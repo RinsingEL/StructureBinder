@@ -1,0 +1,12 @@
+{
+  "type": "structure_bind:door2",
+  "start_pool": "structure_bind:door2_pool",
+  "size": 1,
+  "start_height": {
+    "absolute": 60
+  },
+  "max_distance_from_center": 80,
+  "biomes": "#structure_bind:has_door2",
+  "step": "surface_structures",
+  "spawn_overrides": {}
+}

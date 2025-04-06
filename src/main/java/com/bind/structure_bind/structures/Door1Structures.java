@@ -13,23 +13,22 @@ import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.StructureType;
 import net.minecraft.world.level.levelgen.structure.pools.JigsawPlacement;
 import net.minecraft.world.level.levelgen.structure.pools.StructureTemplatePool;
-import net.minecraft.world.level.block.Blocks;
 
 import java.util.Optional;
 
-public class SkyStructures extends Structure {
+public class Door1Structures extends Structure {
 
     // A custom codec that changes the size limit for our code_structure_sky_fan.json's config to not be capped at 7.
     // With this, we can have a structure with a size limit up to 30 if we want to have extremely long branches of pieces in the structure.
-    public static final Codec<SkyStructures> CODEC = RecordCodecBuilder.<SkyStructures>mapCodec(instance ->
-            instance.group(SkyStructures.settingsCodec(instance),
+    public static final Codec<Door1Structures> CODEC = RecordCodecBuilder.<Door1Structures>mapCodec(instance ->
+            instance.group(Door1Structures.settingsCodec(instance),
                     StructureTemplatePool.CODEC.fieldOf("start_pool").forGetter(structure -> structure.startPool),
                     ResourceLocation.CODEC.optionalFieldOf("start_jigsaw_name").forGetter(structure -> structure.startJigsawName),
                     Codec.intRange(0, 30).fieldOf("size").forGetter(structure -> structure.size),
                     HeightProvider.CODEC.fieldOf("start_height").forGetter(structure -> structure.startHeight),
                     Heightmap.Types.CODEC.optionalFieldOf("project_start_to_heightmap").forGetter(structure -> structure.projectStartToHeightmap),
                     Codec.intRange(1, 128).fieldOf("max_distance_from_center").forGetter(structure -> structure.maxDistanceFromCenter)
-            ).apply(instance, SkyStructures::new)).codec();
+            ).apply(instance, Door1Structures::new)).codec();
 
     private final Holder<StructureTemplatePool> startPool;
     private final Optional<ResourceLocation> startJigsawName;
@@ -38,13 +37,13 @@ public class SkyStructures extends Structure {
     private final Optional<Heightmap.Types> projectStartToHeightmap;
     private final int maxDistanceFromCenter;
 
-    public SkyStructures(Structure.StructureSettings config,
-                         Holder<StructureTemplatePool> startPool,
-                         Optional<ResourceLocation> startJigsawName,
-                         int size,
-                         HeightProvider startHeight,
-                         Optional<Heightmap.Types> projectStartToHeightmap,
-                         int maxDistanceFromCenter)
+    public Door1Structures(StructureSettings config,
+                           Holder<StructureTemplatePool> startPool,
+                           Optional<ResourceLocation> startJigsawName,
+                           int size,
+                           HeightProvider startHeight,
+                           Optional<Heightmap.Types> projectStartToHeightmap,
+                           int maxDistanceFromCenter)
     {
         super(config);
         this.startPool = startPool;
@@ -81,7 +80,7 @@ public class SkyStructures extends Structure {
      * Use the biome tags for where to spawn the structure and users can datapack
      * it to spawn in specific biomes that aren't in the dimension they don't like if they wish.
      */
-    private static boolean extraSpawningChecks(Structure.GenerationContext context) {
+    private static boolean extraSpawningChecks(GenerationContext context) {
         // Grabs the chunk position we are at
         ChunkPos chunkpos = context.chunkPos();
 
@@ -96,11 +95,11 @@ public class SkyStructures extends Structure {
     }
 
     @Override
-    public Optional<Structure.GenerationStub> findGenerationPoint(Structure.GenerationContext context) {
+    public Optional<GenerationStub> findGenerationPoint(GenerationContext context) {
 
         // Check if the spot is valid for our structure. This is just as another method for cleanness.
         // Returning an empty optional tells the game to skip this spot as it will not generate the structure.
-        if (!SkyStructures.extraSpawningChecks(context)) {
+        if (!Door1Structures.extraSpawningChecks(context)) {
             return Optional.empty();
         }
 
@@ -113,7 +112,7 @@ public class SkyStructures extends Structure {
         ChunkPos chunkPos = context.chunkPos();
         BlockPos blockPos = new BlockPos(chunkPos.getMinBlockX(), startY, chunkPos.getMinBlockZ());
 
-        Optional<Structure.GenerationStub> structurePiecesGenerator =
+        Optional<GenerationStub> structurePiecesGenerator =
                 JigsawPlacement.addPieces(
                         context, // Used for JigsawPlacement to get all the proper behaviors done.
                         this.startPool, // The starting pool to use to create the structure layout from
@@ -139,6 +138,6 @@ public class SkyStructures extends Structure {
 
     @Override
     public StructureType<?> type() {
-        return ModStructures.SKY_STRUCTURES.get(); // Helps the game know how to turn this structure back to json to save to chunks
+        return ModStructures.DOOR1_STRUCTURES.get(); // Helps the game know how to turn this structure back to json to save to chunks
     }
 }

@@ -23,6 +23,9 @@ public class ModStructures {
      */
     public static final RegistryObject<StructureType<SkyStructures>> SKY_STRUCTURES = DEFERRED_REGISTRY_STRUCTURE.register("sky_structures", () -> explicitStructureTypeTyping(SkyStructures.CODEC));
 
+    public static final RegistryObject<StructureType<Door1Structures>> DOOR1_STRUCTURES = DEFERRED_REGISTRY_STRUCTURE.register("door1", () -> explicitStructureTypeTyping(Door1Structures.CODEC));
+    public static final RegistryObject<StructureType<Door2Structure>> DOOR2_STRUCTURES =
+            DEFERRED_REGISTRY_STRUCTURE.register("door2", () -> explicitStructureTypeTyping(Door2Structure.CODEC));
     /**
      * Originally, I had a double lambda ()->()-> for the RegistryObject line above, but it turns out that
      * some IDEs cannot resolve the typing correctly. This method explicitly states what the return type
