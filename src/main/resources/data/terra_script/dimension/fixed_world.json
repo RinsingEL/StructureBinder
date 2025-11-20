@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:overworld",
+  "generator": {
+    "type": "minecraft:noise",
+    "settings": "minecraft:overworld",
+    "biome_source": {
+      "type": "terra_script:fixed_biome_source",
+      "seed_salt": "custom_rules"
+    }
+  }
+}
