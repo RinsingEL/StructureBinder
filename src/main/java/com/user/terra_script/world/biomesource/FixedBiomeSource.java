@@ -2,17 +2,25 @@ package com.user.terra_script.world.biomesource;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import com.user.terra_script.config.WorldProjectData;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderGetter;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.resources.RegistryOps;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.BiomeSource;
 import net.minecraft.world.level.biome.Biomes;
 import net.minecraft.world.level.biome.Climate;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
+@SuppressWarnings("removal")
 public class FixedBiomeSource extends BiomeSource {
 
     public static final Codec<FixedBiomeSource> CODEC = RecordCodecBuilder.create(instance ->
@@ -23,9 +31,18 @@ public class FixedBiomeSource extends BiomeSource {
 
     private final HolderGetter<Biome> biomeRegistry;
 
+    // 运行时缓存：String ID -> Biome Holder
+    // 避免每次生成都去查 Registry，虽然 Registry 也是一种 Map，但自己缓存更可控
+    private final Map<String, Holder<Biome>> biomeCache = new ConcurrentHashMap<>();
+
     public FixedBiomeSource(HolderGetter<Biome> biomeRegistry) {
         super();
         this.biomeRegistry = biomeRegistry;
+        WorldProjectData.serverBiomeRegistry = biomeRegistry;
+
+        // 初始化时加载配置 (如果是服务端重启，这会生效)
+        // 注意：如果是单人游戏，这里读取的是本地客户端修改过的 config
+        WorldProjectData.load();
     }
 
     @Override
@@ -35,71 +52,78 @@ public class FixedBiomeSource extends BiomeSource {
 
     @Override
     protected Stream<Holder<Biome>> collectPossibleBiomes() {
-        // 注册所有可能生成的群系，防止结构生成错误
+        // 这里理论上应该返回配置里用到的所有群系
+        // 简单起见，我们返回注册表里的常见群系，或者不实现这个优化（可能会影响 /locate biome 命令）
         return Stream.of(
-                biomeRegistry.getOrThrow(Biomes.OCEAN),
-                biomeRegistry.getOrThrow(Biomes.SNOWY_PLAINS),
-                biomeRegistry.getOrThrow(Biomes.ICE_SPIKES),
-                biomeRegistry.getOrThrow(Biomes.FROZEN_RIVER),
-                biomeRegistry.getOrThrow(Biomes.JUNGLE),
-                biomeRegistry.getOrThrow(Biomes.SPARSE_JUNGLE),
-                biomeRegistry.getOrThrow(Biomes.PLAINS),
-                biomeRegistry.getOrThrow(Biomes.FOREST)
+                getBiomeHolder("minecraft:plains"),
+                getBiomeHolder("minecraft:ocean")
         );
     }
 
     @Override
     public Holder<Biome> getNoiseBiome(int x, int y, int z, Climate.Sampler climateSampler) {
-        // 坐标转换：Quart (4 blocks) -> Chunk (16 blocks)
+        // Quart 坐标 -> 区块坐标
         int chunkX = x >> 2;
         int chunkZ = z >> 2;
 
-        // --- 1. 北方艾尔大陆 (North Aier) ---
-        // Center: 0, -5000 | Radius: 2500
-        if (isInsideContinent(chunkX, chunkZ, 0, -5000, 2500)) {
-            return getAierContinentBiome(chunkX, chunkZ);
-        }
+        WorldProjectData data = WorldProjectData.get();
+        if (data == null) return getBiomeHolder("minecraft:ocean");
+//
+//        // 1. 遍历所有大陆，检查当前区块是否属于该大陆
+//        for (WorldProjectData.Continent continent : data.continents) {
+//            if (continent.containsChunk(chunkX, chunkZ)) {
+//                return getContinentBiome(continent, chunkX, chunkZ);
+//            }
+//        }
 
-        // --- 2. 东方荒野 (East Wilds) ---
-        // Center: 6000, 2000 | Radius: 1500
-        if (isInsideContinent(chunkX, chunkZ, 6000, 2000, 1500)) {
-            return getJungleBiome(chunkX, chunkZ);
-        }
-
-        // --- 3. 出生点平原 (Spawn) ---
-        // Center: 0, 0 | Radius: 1000
-        if (isInsideContinent(chunkX, chunkZ, 0, 0, 1000)) {
-            return biomeRegistry.getOrThrow(Biomes.PLAINS);
-        }
-
-        // 默认：无尽之海
-        return biomeRegistry.getOrThrow(Biomes.OCEAN);
+        // 默认群系 (海洋)
+        return getBiomeHolder("minecraft:plains");
     }
 
-    private boolean isInsideContinent(int x, int z, int centerX, int centerZ, int radius) {
-        // 使用 long 防止坐标溢出
-        long dx = x - centerX;
-        long dz = z - centerZ;
-        return (dx * dx + dz * dz) < ((long) radius * radius);
-    }
-
-    // --- 微观细节层：艾尔大陆 ---
-    private Holder<Biome> getAierContinentBiome(int chunkX, int chunkZ) {
-        // 简单的伪随机噪声模拟
-        double noise = Math.sin(chunkX * 0.05) + Math.cos(chunkZ * 0.05);
-
-        if (noise > 1.0) {
-            return biomeRegistry.getOrThrow(Biomes.ICE_SPIKES);
-        } else if (noise < -0.5) {
-            return biomeRegistry.getOrThrow(Biomes.FROZEN_RIVER);
-        } else {
-            return biomeRegistry.getOrThrow(Biomes.SNOWY_PLAINS);
+    private Holder<Biome> getContinentBiome(WorldProjectData.Continent continent, int cx, int cz) {
+        // 2. 检查是否有固定群系配置
+        long posKey = WorldProjectData.ChunkPos.asLong(cx, cz);
+        if (continent.fixedBiomeChunks.containsKey(posKey)) {
+            String fixedId = continent.fixedBiomeChunks.get(posKey);
+            return getBiomeHolder(fixedId);
         }
+
+        // 3. 按照权重随机生成
+        // 使用伪随机，保证同一个位置每次生成结果一致
+        long seed = (long) cx * 341873128712L + (long) cz * 132897987541L;
+        Random random = new Random(seed);
+
+        return getWeightedBiome(continent.biomeWeights, random);
     }
 
-    // --- 微观细节层：丛林 ---
-    private Holder<Biome> getJungleBiome(int chunkX, int chunkZ) {
-        double noise = Math.sin(chunkX * 0.1) * Math.cos(chunkZ * 0.1);
-        return noise > 0 ? biomeRegistry.getOrThrow(Biomes.JUNGLE) : biomeRegistry.getOrThrow(Biomes.SPARSE_JUNGLE);
+    private Holder<Biome> getWeightedBiome(Map<String, Integer> weights, Random random) {
+        if (weights.isEmpty()) return getBiomeHolder("minecraft:plains");
+
+        int totalWeight = 0;
+        for (int w : weights.values()) totalWeight += w;
+
+        if (totalWeight <= 0) return getBiomeHolder("minecraft:plains");
+
+        int r = random.nextInt(totalWeight);
+        int current = 0;
+
+        for (Map.Entry<String, Integer> entry : weights.entrySet()) {
+            current += entry.getValue();
+            if (r < current) {
+                return getBiomeHolder(entry.getKey());
+            }
+        }
+
+        // Fallback
+        return getBiomeHolder("minecraft:plains");
+    }
+
+    private Holder<Biome> getBiomeHolder(String id) {
+        return biomeCache.computeIfAbsent(id, k -> {
+            ResourceLocation rl = new ResourceLocation(k);
+            // 尝试获取，如果不存在则返回 Plains 防止崩溃
+            return biomeRegistry.get(ResourceKey.create(Registries.BIOME, rl))
+                    .orElseGet(() -> biomeRegistry.getOrThrow(Biomes.PLAINS));
+        });
     }
 }
