@@ -1,4 +1,4 @@
-package com.user.terra_script.client;
+package com.user.terra_script.client.screen.editor;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;

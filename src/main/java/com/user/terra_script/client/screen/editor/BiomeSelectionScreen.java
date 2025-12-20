@@ -1,6 +1,5 @@
-package com.user.terra_script.client;
+package com.user.terra_script.client.screen.editor;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import com.user.terra_script.TerraScriptMod;
 import com.user.terra_script.config.WorldProjectData;
 import net.minecraft.client.Minecraft;
@@ -13,10 +12,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.Util;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 @SuppressWarnings("removal")
 public class BiomeSelectionScreen extends Screen {
