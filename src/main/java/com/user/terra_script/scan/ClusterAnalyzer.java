@@ -1,15 +1,13 @@
 package com.user.terra_script.scan;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Stack;
+import java.util.*;
 
 public class ClusterAnalyzer {
 
     public enum TargetType {
         CONTINENT("Continents"),
         OCEAN("Oceans"),
-        MOUNTAIN("Mountains"); // 新增类型
+        MOUNTAIN("Mountains");
 
         public final String name;
         TargetType(String name) { this.name = name; }
@@ -17,17 +15,38 @@ public class ClusterAnalyzer {
 
     private record Coord(int r, int c) {}
 
-    // 可以在这里加更多参数，为了简单，我们先把山脉阈值写死或通过重载传入
-    // 如果想要 GUI 可配，可以把 slopeThreshold 也传进来
-    public static List<ScanRegion> analyze(ScanPixel[][] map, TargetType type, int minPixelSize) {
+    /**
+     * 执行聚类分析
+     * @param map 全局像素数据
+     * @param type 聚类目标类型
+     * @param minPixelSize 最小像素数（过滤噪点）
+     * @param mergeDistance 归并距离（单位：方块距离，0表示不归并）
+     * @return 聚类区域列表
+     */
+    public static List<ScanRegion> analyze(ScanPixel[][] map, TargetType type, int minPixelSize, int mergeDistance) {
         if (map == null || map.length == 0) return new ArrayList<>();
 
+        // 1. 第一阶段：原子化识别 (找出所有连通的小块)
+        List<ScanRegion> atomicRegions = findAtomicRegions(map, type);
+
+        // 2. 第二阶段：距离归并 (如果启用)
+        List<ScanRegion> finalRegions;
+        if (mergeDistance > 0) {
+            finalRegions = mergeRegions(atomicRegions, mergeDistance, minPixelSize, map);
+        } else {
+            finalRegions = filterBySize(atomicRegions, minPixelSize, map);
+        }
+
+        return finalRegions;
+    }
+
+    // 泛洪填充逻辑
+    private static List<ScanRegion> findAtomicRegions(ScanPixel[][] map, TargetType type) {
         int rows = map.length;
         int cols = map[0].length;
         boolean[][] visited = new boolean[rows][cols];
         List<ScanRegion> regions = new ArrayList<>();
         int currentId = 0;
-
         Stack<Coord> stack = new Stack<>();
 
         for (int r = 0; r < rows; r++) {
@@ -35,24 +54,7 @@ public class ClusterAnalyzer {
                 if (visited[r][c]) continue;
 
                 ScanPixel p = map[r][c];
-                if (p == null) continue;
-
-                boolean matches = false;
-
-                // --- 聚类判别逻辑 ---
-                switch (type) {
-                    case CONTINENT -> matches = p.isLand();
-                    case OCEAN -> matches = !p.isLand();
-                    case MOUNTAIN -> {
-                        // 山脉定义：高度 > 80 且 比较陡峭
-                        // 注意：ScanData 是网格采样的，相邻像素的距离是 step
-                        // 这里计算的是“网格梯度”，依然能很好地反应地形起伏
-                        double slope = getLocalSlope(map, r, c);
-                        matches = p.height() > 80 && slope > 3.0; // 阈值可微调
-                    }
-                }
-
-                if (matches) {
+                if (checkType(p, type, map, r, c)) {
                     ScanRegion region = new ScanRegion(++currentId);
 
                     stack.push(new Coord(r, c));
@@ -60,24 +62,97 @@ public class ClusterAnalyzer {
                     region.addPixel(p);
 
                     while (!stack.isEmpty()) {
-                        Coord current = stack.pop();
-                        int cr = current.r;
-                        int cc = current.c;
-                        // 检查四邻域
-                        checkNeighbor(map, visited, stack, cr + 1, cc, region, type);
-                        checkNeighbor(map, visited, stack, cr - 1, cc, region, type);
-                        checkNeighbor(map, visited, stack, cr, cc + 1, region, type);
-                        checkNeighbor(map, visited, stack, cr, cc - 1, region, type);
+                        Coord curr = stack.pop();
+                        checkNeighbor(map, visited, stack, curr.r + 1, curr.c, region, type);
+                        checkNeighbor(map, visited, stack, curr.r - 1, curr.c, region, type);
+                        checkNeighbor(map, visited, stack, curr.r, curr.c + 1, region, type);
+                        checkNeighbor(map, visited, stack, curr.r, curr.c - 1, region, type);
                     }
-
-                    if (region.pixels.size() >= minPixelSize) {
-                        region.finish();
-                        regions.add(region);
-                    }
+                    regions.add(region);
                 }
             }
         }
         return regions;
+    }
+
+    // 归并逻辑
+    private static List<ScanRegion> mergeRegions(List<ScanRegion> atoms, int distThreshold, int minFinalSize, ScanPixel[][] map) {
+        int n = atoms.size();
+        if (n == 0) return new ArrayList<>();
+
+        // 并查集初始化
+        int[] parent = new int[n];
+        for (int i = 0; i < n; i++) parent[i] = i;
+
+        // 两两比较距离
+        for (int i = 0; i < n; i++) {
+            for (int j = i + 1; j < n; j++) {
+                ScanRegion r1 = atoms.get(i);
+                ScanRegion r2 = atoms.get(j);
+
+                // 包围盒快速排斥
+                if (!boundingBoxOverlap(r1, r2, distThreshold)) continue;
+
+                // 精确距离检查
+                if (r1.distanceTo(r2) <= distThreshold) {
+                    union(parent, i, j);
+                }
+            }
+        }
+
+        // 聚合
+        Map<Integer, ScanRegion> mergedMap = new HashMap<>();
+        for (int i = 0; i < n; i++) {
+            int root = find(parent, i);
+            ScanRegion atom = atoms.get(i);
+
+            if (!mergedMap.containsKey(root)) {
+                // 必须创建新对象或克隆，这里简化直接使用第一个原子作为容器
+                // 注意：如果 ScanRegion 是引用类型，这里需要小心
+                // 这里的逻辑是：把所有子节点像素加到根节点上
+                mergedMap.put(root, atom);
+            } else {
+                ScanRegion target = mergedMap.get(root);
+                if (target != atom) {
+                    target.merge(atom);
+                }
+            }
+        }
+
+        // 过滤并计算特征
+        List<ScanRegion> result = new ArrayList<>();
+        for (ScanRegion r : mergedMap.values()) {
+            if (r.pixels.size() >= minFinalSize) {
+                r.finish(map); // 计算统计特征 (海拔、粗糙度等)
+                result.add(r);
+            }
+        }
+        return result;
+    }
+
+    private static List<ScanRegion> filterBySize(List<ScanRegion> input, int minSize, ScanPixel[][] map) {
+        List<ScanRegion> res = new ArrayList<>();
+        for (ScanRegion r : input) {
+            if (r.pixels.size() >= minSize) {
+                r.finish(map);
+                res.add(r);
+            }
+        }
+        return res;
+    }
+
+    // --- 辅助方法 ---
+
+    private static boolean checkType(ScanPixel p, TargetType type, ScanPixel[][] map, int r, int c) {
+        if (p == null) return false;
+        switch (type) {
+            case CONTINENT: return p.isLand();
+            case OCEAN: return !p.isLand();
+            case MOUNTAIN:
+                // 山脉判定：高度 > 80 且 局部斜率 > 2.0
+                return p.height() > 80 && getLocalSlope(map, r, c) > 2.0;
+        }
+        return false;
     }
 
     private static void checkNeighbor(ScanPixel[][] map, boolean[][] visited, Stack<Coord> stack, int r, int c, ScanRegion region, TargetType type) {
@@ -85,36 +160,42 @@ public class ClusterAnalyzer {
         if (visited[r][c]) return;
 
         ScanPixel p = map[r][c];
-        if (p == null) return;
-
-        boolean matches = false;
-        switch (type) {
-            case CONTINENT -> matches = p.isLand();
-            case OCEAN -> matches = !p.isLand();
-            case MOUNTAIN -> {
-                double slope = getLocalSlope(map, r, c);
-                matches = p.height() > 200 && slope > 3.0;
-            }
+        if (checkType(p, type, map, r, c)) {
+            visited[r][c] = true;
+            region.addPixel(p);
+            stack.push(new Coord(r, c));
         }
-
-        if (!matches) return;
-
-        visited[r][c] = true;
-        region.addPixel(p);
-        stack.push(new Coord(r, c));
     }
 
-    // 计算局部坡度（最大高度差）
+    private static int find(int[] parent, int i) {
+        if (parent[i] == i) return i;
+        return parent[i] = find(parent, parent[i]);
+    }
+
+    private static void union(int[] parent, int i, int j) {
+        int rootI = find(parent, i);
+        int rootJ = find(parent, j);
+        if (rootI != rootJ) parent[rootI] = rootJ;
+    }
+
+    private static boolean boundingBoxOverlap(ScanRegion r1, ScanRegion r2, int dist) {
+        if (r1.maxX + dist < r2.minX) return false;
+        if (r1.minX - dist > r2.maxX) return false;
+        if (r1.maxZ + dist < r2.minZ) return false;
+        if (r1.minZ - dist > r2.maxZ) return false;
+        return true;
+    }
+
     private static double getLocalSlope(ScanPixel[][] map, int r, int c) {
         ScanPixel center = map[r][c];
         double maxDiff = 0;
-
-        // 简单采样右边和下边，计算最大差值
-        if (r + 1 < map.length && map[r+1][c] != null) {
-            maxDiff = Math.max(maxDiff, Math.abs(center.height() - map[r+1][c].height()));
-        }
-        if (c + 1 < map[0].length && map[r][c+1] != null) {
-            maxDiff = Math.max(maxDiff, Math.abs(center.height() - map[r][c+1].height()));
+        int[][] offsets = {{0,1}, {1,0}, {0,-1}, {-1,0}};
+        for(int[] off : offsets) {
+            int nr = r + off[0];
+            int nc = c + off[1];
+            if (nr >= 0 && nr < map.length && nc >= 0 && nc < map[0].length && map[nr][nc] != null) {
+                maxDiff = Math.max(maxDiff, Math.abs(center.height() - map[nr][nc].height()));
+            }
         }
         return maxDiff;
     }
