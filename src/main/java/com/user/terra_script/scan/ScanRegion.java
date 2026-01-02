@@ -41,12 +41,23 @@ public class ScanRegion {
 
     // 计算距离
     public double distanceTo(ScanRegion other) {
-        // 简单优化：如果包围盒距离很远，直接返回大数
-        // 这里为了简单直接算中心点距离作为估算，或者保留之前的暴力像素法
-        // 为了性能，建议先算中心点距离，足够近再算像素
-        double cDist = Math.sqrt(Math.pow(centerX - other.centerX, 2) + Math.pow(centerZ - other.centerZ, 2));
-        return cDist;
-        // 如果需要极高精度归并，请保留之前的像素遍历代码
+        double minDistanceSq = Double.MAX_VALUE;
+
+        // ... 循环计算 ...
+        for (ScanPixel p1 : this.pixels) {
+            for (ScanPixel p2 : other.pixels) {
+                // 确保这里使用的是 p1.x() (世界坐标)
+                double dSq = Math.pow(p1.x() - p2.x(), 2) + Math.pow(p1.z() - p2.z(), 2);
+                if (dSq < minDistanceSq) minDistanceSq = dSq;
+            }
+        }
+
+        double dist = Math.sqrt(minDistanceSq);
+
+        // 【添加这句 Debug】看看算出来的距离到底是 1.414 还是 160.0
+        if (dist < 100) System.out.println("Debug Dist: " + dist + " between " + this.id + " and " + other.id);
+
+        return dist;
     }
 
     /**
@@ -96,6 +107,6 @@ public class ScanRegion {
         // 3. 斜率 (AvgSlope)
         // 建议在 SatelliteScanner 生成 ScanPixel 时直接算出 Slope 并存进去，那样性能最好。
         // 这里暂时置为 0 或留空，等待你给 ScanPixel 加字段
-        this.avgSlope = 0.0;
+        this.avgSlope = this.roughness;
     }
 }

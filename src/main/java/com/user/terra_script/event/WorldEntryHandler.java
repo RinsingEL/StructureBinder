@@ -11,6 +11,7 @@ import net.minecraft.world.level.GameType;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.level.LevelEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
@@ -71,6 +72,14 @@ public class WorldEntryHandler {
                 // 打开设计界面 (context 传 null，强制走游戏内扫描逻辑)
                 Minecraft.getInstance().setScreen(new StandaloneMapScreen(null, null));
             }
+        }
+    }
+
+    @SubscribeEvent
+    public static void onLevelUnload(LevelEvent.Unload event) {
+        // 当服务端世界卸载时，立刻停止扫描
+        if (event.getLevel() instanceof ServerLevel) {
+            com.user.terra_script.scan.SatelliteScanner.stopScanning();
         }
     }
 }

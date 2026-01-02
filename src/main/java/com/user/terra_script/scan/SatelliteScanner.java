@@ -1,43 +1,55 @@
 package com.user.terra_script.scan;
 
 import net.minecraft.core.Holder;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.RandomState;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.IntStream;
-
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SatelliteScanner {
-    public static final int INTERVAL =  100;
+
+    // 1. 自定义线程池：限制最大并发数为 4，防止占满 CPU 导致主线程卡死
+    private static final ExecutorService SCAN_EXECUTOR = Executors.newFixedThreadPool(4);
+
+    // 2. 取消标记：用于紧急停止任务
+    private static final AtomicBoolean isCancelled = new AtomicBoolean(false);
+
     /**
-     * 异步扫描地形 (以 0,0 为中心)
-     * @param level 服务端主世界
-     * @param chunkRadius 扫描半径 (区块单位)
-     * @param targetResolution 目标分辨率 (网格宽/高)
+     * 紧急停止所有扫描任务 (在世界卸载时调用)
+     */
+    public static void stopScanning() {
+        isCancelled.set(true);
+        System.out.println("[Scanner] Stop signal received. Aborting tasks...");
+    }
+
+    /**
+     * 异步扫描地形 (全局)
      */
     public static CompletableFuture<ScanPixel[][]> scanAsync(ServerLevel level, int chunkRadius, int targetResolution) {
-        System.out.println("[Scanner] Starting in-game scan... Seed: " + level.getSeed());
-        // 使用 supplyAsync 在后台线程执行，防止卡死主线程
-        return CompletableFuture.supplyAsync(() -> runScan(level, chunkRadius, targetResolution));
+        // 重置取消标记
+        isCancelled.set(false);
+        System.out.println("[Scanner] Starting global scan... Seed: " + level.getSeed());
+
+        // 使用自定义线程池提交任务
+        return CompletableFuture.supplyAsync(() -> runScan(level, chunkRadius, targetResolution), SCAN_EXECUTOR);
     }
 
     private static ScanPixel[][] runScan(ServerLevel level, int chunkRadius, int targetResolution) {
         long startTime = System.currentTimeMillis();
+        MinecraftServer server = level.getServer();
 
         ChunkGenerator generator = level.getChunkSource().getGenerator();
         RandomState randomState = level.getChunkSource().randomState();
 
-        // 计算扫描参数
         int worldRadiusBlocks = chunkRadius * 16;
         int totalWidth = worldRadiusBlocks * 2;
-        // 确保 step 至少为 1
         int step = Math.max(1, totalWidth / targetResolution);
         int gridSize = totalWidth / step;
 
@@ -45,40 +57,42 @@ public class SatelliteScanner {
 
         ScanPixel[][] map = new ScanPixel[gridSize][gridSize];
 
-        // 用于进度显示
-        int totalPoints = gridSize * gridSize;
-        int processed = 0;
+        long totalPoints = (long) gridSize * gridSize;
+        long processed = 0;
         int lastLogPercent = 0;
 
         for (int i = 0; i < gridSize; i++) {
+
+            // --- 安全检查点 1 ---
+            // 检查是否取消，或者服务器是否已关闭
+            if (isCancelled.get() || !server.isRunning()) {
+                return null;
+            }
+
             for (int j = 0; j < gridSize; j++) {
-                // 计算当前采样点的世界坐标 (以 0,0 为中心)
                 int x = (i * step) - worldRadiusBlocks;
                 int z = (j * step) - worldRadiusBlocks;
 
                 try {
-                    // 1. 获取物理高度
-                    // 使用 level 作为 HeightAccessor 是安全的，因为它只读取世界高度限制配置
                     int height = generator.getBaseHeight(x, z, Heightmap.Types.OCEAN_FLOOR_WG, level, randomState);
 
-                    // 2. 获取生物群系 (注意 Quart 坐标转换: x >> 2)
+                    // 获取群系 (为了速度，全图扫描也可以选择跳过)
                     Holder<Biome> biomeHolder = generator.getBiomeSource().getNoiseBiome(x >> 2, height >> 2, z >> 2, randomState.sampler());
                     String biomeId = biomeHolder.unwrapKey().map(k -> k.location().toString()).orElse("unknown");
 
-                    // 3. 存储像素点 (这里假设海平面是 63，RTF 可能有变动，但通常通用)
                     map[i][j] = new ScanPixel(x, z, height, biomeId, height > 63);
                 } catch (Exception e) {
-                    // 容错处理
                     map[i][j] = new ScanPixel(x, z, 0, "error", false);
-                    if (processed < 5) e.printStackTrace(); // 只打印前几个错误
                 }
 
-                // --- 进度日志 (每 10% 打印一次) ---
                 processed++;
-                int percent = (int)((processed / (float)totalPoints) * INTERVAL);
-                if (percent > lastLogPercent && percent % 10 == 0) {
-                    System.out.println("[Scanner] Progress: " + percent + "%");
-                    lastLogPercent = percent;
+                // 简单的进度计算
+                if (totalPoints > 5000) {
+                    int percent = (int)((processed * 100) / totalPoints);
+                    if (percent > lastLogPercent && percent % 10 == 0) {
+                        System.out.println("[Scanner] Global Progress: " + percent + "%");
+                        lastLogPercent = percent;
+                    }
                 }
             }
         }
@@ -89,19 +103,17 @@ public class SatelliteScanner {
 
     /**
      * 局部高精度扫描
-     * @param startX 世界坐标 X 起点
-     * @param startZ 世界坐标 Z 起点
-     * @param width  扫描宽度
-     * @param height 扫描高度
-     * @param step   采样步长 (建议为 1 或 2)
      */
     public static CompletableFuture<ScanPixel[][]> scanRegionAsync(ServerLevel level, int startX, int startZ, int width, int height, int step) {
+        isCancelled.set(false);
         System.out.println("[Scanner] Starting LOCAL scan: [" + startX + "," + startZ + "] Size: " + width + "x" + height + " Step: " + step);
-        return CompletableFuture.supplyAsync(() -> runRegionScanParallel(level, startX, startZ, width, height, step));
+        // 使用自定义线程池
+        return CompletableFuture.supplyAsync(() -> runRegionScan(level, startX, startZ, width, height, step), SCAN_EXECUTOR);
     }
 
-    private static ScanPixel[][] runRegionScanParallel(ServerLevel level, int startX, int startZ, int width, int height, int step) {
+    private static ScanPixel[][] runRegionScan(ServerLevel level, int startX, int startZ, int width, int height, int step) {
         long startTime = System.currentTimeMillis();
+        MinecraftServer server = level.getServer();
 
         ChunkGenerator generator = level.getChunkSource().getGenerator();
         RandomState randomState = level.getChunkSource().randomState();
@@ -111,47 +123,51 @@ public class SatelliteScanner {
         if (gridW <= 0) gridW = 1;
         if (gridH <= 0) gridH = 1;
 
-        System.out.println("[Scanner] Target Grid: " + gridW + "x" + gridH + " (Parallel Execution)");
+        System.out.println("[Scanner] Target Grid: " + gridW + "x" + gridH);
 
         ScanPixel[][] map = new ScanPixel[gridW][gridH];
 
-        // 进度统计 (线程安全)
-        AtomicInteger processed = new AtomicInteger(0);
-        int totalPoints = gridW * gridH;
-        AtomicInteger lastLogPercent = new AtomicInteger(0);
-        Set<String> threadNames = ConcurrentHashMap.newKeySet();
+        long totalPoints = (long) gridW * gridH;
+        long processed = 0;
+        int lastLogPercent = 0;
 
-        // --- 并行计算核心 ---
-        int finalGridH = gridH;
-        IntStream.range(0, gridW).parallel().forEach(i -> {
-            for (int j = 0; j < finalGridH; j++) {
+        // 这里改回普通循环，不再使用 IntStream.parallel()
+        // 因为 parallel() 会使用公共线程池，容易导致死锁且无法响应 isCancelled
+        // 既然我们在外部已经是异步线程了，内部直接跑循环即可，或者手动拆分任务提交给 SCAN_EXECUTOR
+        // 为了稳定性，单线程跑这个异步任务是最安全的
+
+        for (int i = 0; i < gridW; i++) {
+
+            // --- 安全检查点 2 ---
+            if (isCancelled.get() || !server.isRunning()) {
+                System.out.println("[Scanner] Local scan aborted.");
+                return null;
+            }
+
+            for (int j = 0; j < gridH; j++) {
                 int x = startX + (i * step);
                 int z = startZ + (j * step);
-                threadNames.add(Thread.currentThread().getName());
+
                 try {
-                    // getBaseHeight 是纯数学计算，通常是线程安全的
                     int h = generator.getBaseHeight(x, z, Heightmap.Types.OCEAN_FLOOR_WG, level, randomState);
-                    // 局部扫描为了速度，biomeId 设为 unknown
+                    // 局部扫描暂不计算 Biome
                     map[i][j] = new ScanPixel(x, z, h, "unknown", h > 63);
                 } catch (Exception e) {
                     map[i][j] = new ScanPixel(x, z, 0, "error", false);
                 }
 
-                // 进度日志 (减少锁竞争，每隔一定数量检查一次)
-                int current = processed.incrementAndGet();
-                if (totalPoints > 5000 && current % (totalPoints / 20) == 0) { // 每 5%
-                    int p = (int)((current * 100.0f) / totalPoints);
-                    int last = lastLogPercent.get();
-                    if (p > last && lastLogPercent.compareAndSet(last, p)) {
-                        System.out.println("[Scanner] Parallel Progress: " + p + "%");
+                processed++;
+                if (totalPoints > 5000) {
+                    int percent = (int)((processed * 100) / totalPoints);
+                    if (percent > lastLogPercent && percent % 10 == 0) {
+                        System.out.println("[Scanner] Local Progress: " + percent + "%");
+                        lastLogPercent = percent;
                     }
                 }
             }
-        });
+        }
 
         System.out.println("[Scanner] Local Scan finished in " + (System.currentTimeMillis() - startTime) + "ms");
-        System.out.println("[Scanner Debug] Threads used: " + threadNames);
-        System.out.println("[Scanner Debug] Thread count: " + threadNames.size());
         return map;
     }
 }

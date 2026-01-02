@@ -53,13 +53,15 @@ public class StructureInjector {
         int y = level.getHeight(Heightmap.Types.OCEAN_FLOOR_WG, x, z);
         BlockPos centerPos = new BlockPos(x, y, z);
 
-        System.out.println("[TerraScript] Generating Jigsaw: " + structureId + " at " + centerPos);
-
-        try {
-            placeJigsawStructure(level, centerPos, new ResourceLocation(structureId));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        level.getServer().execute(() -> {
+            try {
+                System.out.println("[TerraScript] Starting generation async for " + structureId);
+                placeJigsawStructure(level, centerPos, new ResourceLocation(structureId));
+                System.out.println("[TerraScript] Finished generation for " + structureId);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     private static void placeJigsawStructure(ServerLevel level, BlockPos startPos, ResourceLocation nbtLocation) {
@@ -85,7 +87,8 @@ public class StructureInjector {
         ));
 
         // 4. 计算拼图布局
-        int maxDepth = 7;
+        int maxDepth = 0;
+
         Optional<Structure.GenerationStub> stubOptional = JigsawPlacement.addPieces(
                 new Structure.GenerationContext(
                         level.registryAccess(),

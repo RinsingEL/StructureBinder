@@ -6,10 +6,12 @@ import com.user.terra_script.client.data.ScanResultHolder;
 import com.user.terra_script.config.StructurePlan;
 import com.user.terra_script.scan.*;
 import com.user.terra_script.util.ScanDataIO;
+import com.user.terra_script.util.StructureDiscovery;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.ObjectSelectionList;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.worldselection.WorldCreationContext;
@@ -22,10 +24,16 @@ import org.joml.Matrix4f;
 
 import java.awt.Color;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 public class StandaloneMapScreen extends Screen {
+    // --- 布局常量 ---
+    private static final int RIGHT_PANEL_WIDTH = 220; // 右侧面板宽度
+    private static final int MAP_PADDING = 10;
+
     private final Screen parent;
     private final WorldCreationContext context;
     private final long seed;
@@ -51,17 +59,18 @@ public class StandaloneMapScreen extends Screen {
     private boolean showMenu = false;
     private int menuX = 0, menuY = 0;
     private ScanPixel selectedPixel = null;
-
-    // 记录当前右键选中的网格坐标
-    private int selectedR = -1;
-    private int selectedC = -1;
+    private int selectedR = -1, selectedC = -1;
 
     // 控件
     private EditBox minSizeInput;
     private EditBox mergeDistInput;
 
+    // 【新增】结构列表控件
+    private StructureListWidget structureListWidget;
+    private StructureDiscovery.StructureInfo selectedStructure = null; // 当前选中的结构
+
     public StandaloneMapScreen(Screen parent, WorldCreationContext context) {
-        super(Component.literal("Satellite Map Debugger"));
+        super(Component.literal("World Architect"));
         this.parent = parent;
         this.context = context;
 
@@ -93,48 +102,84 @@ public class StandaloneMapScreen extends Screen {
 
     @Override
     protected void init() {
-        int btnY = 10;
-        int btnH = 20;
-        int rightX = this.width - 10;
+        // 计算布局坐标
+        int panelX = this.width - RIGHT_PANEL_WIDTH + 10;
+        int btnW = RIGHT_PANEL_WIDTH - 20;
+        int y = 10;
 
-        // 1. 扫描按钮
+        // --- 1. 地形扫描区 ---
         addRenderableWidget(Button.builder(Component.literal("1. Scan Terrain"), b -> startScan())
-                .bounds(10, btnY, 120, btnH).build());
+                .bounds(panelX, y, btnW, 20).build());
+        y += 25;
 
-        // 2. 右侧控制栏
-        // Close
-        addRenderableWidget(Button.builder(Component.literal("Close"), b -> onClose())
-                .bounds(rightX - 50, btnY, 50, btnH).build());
-
-        // Cluster
-        addRenderableWidget(Button.builder(Component.literal("Cluster"), b -> runClustering())
-                .bounds(rightX - 50 - 5 - 60, btnY, 60, btnH).build());
-
-        // Merge Dist Input
-        this.mergeDistInput = new EditBox(this.font, rightX - 115 - 5 - 40, btnY, 40, btnH, Component.literal("Merge"));
-        this.mergeDistInput.setValue("0");
-        this.mergeDistInput.setTooltip(Tooltip.create(Component.literal("Merge Dist (Blocks)")));
-        addRenderableWidget(this.mergeDistInput);
-
-        // Min Size Input
-        this.minSizeInput = new EditBox(this.font, rightX - 160 - 5 - 40, btnY, 40, btnH, Component.literal("Size"));
+        // --- 2. 聚类控制区 ---
+        // 参数行
+        this.minSizeInput = new EditBox(this.font, panelX, y, btnW / 2 - 2, 20, Component.literal("Min Size"));
         this.minSizeInput.setValue("5");
         this.minSizeInput.setTooltip(Tooltip.create(Component.literal("Min Pixel Size")));
         addRenderableWidget(this.minSizeInput);
 
-        // Mode Switch
-        addRenderableWidget(Button.builder(Component.literal("Mode: " + clusterTarget.name), b -> {
+        this.mergeDistInput = new EditBox(this.font, panelX + btnW / 2 + 2, y, btnW / 2 - 2, 20, Component.literal("Merge"));
+        this.mergeDistInput.setValue("0");
+        this.mergeDistInput.setTooltip(Tooltip.create(Component.literal("Merge Dist")));
+        addRenderableWidget(this.mergeDistInput);
+        y += 25;
+
+        // 模式切换
+        addRenderableWidget(Button.builder(Component.literal("Target: " + clusterTarget.name), b -> {
             if (clusterTarget == ClusterAnalyzer.TargetType.CONTINENT) clusterTarget = ClusterAnalyzer.TargetType.OCEAN;
             else if (clusterTarget == ClusterAnalyzer.TargetType.OCEAN) clusterTarget = ClusterAnalyzer.TargetType.MOUNTAIN;
             else clusterTarget = ClusterAnalyzer.TargetType.CONTINENT;
-
-            b.setMessage(Component.literal("Mode: " + clusterTarget.name));
+            b.setMessage(Component.literal("Target: " + clusterTarget.name));
             if (scanData != null) runClustering();
-        }).bounds(rightX - 205 - 5 - 100, btnY, 100, btnH).build());
+        }).bounds(panelX, y, btnW, 20).build());
+        y += 25;
 
-        // 3. 应用并开始游戏
-        addRenderableWidget(Button.builder(Component.literal(">>> 2. APPLY & START <<<"), b -> applyAndStart())
-                .bounds(this.width / 2 - 100, this.height - 30, 200, 20).build());
+        // 执行聚类
+        addRenderableWidget(Button.builder(Component.literal("Run Clustering"), b -> runClustering())
+                .bounds(panelX, y, btnW, 20).build());
+        y += 30; // 增加间隔
+
+        // --- 3. 结构列表区 ---
+        addRenderableWidget(Button.builder(Component.literal("Scan All Structures"), b -> scanStructures())
+                .bounds(panelX, y, btnW, 20).build());
+        y += 25;
+
+        // 列表控件 (高度自适应，留出底部按钮空间)
+        int listBottom = this.height - 60;
+        int listHeight = listBottom - y;
+        this.structureListWidget = new StructureListWidget(this.minecraft, btnW, listHeight, y, listBottom);
+        this.structureListWidget.setLeftPos(panelX); // 设置左边距
+        this.addRenderableWidget(structureListWidget);
+
+        // --- 4. 底部控制区 ---
+        int bottomY = this.height - 50;
+
+        // 应用并开始
+        addRenderableWidget(Button.builder(Component.literal(">>> APPLY & START <<<"), b -> applyAndStart())
+                .bounds(panelX, bottomY, btnW, 20).build());
+
+        // 关闭
+        addRenderableWidget(Button.builder(Component.literal("Back"), b -> onClose())
+                .bounds(panelX, bottomY + 25, btnW, 20).build());
+    }
+
+    // --- 结构扫描逻辑 ---
+    private void scanStructures() {
+        var server = Minecraft.getInstance().getSingleplayerServer();
+        if (server == null) {
+            this.statusMsg = "Error: Not in-game.";
+            return;
+        }
+
+        this.statusMsg = "Scanning structures (Async)...";
+        CompletableFuture.supplyAsync(() -> StructureDiscovery.scanAllStructures(server.overworld()))
+                .thenAccept(list -> {
+                    // 必须在主线程更新 UI
+                    Minecraft.getInstance().execute(() -> {
+                        this.minecraft.setScreen(new StructureExportScreen(this, list));
+                    });
+                });
     }
 
     private void startScan() {
@@ -194,6 +239,7 @@ public class StandaloneMapScreen extends Screen {
         ScanResultHolder.get().lastClusters = regions;
         ScanResultHolder.get().lastClusterMap = this.clusterMap;
         this.statusMsg = "Found " + regions.size() + " regions.";
+        ScanDataIO.saveAll();
     }
 
     private void generateRenderMask(List<ScanRegion> regions) {
@@ -218,7 +264,6 @@ public class StandaloneMapScreen extends Screen {
         ServerLevel level = server.overworld();
         this.statusMsg = "Applying...";
 
-        // 1. 生成所有计划中的结构
         Map<Long, String> plan = StructurePlan.get().getAllPlans();
         plan.forEach((posLong, structId) -> {
             net.minecraft.world.level.ChunkPos cp = new net.minecraft.world.level.ChunkPos(posLong);
@@ -228,26 +273,17 @@ public class StandaloneMapScreen extends Screen {
             }
         });
 
-        // 2. 强制切换玩家模式并传送 (使用 ServerPlayer，无需作弊权限)
         server.execute(() -> {
             if (Minecraft.getInstance().player == null) return;
             var playerUUID = Minecraft.getInstance().player.getUUID();
             var serverPlayer = server.getPlayerList().getPlayer(playerUUID);
-
             if (serverPlayer != null) {
-                // 强制切换生存模式
                 serverPlayer.setGameMode(GameType.SURVIVAL);
-
-                // 计算安全落地高度
-                int currentX = serverPlayer.getBlockX();
-                int currentZ = serverPlayer.getBlockZ();
-                int safeY = level.getHeight(Heightmap.Types.MOTION_BLOCKING, currentX, currentZ);
-
-                // 传送
-                serverPlayer.teleportTo(currentX, safeY + 1, currentZ);
+                int h = level.getHeight(Heightmap.Types.MOTION_BLOCKING, serverPlayer.getBlockX(), serverPlayer.getBlockZ());
+                serverPlayer.teleportTo(serverPlayer.getBlockX(), h + 1, serverPlayer.getBlockZ());
+                serverPlayer.setHealth(serverPlayer.getMaxHealth());
             }
         });
-
         this.onClose();
     }
 
@@ -255,31 +291,36 @@ public class StandaloneMapScreen extends Screen {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        // 1. 菜单交互
+        // 1. 如果点击了右侧面板，优先处理子控件 (列表、按钮)
+        if (mouseX > this.width - RIGHT_PANEL_WIDTH) {
+            return super.mouseClicked(mouseX, mouseY, button);
+        }
+
+        // 2. 菜单交互
         if (showMenu) {
-            int w = 100;
-            int h = 68; // 【关键修复】高度设为 68 以容纳第三个按钮
-
-            // 判定是否点击在菜单范围内
+            int w = 120, h = 68;
             if (mouseX >= menuX && mouseX <= menuX + w && mouseY >= menuY && mouseY <= menuY + h) {
-
                 if (mouseY <= menuY + 20) {
-                    // 按钮 1: Teleport
+                    // Teleport
                     if (selectedPixel != null && Minecraft.getInstance().player != null) {
                         String cmd = String.format("tp @s %d 150 %d", selectedPixel.x(), selectedPixel.z());
                         Minecraft.getInstance().player.connection.sendCommand(cmd);
                         this.statusMsg = "Teleported.";
                     }
                 } else if (mouseY <= menuY + 42) {
-                    // 按钮 2: Place Structure
+                    // Place Selected Structure
                     if (selectedPixel != null) {
-                        int cx = selectedPixel.x() >> 4;
-                        int cz = selectedPixel.z() >> 4;
-                        StructurePlan.get().addStructure(cx, cz, "minecraft:village/plains/town_centers/plains_meeting_point_1");
-                        this.statusMsg = "Planned Village at [" + cx + "," + cz + "]";
+                        if (selectedStructure != null) {
+                            int cx = selectedPixel.x() >> 4;
+                            int cz = selectedPixel.z() >> 4;
+                            StructurePlan.get().addStructure(cx, cz, selectedStructure.id().toString());
+                            this.statusMsg = "Planned: " + selectedStructure.id().getPath();
+                        } else {
+                            this.statusMsg = "No structure selected in list!";
+                        }
                     }
                 } else if (mouseY >= menuY + 44) {
-                    // 按钮 3: Inspect Region
+                    // Inspect Region
                     int rId = getRegionIdAt();
                     if (rId > 0) {
                         ScanRegion target = null;
@@ -301,38 +342,32 @@ public class StandaloneMapScreen extends Screen {
             }
         }
 
-        // 2. 地图交互
-        int mapX = 20, mapY = 40;
-        int mapW = this.width - 40, mapH = this.height - 60;
+        // 3. 地图交互
+        int mapW = this.width - RIGHT_PANEL_WIDTH - (MAP_PADDING * 2);
+        int mapH = this.height - (MAP_PADDING * 2);
+        int mapX = MAP_PADDING;
+        int mapY = MAP_PADDING;
 
         if (scanData != null && mouseX >= mapX && mouseX < mapX + mapW && mouseY >= mapY && mouseY < mapY + mapH) {
-            if (button == 1) { // 右键：打开菜单
+            if (button == 1) { // 右键
                 int cx = mapX + mapW / 2;
                 int cy = mapY + mapH / 2;
-
-                // 这里计算出了 r 和 c
                 int r = (int)((mouseX - cx) / scale - offX + scanData.length / 2.0);
                 int c = (int)((mouseY - cy) / scale - offY + scanData[0].length / 2.0);
 
                 if (r >= 0 && r < scanData.length && c >= 0 && c < scanData[0].length) {
                     this.selectedPixel = scanData[r][c];
                     if (this.selectedPixel != null) {
-                        // 【关键】保存索引，供 getRegionIdAt 使用
                         this.selectedR = r;
                         this.selectedC = c;
-
                         this.showMenu = true;
                         this.menuX = (int)mouseX;
                         this.menuY = (int)mouseY;
                         return true;
                     }
                 }
-            }else if (button == 0) {
-                showMenu = false; // 左键点击关闭菜单
-            }
-        } else {
-            showMenu = false;
-        }
+            } else if (button == 0) { showMenu = false; }
+        } else { showMenu = false; }
 
         return super.mouseClicked(mouseX, mouseY, button);
     }
@@ -342,18 +377,27 @@ public class StandaloneMapScreen extends Screen {
     @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
         this.renderBackground(g);
-        int mapX = 20, mapY = 40;
-        int mapW = this.width - 40, mapH = this.height - 60;
-        g.fill(mapX, mapY, mapX + mapW, mapY + mapH, 0xFF111111);
+
+        // 1. 绘制右侧面板背景
+        int panelX = this.width - RIGHT_PANEL_WIDTH;
+        g.fill(panelX, 0, this.width, this.height, 0xFF222222);
+        g.vLine(panelX, 0, this.height, 0xFFAAAAAA); // 分割线
+
+        // 2. 绘制地图背景 (左侧区域)
+        int mapW = panelX - (MAP_PADDING * 2);
+        int mapH = this.height - (MAP_PADDING * 2);
+        g.fill(MAP_PADDING, MAP_PADDING, MAP_PADDING + mapW, MAP_PADDING + mapH, 0xFF111111);
 
         if (scanData != null) {
-            drawMap(g, mapX, mapY, mapW, mapH);
+            drawMap(g, MAP_PADDING, MAP_PADDING, mapW, mapH);
         }
 
-        g.drawString(this.font, statusMsg, 20, this.height - 15, 0xFFFFFFFF);
-        if (isScanning) g.drawCenteredString(this.font, "SCANNING...", this.width/2, this.height/2, 0xFFFF0000);
+        // 3. 状态栏 (左下角)
+        g.drawString(this.font, statusMsg, MAP_PADDING + 5, MAP_PADDING + mapH - 15, 0xFFFFFFFF);
+        if (isScanning) g.drawCenteredString(this.font, "SCANNING...", mapW / 2, mapH / 2, 0xFFFF0000);
 
-        if (!showMenu) drawTooltip(g, mouseX, mouseY, mapX, mapY, mapW, mapH);
+        // 4. 上下文菜单 & Tooltip
+        if (!showMenu) drawTooltip(g, mouseX, mouseY, MAP_PADDING, MAP_PADDING, mapW, mapH);
         if (showMenu) renderContextMenu(g, mouseX, mouseY);
 
         super.render(g, mouseX, mouseY, partialTick);
@@ -388,7 +432,7 @@ public class StandaloneMapScreen extends Screen {
                 boolean hasPlan = StructurePlan.get().getStructureAt(chunkX, chunkZ) != null;
 
                 if (hasPlan) {
-                    color = 0xFFFFFF00; // Yellow for Plan
+                    color = 0xFFFFFF00; // Plan = Yellow
                 } else if (clusterMap != null && clusterMap[r][c] > 0) {
                     int cid = clusterMap[r][c];
                     if (clusterTarget == ClusterAnalyzer.TargetType.MOUNTAIN) color = Color.HSBtoRGB((cid * 0.1f) % 0.15f, 0.9f, 1.0f);
@@ -414,9 +458,7 @@ public class StandaloneMapScreen extends Screen {
             }
         }
 
-        // 绘制玩家十字 (在 disableScissor 之前)
         drawPlayerCrosshair(buf, mat, x, y, w, h);
-
         tess.end();
         g.disableScissor();
     }
@@ -445,12 +487,10 @@ public class StandaloneMapScreen extends Screen {
         float size = 4.0f;
         int r=255, g=50, b=50, a=255;
 
-        // Draw crosshair logic (vertex calls)
         buf.vertex(mat, (float)(sx - size), (float)sy - 1, 0).color(r, g, b, a).endVertex();
         buf.vertex(mat, (float)(sx - size), (float)(sy + 1), 0).color(r, g, b, a).endVertex();
         buf.vertex(mat, (float)(sx + size), (float)(sy + 1), 0).color(r, g, b, a).endVertex();
         buf.vertex(mat, (float)(sx + size), (float)sy - 1, 0).color(r, g, b, a).endVertex();
-
         buf.vertex(mat, (float)sx - 1, (float)(sy - size), 0).color(r, g, b, a).endVertex();
         buf.vertex(mat, (float)sx - 1, (float)(sy + size), 0).color(r, g, b, a).endVertex();
         buf.vertex(mat, (float)(sx + 1), (float)(sy + size), 0).color(r, g, b, a).endVertex();
@@ -458,8 +498,8 @@ public class StandaloneMapScreen extends Screen {
     }
 
     private void renderContextMenu(GuiGraphics g, int mouseX, int mouseY) {
-        int w = 100;
-        int h = 68; // 修复：高度 68 以容纳三个按钮
+        int w = 120;
+        int h = 68;
         g.fill(menuX, menuY, menuX + w, menuY + h, 0xFF222222);
         g.renderOutline(menuX, menuY, w, h, 0xFFFFFFFF);
 
@@ -469,16 +509,24 @@ public class StandaloneMapScreen extends Screen {
 
         boolean hoverPl = mouseX >= menuX && mouseX <= menuX + w && mouseY >= menuY + 22 && mouseY <= menuY + 44;
         g.fill(menuX + 1, menuY + 22, menuX + w - 1, menuY + 44, hoverPl ? 0xFF444444 : 0xFF333333);
-        g.drawCenteredString(this.font, "Place Village", menuX + w/2, menuY + 28, 0xFFFFFF);
 
-        int rId = (selectedPixel != null) ? getRegionIdAt() : 0;
+        // 显示当前选中的结构名，或者提示选择
+        String placeText = "Place Structure";
+        int textColor = 0xFFFFFF;
+        if (selectedStructure != null) {
+            placeText = "Place: " + selectedStructure.id().getPath();
+            if (placeText.length() > 15) placeText = placeText.substring(0, 15) + "..";
+        } else {
+            placeText = "Select Struct First";
+            textColor = 0xFF5555;
+        }
+        g.drawCenteredString(this.font, placeText, menuX + w/2, menuY + 28, textColor);
 
+        int rId = getRegionIdAt();
         boolean hoverInsp = mouseX >= menuX && mouseX <= menuX + w && mouseY >= menuY + 44 && mouseY <= menuY + 64;
-        // 只有 rId > 0 (属于某个大陆/区域) 时才高亮可用，否则变灰
-        int textColor = (rId > 0) ? 0xFFFFFF : 0x888888;
-
+        int inspColor = (rId > 0) ? 0xFFFFFF : 0x888888;
         g.fill(menuX + 1, menuY + 44, menuX + w - 1, menuY + 64, hoverInsp && rId > 0 ? 0xFF444444 : 0xFF333333);
-        g.drawCenteredString(this.font, "Inspect Region", menuX + w/2, menuY + 50, textColor);
+        g.drawCenteredString(this.font, "Inspect Region", menuX + w/2, menuY + 50, inspColor);
     }
 
     private void drawTooltip(GuiGraphics g, int mx, int my, int x, int y, int w, int h) {
@@ -494,36 +542,27 @@ public class StandaloneMapScreen extends Screen {
             if (p != null) {
                 List<Component> list = new ArrayList<>();
                 list.add(Component.literal("Block: [" + p.x() + ", " + p.z() + "]"));
-                list.add(Component.literal("Chunk: [" + (p.x() >> 4) + ", " + (p.z() >> 4) + "]"));
                 list.add(Component.literal("H: " + p.height() + (p.isLand() ? " (L)" : " (W)")));
-                list.add(Component.literal("Biome: " + p.biomeId()));
-
                 if (clusterMap != null && clusterMap[r][c] > 0) {
-                    int regionId = clusterMap[r][c];
-                    list.add(Component.literal("§aRegion ID: " + regionId));
-                    var holder = ScanResultHolder.get();
-                    if (holder.lastClusters != null) {
-                        for (ScanRegion reg : holder.lastClusters) {
-                            if (reg.id == regionId) {
-                                list.add(Component.literal("§bAvg H: " + String.format("%.1f", reg.avgHeight)));
-                                list.add(Component.literal("§bRough: " + String.format("%.2f", reg.roughness)));
-                                break;
-                            }
-                        }
-                    }
+                    list.add(Component.literal("Region ID: " + clusterMap[r][c]));
                 }
+
+                int chunkX = p.x() >> 4;
+                int chunkZ = p.z() >> 4;
+                String plan = StructurePlan.get().getStructureAt(chunkX, chunkZ);
+                if (plan != null) {
+                    list.add(Component.literal("§ePlanned: " + plan));
+                }
+
                 g.renderTooltip(this.font, list, java.util.Optional.empty(), mx, my);
             }
         }
     }
 
-    // 辅助方法：获取当前选中像素对应的 Region ID
     private int getRegionIdAt() {
-        // 检查 clusterMap 是否存在，以及索引是否有效
         if (clusterMap == null) return 0;
         if (selectedR < 0 || selectedR >= clusterMap.length) return 0;
         if (selectedC < 0 || selectedC >= clusterMap[0].length) return 0;
-
         return clusterMap[selectedR][selectedC];
     }
 
@@ -541,5 +580,62 @@ public class StandaloneMapScreen extends Screen {
     public void onClose() {
         if (parent == null) this.minecraft.setScreen(null);
         else this.minecraft.setScreen(parent);
+    }
+
+    // --- 内部类: 结构列表控件 ---
+    class StructureListWidget extends ObjectSelectionList<StructureListWidget.Entry> {
+        public StructureListWidget(Minecraft mc, int width, int height, int top, int bottom) {
+            super(mc, width, height, top, bottom, 18); // 18px per item
+            this.setRenderBackground(false);
+            this.setRenderTopAndBottom(false);
+        }
+
+        public void refreshList(List<StructureDiscovery.StructureInfo> list) {
+            this.clearEntries();
+            for (StructureDiscovery.StructureInfo info : list) {
+                this.addEntry(new Entry(info));
+            }
+        }
+
+        class Entry extends ObjectSelectionList.Entry<Entry> {
+            private final StructureDiscovery.StructureInfo info;
+
+            public Entry(StructureDiscovery.StructureInfo info) {
+                this.info = info;
+            }
+
+            @Override
+            public void render(GuiGraphics g, int index, int top, int left, int width, int height, int mouseX, int mouseY, boolean isHovering, float partialTick) {
+                // 背景高亮
+                if (selectedStructure == this.info) {
+                    g.fill(left, top, left + width, top + height, 0xFF555555);
+                } else if (isHovering) {
+                    g.fill(left, top, left + width, top + height, 0xFF333333);
+                }
+
+                // 渲染文本
+                String name = info.id().toString().replace("minecraft:", ""); // 简化显示
+                // 截断长文本
+                if (name.length() > 20) name = name.substring(0, 18) + "..";
+
+                g.drawString(StandaloneMapScreen.this.font, name, left + 2, top + 2, 0xFFFFFF);
+
+                // 渲染尺寸 (右对齐)
+                String sizeStr = String.format("%dx%d", info.size().getX(), info.size().getZ());
+                g.drawString(StandaloneMapScreen.this.font, sizeStr, left + width - 35, top + 2, 0xFFAAAAAA);
+            }
+
+            @Override
+            public boolean mouseClicked(double mouseX, double mouseY, int button) {
+                if (button == 0) {
+                    StandaloneMapScreen.this.selectedStructure = this.info;
+                    return true;
+                }
+                return false;
+            }
+
+            @Override
+            public Component getNarration() { return Component.literal(info.id().toString()); }
+        }
     }
 }

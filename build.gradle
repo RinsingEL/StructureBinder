@@ -154,6 +154,9 @@ dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
     runtimeOnly fg.deobf("local:reterraforged:0.0.5")
+    runtimeOnly fg.deobf("local:DistantHorizons:2.3.6")
+    runtimeOnly fg.deobf("local:bettervillageforge:3.3.1")
+    runtimeOnly fg.deobf("local:libraryferret:4.0.0")
     // Example mod dependency with JEI - using fg.deobf() ensures the dependency is remapped to your development mappings
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
     // compileOnly fg.deobf("mezz.jei:jei-${mc_version}-common-api:${jei_version}")
