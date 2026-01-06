@@ -19,40 +19,48 @@ public class ScanDataIO {
     public static void saveAll() {
         var holder = ScanResultHolder.get();
         if (holder.lastScanData == null) return;
-        // ... (后面的保存逻辑完全保持不变) ...
-        CompletableFuture.runAsync(() -> {
+        // 这里的 runAsync 默认用的是 ForkJoinPool.commonPool()
+        // 建议也给 IO 一个独立的线程，防止它和 Scanner 抢
+        new Thread(() -> {
             try {
-                CompoundTag root = new CompoundTag();
-                CompoundTag globalTag = new CompoundTag();
-                globalTag.putLong("seed", holder.seedUsed);
-                globalTag.putInt("radius", holder.scanRadiusChunks);
-                globalTag.putInt("step", holder.scanStep);
-                writePixelMatrix(globalTag, holder.lastScanData);
-                root.put("global", globalTag);
+                CompletableFuture.runAsync(() -> {
+                    try {
+                        CompoundTag root = new CompoundTag();
+                        CompoundTag globalTag = new CompoundTag();
+                        globalTag.putLong("seed", holder.seedUsed);
+                        globalTag.putInt("radius", holder.scanRadiusChunks);
+                        globalTag.putInt("step", holder.scanStep);
+                        writePixelMatrix(globalTag, holder.lastScanData);
+                        root.put("global", globalTag);
 
-                if (holder.lastEditedRegion != null && holder.lastRegionDetailData != null) {
-                    CompoundTag regionTag = new CompoundTag();
-                    regionTag.putInt("id", holder.lastEditedRegion.id);
-                    regionTag.putInt("minX", holder.lastRegionMinX);
-                    regionTag.putInt("minZ", holder.lastRegionMinZ);
-                    regionTag.putInt("w", holder.lastRegionW);
-                    regionTag.putInt("h", holder.lastRegionH);
-                    regionTag.putInt("step", holder.lastRegionStep);
-                    writePixelMatrix(regionTag, holder.lastRegionDetailData);
-                    if (holder.lastRegionSlopeData != null)
-                        regionTag.putLongArray("slope", compressDoubleMatrix(holder.lastRegionSlopeData));
-                    if (holder.lastRegionRoughnessData != null)
-                        regionTag.putLongArray("roughness", compressDoubleMatrix(holder.lastRegionRoughnessData));
-                    if (holder.lastRegionTpiData != null)
-                        regionTag.putLongArray("tpi", compressDoubleMatrix(holder.lastRegionTpiData));
-                    root.put("local", regionTag);
-                }
-                File file = FMLPaths.GAMEDIR.get().resolve(FILENAME).toFile();
-                NbtIo.writeCompressed(root, file);
+                        if (holder.lastEditedRegion != null && holder.lastRegionDetailData != null) {
+                            CompoundTag regionTag = new CompoundTag();
+                            regionTag.putInt("id", holder.lastEditedRegion.id);
+                            regionTag.putInt("minX", holder.lastRegionMinX);
+                            regionTag.putInt("minZ", holder.lastRegionMinZ);
+                            regionTag.putInt("w", holder.lastRegionW);
+                            regionTag.putInt("h", holder.lastRegionH);
+                            regionTag.putInt("step", holder.lastRegionStep);
+                            writePixelMatrix(regionTag, holder.lastRegionDetailData);
+                            if (holder.lastRegionSlopeData != null)
+                                regionTag.putLongArray("slope", compressDoubleMatrix(holder.lastRegionSlopeData));
+                            if (holder.lastRegionRoughnessData != null)
+                                regionTag.putLongArray("roughness", compressDoubleMatrix(holder.lastRegionRoughnessData));
+                            if (holder.lastRegionTpiData != null)
+                                regionTag.putLongArray("tpi", compressDoubleMatrix(holder.lastRegionTpiData));
+                            root.put("local", regionTag);
+                        }
+                        File file = FMLPaths.GAMEDIR.get().resolve(FILENAME).toFile();
+                        NbtIo.writeCompressed(root, file);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                });
+                System.out.println("[DataIO] Save complete.");
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        });
+        }, "TerraScript-IO-Thread").start();
     }
 
     // 【关键修复】加载方法：接收 holder 实例作为参数

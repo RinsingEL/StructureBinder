@@ -1,33 +1,23 @@
 package com.user.terra_script.world;
 
-import com.google.common.collect.ImmutableList;
-import com.mojang.datafixers.util.Pair;
 import com.user.terra_script.config.StructurePlan;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Holder;
-import net.minecraft.core.Registry;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.data.worldgen.Pools;
+import net.minecraft.core.Vec3i;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.block.Mirror;
+import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.levelgen.Heightmap;
-import net.minecraft.world.level.levelgen.RandomState;
-import net.minecraft.world.level.levelgen.structure.BoundingBox;
-import net.minecraft.world.level.levelgen.structure.PoolElementStructurePiece;
-import net.minecraft.world.level.levelgen.structure.Structure;
-import net.minecraft.world.level.levelgen.structure.StructurePiece;
-import net.minecraft.world.level.levelgen.structure.pieces.StructurePiecesBuilder;
-import net.minecraft.world.level.levelgen.structure.pools.*;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplateManager;
-import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraftforge.event.level.ChunkEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
-import java.util.List;
 import java.util.Optional;
-import java.util.function.Function;
+import java.util.Random;
 
 @SuppressWarnings("removal")
 @Mod.EventBusSubscriber(modid = "terra_script")
@@ -38,119 +28,79 @@ public class StructureInjector {
         if (event.getLevel().isClientSide()) return;
         if (!(event.getLevel() instanceof ServerLevel level)) return;
 
+        // 安全检查：如果服务器正在关闭，不要生成，防止死锁
+        if (!level.getServer().isRunning()) return;
+
         ChunkPos pos = event.getChunk().getPos();
         String structId = StructurePlan.get().getStructureAt(pos.x, pos.z);
 
         if (structId != null) {
-            spawnStructure(level, pos, structId);
-            StructurePlan.get().removeStructure(pos.x, pos.z);
+            // 提交给主线程执行
+            level.getServer().execute(() -> {
+                if (level.getServer().isRunning()) {
+                    spawnStructure(level, pos, structId);
+                    StructurePlan.get().removeStructure(pos.x, pos.z);
+                }
+            });
         }
     }
 
     public static void spawnStructure(ServerLevel level, ChunkPos chunkPos, String structureId) {
-        int x = chunkPos.getMinBlockX() + 8;
-        int z = chunkPos.getMinBlockZ() + 8;
-        int y = level.getHeight(Heightmap.Types.OCEAN_FLOOR_WG, x, z);
-        BlockPos centerPos = new BlockPos(x, y, z);
+        StructureTemplateManager manager = level.getStructureManager();
+        ResourceLocation loc = new ResourceLocation(structureId);
+        Optional<StructureTemplate> templateOp = manager.get(loc);
 
-        level.getServer().execute(() -> {
-            try {
-                System.out.println("[TerraScript] Starting generation async for " + structureId);
-                placeJigsawStructure(level, centerPos, new ResourceLocation(structureId));
-                System.out.println("[TerraScript] Finished generation for " + structureId);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
-    }
-
-    private static void placeJigsawStructure(ServerLevel level, BlockPos startPos, ResourceLocation nbtLocation) {
-        Registry<StructureTemplatePool> poolRegistry = level.registryAccess().registryOrThrow(Registries.TEMPLATE_POOL);
-        StructureTemplateManager templateManager = level.getStructureManager();
-        ChunkGenerator chunkGenerator = level.getChunkSource().getGenerator();
-        RandomState randomState = level.getChunkSource().randomState();
-
-        // 1. 获取 Empty Pool 作为 Fallback
-        Holder<StructureTemplatePool> emptyPool = poolRegistry.getHolderOrThrow(Pools.EMPTY);
-
-        // 2. 【修复】构建起始元素工厂 (Function)
-        // 注意：这里不要调用 .apply()，直接使用 SinglePoolElement.single(...) 返回的 Function
-        Function<StructureTemplatePool.Projection, ? extends StructurePoolElement> startElementFactory =
-                SinglePoolElement.single(nbtLocation.toString());
-
-        // 3. 【修复】构建起始池
-        // 泛型会自动匹配 Function<Projection, Element>
-        Holder<StructureTemplatePool> startPool = Holder.direct(new StructureTemplatePool(
-                emptyPool,
-                ImmutableList.of(Pair.of(startElementFactory, 1)),
-                StructureTemplatePool.Projection.RIGID
-        ));
-
-        // 4. 计算拼图布局
-        int maxDepth = 0;
-
-        Optional<Structure.GenerationStub> stubOptional = JigsawPlacement.addPieces(
-                new Structure.GenerationContext(
-                        level.registryAccess(),
-                        chunkGenerator,
-                        chunkGenerator.getBiomeSource(),
-                        randomState,
-                        templateManager,
-                        level.getSeed(),
-                        new ChunkPos(startPos),
-                        level,
-                        registryEntry -> true
-                ),
-                startPool,
-                Optional.empty(),
-                maxDepth,
-                startPos,
-                false,
-                Optional.empty(),
-                128
-        );
-
-        if (stubOptional.isEmpty()) {
-            System.err.println("[TerraScript] Jigsaw calculation failed for " + nbtLocation);
+        if (templateOp.isEmpty()) {
+            System.err.println("[TerraScript] Structure not found: " + structureId);
             return;
         }
 
-        Structure.GenerationStub stub = stubOptional.get();
+        StructureTemplate template = templateOp.get();
+        Vec3i size = template.getSize();
 
-        // 5. 【修复】提取组件 (处理 Either 类型)
-        StructurePiecesBuilder piecesBuilder = new StructurePiecesBuilder();
+        // 1. 确定放置中心点 (区块中心)
+        int centerX = chunkPos.getMinBlockX() + 8;
+        int centerZ = chunkPos.getMinBlockZ() + 8;
 
-        // stub.generator() 返回 Either<Consumer<Builder>, Builder>
-        stub.generator().ifLeft(consumer -> {
-            // 情况 A: 这是一个消费者，我们把 builder 传给它去填充
-            consumer.accept(piecesBuilder);
-        }).ifRight(existingBuilder -> {
-            // 情况 B: 这已经是一个填充好的 builder，我们把里面的东西拿出来加到我们的 builder 里
-            // build() 生成 StructurePieces, pieces() 获取 List<StructurePiece>
-            existingBuilder.build().pieces().forEach(piecesBuilder::addPiece);
-        });
+        // 2. 获取地面高度
+        // OCEAN_FLOOR_WG: 获取固体方块高度 (忽略树木、水)
+        // WORLD_SURFACE: 获取最高点 (包含树叶)
+        int surfaceY = level.getHeight(Heightmap.Types.OCEAN_FLOOR_WG, centerX, centerZ);
 
-        List<StructurePiece> pieces = piecesBuilder.build().pieces();
+        // 3. 设置随机旋转 (让村庄更自然)
+        Rotation rotation = Rotation.values()[level.random.nextInt(Rotation.values().length)];
 
-        System.out.println("[TerraScript] Placing " + pieces.size() + " pieces...");
+        // 4. 计算偏移量以实现“中心对齐”
+        // 旋转后的尺寸变化
+        int rotatedWidth = (rotation == Rotation.CLOCKWISE_90 || rotation == Rotation.COUNTERCLOCKWISE_90) ? size.getZ() : size.getX();
+        int rotatedDepth = (rotation == Rotation.CLOCKWISE_90 || rotation == Rotation.COUNTERCLOCKWISE_90) ? size.getX() : size.getZ();
 
-        BoundingBox worldBox = new BoundingBox(
-                startPos.getX() - 500, -64, startPos.getZ() - 500,
-                startPos.getX() + 500, 320, startPos.getZ() + 500
-        );
+        // 起始点 = 中心点 - (旋转后尺寸 / 2)
+        int originX = centerX - (rotatedWidth / 2);
+        int originZ = centerZ - (rotatedDepth / 2);
 
-        for (StructurePiece piece : pieces) {
-            if (piece instanceof PoolElementStructurePiece poolPiece) {
-                poolPiece.postProcess(
-                        level,
-                        level.structureManager(),
-                        chunkGenerator,
-                        level.getRandom(),
-                        worldBox,
-                        new ChunkPos(startPos),
-                        startPos
-                );
-            }
+        // 5. Y轴微调
+        // 大多数原版结构是以地基为 0 层的，但也有些是有地下室的
+        // 这里做一个简单的处理：如果是普通房屋，向下嵌入 1 格，防止浮空
+        int originY = surfaceY - 1;
+
+        BlockPos placePos = new BlockPos(originX, originY, originZ);
+
+        // 6. 配置放置参数
+        StructurePlaceSettings settings = new StructurePlaceSettings()
+                .setRotation(rotation)
+                .setMirror(Mirror.NONE)
+                .setIgnoreEntities(false); // 是否忽略结构里自带的实体(如村民)
+
+        System.out.println("[TerraScript] Placing DIRECTLY: " + structureId + " at " + placePos + " (" + rotation + ")");
+
+        try {
+            // 7. 强行放置 (这是最关键的一步)
+            // 参数2: 坐标, 参数3: 坐标(用于完整性检查), 参数4: 设置, 参数5: 随机源, 参数6: 更新标志(2=通知客户端)
+            template.placeInWorld(level, placePos, placePos, settings, level.random, 2);
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 }

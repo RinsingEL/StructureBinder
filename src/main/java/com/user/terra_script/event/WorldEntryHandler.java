@@ -3,6 +3,7 @@ package com.user.terra_script.event;
 import com.user.terra_script.client.data.ScanResultHolder;
 import com.user.terra_script.client.screen.map.StandaloneMapScreen;
 import com.user.terra_script.config.StructurePlan;
+import com.user.terra_script.scan.SatelliteScanner;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -79,7 +80,7 @@ public class WorldEntryHandler {
     public static void onLevelUnload(LevelEvent.Unload event) {
         // 当服务端世界卸载时，立刻停止扫描
         if (event.getLevel() instanceof ServerLevel) {
-            com.user.terra_script.scan.SatelliteScanner.stopScanning();
+            SatelliteScanner.stopScanning();
         }
     }
 }
