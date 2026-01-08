@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.sun.net.httpserver.HttpServer;
 import com.user.terra_script.client.data.ScanResultHolder;
+import com.user.terra_script.client.data.ScanResultHolder.RegionCache;
 import com.user.terra_script.config.StructurePlan;
 import com.user.terra_script.scan.ScanPixel;
 import com.user.terra_script.scan.ScanRegion;
@@ -71,6 +72,25 @@ public class ModHttpServer {
                         terrain.addProperty("avg_height", Math.round(r.avgHeight));
                         terrain.addProperty("roughness", String.format("%.2f", r.roughness));
                         obj.add("terrain", terrain);
+
+                        JsonObject climate = new JsonObject();
+                        climate.addProperty("avg_temp", r.avgTemp);
+                        JsonArray grid = new JsonArray();
+                        if (r.climateGrid != null) {
+                            for(float[] row : r.climateGrid) for(float val : row) grid.add(val);
+                        }
+                        climate.add("grid_4x4", grid);
+                        obj.add("climate", climate);
+
+                        JsonObject eco = new JsonObject();
+                        JsonArray dom = new JsonArray();
+                        if (r.dominantBiomes != null) r.dominantBiomes.forEach(dom::add);
+                        eco.add("dominant", dom);
+                        obj.add("ecology", eco);
+
+                        // 标记该区域是否有地形详情缓存
+                        obj.addProperty("has_detail", holder.regionCacheMap.containsKey(r.id));
+
                         list.add(obj);
                     }
                     sendResponse(exchange, 200, gson.toJson(list));
@@ -103,20 +123,27 @@ public class ModHttpServer {
                     int limit = req.has("limit") ? req.get("limit").getAsInt() : 5;
 
                     var holder = ScanResultHolder.get();
-                    if (holder.lastEditedRegion == null || holder.lastEditedRegion.id != regionId
-                            || holder.lastRegionSlopeData == null || holder.lastRegionTpiData == null) {
-                        sendResponse(exchange, 400, "{\"error\": \"Region data not loaded. Please open Region Editor in game.\"}");
+                    RegionCache cache = holder.regionCacheMap.get(regionId);
+
+                    if (cache == null) {
+                        sendResponse(exchange, 404, "{\"error\": \"Region " + regionId + " data not in cache. Please open Region Editor for this region.\"}");
+                        return;
+                    }
+
+                    // 如果数据缺失，直接报错，让用户去游戏里点一下
+                    if (cache.slopeData == null || cache.tpiData == null) {
+                        sendResponse(exchange, 400, "{\"error\": \"Terrain features (Slope/TPI) missing for Region " + regionId + ". Please open 'Region Editor' in-game and click 'View: Slope' and 'View: TPI' to generate them.\"}");
                         return;
                     }
 
                     JsonArray results = new JsonArray();
-                    ScanPixel[][] pixels = holder.lastRegionDetailData;
-                    double[][] slopes = holder.lastRegionSlopeData;
-                    double[][] tpis = holder.lastRegionTpiData;
+                    ScanPixel[][] pixels = cache.detailData;
+                    double[][] slopes = cache.slopeData;
+                    double[][] tpis = cache.tpiData;
                     int w = pixels.length;
                     int h = pixels[0].length;
 
-                    // 【优化】使用步长采样，避免遍历百万像素
+                    // 动态步长优化：点太多时跳着采样
                     int step = Math.max(1, (w * h) / 10000);
                     List<JsonObject> candidates = new ArrayList<>();
                     int foundCount = 0;
@@ -126,6 +153,8 @@ public class ModHttpServer {
                             if (pixels[i][j] == null || !pixels[i][j].isLand()) continue;
                             double s = slopes[i][j];
                             double t = tpis[i][j];
+
+                            // 筛选符合条件的点
                             if (s >= minSlope && s <= maxSlope && t >= minTpi && t <= maxTpi) {
                                 JsonObject p = new JsonObject();
                                 p.addProperty("x", pixels[i][j].x());
@@ -136,7 +165,7 @@ public class ModHttpServer {
                                 candidates.add(p);
                                 foundCount++;
                             }
-                            if (foundCount > 500) break; // 提前结束
+                            if (foundCount > 500) break; // 性能熔断
                         }
                         if (foundCount > 500) break;
                     }
@@ -159,7 +188,6 @@ public class ModHttpServer {
                         String id = json.get("id").getAsString();
 
                         StructurePlan.get().addStructure(x, z, id);
-
                         mcServer.execute(() -> {
                             ServerLevel level = mcServer.overworld();
                             net.minecraft.world.level.ChunkPos cp = new net.minecraft.world.level.ChunkPos(x, z);
@@ -173,14 +201,46 @@ public class ModHttpServer {
                 } else { sendResponse(exchange, 405, "Only POST"); }
             });
 
-            // 【优化】限制线程池为 2 个守护线程
+            // API 5: Create Territory
+            server.createContext("/create_territory", exchange -> {
+                if ("POST".equals(exchange.getRequestMethod())) {
+                    try {
+                        String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+                        JsonObject json = JsonParser.parseString(body).getAsJsonObject();
+
+                        String id = json.get("id").getAsString();
+                        String name = json.get("name").getAsString();
+
+                        // 1. 必填参数检查：如果没有 region_id，直接拒绝
+                        if (!json.has("region_id")) {
+                            sendResponse(exchange, 400, "{\"error\": \"Missing required parameter: region_id\"}");
+                            return;
+                        }
+
+                        // 【新增】region_id
+                        int regionId = json.has("region_id") ? json.get("region_id").getAsInt() : 1;
+
+                        int x = json.get("capital_x").getAsInt();
+                        int z = json.get("capital_z").getAsInt();
+                        int power = json.has("power") ? json.get("power").getAsInt() : 100;
+                        double mCost = json.has("mountain_cost") ? json.get("mountain_cost").getAsDouble() : 2.0;
+                        double wCost = json.has("water_cost") ? json.get("water_cost").getAsDouble() : 5.0;
+                        int color = json.has("color") ? json.get("color").getAsInt() : 0xFF0000;
+
+                        com.user.terra_script.world.TerritoryManager.createTerritory(
+                                id, name, regionId, x, z, power, mCost, wCost, color
+                        );
+                        sendResponse(exchange, 200, "{\"status\": \"created\"}");
+                    } catch (Exception e) { handleError(exchange, e); }
+                }
+            });
+
             server.setExecutor(Executors.newFixedThreadPool(2, r -> {
                 Thread t = new Thread(r);
                 t.setDaemon(true);
                 t.setName("TerraScript-API");
                 return t;
             }));
-
             server.start();
             System.out.println("[TerraScript] API Server started on port " + PORT);
         } catch (IOException e) { e.printStackTrace(); }

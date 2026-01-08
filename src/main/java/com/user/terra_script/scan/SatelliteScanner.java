@@ -15,21 +15,15 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SatelliteScanner {
 
-    // 【优化1】使用固定大小的线程池 (4线程)，防止抢占系统资源
-    // 【优化2】使用 ThreadFactory 设置为守护线程 (Daemon)，保证游戏关闭时线程自动结束
-    private static final ExecutorService SCAN_EXECUTOR = Executors.newFixedThreadPool(4, r -> {
+    private static final ExecutorService SCAN_EXECUTOR = Executors.newFixedThreadPool(8, r -> {
         Thread t = new Thread(r);
         t.setName("TerraScript-Scanner-" + t.getId());
         t.setDaemon(true);
         return t;
     });
 
-    // 取消标记
     private static final AtomicBoolean isCancelled = new AtomicBoolean(false);
 
-    /**
-     * 紧急停止扫描 (在世界卸载时调用)
-     */
     public static void stopScanning() {
         isCancelled.set(true);
         System.out.println("[Scanner] Stop signal received. Aborting tasks...");
@@ -47,56 +41,7 @@ public class SatelliteScanner {
         return CompletableFuture.supplyAsync(() -> runRegionScan(level, startX, startZ, width, height, step), SCAN_EXECUTOR);
     }
 
-    // --- 内部逻辑 ---
-
-    private static ScanPixel[][] runScan(ServerLevel level, int chunkRadius, int targetResolution) {
-        long startTime = System.currentTimeMillis();
-        MinecraftServer server = level.getServer();
-        ChunkGenerator generator = level.getChunkSource().getGenerator();
-        RandomState randomState = level.getChunkSource().randomState();
-
-        int worldRadiusBlocks = chunkRadius * 16;
-        int totalWidth = worldRadiusBlocks * 2;
-        int step = Math.max(1, totalWidth / targetResolution);
-        int gridSize = totalWidth / step;
-
-        System.out.println("[Scanner] Grid Size: " + gridSize + "x" + gridSize + " (Step: " + step + ")");
-        ScanPixel[][] map = new ScanPixel[gridSize][gridSize];
-
-        long totalPoints = (long) gridSize * gridSize;
-        long processed = 0;
-        int lastLogPercent = 0;
-
-        for (int i = 0; i < gridSize; i++) {
-            // 【优化3】每行检查一次：如果取消或服务器停止，立即退出
-            if (isCancelled.get() || !server.isRunning()) return null;
-
-            for (int j = 0; j < gridSize; j++) {
-                int x = (i * step) - worldRadiusBlocks;
-                int z = (j * step) - worldRadiusBlocks;
-                try {
-                    int h = generator.getBaseHeight(x, z, Heightmap.Types.OCEAN_FLOOR_WG, level, randomState);
-                    // 全图扫描可以尝试获取 Biome (如果太慢可注释掉)
-                    Holder<Biome> biomeHolder = generator.getBiomeSource().getNoiseBiome(x >> 2, h >> 2, z >> 2, randomState.sampler());
-                    String biomeId = biomeHolder.unwrapKey().map(k -> k.location().toString()).orElse("unknown");
-                    map[i][j] = new ScanPixel(x, z, h, biomeId, h > 63);
-                } catch (Exception e) {
-                    map[i][j] = new ScanPixel(x, z, 0, "error", false);
-                }
-
-                processed++;
-                if (totalPoints > 5000) {
-                    int percent = (int)((processed * 100) / totalPoints);
-                    if (percent > lastLogPercent && percent % 10 == 0) {
-                        System.out.println("[Scanner] Global Progress: " + percent + "%");
-                        lastLogPercent = percent;
-                    }
-                }
-            }
-        }
-        System.out.println("[Scanner] Finished in " + (System.currentTimeMillis() - startTime) + "ms");
-        return map;
-    }
+    // --- 内部逻辑 (runScan 和 runRegionScan 逻辑高度相似，这里重点展示 runRegionScan 的修改) ---
 
     private static ScanPixel[][] runRegionScan(ServerLevel level, int startX, int startZ, int width, int height, int step) {
         long startTime = System.currentTimeMillis();
@@ -111,24 +56,34 @@ public class SatelliteScanner {
 
         System.out.println("[Scanner] Target Grid: " + gridW + "x" + gridH);
         ScanPixel[][] map = new ScanPixel[gridW][gridH];
-
         long totalPoints = (long) gridW * gridH;
         long processed = 0;
         int lastLogPercent = 0;
 
         for (int i = 0; i < gridW; i++) {
-            // 【优化3】安全退出检查
             if (isCancelled.get() || !server.isRunning()) return null;
 
             for (int j = 0; j < gridH; j++) {
                 int x = startX + (i * step);
                 int z = startZ + (j * step);
                 try {
+                    // 1. 获取高度
                     int h = generator.getBaseHeight(x, z, Heightmap.Types.OCEAN_FLOOR_WG, level, randomState);
-                    // 局部扫描为了速度暂不取 Biome
-                    map[i][j] = new ScanPixel(x, z, h, "unknown", h > 63);
+
+                    // 2. 【新增】获取 Biome 信息
+                    // Quart 坐标转换：x >> 2
+                    Holder<Biome> biomeHolder = generator.getBiomeSource().getNoiseBiome(x >> 2, h >> 2, z >> 2, randomState.sampler());
+                    String biomeId = biomeHolder.unwrapKey().map(k -> k.location().toString()).orElse("minecraft:plains");
+
+                    // 3. 【新增】获取温度
+                    // getBaseTemperature() 获取的是基准温度，不受高度带来的寒冷影响，适合宏观气候判断
+                    float temp = biomeHolder.value().getBaseTemperature();
+
+                    // 4. 存入 Pixel (包含温度)
+                    map[i][j] = new ScanPixel(x, z, h, biomeId, h > 63, temp);
+
                 } catch (Exception e) {
-                    map[i][j] = new ScanPixel(x, z, 0, "error", false);
+                    map[i][j] = new ScanPixel(x, z, 0, "error", false, 0.0f);
                 }
 
                 processed++;
@@ -141,7 +96,56 @@ public class SatelliteScanner {
                 }
             }
         }
-        System.out.println("[Scanner] Local Finished in " + (System.currentTimeMillis() - startTime) + "ms");
+        System.out.println("[Scanner] Local Scan finished in " + (System.currentTimeMillis() - startTime) + "ms");
+        return map;
+    }
+
+    private static ScanPixel[][] runScan(ServerLevel level, int chunkRadius, int targetResolution) {
+        long startTime = System.currentTimeMillis();
+        // ... 初始化 ...
+        int worldRadiusBlocks = chunkRadius * 16;
+        int totalWidth = worldRadiusBlocks * 2;
+        int step = Math.max(1, totalWidth / targetResolution);
+        int gridSize = totalWidth / step;
+
+        System.out.println("[Scanner] Grid Size: " + gridSize + "x" + gridSize);
+        ScanPixel[][] map = new ScanPixel[gridSize][gridSize];
+
+        ChunkGenerator generator = level.getChunkSource().getGenerator();
+        RandomState randomState = level.getChunkSource().randomState();
+        MinecraftServer server = level.getServer();
+
+        long totalPoints = (long) gridSize * gridSize;
+        long processed = 0;
+        int lastLogPercent = 0;
+
+        for (int i = 0; i < gridSize; i++) {
+            if (isCancelled.get() || !server.isRunning()) return null;
+            for (int j = 0; j < gridSize; j++) {
+                int x = (i * step) - worldRadiusBlocks;
+                int z = (j * step) - worldRadiusBlocks;
+                try {
+                    int h = generator.getBaseHeight(x, z, Heightmap.Types.OCEAN_FLOOR_WG, level, randomState);
+                    Holder<Biome> biomeHolder = generator.getBiomeSource().getNoiseBiome(x >> 2, h >> 2, z >> 2, randomState.sampler());
+                    String biomeId = biomeHolder.unwrapKey().map(k -> k.location().toString()).orElse("minecraft:plains");
+                    float temp = biomeHolder.value().getBaseTemperature();
+
+                    map[i][j] = new ScanPixel(x, z, h, biomeId, h > 63, temp);
+                } catch (Exception e) {
+                    map[i][j] = new ScanPixel(x, z, 0, "error", false, 0.0f);
+                }
+                // ... 进度 ...
+                processed++;
+                if (totalPoints > 5000) {
+                    int percent = (int)((processed * 100) / totalPoints);
+                    if (percent > lastLogPercent && percent % 10 == 0) {
+                        System.out.println("[Scanner] Global Progress: " + percent + "%");
+                        lastLogPercent = percent;
+                    }
+                }
+            }
+        }
+        System.out.println("[Scanner] Global Scan finished in " + (System.currentTimeMillis() - startTime) + "ms");
         return map;
     }
 }
