@@ -31,7 +31,7 @@ public class RegionEditorScreen extends Screen {
     private double[][] roughnessData;
     private double[][] tpiData;
 
-    private enum ViewMode { HEIGHT, SLOPE, ROUGHNESS, TPI, TEMPERATURE }
+    private enum ViewMode { HEIGHT, SLOPE, ROUGHNESS, TPI, TEMPERATURE, POLITICAL }
     private ViewMode currentMode = ViewMode.HEIGHT;
 
     private boolean isScanning = true;
@@ -180,7 +180,12 @@ public class RegionEditorScreen extends Screen {
 
         if (detailData == null) return;
 
-        if (currentMode == ViewMode.SLOPE && slopeData == null) {
+        // 如果切到政治模式，刷新数据
+        if (currentMode == ViewMode.POLITICAL) {
+            com.user.terra_script.world.TerritoryManager.refresh();
+        }
+        // 懒加载计算
+        else if (currentMode == ViewMode.SLOPE && slopeData == null) {
             calculateSlopeAsync();
         } else if (currentMode == ViewMode.ROUGHNESS && roughnessData == null) {
             calculateRoughnessAsync();
@@ -253,36 +258,91 @@ public class RegionEditorScreen extends Screen {
         int cx = x + w/2;
         int cy = y + h/2;
 
-        for (int r = 0; r < rows; r++) {
-            for (int c = 0; c < cols; c++) {
+        // 【优化 1】动态 LOD
+        // scale < 2.0 -> step = 2 (减少 75% 顶点)
+        // scale < 1.0 -> step = 4 (减少 94% 顶点)
+        int renderStep = 1;
+        if (scale < 0.8) renderStep = 4;
+        else if (scale < 1.5) renderStep = 2;
+
+        renderStep = 1;// FIXME： 先管功能吧
+        // 绘制的像素大小要相应放大，填补跳过的空隙
+        double pSize = scale * renderStep;
+
+        double rMinRaw = (x - cx) / scale + rows / 2.0 - offX;
+        double rMaxRaw = (x + w - cx) / scale + rows / 2.0 - offX;
+
+        double cMinRaw = (y - cy) / scale + cols / 2.0 - offY;
+        double cMaxRaw = (y + h - cy) / scale + cols / 2.0 - offY;
+
+        // 向下/向上取整，并留一点余量防止边缘裁剪
+        int startR = (int) Math.floor(rMinRaw) - renderStep;
+        int endR = (int) Math.ceil(rMaxRaw) + renderStep;
+        int startC = (int) Math.floor(cMinRaw) - renderStep;
+        int endC = (int) Math.ceil(cMaxRaw) + renderStep;
+
+        // 钳制到数组有效范围
+        startR = Math.max(0, startR);
+        endR = Math.min(rows, endR);
+        startC = Math.max(0, startC);
+        endC = Math.min(cols, endC);
+
+        // 对齐 step
+        // 确保 startR 是 renderStep 的整数倍，防止滚动时网格抖动
+        startR = (startR / renderStep) * renderStep;
+        startC = (startC / renderStep) * renderStep;
+
+        // 安全检查：如果范围无效，就不画
+        if (startR >= endR || startC >= endC) {
+            // 调试用：如果在屏幕内却没画，打印一下
+            // System.out.println("Culling logic hidden everything!");
+            tess.end();
+            g.disableScissor();
+            return;
+        }
+
+
+        for (int r = startR; r < endR; r += renderStep) {
+            for (int c = startC; c < endC; c += renderStep) {
                 ScanPixel p = detailData[r][c];
                 if (p == null) continue;
 
                 double sx = cx + (r - rows/2.0 + offX) * scale;
                 double sy = cy + (c - cols/2.0 + offY) * scale;
 
+                // 二次检查 (虽然循环范围限制了，但为了稳妥)
+                if (sx < x - pSize || sx > x + w || sy < y - pSize || sy > y + h) continue;
                 if (sx < x - scale || sx > x + w || sy < y - scale || sy > y + h) continue;
 
                 int color = 0xFF000000;
 
                 // 领土渲染逻辑
-                long chunkKey = net.minecraft.world.level.ChunkPos.asLong(p.x() >> 4, p.z() >> 4);
                 boolean isClaimed = false;
 
-                for (var result : com.user.terra_script.world.TerritoryManager.getAllResults()) {
-                    if (result.claimedChunks.contains(chunkKey)) {
-                        color = result.config.color | 0xFF000000;
-                        isClaimed = true; break;
-                    } else if (result.wildChunks.contains(chunkKey)) {
-                        int tColor = result.config.color;
-                        int rC = (tColor >> 16) & 0xFF; int gC = (tColor >> 8) & 0xFF; int bC = tColor & 0xFF;
-                        color = 0xFF000000 | ((rC/2) << 16) | ((gC/2) << 8) | (bC/2);
-                        isClaimed = true; break;
+                // 政治视图逻辑
+                if (currentMode == ViewMode.POLITICAL) {
+                    long chunkKey = net.minecraft.world.level.ChunkPos.asLong(p.x() >> 4, p.z() >> 4);
+                    for (var result : com.user.terra_script.world.TerritoryManager.getAllResults()) {
+                        if (result.claimedChunks.contains(chunkKey)) {
+                            color = result.config.color | 0xFF000000;
+                            isClaimed = true; break;
+                        } else if (result.wildChunks.contains(chunkKey)) {
+                            int tColor = result.config.color;
+                            int rC = (tColor >> 16) & 0xFF; int gC = (tColor >> 8) & 0xFF; int bC = tColor & 0xFF;
+                            color = 0xFF000000 | ((rC/2) << 16) | ((gC/2) << 8) | (bC/2);
+                            isClaimed = true; break;
+                        }
                     }
                 }
 
+                // 建筑计划高亮 (所有模式都显示)
+                if (StructurePlan.get().getStructureAt(p.x() >> 4, p.z() >> 4) != null) {
+                    color = 0xFFFFFF00;
+                    isClaimed = true;
+                }
+
                 if (!isClaimed) {
-                    if (currentMode == ViewMode.HEIGHT) {
+                    if (currentMode == ViewMode.HEIGHT || currentMode == ViewMode.POLITICAL) { // 政治模式下未占领区域显示地形
                         if (p.isLand()) {
                             int val = Math.min(255, (p.height() - 63) * 3 + 50);
                             color = (0xFF000000 | (val << 8) | (val / 2));
@@ -317,10 +377,16 @@ public class RegionEditorScreen extends Screen {
                     }
                 }
 
-                buf.vertex(mat, (float)sx, (float)sy, 0).color(color).endVertex();
-                buf.vertex(mat, (float)sx, (float)(sy+scale), 0).color(color).endVertex();
-                buf.vertex(mat, (float)(sx+scale), (float)(sy+scale), 0).color(color).endVertex();
-                buf.vertex(mat, (float)(sx+scale), (float)sy, 0).color(color).endVertex();
+                // 绘制 Quad
+                int red = (color >> 16) & 0xFF;
+                int grn = (color >> 8) & 0xFF;
+                int blu = (color) & 0xFF;
+                int alpha = 255;
+
+                buf.vertex(mat, (float)sx, (float)sy, 0).color(red, grn, blu, alpha).endVertex();
+                buf.vertex(mat, (float)sx, (float)(sy+pSize), 0).color(red, grn, blu, alpha).endVertex();
+                buf.vertex(mat, (float)(sx+pSize), (float)(sy+pSize), 0).color(red, grn, blu, alpha).endVertex();
+                buf.vertex(mat, (float)(sx+pSize), (float)sy, 0).color(red, grn, blu, alpha).endVertex();
             }
         }
         drawPlayerCrosshair(buf, mat, x, y, w, h);

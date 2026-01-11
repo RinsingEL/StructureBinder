@@ -47,6 +47,8 @@ public class StandaloneMapScreen extends Screen {
     private boolean isScanning = false;
     private String statusMsg = "Ready";
     private ClusterAnalyzer.TargetType clusterTarget = ClusterAnalyzer.TargetType.CONTINENT;
+    private enum ViewMode { TERRAIN, POLITICAL }
+    private ViewMode currentMode = ViewMode.TERRAIN;
 
     // 交互状态
     private double scale = 1.0;
@@ -97,6 +99,18 @@ public class StandaloneMapScreen extends Screen {
         int panelX = this.width - RIGHT_PANEL_WIDTH + 10;
         int btnW = RIGHT_PANEL_WIDTH - 20;
         int y = 10;
+
+        // 视图切换按钮
+        addRenderableWidget(Button.builder(Component.literal("View: " + currentMode), b -> {
+            // 切换模式
+            currentMode = (currentMode == ViewMode.TERRAIN) ? ViewMode.POLITICAL : ViewMode.TERRAIN;
+            b.setMessage(Component.literal("View: " + currentMode));
+
+            // 如果切到政治视图，尝试刷新一下数据
+            if (currentMode == ViewMode.POLITICAL) {
+                com.user.terra_script.world.TerritoryManager.refresh();
+            }
+        }).bounds(MAP_PADDING, MAP_PADDING - 25, 120, 20).build()); // 放在左上角地图上方
 
         addRenderableWidget(Button.builder(Component.literal("1. Scan Terrain"), b -> startScan())
                 .bounds(panelX, y, btnW, 20).build());
@@ -382,25 +396,27 @@ public class StandaloneMapScreen extends Screen {
 
                 int color = 0xFF000044; // 默认海
 
-                long chunkKey = net.minecraft.world.level.ChunkPos.asLong(p.x() >> 4, p.z() >> 4);
                 boolean isClaimed = false;
 
-                // 检查领土覆盖
-                for (var result : com.user.terra_script.world.TerritoryManager.getAllResults()) {
-                    if (result.claimedChunks.contains(chunkKey)) {
-                        color = result.config.color | 0xFF000000;
-                        isClaimed = true; break;
-                    } else if (result.wildChunks.contains(chunkKey)) {
-                        int tColor = result.config.color;
-                        int rC = (tColor >> 16) & 0xFF;
-                        int gC = (tColor >> 8) & 0xFF;
-                        int bC = tColor & 0xFF;
-                        color = 0xFF000000 | ((rC/2) << 16) | ((gC/2) << 8) | (bC/2);
-                        isClaimed = true; break;
+                if (currentMode == ViewMode.POLITICAL) {
+                    long chunkKey = net.minecraft.world.level.ChunkPos.asLong(p.x() >> 4, p.z() >> 4);
+
+                    for (var result : com.user.terra_script.world.TerritoryManager.getAllResults()) {
+                        if (result.claimedChunks.contains(chunkKey)) {
+                            color = result.config.color | 0xFF000000;
+                            isClaimed = true; break;
+                        } else if (result.wildChunks.contains(chunkKey)) {
+                            int tColor = result.config.color;
+                            int rC = (tColor >> 16) & 0xFF;
+                            int gC = (tColor >> 8) & 0xFF;
+                            int bC = tColor & 0xFF;
+                            color = 0xFF000000 | ((rC/2) << 16) | ((gC/2) << 8) | (bC/2);
+                            isClaimed = true; break;
+                        }
                     }
                 }
 
-                // 检查建筑计划
+                // 建筑计划始终显示 (高亮)
                 boolean hasPlan = StructurePlan.get().getStructureAt(p.x() >> 4, p.z() >> 4) != null;
                 if (hasPlan) {
                     color = 0xFFFFFF00;
@@ -434,8 +450,10 @@ public class StandaloneMapScreen extends Screen {
             }
         }
 
-        // 2. 【新增】绘制首都 (覆盖在地形之上)
-        drawCapitals(buf, mat, cx, cy, rows, cols);
+        // 首都只在政治模式显示
+        if (currentMode == ViewMode.POLITICAL) {
+            drawCapitals(buf, mat, cx, cy, rows, cols);
+        }
 
         // 3. 绘制玩家位置
         drawPlayerCrosshair(buf, mat, x, y, w, h);

@@ -10,6 +10,8 @@ import com.user.terra_script.client.data.ScanResultHolder.RegionCache;
 import com.user.terra_script.config.StructurePlan;
 import com.user.terra_script.scan.ScanPixel;
 import com.user.terra_script.scan.ScanRegion;
+import com.user.terra_script.util.AsciiMapGenerator;
+import com.user.terra_script.util.DBSCAN;
 import com.user.terra_script.util.StructureDiscovery;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -105,7 +107,7 @@ public class ModHttpServer {
                 } catch (Exception e) { handleError(exchange, e); }
             });
 
-            // API 3: Query Region
+            // API 3: Query Region (升级版：聚类 + ASCII 地图)
             server.createContext("/query_region", exchange -> {
                 if (!"POST".equals(exchange.getRequestMethod())) {
                     sendResponse(exchange, 405, "Method Not Allowed");
@@ -129,50 +131,99 @@ public class ModHttpServer {
                         sendResponse(exchange, 404, "{\"error\": \"Region " + regionId + " data not in cache. Please open Region Editor for this region.\"}");
                         return;
                     }
-
-                    // 如果数据缺失，直接报错，让用户去游戏里点一下
                     if (cache.slopeData == null || cache.tpiData == null) {
-                        sendResponse(exchange, 400, "{\"error\": \"Terrain features (Slope/TPI) missing for Region " + regionId + ". Please open 'Region Editor' in-game and click 'View: Slope' and 'View: TPI' to generate them.\"}");
+                        sendResponse(exchange, 400, "{\"error\": \"Terrain features missing for Region " + regionId + ". Please generate them in-game.\"}");
                         return;
                     }
 
-                    JsonArray results = new JsonArray();
                     ScanPixel[][] pixels = cache.detailData;
                     double[][] slopes = cache.slopeData;
                     double[][] tpis = cache.tpiData;
                     int w = pixels.length;
                     int h = pixels[0].length;
 
-                    // 动态步长优化：点太多时跳着采样
-                    int step = Math.max(1, (w * h) / 10000);
-                    List<JsonObject> candidates = new ArrayList<>();
-                    int foundCount = 0;
+                    // 1. 收集所有符合条件的点 (Candidates)
+                    // 为了保证聚类效果，这里步长不能太大，否则点太稀疏聚不到一起
+                    // 建议 step = 1 或 2，如果性能吃紧可以动态调整
+                    int step = 1;
+                    if (w * h > 250000) step = 2; // 500x500 以上稍微稀疏一点
+
+                    List<ScanPixel> rawCandidates = new ArrayList<>();
 
                     for (int i = 0; i < w; i += step) {
                         for (int j = 0; j < h; j += step) {
                             if (pixels[i][j] == null || !pixels[i][j].isLand()) continue;
                             double s = slopes[i][j];
                             double t = tpis[i][j];
-
-                            // 筛选符合条件的点
                             if (s >= minSlope && s <= maxSlope && t >= minTpi && t <= maxTpi) {
-                                JsonObject p = new JsonObject();
-                                p.addProperty("x", pixels[i][j].x());
-                                p.addProperty("z", pixels[i][j].z());
-                                p.addProperty("y", pixels[i][j].height());
-                                p.addProperty("slope", s);
-                                p.addProperty("tpi", t);
-                                candidates.add(p);
-                                foundCount++;
+                                rawCandidates.add(pixels[i][j]);
                             }
-                            if (foundCount > 500) break; // 性能熔断
                         }
-                        if (foundCount > 500) break;
                     }
 
-                    Collections.shuffle(candidates);
-                    candidates.stream().limit(limit).forEach(results::add);
-                    sendResponse(exchange, 200, gson.toJson(results));
+                    // 2. 执行 DBSCAN 聚类
+                    // 半径 Epsilon 设为 step * 3 (允许中间有少量空隙)，最小点数 MinPts = 10 (过滤噪点)
+                    List<List<DBSCAN.Point>> clusters = DBSCAN.cluster(rawCandidates, step * 4.0, 10);
+
+                    // 3. 构建返回的 JSON 结构
+                    JsonObject response = new JsonObject();
+
+                    // 3.1 元数据
+                    JsonObject meta = new JsonObject();
+                    meta.addProperty("region_id", regionId);
+                    meta.addProperty("total_scanned_area", w + "x" + h);
+                    JsonObject criteria = new JsonObject();
+                    criteria.addProperty("slope_range", "[" + minSlope + ", " + maxSlope + "]");
+                    criteria.addProperty("tpi_range", "[" + minTpi + ", " + maxTpi + "]");
+                    meta.add("search_criteria", criteria);
+                    response.add("region_metadata", meta);
+
+                    // 3.2 候选区域列表
+                    JsonArray candidatesArr = new JsonArray();
+
+                    // 按簇的大小排序，优先返回大块区域
+                    clusters.sort((c1, c2) -> Integer.compare(c2.size(), c1.size()));
+
+                    // 限制返回数量
+                    int count = 0;
+                    for (List<DBSCAN.Point> cluster : clusters) {
+                        if (count >= limit) break;
+
+                        // 生成单个簇的详细描述 (含 ASCII 图)
+                        JsonObject clusterJson = AsciiMapGenerator.generate(count + 1, cluster);
+
+                        // 补充一些描述信息 (根据 TPI/Slope 均值生成 Description)
+                        double avgSlope = cluster.stream().mapToDouble(p -> slopes[(p.x - cache.minX)/cache.step][(p.z - cache.minZ)/cache.step]).average().orElse(0);
+                        double avgTpi = cluster.stream().mapToDouble(p -> tpis[(p.x - cache.minX)/cache.step][(p.z - cache.minZ)/cache.step]).average().orElse(0);
+
+                        String desc = "Area";
+                        if (avgTpi > 1.0) desc = "Ridge/Highland";
+                        else if (avgTpi < -1.0) desc = "Valley/Basin";
+                        else desc = "Plain/Plateau";
+
+                        if (avgSlope < 0.5) desc += " (Flat)";
+                        else if (avgSlope > 1.5) desc += " (Rugged)";
+
+                        clusterJson.addProperty("description", desc);
+
+                        // 补充 Metrics
+                        JsonObject metrics = new JsonObject();
+                        metrics.addProperty("pixel_count", cluster.size());
+                        metrics.addProperty("approx_area", (cluster.size() * step * step) + " blocks^2");
+                        metrics.addProperty("avg_slope", String.format("%.2f", avgSlope));
+                        metrics.addProperty("avg_tpi", String.format("%.2f", avgTpi));
+                        // 寻找主导群系
+                        String domBiome = cluster.get(0).data.biomeId(); // 简单取第一个，也可以做统计
+                        metrics.addProperty("dominant_biome", domBiome);
+
+                        clusterJson.add("metrics", metrics);
+
+                        candidatesArr.add(clusterJson);
+                        count++;
+                    }
+
+                    response.add("candidates", candidatesArr);
+                    sendResponse(exchange, 200, gson.toJson(response));
 
                 } catch (Exception e) { handleError(exchange, e); }
             });
