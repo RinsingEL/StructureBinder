@@ -14,7 +14,8 @@ public class ScanResultHolder {
 
     // --- 全局宏观数据 (全图扫描结果) ---
     public ScanPixel[][] lastScanData = null;
-    public List<ScanRegion> lastClusters = null;
+    public List<ScanRegion> lastClusters = null; // 陆地列表
+    public List<ScanRegion> lastOceanRegions = null; // 【新增】海洋列表
     public int[][] lastClusterMap = null;
     public long seedUsed = 0;
     public int scanRadiusChunks = 500;
@@ -56,6 +57,7 @@ public class ScanResultHolder {
     public void clearAll() {
         lastScanData = null;
         lastClusters = null;
+        lastOceanRegions = null;
         lastClusterMap = null;
         seedUsed = 0;
         scanRadiusChunks = 500;

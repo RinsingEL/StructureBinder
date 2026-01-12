@@ -22,6 +22,7 @@ import org.joml.Matrix4f;
 
 import java.awt.Color;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -38,6 +39,7 @@ public class StandaloneMapScreen extends Screen {
     // 数据状态
     private ScanPixel[][] scanData = null;
     private int[][] clusterMap = null;
+    private int[][] rawIdMap = null;   // 【新增】原始 ID 图 (用于 Tooltip)
 
     // 玩家信息
     private Integer playerChunkX = null;
@@ -47,7 +49,7 @@ public class StandaloneMapScreen extends Screen {
     private boolean isScanning = false;
     private String statusMsg = "Ready";
     private ClusterAnalyzer.TargetType clusterTarget = ClusterAnalyzer.TargetType.CONTINENT;
-    private enum ViewMode { TERRAIN, POLITICAL }
+    private enum ViewMode { TERRAIN, POLITICAL, OCEAN }
     private ViewMode currentMode = ViewMode.TERRAIN;
 
     // 交互状态
@@ -102,15 +104,17 @@ public class StandaloneMapScreen extends Screen {
 
         // 视图切换按钮
         addRenderableWidget(Button.builder(Component.literal("View: " + currentMode), b -> {
-            // 切换模式
-            currentMode = (currentMode == ViewMode.TERRAIN) ? ViewMode.POLITICAL : ViewMode.TERRAIN;
+            // 循环切换逻辑: TERRAIN -> POLITICAL -> OCEAN -> TERRAIN ...
+            int next = (currentMode.ordinal() + 1) % ViewMode.values().length;
+            currentMode = ViewMode.values()[next];
+
             b.setMessage(Component.literal("View: " + currentMode));
 
             // 如果切到政治视图，尝试刷新一下数据
             if (currentMode == ViewMode.POLITICAL) {
                 com.user.terra_script.world.TerritoryManager.refresh();
             }
-        }).bounds(MAP_PADDING, MAP_PADDING - 25, 120, 20).build()); // 放在左上角地图上方
+        }).bounds(MAP_PADDING, MAP_PADDING - 25, 120, 20).build());
 
         addRenderableWidget(Button.builder(Component.literal("1. Scan Terrain"), b -> startScan())
                 .bounds(panelX, y, btnW, 20).build());
@@ -208,21 +212,48 @@ public class StandaloneMapScreen extends Screen {
 
     private void runClustering() {
         if (scanData == null) { this.statusMsg = "No data."; return; }
+
+        // 获取参数
         int minSize = 5;
-        int mergeDist = 0;
+        // mergeDist 在这种模式下通常设为0，因为我们希望通过自然扩张来合并
         try {
             minSize = Integer.parseInt(minSizeInput.getValue());
-            mergeDist = Integer.parseInt(mergeDistInput.getValue());
         } catch (NumberFormatException ignored) {}
 
-        this.statusMsg = "Clustering...";
-        List<ScanRegion> regions = ClusterAnalyzer.analyze(scanData, clusterTarget, minSize, mergeDist);
-        generateRenderMask(regions);
+        this.statusMsg = "Analyzing World...";
 
-        ScanResultHolder.get().lastClusters = regions;
-        ScanResultHolder.get().lastClusterMap = this.clusterMap;
-        this.statusMsg = "Found " + regions.size() + " regions.";
-        ScanDataIO.exportRegionsToJSON(regions);
+        // 1. 分析陆地
+        List<ScanRegion> landRegions = ClusterAnalyzer.analyze(scanData, ClusterAnalyzer.TargetType.CONTINENT, minSize, 0);
+
+        // 2. 分析海洋 (为了给 AI 提供海洋数据)
+        // 注意：这里的海洋是基于连通性的原始海洋块
+        List<ScanRegion> oceanRegions = ClusterAnalyzer.analyze(scanData, ClusterAnalyzer.TargetType.OCEAN, minSize * 10, 0); // 海洋通常比较大，阈值设大点
+
+        // 标记类型
+        for (ScanRegion r : oceanRegions) {
+            r.id += 1000; // 给海洋 ID 做个偏移，防止和陆地 ID 冲突 (e.g. 1001, 1002)
+        }
+
+        generateRawIdMap(landRegions, oceanRegions);
+
+        // 3. 计算领海归属 (泛洪算法)
+        // 这一步是为了生成 clusterMap (视觉上的势力范围)，不影响 oceanRegions 列表的存在
+        this.statusMsg = "Expanding Territories...";
+        this.clusterMap = ClusterAnalyzer.expandOceans(scanData, landRegions);
+
+        // 4. 保存所有数据
+        var holder = ScanResultHolder.get();
+        holder.lastClusters = landRegions;
+        holder.lastOceanRegions = oceanRegions; // 【新增】存入 holder
+        holder.lastClusterMap = this.clusterMap;
+
+        this.statusMsg = "Done. Lands: " + landRegions.size() + ", Oceans: " + oceanRegions.size();
+
+        // 导出调试文件 (可以把两个列表合并导出)
+        List<ScanRegion> all = new ArrayList<>(landRegions);
+        all.addAll(oceanRegions);
+        ScanDataIO.exportRegionsToJSON(all);
+
         ScanDataIO.saveAll();
     }
 
@@ -424,17 +455,33 @@ public class StandaloneMapScreen extends Screen {
                 }
 
                 if (!isClaimed) {
-                    if (clusterMap != null && clusterMap[r][c] > 0) {
-                        int cid = clusterMap[r][c];
-                        if (clusterTarget == ClusterAnalyzer.TargetType.MOUNTAIN) color = Color.HSBtoRGB((cid * 0.1f) % 0.15f, 0.9f, 1.0f);
-                        else if (clusterTarget == ClusterAnalyzer.TargetType.OCEAN) color = Color.HSBtoRGB(0.6f + (cid * 0.05f) % 0.1f, 0.8f, 0.9f);
-                        else color = Color.HSBtoRGB((cid * 0.618f) % 1.0f, 0.8f, 0.9f);
-                    } else {
+                    // 逻辑分支：如何显示地形
+                    if (currentMode == ViewMode.OCEAN) {
+                        // 【OCEAN 模式】：显示海洋归属和聚类色
+                        if (clusterMap != null && clusterMap[r][c] > 0) {
+                            int cid = clusterMap[r][c];
+                            float hue = (cid * 0.6180339887f) % 1.0f;
+
+                            if (p.isLand()) {
+                                color = Color.HSBtoRGB(hue, 0.7f, 0.9f);
+                            } else {
+                                // 领海显示
+                                color = Color.HSBtoRGB(hue, 0.9f, 0.3f);
+                            }
+                        } else {
+                            color = 0xFF000000;
+                        }
+                    }
+                    else {
+                        // 【TERRAIN / POLITICAL 模式】：显示自然地形色
+                        // 在这些模式下，海洋回归深蓝色，不再显示领海归属
                         if (p.isLand()) {
                             int val = Math.min(255, (p.height() - 63) * 2 + 50);
                             color = 0xFF000000 | (val << 8);
                         } else if (p.height() > 45) {
                             color = 0xFF004488;
+                        } else {
+                            color = 0xFF000044;
                         }
                     }
                 }
@@ -564,7 +611,21 @@ public class StandaloneMapScreen extends Screen {
             if (p != null) {
                 List<Component> list = new ArrayList<>();
                 list.add(Component.literal("Block: [" + p.x() + ", " + p.z() + "]"));
+
                 if (clusterMap != null && clusterMap[r][c] > 0) list.add(Component.literal("Region ID: " + clusterMap[r][c]));
+
+                // 1. 显示领海归属 (Political Influence)
+                if (clusterMap != null && clusterMap[r][c] > 0) {
+                    list.add(Component.literal("Jurisdiction: Region " + clusterMap[r][c]));
+                }
+
+                // 2. 【修复】显示自然地理 ID (Physical Feature)
+                if (rawIdMap != null && rawIdMap[r][c] > 0) {
+                    int id = rawIdMap[r][c];
+                    String type = (id >= 1000) ? "Ocean" : "Land";
+                    list.add(Component.literal("Feature: " + type + " " + id));
+                }
+
                 long chunkKey = net.minecraft.world.level.ChunkPos.asLong(p.x() >> 4, p.z() >> 4);
                 for (var result : com.user.terra_script.world.TerritoryManager.getAllResults()) {
                     if (result.claimedChunks.contains(chunkKey) || result.wildChunks.contains(chunkKey)) {
@@ -583,6 +644,33 @@ public class StandaloneMapScreen extends Screen {
         if (selectedC < 0 || selectedC >= clusterMap[0].length) return 0;
         return clusterMap[selectedR][selectedC];
     }
+
+    private void generateRawIdMap(List<ScanRegion> lands, List<ScanRegion> oceans) {
+        int rows = scanData.length;
+        int cols = scanData[0].length;
+        this.rawIdMap = new int[rows][cols];
+
+        // 为了快速查找，我们需要知道每个 ScanPixel 在数组中的索引
+        // 或者是遍历数组去匹配
+        // 最快的方法：ScanPixel 本身有 x, z，我们需要反算 grid r, c
+        // 但 ScanData 没有存 grid 映射关系...
+
+        // 笨办法但有效：
+        // 1. 构建一个 Map<ScanPixel, Integer>
+        Map<ScanPixel, Integer> pixelToId = new HashMap<>();
+        for (ScanRegion r : lands) for (ScanPixel p : r.pixels) pixelToId.put(p, r.id);
+        for (ScanRegion r : oceans) for (ScanPixel p : r.pixels) pixelToId.put(p, r.id);
+
+        // 2. 填充数组
+        for(int r=0; r<rows; r++) {
+            for(int c=0; c<cols; c++) {
+                if(scanData[r][c] != null && pixelToId.containsKey(scanData[r][c])) {
+                    this.rawIdMap[r][c] = pixelToId.get(scanData[r][c]);
+                }
+            }
+        }
+    }
+
     class StructureListWidget extends net.minecraft.client.gui.components.ObjectSelectionList<StructureListWidget.Entry> {
         public StructureListWidget(Minecraft mc, int width, int height, int top, int bottom) { super(mc, width, height, top, bottom, 18); this.setRenderBackground(false); this.setRenderTopAndBottom(false); }
         public void refreshList(List<StructureDiscovery.StructureInfo> list) { this.clearEntries(); for (StructureDiscovery.StructureInfo info : list) this.addEntry(new Entry(info)); }

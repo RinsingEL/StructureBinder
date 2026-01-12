@@ -16,6 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class TerritoryManager {
 
+    // --- 基础配置类 ---
     public static class TerritoryConfig {
         public String id;
         public String name;
@@ -33,92 +34,87 @@ public class TerritoryManager {
         }
     }
 
+    // --- 结果容器类 ---
     public static class TerritoryResult {
         public TerritoryConfig config;
         public Set<Long> claimedChunks = new HashSet<>();
         public Set<Long> wildChunks = new HashSet<>();
+        public TerritoryStats stats; // 详细统计数据
         public TerritoryResult(TerritoryConfig config) { this.config = config; }
+    }
+
+    // --- 【新增】详细统计信息类 ---
+    // 这个类的字段直接对应 JSON 里的内容
+    public static class TerritoryStats {
+        public long area_pixels = 0;
+        public int minX = Integer.MAX_VALUE, maxX = Integer.MIN_VALUE;
+        public int minZ = Integer.MAX_VALUE, maxZ = Integer.MIN_VALUE;
+
+        // 统计 Map
+        public Map<Integer, Integer> rawContinentCounts = new HashMap<>(); // 原始计数
+        public Map<String, Integer> rawBiomeCounts = new HashMap<>();      // 原始计数
+        public Set<String> neighborIds = new HashSet<>();                  // 邻居 ID 集合
+
+        // 最终输出给 API 的百分比数据 (在分析结束后计算)
+        public Map<Integer, Double> continent_distribution = new HashMap<>();
+        public Map<String, Double> biome_composition = new HashMap<>();
     }
 
     private static final List<TerritoryConfig> registeredFactions = new ArrayList<>();
     private static final Map<String, TerritoryResult> results = new ConcurrentHashMap<>();
 
-    // JSON 持久化相关
+    // 全局像素归属图 (用于快速判定接壤)
+    public static String[][] globalOwnershipMap = null;
+
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final File CONFIG_FILE = FMLPaths.CONFIGDIR.get().resolve("terra_script_territories.json").toFile();
 
     public static Collection<TerritoryResult> getAllResults() { return results.values(); }
 
-    public static void clear() {
-        registeredFactions.clear();
-        results.clear();
-        save(); // 清空也要保存
-    }
+    // --- 核心操作方法 ---
 
     public static void createTerritory(String id, String name, int regionId, int startX, int startZ, int maxPower, double mCost, double wCost, int color) {
         registeredFactions.removeIf(c -> c.id.equals(id));
         registeredFactions.add(new TerritoryConfig(id, name, regionId, startX, startZ, maxPower, mCost, wCost, color));
-
-        save(); // 保存到磁盘
+        save();
         recalculateAll();
     }
 
     public static void refresh() {
-        // 刷新时先尝试加载（防止重启游戏后数据丢失）
-        if (registeredFactions.isEmpty() && CONFIG_FILE.exists()) {
-            load();
-        }
+        if (registeredFactions.isEmpty() && CONFIG_FILE.exists()) load();
         recalculateAll();
     }
 
-    // --- 持久化方法 ---
-    private static void save() {
-        try {
-            String json = GSON.toJson(registeredFactions);
-            Files.writeString(CONFIG_FILE.toPath(), json);
-            System.out.println("[Territory] Configs saved to " + CONFIG_FILE.getName());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    public static void clear() {
+        registeredFactions.clear();
+        results.clear();
+        globalOwnershipMap = null;
+        save();
     }
 
-    private static void load() {
-        if (!CONFIG_FILE.exists()) return;
-        try {
-            String json = Files.readString(CONFIG_FILE.toPath());
-            List<TerritoryConfig> loaded = GSON.fromJson(json, new TypeToken<List<TerritoryConfig>>(){}.getType());
-            registeredFactions.clear();
-            if (loaded != null) registeredFactions.addAll(loaded);
-            System.out.println("[Territory] Loaded " + registeredFactions.size() + " factions from disk.");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    // --- 计算逻辑 (复用您之前的代码，只需注意要适配全球计算逻辑) ---
-    // 为了防止混淆，我这里贴上【全球版】的 recalculateAll 代码
-
+    // --- 计算逻辑主入口 ---
     private static void recalculateAll() {
         results.clear();
         var holder = ScanResultHolder.get();
-
-        // 优先检查全球数据
         if (holder.lastScanData != null) {
             computeGlobal(holder);
+            analyzeTerritories(holder); // 计算完立刻分析
         } else {
-            System.out.println("[Territory] No global scan data found. Waiting for scan...");
+            System.out.println("[Territory] No global scan data found.");
         }
     }
 
+    // --- 领土扩张算法 (Dijkstra) ---
     private static void computeGlobal(ScanResultHolder holder) {
         ScanPixel[][] map = holder.lastScanData;
         int w = map.length;
         int h = map[0].length;
         int step = holder.scanStep;
-
         int radiusBlocks = holder.scanRadiusChunks * 16;
         int globalMinX = -radiusBlocks;
         int globalMinZ = -radiusBlocks;
+
+        globalOwnershipMap = new String[w][h];
 
         for (TerritoryConfig cfg : registeredFactions) {
             results.put(cfg.id, new TerritoryResult(cfg));
@@ -127,17 +123,15 @@ public class TerritoryManager {
         PriorityQueue<double[]> pq = new PriorityQueue<>(Comparator.comparingDouble(a -> a[0]));
         double[][] distMap = new double[w][h];
         for (double[] row : distMap) Arrays.fill(row, Double.MAX_VALUE);
-        String[][] ownershipMap = new String[w][h];
 
-        // 1. 初始化
+        // 1. 种子点
         for (TerritoryConfig cfg : registeredFactions) {
             int gx = (cfg.capitalX - globalMinX) / step;
             int gz = (cfg.capitalZ - globalMinZ) / step;
-
             if (gx >= 0 && gx < w && gz >= 0 && gz < h) {
                 pq.add(new double[]{0.0, gx, gz, registeredFactions.indexOf(cfg)});
                 distMap[gx][gz] = 0.0;
-                ownershipMap[gx][gz] = cfg.id;
+                globalOwnershipMap[gx][gz] = cfg.id;
                 claimArea(results.get(cfg.id).claimedChunks, gx, gz, globalMinX, globalMinZ, step);
             }
         }
@@ -145,7 +139,6 @@ public class TerritoryManager {
         int[][] dirs = {{0,1}, {0,-1}, {1,0}, {-1,0}, {1,1}, {1,-1}, {-1,1}, {-1,-1}};
         double[] dirCosts = {1.0, 1.0, 1.0, 1.0, 1.414, 1.414, 1.414, 1.414};
 
-        // 2. 扩张
         while (!pq.isEmpty()) {
             double[] current = pq.poll();
             double cost = current[0];
@@ -179,18 +172,99 @@ public class TerritoryManager {
 
                 if (distMap[nx][nz] == Double.MAX_VALUE && newCost <= currentFaction.maxPower) {
                     distMap[nx][nz] = newCost;
-                    ownershipMap[nx][nz] = currentFaction.id;
+                    globalOwnershipMap[nx][nz] = currentFaction.id;
                     claimArea(results.get(currentFaction.id).claimedChunks, nx, nz, globalMinX, globalMinZ, step);
                     pq.add(new double[]{newCost, nx, nz, fIdx});
                 }
             }
         }
 
-        // 3. 填补
-        fillEnclaves(ownershipMap, w, h, globalMinX, globalMinZ, step);
+        fillEnclaves(globalOwnershipMap, w, h, globalMinX, globalMinZ, step);
     }
 
-    // claimArea 和 fillEnclaves 辅助方法保持不变 (请使用上一轮修复后的版本)
+    // --- 【分析统计逻辑】 ---
+    private static void analyzeTerritories(ScanResultHolder holder) {
+        ScanPixel[][] map = holder.lastScanData;
+        int[][] clusterMap = holder.lastClusterMap;
+        if (globalOwnershipMap == null || map == null) return;
+
+        int w = map.length;
+        int h = map[0].length;
+
+        // 初始化统计对象
+        Map<String, TerritoryStats> tempStats = new HashMap<>();
+        for (String id : results.keySet()) tempStats.put(id, new TerritoryStats());
+
+        // 1. 遍历全图，收集原始数据
+        for (int i = 0; i < w; i++) {
+            for (int j = 0; j < h; j++) {
+                String owner = globalOwnershipMap[i][j];
+                if (owner == null) continue;
+
+                ScanPixel p = map[i][j];
+                if (p == null) continue;
+
+                TerritoryStats stat = tempStats.get(owner);
+                if (stat == null) continue;
+
+                // 面积
+                stat.area_pixels++;
+
+                // 边界框
+                int wx = p.x(); int wz = p.z();
+                if (wx < stat.minX) stat.minX = wx;
+                if (wx > stat.maxX) stat.maxX = wx;
+                if (wz < stat.minZ) stat.minZ = wz;
+                if (wz > stat.maxZ) stat.maxZ = wz;
+
+                // 群系
+                stat.rawBiomeCounts.merge(p.biomeId(), 1, Integer::sum);
+
+                // 大陆
+                if (clusterMap != null && clusterMap[i][j] > 0) {
+                    stat.rawContinentCounts.merge(clusterMap[i][j], 1, Integer::sum);
+                }
+
+                // 邻国判定 (检查上下左右)
+                checkNeighbor(i + 1, j, owner, w, h, stat);
+                checkNeighbor(i - 1, j, owner, w, h, stat);
+                checkNeighbor(i, j + 1, owner, w, h, stat);
+                checkNeighbor(i, j - 1, owner, w, h, stat);
+            }
+        }
+
+        // 2. 汇总百分比
+        for (String id : results.keySet()) {
+            TerritoryResult res = results.get(id);
+            TerritoryStats stat = tempStats.get(id);
+
+            // 计算群系 %
+            long total = Math.max(1, stat.area_pixels);
+            stat.rawBiomeCounts.forEach((bId, count) -> {
+                double pct = (double) count / total;
+                if (pct > 0.05) stat.biome_composition.put(bId, (double)Math.round(pct * 1000) / 1000.0);
+            });
+
+            // 计算大陆 %
+            stat.rawContinentCounts.forEach((rId, count) -> {
+                double pct = (double) count / total;
+                stat.continent_distribution.put(rId, (double)Math.round(pct * 1000) / 1000.0);
+            });
+
+            res.stats = stat;
+        }
+        System.out.println("[Territory] Analysis complete.");
+    }
+
+    private static void checkNeighbor(int x, int z, String myOwner, int w, int h, TerritoryStats stat) {
+        if (x < 0 || x >= w || z < 0 || z >= h) return;
+        String neighbor = globalOwnershipMap[x][z];
+        if (neighbor != null && !neighbor.equals(myOwner)) {
+            stat.neighborIds.add(neighbor);
+        }
+    }
+
+    // --- 辅助方法 ---
     private static void claimArea(Set<Long> chunks, int gx, int gz, int minX, int minZ, int step) {
         int startWorldX = minX + gx * step;
         int startWorldZ = minZ + gz * step;
@@ -243,4 +317,28 @@ public class TerritoryManager {
             }
         }
     }
+
+    /**
+     * 快速检查某区块是否属于指定领土
+     * @param chunkKey ChunkPos.asLong()
+     * @param territoryId 目标领土 ID
+     */
+    public static boolean isChunkOwnedBy(long chunkKey, String territoryId) {
+        if (territoryId == null) return false;
+
+        TerritoryResult res = results.get(territoryId);
+        if (res == null) return false;
+
+        // 检查核心领土
+        if (res.claimedChunks.contains(chunkKey)) return true;
+
+        // 检查荒野领土 (根据策划决定：城市能不能建在荒野/飞地？通常是可以的)
+        if (res.wildChunks.contains(chunkKey)) return true;
+
+        return false;
+    }
+
+    // JSON IO
+    private static void save() { try { Files.writeString(CONFIG_FILE.toPath(), GSON.toJson(registeredFactions)); } catch (Exception e) { e.printStackTrace(); } }
+    private static void load() { if (!CONFIG_FILE.exists()) return; try { List<TerritoryConfig> l = GSON.fromJson(Files.readString(CONFIG_FILE.toPath()), new TypeToken<List<TerritoryConfig>>(){}.getType()); registeredFactions.clear(); if(l!=null) registeredFactions.addAll(l); } catch (Exception e) { e.printStackTrace(); } }
 }

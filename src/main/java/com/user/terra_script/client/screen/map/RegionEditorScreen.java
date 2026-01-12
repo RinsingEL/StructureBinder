@@ -262,18 +262,19 @@ public class RegionEditorScreen extends Screen {
         // scale < 2.0 -> step = 2 (减少 75% 顶点)
         // scale < 1.0 -> step = 4 (减少 94% 顶点)
         int renderStep = 1;
-        if (scale < 0.8) renderStep = 4;
-        else if (scale < 1.5) renderStep = 2;
+        double viewScale = Math.abs(scale);
+        if (viewScale < 0.8) renderStep = 4;
+        else if (viewScale < 1.5) renderStep = 2;
 
-        renderStep = 1;// FIXME： 先管功能吧
+        renderStep = 2;// FIXME： 先管功能吧
         // 绘制的像素大小要相应放大，填补跳过的空隙
-        double pSize = scale * renderStep;
+        double pSize = viewScale * renderStep;
 
-        double rMinRaw = (x - cx) / scale + rows / 2.0 - offX;
-        double rMaxRaw = (x + w - cx) / scale + rows / 2.0 - offX;
+        double rMinRaw = (x - cx) / viewScale + rows / 2.0 - offX;
+        double rMaxRaw = (x + w - cx) / viewScale + rows / 2.0 - offX;
 
-        double cMinRaw = (y - cy) / scale + cols / 2.0 - offY;
-        double cMaxRaw = (y + h - cy) / scale + cols / 2.0 - offY;
+        double cMinRaw = (y - cy) / viewScale + cols / 2.0 - offY;
+        double cMaxRaw = (y + h - cy) / viewScale + cols / 2.0 - offY;
 
         // 向下/向上取整，并留一点余量防止边缘裁剪
         int startR = (int) Math.floor(rMinRaw) - renderStep;
@@ -295,7 +296,7 @@ public class RegionEditorScreen extends Screen {
         // 安全检查：如果范围无效，就不画
         if (startR >= endR || startC >= endC) {
             // 调试用：如果在屏幕内却没画，打印一下
-            // System.out.println("Culling logic hidden everything!");
+            System.out.println("Culling logic hidden everything!");
             tess.end();
             g.disableScissor();
             return;
@@ -307,12 +308,12 @@ public class RegionEditorScreen extends Screen {
                 ScanPixel p = detailData[r][c];
                 if (p == null) continue;
 
-                double sx = cx + (r - rows/2.0 + offX) * scale;
-                double sy = cy + (c - cols/2.0 + offY) * scale;
+                double sx = cx + (r - rows/2.0 + offX) * viewScale;
+                double sy = cy + (c - cols/2.0 + offY) * viewScale;
 
                 // 二次检查 (虽然循环范围限制了，但为了稳妥)
                 if (sx < x - pSize || sx > x + w || sy < y - pSize || sy > y + h) continue;
-                if (sx < x - scale || sx > x + w || sy < y - scale || sy > y + h) continue;
+                if (sx < x - viewScale || sx > x + w || sy < y - viewScale || sy > y + h) continue;
 
                 int color = 0xFF000000;
 

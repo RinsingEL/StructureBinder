@@ -130,6 +130,86 @@ public class ClusterAnalyzer {
         return result;
     }
 
+    /**
+     * 【新算法】基于距离场划分海洋
+     * 将所有海洋像素分配给最近的大陆
+     * @param map 全局地图
+     * @param landRegions 已识别出的陆地列表
+     * @return 一个新的二维数组，存储每个像素归属的 Region ID (无论是陆地还是海洋)
+     */
+    public static int[][] expandOceans(ScanPixel[][] map, List<ScanRegion> landRegions) {
+        int w = map.length;
+        int h = map[0].length;
+
+        // 1. 初始化 ID 图 (0=未分配, >0=RegionID)
+        int[][] idMap = new int[w][h];
+        // 距离图 (用于记录到最近大陆的距离)
+        double[][] distMap = new double[w][h];
+        for(double[] row : distMap) Arrays.fill(row, Double.MAX_VALUE);
+
+        // 优先队列: [distance, x, z, regionId]
+        PriorityQueue<double[]> pq = new PriorityQueue<>(Comparator.comparingDouble(a -> a[0]));
+
+        // 2. 将所有陆地像素作为种子点加入队列
+        for (ScanRegion r : landRegions) {
+            for (ScanPixel p : r.pixels) {
+                // 需要反算网格坐标 (这里假设 ScanPixel 存的是世界坐标，需要知道 offset)
+                // 为了简化，我们假设 analyze 方法里已经把像素和网格对应好了，或者直接遍历 map
+            }
+        }
+
+        // 更简单的做法：遍历全图，如果是陆地且属于某个Region，就作为种子
+        // 为了高效，我们需要快速知道每个像素属于哪个 Region
+        // 我们可以利用 ClusterAnalyzer 刚刚生成的 landRegions
+        Map<ScanPixel, Integer> pixelToRegion = new HashMap<>();
+        for (ScanRegion r : landRegions) for (ScanPixel p : r.pixels) pixelToRegion.put(p, r.id);
+
+        for (int i = 0; i < w; i++) {
+            for (int j = 0; j < h; j++) {
+                ScanPixel p = map[i][j];
+                if (p != null && pixelToRegion.containsKey(p)) {
+                    int rid = pixelToRegion.get(p);
+                    idMap[i][j] = rid;
+                    distMap[i][j] = 0;
+                    pq.add(new double[]{0, i, j, rid});
+                }
+            }
+        }
+
+        // 3. 多源 Dijkstra 泛洪 (填满海洋)
+        int[][] dirs = {{0,1}, {0,-1}, {1,0}, {-1,0}};
+
+        while (!pq.isEmpty()) {
+            double[] curr = pq.poll();
+            double d = curr[0];
+            int cx = (int)curr[1];
+            int cz = (int)curr[2];
+            int rid = (int)curr[3];
+
+            if (d > distMap[cx][cz]) continue;
+
+            for (int[] dir : dirs) {
+                int nx = cx + dir[0];
+                int nz = cz + dir[1];
+
+                if (nx >= 0 && nx < w && nz >= 0 && nz < h) {
+                    // 如果是已经有主的陆地，跳过
+                    // 如果是海洋(或未分配区域)，且找到了更近的路，更新
+                    if (map[nx][nz] != null && !map[nx][nz].isLand()) {
+                        double newDist = d + 1.0; // 简单距离，也可以加权
+                        if (newDist < distMap[nx][nz]) {
+                            distMap[nx][nz] = newDist;
+                            idMap[nx][nz] = rid; // 标记这片海属于 rid
+                            pq.add(new double[]{newDist, nx, nz, rid});
+                        }
+                    }
+                }
+            }
+        }
+
+        return idMap;
+    }
+
     private static List<ScanRegion> filterBySize(List<ScanRegion> input, int minSize, ScanPixel[][] map) {
         List<ScanRegion> res = new ArrayList<>();
         for (ScanRegion r : input) {

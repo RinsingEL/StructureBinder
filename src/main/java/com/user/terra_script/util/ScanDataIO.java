@@ -33,10 +33,14 @@ public class ScanDataIO {
                     root.put("global", globalTag);
                 }
 
-                // 2. 【核心修复】保存宏观聚类分析结果 (Cluster Summaries)
+                // 2. 保存宏观聚类分析结果 (Cluster Summaries)
                 // 这里保存的是大陆的统计数据，而不是像素点，所以比较轻量
                 if (holder.lastClusters != null && !holder.lastClusters.isEmpty()) {
                     root.put("clusters", saveClusters(holder.lastClusters));
+                }
+                // 保存海洋
+                if (holder.lastOceanRegions != null && !holder.lastOceanRegions.isEmpty()) {
+                    root.put("oceans", saveClusters(holder.lastOceanRegions));
                 }
 
                 // 3. 保存局部详细缓存 (Region Caches)
@@ -92,9 +96,14 @@ public class ScanDataIO {
                 holder.lastScanData = readPixelMatrix(globalTag);
             }
 
-            // 2. 【核心修复】恢复宏观聚类结果
+            // 2. 恢复宏观聚类结果
             if (root.contains("clusters")) {
                 holder.lastClusters = readClusters(root.getList("clusters", Tag.TAG_COMPOUND));
+            }
+
+            // 读取海洋
+            if (root.contains("oceans")) {
+                holder.lastOceanRegions = readClusters(root.getList("oceans", Tag.TAG_COMPOUND));
             }
 
             // 3. 恢复局部详细缓存
@@ -332,7 +341,12 @@ public class ScanDataIO {
                 for (ScanRegion r : regions) {
                     com.google.gson.JsonObject obj = new com.google.gson.JsonObject();
                     obj.addProperty("id", r.id);
-                    obj.addProperty("type", r.area < 500 ? "ISLAND" : "CONTINENT");
+                    // 【修复】根据 ID 判断类型
+                    if (r.id >= 1000) {
+                        obj.addProperty("type", "OCEAN");
+                    } else {
+                        obj.addProperty("type", r.area < 500 ? "ISLAND" : "CONTINENT");
+                    }
 
                     // Metrics
                     com.google.gson.JsonObject metrics = new com.google.gson.JsonObject();
