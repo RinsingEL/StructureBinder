@@ -1,5 +1,6 @@
 package com.user.terra_script.world.city;
 
+import com.user.terra_script.world.city.district.District;
 import net.minecraft.world.level.ChunkPos;
 import java.util.*;
 
@@ -18,8 +19,13 @@ public class CityInstance {
     // 城门位置 (BlockPos)
     public List<long[]> gatePositions = new ArrayList<>();
 
-    // 内部多边形 (后续阶段使用)
-    // public List<CityDistrict> districts = ...
+    // 内部多边形
+    public List<District> districts = new ArrayList<>();
+
+    // XXX: 方块道路
+    public Set<Long> roadBlocks = new HashSet<>();
+
+    public transient boolean isRoadsGenerated = false;
 
     public CityInstance(String id, CityConfig config) {
         this.id = id;

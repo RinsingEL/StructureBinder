@@ -4,9 +4,11 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import com.user.terra_script.client.data.ScanResultHolder;
 import com.user.terra_script.client.data.ScanResultHolder.RegionCache;
+import com.user.terra_script.client.screen.city.CityOverlayRenderer;
 import com.user.terra_script.config.StructurePlan;
 import com.user.terra_script.scan.*;
 import com.user.terra_script.util.ScanDataIO;
+import com.user.terra_script.world.city.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
@@ -16,6 +18,7 @@ import net.minecraft.network.chat.Component;
 import org.joml.Matrix4f;
 
 import java.awt.Color;
+import java.util.ArrayList;
 import java.util.concurrent.CompletableFuture;
 
 public class RegionEditorScreen extends Screen {
@@ -266,7 +269,6 @@ public class RegionEditorScreen extends Screen {
         if (viewScale < 0.8) renderStep = 4;
         else if (viewScale < 1.5) renderStep = 2;
 
-        renderStep = 2;// FIXME： 先管功能吧
         // 绘制的像素大小要相应放大，填补跳过的空隙
         double pSize = viewScale * renderStep;
 
@@ -390,8 +392,18 @@ public class RegionEditorScreen extends Screen {
                 buf.vertex(mat, (float)(sx+pSize), (float)sy, 0).color(red, grn, blu, alpha).endVertex();
             }
         }
+
+        tess.end();
+
+        if (currentMode == ViewMode.POLITICAL) {
+            renderCities(g, x, y, w, h);
+        }
+
+        RenderSystem.setShader(GameRenderer::getPositionColorShader);
+        buf.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
         drawPlayerCrosshair(buf, mat, x, y, w, h);
         tess.end();
+
         g.disableScissor();
     }
 
@@ -519,6 +531,95 @@ public class RegionEditorScreen extends Screen {
         } else { showMenu = false; }
         return super.mouseClicked(mouseX, mouseY, button);
     }
+
+    private void renderCities(GuiGraphics g, int mapX, int mapY, int mapW, int mapH) {
+        // 1. 获取所有城市
+        var cities = CityManager.get().getAllCities();
+        if (cities.isEmpty()) return;
+
+        // 2. 准备坐标参数
+        int cx = mapX + mapW / 2;
+        int cy = mapY + mapH / 2;
+        int rows = detailData.length;
+        int cols = detailData[0].length;
+        int step = this.scanStep; // 当前编辑器的扫描步长
+
+        // 3. 构建适配器 (Proxy)
+        MapTransform transform = new MapTransform(0, 0, 1.0f) {
+            @Override
+            public int worldToScreenX(int worldX) {
+                // World -> Grid
+                double gridR = (double)(worldX - worldMinX) / step;
+                // Grid -> Screen
+                return (int)(cx + (gridR - rows/2.0 + offX) * scale);
+            }
+
+            @Override
+            public int worldToScreenZ(int worldZ) {
+                double gridC = (double)(worldZ - worldMinZ) / step;
+                return (int)(cy + (gridC - cols/2.0 + offY) * scale);
+            }
+
+            // Chunk 覆盖大小 (屏幕像素)
+            @Override
+            public int chunkPixelSize() {
+                // 1 Chunk = 16 blocks
+                // grid step = step blocks
+                // grid unit size = scale
+                // -> 16 blocks = (16 / step) * scale
+                return (int) Math.max(1, (16.0 / step) * scale);
+            }
+
+            // 覆盖 blockToScreen
+            @Override
+            public int blockToScreenX(int blockX) { return worldToScreenX(blockX); }
+            @Override
+            public int blockToScreenZ(int blockZ) { return worldToScreenZ(blockZ); }
+        };
+
+        // 4. 遍历渲染
+        for (CityInstance city : cities) {
+            // 只渲染当前大陆内的城市 (简单判断中心点是否在范围内)
+            if (city.config.centerX < worldMinX || city.config.centerX > worldMinX + worldW) continue;
+
+            // 转换数据结构 CityInstance -> CityLayout
+            CityLayout layout = new CityLayout();
+            layout.cityInstanceId = city.id;
+            layout.centerChunkX = city.config.centerX >> 4;
+            layout.centerChunkZ = city.config.centerZ >> 4;
+
+            layout.chunks = new ArrayList<>();
+            city.claimedChunks.forEach((key, type) -> {
+                CityLayout.CityChunk cc = new CityLayout.CityChunk();
+                cc.x = net.minecraft.world.level.ChunkPos.getX(key);
+                cc.z = net.minecraft.world.level.ChunkPos.getZ(key);
+                // 简单的枚举转换
+                cc.zone = CityLayout.ZoneType.valueOf(type.name());
+                layout.chunks.add(cc);
+            });
+
+            // 填充多边形数据 (如果有)
+            if (city.districts != null) {
+                layout.districts = new ArrayList<>();
+                for (var d : city.districts) {
+                    CityLayout.DistrictRenderData dr = new CityLayout.DistrictRenderData();
+                    dr.centerX = d.centerX;
+                    dr.centerZ = d.centerZ;
+                    // dr.type = ...;
+                    // dr.polygon = ...;
+                    layout.districts.add(dr);
+                }
+            }
+
+            // 5. 调用渲染器
+            // 渲染领地 (Chunks)
+            CityOverlayRenderer.render(g, layout, transform);
+
+            // 渲染多边形 (如果有)
+            CityOverlayRenderer.renderDistricts(g, layout, transform);
+        }
+    }
+
     @Override public boolean mouseDragged(double mx, double my, int btn, double dx, double dy) { if (btn == 0) { offX += dx / scale; offY += dy / scale; return true; } return super.mouseDragged(mx, my, btn, dx, dy); }
     @Override public boolean mouseScrolled(double mx, double my, double delta) { if (delta > 0) scale *= 1.1; else scale /= 1.1; return true; }
     @Override public void onClose() { this.minecraft.setScreen(parent); }

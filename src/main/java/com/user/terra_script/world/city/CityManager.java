@@ -1,12 +1,11 @@
 package com.user.terra_script.world.city;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
+import com.google.gson.*;
 import com.user.terra_script.client.data.ScanResultHolder;
 import com.user.terra_script.scan.ScanPixel;
+import com.user.terra_script.util.VoronoiComputer;
 import com.user.terra_script.world.TerritoryManager;
+import com.user.terra_script.world.city.district.District;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraftforge.fml.loading.FMLPaths;
 
@@ -38,6 +37,18 @@ public class CityManager {
 
     public Collection<CityInstance> getAllCities() { return cities.values(); }
 
+    public void reload() {
+        loadFromFile();
+    }
+
+    public String getCityIdAt(long chunkKey) {
+        return globalCityChunkMap.get(chunkKey);
+    }
+
+    public CityInstance getCity(String id) {
+        return cities.get(id);
+    }
+
     /**
      * 创建并生成一个城市
      */
@@ -45,13 +56,21 @@ public class CityManager {
         String uid = "city_" + config.centerX + "_" + config.centerZ;
         config.cityInstanceId = uid;
 
-        CityInstance city = new CityInstance(uid, config);
+        if (cities.containsKey(uid)) {
+            CityInstance oldCity = cities.get(uid);
+            for (Long chunkKey : oldCity.claimedChunks.keySet()) {
+                globalCityChunkMap.remove(chunkKey);
+            }
+            System.out.println("[CityManager] Overwriting existing city: " + uid);
+        }
 
+        CityInstance city = new CityInstance(uid, config);
         // 执行扩张算法
         expandCity(city);
 
-        // 注册
+        // 注册或修改
         cities.put(uid, city);
+        city.districts = VoronoiComputer.computeDistricts(city);
 
         saveToFile();
         return city;
@@ -212,42 +231,166 @@ public class CityManager {
     }
 
     private void saveToFile() {
-        // 使用新线程，避免阻塞主逻辑
         new Thread(() -> {
             try {
                 JsonArray arr = new JsonArray();
                 for (CityInstance city : cities.values()) {
                     JsonObject obj = new JsonObject();
                     obj.addProperty("id", city.id);
-                    obj.addProperty("territory", city.config.territoryId);
-                    obj.addProperty("center_x", city.config.centerX);
-                    obj.addProperty("center_z", city.config.centerZ);
-                    obj.addProperty("bias", city.config.bias.name());
-                    obj.addProperty("ecology", city.config.ecology.name());
 
-                    // 导出区块列表
-                    // 为了减小文件体积，我们可以只存 "x,z:type" 的紧凑字符串数组，或者依然用对象数组
                     JsonArray chunks = new JsonArray();
                     city.claimedChunks.forEach((key, type) -> {
                         JsonObject c = new JsonObject();
                         c.addProperty("x", ChunkPos.getX(key));
                         c.addProperty("z", ChunkPos.getZ(key));
-                        // 简化类型名: CORE -> C, URBAN -> U, BUFFER -> B
                         String tShort = type.name().substring(0, 1);
                         c.addProperty("t", tShort);
                         chunks.add(c);
                     });
                     obj.add("chunks", chunks);
 
+                    // 2. 【新增】导出 Districts (撒点数据)
+                    if (city.districts != null) {
+                        JsonArray dists = new JsonArray();
+                        for (var d : city.districts) {
+                            JsonObject dObj = new JsonObject();
+                            dObj.addProperty("id", d.id);
+                            // 保留 2 位小数即可
+                            dObj.addProperty("x", Math.round(d.centerX * 100) / 100.0);
+                            dObj.addProperty("z", Math.round(d.centerZ * 100) / 100.0);
+                            dObj.addProperty("type", d.zoneType);
+                            // 环境属性
+                            dObj.addProperty("water_dist", d.waterDistance);
+                            dObj.addProperty("slope", d.avgSlope);
+
+                            JsonArray members = new JsonArray();
+                            for(long k : d.memberChunks) {
+                                JsonObject c = new JsonObject();
+                                c.addProperty("x", ChunkPos.getX(k));
+                                c.addProperty("z", ChunkPos.getZ(k));
+                                members.add(c);
+                            }
+                            dObj.add("blocks", members);
+                            dists.add(dObj);
+                        }
+                        obj.add("districts", dists);
+                    }
+
                     arr.add(obj);
                 }
 
                 Files.writeString(EXPORT_FILE.toPath(), GSON.toJson(arr));
-                System.out.println("[CityManager] Auto-saved " + cities.size() + " cities to " + EXPORT_FILE.getName());
+                System.out.println("[CityManager] Auto-saved " + cities.size() + " cities with districts.");
 
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }, "TerraScript-IO-City").start();
+    }
+
+    private void loadFromFile() {
+        if (!EXPORT_FILE.exists()) return;
+        try {
+            String json = Files.readString(EXPORT_FILE.toPath());
+            if (json == null || json.isBlank()) return; // 空文件保护
+
+            JsonArray arr = GSON.fromJson(json, JsonArray.class);
+            if (arr == null) return;
+
+            cities.clear();
+            globalCityChunkMap.clear();
+
+            for (JsonElement el : arr) {
+                JsonObject obj = el.getAsJsonObject();
+
+                CityConfig cfg = new CityConfig();
+                // 必须字段，如果没有则跳过该条目或赋默认值
+                if (!obj.has("id")) continue;
+                cfg.cityInstanceId = obj.get("id").getAsString();
+
+                // 可选字段，带默认值
+                cfg.territoryId = obj.has("territory") && !obj.get("territory").isJsonNull() ? obj.get("territory").getAsString() : "unknown";
+                cfg.continentId = obj.has("continent_id") ? obj.get("continent_id").getAsInt() : 0;
+                cfg.centerX = obj.has("center_x") ? obj.get("center_x").getAsInt() : 0;
+                cfg.centerZ = obj.has("center_z") ? obj.get("center_z").getAsInt() : 0;
+                cfg.targetChunkCount = obj.has("target_size") ? obj.get("target_size").getAsInt() : 100;
+
+                try {
+                    if (obj.has("bias")) cfg.bias = CityConfig.ExpansionBias.valueOf(obj.get("bias").getAsString());
+                } catch (Exception e) { cfg.bias = CityConfig.ExpansionBias.BALANCED; }
+
+                try {
+                    if (obj.has("ecology")) cfg.ecology = CityConfig.EcologyPolicy.valueOf(obj.get("ecology").getAsString());
+                } catch (Exception e) { cfg.ecology = CityConfig.EcologyPolicy.ADAPTIVE; }
+
+                CityInstance city = new CityInstance(cfg.cityInstanceId, cfg);
+
+                // 恢复区块
+                if (obj.has("chunks")) {
+                    for (JsonElement cEl : obj.getAsJsonArray("chunks")) {
+                        JsonObject c = cEl.getAsJsonObject();
+                        int x = c.get("x").getAsInt();
+                        int z = c.get("z").getAsInt();
+                        String typeStr = c.has("t") ? c.get("t").getAsString() : "B";
+
+                        CityInstance.CityZoneType type = CityInstance.CityZoneType.BUFFER;
+                        if (typeStr.equals("C") || typeStr.equals("CORE")) type = CityInstance.CityZoneType.CORE;
+                        else if (typeStr.equals("U") || typeStr.equals("URBAN")) type = CityInstance.CityZoneType.URBAN;
+
+                        long key = ChunkPos.asLong(x, z);
+                        city.claimedChunks.put(key, type);
+                        globalCityChunkMap.put(key, city.id);
+                    }
+                }
+
+                // 恢复区划 (如果之前存了的话，没存就重新算)
+                if (obj.has("districts")) {
+                    // TODO: 解析 district 数据
+                    // 为了简化，这里可以不解析，而是调用 VoronoiComputer.computeDistricts(city) 重新生成
+                    // 只要种子随机数是一样的，结果就是一样的
+                    city.districts = VoronoiComputer.computeDistricts(city);
+                } else {
+                    // 兼容旧数据
+                    city.districts = VoronoiComputer.computeDistricts(city);
+                }
+
+                cities.put(city.id, city);
+            }
+            System.out.println("[CityManager] Loaded " + cities.size() + " cities from disk.");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            // 如果文件损坏，可以选择删除它，或者只是报错
+            System.err.println("[CityManager] Failed to load cities: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 确保该城市的道路数据已生成 (懒加载)
+     */
+    public void ensureRoadsGenerated(String cityId) {
+        CityInstance city = cities.get(cityId);
+        if (city == null || city.isRoadsGenerated) return;
+
+        synchronized (city) { // 防止多线程重复计算
+            if (city.isRoadsGenerated) return;
+
+            System.out.println("[CityManager] Lazy-generating roads for " + cityId + "...");
+            long start = System.currentTimeMillis();
+
+            if (city.districts == null || city.districts.isEmpty()) {
+                // 如果区划也没生成，先生成区划
+                city.districts = VoronoiComputer.computeDistricts(city);
+            }
+
+            if (!city.districts.isEmpty()) {
+                var blockOwner = VoronoiComputer.buildBlockOwnership(city.districts);
+                var rawRoads = VoronoiComputer.computeDistrictBoundaries(blockOwner);
+                city.roadBlocks = VoronoiComputer.expandBoundary(rawRoads, 1);
+            }
+
+            city.isRoadsGenerated = true;
+            System.out.println("[CityManager] Roads ready for " + cityId + ". took " + (System.currentTimeMillis() - start) + "ms. Blocks: " + (city.roadBlocks != null ? city.roadBlocks.size() : 0));
+        }
     }
 }

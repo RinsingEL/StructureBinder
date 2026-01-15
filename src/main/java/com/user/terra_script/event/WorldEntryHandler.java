@@ -60,6 +60,8 @@ public class WorldEntryHandler {
                 pendingOpenMap = true;
             }
         }
+
+        com.user.terra_script.world.city.CityManager.get().reload();
     }
 
     @SubscribeEvent
