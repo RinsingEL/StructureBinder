@@ -26,7 +26,7 @@ public class RoadInjector {
     private static final Set<Long> processedChunks = ConcurrentHashMap.newKeySet();
     private static final Set<Long> queuedChunks = ConcurrentHashMap.newKeySet();
     private static final Queue<RoadTask> pendingChunks = new ConcurrentLinkedQueue<>();
-    private static final int CHUNKS_PER_TICK = 2; // 每 tick 处理多少个 chunk
+    private static final int CHUNKS_PER_TICK = 2; // �?tick 处理多少�?chunk
 
     @SubscribeEvent
     public static void onChunkLoad(ChunkEvent.Load event) {
@@ -54,15 +54,15 @@ public class RoadInjector {
             RoadTask task = pendingChunks.poll();
             if (task == null) return;
 
-            // 再次检查世界状态
+            // 再次检查世界状�?
             if (!task.level.getServer().isRunning() || !task.level.hasChunk(task.chunkPos.x, task.chunkPos.z)) {
                 queuedChunks.remove(task.chunkKey);
                 continue;
             }
 
-            // 确保 Chunk 已完全加载
+            // 确保 Chunk 已完全加�?
             if (task.level.getChunk(task.chunkPos.x, task.chunkPos.z, ChunkStatus.FULL, false) == null) {
-                pendingChunks.add(task); // 还没加载完，放回去下次再试
+                pendingChunks.add(task); // 还没加载完，放回去下次再�?
                 return; // 暂停处理后续任务
             }
 
@@ -70,7 +70,7 @@ public class RoadInjector {
             CityManager.get().ensureRoadsGenerated(task.cityId);
             generateRoadsInChunk(task.level, task.chunkPos, task.cityId);
 
-            // 标记未保存，确保改动被写入磁盘
+            // 标记未保存，确保改动被写入磁�?
             task.level.getChunk(task.chunkPos.x, task.chunkPos.z).setUnsaved(true);
 
             queuedChunks.remove(task.chunkKey);
@@ -107,7 +107,7 @@ public class RoadInjector {
                     // 1. 铺设路面 (Flag 3)
                     level.setBlock(roadPos, roadState, 3);
 
-                    // 2. 清理上方障碍物
+                    // 2. 清理上方障碍�?
                     clearObstacles(level, roadPos, airState, 1, clearHeight);
 
                     // 3. 向下夯实
@@ -118,12 +118,17 @@ public class RoadInjector {
                         below = below.below();
                         fillDepth++;
                     }
+                    updateLightingColumn(level, roadPos, 4);
 
-                    // 4. 【核心修复】垂直链路光照刷新
-                    // 我们刚刚制造了一个“空气柱”，需要告诉引擎整条柱子的光照都变了
-                    // 从路面上一格开始，一直到清理高度的上方一格
-                    for (int i = 1; i <= clearHeight + 1; i++) {
-                        lightEngine.checkBlock(roadPos.above(i));
+                    // 4. 【核心修复】垂直链路光照刷�?
+                    // 我们刚刚制造了一个“空气柱”，需要告诉引擎整条柱子的光照都变�?
+                    // 从路面上一格开始，一直到清理高度的上方一�?
+                    for (int dx = -1; dx <= 1; dx++) {
+                        for (int dz = -1; dz <= 1; dz++) {
+                            for (int dy = -4; dy <= clearHeight + 1; dy++) {
+                                lightEngine.checkBlock(roadPos.offset(dx, dy, dz));
+                            }
+                        }
                     }
                 }
             }
@@ -148,7 +153,7 @@ public class RoadInjector {
     }
 
     private static boolean isValidGround(BlockState state) {
-        // 地基必须是固体，且不能是原木或树叶
+        // 地基必须是固体，且不能是原木或树�?
         if (!state.isSolid()) return false;
         return !state.is(BlockTags.LOGS) && !state.is(BlockTags.LEAVES);
     }
@@ -163,7 +168,7 @@ public class RoadInjector {
                 for (int i = 1; i <= height; i++) {
                     BlockPos target = new BlockPos(baseX + dx, baseY + i, baseZ + dz);
                     BlockState state = level.getBlockState(target);
-                    // 只清除空气以外的方块，且不破坏基岩
+                    // 只清除空气以外的方块，且不破坏基�?
                     if (!state.isAir() && !state.is(Blocks.BEDROCK)) {
                         level.setBlock(target, airState, 3); // Flag 3 触发光照更新
                     }
@@ -172,9 +177,35 @@ public class RoadInjector {
         }
     }
 
+    
+    private static void updateLightingColumn(ServerLevel level, BlockPos basePos, int height) {
+        var lightEngine = level.getLightEngine();
+        for (int dy = 0; dy <= height; dy++) {
+            lightEngine.checkBlock(basePos.above(dy));
+        }
+    }
+
+    public static void resetProcessing() {
+        processedChunks.clear();
+        queuedChunks.clear();
+        pendingChunks.clear();
+    }
     private record RoadTask(ServerLevel level, ChunkPos chunkPos, String cityId, long chunkKey) {}
 
     private static long packBlock(int x, int z) {
         return (((long) x) << 32) ^ (z & 0xffffffffL);
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -31,6 +31,9 @@ import java.util.concurrent.Executors;
 import com.user.terra_script.world.city.CityConfig;
 import com.user.terra_script.world.city.CityManager;
 import com.user.terra_script.world.city.CityInstance;
+import com.user.terra_script.world.NationGenManager;
+import com.user.terra_script.world.city.CityStage1BinaryIO;
+import com.user.terra_script.world.city.CityProjectSnapshot;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -93,7 +96,7 @@ public class ModHttpServer {
                 } catch (Exception e) { handleError(exchange, e); }
             });
 
-// API 3: Query Region (双模：大陆/国度 + 聚类 + ASCII 地图)
+// API 3: Query Region (双模：大�?国度 + 聚类 + ASCII 地图)
             server.createContext("/query_region", exchange -> {
                 if (!"POST".equals(exchange.getRequestMethod())) {
                     sendResponse(exchange, 405, "Method Not Allowed");
@@ -116,8 +119,8 @@ public class ModHttpServer {
                     List<ScanPixel> rawCandidates = new ArrayList<>();
                     int step = 1;
 
-                    // 用于后续计算 Description 的辅助变量
-                    // 如果是 Region 模式，我们可以用精确的 slopeData；如果是 Territory 模式，只能近似
+                    // 用于后续计算 Description 的辅助变�?
+                    // 如果�?Region 模式，我们可以用精确�?slopeData；如果是 Territory 模式，只能近�?
                     ScanResultHolder.RegionCache refCache = null;
 
                     // --- 分支 1: 国度模式 (Territory Mode) ---
@@ -144,7 +147,7 @@ public class ModHttpServer {
                         int h = globalPixels[0].length;
                         int radiusBlocks = holder.scanRadiusChunks * 16;
                         int globalMinX = -radiusBlocks;
-                        int globalMinZ = -radiusBlocks; // 假设扫描以 0,0 为中心
+                        int globalMinZ = -radiusBlocks; // 假设扫描�?0,0 为中�?
 
                         // 计算网格范围 (Grid Range)
                         int gMinX = (targetRes.stats.minX - globalMinX) / step;
@@ -188,7 +191,7 @@ public class ModHttpServer {
                         int w = pixels.length;
                         int h = pixels[0].length;
 
-                        // 动态采样步长，防止点太密
+                        // 动态采样步长，防止点太�?
                         int sampleStep = 1;
                         if (w * h > 250000) sampleStep = 2;
 
@@ -226,18 +229,18 @@ public class ModHttpServer {
                         JsonObject clusterJson = AsciiMapGenerator.generate(count + 1, cluster);
 
                         // 补充描述信息
-                        // 如果有 refCache (Region模式)，用精确数据算均值；否则 (Territory模式)，用默认值
+                        // 如果�?refCache (Region模式)，用精确数据算均值；否则 (Territory模式)，用默认�?
                         double avgSlope = 0;
                         double avgTpi = 0;
 
-                        // 只有在 Region 模式下 (refCache != null) 才能精确计算地形均值
+                        // 只有�?Region 模式�?(refCache != null) 才能精确计算地形均�?
                         if (refCache != null) {
-                            final RegionCache finalCache = refCache; // 显式声明为 final 供 lambda 使用
+                            final RegionCache finalCache = refCache; // 显式声明�?final �?lambda 使用
 
                             avgSlope = cluster.stream().mapToDouble(p -> {
                                 int gx = (p.x - finalCache.minX) / finalCache.step;
                                 int gz = (p.z - finalCache.minZ) / finalCache.step;
-                                // 边界检查防止越界
+                                // 边界检查防止越�?
                                 if (gx >= 0 && gx < finalCache.slopeData.length && gz >= 0 && gz < finalCache.slopeData[0].length) {
                                     return finalCache.slopeData[gx][gz];
                                 }
@@ -308,7 +311,7 @@ public class ModHttpServer {
                         String id = json.get("id").getAsString();
                         String name = json.get("name").getAsString();
 
-                        // 1. 必填参数检查：如果没有 region_id，直接拒绝
+                        // 1. 必填参数检查：如果没有 region_id，直接拒�?
                         if (!json.has("region_id")) {
                             sendResponse(exchange, 400, "{\"error\": \"Missing required parameter: region_id\"}");
                             return;
@@ -366,7 +369,7 @@ public class ModHttpServer {
                             res.stats.continent_distribution.forEach((rid, pct) -> cont.addProperty(String.valueOf(rid), pct));
                             tObj.add("continent_distribution", cont);
 
-                            // 邻国及方位计算
+                            // 邻国及方位计�?
                             JsonObject neighbors = new JsonObject();
                             for (String nid : res.stats.neighborIds) {
                                 // 简单的方位计算：对方首都在我首都的哪个方向
@@ -397,6 +400,163 @@ public class ModHttpServer {
                 } catch (Exception e) { handleError(exchange, e); }
             });
 
+            
+            // API: Freeze Status
+            server.createContext("/freeze_status", exchange -> {
+                try {
+                    JsonObject res = new JsonObject();
+                    res.addProperty("frozen", NationGenManager.SnapshotManager.hasSnapshot());
+                    sendResponse(exchange, 200, gson.toJson(res));
+                } catch (Exception e) { handleError(exchange, e); }
+            });
+
+            // API: Freeze Project (Stage 0)
+            server.createContext("/freeze_project", exchange -> {
+                if (!"POST".equals(exchange.getRequestMethod())) {
+                    sendResponse(exchange, 405, "Only POST");
+                    return;
+                }
+                try {
+                    CityProjectSnapshot.FreezeResult result = NationGenManager.SnapshotManager.freezeIfNotFrozen();
+                    JsonObject res = new JsonObject();
+                    res.addProperty("ok", result.ok);
+                    res.addProperty("message", result.message);
+                    int code = result.ok ? 200 : ("already frozen".equals(result.message) ? 409 : 400);
+                    sendResponse(exchange, code, gson.toJson(res));
+                } catch (Exception e) { handleError(exchange, e); }
+            });
+            // API: Stage 1 heightmap window
+            server.createContext("/city_heightmap", exchange -> {
+                if (!"POST".equals(exchange.getRequestMethod())) {
+                    sendResponse(exchange, 405, "Only POST");
+                    return;
+                }
+                try {
+                    String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+                    JsonObject json = JsonParser.parseString(body).getAsJsonObject();
+                    String cityId = json.has("city_id") ? json.get("city_id").getAsString() : null;
+                    if (cityId == null || cityId.isBlank()) {
+                        sendResponse(exchange, 400, "{\"error\": \"Missing city_id\"}");
+                        return;
+                    }
+
+                    int minX = json.has("min_x") ? json.get("min_x").getAsInt() : Integer.MIN_VALUE;
+                    int minZ = json.has("min_z") ? json.get("min_z").getAsInt() : Integer.MIN_VALUE;
+                    int w = json.has("width") ? json.get("width").getAsInt() : -1;
+                    int h = json.has("height") ? json.get("height").getAsInt() : -1;
+
+                    CityStage1BinaryIO.HeightData data = CityStage1BinaryIO.loadHeightData(cityId);
+                    if (data == null) {
+                        sendResponse(exchange, 404, "{\"error\": \"Heightmap not found for: " + cityId + "\"}");
+                        return;
+                    }
+
+                    if (minX == Integer.MIN_VALUE || minZ == Integer.MIN_VALUE || w <= 0 || h <= 0) {
+                        sendResponse(exchange, 400, "{\"error\": \"min_x/min_z/width/height required\"}");
+                        return;
+                    }
+
+                    int startX = minX - data.originX;
+                    int startZ = minZ - data.originZ;
+                    if (startX < 0 || startZ < 0 || startX + w > data.width || startZ + h > data.height) {
+                        sendResponse(exchange, 400, "{\"error\": \"Requested window out of bounds\"}");
+                        return;
+                    }
+
+                    JsonObject res = new JsonObject();
+                    res.addProperty("origin_x", minX);
+                    res.addProperty("origin_z", minZ);
+                    res.addProperty("width", w);
+                    res.addProperty("height", h);
+
+                    JsonArray rows = new JsonArray();
+                    for (int z = 0; z < h; z++) {
+                        JsonArray row = new JsonArray();
+                        for (int x = 0; x < w; x++) {
+                            row.add(data.heightMap[startX + x][startZ + z]);
+                        }
+                        rows.add(row);
+                    }
+                    res.add("heights", rows);
+
+                    sendResponse(exchange, 200, gson.toJson(res));
+                } catch (Exception e) { handleError(exchange, e); }
+            });
+            // API: Stage 1 data fetch
+            server.createContext("/city_stage1_data", exchange -> {
+                if (!"POST".equals(exchange.getRequestMethod())) {
+                    sendResponse(exchange, 405, "Only POST");
+                    return;
+                }
+                try {
+                    String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+                    JsonObject json = JsonParser.parseString(body).getAsJsonObject();
+                    String cityId = json.has("city_id") ? json.get("city_id").getAsString() : null;
+                    if (cityId == null || cityId.isBlank()) {
+                        sendResponse(exchange, 400, "{\"error\": \"Missing city_id\"}");
+                        return;
+                    }
+
+                    var data = NationGenManager.Stage1Manager.load(cityId);
+                    if (data == null) {
+                        sendResponse(exchange, 404, "{\"error\": \"Stage1 not found for: " + cityId + "\"}");
+                        return;
+                    }
+
+                    sendResponse(exchange, 200, gson.toJson(data));
+                } catch (Exception e) { handleError(exchange, e); }
+            });
+
+            // API: Stage 1 forbidden blocks
+            server.createContext("/city_forbidden", exchange -> {
+                if (!"POST".equals(exchange.getRequestMethod())) {
+                    sendResponse(exchange, 405, "Only POST");
+                    return;
+                }
+                try {
+                    String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+                    JsonObject json = JsonParser.parseString(body).getAsJsonObject();
+                    String cityId = json.has("city_id") ? json.get("city_id").getAsString() : null;
+                    if (cityId == null || cityId.isBlank()) {
+                        sendResponse(exchange, 400, "{\"error\": \"Missing city_id\"}");
+                        return;
+                    }
+
+                    var data = CityStage1BinaryIO.loadForbidden(cityId);
+                    if (data == null) {
+                        sendResponse(exchange, 404, "{\"error\": \"Forbidden data not found for: " + cityId + "\"}");
+                        return;
+                    }
+
+                    sendResponse(exchange, 200, gson.toJson(data));
+                } catch (Exception e) { handleError(exchange, e); }
+            });
+
+            // API: Stage 1 buildable groups
+            server.createContext("/city_buildable_groups", exchange -> {
+                if (!"POST".equals(exchange.getRequestMethod())) {
+                    sendResponse(exchange, 405, "Only POST");
+                    return;
+                }
+                try {
+                    String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+                    JsonObject json = JsonParser.parseString(body).getAsJsonObject();
+                    String cityId = json.has("city_id") ? json.get("city_id").getAsString() : null;
+                    if (cityId == null || cityId.isBlank()) {
+                        sendResponse(exchange, 400, "{\"error\": \"Missing city_id\"}");
+                        return;
+                    }
+
+                    var data = CityStage1BinaryIO.loadBuildableGroups(cityId);
+                    if (data == null) {
+                        sendResponse(exchange, 404, "{\"error\": \"Buildable groups not found for: " + cityId + "\"}");
+                        return;
+                    }
+
+                    sendResponse(exchange, 200, gson.toJson(data));
+                } catch (Exception e) { handleError(exchange, e); }
+            });
+
             server.setExecutor(Executors.newFixedThreadPool(2, r -> {
                 Thread t = new Thread(r);
                 t.setDaemon(true);
@@ -420,7 +580,7 @@ public class ModHttpServer {
                         return;
                     }
 
-                    // 在主线程或通过 Manager 执行 (这里假设 Manager 内部处理了并发或就是纯数据计算)
+                    // 在主线程或通过 Manager 执行 (这里假设 Manager 内部处理了并发或就是纯数据计�?
                     CityInstance city = CityManager.get().createCity(config);
 
                     JsonObject res = new JsonObject();
@@ -447,7 +607,7 @@ public class ModHttpServer {
         os.close();
     }
 
-    // 简单的筛选逻辑 (Territory模式下暂不强制校验 Slope/TPI 以保证性能和可用性)
+    // 简单的筛选逻辑 (Territory模式下暂不强制校�?Slope/TPI 以保证性能和可用�?
     private static boolean checkCriteria(ScanPixel p, double minS, double maxS, double minT, double maxT) {
         return true;
     }
@@ -475,9 +635,19 @@ public class ModHttpServer {
         // ... dom biomes ...
         obj.add("ecology", eco);
 
-        // 注意：海洋通常没有 Detail 缓存，除非您特意去 scanRegion 编辑它
+        // 注意：海洋通常没有 Detail 缓存，除非您特意�?scanRegion 编辑�?
         obj.addProperty("has_detail", holder.regionCacheMap.containsKey(r.id));
 
         return obj;
     }
 }
+
+
+
+
+
+
+
+
+
+
