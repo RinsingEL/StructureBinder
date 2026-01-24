@@ -21,6 +21,7 @@ public class CityOverlayRenderer {
 
     private static final int COLOR_CORE   = 0xAAE53935; // 深红
     private static final int COLOR_URBAN  = 0xAAFB8C00; // 橙
+    private static final int COLOR_RING   = 0xAA1E88E5; // 蓝
     private static final int COLOR_BUFFER = 0xAA43A047; // 绿
     private static final int COLOR_BORDER = 0xCC000000; // 黑边
     private static final int COLOR_CENTER = 0xFFFFFFFF; // 白
@@ -45,7 +46,7 @@ public class CityOverlayRenderer {
 
         // 渲染城市区块
         for (CityLayout.CityChunk chunk : layout.chunks) {
-            int color = getZoneColor(chunk.zone);
+            int color = getZoneColor(chunk.zoneType);
             drawChunk(gui, transform, chunk.x, chunk.z, color);
         }
 
@@ -124,15 +125,16 @@ public class CityOverlayRenderer {
      * Zone → Color
      * ========================= */
 
-    private static int getZoneColor(CityLayout.ZoneType zone) {
-        if (zone == null) {
+    private static int getZoneColor(String zoneType) {
+        if (zoneType == null) {
             return 0xAA888888;
         }
-
-        return switch (zone) {
-            case CORE -> COLOR_CORE;
-            case URBAN -> COLOR_URBAN;
-            case BUFFER -> COLOR_BUFFER;
+        return switch (zoneType.toUpperCase(java.util.Locale.ROOT)) {
+            case "CORE" -> COLOR_CORE;
+            case "URBAN" -> COLOR_URBAN;
+            case "RING" -> COLOR_RING;
+            case "BUFFER" -> COLOR_BUFFER;
+            default -> 0xAA888888;
         };
     }
 

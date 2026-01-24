@@ -55,8 +55,26 @@ public class DevCommandHandler {
                                                 return 0;
                                             }
                                         })))
+                        .then(Commands.literal("stage2")
+                                .requires(src -> src.hasPermission(2))
+                                .then(Commands.argument("city_id", StringArgumentType.string())
+                                        .executes(ctx -> {
+                                            String cityId = StringArgumentType.getString(ctx, "city_id");
+                                            try {
+                                                var result = NationGenManager.Stage2Manager.computeAndSave(cityId);
+                                                if (result == null) {
+                                                    ctx.getSource().sendFailure(Component.literal("Stage1 not found for: " + cityId));
+                                                    return 0;
+                                                }
+                                                ctx.getSource().sendSuccess(() ->
+                                                        Component.literal("Stage2 computed for " + cityId), false);
+                                                return 1;
+                                            } catch (Exception e) {
+                                                ctx.getSource().sendFailure(Component.literal("Stage2 failed: " + e.getMessage()));
+                                                return 0;
+                                            }
+                                        })))
         );
     }
 }
-
 

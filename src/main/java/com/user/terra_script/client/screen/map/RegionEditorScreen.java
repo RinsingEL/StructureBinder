@@ -593,8 +593,8 @@ public class RegionEditorScreen extends Screen {
                 CityLayout.CityChunk cc = new CityLayout.CityChunk();
                 cc.x = net.minecraft.world.level.ChunkPos.getX(key);
                 cc.z = net.minecraft.world.level.ChunkPos.getZ(key);
-                // 简单的枚举转换
-                cc.zone = CityLayout.ZoneType.valueOf(type.name());
+                cc.zoneType = type.layerType;
+                cc.layerIndex = type.layerIndex;
                 layout.chunks.add(cc);
             });
 
@@ -605,7 +605,9 @@ public class RegionEditorScreen extends Screen {
                     CityLayout.DistrictRenderData dr = new CityLayout.DistrictRenderData();
                     dr.centerX = d.centerX;
                     dr.centerZ = d.centerZ;
-                    // dr.type = ...;
+                    dr.type = d.zoneType;
+                    dr.layerIndex = d.layerIndex;
+                    dr.density = d.density;
                     // dr.polygon = ...;
                     layout.districts.add(dr);
                 }

@@ -9,6 +9,7 @@ import com.user.terra_script.world.city.CityInstance;
 import com.user.terra_script.world.city.CityManager;
 import com.user.terra_script.world.city.CityProjectSnapshot;
 import com.user.terra_script.world.city.CityStage1Processor;
+import com.user.terra_script.world.city.CityStage2Processor;
 import com.user.terra_script.world.city.district.District;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.server.level.ServerLevel;
@@ -96,7 +97,10 @@ public class NationGenManager {
                     CityProjectSnapshot.ClaimedChunk cc = new CityProjectSnapshot.ClaimedChunk();
                     cc.x = ChunkPos.getX(key);
                     cc.z = ChunkPos.getZ(key);
-                    cc.zone = zone.name();
+                    String layerType = zone != null ? zone.layerType : "BUFFER";
+                    cc.zone = layerType;
+                    cc.layerType = layerType;
+                    cc.layerIndex = zone != null ? zone.layerIndex : 0;
                     cs.claimedChunks.add(cc);
                 });
 
@@ -107,6 +111,8 @@ public class NationGenManager {
                         ds.centerX = d.centerX;
                         ds.centerZ = d.centerZ;
                         ds.zoneType = d.zoneType;
+                        ds.layerIndex = d.layerIndex;
+                        ds.density = d.density;
                         for (long k : d.memberChunks) {
                             CityProjectSnapshot.ChunkCoord coord = new CityProjectSnapshot.ChunkCoord();
                             coord.x = ChunkPos.getX(k);
@@ -151,6 +157,29 @@ public class NationGenManager {
             cfg.bias = config.bias != null ? config.bias.name() : null;
             cfg.ecology = config.ecology != null ? config.ecology.name() : null;
             cfg.density = config.density;
+            CityConfig.LayerLayout layout = config.resolveLayerLayout();
+            cfg.layerCount = layout.layers.size();
+            cfg.layerThresholds = new java.util.ArrayList<>();
+            for (double t : layout.thresholds) cfg.layerThresholds.add(t);
+            cfg.layers = new java.util.ArrayList<>();
+            for (CityConfig.LayerConfig layer : layout.layers) {
+                CityConfig.LayerConfig copy = new CityConfig.LayerConfig();
+                copy.name = layer.name;
+                copy.type = layer.type;
+                copy.density = layer.density;
+                copy.ecology = layer.ecology;
+                copy.wallLayer = layer.wallLayer;
+                if (layer.wall != null) {
+                    CityConfig.WallConfig wallCopy = new CityConfig.WallConfig();
+                    wallCopy.type = layer.wall.type;
+                    wallCopy.thicknessBlocks = layer.wall.thicknessBlocks;
+                    if (layer.wall.gateCount != null) {
+                        wallCopy.gateCount = java.util.Arrays.copyOf(layer.wall.gateCount, layer.wall.gateCount.length);
+                    }
+                    copy.wall = wallCopy;
+                }
+                cfg.layers.add(copy);
+            }
             return cfg;
         }
 
@@ -181,6 +210,20 @@ public class NationGenManager {
                 e.printStackTrace();
                 return null;
             }
+        }
+    }
+
+    public static class Stage2Manager {
+        public static CityStage2Processor.Stage2Result computeAndSave(String cityId) throws Exception {
+            CityStage1Processor.Stage1Result stage1 = Stage1Manager.load(cityId);
+            if (stage1 == null) return null;
+            CityStage2Processor.Stage2Result result = CityStage2Processor.compute(stage1);
+            CityStage2Processor.save(result);
+            return result;
+        }
+
+        public static CityStage2Processor.Stage2Result load(String cityId) {
+            return CityStage2Processor.load(cityId);
         }
     }
 }

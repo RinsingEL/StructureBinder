@@ -10,8 +10,8 @@ public class CityInstance {
 
     // 核心数据：该城市占领的区块集合
     // Key: ChunkPos.asLong
-    // Value: CityZoneType (层级)
-    public Map<Long, CityZoneType> claimedChunks = new HashMap<>();
+    // Value: LayerAssignment (层级)
+    public Map<Long, LayerAssignment> claimedChunks = new HashMap<>();
 
     // 边界上的区块 (用于生成城墙)
     public Set<Long> borderChunks = new HashSet<>();
@@ -24,25 +24,32 @@ public class CityInstance {
 
     // XXX: 方块道路
     public Set<Long> roadBlocks = new HashSet<>();
+    public transient Map<Long, Integer> roadHeights = new HashMap<>();
+    public transient Set<Long> roadSlabBlocks = new HashSet<>();
 
     public transient boolean isRoadsGenerated = false;
+    public transient CityConfig.LayerLayout layerLayout;
 
     public CityInstance(String id, CityConfig config) {
         this.id = id;
         this.config = config;
     }
 
-    public enum CityZoneType {
-        CORE(0, 0.4f),    // 核心区 (0-40%)
-        URBAN(1, 0.85f),  // 城区 (40-85%)
-        BUFFER(2, 1.0f);  // 缓冲区 (85-100%)
+    public CityConfig.LayerLayout getLayerLayout() {
+        if (layerLayout == null) {
+            if (config == null) config = new CityConfig();
+            layerLayout = config.resolveLayerLayout();
+        }
+        return layerLayout;
+    }
 
-        public final int level;
-        public final float threshold; // 归一化代价阈值
+    public static class LayerAssignment {
+        public int layerIndex;
+        public String layerType;
 
-        CityZoneType(int level, float threshold) {
-            this.level = level;
-            this.threshold = threshold;
+        public LayerAssignment(int layerIndex, String layerType) {
+            this.layerIndex = layerIndex;
+            this.layerType = layerType;
         }
     }
 }

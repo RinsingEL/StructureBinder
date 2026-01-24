@@ -1,6 +1,7 @@
 package com.user.terra_script.world.city;
 
 import com.google.gson.*;
+import com.google.gson.reflect.TypeToken;
 import com.user.terra_script.client.data.ScanResultHolder;
 import com.user.terra_script.config.ForbiddenZoneConfig;
 import com.user.terra_script.scan.ScanPixel;
@@ -22,7 +23,7 @@ public class CityManager {
     // 存储所有生成的城市
     private final Map<String, CityInstance> cities = new ConcurrentHashMap<>();
 
-    // 全局城市占领�?(防止新城市覆盖旧城市)
+    // 全局城市占领�?(防止新城市覆盖旧城市)
     // Key: ChunkPos.asLong, Value: CityInstanceID
     private final Map<Long, String> globalCityChunkMap = new ConcurrentHashMap<>();
 
@@ -51,7 +52,7 @@ public class CityManager {
     }
 
     /**
-     * 创建并生成一个城�?
+     * 创建并生成一个城�?
      */
     public CityInstance createCity(CityConfig config) {
         String uid = "city_" + config.centerX + "_" + config.centerZ;
@@ -69,7 +70,7 @@ public class CityManager {
         // 执行扩张算法
         expandCity(city);
 
-        // 注册或修�?
+        // 注册或修�?
         cities.put(uid, city);
         city.districts = VoronoiComputer.computeDistricts(city);
 
@@ -83,6 +84,7 @@ public class CityManager {
     private void expandCity(CityInstance city) {
         var holder = ScanResultHolder.get();
         if (holder.lastScanData == null) return;
+        CityConfig.LayerLayout layout = city.getLayerLayout();
 
         // 1. 准备数据
         int startChunkX = city.config.centerX >> 4;
@@ -93,19 +95,19 @@ public class CityManager {
         PriorityQueue<double[]> pq = new PriorityQueue<>(Comparator.comparingDouble(a -> a[0]));
         Map<Long, Double> costMap = new HashMap<>();
 
-        // 初始�?
+        // 初始�?
         pq.add(new double[]{0.0, startChunkX, startChunkZ});
         costMap.put(centerKey, 0.0);
 
-        // 辅助：获取该国度的领土范�?(用于边界检�?
-        // 只有属于�?territoryId 的区块才能扩�?
-        // 这一步需要在 TerritoryManager 里加一�?helper method: isChunkOwnedBy(long chunkKey, String territoryId)
+        // 辅助：获取该国度的领土范�?(用于边界检�?
+        // 只有属于�?territoryId 的区块才能扩�?
+        // 这一步需要在 TerritoryManager 里加一�?helper method: isChunkOwnedBy(long chunkKey, String territoryId)
 
         int targetSize = city.config.targetChunkCount;
         int currentSize = 0;
         double maxCostReached = 0.0;
 
-        int[][] dirs = {{0,1}, {0,-1}, {1,0}, {-1,0}}; // 4方向，城市可以方正一点，或者用8方向更圆�?
+        int[][] dirs = {{0,1}, {0,-1}, {1,0}, {-1,0}}; // 4方向，城市可以方正一点，或者用8方向更圆�?
 
         while (!pq.isEmpty() && currentSize < targetSize) {
             double[] curr = pq.poll();
@@ -119,8 +121,10 @@ public class CityManager {
 
             // 真正接纳这个区块
             if (!city.claimedChunks.containsKey(key)) {
-                // 默认先设�?BUFFER，后面统一分层
-                city.claimedChunks.put(key, CityInstance.CityZoneType.BUFFER);
+                // 默认先设为最外层，后面统一分层
+                int lastIndex = layout.layers.size() - 1;
+                String layerType = layout.layerAt(lastIndex).type;
+                city.claimedChunks.put(key, new CityInstance.LayerAssignment(lastIndex, layerType));
                 globalCityChunkMap.put(key, city.id);
                 currentSize++;
                 maxCostReached = Math.max(maxCostReached, currentCost);
@@ -132,10 +136,10 @@ public class CityManager {
                 int nz = cz + d[1];
                 long nKey = ChunkPos.asLong(nx, nz);
 
-                // 检�?: 是否已被任何城市占领
+                // 检�?: 是否已被任何城市占领
                 if (globalCityChunkMap.containsKey(nKey)) continue;
 
-                // 检�?: 是否在国境线�?(重要!)
+                // 检�?: 是否在国境线�?(重要!)
                 // if (!TerritoryManager.isOwnedBy(nKey, city.config.territoryId)) continue;
                 // 这里暂时注释，需要在 TerritoryManager 实现对应接口
 
@@ -151,19 +155,13 @@ public class CityManager {
         }
 
         // 2. 后处理：根据 Cost 分层 (Core / Urban / Buffer)
-        for (Map.Entry<Long, CityInstance.CityZoneType> entry : city.claimedChunks.entrySet()) {
+        for (Map.Entry<Long, CityInstance.LayerAssignment> entry : city.claimedChunks.entrySet()) {
             long key = entry.getKey();
             double cost = costMap.getOrDefault(key, maxCostReached);
             double ratio = (maxCostReached > 0) ? (cost / maxCostReached) : 0;
-
-            if (ratio <= CityInstance.CityZoneType.CORE.threshold) {
-                entry.setValue(CityInstance.CityZoneType.CORE);
-            } else if (ratio <= CityInstance.CityZoneType.URBAN.threshold) {
-                entry.setValue(CityInstance.CityZoneType.URBAN);
-            } else {
-                entry.setValue(CityInstance.CityZoneType.BUFFER);
-                city.borderChunks.add(key); // 简单的边界识别，后续可�?Alpha Shape 优化
-            }
+            int layerIndex = layout.indexForRatio(ratio);
+            CityConfig.LayerConfig layer = layout.layerAt(layerIndex);
+            entry.setValue(new CityInstance.LayerAssignment(layerIndex, layer.type));
         }
 
         computeBorderChunks(city);
@@ -178,7 +176,7 @@ public class CityManager {
         double cost = 1.0;
 
         // 1. 获取地形数据 (取区块中心点采样)
-        // 转换�?Global Scan 坐标�?(假设 holder.lastScanData 是以 (0,0) 为中�?
+        // 转换�?Global Scan 坐标�?(假设 holder.lastScanData 是以 (0,0) 为中�?
         int step = holder.scanStep;
         if (step <= 0) step = 1;
 
@@ -186,11 +184,11 @@ public class CityManager {
         int globalMinX = -radiusBlocks;
         int globalMinZ = -radiusBlocks;
 
-        // 区块中心的世界坐�?
+        // 区块中心的世界坐�?
         int worldX = (chunkX * 16) + 8;
         int worldZ = (chunkZ * 16) + 8;
 
-        // 映射�?scanData 数组索引
+        // 映射�?scanData 数组索引
         int gx = (worldX - globalMinX) / step;
         int gz = (worldZ - globalMinZ) / step;
 
@@ -202,31 +200,31 @@ public class CityManager {
         // 如果数据缺失，给一个中等惩罚，防止报错
         if (p == null) return 5.0;
 
-        // 2. 偏好偏移 (Bias) - 引导城市向特定方向生�?
+        // 2. 偏好偏移 (Bias) - 引导城市向特定方向生�?
         int dx = worldX - config.centerX;
         int dz = worldZ - config.centerZ;
 
-        // 简单的线性势�?
+        // 简单的线性势�?
         if (config.bias == CityConfig.ExpansionBias.NORTH && dz > 0) cost += 1.5; // 往南走更贵
         if (config.bias == CityConfig.ExpansionBias.SOUTH && dz < 0) cost += 1.5;
         if (config.bias == CityConfig.ExpansionBias.EAST && dx < 0) cost += 1.5;
         if (config.bias == CityConfig.ExpansionBias.WEST && dx > 0) cost += 1.5;
 
         // 3. 地形代价
-        // 这里只是粗略判断，因�?p 是单点采样�?
-        // 理想情况应该�?Chunk �?16x16 的平均斜率，但那样太慢�?
-        // 我们可以�?holder.lastScanData[gx][gz] 周围点的差值来估算宏观斜率�?
+        // 这里只是粗略判断，因�?p 是单点采样�?
+        // 理想情况应该�?Chunk �?16x16 的平均斜率，但那样太慢�?
+        // 我们可以�?holder.lastScanData[gx][gz] 周围点的差值来估算宏观斜率�?
 
         // 4. 水域代价
         if (!p.isLand()) {
             if (config.bias == CityConfig.ExpansionBias.COASTAL) {
-                cost += 0.5; // 沿海城市下水容易�?
+                cost += 0.5; // 沿海城市下水容易�?
             } else {
                 cost += 10.0; // 内陆城市极难下水
             }
         } else {
-            // 如果是陆地，但倾向于内�?(INLAND)，则离水越近代价越高�?
-            // 这需要距离场计算，暂时忽略�?
+            // 如果是陆地，但倾向于内�?(INLAND)，则离水越近代价越高�?
+            // 这需要距离场计算，暂时忽略�?
         }
 
         return cost;
@@ -235,17 +233,63 @@ public class CityManager {
     
     private void computeBorderChunks(CityInstance city) {
         city.borderChunks.clear();
+        if (city.claimedChunks == null || city.claimedChunks.isEmpty()) return;
+
+        CityConfig.LayerLayout layout = city.getLayerLayout();
+        boolean useWallLayers = hasWallLayers(layout);
+
         for (long key : city.claimedChunks.keySet()) {
             int cx = ChunkPos.getX(key);
             int cz = ChunkPos.getZ(key);
 
-            if (!city.claimedChunks.containsKey(ChunkPos.asLong(cx + 1, cz)) ||
-                    !city.claimedChunks.containsKey(ChunkPos.asLong(cx - 1, cz)) ||
-                    !city.claimedChunks.containsKey(ChunkPos.asLong(cx, cz + 1)) ||
-                    !city.claimedChunks.containsKey(ChunkPos.asLong(cx, cz - 1))) {
-                city.borderChunks.add(key);
+            if (useWallLayers) {
+                CityInstance.LayerAssignment assignment = city.claimedChunks.get(key);
+                if (!isWallLayer(layout, assignment)) continue;
+                if (isLayerBoundary(city, assignment.layerIndex, cx, cz)) {
+                    city.borderChunks.add(key);
+                }
+            } else {
+                if (!city.claimedChunks.containsKey(ChunkPos.asLong(cx + 1, cz)) ||
+                        !city.claimedChunks.containsKey(ChunkPos.asLong(cx - 1, cz)) ||
+                        !city.claimedChunks.containsKey(ChunkPos.asLong(cx, cz + 1)) ||
+                        !city.claimedChunks.containsKey(ChunkPos.asLong(cx, cz - 1))) {
+                    city.borderChunks.add(key);
+                }
             }
         }
+    }
+
+    private boolean hasWallLayers(CityConfig.LayerLayout layout) {
+        if (layout == null || layout.layers == null) return false;
+        for (CityConfig.LayerConfig layer : layout.layers) {
+            if (layer == null) continue;
+            if (layer.wallLayer || layer.wall != null) return true;
+        }
+        return false;
+    }
+
+    private boolean isWallLayer(CityConfig.LayerLayout layout, CityInstance.LayerAssignment assignment) {
+        if (layout == null || assignment == null) return false;
+        CityConfig.LayerConfig layer = layout.layerAt(assignment.layerIndex);
+        return layer.wallLayer || layer.wall != null;
+    }
+
+    private boolean isLayerBoundary(CityInstance city, int layerIndex, int cx, int cz) {
+        long northKey = ChunkPos.asLong(cx, cz - 1);
+        long southKey = ChunkPos.asLong(cx, cz + 1);
+        long westKey = ChunkPos.asLong(cx - 1, cz);
+        long eastKey = ChunkPos.asLong(cx + 1, cz);
+
+        return isDifferentLayer(city, layerIndex, northKey)
+                || isDifferentLayer(city, layerIndex, southKey)
+                || isDifferentLayer(city, layerIndex, westKey)
+                || isDifferentLayer(city, layerIndex, eastKey);
+    }
+
+    private boolean isDifferentLayer(CityInstance city, int layerIndex, long neighborKey) {
+        CityInstance.LayerAssignment neighbor = city.claimedChunks.get(neighborKey);
+        if (neighbor == null) return true;
+        return neighbor.layerIndex != layerIndex;
     }
     
     public Set<Long> getForbiddenBlocksFromConfig(String cityId) {
@@ -284,28 +328,73 @@ public class CityManager {
                     JsonObject obj = new JsonObject();
                     obj.addProperty("id", city.id);
 
+                    if (city.config != null) {
+                        obj.addProperty("territory", city.config.territoryId);
+                        obj.addProperty("continent_id", city.config.continentId);
+                        obj.addProperty("center_x", city.config.centerX);
+                        obj.addProperty("center_z", city.config.centerZ);
+                        obj.addProperty("target_size", city.config.targetChunkCount);
+                        if (city.config.bias != null) obj.addProperty("bias", city.config.bias.name());
+                        if (city.config.ecology != null) obj.addProperty("ecology", city.config.ecology.name());
+                        if (city.config.density != null) obj.addProperty("density", city.config.density);
+                    }
+
+                    CityConfig.LayerLayout layout = city.getLayerLayout();
+                    obj.addProperty("layer_count", layout.layers.size());
+                    JsonArray thresholdArr = new JsonArray();
+                    for (double t : layout.thresholds) thresholdArr.add(t);
+                    obj.add("layer_thresholds", thresholdArr);
+                    JsonArray layerArr = new JsonArray();
+                    for (CityConfig.LayerConfig layer : layout.layers) {
+                        JsonObject layerObj = new JsonObject();
+                        layerObj.addProperty("name", layer.name);
+                        layerObj.addProperty("type", layer.type);
+                        layerObj.addProperty("density", layer.density);
+                        if (layer.ecology != null) layerObj.addProperty("ecology", layer.ecology.name());
+                        layerObj.addProperty("wall_layer", layer.wallLayer);
+                        if (layer.wall != null) {
+                            JsonObject wallObj = new JsonObject();
+                            wallObj.addProperty("type", layer.wall.type);
+                            wallObj.addProperty("thickness_blocks", layer.wall.thicknessBlocks);
+                            if (layer.wall.gateCount != null) {
+                                JsonArray gateArr = new JsonArray();
+                                for (int g : layer.wall.gateCount) gateArr.add(g);
+                                wallObj.add("gate_count", gateArr);
+                            }
+                            layerObj.add("wall", wallObj);
+                        }
+                        layerArr.add(layerObj);
+                    }
+                    obj.add("layers", layerArr);
+
                     JsonArray chunks = new JsonArray();
                     city.claimedChunks.forEach((key, type) -> {
                         JsonObject c = new JsonObject();
                         c.addProperty("x", ChunkPos.getX(key));
                         c.addProperty("z", ChunkPos.getZ(key));
-                        String tShort = type.name().substring(0, 1);
-                        c.addProperty("t", tShort);
+                        String layerType = type != null ? CityConfig.normalizeLayerType(type.layerType) : null;
+                        if (layerType == null || layerType.isBlank()) layerType = "BUFFER";
+                        int layerIndex = type != null ? type.layerIndex : (layout.layers.size() - 1);
+                        c.addProperty("t", layerType != null && !layerType.isBlank() ? layerType.substring(0, 1) : "B");
+                        c.addProperty("type", layerType);
+                        c.addProperty("layer", layerIndex);
                         chunks.add(c);
                     });
                     obj.add("chunks", chunks);
 
-                    // 2. 【新增】导�?Districts (撒点数据)
+                    // 2. 【新增】导�?Districts (撒点数据)
                     if (city.districts != null) {
                         JsonArray dists = new JsonArray();
                         for (var d : city.districts) {
                             JsonObject dObj = new JsonObject();
                             dObj.addProperty("id", d.id);
-                            // 保留 2 位小数即�?
+                            // 保留 2 位小数即�?
                             dObj.addProperty("x", Math.round(d.centerX * 100) / 100.0);
                             dObj.addProperty("z", Math.round(d.centerZ * 100) / 100.0);
                             dObj.addProperty("type", d.zoneType);
-                            // 环境属�?
+                            dObj.addProperty("layer", d.layerIndex);
+                            if (d.density != null) dObj.addProperty("density", d.density);
+                            // 环境属�?
                             dObj.addProperty("water_dist", d.waterDistance);
                             dObj.addProperty("slope", d.avgSlope);
 
@@ -338,7 +427,7 @@ public class CityManager {
         if (!EXPORT_FILE.exists()) return;
         try {
             String json = Files.readString(EXPORT_FILE.toPath());
-            if (json == null || json.isBlank()) return; // 空文件保�?
+            if (json == null || json.isBlank()) return; // 空文件保�?
 
             JsonArray arr = GSON.fromJson(json, JsonArray.class);
             if (arr == null) return;
@@ -350,11 +439,11 @@ public class CityManager {
                 JsonObject obj = el.getAsJsonObject();
 
                 CityConfig cfg = new CityConfig();
-                // 必须字段，如果没有则跳过该条目或赋默认�?
+                // 必须字段，如果没有则跳过该条目或赋默认�?
                 if (!obj.has("id")) continue;
                 cfg.cityInstanceId = obj.get("id").getAsString();
 
-                // 可选字段，带默认�?
+                // 可选字段，带默认�?
                 cfg.territoryId = obj.has("territory") && !obj.get("territory").isJsonNull() ? obj.get("territory").getAsString() : "unknown";
                 cfg.continentId = obj.has("continent_id") ? obj.get("continent_id").getAsInt() : 0;
                 cfg.centerX = obj.has("center_x") ? obj.get("center_x").getAsInt() : 0;
@@ -369,7 +458,23 @@ public class CityManager {
                     if (obj.has("ecology")) cfg.ecology = CityConfig.EcologyPolicy.valueOf(obj.get("ecology").getAsString());
                 } catch (Exception e) { cfg.ecology = CityConfig.EcologyPolicy.ADAPTIVE; }
 
+                if (obj.has("density") && !obj.get("density").isJsonNull()) {
+                    cfg.density = obj.get("density").getAsString();
+                }
+
+                if (obj.has("layer_count")) cfg.layerCount = obj.get("layer_count").getAsInt();
+                if (obj.has("layer_thresholds")) {
+                    cfg.layerThresholds = new ArrayList<>();
+                    for (JsonElement elThreshold : obj.getAsJsonArray("layer_thresholds")) {
+                        cfg.layerThresholds.add(elThreshold.getAsDouble());
+                    }
+                }
+                if (obj.has("layers")) {
+                    cfg.layers = GSON.fromJson(obj.get("layers"), new TypeToken<List<CityConfig.LayerConfig>>(){}.getType());
+                }
+
                 CityInstance city = new CityInstance(cfg.cityInstanceId, cfg);
+                CityConfig.LayerLayout layout = city.getLayerLayout();
 
                 // 恢复区块
                 if (obj.has("chunks")) {
@@ -377,26 +482,38 @@ public class CityManager {
                         JsonObject c = cEl.getAsJsonObject();
                         int x = c.get("x").getAsInt();
                         int z = c.get("z").getAsInt();
-                        String typeStr = c.has("t") ? c.get("t").getAsString() : "B";
-
-                        CityInstance.CityZoneType type = CityInstance.CityZoneType.BUFFER;
-                        if (typeStr.equals("C") || typeStr.equals("CORE")) type = CityInstance.CityZoneType.CORE;
-                        else if (typeStr.equals("U") || typeStr.equals("URBAN")) type = CityInstance.CityZoneType.URBAN;
+                        String typeStr = null;
+                        if (c.has("type") && !c.get("type").isJsonNull()) {
+                            typeStr = c.get("type").getAsString();
+                        } else if (c.has("t")) {
+                            String shortType = c.get("t").getAsString();
+                            if ("C".equalsIgnoreCase(shortType)) typeStr = "CORE";
+                            else if ("U".equalsIgnoreCase(shortType)) typeStr = "URBAN";
+                            else if ("R".equalsIgnoreCase(shortType)) typeStr = "RING";
+                            else typeStr = "BUFFER";
+                        }
+                        String layerType = CityConfig.normalizeLayerType(typeStr);
+                        if (layerType == null || layerType.isBlank()) layerType = "BUFFER";
+                        int layerIndex = c.has("layer") ? c.get("layer").getAsInt() : -1;
+                        if (layerIndex < 0) {
+                            layerIndex = layout.findLayerIndexByType(layerType);
+                            if (layerIndex < 0) layerIndex = layout.layers.size() - 1;
+                        }
 
                         long key = ChunkPos.asLong(x, z);
-                        city.claimedChunks.put(key, type);
+                        city.claimedChunks.put(key, new CityInstance.LayerAssignment(layerIndex, layerType));
                         globalCityChunkMap.put(key, city.id);
                     }
                 }
 
-                // 恢复区划 (如果之前存了的话，没存就重新�?
+                // 恢复区划 (如果之前存了的话，没存就重新�?
                 if (obj.has("districts")) {
                     // TODO: 解析 district 数据
                     // 为了简化，这里可以不解析，而是调用 VoronoiComputer.computeDistricts(city) 重新生成
                     // 只要种子随机数是一样的，结果就是一样的
                     city.districts = VoronoiComputer.computeDistricts(city);
                 } else {
-                    // 兼容旧数�?
+                    // 兼容旧数�?
                     city.districts = VoronoiComputer.computeDistricts(city);
                 }
 
@@ -406,19 +523,19 @@ public class CityManager {
 
         } catch (Exception e) {
             e.printStackTrace();
-            // 如果文件损坏，可以选择删除它，或者只是报�?
+            // 如果文件损坏，可以选择删除它，或者只是报�?
             System.err.println("[CityManager] Failed to load cities: " + e.getMessage());
         }
     }
 
     /**
-     * 确保该城市的道路数据已生�?(懒加�?
+     * 确保该城市的道路数据已生�?(懒加�?
      */
     public void ensureRoadsGenerated(String cityId) {
         CityInstance city = cities.get(cityId);
         if (city == null || city.isRoadsGenerated) return;
 
-        synchronized (city) { // 防止多线程重复计�?
+        synchronized (city) { // 防止多线程重复计�?
             if (city.isRoadsGenerated) return;
 
             System.out.println("[CityManager] Lazy-generating roads for " + cityId + "...");
@@ -430,7 +547,10 @@ public class CityManager {
             }
 
             if (!city.districts.isEmpty()) {
-                city.roadBlocks = VoronoiComputer.computeSmoothRoads(city.districts);
+                VoronoiComputer.RoadPlan plan = VoronoiComputer.computeSmoothRoadPlan(city.districts);
+                city.roadBlocks = plan.blocks;
+                city.roadHeights = plan.heights;
+                city.roadSlabBlocks = plan.slabBlocks;
             }
 
             city.isRoadsGenerated = true;
@@ -438,6 +558,7 @@ public class CityManager {
         }
     }
 }
+
 
 
 

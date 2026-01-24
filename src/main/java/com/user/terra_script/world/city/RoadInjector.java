@@ -6,7 +6,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.SlabBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.SlabType;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.tags.BlockTags;
@@ -26,7 +28,7 @@ public class RoadInjector {
     private static final Set<Long> processedChunks = ConcurrentHashMap.newKeySet();
     private static final Set<Long> queuedChunks = ConcurrentHashMap.newKeySet();
     private static final Queue<RoadTask> pendingChunks = new ConcurrentLinkedQueue<>();
-    private static final int CHUNKS_PER_TICK = 2; // �?tick 处理多少�?chunk
+    private static final int CHUNKS_PER_TICK = 2; // �?tick 处理多少�?chunk
 
     @SubscribeEvent
     public static void onChunkLoad(ChunkEvent.Load event) {
@@ -54,15 +56,15 @@ public class RoadInjector {
             RoadTask task = pendingChunks.poll();
             if (task == null) return;
 
-            // 再次检查世界状�?
+            // 再次检查世界状�?
             if (!task.level.getServer().isRunning() || !task.level.hasChunk(task.chunkPos.x, task.chunkPos.z)) {
                 queuedChunks.remove(task.chunkKey);
                 continue;
             }
 
-            // 确保 Chunk 已完全加�?
+            // 确保 Chunk 已完全加�?
             if (task.level.getChunk(task.chunkPos.x, task.chunkPos.z, ChunkStatus.FULL, false) == null) {
-                pendingChunks.add(task); // 还没加载完，放回去下次再�?
+                pendingChunks.add(task); // 还没加载完，放回去下次再�?
                 return; // 暂停处理后续任务
             }
 
@@ -70,7 +72,7 @@ public class RoadInjector {
             CityManager.get().ensureRoadsGenerated(task.cityId);
             generateRoadsInChunk(task.level, task.chunkPos, task.cityId);
 
-            // 标记未保存，确保改动被写入磁�?
+            // 标记未保存，确保改动被写入磁�?
             task.level.getChunk(task.chunkPos.x, task.chunkPos.z).setUnsaved(true);
 
             queuedChunks.remove(task.chunkKey);
@@ -83,6 +85,7 @@ public class RoadInjector {
         if (city == null || city.roadBlocks == null) return;
 
         BlockState roadState = Blocks.COBBLESTONE.defaultBlockState();
+        BlockState slabState = Blocks.COBBLESTONE_SLAB.defaultBlockState().setValue(SlabBlock.TYPE, SlabType.BOTTOM);
         BlockState airState = Blocks.AIR.defaultBlockState();
         BlockState fillState = Blocks.DIRT.defaultBlockState();
 
@@ -101,13 +104,22 @@ public class RoadInjector {
                 long blockKey = packBlock(worldX, worldZ);
 
                 if (city.roadBlocks.contains(blockKey)) {
-                    int roadY = findRoadBaseY(level, worldX, worldZ);
+                    Integer plannedY = city.roadHeights != null ? city.roadHeights.get(blockKey) : null;
+                    int groundY = findRoadBaseY(level, worldX, worldZ);
+                    if (plannedY != null && (groundY - plannedY) > 10) {
+                        continue;
+                    }
+                    int roadY = plannedY != null ? Math.max(plannedY, groundY) : groundY;
                     BlockPos roadPos = new BlockPos(worldX, roadY, worldZ);
 
                     // 1. 铺设路面 (Flag 3)
-                    level.setBlock(roadPos, roadState, 3);
+                    BlockState placeState = roadState;
+                    if (city.roadSlabBlocks != null && city.roadSlabBlocks.contains(blockKey)) {
+                        placeState = slabState;
+                    }
+                    level.setBlock(roadPos, placeState, 3);
 
-                    // 2. 清理上方障碍�?
+                    // 2. 清理上方障碍�?
                     clearObstacles(level, roadPos, airState, 1, clearHeight);
 
                     // 3. 向下夯实
@@ -120,9 +132,9 @@ public class RoadInjector {
                     }
                     updateLightingColumn(level, roadPos, 4);
 
-                    // 4. 【核心修复】垂直链路光照刷�?
-                    // 我们刚刚制造了一个“空气柱”，需要告诉引擎整条柱子的光照都变�?
-                    // 从路面上一格开始，一直到清理高度的上方一�?
+                    // 4. 【核心修复】垂直链路光照刷�?
+                    // 我们刚刚制造了一个“空气柱”，需要告诉引擎整条柱子的光照都变�?
+                    // 从路面上一格开始，一直到清理高度的上方一�?
                     for (int dx = -1; dx <= 1; dx++) {
                         for (int dz = -1; dz <= 1; dz++) {
                             for (int dy = -4; dy <= clearHeight + 1; dy++) {
@@ -153,7 +165,7 @@ public class RoadInjector {
     }
 
     private static boolean isValidGround(BlockState state) {
-        // 地基必须是固体，且不能是原木或树�?
+        // 地基必须是固体，且不能是原木或树�?
         if (!state.isSolid()) return false;
         return !state.is(BlockTags.LOGS) && !state.is(BlockTags.LEAVES);
     }
@@ -168,7 +180,7 @@ public class RoadInjector {
                 for (int i = 1; i <= height; i++) {
                     BlockPos target = new BlockPos(baseX + dx, baseY + i, baseZ + dz);
                     BlockState state = level.getBlockState(target);
-                    // 只清除空气以外的方块，且不破坏基�?
+                    // 只清除空气以外的方块，且不破坏基�?
                     if (!state.isAir() && !state.is(Blocks.BEDROCK)) {
                         level.setBlock(target, airState, 3); // Flag 3 触发光照更新
                     }
@@ -196,6 +208,7 @@ public class RoadInjector {
         return (((long) x) << 32) ^ (z & 0xffffffffL);
     }
 }
+
 
 
 

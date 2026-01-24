@@ -40,6 +40,8 @@ public class CityStage1Processor {
         public transient List<List<BlockCoord>> buildableGroups = new ArrayList<>();
         public List<BuildableStats> buildableStats = new ArrayList<>();
         public Map<Integer, String> districtZones = new HashMap<>();
+        public Map<Integer, Integer> districtLayers = new HashMap<>();
+        public Map<Integer, String> districtDensities = new HashMap<>();
     }
 
     public static class ForbiddenBlock {
@@ -68,6 +70,8 @@ public class CityStage1Processor {
     public static Stage1Result compute(ServerLevel level, CityInstance city) {
         Stage1Result result = new Stage1Result();
         result.cityId = city.id;
+
+        ensureCityChunksLoaded(level, city);
 
         Bounds bounds = computeBounds(city.claimedChunks.keySet());
         result.originX = bounds.minX;
@@ -141,6 +145,8 @@ public class CityStage1Processor {
                 bounds
         );
         result.districtZones = buildDistrictZones(city);
+        result.districtLayers = buildDistrictLayers(city);
+        result.districtDensities = buildDistrictDensities(city);
         return result;
     }
 
@@ -235,6 +241,15 @@ public class CityStage1Processor {
     private static boolean isLiquid(ServerLevel level, int worldX, int worldZ, int surfaceY) {
         BlockPos pos = new BlockPos(worldX, surfaceY - 1, worldZ);
         return !level.getFluidState(pos).isEmpty();
+    }
+
+    private static void ensureCityChunksLoaded(ServerLevel level, CityInstance city) {
+        if (city == null || city.claimedChunks == null) return;
+        for (long chunkKey : city.claimedChunks.keySet()) {
+            int cx = ChunkPos.getX(chunkKey);
+            int cz = ChunkPos.getZ(chunkKey);
+            level.getChunk(cx, cz, net.minecraft.world.level.chunk.ChunkStatus.FULL, true);
+        }
     }
 
     private static List<List<BlockCoord>> groupBuildable(Set<Long> buildable) {
@@ -368,6 +383,26 @@ public class CityStage1Processor {
             zones.put(district.id, district.zoneType);
         }
         return zones;
+    }
+
+    private static Map<Integer, Integer> buildDistrictLayers(CityInstance city) {
+        Map<Integer, Integer> layers = new HashMap<>();
+        if (city.districts == null) return layers;
+        for (District district : city.districts) {
+            if (district == null) continue;
+            layers.put(district.id, district.layerIndex);
+        }
+        return layers;
+    }
+
+    private static Map<Integer, String> buildDistrictDensities(CityInstance city) {
+        Map<Integer, String> densities = new HashMap<>();
+        if (city.districts == null) return densities;
+        for (District district : city.districts) {
+            if (district == null) continue;
+            densities.put(district.id, district.density);
+        }
+        return densities;
     }
 
     private static Bounds computePolygonBounds(List<double[]> poly) {

@@ -14,7 +14,9 @@ public class CityLayout {
     public static class DistrictRenderData {
         public int id;
         public double centerX, centerZ;
-        public ZoneType type;
+        public String type;
+        public int layerIndex;
+        public String density;
         public List<Point2D> polygon; // 多边形顶点序列 (有序)
     }
 
@@ -33,11 +35,8 @@ public class CityLayout {
     public static class CityChunk {
         public int x;     // chunk x
         public int z;     // chunk z
-        public ZoneType zone;
-    }
-
-    public enum ZoneType {
-        CORE, URBAN, BUFFER
+        public String zoneType;
+        public int layerIndex;
     }
 
 

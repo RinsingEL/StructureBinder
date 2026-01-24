@@ -11,7 +11,9 @@ public class District {
 
     // 归属信息
     public String cityId;
-    public String zoneType; // CORE, URBAN, BUFFER
+    public String zoneType; // CORE, URBAN, RING, BUFFER
+    public int layerIndex;
+    public String density;
 
     // AI 决策依据 (Field Data)
     public double avgSlope;

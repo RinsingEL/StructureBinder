@@ -68,12 +68,17 @@ public class CityProjectSnapshot {
         public String bias;
         public String ecology;
         public String density;
+        public int layerCount;
+        public List<Double> layerThresholds = new ArrayList<>();
+        public List<CityConfig.LayerConfig> layers = new ArrayList<>();
     }
 
     public static class ClaimedChunk {
         public int x;
         public int z;
         public String zone;
+        public String layerType;
+        public int layerIndex;
     }
 
     public static class ChunkCoord {
@@ -90,6 +95,8 @@ public class CityProjectSnapshot {
         public int id;
         public double centerX, centerZ;
         public String zoneType;
+        public int layerIndex;
+        public String density;
         public List<ChunkCoord> memberChunks = new ArrayList<>();
         public List<Point2D> polygon = new ArrayList<>();
     }

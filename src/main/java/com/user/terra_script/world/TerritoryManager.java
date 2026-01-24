@@ -60,6 +60,18 @@ public class TerritoryManager {
         public Map<String, Double> biome_composition = new HashMap<>();
     }
 
+    private static class RegionTerrainAggregate {
+        public final double[][] slopeAvg;
+        public final double[][] landRatio;
+        public final boolean[][] hasData;
+
+        public RegionTerrainAggregate(double[][] slopeAvg, double[][] landRatio, boolean[][] hasData) {
+            this.slopeAvg = slopeAvg;
+            this.landRatio = landRatio;
+            this.hasData = hasData;
+        }
+    }
+
     private static final List<TerritoryConfig> registeredFactions = new ArrayList<>();
     private static final Map<String, TerritoryResult> results = new ConcurrentHashMap<>();
 
@@ -123,6 +135,8 @@ public class TerritoryManager {
         PriorityQueue<double[]> pq = new PriorityQueue<>(Comparator.comparingDouble(a -> a[0]));
         double[][] distMap = new double[w][h];
         for (double[] row : distMap) Arrays.fill(row, Double.MAX_VALUE);
+        Map<Integer, RegionTerrainAggregate> regionAggregates =
+                buildRegionTerrainAggregates(holder, w, h, globalMinX, globalMinZ, step);
 
         // 1. 种子点
         for (TerritoryConfig cfg : registeredFactions) {
@@ -146,6 +160,7 @@ public class TerritoryManager {
             int cz = (int) current[2];
             int fIdx = (int) current[3];
             TerritoryConfig currentFaction = registeredFactions.get(fIdx);
+            RegionTerrainAggregate terrainAgg = regionAggregates.get(currentFaction.regionId);
 
             if (cost >= currentFaction.maxPower) continue;
             if (cost > distMap[cx][cz]) continue;
@@ -161,12 +176,20 @@ public class TerritoryManager {
                 ScanPixel neighbor = map[nx][nz];
                 if (neighbor == null) continue;
 
-                double moveCost = 1.0;
-                double hDiff = Math.abs(neighbor.height() - center.height());
-                double slope = hDiff / (double)step;
+                double slope;
+                double landRatio;
+                if (terrainAgg != null && terrainAgg.hasData[nx][nz]) {
+                    slope = terrainAgg.slopeAvg[nx][nz];
+                    landRatio = terrainAgg.landRatio[nx][nz];
+                } else {
+                    double hDiff = Math.abs(neighbor.height() - center.height());
+                    slope = hDiff / (double) step;
+                    landRatio = neighbor.isLand() ? 1.0 : 0.0;
+                }
 
-                if (slope > 0.5) moveCost += (slope * 2.0 * currentFaction.mountainCost);
-                if (!neighbor.isLand()) moveCost *= currentFaction.waterCost;
+                double moveCost = 1.0 + (slope * currentFaction.mountainCost);
+                double waterFactor = 1.0 + (1.0 - landRatio) * (currentFaction.waterCost - 1.0);
+                moveCost *= waterFactor;
 
                 double newCost = cost + (moveCost * distFactor);
 
@@ -180,6 +203,76 @@ public class TerritoryManager {
         }
 
         fillEnclaves(globalOwnershipMap, w, h, globalMinX, globalMinZ, step);
+    }
+
+    private static Map<Integer, RegionTerrainAggregate> buildRegionTerrainAggregates(
+            ScanResultHolder holder, int w, int h, int globalMinX, int globalMinZ, int step) {
+        if (holder.regionCacheMap.isEmpty()) return Collections.emptyMap();
+        Map<Integer, RegionTerrainAggregate> aggregates = new HashMap<>();
+        for (Map.Entry<Integer, RegionCache> entry : holder.regionCacheMap.entrySet()) {
+            RegionCache cache = entry.getValue();
+            if (cache == null || cache.detailData == null) continue;
+            ScanPixel[][] data = cache.detailData;
+            int localW = data.length;
+            int localH = data[0].length;
+            double[][] slopeSum = new double[w][h];
+            int[][] landCount = new int[w][h];
+            int[][] sampleCount = new int[w][h];
+            int slopeDiv = Math.max(1, cache.step);
+
+            for (int i = 0; i < localW; i++) {
+                for (int j = 0; j < localH; j++) {
+                    ScanPixel p = data[i][j];
+                    if (p == null) continue;
+                    int gx = (p.x() - globalMinX) / step;
+                    int gz = (p.z() - globalMinZ) / step;
+                    if (gx < 0 || gx >= w || gz < 0 || gz >= h) continue;
+
+                    sampleCount[gx][gz]++;
+                    if (p.isLand()) landCount[gx][gz]++;
+
+                    double slope = 0.0;
+                    if (p.isLand()) {
+                        double raw;
+                        if (cache.slopeData != null
+                                && i < cache.slopeData.length && j < cache.slopeData[0].length) {
+                            raw = cache.slopeData[i][j];
+                        } else if (i + 1 < localW && j + 1 < localH) {
+                            ScanPixel px = data[i + 1][j];
+                            ScanPixel pz = data[i][j + 1];
+                            if (px != null && pz != null) {
+                                double dx = Math.abs(p.height() - px.height());
+                                double dz = Math.abs(p.height() - pz.height());
+                                raw = Math.sqrt(dx * dx + dz * dz);
+                            } else {
+                                raw = 0.0;
+                            }
+                        } else {
+                            raw = 0.0;
+                        }
+                        slope = raw / slopeDiv;
+                    }
+                    slopeSum[gx][gz] += slope;
+                }
+            }
+
+            double[][] slopeAvg = new double[w][h];
+            double[][] landRatio = new double[w][h];
+            boolean[][] hasData = new boolean[w][h];
+
+            for (int x = 0; x < w; x++) {
+                for (int z = 0; z < h; z++) {
+                    int count = sampleCount[x][z];
+                    if (count == 0) continue;
+                    hasData[x][z] = true;
+                    slopeAvg[x][z] = slopeSum[x][z] / count;
+                    landRatio[x][z] = (double) landCount[x][z] / count;
+                }
+            }
+
+            aggregates.put(entry.getKey(), new RegionTerrainAggregate(slopeAvg, landRatio, hasData));
+        }
+        return aggregates;
     }
 
     // --- 【分析统计逻辑】 ---

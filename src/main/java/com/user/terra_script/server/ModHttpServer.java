@@ -507,6 +507,31 @@ public class ModHttpServer {
                 } catch (Exception e) { handleError(exchange, e); }
             });
 
+            // API: Stage 2 data fetch
+            server.createContext("/city_stage2_data", exchange -> {
+                if (!"POST".equals(exchange.getRequestMethod())) {
+                    sendResponse(exchange, 405, "Only POST");
+                    return;
+                }
+                try {
+                    String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+                    JsonObject json = JsonParser.parseString(body).getAsJsonObject();
+                    String cityId = json.has("city_id") ? json.get("city_id").getAsString() : null;
+                    if (cityId == null || cityId.isBlank()) {
+                        sendResponse(exchange, 400, "{\"error\": \"Missing city_id\"}");
+                        return;
+                    }
+
+                    var data = NationGenManager.Stage2Manager.load(cityId);
+                    if (data == null) {
+                        sendResponse(exchange, 404, "{\"error\": \"Stage2 not found for: " + cityId + "\"}");
+                        return;
+                    }
+
+                    sendResponse(exchange, 200, gson.toJson(data));
+                } catch (Exception e) { handleError(exchange, e); }
+            });
+
             // API: Stage 1 forbidden blocks
             server.createContext("/city_forbidden", exchange -> {
                 if (!"POST".equals(exchange.getRequestMethod())) {

@@ -75,10 +75,28 @@ public class CityBoundaryWallInjector {
         long selfKey = cp.toLong();
         if (!city.borderChunks.contains(selfKey)) return;
 
-        boolean north = !city.claimedChunks.containsKey(ChunkPos.asLong(cp.x, cp.z - 1));
-        boolean south = !city.claimedChunks.containsKey(ChunkPos.asLong(cp.x, cp.z + 1));
-        boolean west = !city.claimedChunks.containsKey(ChunkPos.asLong(cp.x - 1, cp.z));
-        boolean east = !city.claimedChunks.containsKey(ChunkPos.asLong(cp.x + 1, cp.z));
+        CityConfig.LayerLayout layout = city.getLayerLayout();
+        boolean useWallLayers = hasWallLayers(layout);
+
+        boolean north;
+        boolean south;
+        boolean west;
+        boolean east;
+
+        if (useWallLayers) {
+            CityInstance.LayerAssignment assignment = city.claimedChunks.get(selfKey);
+            if (assignment == null || !isWallLayer(layout, assignment)) return;
+            int layerIndex = assignment.layerIndex;
+            north = isDifferentLayer(city, layerIndex, ChunkPos.asLong(cp.x, cp.z - 1));
+            south = isDifferentLayer(city, layerIndex, ChunkPos.asLong(cp.x, cp.z + 1));
+            west = isDifferentLayer(city, layerIndex, ChunkPos.asLong(cp.x - 1, cp.z));
+            east = isDifferentLayer(city, layerIndex, ChunkPos.asLong(cp.x + 1, cp.z));
+        } else {
+            north = !city.claimedChunks.containsKey(ChunkPos.asLong(cp.x, cp.z - 1));
+            south = !city.claimedChunks.containsKey(ChunkPos.asLong(cp.x, cp.z + 1));
+            west = !city.claimedChunks.containsKey(ChunkPos.asLong(cp.x - 1, cp.z));
+            east = !city.claimedChunks.containsKey(ChunkPos.asLong(cp.x + 1, cp.z));
+        }
 
         int minX = cp.getMinBlockX();
         int minZ = cp.getMinBlockZ();
@@ -122,6 +140,27 @@ public class CityBoundaryWallInjector {
 
     private static void updateLighting(ServerLevel level, BlockPos pos) {
         level.getChunkSource().getLightEngine().checkBlock(pos);
+    }
+
+    private static boolean hasWallLayers(CityConfig.LayerLayout layout) {
+        if (layout == null || layout.layers == null) return false;
+        for (CityConfig.LayerConfig layer : layout.layers) {
+            if (layer == null) continue;
+            if (layer.wallLayer || layer.wall != null) return true;
+        }
+        return false;
+    }
+
+    private static boolean isWallLayer(CityConfig.LayerLayout layout, CityInstance.LayerAssignment assignment) {
+        if (layout == null || assignment == null) return false;
+        CityConfig.LayerConfig layer = layout.layerAt(assignment.layerIndex);
+        return layer.wallLayer || layer.wall != null;
+    }
+
+    private static boolean isDifferentLayer(CityInstance city, int layerIndex, long neighborKey) {
+        CityInstance.LayerAssignment neighbor = city.claimedChunks.get(neighborKey);
+        if (neighbor == null) return true;
+        return neighbor.layerIndex != layerIndex;
     }
 
     private record WallTask(ServerLevel level, ChunkPos chunkPos, String cityId, long chunkKey) {}

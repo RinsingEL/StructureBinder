@@ -16,7 +16,7 @@ const LORE_FILE = path.join(process.cwd(), "world_lore.json");
 const server = new Server(
   {
     name: "minecraft-world-architect",
-    version: "3.7.0", // Bump version
+    version: "3.8.0", // Bump version
   },
   {
     capabilities: {
@@ -43,6 +43,60 @@ function appendLore(data: any) {
     } catch (e) {
         console.error("[System] Failed to save lore:", e);
     }
+}
+
+function pickFirst(obj: any, keys: string[]) {
+  if (!obj) return undefined;
+  for (const key of keys) {
+    if (obj[key] !== undefined) return obj[key];
+  }
+  return undefined;
+}
+
+function compactObject(obj: Record<string, any>) {
+  const compact: Record<string, any> = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (value !== undefined) compact[key] = value;
+  }
+  return compact;
+}
+
+function normalizeDensityValue(value: any) {
+  if (value === undefined || value === null) return undefined;
+  if (typeof value !== "string") return value;
+  const normalized = value.trim().toLowerCase();
+  if (normalized === "medium") return "mid";
+  return normalized;
+}
+
+function normalizeWallConfig(raw: any) {
+  if (!raw || typeof raw !== "object") return undefined;
+  const wall = compactObject({
+    type: pickFirst(raw, ["type", "类型"]),
+    thickness_blocks: pickFirst(raw, ["thickness_blocks", "厚度方块"]),
+    gate_count: pickFirst(raw, ["gate_count", "城门数量"]),
+  });
+  return Object.keys(wall).length > 0 ? wall : undefined;
+}
+
+function normalizeLayerConfigs(raw: any) {
+  if (!Array.isArray(raw)) return undefined;
+  const layers: any[] = [];
+  for (const entry of raw) {
+    if (!entry || typeof entry !== "object") continue;
+    const wallRaw = pickFirst(entry, ["wall", "墙体"]);
+    const densityRaw = pickFirst(entry, ["density", "功能密度"]);
+    const layer = compactObject({
+      name: pickFirst(entry, ["name", "层名"]),
+      type: pickFirst(entry, ["type", "层类型"]),
+      density: normalizeDensityValue(densityRaw),
+      ecology: pickFirst(entry, ["ecology", "生态策略", "ecology_policy"]),
+      wall_layer: pickFirst(entry, ["wall_layer", "是否墙层"]),
+      wall: normalizeWallConfig(wallRaw),
+    });
+    if (Object.keys(layer).length > 0) layers.push(layer);
+  }
+  return layers.length > 0 ? layers : undefined;
 }
 
 server.setRequestHandler(ListToolsRequestSchema, async () => {
@@ -156,7 +210,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         name: "establish_city",
         description: 
           "【Step 5】在领土内建立一座城市。\n" +
-          "程序将自动生成城市形状、划分核心区/城区/缓冲区。\n" +
+          "程序将自动生成城市形状，并按层级列表划分（至少 CORE/BUFFER，可含多层 URBAN 与 RING）。\n" +
           "请确保 center_x/z 位于 territory_id 领土内。",
         inputSchema: {
           type: "object",
@@ -171,10 +225,55 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                 enum: ["balanced", "north", "south", "east", "west", "coastal", "inland"],
                 description: "扩张倾向"
             },
+            density: {
+                type: "string",
+                enum: ["low", "mid", "medium", "high", "1"],
+                description: "整体密度 (可选)"
+            },
             ecology_policy: {
                 type: "string",
                 enum: ["preserve", "adaptive", "clear"],
                 description: "生态策略"
+            },
+            ecology: {
+                type: "string",
+                enum: ["preserve", "adaptive", "clear"],
+                description: "生态策略 (别名)"
+            },
+            layer_count: {
+                type: "number",
+                description: "层级数量 (3-10)"
+            },
+            layer_thresholds: {
+                type: "array",
+                items: { type: "number" },
+                description: "层级阈值 (长度=层级数量-1)"
+            },
+            layers: {
+                type: "array",
+                description: "层配置列表",
+                items: {
+                    type: "object",
+                    properties: {
+                        name: { type: "string", description: "层名" },
+                        type: { type: "string", description: "层类型 (CORE/URBAN/RING/BUFFER)" },
+                        density: { type: "string", enum: ["high", "mid", "low", "1"], description: "功能密度" },
+                        ecology: { type: "string", enum: ["preserve", "adaptive", "clear"], description: "生态策略" },
+                        wall_layer: { type: "boolean", description: "是否墙层" },
+                        wall: {
+                            type: "object",
+                            properties: {
+                                type: { type: "string", description: "墙体类型" },
+                                thickness_blocks: { type: "number", description: "厚度方块" },
+                                gate_count: {
+                                    type: "array",
+                                    items: { type: "number" },
+                                    description: "城门数量区间"
+                                }
+                            }
+                        }
+                    }
+                }
             }
           },
           required: ["territory_id", "center_x", "center_z", "target_chunk_count"]
@@ -200,6 +299,17 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: "city_stage1_data",
         description: "获取城市阶段1摘要数据（含多边形统计）。",
+        inputSchema: {
+          type: "object",
+          properties: {
+            city_id: { type: "string" }
+          },
+          required: ["city_id"]
+        },
+      },
+      {
+        name: "city_stage2_data",
+        description: "获取城市阶段2高度意图配置。",
         inputSchema: {
           type: "object",
           properties: {
@@ -283,16 +393,22 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       case "establish_city": {
         const args = request.params.arguments as any;
-        const payload = {
+        const layerCount = pickFirst(args, ["layer_count", "层级数量"]);
+        const layerThresholds = pickFirst(args, ["layer_thresholds", "层级阈值"]);
+        const layers = normalizeLayerConfigs(pickFirst(args, ["layers", "层配置"]));
+        const payload: Record<string, any> = {
             territoryId: args.territory_id,
             continentId: args.continent_id,
             centerX: args.center_x,
             centerZ: args.center_z,
             targetChunkCount: args.target_chunk_count,
-            bias: args.bias || "balanced",
-            ecology: args.ecology_policy || "adaptive",
-            density: "medium"
+            bias: pickFirst(args, ["bias", "扩张倾向"]) || "balanced",
+            ecology: pickFirst(args, ["ecology", "ecology_policy", "生态策略"]) || "adaptive",
+            density: normalizeDensityValue(args.density || "medium"),
         };
+        if (layerCount !== undefined) payload["layer_count"] = layerCount;
+        if (layerThresholds !== undefined) payload["layer_thresholds"] = layerThresholds;
+        if (layers !== undefined) payload["layers"] = layers;
         const res = await axios.post(`${MC_API_URL}/create_city`, payload);
         return { 
             content: [{ 
@@ -315,12 +431,20 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const res = await axios.post(`${MC_API_URL}/city_stage1_data`, { city_id: args.city_id });
         return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
       }
+      case "city_stage2_data": {
+        const args = request.params.arguments as any;
+        const res = await axios.post(`${MC_API_URL}/city_stage2_data`, { city_id: args.city_id });
+        return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
+      }
 
       default:
         throw new Error(`Unknown tool: ${request.params.name}`);
     }
   } catch (error: any) {
-    return { content: [{ type: "text", text: `Error: ${error.message}` }], isError: true };
+    const detail = error?.response?.data?.error
+      || (error?.response?.data ? JSON.stringify(error.response.data) : null);
+    const message = detail || error?.message || "Unknown error";
+    return { content: [{ type: "text", text: `Error: ${message}` }], isError: true };
   }
 });
 
