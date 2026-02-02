@@ -2,8 +2,11 @@ package com.user.terra_script.server;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.JsonPrimitive;
 import com.sun.net.httpserver.HttpServer;
 import com.user.terra_script.client.data.ScanResultHolder;
 import com.user.terra_script.client.data.ScanResultHolder.RegionCache;
@@ -13,17 +16,21 @@ import com.user.terra_script.scan.ScanRegion;
 import com.user.terra_script.util.AsciiMapGenerator;
 import com.user.terra_script.util.DBSCAN;
 import com.user.terra_script.util.StructureDiscovery;
+import com.user.terra_script.util.ScanDataIO;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraftforge.event.server.ServerStartedEvent;
 import net.minecraftforge.event.server.ServerStoppingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.loading.FMLPaths;
+import net.minecraft.world.level.storage.LevelResource;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -44,10 +51,14 @@ public class ModHttpServer {
     private static MinecraftServer mcServer;
     private static final int PORT = 5000;
     private static final Gson gson = new Gson();
+    private static final Object LOG_LOCK = new Object();
+    private static final String MCP_LOG_FILE = "terra_script_mcp_log.jsonl";
 
     @SubscribeEvent
     public static void onServerStart(ServerStartedEvent event) {
         mcServer = event.getServer();
+        ScanDataIO.setWorldRoot(mcServer.getWorldPath(LevelResource.ROOT));
+        ScanDataIO.loadInto(ScanResultHolder.get());
         startHttpServer();
     }
 
@@ -99,11 +110,11 @@ public class ModHttpServer {
 // API 3: Query Region (双模：大�?国度 + 聚类 + ASCII 地图)
             server.createContext("/query_region", exchange -> {
                 if (!"POST".equals(exchange.getRequestMethod())) {
-                    sendResponse(exchange, 405, "Method Not Allowed");
+                    sendResponse(exchange, 405, "{\"error\": \"Method Not Allowed\"}");
                     return;
                 }
                 try {
-                    String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+                    String body = readRequestBody(exchange);
                     JsonObject req = JsonParser.parseString(body).getAsJsonObject();
 
                     // 参数解析
@@ -281,7 +292,7 @@ public class ModHttpServer {
             server.createContext("/place", exchange -> {
                 if ("POST".equals(exchange.getRequestMethod())) {
                     try {
-                        String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+                        String body = readRequestBody(exchange);
                         JsonObject json = JsonParser.parseString(body).getAsJsonObject();
                         int x = json.get("x").getAsInt();
                         int z = json.get("z").getAsInt();
@@ -298,14 +309,14 @@ public class ModHttpServer {
                         });
                         sendResponse(exchange, 200, "{\"status\": \"planned\"}");
                     } catch (Exception e) { handleError(exchange, e); }
-                } else { sendResponse(exchange, 405, "Only POST"); }
+                } else { sendResponse(exchange, 405, "{\"error\": \"Only POST\"}"); }
             });
 
             // API 5: Create Territory
             server.createContext("/create_territory", exchange -> {
                 if ("POST".equals(exchange.getRequestMethod())) {
                     try {
-                        String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+                        String body = readRequestBody(exchange);
                         JsonObject json = JsonParser.parseString(body).getAsJsonObject();
 
                         String id = json.get("id").getAsString();
@@ -332,7 +343,7 @@ public class ModHttpServer {
                         );
                         sendResponse(exchange, 200, "{\"status\": \"created\"}");
                     } catch (Exception e) { handleError(exchange, e); }
-                }
+                } else { sendResponse(exchange, 405, "{\"error\": \"Only POST\"}"); }
             });
 
             // API 6: Get Territory Status
@@ -413,7 +424,7 @@ public class ModHttpServer {
             // API: Freeze Project (Stage 0)
             server.createContext("/freeze_project", exchange -> {
                 if (!"POST".equals(exchange.getRequestMethod())) {
-                    sendResponse(exchange, 405, "Only POST");
+                    sendResponse(exchange, 405, "{\"error\": \"Only POST\"}");
                     return;
                 }
                 try {
@@ -428,11 +439,11 @@ public class ModHttpServer {
             // API: Stage 1 heightmap window
             server.createContext("/city_heightmap", exchange -> {
                 if (!"POST".equals(exchange.getRequestMethod())) {
-                    sendResponse(exchange, 405, "Only POST");
+                    sendResponse(exchange, 405, "{\"error\": \"Only POST\"}");
                     return;
                 }
                 try {
-                    String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+                    String body = readRequestBody(exchange);
                     JsonObject json = JsonParser.parseString(body).getAsJsonObject();
                     String cityId = json.has("city_id") ? json.get("city_id").getAsString() : null;
                     if (cityId == null || cityId.isBlank()) {
@@ -485,11 +496,11 @@ public class ModHttpServer {
             // API: Stage 1 data fetch
             server.createContext("/city_stage1_data", exchange -> {
                 if (!"POST".equals(exchange.getRequestMethod())) {
-                    sendResponse(exchange, 405, "Only POST");
+                    sendResponse(exchange, 405, "{\"error\": \"Only POST\"}");
                     return;
                 }
                 try {
-                    String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+                    String body = readRequestBody(exchange);
                     JsonObject json = JsonParser.parseString(body).getAsJsonObject();
                     String cityId = json.has("city_id") ? json.get("city_id").getAsString() : null;
                     if (cityId == null || cityId.isBlank()) {
@@ -510,11 +521,11 @@ public class ModHttpServer {
             // API: Stage 2 data fetch
             server.createContext("/city_stage2_data", exchange -> {
                 if (!"POST".equals(exchange.getRequestMethod())) {
-                    sendResponse(exchange, 405, "Only POST");
+                    sendResponse(exchange, 405, "{\"error\": \"Only POST\"}");
                     return;
                 }
                 try {
-                    String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+                    String body = readRequestBody(exchange);
                     JsonObject json = JsonParser.parseString(body).getAsJsonObject();
                     String cityId = json.has("city_id") ? json.get("city_id").getAsString() : null;
                     if (cityId == null || cityId.isBlank()) {
@@ -535,11 +546,11 @@ public class ModHttpServer {
             // API: Stage 1 forbidden blocks
             server.createContext("/city_forbidden", exchange -> {
                 if (!"POST".equals(exchange.getRequestMethod())) {
-                    sendResponse(exchange, 405, "Only POST");
+                    sendResponse(exchange, 405, "{\"error\": \"Only POST\"}");
                     return;
                 }
                 try {
-                    String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+                    String body = readRequestBody(exchange);
                     JsonObject json = JsonParser.parseString(body).getAsJsonObject();
                     String cityId = json.has("city_id") ? json.get("city_id").getAsString() : null;
                     if (cityId == null || cityId.isBlank()) {
@@ -560,11 +571,11 @@ public class ModHttpServer {
             // API: Stage 1 buildable groups
             server.createContext("/city_buildable_groups", exchange -> {
                 if (!"POST".equals(exchange.getRequestMethod())) {
-                    sendResponse(exchange, 405, "Only POST");
+                    sendResponse(exchange, 405, "{\"error\": \"Only POST\"}");
                     return;
                 }
                 try {
-                    String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+                    String body = readRequestBody(exchange);
                     JsonObject json = JsonParser.parseString(body).getAsJsonObject();
                     String cityId = json.has("city_id") ? json.get("city_id").getAsString() : null;
                     if (cityId == null || cityId.isBlank()) {
@@ -596,7 +607,7 @@ public class ModHttpServer {
         server.createContext("/create_city", exchange -> {
             if ("POST".equals(exchange.getRequestMethod())) {
                 try {
-                    String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+                    String body = readRequestBody(exchange);
                     CityConfig config = gson.fromJson(body, CityConfig.class);
 
                     // 简单的校验
@@ -615,7 +626,7 @@ public class ModHttpServer {
 
                     sendResponse(exchange, 200, gson.toJson(res));
                 } catch (Exception e) { handleError(exchange, e); }
-            }
+            } else { sendResponse(exchange, 405, "{\"error\": \"Only POST\"}"); }
         });
     }
 
@@ -626,10 +637,48 @@ public class ModHttpServer {
     }
     private static void sendResponse(com.sun.net.httpserver.HttpExchange exchange, int code, String response) throws IOException {
         byte[] bytes = response.getBytes(StandardCharsets.UTF_8);
+        exchange.getResponseHeaders().set("Content-Type", "application/json; charset=utf-8");
         exchange.sendResponseHeaders(code, bytes.length);
-        OutputStream os = exchange.getResponseBody();
-        os.write(bytes);
-        os.close();
+        try (OutputStream os = exchange.getResponseBody()) {
+            os.write(bytes);
+        } finally {
+            logExchange(exchange, code, response);
+        }
+    }
+    private static String readRequestBody(com.sun.net.httpserver.HttpExchange exchange) throws IOException {
+        String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+        exchange.setAttribute("mcp_request_body", body);
+        return body;
+    }
+    private static void logExchange(com.sun.net.httpserver.HttpExchange exchange, int code, String response) {
+        try {
+            JsonObject entry = new JsonObject();
+            entry.addProperty("timestamp", System.currentTimeMillis());
+            entry.addProperty("method", exchange.getRequestMethod());
+            entry.addProperty("path", exchange.getRequestURI().getPath());
+            String query = exchange.getRequestURI().getQuery();
+            if (query != null && !query.isBlank()) entry.addProperty("query", query);
+            Object body = exchange.getAttribute("mcp_request_body");
+            entry.add("request", tryParseJson(body != null ? body.toString() : null));
+            entry.addProperty("status", code);
+            entry.add("response", tryParseJson(response));
+            if (exchange.getRemoteAddress() != null) {
+                entry.addProperty("remote", exchange.getRemoteAddress().toString());
+            }
+            entry.addProperty("source", "http");
+
+            Path logPath = FMLPaths.GAMEDIR.get().resolve(MCP_LOG_FILE);
+            String line = gson.toJson(entry) + System.lineSeparator();
+            synchronized (LOG_LOCK) {
+                Files.writeString(logPath, line, StandardCharsets.UTF_8, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    private static JsonElement tryParseJson(String text) {
+        if (text == null || text.isBlank()) return JsonNull.INSTANCE;
+        try { return JsonParser.parseString(text); } catch (Exception e) { return new JsonPrimitive(text); }
     }
 
     // 简单的筛选逻辑 (Territory模式下暂不强制校�?Slope/TPI 以保证性能和可用�?

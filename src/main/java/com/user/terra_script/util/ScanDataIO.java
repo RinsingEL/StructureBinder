@@ -8,13 +8,33 @@ import net.minecraft.nbt.*;
 import net.minecraftforge.fml.loading.FMLPaths;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 public class ScanDataIO {
-    private static final String FILENAME = "terra_script_cache.dat";
+    private static final String TERRAIN_FACTS_FILE = "W4_TerrainFacts.dat";
+    private static final String WORLD_ATLAS_FILE = "W3_ContinentMeta.json";
+    private static final String TERRAIN_SUMMARY_FILE = "W4_TerrainSummary.json";
+    private static final String WORLD_SUMMARY_FILE = "W4_WorldSummary.json";
+    private static final String TERRA_SCRIPT_DIR = "terra_script";
+    private static final String WORLD_DIR = "world";
+
+    private static volatile Path worldRoot = null;
+
+    public static void setWorldRoot(Path root) {
+        worldRoot = root;
+    }
+
+    public static File getTerrainFactsFile() {
+        Path worldDir = getWorldDir(false);
+        if (worldDir == null) return null;
+        return worldDir.resolve(TERRAIN_FACTS_FILE).toFile();
+    }
 
     public static void saveAll() {
         var holder = ScanResultHolder.get();
@@ -69,10 +89,15 @@ public class ScanDataIO {
                     root.put("regions", regionsList);
                 }
 
-                File file = FMLPaths.GAMEDIR.get().resolve(FILENAME).toFile();
+                Path worldDir = getWorldDir(true);
+                File file = worldDir.resolve(TERRAIN_FACTS_FILE).toFile();
                 NbtIo.writeCompressed(root, file);
                 System.out.println("[DataIO] Saved cache: " + holder.regionCacheMap.size() + " regions, "
                         + (holder.lastClusters != null ? holder.lastClusters.size() : 0) + " clusters.");
+
+                // 4. 生成索引与世界概览
+                exportTerrainSummaryFromFile(file.toPath(), worldDir);
+                exportWorldSummaryFromFile(file.toPath(), worldDir);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -80,7 +105,9 @@ public class ScanDataIO {
     }
 
     public static void loadInto(ScanResultHolder holder) {
-        File file = FMLPaths.GAMEDIR.get().resolve(FILENAME).toFile();
+        Path worldDir = getWorldDir(false);
+        if (worldDir == null) return;
+        File file = worldDir.resolve(TERRAIN_FACTS_FILE).toFile();
         if (!file.exists()) return;
 
         try {
@@ -137,7 +164,7 @@ public class ScanDataIO {
                     holder.regionCacheMap.put(id, cache);
                 }
             }
-            System.out.println("[DataIO] Load complete. Loaded " + (holder.lastClusters != null ? holder.lastClusters.size() : 0) + " clusters.");
+                System.out.println("[DataIO] Load complete. Loaded " + (holder.lastClusters != null ? holder.lastClusters.size() : 0) + " clusters.");
 
         } catch (Exception e) {
             System.err.println("[DataIO] Failed to load cache: " + e.getMessage());
@@ -401,10 +428,174 @@ public class ScanDataIO {
 
                     array.add(obj);
                 }
-                File file = FMLPaths.CONFIGDIR.get().resolve("terra_script_regions_debug.json").toFile();
-                java.nio.file.Files.writeString(file.toPath(), gson.toJson(array));
-                System.out.println("[DataIO] Region debug data exported.");
+                Path worldDir = getWorldDir(true);
+                File file = worldDir.resolve(WORLD_ATLAS_FILE).toFile();
+                Files.writeString(file.toPath(), gson.toJson(array), StandardCharsets.UTF_8);
+                System.out.println("[DataIO] World atlas exported.");
             } catch (Exception e) { e.printStackTrace(); }
         });
+    }
+
+    private static void exportTerrainSummaryFromFile(Path filePath, Path worldDir) {
+        try {
+            if (filePath == null || !Files.exists(filePath)) return;
+            CompoundTag rootTag = NbtIo.readCompressed(filePath.toFile());
+            if (!rootTag.contains("regions")) return;
+
+            com.google.gson.JsonObject root = new com.google.gson.JsonObject();
+            com.google.gson.JsonArray regions = new com.google.gson.JsonArray();
+            ListTag list = rootTag.getList("regions", Tag.TAG_COMPOUND);
+            for (int i = 0; i < list.size(); i++) {
+                CompoundTag rTag = list.getCompound(i);
+                com.google.gson.JsonObject r = new com.google.gson.JsonObject();
+                r.addProperty("id", rTag.getInt("id"));
+                r.addProperty("minX", rTag.getInt("minX"));
+                r.addProperty("minZ", rTag.getInt("minZ"));
+                r.addProperty("w", rTag.getInt("w"));
+                r.addProperty("h", rTag.getInt("h"));
+                r.addProperty("step", rTag.getInt("step"));
+                r.addProperty("data_source", TERRAIN_FACTS_FILE);
+                regions.add(r);
+            }
+            root.add("regions", regions);
+            Files.writeString(worldDir.resolve(TERRAIN_SUMMARY_FILE), new com.google.gson.GsonBuilder().setPrettyPrinting().create().toJson(root), StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void exportWorldSummaryFromFile(Path filePath, Path worldDir) {
+        try {
+            if (filePath == null || !Files.exists(filePath)) return;
+            CompoundTag rootTag = NbtIo.readCompressed(filePath.toFile());
+            com.google.gson.JsonObject root = new com.google.gson.JsonObject();
+
+            if (rootTag.contains("global")) {
+                CompoundTag global = rootTag.getCompound("global");
+                root.addProperty("seed", global.getLong("seed"));
+                root.addProperty("scan_radius_chunks", global.getInt("radius"));
+                root.addProperty("scan_step", global.getInt("step"));
+                root.addProperty("grid_width", global.getInt("width"));
+                root.addProperty("grid_height", global.getInt("height"));
+
+                ListTag pixels = global.getList("pixels", Tag.TAG_COMPOUND);
+                int minX = Integer.MAX_VALUE, maxX = Integer.MIN_VALUE;
+                int minZ = Integer.MAX_VALUE, maxZ = Integer.MIN_VALUE;
+                int minH = Integer.MAX_VALUE, maxH = Integer.MIN_VALUE;
+                long sumH = 0;
+                long count = 0;
+
+                for (int i = 0; i < pixels.size(); i++) {
+                    CompoundTag pTag = pixels.getCompound(i);
+                    if (!pTag.contains("x")) continue;
+                    int x = pTag.getInt("x");
+                    int z = pTag.getInt("z");
+                    int h = pTag.getInt("h");
+                    minX = Math.min(minX, x);
+                    maxX = Math.max(maxX, x);
+                    minZ = Math.min(minZ, z);
+                    maxZ = Math.max(maxZ, z);
+                    minH = Math.min(minH, h);
+                    maxH = Math.max(maxH, h);
+                    sumH += h;
+                    count++;
+                }
+                if (count > 0) {
+                    com.google.gson.JsonObject bounds = new com.google.gson.JsonObject();
+                    bounds.addProperty("min_x", minX);
+                    bounds.addProperty("max_x", maxX);
+                    bounds.addProperty("min_z", minZ);
+                    bounds.addProperty("max_z", maxZ);
+                    root.add("bounds", bounds);
+
+                    com.google.gson.JsonObject height = new com.google.gson.JsonObject();
+                    height.addProperty("min", minH);
+                    height.addProperty("max", maxH);
+                    height.addProperty("avg", (double) sumH / count);
+                    root.add("height", height);
+                }
+            }
+
+            RangeStats slope = new RangeStats();
+            RangeStats rough = new RangeStats();
+            RangeStats tpi = new RangeStats();
+            if (rootTag.contains("regions")) {
+                ListTag list = rootTag.getList("regions", Tag.TAG_COMPOUND);
+                for (int i = 0; i < list.size(); i++) {
+                    CompoundTag rTag = list.getCompound(i);
+                    if (rTag.contains("slope")) slope.acceptLongArray(rTag.getLongArray("slope"));
+                    if (rTag.contains("roughness")) rough.acceptLongArray(rTag.getLongArray("roughness"));
+                    if (rTag.contains("tpi")) tpi.acceptLongArray(rTag.getLongArray("tpi"));
+                }
+            }
+            if (slope.hasData()) root.add("slope", slope.toJson());
+            if (rough.hasData()) root.add("roughness", rough.toJson());
+            if (tpi.hasData()) root.add("tpi", tpi.toJson());
+
+            Files.writeString(worldDir.resolve(WORLD_SUMMARY_FILE), new com.google.gson.GsonBuilder().setPrettyPrinting().create().toJson(root), StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static Path getWorldDir(boolean create) {
+        Path base = worldRoot;
+        if (base == null) {
+            base = FMLPaths.GAMEDIR.get().resolve(TERRA_SCRIPT_DIR);
+        } else {
+            base = base.resolve(TERRA_SCRIPT_DIR);
+        }
+        Path dir = base.resolve(WORLD_DIR);
+        try {
+            if (create) Files.createDirectories(dir);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return dir;
+    }
+
+    private static class RangeStats {
+        private double min = Double.MAX_VALUE;
+        private double max = -Double.MAX_VALUE;
+        private double sum = 0;
+        private long count = 0;
+
+        void accept(double[][] data) {
+            if (data == null || data.length == 0 || data[0].length == 0) return;
+            int w = data.length;
+            int h = data[0].length;
+            for (int i = 0; i < w; i++) {
+                for (int j = 0; j < h; j++) {
+                    double v = data[i][j];
+                    if (v < min) min = v;
+                    if (v > max) max = v;
+                    sum += v;
+                    count++;
+                }
+            }
+        }
+
+        void acceptLongArray(long[] data) {
+            if (data == null || data.length == 0) return;
+            for (long bits : data) {
+                double v = Double.longBitsToDouble(bits);
+                if (v < min) min = v;
+                if (v > max) max = v;
+                sum += v;
+                count++;
+            }
+        }
+
+        boolean hasData() {
+            return count > 0;
+        }
+
+        com.google.gson.JsonObject toJson() {
+            com.google.gson.JsonObject obj = new com.google.gson.JsonObject();
+            obj.addProperty("min", min);
+            obj.addProperty("max", max);
+            obj.addProperty("avg", sum / count);
+            return obj;
+        }
     }
 }

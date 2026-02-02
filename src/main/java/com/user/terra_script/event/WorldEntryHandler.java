@@ -4,11 +4,13 @@ import com.user.terra_script.client.data.ScanResultHolder;
 import com.user.terra_script.client.screen.map.StandaloneMapScreen;
 import com.user.terra_script.config.StructurePlan;
 import com.user.terra_script.scan.SatelliteScanner;
+import com.user.terra_script.util.ScanDataIO;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.storage.LevelResource;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
@@ -31,6 +33,8 @@ public class WorldEntryHandler {
         // 2. 获取服务端主世界 (用来拿种子)
         ServerLevel level = server.overworld();
         long currentSeed = level.getSeed();
+        ScanDataIO.setWorldRoot(server.getWorldPath(LevelResource.ROOT));
+        ScanDataIO.loadInto(ScanResultHolder.get());
 
         // 3. 检查种子是否变化 (如果是新存档，清空旧缓存)
         if (ScanResultHolder.get().seedUsed != 0 && ScanResultHolder.get().seedUsed != currentSeed) {

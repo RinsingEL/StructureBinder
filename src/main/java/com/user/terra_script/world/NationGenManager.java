@@ -11,6 +11,7 @@ import com.user.terra_script.world.city.CityProjectSnapshot;
 import com.user.terra_script.world.city.CityStage1Processor;
 import com.user.terra_script.world.city.CityStage2Processor;
 import com.user.terra_script.world.city.district.District;
+import com.user.terra_script.util.ScanDataIO;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraftforge.fml.loading.FMLPaths;
@@ -21,7 +22,7 @@ import java.nio.file.Files;
 public class NationGenManager {
     public static class SnapshotManager {
         private static final String SNAPSHOT_FILE = "terra_script_city_project.json";
-        private static final String SCAN_CACHE_FILE = "terra_script_cache.dat";
+        private static final String SCAN_CACHE_FILE = "W4_TerrainFacts.dat";
         private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
         public static boolean hasSnapshot() {
@@ -139,7 +140,10 @@ public class NationGenManager {
             meta.scanRadiusChunks = holder.scanRadiusChunks;
             meta.scanStep = holder.scanStep;
 
-            File cacheFile = FMLPaths.GAMEDIR.get().resolve(SCAN_CACHE_FILE).toFile();
+            File cacheFile = ScanDataIO.getTerrainFactsFile();
+            if (cacheFile == null) {
+                cacheFile = FMLPaths.GAMEDIR.get().resolve(SCAN_CACHE_FILE).toFile();
+            }
             meta.cacheFile = cacheFile.getName();
             meta.cacheSizeBytes = cacheFile.exists() ? cacheFile.length() : 0;
             meta.cacheLastModified = cacheFile.exists() ? cacheFile.lastModified() : 0;
