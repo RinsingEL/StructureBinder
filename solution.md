@@ -51,7 +51,7 @@
         *   **重数据 (`.dat`)**：将方块级/区块级的 `ScanPixel`, `slope[][]`, `tpi[][]` 写入 NBT 格式的大文件。
         *   **轻数据 (`.json`)**：将统计出的概况信息（Atlas）导出，供 AI 读取。
 *   **AI 可调用数据 (MCP)**：
-    *   `get_W4world_atlas()`：直接读取 `W3_ContinentMeta.json`。
+    *   `W4_get_world_atlas()`：直接读取 `W3_ContinentMeta.json`。
     *   `scan_local_W4candidates(...)`：后端会去查 `W4_TerrainFacts.dat` 中的 slope/tpi 数组。
 
 ---
@@ -163,19 +163,92 @@ root
 
 **用途**：此处的数据为各种总结性数据，包括世界总大小、各个地貌特征如高度、崎岖度、TPI的取值范围，用于给后续AI调用时提供参考
 
-**产出**：`W4_WorldSummary.json`，随`get_W4world_atlas`一起返回。
+**产出**：`W4_WorldSummary.json`，随`W4_get_world_atlas`一起返回。
 **存放位置**：`/saves/<WorldName>/terra_script/world/`
 
 ---
+
+## W阶段 MCP 接口对照 (W1/W2 不启用)
+
+> 以下接口均为 W3/W4 阶段使用，返回体里包含 `step` 字段便于对齐流程阶段。
+
+### 0) `W3_get_continents`（W3 大陆/海洋列表）
+- **用途**：获取 W3 聚类后的大陆/海洋列表
+- **HTTP**：`GET /continents`
+- **输入参数**：无
+- **输出**：
+```jsonc
+{
+  "step": "W3",
+  "continents": [ /* W3 聚类结果 */ ]
+}
+```
+
+### 1) `W4_get_world_atlas`（W4 汇总入口）
+- **用途**：获取世界图集 + 世界特征总览
+- **HTTP**：`GET /world_atlas`
+- **输入参数**：无
+- **输出**：
+```jsonc
+{
+  "step": "W4",
+  "atlas": [ /* W3_ContinentMeta.json 内容 */ ],
+  "summary": { /* W4_WorldSummary.json 内容 */ }
+}
+```
+
+### 2) `W4_world_summary`（W4 世界特征总览）
+- **用途**：只读取世界总体统计
+- **HTTP**：`GET /world_summary`
+- **输入参数**：无
+- **输出**：
+```jsonc
+{
+  "step": "W4",
+  "summary": { /* W4_WorldSummary.json */ }
+}
+```
+
+### 3) `W4_terrain_summary`（W4 索引文件）
+- **用途**：读取 DAT 索引，定位每个 Region 的数据段
+- **HTTP**：`GET /terrain_summary`
+- **输入参数**：无
+- **输出**：
+```jsonc
+{
+  "step": "W4",
+  "summary": {
+    "regions": [
+      { "id": 12, "minX": -1024, "minZ": -768, "w": 512, "h": 384, "step": 2, "data_source": "W4_TerrainFacts.dat" }
+    ]
+  }
+}
+```
+
+### 4) `W4_scan_local_candidates`（W4 局部候选点扫描）
+- **用途**：基于 W4_TerrainFacts 的 slope/tpi 快速筛选候选点
+- **HTTP**：`POST /query_region`
+- **输入参数**：
+```jsonc
+{
+  "region_id": 12, // 或 territory_id
+  "min_slope": 0.2,
+  "max_slope": 1.0,
+  "min_tpi": -0.5,
+  "max_tpi": 2.0,
+  "limit": 5
+}
+```
+- **输出**：候选点列表 + ASCII 图（保持现有实现）
 
 # 二、国度构造部分
 
 
 ## T1 国度和区域蓝图生成（AI）
-**核心逻辑**：AI 根据 `get_W4world_atlas` 返回的大陆硬数据，结合 W1 的世界观，决定要诞生一个什么样的国家，以及它**想去哪个大陆发展**。
+**核心逻辑**：AI 根据 `W4_get_world_atlas` 返回的大陆硬数据，结合 W1 的世界观，决定要诞生一个什么样的国家，以及它**想去哪个大陆发展**。
 
 *   **AI 做什么**：
-  1.  调用 `get_W4world_atlas` 获取所有大陆的详细指标。
+  1.  调用 `W4_get_world_atlas` 获取所有大陆和`W4_world_summary`比对标准的数据。
   2.  **分析匹配**：
     *   看到 ID=12 的大陆 `avg_height: 78` (较高), `roughness: 1.34` (崎岖), `avg_temp: 0.62` (温带偏凉)。
     *   **决策**：这非常适合一个“高山矮人”或“高原游牧”文明。
@@ -185,14 +258,29 @@ root
     *   **扩张基因**：定义 `expansion_power`（总扩张力/能量）和 `movement_costs`（地形消耗表）。
 
 *   **程序 做什么**：
-  *   提供 `get_W4world_atlas` 接口。
+  *   提供 `W4_get_world_atlas` 接口。
   *   接收并存储 AI 生成的蓝图配置。
 
 *   **AI 可调用数据 (MCP)**：
-  *   `get_W4world_atlas()`：返回你 W3 产出的那个详细 JSON（含地貌、气候、生态）。
+  *   `W4_get_world_atlas()`：返回你 W3 产出的那个详细 JSON（含地貌、气候、生态）。
 
-*   **产出 (JSON)**：`T1_Blueprint.json`
-*   **存放位置**：`/saves/<WorldName>/terra_script/territories/<territory_id>/`
+*   **产出 (JSON)**：`T1_Blueprint.json`（列表，按 territory_id 去重）
+*   **存放位置**：`/saves/<WorldName>/terra_script/territories/`
+
+### 🔌 T1 MCP 接口
+- **方法名**：`T1_submit_blueprint`
+- **HTTP**：`POST /t1_blueprint`
+- **输入参数**：T1_Blueprint.json 中的单条对象
+- **输出**：
+```jsonc
+{
+  "step": "T1",
+  "ok": true,
+  "message": "saved",
+  "blueprint": { /* 提交的蓝图 */ }
+}
+```
+- **可选**：`T1_list_blueprints`（`GET /t1_blueprint`）返回全部蓝图列表
 
 ### 📄 产出示例：T1_Blueprint.json
 

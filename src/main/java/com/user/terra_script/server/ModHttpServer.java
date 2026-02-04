@@ -9,14 +9,11 @@ import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
 import com.sun.net.httpserver.HttpServer;
 import com.user.terra_script.client.data.ScanResultHolder;
-import com.user.terra_script.client.data.ScanResultHolder.RegionCache;
 import com.user.terra_script.config.StructurePlan;
-import com.user.terra_script.scan.ScanPixel;
-import com.user.terra_script.scan.ScanRegion;
-import com.user.terra_script.util.AsciiMapGenerator;
-import com.user.terra_script.util.DBSCAN;
 import com.user.terra_script.util.StructureDiscovery;
 import com.user.terra_script.util.ScanDataIO;
+import com.user.terra_script.server.mcp.TerritoryController;
+import com.user.terra_script.server.mcp.WorldController;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraftforge.event.server.ServerStartedEvent;
@@ -30,10 +27,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.Executors;
 import com.user.terra_script.world.city.CityConfig;
 import com.user.terra_script.world.city.CityManager;
@@ -41,7 +36,6 @@ import com.user.terra_script.world.city.CityInstance;
 import com.user.terra_script.world.NationGenManager;
 import com.user.terra_script.world.city.CityStage1BinaryIO;
 import com.user.terra_script.world.city.CityProjectSnapshot;
-import java.nio.file.Files;
 import java.nio.file.Path;
 
 @Mod.EventBusSubscriber(modid = "terra_script")
@@ -74,28 +68,32 @@ public class ModHttpServer {
             // API 1: Continents
             server.createContext("/continents", exchange -> {
                 try {
-                    var holder = ScanResultHolder.get();
-                    JsonArray list = new JsonArray();
+                    JsonObject res = WorldController.buildContinents(ScanResultHolder.get());
+                    sendResponse(exchange, 200, gson.toJson(res));
+                } catch (Exception e) { handleError(exchange, e); }
+            });
 
-                    // 1. 添加陆地
-                    if (holder.lastClusters != null) {
-                        for (ScanRegion r : holder.lastClusters) {
-                            JsonObject obj = serializeRegion(r, holder); // 封装一个序列化方法
-                            obj.addProperty("type", "LAND");
-                            list.add(obj);
-                        }
-                    }
+            // API 1.5: World Atlas (W3 atlas + W4 summary)
+            server.createContext("/world_atlas", exchange -> {
+                try {
+                    JsonObject res = WorldController.buildWorldAtlas(mcServer);
+                    sendResponse(exchange, 200, gson.toJson(res));
+                } catch (Exception e) { handleError(exchange, e); }
+            });
 
-                    // 2. 添加海洋
-                    if (holder.lastOceanRegions != null) {
-                        for (ScanRegion r : holder.lastOceanRegions) {
-                            JsonObject obj = serializeRegion(r, holder);
-                            obj.addProperty("type", "OCEAN");
-                            list.add(obj);
-                        }
-                    }
+            // API 1.6: World Summary (W4_WorldSummary.json)
+            server.createContext("/world_summary", exchange -> {
+                try {
+                    JsonObject res = WorldController.buildWorldSummary(mcServer);
+                    sendResponse(exchange, 200, gson.toJson(res));
+                } catch (Exception e) { handleError(exchange, e); }
+            });
 
-                    sendResponse(exchange, 200, gson.toJson(list));
+            // API 1.7: Terrain Summary (W4_TerrainSummary.json)
+            server.createContext("/terrain_summary", exchange -> {
+                try {
+                    JsonObject res = WorldController.buildTerrainSummary(mcServer);
+                    sendResponse(exchange, 200, gson.toJson(res));
                 } catch (Exception e) { handleError(exchange, e); }
             });
 
@@ -107,185 +105,14 @@ public class ModHttpServer {
                 } catch (Exception e) { handleError(exchange, e); }
             });
 
-// API 3: Query Region (双模：大�?国度 + 聚类 + ASCII 地图)
+            // API T1: Submit Territory Blueprint
+            server.createContext("/t1_blueprint", exchange -> {
+                TerritoryController.handleT1Blueprint(exchange, mcServer);
+            });
+
+            // API 3: Query Region (双模：大�?国度 + 聚类 + ASCII 地图)
             server.createContext("/query_region", exchange -> {
-                if (!"POST".equals(exchange.getRequestMethod())) {
-                    sendResponse(exchange, 405, "{\"error\": \"Method Not Allowed\"}");
-                    return;
-                }
-                try {
-                    String body = readRequestBody(exchange);
-                    JsonObject req = JsonParser.parseString(body).getAsJsonObject();
-
-                    // 参数解析
-                    String territoryId = req.has("territory_id") ? req.get("territory_id").getAsString() : null;
-                    int regionId = req.has("region_id") ? req.get("region_id").getAsInt() : -1;
-
-                    double minSlope = req.has("min_slope") ? req.get("min_slope").getAsDouble() : -1;
-                    double maxSlope = req.has("max_slope") ? req.get("max_slope").getAsDouble() : 999;
-                    double minTpi = req.has("min_tpi") ? req.get("min_tpi").getAsDouble() : -999;
-                    double maxTpi = req.has("max_tpi") ? req.get("max_tpi").getAsDouble() : 999;
-                    int limit = req.has("limit") ? req.get("limit").getAsInt() : 5;
-
-                    List<ScanPixel> rawCandidates = new ArrayList<>();
-                    int step = 1;
-
-                    // 用于后续计算 Description 的辅助变�?
-                    // 如果�?Region 模式，我们可以用精确�?slopeData；如果是 Territory 模式，只能近�?
-                    ScanResultHolder.RegionCache refCache = null;
-
-                    // --- 分支 1: 国度模式 (Territory Mode) ---
-                    if (territoryId != null) {
-                        var holder = ScanResultHolder.get();
-                        String[][] owners = com.user.terra_script.world.TerritoryManager.globalOwnershipMap;
-                        ScanPixel[][] globalPixels = holder.lastScanData;
-
-                        if (owners == null || globalPixels == null) {
-                            sendResponse(exchange, 400, "{\"error\": \"Territory data not ready. Please run 'establish_territory' first.\"}");
-                            return;
-                        }
-
-                        // 查找该国度的 BoundingBox 优化遍历
-                        var allRes = com.user.terra_script.world.TerritoryManager.getAllResults();
-                        var targetRes = allRes.stream().filter(r -> r.config.id.equals(territoryId)).findFirst().orElse(null);
-                        if (targetRes == null) {
-                            sendResponse(exchange, 404, "{\"error\": \"Territory ID not found: " + territoryId + "\"}");
-                            return;
-                        }
-
-                        step = holder.scanStep;
-                        int w = globalPixels.length;
-                        int h = globalPixels[0].length;
-                        int radiusBlocks = holder.scanRadiusChunks * 16;
-                        int globalMinX = -radiusBlocks;
-                        int globalMinZ = -radiusBlocks; // 假设扫描�?0,0 为中�?
-
-                        // 计算网格范围 (Grid Range)
-                        int gMinX = (targetRes.stats.minX - globalMinX) / step;
-                        int gMaxX = (targetRes.stats.maxX - globalMinX) / step;
-                        int gMinZ = (targetRes.stats.minZ - globalMinZ) / step;
-                        int gMaxZ = (targetRes.stats.maxZ - globalMinZ) / step;
-
-                        gMinX = Math.max(0, gMinX); gMaxX = Math.min(w-1, gMaxX);
-                        gMinZ = Math.max(0, gMinZ); gMaxZ = Math.min(h-1, gMaxZ);
-
-                        for (int i = gMinX; i <= gMaxX; i++) {
-                            for (int j = gMinZ; j <= gMaxZ; j++) {
-                                if (territoryId.equals(owners[i][j])) {
-                                    ScanPixel p = globalPixels[i][j];
-                                    if (p != null && checkCriteria(p, minSlope, maxSlope, minTpi, maxTpi)) {
-                                        rawCandidates.add(p);
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    // --- 分支 2: 大陆模式 (Region Mode) ---
-                    else if (regionId != -1) {
-                        var holder = ScanResultHolder.get();
-                        RegionCache cache = holder.regionCacheMap.get(regionId);
-                        if (cache == null || cache.detailData == null) {
-                            sendResponse(exchange, 404, "{\"error\": \"Region " + regionId + " not cached.\"}");
-                            return;
-                        }
-                        if (cache.slopeData == null || cache.tpiData == null) {
-                            sendResponse(exchange, 400, "{\"error\": \"Terrain features missing for Region " + regionId + ". Please generate them in-game.\"}");
-                            return;
-                        }
-
-                        refCache = cache;
-                        step = cache.step;
-                        ScanPixel[][] pixels = cache.detailData;
-                        double[][] slopes = cache.slopeData;
-                        double[][] tpis = cache.tpiData;
-                        int w = pixels.length;
-                        int h = pixels[0].length;
-
-                        // 动态采样步长，防止点太�?
-                        int sampleStep = 1;
-                        if (w * h > 250000) sampleStep = 2;
-
-                        for (int i = 0; i < w; i += sampleStep) {
-                            for (int j = 0; j < h; j += sampleStep) {
-                                if (pixels[i][j] == null || !pixels[i][j].isLand()) continue;
-                                double s = slopes[i][j];
-                                double t = tpis[i][j];
-                                if (s >= minSlope && s <= maxSlope && t >= minTpi && t <= maxTpi) {
-                                    rawCandidates.add(pixels[i][j]);
-                                }
-                            }
-                        }
-                    } else {
-                        sendResponse(exchange, 400, "{\"error\": \"Must provide either 'region_id' or 'territory_id'.\"}");
-                        return;
-                    }
-
-                    // --- 后续处理：DBSCAN + ASCII ---
-                    List<List<DBSCAN.Point>> clusters = DBSCAN.cluster(rawCandidates, step * 4.0, 5); // 稍微放宽点数要求
-
-                    JsonObject response = new JsonObject();
-                    JsonObject meta = new JsonObject();
-                    if (territoryId != null) meta.addProperty("target_territory", territoryId);
-                    else meta.addProperty("target_region", regionId);
-                    response.add("metadata", meta);
-
-                    JsonArray candidatesArr = new JsonArray();
-                    clusters.sort((c1, c2) -> Integer.compare(c2.size(), c1.size()));
-
-                    int count = 0;
-                    for (List<DBSCAN.Point> cluster : clusters) {
-                        if (count >= limit) break;
-
-                        JsonObject clusterJson = AsciiMapGenerator.generate(count + 1, cluster);
-
-                        // 补充描述信息
-                        // 如果�?refCache (Region模式)，用精确数据算均值；否则 (Territory模式)，用默认�?
-                        double avgSlope = 0;
-                        double avgTpi = 0;
-
-                        // 只有�?Region 模式�?(refCache != null) 才能精确计算地形均�?
-                        if (refCache != null) {
-                            final RegionCache finalCache = refCache; // 显式声明�?final �?lambda 使用
-
-                            avgSlope = cluster.stream().mapToDouble(p -> {
-                                int gx = (p.x - finalCache.minX) / finalCache.step;
-                                int gz = (p.z - finalCache.minZ) / finalCache.step;
-                                // 边界检查防止越�?
-                                if (gx >= 0 && gx < finalCache.slopeData.length && gz >= 0 && gz < finalCache.slopeData[0].length) {
-                                    return finalCache.slopeData[gx][gz];
-                                }
-                                return 0.0;
-                            }).average().orElse(0.0);
-
-                            avgTpi = cluster.stream().mapToDouble(p -> {
-                                int gx = (p.x - finalCache.minX) / finalCache.step;
-                                int gz = (p.z - finalCache.minZ) / finalCache.step;
-                                if (gx >= 0 && gx < finalCache.tpiData.length && gz >= 0 && gz < finalCache.tpiData[0].length) {
-                                    return finalCache.tpiData[gx][gz];
-                                }
-                                return 0.0;
-                            }).average().orElse(0.0);
-                        }
-
-                        String desc = "Area";
-                        if (avgTpi > 1.0) desc = "Ridge/Highland"; else if (avgTpi < -1.0) desc = "Valley/Basin"; else desc = "Plain";
-                        if (avgSlope > 1.5) desc += " (Rugged)"; else if (avgSlope < 0.5) desc += " (Flat)";
-                        clusterJson.addProperty("description", desc);
-
-                        JsonObject metrics = new JsonObject();
-                        metrics.addProperty("size", cluster.size());
-                        metrics.addProperty("biome", cluster.get(0).data.biomeId());
-                        clusterJson.add("metrics", metrics);
-
-                        candidatesArr.add(clusterJson);
-                        count++;
-                    }
-
-                    response.add("candidates", candidatesArr);
-                    sendResponse(exchange, 200, gson.toJson(response));
-
-                } catch (Exception e) { handleError(exchange, e); }
+                TerritoryController.handleQueryRegion(exchange, mcServer);
             });
 
             // API 4: Place
@@ -682,46 +509,6 @@ public class ModHttpServer {
     }
 
     // 简单的筛选逻辑 (Territory模式下暂不强制校�?Slope/TPI 以保证性能和可用�?
-    private static boolean checkCriteria(ScanPixel p, double minS, double maxS, double minT, double maxT) {
-        return true;
-    }
-
-    private static JsonObject serializeRegion(ScanRegion r, ScanResultHolder holder) {
-        JsonObject obj = new JsonObject();
-        obj.addProperty("id", r.id);
-        JsonObject center = new JsonObject();
-        center.addProperty("x", r.centerX);
-        center.addProperty("z", r.centerZ);
-        obj.add("center", center);
-        obj.addProperty("area", r.area);
-
-        JsonObject terrain = new JsonObject();
-        terrain.addProperty("avg_height", Math.round(r.avgHeight));
-        terrain.addProperty("roughness", String.format("%.2f", r.roughness));
-        obj.add("terrain", terrain);
-
-        JsonObject climate = new JsonObject();
-        climate.addProperty("avg_temp", r.avgTemp);
-        // ... grid ...
-        obj.add("climate", climate);
-
-        JsonObject eco = new JsonObject();
-        // ... dom biomes ...
-        obj.add("ecology", eco);
-
-        // 注意：海洋通常没有 Detail 缓存，除非您特意�?scanRegion 编辑�?
-        obj.addProperty("has_detail", holder.regionCacheMap.containsKey(r.id));
-
-        return obj;
-    }
+    
 }
-
-
-
-
-
-
-
-
-
 

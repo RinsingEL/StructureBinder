@@ -152,7 +152,24 @@ public class DevCommandHandler {
 
     private static ApiCallResult dispatchMcp(String api, JsonObject args) throws Exception {
         switch (api) {
+            case "W3_get_continents":
+                return httpGet("/continents");
+            case "W4_get_world_atlas":
+                return httpGet("/world_atlas");
+            case "W4_world_summary":
+                return httpGet("/world_summary");
+            case "W4_terrain_summary":
+                return httpGet("/terrain_summary");
+            case "T1_submit_blueprint":
+                return httpPost("/t1_blueprint", args);
+            case "T1_list_blueprints":
+                return httpGet("/t1_blueprint");
             case "get_world_atlas":
+                return httpGet("/world_atlas");
+            case "world_summary":
+                return httpGet("/world_summary");
+            case "terrain_summary":
+                return httpGet("/terrain_summary");
             case "continents":
                 return httpGet("/continents");
             case "list_available_structures":
@@ -167,7 +184,7 @@ public class DevCommandHandler {
                 }
                 return res;
             }
-            case "scan_local_candidates":
+            case "W4_scan_local_candidates":
             case "query_region":
                 return httpPost("/query_region", args);
             case "establish_territory":
@@ -491,9 +508,14 @@ public class DevCommandHandler {
 
     private static void sendMcpHelp(CommandSourceStack source) {
         String tools = String.join(", ",
-                "get_world_atlas",
+                "W3_get_continents",
+                "W4_get_world_atlas",
+                "W4_world_summary",
+                "W4_terrain_summary",
+                "W4_scan_local_candidates",
+                "T1_submit_blueprint",
+                "T1_list_blueprints",
                 "list_available_structures",
-                "scan_local_candidates",
                 "establish_territory",
                 "get_territory_status",
                 "establish_city",
@@ -510,6 +532,9 @@ public class DevCommandHandler {
         );
         String apis = String.join(", ",
                 "continents",
+                "world_atlas",
+                "world_summary",
+                "terrain_summary",
                 "structures",
                 "query_region",
                 "create_territory",

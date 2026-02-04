@@ -488,6 +488,7 @@ public class ScanDataIO {
                 for (int i = 0; i < pixels.size(); i++) {
                     CompoundTag pTag = pixels.getCompound(i);
                     if (!pTag.contains("x")) continue;
+                    if (pTag.contains("l") && !pTag.getBoolean("l")) continue;
                     int x = pTag.getInt("x");
                     int z = pTag.getInt("z");
                     int h = pTag.getInt("h");
@@ -523,9 +524,23 @@ public class ScanDataIO {
                 ListTag list = rootTag.getList("regions", Tag.TAG_COMPOUND);
                 for (int i = 0; i < list.size(); i++) {
                     CompoundTag rTag = list.getCompound(i);
-                    if (rTag.contains("slope")) slope.acceptLongArray(rTag.getLongArray("slope"));
-                    if (rTag.contains("roughness")) rough.acceptLongArray(rTag.getLongArray("roughness"));
-                    if (rTag.contains("tpi")) tpi.acceptLongArray(rTag.getLongArray("tpi"));
+                    ListTag pixels = rTag.getList("pixels", Tag.TAG_COMPOUND);
+                    long[] slopeArr = rTag.contains("slope") ? rTag.getLongArray("slope") : null;
+                    long[] roughArr = rTag.contains("roughness") ? rTag.getLongArray("roughness") : null;
+                    long[] tpiArr = rTag.contains("tpi") ? rTag.getLongArray("tpi") : null;
+
+                    int max = pixels.size();
+                    if (slopeArr != null) max = Math.min(max, slopeArr.length);
+                    if (roughArr != null) max = Math.min(max, roughArr.length);
+                    if (tpiArr != null) max = Math.min(max, tpiArr.length);
+
+                    for (int k = 0; k < max; k++) {
+                        CompoundTag pTag = pixels.getCompound(k);
+                        if (pTag.contains("l") && !pTag.getBoolean("l")) continue;
+                        if (slopeArr != null) slope.acceptValue(Double.longBitsToDouble(slopeArr[k]));
+                        if (roughArr != null) rough.acceptValue(Double.longBitsToDouble(roughArr[k]));
+                        if (tpiArr != null) tpi.acceptValue(Double.longBitsToDouble(tpiArr[k]));
+                    }
                 }
             }
             if (slope.hasData()) root.add("slope", slope.toJson());
@@ -560,17 +575,20 @@ public class ScanDataIO {
         private double sum = 0;
         private long count = 0;
 
+        void acceptValue(double v) {
+            if (v < min) min = v;
+            if (v > max) max = v;
+            sum += v;
+            count++;
+        }
+
         void accept(double[][] data) {
             if (data == null || data.length == 0 || data[0].length == 0) return;
             int w = data.length;
             int h = data[0].length;
             for (int i = 0; i < w; i++) {
                 for (int j = 0; j < h; j++) {
-                    double v = data[i][j];
-                    if (v < min) min = v;
-                    if (v > max) max = v;
-                    sum += v;
-                    count++;
+                    acceptValue(data[i][j]);
                 }
             }
         }
@@ -578,11 +596,7 @@ public class ScanDataIO {
         void acceptLongArray(long[] data) {
             if (data == null || data.length == 0) return;
             for (long bits : data) {
-                double v = Double.longBitsToDouble(bits);
-                if (v < min) min = v;
-                if (v > max) max = v;
-                sum += v;
-                count++;
+                acceptValue(Double.longBitsToDouble(bits));
             }
         }
 
