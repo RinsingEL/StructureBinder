@@ -2,7 +2,7 @@ package com.user.terra_script.client.screen.city;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
-import com.user.terra_script.scan.MapTransform;
+import com.user.terra_script.domain.world.scan.MapTransform;
 import net.minecraft.client.gui.GuiGraphics;
 
 import com.user.terra_script.world.city.CityLayout;
@@ -192,3 +192,4 @@ public class CityOverlayRenderer {
         RenderSystem.disableBlend();
     }
 }
+

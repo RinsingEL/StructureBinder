@@ -5,7 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.user.terra_script.client.data.ScanResultHolder;
 import com.user.terra_script.client.data.ScanResultHolder.RegionCache;
-import com.user.terra_script.scan.ScanPixel;
+import com.user.terra_script.domain.world.scan.ScanPixel;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraftforge.fml.loading.FMLPaths;
 
@@ -435,3 +435,4 @@ public class TerritoryManager {
     private static void save() { try { Files.writeString(CONFIG_FILE.toPath(), GSON.toJson(registeredFactions)); } catch (Exception e) { e.printStackTrace(); } }
     private static void load() { if (!CONFIG_FILE.exists()) return; try { List<TerritoryConfig> l = GSON.fromJson(Files.readString(CONFIG_FILE.toPath()), new TypeToken<List<TerritoryConfig>>(){}.getType()); registeredFactions.clear(); if(l!=null) registeredFactions.addAll(l); } catch (Exception e) { e.printStackTrace(); } }
 }
+

@@ -1,4 +1,5 @@
-package com.user.terra_script.scan;
+package com.user.terra_script.domain.world.scan;
+
 
 public class MapTransform {
 
@@ -32,3 +33,4 @@ public class MapTransform {
         return Math.round(16 * scale);
     }
 }
+

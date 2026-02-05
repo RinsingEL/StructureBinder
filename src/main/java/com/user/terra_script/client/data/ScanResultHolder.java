@@ -1,7 +1,7 @@
 package com.user.terra_script.client.data;
 
-import com.user.terra_script.scan.ScanPixel;
-import com.user.terra_script.scan.ScanRegion;
+import com.user.terra_script.domain.world.scan.ScanPixel;
+import com.user.terra_script.domain.world.scan.ScanRegion;
 import com.user.terra_script.util.ScanDataIO;
 import java.util.List;
 import java.util.Map;

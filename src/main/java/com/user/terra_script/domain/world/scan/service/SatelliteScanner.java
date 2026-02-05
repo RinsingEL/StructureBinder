@@ -1,5 +1,6 @@
-package com.user.terra_script.scan;
+package com.user.terra_script.domain.world.scan.service;
 
+import com.user.terra_script.domain.world.scan.ScanPixel;
 import net.minecraft.core.Holder;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;

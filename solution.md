@@ -565,13 +565,13 @@ private static final List<TerritoryConfig> pendingFactions = new ArrayList<>();
 
 `previewSiteASCII(candidateId)`
 
-
 `getSiteStats(candidateId)`
 - **产出（JSON）**：`C1_Intent.json`（你已有的那套 + 扩展层数/城墙偏好）
 - **存放位置**：`/saves/<WorldName>/terra_script/cities/<city_id>/`
 
 
 ## C2 城市领地生成（程序）
+
 
 
 - **程序做什么**：从市中心扩张得到城市占地区域（chunk集合），并分层（至少核心+缓冲；允许多层墙）

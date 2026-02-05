@@ -1,4 +1,6 @@
-package com.user.terra_script.scan;
+package com.user.terra_script.util;
+
+import com.user.terra_script.domain.world.scan.ScanPixel;
 
 public class TerrainFeatureComputer {
 

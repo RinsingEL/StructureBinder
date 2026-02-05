@@ -2,8 +2,8 @@ package com.user.terra_script.util;
 
 import com.user.terra_script.client.data.ScanResultHolder;
 import com.user.terra_script.client.data.ScanResultHolder.RegionCache;
-import com.user.terra_script.scan.ScanPixel;
-import com.user.terra_script.scan.ScanRegion;
+import com.user.terra_script.domain.world.scan.ScanPixel;
+import com.user.terra_script.domain.world.scan.ScanRegion;
 import net.minecraft.nbt.*;
 import net.minecraftforge.fml.loading.FMLPaths;
 
@@ -613,3 +613,4 @@ public class ScanDataIO {
         }
     }
 }
+

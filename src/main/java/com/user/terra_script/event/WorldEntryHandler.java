@@ -3,7 +3,7 @@ package com.user.terra_script.event;
 import com.user.terra_script.client.data.ScanResultHolder;
 import com.user.terra_script.client.screen.map.StandaloneMapScreen;
 import com.user.terra_script.config.StructurePlan;
-import com.user.terra_script.scan.SatelliteScanner;
+import com.user.terra_script.domain.world.scan.service.SatelliteScanner;
 import com.user.terra_script.util.ScanDataIO;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
@@ -90,3 +90,4 @@ public class WorldEntryHandler {
         }
     }
 }
+

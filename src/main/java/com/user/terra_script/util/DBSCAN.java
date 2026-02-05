@@ -1,6 +1,6 @@
 package com.user.terra_script.util;
 
-import com.user.terra_script.scan.ScanPixel;
+import com.user.terra_script.domain.world.scan.ScanPixel;
 import java.util.*;
 
 public class DBSCAN {

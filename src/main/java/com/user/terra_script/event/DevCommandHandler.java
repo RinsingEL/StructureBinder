@@ -14,6 +14,14 @@ import com.user.terra_script.world.NationGenManager;
 import com.user.terra_script.world.city.CityInstance;
 import com.user.terra_script.world.city.CityManager;
 import com.user.terra_script.world.city.RoadInjector;
+import com.user.terra_script.core.artifact.ArtifactStore;
+import com.user.terra_script.core.artifact.ArtifactKey;
+import com.user.terra_script.core.stage.StageContext;
+import com.user.terra_script.core.workflow.FileStageStatusStore;
+import com.user.terra_script.core.workflow.StageRegistry;
+import com.user.terra_script.core.workflow.WorkflowEngine;
+import com.user.terra_script.domain.world.stage.W3Stage;
+import com.user.terra_script.domain.world.stage.W4Stage;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
@@ -32,6 +40,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.Locale;
 
 @Mod.EventBusSubscriber(modid = "terra_script")
@@ -104,6 +113,13 @@ public class DevCommandHandler {
                                                 return 0;
                                             }
                                         })))
+                        .then(Commands.literal("stage")
+                                .requires(src -> src.hasPermission(2))
+                                .then(Commands.argument("stage_id", StringArgumentType.word())
+                                        .executes(ctx -> {
+                                            String stageId = StringArgumentType.getString(ctx, "stage_id");
+                                            return runWorkflowStage(ctx, stageId);
+                                        })))
                         .then(Commands.literal("mcp")
                                 .requires(src -> src.hasPermission(2))
                                 .then(Commands.argument("api", StringArgumentType.word())
@@ -113,6 +129,43 @@ public class DevCommandHandler {
                                                         StringArgumentType.getString(ctx, "api"),
                                                         StringArgumentType.getString(ctx, "json"))))))
         );
+    }
+
+    private static int runWorkflowStage(CommandContext<CommandSourceStack> ctx, String stageIdRaw) {
+        String stageId = stageIdRaw == null ? "" : stageIdRaw.trim().toUpperCase(Locale.ROOT);
+        if (!"W3".equals(stageId) && !"W4".equals(stageId)) {
+            ctx.getSource().sendFailure(Component.literal("Unknown stage: " + stageIdRaw + " (use W3 or W4)"));
+            return 0;
+        }
+
+        try {
+            ArtifactStore artifacts = new ArtifactStore();
+            FileStageStatusStore statusStore = new FileStageStatusStore(artifacts);
+            StageContext stageCtx = StageContext.forServer(ctx.getSource().getServer(), artifacts, statusStore);
+
+            StageRegistry registry = new StageRegistry();
+            registry.register(new W3Stage());
+            registry.register(new W4Stage());
+
+            WorkflowEngine engine = new WorkflowEngine(registry);
+            engine.runStage(stageId, stageCtx);
+
+            ctx.getSource().sendSuccess(() ->
+                    Component.literal("Stage " + stageId + " completed."), false);
+
+            List<ArtifactKey> keys = "W3".equals(stageId)
+                    ? List.of(ArtifactKey.W3_CONTINENT_META_JSON, ArtifactKey.W3_OCEAN_META_JSON)
+                    : List.of(ArtifactKey.W4_TERRAIN_FACTS_DAT, ArtifactKey.W4_TERRAIN_SUMMARY_JSON);
+            for (ArtifactKey key : keys) {
+                Path p = artifacts.resolve(ctx.getSource().getServer(), stageCtx.worldId, key);
+                ctx.getSource().sendSuccess(() ->
+                        Component.literal("Output: " + p), false);
+            }
+            return 1;
+        } catch (Exception e) {
+            ctx.getSource().sendFailure(Component.literal("Stage " + stageId + " failed: " + e.getMessage()));
+            return 0;
+        }
     }
 
     private static int handleMcpCall(CommandContext<CommandSourceStack> ctx, String apiRaw, String jsonArg) {

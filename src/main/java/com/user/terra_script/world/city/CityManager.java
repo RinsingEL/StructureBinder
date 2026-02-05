@@ -4,7 +4,7 @@ import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 import com.user.terra_script.client.data.ScanResultHolder;
 import com.user.terra_script.config.ForbiddenZoneConfig;
-import com.user.terra_script.scan.ScanPixel;
+import com.user.terra_script.domain.world.scan.ScanPixel;
 import com.user.terra_script.util.VoronoiComputer;
 import com.user.terra_script.world.TerritoryManager;
 import com.user.terra_script.world.city.district.District;
@@ -558,6 +558,7 @@ public class CityManager {
         }
     }
 }
+
 
 
 

@@ -1,4 +1,7 @@
-package com.user.terra_script.scan;
+package com.user.terra_script.domain.world.scan.service;
+
+import com.user.terra_script.domain.world.scan.ScanPixel;
+import com.user.terra_script.domain.world.scan.ScanRegion;
 
 import java.util.*;
 

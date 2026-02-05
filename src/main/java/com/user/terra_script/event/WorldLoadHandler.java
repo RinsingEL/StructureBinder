@@ -1,7 +1,7 @@
 //package com.user.terra_script.event;
 //
 //import com.user.terra_script.client.data.ScanResultHolder;
-//import com.user.terra_script.scan.SatelliteScanner;
+//import com.user.terra_script.domain.world.scan.service.SatelliteScanner;
 //import net.minecraft.server.level.ServerLevel;
 //import net.minecraftforge.event.server.ServerStartedEvent;
 //import net.minecraftforge.eventbus.api.SubscribeEvent;
