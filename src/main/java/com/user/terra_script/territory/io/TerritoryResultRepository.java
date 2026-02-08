@@ -122,6 +122,17 @@ public class TerritoryResultRepository {
         }
     }
 
+    public static Optional<byte[]> readT4Dat(MinecraftServer server, String territoryId) {
+        if (server == null || isBlank(territoryId)) return Optional.empty();
+        try {
+            Path path = datPath(server, territoryId, T4_DIR);
+            if (!Files.exists(path)) return Optional.empty();
+            return Optional.of(Files.readAllBytes(path));
+        } catch (Exception e) {
+            return Optional.empty();
+        }
+    }
+
     public static JsonObject buildSummary(TerritoryManager.TerritoryResult result) {
         return buildSummary(result, "T3");
     }

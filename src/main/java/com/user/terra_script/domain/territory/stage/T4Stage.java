@@ -189,7 +189,9 @@ public class T4Stage extends StageBase {
         Map<Long, Float> temperatures = new HashMap<>(Math.max(256, chunkKeys.size() * 256));
         Map<Long, String> biomesAt = new HashMap<>(Math.max(256, chunkKeys.size() * 256));
         List<Long> orderedChunks = new ArrayList<>(chunkKeys);
-        orderedChunks.sort(Long::compareTo);
+        orderedChunks.sort(Comparator
+                .comparingLong((Long key) -> chunkDistanceSqToCapital(key, result.config.capitalX, result.config.capitalZ))
+                .thenComparingLong(Long::longValue));
         int chunkLimit = options.maxChunksPerTerritory > 0
                 ? Math.min(options.maxChunksPerTerritory, orderedChunks.size())
                 : orderedChunks.size();
@@ -656,6 +658,16 @@ public class T4Stage extends StageBase {
 
     private static int samplesPerAxis(int step) {
         return ((16 - 1) / step) + 1;
+    }
+
+    private static long chunkDistanceSqToCapital(long chunkKey, int capitalX, int capitalZ) {
+        int cx = ChunkPos.getX(chunkKey);
+        int cz = ChunkPos.getZ(chunkKey);
+        int centerX = (cx << 4) + 8;
+        int centerZ = (cz << 4) + 8;
+        long dx = (long) centerX - capitalX;
+        long dz = (long) centerZ - capitalZ;
+        return dx * dx + dz * dz;
     }
 
     private static String borderSecurity(double avgSlope) {

@@ -28,70 +28,70 @@ public class VoronoiComputer {
         Random rand = new Random(city.id.hashCode());
         CityConfig.LayerLayout layout = city.getLayerLayout();
 
-        Map<Integer, List<Long>> layerChunks = new HashMap<>();
-        for (Map.Entry<Long, CityInstance.LayerAssignment> entry : city.claimedChunks.entrySet()) {
-            CityInstance.LayerAssignment assignment = entry.getValue();
-            int layerIndex = assignment != null ? assignment.layerIndex : (layout.layers.size() - 1);
-            layerChunks.computeIfAbsent(layerIndex, k -> new ArrayList<>()).add(entry.getKey());
+        List<Long> allChunks = new ArrayList<>(city.claimedChunks.keySet());
+        int globalTarget = computeTargetDistricts(allChunks.size(), city.config != null ? city.config.density : "mid");
+        globalTarget = Math.max(1, Math.min(globalTarget, allChunks.size()));
+
+        Collections.shuffle(allChunks, rand);
+        List<District> globalSeeds = new ArrayList<>();
+        for (int i = 0; i < globalTarget; i++) {
+            long seed = allChunks.get(i);
+            double sx = (ChunkPos.getX(seed) * 16) + 8;
+            double sz = (ChunkPos.getZ(seed) * 16) + 8;
+            District seedDistrict = new District(i + 1, sx, sz);
+            seedDistrict.cityId = city.id;
+            globalSeeds.add(seedDistrict);
         }
 
-        Map<Integer, List<District>> districtsByLayer = new HashMap<>();
+        Map<String, District> splitDistricts = new LinkedHashMap<>();
         int nextId = 1;
-
-        for (int layerIndex = 0; layerIndex < layout.layers.size(); layerIndex++) {
-            List<Long> candidates = layerChunks.get(layerIndex);
-            if (candidates == null || candidates.isEmpty()) continue;
-            CityConfig.LayerConfig layer = layout.layerAt(layerIndex);
-            int targetDistricts = computeTargetDistricts(candidates.size(), layer.density);
-            if (targetDistricts <= 0) continue;
-
-            Collections.shuffle(candidates, rand);
-
-            int count = Math.min(targetDistricts, candidates.size());
-            for (int i = 0; i < count; i++) {
-                long seedChunk = candidates.get(i);
-
-                double cx = (ChunkPos.getX(seedChunk) * 16) + 8;
-                double cz = (ChunkPos.getZ(seedChunk) * 16) + 8;
-
-                District d = new District(nextId++, cx, cz);
-                d.cityId = city.id;
-                d.zoneType = layer.type;
-                d.layerIndex = layerIndex;
-                d.density = layer.density;
-
-                districts.add(d);
-                districtsByLayer.computeIfAbsent(layerIndex, k -> new ArrayList<>()).add(d);
-            }
-        }
-
-        for (Map.Entry<Long, CityInstance.LayerAssignment> entry : city.claimedChunks.entrySet()) {
-            long chunkKey = entry.getKey();
-            CityInstance.LayerAssignment assignment = entry.getValue();
-            int layerIndex = assignment != null ? assignment.layerIndex : (layout.layers.size() - 1);
-            List<District> layerDistricts = districtsByLayer.get(layerIndex);
-            if (layerDistricts == null || layerDistricts.isEmpty()) continue;
-
+        for (long chunkKey : allChunks) {
             int cx = ChunkPos.getX(chunkKey) * 16 + 8;
             int cz = ChunkPos.getZ(chunkKey) * 16 + 8;
 
-            District nearest = null;
-            double minDst = Double.MAX_VALUE;
-
-            for (District d : layerDistricts) {
-                double distSq = Math.pow(cx - d.centerX, 2) + Math.pow(cz - d.centerZ, 2);
-                if (distSq < minDst) {
-                    minDst = distSq;
-                    nearest = d;
+            District nearestSeed = null;
+            double minDist = Double.MAX_VALUE;
+            for (District seed : globalSeeds) {
+                double dx = cx - seed.centerX;
+                double dz = cz - seed.centerZ;
+                double distSq = dx * dx + dz * dz;
+                if (distSq < minDist) {
+                    minDist = distSq;
+                    nearestSeed = seed;
                 }
             }
+            if (nearestSeed == null) continue;
 
-            if (nearest != null) {
-                nearest.memberChunks.add(chunkKey);
+            CityInstance.LayerAssignment assignment = city.claimedChunks.get(chunkKey);
+            int layerIndex = assignment != null ? assignment.layerIndex : (layout.layers.size() - 1);
+            layerIndex = Math.max(0, Math.min(layout.layers.size() - 1, layerIndex));
+            CityConfig.LayerConfig layer = layout.layerAt(layerIndex);
+
+            String key = nearestSeed.id + ":" + layerIndex;
+            District district = splitDistricts.get(key);
+            if (district == null) {
+                district = new District(nextId++, nearestSeed.centerX, nearestSeed.centerZ);
+                district.cityId = city.id;
+                district.zoneType = layer.type;
+                district.layerIndex = layerIndex;
+                district.density = layer.density;
+                splitDistricts.put(key, district);
             }
+            district.memberChunks.add(chunkKey);
         }
 
-        // 5. 重新计算中心�?(Lloyd Relaxation step 1) - 可选，让种子移动到几何中心
+        for (District district : splitDistricts.values()) {
+            if (district.memberChunks.isEmpty()) continue;
+            double sx = 0.0;
+            double sz = 0.0;
+            for (long chunkKey : district.memberChunks) {
+                sx += (ChunkPos.getX(chunkKey) * 16) + 8;
+                sz += (ChunkPos.getZ(chunkKey) * 16) + 8;
+            }
+            district.centerX = sx / district.memberChunks.size();
+            district.centerZ = sz / district.memberChunks.size();
+            districts.add(district);
+        }
 
         return districts;
     }

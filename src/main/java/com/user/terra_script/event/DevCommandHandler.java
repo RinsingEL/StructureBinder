@@ -272,6 +272,8 @@ public class DevCommandHandler {
                 if (territoryId == null) throw new IllegalArgumentException("Required: territoryId");
                 return httpGet("/territory/summary?territoryId=" + territoryId.getAsString());
             }
+            case "territory_t4_window":
+                return httpPost("/territory/t4_window", args);
             case "T2_run":
             case "workflow_run_t2": {
                 JsonObject payload = args != null ? args.deepCopy() : new JsonObject();
@@ -622,6 +624,7 @@ public class DevCommandHandler {
                 "establish_territory",
                 "get_territory_status",
                 "territory_summary",
+                "territory_t4_window",
                 "T2_run",
                 "T3_run",
                 "T4_run",
@@ -648,6 +651,7 @@ public class DevCommandHandler {
                 "create_territory",
                 "territory_status",
                 "territory/summary",
+                "territory/t4_window",
                 "workflow/run",
                 "workflow/status",
                 "create_city",
