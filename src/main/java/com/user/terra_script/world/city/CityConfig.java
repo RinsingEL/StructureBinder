@@ -15,6 +15,10 @@ public class CityConfig {
     public int centerX; // Block X
     public int centerZ; // Block Z
 
+    // 是否允许中心点落在显著水域（默认 false）
+    @SerializedName(value = "allow_water_city", alternate = {"allowWaterCity"})
+    public boolean allowWaterCity = false;
+
     // 规模 (单位: Chunk)
     public int targetChunkCount;
 
@@ -101,6 +105,14 @@ public class CityConfig {
             if (layer.name == null || layer.name.isBlank()) {
                 layer.name = defaultNameForType(layer.type, i + 1);
             }
+
+            if (layer.weight <= 0) {
+                layer.weight = 1;
+            }
+
+            // Keep old/new wall flags compatible.
+            layer.wallLayer = layer.wallLayer || layer.isWall || layer.wall != null;
+            layer.isWall = layer.wallLayer;
         }
 
         resolved.get(0).type = "CORE";
@@ -224,6 +236,12 @@ public class CityConfig {
 
         @SerializedName(value = "ecology", alternate = {"生态策略"})
         public EcologyPolicy ecology;
+
+        @SerializedName(value = "weight", alternate = {"权重"})
+        public int weight = 1;
+
+        @SerializedName(value = "is_wall", alternate = {"isWall", "是否城墙"})
+        public boolean isWall;
 
         @SerializedName(value = "wall_layer", alternate = {"是否墙层"})
         public boolean wallLayer;

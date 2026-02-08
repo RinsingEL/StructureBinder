@@ -1,6 +1,7 @@
 package com.user.terra_script.server.mcp;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.sun.net.httpserver.HttpExchange;
@@ -8,8 +9,17 @@ import com.user.terra_script.server.http.HttpUtil;
 import com.user.terra_script.territory.io.TerritoryRepository;
 import com.user.terra_script.territory.io.TerritoryResultRepository;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.core.BlockPos;
 
+import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public class TerritoryController {
@@ -208,6 +218,105 @@ public class TerritoryController {
         }
     }
 
+    public void handleTerritoryT4Window(HttpExchange exchange, MinecraftServer server) throws IOException {
+        if (!HttpUtil.requireMethod(exchange, "POST")) return;
+        try {
+            String body = HttpUtil.readBody(exchange);
+            JsonObject req = JsonParser.parseString(body).getAsJsonObject();
+
+            String territoryId = req.has("territory_id") ? req.get("territory_id").getAsString() : null;
+            if (territoryId == null || territoryId.isBlank()) {
+                HttpUtil.sendResponse(exchange, 400, "{\"error\": \"territory_id is required\"}");
+                return;
+            }
+
+            int centerX;
+            int centerZ;
+            if (req.has("center_x") && req.has("center_z")) {
+                centerX = req.get("center_x").getAsInt();
+                centerZ = req.get("center_z").getAsInt();
+            } else {
+                var live = com.user.terra_script.world.TerritoryManager.getAllResults().stream()
+                        .filter(r -> r != null && r.config != null && territoryId.equals(r.config.id))
+                        .findFirst();
+                if (live.isEmpty()) {
+                    HttpUtil.sendResponse(exchange, 400, "{\"error\": \"center_x/center_z missing and territory not found in memory\"}");
+                    return;
+                }
+                centerX = live.get().config.capitalX;
+                centerZ = live.get().config.capitalZ;
+            }
+
+            int radiusBlocks = req.has("radius_blocks") ? req.get("radius_blocks").getAsInt() : 256;
+            int maxPoints = req.has("max_points") ? req.get("max_points").getAsInt() : 160;
+            int maxBiomeSamples = req.has("max_biome_samples") ? req.get("max_biome_samples").getAsInt() : 3000;
+            radiusBlocks = Math.max(16, Math.min(4096, radiusBlocks));
+            maxPoints = Math.max(0, Math.min(2000, maxPoints));
+            maxBiomeSamples = Math.max(0, Math.min(20000, maxBiomeSamples));
+
+            Optional<byte[]> datOpt = TerritoryResultRepository.readT4Dat(server, territoryId);
+            if (datOpt.isEmpty()) {
+                HttpUtil.sendResponse(exchange, 404, "{\"error\": \"T4 dat not found for territory_id: " + territoryId + "\"}");
+                return;
+            }
+
+            DecodedT4 decoded = decodeT4Dat(datOpt.get());
+            List<CellRecord> inWindow = new ArrayList<>();
+            int minX = centerX - radiusBlocks;
+            int maxX = centerX + radiusBlocks;
+            int minZ = centerZ - radiusBlocks;
+            int maxZ = centerZ + radiusBlocks;
+            for (CellRecord r : decoded.records) {
+                if (r.x >= minX && r.x <= maxX && r.z >= minZ && r.z <= maxZ) {
+                    inWindow.add(r);
+                }
+            }
+
+            JsonObject res = new JsonObject();
+            res.addProperty("step", "T4");
+            res.addProperty("ok", true);
+            res.addProperty("source", "artifact_t4_dat");
+            res.addProperty("territory_id", territoryId);
+
+            JsonObject window = new JsonObject();
+            window.addProperty("center_x", centerX);
+            window.addProperty("center_z", centerZ);
+            window.addProperty("radius_blocks", radiusBlocks);
+            window.addProperty("sample_step", decoded.step);
+            window.addProperty("matched_cells", inWindow.size());
+            window.addProperty("estimated_block_count", (long) inWindow.size() * decoded.step * decoded.step);
+            res.add("window", window);
+
+            JsonObject terrain = buildWindowTerrain(inWindow);
+            res.add("terrain", terrain);
+
+            JsonObject biomeComp = buildWindowBiomeComposition(server, inWindow, maxBiomeSamples);
+            res.add("biome_composition_window", biomeComp);
+
+            if (maxPoints > 0) {
+                JsonArray samplePoints = new JsonArray();
+                inWindow.stream()
+                        .sorted(Comparator.comparingInt((CellRecord c) -> c.strategic).reversed())
+                        .limit(maxPoints)
+                        .forEach(c -> {
+                            JsonObject p = new JsonObject();
+                            p.addProperty("x", c.x);
+                            p.addProperty("z", c.z);
+                            p.addProperty("height", c.height);
+                            p.addProperty("slope", c.slope);
+                            p.addProperty("temperature", c.temperature);
+                            p.addProperty("strategic", c.strategic);
+                            samplePoints.add(p);
+                        });
+                res.add("samples", samplePoints);
+            }
+
+            HttpUtil.sendResponse(exchange, 200, GSON.toJson(res));
+        } catch (Exception e) {
+            HttpUtil.handleError(exchange, e);
+        }
+    }
+
     private static String getQueryParam(HttpExchange exchange, String key) {
         String raw = exchange.getRequestURI() != null ? exchange.getRequestURI().getQuery() : null;
         if (raw == null || raw.isBlank()) return null;
@@ -220,5 +329,121 @@ public class TerritoryController {
             }
         }
         return null;
+    }
+
+    private static JsonObject buildWindowTerrain(List<CellRecord> records) {
+        JsonObject terrain = new JsonObject();
+        if (records == null || records.isEmpty()) {
+            terrain.addProperty("empty", true);
+            return terrain;
+        }
+        int minH = Integer.MAX_VALUE, maxH = Integer.MIN_VALUE;
+        double sumH = 0.0, sumS = 0.0, sumT = 0.0;
+        for (CellRecord r : records) {
+            if (r.height < minH) minH = r.height;
+            if (r.height > maxH) maxH = r.height;
+            sumH += r.height;
+            sumS += r.slope;
+            sumT += r.temperature;
+        }
+        int n = records.size();
+        terrain.addProperty("avg_height", round3(sumH / n));
+        terrain.addProperty("avg_slope", round3(sumS / n));
+        terrain.addProperty("avg_temperature", round3(sumT / n));
+        terrain.addProperty("min_height", minH);
+        terrain.addProperty("max_height", maxH);
+        terrain.addProperty("relief", maxH - minH);
+        return terrain;
+    }
+
+    private static JsonObject buildWindowBiomeComposition(MinecraftServer server, List<CellRecord> records, int maxSamples) {
+        JsonObject out = new JsonObject();
+        if (server == null || records == null || records.isEmpty() || maxSamples <= 0) return out;
+        ServerLevel level = server.overworld();
+        if (level == null) return out;
+
+        int sampleCount = Math.min(records.size(), maxSamples);
+        int stride = Math.max(1, records.size() / sampleCount);
+        Map<String, Integer> counts = new HashMap<>();
+        int used = 0;
+        for (int i = 0; i < records.size() && used < sampleCount; i += stride) {
+            CellRecord r = records.get(i);
+            BlockPos pos = new BlockPos(r.x, r.height, r.z);
+            String biomeId = level.getBiome(pos).unwrapKey()
+                    .map(k -> k.location().toString())
+                    .orElse("unknown");
+            counts.merge(biomeId, 1, Integer::sum);
+            used++;
+        }
+        if (used <= 0) return out;
+
+        final int usedSamples = used;
+        counts.entrySet().stream()
+                .sorted((a, b) -> Integer.compare(b.getValue(), a.getValue()))
+                .limit(8)
+                .forEach(e -> out.addProperty(e.getKey(), round3((double) e.getValue() / usedSamples)));
+        return out;
+    }
+
+    private static DecodedT4 decodeT4Dat(byte[] bytes) throws Exception {
+        try (DataInputStream in = new DataInputStream(new ByteArrayInputStream(bytes))) {
+            int version = in.readInt();
+            String territoryId = in.readUTF();
+            int step = in.readInt();
+            int count = in.readInt();
+            List<CellRecord> records = new ArrayList<>(Math.max(0, count));
+            for (int i = 0; i < count; i++) {
+                int x = in.readInt();
+                int z = in.readInt();
+                int h = in.readShort();
+                float slope = in.readFloat();
+                float temperature = in.readFloat();
+                int distBorder = in.readShort();
+                int distCapital = in.readShort();
+                int strategic = in.readUnsignedByte();
+                records.add(new CellRecord(x, z, h, slope, temperature, distBorder, distCapital, strategic));
+            }
+            return new DecodedT4(version, territoryId, step, records);
+        }
+    }
+
+    private static double round3(double v) {
+        return Math.round(v * 1000.0) / 1000.0;
+    }
+
+    private static final class DecodedT4 {
+        final int version;
+        final String territoryId;
+        final int step;
+        final List<CellRecord> records;
+
+        DecodedT4(int version, String territoryId, int step, List<CellRecord> records) {
+            this.version = version;
+            this.territoryId = territoryId;
+            this.step = step;
+            this.records = records;
+        }
+    }
+
+    private static final class CellRecord {
+        final int x;
+        final int z;
+        final int height;
+        final float slope;
+        final float temperature;
+        final int distBorder;
+        final int distCapital;
+        final int strategic;
+
+        CellRecord(int x, int z, int height, float slope, float temperature, int distBorder, int distCapital, int strategic) {
+            this.x = x;
+            this.z = z;
+            this.height = height;
+            this.slope = slope;
+            this.temperature = temperature;
+            this.distBorder = distBorder;
+            this.distCapital = distCapital;
+            this.strategic = strategic;
+        }
     }
 }

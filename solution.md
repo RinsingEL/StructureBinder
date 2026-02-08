@@ -72,7 +72,7 @@
         *   **轻数据 (`.json`)**：将统计出的概况信息（Atlas）导出，供 AI 读取。
 *   **AI 可调用数据 (MCP)**：
     *   `W4_get_world_atlas()`：直接读取 `W3_ContinentMeta.json`。
-    *   `scan_local_W4candidates(...)`：后端会去查 `W4_TerrainFacts.dat` 中的 slope/tpi 数组。
+    *   `scan_local_candidates(...)`：后端会去查 `W4_TerrainFacts.dat` 中的 slope/tpi 数组。
 
 ---
 
@@ -265,42 +265,49 @@ root
 
 
 ## T1 国度和区域蓝图生成（AI）
-**核心逻辑**：AI 根据 `W4_get_world_atlas` 返回的大陆硬数据，结合 W1 的世界观，决定要诞生一个什么样的国家，以及它**想去哪个大陆发展**。
+**核心逻辑**：T1 不再只做“国家设定”，还要做“多候选战略区筛选”。  
+流程与 T2 一致：先扫描多个感兴趣区域，再通过 ASCII 图选择 `region_id`，最后提交蓝图。
 
 *   **AI 做什么**：
-  1.  调用 `W4_get_world_atlas` 获取所有大陆和`W4_world_summary`比对标准的数据。
-  2.  **分析匹配**：
-    *   看到 ID=12 的大陆 `avg_height: 78` (较高), `roughness: 1.34` (崎岖), `avg_temp: 0.62` (温带偏凉)。
-    *   **决策**：这非常适合一个“高山矮人”或“高原游牧”文明。
-  3.  **生成设定**：
-    *   **基本信息**：国名、文明特色、叙事背景。
-    *   **目标大陆**：指定 `target_continent_id: 12`（后续 T2 就在这个大陆上找首都）。
-    *   **扩张基因**：定义 `expansion_power`（总扩张力/能量）和 `movement_costs`（地形消耗表）。
+  1. 调用 `W4_get_world_atlas` 获取 `atlas + world_summary`。
+  2. 根据文明定位，定义 2~3 组兴趣条件（例如高海拔、低坡度、沿海、峡谷）。
+  3. 调用 `scan_local_candidates(region_id=...)` 对候选大陆做局部扫描，拿到多簇候选 + ASCII。
+  4. 在 ASCII 上做视觉推理，选择最优候选簇 `cluster_id`（并记录理由）。
+  5. 提交 `t1_generate_blueprint`，把最终 `target_continent_id` 与扩张参数固化。
 
 *   **程序 做什么**：
-  *   提供 `W4_get_world_atlas` 接口。
-  *   接收并存储 AI 生成的蓝图配置。
+  * 提供 `W4_get_world_atlas` 和 `scan_local_candidates`。
+  * 返回候选簇列表（每个簇都带 `cluster_id`、关键点、ASCII 图）。
+  * 依据 `world_summary` 约束 `base_power` 合理范围（避免扩张力过大/过小）。
+  * 存储蓝图到 `T1_Blueprint.json`。
 
 *   **AI 可调用数据 (MCP)**：
-  *   `W4_get_world_atlas()`：返回你 W3 产出的那个详细 JSON（含地貌、气候、生态）。
+  * `get_world_atlas()`
+  * `scan_local_candidates(...)`
+  * `t1_generate_blueprint(...)`
 
-*   **产出 (JSON)**：`T1_Blueprint.json`（列表，按 territory_id 去重）
+*   **产出 (JSON)**：`T1_Blueprint.json`（列表，按 `territory_id` 去重）
 *   **存放位置**：`/saves/<WorldName>/terra_script/territories/`
 
 ### 🔌 T1 MCP 接口
-- **方法名**：`T1_submit_blueprint`
-- **HTTP**：`POST /t1_blueprint`
-- **输入参数**：T1_Blueprint.json 中的单条对象
+- **方法名**：`t1_generate_blueprint`
+- **能力**：读取 `world_atlas + world_summary`，并按摘要约束扩张力范围后生成并提交蓝图
+- **输入参数（关键）**：
+  - `territory_id`, `name`
+  - `target_continent_id`（或 `auto_pick_region=true`）
+  - `base_power`（会被 world_summary 约束）
+  - `base_move/slope_penalty/water_penalty/forest_penalty`
+  - `preferred_biomes/avoid_biomes`
 - **输出**：
 ```jsonc
 {
   "step": "T1",
   "ok": true,
-  "message": "saved",
+  "message": "blueprint generated and saved",
   "blueprint": { /* 提交的蓝图 */ }
 }
 ```
-- **可选**：`T1_list_blueprints`（`GET /t1_blueprint`）返回全部蓝图列表
+- **可选**：`GET /t1_blueprint` 返回全部蓝图列表
 
 ### 📄 产出示例：T1_Blueprint.json
 
@@ -344,81 +351,64 @@ root
 
 ## T2. 多维勘探与首都决策 (Multi-Criteria Exploration)
 
-**核心逻辑**：**多图层叠加（Multi-Layer Overlay）**。AI 不直接找“要塞”，而是让程序分别找出“高山”和“水源”，并在 ASCII 图上叠加。AI 通过观察 ASCII 字符的**空间相邻关系**来选址。
+**核心逻辑**：T2 使用“多兴趣组叠加 + 综合 ASCII + 区域ID决策”。  
+单簇 ASCII 只用于看局部细节；**最终决策必须基于一张综合 `visual_map`**，这样 AI 才能看到 A/B 簇的相对关系（相邻、包夹、断裂、通道）。
 
 *   **步骤 2.1：下发勘探任务 (AI 动作)**
-    *   **AI 思考**：“我是高地文明，最好的首都是：**背靠高山 (A)** 且 **面向平原 (B)** 的交界处（既能防守又能种地）。”
-    *   **AI 调用 MCP**：`scan_local_W4candidates(...)`
+    * AI 定义多个兴趣组（如 A=山地防御带，B=平原补给带，C=河谷通道）。
+    * AI 调用 MCP：`scan_local_candidates(...)`（建议扩展支持 `interest_groups`）。
 
-    **MCP 请求示例**：
+    **请求示例**：
     ```jsonc
     {
-      "continent_id": 2,
-      "limit_per_group": 3, // 每组特征找前3大
+      "region_id": 12,
+      "limit_per_group": 3,
       "interest_groups": [
-        {
-          "id": "A", 
-          "type": "mountain", // 图例字符：山脉
-          "criteria": { "min_height": 100, "min_roughness": 0.5 },
-          "limit": 3
-        },
-        {
-          "id": "B", 
-          "type": "plain", // 图例字符：平原
-          "criteria": { "max_slope": 0.2, "biome_preference": ["plains"] },
-          "limit": 3
-        }
+        { "id": "A", "criteria": { "min_tpi": 1.0, "min_slope": 0.8 } },
+        { "id": "B", "criteria": { "max_slope": 0.35, "min_tpi": -0.5, "max_tpi": 0.6 } }
       ]
     }
     ```
 
-*   **步骤 2.2：执行扫描与绘图 (程序 动作)**
-    *   **搜索**：程序在 W4 缓存中分别搜索满足 A 条件和 B 条件的像素。
-    *   **聚类**：使用 DBSCAN 分别聚类，找出最大的几块 A 区域和 B 区域。
-    *   **过滤**：剔除已被其他国度占领的区域（硬约束）。
-    *   **绘图**：将 A 和 B 绘制在同一张 ASCII 底图上。
+*   **步骤 2.2：执行扫描与聚类 (程序 动作)**
+    * 对每个兴趣组独立筛选并 DBSCAN 聚类。
+    * 每组保留 TopN（如 A1/A2/A3, B1/B2/B3）。
+    * 输出两类可视化：
+      - `group_ascii_maps`：每簇单图（局部细节）
+      - `visual_map`：所有兴趣组叠加到同一底图（全局关系）
 
 *   **步骤 2.3：返回勘探报告 (程序 返回)**
-    *   **返回内容**：JSON 列表（含精确坐标） + **ASCII 可视化地图**。
+    * **返回内容必须包含**：
+      - `candidates_metadata`：每个簇的标签与坐标（A1/B1...）
+      - `visual_map`：综合 ASCII（多组叠加）
+      - `candidates[]`：兼容现有结构（每簇 `cluster_id + ascii_map + key_points + metrics`）
 
-    **MCP 返回示例**：
+    **返回示例（核心字段）**：
     ```jsonc
     {
       "candidates_metadata": [
-        { "label": "A1", "center": "-1200, 500", "desc": "Huge Mountain Range" },
-        { "label": "B1", "center": "-1150, 600", "desc": "Fertile Plains" },
-        // ... A2, B2 ...
+        { "label": "A1", "group": "A", "cluster_id": 1, "center": { "x": -1200, "z": 500 } },
+        { "label": "B1", "group": "B", "cluster_id": 7, "center": { "x": -1150, "z": 600 } }
       ],
       "visual_map": [
         "~~~~~~~~~~~~~~~~~~~~",
-        "~~~~~~AAAAAA~~~~~~~~", // A1: 高山
         "~~~~~~AAAAAA~~~~~~~~",
-        "~~~~~~AAAABBBBBB~~~~", // 关键点：A1 和 B1 在这里紧紧相邻！
-        "~~~~~~~BBBBBBBB~~~~~", // B1: 平原
+        "~~~~~~AAAAAA~~~~~~~~",
+        "~~~~~~AAAABBBBBB~~~~",
+        "~~~~~~~BBBBBBBB~~~~~",
         "~~~~~~~BBBBB........"
-      ]
+      ],
+      "candidates": [ /* 兼容当前单簇输出 */ ]
     }
     ```
 
 *   **步骤 2.4：视觉推理与定都 (AI 决策)**
-    *   **AI 思考**：“看地图，`A1` (山) 和 `B1` (平原) 紧密相邻，这是完美的关隘位置。而 `A2` 孤零零在海边，不好。”
-    *   **AI 调用 MCP**：`confirm_capital(...)`。可以选择 `A1` 的边缘，或者 `B1` 靠近 `A1` 的一侧，或者直接给出一个基于 A1/B1 中心点微调的坐标。
+    * AI 先在 `visual_map` 选“关系最优点”（如 A1 与 B1 交界）。
+    * 再回到单簇详情校正坐标，最终给出 `capital_x/z`。
+    * 调用 `establish_territory` 提交首都与势力参数。
 
-    **AI 最终指令**：
-    ```jsonc
-    confirm_capital({
-      "territory_id": "kingdom_stone_heart",
-      "capital_x": -1180, // AI 综合判断选定的坐标（在山脚下）
-      "capital_z": 550,
-      “area”: "A" // 是在A区域内还是B区域内，方便后续差错
-      "reason": "Located at the junction of Mountain Range A1 and Plains B1."
-    })
-    ```
-    **程序检查**：
-    * 检查在哪个区域内，假如AI给出的坐标有错误，那就找到AI给出的坐标最近的区域的区块。
-
-*   **产出 (JSON)**：`T2_CapitalData.json`
-*   **存放位置**：`/saves/<WorldName>/terra_script/territories/<territory_id>/`
+*   **产出 (JSON)**：`T2_CapitalData.json` / `TerritorySummary.json`
+*   **存放位置**：`/saves/<WorldName>/terra_script/territory/<territory_id>/T2/`
 
 ---
 
@@ -593,63 +583,130 @@ private static final List<TerritoryConfig> pendingFactions = new ArrayList<>();
 
 
 ## C1 选址与城市参数（AI）
+**目标**：把“选哪里建城”变成标准化输入输出，采用与 T1/T2 相同的“多候选+ASCII+ID选择”。
 
-
-- **AI做什么**：选城市中心点（chunk/block坐标）、城市规模、层数/城墙意图、生态策略等
-- **程序做什么**：提供候选点与预览（避免AI瞎填）
-- **AI可调用数据（接口）**：
-
-
-`listCitySiteCandidates(territoryId, type, constraints)`
-
-
-`previewSiteASCII(candidateId)`
-
-`getSiteStats(candidateId)`
-- **产出（JSON）**：`C1_Intent.json`（你已有的那套 + 扩展层数/城墙偏好）
-- **存放位置**：`/saves/<WorldName>/terra_script/cities/<city_id>/`
+- **AI做什么**：
+  - 调用候选扫描接口拿多个候选区；
+  - 选择 `candidate_id`（或 `cluster_id`）并确定中心点；
+  - 配置层级权重（程序按 `weight/sum(weight)` 计算层面积占比）；
+  - 对 `RING` 层显式指定 `is_wall`（该环层是否作为城墙层）。
+- **程序做什么**：
+  - 返回候选区列表（带 ASCII + 统计 + 关键点）；
+  - 校验中心点是否在 territory 内；
+  - 固化 C1 设计意图。
+- **建议输入（C1_Intent）**：
+```jsonc
+{
+  "city_id": "city_foo",
+  "territory_id": "kingdom_iron_peak",
+  "candidate_id": "cand_03",
+  "center_x": -1180,
+  "center_z": 550,
+  "ecology_policy": "BALANCED",
+  "layers": [
+    { "id": "core", "type": "CORE", "weight": 4, "is_wall": false },
+    { "id": "urban_1", "type": "URBAN", "weight": 6, "is_wall": false },
+    { "id": "ring_1", "type": "RING", "weight": 3, "is_wall": true },
+    { "id": "buffer", "type": "BUFFER", "weight": 2, "is_wall": false }
+  ],
+  "reason": "near ridge pass and river access"
+}
+```
+- **建议输出（C1_Result）**：
+```jsonc
+{
+  "step": "C1",
+  "ok": true,
+  "city_id": "city_foo",
+  "selected_candidate": "cand_03",
+  "validated_center": { "x": -1180, "z": 550 }
+}
+```
+- **存放位置**：`/saves/<WorldName>/terra_script/cities/<city_id>/C1_Intent.json`
 
 
 ## C2 城市领地生成（程序）
+**目标**：由程序根据 C1 意图完成城市占地与分层，输出稳定的结构化结果。  
+**核心口径**：C2 不再让 AI 提面积规模参数；面积由程序方块级扩张算法自动计算。
 
-
-
-- **程序做什么**：从市中心扩张得到城市占地区域（chunk集合），并分层（至少核心+缓冲；允许多层墙）
-
-
-输出每个chunk属于哪个层（layerId），而不只是 C/U/B
-- **AI做什么**：无（硬算法）
-- **产出**：
-
-
-`C2_Claim.dat`（chunk集合 + layer标记）
-
-
-`C2_ClaimSummary.json`（面积、各层比例）
+- **程序做什么**：
+  - 从 `center_x/z` 进行方块级扩张（类似扩张力模型，但作用于 city 域）；
+  - 生成多层结构（`CORE/URBAN/RING/BUFFER`）；
+  - CORE代表核心城区，URBAN代表则是普通城市区，RING为环状带，可以只为城墙，BUFFER则是缓冲区，用于于其他自然环境过渡，比如像篝火啊这种代表人烟气息的结构
+  - 根据 C1 的层权重自动分配各层占比；
+  - 对 `RING` 层依据 `is_wall` 决定是否写入墙体层标记。
+- **AI做什么**：无（硬规则执行）。
+- **输入**：`C1_Intent.json`
+- **输出**：
+  - `C2_Claim.dat`（block/chunk -> layer 映射索引）
+  - `C2_ClaimSummary.json`（程序计算的总面积、每层面积、层占比、边界 bbox）
+```jsonc
+{
+  "step": "C2",
+  "ok": true,
+  "city_id": "city_foo",
+  "blocks_total": 112384,
+  "weight_sum": 15,
+  "layers": [
+    { "id": "core", "type": "CORE", "weight": 4, "is_wall": false, "blocks": 30012, "ratio": 0.267 },
+    { "id": "urban_1", "type": "URBAN", "weight": 6, "is_wall": false, "blocks": 44783, "ratio": 0.399 },
+    { "id": "ring_1", "type": "RING", "weight": 3, "is_wall": true, "blocks": 22412, "ratio": 0.199 },
+    { "id": "buffer", "type": "BUFFER", "weight": 2, "is_wall": false, "blocks": 15177, "ratio": 0.135 }
+  ]
+}
+```
 - **存放位置**：`/saves/<WorldName>/terra_script/cities/<city_id>/`
 
 
 ## C3 多边形/区划种子与分区（程序主导，AI可选增强）
+**目标**：在 C2 占地基础上生成稳定可解释的区划单元，供后续 C4 功能语义标注。  
+**关键约束**：多边形初划分通常不考虑 layer，因此 C3 必须补一个“按 layer 二次拆分”步骤。
 
-
-- **程序做什么**：
-
-
-生成区划种子点（散点数量有上下限，按面积与层级加权）
-
-
-Voronoi/Lloyd 得到初始区块模块（chunk级）
+- **程序做什么（两阶段）**：
+  - **Phase A：全域多边形划分（不看 layer）**
+  - 在城市总占地上生成种子点，运行 Voronoi/Lloyd，得到 `global_polygon_id`。
+  - **Phase B：按 layer 二次拆分**
+  - 对每个全域多边形与 `C2` 的 layer mask 做相交（`polygon × layer`）。
+  - 将跨层多边形拆成多个 `layered_polygon`，确保每个最终区划只属于一个 layer。
+  - 计算每个最终区划统计值（面积、形状紧致度、坡度/高差、连通性）。
 - **AI可选做什么**：
-
-
-若你想：AI可以调“功能密度层级”（核心密/边缘疏），但**不必手选每个点**
-- **产出**：
-
-
-`C3_Districts.json`（每个模块：中心点、所属层、chunk列表、统计值）
-
-
-方块级数据仍在 `.dat`，按模块索引读取
+  - 仅调策略参数（如核心区密度、外围稀疏度、工业区远离核心权重）；
+  - 不直接手动点每个种子。
+- **输入**：
+  - `C2_Claim.dat`
+  - `C2_ClaimSummary.json`
+  - 可选 `C3_Policy.json`
+- **输出**：
+  - `C3_GlobalPolygons.json`（Phase A 原始多边形，不分层）
+  - `C3_Districts.json`（Phase B 最终区划：`district_id`、`source_polygon_id`、`layer`、块/区块列表、统计）
+  - `C3_DistrictIndex.dat`（block/chunk -> district_id）
+```jsonc
+{
+  "step": "C3",
+  "ok": true,
+  "city_id": "city_foo",
+  "global_polygon_count": 12,
+  "district_count": 19,
+  "districts": [
+    {
+      "district_id": "d_01_core",
+      "source_polygon_id": "p_01",
+      "layer": "core",
+      "blocks": 8412,
+      "centroid": { "x": -1168, "z": 544 }
+    },
+    {
+      "district_id": "d_01_ring",
+      "source_polygon_id": "p_01",
+      "layer": "ring_1",
+      "is_wall": true,
+      "blocks": 1205,
+      "centroid": { "x": -1152, "z": 528 }
+    }
+  ]
+}
+```
+- **存放位置**：`/saves/<WorldName>/terra_script/cities/<city_id>/`
 
 
 ## C4 功能语义分类（AI）

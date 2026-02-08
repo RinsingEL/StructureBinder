@@ -45,7 +45,7 @@ public class ModHttpServer {
             WorldController worldController = new WorldController(mcServer);
             TerritoryController territoryController = new TerritoryController();
             WorkflowController workflowController = new WorkflowController(mcServer);
-            CityController cityController = new CityController();
+            CityController cityController = new CityController(mcServer);
 
             server.createContext("/continents", worldController::handleContinents);
             server.createContext("/world_atlas", worldController::handleWorldAtlas);
@@ -59,6 +59,7 @@ public class ModHttpServer {
             server.createContext("/create_territory", exchange -> territoryController.handleCreateTerritory(exchange, mcServer));
             server.createContext("/territory_status", territoryController::handleTerritoryStatus);
             server.createContext("/territory/summary", exchange -> territoryController.handleTerritorySummary(exchange, mcServer));
+            server.createContext("/territory/t4_window", exchange -> territoryController.handleTerritoryT4Window(exchange, mcServer));
 
             server.createContext("/freeze_status", workflowController::handleFreezeStatus);
             server.createContext("/freeze_project", workflowController::handleFreezeProject);

@@ -67,6 +67,9 @@ public class CityManager {
         }
 
         CityInstance city = new CityInstance(uid, config);
+        if (city.config.targetChunkCount <= 0) {
+            city.config.targetChunkCount = estimateTargetChunks(city.config.territoryId);
+        }
         // 执行扩张算法
         expandCity(city);
 
@@ -105,7 +108,6 @@ public class CityManager {
 
         int targetSize = city.config.targetChunkCount;
         int currentSize = 0;
-        double maxCostReached = 0.0;
 
         int[][] dirs = {{0,1}, {0,-1}, {1,0}, {-1,0}}; // 4方向，城市可以方正一点，或者用8方向更圆�?
 
@@ -127,7 +129,6 @@ public class CityManager {
                 city.claimedChunks.put(key, new CityInstance.LayerAssignment(lastIndex, layerType));
                 globalCityChunkMap.put(key, city.id);
                 currentSize++;
-                maxCostReached = Math.max(maxCostReached, currentCost);
             }
 
             // 扩散
@@ -154,18 +155,89 @@ public class CityManager {
             }
         }
 
-        // 2. 后处理：根据 Cost 分层 (Core / Urban / Buffer)
-        for (Map.Entry<Long, CityInstance.LayerAssignment> entry : city.claimedChunks.entrySet()) {
-            long key = entry.getKey();
-            double cost = costMap.getOrDefault(key, maxCostReached);
-            double ratio = (maxCostReached > 0) ? (cost / maxCostReached) : 0;
-            int layerIndex = layout.indexForRatio(ratio);
-            CityConfig.LayerConfig layer = layout.layerAt(layerIndex);
-            entry.setValue(new CityInstance.LayerAssignment(layerIndex, layer.type));
-        }
+        // 2. 后处理：按层权重分配占比（成本低的块优先分给内层）
+        assignLayersByWeight(city, layout, costMap);
 
         computeBorderChunks(city);
         System.out.println("City " + city.id + " generated. Size: " + currentSize + " chunks.");
+    }
+
+    private void assignLayersByWeight(CityInstance city, CityConfig.LayerLayout layout, Map<Long, Double> costMap) {
+        if (city.claimedChunks.isEmpty() || layout == null || layout.layers == null || layout.layers.isEmpty()) return;
+
+        List<Long> ordered = new ArrayList<>(city.claimedChunks.keySet());
+        ordered.sort(Comparator.comparingDouble(k -> costMap.getOrDefault(k, Double.MAX_VALUE)));
+
+        int layerCount = layout.layers.size();
+        int total = ordered.size();
+        int[] weights = new int[layerCount];
+        int weightSum = 0;
+        for (int i = 0; i < layerCount; i++) {
+            int w = Math.max(1, layout.layerAt(i).weight);
+            weights[i] = w;
+            weightSum += w;
+        }
+        if (weightSum <= 0) weightSum = layerCount;
+
+        int[] quotas = new int[layerCount];
+        double[] fractional = new double[layerCount];
+        int assigned = 0;
+        for (int i = 0; i < layerCount; i++) {
+            double exact = (total * (double) weights[i]) / weightSum;
+            int base = (int) Math.floor(exact);
+            quotas[i] = base;
+            fractional[i] = exact - base;
+            assigned += base;
+        }
+
+        int remain = total - assigned;
+        while (remain > 0) {
+            int best = 0;
+            double bestFrac = -1;
+            for (int i = 0; i < layerCount; i++) {
+                if (fractional[i] > bestFrac) {
+                    bestFrac = fractional[i];
+                    best = i;
+                }
+            }
+            quotas[best]++;
+            fractional[best] = -1;
+            remain--;
+        }
+
+        int cursor = 0;
+        for (int i = 0; i < layerCount; i++) {
+            CityConfig.LayerConfig layer = layout.layerAt(i);
+            int take = quotas[i];
+            for (int k = 0; k < take && cursor < ordered.size(); k++, cursor++) {
+                long key = ordered.get(cursor);
+                city.claimedChunks.put(key, new CityInstance.LayerAssignment(i, layer.type));
+            }
+        }
+
+        int fallbackIndex = layerCount - 1;
+        String fallbackType = layout.layerAt(fallbackIndex).type;
+        while (cursor < ordered.size()) {
+            long key = ordered.get(cursor++);
+            city.claimedChunks.put(key, new CityInstance.LayerAssignment(fallbackIndex, fallbackType));
+        }
+    }
+
+    private int estimateTargetChunks(String territoryId) {
+        try {
+            if (territoryId == null || territoryId.isBlank()) return 240;
+            var results = TerritoryManager.getAllResults();
+            if (results == null) return 240;
+            for (var r : results) {
+                if (r == null || r.config == null || r.stats == null) continue;
+                if (!territoryId.equals(r.config.id)) continue;
+                long area = Math.max(0L, r.stats.area_pixels);
+                int estimated = (int) Math.round(area * 0.08);
+                return Math.max(80, Math.min(520, estimated));
+            }
+        } catch (Exception ignored) {
+        }
+        return 240;
     }
 
     /**
@@ -350,6 +422,8 @@ public class CityManager {
                         layerObj.addProperty("name", layer.name);
                         layerObj.addProperty("type", layer.type);
                         layerObj.addProperty("density", layer.density);
+                        layerObj.addProperty("weight", layer.weight);
+                        layerObj.addProperty("is_wall", layer.isWall);
                         if (layer.ecology != null) layerObj.addProperty("ecology", layer.ecology.name());
                         layerObj.addProperty("wall_layer", layer.wallLayer);
                         if (layer.wall != null) {
