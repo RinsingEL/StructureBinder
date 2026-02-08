@@ -20,6 +20,9 @@ import com.user.terra_script.core.stage.StageContext;
 import com.user.terra_script.core.workflow.FileStageStatusStore;
 import com.user.terra_script.core.workflow.StageRegistry;
 import com.user.terra_script.core.workflow.WorkflowEngine;
+import com.user.terra_script.domain.territory.stage.T2Stage;
+import com.user.terra_script.domain.territory.stage.T3Stage;
+import com.user.terra_script.domain.territory.stage.T4Stage;
 import com.user.terra_script.domain.world.stage.W3Stage;
 import com.user.terra_script.domain.world.stage.W4Stage;
 import net.minecraft.commands.CommandSourceStack;
@@ -133,8 +136,12 @@ public class DevCommandHandler {
 
     private static int runWorkflowStage(CommandContext<CommandSourceStack> ctx, String stageIdRaw) {
         String stageId = stageIdRaw == null ? "" : stageIdRaw.trim().toUpperCase(Locale.ROOT);
-        if (!"W3".equals(stageId) && !"W4".equals(stageId)) {
-            ctx.getSource().sendFailure(Component.literal("Unknown stage: " + stageIdRaw + " (use W3 or W4)"));
+        if (!"W3".equals(stageId)
+                && !"W4".equals(stageId)
+                && !"T2".equals(stageId)
+                && !"T3".equals(stageId)
+                && !"T4".equals(stageId)) {
+            ctx.getSource().sendFailure(Component.literal("Unknown stage: " + stageIdRaw + " (use W3/W4/T2/T3/T4)"));
             return 0;
         }
 
@@ -146,20 +153,29 @@ public class DevCommandHandler {
             StageRegistry registry = new StageRegistry();
             registry.register(new W3Stage());
             registry.register(new W4Stage());
+            registry.register(new T2Stage());
+            registry.register(new T3Stage());
+            registry.register(new T4Stage());
 
             WorkflowEngine engine = new WorkflowEngine(registry);
             engine.runStage(stageId, stageCtx);
+            if ("T3".equals(stageId)) {
+                T4Stage.configure(T4Stage.RuntimeOptions.autoTriggerDefaults());
+                registry.get("T4").run(stageCtx);
+            }
 
             ctx.getSource().sendSuccess(() ->
                     Component.literal("Stage " + stageId + " completed."), false);
 
-            List<ArtifactKey> keys = "W3".equals(stageId)
-                    ? List.of(ArtifactKey.W3_CONTINENT_META_JSON, ArtifactKey.W3_OCEAN_META_JSON)
-                    : List.of(ArtifactKey.W4_TERRAIN_FACTS_DAT, ArtifactKey.W4_TERRAIN_SUMMARY_JSON);
-            for (ArtifactKey key : keys) {
-                Path p = artifacts.resolve(ctx.getSource().getServer(), stageCtx.worldId, key);
-                ctx.getSource().sendSuccess(() ->
-                        Component.literal("Output: " + p), false);
+            if ("W3".equals(stageId) || "W4".equals(stageId)) {
+                List<ArtifactKey> keys = "W3".equals(stageId)
+                        ? List.of(ArtifactKey.W3_CONTINENT_META_JSON, ArtifactKey.W3_OCEAN_META_JSON)
+                        : List.of(ArtifactKey.W4_TERRAIN_FACTS_DAT, ArtifactKey.W4_TERRAIN_SUMMARY_JSON);
+                for (ArtifactKey key : keys) {
+                    Path p = artifacts.resolve(ctx.getSource().getServer(), stageCtx.worldId, key);
+                    ctx.getSource().sendSuccess(() ->
+                            Component.literal("Output: " + p), false);
+                }
             }
             return 1;
         } catch (Exception e) {
@@ -250,6 +266,32 @@ public class DevCommandHandler {
             case "get_territory_status":
             case "territory_status":
                 return httpGet("/territory_status");
+            case "territory_summary": {
+                if (args == null) throw new IllegalArgumentException("Required: territoryId");
+                JsonElement territoryId = pickFirst(args, "territoryId", "territory_id");
+                if (territoryId == null) throw new IllegalArgumentException("Required: territoryId");
+                return httpGet("/territory/summary?territoryId=" + territoryId.getAsString());
+            }
+            case "T2_run":
+            case "workflow_run_t2": {
+                JsonObject payload = args != null ? args.deepCopy() : new JsonObject();
+                if (!payload.has("stageId")) payload.addProperty("stageId", "T2");
+                return httpPost("/workflow/run", payload);
+            }
+            case "T3_run":
+            case "workflow_run_t3": {
+                JsonObject payload = args != null ? args.deepCopy() : new JsonObject();
+                if (!payload.has("stageId")) payload.addProperty("stageId", "T3");
+                return httpPost("/workflow/run", payload);
+            }
+            case "T4_run":
+            case "workflow_run_t4": {
+                JsonObject payload = args != null ? args.deepCopy() : new JsonObject();
+                if (!payload.has("stageId")) payload.addProperty("stageId", "T4");
+                return httpPost("/workflow/run", payload);
+            }
+            case "workflow_status":
+                return httpGet("/workflow/status");
             case "freeze_status":
                 return httpGet("/freeze_status");
             case "freeze_project":
@@ -287,7 +329,7 @@ public class DevCommandHandler {
 
     private static ApiCallResult httpGet(String path) throws Exception {
         HttpRequest req = HttpRequest.newBuilder(URI.create(MCP_BASE_URL + path))
-                .timeout(Duration.ofSeconds(30))
+                .timeout(timeoutForPath(path))
                 .GET()
                 .build();
         HttpResponse<String> res = HTTP.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
@@ -298,12 +340,20 @@ public class DevCommandHandler {
         JsonObject payload = body != null ? body : new JsonObject();
         String json = GSON.toJson(payload);
         HttpRequest req = HttpRequest.newBuilder(URI.create(MCP_BASE_URL + path))
-                .timeout(Duration.ofSeconds(30))
+                .timeout(timeoutForPath(path))
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(json, StandardCharsets.UTF_8))
                 .build();
         HttpResponse<String> res = HTTP.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
         return new ApiCallResult(res.statusCode(), res.body(), path, payload);
+    }
+
+    private static Duration timeoutForPath(String path) {
+        if (path == null) return Duration.ofSeconds(30);
+        if (path.startsWith("/workflow/run")) {
+            return Duration.ofMinutes(20);
+        }
+        return Duration.ofSeconds(30);
     }
 
     private static ApiCallResult filterStructures(ApiCallResult res, JsonObject args) {
@@ -571,6 +621,11 @@ public class DevCommandHandler {
                 "list_available_structures",
                 "establish_territory",
                 "get_territory_status",
+                "territory_summary",
+                "T2_run",
+                "T3_run",
+                "T4_run",
+                "workflow_status",
                 "establish_city",
                 "place_structure",
                 "city_stage1_data",
@@ -592,6 +647,9 @@ public class DevCommandHandler {
                 "query_region",
                 "create_territory",
                 "territory_status",
+                "territory/summary",
+                "workflow/run",
+                "workflow/status",
                 "create_city",
                 "place",
                 "city_stage1_data",

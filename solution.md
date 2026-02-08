@@ -26,6 +26,26 @@
 
 ---
 
+## 当前实现状态（已完成：W3 / W4 / T1）
+
+以下内容基于当前代码实际落地情况（`domain` + `server/mcp`）：
+
+- `W3` 已实现：`src/main/java/com/user/terra_script/domain/world/stage/W3Stage.java`
+  - 产物：`world/W3/ContinentMeta.json`、`world/W3/OceanMeta.json`
+  - 触发方式：工作流阶段 `W3`（或 `/dev stage W3`）
+- `W4` 已实现：`src/main/java/com/user/terra_script/domain/world/stage/W4Stage.java`
+  - 依赖：`W3`
+  - 产物：`world/W4/TerrainFacts.dat`、`world/W4/TerrainSummary.json`
+  - 触发方式：工作流阶段 `W4`（或 `/dev stage W4`）
+- `T1` 已实现：`src/main/java/com/user/terra_script/server/mcp/TerritoryController.java`
+  - 接口：`POST /t1_blueprint`、`GET /t1_blueprint`
+  - 持久化：`src/main/java/com/user/terra_script/territory/io/TerritoryRepository.java`
+  - 产物：`/saves/<WorldName>/terra_script/territories/T1_Blueprint.json`
+
+当前实现里，`W4_WorldSummary.json` 仍属于预留描述，尚未由 `W4Stage` 直接产出。
+
+---
+
 ## W3. 大陆/海洋聚类与识别 (程序)
 
 **核心逻辑**：这是“发现大陆”的阶段。基于基础的高度/地形扫描，通过算法（DBSCAN 或 连通域算法）将离散的区块聚合为独立的“地理单元”（Region）。
@@ -434,6 +454,7 @@ private static final List<TerritoryConfig> pendingFactions = new ArrayList<>();
     *   **改进点**：在计算 `moveCost` 时，加入 `biomes_preference` 的权重（例如：精灵在森林里消耗减半）。
 4.  **飞地处理**：`fillEnclaves` 保留，用于填补空洞。
 5.  **生成统计**：`analyzeTerritories` 保留，计算面积和邻国。
+6.  **阶段联动触发**：T3 成功结束后，程序立即调用一次 `T4` 触发接口（内部调用），对本批次全部国度进入方块级统计与战略场计算。
 
 #### 3. 输出数据 (Output)
 
@@ -472,14 +493,21 @@ private static final List<TerritoryConfig> pendingFactions = new ArrayList<>();
 
 **核心变更**：这是一个全新的逻辑模块。T3 只是圈了地（Chunk 级），T4 要进去看细节（Block 级）。
 
-**注意**：这一步不需要一次性把所有国家都跑完，按需触发（比如 AI 决定开始规划 A 国城市时，触发 A 国的 T4 扫描）。
+**触发语义调整**：
+*   不再由 AI 按需决定是否触发。
+*   在 T3 完成后，由程序自动触发 T4。
+*   触发接口仍保留，但用途改为“程序内部调用”（例如 `WorkflowController` 在 T3 结束后调用），不对 AI 暴露为决策型接口。
 
 #### 1. 输入数据 (Input)
-*   `territoryId`: 目标国家 ID。
+*   `territoryIds`: 本次 T3 批处理得到的国家 ID 列表（通常是全部已配置国家）。
 *   `T3_Map.dat`: 知道哪些 Chunk 属于这个国家。
 *   `MinecraftServer`: 需要读取真实的 World 对象。
 
 #### 2. 处理逻辑 (Process - 新增 TerritoryScanner 类)
+
+**步骤 0：程序触发入口**
+*   T3 结束后，程序调用 `T4_trigger_after_t3(batchId, territoryIds)`（命名可按代码实际调整）。
+*   该接口可以手工调试调用，但语义上属于“程序接口”，不是 AI 工作流接口。
 
 **步骤 A：方块级数据采集**
 遍历该国度名下的所有 `claimedChunks`：
@@ -526,6 +554,18 @@ private static final List<TerritoryConfig> pendingFactions = new ArrayList<>();
       { "x": -4200, "z": 1300, "desc": "Mountain Pass" }
     ]
   }
+}
+```
+
+**C. `T4_BatchReport.json` (给工作流编排器)**
+```jsonc
+{
+  "step": "T4",
+  "triggered_by": "T3",
+  "batch_id": "t3_2026-02-07_01",
+  "territories_total": 3,
+  "territories_succeeded": 3,
+  "territories_failed": 0
 }
 ```
 

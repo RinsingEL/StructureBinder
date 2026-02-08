@@ -82,6 +82,14 @@ public class TerritoryManager {
     private static final File CONFIG_FILE = FMLPaths.CONFIGDIR.get().resolve("terra_script_territories.json").toFile();
 
     public static Collection<TerritoryResult> getAllResults() { return results.values(); }
+    public static List<TerritoryConfig> getRegisteredFactions() { return new ArrayList<>(registeredFactions); }
+    public static TerritoryConfig getTerritoryConfig(String id) {
+        if (id == null) return null;
+        for (TerritoryConfig cfg : registeredFactions) {
+            if (id.equals(cfg.id)) return cfg;
+        }
+        return null;
+    }
 
     // --- 核心操作方法 ---
 
@@ -89,11 +97,18 @@ public class TerritoryManager {
         registeredFactions.removeIf(c -> c.id.equals(id));
         registeredFactions.add(new TerritoryConfig(id, name, regionId, startX, startZ, maxPower, mCost, wCost, color));
         save();
-        recalculateAll();
+    }
+
+    public static void ensureLoaded() {
+        if (registeredFactions.isEmpty() && CONFIG_FILE.exists()) load();
     }
 
     public static void refresh() {
-        if (registeredFactions.isEmpty() && CONFIG_FILE.exists()) load();
+        runExpansion();
+    }
+
+    public static void runExpansion() {
+        ensureLoaded();
         recalculateAll();
     }
 
@@ -119,6 +134,7 @@ public class TerritoryManager {
     // --- 领土扩张算法 (Dijkstra) ---
     private static void computeGlobal(ScanResultHolder holder) {
         ScanPixel[][] map = holder.lastScanData;
+        int[][] clusterMap = holder.lastClusterMap;
         int w = map.length;
         int h = map[0].length;
         int step = holder.scanStep;
@@ -140,14 +156,19 @@ public class TerritoryManager {
 
         // 1. 种子点
         for (TerritoryConfig cfg : registeredFactions) {
-            int gx = (cfg.capitalX - globalMinX) / step;
-            int gz = (cfg.capitalZ - globalMinZ) / step;
-            if (gx >= 0 && gx < w && gz >= 0 && gz < h) {
-                pq.add(new double[]{0.0, gx, gz, registeredFactions.indexOf(cfg)});
-                distMap[gx][gz] = 0.0;
-                globalOwnershipMap[gx][gz] = cfg.id;
-                claimArea(results.get(cfg.id).claimedChunks, gx, gz, globalMinX, globalMinZ, step);
-            }
+            int seedX = (cfg.capitalX - globalMinX) / step;
+            int seedZ = (cfg.capitalZ - globalMinZ) / step;
+            int[] snapped = snapSeedToRegion(seedX, seedZ, cfg.regionId, map, clusterMap);
+            int gx = snapped[0];
+            int gz = snapped[1];
+
+            if (gx < 0 || gx >= w || gz < 0 || gz >= h) continue;
+            if (!isCellAllowedForRegion(gx, gz, cfg.regionId, map, clusterMap)) continue;
+
+            pq.add(new double[]{0.0, gx, gz, registeredFactions.indexOf(cfg)});
+            distMap[gx][gz] = 0.0;
+            globalOwnershipMap[gx][gz] = cfg.id;
+            claimArea(results.get(cfg.id).claimedChunks, gx, gz, globalMinX, globalMinZ, step);
         }
 
         int[][] dirs = {{0,1}, {0,-1}, {1,0}, {-1,0}, {1,1}, {1,-1}, {-1,1}, {-1,-1}};
@@ -175,6 +196,7 @@ public class TerritoryManager {
                 if (nx < 0 || nx >= w || nz < 0 || nz >= h) continue;
                 ScanPixel neighbor = map[nx][nz];
                 if (neighbor == null) continue;
+                if (!isCellAllowedForRegion(nx, nz, currentFaction.regionId, map, clusterMap)) continue;
 
                 double slope;
                 double landRatio;
@@ -183,7 +205,7 @@ public class TerritoryManager {
                     landRatio = terrainAgg.landRatio[nx][nz];
                 } else {
                     double hDiff = Math.abs(neighbor.height() - center.height());
-                    slope = hDiff / (double) step;
+                    slope = hDiff / 16.0;
                     landRatio = neighbor.isLand() ? 1.0 : 0.0;
                 }
 
@@ -205,6 +227,44 @@ public class TerritoryManager {
         fillEnclaves(globalOwnershipMap, w, h, globalMinX, globalMinZ, step);
     }
 
+    private static boolean isCellAllowedForRegion(
+            int gx, int gz, int regionId, ScanPixel[][] map, int[][] clusterMap) {
+        if (gx < 0 || gz < 0 || gx >= map.length || gz >= map[0].length) return false;
+        ScanPixel p = map[gx][gz];
+        if (p == null || !p.isLand()) return false;
+        if (clusterMap == null || gx >= clusterMap.length || gz >= clusterMap[0].length) return false;
+        return clusterMap[gx][gz] == regionId;
+    }
+
+    private static int[] snapSeedToRegion(
+            int gx, int gz, int regionId, ScanPixel[][] map, int[][] clusterMap) {
+        int w = map.length;
+        int h = map[0].length;
+        int clampedX = Math.max(0, Math.min(w - 1, gx));
+        int clampedZ = Math.max(0, Math.min(h - 1, gz));
+        if (isCellAllowedForRegion(clampedX, clampedZ, regionId, map, clusterMap)) {
+            return new int[]{clampedX, clampedZ};
+        }
+
+        int bestX = clampedX;
+        int bestZ = clampedZ;
+        int bestDistSq = Integer.MAX_VALUE;
+        for (int x = 0; x < w; x++) {
+            for (int z = 0; z < h; z++) {
+                if (!isCellAllowedForRegion(x, z, regionId, map, clusterMap)) continue;
+                int dx = x - clampedX;
+                int dz = z - clampedZ;
+                int distSq = dx * dx + dz * dz;
+                if (distSq < bestDistSq) {
+                    bestDistSq = distSq;
+                    bestX = x;
+                    bestZ = z;
+                }
+            }
+        }
+        return new int[]{bestX, bestZ};
+    }
+
     private static Map<Integer, RegionTerrainAggregate> buildRegionTerrainAggregates(
             ScanResultHolder holder, int w, int h, int globalMinX, int globalMinZ, int step) {
         if (holder.regionCacheMap.isEmpty()) return Collections.emptyMap();
@@ -218,8 +278,6 @@ public class TerritoryManager {
             double[][] slopeSum = new double[w][h];
             int[][] landCount = new int[w][h];
             int[][] sampleCount = new int[w][h];
-            int slopeDiv = Math.max(1, cache.step);
-
             for (int i = 0; i < localW; i++) {
                 for (int j = 0; j < localH; j++) {
                     ScanPixel p = data[i][j];
@@ -250,7 +308,7 @@ public class TerritoryManager {
                         } else {
                             raw = 0.0;
                         }
-                        slope = raw / slopeDiv;
+                        slope = raw;
                     }
                     slopeSum[gx][gz] += slope;
                 }

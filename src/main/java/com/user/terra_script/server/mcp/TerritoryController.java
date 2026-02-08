@@ -6,9 +6,11 @@ import com.google.gson.JsonParser;
 import com.sun.net.httpserver.HttpExchange;
 import com.user.terra_script.server.http.HttpUtil;
 import com.user.terra_script.territory.io.TerritoryRepository;
+import com.user.terra_script.territory.io.TerritoryResultRepository;
 import net.minecraft.server.MinecraftServer;
 
 import java.io.IOException;
+import java.util.Optional;
 
 public class TerritoryController {
     private static final Gson GSON = new Gson();
@@ -45,7 +47,7 @@ public class TerritoryController {
         }
     }
 
-    public void handleCreateTerritory(HttpExchange exchange) throws IOException {
+    public void handleCreateTerritory(HttpExchange exchange, MinecraftServer server) throws IOException {
         if (!HttpUtil.requireMethod(exchange, "POST")) return;
         try {
             String body = HttpUtil.readBody(exchange);
@@ -71,7 +73,18 @@ public class TerritoryController {
             com.user.terra_script.world.TerritoryManager.createTerritory(
                     id, name, regionId, x, z, power, mCost, wCost, color
             );
-            HttpUtil.sendResponse(exchange, 200, "{\"status\": \"created\"}");
+
+            var cfg = com.user.terra_script.world.TerritoryManager.getTerritoryConfig(id);
+            if (cfg != null) {
+                TerritoryResultRepository.writeT2Capital(server, cfg);
+            }
+
+            JsonObject res = new JsonObject();
+            res.addProperty("status", "created");
+            res.addProperty("step", "T2");
+            res.addProperty("territory_id", id);
+            res.addProperty("artifacts_exported", cfg != null);
+            HttpUtil.sendResponse(exchange, 200, GSON.toJson(res));
         } catch (Exception e) {
             HttpUtil.handleError(exchange, e);
         }
@@ -79,8 +92,27 @@ public class TerritoryController {
 
     public void handleTerritoryStatus(HttpExchange exchange) throws IOException {
         try {
+            com.user.terra_script.world.TerritoryManager.ensureLoaded();
             JsonObject root = new JsonObject();
             var allResults = com.user.terra_script.world.TerritoryManager.getAllResults();
+
+            if (allResults == null || allResults.isEmpty()) {
+                for (var cfg : com.user.terra_script.world.TerritoryManager.getRegisteredFactions()) {
+                    JsonObject tObj = new JsonObject();
+                    tObj.addProperty("id", cfg.id);
+                    tObj.addProperty("name", cfg.name);
+                    JsonObject cap = new JsonObject();
+                    cap.addProperty("x", cfg.capitalX);
+                    cap.addProperty("z", cfg.capitalZ);
+                    tObj.add("capital", cap);
+                    tObj.addProperty("region_id", cfg.regionId);
+                    tObj.addProperty("power", cfg.maxPower);
+                    tObj.addProperty("expansion_executed", false);
+                    root.add(cfg.id, tObj);
+                }
+                HttpUtil.sendResponse(exchange, 200, GSON.toJson(root));
+                return;
+            }
 
             for (var res : allResults) {
                 JsonObject tObj = new JsonObject();
@@ -133,5 +165,60 @@ public class TerritoryController {
         } catch (Exception e) {
             HttpUtil.handleError(exchange, e);
         }
+    }
+
+    public void handleTerritorySummary(HttpExchange exchange, MinecraftServer server) throws IOException {
+        if (!HttpUtil.requireMethod(exchange, "GET")) return;
+        try {
+            String territoryId = getQueryParam(exchange, "territoryId");
+            if (territoryId == null || territoryId.isBlank()) {
+                HttpUtil.sendResponse(exchange, 400, "{\"error\": \"territoryId query parameter is required\"}");
+                return;
+            }
+
+            Optional<JsonObject> stored = TerritoryResultRepository.readSummary(server, territoryId);
+            if (stored.isEmpty()) {
+                var live = com.user.terra_script.world.TerritoryManager.getAllResults().stream()
+                        .filter(r -> r != null && r.config != null && territoryId.equals(r.config.id))
+                        .findFirst();
+                if (live.isPresent()) {
+                    JsonObject summary = TerritoryResultRepository.buildSummary(live.get());
+                    JsonObject res = new JsonObject();
+                    String stage = summary.has("stage") ? summary.get("stage").getAsString() : "T3";
+                    res.addProperty("step", stage);
+                    res.addProperty("ok", true);
+                    res.addProperty("source", "memory");
+                    res.add("summary", summary);
+                    HttpUtil.sendResponse(exchange, 200, GSON.toJson(res));
+                    return;
+                }
+                HttpUtil.sendResponse(exchange, 404, "{\"error\": \"T2 summary not found for territoryId: " + territoryId + "\"}");
+                return;
+            }
+
+            JsonObject res = new JsonObject();
+            String stage = stored.get().has("stage") ? stored.get().get("stage").getAsString() : "T2";
+            res.addProperty("step", stage);
+            res.addProperty("ok", true);
+            res.addProperty("source", "artifact");
+            res.add("summary", stored.get());
+            HttpUtil.sendResponse(exchange, 200, GSON.toJson(res));
+        } catch (Exception e) {
+            HttpUtil.handleError(exchange, e);
+        }
+    }
+
+    private static String getQueryParam(HttpExchange exchange, String key) {
+        String raw = exchange.getRequestURI() != null ? exchange.getRequestURI().getQuery() : null;
+        if (raw == null || raw.isBlank()) return null;
+        String[] pairs = raw.split("&");
+        for (String pair : pairs) {
+            String[] kv = pair.split("=", 2);
+            if (kv.length == 0) continue;
+            if (key.equals(kv[0])) {
+                return kv.length > 1 ? kv[1] : "";
+            }
+        }
+        return null;
     }
 }
