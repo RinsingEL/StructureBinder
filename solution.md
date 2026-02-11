@@ -662,6 +662,10 @@ private static final List<TerritoryConfig> pendingFactions = new ArrayList<>();
 **目标**：在 C2 占地基础上生成稳定可解释的区划单元，供后续 C4 功能语义标注。  
 **关键约束**：多边形初划分通常不考虑 layer，因此 C3 必须补一个“按 layer 二次拆分”步骤。
 
+- **当前落地状态判定（用于开发检查）**：
+  - **半步合格**：已经有可用区划单元（district）+ 每个区划可追溯 layer，可支撑后续 C4 打标签。
+  - **完全合格**：除上述外，还补齐 `C3_GlobalPolygons.json`、`C3_Districts.json`、`C3_DistrictIndex.dat` 三件套，且存在 `source_polygon_id`（可追溯 Phase A -> Phase B）。
+
 - **程序做什么（两阶段）**：
   - **Phase A：全域多边形划分（不看 layer）**
   - 在城市总占地上生成种子点，运行 Voronoi/Lloyd，得到 `global_polygon_id`。
@@ -711,68 +715,280 @@ private static final List<TerritoryConfig> pendingFactions = new ArrayList<>();
 
 ## C4 功能语义分类（AI）
 
-
-- **AI做什么**：给每个模块打功能标签（可重复，邻近可合并）
+- **目标**：将 C3 的每个区划（district）映射为“功能语义”，作为 C5 聚合输入。
+- **AI做什么**：
+  - 为每个 `district_id` 选择 1~N 个功能标签（主标签 + 可选副标签）；
+  - 填写功能优先级、禁邻规则、偏好邻接；
+  - 不直接改几何边界（几何仍由程序维护）。
+- **程序做什么**：
+  - 提供区划摘要、ASCII 预览、邻接关系；
+  - 校验标签合法性（白名单）、冲突关系（如 `cemetery` 不贴 `market`）。
+- **输入**：
+  - `C3_Districts.json`
+  - `C3_DistrictIndex.dat`
+  - 可选 `C4_TagPolicy.json`（功能字典与硬约束）
 - **AI可调用数据（接口）**：
-
-
-`getDistrictSummary(cityId, districtId)`
-
-
-`previewDistrictASCII(cityId, districtId, scale)`
-- **产出**：`C4_FunctionPlan.json`
+  - `getDistrictSummary(cityId, districtId)`：区划统计摘要（面积、坡度、高差、layer、邻居）
+  - `previewDistrictASCII(cityId, districtId, scale)`：单区划 ASCII
+  - `previewDistrictAdjacency(cityId)`：全城区划邻接图（建议新增）
+- **输出**：
+  - `C4_FunctionPlan.json`（AI主产物）
+  - `C4_FunctionPlan.validated.json`（程序校验后）
+```jsonc
+{
+  "step": "C4",
+  "ok": true,
+  "city_id": "city_foo",
+  "version": 1,
+  "district_functions": [
+    {
+      "district_id": "d_01_core",
+      "layer": "core",
+      "primary_function": "civic_center",
+      "secondary_functions": ["market"],
+      "priority": 0.92,
+      "constraints": {
+        "avoid_adjacent": ["heavy_industry", "cemetery"],
+        "prefer_adjacent": ["market", "residential_mid"]
+      },
+      "notes": "核心行政+贸易复合区"
+    }
+  ],
+  "global_policies": {
+    "min_function_diversity": 5,
+    "max_same_function_ratio": 0.35
+  }
+}
+```
 - **可回滚点**：本阶段可反复直到满意
 - **存放位置**：`/saves/<WorldName>/terra_script/cities/<city_id>/`
 
 
 ## C5 模块聚合（程序+AI策略）
 
-
-- **程序做什么**：把相邻同功能模块合并成“大模块”（解决 3~4 chunk碎片）
-- **AI做什么**：给合并阈值/偏好（比如市场要更大、墓地要远离核心）
-- **产出**：`C5_ModuleGroups.json`
+- **目标**：将 C4 中碎片化的同功能区划聚合成“可执行模块组”，便于后续 C6 可建造区计算。
+- **程序做什么**：
+  - 基于邻接图 + 几何连通性进行自动合并；
+  - 输出聚合后模块组边界、中心、连通块统计；
+  - 若跨 layer 冲突，默认不合并（除非策略允许）。
+- **AI做什么**：
+  - 给聚合阈值与倾向：`min_group_area`、`max_split_count`、`cross_layer_merge`；
+  - 为关键功能指定目标规模区间（如市场、港区、墓地）。
+- **输入**：
+  - `C4_FunctionPlan.validated.json`
+  - `C3_Districts.json`
+  - 可选 `C5_GroupPolicy.json`
+- **输出**：
+  - `C5_ModuleGroups.json`
+  - `C5_ModuleIndex.dat`（block/chunk -> module_group_id）
+```jsonc
+{
+  "step": "C5",
+  "ok": true,
+  "city_id": "city_foo",
+  "groups": [
+    {
+      "group_id": "g_market_01",
+      "function": "market",
+      "layer": "urban_1",
+      "district_ids": ["d_07_u1", "d_09_u1", "d_12_u1"],
+      "area_blocks": 18640,
+      "centroid": { "x": -1182, "z": 566 },
+      "connectivity": {
+        "component_count": 1,
+        "compactness": 0.71
+      }
+    }
+  ],
+  "merge_stats": {
+    "input_district_count": 19,
+    "output_group_count": 11,
+    "fragment_reduction_ratio": 0.42
+  }
+}
+```
 - **可回滚点**：可回到 C4
 - **存放位置**：`/saves/<WorldName>/terra_script/cities/<city_id>/`
 
 
-## C6 可建造区计算（硬规则阶段，程序）
+## C6 可建造区与空间布局设计
 
+### 阶段定位
 
-- **程序做什么**：
+C6 是空间设计阶段，目标不是直接放置建筑，而是把 C5 的功能模块转成可落地、可复现的空间占位方案。
 
+* 在硬规则完全由程序控制的前提下，允许 AI 参与空间设计决策。
+* 为 C7（模板裁剪）、C8（基台）、C9（放置）提供稳定、可解释的中间结构。
 
-按生态策略清除地物（0/30/80/100%）
+### C6 核心原则
 
+1. 主体建筑优先。
+少量 Primary Modules 决定整体空间结构，AI 主要在这一层做几何级决策。
+2. 语法而非坐标。
+次级建筑不由 AI 指定逐点坐标，而是由 AI 选择 Fill Style 与参数，程序展开。
+3. 硬规则先行。
+可建造判定完全由程序完成，AI 不直接决定“哪里能建”。
+4. 不生成道路。
+C6 只为未来道路留空间与意图，道路在房屋完成后再生成。
 
-计算地面平整与禁区：水体/悬崖/保护点
+### C6 输入
 
+#### 必需输入（程序）
 
-在每个大模块内找连续可用区域（连通块）
+* `C5_ModuleGroups.json`
+  功能模块（function / layer / centroid / 连通性）。
+* `C5_ModuleIndex.dat`
+  block 或 chunk 到 module_group_id 的映射。
+* `C2_Claim.dat`
+  block 或 chunk 到 layer 的映射。
+* 地貌 scan 能力，扫描T4中我们算好的国度方块级地形数据
+  包括高度、坡度、水体、保护点、可达性。
 
+#### 可选输入（建议）
 
-输出“可建造区候选”的**摘要**与 ASCII（而不是全方块列表）
-- **AI做什么**：可选做“矩形积木序列”来切分建造区（你提出的方案）
-- **产出**：
+* `C6_BuildRules.json`
+  集中管理硬规则阈值、生态清理强度与 buffer，保证规则可版本化与可复现。
 
+### C6 程序处理（硬规则）
 
-`C6_BuildAreaIndex.dat`（方块级mask索引）
+在每个 Module Group 内按固定流程执行：
 
+1. 按生态策略清理地物（0 / 30 / 80 / 100%）。
+2. 排除禁区。
+水体、悬崖或超阈值坡度、保护点及其 buffer。
+3. 计算连续可建造区域（连通块）。
+4. 为每个可建造区生成指标。
+面积、bbox、坡度统计、可用率、ASCII 预览。
 
-`C6_BuildAreaSummary.json`（每个建造区：面积、bbox、平均坡度、可用率）
+### C6 输出（程序）
 
+#### `C6_BuildAreaIndex.dat`
 
-`C6_BuildAreaLayout.json`（AI返回的矩形切分结果，最多回滚2次）
-- **存放位置**：`/saves/<WorldName>/terra_script/cities/<city_id>/`
+* 方块级索引：`block -> build_area_id | 0`。
+* 用于后续放置合法性判定和容错回滚。
 
+#### `C6_BuildAreaSummary.json`
 
-## C7 模板池裁剪（AI+规则）
+* 每个建造区候选的摘要信息。
+* 不包含完整方块列表。
+* 用于 AI 对比与 C7 初筛。
 
+### C6 输出（AI，可选）
 
-- **AI做什么**：为每个建造区选择可用模板池、是否换皮、是否需要拼图式扩展、拼图深度/权重
-- **程序做什么**：根据模板尺寸/碰撞/生态/高度约束裁掉不合法模板
-- **产出**：`C7_TemplateSelectionPlan.json`
-- **可回滚点**：可在本阶段重选
-- **存放位置**：`/saves/<WorldName>/terra_script/cities/<city_id>/`
+#### `C6_BuildAreaLayout.json`（最多回滚 2 次）
+
+#### A. 主体模块（Primary Modules）
+
+* 每个 Module Group 通常 1 到 3 个。
+* 每项包含 `anchor`、`importance`、`template_hint`。
+* 作用是定义空间主语（广场、地标、核心建筑）。
+
+#### B. 次级填充（Secondary Fill）
+
+* AI 不给具体坐标。
+* AI 选择 Fill Style、参数范围、可用地块尺寸族（rect sizes，可多选加权）。
+* 程序按固定排列器执行。
+
+Fill Style 示例：
+
+* `PLAZA_RING` （目前只开发这个类别的）
+* `STREET_SPINE`
+* `EDGE_FOLLOW`
+* `CLUSTER_POISSON`
+* `GRID_RELAXED`
+* `TERRACE_BANDS`
+* `DECOR_BUFFER`
+
+#### C. 可选：矩形积木（Bricks）
+
+* AI 可选择介入更细粒度切分。
+* 不介入时由程序使用默认切分策略。
+
+### C6 明确不做的事
+
+* 不生成道路。
+* 不选择具体模板。
+* 不做基台和垂直结构。
+* 不做最终装饰。
+
+## C7 模板池裁剪与拼图策略
+
+### 阶段定位
+
+C7 的任务是在 C6 给定的空间结构（primary / plots）上，从模板池中筛选“可用候选模板集合”。
+
+* 决定是否启用拼图。
+* 决定拼图深度（0 / 1 / 2）。
+* 决定使用哪个拼图池。
+* 为 C8 / C9 提供候选与 fallback 链。
+
+### C7 输入
+
+#### 1) C6 输出
+
+* `C6_BuildAreaLayout.json`
+  包含 primary_modules 与 fills（Fill Style + rect sizes）。
+
+#### 2) 模板库（Template Catalog）
+
+* 每个模板已由 AI 批量标注。
+
+#### 3) 可选规则
+
+* `C7_TemplateRules.json`
+  管理功能区偏好、拼图上限与 fallback 策略。
+
+### 模板标签体系（最终定型）
+
+#### ① 核心硬标签（最重要）
+
+决定“能不能用”：
+
+* `function_role`（第一筛选维度）
+* `interaction_role`
+  例如 `FRONT_TO_PLAZA` / `FRONT_TO_STREET` / `INWARD_FACING` / `EDGE_ATTACH`
+* `footprint`（w/h，可旋转）
+* `height`
+* `terrain_profile`
+  例如 `flat_only` / `slope_ok` / `water_edge_ok`
+
+#### ② 拼图相关（仅在启用拼图时使用）
+
+* `puzzle_pool_id`
+* `connector_types`
+* `connector_dirs`
+
+这部分不参与普通筛选，避免维度爆炸。
+
+#### ③ 软偏好（排序用）
+
+* `reskin_supported`
+* `material_profile`
+* `style_tags`
+* `landmark_score`
+
+### C7 筛选顺序（建议写死）
+
+1. `function_role`
+2. `interaction_role`
+3. `footprint / height`
+4. `terrain_profile`
+5. 拼图可用性（仅当需要）
+6. `reskin_supported / material_profile`
+7. `style_tags`
+
+### C7 输出
+
+#### `C7_TemplateSelection.json`
+
+对每个 `primary_module` 或 `plot`，输出：
+
+* Top-K 模板候选。
+* 拼图参数（若启用）。
+* 明确 fallback 链。
+
+* 可回滚点：可在本阶段重选。
+* 存放位置：`/saves/<WorldName>/terra_script/cities/<city_id>/`。
 
 
 ## C8 基台与垂直处理（程序执行 + AI风格参数）

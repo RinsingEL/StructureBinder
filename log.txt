@@ -1,0 +1,24 @@
+[20:33:53] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] Stage T4 failed: T3 produced zero claimed chunks for all territories. Likely causes: missing/invalid W3-W4 scan cache, missing cluster map, or territory region_id does not match current W3 continent ids.
+[20:33:59] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] Stage W3 completed.
+[20:33:59] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] Output: .\saves\新的世界 (1)\.\terra_script\9161139915381784808\world\W3\ContinentMeta.json
+[20:33:59] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] Output: .\saves\新的世界 (1)\.\terra_script\9161139915381784808\world\W3\OceanMeta.json
+[20:34:01] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] Stage W4 completed.
+[20:34:01] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] Output: .\saves\新的世界 (1)\.\terra_script\9161139915381784808\world\W4\TerrainFacts.dat
+[20:34:01] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] Output: .\saves\新的世界 (1)\.\terra_script\9161139915381784808\world\W4\TerrainSummary.json
+[Territory] Analysis complete.
+[TerraScript][T4] T4 scan started. total_blocks=96998400, progress=0%
+[20:34:05] [Server thread/INFO] [minecraft/MinecraftServer]: [TerraScript][T4] T4 scan started. total_blocks=96998400, progress=0%
+[20:34:05] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] [TerraScript][T4] T4 scan started. total_blocks=96998400, progress=0%
+[TerraScript][T4] T4 scan progress 25% (32588800/96998400 blocks)
+[20:34:05] [Server thread/INFO] [minecraft/MinecraftServer]: [TerraScript][T4] T4 scan progress 25% (32588800/96998400 blocks)
+[20:34:05] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] [TerraScript][T4] T4 scan progress 25% (32588800/96998400 blocks)
+[TerraScript][T4] T4 scan progress 50% (96998400/96998400 blocks)
+[20:34:05] [Server thread/INFO] [minecraft/MinecraftServer]: [TerraScript][T4] T4 scan progress 50% (96998400/96998400 blocks)
+[TerraScript][T4] T4 scan progress 75% (96998400/96998400 blocks)
+[20:34:05] [Server thread/INFO] [minecraft/MinecraftServer]: [TerraScript][T4] T4 scan progress 75% (96998400/96998400 blocks)
+[TerraScript][T4] T4 scan progress 100% (96998400/96998400 blocks)
+[20:34:05] [Server thread/INFO] [minecraft/MinecraftServer]: [TerraScript][T4] T4 scan progress 100% (96998400/96998400 blocks)
+[20:34:05] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] [TerraScript][T4] T4 scan progress 50% (96998400/96998400 blocks)
+[20:34:05] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] [TerraScript][T4] T4 scan progress 75% (96998400/96998400 blocks)
+[20:34:05] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] [TerraScript][T4] T4 scan progress 100% (96998400/96998400 blocks)
+[20:34:05] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] Stage T3 completed.

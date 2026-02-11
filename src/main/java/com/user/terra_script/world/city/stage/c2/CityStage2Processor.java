@@ -1,7 +1,8 @@
-package com.user.terra_script.world.city;
+package com.user.terra_script.world.city.stage.c2;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.user.terra_script.world.city.stage.c1.CityStage1Processor;
 import net.minecraftforge.fml.loading.FMLPaths;
 
 import java.io.File;

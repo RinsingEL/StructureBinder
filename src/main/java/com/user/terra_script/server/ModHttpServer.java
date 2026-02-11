@@ -71,6 +71,13 @@ public class ModHttpServer {
             server.createContext("/city_stage2_data", cityController::handleCityStage2Data);
             server.createContext("/city_forbidden", cityController::handleCityForbidden);
             server.createContext("/city_buildable_groups", cityController::handleCityBuildableGroups);
+            server.createContext("/city_c4_generate", cityController::handleCityC4Generate);
+            server.createContext("/city_c4_data", cityController::handleCityC4Data);
+            server.createContext("/city_c5_generate", cityController::handleCityC5Generate);
+            server.createContext("/city_c5_data", cityController::handleCityC5Data);
+            server.createContext("/city_c6_generate", cityController::handleCityC6Generate);
+            server.createContext("/city_c6_data", cityController::handleCityC6Data);
+            server.createContext("/city_c6_pave_stone", cityController::handleCityC6PaveStone);
             server.createContext("/create_city", cityController::handleCreateCity);
 
             server.setExecutor(Executors.newFixedThreadPool(2, r -> {

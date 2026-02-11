@@ -314,6 +314,20 @@ public class DevCommandHandler {
                 return httpPost("/city_stage1_data", args);
             case "city_stage2_data":
                 return httpPost("/city_stage2_data", args);
+            case "city_c4_generate":
+                return httpPost("/city_c4_generate", args);
+            case "city_c4_data":
+                return httpPost("/city_c4_data", args);
+            case "city_c5_generate":
+                return httpPost("/city_c5_generate", args);
+            case "city_c5_data":
+                return httpPost("/city_c5_data", args);
+            case "city_c6_generate":
+                return httpPost("/city_c6_generate", args);
+            case "city_c6_data":
+                return httpPost("/city_c6_data", args);
+            case "city_c6_pave_stone":
+                return httpPost("/city_c6_pave_stone", args);
             case "city_heightmap":
                 return httpPost("/city_heightmap", args);
             case "city_forbidden":
@@ -633,6 +647,13 @@ public class DevCommandHandler {
                 "place_structure",
                 "city_stage1_data",
                 "city_stage2_data",
+                "city_c4_generate",
+                "city_c4_data",
+                "city_c5_generate",
+                "city_c5_data",
+                "city_c6_generate",
+                "city_c6_data",
+                "city_c6_pave_stone",
                 "city_heightmap",
                 "city_forbidden",
                 "city_buildable_groups",
@@ -658,6 +679,13 @@ public class DevCommandHandler {
                 "place",
                 "city_stage1_data",
                 "city_stage2_data",
+                "city_c4_generate",
+                "city_c4_data",
+                "city_c5_generate",
+                "city_c5_data",
+                "city_c6_generate",
+                "city_c6_data",
+                "city_c6_pave_stone",
                 "city_heightmap",
                 "city_forbidden",
                 "city_buildable_groups",

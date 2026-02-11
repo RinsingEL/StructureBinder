@@ -1,4 +1,4 @@
-package com.user.terra_script.world.city;
+package com.user.terra_script.world.city.stage.c1;
 
 import net.minecraftforge.fml.loading.FMLPaths;
 

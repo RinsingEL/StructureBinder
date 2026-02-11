@@ -3,7 +3,7 @@ package com.user.terra_script.util;
 import com.user.terra_script.client.data.ScanResultHolder;
 import com.user.terra_script.world.city.CityConfig;
 import com.user.terra_script.world.city.CityInstance;
-import com.user.terra_script.world.city.CityStage1BinaryIO;
+import com.user.terra_script.world.city.stage.c1.CityStage1BinaryIO;
 import com.user.terra_script.world.city.district.District;
 import net.minecraft.world.level.ChunkPos;
 
