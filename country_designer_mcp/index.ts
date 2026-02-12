@@ -464,6 +464,94 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: ["city_id"]
         },
       },
+      {
+        name: "city_c4_generate",
+        description: "生成并保存 C4 功能语义分类方案（C4_FunctionPlan.json）。",
+        inputSchema: {
+          type: "object",
+          properties: {
+            city_id: { type: "string" }
+          },
+          required: ["city_id"]
+        }
+      },
+      {
+        name: "city_c4_data",
+        description: "读取城市 C4 功能语义分类方案。",
+        inputSchema: {
+          type: "object",
+          properties: {
+            city_id: { type: "string" }
+          },
+          required: ["city_id"]
+        }
+      },
+      {
+        name: "city_c5_generate",
+        description: "生成并保存 C5 模块聚合结果（C5_ModuleGroups.json）。",
+        inputSchema: {
+          type: "object",
+          properties: {
+            city_id: { type: "string" },
+            cross_layer_merge: { type: "boolean", description: "是否允许跨 layer 合并同功能区块（默认 false）" }
+          },
+          required: ["city_id"]
+        }
+      },
+      {
+        name: "city_c5_data",
+        description: "读取城市 C5 模块聚合结果。",
+        inputSchema: {
+          type: "object",
+          properties: {
+            city_id: { type: "string" }
+          },
+          required: ["city_id"]
+        }
+      },
+      {
+        name: "city_c6_generate",
+        description: "生成并保存 C6 可建造区与布局方案（含 C6_BuildAreaSummary / C6_BuildAreaLayout）。",
+        inputSchema: {
+          type: "object",
+          properties: {
+            city_id: { type: "string" },
+            fill_style: {
+              type: "string",
+              enum: ["PLAZA_RING", "STREET_SPINE", "EDGE_FOLLOW", "CLUSTER_POISSON", "GRID_RELAXED", "TERRACE_BANDS", "DECOR_BUFFER"],
+              description: "C6 排列风格（当前主要实现 PLAZA_RING）"
+            }
+          },
+          required: ["city_id"]
+        }
+      },
+      {
+        name: "city_c6_data",
+        description: "读取城市 C6 结果（summary + layout）。",
+        inputSchema: {
+          type: "object",
+          properties: {
+            city_id: { type: "string" }
+          },
+          required: ["city_id"]
+        }
+      },
+      {
+        name: "city_c6_pave_stone",
+        description: "将 C6 选定范围的地表替换为一层石头（支持全城/按 group_id/按 build_area_id）。",
+        inputSchema: {
+          type: "object",
+          properties: {
+            city_id: { type: "string" },
+            group_id: { type: "string" },
+            build_area_id: { type: "string" },
+            square_only: { type: "boolean", description: "仅铺正方形块，不铺满整个功能区" },
+            square_size: { type: "number", description: "正方形边长（3-32）" },
+            square_count: { type: "number", description: "目标正方形数量（1-128）" }
+          },
+          required: ["city_id"]
+        }
+      },
     ],
   };
 });
@@ -767,6 +855,51 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case "city_stage2_data": {
         const args = request.params.arguments as any;
         const res = await axios.post(`${MC_API_URL}/city_stage2_data`, { city_id: args.city_id });
+        return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
+      }
+      case "city_c4_generate": {
+        const args = request.params.arguments as any;
+        const res = await axios.post(`${MC_API_URL}/city_c4_generate`, { city_id: args.city_id });
+        return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
+      }
+      case "city_c4_data": {
+        const args = request.params.arguments as any;
+        const res = await axios.post(`${MC_API_URL}/city_c4_data`, { city_id: args.city_id });
+        return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
+      }
+      case "city_c5_generate": {
+        const args = request.params.arguments as any;
+        const payload: Record<string, any> = { city_id: args.city_id };
+        if (args.cross_layer_merge !== undefined) payload.cross_layer_merge = Boolean(args.cross_layer_merge);
+        const res = await axios.post(`${MC_API_URL}/city_c5_generate`, payload);
+        return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
+      }
+      case "city_c5_data": {
+        const args = request.params.arguments as any;
+        const res = await axios.post(`${MC_API_URL}/city_c5_data`, { city_id: args.city_id });
+        return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
+      }
+      case "city_c6_generate": {
+        const args = request.params.arguments as any;
+        const payload: Record<string, any> = { city_id: args.city_id };
+        if (args.fill_style !== undefined) payload.fill_style = String(args.fill_style);
+        const res = await axios.post(`${MC_API_URL}/city_c6_generate`, payload);
+        return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
+      }
+      case "city_c6_data": {
+        const args = request.params.arguments as any;
+        const res = await axios.post(`${MC_API_URL}/city_c6_data`, { city_id: args.city_id });
+        return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
+      }
+      case "city_c6_pave_stone": {
+        const args = request.params.arguments as any;
+        const payload: Record<string, any> = { city_id: args.city_id };
+        if (args.group_id !== undefined) payload.group_id = String(args.group_id);
+        if (args.build_area_id !== undefined) payload.build_area_id = String(args.build_area_id);
+        if (args.square_only !== undefined) payload.square_only = Boolean(args.square_only);
+        if (args.square_size !== undefined) payload.square_size = Number(args.square_size);
+        if (args.square_count !== undefined) payload.square_count = Number(args.square_count);
+        const res = await axios.post(`${MC_API_URL}/city_c6_pave_stone`, payload);
         return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
       }
 
