@@ -991,19 +991,232 @@ C7 的任务是在 C6 给定的空间结构（primary / plots）上，从模板�
 * 存放位置：`/saves/<WorldName>/terra_script/cities/<city_id>/`。
 
 
-## C8 基台与垂直处理（程序执行 + AI风格参数）
+# C8 · 基台与垂直过渡（T4 驱动版）
+
+## 阶段定位（修订）
+
+**C8 是“基于 T4 地形分析结果的基台决策与生成阶段”**：
+
+* 不重新计算高度、坡度
+
+* 不扫描方块
+
+* 不推导地形结构
+
+* 只做：
+
+    * 策略选择
+
+    * 几何生成
+
+    * 影响范围记录
 
 
-- **AI做什么**：给“权威感/仪式感/荒蛮感”等参数（决定基台高度、护坡材料风格）
-- **程序做什么**：生成台基、护坡、台阶、缓冲绿化
-- **产出**：`C8_TerracePlan.json`
-- **可回滚点**：可回滚（只影响地形改造与台基）
-- **存放位置**：`/saves/<WorldName>/terra_script/cities/<city_id>/`
+* * *
+
+## C8 的几何基准（再次确认）
+
+* **唯一几何基准：`plot`（C6 生成的长方形）**
+
+* 功能区 / 多边形：
+
+    * 只作为**规则选择与风格偏好**
+
+    * 不参与基台几何计算
 
 
-## C9 建筑放置与装饰（程序执行，AI评审）
+这点在 T4 已完备的前提下更重要，否则会“重复建模”。
+
+* * *
+
+## C8 输入（最终定型）
+
+### 1️⃣ 来自 C6 / C7
+
+* `plots[]`
+
+    * `plot_id`
+
+    * `rect (x,z,w,h)`
+
+    * `rotation`
+
+    * `module_group_id`
+
+* `selected_template`
+
+    * `footprint`
+
+    * `base_height`
+
+    * `foundation_hint`（可选）
 
 
+* * *
+
+### 2️⃣ 来自 **T4_HeightAnalysis**（核心输入）
+
+> 这是 C8 的“物理事实源”，也是你系统的优势点。
+
+对 **每个 plot**，直接引用 T4 的结果即可：
+
+* `height_min / max / avg / p50 / p95`
+
+* `relief`（max - min）
+
+* `slope_avg / slope_p95`
+
+* `edge_heights`（N / E / S / W）
+
+* `hazards`
+
+    * `touch_water`
+
+    * `touch_cliff`
+
+    * `protected_overlap`
+
+
+> ⚠️ 关键点：  
+> **C8 不再允许直接访问方块世界**，只消费 T4 产物  
+> → 确定性、可回滚、调试友好
+
+* * *
+
+### 3️⃣ C8 规则输入（轻量）
+
+`C8_FoundationRules.json`（或内置表）
+
+* 最大允许抬高 / 挖低
+
+* 是否允许 cut & fill
+
+* 是否允许悬挑
+
+* 台阶 / 护坡触发阈值
+
+* 各 `function_role` 的偏好策略
+
+
+* * *
+
+## C8 处理流程（精简版）
+
+对 **每个 plot**：
+
+### Step 1：选择基台策略（不算数，只决策）
+
+基于 T4 指标：
+
+* `relief < ε`  
+  → `NONE`：直接贴地
+
+* `relief` 中等 & `slope_avg` 可接受  
+  → `PLATFORM`（抬高或切平）
+
+* `relief` 大 & 等高线近似平行  
+  → `TERRACE`（梯田/分级台阶）
+
+* `edge_heights` 单侧突变  
+  → `PLATFORM + RETAINING_WALL`
+
+
+> 这一步可以是**程序规则**，也可以留一个 `strategy_hint` 给 AI（但 AI 不接触原始高度）。
+
+* * *
+
+### Step 2：确定基准高度
+
+使用 T4 已算好的统计量：
+
+* `FOLLOW_AVG`
+
+* `FOLLOW_P50`
+
+* `FOLLOW_MIN`
+
+* `FOLLOW_MAX`
+
+* `CUT_AND_FILL`（受规则约束）
+
+
+* * *
+
+### Step 3：生成基台几何
+
+* 基台体块
+
+* 护坡 / 挡墙
+
+* 台阶
+
+* 边界裁切
+
+
+* * *
+
+## C8 输出（最终）
+
+### `C8_FoundationPlan.json`
+
+（不变，但现在**完全可复现**）
+
+```jsonc
+{
+  "plot_id": "p23",
+  "foundation_type": "PLATFORM",
+  "strategy": "CUT_AND_FILL",
+  "base_y": 74,
+  "delta_height": 3,
+  "supports": [
+    { "type": "retaining_wall", "side": "N" },
+    { "type": "stairs", "side": "E" }
+  ],
+  "terrain_impact_bbox": {
+    "minX": -1182, "minZ": 540,
+    "maxX": -1156, "maxZ": 566
+  }
+}
+```
+
+* * *
+
+## 那等高线 + C6 多边形还要不要？
+
+### ✔️ 要，但角色变了
+
+它们不再是 **C8 的“计算输入”**，而是：
+
+* **AI 决策辅助**（当你允许 AI 参与策略选择时）
+
+* **Debug 可视化**
+
+* **回放 / 复盘**
+
+
+可以定义为：
+
+* `C8_TerrainPreview`（只读、非必需）
+
+* 不影响 determinism
+
+* 丢了也不影响结果
+
+
+* * *
+
+# C9 · 建筑放置与装饰（顺承 T4 + C8）
+
+在这个体系下，C9 变得非常“干净”：
+
+* 地形问题 → 已由 T4 + C8 解决
+
+* 几何位置 → 已由 C6 决定
+
+* 模板选择 → 已由 C7 决定
+
+
+**C9 只负责执行与记录。**
 - **程序做什么**：
 
 
@@ -1024,7 +1237,13 @@ C7 的任务是在 C6 给定的空间结构（primary / plots）上，从模板�
 `C9_DecorationPlan.json`
 - **可回滚点**：单建造区回滚（不要推翻全城）
 - **存放位置**：`/saves/<WorldName>/terra_script/cities/<city_id>/`
+* * *
 
+## 最终一句话定性
+
+> **T4 是地形物理真相，  
+> C6 是空间设计，  
+> C8 是“如何把设计接到真实世界上”。**
 
 # 总结：三大模块的“谁负责什么”
 
