@@ -67,6 +67,11 @@ public class ModHttpServer {
             server.createContext("/workflow/status", workflowController::handleWorkflowStatus);
 
             server.createContext("/city_heightmap", cityController::handleCityHeightmap);
+            server.createContext("/city_c1_generate", cityController::handleCreateCity);
+            server.createContext("/city_c2_generate", cityController::handleCityC2Generate);
+            server.createContext("/city_c2_data", cityController::handleCityStage1Data);
+            server.createContext("/city_c3_generate", cityController::handleCityC3Generate);
+            server.createContext("/city_c3_data", cityController::handleCityStage2Data);
             server.createContext("/city_stage1_data", cityController::handleCityStage1Data);
             server.createContext("/city_stage2_data", cityController::handleCityStage2Data);
             server.createContext("/city_forbidden", cityController::handleCityForbidden);
@@ -77,6 +82,12 @@ public class ModHttpServer {
             server.createContext("/city_c5_data", cityController::handleCityC5Data);
             server.createContext("/city_c6_generate", cityController::handleCityC6Generate);
             server.createContext("/city_c6_data", cityController::handleCityC6Data);
+            server.createContext("/city_c7_generate", cityController::handleCityC7Generate);
+            server.createContext("/city_c7_data", cityController::handleCityC7Data);
+            server.createContext("/city_c8_generate", cityController::handleCityC8Generate);
+            server.createContext("/city_c8_data", cityController::handleCityC8Data);
+            server.createContext("/city_c9_generate", cityController::handleCityC9Generate);
+            server.createContext("/city_c9_data", cityController::handleCityC9Data);
             server.createContext("/city_c6_pave_stone", cityController::handleCityC6PaveStone);
             server.createContext("/create_city", cityController::handleCreateCity);
 

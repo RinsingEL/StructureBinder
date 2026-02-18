@@ -15,6 +15,9 @@ import com.user.terra_script.world.city.stage.c1.CityStage1BinaryIO;
 import com.user.terra_script.world.city.stage.c1.CityStage1Processor;
 import com.user.terra_script.world.city.stage.c6.C6FillStyle;
 import com.user.terra_script.world.city.stage.c6.CityC6Stages;
+import com.user.terra_script.world.city.stage.c7.CityC7Stages;
+import com.user.terra_script.world.city.stage.c8.CityC8Stages;
+import com.user.terra_script.world.city.stage.c9.CityC9Stages;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -121,6 +124,39 @@ public class CityController {
         }
     }
 
+    public void handleCityC2Generate(HttpExchange exchange) throws IOException {
+        if (!HttpUtil.requireMethod(exchange, "POST")) return;
+        try {
+            String body = HttpUtil.readBody(exchange);
+            JsonObject json = JsonParser.parseString(body).getAsJsonObject();
+            String cityId = json.has("city_id") ? json.get("city_id").getAsString() : null;
+            if (cityId == null || cityId.isBlank()) {
+                HttpUtil.sendResponse(exchange, 400, "{\"error\": \"Missing city_id\"}");
+                return;
+            }
+            if (mcServer == null || mcServer.overworld() == null) {
+                HttpUtil.sendResponse(exchange, 500, "{\"error\": \"Minecraft server/overworld unavailable\"}");
+                return;
+            }
+
+            var result = NationGenManager.Stage1Manager.computeAndSave(mcServer.overworld(), cityId);
+            if (result == null) {
+                HttpUtil.sendResponse(exchange, 404, "{\"error\": \"City not found: " + cityId + "\"}");
+                return;
+            }
+
+            JsonObject res = new JsonObject();
+            res.addProperty("status", "ok");
+            res.addProperty("step", "C2");
+            res.addProperty("city_id", cityId);
+            res.addProperty("district_count", result.buildableStats != null ? result.buildableStats.size() : 0);
+            res.addProperty("buildable_group_count", result.buildableGroups != null ? result.buildableGroups.size() : 0);
+            HttpUtil.sendResponse(exchange, 200, gson.toJson(res));
+        } catch (Exception e) {
+            HttpUtil.handleError(exchange, e);
+        }
+    }
+
     public void handleCityStage2Data(HttpExchange exchange) throws IOException {
         if (!HttpUtil.requireMethod(exchange, "POST")) return;
         try {
@@ -139,6 +175,34 @@ public class CityController {
             }
 
             HttpUtil.sendResponse(exchange, 200, gson.toJson(data));
+        } catch (Exception e) {
+            HttpUtil.handleError(exchange, e);
+        }
+    }
+
+    public void handleCityC3Generate(HttpExchange exchange) throws IOException {
+        if (!HttpUtil.requireMethod(exchange, "POST")) return;
+        try {
+            String body = HttpUtil.readBody(exchange);
+            JsonObject json = JsonParser.parseString(body).getAsJsonObject();
+            String cityId = json.has("city_id") ? json.get("city_id").getAsString() : null;
+            if (cityId == null || cityId.isBlank()) {
+                HttpUtil.sendResponse(exchange, 400, "{\"error\": \"Missing city_id\"}");
+                return;
+            }
+
+            var result = NationGenManager.Stage2Manager.computeAndSave(cityId);
+            if (result == null) {
+                HttpUtil.sendResponse(exchange, 404, "{\"error\": \"Stage1 not found for: " + cityId + "\"}");
+                return;
+            }
+
+            JsonObject res = new JsonObject();
+            res.addProperty("status", "ok");
+            res.addProperty("step", "C3");
+            res.addProperty("city_id", cityId);
+            res.addProperty("intent_count", result.intents != null ? result.intents.size() : 0);
+            HttpUtil.sendResponse(exchange, 200, gson.toJson(res));
         } catch (Exception e) {
             HttpUtil.handleError(exchange, e);
         }
@@ -390,6 +454,223 @@ public class CityController {
             res.addProperty("ok", true);
             res.add("summary", gson.toJsonTree(summary));
             res.add("layout", gson.toJsonTree(layout));
+            HttpUtil.sendResponse(exchange, 200, gson.toJson(res));
+        } catch (Exception e) {
+            HttpUtil.handleError(exchange, e);
+        }
+    }
+
+    public void handleCityC7Generate(HttpExchange exchange) throws IOException {
+        if (!HttpUtil.requireMethod(exchange, "POST")) return;
+        try {
+            String body = HttpUtil.readBody(exchange);
+            JsonObject json = JsonParser.parseString(body).getAsJsonObject();
+            String cityId = json.has("city_id") ? json.get("city_id").getAsString() : null;
+            if (cityId == null || cityId.isBlank()) {
+                HttpUtil.sendResponse(exchange, 400, "{\"error\": \"Missing city_id\"}");
+                return;
+            }
+
+            Path cityDir = resolveCityDir(cityId);
+            CityC6Stages.C6Layout c6Layout = CityC6Stages.loadLayout(cityDir);
+            if (c6Layout == null) {
+                HttpUtil.sendResponse(exchange, 404, "{\"error\": \"C6 layout not found for: " + cityId + "\"}");
+                return;
+            }
+
+            CityC7Stages.C7Selection selection = CityC7Stages.generate(cityId, c6Layout);
+            CityC7Stages.save(cityDir, selection);
+
+            JsonObject res = new JsonObject();
+            res.addProperty("status", "ok");
+            res.addProperty("step", "C7");
+            res.addProperty("city_id", cityId);
+            res.addProperty("selection_count", selection.selections != null ? selection.selections.size() : 0);
+            res.addProperty("catalog_source", selection.catalog_source);
+            res.addProperty("file", cityDir.resolve(CityC7Stages.C7_FILE).toString());
+            HttpUtil.sendResponse(exchange, 200, gson.toJson(res));
+        } catch (Exception e) {
+            HttpUtil.handleError(exchange, e);
+        }
+    }
+
+    public void handleCityC7Data(HttpExchange exchange) throws IOException {
+        if (!HttpUtil.requireMethod(exchange, "POST")) return;
+        try {
+            String body = HttpUtil.readBody(exchange);
+            JsonObject json = JsonParser.parseString(body).getAsJsonObject();
+            String cityId = json.has("city_id") ? json.get("city_id").getAsString() : null;
+            if (cityId == null || cityId.isBlank()) {
+                HttpUtil.sendResponse(exchange, 400, "{\"error\": \"Missing city_id\"}");
+                return;
+            }
+            Path cityDir = resolveCityDir(cityId);
+            CityC7Stages.C7Selection selection = CityC7Stages.load(cityDir);
+            if (selection == null) {
+                HttpUtil.sendResponse(exchange, 404, "{\"error\": \"C7 data not found for: " + cityId + "\"}");
+                return;
+            }
+            HttpUtil.sendResponse(exchange, 200, gson.toJson(selection));
+        } catch (Exception e) {
+            HttpUtil.handleError(exchange, e);
+        }
+    }
+
+    public void handleCityC8Generate(HttpExchange exchange) throws IOException {
+        if (!HttpUtil.requireMethod(exchange, "POST")) return;
+        try {
+            String body = HttpUtil.readBody(exchange);
+            JsonObject json = JsonParser.parseString(body).getAsJsonObject();
+            String cityId = json.has("city_id") ? json.get("city_id").getAsString() : null;
+            if (cityId == null || cityId.isBlank()) {
+                HttpUtil.sendResponse(exchange, 400, "{\"error\": \"Missing city_id\"}");
+                return;
+            }
+
+            Path cityDir = resolveCityDir(cityId);
+            CityC6Stages.C6Summary c6Summary = CityC6Stages.loadSummary(cityDir);
+            CityC6Stages.C6Layout c6Layout = CityC6Stages.loadLayout(cityDir);
+            Map<Long, Integer> c6Index = CityC6Stages.loadIndex(cityDir);
+            CityStage1BinaryIO.HeightData heightData = CityStage1BinaryIO.loadHeightData(cityId);
+            if (c6Summary == null || c6Layout == null || c6Index == null || c6Index.isEmpty() || heightData == null) {
+                HttpUtil.sendResponse(exchange, 404, "{\"error\": \"Required C6/heightmap data not found for: " + cityId + "\"}");
+                return;
+            }
+
+            CityC8Stages.C8Plan plan = CityC8Stages.generate(cityId, c6Summary, c6Layout, heightData, c6Index);
+            CityC8Stages.save(cityDir, plan);
+
+            JsonObject res = new JsonObject();
+            res.addProperty("status", "ok");
+            res.addProperty("step", "C8");
+            res.addProperty("city_id", cityId);
+            res.addProperty("foundation_count", plan.foundations != null ? plan.foundations.size() : 0);
+            res.addProperty("file", cityDir.resolve(CityC8Stages.C8_PLAN_FILE).toString());
+            HttpUtil.sendResponse(exchange, 200, gson.toJson(res));
+        } catch (Exception e) {
+            HttpUtil.handleError(exchange, e);
+        }
+    }
+
+    public void handleCityC8Data(HttpExchange exchange) throws IOException {
+        if (!HttpUtil.requireMethod(exchange, "POST")) return;
+        try {
+            String body = HttpUtil.readBody(exchange);
+            JsonObject json = JsonParser.parseString(body).getAsJsonObject();
+            String cityId = json.has("city_id") ? json.get("city_id").getAsString() : null;
+            if (cityId == null || cityId.isBlank()) {
+                HttpUtil.sendResponse(exchange, 400, "{\"error\": \"Missing city_id\"}");
+                return;
+            }
+
+            Path cityDir = resolveCityDir(cityId);
+            CityC8Stages.C8Plan plan = CityC8Stages.load(cityDir);
+            if (plan == null) {
+                HttpUtil.sendResponse(exchange, 404, "{\"error\": \"C8 data not found for: " + cityId + "\"}");
+                return;
+            }
+            HttpUtil.sendResponse(exchange, 200, gson.toJson(plan));
+        } catch (Exception e) {
+            HttpUtil.handleError(exchange, e);
+        }
+    }
+
+    public void handleCityC9Generate(HttpExchange exchange) throws IOException {
+        if (!HttpUtil.requireMethod(exchange, "POST")) return;
+        try {
+            String body = HttpUtil.readBody(exchange);
+            JsonObject json = JsonParser.parseString(body).getAsJsonObject();
+            String cityId = json.has("city_id") ? json.get("city_id").getAsString() : null;
+            if (cityId == null || cityId.isBlank()) {
+                HttpUtil.sendResponse(exchange, 400, "{\"error\": \"Missing city_id\"}");
+                return;
+            }
+            boolean applyBlocks = json.has("apply_blocks") && json.get("apply_blocks").getAsBoolean();
+            int maxBlocks = json.has("max_blocks") ? Math.max(1, Math.min(200000, json.get("max_blocks").getAsInt())) : 25000;
+
+            Path cityDir = resolveCityDir(cityId);
+            CityC6Stages.C6Summary c6Summary = CityC6Stages.loadSummary(cityDir);
+            Map<Long, Integer> c6Index = CityC6Stages.loadIndex(cityDir);
+            if (c6Summary == null || c6Index == null || c6Index.isEmpty()) {
+                HttpUtil.sendResponse(exchange, 404, "{\"error\": \"C6 summary/index not found for: " + cityId + "\"}");
+                return;
+            }
+
+            CityC8Stages.C8Plan c8Plan = CityC8Stages.load(cityDir);
+            if (c8Plan == null) {
+                CityC6Stages.C6Layout c6Layout = CityC6Stages.loadLayout(cityDir);
+                CityStage1BinaryIO.HeightData heightData = CityStage1BinaryIO.loadHeightData(cityId);
+                if (c6Layout == null || heightData == null) {
+                    HttpUtil.sendResponse(exchange, 404, "{\"error\": \"C8 missing and required data to regenerate C8 not found for: " + cityId + "\"}");
+                    return;
+                }
+                c8Plan = CityC8Stages.generate(cityId, c6Summary, c6Layout, heightData, c6Index);
+                CityC8Stages.save(cityDir, c8Plan);
+            }
+            final CityC8Stages.C8Plan finalC8Plan = c8Plan;
+
+            final CityC9Stages.C9Result[] holder = new CityC9Stages.C9Result[1];
+            if (applyBlocks) {
+                if (mcServer == null || mcServer.overworld() == null) {
+                    HttpUtil.sendResponse(exchange, 500, "{\"error\": \"Minecraft server/overworld unavailable\"}");
+                    return;
+                }
+                CountDownLatch latch = new CountDownLatch(1);
+                ServerLevel level = mcServer.overworld();
+                mcServer.execute(() -> {
+                    try {
+                        holder[0] = CityC9Stages.generate(cityId, level, c6Summary, c6Index, finalC8Plan, true, maxBlocks);
+                    } finally {
+                        latch.countDown();
+                    }
+                });
+                latch.await();
+            } else {
+                holder[0] = CityC9Stages.generate(cityId, null, c6Summary, c6Index, finalC8Plan, false, maxBlocks);
+            }
+            CityC9Stages.C9Result result = holder[0];
+            CityC9Stages.save(cityDir, result);
+
+            JsonObject res = new JsonObject();
+            res.addProperty("status", "ok");
+            res.addProperty("step", "C9");
+            res.addProperty("city_id", cityId);
+            res.addProperty("apply_blocks", applyBlocks);
+            res.addProperty("processed_areas", result != null && result.placement != null ? result.placement.processed_areas : 0);
+            res.addProperty("changed_blocks_total", result != null && result.placement != null ? result.placement.changed_blocks_total : 0);
+            res.addProperty("placement_file", cityDir.resolve(CityC9Stages.C9_PLACEMENT_FILE).toString());
+            res.addProperty("decoration_file", cityDir.resolve(CityC9Stages.C9_DECORATION_FILE).toString());
+            HttpUtil.sendResponse(exchange, 200, gson.toJson(res));
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+            HttpUtil.sendResponse(exchange, 500, "{\"error\": \"Interrupted while generating C9\"}");
+        } catch (Exception e) {
+            HttpUtil.handleError(exchange, e);
+        }
+    }
+
+    public void handleCityC9Data(HttpExchange exchange) throws IOException {
+        if (!HttpUtil.requireMethod(exchange, "POST")) return;
+        try {
+            String body = HttpUtil.readBody(exchange);
+            JsonObject json = JsonParser.parseString(body).getAsJsonObject();
+            String cityId = json.has("city_id") ? json.get("city_id").getAsString() : null;
+            if (cityId == null || cityId.isBlank()) {
+                HttpUtil.sendResponse(exchange, 400, "{\"error\": \"Missing city_id\"}");
+                return;
+            }
+            Path cityDir = resolveCityDir(cityId);
+            CityC9Stages.C9Placement placement = CityC9Stages.loadPlacement(cityDir);
+            CityC9Stages.C9Decoration decoration = CityC9Stages.loadDecoration(cityDir);
+            if (placement == null && decoration == null) {
+                HttpUtil.sendResponse(exchange, 404, "{\"error\": \"C9 data not found for: " + cityId + "\"}");
+                return;
+            }
+            JsonObject res = new JsonObject();
+            res.addProperty("step", "C9");
+            res.addProperty("ok", true);
+            res.add("placement", gson.toJsonTree(placement));
+            res.add("decoration", gson.toJsonTree(decoration));
             HttpUtil.sendResponse(exchange, 200, gson.toJson(res));
         } catch (Exception e) {
             HttpUtil.handleError(exchange, e);

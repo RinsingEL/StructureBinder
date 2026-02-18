@@ -104,6 +104,27 @@ function normalizeLayerConfigs(raw: any) {
   return layers.length > 0 ? layers : undefined;
 }
 
+function buildCreateCityPayload(args: any) {
+  const layerCount = pickFirst(args, ["layer_count", "层级数量"]);
+  const layerThresholds = pickFirst(args, ["layer_thresholds", "层级阈值"]);
+  const layers = normalizeLayerConfigs(pickFirst(args, ["layers", "层配置"]));
+  const payload: Record<string, any> = {
+    territoryId: args.territory_id,
+    continentId: args.continent_id,
+    centerX: args.center_x,
+    centerZ: args.center_z,
+    targetChunkCount: args.target_chunk_count,
+    allow_water_city: pickFirst(args, ["allow_water_city", "allowWaterCity"]),
+    bias: pickFirst(args, ["bias", "扩张倾向"]) || "balanced",
+    ecology: pickFirst(args, ["ecology", "ecology_policy", "生态策略"]) || "adaptive",
+    density: normalizeDensityValue(args.density || "medium"),
+  };
+  if (layerCount !== undefined) payload["layer_count"] = layerCount;
+  if (layerThresholds !== undefined) payload["layer_thresholds"] = layerThresholds;
+  if (layers !== undefined) payload["layers"] = layers;
+  return payload;
+}
+
 function toFiniteNumber(value: any, fallback: number) {
   const n = Number(value);
   return Number.isFinite(n) ? n : fallback;
@@ -425,6 +446,126 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: ["territory_id", "center_x", "center_z"]
         },
       },
+      {
+        name: "city_c1_generate",
+        description: "生成并保存 C1 城市意图（复用建城入口，输出 city_id 与层级统计）。",
+        inputSchema: {
+          type: "object",
+          properties: {
+            territory_id: { type: "string", description: "所属领土 ID" },
+            continent_id: { type: "number", description: "所属大陆 ID" },
+            center_x: { type: "number", description: "市中心 Block X" },
+            center_z: { type: "number", description: "市中心 Block Z" },
+            target_chunk_count: { type: "number", description: "城市规模(区块数，可选)。不传时由程序自动估算" },
+            bias: {
+                type: "string",
+                enum: ["balanced", "north", "south", "east", "west", "coastal", "inland"],
+                description: "扩张倾向"
+            },
+            density: {
+                type: "string",
+                enum: ["low", "mid", "medium", "high", "1"],
+                description: "整体密度 (可选)"
+            },
+            ecology_policy: {
+                type: "string",
+                enum: ["preserve", "adaptive", "clear"],
+                description: "生态策略"
+            },
+            ecology: {
+                type: "string",
+                enum: ["preserve", "adaptive", "clear"],
+                description: "生态策略 (别名)"
+            },
+            allow_water_city: {
+                type: "boolean",
+                description: "是否允许中心位于显著水域（默认 false）"
+            },
+            layer_count: {
+                type: "number",
+                description: "层级数量 (3-10)"
+            },
+            layer_thresholds: {
+                type: "array",
+                items: { type: "number" },
+                description: "层级阈值 (长度=层级数量-1)"
+            },
+            layers: {
+                type: "array",
+                description: "层配置列表",
+                items: {
+                    type: "object",
+                    properties: {
+                        name: { type: "string", description: "层名" },
+                        type: { type: "string", description: "层类型 (CORE/URBAN/RING/BUFFER)" },
+                        density: { type: "string", enum: ["high", "mid", "low", "1"], description: "功能密度" },
+                        weight: { type: "number", description: "层权重。程序按 weight/sum(weight) 计算层占比" },
+                        ecology: { type: "string", enum: ["preserve", "adaptive", "clear"], description: "生态策略" },
+                        is_wall: { type: "boolean", description: "是否城墙层（尤其用于 RING）" },
+                        wall_layer: { type: "boolean", description: "是否墙层" },
+                        wall: {
+                            type: "object",
+                            properties: {
+                                type: { type: "string", description: "墙体类型" },
+                                thickness_blocks: { type: "number", description: "厚度方块" },
+                                gate_count: {
+                                    type: "array",
+                                    items: { type: "number" },
+                                    description: "城门数量区间"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+          },
+          required: ["territory_id", "center_x", "center_z"]
+        }
+      },
+      {
+        name: "city_c2_generate",
+        description: "生成并保存 C2 城市领地阶段产物（当前映射 Stage1 计算）。",
+        inputSchema: {
+          type: "object",
+          properties: {
+            city_id: { type: "string" }
+          },
+          required: ["city_id"]
+        }
+      },
+      {
+        name: "city_c2_data",
+        description: "读取城市 C2 结果（当前映射 Stage1 摘要）。",
+        inputSchema: {
+          type: "object",
+          properties: {
+            city_id: { type: "string" }
+          },
+          required: ["city_id"]
+        }
+      },
+      {
+        name: "city_c3_generate",
+        description: "生成并保存 C3 区划阶段产物（当前映射 Stage2 计算）。",
+        inputSchema: {
+          type: "object",
+          properties: {
+            city_id: { type: "string" }
+          },
+          required: ["city_id"]
+        }
+      },
+      {
+        name: "city_c3_data",
+        description: "读取城市 C3 结果（当前映射 Stage2 摘要）。",
+        inputSchema: {
+          type: "object",
+          properties: {
+            city_id: { type: "string" }
+          },
+          required: ["city_id"]
+        }
+      },
 
       // --- 7. 建设执行 ---
       {
@@ -528,6 +669,74 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: "city_c6_data",
         description: "读取城市 C6 结果（summary + layout）。",
+        inputSchema: {
+          type: "object",
+          properties: {
+            city_id: { type: "string" }
+          },
+          required: ["city_id"]
+        }
+      },
+      {
+        name: "city_c7_generate",
+        description: "生成并保存 C7 模板选择结果（硬编码原版村庄模板库）。",
+        inputSchema: {
+          type: "object",
+          properties: {
+            city_id: { type: "string" }
+          },
+          required: ["city_id"]
+        }
+      },
+      {
+        name: "city_c7_data",
+        description: "读取城市 C7 模板选择结果（C7_TemplateSelection.json）。",
+        inputSchema: {
+          type: "object",
+          properties: {
+            city_id: { type: "string" }
+          },
+          required: ["city_id"]
+        }
+      },
+      {
+        name: "city_c8_generate",
+        description: "生成并保存 C8 基台规划（C8_FoundationPlan.json）。",
+        inputSchema: {
+          type: "object",
+          properties: {
+            city_id: { type: "string" }
+          },
+          required: ["city_id"]
+        }
+      },
+      {
+        name: "city_c8_data",
+        description: "读取城市 C8 基台规划。",
+        inputSchema: {
+          type: "object",
+          properties: {
+            city_id: { type: "string" }
+          },
+          required: ["city_id"]
+        }
+      },
+      {
+        name: "city_c9_generate",
+        description: "生成并保存 C9 放置与装饰计划；可选是否实际落地方块。",
+        inputSchema: {
+          type: "object",
+          properties: {
+            city_id: { type: "string" },
+            apply_blocks: { type: "boolean", description: "是否实际在世界中执行放置（默认 false）" },
+            max_blocks: { type: "number", description: "最大放置方块预算" }
+          },
+          required: ["city_id"]
+        }
+      },
+      {
+        name: "city_c9_data",
+        description: "读取城市 C9 结果（placement + decoration）。",
         inputSchema: {
           type: "object",
           properties: {
@@ -813,23 +1022,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       case "establish_city": {
         const args = request.params.arguments as any;
-        const layerCount = pickFirst(args, ["layer_count", "层级数量"]);
-        const layerThresholds = pickFirst(args, ["layer_thresholds", "层级阈值"]);
-        const layers = normalizeLayerConfigs(pickFirst(args, ["layers", "层配置"]));
-        const payload: Record<string, any> = {
-            territoryId: args.territory_id,
-            continentId: args.continent_id,
-            centerX: args.center_x,
-            centerZ: args.center_z,
-            targetChunkCount: args.target_chunk_count,
-            allow_water_city: pickFirst(args, ["allow_water_city", "allowWaterCity"]),
-            bias: pickFirst(args, ["bias", "扩张倾向"]) || "balanced",
-            ecology: pickFirst(args, ["ecology", "ecology_policy", "生态策略"]) || "adaptive",
-            density: normalizeDensityValue(args.density || "medium"),
-        };
-        if (layerCount !== undefined) payload["layer_count"] = layerCount;
-        if (layerThresholds !== undefined) payload["layer_thresholds"] = layerThresholds;
-        if (layers !== undefined) payload["layers"] = layers;
+        const payload = buildCreateCityPayload(args);
         const res = await axios.post(`${MC_API_URL}/create_city`, payload);
         return { 
             content: [{ 
@@ -837,6 +1030,32 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                 text: `City established! ID: ${res.data.city_id}, Size: ${res.data.actual_size} chunks.` 
             }] 
         };
+      }
+      case "city_c1_generate": {
+        const args = request.params.arguments as any;
+        const payload = buildCreateCityPayload(args);
+        const res = await axios.post(`${MC_API_URL}/city_c1_generate`, payload);
+        return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
+      }
+      case "city_c2_generate": {
+        const args = request.params.arguments as any;
+        const res = await axios.post(`${MC_API_URL}/city_c2_generate`, { city_id: args.city_id });
+        return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
+      }
+      case "city_c2_data": {
+        const args = request.params.arguments as any;
+        const res = await axios.post(`${MC_API_URL}/city_c2_data`, { city_id: args.city_id });
+        return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
+      }
+      case "city_c3_generate": {
+        const args = request.params.arguments as any;
+        const res = await axios.post(`${MC_API_URL}/city_c3_generate`, { city_id: args.city_id });
+        return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
+      }
+      case "city_c3_data": {
+        const args = request.params.arguments as any;
+        const res = await axios.post(`${MC_API_URL}/city_c3_data`, { city_id: args.city_id });
+        return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
       }
 
       case "place_structure": {
@@ -889,6 +1108,39 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case "city_c6_data": {
         const args = request.params.arguments as any;
         const res = await axios.post(`${MC_API_URL}/city_c6_data`, { city_id: args.city_id });
+        return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
+      }
+      case "city_c7_generate": {
+        const args = request.params.arguments as any;
+        const res = await axios.post(`${MC_API_URL}/city_c7_generate`, { city_id: args.city_id });
+        return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
+      }
+      case "city_c7_data": {
+        const args = request.params.arguments as any;
+        const res = await axios.post(`${MC_API_URL}/city_c7_data`, { city_id: args.city_id });
+        return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
+      }
+      case "city_c8_generate": {
+        const args = request.params.arguments as any;
+        const res = await axios.post(`${MC_API_URL}/city_c8_generate`, { city_id: args.city_id });
+        return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
+      }
+      case "city_c8_data": {
+        const args = request.params.arguments as any;
+        const res = await axios.post(`${MC_API_URL}/city_c8_data`, { city_id: args.city_id });
+        return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
+      }
+      case "city_c9_generate": {
+        const args = request.params.arguments as any;
+        const payload: Record<string, any> = { city_id: args.city_id };
+        if (args.apply_blocks !== undefined) payload.apply_blocks = Boolean(args.apply_blocks);
+        if (args.max_blocks !== undefined) payload.max_blocks = Number(args.max_blocks);
+        const res = await axios.post(`${MC_API_URL}/city_c9_generate`, payload);
+        return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
+      }
+      case "city_c9_data": {
+        const args = request.params.arguments as any;
+        const res = await axios.post(`${MC_API_URL}/city_c9_data`, { city_id: args.city_id });
         return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
       }
       case "city_c6_pave_stone": {

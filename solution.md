@@ -26,7 +26,7 @@
 
 ---
 
-## 当前实现状态（已完成：W3 / W4 / T1）
+## 当前实现状态（已完成：W3 / W4 / T1 / T2 / T3 / T4 / C4 / C5 / C6）
 
 以下内容基于当前代码实际落地情况（`domain` + `server/mcp`）：
 
@@ -41,6 +41,12 @@
   - 接口：`POST /t1_blueprint`、`GET /t1_blueprint`
   - 持久化：`src/main/java/com/user/terra_script/territory/io/TerritoryRepository.java`
   - 产物：`/saves/<WorldName>/terra_script/territories/T1_Blueprint.json`
+- `T2 / T3 / T4` 已实现并接入工作流：
+  - 阶段类：`src/main/java/com/user/terra_script/domain/territory/stage/T2Stage.java`、`src/main/java/com/user/terra_script/domain/territory/stage/T3Stage.java`、`src/main/java/com/user/terra_script/domain/territory/stage/T4Stage.java`
+  - 工作流注册：`src/main/java/com/user/terra_script/server/mcp/WorkflowController.java`
+- 城市阶段 `C4 / C5 / C6` 已实现并提供接口：
+  - 入口：`src/main/java/com/user/terra_script/server/mcp/CityController.java`
+  - 接口：`/city_c4_generate`、`/city_c5_generate`、`/city_c6_generate`
 
 当前实现里，`W4_WorldSummary.json` 仍属于预留描述，尚未由 `W4Stage` 直接产出。
 
