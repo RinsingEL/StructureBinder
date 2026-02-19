@@ -35,7 +35,7 @@
   - 触发方式：工作流阶段 `W3`（或 `/dev stage W3`）
 - `W4` 已实现：`src/main/java/com/user/terra_script/domain/world/stage/W4Stage.java`
   - 依赖：`W3`
-  - 产物：`world/W4/TerrainFacts.dat`、`world/W4/TerrainSummary.json`
+  - 产物：`world/W4/TerrainFacts.dat`、`world/W4/TerrainSummary.json`、`W4_*preview*.png`（规划中按规范输出）
   - 触发方式：工作流阶段 `W4`（或 `/dev stage W4`）
 - `T1` 已实现：`src/main/java/com/user/terra_script/server/mcp/TerritoryController.java`
   - 接口：`POST /t1_blueprint`、`GET /t1_blueprint`
@@ -81,6 +81,123 @@
     *   `scan_local_candidates(...)`：后端会去查 `W4_TerrainFacts.dat` 中的 slope/tpi 数组。
 
 ---
+
+### W4 预览图渲染规范（v2）
+
+> 目标：给 AI 一次性提供 5 张世界预览图（高程、斜率、崎岖度、温度、群系）+ 世界总览信息。  
+> 本阶段只定义“输出图片 + legend”，候选聚类叠画放在下一步。
+
+#### 输出清单（固定）
+
+- `W4_preview_height.png`
+- `W4_preview_slope.png`
+- `W4_preview_roughness.png`
+- `W4_preview_temperature.png`
+- `W4_preview_biome.png`
+
+每张图必须同时输出对应图例文件：
+
+- `W4_preview_height.legend.json`
+- `W4_preview_slope.legend.json`
+- `W4_preview_roughness.legend.json`
+- `W4_preview_temperature.legend.json`
+- `W4_preview_biome.legend.json`
+
+#### 通用采样与拉伸规则
+
+- 下采样统一使用“区域平均（area average）”，禁止最近邻。
+- 连续量拉伸优先使用百分位：`min=P5`，`max=P95`，避免极值污染。
+- 分辨率默认 `512 x 512`（可配，但默认固定）。
+
+#### 1) 高程图（Height）
+
+A. 阴影增强（Hillshade）：
+
+- 从高程计算坡度与坡向，固定光源方向 `315°`（西北）。
+- 亮面=面向光源，暗面=背光。
+- 合成公式：`final_color = elevation_color * 0.6 + hillshade_gray * 0.4`
+
+B. 分级色带（禁止简单线性渐变）：
+
+- `< sea level`：深蓝
+- `0–70`：浅绿
+- `70–110`：绿
+- `110–160`：黄棕
+- `160–220`：棕
+- `>220`：灰白
+
+C. 等高线：
+
+- 使用等值线算法绘制 contour（建议按固定高差间隔）。
+- 等高线叠加在高程底图上，颜色与底图保持足够对比。
+
+#### 2) 斜率图（Slope）
+
+问题口径：当前噪点重（雪花）且颜色连续过渡导致结构不清晰。  
+修正规范：
+
+- 下采样改为区域平均。
+- 拉伸使用 `P5–P95`。
+- 使用离散分档（禁止连续渐变），建议 5 档：
+  - `0–5°`：平地（绿色）
+  - `5–15°`：缓坡（浅黄）
+  - `15–30°`：中坡（橙）
+  - `30–45°`：陡坡（红）
+  - `>45°`：悬崖（紫/深红）
+
+#### 3) 崎岖度图（Roughness）
+
+- 同样采用：区域平均下采样 + `P5–P95` 拉伸 + 分档显示。
+- 档位数建议与 slope 一致（5 档），便于 AI 视觉对齐。
+
+#### 4) 温度图（Temperature）
+
+- 同样采用：区域平均下采样 + `P5–P95` 拉伸 + 分档显示。
+- 档位数建议 `5~7` 档，表达冷温带梯度，不使用纯连续渐变。
+
+#### 5) 群系图（Biome）
+
+A. 使用超类（super-class）分色，不再“每个 biome 一个颜色”：
+
+- 海洋/河流：蓝
+- 沙漠/恶地：黄红
+- 草原/平原：浅绿
+- 森林：深绿
+- 丛林：翠绿
+- 山地：灰
+- 雪地：白
+- Nether/End：紫黑
+
+建议总色类控制在 `8–12` 种。
+
+
+#### legend.json 最小字段（每图）
+
+```jsonc
+{
+  "image": "W4_preview_slope.png",
+  "type": "slope",
+  "resolution": [512, 512],
+  "downsample": "area_average",
+  "stretch": { "mode": "percentile", "p_min": 5, "p_max": 95 },
+  "bins": [
+    { "label": "0-5deg", "range": [0, 5], "color": "#4CAF50" }
+  ],
+  "style": {
+    "discrete": true,
+    "saturation_scale": 1.0,
+    "hillshade": null,
+    "contour": null
+  }
+}
+```
+
+高程图的 `style` 需包含：
+
+- `hillshade.azimuth_deg = 315`
+- `blend.elevation_weight = 0.6`
+- `blend.hillshade_weight = 0.4`
+- `contour.enabled = true`
 
 ### 产出文件详解
 
@@ -276,24 +393,52 @@ root
 
 *   **AI 做什么**：
   1. 调用 `W4_get_world_atlas` 获取 `atlas + world_summary`。
-  2. 根据文明定位，定义 2~3 组兴趣条件（例如高海拔、低坡度、沿海、峡谷）。
-  3. 调用 `scan_local_candidates(region_id=...)` 对候选大陆做局部扫描，拿到多簇候选 + ASCII。
-  4. 在 ASCII 上做视觉推理，选择最优候选簇 `cluster_id`（并记录理由）。
-  5. 提交 `t1_generate_blueprint`，把最终 `target_continent_id` 与扩张参数固化。
+  2. 调用 T1 预览图接口获取候选区域地理图（高度+等高线、山体阴影等）。
+  3. 根据文明定位，定义 2~3 组兴趣条件（例如高海拔、低坡度、沿海、峡谷）。
+  4. 调用 `scan_local_candidates(region_id=...)` 对候选大陆做局部扫描，拿到多簇候选 + ASCII。
+  5. 在 ASCII 上做视觉推理，选择最优候选簇 `cluster_id`（并记录理由）。
+  6. 提交 `t1_generate_blueprint`，把最终 `target_continent_id` 与扩张参数固化。
 
 *   **程序 做什么**：
   * 提供 `W4_get_world_atlas` 和 `scan_local_candidates`。
+  * 为 T1 候选区域输出 PNG 预览图（遵循 W4 同款图例规则）。
   * 返回候选簇列表（每个簇都带 `cluster_id`、关键点、ASCII 图）。
   * 依据 `world_summary` 约束 `base_power` 合理范围（避免扩张力过大/过小）。
   * 存储蓝图到 `T1_Blueprint.json`。
 
 *   **AI 可调用数据 (MCP)**：
   * `get_world_atlas()`
+  * `get_t1_preview_maps(...)`（拟新增）
   * `scan_local_candidates(...)`
   * `t1_generate_blueprint(...)`
 
 *   **产出 (JSON)**：`T1_Blueprint.json`（列表，按 `territory_id` 去重）
+*   **产出 (PNG + Legend)**：`T1_preview_*.png` + `T1_preview_*.legend.json`
 *   **存放位置**：`/saves/<WorldName>/terra_script/territories/`
+
+### T1 预览图渲染规范（v1，沿用 W4 规范）
+
+> 目标：给 AI 在 T1 选址时提供“可直接视觉推理”的区域图。整体规则与 W4 一致，重点新增山体阴影独立图层。
+
+#### 输出清单（固定）
+
+- `T1_preview_height.png`（必须叠加等高线）
+- `T1_preview_hillshade.png`（新增：山体阴影图，灰度）
+- `T1_preview_slope.png`
+- `T1_preview_biome.png`
+
+每张图同时输出对应图例：
+
+- `T1_preview_height.legend.json`
+- `T1_preview_hillshade.legend.json`
+- `T1_preview_slope.legend.json`
+- `T1_preview_biome.legend.json`
+
+#### 关键约束
+
+- 高度图 `T1_preview_height.png`：必须包含 contour（等高线）。
+- 山体阴影图 `T1_preview_hillshade.png`：独立输出，不与其他图合并。
+- 其余拉伸、分档、下采样策略默认复用 W4（区域平均 + 百分位拉伸 + 离散分档）。
 
 ### 🔌 T1 MCP 接口
 - **方法名**：`t1_generate_blueprint`

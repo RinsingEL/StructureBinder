@@ -10,8 +10,6 @@ import com.user.terra_script.core.stage.StageContext;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtIo;
-import net.minecraft.nbt.Tag;
-
 import java.io.ByteArrayOutputStream;
 import java.nio.file.Path;
 
@@ -43,6 +41,8 @@ public class W4Stage extends StageBase {
             regions.add(r);
         }
         summary.add("regions", regions);
+        JsonObject previews = W4PreviewExporter.export(ctx, holder);
+        summary.add("preview_images", previews);
 
         Path summaryPath = ctx.artifacts.resolve(ctx.server, ctx.worldId, ArtifactKey.W4_TERRAIN_SUMMARY_JSON);
         ctx.artifacts.writeJsonAtomic(summaryPath, summary);

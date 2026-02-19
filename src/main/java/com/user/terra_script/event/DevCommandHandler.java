@@ -23,12 +23,15 @@ import com.user.terra_script.core.workflow.WorkflowEngine;
 import com.user.terra_script.domain.territory.stage.T2Stage;
 import com.user.terra_script.domain.territory.stage.T3Stage;
 import com.user.terra_script.domain.territory.stage.T4Stage;
+import com.user.terra_script.domain.world.stage.W4PreviewExporter;
 import com.user.terra_script.domain.world.stage.W3Stage;
 import com.user.terra_script.domain.world.stage.W4Stage;
+import com.user.terra_script.client.data.ScanResultHolder;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.storage.LevelResource;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -123,6 +126,9 @@ public class DevCommandHandler {
                                             String stageId = StringArgumentType.getString(ctx, "stage_id");
                                             return runWorkflowStage(ctx, stageId);
                                         })))
+                        .then(Commands.literal("w4_preview_images")
+                                .requires(src -> src.hasPermission(2))
+                                .executes(DevCommandHandler::runW4PreviewImages))
                         .then(Commands.literal("mcp")
                                 .requires(src -> src.hasPermission(2))
                                 .then(Commands.argument("api", StringArgumentType.word())
@@ -180,6 +186,34 @@ public class DevCommandHandler {
             return 1;
         } catch (Exception e) {
             ctx.getSource().sendFailure(Component.literal("Stage " + stageId + " failed: " + e.getMessage()));
+            return 0;
+        }
+    }
+
+    private static int runW4PreviewImages(CommandContext<CommandSourceStack> ctx) {
+        try {
+            ArtifactStore artifacts = new ArtifactStore();
+            FileStageStatusStore statusStore = new FileStageStatusStore(artifacts);
+            StageContext stageCtx = StageContext.forServer(ctx.getSource().getServer(), artifacts, statusStore);
+            JsonObject previews = W4PreviewExporter.export(stageCtx, ScanResultHolder.get());
+            if (!previews.has("generated") || !previews.get("generated").getAsBoolean()) {
+                String reason = previews.has("reason") ? previews.get("reason").getAsString() : "unknown";
+                ctx.getSource().sendFailure(Component.literal("W4 preview export skipped: " + reason + ". Please run world scan/W4 first."));
+                return 0;
+            }
+
+            Path w4Dir = artifacts.resolve(ctx.getSource().getServer(), stageCtx.worldId, ArtifactKey.W4_TERRAIN_FACTS_DAT).getParent();
+            Path legacyDir = ctx.getSource().getServer().getWorldPath(LevelResource.ROOT).resolve("terra_script").resolve("world");
+            ctx.getSource().sendSuccess(() -> Component.literal("W4 preview images exported (512x512)."), false);
+            ctx.getSource().sendSuccess(() -> Component.literal("Output: " + w4Dir.resolve("W4_preview_height.png")), false);
+            ctx.getSource().sendSuccess(() -> Component.literal("Output: " + w4Dir.resolve("W4_preview_slope.png")), false);
+            ctx.getSource().sendSuccess(() -> Component.literal("Output: " + w4Dir.resolve("W4_preview_roughness.png")), false);
+            ctx.getSource().sendSuccess(() -> Component.literal("Output: " + w4Dir.resolve("W4_preview_temperature.png")), false);
+            ctx.getSource().sendSuccess(() -> Component.literal("Output: " + w4Dir.resolve("W4_preview_biome.png")), false);
+            ctx.getSource().sendSuccess(() -> Component.literal("Legacy Output: " + legacyDir.resolve("W4_preview_height.png")), false);
+            return 1;
+        } catch (Exception e) {
+            ctx.getSource().sendFailure(Component.literal("W4 preview export failed: " + e.getMessage()));
             return 0;
         }
     }

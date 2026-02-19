@@ -518,6 +518,7 @@ public class ScanDataIO {
             }
 
             RangeStats slope = new RangeStats();
+            RangeStats slopeDegree = new RangeStats();
             RangeStats rough = new RangeStats();
             RangeStats tpi = new RangeStats();
             if (rootTag.contains("regions")) {
@@ -537,13 +538,18 @@ public class ScanDataIO {
                     for (int k = 0; k < max; k++) {
                         CompoundTag pTag = pixels.getCompound(k);
                         if (pTag.contains("l") && !pTag.getBoolean("l")) continue;
-                        if (slopeArr != null) slope.acceptValue(Double.longBitsToDouble(slopeArr[k]));
+                        if (slopeArr != null) {
+                            double rawSlope = Double.longBitsToDouble(slopeArr[k]);
+                            slope.acceptValue(rawSlope);
+                            slopeDegree.acceptValue(Math.toDegrees(Math.atan(Math.max(0.0, rawSlope))));
+                        }
                         if (roughArr != null) rough.acceptValue(Double.longBitsToDouble(roughArr[k]));
                         if (tpiArr != null) tpi.acceptValue(Double.longBitsToDouble(tpiArr[k]));
                     }
                 }
             }
             if (slope.hasData()) root.add("slope", slope.toJson());
+            if (slopeDegree.hasData()) root.add("slope_degree", slopeDegree.toJson());
             if (rough.hasData()) root.add("roughness", rough.toJson());
             if (tpi.hasData()) root.add("tpi", tpi.toJson());
 
