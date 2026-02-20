@@ -26,6 +26,8 @@ import java.util.ArrayList;
 import java.util.concurrent.CompletableFuture;
 
 public class RegionEditorScreen extends Screen {
+    private static final int BLOCK_SCAN_STEP = 1;
+
     private final Screen parent;
     private final ScanRegion targetRegion;
     private final int worldMinX, worldMinZ, worldW, worldH;
@@ -69,9 +71,8 @@ public class RegionEditorScreen extends Screen {
         this.worldW = size;
         this.worldH = size;
 
-        // 默认步长
-        int maxResolution = 512;
-        this.scanStep = Math.max(1, size / maxResolution);
+        // 统一采用方块级扫描
+        this.scanStep = BLOCK_SCAN_STEP;
 
         if (Minecraft.getInstance().player != null) {
             this.playerChunkX = Minecraft.getInstance().player.chunkPosition().x;
@@ -86,12 +87,11 @@ public class RegionEditorScreen extends Screen {
         // 尝试从 Map 中获取缓存
         RegionCache cache = holder.regionCacheMap.get(region.id);
 
-        if (cache != null && cache.detailData != null) {
+        if (cache != null && cache.detailData != null && cache.step == BLOCK_SCAN_STEP) {
             this.detailData = cache.detailData;
             this.slopeData = cache.slopeData;
             this.roughnessData = cache.roughnessData;
             this.tpiData = cache.tpiData;
-            this.scanStep = cache.step > 0 ? cache.step : this.scanStep;
 
             this.isScanning = false;
             this.statusMsg = "Loaded cached data for Region " + region.id;
@@ -102,6 +102,9 @@ public class RegionEditorScreen extends Screen {
                 double gridH = Math.max(1, detailData[0].length);
                 this.scale = Math.min((double)(this.width - 40) / gridW, (double)(this.height - 60) / gridH);
             }
+        } else if (cache != null && cache.detailData != null) {
+            // 旧缓存可能来自采样扫描(step>1)，强制重扫为方块级
+            this.statusMsg = "Legacy sampled cache detected. Rescanning region in block-level...";
         }
     }
 
@@ -131,7 +134,7 @@ public class RegionEditorScreen extends Screen {
             return;
         }
 
-        this.statusMsg = "Scanning Region " + targetRegion.id + " (Step: " + scanStep + ")...";
+        this.statusMsg = "Scanning Region " + targetRegion.id + " (Block-level, step=1)...";
 
         SatelliteScanner.scanRegionAsync(server.overworld(), worldMinX, worldMinZ, worldW, worldH, scanStep)
                 .thenAccept(result -> {
