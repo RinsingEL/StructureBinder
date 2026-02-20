@@ -9,12 +9,18 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.RandomState;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class SatelliteScanner {
+    private static final int MAX_SCAN_WORKERS = 12;
+    private static final long PARALLEL_THRESHOLD_POINTS = 80_000L;
 
     private static final ExecutorService SCAN_EXECUTOR = Executors.newFixedThreadPool(8, r -> {
         Thread t = new Thread(r);
@@ -58,44 +64,34 @@ public class SatelliteScanner {
         System.out.println("[Scanner] Target Grid: " + gridW + "x" + gridH);
         ScanPixel[][] map = new ScanPixel[gridW][gridH];
         long totalPoints = (long) gridW * gridH;
-        long processed = 0;
-        int lastLogPercent = 0;
-
-        for (int i = 0; i < gridW; i++) {
-            if (isCancelled.get() || !server.isRunning()) return null;
-
-            for (int j = 0; j < gridH; j++) {
-                int x = startX + (i * step);
-                int z = startZ + (j * step);
-                try {
-                    // 1. 获取高度
-                    int h = generator.getBaseHeight(x, z, Heightmap.Types.OCEAN_FLOOR_WG, level, randomState);
-
-                    // 2. 【新增】获取 Biome 信息
-                    // Quart 坐标转换：x >> 2
-                    Holder<Biome> biomeHolder = generator.getBiomeSource().getNoiseBiome(x >> 2, h >> 2, z >> 2, randomState.sampler());
-                    String biomeId = biomeHolder.unwrapKey().map(k -> k.location().toString()).orElse("minecraft:plains");
-
-                    // 3. 【新增】获取温度
-                    // getBaseTemperature() 获取的是基准温度，不受高度带来的寒冷影响，适合宏观气候判断
-                    float temp = biomeHolder.value().getBaseTemperature();
-
-                    // 4. 存入 Pixel (包含温度)
-                    map[i][j] = new ScanPixel(x, z, h, biomeId, h > 63, temp);
-
-                } catch (Exception e) {
-                    map[i][j] = new ScanPixel(x, z, 0, "error", false, 0.0f);
-                }
-
-                processed++;
-                if (totalPoints > 5000) {
-                    int percent = (int)((processed * 100) / totalPoints);
-                    if (percent > lastLogPercent && percent % 10 == 0) {
-                        System.out.println("[Scanner] Local Progress: " + percent + "%");
-                        lastLogPercent = percent;
+        int workers = pickWorkerCount(gridW, totalPoints);
+        if (workers <= 1) {
+            long processed = 0;
+            int lastLogPercent = 0;
+            for (int i = 0; i < gridW; i++) {
+                if (isCancelled.get() || !server.isRunning()) return null;
+                for (int j = 0; j < gridH; j++) {
+                    int x = startX + (i * step);
+                    int z = startZ + (j * step);
+                    map[i][j] = samplePixel(level, generator, randomState, x, z);
+                    processed++;
+                    if (totalPoints > 5000) {
+                        int percent = (int) ((processed * 100) / totalPoints);
+                        if (percent > lastLogPercent && percent % 10 == 0) {
+                            System.out.println("[Scanner] Local Progress: " + percent + "%");
+                            lastLogPercent = percent;
+                        }
                     }
                 }
             }
+        } else {
+            parallelFill(
+                    map, gridH, workers, totalPoints, server, "Local",
+                    i -> startX + (i * step),
+                    j -> startZ + (j * step),
+                    level, generator, randomState
+            );
+            if (isCancelled.get() || !server.isRunning()) return null;
         }
         System.out.println("[Scanner] Local Scan finished in " + (System.currentTimeMillis() - startTime) + "ms");
         return map;
@@ -117,36 +113,121 @@ public class SatelliteScanner {
         MinecraftServer server = level.getServer();
 
         long totalPoints = (long) gridSize * gridSize;
-        long processed = 0;
-        int lastLogPercent = 0;
-
-        for (int i = 0; i < gridSize; i++) {
-            if (isCancelled.get() || !server.isRunning()) return null;
-            for (int j = 0; j < gridSize; j++) {
-                int x = (i * step) - worldRadiusBlocks;
-                int z = (j * step) - worldRadiusBlocks;
-                try {
-                    int h = generator.getBaseHeight(x, z, Heightmap.Types.OCEAN_FLOOR_WG, level, randomState);
-                    Holder<Biome> biomeHolder = generator.getBiomeSource().getNoiseBiome(x >> 2, h >> 2, z >> 2, randomState.sampler());
-                    String biomeId = biomeHolder.unwrapKey().map(k -> k.location().toString()).orElse("minecraft:plains");
-                    float temp = biomeHolder.value().getBaseTemperature();
-
-                    map[i][j] = new ScanPixel(x, z, h, biomeId, h > 63, temp);
-                } catch (Exception e) {
-                    map[i][j] = new ScanPixel(x, z, 0, "error", false, 0.0f);
-                }
-                // ... 进度 ...
-                processed++;
-                if (totalPoints > 5000) {
-                    int percent = (int)((processed * 100) / totalPoints);
-                    if (percent > lastLogPercent && percent % 10 == 0) {
-                        System.out.println("[Scanner] Global Progress: " + percent + "%");
-                        lastLogPercent = percent;
+        int workers = pickWorkerCount(gridSize, totalPoints);
+        if (workers <= 1) {
+            long processed = 0;
+            int lastLogPercent = 0;
+            for (int i = 0; i < gridSize; i++) {
+                if (isCancelled.get() || !server.isRunning()) return null;
+                for (int j = 0; j < gridSize; j++) {
+                    int x = (i * step) - worldRadiusBlocks;
+                    int z = (j * step) - worldRadiusBlocks;
+                    map[i][j] = samplePixel(level, generator, randomState, x, z);
+                    processed++;
+                    if (totalPoints > 5000) {
+                        int percent = (int) ((processed * 100) / totalPoints);
+                        if (percent > lastLogPercent && percent % 10 == 0) {
+                            System.out.println("[Scanner] Global Progress: " + percent + "%");
+                            lastLogPercent = percent;
+                        }
                     }
                 }
             }
+        } else {
+            parallelFill(
+                    map, gridSize, workers, totalPoints, server, "Global",
+                    i -> (i * step) - worldRadiusBlocks,
+                    j -> (j * step) - worldRadiusBlocks,
+                    level, generator, randomState
+            );
+            if (isCancelled.get() || !server.isRunning()) return null;
         }
         System.out.println("[Scanner] Global Scan finished in " + (System.currentTimeMillis() - startTime) + "ms");
         return map;
+    }
+
+    private interface CoordMapper {
+        int toWorld(int gridIndex);
+    }
+
+    private static void parallelFill(
+            ScanPixel[][] map,
+            int gridH,
+            int workers,
+            long totalPoints,
+            MinecraftServer server,
+            String progressLabel,
+            CoordMapper xMapper,
+            CoordMapper zMapper,
+            ServerLevel level,
+            ChunkGenerator generator,
+            RandomState randomState
+    ) {
+        int gridW = map.length;
+        int stripe = Math.max(1, (int) Math.ceil(gridW / (double) workers));
+        AtomicLong processed = new AtomicLong(0L);
+        AtomicInteger lastLoggedBucket = new AtomicInteger(0);
+        List<CompletableFuture<Void>> jobs = new ArrayList<>();
+
+        for (int from = 0; from < gridW; from += stripe) {
+            int start = from;
+            int end = Math.min(gridW, from + stripe);
+            jobs.add(CompletableFuture.runAsync(() -> {
+                for (int i = start; i < end; i++) {
+                    if (isCancelled.get() || !server.isRunning()) return;
+                    for (int j = 0; j < gridH; j++) {
+                        int x = xMapper.toWorld(i);
+                        int z = zMapper.toWorld(j);
+                        map[i][j] = samplePixel(level, generator, randomState, x, z);
+                        long done = processed.incrementAndGet();
+                        logProgressEvery10(progressLabel, done, totalPoints, lastLoggedBucket);
+                    }
+                }
+            }, SCAN_EXECUTOR));
+        }
+
+        CompletableFuture.allOf(jobs.toArray(new CompletableFuture[0])).join();
+    }
+
+    private static int pickWorkerCount(int gridW, long totalPoints) {
+        if (totalPoints < PARALLEL_THRESHOLD_POINTS) return 1;
+        int cpu = Runtime.getRuntime().availableProcessors();
+        int maxByCpu = Math.max(1, Math.min(MAX_SCAN_WORKERS, cpu - 1));
+        return Math.max(1, Math.min(gridW, maxByCpu));
+    }
+
+    private static void logProgressEvery10(String label, long done, long total, AtomicInteger lastLoggedBucket) {
+        if (total <= 5000L) return;
+        int percent = (int) ((done * 100L) / total);
+        int bucket = (percent / 10) * 10;
+        if (bucket <= 0) return;
+
+        int prev = lastLoggedBucket.get();
+        while (bucket > prev) {
+            if (lastLoggedBucket.compareAndSet(prev, bucket)) {
+                System.out.println("[Scanner] " + label + " Progress: " + bucket + "%");
+                return;
+            }
+            prev = lastLoggedBucket.get();
+        }
+    }
+
+    private static ScanPixel samplePixel(
+            ServerLevel level,
+            ChunkGenerator generator,
+            RandomState randomState,
+            int x,
+            int z
+    ) {
+        try {
+            int h = generator.getBaseHeight(x, z, Heightmap.Types.OCEAN_FLOOR_WG, level, randomState);
+            Holder<Biome> biomeHolder = generator.getBiomeSource()
+                    .getNoiseBiome(x >> 2, h >> 2, z >> 2, randomState.sampler());
+            String biomeId = biomeHolder.unwrapKey().map(k -> k.location().toString()).orElse("minecraft:plains");
+            float temp = biomeHolder.value().getBaseTemperature();
+            return new ScanPixel(x, z, h, biomeId, h > 63, temp);
+        } catch (Exception e) {
+            return new ScanPixel(x, z, 0, "error", false, 0.0f);
+        }
     }
 }
