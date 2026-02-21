@@ -175,6 +175,18 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         inputSchema: { type: "object", properties: {} },
       },
       {
+        name: "get_t1_preview_maps",
+        description:
+          "【T1 预览】按 region_id 生成并返回 T1 预览图（height/hillshade/slope/biome + legends）。",
+        inputSchema: {
+          type: "object",
+          properties: {
+            region_id: { type: "number", description: "目标大陆/区域 ID" }
+          },
+          required: ["region_id"]
+        },
+      },
+      {
         name: "run_workflow_stage",
         description: "运行工作流阶段（W3/W4/T2/T3/T4）。用于触发扫描、汇总与领土导出。",
         inputSchema: {
@@ -788,6 +800,16 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       case "get_world_atlas": {
         const res = await axios.get(`${MC_API_URL}/world_atlas`);
+        return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
+      }
+
+      case "get_t1_preview_maps": {
+        const args = (request.params.arguments as any) || {};
+        const regionId = Number(args.region_id);
+        if (!Number.isFinite(regionId) || regionId <= 0) {
+          throw new Error("region_id is required and must be > 0");
+        }
+        const res = await axios.post(`${MC_API_URL}/t1_preview_maps`, { region_id: regionId });
         return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
       }
 

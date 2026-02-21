@@ -261,6 +261,9 @@ public class DevCommandHandler {
                 return httpGet("/world_atlas");
             case "W4_world_summary":
                 return httpGet("/world_summary");
+            case "get_t1_preview_maps":
+            case "t1_preview_maps":
+                return httpPost("/t1_preview_maps", args);
             case "W4_terrain_summary":
                 return httpGet("/terrain_summary");
             case "T1_submit_blueprint":
@@ -665,6 +668,7 @@ public class DevCommandHandler {
                 "W4_get_world_atlas",
                 "W4_world_summary",
                 "W4_terrain_summary",
+                "get_t1_preview_maps",
                 "W4_scan_local_candidates",
                 "T1_submit_blueprint",
                 "T1_list_blueprints",
@@ -700,6 +704,7 @@ public class DevCommandHandler {
                 "continents",
                 "world_atlas",
                 "world_summary",
+                "t1_preview_maps",
                 "terrain_summary",
                 "structures",
                 "query_region",

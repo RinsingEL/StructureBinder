@@ -26,7 +26,7 @@ import java.util.ArrayList;
 import java.util.concurrent.CompletableFuture;
 
 public class RegionEditorScreen extends Screen {
-    private static final int BLOCK_SCAN_STEP = 1;
+    private static final int LOCAL_SCAN_STEP = 16;
 
     private final Screen parent;
     private final ScanRegion targetRegion;
@@ -45,6 +45,8 @@ public class RegionEditorScreen extends Screen {
 
     private boolean isScanning = true;
     private String statusMsg = "Initializing...";
+    private int estimatedScanWorkers;
+    private long lastUiHeartbeatMs = 0L;
 
     private double scale = 1.0;
     private double offX = 0, offY = 0;
@@ -71,8 +73,10 @@ public class RegionEditorScreen extends Screen {
         this.worldW = size;
         this.worldH = size;
 
-        // 统一采用方块级扫描
-        this.scanStep = BLOCK_SCAN_STEP;
+        // 锁定局部细扫步长，避免 step=1 带来的超大数据量
+        this.scanStep = LOCAL_SCAN_STEP;
+        this.estimatedScanWorkers = SatelliteScanner.estimateRegionScanWorkers(worldW, worldH, this.scanStep);
+        this.lastUiHeartbeatMs = System.currentTimeMillis();
 
         if (Minecraft.getInstance().player != null) {
             this.playerChunkX = Minecraft.getInstance().player.chunkPosition().x;
@@ -87,7 +91,7 @@ public class RegionEditorScreen extends Screen {
         // 尝试从 Map 中获取缓存
         RegionCache cache = holder.regionCacheMap.get(region.id);
 
-        if (cache != null && cache.detailData != null && cache.step == BLOCK_SCAN_STEP) {
+        if (cache != null && cache.detailData != null && cache.step == LOCAL_SCAN_STEP) {
             this.detailData = cache.detailData;
             this.slopeData = cache.slopeData;
             this.roughnessData = cache.roughnessData;
@@ -103,8 +107,7 @@ public class RegionEditorScreen extends Screen {
                 this.scale = Math.min((double)(this.width - 40) / gridW, (double)(this.height - 60) / gridH);
             }
         } else if (cache != null && cache.detailData != null) {
-            // 旧缓存可能来自采样扫描(step>1)，强制重扫为方块级
-            this.statusMsg = "Legacy sampled cache detected. Rescanning region in block-level...";
+            this.statusMsg = "Legacy cache step mismatch. Rescanning region with step=16...";
         }
     }
 
@@ -134,7 +137,9 @@ public class RegionEditorScreen extends Screen {
             return;
         }
 
-        this.statusMsg = "Scanning Region " + targetRegion.id + " (Block-level, step=1)...";
+        this.estimatedScanWorkers = SatelliteScanner.estimateRegionScanWorkers(worldW, worldH, scanStep);
+        this.lastUiHeartbeatMs = System.currentTimeMillis();
+        this.statusMsg = "Scanning Region " + targetRegion.id + " (Local detail, step=16)...";
 
         SatelliteScanner.scanRegionAsync(server.overworld(), worldMinX, worldMinZ, worldW, worldH, scanStep)
                 .thenAccept(result -> {
@@ -207,7 +212,7 @@ public class RegionEditorScreen extends Screen {
     private void calculateSlopeAsync() {
         if (detailData == null) return;
         this.statusMsg = "Calculating Slope...";
-        CompletableFuture.supplyAsync(() -> TerrainFeatureComputer.computeSlope(detailData, ignoreOcean))
+        CompletableFuture.supplyAsync(() -> TerrainFeatureComputer.computeSlope(detailData, scanStep, ignoreOcean))
                 .thenAccept(res -> {
                     this.slopeData = res;
                     this.statusMsg = "Slope Ready.";
@@ -218,7 +223,7 @@ public class RegionEditorScreen extends Screen {
     private void calculateRoughnessAsync() {
         if (detailData == null) return;
         this.statusMsg = "Calculating Roughness...";
-        CompletableFuture.supplyAsync(() -> TerrainFeatureComputer.computeRoughness(detailData, 2, ignoreOcean))
+        CompletableFuture.supplyAsync(() -> TerrainFeatureComputer.computeRoughness(detailData, scanStep, 2, ignoreOcean))
                 .thenAccept(res -> {
                     this.roughnessData = res;
                     this.statusMsg = "Roughness Ready.";
@@ -239,6 +244,7 @@ public class RegionEditorScreen extends Screen {
 
     @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+        updateHeartbeatStatusIfNeeded();
         this.renderBackground(g);
         int x = 20, y = 40;
         int w = this.width - 40, h = this.height - 60;
@@ -251,8 +257,33 @@ public class RegionEditorScreen extends Screen {
             g.drawCenteredString(this.font, statusMsg, this.width/2, this.height/2, 0xFF00FF00);
         }
         g.drawString(this.font, statusMsg, 20, this.height - 15, 0xFFFFFFFF);
+        g.drawString(this.font, buildScanThreadHint(), 140, 16, 0xFFB0E0B0);
         if (showMenu) renderContextMenu(g, mouseX, mouseY);
         super.render(g, mouseX, mouseY, partialTick);
+    }
+
+    private String buildScanThreadHint() {
+        int pool = SatelliteScanner.getScanExecutorSize();
+        String phase = isScanning ? "Scanning" : "Idle";
+        return "Scan Threads: " + estimatedScanWorkers + " / " + pool + " (" + phase + ")";
+    }
+
+    private void updateHeartbeatStatusIfNeeded() {
+        if (!isScanning) return;
+
+        long now = System.currentTimeMillis();
+        if (now - lastUiHeartbeatMs < 60_000L) return;
+        lastUiHeartbeatMs = now;
+
+        SatelliteScanner.ScanProgressSnapshot snapshot = SatelliteScanner.getProgressSnapshot();
+        if (!snapshot.inProgress()) return;
+
+        this.statusMsg = String.format(
+                "Scan Heartbeat: %d%% (%d/%d)",
+                snapshot.percent(),
+                snapshot.done(),
+                snapshot.total()
+        );
     }
 
     private void drawMap(GuiGraphics g, int x, int y, int w, int h) {

@@ -11,6 +11,7 @@ import com.user.terra_script.client.data.ScanResultHolder;
 import com.user.terra_script.client.data.ScanResultHolder.RegionCache;
 import com.user.terra_script.domain.world.scan.ScanPixel;
 import com.user.terra_script.domain.world.scan.ScanRegion;
+import com.user.terra_script.domain.world.stage.T1PreviewExporter;
 import com.user.terra_script.server.http.HttpUtil;
 import com.user.terra_script.util.AsciiMapGenerator;
 import com.user.terra_script.util.DBSCAN;
@@ -83,6 +84,28 @@ public class WorldController {
             Optional<JsonElement> summary = WorldRepository.readWorldSummary(mcServer);
             res.add("summary", summary.orElse(JsonNull.INSTANCE));
             HttpUtil.sendResponse(exchange, 200, gson.toJson(res));
+        } catch (Exception e) {
+            HttpUtil.handleError(exchange, e);
+        }
+    }
+
+    public void handleT1PreviewMaps(HttpExchange exchange) throws IOException {
+        if (!HttpUtil.requireMethod(exchange, "POST")) return;
+        try {
+            String body = HttpUtil.readBody(exchange);
+            JsonObject req = JsonParser.parseString(body).getAsJsonObject();
+            int regionId = req.has("region_id") ? req.get("region_id").getAsInt() : -1;
+            if (regionId <= 0) {
+                HttpUtil.sendResponse(exchange, 400, "{\"error\": \"region_id is required\"}");
+                return;
+            }
+
+            JsonObject preview = T1PreviewExporter.export(mcServer, ScanResultHolder.get(), regionId);
+            JsonObject res = new JsonObject();
+            res.addProperty("step", "T1");
+            res.add("preview", preview);
+            int status = preview.has("generated") && preview.get("generated").getAsBoolean() ? 200 : 400;
+            HttpUtil.sendResponse(exchange, status, gson.toJson(res));
         } catch (Exception e) {
             HttpUtil.handleError(exchange, e);
         }

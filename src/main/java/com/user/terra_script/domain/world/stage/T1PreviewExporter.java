@@ -3,10 +3,11 @@ package com.user.terra_script.domain.world.stage;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.user.terra_script.client.data.ScanResultHolder;
-import com.user.terra_script.core.artifact.ArtifactKey;
-import com.user.terra_script.core.stage.StageContext;
+import com.user.terra_script.client.data.ScanResultHolder.RegionCache;
 import com.user.terra_script.domain.world.scan.ScanPixel;
+import com.user.terra_script.domain.world.scan.ScanRegion;
 import com.user.terra_script.util.TerrainFeatureComputer;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.storage.LevelResource;
 
 import javax.imageio.ImageIO;
@@ -16,109 +17,158 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
-public final class W4PreviewExporter {
+public final class T1PreviewExporter {
     public static final int PREVIEW_SIZE = 512;
 
     private static final int SEA_LEVEL = 63;
+    private static final double HILLSHADE_AZIMUTH_DEG = 315.0;
+    private static final double HILLSHADE_ALTITUDE_DEG = 45.0;
+    private static final int CONTOUR_INTERVAL = 20;
+    private static final double CONTOUR_THRESHOLD = 1.2;
 
-    private static final String IMG_HEIGHT = "W4_preview_height.png";
-    private static final String IMG_SLOPE = "W4_preview_slope.png";
-    private static final String IMG_ROUGHNESS = "W4_preview_roughness.png";
-    private static final String IMG_TEMPERATURE = "W4_preview_temperature.png";
-    private static final String IMG_BIOME = "W4_preview_biome.png";
+    private static final String IMG_HEIGHT = "T1_preview_height.png";
+    private static final String IMG_HILLSHADE = "T1_preview_hillshade.png";
+    private static final String IMG_SLOPE = "T1_preview_slope.png";
+    private static final String IMG_BIOME = "T1_preview_biome.png";
 
-    private W4PreviewExporter() {}
+    private T1PreviewExporter() {}
 
-    public static JsonObject export(StageContext ctx, ScanResultHolder holder) throws Exception {
+    public static JsonObject export(MinecraftServer server, ScanResultHolder holder, int regionId) throws Exception {
         JsonObject result = new JsonObject();
-        ScanPixel[][] map = holder.lastScanData;
-        if (map == null || map.length == 0 || map[0] == null || map[0].length == 0) {
+        if (server == null) {
             result.addProperty("generated", false);
-            result.addProperty("reason", "lastScanData_missing");
+            result.addProperty("reason", "server_missing");
             return result;
         }
 
-        int scanStep = Math.max(1, holder.scanStep);
-        double[][] slopeRaw = TerrainFeatureComputer.computeSlope(map, scanStep, false);
-        double[][] roughRaw = TerrainFeatureComputer.computeRoughness(map, scanStep, 2, false);
+        ScanPixel[][] map = resolveRegionMap(holder, regionId);
+        if (map == null || map.length == 0 || map[0] == null || map[0].length == 0) {
+            result.addProperty("generated", false);
+            result.addProperty("reason", "region_map_missing");
+            result.addProperty("region_id", regionId);
+            return result;
+        }
+
+        int step = resolveRegionStep(holder, regionId);
+        double[][] slopeRaw = TerrainFeatureComputer.computeSlope(map, step, false);
         double[][] slopeDegRaw = toSlopeDegrees(slopeRaw);
 
         double[][] heightDs = downsampleAverage(map, ValueField.HEIGHT);
-        double[][] tempDs = downsampleAverage(map, ValueField.TEMPERATURE);
         double[][] slopeDs = downsampleAverage(slopeDegRaw);
-        double[][] roughDs = downsampleAverage(roughRaw);
         BiomeClass[][] biomeDs = downsampleBiomeClass(map);
+        double[][] hillshadeDs = buildHillshade(heightDs);
 
-        PercentileRange slopeStretch = percentileRange(slopeDs, 5, 95);
-        PercentileRange roughStretch = percentileRange(roughDs, 5, 95);
-        PercentileRange tempStretch = percentileRange(tempDs, 5, 95);
-
-        BufferedImage heightImage = renderHeight(heightDs);
-        BufferedImage slopeImage = renderSlope(slopeDs);
-        BufferedImage roughImage = renderClassified(
-                roughDs,
-                makeEqualBins(roughStretch.min, roughStretch.max, 5),
-                new int[]{0xFF34516B, 0xFF4B7696, 0xFF679FC4, 0xFF8EC7DF, 0xFFD3ECF7}
-        );
-        BufferedImage tempImage = renderClassified(
-                tempDs,
-                makeEqualBins(tempStretch.min, tempStretch.max, 6),
-                new int[]{0xFF3B4CC0, 0xFF6A9FD8, 0xFF9EDAE5, 0xFFF2E394, 0xFFF4A259, 0xFFD1495B}
+        BufferedImage heightImage = renderHeightWithContour(heightDs);
+        BufferedImage hillshadeImage = renderHillshade(hillshadeDs);
+        BufferedImage slopeImage = renderClassified(
+                slopeDs,
+                new double[]{5, 15, 30, 45},
+                new int[]{0xFF4CAF50, 0xFFF4D35E, 0xFFF08A4B, 0xFFD1495B, 0xFF6A1B9A}
         );
         BufferedImage biomeImage = renderBiome(biomeDs);
 
         JsonObject legends = new JsonObject();
         legends.add(IMG_HEIGHT, buildHeightLegend());
-        legends.add(IMG_SLOPE, buildSlopeLegend(slopeStretch));
-        legends.add(IMG_ROUGHNESS, buildContinuousLegend("roughness", IMG_ROUGHNESS, roughStretch, 5));
-        legends.add(IMG_TEMPERATURE, buildContinuousLegend("temperature", IMG_TEMPERATURE, tempStretch, 6));
+        legends.add(IMG_HILLSHADE, buildHillshadeLegend());
+        legends.add(IMG_SLOPE, buildSlopeLegend());
         legends.add(IMG_BIOME, buildBiomeLegend());
 
-        Path w4Dir = ctx.artifacts.resolve(ctx.server, ctx.worldId, ArtifactKey.W4_TERRAIN_FACTS_DAT).getParent();
-        writePreviewSet(w4Dir, heightImage, slopeImage, roughImage, tempImage, biomeImage, legends);
-        if (ctx.server != null) {
-            Path legacyDir = ctx.server.getWorldPath(LevelResource.ROOT).resolve("terra_script").resolve("world");
-            writePreviewSet(legacyDir, heightImage, slopeImage, roughImage, tempImage, biomeImage, legends);
-        }
+        Path dir = server.getWorldPath(LevelResource.ROOT).resolve("terra_script").resolve("territories");
+        writePreviewSet(dir, heightImage, hillshadeImage, slopeImage, biomeImage, legends);
 
         result.addProperty("generated", true);
+        result.addProperty("step", "T1");
+        result.addProperty("region_id", regionId);
         result.addProperty("size", PREVIEW_SIZE);
-        result.addProperty("height", "world/W4/" + IMG_HEIGHT);
-        result.addProperty("slope", "world/W4/" + IMG_SLOPE);
-        result.addProperty("roughness", "world/W4/" + IMG_ROUGHNESS);
-        result.addProperty("temperature", "world/W4/" + IMG_TEMPERATURE);
-        result.addProperty("biome", "world/W4/" + IMG_BIOME);
+        result.addProperty("height", "territories/" + IMG_HEIGHT);
+        result.addProperty("hillshade", "territories/" + IMG_HILLSHADE);
+        result.addProperty("slope", "territories/" + IMG_SLOPE);
+        result.addProperty("biome", "territories/" + IMG_BIOME);
 
         JsonObject legendPaths = new JsonObject();
-        legendPaths.addProperty("height", "world/W4/" + toLegendFile(IMG_HEIGHT));
-        legendPaths.addProperty("slope", "world/W4/" + toLegendFile(IMG_SLOPE));
-        legendPaths.addProperty("roughness", "world/W4/" + toLegendFile(IMG_ROUGHNESS));
-        legendPaths.addProperty("temperature", "world/W4/" + toLegendFile(IMG_TEMPERATURE));
-        legendPaths.addProperty("biome", "world/W4/" + toLegendFile(IMG_BIOME));
+        legendPaths.addProperty("height", "territories/" + toLegendFile(IMG_HEIGHT));
+        legendPaths.addProperty("hillshade", "territories/" + toLegendFile(IMG_HILLSHADE));
+        legendPaths.addProperty("slope", "territories/" + toLegendFile(IMG_SLOPE));
+        legendPaths.addProperty("biome", "territories/" + toLegendFile(IMG_BIOME));
         result.add("legends", legendPaths);
         return result;
     }
 
-    private static BufferedImage renderHeight(double[][] heightDs) {
+    private static ScanPixel[][] resolveRegionMap(ScanResultHolder holder, int regionId) {
+        if (holder == null || regionId <= 0) return null;
+        RegionCache cache = holder.regionCacheMap.get(regionId);
+        if (cache != null && cache.detailData != null && cache.detailData.length > 0 && cache.detailData[0] != null) {
+            return cache.detailData;
+        }
+
+        ScanRegion region = null;
+        if (holder.lastClusters != null) {
+            region = holder.lastClusters.stream().filter(r -> r != null && r.id == regionId).findFirst().orElse(null);
+        }
+        if (region == null && holder.lastOceanRegions != null) {
+            region = holder.lastOceanRegions.stream().filter(r -> r != null && r.id == regionId).findFirst().orElse(null);
+        }
+        if (region == null || holder.lastScanData == null || holder.lastScanData.length == 0 || holder.lastScanData[0] == null) {
+            return null;
+        }
+
+        int step = Math.max(1, holder.scanStep);
+        int radiusBlocks = holder.scanRadiusChunks * 16;
+        int worldMinX = -radiusBlocks;
+        int worldMinZ = -radiusBlocks;
+        ScanPixel[][] global = holder.lastScanData;
+
+        int gx0 = Math.max(0, (region.minX - worldMinX) / step);
+        int gz0 = Math.max(0, (region.minZ - worldMinZ) / step);
+        int gx1 = Math.min(global.length - 1, (region.maxX - worldMinX) / step);
+        int gz1 = Math.min(global[0].length - 1, (region.maxZ - worldMinZ) / step);
+        if (gx0 > gx1 || gz0 > gz1) return null;
+
+        int w = gx1 - gx0 + 1;
+        int h = gz1 - gz0 + 1;
+        ScanPixel[][] out = new ScanPixel[w][h];
+        for (int x = 0; x < w; x++) {
+            for (int z = 0; z < h; z++) {
+                out[x][z] = global[gx0 + x][gz0 + z];
+            }
+        }
+        return out;
+    }
+
+    private static int resolveRegionStep(ScanResultHolder holder, int regionId) {
+        if (holder == null) return 1;
+        RegionCache cache = holder.regionCacheMap.get(regionId);
+        if (cache != null && cache.step > 0) return cache.step;
+        return Math.max(1, holder.scanStep);
+    }
+
+    private static BufferedImage renderHeightWithContour(double[][] heightDs) {
         BufferedImage image = new BufferedImage(PREVIEW_SIZE, PREVIEW_SIZE, BufferedImage.TYPE_INT_ARGB);
         for (int x = 0; x < PREVIEW_SIZE; x++) {
             for (int y = 0; y < PREVIEW_SIZE; y++) {
-                image.setRGB(x, y, classifyHeightColor(heightDs[x][y]));
+                double h = heightDs[x][y];
+                int color = classifyHeightColor(h);
+                double contourDelta = Math.abs(h - Math.round(h / CONTOUR_INTERVAL) * CONTOUR_INTERVAL);
+                if (contourDelta <= CONTOUR_THRESHOLD) color = blend(color, 0xFF2A2A2A, 0.55);
+                image.setRGB(x, y, color);
             }
         }
         return image;
     }
 
-    private static BufferedImage renderSlope(double[][] slopeDegDs) {
-        return renderClassified(
-                slopeDegDs,
-                new double[]{5, 15, 30, 45},
-                new int[]{0xFF4CAF50, 0xFFF4D35E, 0xFFF08A4B, 0xFFD1495B, 0xFF6A1B9A}
-        );
+    private static BufferedImage renderHillshade(double[][] hillshadeDs) {
+        BufferedImage image = new BufferedImage(PREVIEW_SIZE, PREVIEW_SIZE, BufferedImage.TYPE_INT_ARGB);
+        for (int x = 0; x < PREVIEW_SIZE; x++) {
+            for (int y = 0; y < PREVIEW_SIZE; y++) {
+                int v = (int) Math.max(0, Math.min(255, Math.round(hillshadeDs[x][y] * 255.0)));
+                int argb = 0xFF000000 | (v << 16) | (v << 8) | v;
+                image.setRGB(x, y, argb);
+            }
+        }
+        return image;
     }
 
     private static BufferedImage renderClassified(double[][] values, double[] bins, int[] colors) {
@@ -220,15 +270,6 @@ public final class W4PreviewExporter {
         return out;
     }
 
-    private static int classifyHeightColor(double h) {
-        if (h < SEA_LEVEL) return 0xFF1F4E79;
-        if (h < 70) return 0xFFA7D08C;
-        if (h < 110) return 0xFF70AD47;
-        if (h < 160) return 0xFFC9B458;
-        if (h < 220) return 0xFF8B5A2B;
-        return 0xFFD9D9D9;
-    }
-
     private static double[][] toSlopeDegrees(double[][] raw) {
         int w = raw.length;
         int h = raw[0].length;
@@ -241,37 +282,61 @@ public final class W4PreviewExporter {
         return out;
     }
 
-    private static PercentileRange percentileRange(double[][] values, double pMin, double pMax) {
-        List<Double> list = new ArrayList<>(values.length * values[0].length);
-        for (double[] row : values) for (double v : row) if (Double.isFinite(v)) list.add(v);
-        if (list.isEmpty()) return new PercentileRange(0.0, 1.0, pMin, pMax);
-        list.sort(Comparator.naturalOrder());
-        double min = percentile(list, pMin);
-        double max = percentile(list, pMax);
-        if (max <= min) max = min + 1e-6;
-        return new PercentileRange(min, max, pMin, pMax);
+    private static double[][] buildHillshade(double[][] elevation) {
+        int w = elevation.length;
+        int h = elevation[0].length;
+        double[][] out = new double[w][h];
+        double azimuth = Math.toRadians(HILLSHADE_AZIMUTH_DEG);
+        double zenith = Math.toRadians(90.0 - HILLSHADE_ALTITUDE_DEG);
+
+        for (int x = 0; x < w; x++) {
+            int xm = Math.max(0, x - 1);
+            int xp = Math.min(w - 1, x + 1);
+            for (int y = 0; y < h; y++) {
+                int ym = Math.max(0, y - 1);
+                int yp = Math.min(h - 1, y + 1);
+
+                double dzdx = (elevation[xp][y] - elevation[xm][y]) * 0.5;
+                double dzdy = (elevation[x][yp] - elevation[x][ym]) * 0.5;
+                double slope = Math.atan(Math.sqrt(dzdx * dzdx + dzdy * dzdy));
+                double aspect = Math.atan2(dzdy, -dzdx);
+                if (aspect < 0) aspect += Math.PI * 2.0;
+
+                double shade = Math.cos(zenith) * Math.cos(slope)
+                        + Math.sin(zenith) * Math.sin(slope) * Math.cos(azimuth - aspect);
+                out[x][y] = Math.max(0.0, Math.min(1.0, shade));
+            }
+        }
+        return out;
     }
 
-    private static double percentile(List<Double> sorted, double p) {
-        double pos = (p / 100.0) * (sorted.size() - 1);
-        int lo = (int) Math.floor(pos);
-        int hi = (int) Math.ceil(pos);
-        if (lo == hi) return sorted.get(lo);
-        double t = pos - lo;
-        return sorted.get(lo) * (1.0 - t) + sorted.get(hi) * t;
-    }
-
-    private static double[] makeEqualBins(double min, double max, int classes) {
-        int cuts = Math.max(1, classes - 1);
-        double[] bins = new double[cuts];
-        double step = (max - min) / classes;
-        for (int i = 0; i < cuts; i++) bins[i] = min + step * (i + 1);
-        return bins;
+    private static int classifyHeightColor(double h) {
+        if (h < SEA_LEVEL) return 0xFF1F4E79;
+        if (h < 70) return 0xFFA7D08C;
+        if (h < 110) return 0xFF70AD47;
+        if (h < 160) return 0xFFC9B458;
+        if (h < 220) return 0xFF8B5A2B;
+        return 0xFFD9D9D9;
     }
 
     private static int classify(double v, double[] bins) {
         for (int i = 0; i < bins.length; i++) if (v <= bins[i]) return i;
         return bins.length;
+    }
+
+    private static int blend(int a, int b, double weightB) {
+        double wb = Math.max(0.0, Math.min(1.0, weightB));
+        double wa = 1.0 - wb;
+        int ar = (a >> 16) & 0xFF;
+        int ag = (a >> 8) & 0xFF;
+        int ab = a & 0xFF;
+        int br = (b >> 16) & 0xFF;
+        int bg = (b >> 8) & 0xFF;
+        int bb = b & 0xFF;
+        int r = (int) Math.round(ar * wa + br * wb);
+        int g = (int) Math.round(ag * wa + bg * wb);
+        int bl = (int) Math.round(ab * wa + bb * wb);
+        return 0xFF000000 | (r << 16) | (g << 8) | bl;
     }
 
     private static BiomeClass toBiomeClass(String biomeIdRaw) {
@@ -288,7 +353,7 @@ public final class W4PreviewExporter {
     }
 
     private static JsonObject buildHeightLegend() {
-        JsonObject legend = baseLegend(IMG_HEIGHT, "height", null);
+        JsonObject legend = baseLegend(IMG_HEIGHT, "height");
         JsonArray bins = new JsonArray();
         bins.add(bin("<sea_level", Double.NEGATIVE_INFINITY, SEA_LEVEL, "#1F4E79"));
         bins.add(bin("sea_level_to_70", SEA_LEVEL, 70, "#A7D08C"));
@@ -301,42 +366,50 @@ public final class W4PreviewExporter {
         JsonObject style = new JsonObject();
         style.addProperty("discrete", true);
         style.addProperty("saturation_scale", 1.0);
-        style.add("hillshade", null);
+        JsonObject hillshade = new JsonObject();
+        hillshade.addProperty("azimuth_deg", HILLSHADE_AZIMUTH_DEG);
+        style.add("hillshade", hillshade);
+        JsonObject blend = new JsonObject();
+        blend.addProperty("elevation_weight", 0.6);
+        blend.addProperty("hillshade_weight", 0.4);
+        style.add("blend", blend);
+        JsonObject contour = new JsonObject();
+        contour.addProperty("enabled", true);
+        contour.addProperty("interval", CONTOUR_INTERVAL);
+        style.add("contour", contour);
+        legend.add("style", style);
+        return legend;
+    }
+
+    private static JsonObject buildHillshadeLegend() {
+        JsonObject legend = baseLegend(IMG_HILLSHADE, "hillshade");
+        JsonArray bins = new JsonArray();
+        bins.add(bin("dark", 0.0, 0.25, "#202020"));
+        bins.add(bin("mid_dark", 0.25, 0.5, "#555555"));
+        bins.add(bin("mid_light", 0.5, 0.75, "#999999"));
+        bins.add(bin("bright", 0.75, 1.0, "#E0E0E0"));
+        legend.add("bins", bins);
+
+        JsonObject style = new JsonObject();
+        style.addProperty("discrete", true);
+        style.addProperty("saturation_scale", 0.0);
+        JsonObject hillshade = new JsonObject();
+        hillshade.addProperty("azimuth_deg", HILLSHADE_AZIMUTH_DEG);
+        hillshade.addProperty("altitude_deg", HILLSHADE_ALTITUDE_DEG);
+        style.add("hillshade", hillshade);
         style.add("contour", null);
         legend.add("style", style);
         return legend;
     }
 
-    private static JsonObject buildSlopeLegend(PercentileRange stretch) {
-        JsonObject legend = baseLegend(IMG_SLOPE, "slope", stretch);
+    private static JsonObject buildSlopeLegend() {
+        JsonObject legend = baseLegend(IMG_SLOPE, "slope");
         JsonArray bins = new JsonArray();
         bins.add(bin("0_to_5_deg", 0, 5, "#4CAF50"));
         bins.add(bin("5_to_15_deg", 5, 15, "#F4D35E"));
         bins.add(bin("15_to_30_deg", 15, 30, "#F08A4B"));
         bins.add(bin("30_to_45_deg", 30, 45, "#D1495B"));
         bins.add(bin(">45_deg", 45, Double.POSITIVE_INFINITY, "#6A1B9A"));
-        legend.add("bins", bins);
-
-        JsonObject style = new JsonObject();
-        style.addProperty("discrete", true);
-        style.addProperty("unit", "degree");
-        style.addProperty("saturation_scale", 1.0);
-        style.add("hillshade", null);
-        style.add("contour", null);
-        legend.add("style", style);
-        return legend;
-    }
-
-    private static JsonObject buildContinuousLegend(String type, String image, PercentileRange stretch, int classes) {
-        JsonObject legend = baseLegend(image, type, stretch);
-        JsonArray bins = new JsonArray();
-        double[] cuts = makeEqualBins(stretch.min, stretch.max, classes);
-        double prev = Double.NEGATIVE_INFINITY;
-        for (int i = 0; i < cuts.length; i++) {
-            bins.add(bin("class_" + (i + 1), prev, cuts[i], null));
-            prev = cuts[i];
-        }
-        bins.add(bin("class_" + classes, prev, Double.POSITIVE_INFINITY, null));
         legend.add("bins", bins);
 
         JsonObject style = new JsonObject();
@@ -349,7 +422,7 @@ public final class W4PreviewExporter {
     }
 
     private static JsonObject buildBiomeLegend() {
-        JsonObject legend = baseLegend(IMG_BIOME, "biome", null);
+        JsonObject legend = baseLegend(IMG_BIOME, "biome");
         JsonArray bins = new JsonArray();
         for (BiomeClass c : BiomeClass.values()) {
             bins.add(bin(c.label, Double.NaN, Double.NaN, toHex(c.color)));
@@ -365,7 +438,7 @@ public final class W4PreviewExporter {
         return legend;
     }
 
-    private static JsonObject baseLegend(String image, String type, PercentileRange stretch) {
+    private static JsonObject baseLegend(String image, String type) {
         JsonObject legend = new JsonObject();
         legend.addProperty("image", image);
         legend.addProperty("type", type);
@@ -374,18 +447,6 @@ public final class W4PreviewExporter {
         resolution.add(PREVIEW_SIZE);
         legend.add("resolution", resolution);
         legend.addProperty("downsample", "area_average");
-
-        JsonObject stretchObj = new JsonObject();
-        if (stretch != null) {
-            stretchObj.addProperty("mode", "percentile");
-            stretchObj.addProperty("p_min", stretch.pMin);
-            stretchObj.addProperty("p_max", stretch.pMax);
-            stretchObj.addProperty("value_min", stretch.min);
-            stretchObj.addProperty("value_max", stretch.max);
-        } else {
-            stretchObj.addProperty("mode", "fixed");
-        }
-        legend.add("stretch", stretchObj);
         return legend;
     }
 
@@ -403,23 +464,20 @@ public final class W4PreviewExporter {
     private static void writePreviewSet(
             Path dir,
             BufferedImage heightImage,
+            BufferedImage hillshadeImage,
             BufferedImage slopeImage,
-            BufferedImage roughImage,
-            BufferedImage tempImage,
             BufferedImage biomeImage,
             JsonObject legends
     ) throws Exception {
         Files.createDirectories(dir);
         writeImage(dir.resolve(IMG_HEIGHT), heightImage);
+        writeImage(dir.resolve(IMG_HILLSHADE), hillshadeImage);
         writeImage(dir.resolve(IMG_SLOPE), slopeImage);
-        writeImage(dir.resolve(IMG_ROUGHNESS), roughImage);
-        writeImage(dir.resolve(IMG_TEMPERATURE), tempImage);
         writeImage(dir.resolve(IMG_BIOME), biomeImage);
 
         writeLegend(dir.resolve(toLegendFile(IMG_HEIGHT)), legends.getAsJsonObject(IMG_HEIGHT));
+        writeLegend(dir.resolve(toLegendFile(IMG_HILLSHADE)), legends.getAsJsonObject(IMG_HILLSHADE));
         writeLegend(dir.resolve(toLegendFile(IMG_SLOPE)), legends.getAsJsonObject(IMG_SLOPE));
-        writeLegend(dir.resolve(toLegendFile(IMG_ROUGHNESS)), legends.getAsJsonObject(IMG_ROUGHNESS));
-        writeLegend(dir.resolve(toLegendFile(IMG_TEMPERATURE)), legends.getAsJsonObject(IMG_TEMPERATURE));
         writeLegend(dir.resolve(toLegendFile(IMG_BIOME)), legends.getAsJsonObject(IMG_BIOME));
     }
 
@@ -428,14 +486,14 @@ public final class W4PreviewExporter {
         Files.writeString(path, legend.toString(), StandardCharsets.UTF_8);
     }
 
-    private static String toLegendFile(String image) {
-        int dot = image.lastIndexOf('.');
-        return dot > 0 ? image.substring(0, dot) + ".legend.json" : image + ".legend.json";
-    }
-
     private static void writeImage(Path path, BufferedImage image) throws Exception {
         Files.createDirectories(path.getParent());
         ImageIO.write(image, "png", path.toFile());
+    }
+
+    private static String toLegendFile(String image) {
+        int dot = image.lastIndexOf('.');
+        return dot > 0 ? image.substring(0, dot) + ".legend.json" : image + ".legend.json";
     }
 
     private static int mapStart(int out, int srcSize) {
@@ -454,8 +512,6 @@ public final class W4PreviewExporter {
     }
 
     private enum ValueField { HEIGHT, TEMPERATURE }
-
-    private record PercentileRange(double min, double max, double pMin, double pMax) {}
 
     private enum BiomeClass {
         OCEAN_RIVER("ocean_river", desaturate(0xFF3B82F6, 0.7)),

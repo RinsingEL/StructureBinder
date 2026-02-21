@@ -7,6 +7,7 @@ import com.user.terra_script.server.mcp.TerritoryController;
 import com.user.terra_script.server.mcp.WorldController;
 import com.user.terra_script.server.mcp.WorkflowController;
 import com.user.terra_script.util.ScanDataIO;
+import com.user.terra_script.domain.world.scan.service.SatelliteScanner;
 import net.minecraft.server.MinecraftServer;
 import net.minecraftforge.event.server.ServerStartedEvent;
 import net.minecraftforge.event.server.ServerStoppingEvent;
@@ -29,12 +30,15 @@ public class ModHttpServer {
     public static void onServerStart(ServerStartedEvent event) {
         mcServer = event.getServer();
         ScanDataIO.setWorldRoot(mcServer.getWorldPath(LevelResource.ROOT));
+        ScanDataIO.onServerStarted();
         ScanDataIO.loadInto(ScanResultHolder.get());
         startHttpServer();
     }
 
     @SubscribeEvent
     public static void onServerStop(ServerStoppingEvent event) {
+        SatelliteScanner.stopScanning();
+        ScanDataIO.onServerStopping();
         stopHttpServer();
     }
 
@@ -50,6 +54,7 @@ public class ModHttpServer {
             server.createContext("/continents", worldController::handleContinents);
             server.createContext("/world_atlas", worldController::handleWorldAtlas);
             server.createContext("/world_summary", worldController::handleWorldSummary);
+            server.createContext("/t1_preview_maps", worldController::handleT1PreviewMaps);
             server.createContext("/terrain_summary", worldController::handleTerrainSummary);
             server.createContext("/structures", worldController::handleStructures);
             server.createContext("/query_region", worldController::handleQueryRegion);

@@ -37,6 +37,7 @@
   - 依赖：`W3`
   - 产物：`world/W4/TerrainFacts.dat`、`world/W4/TerrainSummary.json`、`W4_*preview*.png`（规划中按规范输出）
   - 触发方式：工作流阶段 `W4`（或 `/dev stage W4`）
+- 局部细扫步长：Region 局部细扫固定 `step=16`（全图扫描保持原逻辑不变，避免局部细扫 `step=1` 带来的内存/关服压力）
 - `T1` 已实现：`src/main/java/com/user/terra_script/server/mcp/TerritoryController.java`
   - 接口：`POST /t1_blueprint`、`GET /t1_blueprint`
   - 持久化：`src/main/java/com/user/terra_script/territory/io/TerritoryRepository.java`

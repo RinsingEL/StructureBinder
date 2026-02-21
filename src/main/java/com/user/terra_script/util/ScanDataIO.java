@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ScanDataIO {
     private static final String TERRAIN_FACTS_FILE = "W4_TerrainFacts.dat";
@@ -23,11 +24,23 @@ public class ScanDataIO {
     private static final String WORLD_SUMMARY_FILE = "W4_WorldSummary.json";
     private static final String TERRA_SCRIPT_DIR = "terra_script";
     private static final String WORLD_DIR = "world";
+    private static final long MAX_AUTOSAVE_POINTS = 10_000_000L;
+    private static final long MIN_FREE_HEAP_BYTES = 256L * 1024L * 1024L;
 
     private static volatile Path worldRoot = null;
+    private static final AtomicBoolean saveInProgress = new AtomicBoolean(false);
+    private static volatile boolean serverStopping = false;
 
     public static void setWorldRoot(Path root) {
         worldRoot = root;
+    }
+
+    public static void onServerStarted() {
+        serverStopping = false;
+    }
+
+    public static void onServerStopping() {
+        serverStopping = true;
     }
 
     public static File getTerrainFactsFile() {
@@ -37,9 +50,30 @@ public class ScanDataIO {
     }
 
     public static void saveAll() {
+        if (serverStopping) {
+            System.out.println("[DataIO] Skipped saveAll: server is stopping.");
+            return;
+        }
+        if (!saveInProgress.compareAndSet(false, true)) {
+            System.out.println("[DataIO] Skipped saveAll: previous save still running.");
+            return;
+        }
+
         var holder = ScanResultHolder.get();
+        long points = estimatePointCount(holder);
+        if (points > MAX_AUTOSAVE_POINTS) {
+            saveInProgress.set(false);
+            System.out.println("[DataIO] Skipped saveAll: data too large (" + points + " points > " + MAX_AUTOSAVE_POINTS + ").");
+            return;
+        }
+        if (Runtime.getRuntime().freeMemory() < MIN_FREE_HEAP_BYTES) {
+            saveInProgress.set(false);
+            System.out.println("[DataIO] Skipped saveAll: low free heap (" + Runtime.getRuntime().freeMemory() + " bytes).");
+            return;
+        }
+
         // 使用独立线程进行 IO 操作
-        new Thread(() -> {
+        Thread ioThread = new Thread(() -> {
             try {
                 CompoundTag root = new CompoundTag();
 
@@ -98,10 +132,28 @@ public class ScanDataIO {
                 // 4. 生成索引与世界概览
                 exportTerrainSummaryFromFile(file.toPath(), worldDir);
                 exportWorldSummaryFromFile(file.toPath(), worldDir);
+            } catch (OutOfMemoryError oom) {
+                System.err.println("[DataIO] Save failed with OOM. Consider smaller scan region or higher -Xmx.");
             } catch (Exception e) {
                 e.printStackTrace();
+            } finally {
+                saveInProgress.set(false);
             }
-        }, "TerraScript-IO-Thread").start();
+        }, "TerraScript-IO-Thread");
+        ioThread.setDaemon(true);
+        ioThread.start();
+    }
+
+    private static long estimatePointCount(ScanResultHolder holder) {
+        long total = 0L;
+        if (holder.lastScanData != null && holder.lastScanData.length > 0 && holder.lastScanData[0] != null) {
+            total += (long) holder.lastScanData.length * holder.lastScanData[0].length;
+        }
+        for (RegionCache cache : holder.regionCacheMap.values()) {
+            if (cache == null || cache.detailData == null || cache.detailData.length == 0 || cache.detailData[0] == null) continue;
+            total += (long) cache.detailData.length * cache.detailData[0].length;
+        }
+        return total;
     }
 
     public static void loadInto(ScanResultHolder holder) {

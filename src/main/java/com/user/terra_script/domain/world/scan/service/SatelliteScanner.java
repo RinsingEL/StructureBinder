@@ -20,9 +20,11 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class SatelliteScanner {
     private static final int MAX_SCAN_WORKERS = 12;
+    private static final int SCAN_POOL_SIZE = 8;
     private static final long PARALLEL_THRESHOLD_POINTS = 80_000L;
+    private static final long HEARTBEAT_INTERVAL_MS = 60_000L;
 
-    private static final ExecutorService SCAN_EXECUTOR = Executors.newFixedThreadPool(8, r -> {
+    private static final ExecutorService SCAN_EXECUTOR = Executors.newFixedThreadPool(SCAN_POOL_SIZE, r -> {
         Thread t = new Thread(r);
         t.setName("TerraScript-Scanner-" + t.getId());
         t.setDaemon(true);
@@ -30,6 +32,21 @@ public class SatelliteScanner {
     });
 
     private static final AtomicBoolean isCancelled = new AtomicBoolean(false);
+    private static final AtomicBoolean scanInProgress = new AtomicBoolean(false);
+    private static final AtomicLong heartbeatDone = new AtomicLong(0L);
+    private static final AtomicLong heartbeatTotal = new AtomicLong(0L);
+    private static final AtomicLong heartbeatStartMs = new AtomicLong(0L);
+    private static final AtomicLong lastHeartbeatMs = new AtomicLong(0L);
+    private static volatile String heartbeatLabel = "";
+
+    public record ScanProgressSnapshot(
+            boolean inProgress,
+            String label,
+            long done,
+            long total,
+            int percent,
+            long elapsedMs
+    ) {}
 
     public static void stopScanning() {
         isCancelled.set(true);
@@ -48,6 +65,27 @@ public class SatelliteScanner {
         return CompletableFuture.supplyAsync(() -> runRegionScan(level, startX, startZ, width, height, step), SCAN_EXECUTOR);
     }
 
+    public static int getScanExecutorSize() {
+        return SCAN_POOL_SIZE;
+    }
+
+    public static int estimateRegionScanWorkers(int width, int height, int step) {
+        int safeStep = Math.max(1, step);
+        int gridW = Math.max(1, width / safeStep);
+        int gridH = Math.max(1, height / safeStep);
+        long totalPoints = (long) gridW * gridH;
+        return pickWorkerCount(gridW, totalPoints);
+    }
+
+    public static ScanProgressSnapshot getProgressSnapshot() {
+        long done = heartbeatDone.get();
+        long total = heartbeatTotal.get();
+        int percent = total <= 0L ? 0 : (int) Math.min(100L, (done * 100L) / total);
+        long start = heartbeatStartMs.get();
+        long elapsed = start <= 0L ? 0L : Math.max(0L, System.currentTimeMillis() - start);
+        return new ScanProgressSnapshot(scanInProgress.get(), heartbeatLabel, done, total, percent, elapsed);
+    }
+
     // --- 内部逻辑 (runScan 和 runRegionScan 逻辑高度相似，这里重点展示 runRegionScan 的修改) ---
 
     private static ScanPixel[][] runRegionScan(ServerLevel level, int startX, int startZ, int width, int height, int step) {
@@ -64,37 +102,36 @@ public class SatelliteScanner {
         System.out.println("[Scanner] Target Grid: " + gridW + "x" + gridH);
         ScanPixel[][] map = new ScanPixel[gridW][gridH];
         long totalPoints = (long) gridW * gridH;
-        int workers = pickWorkerCount(gridW, totalPoints);
-        if (workers <= 1) {
-            long processed = 0;
-            int lastLogPercent = 0;
-            for (int i = 0; i < gridW; i++) {
-                if (isCancelled.get() || !server.isRunning()) return null;
-                for (int j = 0; j < gridH; j++) {
-                    int x = startX + (i * step);
-                    int z = startZ + (j * step);
-                    map[i][j] = samplePixel(level, generator, randomState, x, z);
-                    processed++;
-                    if (totalPoints > 5000) {
-                        int percent = (int) ((processed * 100) / totalPoints);
-                        if (percent > lastLogPercent && percent % 10 == 0) {
-                            System.out.println("[Scanner] Local Progress: " + percent + "%");
-                            lastLogPercent = percent;
-                        }
+        beginProgress("Local", totalPoints);
+        try {
+            int workers = pickWorkerCount(gridW, totalPoints);
+            AtomicInteger lastLogPercent = new AtomicInteger(0);
+            if (workers <= 1) {
+                long processed = 0;
+                for (int i = 0; i < gridW; i++) {
+                    if (isCancelled.get() || !server.isRunning()) return null;
+                    for (int j = 0; j < gridH; j++) {
+                        int x = startX + (i * step);
+                        int z = startZ + (j * step);
+                        map[i][j] = samplePixel(level, generator, randomState, x, z);
+                        processed++;
+                        reportProgress("Local", processed, totalPoints, lastLogPercent);
                     }
                 }
+            } else {
+                parallelFill(
+                        map, gridH, workers, totalPoints, server, "Local",
+                        i -> startX + (i * step),
+                        j -> startZ + (j * step),
+                        level, generator, randomState
+                );
+                if (isCancelled.get() || !server.isRunning()) return null;
             }
-        } else {
-            parallelFill(
-                    map, gridH, workers, totalPoints, server, "Local",
-                    i -> startX + (i * step),
-                    j -> startZ + (j * step),
-                    level, generator, randomState
-            );
-            if (isCancelled.get() || !server.isRunning()) return null;
+            System.out.println("[Scanner] Local Scan finished in " + (System.currentTimeMillis() - startTime) + "ms");
+            return map;
+        } finally {
+            finishProgress();
         }
-        System.out.println("[Scanner] Local Scan finished in " + (System.currentTimeMillis() - startTime) + "ms");
-        return map;
     }
 
     private static ScanPixel[][] runScan(ServerLevel level, int chunkRadius, int targetResolution) {
@@ -113,37 +150,36 @@ public class SatelliteScanner {
         MinecraftServer server = level.getServer();
 
         long totalPoints = (long) gridSize * gridSize;
-        int workers = pickWorkerCount(gridSize, totalPoints);
-        if (workers <= 1) {
-            long processed = 0;
-            int lastLogPercent = 0;
-            for (int i = 0; i < gridSize; i++) {
-                if (isCancelled.get() || !server.isRunning()) return null;
-                for (int j = 0; j < gridSize; j++) {
-                    int x = (i * step) - worldRadiusBlocks;
-                    int z = (j * step) - worldRadiusBlocks;
-                    map[i][j] = samplePixel(level, generator, randomState, x, z);
-                    processed++;
-                    if (totalPoints > 5000) {
-                        int percent = (int) ((processed * 100) / totalPoints);
-                        if (percent > lastLogPercent && percent % 10 == 0) {
-                            System.out.println("[Scanner] Global Progress: " + percent + "%");
-                            lastLogPercent = percent;
-                        }
+        beginProgress("Global", totalPoints);
+        try {
+            int workers = pickWorkerCount(gridSize, totalPoints);
+            AtomicInteger lastLogPercent = new AtomicInteger(0);
+            if (workers <= 1) {
+                long processed = 0;
+                for (int i = 0; i < gridSize; i++) {
+                    if (isCancelled.get() || !server.isRunning()) return null;
+                    for (int j = 0; j < gridSize; j++) {
+                        int x = (i * step) - worldRadiusBlocks;
+                        int z = (j * step) - worldRadiusBlocks;
+                        map[i][j] = samplePixel(level, generator, randomState, x, z);
+                        processed++;
+                        reportProgress("Global", processed, totalPoints, lastLogPercent);
                     }
                 }
+            } else {
+                parallelFill(
+                        map, gridSize, workers, totalPoints, server, "Global",
+                        i -> (i * step) - worldRadiusBlocks,
+                        j -> (j * step) - worldRadiusBlocks,
+                        level, generator, randomState
+                );
+                if (isCancelled.get() || !server.isRunning()) return null;
             }
-        } else {
-            parallelFill(
-                    map, gridSize, workers, totalPoints, server, "Global",
-                    i -> (i * step) - worldRadiusBlocks,
-                    j -> (j * step) - worldRadiusBlocks,
-                    level, generator, randomState
-            );
-            if (isCancelled.get() || !server.isRunning()) return null;
+            System.out.println("[Scanner] Global Scan finished in " + (System.currentTimeMillis() - startTime) + "ms");
+            return map;
+        } finally {
+            finishProgress();
         }
-        System.out.println("[Scanner] Global Scan finished in " + (System.currentTimeMillis() - startTime) + "ms");
-        return map;
     }
 
     private interface CoordMapper {
@@ -180,7 +216,7 @@ public class SatelliteScanner {
                         int z = zMapper.toWorld(j);
                         map[i][j] = samplePixel(level, generator, randomState, x, z);
                         long done = processed.incrementAndGet();
-                        logProgressEvery10(progressLabel, done, totalPoints, lastLoggedBucket);
+                        reportProgress(progressLabel, done, totalPoints, lastLoggedBucket);
                     }
                 }
             }, SCAN_EXECUTOR));
@@ -193,22 +229,48 @@ public class SatelliteScanner {
         if (totalPoints < PARALLEL_THRESHOLD_POINTS) return 1;
         int cpu = Runtime.getRuntime().availableProcessors();
         int maxByCpu = Math.max(1, Math.min(MAX_SCAN_WORKERS, cpu - 1));
-        return Math.max(1, Math.min(gridW, maxByCpu));
+        int maxByExecutor = Math.max(1, Math.min(SCAN_POOL_SIZE, maxByCpu));
+        return Math.max(1, Math.min(gridW, maxByExecutor));
     }
 
-    private static void logProgressEvery10(String label, long done, long total, AtomicInteger lastLoggedBucket) {
+    private static void beginProgress(String label, long total) {
+        long now = System.currentTimeMillis();
+        scanInProgress.set(true);
+        heartbeatLabel = label;
+        heartbeatDone.set(0L);
+        heartbeatTotal.set(Math.max(1L, total));
+        heartbeatStartMs.set(now);
+        lastHeartbeatMs.set(now);
+    }
+
+    private static void finishProgress() {
+        long total = heartbeatTotal.get();
+        if (total > 0L) heartbeatDone.set(total);
+        scanInProgress.set(false);
+    }
+
+    private static void reportProgress(String label, long done, long total, AtomicInteger lastLoggedBucket) {
+        heartbeatDone.set(done);
+        heartbeatTotal.set(Math.max(1L, total));
+
         if (total <= 5000L) return;
         int percent = (int) ((done * 100L) / total);
         int bucket = (percent / 10) * 10;
-        if (bucket <= 0) return;
-
-        int prev = lastLoggedBucket.get();
-        while (bucket > prev) {
-            if (lastLoggedBucket.compareAndSet(prev, bucket)) {
-                System.out.println("[Scanner] " + label + " Progress: " + bucket + "%");
-                return;
+        if (bucket > 0) {
+            int prev = lastLoggedBucket.get();
+            while (bucket > prev) {
+                if (lastLoggedBucket.compareAndSet(prev, bucket)) {
+                    System.out.println("[Scanner] " + label + " Progress: " + bucket + "%");
+                    break;
+                }
+                prev = lastLoggedBucket.get();
             }
-            prev = lastLoggedBucket.get();
+        }
+
+        long now = System.currentTimeMillis();
+        long last = lastHeartbeatMs.get();
+        if (now - last >= HEARTBEAT_INTERVAL_MS && lastHeartbeatMs.compareAndSet(last, now)) {
+            System.out.println("[Scanner] " + label + " Heartbeat: " + percent + "% (" + done + "/" + total + ")");
         }
     }
 

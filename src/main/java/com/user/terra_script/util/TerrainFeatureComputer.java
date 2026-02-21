@@ -5,10 +5,11 @@ import com.user.terra_script.domain.world.scan.ScanPixel;
 public class TerrainFeatureComputer {
 
     // 斜率计算 (移除 parallel)
-    public static double[][] computeSlope(ScanPixel[][] map, boolean ignoreOcean) {
+    public static double[][] computeSlope(ScanPixel[][] map, int step, boolean ignoreOcean) {
         int w = map.length;
         int h = map[0].length;
         double[][] slopeMap = new double[w][h];
+        double run = Math.max(1, step);
 
         for (int i = 0; i < w; i++) {
             for (int j = 0; j < h; j++) {
@@ -23,8 +24,8 @@ public class TerrainFeatureComputer {
                 ScanPixel pz = map[i][j + 1];
                 if (px == null || pz == null) continue;
 
-                double dx = Math.abs(p.height() - px.height());
-                double dz = Math.abs(p.height() - pz.height());
+                double dx = Math.abs(p.height() - px.height()) / run;
+                double dz = Math.abs(p.height() - pz.height()) / run;
                 slopeMap[i][j] = Math.sqrt(dx * dx + dz * dz);
             }
         }
@@ -32,10 +33,11 @@ public class TerrainFeatureComputer {
     }
 
     // 崎岖度计算 (移除 parallel)
-    public static double[][] computeRoughness(ScanPixel[][] map, int kernelRadius, boolean ignoreOcean) {
+    public static double[][] computeRoughness(ScanPixel[][] map, int step, int kernelRadius, boolean ignoreOcean) {
         int w = map.length;
         int h = map[0].length;
         double[][] roughMap = new double[w][h];
+        double run = Math.max(1, step);
 
         for (int i = 0; i < w; i++) {
             for (int j = 0; j < h; j++) {
@@ -44,7 +46,7 @@ public class TerrainFeatureComputer {
                     roughMap[i][j] = 0;
                     continue;
                 }
-                roughMap[i][j] = Math.sqrt(getLocalVariance(map, i, j, kernelRadius, w, h));
+                roughMap[i][j] = Math.sqrt(getLocalVariance(map, i, j, kernelRadius, w, h)) / run;
             }
         }
         return roughMap;
