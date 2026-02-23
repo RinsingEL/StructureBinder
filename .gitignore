@@ -23,3 +23,7 @@ run
 
 # Files from Forge MDK
 forge*changelog.txt
+
+# country_designer_mcp 只保留 index.ts
+country_designer_mcp/*
+!country_designer_mcp/index.ts

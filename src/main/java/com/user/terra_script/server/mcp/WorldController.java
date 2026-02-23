@@ -11,6 +11,7 @@ import com.user.terra_script.client.data.ScanResultHolder;
 import com.user.terra_script.client.data.ScanResultHolder.RegionCache;
 import com.user.terra_script.domain.world.scan.ScanPixel;
 import com.user.terra_script.domain.world.scan.ScanRegion;
+import com.user.terra_script.domain.world.stage.QueryRegionPreviewExporter;
 import com.user.terra_script.domain.world.stage.T1PreviewExporter;
 import com.user.terra_script.server.http.HttpUtil;
 import com.user.terra_script.util.AsciiMapGenerator;
@@ -274,11 +275,13 @@ public class WorldController {
                         globalClusterId++;
                         int serial = groupCounter.merge(groupId, 1, Integer::sum);
                         String label = groupId + serial;
+                        char previewLabel = pickPreviewLabel(globalClusterId - 1);
 
                         JsonObject clusterJson = buildClusterJson(globalClusterId, cluster, refCache);
                         clusterJson.addProperty("group_id", groupId);
                         clusterJson.addProperty("label", label);
                         clusterJson.addProperty("symbol", String.valueOf(symbol));
+                        clusterJson.addProperty("preview_label", String.valueOf(previewLabel));
                         candidatesArr.add(clusterJson);
 
                         JsonObject metaEntry = new JsonObject();
@@ -298,7 +301,7 @@ public class WorldController {
                         mapEntry.add("ascii_map", clusterJson.getAsJsonArray("ascii_map"));
                         groupAsciiMaps.add(mapEntry);
 
-                        overlayClusters.add(new OverlayCluster(symbol, cluster));
+                        overlayClusters.add(new OverlayCluster(symbol, previewLabel, label, globalClusterId, cluster));
                     }
                 }
                 response.add("candidates_metadata", candidatesMetadata);
@@ -313,14 +316,60 @@ public class WorldController {
                 for (List<DBSCAN.Point> cluster : filteredClusters) {
                     if (count >= limit) break;
                     globalClusterId++;
+                    char previewLabel = pickPreviewLabel(globalClusterId - 1);
                     JsonObject clusterJson = buildClusterJson(globalClusterId, cluster, refCache);
+                    clusterJson.addProperty("label", String.valueOf(previewLabel));
+                    clusterJson.addProperty("symbol", String.valueOf(previewLabel));
+                    clusterJson.addProperty("preview_label", String.valueOf(previewLabel));
                     candidatesArr.add(clusterJson);
+                    overlayClusters.add(new OverlayCluster(previewLabel, previewLabel, String.valueOf(previewLabel), globalClusterId, cluster));
                     count++;
                 }
             }
 
             response.add("candidates", candidatesArr);
+            List<QueryRegionPreviewExporter.OverlayInput> previewOverlays = new ArrayList<>();
+            for (OverlayCluster overlay : overlayClusters) {
+                previewOverlays.add(new QueryRegionPreviewExporter.OverlayInput(
+                        overlay.previewLabel,
+                        overlay.label,
+                        overlay.clusterId,
+                        overlay.points
+                ));
+            }
+
+            // 获取完整的底层地图数据和坐标参数
+            ScanPixel[][] mapData;
+            int mapWorldMinX, mapWorldMinZ, mapStep;
+            var holder = ScanResultHolder.get();
+            
+            if (territoryId != null) {
+                mapData = holder.lastScanData;
+                mapStep = holder.scanStep;
+                int radiusBlocks = holder.scanRadiusChunks * 16;
+                mapWorldMinX = -radiusBlocks;
+                mapWorldMinZ = -radiusBlocks;
+            } else {
+                mapData = refCache.detailData;
+                mapStep = refCache.step;
+                mapWorldMinX = refCache.minX;
+                mapWorldMinZ = refCache.minZ;
+            }
+
+            JsonObject preview = QueryRegionPreviewExporter.export(
+                    mcServer,
+                    territoryId == null ? "region" : "territory",
+                    territoryId == null ? String.valueOf(regionId) : territoryId,
+                    mapData,          // 新增传参
+                    mapWorldMinX,     // 新增传参
+                    mapWorldMinZ,     // 新增传参
+                    mapStep,          // 新增传参
+                    basePixels,
+                    previewOverlays
+            );
+            response.add("preview_overlay", preview);
             HttpUtil.sendResponse(exchange, 200, gson.toJson(response));
+            // ------ 替换结束 ------
 
         } catch (Exception e) {
             HttpUtil.handleError(exchange, e);
@@ -437,6 +486,10 @@ public class WorldController {
         return (char) ('A' + (groupIndex % 26));
     }
 
+    private static char pickPreviewLabel(int index) {
+        return (char) ('A' + (Math.max(0, index) % 26));
+    }
+
     private static JsonArray buildVisualMap(List<OverlayCluster> overlays) {
         JsonArray arr = new JsonArray();
         if (overlays == null || overlays.isEmpty()) return arr;
@@ -498,10 +551,16 @@ public class WorldController {
 
     private static final class OverlayCluster {
         final char symbol;
+        final char previewLabel;
+        final String label;
+        final int clusterId;
         final List<DBSCAN.Point> points;
 
-        OverlayCluster(char symbol, List<DBSCAN.Point> points) {
+        OverlayCluster(char symbol, char previewLabel, String label, int clusterId, List<DBSCAN.Point> points) {
             this.symbol = symbol;
+            this.previewLabel = previewLabel;
+            this.label = label;
+            this.clusterId = clusterId;
             this.points = points;
         }
     }
