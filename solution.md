@@ -45,6 +45,7 @@
   - 产物：`/saves/<WorldName>/terra_script/territories/T1_Blueprint.json`
 - `T2 / T3 / T4` 已实现并接入工作流：
   - 阶段类：`src/main/java/com/user/terra_script/domain/territory/stage/T2Stage.java`、`src/main/java/com/user/terra_script/domain/territory/stage/T3Stage.java`、`src/main/java/com/user/terra_script/domain/territory/stage/T4Stage.java`
+  - 当前默认语义：`T4` 执行首都城市 bootstrap（默认生成 1 座城市）；旧的领土精细扫描保留为可选 legacy 模式（`t4_legacy_scan=true`）。
   - 工作流注册：`src/main/java/com/user/terra_script/server/mcp/WorkflowController.java`
 - 城市阶段 `C4 / C5 / C6` 已实现并提供接口：
   - 入口：`src/main/java/com/user/terra_script/server/mcp/CityController.java`
@@ -653,6 +654,26 @@ private static final List<TerritoryConfig> pendingFactions = new ArrayList<>();
 
 ---
 
+### 🌊 T3.5：领海层计算（规划占位，暂不开发）
+
+**阶段定位**：  
+`T3.5` 用于在 `T3` 陆地扩张结果之外，额外生成“领海层（maritime layer）”，作为海域归属与后续海权玩法的基础数据。
+
+**当前约束**：
+- 该阶段仅立项记录，不进入当前工作流执行链。
+- 当前版本仍保持 `T3` 只处理陆地扩张，不放开水体扩张。
+- `T3.5` 未来应与 `T3` 分离实现，避免影响现有陆地扩张稳定性。
+
+**预期输入（未来）**：
+- `T3` 的陆地边界结果（已确认归属的陆地格/区块）
+- `W3/W4` 海陆与地形数据（用于海域可达性/边界裁剪）
+
+**预期输出（未来）**：
+- `T3_5_MaritimeMap.dat`（海域归属层）
+- `T3_5_MaritimeReport.json`（领海面积、邻海势力、关键海峡等摘要）
+
+---
+
 ### 🔭 T4：全境精细化扫描与战略场 (Strategic Scan)
 
 **核心变更**：这是一个全新的逻辑模块。T3 只是圈了地（Chunk 级），T4 要进去看细节（Block 级）。
@@ -814,6 +835,8 @@ private static final List<TerritoryConfig> pendingFactions = new ArrayList<>();
 - **输出**：
   - `C2_Claim.dat`（block/chunk -> layer 映射索引）
   - `C2_ClaimSummary.json`（程序计算的总面积、每层面积、层占比、边界 bbox）
+  - `C2_satellite_preview.png` + `C2_satellite_preview.legend.json`（仅城市范围、默认 step=1 精细扫描）
+  - `terra_script_city_c2_scan_<city_id>.dat`（城市范围 step=1 扫描数据，供 C3 预览与后续可视化复用）
 ```jsonc
 {
   "step": "C2",
@@ -830,6 +853,12 @@ private static final List<TerritoryConfig> pendingFactions = new ArrayList<>();
 }
 ```
 - **存放位置**：`/saves/<WorldName>/terra_script/cities/<city_id>/`
+
+### C2 结束后自动动作（新增）
+
+- C2 完成后自动触发一次“城市范围地貌精细扫描”（默认 `step=1`，仅扫描城市占用范围 + padding）。
+- 程序立即导出城市卫星预览图到城市目录，供后续 C3/C4 决策前复核。
+- MCP 返回体会附带 `ai_should_pause=true` 和 `next_action=STOP_CURRENT_STEP_AND_REVIEW_C2_SATELLITE_PREVIEW`，提示 AI 终止当前步骤并先审图再继续。
 
 
 ## C3 多边形/区划种子与分区（程序主导，AI可选增强）
@@ -858,6 +887,7 @@ private static final List<TerritoryConfig> pendingFactions = new ArrayList<>();
   - `C3_GlobalPolygons.json`（Phase A 原始多边形，不分层）
   - `C3_Districts.json`（Phase B 最终区划：`district_id`、`source_polygon_id`、`layer`、块/区块列表、统计）
   - `C3_DistrictIndex.dat`（block/chunk -> district_id）
+  - `C3_polygon_preview.png` + `C3_polygon_preview.legend.json`（底图数据源固定使用 C2 的 `step=1` 扫描文件）
 ```jsonc
 {
   "step": "C3",

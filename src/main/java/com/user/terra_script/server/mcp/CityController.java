@@ -11,13 +11,20 @@ import com.user.terra_script.world.city.CityConfig;
 import com.user.terra_script.world.city.CityInstance;
 import com.user.terra_script.world.city.CityManager;
 import com.user.terra_script.world.city.stage.c4.CitySemanticStages;
+import com.user.terra_script.world.city.stage.c4.CityC5ModulePreviewExporter;
 import com.user.terra_script.world.city.stage.c1.CityStage1BinaryIO;
 import com.user.terra_script.world.city.stage.c1.CityStage1Processor;
+import com.user.terra_script.world.city.stage.c2.CityC2ScanBinaryIO;
+import com.user.terra_script.world.city.stage.c2.CityC3PolygonPreviewExporter;
+import com.user.terra_script.world.city.stage.c2.CityC2SatellitePreviewExporter;
+import com.user.terra_script.world.city.stage.c2.CityC3OwnershipIO;
 import com.user.terra_script.world.city.stage.c6.C6FillStyle;
 import com.user.terra_script.world.city.stage.c6.CityC6Stages;
 import com.user.terra_script.world.city.stage.c7.CityC7Stages;
 import com.user.terra_script.world.city.stage.c8.CityC8Stages;
 import com.user.terra_script.world.city.stage.c9.CityC9Stages;
+import com.user.terra_script.domain.world.scan.ScanPixel;
+import com.user.terra_script.domain.world.scan.service.SatelliteScanner;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -31,12 +38,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.nio.file.Path;
+import java.io.File;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class CityController {
     private static final int CENTER_WATER_PROBE_RADIUS = 8;
     private static final int CENTER_WATER_PROBE_STEP = 2;
     private static final double CENTER_WATER_RATIO_THRESHOLD = 0.60;
+    private static final int C2_SCAN_DEFAULT_STEP = 1;
+    private static final int C2_SCAN_DEFAULT_PADDING_BLOCKS = 64;
+    // Serialize heavy C2 scans across all cities to avoid concurrent scanner pressure.
+    private static final ReentrantLock C2_SCAN_LOCK = new ReentrantLock(true);
+    private static final AtomicReference<String> C2_ACTIVE_CITY = new AtomicReference<>(null);
+    private static final long C2_MEMORY_CACHE_TTL_MS = 10 * 60 * 1000L;
+    private static final Map<String, C2CacheEntry> C2_SCAN_CACHE = new ConcurrentHashMap<>();
 
     private final Gson gson = new Gson();
     private final MinecraftServer mcServer;
@@ -139,19 +158,75 @@ public class CityController {
                 return;
             }
 
-            var result = NationGenManager.Stage1Manager.computeAndSave(mcServer.overworld(), cityId);
-            if (result == null) {
-                HttpUtil.sendResponse(exchange, 404, "{\"error\": \"City not found: " + cityId + "\"}");
-                return;
-            }
+            long waitStart = System.currentTimeMillis();
+            C2_SCAN_LOCK.lock();
+            long waitedMs = Math.max(0L, System.currentTimeMillis() - waitStart);
+            C2_ACTIVE_CITY.set(cityId);
+            try {
+                var result = NationGenManager.Stage1Manager.computeAndSave(mcServer.overworld(), cityId);
+                if (result == null) {
+                    HttpUtil.sendResponse(exchange, 404, "{\"error\": \"City not found: " + cityId + "\"}");
+                    return;
+                }
 
-            JsonObject res = new JsonObject();
-            res.addProperty("status", "ok");
-            res.addProperty("step", "C2");
-            res.addProperty("city_id", cityId);
-            res.addProperty("district_count", result.buildableStats != null ? result.buildableStats.size() : 0);
-            res.addProperty("buildable_group_count", result.buildableGroups != null ? result.buildableGroups.size() : 0);
-            HttpUtil.sendResponse(exchange, 200, gson.toJson(res));
+                CityInstance city = CityManager.get().getCity(cityId);
+                if (city == null) {
+                    HttpUtil.sendResponse(exchange, 404, "{\"error\": \"City not found after C2 compute: " + cityId + "\"}");
+                    return;
+                }
+
+                int scanStep = json.has("scan_step") ? Math.max(1, json.get("scan_step").getAsInt()) : C2_SCAN_DEFAULT_STEP;
+                int scanPadding = json.has("scan_padding_blocks")
+                        ? Math.max(0, json.get("scan_padding_blocks").getAsInt())
+                        : C2_SCAN_DEFAULT_PADDING_BLOCKS;
+                CityScanBounds scanBounds = computeCityScanBounds(city, scanPadding);
+                C2ScanResolved resolved = resolveC2ScanData(
+                        cityId,
+                        scanBounds,
+                        scanStep,
+                        mcServer.overworld()
+                );
+                ScanPixel[][] scanned = resolved.map;
+                File c2ScanFile = resolved.file;
+
+                JsonObject preview = CityC2SatellitePreviewExporter.export(
+                        mcServer,
+                        cityId,
+                        scanned,
+                        scanBounds.minX,
+                        scanBounds.minZ,
+                        scanStep,
+                        scanBounds.width,
+                        scanBounds.height,
+                        city.config.centerX,
+                        city.config.centerZ,
+                        city.claimedChunks
+                );
+
+                JsonObject res = new JsonObject();
+                res.addProperty("status", "ok");
+                res.addProperty("step", "C2");
+                res.addProperty("city_id", cityId);
+                res.addProperty("district_count", result.buildableStats != null ? result.buildableStats.size() : 0);
+                res.addProperty("buildable_group_count", result.buildableGroups != null ? result.buildableGroups.size() : 0);
+                res.addProperty("scan_step", scanStep);
+                res.addProperty("scan_padding_blocks", scanPadding);
+                res.addProperty("scan_data_file", c2ScanFile.getName());
+                res.addProperty("scan_serialized", true);
+                res.addProperty("scan_queue_wait_ms", waitedMs);
+                res.addProperty("scan_cache_hit", resolved.cacheHit);
+                res.addProperty("scan_cache_source", resolved.cacheSource);
+                res.add("satellite_preview", preview);
+                res.addProperty("ai_should_pause", true);
+                res.addProperty("next_action", "STOP_CURRENT_STEP_AND_REVIEW_C2_SATELLITE_PREVIEW");
+                res.addProperty("message", "C2 completed and city-local satellite preview is generated. Pause current step, save, and review preview before continuing.");
+                HttpUtil.sendResponse(exchange, 200, gson.toJson(res));
+            } finally {
+                C2_ACTIVE_CITY.set(null);
+                C2_SCAN_LOCK.unlock();
+            }
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            HttpUtil.sendResponse(exchange, 400, "{\"error\": \"" + escapeJson(e.getMessage() != null ? e.getMessage() : "Invalid city request") + "\"}");
         } catch (Exception e) {
             HttpUtil.handleError(exchange, e);
         }
@@ -197,11 +272,26 @@ public class CityController {
                 return;
             }
 
+            CityInstance city = CityManager.get().getCity(cityId);
+            CityC2ScanBinaryIO.C2ScanData scanData = CityC2ScanBinaryIO.load(cityId);
+            Path cityDir = resolveCityDir(cityId);
+            CityC3OwnershipIO.OwnershipData ownership = CityC3OwnershipIO.compute(city);
+            Path ownershipFile = CityC3OwnershipIO.save(cityDir, ownership);
+            JsonObject polygonPreview = CityC3PolygonPreviewExporter.export(mcServer, cityId, city, scanData, ownership);
+
             JsonObject res = new JsonObject();
             res.addProperty("status", "ok");
             res.addProperty("step", "C3");
             res.addProperty("city_id", cityId);
             res.addProperty("intent_count", result.intents != null ? result.intents.size() : 0);
+            if (ownershipFile != null) {
+                res.addProperty("ownership_file", ownershipFile.toString());
+                res.addProperty("ownership_step", ownership != null ? ownership.step : -1);
+            }
+            res.add("polygon_preview", polygonPreview);
+            res.addProperty("ai_should_pause", true);
+            res.addProperty("next_action", "STOP_CURRENT_STEP_AND_REVIEW_C3_POLYGON_PREVIEW");
+            res.addProperty("message", "C3 completed and polygon preview is generated from C2 step scan data.");
             HttpUtil.sendResponse(exchange, 200, gson.toJson(res));
         } catch (Exception e) {
             HttpUtil.handleError(exchange, e);
@@ -336,6 +426,9 @@ public class CityController {
             boolean crossLayerMerge = json.has("cross_layer_merge") && json.get("cross_layer_merge").getAsBoolean();
             CitySemanticStages.C5Groups groups = CitySemanticStages.generateC5(city, c4Plan, crossLayerMerge);
             CitySemanticStages.saveC5(cityDir, groups);
+            CityC2ScanBinaryIO.C2ScanData scanData = CityC2ScanBinaryIO.load(cityId);
+            CityC3OwnershipIO.OwnershipData ownership = CityC3OwnershipIO.load(cityDir);
+            JsonObject modulePreview = CityC5ModulePreviewExporter.export(mcServer, cityId, city, groups, scanData, ownership);
 
             JsonObject res = new JsonObject();
             res.addProperty("status", "ok");
@@ -344,6 +437,7 @@ public class CityController {
             res.addProperty("group_count", groups.groups != null ? groups.groups.size() : 0);
             res.addProperty("cross_layer_merge", crossLayerMerge);
             res.addProperty("file", cityDir.resolve(CitySemanticStages.C5_FILE).toString());
+            res.add("module_preview", modulePreview);
             HttpUtil.sendResponse(exchange, 200, gson.toJson(res));
         } catch (Exception e) {
             HttpUtil.handleError(exchange, e);
@@ -996,6 +1090,137 @@ public class CityController {
             this.waterSamples = waterSamples;
             this.totalSamples = totalSamples;
             this.waterRatio = waterRatio;
+        }
+    }
+
+    private static CityScanBounds computeCityScanBounds(CityInstance city, int paddingBlocks) {
+        int minX = Integer.MAX_VALUE;
+        int minZ = Integer.MAX_VALUE;
+        int maxX = Integer.MIN_VALUE;
+        int maxZ = Integer.MIN_VALUE;
+        if (city != null && city.claimedChunks != null && !city.claimedChunks.isEmpty()) {
+            for (Long key : city.claimedChunks.keySet()) {
+                if (key == null) continue;
+                int cx = net.minecraft.world.level.ChunkPos.getX(key);
+                int cz = net.minecraft.world.level.ChunkPos.getZ(key);
+                int cMinX = cx << 4;
+                int cMinZ = cz << 4;
+                int cMaxX = cMinX + 15;
+                int cMaxZ = cMinZ + 15;
+                if (cMinX < minX) minX = cMinX;
+                if (cMinZ < minZ) minZ = cMinZ;
+                if (cMaxX > maxX) maxX = cMaxX;
+                if (cMaxZ > maxZ) maxZ = cMaxZ;
+            }
+        } else {
+            int centerX = city != null && city.config != null ? city.config.centerX : 0;
+            int centerZ = city != null && city.config != null ? city.config.centerZ : 0;
+            minX = centerX - 128;
+            minZ = centerZ - 128;
+            maxX = centerX + 128;
+            maxZ = centerZ + 128;
+        }
+
+        minX -= paddingBlocks;
+        minZ -= paddingBlocks;
+        maxX += paddingBlocks;
+        maxZ += paddingBlocks;
+        int width = Math.max(16, maxX - minX + 1);
+        int height = Math.max(16, maxZ - minZ + 1);
+        return new CityScanBounds(minX, minZ, width, height);
+    }
+
+    private static final class CityScanBounds {
+        final int minX;
+        final int minZ;
+        final int width;
+        final int height;
+
+        private CityScanBounds(int minX, int minZ, int width, int height) {
+            this.minX = minX;
+            this.minZ = minZ;
+            this.width = width;
+            this.height = height;
+        }
+    }
+
+    private static C2ScanResolved resolveC2ScanData(
+            String cityId,
+            CityScanBounds bounds,
+            int scanStep,
+            ServerLevel level
+    ) throws Exception {
+        long now = System.currentTimeMillis();
+        C2CacheEntry mem = C2_SCAN_CACHE.get(cityId);
+        if (mem != null
+                && (now - mem.cachedAtMs) <= C2_MEMORY_CACHE_TTL_MS
+                && isMatchingScan(mem.data, bounds, scanStep)
+                && mem.data.map != null
+                && mem.data.map.length > 0
+                && mem.data.map[0] != null) {
+            return new C2ScanResolved(mem.data.map, CityC2ScanBinaryIO.dataFile(cityId), true, "memory");
+        }
+
+        CityC2ScanBinaryIO.C2ScanData disk = CityC2ScanBinaryIO.load(cityId);
+        if (isMatchingScan(disk, bounds, scanStep) && disk.map != null && disk.map.length > 0 && disk.map[0] != null) {
+            C2_SCAN_CACHE.put(cityId, new C2CacheEntry(disk, now));
+            return new C2ScanResolved(disk.map, CityC2ScanBinaryIO.dataFile(cityId), true, "disk");
+        }
+
+        ScanPixel[][] scanned = SatelliteScanner.scanRegionAsync(
+                level,
+                bounds.minX,
+                bounds.minZ,
+                bounds.width,
+                bounds.height,
+                scanStep
+        ).get(10, TimeUnit.MINUTES);
+        File file = CityC2ScanBinaryIO.save(
+                cityId,
+                bounds.minX,
+                bounds.minZ,
+                bounds.width,
+                bounds.height,
+                scanStep,
+                scanned
+        );
+        C2_SCAN_CACHE.put(cityId, new C2CacheEntry(
+                new CityC2ScanBinaryIO.C2ScanData(bounds.minX, bounds.minZ, bounds.width, bounds.height, scanStep, scanned),
+                now
+        ));
+        return new C2ScanResolved(scanned, file, false, "scan");
+    }
+
+    private static boolean isMatchingScan(CityC2ScanBinaryIO.C2ScanData data, CityScanBounds bounds, int step) {
+        if (data == null || bounds == null) return false;
+        return data.step == step
+                && data.originX == bounds.minX
+                && data.originZ == bounds.minZ
+                && data.widthBlocks == bounds.width
+                && data.heightBlocks == bounds.height;
+    }
+
+    private static final class C2CacheEntry {
+        final CityC2ScanBinaryIO.C2ScanData data;
+        final long cachedAtMs;
+
+        C2CacheEntry(CityC2ScanBinaryIO.C2ScanData data, long cachedAtMs) {
+            this.data = data;
+            this.cachedAtMs = cachedAtMs;
+        }
+    }
+
+    private static final class C2ScanResolved {
+        final ScanPixel[][] map;
+        final File file;
+        final boolean cacheHit;
+        final String cacheSource;
+
+        C2ScanResolved(ScanPixel[][] map, File file, boolean cacheHit, String cacheSource) {
+            this.map = map;
+            this.file = file;
+            this.cacheHit = cacheHit;
+            this.cacheSource = cacheSource;
         }
     }
 }

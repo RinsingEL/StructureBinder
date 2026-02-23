@@ -642,6 +642,17 @@ public class TerritoryManager {
         return false;
     }
 
+    /**
+     * Sovereignty check for city placement/expansion.
+     * Currently includes land territory (+ wild enclaves) only.
+     * TODO(T3.5): extend with maritime sovereignty once territorial sea layer is implemented.
+     */
+    public static boolean isChunkWithinSovereignty(long chunkKey, String territoryId) {
+        if (isChunkOwnedBy(chunkKey, territoryId)) return true;
+        // TODO(T3.5): include territorial sea / maritime boundary once available.
+        return false;
+    }
+
     // JSON IO
     private static void save() { try { Files.writeString(CONFIG_FILE.toPath(), GSON.toJson(registeredFactions)); } catch (Exception e) { e.printStackTrace(); } }
     private static void load() { if (!CONFIG_FILE.exists()) return; try { List<TerritoryConfig> l = GSON.fromJson(Files.readString(CONFIG_FILE.toPath()), new TypeToken<List<TerritoryConfig>>(){}.getType()); registeredFactions.clear(); if(l!=null) registeredFactions.addAll(l); } catch (Exception e) { e.printStackTrace(); } }

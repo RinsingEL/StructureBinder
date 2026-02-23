@@ -7,6 +7,9 @@ import com.user.terra_script.core.stage.StageContext;
 import com.user.terra_script.event.ServerTickTracker;
 import com.user.terra_script.territory.io.TerritoryResultRepository;
 import com.user.terra_script.world.TerritoryManager;
+import com.user.terra_script.world.city.CityConfig;
+import com.user.terra_script.world.city.CityInstance;
+import com.user.terra_script.world.city.CityManager;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -38,19 +41,44 @@ public class T4Stage extends StageBase {
         public final int sampleStride;
         public final int maxChunksPerTerritory;
         public final boolean loadedOnly;
+        public final boolean legacyTerrainScan;
+        public final boolean bootstrapCity;
+        public final int cityTargetChunks;
+        public final String cityBias;
+        public final String cityDensity;
+        public final String cityEcology;
+        public final boolean cityAllowWater;
 
-        public RuntimeOptions(int sampleStride, int maxChunksPerTerritory, boolean loadedOnly) {
+        public RuntimeOptions(
+                int sampleStride,
+                int maxChunksPerTerritory,
+                boolean loadedOnly,
+                boolean legacyTerrainScan,
+                boolean bootstrapCity,
+                int cityTargetChunks,
+                String cityBias,
+                String cityDensity,
+                String cityEcology,
+                boolean cityAllowWater
+        ) {
             this.sampleStride = Math.max(1, Math.min(16, sampleStride));
             this.maxChunksPerTerritory = maxChunksPerTerritory;
             this.loadedOnly = loadedOnly;
+            this.legacyTerrainScan = legacyTerrainScan;
+            this.bootstrapCity = bootstrapCity;
+            this.cityTargetChunks = cityTargetChunks;
+            this.cityBias = cityBias;
+            this.cityDensity = cityDensity;
+            this.cityEcology = cityEcology;
+            this.cityAllowWater = cityAllowWater;
         }
 
         public static RuntimeOptions defaults() {
-            return new RuntimeOptions(2, -1, false);
+            return new RuntimeOptions(2, -1, false, false, true, -1, "BALANCED", "medium", "ADAPTIVE", false);
         }
 
         public static RuntimeOptions autoTriggerDefaults() {
-            return new RuntimeOptions(4, 256, true);
+            return new RuntimeOptions(4, 256, true, false, true, -1, "BALANCED", "medium", "ADAPTIVE", false);
         }
     }
 
@@ -72,6 +100,145 @@ public class T4Stage extends StageBase {
 
     @Override
     protected void execute(StageContext ctx) throws Exception {
+        RuntimeOptions options = RUNTIME_OPTIONS;
+        if (!options.legacyTerrainScan) {
+            runCapitalCityBootstrap(ctx, options);
+            return;
+        }
+
+        runLegacyTerrainScan(ctx, options);
+    }
+
+    private static void runCapitalCityBootstrap(StageContext ctx, RuntimeOptions options) throws Exception {
+        if (!options.bootstrapCity) {
+            JsonObject batch = new JsonObject();
+            batch.addProperty("step", "T4");
+            batch.addProperty("mode", "CITY_BOOTSTRAP");
+            batch.addProperty("triggered_by", "T3");
+            batch.addProperty("territories_total", 0);
+            batch.addProperty("territories_succeeded", 0);
+            batch.addProperty("territories_failed", 0);
+            batch.addProperty("message", "bootstrap_city=false; skipped");
+            TerritoryResultRepository.writeT4BatchReport(ctx.server, batch);
+            return;
+        }
+
+        TerritoryManager.ensureLoaded();
+        List<TerritoryManager.TerritoryResult> results = new ArrayList<>(TerritoryManager.getAllResults());
+        if (results.isEmpty()) {
+            throw new IllegalStateException("T4 requires territory results from T3");
+        }
+
+        int succeeded = 0;
+        int failed = 0;
+        JsonArray failures = new JsonArray();
+
+        for (TerritoryManager.TerritoryResult result : results) {
+            if (result == null || result.config == null || result.config.id == null || result.config.id.isBlank()) continue;
+            String territoryId = result.config.id;
+            try {
+                CityConfig cityCfg = buildCityBootstrapConfig(result, options);
+                CityInstance city = CityManager.get().createCity(cityCfg);
+                JsonObject summary = buildCityBootstrapSummary(result, city, options);
+                TerritoryResultRepository.writeT4(ctx.server, territoryId, summary, new byte[0]);
+                succeeded++;
+            } catch (Exception e) {
+                failed++;
+                JsonObject err = new JsonObject();
+                err.addProperty("territory_id", territoryId);
+                err.addProperty("error", e.getMessage());
+                failures.add(err);
+            }
+        }
+
+        JsonObject batch = new JsonObject();
+        batch.addProperty("step", "T4");
+        batch.addProperty("mode", "CITY_BOOTSTRAP");
+        batch.addProperty("triggered_by", "T3");
+        batch.addProperty("territories_total", results.size());
+        batch.addProperty("territories_succeeded", succeeded);
+        batch.addProperty("territories_failed", failed);
+        if (failures.size() > 0) batch.add("failures", failures);
+        TerritoryResultRepository.writeT4BatchReport(ctx.server, batch);
+
+        if (succeeded <= 0) {
+            throw new IllegalStateException("T4 city bootstrap failed for all territories");
+        }
+    }
+
+    private static CityConfig buildCityBootstrapConfig(TerritoryManager.TerritoryResult result, RuntimeOptions options) {
+        CityConfig cfg = new CityConfig();
+        cfg.territoryId = result.config.id;
+        cfg.continentId = result.config.regionId;
+        cfg.centerX = result.config.capitalX;
+        cfg.centerZ = result.config.capitalZ;
+        cfg.allowWaterCity = options.cityAllowWater;
+        if (options.cityTargetChunks > 0) {
+            cfg.targetChunkCount = options.cityTargetChunks;
+        } else {
+            cfg.targetChunkCount = -1;
+        }
+
+        cfg.bias = parseBias(options.cityBias, CityConfig.ExpansionBias.BALANCED);
+        cfg.ecology = parseEcology(options.cityEcology, CityConfig.EcologyPolicy.ADAPTIVE);
+        cfg.density = options.cityDensity == null || options.cityDensity.isBlank()
+                ? "medium"
+                : options.cityDensity.trim().toLowerCase();
+        return cfg;
+    }
+
+    private static CityConfig.ExpansionBias parseBias(String value, CityConfig.ExpansionBias fallback) {
+        if (value == null || value.isBlank()) return fallback;
+        try {
+            return CityConfig.ExpansionBias.valueOf(value.trim().toUpperCase());
+        } catch (Exception ignored) {
+            return fallback;
+        }
+    }
+
+    private static CityConfig.EcologyPolicy parseEcology(String value, CityConfig.EcologyPolicy fallback) {
+        if (value == null || value.isBlank()) return fallback;
+        try {
+            return CityConfig.EcologyPolicy.valueOf(value.trim().toUpperCase());
+        } catch (Exception ignored) {
+            return fallback;
+        }
+    }
+
+    private static JsonObject buildCityBootstrapSummary(
+            TerritoryManager.TerritoryResult result,
+            CityInstance city,
+            RuntimeOptions options
+    ) {
+        JsonObject root = new JsonObject();
+        root.addProperty("schema_version", 1);
+        root.addProperty("stage", "T4");
+        root.addProperty("mode", "CITY_BOOTSTRAP");
+
+        JsonObject territory = new JsonObject();
+        territory.addProperty("id", result.config.id);
+        territory.addProperty("name", result.config.name);
+        territory.addProperty("region_id", result.config.regionId);
+        territory.addProperty("capital_x", result.config.capitalX);
+        territory.addProperty("capital_z", result.config.capitalZ);
+        root.add("territory", territory);
+
+        JsonObject cityObj = new JsonObject();
+        cityObj.addProperty("generated", city != null);
+        cityObj.addProperty("city_id", city != null ? city.id : "unknown");
+        cityObj.addProperty("center_x", result.config.capitalX);
+        cityObj.addProperty("center_z", result.config.capitalZ);
+        cityObj.addProperty("target_chunk_count", options.cityTargetChunks);
+        cityObj.addProperty("actual_chunk_count", city != null && city.claimedChunks != null ? city.claimedChunks.size() : 0);
+        cityObj.addProperty("bias", options.cityBias);
+        cityObj.addProperty("density", options.cityDensity);
+        cityObj.addProperty("ecology", options.cityEcology);
+        cityObj.addProperty("allow_water_city", options.cityAllowWater);
+        root.add("city_bootstrap", cityObj);
+        return root;
+    }
+
+    private static void runLegacyTerrainScan(StageContext ctx, RuntimeOptions options) throws Exception {
         TerritoryManager.ensureLoaded();
         List<TerritoryManager.TerritoryResult> results = new ArrayList<>(TerritoryManager.getAllResults());
         if (results.isEmpty()) {
@@ -81,8 +248,6 @@ public class T4Stage extends StageBase {
         if (level == null) {
             throw new IllegalStateException("T4 requires overworld");
         }
-        RuntimeOptions options = RUNTIME_OPTIONS;
-
         long totalBlocks = estimateTotalBlocksFromChunks(level, results, options.sampleStride, options.maxChunksPerTerritory, options.loadedOnly);
         if (totalBlocks <= 0) {
             if (options.loadedOnly) {

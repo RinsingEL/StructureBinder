@@ -195,7 +195,14 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             stage_id: { type: "string", enum: ["W3", "W4", "T2", "T3", "T4"] },
             t4_sample_stride: { type: "number", description: "T4 扫描步长。1=最精细，越大越快。默认自动触发时=4，手动=2" },
             t4_max_chunks: { type: "number", description: "每个国家最多扫描 chunk 数，<=0 表示不限制" },
-            t4_loaded_only: { type: "boolean", description: "仅扫描已加载 chunk；true 更不易卡主线程" }
+            t4_loaded_only: { type: "boolean", description: "仅扫描已加载 chunk；true 更不易卡主线程" },
+            t4_legacy_scan: { type: "boolean", description: "是否启用旧版 T4 领土精细扫描（默认 false，默认改为城市 bootstrap）" },
+            t4_bootstrap_city: { type: "boolean", description: "T4 城市 bootstrap 开关（默认 true）" },
+            t4_city_target_chunks: { type: "number", description: "T4 自动建城目标 chunk 数（<=0 表示自动估算）" },
+            t4_city_bias: { type: "string", description: "T4 自动建城扩张倾向（BALANCED/NORTH/SOUTH/EAST/WEST/COASTAL/INLAND）" },
+            t4_city_density: { type: "string", description: "T4 自动建城密度（low/medium/high）" },
+            t4_city_ecology: { type: "string", description: "T4 自动建城生态策略（PRESERVE/ADAPTIVE/CLEAR）" },
+            t4_city_allow_water: { type: "boolean", description: "T4 自动建城是否允许中心水域（默认 false）" }
           },
           required: ["stage_id"]
         }
@@ -562,7 +569,9 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         inputSchema: {
           type: "object",
           properties: {
-            city_id: { type: "string" }
+            city_id: { type: "string" },
+            scan_step: { type: "number", description: "C2 结束后自动城市精扫步长（默认 1）" },
+            scan_padding_blocks: { type: "number", description: "C2 自动精扫边界 padding 方块（默认 64）" }
           },
           required: ["city_id"]
         }
@@ -580,7 +589,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "city_c3_generate",
-        description: "生成并保存 C3 区划阶段产物（当前映射 Stage2 计算）。",
+        description: "生成并保存 C3 区划阶段产物（当前映射 Stage2 计算，含 C3 多边形预览图）。",
         inputSchema: {
           type: "object",
           properties: {
@@ -845,6 +854,13 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         if (args.t4_sample_stride !== undefined) payload.t4_sample_stride = Number(args.t4_sample_stride);
         if (args.t4_max_chunks !== undefined) payload.t4_max_chunks = Number(args.t4_max_chunks);
         if (args.t4_loaded_only !== undefined) payload.t4_loaded_only = Boolean(args.t4_loaded_only);
+        if (args.t4_legacy_scan !== undefined) payload.t4_legacy_scan = Boolean(args.t4_legacy_scan);
+        if (args.t4_bootstrap_city !== undefined) payload.t4_bootstrap_city = Boolean(args.t4_bootstrap_city);
+        if (args.t4_city_target_chunks !== undefined) payload.t4_city_target_chunks = Number(args.t4_city_target_chunks);
+        if (args.t4_city_bias !== undefined) payload.t4_city_bias = String(args.t4_city_bias);
+        if (args.t4_city_density !== undefined) payload.t4_city_density = String(args.t4_city_density);
+        if (args.t4_city_ecology !== undefined) payload.t4_city_ecology = String(args.t4_city_ecology);
+        if (args.t4_city_allow_water !== undefined) payload.t4_city_allow_water = Boolean(args.t4_city_allow_water);
         const res = await axios.post(`${MC_API_URL}/workflow/run`, payload);
         return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
       }
@@ -1092,7 +1108,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
       case "city_c2_generate": {
         const args = request.params.arguments as any;
-        const res = await axios.post(`${MC_API_URL}/city_c2_generate`, { city_id: args.city_id });
+        const payload: any = { city_id: args.city_id };
+        if (args.scan_step !== undefined) payload.scan_step = Number(args.scan_step);
+        if (args.scan_padding_blocks !== undefined) payload.scan_padding_blocks = Number(args.scan_padding_blocks);
+        const res = await axios.post(`${MC_API_URL}/city_c2_generate`, payload);
         return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
       }
       case "city_c2_data": {

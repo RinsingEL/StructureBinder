@@ -38,7 +38,7 @@ public final class TerritoryPreviewExporter {
                 map = holder.lastScanData;
             }
             String[][] ownership = TerritoryManager.globalOwnershipMap;
-            if (map == null || map.length == 0 || map[0] == null || ownership == null) {
+            if (map == null || map.length == 0 || map[0] == null || ownership == null || ownership.length == 0 || ownership[0] == null) {
                 out.addProperty("generated", false);
                 out.addProperty("reason", "scan_or_ownership_missing");
                 return out;
@@ -49,7 +49,7 @@ public final class TerritoryPreviewExporter {
             int globalMinZ = TerritoryManager.getExpansionMinZ();
             int step = TerritoryManager.getExpansionStepBlocks();
             if (step <= 0) step = Math.max(1, holder.scanStep);
-            if (globalMinX == 0 && globalMinZ == 0 && (map == holder.lastScanData)) {
+            if (globalMinX == 0 && globalMinZ == 0 && TerritoryManager.getExpansionScanMap() == null) {
                 globalMinX = -radiusBlocks;
                 globalMinZ = -radiusBlocks;
             }
@@ -83,14 +83,16 @@ public final class TerritoryPreviewExporter {
                     if (gx >= 0 && gx < map.length && gz >= 0 && gz < map[0].length) {
                         ScanPixel sp = map[gx][gz];
                         if (sp != null) {
-                            base = classifyHeightColor(sp.height());
+                            base = classifyTerrainColor(sp);
                         }
                     }
 
                     if (gx >= 0 && gx < ownership.length && gz >= 0 && gz < ownership[0].length) {
                         String owner = ownership[gx][gz];
                         if (result.config.id.equals(owner)) {
-                            base = blend(base, territoryColor, 0.68);
+                            base = blend(base, territoryColor, 0.62);
+                        } else if (owner != null && !owner.isBlank()) {
+                            base = blend(base, 0xFF2E3138, 0.42);
                         }
                     }
                     image.setRGB(px, pz, base);
@@ -153,7 +155,14 @@ public final class TerritoryPreviewExporter {
         }
     }
 
-    private static int classifyHeightColor(double h) {
+    private static String toHex(int argb) {
+        return String.format(Locale.ROOT, "#%06X", (argb & 0x00FFFFFF));
+    }
+
+    private static int classifyTerrainColor(ScanPixel p) {
+        if (p == null) return 0xFF1F4E79;
+        if (!p.isLand()) return 0xFF1F4E79;
+        double h = p.height();
         if (h < SEA_LEVEL) return 0xFF1F4E79;
         if (h < 70) return 0xFFA7D08C;
         if (h < 110) return 0xFF70AD47;
@@ -175,10 +184,6 @@ public final class TerritoryPreviewExporter {
         int g = (int) Math.round(bg * bw + og * ow);
         int b = (int) Math.round(bb * bw + ob * ow);
         return 0xFF000000 | (r << 16) | (g << 8) | b;
-    }
-
-    private static String toHex(int argb) {
-        return String.format(Locale.ROOT, "#%06X", (argb & 0x00FFFFFF));
     }
 
     private static String sanitize(String input) {

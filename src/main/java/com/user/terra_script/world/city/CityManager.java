@@ -58,8 +58,9 @@ public class CityManager {
         String uid = "city_" + config.centerX + "_" + config.centerZ;
         config.cityInstanceId = uid;
 
+        CityInstance oldCity = null;
         if (cities.containsKey(uid)) {
-            CityInstance oldCity = cities.get(uid);
+            oldCity = cities.get(uid);
             for (Long chunkKey : oldCity.claimedChunks.keySet()) {
                 globalCityChunkMap.remove(chunkKey);
             }
@@ -70,8 +71,20 @@ public class CityManager {
         if (city.config.targetChunkCount <= 0) {
             city.config.targetChunkCount = estimateTargetChunks(city.config.territoryId);
         }
-        // 执行扩张算法
-        expandCity(city);
+        try {
+            // 执行扩张算法
+            expandCity(city);
+            validateCityWithinSovereignty(city);
+        } catch (Exception e) {
+            // Restore old city occupancy when overwrite fails.
+            if (oldCity != null) {
+                cities.put(oldCity.id, oldCity);
+                for (Long chunkKey : oldCity.claimedChunks.keySet()) {
+                    globalCityChunkMap.put(chunkKey, oldCity.id);
+                }
+            }
+            throw e;
+        }
 
         // 注册或修�?
         cities.put(uid, city);
@@ -93,6 +106,9 @@ public class CityManager {
         int startChunkX = city.config.centerX >> 4;
         int startChunkZ = city.config.centerZ >> 4;
         long centerKey = ChunkPos.asLong(startChunkX, startChunkZ);
+        if (!TerritoryManager.isChunkWithinSovereignty(centerKey, city.config.territoryId)) {
+            throw new IllegalArgumentException("City center chunk is outside territory sovereignty: " + city.config.territoryId);
+        }
 
         // 优先队列 [cost, chunkX, chunkZ]
         PriorityQueue<double[]> pq = new PriorityQueue<>(Comparator.comparingDouble(a -> a[0]));
@@ -120,6 +136,7 @@ public class CityManager {
 
             // 如果已经被更低成本的处理过，跳过
             if (costMap.containsKey(key) && costMap.get(key) < currentCost) continue;
+            if (!TerritoryManager.isChunkWithinSovereignty(key, city.config.territoryId)) continue;
 
             // 真正接纳这个区块
             if (!city.claimedChunks.containsKey(key)) {
@@ -141,8 +158,7 @@ public class CityManager {
                 if (globalCityChunkMap.containsKey(nKey)) continue;
 
                 // 检�?: 是否在国境线�?(重要!)
-                // if (!TerritoryManager.isOwnedBy(nKey, city.config.territoryId)) continue;
-                // 这里暂时注释，需要在 TerritoryManager 实现对应接口
+                if (!TerritoryManager.isChunkWithinSovereignty(nKey, city.config.territoryId)) continue;
 
                 // 计算代价
                 double moveCost = calculateCellCost(nx, nz, city.config, holder);
@@ -160,6 +176,16 @@ public class CityManager {
 
         computeBorderChunks(city);
         System.out.println("City " + city.id + " generated. Size: " + currentSize + " chunks.");
+    }
+
+    private void validateCityWithinSovereignty(CityInstance city) {
+        if (city == null || city.claimedChunks == null || city.claimedChunks.isEmpty()) return;
+        for (Long chunkKey : city.claimedChunks.keySet()) {
+            if (chunkKey == null) continue;
+            if (!TerritoryManager.isChunkWithinSovereignty(chunkKey, city.config.territoryId)) {
+                throw new IllegalStateException("City expansion overflowed sovereignty boundary: " + city.id);
+            }
+        }
     }
 
     private void assignLayersByWeight(CityInstance city, CityConfig.LayerLayout layout, Map<Long, Double> costMap) {

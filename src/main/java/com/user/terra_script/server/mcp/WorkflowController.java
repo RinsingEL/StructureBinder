@@ -166,6 +166,39 @@ public class WorkflowController {
         boolean loadedOnly = req.has("t4_loaded_only")
                 ? req.get("t4_loaded_only").getAsBoolean()
                 : fallback.loadedOnly;
-        return new T4Stage.RuntimeOptions(stride, maxChunks, loadedOnly);
+        boolean legacyTerrainScan = req.has("t4_legacy_scan")
+                ? req.get("t4_legacy_scan").getAsBoolean()
+                : fallback.legacyTerrainScan;
+        boolean bootstrapCity = req.has("t4_bootstrap_city")
+                ? req.get("t4_bootstrap_city").getAsBoolean()
+                : fallback.bootstrapCity;
+        int cityTargetChunks = req.has("t4_city_target_chunks")
+                ? req.get("t4_city_target_chunks").getAsInt()
+                : fallback.cityTargetChunks;
+        String cityBias = req.has("t4_city_bias")
+                ? req.get("t4_city_bias").getAsString()
+                : fallback.cityBias;
+        String cityDensity = req.has("t4_city_density")
+                ? req.get("t4_city_density").getAsString()
+                : fallback.cityDensity;
+        String cityEcology = req.has("t4_city_ecology")
+                ? req.get("t4_city_ecology").getAsString()
+                : fallback.cityEcology;
+        boolean cityAllowWater = req.has("t4_city_allow_water")
+                ? req.get("t4_city_allow_water").getAsBoolean()
+                : fallback.cityAllowWater;
+
+        return new T4Stage.RuntimeOptions(
+                stride,
+                maxChunks,
+                loadedOnly,
+                legacyTerrainScan,
+                bootstrapCity,
+                cityTargetChunks,
+                cityBias,
+                cityDensity,
+                cityEcology,
+                cityAllowWater
+        );
     }
 }
