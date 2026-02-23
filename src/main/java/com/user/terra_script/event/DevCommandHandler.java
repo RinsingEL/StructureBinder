@@ -291,8 +291,12 @@ public class DevCommandHandler {
                 return res;
             }
             case "W4_scan_local_candidates":
+            case "Q1_scan_local_candidates_preview_pending_pick":
             case "query_region":
                 return httpPost("/query_region", args);
+            case "Q2_pick_query_region_cluster_point":
+            case "query_region_pick":
+                return httpPost("/query_region_pick", args);
             case "establish_territory":
             case "create_territory": {
                 JsonObject payload = args != null ? args.deepCopy() : new JsonObject();
@@ -670,6 +674,8 @@ public class DevCommandHandler {
                 "W4_terrain_summary",
                 "get_t1_preview_maps",
                 "W4_scan_local_candidates",
+                "Q1_scan_local_candidates_preview_pending_pick",
+                "Q2_pick_query_region_cluster_point",
                 "T1_submit_blueprint",
                 "T1_list_blueprints",
                 "list_available_structures",
@@ -708,6 +714,7 @@ public class DevCommandHandler {
                 "terrain_summary",
                 "structures",
                 "query_region",
+                "query_region_pick",
                 "create_territory",
                 "territory_status",
                 "territory/summary",

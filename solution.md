@@ -38,6 +38,7 @@
   - 产物：`world/W4/TerrainFacts.dat`、`world/W4/TerrainSummary.json`、`W4_*preview*.png`（规划中按规范输出）
   - 触发方式：工作流阶段 `W4`（或 `/dev stage W4`）
 - 局部细扫步长：Region 局部细扫固定 `step=16`（全图扫描保持原逻辑不变，避免局部细扫 `step=1` 带来的内存/关服压力）
+- 领土扩张与领土预览：当存在 Region 细扫缓存时，`TerritoryManager` 扩张主网格优先使用 `step=16`（细扫精度）；无细扫缓存时回退到全局 `scanStep`。`TerritoryPreview` 已对齐扩张网格的 `step/minX/minZ`，避免预览与扩张归属错位。
 - `T1` 已实现：`src/main/java/com/user/terra_script/server/mcp/TerritoryController.java`
   - 接口：`POST /t1_blueprint`、`GET /t1_blueprint`
   - 持久化：`src/main/java/com/user/terra_script/territory/io/TerritoryRepository.java`
@@ -383,27 +384,48 @@ root
   "limit": 5
 }
 ```
-- **输出**：候选点列表 + ASCII 图（保持现有实现）
+- **输出（Q1）**：候选点列表 + `group_ascii_maps` + `visual_map` + `preview_overlay`，并写入待选择缓存（流程暂停，等待人工触发 Q2）。
+
+### 5) `Q2_pick_query_region_cluster_point`（Q2 人工选簇取点）
+- **用途**：在 Q1 结果上人工选择簇，并按模式提取最终坐标点。
+- **HTTP**：`POST /query_region_pick`
+- **输入参数**：
+```jsonc
+{
+  "query_id": "region_12_1700000000000", // 或 target_type + target_id 读取最新挂起记录
+  "cluster_id": 3,                        // 可选：cluster_id / label / preview_label 三选一
+  "point_mode": "random_cardinal"         // center|north|south|east|west|random_cardinal
+}
+```
+- **输出（Q2）**：
+```jsonc
+{
+  "step": "Q2_PICK_CLUSTER_POINT",
+  "selected_cluster": { "cluster_id": 3, "label": "A3", "preview_label": "C" },
+  "selected_point": { "x": -1180, "z": 550 }
+}
+```
 
 # 二、国度构造部分
 
 
 ## T1 国度和区域蓝图生成（AI）
 **核心逻辑**：T1 不再只做“国家设定”，还要做“多候选战略区筛选”。  
-流程与 T2 一致：先扫描多个感兴趣区域，再通过 ASCII 图选择 `region_id`，最后提交蓝图。
+流程与 T2 一致：先扫描多个感兴趣区域并生成预览挂起（Q1），再人工触发选簇取点（Q2），最后提交蓝图。
 
 *   **AI 做什么**：
   1. 调用 `W4_get_world_atlas` 获取 `atlas + world_summary`。
   2. 调用 T1 预览图接口获取候选区域地理图（高度+等高线、山体阴影等）。
   3. 根据文明定位，定义 2~3 组兴趣条件（例如高海拔、低坡度、沿海、峡谷）。
-  4. 调用 `scan_local_candidates(region_id=...)` 对候选大陆做局部扫描，拿到多簇候选 + ASCII。
-  5. 在 ASCII 上做视觉推理，选择最优候选簇 `cluster_id`（并记录理由）。
+  4. 调用 `scan_local_candidates(region_id=...)` 进入 Q1，拿到多簇候选 + ASCII + 叠图预览，并生成待选缓存。
+  5. 人工触发 Q2（`/query_region_pick`）选择最优簇和取点模式（center / north / south / east / west / random_cardinal）。
   6. 提交 `t1_generate_blueprint`，把最终 `target_continent_id` 与扩张参数固化。
 
 *   **程序 做什么**：
   * 提供 `W4_get_world_atlas` 和 `scan_local_candidates`。
   * 为 T1 候选区域输出 PNG 预览图（遵循 W4 同款图例规则）。
-  * 返回候选簇列表（每个簇都带 `cluster_id`、关键点、ASCII 图）。
+  * 返回候选簇列表（每个簇都带 `cluster_id`、关键点、ASCII 图）和 `preview_overlay`。
+  * 写入 Q1 待选缓存，等待人工触发 Q2。
   * 依据 `world_summary` 约束 `base_power` 合理范围（避免扩张力过大/过小）。
   * 存储蓝图到 `T1_Blueprint.json`。
 

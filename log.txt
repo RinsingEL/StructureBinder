@@ -1,24 +1,79 @@
-[20:33:53] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] Stage T4 failed: T3 produced zero claimed chunks for all territories. Likely causes: missing/invalid W3-W4 scan cache, missing cluster map, or territory region_id does not match current W3 continent ids.
-[20:33:59] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] Stage W3 completed.
-[20:33:59] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] Output: .\saves\新的世界 (1)\.\terra_script\9161139915381784808\world\W3\ContinentMeta.json
-[20:33:59] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] Output: .\saves\新的世界 (1)\.\terra_script\9161139915381784808\world\W3\OceanMeta.json
-[20:34:01] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] Stage W4 completed.
-[20:34:01] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] Output: .\saves\新的世界 (1)\.\terra_script\9161139915381784808\world\W4\TerrainFacts.dat
-[20:34:01] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] Output: .\saves\新的世界 (1)\.\terra_script\9161139915381784808\world\W4\TerrainSummary.json
-[Territory] Analysis complete.
-[TerraScript][T4] T4 scan started. total_blocks=96998400, progress=0%
-[20:34:05] [Server thread/INFO] [minecraft/MinecraftServer]: [TerraScript][T4] T4 scan started. total_blocks=96998400, progress=0%
-[20:34:05] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] [TerraScript][T4] T4 scan started. total_blocks=96998400, progress=0%
-[TerraScript][T4] T4 scan progress 25% (32588800/96998400 blocks)
-[20:34:05] [Server thread/INFO] [minecraft/MinecraftServer]: [TerraScript][T4] T4 scan progress 25% (32588800/96998400 blocks)
-[20:34:05] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] [TerraScript][T4] T4 scan progress 25% (32588800/96998400 blocks)
-[TerraScript][T4] T4 scan progress 50% (96998400/96998400 blocks)
-[20:34:05] [Server thread/INFO] [minecraft/MinecraftServer]: [TerraScript][T4] T4 scan progress 50% (96998400/96998400 blocks)
-[TerraScript][T4] T4 scan progress 75% (96998400/96998400 blocks)
-[20:34:05] [Server thread/INFO] [minecraft/MinecraftServer]: [TerraScript][T4] T4 scan progress 75% (96998400/96998400 blocks)
-[TerraScript][T4] T4 scan progress 100% (96998400/96998400 blocks)
-[20:34:05] [Server thread/INFO] [minecraft/MinecraftServer]: [TerraScript][T4] T4 scan progress 100% (96998400/96998400 blocks)
-[20:34:05] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] [TerraScript][T4] T4 scan progress 50% (96998400/96998400 blocks)
-[20:34:05] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] [TerraScript][T4] T4 scan progress 75% (96998400/96998400 blocks)
-[20:34:05] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] [TerraScript][T4] T4 scan progress 100% (96998400/96998400 blocks)
-[20:34:05] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] Stage T3 completed.
+[10:23:17] [Render thread/INFO] [minecraft/Minecraft]: Stopping!
+[10:23:17] [Render thread/INFO] [co.se.di.co.ap.in.ClientApi/]: Client on ClientOnly mode disconnecting.
+[10:23:17] [Render thread/INFO] [Di.se.di.co.wo.AbstractDhWorld/]: Unloading level [minecraft:the_end].
+[10:23:17] [Render thread/INFO] [Di.se.di.co.fi.AbstractDataSourceHandler/]: Closing [GeneratedFullDataSourceProvider] for level: [DhClientServerLevel{v2_m1blcn27qmt1c@minecraft:the_end}].
+[10:23:17] [Render thread/INFO] [Di.se.di.co.fi.fu.FullDataSourceProviderV1/]: Closing [FullDataSourceProviderV1] for level: [DhClientServerLevel{v2_m1blcn27qmt1c@minecraft:the_end}].
+[10:23:17] [Render thread/INFO] [Di.se.di.co.sq.re.AbstractDhRepo/]: Closing database connection: [jdbc:dh_sqlite:.\saves\v2\DIM1\data\DistantHorizons.sqlite]...
+[10:23:17] [DH-Parent Update Queue [minecraft:the_end] Thread[0]/INFO] [Di.se.di.co.fi.fu.FullDataSourceProviderV2/]: Update thread [DH-Parent Update Queue [minecraft:the_end] Thread[0]] terminated.
+[10:23:17] [Render thread/INFO] [Di.se.di.co.sq.re.AbstractDhRepo/]: Finished closing database connection: [jdbc:dh_sqlite:.\saves\v2\DIM1\data\DistantHorizons.sqlite]
+[10:23:17] [Render thread/INFO] [Di.se.di.co.le.AbstractDhServerLevel/]: Closed DHLevel for [Wrapped{ServerLevel[v2]@minecraft:the_end}].
+[10:23:17] [Render thread/INFO] [Di.se.di.co.fi.AbstractDataSourceHandler/]: Closing [GeneratedFullDataSourceProvider] for level: [DhClientServerLevel{v2_m1blcn27qmt1c@minecraft:the_end}].
+[10:23:17] [Render thread/INFO] [Di.se.di.co.fi.fu.FullDataSourceProviderV1/]: Closing [FullDataSourceProviderV1] for level: [DhClientServerLevel{v2_m1blcn27qmt1c@minecraft:the_end}].
+[10:23:17] [Render thread/INFO] [Di.se.di.co.le.AbstractDhServerLevel/]: Closed DhClientServerLevel for Wrapped{ServerLevel[v2]@minecraft:the_end}
+[10:23:17] [Render thread/INFO] [Di.se.di.co.wo.AbstractDhWorld/]: Unloading level [minecraft:the_nether].
+[10:23:17] [Render thread/INFO] [Di.se.di.co.fi.AbstractDataSourceHandler/]: Closing [GeneratedFullDataSourceProvider] for level: [DhClientServerLevel{v2_m1blcn27qmt1c@minecraft:the_nether}].
+[10:23:17] [Render thread/INFO] [Di.se.di.co.fi.fu.FullDataSourceProviderV1/]: Closing [FullDataSourceProviderV1] for level: [DhClientServerLevel{v2_m1blcn27qmt1c@minecraft:the_nether}].
+[10:23:17] [Render thread/INFO] [Di.se.di.co.sq.re.AbstractDhRepo/]: Closing database connection: [jdbc:dh_sqlite:.\saves\v2\DIM-1\data\DistantHorizons.sqlite]...
+[10:23:17] [DH-Parent Update Queue [minecraft:the_nether] Thread[0]/INFO] [Di.se.di.co.fi.fu.FullDataSourceProviderV2/]: Update thread [DH-Parent Update Queue [minecraft:the_nether] Thread[0]] terminated.
+[10:23:17] [Render thread/INFO] [Di.se.di.co.sq.re.AbstractDhRepo/]: Finished closing database connection: [jdbc:dh_sqlite:.\saves\v2\DIM-1\data\DistantHorizons.sqlite]
+[10:23:17] [Render thread/INFO] [Di.se.di.co.le.AbstractDhServerLevel/]: Closed DHLevel for [Wrapped{ServerLevel[v2]@minecraft:the_nether}].
+[10:23:18] [Render thread/INFO] [Di.se.di.co.fi.AbstractDataSourceHandler/]: Closing [GeneratedFullDataSourceProvider] for level: [DhClientServerLevel{v2_m1blcn27qmt1c@minecraft:the_nether}].
+[10:23:18] [Render thread/INFO] [Di.se.di.co.fi.fu.FullDataSourceProviderV1/]: Closing [FullDataSourceProviderV1] for level: [DhClientServerLevel{v2_m1blcn27qmt1c@minecraft:the_nether}].
+[10:23:18] [Render thread/INFO] [Di.se.di.co.le.AbstractDhServerLevel/]: Closed DhClientServerLevel for Wrapped{ServerLevel[v2]@minecraft:the_nether}
+[10:23:18] [Render thread/INFO] [Di.se.di.co.wo.AbstractDhWorld/]: Unloading level [minecraft:overworld].
+[10:23:18] [Render thread/INFO] [Di.se.di.co.le.ClientLevelModule$ClientRenderState/]: Shutting down ClientRenderState
+[10:23:18] [Render thread/INFO] [co.se.di.co.re.re.LodRenderer/]: Shutting down LodRenderer...
+[10:23:18] [Render thread/INFO] [co.se.di.co.re.re.LodRenderer/]: Queuing Renderer Cleanup for main render thread
+[10:23:18] [Render thread/INFO] [Di.se.di.co.re.LodQuadTree/]: Shutting down LodQuadTree...
+[10:23:18] [Render thread/INFO] [Di.se.di.co.re.LodQuadTree/]: Finished shutting down LodQuadTree
+[10:23:18] [Render thread/INFO] [co.se.di.co.re.re.LodRenderer/]: Finished shutting down LodRenderer
+[10:23:18] [Render thread/INFO] [Di.se.di.co.re.LodQuadTree/]: Shutting down LodQuadTree...
+[10:23:18] [Render thread/INFO] [Di.se.di.co.re.LodQuadTree/]: Finished shutting down LodQuadTree
+[10:23:18] [DH-Cleanup Thread[0]/INFO] [Di.se.di.co.re.LodQuadTree/]: waiting for [0] futures before closing render cache...
+[10:23:18] [DH-Cleanup Thread[0]/INFO] [Di.se.di.co.re.LodQuadTree/]: waiting for [0] futures before closing render cache...
+[10:23:18] [Render thread/INFO] [Di.se.di.co.fi.AbstractDataSourceHandler/]: Closing [GeneratedFullDataSourceProvider] for level: [DhClientServerLevel{v2_m1blcn27qmt1c@minecraft:overworld}].
+[10:23:18] [Render thread/INFO] [Di.se.di.co.fi.fu.FullDataSourceProviderV1/]: Closing [FullDataSourceProviderV1] for level: [DhClientServerLevel{v2_m1blcn27qmt1c@minecraft:overworld}].
+[10:23:18] [Render thread/INFO] [Di.se.di.co.sq.re.AbstractDhRepo/]: Closing database connection: [jdbc:dh_sqlite:.\saves\v2\data\DistantHorizons.sqlite]...
+[10:23:18] [DH-Parent Update Queue [minecraft:overworld] Thread[0]/INFO] [Di.se.di.co.fi.fu.FullDataSourceProviderV2/]: Update thread [DH-Parent Update Queue [minecraft:overworld] Thread[0]] terminated.
+[10:23:18] [Render thread/INFO] [Di.se.di.co.sq.re.AbstractDhRepo/]: Finished closing database connection: [jdbc:dh_sqlite:.\saves\v2\data\DistantHorizons.sqlite]
+[10:23:18] [Render thread/INFO] [Di.se.di.co.le.AbstractDhServerLevel/]: Closed DHLevel for [Wrapped{ServerLevel[v2]@minecraft:overworld}].
+[10:23:18] [Render thread/INFO] [Di.se.di.co.fi.AbstractDataSourceHandler/]: Closing [GeneratedFullDataSourceProvider] for level: [DhClientServerLevel{v2_m1blcn27qmt1c@minecraft:overworld}].
+[10:23:18] [Render thread/INFO] [Di.se.di.co.fi.fu.FullDataSourceProviderV1/]: Closing [FullDataSourceProviderV1] for level: [DhClientServerLevel{v2_m1blcn27qmt1c@minecraft:overworld}].
+[10:23:18] [Render thread/INFO] [Di.se.di.co.le.AbstractDhServerLevel/]: Closed DhClientServerLevel for Wrapped{ServerLevel[v2]@minecraft:overworld}
+[10:23:18] [Render thread/INFO] [Di.se.di.co.wo.AbstractDhWorld/]: Closed DhWorld of type CLIENT_SERVER
+[10:23:18] [Render thread/INFO] [Di.se.di.co.wo.AbstractDhWorld/]: Unloading level [minecraft:the_end].
+[10:23:18] [Render thread/INFO] [Di.se.di.co.fi.AbstractDataSourceHandler/]: Closing [GeneratedFullDataSourceProvider] for level: [DhClientServerLevel{v2_m1blcn27qmt1c@minecraft:the_end}].
+[10:23:18] [Render thread/INFO] [Di.se.di.co.fi.fu.FullDataSourceProviderV1/]: Closing [FullDataSourceProviderV1] for level: [DhClientServerLevel{v2_m1blcn27qmt1c@minecraft:the_end}].
+[10:23:18] [Render thread/INFO] [Di.se.di.co.le.AbstractDhServerLevel/]: Closed DHLevel for [Wrapped{ServerLevel[v2]@minecraft:the_end}].
+[10:23:19] [Render thread/INFO] [Di.se.di.co.fi.AbstractDataSourceHandler/]: Closing [GeneratedFullDataSourceProvider] for level: [DhClientServerLevel{v2_m1blcn27qmt1c@minecraft:the_end}].
+[10:23:19] [Render thread/INFO] [Di.se.di.co.fi.fu.FullDataSourceProviderV1/]: Closing [FullDataSourceProviderV1] for level: [DhClientServerLevel{v2_m1blcn27qmt1c@minecraft:the_end}].
+[10:23:19] [Render thread/INFO] [Di.se.di.co.le.AbstractDhServerLevel/]: Closed DhClientServerLevel for Wrapped{ServerLevel[v2]@minecraft:the_end}
+[10:23:19] [Render thread/INFO] [Di.se.di.co.wo.AbstractDhWorld/]: Unloading level [minecraft:the_nether].
+[10:23:19] [Render thread/INFO] [Di.se.di.co.fi.AbstractDataSourceHandler/]: Closing [GeneratedFullDataSourceProvider] for level: [DhClientServerLevel{v2_m1blcn27qmt1c@minecraft:the_nether}].
+[10:23:19] [Render thread/INFO] [Di.se.di.co.fi.fu.FullDataSourceProviderV1/]: Closing [FullDataSourceProviderV1] for level: [DhClientServerLevel{v2_m1blcn27qmt1c@minecraft:the_nether}].
+[10:23:19] [Render thread/INFO] [Di.se.di.co.le.AbstractDhServerLevel/]: Closed DHLevel for [Wrapped{ServerLevel[v2]@minecraft:the_nether}].
+[10:23:19] [Render thread/INFO] [Di.se.di.co.fi.AbstractDataSourceHandler/]: Closing [GeneratedFullDataSourceProvider] for level: [DhClientServerLevel{v2_m1blcn27qmt1c@minecraft:the_nether}].
+[10:23:19] [Render thread/INFO] [Di.se.di.co.fi.fu.FullDataSourceProviderV1/]: Closing [FullDataSourceProviderV1] for level: [DhClientServerLevel{v2_m1blcn27qmt1c@minecraft:the_nether}].
+[10:23:19] [Render thread/INFO] [Di.se.di.co.le.AbstractDhServerLevel/]: Closed DhClientServerLevel for Wrapped{ServerLevel[v2]@minecraft:the_nether}
+[10:23:19] [Render thread/INFO] [Di.se.di.co.wo.AbstractDhWorld/]: Unloading level [minecraft:overworld].
+[10:23:19] [Render thread/INFO] [Di.se.di.co.fi.AbstractDataSourceHandler/]: Closing [GeneratedFullDataSourceProvider] for level: [DhClientServerLevel{v2_m1blcn27qmt1c@minecraft:overworld}].
+[10:23:19] [Render thread/INFO] [Di.se.di.co.fi.fu.FullDataSourceProviderV1/]: Closing [FullDataSourceProviderV1] for level: [DhClientServerLevel{v2_m1blcn27qmt1c@minecraft:overworld}].
+[10:23:19] [Render thread/INFO] [Di.se.di.co.le.AbstractDhServerLevel/]: Closed DHLevel for [Wrapped{ServerLevel[v2]@minecraft:overworld}].
+[10:23:19] [Render thread/INFO] [Di.se.di.co.fi.AbstractDataSourceHandler/]: Closing [GeneratedFullDataSourceProvider] for level: [DhClientServerLevel{v2_m1blcn27qmt1c@minecraft:overworld}].
+[10:23:19] [Render thread/INFO] [Di.se.di.co.fi.fu.FullDataSourceProviderV1/]: Closing [FullDataSourceProviderV1] for level: [DhClientServerLevel{v2_m1blcn27qmt1c@minecraft:overworld}].
+[10:23:19] [Render thread/INFO] [Di.se.di.co.le.AbstractDhServerLevel/]: Closed DhClientServerLevel for Wrapped{ServerLevel[v2]@minecraft:overworld}
+[10:23:19] [Render thread/INFO] [Di.se.di.co.wo.AbstractDhWorld/]: Closed DhWorld of type CLIENT_SERVER
+[10:23:19] [Render thread/INFO] [Di.se.di.co.ut.th.PriorityTaskPicker/]: Shutting down PriorityTaskPicker thread pool...
+[10:23:19] [Render thread/INFO] [Di.se.di.co.sq.re.AbstractDhRepo/]: Closing all [0] database connections...
+[10:23:20] [Render thread/INFO] [Di.se.di.fo.ForgeClientProxy/]: level unload
+[10:23:20] [Render thread/INFO] [co.se.di.co.ap.in.ClientApi/]: Unloading client level [ClientLevelWrapper]-[m1blcn27qmt1c@minecraft:overworld].
+[10:23:20] [Server thread/INFO] [minecraft/ServerGamePacketListenerImpl]: Dev lost connection: 连接中断
+[10:23:20] [Server thread/INFO] [minecraft/MinecraftServer]: Dev退出了游戏
+[10:23:20] [Server thread/INFO] [Di.se.di.co.ap.in.ServerApi/]: Player [Dev] disconnected.
+[10:23:20] [Server thread/INFO] [minecraft/ServerGamePacketListenerImpl]: Stopping singleplayer server as player logged out
+[10:23:20] [Server thread/DEBUG] [Di.se.di.co.ap.in.ServerApi/]: Server World null unloading
+[10:23:20] [Server thread/INFO] [minecraft/MinecraftServer]: Stopping server
+[10:23:20] [Server thread/INFO] [minecraft/MinecraftServer]: Saving players
+[10:23:20] [Server thread/INFO] [minecraft/MinecraftServer]: Saving worlds
+[10:23:24] [Thread-30/DEBUG] [Di.se.di.co.re.LodQuadTree/]: closing render cache
+[10:23:24] [Thread-31/DEBUG] [Di.se.di.co.re.LodQuadTree/]: closing render cache

@@ -280,10 +280,10 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: "scan_local_candidates",
         description: 
-          "【Step 3 / 支线任务】寻找符合地理条件的坐标点。\n" +
+          "【Q1 / 支线任务】寻找符合地理条件的坐标点，并生成待选择预览。\n" +
           "模式 A (找首都)：提供 `region_id`，在整个大陆范围内寻找。\n" +
           "模式 B (找分城)：提供 `territory_id`，仅在已建立的领土范围内寻找。\n" +
-          "支持 interest_groups 多兴趣组扫描：返回 candidates + candidates_metadata + group_ascii_maps + visual_map（综合 ASCII）。",
+          "支持 interest_groups 多兴趣组扫描：返回 candidates + candidates_metadata + group_ascii_maps + visual_map + preview_overlay，并进入 selection_pending 状态等待人工触发 Q2。",
         inputSchema: {
           type: "object",
           properties: {
@@ -317,6 +317,28 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             }
           },
         },
+      },
+      {
+        name: "query_region_pick",
+        description:
+          "【Q2】人工触发：在 Q1(scan_local_candidates) 结果中选择簇，并提取最终坐标点。\n" +
+          "支持按 cluster_id / label / preview_label 选簇；点位可选 center/north/south/east/west/random_cardinal。",
+        inputSchema: {
+          type: "object",
+          properties: {
+            query_id: { type: "string", description: "Q1 返回的 selection_pending.query_id（推荐）" },
+            target_type: { type: "string", description: "可选：region 或 territory（与 target_id 搭配）" },
+            target_id: { type: "string", description: "可选：目标 ID（与 target_type 搭配）" },
+            cluster_id: { type: "number", description: "可选：簇编号，cluster_id/label/preview_label 三选一" },
+            label: { type: "string", description: "可选：簇标签（如 Plains1 / A1）" },
+            preview_label: { type: "string", description: "可选：预览标签（如 A/B/C）" },
+            point_mode: {
+              type: "string",
+              enum: ["center", "north", "south", "east", "west", "random_cardinal"],
+              description: "取点模式"
+            }
+          }
+        }
       },
 
       // --- 5. 领土规划 ---
@@ -1000,6 +1022,15 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
         } catch (err: any) {
              return { content: [{ type: "text", text: `Error: ${err.response?.data?.error || err.message}` }], isError: true };
+        }
+      }
+      case "query_region_pick": {
+        const args = request.params.arguments as any;
+        try {
+          const res = await axios.post(`${MC_API_URL}/query_region_pick`, args || {});
+          return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
+        } catch (err: any) {
+          return { content: [{ type: "text", text: `Error: ${err.response?.data?.error || err.message}` }], isError: true };
         }
       }
 

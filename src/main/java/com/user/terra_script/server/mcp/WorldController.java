@@ -22,11 +22,18 @@ import com.user.terra_script.config.StructurePlan;
 import com.user.terra_script.world.io.WorldRepository;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.storage.LevelResource;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class WorldController {
+    private static final String STEP_Q1 = "Q1_SCAN_PREVIEW_PENDING_PICK";
+    private static final String STEP_Q2 = "Q2_PICK_CLUSTER_POINT";
     private final MinecraftServer mcServer;
     private final Gson gson = new Gson();
 
@@ -238,6 +245,7 @@ public class WorldController {
             }
 
             JsonObject response = new JsonObject();
+            response.addProperty("step", STEP_Q1);
             JsonObject meta = new JsonObject();
             if (territoryId != null) meta.addProperty("target_territory", territoryId);
             else meta.addProperty("target_region", regionId);
@@ -368,9 +376,83 @@ public class WorldController {
                     previewOverlays
             );
             response.add("preview_overlay", preview);
-            HttpUtil.sendResponse(exchange, 200, gson.toJson(response));
-            // ------ 替换结束 ------
 
+            String targetType = territoryId == null ? "region" : "territory";
+            String targetId = territoryId == null ? String.valueOf(regionId) : territoryId;
+            JsonObject pending = persistPendingSelection(targetType, targetId, response);
+            response.add("selection_pending", pending);
+            HttpUtil.sendResponse(exchange, 200, gson.toJson(response));
+
+        } catch (Exception e) {
+            HttpUtil.handleError(exchange, e);
+        }
+    }
+
+    public void handleQueryRegionPick(HttpExchange exchange) throws IOException {
+        if (!HttpUtil.requireMethod(exchange, "POST")) return;
+        try {
+            String body = HttpUtil.readBody(exchange);
+            JsonObject req = JsonParser.parseString(body).getAsJsonObject();
+
+            String queryId = req.has("query_id") ? req.get("query_id").getAsString() : null;
+            String targetType = req.has("target_type") ? req.get("target_type").getAsString() : null;
+            String targetId = req.has("target_id") ? req.get("target_id").getAsString() : null;
+            String pointMode = req.has("point_mode") ? req.get("point_mode").getAsString() : "center";
+
+            JsonObject pending = loadPendingSelection(queryId, targetType, targetId);
+            if (pending == null) {
+                HttpUtil.sendResponse(exchange, 404, "{\"error\":\"No pending query_region selection found.\"}");
+                return;
+            }
+            if (!pending.has("candidates") || !pending.get("candidates").isJsonArray()) {
+                HttpUtil.sendResponse(exchange, 400, "{\"error\":\"Pending selection cache has no candidates.\"}");
+                return;
+            }
+
+            JsonArray candidates = pending.getAsJsonArray("candidates");
+            JsonObject selected = pickCandidate(candidates, req);
+            if (selected == null) {
+                HttpUtil.sendResponse(exchange, 404, "{\"error\":\"Candidate not found. Provide cluster_id or label/preview_label.\"}");
+                return;
+            }
+
+            JsonObject keyPoints = selected.has("key_points") && selected.get("key_points").isJsonObject()
+                    ? selected.getAsJsonObject("key_points")
+                    : null;
+            if (keyPoints == null || !keyPoints.has("center")) {
+                HttpUtil.sendResponse(exchange, 400, "{\"error\":\"Selected candidate missing key_points.\"}");
+                return;
+            }
+
+            String appliedMode = normalizePointMode(pointMode);
+            JsonObject point = resolvePointFromMode(keyPoints, appliedMode);
+            if (point == null) {
+                HttpUtil.sendResponse(exchange, 400, "{\"error\":\"Failed to resolve point from mode.\"}");
+                return;
+            }
+
+            JsonObject res = new JsonObject();
+            res.addProperty("step", STEP_Q2);
+            res.addProperty("query_id", pending.has("query_id") ? pending.get("query_id").getAsString() : "");
+            res.addProperty("point_mode_requested", pointMode);
+            res.addProperty("point_mode_applied", appliedMode);
+
+            JsonObject selectedMeta = new JsonObject();
+            selectedMeta.addProperty("cluster_id", selected.has("cluster_id") ? selected.get("cluster_id").getAsInt() : -1);
+            if (selected.has("label")) selectedMeta.addProperty("label", selected.get("label").getAsString());
+            if (selected.has("preview_label")) selectedMeta.addProperty("preview_label", selected.get("preview_label").getAsString());
+            if (selected.has("group_id")) selectedMeta.addProperty("group_id", selected.get("group_id").getAsString());
+            res.add("selected_cluster", selectedMeta);
+            res.add("selected_point", point);
+
+            JsonObject pendingInfo = new JsonObject();
+            if (pending.has("target_type")) pendingInfo.addProperty("target_type", pending.get("target_type").getAsString());
+            if (pending.has("target_id")) pendingInfo.addProperty("target_id", pending.get("target_id").getAsString());
+            if (pending.has("preview_overlay")) pendingInfo.add("preview_overlay", pending.get("preview_overlay"));
+            res.add("from_pending", pendingInfo);
+
+            persistPickResult(res);
+            HttpUtil.sendResponse(exchange, 200, gson.toJson(res));
         } catch (Exception e) {
             HttpUtil.handleError(exchange, e);
         }
@@ -490,6 +572,153 @@ public class WorldController {
         return (char) ('A' + (Math.max(0, index) % 26));
     }
 
+    private JsonObject persistPendingSelection(String targetType, String targetId, JsonObject response) {
+        JsonObject pending = new JsonObject();
+        try {
+            String queryId = buildQueryId(targetType, targetId);
+            Path dir = queryRegionCacheDir();
+            Files.createDirectories(dir);
+
+            JsonObject content = new JsonObject();
+            content.addProperty("step", STEP_Q1);
+            content.addProperty("query_id", queryId);
+            content.addProperty("created_at_epoch_ms", System.currentTimeMillis());
+            content.addProperty("target_type", targetType);
+            content.addProperty("target_id", targetId);
+            content.addProperty("selection_pending", true);
+            content.add("metadata", response.get("metadata"));
+            content.add("candidates", response.get("candidates"));
+            if (response.has("candidates_metadata")) content.add("candidates_metadata", response.get("candidates_metadata"));
+            if (response.has("group_ascii_maps")) content.add("group_ascii_maps", response.get("group_ascii_maps"));
+            if (response.has("visual_map")) content.add("visual_map", response.get("visual_map"));
+            if (response.has("preview_overlay")) content.add("preview_overlay", response.get("preview_overlay"));
+
+            JsonArray modes = new JsonArray();
+            modes.add("center");
+            modes.add("north");
+            modes.add("south");
+            modes.add("east");
+            modes.add("west");
+            modes.add("random_cardinal");
+            content.add("supported_point_modes", modes);
+
+            String fileName = "query_region_selection_" + queryId + ".json";
+            Path file = dir.resolve(fileName);
+            Files.writeString(file, gson.toJson(content), StandardCharsets.UTF_8);
+
+            JsonObject latest = new JsonObject();
+            latest.addProperty("query_id", queryId);
+            latest.addProperty("target_type", targetType);
+            latest.addProperty("target_id", targetId);
+            latest.addProperty("file", "cache/query_region/" + fileName);
+            latest.addProperty("updated_at_epoch_ms", System.currentTimeMillis());
+            Path latestFile = dir.resolve("query_region_selection_latest_" + sanitize(targetType + "_" + targetId) + ".json");
+            Files.writeString(latestFile, gson.toJson(latest), StandardCharsets.UTF_8);
+
+            pending.addProperty("query_id", queryId);
+            pending.addProperty("status", "pending");
+            pending.addProperty("step", STEP_Q1);
+            pending.addProperty("cache", "cache/query_region/" + fileName);
+            pending.addProperty("latest_pointer", "cache/query_region/" + latestFile.getFileName());
+            pending.addProperty("pick_api", "/query_region_pick");
+        } catch (Exception e) {
+            pending.addProperty("status", "pending_cache_failed");
+            pending.addProperty("error", e.getMessage() == null ? "unknown" : e.getMessage());
+        }
+        return pending;
+    }
+
+    private JsonObject loadPendingSelection(String queryId, String targetType, String targetId) {
+        try {
+            Path dir = queryRegionCacheDir();
+            if (queryId != null && !queryId.isBlank()) {
+                Path file = dir.resolve("query_region_selection_" + sanitize(queryId) + ".json");
+                if (Files.exists(file)) return JsonParser.parseString(Files.readString(file, StandardCharsets.UTF_8)).getAsJsonObject();
+                return null;
+            }
+            if (targetType == null || targetType.isBlank() || targetId == null || targetId.isBlank()) return null;
+            Path latest = dir.resolve("query_region_selection_latest_" + sanitize(targetType + "_" + targetId) + ".json");
+            if (!Files.exists(latest)) return null;
+            JsonObject latestObj = JsonParser.parseString(Files.readString(latest, StandardCharsets.UTF_8)).getAsJsonObject();
+            if (!latestObj.has("query_id")) return null;
+            String latestQueryId = latestObj.get("query_id").getAsString();
+            Path file = dir.resolve("query_region_selection_" + sanitize(latestQueryId) + ".json");
+            if (!Files.exists(file)) return null;
+            return JsonParser.parseString(Files.readString(file, StandardCharsets.UTF_8)).getAsJsonObject();
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private JsonObject pickCandidate(JsonArray candidates, JsonObject req) {
+        Integer clusterId = req.has("cluster_id") ? req.get("cluster_id").getAsInt() : null;
+        String label = req.has("label") ? req.get("label").getAsString() : null;
+        String previewLabel = req.has("preview_label") ? req.get("preview_label").getAsString() : null;
+
+        for (JsonElement el : candidates) {
+            if (!el.isJsonObject()) continue;
+            JsonObject c = el.getAsJsonObject();
+            if (clusterId != null && c.has("cluster_id") && c.get("cluster_id").getAsInt() == clusterId) return c;
+            if (label != null && c.has("label") && label.equalsIgnoreCase(c.get("label").getAsString())) return c;
+            if (previewLabel != null && c.has("preview_label") && previewLabel.equalsIgnoreCase(c.get("preview_label").getAsString())) return c;
+        }
+        return null;
+    }
+
+    private static String normalizePointMode(String raw) {
+        String mode = raw == null ? "center" : raw.trim().toLowerCase(Locale.ROOT);
+        return switch (mode) {
+            case "north", "south", "east", "west", "random_cardinal", "center" -> mode;
+            default -> "center";
+        };
+    }
+
+    private static JsonObject resolvePointFromMode(JsonObject keyPoints, String mode) {
+        if ("random_cardinal".equals(mode)) {
+            List<String> keys = List.of("north_tip", "south_tip", "east_tip", "west_tip");
+            String selected = keys.get(ThreadLocalRandom.current().nextInt(keys.size()));
+            JsonObject point = keyPoints.has(selected) ? keyPoints.getAsJsonObject(selected) : null;
+            if (point != null) return point;
+            return keyPoints.getAsJsonObject("center");
+        }
+        String key = switch (mode) {
+            case "north" -> "north_tip";
+            case "south" -> "south_tip";
+            case "east" -> "east_tip";
+            case "west" -> "west_tip";
+            default -> "center";
+        };
+        if (keyPoints.has(key) && keyPoints.get(key).isJsonObject()) return keyPoints.getAsJsonObject(key);
+        if (keyPoints.has("center") && keyPoints.get("center").isJsonObject()) return keyPoints.getAsJsonObject("center");
+        return null;
+    }
+
+    private void persistPickResult(JsonObject result) {
+        try {
+            Path dir = queryRegionCacheDir();
+            Files.createDirectories(dir);
+            String queryId = result.has("query_id") ? result.get("query_id").getAsString() : "unknown";
+            int clusterId = result.has("selected_cluster") && result.getAsJsonObject("selected_cluster").has("cluster_id")
+                    ? result.getAsJsonObject("selected_cluster").get("cluster_id").getAsInt()
+                    : -1;
+            String fileName = "query_region_pick_" + sanitize(queryId) + "_c" + clusterId + ".json";
+            Files.writeString(dir.resolve(fileName), gson.toJson(result), StandardCharsets.UTF_8);
+        } catch (Exception ignored) { }
+    }
+
+    private Path queryRegionCacheDir() {
+        return mcServer.getWorldPath(LevelResource.ROOT).resolve("terra_script").resolve("cache").resolve("query_region");
+    }
+
+    private static String buildQueryId(String targetType, String targetId) {
+        return sanitize(targetType + "_" + targetId) + "_" + System.currentTimeMillis();
+    }
+
+    private static String sanitize(String input) {
+        if (input == null || input.isBlank()) return "unknown";
+        return input.replaceAll("[^a-zA-Z0-9._-]", "_");
+    }
+
     private static JsonArray buildVisualMap(List<OverlayCluster> overlays) {
         JsonArray arr = new JsonArray();
         if (overlays == null || overlays.isEmpty()) return arr;
@@ -590,4 +819,3 @@ public class WorldController {
         return obj;
     }
 }
-

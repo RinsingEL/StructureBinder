@@ -77,11 +77,20 @@ public class TerritoryManager {
 
     // 全局像素归属图 (用于快速判定接壤)
     public static String[][] globalOwnershipMap = null;
+    private static final int HIGH_RES_EXPANSION_STEP = 16;
+    private static int expansionStepBlocks = 1;
+    private static int expansionMinX = 0;
+    private static int expansionMinZ = 0;
+    private static ScanPixel[][] expansionScanMap = null;
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final File CONFIG_FILE = FMLPaths.CONFIGDIR.get().resolve("terra_script_territories.json").toFile();
 
     public static Collection<TerritoryResult> getAllResults() { return results.values(); }
+    public static int getExpansionStepBlocks() { return Math.max(1, expansionStepBlocks); }
+    public static int getExpansionMinX() { return expansionMinX; }
+    public static int getExpansionMinZ() { return expansionMinZ; }
+    public static ScanPixel[][] getExpansionScanMap() { return expansionScanMap; }
     public static List<TerritoryConfig> getRegisteredFactions() { return new ArrayList<>(registeredFactions); }
     public static TerritoryConfig getTerritoryConfig(String id) {
         if (id == null) return null;
@@ -89,6 +98,22 @@ public class TerritoryManager {
             if (id.equals(cfg.id)) return cfg;
         }
         return null;
+    }
+
+    private static class ExpansionGrid {
+        public final ScanPixel[][] map;
+        public final int step;
+        public final int minX;
+        public final int minZ;
+        public final int coarseStep;
+
+        public ExpansionGrid(ScanPixel[][] map, int step, int minX, int minZ, int coarseStep) {
+            this.map = map;
+            this.step = step;
+            this.minX = minX;
+            this.minZ = minZ;
+            this.coarseStep = coarseStep;
+        }
     }
 
     // --- 核心操作方法 ---
@@ -116,6 +141,10 @@ public class TerritoryManager {
         registeredFactions.clear();
         results.clear();
         globalOwnershipMap = null;
+        expansionScanMap = null;
+        expansionStepBlocks = 1;
+        expansionMinX = 0;
+        expansionMinZ = 0;
         save();
     }
 
@@ -133,14 +162,20 @@ public class TerritoryManager {
 
     // --- 领土扩张算法 (Dijkstra) ---
     private static void computeGlobal(ScanResultHolder holder) {
-        ScanPixel[][] map = holder.lastScanData;
+        ExpansionGrid grid = buildExpansionGrid(holder);
+        ScanPixel[][] map = grid.map;
         int[][] clusterMap = holder.lastClusterMap;
         int w = map.length;
         int h = map[0].length;
-        int step = holder.scanStep;
-        int radiusBlocks = holder.scanRadiusChunks * 16;
-        int globalMinX = -radiusBlocks;
-        int globalMinZ = -radiusBlocks;
+        int step = grid.step;
+        int globalMinX = grid.minX;
+        int globalMinZ = grid.minZ;
+        int coarseStep = grid.coarseStep;
+
+        expansionScanMap = map;
+        expansionStepBlocks = step;
+        expansionMinX = globalMinX;
+        expansionMinZ = globalMinZ;
 
         globalOwnershipMap = new String[w][h];
 
@@ -158,12 +193,16 @@ public class TerritoryManager {
         for (TerritoryConfig cfg : registeredFactions) {
             int seedX = (cfg.capitalX - globalMinX) / step;
             int seedZ = (cfg.capitalZ - globalMinZ) / step;
-            int[] snapped = snapSeedToRegion(seedX, seedZ, cfg.regionId, map, clusterMap);
+            int[] snapped = snapSeedToRegion(
+                    seedX, seedZ, cfg.regionId, map, clusterMap,
+                    globalMinX, globalMinZ, step, coarseStep);
             int gx = snapped[0];
             int gz = snapped[1];
 
             if (gx < 0 || gx >= w || gz < 0 || gz >= h) continue;
-            if (!isCellAllowedForRegion(gx, gz, cfg.regionId, map, clusterMap)) continue;
+            if (!isCellAllowedForRegion(
+                    gx, gz, cfg.regionId, map, clusterMap,
+                    globalMinX, globalMinZ, step, coarseStep)) continue;
 
             pq.add(new double[]{0.0, gx, gz, registeredFactions.indexOf(cfg)});
             distMap[gx][gz] = 0.0;
@@ -196,7 +235,9 @@ public class TerritoryManager {
                 if (nx < 0 || nx >= w || nz < 0 || nz >= h) continue;
                 ScanPixel neighbor = map[nx][nz];
                 if (neighbor == null) continue;
-                if (!isCellAllowedForRegion(nx, nz, currentFaction.regionId, map, clusterMap)) continue;
+                if (!isCellAllowedForRegion(
+                        nx, nz, currentFaction.regionId, map, clusterMap,
+                        globalMinX, globalMinZ, step, coarseStep)) continue;
 
                 double slope;
                 double landRatio;
@@ -228,21 +269,27 @@ public class TerritoryManager {
     }
 
     private static boolean isCellAllowedForRegion(
-            int gx, int gz, int regionId, ScanPixel[][] map, int[][] clusterMap) {
+            int gx, int gz, int regionId, ScanPixel[][] map, int[][] clusterMap,
+            int globalMinX, int globalMinZ, int step, int clusterStep) {
         if (gx < 0 || gz < 0 || gx >= map.length || gz >= map[0].length) return false;
         ScanPixel p = map[gx][gz];
         if (p == null || !p.isLand()) return false;
-        if (clusterMap == null || gx >= clusterMap.length || gz >= clusterMap[0].length) return false;
-        return clusterMap[gx][gz] == regionId;
+        int worldX = globalMinX + gx * step + step / 2;
+        int worldZ = globalMinZ + gz * step + step / 2;
+        int clusterId = readClusterAtWorld(worldX, worldZ, clusterMap, globalMinX, globalMinZ, clusterStep);
+        return clusterId == regionId;
     }
 
     private static int[] snapSeedToRegion(
-            int gx, int gz, int regionId, ScanPixel[][] map, int[][] clusterMap) {
+            int gx, int gz, int regionId, ScanPixel[][] map, int[][] clusterMap,
+            int globalMinX, int globalMinZ, int step, int clusterStep) {
         int w = map.length;
         int h = map[0].length;
         int clampedX = Math.max(0, Math.min(w - 1, gx));
         int clampedZ = Math.max(0, Math.min(h - 1, gz));
-        if (isCellAllowedForRegion(clampedX, clampedZ, regionId, map, clusterMap)) {
+        if (isCellAllowedForRegion(
+                clampedX, clampedZ, regionId, map, clusterMap,
+                globalMinX, globalMinZ, step, clusterStep)) {
             return new int[]{clampedX, clampedZ};
         }
 
@@ -251,7 +298,9 @@ public class TerritoryManager {
         int bestDistSq = Integer.MAX_VALUE;
         for (int x = 0; x < w; x++) {
             for (int z = 0; z < h; z++) {
-                if (!isCellAllowedForRegion(x, z, regionId, map, clusterMap)) continue;
+                if (!isCellAllowedForRegion(
+                        x, z, regionId, map, clusterMap,
+                        globalMinX, globalMinZ, step, clusterStep)) continue;
                 int dx = x - clampedX;
                 int dz = z - clampedZ;
                 int distSq = dx * dx + dz * dz;
@@ -263,6 +312,102 @@ public class TerritoryManager {
             }
         }
         return new int[]{bestX, bestZ};
+    }
+
+    private static ExpansionGrid buildExpansionGrid(ScanResultHolder holder) {
+        ScanPixel[][] coarseMap = holder.lastScanData;
+        int coarseStep = Math.max(1, holder.scanStep);
+        int targetStep = selectExpansionStep(holder, coarseStep);
+        int radiusBlocks = holder.scanRadiusChunks * 16;
+        int globalMinX = -radiusBlocks;
+        int globalMinZ = -radiusBlocks;
+        int span = radiusBlocks * 2;
+        int w = Math.max(1, span / targetStep);
+        int h = Math.max(1, span / targetStep);
+
+        ScanPixel[][] map = new ScanPixel[w][h];
+        paintCoarseFallback(coarseMap, map, globalMinX, globalMinZ, coarseStep, targetStep);
+        paintDetailCaches(holder, map, globalMinX, globalMinZ, targetStep);
+        return new ExpansionGrid(map, targetStep, globalMinX, globalMinZ, coarseStep);
+    }
+
+    private static int selectExpansionStep(ScanResultHolder holder, int coarseStep) {
+        if (holder.regionCacheMap == null || holder.regionCacheMap.isEmpty()) return coarseStep;
+        for (RegionCache cache : holder.regionCacheMap.values()) {
+            if (cache == null || cache.detailData == null) continue;
+            int s = Math.max(1, cache.step);
+            if (s <= HIGH_RES_EXPANSION_STEP) return HIGH_RES_EXPANSION_STEP;
+        }
+        return coarseStep;
+    }
+
+    private static void paintCoarseFallback(
+            ScanPixel[][] coarseMap,
+            ScanPixel[][] out,
+            int globalMinX,
+            int globalMinZ,
+            int coarseStep,
+            int targetStep) {
+        if (coarseMap == null || coarseMap.length == 0 || coarseMap[0] == null) return;
+        int factor = Math.max(1, coarseStep / targetStep);
+        for (int i = 0; i < coarseMap.length; i++) {
+            for (int j = 0; j < coarseMap[0].length; j++) {
+                ScanPixel p = coarseMap[i][j];
+                if (p == null) continue;
+                int gx = (p.x() - globalMinX) / targetStep;
+                int gz = (p.z() - globalMinZ) / targetStep;
+                paintCell(out, gx, gz, factor, p);
+            }
+        }
+    }
+
+    private static void paintDetailCaches(
+            ScanResultHolder holder,
+            ScanPixel[][] out,
+            int globalMinX,
+            int globalMinZ,
+            int targetStep) {
+        if (holder.regionCacheMap == null || holder.regionCacheMap.isEmpty()) return;
+        for (RegionCache cache : holder.regionCacheMap.values()) {
+            if (cache == null || cache.detailData == null) continue;
+            int cacheStep = Math.max(1, cache.step);
+            int factor = (cacheStep % targetStep == 0) ? Math.max(1, cacheStep / targetStep) : 1;
+            ScanPixel[][] data = cache.detailData;
+            for (int i = 0; i < data.length; i++) {
+                for (int j = 0; j < data[0].length; j++) {
+                    ScanPixel p = data[i][j];
+                    if (p == null) continue;
+                    int gx = (p.x() - globalMinX) / targetStep;
+                    int gz = (p.z() - globalMinZ) / targetStep;
+                    paintCell(out, gx, gz, factor, p);
+                }
+            }
+        }
+    }
+
+    private static void paintCell(ScanPixel[][] out, int gx, int gz, int factor, ScanPixel value) {
+        if (value == null || factor <= 0) return;
+        for (int dx = 0; dx < factor; dx++) {
+            for (int dz = 0; dz < factor; dz++) {
+                int x = gx + dx;
+                int z = gz + dz;
+                if (x < 0 || z < 0 || x >= out.length || z >= out[0].length) continue;
+                out[x][z] = value;
+            }
+        }
+    }
+
+    private static int readClusterAtWorld(
+            int worldX, int worldZ,
+            int[][] clusterMap,
+            int globalMinX, int globalMinZ,
+            int clusterStep) {
+        if (clusterMap == null || clusterMap.length == 0 || clusterMap[0] == null) return -1;
+        int step = Math.max(1, clusterStep);
+        int gx = (worldX - globalMinX) / step;
+        int gz = (worldZ - globalMinZ) / step;
+        if (gx < 0 || gz < 0 || gx >= clusterMap.length || gz >= clusterMap[0].length) return -1;
+        return clusterMap[gx][gz];
     }
 
     private static Map<Integer, RegionTerrainAggregate> buildRegionTerrainAggregates(
@@ -335,12 +480,16 @@ public class TerritoryManager {
 
     // --- 【分析统计逻辑】 ---
     private static void analyzeTerritories(ScanResultHolder holder) {
-        ScanPixel[][] map = holder.lastScanData;
+        ScanPixel[][] map = expansionScanMap != null ? expansionScanMap : holder.lastScanData;
         int[][] clusterMap = holder.lastClusterMap;
         if (globalOwnershipMap == null || map == null) return;
 
-        int w = map.length;
-        int h = map[0].length;
+        int step = Math.max(1, expansionStepBlocks);
+        int globalMinX = expansionMinX;
+        int globalMinZ = expansionMinZ;
+        int clusterStep = Math.max(1, holder.scanStep);
+        int w = Math.min(map.length, globalOwnershipMap.length);
+        int h = Math.min(map[0].length, globalOwnershipMap[0].length);
 
         // 初始化统计对象
         Map<String, TerritoryStats> tempStats = new HashMap<>();
@@ -362,7 +511,8 @@ public class TerritoryManager {
                 stat.area_pixels++;
 
                 // 边界框
-                int wx = p.x(); int wz = p.z();
+                int wx = globalMinX + i * step;
+                int wz = globalMinZ + j * step;
                 if (wx < stat.minX) stat.minX = wx;
                 if (wx > stat.maxX) stat.maxX = wx;
                 if (wz < stat.minZ) stat.minZ = wz;
@@ -372,8 +522,11 @@ public class TerritoryManager {
                 stat.rawBiomeCounts.merge(p.biomeId(), 1, Integer::sum);
 
                 // 大陆
-                if (clusterMap != null && clusterMap[i][j] > 0) {
-                    stat.rawContinentCounts.merge(clusterMap[i][j], 1, Integer::sum);
+                int regionId = readClusterAtWorld(
+                        wx + step / 2, wz + step / 2, clusterMap,
+                        globalMinX, globalMinZ, clusterStep);
+                if (regionId > 0) {
+                    stat.rawContinentCounts.merge(regionId, 1, Integer::sum);
                 }
 
                 // 邻国判定 (检查上下左右)

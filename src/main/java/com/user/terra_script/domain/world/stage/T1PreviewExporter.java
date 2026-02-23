@@ -76,23 +76,28 @@ public final class T1PreviewExporter {
         legends.add(IMG_SLOPE, buildSlopeLegend());
         legends.add(IMG_BIOME, buildBiomeLegend());
 
-        Path dir = server.getWorldPath(LevelResource.ROOT).resolve("terra_script").resolve("territories");
+        Path dir = server.getWorldPath(LevelResource.ROOT)
+                .resolve("terra_script")
+                .resolve("territories")
+                .resolve("regions")
+                .resolve("region_" + regionId);
         writePreviewSet(dir, heightImage, hillshadeImage, slopeImage, biomeImage, legends);
 
         result.addProperty("generated", true);
         result.addProperty("step", "T1");
         result.addProperty("region_id", regionId);
         result.addProperty("size", PREVIEW_SIZE);
-        result.addProperty("height", "territories/" + IMG_HEIGHT);
-        result.addProperty("hillshade", "territories/" + IMG_HILLSHADE);
-        result.addProperty("slope", "territories/" + IMG_SLOPE);
-        result.addProperty("biome", "territories/" + IMG_BIOME);
+        String relPrefix = "territories/regions/region_" + regionId + "/";
+        result.addProperty("height", relPrefix + IMG_HEIGHT);
+        result.addProperty("hillshade", relPrefix + IMG_HILLSHADE);
+        result.addProperty("slope", relPrefix + IMG_SLOPE);
+        result.addProperty("biome", relPrefix + IMG_BIOME);
 
         JsonObject legendPaths = new JsonObject();
-        legendPaths.addProperty("height", "territories/" + toLegendFile(IMG_HEIGHT));
-        legendPaths.addProperty("hillshade", "territories/" + toLegendFile(IMG_HILLSHADE));
-        legendPaths.addProperty("slope", "territories/" + toLegendFile(IMG_SLOPE));
-        legendPaths.addProperty("biome", "territories/" + toLegendFile(IMG_BIOME));
+        legendPaths.addProperty("height", relPrefix + toLegendFile(IMG_HEIGHT));
+        legendPaths.addProperty("hillshade", relPrefix + toLegendFile(IMG_HILLSHADE));
+        legendPaths.addProperty("slope", relPrefix + toLegendFile(IMG_SLOPE));
+        legendPaths.addProperty("biome", relPrefix + toLegendFile(IMG_BIOME));
         result.add("legends", legendPaths);
         return result;
     }

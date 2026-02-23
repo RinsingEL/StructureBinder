@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.user.terra_script.domain.territory.stage.TerritoryPreviewExporter;
 import com.user.terra_script.world.TerritoryManager;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.storage.LevelResource;
@@ -75,6 +76,8 @@ public class TerritoryResultRepository {
         Path summaryPath = summaryPath(server, result.config.id, T3_DIR);
         Path datPath = datPath(server, result.config.id, T3_DIR);
         JsonObject summary = buildSummary(result, "T3");
+        JsonObject preview = TerritoryPreviewExporter.export(server, result);
+        summary.add("preview", preview);
         writeJsonAtomic(summaryPath, summary);
         writeDatAtomic(datPath, encodeDat(result));
     }

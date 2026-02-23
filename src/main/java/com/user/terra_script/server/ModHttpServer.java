@@ -58,6 +58,7 @@ public class ModHttpServer {
             server.createContext("/terrain_summary", worldController::handleTerrainSummary);
             server.createContext("/structures", worldController::handleStructures);
             server.createContext("/query_region", worldController::handleQueryRegion);
+            server.createContext("/query_region_pick", worldController::handleQueryRegionPick);
             server.createContext("/place", worldController::handlePlace);
 
             server.createContext("/t1_blueprint", exchange -> territoryController.handleT1Blueprint(exchange, mcServer));
