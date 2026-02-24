@@ -82,6 +82,8 @@ public class ModHttpServer {
             server.createContext("/city_stage2_data", cityController::handleCityStage2Data);
             server.createContext("/city_forbidden", cityController::handleCityForbidden);
             server.createContext("/city_buildable_groups", cityController::handleCityBuildableGroups);
+            server.createContext("/city_c4_whitelist_generate", cityController::handleCityC4WhitelistGenerate);
+            server.createContext("/city_c4_whitelist_data", cityController::handleCityC4WhitelistData);
             server.createContext("/city_c4_generate", cityController::handleCityC4Generate);
             server.createContext("/city_c4_data", cityController::handleCityC4Data);
             server.createContext("/city_c5_generate", cityController::handleCityC5Generate);

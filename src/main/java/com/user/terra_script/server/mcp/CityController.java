@@ -361,8 +361,14 @@ public class CityController {
                 return;
             }
 
-            CitySemanticStages.C4Plan plan = CitySemanticStages.generateC4(city);
             Path cityDir = resolveCityDir(cityId);
+            CitySemanticStages.FunctionWhitelist whitelist = CitySemanticStages.loadFunctionWhitelist(cityDir);
+            if (whitelist == null || !whitelist.ok) {
+                HttpUtil.sendResponse(exchange, 400, "{\"error\": \"Missing/invalid C4 whitelist. Run city_c4_whitelist_generate before C4.\"}");
+                return;
+            }
+
+            CitySemanticStages.C4Plan plan = CitySemanticStages.generateC4(city, whitelist);
             CitySemanticStages.saveC4(cityDir, plan);
 
             JsonObject res = new JsonObject();
@@ -370,9 +376,84 @@ public class CityController {
             res.addProperty("step", "C4");
             res.addProperty("city_id", cityId);
             res.addProperty("district_count", plan.district_functions != null ? plan.district_functions.size() : 0);
+            res.addProperty("function_whitelist_version", plan.function_whitelist_version);
+            res.addProperty("whitelist_file", cityDir.resolve(CitySemanticStages.C4_WHITELIST_FILE).toString());
             res.addProperty("file", cityDir.resolve(CitySemanticStages.C4_FILE).toString());
             res.addProperty("validated_file", cityDir.resolve(CitySemanticStages.C4_VALIDATED_FILE).toString());
             HttpUtil.sendResponse(exchange, 200, gson.toJson(res));
+        } catch (Exception e) {
+            HttpUtil.handleError(exchange, e);
+        }
+    }
+
+    public void handleCityC4WhitelistGenerate(HttpExchange exchange) throws IOException {
+        if (!HttpUtil.requireMethod(exchange, "POST")) return;
+        try {
+            String body = HttpUtil.readBody(exchange);
+            JsonObject json = JsonParser.parseString(body).getAsJsonObject();
+            String cityId = json.has("city_id") ? json.get("city_id").getAsString() : null;
+            if (cityId == null || cityId.isBlank()) {
+                HttpUtil.sendResponse(exchange, 400, "{\"error\": \"Missing city_id\"}");
+                return;
+            }
+
+            CityInstance city = CityManager.get().getCity(cityId);
+            if (city == null) {
+                HttpUtil.sendResponse(exchange, 404, "{\"error\": \"City not found: " + cityId + "\"}");
+                return;
+            }
+
+            List<String> primary = readStringList(json, "primary_functions");
+            List<String> secondary = readStringList(json, "secondary_functions");
+            if (primary.isEmpty() || secondary.isEmpty()) {
+                HttpUtil.sendResponse(exchange, 400, "{\"error\": \"primary_functions and secondary_functions are required and cannot be empty.\"}");
+                return;
+            }
+
+            CitySemanticStages.FunctionWhitelist whitelist = new CitySemanticStages.FunctionWhitelist();
+            whitelist.city_id = cityId;
+            whitelist.generated_at_epoch_ms = System.currentTimeMillis();
+            whitelist.version = json.has("version") ? json.get("version").getAsString() : "ai_dynamic_v1";
+            whitelist.source = json.has("source") ? json.get("source").getAsString() : "mcp_ai";
+            whitelist.rationale = json.has("rationale") ? json.get("rationale").getAsString() : "";
+            whitelist.primary_functions = primary;
+            whitelist.secondary_functions = secondary;
+
+            Path cityDir = resolveCityDir(cityId);
+            CitySemanticStages.saveFunctionWhitelist(cityDir, whitelist);
+            CitySemanticStages.FunctionWhitelist saved = CitySemanticStages.loadFunctionWhitelist(cityDir);
+
+            JsonObject res = new JsonObject();
+            res.addProperty("status", "ok");
+            res.addProperty("step", "C4_WHITELIST");
+            res.addProperty("city_id", cityId);
+            res.addProperty("function_whitelist_version", saved != null ? saved.version : whitelist.version);
+            res.addProperty("primary_count", saved != null && saved.primary_functions != null ? saved.primary_functions.size() : primary.size());
+            res.addProperty("secondary_count", saved != null && saved.secondary_functions != null ? saved.secondary_functions.size() : secondary.size());
+            res.addProperty("file", cityDir.resolve(CitySemanticStages.C4_WHITELIST_FILE).toString());
+            HttpUtil.sendResponse(exchange, 200, gson.toJson(res));
+        } catch (Exception e) {
+            HttpUtil.handleError(exchange, e);
+        }
+    }
+
+    public void handleCityC4WhitelistData(HttpExchange exchange) throws IOException {
+        if (!HttpUtil.requireMethod(exchange, "POST")) return;
+        try {
+            String body = HttpUtil.readBody(exchange);
+            JsonObject json = JsonParser.parseString(body).getAsJsonObject();
+            String cityId = json.has("city_id") ? json.get("city_id").getAsString() : null;
+            if (cityId == null || cityId.isBlank()) {
+                HttpUtil.sendResponse(exchange, 400, "{\"error\": \"Missing city_id\"}");
+                return;
+            }
+            Path cityDir = resolveCityDir(cityId);
+            CitySemanticStages.FunctionWhitelist whitelist = CitySemanticStages.loadFunctionWhitelist(cityDir);
+            if (whitelist == null) {
+                HttpUtil.sendResponse(exchange, 404, "{\"error\": \"C4 whitelist not found for: " + cityId + "\"}");
+                return;
+            }
+            HttpUtil.sendResponse(exchange, 200, gson.toJson(whitelist));
         } catch (Exception e) {
             HttpUtil.handleError(exchange, e);
         }
@@ -417,14 +498,17 @@ public class CityController {
             }
 
             Path cityDir = resolveCityDir(cityId);
-            CitySemanticStages.C4Plan c4Plan = CitySemanticStages.loadC4(cityDir);
+            CitySemanticStages.C4Plan c4Plan = CitySemanticStages.loadC4Validated(cityDir);
             if (c4Plan == null) {
-                c4Plan = CitySemanticStages.generateC4(city);
-                CitySemanticStages.saveC4(cityDir, c4Plan);
+                c4Plan = CitySemanticStages.loadC4(cityDir);
+            }
+            if (c4Plan == null) {
+                HttpUtil.sendResponse(exchange, 400, "{\"error\": \"C4 data missing. Run city_c4_whitelist_generate then city_c4_generate first.\"}");
+                return;
             }
 
-            boolean crossLayerMerge = json.has("cross_layer_merge") && json.get("cross_layer_merge").getAsBoolean();
-            CitySemanticStages.C5Groups groups = CitySemanticStages.generateC5(city, c4Plan, crossLayerMerge);
+            CitySemanticStages.MergePolicy policy = parseC5MergePolicy(json);
+            CitySemanticStages.C5Groups groups = CitySemanticStages.generateC5(city, c4Plan, policy);
             CitySemanticStages.saveC5(cityDir, groups);
             CityC2ScanBinaryIO.C2ScanData scanData = CityC2ScanBinaryIO.load(cityId);
             CityC3OwnershipIO.OwnershipData ownership = CityC3OwnershipIO.load(cityDir);
@@ -435,8 +519,11 @@ public class CityController {
             res.addProperty("step", "C5");
             res.addProperty("city_id", cityId);
             res.addProperty("group_count", groups.groups != null ? groups.groups.size() : 0);
-            res.addProperty("cross_layer_merge", crossLayerMerge);
+            res.addProperty("cross_layer_merge", groups.policy != null && groups.policy.cross_layer_merge);
+            res.add("policy", gson.toJsonTree(groups.policy));
+            res.addProperty("merge_log_count", groups.merge_log != null ? groups.merge_log.size() : 0);
             res.addProperty("file", cityDir.resolve(CitySemanticStages.C5_FILE).toString());
+            res.addProperty("merge_log_file", cityDir.resolve(CitySemanticStages.C5_MERGE_LOG_FILE).toString());
             res.add("module_preview", modulePreview);
             HttpUtil.sendResponse(exchange, 200, gson.toJson(res));
         } catch (Exception e) {
@@ -490,12 +577,13 @@ public class CityController {
             Path cityDir = resolveCityDir(cityId);
             CitySemanticStages.C5Groups c5 = CitySemanticStages.loadC5(cityDir);
             if (c5 == null) {
-                CitySemanticStages.C4Plan c4 = CitySemanticStages.loadC4(cityDir);
+                CitySemanticStages.C4Plan c4 = CitySemanticStages.loadC4Validated(cityDir);
+                if (c4 == null) c4 = CitySemanticStages.loadC4(cityDir);
                 if (c4 == null) {
-                    c4 = CitySemanticStages.generateC4(city);
-                    CitySemanticStages.saveC4(cityDir, c4);
+                    HttpUtil.sendResponse(exchange, 400, "{\"error\": \"C4 data missing. Run city_c4_whitelist_generate then city_c4_generate first.\"}");
+                    return;
                 }
-                c5 = CitySemanticStages.generateC5(city, c4, false);
+                c5 = CitySemanticStages.generateC5(city, c4, CitySemanticStages.MergePolicy.defaults());
                 CitySemanticStages.saveC5(cityDir, c5);
             }
 
@@ -1067,6 +1155,49 @@ public class CityController {
 
     private static String escapeJson(String text) {
         return text.replace("\\", "\\\\").replace("\"", "\\\"");
+    }
+
+    private static List<String> readStringList(JsonObject json, String key) {
+        java.util.LinkedHashSet<String> out = new java.util.LinkedHashSet<>();
+        if (json == null || key == null || key.isBlank() || !json.has(key) || !json.get(key).isJsonArray()) {
+            return new java.util.ArrayList<>();
+        }
+        JsonArray arr = json.getAsJsonArray(key);
+        for (int i = 0; i < arr.size(); i++) {
+            if (arr.get(i) == null || arr.get(i).isJsonNull()) continue;
+            String value = arr.get(i).getAsString();
+            if (value == null) continue;
+            String normalized = value.trim().toLowerCase(java.util.Locale.ROOT);
+            if (normalized.isBlank()) continue;
+            out.add(normalized);
+        }
+        return new java.util.ArrayList<>(out);
+    }
+
+    private static CitySemanticStages.MergePolicy parseC5MergePolicy(JsonObject json) {
+        CitySemanticStages.MergePolicy policy = CitySemanticStages.MergePolicy.defaults();
+        if (json == null) return policy;
+        if (json.has("cross_layer_merge")) {
+            policy.cross_layer_merge = json.get("cross_layer_merge").getAsBoolean();
+        }
+        if (json.has("adjacency_mode")) {
+            policy.adjacency_mode = json.get("adjacency_mode").getAsString();
+        }
+        if (json.has("min_district_area_chunks")) {
+            policy.min_district_area_chunks = Math.max(0, json.get("min_district_area_chunks").getAsInt());
+        }
+        if (json.has("allow_cross_function_absorb_for_tiny")) {
+            policy.allow_cross_function_absorb_for_tiny = json.get("allow_cross_function_absorb_for_tiny").getAsBoolean();
+        }
+        if (json.has("split_disconnected_group")) {
+            policy.split_disconnected_group = json.get("split_disconnected_group").getAsBoolean();
+        }
+        if (json.has("min_compactness")) {
+            double value = json.get("min_compactness").getAsDouble();
+            if (!Double.isFinite(value)) value = policy.min_compactness;
+            policy.min_compactness = Math.max(0.0, Math.min(1.0, value));
+        }
+        return policy;
     }
 
     private Path resolveCityDir(String cityId) {

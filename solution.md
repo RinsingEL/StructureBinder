@@ -49,7 +49,8 @@
   - 工作流注册：`src/main/java/com/user/terra_script/server/mcp/WorkflowController.java`
 - 城市阶段 `C4 / C5 / C6` 已实现并提供接口：
   - 入口：`src/main/java/com/user/terra_script/server/mcp/CityController.java`
-  - 接口：`/city_c4_generate`、`/city_c5_generate`、`/city_c6_generate`
+  - 接口：`/city_c4_whitelist_generate`、`/city_c4_whitelist_data`、`/city_c4_generate`、`/city_c5_generate`、`/city_c6_generate`
+  - 当前语义：`C4` 必须先有白名单（`C4_FunctionWhitelist.json`）；`C4` 已支持“同一 layer 内多主功能分配”；`C5` 基于邻接与功能可在同一 layer 形成多个 group。
 
 当前实现里，`W4_WorldSummary.json` 仍属于预留描述，尚未由 `W4Stage` 直接产出。
 
@@ -917,27 +918,31 @@ private static final List<TerritoryConfig> pendingFactions = new ArrayList<>();
 - **存放位置**：`/saves/<WorldName>/terra_script/cities/<city_id>/`
 
 
-## C4 功能语义分类（AI）
+## C4 功能语义标注（AI，仅 tag）
 
-- **目标**：将 C3 的每个区划（district）映射为“功能语义”，作为 C5 聚合输入。
-- **AI做什么**：
-  - 为每个 `district_id` 选择 1~N 个功能标签（主标签 + 可选副标签）；
-  - 填写功能优先级、禁邻规则、偏好邻接；
-  - 不直接改几何边界（几何仍由程序维护）。
+- **目标**：AI 只做语义标注（tag），不做 group 决策；C5 再基于拓扑自动合并。
+- **AI做什么（仅字段标注）**：
+  - 为每个 `district_id` 标注 `primary_function`（必须）；
+  - 可选填写 `secondary_functions`、`constraints`（`avoid_adjacent` / `prefer_adjacent`）、`priority`；
+  - 不直接改几何边界，不直接指定 group。
 - **程序做什么**：
   - 提供区划摘要、ASCII 预览、邻接关系；
-  - 校验标签合法性（白名单）、冲突关系（如 `cemetery` 不贴 `market`）。
+  - 校验字段完整性与冲突关系；
+  - 校验枚举白名单：`primary_function` 必须来自白名单，`secondary_functions` 也走白名单约束。
+  - 基于白名单与区划空间关系进行层内功能混合分配（同一 layer 可生成多个 `primary_function`，不再整层单功能）。
 - **输入**：
   - `C3_Districts.json`
   - `C3_DistrictIndex.dat`
-  - 可选 `C4_TagPolicy.json`（功能字典与硬约束）
+  - `C4_FunctionWhitelist.json`（必填：由 `/city_c4_whitelist_generate` 生成）
+  - `C4_TagPolicy.json`（可选：硬约束扩展）
 - **AI可调用数据（接口）**：
   - `getDistrictSummary(cityId, districtId)`：区划统计摘要（面积、坡度、高差、layer、邻居）
   - `previewDistrictASCII(cityId, districtId, scale)`：单区划 ASCII
-  - `previewDistrictAdjacency(cityId)`：全城区划邻接图（建议新增）
+  - `previewDistrictAdjacency(cityId)`：全城区划邻接图
 - **输出**：
-  - `C4_FunctionPlan.json`（AI主产物）
-  - `C4_FunctionPlan.validated.json`（程序校验后）
+  - `C4_FunctionWhitelist.json`
+  - `C4_FunctionPlan.json`（AI 主产物）
+  - `C4_FunctionPlan.validated.json`（程序校验后，供 C5 使用）
 ```jsonc
 {
   "step": "C4",
@@ -958,26 +963,35 @@ private static final List<TerritoryConfig> pendingFactions = new ArrayList<>();
       "notes": "核心行政+贸易复合区"
     }
   ],
-  "global_policies": {
-    "min_function_diversity": 5,
-    "max_same_function_ratio": 0.35
-  }
+  "function_whitelist_version": "city_v1"
 }
 ```
 - **可回滚点**：本阶段可反复直到满意
 - **存放位置**：`/saves/<WorldName>/terra_script/cities/<city_id>/`
 
 
-## C5 模块聚合（程序+AI策略）
+## C5 模块拓扑合并（程序）
 
-- **目标**：将 C4 中碎片化的同功能区划聚合成“可执行模块组”，便于后续 C6 可建造区计算。
+- **目标**：程序根据相邻关系 + 功能标签自动合并 group，输出稳定可解释的模块组。
+- **职责边界**：
+  - AI 不再直接给 group；
+  - 程序在 C5 完成 grouping、连通性检查与防抖修正。
 - **程序做什么**：
-  - 基于邻接图 + 几何连通性进行自动合并；
-  - 输出聚合后模块组边界、中心、连通块统计；
-  - 若跨 layer 冲突，默认不合并（除非策略允许）。
+  - 以 `C4_FunctionPlan.validated.json` 的 `primary_function` 为主键，按拓扑邻接自动合并；
+  - 计算每个 group 的 `centroid`、`area_blocks`、`connectivity`（`component_count`、`compactness`）；
+  - 输出 `C5_ModuleGroups.json` + 预览图；
+  - 产出合并日志（规则命中、吞碎片、拆分修正）。
+  - 在 `cross_layer_merge=false` 默认下，同一 layer 内可存在多个 group（由 C4 层内多功能 + 拓扑连通共同决定）。
+- **默认合并条件（可配置）**：
+  1. 区划必须相邻（共享边，不接受仅角点接触）；
+  2. `primary_function` 相同；
+  3. `layer` 相同（默认）；可通过 `cross_layer_merge=true` 开关放宽。
+- **防抖规则（默认启用）**：
+  - 最小面积吞碎片：当区划面积 `< min_district_area`（示例：`2 chunks`）时，优先并入“最相邻大组”；必要时允许跨功能吸附，并写入 `merge_log`；
+  - 连通性 sanity check：默认不允许一个 group 含多个离散 component；若出现 `component_count > 1`，自动拆分为多个 group；
+  - 紧致度 sanity check：`compactness < min_compactness` 时，执行拆分或近邻重吸附（由策略控制）。
 - **AI做什么**：
-  - 给聚合阈值与倾向：`min_group_area`、`max_split_count`、`cross_layer_merge`；
-  - 为关键功能指定目标规模区间（如市场、港区、墓地）。
+  - 仅在上游 C4 输出标签；可通过策略文件间接影响 C5，但不直接分组。
 - **输入**：
   - `C4_FunctionPlan.validated.json`
   - `C3_Districts.json`
@@ -985,6 +999,8 @@ private static final List<TerritoryConfig> pendingFactions = new ArrayList<>();
 - **输出**：
   - `C5_ModuleGroups.json`
   - `C5_ModuleIndex.dat`（block/chunk -> module_group_id）
+  - `C5_merge_preview.png` + `C5_merge_preview.legend.json`
+  - `C5_MergeLog.json`
 ```jsonc
 {
   "step": "C5",
@@ -1008,6 +1024,26 @@ private static final List<TerritoryConfig> pendingFactions = new ArrayList<>();
     "input_district_count": 19,
     "output_group_count": 11,
     "fragment_reduction_ratio": 0.42
+  },
+  "policy": {
+    "cross_layer_merge": false,
+    "adjacency_mode": "shared_edge_only",
+    "min_district_area_chunks": 2,
+    "allow_cross_function_absorb_for_tiny": true,
+    "split_disconnected_group": true
+  },
+  "merge_log": [
+    {
+      "type": "tiny_absorb",
+      "district_id": "d_18_u1",
+      "from_function": "green_buffer",
+      "to_group_id": "g_residential_mid_02",
+      "reason": "area_below_min_threshold"
+    }
+  ],
+  "quality": {
+    "disconnected_groups": 0,
+    "low_compactness_groups": 1
   }
 }
 ```

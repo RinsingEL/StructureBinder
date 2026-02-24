@@ -649,8 +649,35 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         },
       },
       {
+        name: "city_c4_whitelist_generate",
+        description: "【C4前置】由 AI 按城市设定与地理分析生成并保存功能白名单（C4_FunctionWhitelist.json）。",
+        inputSchema: {
+          type: "object",
+          properties: {
+            city_id: { type: "string" },
+            version: { type: "string", description: "白名单版本标识，例如 ai_dynamic_v1" },
+            source: { type: "string", description: "来源标记，例如 mcp_ai" },
+            rationale: { type: "string", description: "白名单生成依据（叙事/地理/策略）" },
+            primary_functions: { type: "array", items: { type: "string" } },
+            secondary_functions: { type: "array", items: { type: "string" } }
+          },
+          required: ["city_id", "primary_functions", "secondary_functions"]
+        }
+      },
+      {
+        name: "city_c4_whitelist_data",
+        description: "读取城市 C4 前置功能白名单。",
+        inputSchema: {
+          type: "object",
+          properties: {
+            city_id: { type: "string" }
+          },
+          required: ["city_id"]
+        }
+      },
+      {
         name: "city_c4_generate",
-        description: "生成并保存 C4 功能语义分类方案（C4_FunctionPlan.json）。",
+        description: "生成并保存 C4 功能语义分类方案（需先有 C4 白名单）。",
         inputSchema: {
           type: "object",
           properties: {
@@ -1146,6 +1173,24 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case "city_stage2_data": {
         const args = request.params.arguments as any;
         const res = await axios.post(`${MC_API_URL}/city_stage2_data`, { city_id: args.city_id });
+        return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
+      }
+      case "city_c4_whitelist_generate": {
+        const args = request.params.arguments as any;
+        const payload: Record<string, any> = {
+          city_id: args.city_id,
+          primary_functions: Array.isArray(args.primary_functions) ? args.primary_functions : [],
+          secondary_functions: Array.isArray(args.secondary_functions) ? args.secondary_functions : []
+        };
+        if (args.version !== undefined) payload.version = String(args.version);
+        if (args.source !== undefined) payload.source = String(args.source);
+        if (args.rationale !== undefined) payload.rationale = String(args.rationale);
+        const res = await axios.post(`${MC_API_URL}/city_c4_whitelist_generate`, payload);
+        return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
+      }
+      case "city_c4_whitelist_data": {
+        const args = request.params.arguments as any;
+        const res = await axios.post(`${MC_API_URL}/city_c4_whitelist_data`, { city_id: args.city_id });
         return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
       }
       case "city_c4_generate": {

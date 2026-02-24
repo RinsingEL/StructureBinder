@@ -355,6 +355,10 @@ public class DevCommandHandler {
                 return httpPost("/city_stage1_data", args);
             case "city_stage2_data":
                 return httpPost("/city_stage2_data", args);
+            case "city_c4_whitelist_generate":
+                return httpPost("/city_c4_whitelist_generate", args);
+            case "city_c4_whitelist_data":
+                return httpPost("/city_c4_whitelist_data", args);
             case "city_c4_generate":
                 return httpPost("/city_c4_generate", args);
             case "city_c4_data":
@@ -691,6 +695,8 @@ public class DevCommandHandler {
                 "place_structure",
                 "city_stage1_data",
                 "city_stage2_data",
+                "city_c4_whitelist_generate",
+                "city_c4_whitelist_data",
                 "city_c4_generate",
                 "city_c4_data",
                 "city_c5_generate",
@@ -725,6 +731,8 @@ public class DevCommandHandler {
                 "place",
                 "city_stage1_data",
                 "city_stage2_data",
+                "city_c4_whitelist_generate",
+                "city_c4_whitelist_data",
                 "city_c4_generate",
                 "city_c4_data",
                 "city_c5_generate",

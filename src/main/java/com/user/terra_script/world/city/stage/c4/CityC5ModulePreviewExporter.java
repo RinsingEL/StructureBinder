@@ -32,8 +32,10 @@ import java.util.Set;
 public final class CityC5ModulePreviewExporter {
     private static final int PREVIEW_SIZE = 512;
     private static final int SEA_LEVEL = 63;
-    private static final String IMAGE_FILE = "C5_module_preview.png";
-    private static final String LEGEND_FILE = "C5_module_preview.legend.json";
+    private static final int MODULE_FILL_ALPHA = 96;
+    private static final Color MODULE_BORDER_RED = new Color(220, 32, 32, 230);
+    private static final String IMAGE_FILE = "C5_merge_preview.png";
+    private static final String LEGEND_FILE = "C5_merge_preview.legend.json";
 
     private CityC5ModulePreviewExporter() {}
 
@@ -71,7 +73,7 @@ public final class CityC5ModulePreviewExporter {
 
         JsonObject legend = new JsonObject();
         legend.addProperty("image", IMAGE_FILE);
-        legend.addProperty("type", "city_c5_module_preview");
+        legend.addProperty("type", "city_c5_merge_preview");
         legend.addProperty("city_id", cityId);
         legend.addProperty("source_scan", "C2_step_scan");
         legend.addProperty("scan_step", scanData.step);
@@ -182,13 +184,13 @@ public final class CityC5ModulePreviewExporter {
                 int code = districtToCode.getOrDefault(districtId, -1);
                 if (code < 0) continue;
                 Color base = codeColor.getOrDefault(code, new Color(180, 180, 180));
-                g.setColor(new Color(base.getRed(), base.getGreen(), base.getBlue(), 44));
+                g.setColor(new Color(base.getRed(), base.getGreen(), base.getBlue(), MODULE_FILL_ALPHA));
                 g.fillRect(px, pz, 1, 1);
             }
         }
 
-        g.setStroke(new BasicStroke(1f));
-        g.setColor(new Color(20, 20, 20, 210));
+        g.setStroke(new BasicStroke(2f));
+        g.setColor(MODULE_BORDER_RED);
         for (int x = 0; x < ownershipData.width; x++) {
             for (int z = 0; z < ownershipData.height; z++) {
                 int districtId = owner[x][z];
