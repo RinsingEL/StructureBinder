@@ -93,6 +93,7 @@ public final class CityC5ModulePreviewExporter {
         out.addProperty("generated", true);
         out.addProperty("image", "cities/" + cityId + "/" + IMAGE_FILE);
         out.addProperty("legend", "cities/" + cityId + "/" + LEGEND_FILE);
+        out.add("group_terrain_previews", CityC5GroupTerrainPreviewExporter.export(server, cityId, groups, scanData, ownershipData));
         out.addProperty("source_scan_step", scanData.step);
         return out;
     }

@@ -27,7 +27,7 @@ public final class TerritoryPreviewExporter {
     public static JsonObject export(MinecraftServer server, TerritoryManager.TerritoryResult result) {
         JsonObject out = new JsonObject();
         try {
-            if (server == null || result == null || result.config == null) {
+            if (server == null || result == null || result.config ==  null) {
                 out.addProperty("generated", false);
                 out.addProperty("reason", "server_or_result_missing");
                 return out;

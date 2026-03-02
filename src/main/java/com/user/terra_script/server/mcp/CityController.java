@@ -20,6 +20,8 @@ import com.user.terra_script.world.city.stage.c2.CityC2SatellitePreviewExporter;
 import com.user.terra_script.world.city.stage.c2.CityC3OwnershipIO;
 import com.user.terra_script.world.city.stage.c6.C6FillStyle;
 import com.user.terra_script.world.city.stage.c6.CityC6Stages;
+import com.user.terra_script.world.city.stage.c6.CityC6BuildAreaPreviewExporter;
+import com.user.terra_script.world.city.stage.c6.CityC6RectPlacementPreviewExporter;
 import com.user.terra_script.world.city.stage.c7.CityC7Stages;
 import com.user.terra_script.world.city.stage.c8.CityC8Stages;
 import com.user.terra_script.world.city.stage.c9.CityC9Stages;
@@ -593,9 +595,27 @@ public class CityController {
                 HttpUtil.sendResponse(exchange, 404, "{\"error\": \"Stage1 binary data not found for: " + cityId + "\"}");
                 return;
             }
+            List<CityStage1Processor.ForbiddenBlock> forbiddenBlocks = CityStage1BinaryIO.loadForbidden(cityId);
 
             CityC6Stages.C6Bundle bundle = CityC6Stages.generate(city, c5, heightData, buildableGroups, fillStyle);
             CityC6Stages.save(cityDir, bundle);
+            JsonObject c6Preview = CityC6BuildAreaPreviewExporter.export(
+                    mcServer,
+                    cityId,
+                    city,
+                    heightData,
+                    bundle.index_by_block,
+                    forbiddenBlocks,
+                    bundle.summary
+            );
+            JsonObject rectPreview = CityC6RectPlacementPreviewExporter.export(
+                    mcServer,
+                    cityId,
+                    heightData,
+                    bundle.summary,
+                    bundle.layout,
+                    bundle.index_by_block
+            );
 
             JsonObject res = new JsonObject();
             res.addProperty("status", "ok");
@@ -608,6 +628,8 @@ public class CityController {
             res.addProperty("summary_file", cityDir.resolve(CityC6Stages.C6_SUMMARY_FILE).toString());
             res.addProperty("layout_file", cityDir.resolve(CityC6Stages.C6_LAYOUT_FILE).toString());
             res.addProperty("index_file", cityDir.resolve(CityC6Stages.C6_INDEX_FILE).toString());
+            res.add("build_area_preview", c6Preview);
+            res.add("rect_placement_preview", rectPreview);
             HttpUtil.sendResponse(exchange, 200, gson.toJson(res));
         } catch (Exception e) {
             HttpUtil.handleError(exchange, e);
