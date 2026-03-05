@@ -26,7 +26,7 @@
 
 ---
 
-## 当前实现状态（已完成：W3 / W4 / T1 / T2 / T3 / T4 / C4 / C5 / C6）
+## 当前实现状态（已完成：W3 / W4 / T1 / T2 / T3 / T4 / C5 / C6；C4 方案已定稿但未代码落地）
 
 以下内容基于当前代码实际落地情况（`domain` + `server/mcp`）：
 
@@ -47,10 +47,10 @@
   - 阶段类：`src/main/java/com/user/terra_script/domain/territory/stage/T2Stage.java`、`src/main/java/com/user/terra_script/domain/territory/stage/T3Stage.java`、`src/main/java/com/user/terra_script/domain/territory/stage/T4Stage.java`
   - 当前默认语义：`T4` 执行首都城市 bootstrap（默认生成 1 座城市）；旧的领土精细扫描保留为可选 legacy 模式（`t4_legacy_scan=true`）。
   - 工作流注册：`src/main/java/com/user/terra_script/server/mcp/WorkflowController.java`
-- 城市阶段 `C4 / C5 / C6` 已实现并提供接口：
+- 城市阶段 `C5 / C6` 已实现并提供接口；`C4` 目前为网页端实验流程（未在当前代码主流程落地）：
   - 入口：`src/main/java/com/user/terra_script/server/mcp/CityController.java`
-  - 接口：`/city_c4_whitelist_generate`、`/city_c4_whitelist_data`、`/city_c4_generate`、`/city_c5_generate`、`/city_c6_generate`
-  - 当前语义：`C4` 必须先有白名单（`C4_FunctionWhitelist.json`）；`C4` 已支持“同一 layer 内多主功能分配”；`C5` 基于邻接与功能可在同一 layer 形成多个 group。
+  - 接口：`/city_c5_generate`、`/city_c6_generate`（C4 相关接口暂按实验接口看待，不计入主流程完成度）
+  - 当前语义：`C5` 基于邻接与功能可在同一 layer 形成多个 group；`C4` 的 Polygon Tag 逻辑以本案文定义为准，待正式实现。
 
 当前实现里，`W4_WorldSummary.json` 仍属于预留描述，尚未由 `W4Stage` 直接产出。
 
@@ -863,7 +863,7 @@ private static final List<TerritoryConfig> pendingFactions = new ArrayList<>();
 
 
 ## C3 多边形/区划种子与分区（程序主导，AI可选增强）
-**目标**：在 C2 占地基础上生成稳定可解释的区划单元，供后续 C4 功能语义标注。  
+**目标**：在 C2 占地基础上生成稳定可解释的区划单元，供后续 C3.5/C4 使用。  
 **关键约束**：多边形初划分通常不考虑 layer，因此 C3 必须补一个“按 layer 二次拆分”步骤。
 
 - **当前落地状态判定（用于开发检查）**：
@@ -918,56 +918,142 @@ private static final List<TerritoryConfig> pendingFactions = new ArrayList<>();
 - **存放位置**：`/saves/<WorldName>/terra_script/cities/<city_id>/`
 
 
-## C4 功能语义标注（AI，仅 tag）
+## C3.5 结构预处理与功能先验（程序）
 
-- **目标**：AI 只做语义标注（tag），不做 group 决策；C5 再基于拓扑自动合并。
-- **AI做什么（仅字段标注）**：
-  - 为每个 `district_id` 标注 `primary_function`（必须）；
-  - 可选填写 `secondary_functions`、`constraints`（`avoid_adjacent` / `prefer_adjacent`）、`priority`；
-  - 不直接改几何边界，不直接指定 group。
+- **目标**：把“结构级信息”前置到 C4 之前，先形成可供 AI 分类的结构特征库与功能总枚举表。
 - **程序做什么**：
-  - 提供区划摘要、ASCII 预览、邻接关系；
-  - 校验字段完整性与冲突关系；
-  - 校验枚举白名单：`primary_function` 必须来自白名单，`secondary_functions` 也走白名单约束。
-  - 基于白名单与区划空间关系进行层内功能混合分配（同一 layer 可生成多个 `primary_function`，不再整层单功能）。
+  - 扫描可用模板库，生成结构级元信息（不做最终筛选与摆放）。
+  - 为每个结构计算/标注以下字段：
+  - `size`：`length`、`width`、`height`；
+  - `orientation`：拼图方块朝向、入口朝向、可旋转集合；
+  - `piece_role`：`START` / `MIDDLE` / `END` / `SINGLE`；
+  - `style_score`：按既定风格轴（如古典/军事/商业/居住）输出 0~1 分值向量；
+  - `function_candidates`：结构可能承担的功能候选及置信度。
+  - 聚合全量模板，产出城市级 `function_enum_table`（功能总枚举），作为 C4 的硬约束输入。
+- **AI做什么**：
+  - 不直接改结构元数据；
+  - 在 C4 使用 `function_enum_table` 和 `function_candidates` 做功能决策。
 - **输入**：
   - `C3_Districts.json`
-  - `C3_DistrictIndex.dat`
-  - `C4_FunctionWhitelist.json`（必填：由 `/city_c4_whitelist_generate` 生成）
-  - `C4_TagPolicy.json`（可选：硬约束扩展）
-- **AI可调用数据（接口）**：
-  - `getDistrictSummary(cityId, districtId)`：区划统计摘要（面积、坡度、高差、layer、邻居）
-  - `previewDistrictASCII(cityId, districtId, scale)`：单区划 ASCII
-  - `previewDistrictAdjacency(cityId)`：全城区划邻接图
+  - 模板库原始清单（结构文件 + 现有标签）
+  - 可选 `C3_5_StructurePreprocessPolicy.json`
 - **输出**：
-  - `C4_FunctionWhitelist.json`
-  - `C4_FunctionPlan.json`（AI 主产物）
-  - `C4_FunctionPlan.validated.json`（程序校验后，供 C5 使用）
+  - `C3_5_StructureCatalog.preprocessed.json`
+  - `C3_5_FunctionEnumTable.json`
+  - `C3_5_StructureFeatureIndex.dat`（可选，用于快速查检）
 ```jsonc
 {
-  "step": "C4",
+  "step": "C3.5",
   "ok": true,
   "city_id": "city_foo",
-  "version": 1,
-  "district_functions": [
+  "function_enum_table": ["civic_center", "market", "residential_mid", "workshop", "fortification"],
+  "structures": [
     {
-      "district_id": "d_01_core",
-      "layer": "core",
-      "primary_function": "civic_center",
-      "secondary_functions": ["market"],
-      "priority": 0.92,
-      "constraints": {
-        "avoid_adjacent": ["heavy_industry", "cemetery"],
-        "prefer_adjacent": ["market", "residential_mid"]
+      "structure_id": "house_a_01",
+      "size": { "length": 13, "width": 9, "height": 11 },
+      "orientation": {
+        "jigsaw_facing": ["north", "south"],
+        "entry_facing": "south",
+        "rotations": [0, 90, 180, 270]
       },
-      "notes": "核心行政+贸易复合区"
+      "piece_role": "MIDDLE",
+      "style_score": { "classical": 0.73, "military": 0.12, "commercial": 0.48, "residential": 0.82 },
+      "function_candidates": [
+        { "function": "residential_mid", "score": 0.86 },
+        { "function": "market", "score": 0.33 }
+      ]
     }
-  ],
-  "function_whitelist_version": "city_v1"
+  ]
 }
 ```
-- **可回滚点**：本阶段可反复直到满意
 - **存放位置**：`/saves/<WorldName>/terra_script/cities/<city_id>/`
+
+## C4：多边形 Tag 标记（Polygon Tagging）
+
+- **目标**：为 C3 的每个多边形区块打功能与地形语义标签，不改几何边界，不做分组合并；分组仍由 C5 处理。
+- **当前状态（2026-03-06）**：本阶段方案已在网页端实验验证；主工程代码尚未正式落地该版本 C4。
+
+### 一、输入
+
+#### 1）图像输入
+
+- `city_c3_polygon_preview`（城市多边形总预览图）
+    - 用于 AI 理解多边形边界、相邻关系、城市结构。
+- 城市总体地貌特征图（3 张）
+    - 阴影图（hillshade）
+    - 崎岖度图（roughness）
+    - 高度图（height）
+    - 用于约束功能与地形匹配，避免出现不自然布局。
+
+多边形总预览图图例/参数：
+
+| 参数 | 说明 |
+| --- | --- |
+| city_id | 城市ID |
+| origin_x / origin_z | 世界坐标原点 |
+| width_blocks / height_blocks | 城市扫描尺寸 |
+| district_count | 多边形数量 |
+| district_codes | 多边形编号与 layer |
+| ownership_step | 扫描精度 |
+
+#### 2）数据输入
+
+表1：多边形基础信息表（程序生成，来源 C3 polygon ownership）
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| district_code | int | 多边形编号 |
+| district_id | int | 多边形ID |
+| layer_index | int | 城市层级 |
+| zone_type | string | 区域类型（CORE / URBAN / BUFFER） |
+
+表2：层级定义表（来源 C2 layer labels）
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| layer_index | int | 层级编号 |
+| layer_type | string | 层级名称 |
+| chunk_count | int | 面积规模 |
+| centroid_x | float | 层级中心 |
+| centroid_z | float | 层级中心 |
+
+表3：功能枚举表（来源 C3.5 全结构功能枚举）
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| function_id | int | 功能ID |
+| function_name | string | 功能名称 |
+
+示例：住宅、商业店铺、道路段、公园绿地、办公楼、工厂仓库、学校、医院诊所、宗教建筑、防御塔楼、桥梁、广场、市场、市政厅、供水设施、农场、牧场、港口。
+
+### 二、输出
+
+数据输出：表4 多边形 Tag 表
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| district_code | int | 多边形编号 |
+| zone_type | string | 区域层级 |
+| function | string | 功能标签 |
+| terrain_tag | array | 地形标签 |
+| role_tag | array | 城市角色 |
+
+示例：
+
+| district_code | zone_type | function | terrain_tag | role_tag |
+| --- | --- | --- | --- | --- |
+| 10 | CORE | 港口 | coastal,flat | logistics_anchor |
+| 15 | BUFFER | 港口 | coastal_slope | shore_support |
+| 5 | BUFFER | 港口 | cliff | breakwater |
+
+推荐文件产物：
+
+- `C4_PolygonTagTable.json`（AI 产物）
+- `C4_PolygonTagTable.validated.json`（程序校验后，供 C5 使用）
+- `C4_FunctionPlan.validated.json`（兼容旧 C5 消费口径，可由程序从 `function/role_tag` 映射生成）
+
+可回滚点：本阶段可反复打标直到满意。
+存放位置：`/saves/<WorldName>/terra_script/cities/<city_id>/`
 
 
 ## C5 模块拓扑合并（程序）
@@ -1171,7 +1257,7 @@ C7 的任务是在 C6 给定的空间结构（primary / plots）上，从模板�
 
 #### 2) 模板库（Template Catalog）
 
-* 每个模板已由 AI 批量标注。
+* 每个模板优先使用 C3.5 预处理产物（尺寸、朝向、拼图段位、风格分数、功能候选）。
 
 #### 3) 可选规则
 
@@ -1499,3 +1585,6 @@ C7 的任务是在 C6 给定的空间结构（primary / plots）上，从模板�
 **存放位置**：`/saves/<WorldName>/terra_script/territories/<territory_id>/`
 **存放位置**：`/saves/<WorldName>/terra_script/territories/<territory_id>/`
 **存放位置**：`/saves/<WorldName>/terra_script/cities/<city_id>/`
+
+
+
