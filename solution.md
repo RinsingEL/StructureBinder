@@ -1137,105 +1137,365 @@ private static final List<TerritoryConfig> pendingFactions = new ArrayList<>();
 - **存放位置**：`/saves/<WorldName>/terra_script/cities/<city_id>/`
 
 
-## C6 可建造区与空间布局设计
+## C6 可建造矩形生成
 
 ### 阶段定位
 
-C6 是空间设计阶段，目标不是直接放置建筑，而是把 C5 的功能模块转成可落地、可复现的空间占位方案。
+C6 的目标收敛为一件事：在每个 `C5 Module Group` 内生成 `1~3` 个可建造主矩形（buildable rectangles）。
 
-* 在硬规则完全由程序控制的前提下，允许 AI 参与空间设计决策。
-* 为 C7（模板裁剪）、C8（基台）、C9（放置）提供稳定、可解释的中间结构。
+* 程序负责提供局部地形图、group 边界、功能约束与结构库。
+* AI 负责做“矩形级”的规划决策，而不是直接放建筑。
+* C6 的直接产物是可复现的矩形占位结果，供 C7 选模板、C8 做基台、C9 做最终放置。
 
 ### C6 核心原则
 
-1. 主体建筑优先。
-少量 Primary Modules 决定整体空间结构，AI 主要在这一层做几何级决策。
-2. 语法而非坐标。
-次级建筑不由 AI 指定逐点坐标，而是由 AI 选择 Fill Style 与参数，程序展开。
-3. 硬规则先行。
-可建造判定完全由程序完成，AI 不直接决定“哪里能建”。
-4. 不生成道路。
-C6 只为未来道路留空间与意图，道路在房屋完成后再生成。
+1. 先矩形，后建筑。
+AI 在 C6 只决定“主矩形放哪里、多大、承担什么空间角色”，不决定最终模板实例。
+2. 必须落在世界坐标系。
+所有矩形都必须用世界坐标表达：`(cx, cz, w, h)`。
+3. 只能在当前 group 内规划。
+AI 不得跨 group 放置，不得越过当前 group 的允许建造区域。
+4. 地形先验必须参与决策。
+矩形不能建立在高 roughness、明显断裂、陡坡或不连续地形上。
+5. 程序硬校验兜底。
+AI 可以提出候选矩形，但 coverage、重叠、越界、非法地形一律由程序复核。
 
 ### C6 输入
 
-#### 必需输入（程序）
+输入分成五类数据。
 
-* `C5_ModuleGroups.json`
-  功能模块（function / layer / centroid / 连通性）。
-* `C5_ModuleIndex.dat`
-  block 或 chunk 到 module_group_id 的映射。
-* `C2_Claim.dat`
-  block 或 chunk 到 layer 的映射。
-* 地貌 scan 能力，扫描T4中我们算好的国度方块级地形数据
-  包括高度、坡度、水体、保护点、可达性。
+#### 1) 地形图输入
 
-#### 可选输入（建议）
+给 AI 三张带世界坐标的局部图：
 
-* `C6_BuildRules.json`
-  集中管理硬规则阈值、生态清理强度与 buffer，保证规则可版本化与可复现。
+* `height map`
+* `hillshade`
+* `roughness`
 
-### C6 程序处理（硬规则）
+说明：
 
-在每个 Module Group 内按固定流程执行：
+* 图上的坐标网格沿用 C4 / C5 预览图的世界坐标系。
+* 这三张图来自 C2 的局部扫描数据。
+* `height` 负责判断高差与平台可能性。
+* `hillshade` 负责判断山体形态、坡向与地形转折。
+* `roughness` 负责判断哪里适合放规则矩形。
 
-1. 按生态策略清理地物（0 / 30 / 80 / 100%）。
-2. 排除禁区。
-水体、悬崖或超阈值坡度、保护点及其 buffer。
-3. 计算连续可建造区域（连通块）。
-4. 为每个可建造区生成指标。
-面积、bbox、坡度统计、可用率、ASCII 预览。
+高度分类示例：
 
-### C6 输出（程序）
+* `70-110`：平缓丘陵
+* `110-160`：高地
+* `>160`：山体
 
-#### `C6_BuildAreaIndex.dat`
+相关图例文件：
 
-* 方块级索引：`block -> build_area_id | 0`。
-* 用于后续放置合法性判定和容错回滚。
+* `C2_satellite_preview.legend.json`
 
-#### `C6_BuildAreaSummary.json`
+作用：
 
-* 每个建造区候选的摘要信息。
-* 不包含完整方块列表。
-* 用于 AI 对比与 C7 初筛。
+* 判断哪里适合建造
+* 判断坡度方向
+* 判断哪些区域需要后续平台或挡墙
 
-### C6 输出（AI，可选）
+#### 2) group 边界
 
-#### `C6_BuildAreaLayout.json`（最多回滚 2 次）
+程序为当前 group 提供边界摘要与唯一标识，例如：
 
-#### A. 主体模块（Primary Modules）
+```json
+{
+  "code": 10,
+  "group_id": "g_port_06",
+  "function": "port",
+  "layer": "buffer",
+  "district_count": 3
+}
+```
 
-* 每个 Module Group 通常 1 到 3 个。
-* 每项包含 `anchor`、`importance`、`template_hint`。
-* 作用是定义空间主语（广场、地标、核心建筑）。
+作用：
 
-#### B. 次级填充（Secondary Fill）
+* 限定 AI 只能在当前 `group_id` 对应区域内规划矩形
+* 提供该组的功能语义（如 `port` / `market` / `fortification`）
 
-* AI 不给具体坐标。
-* AI 选择 Fill Style、参数范围、可用地块尺寸族（rect sizes，可多选加权）。
-* 程序按固定排列器执行。
+#### 3) group 多边形结构
 
-Fill Style 示例：
+来自 C3 / C5 的区划结构信息：
 
-* `PLAZA_RING` （目前只开发这个类别的）
-* `STREET_SPINE`
-* `EDGE_FOLLOW`
-* `CLUSTER_POISSON`
-* `GRID_RELAXED`
-* `TERRACE_BANDS`
-* `DECOR_BUFFER`
+* `district_code`
+* `zone_type`
+* `layer_index`
 
-#### C. 可选：矩形积木（Bricks）
+例如：
 
-* AI 可选择介入更细粒度切分。
-* 不介入时由程序使用默认切分策略。
+* `CORE`
+* `URBAN`
+* `BUFFER`
+
+相关图例文件：
+
+* `C3_polygon_preview.legend.json`
+
+作用：
+
+* 控制建筑密度
+* 控制建筑规模
+* 让 AI 理解当前 group 在整座城市中的空间角色
+
+#### 4) 坐标网格
+
+局部图必须明确给出坐标范围，例如：
+
+* `x: -5480 -> -5350`
+* `z: -6760 -> -6690`
+
+作用：
+
+* AI 不能只“看图画框”，而必须在世界坐标系中输出矩形
+* 后续 C7 / C8 / C9 直接消费这些坐标，不再重新解释
+
+#### 5) 功能结构库输入
+
+以当前 group 的 `function` 为索引，提供该功能下可用的全部结构配置。
+
+例如 `function = port` 时，输入该功能下全部 starter / module 结构：
+
+```json
+{
+  "function": "port",
+  "structures": [
+    {
+      "structure_id": "port_harbor_master",
+      "category": "starter",
+      "footprint": { "w": 20, "h": 12 },
+      "height_class": "mid",
+      "entry_side": ["south", "west"],
+      "requires_near_water": true,
+      "requires_platform": true,
+      "expandable": true,
+      "puzzle_pool": [
+        "port_warehouse_block",
+        "port_office_block",
+        "port_crane_block",
+        "port_yard_block"
+      ],
+      "tags": ["core", "administration", "dock_control"]
+    },
+    {
+      "structure_id": "port_warehouse_block",
+      "category": "module",
+      "footprint": { "w": 12, "h": 8 },
+      "height_class": "low",
+      "requires_near_water": false,
+      "requires_platform": true,
+      "expandable": true,
+      "tags": ["storage"]
+    }
+  ]
+}
+```
+
+作用：
+
+* 不是让 AI 只选“建筑名”
+* 而是让 AI 理解最小需要多大矩形才能容纳 starter 结构
+* 让 AI 理解一个主矩形里适合塞哪些 module
+* 让 AI 理解哪些结构必须靠海、靠平台、靠主入口
+* 让 AI 区分哪些结构应当作为主矩形，哪些只是后续填充部件
+
+### C6 提示词（Prompt）
+
+核心提示词分三部分。
+
+#### 1) 角色
+
+AI 必须被设定为城市规划师，例如：
+
+```text
+You are a Minecraft city planner.
+
+Your task is to place 1-3 buildable rectangles
+inside the given group area.
+
+The rectangles represent major structures.
+```
+
+目的：
+
+* 让 AI 做规划决策，而不是自由发散
+
+#### 2) 地形分析任务
+
+提示词必须要求 AI 先完成地形判断：
+
+1. Analyze terrain height
+2. Analyze slope direction
+3. Identify flat zones
+4. Avoid high roughness areas
+
+这是强约束，否则矩形容易落在悬崖、斜坡折线或破碎地块上。
+
+#### 3) 输出要求
+
+输出格式必须被限制为：
+
+```json
+{
+  "rectangles": [
+    { "cx": -5391, "cz": -6734, "w": 60, "h": 24 }
+  ]
+}
+```
+
+并明确约束：
+
+* `1 <= rectangles <= 3`
+* 坐标必须使用世界坐标
+* 宽高必须是实际方块尺寸
+
+### C6 AI 内部思考步骤
+
+AI 在本阶段实际需要完成六步决策。
+
+#### Step 1：识别可建区域
+
+根据 `height / hillshade / roughness` 找出低 roughness、地形连续、适合放规则矩形的区域。
+
+#### Step 2：识别该功能的空间组织方式
+
+结合功能结构库，判断：
+
+* 需要几个主矩形
+* 每个矩形承担什么角色
+* 每个矩形是否需要容纳 starter + puzzle modules
+
+#### Step 3：生成候选矩形
+
+输出 `1~3` 个候选主矩形。
+
+#### Step 4：领土覆盖率检测
+
+不要求矩形 `100%` 全包含，但要求矩形面积至少 `80%` 落在当前 group 的允许建造方块内。
+
+#### Step 5：矩形冲突处理
+
+发现重叠或边界冲突后，不直接失败，而是：
+
+* `merge`
+* `trim`
+* `drop`
+
+并记录差错日志。
+
+#### Step 6：结果落盘
+
+输出矩形结果与冲突处理日志，供后续阶段直接消费。
+
+### C6 输出
+
+#### `C6_BuildableRects.json`
+
+这是 C6 的主产物，由 AI 规划、程序校验后落盘。
+
+结构示意：
+
+```json
+{
+  "step": "C6",
+  "group_id": "g_port_06",
+  "function": "port",
+  "rectangles": [
+    {
+      "id": "R1",
+      "cx": -5391,
+      "cz": -6734,
+      "w": 60,
+      "h": 24
+    },
+    {
+      "id": "R2",
+      "cx": -5373,
+      "cz": -6730,
+      "w": 36,
+      "h": 18
+    }
+  ],
+  "conflict_log": [
+    {
+      "type": "trim",
+      "target": "R2",
+      "reason": "overlap_with_R1"
+    }
+  ]
+}
+```
+
+建议附带的校验字段：
+
+* `coverage_ratio`
+* `terrain_fit_score`
+* `requires_platform`
+* `near_water`
+
+
+差错日志字段规范：
+
+* `type`：差错类型，当前至少包括 `overlap_detected`。
+* `rect_a / rect_b`：参与冲突的两个矩形 ID。
+* `overlap_area`：重叠面积（方块数）。
+* `overlap_ratio_a / overlap_ratio_b`：重叠面积分别占各自矩形面积的比例。
+* `resolution`：程序或 AI 采用的解决动作，建议限定为 `merge / trim / drop / keep_both`。
+* `winner / loser`：当存在主次取舍时，记录保留方与被裁剪/丢弃方。
+* `notes`：补充说明，记录为什么采用该处理方式。
+
+建议：后续 C7 / C8 如果也有布局修正、候选淘汰、裁剪冲突，继续沿用这套日志字段，避免每阶段单独发明一套格式。
+
+差错日志示例：
+
+```json
+{
+  "overlap_logs": [
+    {
+      "type": "overlap_detected",
+      "rect_a": "R1",
+      "rect_b": "R2",
+      "overlap_area": 168,
+      "overlap_ratio_a": 0.12,
+      "overlap_ratio_b": 0.31,
+      "resolution": "trim",
+      "winner": "R1",
+      "loser": "R2",
+      "notes": "R2 truncated on east side to preserve main harbor core."
+    }
+  ]
+}
+```
+
+#### `C6_BuildableRects.validated.json`
+
+程序复核后的稳定版本，供 C7 / C8 / C9 使用。
+
+程序负责校验：
+
+* 是否越出当前 group
+* 是否低于 `80%` 覆盖率
+* 是否与其他矩形发生不可接受重叠
+* 是否落在明显不可建地形
+
+#### 可选调试产物
+
+* `C6_rect_preview.png`
+* `C6_rect_preview.legend.json`
+
+用途：
+
+* 在底图上回看矩形布局是否合理
+* 为后续人工 review 和回滚提供依据
 
 ### C6 明确不做的事
 
-* 不生成道路。
-* 不选择具体模板。
-* 不做基台和垂直结构。
-* 不做最终装饰。
+* 不生成道路
+* 不直接选择最终模板
+* 不做基台和垂直结构
+* 不做最终装饰
+* 不做逐建筑逐模块坐标展开
 
 ## C7 模板池裁剪与拼图策略
 
@@ -1252,8 +1512,8 @@ C7 的任务是在 C6 给定的空间结构（primary / plots）上，从模板�
 
 #### 1) C6 输出
 
-* `C6_BuildAreaLayout.json`
-  包含 primary_modules 与 fills（Fill Style + rect sizes）。
+* `C6_BuildableRects.validated.json`
+  包含每个 group 的主矩形结果（`cx/cz/w/h`）及程序校验后的稳定版本。
 
 #### 2) 模板库（Template Catalog）
 
