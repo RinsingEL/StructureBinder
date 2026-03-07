@@ -1145,7 +1145,7 @@ C6 的目标收敛为一件事：在每个 `C5 Module Group` 内生成 `1~3` 个
 
 * 程序负责提供局部地形图、group 边界、功能约束与结构库。
 * AI 负责做“矩形级”的规划决策，而不是直接放建筑。
-* C6 的直接产物是可复现的矩形占位结果，供 C7 选模板、C8 做基台、C9 做最终放置。
+* C6 的直接产物是可复现的矩形占位结果，供 C7 做组件规划与内置排列/拼图规则选择、C8 做 jigsaw 求解与基台计划、C9 做最终放置。
 
 ### C6 核心原则
 
@@ -1497,259 +1497,588 @@ AI 在本阶段实际需要完成六步决策。
 * 不做最终装饰
 * 不做逐建筑逐模块坐标展开
 
-## C7 模板池裁剪与拼图策略
+## C7 组件规划与拼图规则选择
 
 ### 阶段定位
 
-C7 的任务是在 C6 给定的空间结构（primary / plots）上，从模板池中筛选“可用候选模板集合”。
+C7 的目标是在每个 `C6 buildable rectangle` 内，先把“可建空间”转成“组件计划 + starter/pool/landing_profile 规则”。
 
-* 决定是否启用拼图。
-* 决定拼图深度（0 / 1 / 2）。
-* 决定使用哪个拼图池。
-* 为 C8 / C9 提供候选与 fallback 链。
+* AI 负责组件语义拆分与优先级判断。
+* 程序负责预筛结构库、裁剪非法候选、固化 fallback 链。
+* C7 不输出最终 piece 世界坐标，不直接写入世界。
+* C7 的产物是“怎么长”的规则，而不是“已经长完”的结果。
+
+### C7 核心原则
+
+1. 先语义，后几何。
+C7 先决定矩形里需要哪些组件，再决定每个组件用什么 starter 和 pool。
+2. starter 是组件锚点。
+每个组件必须先确定 `starter_structure` 或 `starter_candidates`，后续扩展都围绕它展开。
+3. `landing_profile` 在 C7 只是一种意图。
+它表示该组件更偏向 `none / adapt / platform / flatten`，真正的基台几何与高度解算留到 C8。
+4. C7 允许 AI 参与，C8 尽量确定性。
+AI 在这里做风格与组织判断，程序在下一阶段做可复放的几何求解。
+5. 不在本阶段生成最终 piece 坐标。
+否则 C7 会同时承担“选规则”和“执行落位”，阶段边界会混乱。
 
 ### C7 输入
 
 #### 1) C6 输出
 
 * `C6_BuildableRects.validated.json`
-  包含每个 group 的主矩形结果（`cx/cz/w/h`）及程序校验后的稳定版本。
 
-#### 2) 模板库（Template Catalog）
+每个矩形至少包含：
 
-* 每个模板优先使用 C3.5 预处理产物（尺寸、朝向、拼图段位、风格分数、功能候选）。
+* `rect_id`
+* `group_id`
+* `function`
+* `cx / cz / w / h`
+* `coverage_ratio`
+* `terrain_fit_score`
+* `requires_platform`
+* `near_water`
 
-#### 3) 可选规则
+#### 2) 写死的组件排列类型表
 
-* `C7_TemplateRules.json`
-  管理功能区偏好、拼图上限与 fallback 策略。
+C7 直接内置一张固定的排列类型表，不再单独拆出 C6.5 阶段。
 
-### 模板标签体系（最终定型）
+第一版只支持：
 
-#### ① 核心硬标签（最重要）
+* `linear`
+* `cluster`
+* `axial`
+* `edge_wrap`
 
-决定“能不能用”：
+每种排列类型至少固定以下字段：
 
-* `function_role`（第一筛选维度）
-* `interaction_role`
-  例如 `FRONT_TO_PLAZA` / `FRONT_TO_STREET` / `INWARD_FACING` / `EDGE_ATTACH`
-* `footprint`（w/h，可旋转）
-* `height`
-* `terrain_profile`
-  例如 `flat_only` / `slope_ok` / `water_edge_ok`
+* `layout_type`
+* `allowed_component_roles`
+* `required_component_roles`
+* `preferred_order`
+* `starter_strategy`
+* `expansion_strategy`
+* `boundary_preference`
+* `terrain_preference`
 
-#### ② 拼图相关（仅在启用拼图时使用）
+同时在 C7 内部维护 `function -> preferred_layout + fallback_layouts` 的写死映射，例如：
 
-* `puzzle_pool_id`
-* `connector_types`
-* `connector_dirs`
+* `port -> linear`
+* `market -> cluster`
+* `fortification -> edge_wrap`
+* `civic_center -> axial`
 
-这部分不参与普通筛选，避免维度爆炸。
+作用：
 
-#### ③ 软偏好（排序用）
+* 为当前 `rect` 指定主 `layout_type`
+* 给出该 `layout_type` 的默认组件顺序与必需组件角色
+* 给出 `fallback_layouts`，避免 C7 临时发明排列方式
 
-* `reskin_supported`
-* `material_profile`
-* `style_tags`
-* `landmark_score`
+#### 3) C3.5 结构预处理产物
 
-### C7 筛选顺序（建议写死）
+* `C3_5_StructureCatalog.preprocessed.json`
+* `C3_5_FunctionEnumTable.json`
 
-1. `function_role`
-2. `interaction_role`
-3. `footprint / height`
-4. `terrain_profile`
-5. 拼图可用性（仅当需要）
-6. `reskin_supported / material_profile`
-7. `style_tags`
+每个结构至少要带：
+
+* `size.length / width / height`
+* `orientation.jigsaw_facing`
+* `orientation.entry_facing`
+* `piece_role`：`START / MIDDLE / END / SINGLE`
+* `style_score`
+* `function_candidates`
+* 可选 `connector_types / connector_dirs / allowed_neighbors / landing_hint`
+
+#### 4) C4 / C5 语义上下文
+
+* `function`
+* `layer`
+* `zone_type`
+* `district_count`
+* `role_tag`
+
+作用：
+
+* 决定组件顺序
+* 决定哪些组件是必需项
+* 决定哪些组件应靠边、靠路、靠水
+
+#### 5) 三张局部地形预览图
+
+C7 虽然不做逐 piece 地形求解，但仍然建议给 AI 直接看局部图，而不是只看统计摘要。
+
+建议沿用 C6 的三张局部预览图：
+
+* `height map`
+* `hillshade`
+* `roughness`
+
+作用：
+
+* 帮 AI 判断矩形内部哪里更适合放 `core`，哪里更适合放 `boundary / amenity`
+* 帮 AI 判断组件更适合做线性展开、团块展开还是边缘包裹
+* 帮 AI 判断 `landing_profile` 更偏向 `none / adapt / platform / flatten`
+
+程序侧仍可附带轻量摘要字段作为辅助，但不再把摘要当成 C7 的主输入。
+
+#### 6) 组件规则表
+
+建议使用：
+
+* `C7_ComponentRules.json`
+
+管理以下约束：
+
+* 各功能默认组件顺序
+* 各组件最小 / 最大占比
+* starter 候选优先级
+* `puzzle_pool` 白名单 / 黑名单
+* 组件删减优先级
+* fallback 顺序
+
+### C7 提示词（Prompt）
+
+#### 1) 角色
+
+```text
+You are a Minecraft component planner.
+
+Your task is to decompose each buildable rectangle
+into semantic components and choose starter candidates,
+puzzle pool, landing profile, and fallback order.
+
+Do not place individual pieces.
+Do not generate final world coordinates.
+```
+
+#### 2) AI 必须完成的判断
+
+1. 读取 C6 已给出的 `function / group_id / rect` 约束
+2. 确定组件顺序与目标占比
+3. 为每个组件选 `starter_candidates`
+4. 为每个组件选 `puzzle_pool`
+5. 为每个组件选 `landing_profile`
+6. 给出组件删减与 starter 替换优先级
+
+#### 3) 输出要求
+
+```json
+{
+  "rect_id": "R1",
+  "components": [
+    {
+      "component_id": "CP1",
+      "role": "core",
+      "order": 1,
+      "target_ratio": 0.42,
+      "starter_candidates": ["palace_main_hall"],
+      "puzzle_pool": "palace_pool_v1",
+      "landing_profile": "platform",
+      "fallback_policy": ["swap_pool", "swap_starter", "drop_component"]
+    }
+  ]
+}
+```
+
+### C7 AI 内部思考步骤
+
+#### Step 1：读取已确定的矩形约束
+
+C7 不再重新判断这块矩形属于什么功能。功能语义已经由 C4 / C5 / C6 给定，当前步骤只读取并接受：
+
+* `function`
+* `group_id`
+* `rect (cx, cz, w, h)`
+* `near_water / requires_platform` 等先验约束
+
+#### Step 2：拆分组件
+
+例如：
+
+* `core -> secondary -> amenity -> landmark -> boundary`
+
+这一步不是只决定“有哪些组件”，还要同时决定“每个组件预留多少生成空间”。
+
+也就是说，C7 在拆分组件时要先做一轮 **组件空间预算**：
+
+* `starter_min_footprint`：该组件至少要容纳 1 个 starter 的最小长宽
+* `expected_piece_count`：预期会扩展多少个 piece
+* `expected_fill_ratio`：目标占比
+* `connector_buffer`：为 jigsaw 接口和转向预留的缓冲空间
+* `reserved_bbox_hint`：该组件在矩形中大致应占据的子区域
+
+组件空间预算的目的不是生成最终坐标，而是避免出现：
+
+* `core` 的 starter 能放下，但后续扩展完全没有空间
+* 前一个组件把后一个组件的 starter 区域挤没
+* 组件理论上达到 `target_ratio`，但实际装不下对应尺寸的 piece
+
+一个实用口径是：
+
+* 先按 `layout_type` 切出组件顺序和大致子区域
+* 再按 `starter footprint + 预期扩展长度/块数 + connector_buffer` 估算每个组件最小预算
+* 若预算总和超过 `rect` 可用面积，优先删减低优先级组件，而不是硬塞
+
+#### Step 3：选 starter
+
+基于 `piece_role = START`、尺寸、朝向、风格分数、功能候选给出候选序。
+
+#### Step 4：选 pool
+
+决定组件更适合线性扩展、团块扩展还是边界包裹扩展。
+
+#### Step 5：选 landing_profile
+
+这里只输出意图，不生成基台几何。
+
+#### Step 6：输出回退优先级
+
+明确哪些组件可以先删、哪些 starter 可以先换。
+
+### C7 程序处理
+
+程序在本阶段只做规则固化，不做最终落位。
+
+#### Step 1：预筛 starter 与 pool
+
+至少校验：
+
+* 功能匹配
+* `piece_role`
+* 尺寸是否可能装入当前矩形
+* 朝向是否可旋转
+* 风格分数是否落在允许范围
+
+#### Step 2：归一化组件计划
+
+程序把 AI 输出收敛成稳定结构：
+
+* 补齐 `order`
+* 归一化 `target_ratio`
+* 去掉非法 starter / pool
+* 固化 fallback 链
+
+#### Step 3：组件空间预算复核
+
+程序要对每个组件做一次静态预算复核，至少检查：
+
+* `starter_candidates` 的最小 footprint 是否落在该组件预算内
+* 若按 `expected_piece_count` 扩展，是否仍大概率装得下
+* 是否为 connector 留出了最小缓冲带
+* 多个组件的预算区是否发生明显重叠
+
+建议程序额外补出以下中间字段：
+
+* `starter_min_footprint`
+* `reserved_area_blocks`
+* `expected_piece_count`
+* `connector_buffer`
+* `space_budget_ok`
+
+如果预算不成立，优先采用以下修正顺序：
+
+* 缩减低优先级组件的 `target_ratio`
+* 降低该组件 `expected_piece_count`
+* 替换更小的 starter
+* 删除低优先级组件
+
+#### Step 4：输出给 C8 的执行计划
+
+此时只得到“执行蓝图”，还没有最终 piece 坐标。
 
 ### C7 输出
 
-#### `C7_TemplateSelection.json`
+#### `C7_ComponentPlan.json`
 
-对每个 `primary_module` 或 `plot`，输出：
+这是 C7 的主产物，供 C8 执行。
 
-* Top-K 模板候选。
-* 拼图参数（若启用）。
-* 明确 fallback 链。
+```json
+{
+  "step": "C7",
+  "rect_id": "R1",
+  "group_id": "g_port_06",
+  "function": "port",
+  "components": [
+    {
+      "component_id": "CP_core_01",
+      "role": "core",
+      "order": 1,
+      "target_ratio": 0.38,
+      "starter_candidates": ["port_harbor_master"],
+      "puzzle_pool": "port_core_pool_v1",
+      "landing_profile": "platform",
+      "fallback_policy": ["swap_pool", "swap_starter"]
+    },
+    {
+      "component_id": "CP_secondary_01",
+      "role": "secondary",
+      "order": 2,
+      "target_ratio": 0.34,
+      "starter_candidates": ["port_warehouse_head"],
+      "puzzle_pool": "port_storage_pool_v1",
+      "landing_profile": "adapt",
+      "fallback_policy": ["swap_pool", "drop_component"]
+    }
+  ]
+}
+```
 
-* 可回滚点：可在本阶段重选。
+#### `C7_ComponentCandidates.json`（可选）
+
+用于调试程序预筛结果，记录每个组件被保留的 starter / pool 候选。
+
+### C7 差错与回退
+
+常见差错：
+
+* `starter_candidate_empty`
+* `pool_candidate_empty`
+* `ratio_overflow`
+* `function_mismatch`
+* `style_conflict`
+
+回退顺序建议固定为：
+
+```text
+swap_pool
+-> swap_starter
+-> drop_component
+-> abandon_rect
+```
+
+* 可回滚点：可在本阶段重选组件计划；必要时回退到 C6 重选矩形。
 * 存放位置：`/saves/<WorldName>/terra_script/cities/<city_id>/`。
 
+# C8 · 结构求解落位与基台计划（顺承 T4 + C7）
 
-# C8 · 基台与垂直过渡（T4 驱动版）
+## 阶段定位
 
-## 阶段定位（修订）
+C8 是第一个真正开始“落地结构方案”的阶段。
 
-**C8 是“基于 T4 地形分析结果的基台决策与生成阶段”**：
+这里的“落地”不是立刻写世界方块，而是把 `C7_ComponentPlan` 求解成稳定、可复放的 piece 布局结果，并同步生成基台与垂直过渡计划。
 
-* 不重新计算高度、坡度
+* C7 决定：组件顺序、starter、pool、landing_profile、fallback。
+* C8 决定：starter 具体放哪、后续 piece 怎么长、哪里能放、哪里必须回退、基台怎么接地。
+* C8 输出的是“已求解完成但尚未执行写入”的结果，供 C9 直接执行。
 
-* 不扫描方块
+## C8 核心原则
 
-* 不推导地形结构
+1. C8 是确定性执行层。
+connector 匹配、占位更新、碰撞检测、地形校验、基台决策都由程序完成。
+2. 从 C8 开始才产生真实 piece 坐标。
+C7 只有规则与预算，C8 才真正产生 `world_pos / rotation / jigsaw_facing`。
+3. 组件按顺序求解，不允许后组件破坏前组件的已确认占位。
+4. 先通过地形校验，再确认 piece 落位。
+5. 先稳定 piece 布局，再汇总生成 foundation plan。
 
-* 只做：
+## C8 输入
 
-    * 策略选择
+### 1) 来自 C6 / C7
 
-    * 几何生成
+* `C6_BuildableRects.validated.json`
+* `C7_ComponentPlan.json`
 
-    * 影响范围记录
+C8 至少读取：
 
+* `rect_id / rect`
+* `group_id`
+* `function`
+* `layout_type`
+* `components[]`
+* `order`
+* `target_ratio`
+* `starter_candidates`
+* `puzzle_pool`
+* `landing_profile`
+* `fallback_policy`
+* `starter_min_footprint / expected_piece_count / connector_buffer` 等空间预算字段
 
-* * *
+### 2) 来自 T4 的地形事实
 
-## C8 的几何基准（再次确认）
-
-* **唯一几何基准：`plot`（C6 生成的长方形）**
-
-* 功能区 / 多边形：
-
-    * 只作为**规则选择与风格偏好**
-
-    * 不参与基台几何计算
-
-
-这点在 T4 已完备的前提下更重要，否则会“重复建模”。
-
-* * *
-
-## C8 输入（最终定型）
-
-### 1️⃣ 来自 C6 / C7
-
-* `plots[]`
-
-    * `plot_id`
-
-    * `rect (x,z,w,h)`
-
-    * `rotation`
-
-    * `module_group_id`
-
-* `selected_template`
-
-    * `footprint`
-
-    * `base_height`
-
-    * `foundation_hint`（可选）
-
-
-* * *
-
-### 2️⃣ 来自 **T4_HeightAnalysis**（核心输入）
-
-> 这是 C8 的“物理事实源”，也是你系统的优势点。
-
-对 **每个 plot**，直接引用 T4 的结果即可：
+对每个 `rect` 和候选落点，直接引用 T4 已计算结果：
 
 * `height_min / max / avg / p50 / p95`
-
-* `relief`（max - min）
-
+* `relief`
 * `slope_avg / slope_p95`
-
-* `edge_heights`（N / E / S / W）
-
+* `roughness_avg / roughness_p95`
+* `edge_heights`
+* `water_ratio`
 * `hazards`
+  * `touch_water`
+  * `touch_cliff`
+  * `protected_overlap`
 
-    * `touch_water`
+关键点：C8 只消费 T4 与规则库，不重新扫描世界。
 
-    * `touch_cliff`
+### 3) C8 规则输入
 
-    * `protected_overlap`
+* `C8_JigsawRules.json`
+* `C8_FoundationRules.json`
 
+建议至少管理：
 
-> ⚠️ 关键点：  
-> **C8 不再允许直接访问方块世界**，只消费 T4 产物  
-> → 确定性、可回滚、调试友好
-
-* * *
-
-### 3️⃣ C8 规则输入（轻量）
-
-`C8_FoundationRules.json`（或内置表）
-
+* connector 匹配优先级
+* 单组件最大 piece 数
+* 连续失败阈值
 * 最大允许抬高 / 挖低
+* 是否允许 `cut_and_fill / terrace / retaining_wall / suspend`
+* 不同 `landing_profile` 的落地阈值
 
-* 是否允许 cut & fill
+## C8 处理流程
 
-* 是否允许悬挑
+### Step 1：初始化矩形求解状态
 
-* 台阶 / 护坡触发阈值
+程序为当前 `rect` 建立：
 
-* 各 `function_role` 的偏好策略
+* `occupied_mask`
+* `reserved_component_areas`
+* `component_progress`
+* `frontier_connectors`
+* `terrain_cache`
+* `foundation_hints`
 
+### Step 2：按组件顺序求解 starter
 
-* * *
+对每个 `component`，按照 `order` 依次执行：
 
-## C8 处理流程（精简版）
+* 按 `starter_candidates` 顺序尝试
+* 结合 `layout_type` 选择该组件的优先锚点区域
+* 为 starter 选择具体 `world_pos + rotation`
+* 检查是否越出 `rect`
+* 检查是否撞上已落位 piece
+* 检查是否满足 `near_water / edge / entry` 等约束
+* 检查 starter 是否落在本组件的预算区内
 
-对 **每个 plot**：
+### Step 3：组件级 jigsaw 扩展
 
-### Step 1：选择基台策略（不算数，只决策）
+starter 成功后，程序维护该组件的 `frontier_connectors`，再从对应 `puzzle_pool` 中选择 piece 继续扩展。
 
-基于 T4 指标：
+固定执行口径：
 
-* `relief < ε`  
-  → `NONE`：直接贴地
+```text
+place starter
+open frontier connectors
+pick piece from puzzle_pool
+check connector match
+check terrain and bounds
+accept or reject
+repeat until stop condition
+```
 
-* `relief` 中等 & `slope_avg` 可接受  
-  → `PLATFORM`（抬高或切平）
+每次尝试 piece 时至少检查：
 
-* `relief` 大 & 等高线近似平行  
-  → `TERRACE`（梯田/分级台阶）
+* connector 类型是否匹配
+* 朝向能否接上
+* `piece_role` 是否允许出现在当前时机
+* 放下后是否仍在 `rect` 内
+* 是否侵占其他组件预算区太多
+* 是否与已落位 piece 冲突
 
-* `edge_heights` 单侧突变  
-  → `PLATFORM + RETAINING_WALL`
+### Step 4：piece 落地前地形校验
 
+每个 piece 在确认前都必须检查：
 
-> 这一步可以是**程序规则**，也可以留一个 `strategy_hint` 给 AI（但 AI 不接触原始高度）。
+* `height`
+* `slope`
+* `roughness`
+* `water_ratio`
+* 是否触发 `touch_cliff / protected_overlap`
 
-* * *
+若任一条件不满足，则该次尝试直接判失败，不进入最终 placement。
 
-### Step 2：确定基准高度
+### Step 5：按 landing_profile 生成落地策略
 
-使用 T4 已算好的统计量：
+piece 通过地形校验后，再根据 C7 给定的 `landing_profile` 决定实际落地方式：
 
-* `FOLLOW_AVG`
+* `none`：直接贴地或只做极小修正
+* `adapt`：允许局部补齐或小范围抬降
+* `platform`：生成规则平台、挡墙、台阶
+* `flatten`：对局部区域做切平方案，再放置 piece
 
-* `FOLLOW_P50`
+### Step 6：组件停止条件
 
-* `FOLLOW_MIN`
+满足任一条件就停止当前组件：
 
-* `FOLLOW_MAX`
+* 达到 `target_ratio`
+* 达到 `expected_piece_count` 或 `max_piece_count`
+* 无可用 connector
+* 连续失败次数超过阈值
+* 剩余预算空间已不足以再放下最小 piece
 
-* `CUT_AND_FILL`（受规则约束）
+### Step 7：组件 / 矩形回退
 
+建议固定回退链：
 
-* * *
+```text
+piece 失败
+-> 换 pool 元素
 
-### Step 3：生成基台几何
+starter 失败
+-> 换 starter
 
-* 基台体块
+component 失败
+-> drop component / 标记 underfilled
 
+rect 失败
+-> abandon rect
+```
+
+其中：
+
+* `drop component` 只允许删除低优先级组件
+* `abandon rect` 只在核心组件无法成立时触发
+
+### Step 8：汇总生成基台与垂直过渡计划
+
+当整块 `rect` 的 piece 布局稳定后，再统一汇总：
+
+* 平台体块
 * 护坡 / 挡墙
-
 * 台阶
+* terracing
+* 切填区域
+* `terrain_impact_bbox`
 
-* 边界裁切
+## C8 输出
 
+### `C8_ComponentPlacement.json`
 
-* * *
-
-## C8 输出（最终）
-
-### `C8_FoundationPlan.json`
-
-（不变，但现在**完全可复现**）
+这是 C8 的主产物，记录最终求解完成的 piece 布局。
 
 ```jsonc
 {
-  "plot_id": "p23",
+  "step": "C8",
+  "rect_id": "R1",
+  "group_id": "g_port_06",
+  "function": "port",
+  "placements": [
+    {
+      "piece_id": "P_001",
+      "component_id": "CP_core_01",
+      "structure_id": "port_harbor_master",
+      "piece_role": "START",
+      "world_pos": { "x": -5398, "y": 71, "z": -6738 },
+      "rotation": 90,
+      "jigsaw_facing": "south",
+      "landing_profile": "platform"
+    }
+  ],
+  "component_stats": [
+    {
+      "component_id": "CP_core_01",
+      "filled_ratio": 0.41,
+      "piece_count": 4,
+      "starter_used": "port_harbor_master",
+      "space_budget_ok": true
+    }
+  ]
+}
+```
+
+### `C8_FoundationPlan.json`
+
+```jsonc
+{
+  "rect_id": "R1",
   "foundation_type": "PLATFORM",
   "strategy": "CUT_AND_FILL",
   "base_y": 74,
@@ -1765,71 +2094,167 @@ C7 的任务是在 C6 给定的空间结构（primary / plots）上，从模板�
 }
 ```
 
-* * *
+### `C8_ComponentPlacement.validated.json`
 
-## 那等高线 + C6 多边形还要不要？
+程序复核后的稳定版本，供 C9 执行。
 
-### ✔️ 要，但角色变了
+建议校验：
 
-它们不再是 **C8 的“计算输入”**，而是：
+* 是否越出 `rect`
+* 是否存在不可接受重叠
+* 是否存在未通过地形校验却被保留的 piece
+* 是否存在核心组件缺失
+* 是否存在 foundation 与 piece 布局不一致
 
-* **AI 决策辅助**（当你允许 AI 参与策略选择时）
+### 可选调试产物
 
-* **Debug 可视化**
+* `C8_component_preview.png`
+* `C8_component_preview.legend.json`
+* `C8_connector_debug.json`
+* `C8_foundation_preview.png`
 
-* **回放 / 复盘**
+## C8 差错与回退
 
+常见差错建议固定为：
 
-可以定义为：
+* `piece_connector_mismatch`
+* `piece_terrain_rejected`
+* `piece_overlap`
+* `piece_out_of_budget`
+* `starter_unplaceable`
+* `component_underfilled`
+* `core_component_missing`
+* `rect_abandoned`
 
-* `C8_TerrainPreview`（只读、非必需）
+## C8 明确不做的事
 
-* 不影响 determinism
+* 不直接写世界方块
+* 不做最终装饰随机
+* 不在本阶段重新改 C7 的组件语义
 
-* 丢了也不影响结果
+# C9 · 世界写入与装饰执行（顺承 C8）
 
+## 阶段定位
 
-* * *
+C9 只负责把 C8 已经求解并验证过的结果写进世界，并记录执行结果。
 
-# C9 · 建筑放置与装饰（顺承 T4 + C8）
+* 地形与基台问题 -> 已由 T4 + C8 解决
+* 几何位置 -> 已由 C6 + C8 决定
+* 组件与拼图规则 -> 已由 C7 决定
 
-在这个体系下，C9 变得非常“干净”：
+C9 不再负责重新选 starter、重新拼 jigsaw、重新判断主功能。
 
-* 地形问题 → 已由 T4 + C8 解决
+## C9 输入
 
-* 几何位置 → 已由 C6 决定
+* `C8_ComponentPlacement.validated.json`
+* `C8_FoundationPlan.json`
+* 可选 `C9_DecorationRules.json`
 
-* 模板选择 → 已由 C7 决定
+执行前至少读取：
 
+* 各 piece 的 `structure_id / world_pos / rotation`
+* foundation 的 `base_y / supports / terrain_impact_bbox`
+* 装饰权重、随机种子、禁放列表
 
-**C9 只负责执行与记录。**
-- **程序做什么**：
+## C9 处理流程
 
+### Step 1：写入 foundation
 
-放置建筑（位置+朝向N/E/S/W+基准点）
+先按 `C8_FoundationPlan.json` 写入：
 
+* 平台
+* 挡墙
+* 台阶
+* terracing
+* 其他基础支撑结构
 
-若有“拼图式扩展”：用你自定义的“受边界约束的拼接逻辑”（不走原版无限扩张）
+### Step 2：写入结构 piece
 
+再按 `C8_ComponentPlacement.validated.json` 依次写入：
 
-填充装饰/小结构（权重随机）
-- **AI做什么**：看效果评审（截图/俯视图），不满意可回滚到“该建造区”
-- **产出**：
+* starter
+* middle
+* end / single
 
+写入时记录每个 piece 的实际执行状态：
 
-`C9_Placement.dat/json`（最终落地记录）
+* `placed`
+* `skipped`
+* `failed`
 
+### Step 3：写入装饰与小结构
 
-`C9_DecorationPlan.json`
-- **可回滚点**：单建造区回滚（不要推翻全城）
-- **存放位置**：`/saves/<WorldName>/terra_script/cities/<city_id>/`
+主结构稳定后，再执行：
+
+* 权重随机装饰
+* 小型附属物
+* 功能性细节补件
+
+装饰不得破坏 C8 已确认的主结构和 connector 逻辑。
+
+### Step 4：执行复核与记录
+
+程序应输出：
+
+* 成功写入多少个 foundation 单元
+* 成功写入多少个 piece
+* 失败的 piece 列表
+* 是否需要局部回滚
+
+## C9 输出
+
+### `C9_Placement.dat/json`
+
+最终世界写入记录。
+
+### `C9_DecorationPlan.json`
+
+最终执行过的装饰清单与随机结果。
+
+### `C9_ExecutionReport.json`
+
+建议至少包含：
+
+* `rect_id`
+* `piece_total / piece_success / piece_failed`
+* `foundation_success`
+* `decoration_success`
+* `rollback_applied`
+* `notes`
+
+## C9 差错与回退
+
+常见差错建议固定为：
+
+* `foundation_write_failed`
+* `piece_write_failed`
+* `chunk_not_ready`
+* `placement_blocked`
+* `decoration_conflict`
+* `partial_rollback_applied`
+
+回滚原则：
+
+* 优先单 piece 回滚
+* 其次单组件回滚
+* 再次单矩形回滚
+* 不要因为局部失败推翻整城
+
+## C9 明确不做的事
+
+* 不回头重算 C8 几何
+* 不重做 C7 组件规划
+* 不修改 C6 矩形
+
 * * *
 
 ## 最终一句话定性
 
 > **T4 是地形物理真相，  
 > C6 是空间设计，  
-> C8 是“如何把设计接到真实世界上”。**
+> C7 是组件与规则决策，  
+> C8 是几何求解与接地，  
+> C9 是最终写入。**
 
 # 总结：三大模块的“谁负责什么”
 
