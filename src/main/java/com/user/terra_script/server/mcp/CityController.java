@@ -5,6 +5,10 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.sun.net.httpserver.HttpExchange;
+import com.user.terra_script.world.city.stage.CityGroupPathUtil;
+import com.user.terra_script.world.city.stage.GroupStepStateUtil;
+import com.user.terra_script.world.city.stage.c6.CityC6Validation;
+import com.user.terra_script.world.city.stage.c7.CityC7Validation;
 import com.user.terra_script.server.http.HttpUtil;
 import com.user.terra_script.world.NationGenManager;
 import com.user.terra_script.world.city.CityConfig;
@@ -670,6 +674,7 @@ public class CityController {
             String body = HttpUtil.readBody(exchange);
             JsonObject json = JsonParser.parseString(body).getAsJsonObject();
             String cityId = json.has("city_id") ? json.get("city_id").getAsString() : null;
+            String groupId = readOptionalString(json, "group_id");
             if (cityId == null || cityId.isBlank()) {
                 HttpUtil.sendResponse(exchange, 400, "{\"error\": \"Missing city_id\"}");
                 return;
@@ -683,15 +688,40 @@ public class CityController {
             }
 
             CityC7Stages.C7Selection selection = CityC7Stages.generate(cityId, c6Layout);
-            CityC7Stages.save(cityDir, selection);
+            CityC7Stages.C7Selection responseSelection = filterC7SelectionByGroup(selection, groupId);
+            Path outputFile = cityDir.resolve(CityC7Stages.C7_FILE);
+            if (groupId != null && !groupId.isBlank()) {
+                Path groupDir = resolveGroupDir(cityDir, groupId);
+                outputFile = groupDir.resolve("c7_selection.json");
+                java.nio.file.Files.writeString(outputFile, gson.toJson(responseSelection));
+            } else {
+                CityC7Stages.save(cityDir, selection);
+            }
 
             JsonObject res = new JsonObject();
             res.addProperty("status", "ok");
             res.addProperty("step", "C7");
             res.addProperty("city_id", cityId);
-            res.addProperty("selection_count", selection.selections != null ? selection.selections.size() : 0);
-            res.addProperty("catalog_source", selection.catalog_source);
-            res.addProperty("file", cityDir.resolve(CityC7Stages.C7_FILE).toString());
+            if (groupId != null) res.addProperty("group_id", groupId);
+            res.addProperty("selection_count", responseSelection.selections != null ? responseSelection.selections.size() : 0);
+            res.addProperty("catalog_source", responseSelection.catalog_source);
+            res.addProperty("file", outputFile.toString());
+            if (groupId != null && !groupId.isBlank()) {
+                CityC7Validation.Report validation = CityC7Validation.generate(cityId, groupId, responseSelection);
+                Path groupDir = resolveGroupDir(cityDir, groupId);
+                Path validationFile = CityC7Validation.save(cityDir, groupId, validation);
+                GroupStepStateUtil.State state = GroupStepStateUtil.update(groupDir, "C7", !validation.ok, "c7_validation_failed_three_times");
+                res.addProperty("artifact_dir", groupDir.toString());
+                res.addProperty("validation_file", validationFile.toString());
+                res.addProperty("retry_count", state.failure_count);
+                res.addProperty("blocked_after_failures", state.blocked);
+                res.add("validation", gson.toJsonTree(validation));
+                if (state.blocked || !validation.ok) {
+                    res.addProperty("status", "invalid");
+                    HttpUtil.sendResponse(exchange, state.blocked ? 409 : 422, gson.toJson(res));
+                    return;
+                }
+            }
             HttpUtil.sendResponse(exchange, 200, gson.toJson(res));
         } catch (Exception e) {
             HttpUtil.handleError(exchange, e);
@@ -704,11 +734,21 @@ public class CityController {
             String body = HttpUtil.readBody(exchange);
             JsonObject json = JsonParser.parseString(body).getAsJsonObject();
             String cityId = json.has("city_id") ? json.get("city_id").getAsString() : null;
+            String groupId = readOptionalString(json, "group_id");
             if (cityId == null || cityId.isBlank()) {
                 HttpUtil.sendResponse(exchange, 400, "{\"error\": \"Missing city_id\"}");
                 return;
             }
             Path cityDir = resolveCityDir(cityId);
+            if (groupId != null && !groupId.isBlank()) {
+                Path file = resolveGroupDir(cityDir, groupId).resolve("c7_selection.json");
+                if (!java.nio.file.Files.exists(file)) {
+                    HttpUtil.sendResponse(exchange, 404, "{\"error\": \"C7 group data not found for: " + cityId + " / " + groupId + "\"}");
+                    return;
+                }
+                HttpUtil.sendResponse(exchange, 200, java.nio.file.Files.readString(file));
+                return;
+            }
             CityC7Stages.C7Selection selection = CityC7Stages.load(cityDir);
             if (selection == null) {
                 HttpUtil.sendResponse(exchange, 404, "{\"error\": \"C7 data not found for: " + cityId + "\"}");
@@ -719,13 +759,13 @@ public class CityController {
             HttpUtil.handleError(exchange, e);
         }
     }
-
     public void handleCityC8Generate(HttpExchange exchange) throws IOException {
         if (!HttpUtil.requireMethod(exchange, "POST")) return;
         try {
             String body = HttpUtil.readBody(exchange);
             JsonObject json = JsonParser.parseString(body).getAsJsonObject();
             String cityId = json.has("city_id") ? json.get("city_id").getAsString() : null;
+            String groupId = readOptionalString(json, "group_id");
             if (cityId == null || cityId.isBlank()) {
                 HttpUtil.sendResponse(exchange, 400, "{\"error\": \"Missing city_id\"}");
                 return;
@@ -741,15 +781,26 @@ public class CityController {
                 return;
             }
 
-            CityC8Stages.C8Plan plan = CityC8Stages.generate(cityId, c6Summary, c6Layout, heightData, c6Index);
+            CityC2ScanBinaryIO.C2ScanData c2ScanData = CityC2ScanBinaryIO.load(cityId);
+            CityC8Stages.C8Plan plan = CityC8Stages.generate(cityId, c6Summary, c6Layout, heightData, c2ScanData, c6Index);
             CityC8Stages.save(cityDir, plan);
+
+            Set<Integer> targetAreaIds = collectAreaIdsForGroup(c6Summary, groupId);
+            CityC8Stages.C8Plan responsePlan = filterC8PlanByGroup(plan, groupId, targetAreaIds);
+            Path outputFile = cityDir.resolve(CityC8Stages.C8_PLAN_FILE);
+            if (groupId != null && !groupId.isBlank()) {
+                Path groupDir = resolveGroupDir(cityDir, groupId);
+                outputFile = groupDir.resolve("c8_foundation.json");
+                java.nio.file.Files.writeString(outputFile, gson.toJson(responsePlan));
+            }
 
             JsonObject res = new JsonObject();
             res.addProperty("status", "ok");
             res.addProperty("step", "C8");
             res.addProperty("city_id", cityId);
-            res.addProperty("foundation_count", plan.foundations != null ? plan.foundations.size() : 0);
-            res.addProperty("file", cityDir.resolve(CityC8Stages.C8_PLAN_FILE).toString());
+            if (groupId != null) res.addProperty("group_id", groupId);
+            res.addProperty("foundation_count", responsePlan.foundations != null ? responsePlan.foundations.size() : 0);
+            res.addProperty("file", outputFile.toString());
             HttpUtil.sendResponse(exchange, 200, gson.toJson(res));
         } catch (Exception e) {
             HttpUtil.handleError(exchange, e);
@@ -762,12 +813,22 @@ public class CityController {
             String body = HttpUtil.readBody(exchange);
             JsonObject json = JsonParser.parseString(body).getAsJsonObject();
             String cityId = json.has("city_id") ? json.get("city_id").getAsString() : null;
+            String groupId = readOptionalString(json, "group_id");
             if (cityId == null || cityId.isBlank()) {
                 HttpUtil.sendResponse(exchange, 400, "{\"error\": \"Missing city_id\"}");
                 return;
             }
 
             Path cityDir = resolveCityDir(cityId);
+            if (groupId != null && !groupId.isBlank()) {
+                Path file = resolveGroupDir(cityDir, groupId).resolve("c8_foundation.json");
+                if (!java.nio.file.Files.exists(file)) {
+                    HttpUtil.sendResponse(exchange, 404, "{\"error\": \"C8 group data not found for: " + cityId + " / " + groupId + "\"}");
+                    return;
+                }
+                HttpUtil.sendResponse(exchange, 200, java.nio.file.Files.readString(file));
+                return;
+            }
             CityC8Stages.C8Plan plan = CityC8Stages.load(cityDir);
             if (plan == null) {
                 HttpUtil.sendResponse(exchange, 404, "{\"error\": \"C8 data not found for: " + cityId + "\"}");
@@ -785,6 +846,7 @@ public class CityController {
             String body = HttpUtil.readBody(exchange);
             JsonObject json = JsonParser.parseString(body).getAsJsonObject();
             String cityId = json.has("city_id") ? json.get("city_id").getAsString() : null;
+            String groupId = readOptionalString(json, "group_id");
             if (cityId == null || cityId.isBlank()) {
                 HttpUtil.sendResponse(exchange, 400, "{\"error\": \"Missing city_id\"}");
                 return;
@@ -808,10 +870,15 @@ public class CityController {
                     HttpUtil.sendResponse(exchange, 404, "{\"error\": \"C8 missing and required data to regenerate C8 not found for: " + cityId + "\"}");
                     return;
                 }
-                c8Plan = CityC8Stages.generate(cityId, c6Summary, c6Layout, heightData, c6Index);
+                CityC2ScanBinaryIO.C2ScanData c2ScanData = CityC2ScanBinaryIO.load(cityId);
+                c8Plan = CityC8Stages.generate(cityId, c6Summary, c6Layout, heightData, c2ScanData, c6Index);
                 CityC8Stages.save(cityDir, c8Plan);
             }
-            final CityC8Stages.C8Plan finalC8Plan = c8Plan;
+
+            Set<Integer> targetAreaIds = collectAreaIdsForGroup(c6Summary, groupId);
+            CityC6Stages.C6Summary responseSummary = filterC6SummaryByGroup(c6Summary, groupId);
+            Map<Long, Integer> responseIndex = filterIndexByAreaIds(c6Index, targetAreaIds);
+            CityC8Stages.C8Plan responsePlan = filterC8PlanByGroup(c8Plan, groupId, targetAreaIds);
 
             final CityC9Stages.C9Result[] holder = new CityC9Stages.C9Result[1];
             if (applyBlocks) {
@@ -823,27 +890,39 @@ public class CityController {
                 ServerLevel level = mcServer.overworld();
                 mcServer.execute(() -> {
                     try {
-                        holder[0] = CityC9Stages.generate(cityId, level, c6Summary, c6Index, finalC8Plan, true, maxBlocks);
+                        holder[0] = CityC9Stages.generate(cityId, level, responseSummary, responseIndex, responsePlan, true, maxBlocks);
                     } finally {
                         latch.countDown();
                     }
                 });
                 latch.await();
             } else {
-                holder[0] = CityC9Stages.generate(cityId, null, c6Summary, c6Index, finalC8Plan, false, maxBlocks);
+                holder[0] = CityC9Stages.generate(cityId, null, responseSummary, responseIndex, responsePlan, false, maxBlocks);
             }
             CityC9Stages.C9Result result = holder[0];
-            CityC9Stages.save(cityDir, result);
+            CityC9Stages.C9Result responseResult = filterC9ResultByAreas(result, targetAreaIds);
+            Path placementFile = cityDir.resolve(CityC9Stages.C9_PLACEMENT_FILE);
+            Path decorationFile = cityDir.resolve(CityC9Stages.C9_DECORATION_FILE);
+            if (groupId != null && !groupId.isBlank()) {
+                Path groupDir = resolveGroupDir(cityDir, groupId);
+                placementFile = groupDir.resolve("c9_placement.json");
+                decorationFile = groupDir.resolve("c9_decoration.json");
+                if (responseResult.placement != null) java.nio.file.Files.writeString(placementFile, gson.toJson(responseResult.placement));
+                if (responseResult.decoration != null) java.nio.file.Files.writeString(decorationFile, gson.toJson(responseResult.decoration));
+            } else {
+                CityC9Stages.save(cityDir, result);
+            }
 
             JsonObject res = new JsonObject();
             res.addProperty("status", "ok");
             res.addProperty("step", "C9");
             res.addProperty("city_id", cityId);
+            if (groupId != null) res.addProperty("group_id", groupId);
             res.addProperty("apply_blocks", applyBlocks);
-            res.addProperty("processed_areas", result != null && result.placement != null ? result.placement.processed_areas : 0);
-            res.addProperty("changed_blocks_total", result != null && result.placement != null ? result.placement.changed_blocks_total : 0);
-            res.addProperty("placement_file", cityDir.resolve(CityC9Stages.C9_PLACEMENT_FILE).toString());
-            res.addProperty("decoration_file", cityDir.resolve(CityC9Stages.C9_DECORATION_FILE).toString());
+            res.addProperty("processed_areas", responseResult != null && responseResult.placement != null ? responseResult.placement.processed_areas : 0);
+            res.addProperty("changed_blocks_total", responseResult != null && responseResult.placement != null ? responseResult.placement.changed_blocks_total : 0);
+            res.addProperty("placement_file", placementFile.toString());
+            res.addProperty("decoration_file", decorationFile.toString());
             HttpUtil.sendResponse(exchange, 200, gson.toJson(res));
         } catch (InterruptedException ie) {
             Thread.currentThread().interrupt();
@@ -859,13 +938,31 @@ public class CityController {
             String body = HttpUtil.readBody(exchange);
             JsonObject json = JsonParser.parseString(body).getAsJsonObject();
             String cityId = json.has("city_id") ? json.get("city_id").getAsString() : null;
+            String groupId = readOptionalString(json, "group_id");
             if (cityId == null || cityId.isBlank()) {
                 HttpUtil.sendResponse(exchange, 400, "{\"error\": \"Missing city_id\"}");
                 return;
             }
             Path cityDir = resolveCityDir(cityId);
-            CityC9Stages.C9Placement placement = CityC9Stages.loadPlacement(cityDir);
-            CityC9Stages.C9Decoration decoration = CityC9Stages.loadDecoration(cityDir);
+            if (groupId != null && !groupId.isBlank()) {
+                Path groupDir = resolveGroupDir(cityDir, groupId);
+                Path placementFile = groupDir.resolve("c9_placement.json");
+                Path decorationFile = groupDir.resolve("c9_decoration.json");
+                if (!java.nio.file.Files.exists(placementFile) && !java.nio.file.Files.exists(decorationFile)) {
+                    HttpUtil.sendResponse(exchange, 404, "{\"error\": \"C9 group data not found for: " + cityId + " / " + groupId + "\"}");
+                    return;
+                }
+                JsonObject res = new JsonObject();
+                res.addProperty("step", "C9");
+                res.addProperty("ok", true);
+                if (java.nio.file.Files.exists(placementFile)) res.add("placement", JsonParser.parseString(java.nio.file.Files.readString(placementFile)));
+                if (java.nio.file.Files.exists(decorationFile)) res.add("decoration", JsonParser.parseString(java.nio.file.Files.readString(decorationFile)));
+                HttpUtil.sendResponse(exchange, 200, gson.toJson(res));
+                return;
+            }
+            Path cityRoot = resolveCityDir(cityId);
+            CityC9Stages.C9Placement placement = CityC9Stages.loadPlacement(cityRoot);
+            CityC9Stages.C9Decoration decoration = CityC9Stages.loadDecoration(cityRoot);
             if (placement == null && decoration == null) {
                 HttpUtil.sendResponse(exchange, 404, "{\"error\": \"C9 data not found for: " + cityId + "\"}");
                 return;
@@ -1375,5 +1472,116 @@ public class CityController {
             this.cacheHit = cacheHit;
             this.cacheSource = cacheSource;
         }
+    }
+
+    private static String readOptionalString(JsonObject json, String key) {
+        if (json == null || key == null || key.isBlank() || !json.has(key) || json.get(key).isJsonNull()) return null;
+        String value = json.get(key).getAsString();
+        return value == null || value.isBlank() ? null : value.trim();
+    }
+
+    private static Path resolveGroupDir(Path cityDir, String groupId) throws Exception {
+        return CityGroupPathUtil.resolveGroupDir(cityDir, groupId);
+    }
+
+    private static CityC6Stages.C6Summary filterC6SummaryByGroup(CityC6Stages.C6Summary summary, String groupId) {
+        if (summary == null || groupId == null || groupId.isBlank()) return summary;
+        CityC6Stages.C6Summary copy = new CityC6Stages.C6Summary();
+        copy.ok = summary.ok;
+        copy.city_id = summary.city_id;
+        copy.rules_version = summary.rules_version;
+        copy.fill_style = summary.fill_style;
+        copy.generated_at_epoch_ms = summary.generated_at_epoch_ms;
+        for (CityC6Stages.BuildAreaSummary area : summary.areas) {
+            if (area != null && groupId.equals(area.group_id)) copy.areas.add(area);
+        }
+        return copy;
+    }
+
+    private static CityC6Stages.C6Layout filterC6LayoutByGroup(CityC6Stages.C6Layout layout, String groupId) {
+        if (layout == null || groupId == null || groupId.isBlank()) return layout;
+        CityC6Stages.C6Layout copy = new CityC6Stages.C6Layout();
+        copy.ok = layout.ok;
+        copy.city_id = layout.city_id;
+        copy.fill_style = layout.fill_style;
+        copy.version = layout.version;
+        copy.generated_at_epoch_ms = layout.generated_at_epoch_ms;
+        for (CityC6Stages.LayoutPlan plan : layout.plans) {
+            if (plan != null && groupId.equals(plan.group_id)) copy.plans.add(plan);
+        }
+        return copy;
+    }
+
+    private static Set<Integer> collectAreaIdsForGroup(CityC6Stages.C6Summary summary, String groupId) {
+        Set<Integer> ids = new java.util.LinkedHashSet<>();
+        if (summary == null || summary.areas == null) return ids;
+        for (CityC6Stages.BuildAreaSummary area : summary.areas) {
+            if (area != null && (groupId == null || groupId.isBlank() || groupId.equals(area.group_id))) ids.add(area.build_area_numeric_id);
+        }
+        return ids;
+    }
+
+    private static Map<Long, Integer> filterIndexByAreaIds(Map<Long, Integer> index, Set<Integer> areaIds) {
+        if (index == null || areaIds == null || areaIds.isEmpty()) return index;
+        Map<Long, Integer> filtered = new java.util.LinkedHashMap<>();
+        for (Map.Entry<Long, Integer> entry : index.entrySet()) {
+            if (entry.getValue() != null && areaIds.contains(entry.getValue())) filtered.put(entry.getKey(), entry.getValue());
+        }
+        return filtered;
+    }
+
+    private static CityC7Stages.C7Selection filterC7SelectionByGroup(CityC7Stages.C7Selection selection, String groupId) {
+        if (selection == null || groupId == null || groupId.isBlank()) return selection;
+        CityC7Stages.C7Selection copy = new CityC7Stages.C7Selection();
+        copy.ok = selection.ok;
+        copy.city_id = selection.city_id;
+        copy.generated_at_epoch_ms = selection.generated_at_epoch_ms;
+        copy.catalog_source = selection.catalog_source;
+        copy.puzzle_depth = selection.puzzle_depth;
+        for (CityC7Stages.TemplateSelectionItem item : selection.selections) {
+            if (item != null && groupId.equals(item.group_id)) copy.selections.add(item);
+        }
+        return copy;
+    }
+
+    private static CityC8Stages.C8Plan filterC8PlanByGroup(CityC8Stages.C8Plan plan, String groupId, Set<Integer> areaIds) {
+        if (plan == null || groupId == null || groupId.isBlank()) return plan;
+        CityC8Stages.C8Plan copy = new CityC8Stages.C8Plan();
+        copy.ok = plan.ok;
+        copy.city_id = plan.city_id;
+        copy.version = plan.version;
+        copy.generated_at_epoch_ms = plan.generated_at_epoch_ms;
+        for (CityC8Stages.FoundationItem item : plan.foundations) {
+            if (item != null && (groupId.equals(item.group_id) || areaIds.contains(item.build_area_numeric_id))) copy.foundations.add(item);
+        }
+        return copy;
+    }
+
+    private static CityC9Stages.C9Result filterC9ResultByAreas(CityC9Stages.C9Result result, Set<Integer> areaIds) {
+        if (result == null || areaIds == null || areaIds.isEmpty()) return result;
+        CityC9Stages.C9Result copy = new CityC9Stages.C9Result();
+        copy.placement = new CityC9Stages.C9Placement();
+        copy.decoration = new CityC9Stages.C9Decoration();
+        if (result.placement != null) {
+            copy.placement.city_id = result.placement.city_id;
+            copy.placement.generated_at_epoch_ms = result.placement.generated_at_epoch_ms;
+            copy.placement.apply_blocks = result.placement.apply_blocks;
+            copy.placement.max_blocks = result.placement.max_blocks;
+            for (CityC9Stages.PlacementItem item : result.placement.items) {
+                if (item != null && areaIds.contains(item.build_area_numeric_id)) {
+                    copy.placement.items.add(item);
+                    copy.placement.changed_blocks_total += item.changed_blocks;
+                }
+            }
+            copy.placement.processed_areas = copy.placement.items.size();
+        }
+        if (result.decoration != null) {
+            copy.decoration.city_id = result.decoration.city_id;
+            copy.decoration.generated_at_epoch_ms = result.decoration.generated_at_epoch_ms;
+            for (CityC9Stages.DecorationItem item : result.decoration.items) {
+                if (item != null) copy.decoration.items.add(item);
+            }
+        }
+        return copy;
     }
 }

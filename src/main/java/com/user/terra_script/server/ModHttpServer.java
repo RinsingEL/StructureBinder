@@ -71,6 +71,7 @@ public class ModHttpServer {
             server.createContext("/freeze_project", workflowController::handleFreezeProject);
             server.createContext("/workflow/run", workflowController::handleWorkflowRun);
             server.createContext("/workflow/status", workflowController::handleWorkflowStatus);
+            server.createContext("/task_status", workflowController::handleTaskStatus);
 
             server.createContext("/city_heightmap", cityController::handleCityHeightmap);
             server.createContext("/city_c1_generate", cityController::handleCreateCity);
@@ -116,3 +117,4 @@ public class ModHttpServer {
         if (server != null) server.stop(0);
     }
 }
+

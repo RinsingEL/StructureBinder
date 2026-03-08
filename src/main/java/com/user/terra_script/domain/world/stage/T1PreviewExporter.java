@@ -6,6 +6,7 @@ import com.user.terra_script.client.data.ScanResultHolder;
 import com.user.terra_script.client.data.ScanResultHolder.RegionCache;
 import com.user.terra_script.domain.world.scan.ScanPixel;
 import com.user.terra_script.domain.world.scan.ScanRegion;
+import com.user.terra_script.util.PreviewOverlayUtil;
 import com.user.terra_script.util.TerrainFeatureComputer;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.storage.LevelResource;
@@ -70,11 +71,30 @@ public final class T1PreviewExporter {
         );
         BufferedImage biomeImage = renderBiome(biomeDs);
 
+        RegionCache gridCache = holder != null ? holder.regionCacheMap.get(regionId) : null;
+        PreviewOverlayUtil.GridSpec gridSpec = new PreviewOverlayUtil.GridSpec();
+        gridSpec.previewSize = PREVIEW_SIZE;
+        gridSpec.originX = gridCache != null ? gridCache.minX : 0;
+        gridSpec.originZ = gridCache != null ? gridCache.minZ : 0;
+        gridSpec.widthBlocks = gridCache != null ? gridCache.w : (map.length * Math.max(1, step));
+        gridSpec.heightBlocks = gridCache != null ? gridCache.h : (map[0].length * Math.max(1, step));
+        gridSpec.sampleStepBlocks = Math.max(1, step);
+        gridSpec.legendText = PreviewOverlayUtil.defaultLegendText(gridSpec);
+        PreviewOverlayUtil.applyGridOverlay(heightImage, gridSpec);
+        PreviewOverlayUtil.applyGridOverlay(hillshadeImage, gridSpec);
+        PreviewOverlayUtil.applyGridOverlay(slopeImage, gridSpec);
+        PreviewOverlayUtil.applyGridOverlay(biomeImage, gridSpec);
+
         JsonObject legends = new JsonObject();
         legends.add(IMG_HEIGHT, buildHeightLegend());
         legends.add(IMG_HILLSHADE, buildHillshadeLegend());
         legends.add(IMG_SLOPE, buildSlopeLegend());
         legends.add(IMG_BIOME, buildBiomeLegend());
+        JsonObject gridMeta = PreviewOverlayUtil.buildGridMetadata(gridSpec);
+        legends.getAsJsonObject(IMG_HEIGHT).add("grid", gridMeta.deepCopy());
+        legends.getAsJsonObject(IMG_HILLSHADE).add("grid", gridMeta.deepCopy());
+        legends.getAsJsonObject(IMG_SLOPE).add("grid", gridMeta.deepCopy());
+        legends.getAsJsonObject(IMG_BIOME).add("grid", gridMeta.deepCopy());
 
         Path dir = server.getWorldPath(LevelResource.ROOT)
                 .resolve("terra_script")
@@ -548,3 +568,4 @@ public final class T1PreviewExporter {
         }
     }
 }
+

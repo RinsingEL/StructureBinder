@@ -3,6 +3,8 @@ package com.user.terra_script.world.city.stage.c8;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.user.terra_script.world.city.stage.c1.CityStage1BinaryIO;
+import com.user.terra_script.world.city.stage.CityHeightResolver;
+import com.user.terra_script.world.city.stage.c2.CityC2ScanBinaryIO;
 import com.user.terra_script.world.city.stage.c6.CityC6Stages;
 
 import java.nio.charset.StandardCharsets;
@@ -76,6 +78,17 @@ public final class CityC8Stages {
             CityStage1BinaryIO.HeightData heightData,
             Map<Long, Integer> indexByBlock
     ) {
+        return generate(cityId, c6Summary, c6Layout, heightData, null, indexByBlock);
+    }
+
+    public static C8Plan generate(
+            String cityId,
+            CityC6Stages.C6Summary c6Summary,
+            CityC6Stages.C6Layout c6Layout,
+            CityStage1BinaryIO.HeightData heightData,
+            CityC2ScanBinaryIO.C2ScanData c2ScanData,
+            Map<Long, Integer> indexByBlock
+    ) {
         C8Plan plan = new C8Plan();
         plan.city_id = cityId;
         plan.generated_at_epoch_ms = System.currentTimeMillis();
@@ -96,7 +109,7 @@ public final class CityC8Stages {
         for (CityC6Stages.BuildAreaSummary area : areas) {
             if (area == null) continue;
             List<Long> blockKeys = blocksByArea.getOrDefault(area.build_area_numeric_id, Collections.emptyList());
-            FoundationItem item = buildFoundationItem(area, blockKeys, heightData);
+            FoundationItem item = buildFoundationItem(area, blockKeys, heightData, c2ScanData);
             plan.foundations.add(item);
         }
         return plan;
@@ -117,7 +130,8 @@ public final class CityC8Stages {
     private static FoundationItem buildFoundationItem(
             CityC6Stages.BuildAreaSummary area,
             List<Long> blockKeys,
-            CityStage1BinaryIO.HeightData heightData
+            CityStage1BinaryIO.HeightData heightData,
+            CityC2ScanBinaryIO.C2ScanData c2ScanData
     ) {
         FoundationItem item = new FoundationItem();
         item.plot_id = area.build_area_id;
@@ -143,7 +157,7 @@ public final class CityC8Stages {
             if (key == null) continue;
             int x = unpackX(key);
             int z = unpackZ(key);
-            int h = heightAt(heightData, x, z);
+            int h = heightAt(heightData, c2ScanData, x, z);
             heights.add(h);
             sum += h;
             minH = Math.min(minH, h);
@@ -178,7 +192,7 @@ public final class CityC8Stages {
             if (key == null) continue;
             int x = unpackX(key);
             int z = unpackZ(key);
-            int h = heightAt(heightData, x, z);
+            int h = heightAt(heightData, c2ScanData, x, z);
             if (z == minZ) {
                 northSum += h;
                 northCnt++;
@@ -202,7 +216,7 @@ public final class CityC8Stages {
         int edgeS = southCnt > 0 ? safeRound(southSum / (double) southCnt) : safeRound(avgH);
         int edgeW = westCnt > 0 ? safeRound(westSum / (double) westCnt) : safeRound(avgH);
 
-        double slopeAvg = estimateSlopeAvg(blockKeys, heightData);
+        double slopeAvg = estimateSlopeAvg(blockKeys, heightData, c2ScanData);
         boolean strongEdgeDelta = Math.abs(edgeN - edgeS) >= 6 || Math.abs(edgeE - edgeW) >= 6;
 
         item.foundation_type = "NONE";
@@ -255,14 +269,14 @@ public final class CityC8Stages {
         item.supports.add(action);
     }
 
-    private static double estimateSlopeAvg(List<Long> blockKeys, CityStage1BinaryIO.HeightData heightData) {
+    private static double estimateSlopeAvg(List<Long> blockKeys, CityStage1BinaryIO.HeightData heightData, CityC2ScanBinaryIO.C2ScanData c2ScanData) {
         if (blockKeys == null || blockKeys.isEmpty()) return 0.0;
         Map<Long, Integer> h = new HashMap<>();
         for (Long key : blockKeys) {
             if (key == null) continue;
             int x = unpackX(key);
             int z = unpackZ(key);
-            h.put(key, heightAt(heightData, x, z));
+            h.put(key, heightAt(heightData, c2ScanData, x, z));
         }
         int[][] dirs = new int[][]{{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
         double sum = 0.0;
@@ -299,11 +313,8 @@ public final class CityC8Stages {
         return "W";
     }
 
-    private static int heightAt(CityStage1BinaryIO.HeightData data, int worldX, int worldZ) {
-        int ix = worldX - data.originX;
-        int iz = worldZ - data.originZ;
-        if (ix < 0 || iz < 0 || ix >= data.width || iz >= data.height) return 0;
-        return data.heightMap[ix][iz];
+    private static int heightAt(CityStage1BinaryIO.HeightData data, CityC2ScanBinaryIO.C2ScanData c2ScanData, int worldX, int worldZ) {
+        return CityHeightResolver.resolveHeight(data, c2ScanData, worldX, worldZ);
     }
 
     private static int unpackX(long key) {

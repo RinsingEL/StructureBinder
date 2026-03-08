@@ -7,6 +7,7 @@ import com.user.terra_script.client.data.ScanResultHolder.RegionCache;
 import com.user.terra_script.core.artifact.ArtifactKey;
 import com.user.terra_script.core.stage.StageBase;
 import com.user.terra_script.core.stage.StageContext;
+import com.user.terra_script.core.workflow.FileStageStatusStore;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtIo;
@@ -23,6 +24,9 @@ public class W4Stage extends StageBase {
     @Override
     protected void execute(StageContext ctx) throws Exception {
         ScanResultHolder holder = ScanResultHolder.get();
+        if (ctx.statusStore instanceof FileStageStatusStore store) {
+            store.updateProgress("W4", ctx, "W4 preparing terrain summary and preview images.", 0L, 3L, "w4_prepare");
+        }
         if (holder.regionCacheMap == null || holder.regionCacheMap.isEmpty()) {
             throw new IllegalStateException("W4 requires region cache (regionCacheMap)");
         }
@@ -42,10 +46,16 @@ public class W4Stage extends StageBase {
         }
         summary.add("regions", regions);
         JsonObject previews = W4PreviewExporter.export(ctx, holder);
+        if (ctx.statusStore instanceof FileStageStatusStore store) {
+            store.updateProgress("W4", ctx, "W4 preview images exported.", 1L, 3L, "w4_previews");
+        }
         summary.add("preview_images", previews);
 
         Path summaryPath = ctx.artifacts.resolve(ctx.server, ctx.worldId, ArtifactKey.W4_TERRAIN_SUMMARY_JSON);
         ctx.artifacts.writeJsonAtomic(summaryPath, summary);
+        if (ctx.statusStore instanceof FileStageStatusStore store) {
+            store.updateProgress("W4", ctx, "W4 terrain summary saved.", 2L, 3L, "w4_summary");
+        }
 
         // TerrainFacts.dat (NBT)
         CompoundTag root = new CompoundTag();
@@ -71,6 +81,9 @@ public class W4Stage extends StageBase {
         NbtIo.writeCompressed(root, baos);
         Path datPath = ctx.artifacts.resolve(ctx.server, ctx.worldId, ArtifactKey.W4_TERRAIN_FACTS_DAT);
         ctx.artifacts.writeDatAtomic(datPath, baos.toByteArray());
+        if (ctx.statusStore instanceof FileStageStatusStore store) {
+            store.updateProgress("W4", ctx, "W4 terrain facts saved.", 3L, 3L, "w4_dat");
+        }
     }
 
     private static long[] compressDoubleMatrix(double[][] matrix) {
@@ -85,3 +98,4 @@ public class W4Stage extends StageBase {
         return result;
     }
 }
+

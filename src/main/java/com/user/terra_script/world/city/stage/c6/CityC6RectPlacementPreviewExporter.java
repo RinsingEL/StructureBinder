@@ -2,6 +2,7 @@ package com.user.terra_script.world.city.stage.c6;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.user.terra_script.util.PreviewOverlayUtil;
 import com.user.terra_script.world.city.stage.c1.CityStage1BinaryIO;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.storage.LevelResource;
@@ -21,6 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public final class CityC6RectPlacementPreviewExporter {
     private static final int PREVIEW_SIZE = 512;
@@ -62,6 +64,7 @@ public final class CityC6RectPlacementPreviewExporter {
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 
         JsonArray planLegend = new JsonArray();
+        List<PreviewOverlayUtil.RectLabelAnchor> labelAnchors = new ArrayList<>();
         List<CityC6Stages.LayoutPlan> sortedPlans = new ArrayList<>(layout.plans);
         sortedPlans.sort(Comparator.comparing(p -> p.group_id == null ? "" : p.group_id));
         int planIndex = 0;
@@ -72,7 +75,7 @@ public final class CityC6RectPlacementPreviewExporter {
 
             Color planColor = colorByIndex(planIndex++);
             drawBuildAreaMaskAndOutline(g, area, heightData, indexByBlock, planColor);
-            int placed = drawRectPlacements(g, plan, area, heightData, indexByBlock, planColor);
+            int placed = drawRectPlacements(g, plan, area, heightData, indexByBlock, planColor, labelAnchors);
             drawPrimaryModules(g, plan, heightData);
 
             JsonObject item = new JsonObject();
@@ -83,6 +86,15 @@ public final class CityC6RectPlacementPreviewExporter {
             item.addProperty("color", toHex(planColor));
             planLegend.add(item);
         }
+        PreviewOverlayUtil.GridSpec gridSpec = new PreviewOverlayUtil.GridSpec();
+        gridSpec.previewSize = PREVIEW_SIZE;
+        gridSpec.originX = heightData.originX;
+        gridSpec.originZ = heightData.originZ;
+        gridSpec.widthBlocks = heightData.width;
+        gridSpec.heightBlocks = heightData.height;
+        gridSpec.legendText = PreviewOverlayUtil.defaultLegendText(gridSpec);
+        PreviewOverlayUtil.drawExternalLabels(g, labelAnchors, PREVIEW_SIZE, PREVIEW_SIZE);
+        PreviewOverlayUtil.applyGridOverlay(image, gridSpec);
         g.dispose();
 
         Path cityDir = server.getWorldPath(LevelResource.ROOT)
@@ -103,6 +115,7 @@ public final class CityC6RectPlacementPreviewExporter {
         legend.addProperty("plan_count", sortedPlans.size());
         legend.addProperty("index_block_count", indexByBlock.size());
         legend.add("plans", planLegend);
+        legend.add("grid", PreviewOverlayUtil.buildGridMetadata(gridSpec));
         JsonArray resolution = new JsonArray();
         resolution.add(PREVIEW_SIZE);
         resolution.add(PREVIEW_SIZE);
@@ -185,14 +198,15 @@ public final class CityC6RectPlacementPreviewExporter {
             CityC6Stages.BuildAreaSummary area,
             CityStage1BinaryIO.HeightData data,
             Map<Long, Integer> indexByBlock,
-            Color baseColor
+            Color baseColor,
+            List<PreviewOverlayUtil.RectLabelAnchor> labelAnchors
     ) {
         if (plan.rect_sizes == null || plan.rect_sizes.isEmpty() || plan.primary_modules == null || plan.primary_modules.isEmpty()) {
             return 0;
         }
 
-        CityC6Stages.Point anchor = plan.primary_modules.get(0).anchor;
-        if (anchor == null) return 0;
+        CityC6Stages.Point primaryAnchor = plan.primary_modules.get(0).anchor;
+        if (primaryAnchor == null) return 0;
 
         double plazaR = averageRange(plan.fill_params != null ? plan.fill_params.plaza_radius_blocks : null, 10.0);
         double padding = averageRange(plan.fill_params != null ? plan.fill_params.plaza_padding_blocks : null, 3.0);
@@ -234,8 +248,8 @@ public final class CityC6RectPlacementPreviewExporter {
             RectSpec spec = rects.get(i);
             double theta = (2.0 * Math.PI * i / Math.max(1, rects.size())) + ((seed % 360) * Math.PI / 180.0);
             double r = baseRadius + (i % 5) * 5.0;
-            int cx = (int) Math.round(anchor.x + Math.cos(theta) * r);
-            int cz = (int) Math.round(anchor.z + Math.sin(theta) * r);
+            int cx = (int) Math.round(primaryAnchor.x + Math.cos(theta) * r);
+            int cz = (int) Math.round(primaryAnchor.z + Math.sin(theta) * r);
 
             boolean ok = false;
             for (int attempt = 0; attempt < 5 && !ok; attempt++) {
@@ -245,6 +259,14 @@ public final class CityC6RectPlacementPreviewExporter {
                 int rcz = cz + jitterZ;
                 if (!fitsArea(rcx, rcz, spec.w, spec.h, area.build_area_numeric_id, indexByBlock)) continue;
                 drawRect(g, rcx, rcz, spec.w, spec.h, data, baseColor);
+                if (labelAnchors != null) {
+                    PreviewOverlayUtil.RectLabelAnchor labelAnchor = new PreviewOverlayUtil.RectLabelAnchor();
+                    labelAnchor.centerX = toPreviewCoord(rcx, data.originX, data.width);
+                    labelAnchor.centerZ = toPreviewCoord(rcz, data.originZ, data.height);
+                    labelAnchor.label = spec.id != null && !spec.id.isBlank() ? spec.id : (plan.group_id + "#" + (placed + 1));
+                    labelAnchor.color = baseColor;
+                    labelAnchors.add(labelAnchor);
+                }
                 ok = true;
                 placed++;
             }
@@ -397,3 +419,4 @@ public final class CityC6RectPlacementPreviewExporter {
         }
     }
 }
+

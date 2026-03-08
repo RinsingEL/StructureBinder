@@ -4,7 +4,9 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.user.terra_script.world.city.CityInstance;
 import com.user.terra_script.world.city.stage.c4.CitySemanticStages;
+import com.user.terra_script.world.city.stage.CityHeightResolver;
 import com.user.terra_script.world.city.stage.c1.CityStage1BinaryIO;
+import com.user.terra_script.world.city.stage.c2.CityC2ScanBinaryIO;
 import com.user.terra_script.world.city.stage.c1.CityStage1Processor;
 import com.user.terra_script.world.city.district.District;
 import net.minecraft.world.level.ChunkPos;
@@ -158,6 +160,17 @@ public final class CityC6Stages {
             List<List<CityStage1Processor.BlockCoord>> buildableGroups,
             C6FillStyle fillStyle
     ) {
+        return generate(city, c5Groups, heightData, null, buildableGroups, fillStyle);
+    }
+
+    public static C6Bundle generate(
+            CityInstance city,
+            CitySemanticStages.C5Groups c5Groups,
+            CityStage1BinaryIO.HeightData heightData,
+            CityC2ScanBinaryIO.C2ScanData c2ScanData,
+            List<List<CityStage1Processor.BlockCoord>> buildableGroups,
+            C6FillStyle fillStyle
+    ) {
         C6Bundle bundle = new C6Bundle();
         C6Summary summary = new C6Summary();
         C6Layout layout = new C6Layout();
@@ -216,7 +229,7 @@ public final class CityC6Stages {
                 List<CityStage1Processor.BlockCoord> points = entry.getValue();
                 if (points.isEmpty()) continue;
                 ModuleMeta meta = moduleMetaMap.get(entry.getKey());
-                BuildAreaSummary area = buildAreaSummary(meta, points, heightData, areaSeq++);
+                BuildAreaSummary area = buildAreaSummary(meta, points, heightData, c2ScanData, areaSeq++);
                 summary.areas.add(area);
                 for (CityStage1Processor.BlockCoord point : points) {
                     blockToArea.put(packBlock(point.x, point.z), area.build_area_numeric_id);
@@ -269,6 +282,7 @@ public final class CityC6Stages {
             ModuleMeta meta,
             List<CityStage1Processor.BlockCoord> points,
             CityStage1BinaryIO.HeightData heightData,
+            CityC2ScanBinaryIO.C2ScanData c2ScanData,
             int numericId
     ) {
         BuildAreaSummary area = new BuildAreaSummary();
@@ -291,7 +305,7 @@ public final class CityC6Stages {
             maxZ = Math.max(maxZ, p.z);
             sumX += p.x;
             sumZ += p.z;
-            sumH += heightAt(heightData, p.x, p.z);
+            sumH += heightAt(heightData, c2ScanData, p.x, p.z);
             pointSet.add(packBlock(p.x, p.z));
         }
         area.bbox.minX = minX;
@@ -352,11 +366,8 @@ public final class CityC6Stages {
         return rows;
     }
 
-    private static int heightAt(CityStage1BinaryIO.HeightData data, int worldX, int worldZ) {
-        int ix = worldX - data.originX;
-        int iz = worldZ - data.originZ;
-        if (ix < 0 || iz < 0 || ix >= data.width || iz >= data.height) return 0;
-        return data.heightMap[ix][iz];
+    private static int heightAt(CityStage1BinaryIO.HeightData data, CityC2ScanBinaryIO.C2ScanData c2ScanData, int worldX, int worldZ) {
+        return CityHeightResolver.resolveHeight(data, c2ScanData, worldX, worldZ);
     }
 
     private static String safeId(String value) {

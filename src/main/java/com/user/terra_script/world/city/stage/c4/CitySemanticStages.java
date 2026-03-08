@@ -2,6 +2,10 @@ package com.user.terra_script.world.city.stage.c4;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.user.terra_script.world.city.CityConfig;
 import com.user.terra_script.world.city.CityInstance;
 import com.user.terra_script.world.city.district.District;
@@ -27,9 +31,12 @@ public final class CitySemanticStages {
     public static final String C4_FILE = "C4_FunctionPlan.json";
     public static final String C4_VALIDATED_FILE = "C4_FunctionPlan.validated.json";
     public static final String C4_WHITELIST_FILE = "C4_FunctionWhitelist.json";
+    public static final String C3_5_FUNCTION_ENUM_FILE = "C3_5_FunctionEnumTable.json";
     public static final String C5_FILE = "C5_ModuleGroups.json";
     public static final String C5_MERGE_LOG_FILE = "C5_MergeLog.json";
     private static final String FUNCTION_WHITELIST_VERSION = "ai_dynamic_v1";
+    private static final List<String> DEFAULT_PRIMARY_FUNCTIONS = List.of("core", "market", "port", "residential", "defense");
+    private static final List<String> DEFAULT_SECONDARY_FUNCTIONS = List.of("storage", "amenity", "craft", "garden", "watch");
 
     private CitySemanticStages() {}
 
@@ -148,7 +155,7 @@ public final class CitySemanticStages {
             return plan;
         }
         FunctionWhitelist whitelist = sanitizeWhitelist(whitelistInput, city != null ? city.id : null);
-        if (whitelist.primary_functions.isEmpty() || whitelist.secondary_functions.isEmpty()) {
+        if (whitelist.primary_functions.isEmpty()) {
             plan.ok = false;
             return plan;
         }
@@ -282,6 +289,19 @@ public final class CitySemanticStages {
         return sanitizeWhitelist(raw, raw != null ? raw.city_id : null);
     }
 
+
+    public static FunctionWhitelist loadFunctionWhitelistOrEnum(Path cityDir, String cityId) throws Exception {
+        FunctionWhitelist whitelist = loadFunctionWhitelist(cityDir);
+        if (whitelist != null && whitelist.ok) return whitelist;
+        FunctionWhitelist fallback = new FunctionWhitelist();
+        fallback.city_id = cityId;
+        fallback.version = FUNCTION_WHITELIST_VERSION;
+        fallback.source = "enum_fallback";
+        fallback.primary_functions = new ArrayList<>(DEFAULT_PRIMARY_FUNCTIONS);
+        fallback.secondary_functions = new ArrayList<>(DEFAULT_SECONDARY_FUNCTIONS);
+        fallback.ok = true;
+        return sanitizeWhitelist(fallback, cityId);
+    }
     public static C4Plan loadC4(Path cityDir) throws Exception {
         Path file = cityDir.resolve(C4_FILE);
         if (!Files.exists(file)) return null;
@@ -329,7 +349,7 @@ public final class CitySemanticStages {
     private static DistrictFunction sanitizeDistrictFunction(DistrictFunction source, FunctionWhitelist whitelist) {
         DistrictFunction df = source == null ? new DistrictFunction() : source;
         List<String> primaryWhitelist = whitelist != null ? whitelist.primary_functions : Collections.emptyList();
-        List<String> secondaryWhitelist = whitelist != null ? whitelist.secondary_functions : Collections.emptyList();
+        List<String> secondaryWhitelist = secondaryWhitelist(whitelist);
         String primaryFallback = pickPrimaryFallback(df.zone_type, df.layer, primaryWhitelist, df.primary_function);
         df.primary_function = validateFunction(df.primary_function, primaryFallback, primaryWhitelist);
         if (df.secondary_functions == null) df.secondary_functions = new ArrayList<>();
@@ -411,6 +431,13 @@ public final class CitySemanticStages {
         return fallback;
     }
 
+
+    private static List<String> secondaryWhitelist(FunctionWhitelist whitelist) {
+        if (whitelist == null || whitelist.secondary_functions == null || whitelist.secondary_functions.isEmpty()) {
+            return new ArrayList<>();
+        }
+        return new ArrayList<>(whitelist.secondary_functions);
+    }
     private static String validateFunction(String function, String fallback, List<String> whitelist) {
         String normalized = normalizeLower(function, fallback);
         if (normalized == null) return fallback;
@@ -1040,3 +1067,5 @@ public final class CitySemanticStages {
         return Math.min(1, value);
     }
 }
+
+

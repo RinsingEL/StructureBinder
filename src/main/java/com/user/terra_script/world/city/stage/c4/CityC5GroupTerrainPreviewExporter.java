@@ -5,6 +5,7 @@ import com.google.gson.JsonObject;
 import com.user.terra_script.domain.world.scan.ScanPixel;
 import com.user.terra_script.util.TerrainFeatureComputer;
 import com.user.terra_script.world.city.stage.c2.CityC2ScanBinaryIO;
+import com.user.terra_script.world.city.stage.CityGroupPathUtil;
 import com.user.terra_script.world.city.stage.c2.CityC3OwnershipIO;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.storage.LevelResource;
@@ -77,9 +78,7 @@ public final class CityC5GroupTerrainPreviewExporter {
             if (groupCells <= 0) continue;
 
             String groupId = codeMapping.codeToGroupId.getOrDefault(code, "group_" + code);
-            String safeId = safeFileId(groupId);
-            String prefix = "C5_group_" + String.format(Locale.ROOT, "%02d", code) + "_" + safeId;
-
+            Path groupDir = CityGroupPathUtil.resolveGroupDir(cityDir, groupId);
             double[] heightRange = localRange(heightRaw, ownershipData, scanData, codeMapping, code, bbox);
             double[] roughRange = localRange(roughRaw, ownershipData, scanData, codeMapping, code, bbox);
             double[] hillRange = localRange(hillshadeRaw, ownershipData, scanData, codeMapping, code, bbox);
@@ -93,19 +92,27 @@ public final class CityC5GroupTerrainPreviewExporter {
             drawGridAndLabel(roughImg, groupId, bbox, context);
             drawGridAndLabel(hillImg, groupId, bbox, context);
 
-            String heightFile = prefix + "_height.png";
-            String roughFile = prefix + "_roughness.png";
-            String hillFile = prefix + "_hillshade.png";
-            ImageIO.write(heightImg, "png", cityDir.resolve(heightFile).toFile());
-            ImageIO.write(roughImg, "png", cityDir.resolve(roughFile).toFile());
-            ImageIO.write(hillImg, "png", cityDir.resolve(hillFile).toFile());
+            String heightFile = "height.png";
+            String roughFile = "roughness.png";
+            String hillFile = "hillshade.png";
+            ImageIO.write(heightImg, "png", groupDir.resolve(heightFile).toFile());
+            ImageIO.write(roughImg, "png", groupDir.resolve(roughFile).toFile());
+            ImageIO.write(hillImg, "png", groupDir.resolve(hillFile).toFile());
+            JsonObject terrainLegend = new JsonObject();
+            terrainLegend.addProperty("group_id", groupId);
+            terrainLegend.addProperty("height_image", heightFile);
+            terrainLegend.addProperty("roughness_image", roughFile);
+            terrainLegend.addProperty("hillshade_image", hillFile);
+            terrainLegend.addProperty("grid_step_blocks", GRID_STEP_BLOCKS);
+            Files.writeString(groupDir.resolve("terrain.legend.json"), terrainLegend.toString());
 
             JsonObject item = new JsonObject();
             item.addProperty("group_id", groupId);
             item.addProperty("code", code);
-            item.addProperty("height_image", "cities/" + cityId + "/" + heightFile);
-            item.addProperty("roughness_image", "cities/" + cityId + "/" + roughFile);
-            item.addProperty("hillshade_image", "cities/" + cityId + "/" + hillFile);
+            item.addProperty("height_image", CityGroupPathUtil.relativeGroupPath(cityId, groupId, heightFile));
+            item.addProperty("roughness_image", CityGroupPathUtil.relativeGroupPath(cityId, groupId, roughFile));
+            item.addProperty("hillshade_image", CityGroupPathUtil.relativeGroupPath(cityId, groupId, hillFile));
+            item.addProperty("legend", CityGroupPathUtil.relativeGroupPath(cityId, groupId, "terrain.legend.json"));
             item.addProperty("grid_step_blocks", GRID_STEP_BLOCKS);
             item.addProperty("bbox_min_x", bbox.minX);
             item.addProperty("bbox_min_z", bbox.minZ);
@@ -476,13 +483,6 @@ public final class CityC5GroupTerrainPreviewExporter {
         }
         return out;
     }
-
-    private static String safeFileId(String raw) {
-        if (raw == null || raw.isBlank()) return "group_unknown";
-        String normalized = raw.trim().toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9_\\-]+", "_");
-        return normalized.isBlank() ? "group_unknown" : normalized;
-    }
-
     private static double round3(double v) {
         return Math.round(v * 1000.0) / 1000.0;
     }

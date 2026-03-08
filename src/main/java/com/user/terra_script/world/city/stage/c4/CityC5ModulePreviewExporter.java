@@ -7,6 +7,7 @@ import com.user.terra_script.world.city.CityInstance;
 import com.user.terra_script.world.city.district.District;
 import com.user.terra_script.world.city.stage.c2.CityC2ScanBinaryIO;
 import com.user.terra_script.world.city.stage.c2.CityC3OwnershipIO;
+import com.user.terra_script.util.PreviewOverlayUtil;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.storage.LevelResource;
 
@@ -62,6 +63,15 @@ public final class CityC5ModulePreviewExporter {
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
         JsonArray codeLegend = drawModuleOverlay(g, city, groups, scanData, ownershipData);
         drawCenterCross(g, city.config != null ? city.config.centerX : 0, city.config != null ? city.config.centerZ : 0, scanData);
+        PreviewOverlayUtil.GridSpec gridSpec = new PreviewOverlayUtil.GridSpec();
+        gridSpec.previewSize = PREVIEW_SIZE;
+        gridSpec.originX = scanData.originX;
+        gridSpec.originZ = scanData.originZ;
+        gridSpec.widthBlocks = scanData.widthBlocks;
+        gridSpec.heightBlocks = scanData.heightBlocks;
+        gridSpec.sampleStepBlocks = Math.max(1, scanData.step);
+        gridSpec.legendText = PreviewOverlayUtil.defaultLegendText(gridSpec);
+        PreviewOverlayUtil.applyGridOverlay(image, gridSpec);
         g.dispose();
 
         Path cityDir = server.getWorldPath(LevelResource.ROOT)
@@ -84,6 +94,7 @@ public final class CityC5ModulePreviewExporter {
         legend.addProperty("module_group_count", groups.groups != null ? groups.groups.size() : 0);
         legend.addProperty("ownership_step", ownershipData != null ? ownershipData.step : -1);
         legend.add("module_codes", codeLegend);
+        legend.add("grid", PreviewOverlayUtil.buildGridMetadata(gridSpec));
         JsonArray resolution = new JsonArray();
         resolution.add(PREVIEW_SIZE);
         resolution.add(PREVIEW_SIZE);
@@ -351,3 +362,4 @@ public final class CityC5ModulePreviewExporter {
         return 0xFFD9D9D9;
     }
 }
+

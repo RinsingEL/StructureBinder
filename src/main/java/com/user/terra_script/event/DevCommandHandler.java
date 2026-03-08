@@ -64,22 +64,7 @@ public class DevCommandHandler {
     public static void onRegisterCommands(RegisterCommandsEvent event) {
         event.getDispatcher().register(
                 Commands.literal("dev")
-                        .then(Commands.literal("rebuild_road")
-                                .requires(src -> src.hasPermission(2))
-                                .executes(ctx -> {
-                                    CityManager mgr = CityManager.get();
-                                    for (CityInstance city : mgr.getAllCities()) {
-                                        city.isRoadsGenerated = false;
-                                        city.roadBlocks = null;
-                                    }
-                                    for (CityInstance city : mgr.getAllCities()) {
-                                        mgr.ensureRoadsGenerated(city.id);
-                                    }
-                                    RoadInjector.resetProcessing();
-                                    ctx.getSource().sendSuccess(() ->
-                                            Component.literal("Roads rebuilt. Reload chunks to apply."), false);
-                                    return 1;
-                                }))
+
                         .then(Commands.literal("stage1")
                                 .requires(src -> src.hasPermission(2))
                                 .then(Commands.argument("city_id", StringArgumentType.string())

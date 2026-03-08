@@ -4,11 +4,13 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.sun.net.httpserver.HttpExchange;
+import com.user.terra_script.config.AiProviderConfig;
 import com.user.terra_script.core.artifact.ArtifactStore;
 import com.user.terra_script.core.stage.StageContext;
 import com.user.terra_script.core.workflow.FileStageStatusStore;
 import com.user.terra_script.core.workflow.StageRegistry;
 import com.user.terra_script.core.workflow.StageStatus;
+import com.user.terra_script.core.workflow.TaskStatusHeartbeat;
 import com.user.terra_script.core.workflow.WorkflowEngine;
 import com.user.terra_script.domain.territory.stage.T2Stage;
 import com.user.terra_script.domain.territory.stage.T3Stage;
@@ -35,6 +37,7 @@ public class WorkflowController {
         try {
             JsonObject res = new JsonObject();
             res.addProperty("frozen", NationGenManager.SnapshotManager.hasSnapshot());
+            res.add("ai_config", GSON.toJsonTree(AiProviderConfig.describe()));
             HttpUtil.sendResponse(exchange, 200, res.toString());
         } catch (Exception e) {
             HttpUtil.handleError(exchange, e);
@@ -73,26 +76,33 @@ public class WorkflowController {
             StageContext ctx = StageContext.forServer(server, artifacts, statusStore);
             StageRegistry registry = buildRegistry();
             WorkflowEngine engine = new WorkflowEngine(registry);
-            var result = engine.runStage(stageId, ctx);
-            String triggeredStage = null;
-            String triggeredStatus = null;
-            if ("T3".equals(stageId)) {
-                T4Stage.configure(parseT4Options(req, T4Stage.RuntimeOptions.autoTriggerDefaults()));
-                var t4 = registry.get("T4").run(ctx);
-                triggeredStage = "T4";
-                triggeredStatus = t4.status.name();
-            }
 
-            JsonObject res = new JsonObject();
-            res.addProperty("ok", true);
-            res.addProperty("stage", stageId);
-            res.addProperty("status", result.status.name());
-            res.addProperty("message", result.message);
-            if (triggeredStage != null) {
-                res.addProperty("triggered_stage", triggeredStage);
-                res.addProperty("triggered_status", triggeredStatus);
+            statusStore.markRunningDetailed(stageId, ctx, "Workflow stage accepted. Processing may take several minutes.", "workflow_" + stageId.toLowerCase(Locale.ROOT));
+            try (TaskStatusHeartbeat ignored = TaskStatusHeartbeat.start(statusStore, stageId, ctx, "Workflow stage still running. Please wait and poll workflow/status.", "workflow_" + stageId.toLowerCase(Locale.ROOT))) {
+                var result = engine.runStage(stageId, ctx);
+                String triggeredStage = null;
+                String triggeredStatus = null;
+                if ("T3".equals(stageId)) {
+                    T4Stage.configure(parseT4Options(req, T4Stage.RuntimeOptions.autoTriggerDefaults()));
+                    var t4 = registry.get("T4").run(ctx);
+                    triggeredStage = "T4";
+                    triggeredStatus = t4.status.name();
+                }
+                statusStore.markDoneDetailed(stageId, ctx, result.message);
+
+                JsonObject res = new JsonObject();
+                res.addProperty("ok", true);
+                res.addProperty("stage", stageId);
+                res.addProperty("status", result.status.name());
+                res.addProperty("message", result.message);
+                res.addProperty("status_query", "/workflow/status?stageId=" + stageId);
+                res.addProperty("heartbeat_interval_seconds", FileStageStatusStore.HEARTBEAT_INTERVAL_SECONDS);
+                if (triggeredStage != null) {
+                    res.addProperty("triggered_stage", triggeredStage);
+                    res.addProperty("triggered_status", triggeredStatus);
+                }
+                HttpUtil.sendResponse(exchange, 200, GSON.toJson(res));
             }
-            HttpUtil.sendResponse(exchange, 200, GSON.toJson(res));
         } catch (IllegalArgumentException e) {
             HttpUtil.sendResponse(exchange, 400, "{\"error\": \"" + e.getMessage() + "\"}");
         } catch (Exception e) {
@@ -119,6 +129,29 @@ public class WorkflowController {
                     res.add(id, toJson(status));
                 }
             }
+            res.addProperty("heartbeat_interval_seconds", FileStageStatusStore.HEARTBEAT_INTERVAL_SECONDS);
+            HttpUtil.sendResponse(exchange, 200, GSON.toJson(res));
+        } catch (Exception e) {
+            HttpUtil.handleError(exchange, e);
+        }
+    }
+
+    public void handleTaskStatus(HttpExchange exchange) throws IOException {
+        if (!HttpUtil.requireMethod(exchange, "GET")) return;
+        try {
+            String taskId = getQueryParam(exchange, "taskId");
+            if (taskId == null || taskId.isBlank()) {
+                HttpUtil.sendResponse(exchange, 400, "{\"error\": \"taskId is required\"}");
+                return;
+            }
+            ArtifactStore artifacts = new ArtifactStore();
+            FileStageStatusStore statusStore = new FileStageStatusStore(artifacts);
+            StageContext ctx = StageContext.forServer(server, artifacts, statusStore);
+            StageStatus status = statusStore.getTaskStatus(taskId, ctx);
+            JsonObject res = new JsonObject();
+            res.addProperty("task_id", taskId);
+            res.add("status", toJson(status));
+            res.addProperty("heartbeat_interval_seconds", FileStageStatusStore.HEARTBEAT_INTERVAL_SECONDS);
             HttpUtil.sendResponse(exchange, 200, GSON.toJson(res));
         } catch (Exception e) {
             HttpUtil.handleError(exchange, e);
@@ -140,6 +173,14 @@ public class WorkflowController {
         obj.addProperty("state", status.state.name());
         obj.addProperty("message", status.message);
         obj.addProperty("lastUpdatedMillis", status.lastUpdatedMillis);
+        obj.addProperty("started_at", status.startedAtMillis);
+        obj.addProperty("heartbeat_at", status.heartbeatAtMillis);
+        obj.addProperty("progress_percent", status.progressPercent);
+        obj.addProperty("progress_current", status.progressCurrent);
+        obj.addProperty("progress_total", status.progressTotal);
+        obj.addProperty("waiting_for_ai", status.waitingForAi);
+        obj.addProperty("next_action", status.nextAction);
+        obj.addProperty("active_operation", status.activeOperation);
         return obj;
     }
 

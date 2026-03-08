@@ -1,6 +1,7 @@
 package com.user.terra_script;
 
 import com.mojang.logging.LogUtils;
+import com.user.terra_script.config.AiProviderConfig;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.common.Mod;
@@ -23,6 +24,8 @@ public class TerraScriptMod {
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
+        AiProviderConfig.load();
         LOGGER.info("TerraScript WorldGen Initiated based on Fixed Rules.");
     }
 }
+

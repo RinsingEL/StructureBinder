@@ -6,6 +6,7 @@ import com.user.terra_script.client.data.ScanResultHolder;
 import com.user.terra_script.core.artifact.ArtifactKey;
 import com.user.terra_script.core.stage.StageContext;
 import com.user.terra_script.domain.world.scan.ScanPixel;
+import com.user.terra_script.util.PreviewOverlayUtil;
 import com.user.terra_script.util.TerrainFeatureComputer;
 import net.minecraft.world.level.storage.LevelResource;
 
@@ -71,12 +72,32 @@ public final class W4PreviewExporter {
         );
         BufferedImage biomeImage = renderBiome(biomeDs);
 
+        PreviewOverlayUtil.GridSpec gridSpec = new PreviewOverlayUtil.GridSpec();
+        gridSpec.previewSize = PREVIEW_SIZE;
+        gridSpec.originX = -(holder.scanRadiusChunks * 16);
+        gridSpec.originZ = -(holder.scanRadiusChunks * 16);
+        gridSpec.widthBlocks = holder.lastScanData.length * Math.max(1, holder.scanStep);
+        gridSpec.heightBlocks = holder.lastScanData[0].length * Math.max(1, holder.scanStep);
+        gridSpec.sampleStepBlocks = Math.max(1, holder.scanStep);
+        gridSpec.legendText = PreviewOverlayUtil.defaultLegendText(gridSpec);
+        PreviewOverlayUtil.applyGridOverlay(heightImage, gridSpec);
+        PreviewOverlayUtil.applyGridOverlay(slopeImage, gridSpec);
+        PreviewOverlayUtil.applyGridOverlay(roughImage, gridSpec);
+        PreviewOverlayUtil.applyGridOverlay(tempImage, gridSpec);
+        PreviewOverlayUtil.applyGridOverlay(biomeImage, gridSpec);
+
         JsonObject legends = new JsonObject();
         legends.add(IMG_HEIGHT, buildHeightLegend());
         legends.add(IMG_SLOPE, buildSlopeLegend(slopeStretch));
         legends.add(IMG_ROUGHNESS, buildContinuousLegend("roughness", IMG_ROUGHNESS, roughStretch, 5));
         legends.add(IMG_TEMPERATURE, buildContinuousLegend("temperature", IMG_TEMPERATURE, tempStretch, 6));
         legends.add(IMG_BIOME, buildBiomeLegend());
+        JsonObject gridMeta = PreviewOverlayUtil.buildGridMetadata(gridSpec);
+        legends.getAsJsonObject(IMG_HEIGHT).add("grid", gridMeta.deepCopy());
+        legends.getAsJsonObject(IMG_SLOPE).add("grid", gridMeta.deepCopy());
+        legends.getAsJsonObject(IMG_ROUGHNESS).add("grid", gridMeta.deepCopy());
+        legends.getAsJsonObject(IMG_TEMPERATURE).add("grid", gridMeta.deepCopy());
+        legends.getAsJsonObject(IMG_BIOME).add("grid", gridMeta.deepCopy());
 
         Path w4Dir = ctx.artifacts.resolve(ctx.server, ctx.worldId, ArtifactKey.W4_TERRAIN_FACTS_DAT).getParent();
         writePreviewSet(w4Dir, heightImage, slopeImage, roughImage, tempImage, biomeImage, legends);
@@ -487,3 +508,4 @@ public final class W4PreviewExporter {
         }
     }
 }
+

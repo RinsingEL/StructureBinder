@@ -631,37 +631,25 @@ public class CityManager {
     /**
      * 确保该城市的道路数据已生�?(懒加�?
      */
+    /**
+     * Legacy road generation is disabled.
+     */
     public void ensureRoadsGenerated(String cityId) {
         CityInstance city = cities.get(cityId);
-        if (city == null || city.isRoadsGenerated) return;
+        if (city == null) return;
 
-        synchronized (city) { // 防止多线程重复计�?
-            if (city.isRoadsGenerated) return;
-
-            System.out.println("[CityManager] Lazy-generating roads for " + cityId + "...");
-            long start = System.currentTimeMillis();
-
-            if (city.districts == null || city.districts.isEmpty()) {
-                // 如果区划也没生成，先生成区划
-                city.districts = VoronoiComputer.computeDistricts(city);
-            }
-
-            if (!city.districts.isEmpty()) {
-                VoronoiComputer.RoadPlan plan = VoronoiComputer.computeSmoothRoadPlan(city.districts);
-                city.roadBlocks = plan.blocks;
-                city.roadHeights = plan.heights;
-                city.roadSlabBlocks = plan.slabBlocks;
-            }
-
+        synchronized (city) {
+            city.roadBlocks = new HashSet<>();
+            city.roadHeights = new HashMap<>();
+            city.roadSlabBlocks = new HashSet<>();
             city.isRoadsGenerated = true;
-            System.out.println("[CityManager] Roads ready for " + cityId + ". took " + (System.currentTimeMillis() - start) + "ms. Blocks: " + (city.roadBlocks != null ? city.roadBlocks.size() : 0));
         }
     }
+
+
+
+
+
+
+
 }
-
-
-
-
-
-
-

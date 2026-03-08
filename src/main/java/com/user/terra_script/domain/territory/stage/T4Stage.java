@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.user.terra_script.core.stage.StageBase;
 import com.user.terra_script.core.stage.StageContext;
+import com.user.terra_script.core.workflow.FileStageStatusStore;
 import com.user.terra_script.event.ServerTickTracker;
 import com.user.terra_script.territory.io.TerritoryResultRepository;
 import com.user.terra_script.world.TerritoryManager;
@@ -256,7 +257,7 @@ public class T4Stage extends StageBase {
             }
             totalBlocks = 1L;
         }
-        ProgressTracker progress = new ProgressTracker(ctx.server, totalBlocks);
+        ProgressTracker progress = new ProgressTracker(ctx, "T4", totalBlocks);
         progress.start();
         sendProgress(ctx.server,
                 "T4 options: sample_stride=" + options.sampleStride
@@ -893,7 +894,10 @@ public class T4Stage extends StageBase {
         }
     }
 
+
     private static final class ProgressTracker {
+        private final StageContext ctx;
+        private final String stageId;
         private final MinecraftServer server;
         private final long totalBlocks;
         private long scannedBlocks = 0L;
@@ -901,13 +905,17 @@ public class T4Stage extends StageBase {
         private long lastHeartbeatNanos = 0L;
         private static final long HEARTBEAT_INTERVAL_NANOS = 30_000_000_000L;
 
-        private ProgressTracker(MinecraftServer server, long totalBlocks) {
-            this.server = server;
+        private ProgressTracker(StageContext ctx, String stageId, long totalBlocks) {
+            this.ctx = ctx;
+            this.stageId = stageId;
+            this.server = ctx != null ? ctx.server : null;
             this.totalBlocks = Math.max(1L, totalBlocks);
         }
 
         synchronized void start() {
-            sendProgress(server, "T4 scan started. total_blocks=" + totalBlocks + ", progress=0%");
+            String message = "T4 scan started. total_blocks=" + totalBlocks + ", progress=0%";
+            sendProgress(server, message);
+            syncStatus(message);
             lastHeartbeatNanos = System.nanoTime();
         }
 
@@ -915,7 +923,9 @@ public class T4Stage extends StageBase {
             scannedBlocks++;
             maybeHeartbeat();
             while (nextProgressPct <= 100 && scannedBlocks * 100 >= totalBlocks * (long) nextProgressPct) {
-                sendProgress(server, "T4 scan progress " + nextProgressPct + "% (" + scannedBlocks + "/" + totalBlocks + " blocks)");
+                String message = "T4 scan progress " + nextProgressPct + "% (" + scannedBlocks + "/" + totalBlocks + " blocks)";
+                sendProgress(server, message);
+                syncStatus(message);
                 nextProgressPct += 25;
             }
         }
@@ -925,14 +935,18 @@ public class T4Stage extends StageBase {
             scannedBlocks += count;
             maybeHeartbeat();
             while (nextProgressPct <= 100 && scannedBlocks * 100 >= totalBlocks * (long) nextProgressPct) {
-                sendProgress(server, "T4 scan progress " + nextProgressPct + "% (" + scannedBlocks + "/" + totalBlocks + " blocks)");
+                String message = "T4 scan progress " + nextProgressPct + "% (" + scannedBlocks + "/" + totalBlocks + " blocks)";
+                sendProgress(server, message);
+                syncStatus(message);
                 nextProgressPct += 25;
             }
         }
 
         synchronized void finish() {
             if (nextProgressPct <= 100) {
-                sendProgress(server, "T4 scan progress 100% (" + scannedBlocks + "/" + totalBlocks + " blocks)");
+                String message = "T4 scan progress 100% (" + scannedBlocks + "/" + totalBlocks + " blocks)";
+                sendProgress(server, message);
+                syncStatus(message);
             }
         }
 
@@ -940,8 +954,18 @@ public class T4Stage extends StageBase {
             long now = System.nanoTime();
             if (now - lastHeartbeatNanos < HEARTBEAT_INTERVAL_NANOS) return;
             int pct = (int) Math.min(99, (scannedBlocks * 100L) / totalBlocks);
-            sendProgress(server, "T4 scan heartbeat " + pct + "% (" + scannedBlocks + "/" + totalBlocks + " blocks)");
+            String message = "T4 scan heartbeat " + pct + "% (" + scannedBlocks + "/" + totalBlocks + " blocks)";
+            sendProgress(server, message);
+            syncStatus(message);
             lastHeartbeatNanos = now;
+        }
+
+        private void syncStatus(String message) {
+            if (ctx == null || !(ctx.statusStore instanceof FileStageStatusStore store)) return;
+            try {
+                store.updateProgress(stageId, ctx, message, scannedBlocks, totalBlocks, "t4_legacy_scan");
+            } catch (Exception ignored) {
+            }
         }
     }
 
@@ -979,3 +1003,4 @@ public class T4Stage extends StageBase {
         }
     }
 }
+

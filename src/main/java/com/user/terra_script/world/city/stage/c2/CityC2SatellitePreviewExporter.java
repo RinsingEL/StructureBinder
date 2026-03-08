@@ -3,6 +3,7 @@ package com.user.terra_script.world.city.stage.c2;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.user.terra_script.domain.world.scan.ScanPixel;
+import com.user.terra_script.util.PreviewOverlayUtil;
 import com.user.terra_script.util.TerrainFeatureComputer;
 import com.user.terra_script.world.city.CityInstance;
 import net.minecraft.server.MinecraftServer;
@@ -76,6 +77,18 @@ public final class CityC2SatellitePreviewExporter {
         applyCityOverlay(hillshadeImage, claimedChunks, layerLabels, originX, originZ, worldWidth, worldHeight, centerX, centerZ);
         applyCityOverlay(roughnessImage, claimedChunks, layerLabels, originX, originZ, worldWidth, worldHeight, centerX, centerZ);
 
+        PreviewOverlayUtil.GridSpec gridSpec = new PreviewOverlayUtil.GridSpec();
+        gridSpec.previewSize = PREVIEW_SIZE;
+        gridSpec.originX = originX;
+        gridSpec.originZ = originZ;
+        gridSpec.widthBlocks = worldWidth;
+        gridSpec.heightBlocks = worldHeight;
+        gridSpec.sampleStepBlocks = Math.max(1, scanStep);
+        gridSpec.legendText = PreviewOverlayUtil.defaultLegendText(gridSpec);
+        PreviewOverlayUtil.applyGridOverlay(image, gridSpec);
+        PreviewOverlayUtil.applyGridOverlay(hillshadeImage, gridSpec);
+        PreviewOverlayUtil.applyGridOverlay(roughnessImage, gridSpec);
+
         Path cityDir = server.getWorldPath(LevelResource.ROOT)
                 .resolve("terra_script")
                 .resolve("cities")
@@ -101,6 +114,7 @@ public final class CityC2SatellitePreviewExporter {
         resolution.add(PREVIEW_SIZE);
         legend.add("resolution", resolution);
         legend.add("height_bins", buildHeightBinsLegend());
+        legend.add("grid", PreviewOverlayUtil.buildGridMetadata(gridSpec));
         Files.writeString(cityDir.resolve(LEGEND_FILE), legend.toString(), StandardCharsets.UTF_8);
 
         JsonObject labelDoc = buildLayerLabelDoc(layerLabels);
@@ -482,3 +496,4 @@ public final class CityC2SatellitePreviewExporter {
         }
     }
 }
+
