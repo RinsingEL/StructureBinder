@@ -1,4 +1,4 @@
-# 一、世界构造部分
+﻿# 一、世界构造部分
 
 
 ## W1 世界主题与约束（AI）（拓展插件；暂不开发）
@@ -1587,6 +1587,7 @@ C7 直接内置一张固定的排列类型表，不再单独拆出 C6.5 阶段�
 * `style_score`
 * `function_candidates`
 * 可选 `connector_types / connector_dirs / allowed_neighbors / landing_hint`
+* 若结构可参与竖直延申，建议额外带：`growth_axis`、`vertical_role`、`vertical_clearance`
 
 #### 4) C4 / C5 语义上下文
 
@@ -1631,7 +1632,14 @@ C7 虽然不做逐 piece 地形求解，但仍然建议给 AI 直接看局部图
 * 各功能默认组件顺序
 * 各组件最小 / 最大占比
 * starter 候选优先级
-* `puzzle_pool` 白名单 / 黑名单
+* `starter_pool / horizontal_pool / vertical_up_pool / vertical_down_pool / cap_pool / base_pool / transition_pool` 的白名单 / 黑名单
+* 各组件是否允许启用竖直延申
+* `vertical_mode`：`none / up_only / down_only / both`
+* `max_upward_extension / max_downward_extension`
+* `upward_cap_mode`：达到上限后是否直接封顶且不回退整条分支
+* `downward_target`：`until_non_air / until_solid / until_terrain`
+* `replace_bottom_block`：是否允许替换底部 `lava / water / fragile`
+* `embed_into_terrain`：是否允许末端嵌入地形
 * 组件删减优先级
 * fallback 顺序
 
@@ -1887,8 +1895,11 @@ C8 至少读取：
 * `order`
 * `target_ratio`
 * `starter_candidates`
-* `puzzle_pool`
+* `starter_pool / horizontal_pool`
+* 可选 `vertical_up_pool / vertical_down_pool / cap_pool / base_pool / transition_pool`
 * `landing_profile`
+* `vertical_mode / max_upward_extension / max_downward_extension`
+* `upward_cap_mode / downward_target / replace_bottom_block / embed_into_terrain`
 * `fallback_policy`
 * `starter_min_footprint / expected_piece_count / connector_buffer` 等空间预算字段
 
@@ -1922,6 +1933,8 @@ C8 至少读取：
 * 最大允许抬高 / 挖低
 * 是否允许 `cut_and_fill / terrace / retaining_wall / suspend`
 * 不同 `landing_profile` 的落地阈值
+* 竖直 connector 的匹配优先级与最小净空
+* 竖直延申的停止条件、封顶规则、触底替换规则
 
 ## C8 处理流程
 
@@ -1952,6 +1965,13 @@ C8 至少读取：
 
 starter 成功后，程序维护该组件的 `frontier_connectors`，再从对应 `puzzle_pool` 中选择 piece 继续扩展。
 
+默认口径：
+
+* 水平扩展优先使用 `horizontal_pool`
+* 命中 `up/down` 连接器时，不再混用普通池，而是切换到对应的 `vertical_up_pool / vertical_down_pool`
+* 需要转向时先尝试 `transition_pool`
+* 达到上限或命中终止条件后，使用 `cap_pool / base_pool` 收口
+
 固定执行口径：
 
 ```text
@@ -1973,6 +1993,20 @@ repeat until stop condition
 * 是否侵占其他组件预算区太多
 * 是否与已落位 piece 冲突
 
+### Step 3.5：竖直分支求解
+
+当某个 frontier connector 被判定为竖直连接器时，按单独规则求解，不再走普通水平扩展口径：
+
+* 向上分支：逐层从 `vertical_up_pool` 取候选 piece
+* 向下分支：逐层从 `vertical_down_pool` 取候选 piece
+* 每成功放置一层都更新当前顶点 / 底点高度与占位
+* 达到 `max_upward_extension / max_downward_extension` 后立即停止该分支
+* 若配置了 `upward_cap_mode`，达到高度上限后直接放置 `cap_pool`，不回退已成立的上升分支
+* 向下分支根据 `downward_target` 判断是否继续生长到非 air / solid / terrain
+* 命中目标面后，按 `replace_bottom_block / embed_into_terrain` 决定末端是否替换底块、贴底收口或嵌入地形
+
+建议将竖直分支视为“组件内子分支”处理：单个分支失败优先只回退当前分支，不回退整个组件。
+
 ### Step 4：piece 落地前地形校验
 
 每个 piece 在确认前都必须检查：
@@ -1993,6 +2027,13 @@ piece 通过地形校验后，再根据 C7 给定的 `landing_profile` 决定实
 * `adapt`：允许局部补齐或小范围抬降
 * `platform`：生成规则平台、挡墙、台阶
 * `flatten`：对局部区域做切平方案，再放置 piece
+
+若 piece 属于竖直延申链，还应追加以下判定：
+
+* 是否超过该链允许的高度上限 / 深度上限
+* 末端是否需要封顶、落底或转入 `transition_pool`
+* 末端接触物是否允许被替换（如 `lava / water`）
+* 是否允许把末端嵌入山体、地面或 cliff 面
 
 ### Step 6：组件停止条件
 
@@ -2026,6 +2067,7 @@ rect 失败
 
 * `drop component` 只允许删除低优先级组件
 * `abandon rect` 只在核心组件无法成立时触发
+* 竖直链到达高度上限时优先“封顶收口”，而不是回退整个已成立分支
 
 ### Step 8：汇总生成基台与垂直过渡计划
 
@@ -2059,7 +2101,9 @@ rect 失败
       "world_pos": { "x": -5398, "y": 71, "z": -6738 },
       "rotation": 90,
       "jigsaw_facing": "south",
-      "landing_profile": "platform"
+      "landing_profile": "platform",
+      "pool_source": "horizontal_pool",
+      "vertical_branch": null
     }
   ],
   "component_stats": [
@@ -2270,6 +2314,7 @@ C9 不再负责重新选 starter、重新拼 jigsaw、重新判断主功能。
 **存放位置**：`/saves/<WorldName>/terra_script/territories/<territory_id>/`
 **存放位置**：`/saves/<WorldName>/terra_script/territories/<territory_id>/`
 **存放位置**：`/saves/<WorldName>/terra_script/cities/<city_id>/`
+
 
 
 
