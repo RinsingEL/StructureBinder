@@ -43,22 +43,14 @@ public final class CityC7Validation {
             report.failure_count = 1;
             return report;
         }
-        int primaryCount = 0;
         for (CityC7Stages.TemplateSelectionItem selected : selection.selections) {
             if (selected == null) continue;
             if (groupId != null && !groupId.isBlank() && !groupId.equals(selected.group_id)) continue;
-            primaryCount++;
             Item item = new Item();
             item.module_id = selected.module_id;
             item.selected_template = selected.selected_template;
             item.size_tier = selected.size_tier;
-            if (primaryCount > 1 && isSingleFunctionGroup(groupId)) {
-                item.status = "fail";
-                item.reason = "too_many_primary_modules";
-                item.suggested_fix = "reduce_to_single_primary_module";
-                report.ok = false;
-                report.failure_count++;
-            } else if (selected.selected_template == null || selected.selected_template.isBlank()) {
+            if (selected.selected_template == null || selected.selected_template.isBlank()) {
                 item.status = "fail";
                 item.reason = "missing_template_selection";
                 item.suggested_fix = "pick_template_for_primary_module";
@@ -81,9 +73,4 @@ public final class CityC7Validation {
         return file;
     }
 
-    private static boolean isSingleFunctionGroup(String groupId) {
-        if (groupId == null || groupId.isBlank()) return true;
-        String normalized = groupId.toLowerCase(Locale.ROOT);
-        return normalized.contains("market") || normalized.contains("farm") || normalized.contains("school") || normalized.contains("port") || normalized.contains("shop");
-    }
 }

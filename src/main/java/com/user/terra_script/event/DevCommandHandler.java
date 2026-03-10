@@ -354,10 +354,18 @@ public class DevCommandHandler {
                 return httpPost("/city_c5_data", args);
             case "city_c6_generate":
                 return httpPost("/city_c6_generate", args);
+            case "city_c6_rect_prepare":
+                return httpPost("/city_c6_rect_prepare", args);
+            case "city_c6_rect_submit":
+                return httpPost("/city_c6_rect_submit", args);
             case "city_c6_data":
                 return httpPost("/city_c6_data", args);
             case "city_c6_pave_stone":
                 return httpPost("/city_c6_pave_stone", args);
+            case "city_c7_generate":
+                return httpPost("/city_c7_generate", args);
+            case "city_c7_data":
+                return httpPost("/city_c7_data", args);
             case "city_heightmap":
                 return httpPost("/city_heightmap", args);
             case "city_forbidden":
@@ -687,8 +695,12 @@ public class DevCommandHandler {
                 "city_c5_generate",
                 "city_c5_data",
                 "city_c6_generate",
+                "city_c6_rect_prepare",
+                "city_c6_rect_submit",
                 "city_c6_data",
                 "city_c6_pave_stone",
+                "city_c7_generate",
+                "city_c7_data",
                 "city_heightmap",
                 "city_forbidden",
                 "city_buildable_groups",
@@ -723,8 +735,12 @@ public class DevCommandHandler {
                 "city_c5_generate",
                 "city_c5_data",
                 "city_c6_generate",
+                "city_c6_rect_prepare",
+                "city_c6_rect_submit",
                 "city_c6_data",
                 "city_c6_pave_stone",
+                "city_c7_generate",
+                "city_c7_data",
                 "city_heightmap",
                 "city_forbidden",
                 "city_buildable_groups",
@@ -748,3 +764,4 @@ public class DevCommandHandler {
         }
     }
 }
+

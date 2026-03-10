@@ -2,10 +2,11 @@ package com.user.terra_script.world.city.stage.c8;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.user.terra_script.world.city.stage.c1.CityStage1BinaryIO;
 import com.user.terra_script.world.city.stage.CityHeightResolver;
+import com.user.terra_script.world.city.stage.c1.CityStage1BinaryIO;
 import com.user.terra_script.world.city.stage.c2.CityC2ScanBinaryIO;
 import com.user.terra_script.world.city.stage.c6.CityC6Stages;
+import com.user.terra_script.world.city.stage.c7.CityC7Stages;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -28,7 +29,7 @@ public final class CityC8Stages {
         public String step = "C8";
         public boolean ok = true;
         public String city_id;
-        public int version = 1;
+        public int version = 2;
         public long generated_at_epoch_ms;
         public List<FoundationItem> foundations = new ArrayList<>();
     }
@@ -42,6 +43,17 @@ public final class CityC8Stages {
         public String strategy;
         public int base_y;
         public int delta_height;
+        public String selected_template;
+        public String function_role;
+        public String interaction_role;
+        public List<String> top_k_templates = new ArrayList<>();
+        public List<String> fallback_chain = new ArrayList<>();
+        public String landing_hint;
+        public String growth_axis;
+        public String vertical_role;
+        public int vertical_clearance;
+        public boolean vertical_capable;
+        public String vertical_mode_hint = "none";
         public TerrainImpactBBox terrain_impact_bbox = new TerrainImpactBBox();
         public List<SupportAction> supports = new ArrayList<>();
         public TerrainMetrics terrain_metrics = new TerrainMetrics();
@@ -78,13 +90,25 @@ public final class CityC8Stages {
             CityStage1BinaryIO.HeightData heightData,
             Map<Long, Integer> indexByBlock
     ) {
-        return generate(cityId, c6Summary, c6Layout, heightData, null, indexByBlock);
+        return generate(cityId, c6Summary, c6Layout, null, heightData, null, indexByBlock);
     }
 
     public static C8Plan generate(
             String cityId,
             CityC6Stages.C6Summary c6Summary,
             CityC6Stages.C6Layout c6Layout,
+            CityStage1BinaryIO.HeightData heightData,
+            CityC2ScanBinaryIO.C2ScanData c2ScanData,
+            Map<Long, Integer> indexByBlock
+    ) {
+        return generate(cityId, c6Summary, c6Layout, null, heightData, c2ScanData, indexByBlock);
+    }
+
+    public static C8Plan generate(
+            String cityId,
+            CityC6Stages.C6Summary c6Summary,
+            CityC6Stages.C6Layout c6Layout,
+            CityC7Stages.C7Selection c7Selection,
             CityStage1BinaryIO.HeightData heightData,
             CityC2ScanBinaryIO.C2ScanData c2ScanData,
             Map<Long, Integer> indexByBlock
@@ -104,12 +128,16 @@ public final class CityC8Stages {
             blocksByArea.computeIfAbsent(e.getValue(), k -> new ArrayList<>()).add(e.getKey());
         }
 
+        Map<String, CityC7Stages.TemplateSelectionItem> c7ByArea = indexC7SelectionByArea(c7Selection);
+
         List<CityC6Stages.BuildAreaSummary> areas = c6Summary.areas != null ? c6Summary.areas : Collections.emptyList();
         areas.sort(Comparator.comparing(a -> a.build_area_id));
         for (CityC6Stages.BuildAreaSummary area : areas) {
             if (area == null) continue;
             List<Long> blockKeys = blocksByArea.getOrDefault(area.build_area_numeric_id, Collections.emptyList());
-            FoundationItem item = buildFoundationItem(area, blockKeys, heightData, c2ScanData);
+            CityC7Stages.TemplateSelectionItem selection = c7ByArea.get(area.build_area_id);
+            if (selection == null) selection = c7ByArea.get(area.group_id);
+            FoundationItem item = buildFoundationItem(area, selection, blockKeys, heightData, c2ScanData);
             plan.foundations.add(item);
         }
         return plan;
@@ -129,6 +157,7 @@ public final class CityC8Stages {
 
     private static FoundationItem buildFoundationItem(
             CityC6Stages.BuildAreaSummary area,
+            CityC7Stages.TemplateSelectionItem selection,
             List<Long> blockKeys,
             CityStage1BinaryIO.HeightData heightData,
             CityC2ScanBinaryIO.C2ScanData c2ScanData
@@ -138,6 +167,19 @@ public final class CityC8Stages {
         item.build_area_id = area.build_area_id;
         item.build_area_numeric_id = area.build_area_numeric_id;
         item.group_id = area.group_id;
+        if (selection != null) {
+            item.selected_template = selection.selected_template;
+            item.function_role = selection.function_role;
+            item.interaction_role = selection.interaction_role;
+            item.top_k_templates = selection.top_k_templates != null ? new ArrayList<>(selection.top_k_templates) : new ArrayList<>();
+            item.fallback_chain = selection.fallback_chain != null ? new ArrayList<>(selection.fallback_chain) : new ArrayList<>();
+            item.landing_hint = selection.landing_hint;
+            item.growth_axis = selection.growth_axis;
+            item.vertical_role = selection.vertical_role;
+            item.vertical_clearance = Math.max(0, selection.vertical_clearance);
+            item.vertical_capable = selection.vertical_capable;
+            item.vertical_mode_hint = inferVerticalMode(selection);
+        }
 
         List<Integer> heights = new ArrayList<>(Math.max(16, blockKeys.size()));
         long sum = 0L;
@@ -147,8 +189,6 @@ public final class CityC8Stages {
         int minZ = Integer.MAX_VALUE;
         int maxX = Integer.MIN_VALUE;
         int maxZ = Integer.MIN_VALUE;
-        long sumX = 0L;
-        long sumZ = 0L;
 
         int northSum = 0, eastSum = 0, southSum = 0, westSum = 0;
         int northCnt = 0, eastCnt = 0, southCnt = 0, westCnt = 0;
@@ -166,8 +206,6 @@ public final class CityC8Stages {
             minZ = Math.min(minZ, z);
             maxX = Math.max(maxX, x);
             maxZ = Math.max(maxZ, z);
-            sumX += x;
-            sumZ += z;
         }
 
         if (heights.isEmpty()) {
@@ -179,8 +217,6 @@ public final class CityC8Stages {
             maxZ = area.bbox.maxZ;
             heights.add(minH);
             sum = minH;
-            sumX = safeRound(area.centroid.x);
-            sumZ = safeRound(area.centroid.z);
         }
 
         double avgH = sum / (double) heights.size();
@@ -235,6 +271,15 @@ public final class CityC8Stages {
             item.strategy = "CUT_AND_FILL";
         }
 
+        if (item.vertical_capable) {
+            if ("up".equalsIgnoreCase(item.growth_axis) || "vertical".equalsIgnoreCase(item.growth_axis)) {
+                item.strategy = "FOLLOW_P50";
+            }
+            if (relief >= 4 && "PLATFORM".equals(item.foundation_type)) {
+                addSupport(item, "stairs", maxEdgeSide(edgeN, edgeE, edgeS, edgeW));
+            }
+        }
+
         item.base_y = "FOLLOW_P50".equals(item.strategy) ? safeRound(p50) : safeRound(avgH);
         item.delta_height = relief;
 
@@ -262,7 +307,30 @@ public final class CityC8Stages {
         return item;
     }
 
+    private static Map<String, CityC7Stages.TemplateSelectionItem> indexC7SelectionByArea(CityC7Stages.C7Selection selection) {
+        Map<String, CityC7Stages.TemplateSelectionItem> index = new HashMap<>();
+        if (selection == null || selection.selections == null) return index;
+        for (CityC7Stages.TemplateSelectionItem item : selection.selections) {
+            if (item == null) continue;
+            if (item.build_area_id != null && !item.build_area_id.isBlank()) index.putIfAbsent(item.build_area_id, item);
+            if (item.group_id != null && !item.group_id.isBlank()) index.putIfAbsent(item.group_id, item);
+        }
+        return index;
+    }
+
+    private static String inferVerticalMode(CityC7Stages.TemplateSelectionItem selection) {
+        if (selection == null || !selection.vertical_capable) return "none";
+        String role = selection.vertical_role != null ? selection.vertical_role.trim().toLowerCase() : "";
+        if (role.contains("up") && role.contains("down")) return "both";
+        if (role.contains("up")) return "up_only";
+        if (role.contains("down")) return "down_only";
+        return "both";
+    }
+
     private static void addSupport(FoundationItem item, String type, String side) {
+        for (SupportAction existing : item.supports) {
+            if (existing != null && type.equals(existing.type) && side.equals(existing.side)) return;
+        }
         SupportAction action = new SupportAction();
         action.type = type;
         action.side = side;

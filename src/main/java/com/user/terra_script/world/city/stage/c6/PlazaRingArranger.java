@@ -38,7 +38,7 @@ public final class PlazaRingArranger {
         return plan;
     }
 
-    private static CityC6Stages.PlazaRingParams defaultParams(int areaBlocks) {
+    public static CityC6Stages.PlazaRingParams defaultParams(int areaBlocks) {
         int radius = (int) Math.max(8, Math.min(20, Math.sqrt(Math.max(1, areaBlocks) / Math.PI) * 0.18));
         int outer = Math.max(radius + 4, radius + 8);
 
@@ -62,7 +62,7 @@ public final class PlazaRingArranger {
         return params;
     }
 
-    private static List<CityC6Stages.RectSize> defaultRectSizes() {
+    public static List<CityC6Stages.RectSize> defaultRectSizes() {
         List<CityC6Stages.RectSize> sizes = new ArrayList<>();
         sizes.add(rect("S1", 7, 9, 7, 9, 0.55, 6, 18));
         sizes.add(rect("M1", 10, 14, 8, 12, 0.35, 2, 8));

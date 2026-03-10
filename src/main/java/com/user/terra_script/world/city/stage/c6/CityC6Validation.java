@@ -8,9 +8,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 public final class CityC6Validation {
@@ -18,126 +16,161 @@ public final class CityC6Validation {
 
     private CityC6Validation() {}
 
-    public static final class Report {
-        public String step = "C6";
-        public String city_id;
-        public String group_id;
-        public boolean ok = true;
-        public int failure_count = 0;
-        public List<Item> items = new ArrayList<>();
+    public static CityC6Stages.GroupRectValidation validateSubmission(
+            CityC6Stages.BuildAreaSummary area,
+            CityC6Stages.GroupRectCandidate candidate,
+            Map<Long, Integer> indexByBlock,
+            int attemptLimit
+    ) {
+        CityC6Stages.GroupRectValidation result = new CityC6Stages.GroupRectValidation();
+        result.group_id = area != null ? area.group_id : null;
+        result.build_area_id = area != null ? area.build_area_id : null;
+        result.attempt_index = candidate != null ? candidate.attempt_index : 0;
+        result.decision_mode = candidate != null ? candidate.decision_mode : null;
+        result.polygon_area_blocks = area != null ? area.area_blocks : 0;
+        result.rects = new ArrayList<>();
+
+        if (area == null || candidate == null || indexByBlock == null || indexByBlock.isEmpty()) {
+            result.all_rects_valid = false;
+            result.accepted = false;
+            result.decision_terminal = true;
+            result.continue_allowed = false;
+            result.reason = "missing_required_input";
+            return result;
+        }
+
+        if (candidate.attempt_index < 1 || candidate.attempt_index > attemptLimit) {
+            result.all_rects_valid = false;
+            result.accepted = false;
+            result.decision_terminal = true;
+            result.continue_allowed = false;
+            result.reason = "attempt_limit_exceeded";
+            return result;
+        }
+
+        if ("keep_current".equals(candidate.decision_mode)) {
+            result.all_rects_valid = true;
+            result.accepted = true;
+            result.decision_terminal = true;
+            result.continue_allowed = false;
+            result.reason = "keep_current";
+            return result;
+        }
+
+        if ("no_primary_module".equals(candidate.decision_mode)) {
+            result.all_rects_valid = true;
+            result.accepted = true;
+            result.decision_terminal = true;
+            result.continue_allowed = false;
+            result.reason = "no_primary_module";
+            return result;
+        }
+
+        List<CityC6Stages.RectDecision> rects = candidate.rects != null ? candidate.rects : List.of();
+        if (rects.isEmpty()) {
+            result.all_rects_valid = false;
+            result.accepted = false;
+            result.decision_terminal = candidate.attempt_index >= attemptLimit;
+            result.continue_allowed = !result.decision_terminal;
+            result.reason = "empty_rects";
+            return result;
+        }
+
+        boolean allValid = true;
+        int totalArea = 0;
+        for (CityC6Stages.RectDecision rect : rects) {
+            CityC6Stages.RectValidationItem item = validateRect(area, rect, indexByBlock);
+            result.rects.add(item);
+            totalArea += Math.max(0, item.w) * Math.max(0, item.h);
+            if (!item.valid) allValid = false;
+        }
+
+        result.total_primary_rect_area = totalArea;
+        result.total_primary_area_ratio = result.polygon_area_blocks <= 0
+                ? 0.0
+                : round3(totalArea / (double) result.polygon_area_blocks);
+        result.all_rects_valid = allValid;
+
+        boolean enoughArea = result.total_primary_area_ratio > CityC6Stages.MIN_TOTAL_PRIMARY_AREA_RATIO;
+        if (allValid && enoughArea) {
+            result.accepted = true;
+            result.decision_terminal = true;
+            result.continue_allowed = false;
+            result.reason = "accepted";
+        } else {
+            result.accepted = false;
+            result.decision_terminal = candidate.attempt_index >= attemptLimit;
+            result.continue_allowed = !result.decision_terminal;
+            result.reason = !allValid ? "rect_validation_failed" : "total_primary_area_ratio_not_enough";
+        }
+        return result;
     }
 
-    public static final class Item {
-        public String module_id;
-        public String build_area_id;
-        public double coverage_ratio;
-        public int inside_buildable_blocks;
-        public int total_rect_blocks;
-        public int out_of_bounds_blocks;
-        public int forbidden_overlap_blocks = 0;
-        public String terrain_height_range;
-        public double slope_avg;
-        public int max_local_relief;
-        public String status;
-        public String reason;
-        public String suggested_fix;
-    }
-
-    public static Report generate(
-            String cityId,
-            String groupId,
-            CityC6Stages.C6Summary summary,
-            CityC6Stages.C6Layout layout,
+    private static CityC6Stages.RectValidationItem validateRect(
+            CityC6Stages.BuildAreaSummary area,
+            CityC6Stages.RectDecision rect,
             Map<Long, Integer> indexByBlock
     ) {
-        Report report = new Report();
-        report.city_id = cityId;
-        report.group_id = groupId;
-        if (summary == null || layout == null || indexByBlock == null) {
-            report.ok = false;
-            report.failure_count = 1;
-            return report;
-        }
+        normalizeRect(rect);
 
-        Map<String, CityC6Stages.BuildAreaSummary> areaById = new HashMap<>();
-        for (CityC6Stages.BuildAreaSummary area : summary.areas) {
-            if (area != null && area.build_area_id != null) areaById.put(area.build_area_id, area);
-        }
+        CityC6Stages.RectValidationItem item = new CityC6Stages.RectValidationItem();
+        item.rect_id = rect.rect_id;
+        item.cx = rect.cx;
+        item.cz = rect.cz;
+        item.w = rect.w;
+        item.h = rect.h;
+        item.minX = rect.minX;
+        item.minZ = rect.minZ;
+        item.maxX = rect.maxX;
+        item.maxZ = rect.maxZ;
 
-        for (CityC6Stages.LayoutPlan plan : layout.plans) {
-            if (plan == null) continue;
-            if (groupId != null && !groupId.isBlank() && !groupId.equals(plan.group_id)) continue;
-            CityC6Stages.BuildAreaSummary area = areaById.get(plan.build_area_id);
-            if (area == null) continue;
-
-            int w = 8;
-            int h = 8;
-            if (plan.rect_sizes != null && !plan.rect_sizes.isEmpty()) {
-                CityC6Stages.RectSize best = plan.rect_sizes.get(0);
-                for (CityC6Stages.RectSize candidate : plan.rect_sizes) {
-                    if (candidate != null && candidate.weight > best.weight) best = candidate;
-                }
-                w = average(best.w_blocks, 8);
-                h = average(best.h_blocks, 8);
-            }
-            CityC6Stages.Point anchor = plan.primary_modules != null && !plan.primary_modules.isEmpty()
-                    ? plan.primary_modules.get(0).anchor
-                    : area.centroid;
-            int cx = (int) Math.round(anchor != null ? anchor.x : area.centroid.x);
-            int cz = (int) Math.round(anchor != null ? anchor.z : area.centroid.z);
-            int minX = cx - w / 2;
-            int minZ = cz - h / 2;
-            int maxX = minX + w - 1;
-            int maxZ = minZ + h - 1;
-            int total = 0;
-            int inside = 0;
-            for (int x = minX; x <= maxX; x++) {
-                for (int z = minZ; z <= maxZ; z++) {
-                    total++;
-                    Integer areaId = indexByBlock.get(packBlock(x, z));
-                    if (areaId != null && areaId == area.build_area_numeric_id) inside++;
+        for (int x = rect.minX; x <= rect.maxX; x++) {
+            for (int z = rect.minZ; z <= rect.maxZ; z++) {
+                item.total_rect_blocks++;
+                Integer areaId = indexByBlock.get(packBlock(x, z));
+                if (areaId != null && areaId == area.build_area_numeric_id) {
+                    item.inside_functional_blocks++;
                 }
             }
-
-            Item item = new Item();
-            item.module_id = plan.primary_modules != null && !plan.primary_modules.isEmpty() && plan.primary_modules.get(0) != null
-                    ? plan.primary_modules.get(0).module_id
-                    : (plan.group_id + "_primary");
-            item.build_area_id = plan.build_area_id;
-            item.total_rect_blocks = total;
-            item.inside_buildable_blocks = inside;
-            item.out_of_bounds_blocks = Math.max(0, total - inside);
-            item.coverage_ratio = total <= 0 ? 0.0 : round3(inside / (double) total);
-            item.terrain_height_range = String.format(Locale.ROOT, "%.0f..%.0f", area.avg_height, area.avg_height);
-            item.slope_avg = 0.0;
-            item.max_local_relief = 0;
-            if (item.coverage_ratio < 0.80) {
-                item.status = "fail";
-                item.reason = "coverage_below_threshold";
-                item.suggested_fix = "shrink_or_move_primary_rect";
-                report.ok = false;
-                report.failure_count++;
-            } else {
-                item.status = "accept";
-                item.reason = "ok";
-                item.suggested_fix = "keep";
-            }
-            report.items.add(item);
         }
-        return report;
+        item.coverage_ratio = item.total_rect_blocks <= 0
+                ? 0.0
+                : round3(item.inside_functional_blocks / (double) item.total_rect_blocks);
+        item.valid = rect.w > 0
+                && rect.h > 0
+                && item.coverage_ratio >= CityC6Stages.MIN_COVERAGE_RATIO;
+        item.reason = rect.w <= 0 || rect.h <= 0
+                ? "invalid_rect_size"
+                : (item.valid ? "ok" : "coverage_below_threshold");
+        return item;
     }
 
-    public static Path save(Path cityDir, String groupId, Report report) throws Exception {
+    public static void normalizeRect(CityC6Stages.RectDecision rect) {
+        if (rect == null) return;
+        rect.w = Math.max(0, rect.w);
+        rect.h = Math.max(0, rect.h);
+        if (rect.minX == 0 && rect.maxX == 0 && rect.w > 0) {
+            rect.minX = rect.cx - rect.w / 2;
+            rect.maxX = rect.minX + rect.w - 1;
+        }
+        if (rect.minZ == 0 && rect.maxZ == 0 && rect.h > 0) {
+            rect.minZ = rect.cz - rect.h / 2;
+            rect.maxZ = rect.minZ + rect.h - 1;
+        }
+        if (rect.w > 0 && rect.maxX < rect.minX) rect.maxX = rect.minX + rect.w - 1;
+        if (rect.h > 0 && rect.maxZ < rect.minZ) rect.maxZ = rect.minZ + rect.h - 1;
+        if (rect.w <= 0 && rect.maxX >= rect.minX) rect.w = rect.maxX - rect.minX + 1;
+        if (rect.h <= 0 && rect.maxZ >= rect.minZ) rect.h = rect.maxZ - rect.minZ + 1;
+        if (rect.cx == 0 && rect.w > 0) rect.cx = rect.minX + rect.w / 2;
+        if (rect.cz == 0 && rect.h > 0) rect.cz = rect.minZ + rect.h / 2;
+        if (rect.rect_id == null || rect.rect_id.isBlank()) rect.rect_id = "rect_" + rect.cx + "_" + rect.cz;
+    }
+
+    public static Path save(Path cityDir, String groupId, CityC6Stages.GroupRectValidation report) throws Exception {
         Path groupDir = CityGroupPathUtil.resolveGroupDir(cityDir, groupId);
         Path file = groupDir.resolve("c6_validation.json");
         Files.writeString(file, GSON.toJson(report), StandardCharsets.UTF_8);
         return file;
-    }
-
-    private static int average(List<Integer> values, int fallback) {
-        if (values == null || values.isEmpty()) return fallback;
-        if (values.size() == 1) return values.get(0);
-        return (int) Math.round((values.get(0) + values.get(1)) / 2.0);
     }
 
     private static long packBlock(int x, int z) {

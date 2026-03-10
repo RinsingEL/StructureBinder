@@ -201,7 +201,30 @@ public final class CityC6RectPlacementPreviewExporter {
             Color baseColor,
             List<PreviewOverlayUtil.RectLabelAnchor> labelAnchors
     ) {
-        if (plan.rect_sizes == null || plan.rect_sizes.isEmpty() || plan.primary_modules == null || plan.primary_modules.isEmpty()) {
+        if (plan.primary_modules == null || plan.primary_modules.isEmpty()) {
+            return 0;
+        }
+
+        boolean hasExplicitRects = false;
+        for (CityC6Stages.PrimaryModule module : plan.primary_modules) {
+            if (module != null && module.w > 0 && module.h > 0) {
+                hasExplicitRects = true;
+                drawRect(g, module.anchor != null ? (int) Math.round(module.anchor.x) : (module.minX + module.maxX) / 2, module.anchor != null ? (int) Math.round(module.anchor.z) : (module.minZ + module.maxZ) / 2, module.w, module.h, data, baseColor);
+                if (labelAnchors != null) {
+                    PreviewOverlayUtil.RectLabelAnchor labelAnchor = new PreviewOverlayUtil.RectLabelAnchor();
+                    labelAnchor.centerX = toPreviewCoord(module.anchor != null ? module.anchor.x : (module.minX + module.maxX) / 2.0, data.originX, data.width);
+                    labelAnchor.centerZ = toPreviewCoord(module.anchor != null ? module.anchor.z : (module.minZ + module.maxZ) / 2.0, data.originZ, data.height);
+                    labelAnchor.label = module.rect_id != null && !module.rect_id.isBlank() ? module.rect_id : module.module_id;
+                    labelAnchor.color = baseColor;
+                    labelAnchors.add(labelAnchor);
+                }
+            }
+        }
+        if (hasExplicitRects) {
+            return plan.primary_modules.size();
+        }
+
+        if (plan.rect_sizes == null || plan.rect_sizes.isEmpty()) {
             return 0;
         }
 

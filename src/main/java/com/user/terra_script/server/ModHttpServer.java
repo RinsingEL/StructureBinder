@@ -90,6 +90,8 @@ public class ModHttpServer {
             server.createContext("/city_c5_generate", cityController::handleCityC5Generate);
             server.createContext("/city_c5_data", cityController::handleCityC5Data);
             server.createContext("/city_c6_generate", cityController::handleCityC6Generate);
+            server.createContext("/city_c6_rect_prepare", cityController::handleCityC6RectPrepare);
+            server.createContext("/city_c6_rect_submit", cityController::handleCityC6RectSubmit);
             server.createContext("/city_c6_data", cityController::handleCityC6Data);
             server.createContext("/city_c7_generate", cityController::handleCityC7Generate);
             server.createContext("/city_c7_data", cityController::handleCityC7Data);

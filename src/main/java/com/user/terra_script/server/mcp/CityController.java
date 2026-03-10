@@ -16,6 +16,7 @@ import com.user.terra_script.world.city.CityInstance;
 import com.user.terra_script.world.city.CityManager;
 import com.user.terra_script.world.city.stage.c4.CitySemanticStages;
 import com.user.terra_script.world.city.stage.c4.CityC5ModulePreviewExporter;
+import com.user.terra_script.world.city.stage.c4.CityC5GroupTerrainPreviewExporter;
 import com.user.terra_script.world.city.stage.c1.CityStage1BinaryIO;
 import com.user.terra_script.world.city.stage.c1.CityStage1Processor;
 import com.user.terra_script.world.city.stage.c2.CityC2ScanBinaryIO;
@@ -26,6 +27,7 @@ import com.user.terra_script.world.city.stage.c6.C6FillStyle;
 import com.user.terra_script.world.city.stage.c6.CityC6Stages;
 import com.user.terra_script.world.city.stage.c6.CityC6BuildAreaPreviewExporter;
 import com.user.terra_script.world.city.stage.c6.CityC6RectPlacementPreviewExporter;
+import com.user.terra_script.world.city.stage.c6.CityC6GroupPreviewExporter;
 import com.user.terra_script.world.city.stage.c7.CityC7Stages;
 import com.user.terra_script.world.city.stage.c8.CityC8Stages;
 import com.user.terra_script.world.city.stage.c9.CityC9Stages;
@@ -43,6 +45,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.ArrayList;
 import java.nio.file.Path;
 import java.io.File;
 import java.util.concurrent.CountDownLatch;
@@ -560,11 +563,16 @@ public class CityController {
     }
 
     public void handleCityC6Generate(HttpExchange exchange) throws IOException {
+        handleCityC6RectPrepare(exchange);
+    }
+
+    public void handleCityC6RectPrepare(HttpExchange exchange) throws IOException {
         if (!HttpUtil.requireMethod(exchange, "POST")) return;
         try {
             String body = HttpUtil.readBody(exchange);
             JsonObject json = JsonParser.parseString(body).getAsJsonObject();
             String cityId = json.has("city_id") ? json.get("city_id").getAsString() : null;
+            String groupId = readOptionalString(json, "group_id");
             if (cityId == null || cityId.isBlank()) {
                 HttpUtil.sendResponse(exchange, 400, "{\"error\": \"Missing city_id\"}");
                 return;
@@ -594,6 +602,7 @@ public class CityController {
             }
 
             CityStage1BinaryIO.HeightData heightData = CityStage1BinaryIO.loadHeightData(cityId);
+            CityC2ScanBinaryIO.C2ScanData c2ScanData = CityC2ScanBinaryIO.load(cityId);
             List<List<CityStage1Processor.BlockCoord>> buildableGroups = CityStage1BinaryIO.loadBuildableGroups(cityId);
             if (heightData == null || buildableGroups == null) {
                 HttpUtil.sendResponse(exchange, 404, "{\"error\": \"Stage1 binary data not found for: " + cityId + "\"}");
@@ -601,8 +610,34 @@ public class CityController {
             }
             List<CityStage1Processor.ForbiddenBlock> forbiddenBlocks = CityStage1BinaryIO.loadForbidden(cityId);
 
-            CityC6Stages.C6Bundle bundle = CityC6Stages.generate(city, c5, heightData, buildableGroups, fillStyle);
+            CityC6Stages.C6Bundle bundle = CityC6Stages.generate(city, c5, heightData, c2ScanData, buildableGroups, fillStyle);
+            CityC6Stages.C6Layout existingLayout = CityC6Stages.loadLayout(cityDir);
+            CityC6Stages.C6RectCandidates existingCandidates = CityC6Stages.loadCandidates(cityDir);
+            CityC6Stages.C6RectValidation existingValidation = CityC6Stages.loadValidation(cityDir);
+            if (existingLayout != null && existingLayout.plans != null && !existingLayout.plans.isEmpty()) {
+                for (CityC6Stages.LayoutPlan existingPlan : existingLayout.plans) {
+                    CityC6Stages.LayoutPlan freshPlan = CityC6Stages.findPlanByGroup(bundle.layout, existingPlan != null ? existingPlan.group_id : null);
+                    if (freshPlan != null && existingPlan != null && existingPlan.validated) {
+                        freshPlan.primary_modules = existingPlan.primary_modules != null ? existingPlan.primary_modules : new ArrayList<>();
+                        freshPlan.validated = true;
+                        freshPlan.decision_mode = existingPlan.decision_mode;
+                        freshPlan.accepted_attempt_index = existingPlan.accepted_attempt_index;
+                        freshPlan.notes = existingPlan.notes;
+                    }
+                }
+            }
+            if (existingCandidates != null) bundle.candidates = existingCandidates;
+            if (existingValidation != null) bundle.validation = existingValidation;
+            if (bundle.decision_input != null && bundle.decision_input.groups != null) {
+                for (CityC6Stages.GroupDecisionInput item : bundle.decision_input.groups) {
+                    item.current_attempt_count = CityC6Stages.currentAttemptCount(bundle.candidates, item.group_id);
+                }
+            }
             CityC6Stages.save(cityDir, bundle);
+            CityC3OwnershipIO.OwnershipData ownership = CityC3OwnershipIO.load(cityDir);
+            if (c2ScanData != null && ownership != null) {
+                CityC5GroupTerrainPreviewExporter.export(mcServer, cityId, c5, c2ScanData, ownership);
+            }
             JsonObject c6Preview = CityC6BuildAreaPreviewExporter.export(
                     mcServer,
                     cityId,
@@ -620,21 +655,156 @@ public class CityController {
                     bundle.layout,
                     bundle.index_by_block
             );
+            JsonObject groupPreview = CityC6GroupPreviewExporter.export(
+                    mcServer,
+                    cityId,
+                    heightData,
+                    c2ScanData,
+                    bundle.summary,
+                    bundle.decision_input,
+                    bundle.candidates,
+                    bundle.validation,
+                    bundle.index_by_block
+            );
+            CityC6Stages.saveDecisionInput(cityDir, bundle.decision_input);
 
             JsonObject res = new JsonObject();
             res.addProperty("status", "ok");
-            res.addProperty("step", "C6");
+            res.addProperty("step", "C6_prepare");
             res.addProperty("city_id", cityId);
+            if (groupId != null) res.addProperty("group_id", groupId);
             res.addProperty("fill_style", fillStyle.name());
             res.addProperty("area_count", bundle.summary != null && bundle.summary.areas != null ? bundle.summary.areas.size() : 0);
             res.addProperty("plan_count", bundle.layout != null && bundle.layout.plans != null ? bundle.layout.plans.size() : 0);
             res.addProperty("indexed_block_count", bundle.indexed_block_count);
             res.addProperty("summary_file", cityDir.resolve(CityC6Stages.C6_SUMMARY_FILE).toString());
             res.addProperty("layout_file", cityDir.resolve(CityC6Stages.C6_LAYOUT_FILE).toString());
+            res.addProperty("decision_input_file", cityDir.resolve(CityC6Stages.C6_RECT_DECISION_INPUT_FILE).toString());
+            res.addProperty("candidates_file", cityDir.resolve(CityC6Stages.C6_RECT_CANDIDATES_FILE).toString());
+            res.addProperty("validation_file", cityDir.resolve(CityC6Stages.C6_RECT_VALIDATION_FILE).toString());
             res.addProperty("index_file", cityDir.resolve(CityC6Stages.C6_INDEX_FILE).toString());
             res.add("build_area_preview", c6Preview);
             res.add("rect_placement_preview", rectPreview);
+            res.add("group_previews", groupPreview);
+            res.add("decision_input", gson.toJsonTree(filterDecisionInputByGroup(bundle.decision_input, groupId)));
             HttpUtil.sendResponse(exchange, 200, gson.toJson(res));
+        } catch (Exception e) {
+            HttpUtil.handleError(exchange, e);
+        }
+    }
+
+    public void handleCityC6RectSubmit(HttpExchange exchange) throws IOException {
+        if (!HttpUtil.requireMethod(exchange, "POST")) return;
+        try {
+            String body = HttpUtil.readBody(exchange);
+            JsonObject json = JsonParser.parseString(body).getAsJsonObject();
+            String cityId = readOptionalString(json, "city_id");
+            String groupId = readOptionalString(json, "group_id");
+            String decisionMode = readOptionalString(json, "decision_mode");
+            int attemptIndex = json.has("attempt_index") ? json.get("attempt_index").getAsInt() : 0;
+            if (cityId == null || groupId == null || decisionMode == null) {
+                HttpUtil.sendResponse(exchange, 400, "{\"error\": \"Missing city_id/group_id/decision_mode\"}");
+                return;
+            }
+
+            Path cityDir = resolveCityDir(cityId);
+            CityC6Stages.C6Summary summary = CityC6Stages.loadSummary(cityDir);
+            CityC6Stages.C6Layout layout = CityC6Stages.loadLayout(cityDir);
+            CityC6Stages.C6RectDecisionInput input = CityC6Stages.loadDecisionInput(cityDir);
+            CityC6Stages.C6RectCandidates candidates = CityC6Stages.loadCandidates(cityDir);
+            CityC6Stages.C6RectValidation validation = CityC6Stages.loadValidation(cityDir);
+            Map<Long, Integer> indexByBlock = CityC6Stages.loadIndex(cityDir);
+            CityStage1BinaryIO.HeightData heightData = CityStage1BinaryIO.loadHeightData(cityId);
+            CityC2ScanBinaryIO.C2ScanData c2ScanData = CityC2ScanBinaryIO.load(cityId);
+            if (summary == null || layout == null || input == null || indexByBlock == null || heightData == null) {
+                HttpUtil.sendResponse(exchange, 404, "{\"error\": \"Required C6 prepare data not found. Run city_c6_rect_prepare first.\"}");
+                return;
+            }
+
+            CityC6Stages.BuildAreaSummary area = findBestAreaByGroup(summary, groupId);
+            if (area == null) {
+                HttpUtil.sendResponse(exchange, 404, "{\"error\": \"C6 group not found: " + groupId + "\"}");
+                return;
+            }
+
+            int currentAttemptCount = CityC6Stages.currentAttemptCount(candidates, groupId);
+            if (attemptIndex < 1) attemptIndex = currentAttemptCount + 1;
+            if (attemptIndex != currentAttemptCount + 1 && attemptIndex <= CityC6Stages.RECT_ATTEMPT_LIMIT) {
+                HttpUtil.sendResponse(exchange, 409, "{\"error\": \"attempt_index must be sequential\"}");
+                return;
+            }
+
+            CityC6Stages.GroupRectCandidate candidate = new CityC6Stages.GroupRectCandidate();
+            candidate.group_id = groupId;
+            candidate.build_area_id = area.build_area_id;
+            candidate.attempt_index = attemptIndex;
+            candidate.decision_mode = decisionMode;
+            candidate.rects = parseSubmittedRects(json);
+
+            CityC6Stages.GroupRectValidation validationItem = CityC6Validation.validateSubmission(
+                    area,
+                    candidate,
+                    indexByBlock,
+                    CityC6Stages.RECT_ATTEMPT_LIMIT
+            );
+
+            boolean finalized = false;
+            if ("keep_current".equals(decisionMode)) {
+                CityC6Stages.LayoutPlan existingPlan = CityC6Stages.findPlanByGroup(layout, groupId);
+                finalized = existingPlan != null && existingPlan.validated;
+                if (!finalized) {
+                    validationItem.accepted = false;
+                    validationItem.continue_allowed = attemptIndex < CityC6Stages.RECT_ATTEMPT_LIMIT;
+                    validationItem.decision_terminal = !validationItem.continue_allowed;
+                    validationItem.reason = "keep_current_without_validated_layout";
+                }
+            } else if ("no_primary_module".equals(decisionMode)) {
+                CityC6Stages.applyAcceptedDecision(layout, area, candidate);
+                finalized = true;
+            } else if (validationItem.accepted) {
+                CityC6Stages.applyAcceptedDecision(layout, area, candidate);
+                finalized = true;
+            }
+            validationItem.finalized_into_layout = finalized;
+
+            CityC6Stages.upsertCandidate(candidates, candidate);
+            CityC6Stages.upsertValidation(validation, validationItem);
+            CityC6Stages.updateAttemptCount(input, groupId, Math.max(currentAttemptCount, attemptIndex));
+            CityC6Stages.saveCandidates(cityDir, candidates);
+            CityC6Stages.saveValidation(cityDir, validation);
+            CityC6Stages.saveDecisionInput(cityDir, input);
+            if (finalized) {
+                CityC6Stages.saveLayout(cityDir, layout);
+            }
+
+            JsonObject groupPreview = CityC6GroupPreviewExporter.export(
+                    mcServer,
+                    cityId,
+                    heightData,
+                    c2ScanData,
+                    summary,
+                    input,
+                    candidates,
+                    validation,
+                    indexByBlock
+            );
+            Path validationFile = CityC6Validation.save(cityDir, groupId, validationItem);
+
+            JsonObject res = new JsonObject();
+            res.addProperty("status", validationItem.accepted || finalized ? "ok" : "invalid");
+            res.addProperty("step", "C6_decide_validate");
+            res.addProperty("city_id", cityId);
+            res.addProperty("group_id", groupId);
+            res.addProperty("attempt_index", attemptIndex);
+            res.addProperty("decision_mode", decisionMode);
+            res.addProperty("continue_allowed", validationItem.continue_allowed);
+            res.addProperty("decision_terminal", validationItem.decision_terminal);
+            res.addProperty("finalized_into_layout", finalized);
+            res.addProperty("validation_file", validationFile.toString());
+            res.add("validation", gson.toJsonTree(validationItem));
+            res.add("group_previews", groupPreview);
+            int statusCode = (validationItem.accepted || finalized) ? 200 : (validationItem.decision_terminal ? 409 : 422);
+            HttpUtil.sendResponse(exchange, statusCode, gson.toJson(res));
         } catch (Exception e) {
             HttpUtil.handleError(exchange, e);
         }
@@ -646,6 +816,7 @@ public class CityController {
             String body = HttpUtil.readBody(exchange);
             JsonObject json = JsonParser.parseString(body).getAsJsonObject();
             String cityId = json.has("city_id") ? json.get("city_id").getAsString() : null;
+            String groupId = readOptionalString(json, "group_id");
             if (cityId == null || cityId.isBlank()) {
                 HttpUtil.sendResponse(exchange, 400, "{\"error\": \"Missing city_id\"}");
                 return;
@@ -653,15 +824,21 @@ public class CityController {
             Path cityDir = resolveCityDir(cityId);
             CityC6Stages.C6Summary summary = CityC6Stages.loadSummary(cityDir);
             CityC6Stages.C6Layout layout = CityC6Stages.loadLayout(cityDir);
-            if (summary == null && layout == null) {
+            CityC6Stages.C6RectDecisionInput input = CityC6Stages.loadDecisionInput(cityDir);
+            CityC6Stages.C6RectCandidates candidates = CityC6Stages.loadCandidates(cityDir);
+            CityC6Stages.C6RectValidation validation = CityC6Stages.loadValidation(cityDir);
+            if (summary == null && layout == null && input == null) {
                 HttpUtil.sendResponse(exchange, 404, "{\"error\": \"C6 data not found for: " + cityId + "\"}");
                 return;
             }
             JsonObject res = new JsonObject();
             res.addProperty("step", "C6");
             res.addProperty("ok", true);
-            res.add("summary", gson.toJsonTree(summary));
-            res.add("layout", gson.toJsonTree(layout));
+            res.add("summary", gson.toJsonTree(filterC6SummaryByGroup(summary, groupId)));
+            res.add("layout", gson.toJsonTree(filterC6LayoutByGroup(layout, groupId)));
+            res.add("decision_input", gson.toJsonTree(filterDecisionInputByGroup(input, groupId)));
+            res.add("candidates", gson.toJsonTree(filterCandidatesByGroup(candidates, groupId)));
+            res.add("validation", gson.toJsonTree(filterValidationByGroup(validation, groupId)));
             HttpUtil.sendResponse(exchange, 200, gson.toJson(res));
         } catch (Exception e) {
             HttpUtil.handleError(exchange, e);
@@ -782,7 +959,8 @@ public class CityController {
             }
 
             CityC2ScanBinaryIO.C2ScanData c2ScanData = CityC2ScanBinaryIO.load(cityId);
-            CityC8Stages.C8Plan plan = CityC8Stages.generate(cityId, c6Summary, c6Layout, heightData, c2ScanData, c6Index);
+            CityC7Stages.C7Selection c7Selection = CityC7Stages.load(cityDir);
+            CityC8Stages.C8Plan plan = CityC8Stages.generate(cityId, c6Summary, c6Layout, c7Selection, heightData, c2ScanData, c6Index);
             CityC8Stages.save(cityDir, plan);
 
             Set<Integer> targetAreaIds = collectAreaIdsForGroup(c6Summary, groupId);
@@ -871,7 +1049,8 @@ public class CityController {
                     return;
                 }
                 CityC2ScanBinaryIO.C2ScanData c2ScanData = CityC2ScanBinaryIO.load(cityId);
-                c8Plan = CityC8Stages.generate(cityId, c6Summary, c6Layout, heightData, c2ScanData, c6Index);
+                CityC7Stages.C7Selection c7Selection = CityC7Stages.load(cityDir);
+                c8Plan = CityC8Stages.generate(cityId, c6Summary, c6Layout, c7Selection, heightData, c2ScanData, c6Index);
                 CityC8Stages.save(cityDir, c8Plan);
             }
 
@@ -1510,6 +1689,78 @@ public class CityController {
             if (plan != null && groupId.equals(plan.group_id)) copy.plans.add(plan);
         }
         return copy;
+    }
+
+    private static CityC6Stages.C6RectDecisionInput filterDecisionInputByGroup(CityC6Stages.C6RectDecisionInput input, String groupId) {
+        if (input == null || groupId == null || groupId.isBlank()) return input;
+        CityC6Stages.C6RectDecisionInput copy = new CityC6Stages.C6RectDecisionInput();
+        copy.ok = input.ok;
+        copy.city_id = input.city_id;
+        copy.rect_limit = input.rect_limit;
+        copy.min_total_primary_area_ratio = input.min_total_primary_area_ratio;
+        copy.generated_at_epoch_ms = input.generated_at_epoch_ms;
+        for (CityC6Stages.GroupDecisionInput item : input.groups) {
+            if (item != null && groupId.equals(item.group_id)) copy.groups.add(item);
+        }
+        return copy;
+    }
+
+    private static CityC6Stages.C6RectCandidates filterCandidatesByGroup(CityC6Stages.C6RectCandidates candidates, String groupId) {
+        if (candidates == null || groupId == null || groupId.isBlank()) return candidates;
+        CityC6Stages.C6RectCandidates copy = new CityC6Stages.C6RectCandidates();
+        copy.ok = candidates.ok;
+        copy.city_id = candidates.city_id;
+        copy.updated_at_epoch_ms = candidates.updated_at_epoch_ms;
+        for (CityC6Stages.GroupRectCandidate item : candidates.items) {
+            if (item != null && groupId.equals(item.group_id)) copy.items.add(item);
+        }
+        return copy;
+    }
+
+    private static CityC6Stages.C6RectValidation filterValidationByGroup(CityC6Stages.C6RectValidation validation, String groupId) {
+        if (validation == null || groupId == null || groupId.isBlank()) return validation;
+        CityC6Stages.C6RectValidation copy = new CityC6Stages.C6RectValidation();
+        copy.ok = validation.ok;
+        copy.city_id = validation.city_id;
+        copy.updated_at_epoch_ms = validation.updated_at_epoch_ms;
+        for (CityC6Stages.GroupRectValidation item : validation.items) {
+            if (item != null && groupId.equals(item.group_id)) copy.items.add(item);
+        }
+        return copy;
+    }
+
+    private static CityC6Stages.BuildAreaSummary findBestAreaByGroup(CityC6Stages.C6Summary summary, String groupId) {
+        if (summary == null || summary.areas == null || groupId == null) return null;
+        CityC6Stages.BuildAreaSummary best = null;
+        for (CityC6Stages.BuildAreaSummary area : summary.areas) {
+            if (area == null || !groupId.equals(area.group_id)) continue;
+            if (best == null || area.area_blocks > best.area_blocks) best = area;
+        }
+        return best;
+    }
+
+    private static List<CityC6Stages.RectDecision> parseSubmittedRects(JsonObject json) {
+        List<CityC6Stages.RectDecision> rects = new ArrayList<>();
+        if (json == null || !json.has("rects") || !json.get("rects").isJsonArray()) return rects;
+        for (var element : json.getAsJsonArray("rects")) {
+            if (!element.isJsonObject()) continue;
+            JsonObject obj = element.getAsJsonObject();
+            CityC6Stages.RectDecision rect = new CityC6Stages.RectDecision();
+            rect.rect_id = readOptionalString(obj, "rect_id");
+            rect.role = readOptionalString(obj, "role");
+            if (rect.role == null) rect.role = "primary";
+            rect.cx = obj.has("cx") ? obj.get("cx").getAsInt() : 0;
+            rect.cz = obj.has("cz") ? obj.get("cz").getAsInt() : 0;
+            rect.w = obj.has("w") ? obj.get("w").getAsInt() : 0;
+            rect.h = obj.has("h") ? obj.get("h").getAsInt() : 0;
+            rect.minX = obj.has("minX") ? obj.get("minX").getAsInt() : 0;
+            rect.minZ = obj.has("minZ") ? obj.get("minZ").getAsInt() : 0;
+            rect.maxX = obj.has("maxX") ? obj.get("maxX").getAsInt() : 0;
+            rect.maxZ = obj.has("maxZ") ? obj.get("maxZ").getAsInt() : 0;
+            CityC6Validation.normalizeRect(rect);
+            rects.add(rect);
+        }
+        return rects;
     }
 
     private static Set<Integer> collectAreaIdsForGroup(CityC6Stages.C6Summary summary, String groupId) {

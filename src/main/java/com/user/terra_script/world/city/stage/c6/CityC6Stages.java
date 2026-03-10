@@ -3,18 +3,18 @@ package com.user.terra_script.world.city.stage.c6;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.user.terra_script.world.city.CityInstance;
-import com.user.terra_script.world.city.stage.c4.CitySemanticStages;
+import com.user.terra_script.world.city.district.District;
 import com.user.terra_script.world.city.stage.CityHeightResolver;
 import com.user.terra_script.world.city.stage.c1.CityStage1BinaryIO;
-import com.user.terra_script.world.city.stage.c2.CityC2ScanBinaryIO;
 import com.user.terra_script.world.city.stage.c1.CityStage1Processor;
-import com.user.terra_script.world.city.district.District;
+import com.user.terra_script.world.city.stage.c2.CityC2ScanBinaryIO;
+import com.user.terra_script.world.city.stage.c4.CitySemanticStages;
 import net.minecraft.world.level.ChunkPos;
 
-import java.io.DataOutputStream;
-import java.io.FileOutputStream;
 import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -35,12 +35,22 @@ public final class CityC6Stages {
     public static final String C6_INDEX_FILE = "C6_BuildAreaIndex.dat";
     public static final String C6_SUMMARY_FILE = "C6_BuildAreaSummary.json";
     public static final String C6_LAYOUT_FILE = "C6_BuildAreaLayout.json";
+    public static final String C6_RECT_DECISION_INPUT_FILE = "C6_RectDecisionInput.json";
+    public static final String C6_RECT_CANDIDATES_FILE = "C6_RectCandidates.json";
+    public static final String C6_RECT_VALIDATION_FILE = "C6_RectValidation.json";
+
+    public static final int RECT_ATTEMPT_LIMIT = 3;
+    public static final double MIN_TOTAL_PRIMARY_AREA_RATIO = 0.50;
+    public static final double MIN_COVERAGE_RATIO = 0.80;
 
     private CityC6Stages() {}
 
     public static class C6Bundle {
         public C6Summary summary;
         public C6Layout layout;
+        public C6RectDecisionInput decision_input;
+        public C6RectCandidates candidates;
+        public C6RectValidation validation;
         public int indexed_block_count;
         public transient Map<Long, Integer> index_by_block = new LinkedHashMap<>();
     }
@@ -49,7 +59,7 @@ public final class CityC6Stages {
         public String step = "C6";
         public boolean ok = true;
         public String city_id;
-        public int rules_version = 1;
+        public int rules_version = 2;
         public String fill_style = C6FillStyle.PLAZA_RING.name();
         public long generated_at_epoch_ms;
         public List<BuildAreaSummary> areas = new ArrayList<>();
@@ -85,7 +95,7 @@ public final class CityC6Stages {
         public boolean ok = true;
         public String city_id;
         public String fill_style = C6FillStyle.PLAZA_RING.name();
-        public int version = 1;
+        public int version = 2;
         public long generated_at_epoch_ms;
         public List<LayoutPlan> plans = new ArrayList<>();
     }
@@ -99,12 +109,23 @@ public final class CityC6Stages {
         public PlazaRingParams fill_params;
         public List<RectSize> rect_sizes = new ArrayList<>();
         public String notes;
+        public boolean validated;
+        public String decision_mode;
+        public int accepted_attempt_index;
     }
 
     public static class PrimaryModule {
         public String module_id;
+        public String rect_id;
+        public String role = "primary";
         public Point anchor = new Point();
         public double importance;
+        public int w;
+        public int h;
+        public int minX;
+        public int minZ;
+        public int maxX;
+        public int maxZ;
         public TemplateHint template_hint = new TemplateHint();
     }
 
@@ -147,6 +168,110 @@ public final class CityC6Stages {
         public int max_count;
     }
 
+    public static class C6RectDecisionInput {
+        public String step = "C6_prepare";
+        public boolean ok = true;
+        public String city_id;
+        public int rect_limit = RECT_ATTEMPT_LIMIT;
+        public double min_total_primary_area_ratio = MIN_TOTAL_PRIMARY_AREA_RATIO;
+        public long generated_at_epoch_ms;
+        public List<GroupDecisionInput> groups = new ArrayList<>();
+    }
+
+    public static class GroupDecisionInput {
+        public String group_id;
+        public String build_area_id;
+        public int build_area_numeric_id;
+        public String function;
+        public String layer;
+        public int polygon_area_blocks;
+        public BBox mask_bbox = new BBox();
+        public Point centroid = new Point();
+        public int rect_limit = RECT_ATTEMPT_LIMIT;
+        public double min_total_primary_area_ratio = MIN_TOTAL_PRIMARY_AREA_RATIO;
+        public int current_attempt_count;
+        public PreviewPaths previews = new PreviewPaths();
+    }
+
+    public static class PreviewPaths {
+        public String height;
+        public String hillshade;
+        public String roughness;
+        public String bbox_overview;
+        public String rect_preview;
+    }
+
+    public static class C6RectCandidates {
+        public String step = "C6_decide_validate";
+        public boolean ok = true;
+        public String city_id;
+        public long updated_at_epoch_ms;
+        public List<GroupRectCandidate> items = new ArrayList<>();
+    }
+
+    public static class GroupRectCandidate {
+        public String group_id;
+        public String build_area_id;
+        public int attempt_index;
+        public String decision_mode;
+        public List<RectDecision> rects = new ArrayList<>();
+    }
+
+    public static class RectDecision {
+        public String rect_id;
+        public String role = "primary";
+        public int cx;
+        public int cz;
+        public int w;
+        public int h;
+        public int minX;
+        public int minZ;
+        public int maxX;
+        public int maxZ;
+    }
+
+    public static class C6RectValidation {
+        public String step = "C6_decide_validate";
+        public boolean ok = true;
+        public String city_id;
+        public long updated_at_epoch_ms;
+        public List<GroupRectValidation> items = new ArrayList<>();
+    }
+
+    public static class GroupRectValidation {
+        public String group_id;
+        public String build_area_id;
+        public int attempt_index;
+        public String decision_mode;
+        public List<RectValidationItem> rects = new ArrayList<>();
+        public int total_primary_rect_area;
+        public int polygon_area_blocks;
+        public double total_primary_area_ratio;
+        public boolean all_rects_valid;
+        public boolean accepted;
+        public boolean decision_terminal;
+        public boolean continue_allowed;
+        public boolean finalized_into_layout;
+        public String reason;
+    }
+
+    public static class RectValidationItem {
+        public String rect_id;
+        public int cx;
+        public int cz;
+        public int w;
+        public int h;
+        public int minX;
+        public int minZ;
+        public int maxX;
+        public int maxZ;
+        public int inside_functional_blocks;
+        public int total_rect_blocks;
+        public double coverage_ratio;
+        public boolean valid;
+        public String reason;
+    }
+
     private static class ModuleMeta {
         String group_id;
         String function;
@@ -174,21 +299,37 @@ public final class CityC6Stages {
         C6Bundle bundle = new C6Bundle();
         C6Summary summary = new C6Summary();
         C6Layout layout = new C6Layout();
+        C6RectDecisionInput decisionInput = new C6RectDecisionInput();
+        C6RectCandidates candidates = new C6RectCandidates();
+        C6RectValidation validation = new C6RectValidation();
         bundle.summary = summary;
         bundle.layout = layout;
+        bundle.decision_input = decisionInput;
+        bundle.candidates = candidates;
+        bundle.validation = validation;
 
         if (city == null || c5Groups == null || heightData == null || buildableGroups == null) {
             summary.ok = false;
             layout.ok = false;
+            decisionInput.ok = false;
+            candidates.ok = false;
+            validation.ok = false;
             return bundle;
         }
 
+        long now = System.currentTimeMillis();
         summary.city_id = city.id;
-        summary.generated_at_epoch_ms = System.currentTimeMillis();
+        summary.generated_at_epoch_ms = now;
         summary.fill_style = fillStyle.name();
         layout.city_id = city.id;
-        layout.generated_at_epoch_ms = summary.generated_at_epoch_ms;
+        layout.generated_at_epoch_ms = now;
         layout.fill_style = fillStyle.name();
+        decisionInput.city_id = city.id;
+        decisionInput.generated_at_epoch_ms = now;
+        candidates.city_id = city.id;
+        candidates.updated_at_epoch_ms = now;
+        validation.city_id = city.id;
+        validation.updated_at_epoch_ms = now;
 
         Map<Integer, District> districtById = new HashMap<>();
         for (District district : city.districts) {
@@ -243,31 +384,175 @@ public final class CityC6Stages {
 
         summary.areas.sort(Comparator.comparing(a -> a.build_area_id));
         layout.plans = buildPlans(fillStyle, bestAreaByGroup);
+        decisionInput.groups = buildDecisionInputs(bestAreaByGroup);
         bundle.indexed_block_count = blockToArea.size();
-        bundle.summary = summary;
-        bundle.layout = layout;
         bundle.index_by_block = blockToArea;
         return bundle;
     }
 
     public static void save(Path cityDir, C6Bundle bundle) throws Exception {
-        if (bundle == null || bundle.summary == null || bundle.layout == null) return;
+        if (bundle == null) return;
         Files.createDirectories(cityDir);
-        Files.writeString(cityDir.resolve(C6_SUMMARY_FILE), GSON.toJson(bundle.summary), StandardCharsets.UTF_8);
-        Files.writeString(cityDir.resolve(C6_LAYOUT_FILE), GSON.toJson(bundle.layout), StandardCharsets.UTF_8);
+        if (bundle.summary != null) Files.writeString(cityDir.resolve(C6_SUMMARY_FILE), GSON.toJson(bundle.summary), StandardCharsets.UTF_8);
+        if (bundle.layout != null) Files.writeString(cityDir.resolve(C6_LAYOUT_FILE), GSON.toJson(bundle.layout), StandardCharsets.UTF_8);
+        if (bundle.decision_input != null) Files.writeString(cityDir.resolve(C6_RECT_DECISION_INPUT_FILE), GSON.toJson(bundle.decision_input), StandardCharsets.UTF_8);
+        if (bundle.candidates != null) Files.writeString(cityDir.resolve(C6_RECT_CANDIDATES_FILE), GSON.toJson(bundle.candidates), StandardCharsets.UTF_8);
+        if (bundle.validation != null) Files.writeString(cityDir.resolve(C6_RECT_VALIDATION_FILE), GSON.toJson(bundle.validation), StandardCharsets.UTF_8);
         writeIndexDat(cityDir.resolve(C6_INDEX_FILE), bundle.index_by_block);
+    }
+
+    public static void saveLayout(Path cityDir, C6Layout layout) throws Exception {
+        if (cityDir == null || layout == null) return;
+        Files.createDirectories(cityDir);
+        Files.writeString(cityDir.resolve(C6_LAYOUT_FILE), GSON.toJson(layout), StandardCharsets.UTF_8);
+    }
+
+    public static void saveDecisionInput(Path cityDir, C6RectDecisionInput input) throws Exception {
+        if (cityDir == null || input == null) return;
+        Files.createDirectories(cityDir);
+        Files.writeString(cityDir.resolve(C6_RECT_DECISION_INPUT_FILE), GSON.toJson(input), StandardCharsets.UTF_8);
+    }
+
+    public static void saveCandidates(Path cityDir, C6RectCandidates candidates) throws Exception {
+        if (cityDir == null || candidates == null) return;
+        Files.createDirectories(cityDir);
+        Files.writeString(cityDir.resolve(C6_RECT_CANDIDATES_FILE), GSON.toJson(candidates), StandardCharsets.UTF_8);
+    }
+
+    public static void saveValidation(Path cityDir, C6RectValidation validation) throws Exception {
+        if (cityDir == null || validation == null) return;
+        Files.createDirectories(cityDir);
+        Files.writeString(cityDir.resolve(C6_RECT_VALIDATION_FILE), GSON.toJson(validation), StandardCharsets.UTF_8);
     }
 
     public static C6Summary loadSummary(Path cityDir) throws Exception {
         Path file = cityDir.resolve(C6_SUMMARY_FILE);
-        if (!Files.exists(file)) return null;
-        return GSON.fromJson(Files.readString(file, StandardCharsets.UTF_8), C6Summary.class);
+        return Files.exists(file) ? GSON.fromJson(Files.readString(file, StandardCharsets.UTF_8), C6Summary.class) : null;
     }
 
     public static C6Layout loadLayout(Path cityDir) throws Exception {
         Path file = cityDir.resolve(C6_LAYOUT_FILE);
-        if (!Files.exists(file)) return null;
-        return GSON.fromJson(Files.readString(file, StandardCharsets.UTF_8), C6Layout.class);
+        return Files.exists(file) ? GSON.fromJson(Files.readString(file, StandardCharsets.UTF_8), C6Layout.class) : null;
+    }
+
+    public static C6RectDecisionInput loadDecisionInput(Path cityDir) throws Exception {
+        Path file = cityDir.resolve(C6_RECT_DECISION_INPUT_FILE);
+        return Files.exists(file) ? GSON.fromJson(Files.readString(file, StandardCharsets.UTF_8), C6RectDecisionInput.class) : null;
+    }
+
+    public static C6RectCandidates loadCandidates(Path cityDir) throws Exception {
+        Path file = cityDir.resolve(C6_RECT_CANDIDATES_FILE);
+        return Files.exists(file) ? GSON.fromJson(Files.readString(file, StandardCharsets.UTF_8), C6RectCandidates.class) : new C6RectCandidates();
+    }
+
+    public static C6RectValidation loadValidation(Path cityDir) throws Exception {
+        Path file = cityDir.resolve(C6_RECT_VALIDATION_FILE);
+        return Files.exists(file) ? GSON.fromJson(Files.readString(file, StandardCharsets.UTF_8), C6RectValidation.class) : new C6RectValidation();
+    }
+
+    public static GroupDecisionInput findDecisionGroup(C6RectDecisionInput input, String groupId) {
+        if (input == null || input.groups == null || groupId == null) return null;
+        for (GroupDecisionInput item : input.groups) if (item != null && groupId.equals(item.group_id)) return item;
+        return null;
+    }
+
+    public static LayoutPlan findPlanByGroup(C6Layout layout, String groupId) {
+        if (layout == null || layout.plans == null || groupId == null) return null;
+        for (LayoutPlan plan : layout.plans) if (plan != null && groupId.equals(plan.group_id)) return plan;
+        return null;
+    }
+
+    public static GroupRectCandidate findLatestCandidate(C6RectCandidates candidates, String groupId) {
+        if (candidates == null || candidates.items == null || groupId == null) return null;
+        GroupRectCandidate latest = null;
+        for (GroupRectCandidate item : candidates.items) {
+            if (item == null || !groupId.equals(item.group_id)) continue;
+            if (latest == null || item.attempt_index >= latest.attempt_index) latest = item;
+        }
+        return latest;
+    }
+
+    public static GroupRectValidation findLatestValidation(C6RectValidation validation, String groupId) {
+        if (validation == null || validation.items == null || groupId == null) return null;
+        GroupRectValidation latest = null;
+        for (GroupRectValidation item : validation.items) {
+            if (item == null || !groupId.equals(item.group_id)) continue;
+            if (latest == null || item.attempt_index >= latest.attempt_index) latest = item;
+        }
+        return latest;
+    }
+
+    public static int currentAttemptCount(C6RectCandidates candidates, String groupId) {
+        GroupRectCandidate latest = findLatestCandidate(candidates, groupId);
+        return latest != null ? latest.attempt_index : 0;
+    }
+
+    public static void upsertCandidate(C6RectCandidates candidates, GroupRectCandidate candidate) {
+        if (candidates == null || candidate == null) return;
+        if (candidates.items == null) candidates.items = new ArrayList<>();
+        candidates.items.removeIf(item -> item != null && eq(item.group_id, candidate.group_id) && item.attempt_index == candidate.attempt_index);
+        candidates.items.add(candidate);
+        candidates.items.sort(Comparator.comparing((GroupRectCandidate item) -> safe(item.group_id)).thenComparingInt(item -> item.attempt_index));
+        candidates.updated_at_epoch_ms = System.currentTimeMillis();
+    }
+
+    public static void upsertValidation(C6RectValidation validation, GroupRectValidation item) {
+        if (validation == null || item == null) return;
+        if (validation.items == null) validation.items = new ArrayList<>();
+        validation.items.removeIf(existing -> existing != null && eq(existing.group_id, item.group_id) && existing.attempt_index == item.attempt_index);
+        validation.items.add(item);
+        validation.items.sort(Comparator.comparing((GroupRectValidation v) -> safe(v.group_id)).thenComparingInt(v -> v.attempt_index));
+        validation.updated_at_epoch_ms = System.currentTimeMillis();
+    }
+
+    public static void updateAttemptCount(C6RectDecisionInput input, String groupId, int attemptCount) {
+        GroupDecisionInput group = findDecisionGroup(input, groupId);
+        if (group != null) group.current_attempt_count = Math.max(0, attemptCount);
+    }
+
+    public static void applyAcceptedDecision(C6Layout layout, BuildAreaSummary area, GroupRectCandidate candidate) {
+        if (layout == null || area == null || candidate == null) return;
+        LayoutPlan plan = findPlanByGroup(layout, area.group_id);
+        if (plan == null) {
+            plan = buildEmptyPlan(area, C6FillStyle.PLAZA_RING);
+            layout.plans.add(plan);
+        }
+        plan.build_area_id = area.build_area_id;
+        plan.validated = true;
+        plan.decision_mode = candidate.decision_mode;
+        plan.accepted_attempt_index = candidate.attempt_index;
+        plan.primary_modules = new ArrayList<>();
+        if ("submit_rects".equals(candidate.decision_mode) && candidate.rects != null) {
+            int index = 1;
+            for (RectDecision rect : candidate.rects) {
+                if (rect == null) continue;
+                PrimaryModule module = new PrimaryModule();
+                module.module_id = area.group_id + "_primary_" + index;
+                module.rect_id = rect.rect_id;
+                module.anchor = new Point();
+                module.anchor.x = rect.cx;
+                module.anchor.z = rect.cz;
+                module.importance = index == 1 ? 1.0 : Math.max(0.25, 1.0 - index * 0.15);
+                module.w = rect.w;
+                module.h = rect.h;
+                module.minX = rect.minX;
+                module.minZ = rect.minZ;
+                module.maxX = rect.maxX;
+                module.maxZ = rect.maxZ;
+                module.template_hint = defaultTemplateHint(area);
+                plan.primary_modules.add(module);
+                index++;
+            }
+        }
+        plan.notes = "Validated AI decision (" + candidate.decision_mode + ")";
+        layout.generated_at_epoch_ms = System.currentTimeMillis();
+    }
+
+    public static TemplateHint defaultTemplateHint(BuildAreaSummary area) {
+        TemplateHint hint = new TemplateHint();
+        hint.category = "plaza_or_civic";
+        hint.size_tier = sizeTier(area != null ? area.area_blocks : 0);
+        return hint;
     }
 
     private static ModuleMeta toModuleMeta(CitySemanticStages.ModuleGroup group) {
@@ -278,13 +563,7 @@ public final class CityC6Stages {
         return meta;
     }
 
-    private static BuildAreaSummary buildAreaSummary(
-            ModuleMeta meta,
-            List<CityStage1Processor.BlockCoord> points,
-            CityStage1BinaryIO.HeightData heightData,
-            CityC2ScanBinaryIO.C2ScanData c2ScanData,
-            int numericId
-    ) {
+    private static BuildAreaSummary buildAreaSummary(ModuleMeta meta, List<CityStage1Processor.BlockCoord> points, CityStage1BinaryIO.HeightData heightData, CityC2ScanBinaryIO.C2ScanData c2ScanData, int numericId) {
         BuildAreaSummary area = new BuildAreaSummary();
         area.group_id = meta.group_id;
         area.function = meta.function;
@@ -293,8 +572,7 @@ public final class CityC6Stages {
         area.build_area_id = "ba_" + safeId(meta.group_id) + "_a" + String.format(Locale.ROOT, "%03d", numericId);
         area.area_blocks = points.size();
 
-        int minX = Integer.MAX_VALUE, minZ = Integer.MAX_VALUE;
-        int maxX = Integer.MIN_VALUE, maxZ = Integer.MIN_VALUE;
+        int minX = Integer.MAX_VALUE, minZ = Integer.MAX_VALUE, maxX = Integer.MIN_VALUE, maxZ = Integer.MIN_VALUE;
         long sumX = 0, sumZ = 0, sumH = 0;
         Set<Long> pointSet = new HashSet<>();
         for (CityStage1Processor.BlockCoord p : points) {
@@ -323,21 +601,38 @@ public final class CityC6Stages {
         List<LayoutPlan> plans = new ArrayList<>();
         List<BuildAreaSummary> areas = new ArrayList<>(bestAreaByGroup.values());
         areas.sort(Comparator.comparing(a -> a.group_id));
-        for (BuildAreaSummary area : areas) {
-            LayoutPlan plan;
-            if (fillStyle == C6FillStyle.PLAZA_RING) {
-                plan = PlazaRingArranger.createDefaultPlan(area);
-            } else {
-                plan = PlazaRingArranger.createDefaultPlan(area);
-                plan.fill_style = fillStyle.name();
-                for (SecondaryFill fill : plan.secondary_fill) {
-                    fill.style = fillStyle.name();
-                }
-                plan.notes = "Fallback to PLAZA_RING defaults for " + fillStyle.name();
-            }
-            plans.add(plan);
-        }
+        for (BuildAreaSummary area : areas) plans.add(buildEmptyPlan(area, fillStyle));
         return plans;
+    }
+
+    private static LayoutPlan buildEmptyPlan(BuildAreaSummary area, C6FillStyle fillStyle) {
+        LayoutPlan plan = new LayoutPlan();
+        plan.group_id = area.group_id;
+        plan.build_area_id = area.build_area_id;
+        plan.fill_style = fillStyle.name();
+        plan.fill_params = PlazaRingArranger.defaultParams(area.area_blocks);
+        plan.rect_sizes = PlazaRingArranger.defaultRectSizes();
+        plan.notes = "Prepared for AI rectangle decision; no default primary modules.";
+        return plan;
+    }
+
+    private static List<GroupDecisionInput> buildDecisionInputs(Map<String, BuildAreaSummary> bestAreaByGroup) {
+        List<GroupDecisionInput> items = new ArrayList<>();
+        List<BuildAreaSummary> areas = new ArrayList<>(bestAreaByGroup.values());
+        areas.sort(Comparator.comparing(a -> a.group_id));
+        for (BuildAreaSummary area : areas) {
+            GroupDecisionInput item = new GroupDecisionInput();
+            item.group_id = area.group_id;
+            item.build_area_id = area.build_area_id;
+            item.build_area_numeric_id = area.build_area_numeric_id;
+            item.function = area.function;
+            item.layer = area.layer;
+            item.polygon_area_blocks = area.area_blocks;
+            item.mask_bbox = area.bbox;
+            item.centroid = area.centroid;
+            items.add(item);
+        }
+        return items;
     }
 
     private static List<String> asciiPreview(Set<Long> points, int minX, int minZ, int maxX, int maxZ, int outW, int outH) {
@@ -350,14 +645,7 @@ public final class CityC6Stages {
             StringBuilder row = new StringBuilder();
             for (int x = minX; x <= maxX; x += stepX) {
                 boolean filled = false;
-                for (int sx = 0; sx < stepX && !filled; sx++) {
-                    for (int sz = 0; sz < stepZ; sz++) {
-                        if (points.contains(packBlock(x + sx, z + sz))) {
-                            filled = true;
-                            break;
-                        }
-                    }
-                }
+                for (int sx = 0; sx < stepX && !filled; sx++) for (int sz = 0; sz < stepZ; sz++) if (points.contains(packBlock(x + sx, z + sz))) { filled = true; break; }
                 row.append(filled ? '#' : '.');
             }
             rows.add(row.toString());
@@ -373,6 +661,20 @@ public final class CityC6Stages {
     private static String safeId(String value) {
         if (value == null || value.isBlank()) return "unknown";
         return value.trim().toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9_]+", "_");
+    }
+
+    private static String safe(String value) {
+        return value == null ? "" : value;
+    }
+
+    private static boolean eq(String a, String b) {
+        return safe(a).equals(safe(b));
+    }
+
+    private static String sizeTier(int areaBlocks) {
+        if (areaBlocks >= 2500) return "L";
+        if (areaBlocks >= 900) return "M";
+        return "S";
     }
 
     private static long packBlock(int x, int z) {
@@ -411,5 +713,4 @@ public final class CityC6Stages {
         }
         return map;
     }
-
 }
