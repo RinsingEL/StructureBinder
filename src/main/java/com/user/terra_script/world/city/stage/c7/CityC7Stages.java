@@ -2,6 +2,8 @@ package com.user.terra_script.world.city.stage.c7;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.user.terra_script.world.city.stage.c6.CityC6Stages;
 import net.minecraftforge.fml.loading.FMLPaths;
 
@@ -108,8 +110,69 @@ public final class CityC7Stages {
         public String city_id;
         public long generated_at_epoch_ms;
         public String catalog_source = "hardcoded_vanilla_village_templates";
+        public String decision_source = "program_fallback";
         public int puzzle_depth = 0;
         public List<TemplateSelectionItem> selections = new ArrayList<>();
+        public List<GroupArrangementDecision> arrangements = new ArrayList<>();
+    }
+
+    public static class GroupArrangementDecision {
+        public String group_id;
+        public String build_area_id;
+        public String arrangement_type;
+        public SeedSpec seed = new SeedSpec();
+        public LimitsSpec limits = new LimitsSpec();
+        public TerminationSpec termination = new TerminationSpec();
+        public Map<String, Object> arrangement_params = new LinkedHashMap<>();
+        public Map<String, Object> linear = new LinkedHashMap<>();
+        public Map<String, Object> courtyard = new LinkedHashMap<>();
+        public Map<String, Object> spine_branch = new LinkedHashMap<>();
+        public Map<String, Object> cluster = new LinkedHashMap<>();
+        public String preset_pool_ref;
+        public String notes;
+        public List<String> validated_primary_modules = new ArrayList<>();
+        public List<SelectedComponent> selected_components = new ArrayList<>();
+    }
+
+    public static class SeedSpec {
+        public int start_x;
+        public int start_z;
+        public int start_rotation;
+        public String start_template_id;
+        public String start_connector_dir;
+    }
+
+    public static class LimitsSpec {
+        public int max_depth = 6;
+        public int max_pieces = 24;
+        public int max_branch_per_depth = 2;
+    }
+
+    public static class TerminationSpec {
+        public boolean require_closure = true;
+        public boolean allow_trim_leaf = true;
+        public boolean rollback_on_unclosed_middle = true;
+    }
+
+    public static class SelectedComponent {
+        public String component_id;
+        public String role;
+        public String template_id;
+        public boolean required = true;
+        public double weight = 1.0;
+        public String attach_to_component_id;
+        public ComponentRule rule = new ComponentRule();
+    }
+
+    public static class ComponentRule {
+        public String anchor_preference = "primary_center";
+        public int max_distance_from_anchor = 48;
+        public int min_spacing = 8;
+        public boolean prefer_edge;
+        public boolean snap_to_water;
+        public String terrain_mode = "follow_ground";
+        public String prefer_axis = "auto";
+        public List<Integer> allowed_rotations = new ArrayList<>(List.of(0, 90, 180, 270));
     }
 
     public static class TemplateSelectionItem {
@@ -125,8 +188,15 @@ public final class CityC7Stages {
         public String vertical_role;
         public int vertical_clearance;
         public boolean vertical_capable;
+        public String arrangement_type;
+        public SeedSpec seed = new SeedSpec();
+        public LimitsSpec limits = new LimitsSpec();
+        public TerminationSpec termination = new TerminationSpec();
+        public Map<String, Object> arrangement_params = new LinkedHashMap<>();
+        public Map<String, Object> strategy_params = new LinkedHashMap<>();
         public List<String> top_k_templates = new ArrayList<>();
         public List<String> fallback_chain = new ArrayList<>();
+        public List<SelectedComponent> selected_components = new ArrayList<>();
         public String notes;
     }
 
@@ -145,14 +215,40 @@ public final class CityC7Stages {
                 : "hardcoded_vanilla_village_templates";
 
         for (CityC6Stages.LayoutPlan plan : c6Layout.plans) {
-            if (plan == null) continue;
-            if (plan.primary_modules == null || plan.primary_modules.isEmpty()) continue;
+            if (plan == null || plan.primary_modules == null || plan.primary_modules.isEmpty()) continue;
+            boolean consumable = plan.validated || plan.decision_mode == null || plan.decision_mode.isBlank();
+            if (!consumable) continue;
+            result.arrangements.add(buildFallbackArrangement(plan, catalog));
             for (CityC6Stages.PrimaryModule module : plan.primary_modules) {
-                TemplateSelectionItem item = buildItem(plan, module, catalog);
-                result.selections.add(item);
+                result.selections.add(buildFallbackSelection(plan, module, catalog));
             }
         }
         result.selections.sort(Comparator.comparing(i -> safe(i.build_area_id) + "|" + safe(i.module_id)));
+        result.arrangements.sort(Comparator.comparing(i -> safe(i.build_area_id) + "|" + safe(i.group_id)));
+        return result;
+    }
+
+    public static C7Selection fromDecisionRequest(String cityId, CityC6Stages.C6Layout c6Layout, JsonObject request) {
+        C7Selection result = new C7Selection();
+        result.city_id = cityId;
+        result.generated_at_epoch_ms = System.currentTimeMillis();
+        result.decision_source = "ai_decision_submit";
+        Catalog catalog = loadCatalog();
+        result.catalog_source = catalog != null && catalog.ok
+                ? FMLPaths.GAMEDIR.get().resolve(C3_5_CATALOG_FILE).toString()
+                : "hardcoded_vanilla_village_templates";
+
+        if (request != null && request.has("arrangements") && request.get("arrangements").isJsonArray()) {
+            for (JsonElement element : request.getAsJsonArray("arrangements")) {
+                if (!element.isJsonObject()) continue;
+                GroupArrangementDecision arrangement = parseArrangement(element.getAsJsonObject(), c6Layout);
+                if (arrangement == null) continue;
+                result.arrangements.add(arrangement);
+                result.selections.addAll(expandSelectionsFromArrangement(arrangement, catalog));
+            }
+        }
+        result.selections.sort(Comparator.comparing(i -> safe(i.build_area_id) + "|" + safe(i.module_id)));
+        result.arrangements.sort(Comparator.comparing(i -> safe(i.build_area_id) + "|" + safe(i.group_id)));
         return result;
     }
 
@@ -168,7 +264,42 @@ public final class CityC7Stages {
         return GSON.fromJson(Files.readString(file, StandardCharsets.UTF_8), C7Selection.class);
     }
 
-    private static TemplateSelectionItem buildItem(CityC6Stages.LayoutPlan plan, CityC6Stages.PrimaryModule module, Catalog catalog) {
+    private static GroupArrangementDecision buildFallbackArrangement(CityC6Stages.LayoutPlan plan, Catalog catalog) {
+        GroupArrangementDecision arrangement = new GroupArrangementDecision();
+        arrangement.group_id = plan.group_id;
+        arrangement.build_area_id = plan.build_area_id;
+        arrangement.arrangement_type = inferArrangementType(plan.group_id);
+        arrangement.preset_pool_ref = catalog != null && catalog.ok
+                ? FMLPaths.GAMEDIR.get().resolve(C3_5_CATALOG_FILE).toString()
+                : "hardcoded_vanilla_village_templates";
+        arrangement.notes = "Program fallback arrangement; replace with AI decision when available.";
+        arrangement.arrangement_params.put("spacing", defaultSpacing(arrangement.arrangement_type));
+        arrangement.arrangement_params.put("axis", "auto");
+        arrangement.limits.max_depth = 6;
+        arrangement.limits.max_pieces = 12;
+        arrangement.limits.max_branch_per_depth = 1;
+        arrangement.termination.require_closure = true;
+        arrangement.termination.allow_trim_leaf = true;
+        arrangement.termination.rollback_on_unclosed_middle = true;
+        applyDefaultStrategyParams(arrangement);
+        if (plan.primary_modules != null) {
+            for (CityC6Stages.PrimaryModule module : plan.primary_modules) {
+                if (module == null) continue;
+                if (arrangement.seed.start_template_id == null || arrangement.seed.start_template_id.isBlank()) {
+                    arrangement.seed.start_x = (int) Math.round(module.anchor.x);
+                    arrangement.seed.start_z = (int) Math.round(module.anchor.z);
+                    arrangement.seed.start_rotation = defaultRotation(arrangement.arrangement_type);
+                    arrangement.seed.start_template_id = buildFallbackComponent(plan, module, catalog).template_id;
+                    arrangement.seed.start_connector_dir = defaultConnectorDir(arrangement.arrangement_type);
+                }
+                arrangement.validated_primary_modules.add(module.module_id);
+                arrangement.selected_components.add(buildFallbackComponent(plan, module, catalog));
+            }
+        }
+        return arrangement;
+    }
+
+    private static TemplateSelectionItem buildFallbackSelection(CityC6Stages.LayoutPlan plan, CityC6Stages.PrimaryModule module, Catalog catalog) {
         TemplateSelectionItem item = new TemplateSelectionItem();
         item.group_id = plan.group_id;
         item.build_area_id = plan.build_area_id;
@@ -183,21 +314,26 @@ public final class CityC7Stages {
         item.size_tier = normalizeTier(sizeTier);
         item.function_role = inferFunctionRole(category, item.module_id, plan.group_id);
         item.interaction_role = inferInteractionRole(item.function_role);
+        item.arrangement_type = inferArrangementType(plan.group_id);
+        item.seed.start_x = module != null && module.anchor != null ? (int) Math.round(module.anchor.x) : 0;
+        item.seed.start_z = module != null && module.anchor != null ? (int) Math.round(module.anchor.z) : 0;
+        item.seed.start_rotation = defaultRotation(item.arrangement_type);
+        item.seed.start_connector_dir = defaultConnectorDir(item.arrangement_type);
+        item.arrangement_params.put("spacing", defaultSpacing(item.arrangement_type));
+        item.arrangement_params.put("axis", "auto");
+        item.limits.max_depth = 6;
+        item.limits.max_pieces = 12;
+        item.limits.max_branch_per_depth = 1;
+        item.termination.require_closure = true;
+        item.termination.allow_trim_leaf = true;
+        item.termination.rollback_on_unclosed_middle = true;
+        item.strategy_params.putAll(defaultStrategyParams(item.arrangement_type));
 
         List<String> candidates = chooseCandidates(category, item.size_tier, item.function_role, plan.group_id, catalog);
         item.top_k_templates = new ArrayList<>(candidates.subList(0, Math.min(3, candidates.size())));
         item.selected_template = item.top_k_templates.isEmpty() ? null : item.top_k_templates.get(0);
-        item.fallback_chain = new ArrayList<>();
         for (String c : item.top_k_templates) {
             if (!c.equals(item.selected_template)) item.fallback_chain.add(c);
-        }
-        if (item.fallback_chain.isEmpty()) {
-            List<String> backup = chooseCandidates("residential", "S", "residential", plan.group_id, null);
-            for (String b : backup) {
-                if (item.selected_template != null && item.selected_template.equals(b)) continue;
-                item.fallback_chain.add(b);
-                if (item.fallback_chain.size() >= 2) break;
-            }
         }
 
         if (catalog != null && catalog.ok && item.selected_template != null && !item.selected_template.isBlank()) {
@@ -211,10 +347,297 @@ public final class CityC7Stages {
             }
         }
 
+        item.selected_components.add(buildFallbackComponent(plan, module, catalog));
         item.notes = catalog != null && catalog.ok && !item.top_k_templates.isEmpty()
-                ? "Catalog-driven selection from C3.5 structure catalog"
-                : "Hardcoded village catalog fallback (phase-1 C7)";
+                ? "Catalog-driven fallback selection"
+                : "Hardcoded village fallback selection";
         return item;
+    }
+
+    private static SelectedComponent buildFallbackComponent(CityC6Stages.LayoutPlan plan, CityC6Stages.PrimaryModule module, Catalog catalog) {
+        SelectedComponent component = new SelectedComponent();
+        component.component_id = module != null && module.module_id != null ? module.module_id : ("component_" + safe(plan.group_id));
+        component.role = inferComponentRole(plan.group_id);
+
+        String category = module != null && module.template_hint != null ? module.template_hint.category : "residential";
+        String sizeTier = module != null && module.template_hint != null ? module.template_hint.size_tier : "M";
+        String functionRole = inferFunctionRole(category, component.component_id, plan.group_id);
+        List<String> candidates = chooseCandidates(category, normalizeTier(sizeTier), functionRole, plan.group_id, catalog);
+        component.template_id = candidates.isEmpty() ? null : candidates.get(0);
+        component.rule = defaultRuleForArrangement(inferArrangementType(plan.group_id), component.role);
+        return component;
+    }
+
+    private static GroupArrangementDecision parseArrangement(JsonObject json, CityC6Stages.C6Layout c6Layout) {
+        String groupId = readString(json, "group_id");
+        String buildAreaId = readString(json, "build_area_id");
+        if ((groupId == null || groupId.isBlank()) && (buildAreaId == null || buildAreaId.isBlank())) return null;
+
+        GroupArrangementDecision arrangement = new GroupArrangementDecision();
+        arrangement.group_id = groupId;
+        arrangement.build_area_id = buildAreaId;
+        arrangement.arrangement_type = readString(json, "arrangement_type");
+        arrangement.preset_pool_ref = readString(json, "preset_pool_ref");
+        arrangement.notes = readString(json, "notes");
+        if (arrangement.arrangement_type == null || arrangement.arrangement_type.isBlank()) {
+            arrangement.arrangement_type = inferArrangementType(groupId);
+        }
+        if (json.has("arrangement_params") && json.get("arrangement_params").isJsonObject()) {
+            arrangement.arrangement_params = GSON.fromJson(json.get("arrangement_params"), LinkedHashMap.class);
+        }
+        if (json.has("seed") && json.get("seed").isJsonObject()) {
+            arrangement.seed = GSON.fromJson(json.get("seed"), SeedSpec.class);
+        }
+        if (json.has("limits") && json.get("limits").isJsonObject()) {
+            arrangement.limits = GSON.fromJson(json.get("limits"), LimitsSpec.class);
+        }
+        if (json.has("termination") && json.get("termination").isJsonObject()) {
+            arrangement.termination = GSON.fromJson(json.get("termination"), TerminationSpec.class);
+        }
+        if (json.has("linear") && json.get("linear").isJsonObject()) {
+            arrangement.linear = GSON.fromJson(json.get("linear"), LinkedHashMap.class);
+        }
+        if (json.has("courtyard") && json.get("courtyard").isJsonObject()) {
+            arrangement.courtyard = GSON.fromJson(json.get("courtyard"), LinkedHashMap.class);
+        }
+        if (json.has("spine_branch") && json.get("spine_branch").isJsonObject()) {
+            arrangement.spine_branch = GSON.fromJson(json.get("spine_branch"), LinkedHashMap.class);
+        }
+        if (json.has("cluster") && json.get("cluster").isJsonObject()) {
+            arrangement.cluster = GSON.fromJson(json.get("cluster"), LinkedHashMap.class);
+        }
+        if (json.has("validated_primary_modules") && json.get("validated_primary_modules").isJsonArray()) {
+            for (JsonElement element : json.getAsJsonArray("validated_primary_modules")) {
+                if (element != null && element.isJsonPrimitive()) arrangement.validated_primary_modules.add(element.getAsString());
+            }
+        }
+        if (json.has("selected_components") && json.get("selected_components").isJsonArray()) {
+            for (JsonElement element : json.getAsJsonArray("selected_components")) {
+                if (!element.isJsonObject()) continue;
+                arrangement.selected_components.add(parseComponent(element.getAsJsonObject(), arrangement.arrangement_type));
+            }
+        }
+
+        CityC6Stages.LayoutPlan plan = findPlan(c6Layout, groupId, buildAreaId);
+        if (plan != null) {
+            arrangement.group_id = arrangement.group_id != null ? arrangement.group_id : plan.group_id;
+            arrangement.build_area_id = arrangement.build_area_id != null ? arrangement.build_area_id : plan.build_area_id;
+            if (arrangement.validated_primary_modules.isEmpty() && plan.primary_modules != null) {
+                for (CityC6Stages.PrimaryModule module : plan.primary_modules) {
+                    if (module != null && module.module_id != null) arrangement.validated_primary_modules.add(module.module_id);
+                }
+            }
+        }
+        return arrangement;
+    }
+
+    private static SelectedComponent parseComponent(JsonObject json, String arrangementType) {
+        SelectedComponent component = new SelectedComponent();
+        component.component_id = readString(json, "component_id");
+        component.role = readString(json, "role");
+        component.template_id = readString(json, "template_id");
+        component.required = !json.has("required") || json.get("required").getAsBoolean();
+        component.weight = json.has("weight") ? json.get("weight").getAsDouble() : 1.0;
+        component.attach_to_component_id = readString(json, "attach_to_component_id");
+        component.rule = defaultRuleForArrangement(arrangementType, component.role);
+        if (json.has("rule") && json.get("rule").isJsonObject()) {
+            JsonObject ruleJson = json.getAsJsonObject("rule");
+            String anchorPreference = readString(ruleJson, "anchor_preference");
+            if (anchorPreference != null) component.rule.anchor_preference = anchorPreference;
+            if (ruleJson.has("max_distance_from_anchor")) component.rule.max_distance_from_anchor = ruleJson.get("max_distance_from_anchor").getAsInt();
+            if (ruleJson.has("min_spacing")) component.rule.min_spacing = ruleJson.get("min_spacing").getAsInt();
+            if (ruleJson.has("prefer_edge")) component.rule.prefer_edge = ruleJson.get("prefer_edge").getAsBoolean();
+            if (ruleJson.has("snap_to_water")) component.rule.snap_to_water = ruleJson.get("snap_to_water").getAsBoolean();
+            String terrainMode = readString(ruleJson, "terrain_mode");
+            if (terrainMode != null) component.rule.terrain_mode = terrainMode;
+            String preferAxis = readString(ruleJson, "prefer_axis");
+            if (preferAxis != null) component.rule.prefer_axis = preferAxis;
+            if (ruleJson.has("allowed_rotations") && ruleJson.get("allowed_rotations").isJsonArray()) {
+                component.rule.allowed_rotations.clear();
+                for (JsonElement rotation : ruleJson.getAsJsonArray("allowed_rotations")) {
+                    if (rotation.isJsonPrimitive()) component.rule.allowed_rotations.add(rotation.getAsInt());
+                }
+            }
+        }
+        return component;
+    }
+
+    private static List<TemplateSelectionItem> expandSelectionsFromArrangement(GroupArrangementDecision arrangement, Catalog catalog) {
+        List<TemplateSelectionItem> items = new ArrayList<>();
+        if (arrangement == null || arrangement.selected_components == null) return items;
+        int index = 1;
+        for (SelectedComponent component : arrangement.selected_components) {
+            if (component == null) continue;
+            TemplateSelectionItem item = new TemplateSelectionItem();
+            item.group_id = arrangement.group_id;
+            item.build_area_id = arrangement.build_area_id;
+            item.module_id = component.component_id != null ? component.component_id : (arrangement.group_id + "_component_" + index);
+            item.function_role = inferFunctionRole(component.role, item.module_id, arrangement.group_id);
+            item.interaction_role = inferInteractionRole(item.function_role);
+            item.selected_template = component.template_id;
+            item.arrangement_type = arrangement.arrangement_type;
+            item.seed = arrangement.seed;
+            item.limits = arrangement.limits;
+            item.termination = arrangement.termination;
+            item.arrangement_params = arrangement.arrangement_params != null ? new LinkedHashMap<>(arrangement.arrangement_params) : new LinkedHashMap<>();
+            item.strategy_params = strategyParamsFor(arrangement);
+            item.selected_components.add(component);
+            item.size_tier = inferSizeTierFromTemplate(component.template_id, catalog);
+            if (catalog != null && catalog.ok && component.template_id != null) {
+                CatalogStructure selected = findStructure(catalog, component.template_id);
+                if (selected != null) {
+                    item.landing_hint = safe(selected.landing_hint);
+                    item.growth_axis = safe(selected.growth_axis);
+                    item.vertical_role = safe(selected.vertical_role);
+                    item.vertical_clearance = Math.max(0, selected.vertical_clearance);
+                    item.vertical_capable = !item.growth_axis.isBlank() || !item.vertical_role.isBlank() || item.vertical_clearance > 0;
+                }
+            }
+            item.notes = arrangement.notes;
+            items.add(item);
+            index++;
+        }
+        return items;
+    }
+
+    private static String inferArrangementType(String groupId) {
+        String normalized = safe(groupId).toLowerCase(Locale.ROOT);
+        if (normalized.contains("port")) return "LINEAR_DOCK";
+        if (normalized.contains("market") || normalized.contains("civic")) return "COURTYARD";
+        if (normalized.contains("residential") || normalized.contains("shop")) return "SPINE_BRANCH";
+        if (normalized.contains("farm")) return "TERRACE_CHAIN";
+        return "RING";
+    }
+
+    private static int defaultSpacing(String arrangementType) {
+        String normalized = safe(arrangementType).toUpperCase(Locale.ROOT);
+        if ("LINEAR_DOCK".equals(normalized)) return 12;
+        if ("COURTYARD".equals(normalized)) return 10;
+        if ("SPINE_BRANCH".equals(normalized)) return 9;
+        if ("TERRACE_CHAIN".equals(normalized)) return 8;
+        return 10;
+    }
+
+    private static int defaultRotation(String arrangementType) {
+        String normalized = safe(arrangementType).toUpperCase(Locale.ROOT);
+        if ("LINEAR_DOCK".equals(normalized) || "LINEAR".equals(normalized)) return 90;
+        return 0;
+    }
+
+    private static String defaultConnectorDir(String arrangementType) {
+        String normalized = safe(arrangementType).toUpperCase(Locale.ROOT);
+        if ("LINEAR_DOCK".equals(normalized) || "LINEAR".equals(normalized)) return "east";
+        if ("COURTYARD".equals(normalized) || "RING".equals(normalized)) return "south";
+        return "east";
+    }
+
+    private static void applyDefaultStrategyParams(GroupArrangementDecision arrangement) {
+        Map<String, Object> params = defaultStrategyParams(arrangement.arrangement_type);
+        String normalized = safe(arrangement.arrangement_type).toUpperCase(Locale.ROOT);
+        if ("COURTYARD".equals(normalized) || "RING".equals(normalized)) arrangement.courtyard.putAll(params);
+        else if ("SPINE_BRANCH".equals(normalized)) arrangement.spine_branch.putAll(params);
+        else if ("CLUSTER".equals(normalized)) arrangement.cluster.putAll(params);
+        else arrangement.linear.putAll(params);
+    }
+
+    private static Map<String, Object> strategyParamsFor(GroupArrangementDecision arrangement) {
+        if (arrangement == null) return new LinkedHashMap<>();
+        String normalized = safe(arrangement.arrangement_type).toUpperCase(Locale.ROOT);
+        if ("COURTYARD".equals(normalized) || "RING".equals(normalized)) return arrangement.courtyard != null ? new LinkedHashMap<>(arrangement.courtyard) : new LinkedHashMap<>();
+        if ("SPINE_BRANCH".equals(normalized)) return arrangement.spine_branch != null ? new LinkedHashMap<>(arrangement.spine_branch) : new LinkedHashMap<>();
+        if ("CLUSTER".equals(normalized)) return arrangement.cluster != null ? new LinkedHashMap<>(arrangement.cluster) : new LinkedHashMap<>();
+        return arrangement.linear != null ? new LinkedHashMap<>(arrangement.linear) : new LinkedHashMap<>();
+    }
+
+    private static Map<String, Object> defaultStrategyParams(String arrangementType) {
+        Map<String, Object> params = new LinkedHashMap<>();
+        String normalized = safe(arrangementType).toUpperCase(Locale.ROOT);
+        if ("LINEAR_DOCK".equals(normalized) || "LINEAR".equals(normalized)) {
+            params.put("primary_axis", "x");
+            params.put("forward_dirs", List.of("east"));
+            params.put("preferred_forward_dir", "east");
+            params.put("segment_spacing", 12);
+            params.put("lane_count", 1);
+            params.put("allow_side_branches", false);
+            params.put("side_branch_interval", 99);
+            params.put("side_branch_max_length", 0);
+            params.put("alternate_branch_side", false);
+            params.put("allow_reverse_growth", false);
+            params.put("front_loaded_start", true);
+        } else if ("COURTYARD".equals(normalized) || "RING".equals(normalized)) {
+            params.put("center_mode", "seed_is_center");
+            params.put("ring_count", 1);
+            params.put("ring_spacing", 10);
+            params.put("arc_coverage_deg", 300);
+            params.put("entry_gap_dir", "south");
+            params.put("entry_gap_width", 1);
+            params.put("prefer_symmetric_pairs", true);
+            params.put("allow_corner_emphasis", true);
+            params.put("corner_piece_weight", 1.5);
+            params.put("inward_facing", true);
+        } else if ("SPINE_BRANCH".equals(normalized)) {
+            params.put("spine_axis", "x");
+            params.put("spine_dirs", List.of("east"));
+            params.put("spine_spacing", 10);
+            params.put("spine_length_target", 6);
+            params.put("branch_dirs", List.of("north", "south"));
+            params.put("branch_spacing", 8);
+            params.put("branch_interval", 2);
+            params.put("branch_max_length", 3);
+            params.put("branch_balance_mode", "alternate");
+            params.put("allow_terminal_hub", true);
+            params.put("terminal_hub_size", 2);
+        } else if ("CLUSTER".equals(normalized)) {
+            params.put("cluster_count", 3);
+            params.put("cluster_radius", 14);
+            params.put("cluster_spacing", 18);
+            params.put("cluster_shape", "ellipse");
+            params.put("scatter_mode", "weighted_random");
+            params.put("allow_micro_paths", true);
+            params.put("intra_cluster_branch_limit", 2);
+            params.put("cluster_center_bias", "medium");
+            params.put("edge_avoidance", 0.7);
+            params.put("overlap_tolerance", 0.0);
+        }
+        return params;
+    }
+
+    private static String inferComponentRole(String groupId) {
+        String normalized = safe(groupId).toLowerCase(Locale.ROOT);
+        if (normalized.contains("port")) return "dock_head";
+        if (normalized.contains("market")) return "market_stall";
+        if (normalized.contains("civic")) return "centerpiece";
+        if (normalized.contains("farm")) return "farm_plot";
+        return "primary";
+    }
+
+    private static ComponentRule defaultRuleForArrangement(String arrangementType, String role) {
+        ComponentRule rule = new ComponentRule();
+        String arrangement = safe(arrangementType).toUpperCase(Locale.ROOT);
+        String normalizedRole = safe(role).toLowerCase(Locale.ROOT);
+        if ("LINEAR_DOCK".equals(arrangement)) {
+            rule.anchor_preference = "edge_near_water";
+            rule.min_spacing = 10;
+            rule.snap_to_water = true;
+            rule.prefer_edge = true;
+            rule.prefer_axis = "x";
+        } else if ("COURTYARD".equals(arrangement)) {
+            rule.anchor_preference = "primary_center";
+            rule.min_spacing = 8;
+            rule.prefer_axis = "radial";
+        } else if ("SPINE_BRANCH".equals(arrangement)) {
+            rule.anchor_preference = "primary_center";
+            rule.min_spacing = 9;
+            rule.prefer_axis = "long_axis";
+        } else if ("TERRACE_CHAIN".equals(arrangement)) {
+            rule.anchor_preference = "slope_mid";
+            rule.min_spacing = 8;
+            rule.prefer_axis = "slope";
+        }
+        if (normalizedRole.contains("center")) {
+            rule.max_distance_from_anchor = 16;
+        }
+        return rule;
     }
 
     private static List<String> chooseCandidates(String category, String sizeTier, String functionRole, String groupId, Catalog catalog) {
@@ -223,7 +646,6 @@ public final class CityC7Stages {
 
         String c = safe(category).toLowerCase(Locale.ROOT);
         String t = normalizeTier(sizeTier);
-
         if (c.contains("plaza") || c.contains("civic")) {
             if ("L".equals(t)) return VILLAGE_CIVIC_L;
             return merge(VILLAGE_CIVIC_L, VILLAGE_HOUSE_M);
@@ -259,7 +681,6 @@ public final class CityC7Stages {
 
     private static double scoreStructure(CatalogStructure structure, String sizeTier, String functionRole, String groupId) {
         double score = 0.0;
-
         String pieceRole = safe(structure.piece_role).toUpperCase(Locale.ROOT);
         if ("START".equals(pieceRole)) score += 0.20;
         else if ("SINGLE".equals(pieceRole)) score += 0.16;
@@ -282,29 +703,16 @@ public final class CityC7Stages {
 
         String path = safe(structure.path).toLowerCase(Locale.ROOT);
         String group = safe(groupId).toLowerCase(Locale.ROOT);
-        if (group.contains("port") && (path.contains("ocean") || path.contains("ship") || path.contains("lighthouse") || path.contains("harbor") || path.contains("port"))) {
-            score += 0.12;
-        }
-        if ((group.contains("defense") || group.contains("tower")) && (path.contains("tower") || path.contains("outpost"))) {
-            score += 0.08;
-        }
-        if (group.contains("market") && (path.contains("market") || path.contains("shop"))) {
-            score += 0.08;
-        }
-        if (group.contains("farm") && path.contains("farm")) {
-            score += 0.08;
-        }
-
-        if (!safe(structure.growth_axis).isBlank() || !safe(structure.vertical_role).isBlank() || structure.vertical_clearance > 0) {
-            score += 0.04;
-        }
-        if (safe(structure.notes).toLowerCase(Locale.ROOT).contains("helper/base piece")) {
-            score -= 0.22;
-        }
-        if (path.contains("villagers/")) {
-            score -= 0.50;
-        }
+        if (group.contains("port") && (path.contains("ocean") || path.contains("ship") || path.contains("lighthouse") || path.contains("harbor") || path.contains("port"))) score += 0.12;
+        if ((group.contains("defense") || group.contains("tower")) && (path.contains("tower") || path.contains("outpost"))) score += 0.08;
+        if (group.contains("market") && (path.contains("market") || path.contains("shop"))) score += 0.08;
+        if (group.contains("farm") && path.contains("farm")) score += 0.08;
         return score;
+    }
+
+    private static String inferSizeTierFromTemplate(String templateId, Catalog catalog) {
+        CatalogStructure structure = findStructure(catalog, templateId);
+        return structure != null ? normalizeTier(structure.size_tier) : "M";
     }
 
     private static boolean isNeighborTier(String wanted, String actual) {
@@ -355,17 +763,14 @@ public final class CityC7Stages {
         List<String> out = new ArrayList<>();
         if (a != null) out.addAll(a);
         if (b != null) {
-            for (String s : b) {
-                if (!out.contains(s)) out.add(s);
-            }
+            for (String s : b) if (!out.contains(s)) out.add(s);
         }
         return out;
     }
 
     private static String normalizeTier(String raw) {
         String s = safe(raw).toUpperCase(Locale.ROOT);
-        if (Arrays.asList("S", "M", "L").contains(s)) return s;
-        return "M";
+        return Arrays.asList("S", "M", "L").contains(s) ? s : "M";
     }
 
     private static String normalizeCatalogFunction(String raw) {
@@ -398,6 +803,21 @@ public final class CityC7Stages {
             if (structure != null && structureId.equals(structure.structure_id)) return structure;
         }
         return null;
+    }
+
+    private static CityC6Stages.LayoutPlan findPlan(CityC6Stages.C6Layout layout, String groupId, String buildAreaId) {
+        if (layout == null || layout.plans == null) return null;
+        for (CityC6Stages.LayoutPlan plan : layout.plans) {
+            if (plan == null) continue;
+            if (groupId != null && groupId.equals(plan.group_id)) return plan;
+            if (buildAreaId != null && buildAreaId.equals(plan.build_area_id)) return plan;
+        }
+        return null;
+    }
+
+    private static String readString(JsonObject json, String key) {
+        if (json == null || key == null || !json.has(key) || json.get(key).isJsonNull()) return null;
+        return json.get(key).getAsString();
     }
 
     private static String safe(String raw) {

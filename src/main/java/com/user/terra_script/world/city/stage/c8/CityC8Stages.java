@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -29,7 +30,7 @@ public final class CityC8Stages {
         public String step = "C8";
         public boolean ok = true;
         public String city_id;
-        public int version = 2;
+        public int version = 3;
         public long generated_at_epoch_ms;
         public List<FoundationItem> foundations = new ArrayList<>();
     }
@@ -39,6 +40,9 @@ public final class CityC8Stages {
         public String build_area_id;
         public int build_area_numeric_id;
         public String group_id;
+        public String anchor_module_id;
+        public String arrangement_type;
+        public Map<String, Object> arrangement_params = new LinkedHashMap<>();
         public String foundation_type;
         public String strategy;
         public int base_y;
@@ -57,6 +61,25 @@ public final class CityC8Stages {
         public TerrainImpactBBox terrain_impact_bbox = new TerrainImpactBBox();
         public List<SupportAction> supports = new ArrayList<>();
         public TerrainMetrics terrain_metrics = new TerrainMetrics();
+        public List<PlacementNode> placements = new ArrayList<>();
+        public boolean arrangement_success = true;
+        public List<String> arrangement_errors = new ArrayList<>();
+        public List<String> arrangement_warnings = new ArrayList<>();
+    }
+
+    public static class PlacementNode {
+        public String node_id;
+        public String component_id;
+        public String template_id;
+        public String role;
+        public int x;
+        public int y;
+        public int z;
+        public int rotation;
+        public int level;
+        public String attach_to_component_id;
+        public String parent_node_id;
+        public String placement_reason;
     }
 
     public static class TerrainImpactBBox {
@@ -116,7 +139,6 @@ public final class CityC8Stages {
         C8Plan plan = new C8Plan();
         plan.city_id = cityId;
         plan.generated_at_epoch_ms = System.currentTimeMillis();
-
         if (c6Summary == null || c6Layout == null || heightData == null || indexByBlock == null || indexByBlock.isEmpty()) {
             plan.ok = false;
             return plan;
@@ -128,17 +150,23 @@ public final class CityC8Stages {
             blocksByArea.computeIfAbsent(e.getValue(), k -> new ArrayList<>()).add(e.getKey());
         }
 
-        Map<String, CityC7Stages.TemplateSelectionItem> c7ByArea = indexC7SelectionByArea(c7Selection);
+        Map<String, CityC7Stages.GroupArrangementDecision> arrangements = indexArrangements(c7Selection);
+        Map<String, CityC7Stages.TemplateSelectionItem> selections = indexSelections(c7Selection);
+        Map<String, CityC6Stages.LayoutPlan> plansByArea = indexPlans(c6Layout);
 
-        List<CityC6Stages.BuildAreaSummary> areas = c6Summary.areas != null ? c6Summary.areas : Collections.emptyList();
+        List<CityC6Stages.BuildAreaSummary> areas = c6Summary.areas != null ? new ArrayList<>(c6Summary.areas) : Collections.emptyList();
         areas.sort(Comparator.comparing(a -> a.build_area_id));
         for (CityC6Stages.BuildAreaSummary area : areas) {
             if (area == null) continue;
+            CityC6Stages.LayoutPlan layoutPlan = plansByArea.get(area.build_area_id);
+            if (layoutPlan == null || layoutPlan.primary_modules == null || layoutPlan.primary_modules.isEmpty()) continue;
+            boolean consumable = layoutPlan.validated || layoutPlan.decision_mode == null || layoutPlan.decision_mode.isBlank();
+            if (!consumable) continue;
             List<Long> blockKeys = blocksByArea.getOrDefault(area.build_area_numeric_id, Collections.emptyList());
-            CityC7Stages.TemplateSelectionItem selection = c7ByArea.get(area.build_area_id);
-            if (selection == null) selection = c7ByArea.get(area.group_id);
-            FoundationItem item = buildFoundationItem(area, selection, blockKeys, heightData, c2ScanData);
-            plan.foundations.add(item);
+            CityC7Stages.GroupArrangementDecision arrangement = arrangements.getOrDefault(area.build_area_id, arrangements.get(area.group_id));
+            CityC7Stages.TemplateSelectionItem selection = selections.getOrDefault(area.build_area_id, selections.get(area.group_id));
+            FoundationItem item = buildFoundationItem(area, layoutPlan, arrangement, selection, blockKeys, heightData, c2ScanData);
+            if (item != null) plan.foundations.add(item);
         }
         return plan;
     }
@@ -155,8 +183,18 @@ public final class CityC8Stages {
         return GSON.fromJson(Files.readString(file, StandardCharsets.UTF_8), C8Plan.class);
     }
 
+    public static Path saveDebug(Path cityDir, String groupId, C8Plan plan) throws Exception {
+        if (cityDir == null || groupId == null || groupId.isBlank() || plan == null) return null;
+        Path groupDir = com.user.terra_script.world.city.stage.CityGroupPathUtil.resolveGroupDir(cityDir, groupId);
+        Path file = groupDir.resolve("c8_arrangement_debug.json");
+        Files.writeString(file, GSON.toJson(plan), StandardCharsets.UTF_8);
+        return file;
+    }
+
     private static FoundationItem buildFoundationItem(
             CityC6Stages.BuildAreaSummary area,
+            CityC6Stages.LayoutPlan layoutPlan,
+            CityC7Stages.GroupArrangementDecision arrangement,
             CityC7Stages.TemplateSelectionItem selection,
             List<Long> blockKeys,
             CityStage1BinaryIO.HeightData heightData,
@@ -167,6 +205,17 @@ public final class CityC8Stages {
         item.build_area_id = area.build_area_id;
         item.build_area_numeric_id = area.build_area_numeric_id;
         item.group_id = area.group_id;
+        item.anchor_module_id = layoutPlan.primary_modules.get(0).module_id;
+
+        if (arrangement != null) {
+            item.arrangement_type = arrangement.arrangement_type;
+            if (arrangement.arrangement_params != null) item.arrangement_params.putAll(arrangement.arrangement_params);
+            CityC8ArrangementEngine.SolveResult solveResult = CityC8ArrangementEngine.solve(area, layoutPlan, arrangement);
+            item.placements = solveResult.placements != null ? solveResult.placements : new ArrayList<>();
+            item.arrangement_success = solveResult.success;
+            item.arrangement_errors = solveResult.errors != null ? new ArrayList<>(solveResult.errors) : new ArrayList<>();
+            item.arrangement_warnings = solveResult.warnings != null ? new ArrayList<>(solveResult.warnings) : new ArrayList<>();
+        }
         if (selection != null) {
             item.selected_template = selection.selected_template;
             item.function_role = selection.function_role;
@@ -179,19 +228,61 @@ public final class CityC8Stages {
             item.vertical_clearance = Math.max(0, selection.vertical_clearance);
             item.vertical_capable = selection.vertical_capable;
             item.vertical_mode_hint = inferVerticalMode(selection);
+            if ((item.arrangement_type == null || item.arrangement_type.isBlank()) && selection.arrangement_type != null) {
+                item.arrangement_type = selection.arrangement_type;
+            }
+            if (item.arrangement_params.isEmpty() && selection.arrangement_params != null) {
+                item.arrangement_params.putAll(selection.arrangement_params);
+            }
         }
 
+        TerrainStats terrain = analyzeTerrain(area, blockKeys, heightData, c2ScanData);
+        item.foundation_type = terrain.foundation_type;
+        item.strategy = terrain.strategy;
+        item.base_y = terrain.baseY;
+        item.delta_height = terrain.relief;
+        item.terrain_impact_bbox.minX = terrain.minX - 1;
+        item.terrain_impact_bbox.minZ = terrain.minZ - 1;
+        item.terrain_impact_bbox.maxX = terrain.maxX + 1;
+        item.terrain_impact_bbox.maxZ = terrain.maxZ + 1;
+        item.terrain_metrics.height_min = terrain.minH;
+        item.terrain_metrics.height_max = terrain.maxH;
+        item.terrain_metrics.height_avg = round3(terrain.avgH);
+        item.terrain_metrics.height_p50 = round3(terrain.p50);
+        item.terrain_metrics.slope_avg = round3(terrain.slopeAvg);
+        item.terrain_metrics.edge_n = terrain.edgeN;
+        item.terrain_metrics.edge_e = terrain.edgeE;
+        item.terrain_metrics.edge_s = terrain.edgeS;
+        item.terrain_metrics.edge_w = terrain.edgeW;
+
+        if ("PLATFORM_WITH_RETAINING_WALL".equals(item.foundation_type)) {
+            addSupport(item, "retaining_wall", maxEdgeSide(terrain.edgeN, terrain.edgeE, terrain.edgeS, terrain.edgeW));
+            addSupport(item, "stairs", minEdgeSide(terrain.edgeN, terrain.edgeE, terrain.edgeS, terrain.edgeW));
+        } else if ("TERRACE".equals(item.foundation_type)) {
+            addSupport(item, "stairs", "E");
+        }
+
+        for (PlacementNode node : item.placements) {
+            if (node != null) node.y = item.base_y;
+        }
+        return item;
+    }
+
+    private static TerrainStats analyzeTerrain(
+            CityC6Stages.BuildAreaSummary area,
+            List<Long> blockKeys,
+            CityStage1BinaryIO.HeightData heightData,
+            CityC2ScanBinaryIO.C2ScanData c2ScanData
+    ) {
+        TerrainStats stats = new TerrainStats();
         List<Integer> heights = new ArrayList<>(Math.max(16, blockKeys.size()));
         long sum = 0L;
-        int minH = Integer.MAX_VALUE;
-        int maxH = Integer.MIN_VALUE;
-        int minX = Integer.MAX_VALUE;
-        int minZ = Integer.MAX_VALUE;
-        int maxX = Integer.MIN_VALUE;
-        int maxZ = Integer.MIN_VALUE;
-
-        int northSum = 0, eastSum = 0, southSum = 0, westSum = 0;
-        int northCnt = 0, eastCnt = 0, southCnt = 0, westCnt = 0;
+        stats.minH = Integer.MAX_VALUE;
+        stats.maxH = Integer.MIN_VALUE;
+        stats.minX = Integer.MAX_VALUE;
+        stats.minZ = Integer.MAX_VALUE;
+        stats.maxX = Integer.MIN_VALUE;
+        stats.maxZ = Integer.MIN_VALUE;
 
         for (Long key : blockKeys) {
             if (key == null) continue;
@@ -200,120 +291,96 @@ public final class CityC8Stages {
             int h = heightAt(heightData, c2ScanData, x, z);
             heights.add(h);
             sum += h;
-            minH = Math.min(minH, h);
-            maxH = Math.max(maxH, h);
-            minX = Math.min(minX, x);
-            minZ = Math.min(minZ, z);
-            maxX = Math.max(maxX, x);
-            maxZ = Math.max(maxZ, z);
+            stats.minH = Math.min(stats.minH, h);
+            stats.maxH = Math.max(stats.maxH, h);
+            stats.minX = Math.min(stats.minX, x);
+            stats.minZ = Math.min(stats.minZ, z);
+            stats.maxX = Math.max(stats.maxX, x);
+            stats.maxZ = Math.max(stats.maxZ, z);
         }
 
         if (heights.isEmpty()) {
-            minH = safeRound(area.avg_height);
-            maxH = minH;
-            minX = area.bbox.minX;
-            minZ = area.bbox.minZ;
-            maxX = area.bbox.maxX;
-            maxZ = area.bbox.maxZ;
-            heights.add(minH);
-            sum = minH;
+            stats.minH = safeRound(area.avg_height);
+            stats.maxH = stats.minH;
+            stats.minX = area.bbox.minX;
+            stats.minZ = area.bbox.minZ;
+            stats.maxX = area.bbox.maxX;
+            stats.maxZ = area.bbox.maxZ;
+            heights.add(stats.minH);
+            sum = stats.minH;
         }
 
-        double avgH = sum / (double) heights.size();
+        stats.avgH = sum / (double) heights.size();
         Collections.sort(heights);
-        double p50 = heights.get(Math.max(0, heights.size() / 2));
-        int relief = Math.max(0, maxH - minH);
+        stats.p50 = heights.get(Math.max(0, heights.size() / 2));
+        stats.relief = Math.max(0, stats.maxH - stats.minH);
+        stats.slopeAvg = estimateSlopeAvg(blockKeys, heightData, c2ScanData);
 
+        int northSum = 0, eastSum = 0, southSum = 0, westSum = 0;
+        int northCnt = 0, eastCnt = 0, southCnt = 0, westCnt = 0;
         for (Long key : blockKeys) {
             if (key == null) continue;
             int x = unpackX(key);
             int z = unpackZ(key);
             int h = heightAt(heightData, c2ScanData, x, z);
-            if (z == minZ) {
-                northSum += h;
-                northCnt++;
-            }
-            if (x == maxX) {
-                eastSum += h;
-                eastCnt++;
-            }
-            if (z == maxZ) {
-                southSum += h;
-                southCnt++;
-            }
-            if (x == minX) {
-                westSum += h;
-                westCnt++;
-            }
+            if (z == stats.minZ) { northSum += h; northCnt++; }
+            if (x == stats.maxX) { eastSum += h; eastCnt++; }
+            if (z == stats.maxZ) { southSum += h; southCnt++; }
+            if (x == stats.minX) { westSum += h; westCnt++; }
         }
+        stats.edgeN = northCnt > 0 ? safeRound(northSum / (double) northCnt) : safeRound(stats.avgH);
+        stats.edgeE = eastCnt > 0 ? safeRound(eastSum / (double) eastCnt) : safeRound(stats.avgH);
+        stats.edgeS = southCnt > 0 ? safeRound(southSum / (double) southCnt) : safeRound(stats.avgH);
+        stats.edgeW = westCnt > 0 ? safeRound(westSum / (double) westCnt) : safeRound(stats.avgH);
 
-        int edgeN = northCnt > 0 ? safeRound(northSum / (double) northCnt) : safeRound(avgH);
-        int edgeE = eastCnt > 0 ? safeRound(eastSum / (double) eastCnt) : safeRound(avgH);
-        int edgeS = southCnt > 0 ? safeRound(southSum / (double) southCnt) : safeRound(avgH);
-        int edgeW = westCnt > 0 ? safeRound(westSum / (double) westCnt) : safeRound(avgH);
-
-        double slopeAvg = estimateSlopeAvg(blockKeys, heightData, c2ScanData);
-        boolean strongEdgeDelta = Math.abs(edgeN - edgeS) >= 6 || Math.abs(edgeE - edgeW) >= 6;
-
-        item.foundation_type = "NONE";
-        item.strategy = "FOLLOW_AVG";
-        if (relief <= 1 && slopeAvg < 0.4) {
-            item.foundation_type = "NONE";
-            item.strategy = "FOLLOW_AVG";
-        } else if (relief >= 9) {
-            item.foundation_type = "TERRACE";
-            item.strategy = "FOLLOW_P50";
-        } else if (strongEdgeDelta && relief >= 4) {
-            item.foundation_type = "PLATFORM_WITH_RETAINING_WALL";
-            item.strategy = "CUT_AND_FILL";
+        boolean strongEdgeDelta = Math.abs(stats.edgeN - stats.edgeS) >= 6 || Math.abs(stats.edgeE - stats.edgeW) >= 6;
+        stats.foundation_type = "NONE";
+        stats.strategy = "FOLLOW_AVG";
+        if (stats.relief <= 1 && stats.slopeAvg < 0.4) {
+            stats.foundation_type = "NONE";
+            stats.strategy = "FOLLOW_AVG";
+        } else if (stats.relief >= 9) {
+            stats.foundation_type = "TERRACE";
+            stats.strategy = "FOLLOW_P50";
+        } else if (strongEdgeDelta && stats.relief >= 4) {
+            stats.foundation_type = "PLATFORM_WITH_RETAINING_WALL";
+            stats.strategy = "CUT_AND_FILL";
         } else {
-            item.foundation_type = "PLATFORM";
-            item.strategy = "CUT_AND_FILL";
+            stats.foundation_type = "PLATFORM";
+            stats.strategy = "CUT_AND_FILL";
         }
-
-        if (item.vertical_capable) {
-            if ("up".equalsIgnoreCase(item.growth_axis) || "vertical".equalsIgnoreCase(item.growth_axis)) {
-                item.strategy = "FOLLOW_P50";
-            }
-            if (relief >= 4 && "PLATFORM".equals(item.foundation_type)) {
-                addSupport(item, "stairs", maxEdgeSide(edgeN, edgeE, edgeS, edgeW));
-            }
-        }
-
-        item.base_y = "FOLLOW_P50".equals(item.strategy) ? safeRound(p50) : safeRound(avgH);
-        item.delta_height = relief;
-
-        item.terrain_impact_bbox.minX = minX - 1;
-        item.terrain_impact_bbox.minZ = minZ - 1;
-        item.terrain_impact_bbox.maxX = maxX + 1;
-        item.terrain_impact_bbox.maxZ = maxZ + 1;
-
-        if ("PLATFORM_WITH_RETAINING_WALL".equals(item.foundation_type)) {
-            addSupport(item, "retaining_wall", maxEdgeSide(edgeN, edgeE, edgeS, edgeW));
-            addSupport(item, "stairs", minEdgeSide(edgeN, edgeE, edgeS, edgeW));
-        } else if ("TERRACE".equals(item.foundation_type)) {
-            addSupport(item, "stairs", "E");
-        }
-
-        item.terrain_metrics.height_min = minH;
-        item.terrain_metrics.height_max = maxH;
-        item.terrain_metrics.height_avg = round3(avgH);
-        item.terrain_metrics.height_p50 = round3(p50);
-        item.terrain_metrics.slope_avg = round3(slopeAvg);
-        item.terrain_metrics.edge_n = edgeN;
-        item.terrain_metrics.edge_e = edgeE;
-        item.terrain_metrics.edge_s = edgeS;
-        item.terrain_metrics.edge_w = edgeW;
-        return item;
+        stats.baseY = "FOLLOW_P50".equals(stats.strategy) ? safeRound(stats.p50) : safeRound(stats.avgH);
+        return stats;
     }
 
-    private static Map<String, CityC7Stages.TemplateSelectionItem> indexC7SelectionByArea(CityC7Stages.C7Selection selection) {
+    private static Map<String, CityC7Stages.GroupArrangementDecision> indexArrangements(CityC7Stages.C7Selection selection) {
+        Map<String, CityC7Stages.GroupArrangementDecision> index = new HashMap<>();
+        if (selection == null || selection.arrangements == null) return index;
+        for (CityC7Stages.GroupArrangementDecision item : selection.arrangements) {
+            if (item == null) continue;
+            if (item.build_area_id != null && !item.build_area_id.isBlank()) index.putIfAbsent(item.build_area_id, item);
+            if (item.group_id != null && !item.group_id.isBlank()) index.putIfAbsent(item.group_id, item);
+        }
+        return index;
+    }
+
+    private static Map<String, CityC7Stages.TemplateSelectionItem> indexSelections(CityC7Stages.C7Selection selection) {
         Map<String, CityC7Stages.TemplateSelectionItem> index = new HashMap<>();
         if (selection == null || selection.selections == null) return index;
         for (CityC7Stages.TemplateSelectionItem item : selection.selections) {
             if (item == null) continue;
             if (item.build_area_id != null && !item.build_area_id.isBlank()) index.putIfAbsent(item.build_area_id, item);
             if (item.group_id != null && !item.group_id.isBlank()) index.putIfAbsent(item.group_id, item);
+        }
+        return index;
+    }
+
+    private static Map<String, CityC6Stages.LayoutPlan> indexPlans(CityC6Stages.C6Layout c6Layout) {
+        Map<String, CityC6Stages.LayoutPlan> index = new HashMap<>();
+        if (c6Layout == null || c6Layout.plans == null) return index;
+        for (CityC6Stages.LayoutPlan plan : c6Layout.plans) {
+            if (plan == null || plan.build_area_id == null) continue;
+            index.put(plan.build_area_id, plan);
         }
         return index;
     }
@@ -339,30 +406,28 @@ public final class CityC8Stages {
 
     private static double estimateSlopeAvg(List<Long> blockKeys, CityStage1BinaryIO.HeightData heightData, CityC2ScanBinaryIO.C2ScanData c2ScanData) {
         if (blockKeys == null || blockKeys.isEmpty()) return 0.0;
-        Map<Long, Integer> h = new HashMap<>();
+        Map<Long, Integer> heights = new HashMap<>();
         for (Long key : blockKeys) {
             if (key == null) continue;
             int x = unpackX(key);
             int z = unpackZ(key);
-            h.put(key, heightAt(heightData, c2ScanData, x, z));
+            heights.put(key, heightAt(heightData, c2ScanData, x, z));
         }
         int[][] dirs = new int[][]{{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
         double sum = 0.0;
         int cnt = 0;
-        for (Long key : h.keySet()) {
+        for (Long key : heights.keySet()) {
             int x = unpackX(key);
             int z = unpackZ(key);
-            int base = h.getOrDefault(key, 0);
+            int base = heights.getOrDefault(key, 0);
             for (int[] d : dirs) {
-                long nk = packBlock(x + d[0], z + d[1]);
-                Integer nh = h.get(nk);
+                Integer nh = heights.get(packBlock(x + d[0], z + d[1]));
                 if (nh == null) continue;
                 sum += Math.abs(base - nh);
                 cnt++;
             }
         }
-        if (cnt <= 0) return 0.0;
-        return sum / cnt;
+        return cnt <= 0 ? 0.0 : sum / cnt;
     }
 
     private static String maxEdgeSide(int n, int e, int s, int w) {
@@ -403,5 +468,25 @@ public final class CityC8Stages {
 
     private static double round3(double v) {
         return Math.round(v * 1000.0) / 1000.0;
+    }
+
+    private static final class TerrainStats {
+        int minH;
+        int maxH;
+        int minX;
+        int minZ;
+        int maxX;
+        int maxZ;
+        double avgH;
+        double p50;
+        double slopeAvg;
+        int relief;
+        int edgeN;
+        int edgeE;
+        int edgeS;
+        int edgeW;
+        int baseY;
+        String foundation_type;
+        String strategy;
     }
 }

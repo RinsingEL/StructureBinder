@@ -627,29 +627,4 @@ public class CityManager {
             System.err.println("[CityManager] Failed to load cities: " + e.getMessage());
         }
     }
-
-    /**
-     * 确保该城市的道路数据已生�?(懒加�?
-     */
-    /**
-     * Legacy road generation is disabled.
-     */
-    public void ensureRoadsGenerated(String cityId) {
-        CityInstance city = cities.get(cityId);
-        if (city == null) return;
-
-        synchronized (city) {
-            city.roadBlocks = new HashSet<>();
-            city.roadHeights = new HashMap<>();
-            city.roadSlabBlocks = new HashSet<>();
-            city.isRoadsGenerated = true;
-        }
-    }
-
-
-
-
-
-
-
 }

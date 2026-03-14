@@ -13,7 +13,6 @@ import com.mojang.brigadier.context.CommandContext;
 import com.user.terra_script.world.NationGenManager;
 import com.user.terra_script.world.city.CityInstance;
 import com.user.terra_script.world.city.CityManager;
-import com.user.terra_script.world.city.RoadInjector;
 import com.user.terra_script.core.artifact.ArtifactStore;
 import com.user.terra_script.core.artifact.ArtifactKey;
 import com.user.terra_script.core.stage.StageContext;

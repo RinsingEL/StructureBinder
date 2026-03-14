@@ -26,7 +26,7 @@
 
 ---
 
-## 当前实现状态（已完成：W3 / W4 / T1 / T2 / T3 / T4 / C5 / C6；C4 方案已定稿但未代码落地）
+## 当前实现状态（已完成：W3 / W4 / T1 / T2 / T3 / T4 / C5 / C6；C7 / C8 / C9 进入重构联调中；C4 方案已定稿但未代码落地）
 
 以下内容基于当前代码实际落地情况（`domain` + `server/mcp`）：
 
@@ -47,10 +47,543 @@
   - 阶段类：`src/main/java/com/user/terra_script/domain/territory/stage/T2Stage.java`、`src/main/java/com/user/terra_script/domain/territory/stage/T3Stage.java`、`src/main/java/com/user/terra_script/domain/territory/stage/T4Stage.java`
   - 当前默认语义：`T4` 执行首都城市 bootstrap（默认生成 1 座城市）；旧的领土精细扫描保留为可选 legacy 模式（`t4_legacy_scan=true`）。
   - 工作流注册：`src/main/java/com/user/terra_script/server/mcp/WorkflowController.java`
-- 城市阶段 `C5 / C6` 已实现并提供接口；`C4` 目前为网页端实验流程（未在当前代码主流程落地）：
+- 城市阶段 `C5 / C6 / C7 / C8 / C9` 已实现基础接口；其中 `C7 / C8 / C9` 当前处于“新语义重构 + 运行态联调”阶段；`C4` 目前为网页端实验流程（未在当前代码主流程落地）：
   - 入口：`src/main/java/com/user/terra_script/server/mcp/CityController.java`
-  - 接口：`/city_c5_generate`、`/city_c6_generate`（C4 相关接口暂按实验接口看待，不计入主流程完成度）
-  - 当前语义：`C5` 基于邻接与功能可在同一 layer 形成多个 group；`C4` 的 Polygon Tag 逻辑以本案文定义为准，待正式实现。
+  - 接口：`/city_c5_generate`、`/city_c6_generate`、`/city_c6_rect_prepare`、`/city_c6_rect_submit`、`/city_c7_generate`、`/city_c8_generate`、`/city_c9_generate`
+  - 当前语义：
+    - `C5` 基于邻接与功能可在同一 layer 形成多个 group
+    - `C6` 已改为“AI 决策主模块矩形 + 程序校验闭环”
+    - `C7` 正在改为“AI 决定主模块结构组件与排列方式，程序只做契约校验与落盘”
+    - `C8` 正在改为“程序按排列算法与拼图连接规则展开主模块结构，并输出调试预览与 debug”
+    - `C9` 正在改为“严格按 C8 已确定的模板与坐标落地主模块，不再使用原版随机 jigsaw 扩展”
+    - `C4` 的 Polygon Tag 逻辑以本案文定义为准，待正式实现
+
+---
+
+## 城市阶段现行契约补充（C6 / C7 / C8）
+
+### C6：主模块来源改造
+
+- `C6` 不再由程序默认排布主模块矩形。
+- 程序职责改为：
+  - `city_c6_rect_prepare`
+    - 生成 `C6_RectDecisionInput.json`
+    - 生成 `groups/<group_id>/height.png`
+    - 生成 `groups/<group_id>/hillshade.png`
+    - 生成 `groups/<group_id>/roughness.png`
+    - 生成 `groups/<group_id>/bbox_overview.png`
+    - 生成 `groups/<group_id>/rect_preview.png`
+  - `city_c6_rect_submit`
+    - 接收 AI 回传矩形
+    - 生成 `C6_RectCandidates.json`
+    - 生成 `C6_RectValidation.json`
+    - 仅在校验通过或 AI 明确终止时回写 `C6_BuildAreaLayout.json`
+
+### C6：最终 layout 含义
+
+- `C6_BuildAreaLayout.json` 中的 `primary_modules`
+  - 不再表示程序默认猜测矩形
+  - 只表示“最终通过校验的 AI 决策矩形”
+- `validated = true` 才表示该 plan 可以被下游正式消费。
+- `decision_mode`
+  - `submit_rects`
+  - `keep_current`
+  - `no_primary_module`
+- `accepted_attempt_index`
+  - 表示该 group 的最终收敛轮次
+
+### C7：阶段职责重定义
+
+- `C7` 不再以程序硬编码规则去推导：
+  - `function_role`
+  - `selected_template`
+  - `top_k_templates`
+  - “该 group 默认适合什么模板”的打分结论
+- `C7` 的主职责改为“AI 选择组件与排列方式”：
+  - 输入：
+    - `C6` validated 的 `primary_modules`
+    - 结构预设池（preset pool）
+    - 每个 preset 的落地规则说明
+  - 输出：
+    - AI 决定的组件集合
+    - 每个组件的落地限制/参数
+    - 该 group 采用的排列方式
+    - 排列方式所需参数
+- 程序在 `C7` 只负责：
+  - 提供给 AI 的候选池与规则说明
+  - 校验 AI 回传字段是否合法
+  - 将 AI 决策结果落盘为正式产物
+
+### C7：当前进度
+
+- 已完成：
+  - `arrangements` 数据结构已落地
+  - `seed / limits / termination / strategy_params` 已进入 `C7` 产物
+  - `city_c7_generate` 支持：
+    - 程序 fallback 生成
+    - AI 直接提交 arrangement decision
+  - `c7_validation.json` 已开始校验：
+    - `arrangement_type`
+    - `selected_components`
+    - `template_id`
+    - `component_rule`
+- 已验证：
+  - `g_port_15` 的 `c7_selection.json` 中已成功写出：
+    - `seed`
+    - `limits`
+    - `termination`
+    - `linear`
+    - `decision_source = ai_decision_submit`
+- 未完成：
+  - road / secondary 相关策略参数尚未并入 `C7`
+
+### C7：程序写死与 AI 决策的边界
+
+- AI 决策内容：
+  - 选哪些结构组件
+  - 每个组件的用途与落地规则
+  - 采用哪种排列方式
+  - 排列方式参数
+- 程序写死内容：
+  - 排列方式枚举有哪些
+  - 每种排列方式需要哪些参数
+  - 回传 JSON 的字段契约
+  - 字段合法性校验
+- 因此，`C7` 不应继续把“port/market/residential 应优先什么模板”写死在 Java 逻辑里。
+
+### C7：建议产物语义
+
+- 当前的 `C7_TemplateSelection.json` 建议后续升级为更明确的“排列决策文件”：
+  - 可命名为 `C7_ArrangementDecision.json`
+- 最低应包含：
+  - `group_id`
+  - `build_area_id`
+  - `validated_primary_modules`
+  - `preset_pool_ref`
+  - `selected_components[]`
+  - `arrangement_type`
+  - `arrangement_params`
+  - `component_rules[]`
+- 若暂不改文件名，也应把现有 `C7` 的语义逐步迁移到上述结构。
+
+### C8：阶段职责重定义
+
+- `C8` 不再负责“决定怎么排”。
+- `C8` 的职责改为：
+  - 读取 `C7` 已确定的排列方式
+  - 调用程序内置排列算法
+  - 计算每个组件/拼图结构的实际坐标、朝向、连接关系、落地高度
+- 换句话说：
+  - `C7` 决定“排法”
+  - `C8` 执行“按该排法求具体坐标”
+
+### C8：当前进度
+
+- 已完成：
+  - `C8` 已接入 `arrangement_type`
+  - `placements[]` 已升级为 piece 级节点结构，包含：
+    - `node_id`
+    - `template_id`
+    - `x / y / z`
+    - `rotation`
+    - `level`
+    - `parent_node_id`
+    - `placement_reason`
+  - 已加入：
+    - `arrangement_success`
+    - `arrangement_errors`
+    - `arrangement_warnings`
+  - 已输出：
+    - `c8_arrangement_preview.png`
+    - `c8_arrangement_preview.legend.json`
+    - `c8_arrangement_debug.json`
+- 当前主模块展开逻辑：
+  - 仍是“有限受约束展开”
+  - 已支持 root 起点与 `LINEAR` 主方向约束
+  - 已支持边界检查与分支回退
+- 已验证：
+  - `g_port_15` 的 `C8` 已可输出 debug 文件
+  - 当前 debug 已能解释为何仅生成 root 节点
+- 未完成：
+  - `COURTYARD / SPINE_BRANCH / CLUSTER` 的执行算法仍未完全展开
+  - `LINEAR` 仍需继续调到能稳定长出多节点主链
+  - “闭合收尾 / 模块级整体回退”规则仍需进一步精化
+
+### C8：程序应写死的内容
+
+- `C8` 中真正应写死的是“排列算法实现”，而不是模板选择偏好。
+- 程序固定维护：
+  - 排列方式枚举
+    - 例如：`LINEAR_DOCK`、`COURTYARD`、`SPINE_BRANCH`、`RING`、`TERRACE_CHAIN`
+  - 每种排列方式的参数规范
+  - 每种排列方式如何从输入模块与组件规则计算出最终结构坐标
+- `C8` 输出应聚焦于：
+  - `template_id`
+  - `x / y / z`
+  - `rotation`
+  - `anchor_module_id`
+  - `placement_reason`
+  - `connection_targets`
+
+### C8：当前主模块流程总结
+
+目前主模块结构流程已经固定为：
+
+1. `C6`
+   - AI 确定主模块矩形
+   - 程序校验 block 级覆盖率
+   - 合法后写回 validated `primary_modules`
+2. `C7`
+   - AI 选择主模块起始模板、排列方式、展开参数
+   - 程序只做契约校验与落盘
+3. `C8`
+   - 程序按 `seed + limits + termination + strategy` 执行结构展开
+   - 输出 piece 级坐标计划与 debug
+4. `C9`
+   - 程序只按 `C8 placements` 落结构
+   - 不再调用原版随机 jigsaw 继续扩展
+   - 若某拼图方块无计划中的后续，则清为空气
+
+### C7 / C8：代码组织建议
+
+- 建议把“契约”和“排列算法”拆到单独文件夹，而不是继续堆在单一 stages 文件中。
+- 推荐组织：
+  - `world/city/stage/c7/`
+    - `CityC7Contract.java`
+    - `CityC7PresetPool.java`
+    - `CityC7DecisionIO.java`
+    - `CityC7Validation.java`
+  - `world/city/stage/c8/`
+    - `CityC8ArrangementEngine.java`
+    - `CityC8PlacementSolver.java`
+    - `arrangement/`
+      - `ArrangementType.java`
+      - `ArrangementSpec.java`
+      - `LinearDockArranger.java`
+      - `CourtyardArranger.java`
+      - `SpineBranchArranger.java`
+
+### C8：现阶段兼容策略
+
+- 本阶段允许：
+  - 继续兼容旧的 `C7_TemplateSelection.json`
+  - 继续兼容旧的 `C8_FoundationPlan.json`
+- 但文义上应开始转向：
+  - `C7` 负责 AI 排列决策
+  - `C8` 负责程序坐标求解
+- 后续如保留 `C8_FoundationPlan.json` 文件名，也应明确其语义正在从“地基类型计划”转向“结构落位执行前计划”。
+
+### C9：阶段职责重定义
+
+- `C9` 不再负责“根据 foundation_type 粗略改地形”这一层简单动作。
+- `C9` 的主模块职责改为：
+  - 按 `C8 placements[]` 中给定的：
+    - `template_id`
+    - `x / y / z`
+    - `rotation`
+  - 直接放置结构模板
+  - 不再让原版 jigsaw 随机继续选择后继模板
+  - 对没有计划中后继的拼图方块，直接替换为空气
+
+### C9：当前进度
+
+- 已完成代码：
+  - `C9` 已能读取 `C8 placements[]`
+  - `StructureInjector` 已新增按 block 坐标与 rotation 直接放模板的方法
+  - 模板放置后会清理包围盒中的 `JIGSAW` 方块为空气
+  - `C9Placement.items[]` 已扩展支持：
+    - `planned_nodes`
+    - `placed_structures`
+    - `structures[]`
+- 已验证：
+  - `city_c9_generate` dry-run 可正常返回
+  - `groups/<group_id>/c9_placement.json`
+  - `groups/<group_id>/c9_decoration.json`
+  - 均可落盘
+- 当前运行态问题：
+  - 最新 `structures[]` 明细在代码中已实现并编译通过
+  - 但当前游戏实例多次联调中，运行态产物仍未稳定体现这一新版输出
+  - 因此，`C9` 当前应视为：
+    - 代码层已到位
+    - 运行态验证尚未完全收口
+
+### C7 / C8：主模块排列策略参数（第一版）
+
+- 主模块的起始位置仍采用：
+  - AI 决策
+  - 程序查错
+- 程序当前最低校验要求：
+  - `start_x / start_z` 必须在主模块矩形内
+  - 后续每个组件矩形必须完全落在主模块矩形内
+  - 不允许超 `max_depth / max_pieces`
+- `start` 的含义：
+  - 表示该模板可独立作为开头
+  - 不代表其所有 connector 都必须放开展开
+- 排列方式的职责：
+  - 决定“允许哪些 connector 使用、按什么顺序展开、每层允许多少分支”
+  - 而不是直接对 start 模板的全部 jigsaw 方向无约束 BFS
+
+#### 通用字段
+
+```jsonc
+{
+  "arrangement_type": "LINEAR",
+  "seed": {
+    "start_x": 0,
+    "start_z": 0,
+    "start_rotation": 0,
+    "start_template_id": "namespace:path",
+    "start_connector_dir": "north"
+  },
+  "limits": {
+    "max_depth": 6,
+    "max_pieces": 24,
+    "max_branch_per_depth": 2
+  },
+  "termination": {
+    "require_closure": true,
+    "allow_trim_leaf": true,
+    "rollback_on_unclosed_middle": true
+  }
+}
+```
+
+- `seed.start_x / start_z`
+  - AI 指定的起始点
+- `seed.start_rotation`
+  - 起始模板朝向
+- `seed.start_template_id`
+  - 起始模板
+- `seed.start_connector_dir`
+  - 从起始模板优先使用哪个 connector 开始
+- `limits.max_depth`
+  - 展开最大层数
+- `limits.max_pieces`
+  - 最大拼图数
+- `limits.max_branch_per_depth`
+  - 每层最多允许开的分支数
+- `termination.require_closure`
+  - 是否必须闭合到合法收尾
+- `termination.allow_trim_leaf`
+  - 是否允许砍掉末端叶子
+- `termination.rollback_on_unclosed_middle`
+  - 出现未闭合 `MIDDLE` 是否整体回退
+
+#### 1. LINEAR
+
+- 适合：
+  - 港口
+  - 长廊
+  - 码头
+  - 线性商业带
+
+```jsonc
+{
+  "arrangement_type": "LINEAR",
+  "seed": { "...": "..." },
+  "limits": { "...": "..." },
+  "termination": { "...": "..." },
+  "linear": {
+    "primary_axis": "x",
+    "forward_dirs": ["east", "west"],
+    "preferred_forward_dir": "east",
+    "segment_spacing": 12,
+    "lane_count": 1,
+    "allow_side_branches": true,
+    "side_branch_interval": 3,
+    "side_branch_max_length": 2,
+    "alternate_branch_side": true,
+    "allow_reverse_growth": false,
+    "front_loaded_start": true
+  }
+}
+```
+
+- `primary_axis`
+  - 线性主轴，`x / z / auto`
+- `forward_dirs`
+  - 允许沿哪些方向主推进
+- `preferred_forward_dir`
+  - 优先主方向
+- `segment_spacing`
+  - 主链相邻 piece 间距
+- `lane_count`
+  - 平行链条数
+- `allow_side_branches`
+  - 是否允许主链两侧挂支路
+- `side_branch_interval`
+  - 每隔几个主节点允许挂一次
+- `side_branch_max_length`
+  - 支路最大长度
+- `alternate_branch_side`
+  - 是否左右交替挂支路
+- `allow_reverse_growth`
+  - 是否允许从 root 向反方向同时生长
+- `front_loaded_start`
+  - 是否优先把核心 piece 放在链头
+
+#### 2. COURTYARD
+
+- 适合：
+  - 城堡内院
+  - 市场广场
+  - 学校主院
+  - 宗教中心
+
+```jsonc
+{
+  "arrangement_type": "COURTYARD",
+  "seed": { "...": "..." },
+  "limits": { "...": "..." },
+  "termination": { "...": "..." },
+  "courtyard": {
+    "center_mode": "seed_is_center",
+    "ring_count": 1,
+    "ring_spacing": 10,
+    "arc_coverage_deg": 300,
+    "entry_gap_dir": "south",
+    "entry_gap_width": 1,
+    "prefer_symmetric_pairs": true,
+    "allow_corner_emphasis": true,
+    "corner_piece_weight": 1.5,
+    "inward_facing": true
+  }
+}
+```
+
+- `center_mode`
+  - `seed_is_center / seed_on_edge`
+- `ring_count`
+  - 院落层数
+- `ring_spacing`
+  - 环层间距
+- `arc_coverage_deg`
+  - 环绕角度
+- `entry_gap_dir`
+  - 开口朝向
+- `entry_gap_width`
+  - 开口宽度
+- `prefer_symmetric_pairs`
+  - 是否尽量成对称布局
+- `allow_corner_emphasis`
+  - 是否允许角点放大件
+- `corner_piece_weight`
+  - 角部件优先权重
+- `inward_facing`
+  - 是否朝向内院
+
+#### 3. SPINE_BRANCH
+
+- 适合：
+  - 住宅骨架
+  - 城堡外廓
+  - 沿主路展开的功能带
+
+```jsonc
+{
+  "arrangement_type": "SPINE_BRANCH",
+  "seed": { "...": "..." },
+  "limits": { "...": "..." },
+  "termination": { "...": "..." },
+  "spine_branch": {
+    "spine_axis": "x",
+    "spine_dirs": ["east"],
+    "spine_spacing": 10,
+    "spine_length_target": 6,
+    "branch_dirs": ["north", "south"],
+    "branch_spacing": 8,
+    "branch_interval": 2,
+    "branch_max_length": 3,
+    "branch_balance_mode": "alternate",
+    "allow_terminal_hub": true,
+    "terminal_hub_size": 2
+  }
+}
+```
+
+- `spine_axis`
+  - 主脊轴
+- `spine_dirs`
+  - 主脊允许生长方向
+- `spine_spacing`
+  - 主脊间距
+- `spine_length_target`
+  - 主脊目标长度
+- `branch_dirs`
+  - 支脉方向
+- `branch_spacing`
+  - 支脉间距
+- `branch_interval`
+  - 每隔几个主脊节点挂支脉
+- `branch_max_length`
+  - 单条支脉最大长度
+- `branch_balance_mode`
+  - `alternate / symmetric / free`
+- `allow_terminal_hub`
+  - 脊尾是否允许扩成小核心
+- `terminal_hub_size`
+  - 脊尾核心规模
+
+#### 4. CLUSTER
+
+- 适合：
+  - 不规则组团
+  - 港口附属组团
+  - 工坊群
+  - 小院落簇
+
+```jsonc
+{
+  "arrangement_type": "CLUSTER",
+  "seed": { "...": "..." },
+  "limits": { "...": "..." },
+  "termination": { "...": "..." },
+  "cluster": {
+    "cluster_count": 3,
+    "cluster_radius": 14,
+    "cluster_spacing": 18,
+    "cluster_shape": "ellipse",
+    "scatter_mode": "weighted_random",
+    "allow_micro_paths": true,
+    "intra_cluster_branch_limit": 2,
+    "cluster_center_bias": "medium",
+    "edge_avoidance": 0.7,
+    "overlap_tolerance": 0.0
+  }
+}
+```
+
+- `cluster_count`
+  - 组团数量
+- `cluster_radius`
+  - 单组团半径
+- `cluster_spacing`
+  - 组团中心最小距离
+- `cluster_shape`
+  - `circle / ellipse / irregular`
+- `scatter_mode`
+  - `weighted_random / radial / patch`
+- `allow_micro_paths`
+  - 组团内部是否允许短链连接
+- `intra_cluster_branch_limit`
+  - 组团内部最大支路数
+- `cluster_center_bias`
+  - 中心聚集倾向
+- `edge_avoidance`
+  - 靠近主模块边缘时的回避程度
+- `overlap_tolerance`
+  - 允许多少重叠，默认 `0`
+
+#### 默认映射建议
+
+- `port`
+  - 主推 `LINEAR`
+- `market`
+  - 主推 `COURTYARD`
+- `residential / urban block`
+  - 主推 `SPINE_BRANCH`
+- `castle / workshop yard / irregular compound`
+  - 主推 `CLUSTER`
 
 当前实现里，`W4_WorldSummary.json` 仍属于预留描述，尚未由 `W4Stage` 直接产出。
 

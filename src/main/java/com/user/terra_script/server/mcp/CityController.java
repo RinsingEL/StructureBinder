@@ -30,6 +30,7 @@ import com.user.terra_script.world.city.stage.c6.CityC6RectPlacementPreviewExpor
 import com.user.terra_script.world.city.stage.c6.CityC6GroupPreviewExporter;
 import com.user.terra_script.world.city.stage.c7.CityC7Stages;
 import com.user.terra_script.world.city.stage.c8.CityC8Stages;
+import com.user.terra_script.world.city.stage.c8.CityC8ArrangementPreviewExporter;
 import com.user.terra_script.world.city.stage.c9.CityC9Stages;
 import com.user.terra_script.domain.world.scan.ScanPixel;
 import com.user.terra_script.domain.world.scan.service.SatelliteScanner;
@@ -864,7 +865,9 @@ public class CityController {
                 return;
             }
 
-            CityC7Stages.C7Selection selection = CityC7Stages.generate(cityId, c6Layout);
+            CityC7Stages.C7Selection selection = json.has("arrangements")
+                    ? CityC7Stages.fromDecisionRequest(cityId, c6Layout, json)
+                    : CityC7Stages.generate(cityId, c6Layout);
             CityC7Stages.C7Selection responseSelection = filterC7SelectionByGroup(selection, groupId);
             Path outputFile = cityDir.resolve(CityC7Stages.C7_FILE);
             if (groupId != null && !groupId.isBlank()) {
@@ -881,7 +884,9 @@ public class CityController {
             res.addProperty("city_id", cityId);
             if (groupId != null) res.addProperty("group_id", groupId);
             res.addProperty("selection_count", responseSelection.selections != null ? responseSelection.selections.size() : 0);
+            res.addProperty("arrangement_count", responseSelection.arrangements != null ? responseSelection.arrangements.size() : 0);
             res.addProperty("catalog_source", responseSelection.catalog_source);
+            res.addProperty("decision_source", responseSelection.decision_source);
             res.addProperty("file", outputFile.toString());
             if (groupId != null && !groupId.isBlank()) {
                 CityC7Validation.Report validation = CityC7Validation.generate(cityId, groupId, responseSelection);
@@ -959,7 +964,7 @@ public class CityController {
             }
 
             CityC2ScanBinaryIO.C2ScanData c2ScanData = CityC2ScanBinaryIO.load(cityId);
-            CityC7Stages.C7Selection c7Selection = CityC7Stages.load(cityDir);
+            CityC7Stages.C7Selection c7Selection = loadC7Selection(cityDir, groupId);
             CityC8Stages.C8Plan plan = CityC8Stages.generate(cityId, c6Summary, c6Layout, c7Selection, heightData, c2ScanData, c6Index);
             CityC8Stages.save(cityDir, plan);
 
@@ -970,7 +975,12 @@ public class CityController {
                 Path groupDir = resolveGroupDir(cityDir, groupId);
                 outputFile = groupDir.resolve("c8_foundation.json");
                 java.nio.file.Files.writeString(outputFile, gson.toJson(responsePlan));
+                CityC8Stages.saveDebug(cityDir, groupId, responsePlan);
             }
+
+            JsonObject preview = groupId != null && !groupId.isBlank()
+                    ? CityC8ArrangementPreviewExporter.export(mcServer, cityId, groupId, heightData, c2ScanData, c6Summary, c6Layout, responsePlan)
+                    : new JsonObject();
 
             JsonObject res = new JsonObject();
             res.addProperty("status", "ok");
@@ -979,6 +989,7 @@ public class CityController {
             if (groupId != null) res.addProperty("group_id", groupId);
             res.addProperty("foundation_count", responsePlan.foundations != null ? responsePlan.foundations.size() : 0);
             res.addProperty("file", outputFile.toString());
+            if (groupId != null && !groupId.isBlank()) res.add("arrangement_preview", preview);
             HttpUtil.sendResponse(exchange, 200, gson.toJson(res));
         } catch (Exception e) {
             HttpUtil.handleError(exchange, e);
@@ -1049,7 +1060,7 @@ public class CityController {
                     return;
                 }
                 CityC2ScanBinaryIO.C2ScanData c2ScanData = CityC2ScanBinaryIO.load(cityId);
-                CityC7Stages.C7Selection c7Selection = CityC7Stages.load(cityDir);
+                CityC7Stages.C7Selection c7Selection = loadC7Selection(cityDir, groupId);
                 c8Plan = CityC8Stages.generate(cityId, c6Summary, c6Layout, c7Selection, heightData, c2ScanData, c6Index);
                 CityC8Stages.save(cityDir, c8Plan);
             }
@@ -1788,11 +1799,29 @@ public class CityController {
         copy.city_id = selection.city_id;
         copy.generated_at_epoch_ms = selection.generated_at_epoch_ms;
         copy.catalog_source = selection.catalog_source;
+        copy.decision_source = selection.decision_source;
         copy.puzzle_depth = selection.puzzle_depth;
-        for (CityC7Stages.TemplateSelectionItem item : selection.selections) {
-            if (item != null && groupId.equals(item.group_id)) copy.selections.add(item);
+        if (selection.selections != null) {
+            for (CityC7Stages.TemplateSelectionItem item : selection.selections) {
+                if (item != null && groupId.equals(item.group_id)) copy.selections.add(item);
+            }
+        }
+        if (selection.arrangements != null) {
+            for (CityC7Stages.GroupArrangementDecision item : selection.arrangements) {
+                if (item != null && groupId.equals(item.group_id)) copy.arrangements.add(item);
+            }
         }
         return copy;
+    }
+
+    private static CityC7Stages.C7Selection loadC7Selection(Path cityDir, String groupId) throws Exception {
+        if (groupId != null && !groupId.isBlank()) {
+            Path groupFile = resolveGroupDir(cityDir, groupId).resolve("c7_selection.json");
+            if (java.nio.file.Files.exists(groupFile)) {
+                return new Gson().fromJson(java.nio.file.Files.readString(groupFile), CityC7Stages.C7Selection.class);
+            }
+        }
+        return CityC7Stages.load(cityDir);
     }
 
     private static CityC8Stages.C8Plan filterC8PlanByGroup(CityC8Stages.C8Plan plan, String groupId, Set<Integer> areaIds) {

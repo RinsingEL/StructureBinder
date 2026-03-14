@@ -46,6 +46,10 @@ public class StructureInjector {
     }
 
     public static void spawnStructure(ServerLevel level, ChunkPos chunkPos, String structureId) {
+        spawnStructure(level, chunkPos, structureId, null);
+    }
+
+    public static void spawnStructure(ServerLevel level, ChunkPos chunkPos, String structureId, Rotation forcedRotation) {
         StructureTemplateManager manager = level.getStructureManager();
         ResourceLocation loc = new ResourceLocation(structureId);
         Optional<StructureTemplate> templateOp = manager.get(loc);
@@ -68,7 +72,7 @@ public class StructureInjector {
         int surfaceY = level.getHeight(Heightmap.Types.OCEAN_FLOOR_WG, centerX, centerZ);
 
         // 3. 设置随机旋转 (让村庄更自然)
-        Rotation rotation = Rotation.values()[level.random.nextInt(Rotation.values().length)];
+        Rotation rotation = forcedRotation != null ? forcedRotation : Rotation.values()[level.random.nextInt(Rotation.values().length)];
 
         // 4. 计算偏移量以实现“中心对齐”
         // 旋转后的尺寸变化
@@ -101,6 +105,62 @@ public class StructureInjector {
 
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    public static boolean spawnStructureAtBlock(ServerLevel level, String structureId, BlockPos origin, Rotation rotation, boolean clearJigsawBlocks) {
+        if (level == null || structureId == null || structureId.isBlank() || origin == null) return false;
+        StructureTemplateManager manager = level.getStructureManager();
+        ResourceLocation loc = new ResourceLocation(structureId);
+        Optional<StructureTemplate> templateOp = manager.get(loc);
+        if (templateOp.isEmpty()) {
+            System.err.println("[TerraScript] Structure not found: " + structureId + " origin=" + origin + " rotation=" + rotation);
+            return false;
+        }
+        StructureTemplate template = templateOp.get();
+        Vec3i size = template.getSize();
+        StructurePlaceSettings settings = new StructurePlaceSettings()
+                .setRotation(rotation != null ? rotation : Rotation.NONE)
+                .setMirror(Mirror.NONE)
+                .setIgnoreEntities(false);
+        try {
+            System.out.println("[TerraScript] spawnStructureAtBlock template=" + structureId
+                    + " origin=" + origin
+                    + " rotation=" + (rotation != null ? rotation : Rotation.NONE)
+                    + " size=(" + size.getX() + "," + size.getY() + "," + size.getZ() + ")"
+                    + " clear_jigsaw=" + clearJigsawBlocks);
+            boolean placed = template.placeInWorld(level, origin, origin, settings, level.random, 2);
+            System.out.println("[TerraScript] spawnStructureAtBlock result template=" + structureId
+                    + " origin=" + origin
+                    + " placed=" + placed);
+            if (placed && clearJigsawBlocks) {
+                clearPlacedJigsawBlocks(level, template, origin, rotation != null ? rotation : Rotation.NONE);
+            }
+            return placed;
+        } catch (Exception e) {
+            System.err.println("[TerraScript] spawnStructureAtBlock exception template=" + structureId
+                    + " origin=" + origin
+                    + " rotation=" + (rotation != null ? rotation : Rotation.NONE));
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    private static void clearPlacedJigsawBlocks(ServerLevel level, StructureTemplate template, BlockPos origin, Rotation rotation) {
+        if (level == null || template == null || origin == null) return;
+        Vec3i size = template.getSize();
+        int width = (rotation == Rotation.CLOCKWISE_90 || rotation == Rotation.COUNTERCLOCKWISE_90) ? size.getZ() : size.getX();
+        int depth = (rotation == Rotation.CLOCKWISE_90 || rotation == Rotation.COUNTERCLOCKWISE_90) ? size.getX() : size.getZ();
+        int height = Math.max(1, size.getY());
+        for (int x = origin.getX(); x < origin.getX() + width; x++) {
+            for (int y = origin.getY(); y < origin.getY() + height; y++) {
+                for (int z = origin.getZ(); z < origin.getZ() + depth; z++) {
+                    BlockPos pos = new BlockPos(x, y, z);
+                    if (level.getBlockState(pos).is(net.minecraft.world.level.block.Blocks.JIGSAW)) {
+                        level.setBlock(pos, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 3);
+                    }
+                }
+            }
         }
     }
 }

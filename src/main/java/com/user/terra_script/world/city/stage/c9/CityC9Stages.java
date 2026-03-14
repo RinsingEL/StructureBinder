@@ -2,9 +2,11 @@ package com.user.terra_script.world.city.stage.c9;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.user.terra_script.world.StructureInjector;
 import com.user.terra_script.world.city.stage.c6.CityC6Stages;
 import com.user.terra_script.world.city.stage.c8.CityC8Stages;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.block.Rotation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Blocks;
 
@@ -52,6 +54,20 @@ public final class CityC9Stages {
         public int base_y;
         public int scanned_blocks;
         public int changed_blocks;
+        public int planned_nodes;
+        public int placed_structures;
+        public List<PlacedStructure> structures = new ArrayList<>();
+    }
+
+    public static class PlacedStructure {
+        public String node_id;
+        public String template_id;
+        public int x;
+        public int y;
+        public int z;
+        public int rotation;
+        public boolean placed;
+        public String reason;
     }
 
     public static class C9Decoration {
@@ -131,8 +147,9 @@ public final class CityC9Stages {
             p.scanned_blocks = areaBlocks.size();
 
             int changed = 0;
+            p.planned_nodes = foundation.placements != null ? foundation.placements.size() : 0;
+            changed = placeArea(applyBlocks ? level : null, areaBlocks, foundation, remainingBudget, p);
             if (applyBlocks) {
-                changed = placeArea(level, areaBlocks, foundation, remainingBudget);
                 remainingBudget = Math.max(0, remainingBudget - changed);
             }
             p.changed_blocks = changed;
@@ -182,12 +199,61 @@ public final class CityC9Stages {
             ServerLevel level,
             Set<Long> areaBlocks,
             CityC8Stages.FoundationItem foundation,
-            int budget
+            int budget,
+            PlacementItem resultItem
     ) {
-        if (level == null || areaBlocks == null || areaBlocks.isEmpty() || budget <= 0) return 0;
+        if (areaBlocks == null || areaBlocks.isEmpty() || budget <= 0) return 0;
         int changed = 0;
-        int targetY = Math.max(level.getMinBuildHeight() + 1, foundation.base_y);
+        int targetY = level != null ? Math.max(level.getMinBuildHeight() + 1, foundation.base_y) : foundation.base_y;
         Set<Long> set = areaBlocks;
+
+        if (foundation.placements != null && !foundation.placements.isEmpty()) {
+            System.out.println("[C9] placements branch build_area=" + foundation.build_area_id
+                    + " dry_run=" + (level == null)
+                    + " count=" + foundation.placements.size());
+            for (CityC8Stages.PlacementNode node : foundation.placements) {
+                if (node == null || node.template_id == null || node.template_id.isBlank()) continue;
+                PlacedStructure placed = new PlacedStructure();
+                placed.node_id = node.node_id;
+                placed.template_id = node.template_id;
+                placed.x = node.x;
+                placed.y = node.y > 0 ? node.y : targetY;
+                placed.z = node.z;
+                placed.rotation = node.rotation;
+                boolean ok = false;
+                if (level != null) {
+                    System.out.println("[C9] placing template=" + node.template_id
+                            + " node=" + node.node_id
+                            + " pos=(" + node.x + "," + placed.y + "," + node.z + ")"
+                            + " rot=" + node.rotation);
+                    ok = StructureInjector.spawnStructureAtBlock(
+                            level,
+                            node.template_id,
+                            new BlockPos(node.x, placed.y, node.z),
+                            toRotation(node.rotation),
+                            true
+                    );
+                }
+                placed.placed = ok;
+                placed.reason = level != null
+                        ? (ok ? "placed_from_c8_plan" : "structure_place_failed")
+                        : "dry_run_planned";
+                System.out.println("[C9] structure entry node=" + placed.node_id
+                        + " dry_run=" + (level == null)
+                        + " placed=" + placed.placed
+                        + " reason=" + placed.reason);
+                if (resultItem != null) {
+                    resultItem.structures.add(placed);
+                    if (ok) resultItem.placed_structures++;
+                }
+            }
+            return changed;
+        }
+
+        if (level == null) {
+            System.out.println("[C9] no placements for build_area=" + foundation.build_area_id + " in dry-run fallback mode");
+            return 0;
+        }
 
         for (long key : areaBlocks) {
             if (changed >= budget) break;
@@ -229,6 +295,16 @@ public final class CityC9Stages {
         return changed;
     }
 
+    private static Rotation toRotation(int degrees) {
+        int normalized = ((degrees % 360) + 360) % 360;
+        return switch (normalized) {
+            case 90 -> Rotation.CLOCKWISE_90;
+            case 180 -> Rotation.CLOCKWISE_180;
+            case 270 -> Rotation.COUNTERCLOCKWISE_90;
+            default -> Rotation.NONE;
+        };
+    }
+
     private static boolean isBoundary(Set<Long> set, int x, int z) {
         int[][] dirs = new int[][]{{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
         for (int[] d : dirs) {
@@ -256,4 +332,3 @@ public final class CityC9Stages {
         return (((long) x) << 32) ^ (z & 0xffffffffL);
     }
 }
-
