@@ -135,6 +135,9 @@ repositories {
             artifact()
         }
     }
+    flatDir {
+        dir 'libs'
+    }
     // Put repositories for dependencies here
     // ForgeGradle automatically adds the Forge maven and Maven Central for you
 
@@ -157,6 +160,9 @@ dependencies {
     runtimeOnly fg.deobf("local:DistantHorizons:2.3.6")
     runtimeOnly fg.deobf("local:bettervillageforge:3.3.1")
     runtimeOnly fg.deobf("local:libraryferret:4.0.0")
+    runtimeOnly fg.deobf("local:cristellib:1.1.6")
+    runtimeOnly fg.deobf("local:t_and_t:1.12")
+    runtimeOnly fg.deobf("local:villager_fish_shop:1.0.0")
     // Example mod dependency with JEI - using fg.deobf() ensures the dependency is remapped to your development mappings
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
     // compileOnly fg.deobf("mezz.jei:jei-${mc_version}-common-api:${jei_version}")

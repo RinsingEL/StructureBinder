@@ -1,0 +1,13 @@
+{
+  "meta": {
+    "image": "E:\\Mod_Dev\\StructureBinder\\drawTool\\grid.png",
+    "rects": "E:\\Mod_Dev\\StructureBinder\\drawTool\\rectangles.json",
+    "scale_px_per_cell": 1,
+    "grid_size": [
+      512,
+      512
+    ],
+    "mask": null
+  },
+  "errors": []
+}

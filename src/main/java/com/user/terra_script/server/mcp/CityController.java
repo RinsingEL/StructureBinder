@@ -1069,7 +1069,6 @@ public class CityController {
             CityC6Stages.C6Summary responseSummary = filterC6SummaryByGroup(c6Summary, groupId);
             Map<Long, Integer> responseIndex = filterIndexByAreaIds(c6Index, targetAreaIds);
             CityC8Stages.C8Plan responsePlan = filterC8PlanByGroup(c8Plan, groupId, targetAreaIds);
-
             final CityC9Stages.C9Result[] holder = new CityC9Stages.C9Result[1];
             if (applyBlocks) {
                 if (mcServer == null || mcServer.overworld() == null) {
@@ -1701,6 +1700,7 @@ public class CityController {
         }
         return copy;
     }
+
 
     private static CityC6Stages.C6RectDecisionInput filterDecisionInputByGroup(CityC6Stages.C6RectDecisionInput input, String groupId) {
         if (input == null || groupId == null || groupId.isBlank()) return input;

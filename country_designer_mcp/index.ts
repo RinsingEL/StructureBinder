@@ -218,6 +218,17 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         }
       },
 
+      {
+        name: "task_status",
+        description: "查询长任务状态。用于城市阶段或其他带 task_id 的长耗时任务。",
+        inputSchema: {
+          type: "object",
+          properties: {
+            task_id: { type: "string", description: "服务端返回的 task_id" }
+          },
+          required: ["task_id"]
+        }
+      },
       // --- 2. 资源库 ---
       {
         name: "list_available_structures",
@@ -727,6 +738,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           type: "object",
           properties: {
             city_id: { type: "string" },
+            group_id: { type: "string", description: "功能区 group_id；传入后按单功能区执行" },
             fill_style: {
               type: "string",
               enum: ["PLAZA_RING", "STREET_SPINE", "EDGE_FOLLOW", "CLUSTER_POISSON", "GRID_RELAXED", "TERRACE_BANDS", "DECOR_BUFFER"],
@@ -742,7 +754,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         inputSchema: {
           type: "object",
           properties: {
-            city_id: { type: "string" }
+            city_id: { type: "string" },
+            group_id: { type: "string", description: "功能区 group_id；传入后按单功能区执行" }
           },
           required: ["city_id"]
         }
@@ -764,7 +777,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         inputSchema: {
           type: "object",
           properties: {
-            city_id: { type: "string" }
+            city_id: { type: "string" },
+            group_id: { type: "string", description: "功能区 group_id；传入后按单功能区执行" }
           },
           required: ["city_id"]
         }
@@ -798,6 +812,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           type: "object",
           properties: {
             city_id: { type: "string" },
+            group_id: { type: "string", description: "功能区 group_id；传入后按单功能区执行" },
             apply_blocks: { type: "boolean", description: "是否实际在世界中执行放置（默认 false）" },
             max_blocks: { type: "number", description: "最大放置方块预算" }
           },
@@ -899,6 +914,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           ? `${MC_API_URL}/workflow/status?stageId=${encodeURIComponent(stageId)}`
           : `${MC_API_URL}/workflow/status`;
         const res = await axios.get(url);
+        return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
+      }
+
+      case "task_status": {
+        const args = (request.params.arguments as any) || {};
+        const taskId = String(args.task_id || "").trim();
+        if (!taskId) throw new Error("task_id is required");
+        const res = await axios.get(`${MC_API_URL}/task_status?taskId=${encodeURIComponent(taskId)}`);
         return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
       }
 
@@ -1218,38 +1241,50 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case "city_c6_generate": {
         const args = request.params.arguments as any;
         const payload: Record<string, any> = { city_id: args.city_id };
+        if (args.group_id !== undefined) payload.group_id = String(args.group_id);
         if (args.fill_style !== undefined) payload.fill_style = String(args.fill_style);
         const res = await axios.post(`${MC_API_URL}/city_c6_generate`, payload);
         return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
       }
       case "city_c6_data": {
         const args = request.params.arguments as any;
-        const res = await axios.post(`${MC_API_URL}/city_c6_data`, { city_id: args.city_id });
+        const payload: Record<string, any> = { city_id: args.city_id };
+        if (args.group_id !== undefined) payload.group_id = String(args.group_id);
+        const res = await axios.post(`${MC_API_URL}/city_c6_data`, payload);
         return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
       }
       case "city_c7_generate": {
         const args = request.params.arguments as any;
-        const res = await axios.post(`${MC_API_URL}/city_c7_generate`, { city_id: args.city_id });
+        const payload: Record<string, any> = { city_id: args.city_id };
+        if (args.group_id !== undefined) payload.group_id = String(args.group_id);
+        const res = await axios.post(`${MC_API_URL}/city_c7_generate`, payload);
         return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
       }
       case "city_c7_data": {
         const args = request.params.arguments as any;
-        const res = await axios.post(`${MC_API_URL}/city_c7_data`, { city_id: args.city_id });
+        const payload: Record<string, any> = { city_id: args.city_id };
+        if (args.group_id !== undefined) payload.group_id = String(args.group_id);
+        const res = await axios.post(`${MC_API_URL}/city_c7_data`, payload);
         return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
       }
       case "city_c8_generate": {
         const args = request.params.arguments as any;
-        const res = await axios.post(`${MC_API_URL}/city_c8_generate`, { city_id: args.city_id });
+        const payload: Record<string, any> = { city_id: args.city_id };
+        if (args.group_id !== undefined) payload.group_id = String(args.group_id);
+        const res = await axios.post(`${MC_API_URL}/city_c8_generate`, payload);
         return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
       }
       case "city_c8_data": {
         const args = request.params.arguments as any;
-        const res = await axios.post(`${MC_API_URL}/city_c8_data`, { city_id: args.city_id });
+        const payload: Record<string, any> = { city_id: args.city_id };
+        if (args.group_id !== undefined) payload.group_id = String(args.group_id);
+        const res = await axios.post(`${MC_API_URL}/city_c8_data`, payload);
         return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
       }
       case "city_c9_generate": {
         const args = request.params.arguments as any;
         const payload: Record<string, any> = { city_id: args.city_id };
+        if (args.group_id !== undefined) payload.group_id = String(args.group_id);
         if (args.apply_blocks !== undefined) payload.apply_blocks = Boolean(args.apply_blocks);
         if (args.max_blocks !== undefined) payload.max_blocks = Number(args.max_blocks);
         const res = await axios.post(`${MC_API_URL}/city_c9_generate`, payload);
@@ -1257,7 +1292,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
       case "city_c9_data": {
         const args = request.params.arguments as any;
-        const res = await axios.post(`${MC_API_URL}/city_c9_data`, { city_id: args.city_id });
+        const payload: Record<string, any> = { city_id: args.city_id };
+        if (args.group_id !== undefined) payload.group_id = String(args.group_id);
+        const res = await axios.post(`${MC_API_URL}/city_c9_data`, payload);
         return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
       }
       case "city_c6_pave_stone": {

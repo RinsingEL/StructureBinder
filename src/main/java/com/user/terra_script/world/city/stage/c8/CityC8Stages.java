@@ -80,6 +80,10 @@ public final class CityC8Stages {
         public String attach_to_component_id;
         public String parent_node_id;
         public String placement_reason;
+        public Integer footprint_min_x;
+        public Integer footprint_min_z;
+        public Integer footprint_max_x;
+        public Integer footprint_max_z;
     }
 
     public static class TerrainImpactBBox {
@@ -210,7 +214,7 @@ public final class CityC8Stages {
         if (arrangement != null) {
             item.arrangement_type = arrangement.arrangement_type;
             if (arrangement.arrangement_params != null) item.arrangement_params.putAll(arrangement.arrangement_params);
-            CityC8ArrangementEngine.SolveResult solveResult = CityC8ArrangementEngine.solve(area, layoutPlan, arrangement);
+            CityC8ArrangementEngine.SolveResult solveResult = CityC8ArrangementEngine.solve(area, layoutPlan, arrangement, heightData, c2ScanData);
             item.placements = solveResult.placements != null ? solveResult.placements : new ArrayList<>();
             item.arrangement_success = solveResult.success;
             item.arrangement_errors = solveResult.errors != null ? new ArrayList<>(solveResult.errors) : new ArrayList<>();

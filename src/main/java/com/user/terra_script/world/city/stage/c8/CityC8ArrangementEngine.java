@@ -2,6 +2,9 @@ package com.user.terra_script.world.city.stage.c8;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.user.terra_script.world.city.stage.CityHeightResolver;
+import com.user.terra_script.world.city.stage.c1.CityStage1BinaryIO;
+import com.user.terra_script.world.city.stage.c2.CityC2ScanBinaryIO;
 import com.user.terra_script.world.city.stage.c6.CityC6Stages;
 import com.user.terra_script.world.city.stage.c7.CityC7Stages;
 import com.user.terra_script.world.city.stage.c8.arrangement.ArrangementType;
@@ -28,7 +31,9 @@ public final class CityC8ArrangementEngine {
     public static SolveResult solve(
             CityC6Stages.BuildAreaSummary area,
             CityC6Stages.LayoutPlan plan,
-            CityC7Stages.GroupArrangementDecision arrangement
+            CityC7Stages.GroupArrangementDecision arrangement,
+            CityStage1BinaryIO.HeightData heightData,
+            CityC2ScanBinaryIO.C2ScanData c2ScanData
     ) {
         SolveResult result = new SolveResult();
         if (area == null || plan == null || arrangement == null || arrangement.selected_components == null || arrangement.selected_components.isEmpty()) {
@@ -60,7 +65,7 @@ public final class CityC8ArrangementEngine {
             longX = true;
         }
 
-        SolveContext ctx = new SolveContext(area, arrangement, metaById, spacing, maxPieces, maxDepth);
+        SolveContext ctx = new SolveContext(area, arrangement, metaById, spacing, maxPieces, maxDepth, heightData, c2ScanData);
         if (type == ArrangementType.LINEAR_DOCK) {
             solveLinearDock(ctx, arrangement, metaById, baseX, baseZ, longX);
             result.placements.addAll(ctx.nodes);
@@ -80,6 +85,7 @@ public final class CityC8ArrangementEngine {
             TemplateMeta rootMeta = metaById.get(rootTemplateId);
             CityC8Stages.PlacementNode root = node(seed.component, seed.x, seed.z, seed.rotation, 0, null, "seed_anchor");
             root.node_id = "p" + ctx.nextId++;
+            applyFootprint(root, rootMeta);
             int mark = ctx.nodes.size();
             ctx.nodes.add(root);
             ctx.occupied.add(pack(root.x, root.z));
@@ -161,6 +167,10 @@ public final class CityC8ArrangementEngine {
             child.template_id = nextMeta.structure_id;
             child.role = nextMeta.piece_role;
             child.attach_to_component_id = currentNode.component_id;
+            applyFootprint(child, nextMeta);
+            if (!isPlacementFeasible(ctx, child, nextMeta, "linear")) {
+                break;
+            }
             ctx.nodes.add(child);
             ctx.occupied.add(pack(nx, nz));
             currentNode = child;
@@ -228,7 +238,7 @@ public final class CityC8ArrangementEngine {
         return out;
     }
 
-    private static TemplateMeta chooseNeighborMeta(
+    private static List<TemplateMeta> collectNeighborCandidates(
             TemplateMeta current,
             Direction dir,
             Map<String, TemplateMeta> metaById,
@@ -236,6 +246,7 @@ public final class CityC8ArrangementEngine {
             int depth
     ) {
         List<TemplateMeta> candidates = new ArrayList<>();
+        if (current == null) return candidates;
         if (current.allowed_neighbors != null && !current.allowed_neighbors.isEmpty()) {
             for (String allowed : current.allowed_neighbors) {
                 TemplateMeta byId = metaById.get(allowed);
@@ -262,10 +273,8 @@ public final class CityC8ArrangementEngine {
                 }
             }
         }
-        if (candidates.isEmpty()) return null;
-
         candidates.sort((a, b) -> Double.compare(scoreNeighbor(b, dir, depth), scoreNeighbor(a, dir, depth)));
-        return candidates.get(0);
+        return dedupeCandidates(candidates);
     }
 
     private static TemplateMeta chooseLinearNextMeta(
@@ -292,7 +301,8 @@ public final class CityC8ArrangementEngine {
                 return same;
             }
         }
-        return chooseNeighborMeta(current, dir, metaById, arrangement, depth);
+        List<TemplateMeta> candidates = collectNeighborCandidates(current, dir, metaById, arrangement, depth);
+        return candidates.isEmpty() ? null : candidates.get(0);
     }
 
     private static boolean expandNode(
@@ -356,39 +366,45 @@ public final class CityC8ArrangementEngine {
             int depth,
             int branchIndex
     ) {
-        TemplateMeta nextMeta = chooseNeighborMeta(parentMeta, dir, ctx.metaById, ctx.arrangement, depth + 1);
-        if (nextMeta == null) return null;
-        int step = Math.max(ctx.spacing, nextMeta.primarySpan() + 2);
-        int nx = parent.x + dir.dx * step;
-        int nz = parent.z + dir.dz * step;
-        if (ctx.occupied.contains(pack(nx, nz))) {
-            nx += dir.rightDx() * (branchIndex + 1) * 4;
-            nz += dir.rightDz() * (branchIndex + 1) * 4;
-        }
-        if (ctx.occupied.contains(pack(nx, nz))) {
-            ctx.warnings.add("occupied_collision:" + nx + "," + nz);
-            return null;
-        }
-        if (!insideArea(ctx.area, nx, nz)) {
-            ctx.warnings.add("out_of_bounds:" + nx + "," + nz);
-            return null;
-        }
+        List<TemplateMeta> candidates = collectNeighborCandidates(parentMeta, dir, ctx.metaById, ctx.arrangement, depth + 1);
+        if (candidates.isEmpty()) return null;
 
-        CityC8Stages.PlacementNode child = new CityC8Stages.PlacementNode();
-        child.node_id = "p" + ctx.nextId++;
-        child.component_id = parent.component_id;
-        child.template_id = nextMeta.structure_id;
-        child.role = nextMeta.piece_role;
-        child.x = nx;
-        child.z = nz;
-        child.rotation = dir.rotation;
-        child.level = depth + 1;
-        child.attach_to_component_id = parent.component_id;
-        child.parent_node_id = parent.node_id;
-        child.placement_reason = "jigsaw_bfs_expand";
-        ctx.nodes.add(child);
-        ctx.occupied.add(pack(nx, nz));
-        return child;
+        List<CandidatePlacement> feasible = new ArrayList<>();
+        for (TemplateMeta nextMeta : candidates) {
+            int step = Math.max(ctx.spacing, nextMeta.primarySpan() + 2);
+            int nx = parent.x + dir.dx * step;
+            int nz = parent.z + dir.dz * step;
+            if (ctx.occupied.contains(pack(nx, nz))) {
+                nx += dir.rightDx() * (branchIndex + 1) * 4;
+                nz += dir.rightDz() * (branchIndex + 1) * 4;
+            }
+            CityC8Stages.PlacementNode child = new CityC8Stages.PlacementNode();
+            child.node_id = "p" + ctx.nextId;
+            child.component_id = parent.component_id;
+            child.template_id = nextMeta.structure_id;
+            child.role = nextMeta.piece_role;
+            child.x = nx;
+            child.z = nz;
+            child.rotation = dir.rotation;
+            child.level = depth + 1;
+            child.attach_to_component_id = parent.component_id;
+            child.parent_node_id = parent.node_id;
+            child.placement_reason = "jigsaw_bfs_expand";
+            applyFootprint(child, nextMeta);
+            String reject = firstPlacementRejectReason(ctx, child, nextMeta);
+            if (reject == null) {
+                feasible.add(new CandidatePlacement(child, nextMeta, scoreNeighbor(nextMeta, dir, depth + 1)));
+            } else {
+                ctx.warnings.add(reject + ":" + safe(parent.node_id) + ":" + safe(nextMeta.structure_id));
+            }
+        }
+        if (feasible.isEmpty()) return null;
+
+        CandidatePlacement chosen = pickCandidate(ctx, feasible, parent, dir, depth);
+        chosen.node.node_id = "p" + ctx.nextId++;
+        ctx.nodes.add(chosen.node);
+        ctx.occupied.add(pack(chosen.node.x, chosen.node.z));
+        return chosen.node;
     }
 
     private static boolean canTerminate(TemplateMeta meta, int successCount, boolean isRoot) {
@@ -582,12 +598,114 @@ public final class CityC8ArrangementEngine {
 
     private static int axisSpan(TemplateMeta meta, Direction dir) {
         if (meta == null || meta.size == null || dir == null) return 0;
-        return dir.dx != 0 ? Math.max(meta.size.width, meta.size.length) : Math.max(meta.size.length, meta.size.width);
+        return dir.dx != 0 ? meta.size.width : meta.size.length;
     }
 
     private static int crossSpan(TemplateMeta meta, Direction dir) {
         if (meta == null || meta.size == null || dir == null) return 0;
-        return dir.dx != 0 ? Math.min(meta.size.width, meta.size.length) : Math.min(meta.size.length, meta.size.width);
+        return dir.dx != 0 ? meta.size.length : meta.size.width;
+    }
+
+    private static void applyFootprint(CityC8Stages.PlacementNode node, TemplateMeta meta) {
+        if (node == null || meta == null || meta.size == null) return;
+        FootprintBox box = computeFootprint(node.x, node.z, node.rotation, meta.size.length, meta.size.width);
+        node.footprint_min_x = box.minX;
+        node.footprint_min_z = box.minZ;
+        node.footprint_max_x = box.maxX;
+        node.footprint_max_z = box.maxZ;
+    }
+
+    private static String firstPlacementRejectReason(SolveContext ctx, CityC8Stages.PlacementNode node, TemplateMeta meta) {
+        if (ctx.occupied.contains(pack(node.x, node.z))) return "occupied_collision";
+        if (!insideArea(ctx.area, node.x, node.z, meta, Direction.fromRotation(node.rotation))) return "out_of_bounds";
+        if (intersectsExisting(ctx.nodes, node)) return "footprint_collision";
+        if (!terrainPasses(ctx, node)) return "terrain_rejected";
+        return null;
+    }
+
+    private static boolean isPlacementFeasible(SolveContext ctx, CityC8Stages.PlacementNode node, TemplateMeta meta, String prefix) {
+        String reject = firstPlacementRejectReason(ctx, node, meta);
+        if (reject == null) return true;
+        ctx.warnings.add(reject + ":" + prefix + ":" + safe(node.template_id));
+        return false;
+    }
+
+    private static boolean intersectsExisting(List<CityC8Stages.PlacementNode> nodes, CityC8Stages.PlacementNode candidate) {
+        if (candidate == null || candidate.footprint_min_x == null || candidate.footprint_min_z == null
+                || candidate.footprint_max_x == null || candidate.footprint_max_z == null) {
+            return false;
+        }
+        for (CityC8Stages.PlacementNode existing : nodes) {
+            if (existing == null || existing.footprint_min_x == null || existing.footprint_min_z == null
+                    || existing.footprint_max_x == null || existing.footprint_max_z == null) {
+                continue;
+            }
+            boolean separated = candidate.footprint_max_x < existing.footprint_min_x
+                    || candidate.footprint_min_x > existing.footprint_max_x
+                    || candidate.footprint_max_z < existing.footprint_min_z
+                    || candidate.footprint_min_z > existing.footprint_max_z;
+            if (!separated) return true;
+        }
+        return false;
+    }
+
+    private static boolean terrainPasses(SolveContext ctx, CityC8Stages.PlacementNode node) {
+        if (ctx.heightData == null || node == null || node.footprint_min_x == null || node.footprint_min_z == null
+                || node.footprint_max_x == null || node.footprint_max_z == null) {
+            return true;
+        }
+        int centerX = node.x;
+        int centerZ = node.z;
+        int[] xs = new int[]{node.footprint_min_x, node.footprint_max_x, centerX, node.footprint_min_x, node.footprint_max_x};
+        int[] zs = new int[]{node.footprint_min_z, node.footprint_max_z, centerZ, node.footprint_max_z, node.footprint_min_z};
+        int min = Integer.MAX_VALUE;
+        int max = Integer.MIN_VALUE;
+        for (int i = 0; i < xs.length; i++) {
+            int h = CityHeightResolver.resolveHeight(ctx.heightData, ctx.c2ScanData, xs[i], zs[i]);
+            min = Math.min(min, h);
+            max = Math.max(max, h);
+        }
+        return (max - min) <= ctx.maxTerrainDelta;
+    }
+
+    private static CandidatePlacement pickCandidate(
+            SolveContext ctx,
+            List<CandidatePlacement> candidates,
+            CityC8Stages.PlacementNode parent,
+            Direction dir,
+            int depth
+    ) {
+        if (candidates.size() == 1) return candidates.get(0);
+        double total = 0.0;
+        for (CandidatePlacement candidate : candidates) total += Math.max(0.05, candidate.weight);
+        long seed = (safe(ctx.arrangement != null ? ctx.arrangement.group_id : "") + "|" + safe(parent.node_id) + "|" + dir.nameLower + "|" + depth).hashCode();
+        double pick = (Math.abs(seed) % 10000) / 10000.0 * total;
+        double acc = 0.0;
+        for (CandidatePlacement candidate : candidates) {
+            acc += Math.max(0.05, candidate.weight);
+            if (pick <= acc) return candidate;
+        }
+        return candidates.get(0);
+    }
+
+    private static List<TemplateMeta> dedupeCandidates(List<TemplateMeta> candidates) {
+        List<TemplateMeta> out = new ArrayList<>();
+        Set<String> seen = new HashSet<>();
+        for (TemplateMeta candidate : candidates) {
+            if (candidate == null || candidate.structure_id == null || !seen.add(candidate.structure_id)) continue;
+            out.add(candidate);
+        }
+        return out;
+    }
+
+    private static FootprintBox computeFootprint(int originX, int originZ, int rotation, int length, int width) {
+        int normalized = ((rotation % 360) + 360) % 360;
+        return switch (normalized) {
+            case 90 -> new FootprintBox(originX - length + 1, originZ, originX, originZ + width - 1);
+            case 180 -> new FootprintBox(originX - width + 1, originZ - length + 1, originX, originZ);
+            case 270 -> new FootprintBox(originX, originZ - width + 1, originX + length - 1, originZ);
+            default -> new FootprintBox(originX, originZ, originX + width - 1, originZ + length - 1);
+        };
     }
 
     private static final class SeedAnchor {
@@ -612,6 +730,9 @@ public final class CityC8ArrangementEngine {
         final int maxPieces;
         final int maxDepth;
         final int maxBranchPerDepth;
+        final CityStage1BinaryIO.HeightData heightData;
+        final CityC2ScanBinaryIO.C2ScanData c2ScanData;
+        final int maxTerrainDelta;
         final List<CityC8Stages.PlacementNode> nodes = new ArrayList<>();
         final Set<Long> occupied = new HashSet<>();
         final List<String> errors = new ArrayList<>();
@@ -624,7 +745,9 @@ public final class CityC8ArrangementEngine {
                 Map<String, TemplateMeta> metaById,
                 int spacing,
                 int maxPieces,
-                int maxDepth
+                int maxDepth,
+                CityStage1BinaryIO.HeightData heightData,
+                CityC2ScanBinaryIO.C2ScanData c2ScanData
         ) {
             this.area = area;
             this.arrangement = arrangement;
@@ -632,11 +755,18 @@ public final class CityC8ArrangementEngine {
             this.spacing = spacing;
             this.maxPieces = maxPieces;
             this.maxDepth = maxDepth;
+            this.heightData = heightData;
+            this.c2ScanData = c2ScanData;
+            this.maxTerrainDelta = readStrategyInt(arrangement, "max_terrain_delta", 12);
             this.maxBranchPerDepth = arrangement != null && arrangement.limits != null
                     ? Math.max(1, arrangement.limits.max_branch_per_depth)
                     : 1;
         }
     }
+
+    private record FootprintBox(int minX, int minZ, int maxX, int maxZ) {}
+
+    private record CandidatePlacement(CityC8Stages.PlacementNode node, TemplateMeta meta, double weight) {}
 
     public static final class SolveResult {
         public boolean success = true;
@@ -728,6 +858,16 @@ public final class CityC8ArrangementEngine {
                 case SOUTH -> 0;
                 case EAST -> 1;
                 case WEST -> -1;
+            };
+        }
+
+        static Direction fromRotation(int rotation) {
+            int normalized = ((rotation % 360) + 360) % 360;
+            return switch (normalized) {
+                case 90 -> EAST;
+                case 180 -> SOUTH;
+                case 270 -> WEST;
+                default -> NORTH;
             };
         }
     }

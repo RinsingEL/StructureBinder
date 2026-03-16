@@ -1,0 +1,317 @@
+{
+"rectangles": [
+{
+"rid": "R01",
+"zone_id": 1,
+"structure_id": "royal_palace",
+"cx": 270,
+"cy": 120,
+"w": 16,
+"h": 16
+},
+{
+"rid": "R02",
+"zone_id": 1,
+"structure_id": "city_hall",
+"cx": 290,
+"cy": 120,
+"w": 12,
+"h": 12
+},
+{
+"rid": "R03",
+"zone_id": 1,
+"structure_id": "noble_mansion",
+"cx": 250,
+"cy": 120,
+"w": 12,
+"h": 12
+},
+{
+"rid": "R04",
+"zone_id": 1,
+"structure_id": "noble_mansion",
+"cx": 270,
+"cy": 140,
+"w": 12,
+"h": 12
+},
+{
+"rid": "R05",
+"zone_id": 1,
+"structure_id": "grand_theater",
+"cx": 290,
+"cy": 140,
+"w": 10,
+"h": 10
+},
+{
+"rid": "R06",
+"zone_id": 1,
+"structure_id": "central_plaza",
+"cx": 280,
+"cy": 160,
+"w": 14,
+"h": 14
+},
+{
+"rid": "R07",
+"zone_id": 1,
+"structure_id": "cargo_dock",
+"cx": 340,
+"cy": 120,
+"w": 20,
+"h": 8
+},
+{
+"rid": "R08",
+"zone_id": 1,
+"structure_id": "shipyard",
+"cx": 370,
+"cy": 120,
+"w": 18,
+"h": 12
+},
+{
+"rid": "R09",
+"zone_id": 1,
+"structure_id": "harbor_storage",
+"cx": 400,
+"cy": 120,
+"w": 14,
+"h": 10
+},
+{
+"rid": "R10",
+"zone_id": 1,
+"structure_id": "cargo_dock",
+"cx": 340,
+"cy": 140,
+"w": 20,
+"h": 8
+},
+{
+"rid": "R11",
+"zone_id": 1,
+"structure_id": "harbor_storage",
+"cx": 370,
+"cy": 140,
+"w": 14,
+"h": 10
+},
+{
+"rid": "R12",
+"zone_id": 2,
+"structure_id": "foreign_merchant_quarter",
+"cx": 220,
+"cy": 160,
+"w": 12,
+"h": 12
+},
+{
+"rid": "R13",
+"zone_id": 2,
+"structure_id": "urban_market",
+"cx": 240,
+"cy": 160,
+"w": 10,
+"h": 10
+},
+{
+"rid": "R14",
+"zone_id": 2,
+"structure_id": "retail_block",
+"cx": 220,
+"cy": 180,
+"w": 10,
+"h": 8
+},
+{
+"rid": "R15",
+"zone_id": 2,
+"structure_id": "trade_warehouse",
+"cx": 240,
+"cy": 180,
+"w": 12,
+"h": 10
+},
+{
+"rid": "R16",
+"zone_id": 2,
+"structure_id": "finance_tower",
+"cx": 260,
+"cy": 180,
+"w": 8,
+"h": 8
+},
+{
+"rid": "R17",
+"zone_id": 2,
+"structure_id": "office_block_A",
+"cx": 220,
+"cy": 200,
+"w": 10, "h": 10
+},
+{
+"rid": "R18",
+"zone_id": 2,
+"structure_id": "midrise_residence",
+"cx": 240,
+"cy": 200,
+"w": 8,
+"h": 10
+},
+{
+"rid": "R19",
+"zone_id": 2,
+"structure_id": "townhouse_cluster",
+"cx": 260,
+"cy": 200,
+"w": 6,
+"h": 6
+},
+{
+"rid": "R20",
+"zone_id": 2,
+"structure_id": "midrise_residence",
+"cx": 220,
+"cy": 220,
+"w": 8,
+"h": 10
+},
+{
+"rid": "R21",
+"zone_id": 2,
+"structure_id": "cargo_dock",
+"cx": 340,
+"cy": 200,
+"w": 18,
+"h": 8
+},
+{
+"rid": "R22",
+"zone_id": 2,
+"structure_id": "shipyard",
+"cx": 370,
+"cy": 200,
+"w": 16,
+"h": 12
+},
+{
+"rid": "R23",
+"zone_id": 2,
+"structure_id": "trade_warehouse",
+"cx": 320,
+"cy": 220,
+"w": 14,
+"h": 10
+},
+{
+"rid": "R24",
+"zone_id": 2,
+"structure_id": "simple_dock",
+"cx": 340,
+"cy": 220,
+"w": 8,
+"h": 6
+},
+{
+"rid": "R25",
+"zone_id": 3,
+"structure_id": "coastal_farm",
+"cx": 180,
+"cy": 160,
+"w": 12,
+"h": 10
+},
+{
+"rid": "R26",
+"zone_id": 3,
+"structure_id": "coastal_farm",
+"cx": 180,
+"cy": 180,
+"w": 12,
+"h": 10
+},
+{
+"rid": "R27",
+"zone_id": 3,
+"structure_id": "coastal_farm",
+"cx": 180,
+"cy": 200,
+"w": 12,
+"h": 10
+},
+{
+"rid": "R28",
+"zone_id": 3,
+"structure_id": "buffer_hamlet",
+"cx": 160,
+"cy": 160,
+"w": 8,
+"h": 8
+},
+{
+"rid": "R29",
+"zone_id": 3,
+"structure_id": "buffer_hamlet",
+"cx": 160,
+"cy": 180,
+"w": 8,
+"h": 8
+},
+{
+"rid": "R30",
+"zone_id": 3,
+"structure_id": "outpost_watchtower",
+"cx": 140,
+"cy": 160,
+"w": 4,
+"h": 4
+},
+{
+"rid": "R31",
+"zone_id": 3,
+"structure_id": "fishing_village",
+"cx": 220,
+"cy": 260,
+"w": 10,
+"h": 10
+},
+{
+"rid": "R32",
+"zone_id": 3, "structure_id": "simple_dock",
+"cx": 240,
+"cy": 260,
+"w": 8,
+"h": 6
+},
+{
+"rid": "R33",
+"zone_id": 3,
+"structure_id": "buffer_hamlet",
+"cx": 200,
+"cy": 260,
+"w": 8,
+"h": 8
+},
+{
+"rid": "R34",
+"zone_id": 3,
+"structure_id": "coastal_farm",
+"cx": 220,
+"cy": 280,
+"w": 12,
+"h": 10
+},
+{
+"rid": "R35",
+"zone_id": 3,
+"structure_id": "outpost_watchtower",
+"cx": 200,
+"cy": 300,
+"w": 4,
+"h": 4
+}
+]
+}
