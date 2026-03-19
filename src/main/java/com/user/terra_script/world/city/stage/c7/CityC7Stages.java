@@ -4,8 +4,8 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.user.terra_script.world.city.stage.CityC35CatalogIO;
 import com.user.terra_script.world.city.stage.c6.CityC6Stages;
-import net.minecraftforge.fml.loading.FMLPaths;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -23,7 +23,6 @@ public final class CityC7Stages {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
     public static final String C7_FILE = "C7_TemplateSelection.json";
-    private static final String C3_5_CATALOG_FILE = "config/structureTemplate/C3_5_StructureCatalog.preprocessed.json";
 
     private static final List<String> VILLAGE_CIVIC_L = List.of(
             "minecraft:village/plains/town_centers/plains_meeting_point_1",
@@ -57,52 +56,17 @@ public final class CityC7Stages {
         public String step;
         public boolean ok;
         public String city_id;
+        public int catalog_version;
+        public long generated_at_epoch_ms;
+        public List<String> function_enum_table = new ArrayList<>();
         public List<CatalogStructure> structures = new ArrayList<>();
     }
 
-    private static final class CatalogStructure {
-        public String structure_id;
-        public Size size = new Size();
-        public Orientation orientation = new Orientation();
-        public String piece_role;
-        public Map<String, Double> style_score = new LinkedHashMap<>();
-        public List<FunctionCandidate> function_candidates = new ArrayList<>();
-        public String namespace;
-        public String path;
-        public String size_tier;
-        public List<String> connector_types = new ArrayList<>();
-        public List<String> connector_dirs = new ArrayList<>();
-        public List<String> allowed_neighbors = new ArrayList<>();
-        public String landing_hint;
-        public String growth_axis;
-        public String vertical_role;
-        public int vertical_clearance;
-        public TagSource tag_source = new TagSource();
-        public String notes;
-    }
-
-    private static final class Size {
-        public int length;
-        public int width;
-        public int height;
-    }
-
-    private static final class Orientation {
-        public List<String> jigsaw_facing = new ArrayList<>();
-        public String entry_facing;
-        public List<Integer> rotations = new ArrayList<>();
-    }
-
-    private static final class FunctionCandidate {
-        public String function;
-        public double score;
-    }
-
-    private static final class TagSource {
-        public boolean scanner;
-        public String preset_rule;
-        public boolean manual_override;
-    }
+    private static final class CatalogStructure extends CityC35CatalogIO.CatalogStructure {}
+    private static final class Size extends CityC35CatalogIO.Size {}
+    private static final class Orientation extends CityC35CatalogIO.Orientation {}
+    private static final class FunctionCandidate extends CityC35CatalogIO.FunctionCandidate {}
+    private static final class TagSource extends CityC35CatalogIO.TagSource {}
 
     public static class C7Selection {
         public String step = "C7";
@@ -211,7 +175,7 @@ public final class CityC7Stages {
 
         Catalog catalog = loadCatalog();
         result.catalog_source = catalog != null && catalog.ok
-                ? FMLPaths.GAMEDIR.get().resolve(C3_5_CATALOG_FILE).toString()
+                ? CityC35CatalogIO.catalogPath().toString()
                 : "hardcoded_vanilla_village_templates";
 
         for (CityC6Stages.LayoutPlan plan : c6Layout.plans) {
@@ -235,7 +199,7 @@ public final class CityC7Stages {
         result.decision_source = "ai_decision_submit";
         Catalog catalog = loadCatalog();
         result.catalog_source = catalog != null && catalog.ok
-                ? FMLPaths.GAMEDIR.get().resolve(C3_5_CATALOG_FILE).toString()
+                ? CityC35CatalogIO.catalogPath().toString()
                 : "hardcoded_vanilla_village_templates";
 
         if (request != null && request.has("arrangements") && request.get("arrangements").isJsonArray()) {
@@ -270,7 +234,7 @@ public final class CityC7Stages {
         arrangement.build_area_id = plan.build_area_id;
         arrangement.arrangement_type = inferArrangementType(plan.group_id);
         arrangement.preset_pool_ref = catalog != null && catalog.ok
-                ? FMLPaths.GAMEDIR.get().resolve(C3_5_CATALOG_FILE).toString()
+                ? CityC35CatalogIO.catalogPath().toString()
                 : "hardcoded_vanilla_village_templates";
         arrangement.notes = "Program fallback arrangement; replace with AI decision when available.";
         arrangement.arrangement_params.put("spacing", defaultSpacing(arrangement.arrangement_type));
@@ -692,7 +656,7 @@ public final class CityC7Stages {
 
         double bestFunctionScore = 0.0;
         if (structure.function_candidates != null) {
-            for (FunctionCandidate candidate : structure.function_candidates) {
+            for (CityC35CatalogIO.FunctionCandidate candidate : structure.function_candidates) {
                 if (candidate == null) continue;
                 String actual = normalizeCatalogFunction(candidate.function);
                 if (functionRole.equals(actual)) bestFunctionScore = Math.max(bestFunctionScore, candidate.score);
@@ -786,13 +750,16 @@ public final class CityC7Stages {
 
     private static Catalog loadCatalog() {
         try {
-            Path path = FMLPaths.GAMEDIR.get().resolve(C3_5_CATALOG_FILE);
-            if (!Files.exists(path)) return null;
-            Catalog catalog = GSON.fromJson(Files.readString(path, StandardCharsets.UTF_8), Catalog.class);
-            if (catalog == null) return null;
+            Catalog catalog = CityC35CatalogIO.loadCatalog(GSON, Catalog.class);
+            if (catalog == null) {
+                System.out.println("[C7] loadCatalog result=null");
+                return null;
+            }
             catalog.ok = catalog.ok && catalog.structures != null;
+            System.out.println("[C7] loadCatalog ok=" + catalog.ok + " structure_count=" + (catalog.structures != null ? catalog.structures.size() : 0));
             return catalog;
         } catch (Exception ignored) {
+            System.out.println("[C7] loadCatalog exception=" + ignored.getClass().getSimpleName() + " msg=" + ignored.getMessage());
             return null;
         }
     }

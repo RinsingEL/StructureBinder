@@ -2,6 +2,7 @@ package com.user.terra_script.world.city.stage.c8;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.user.terra_script.world.city.stage.CityC35CatalogIO;
 import com.user.terra_script.world.city.stage.CityHeightResolver;
 import com.user.terra_script.world.city.stage.c1.CityStage1BinaryIO;
 import com.user.terra_script.world.city.stage.c2.CityC2ScanBinaryIO;
@@ -24,7 +25,6 @@ import java.util.Set;
 
 public final class CityC8ArrangementEngine {
     private static final Gson GSON = new GsonBuilder().create();
-    private static final String C3_5_CATALOG_FILE = "config/structureTemplate/C3_5_StructureCatalog.preprocessed.json";
 
     private CityC8ArrangementEngine() {}
 
@@ -134,6 +134,7 @@ public final class CityC8ArrangementEngine {
 
         CityC8Stages.PlacementNode root = node(rootComponent, baseX, baseZ, rootRotation, 0, null, "seed_anchor");
         root.node_id = "p" + ctx.nextId++;
+        applyFootprint(root, metaById.get(root.template_id));
         ctx.nodes.add(root);
         ctx.occupied.add(pack(root.x, root.z));
 
@@ -241,19 +242,25 @@ public final class CityC8ArrangementEngine {
     private static List<TemplateMeta> collectNeighborCandidates(
             TemplateMeta current,
             Direction dir,
+            ConnectorView sourceConnector,
             Map<String, TemplateMeta> metaById,
             CityC7Stages.GroupArrangementDecision arrangement,
             int depth
     ) {
         List<TemplateMeta> candidates = new ArrayList<>();
         if (current == null) return candidates;
+        String requiredSocket = sourceConnector != null && sourceConnector.socket != null ? safe(sourceConnector.socket) : "";
+        Set<String> allowedPools = sourceConnector != null && sourceConnector.connectToPools != null
+                ? new HashSet<>(sourceConnector.connectToPools)
+                : Set.of();
         if (current.allowed_neighbors != null && !current.allowed_neighbors.isEmpty()) {
             for (String allowed : current.allowed_neighbors) {
                 TemplateMeta byId = metaById.get(allowed);
-                if (byId != null) candidates.add(byId);
+                if (byId != null && connectorCompatible(byId, dir, requiredSocket, allowedPools)) candidates.add(byId);
                 else {
                     for (TemplateMeta meta : metaById.values()) {
-                        if (meta.structure_id.contains(allowed) || meta.path.contains(allowed.toLowerCase(Locale.ROOT))) {
+                        if ((meta.structure_id.contains(allowed) || meta.path.contains(allowed.toLowerCase(Locale.ROOT)))
+                                && connectorCompatible(meta, dir, requiredSocket, allowedPools)) {
                             candidates.add(meta);
                         }
                     }
@@ -264,6 +271,7 @@ public final class CityC8ArrangementEngine {
             String arrangementType = arrangement != null ? safe(arrangement.arrangement_type).toLowerCase(Locale.ROOT) : "";
             for (TemplateMeta meta : metaById.values()) {
                 if (meta == null || meta.structure_id == null || meta.structure_id.isBlank()) continue;
+                if (!connectorCompatible(meta, dir, requiredSocket, allowedPools)) continue;
                 if (arrangementType.contains("dock") || safe(arrangement != null ? arrangement.group_id : "").toLowerCase(Locale.ROOT).contains("port")) {
                     if (meta.path.contains("ship") || meta.path.contains("ocean") || meta.path.contains("beach") || meta.path.contains("lighthouse")) {
                         candidates.add(meta);
@@ -301,7 +309,7 @@ public final class CityC8ArrangementEngine {
                 return same;
             }
         }
-        List<TemplateMeta> candidates = collectNeighborCandidates(current, dir, metaById, arrangement, depth);
+        List<TemplateMeta> candidates = collectNeighborCandidates(current, dir, null, metaById, arrangement, depth);
         return candidates.isEmpty() ? null : candidates.get(0);
     }
 
@@ -321,11 +329,8 @@ public final class CityC8ArrangementEngine {
             return true;
         }
 
-        List<String> dirs = !meta.connector_dirs.isEmpty() ? meta.connector_dirs : meta.jigsawFacing;
-        if (isRoot) {
-            dirs = allowedRootDirs(ctx.arrangement, dirs);
-        }
-        if (dirs.isEmpty()) {
+        List<ConnectorView> connectors = resolveConnectorViews(meta, node.rotation);
+        if (connectors.isEmpty()) {
             return canTerminate(meta, 0, isRoot);
         }
         if (depth >= ctx.maxDepth) {
@@ -335,12 +340,14 @@ public final class CityC8ArrangementEngine {
 
         int successCount = 0;
         int branchIndex = 0;
-        for (String dirRaw : dirs) {
-            Direction dir = Direction.parse(dirRaw);
+        List<String> rootDirs = isRoot ? allowedRootDirs(ctx.arrangement, List.of()) : List.of();
+        for (ConnectorView connector : connectors) {
+            Direction dir = connector.direction;
             if (dir == null) continue;
+            if (isRoot && !rootDirs.isEmpty() && !rootDirs.contains(dir.nameLower)) continue;
             if (successCount >= ctx.maxBranchPerDepth) break;
             int branchMark = ctx.nodes.size();
-            CityC8Stages.PlacementNode child = tryCreateChild(ctx, node, meta, dir, depth, branchIndex);
+            CityC8Stages.PlacementNode child = tryCreateChild(ctx, node, meta, connector, depth, branchIndex);
             branchIndex++;
             if (child == null) {
                 ctx.warnings.add("branch_rejected:" + safe(node.node_id) + ":" + safe(dir.nameLower));
@@ -362,11 +369,12 @@ public final class CityC8ArrangementEngine {
             SolveContext ctx,
             CityC8Stages.PlacementNode parent,
             TemplateMeta parentMeta,
-            Direction dir,
+            ConnectorView connector,
             int depth,
             int branchIndex
     ) {
-        List<TemplateMeta> candidates = collectNeighborCandidates(parentMeta, dir, ctx.metaById, ctx.arrangement, depth + 1);
+        Direction dir = connector.direction;
+        List<TemplateMeta> candidates = collectNeighborCandidates(parentMeta, dir, connector, ctx.metaById, ctx.arrangement, depth + 1);
         if (candidates.isEmpty()) return null;
 
         List<CandidatePlacement> feasible = new ArrayList<>();
@@ -385,7 +393,7 @@ public final class CityC8ArrangementEngine {
             child.role = nextMeta.piece_role;
             child.x = nx;
             child.z = nz;
-            child.rotation = dir.rotation;
+            child.rotation = resolveCandidateRotation(nextMeta, dir, connector);
             child.level = depth + 1;
             child.attach_to_component_id = parent.component_id;
             child.parent_node_id = parent.node_id;
@@ -425,6 +433,103 @@ public final class CityC8ArrangementEngine {
         String preferred = arrangement.seed != null ? arrangement.seed.start_connector_dir : null;
         if (preferred != null && !preferred.isBlank()) return List.of(preferred);
         return fallback;
+    }
+
+    private static List<ConnectorView> resolveConnectorViews(TemplateMeta meta, int nodeRotation) {
+        List<ConnectorView> out = new ArrayList<>();
+        if (meta != null && meta.connectors != null && !meta.connectors.isEmpty()) {
+            for (CityC35CatalogIO.ConnectorSpec connector : meta.connectors) {
+                if (connector == null) continue;
+                Direction local = Direction.parse(connector.facing);
+                if (local == null) continue;
+                out.add(new ConnectorView(
+                        rotate(local, nodeRotation),
+                        connector.socket,
+                        connector.connect_to_pools != null ? new ArrayList<>(connector.connect_to_pools) : List.of()
+                ));
+            }
+        }
+        if (!out.isEmpty()) return out;
+
+        List<String> fallback = meta != null && meta.connector_dirs != null && !meta.connector_dirs.isEmpty()
+                ? meta.connector_dirs
+                : (meta != null ? meta.jigsawFacing : List.of());
+        for (String dirRaw : fallback) {
+            Direction dir = Direction.parse(dirRaw);
+            if (dir != null) out.add(new ConnectorView(dir, "", List.of()));
+        }
+        return out;
+    }
+
+    private static boolean connectorCompatible(TemplateMeta candidate, Direction incomingDir, String requiredSocket, Set<String> allowedPools) {
+        if (candidate == null) return false;
+        if (!allowedPools.isEmpty()) {
+            String pool = safe(candidate.preset_pool);
+            boolean poolOk = allowedPools.stream().anyMatch(pool::equalsIgnoreCase);
+            if (!poolOk) return false;
+        }
+        if (incomingDir == null) return true;
+        if (candidate.constraints != null && candidate.constraints.allowed_rotations != null && !candidate.constraints.allowed_rotations.isEmpty()) {
+            for (Integer rotation : candidate.constraints.allowed_rotations) {
+                if (rotation != null && hasMatchingConnector(candidate, incomingDir, requiredSocket, rotation)) return true;
+            }
+        }
+        if (hasMatchingLegacyDirection(candidate, incomingDir)) return true;
+        return candidate.connectors == null || candidate.connectors.isEmpty();
+    }
+
+    private static boolean hasMatchingConnector(TemplateMeta candidate, Direction incomingDir, String requiredSocket, int rotation) {
+        if (candidate.connectors == null || candidate.connectors.isEmpty()) return false;
+        for (CityC35CatalogIO.ConnectorSpec connector : candidate.connectors) {
+            if (connector == null) continue;
+            Direction facing = Direction.parse(connector.facing);
+            if (facing == null) continue;
+            Direction worldFacing = rotate(facing, rotation);
+            if (worldFacing != incomingDir.opposite()) continue;
+            if (!requiredSocket.isBlank()) {
+                String socket = safe(connector.socket);
+                if (!requiredSocket.equals(socket)) continue;
+            }
+            return true;
+        }
+        return false;
+    }
+
+    private static boolean hasMatchingLegacyDirection(TemplateMeta candidate, Direction incomingDir) {
+        if (candidate == null || incomingDir == null) return false;
+        String needed = incomingDir.opposite().nameLower;
+        if (candidate.connector_dirs != null && candidate.connector_dirs.stream().anyMatch(needed::equalsIgnoreCase)) return true;
+        return candidate.jigsawFacing != null && candidate.jigsawFacing.stream().anyMatch(needed::equalsIgnoreCase);
+    }
+
+    private static int resolveCandidateRotation(TemplateMeta candidate, Direction incomingDir, ConnectorView sourceConnector) {
+        List<Integer> rotations = candidate.constraints != null && candidate.constraints.allowed_rotations != null && !candidate.constraints.allowed_rotations.isEmpty()
+                ? candidate.constraints.allowed_rotations
+                : (candidate.orientation != null && candidate.orientation.rotations != null && !candidate.orientation.rotations.isEmpty()
+                ? candidate.orientation.rotations
+                : List.of(0, 90, 180, 270));
+        String requiredSocket = sourceConnector != null && sourceConnector.socket != null ? safe(sourceConnector.socket) : "";
+        for (Integer rotation : rotations) {
+            if (rotation == null) continue;
+            if (hasMatchingConnector(candidate, incomingDir, requiredSocket, rotation)) return rotation;
+        }
+        return incomingDir != null ? incomingDir.rotation : 0;
+    }
+
+    private static Direction rotate(Direction base, int rotation) {
+        if (base == null) return null;
+        int normalized = ((rotation % 360) + 360) % 360;
+        int turns = normalized / 90;
+        Direction current = base;
+        for (int i = 0; i < turns; i++) {
+            current = switch (current) {
+                case NORTH -> Direction.EAST;
+                case EAST -> Direction.SOUTH;
+                case SOUTH -> Direction.WEST;
+                case WEST -> Direction.NORTH;
+            };
+        }
+        return current;
     }
 
     private static int readStrategyInt(CityC7Stages.GroupArrangementDecision arrangement, String key, int fallback) {
@@ -523,10 +628,16 @@ public final class CityC8ArrangementEngine {
 
     private static Catalog loadCatalog() {
         try {
-            Path path = FMLPaths.GAMEDIR.get().resolve(C3_5_CATALOG_FILE);
-            if (!Files.exists(path)) return null;
-            return GSON.fromJson(Files.readString(path, StandardCharsets.UTF_8), Catalog.class);
+            Catalog catalog = CityC35CatalogIO.loadCatalog(GSON, Catalog.class);
+            if (catalog == null) {
+                System.out.println("[C8] loadCatalog result=null");
+                return null;
+            }
+            catalog.ok = catalog.ok && catalog.structures != null;
+            System.out.println("[C8] loadCatalog ok=" + catalog.ok + " structure_count=" + (catalog.structures != null ? catalog.structures.size() : 0));
+            return catalog;
         } catch (Exception ignored) {
+            System.out.println("[C8] loadCatalog exception=" + ignored.getClass().getSimpleName() + " msg=" + ignored.getMessage());
             return null;
         }
     }
@@ -607,8 +718,8 @@ public final class CityC8ArrangementEngine {
     }
 
     private static void applyFootprint(CityC8Stages.PlacementNode node, TemplateMeta meta) {
-        if (node == null || meta == null || meta.size == null) return;
-        FootprintBox box = computeFootprint(node.x, node.z, node.rotation, meta.size.length, meta.size.width);
+        if (node == null || meta == null) return;
+        FootprintBox box = computeFootprint(node, meta);
         node.footprint_min_x = box.minX;
         node.footprint_min_z = box.minZ;
         node.footprint_max_x = box.maxX;
@@ -619,7 +730,7 @@ public final class CityC8ArrangementEngine {
         if (ctx.occupied.contains(pack(node.x, node.z))) return "occupied_collision";
         if (!insideArea(ctx.area, node.x, node.z, meta, Direction.fromRotation(node.rotation))) return "out_of_bounds";
         if (intersectsExisting(ctx.nodes, node)) return "footprint_collision";
-        if (!terrainPasses(ctx, node)) return "terrain_rejected";
+        if (!terrainPasses(ctx, node, meta)) return "terrain_rejected";
         return null;
     }
 
@@ -649,23 +760,35 @@ public final class CityC8ArrangementEngine {
         return false;
     }
 
-    private static boolean terrainPasses(SolveContext ctx, CityC8Stages.PlacementNode node) {
+    private static boolean terrainPasses(SolveContext ctx, CityC8Stages.PlacementNode node, TemplateMeta meta) {
         if (ctx.heightData == null || node == null || node.footprint_min_x == null || node.footprint_min_z == null
                 || node.footprint_max_x == null || node.footprint_max_z == null) {
             return true;
         }
-        int centerX = node.x;
-        int centerZ = node.z;
-        int[] xs = new int[]{node.footprint_min_x, node.footprint_max_x, centerX, node.footprint_min_x, node.footprint_max_x};
-        int[] zs = new int[]{node.footprint_min_z, node.footprint_max_z, centerZ, node.footprint_max_z, node.footprint_min_z};
+        List<ProbeWorldPoint> probes = resolveProbePoints(node, meta);
+        if (probes.isEmpty()) return true;
         int min = Integer.MAX_VALUE;
         int max = Integer.MIN_VALUE;
-        for (int i = 0; i < xs.length; i++) {
-            int h = CityHeightResolver.resolveHeight(ctx.heightData, ctx.c2ScanData, xs[i], zs[i]);
+        for (ProbeWorldPoint probe : probes) {
+            int h = CityHeightResolver.resolveHeight(ctx.heightData, ctx.c2ScanData, probe.x, probe.z);
             min = Math.min(min, h);
             max = Math.max(max, h);
+            if (meta.constraints != null && meta.constraints.avoid_water && !isLand(ctx.c2ScanData, probe.x, probe.z)) return false;
         }
-        return (max - min) <= ctx.maxTerrainDelta;
+        int allowedDelta = meta.constraints != null && meta.constraints.max_height_delta > 0
+                ? meta.constraints.max_height_delta
+                : ctx.maxTerrainDelta;
+        if ((max - min) > allowedDelta) return false;
+
+        if (meta.constraints != null && meta.constraints.max_slope > 0) {
+            double span = Math.max(1.0, Math.hypot(
+                    Math.max(1, node.footprint_max_x - node.footprint_min_x + 1),
+                    Math.max(1, node.footprint_max_z - node.footprint_min_z + 1)
+            ));
+            double approxSlope = (max - min) / span;
+            if (approxSlope > meta.constraints.max_slope) return false;
+        }
+        return true;
     }
 
     private static CandidatePlacement pickCandidate(
@@ -698,13 +821,75 @@ public final class CityC8ArrangementEngine {
         return out;
     }
 
-    private static FootprintBox computeFootprint(int originX, int originZ, int rotation, int length, int width) {
+    private static FootprintBox computeFootprint(CityC8Stages.PlacementNode node, TemplateMeta meta) {
+        if (meta.placement != null && meta.placement.footprint != null) {
+            CityC35CatalogIO.Vec3i originOffset = meta.placement.origin_offset != null ? meta.placement.origin_offset : new CityC35CatalogIO.Vec3i();
+            CityC35CatalogIO.Footprint footprint = meta.placement.footprint;
+            int[][] corners = new int[][]{
+                    {footprint.min_x - originOffset.x, footprint.min_z - originOffset.z},
+                    {footprint.max_x - originOffset.x, footprint.min_z - originOffset.z},
+                    {footprint.min_x - originOffset.x, footprint.max_z - originOffset.z},
+                    {footprint.max_x - originOffset.x, footprint.max_z - originOffset.z}
+            };
+            int minX = Integer.MAX_VALUE;
+            int minZ = Integer.MAX_VALUE;
+            int maxX = Integer.MIN_VALUE;
+            int maxZ = Integer.MIN_VALUE;
+            for (int[] corner : corners) {
+                int[] rotated = rotateLocal(corner[0], corner[1], node.rotation);
+                int worldX = node.x + rotated[0];
+                int worldZ = node.z + rotated[1];
+                minX = Math.min(minX, worldX);
+                minZ = Math.min(minZ, worldZ);
+                maxX = Math.max(maxX, worldX);
+                maxZ = Math.max(maxZ, worldZ);
+            }
+            return new FootprintBox(minX, minZ, maxX, maxZ);
+        }
+        int normalized = ((node.rotation % 360) + 360) % 360;
+        int length = meta.size != null ? meta.size.length : 1;
+        int width = meta.size != null ? meta.size.width : 1;
+        return switch (normalized) {
+            case 90 -> new FootprintBox(node.x - length + 1, node.z, node.x, node.z + width - 1);
+            case 180 -> new FootprintBox(node.x - width + 1, node.z - length + 1, node.x, node.z);
+            case 270 -> new FootprintBox(node.x, node.z - width + 1, node.x + length - 1, node.z);
+            default -> new FootprintBox(node.x, node.z, node.x + width - 1, node.z + length - 1);
+        };
+    }
+
+    private static List<ProbeWorldPoint> resolveProbePoints(CityC8Stages.PlacementNode node, TemplateMeta meta) {
+        List<ProbeWorldPoint> out = new ArrayList<>();
+        if (meta != null && meta.placement != null && meta.placement.terrain_probe_points != null && !meta.placement.terrain_probe_points.isEmpty()) {
+            CityC35CatalogIO.Vec3i originOffset = meta.placement.origin_offset != null ? meta.placement.origin_offset : new CityC35CatalogIO.Vec3i();
+            for (CityC35CatalogIO.ProbePoint probe : meta.placement.terrain_probe_points) {
+                if (probe == null) continue;
+                int[] rotated = rotateLocal(probe.x - originOffset.x, probe.z - originOffset.z, node.rotation);
+                out.add(new ProbeWorldPoint(node.x + rotated[0], node.z + rotated[1]));
+            }
+            return out;
+        }
+        out.add(new ProbeWorldPoint(node.x, node.z));
+        if (node.footprint_min_x != null && node.footprint_min_z != null) out.add(new ProbeWorldPoint(node.footprint_min_x, node.footprint_min_z));
+        if (node.footprint_max_x != null && node.footprint_max_z != null) out.add(new ProbeWorldPoint(node.footprint_max_x, node.footprint_max_z));
+        return out;
+    }
+
+    private static boolean isLand(CityC2ScanBinaryIO.C2ScanData data, int worldX, int worldZ) {
+        if (data == null || data.map == null || data.map.length == 0 || data.map[0] == null) return true;
+        int step = Math.max(1, data.step);
+        int ix = (int) Math.round((worldX - data.originX) / (double) step);
+        int iz = (int) Math.round((worldZ - data.originZ) / (double) step);
+        if (ix < 0 || iz < 0 || ix >= data.map.length || iz >= data.map[0].length) return true;
+        return data.map[ix][iz] == null || data.map[ix][iz].isLand();
+    }
+
+    private static int[] rotateLocal(int localX, int localZ, int rotation) {
         int normalized = ((rotation % 360) + 360) % 360;
         return switch (normalized) {
-            case 90 -> new FootprintBox(originX - length + 1, originZ, originX, originZ + width - 1);
-            case 180 -> new FootprintBox(originX - width + 1, originZ - length + 1, originX, originZ);
-            case 270 -> new FootprintBox(originX, originZ - width + 1, originX + length - 1, originZ);
-            default -> new FootprintBox(originX, originZ, originX + width - 1, originZ + length - 1);
+            case 90 -> new int[]{-localZ, localX};
+            case 180 -> new int[]{-localX, -localZ};
+            case 270 -> new int[]{localZ, -localX};
+            default -> new int[]{localX, localZ};
         };
     }
 
@@ -768,6 +953,10 @@ public final class CityC8ArrangementEngine {
 
     private record CandidatePlacement(CityC8Stages.PlacementNode node, TemplateMeta meta, double weight) {}
 
+    private record ConnectorView(Direction direction, String socket, List<String> connectToPools) {}
+
+    private record ProbeWorldPoint(int x, int z) {}
+
     public static final class SolveResult {
         public boolean success = true;
         public List<CityC8Stages.PlacementNode> placements = new ArrayList<>();
@@ -776,33 +965,26 @@ public final class CityC8ArrangementEngine {
     }
 
     private static final class Catalog {
+        String step;
+        boolean ok;
+        String city_id;
+        int catalog_version;
+        long generated_at_epoch_ms;
+        List<String> function_enum_table = new ArrayList<>();
         List<TemplateMeta> structures = new ArrayList<>();
     }
 
-    private static final class TemplateMeta {
-        String structure_id;
-        TemplateSize size = new TemplateSize();
-        TemplateOrientation orientation = new TemplateOrientation();
-        String piece_role;
-        String path = "";
-        List<String> connector_types = new ArrayList<>();
-        List<String> connector_dirs = new ArrayList<>();
-        List<String> allowed_neighbors = new ArrayList<>();
+    private static final class TemplateMeta extends CityC35CatalogIO.CatalogStructure {
         List<String> jigsawFacing = new ArrayList<>();
 
         private int primarySpan() {
+            if (placement != null && placement.footprint != null) {
+                int width = Math.max(1, placement.footprint.max_x - placement.footprint.min_x + 1);
+                int depth = Math.max(1, placement.footprint.max_z - placement.footprint.min_z + 1);
+                return Math.max(6, Math.max(width, depth) / 2);
+            }
             return Math.max(6, Math.max(size.length, size.width) / 2);
         }
-    }
-
-    private static final class TemplateSize {
-        int length;
-        int width;
-        int height;
-    }
-
-    private static final class TemplateOrientation {
-        List<String> jigsaw_facing = new ArrayList<>();
     }
 
     private enum Direction {
