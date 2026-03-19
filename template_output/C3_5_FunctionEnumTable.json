@@ -1,0 +1,22 @@
+{
+  "step": "C3.5",
+  "ok": true,
+  "city_id": "city_default",
+  "function_enum_table": [
+    "civic_center",
+    "commercial",
+    "farm",
+    "fishing",
+    "fortification",
+    "landmark",
+    "market",
+    "port",
+    "religious",
+    "residential_high",
+    "residential_low",
+    "residential_mid",
+    "warehouse",
+    "watchtower",
+    "workshop"
+  ]
+}

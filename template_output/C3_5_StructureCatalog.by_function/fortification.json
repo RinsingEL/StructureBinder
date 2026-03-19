@@ -1,0 +1,3239 @@
+{
+  "step": "C3.5",
+  "ok": true,
+  "city_id": "city_default",
+  "catalog_version": 2,
+  "generated_at_epoch_ms": 1773770249093,
+  "function_enum_table": [
+    "civic_center",
+    "commercial",
+    "farm",
+    "fishing",
+    "fortification",
+    "landmark",
+    "market",
+    "port",
+    "religious",
+    "residential_high",
+    "residential_low",
+    "residential_mid",
+    "warehouse",
+    "watchtower",
+    "workshop"
+  ],
+  "structures": [
+    {
+      "structure_id": "kaisyn:outpost/camps/beach/base_plate",
+      "size": {
+        "length": 14,
+        "width": 28,
+        "height": 12
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "east",
+          "north",
+          "south",
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0,
+        "military": 0,
+        "commercial": 0,
+        "residential": 0,
+        "religious": 0,
+        "industrial": 0,
+        "maritime": 0,
+        "civic": 0
+      },
+      "function_candidates": [
+        {
+          "function": "fortification",
+          "score": 0.9
+        }
+      ],
+      "namespace": "kaisyn",
+      "path": "outpost/camps/beach/base_plate",
+      "size_tier": "L",
+      "connector_types": [],
+      "connector_dirs": [],
+      "allowed_neighbors": [],
+      "landing_hint": "edge_guard",
+      "growth_axis": "x",
+      "vertical_role": "ground",
+      "vertical_clearance": 12,
+      "preset_pool": "defense_edge",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "defense_edge",
+        "evidence": "outpost/camps/beach/base_plate"
+      },
+      "function_definition": {
+        "primary_function": "fortification",
+        "secondary_functions": [],
+        "semantic_role": "defense",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 27,
+          "max_z": 13
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 12
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 27,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 13
+          },
+          {
+            "x": 27,
+            "z": 13
+          },
+          {
+            "x": 13,
+            "z": 6
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 13,
+            "y": 0,
+            "z": 13,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.18,
+        "max_height_delta": 3,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "west_connector",
+          "local_pos": {
+            "x": 0,
+            "y": 0,
+            "z": 6
+          },
+          "facing": "west",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "landmark_pool"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "south_connector",
+          "local_pos": {
+            "x": 13,
+            "y": 0,
+            "z": 13
+          },
+          "facing": "south",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "landmark_pool"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "east_connector",
+          "local_pos": {
+            "x": 27,
+            "y": 0,
+            "z": 6
+          },
+          "facing": "east",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "landmark_pool"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "north_connector",
+          "local_pos": {
+            "x": 13,
+            "y": 0,
+            "z": 0
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "landmark_pool"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1,
+        "landmark": 1.25
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "kaisyn:outpost/camps/snowy_beach/base_plate",
+      "size": {
+        "length": 14,
+        "width": 28,
+        "height": 12
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "east",
+          "north",
+          "south",
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0,
+        "military": 0,
+        "commercial": 0,
+        "residential": 0,
+        "religious": 0,
+        "industrial": 0,
+        "maritime": 0,
+        "civic": 0
+      },
+      "function_candidates": [
+        {
+          "function": "fortification",
+          "score": 0.9
+        }
+      ],
+      "namespace": "kaisyn",
+      "path": "outpost/camps/snowy_beach/base_plate",
+      "size_tier": "L",
+      "connector_types": [],
+      "connector_dirs": [],
+      "allowed_neighbors": [],
+      "landing_hint": "edge_guard",
+      "growth_axis": "x",
+      "vertical_role": "ground",
+      "vertical_clearance": 12,
+      "preset_pool": "defense_edge",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "defense_edge",
+        "evidence": "outpost/camps/snowy_beach/base_plate"
+      },
+      "function_definition": {
+        "primary_function": "fortification",
+        "secondary_functions": [],
+        "semantic_role": "defense",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 27,
+          "max_z": 13
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 12
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 27,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 13
+          },
+          {
+            "x": 27,
+            "z": 13
+          },
+          {
+            "x": 13,
+            "z": 6
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 13,
+            "y": 0,
+            "z": 13,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.18,
+        "max_height_delta": 3,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "west_connector",
+          "local_pos": {
+            "x": 0,
+            "y": 0,
+            "z": 6
+          },
+          "facing": "west",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "landmark_pool"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "south_connector",
+          "local_pos": {
+            "x": 13,
+            "y": 0,
+            "z": 13
+          },
+          "facing": "south",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "landmark_pool"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "east_connector",
+          "local_pos": {
+            "x": 27,
+            "y": 0,
+            "z": 6
+          },
+          "facing": "east",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "landmark_pool"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "north_connector",
+          "local_pos": {
+            "x": 13,
+            "y": 0,
+            "z": 0
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "landmark_pool"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1,
+        "landmark": 1.25
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "trek:overworld/medium/birch_fort",
+      "size": {
+        "length": 16,
+        "width": 15,
+        "height": 19
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "south",
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0,
+        "military": 0.9,
+        "commercial": 0,
+        "residential": 0,
+        "religious": 0,
+        "industrial": 0,
+        "maritime": 0,
+        "civic": 0
+      },
+      "function_candidates": [
+        {
+          "function": "fortification",
+          "score": 0.9
+        }
+      ],
+      "namespace": "trek",
+      "path": "overworld/medium/birch_fort",
+      "size_tier": "M",
+      "connector_types": [],
+      "connector_dirs": [],
+      "allowed_neighbors": [],
+      "landing_hint": "edge_guard",
+      "growth_axis": "z",
+      "vertical_role": "ground",
+      "vertical_clearance": 19,
+      "preset_pool": "defense_edge",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "defense_edge",
+        "evidence": "overworld/medium/birch_fort"
+      },
+      "function_definition": {
+        "primary_function": "fortification",
+        "secondary_functions": [],
+        "semantic_role": "defense",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 14,
+          "max_z": 15
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 19
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 14,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 15
+          },
+          {
+            "x": 14,
+            "z": 15
+          },
+          {
+            "x": 7,
+            "z": 7
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 7,
+            "y": 0,
+            "z": 15,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.18,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "west_connector",
+          "local_pos": {
+            "x": 0,
+            "y": 0,
+            "z": 7
+          },
+          "facing": "west",
+          "type": "road",
+          "socket": "wall_path_small",
+          "connect_to_pools": [
+            "defense_edge"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "south_connector",
+          "local_pos": {
+            "x": 7,
+            "y": 0,
+            "z": 15
+          },
+          "facing": "south",
+          "type": "road",
+          "socket": "wall_path_small",
+          "connect_to_pools": [
+            "defense_edge"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1,
+        "fortification": 1.25,
+        "military": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "trek:overworld/medium/camp_1",
+      "size": {
+        "length": 11,
+        "width": 8,
+        "height": 6
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0,
+        "military": 0,
+        "commercial": 0,
+        "residential": 0,
+        "religious": 0,
+        "industrial": 0,
+        "maritime": 0,
+        "civic": 0
+      },
+      "function_candidates": [
+        {
+          "function": "fortification",
+          "score": 0.9
+        }
+      ],
+      "namespace": "trek",
+      "path": "overworld/medium/camp_1",
+      "size_tier": "S",
+      "connector_types": [],
+      "connector_dirs": [],
+      "allowed_neighbors": [],
+      "landing_hint": "edge_guard",
+      "growth_axis": "z",
+      "vertical_role": "ground",
+      "vertical_clearance": 6,
+      "preset_pool": "defense_edge",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "defense_edge",
+        "evidence": "overworld/medium/camp_1"
+      },
+      "function_definition": {
+        "primary_function": "fortification",
+        "secondary_functions": [],
+        "semantic_role": "defense",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 7,
+          "max_z": 10
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 6
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 7,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 10
+          },
+          {
+            "x": 7,
+            "z": 10
+          },
+          {
+            "x": 3,
+            "z": 5
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 3,
+            "y": 0,
+            "z": 10,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.22,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "west_connector",
+          "local_pos": {
+            "x": 0,
+            "y": 0,
+            "z": 5
+          },
+          "facing": "west",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "landmark_pool"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1,
+        "landmark": 1.25
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "trek:overworld/medium/camp_2",
+      "size": {
+        "length": 8,
+        "width": 9,
+        "height": 5
+      },
+      "orientation": {
+        "jigsaw_facing": [],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0,
+        "military": 0,
+        "commercial": 0,
+        "residential": 0,
+        "religious": 0,
+        "industrial": 0,
+        "maritime": 0,
+        "civic": 0
+      },
+      "function_candidates": [
+        {
+          "function": "fortification",
+          "score": 0.9
+        }
+      ],
+      "namespace": "trek",
+      "path": "overworld/medium/camp_2",
+      "size_tier": "S",
+      "connector_types": [],
+      "connector_dirs": [],
+      "allowed_neighbors": [],
+      "landing_hint": "edge_guard",
+      "growth_axis": "x",
+      "vertical_role": "ground",
+      "vertical_clearance": 5,
+      "preset_pool": "defense_edge",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "defense_edge",
+        "evidence": "overworld/medium/camp_2"
+      },
+      "function_definition": {
+        "primary_function": "fortification",
+        "secondary_functions": [],
+        "semantic_role": "defense",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 8,
+          "max_z": 7
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 5
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 8,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 7
+          },
+          {
+            "x": 8,
+            "z": 7
+          },
+          {
+            "x": 4,
+            "z": 3
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 4,
+            "y": 0,
+            "z": 7,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.22,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [],
+      "weight_profile": {
+        "default": 1,
+        "landmark": 1.25
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "trek:overworld/medium/camp_3",
+      "size": {
+        "length": 7,
+        "width": 7,
+        "height": 4
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "north"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0,
+        "military": 0,
+        "commercial": 0,
+        "residential": 0,
+        "religious": 0,
+        "industrial": 0,
+        "maritime": 0,
+        "civic": 0
+      },
+      "function_candidates": [
+        {
+          "function": "fortification",
+          "score": 0.9
+        }
+      ],
+      "namespace": "trek",
+      "path": "overworld/medium/camp_3",
+      "size_tier": "S",
+      "connector_types": [],
+      "connector_dirs": [],
+      "allowed_neighbors": [],
+      "landing_hint": "edge_guard",
+      "growth_axis": "auto",
+      "vertical_role": "ground",
+      "vertical_clearance": 4,
+      "preset_pool": "defense_edge",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "defense_edge",
+        "evidence": "overworld/medium/camp_3"
+      },
+      "function_definition": {
+        "primary_function": "fortification",
+        "secondary_functions": [],
+        "semantic_role": "defense",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 6,
+          "max_z": 6
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 4
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 6,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 6
+          },
+          {
+            "x": 6,
+            "z": 6
+          },
+          {
+            "x": 3,
+            "z": 3
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 3,
+            "y": 0,
+            "z": 6,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.22,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "north_connector",
+          "local_pos": {
+            "x": 3,
+            "y": 0,
+            "z": 0
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "landmark_pool"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1,
+        "landmark": 1.25
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "trek:overworld/medium/camp_4",
+      "size": {
+        "length": 19,
+        "width": 17,
+        "height": 16
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "north",
+          "south",
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0,
+        "military": 0,
+        "commercial": 0,
+        "residential": 0,
+        "religious": 0,
+        "industrial": 0,
+        "maritime": 0,
+        "civic": 0
+      },
+      "function_candidates": [
+        {
+          "function": "fortification",
+          "score": 0.9
+        }
+      ],
+      "namespace": "trek",
+      "path": "overworld/medium/camp_4",
+      "size_tier": "L",
+      "connector_types": [],
+      "connector_dirs": [],
+      "allowed_neighbors": [],
+      "landing_hint": "edge_guard",
+      "growth_axis": "z",
+      "vertical_role": "ground",
+      "vertical_clearance": 16,
+      "preset_pool": "defense_edge",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "defense_edge",
+        "evidence": "overworld/medium/camp_4"
+      },
+      "function_definition": {
+        "primary_function": "fortification",
+        "secondary_functions": [],
+        "semantic_role": "defense",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 16,
+          "max_z": 18
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 16
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 16,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 18
+          },
+          {
+            "x": 16,
+            "z": 18
+          },
+          {
+            "x": 8,
+            "z": 9
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 8,
+            "y": 0,
+            "z": 18,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.18,
+        "max_height_delta": 3,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "north_connector",
+          "local_pos": {
+            "x": 8,
+            "y": 0,
+            "z": 0
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "landmark_pool"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "south_connector",
+          "local_pos": {
+            "x": 8,
+            "y": 0,
+            "z": 18
+          },
+          "facing": "south",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "landmark_pool"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "west_connector",
+          "local_pos": {
+            "x": 0,
+            "y": 0,
+            "z": 9
+          },
+          "facing": "west",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "landmark_pool"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1,
+        "landmark": 1.25
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "trek:overworld/medium/desert_outpost",
+      "size": {
+        "length": 40,
+        "width": 22,
+        "height": 20
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "east",
+          "north",
+          "south",
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0,
+        "military": 0,
+        "commercial": 0,
+        "residential": 0,
+        "religious": 0,
+        "industrial": 0,
+        "maritime": 0,
+        "civic": 0
+      },
+      "function_candidates": [
+        {
+          "function": "fortification",
+          "score": 0.9
+        }
+      ],
+      "namespace": "trek",
+      "path": "overworld/medium/desert_outpost",
+      "size_tier": "L",
+      "connector_types": [],
+      "connector_dirs": [],
+      "allowed_neighbors": [],
+      "landing_hint": "edge_guard",
+      "growth_axis": "z",
+      "vertical_role": "ground",
+      "vertical_clearance": 20,
+      "preset_pool": "defense_edge",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "defense_edge",
+        "evidence": "overworld/medium/desert_outpost"
+      },
+      "function_definition": {
+        "primary_function": "fortification",
+        "secondary_functions": [],
+        "semantic_role": "defense",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 21,
+          "max_z": 39
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 20
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 21,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 39
+          },
+          {
+            "x": 21,
+            "z": 39
+          },
+          {
+            "x": 10,
+            "z": 19
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 10,
+            "y": 0,
+            "z": 39,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.18,
+        "max_height_delta": 3,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "east_connector",
+          "local_pos": {
+            "x": 21,
+            "y": 0,
+            "z": 19
+          },
+          "facing": "east",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "landmark_pool"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "south_connector",
+          "local_pos": {
+            "x": 10,
+            "y": 0,
+            "z": 39
+          },
+          "facing": "south",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "landmark_pool"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "north_connector",
+          "local_pos": {
+            "x": 10,
+            "y": 0,
+            "z": 0
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "landmark_pool"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "west_connector",
+          "local_pos": {
+            "x": 0,
+            "y": 0,
+            "z": 19
+          },
+          "facing": "west",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "landmark_pool"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1,
+        "landmark": 1.25
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "trek:overworld/medium/fort",
+      "size": {
+        "length": 16,
+        "width": 16,
+        "height": 8
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "east",
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0,
+        "military": 0.9,
+        "commercial": 0,
+        "residential": 0,
+        "religious": 0,
+        "industrial": 0,
+        "maritime": 0,
+        "civic": 0
+      },
+      "function_candidates": [
+        {
+          "function": "fortification",
+          "score": 0.9
+        }
+      ],
+      "namespace": "trek",
+      "path": "overworld/medium/fort",
+      "size_tier": "M",
+      "connector_types": [],
+      "connector_dirs": [],
+      "allowed_neighbors": [],
+      "landing_hint": "edge_guard",
+      "growth_axis": "auto",
+      "vertical_role": "ground",
+      "vertical_clearance": 8,
+      "preset_pool": "defense_edge",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "defense_edge",
+        "evidence": "overworld/medium/fort"
+      },
+      "function_definition": {
+        "primary_function": "fortification",
+        "secondary_functions": [],
+        "semantic_role": "defense",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 15,
+          "max_z": 15
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 8
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 15,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 15
+          },
+          {
+            "x": 15,
+            "z": 15
+          },
+          {
+            "x": 7,
+            "z": 7
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 7,
+            "y": 0,
+            "z": 15,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.18,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "east_connector",
+          "local_pos": {
+            "x": 15,
+            "y": 0,
+            "z": 7
+          },
+          "facing": "east",
+          "type": "road",
+          "socket": "wall_path_small",
+          "connect_to_pools": [
+            "defense_edge"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "west_connector",
+          "local_pos": {
+            "x": 0,
+            "y": 0,
+            "z": 7
+          },
+          "facing": "west",
+          "type": "road",
+          "socket": "wall_path_small",
+          "connect_to_pools": [
+            "defense_edge"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1,
+        "fortification": 1.25,
+        "military": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "trek:overworld/medium/ice_fort",
+      "size": {
+        "length": 18,
+        "width": 20,
+        "height": 29
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "east",
+          "north",
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0,
+        "military": 0.9,
+        "commercial": 0,
+        "residential": 0,
+        "religious": 0,
+        "industrial": 0,
+        "maritime": 0,
+        "civic": 0
+      },
+      "function_candidates": [
+        {
+          "function": "fortification",
+          "score": 0.9
+        }
+      ],
+      "namespace": "trek",
+      "path": "overworld/medium/ice_fort",
+      "size_tier": "L",
+      "connector_types": [],
+      "connector_dirs": [],
+      "allowed_neighbors": [],
+      "landing_hint": "edge_guard",
+      "growth_axis": "x",
+      "vertical_role": "ground",
+      "vertical_clearance": 29,
+      "preset_pool": "defense_edge",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "defense_edge",
+        "evidence": "overworld/medium/ice_fort"
+      },
+      "function_definition": {
+        "primary_function": "fortification",
+        "secondary_functions": [],
+        "semantic_role": "defense",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 19,
+          "max_z": 17
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 29
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 19,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 17
+          },
+          {
+            "x": 19,
+            "z": 17
+          },
+          {
+            "x": 9,
+            "z": 8
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 9,
+            "y": 0,
+            "z": 17,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.18,
+        "max_height_delta": 3,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "north_connector",
+          "local_pos": {
+            "x": 9,
+            "y": 0,
+            "z": 0
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "wall_path_small",
+          "connect_to_pools": [
+            "defense_edge"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "west_connector",
+          "local_pos": {
+            "x": 0,
+            "y": 0,
+            "z": 8
+          },
+          "facing": "west",
+          "type": "road",
+          "socket": "wall_path_small",
+          "connect_to_pools": [
+            "defense_edge"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "east_connector",
+          "local_pos": {
+            "x": 19,
+            "y": 0,
+            "z": 8
+          },
+          "facing": "east",
+          "type": "road",
+          "socket": "wall_path_small",
+          "connect_to_pools": [
+            "defense_edge"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1,
+        "fortification": 1.25,
+        "military": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "trek:overworld/medium/jungle_outpost",
+      "size": {
+        "length": 31,
+        "width": 26,
+        "height": 28
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "east",
+          "south",
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0,
+        "military": 0,
+        "commercial": 0,
+        "residential": 0,
+        "religious": 0,
+        "industrial": 0,
+        "maritime": 0,
+        "civic": 0
+      },
+      "function_candidates": [
+        {
+          "function": "fortification",
+          "score": 0.9
+        }
+      ],
+      "namespace": "trek",
+      "path": "overworld/medium/jungle_outpost",
+      "size_tier": "L",
+      "connector_types": [],
+      "connector_dirs": [],
+      "allowed_neighbors": [],
+      "landing_hint": "edge_guard",
+      "growth_axis": "z",
+      "vertical_role": "ground",
+      "vertical_clearance": 28,
+      "preset_pool": "defense_edge",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "defense_edge",
+        "evidence": "overworld/medium/jungle_outpost"
+      },
+      "function_definition": {
+        "primary_function": "fortification",
+        "secondary_functions": [],
+        "semantic_role": "defense",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 25,
+          "max_z": 30
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 28
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 25,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 30
+          },
+          {
+            "x": 25,
+            "z": 30
+          },
+          {
+            "x": 12,
+            "z": 15
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 12,
+            "y": 0,
+            "z": 30,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.18,
+        "max_height_delta": 3,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "east_connector",
+          "local_pos": {
+            "x": 25,
+            "y": 0,
+            "z": 15
+          },
+          "facing": "east",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "landmark_pool"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "west_connector",
+          "local_pos": {
+            "x": 0,
+            "y": 0,
+            "z": 15
+          },
+          "facing": "west",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "landmark_pool"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "south_connector",
+          "local_pos": {
+            "x": 12,
+            "y": 0,
+            "z": 30
+          },
+          "facing": "south",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "landmark_pool"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1,
+        "landmark": 1.25
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "trek:overworld/medium/pillager_old_camp",
+      "size": {
+        "length": 12,
+        "width": 11,
+        "height": 5
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "east",
+          "north"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0,
+        "military": 0,
+        "commercial": 0,
+        "residential": 0,
+        "religious": 0,
+        "industrial": 0,
+        "maritime": 0,
+        "civic": 0
+      },
+      "function_candidates": [
+        {
+          "function": "fortification",
+          "score": 0.9
+        }
+      ],
+      "namespace": "trek",
+      "path": "overworld/medium/pillager_old_camp",
+      "size_tier": "M",
+      "connector_types": [],
+      "connector_dirs": [],
+      "allowed_neighbors": [],
+      "landing_hint": "edge_guard",
+      "growth_axis": "z",
+      "vertical_role": "ground",
+      "vertical_clearance": 5,
+      "preset_pool": "defense_edge",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "defense_edge",
+        "evidence": "overworld/medium/pillager_old_camp"
+      },
+      "function_definition": {
+        "primary_function": "fortification",
+        "secondary_functions": [],
+        "semantic_role": "defense",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 10,
+          "max_z": 11
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 5
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 10,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 11
+          },
+          {
+            "x": 10,
+            "z": 11
+          },
+          {
+            "x": 5,
+            "z": 5
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 5,
+            "y": 0,
+            "z": 11,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.18,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "north_connector",
+          "local_pos": {
+            "x": 5,
+            "y": 0,
+            "z": 0
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "landmark_pool"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "east_connector",
+          "local_pos": {
+            "x": 10,
+            "y": 0,
+            "z": 5
+          },
+          "facing": "east",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "landmark_pool"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1,
+        "landmark": 1.25
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "trek:overworld/medium/siege_tower_pillager",
+      "size": {
+        "length": 11,
+        "width": 17,
+        "height": 23
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "east",
+          "north",
+          "south"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "START",
+      "style_score": {
+        "classical": 0,
+        "military": 0.88,
+        "commercial": 0,
+        "residential": 0,
+        "religious": 0,
+        "industrial": 0,
+        "maritime": 0,
+        "civic": 0
+      },
+      "function_candidates": [
+        {
+          "function": "fortification",
+          "score": 0.9
+        }
+      ],
+      "namespace": "trek",
+      "path": "overworld/medium/siege_tower_pillager",
+      "size_tier": "M",
+      "connector_types": [],
+      "connector_dirs": [],
+      "allowed_neighbors": [],
+      "landing_hint": "edge_guard",
+      "growth_axis": "x",
+      "vertical_role": "ground",
+      "vertical_clearance": 23,
+      "preset_pool": "defense_edge",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "defense_edge",
+        "evidence": "overworld/medium/siege_tower_pillager"
+      },
+      "function_definition": {
+        "primary_function": "fortification",
+        "secondary_functions": [],
+        "semantic_role": "defense",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 16,
+          "max_z": 10
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 23
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 16,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 10
+          },
+          {
+            "x": 16,
+            "z": 10
+          },
+          {
+            "x": 8,
+            "z": 5
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 8,
+            "y": 0,
+            "z": 10,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.18,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "east_connector",
+          "local_pos": {
+            "x": 16,
+            "y": 0,
+            "z": 5
+          },
+          "facing": "east",
+          "type": "road",
+          "socket": "wall_path_small",
+          "connect_to_pools": [
+            "defense_edge"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "south_connector",
+          "local_pos": {
+            "x": 8,
+            "y": 0,
+            "z": 10
+          },
+          "facing": "south",
+          "type": "road",
+          "socket": "wall_path_small",
+          "connect_to_pools": [
+            "defense_edge"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "north_connector",
+          "local_pos": {
+            "x": 8,
+            "y": 0,
+            "z": 0
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "wall_path_small",
+          "connect_to_pools": [
+            "defense_edge"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1,
+        "fortification": 1.25,
+        "military": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "trek:overworld/medium/spruce_camp",
+      "size": {
+        "length": 7,
+        "width": 9,
+        "height": 6
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "north"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0,
+        "military": 0,
+        "commercial": 0,
+        "residential": 0,
+        "religious": 0,
+        "industrial": 0,
+        "maritime": 0,
+        "civic": 0
+      },
+      "function_candidates": [
+        {
+          "function": "fortification",
+          "score": 0.9
+        }
+      ],
+      "namespace": "trek",
+      "path": "overworld/medium/spruce_camp",
+      "size_tier": "S",
+      "connector_types": [],
+      "connector_dirs": [],
+      "allowed_neighbors": [],
+      "landing_hint": "edge_guard",
+      "growth_axis": "x",
+      "vertical_role": "ground",
+      "vertical_clearance": 6,
+      "preset_pool": "defense_edge",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "defense_edge",
+        "evidence": "overworld/medium/spruce_camp"
+      },
+      "function_definition": {
+        "primary_function": "fortification",
+        "secondary_functions": [],
+        "semantic_role": "defense",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 8,
+          "max_z": 6
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 6
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 8,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 6
+          },
+          {
+            "x": 8,
+            "z": 6
+          },
+          {
+            "x": 4,
+            "z": 3
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 4,
+            "y": 0,
+            "z": 6,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.22,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "north_connector",
+          "local_pos": {
+            "x": 4,
+            "y": 0,
+            "z": 0
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "landmark_pool"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1,
+        "landmark": 1.25
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "trek:overworld/medium/square_tower",
+      "size": {
+        "length": 15,
+        "width": 15,
+        "height": 30
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "south"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "START",
+      "style_score": {
+        "classical": 0,
+        "military": 0.88,
+        "commercial": 0,
+        "residential": 0,
+        "religious": 0,
+        "industrial": 0,
+        "maritime": 0,
+        "civic": 0
+      },
+      "function_candidates": [
+        {
+          "function": "fortification",
+          "score": 0.9
+        }
+      ],
+      "namespace": "trek",
+      "path": "overworld/medium/square_tower",
+      "size_tier": "M",
+      "connector_types": [],
+      "connector_dirs": [],
+      "allowed_neighbors": [],
+      "landing_hint": "edge_guard",
+      "growth_axis": "auto",
+      "vertical_role": "ground",
+      "vertical_clearance": 30,
+      "preset_pool": "defense_edge",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "defense_edge",
+        "evidence": "overworld/medium/square_tower"
+      },
+      "function_definition": {
+        "primary_function": "fortification",
+        "secondary_functions": [],
+        "semantic_role": "defense",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 14,
+          "max_z": 14
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 30
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 14,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 14
+          },
+          {
+            "x": 14,
+            "z": 14
+          },
+          {
+            "x": 7,
+            "z": 7
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 7,
+            "y": 0,
+            "z": 14,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.18,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "south_connector",
+          "local_pos": {
+            "x": 7,
+            "y": 0,
+            "z": 14
+          },
+          "facing": "south",
+          "type": "road",
+          "socket": "wall_path_small",
+          "connect_to_pools": [
+            "defense_edge"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1,
+        "fortification": 1.25,
+        "military": 1.05,
+        "civic": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "trek:overworld/medium/tower",
+      "size": {
+        "length": 10,
+        "width": 9,
+        "height": 30
+      },
+      "orientation": {
+        "jigsaw_facing": [],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "START",
+      "style_score": {
+        "classical": 0,
+        "military": 0.88,
+        "commercial": 0,
+        "residential": 0,
+        "religious": 0,
+        "industrial": 0,
+        "maritime": 0,
+        "civic": 0
+      },
+      "function_candidates": [
+        {
+          "function": "fortification",
+          "score": 0.9
+        }
+      ],
+      "namespace": "trek",
+      "path": "overworld/medium/tower",
+      "size_tier": "S",
+      "connector_types": [],
+      "connector_dirs": [],
+      "allowed_neighbors": [],
+      "landing_hint": "edge_guard",
+      "growth_axis": "z",
+      "vertical_role": "ground",
+      "vertical_clearance": 30,
+      "preset_pool": "defense_edge",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "defense_edge",
+        "evidence": "overworld/medium/tower"
+      },
+      "function_definition": {
+        "primary_function": "fortification",
+        "secondary_functions": [],
+        "semantic_role": "defense",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 8,
+          "max_z": 9
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 30
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 8,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 9
+          },
+          {
+            "x": 8,
+            "z": 9
+          },
+          {
+            "x": 4,
+            "z": 4
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 4,
+            "y": 0,
+            "z": 9,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.22,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [],
+      "weight_profile": {
+        "default": 1,
+        "fortification": 1.25,
+        "military": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "trek:overworld/medium/tower_of_ice",
+      "size": {
+        "length": 16,
+        "width": 17,
+        "height": 27
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "south",
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "START",
+      "style_score": {
+        "classical": 0,
+        "military": 0.88,
+        "commercial": 0,
+        "residential": 0,
+        "religious": 0,
+        "industrial": 0,
+        "maritime": 0,
+        "civic": 0
+      },
+      "function_candidates": [
+        {
+          "function": "fortification",
+          "score": 0.9
+        }
+      ],
+      "namespace": "trek",
+      "path": "overworld/medium/tower_of_ice",
+      "size_tier": "L",
+      "connector_types": [],
+      "connector_dirs": [],
+      "allowed_neighbors": [],
+      "landing_hint": "edge_guard",
+      "growth_axis": "x",
+      "vertical_role": "ground",
+      "vertical_clearance": 27,
+      "preset_pool": "defense_edge",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "defense_edge",
+        "evidence": "overworld/medium/tower_of_ice"
+      },
+      "function_definition": {
+        "primary_function": "fortification",
+        "secondary_functions": [],
+        "semantic_role": "defense",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 16,
+          "max_z": 15
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 27
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 16,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 15
+          },
+          {
+            "x": 16,
+            "z": 15
+          },
+          {
+            "x": 8,
+            "z": 7
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 8,
+            "y": 0,
+            "z": 15,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.18,
+        "max_height_delta": 3,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "south_connector",
+          "local_pos": {
+            "x": 8,
+            "y": 0,
+            "z": 15
+          },
+          "facing": "south",
+          "type": "road",
+          "socket": "wall_path_small",
+          "connect_to_pools": [
+            "defense_edge"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "west_connector",
+          "local_pos": {
+            "x": 0,
+            "y": 0,
+            "z": 7
+          },
+          "facing": "west",
+          "type": "road",
+          "socket": "wall_path_small",
+          "connect_to_pools": [
+            "defense_edge"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1,
+        "fortification": 1.25,
+        "military": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "trek:overworld/medium/witch_tower",
+      "size": {
+        "length": 13,
+        "width": 15,
+        "height": 36
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "north",
+          "south"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "START",
+      "style_score": {
+        "classical": 0,
+        "military": 0.88,
+        "commercial": 0,
+        "residential": 0,
+        "religious": 0,
+        "industrial": 0,
+        "maritime": 0,
+        "civic": 0
+      },
+      "function_candidates": [
+        {
+          "function": "fortification",
+          "score": 0.9
+        }
+      ],
+      "namespace": "trek",
+      "path": "overworld/medium/witch_tower",
+      "size_tier": "M",
+      "connector_types": [],
+      "connector_dirs": [],
+      "allowed_neighbors": [],
+      "landing_hint": "edge_guard",
+      "growth_axis": "x",
+      "vertical_role": "ground",
+      "vertical_clearance": 36,
+      "preset_pool": "defense_edge",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "defense_edge",
+        "evidence": "overworld/medium/witch_tower"
+      },
+      "function_definition": {
+        "primary_function": "fortification",
+        "secondary_functions": [],
+        "semantic_role": "defense",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 14,
+          "max_z": 12
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 36
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 14,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 12
+          },
+          {
+            "x": 14,
+            "z": 12
+          },
+          {
+            "x": 7,
+            "z": 6
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 7,
+            "y": 0,
+            "z": 12,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.18,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "north_connector",
+          "local_pos": {
+            "x": 7,
+            "y": 0,
+            "z": 0
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "wall_path_small",
+          "connect_to_pools": [
+            "defense_edge"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "south_connector",
+          "local_pos": {
+            "x": 7,
+            "y": 0,
+            "z": 12
+          },
+          "facing": "south",
+          "type": "road",
+          "socket": "wall_path_small",
+          "connect_to_pools": [
+            "defense_edge"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1,
+        "fortification": 1.25,
+        "military": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "trek:overworld/rare/tower_island",
+      "size": {
+        "length": 54,
+        "width": 68,
+        "height": 35
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "east",
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "START",
+      "style_score": {
+        "classical": 0,
+        "military": 0.88,
+        "commercial": 0,
+        "residential": 0,
+        "religious": 0,
+        "industrial": 0,
+        "maritime": 0,
+        "civic": 0
+      },
+      "function_candidates": [
+        {
+          "function": "fortification",
+          "score": 0.9
+        }
+      ],
+      "namespace": "trek",
+      "path": "overworld/rare/tower_island",
+      "size_tier": "L",
+      "connector_types": [],
+      "connector_dirs": [],
+      "allowed_neighbors": [],
+      "landing_hint": "edge_guard",
+      "growth_axis": "x",
+      "vertical_role": "ground",
+      "vertical_clearance": 35,
+      "preset_pool": "defense_edge",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "defense_edge",
+        "evidence": "overworld/rare/tower_island"
+      },
+      "function_definition": {
+        "primary_function": "fortification",
+        "secondary_functions": [],
+        "semantic_role": "defense",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 67,
+          "max_z": 53
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 35
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 67,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 53
+          },
+          {
+            "x": 67,
+            "z": 53
+          },
+          {
+            "x": 33,
+            "z": 26
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 33,
+            "y": 0,
+            "z": 53,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.18,
+        "max_height_delta": 3,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "east_connector",
+          "local_pos": {
+            "x": 67,
+            "y": 0,
+            "z": 26
+          },
+          "facing": "east",
+          "type": "road",
+          "socket": "wall_path_small",
+          "connect_to_pools": [
+            "defense_edge"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "west_connector",
+          "local_pos": {
+            "x": 0,
+            "y": 0,
+            "z": 26
+          },
+          "facing": "west",
+          "type": "road",
+          "socket": "wall_path_small",
+          "connect_to_pools": [
+            "defense_edge"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1,
+        "fortification": 1.25,
+        "military": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    }
+  ]
+}

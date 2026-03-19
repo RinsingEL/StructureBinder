@@ -1,0 +1,455 @@
+[
+  {
+    "rule_id": "village_house_small",
+    "match": {
+      "path_contains": [
+        "village",
+        "house",
+        "small"
+      ]
+    },
+    "assign": {
+      "piece_role": "SINGLE",
+      "function_candidates": [
+        {
+          "function": "residential_low",
+          "score": 0.9
+        }
+      ],
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.05,
+        "commercial": 0.08,
+        "residential": 0.88,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "entry_facing": "unknown",
+      "notes": ""
+    },
+    "priority": 100
+  },
+  {
+    "rule_id": "village_house_medium",
+    "match": {
+      "path_contains": [
+        "village",
+        "house"
+      ]
+    },
+    "assign": {
+      "piece_role": "SINGLE",
+      "function_candidates": [
+        {
+          "function": "residential_mid",
+          "score": 0.82
+        }
+      ],
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.08,
+        "commercial": 0.12,
+        "residential": 0.82,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "entry_facing": "unknown",
+      "notes": ""
+    },
+    "priority": 80
+  },
+  {
+    "rule_id": "civic_center",
+    "match": {
+      "path_contains": [
+        "center"
+      ]
+    },
+    "assign": {
+      "piece_role": "START",
+      "function_candidates": [
+        {
+          "function": "civic_center",
+          "score": 0.95
+        }
+      ],
+      "style_score": {
+        "classical": 0.4,
+        "military": 0.05,
+        "commercial": 0.25,
+        "residential": 0.1,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.88
+      },
+      "entry_facing": "unknown",
+      "notes": ""
+    },
+    "priority": 110
+  },
+  {
+    "rule_id": "meeting_point",
+    "match": {
+      "path_contains": [
+        "meeting"
+      ]
+    },
+    "assign": {
+      "piece_role": "START",
+      "function_candidates": [
+        {
+          "function": "civic_center",
+          "score": 0.96
+        }
+      ],
+      "style_score": {
+        "classical": 0.35,
+        "military": 0.05,
+        "commercial": 0.2,
+        "residential": 0.15,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.92
+      },
+      "entry_facing": "unknown",
+      "notes": ""
+    },
+    "priority": 110
+  },
+  {
+    "rule_id": "market",
+    "match": {
+      "path_contains": [
+        "market"
+      ]
+    },
+    "assign": {
+      "piece_role": "SINGLE",
+      "function_candidates": [
+        {
+          "function": "market",
+          "score": 0.94
+        }
+      ],
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.04,
+        "commercial": 0.92,
+        "residential": 0.1,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "entry_facing": "unknown",
+      "notes": ""
+    },
+    "priority": 100
+  },
+  {
+    "rule_id": "commercial_shop",
+    "match": {
+      "path_contains": [
+        "shop"
+      ]
+    },
+    "assign": {
+      "piece_role": "SINGLE",
+      "function_candidates": [
+        {
+          "function": "commercial",
+          "score": 0.88
+        }
+      ],
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.02,
+        "commercial": 0.9,
+        "residential": 0.1,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "entry_facing": "unknown",
+      "notes": ""
+    },
+    "priority": 90
+  },
+  {
+    "rule_id": "warehouse",
+    "match": {
+      "path_contains": [
+        "warehouse"
+      ]
+    },
+    "assign": {
+      "piece_role": "SINGLE",
+      "function_candidates": [
+        {
+          "function": "warehouse",
+          "score": 0.93
+        }
+      ],
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.05,
+        "commercial": 0.18,
+        "residential": 0.03,
+        "religious": 0.0,
+        "industrial": 0.78,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "entry_facing": "unknown",
+      "notes": ""
+    },
+    "priority": 100
+  },
+  {
+    "rule_id": "port",
+    "match": {
+      "path_contains": [
+        "port"
+      ]
+    },
+    "assign": {
+      "piece_role": "START",
+      "function_candidates": [
+        {
+          "function": "port",
+          "score": 0.92
+        }
+      ],
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.02,
+        "commercial": 0.2,
+        "residential": 0.0,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.9,
+        "civic": 0.0
+      },
+      "entry_facing": "unknown",
+      "notes": ""
+    },
+    "priority": 100
+  },
+  {
+    "rule_id": "harbor",
+    "match": {
+      "path_contains": [
+        "harbor"
+      ]
+    },
+    "assign": {
+      "piece_role": "START",
+      "function_candidates": [
+        {
+          "function": "port",
+          "score": 0.92
+        }
+      ],
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.02,
+        "commercial": 0.2,
+        "residential": 0.0,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.9,
+        "civic": 0.0
+      },
+      "entry_facing": "unknown",
+      "notes": ""
+    },
+    "priority": 100
+  },
+  {
+    "rule_id": "watchtower",
+    "match": {
+      "path_contains": [
+        "watchtower"
+      ]
+    },
+    "assign": {
+      "piece_role": "START",
+      "function_candidates": [
+        {
+          "function": "watchtower",
+          "score": 0.96
+        }
+      ],
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.95,
+        "commercial": 0.0,
+        "residential": 0.0,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "entry_facing": "unknown",
+      "notes": ""
+    },
+    "priority": 120
+  },
+  {
+    "rule_id": "fortification",
+    "match": {
+      "path_contains": [
+        "tower"
+      ]
+    },
+    "assign": {
+      "piece_role": "START",
+      "function_candidates": [
+        {
+          "function": "fortification",
+          "score": 0.88
+        }
+      ],
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.88,
+        "commercial": 0.0,
+        "residential": 0.0,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "entry_facing": "unknown",
+      "notes": ""
+    },
+    "priority": 90
+  },
+  {
+    "rule_id": "farm",
+    "match": {
+      "path_contains": [
+        "farm"
+      ]
+    },
+    "assign": {
+      "piece_role": "SINGLE",
+      "function_candidates": [
+        {
+          "function": "farm",
+          "score": 0.9
+        }
+      ],
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.02,
+        "commercial": 0.08,
+        "residential": 0.4,
+        "religious": 0.0,
+        "industrial": 0.15,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "entry_facing": "unknown",
+      "notes": ""
+    },
+    "priority": 90
+  },
+  {
+    "rule_id": "religious",
+    "match": {
+      "path_contains": [
+        "temple"
+      ]
+    },
+    "assign": {
+      "piece_role": "START",
+      "function_candidates": [
+        {
+          "function": "religious",
+          "score": 0.95
+        }
+      ],
+      "style_score": {
+        "classical": 0.6,
+        "military": 0.0,
+        "commercial": 0.0,
+        "residential": 0.0,
+        "religious": 0.95,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.15
+      },
+      "entry_facing": "unknown",
+      "notes": ""
+    },
+    "priority": 110
+  },
+  {
+    "rule_id": "church",
+    "match": {
+      "path_contains": [
+        "church"
+      ]
+    },
+    "assign": {
+      "piece_role": "START",
+      "function_candidates": [
+        {
+          "function": "religious",
+          "score": 0.95
+        }
+      ],
+      "style_score": {
+        "classical": 0.6,
+        "military": 0.0,
+        "commercial": 0.0,
+        "residential": 0.0,
+        "religious": 0.95,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.15
+      },
+      "entry_facing": "unknown",
+      "notes": ""
+    },
+    "priority": 110
+  },
+  {
+    "rule_id": "workshop",
+    "match": {
+      "path_contains": [
+        "workshop"
+      ]
+    },
+    "assign": {
+      "piece_role": "SINGLE",
+      "function_candidates": [
+        {
+          "function": "workshop",
+          "score": 0.9
+        }
+      ],
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.0,
+        "commercial": 0.08,
+        "residential": 0.05,
+        "religious": 0.0,
+        "industrial": 0.9,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "entry_facing": "unknown",
+      "notes": ""
+    },
+    "priority": 100
+  }
+]
