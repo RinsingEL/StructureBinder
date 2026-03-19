@@ -1,0 +1,83 @@
+package com.user.terra_script.world.city.stage.c7;
+
+import com.user.terra_script.world.city.stage.CityC35CatalogIO;
+import org.junit.jupiter.api.Test;
+
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+class CityC7StagesTest {
+    @Test
+    void rootScoringPrefersPoolAndConnectorCompatibleSeed() throws Exception {
+        Object matching = newCatalogStructure();
+        setField(matching, "structure_id", "test:port_start");
+        setField(matching, "piece_role", "START");
+        setField(matching, "size_tier", "M");
+        setField(matching, "preset_pool", "port/main");
+        setField(matching, "path", "port/dock/start");
+        addFunctionCandidate(matching, "port", 0.85);
+        addConnector(matching, "c0", 0, 0, "east");
+
+        Object mismatched = newCatalogStructure();
+        setField(mismatched, "structure_id", "test:generic_house");
+        setField(mismatched, "piece_role", "START");
+        setField(mismatched, "size_tier", "M");
+        setField(mismatched, "preset_pool", "residential/base");
+        setField(mismatched, "path", "village/house");
+        addFunctionCandidate(mismatched, "port", 0.95);
+        addConnector(mismatched, "c0", 0, 0, "north");
+
+        Method score = CityC7Stages.class.getDeclaredMethod(
+                "scoreStructure",
+                matching.getClass(),
+                String.class,
+                String.class,
+                String.class,
+                String.class,
+                String.class,
+                boolean.class
+        );
+        score.setAccessible(true);
+
+        double matchingScore = (double) score.invoke(null, matching, "M", "port", "port_group", "port", "east", true);
+        double mismatchedScore = (double) score.invoke(null, mismatched, "M", "port", "port_group", "port", "east", true);
+
+        assertTrue(matchingScore > mismatchedScore, "seed scoring should prefer pool+connector compatible root");
+    }
+
+    private static Object newCatalogStructure() throws Exception {
+        Class<?> type = Class.forName("com.user.terra_script.world.city.stage.c7.CityC7Stages$CatalogStructure");
+        Constructor<?> ctor = type.getDeclaredConstructor();
+        ctor.setAccessible(true);
+        return ctor.newInstance();
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void addFunctionCandidate(Object structure, String function, double score) throws Exception {
+        CityC35CatalogIO.FunctionCandidate candidate = new CityC35CatalogIO.FunctionCandidate();
+        candidate.function = function;
+        candidate.score = score;
+        ((List<CityC35CatalogIO.FunctionCandidate>) getField(structure, "function_candidates")).add(candidate);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void addConnector(Object structure, String id, int x, int z, String facing) throws Exception {
+        CityC35CatalogIO.ConnectorSpec connector = new CityC35CatalogIO.ConnectorSpec();
+        connector.id = id;
+        connector.facing = facing;
+        connector.local_pos.x = x;
+        connector.local_pos.z = z;
+        ((List<CityC35CatalogIO.ConnectorSpec>) getField(structure, "connectors")).add(connector);
+    }
+
+    private static Object getField(Object target, String fieldName) throws Exception {
+        return target.getClass().getField(fieldName).get(target);
+    }
+
+    private static void setField(Object target, String fieldName, Object value) throws Exception {
+        target.getClass().getField(fieldName).set(target, value);
+    }
+}

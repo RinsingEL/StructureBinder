@@ -6,8 +6,10 @@ import net.minecraft.core.Vec3i;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
@@ -16,12 +18,37 @@ import net.minecraftforge.event.level.ChunkEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 
 @SuppressWarnings("removal")
 @Mod.EventBusSubscriber(modid = "terra_script")
 public class StructureInjector {
+    public static final class TemplateSnapshot {
+        public final String structureId;
+        public final BlockPos origin;
+        public final Rotation rotation;
+        public final List<BlockEntry> entries;
+
+        private TemplateSnapshot(String structureId, BlockPos origin, Rotation rotation, List<BlockEntry> entries) {
+            this.structureId = structureId;
+            this.origin = origin;
+            this.rotation = rotation;
+            this.entries = entries;
+        }
+    }
+
+    public static final class BlockEntry {
+        public final BlockPos pos;
+        public final BlockState state;
+
+        private BlockEntry(BlockPos pos, BlockState state) {
+            this.pos = pos;
+            this.state = state;
+        }
+    }
 
     @SubscribeEvent
     public static void onChunkLoad(ChunkEvent.Load event) {
@@ -146,15 +173,42 @@ public class StructureInjector {
         }
     }
 
+    public static TemplateSnapshot captureTemplateSnapshot(ServerLevel level, String structureId, BlockPos origin, Rotation rotation) {
+        StructureTemplate template = loadTemplate(level, structureId);
+        if (level == null || template == null || origin == null) return null;
+        Bounds bounds = boundsFor(template, origin, rotation != null ? rotation : Rotation.NONE);
+        List<BlockEntry> entries = new ArrayList<>(Math.max(1, bounds.width * bounds.depth * bounds.height));
+        for (int x = bounds.minX; x < bounds.maxXExclusive; x++) {
+            for (int y = bounds.minY; y < bounds.maxYExclusive; y++) {
+                for (int z = bounds.minZ; z < bounds.maxZExclusive; z++) {
+                    BlockPos pos = new BlockPos(x, y, z);
+                    entries.add(new BlockEntry(pos, level.getBlockState(pos)));
+                }
+            }
+        }
+        return new TemplateSnapshot(structureId, origin, rotation != null ? rotation : Rotation.NONE, entries);
+    }
+
+    public static boolean restoreTemplateSnapshot(ServerLevel level, TemplateSnapshot snapshot) {
+        if (level == null || snapshot == null || snapshot.entries == null) return false;
+        for (BlockEntry entry : snapshot.entries) {
+            if (entry == null || entry.pos == null || entry.state == null) continue;
+            level.setBlock(entry.pos, entry.state, Block.UPDATE_ALL);
+        }
+        return true;
+    }
+
+    public static Vec3i templateSize(ServerLevel level, String structureId) {
+        StructureTemplate template = loadTemplate(level, structureId);
+        return template != null ? template.getSize() : null;
+    }
+
     private static void clearPlacedJigsawBlocks(ServerLevel level, StructureTemplate template, BlockPos origin, Rotation rotation) {
         if (level == null || template == null || origin == null) return;
-        Vec3i size = template.getSize();
-        int width = (rotation == Rotation.CLOCKWISE_90 || rotation == Rotation.COUNTERCLOCKWISE_90) ? size.getZ() : size.getX();
-        int depth = (rotation == Rotation.CLOCKWISE_90 || rotation == Rotation.COUNTERCLOCKWISE_90) ? size.getX() : size.getZ();
-        int height = Math.max(1, size.getY());
-        for (int x = origin.getX(); x < origin.getX() + width; x++) {
-            for (int y = origin.getY(); y < origin.getY() + height; y++) {
-                for (int z = origin.getZ(); z < origin.getZ() + depth; z++) {
+        Bounds bounds = boundsFor(template, origin, rotation);
+        for (int x = bounds.minX; x < bounds.maxXExclusive; x++) {
+            for (int y = bounds.minY; y < bounds.maxYExclusive; y++) {
+                for (int z = bounds.minZ; z < bounds.maxZExclusive; z++) {
                     BlockPos pos = new BlockPos(x, y, z);
                     if (level.getBlockState(pos).is(net.minecraft.world.level.block.Blocks.JIGSAW)) {
                         level.setBlock(pos, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 3);
@@ -163,4 +217,40 @@ public class StructureInjector {
             }
         }
     }
+
+    private static StructureTemplate loadTemplate(ServerLevel level, String structureId) {
+        if (level == null || structureId == null || structureId.isBlank()) return null;
+        StructureTemplateManager manager = level.getStructureManager();
+        return manager.get(new ResourceLocation(structureId)).orElse(null);
+    }
+
+    private static Bounds boundsFor(StructureTemplate template, BlockPos origin, Rotation rotation) {
+        Vec3i size = template.getSize();
+        int width = (rotation == Rotation.CLOCKWISE_90 || rotation == Rotation.COUNTERCLOCKWISE_90) ? size.getZ() : size.getX();
+        int depth = (rotation == Rotation.CLOCKWISE_90 || rotation == Rotation.COUNTERCLOCKWISE_90) ? size.getX() : size.getZ();
+        int height = Math.max(1, size.getY());
+        return new Bounds(
+                origin.getX(),
+                origin.getY(),
+                origin.getZ(),
+                origin.getX() + Math.max(1, width),
+                origin.getY() + height,
+                origin.getZ() + Math.max(1, depth),
+                Math.max(1, width),
+                height,
+                Math.max(1, depth)
+        );
+    }
+
+    private record Bounds(
+            int minX,
+            int minY,
+            int minZ,
+            int maxXExclusive,
+            int maxYExclusive,
+            int maxZExclusive,
+            int width,
+            int height,
+            int depth
+    ) {}
 }

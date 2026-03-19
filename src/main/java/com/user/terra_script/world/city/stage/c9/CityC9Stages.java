@@ -6,6 +6,7 @@ import com.user.terra_script.world.StructureInjector;
 import com.user.terra_script.world.city.stage.c6.CityC6Stages;
 import com.user.terra_script.world.city.stage.c8.CityC8Stages;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Vec3i;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Blocks;
@@ -18,6 +19,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -66,6 +68,8 @@ public final class CityC9Stages {
         public int y;
         public int z;
         public int rotation;
+        public Integer build_order;
+        public boolean terminalized;
         public boolean placed;
         public String reason;
     }
@@ -208,11 +212,28 @@ public final class CityC9Stages {
         Set<Long> set = areaBlocks;
 
         if (foundation.placements != null && !foundation.placements.isEmpty()) {
+            List<CityC8Stages.PlacementNode> orderedNodes = new ArrayList<>(foundation.placements);
+            boolean legacyPlan = orderedNodes.stream().anyMatch(node -> node == null || node.build_order == null);
+            orderedNodes.sort(Comparator
+                    .comparing((CityC8Stages.PlacementNode node) -> node != null && node.build_order != null ? node.build_order : Integer.MAX_VALUE)
+                    .thenComparing(node -> node != null && node.node_id != null ? node.node_id : ""));
             System.out.println("[C9] placements branch build_area=" + foundation.build_area_id
                     + " dry_run=" + (level == null)
-                    + " count=" + foundation.placements.size());
-            for (CityC8Stages.PlacementNode node : foundation.placements) {
+                    + " count=" + orderedNodes.size()
+                    + " legacy=" + legacyPlan);
+            Map<String, CityC8Stages.PlacementNode> byId = new LinkedHashMap<>();
+            for (CityC8Stages.PlacementNode node : orderedNodes) {
+                if (node != null && node.node_id != null) byId.put(node.node_id, node);
+            }
+            Map<String, PlacedNodeState> placedStates = new LinkedHashMap<>();
+            Set<String> terminatedBranchRoots = new HashSet<>();
+
+            for (CityC8Stages.PlacementNode node : orderedNodes) {
                 if (node == null || node.template_id == null || node.template_id.isBlank()) continue;
+                if (isDescendantOfAny(node, byId, terminatedBranchRoots)) {
+                    recordStructureResult(resultItem, node, targetY, false, "skipped_terminalized_branch");
+                    continue;
+                }
                 PlacedStructure placed = new PlacedStructure();
                 placed.node_id = node.node_id;
                 placed.template_id = node.template_id;
@@ -220,8 +241,17 @@ public final class CityC9Stages {
                 placed.y = node.y > 0 ? node.y : targetY;
                 placed.z = node.z;
                 placed.rotation = node.rotation;
+                placed.build_order = node.build_order;
+                placed.terminalized = node.terminalized;
                 boolean ok = false;
-                if (level != null) {
+                String rejectReason = null;
+                if (level != null && !legacyPlan) {
+                    rejectReason = validateRuntimePlacement(node, byId, placedStates);
+                }
+                if (level != null && rejectReason == null) {
+                    StructureInjector.TemplateSnapshot snapshot = shouldCaptureSnapshot(node)
+                            ? StructureInjector.captureTemplateSnapshot(level, node.template_id, new BlockPos(node.x, placed.y, node.z), toRotation(node.rotation))
+                            : null;
                     System.out.println("[C9] placing template=" + node.template_id
                             + " node=" + node.node_id
                             + " pos=(" + node.x + "," + placed.y + "," + node.z + ")"
@@ -233,11 +263,24 @@ public final class CityC9Stages {
                             toRotation(node.rotation),
                             true
                     );
+                    if (ok) {
+                        placedStates.put(node.node_id, new PlacedNodeState(node, placed.y, snapshot));
+                    }
                 }
-                placed.placed = ok;
-                placed.reason = level != null
-                        ? (ok ? "placed_from_c8_plan" : "structure_place_failed")
-                        : "dry_run_planned";
+                if (level != null && rejectReason != null) {
+                    String fallbackReason = tryTerminalizeAncestor(level, node, byId, placedStates, terminatedBranchRoots);
+                    placed.placed = false;
+                    placed.reason = fallbackReason != null ? fallbackReason : rejectReason;
+                } else if (level != null && !ok) {
+                    String fallbackReason = tryTerminalizeAncestor(level, node, byId, placedStates, terminatedBranchRoots);
+                    placed.placed = false;
+                    placed.reason = fallbackReason != null ? fallbackReason : "structure_place_failed";
+                } else {
+                    placed.placed = ok;
+                    placed.reason = level != null
+                            ? (ok ? "placed_from_c8_plan" : "structure_place_failed")
+                            : "dry_run_planned";
+                }
                 System.out.println("[C9] structure entry node=" + placed.node_id
                         + " dry_run=" + (level == null)
                         + " placed=" + placed.placed
@@ -295,6 +338,139 @@ public final class CityC9Stages {
         return changed;
     }
 
+    private static void recordStructureResult(
+            PlacementItem resultItem,
+            CityC8Stages.PlacementNode node,
+            int targetY,
+            boolean placedFlag,
+            String reason
+    ) {
+        if (resultItem == null || node == null) return;
+        PlacedStructure placed = new PlacedStructure();
+        placed.node_id = node.node_id;
+        placed.template_id = node.template_id;
+        placed.x = node.x;
+        placed.y = node.y > 0 ? node.y : targetY;
+        placed.z = node.z;
+        placed.rotation = node.rotation;
+        placed.build_order = node.build_order;
+        placed.terminalized = node.terminalized;
+        placed.placed = placedFlag;
+        placed.reason = reason;
+        resultItem.structures.add(placed);
+    }
+
+    private static boolean shouldCaptureSnapshot(CityC8Stages.PlacementNode node) {
+        return node != null
+                && node.fallback_terminal_template_id != null
+                && !node.fallback_terminal_template_id.isBlank();
+    }
+
+    private static String validateRuntimePlacement(
+            CityC8Stages.PlacementNode node,
+            Map<String, CityC8Stages.PlacementNode> byId,
+            Map<String, PlacedNodeState> placedStates
+    ) {
+        if (node == null) return "missing_node";
+        if (node.parent_node_id != null && !node.parent_node_id.isBlank() && !placedStates.containsKey(node.parent_node_id)) {
+            return "missing_parent_before_build";
+        }
+        for (PlacedNodeState state : placedStates.values()) {
+            if (state == null || state.node == null) continue;
+            if (state.node.node_id != null && state.node.node_id.equals(node.parent_node_id)) continue;
+            if (intersects(node, state.node)) return "runtime_footprint_collision";
+        }
+        if (node.parent_node_id != null && byId != null) {
+            CityC8Stages.PlacementNode parent = byId.get(node.parent_node_id);
+            if (parent != null
+                    && parent.terminalized
+                    && parent.fallback_terminal_template_id != null
+                    && !parent.fallback_terminal_template_id.isBlank()) {
+                return "parent_already_terminalized";
+            }
+            if (parent != null && node.incoming_parent_connector_x != null && node.incoming_child_connector_x != null) {
+                int dx = node.incoming_child_connector_x - node.incoming_parent_connector_x;
+                int dz = node.incoming_child_connector_z - node.incoming_parent_connector_z;
+                if (Math.abs(dx) + Math.abs(dz) != 1) return "runtime_connector_mismatch";
+            }
+        }
+        return null;
+    }
+
+    private static boolean intersects(CityC8Stages.PlacementNode a, CityC8Stages.PlacementNode b) {
+        if (a == null || b == null
+                || a.footprint_min_x == null || a.footprint_min_z == null || a.footprint_max_x == null || a.footprint_max_z == null
+                || b.footprint_min_x == null || b.footprint_min_z == null || b.footprint_max_x == null || b.footprint_max_z == null) {
+            return false;
+        }
+        boolean separated = a.footprint_max_x < b.footprint_min_x
+                || a.footprint_min_x > b.footprint_max_x
+                || a.footprint_max_z < b.footprint_min_z
+                || a.footprint_min_z > b.footprint_max_z;
+        return !separated;
+    }
+
+    private static String tryTerminalizeAncestor(
+            ServerLevel level,
+            CityC8Stages.PlacementNode failedNode,
+            Map<String, CityC8Stages.PlacementNode> byId,
+            Map<String, PlacedNodeState> placedStates,
+            Set<String> terminatedBranchRoots
+    ) {
+        CityC8Stages.PlacementNode cursor = failedNode;
+        while (cursor != null && cursor.parent_node_id != null && !cursor.parent_node_id.isBlank()) {
+            PlacedNodeState parentState = placedStates.get(cursor.parent_node_id);
+            CityC8Stages.PlacementNode parentNode = byId.get(cursor.parent_node_id);
+            if (parentState != null && parentNode != null && shouldCaptureSnapshot(parentNode)) {
+                if (parentState.snapshot == null) return "terminalize_snapshot_missing";
+                boolean restored = StructureInjector.restoreTemplateSnapshot(level, parentState.snapshot);
+                if (!restored) return "terminalize_restore_failed";
+
+                BlockPos origin = new BlockPos(
+                        parentNode.fallback_terminal_x != null ? parentNode.fallback_terminal_x : parentNode.x,
+                        parentState.y,
+                        parentNode.fallback_terminal_z != null ? parentNode.fallback_terminal_z : parentNode.z
+                );
+                boolean replaced = StructureInjector.spawnStructureAtBlock(
+                        level,
+                        parentNode.fallback_terminal_template_id,
+                        origin,
+                        toRotation(parentNode.fallback_terminal_rotation != null ? parentNode.fallback_terminal_rotation : parentNode.rotation),
+                        true
+                );
+                if (!replaced) return "terminalize_replace_failed";
+
+                parentNode.template_id = parentNode.fallback_terminal_template_id;
+                if (parentNode.fallback_terminal_x != null) parentNode.x = parentNode.fallback_terminal_x;
+                if (parentNode.fallback_terminal_z != null) parentNode.z = parentNode.fallback_terminal_z;
+                if (parentNode.fallback_terminal_rotation != null) parentNode.rotation = parentNode.fallback_terminal_rotation;
+                parentNode.terminalized = true;
+                placedStates.put(parentNode.node_id, new PlacedNodeState(parentNode, parentState.y, null));
+                terminatedBranchRoots.add(parentNode.node_id);
+                return "terminalized_parent_after_runtime_reject";
+            }
+            cursor = parentNode;
+        }
+        if (failedNode != null && failedNode.parent_node_id != null) {
+            terminatedBranchRoots.add(failedNode.parent_node_id);
+        }
+        return null;
+    }
+
+    private static boolean isDescendantOfAny(
+            CityC8Stages.PlacementNode node,
+            Map<String, CityC8Stages.PlacementNode> byId,
+            Set<String> roots
+    ) {
+        if (node == null || byId == null || roots == null || roots.isEmpty()) return false;
+        CityC8Stages.PlacementNode cursor = node;
+        while (cursor != null && cursor.parent_node_id != null && !cursor.parent_node_id.isBlank()) {
+            if (roots.contains(cursor.parent_node_id)) return true;
+            cursor = byId.get(cursor.parent_node_id);
+        }
+        return false;
+    }
+
     private static Rotation toRotation(int degrees) {
         int normalized = ((degrees % 360) + 360) % 360;
         return switch (normalized) {
@@ -331,4 +507,10 @@ public final class CityC9Stages {
     private static long packBlock(int x, int z) {
         return (((long) x) << 32) ^ (z & 0xffffffffL);
     }
+
+    private record PlacedNodeState(
+            CityC8Stages.PlacementNode node,
+            int y,
+            StructureInjector.TemplateSnapshot snapshot
+    ) {}
 }

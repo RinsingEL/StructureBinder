@@ -252,9 +252,10 @@ public final class CityC7Stages {
                 if (arrangement.seed.start_template_id == null || arrangement.seed.start_template_id.isBlank()) {
                     arrangement.seed.start_x = (int) Math.round(module.anchor.x);
                     arrangement.seed.start_z = (int) Math.round(module.anchor.z);
-                    arrangement.seed.start_rotation = defaultRotation(arrangement.arrangement_type);
-                    arrangement.seed.start_template_id = buildFallbackComponent(plan, module, catalog).template_id;
                     arrangement.seed.start_connector_dir = defaultConnectorDir(arrangement.arrangement_type);
+                    SelectedComponent seedComponent = buildFallbackComponent(plan, module, catalog);
+                    arrangement.seed.start_template_id = seedComponent.template_id;
+                    arrangement.seed.start_rotation = resolveStartRotation(findStructure(catalog, arrangement.seed.start_template_id), arrangement.seed.start_connector_dir, arrangement.arrangement_type);
                 }
                 arrangement.validated_primary_modules.add(module.module_id);
                 arrangement.selected_components.add(buildFallbackComponent(plan, module, catalog));
@@ -293,9 +294,11 @@ public final class CityC7Stages {
         item.termination.rollback_on_unclosed_middle = true;
         item.strategy_params.putAll(defaultStrategyParams(item.arrangement_type));
 
-        List<String> candidates = chooseCandidates(category, item.size_tier, item.function_role, plan.group_id, catalog);
+        List<String> candidates = chooseCandidates(category, item.size_tier, item.function_role, plan.group_id, item.arrangement_type, item.seed.start_connector_dir, true, catalog);
         item.top_k_templates = new ArrayList<>(candidates.subList(0, Math.min(3, candidates.size())));
         item.selected_template = item.top_k_templates.isEmpty() ? null : item.top_k_templates.get(0);
+        item.seed.start_template_id = item.selected_template;
+        item.seed.start_rotation = resolveStartRotation(findStructure(catalog, item.selected_template), item.seed.start_connector_dir, item.arrangement_type);
         for (String c : item.top_k_templates) {
             if (!c.equals(item.selected_template)) item.fallback_chain.add(c);
         }
@@ -326,9 +329,19 @@ public final class CityC7Stages {
         String category = module != null && module.template_hint != null ? module.template_hint.category : "residential";
         String sizeTier = module != null && module.template_hint != null ? module.template_hint.size_tier : "M";
         String functionRole = inferFunctionRole(category, component.component_id, plan.group_id);
-        List<String> candidates = chooseCandidates(category, normalizeTier(sizeTier), functionRole, plan.group_id, catalog);
+        String arrangementType = inferArrangementType(plan.group_id);
+        List<String> candidates = chooseCandidates(
+                category,
+                normalizeTier(sizeTier),
+                functionRole,
+                plan.group_id,
+                arrangementType,
+                defaultConnectorDir(arrangementType),
+                true,
+                catalog
+        );
         component.template_id = candidates.isEmpty() ? null : candidates.get(0);
-        component.rule = defaultRuleForArrangement(inferArrangementType(plan.group_id), component.role);
+        component.rule = defaultRuleForArrangement(arrangementType, component.role);
         return component;
     }
 
@@ -604,8 +617,17 @@ public final class CityC7Stages {
         return rule;
     }
 
-    private static List<String> chooseCandidates(String category, String sizeTier, String functionRole, String groupId, Catalog catalog) {
-        List<String> fromCatalog = chooseCandidatesFromCatalog(sizeTier, functionRole, groupId, catalog);
+    private static List<String> chooseCandidates(
+            String category,
+            String sizeTier,
+            String functionRole,
+            String groupId,
+            String arrangementType,
+            String startConnectorDir,
+            boolean rootCandidate,
+            Catalog catalog
+    ) {
+        List<String> fromCatalog = chooseCandidatesFromCatalog(sizeTier, functionRole, groupId, arrangementType, startConnectorDir, rootCandidate, catalog);
         if (!fromCatalog.isEmpty()) return fromCatalog;
 
         String c = safe(category).toLowerCase(Locale.ROOT);
@@ -619,17 +641,26 @@ public final class CityC7Stages {
         return VILLAGE_HOUSE_M;
     }
 
-    private static List<String> chooseCandidatesFromCatalog(String sizeTier, String functionRole, String groupId, Catalog catalog) {
+    private static List<String> chooseCandidatesFromCatalog(
+            String sizeTier,
+            String functionRole,
+            String groupId,
+            String arrangementType,
+            String startConnectorDir,
+            boolean rootCandidate,
+            Catalog catalog
+    ) {
         if (catalog == null || !catalog.ok || catalog.structures == null || catalog.structures.isEmpty()) {
             return Collections.emptyList();
         }
 
         String tier = normalizeTier(sizeTier);
         String normalizedFunction = normalizeCatalogFunction(functionRole);
+        String preferredPool = inferPreferredPool(groupId, arrangementType, normalizedFunction);
         List<ScoredTemplate> scored = new ArrayList<>();
         for (CatalogStructure structure : catalog.structures) {
             if (structure == null || structure.structure_id == null || structure.structure_id.isBlank()) continue;
-            double score = scoreStructure(structure, tier, normalizedFunction, groupId);
+            double score = scoreStructure(structure, tier, normalizedFunction, groupId, preferredPool, startConnectorDir, rootCandidate);
             if (score <= 0.0) continue;
             scored.add(new ScoredTemplate(structure.structure_id, score));
         }
@@ -643,12 +674,25 @@ public final class CityC7Stages {
         return out;
     }
 
-    private static double scoreStructure(CatalogStructure structure, String sizeTier, String functionRole, String groupId) {
+    private static double scoreStructure(
+            CatalogStructure structure,
+            String sizeTier,
+            String functionRole,
+            String groupId,
+            String preferredPool,
+            String startConnectorDir,
+            boolean rootCandidate
+    ) {
         double score = 0.0;
         String pieceRole = safe(structure.piece_role).toUpperCase(Locale.ROOT);
-        if ("START".equals(pieceRole)) score += 0.20;
-        else if ("SINGLE".equals(pieceRole)) score += 0.16;
+        if ("START".equals(pieceRole)) score += rootCandidate ? 0.48 : 0.20;
+        else if ("SINGLE".equals(pieceRole)) score += rootCandidate ? 0.34 : 0.16;
         else if ("MIDDLE".equals(pieceRole)) score += 0.06;
+        else if ("END".equals(pieceRole)) score -= rootCandidate ? 0.18 : 0.0;
+
+        if (rootCandidate && !"START".equals(pieceRole) && !"SINGLE".equals(pieceRole)) {
+            score -= 0.10;
+        }
 
         String structureTier = normalizeTier(structure.size_tier);
         if (sizeTier.equals(structureTier)) score += 0.20;
@@ -665,6 +709,17 @@ public final class CityC7Stages {
         }
         score += bestFunctionScore;
 
+        double poolScore = scorePoolAffinity(structure, preferredPool);
+        if (!preferredPool.isBlank() && poolScore <= 0.0) score -= 0.05;
+        score += poolScore;
+
+        if (rootCandidate) {
+            if (!supportsSeedConnector(structure, startConnectorDir)) {
+                return 0.0;
+            }
+            score += 0.36;
+        }
+
         String path = safe(structure.path).toLowerCase(Locale.ROOT);
         String group = safe(groupId).toLowerCase(Locale.ROOT);
         if (group.contains("port") && (path.contains("ocean") || path.contains("ship") || path.contains("lighthouse") || path.contains("harbor") || path.contains("port"))) score += 0.12;
@@ -672,6 +727,91 @@ public final class CityC7Stages {
         if (group.contains("market") && (path.contains("market") || path.contains("shop"))) score += 0.08;
         if (group.contains("farm") && path.contains("farm")) score += 0.08;
         return score;
+    }
+
+    private static String inferPreferredPool(String groupId, String arrangementType, String functionRole) {
+        String group = safe(groupId).toLowerCase(Locale.ROOT);
+        String arrangement = safe(arrangementType).toLowerCase(Locale.ROOT);
+        String function = safe(functionRole).toLowerCase(Locale.ROOT);
+        if (group.contains("port") || arrangement.contains("dock") || function.contains("port")) return "port";
+        if (group.contains("market") || function.contains("market") || function.contains("commercial")) return "market";
+        if (group.contains("farm") || function.contains("farm")) return "farm";
+        if (group.contains("civic") || function.contains("civic")) return "civic";
+        if (group.contains("residential") || function.contains("residential")) return "residential";
+        return "";
+    }
+
+    private static double scorePoolAffinity(CatalogStructure structure, String preferredPool) {
+        if (structure == null || preferredPool == null || preferredPool.isBlank()) return 0.0;
+        String pool = safe(structure.preset_pool).toLowerCase(Locale.ROOT);
+        if (pool.isBlank()) return 0.0;
+        if (pool.contains(preferredPool)) return 0.42;
+        String path = safe(structure.path).toLowerCase(Locale.ROOT);
+        return path.contains(preferredPool) ? 0.18 : 0.0;
+    }
+
+    private static boolean supportsSeedConnector(CatalogStructure structure, String startConnectorDir) {
+        DirectionMatch match = resolveSeedConnector(structure, startConnectorDir);
+        return match != null;
+    }
+
+    private static int resolveStartRotation(CatalogStructure structure, String startConnectorDir, String arrangementType) {
+        DirectionMatch match = resolveSeedConnector(structure, startConnectorDir);
+        if (match != null) return match.rotation;
+        return defaultRotation(arrangementType);
+    }
+
+    private static DirectionMatch resolveSeedConnector(CatalogStructure structure, String startConnectorDir) {
+        if (structure == null || startConnectorDir == null || startConnectorDir.isBlank()) return null;
+        String wanted = startConnectorDir.trim().toLowerCase(Locale.ROOT);
+        if (structure.connectors != null && !structure.connectors.isEmpty()) {
+            for (Integer rotation : allowedRotations(structure)) {
+                for (CityC35CatalogIO.ConnectorSpec connector : structure.connectors) {
+                    if (connector == null) continue;
+                    String facing = rotateDirection(connector.facing, rotation);
+                    if (wanted.equals(facing)) return new DirectionMatch(rotation);
+                }
+            }
+        }
+        if (structure.connector_dirs != null) {
+            for (String dir : structure.connector_dirs) {
+                if (wanted.equalsIgnoreCase(dir)) return new DirectionMatch(rotationForDirection(wanted));
+            }
+        }
+        if (structure.orientation != null && structure.orientation.jigsaw_facing != null) {
+            for (String dir : structure.orientation.jigsaw_facing) {
+                if (wanted.equalsIgnoreCase(dir)) return new DirectionMatch(rotationForDirection(wanted));
+            }
+        }
+        return null;
+    }
+
+    private static List<Integer> allowedRotations(CatalogStructure structure) {
+        if (structure != null && structure.constraints != null && structure.constraints.allowed_rotations != null && !structure.constraints.allowed_rotations.isEmpty()) {
+            return structure.constraints.allowed_rotations;
+        }
+        if (structure != null && structure.orientation != null && structure.orientation.rotations != null && !structure.orientation.rotations.isEmpty()) {
+            return structure.orientation.rotations;
+        }
+        return List.of(0, 90, 180, 270);
+    }
+
+    private static String rotateDirection(String direction, int rotation) {
+        String base = safe(direction).toLowerCase(Locale.ROOT);
+        List<String> order = List.of("north", "east", "south", "west");
+        int index = order.indexOf(base);
+        if (index < 0) return base;
+        int turns = (((rotation % 360) + 360) % 360) / 90;
+        return order.get((index + turns) % order.size());
+    }
+
+    private static int rotationForDirection(String direction) {
+        return switch (safe(direction).toLowerCase(Locale.ROOT)) {
+            case "east" -> 90;
+            case "south" -> 180;
+            case "west" -> 270;
+            default -> 0;
+        };
     }
 
     private static String inferSizeTierFromTemplate(String templateId, Catalog catalog) {
@@ -792,4 +932,6 @@ public final class CityC7Stages {
     }
 
     private record ScoredTemplate(String id, double score) {}
+
+    private record DirectionMatch(int rotation) {}
 }
