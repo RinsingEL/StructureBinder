@@ -67,6 +67,7 @@ public class TerritoryRepository {
     }
 
     private static List<TerritoryBlueprint> loadBlueprints(Path file) throws Exception {
+        if (file == null || !Files.exists(file)) return new ArrayList<>();
         String content = Files.readString(file, StandardCharsets.UTF_8);
         if (content == null || content.isBlank()) return new ArrayList<>();
         var el = JsonParser.parseString(content);

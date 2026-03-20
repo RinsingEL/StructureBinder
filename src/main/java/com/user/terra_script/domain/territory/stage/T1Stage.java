@@ -5,19 +5,19 @@ import com.user.terra_script.core.stage.StageContext;
 
 import java.util.List;
 
-public class T2Stage extends StageBase {
+public class T1Stage extends StageBase {
     @Override
     public String id() {
-        return "T2";
+        return "T1";
     }
 
     @Override
     public List<String> dependsOn() {
-        return List.of("T1");
+        return List.of("W4");
     }
 
     @Override
     protected void execute(StageContext ctx) throws Exception {
-        TerritoryStageOrchestrator.runT2(ctx);
+        TerritoryStageOrchestrator.runT1(ctx);
     }
 }

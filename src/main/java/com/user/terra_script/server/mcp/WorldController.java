@@ -66,6 +66,8 @@ public class WorldController {
             res.addProperty("step", "W3");
             res.add("continents", list);
             HttpUtil.sendResponse(exchange, 200, gson.toJson(res));
+        } catch (IllegalArgumentException e) {
+            HttpUtil.sendResponse(exchange, 400, "{\"error\": \"" + e.getMessage() + "\"}");
         } catch (Exception e) {
             HttpUtil.handleError(exchange, e);
         }
@@ -146,237 +148,9 @@ public class WorldController {
             String body = HttpUtil.readBody(exchange);
             JsonObject req = JsonParser.parseString(body).getAsJsonObject();
 
+            JsonObject response = buildQueryRegionBundle(mcServer, req);
             String territoryId = req.has("territory_id") ? req.get("territory_id").getAsString() : null;
             int regionId = req.has("region_id") ? req.get("region_id").getAsInt() : -1;
-
-            double minSlope = req.has("min_slope") ? req.get("min_slope").getAsDouble() : -1;
-            double maxSlope = req.has("max_slope") ? req.get("max_slope").getAsDouble() : 999;
-            double minTpi = req.has("min_tpi") ? req.get("min_tpi").getAsDouble() : -999;
-            double maxTpi = req.has("max_tpi") ? req.get("max_tpi").getAsDouble() : 999;
-            int limit = req.has("limit") ? req.get("limit").getAsInt() : 5;
-            int limitPerGroup = req.has("limit_per_group") ? req.get("limit_per_group").getAsInt() : Math.max(1, limit);
-            JsonArray interestGroups = req.has("interest_groups") && req.get("interest_groups").isJsonArray()
-                    ? req.getAsJsonArray("interest_groups")
-                    : null;
-            boolean hasInterestGroups = interestGroups != null && !interestGroups.isEmpty();
-            CandidateCriteria defaultCriteria = new CandidateCriteria(minSlope, maxSlope, minTpi, maxTpi);
-
-            List<ScanPixel> basePixels = new ArrayList<>();
-            int step = 1;
-            RegionCache refCache = null;
-
-            if (territoryId != null) {
-                var holder = ScanResultHolder.get();
-                String[][] owners = com.user.terra_script.world.TerritoryManager.globalOwnershipMap;
-                ScanPixel[][] globalPixels = holder.lastScanData;
-
-                if (owners == null || globalPixels == null) {
-                    HttpUtil.sendResponse(exchange, 400, "{\"error\": \"Territory data not ready. Please run 'establish_territory' first.\"}");
-                    return;
-                }
-
-                var allRes = com.user.terra_script.world.TerritoryManager.getAllResults();
-                var targetRes = allRes.stream().filter(r -> r.config.id.equals(territoryId)).findFirst().orElse(null);
-                if (targetRes == null) {
-                    HttpUtil.sendResponse(exchange, 404, "{\"error\": \"Territory ID not found: " + territoryId + "\"}");
-                    return;
-                }
-
-                step = holder.scanStep;
-                int w = globalPixels.length;
-                int h = globalPixels[0].length;
-                int radiusBlocks = holder.scanRadiusChunks * 16;
-                int globalMinX = -radiusBlocks;
-                int globalMinZ = -radiusBlocks;
-
-                int gMinX = (targetRes.stats.minX - globalMinX) / step;
-                int gMaxX = (targetRes.stats.maxX - globalMinX) / step;
-                int gMinZ = (targetRes.stats.minZ - globalMinZ) / step;
-                int gMaxZ = (targetRes.stats.maxZ - globalMinZ) / step;
-
-                gMinX = Math.max(0, gMinX);
-                gMaxX = Math.min(w - 1, gMaxX);
-                gMinZ = Math.max(0, gMinZ);
-                gMaxZ = Math.min(h - 1, gMaxZ);
-
-                for (int i = gMinX; i <= gMaxX; i++) {
-                    for (int j = gMinZ; j <= gMaxZ; j++) {
-                        if (territoryId.equals(owners[i][j])) {
-                            ScanPixel p = globalPixels[i][j];
-                            if (p != null && p.isLand()) {
-                                basePixels.add(p);
-                            }
-                        }
-                    }
-                }
-            } else if (regionId != -1) {
-                var holder = ScanResultHolder.get();
-                RegionCache cache = holder.regionCacheMap.get(regionId);
-                if (cache == null || cache.detailData == null) {
-                    HttpUtil.sendResponse(exchange, 404, "{\"error\": \"Region " + regionId + " not cached.\"}");
-                    return;
-                }
-                if (cache.slopeData == null || cache.tpiData == null) {
-                    HttpUtil.sendResponse(exchange, 400, "{\"error\": \"Terrain features missing for Region " + regionId + ". Please generate them in-game.\"}");
-                    return;
-                }
-
-                refCache = cache;
-                step = cache.step;
-                ScanPixel[][] pixels = cache.detailData;
-                double[][] slopes = cache.slopeData;
-                double[][] tpis = cache.tpiData;
-                int w = pixels.length;
-                int h = pixels[0].length;
-
-                int sampleStep = 1;
-                if (w * h > 250000) sampleStep = 2;
-
-                for (int i = 0; i < w; i += sampleStep) {
-                    for (int j = 0; j < h; j += sampleStep) {
-                        if (pixels[i][j] != null && pixels[i][j].isLand()) {
-                            basePixels.add(pixels[i][j]);
-                        }
-                    }
-                }
-            } else {
-                HttpUtil.sendResponse(exchange, 400, "{\"error\": \"Must provide either 'region_id' or 'territory_id'.\"}");
-                return;
-            }
-
-            JsonObject response = new JsonObject();
-            response.addProperty("step", STEP_Q1);
-            JsonObject meta = new JsonObject();
-            if (territoryId != null) meta.addProperty("target_territory", territoryId);
-            else meta.addProperty("target_region", regionId);
-            meta.addProperty("interest_groups_enabled", hasInterestGroups);
-            response.add("metadata", meta);
-
-            JsonArray candidatesArr = new JsonArray();
-            JsonArray candidatesMetadata = new JsonArray();
-            JsonArray groupAsciiMaps = new JsonArray();
-            List<OverlayCluster> overlayClusters = new ArrayList<>();
-            int globalClusterId = 0;
-
-            if (hasInterestGroups) {
-                Map<String, Integer> groupCounter = new LinkedHashMap<>();
-                for (int gi = 0; gi < interestGroups.size(); gi++) {
-                    JsonElement groupEl = interestGroups.get(gi);
-                    if (!groupEl.isJsonObject()) continue;
-                    JsonObject group = groupEl.getAsJsonObject();
-                    String groupId = group.has("id") ? group.get("id").getAsString() : String.valueOf((char) ('A' + (gi % 26)));
-                    JsonObject criteriaObj = group.has("criteria") && group.get("criteria").isJsonObject()
-                            ? group.getAsJsonObject("criteria")
-                            : group;
-                    CandidateCriteria criteria = parseCriteria(criteriaObj, defaultCriteria);
-                    int groupLimit = group.has("limit") ? Math.max(1, group.get("limit").getAsInt()) : Math.max(1, limitPerGroup);
-                    char symbol = pickGroupSymbol(groupId, gi);
-
-                    List<ScanPixel> filtered = filterCandidates(basePixels, refCache, criteria);
-                    List<List<DBSCAN.Point>> groupedClusters = DBSCAN.cluster(filtered, step * 4.0, 5);
-                    groupedClusters.sort((c1, c2) -> Integer.compare(c2.size(), c1.size()));
-
-                    for (int idx = 0; idx < groupedClusters.size() && idx < groupLimit; idx++) {
-                        List<DBSCAN.Point> cluster = groupedClusters.get(idx);
-                        if (cluster.isEmpty()) continue;
-
-                        globalClusterId++;
-                        int serial = groupCounter.merge(groupId, 1, Integer::sum);
-                        String label = groupId + serial;
-                        char previewLabel = pickPreviewLabel(globalClusterId - 1);
-
-                        JsonObject clusterJson = buildClusterJson(globalClusterId, cluster, refCache);
-                        clusterJson.addProperty("group_id", groupId);
-                        clusterJson.addProperty("label", label);
-                        clusterJson.addProperty("symbol", String.valueOf(symbol));
-                        clusterJson.addProperty("preview_label", String.valueOf(previewLabel));
-                        candidatesArr.add(clusterJson);
-
-                        JsonObject metaEntry = new JsonObject();
-                        metaEntry.addProperty("label", label);
-                        metaEntry.addProperty("group", groupId);
-                        metaEntry.addProperty("cluster_id", globalClusterId);
-                        if (clusterJson.has("description")) metaEntry.addProperty("desc", clusterJson.get("description").getAsString());
-                        if (clusterJson.has("key_points") && clusterJson.getAsJsonObject("key_points").has("center")) {
-                            metaEntry.add("center", clusterJson.getAsJsonObject("key_points").get("center"));
-                        }
-                        candidatesMetadata.add(metaEntry);
-
-                        JsonObject mapEntry = new JsonObject();
-                        mapEntry.addProperty("label", label);
-                        mapEntry.addProperty("group", groupId);
-                        mapEntry.addProperty("cluster_id", globalClusterId);
-                        mapEntry.add("ascii_map", clusterJson.getAsJsonArray("ascii_map"));
-                        groupAsciiMaps.add(mapEntry);
-
-                        overlayClusters.add(new OverlayCluster(symbol, previewLabel, label, globalClusterId, cluster));
-                    }
-                }
-                response.add("candidates_metadata", candidatesMetadata);
-                response.add("group_ascii_maps", groupAsciiMaps);
-                response.add("visual_map", buildVisualMap(overlayClusters));
-            } else {
-                List<ScanPixel> filtered = filterCandidates(basePixels, refCache, defaultCriteria);
-                List<List<DBSCAN.Point>> filteredClusters = DBSCAN.cluster(filtered, step * 4.0, 5);
-                filteredClusters.sort((c1, c2) -> Integer.compare(c2.size(), c1.size()));
-
-                int count = 0;
-                for (List<DBSCAN.Point> cluster : filteredClusters) {
-                    if (count >= limit) break;
-                    globalClusterId++;
-                    char previewLabel = pickPreviewLabel(globalClusterId - 1);
-                    JsonObject clusterJson = buildClusterJson(globalClusterId, cluster, refCache);
-                    clusterJson.addProperty("label", String.valueOf(previewLabel));
-                    clusterJson.addProperty("symbol", String.valueOf(previewLabel));
-                    clusterJson.addProperty("preview_label", String.valueOf(previewLabel));
-                    candidatesArr.add(clusterJson);
-                    overlayClusters.add(new OverlayCluster(previewLabel, previewLabel, String.valueOf(previewLabel), globalClusterId, cluster));
-                    count++;
-                }
-            }
-
-            response.add("candidates", candidatesArr);
-            List<QueryRegionPreviewExporter.OverlayInput> previewOverlays = new ArrayList<>();
-            for (OverlayCluster overlay : overlayClusters) {
-                previewOverlays.add(new QueryRegionPreviewExporter.OverlayInput(
-                        overlay.previewLabel,
-                        overlay.label,
-                        overlay.clusterId,
-                        overlay.points
-                ));
-            }
-
-            // 获取完整的底层地图数据和坐标参数
-            ScanPixel[][] mapData;
-            int mapWorldMinX, mapWorldMinZ, mapStep;
-            var holder = ScanResultHolder.get();
-            
-            if (territoryId != null) {
-                mapData = holder.lastScanData;
-                mapStep = holder.scanStep;
-                int radiusBlocks = holder.scanRadiusChunks * 16;
-                mapWorldMinX = -radiusBlocks;
-                mapWorldMinZ = -radiusBlocks;
-            } else {
-                mapData = refCache.detailData;
-                mapStep = refCache.step;
-                mapWorldMinX = refCache.minX;
-                mapWorldMinZ = refCache.minZ;
-            }
-
-            JsonObject preview = QueryRegionPreviewExporter.export(
-                    mcServer,
-                    territoryId == null ? "region" : "territory",
-                    territoryId == null ? String.valueOf(regionId) : territoryId,
-                    mapData,          // 新增传参
-                    mapWorldMinX,     // 新增传参
-                    mapWorldMinZ,     // 新增传参
-                    mapStep,          // 新增传参
-                    basePixels,
-                    previewOverlays
-            );
-            response.add("preview_overlay", preview);
-
             String targetType = territoryId == null ? "region" : "territory";
             String targetId = territoryId == null ? String.valueOf(regionId) : territoryId;
             JsonObject pending = persistPendingSelection(targetType, targetId, response);
@@ -386,6 +160,257 @@ public class WorldController {
         } catch (Exception e) {
             HttpUtil.handleError(exchange, e);
         }
+    }
+
+    public static JsonObject buildRegionCandidateBundle(
+            MinecraftServer mcServer,
+            String targetType,
+            String targetId,
+            int regionId,
+            int limit
+    ) {
+        JsonObject req = new JsonObject();
+        req.addProperty("region_id", regionId);
+        req.addProperty("limit", Math.max(1, limit));
+        JsonObject bundle = buildQueryRegionBundle(mcServer, req);
+        if (targetType != null && !targetType.isBlank() && targetId != null && !targetId.isBlank()) {
+            JsonObject metadata = bundle.has("metadata") && bundle.get("metadata").isJsonObject()
+                    ? bundle.getAsJsonObject("metadata")
+                    : new JsonObject();
+            metadata.addProperty("target_type", targetType);
+            metadata.addProperty("target_id", targetId);
+            bundle.add("metadata", metadata);
+        }
+        return bundle;
+    }
+
+    public static JsonObject pickPointFromBundle(
+            JsonObject pending,
+            Integer clusterId,
+            String label,
+            String pointMode
+    ) {
+        if (pending == null || !pending.has("candidates") || !pending.get("candidates").isJsonArray()) return null;
+        JsonObject req = new JsonObject();
+        if (clusterId != null) req.addProperty("cluster_id", clusterId);
+        if (label != null && !label.isBlank()) req.addProperty("label", label);
+        JsonObject selected = pickCandidate(pending.getAsJsonArray("candidates"), req);
+        if (selected == null) return null;
+        JsonObject keyPoints = selected.has("key_points") && selected.get("key_points").isJsonObject()
+                ? selected.getAsJsonObject("key_points")
+                : null;
+        if (keyPoints == null) return null;
+
+        JsonObject point = resolvePointFromMode(keyPoints, normalizePointMode(pointMode));
+        if (point == null) return null;
+
+        JsonObject result = new JsonObject();
+        JsonObject selectedMeta = new JsonObject();
+        if (selected.has("cluster_id")) selectedMeta.add("cluster_id", selected.get("cluster_id"));
+        if (selected.has("label")) selectedMeta.add("label", selected.get("label"));
+        if (selected.has("preview_label")) selectedMeta.add("preview_label", selected.get("preview_label"));
+        result.add("selected_cluster", selectedMeta);
+        result.add("selected_point", point.deepCopy());
+        result.addProperty("point_mode_applied", normalizePointMode(pointMode));
+        return result;
+    }
+
+    public static JsonObject buildQueryRegionBundle(MinecraftServer mcServer, JsonObject req) {
+        QueryRegionInput input = QueryRegionInput.from(req);
+        return buildQueryRegionBundle(mcServer, ScanResultHolder.get(), input);
+    }
+
+    static JsonObject buildQueryRegionBundle(MinecraftServer mcServer, ScanResultHolder holder, QueryRegionInput input) {
+        if (input == null) throw new IllegalArgumentException("query_region request is required");
+
+        List<ScanPixel> basePixels = new ArrayList<>();
+        RegionCache refCache = null;
+        int step;
+
+        if (input.territoryId != null) {
+            String[][] owners = com.user.terra_script.world.TerritoryManager.globalOwnershipMap;
+            ScanPixel[][] globalPixels = holder.lastScanData;
+            if (owners == null || globalPixels == null) {
+                throw new IllegalArgumentException("Territory data not ready. Please run 'establish_territory' first.");
+            }
+            var allRes = com.user.terra_script.world.TerritoryManager.getAllResults();
+            var targetRes = allRes.stream()
+                    .filter(r -> r != null && r.config != null && input.territoryId.equals(r.config.id))
+                    .findFirst()
+                    .orElse(null);
+            if (targetRes == null) {
+                throw new IllegalArgumentException("Territory ID not found: " + input.territoryId);
+            }
+            refCache = holder.regionCacheMap.get(targetRes.config.regionId);
+            if (refCache == null || refCache.slopeData == null || refCache.tpiData == null) {
+                throw new IllegalArgumentException("Terrain features missing for territory region " + targetRes.config.regionId + ".");
+            }
+
+            step = holder.scanStep;
+            int radiusBlocks = holder.scanRadiusChunks * 16;
+            int globalMinX = -radiusBlocks;
+            int globalMinZ = -radiusBlocks;
+            int w = globalPixels.length;
+            int h = globalPixels[0].length;
+
+            int gMinX = Math.max(0, (targetRes.stats.minX - globalMinX) / step);
+            int gMaxX = Math.min(w - 1, (targetRes.stats.maxX - globalMinX) / step);
+            int gMinZ = Math.max(0, (targetRes.stats.minZ - globalMinZ) / step);
+            int gMaxZ = Math.min(h - 1, (targetRes.stats.maxZ - globalMinZ) / step);
+
+            for (int i = gMinX; i <= gMaxX; i++) {
+                for (int j = gMinZ; j <= gMaxZ; j++) {
+                    if (!input.territoryId.equals(owners[i][j])) continue;
+                    ScanPixel p = globalPixels[i][j];
+                    if (p != null && p.isLand()) basePixels.add(p);
+                }
+            }
+        } else if (input.regionId > 0) {
+            refCache = holder.regionCacheMap.get(input.regionId);
+            if (refCache == null || refCache.detailData == null) {
+                throw new IllegalArgumentException("Region " + input.regionId + " not cached.");
+            }
+            if (refCache.slopeData == null || refCache.tpiData == null) {
+                throw new IllegalArgumentException("Terrain features missing for Region " + input.regionId + ".");
+            }
+            step = refCache.step;
+            int sampleStep = refCache.detailData.length * refCache.detailData[0].length > 250000 ? 2 : 1;
+            for (int i = 0; i < refCache.detailData.length; i += sampleStep) {
+                for (int j = 0; j < refCache.detailData[0].length; j += sampleStep) {
+                    ScanPixel p = refCache.detailData[i][j];
+                    if (p != null && p.isLand()) basePixels.add(p);
+                }
+            }
+        } else {
+            throw new IllegalArgumentException("Must provide either 'region_id' or 'territory_id'.");
+        }
+
+        JsonObject response = new JsonObject();
+        response.addProperty("step", STEP_Q1);
+        JsonObject meta = new JsonObject();
+        if (input.territoryId != null) meta.addProperty("target_territory", input.territoryId);
+        else meta.addProperty("target_region", input.regionId);
+        meta.addProperty("interest_groups_enabled", input.hasInterestGroups());
+        response.add("metadata", meta);
+
+        JsonArray candidatesArr = new JsonArray();
+        JsonArray candidatesMetadata = new JsonArray();
+        JsonArray groupAsciiMaps = new JsonArray();
+        List<OverlayCluster> overlayClusters = new ArrayList<>();
+        int globalClusterId = 0;
+
+        if (input.hasInterestGroups()) {
+            Map<String, Integer> groupCounter = new LinkedHashMap<>();
+            for (int gi = 0; gi < input.interestGroups.size(); gi++) {
+                JsonElement groupEl = input.interestGroups.get(gi);
+                if (!groupEl.isJsonObject()) continue;
+                JsonObject group = groupEl.getAsJsonObject();
+                String groupId = group.has("id") ? group.get("id").getAsString() : String.valueOf((char) ('A' + (gi % 26)));
+                JsonObject criteriaObj = group.has("criteria") && group.get("criteria").isJsonObject()
+                        ? group.getAsJsonObject("criteria")
+                        : group;
+                CandidateCriteria criteria = parseCriteria(criteriaObj, input.criteria);
+                int groupLimit = group.has("limit") ? Math.max(1, group.get("limit").getAsInt()) : Math.max(1, input.limitPerGroup);
+                char symbol = pickGroupSymbol(groupId, gi);
+                List<ScanPixel> filtered = filterCandidates(basePixels, refCache, criteria);
+                List<List<DBSCAN.Point>> groupedClusters = DBSCAN.cluster(filtered, step * 4.0, 5);
+                groupedClusters.sort((c1, c2) -> Integer.compare(c2.size(), c1.size()));
+                for (int idx = 0; idx < groupedClusters.size() && idx < groupLimit; idx++) {
+                    List<DBSCAN.Point> cluster = groupedClusters.get(idx);
+                    if (cluster.isEmpty()) continue;
+                    globalClusterId++;
+                    int serial = groupCounter.merge(groupId, 1, Integer::sum);
+                    String label = groupId + serial;
+                    char previewLabel = pickPreviewLabel(globalClusterId - 1);
+                    JsonObject clusterJson = buildClusterJson(globalClusterId, cluster, refCache);
+                    clusterJson.addProperty("group_id", groupId);
+                    clusterJson.addProperty("label", label);
+                    clusterJson.addProperty("symbol", String.valueOf(symbol));
+                    clusterJson.addProperty("preview_label", String.valueOf(previewLabel));
+                    candidatesArr.add(clusterJson);
+
+                    JsonObject metaEntry = new JsonObject();
+                    metaEntry.addProperty("label", label);
+                    metaEntry.addProperty("group", groupId);
+                    metaEntry.addProperty("cluster_id", globalClusterId);
+                    if (clusterJson.has("description")) metaEntry.addProperty("desc", clusterJson.get("description").getAsString());
+                    if (clusterJson.has("key_points") && clusterJson.getAsJsonObject("key_points").has("center")) {
+                        metaEntry.add("center", clusterJson.getAsJsonObject("key_points").get("center"));
+                    }
+                    candidatesMetadata.add(metaEntry);
+
+                    JsonObject mapEntry = new JsonObject();
+                    mapEntry.addProperty("label", label);
+                    mapEntry.addProperty("group", groupId);
+                    mapEntry.addProperty("cluster_id", globalClusterId);
+                    mapEntry.add("ascii_map", clusterJson.getAsJsonArray("ascii_map"));
+                    groupAsciiMaps.add(mapEntry);
+                    overlayClusters.add(new OverlayCluster(symbol, previewLabel, label, globalClusterId, cluster));
+                }
+            }
+            response.add("candidates_metadata", candidatesMetadata);
+            response.add("group_ascii_maps", groupAsciiMaps);
+            response.add("visual_map", buildVisualMap(overlayClusters));
+        } else {
+            List<ScanPixel> filtered = filterCandidates(basePixels, refCache, input.criteria);
+            List<List<DBSCAN.Point>> filteredClusters = DBSCAN.cluster(filtered, step * 4.0, 5);
+            filteredClusters.sort((c1, c2) -> Integer.compare(c2.size(), c1.size()));
+            int count = 0;
+            for (List<DBSCAN.Point> cluster : filteredClusters) {
+                if (count >= input.limit) break;
+                globalClusterId++;
+                char previewLabel = pickPreviewLabel(globalClusterId - 1);
+                JsonObject clusterJson = buildClusterJson(globalClusterId, cluster, refCache);
+                clusterJson.addProperty("label", String.valueOf(previewLabel));
+                clusterJson.addProperty("symbol", String.valueOf(previewLabel));
+                clusterJson.addProperty("preview_label", String.valueOf(previewLabel));
+                candidatesArr.add(clusterJson);
+                overlayClusters.add(new OverlayCluster(previewLabel, previewLabel, String.valueOf(previewLabel), globalClusterId, cluster));
+                count++;
+            }
+        }
+
+        response.add("candidates", candidatesArr);
+        List<QueryRegionPreviewExporter.OverlayInput> previewOverlays = new ArrayList<>();
+        for (OverlayCluster overlay : overlayClusters) {
+            previewOverlays.add(new QueryRegionPreviewExporter.OverlayInput(
+                    overlay.previewLabel,
+                    overlay.label,
+                    overlay.clusterId,
+                    overlay.points
+            ));
+        }
+
+        ScanPixel[][] mapData;
+        int mapWorldMinX;
+        int mapWorldMinZ;
+        int mapStep;
+        if (input.territoryId != null) {
+            mapData = holder.lastScanData;
+            mapStep = holder.scanStep;
+            int radiusBlocks = holder.scanRadiusChunks * 16;
+            mapWorldMinX = -radiusBlocks;
+            mapWorldMinZ = -radiusBlocks;
+        } else {
+            mapData = refCache.detailData;
+            mapStep = refCache.step;
+            mapWorldMinX = refCache.minX;
+            mapWorldMinZ = refCache.minZ;
+        }
+
+        JsonObject preview = QueryRegionPreviewExporter.export(
+                mcServer,
+                input.territoryId == null ? "region" : "territory",
+                input.territoryId == null ? String.valueOf(input.regionId) : input.territoryId,
+                mapData,
+                mapWorldMinX,
+                mapWorldMinZ,
+                mapStep,
+                basePixels,
+                previewOverlays
+        );
+        response.add("preview_overlay", preview);
+        return response;
     }
 
     public void handleQueryRegionPick(HttpExchange exchange) throws IOException {
@@ -482,8 +507,8 @@ public class WorldController {
         }
     }
 
-    private static boolean checkCriteria(ScanPixel p, double minS, double maxS, double minT, double maxT) {
-        return true;
+    static boolean checkCriteria(double slope, double tpi, double minS, double maxS, double minT, double maxT) {
+        return slope >= minS && slope <= maxS && tpi >= minT && tpi <= maxT;
     }
 
     private static CandidateCriteria parseCriteria(JsonObject criteriaObj, CandidateCriteria fallback) {
@@ -510,15 +535,10 @@ public class WorldController {
         List<ScanPixel> filtered = new ArrayList<>();
         for (ScanPixel p : source) {
             if (p == null || !p.isLand()) continue;
-            if (cache == null) {
-                if (checkCriteria(p, criteria.minSlope, criteria.maxSlope, criteria.minTpi, criteria.maxTpi)) {
-                    filtered.add(p);
-                }
-                continue;
-            }
+            if (cache == null) continue;
             double s = sample(cache.slopeData, cache, p.x(), p.z());
             double t = sample(cache.tpiData, cache, p.x(), p.z());
-            if (s >= criteria.minSlope && s <= criteria.maxSlope && t >= criteria.minTpi && t <= criteria.maxTpi) {
+            if (checkCriteria(s, t, criteria.minSlope, criteria.maxSlope, criteria.minTpi, criteria.maxTpi)) {
                 filtered.add(p);
             }
         }
@@ -650,7 +670,7 @@ public class WorldController {
         }
     }
 
-    private JsonObject pickCandidate(JsonArray candidates, JsonObject req) {
+    private static JsonObject pickCandidate(JsonArray candidates, JsonObject req) {
         Integer clusterId = req.has("cluster_id") ? req.get("cluster_id").getAsInt() : null;
         String label = req.has("label") ? req.get("label").getAsString() : null;
         String previewLabel = req.has("preview_label") ? req.get("preview_label").getAsString() : null;
@@ -764,17 +784,68 @@ public class WorldController {
         return arr;
     }
 
-    private static final class CandidateCriteria {
+    public static final class CandidateCriteria {
         final double minSlope;
         final double maxSlope;
         final double minTpi;
         final double maxTpi;
 
-        CandidateCriteria(double minSlope, double maxSlope, double minTpi, double maxTpi) {
+        public CandidateCriteria(double minSlope, double maxSlope, double minTpi, double maxTpi) {
             this.minSlope = minSlope;
             this.maxSlope = maxSlope;
             this.minTpi = minTpi;
             this.maxTpi = maxTpi;
+        }
+    }
+
+    static final class QueryRegionInput {
+        final String territoryId;
+        final int regionId;
+        final CandidateCriteria criteria;
+        final int limit;
+        final int limitPerGroup;
+        final JsonArray interestGroups;
+
+        QueryRegionInput(
+                String territoryId,
+                int regionId,
+                CandidateCriteria criteria,
+                int limit,
+                int limitPerGroup,
+                JsonArray interestGroups
+        ) {
+            this.territoryId = territoryId;
+            this.regionId = regionId;
+            this.criteria = criteria;
+            this.limit = Math.max(1, limit);
+            this.limitPerGroup = Math.max(1, limitPerGroup);
+            this.interestGroups = interestGroups;
+        }
+
+        static QueryRegionInput from(JsonObject req) {
+            String territoryId = req.has("territory_id") ? req.get("territory_id").getAsString() : null;
+            int regionId = req.has("region_id") ? req.get("region_id").getAsInt() : -1;
+            double minSlope = req.has("min_slope") ? req.get("min_slope").getAsDouble() : -1;
+            double maxSlope = req.has("max_slope") ? req.get("max_slope").getAsDouble() : 999;
+            double minTpi = req.has("min_tpi") ? req.get("min_tpi").getAsDouble() : -999;
+            double maxTpi = req.has("max_tpi") ? req.get("max_tpi").getAsDouble() : 999;
+            int limit = req.has("limit") ? req.get("limit").getAsInt() : 5;
+            int limitPerGroup = req.has("limit_per_group") ? req.get("limit_per_group").getAsInt() : Math.max(1, limit);
+            JsonArray interestGroups = req.has("interest_groups") && req.get("interest_groups").isJsonArray()
+                    ? req.getAsJsonArray("interest_groups")
+                    : null;
+            return new QueryRegionInput(
+                    territoryId,
+                    regionId,
+                    new CandidateCriteria(minSlope, maxSlope, minTpi, maxTpi),
+                    limit,
+                    limitPerGroup,
+                    interestGroups
+            );
+        }
+
+        boolean hasInterestGroups() {
+            return interestGroups != null && !interestGroups.isEmpty();
         }
     }
 

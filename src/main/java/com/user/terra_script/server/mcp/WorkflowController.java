@@ -12,6 +12,7 @@ import com.user.terra_script.core.workflow.StageRegistry;
 import com.user.terra_script.core.workflow.StageStatus;
 import com.user.terra_script.core.workflow.TaskStatusHeartbeat;
 import com.user.terra_script.core.workflow.WorkflowEngine;
+import com.user.terra_script.domain.territory.stage.T1Stage;
 import com.user.terra_script.domain.territory.stage.T2Stage;
 import com.user.terra_script.domain.territory.stage.T3Stage;
 import com.user.terra_script.domain.territory.stage.T4Stage;
@@ -67,7 +68,7 @@ public class WorkflowController {
                     : JsonParser.parseString(body).getAsJsonObject();
             String stageId = req.has("stageId")
                     ? req.get("stageId").getAsString().trim().toUpperCase(Locale.ROOT)
-                    : "T2";
+                    : "T1";
             T4Stage.RuntimeOptions requestOptions = parseT4Options(req, T4Stage.RuntimeOptions.defaults());
             T4Stage.configure(requestOptions);
 
@@ -124,7 +125,7 @@ public class WorkflowController {
                 StageStatus status = statusStore.getStatus(normalized, ctx);
                 res.add(normalized, toJson(status));
             } else {
-                for (String id : new String[]{"W3", "W4", "T2", "T3", "T4"}) {
+                for (String id : new String[]{"W3", "W4", "T1", "T2", "T3", "T4"}) {
                     StageStatus status = statusStore.getStatus(id, ctx);
                     res.add(id, toJson(status));
                 }
@@ -162,6 +163,7 @@ public class WorkflowController {
         StageRegistry registry = new StageRegistry();
         registry.register(new W3Stage());
         registry.register(new W4Stage());
+        registry.register(new T1Stage());
         registry.register(new T2Stage());
         registry.register(new T3Stage());
         registry.register(new T4Stage());
@@ -198,6 +200,19 @@ public class WorkflowController {
 
     private static T4Stage.RuntimeOptions parseT4Options(JsonObject req, T4Stage.RuntimeOptions fallback) {
         if (req == null) return fallback;
+        for (String deprecated : new String[]{
+                "t4_bootstrap_city",
+                "t4_city_target_chunks",
+                "t4_city_bias",
+                "t4_city_density",
+                "t4_city_ecology",
+                "t4_city_allow_water",
+                "t4_legacy_scan"
+        }) {
+            if (req.has(deprecated)) {
+                throw new IllegalArgumentException("Deprecated T4 option is no longer supported: " + deprecated);
+            }
+        }
         int stride = req.has("t4_sample_stride")
                 ? req.get("t4_sample_stride").getAsInt()
                 : fallback.sampleStride;
@@ -207,39 +222,6 @@ public class WorkflowController {
         boolean loadedOnly = req.has("t4_loaded_only")
                 ? req.get("t4_loaded_only").getAsBoolean()
                 : fallback.loadedOnly;
-        boolean legacyTerrainScan = req.has("t4_legacy_scan")
-                ? req.get("t4_legacy_scan").getAsBoolean()
-                : fallback.legacyTerrainScan;
-        boolean bootstrapCity = req.has("t4_bootstrap_city")
-                ? req.get("t4_bootstrap_city").getAsBoolean()
-                : fallback.bootstrapCity;
-        int cityTargetChunks = req.has("t4_city_target_chunks")
-                ? req.get("t4_city_target_chunks").getAsInt()
-                : fallback.cityTargetChunks;
-        String cityBias = req.has("t4_city_bias")
-                ? req.get("t4_city_bias").getAsString()
-                : fallback.cityBias;
-        String cityDensity = req.has("t4_city_density")
-                ? req.get("t4_city_density").getAsString()
-                : fallback.cityDensity;
-        String cityEcology = req.has("t4_city_ecology")
-                ? req.get("t4_city_ecology").getAsString()
-                : fallback.cityEcology;
-        boolean cityAllowWater = req.has("t4_city_allow_water")
-                ? req.get("t4_city_allow_water").getAsBoolean()
-                : fallback.cityAllowWater;
-
-        return new T4Stage.RuntimeOptions(
-                stride,
-                maxChunks,
-                loadedOnly,
-                legacyTerrainScan,
-                bootstrapCity,
-                cityTargetChunks,
-                cityBias,
-                cityDensity,
-                cityEcology,
-                cityAllowWater
-        );
+        return new T4Stage.RuntimeOptions(stride, maxChunks, loadedOnly);
     }
 }

@@ -19,6 +19,7 @@ import com.user.terra_script.core.stage.StageContext;
 import com.user.terra_script.core.workflow.FileStageStatusStore;
 import com.user.terra_script.core.workflow.StageRegistry;
 import com.user.terra_script.core.workflow.WorkflowEngine;
+import com.user.terra_script.domain.territory.stage.T1Stage;
 import com.user.terra_script.domain.territory.stage.T2Stage;
 import com.user.terra_script.domain.territory.stage.T3Stage;
 import com.user.terra_script.domain.territory.stage.T4Stage;
@@ -128,10 +129,11 @@ public class DevCommandHandler {
         String stageId = stageIdRaw == null ? "" : stageIdRaw.trim().toUpperCase(Locale.ROOT);
         if (!"W3".equals(stageId)
                 && !"W4".equals(stageId)
+                && !"T1".equals(stageId)
                 && !"T2".equals(stageId)
                 && !"T3".equals(stageId)
                 && !"T4".equals(stageId)) {
-            ctx.getSource().sendFailure(Component.literal("Unknown stage: " + stageIdRaw + " (use W3/W4/T2/T3/T4)"));
+            ctx.getSource().sendFailure(Component.literal("Unknown stage: " + stageIdRaw + " (use W3/W4/T1/T2/T3/T4)"));
             return 0;
         }
 
@@ -143,6 +145,7 @@ public class DevCommandHandler {
             StageRegistry registry = new StageRegistry();
             registry.register(new W3Stage());
             registry.register(new W4Stage());
+            registry.register(new T1Stage());
             registry.register(new T2Stage());
             registry.register(new T3Stage());
             registry.register(new T4Stage());
@@ -303,6 +306,12 @@ public class DevCommandHandler {
             case "workflow_run_t2": {
                 JsonObject payload = args != null ? args.deepCopy() : new JsonObject();
                 if (!payload.has("stageId")) payload.addProperty("stageId", "T2");
+                return httpPost("/workflow/run", payload);
+            }
+            case "T1_run":
+            case "workflow_run_t1": {
+                JsonObject payload = args != null ? args.deepCopy() : new JsonObject();
+                if (!payload.has("stageId")) payload.addProperty("stageId", "T1");
                 return httpPost("/workflow/run", payload);
             }
             case "T3_run":
@@ -674,6 +683,7 @@ public class DevCommandHandler {
                 "Q2_pick_query_region_cluster_point",
                 "T1_submit_blueprint",
                 "T1_list_blueprints",
+                "T1_run",
                 "list_available_structures",
                 "establish_territory",
                 "get_territory_status",
