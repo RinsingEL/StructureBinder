@@ -37,6 +37,20 @@ class TerritoryWorkflowStagesTest {
     }
 
     @Test
+    void t3ReadinessReportsDuplicateSeedCellsAndBlockedTerritories() {
+        TerritoryStageOrchestrator.ReadinessReport report = TerritoryStageOrchestrator.evaluateReadiness(List.of(
+                new TerritoryStageOrchestrator.GateRow(3, "han", true, true, true, false, null, "1:1", "4:4"),
+                new TerritoryStageOrchestrator.GateRow(3, "qin", true, true, true, true, "no_available_direction_after_conflict_filter", "2:2", "4:4")
+        ));
+
+        assertFalse(report.ready);
+        assertTrue(report.message.contains("blocked territories region_id=3"));
+        assertTrue(report.message.contains("qin blocked no_available_direction_after_conflict_filter"));
+        assertTrue(report.message.contains("duplicate seed cells region_id=3"));
+        assertTrue(report.message.contains("4:4 -> han/qin"));
+    }
+
+    @Test
     void t4RuntimeOptionsDefaultToScanOnly() {
         T4Stage.RuntimeOptions defaults = T4Stage.RuntimeOptions.defaults();
         T4Stage.RuntimeOptions autoTrigger = T4Stage.RuntimeOptions.autoTriggerDefaults();

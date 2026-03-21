@@ -20,39 +20,61 @@ public final class TerritoryStageArtifacts {
 
     private TerritoryStageArtifacts() {}
 
-    public static Optional<T1Status> readT1Status(MinecraftServer server, String worldId, String territoryId) {
-        return readJson(statusPath(server, worldId, territoryId, "T1", "T1_Status.json"), T1Status.class);
+    public static Optional<T1Status> readT1Status(MinecraftServer server, String worldId, String territoryId, int continentId) {
+        Optional<T1Status> scoped = readJson(statusPath(server, worldId, territoryId, continentId, "T1", "T1_Status.json"), T1Status.class);
+        if (scoped.isPresent()) return scoped;
+        return readJson(legacyStatusPath(server, worldId, territoryId, "T1", "T1_Status.json"), T1Status.class);
     }
 
     public static void writeT1Status(MinecraftServer server, String worldId, T1Status status) throws Exception {
-        if (status == null || blank(status.territoryId)) throw new IllegalArgumentException("invalid T1 status");
-        writeJson(statusPath(server, worldId, status.territoryId, "T1", "T1_Status.json"), status);
+        if (status == null || blank(status.territoryId) || status.selectedContinentId <= 0) {
+            throw new IllegalArgumentException("invalid T1 status");
+        }
+        writeJson(statusPath(server, worldId, status.territoryId, status.selectedContinentId, "T1", "T1_Status.json"), status);
     }
 
-    public static Optional<T2Status> readT2Status(MinecraftServer server, String worldId, String territoryId) {
-        return readJson(statusPath(server, worldId, territoryId, "T2", "T2_Status.json"), T2Status.class);
+    public static Optional<T2Status> readT2Status(MinecraftServer server, String worldId, String territoryId, int continentId) {
+        Optional<T2Status> scoped = readJson(statusPath(server, worldId, territoryId, continentId, "T2", "T2_Status.json"), T2Status.class);
+        if (scoped.isPresent()) return scoped;
+        return readJson(legacyStatusPath(server, worldId, territoryId, "T2", "T2_Status.json"), T2Status.class);
     }
 
     public static void writeT2Status(MinecraftServer server, String worldId, T2Status status) throws Exception {
-        if (status == null || blank(status.territoryId)) throw new IllegalArgumentException("invalid T2 status");
-        writeJson(statusPath(server, worldId, status.territoryId, "T2", "T2_Status.json"), status);
-    }
-
-    public static Optional<JsonObject> readT1Candidates(MinecraftServer server, String worldId, String territoryId) {
-        Path path = statusPath(server, worldId, territoryId, "T1", "T1_Candidates.json");
-        try {
-            if (!Files.exists(path)) return Optional.empty();
-            String content = Files.readString(path, StandardCharsets.UTF_8);
-            if (content == null || content.isBlank()) return Optional.empty();
-            return Optional.of(JsonParser.parseString(content).getAsJsonObject());
-        } catch (Exception ignored) {
-            return Optional.empty();
+        if (status == null || blank(status.territoryId) || status.selectedContinentId <= 0) {
+            throw new IllegalArgumentException("invalid T2 status");
         }
+        writeJson(statusPath(server, worldId, status.territoryId, status.selectedContinentId, "T2", "T2_Status.json"), status);
     }
 
-    public static void writeT1Candidates(MinecraftServer server, String worldId, String territoryId, JsonObject bundle) throws Exception {
-        if (blank(territoryId) || bundle == null) throw new IllegalArgumentException("invalid T1 candidates");
-        writeJson(statusPath(server, worldId, territoryId, "T1", "T1_Candidates.json"), bundle);
+    public static Optional<JsonObject> readT1Candidates(MinecraftServer server, String worldId, String territoryId, int continentId) {
+        Optional<JsonObject> scoped = readJsonObject(statusPath(server, worldId, territoryId, continentId, "T1", "T1_Candidates.json"));
+        if (scoped.isPresent()) return scoped;
+        return readJsonObject(legacyStatusPath(server, worldId, territoryId, "T1", "T1_Candidates.json"));
+    }
+
+    public static void writeT1Candidates(MinecraftServer server, String worldId, String territoryId, int continentId, JsonObject bundle) throws Exception {
+        if (blank(territoryId) || continentId <= 0 || bundle == null) throw new IllegalArgumentException("invalid T1 candidates");
+        writeJson(statusPath(server, worldId, territoryId, continentId, "T1", "T1_Candidates.json"), bundle);
+    }
+
+    public static Optional<JsonObject> readT2DirectionCandidates(MinecraftServer server, String worldId, String territoryId, int continentId) {
+        return readJsonObject(statusPath(server, worldId, territoryId, continentId, "T2", "T2_DirectionCandidates.json"));
+    }
+
+    public static void writeT2DirectionCandidates(
+            MinecraftServer server,
+            String worldId,
+            String territoryId,
+            int continentId,
+            JsonObject bundle
+    ) throws Exception {
+        if (blank(territoryId) || continentId <= 0 || bundle == null) throw new IllegalArgumentException("invalid T2 direction candidates");
+        writeJson(statusPath(server, worldId, territoryId, continentId, "T2", "T2_DirectionCandidates.json"), bundle);
+    }
+
+    public static void deleteT2Artifacts(MinecraftServer server, String worldId, String territoryId, int continentId) {
+        delete(statusPath(server, worldId, territoryId, continentId, "T2", "T2_Status.json"));
+        delete(statusPath(server, worldId, territoryId, continentId, "T2", "T2_DirectionCandidates.json"));
     }
 
     public static Optional<ContinentIndex> readContinentIndex(
@@ -85,6 +107,17 @@ public final class TerritoryStageArtifacts {
         }
     }
 
+    private static Optional<JsonObject> readJsonObject(Path path) {
+        try {
+            if (path == null || !Files.exists(path)) return Optional.empty();
+            String content = Files.readString(path, StandardCharsets.UTF_8);
+            if (content == null || content.isBlank()) return Optional.empty();
+            return Optional.of(JsonParser.parseString(content).getAsJsonObject());
+        } catch (Exception ignored) {
+            return Optional.empty();
+        }
+    }
+
     static void writeJson(Path path, Object value) throws Exception {
         Files.createDirectories(path.getParent());
         Path tmp = path.resolveSibling(path.getFileName() + ".tmp");
@@ -104,6 +137,19 @@ public final class TerritoryStageArtifacts {
             MinecraftServer server,
             String worldId,
             String territoryId,
+            int continentId,
+            String stageFolder,
+            String fileName
+    ) {
+        return territoryContinentDir(server, worldId, territoryId, continentId)
+                .resolve(stageFolder)
+                .resolve(fileName);
+    }
+
+    private static Path legacyStatusPath(
+            MinecraftServer server,
+            String worldId,
+            String territoryId,
             String stageFolder,
             String fileName
     ) {
@@ -114,11 +160,26 @@ public final class TerritoryStageArtifacts {
                 .resolve(fileName);
     }
 
+    private static Path territoryContinentDir(MinecraftServer server, String worldId, String territoryId, int continentId) {
+        return baseDir(server, worldId)
+                .resolve("territory")
+                .resolve(safeId(territoryId))
+                .resolve("continents")
+                .resolve("region_" + continentId);
+    }
+
     private static Path continentIndexPath(MinecraftServer server, String worldId, int continentId, String stageId) {
         return baseDir(server, worldId)
                 .resolve("continents")
                 .resolve("region_" + continentId)
                 .resolve(stageId + "_Index.json");
+    }
+
+    private static void delete(Path path) {
+        try {
+            if (path != null) Files.deleteIfExists(path);
+        } catch (Exception ignored) {
+        }
     }
 
     private static String safeId(String input) {
@@ -134,34 +195,47 @@ public final class TerritoryStageArtifacts {
     public static final class T1Status {
         public String territoryId;
         public String territoryName;
-        public int continentId;
+        public String territoryInstanceId;
+        public int selectedContinentId;
         public boolean previewGenerated;
         public boolean candidatesGenerated;
         public boolean clusterSelected;
+        public boolean blocked;
         public Integer selectedClusterId;
         public String selectedClusterLabel;
         public String selectionSource;
         public String previewImage;
         public String candidatesFile;
+        public String workflowState;
+        public String blockedReason;
         public String message;
         public long updatedAtEpochMs;
+        public final List<String> recommendedAdjustments = new ArrayList<>();
     }
 
     public static final class T2Status {
         public String territoryId;
         public String territoryName;
-        public int continentId;
+        public String territoryInstanceId;
+        public int selectedContinentId;
         public boolean t1ClusterReady;
+        public boolean directionsGenerated;
         public boolean pointSelected;
         public boolean territoryConfigWritten;
         public boolean expansionReady;
+        public boolean blocked;
         public Integer selectedClusterId;
         public String selectedClusterLabel;
-        public String pointMode;
-        public String pointSelectionSource;
+        public String selectedDirection;
         public SelectedPoint selectedPoint;
+        public Integer seedCellX;
+        public Integer seedCellZ;
+        public String workflowState;
+        public String blockedReason;
+        public String pointSelectionSource;
         public String message;
         public long updatedAtEpochMs;
+        public final List<String> recommendedAdjustments = new ArrayList<>();
     }
 
     public static final class SelectedPoint {
@@ -176,13 +250,17 @@ public final class TerritoryStageArtifacts {
         public int territoryCount;
         public int completedCount;
         public int pendingCount;
+        public int blockedCount;
         public final List<ContinentIndexItem> items = new ArrayList<>();
     }
 
     public static final class ContinentIndexItem {
         public String territoryId;
+        public String territoryInstanceId;
         public String territoryName;
         public boolean completed;
+        public boolean blocked;
+        public String workflowState;
         public String message;
     }
 }

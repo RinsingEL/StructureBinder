@@ -142,16 +142,21 @@ public class TerritoryResultRepository {
 
     public static JsonObject buildSummary(TerritoryManager.TerritoryResult result, String stage) {
         JsonObject root = new JsonObject();
-        root.addProperty("schema_version", 1);
+        root.addProperty("schema_version", 2);
         root.addProperty("stage", stage);
 
         JsonObject territory = new JsonObject();
         territory.addProperty("id", result.config.id);
+        territory.addProperty("territory_id", result.config.territoryId);
         territory.addProperty("name", result.config.name);
         territory.addProperty("region_id", result.config.regionId);
+        territory.addProperty("continent_id", result.config.selectedContinentId);
         territory.addProperty("capital_x", result.config.capitalX);
         territory.addProperty("capital_z", result.config.capitalZ);
-        territory.addProperty("power", result.config.maxPower);
+        territory.addProperty("seed_cell_x", result.config.seedCellX);
+        territory.addProperty("seed_cell_z", result.config.seedCellZ);
+        territory.addProperty("base_power", result.config.maxPower);
+        territory.addProperty("land_power", result.config.landPower);
         root.add("territory", territory);
 
         JsonObject chunks = new JsonObject();
@@ -178,6 +183,15 @@ public class TerritoryResultRepository {
             result.stats.biome_composition.forEach(biomes::addProperty);
             stats.add("biomes", biomes);
 
+            JsonObject competition = new JsonObject();
+            competition.addProperty("land_power_initial", result.stats.land_power_initial);
+            competition.addProperty("land_power_remaining", result.stats.land_power_remaining);
+            competition.addProperty("land_power_spent", result.stats.land_power_spent);
+            competition.addProperty("conflict_cells", result.stats.conflict_cells);
+            competition.addProperty("conflict_wins", result.stats.conflict_wins);
+            competition.addProperty("conflict_losses", result.stats.conflict_losses);
+            stats.add("competition", competition);
+
             root.add("stats", stats);
         }
         return root;
@@ -185,16 +199,21 @@ public class TerritoryResultRepository {
 
     public static JsonObject buildT2CapitalSummary(TerritoryManager.TerritoryConfig cfg) {
         JsonObject root = new JsonObject();
-        root.addProperty("schema_version", 1);
+        root.addProperty("schema_version", 2);
         root.addProperty("stage", "T2");
 
         JsonObject territory = new JsonObject();
         territory.addProperty("id", cfg.id);
+        territory.addProperty("territory_id", cfg.territoryId);
         territory.addProperty("name", cfg.name);
         territory.addProperty("region_id", cfg.regionId);
+        territory.addProperty("continent_id", cfg.selectedContinentId);
         territory.addProperty("capital_x", cfg.capitalX);
         territory.addProperty("capital_z", cfg.capitalZ);
-        territory.addProperty("power", cfg.maxPower);
+        territory.addProperty("seed_cell_x", cfg.seedCellX);
+        territory.addProperty("seed_cell_z", cfg.seedCellZ);
+        territory.addProperty("base_power", cfg.maxPower);
+        territory.addProperty("land_power", cfg.landPower);
         root.add("territory", territory);
 
         root.addProperty("expansion_ready", true);

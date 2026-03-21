@@ -18,7 +18,8 @@ class TerritoryStageArtifactsTest {
         TerritoryStageArtifacts.T1Status status = new TerritoryStageArtifacts.T1Status();
         status.territoryId = "han";
         status.territoryName = "Han";
-        status.continentId = 7;
+        status.territoryInstanceId = "han@c7";
+        status.selectedContinentId = 7;
         status.clusterSelected = true;
         status.selectedClusterId = 3;
         status.selectedClusterLabel = "A";
@@ -30,7 +31,8 @@ class TerritoryStageArtifactsTest {
                 .orElseThrow();
 
         assertEquals("han", restored.territoryId);
-        assertEquals(7, restored.continentId);
+        assertEquals("han@c7", restored.territoryInstanceId);
+        assertEquals(7, restored.selectedContinentId);
         assertTrue(restored.clusterSelected);
         assertEquals(3, restored.selectedClusterId);
         assertEquals("A", restored.selectedClusterLabel);

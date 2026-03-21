@@ -4,6 +4,7 @@ import com.sun.net.httpserver.HttpServer;
 import com.user.terra_script.client.data.ScanResultHolder;
 import com.user.terra_script.server.mcp.CityController;
 import com.user.terra_script.server.mcp.TerritoryController;
+import com.user.terra_script.server.mcp.WorldAutomationController;
 import com.user.terra_script.server.mcp.WorldController;
 import com.user.terra_script.server.mcp.WorkflowController;
 import com.user.terra_script.util.ScanDataIO;
@@ -47,6 +48,7 @@ public class ModHttpServer {
             server = HttpServer.create(new InetSocketAddress(PORT), 0);
 
             WorldController worldController = new WorldController(mcServer);
+            WorldAutomationController worldAutomationController = new WorldAutomationController(mcServer);
             TerritoryController territoryController = new TerritoryController();
             WorkflowController workflowController = new WorkflowController(mcServer);
             CityController cityController = new CityController(mcServer);
@@ -60,8 +62,20 @@ public class ModHttpServer {
             server.createContext("/query_region", worldController::handleQueryRegion);
             server.createContext("/query_region_pick", worldController::handleQueryRegionPick);
             server.createContext("/place", worldController::handlePlace);
+            server.createContext("/world/scan/start", worldAutomationController::handleWorldScanStart);
+            server.createContext("/world/scan/status", worldAutomationController::handleWorldScanStatus);
+            server.createContext("/world/scan/cancel", worldAutomationController::handleWorldScanCancel);
+            server.createContext("/world/w3/cluster", worldAutomationController::handleW3Cluster);
+            server.createContext("/world/w4/region_scan", worldAutomationController::handleW4RegionScan);
+            server.createContext("/world/w4/region_status", worldAutomationController::handleW4RegionStatus);
+            server.createContext("/world/w4/export", worldAutomationController::handleW4Export);
 
             server.createContext("/t1_blueprint", exchange -> territoryController.handleT1Blueprint(exchange, mcServer));
+            server.createContext("/t1_candidates_for_continent", exchange -> territoryController.handleT1CandidatesForContinent(exchange, mcServer));
+            server.createContext("/t1_select_cluster", exchange -> territoryController.handleT1SelectCluster(exchange, mcServer));
+            server.createContext("/t2_direction_candidates", exchange -> territoryController.handleT2DirectionCandidates(exchange, mcServer));
+            server.createContext("/t2_select_direction", exchange -> territoryController.handleT2SelectDirection(exchange, mcServer));
+            server.createContext("/t3_run_continent", exchange -> territoryController.handleT3RunContinent(exchange, mcServer));
             server.createContext("/create_territory", exchange -> territoryController.handleCreateTerritory(exchange, mcServer));
             server.createContext("/territory_status", territoryController::handleTerritoryStatus);
             server.createContext("/territory/summary", exchange -> territoryController.handleTerritorySummary(exchange, mcServer));
@@ -102,7 +116,7 @@ public class ModHttpServer {
             server.createContext("/city_c6_pave_stone", cityController::handleCityC6PaveStone);
             server.createContext("/create_city", cityController::handleCreateCity);
 
-            server.setExecutor(Executors.newFixedThreadPool(2, r -> {
+            server.setExecutor(Executors.newFixedThreadPool(6, r -> {
                 Thread t = new Thread(r);
                 t.setDaemon(true);
                 t.setName("TerraScript-API");

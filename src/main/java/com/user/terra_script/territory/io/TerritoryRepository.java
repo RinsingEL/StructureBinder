@@ -92,10 +92,10 @@ public class TerritoryRepository {
         if (bp == null) return "empty blueprint";
         if (isBlank(bp.territory_id)) return "territory_id required";
         if (isBlank(bp.name)) return "name required";
-        if (bp.target_continent_id <= 0) return "target_continent_id required";
+        if (bp.normalizedContinents().isEmpty()) return "target_continent_id or continents[] required";
         if (bp.expansion_policy == null) return "expansion_policy required";
-        if (bp.expansion_policy.base_power <= 0) return "expansion_policy.base_power required";
-        if (bp.expansion_policy.costs == null) return "expansion_policy.costs required";
+        if (bp.normalizedExpansionPolicy().base_power <= 0) return "expansion_policy.base_power required";
+        if (bp.normalizedExpansionPolicy().costs == null) return "expansion_policy.costs required";
         return null;
     }
 

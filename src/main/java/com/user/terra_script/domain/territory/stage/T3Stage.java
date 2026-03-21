@@ -25,27 +25,21 @@ public class T3Stage extends StageBase {
         JsonObject stageStart = new JsonObject();
         stageStart.addProperty("territory_count", TerritoryManager.getRegisteredFactions().size());
         TStageTraceLogger.stage(ctx, "T3", "expansion_started", stageStart);
-        TerritoryManager.runExpansion();
-        var allResults = TerritoryManager.getAllResults();
-        int exported = TerritoryResultRepository.exportAllT3(ctx.server, allResults);
-        if (exported <= 0) {
-            throw new IllegalStateException("No territory results available for T3 export");
-        }
 
         long claimedTotal = 0L;
         long wildTotal = 0L;
-        for (var result : allResults) {
+        int exported = 0;
+        java.util.Set<Integer> continents = new java.util.LinkedHashSet<>();
+        for (TerritoryManager.TerritoryConfig cfg : TerritoryManager.getRegisteredFactions()) {
+            if (cfg != null && cfg.selectedContinentId > 0) continents.add(cfg.selectedContinentId);
+        }
+        for (Integer continentId : continents) {
+            exported += TerritoryStageOrchestrator.runT3ForContinent(ctx, continentId).size();
+        }
+        for (var result : TerritoryManager.getAllResults()) {
             if (result == null) continue;
             claimedTotal += result.claimedChunks != null ? result.claimedChunks.size() : 0;
             wildTotal += result.wildChunks != null ? result.wildChunks.size() : 0;
-            if (result.config != null && result.config.id != null) {
-                JsonObject territory = new JsonObject();
-                territory.addProperty("territory_id", result.config.id);
-                territory.addProperty("continent_id", result.config.regionId);
-                territory.addProperty("claimed_chunks", result.claimedChunks != null ? result.claimedChunks.size() : 0);
-                territory.addProperty("wild_chunks", result.wildChunks != null ? result.wildChunks.size() : 0);
-                TStageTraceLogger.territory(ctx, "T3", result.config.id, "territory_expanded", territory);
-            }
         }
         JsonObject stageDone = new JsonObject();
         stageDone.addProperty("exported_count", exported);

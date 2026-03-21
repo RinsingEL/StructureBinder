@@ -5,9 +5,14 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.sun.net.httpserver.HttpExchange;
+import com.user.terra_script.core.artifact.ArtifactStore;
+import com.user.terra_script.core.stage.StageContext;
+import com.user.terra_script.core.workflow.FileStageStatusStore;
+import com.user.terra_script.domain.territory.stage.TerritoryStageOrchestrator;
 import com.user.terra_script.server.http.HttpUtil;
 import com.user.terra_script.territory.io.TerritoryRepository;
 import com.user.terra_script.territory.io.TerritoryResultRepository;
+import com.user.terra_script.territory.model.TerritoryBlueprint;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.core.BlockPos;
@@ -100,6 +105,95 @@ public class TerritoryController {
         }
     }
 
+    public void handleT1CandidatesForContinent(HttpExchange exchange, MinecraftServer server) throws IOException {
+        if (!HttpUtil.requireMethod(exchange, "POST")) return;
+        try {
+            JsonObject req = JsonParser.parseString(HttpUtil.readBody(exchange)).getAsJsonObject();
+            int continentId = req.has("continent_id") ? req.get("continent_id").getAsInt() : -1;
+            if (continentId <= 0) {
+                HttpUtil.sendResponse(exchange, 400, "{\"error\":\"continent_id is required\"}");
+                return;
+            }
+            JsonObject res = TerritoryStageOrchestrator.getT1CandidatesForContinent(buildStageContext(server), continentId);
+            HttpUtil.sendResponse(exchange, 200, GSON.toJson(res));
+        } catch (Exception e) {
+            HttpUtil.handleError(exchange, e);
+        }
+    }
+
+    public void handleT1SelectCluster(HttpExchange exchange, MinecraftServer server) throws IOException {
+        if (!HttpUtil.requireMethod(exchange, "POST")) return;
+        try {
+            JsonObject req = JsonParser.parseString(HttpUtil.readBody(exchange)).getAsJsonObject();
+            String territoryId = req.has("territory_id") ? req.get("territory_id").getAsString() : null;
+            int continentId = req.has("continent_id") ? req.get("continent_id").getAsInt() : -1;
+            Integer clusterId = req.has("cluster_id") ? req.get("cluster_id").getAsInt() : null;
+            String label = req.has("label") ? req.get("label").getAsString() : null;
+            if (territoryId == null || territoryId.isBlank() || continentId <= 0 || (clusterId == null && (label == null || label.isBlank()))) {
+                HttpUtil.sendResponse(exchange, 400, "{\"error\":\"territory_id, continent_id, and cluster_id or label are required\"}");
+                return;
+            }
+            var status = TerritoryStageOrchestrator.selectT1Cluster(buildStageContext(server), territoryId, continentId, clusterId, label);
+            HttpUtil.sendResponse(exchange, 200, GSON.toJson(status));
+        } catch (Exception e) {
+            HttpUtil.handleError(exchange, e);
+        }
+    }
+
+    public void handleT2DirectionCandidates(HttpExchange exchange, MinecraftServer server) throws IOException {
+        if (!HttpUtil.requireMethod(exchange, "POST")) return;
+        try {
+            JsonObject req = JsonParser.parseString(HttpUtil.readBody(exchange)).getAsJsonObject();
+            String territoryId = req.has("territory_id") ? req.get("territory_id").getAsString() : null;
+            int continentId = req.has("continent_id") ? req.get("continent_id").getAsInt() : -1;
+            if (territoryId == null || territoryId.isBlank() || continentId <= 0) {
+                HttpUtil.sendResponse(exchange, 400, "{\"error\":\"territory_id and continent_id are required\"}");
+                return;
+            }
+            JsonObject res = TerritoryStageOrchestrator.getT2DirectionCandidates(buildStageContext(server), territoryId, continentId);
+            HttpUtil.sendResponse(exchange, 200, GSON.toJson(res));
+        } catch (Exception e) {
+            HttpUtil.handleError(exchange, e);
+        }
+    }
+
+    public void handleT2SelectDirection(HttpExchange exchange, MinecraftServer server) throws IOException {
+        if (!HttpUtil.requireMethod(exchange, "POST")) return;
+        try {
+            JsonObject req = JsonParser.parseString(HttpUtil.readBody(exchange)).getAsJsonObject();
+            String territoryId = req.has("territory_id") ? req.get("territory_id").getAsString() : null;
+            int continentId = req.has("continent_id") ? req.get("continent_id").getAsInt() : -1;
+            String direction = req.has("direction") ? req.get("direction").getAsString() : null;
+            if (territoryId == null || territoryId.isBlank() || continentId <= 0 || direction == null || direction.isBlank()) {
+                HttpUtil.sendResponse(exchange, 400, "{\"error\":\"territory_id, continent_id, and direction are required\"}");
+                return;
+            }
+            var status = TerritoryStageOrchestrator.selectT2Direction(buildStageContext(server), territoryId, continentId, direction);
+            HttpUtil.sendResponse(exchange, 200, GSON.toJson(status));
+        } catch (Exception e) {
+            HttpUtil.handleError(exchange, e);
+        }
+    }
+
+    public void handleT3RunContinent(HttpExchange exchange, MinecraftServer server) throws IOException {
+        if (!HttpUtil.requireMethod(exchange, "POST")) return;
+        try {
+            JsonObject req = JsonParser.parseString(HttpUtil.readBody(exchange)).getAsJsonObject();
+            int continentId = req.has("continent_id") ? req.get("continent_id").getAsInt() : -1;
+            if (continentId <= 0) {
+                HttpUtil.sendResponse(exchange, 400, "{\"error\":\"continent_id is required\"}");
+                return;
+            }
+            var results = TerritoryStageOrchestrator.runT3ForContinent(buildStageContext(server), continentId);
+            JsonObject res = new JsonObject();
+            res.addProperty("continent_id", continentId);
+            res.addProperty("exported_count", results.size());
+            HttpUtil.sendResponse(exchange, 200, GSON.toJson(res));
+        } catch (Exception e) {
+            HttpUtil.handleError(exchange, e);
+        }
+    }
+
     public void handleTerritoryStatus(HttpExchange exchange) throws IOException {
         try {
             com.user.terra_script.world.TerritoryManager.ensureLoaded();
@@ -110,13 +204,16 @@ public class TerritoryController {
                 for (var cfg : com.user.terra_script.world.TerritoryManager.getRegisteredFactions()) {
                     JsonObject tObj = new JsonObject();
                     tObj.addProperty("id", cfg.id);
+                    tObj.addProperty("territory_id", cfg.territoryId);
                     tObj.addProperty("name", cfg.name);
                     JsonObject cap = new JsonObject();
                     cap.addProperty("x", cfg.capitalX);
                     cap.addProperty("z", cfg.capitalZ);
                     tObj.add("capital", cap);
                     tObj.addProperty("region_id", cfg.regionId);
-                    tObj.addProperty("power", cfg.maxPower);
+                    tObj.addProperty("continent_id", cfg.selectedContinentId);
+                    tObj.addProperty("base_power", cfg.maxPower);
+                    tObj.addProperty("land_power", cfg.landPower);
                     tObj.addProperty("expansion_executed", false);
                     root.add(cfg.id, tObj);
                 }
@@ -127,12 +224,17 @@ public class TerritoryController {
             for (var res : allResults) {
                 JsonObject tObj = new JsonObject();
                 tObj.addProperty("id", res.config.id);
+                tObj.addProperty("territory_id", res.config.territoryId);
                 tObj.addProperty("name", res.config.name);
 
                 JsonObject cap = new JsonObject();
                 cap.addProperty("x", res.config.capitalX);
                 cap.addProperty("z", res.config.capitalZ);
                 tObj.add("capital", cap);
+
+                tObj.addProperty("continent_id", res.config.selectedContinentId);
+                tObj.addProperty("base_power", res.config.maxPower);
+                tObj.addProperty("land_power", res.config.landPower);
 
                 if (res.stats != null) {
                     tObj.addProperty("total_area", res.stats.area_pixels);
@@ -168,6 +270,13 @@ public class TerritoryController {
                     JsonObject biomes = new JsonObject();
                     res.stats.biome_composition.forEach(biomes::addProperty);
                     tObj.add("biomes", biomes);
+
+                    JsonObject competition = new JsonObject();
+                    competition.addProperty("land_power_initial", res.stats.land_power_initial);
+                    competition.addProperty("land_power_remaining", res.stats.land_power_remaining);
+                    competition.addProperty("land_power_spent", res.stats.land_power_spent);
+                    competition.addProperty("conflict_cells", res.stats.conflict_cells);
+                    tObj.add("competition", competition);
                 }
                 root.add(res.config.id, tObj);
             }
@@ -181,15 +290,17 @@ public class TerritoryController {
         if (!HttpUtil.requireMethod(exchange, "GET")) return;
         try {
             String territoryId = getQueryParam(exchange, "territoryId");
+            String continentIdRaw = getQueryParam(exchange, "continentId");
             if (territoryId == null || territoryId.isBlank()) {
                 HttpUtil.sendResponse(exchange, 400, "{\"error\": \"territoryId query parameter is required\"}");
                 return;
             }
 
-            Optional<JsonObject> stored = TerritoryResultRepository.readSummary(server, territoryId);
+            String lookupId = resolveSummaryLookupId(territoryId, continentIdRaw);
+            Optional<JsonObject> stored = TerritoryResultRepository.readSummary(server, lookupId);
             if (stored.isEmpty()) {
                 var live = com.user.terra_script.world.TerritoryManager.getAllResults().stream()
-                        .filter(r -> r != null && r.config != null && territoryId.equals(r.config.id))
+                        .filter(r -> r != null && r.config != null && lookupId.equals(r.config.id))
                         .findFirst();
                 if (live.isPresent()) {
                     JsonObject summary = TerritoryResultRepository.buildSummary(live.get());
@@ -329,6 +440,28 @@ public class TerritoryController {
             }
         }
         return null;
+    }
+
+    private static StageContext buildStageContext(MinecraftServer server) {
+        ArtifactStore artifacts = new ArtifactStore();
+        FileStageStatusStore statusStore = new FileStageStatusStore(artifacts);
+        return StageContext.forServer(server, artifacts, statusStore);
+    }
+
+    private static String resolveSummaryLookupId(String territoryId, String continentIdRaw) {
+        if (continentIdRaw != null && !continentIdRaw.isBlank()) {
+            try {
+                int continentId = Integer.parseInt(continentIdRaw);
+                if (continentId > 0) return TerritoryBlueprint.instanceId(territoryId, continentId);
+            } catch (Exception ignored) {
+            }
+        }
+        for (var cfg : com.user.terra_script.world.TerritoryManager.getRegisteredFactions()) {
+            if (cfg != null && territoryId.equals(cfg.territoryId)) {
+                return cfg.id;
+            }
+        }
+        return territoryId;
     }
 
     private static JsonObject buildWindowTerrain(List<CellRecord> records) {
