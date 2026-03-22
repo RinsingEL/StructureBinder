@@ -25,6 +25,11 @@ run
 # Files from Forge MDK
 forge*changelog.txt
 
-# country_designer_mcp 只保留 index.ts
+# country_designer_mcp 保留源码与配置
 country_designer_mcp/*
 !country_designer_mcp/index.ts
+!country_designer_mcp/package.json
+!country_designer_mcp/package-lock.json
+!country_designer_mcp/tsconfig.json
+!country_designer_mcp/src/
+!country_designer_mcp/src/**
