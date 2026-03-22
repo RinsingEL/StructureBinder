@@ -18,6 +18,7 @@ import com.user.terra_script.util.AsciiMapGenerator;
 import com.user.terra_script.util.DBSCAN;
 import com.user.terra_script.util.StructureDiscovery;
 import com.user.terra_script.world.StructureInjector;
+import com.user.terra_script.world.city.stage.StructureTemplateQueryService;
 import com.user.terra_script.config.StructurePlan;
 import com.user.terra_script.world.io.WorldRepository;
 import net.minecraft.server.MinecraftServer;
@@ -137,6 +138,25 @@ public class WorldController {
         try {
             var list = StructureDiscovery.scanAllStructures(mcServer.overworld());
             HttpUtil.sendResponse(exchange, 200, gson.toJson(list));
+        } catch (Exception e) {
+            HttpUtil.handleError(exchange, e);
+        }
+    }
+
+    public void handleStructureTemplatesQuery(HttpExchange exchange) throws IOException {
+        if (!HttpUtil.requireMethod(exchange, "POST")) return;
+        try {
+            String body = HttpUtil.readBody(exchange);
+            JsonObject req = JsonParser.parseString(body).getAsJsonObject();
+            StructureTemplateQueryService.QueryRequest query = new StructureTemplateQueryService.QueryRequest();
+            query.function_tag = req.has("function_tag") ? req.get("function_tag").getAsString() : null;
+            query.size_tier = req.has("size_tier") ? req.get("size_tier").getAsString() : null;
+            query.arrangement_type = req.has("arrangement_type") ? req.get("arrangement_type").getAsString() : null;
+            query.require_connector = req.has("require_connector") && req.get("require_connector").getAsBoolean();
+            query.strict_tag_source = !req.has("strict_tag_source") || req.get("strict_tag_source").getAsBoolean();
+
+            StructureTemplateQueryService.QueryResult result = StructureTemplateQueryService.queryTemplates(query);
+            HttpUtil.sendResponse(exchange, result.ok ? 200 : 422, gson.toJson(result));
         } catch (Exception e) {
             HttpUtil.handleError(exchange, e);
         }

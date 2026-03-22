@@ -326,7 +326,7 @@ public final class CityC8ArrangementEngine {
 
         List<ConnectorView> connectors = resolveConnectorViews(meta, node.rotation);
         if (connectors.isEmpty()) {
-            return canTerminate(meta, 0, isRoot);
+            return true;
         }
         if (depth >= ctx.maxDepth) {
             ctx.warnings.add("max_depth_reached:" + safe(node.node_id));
@@ -398,7 +398,7 @@ public final class CityC8ArrangementEngine {
     private static boolean canTerminate(TemplateMeta meta, int successCount, boolean isRoot) {
         String role = meta == null || meta.piece_role == null ? "" : meta.piece_role.toUpperCase(Locale.ROOT);
         if ("MIDDLE".equals(role)) return successCount > 0;
-        if (isRoot && "START".equals(role)) return successCount > 0;
+        if (isRoot && "START".equals(role)) return true;
         return true;
     }
 
@@ -444,7 +444,7 @@ public final class CityC8ArrangementEngine {
 
         List<String> fallback = meta != null && meta.connector_dirs != null && !meta.connector_dirs.isEmpty()
                 ? meta.connector_dirs
-                : (meta != null ? meta.jigsawFacing : List.of());
+                : List.of();
         for (String dirRaw : fallback) {
             Direction dir = Direction.parse(dirRaw);
             if (dir != null) out.add(new ConnectorView(dir.nameLower, 0, 0, dir, dir, "", List.of(), false, 1));

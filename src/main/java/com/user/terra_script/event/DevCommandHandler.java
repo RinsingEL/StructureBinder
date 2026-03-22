@@ -376,6 +376,8 @@ public class DevCommandHandler {
                 return httpPost("/city_c7_data", args);
             case "city_heightmap":
                 return httpPost("/city_heightmap", args);
+            case "structure_templates_query":
+                return httpPost("/structure_templates_query", args);
             case "city_forbidden":
                 return httpPost("/city_forbidden", args);
             case "city_buildable_groups":

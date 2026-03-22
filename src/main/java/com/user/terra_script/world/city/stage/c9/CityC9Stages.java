@@ -5,6 +5,8 @@ import com.google.gson.GsonBuilder;
 import com.user.terra_script.world.StructureInjector;
 import com.user.terra_script.world.city.stage.c6.CityC6Stages;
 import com.user.terra_script.world.city.stage.c8.CityC8Stages;
+import com.user.terra_script.world.city.stage.c9.CityC9BuildQueue.BuildQueue;
+import com.user.terra_script.world.city.stage.c9.CityC9BuildQueue.QueueSummary;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.world.level.block.Rotation;
@@ -35,6 +37,8 @@ public final class CityC9Stages {
     public static class C9Result {
         public C9Placement placement;
         public C9Decoration decoration;
+        public BuildQueue queue;
+        public QueueSummary queue_summary;
     }
 
     public static class C9Placement {
@@ -42,10 +46,13 @@ public final class CityC9Stages {
         public boolean ok = true;
         public String city_id;
         public long generated_at_epoch_ms;
+        public String mode = Mode.ENQUEUE.name().toLowerCase();
         public boolean apply_blocks;
         public int max_blocks;
         public int changed_blocks_total;
         public int processed_areas;
+        public int enqueued_tasks_count;
+        public int applied_tasks_count;
         public List<PlacementItem> items = new ArrayList<>();
     }
 
@@ -88,14 +95,33 @@ public final class CityC9Stages {
         public String note;
     }
 
+    public enum Mode {
+        DRY_RUN,
+        ENQUEUE,
+        APPLY_NOW;
+
+        public static Mode parse(String raw, Boolean deprecatedApplyBlocks) {
+            if (raw != null && !raw.isBlank()) {
+                try {
+                    return valueOf(raw.trim().toUpperCase(java.util.Locale.ROOT));
+                } catch (IllegalArgumentException ignored) {
+                }
+            }
+            if (deprecatedApplyBlocks != null) {
+                return deprecatedApplyBlocks ? ENQUEUE : DRY_RUN;
+            }
+            return ENQUEUE;
+        }
+    }
+
     public static C9Result generate(
             String cityId,
-            ServerLevel level,
             CityC6Stages.C6Summary c6Summary,
             Map<Long, Integer> c6Index,
             CityC8Stages.C8Plan c8Plan,
-            boolean applyBlocks,
-            int maxBlocks
+            Mode mode,
+            int maxBlocks,
+            BuildQueue existingQueue
     ) {
         C9Result out = new C9Result();
         out.placement = new C9Placement();
@@ -104,15 +130,11 @@ public final class CityC9Stages {
         out.decoration.city_id = cityId;
         out.placement.generated_at_epoch_ms = System.currentTimeMillis();
         out.decoration.generated_at_epoch_ms = out.placement.generated_at_epoch_ms;
-        out.placement.apply_blocks = applyBlocks;
+        out.placement.mode = (mode != null ? mode : Mode.ENQUEUE).name().toLowerCase(java.util.Locale.ROOT);
+        out.placement.apply_blocks = mode == Mode.APPLY_NOW;
         out.placement.max_blocks = Math.max(1, maxBlocks);
 
         if (c6Summary == null || c6Index == null || c6Index.isEmpty() || c8Plan == null || c8Plan.foundations == null) {
-            out.placement.ok = false;
-            out.decoration.ok = false;
-            return out;
-        }
-        if (applyBlocks && level == null) {
             out.placement.ok = false;
             out.decoration.ok = false;
             return out;
@@ -133,8 +155,7 @@ public final class CityC9Stages {
         List<CityC6Stages.BuildAreaSummary> areas = c6Summary.areas != null ? c6Summary.areas : Collections.emptyList();
         areas.sort(Comparator.comparing(a -> a.build_area_id));
 
-        int changedTotal = 0;
-        int remainingBudget = Math.max(1, out.placement.max_blocks);
+        int plannedTaskCount = 0;
         for (CityC6Stages.BuildAreaSummary area : areas) {
             if (area == null) continue;
             CityC8Stages.FoundationItem foundation = foundationByArea.get(area.build_area_numeric_id);
@@ -149,15 +170,21 @@ public final class CityC9Stages {
             p.foundation_type = foundation.foundation_type;
             p.base_y = foundation.base_y;
             p.scanned_blocks = areaBlocks.size();
-
-            int changed = 0;
             p.planned_nodes = foundation.placements != null ? foundation.placements.size() : 0;
-            changed = placeArea(applyBlocks ? level : null, areaBlocks, foundation, remainingBudget, p);
-            if (applyBlocks) {
-                remainingBudget = Math.max(0, remainingBudget - changed);
+            plannedTaskCount += p.planned_nodes;
+            p.changed_blocks = 0;
+            if (foundation.placements != null) {
+                for (CityC8Stages.PlacementNode node : foundation.placements) {
+                    if (node == null) continue;
+                    recordStructureResult(
+                            p,
+                            node,
+                            node.y > 0 ? node.y : foundation.base_y,
+                            false,
+                            mode == Mode.DRY_RUN ? "dry_run_planned" : "queued_for_build"
+                    );
+                }
             }
-            p.changed_blocks = changed;
-            changedTotal += changed;
             out.placement.items.add(p);
 
             DecorationItem d = new DecorationItem();
@@ -165,14 +192,16 @@ public final class CityC9Stages {
             d.strategy = inferDecorStrategy(foundation.foundation_type);
             d.note = "Generated from C8 foundation type";
             out.decoration.items.add(d);
-
-            if (applyBlocks && remainingBudget <= 0) {
-                break;
-            }
         }
 
         out.placement.processed_areas = out.placement.items.size();
-        out.placement.changed_blocks_total = changedTotal;
+        out.placement.changed_blocks_total = 0;
+        out.placement.enqueued_tasks_count = mode == Mode.DRY_RUN ? 0 : plannedTaskCount;
+        out.placement.applied_tasks_count = 0;
+        out.queue = mode == Mode.DRY_RUN
+                ? CityC9BuildQueue.filtered(existingQueue, null)
+                : CityC9BuildQueue.upsertFromPlan(existingQueue, cityId, c8Plan, null);
+        out.queue_summary = CityC9BuildQueue.summarize(out.queue, null);
         return out;
     }
 

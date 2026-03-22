@@ -9,6 +9,7 @@ import com.user.terra_script.server.mcp.WorldController;
 import com.user.terra_script.server.mcp.WorkflowController;
 import com.user.terra_script.util.ScanDataIO;
 import com.user.terra_script.domain.world.scan.service.SatelliteScanner;
+import com.user.terra_script.world.city.CityBuildQueueExecutor;
 import net.minecraft.server.MinecraftServer;
 import net.minecraftforge.event.server.ServerStartedEvent;
 import net.minecraftforge.event.server.ServerStoppingEvent;
@@ -33,6 +34,7 @@ public class ModHttpServer {
         ScanDataIO.setWorldRoot(mcServer.getWorldPath(LevelResource.ROOT));
         ScanDataIO.onServerStarted();
         ScanDataIO.loadInto(ScanResultHolder.get());
+        CityBuildQueueExecutor.bindServer(mcServer);
         startHttpServer();
     }
 
@@ -40,6 +42,7 @@ public class ModHttpServer {
     public static void onServerStop(ServerStoppingEvent event) {
         SatelliteScanner.stopScanning();
         ScanDataIO.onServerStopping();
+        CityBuildQueueExecutor.unbindServer();
         stopHttpServer();
     }
 
@@ -59,6 +62,7 @@ public class ModHttpServer {
             server.createContext("/t1_preview_maps", worldController::handleT1PreviewMaps);
             server.createContext("/terrain_summary", worldController::handleTerrainSummary);
             server.createContext("/structures", worldController::handleStructures);
+            server.createContext("/structure_templates_query", worldController::handleStructureTemplatesQuery);
             server.createContext("/query_region", worldController::handleQueryRegion);
             server.createContext("/query_region_pick", worldController::handleQueryRegionPick);
             server.createContext("/place", worldController::handlePlace);
@@ -113,6 +117,7 @@ public class ModHttpServer {
             server.createContext("/city_c8_data", cityController::handleCityC8Data);
             server.createContext("/city_c9_generate", cityController::handleCityC9Generate);
             server.createContext("/city_c9_data", cityController::handleCityC9Data);
+            server.createContext("/city_c9_queue_data", cityController::handleCityC9QueueData);
             server.createContext("/city_c6_pave_stone", cityController::handleCityC6PaveStone);
             server.createContext("/create_city", cityController::handleCreateCity);
 

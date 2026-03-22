@@ -6,7 +6,10 @@ import org.junit.jupiter.api.Test;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.List;
+import java.util.LinkedHashMap;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityC7StagesTest {
@@ -46,6 +49,61 @@ class CityC7StagesTest {
         double mismatchedScore = (double) score.invoke(null, mismatched, "M", "port", "port_group", "port", "east", true);
 
         assertTrue(matchingScore > mismatchedScore, "seed scoring should prefer pool+connector compatible root");
+    }
+
+    @Test
+    void strictSelectionCapturesFailureReasonWhenNoTrustedCandidate() throws Exception {
+        Object heuristicOnly = newCatalogStructure();
+        setField(heuristicOnly, "structure_id", "test:landmark");
+        setField(heuristicOnly, "piece_role", "START");
+        setField(heuristicOnly, "size_tier", "S");
+        setField(heuristicOnly, "preset_pool", "landmark_pool");
+        setField(heuristicOnly, "path", "landmark/test");
+        addFunctionCandidate(heuristicOnly, "landmark", 0.8);
+        Object functionDefinition = getField(heuristicOnly, "function_definition");
+        setField(functionDefinition, "source", "mcp_path_heuristic");
+        Object tagSource = getField(heuristicOnly, "tag_source");
+        setField(tagSource, "preset_rule", "mcp_path_heuristic");
+
+        Object catalog = newCatalog();
+        @SuppressWarnings("unchecked")
+        List<Object> structures = (List<Object>) getField(catalog, "structures");
+        structures.add(heuristicOnly);
+
+        Method chooseCandidates = CityC7Stages.class.getDeclaredMethod(
+                "chooseCandidatesFromCatalog",
+                Class.forName("com.user.terra_script.world.city.stage.StructureTemplateQueryService$QueryRequest"),
+                String.class,
+                String.class,
+                boolean.class,
+                catalog.getClass()
+        );
+        chooseCandidates.setAccessible(true);
+
+        Class<?> queryType = Class.forName("com.user.terra_script.world.city.stage.StructureTemplateQueryService$QueryRequest");
+        Object query = queryType.getDeclaredConstructor().newInstance();
+        queryType.getField("function_tag").set(query, "market");
+        queryType.getField("size_tier").set(query, "S");
+        queryType.getField("arrangement_type").set(query, "COURTYARD");
+        queryType.getField("strict_tag_source").set(query, true);
+
+        Object result = chooseCandidates.invoke(null, query, "g_market_04", "south", true, catalog);
+        boolean ok = (boolean) result.getClass().getField("ok").get(result);
+        int candidateCount = result.getClass().getField("candidate_count").getInt(result);
+        String reason = (String) result.getClass().getField("failure_reason").get(result);
+
+        assertFalse(ok);
+        assertEquals(0, candidateCount);
+        assertEquals("no_candidates_after_strict_function_filter", reason);
+    }
+
+    private static Object newCatalog() throws Exception {
+        Class<?> type = Class.forName("com.user.terra_script.world.city.stage.c7.CityC7Stages$Catalog");
+        Constructor<?> ctor = type.getDeclaredConstructor();
+        ctor.setAccessible(true);
+        Object catalog = ctor.newInstance();
+        setField(catalog, "ok", true);
+        return catalog;
     }
 
     private static Object newCatalogStructure() throws Exception {

@@ -26,6 +26,35 @@ import java.util.Random;
 @SuppressWarnings("removal")
 @Mod.EventBusSubscriber(modid = "terra_script")
 public class StructureInjector {
+    public static final class PlacementBounds {
+        public final int minX;
+        public final int minY;
+        public final int minZ;
+        public final int maxXExclusive;
+        public final int maxYExclusive;
+        public final int maxZExclusive;
+
+        private PlacementBounds(int minX, int minY, int minZ, int maxXExclusive, int maxYExclusive, int maxZExclusive) {
+            this.minX = minX;
+            this.minY = minY;
+            this.minZ = minZ;
+            this.maxXExclusive = maxXExclusive;
+            this.maxYExclusive = maxYExclusive;
+            this.maxZExclusive = maxZExclusive;
+        }
+
+        public boolean intersects(PlacementBounds other) {
+            if (other == null) return false;
+            boolean separated = this.maxXExclusive <= other.minX
+                    || this.minX >= other.maxXExclusive
+                    || this.maxYExclusive <= other.minY
+                    || this.minY >= other.maxYExclusive
+                    || this.maxZExclusive <= other.minZ
+                    || this.minZ >= other.maxZExclusive;
+            return !separated;
+        }
+    }
+
     public static final class TemplateSnapshot {
         public final String structureId;
         public final BlockPos origin;
@@ -201,6 +230,20 @@ public class StructureInjector {
     public static Vec3i templateSize(ServerLevel level, String structureId) {
         StructureTemplate template = loadTemplate(level, structureId);
         return template != null ? template.getSize() : null;
+    }
+
+    public static PlacementBounds placementBounds(ServerLevel level, String structureId, BlockPos origin, Rotation rotation) {
+        StructureTemplate template = loadTemplate(level, structureId);
+        if (template == null || origin == null) return null;
+        Bounds bounds = boundsFor(template, origin, rotation != null ? rotation : Rotation.NONE);
+        return new PlacementBounds(
+                bounds.minX,
+                bounds.minY,
+                bounds.minZ,
+                bounds.maxXExclusive,
+                bounds.maxYExclusive,
+                bounds.maxZExclusive
+        );
     }
 
     private static void clearPlacedJigsawBlocks(ServerLevel level, StructureTemplate template, BlockPos origin, Rotation rotation) {

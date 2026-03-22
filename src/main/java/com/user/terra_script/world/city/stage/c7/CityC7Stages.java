@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.user.terra_script.world.city.stage.CityC35CatalogIO;
+import com.user.terra_script.world.city.stage.StructureTemplateQueryService;
 import com.user.terra_script.world.city.stage.c6.CityC6Stages;
 
 import java.nio.charset.StandardCharsets;
@@ -75,6 +76,9 @@ public final class CityC7Stages {
         public long generated_at_epoch_ms;
         public String catalog_source = "hardcoded_vanilla_village_templates";
         public String decision_source = "program_fallback";
+        public String selection_mode = "strict_function_filter";
+        public int filtered_candidate_count;
+        public String strict_filter_failure_reason;
         public int puzzle_depth = 0;
         public List<TemplateSelectionItem> selections = new ArrayList<>();
         public List<GroupArrangementDecision> arrangements = new ArrayList<>();
@@ -161,6 +165,8 @@ public final class CityC7Stages {
         public List<String> top_k_templates = new ArrayList<>();
         public List<String> fallback_chain = new ArrayList<>();
         public List<SelectedComponent> selected_components = new ArrayList<>();
+        public int filtered_candidate_count;
+        public String strict_filter_failure_reason;
         public String notes;
     }
 
@@ -182,9 +188,9 @@ public final class CityC7Stages {
             if (plan == null || plan.primary_modules == null || plan.primary_modules.isEmpty()) continue;
             boolean consumable = plan.validated || plan.decision_mode == null || plan.decision_mode.isBlank();
             if (!consumable) continue;
-            result.arrangements.add(buildFallbackArrangement(plan, catalog));
+            result.arrangements.add(buildFallbackArrangement(plan, catalog, result));
             for (CityC6Stages.PrimaryModule module : plan.primary_modules) {
-                result.selections.add(buildFallbackSelection(plan, module, catalog));
+                result.selections.add(buildFallbackSelection(plan, module, catalog, result));
             }
         }
         result.selections.sort(Comparator.comparing(i -> safe(i.build_area_id) + "|" + safe(i.module_id)));
@@ -197,6 +203,7 @@ public final class CityC7Stages {
         result.city_id = cityId;
         result.generated_at_epoch_ms = System.currentTimeMillis();
         result.decision_source = "ai_decision_submit";
+        result.selection_mode = "ai_decision_submit";
         Catalog catalog = loadCatalog();
         result.catalog_source = catalog != null && catalog.ok
                 ? CityC35CatalogIO.catalogPath().toString()
@@ -228,7 +235,7 @@ public final class CityC7Stages {
         return GSON.fromJson(Files.readString(file, StandardCharsets.UTF_8), C7Selection.class);
     }
 
-    private static GroupArrangementDecision buildFallbackArrangement(CityC6Stages.LayoutPlan plan, Catalog catalog) {
+    private static GroupArrangementDecision buildFallbackArrangement(CityC6Stages.LayoutPlan plan, Catalog catalog, C7Selection selection) {
         GroupArrangementDecision arrangement = new GroupArrangementDecision();
         arrangement.group_id = plan.group_id;
         arrangement.build_area_id = plan.build_area_id;
@@ -253,18 +260,18 @@ public final class CityC7Stages {
                     arrangement.seed.start_x = (int) Math.round(module.anchor.x);
                     arrangement.seed.start_z = (int) Math.round(module.anchor.z);
                     arrangement.seed.start_connector_dir = defaultConnectorDir(arrangement.arrangement_type);
-                    SelectedComponent seedComponent = buildFallbackComponent(plan, module, catalog);
+                    SelectedComponent seedComponent = buildFallbackComponent(plan, module, catalog, selection);
                     arrangement.seed.start_template_id = seedComponent.template_id;
                     arrangement.seed.start_rotation = resolveStartRotation(findStructure(catalog, arrangement.seed.start_template_id), arrangement.seed.start_connector_dir, arrangement.arrangement_type);
                 }
                 arrangement.validated_primary_modules.add(module.module_id);
-                arrangement.selected_components.add(buildFallbackComponent(plan, module, catalog));
+                arrangement.selected_components.add(buildFallbackComponent(plan, module, catalog, selection));
             }
         }
         return arrangement;
     }
 
-    private static TemplateSelectionItem buildFallbackSelection(CityC6Stages.LayoutPlan plan, CityC6Stages.PrimaryModule module, Catalog catalog) {
+    private static TemplateSelectionItem buildFallbackSelection(CityC6Stages.LayoutPlan plan, CityC6Stages.PrimaryModule module, Catalog catalog, C7Selection selection) {
         TemplateSelectionItem item = new TemplateSelectionItem();
         item.group_id = plan.group_id;
         item.build_area_id = plan.build_area_id;
@@ -294,7 +301,7 @@ public final class CityC7Stages {
         item.termination.rollback_on_unclosed_middle = true;
         item.strategy_params.putAll(defaultStrategyParams(item.arrangement_type));
 
-        List<String> candidates = chooseCandidates(category, item.size_tier, item.function_role, plan.group_id, item.arrangement_type, item.seed.start_connector_dir, true, catalog);
+        List<String> candidates = chooseCandidates(category, item.size_tier, item.function_role, plan.group_id, item.arrangement_type, item.seed.start_connector_dir, true, catalog, item, selection);
         item.top_k_templates = new ArrayList<>(candidates.subList(0, Math.min(3, candidates.size())));
         item.selected_template = item.top_k_templates.isEmpty() ? null : item.top_k_templates.get(0);
         item.seed.start_template_id = item.selected_template;
@@ -314,14 +321,14 @@ public final class CityC7Stages {
             }
         }
 
-        item.selected_components.add(buildFallbackComponent(plan, module, catalog));
+        item.selected_components.add(buildFallbackComponent(plan, module, catalog, selection));
         item.notes = catalog != null && catalog.ok && !item.top_k_templates.isEmpty()
-                ? "Catalog-driven fallback selection"
-                : "Hardcoded village fallback selection";
+                ? "Catalog-driven strict fallback selection"
+                : "Strict function filter found no candidate";
         return item;
     }
 
-    private static SelectedComponent buildFallbackComponent(CityC6Stages.LayoutPlan plan, CityC6Stages.PrimaryModule module, Catalog catalog) {
+    private static SelectedComponent buildFallbackComponent(CityC6Stages.LayoutPlan plan, CityC6Stages.PrimaryModule module, Catalog catalog, C7Selection selection) {
         SelectedComponent component = new SelectedComponent();
         component.component_id = module != null && module.module_id != null ? module.module_id : ("component_" + safe(plan.group_id));
         component.role = inferComponentRole(plan.group_id);
@@ -330,6 +337,7 @@ public final class CityC7Stages {
         String sizeTier = module != null && module.template_hint != null ? module.template_hint.size_tier : "M";
         String functionRole = inferFunctionRole(category, component.component_id, plan.group_id);
         String arrangementType = inferArrangementType(plan.group_id);
+        TemplateSelectionItem scratch = new TemplateSelectionItem();
         List<String> candidates = chooseCandidates(
                 category,
                 normalizeTier(sizeTier),
@@ -338,7 +346,9 @@ public final class CityC7Stages {
                 arrangementType,
                 defaultConnectorDir(arrangementType),
                 true,
-                catalog
+                catalog,
+                scratch,
+                selection
         );
         component.template_id = candidates.isEmpty() ? null : candidates.get(0);
         component.rule = defaultRuleForArrangement(arrangementType, component.role);
@@ -625,53 +635,75 @@ public final class CityC7Stages {
             String arrangementType,
             String startConnectorDir,
             boolean rootCandidate,
-            Catalog catalog
+            Catalog catalog,
+            TemplateSelectionItem item,
+            C7Selection selection
     ) {
-        List<String> fromCatalog = chooseCandidatesFromCatalog(sizeTier, functionRole, groupId, arrangementType, startConnectorDir, rootCandidate, catalog);
-        if (!fromCatalog.isEmpty()) return fromCatalog;
-
-        String c = safe(category).toLowerCase(Locale.ROOT);
-        String t = normalizeTier(sizeTier);
-        if (c.contains("plaza") || c.contains("civic")) {
-            if ("L".equals(t)) return VILLAGE_CIVIC_L;
-            return merge(VILLAGE_CIVIC_L, VILLAGE_HOUSE_M);
+        StructureTemplateQueryService.QueryRequest request = new StructureTemplateQueryService.QueryRequest();
+        request.function_tag = functionRole;
+        request.size_tier = sizeTier;
+        request.arrangement_type = arrangementType;
+        request.require_connector = false;
+        request.strict_tag_source = true;
+        StructureTemplateQueryService.QueryResult queryResult = chooseCandidatesFromCatalog(request, groupId, startConnectorDir, rootCandidate, catalog);
+        if (item != null) {
+            item.filtered_candidate_count = queryResult.candidate_count;
+            item.strict_filter_failure_reason = queryResult.failure_reason;
         }
-        if ("L".equals(t)) return merge(VILLAGE_HOUSE_M, VILLAGE_CIVIC_L);
-        if ("S".equals(t)) return VILLAGE_HOUSE_S;
-        return VILLAGE_HOUSE_M;
+        if (selection != null) {
+            selection.filtered_candidate_count = Math.max(selection.filtered_candidate_count, queryResult.candidate_count);
+            if (!queryResult.ok && (selection.strict_filter_failure_reason == null || selection.strict_filter_failure_reason.isBlank())) {
+                selection.strict_filter_failure_reason = queryResult.failure_reason;
+                selection.ok = false;
+            }
+        }
+        return queryResult.candidates.stream().map(candidate -> candidate.structure_id).toList();
     }
 
-    private static List<String> chooseCandidatesFromCatalog(
-            String sizeTier,
-            String functionRole,
+    private static StructureTemplateQueryService.QueryResult chooseCandidatesFromCatalog(
+            StructureTemplateQueryService.QueryRequest request,
             String groupId,
-            String arrangementType,
             String startConnectorDir,
             boolean rootCandidate,
             Catalog catalog
     ) {
+        StructureTemplateQueryService.QueryResult empty = new StructureTemplateQueryService.QueryResult();
+        empty.function_tag = request.function_tag;
         if (catalog == null || !catalog.ok || catalog.structures == null || catalog.structures.isEmpty()) {
-            return Collections.emptyList();
+            empty.ok = false;
+            empty.failure_reason = "catalog_not_found";
+            return empty;
         }
 
-        String tier = normalizeTier(sizeTier);
-        String normalizedFunction = normalizeCatalogFunction(functionRole);
-        String preferredPool = inferPreferredPool(groupId, arrangementType, normalizedFunction);
+        String tier = normalizeTier(request.size_tier);
+        String normalizedFunction = StructureTemplateQueryService.normalizeCatalogFunction(request.function_tag);
+        String preferredPool = inferPreferredPool(groupId, request.arrangement_type, normalizedFunction);
+        StructureTemplateQueryService.QueryResult filtered = StructureTemplateQueryService.queryTemplates(catalog.structures, request);
+        if (!filtered.ok) return filtered;
         List<ScoredTemplate> scored = new ArrayList<>();
-        for (CatalogStructure structure : catalog.structures) {
-            if (structure == null || structure.structure_id == null || structure.structure_id.isBlank()) continue;
+        for (StructureTemplateQueryService.Candidate candidate : filtered.candidates) {
+            CatalogStructure structure = findStructure(catalog, candidate.structure_id);
+            if (structure == null) continue;
             double score = scoreStructure(structure, tier, normalizedFunction, groupId, preferredPool, startConnectorDir, rootCandidate);
             if (score <= 0.0) continue;
             scored.add(new ScoredTemplate(structure.structure_id, score));
         }
         scored.sort(Comparator.comparingDouble(ScoredTemplate::score).reversed().thenComparing(ScoredTemplate::id));
 
-        List<String> out = new ArrayList<>();
+        List<StructureTemplateQueryService.Candidate> ranked = new ArrayList<>();
         for (ScoredTemplate candidate : scored) {
-            out.add(candidate.id());
-            if (out.size() >= 6) break;
+            StructureTemplateQueryService.Candidate metadata = filtered.candidates.stream()
+                    .filter(item -> candidate.id().equals(item.structure_id))
+                    .findFirst()
+                    .orElse(null);
+            if (metadata != null) ranked.add(metadata);
+            if (ranked.size() >= 6) break;
         }
-        return out;
+        filtered.candidates = ranked;
+        filtered.candidate_count = ranked.size();
+        filtered.ok = !ranked.isEmpty();
+        if (!filtered.ok) filtered.failure_reason = "no_candidates_after_strict_function_filter";
+        return filtered;
     }
 
     private static double scoreStructure(
@@ -702,7 +734,7 @@ public final class CityC7Stages {
         if (structure.function_candidates != null) {
             for (CityC35CatalogIO.FunctionCandidate candidate : structure.function_candidates) {
                 if (candidate == null) continue;
-                String actual = normalizeCatalogFunction(candidate.function);
+                String actual = StructureTemplateQueryService.normalizeCatalogFunction(candidate.function);
                 if (functionRole.equals(actual)) bestFunctionScore = Math.max(bestFunctionScore, candidate.score);
                 else if (isCompatibleFunction(functionRole, actual)) bestFunctionScore = Math.max(bestFunctionScore, candidate.score * 0.75);
             }
@@ -875,17 +907,6 @@ public final class CityC7Stages {
     private static String normalizeTier(String raw) {
         String s = safe(raw).toUpperCase(Locale.ROOT);
         return Arrays.asList("S", "M", "L").contains(s) ? s : "M";
-    }
-
-    private static String normalizeCatalogFunction(String raw) {
-        String s = safe(raw).toLowerCase(Locale.ROOT);
-        if (s.startsWith("residential")) return "residential";
-        if ("watchtower".equals(s) || "fortification".equals(s)) return "military";
-        if ("market".equals(s)) return "market";
-        if ("commercial".equals(s) || "warehouse".equals(s) || "workshop".equals(s)) return "commercial";
-        if ("civic_center".equals(s) || "religious".equals(s) || "landmark".equals(s)) return "civic_center";
-        if ("port".equals(s) || "fishing".equals(s) || "farm".equals(s)) return s;
-        return s.isBlank() ? "residential" : s;
     }
 
     private static Catalog loadCatalog() {
