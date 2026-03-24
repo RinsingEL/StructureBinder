@@ -56,6 +56,7 @@ public final class CityC9BuildQueue {
         public String last_error;
         public long created_at_tick;
         public long updated_at_tick;
+        public String placement_signature;
         public Integer build_order;
         public String parent_node_id;
         public boolean terminalized;
@@ -159,7 +160,11 @@ public final class CityC9BuildQueue {
                     }
                     String taskId = taskId(cityId, foundation.build_area_id, node.node_id);
                     BuildTask existing = byId.get(taskId);
-                    if (existing != null && Status.DONE.name().equals(Status.normalize(existing.status))) {
+                    String nextSignature = placementSignature(foundation, node);
+                    boolean changed = existing == null || hasTaskChanged(existing, foundation, node, nextSignature);
+                    if (existing != null
+                            && !changed
+                            && Status.DONE.name().equals(Status.normalize(existing.status))) {
                         continue;
                     }
                     BuildTask task = existing != null ? existing : new BuildTask();
@@ -177,6 +182,7 @@ public final class CityC9BuildQueue {
                     task.chunk_x = Math.floorDiv(node.x, 16);
                     task.chunk_z = Math.floorDiv(node.z, 16);
                     task.priority = buildPriority(node);
+                    task.placement_signature = nextSignature;
                     task.build_order = node.build_order;
                     task.parent_node_id = node.parent_node_id;
                     task.terminalized = node.terminalized;
@@ -185,6 +191,10 @@ public final class CityC9BuildQueue {
                     if (existing == null) {
                         task.created_at_tick = nowTick;
                         task.status = Status.PLANNED.name();
+                    } else if (changed) {
+                        task.status = Status.PLANNED.name();
+                        task.retry_count = 0;
+                        task.last_error = null;
                     } else if (!Status.BLOCKED.name().equals(Status.normalize(task.status))) {
                         task.status = Status.PLANNED.name();
                     }
@@ -238,7 +248,65 @@ public final class CityC9BuildQueue {
             if (task.task_id == null || task.task_id.isBlank()) {
                 task.task_id = taskId(task.city_id, task.build_area_id, task.node_id);
             }
+            if ((task.placement_signature == null || task.placement_signature.isBlank()) && task.placement_node != null) {
+                CityC8Stages.FoundationItem foundation = new CityC8Stages.FoundationItem();
+                foundation.group_id = task.group_id;
+                foundation.build_area_id = task.build_area_id;
+                foundation.build_area_numeric_id = task.build_area_numeric_id;
+                foundation.base_y = task.y;
+                task.placement_signature = placementSignature(foundation, task.placement_node);
+            }
         }
+    }
+
+    private static boolean hasTaskChanged(
+            BuildTask existing,
+            CityC8Stages.FoundationItem foundation,
+            CityC8Stages.PlacementNode node,
+            String nextSignature
+    ) {
+        if (existing == null) return true;
+        String currentSignature = safe(existing.placement_signature);
+        if (!currentSignature.isBlank()) {
+            return !currentSignature.equals(nextSignature);
+        }
+        if (!safe(existing.template_id).equals(safe(node.template_id))) return true;
+        int effectiveY = node.y > 0 ? node.y : foundation.base_y;
+        if (existing.x != node.x || existing.y != effectiveY || existing.z != node.z) return true;
+        if (existing.rotation != node.rotation) return true;
+        if (!Objects.equals(existing.build_order, node.build_order)) return true;
+        if (!Objects.equals(existing.parent_node_id, node.parent_node_id)) return true;
+        if (existing.terminalized != node.terminalized) return true;
+        CityC8Stages.PlacementNode placed = existing.placement_node;
+        if (placed == null) return true;
+        if (!safe(placed.role).equals(safe(node.role))) return true;
+        if (!safe(placed.component_id).equals(safe(node.component_id))) return true;
+        if (!Objects.equals(placed.footprint_min_x, node.footprint_min_x)
+                || !Objects.equals(placed.footprint_min_z, node.footprint_min_z)
+                || !Objects.equals(placed.footprint_max_x, node.footprint_max_x)
+                || !Objects.equals(placed.footprint_max_z, node.footprint_max_z)) {
+            return true;
+        }
+        return false;
+    }
+
+    private static String placementSignature(CityC8Stages.FoundationItem foundation, CityC8Stages.PlacementNode node) {
+        int effectiveY = node.y > 0 ? node.y : foundation.base_y;
+        return String.join("|",
+                safe(node.template_id),
+                Integer.toString(node.x),
+                Integer.toString(effectiveY),
+                Integer.toString(node.z),
+                Integer.toString(node.rotation),
+                Integer.toString(node.build_order != null ? node.build_order : -1),
+                safe(node.parent_node_id),
+                Boolean.toString(node.terminalized),
+                safe(node.component_id),
+                safe(node.role),
+                Integer.toString(node.footprint_min_x != null ? node.footprint_min_x : Integer.MIN_VALUE),
+                Integer.toString(node.footprint_min_z != null ? node.footprint_min_z : Integer.MIN_VALUE),
+                Integer.toString(node.footprint_max_x != null ? node.footprint_max_x : Integer.MIN_VALUE),
+                Integer.toString(node.footprint_max_z != null ? node.footprint_max_z : Integer.MIN_VALUE));
     }
 
     private static String safe(String value) {
