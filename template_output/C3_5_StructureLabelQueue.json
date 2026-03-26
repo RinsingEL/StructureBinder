@@ -2,10 +2,10 @@
   "step": "C3.5-queue",
   "ok": true,
   "city_id": "city_default",
-  "generated_at_epoch_ms": 1773770249093,
-  "total_items": 221,
+  "generated_at_epoch_ms": 1774447196021,
+  "total_items": 238,
   "pending_items": 0,
-  "completed_items": 221,
+  "completed_items": 238,
   "items": [
     {
       "structure_id": "kaisyn:outpost/camps/beach/base_plate",
@@ -18,7 +18,21 @@
       },
       "status": "done",
       "label_batch": 1,
-      "labeled_at_epoch_ms": 1773769924712,
+      "labeled_at_epoch_ms": 1774447166746,
+      "last_error": ""
+    },
+    {
+      "structure_id": "kaisyn:outpost/camps/savanna_plateau/side/workshop",
+      "namespace": "kaisyn",
+      "path": "outpost/camps/savanna_plateau/side/workshop",
+      "size": {
+        "length": 12,
+        "width": 15,
+        "height": 21
+      },
+      "status": "done",
+      "label_batch": 1,
+      "labeled_at_epoch_ms": 1774447166746,
       "last_error": ""
     },
     {
@@ -32,77 +46,35 @@
       },
       "status": "done",
       "label_batch": 1,
-      "labeled_at_epoch_ms": 1773769924712,
+      "labeled_at_epoch_ms": 1774447166746,
       "last_error": ""
     },
     {
-      "structure_id": "kaisyn:ships/village_ocean/pieces/mothership/mothership_1",
+      "structure_id": "kaisyn:outpost/camps/sparse_jungle/side/workshop",
       "namespace": "kaisyn",
-      "path": "ships/village_ocean/pieces/mothership/mothership_1",
+      "path": "outpost/camps/sparse_jungle/side/workshop",
       "size": {
-        "length": 17,
-        "width": 34,
-        "height": 38
-      },
-      "status": "done",
-      "label_batch": 1,
-      "labeled_at_epoch_ms": 1773769924712,
-      "last_error": ""
-    },
-    {
-      "structure_id": "kaisyn:ships/village_ocean/pieces/small_ship/small_ship_1",
-      "namespace": "kaisyn",
-      "path": "ships/village_ocean/pieces/small_ship/small_ship_1",
-      "size": {
-        "length": 6,
-        "width": 10,
-        "height": 10
-      },
-      "status": "done",
-      "label_batch": 1,
-      "labeled_at_epoch_ms": 1773769924712,
-      "last_error": ""
-    },
-    {
-      "structure_id": "kaisyn:ships/village_ocean/pieces/small_ship/small_ship_2",
-      "namespace": "kaisyn",
-      "path": "ships/village_ocean/pieces/small_ship/small_ship_2",
-      "size": {
-        "length": 3,
-        "width": 7,
-        "height": 6
-      },
-      "status": "done",
-      "label_batch": 1,
-      "labeled_at_epoch_ms": 1773769924712,
-      "last_error": ""
-    },
-    {
-      "structure_id": "kaisyn:ships/village_ocean/pieces/small_ship/small_ship_3",
-      "namespace": "kaisyn",
-      "path": "ships/village_ocean/pieces/small_ship/small_ship_3",
-      "size": {
-        "length": 6,
+        "length": 9,
         "width": 15,
-        "height": 13
+        "height": 8
       },
       "status": "done",
       "label_batch": 1,
-      "labeled_at_epoch_ms": 1773769924712,
+      "labeled_at_epoch_ms": 1774447166746,
       "last_error": ""
     },
     {
-      "structure_id": "kaisyn:ships/village_ocean/pieces/small_ship/small_ship_4",
+      "structure_id": "kaisyn:outpost/camps/wooded_badlands/side/workshop",
       "namespace": "kaisyn",
-      "path": "ships/village_ocean/pieces/small_ship/small_ship_4",
+      "path": "outpost/camps/wooded_badlands/side/workshop",
       "size": {
-        "length": 7,
-        "width": 19,
-        "height": 22
+        "length": 9,
+        "width": 15,
+        "height": 8
       },
       "status": "done",
       "label_batch": 1,
-      "labeled_at_epoch_ms": 1773769924712,
+      "labeled_at_epoch_ms": 1774447166746,
       "last_error": ""
     },
     {
@@ -116,7 +88,7 @@
       },
       "status": "done",
       "label_batch": 1,
-      "labeled_at_epoch_ms": 1773769924712,
+      "labeled_at_epoch_ms": 1774447166746,
       "last_error": ""
     },
     {
@@ -130,7 +102,7 @@
       },
       "status": "done",
       "label_batch": 1,
-      "labeled_at_epoch_ms": 1773769924712,
+      "labeled_at_epoch_ms": 1774447166746,
       "last_error": ""
     },
     {
@@ -144,7 +116,7 @@
       },
       "status": "done",
       "label_batch": 1,
-      "labeled_at_epoch_ms": 1773769924712,
+      "labeled_at_epoch_ms": 1774447166746,
       "last_error": ""
     },
     {
@@ -158,7 +130,7 @@
       },
       "status": "done",
       "label_batch": 1,
-      "labeled_at_epoch_ms": 1773769924712,
+      "labeled_at_epoch_ms": 1774447166746,
       "last_error": ""
     },
     {
@@ -172,7 +144,147 @@
       },
       "status": "done",
       "label_batch": 1,
-      "labeled_at_epoch_ms": 1773769924712,
+      "labeled_at_epoch_ms": 1774447166746,
+      "last_error": ""
+    },
+    {
+      "structure_id": "kaisyn:village/exclusives/mediterranean/villagers/bishop",
+      "namespace": "kaisyn",
+      "path": "village/exclusives/mediterranean/villagers/bishop",
+      "size": {
+        "length": 1,
+        "width": 1,
+        "height": 3
+      },
+      "status": "done",
+      "label_batch": 1,
+      "labeled_at_epoch_ms": 1774447166746,
+      "last_error": ""
+    },
+    {
+      "structure_id": "minecraft:village/desert/houses/desert_butcher_shop_1",
+      "namespace": "minecraft",
+      "path": "village/desert/houses/desert_butcher_shop_1",
+      "size": {
+        "length": 8,
+        "width": 8,
+        "height": 5
+      },
+      "status": "done",
+      "label_batch": 1,
+      "labeled_at_epoch_ms": 1774447166746,
+      "last_error": ""
+    },
+    {
+      "structure_id": "minecraft:village/plains/houses/plains_butcher_shop_1",
+      "namespace": "minecraft",
+      "path": "village/plains/houses/plains_butcher_shop_1",
+      "size": {
+        "length": 11,
+        "width": 12,
+        "height": 8
+      },
+      "status": "done",
+      "label_batch": 1,
+      "labeled_at_epoch_ms": 1774447166746,
+      "last_error": ""
+    },
+    {
+      "structure_id": "minecraft:village/plains/houses/plains_butcher_shop_2",
+      "namespace": "minecraft",
+      "path": "village/plains/houses/plains_butcher_shop_2",
+      "size": {
+        "length": 15,
+        "width": 7,
+        "height": 12
+      },
+      "status": "done",
+      "label_batch": 1,
+      "labeled_at_epoch_ms": 1774447166746,
+      "last_error": ""
+    },
+    {
+      "structure_id": "minecraft:village/plains/zombie/houses/plains_butcher_shop_2",
+      "namespace": "minecraft",
+      "path": "village/plains/zombie/houses/plains_butcher_shop_2",
+      "size": {
+        "length": 15,
+        "width": 7,
+        "height": 12
+      },
+      "status": "done",
+      "label_batch": 1,
+      "labeled_at_epoch_ms": 1774447166746,
+      "last_error": ""
+    },
+    {
+      "structure_id": "minecraft:village/savanna/houses/savanna_butchers_shop_1",
+      "namespace": "minecraft",
+      "path": "village/savanna/houses/savanna_butchers_shop_1",
+      "size": {
+        "length": 11,
+        "width": 11,
+        "height": 8
+      },
+      "status": "done",
+      "label_batch": 1,
+      "labeled_at_epoch_ms": 1774447166746,
+      "last_error": ""
+    },
+    {
+      "structure_id": "minecraft:village/savanna/houses/savanna_butchers_shop_2",
+      "namespace": "minecraft",
+      "path": "village/savanna/houses/savanna_butchers_shop_2",
+      "size": {
+        "length": 13,
+        "width": 9,
+        "height": 10
+      },
+      "status": "done",
+      "label_batch": 1,
+      "labeled_at_epoch_ms": 1774447166746,
+      "last_error": ""
+    },
+    {
+      "structure_id": "minecraft:village/snowy/houses/snowy_butchers_shop_1",
+      "namespace": "minecraft",
+      "path": "village/snowy/houses/snowy_butchers_shop_1",
+      "size": {
+        "length": 7,
+        "width": 9,
+        "height": 8
+      },
+      "status": "done",
+      "label_batch": 1,
+      "labeled_at_epoch_ms": 1774447166746,
+      "last_error": ""
+    },
+    {
+      "structure_id": "minecraft:village/snowy/houses/snowy_butchers_shop_2",
+      "namespace": "minecraft",
+      "path": "village/snowy/houses/snowy_butchers_shop_2",
+      "size": {
+        "length": 9,
+        "width": 5,
+        "height": 5
+      },
+      "status": "done",
+      "label_batch": 1,
+      "labeled_at_epoch_ms": 1774447166746,
+      "last_error": ""
+    },
+    {
+      "structure_id": "minecraft:village/taiga/houses/taiga_butcher_shop_1",
+      "namespace": "minecraft",
+      "path": "village/taiga/houses/taiga_butcher_shop_1",
+      "size": {
+        "length": 11,
+        "width": 9,
+        "height": 7
+      },
+      "status": "done",
+      "label_batch": 1,
+      "labeled_at_epoch_ms": 1774447166746,
       "last_error": ""
     },
     {
@@ -186,7 +298,7 @@
       },
       "status": "done",
       "label_batch": 1,
-      "labeled_at_epoch_ms": 1773769924712,
+      "labeled_at_epoch_ms": 1774447166746,
       "last_error": ""
     },
     {
@@ -200,7 +312,7 @@
       },
       "status": "done",
       "label_batch": 1,
-      "labeled_at_epoch_ms": 1773769924712,
+      "labeled_at_epoch_ms": 1774447166746,
       "last_error": ""
     },
     {
@@ -214,7 +326,7 @@
       },
       "status": "done",
       "label_batch": 1,
-      "labeled_at_epoch_ms": 1773769924712,
+      "labeled_at_epoch_ms": 1774447166746,
       "last_error": ""
     },
     {
@@ -228,7 +340,7 @@
       },
       "status": "done",
       "label_batch": 1,
-      "labeled_at_epoch_ms": 1773769924712,
+      "labeled_at_epoch_ms": 1774447166746,
       "last_error": ""
     },
     {
@@ -242,7 +354,7 @@
       },
       "status": "done",
       "label_batch": 1,
-      "labeled_at_epoch_ms": 1773769924712,
+      "labeled_at_epoch_ms": 1774447166746,
       "last_error": ""
     },
     {
@@ -256,7 +368,7 @@
       },
       "status": "done",
       "label_batch": 1,
-      "labeled_at_epoch_ms": 1773769924712,
+      "labeled_at_epoch_ms": 1774447166746,
       "last_error": ""
     },
     {
@@ -270,7 +382,7 @@
       },
       "status": "done",
       "label_batch": 1,
-      "labeled_at_epoch_ms": 1773769924712,
+      "labeled_at_epoch_ms": 1774447166746,
       "last_error": ""
     },
     {
@@ -284,7 +396,7 @@
       },
       "status": "done",
       "label_batch": 1,
-      "labeled_at_epoch_ms": 1773769924712,
+      "labeled_at_epoch_ms": 1774447166746,
       "last_error": ""
     },
     {
@@ -298,7 +410,7 @@
       },
       "status": "done",
       "label_batch": 1,
-      "labeled_at_epoch_ms": 1773769924712,
+      "labeled_at_epoch_ms": 1774447166746,
       "last_error": ""
     },
     {
@@ -312,7 +424,7 @@
       },
       "status": "done",
       "label_batch": 1,
-      "labeled_at_epoch_ms": 1773769924712,
+      "labeled_at_epoch_ms": 1774447166746,
       "last_error": ""
     },
     {
@@ -325,8 +437,8 @@
         "height": 6
       },
       "status": "done",
-      "label_batch": 1,
-      "labeled_at_epoch_ms": 1773769924712,
+      "label_batch": 2,
+      "labeled_at_epoch_ms": 1774447170879,
       "last_error": ""
     },
     {
@@ -339,8 +451,8 @@
         "height": 6
       },
       "status": "done",
-      "label_batch": 1,
-      "labeled_at_epoch_ms": 1773769924712,
+      "label_batch": 2,
+      "labeled_at_epoch_ms": 1774447170879,
       "last_error": ""
     },
     {
@@ -353,8 +465,8 @@
         "height": 5
       },
       "status": "done",
-      "label_batch": 1,
-      "labeled_at_epoch_ms": 1773769924712,
+      "label_batch": 2,
+      "labeled_at_epoch_ms": 1774447170879,
       "last_error": ""
     },
     {
@@ -367,8 +479,8 @@
         "height": 5
       },
       "status": "done",
-      "label_batch": 1,
-      "labeled_at_epoch_ms": 1773769924712,
+      "label_batch": 2,
+      "labeled_at_epoch_ms": 1774447170879,
       "last_error": ""
     },
     {
@@ -381,8 +493,8 @@
         "height": 5
       },
       "status": "done",
-      "label_batch": 1,
-      "labeled_at_epoch_ms": 1773769924712,
+      "label_batch": 2,
+      "labeled_at_epoch_ms": 1774447170879,
       "last_error": ""
     },
     {
@@ -395,8 +507,8 @@
         "height": 10
       },
       "status": "done",
-      "label_batch": 1,
-      "labeled_at_epoch_ms": 1773769924712,
+      "label_batch": 2,
+      "labeled_at_epoch_ms": 1774447170879,
       "last_error": ""
     },
     {
@@ -409,8 +521,8 @@
         "height": 5
       },
       "status": "done",
-      "label_batch": 1,
-      "labeled_at_epoch_ms": 1773769924712,
+      "label_batch": 2,
+      "labeled_at_epoch_ms": 1774447170879,
       "last_error": ""
     },
     {
@@ -423,8 +535,8 @@
         "height": 4
       },
       "status": "done",
-      "label_batch": 1,
-      "labeled_at_epoch_ms": 1773769924712,
+      "label_batch": 2,
+      "labeled_at_epoch_ms": 1774447170879,
       "last_error": ""
     },
     {
@@ -438,7 +550,7 @@
       },
       "status": "done",
       "label_batch": 2,
-      "labeled_at_epoch_ms": 1773770248988,
+      "labeled_at_epoch_ms": 1774447170879,
       "last_error": ""
     },
     {
@@ -452,7 +564,7 @@
       },
       "status": "done",
       "label_batch": 2,
-      "labeled_at_epoch_ms": 1773770248988,
+      "labeled_at_epoch_ms": 1774447170879,
       "last_error": ""
     },
     {
@@ -466,7 +578,7 @@
       },
       "status": "done",
       "label_batch": 2,
-      "labeled_at_epoch_ms": 1773770248988,
+      "labeled_at_epoch_ms": 1774447170879,
       "last_error": ""
     },
     {
@@ -480,7 +592,7 @@
       },
       "status": "done",
       "label_batch": 2,
-      "labeled_at_epoch_ms": 1773770248988,
+      "labeled_at_epoch_ms": 1774447170879,
       "last_error": ""
     },
     {
@@ -494,7 +606,7 @@
       },
       "status": "done",
       "label_batch": 2,
-      "labeled_at_epoch_ms": 1773770248988,
+      "labeled_at_epoch_ms": 1774447170879,
       "last_error": ""
     },
     {
@@ -508,7 +620,7 @@
       },
       "status": "done",
       "label_batch": 2,
-      "labeled_at_epoch_ms": 1773770248988,
+      "labeled_at_epoch_ms": 1774447170879,
       "last_error": ""
     },
     {
@@ -522,7 +634,7 @@
       },
       "status": "done",
       "label_batch": 2,
-      "labeled_at_epoch_ms": 1773770248988,
+      "labeled_at_epoch_ms": 1774447170879,
       "last_error": ""
     },
     {
@@ -536,7 +648,7 @@
       },
       "status": "done",
       "label_batch": 2,
-      "labeled_at_epoch_ms": 1773770248988,
+      "labeled_at_epoch_ms": 1774447170879,
       "last_error": ""
     },
     {
@@ -550,7 +662,7 @@
       },
       "status": "done",
       "label_batch": 2,
-      "labeled_at_epoch_ms": 1773770248988,
+      "labeled_at_epoch_ms": 1774447170879,
       "last_error": ""
     },
     {
@@ -564,7 +676,7 @@
       },
       "status": "done",
       "label_batch": 2,
-      "labeled_at_epoch_ms": 1773770248988,
+      "labeled_at_epoch_ms": 1774447170879,
       "last_error": ""
     },
     {
@@ -578,7 +690,7 @@
       },
       "status": "done",
       "label_batch": 2,
-      "labeled_at_epoch_ms": 1773770248988,
+      "labeled_at_epoch_ms": 1774447170879,
       "last_error": ""
     },
     {
@@ -592,7 +704,7 @@
       },
       "status": "done",
       "label_batch": 2,
-      "labeled_at_epoch_ms": 1773770248988,
+      "labeled_at_epoch_ms": 1774447170879,
       "last_error": ""
     },
     {
@@ -606,7 +718,7 @@
       },
       "status": "done",
       "label_batch": 2,
-      "labeled_at_epoch_ms": 1773770248988,
+      "labeled_at_epoch_ms": 1774447170879,
       "last_error": ""
     },
     {
@@ -620,7 +732,7 @@
       },
       "status": "done",
       "label_batch": 2,
-      "labeled_at_epoch_ms": 1773770248988,
+      "labeled_at_epoch_ms": 1774447170879,
       "last_error": ""
     },
     {
@@ -634,7 +746,7 @@
       },
       "status": "done",
       "label_batch": 2,
-      "labeled_at_epoch_ms": 1773770248988,
+      "labeled_at_epoch_ms": 1774447170879,
       "last_error": ""
     },
     {
@@ -648,7 +760,7 @@
       },
       "status": "done",
       "label_batch": 2,
-      "labeled_at_epoch_ms": 1773770248988,
+      "labeled_at_epoch_ms": 1774447170879,
       "last_error": ""
     },
     {
@@ -662,7 +774,7 @@
       },
       "status": "done",
       "label_batch": 2,
-      "labeled_at_epoch_ms": 1773770248988,
+      "labeled_at_epoch_ms": 1774447170879,
       "last_error": ""
     },
     {
@@ -676,7 +788,7 @@
       },
       "status": "done",
       "label_batch": 2,
-      "labeled_at_epoch_ms": 1773770248988,
+      "labeled_at_epoch_ms": 1774447170879,
       "last_error": ""
     },
     {
@@ -690,7 +802,7 @@
       },
       "status": "done",
       "label_batch": 2,
-      "labeled_at_epoch_ms": 1773770248988,
+      "labeled_at_epoch_ms": 1774447170879,
       "last_error": ""
     },
     {
@@ -704,7 +816,7 @@
       },
       "status": "done",
       "label_batch": 2,
-      "labeled_at_epoch_ms": 1773770248988,
+      "labeled_at_epoch_ms": 1774447170879,
       "last_error": ""
     },
     {
@@ -718,7 +830,7 @@
       },
       "status": "done",
       "label_batch": 2,
-      "labeled_at_epoch_ms": 1773770248988,
+      "labeled_at_epoch_ms": 1774447170879,
       "last_error": ""
     },
     {
@@ -732,7 +844,7 @@
       },
       "status": "done",
       "label_batch": 2,
-      "labeled_at_epoch_ms": 1773770248988,
+      "labeled_at_epoch_ms": 1774447170879,
       "last_error": ""
     },
     {
@@ -745,8 +857,8 @@
         "height": 35
       },
       "status": "done",
-      "label_batch": 2,
-      "labeled_at_epoch_ms": 1773770248988,
+      "label_batch": 3,
+      "labeled_at_epoch_ms": 1774447174150,
       "last_error": ""
     },
     {
@@ -759,8 +871,8 @@
         "height": 26
       },
       "status": "done",
-      "label_batch": 2,
-      "labeled_at_epoch_ms": 1773770248988,
+      "label_batch": 3,
+      "labeled_at_epoch_ms": 1774447174150,
       "last_error": ""
     },
     {
@@ -773,8 +885,8 @@
         "height": 39
       },
       "status": "done",
-      "label_batch": 2,
-      "labeled_at_epoch_ms": 1773770248988,
+      "label_batch": 3,
+      "labeled_at_epoch_ms": 1774447174150,
       "last_error": ""
     },
     {
@@ -787,8 +899,8 @@
         "height": 39
       },
       "status": "done",
-      "label_batch": 2,
-      "labeled_at_epoch_ms": 1773770248988,
+      "label_batch": 3,
+      "labeled_at_epoch_ms": 1774447174150,
       "last_error": ""
     },
     {
@@ -801,8 +913,8 @@
         "height": 20
       },
       "status": "done",
-      "label_batch": 2,
-      "labeled_at_epoch_ms": 1773770248988,
+      "label_batch": 3,
+      "labeled_at_epoch_ms": 1774447174150,
       "last_error": ""
     },
     {
@@ -815,8 +927,8 @@
         "height": 8
       },
       "status": "done",
-      "label_batch": 2,
-      "labeled_at_epoch_ms": 1773770248988,
+      "label_batch": 3,
+      "labeled_at_epoch_ms": 1774447174150,
       "last_error": ""
     },
     {
@@ -829,8 +941,8 @@
         "height": 12
       },
       "status": "done",
-      "label_batch": 2,
-      "labeled_at_epoch_ms": 1773770248988,
+      "label_batch": 3,
+      "labeled_at_epoch_ms": 1774447174150,
       "last_error": ""
     },
     {
@@ -843,8 +955,8 @@
         "height": 5
       },
       "status": "done",
-      "label_batch": 2,
-      "labeled_at_epoch_ms": 1773770248988,
+      "label_batch": 3,
+      "labeled_at_epoch_ms": 1774447174150,
       "last_error": ""
     },
     {
@@ -858,7 +970,7 @@
       },
       "status": "done",
       "label_batch": 3,
-      "labeled_at_epoch_ms": 1773770249013,
+      "labeled_at_epoch_ms": 1774447174150,
       "last_error": ""
     },
     {
@@ -872,7 +984,7 @@
       },
       "status": "done",
       "label_batch": 3,
-      "labeled_at_epoch_ms": 1773770249013,
+      "labeled_at_epoch_ms": 1774447174150,
       "last_error": ""
     },
     {
@@ -886,7 +998,7 @@
       },
       "status": "done",
       "label_batch": 3,
-      "labeled_at_epoch_ms": 1773770249013,
+      "labeled_at_epoch_ms": 1774447174150,
       "last_error": ""
     },
     {
@@ -900,7 +1012,7 @@
       },
       "status": "done",
       "label_batch": 3,
-      "labeled_at_epoch_ms": 1773770249013,
+      "labeled_at_epoch_ms": 1774447174150,
       "last_error": ""
     },
     {
@@ -914,7 +1026,7 @@
       },
       "status": "done",
       "label_batch": 3,
-      "labeled_at_epoch_ms": 1773770249013,
+      "labeled_at_epoch_ms": 1774447174150,
       "last_error": ""
     },
     {
@@ -928,7 +1040,7 @@
       },
       "status": "done",
       "label_batch": 3,
-      "labeled_at_epoch_ms": 1773770249013,
+      "labeled_at_epoch_ms": 1774447174150,
       "last_error": ""
     },
     {
@@ -942,7 +1054,7 @@
       },
       "status": "done",
       "label_batch": 3,
-      "labeled_at_epoch_ms": 1773770249013,
+      "labeled_at_epoch_ms": 1774447174150,
       "last_error": ""
     },
     {
@@ -956,7 +1068,7 @@
       },
       "status": "done",
       "label_batch": 3,
-      "labeled_at_epoch_ms": 1773770249013,
+      "labeled_at_epoch_ms": 1774447174150,
       "last_error": ""
     },
     {
@@ -970,7 +1082,7 @@
       },
       "status": "done",
       "label_batch": 3,
-      "labeled_at_epoch_ms": 1773770249013,
+      "labeled_at_epoch_ms": 1774447174150,
       "last_error": ""
     },
     {
@@ -984,7 +1096,7 @@
       },
       "status": "done",
       "label_batch": 3,
-      "labeled_at_epoch_ms": 1773770249013,
+      "labeled_at_epoch_ms": 1774447174150,
       "last_error": ""
     },
     {
@@ -998,7 +1110,7 @@
       },
       "status": "done",
       "label_batch": 3,
-      "labeled_at_epoch_ms": 1773770249013,
+      "labeled_at_epoch_ms": 1774447174150,
       "last_error": ""
     },
     {
@@ -1012,7 +1124,7 @@
       },
       "status": "done",
       "label_batch": 3,
-      "labeled_at_epoch_ms": 1773770249013,
+      "labeled_at_epoch_ms": 1774447174150,
       "last_error": ""
     },
     {
@@ -1026,7 +1138,7 @@
       },
       "status": "done",
       "label_batch": 3,
-      "labeled_at_epoch_ms": 1773770249013,
+      "labeled_at_epoch_ms": 1774447174150,
       "last_error": ""
     },
     {
@@ -1040,7 +1152,7 @@
       },
       "status": "done",
       "label_batch": 3,
-      "labeled_at_epoch_ms": 1773770249013,
+      "labeled_at_epoch_ms": 1774447174150,
       "last_error": ""
     },
     {
@@ -1054,7 +1166,7 @@
       },
       "status": "done",
       "label_batch": 3,
-      "labeled_at_epoch_ms": 1773770249013,
+      "labeled_at_epoch_ms": 1774447174150,
       "last_error": ""
     },
     {
@@ -1068,7 +1180,7 @@
       },
       "status": "done",
       "label_batch": 3,
-      "labeled_at_epoch_ms": 1773770249013,
+      "labeled_at_epoch_ms": 1774447174150,
       "last_error": ""
     },
     {
@@ -1082,7 +1194,7 @@
       },
       "status": "done",
       "label_batch": 3,
-      "labeled_at_epoch_ms": 1773770249013,
+      "labeled_at_epoch_ms": 1774447174150,
       "last_error": ""
     },
     {
@@ -1096,7 +1208,7 @@
       },
       "status": "done",
       "label_batch": 3,
-      "labeled_at_epoch_ms": 1773770249013,
+      "labeled_at_epoch_ms": 1774447174150,
       "last_error": ""
     },
     {
@@ -1110,7 +1222,7 @@
       },
       "status": "done",
       "label_batch": 3,
-      "labeled_at_epoch_ms": 1773770249013,
+      "labeled_at_epoch_ms": 1774447174150,
       "last_error": ""
     },
     {
@@ -1124,7 +1236,7 @@
       },
       "status": "done",
       "label_batch": 3,
-      "labeled_at_epoch_ms": 1773770249013,
+      "labeled_at_epoch_ms": 1774447174150,
       "last_error": ""
     },
     {
@@ -1138,7 +1250,7 @@
       },
       "status": "done",
       "label_batch": 3,
-      "labeled_at_epoch_ms": 1773770249013,
+      "labeled_at_epoch_ms": 1774447174150,
       "last_error": ""
     },
     {
@@ -1152,7 +1264,7 @@
       },
       "status": "done",
       "label_batch": 3,
-      "labeled_at_epoch_ms": 1773770249013,
+      "labeled_at_epoch_ms": 1774447174150,
       "last_error": ""
     },
     {
@@ -1165,8 +1277,8 @@
         "height": 26
       },
       "status": "done",
-      "label_batch": 3,
-      "labeled_at_epoch_ms": 1773770249013,
+      "label_batch": 4,
+      "labeled_at_epoch_ms": 1774447181390,
       "last_error": ""
     },
     {
@@ -1179,8 +1291,8 @@
         "height": 10
       },
       "status": "done",
-      "label_batch": 3,
-      "labeled_at_epoch_ms": 1773770249013,
+      "label_batch": 4,
+      "labeled_at_epoch_ms": 1774447181390,
       "last_error": ""
     },
     {
@@ -1193,8 +1305,8 @@
         "height": 4
       },
       "status": "done",
-      "label_batch": 3,
-      "labeled_at_epoch_ms": 1773770249013,
+      "label_batch": 4,
+      "labeled_at_epoch_ms": 1774447181390,
       "last_error": ""
     },
     {
@@ -1207,8 +1319,8 @@
         "height": 17
       },
       "status": "done",
-      "label_batch": 3,
-      "labeled_at_epoch_ms": 1773770249013,
+      "label_batch": 4,
+      "labeled_at_epoch_ms": 1774447181390,
       "last_error": ""
     },
     {
@@ -1221,8 +1333,8 @@
         "height": 16
       },
       "status": "done",
-      "label_batch": 3,
-      "labeled_at_epoch_ms": 1773770249013,
+      "label_batch": 4,
+      "labeled_at_epoch_ms": 1774447181390,
       "last_error": ""
     },
     {
@@ -1235,8 +1347,8 @@
         "height": 20
       },
       "status": "done",
-      "label_batch": 3,
-      "labeled_at_epoch_ms": 1773770249013,
+      "label_batch": 4,
+      "labeled_at_epoch_ms": 1774447181390,
       "last_error": ""
     },
     {
@@ -1249,8 +1361,8 @@
         "height": 22
       },
       "status": "done",
-      "label_batch": 3,
-      "labeled_at_epoch_ms": 1773770249013,
+      "label_batch": 4,
+      "labeled_at_epoch_ms": 1774447181390,
       "last_error": ""
     },
     {
@@ -1263,8 +1375,8 @@
         "height": 23
       },
       "status": "done",
-      "label_batch": 3,
-      "labeled_at_epoch_ms": 1773770249013,
+      "label_batch": 4,
+      "labeled_at_epoch_ms": 1774447181390,
       "last_error": ""
     },
     {
@@ -1278,7 +1390,7 @@
       },
       "status": "done",
       "label_batch": 4,
-      "labeled_at_epoch_ms": 1773770249029,
+      "labeled_at_epoch_ms": 1774447181390,
       "last_error": ""
     },
     {
@@ -1292,7 +1404,7 @@
       },
       "status": "done",
       "label_batch": 4,
-      "labeled_at_epoch_ms": 1773770249029,
+      "labeled_at_epoch_ms": 1774447181390,
       "last_error": ""
     },
     {
@@ -1306,7 +1418,7 @@
       },
       "status": "done",
       "label_batch": 4,
-      "labeled_at_epoch_ms": 1773770249029,
+      "labeled_at_epoch_ms": 1774447181390,
       "last_error": ""
     },
     {
@@ -1320,7 +1432,7 @@
       },
       "status": "done",
       "label_batch": 4,
-      "labeled_at_epoch_ms": 1773770249029,
+      "labeled_at_epoch_ms": 1774447181390,
       "last_error": ""
     },
     {
@@ -1334,7 +1446,7 @@
       },
       "status": "done",
       "label_batch": 4,
-      "labeled_at_epoch_ms": 1773770249029,
+      "labeled_at_epoch_ms": 1774447181390,
       "last_error": ""
     },
     {
@@ -1348,7 +1460,7 @@
       },
       "status": "done",
       "label_batch": 4,
-      "labeled_at_epoch_ms": 1773770249029,
+      "labeled_at_epoch_ms": 1774447181390,
       "last_error": ""
     },
     {
@@ -1362,7 +1474,7 @@
       },
       "status": "done",
       "label_batch": 4,
-      "labeled_at_epoch_ms": 1773770249029,
+      "labeled_at_epoch_ms": 1774447181390,
       "last_error": ""
     },
     {
@@ -1376,7 +1488,7 @@
       },
       "status": "done",
       "label_batch": 4,
-      "labeled_at_epoch_ms": 1773770249029,
+      "labeled_at_epoch_ms": 1774447181390,
       "last_error": ""
     },
     {
@@ -1390,7 +1502,7 @@
       },
       "status": "done",
       "label_batch": 4,
-      "labeled_at_epoch_ms": 1773770249029,
+      "labeled_at_epoch_ms": 1774447181390,
       "last_error": ""
     },
     {
@@ -1404,7 +1516,7 @@
       },
       "status": "done",
       "label_batch": 4,
-      "labeled_at_epoch_ms": 1773770249029,
+      "labeled_at_epoch_ms": 1774447181390,
       "last_error": ""
     },
     {
@@ -1418,7 +1530,7 @@
       },
       "status": "done",
       "label_batch": 4,
-      "labeled_at_epoch_ms": 1773770249029,
+      "labeled_at_epoch_ms": 1774447181390,
       "last_error": ""
     },
     {
@@ -1432,7 +1544,7 @@
       },
       "status": "done",
       "label_batch": 4,
-      "labeled_at_epoch_ms": 1773770249029,
+      "labeled_at_epoch_ms": 1774447181390,
       "last_error": ""
     },
     {
@@ -1446,7 +1558,7 @@
       },
       "status": "done",
       "label_batch": 4,
-      "labeled_at_epoch_ms": 1773770249029,
+      "labeled_at_epoch_ms": 1774447181390,
       "last_error": ""
     },
     {
@@ -1460,7 +1572,7 @@
       },
       "status": "done",
       "label_batch": 4,
-      "labeled_at_epoch_ms": 1773770249029,
+      "labeled_at_epoch_ms": 1774447181390,
       "last_error": ""
     },
     {
@@ -1474,7 +1586,7 @@
       },
       "status": "done",
       "label_batch": 4,
-      "labeled_at_epoch_ms": 1773770249029,
+      "labeled_at_epoch_ms": 1774447181390,
       "last_error": ""
     },
     {
@@ -1488,7 +1600,7 @@
       },
       "status": "done",
       "label_batch": 4,
-      "labeled_at_epoch_ms": 1773770249029,
+      "labeled_at_epoch_ms": 1774447181390,
       "last_error": ""
     },
     {
@@ -1502,7 +1614,7 @@
       },
       "status": "done",
       "label_batch": 4,
-      "labeled_at_epoch_ms": 1773770249029,
+      "labeled_at_epoch_ms": 1774447181390,
       "last_error": ""
     },
     {
@@ -1516,7 +1628,7 @@
       },
       "status": "done",
       "label_batch": 4,
-      "labeled_at_epoch_ms": 1773770249029,
+      "labeled_at_epoch_ms": 1774447181390,
       "last_error": ""
     },
     {
@@ -1530,7 +1642,7 @@
       },
       "status": "done",
       "label_batch": 4,
-      "labeled_at_epoch_ms": 1773770249029,
+      "labeled_at_epoch_ms": 1774447181390,
       "last_error": ""
     },
     {
@@ -1544,7 +1656,7 @@
       },
       "status": "done",
       "label_batch": 4,
-      "labeled_at_epoch_ms": 1773770249029,
+      "labeled_at_epoch_ms": 1774447181390,
       "last_error": ""
     },
     {
@@ -1558,7 +1670,7 @@
       },
       "status": "done",
       "label_batch": 4,
-      "labeled_at_epoch_ms": 1773770249029,
+      "labeled_at_epoch_ms": 1774447181390,
       "last_error": ""
     },
     {
@@ -1572,7 +1684,7 @@
       },
       "status": "done",
       "label_batch": 4,
-      "labeled_at_epoch_ms": 1773770249029,
+      "labeled_at_epoch_ms": 1774447181390,
       "last_error": ""
     },
     {
@@ -1585,8 +1697,8 @@
         "height": 15
       },
       "status": "done",
-      "label_batch": 4,
-      "labeled_at_epoch_ms": 1773770249029,
+      "label_batch": 5,
+      "labeled_at_epoch_ms": 1774447186317,
       "last_error": ""
     },
     {
@@ -1599,8 +1711,8 @@
         "height": 20
       },
       "status": "done",
-      "label_batch": 4,
-      "labeled_at_epoch_ms": 1773770249029,
+      "label_batch": 5,
+      "labeled_at_epoch_ms": 1774447186317,
       "last_error": ""
     },
     {
@@ -1613,8 +1725,8 @@
         "height": 6
       },
       "status": "done",
-      "label_batch": 4,
-      "labeled_at_epoch_ms": 1773770249029,
+      "label_batch": 5,
+      "labeled_at_epoch_ms": 1774447186317,
       "last_error": ""
     },
     {
@@ -1627,8 +1739,8 @@
         "height": 6
       },
       "status": "done",
-      "label_batch": 4,
-      "labeled_at_epoch_ms": 1773770249029,
+      "label_batch": 5,
+      "labeled_at_epoch_ms": 1774447186317,
       "last_error": ""
     },
     {
@@ -1641,8 +1753,8 @@
         "height": 6
       },
       "status": "done",
-      "label_batch": 4,
-      "labeled_at_epoch_ms": 1773770249029,
+      "label_batch": 5,
+      "labeled_at_epoch_ms": 1774447186317,
       "last_error": ""
     },
     {
@@ -1655,8 +1767,8 @@
         "height": 14
       },
       "status": "done",
-      "label_batch": 4,
-      "labeled_at_epoch_ms": 1773770249029,
+      "label_batch": 5,
+      "labeled_at_epoch_ms": 1774447186317,
       "last_error": ""
     },
     {
@@ -1669,8 +1781,8 @@
         "height": 10
       },
       "status": "done",
-      "label_batch": 4,
-      "labeled_at_epoch_ms": 1773770249029,
+      "label_batch": 5,
+      "labeled_at_epoch_ms": 1774447186317,
       "last_error": ""
     },
     {
@@ -1683,8 +1795,8 @@
         "height": 9
       },
       "status": "done",
-      "label_batch": 4,
-      "labeled_at_epoch_ms": 1773770249029,
+      "label_batch": 5,
+      "labeled_at_epoch_ms": 1774447186317,
       "last_error": ""
     },
     {
@@ -1698,7 +1810,7 @@
       },
       "status": "done",
       "label_batch": 5,
-      "labeled_at_epoch_ms": 1773770249044,
+      "labeled_at_epoch_ms": 1774447186317,
       "last_error": ""
     },
     {
@@ -1712,7 +1824,7 @@
       },
       "status": "done",
       "label_batch": 5,
-      "labeled_at_epoch_ms": 1773770249044,
+      "labeled_at_epoch_ms": 1774447186317,
       "last_error": ""
     },
     {
@@ -1726,7 +1838,7 @@
       },
       "status": "done",
       "label_batch": 5,
-      "labeled_at_epoch_ms": 1773770249044,
+      "labeled_at_epoch_ms": 1774447186317,
       "last_error": ""
     },
     {
@@ -1740,7 +1852,7 @@
       },
       "status": "done",
       "label_batch": 5,
-      "labeled_at_epoch_ms": 1773770249044,
+      "labeled_at_epoch_ms": 1774447186317,
       "last_error": ""
     },
     {
@@ -1754,7 +1866,7 @@
       },
       "status": "done",
       "label_batch": 5,
-      "labeled_at_epoch_ms": 1773770249044,
+      "labeled_at_epoch_ms": 1774447186317,
       "last_error": ""
     },
     {
@@ -1768,7 +1880,7 @@
       },
       "status": "done",
       "label_batch": 5,
-      "labeled_at_epoch_ms": 1773770249044,
+      "labeled_at_epoch_ms": 1774447186317,
       "last_error": ""
     },
     {
@@ -1782,7 +1894,7 @@
       },
       "status": "done",
       "label_batch": 5,
-      "labeled_at_epoch_ms": 1773770249044,
+      "labeled_at_epoch_ms": 1774447186317,
       "last_error": ""
     },
     {
@@ -1796,7 +1908,7 @@
       },
       "status": "done",
       "label_batch": 5,
-      "labeled_at_epoch_ms": 1773770249044,
+      "labeled_at_epoch_ms": 1774447186317,
       "last_error": ""
     },
     {
@@ -1810,7 +1922,7 @@
       },
       "status": "done",
       "label_batch": 5,
-      "labeled_at_epoch_ms": 1773770249044,
+      "labeled_at_epoch_ms": 1774447186317,
       "last_error": ""
     },
     {
@@ -1824,7 +1936,7 @@
       },
       "status": "done",
       "label_batch": 5,
-      "labeled_at_epoch_ms": 1773770249044,
+      "labeled_at_epoch_ms": 1774447186317,
       "last_error": ""
     },
     {
@@ -1838,7 +1950,7 @@
       },
       "status": "done",
       "label_batch": 5,
-      "labeled_at_epoch_ms": 1773770249044,
+      "labeled_at_epoch_ms": 1774447186317,
       "last_error": ""
     },
     {
@@ -1852,7 +1964,7 @@
       },
       "status": "done",
       "label_batch": 5,
-      "labeled_at_epoch_ms": 1773770249044,
+      "labeled_at_epoch_ms": 1774447186317,
       "last_error": ""
     },
     {
@@ -1866,7 +1978,7 @@
       },
       "status": "done",
       "label_batch": 5,
-      "labeled_at_epoch_ms": 1773770249044,
+      "labeled_at_epoch_ms": 1774447186317,
       "last_error": ""
     },
     {
@@ -1880,7 +1992,7 @@
       },
       "status": "done",
       "label_batch": 5,
-      "labeled_at_epoch_ms": 1773770249044,
+      "labeled_at_epoch_ms": 1774447186317,
       "last_error": ""
     },
     {
@@ -1894,7 +2006,7 @@
       },
       "status": "done",
       "label_batch": 5,
-      "labeled_at_epoch_ms": 1773770249044,
+      "labeled_at_epoch_ms": 1774447186317,
       "last_error": ""
     },
     {
@@ -1908,7 +2020,7 @@
       },
       "status": "done",
       "label_batch": 5,
-      "labeled_at_epoch_ms": 1773770249044,
+      "labeled_at_epoch_ms": 1774447186317,
       "last_error": ""
     },
     {
@@ -1922,7 +2034,7 @@
       },
       "status": "done",
       "label_batch": 5,
-      "labeled_at_epoch_ms": 1773770249044,
+      "labeled_at_epoch_ms": 1774447186317,
       "last_error": ""
     },
     {
@@ -1936,7 +2048,7 @@
       },
       "status": "done",
       "label_batch": 5,
-      "labeled_at_epoch_ms": 1773770249044,
+      "labeled_at_epoch_ms": 1774447186317,
       "last_error": ""
     },
     {
@@ -1950,7 +2062,7 @@
       },
       "status": "done",
       "label_batch": 5,
-      "labeled_at_epoch_ms": 1773770249044,
+      "labeled_at_epoch_ms": 1774447186317,
       "last_error": ""
     },
     {
@@ -1964,7 +2076,7 @@
       },
       "status": "done",
       "label_batch": 5,
-      "labeled_at_epoch_ms": 1773770249044,
+      "labeled_at_epoch_ms": 1774447186317,
       "last_error": ""
     },
     {
@@ -1978,7 +2090,7 @@
       },
       "status": "done",
       "label_batch": 5,
-      "labeled_at_epoch_ms": 1773770249044,
+      "labeled_at_epoch_ms": 1774447186317,
       "last_error": ""
     },
     {
@@ -1992,7 +2104,7 @@
       },
       "status": "done",
       "label_batch": 5,
-      "labeled_at_epoch_ms": 1773770249044,
+      "labeled_at_epoch_ms": 1774447186317,
       "last_error": ""
     },
     {
@@ -2006,7 +2118,7 @@
       },
       "status": "done",
       "label_batch": 5,
-      "labeled_at_epoch_ms": 1773770249044,
+      "labeled_at_epoch_ms": 1774447186317,
       "last_error": ""
     },
     {
@@ -2020,7 +2132,7 @@
       },
       "status": "done",
       "label_batch": 5,
-      "labeled_at_epoch_ms": 1773770249044,
+      "labeled_at_epoch_ms": 1774447186317,
       "last_error": ""
     },
     {
@@ -2034,7 +2146,7 @@
       },
       "status": "done",
       "label_batch": 5,
-      "labeled_at_epoch_ms": 1773770249044,
+      "labeled_at_epoch_ms": 1774447186317,
       "last_error": ""
     },
     {
@@ -2048,7 +2160,7 @@
       },
       "status": "done",
       "label_batch": 5,
-      "labeled_at_epoch_ms": 1773770249044,
+      "labeled_at_epoch_ms": 1774447186317,
       "last_error": ""
     },
     {
@@ -2062,7 +2174,7 @@
       },
       "status": "done",
       "label_batch": 5,
-      "labeled_at_epoch_ms": 1773770249044,
+      "labeled_at_epoch_ms": 1774447186317,
       "last_error": ""
     },
     {
@@ -2076,7 +2188,7 @@
       },
       "status": "done",
       "label_batch": 5,
-      "labeled_at_epoch_ms": 1773770249044,
+      "labeled_at_epoch_ms": 1774447186317,
       "last_error": ""
     },
     {
@@ -2090,7 +2202,7 @@
       },
       "status": "done",
       "label_batch": 5,
-      "labeled_at_epoch_ms": 1773770249044,
+      "labeled_at_epoch_ms": 1774447186317,
       "last_error": ""
     },
     {
@@ -2104,7 +2216,7 @@
       },
       "status": "done",
       "label_batch": 5,
-      "labeled_at_epoch_ms": 1773770249044,
+      "labeled_at_epoch_ms": 1774447186317,
       "last_error": ""
     },
     {
@@ -2117,8 +2229,8 @@
         "height": 2
       },
       "status": "done",
-      "label_batch": 6,
-      "labeled_at_epoch_ms": 1773770249060,
+      "label_batch": 5,
+      "labeled_at_epoch_ms": 1774447186317,
       "last_error": ""
     },
     {
@@ -2131,8 +2243,8 @@
         "height": 3
       },
       "status": "done",
-      "label_batch": 6,
-      "labeled_at_epoch_ms": 1773770249060,
+      "label_batch": 5,
+      "labeled_at_epoch_ms": 1774447186317,
       "last_error": ""
     },
     {
@@ -2145,8 +2257,8 @@
         "height": 3
       },
       "status": "done",
-      "label_batch": 6,
-      "labeled_at_epoch_ms": 1773770249060,
+      "label_batch": 5,
+      "labeled_at_epoch_ms": 1774447186317,
       "last_error": ""
     },
     {
@@ -2159,8 +2271,8 @@
         "height": 3
       },
       "status": "done",
-      "label_batch": 6,
-      "labeled_at_epoch_ms": 1773770249060,
+      "label_batch": 5,
+      "labeled_at_epoch_ms": 1774447186317,
       "last_error": ""
     },
     {
@@ -2173,8 +2285,8 @@
         "height": 4
       },
       "status": "done",
-      "label_batch": 6,
-      "labeled_at_epoch_ms": 1773770249060,
+      "label_batch": 5,
+      "labeled_at_epoch_ms": 1774447186317,
       "last_error": ""
     },
     {
@@ -2187,8 +2299,8 @@
         "height": 4
       },
       "status": "done",
-      "label_batch": 6,
-      "labeled_at_epoch_ms": 1773770249060,
+      "label_batch": 5,
+      "labeled_at_epoch_ms": 1774447186317,
       "last_error": ""
     },
     {
@@ -2201,8 +2313,8 @@
         "height": 4
       },
       "status": "done",
-      "label_batch": 6,
-      "labeled_at_epoch_ms": 1773770249060,
+      "label_batch": 5,
+      "labeled_at_epoch_ms": 1774447186317,
       "last_error": ""
     },
     {
@@ -2215,8 +2327,8 @@
         "height": 4
       },
       "status": "done",
-      "label_batch": 6,
-      "labeled_at_epoch_ms": 1773770249060,
+      "label_batch": 5,
+      "labeled_at_epoch_ms": 1774447186317,
       "last_error": ""
     },
     {
@@ -2229,8 +2341,8 @@
         "height": 109
       },
       "status": "done",
-      "label_batch": 6,
-      "labeled_at_epoch_ms": 1773770249060,
+      "label_batch": 5,
+      "labeled_at_epoch_ms": 1774447186317,
       "last_error": ""
     },
     {
@@ -2243,8 +2355,8 @@
         "height": 104
       },
       "status": "done",
-      "label_batch": 6,
-      "labeled_at_epoch_ms": 1773770249060,
+      "label_batch": 5,
+      "labeled_at_epoch_ms": 1774447186317,
       "last_error": ""
     },
     {
@@ -2257,8 +2369,8 @@
         "height": 94
       },
       "status": "done",
-      "label_batch": 6,
-      "labeled_at_epoch_ms": 1773770249060,
+      "label_batch": 5,
+      "labeled_at_epoch_ms": 1774447186317,
       "last_error": ""
     },
     {
@@ -2271,8 +2383,8 @@
         "height": 82
       },
       "status": "done",
-      "label_batch": 6,
-      "labeled_at_epoch_ms": 1773770249060,
+      "label_batch": 5,
+      "labeled_at_epoch_ms": 1774447186317,
       "last_error": ""
     },
     {
@@ -2286,7 +2398,7 @@
       },
       "status": "done",
       "label_batch": 6,
-      "labeled_at_epoch_ms": 1773770249060,
+      "labeled_at_epoch_ms": 1774447196021,
       "last_error": ""
     },
     {
@@ -2300,7 +2412,7 @@
       },
       "status": "done",
       "label_batch": 6,
-      "labeled_at_epoch_ms": 1773770249060,
+      "labeled_at_epoch_ms": 1774447196021,
       "last_error": ""
     },
     {
@@ -2314,7 +2426,7 @@
       },
       "status": "done",
       "label_batch": 6,
-      "labeled_at_epoch_ms": 1773770249060,
+      "labeled_at_epoch_ms": 1774447196021,
       "last_error": ""
     },
     {
@@ -2328,7 +2440,7 @@
       },
       "status": "done",
       "label_batch": 6,
-      "labeled_at_epoch_ms": 1773770249060,
+      "labeled_at_epoch_ms": 1774447196021,
       "last_error": ""
     },
     {
@@ -2342,7 +2454,7 @@
       },
       "status": "done",
       "label_batch": 6,
-      "labeled_at_epoch_ms": 1773770249060,
+      "labeled_at_epoch_ms": 1774447196021,
       "last_error": ""
     },
     {
@@ -2356,7 +2468,7 @@
       },
       "status": "done",
       "label_batch": 6,
-      "labeled_at_epoch_ms": 1773770249060,
+      "labeled_at_epoch_ms": 1774447196021,
       "last_error": ""
     },
     {
@@ -2370,7 +2482,7 @@
       },
       "status": "done",
       "label_batch": 6,
-      "labeled_at_epoch_ms": 1773770249060,
+      "labeled_at_epoch_ms": 1774447196021,
       "last_error": ""
     },
     {
@@ -2384,7 +2496,7 @@
       },
       "status": "done",
       "label_batch": 6,
-      "labeled_at_epoch_ms": 1773770249060,
+      "labeled_at_epoch_ms": 1774447196021,
       "last_error": ""
     },
     {
@@ -2398,7 +2510,7 @@
       },
       "status": "done",
       "label_batch": 6,
-      "labeled_at_epoch_ms": 1773770249060,
+      "labeled_at_epoch_ms": 1774447196021,
       "last_error": ""
     },
     {
@@ -2412,7 +2524,7 @@
       },
       "status": "done",
       "label_batch": 6,
-      "labeled_at_epoch_ms": 1773770249060,
+      "labeled_at_epoch_ms": 1774447196021,
       "last_error": ""
     },
     {
@@ -2426,7 +2538,7 @@
       },
       "status": "done",
       "label_batch": 6,
-      "labeled_at_epoch_ms": 1773770249060,
+      "labeled_at_epoch_ms": 1774447196021,
       "last_error": ""
     },
     {
@@ -2440,7 +2552,7 @@
       },
       "status": "done",
       "label_batch": 6,
-      "labeled_at_epoch_ms": 1773770249060,
+      "labeled_at_epoch_ms": 1774447196021,
       "last_error": ""
     },
     {
@@ -2454,7 +2566,7 @@
       },
       "status": "done",
       "label_batch": 6,
-      "labeled_at_epoch_ms": 1773770249060,
+      "labeled_at_epoch_ms": 1774447196021,
       "last_error": ""
     },
     {
@@ -2468,7 +2580,7 @@
       },
       "status": "done",
       "label_batch": 6,
-      "labeled_at_epoch_ms": 1773770249060,
+      "labeled_at_epoch_ms": 1774447196021,
       "last_error": ""
     },
     {
@@ -2482,7 +2594,7 @@
       },
       "status": "done",
       "label_batch": 6,
-      "labeled_at_epoch_ms": 1773770249060,
+      "labeled_at_epoch_ms": 1774447196021,
       "last_error": ""
     },
     {
@@ -2496,7 +2608,7 @@
       },
       "status": "done",
       "label_batch": 6,
-      "labeled_at_epoch_ms": 1773770249060,
+      "labeled_at_epoch_ms": 1774447196021,
       "last_error": ""
     },
     {
@@ -2510,7 +2622,7 @@
       },
       "status": "done",
       "label_batch": 6,
-      "labeled_at_epoch_ms": 1773770249060,
+      "labeled_at_epoch_ms": 1774447196021,
       "last_error": ""
     },
     {
@@ -2524,7 +2636,7 @@
       },
       "status": "done",
       "label_batch": 6,
-      "labeled_at_epoch_ms": 1773770249060,
+      "labeled_at_epoch_ms": 1774447196021,
       "last_error": ""
     },
     {
@@ -2537,8 +2649,8 @@
         "height": 41
       },
       "status": "done",
-      "label_batch": 7,
-      "labeled_at_epoch_ms": 1773770249077,
+      "label_batch": 6,
+      "labeled_at_epoch_ms": 1774447196021,
       "last_error": ""
     },
     {
@@ -2551,8 +2663,8 @@
         "height": 47
       },
       "status": "done",
-      "label_batch": 7,
-      "labeled_at_epoch_ms": 1773770249077,
+      "label_batch": 6,
+      "labeled_at_epoch_ms": 1774447196021,
       "last_error": ""
     },
     {
@@ -2565,8 +2677,8 @@
         "height": 47
       },
       "status": "done",
-      "label_batch": 7,
-      "labeled_at_epoch_ms": 1773770249077,
+      "label_batch": 6,
+      "labeled_at_epoch_ms": 1774447196021,
       "last_error": ""
     },
     {
@@ -2579,8 +2691,8 @@
         "height": 47
       },
       "status": "done",
-      "label_batch": 7,
-      "labeled_at_epoch_ms": 1773770249077,
+      "label_batch": 6,
+      "labeled_at_epoch_ms": 1774447196021,
       "last_error": ""
     },
     {
@@ -2593,8 +2705,8 @@
         "height": 23
       },
       "status": "done",
-      "label_batch": 7,
-      "labeled_at_epoch_ms": 1773770249077,
+      "label_batch": 6,
+      "labeled_at_epoch_ms": 1774447196021,
       "last_error": ""
     },
     {
@@ -2607,8 +2719,8 @@
         "height": 11
       },
       "status": "done",
-      "label_batch": 7,
-      "labeled_at_epoch_ms": 1773770249077,
+      "label_batch": 6,
+      "labeled_at_epoch_ms": 1774447196021,
       "last_error": ""
     },
     {
@@ -2621,8 +2733,8 @@
         "height": 47
       },
       "status": "done",
-      "label_batch": 7,
-      "labeled_at_epoch_ms": 1773770249077,
+      "label_batch": 6,
+      "labeled_at_epoch_ms": 1774447196021,
       "last_error": ""
     },
     {
@@ -2635,8 +2747,8 @@
         "height": 47
       },
       "status": "done",
-      "label_batch": 7,
-      "labeled_at_epoch_ms": 1773770249077,
+      "label_batch": 6,
+      "labeled_at_epoch_ms": 1774447196021,
       "last_error": ""
     },
     {
@@ -2649,8 +2761,8 @@
         "height": 47
       },
       "status": "done",
-      "label_batch": 7,
-      "labeled_at_epoch_ms": 1773770249077,
+      "label_batch": 6,
+      "labeled_at_epoch_ms": 1774447196021,
       "last_error": ""
     },
     {
@@ -2663,8 +2775,8 @@
         "height": 13
       },
       "status": "done",
-      "label_batch": 7,
-      "labeled_at_epoch_ms": 1773770249077,
+      "label_batch": 6,
+      "labeled_at_epoch_ms": 1774447196021,
       "last_error": ""
     },
     {
@@ -2677,8 +2789,8 @@
         "height": 47
       },
       "status": "done",
-      "label_batch": 7,
-      "labeled_at_epoch_ms": 1773770249077,
+      "label_batch": 6,
+      "labeled_at_epoch_ms": 1774447196021,
       "last_error": ""
     },
     {
@@ -2691,8 +2803,8 @@
         "height": 17
       },
       "status": "done",
-      "label_batch": 7,
-      "labeled_at_epoch_ms": 1773770249077,
+      "label_batch": 6,
+      "labeled_at_epoch_ms": 1774447196021,
       "last_error": ""
     },
     {
@@ -2705,8 +2817,8 @@
         "height": 13
       },
       "status": "done",
-      "label_batch": 7,
-      "labeled_at_epoch_ms": 1773770249077,
+      "label_batch": 6,
+      "labeled_at_epoch_ms": 1774447196021,
       "last_error": ""
     },
     {
@@ -2719,8 +2831,8 @@
         "height": 11
       },
       "status": "done",
-      "label_batch": 7,
-      "labeled_at_epoch_ms": 1773770249077,
+      "label_batch": 6,
+      "labeled_at_epoch_ms": 1774447196021,
       "last_error": ""
     },
     {
@@ -2733,8 +2845,8 @@
         "height": 15
       },
       "status": "done",
-      "label_batch": 7,
-      "labeled_at_epoch_ms": 1773770249077,
+      "label_batch": 6,
+      "labeled_at_epoch_ms": 1774447196021,
       "last_error": ""
     },
     {
@@ -2747,8 +2859,8 @@
         "height": 47
       },
       "status": "done",
-      "label_batch": 7,
-      "labeled_at_epoch_ms": 1773770249077,
+      "label_batch": 6,
+      "labeled_at_epoch_ms": 1774447196021,
       "last_error": ""
     },
     {
@@ -2761,8 +2873,8 @@
         "height": 3
       },
       "status": "done",
-      "label_batch": 7,
-      "labeled_at_epoch_ms": 1773770249077,
+      "label_batch": 6,
+      "labeled_at_epoch_ms": 1774447196021,
       "last_error": ""
     },
     {
@@ -2775,8 +2887,8 @@
         "height": 27
       },
       "status": "done",
-      "label_batch": 7,
-      "labeled_at_epoch_ms": 1773770249077,
+      "label_batch": 6,
+      "labeled_at_epoch_ms": 1774447196021,
       "last_error": ""
     },
     {
@@ -2789,8 +2901,8 @@
         "height": 43
       },
       "status": "done",
-      "label_batch": 7,
-      "labeled_at_epoch_ms": 1773770249077,
+      "label_batch": 6,
+      "labeled_at_epoch_ms": 1774447196021,
       "last_error": ""
     },
     {
@@ -2803,8 +2915,8 @@
         "height": 21
       },
       "status": "done",
-      "label_batch": 7,
-      "labeled_at_epoch_ms": 1773770249077,
+      "label_batch": 6,
+      "labeled_at_epoch_ms": 1774447196021,
       "last_error": ""
     },
     {
@@ -2817,8 +2929,8 @@
         "height": 33
       },
       "status": "done",
-      "label_batch": 7,
-      "labeled_at_epoch_ms": 1773770249077,
+      "label_batch": 6,
+      "labeled_at_epoch_ms": 1774447196021,
       "last_error": ""
     },
     {
@@ -2831,8 +2943,8 @@
         "height": 15
       },
       "status": "done",
-      "label_batch": 7,
-      "labeled_at_epoch_ms": 1773770249077,
+      "label_batch": 6,
+      "labeled_at_epoch_ms": 1774447196021,
       "last_error": ""
     },
     {
@@ -2845,8 +2957,8 @@
         "height": 27
       },
       "status": "done",
-      "label_batch": 7,
-      "labeled_at_epoch_ms": 1773770249077,
+      "label_batch": 6,
+      "labeled_at_epoch_ms": 1774447196021,
       "last_error": ""
     },
     {
@@ -2859,8 +2971,8 @@
         "height": 35
       },
       "status": "done",
-      "label_batch": 7,
-      "labeled_at_epoch_ms": 1773770249077,
+      "label_batch": 6,
+      "labeled_at_epoch_ms": 1774447196021,
       "last_error": ""
     },
     {
@@ -2873,8 +2985,8 @@
         "height": 33
       },
       "status": "done",
-      "label_batch": 7,
-      "labeled_at_epoch_ms": 1773770249077,
+      "label_batch": 6,
+      "labeled_at_epoch_ms": 1774447196021,
       "last_error": ""
     },
     {
@@ -2887,8 +2999,8 @@
         "height": 39
       },
       "status": "done",
-      "label_batch": 7,
-      "labeled_at_epoch_ms": 1773770249077,
+      "label_batch": 6,
+      "labeled_at_epoch_ms": 1774447196021,
       "last_error": ""
     },
     {
@@ -2901,8 +3013,8 @@
         "height": 31
       },
       "status": "done",
-      "label_batch": 7,
-      "labeled_at_epoch_ms": 1773770249077,
+      "label_batch": 6,
+      "labeled_at_epoch_ms": 1774447196021,
       "last_error": ""
     },
     {
@@ -2915,8 +3027,8 @@
         "height": 41
       },
       "status": "done",
-      "label_batch": 7,
-      "labeled_at_epoch_ms": 1773770249077,
+      "label_batch": 6,
+      "labeled_at_epoch_ms": 1774447196021,
       "last_error": ""
     },
     {
@@ -2929,8 +3041,8 @@
         "height": 41
       },
       "status": "done",
-      "label_batch": 7,
-      "labeled_at_epoch_ms": 1773770249077,
+      "label_batch": 6,
+      "labeled_at_epoch_ms": 1774447196021,
       "last_error": ""
     },
     {
@@ -2943,8 +3055,8 @@
         "height": 43
       },
       "status": "done",
-      "label_batch": 7,
-      "labeled_at_epoch_ms": 1773770249077,
+      "label_batch": 6,
+      "labeled_at_epoch_ms": 1774447196021,
       "last_error": ""
     },
     {
@@ -2957,8 +3069,8 @@
         "height": 47
       },
       "status": "done",
-      "label_batch": 8,
-      "labeled_at_epoch_ms": 1773770249093,
+      "label_batch": 6,
+      "labeled_at_epoch_ms": 1774447196021,
       "last_error": ""
     },
     {
@@ -2971,8 +3083,8 @@
         "height": 33
       },
       "status": "done",
-      "label_batch": 8,
-      "labeled_at_epoch_ms": 1773770249093,
+      "label_batch": 6,
+      "labeled_at_epoch_ms": 1774447196021,
       "last_error": ""
     },
     {
@@ -2985,8 +3097,8 @@
         "height": 33
       },
       "status": "done",
-      "label_batch": 8,
-      "labeled_at_epoch_ms": 1773770249093,
+      "label_batch": 6,
+      "labeled_at_epoch_ms": 1774447196021,
       "last_error": ""
     },
     {
@@ -2999,8 +3111,8 @@
         "height": 47
       },
       "status": "done",
-      "label_batch": 8,
-      "labeled_at_epoch_ms": 1773770249093,
+      "label_batch": 6,
+      "labeled_at_epoch_ms": 1774447196021,
       "last_error": ""
     },
     {
@@ -3013,8 +3125,8 @@
         "height": 39
       },
       "status": "done",
-      "label_batch": 8,
-      "labeled_at_epoch_ms": 1773770249093,
+      "label_batch": 6,
+      "labeled_at_epoch_ms": 1774447196021,
       "last_error": ""
     },
     {
@@ -3027,8 +3139,8 @@
         "height": 47
       },
       "status": "done",
-      "label_batch": 8,
-      "labeled_at_epoch_ms": 1773770249093,
+      "label_batch": 6,
+      "labeled_at_epoch_ms": 1774447196021,
       "last_error": ""
     },
     {
@@ -3041,8 +3153,8 @@
         "height": 27
       },
       "status": "done",
-      "label_batch": 8,
-      "labeled_at_epoch_ms": 1773770249093,
+      "label_batch": 6,
+      "labeled_at_epoch_ms": 1774447196021,
       "last_error": ""
     },
     {
@@ -3055,8 +3167,8 @@
         "height": 41
       },
       "status": "done",
-      "label_batch": 8,
-      "labeled_at_epoch_ms": 1773770249093,
+      "label_batch": 6,
+      "labeled_at_epoch_ms": 1774447196021,
       "last_error": ""
     },
     {
@@ -3069,8 +3181,8 @@
         "height": 11
       },
       "status": "done",
-      "label_batch": 8,
-      "labeled_at_epoch_ms": 1773770249093,
+      "label_batch": 6,
+      "labeled_at_epoch_ms": 1774447196021,
       "last_error": ""
     },
     {
@@ -3083,8 +3195,134 @@
         "height": 7
       },
       "status": "done",
-      "label_batch": 8,
-      "labeled_at_epoch_ms": 1773770249093,
+      "label_batch": 6,
+      "labeled_at_epoch_ms": 1774447196021,
+      "last_error": ""
+    },
+    {
+      "structure_id": "trek:village/vanilla_files/village/desert/houses/desert_butcher_shop_1",
+      "namespace": "trek",
+      "path": "village/vanilla_files/village/desert/houses/desert_butcher_shop_1",
+      "size": {
+        "length": 8,
+        "width": 8,
+        "height": 5
+      },
+      "status": "done",
+      "label_batch": 6,
+      "labeled_at_epoch_ms": 1774447196021,
+      "last_error": ""
+    },
+    {
+      "structure_id": "trek:village/vanilla_files/village/plains/houses/plains_butcher_shop_1",
+      "namespace": "trek",
+      "path": "village/vanilla_files/village/plains/houses/plains_butcher_shop_1",
+      "size": {
+        "length": 11,
+        "width": 12,
+        "height": 8
+      },
+      "status": "done",
+      "label_batch": 6,
+      "labeled_at_epoch_ms": 1774447196021,
+      "last_error": ""
+    },
+    {
+      "structure_id": "trek:village/vanilla_files/village/plains/houses/plains_butcher_shop_2",
+      "namespace": "trek",
+      "path": "village/vanilla_files/village/plains/houses/plains_butcher_shop_2",
+      "size": {
+        "length": 15,
+        "width": 7,
+        "height": 12
+      },
+      "status": "done",
+      "label_batch": 6,
+      "labeled_at_epoch_ms": 1774447196021,
+      "last_error": ""
+    },
+    {
+      "structure_id": "trek:village/vanilla_files/village/plains/zombie/houses/plains_butcher_shop_2",
+      "namespace": "trek",
+      "path": "village/vanilla_files/village/plains/zombie/houses/plains_butcher_shop_2",
+      "size": {
+        "length": 15,
+        "width": 7,
+        "height": 12
+      },
+      "status": "done",
+      "label_batch": 6,
+      "labeled_at_epoch_ms": 1774447196021,
+      "last_error": ""
+    },
+    {
+      "structure_id": "trek:village/vanilla_files/village/savanna/houses/savanna_butchers_shop_1",
+      "namespace": "trek",
+      "path": "village/vanilla_files/village/savanna/houses/savanna_butchers_shop_1",
+      "size": {
+        "length": 11,
+        "width": 11,
+        "height": 8
+      },
+      "status": "done",
+      "label_batch": 6,
+      "labeled_at_epoch_ms": 1774447196021,
+      "last_error": ""
+    },
+    {
+      "structure_id": "trek:village/vanilla_files/village/savanna/houses/savanna_butchers_shop_2",
+      "namespace": "trek",
+      "path": "village/vanilla_files/village/savanna/houses/savanna_butchers_shop_2",
+      "size": {
+        "length": 13,
+        "width": 9,
+        "height": 10
+      },
+      "status": "done",
+      "label_batch": 6,
+      "labeled_at_epoch_ms": 1774447196021,
+      "last_error": ""
+    },
+    {
+      "structure_id": "trek:village/vanilla_files/village/snowy/houses/snowy_butchers_shop_1",
+      "namespace": "trek",
+      "path": "village/vanilla_files/village/snowy/houses/snowy_butchers_shop_1",
+      "size": {
+        "length": 7,
+        "width": 9,
+        "height": 8
+      },
+      "status": "done",
+      "label_batch": 6,
+      "labeled_at_epoch_ms": 1774447196021,
+      "last_error": ""
+    },
+    {
+      "structure_id": "trek:village/vanilla_files/village/snowy/houses/snowy_butchers_shop_2",
+      "namespace": "trek",
+      "path": "village/vanilla_files/village/snowy/houses/snowy_butchers_shop_2",
+      "size": {
+        "length": 9,
+        "width": 5,
+        "height": 5
+      },
+      "status": "done",
+      "label_batch": 6,
+      "labeled_at_epoch_ms": 1774447196021,
+      "last_error": ""
+    },
+    {
+      "structure_id": "trek:village/vanilla_files/village/taiga/houses/taiga_butcher_shop_1",
+      "namespace": "trek",
+      "path": "village/vanilla_files/village/taiga/houses/taiga_butcher_shop_1",
+      "size": {
+        "length": 11,
+        "width": 9,
+        "height": 7
+      },
+      "status": "done",
+      "label_batch": 6,
+      "labeled_at_epoch_ms": 1774447196021,
       "last_error": ""
     },
     {
@@ -3097,8 +3335,8 @@
         "height": 15
       },
       "status": "done",
-      "label_batch": 8,
-      "labeled_at_epoch_ms": 1773770249093,
+      "label_batch": 6,
+      "labeled_at_epoch_ms": 1774447196021,
       "last_error": ""
     }
   ]

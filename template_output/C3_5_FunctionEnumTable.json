@@ -5,18 +5,18 @@
   "function_enum_table": [
     "civic_center",
     "commercial",
-    "farm",
-    "fishing",
-    "fortification",
-    "landmark",
     "market",
-    "port",
-    "religious",
-    "residential_high",
     "residential_low",
     "residential_mid",
+    "residential_high",
     "warehouse",
+    "port",
     "watchtower",
-    "workshop"
+    "fortification",
+    "farm",
+    "fishing",
+    "religious",
+    "workshop",
+    "landmark"
   ]
 }

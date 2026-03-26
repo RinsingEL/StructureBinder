@@ -3,23 +3,23 @@
   "ok": true,
   "city_id": "city_default",
   "catalog_version": 2,
-  "generated_at_epoch_ms": 1773770249093,
+  "generated_at_epoch_ms": 1774447195997,
   "function_enum_table": [
     "civic_center",
     "commercial",
-    "farm",
-    "fishing",
-    "fortification",
-    "landmark",
     "market",
-    "port",
-    "religious",
-    "residential_high",
     "residential_low",
     "residential_mid",
+    "residential_high",
     "warehouse",
+    "port",
     "watchtower",
-    "workshop"
+    "fortification",
+    "farm",
+    "fishing",
+    "religious",
+    "workshop",
+    "landmark"
   ],
   "structures": [
     {
@@ -43,14 +43,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
-        "military": 0,
+        "classical": 0.0,
+        "military": 0.0,
         "commercial": 0.1,
         "residential": 0.85,
-        "religious": 0,
-        "industrial": 0,
-        "maritime": 0,
-        "civic": 0
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -61,8 +61,12 @@
       "namespace": "trek",
       "path": "overworld/medium/dirt_hut",
       "size_tier": "S",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "east"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "z",
@@ -145,9 +149,9 @@
       },
       "connectors": [
         {
-          "id": "east_connector",
+          "id": "jigsaw_east_2_0_2",
           "local_pos": {
-            "x": 4,
+            "x": 2,
             "y": 0,
             "z": 2
           },
@@ -166,7 +170,7 @@
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "residential_low": 1.25,
         "residential": 1.05
       },

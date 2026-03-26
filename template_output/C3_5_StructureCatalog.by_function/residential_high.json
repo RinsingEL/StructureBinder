@@ -3,23 +3,23 @@
   "ok": true,
   "city_id": "city_default",
   "catalog_version": 2,
-  "generated_at_epoch_ms": 1773770249093,
+  "generated_at_epoch_ms": 1774447195997,
   "function_enum_table": [
     "civic_center",
     "commercial",
-    "farm",
-    "fishing",
-    "fortification",
-    "landmark",
     "market",
-    "port",
-    "religious",
-    "residential_high",
     "residential_low",
     "residential_mid",
+    "residential_high",
     "warehouse",
+    "port",
     "watchtower",
-    "workshop"
+    "fortification",
+    "farm",
+    "fishing",
+    "religious",
+    "workshop",
+    "landmark"
   ],
   "structures": [
     {
@@ -41,14 +41,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
-        "military": 0,
+        "classical": 0.0,
+        "military": 0.0,
         "commercial": 0.1,
         "residential": 0.85,
-        "religious": 0,
-        "industrial": 0,
-        "maritime": 0,
-        "civic": 0
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -143,7 +143,7 @@
       },
       "connectors": [],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "residential_high": 1.25,
         "residential": 1.05
       },
@@ -175,14 +175,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
-        "military": 0,
+        "classical": 0.0,
+        "military": 0.0,
         "commercial": 0.1,
         "residential": 0.85,
-        "religious": 0,
-        "industrial": 0,
-        "maritime": 0,
-        "civic": 0
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -193,8 +193,12 @@
       "namespace": "trek",
       "path": "overworld/medium/haunted_house",
       "size_tier": "L",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "east"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "x",
@@ -277,11 +281,11 @@
       },
       "connectors": [
         {
-          "id": "east_connector",
+          "id": "jigsaw_east_9_4_5",
           "local_pos": {
-            "x": 23,
-            "y": 0,
-            "z": 9
+            "x": 9,
+            "y": 4,
+            "z": 5
           },
           "facing": "east",
           "type": "road",
@@ -298,7 +302,7 @@
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "residential_high": 1.25,
         "residential": 1.05
       },
@@ -332,14 +336,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
-        "military": 0,
+        "classical": 0.0,
+        "military": 0.0,
         "commercial": 0.1,
         "residential": 0.85,
-        "religious": 0,
-        "industrial": 0,
-        "maritime": 0,
-        "civic": 0
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -350,8 +354,14 @@
       "namespace": "trek",
       "path": "overworld/medium/sorcerers_house",
       "size_tier": "M",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "north",
+        "east",
+        "south"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "auto",
@@ -434,11 +444,11 @@
       },
       "connectors": [
         {
-          "id": "north_connector",
+          "id": "jigsaw_north_10_0_8",
           "local_pos": {
-            "x": 7,
+            "x": 10,
             "y": 0,
-            "z": 0
+            "z": 8
           },
           "facing": "north",
           "type": "road",
@@ -454,11 +464,11 @@
           "max_connections": 1
         },
         {
-          "id": "east_connector",
+          "id": "jigsaw_east_4_3_10",
           "local_pos": {
-            "x": 14,
-            "y": 0,
-            "z": 7
+            "x": 4,
+            "y": 3,
+            "z": 10
           },
           "facing": "east",
           "type": "road",
@@ -474,11 +484,11 @@
           "max_connections": 1
         },
         {
-          "id": "south_connector",
+          "id": "jigsaw_south_10_3_5",
           "local_pos": {
-            "x": 7,
-            "y": 0,
-            "z": 14
+            "x": 10,
+            "y": 3,
+            "z": 5
           },
           "facing": "south",
           "type": "road",
@@ -495,7 +505,7 @@
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "residential_high": 1.25,
         "residential": 1.05
       },
@@ -525,14 +535,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
-        "military": 0,
+        "classical": 0.0,
+        "military": 0.0,
         "commercial": 0.1,
         "residential": 0.85,
-        "religious": 0,
-        "industrial": 0,
-        "maritime": 0,
-        "civic": 0
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -627,7 +637,7 @@
       },
       "connectors": [],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "residential_high": 1.25,
         "residential": 1.05
       },

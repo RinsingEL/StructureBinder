@@ -10,6 +10,7 @@ import java.util.LinkedHashMap;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityC7StagesTest {
@@ -95,6 +96,96 @@ class CityC7StagesTest {
         assertFalse(ok);
         assertEquals(0, candidateCount);
         assertEquals("no_candidates_after_strict_function_filter", reason);
+    }
+
+    @Test
+    void nonStrictSelectionAllowsHeuristicCandidate() throws Exception {
+        Object heuristicOnly = newCatalogStructure();
+        setField(heuristicOnly, "structure_id", "test:market_guess");
+        setField(heuristicOnly, "piece_role", "START");
+        setField(heuristicOnly, "size_tier", "S");
+        setField(heuristicOnly, "preset_pool", "village_market_small");
+        setField(heuristicOnly, "path", "market/test");
+        addFunctionCandidate(heuristicOnly, "market", 0.8);
+        addConnector(heuristicOnly, "c0", 0, 0, "south");
+        Object functionDefinition = getField(heuristicOnly, "function_definition");
+        setField(functionDefinition, "source", "mcp_path_heuristic");
+        Object tagSource = getField(heuristicOnly, "tag_source");
+        setField(tagSource, "preset_rule", "mcp_path_heuristic");
+
+        Object catalog = newCatalog();
+        @SuppressWarnings("unchecked")
+        List<Object> structures = (List<Object>) getField(catalog, "structures");
+        structures.add(heuristicOnly);
+
+        Method chooseCandidates = CityC7Stages.class.getDeclaredMethod(
+                "chooseCandidatesFromCatalog",
+                Class.forName("com.user.terra_script.world.city.stage.StructureTemplateQueryService$QueryRequest"),
+                String.class,
+                String.class,
+                boolean.class,
+                catalog.getClass()
+        );
+        chooseCandidates.setAccessible(true);
+
+        Class<?> queryType = Class.forName("com.user.terra_script.world.city.stage.StructureTemplateQueryService$QueryRequest");
+        Object query = queryType.getDeclaredConstructor().newInstance();
+        queryType.getField("function_tag").set(query, "market");
+        queryType.getField("size_tier").set(query, "S");
+        queryType.getField("arrangement_type").set(query, "COURTYARD");
+        queryType.getField("strict_tag_source").set(query, false);
+
+        Object result = chooseCandidates.invoke(null, query, "g_market_04", "south", true, catalog);
+        boolean ok = (boolean) result.getClass().getField("ok").get(result);
+        int candidateCount = result.getClass().getField("candidate_count").getInt(result);
+
+        assertTrue(ok);
+        assertEquals(1, candidateCount);
+    }
+
+    @Test
+    void seedConnectorResolutionDoesNotFallbackToJigsawFacing() throws Exception {
+        Object legacyOnly = newCatalogStructure();
+        setField(legacyOnly, "structure_id", "test:legacy_only");
+        setField(legacyOnly, "piece_role", "START");
+        setField(legacyOnly, "size_tier", "M");
+        setField(legacyOnly, "path", "port/legacy_only");
+        Object orientation = getField(legacyOnly, "orientation");
+        @SuppressWarnings("unchecked")
+        List<String> jigsawFacing = (List<String>) getField(orientation, "jigsaw_facing");
+        jigsawFacing.add("east");
+
+        Method resolver = CityC7Stages.class.getDeclaredMethod("resolveSeedConnector", legacyOnly.getClass(), String.class);
+        resolver.setAccessible(true);
+        Object result = resolver.invoke(null, legacyOnly, "east");
+
+        assertNull(result);
+    }
+
+    @Test
+    void rootScoringAllowsConnectorlessSingleAsTerminalSeed() throws Exception {
+        Object single = newCatalogStructure();
+        setField(single, "structure_id", "test:single_market");
+        setField(single, "piece_role", "SINGLE");
+        setField(single, "size_tier", "M");
+        setField(single, "preset_pool", "market_pool");
+        setField(single, "path", "market/single");
+        addFunctionCandidate(single, "market", 0.9);
+
+        Method score = CityC7Stages.class.getDeclaredMethod(
+                "scoreStructure",
+                single.getClass(),
+                String.class,
+                String.class,
+                String.class,
+                String.class,
+                String.class,
+                boolean.class
+        );
+        score.setAccessible(true);
+
+        double value = (double) score.invoke(null, single, "M", "market", "g_market_04", "market_pool", "south", true);
+        assertTrue(value > 0.0);
     }
 
     private static Object newCatalog() throws Exception {

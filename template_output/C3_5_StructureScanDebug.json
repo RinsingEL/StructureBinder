@@ -2,3172 +2,13 @@
   "step": "C3.5",
   "ok": true,
   "city_id": "city_default",
-  "total_scanned": 221,
+  "total_scanned": 68,
   "namespace_counts": {
-    "kaisyn": 12,
-    "trek": 208,
+    "trek": 67,
     "villager_fish_shop": 1
   },
   "scan_failures": [],
   "scanned_structures": [
-    {
-      "structure_id": "trek:overworld/common/cooking_pork",
-      "namespace": "trek",
-      "path": "overworld/common/cooking_pork",
-      "size": {
-        "length": 3,
-        "width": 5,
-        "height": 3
-      },
-      "path_tokens": [
-        "overworld",
-        "common",
-        "cooking",
-        "pork"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248441
-    },
-    {
-      "structure_id": "trek:overworld/common/elven_pillar_small",
-      "namespace": "trek",
-      "path": "overworld/common/elven_pillar_small",
-      "size": {
-        "length": 20,
-        "width": 16,
-        "height": 19
-      },
-      "path_tokens": [
-        "overworld",
-        "common",
-        "elven",
-        "pillar",
-        "small"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248441
-    },
-    {
-      "structure_id": "trek:overworld/common/elven_pillar_tall",
-      "namespace": "trek",
-      "path": "overworld/common/elven_pillar_tall",
-      "size": {
-        "length": 16,
-        "width": 13,
-        "height": 30
-      },
-      "path_tokens": [
-        "overworld",
-        "common",
-        "elven",
-        "pillar",
-        "tall"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "south",
-        "north"
-      ],
-      "scan_time": 1773767248441
-    },
-    {
-      "structure_id": "trek:overworld/common/frozen_remains",
-      "namespace": "trek",
-      "path": "overworld/common/frozen_remains",
-      "size": {
-        "length": 17,
-        "width": 10,
-        "height": 7
-      },
-      "path_tokens": [
-        "overworld",
-        "common",
-        "frozen",
-        "remains"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248441
-    },
-    {
-      "structure_id": "trek:overworld/common/mushroom_house",
-      "namespace": "trek",
-      "path": "overworld/common/mushroom_house",
-      "size": {
-        "length": 11,
-        "width": 11,
-        "height": 11
-      },
-      "path_tokens": [
-        "overworld",
-        "common",
-        "mushroom",
-        "house"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "north"
-      ],
-      "scan_time": 1773767248441
-    },
-    {
-      "structure_id": "trek:overworld/common/ruine_1",
-      "namespace": "trek",
-      "path": "overworld/common/ruine_1",
-      "size": {
-        "length": 8,
-        "width": 10,
-        "height": 6
-      },
-      "path_tokens": [
-        "overworld",
-        "common",
-        "ruine",
-        "1"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248441
-    },
-    {
-      "structure_id": "trek:overworld/common/ruine_2",
-      "namespace": "trek",
-      "path": "overworld/common/ruine_2",
-      "size": {
-        "length": 6,
-        "width": 7,
-        "height": 6
-      },
-      "path_tokens": [
-        "overworld",
-        "common",
-        "ruine",
-        "2"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248441
-    },
-    {
-      "structure_id": "trek:overworld/common/ruine_3",
-      "namespace": "trek",
-      "path": "overworld/common/ruine_3",
-      "size": {
-        "length": 4,
-        "width": 5,
-        "height": 6
-      },
-      "path_tokens": [
-        "overworld",
-        "common",
-        "ruine",
-        "3"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248441
-    },
-    {
-      "structure_id": "trek:overworld/common/ruine_4",
-      "namespace": "trek",
-      "path": "overworld/common/ruine_4",
-      "size": {
-        "length": 6,
-        "width": 8,
-        "height": 6
-      },
-      "path_tokens": [
-        "overworld",
-        "common",
-        "ruine",
-        "4"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248442
-    },
-    {
-      "structure_id": "trek:overworld/common/ruine_5",
-      "namespace": "trek",
-      "path": "overworld/common/ruine_5",
-      "size": {
-        "length": 4,
-        "width": 6,
-        "height": 4
-      },
-      "path_tokens": [
-        "overworld",
-        "common",
-        "ruine",
-        "5"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248442
-    },
-    {
-      "structure_id": "trek:overworld/common/ruine_6",
-      "namespace": "trek",
-      "path": "overworld/common/ruine_6",
-      "size": {
-        "length": 5,
-        "width": 7,
-        "height": 6
-      },
-      "path_tokens": [
-        "overworld",
-        "common",
-        "ruine",
-        "6"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248442
-    },
-    {
-      "structure_id": "trek:overworld/common/ruine_7",
-      "namespace": "trek",
-      "path": "overworld/common/ruine_7",
-      "size": {
-        "length": 5,
-        "width": 6,
-        "height": 6
-      },
-      "path_tokens": [
-        "overworld",
-        "common",
-        "ruine",
-        "7"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248442
-    },
-    {
-      "structure_id": "trek:overworld/common/small_desert_ruins",
-      "namespace": "trek",
-      "path": "overworld/common/small_desert_ruins",
-      "size": {
-        "length": 10,
-        "width": 9,
-        "height": 5
-      },
-      "path_tokens": [
-        "overworld",
-        "common",
-        "small",
-        "desert",
-        "ruins"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248442
-    },
-    {
-      "structure_id": "trek:overworld/common/small_swamp_ruins",
-      "namespace": "trek",
-      "path": "overworld/common/small_swamp_ruins",
-      "size": {
-        "length": 11,
-        "width": 10,
-        "height": 5
-      },
-      "path_tokens": [
-        "overworld",
-        "common",
-        "small",
-        "swamp",
-        "ruins"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248442
-    },
-    {
-      "structure_id": "trek:overworld/common/smoldering_altar",
-      "namespace": "trek",
-      "path": "overworld/common/smoldering_altar",
-      "size": {
-        "length": 13,
-        "width": 13,
-        "height": 5
-      },
-      "path_tokens": [
-        "overworld",
-        "common",
-        "smoldering",
-        "altar"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248442
-    },
-    {
-      "structure_id": "trek:overworld/common/strange_stone",
-      "namespace": "trek",
-      "path": "overworld/common/strange_stone",
-      "size": {
-        "length": 9,
-        "width": 11,
-        "height": 10
-      },
-      "path_tokens": [
-        "overworld",
-        "common",
-        "strange",
-        "stone"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248442
-    },
-    {
-      "structure_id": "trek:overworld/common/termite_hill",
-      "namespace": "trek",
-      "path": "overworld/common/termite_hill",
-      "size": {
-        "length": 6,
-        "width": 9,
-        "height": 5
-      },
-      "path_tokens": [
-        "overworld",
-        "common",
-        "termite",
-        "hill"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248442
-    },
-    {
-      "structure_id": "trek:overworld/common/two_woods",
-      "namespace": "trek",
-      "path": "overworld/common/two_woods",
-      "size": {
-        "length": 7,
-        "width": 10,
-        "height": 4
-      },
-      "path_tokens": [
-        "overworld",
-        "common",
-        "two",
-        "woods"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248442
-    },
-    {
-      "structure_id": "trek:overworld/common/well",
-      "namespace": "trek",
-      "path": "overworld/common/well",
-      "size": {
-        "length": 7,
-        "width": 7,
-        "height": 13
-      },
-      "path_tokens": [
-        "overworld",
-        "common",
-        "well"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248442
-    },
-    {
-      "structure_id": "trek:overworld/common/well_pillager_small",
-      "namespace": "trek",
-      "path": "overworld/common/well_pillager_small",
-      "size": {
-        "length": 4,
-        "width": 3,
-        "height": 6
-      },
-      "path_tokens": [
-        "overworld",
-        "common",
-        "well",
-        "pillager",
-        "small"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248442
-    },
-    {
-      "structure_id": "trek:overworld/common/well_pillager_tiny",
-      "namespace": "trek",
-      "path": "overworld/common/well_pillager_tiny",
-      "size": {
-        "length": 3,
-        "width": 3,
-        "height": 5
-      },
-      "path_tokens": [
-        "overworld",
-        "common",
-        "well",
-        "pillager",
-        "tiny"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248442
-    },
-    {
-      "structure_id": "trek:overworld/medium/all_abandoned",
-      "namespace": "trek",
-      "path": "overworld/medium/all_abandoned",
-      "size": {
-        "length": 16,
-        "width": 16,
-        "height": 4
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "all",
-        "abandoned"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248442
-    },
-    {
-      "structure_id": "trek:overworld/medium/ballista_pillager",
-      "namespace": "trek",
-      "path": "overworld/medium/ballista_pillager",
-      "size": {
-        "length": 15,
-        "width": 13,
-        "height": 6
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "ballista",
-        "pillager"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248442
-    },
-    {
-      "structure_id": "trek:overworld/medium/base_1",
-      "namespace": "trek",
-      "path": "overworld/medium/base_1",
-      "size": {
-        "length": 19,
-        "width": 16,
-        "height": 11
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "base",
-        "1"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "west",
-        "south"
-      ],
-      "scan_time": 1773767248442
-    },
-    {
-      "structure_id": "trek:overworld/medium/base_2",
-      "namespace": "trek",
-      "path": "overworld/medium/base_2",
-      "size": {
-        "length": 7,
-        "width": 7,
-        "height": 10
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "base",
-        "2"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "west"
-      ],
-      "scan_time": 1773767248443
-    },
-    {
-      "structure_id": "trek:overworld/medium/base_pillager",
-      "namespace": "trek",
-      "path": "overworld/medium/base_pillager",
-      "size": {
-        "length": 17,
-        "width": 23,
-        "height": 16
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "base",
-        "pillager"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "east",
-        "north",
-        "west",
-        "south"
-      ],
-      "scan_time": 1773767248443
-    },
-    {
-      "structure_id": "trek:overworld/medium/battering_ram_pillager",
-      "namespace": "trek",
-      "path": "overworld/medium/battering_ram_pillager",
-      "size": {
-        "length": 9,
-        "width": 12,
-        "height": 7
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "battering",
-        "ram",
-        "pillager"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248443
-    },
-    {
-      "structure_id": "trek:overworld/medium/beehive_house",
-      "namespace": "trek",
-      "path": "overworld/medium/beehive_house",
-      "size": {
-        "length": 13,
-        "width": 10,
-        "height": 11
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "beehive",
-        "house"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248443
-    },
-    {
-      "structure_id": "trek:overworld/medium/birch_fort",
-      "namespace": "trek",
-      "path": "overworld/medium/birch_fort",
-      "size": {
-        "length": 16,
-        "width": 15,
-        "height": 19
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "birch",
-        "fort"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "west",
-        "south"
-      ],
-      "scan_time": 1773767248443
-    },
-    {
-      "structure_id": "trek:overworld/medium/birch_trade",
-      "namespace": "trek",
-      "path": "overworld/medium/birch_trade",
-      "size": {
-        "length": 80,
-        "width": 25,
-        "height": 68
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "birch",
-        "trade"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "west",
-        "south",
-        "north"
-      ],
-      "scan_time": 1773767248464
-    },
-    {
-      "structure_id": "trek:overworld/medium/bone_dragon",
-      "namespace": "trek",
-      "path": "overworld/medium/bone_dragon",
-      "size": {
-        "length": 7,
-        "width": 13,
-        "height": 8
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "bone",
-        "dragon"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248465
-    },
-    {
-      "structure_id": "trek:overworld/medium/broken_well",
-      "namespace": "trek",
-      "path": "overworld/medium/broken_well",
-      "size": {
-        "length": 6,
-        "width": 6,
-        "height": 8
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "broken",
-        "well"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248465
-    },
-    {
-      "structure_id": "trek:overworld/medium/buried_village",
-      "namespace": "trek",
-      "path": "overworld/medium/buried_village",
-      "size": {
-        "length": 8,
-        "width": 7,
-        "height": 33
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "buried",
-        "village"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "west"
-      ],
-      "scan_time": 1773767248465
-    },
-    {
-      "structure_id": "trek:overworld/medium/camp_1",
-      "namespace": "trek",
-      "path": "overworld/medium/camp_1",
-      "size": {
-        "length": 11,
-        "width": 8,
-        "height": 6
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "camp",
-        "1"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "west"
-      ],
-      "scan_time": 1773767248465
-    },
-    {
-      "structure_id": "trek:overworld/medium/camp_2",
-      "namespace": "trek",
-      "path": "overworld/medium/camp_2",
-      "size": {
-        "length": 8,
-        "width": 9,
-        "height": 5
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "camp",
-        "2"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248465
-    },
-    {
-      "structure_id": "trek:overworld/medium/camp_3",
-      "namespace": "trek",
-      "path": "overworld/medium/camp_3",
-      "size": {
-        "length": 7,
-        "width": 7,
-        "height": 4
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "camp",
-        "3"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "north"
-      ],
-      "scan_time": 1773767248465
-    },
-    {
-      "structure_id": "trek:overworld/medium/camp_4",
-      "namespace": "trek",
-      "path": "overworld/medium/camp_4",
-      "size": {
-        "length": 19,
-        "width": 17,
-        "height": 16
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "camp",
-        "4"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "north",
-        "south",
-        "west"
-      ],
-      "scan_time": 1773767248466
-    },
-    {
-      "structure_id": "trek:overworld/medium/catapult_pillager",
-      "namespace": "trek",
-      "path": "overworld/medium/catapult_pillager",
-      "size": {
-        "length": 15,
-        "width": 7,
-        "height": 5
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "catapult",
-        "pillager"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248466
-    },
-    {
-      "structure_id": "trek:overworld/medium/church",
-      "namespace": "trek",
-      "path": "overworld/medium/church",
-      "size": {
-        "length": 21,
-        "width": 13,
-        "height": 22
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "church"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "west"
-      ],
-      "scan_time": 1773767248466
-    },
-    {
-      "structure_id": "trek:overworld/medium/claw_pillager",
-      "namespace": "trek",
-      "path": "overworld/medium/claw_pillager",
-      "size": {
-        "length": 15,
-        "width": 3,
-        "height": 15
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "claw",
-        "pillager"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248466
-    },
-    {
-      "structure_id": "trek:overworld/medium/claw_spike",
-      "namespace": "trek",
-      "path": "overworld/medium/claw_spike",
-      "size": {
-        "length": 27,
-        "width": 32,
-        "height": 35
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "claw",
-        "spike"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248466
-    },
-    {
-      "structure_id": "trek:overworld/medium/cold_hideout",
-      "namespace": "trek",
-      "path": "overworld/medium/cold_hideout",
-      "size": {
-        "length": 14,
-        "width": 13,
-        "height": 26
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "cold",
-        "hideout"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "south",
-        "north",
-        "west"
-      ],
-      "scan_time": 1773767248467
-    },
-    {
-      "structure_id": "trek:overworld/medium/cold_red_trade",
-      "namespace": "trek",
-      "path": "overworld/medium/cold_red_trade",
-      "size": {
-        "length": 41,
-        "width": 13,
-        "height": 39
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "cold",
-        "red",
-        "trade"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "west",
-        "east",
-        "north"
-      ],
-      "scan_time": 1773767248467
-    },
-    {
-      "structure_id": "trek:overworld/medium/dark_oak_trade",
-      "namespace": "trek",
-      "path": "overworld/medium/dark_oak_trade",
-      "size": {
-        "length": 41,
-        "width": 19,
-        "height": 39
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "dark",
-        "oak",
-        "trade"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "east",
-        "west"
-      ],
-      "scan_time": 1773767248468
-    },
-    {
-      "structure_id": "trek:overworld/medium/desert_outpost",
-      "namespace": "trek",
-      "path": "overworld/medium/desert_outpost",
-      "size": {
-        "length": 40,
-        "width": 22,
-        "height": 20
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "desert",
-        "outpost"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "east",
-        "south",
-        "north",
-        "west"
-      ],
-      "scan_time": 1773767248468
-    },
-    {
-      "structure_id": "trek:overworld/medium/desert_ranch",
-      "namespace": "trek",
-      "path": "overworld/medium/desert_ranch",
-      "size": {
-        "length": 16,
-        "width": 16,
-        "height": 8
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "desert",
-        "ranch"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "south"
-      ],
-      "scan_time": 1773767248468
-    },
-    {
-      "structure_id": "trek:overworld/medium/destroyed_house",
-      "namespace": "trek",
-      "path": "overworld/medium/destroyed_house",
-      "size": {
-        "length": 23,
-        "width": 22,
-        "height": 12
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "destroyed",
-        "house"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248468
-    },
-    {
-      "structure_id": "trek:overworld/medium/dirt_hut",
-      "namespace": "trek",
-      "path": "overworld/medium/dirt_hut",
-      "size": {
-        "length": 6,
-        "width": 5,
-        "height": 5
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "dirt",
-        "hut"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "east"
-      ],
-      "scan_time": 1773767248468
-    },
-    {
-      "structure_id": "trek:overworld/medium/enchanter",
-      "namespace": "trek",
-      "path": "overworld/medium/enchanter",
-      "size": {
-        "length": 7,
-        "width": 6,
-        "height": 4
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "enchanter"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248468
-    },
-    {
-      "structure_id": "trek:overworld/medium/explorer_cabin",
-      "namespace": "trek",
-      "path": "overworld/medium/explorer_cabin",
-      "size": {
-        "length": 30,
-        "width": 28,
-        "height": 22
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "explorer",
-        "cabin"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "east",
-        "south"
-      ],
-      "scan_time": 1773767248469
-    },
-    {
-      "structure_id": "trek:overworld/medium/farm",
-      "namespace": "trek",
-      "path": "overworld/medium/farm",
-      "size": {
-        "length": 17,
-        "width": 23,
-        "height": 11
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "farm"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "south",
-        "north",
-        "west"
-      ],
-      "scan_time": 1773767248469
-    },
-    {
-      "structure_id": "trek:overworld/medium/farm_pillager",
-      "namespace": "trek",
-      "path": "overworld/medium/farm_pillager",
-      "size": {
-        "length": 19,
-        "width": 11,
-        "height": 15
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "farm",
-        "pillager"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "east",
-        "west",
-        "south"
-      ],
-      "scan_time": 1773767248470
-    },
-    {
-      "structure_id": "trek:overworld/medium/fort",
-      "namespace": "trek",
-      "path": "overworld/medium/fort",
-      "size": {
-        "length": 16,
-        "width": 16,
-        "height": 8
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "fort"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "east",
-        "west"
-      ],
-      "scan_time": 1773767248470
-    },
-    {
-      "structure_id": "trek:overworld/medium/frozen_tree",
-      "namespace": "trek",
-      "path": "overworld/medium/frozen_tree",
-      "size": {
-        "length": 26,
-        "width": 27,
-        "height": 41
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "frozen",
-        "tree"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248470
-    },
-    {
-      "structure_id": "trek:overworld/medium/graveyard",
-      "namespace": "trek",
-      "path": "overworld/medium/graveyard",
-      "size": {
-        "length": 12,
-        "width": 15,
-        "height": 6
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "graveyard"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "west"
-      ],
-      "scan_time": 1773767248470
-    },
-    {
-      "structure_id": "trek:overworld/medium/haunted_house",
-      "namespace": "trek",
-      "path": "overworld/medium/haunted_house",
-      "size": {
-        "length": 19,
-        "width": 24,
-        "height": 38
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "haunted",
-        "house"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "east"
-      ],
-      "scan_time": 1773767248471
-    },
-    {
-      "structure_id": "trek:overworld/medium/hobbit_hole",
-      "namespace": "trek",
-      "path": "overworld/medium/hobbit_hole",
-      "size": {
-        "length": 11,
-        "width": 11,
-        "height": 6
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "hobbit",
-        "hole"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "east"
-      ],
-      "scan_time": 1773767248471
-    },
-    {
-      "structure_id": "trek:overworld/medium/ice_fort",
-      "namespace": "trek",
-      "path": "overworld/medium/ice_fort",
-      "size": {
-        "length": 18,
-        "width": 20,
-        "height": 29
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "ice",
-        "fort"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "north",
-        "west",
-        "east"
-      ],
-      "scan_time": 1773767248471
-    },
-    {
-      "structure_id": "trek:overworld/medium/igloo_village",
-      "namespace": "trek",
-      "path": "overworld/medium/igloo_village",
-      "size": {
-        "length": 24,
-        "width": 22,
-        "height": 11
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "igloo",
-        "village"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "west",
-        "east",
-        "south",
-        "north"
-      ],
-      "scan_time": 1773767248471
-    },
-    {
-      "structure_id": "trek:overworld/medium/jungle_outpost",
-      "namespace": "trek",
-      "path": "overworld/medium/jungle_outpost",
-      "size": {
-        "length": 31,
-        "width": 26,
-        "height": 28
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "jungle",
-        "outpost"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "east",
-        "west",
-        "south"
-      ],
-      "scan_time": 1773767248472
-    },
-    {
-      "structure_id": "trek:overworld/medium/jungle_trade",
-      "namespace": "trek",
-      "path": "overworld/medium/jungle_trade",
-      "size": {
-        "length": 20,
-        "width": 11,
-        "height": 22
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "jungle",
-        "trade"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "north"
-      ],
-      "scan_time": 1773767248472
-    },
-    {
-      "structure_id": "trek:overworld/medium/jungle_treehouse",
-      "namespace": "trek",
-      "path": "overworld/medium/jungle_treehouse",
-      "size": {
-        "length": 26,
-        "width": 19,
-        "height": 48
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "jungle",
-        "treehouse"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "south",
-        "north",
-        "east"
-      ],
-      "scan_time": 1773767248472
-    },
-    {
-      "structure_id": "trek:overworld/medium/lush_ice",
-      "namespace": "trek",
-      "path": "overworld/medium/lush_ice",
-      "size": {
-        "length": 12,
-        "width": 14,
-        "height": 13
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "lush",
-        "ice"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "east",
-        "north"
-      ],
-      "scan_time": 1773767248472
-    },
-    {
-      "structure_id": "trek:overworld/medium/maison",
-      "namespace": "trek",
-      "path": "overworld/medium/maison",
-      "size": {
-        "length": 18,
-        "width": 28,
-        "height": 15
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "maison"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "east"
-      ],
-      "scan_time": 1773767248473
-    },
-    {
-      "structure_id": "trek:overworld/medium/mangrove_watchtower_1",
-      "namespace": "trek",
-      "path": "overworld/medium/mangrove_watchtower_1",
-      "size": {
-        "length": 12,
-        "width": 11,
-        "height": 12
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "mangrove",
-        "watchtower",
-        "1"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "south",
-        "north"
-      ],
-      "scan_time": 1773767248473
-    },
-    {
-      "structure_id": "trek:overworld/medium/mangrove_watchtower_2",
-      "namespace": "trek",
-      "path": "overworld/medium/mangrove_watchtower_2",
-      "size": {
-        "length": 12,
-        "width": 11,
-        "height": 23
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "mangrove",
-        "watchtower",
-        "2"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "east",
-        "north"
-      ],
-      "scan_time": 1773767248474
-    },
-    {
-      "structure_id": "trek:overworld/medium/oasis",
-      "namespace": "trek",
-      "path": "overworld/medium/oasis",
-      "size": {
-        "length": 30,
-        "width": 30,
-        "height": 15
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "oasis"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248474
-    },
-    {
-      "structure_id": "trek:overworld/medium/offshore_platform_pillager",
-      "namespace": "trek",
-      "path": "overworld/medium/offshore_platform_pillager",
-      "size": {
-        "length": 25,
-        "width": 21,
-        "height": 48
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "offshore",
-        "platform",
-        "pillager"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "south",
-        "west",
-        "north"
-      ],
-      "scan_time": 1773767248474
-    },
-    {
-      "structure_id": "trek:overworld/medium/orbital",
-      "namespace": "trek",
-      "path": "overworld/medium/orbital",
-      "size": {
-        "length": 28,
-        "width": 28,
-        "height": 15
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "orbital"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248474
-    },
-    {
-      "structure_id": "trek:overworld/medium/pillager_old_camp",
-      "namespace": "trek",
-      "path": "overworld/medium/pillager_old_camp",
-      "size": {
-        "length": 12,
-        "width": 11,
-        "height": 5
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "pillager",
-        "old",
-        "camp"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "north",
-        "east"
-      ],
-      "scan_time": 1773767248474
-    },
-    {
-      "structure_id": "trek:overworld/medium/plains_cottage",
-      "namespace": "trek",
-      "path": "overworld/medium/plains_cottage",
-      "size": {
-        "length": 36,
-        "width": 44,
-        "height": 26
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "plains",
-        "cottage"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "north",
-        "south",
-        "west"
-      ],
-      "scan_time": 1773767248474
-    },
-    {
-      "structure_id": "trek:overworld/medium/railroad",
-      "namespace": "trek",
-      "path": "overworld/medium/railroad",
-      "size": {
-        "length": 29,
-        "width": 12,
-        "height": 10
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "railroad"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "north"
-      ],
-      "scan_time": 1773767248474
-    },
-    {
-      "structure_id": "trek:overworld/medium/ritual",
-      "namespace": "trek",
-      "path": "overworld/medium/ritual",
-      "size": {
-        "length": 15,
-        "width": 15,
-        "height": 4
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "ritual"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248474
-    },
-    {
-      "structure_id": "trek:overworld/medium/ruine_bateaux",
-      "namespace": "trek",
-      "path": "overworld/medium/ruine_bateaux",
-      "size": {
-        "length": 16,
-        "width": 30,
-        "height": 17
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "ruine",
-        "bateaux"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "south",
-        "north"
-      ],
-      "scan_time": 1773767248476
-    },
-    {
-      "structure_id": "trek:overworld/medium/ruine_cabane",
-      "namespace": "trek",
-      "path": "overworld/medium/ruine_cabane",
-      "size": {
-        "length": 29,
-        "width": 26,
-        "height": 16
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "ruine",
-        "cabane"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "east"
-      ],
-      "scan_time": 1773767248476
-    },
-    {
-      "structure_id": "trek:overworld/medium/ruine_tour",
-      "namespace": "trek",
-      "path": "overworld/medium/ruine_tour",
-      "size": {
-        "length": 18,
-        "width": 19,
-        "height": 20
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "ruine",
-        "tour"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248476
-    },
-    {
-      "structure_id": "trek:overworld/medium/ship_pillager",
-      "namespace": "trek",
-      "path": "overworld/medium/ship_pillager",
-      "size": {
-        "length": 21,
-        "width": 13,
-        "height": 22
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "ship",
-        "pillager"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "east",
-        "west",
-        "south"
-      ],
-      "scan_time": 1773767248477
-    },
-    {
-      "structure_id": "trek:overworld/medium/siege_tower_pillager",
-      "namespace": "trek",
-      "path": "overworld/medium/siege_tower_pillager",
-      "size": {
-        "length": 11,
-        "width": 17,
-        "height": 23
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "siege",
-        "tower",
-        "pillager"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "east",
-        "south",
-        "north"
-      ],
-      "scan_time": 1773767248477
-    },
-    {
-      "structure_id": "trek:overworld/medium/small_pyramide",
-      "namespace": "trek",
-      "path": "overworld/medium/small_pyramide",
-      "size": {
-        "length": 14,
-        "width": 15,
-        "height": 15
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "small",
-        "pyramide"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248477
-    },
-    {
-      "structure_id": "trek:overworld/medium/small_red_trade",
-      "namespace": "trek",
-      "path": "overworld/medium/small_red_trade",
-      "size": {
-        "length": 21,
-        "width": 11,
-        "height": 15
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "small",
-        "red",
-        "trade"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "east"
-      ],
-      "scan_time": 1773767248477
-    },
-    {
-      "structure_id": "trek:overworld/medium/snow_cottage",
-      "namespace": "trek",
-      "path": "overworld/medium/snow_cottage",
-      "size": {
-        "length": 10,
-        "width": 12,
-        "height": 12
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "snow",
-        "cottage"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "south"
-      ],
-      "scan_time": 1773767248477
-    },
-    {
-      "structure_id": "trek:overworld/medium/snowman",
-      "namespace": "trek",
-      "path": "overworld/medium/snowman",
-      "size": {
-        "length": 12,
-        "width": 10,
-        "height": 20
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "snowman"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "west"
-      ],
-      "scan_time": 1773767248478
-    },
-    {
-      "structure_id": "trek:overworld/medium/sorcerers_house",
-      "namespace": "trek",
-      "path": "overworld/medium/sorcerers_house",
-      "size": {
-        "length": 15,
-        "width": 15,
-        "height": 9
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "sorcerers",
-        "house"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "north",
-        "east",
-        "south"
-      ],
-      "scan_time": 1773767248478
-    },
-    {
-      "structure_id": "trek:overworld/medium/spruce_camp",
-      "namespace": "trek",
-      "path": "overworld/medium/spruce_camp",
-      "size": {
-        "length": 7,
-        "width": 9,
-        "height": 6
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "spruce",
-        "camp"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "north"
-      ],
-      "scan_time": 1773767248478
-    },
-    {
-      "structure_id": "trek:overworld/medium/spruce_cottage",
-      "namespace": "trek",
-      "path": "overworld/medium/spruce_cottage",
-      "size": {
-        "length": 12,
-        "width": 10,
-        "height": 12
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "spruce",
-        "cottage"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "south"
-      ],
-      "scan_time": 1773767248478
-    },
-    {
-      "structure_id": "trek:overworld/medium/square_tower",
-      "namespace": "trek",
-      "path": "overworld/medium/square_tower",
-      "size": {
-        "length": 15,
-        "width": 15,
-        "height": 30
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "square",
-        "tower"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "south"
-      ],
-      "scan_time": 1773767248478
-    },
-    {
-      "structure_id": "trek:overworld/medium/star_spike",
-      "namespace": "trek",
-      "path": "overworld/medium/star_spike",
-      "size": {
-        "length": 37,
-        "width": 39,
-        "height": 38
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "star",
-        "spike"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248479
-    },
-    {
-      "structure_id": "trek:overworld/medium/stelzen_1",
-      "namespace": "trek",
-      "path": "overworld/medium/stelzen_1",
-      "size": {
-        "length": 12,
-        "width": 12,
-        "height": 19
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "stelzen",
-        "1"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248479
-    },
-    {
-      "structure_id": "trek:overworld/medium/stelzen_2",
-      "namespace": "trek",
-      "path": "overworld/medium/stelzen_2",
-      "size": {
-        "length": 12,
-        "width": 13,
-        "height": 31
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "stelzen",
-        "2"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248479
-    },
-    {
-      "structure_id": "trek:overworld/medium/stonehedge",
-      "namespace": "trek",
-      "path": "overworld/medium/stonehedge",
-      "size": {
-        "length": 27,
-        "width": 26,
-        "height": 8
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "stonehedge"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248479
-    },
-    {
-      "structure_id": "trek:overworld/medium/strange_house",
-      "namespace": "trek",
-      "path": "overworld/medium/strange_house",
-      "size": {
-        "length": 16,
-        "width": 13,
-        "height": 24
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "strange",
-        "house"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248479
-    },
-    {
-      "structure_id": "trek:overworld/medium/street_vendor_pillager",
-      "namespace": "trek",
-      "path": "overworld/medium/street_vendor_pillager",
-      "size": {
-        "length": 10,
-        "width": 7,
-        "height": 6
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "street",
-        "vendor",
-        "pillager"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248479
-    },
-    {
-      "structure_id": "trek:overworld/medium/street_vendor_stall",
-      "namespace": "trek",
-      "path": "overworld/medium/street_vendor_stall",
-      "size": {
-        "length": 11,
-        "width": 8,
-        "height": 9
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "street",
-        "vendor",
-        "stall"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248479
-    },
-    {
-      "structure_id": "trek:overworld/medium/three_finger_ice",
-      "namespace": "trek",
-      "path": "overworld/medium/three_finger_ice",
-      "size": {
-        "length": 23,
-        "width": 26,
-        "height": 35
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "three",
-        "finger",
-        "ice"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248480
-    },
-    {
-      "structure_id": "trek:overworld/medium/tour_1",
-      "namespace": "trek",
-      "path": "overworld/medium/tour_1",
-      "size": {
-        "length": 8,
-        "width": 7,
-        "height": 16
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "tour",
-        "1"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "east",
-        "north"
-      ],
-      "scan_time": 1773767248480
-    },
-    {
-      "structure_id": "trek:overworld/medium/tour_2",
-      "namespace": "trek",
-      "path": "overworld/medium/tour_2",
-      "size": {
-        "length": 11,
-        "width": 11,
-        "height": 24
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "tour",
-        "2"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "south",
-        "west",
-        "east",
-        "north"
-      ],
-      "scan_time": 1773767248480
-    },
-    {
-      "structure_id": "trek:overworld/medium/tour_desert_1",
-      "namespace": "trek",
-      "path": "overworld/medium/tour_desert_1",
-      "size": {
-        "length": 11,
-        "width": 11,
-        "height": 18
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "tour",
-        "desert",
-        "1"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "south",
-        "north",
-        "east",
-        "west"
-      ],
-      "scan_time": 1773767248480
-    },
-    {
-      "structure_id": "trek:overworld/medium/tour_desert_2",
-      "namespace": "trek",
-      "path": "overworld/medium/tour_desert_2",
-      "size": {
-        "length": 13,
-        "width": 11,
-        "height": 15
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "tour",
-        "desert",
-        "2"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "west",
-        "east"
-      ],
-      "scan_time": 1773767248480
-    },
-    {
-      "structure_id": "trek:overworld/medium/tower",
-      "namespace": "trek",
-      "path": "overworld/medium/tower",
-      "size": {
-        "length": 10,
-        "width": 9,
-        "height": 30
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "tower"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248481
-    },
-    {
-      "structure_id": "trek:overworld/medium/tower_of_ice",
-      "namespace": "trek",
-      "path": "overworld/medium/tower_of_ice",
-      "size": {
-        "length": 16,
-        "width": 17,
-        "height": 27
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "tower",
-        "of",
-        "ice"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "south",
-        "west"
-      ],
-      "scan_time": 1773767248481
-    },
-    {
-      "structure_id": "trek:overworld/medium/trebuchet_pillager",
-      "namespace": "trek",
-      "path": "overworld/medium/trebuchet_pillager",
-      "size": {
-        "length": 9,
-        "width": 18,
-        "height": 15
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "trebuchet",
-        "pillager"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248481
-    },
-    {
-      "structure_id": "trek:overworld/medium/underwater_sword",
-      "namespace": "trek",
-      "path": "overworld/medium/underwater_sword",
-      "size": {
-        "length": 10,
-        "width": 9,
-        "height": 20
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "underwater",
-        "sword"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248481
-    },
-    {
-      "structure_id": "trek:overworld/medium/wandering_trader_dark_oak",
-      "namespace": "trek",
-      "path": "overworld/medium/wandering_trader_dark_oak",
-      "size": {
-        "length": 13,
-        "width": 9,
-        "height": 6
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "wandering",
-        "trader",
-        "dark",
-        "oak"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248481
-    },
-    {
-      "structure_id": "trek:overworld/medium/wandering_trader_oak",
-      "namespace": "trek",
-      "path": "overworld/medium/wandering_trader_oak",
-      "size": {
-        "length": 13,
-        "width": 10,
-        "height": 6
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "wandering",
-        "trader",
-        "oak"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248481
-    },
-    {
-      "structure_id": "trek:overworld/medium/wandering_trader_spruce",
-      "namespace": "trek",
-      "path": "overworld/medium/wandering_trader_spruce",
-      "size": {
-        "length": 13,
-        "width": 9,
-        "height": 6
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "wandering",
-        "trader",
-        "spruce"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248481
-    },
-    {
-      "structure_id": "trek:overworld/medium/water_reservoir_pillager",
-      "namespace": "trek",
-      "path": "overworld/medium/water_reservoir_pillager",
-      "size": {
-        "length": 5,
-        "width": 5,
-        "height": 14
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "water",
-        "reservoir",
-        "pillager"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248481
-    },
-    {
-      "structure_id": "trek:overworld/medium/well_pillager_big",
-      "namespace": "trek",
-      "path": "overworld/medium/well_pillager_big",
-      "size": {
-        "length": 7,
-        "width": 7,
-        "height": 10
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "well",
-        "pillager",
-        "big"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248481
-    },
-    {
-      "structure_id": "trek:overworld/medium/well_pillager_medium",
-      "namespace": "trek",
-      "path": "overworld/medium/well_pillager_medium",
-      "size": {
-        "length": 7,
-        "width": 7,
-        "height": 9
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "well",
-        "pillager"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248481
-    },
-    {
-      "structure_id": "trek:overworld/medium/wild_stone",
-      "namespace": "trek",
-      "path": "overworld/medium/wild_stone",
-      "size": {
-        "length": 8,
-        "width": 8,
-        "height": 12
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "wild",
-        "stone"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248481
-    },
-    {
-      "structure_id": "trek:overworld/medium/witch_tower",
-      "namespace": "trek",
-      "path": "overworld/medium/witch_tower",
-      "size": {
-        "length": 13,
-        "width": 15,
-        "height": 36
-      },
-      "path_tokens": [
-        "overworld",
-        "medium",
-        "witch",
-        "tower"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "north",
-        "south"
-      ],
-      "scan_time": 1773767248481
-    },
-    {
-      "structure_id": "trek:overworld/rare/abandoned_castle_pillager",
-      "namespace": "trek",
-      "path": "overworld/rare/abandoned_castle_pillager",
-      "size": {
-        "length": 44,
-        "width": 36,
-        "height": 48
-      },
-      "path_tokens": [
-        "overworld",
-        "rare",
-        "abandoned",
-        "castle",
-        "pillager"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248483
-    },
-    {
-      "structure_id": "trek:overworld/rare/castle",
-      "namespace": "trek",
-      "path": "overworld/rare/castle",
-      "size": {
-        "length": 35,
-        "width": 30,
-        "height": 35
-      },
-      "path_tokens": [
-        "overworld",
-        "rare",
-        "castle"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "north",
-        "south",
-        "east",
-        "west"
-      ],
-      "scan_time": 1773767248484
-    },
-    {
-      "structure_id": "trek:overworld/rare/elven_tree",
-      "namespace": "trek",
-      "path": "overworld/rare/elven_tree",
-      "size": {
-        "length": 26,
-        "width": 36,
-        "height": 35
-      },
-      "path_tokens": [
-        "overworld",
-        "rare",
-        "elven",
-        "tree"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "west",
-        "north",
-        "east"
-      ],
-      "scan_time": 1773767248485
-    },
-    {
-      "structure_id": "trek:overworld/rare/island_village_1",
-      "namespace": "trek",
-      "path": "overworld/rare/island_village_1",
-      "size": {
-        "length": 34,
-        "width": 34,
-        "height": 51
-      },
-      "path_tokens": [
-        "overworld",
-        "rare",
-        "island",
-        "village",
-        "1"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "west",
-        "south",
-        "north",
-        "east"
-      ],
-      "scan_time": 1773767248487
-    },
-    {
-      "structure_id": "trek:overworld/rare/maya",
-      "namespace": "trek",
-      "path": "overworld/rare/maya",
-      "size": {
-        "length": 31,
-        "width": 31,
-        "height": 15
-      },
-      "path_tokens": [
-        "overworld",
-        "rare",
-        "maya"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "south",
-        "west",
-        "north"
-      ],
-      "scan_time": 1773767248487
-    },
-    {
-      "structure_id": "trek:overworld/rare/mushroom_island",
-      "namespace": "trek",
-      "path": "overworld/rare/mushroom_island",
-      "size": {
-        "length": 90,
-        "width": 80,
-        "height": 75
-      },
-      "path_tokens": [
-        "overworld",
-        "rare",
-        "mushroom",
-        "island"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "east",
-        "west",
-        "north",
-        "south"
-      ],
-      "scan_time": 1773767248501
-    },
-    {
-      "structure_id": "trek:overworld/rare/pillager_mansion",
-      "namespace": "trek",
-      "path": "overworld/rare/pillager_mansion",
-      "size": {
-        "length": 33,
-        "width": 42,
-        "height": 37
-      },
-      "path_tokens": [
-        "overworld",
-        "rare",
-        "pillager",
-        "mansion"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "south",
-        "north",
-        "west",
-        "east"
-      ],
-      "scan_time": 1773767248504
-    },
-    {
-      "structure_id": "trek:overworld/rare/portal_sword/1",
-      "namespace": "trek",
-      "path": "overworld/rare/portal_sword/1",
-      "size": {
-        "length": 6,
-        "width": 16,
-        "height": 4
-      },
-      "path_tokens": [
-        "overworld",
-        "rare",
-        "portal",
-        "sword",
-        "1"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "west"
-      ],
-      "scan_time": 1773767248504
-    },
-    {
-      "structure_id": "trek:overworld/rare/portal_sword/2",
-      "namespace": "trek",
-      "path": "overworld/rare/portal_sword/2",
-      "size": {
-        "length": 30,
-        "width": 6,
-        "height": 3
-      },
-      "path_tokens": [
-        "overworld",
-        "rare",
-        "portal",
-        "sword",
-        "2"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "north"
-      ],
-      "scan_time": 1773767248504
-    },
-    {
-      "structure_id": "trek:overworld/rare/portal_sword/3",
-      "namespace": "trek",
-      "path": "overworld/rare/portal_sword/3",
-      "size": {
-        "length": 7,
-        "width": 16,
-        "height": 4
-      },
-      "path_tokens": [
-        "overworld",
-        "rare",
-        "portal",
-        "sword",
-        "3"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "east"
-      ],
-      "scan_time": 1773767248504
-    },
-    {
-      "structure_id": "trek:overworld/rare/portal_sword/4",
-      "namespace": "trek",
-      "path": "overworld/rare/portal_sword/4",
-      "size": {
-        "length": 28,
-        "width": 10,
-        "height": 3
-      },
-      "path_tokens": [
-        "overworld",
-        "rare",
-        "portal",
-        "sword",
-        "4"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "south"
-      ],
-      "scan_time": 1773767248504
-    },
-    {
-      "structure_id": "trek:overworld/rare/portal_sword/centre",
-      "namespace": "trek",
-      "path": "overworld/rare/portal_sword/centre",
-      "size": {
-        "length": 18,
-        "width": 16,
-        "height": 45
-      },
-      "path_tokens": [
-        "overworld",
-        "rare",
-        "portal",
-        "sword",
-        "centre"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "south",
-        "east",
-        "west",
-        "north"
-      ],
-      "scan_time": 1773767248505
-    },
-    {
-      "structure_id": "trek:overworld/rare/portal_sword/up_1",
-      "namespace": "trek",
-      "path": "overworld/rare/portal_sword/up_1",
-      "size": {
-        "length": 4,
-        "width": 1,
-        "height": 5
-      },
-      "path_tokens": [
-        "overworld",
-        "rare",
-        "portal",
-        "sword",
-        "up",
-        "1"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "west"
-      ],
-      "scan_time": 1773767248505
-    },
-    {
-      "structure_id": "trek:overworld/rare/portal_sword/up_3",
-      "namespace": "trek",
-      "path": "overworld/rare/portal_sword/up_3",
-      "size": {
-        "length": 5,
-        "width": 1,
-        "height": 5
-      },
-      "path_tokens": [
-        "overworld",
-        "rare",
-        "portal",
-        "sword",
-        "up",
-        "3"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "east"
-      ],
-      "scan_time": 1773767248505
-    },
-    {
-      "structure_id": "trek:overworld/rare/pyramide_of_anubis",
-      "namespace": "trek",
-      "path": "overworld/rare/pyramide_of_anubis",
-      "size": {
-        "length": 40,
-        "width": 43,
-        "height": 24
-      },
-      "path_tokens": [
-        "overworld",
-        "rare",
-        "pyramide",
-        "of",
-        "anubis"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248506
-    },
-    {
-      "structure_id": "trek:overworld/rare/sleepy_island",
-      "namespace": "trek",
-      "path": "overworld/rare/sleepy_island",
-      "size": {
-        "length": 56,
-        "width": 69,
-        "height": 30
-      },
-      "path_tokens": [
-        "overworld",
-        "rare",
-        "sleepy",
-        "island"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "west",
-        "north",
-        "east",
-        "south"
-      ],
-      "scan_time": 1773767248510
-    },
-    {
-      "structure_id": "trek:overworld/rare/sunken_city",
-      "namespace": "trek",
-      "path": "overworld/rare/sunken_city",
-      "size": {
-        "length": 48,
-        "width": 48,
-        "height": 44
-      },
-      "path_tokens": [
-        "overworld",
-        "rare",
-        "sunken",
-        "city"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "east",
-        "south",
-        "north",
-        "west"
-      ],
-      "scan_time": 1773767248511
-    },
-    {
-      "structure_id": "trek:overworld/rare/tower_island",
-      "namespace": "trek",
-      "path": "overworld/rare/tower_island",
-      "size": {
-        "length": 54,
-        "width": 68,
-        "height": 35
-      },
-      "path_tokens": [
-        "overworld",
-        "rare",
-        "tower",
-        "island"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "east",
-        "west"
-      ],
-      "scan_time": 1773767248511
-    },
-    {
-      "structure_id": "trek:overworld/rare/villager_castle",
-      "namespace": "trek",
-      "path": "overworld/rare/villager_castle",
-      "size": {
-        "length": 75,
-        "width": 65,
-        "height": 56
-      },
-      "path_tokens": [
-        "overworld",
-        "rare",
-        "villager",
-        "castle"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "south",
-        "east",
-        "north",
-        "west"
-      ],
-      "scan_time": 1773767248519
-    },
-    {
-      "structure_id": "trek:overworld/rare/villager_fortress",
-      "namespace": "trek",
-      "path": "overworld/rare/villager_fortress",
-      "size": {
-        "length": 25,
-        "width": 30,
-        "height": 43
-      },
-      "path_tokens": [
-        "overworld",
-        "rare",
-        "villager",
-        "fortress"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "east",
-        "south",
-        "west",
-        "north"
-      ],
-      "scan_time": 1773767248520
-    },
-    {
-      "structure_id": "trek:overworld/rare/villager_island",
-      "namespace": "trek",
-      "path": "overworld/rare/villager_island",
-      "size": {
-        "length": 53,
-        "width": 54,
-        "height": 49
-      },
-      "path_tokens": [
-        "overworld",
-        "rare",
-        "villager",
-        "island"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "east",
-        "north",
-        "west",
-        "south"
-      ],
-      "scan_time": 1773767248523
-    },
-    {
-      "structure_id": "trek:overworld/rare/wooden_manor",
-      "namespace": "trek",
-      "path": "overworld/rare/wooden_manor",
-      "size": {
-        "length": 29,
-        "width": 48,
-        "height": 46
-      },
-      "path_tokens": [
-        "overworld",
-        "rare",
-        "wooden",
-        "manor"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "north",
-        "east",
-        "west",
-        "south"
-      ],
-      "scan_time": 1773767248524
-    },
-    {
-      "structure_id": "trek:overworld/very_common/crystal_rock",
-      "namespace": "trek",
-      "path": "overworld/very_common/crystal_rock",
-      "size": {
-        "length": 3,
-        "width": 3,
-        "height": 3
-      },
-      "path_tokens": [
-        "overworld",
-        "very",
-        "common",
-        "crystal",
-        "rock"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248524
-    },
-    {
-      "structure_id": "trek:overworld/very_common/forgotten_garden",
-      "namespace": "trek",
-      "path": "overworld/very_common/forgotten_garden",
-      "size": {
-        "length": 9,
-        "width": 9,
-        "height": 3
-      },
-      "path_tokens": [
-        "overworld",
-        "very",
-        "common",
-        "forgotten",
-        "garden"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248524
-    },
-    {
-      "structure_id": "trek:overworld/very_common/mid_rock_thin",
-      "namespace": "trek",
-      "path": "overworld/very_common/mid_rock_thin",
-      "size": {
-        "length": 4,
-        "width": 3,
-        "height": 4
-      },
-      "path_tokens": [
-        "overworld",
-        "very",
-        "common",
-        "mid",
-        "rock",
-        "thin"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248524
-    },
-    {
-      "structure_id": "trek:overworld/very_common/plains_1",
-      "namespace": "trek",
-      "path": "overworld/very_common/plains_1",
-      "size": {
-        "length": 5,
-        "width": 5,
-        "height": 4
-      },
-      "path_tokens": [
-        "overworld",
-        "very",
-        "common",
-        "plains",
-        "1"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248524
-    },
-    {
-      "structure_id": "trek:overworld/very_common/plains_2",
-      "namespace": "trek",
-      "path": "overworld/very_common/plains_2",
-      "size": {
-        "length": 5,
-        "width": 5,
-        "height": 2
-      },
-      "path_tokens": [
-        "overworld",
-        "very",
-        "common",
-        "plains",
-        "2"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248524
-    },
-    {
-      "structure_id": "trek:overworld/very_common/plains_3",
-      "namespace": "trek",
-      "path": "overworld/very_common/plains_3",
-      "size": {
-        "length": 5,
-        "width": 5,
-        "height": 4
-      },
-      "path_tokens": [
-        "overworld",
-        "very",
-        "common",
-        "plains",
-        "3"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248524
-    },
-    {
-      "structure_id": "trek:overworld/very_common/plains_4",
-      "namespace": "trek",
-      "path": "overworld/very_common/plains_4",
-      "size": {
-        "length": 5,
-        "width": 5,
-        "height": 2
-      },
-      "path_tokens": [
-        "overworld",
-        "very",
-        "common",
-        "plains",
-        "4"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248524
-    },
-    {
-      "structure_id": "trek:overworld/very_common/short_rock",
-      "namespace": "trek",
-      "path": "overworld/very_common/short_rock",
-      "size": {
-        "length": 3,
-        "width": 3,
-        "height": 3
-      },
-      "path_tokens": [
-        "overworld",
-        "very",
-        "common",
-        "short",
-        "rock"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248524
-    },
-    {
-      "structure_id": "trek:overworld/very_common/short_wide_1",
-      "namespace": "trek",
-      "path": "overworld/very_common/short_wide_1",
-      "size": {
-        "length": 3,
-        "width": 3,
-        "height": 3
-      },
-      "path_tokens": [
-        "overworld",
-        "very",
-        "common",
-        "short",
-        "wide",
-        "1"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248524
-    },
-    {
-      "structure_id": "trek:overworld/very_common/short_wide_2",
-      "namespace": "trek",
-      "path": "overworld/very_common/short_wide_2",
-      "size": {
-        "length": 3,
-        "width": 3,
-        "height": 3
-      },
-      "path_tokens": [
-        "overworld",
-        "very",
-        "common",
-        "short",
-        "wide",
-        "2"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248524
-    },
-    {
-      "structure_id": "trek:overworld/very_common/short_wide_3",
-      "namespace": "trek",
-      "path": "overworld/very_common/short_wide_3",
-      "size": {
-        "length": 3,
-        "width": 3,
-        "height": 4
-      },
-      "path_tokens": [
-        "overworld",
-        "very",
-        "common",
-        "short",
-        "wide",
-        "3"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248524
-    },
-    {
-      "structure_id": "trek:overworld/very_common/tall_thin_2",
-      "namespace": "trek",
-      "path": "overworld/very_common/tall_thin_2",
-      "size": {
-        "length": 3,
-        "width": 3,
-        "height": 4
-      },
-      "path_tokens": [
-        "overworld",
-        "very",
-        "common",
-        "tall",
-        "thin",
-        "2"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248524
-    },
-    {
-      "structure_id": "trek:overworld/very_common/tall_wide_3",
-      "namespace": "trek",
-      "path": "overworld/very_common/tall_wide_3",
-      "size": {
-        "length": 3,
-        "width": 3,
-        "height": 4
-      },
-      "path_tokens": [
-        "overworld",
-        "very",
-        "common",
-        "tall",
-        "wide",
-        "3"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248524
-    },
-    {
-      "structure_id": "trek:overworld/very_common/wide_tall_rock",
-      "namespace": "trek",
-      "path": "overworld/very_common/wide_tall_rock",
-      "size": {
-        "length": 3,
-        "width": 3,
-        "height": 4
-      },
-      "path_tokens": [
-        "overworld",
-        "very",
-        "common",
-        "wide",
-        "tall",
-        "rock"
-      ],
-      "has_jigsaw": false,
-      "jigsaw_facing": [],
-      "scan_time": 1773767248524
-    },
-    {
-      "structure_id": "trek:overworld/very_rare/coves/coves_1",
-      "namespace": "trek",
-      "path": "overworld/very_rare/coves/coves_1",
-      "size": {
-        "length": 96,
-        "width": 83,
-        "height": 109
-      },
-      "path_tokens": [
-        "overworld",
-        "very",
-        "rare",
-        "coves",
-        "1"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "south",
-        "west",
-        "north",
-        "east"
-      ],
-      "scan_time": 1773767248567
-    },
-    {
-      "structure_id": "trek:overworld/very_rare/coves/coves_2",
-      "namespace": "trek",
-      "path": "overworld/very_rare/coves/coves_2",
-      "size": {
-        "length": 91,
-        "width": 97,
-        "height": 104
-      },
-      "path_tokens": [
-        "overworld",
-        "very",
-        "rare",
-        "coves",
-        "2"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "east",
-        "west",
-        "north",
-        "south"
-      ],
-      "scan_time": 1773767248590
-    },
-    {
-      "structure_id": "trek:overworld/very_rare/coves/coves_3",
-      "namespace": "trek",
-      "path": "overworld/very_rare/coves/coves_3",
-      "size": {
-        "length": 90,
-        "width": 112,
-        "height": 94
-      },
-      "path_tokens": [
-        "overworld",
-        "very",
-        "rare",
-        "coves",
-        "3"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "west"
-      ],
-      "scan_time": 1773767248626
-    },
-    {
-      "structure_id": "trek:overworld/very_rare/coves/coves_4",
-      "namespace": "trek",
-      "path": "overworld/very_rare/coves/coves_4",
-      "size": {
-        "length": 82,
-        "width": 52,
-        "height": 82
-      },
-      "path_tokens": [
-        "overworld",
-        "very",
-        "rare",
-        "coves",
-        "4"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "north"
-      ],
-      "scan_time": 1773767248650
-    },
     {
       "structure_id": "trek:overworld/very_rare/coves/coves_base",
       "namespace": "trek",
@@ -3191,7 +32,41 @@
         "west",
         "north"
       ],
-      "scan_time": 1773767248650
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 2,
+            "y": 81,
+            "z": 2
+          },
+          "facing": "south"
+        },
+        {
+          "local_pos": {
+            "x": 2,
+            "y": 93,
+            "z": 0
+          },
+          "facing": "east"
+        },
+        {
+          "local_pos": {
+            "x": 0,
+            "y": 103,
+            "z": 2
+          },
+          "facing": "west"
+        },
+        {
+          "local_pos": {
+            "x": 0,
+            "y": 108,
+            "z": 0
+          },
+          "facing": "north"
+        }
+      ],
+      "scan_time": 1774447195116
     },
     {
       "structure_id": "trek:overworld/very_rare/farm_island/farm_island_1",
@@ -3214,7 +89,33 @@
       "jigsaw_facing": [
         "east"
       ],
-      "scan_time": 1773767248660
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 42,
+            "y": 57,
+            "z": 8
+          },
+          "facing": "east"
+        },
+        {
+          "local_pos": {
+            "x": 42,
+            "y": 57,
+            "z": 9
+          },
+          "facing": "east"
+        },
+        {
+          "local_pos": {
+            "x": 48,
+            "y": 64,
+            "z": 22
+          },
+          "facing": "east"
+        }
+      ],
+      "scan_time": 1774447195125
     },
     {
       "structure_id": "trek:overworld/very_rare/farm_island/farm_island_2",
@@ -3240,7 +141,73 @@
         "east",
         "south"
       ],
-      "scan_time": 1773767248666
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 0,
+            "y": 45,
+            "z": 45
+          },
+          "facing": "west"
+        },
+        {
+          "local_pos": {
+            "x": 39,
+            "y": 53,
+            "z": 45
+          },
+          "facing": "north"
+        },
+        {
+          "local_pos": {
+            "x": 56,
+            "y": 53,
+            "z": 6
+          },
+          "facing": "east"
+        },
+        {
+          "local_pos": {
+            "x": 40,
+            "y": 54,
+            "z": 23
+          },
+          "facing": "north"
+        },
+        {
+          "local_pos": {
+            "x": 47,
+            "y": 54,
+            "z": 14
+          },
+          "facing": "east"
+        },
+        {
+          "local_pos": {
+            "x": 52,
+            "y": 54,
+            "z": 33
+          },
+          "facing": "east"
+        },
+        {
+          "local_pos": {
+            "x": 52,
+            "y": 54,
+            "z": 56
+          },
+          "facing": "south"
+        },
+        {
+          "local_pos": {
+            "x": 66,
+            "y": 54,
+            "z": 29
+          },
+          "facing": "south"
+        }
+      ],
+      "scan_time": 1774447195134
     },
     {
       "structure_id": "trek:overworld/very_rare/farm_island/farm_island_3",
@@ -3265,7 +232,65 @@
         "south",
         "west"
       ],
-      "scan_time": 1773767248672
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 36,
+            "y": 43,
+            "z": 0
+          },
+          "facing": "north"
+        },
+        {
+          "local_pos": {
+            "x": 20,
+            "y": 52,
+            "z": 48
+          },
+          "facing": "south"
+        },
+        {
+          "local_pos": {
+            "x": 30,
+            "y": 52,
+            "z": 41
+          },
+          "facing": "south"
+        },
+        {
+          "local_pos": {
+            "x": 30,
+            "y": 52,
+            "z": 42
+          },
+          "facing": "west"
+        },
+        {
+          "local_pos": {
+            "x": 30,
+            "y": 57,
+            "z": 42
+          },
+          "facing": "west"
+        },
+        {
+          "local_pos": {
+            "x": 21,
+            "y": 58,
+            "z": 49
+          },
+          "facing": "south"
+        },
+        {
+          "local_pos": {
+            "x": 29,
+            "y": 62,
+            "z": 46
+          },
+          "facing": "north"
+        }
+      ],
+      "scan_time": 1774447195141
     },
     {
       "structure_id": "trek:overworld/very_rare/floating_farm_large/1",
@@ -3292,7 +317,57 @@
         "west",
         "east"
       ],
-      "scan_time": 1773767248681
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 25,
+            "y": 0,
+            "z": 20
+          },
+          "facing": "south"
+        },
+        {
+          "local_pos": {
+            "x": 26,
+            "y": 13,
+            "z": 0
+          },
+          "facing": "north"
+        },
+        {
+          "local_pos": {
+            "x": 0,
+            "y": 21,
+            "z": 30
+          },
+          "facing": "west"
+        },
+        {
+          "local_pos": {
+            "x": 24,
+            "y": 22,
+            "z": 46
+          },
+          "facing": "south"
+        },
+        {
+          "local_pos": {
+            "x": 46,
+            "y": 29,
+            "z": 25
+          },
+          "facing": "east"
+        },
+        {
+          "local_pos": {
+            "x": 25,
+            "y": 46,
+            "z": 21
+          },
+          "facing": "west"
+        }
+      ],
+      "scan_time": 1774447195154
     },
     {
       "structure_id": "trek:overworld/very_rare/floating_farm_large/1_1",
@@ -3318,7 +393,41 @@
         "south",
         "north"
       ],
-      "scan_time": 1773767248681
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 0,
+            "y": 5,
+            "z": 25
+          },
+          "facing": "west"
+        },
+        {
+          "local_pos": {
+            "x": 9,
+            "y": 9,
+            "z": 46
+          },
+          "facing": "south"
+        },
+        {
+          "local_pos": {
+            "x": 2,
+            "y": 17,
+            "z": 0
+          },
+          "facing": "north"
+        },
+        {
+          "local_pos": {
+            "x": 11,
+            "y": 22,
+            "z": 23
+          },
+          "facing": "north"
+        }
+      ],
+      "scan_time": 1774447195155
     },
     {
       "structure_id": "trek:overworld/very_rare/floating_farm_large/2",
@@ -3343,7 +452,25 @@
         "north",
         "east"
       ],
-      "scan_time": 1773767248688
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 24,
+            "y": 16,
+            "z": 0
+          },
+          "facing": "north"
+        },
+        {
+          "local_pos": {
+            "x": 26,
+            "y": 40,
+            "z": 30
+          },
+          "facing": "east"
+        }
+      ],
+      "scan_time": 1774447195161
     },
     {
       "structure_id": "trek:overworld/very_rare/floating_farm_large/2_1",
@@ -3369,7 +496,25 @@
         "north",
         "south"
       ],
-      "scan_time": 1773767248688
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 9,
+            "y": 7,
+            "z": 0
+          },
+          "facing": "north"
+        },
+        {
+          "local_pos": {
+            "x": 15,
+            "y": 20,
+            "z": 12
+          },
+          "facing": "south"
+        }
+      ],
+      "scan_time": 1774447195162
     },
     {
       "structure_id": "trek:overworld/very_rare/floating_farm_large/2_2",
@@ -3394,7 +539,25 @@
         "west",
         "east"
       ],
-      "scan_time": 1773767248689
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 0,
+            "y": 11,
+            "z": 13
+          },
+          "facing": "west"
+        },
+        {
+          "local_pos": {
+            "x": 12,
+            "y": 22,
+            "z": 14
+          },
+          "facing": "east"
+        }
+      ],
+      "scan_time": 1774447195164
     },
     {
       "structure_id": "trek:overworld/very_rare/floating_farm_large/3",
@@ -3420,7 +583,41 @@
         "north",
         "south"
       ],
-      "scan_time": 1773767248698
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 23,
+            "y": 0,
+            "z": 26
+          },
+          "facing": "east"
+        },
+        {
+          "local_pos": {
+            "x": 31,
+            "y": 15,
+            "z": 0
+          },
+          "facing": "north"
+        },
+        {
+          "local_pos": {
+            "x": 21,
+            "y": 31,
+            "z": 46
+          },
+          "facing": "south"
+        },
+        {
+          "local_pos": {
+            "x": 24,
+            "y": 46,
+            "z": 24
+          },
+          "facing": "south"
+        }
+      ],
+      "scan_time": 1774447195177
     },
     {
       "structure_id": "trek:overworld/very_rare/floating_farm_large/3_1",
@@ -3448,7 +645,41 @@
         "west",
         "south"
       ],
-      "scan_time": 1773767248700
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 21,
+            "y": 13,
+            "z": 0
+          },
+          "facing": "north"
+        },
+        {
+          "local_pos": {
+            "x": 46,
+            "y": 17,
+            "z": 13
+          },
+          "facing": "east"
+        },
+        {
+          "local_pos": {
+            "x": 0,
+            "y": 22,
+            "z": 2
+          },
+          "facing": "west"
+        },
+        {
+          "local_pos": {
+            "x": 22,
+            "y": 28,
+            "z": 15
+          },
+          "facing": "south"
+        }
+      ],
+      "scan_time": 1774447195180
     },
     {
       "structure_id": "trek:overworld/very_rare/floating_farm_large/4",
@@ -3474,7 +705,33 @@
         "north",
         "west"
       ],
-      "scan_time": 1773767248708
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 23,
+            "y": 0,
+            "z": 22
+          },
+          "facing": "south"
+        },
+        {
+          "local_pos": {
+            "x": 15,
+            "y": 3,
+            "z": 0
+          },
+          "facing": "north"
+        },
+        {
+          "local_pos": {
+            "x": 5,
+            "y": 46,
+            "z": 39
+          },
+          "facing": "west"
+        }
+      ],
+      "scan_time": 1774447195190
     },
     {
       "structure_id": "trek:overworld/very_rare/floating_farm_large/4_1",
@@ -3500,7 +757,25 @@
         "east",
         "south"
       ],
-      "scan_time": 1773767248708
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 38,
+            "y": 8,
+            "z": 2
+          },
+          "facing": "east"
+        },
+        {
+          "local_pos": {
+            "x": 17,
+            "y": 14,
+            "z": 5
+          },
+          "facing": "south"
+        }
+      ],
+      "scan_time": 1774447195191
     },
     {
       "structure_id": "trek:overworld/very_rare/floating_farm_large/4_2",
@@ -3526,7 +801,25 @@
         "north",
         "west"
       ],
-      "scan_time": 1773767248709
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 8,
+            "y": 20,
+            "z": 0
+          },
+          "facing": "north"
+        },
+        {
+          "local_pos": {
+            "x": 8,
+            "y": 30,
+            "z": 29
+          },
+          "facing": "west"
+        }
+      ],
+      "scan_time": 1774447195192
     },
     {
       "structure_id": "trek:overworld/very_rare/floating_farm_large/5",
@@ -3553,7 +846,57 @@
         "north",
         "west"
       ],
-      "scan_time": 1773767248720
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 25,
+            "y": 0,
+            "z": 18
+          },
+          "facing": "south"
+        },
+        {
+          "local_pos": {
+            "x": 46,
+            "y": 2,
+            "z": 25
+          },
+          "facing": "east"
+        },
+        {
+          "local_pos": {
+            "x": 15,
+            "y": 3,
+            "z": 46
+          },
+          "facing": "south"
+        },
+        {
+          "local_pos": {
+            "x": 17,
+            "y": 20,
+            "z": 0
+          },
+          "facing": "north"
+        },
+        {
+          "local_pos": {
+            "x": 0,
+            "y": 29,
+            "z": 27
+          },
+          "facing": "west"
+        },
+        {
+          "local_pos": {
+            "x": 22,
+            "y": 46,
+            "z": 22
+          },
+          "facing": "east"
+        }
+      ],
+      "scan_time": 1774447195208
     },
     {
       "structure_id": "trek:overworld/very_rare/floating_farm_large/5_1",
@@ -3580,7 +923,41 @@
         "south",
         "north"
       ],
-      "scan_time": 1773767248721
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 30,
+            "y": 13,
+            "z": 27
+          },
+          "facing": "east"
+        },
+        {
+          "local_pos": {
+            "x": 20,
+            "y": 20,
+            "z": 46
+          },
+          "facing": "south"
+        },
+        {
+          "local_pos": {
+            "x": 18,
+            "y": 21,
+            "z": 0
+          },
+          "facing": "north"
+        },
+        {
+          "local_pos": {
+            "x": 15,
+            "y": 30,
+            "z": 33
+          },
+          "facing": "south"
+        }
+      ],
+      "scan_time": 1774447195211
     },
     {
       "structure_id": "trek:overworld/very_rare/floating_farm_large/6",
@@ -3606,7 +983,33 @@
         "south",
         "north"
       ],
-      "scan_time": 1773767248728
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 23,
+            "y": 0,
+            "z": 23
+          },
+          "facing": "west"
+        },
+        {
+          "local_pos": {
+            "x": 17,
+            "y": 20,
+            "z": 46
+          },
+          "facing": "south"
+        },
+        {
+          "local_pos": {
+            "x": 27,
+            "y": 46,
+            "z": 0
+          },
+          "facing": "north"
+        }
+      ],
+      "scan_time": 1774447195221
     },
     {
       "structure_id": "trek:overworld/very_rare/floating_farm_large/6_1",
@@ -3632,7 +1035,25 @@
         "south",
         "west"
       ],
-      "scan_time": 1773767248728
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 12,
+            "y": 7,
+            "z": 40
+          },
+          "facing": "south"
+        },
+        {
+          "local_pos": {
+            "x": 11,
+            "y": 16,
+            "z": 16
+          },
+          "facing": "west"
+        }
+      ],
+      "scan_time": 1774447195222
     },
     {
       "structure_id": "trek:overworld/very_rare/floating_farm_large/6_2",
@@ -3658,7 +1079,25 @@
         "east",
         "north"
       ],
-      "scan_time": 1773767248728
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 40,
+            "y": 21,
+            "z": 6
+          },
+          "facing": "east"
+        },
+        {
+          "local_pos": {
+            "x": 19,
+            "y": 40,
+            "z": 9
+          },
+          "facing": "north"
+        }
+      ],
+      "scan_time": 1774447195222
     },
     {
       "structure_id": "trek:overworld/very_rare/floating_farm_large/7",
@@ -3684,7 +1123,41 @@
         "south",
         "west"
       ],
-      "scan_time": 1773767248741
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 29,
+            "y": 0,
+            "z": 19
+          },
+          "facing": "north"
+        },
+        {
+          "local_pos": {
+            "x": 25,
+            "y": 25,
+            "z": 46
+          },
+          "facing": "south"
+        },
+        {
+          "local_pos": {
+            "x": 27,
+            "y": 27,
+            "z": 0
+          },
+          "facing": "north"
+        },
+        {
+          "local_pos": {
+            "x": 22,
+            "y": 46,
+            "z": 22
+          },
+          "facing": "west"
+        }
+      ],
+      "scan_time": 1774447195238
     },
     {
       "structure_id": "trek:overworld/very_rare/floating_farm_large/7_1",
@@ -3712,7 +1185,49 @@
         "south",
         "east"
       ],
-      "scan_time": 1773767248744
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 8,
+            "y": 0,
+            "z": 25
+          },
+          "facing": "north"
+        },
+        {
+          "local_pos": {
+            "x": 0,
+            "y": 27,
+            "z": 8
+          },
+          "facing": "west"
+        },
+        {
+          "local_pos": {
+            "x": 27,
+            "y": 27,
+            "z": 26
+          },
+          "facing": "south"
+        },
+        {
+          "local_pos": {
+            "x": 46,
+            "y": 33,
+            "z": 10
+          },
+          "facing": "east"
+        },
+        {
+          "local_pos": {
+            "x": 27,
+            "y": 46,
+            "z": 2
+          },
+          "facing": "north"
+        }
+      ],
+      "scan_time": 1774447195241
     },
     {
       "structure_id": "trek:overworld/very_rare/floating_farm_large/8",
@@ -3738,7 +1253,33 @@
         "south",
         "north"
       ],
-      "scan_time": 1773767248751
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 22,
+            "y": 0,
+            "z": 22
+          },
+          "facing": "east"
+        },
+        {
+          "local_pos": {
+            "x": 26,
+            "y": 13,
+            "z": 46
+          },
+          "facing": "south"
+        },
+        {
+          "local_pos": {
+            "x": 44,
+            "y": 46,
+            "z": 0
+          },
+          "facing": "north"
+        }
+      ],
+      "scan_time": 1774447195250
     },
     {
       "structure_id": "trek:overworld/very_rare/floating_farm_large/8_1",
@@ -3764,7 +1305,25 @@
         "west",
         "north"
       ],
-      "scan_time": 1773767248752
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 0,
+            "y": 9,
+            "z": 6
+          },
+          "facing": "west"
+        },
+        {
+          "local_pos": {
+            "x": 27,
+            "y": 22,
+            "z": 4
+          },
+          "facing": "north"
+        }
+      ],
+      "scan_time": 1774447195251
     },
     {
       "structure_id": "trek:overworld/very_rare/floating_farm_large/8_2",
@@ -3790,7 +1349,25 @@
         "south",
         "north"
       ],
-      "scan_time": 1773767248752
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 2,
+            "y": 5,
+            "z": 44
+          },
+          "facing": "south"
+        },
+        {
+          "local_pos": {
+            "x": 2,
+            "y": 10,
+            "z": 17
+          },
+          "facing": "north"
+        }
+      ],
+      "scan_time": 1774447195251
     },
     {
       "structure_id": "trek:overworld/very_rare/floating_farm_large/centre",
@@ -3817,7 +1394,57 @@
         "south",
         "north"
       ],
-      "scan_time": 1773767248766
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 22,
+            "y": 0,
+            "z": 24
+          },
+          "facing": "east"
+        },
+        {
+          "local_pos": {
+            "x": 0,
+            "y": 2,
+            "z": 25
+          },
+          "facing": "west"
+        },
+        {
+          "local_pos": {
+            "x": 31,
+            "y": 15,
+            "z": 46
+          },
+          "facing": "south"
+        },
+        {
+          "local_pos": {
+            "x": 46,
+            "y": 21,
+            "z": 30
+          },
+          "facing": "east"
+        },
+        {
+          "local_pos": {
+            "x": 25,
+            "y": 25,
+            "z": 0
+          },
+          "facing": "north"
+        },
+        {
+          "local_pos": {
+            "x": 21,
+            "y": 46,
+            "z": 20
+          },
+          "facing": "north"
+        }
+      ],
+      "scan_time": 1774447195269
     },
     {
       "structure_id": "trek:overworld/very_rare/floating_farm_large/centre_down",
@@ -3842,7 +1469,17 @@
       "jigsaw_facing": [
         "east"
       ],
-      "scan_time": 1773767248770
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 22,
+            "y": 46,
+            "z": 24
+          },
+          "facing": "east"
+        }
+      ],
+      "scan_time": 1774447195275
     },
     {
       "structure_id": "trek:overworld/very_rare/floating_farm_large/centre_up",
@@ -3869,7 +1506,57 @@
         "east",
         "west"
       ],
-      "scan_time": 1773767248776
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 21,
+            "y": 0,
+            "z": 20
+          },
+          "facing": "north"
+        },
+        {
+          "local_pos": {
+            "x": 38,
+            "y": 12,
+            "z": 33
+          },
+          "facing": "east"
+        },
+        {
+          "local_pos": {
+            "x": 34,
+            "y": 22,
+            "z": 0
+          },
+          "facing": "west"
+        },
+        {
+          "local_pos": {
+            "x": 34,
+            "y": 22,
+            "z": 2
+          },
+          "facing": "north"
+        },
+        {
+          "local_pos": {
+            "x": 28,
+            "y": 29,
+            "z": 2
+          },
+          "facing": "north"
+        },
+        {
+          "local_pos": {
+            "x": 27,
+            "y": 46,
+            "z": 30
+          },
+          "facing": "east"
+        }
+      ],
+      "scan_time": 1774447195280
     },
     {
       "structure_id": "trek:overworld/very_rare/floating_farm_large/centre_up_up",
@@ -3894,7 +1581,17 @@
       "jigsaw_facing": [
         "east"
       ],
-      "scan_time": 1773767248776
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 27,
+            "y": 0,
+            "z": 30
+          },
+          "facing": "east"
+        }
+      ],
+      "scan_time": 1774447195280
     },
     {
       "structure_id": "trek:overworld/very_rare/floating_farm_large/down_1",
@@ -3919,7 +1616,17 @@
       "jigsaw_facing": [
         "south"
       ],
-      "scan_time": 1773767248777
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 25,
+            "y": 46,
+            "z": 20
+          },
+          "facing": "south"
+        }
+      ],
+      "scan_time": 1774447195282
     },
     {
       "structure_id": "trek:overworld/very_rare/floating_farm_large/down_3",
@@ -3944,7 +1651,17 @@
       "jigsaw_facing": [
         "east"
       ],
-      "scan_time": 1773767248777
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 23,
+            "y": 16,
+            "z": 26
+          },
+          "facing": "east"
+        }
+      ],
+      "scan_time": 1774447195282
     },
     {
       "structure_id": "trek:overworld/very_rare/floating_farm_large/down_4",
@@ -3969,7 +1686,17 @@
       "jigsaw_facing": [
         "south"
       ],
-      "scan_time": 1773767248777
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 23,
+            "y": 12,
+            "z": 22
+          },
+          "facing": "south"
+        }
+      ],
+      "scan_time": 1774447195282
     },
     {
       "structure_id": "trek:overworld/very_rare/floating_farm_large/down_5",
@@ -3994,7 +1721,17 @@
       "jigsaw_facing": [
         "south"
       ],
-      "scan_time": 1773767248777
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 25,
+            "y": 10,
+            "z": 18
+          },
+          "facing": "south"
+        }
+      ],
+      "scan_time": 1774447195282
     },
     {
       "structure_id": "trek:overworld/very_rare/floating_farm_large/down_6",
@@ -4019,7 +1756,17 @@
       "jigsaw_facing": [
         "west"
       ],
-      "scan_time": 1773767248777
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 23,
+            "y": 14,
+            "z": 23
+          },
+          "facing": "west"
+        }
+      ],
+      "scan_time": 1774447195282
     },
     {
       "structure_id": "trek:overworld/very_rare/floating_farm_large/down_7",
@@ -4044,7 +1791,17 @@
       "jigsaw_facing": [
         "north"
       ],
-      "scan_time": 1773767248780
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 29,
+            "y": 46,
+            "z": 19
+          },
+          "facing": "north"
+        }
+      ],
+      "scan_time": 1774447195286
     },
     {
       "structure_id": "trek:overworld/very_rare/floating_farm_large/down_7_1",
@@ -4070,7 +1827,17 @@
       "jigsaw_facing": [
         "north"
       ],
-      "scan_time": 1773767248780
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 4,
+            "y": 2,
+            "z": 1
+          },
+          "facing": "north"
+        }
+      ],
+      "scan_time": 1774447195286
     },
     {
       "structure_id": "trek:overworld/very_rare/floating_farm_large/down_8",
@@ -4095,7 +1862,17 @@
       "jigsaw_facing": [
         "east"
       ],
-      "scan_time": 1773767248780
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 22,
+            "y": 26,
+            "z": 22
+          },
+          "facing": "east"
+        }
+      ],
+      "scan_time": 1774447195286
     },
     {
       "structure_id": "trek:overworld/very_rare/floating_farm_large/up_1",
@@ -4122,7 +1899,57 @@
         "south",
         "north"
       ],
-      "scan_time": 1773767248785
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 25,
+            "y": 0,
+            "z": 21
+          },
+          "facing": "west"
+        },
+        {
+          "local_pos": {
+            "x": 12,
+            "y": 12,
+            "z": 46
+          },
+          "facing": "south"
+        },
+        {
+          "local_pos": {
+            "x": 44,
+            "y": 12,
+            "z": 36
+          },
+          "facing": "north"
+        },
+        {
+          "local_pos": {
+            "x": 3,
+            "y": 13,
+            "z": 36
+          },
+          "facing": "south"
+        },
+        {
+          "local_pos": {
+            "x": 15,
+            "y": 13,
+            "z": 37
+          },
+          "facing": "south"
+        },
+        {
+          "local_pos": {
+            "x": 15,
+            "y": 13,
+            "z": 40
+          },
+          "facing": "north"
+        }
+      ],
+      "scan_time": 1774447195292
     },
     {
       "structure_id": "trek:overworld/very_rare/floating_farm_large/up_1_1",
@@ -4148,7 +1975,25 @@
         "north",
         "east"
       ],
-      "scan_time": 1773767248786
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 11,
+            "y": 0,
+            "z": 23
+          },
+          "facing": "north"
+        },
+        {
+          "local_pos": {
+            "x": 14,
+            "y": 12,
+            "z": 40
+          },
+          "facing": "east"
+        }
+      ],
+      "scan_time": 1774447195295
     },
     {
       "structure_id": "trek:overworld/very_rare/floating_farm_large/up_2",
@@ -4176,7 +2021,73 @@
         "south",
         "west"
       ],
-      "scan_time": 1773767248790
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 26,
+            "y": 0,
+            "z": 30
+          },
+          "facing": "east"
+        },
+        {
+          "local_pos": {
+            "x": 12,
+            "y": 10,
+            "z": 28
+          },
+          "facing": "north"
+        },
+        {
+          "local_pos": {
+            "x": 25,
+            "y": 10,
+            "z": 20
+          },
+          "facing": "south"
+        },
+        {
+          "local_pos": {
+            "x": 7,
+            "y": 11,
+            "z": 20
+          },
+          "facing": "east"
+        },
+        {
+          "local_pos": {
+            "x": 18,
+            "y": 11,
+            "z": 40
+          },
+          "facing": "south"
+        },
+        {
+          "local_pos": {
+            "x": 20,
+            "y": 11,
+            "z": 7
+          },
+          "facing": "west"
+        },
+        {
+          "local_pos": {
+            "x": 7,
+            "y": 12,
+            "z": 11
+          },
+          "facing": "east"
+        },
+        {
+          "local_pos": {
+            "x": 42,
+            "y": 12,
+            "z": 18
+          },
+          "facing": "east"
+        }
+      ],
+      "scan_time": 1774447195299
     },
     {
       "structure_id": "trek:overworld/very_rare/floating_farm_large/up_2_1",
@@ -4202,7 +2113,17 @@
       "jigsaw_facing": [
         "south"
       ],
-      "scan_time": 1773767248790
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 15,
+            "y": 0,
+            "z": 12
+          },
+          "facing": "south"
+        }
+      ],
+      "scan_time": 1774447195300
     },
     {
       "structure_id": "trek:overworld/very_rare/floating_farm_large/up_2_2",
@@ -4227,7 +2148,17 @@
       "jigsaw_facing": [
         "east"
       ],
-      "scan_time": 1773767248791
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 12,
+            "y": 0,
+            "z": 14
+          },
+          "facing": "east"
+        }
+      ],
+      "scan_time": 1774447195301
     },
     {
       "structure_id": "trek:overworld/very_rare/floating_farm_large/up_3",
@@ -4254,7 +2185,89 @@
         "west",
         "east"
       ],
-      "scan_time": 1773767248796
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 24,
+            "y": 0,
+            "z": 24
+          },
+          "facing": "south"
+        },
+        {
+          "local_pos": {
+            "x": 19,
+            "y": 11,
+            "z": 32
+          },
+          "facing": "west"
+        },
+        {
+          "local_pos": {
+            "x": 2,
+            "y": 12,
+            "z": 6
+          },
+          "facing": "east"
+        },
+        {
+          "local_pos": {
+            "x": 2,
+            "y": 12,
+            "z": 23
+          },
+          "facing": "east"
+        },
+        {
+          "local_pos": {
+            "x": 9,
+            "y": 12,
+            "z": 13
+          },
+          "facing": "south"
+        },
+        {
+          "local_pos": {
+            "x": 36,
+            "y": 12,
+            "z": 29
+          },
+          "facing": "west"
+        },
+        {
+          "local_pos": {
+            "x": 16,
+            "y": 13,
+            "z": 17
+          },
+          "facing": "south"
+        },
+        {
+          "local_pos": {
+            "x": 26,
+            "y": 14,
+            "z": 24
+          },
+          "facing": "south"
+        },
+        {
+          "local_pos": {
+            "x": 42,
+            "y": 14,
+            "z": 14
+          },
+          "facing": "south"
+        },
+        {
+          "local_pos": {
+            "x": 44,
+            "y": 14,
+            "z": 3
+          },
+          "facing": "east"
+        }
+      ],
+      "scan_time": 1774447195308
     },
     {
       "structure_id": "trek:overworld/very_rare/floating_farm_large/up_3_1",
@@ -4280,7 +2293,25 @@
       "jigsaw_facing": [
         "south"
       ],
-      "scan_time": 1773767248798
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 22,
+            "y": 0,
+            "z": 15
+          },
+          "facing": "south"
+        },
+        {
+          "local_pos": {
+            "x": 27,
+            "y": 12,
+            "z": 9
+          },
+          "facing": "south"
+        }
+      ],
+      "scan_time": 1774447195311
     },
     {
       "structure_id": "trek:overworld/very_rare/floating_farm_large/up_4",
@@ -4307,7 +2338,33 @@
         "south",
         "north"
       ],
-      "scan_time": 1773767248803
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 5,
+            "y": 0,
+            "z": 39
+          },
+          "facing": "west"
+        },
+        {
+          "local_pos": {
+            "x": 34,
+            "y": 13,
+            "z": 39
+          },
+          "facing": "south"
+        },
+        {
+          "local_pos": {
+            "x": 1,
+            "y": 15,
+            "z": 4
+          },
+          "facing": "north"
+        }
+      ],
+      "scan_time": 1774447195318
     },
     {
       "structure_id": "trek:overworld/very_rare/floating_farm_large/up_4_1",
@@ -4333,7 +2390,17 @@
       "jigsaw_facing": [
         "south"
       ],
-      "scan_time": 1773767248803
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 17,
+            "y": 0,
+            "z": 5
+          },
+          "facing": "south"
+        }
+      ],
+      "scan_time": 1774447195318
     },
     {
       "structure_id": "trek:overworld/very_rare/floating_farm_large/up_4_2",
@@ -4360,7 +2427,33 @@
         "west",
         "east"
       ],
-      "scan_time": 1773767248804
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 10,
+            "y": 0,
+            "z": 29
+          },
+          "facing": "west"
+        },
+        {
+          "local_pos": {
+            "x": 11,
+            "y": 15,
+            "z": 8
+          },
+          "facing": "east"
+        },
+        {
+          "local_pos": {
+            "x": 11,
+            "y": 15,
+            "z": 16
+          },
+          "facing": "east"
+        }
+      ],
+      "scan_time": 1774447195320
     },
     {
       "structure_id": "trek:overworld/very_rare/floating_farm_large/up_5",
@@ -4387,7 +2480,57 @@
         "north",
         "west"
       ],
-      "scan_time": 1773767248809
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 22,
+            "y": 0,
+            "z": 22
+          },
+          "facing": "east"
+        },
+        {
+          "local_pos": {
+            "x": 16,
+            "y": 12,
+            "z": 31
+          },
+          "facing": "north"
+        },
+        {
+          "local_pos": {
+            "x": 21,
+            "y": 12,
+            "z": 23
+          },
+          "facing": "east"
+        },
+        {
+          "local_pos": {
+            "x": 34,
+            "y": 12,
+            "z": 35
+          },
+          "facing": "east"
+        },
+        {
+          "local_pos": {
+            "x": 8,
+            "y": 14,
+            "z": 38
+          },
+          "facing": "north"
+        },
+        {
+          "local_pos": {
+            "x": 32,
+            "y": 19,
+            "z": 1
+          },
+          "facing": "west"
+        }
+      ],
+      "scan_time": 1774447195325
     },
     {
       "structure_id": "trek:overworld/very_rare/floating_farm_large/up_5_1",
@@ -4413,7 +2556,17 @@
       "jigsaw_facing": [
         "south"
       ],
-      "scan_time": 1773767248811
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 15,
+            "y": 0,
+            "z": 33
+          },
+          "facing": "south"
+        }
+      ],
+      "scan_time": 1774447195330
     },
     {
       "structure_id": "trek:overworld/very_rare/floating_farm_large/up_6",
@@ -4440,7 +2593,57 @@
         "south",
         "west"
       ],
-      "scan_time": 1773767248817
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 27,
+            "y": 0,
+            "z": 0
+          },
+          "facing": "north"
+        },
+        {
+          "local_pos": {
+            "x": 32,
+            "y": 18,
+            "z": 42
+          },
+          "facing": "north"
+        },
+        {
+          "local_pos": {
+            "x": 17,
+            "y": 24,
+            "z": 8
+          },
+          "facing": "south"
+        },
+        {
+          "local_pos": {
+            "x": 20,
+            "y": 24,
+            "z": 11
+          },
+          "facing": "west"
+        },
+        {
+          "local_pos": {
+            "x": 14,
+            "y": 29,
+            "z": 15
+          },
+          "facing": "north"
+        },
+        {
+          "local_pos": {
+            "x": 9,
+            "y": 30,
+            "z": 17
+          },
+          "facing": "south"
+        }
+      ],
+      "scan_time": 1774447195340
     },
     {
       "structure_id": "trek:overworld/very_rare/floating_farm_large/up_6_1",
@@ -4466,7 +2669,17 @@
       "jigsaw_facing": [
         "west"
       ],
-      "scan_time": 1773767248818
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 15,
+            "y": 0,
+            "z": 22
+          },
+          "facing": "west"
+        }
+      ],
+      "scan_time": 1774447195342
     },
     {
       "structure_id": "trek:overworld/very_rare/floating_farm_large/up_6_2",
@@ -4493,7 +2706,41 @@
         "north",
         "south"
       ],
-      "scan_time": 1773767248819
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 23,
+            "y": 0,
+            "z": 17
+          },
+          "facing": "north"
+        },
+        {
+          "local_pos": {
+            "x": 42,
+            "y": 17,
+            "z": 25
+          },
+          "facing": "south"
+        },
+        {
+          "local_pos": {
+            "x": 43,
+            "y": 17,
+            "z": 24
+          },
+          "facing": "south"
+        },
+        {
+          "local_pos": {
+            "x": 43,
+            "y": 17,
+            "z": 25
+          },
+          "facing": "south"
+        }
+      ],
+      "scan_time": 1774447195344
     },
     {
       "structure_id": "trek:overworld/very_rare/floating_farm_large/up_7",
@@ -4519,7 +2766,25 @@
         "west",
         "south"
       ],
-      "scan_time": 1773767248827
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 22,
+            "y": 0,
+            "z": 22
+          },
+          "facing": "west"
+        },
+        {
+          "local_pos": {
+            "x": 23,
+            "y": 46,
+            "z": 24
+          },
+          "facing": "south"
+        }
+      ],
+      "scan_time": 1774447195354
     },
     {
       "structure_id": "trek:overworld/very_rare/floating_farm_large/up_7_1",
@@ -4547,7 +2812,73 @@
         "south",
         "east"
       ],
-      "scan_time": 1773767248830
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 27,
+            "y": 0,
+            "z": 6
+          },
+          "facing": "north"
+        },
+        {
+          "local_pos": {
+            "x": 1,
+            "y": 17,
+            "z": 22
+          },
+          "facing": "south"
+        },
+        {
+          "local_pos": {
+            "x": 2,
+            "y": 17,
+            "z": 22
+          },
+          "facing": "south"
+        },
+        {
+          "local_pos": {
+            "x": 2,
+            "y": 17,
+            "z": 23
+          },
+          "facing": "east"
+        },
+        {
+          "local_pos": {
+            "x": 3,
+            "y": 17,
+            "z": 22
+          },
+          "facing": "south"
+        },
+        {
+          "local_pos": {
+            "x": 3,
+            "y": 17,
+            "z": 23
+          },
+          "facing": "south"
+        },
+        {
+          "local_pos": {
+            "x": 7,
+            "y": 17,
+            "z": 22
+          },
+          "facing": "east"
+        },
+        {
+          "local_pos": {
+            "x": 8,
+            "y": 17,
+            "z": 22
+          },
+          "facing": "south"
+        }
+      ],
+      "scan_time": 1774447195357
     },
     {
       "structure_id": "trek:overworld/very_rare/floating_farm_large/up_8",
@@ -4573,7 +2904,25 @@
         "north",
         "east"
       ],
-      "scan_time": 1773767248837
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 44,
+            "y": 0,
+            "z": 0
+          },
+          "facing": "north"
+        },
+        {
+          "local_pos": {
+            "x": 23,
+            "y": 46,
+            "z": 19
+          },
+          "facing": "east"
+        }
+      ],
+      "scan_time": 1774447195365
     },
     {
       "structure_id": "trek:overworld/very_rare/floating_farm_large/up_8_1",
@@ -4599,7 +2948,17 @@
       "jigsaw_facing": [
         "north"
       ],
-      "scan_time": 1773767248839
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 27,
+            "y": 0,
+            "z": 6
+          },
+          "facing": "north"
+        }
+      ],
+      "scan_time": 1774447195367
     },
     {
       "structure_id": "trek:overworld/very_rare/floating_farm_large/up_8_2",
@@ -4625,7 +2984,17 @@
       "jigsaw_facing": [
         "north"
       ],
-      "scan_time": 1773767248839
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 2,
+            "y": 0,
+            "z": 19
+          },
+          "facing": "north"
+        }
+      ],
+      "scan_time": 1774447195368
     },
     {
       "structure_id": "trek:overworld/very_rare/floating_farm_large/up_up_7",
@@ -4650,7 +3019,17 @@
       "jigsaw_facing": [
         "south"
       ],
-      "scan_time": 1773767248839
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 23,
+            "y": 0,
+            "z": 24
+          },
+          "facing": "south"
+        }
+      ],
+      "scan_time": 1774447195368
     },
     {
       "structure_id": "trek:overworld/very_rare/floating_farm_large/up_up_8",
@@ -4675,126 +3054,123 @@
       "jigsaw_facing": [
         "east"
       ],
-      "scan_time": 1773767248839
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 23,
+            "y": 0,
+            "z": 19
+          },
+          "facing": "east"
+        }
+      ],
+      "scan_time": 1774447195368
     },
     {
-      "structure_id": "kaisyn:outpost/camps/beach/base_plate",
-      "namespace": "kaisyn",
-      "path": "outpost/camps/beach/base_plate",
+      "structure_id": "trek:village/vanilla_files/village/desert/houses/desert_butcher_shop_1",
+      "namespace": "trek",
+      "path": "village/vanilla_files/village/desert/houses/desert_butcher_shop_1",
       "size": {
-        "length": 14,
-        "width": 28,
-        "height": 12
+        "length": 8,
+        "width": 8,
+        "height": 5
       },
       "path_tokens": [
-        "outpost",
-        "camps",
-        "beach",
-        "base",
-        "plate"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "west",
-        "south",
-        "east",
-        "north"
-      ],
-      "scan_time": 1773767248948
-    },
-    {
-      "structure_id": "kaisyn:outpost/camps/snowy_beach/base_plate",
-      "namespace": "kaisyn",
-      "path": "outpost/camps/snowy_beach/base_plate",
-      "size": {
-        "length": 14,
-        "width": 28,
-        "height": 12
-      },
-      "path_tokens": [
-        "outpost",
-        "camps",
-        "snowy",
-        "beach",
-        "base",
-        "plate"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "west",
-        "south",
-        "east",
-        "north"
-      ],
-      "scan_time": 1773767248951
-    },
-    {
-      "structure_id": "kaisyn:ships/village_ocean/pieces/mothership/mothership_1",
-      "namespace": "kaisyn",
-      "path": "ships/village_ocean/pieces/mothership/mothership_1",
-      "size": {
-        "length": 17,
-        "width": 34,
-        "height": 38
-      },
-      "path_tokens": [
-        "ships",
         "village",
-        "ocean",
-        "pieces",
-        "mothership",
+        "vanilla",
+        "files",
+        "desert",
+        "houses",
+        "butcher",
+        "shop",
         "1"
       ],
       "has_jigsaw": true,
       "jigsaw_facing": [
-        "south",
-        "east",
-        "north",
-        "west"
+        "west",
+        "north"
       ],
-      "scan_time": 1773767249054
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 0,
+            "y": 0,
+            "z": 3
+          },
+          "facing": "west"
+        },
+        {
+          "local_pos": {
+            "x": 6,
+            "y": 0,
+            "z": 6
+          },
+          "facing": "north"
+        }
+      ],
+      "scan_time": 1774447195449
     },
     {
-      "structure_id": "kaisyn:ships/village_ocean/pieces/small_ship/small_ship_1",
-      "namespace": "kaisyn",
-      "path": "ships/village_ocean/pieces/small_ship/small_ship_1",
+      "structure_id": "trek:village/vanilla_files/village/plains/houses/plains_butcher_shop_1",
+      "namespace": "trek",
+      "path": "village/vanilla_files/village/plains/houses/plains_butcher_shop_1",
       "size": {
-        "length": 6,
-        "width": 10,
-        "height": 10
+        "length": 11,
+        "width": 12,
+        "height": 8
       },
       "path_tokens": [
-        "ships",
         "village",
-        "ocean",
-        "pieces",
-        "small",
-        "ship",
+        "vanilla",
+        "files",
+        "plains",
+        "houses",
+        "butcher",
+        "shop",
         "1"
       ],
       "has_jigsaw": true,
       "jigsaw_facing": [
-        "south",
+        "west",
         "north"
       ],
-      "scan_time": 1773767249054
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 0,
+            "y": 0,
+            "z": 3
+          },
+          "facing": "west"
+        },
+        {
+          "local_pos": {
+            "x": 6,
+            "y": 0,
+            "z": 9
+          },
+          "facing": "north"
+        }
+      ],
+      "scan_time": 1774447195456
     },
     {
-      "structure_id": "kaisyn:ships/village_ocean/pieces/small_ship/small_ship_2",
-      "namespace": "kaisyn",
-      "path": "ships/village_ocean/pieces/small_ship/small_ship_2",
+      "structure_id": "trek:village/vanilla_files/village/plains/houses/plains_butcher_shop_2",
+      "namespace": "trek",
+      "path": "village/vanilla_files/village/plains/houses/plains_butcher_shop_2",
       "size": {
-        "length": 3,
+        "length": 15,
         "width": 7,
-        "height": 6
+        "height": 12
       },
       "path_tokens": [
-        "ships",
         "village",
-        "ocean",
-        "pieces",
-        "small",
-        "ship",
+        "vanilla",
+        "files",
+        "plains",
+        "houses",
+        "butcher",
+        "shop",
         "2"
       ],
       "has_jigsaw": true,
@@ -4802,180 +3178,353 @@
         "north",
         "west"
       ],
-      "scan_time": 1773767249054
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "facing": "north"
+        },
+        {
+          "local_pos": {
+            "x": 5,
+            "y": 0,
+            "z": 6
+          },
+          "facing": "north"
+        },
+        {
+          "local_pos": {
+            "x": 12,
+            "y": 0,
+            "z": 3
+          },
+          "facing": "north"
+        },
+        {
+          "local_pos": {
+            "x": 13,
+            "y": 0,
+            "z": 6
+          },
+          "facing": "north"
+        },
+        {
+          "local_pos": {
+            "x": 14,
+            "y": 0,
+            "z": 0
+          },
+          "facing": "north"
+        },
+        {
+          "local_pos": {
+            "x": 0,
+            "y": 1,
+            "z": 3
+          },
+          "facing": "west"
+        }
+      ],
+      "scan_time": 1774447195456
     },
     {
-      "structure_id": "kaisyn:ships/village_ocean/pieces/small_ship/small_ship_3",
-      "namespace": "kaisyn",
-      "path": "ships/village_ocean/pieces/small_ship/small_ship_3",
+      "structure_id": "trek:village/vanilla_files/village/plains/zombie/houses/plains_butcher_shop_2",
+      "namespace": "trek",
+      "path": "village/vanilla_files/village/plains/zombie/houses/plains_butcher_shop_2",
       "size": {
-        "length": 6,
-        "width": 15,
-        "height": 13
-      },
-      "path_tokens": [
-        "ships",
-        "village",
-        "ocean",
-        "pieces",
-        "small",
-        "ship",
-        "3"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "south",
-        "west"
-      ],
-      "scan_time": 1773767249054
-    },
-    {
-      "structure_id": "kaisyn:ships/village_ocean/pieces/small_ship/small_ship_4",
-      "namespace": "kaisyn",
-      "path": "ships/village_ocean/pieces/small_ship/small_ship_4",
-      "size": {
-        "length": 7,
-        "width": 19,
-        "height": 22
-      },
-      "path_tokens": [
-        "ships",
-        "village",
-        "ocean",
-        "pieces",
-        "small",
-        "ship",
-        "4"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "south",
-        "west"
-      ],
-      "scan_time": 1773767249055
-    },
-    {
-      "structure_id": "kaisyn:village/beach_lighthouse/side/beach_giant_cross_1",
-      "namespace": "kaisyn",
-      "path": "village/beach_lighthouse/side/beach_giant_cross_1",
-      "size": {
-        "length": 3,
-        "width": 4,
+        "length": 15,
+        "width": 7,
         "height": 12
       },
       "path_tokens": [
         "village",
-        "beach",
-        "lighthouse",
-        "side",
-        "giant",
-        "cross",
-        "1"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "north"
-      ],
-      "scan_time": 1773767249059
-    },
-    {
-      "structure_id": "kaisyn:village/beach_lighthouse/side/beach_main_house_1",
-      "namespace": "kaisyn",
-      "path": "village/beach_lighthouse/side/beach_main_house_1",
-      "size": {
-        "length": 9,
-        "width": 14,
-        "height": 10
-      },
-      "path_tokens": [
-        "village",
-        "beach",
-        "lighthouse",
-        "side",
-        "main",
-        "house",
-        "1"
+        "vanilla",
+        "files",
+        "plains",
+        "zombie",
+        "houses",
+        "butcher",
+        "shop",
+        "2"
       ],
       "has_jigsaw": true,
       "jigsaw_facing": [
         "north",
-        "east"
+        "west"
       ],
-      "scan_time": 1773767249059
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 5,
+            "y": 0,
+            "z": 6
+          },
+          "facing": "north"
+        },
+        {
+          "local_pos": {
+            "x": 11,
+            "y": 0,
+            "z": 6
+          },
+          "facing": "north"
+        },
+        {
+          "local_pos": {
+            "x": 12,
+            "y": 0,
+            "z": 3
+          },
+          "facing": "north"
+        },
+        {
+          "local_pos": {
+            "x": 13,
+            "y": 0,
+            "z": 6
+          },
+          "facing": "north"
+        },
+        {
+          "local_pos": {
+            "x": 14,
+            "y": 0,
+            "z": 0
+          },
+          "facing": "north"
+        },
+        {
+          "local_pos": {
+            "x": 0,
+            "y": 1,
+            "z": 3
+          },
+          "facing": "west"
+        }
+      ],
+      "scan_time": 1774447195461
     },
     {
-      "structure_id": "kaisyn:village/beach_lighthouse/side/beach_outdoor_shack_1",
-      "namespace": "kaisyn",
-      "path": "village/beach_lighthouse/side/beach_outdoor_shack_1",
+      "structure_id": "trek:village/vanilla_files/village/savanna/houses/savanna_butchers_shop_1",
+      "namespace": "trek",
+      "path": "village/vanilla_files/village/savanna/houses/savanna_butchers_shop_1",
       "size": {
-        "length": 7,
-        "width": 9,
-        "height": 5
+        "length": 11,
+        "width": 11,
+        "height": 8
       },
       "path_tokens": [
         "village",
-        "beach",
-        "lighthouse",
-        "side",
-        "outdoor",
-        "shack",
-        "1"
-      ],
-      "has_jigsaw": true,
-      "jigsaw_facing": [
-        "south"
-      ],
-      "scan_time": 1773767249059
-    },
-    {
-      "structure_id": "kaisyn:village/beach_lighthouse/town_centers/beach_meeting_point_1",
-      "namespace": "kaisyn",
-      "path": "village/beach_lighthouse/town_centers/beach_meeting_point_1",
-      "size": {
-        "length": 25,
-        "width": 29,
-        "height": 35
-      },
-      "path_tokens": [
-        "village",
-        "beach",
-        "lighthouse",
-        "town",
-        "centers",
-        "meeting",
-        "point",
+        "vanilla",
+        "files",
+        "savanna",
+        "houses",
+        "butchers",
+        "shop",
         "1"
       ],
       "has_jigsaw": true,
       "jigsaw_facing": [
         "west",
-        "south",
-        "north",
-        "east"
+        "north"
       ],
-      "scan_time": 1773767249064
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 0,
+            "y": 0,
+            "z": 6
+          },
+          "facing": "west"
+        },
+        {
+          "local_pos": {
+            "x": 8,
+            "y": 0,
+            "z": 5
+          },
+          "facing": "north"
+        }
+      ],
+      "scan_time": 1774447195465
     },
     {
-      "structure_id": "kaisyn:village/beach_lighthouse/villagers/lighthouse_master",
-      "namespace": "kaisyn",
-      "path": "village/beach_lighthouse/villagers/lighthouse_master",
+      "structure_id": "trek:village/vanilla_files/village/savanna/houses/savanna_butchers_shop_2",
+      "namespace": "trek",
+      "path": "village/vanilla_files/village/savanna/houses/savanna_butchers_shop_2",
       "size": {
-        "length": 1,
-        "width": 1,
-        "height": 3
+        "length": 13,
+        "width": 9,
+        "height": 10
       },
       "path_tokens": [
         "village",
-        "beach",
-        "lighthouse",
-        "villagers",
-        "master"
+        "vanilla",
+        "files",
+        "savanna",
+        "houses",
+        "butchers",
+        "shop",
+        "2"
+      ],
+      "has_jigsaw": true,
+      "jigsaw_facing": [
+        "north",
+        "west"
+      ],
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 10,
+            "y": 0,
+            "z": 2
+          },
+          "facing": "north"
+        },
+        {
+          "local_pos": {
+            "x": 0,
+            "y": 1,
+            "z": 4
+          },
+          "facing": "west"
+        }
+      ],
+      "scan_time": 1774447195465
+    },
+    {
+      "structure_id": "trek:village/vanilla_files/village/snowy/houses/snowy_butchers_shop_1",
+      "namespace": "trek",
+      "path": "village/vanilla_files/village/snowy/houses/snowy_butchers_shop_1",
+      "size": {
+        "length": 7,
+        "width": 9,
+        "height": 8
+      },
+      "path_tokens": [
+        "village",
+        "vanilla",
+        "files",
+        "snowy",
+        "houses",
+        "butchers",
+        "shop",
+        "1"
       ],
       "has_jigsaw": true,
       "jigsaw_facing": [
         "north"
       ],
-      "scan_time": 1773767249064
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 3,
+            "y": 0,
+            "z": 0
+          },
+          "facing": "north"
+        },
+        {
+          "local_pos": {
+            "x": 4,
+            "y": 0,
+            "z": 7
+          },
+          "facing": "north"
+        }
+      ],
+      "scan_time": 1774447195472
+    },
+    {
+      "structure_id": "trek:village/vanilla_files/village/snowy/houses/snowy_butchers_shop_2",
+      "namespace": "trek",
+      "path": "village/vanilla_files/village/snowy/houses/snowy_butchers_shop_2",
+      "size": {
+        "length": 9,
+        "width": 5,
+        "height": 5
+      },
+      "path_tokens": [
+        "village",
+        "vanilla",
+        "files",
+        "snowy",
+        "houses",
+        "butchers",
+        "shop",
+        "2"
+      ],
+      "has_jigsaw": true,
+      "jigsaw_facing": [
+        "north",
+        "west"
+      ],
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 5,
+            "y": 0,
+            "z": 2
+          },
+          "facing": "north"
+        },
+        {
+          "local_pos": {
+            "x": 0,
+            "y": 1,
+            "z": 3
+          },
+          "facing": "west"
+        }
+      ],
+      "scan_time": 1774447195472
+    },
+    {
+      "structure_id": "trek:village/vanilla_files/village/taiga/houses/taiga_butcher_shop_1",
+      "namespace": "trek",
+      "path": "village/vanilla_files/village/taiga/houses/taiga_butcher_shop_1",
+      "size": {
+        "length": 11,
+        "width": 9,
+        "height": 7
+      },
+      "path_tokens": [
+        "village",
+        "vanilla",
+        "files",
+        "taiga",
+        "houses",
+        "butcher",
+        "shop",
+        "1"
+      ],
+      "has_jigsaw": true,
+      "jigsaw_facing": [
+        "south",
+        "north"
+      ],
+      "jigsaw_points": [
+        {
+          "local_pos": {
+            "x": 4,
+            "y": 0,
+            "z": 8
+          },
+          "facing": "south"
+        },
+        {
+          "local_pos": {
+            "x": 7,
+            "y": 0,
+            "z": 6
+          },
+          "facing": "north"
+        }
+      ],
+      "scan_time": 1774447195480
     },
     {
       "structure_id": "villager_fish_shop:smallfishinshop",
@@ -4991,7 +3540,8 @@
       ],
       "has_jigsaw": false,
       "jigsaw_facing": [],
-      "scan_time": 1773767249296
+      "jigsaw_points": [],
+      "scan_time": 1774447195987
     }
   ]
 }

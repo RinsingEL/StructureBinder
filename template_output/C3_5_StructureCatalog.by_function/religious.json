@@ -3,23 +3,23 @@
   "ok": true,
   "city_id": "city_default",
   "catalog_version": 2,
-  "generated_at_epoch_ms": 1773770249093,
+  "generated_at_epoch_ms": 1774447195997,
   "function_enum_table": [
     "civic_center",
     "commercial",
-    "farm",
-    "fishing",
-    "fortification",
-    "landmark",
     "market",
-    "port",
-    "religious",
-    "residential_high",
     "residential_low",
     "residential_mid",
+    "residential_high",
     "warehouse",
+    "port",
     "watchtower",
-    "workshop"
+    "fortification",
+    "farm",
+    "fishing",
+    "religious",
+    "workshop",
+    "landmark"
   ],
   "structures": [
     {
@@ -41,14 +41,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
-        "military": 0,
-        "commercial": 0,
-        "residential": 0,
-        "religious": 0,
-        "industrial": 0,
-        "maritime": 0,
-        "civic": 0
+        "classical": 0.0,
+        "military": 0.0,
+        "commercial": 0.0,
+        "residential": 0.0,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -143,7 +143,7 @@
       },
       "connectors": [],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "landmark": 1.25
       },
       "tag_source": {
@@ -175,12 +175,12 @@
       "piece_role": "START",
       "style_score": {
         "classical": 0.6,
-        "military": 0,
-        "commercial": 0,
-        "residential": 0,
+        "military": 0.0,
+        "commercial": 0.0,
+        "residential": 0.0,
         "religious": 0.95,
-        "industrial": 0,
-        "maritime": 0,
+        "industrial": 0.0,
+        "maritime": 0.0,
         "civic": 0.15
       },
       "function_candidates": [
@@ -192,8 +192,12 @@
       "namespace": "trek",
       "path": "overworld/medium/church",
       "size_tier": "L",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "z",
@@ -276,11 +280,11 @@
       },
       "connectors": [
         {
-          "id": "west_connector",
+          "id": "jigsaw_west_4_1_6",
           "local_pos": {
-            "x": 0,
-            "y": 0,
-            "z": 10
+            "x": 4,
+            "y": 1,
+            "z": 6
           },
           "facing": "west",
           "type": "road",
@@ -293,7 +297,7 @@
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "religious": 1.05,
         "classical": 1.05
       },

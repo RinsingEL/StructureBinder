@@ -151,8 +151,8 @@ public final class StructureTemplateQueryService {
 
     private static boolean hasConnectors(CityC35CatalogIO.CatalogStructure structure) {
         return structure != null
-                && ((structure.connectors != null && !structure.connectors.isEmpty())
-                || (structure.connector_dirs != null && !structure.connector_dirs.isEmpty()));
+                && structure.connectors != null
+                && !structure.connectors.isEmpty();
     }
 
     private static Set<String> targetFunctions(String functionTag) {

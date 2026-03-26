@@ -539,7 +539,14 @@ public final class CityC6Stages {
                 module.minZ = rect.minZ;
                 module.maxX = rect.maxX;
                 module.maxZ = rect.maxZ;
-                module.template_hint = defaultTemplateHint(area);
+                module.template_hint = defaultTemplateHint(area, rect);
+                System.out.println("[C6] applyAcceptedDecision group=" + safeId(area.group_id)
+                        + " module=" + module.module_id
+                        + " rect=" + safeId(rect.rect_id)
+                        + " rect_size=" + rect.w + "x" + rect.h
+                        + " rect_area=" + (Math.max(0, rect.w) * Math.max(0, rect.h))
+                        + " area_blocks=" + (area != null ? area.area_blocks : 0)
+                        + " assigned_size_tier=" + (module.template_hint != null ? module.template_hint.size_tier : ""));
                 plan.primary_modules.add(module);
                 index++;
             }
@@ -549,9 +556,23 @@ public final class CityC6Stages {
     }
 
     public static TemplateHint defaultTemplateHint(BuildAreaSummary area) {
+        return defaultTemplateHint(area, null);
+    }
+
+    public static TemplateHint defaultTemplateHint(BuildAreaSummary area, RectDecision rect) {
         TemplateHint hint = new TemplateHint();
         hint.category = "plaza_or_civic";
-        hint.size_tier = sizeTier(area != null ? area.area_blocks : 0);
+        int areaBlocks = rect != null && rect.w > 0 && rect.h > 0
+                ? rect.w * rect.h
+                : (area != null ? area.area_blocks : 0);
+        hint.size_tier = sizeTier(areaBlocks);
+        System.out.println("[C6] defaultTemplateHint group=" + safeId(area != null ? area.group_id : "")
+                + " build_area=" + safeId(area != null ? area.build_area_id : "")
+                + " rect=" + safeId(rect != null ? rect.rect_id : "")
+                + " rect_size=" + (rect != null ? rect.w : 0) + "x" + (rect != null ? rect.h : 0)
+                + " chosen_area_blocks=" + areaBlocks
+                + " fallback_area_blocks=" + (area != null ? area.area_blocks : 0)
+                + " size_tier=" + hint.size_tier);
         return hint;
     }
 

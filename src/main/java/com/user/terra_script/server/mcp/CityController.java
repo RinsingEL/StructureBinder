@@ -5,6 +5,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.sun.net.httpserver.HttpExchange;
+import com.user.terra_script.config.CityGenerationConfig;
 import com.user.terra_script.world.city.stage.CityGroupPathUtil;
 import com.user.terra_script.world.city.stage.GroupStepStateUtil;
 import com.user.terra_script.world.city.stage.c6.CityC6Validation;
@@ -855,6 +856,8 @@ public class CityController {
             JsonObject json = JsonParser.parseString(body).getAsJsonObject();
             String cityId = json.has("city_id") ? json.get("city_id").getAsString() : null;
             String groupId = readOptionalString(json, "group_id");
+            Boolean strictTagOverride = json.has("strict_tag_source") ? json.get("strict_tag_source").getAsBoolean() : null;
+            boolean strictTagSource = CityGenerationConfig.resolveStrictTagSource(strictTagOverride);
             if (cityId == null || cityId.isBlank()) {
                 HttpUtil.sendResponse(exchange, 400, "{\"error\": \"Missing city_id\"}");
                 return;
@@ -869,7 +872,7 @@ public class CityController {
 
             CityC7Stages.C7Selection selection = json.has("arrangements")
                     ? CityC7Stages.fromDecisionRequest(cityId, c6Layout, json)
-                    : CityC7Stages.generate(cityId, c6Layout);
+                    : CityC7Stages.generate(cityId, c6Layout, strictTagSource);
             CityC7Stages.C7Selection responseSelection = filterC7SelectionByGroup(selection, groupId);
             Path outputFile = cityDir.resolve(CityC7Stages.C7_FILE);
             if (groupId != null && !groupId.isBlank()) {
@@ -890,6 +893,7 @@ public class CityController {
             res.addProperty("catalog_source", responseSelection.catalog_source);
             res.addProperty("decision_source", responseSelection.decision_source);
             res.addProperty("selection_mode", responseSelection.selection_mode);
+            res.addProperty("strict_tag_source", responseSelection.strict_tag_source);
             res.addProperty("filtered_candidate_count", responseSelection.filtered_candidate_count);
             if (responseSelection.strict_filter_failure_reason != null) {
                 res.addProperty("strict_filter_failure_reason", responseSelection.strict_filter_failure_reason);
@@ -972,6 +976,10 @@ public class CityController {
 
             CityC2ScanBinaryIO.C2ScanData c2ScanData = CityC2ScanBinaryIO.load(cityId);
             CityC7Stages.C7Selection c7Selection = loadC7Selection(cityDir, groupId);
+            System.out.println("[C8] handleCityC8Generate city=" + cityId
+                    + " group=" + safe(groupId)
+                    + " c7_selection_generated_at=" + (c7Selection != null ? c7Selection.generated_at_epoch_ms : -1)
+                    + " c7_selection_count=" + (c7Selection != null && c7Selection.selections != null ? c7Selection.selections.size() : -1));
             CityC8Stages.C8Plan plan = CityC8Stages.generate(cityId, c6Summary, c6Layout, c7Selection, heightData, c2ScanData, c6Index);
             CityC8Stages.save(cityDir, plan);
 
@@ -982,6 +990,11 @@ public class CityController {
                 Path groupDir = resolveGroupDir(cityDir, groupId);
                 outputFile = groupDir.resolve("c8_foundation.json");
                 java.nio.file.Files.writeString(outputFile, gson.toJson(responsePlan));
+                String written = java.nio.file.Files.readString(outputFile);
+                System.out.println("[C8] wrote_group_file=" + outputFile
+                        + " bytes=" + written.length()
+                        + " contains_plains_butcher_shop_1=" + written.contains("minecraft:village/plains/houses/plains_butcher_shop_1")
+                        + " contains_missing_catalog_meta=" + written.contains("missing_catalog_meta"));
                 CityC8Stages.saveDebug(cityDir, groupId, responsePlan);
             }
 

@@ -9,6 +9,7 @@ import com.google.gson.JsonParser;
 import com.sun.net.httpserver.HttpExchange;
 import com.user.terra_script.client.data.ScanResultHolder;
 import com.user.terra_script.client.data.ScanResultHolder.RegionCache;
+import com.user.terra_script.config.CityGenerationConfig;
 import com.user.terra_script.domain.world.scan.ScanPixel;
 import com.user.terra_script.domain.world.scan.ScanRegion;
 import com.user.terra_script.domain.world.stage.QueryRegionPreviewExporter;
@@ -153,7 +154,8 @@ public class WorldController {
             query.size_tier = req.has("size_tier") ? req.get("size_tier").getAsString() : null;
             query.arrangement_type = req.has("arrangement_type") ? req.get("arrangement_type").getAsString() : null;
             query.require_connector = req.has("require_connector") && req.get("require_connector").getAsBoolean();
-            query.strict_tag_source = !req.has("strict_tag_source") || req.get("strict_tag_source").getAsBoolean();
+            Boolean strictTagOverride = req.has("strict_tag_source") ? req.get("strict_tag_source").getAsBoolean() : null;
+            query.strict_tag_source = CityGenerationConfig.resolveStrictTagSource(strictTagOverride);
 
             StructureTemplateQueryService.QueryResult result = StructureTemplateQueryService.queryTemplates(query);
             HttpUtil.sendResponse(exchange, result.ok ? 200 : 422, gson.toJson(result));

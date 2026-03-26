@@ -183,6 +183,11 @@ public final class CityC8Stages {
             List<Long> blockKeys = blocksByArea.getOrDefault(area.build_area_numeric_id, Collections.emptyList());
             CityC7Stages.GroupArrangementDecision arrangement = arrangements.getOrDefault(area.build_area_id, arrangements.get(area.group_id));
             CityC7Stages.TemplateSelectionItem selection = selections.getOrDefault(area.build_area_id, selections.get(area.group_id));
+            System.out.println("[C8] area=" + safe(area.build_area_id)
+                    + " group=" + safe(area.group_id)
+                    + " layout_primary_count=" + (layoutPlan.primary_modules != null ? layoutPlan.primary_modules.size() : 0)
+                    + " arrangement_seed_template=" + safe(arrangement != null && arrangement.seed != null ? arrangement.seed.start_template_id : "")
+                    + " selection_template=" + safe(selection != null ? selection.selected_template : ""));
             FoundationItem item = buildFoundationItem(area, layoutPlan, arrangement, selection, blockKeys, heightData, c2ScanData);
             if (item != null) plan.foundations.add(item);
         }
@@ -253,6 +258,10 @@ public final class CityC8Stages {
                 item.arrangement_params.putAll(selection.arrangement_params);
             }
         }
+        System.out.println("[C8] foundation build_area=" + safe(item.build_area_id)
+                + " selected_template=" + safe(item.selected_template)
+                + " placement_count=" + (item.placements != null ? item.placements.size() : 0)
+                + " warnings=" + (item.arrangement_warnings != null ? item.arrangement_warnings.size() : 0));
 
         TerrainStats terrain = analyzeTerrain(area, blockKeys, heightData, c2ScanData);
         item.foundation_type = terrain.foundation_type;

@@ -61,6 +61,24 @@ class StructureTemplateQueryServiceTest {
         assertEquals(0, result.candidate_count);
     }
 
+    @Test
+    void connectorRequirementIgnoresConnectorDirsWithoutRealConnectors() {
+        CityC35CatalogIO.CatalogStructure structure = structure("test:legacy_port_piece", "START", "M");
+        structure.function_definition.source = "preset_rule";
+        structure.tag_source.preset_rule = "manual";
+        structure.connector_dirs.add("east");
+        addFunction(structure, "port", 0.9);
+
+        StructureTemplateQueryService.QueryRequest request = new StructureTemplateQueryService.QueryRequest();
+        request.function_tag = "port";
+        request.require_connector = true;
+        request.strict_tag_source = true;
+
+        StructureTemplateQueryService.QueryResult result = StructureTemplateQueryService.queryTemplates(List.of(structure), request);
+        assertFalse(result.ok);
+        assertEquals(0, result.candidate_count);
+    }
+
     private static CityC35CatalogIO.CatalogStructure structure(String id, String pieceRole, String sizeTier) {
         CityC35CatalogIO.CatalogStructure structure = new CityC35CatalogIO.CatalogStructure();
         structure.structure_id = id;

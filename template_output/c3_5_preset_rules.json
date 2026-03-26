@@ -10,6 +10,7 @@
     },
     "assign": {
       "piece_role": "SINGLE",
+      "preset_pool": "village_house_small",
       "function_candidates": [
         {
           "function": "residential_low",
@@ -27,6 +28,12 @@
         "civic": 0.0
       },
       "entry_facing": "unknown",
+      "function_definition": {
+        "primary_function": "residential_low",
+        "secondary_functions": [],
+        "semantic_role": "residential",
+        "source": "preset_rule:village_house_small"
+      },
       "notes": ""
     },
     "priority": 100
@@ -41,6 +48,7 @@
     },
     "assign": {
       "piece_role": "SINGLE",
+      "preset_pool": "village_house_medium",
       "function_candidates": [
         {
           "function": "residential_mid",
@@ -58,6 +66,12 @@
         "civic": 0.0
       },
       "entry_facing": "unknown",
+      "function_definition": {
+        "primary_function": "residential_mid",
+        "secondary_functions": [],
+        "semantic_role": "residential",
+        "source": "preset_rule:village_house_medium"
+      },
       "notes": ""
     },
     "priority": 80
@@ -71,6 +85,7 @@
     },
     "assign": {
       "piece_role": "START",
+      "preset_pool": "village_civic_core",
       "function_candidates": [
         {
           "function": "civic_center",
@@ -88,6 +103,12 @@
         "civic": 0.88
       },
       "entry_facing": "unknown",
+      "function_definition": {
+        "primary_function": "civic_center",
+        "secondary_functions": [],
+        "semantic_role": "anchor",
+        "source": "preset_rule:civic_center"
+      },
       "notes": ""
     },
     "priority": 110
@@ -101,6 +122,7 @@
     },
     "assign": {
       "piece_role": "START",
+      "preset_pool": "village_civic_core",
       "function_candidates": [
         {
           "function": "civic_center",
@@ -118,6 +140,12 @@
         "civic": 0.92
       },
       "entry_facing": "unknown",
+      "function_definition": {
+        "primary_function": "civic_center",
+        "secondary_functions": [],
+        "semantic_role": "anchor",
+        "source": "preset_rule:meeting_point"
+      },
       "notes": ""
     },
     "priority": 110
@@ -131,6 +159,7 @@
     },
     "assign": {
       "piece_role": "SINGLE",
+      "preset_pool": "village_market_small",
       "function_candidates": [
         {
           "function": "market",
@@ -148,6 +177,12 @@
         "civic": 0.0
       },
       "entry_facing": "unknown",
+      "function_definition": {
+        "primary_function": "market",
+        "secondary_functions": [],
+        "semantic_role": "service",
+        "source": "preset_rule:market"
+      },
       "notes": ""
     },
     "priority": 100
@@ -161,6 +196,7 @@
     },
     "assign": {
       "piece_role": "SINGLE",
+      "preset_pool": "village_commercial_small",
       "function_candidates": [
         {
           "function": "commercial",
@@ -178,6 +214,12 @@
         "civic": 0.0
       },
       "entry_facing": "unknown",
+      "function_definition": {
+        "primary_function": "commercial",
+        "secondary_functions": [],
+        "semantic_role": "service",
+        "source": "preset_rule:commercial_shop"
+      },
       "notes": ""
     },
     "priority": 90
@@ -191,6 +233,7 @@
     },
     "assign": {
       "piece_role": "SINGLE",
+      "preset_pool": "warehouse_pool",
       "function_candidates": [
         {
           "function": "warehouse",
@@ -208,6 +251,12 @@
         "civic": 0.0
       },
       "entry_facing": "unknown",
+      "function_definition": {
+        "primary_function": "warehouse",
+        "secondary_functions": [],
+        "semantic_role": "generic",
+        "source": "preset_rule:warehouse"
+      },
       "notes": ""
     },
     "priority": 100
@@ -221,6 +270,7 @@
     },
     "assign": {
       "piece_role": "START",
+      "preset_pool": "port_district",
       "function_candidates": [
         {
           "function": "port",
@@ -238,6 +288,12 @@
         "civic": 0.0
       },
       "entry_facing": "unknown",
+      "function_definition": {
+        "primary_function": "port",
+        "secondary_functions": [],
+        "semantic_role": "waterfront",
+        "source": "preset_rule:port"
+      },
       "notes": ""
     },
     "priority": 100
@@ -251,6 +307,7 @@
     },
     "assign": {
       "piece_role": "START",
+      "preset_pool": "port_district",
       "function_candidates": [
         {
           "function": "port",
@@ -268,6 +325,12 @@
         "civic": 0.0
       },
       "entry_facing": "unknown",
+      "function_definition": {
+        "primary_function": "port",
+        "secondary_functions": [],
+        "semantic_role": "waterfront",
+        "source": "preset_rule:harbor"
+      },
       "notes": ""
     },
     "priority": 100
@@ -281,6 +344,7 @@
     },
     "assign": {
       "piece_role": "START",
+      "preset_pool": "defense_edge",
       "function_candidates": [
         {
           "function": "watchtower",
@@ -298,6 +362,12 @@
         "civic": 0.0
       },
       "entry_facing": "unknown",
+      "function_definition": {
+        "primary_function": "watchtower",
+        "secondary_functions": [],
+        "semantic_role": "defense",
+        "source": "preset_rule:watchtower"
+      },
       "notes": ""
     },
     "priority": 120
@@ -311,6 +381,7 @@
     },
     "assign": {
       "piece_role": "START",
+      "preset_pool": "defense_edge",
       "function_candidates": [
         {
           "function": "fortification",
@@ -328,6 +399,12 @@
         "civic": 0.0
       },
       "entry_facing": "unknown",
+      "function_definition": {
+        "primary_function": "fortification",
+        "secondary_functions": [],
+        "semantic_role": "defense",
+        "source": "preset_rule:fortification"
+      },
       "notes": ""
     },
     "priority": 90
@@ -341,6 +418,7 @@
     },
     "assign": {
       "piece_role": "SINGLE",
+      "preset_pool": "village_farm",
       "function_candidates": [
         {
           "function": "farm",
@@ -358,6 +436,12 @@
         "civic": 0.0
       },
       "entry_facing": "unknown",
+      "function_definition": {
+        "primary_function": "farm",
+        "secondary_functions": [],
+        "semantic_role": "generic",
+        "source": "preset_rule:farm"
+      },
       "notes": ""
     },
     "priority": 90
@@ -371,6 +455,7 @@
     },
     "assign": {
       "piece_role": "START",
+      "preset_pool": "religious_core",
       "function_candidates": [
         {
           "function": "religious",
@@ -388,6 +473,12 @@
         "civic": 0.15
       },
       "entry_facing": "unknown",
+      "function_definition": {
+        "primary_function": "religious",
+        "secondary_functions": [],
+        "semantic_role": "generic",
+        "source": "preset_rule:religious"
+      },
       "notes": ""
     },
     "priority": 110
@@ -401,6 +492,7 @@
     },
     "assign": {
       "piece_role": "START",
+      "preset_pool": "religious_core",
       "function_candidates": [
         {
           "function": "religious",
@@ -418,6 +510,12 @@
         "civic": 0.15
       },
       "entry_facing": "unknown",
+      "function_definition": {
+        "primary_function": "religious",
+        "secondary_functions": [],
+        "semantic_role": "generic",
+        "source": "preset_rule:church"
+      },
       "notes": ""
     },
     "priority": 110
@@ -431,6 +529,7 @@
     },
     "assign": {
       "piece_role": "SINGLE",
+      "preset_pool": "workshop_small",
       "function_candidates": [
         {
           "function": "workshop",
@@ -448,6 +547,12 @@
         "civic": 0.0
       },
       "entry_facing": "unknown",
+      "function_definition": {
+        "primary_function": "workshop",
+        "secondary_functions": [],
+        "semantic_role": "service",
+        "source": "preset_rule:workshop"
+      },
       "notes": ""
     },
     "priority": 100

@@ -77,6 +77,7 @@ public final class CityC7Stages {
         public String catalog_source = "hardcoded_vanilla_village_templates";
         public String decision_source = "program_fallback";
         public String selection_mode = "strict_function_filter";
+        public boolean strict_tag_source = true;
         public int filtered_candidate_count;
         public String strict_filter_failure_reason;
         public int puzzle_depth = 0;
@@ -171,9 +172,14 @@ public final class CityC7Stages {
     }
 
     public static C7Selection generate(String cityId, CityC6Stages.C6Layout c6Layout) {
+        return generate(cityId, c6Layout, true);
+    }
+
+    public static C7Selection generate(String cityId, CityC6Stages.C6Layout c6Layout, boolean strictTagSource) {
         C7Selection result = new C7Selection();
         result.city_id = cityId;
         result.generated_at_epoch_ms = System.currentTimeMillis();
+        result.strict_tag_source = strictTagSource;
         if (c6Layout == null || c6Layout.plans == null) {
             result.ok = false;
             return result;
@@ -204,6 +210,7 @@ public final class CityC7Stages {
         result.generated_at_epoch_ms = System.currentTimeMillis();
         result.decision_source = "ai_decision_submit";
         result.selection_mode = "ai_decision_submit";
+        result.strict_tag_source = true;
         Catalog catalog = loadCatalog();
         result.catalog_source = catalog != null && catalog.ok
                 ? CityC35CatalogIO.catalogPath().toString()
@@ -644,7 +651,7 @@ public final class CityC7Stages {
         request.size_tier = sizeTier;
         request.arrangement_type = arrangementType;
         request.require_connector = false;
-        request.strict_tag_source = true;
+        request.strict_tag_source = selection == null || selection.strict_tag_source;
         StructureTemplateQueryService.QueryResult queryResult = chooseCandidatesFromCatalog(request, groupId, startConnectorDir, rootCandidate, catalog);
         if (item != null) {
             item.filtered_candidate_count = queryResult.candidate_count;
@@ -746,10 +753,11 @@ public final class CityC7Stages {
         score += poolScore;
 
         if (rootCandidate) {
-            if (!supportsSeedConnector(structure, startConnectorDir)) {
+            boolean hasConnectors = structure.connectors != null && !structure.connectors.isEmpty();
+            if (hasConnectors && !supportsSeedConnector(structure, startConnectorDir)) {
                 return 0.0;
             }
-            score += 0.36;
+            score += hasConnectors ? 0.36 : 0.12;
         }
 
         String path = safe(structure.path).toLowerCase(Locale.ROOT);
@@ -803,16 +811,6 @@ public final class CityC7Stages {
                     String facing = rotateDirection(connector.facing, rotation);
                     if (wanted.equals(facing)) return new DirectionMatch(rotation);
                 }
-            }
-        }
-        if (structure.connector_dirs != null) {
-            for (String dir : structure.connector_dirs) {
-                if (wanted.equalsIgnoreCase(dir)) return new DirectionMatch(rotationForDirection(wanted));
-            }
-        }
-        if (structure.orientation != null && structure.orientation.jigsaw_facing != null) {
-            for (String dir : structure.orientation.jigsaw_facing) {
-                if (wanted.equalsIgnoreCase(dir)) return new DirectionMatch(rotationForDirection(wanted));
             }
         }
         return null;

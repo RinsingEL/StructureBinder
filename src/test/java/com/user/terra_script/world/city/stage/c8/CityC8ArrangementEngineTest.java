@@ -10,8 +10,10 @@ import java.lang.reflect.Method;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class CityC8ArrangementEngineTest {
@@ -74,6 +76,29 @@ class CityC8ArrangementEngineTest {
         assertEquals(270, child.rotation);
         assertEquals("p_east", child.incoming_parent_connector_id);
         assertEquals("c_north", child.incoming_child_connector_id);
+    }
+
+    @Test
+    void connectorCompatibilityIgnoresLegacyDirectionsWithoutRealConnectors() throws Exception {
+        Object candidate = newTemplateMeta("test:legacy_child", "MIDDLE");
+        @SuppressWarnings("unchecked")
+        List<String> connectorDirs = (List<String>) getField(candidate, "connector_dirs");
+        connectorDirs.add("west");
+
+        Class<?> directionType = Class.forName("com.user.terra_script.world.city.stage.c8.CityC8ArrangementEngine$Direction");
+        Object east = Enum.valueOf((Class<Enum>) directionType, "EAST");
+
+        Method connectorCompatible = CityC8ArrangementEngine.class.getDeclaredMethod(
+                "connectorCompatible",
+                candidate.getClass(),
+                directionType,
+                String.class,
+                Set.class
+        );
+        connectorCompatible.setAccessible(true);
+
+        boolean compatible = (boolean) connectorCompatible.invoke(null, candidate, east, "", Set.of());
+        assertFalse(compatible);
     }
 
     private static Object newTemplateMeta(String structureId, String pieceRole) throws Exception {

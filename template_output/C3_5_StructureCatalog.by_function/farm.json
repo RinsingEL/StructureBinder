@@ -3,23 +3,23 @@
   "ok": true,
   "city_id": "city_default",
   "catalog_version": 2,
-  "generated_at_epoch_ms": 1773770249093,
+  "generated_at_epoch_ms": 1774447195997,
   "function_enum_table": [
     "civic_center",
     "commercial",
-    "farm",
-    "fishing",
-    "fortification",
-    "landmark",
     "market",
-    "port",
-    "religious",
-    "residential_high",
     "residential_low",
     "residential_mid",
+    "residential_high",
     "warehouse",
+    "port",
     "watchtower",
-    "workshop"
+    "fortification",
+    "farm",
+    "fishing",
+    "religious",
+    "workshop",
+    "landmark"
   ],
   "structures": [
     {
@@ -45,14 +45,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
+        "classical": 0.0,
         "military": 0.02,
         "commercial": 0.08,
         "residential": 0.4,
-        "religious": 0,
+        "religious": 0.0,
         "industrial": 0.15,
-        "maritime": 0,
-        "civic": 0
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -63,8 +63,14 @@
       "namespace": "trek",
       "path": "overworld/medium/farm",
       "size_tier": "L",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "south",
+        "north",
+        "west"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "x",
@@ -147,11 +153,11 @@
       },
       "connectors": [
         {
-          "id": "south_connector",
+          "id": "jigsaw_south_9_0_4",
           "local_pos": {
-            "x": 11,
+            "x": 9,
             "y": 0,
-            "z": 16
+            "z": 4
           },
           "facing": "south",
           "type": "road",
@@ -163,11 +169,91 @@
           "max_connections": 1
         },
         {
-          "id": "north_connector",
+          "id": "jigsaw_south_9_0_5",
+          "local_pos": {
+            "x": 9,
+            "y": 0,
+            "z": 5
+          },
+          "facing": "south",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_south_9_0_6",
+          "local_pos": {
+            "x": 9,
+            "y": 0,
+            "z": 6
+          },
+          "facing": "south",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_south_10_0_5",
+          "local_pos": {
+            "x": 10,
+            "y": 0,
+            "z": 5
+          },
+          "facing": "south",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_south_10_0_6",
+          "local_pos": {
+            "x": 10,
+            "y": 0,
+            "z": 6
+          },
+          "facing": "south",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_south_11_0_6",
           "local_pos": {
             "x": 11,
             "y": 0,
-            "z": 0
+            "z": 6
+          },
+          "facing": "south",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_north_11_0_13",
+          "local_pos": {
+            "x": 11,
+            "y": 0,
+            "z": 13
           },
           "facing": "north",
           "type": "road",
@@ -179,13 +265,93 @@
           "max_connections": 1
         },
         {
-          "id": "west_connector",
+          "id": "jigsaw_west_12_0_12",
           "local_pos": {
-            "x": 0,
+            "x": 12,
             "y": 0,
-            "z": 8
+            "z": 12
           },
           "facing": "west",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_south_11_1_5",
+          "local_pos": {
+            "x": 11,
+            "y": 1,
+            "z": 5
+          },
+          "facing": "south",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_south_12_1_5",
+          "local_pos": {
+            "x": 12,
+            "y": 1,
+            "z": 5
+          },
+          "facing": "south",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_west_12_1_6",
+          "local_pos": {
+            "x": 12,
+            "y": 1,
+            "z": 6
+          },
+          "facing": "west",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_west_13_1_6",
+          "local_pos": {
+            "x": 13,
+            "y": 1,
+            "z": 6
+          },
+          "facing": "west",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_south_5_4_4",
+          "local_pos": {
+            "x": 5,
+            "y": 4,
+            "z": 4
+          },
+          "facing": "south",
           "type": "road",
           "socket": "village_street_small",
           "connect_to_pools": [
@@ -196,7 +362,7 @@
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "farm": 1.25
       },
       "tag_source": {
@@ -229,14 +395,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
+        "classical": 0.0,
         "military": 0.02,
         "commercial": 0.08,
         "residential": 0.4,
-        "religious": 0,
+        "religious": 0.0,
         "industrial": 0.15,
-        "maritime": 0,
-        "civic": 0
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -247,8 +413,14 @@
       "namespace": "trek",
       "path": "overworld/medium/farm_pillager",
       "size_tier": "M",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "east",
+        "west",
+        "south"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "z",
@@ -331,11 +503,11 @@
       },
       "connectors": [
         {
-          "id": "east_connector",
+          "id": "jigsaw_east_6_0_6",
           "local_pos": {
-            "x": 10,
+            "x": 6,
             "y": 0,
-            "z": 9
+            "z": 6
           },
           "facing": "east",
           "type": "road",
@@ -347,11 +519,11 @@
           "max_connections": 1
         },
         {
-          "id": "west_connector",
+          "id": "jigsaw_west_12_0_6",
           "local_pos": {
-            "x": 0,
+            "x": 12,
             "y": 0,
-            "z": 9
+            "z": 6
           },
           "facing": "west",
           "type": "road",
@@ -363,11 +535,59 @@
           "max_connections": 1
         },
         {
-          "id": "south_connector",
+          "id": "jigsaw_east_6_4_6",
           "local_pos": {
-            "x": 5,
-            "y": 0,
-            "z": 18
+            "x": 6,
+            "y": 4,
+            "z": 6
+          },
+          "facing": "east",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_west_12_4_6",
+          "local_pos": {
+            "x": 12,
+            "y": 4,
+            "z": 6
+          },
+          "facing": "west",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_east_4_9_6",
+          "local_pos": {
+            "x": 4,
+            "y": 9,
+            "z": 6
+          },
+          "facing": "east",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_south_14_9_6",
+          "local_pos": {
+            "x": 14,
+            "y": 9,
+            "z": 6
           },
           "facing": "south",
           "type": "road",
@@ -380,7 +600,7 @@
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "farm": 1.25
       },
       "tag_source": {
@@ -411,14 +631,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
+        "classical": 0.0,
         "military": 0.02,
         "commercial": 0.08,
         "residential": 0.4,
-        "religious": 0,
+        "religious": 0.0,
         "industrial": 0.15,
-        "maritime": 0,
-        "civic": 0
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -429,8 +649,12 @@
       "namespace": "trek",
       "path": "overworld/very_rare/farm_island/farm_island_1",
       "size_tier": "L",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "east"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "x",
@@ -513,11 +737,43 @@
       },
       "connectors": [
         {
-          "id": "east_connector",
+          "id": "jigsaw_east_42_57_8",
           "local_pos": {
-            "x": 59,
-            "y": 0,
-            "z": 24
+            "x": 42,
+            "y": 57,
+            "z": 8
+          },
+          "facing": "east",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_east_42_57_9",
+          "local_pos": {
+            "x": 42,
+            "y": 57,
+            "z": 9
+          },
+          "facing": "east",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_east_48_64_22",
+          "local_pos": {
+            "x": 48,
+            "y": 64,
+            "z": 22
           },
           "facing": "east",
           "type": "road",
@@ -530,7 +786,7 @@
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "farm": 1.25
       },
       "tag_source": {
@@ -564,14 +820,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
+        "classical": 0.0,
         "military": 0.02,
         "commercial": 0.08,
         "residential": 0.4,
-        "religious": 0,
+        "religious": 0.0,
         "industrial": 0.15,
-        "maritime": 0,
-        "civic": 0
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -582,8 +838,15 @@
       "namespace": "trek",
       "path": "overworld/very_rare/farm_island/farm_island_2",
       "size_tier": "L",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west",
+        "north",
+        "east",
+        "south"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "z",
@@ -666,11 +929,11 @@
       },
       "connectors": [
         {
-          "id": "west_connector",
+          "id": "jigsaw_west_0_45_45",
           "local_pos": {
             "x": 0,
-            "y": 0,
-            "z": 43
+            "y": 45,
+            "z": 45
           },
           "facing": "west",
           "type": "road",
@@ -682,11 +945,11 @@
           "max_connections": 1
         },
         {
-          "id": "north_connector",
+          "id": "jigsaw_north_39_53_45",
           "local_pos": {
-            "x": 28,
-            "y": 0,
-            "z": 0
+            "x": 39,
+            "y": 53,
+            "z": 45
           },
           "facing": "north",
           "type": "road",
@@ -698,11 +961,11 @@
           "max_connections": 1
         },
         {
-          "id": "east_connector",
+          "id": "jigsaw_east_56_53_6",
           "local_pos": {
             "x": 56,
-            "y": 0,
-            "z": 43
+            "y": 53,
+            "z": 6
           },
           "facing": "east",
           "type": "road",
@@ -714,11 +977,75 @@
           "max_connections": 1
         },
         {
-          "id": "south_connector",
+          "id": "jigsaw_north_40_54_23",
           "local_pos": {
-            "x": 28,
-            "y": 0,
-            "z": 86
+            "x": 40,
+            "y": 54,
+            "z": 23
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_east_47_54_14",
+          "local_pos": {
+            "x": 47,
+            "y": 54,
+            "z": 14
+          },
+          "facing": "east",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_east_52_54_33",
+          "local_pos": {
+            "x": 52,
+            "y": 54,
+            "z": 33
+          },
+          "facing": "east",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_south_52_54_56",
+          "local_pos": {
+            "x": 52,
+            "y": 54,
+            "z": 56
+          },
+          "facing": "south",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_south_66_54_29",
+          "local_pos": {
+            "x": 66,
+            "y": 54,
+            "z": 29
           },
           "facing": "south",
           "type": "road",
@@ -731,7 +1058,7 @@
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "farm": 1.25
       },
       "tag_source": {
@@ -764,14 +1091,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
+        "classical": 0.0,
         "military": 0.02,
         "commercial": 0.08,
         "residential": 0.4,
-        "religious": 0,
+        "religious": 0.0,
         "industrial": 0.15,
-        "maritime": 0,
-        "civic": 0
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -782,8 +1109,14 @@
       "namespace": "trek",
       "path": "overworld/very_rare/farm_island/farm_island_3",
       "size_tier": "L",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "north",
+        "south",
+        "west"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "x",
@@ -866,10 +1199,10 @@
       },
       "connectors": [
         {
-          "id": "north_connector",
+          "id": "jigsaw_north_36_43_0",
           "local_pos": {
-            "x": 32,
-            "y": 0,
+            "x": 36,
+            "y": 43,
             "z": 0
           },
           "facing": "north",
@@ -882,10 +1215,74 @@
           "max_connections": 1
         },
         {
-          "id": "south_connector",
+          "id": "jigsaw_south_20_52_48",
           "local_pos": {
-            "x": 32,
-            "y": 0,
+            "x": 20,
+            "y": 52,
+            "z": 48
+          },
+          "facing": "south",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_south_30_52_41",
+          "local_pos": {
+            "x": 30,
+            "y": 52,
+            "z": 41
+          },
+          "facing": "south",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_west_30_52_42",
+          "local_pos": {
+            "x": 30,
+            "y": 52,
+            "z": 42
+          },
+          "facing": "west",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_west_30_57_42",
+          "local_pos": {
+            "x": 30,
+            "y": 57,
+            "z": 42
+          },
+          "facing": "west",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_south_21_58_49",
+          "local_pos": {
+            "x": 21,
+            "y": 58,
             "z": 49
           },
           "facing": "south",
@@ -898,13 +1295,13 @@
           "max_connections": 1
         },
         {
-          "id": "west_connector",
+          "id": "jigsaw_north_29_62_46",
           "local_pos": {
-            "x": 0,
-            "y": 0,
-            "z": 24
+            "x": 29,
+            "y": 62,
+            "z": 46
           },
-          "facing": "west",
+          "facing": "north",
           "type": "road",
           "socket": "village_street_small",
           "connect_to_pools": [
@@ -915,7 +1312,7 @@
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "farm": 1.25
       },
       "tag_source": {
@@ -949,14 +1346,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
+        "classical": 0.0,
         "military": 0.02,
         "commercial": 0.08,
         "residential": 0.4,
-        "religious": 0,
+        "religious": 0.0,
         "industrial": 0.15,
-        "maritime": 0,
-        "civic": 0
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -967,8 +1364,15 @@
       "namespace": "trek",
       "path": "overworld/very_rare/floating_farm_large/1",
       "size_tier": "L",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "south",
+        "north",
+        "west",
+        "east"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "auto",
@@ -1051,11 +1455,11 @@
       },
       "connectors": [
         {
-          "id": "south_connector",
+          "id": "jigsaw_south_25_0_20",
           "local_pos": {
-            "x": 23,
+            "x": 25,
             "y": 0,
-            "z": 46
+            "z": 20
           },
           "facing": "south",
           "type": "road",
@@ -1067,10 +1471,10 @@
           "max_connections": 1
         },
         {
-          "id": "north_connector",
+          "id": "jigsaw_north_26_13_0",
           "local_pos": {
-            "x": 23,
-            "y": 0,
+            "x": 26,
+            "y": 13,
             "z": 0
           },
           "facing": "north",
@@ -1083,11 +1487,11 @@
           "max_connections": 1
         },
         {
-          "id": "west_connector",
+          "id": "jigsaw_west_0_21_30",
           "local_pos": {
             "x": 0,
-            "y": 0,
-            "z": 23
+            "y": 21,
+            "z": 30
           },
           "facing": "west",
           "type": "road",
@@ -1099,13 +1503,45 @@
           "max_connections": 1
         },
         {
-          "id": "east_connector",
+          "id": "jigsaw_south_24_22_46",
+          "local_pos": {
+            "x": 24,
+            "y": 22,
+            "z": 46
+          },
+          "facing": "south",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_east_46_29_25",
           "local_pos": {
             "x": 46,
-            "y": 0,
-            "z": 23
+            "y": 29,
+            "z": 25
           },
           "facing": "east",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_west_25_46_21",
+          "local_pos": {
+            "x": 25,
+            "y": 46,
+            "z": 21
+          },
+          "facing": "west",
           "type": "road",
           "socket": "village_street_small",
           "connect_to_pools": [
@@ -1116,7 +1552,7 @@
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "farm": 1.25
       },
       "tag_source": {
@@ -1149,14 +1585,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
+        "classical": 0.0,
         "military": 0.02,
         "commercial": 0.08,
         "residential": 0.4,
-        "religious": 0,
+        "religious": 0.0,
         "industrial": 0.15,
-        "maritime": 0,
-        "civic": 0
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -1167,8 +1603,14 @@
       "namespace": "trek",
       "path": "overworld/very_rare/floating_farm_large/1_1",
       "size_tier": "L",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west",
+        "south",
+        "north"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "x",
@@ -1251,11 +1693,11 @@
       },
       "connectors": [
         {
-          "id": "west_connector",
+          "id": "jigsaw_west_0_5_25",
           "local_pos": {
             "x": 0,
-            "y": 0,
-            "z": 10
+            "y": 5,
+            "z": 25
           },
           "facing": "west",
           "type": "road",
@@ -1267,11 +1709,11 @@
           "max_connections": 1
         },
         {
-          "id": "south_connector",
+          "id": "jigsaw_south_9_9_46",
           "local_pos": {
-            "x": 23,
-            "y": 0,
-            "z": 20
+            "x": 9,
+            "y": 9,
+            "z": 46
           },
           "facing": "south",
           "type": "road",
@@ -1283,11 +1725,27 @@
           "max_connections": 1
         },
         {
-          "id": "north_connector",
+          "id": "jigsaw_north_2_17_0",
           "local_pos": {
-            "x": 23,
-            "y": 0,
+            "x": 2,
+            "y": 17,
             "z": 0
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_north_11_22_23",
+          "local_pos": {
+            "x": 11,
+            "y": 22,
+            "z": 23
           },
           "facing": "north",
           "type": "road",
@@ -1300,7 +1758,7 @@
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "farm": 1.25
       },
       "tag_source": {
@@ -1332,14 +1790,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
+        "classical": 0.0,
         "military": 0.02,
         "commercial": 0.08,
         "residential": 0.4,
-        "religious": 0,
+        "religious": 0.0,
         "industrial": 0.15,
-        "maritime": 0,
-        "civic": 0
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -1350,8 +1808,13 @@
       "namespace": "trek",
       "path": "overworld/very_rare/floating_farm_large/2",
       "size_tier": "L",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "north",
+        "east"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "auto",
@@ -1434,10 +1897,10 @@
       },
       "connectors": [
         {
-          "id": "north_connector",
+          "id": "jigsaw_north_24_16_0",
           "local_pos": {
-            "x": 23,
-            "y": 0,
+            "x": 24,
+            "y": 16,
             "z": 0
           },
           "facing": "north",
@@ -1450,11 +1913,11 @@
           "max_connections": 1
         },
         {
-          "id": "east_connector",
+          "id": "jigsaw_east_26_40_30",
           "local_pos": {
-            "x": 46,
-            "y": 0,
-            "z": 23
+            "x": 26,
+            "y": 40,
+            "z": 30
           },
           "facing": "east",
           "type": "road",
@@ -1467,7 +1930,7 @@
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "farm": 1.25
       },
       "tag_source": {
@@ -1499,14 +1962,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
+        "classical": 0.0,
         "military": 0.02,
         "commercial": 0.08,
         "residential": 0.4,
-        "religious": 0,
+        "religious": 0.0,
         "industrial": 0.15,
-        "maritime": 0,
-        "civic": 0
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -1517,8 +1980,13 @@
       "namespace": "trek",
       "path": "overworld/very_rare/floating_farm_large/2_1",
       "size_tier": "L",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "north",
+        "south"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "x",
@@ -1601,10 +2069,10 @@
       },
       "connectors": [
         {
-          "id": "north_connector",
+          "id": "jigsaw_north_9_7_0",
           "local_pos": {
-            "x": 10,
-            "y": 0,
+            "x": 9,
+            "y": 7,
             "z": 0
           },
           "facing": "north",
@@ -1617,11 +2085,11 @@
           "max_connections": 1
         },
         {
-          "id": "south_connector",
+          "id": "jigsaw_south_15_20_12",
           "local_pos": {
-            "x": 10,
-            "y": 0,
-            "z": 18
+            "x": 15,
+            "y": 20,
+            "z": 12
           },
           "facing": "south",
           "type": "road",
@@ -1634,7 +2102,7 @@
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "farm": 1.25
       },
       "tag_source": {
@@ -1666,14 +2134,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
+        "classical": 0.0,
         "military": 0.02,
         "commercial": 0.08,
         "residential": 0.4,
-        "religious": 0,
+        "religious": 0.0,
         "industrial": 0.15,
-        "maritime": 0,
-        "civic": 0
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -1684,8 +2152,13 @@
       "namespace": "trek",
       "path": "overworld/very_rare/floating_farm_large/2_2",
       "size_tier": "L",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west",
+        "east"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "auto",
@@ -1768,11 +2241,11 @@
       },
       "connectors": [
         {
-          "id": "west_connector",
+          "id": "jigsaw_west_0_11_13",
           "local_pos": {
             "x": 0,
-            "y": 0,
-            "z": 9
+            "y": 11,
+            "z": 13
           },
           "facing": "west",
           "type": "road",
@@ -1784,11 +2257,11 @@
           "max_connections": 1
         },
         {
-          "id": "east_connector",
+          "id": "jigsaw_east_12_22_14",
           "local_pos": {
-            "x": 18,
-            "y": 0,
-            "z": 9
+            "x": 12,
+            "y": 22,
+            "z": 14
           },
           "facing": "east",
           "type": "road",
@@ -1801,7 +2274,7 @@
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "farm": 1.25
       },
       "tag_source": {
@@ -1834,14 +2307,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
+        "classical": 0.0,
         "military": 0.02,
         "commercial": 0.08,
         "residential": 0.4,
-        "religious": 0,
+        "religious": 0.0,
         "industrial": 0.15,
-        "maritime": 0,
-        "civic": 0
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -1852,8 +2325,14 @@
       "namespace": "trek",
       "path": "overworld/very_rare/floating_farm_large/3",
       "size_tier": "L",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "east",
+        "north",
+        "south"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "auto",
@@ -1936,11 +2415,11 @@
       },
       "connectors": [
         {
-          "id": "east_connector",
+          "id": "jigsaw_east_23_0_26",
           "local_pos": {
-            "x": 46,
+            "x": 23,
             "y": 0,
-            "z": 23
+            "z": 26
           },
           "facing": "east",
           "type": "road",
@@ -1952,10 +2431,10 @@
           "max_connections": 1
         },
         {
-          "id": "north_connector",
+          "id": "jigsaw_north_31_15_0",
           "local_pos": {
-            "x": 23,
-            "y": 0,
+            "x": 31,
+            "y": 15,
             "z": 0
           },
           "facing": "north",
@@ -1968,11 +2447,27 @@
           "max_connections": 1
         },
         {
-          "id": "south_connector",
+          "id": "jigsaw_south_21_31_46",
           "local_pos": {
-            "x": 23,
-            "y": 0,
+            "x": 21,
+            "y": 31,
             "z": 46
+          },
+          "facing": "south",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_south_24_46_24",
+          "local_pos": {
+            "x": 24,
+            "y": 46,
+            "z": 24
           },
           "facing": "south",
           "type": "road",
@@ -1985,7 +2480,7 @@
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "farm": 1.25
       },
       "tag_source": {
@@ -2019,14 +2514,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
+        "classical": 0.0,
         "military": 0.02,
         "commercial": 0.08,
         "residential": 0.4,
-        "religious": 0,
+        "religious": 0.0,
         "industrial": 0.15,
-        "maritime": 0,
-        "civic": 0
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -2037,8 +2532,15 @@
       "namespace": "trek",
       "path": "overworld/very_rare/floating_farm_large/3_1",
       "size_tier": "L",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "north",
+        "east",
+        "west",
+        "south"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "z",
@@ -2121,10 +2623,10 @@
       },
       "connectors": [
         {
-          "id": "north_connector",
+          "id": "jigsaw_north_21_13_0",
           "local_pos": {
-            "x": 10,
-            "y": 0,
+            "x": 21,
+            "y": 13,
             "z": 0
           },
           "facing": "north",
@@ -2137,11 +2639,11 @@
           "max_connections": 1
         },
         {
-          "id": "east_connector",
+          "id": "jigsaw_east_46_17_13",
           "local_pos": {
-            "x": 20,
-            "y": 0,
-            "z": 23
+            "x": 46,
+            "y": 17,
+            "z": 13
           },
           "facing": "east",
           "type": "road",
@@ -2153,11 +2655,11 @@
           "max_connections": 1
         },
         {
-          "id": "west_connector",
+          "id": "jigsaw_west_0_22_2",
           "local_pos": {
             "x": 0,
-            "y": 0,
-            "z": 23
+            "y": 22,
+            "z": 2
           },
           "facing": "west",
           "type": "road",
@@ -2169,11 +2671,11 @@
           "max_connections": 1
         },
         {
-          "id": "south_connector",
+          "id": "jigsaw_south_22_28_15",
           "local_pos": {
-            "x": 10,
-            "y": 0,
-            "z": 46
+            "x": 22,
+            "y": 28,
+            "z": 15
           },
           "facing": "south",
           "type": "road",
@@ -2186,7 +2688,7 @@
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "farm": 1.25
       },
       "tag_source": {
@@ -2219,14 +2721,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
+        "classical": 0.0,
         "military": 0.02,
         "commercial": 0.08,
         "residential": 0.4,
-        "religious": 0,
+        "religious": 0.0,
         "industrial": 0.15,
-        "maritime": 0,
-        "civic": 0
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -2237,8 +2739,14 @@
       "namespace": "trek",
       "path": "overworld/very_rare/floating_farm_large/4",
       "size_tier": "L",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "south",
+        "north",
+        "west"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "auto",
@@ -2321,11 +2829,11 @@
       },
       "connectors": [
         {
-          "id": "south_connector",
+          "id": "jigsaw_south_23_0_22",
           "local_pos": {
             "x": 23,
             "y": 0,
-            "z": 46
+            "z": 22
           },
           "facing": "south",
           "type": "road",
@@ -2337,10 +2845,10 @@
           "max_connections": 1
         },
         {
-          "id": "north_connector",
+          "id": "jigsaw_north_15_3_0",
           "local_pos": {
-            "x": 23,
-            "y": 0,
+            "x": 15,
+            "y": 3,
             "z": 0
           },
           "facing": "north",
@@ -2353,11 +2861,11 @@
           "max_connections": 1
         },
         {
-          "id": "west_connector",
+          "id": "jigsaw_west_5_46_39",
           "local_pos": {
-            "x": 0,
-            "y": 0,
-            "z": 23
+            "x": 5,
+            "y": 46,
+            "z": 39
           },
           "facing": "west",
           "type": "road",
@@ -2370,7 +2878,7 @@
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "farm": 1.25
       },
       "tag_source": {
@@ -2402,14 +2910,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
+        "classical": 0.0,
         "military": 0.02,
         "commercial": 0.08,
         "residential": 0.4,
-        "religious": 0,
+        "religious": 0.0,
         "industrial": 0.15,
-        "maritime": 0,
-        "civic": 0
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -2420,8 +2928,13 @@
       "namespace": "trek",
       "path": "overworld/very_rare/floating_farm_large/4_1",
       "size_tier": "L",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "east",
+        "south"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "z",
@@ -2504,11 +3017,11 @@
       },
       "connectors": [
         {
-          "id": "east_connector",
+          "id": "jigsaw_east_38_8_2",
           "local_pos": {
-            "x": 6,
-            "y": 0,
-            "z": 19
+            "x": 38,
+            "y": 8,
+            "z": 2
           },
           "facing": "east",
           "type": "road",
@@ -2520,11 +3033,11 @@
           "max_connections": 1
         },
         {
-          "id": "south_connector",
+          "id": "jigsaw_south_17_14_5",
           "local_pos": {
-            "x": 3,
-            "y": 0,
-            "z": 38
+            "x": 17,
+            "y": 14,
+            "z": 5
           },
           "facing": "south",
           "type": "road",
@@ -2537,7 +3050,7 @@
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "farm": 1.25
       },
       "tag_source": {
@@ -2569,14 +3082,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
+        "classical": 0.0,
         "military": 0.02,
         "commercial": 0.08,
         "residential": 0.4,
-        "religious": 0,
+        "religious": 0.0,
         "industrial": 0.15,
-        "maritime": 0,
-        "civic": 0
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -2587,8 +3100,13 @@
       "namespace": "trek",
       "path": "overworld/very_rare/floating_farm_large/4_2",
       "size_tier": "L",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "north",
+        "west"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "x",
@@ -2671,10 +3189,10 @@
       },
       "connectors": [
         {
-          "id": "north_connector",
+          "id": "jigsaw_north_8_20_0",
           "local_pos": {
-            "x": 17,
-            "y": 0,
+            "x": 8,
+            "y": 20,
             "z": 0
           },
           "facing": "north",
@@ -2687,11 +3205,11 @@
           "max_connections": 1
         },
         {
-          "id": "west_connector",
+          "id": "jigsaw_west_8_30_29",
           "local_pos": {
-            "x": 0,
-            "y": 0,
-            "z": 9
+            "x": 8,
+            "y": 30,
+            "z": 29
           },
           "facing": "west",
           "type": "road",
@@ -2704,7 +3222,7 @@
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "farm": 1.25
       },
       "tag_source": {
@@ -2738,14 +3256,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
+        "classical": 0.0,
         "military": 0.02,
         "commercial": 0.08,
         "residential": 0.4,
-        "religious": 0,
+        "religious": 0.0,
         "industrial": 0.15,
-        "maritime": 0,
-        "civic": 0
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -2756,8 +3274,15 @@
       "namespace": "trek",
       "path": "overworld/very_rare/floating_farm_large/5",
       "size_tier": "L",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "south",
+        "east",
+        "north",
+        "west"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "auto",
@@ -2840,10 +3365,42 @@
       },
       "connectors": [
         {
-          "id": "south_connector",
+          "id": "jigsaw_south_25_0_18",
           "local_pos": {
-            "x": 23,
+            "x": 25,
             "y": 0,
+            "z": 18
+          },
+          "facing": "south",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_east_46_2_25",
+          "local_pos": {
+            "x": 46,
+            "y": 2,
+            "z": 25
+          },
+          "facing": "east",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_south_15_3_46",
+          "local_pos": {
+            "x": 15,
+            "y": 3,
             "z": 46
           },
           "facing": "south",
@@ -2856,26 +3413,10 @@
           "max_connections": 1
         },
         {
-          "id": "east_connector",
+          "id": "jigsaw_north_17_20_0",
           "local_pos": {
-            "x": 46,
-            "y": 0,
-            "z": 23
-          },
-          "facing": "east",
-          "type": "road",
-          "socket": "village_street_small",
-          "connect_to_pools": [
-            "village_farm"
-          ],
-          "required": false,
-          "max_connections": 1
-        },
-        {
-          "id": "north_connector",
-          "local_pos": {
-            "x": 23,
-            "y": 0,
+            "x": 17,
+            "y": 20,
             "z": 0
           },
           "facing": "north",
@@ -2888,13 +3429,29 @@
           "max_connections": 1
         },
         {
-          "id": "west_connector",
+          "id": "jigsaw_west_0_29_27",
           "local_pos": {
             "x": 0,
-            "y": 0,
-            "z": 23
+            "y": 29,
+            "z": 27
           },
           "facing": "west",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_east_22_46_22",
+          "local_pos": {
+            "x": 22,
+            "y": 46,
+            "z": 22
+          },
+          "facing": "east",
           "type": "road",
           "socket": "village_street_small",
           "connect_to_pools": [
@@ -2905,7 +3462,7 @@
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "farm": 1.25
       },
       "tag_source": {
@@ -2938,14 +3495,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
+        "classical": 0.0,
         "military": 0.02,
         "commercial": 0.08,
         "residential": 0.4,
-        "religious": 0,
+        "religious": 0.0,
         "industrial": 0.15,
-        "maritime": 0,
-        "civic": 0
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -2956,8 +3513,14 @@
       "namespace": "trek",
       "path": "overworld/very_rare/floating_farm_large/5_1",
       "size_tier": "L",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "east",
+        "south",
+        "north"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "x",
@@ -3040,11 +3603,11 @@
       },
       "connectors": [
         {
-          "id": "east_connector",
+          "id": "jigsaw_east_30_13_27",
           "local_pos": {
-            "x": 46,
-            "y": 0,
-            "z": 15
+            "x": 30,
+            "y": 13,
+            "z": 27
           },
           "facing": "east",
           "type": "road",
@@ -3056,11 +3619,11 @@
           "max_connections": 1
         },
         {
-          "id": "south_connector",
+          "id": "jigsaw_south_20_20_46",
           "local_pos": {
-            "x": 23,
-            "y": 0,
-            "z": 30
+            "x": 20,
+            "y": 20,
+            "z": 46
           },
           "facing": "south",
           "type": "road",
@@ -3072,10 +3635,10 @@
           "max_connections": 1
         },
         {
-          "id": "north_connector",
+          "id": "jigsaw_north_18_21_0",
           "local_pos": {
-            "x": 23,
-            "y": 0,
+            "x": 18,
+            "y": 21,
             "z": 0
           },
           "facing": "north",
@@ -3086,10 +3649,26 @@
           ],
           "required": false,
           "max_connections": 1
+        },
+        {
+          "id": "jigsaw_south_15_30_33",
+          "local_pos": {
+            "x": 15,
+            "y": 30,
+            "z": 33
+          },
+          "facing": "south",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "farm": 1.25
       },
       "tag_source": {
@@ -3122,14 +3701,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
+        "classical": 0.0,
         "military": 0.02,
         "commercial": 0.08,
         "residential": 0.4,
-        "religious": 0,
+        "religious": 0.0,
         "industrial": 0.15,
-        "maritime": 0,
-        "civic": 0
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -3140,8 +3719,14 @@
       "namespace": "trek",
       "path": "overworld/very_rare/floating_farm_large/6",
       "size_tier": "L",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west",
+        "south",
+        "north"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "auto",
@@ -3224,9 +3809,9 @@
       },
       "connectors": [
         {
-          "id": "west_connector",
+          "id": "jigsaw_west_23_0_23",
           "local_pos": {
-            "x": 0,
+            "x": 23,
             "y": 0,
             "z": 23
           },
@@ -3240,10 +3825,10 @@
           "max_connections": 1
         },
         {
-          "id": "south_connector",
+          "id": "jigsaw_south_17_20_46",
           "local_pos": {
-            "x": 23,
-            "y": 0,
+            "x": 17,
+            "y": 20,
             "z": 46
           },
           "facing": "south",
@@ -3256,10 +3841,10 @@
           "max_connections": 1
         },
         {
-          "id": "north_connector",
+          "id": "jigsaw_north_27_46_0",
           "local_pos": {
-            "x": 23,
-            "y": 0,
+            "x": 27,
+            "y": 46,
             "z": 0
           },
           "facing": "north",
@@ -3273,7 +3858,7 @@
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "farm": 1.25
       },
       "tag_source": {
@@ -3305,14 +3890,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
+        "classical": 0.0,
         "military": 0.02,
         "commercial": 0.08,
         "residential": 0.4,
-        "religious": 0,
+        "religious": 0.0,
         "industrial": 0.15,
-        "maritime": 0,
-        "civic": 0
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -3323,8 +3908,13 @@
       "namespace": "trek",
       "path": "overworld/very_rare/floating_farm_large/6_1",
       "size_tier": "L",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "south",
+        "west"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "x",
@@ -3407,11 +3997,11 @@
       },
       "connectors": [
         {
-          "id": "south_connector",
+          "id": "jigsaw_south_12_7_40",
           "local_pos": {
-            "x": 20,
-            "y": 0,
-            "z": 24
+            "x": 12,
+            "y": 7,
+            "z": 40
           },
           "facing": "south",
           "type": "road",
@@ -3423,11 +4013,11 @@
           "max_connections": 1
         },
         {
-          "id": "west_connector",
+          "id": "jigsaw_west_11_16_16",
           "local_pos": {
-            "x": 0,
-            "y": 0,
-            "z": 12
+            "x": 11,
+            "y": 16,
+            "z": 16
           },
           "facing": "west",
           "type": "road",
@@ -3440,7 +4030,7 @@
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "farm": 1.25
       },
       "tag_source": {
@@ -3472,14 +4062,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
+        "classical": 0.0,
         "military": 0.02,
         "commercial": 0.08,
         "residential": 0.4,
-        "religious": 0,
+        "religious": 0.0,
         "industrial": 0.15,
-        "maritime": 0,
-        "civic": 0
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -3490,8 +4080,13 @@
       "namespace": "trek",
       "path": "overworld/very_rare/floating_farm_large/6_2",
       "size_tier": "L",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "east",
+        "north"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "z",
@@ -3574,11 +4169,11 @@
       },
       "connectors": [
         {
-          "id": "east_connector",
+          "id": "jigsaw_east_40_21_6",
           "local_pos": {
-            "x": 24,
-            "y": 0,
-            "z": 20
+            "x": 40,
+            "y": 21,
+            "z": 6
           },
           "facing": "east",
           "type": "road",
@@ -3590,11 +4185,11 @@
           "max_connections": 1
         },
         {
-          "id": "north_connector",
+          "id": "jigsaw_north_19_40_9",
           "local_pos": {
-            "x": 12,
-            "y": 0,
-            "z": 0
+            "x": 19,
+            "y": 40,
+            "z": 9
           },
           "facing": "north",
           "type": "road",
@@ -3607,7 +4202,7 @@
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "farm": 1.25
       },
       "tag_source": {
@@ -3640,14 +4235,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
+        "classical": 0.0,
         "military": 0.02,
         "commercial": 0.08,
         "residential": 0.4,
-        "religious": 0,
+        "religious": 0.0,
         "industrial": 0.15,
-        "maritime": 0,
-        "civic": 0
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -3658,8 +4253,14 @@
       "namespace": "trek",
       "path": "overworld/very_rare/floating_farm_large/7",
       "size_tier": "L",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "north",
+        "south",
+        "west"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "auto",
@@ -3742,11 +4343,11 @@
       },
       "connectors": [
         {
-          "id": "north_connector",
+          "id": "jigsaw_north_29_0_19",
           "local_pos": {
-            "x": 23,
+            "x": 29,
             "y": 0,
-            "z": 0
+            "z": 19
           },
           "facing": "north",
           "type": "road",
@@ -3758,10 +4359,10 @@
           "max_connections": 1
         },
         {
-          "id": "south_connector",
+          "id": "jigsaw_south_25_25_46",
           "local_pos": {
-            "x": 23,
-            "y": 0,
+            "x": 25,
+            "y": 25,
             "z": 46
           },
           "facing": "south",
@@ -3774,11 +4375,27 @@
           "max_connections": 1
         },
         {
-          "id": "west_connector",
+          "id": "jigsaw_north_27_27_0",
           "local_pos": {
-            "x": 0,
-            "y": 0,
-            "z": 23
+            "x": 27,
+            "y": 27,
+            "z": 0
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_west_22_46_22",
+          "local_pos": {
+            "x": 22,
+            "y": 46,
+            "z": 22
           },
           "facing": "west",
           "type": "road",
@@ -3791,7 +4408,7 @@
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "farm": 1.25
       },
       "tag_source": {
@@ -3825,14 +4442,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
+        "classical": 0.0,
         "military": 0.02,
         "commercial": 0.08,
         "residential": 0.4,
-        "religious": 0,
+        "religious": 0.0,
         "industrial": 0.15,
-        "maritime": 0,
-        "civic": 0
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -3843,8 +4460,15 @@
       "namespace": "trek",
       "path": "overworld/very_rare/floating_farm_large/7_1",
       "size_tier": "L",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "north",
+        "west",
+        "south",
+        "east"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "z",
@@ -3927,11 +4551,11 @@
       },
       "connectors": [
         {
-          "id": "north_connector",
+          "id": "jigsaw_north_8_0_25",
           "local_pos": {
-            "x": 13,
+            "x": 8,
             "y": 0,
-            "z": 0
+            "z": 25
           },
           "facing": "north",
           "type": "road",
@@ -3943,11 +4567,11 @@
           "max_connections": 1
         },
         {
-          "id": "west_connector",
+          "id": "jigsaw_west_0_27_8",
           "local_pos": {
             "x": 0,
-            "y": 0,
-            "z": 23
+            "y": 27,
+            "z": 8
           },
           "facing": "west",
           "type": "road",
@@ -3959,11 +4583,11 @@
           "max_connections": 1
         },
         {
-          "id": "south_connector",
+          "id": "jigsaw_south_27_27_26",
           "local_pos": {
-            "x": 13,
-            "y": 0,
-            "z": 46
+            "x": 27,
+            "y": 27,
+            "z": 26
           },
           "facing": "south",
           "type": "road",
@@ -3975,13 +4599,29 @@
           "max_connections": 1
         },
         {
-          "id": "east_connector",
+          "id": "jigsaw_east_46_33_10",
           "local_pos": {
-            "x": 26,
-            "y": 0,
-            "z": 23
+            "x": 46,
+            "y": 33,
+            "z": 10
           },
           "facing": "east",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_north_27_46_2",
+          "local_pos": {
+            "x": 27,
+            "y": 46,
+            "z": 2
+          },
+          "facing": "north",
           "type": "road",
           "socket": "village_street_small",
           "connect_to_pools": [
@@ -3992,7 +4632,7 @@
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "farm": 1.25
       },
       "tag_source": {
@@ -4025,14 +4665,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
+        "classical": 0.0,
         "military": 0.02,
         "commercial": 0.08,
         "residential": 0.4,
-        "religious": 0,
+        "religious": 0.0,
         "industrial": 0.15,
-        "maritime": 0,
-        "civic": 0
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -4043,8 +4683,14 @@
       "namespace": "trek",
       "path": "overworld/very_rare/floating_farm_large/8",
       "size_tier": "L",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "east",
+        "south",
+        "north"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "auto",
@@ -4127,11 +4773,11 @@
       },
       "connectors": [
         {
-          "id": "east_connector",
+          "id": "jigsaw_east_22_0_22",
           "local_pos": {
-            "x": 46,
+            "x": 22,
             "y": 0,
-            "z": 23
+            "z": 22
           },
           "facing": "east",
           "type": "road",
@@ -4143,10 +4789,10 @@
           "max_connections": 1
         },
         {
-          "id": "south_connector",
+          "id": "jigsaw_south_26_13_46",
           "local_pos": {
-            "x": 23,
-            "y": 0,
+            "x": 26,
+            "y": 13,
             "z": 46
           },
           "facing": "south",
@@ -4159,10 +4805,10 @@
           "max_connections": 1
         },
         {
-          "id": "north_connector",
+          "id": "jigsaw_north_44_46_0",
           "local_pos": {
-            "x": 23,
-            "y": 0,
+            "x": 44,
+            "y": 46,
             "z": 0
           },
           "facing": "north",
@@ -4176,7 +4822,7 @@
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "farm": 1.25
       },
       "tag_source": {
@@ -4208,14 +4854,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
+        "classical": 0.0,
         "military": 0.02,
         "commercial": 0.08,
         "residential": 0.4,
-        "religious": 0,
+        "religious": 0.0,
         "industrial": 0.15,
-        "maritime": 0,
-        "civic": 0
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -4226,8 +4872,13 @@
       "namespace": "trek",
       "path": "overworld/very_rare/floating_farm_large/8_1",
       "size_tier": "L",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west",
+        "north"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "z",
@@ -4310,11 +4961,11 @@
       },
       "connectors": [
         {
-          "id": "west_connector",
+          "id": "jigsaw_west_0_9_6",
           "local_pos": {
             "x": 0,
-            "y": 0,
-            "z": 19
+            "y": 9,
+            "z": 6
           },
           "facing": "west",
           "type": "road",
@@ -4326,11 +4977,11 @@
           "max_connections": 1
         },
         {
-          "id": "north_connector",
+          "id": "jigsaw_north_27_22_4",
           "local_pos": {
-            "x": 11,
-            "y": 0,
-            "z": 0
+            "x": 27,
+            "y": 22,
+            "z": 4
           },
           "facing": "north",
           "type": "road",
@@ -4343,7 +4994,7 @@
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "farm": 1.25
       },
       "tag_source": {
@@ -4375,14 +5026,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
+        "classical": 0.0,
         "military": 0.02,
         "commercial": 0.08,
         "residential": 0.4,
-        "religious": 0,
+        "religious": 0.0,
         "industrial": 0.15,
-        "maritime": 0,
-        "civic": 0
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -4393,8 +5044,13 @@
       "namespace": "trek",
       "path": "overworld/very_rare/floating_farm_large/8_2",
       "size_tier": "M",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "south",
+        "north"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "x",
@@ -4477,11 +5133,11 @@
       },
       "connectors": [
         {
-          "id": "south_connector",
+          "id": "jigsaw_south_2_5_44",
           "local_pos": {
-            "x": 22,
-            "y": 0,
-            "z": 4
+            "x": 2,
+            "y": 5,
+            "z": 44
           },
           "facing": "south",
           "type": "road",
@@ -4493,11 +5149,11 @@
           "max_connections": 1
         },
         {
-          "id": "north_connector",
+          "id": "jigsaw_north_2_10_17",
           "local_pos": {
-            "x": 22,
-            "y": 0,
-            "z": 0
+            "x": 2,
+            "y": 10,
+            "z": 17
           },
           "facing": "north",
           "type": "road",
@@ -4510,7 +5166,7 @@
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "farm": 1.25
       },
       "tag_source": {
@@ -4544,14 +5200,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
+        "classical": 0.0,
         "military": 0.02,
         "commercial": 0.08,
         "residential": 0.4,
-        "religious": 0,
+        "religious": 0.0,
         "industrial": 0.15,
-        "maritime": 0,
-        "civic": 0
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -4562,8 +5218,15 @@
       "namespace": "trek",
       "path": "overworld/very_rare/floating_farm_large/centre",
       "size_tier": "L",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "east",
+        "west",
+        "south",
+        "north"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "auto",
@@ -4646,11 +5309,11 @@
       },
       "connectors": [
         {
-          "id": "east_connector",
+          "id": "jigsaw_east_22_0_24",
           "local_pos": {
-            "x": 46,
+            "x": 22,
             "y": 0,
-            "z": 23
+            "z": 24
           },
           "facing": "east",
           "type": "road",
@@ -4662,11 +5325,11 @@
           "max_connections": 1
         },
         {
-          "id": "west_connector",
+          "id": "jigsaw_west_0_2_25",
           "local_pos": {
             "x": 0,
-            "y": 0,
-            "z": 23
+            "y": 2,
+            "z": 25
           },
           "facing": "west",
           "type": "road",
@@ -4678,10 +5341,10 @@
           "max_connections": 1
         },
         {
-          "id": "south_connector",
+          "id": "jigsaw_south_31_15_46",
           "local_pos": {
-            "x": 23,
-            "y": 0,
+            "x": 31,
+            "y": 15,
             "z": 46
           },
           "facing": "south",
@@ -4694,11 +5357,43 @@
           "max_connections": 1
         },
         {
-          "id": "north_connector",
+          "id": "jigsaw_east_46_21_30",
           "local_pos": {
-            "x": 23,
-            "y": 0,
+            "x": 46,
+            "y": 21,
+            "z": 30
+          },
+          "facing": "east",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_north_25_25_0",
+          "local_pos": {
+            "x": 25,
+            "y": 25,
             "z": 0
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_north_21_46_20",
+          "local_pos": {
+            "x": 21,
+            "y": 46,
+            "z": 20
           },
           "facing": "north",
           "type": "road",
@@ -4711,7 +5406,7 @@
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "farm": 1.25
       },
       "tag_source": {
@@ -4742,14 +5437,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
+        "classical": 0.0,
         "military": 0.02,
         "commercial": 0.08,
         "residential": 0.4,
-        "religious": 0,
+        "religious": 0.0,
         "industrial": 0.15,
-        "maritime": 0,
-        "civic": 0
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -4760,8 +5455,12 @@
       "namespace": "trek",
       "path": "overworld/very_rare/floating_farm_large/centre_down",
       "size_tier": "L",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "east"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "auto",
@@ -4844,11 +5543,11 @@
       },
       "connectors": [
         {
-          "id": "east_connector",
+          "id": "jigsaw_east_22_46_24",
           "local_pos": {
-            "x": 46,
-            "y": 0,
-            "z": 23
+            "x": 22,
+            "y": 46,
+            "z": 24
           },
           "facing": "east",
           "type": "road",
@@ -4861,7 +5560,7 @@
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "farm": 1.25
       },
       "tag_source": {
@@ -4894,14 +5593,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
+        "classical": 0.0,
         "military": 0.02,
         "commercial": 0.08,
         "residential": 0.4,
-        "religious": 0,
+        "religious": 0.0,
         "industrial": 0.15,
-        "maritime": 0,
-        "civic": 0
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -4912,8 +5611,14 @@
       "namespace": "trek",
       "path": "overworld/very_rare/floating_farm_large/centre_up",
       "size_tier": "L",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "north",
+        "east",
+        "west"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "auto",
@@ -4996,11 +5701,11 @@
       },
       "connectors": [
         {
-          "id": "north_connector",
+          "id": "jigsaw_north_21_0_20",
           "local_pos": {
-            "x": 23,
+            "x": 21,
             "y": 0,
-            "z": 0
+            "z": 20
           },
           "facing": "north",
           "type": "road",
@@ -5012,11 +5717,11 @@
           "max_connections": 1
         },
         {
-          "id": "east_connector",
+          "id": "jigsaw_east_38_12_33",
           "local_pos": {
-            "x": 46,
-            "y": 0,
-            "z": 23
+            "x": 38,
+            "y": 12,
+            "z": 33
           },
           "facing": "east",
           "type": "road",
@@ -5028,13 +5733,61 @@
           "max_connections": 1
         },
         {
-          "id": "west_connector",
+          "id": "jigsaw_west_34_22_0",
           "local_pos": {
-            "x": 0,
-            "y": 0,
-            "z": 23
+            "x": 34,
+            "y": 22,
+            "z": 0
           },
           "facing": "west",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_north_34_22_2",
+          "local_pos": {
+            "x": 34,
+            "y": 22,
+            "z": 2
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_north_28_29_2",
+          "local_pos": {
+            "x": 28,
+            "y": 29,
+            "z": 2
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_east_27_46_30",
+          "local_pos": {
+            "x": 27,
+            "y": 46,
+            "z": 30
+          },
+          "facing": "east",
           "type": "road",
           "socket": "village_street_small",
           "connect_to_pools": [
@@ -5045,7 +5798,7 @@
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "farm": 1.25
       },
       "tag_source": {
@@ -5076,14 +5829,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
+        "classical": 0.0,
         "military": 0.02,
         "commercial": 0.08,
         "residential": 0.4,
-        "religious": 0,
+        "religious": 0.0,
         "industrial": 0.15,
-        "maritime": 0,
-        "civic": 0
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -5094,8 +5847,12 @@
       "namespace": "trek",
       "path": "overworld/very_rare/floating_farm_large/centre_up_up",
       "size_tier": "L",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "east"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "auto",
@@ -5178,11 +5935,11 @@
       },
       "connectors": [
         {
-          "id": "east_connector",
+          "id": "jigsaw_east_27_0_30",
           "local_pos": {
-            "x": 46,
+            "x": 27,
             "y": 0,
-            "z": 23
+            "z": 30
           },
           "facing": "east",
           "type": "road",
@@ -5195,7 +5952,7 @@
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "farm": 1.25
       },
       "tag_source": {
@@ -5226,14 +5983,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
+        "classical": 0.0,
         "military": 0.02,
         "commercial": 0.08,
         "residential": 0.4,
-        "religious": 0,
+        "religious": 0.0,
         "industrial": 0.15,
-        "maritime": 0,
-        "civic": 0
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -5244,8 +6001,12 @@
       "namespace": "trek",
       "path": "overworld/very_rare/floating_farm_large/down_1",
       "size_tier": "L",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "south"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "auto",
@@ -5328,11 +6089,11 @@
       },
       "connectors": [
         {
-          "id": "south_connector",
+          "id": "jigsaw_south_25_46_20",
           "local_pos": {
-            "x": 23,
-            "y": 0,
-            "z": 46
+            "x": 25,
+            "y": 46,
+            "z": 20
           },
           "facing": "south",
           "type": "road",
@@ -5345,7 +6106,7 @@
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "farm": 1.25
       },
       "tag_source": {
@@ -5376,14 +6137,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
+        "classical": 0.0,
         "military": 0.02,
         "commercial": 0.08,
         "residential": 0.4,
-        "religious": 0,
+        "religious": 0.0,
         "industrial": 0.15,
-        "maritime": 0,
-        "civic": 0
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -5394,8 +6155,12 @@
       "namespace": "trek",
       "path": "overworld/very_rare/floating_farm_large/down_3",
       "size_tier": "L",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "east"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "auto",
@@ -5478,11 +6243,11 @@
       },
       "connectors": [
         {
-          "id": "east_connector",
+          "id": "jigsaw_east_23_16_26",
           "local_pos": {
-            "x": 46,
-            "y": 0,
-            "z": 23
+            "x": 23,
+            "y": 16,
+            "z": 26
           },
           "facing": "east",
           "type": "road",
@@ -5495,7 +6260,7 @@
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "farm": 1.25
       },
       "tag_source": {
@@ -5526,14 +6291,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
+        "classical": 0.0,
         "military": 0.02,
         "commercial": 0.08,
         "residential": 0.4,
-        "religious": 0,
+        "religious": 0.0,
         "industrial": 0.15,
-        "maritime": 0,
-        "civic": 0
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -5544,8 +6309,12 @@
       "namespace": "trek",
       "path": "overworld/very_rare/floating_farm_large/down_4",
       "size_tier": "L",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "south"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "auto",
@@ -5628,11 +6397,11 @@
       },
       "connectors": [
         {
-          "id": "south_connector",
+          "id": "jigsaw_south_23_12_22",
           "local_pos": {
             "x": 23,
-            "y": 0,
-            "z": 46
+            "y": 12,
+            "z": 22
           },
           "facing": "south",
           "type": "road",
@@ -5645,7 +6414,7 @@
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "farm": 1.25
       },
       "tag_source": {
@@ -5676,14 +6445,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
+        "classical": 0.0,
         "military": 0.02,
         "commercial": 0.08,
         "residential": 0.4,
-        "religious": 0,
+        "religious": 0.0,
         "industrial": 0.15,
-        "maritime": 0,
-        "civic": 0
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -5694,8 +6463,12 @@
       "namespace": "trek",
       "path": "overworld/very_rare/floating_farm_large/down_5",
       "size_tier": "L",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "south"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "auto",
@@ -5778,11 +6551,11 @@
       },
       "connectors": [
         {
-          "id": "south_connector",
+          "id": "jigsaw_south_25_10_18",
           "local_pos": {
-            "x": 23,
-            "y": 0,
-            "z": 46
+            "x": 25,
+            "y": 10,
+            "z": 18
           },
           "facing": "south",
           "type": "road",
@@ -5795,7 +6568,7 @@
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "farm": 1.25
       },
       "tag_source": {
@@ -5826,14 +6599,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
+        "classical": 0.0,
         "military": 0.02,
         "commercial": 0.08,
         "residential": 0.4,
-        "religious": 0,
+        "religious": 0.0,
         "industrial": 0.15,
-        "maritime": 0,
-        "civic": 0
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -5844,8 +6617,12 @@
       "namespace": "trek",
       "path": "overworld/very_rare/floating_farm_large/down_6",
       "size_tier": "L",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "auto",
@@ -5928,10 +6705,10 @@
       },
       "connectors": [
         {
-          "id": "west_connector",
+          "id": "jigsaw_west_23_14_23",
           "local_pos": {
-            "x": 0,
-            "y": 0,
+            "x": 23,
+            "y": 14,
             "z": 23
           },
           "facing": "west",
@@ -5945,7 +6722,7 @@
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "farm": 1.25
       },
       "tag_source": {
@@ -5976,14 +6753,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
+        "classical": 0.0,
         "military": 0.02,
         "commercial": 0.08,
         "residential": 0.4,
-        "religious": 0,
+        "religious": 0.0,
         "industrial": 0.15,
-        "maritime": 0,
-        "civic": 0
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -5994,8 +6771,12 @@
       "namespace": "trek",
       "path": "overworld/very_rare/floating_farm_large/down_7",
       "size_tier": "L",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "north"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "auto",
@@ -6078,11 +6859,11 @@
       },
       "connectors": [
         {
-          "id": "north_connector",
+          "id": "jigsaw_north_29_46_19",
           "local_pos": {
-            "x": 23,
-            "y": 0,
-            "z": 0
+            "x": 29,
+            "y": 46,
+            "z": 19
           },
           "facing": "north",
           "type": "road",
@@ -6095,7 +6876,7 @@
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "farm": 1.25
       },
       "tag_source": {
@@ -6126,14 +6907,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
+        "classical": 0.0,
         "military": 0.02,
         "commercial": 0.08,
         "residential": 0.4,
-        "religious": 0,
+        "religious": 0.0,
         "industrial": 0.15,
-        "maritime": 0,
-        "civic": 0
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -6144,8 +6925,12 @@
       "namespace": "trek",
       "path": "overworld/very_rare/floating_farm_large/down_7_1",
       "size_tier": "S",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "north"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "z",
@@ -6228,11 +7013,11 @@
       },
       "connectors": [
         {
-          "id": "north_connector",
+          "id": "jigsaw_north_4_2_1",
           "local_pos": {
-            "x": 1,
-            "y": 0,
-            "z": 0
+            "x": 4,
+            "y": 2,
+            "z": 1
           },
           "facing": "north",
           "type": "road",
@@ -6245,7 +7030,7 @@
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "farm": 1.25
       },
       "tag_source": {
@@ -6276,14 +7061,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
+        "classical": 0.0,
         "military": 0.02,
         "commercial": 0.08,
         "residential": 0.4,
-        "religious": 0,
+        "religious": 0.0,
         "industrial": 0.15,
-        "maritime": 0,
-        "civic": 0
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -6294,8 +7079,12 @@
       "namespace": "trek",
       "path": "overworld/very_rare/floating_farm_large/down_8",
       "size_tier": "L",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "east"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "auto",
@@ -6378,11 +7167,11 @@
       },
       "connectors": [
         {
-          "id": "east_connector",
+          "id": "jigsaw_east_22_26_22",
           "local_pos": {
-            "x": 46,
-            "y": 0,
-            "z": 23
+            "x": 22,
+            "y": 26,
+            "z": 22
           },
           "facing": "east",
           "type": "road",
@@ -6395,7 +7184,7 @@
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "farm": 1.25
       },
       "tag_source": {
@@ -6428,14 +7217,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
+        "classical": 0.0,
         "military": 0.02,
         "commercial": 0.08,
         "residential": 0.4,
-        "religious": 0,
+        "religious": 0.0,
         "industrial": 0.15,
-        "maritime": 0,
-        "civic": 0
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -6446,8 +7235,14 @@
       "namespace": "trek",
       "path": "overworld/very_rare/floating_farm_large/up_1",
       "size_tier": "L",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west",
+        "south",
+        "north"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "auto",
@@ -6530,11 +7325,11 @@
       },
       "connectors": [
         {
-          "id": "west_connector",
+          "id": "jigsaw_west_25_0_21",
           "local_pos": {
-            "x": 0,
+            "x": 25,
             "y": 0,
-            "z": 23
+            "z": 21
           },
           "facing": "west",
           "type": "road",
@@ -6546,10 +7341,10 @@
           "max_connections": 1
         },
         {
-          "id": "south_connector",
+          "id": "jigsaw_south_12_12_46",
           "local_pos": {
-            "x": 23,
-            "y": 0,
+            "x": 12,
+            "y": 12,
             "z": 46
           },
           "facing": "south",
@@ -6562,11 +7357,59 @@
           "max_connections": 1
         },
         {
-          "id": "north_connector",
+          "id": "jigsaw_north_44_12_36",
           "local_pos": {
-            "x": 23,
-            "y": 0,
-            "z": 0
+            "x": 44,
+            "y": 12,
+            "z": 36
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_south_3_13_36",
+          "local_pos": {
+            "x": 3,
+            "y": 13,
+            "z": 36
+          },
+          "facing": "south",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_south_15_13_37",
+          "local_pos": {
+            "x": 15,
+            "y": 13,
+            "z": 37
+          },
+          "facing": "south",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_north_15_13_40",
+          "local_pos": {
+            "x": 15,
+            "y": 13,
+            "z": 40
           },
           "facing": "north",
           "type": "road",
@@ -6579,7 +7422,7 @@
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "farm": 1.25
       },
       "tag_source": {
@@ -6611,14 +7454,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
+        "classical": 0.0,
         "military": 0.02,
         "commercial": 0.08,
         "residential": 0.4,
-        "religious": 0,
+        "religious": 0.0,
         "industrial": 0.15,
-        "maritime": 0,
-        "civic": 0
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -6629,8 +7472,13 @@
       "namespace": "trek",
       "path": "overworld/very_rare/floating_farm_large/up_1_1",
       "size_tier": "L",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "north",
+        "east"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "x",
@@ -6713,11 +7561,11 @@
       },
       "connectors": [
         {
-          "id": "north_connector",
+          "id": "jigsaw_north_11_0_23",
           "local_pos": {
-            "x": 23,
+            "x": 11,
             "y": 0,
-            "z": 0
+            "z": 23
           },
           "facing": "north",
           "type": "road",
@@ -6729,11 +7577,11 @@
           "max_connections": 1
         },
         {
-          "id": "east_connector",
+          "id": "jigsaw_east_14_12_40",
           "local_pos": {
-            "x": 46,
-            "y": 0,
-            "z": 11
+            "x": 14,
+            "y": 12,
+            "z": 40
           },
           "facing": "east",
           "type": "road",
@@ -6746,7 +7594,7 @@
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "farm": 1.25
       },
       "tag_source": {
@@ -6780,14 +7628,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
+        "classical": 0.0,
         "military": 0.02,
         "commercial": 0.08,
         "residential": 0.4,
-        "religious": 0,
+        "religious": 0.0,
         "industrial": 0.15,
-        "maritime": 0,
-        "civic": 0
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -6798,8 +7646,15 @@
       "namespace": "trek",
       "path": "overworld/very_rare/floating_farm_large/up_2",
       "size_tier": "L",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "east",
+        "north",
+        "south",
+        "west"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "auto",
@@ -6882,11 +7737,11 @@
       },
       "connectors": [
         {
-          "id": "east_connector",
+          "id": "jigsaw_east_26_0_30",
           "local_pos": {
-            "x": 46,
+            "x": 26,
             "y": 0,
-            "z": 23
+            "z": 30
           },
           "facing": "east",
           "type": "road",
@@ -6898,11 +7753,11 @@
           "max_connections": 1
         },
         {
-          "id": "north_connector",
+          "id": "jigsaw_north_12_10_28",
           "local_pos": {
-            "x": 23,
-            "y": 0,
-            "z": 0
+            "x": 12,
+            "y": 10,
+            "z": 28
           },
           "facing": "north",
           "type": "road",
@@ -6914,11 +7769,11 @@
           "max_connections": 1
         },
         {
-          "id": "south_connector",
+          "id": "jigsaw_south_25_10_20",
           "local_pos": {
-            "x": 23,
-            "y": 0,
-            "z": 46
+            "x": 25,
+            "y": 10,
+            "z": 20
           },
           "facing": "south",
           "type": "road",
@@ -6930,13 +7785,77 @@
           "max_connections": 1
         },
         {
-          "id": "west_connector",
+          "id": "jigsaw_east_7_11_20",
           "local_pos": {
-            "x": 0,
-            "y": 0,
-            "z": 23
+            "x": 7,
+            "y": 11,
+            "z": 20
+          },
+          "facing": "east",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_south_18_11_40",
+          "local_pos": {
+            "x": 18,
+            "y": 11,
+            "z": 40
+          },
+          "facing": "south",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_west_20_11_7",
+          "local_pos": {
+            "x": 20,
+            "y": 11,
+            "z": 7
           },
           "facing": "west",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_east_7_12_11",
+          "local_pos": {
+            "x": 7,
+            "y": 12,
+            "z": 11
+          },
+          "facing": "east",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_east_42_12_18",
+          "local_pos": {
+            "x": 42,
+            "y": 12,
+            "z": 18
+          },
+          "facing": "east",
           "type": "road",
           "socket": "village_street_small",
           "connect_to_pools": [
@@ -6947,7 +7866,7 @@
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "farm": 1.25
       },
       "tag_source": {
@@ -6978,14 +7897,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
+        "classical": 0.0,
         "military": 0.02,
         "commercial": 0.08,
         "residential": 0.4,
-        "religious": 0,
+        "religious": 0.0,
         "industrial": 0.15,
-        "maritime": 0,
-        "civic": 0
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -6996,8 +7915,12 @@
       "namespace": "trek",
       "path": "overworld/very_rare/floating_farm_large/up_2_1",
       "size_tier": "L",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "south"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "x",
@@ -7080,11 +8003,11 @@
       },
       "connectors": [
         {
-          "id": "south_connector",
+          "id": "jigsaw_south_15_0_12",
           "local_pos": {
-            "x": 12,
+            "x": 15,
             "y": 0,
-            "z": 20
+            "z": 12
           },
           "facing": "south",
           "type": "road",
@@ -7097,7 +8020,7 @@
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "farm": 1.25
       },
       "tag_source": {
@@ -7128,14 +8051,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
+        "classical": 0.0,
         "military": 0.02,
         "commercial": 0.08,
         "residential": 0.4,
-        "religious": 0,
+        "religious": 0.0,
         "industrial": 0.15,
-        "maritime": 0,
-        "civic": 0
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -7146,8 +8069,12 @@
       "namespace": "trek",
       "path": "overworld/very_rare/floating_farm_large/up_2_2",
       "size_tier": "L",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "east"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "z",
@@ -7230,11 +8157,11 @@
       },
       "connectors": [
         {
-          "id": "east_connector",
+          "id": "jigsaw_east_12_0_14",
           "local_pos": {
-            "x": 18,
+            "x": 12,
             "y": 0,
-            "z": 12
+            "z": 14
           },
           "facing": "east",
           "type": "road",
@@ -7247,7 +8174,7 @@
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "farm": 1.25
       },
       "tag_source": {
@@ -7280,14 +8207,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
+        "classical": 0.0,
         "military": 0.02,
         "commercial": 0.08,
         "residential": 0.4,
-        "religious": 0,
+        "religious": 0.0,
         "industrial": 0.15,
-        "maritime": 0,
-        "civic": 0
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -7298,8 +8225,14 @@
       "namespace": "trek",
       "path": "overworld/very_rare/floating_farm_large/up_3",
       "size_tier": "L",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "south",
+        "west",
+        "east"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "auto",
@@ -7382,11 +8315,11 @@
       },
       "connectors": [
         {
-          "id": "south_connector",
+          "id": "jigsaw_south_24_0_24",
           "local_pos": {
-            "x": 23,
+            "x": 24,
             "y": 0,
-            "z": 46
+            "z": 24
           },
           "facing": "south",
           "type": "road",
@@ -7398,11 +8331,11 @@
           "max_connections": 1
         },
         {
-          "id": "west_connector",
+          "id": "jigsaw_west_19_11_32",
           "local_pos": {
-            "x": 0,
-            "y": 0,
-            "z": 23
+            "x": 19,
+            "y": 11,
+            "z": 32
           },
           "facing": "west",
           "type": "road",
@@ -7414,11 +8347,123 @@
           "max_connections": 1
         },
         {
-          "id": "east_connector",
+          "id": "jigsaw_east_2_12_6",
           "local_pos": {
-            "x": 46,
-            "y": 0,
+            "x": 2,
+            "y": 12,
+            "z": 6
+          },
+          "facing": "east",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_east_2_12_23",
+          "local_pos": {
+            "x": 2,
+            "y": 12,
             "z": 23
+          },
+          "facing": "east",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_south_9_12_13",
+          "local_pos": {
+            "x": 9,
+            "y": 12,
+            "z": 13
+          },
+          "facing": "south",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_west_36_12_29",
+          "local_pos": {
+            "x": 36,
+            "y": 12,
+            "z": 29
+          },
+          "facing": "west",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_south_16_13_17",
+          "local_pos": {
+            "x": 16,
+            "y": 13,
+            "z": 17
+          },
+          "facing": "south",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_south_26_14_24",
+          "local_pos": {
+            "x": 26,
+            "y": 14,
+            "z": 24
+          },
+          "facing": "south",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_south_42_14_14",
+          "local_pos": {
+            "x": 42,
+            "y": 14,
+            "z": 14
+          },
+          "facing": "south",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_east_44_14_3",
+          "local_pos": {
+            "x": 44,
+            "y": 14,
+            "z": 3
           },
           "facing": "east",
           "type": "road",
@@ -7431,7 +8476,7 @@
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "farm": 1.25
       },
       "tag_source": {
@@ -7462,14 +8507,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
+        "classical": 0.0,
         "military": 0.02,
         "commercial": 0.08,
         "residential": 0.4,
-        "religious": 0,
+        "religious": 0.0,
         "industrial": 0.15,
-        "maritime": 0,
-        "civic": 0
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -7480,8 +8525,12 @@
       "namespace": "trek",
       "path": "overworld/very_rare/floating_farm_large/up_3_1",
       "size_tier": "L",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "south"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "z",
@@ -7564,11 +8613,27 @@
       },
       "connectors": [
         {
-          "id": "south_connector",
+          "id": "jigsaw_south_22_0_15",
           "local_pos": {
-            "x": 10,
+            "x": 22,
             "y": 0,
-            "z": 46
+            "z": 15
+          },
+          "facing": "south",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_south_27_12_9",
+          "local_pos": {
+            "x": 27,
+            "y": 12,
+            "z": 9
           },
           "facing": "south",
           "type": "road",
@@ -7581,7 +8646,7 @@
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "farm": 1.25
       },
       "tag_source": {
@@ -7614,14 +8679,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
+        "classical": 0.0,
         "military": 0.02,
         "commercial": 0.08,
         "residential": 0.4,
-        "religious": 0,
+        "religious": 0.0,
         "industrial": 0.15,
-        "maritime": 0,
-        "civic": 0
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -7632,8 +8697,14 @@
       "namespace": "trek",
       "path": "overworld/very_rare/floating_farm_large/up_4",
       "size_tier": "L",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west",
+        "south",
+        "north"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "auto",
@@ -7716,11 +8787,11 @@
       },
       "connectors": [
         {
-          "id": "west_connector",
+          "id": "jigsaw_west_5_0_39",
           "local_pos": {
-            "x": 0,
+            "x": 5,
             "y": 0,
-            "z": 23
+            "z": 39
           },
           "facing": "west",
           "type": "road",
@@ -7732,11 +8803,11 @@
           "max_connections": 1
         },
         {
-          "id": "south_connector",
+          "id": "jigsaw_south_34_13_39",
           "local_pos": {
-            "x": 23,
-            "y": 0,
-            "z": 46
+            "x": 34,
+            "y": 13,
+            "z": 39
           },
           "facing": "south",
           "type": "road",
@@ -7748,11 +8819,11 @@
           "max_connections": 1
         },
         {
-          "id": "north_connector",
+          "id": "jigsaw_north_1_15_4",
           "local_pos": {
-            "x": 23,
-            "y": 0,
-            "z": 0
+            "x": 1,
+            "y": 15,
+            "z": 4
           },
           "facing": "north",
           "type": "road",
@@ -7765,7 +8836,7 @@
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "farm": 1.25
       },
       "tag_source": {
@@ -7796,14 +8867,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
+        "classical": 0.0,
         "military": 0.02,
         "commercial": 0.08,
         "residential": 0.4,
-        "religious": 0,
+        "religious": 0.0,
         "industrial": 0.15,
-        "maritime": 0,
-        "civic": 0
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -7814,8 +8885,12 @@
       "namespace": "trek",
       "path": "overworld/very_rare/floating_farm_large/up_4_1",
       "size_tier": "L",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "south"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "z",
@@ -7898,11 +8973,11 @@
       },
       "connectors": [
         {
-          "id": "south_connector",
+          "id": "jigsaw_south_17_0_5",
           "local_pos": {
-            "x": 5,
+            "x": 17,
             "y": 0,
-            "z": 38
+            "z": 5
           },
           "facing": "south",
           "type": "road",
@@ -7915,7 +8990,7 @@
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "farm": 1.25
       },
       "tag_source": {
@@ -7947,14 +9022,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
+        "classical": 0.0,
         "military": 0.02,
         "commercial": 0.08,
         "residential": 0.4,
-        "religious": 0,
+        "religious": 0.0,
         "industrial": 0.15,
-        "maritime": 0,
-        "civic": 0
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -7965,8 +9040,13 @@
       "namespace": "trek",
       "path": "overworld/very_rare/floating_farm_large/up_4_2",
       "size_tier": "L",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west",
+        "east"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "x",
@@ -8049,11 +9129,11 @@
       },
       "connectors": [
         {
-          "id": "west_connector",
+          "id": "jigsaw_west_10_0_29",
           "local_pos": {
-            "x": 0,
+            "x": 10,
             "y": 0,
-            "z": 10
+            "z": 29
           },
           "facing": "west",
           "type": "road",
@@ -8065,11 +9145,27 @@
           "max_connections": 1
         },
         {
-          "id": "east_connector",
+          "id": "jigsaw_east_11_15_8",
           "local_pos": {
-            "x": 34,
-            "y": 0,
-            "z": 10
+            "x": 11,
+            "y": 15,
+            "z": 8
+          },
+          "facing": "east",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_east_11_15_16",
+          "local_pos": {
+            "x": 11,
+            "y": 15,
+            "z": 16
           },
           "facing": "east",
           "type": "road",
@@ -8082,7 +9178,7 @@
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "farm": 1.25
       },
       "tag_source": {
@@ -8115,14 +9211,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
+        "classical": 0.0,
         "military": 0.02,
         "commercial": 0.08,
         "residential": 0.4,
-        "religious": 0,
+        "religious": 0.0,
         "industrial": 0.15,
-        "maritime": 0,
-        "civic": 0
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -8133,8 +9229,14 @@
       "namespace": "trek",
       "path": "overworld/very_rare/floating_farm_large/up_5",
       "size_tier": "L",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "east",
+        "north",
+        "west"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "auto",
@@ -8217,10 +9319,42 @@
       },
       "connectors": [
         {
-          "id": "east_connector",
+          "id": "jigsaw_east_22_0_22",
           "local_pos": {
-            "x": 46,
+            "x": 22,
             "y": 0,
+            "z": 22
+          },
+          "facing": "east",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_north_16_12_31",
+          "local_pos": {
+            "x": 16,
+            "y": 12,
+            "z": 31
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_east_21_12_23",
+          "local_pos": {
+            "x": 21,
+            "y": 12,
             "z": 23
           },
           "facing": "east",
@@ -8233,11 +9367,27 @@
           "max_connections": 1
         },
         {
-          "id": "north_connector",
+          "id": "jigsaw_east_34_12_35",
           "local_pos": {
-            "x": 23,
-            "y": 0,
-            "z": 0
+            "x": 34,
+            "y": 12,
+            "z": 35
+          },
+          "facing": "east",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_north_8_14_38",
+          "local_pos": {
+            "x": 8,
+            "y": 14,
+            "z": 38
           },
           "facing": "north",
           "type": "road",
@@ -8249,11 +9399,11 @@
           "max_connections": 1
         },
         {
-          "id": "west_connector",
+          "id": "jigsaw_west_32_19_1",
           "local_pos": {
-            "x": 0,
-            "y": 0,
-            "z": 23
+            "x": 32,
+            "y": 19,
+            "z": 1
           },
           "facing": "west",
           "type": "road",
@@ -8266,7 +9416,7 @@
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "farm": 1.25
       },
       "tag_source": {
@@ -8297,14 +9447,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
+        "classical": 0.0,
         "military": 0.02,
         "commercial": 0.08,
         "residential": 0.4,
-        "religious": 0,
+        "religious": 0.0,
         "industrial": 0.15,
-        "maritime": 0,
-        "civic": 0
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -8315,8 +9465,12 @@
       "namespace": "trek",
       "path": "overworld/very_rare/floating_farm_large/up_5_1",
       "size_tier": "L",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "south"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "x",
@@ -8399,11 +9553,11 @@
       },
       "connectors": [
         {
-          "id": "south_connector",
+          "id": "jigsaw_south_15_0_33",
           "local_pos": {
-            "x": 23,
+            "x": 15,
             "y": 0,
-            "z": 30
+            "z": 33
           },
           "facing": "south",
           "type": "road",
@@ -8416,7 +9570,7 @@
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "farm": 1.25
       },
       "tag_source": {
@@ -8449,14 +9603,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
+        "classical": 0.0,
         "military": 0.02,
         "commercial": 0.08,
         "residential": 0.4,
-        "religious": 0,
+        "religious": 0.0,
         "industrial": 0.15,
-        "maritime": 0,
-        "civic": 0
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -8467,8 +9621,14 @@
       "namespace": "trek",
       "path": "overworld/very_rare/floating_farm_large/up_6",
       "size_tier": "L",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "north",
+        "south",
+        "west"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "auto",
@@ -8551,9 +9711,9 @@
       },
       "connectors": [
         {
-          "id": "north_connector",
+          "id": "jigsaw_north_27_0_0",
           "local_pos": {
-            "x": 23,
+            "x": 27,
             "y": 0,
             "z": 0
           },
@@ -8567,11 +9727,27 @@
           "max_connections": 1
         },
         {
-          "id": "south_connector",
+          "id": "jigsaw_north_32_18_42",
           "local_pos": {
-            "x": 23,
-            "y": 0,
-            "z": 46
+            "x": 32,
+            "y": 18,
+            "z": 42
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_south_17_24_8",
+          "local_pos": {
+            "x": 17,
+            "y": 24,
+            "z": 8
           },
           "facing": "south",
           "type": "road",
@@ -8583,13 +9759,45 @@
           "max_connections": 1
         },
         {
-          "id": "west_connector",
+          "id": "jigsaw_west_20_24_11",
           "local_pos": {
-            "x": 0,
-            "y": 0,
-            "z": 23
+            "x": 20,
+            "y": 24,
+            "z": 11
           },
           "facing": "west",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_north_14_29_15",
+          "local_pos": {
+            "x": 14,
+            "y": 29,
+            "z": 15
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_south_9_30_17",
+          "local_pos": {
+            "x": 9,
+            "y": 30,
+            "z": 17
+          },
+          "facing": "south",
           "type": "road",
           "socket": "village_street_small",
           "connect_to_pools": [
@@ -8600,7 +9808,7 @@
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "farm": 1.25
       },
       "tag_source": {
@@ -8631,14 +9839,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
+        "classical": 0.0,
         "military": 0.02,
         "commercial": 0.08,
         "residential": 0.4,
-        "religious": 0,
+        "religious": 0.0,
         "industrial": 0.15,
-        "maritime": 0,
-        "civic": 0
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -8649,8 +9857,12 @@
       "namespace": "trek",
       "path": "overworld/very_rare/floating_farm_large/up_6_1",
       "size_tier": "L",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "x",
@@ -8733,11 +9945,11 @@
       },
       "connectors": [
         {
-          "id": "west_connector",
+          "id": "jigsaw_west_15_0_22",
           "local_pos": {
-            "x": 0,
+            "x": 15,
             "y": 0,
-            "z": 14
+            "z": 22
           },
           "facing": "west",
           "type": "road",
@@ -8750,7 +9962,7 @@
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "farm": 1.25
       },
       "tag_source": {
@@ -8782,14 +9994,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
+        "classical": 0.0,
         "military": 0.02,
         "commercial": 0.08,
         "residential": 0.4,
-        "religious": 0,
+        "religious": 0.0,
         "industrial": 0.15,
-        "maritime": 0,
-        "civic": 0
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -8800,8 +10012,13 @@
       "namespace": "trek",
       "path": "overworld/very_rare/floating_farm_large/up_6_2",
       "size_tier": "L",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "north",
+        "south"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "z",
@@ -8884,11 +10101,11 @@
       },
       "connectors": [
         {
-          "id": "north_connector",
+          "id": "jigsaw_north_23_0_17",
           "local_pos": {
-            "x": 16,
+            "x": 23,
             "y": 0,
-            "z": 0
+            "z": 17
           },
           "facing": "north",
           "type": "road",
@@ -8900,11 +10117,43 @@
           "max_connections": 1
         },
         {
-          "id": "south_connector",
+          "id": "jigsaw_south_42_17_25",
           "local_pos": {
-            "x": 16,
-            "y": 0,
-            "z": 44
+            "x": 42,
+            "y": 17,
+            "z": 25
+          },
+          "facing": "south",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_south_43_17_24",
+          "local_pos": {
+            "x": 43,
+            "y": 17,
+            "z": 24
+          },
+          "facing": "south",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_south_43_17_25",
+          "local_pos": {
+            "x": 43,
+            "y": 17,
+            "z": 25
           },
           "facing": "south",
           "type": "road",
@@ -8917,7 +10166,7 @@
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "farm": 1.25
       },
       "tag_source": {
@@ -8949,14 +10198,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
+        "classical": 0.0,
         "military": 0.02,
         "commercial": 0.08,
         "residential": 0.4,
-        "religious": 0,
+        "religious": 0.0,
         "industrial": 0.15,
-        "maritime": 0,
-        "civic": 0
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -8967,8 +10216,13 @@
       "namespace": "trek",
       "path": "overworld/very_rare/floating_farm_large/up_7",
       "size_tier": "L",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west",
+        "south"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "auto",
@@ -9051,11 +10305,11 @@
       },
       "connectors": [
         {
-          "id": "west_connector",
+          "id": "jigsaw_west_22_0_22",
           "local_pos": {
-            "x": 0,
+            "x": 22,
             "y": 0,
-            "z": 23
+            "z": 22
           },
           "facing": "west",
           "type": "road",
@@ -9067,11 +10321,11 @@
           "max_connections": 1
         },
         {
-          "id": "south_connector",
+          "id": "jigsaw_south_23_46_24",
           "local_pos": {
             "x": 23,
-            "y": 0,
-            "z": 46
+            "y": 46,
+            "z": 24
           },
           "facing": "south",
           "type": "road",
@@ -9084,7 +10338,7 @@
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "farm": 1.25
       },
       "tag_source": {
@@ -9117,14 +10371,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
+        "classical": 0.0,
         "military": 0.02,
         "commercial": 0.08,
         "residential": 0.4,
-        "religious": 0,
+        "religious": 0.0,
         "industrial": 0.15,
-        "maritime": 0,
-        "civic": 0
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -9135,8 +10389,14 @@
       "namespace": "trek",
       "path": "overworld/very_rare/floating_farm_large/up_7_1",
       "size_tier": "L",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "north",
+        "south",
+        "east"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "z",
@@ -9219,11 +10479,11 @@
       },
       "connectors": [
         {
-          "id": "north_connector",
+          "id": "jigsaw_north_27_0_6",
           "local_pos": {
-            "x": 15,
+            "x": 27,
             "y": 0,
-            "z": 0
+            "z": 6
           },
           "facing": "north",
           "type": "road",
@@ -9235,11 +10495,11 @@
           "max_connections": 1
         },
         {
-          "id": "south_connector",
+          "id": "jigsaw_south_1_17_22",
           "local_pos": {
-            "x": 15,
-            "y": 0,
-            "z": 46
+            "x": 1,
+            "y": 17,
+            "z": 22
           },
           "facing": "south",
           "type": "road",
@@ -9251,10 +10511,26 @@
           "max_connections": 1
         },
         {
-          "id": "east_connector",
+          "id": "jigsaw_south_2_17_22",
           "local_pos": {
-            "x": 30,
-            "y": 0,
+            "x": 2,
+            "y": 17,
+            "z": 22
+          },
+          "facing": "south",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_east_2_17_23",
+          "local_pos": {
+            "x": 2,
+            "y": 17,
             "z": 23
           },
           "facing": "east",
@@ -9265,10 +10541,74 @@
           ],
           "required": false,
           "max_connections": 1
+        },
+        {
+          "id": "jigsaw_south_3_17_22",
+          "local_pos": {
+            "x": 3,
+            "y": 17,
+            "z": 22
+          },
+          "facing": "south",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_south_3_17_23",
+          "local_pos": {
+            "x": 3,
+            "y": 17,
+            "z": 23
+          },
+          "facing": "south",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_east_7_17_22",
+          "local_pos": {
+            "x": 7,
+            "y": 17,
+            "z": 22
+          },
+          "facing": "east",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_south_8_17_22",
+          "local_pos": {
+            "x": 8,
+            "y": 17,
+            "z": 22
+          },
+          "facing": "south",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_farm"
+          ],
+          "required": false,
+          "max_connections": 1
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "farm": 1.25
       },
       "tag_source": {
@@ -9300,14 +10640,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
+        "classical": 0.0,
         "military": 0.02,
         "commercial": 0.08,
         "residential": 0.4,
-        "religious": 0,
+        "religious": 0.0,
         "industrial": 0.15,
-        "maritime": 0,
-        "civic": 0
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -9318,8 +10658,13 @@
       "namespace": "trek",
       "path": "overworld/very_rare/floating_farm_large/up_8",
       "size_tier": "L",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "north",
+        "east"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "auto",
@@ -9402,9 +10747,9 @@
       },
       "connectors": [
         {
-          "id": "north_connector",
+          "id": "jigsaw_north_44_0_0",
           "local_pos": {
-            "x": 23,
+            "x": 44,
             "y": 0,
             "z": 0
           },
@@ -9418,11 +10763,11 @@
           "max_connections": 1
         },
         {
-          "id": "east_connector",
+          "id": "jigsaw_east_23_46_19",
           "local_pos": {
-            "x": 46,
-            "y": 0,
-            "z": 23
+            "x": 23,
+            "y": 46,
+            "z": 19
           },
           "facing": "east",
           "type": "road",
@@ -9435,7 +10780,7 @@
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "farm": 1.25
       },
       "tag_source": {
@@ -9466,14 +10811,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
+        "classical": 0.0,
         "military": 0.02,
         "commercial": 0.08,
         "residential": 0.4,
-        "religious": 0,
+        "religious": 0.0,
         "industrial": 0.15,
-        "maritime": 0,
-        "civic": 0
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -9484,8 +10829,12 @@
       "namespace": "trek",
       "path": "overworld/very_rare/floating_farm_large/up_8_1",
       "size_tier": "L",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "north"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "z",
@@ -9568,11 +10917,11 @@
       },
       "connectors": [
         {
-          "id": "north_connector",
+          "id": "jigsaw_north_27_0_6",
           "local_pos": {
-            "x": 12,
+            "x": 27,
             "y": 0,
-            "z": 0
+            "z": 6
           },
           "facing": "north",
           "type": "road",
@@ -9585,7 +10934,7 @@
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "farm": 1.25
       },
       "tag_source": {
@@ -9616,14 +10965,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
+        "classical": 0.0,
         "military": 0.02,
         "commercial": 0.08,
         "residential": 0.4,
-        "religious": 0,
+        "religious": 0.0,
         "industrial": 0.15,
-        "maritime": 0,
-        "civic": 0
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -9634,8 +10983,12 @@
       "namespace": "trek",
       "path": "overworld/very_rare/floating_farm_large/up_8_2",
       "size_tier": "L",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "north"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "x",
@@ -9718,11 +11071,11 @@
       },
       "connectors": [
         {
-          "id": "north_connector",
+          "id": "jigsaw_north_2_0_19",
           "local_pos": {
-            "x": 23,
+            "x": 2,
             "y": 0,
-            "z": 0
+            "z": 19
           },
           "facing": "north",
           "type": "road",
@@ -9735,7 +11088,7 @@
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "farm": 1.25
       },
       "tag_source": {
@@ -9766,14 +11119,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
+        "classical": 0.0,
         "military": 0.02,
         "commercial": 0.08,
         "residential": 0.4,
-        "religious": 0,
+        "religious": 0.0,
         "industrial": 0.15,
-        "maritime": 0,
-        "civic": 0
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -9784,8 +11137,12 @@
       "namespace": "trek",
       "path": "overworld/very_rare/floating_farm_large/up_up_7",
       "size_tier": "L",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "south"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "auto",
@@ -9868,11 +11225,11 @@
       },
       "connectors": [
         {
-          "id": "south_connector",
+          "id": "jigsaw_south_23_0_24",
           "local_pos": {
             "x": 23,
             "y": 0,
-            "z": 46
+            "z": 24
           },
           "facing": "south",
           "type": "road",
@@ -9885,7 +11242,7 @@
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "farm": 1.25
       },
       "tag_source": {
@@ -9916,14 +11273,14 @@
       },
       "piece_role": "SINGLE",
       "style_score": {
-        "classical": 0,
+        "classical": 0.0,
         "military": 0.02,
         "commercial": 0.08,
         "residential": 0.4,
-        "religious": 0,
+        "religious": 0.0,
         "industrial": 0.15,
-        "maritime": 0,
-        "civic": 0
+        "maritime": 0.0,
+        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -9934,8 +11291,12 @@
       "namespace": "trek",
       "path": "overworld/very_rare/floating_farm_large/up_up_8",
       "size_tier": "L",
-      "connector_types": [],
-      "connector_dirs": [],
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "east"
+      ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "auto",
@@ -10018,11 +11379,11 @@
       },
       "connectors": [
         {
-          "id": "east_connector",
+          "id": "jigsaw_east_23_0_19",
           "local_pos": {
-            "x": 46,
+            "x": 23,
             "y": 0,
-            "z": 23
+            "z": 19
           },
           "facing": "east",
           "type": "road",
@@ -10035,7 +11396,7 @@
         }
       ],
       "weight_profile": {
-        "default": 1,
+        "default": 1.0,
         "farm": 1.25
       },
       "tag_source": {

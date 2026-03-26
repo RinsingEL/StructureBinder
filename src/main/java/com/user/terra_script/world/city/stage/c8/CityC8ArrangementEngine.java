@@ -440,15 +440,6 @@ public final class CityC8ArrangementEngine {
                 ));
             }
         }
-        if (!out.isEmpty()) return out;
-
-        List<String> fallback = meta != null && meta.connector_dirs != null && !meta.connector_dirs.isEmpty()
-                ? meta.connector_dirs
-                : List.of();
-        for (String dirRaw : fallback) {
-            Direction dir = Direction.parse(dirRaw);
-            if (dir != null) out.add(new ConnectorView(dir.nameLower, 0, 0, dir, dir, "", List.of(), false, 1));
-        }
         return out;
     }
 
@@ -465,19 +456,11 @@ public final class CityC8ArrangementEngine {
                 if (rotation != null && hasMatchingConnector(candidate, incomingDir, requiredSocket, rotation)) return true;
             }
         }
-        if (hasMatchingLegacyDirection(candidate, incomingDir)) return true;
-        return candidate.connectors == null || candidate.connectors.isEmpty();
+        return false;
     }
 
     private static boolean hasMatchingConnector(TemplateMeta candidate, Direction incomingDir, String requiredSocket, int rotation) {
         return matchChildConnectors(candidate, incomingDir, requiredSocket, rotation).stream().findFirst().isPresent();
-    }
-
-    private static boolean hasMatchingLegacyDirection(TemplateMeta candidate, Direction incomingDir) {
-        if (candidate == null || incomingDir == null) return false;
-        String needed = incomingDir.opposite().nameLower;
-        if (candidate.connector_dirs != null && candidate.connector_dirs.stream().anyMatch(needed::equalsIgnoreCase)) return true;
-        return candidate.jigsawFacing != null && candidate.jigsawFacing.stream().anyMatch(needed::equalsIgnoreCase);
     }
 
     private static int resolveCandidateRotation(TemplateMeta candidate, Direction incomingDir, ConnectorView sourceConnector) {
@@ -785,8 +768,7 @@ public final class CityC8ArrangementEngine {
         if ("START".equals(meta.piece_role)) score -= 0.3;
         if ("MIDDLE".equals(meta.piece_role)) score += 0.2;
         if ("SINGLE".equals(meta.piece_role)) score += 0.12;
-        if (meta.connector_dirs.contains(dir.opposite().nameLower)) score += 0.35;
-        if (meta.jigsawFacing.contains(dir.opposite().nameLower)) score += 0.18;
+        if (hasFacingConnector(meta, dir.opposite(), 0)) score += 0.35;
         if (meta.path.contains("ship")) score += 0.18;
         if (meta.path.contains("dock")) score += 0.14;
         if (meta.path.contains("lighthouse")) score += 0.08;
@@ -832,6 +814,14 @@ public final class CityC8ArrangementEngine {
             System.out.println("[C8] loadCatalog exception=" + ignored.getClass().getSimpleName() + " msg=" + ignored.getMessage());
             return null;
         }
+    }
+
+    private static boolean hasFacingConnector(TemplateMeta meta, Direction neededDirection, int rotation) {
+        if (meta == null || neededDirection == null || meta.connectors == null || meta.connectors.isEmpty()) return false;
+        for (ConnectorView connector : resolveConnectorViews(meta, rotation)) {
+            if (connector != null && connector.direction == neededDirection) return true;
+        }
+        return false;
     }
 
     private static CityC8Stages.PlacementNode node(CityC7Stages.SelectedComponent component, int x, int z, int rotation, int level, String parentNodeId, String reason) {
