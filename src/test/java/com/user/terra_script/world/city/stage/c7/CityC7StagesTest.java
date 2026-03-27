@@ -1,6 +1,9 @@
 package com.user.terra_script.world.city.stage.c7;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import com.user.terra_script.world.city.stage.CityC35CatalogIO;
+import com.user.terra_script.world.city.stage.c6.CityC6Stages;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Constructor;
@@ -186,6 +189,17 @@ class CityC7StagesTest {
 
         double value = (double) score.invoke(null, single, "M", "market", "g_market_04", "market_pool", "south", true);
         assertTrue(value > 0.0);
+    }
+
+    @Test
+    void decisionRequestPreservesNonStrictTagOverride() {
+        CityC6Stages.C6Layout layout = new CityC6Stages.C6Layout();
+        JsonObject request = new JsonObject();
+        request.add("arrangements", new JsonArray());
+
+        CityC7Stages.C7Selection selection = CityC7Stages.fromDecisionRequest("city_test", layout, request, false);
+
+        assertFalse(selection.strict_tag_source);
     }
 
     private static Object newCatalog() throws Exception {

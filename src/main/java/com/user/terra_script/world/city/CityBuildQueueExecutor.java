@@ -97,6 +97,9 @@ public final class CityBuildQueueExecutor {
     public static ExecutionReport executeLoadedTasksNow(MinecraftServer server, String cityId, String groupId, int maxTasks) throws Exception {
         ensureLoaded(server);
         if (cityId != null && !cityId.isBlank()) refreshCityQueue(server, cityId);
+        System.out.println("[C9] executeLoadedTasksNow city=" + safe(cityId)
+                + " group=" + safe(groupId)
+                + " maxTasks=" + maxTasks);
         return executeReady(server, cityId, groupId, Math.max(0, maxTasks));
     }
 
@@ -176,6 +179,12 @@ public final class CityBuildQueueExecutor {
                 .comparingInt((BuildTask task) -> -task.priority)
                 .thenComparing(task -> task.build_order != null ? task.build_order : Integer.MAX_VALUE)
                 .thenComparing(task -> task.task_id));
+        if ((cityId != null && !cityId.isBlank()) || (groupId != null && !groupId.isBlank())) {
+            System.out.println("[C9] executeReady city=" + safe(cityId)
+                    + " group=" + safe(groupId)
+                    + " maxTasks=" + maxTasks
+                    + " candidate_count=" + candidates.size());
+        }
         int processed = 0;
         for (BuildTask task : candidates) {
             if (processed >= maxTasks) break;
@@ -229,11 +238,15 @@ public final class CityBuildQueueExecutor {
         if (!level.hasChunk(task.chunk_x, task.chunk_z)) {
             task.status = CityC9BuildQueue.Status.PLANNED.name();
             persist(task.city_id);
+            System.out.println("[C9] skip_not_loaded_chunk task=" + taskLabel(task)
+                    + " chunk=" + task.chunk_x + "," + task.chunk_z);
             return TaskOutcome.SKIPPED;
         }
         if (level.getChunk(task.chunk_x, task.chunk_z, ChunkStatus.FULL, false) == null) {
             task.status = CityC9BuildQueue.Status.READY.name();
             persist(task.city_id);
+            System.out.println("[C9] skip_chunk_not_full task=" + taskLabel(task)
+                    + " chunk=" + task.chunk_x + "," + task.chunk_z);
             return TaskOutcome.SKIPPED;
         }
 
@@ -261,6 +274,10 @@ public final class CityBuildQueueExecutor {
         task.last_error = null;
         task.updated_at_tick = ServerTickTracker.currentTick();
         persist(task.city_id);
+        System.out.println("[C9] completed task=" + taskLabel(task)
+                + " template=" + safe(task.template_id)
+                + " pos=" + task.x + "," + task.y + "," + task.z
+                + " rotation=" + task.rotation);
         return TaskOutcome.COMPLETED;
     }
 
@@ -291,6 +308,9 @@ public final class CityBuildQueueExecutor {
         task.retry_count++;
         task.last_error = error;
         task.updated_at_tick = ServerTickTracker.currentTick();
+        System.out.println("[C9] fail task=" + taskLabel(task)
+                + " error=" + safe(error)
+                + " retry_count=" + task.retry_count);
         if (task.retry_count >= CityC9BuildQueue.MAX_RETRIES || isTerminalError(error)) {
             task.status = CityC9BuildQueue.Status.BLOCKED.name();
             persist(task.city_id);
@@ -339,6 +359,15 @@ public final class CityBuildQueueExecutor {
             CityC9BuildQueue.save(loadedWorldRoot.resolve("terra_script").resolve("cities").resolve(cityId), queue);
         } catch (Exception ignored) {
         }
+    }
+
+    private static String taskLabel(BuildTask task) {
+        if (task == null) return "";
+        return safe(task.city_id) + "|" + safe(task.group_id) + "|" + safe(task.build_area_id) + "|" + safe(task.node_id);
+    }
+
+    private static String safe(String value) {
+        return value == null ? "" : value;
     }
 
     private static long chunkKey(int chunkX, int chunkZ) {

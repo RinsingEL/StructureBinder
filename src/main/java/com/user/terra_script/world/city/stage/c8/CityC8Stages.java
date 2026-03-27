@@ -497,6 +497,10 @@ public final class CityC8Stages {
         return Math.round(v * 1000.0) / 1000.0;
     }
 
+    private static String safe(String value) {
+        return value == null ? "" : value;
+    }
+
     private static final class TerrainStats {
         int minH;
         int maxH;

@@ -34,6 +34,7 @@ import com.user.terra_script.world.city.stage.c8.CityC8Stages;
 import com.user.terra_script.world.city.stage.c8.CityC8ArrangementPreviewExporter;
 import com.user.terra_script.world.city.stage.c9.CityC9Stages;
 import com.user.terra_script.world.city.stage.c9.CityC9BuildQueue;
+import com.user.terra_script.world.city.stage.c9.CityC9PlacementPreviewExporter;
 import com.user.terra_script.domain.world.scan.ScanPixel;
 import com.user.terra_script.domain.world.scan.service.SatelliteScanner;
 import com.user.terra_script.world.city.CityBuildQueueExecutor;
@@ -871,7 +872,7 @@ public class CityController {
             }
 
             CityC7Stages.C7Selection selection = json.has("arrangements")
-                    ? CityC7Stages.fromDecisionRequest(cityId, c6Layout, json)
+                    ? CityC7Stages.fromDecisionRequest(cityId, c6Layout, json, strictTagSource)
                     : CityC7Stages.generate(cityId, c6Layout, strictTagSource);
             CityC7Stages.C7Selection responseSelection = filterC7SelectionByGroup(selection, groupId);
             Path outputFile = cityDir.resolve(CityC7Stages.C7_FILE);
@@ -975,13 +976,15 @@ public class CityController {
             }
 
             CityC2ScanBinaryIO.C2ScanData c2ScanData = CityC2ScanBinaryIO.load(cityId);
-            CityC7Stages.C7Selection c7Selection = loadC7Selection(cityDir, groupId);
+            CityC7Stages.C7Selection c7Selection = loadC8GenerationSelection(cityDir, groupId);
             System.out.println("[C8] handleCityC8Generate city=" + cityId
                     + " group=" + safe(groupId)
                     + " c7_selection_generated_at=" + (c7Selection != null ? c7Selection.generated_at_epoch_ms : -1)
                     + " c7_selection_count=" + (c7Selection != null && c7Selection.selections != null ? c7Selection.selections.size() : -1));
             CityC8Stages.C8Plan plan = CityC8Stages.generate(cityId, c6Summary, c6Layout, c7Selection, heightData, c2ScanData, c6Index);
-            CityC8Stages.save(cityDir, plan);
+            if (groupId == null || groupId.isBlank()) {
+                CityC8Stages.save(cityDir, plan);
+            }
 
             Set<Integer> targetAreaIds = collectAreaIdsForGroup(c6Summary, groupId);
             CityC8Stages.C8Plan responsePlan = filterC8PlanByGroup(plan, groupId, targetAreaIds);
@@ -1067,7 +1070,10 @@ public class CityController {
 
             Path cityDir = resolveCityDir(cityId);
             CityC6Stages.C6Summary c6Summary = CityC6Stages.loadSummary(cityDir);
+            CityC6Stages.C6Layout c6Layout = CityC6Stages.loadLayout(cityDir);
             Map<Long, Integer> c6Index = CityC6Stages.loadIndex(cityDir);
+            CityStage1BinaryIO.HeightData heightData = CityStage1BinaryIO.loadHeightData(cityId);
+            CityC2ScanBinaryIO.C2ScanData c2ScanData = CityC2ScanBinaryIO.load(cityId);
             if (c6Summary == null || c6Index == null || c6Index.isEmpty()) {
                 HttpUtil.sendResponse(exchange, 404, "{\"error\": \"C6 summary/index not found for: " + cityId + "\"}");
                 return;
@@ -1075,16 +1081,15 @@ public class CityController {
 
             CityC8Stages.C8Plan c8Plan = CityC8Stages.load(cityDir);
             if (c8Plan == null) {
-                CityC6Stages.C6Layout c6Layout = CityC6Stages.loadLayout(cityDir);
-                CityStage1BinaryIO.HeightData heightData = CityStage1BinaryIO.loadHeightData(cityId);
                 if (c6Layout == null || heightData == null) {
                     HttpUtil.sendResponse(exchange, 404, "{\"error\": \"C8 missing and required data to regenerate C8 not found for: " + cityId + "\"}");
                     return;
                 }
-                CityC2ScanBinaryIO.C2ScanData c2ScanData = CityC2ScanBinaryIO.load(cityId);
-                CityC7Stages.C7Selection c7Selection = loadC7Selection(cityDir, groupId);
+                CityC7Stages.C7Selection c7Selection = loadC8GenerationSelection(cityDir, groupId);
                 c8Plan = CityC8Stages.generate(cityId, c6Summary, c6Layout, c7Selection, heightData, c2ScanData, c6Index);
-                CityC8Stages.save(cityDir, c8Plan);
+                if (groupId == null || groupId.isBlank()) {
+                    CityC8Stages.save(cityDir, c8Plan);
+                }
             }
 
             Set<Integer> targetAreaIds = collectAreaIdsForGroup(c6Summary, groupId);
@@ -1094,6 +1099,13 @@ public class CityController {
             CityC9BuildQueue.BuildQueue existingQueue = CityC9BuildQueue.loadOrCreate(cityDir, cityId);
             final CityC9Stages.C9Result[] holder = new CityC9Stages.C9Result[1];
             holder[0] = CityC9Stages.generate(cityId, responseSummary, responseIndex, responsePlan, mode, maxBlocks, existingQueue);
+            System.out.println("[C9] generate city=" + cityId
+                    + " group=" + safe(groupId)
+                    + " mode=" + mode.name()
+                    + " max_blocks=" + maxBlocks
+                    + " foundation_count=" + (responsePlan != null && responsePlan.foundations != null ? responsePlan.foundations.size() : -1)
+                    + " queue_total_before_save=" + (holder[0] != null && holder[0].queue != null && holder[0].queue.tasks != null ? holder[0].queue.tasks.size() : -1)
+                    + " enqueued_tasks_count=" + (holder[0] != null && holder[0].placement != null ? holder[0].placement.enqueued_tasks_count : -1));
             if (mode != CityC9Stages.Mode.DRY_RUN && holder[0] != null && holder[0].queue != null) {
                 CityC9BuildQueue.save(cityDir, holder[0].queue);
                 if (mcServer != null) {
@@ -1109,6 +1121,13 @@ public class CityController {
                 mcServer.execute(() -> {
                     try {
                         CityBuildQueueExecutor.ExecutionReport execution = CityBuildQueueExecutor.executeLoadedTasksNow(mcServer, cityId, groupId, maxBlocks);
+                        System.out.println("[C9] apply_now city=" + cityId
+                                + " group=" + safe(groupId)
+                                + " max_blocks=" + maxBlocks
+                                + " attempted=" + execution.attempted
+                                + " completed=" + execution.completed
+                                + " blocked=" + execution.blocked
+                                + " retried=" + execution.retried);
                         if (holder[0] != null && holder[0].placement != null) {
                             holder[0].placement.applied_tasks_count = execution.completed;
                             holder[0].placement.changed_blocks_total = execution.completed;
@@ -1120,6 +1139,14 @@ public class CityController {
                                         ? CityC9BuildQueue.filtered(latestQueue, groupId)
                                         : latestQueue;
                                 holder[0].queue_summary = CityC9BuildQueue.summarize(holder[0].queue, null);
+                                System.out.println("[C9] queue_after_apply city=" + cityId
+                                        + " group=" + safe(groupId)
+                                        + " planned=" + (holder[0].queue_summary != null ? holder[0].queue_summary.planned_count : -1)
+                                        + " ready=" + (holder[0].queue_summary != null ? holder[0].queue_summary.ready_count : -1)
+                                        + " inflight=" + (holder[0].queue_summary != null ? holder[0].queue_summary.inflight_count : -1)
+                                        + " done=" + (holder[0].queue_summary != null ? holder[0].queue_summary.done_count : -1)
+                                        + " blocked=" + (holder[0].queue_summary != null ? holder[0].queue_summary.blocked_count : -1)
+                                        + " total=" + (holder[0].queue_summary != null ? holder[0].queue_summary.total_count : -1));
                             }
                         } catch (Exception ignored) {
                         }
@@ -1140,12 +1167,26 @@ public class CityController {
             }
             Path placementFile = cityDir.resolve(CityC9Stages.C9_PLACEMENT_FILE);
             Path decorationFile = cityDir.resolve(CityC9Stages.C9_DECORATION_FILE);
+            JsonObject placementPreview = new JsonObject();
             if (groupId != null && !groupId.isBlank()) {
                 Path groupDir = resolveGroupDir(cityDir, groupId);
                 placementFile = groupDir.resolve("c9_placement.json");
                 decorationFile = groupDir.resolve("c9_decoration.json");
                 if (responseResult.placement != null) java.nio.file.Files.writeString(placementFile, gson.toJson(responseResult.placement));
                 if (responseResult.decoration != null) java.nio.file.Files.writeString(decorationFile, gson.toJson(responseResult.decoration));
+                placementPreview = CityC9PlacementPreviewExporter.export(
+                        mcServer,
+                        cityId,
+                        groupId,
+                        mode.name().toLowerCase(java.util.Locale.ROOT),
+                        heightData,
+                        c2ScanData,
+                        c6Summary,
+                        c6Layout,
+                        responsePlan,
+                        responseResult != null ? responseResult.placement : null,
+                        responseResult != null ? responseResult.queue : null
+                );
             } else {
                 CityC9Stages.save(cityDir, result);
             }
@@ -1169,6 +1210,9 @@ public class CityController {
             }
             res.addProperty("placement_file", placementFile.toString());
             res.addProperty("decoration_file", decorationFile.toString());
+            if (groupId != null && !groupId.isBlank()) {
+                res.add("placement_preview", placementPreview);
+            }
             HttpUtil.sendResponse(exchange, 200, gson.toJson(res));
         } catch (InterruptedException ie) {
             Thread.currentThread().interrupt();
@@ -1898,6 +1942,7 @@ public class CityController {
         copy.catalog_source = selection.catalog_source;
         copy.decision_source = selection.decision_source;
         copy.selection_mode = selection.selection_mode;
+        copy.strict_tag_source = selection.strict_tag_source;
         copy.filtered_candidate_count = selection.filtered_candidate_count;
         copy.strict_filter_failure_reason = selection.strict_filter_failure_reason;
         copy.puzzle_depth = selection.puzzle_depth;
@@ -1922,6 +1967,12 @@ public class CityController {
             }
         }
         return CityC7Stages.load(cityDir);
+    }
+
+    private static CityC7Stages.C7Selection loadC8GenerationSelection(Path cityDir, String groupId) throws Exception {
+        CityC7Stages.C7Selection citySelection = CityC7Stages.load(cityDir);
+        if (citySelection != null) return citySelection;
+        return loadC7Selection(cityDir, groupId);
     }
 
     private static CityC8Stages.C8Plan filterC8PlanByGroup(CityC8Stages.C8Plan plan, String groupId, Set<Integer> areaIds) {
@@ -1968,5 +2019,9 @@ public class CityController {
         copy.queue = result.queue;
         copy.queue_summary = result.queue_summary;
         return copy;
+    }
+
+    private static String safe(String value) {
+        return value == null ? "" : value;
     }
 }

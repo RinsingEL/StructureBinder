@@ -205,12 +205,16 @@ public final class CityC7Stages {
     }
 
     public static C7Selection fromDecisionRequest(String cityId, CityC6Stages.C6Layout c6Layout, JsonObject request) {
+        return fromDecisionRequest(cityId, c6Layout, request, true);
+    }
+
+    public static C7Selection fromDecisionRequest(String cityId, CityC6Stages.C6Layout c6Layout, JsonObject request, boolean strictTagSource) {
         C7Selection result = new C7Selection();
         result.city_id = cityId;
         result.generated_at_epoch_ms = System.currentTimeMillis();
         result.decision_source = "ai_decision_submit";
         result.selection_mode = "ai_decision_submit";
-        result.strict_tag_source = true;
+        result.strict_tag_source = strictTagSource;
         Catalog catalog = loadCatalog();
         result.catalog_source = catalog != null && catalog.ok
                 ? CityC35CatalogIO.catalogPath().toString()
@@ -910,15 +914,10 @@ public final class CityC7Stages {
     private static Catalog loadCatalog() {
         try {
             Catalog catalog = CityC35CatalogIO.loadCatalog(GSON, Catalog.class);
-            if (catalog == null) {
-                System.out.println("[C7] loadCatalog result=null");
-                return null;
-            }
+            if (catalog == null) return null;
             catalog.ok = catalog.ok && catalog.structures != null;
-            System.out.println("[C7] loadCatalog ok=" + catalog.ok + " structure_count=" + (catalog.structures != null ? catalog.structures.size() : 0));
             return catalog;
         } catch (Exception ignored) {
-            System.out.println("[C7] loadCatalog exception=" + ignored.getClass().getSimpleName() + " msg=" + ignored.getMessage());
             return null;
         }
     }

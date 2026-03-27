@@ -1,0 +1,61 @@
+import { ToolDefinition } from "../shared/types.js";
+
+const cityIdRequired = {
+  type: "object",
+  properties: { city_id: { type: "string" } },
+  required: ["city_id"],
+};
+
+export const cityTools: ToolDefinition[] = [
+  {
+    name: "list_available_structures",
+    description: "查询可用的 NBT 建筑结构。",
+    inputSchema: { type: "object", properties: { search_query: { type: "string" }, limit: { type: "number" } } },
+  },
+  {
+    name: "establish_city",
+    description: "在领土内建立一座城市。",
+    inputSchema: {
+      type: "object",
+      properties: {
+        territory_id: { type: "string" },
+        continent_id: { type: "number" },
+        center_x: { type: "number" },
+        center_z: { type: "number" },
+        target_chunk_count: { type: "number" },
+        bias: { type: "string", enum: ["balanced", "north", "south", "east", "west", "coastal", "inland"] },
+        density: { type: "string", enum: ["low", "mid", "medium", "high", "1"] },
+        ecology_policy: { type: "string", enum: ["preserve", "adaptive", "clear"] },
+        ecology: { type: "string", enum: ["preserve", "adaptive", "clear"] },
+        allow_water_city: { type: "boolean" },
+        layer_count: { type: "number" },
+        layer_thresholds: { type: "array", items: { type: "number" } },
+        layers: { type: "array" },
+      },
+      required: ["territory_id", "center_x", "center_z"],
+    },
+  },
+  { name: "city_c1_generate", description: "生成并保存 C1 城市意图。", inputSchema: { type: "object", properties: { territory_id: { type: "string" }, continent_id: { type: "number" }, center_x: { type: "number" }, center_z: { type: "number" }, target_chunk_count: { type: "number" }, bias: { type: "string" }, density: { type: "string" }, ecology_policy: { type: "string" }, ecology: { type: "string" }, allow_water_city: { type: "boolean" }, layer_count: { type: "number" }, layer_thresholds: { type: "array" }, layers: { type: "array" } }, required: ["territory_id", "center_x", "center_z"] } },
+  { name: "city_c2_generate", description: "生成并保存 C2 城市领地阶段产物。", inputSchema: { type: "object", properties: { city_id: { type: "string" }, scan_step: { type: "number" }, scan_padding_blocks: { type: "number" } }, required: ["city_id"] } },
+  { name: "city_c2_data", description: "读取城市 C2 结果。", inputSchema: cityIdRequired },
+  { name: "city_c3_generate", description: "生成并保存 C3 区划阶段产物。", inputSchema: cityIdRequired },
+  { name: "city_c3_data", description: "读取城市 C3 结果。", inputSchema: cityIdRequired },
+  { name: "place_structure", description: "在特定坐标放置具体的 NBT 结构。", inputSchema: { type: "object", properties: { x: { type: "number" }, z: { type: "number" }, structure_id: { type: "string" } }, required: ["x", "z", "structure_id"] } },
+  { name: "city_stage1_data", description: "获取城市阶段1摘要数据。", inputSchema: cityIdRequired },
+  { name: "city_stage2_data", description: "获取城市阶段2高度意图配置。", inputSchema: cityIdRequired },
+  { name: "city_c4_whitelist_generate", description: "为 C4 指定可用功能标签白名单。这个阶段只确定城市多边形允许被分配哪些主功能和次功能，不选择具体建筑模板。", inputSchema: { type: "object", properties: { city_id: { type: "string" }, version: { type: "string" }, source: { type: "string" }, rationale: { type: "string" }, primary_functions: { type: "array", items: { type: "string" } }, secondary_functions: { type: "array", items: { type: "string" } } }, required: ["city_id", "primary_functions", "secondary_functions"] } },
+  { name: "city_c4_whitelist_data", description: "读取城市 C4 前置功能白名单。", inputSchema: cityIdRequired },
+  { name: "city_c4_generate", description: "根据 C3 区划结果给城市多边形打功能标签，输出每个 district 的主功能和次功能。这个阶段仍然不做具体结构模板选择。", inputSchema: cityIdRequired },
+  { name: "city_c4_data", description: "读取城市 C4 的功能标签结果，也就是每个多边形/district 被分配到的主功能和次功能。", inputSchema: cityIdRequired },
+  { name: "city_c5_generate", description: "生成并保存 C5 模块聚合结果，把 C4 的多个 district 合并成功能区 group。后续 C6-C9 都是按单个 group 逐个推进，而不是一次完成整座城市。", inputSchema: { type: "object", properties: { city_id: { type: "string" }, cross_layer_merge: { type: "boolean" } }, required: ["city_id"] } },
+  { name: "city_c5_data", description: "读取城市 C5 模块聚合结果，确认当前城市有哪些功能区 group 需要后续逐个处理。", inputSchema: cityIdRequired },
+  { name: "city_c6_generate", description: "生成并保存 C6 可建造区与矩形决策输入。这个阶段一次处理一个功能区 group，给该 group 准备底图、build area 和候选矩形；整座城市需要对所有 group 循环执行。", inputSchema: { type: "object", properties: { city_id: { type: "string" }, group_id: { type: "string" }, fill_style: { type: "string" } }, required: ["city_id"] } },
+  { name: "city_c6_data", description: "读取城市 C6 结果。重点查看某个功能区 group 的底图、decision_input、候选矩形和验证状态；如果不传 group_id 则读取全城汇总。", inputSchema: { type: "object", properties: { city_id: { type: "string" }, group_id: { type: "string" } }, required: ["city_id"] } },
+  { name: "city_c7_generate", description: "为单个功能区 group 生成 C7 模板选择结果。只有该 group 在 C6 中完成矩形决策后，C7 才会有可用结果；整座城市需要逐个 group 循环执行。", inputSchema: { type: "object", properties: { city_id: { type: "string" }, group_id: { type: "string" } }, required: ["city_id"] } },
+  { name: "city_c7_data", description: "读取单个功能区 group 的 C7 模板选择结果；如果没有矩形决策完成，结果可能为空。", inputSchema: { type: "object", properties: { city_id: { type: "string" }, group_id: { type: "string" } }, required: ["city_id"] } },
+  { name: "city_c8_generate", description: "为单个功能区 group 生成 C8 基台规划。这个阶段不是全城总规划，而是对已完成 C7 的某一个功能区继续推进。", inputSchema: { type: "object", properties: { city_id: { type: "string" }, group_id: { type: "string" } }, required: ["city_id"] } },
+  { name: "city_c8_data", description: "读取单个功能区 group 的 C8 基台规划结果。", inputSchema: { type: "object", properties: { city_id: { type: "string" }, group_id: { type: "string" } }, required: ["city_id"] } },
+  { name: "city_c9_generate", description: "为单个功能区 group 生成 C9 放置与装饰计划。整座城市需要把每个 group 分别推进到 C9，而不是一次性完成全部区域。", inputSchema: { type: "object", properties: { city_id: { type: "string" }, group_id: { type: "string" }, apply_blocks: { type: "boolean" }, max_blocks: { type: "number" } }, required: ["city_id"] } },
+  { name: "city_c9_data", description: "读取单个功能区 group 的 C9 结果。", inputSchema: { type: "object", properties: { city_id: { type: "string" }, group_id: { type: "string" } }, required: ["city_id"] } },
+  { name: "city_c6_pave_stone", description: "对 C6 中选定的单个功能区 group / build_area 做铺石测试操作，用于验证该局部区域的地表处理。", inputSchema: { type: "object", properties: { city_id: { type: "string" }, group_id: { type: "string" }, build_area_id: { type: "string" }, square_only: { type: "boolean" }, square_size: { type: "number" }, square_count: { type: "number" } }, required: ["city_id"] } },
+];
