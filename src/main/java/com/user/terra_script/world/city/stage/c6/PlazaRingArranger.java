@@ -26,9 +26,11 @@ public final class PlazaRingArranger {
         primary.template_hint.size_tier = sizeTier(area.area_blocks);
         plan.primary_modules.add(primary);
 
-        CityC6Stages.PlazaRingParams params = defaultParams(area.area_blocks);
+        CityC6Stages.RectGuidance guidance = CityC6Stages.deriveRectGuidance(area, List.of());
+        CityC6Stages.PlazaRingParams params = defaultParams(area.area_blocks, guidance);
         plan.fill_params = params;
-        plan.rect_sizes = defaultRectSizes();
+        plan.rect_sizes = defaultRectSizes(guidance);
+        plan.rect_guidance = guidance;
 
         CityC6Stages.SecondaryFill fill = new CityC6Stages.SecondaryFill();
         fill.zone = "around_primary";
@@ -39,8 +41,15 @@ public final class PlazaRingArranger {
     }
 
     public static CityC6Stages.PlazaRingParams defaultParams(int areaBlocks) {
+        return defaultParams(areaBlocks, null);
+    }
+
+    public static CityC6Stages.PlazaRingParams defaultParams(int areaBlocks, CityC6Stages.RectGuidance guidance) {
         int radius = (int) Math.max(8, Math.min(20, Math.sqrt(Math.max(1, areaBlocks) / Math.PI) * 0.18));
-        int outer = Math.max(radius + 4, radius + 8);
+        int footprintSpan = guidance != null
+                ? Math.max(guidance.main_template_width_blocks.recommended, guidance.main_template_height_blocks.recommended)
+                : 0;
+        int outer = Math.max(radius + 4, radius + Math.max(8, (int) Math.ceil(footprintSpan * 0.5)));
 
         CityC6Stages.PlazaRingParams params = new CityC6Stages.PlazaRingParams();
         params.plaza_shape = "CIRCLE";
@@ -58,15 +67,36 @@ public final class PlazaRingArranger {
         params.rotation_mode = "TANGENT";
         params.rotation_jitter_deg = Arrays.asList(0, 12);
         params.respect_build_area_boundary = true;
-        params.reserve_decor_ratio = 0.10;
+        params.reserve_decor_ratio = guidance != null && guidance.fallback_path ? 0.10 : 0.08;
         return params;
     }
 
     public static List<CityC6Stages.RectSize> defaultRectSizes() {
+        return defaultRectSizes(null);
+    }
+
+    public static List<CityC6Stages.RectSize> defaultRectSizes(CityC6Stages.RectGuidance guidance) {
+        if (guidance == null || guidance.rect_width_blocks.max <= 0 || guidance.rect_height_blocks.max <= 0) {
+            List<CityC6Stages.RectSize> sizes = new ArrayList<>();
+            sizes.add(rect("S1", 7, 9, 7, 9, 0.55, 6, 18));
+            sizes.add(rect("M1", 10, 14, 8, 12, 0.35, 2, 8));
+            sizes.add(rect("L1", 16, 22, 12, 18, 0.10, 0, 2));
+            return sizes;
+        }
+
         List<CityC6Stages.RectSize> sizes = new ArrayList<>();
-        sizes.add(rect("S1", 7, 9, 7, 9, 0.55, 6, 18));
-        sizes.add(rect("M1", 10, 14, 8, 12, 0.35, 2, 8));
-        sizes.add(rect("L1", 16, 22, 12, 18, 0.10, 0, 2));
+        int minCount = Math.max(1, guidance.recommended_rect_count.min);
+        int recommended = Math.max(minCount, guidance.recommended_rect_count.recommended);
+        int maxCount = Math.max(recommended, guidance.recommended_rect_count.max);
+        int narrowWidth = Math.max(4, guidance.rect_width_blocks.min);
+        int narrowHeight = Math.max(4, guidance.rect_height_blocks.min);
+        int midWidth = Math.max(narrowWidth, guidance.rect_width_blocks.recommended);
+        int midHeight = Math.max(narrowHeight, guidance.rect_height_blocks.recommended);
+        int largeWidth = Math.max(midWidth, guidance.rect_width_blocks.max);
+        int largeHeight = Math.max(midHeight, guidance.rect_height_blocks.max);
+        sizes.add(rect("F1", narrowWidth, Math.max(narrowWidth, midWidth - 1), narrowHeight, Math.max(narrowHeight, midHeight - 1), 0.40, minCount, maxCount));
+        sizes.add(rect("F2", Math.max(narrowWidth, midWidth - 1), midWidth + 1, Math.max(narrowHeight, midHeight - 1), midHeight + 1, 0.40, Math.max(1, recommended - 1), maxCount));
+        sizes.add(rect("F3", Math.max(midWidth, largeWidth - 3), largeWidth, Math.max(midHeight, largeHeight - 3), largeHeight, 0.20, 0, Math.max(1, maxCount - minCount + 1)));
         return sizes;
     }
 

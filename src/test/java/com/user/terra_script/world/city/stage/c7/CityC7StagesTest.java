@@ -202,6 +202,32 @@ class CityC7StagesTest {
         assertFalse(selection.strict_tag_source);
     }
 
+    @Test
+    void generateUsesC6GuidanceFunctionAndTier() {
+        CityC6Stages.C6Layout layout = new CityC6Stages.C6Layout();
+        CityC6Stages.LayoutPlan plan = new CityC6Stages.LayoutPlan();
+        plan.group_id = "g_market_01";
+        plan.build_area_id = "ba_g_market_01_a001";
+        plan.validated = true;
+        CityC6Stages.PrimaryModule module = new CityC6Stages.PrimaryModule();
+        module.module_id = "g_market_01_primary_1";
+        module.template_hint.function_tag = "market";
+        module.template_hint.interaction_role = "FRONT_TO_PLAZA";
+        module.template_hint.size_tier = "S";
+        module.template_hint.recommended_templates.add("test:preferred_market");
+        module.structure_guidance.function_tag = "market";
+        module.structure_guidance.interaction_role = "FRONT_TO_PLAZA";
+        module.structure_guidance.target_size_tiers.add("L");
+        plan.primary_modules.add(module);
+        layout.plans.add(plan);
+
+        CityC7Stages.C7Selection selection = CityC7Stages.generate("city_test", layout, false);
+
+        assertEquals("market", selection.selections.get(0).function_role);
+        assertEquals("FRONT_TO_PLAZA", selection.selections.get(0).interaction_role);
+        assertEquals("L", selection.selections.get(0).size_tier);
+    }
+
     private static Object newCatalog() throws Exception {
         Class<?> type = Class.forName("com.user.terra_script.world.city.stage.c7.CityC7Stages$Catalog");
         Constructor<?> ctor = type.getDeclaredConstructor();

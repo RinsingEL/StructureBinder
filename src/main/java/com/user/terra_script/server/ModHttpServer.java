@@ -3,6 +3,7 @@ package com.user.terra_script.server;
 import com.sun.net.httpserver.HttpServer;
 import com.user.terra_script.client.data.ScanResultHolder;
 import com.user.terra_script.server.mcp.CityController;
+import com.user.terra_script.server.mcp.RuntimeDebugController;
 import com.user.terra_script.server.mcp.TerritoryController;
 import com.user.terra_script.server.mcp.WorldAutomationController;
 import com.user.terra_script.server.mcp.WorldController;
@@ -55,6 +56,7 @@ public class ModHttpServer {
             TerritoryController territoryController = new TerritoryController();
             WorkflowController workflowController = new WorkflowController(mcServer);
             CityController cityController = new CityController(mcServer);
+            RuntimeDebugController runtimeDebugController = new RuntimeDebugController();
 
             server.createContext("/continents", worldController::handleContinents);
             server.createContext("/world_atlas", worldController::handleWorldAtlas);
@@ -90,6 +92,7 @@ public class ModHttpServer {
             server.createContext("/workflow/run", workflowController::handleWorkflowRun);
             server.createContext("/workflow/status", workflowController::handleWorkflowStatus);
             server.createContext("/task_status", workflowController::handleTaskStatus);
+            server.createContext("/runtime_debug_logs", runtimeDebugController::handleRuntimeDebugLogs);
 
             server.createContext("/city_heightmap", cityController::handleCityHeightmap);
             server.createContext("/city_c1_generate", cityController::handleCreateCity);

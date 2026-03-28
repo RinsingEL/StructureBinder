@@ -578,6 +578,7 @@ public class CityController {
             JsonObject json = JsonParser.parseString(body).getAsJsonObject();
             String cityId = json.has("city_id") ? json.get("city_id").getAsString() : null;
             String groupId = readOptionalString(json, "group_id");
+            System.out.println("[C6] city_c6_rect_prepare request city_id=" + cityId + " group_id=" + groupId);
             if (cityId == null || cityId.isBlank()) {
                 HttpUtil.sendResponse(exchange, 400, "{\"error\": \"Missing city_id\"}");
                 return;
@@ -616,6 +617,10 @@ public class CityController {
             List<CityStage1Processor.ForbiddenBlock> forbiddenBlocks = CityStage1BinaryIO.loadForbidden(cityId);
 
             CityC6Stages.C6Bundle bundle = CityC6Stages.generate(city, c5, heightData, c2ScanData, buildableGroups, fillStyle);
+            System.out.println("[C6] city_c6_rect_prepare generated city_id=" + cityId
+                    + " group_id=" + (groupId != null ? groupId : "all")
+                    + " areas=" + (bundle.summary != null && bundle.summary.areas != null ? bundle.summary.areas.size() : 0)
+                    + " plans=" + (bundle.layout != null && bundle.layout.plans != null ? bundle.layout.plans.size() : 0));
             CityC6Stages.C6Layout existingLayout = CityC6Stages.loadLayout(cityDir);
             CityC6Stages.C6RectCandidates existingCandidates = CityC6Stages.loadCandidates(cityDir);
             CityC6Stages.C6RectValidation existingValidation = CityC6Stages.loadValidation(cityDir);
@@ -636,6 +641,14 @@ public class CityController {
             if (bundle.decision_input != null && bundle.decision_input.groups != null) {
                 for (CityC6Stages.GroupDecisionInput item : bundle.decision_input.groups) {
                     item.current_attempt_count = CityC6Stages.currentAttemptCount(bundle.candidates, item.group_id);
+                    if (groupId == null || groupId.equals(item.group_id)) {
+                        System.out.println("[C6] prepare guidance group=" + item.group_id
+                                + " candidate_count=" + (item.rect_guidance != null ? item.rect_guidance.candidate_count : 0)
+                                + " edge_buffer=" + (item.rect_guidance != null ? item.rect_guidance.edge_buffer_blocks : 0)
+                                + " growth_buffer=" + (item.rect_guidance != null ? item.rect_guidance.growth_buffer_blocks : 0)
+                                + " expansion_side=" + (item.rect_guidance != null ? item.rect_guidance.requires_expansion_side : "")
+                                + " connector_reserve=" + (item.rect_guidance != null ? item.rect_guidance.connector_reserve_by_side : null));
+                    }
                 }
             }
             CityC6Stages.save(cityDir, bundle);
@@ -692,6 +705,9 @@ public class CityController {
             res.add("rect_placement_preview", rectPreview);
             res.add("group_previews", groupPreview);
             res.add("decision_input", gson.toJsonTree(filterDecisionInputByGroup(bundle.decision_input, groupId)));
+            System.out.println("[C6] city_c6_rect_prepare response city_id=" + cityId
+                    + " group_id=" + (groupId != null ? groupId : "all")
+                    + " indexed_block_count=" + bundle.indexed_block_count);
             HttpUtil.sendResponse(exchange, 200, gson.toJson(res));
         } catch (Exception e) {
             HttpUtil.handleError(exchange, e);
@@ -707,6 +723,10 @@ public class CityController {
             String groupId = readOptionalString(json, "group_id");
             String decisionMode = readOptionalString(json, "decision_mode");
             int attemptIndex = json.has("attempt_index") ? json.get("attempt_index").getAsInt() : 0;
+            System.out.println("[C6] city_c6_rect_submit request city_id=" + cityId
+                    + " group_id=" + groupId
+                    + " decision_mode=" + decisionMode
+                    + " attempt_index=" + attemptIndex);
             if (cityId == null || groupId == null || decisionMode == null) {
                 HttpUtil.sendResponse(exchange, 400, "{\"error\": \"Missing city_id/group_id/decision_mode\"}");
                 return;
@@ -748,10 +768,17 @@ public class CityController {
 
             CityC6Stages.GroupRectValidation validationItem = CityC6Validation.validateSubmission(
                     area,
+                    CityC6Stages.findDecisionGroup(input, groupId),
                     candidate,
                     indexByBlock,
                     CityC6Stages.RECT_ATTEMPT_LIMIT
             );
+            System.out.println("[C6] submit validation group=" + groupId
+                    + " attempt=" + attemptIndex
+                    + " accepted=" + validationItem.accepted
+                    + " reason=" + validationItem.reason
+                    + " structure_compatible_rects=" + validationItem.structure_compatible_rects
+                    + " matching_main_template_count=" + validationItem.matching_main_template_count);
 
             boolean finalized = false;
             if ("keep_current".equals(decisionMode)) {
@@ -809,6 +836,11 @@ public class CityController {
             res.add("validation", gson.toJsonTree(validationItem));
             res.add("group_previews", groupPreview);
             int statusCode = (validationItem.accepted || finalized) ? 200 : (validationItem.decision_terminal ? 409 : 422);
+            System.out.println("[C6] city_c6_rect_submit response group=" + groupId
+                    + " status=" + statusCode
+                    + " finalized=" + finalized
+                    + " continue_allowed=" + validationItem.continue_allowed
+                    + " reason=" + validationItem.reason);
             HttpUtil.sendResponse(exchange, statusCode, gson.toJson(res));
         } catch (Exception e) {
             HttpUtil.handleError(exchange, e);

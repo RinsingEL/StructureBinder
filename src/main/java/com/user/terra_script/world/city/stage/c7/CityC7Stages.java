@@ -290,13 +290,32 @@ public final class CityC7Stages {
 
         String category = "residential";
         String sizeTier = "M";
+        String functionRole = null;
+        String interactionRole = null;
         if (module != null && module.template_hint != null) {
             category = module.template_hint.category != null ? module.template_hint.category : category;
             sizeTier = module.template_hint.size_tier != null ? module.template_hint.size_tier : sizeTier;
+            functionRole = module.template_hint.function_tag;
+            interactionRole = module.template_hint.interaction_role;
+        }
+        if (module != null && module.structure_guidance != null) {
+            if (module.structure_guidance.function_tag != null && !module.structure_guidance.function_tag.isBlank()) {
+                functionRole = module.structure_guidance.function_tag;
+            }
+            if (module.structure_guidance.interaction_role != null && !module.structure_guidance.interaction_role.isBlank()) {
+                interactionRole = module.structure_guidance.interaction_role;
+            }
+            if (module.structure_guidance.target_size_tiers != null && !module.structure_guidance.target_size_tiers.isEmpty()) {
+                sizeTier = module.structure_guidance.target_size_tiers.get(0);
+            }
         }
         item.size_tier = normalizeTier(sizeTier);
-        item.function_role = inferFunctionRole(category, item.module_id, plan.group_id);
-        item.interaction_role = inferInteractionRole(item.function_role);
+        item.function_role = functionRole != null && !functionRole.isBlank()
+                ? functionRole
+                : inferFunctionRole(category, item.module_id, plan.group_id);
+        item.interaction_role = interactionRole != null && !interactionRole.isBlank()
+                ? interactionRole
+                : inferInteractionRole(item.function_role);
         item.arrangement_type = inferArrangementType(plan.group_id);
         item.seed.start_x = module != null && module.anchor != null ? (int) Math.round(module.anchor.x) : 0;
         item.seed.start_z = module != null && module.anchor != null ? (int) Math.round(module.anchor.z) : 0;
@@ -313,6 +332,7 @@ public final class CityC7Stages {
         item.strategy_params.putAll(defaultStrategyParams(item.arrangement_type));
 
         List<String> candidates = chooseCandidates(category, item.size_tier, item.function_role, plan.group_id, item.arrangement_type, item.seed.start_connector_dir, true, catalog, item, selection);
+        candidates = prioritizeGuidanceCandidates(candidates, module);
         item.top_k_templates = new ArrayList<>(candidates.subList(0, Math.min(3, candidates.size())));
         item.selected_template = item.top_k_templates.isEmpty() ? null : item.top_k_templates.get(0);
         item.seed.start_template_id = item.selected_template;
@@ -346,7 +366,17 @@ public final class CityC7Stages {
 
         String category = module != null && module.template_hint != null ? module.template_hint.category : "residential";
         String sizeTier = module != null && module.template_hint != null ? module.template_hint.size_tier : "M";
-        String functionRole = inferFunctionRole(category, component.component_id, plan.group_id);
+        String functionRole = module != null && module.template_hint != null && module.template_hint.function_tag != null
+                ? module.template_hint.function_tag
+                : inferFunctionRole(category, component.component_id, plan.group_id);
+        if (module != null && module.structure_guidance != null) {
+            if (module.structure_guidance.function_tag != null && !module.structure_guidance.function_tag.isBlank()) {
+                functionRole = module.structure_guidance.function_tag;
+            }
+            if (module.structure_guidance.target_size_tiers != null && !module.structure_guidance.target_size_tiers.isEmpty()) {
+                sizeTier = module.structure_guidance.target_size_tiers.get(0);
+            }
+        }
         String arrangementType = inferArrangementType(plan.group_id);
         TemplateSelectionItem scratch = new TemplateSelectionItem();
         List<String> candidates = chooseCandidates(
@@ -361,6 +391,7 @@ public final class CityC7Stages {
                 scratch,
                 selection
         );
+        candidates = prioritizeGuidanceCandidates(candidates, module);
         component.template_id = candidates.isEmpty() ? null : candidates.get(0);
         component.rule = defaultRuleForArrangement(arrangementType, component.role);
         return component;
@@ -904,6 +935,20 @@ public final class CityC7Stages {
             for (String s : b) if (!out.contains(s)) out.add(s);
         }
         return out;
+    }
+
+    private static List<String> prioritizeGuidanceCandidates(List<String> candidates, CityC6Stages.PrimaryModule module) {
+        if (candidates == null || candidates.isEmpty() || module == null || module.template_hint == null || module.template_hint.recommended_templates == null) {
+            return candidates;
+        }
+        List<String> prioritized = new ArrayList<>();
+        for (String templateId : module.template_hint.recommended_templates) {
+            if (templateId != null && candidates.contains(templateId) && !prioritized.contains(templateId)) prioritized.add(templateId);
+        }
+        for (String candidate : candidates) {
+            if (!prioritized.contains(candidate)) prioritized.add(candidate);
+        }
+        return prioritized;
     }
 
     private static String normalizeTier(String raw) {
