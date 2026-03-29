@@ -71,7 +71,7 @@
     - 生成 `groups/<group_id>/height.png`
     - 生成 `groups/<group_id>/hillshade.png`
     - 生成 `groups/<group_id>/roughness.png`
-    - 生成 `groups/<group_id>/bbox_overview.png`
+- 生成 `groups/<group_id>/polygon_overview.png`
     - 生成 `groups/<group_id>/rect_preview.png`
   - `city_c6_rect_submit`
     - 接收 AI 回传矩形
@@ -2611,7 +2611,7 @@ rect 失败
 * 台阶
 * terracing
 * 切填区域
-* `terrain_impact_bbox`
+* `terrain_impact_extent`
 
 ## C8 输出
 
@@ -2664,7 +2664,7 @@ rect 失败
     { "type": "retaining_wall", "side": "N" },
     { "type": "stairs", "side": "E" }
   ],
-  "terrain_impact_bbox": {
+  "terrain_impact_extent": {
     "minX": -1182, "minZ": 540,
     "maxX": -1156, "maxZ": 566
   }
@@ -2730,7 +2730,7 @@ C9 不再负责重新选 starter、重新拼 jigsaw、重新判断主功能。
 执行前至少读取：
 
 * 各 piece 的 `structure_id / world_pos / rotation`
-* foundation 的 `base_y / supports / terrain_impact_bbox`
+* foundation 的 `base_y / supports / terrain_impact_extent`
 * 装饰权重、随机种子、禁放列表
 
 ## C9 处理流程

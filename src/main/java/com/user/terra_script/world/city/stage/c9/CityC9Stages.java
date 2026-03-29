@@ -156,6 +156,10 @@ public final class CityC9Stages {
         areas.sort(Comparator.comparing(a -> a.build_area_id));
 
         int plannedTaskCount = 0;
+        CityC8Stages.C8Plan executablePlan = new CityC8Stages.C8Plan();
+        executablePlan.city_id = c8Plan.city_id;
+        executablePlan.generated_at_epoch_ms = c8Plan.generated_at_epoch_ms;
+        executablePlan.version = c8Plan.version;
         for (CityC6Stages.BuildAreaSummary area : areas) {
             if (area == null) continue;
             CityC8Stages.FoundationItem foundation = foundationByArea.get(area.build_area_numeric_id);
@@ -171,21 +175,29 @@ public final class CityC9Stages {
             p.base_y = foundation.base_y;
             p.scanned_blocks = areaBlocks.size();
             p.planned_nodes = foundation.placements != null ? foundation.placements.size() : 0;
-            plannedTaskCount += p.planned_nodes;
             p.changed_blocks = 0;
+            CityC8Stages.FoundationItem executableFoundation = copyFoundationWithoutPlacements(foundation);
             if (foundation.placements != null) {
                 for (CityC8Stages.PlacementNode node : foundation.placements) {
                     if (node == null) continue;
+                    boolean insideArea = footprintInsideArea(areaBlocks, node);
+                    if (insideArea) {
+                        executableFoundation.placements.add(node);
+                        plannedTaskCount++;
+                    }
                     recordStructureResult(
                             p,
                             node,
                             node.y > 0 ? node.y : foundation.base_y,
                             false,
-                            mode == Mode.DRY_RUN ? "dry_run_planned" : "queued_for_build"
+                            insideArea
+                                    ? (mode == Mode.DRY_RUN ? "dry_run_planned" : "queued_for_build")
+                                    : "runtime_out_of_area"
                     );
                 }
             }
             out.placement.items.add(p);
+            executablePlan.foundations.add(executableFoundation);
 
             DecorationItem d = new DecorationItem();
             d.build_area_id = area.build_area_id;
@@ -200,7 +212,7 @@ public final class CityC9Stages {
         out.placement.applied_tasks_count = 0;
         out.queue = mode == Mode.DRY_RUN
                 ? CityC9BuildQueue.filtered(existingQueue, null)
-                : CityC9BuildQueue.upsertFromPlan(existingQueue, cityId, c8Plan, null);
+                : CityC9BuildQueue.upsertFromPlan(existingQueue, cityId, executablePlan, null);
         out.queue_summary = CityC9BuildQueue.summarize(out.queue, null);
         return out;
     }
@@ -275,7 +287,7 @@ public final class CityC9Stages {
                 boolean ok = false;
                 String rejectReason = null;
                 if (level != null && !legacyPlan) {
-                    rejectReason = validateRuntimePlacement(node, byId, placedStates);
+                    rejectReason = validateRuntimePlacement(node, areaBlocks, byId, placedStates);
                 }
                 if (level != null && rejectReason == null) {
                     StructureInjector.TemplateSnapshot snapshot = shouldCaptureSnapshot(node)
@@ -397,10 +409,12 @@ public final class CityC9Stages {
 
     private static String validateRuntimePlacement(
             CityC8Stages.PlacementNode node,
+            Set<Long> areaBlocks,
             Map<String, CityC8Stages.PlacementNode> byId,
             Map<String, PlacedNodeState> placedStates
     ) {
         if (node == null) return "missing_node";
+        if (!footprintInsideArea(areaBlocks, node)) return "runtime_out_of_area";
         if (node.parent_node_id != null && !node.parent_node_id.isBlank() && !placedStates.containsKey(node.parent_node_id)) {
             return "missing_parent_before_build";
         }
@@ -516,6 +530,65 @@ public final class CityC9Stages {
             if (!set.contains(packBlock(x + d[0], z + d[1]))) return true;
         }
         return false;
+    }
+
+    private static CityC8Stages.FoundationItem copyFoundationWithoutPlacements(CityC8Stages.FoundationItem source) {
+        CityC8Stages.FoundationItem copy = new CityC8Stages.FoundationItem();
+        if (source == null) return copy;
+        copy.plot_id = source.plot_id;
+        copy.build_area_id = source.build_area_id;
+        copy.build_area_numeric_id = source.build_area_numeric_id;
+        copy.group_id = source.group_id;
+        copy.anchor_module_id = source.anchor_module_id;
+        copy.arrangement_type = source.arrangement_type;
+        copy.arrangement_params.putAll(source.arrangement_params);
+        copy.foundation_type = source.foundation_type;
+        copy.strategy = source.strategy;
+        copy.base_y = source.base_y;
+        copy.delta_height = source.delta_height;
+        copy.selected_template = source.selected_template;
+        copy.function_role = source.function_role;
+        copy.interaction_role = source.interaction_role;
+        copy.top_k_templates.addAll(source.top_k_templates);
+        copy.fallback_chain.addAll(source.fallback_chain);
+        copy.landing_hint = source.landing_hint;
+        copy.growth_axis = source.growth_axis;
+        copy.vertical_role = source.vertical_role;
+        copy.vertical_clearance = source.vertical_clearance;
+        copy.vertical_capable = source.vertical_capable;
+        copy.vertical_mode_hint = source.vertical_mode_hint;
+        copy.terrain_impact_extent.minX = source.terrain_impact_extent.minX;
+        copy.terrain_impact_extent.minZ = source.terrain_impact_extent.minZ;
+        copy.terrain_impact_extent.maxX = source.terrain_impact_extent.maxX;
+        copy.terrain_impact_extent.maxZ = source.terrain_impact_extent.maxZ;
+        copy.supports.addAll(source.supports);
+        copy.terrain_metrics.height_min = source.terrain_metrics.height_min;
+        copy.terrain_metrics.height_max = source.terrain_metrics.height_max;
+        copy.terrain_metrics.height_avg = source.terrain_metrics.height_avg;
+        copy.terrain_metrics.height_p50 = source.terrain_metrics.height_p50;
+        copy.terrain_metrics.slope_avg = source.terrain_metrics.slope_avg;
+        copy.terrain_metrics.edge_n = source.terrain_metrics.edge_n;
+        copy.terrain_metrics.edge_e = source.terrain_metrics.edge_e;
+        copy.terrain_metrics.edge_s = source.terrain_metrics.edge_s;
+        copy.terrain_metrics.edge_w = source.terrain_metrics.edge_w;
+        copy.arrangement_success = source.arrangement_success;
+        copy.arrangement_errors.addAll(source.arrangement_errors);
+        copy.arrangement_warnings.addAll(source.arrangement_warnings);
+        return copy;
+    }
+
+    private static boolean footprintInsideArea(Set<Long> areaBlocks, CityC8Stages.PlacementNode node) {
+        if (areaBlocks == null || areaBlocks.isEmpty() || node == null) return false;
+        int minX = node.footprint_min_x != null ? node.footprint_min_x : node.x;
+        int minZ = node.footprint_min_z != null ? node.footprint_min_z : node.z;
+        int maxX = node.footprint_max_x != null ? node.footprint_max_x : node.x;
+        int maxZ = node.footprint_max_z != null ? node.footprint_max_z : node.z;
+        for (int x = minX; x <= maxX; x++) {
+            for (int z = minZ; z <= maxZ; z++) {
+                if (!areaBlocks.contains(packBlock(x, z))) return false;
+            }
+        }
+        return true;
     }
 
     private static String inferDecorStrategy(String foundationType) {

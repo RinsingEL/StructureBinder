@@ -31,13 +31,15 @@ public final class CityC9PlacementPreviewExporter {
             CityC2ScanBinaryIO.C2ScanData c2ScanData,
             CityC6Stages.C6Summary c6Summary,
             CityC6Stages.C6Layout c6Layout,
+            Map<Long, Integer> c6Index,
             CityC8Stages.C8Plan c8Plan,
             CityC9Stages.C9Placement placement,
             CityC9BuildQueue.BuildQueue queue
     ) throws Exception {
         JsonObject out = new JsonObject();
         if (server == null || cityId == null || cityId.isBlank() || groupId == null || groupId.isBlank()
-                || heightData == null || c6Summary == null || c6Layout == null || c8Plan == null || placement == null) {
+                || heightData == null || c6Summary == null || c6Layout == null || c6Index == null || c6Index.isEmpty()
+                || c8Plan == null || placement == null) {
             out.addProperty("generated", false);
             out.addProperty("reason", "invalid_input");
             return out;
@@ -47,7 +49,10 @@ public final class CityC9PlacementPreviewExporter {
         CityC6Stages.LayoutPlan layoutPlan = CityC6Stages.findPlanByGroup(c6Layout, groupId);
         CityC8Stages.FoundationItem foundation = findFoundation(c8Plan, groupId);
         CityC9Stages.PlacementItem placementItem = findPlacementItem(placement, foundation != null ? foundation.build_area_id : null);
-        if (area == null || layoutPlan == null || foundation == null || placementItem == null) {
+        CityC8Stages.AreaGeometry geometry = area != null
+                ? CityC8Stages.buildAreaGeometry(area, CityC8Stages.collectAreaBlockKeys(c6Index, area.build_area_numeric_id))
+                : null;
+        if (area == null || layoutPlan == null || foundation == null || placementItem == null || geometry == null || !geometry.valid) {
             out.addProperty("generated", false);
             out.addProperty("reason", "group_not_found");
             return out;
@@ -62,14 +67,15 @@ public final class CityC9PlacementPreviewExporter {
         String normalizedMode = safe(mode).toLowerCase();
         boolean applyPreview = "apply_now".equals(normalizedMode);
 
-        BufferedImage image = CityStagePreviewUtil.renderBaseTerrain(heightData, c2ScanData, area);
+        CityStagePreviewUtil.AreaPreviewContext previewContext = CityStagePreviewUtil.fromGeometry(geometry);
+        BufferedImage image = CityStagePreviewUtil.renderBaseTerrain(heightData, c2ScanData, previewContext);
         Graphics2D g = image.createGraphics();
         try {
             CityStagePreviewUtil.configure(g);
-            CityStagePreviewUtil.drawMaskBounds(g, area);
-            CityStagePreviewUtil.drawPrimaryModules(g, area, layoutPlan);
-            drawStructureRects(g, area, placementItem, nodeById, queue, groupId, placementItem.build_area_id, applyPreview);
-            CityStagePreviewUtil.applyGridOverlay(image, area, groupId + " / C9 " + safe(mode));
+            CityStagePreviewUtil.drawAreaShape(g, previewContext);
+            CityStagePreviewUtil.drawPrimaryModules(g, previewContext, layoutPlan);
+            drawStructureRects(g, previewContext, placementItem, nodeById, queue, groupId, placementItem.build_area_id, applyPreview);
+            CityStagePreviewUtil.applyGridOverlay(image, previewContext, groupId + " / C9 " + safe(mode));
         } finally {
             g.dispose();
         }
@@ -86,7 +92,8 @@ public final class CityC9PlacementPreviewExporter {
         legend.addProperty("structure_count", placementItem.structures != null ? placementItem.structures.size() : 0);
         legend.addProperty("foundation_type", safe(placementItem.foundation_type));
         legend.addProperty("base_y", placementItem.base_y);
-        legend.add("structures", buildStructureLegend(placementItem, nodeById, queue, groupId, placementItem.build_area_id));
+        legend.addProperty("geometry_semantics", "polygon_blocks");
+        legend.add("structures", buildStructureLegend(placementItem, nodeById, queue, groupId, placementItem.build_area_id, applyPreview));
 
         Path cityDir = server.getWorldPath(LevelResource.ROOT).resolve("terra_script").resolve("cities").resolve(cityId);
         return CityStagePreviewUtil.writeGroupPreview(
@@ -102,7 +109,7 @@ public final class CityC9PlacementPreviewExporter {
 
     private static void drawStructureRects(
             Graphics2D g,
-            CityC6Stages.BuildAreaSummary area,
+            CityStagePreviewUtil.AreaPreviewContext previewContext,
             CityC9Stages.PlacementItem placementItem,
             Map<String, CityC8Stages.PlacementNode> nodeById,
             CityC9BuildQueue.BuildQueue queue,
@@ -123,10 +130,10 @@ public final class CityC9PlacementPreviewExporter {
             int maxX = node != null && node.footprint_max_x != null ? node.footprint_max_x : structure.x + 1;
             int maxZ = node != null && node.footprint_max_z != null ? node.footprint_max_z : structure.z + 1;
 
-            int px0 = CityStagePreviewUtil.toPreviewCoord(area, minX, true);
-            int pz0 = CityStagePreviewUtil.toPreviewCoord(area, minZ, false);
-            int px1 = CityStagePreviewUtil.toPreviewCoord(area, maxX, true);
-            int pz1 = CityStagePreviewUtil.toPreviewCoord(area, maxZ, false);
+            int px0 = CityStagePreviewUtil.toPreviewCoord(previewContext, minX, true);
+            int pz0 = CityStagePreviewUtil.toPreviewCoord(previewContext, minZ, false);
+            int px1 = CityStagePreviewUtil.toPreviewCoord(previewContext, maxX, true);
+            int pz1 = CityStagePreviewUtil.toPreviewCoord(previewContext, maxZ, false);
             int left = Math.min(px0, px1);
             int top = Math.min(pz0, pz1);
             int width = Math.max(1, Math.abs(px1 - px0));
@@ -144,7 +151,8 @@ public final class CityC9PlacementPreviewExporter {
             Map<String, CityC8Stages.PlacementNode> nodeById,
             CityC9BuildQueue.BuildQueue queue,
             String groupId,
-            String buildAreaId
+            String buildAreaId,
+            boolean applyPreview
     ) {
         JsonArray out = new JsonArray();
         if (placementItem.structures == null) return out;
@@ -152,10 +160,10 @@ public final class CityC9PlacementPreviewExporter {
         for (CityC9Stages.PlacedStructure structure : placementItem.structures) {
             if (structure == null) continue;
             JsonObject item = new JsonObject();
-            CityC9BuildQueue.BuildTask task = structure.node_id != null ? tasksByNodeId.get(structure.node_id) : null;
+            CityC9BuildQueue.BuildTask task = applyPreview && structure.node_id != null ? tasksByNodeId.get(structure.node_id) : null;
             item.addProperty("node_id", safe(structure.node_id));
             item.addProperty("template_id", safe(structure.template_id));
-            item.addProperty("status", task != null ? CityC9BuildQueue.Status.normalize(task.status).toLowerCase() : "");
+            item.addProperty("status", resolveDisplayStatus(structure, task, applyPreview));
             item.addProperty("reason", task != null && task.last_error != null && !task.last_error.isBlank() ? task.last_error : safe(structure.reason));
             item.addProperty("placed", task != null
                     ? CityC9BuildQueue.Status.DONE.name().equals(CityC9BuildQueue.Status.normalize(task.status))
@@ -179,6 +187,9 @@ public final class CityC9PlacementPreviewExporter {
 
     private static Color previewColor(CityC9Stages.PlacedStructure structure, CityC9BuildQueue.BuildTask task, boolean applyPreview) {
         if (!applyPreview) {
+            if (structure != null && safe(structure.reason).startsWith("runtime_")) {
+                return new Color(255, 92, 92);
+            }
             return colorFor(structure != null && structure.node_id != null ? structure.node_id : (structure != null ? structure.template_id : ""));
         }
         String status = task != null ? CityC9BuildQueue.Status.normalize(task.status) : "";
@@ -186,6 +197,20 @@ public final class CityC9PlacementPreviewExporter {
             return new Color(80, 255, 120);
         }
         return new Color(220, 96, 255);
+    }
+
+    private static String resolveDisplayStatus(
+            CityC9Stages.PlacedStructure structure,
+            CityC9BuildQueue.BuildTask task,
+            boolean applyPreview
+    ) {
+        if (applyPreview && task != null) {
+            return CityC9BuildQueue.Status.normalize(task.status).toLowerCase();
+        }
+        if (structure == null) return "";
+        if (safe(structure.reason).startsWith("runtime_")) return "rejected";
+        if (structure.placed) return "placed";
+        return "planned";
     }
 
     private static Map<String, CityC9BuildQueue.BuildTask> indexTasks(

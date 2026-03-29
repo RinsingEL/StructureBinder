@@ -26,8 +26,8 @@ import java.util.Locale;
 public final class CityC6BuildAreaPreviewExporter {
     private static final int PREVIEW_SIZE = 512;
     private static final int SEA_LEVEL = 63;
-    private static final String IMAGE_FILE = "C6_buildable_preview.png";
-    private static final String LEGEND_FILE = "C6_buildable_preview.legend.json";
+    private static final String IMAGE_FILE = "C6_polygon_preview.png";
+    private static final String LEGEND_FILE = "C6_polygon_preview.legend.json";
     private static final Color BUILDABLE_FILL = new Color(44, 166, 84, 150);
     private static final Color FORBIDDEN_FILL = new Color(224, 54, 54, 200);
     private static final Color FORBIDDEN_WATER = new Color(55, 122, 220, 210);
@@ -80,9 +80,9 @@ public final class CityC6BuildAreaPreviewExporter {
 
         JsonObject legend = new JsonObject();
         legend.addProperty("image", IMAGE_FILE);
-        legend.addProperty("type", "city_c6_buildable_preview");
+        legend.addProperty("type", "city_c6_polygon_preview");
         legend.addProperty("city_id", cityId);
-        legend.addProperty("source", "stage1_height_forbidden + c6_build_area_index");
+        legend.addProperty("source", "polygon-first c6 area preview; not a final buildability decision");
         legend.addProperty("origin_x", heightData.originX);
         legend.addProperty("origin_z", heightData.originZ);
         legend.addProperty("width_blocks", heightData.width);
@@ -93,7 +93,7 @@ public final class CityC6BuildAreaPreviewExporter {
         legend.addProperty("access_seed_overlay", true);
 
         JsonArray palette = new JsonArray();
-        palette.add(colorEntry("buildable", BUILDABLE_FILL));
+        palette.add(colorEntry("functional_area", BUILDABLE_FILL));
         palette.add(colorEntry("forbidden_default", FORBIDDEN_FILL));
         palette.add(colorEntry("forbidden_water", FORBIDDEN_WATER));
         palette.add(colorEntry("forbidden_cliff_slope", FORBIDDEN_CLIFF));
@@ -104,6 +104,8 @@ public final class CityC6BuildAreaPreviewExporter {
         legend.add("palette", palette);
         legend.add("access_seeds", accessSeeds);
         legend.add("forbidden_reason_counts", toReasonCounts(reasonCounts));
+        legend.addProperty("geometry_semantics", "polygon_first");
+        legend.addProperty("buildability_semantics", "preview_only_not_final");
 
         JsonArray resolution = new JsonArray();
         resolution.add(PREVIEW_SIZE);
@@ -114,6 +116,7 @@ public final class CityC6BuildAreaPreviewExporter {
         out.addProperty("generated", true);
         out.addProperty("image", "cities/" + cityId + "/" + IMAGE_FILE);
         out.addProperty("legend", "cities/" + cityId + "/" + LEGEND_FILE);
+        out.addProperty("geometry_semantics", "polygon_first");
         return out;
     }
 

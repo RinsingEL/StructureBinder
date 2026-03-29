@@ -10,6 +10,7 @@ import com.user.terra_script.world.city.stage.StructureTemplateQueryService;
 import com.user.terra_script.world.city.stage.c1.CityStage1BinaryIO;
 import com.user.terra_script.world.city.stage.c1.CityStage1Processor;
 import com.user.terra_script.world.city.stage.c2.CityC2ScanBinaryIO;
+import com.user.terra_script.world.city.stage.c2.CityC3OwnershipIO;
 import com.user.terra_script.world.city.stage.c4.CitySemanticStages;
 import net.minecraft.world.level.ChunkPos;
 
@@ -244,11 +245,13 @@ public final class CityC6Stages {
         public String function;
         public String layer;
         public int polygon_area_blocks;
-        public BBox mask_bbox = new BBox();
+        public BBox polygon_reference_bbox = new BBox();
         public Point centroid = new Point();
         public int rect_limit = RECT_ATTEMPT_LIMIT;
         public double min_total_primary_area_ratio = MIN_TOTAL_PRIMARY_AREA_RATIO;
         public int current_attempt_count;
+        public List<String> polygon_ascii_map = new ArrayList<>();
+        public List<String> boundary_notes = new ArrayList<>();
         public PreviewPaths previews = new PreviewPaths();
         public RectGuidance rect_guidance = new RectGuidance();
     }
@@ -257,6 +260,7 @@ public final class CityC6Stages {
         public String height;
         public String hillshade;
         public String roughness;
+        public String polygon_overview;
         public String bbox_overview;
         public String rect_preview;
     }
@@ -379,7 +383,7 @@ public final class CityC6Stages {
             List<List<CityStage1Processor.BlockCoord>> buildableGroups,
             C6FillStyle fillStyle
     ) {
-        return generate(city, c5Groups, heightData, null, buildableGroups, fillStyle);
+        return generate(city, c5Groups, heightData, null, buildableGroups, null, fillStyle);
     }
 
     public static C6Bundle generate(
@@ -388,6 +392,7 @@ public final class CityC6Stages {
             CityStage1BinaryIO.HeightData heightData,
             CityC2ScanBinaryIO.C2ScanData c2ScanData,
             List<List<CityStage1Processor.BlockCoord>> buildableGroups,
+            CityC3OwnershipIO.OwnershipData ownershipData,
             C6FillStyle fillStyle
     ) {
         C6Bundle bundle = new C6Bundle();
@@ -402,7 +407,7 @@ public final class CityC6Stages {
         bundle.candidates = candidates;
         bundle.validation = validation;
 
-        if (city == null || c5Groups == null || heightData == null || buildableGroups == null) {
+        if (city == null || c5Groups == null || heightData == null || (buildableGroups == null && ownershipData == null)) {
             summary.ok = false;
             layout.ok = false;
             decisionInput.ok = false;
@@ -446,6 +451,33 @@ public final class CityC6Stages {
         Map<String, BuildAreaSummary> bestAreaByGroup = new HashMap<>();
         Map<Long, Integer> blockToArea = new LinkedHashMap<>();
         int areaSeq = 1;
+        if (ownershipData != null) {
+            areaSeq = populateAreasFromOwnership(summary, bestAreaByGroup, blockToArea, chunkToModule, heightData, c2ScanData, ownershipData, areaSeq);
+        }
+        if (summary.areas.isEmpty()) {
+            areaSeq = populateAreasFromBuildableGroups(summary, bestAreaByGroup, blockToArea, chunkToModule, heightData, c2ScanData, buildableGroups, areaSeq);
+        }
+
+        summary.areas.sort(Comparator.comparing(a -> a.build_area_id));
+        Map<String, RectGuidance> rectGuidanceByGroup = buildRectGuidanceByGroup(bestAreaByGroup);
+        layout.plans = buildPlans(fillStyle, bestAreaByGroup, rectGuidanceByGroup);
+        decisionInput.groups = buildDecisionInputs(bestAreaByGroup, rectGuidanceByGroup);
+        bundle.indexed_block_count = blockToArea.size();
+        bundle.index_by_block = blockToArea;
+        return bundle;
+    }
+
+    private static int populateAreasFromBuildableGroups(
+            C6Summary summary,
+            Map<String, BuildAreaSummary> bestAreaByGroup,
+            Map<Long, Integer> blockToArea,
+            Map<Long, ModuleMeta> chunkToModule,
+            CityStage1BinaryIO.HeightData heightData,
+            CityC2ScanBinaryIO.C2ScanData c2ScanData,
+            List<List<CityStage1Processor.BlockCoord>> buildableGroups,
+            int areaSeq
+    ) {
+        if (buildableGroups == null) return areaSeq;
         for (List<CityStage1Processor.BlockCoord> blockGroup : buildableGroups) {
             if (blockGroup == null || blockGroup.isEmpty()) continue;
 
@@ -461,28 +493,70 @@ public final class CityC6Stages {
             }
 
             for (Map.Entry<String, List<CityStage1Processor.BlockCoord>> entry : splitByModule.entrySet()) {
-                List<CityStage1Processor.BlockCoord> points = entry.getValue();
-                if (points.isEmpty()) continue;
                 ModuleMeta meta = moduleMetaMap.get(entry.getKey());
-                BuildAreaSummary area = buildAreaSummary(meta, points, heightData, c2ScanData, areaSeq++);
-                summary.areas.add(area);
-                for (CityStage1Processor.BlockCoord point : points) {
-                    blockToArea.put(packBlock(point.x, point.z), area.build_area_numeric_id);
-                }
-                BuildAreaSummary prev = bestAreaByGroup.get(area.group_id);
-                if (prev == null || area.area_blocks > prev.area_blocks) {
-                    bestAreaByGroup.put(area.group_id, area);
-                }
+                areaSeq = registerArea(summary, bestAreaByGroup, blockToArea, meta, entry.getValue(), heightData, c2ScanData, areaSeq);
             }
         }
+        return areaSeq;
+    }
 
-        summary.areas.sort(Comparator.comparing(a -> a.build_area_id));
-        Map<String, RectGuidance> rectGuidanceByGroup = buildRectGuidanceByGroup(bestAreaByGroup);
-        layout.plans = buildPlans(fillStyle, bestAreaByGroup, rectGuidanceByGroup);
-        decisionInput.groups = buildDecisionInputs(bestAreaByGroup, rectGuidanceByGroup);
-        bundle.indexed_block_count = blockToArea.size();
-        bundle.index_by_block = blockToArea;
-        return bundle;
+    private static int populateAreasFromOwnership(
+            C6Summary summary,
+            Map<String, BuildAreaSummary> bestAreaByGroup,
+            Map<Long, Integer> blockToArea,
+            Map<Long, ModuleMeta> chunkToModule,
+            CityStage1BinaryIO.HeightData heightData,
+            CityC2ScanBinaryIO.C2ScanData c2ScanData,
+            CityC3OwnershipIO.OwnershipData ownershipData,
+            int areaSeq
+    ) {
+        if (ownershipData == null || ownershipData.owner == null) return areaSeq;
+        Map<String, List<CityStage1Processor.BlockCoord>> splitByModule = new HashMap<>();
+        Map<String, ModuleMeta> moduleMetaMap = new HashMap<>();
+        for (int x = 0; x < ownershipData.width; x++) {
+            for (int z = 0; z < ownershipData.height; z++) {
+                int districtId = ownershipData.owner[x][z];
+                if (districtId < 0) continue;
+                int worldX = ownershipData.originX + x * Math.max(1, ownershipData.step);
+                int worldZ = ownershipData.originZ + z * Math.max(1, ownershipData.step);
+                long chunkKey = ChunkPos.asLong(worldX >> 4, worldZ >> 4);
+                ModuleMeta meta = chunkToModule.get(chunkKey);
+                if (meta == null) continue;
+                CityStage1Processor.BlockCoord coord = new CityStage1Processor.BlockCoord();
+                coord.x = worldX;
+                coord.z = worldZ;
+                splitByModule.computeIfAbsent(meta.group_id, k -> new ArrayList<>()).add(coord);
+                moduleMetaMap.put(meta.group_id, meta);
+            }
+        }
+        for (Map.Entry<String, List<CityStage1Processor.BlockCoord>> entry : splitByModule.entrySet()) {
+            ModuleMeta meta = moduleMetaMap.get(entry.getKey());
+            areaSeq = registerArea(summary, bestAreaByGroup, blockToArea, meta, entry.getValue(), heightData, c2ScanData, areaSeq);
+        }
+        return areaSeq;
+    }
+
+    private static int registerArea(
+            C6Summary summary,
+            Map<String, BuildAreaSummary> bestAreaByGroup,
+            Map<Long, Integer> blockToArea,
+            ModuleMeta meta,
+            List<CityStage1Processor.BlockCoord> points,
+            CityStage1BinaryIO.HeightData heightData,
+            CityC2ScanBinaryIO.C2ScanData c2ScanData,
+            int areaSeq
+    ) {
+        if (meta == null || points == null || points.isEmpty()) return areaSeq;
+        BuildAreaSummary area = buildAreaSummary(meta, points, heightData, c2ScanData, areaSeq++);
+        summary.areas.add(area);
+        for (CityStage1Processor.BlockCoord point : points) {
+            blockToArea.put(packBlock(point.x, point.z), area.build_area_numeric_id);
+        }
+        BuildAreaSummary prev = bestAreaByGroup.get(area.group_id);
+        if (prev == null || area.area_blocks > prev.area_blocks) {
+            bestAreaByGroup.put(area.group_id, area);
+        }
+        return areaSeq;
     }
 
     public static void save(Path cityDir, C6Bundle bundle) throws Exception {
@@ -765,14 +839,35 @@ public final class CityC6Stages {
             item.function = area.function;
             item.layer = area.layer;
             item.polygon_area_blocks = area.area_blocks;
-            item.mask_bbox = area.bbox;
+            item.polygon_reference_bbox = copyBBox(area.bbox);
             item.centroid = area.centroid;
+            item.polygon_ascii_map = new ArrayList<>(area.ascii_map);
+            item.boundary_notes = buildBoundaryNotes(area);
             item.rect_guidance = rectGuidanceByGroup != null && rectGuidanceByGroup.containsKey(area.group_id)
                     ? copyGuidance(rectGuidanceByGroup.get(area.group_id))
                     : fallbackRectGuidance(area);
             items.add(item);
         }
         return items;
+    }
+
+    private static List<String> buildBoundaryNotes(BuildAreaSummary area) {
+        List<String> notes = new ArrayList<>();
+        notes.add("Rect legality is evaluated against polygon coverage, not bbox containment.");
+        notes.add("polygon_reference_bbox is only a preview framing reference.");
+        notes.add("C6 does not decide final buildability; later stages may adapt terrain.");
+        if (area != null) notes.add("Polygon area blocks: " + area.area_blocks);
+        return notes;
+    }
+
+    private static BBox copyBBox(BBox source) {
+        BBox copy = new BBox();
+        if (source == null) return copy;
+        copy.minX = source.minX;
+        copy.minZ = source.minZ;
+        copy.maxX = source.maxX;
+        copy.maxZ = source.maxZ;
+        return copy;
     }
 
     static RectGuidance deriveRectGuidance(BuildAreaSummary area, List<? extends CityC35CatalogIO.CatalogStructure> structures) {

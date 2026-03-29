@@ -7,10 +7,11 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityC6ValidationTest {
     @Test
-    void rejectsCoverageOkRectWhenMainTemplateCannotFit() {
+    void allowsCoverageOkRectWhenMainTemplateCannotFit() {
         CityC6Stages.BuildAreaSummary area = new CityC6Stages.BuildAreaSummary();
         area.group_id = "g_market_01";
         area.build_area_id = "ba_g_market_01_a001";
@@ -64,14 +65,14 @@ class CityC6ValidationTest {
 
         CityC6Stages.GroupRectValidation validation = CityC6Validation.validateSubmission(area, input, candidate, index, 3);
 
-        assertFalse(validation.accepted);
+        assertTrue(validation.accepted);
         assertFalse(validation.structure_validation_passed);
-        assertEquals("structure_fit_failed", validation.reason);
+        assertEquals("accepted", validation.reason);
         assertEquals("main_template_size_not_supported", validation.rects.get(0).structure_reason);
     }
 
     @Test
-    void rejectsWhenGrowthBufferIsNotEnoughEvenIfCoveragePasses() {
+    void allowsWhenGrowthBufferIsNotEnoughEvenIfCoveragePasses() {
         CityC6Stages.BuildAreaSummary area = new CityC6Stages.BuildAreaSummary();
         area.group_id = "g_market_02";
         area.build_area_id = "ba_g_market_02_a001";
@@ -125,8 +126,8 @@ class CityC6ValidationTest {
 
         CityC6Stages.GroupRectValidation validation = CityC6Validation.validateSubmission(area, input, candidate, index, 3);
 
-        assertFalse(validation.accepted);
-        assertEquals("structure_fit_failed", validation.reason);
+        assertTrue(validation.accepted);
+        assertEquals("accepted", validation.reason);
         assertEquals("growth_buffer_not_enough", validation.rects.get(0).structure_reason);
     }
 

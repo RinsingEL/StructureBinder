@@ -17,7 +17,7 @@ class CityC9StagesTest {
                 "city_demo",
                 summary(),
                 index(),
-                plan(),
+                validPlan(),
                 CityC9Stages.Mode.DRY_RUN,
                 100,
                 null
@@ -34,7 +34,7 @@ class CityC9StagesTest {
                 "city_demo",
                 summary(),
                 index(),
-                plan(),
+                validPlan(),
                 CityC9Stages.Mode.ENQUEUE,
                 100,
                 null
@@ -43,6 +43,24 @@ class CityC9StagesTest {
         assertNotNull(result.queue);
         assertEquals(1, result.queue.tasks.size());
         assertEquals(1, result.placement.enqueued_tasks_count);
+    }
+
+    @Test
+    void enqueueSkipsPlacementsOutsideAreaBlocks() {
+        CityC9Stages.C9Result result = CityC9Stages.generate(
+                "city_demo",
+                summary(),
+                index(),
+                invalidPlan(),
+                CityC9Stages.Mode.ENQUEUE,
+                100,
+                null
+        );
+
+        assertNotNull(result.queue);
+        assertEquals(0, result.queue.tasks.size());
+        assertEquals(0, result.placement.enqueued_tasks_count);
+        assertEquals("runtime_out_of_area", result.placement.items.get(0).structures.get(0).reason);
     }
 
     private static CityC6Stages.C6Summary summary() {
@@ -57,11 +75,14 @@ class CityC9StagesTest {
 
     private static Map<Long, Integer> index() {
         Map<Long, Integer> index = new HashMap<>();
-        index.put(1L, 1);
+        index.put(packBlock(32, 48), 1);
+        index.put(packBlock(33, 48), 1);
+        index.put(packBlock(32, 49), 1);
+        index.put(packBlock(33, 49), 1);
         return index;
     }
 
-    private static CityC8Stages.C8Plan plan() {
+    private static CityC8Stages.C8Plan validPlan() {
         CityC8Stages.C8Plan plan = new CityC8Stages.C8Plan();
         CityC8Stages.FoundationItem foundation = new CityC8Stages.FoundationItem();
         foundation.group_id = "g_market_04";
@@ -76,9 +97,24 @@ class CityC9StagesTest {
         node.x = 32;
         node.y = 64;
         node.z = 48;
+        node.footprint_min_x = 32;
+        node.footprint_min_z = 48;
+        node.footprint_max_x = 33;
+        node.footprint_max_z = 49;
         foundation.placements.add(node);
 
         plan.foundations.add(foundation);
         return plan;
+    }
+
+    private static CityC8Stages.C8Plan invalidPlan() {
+        CityC8Stages.C8Plan plan = validPlan();
+        CityC8Stages.PlacementNode node = plan.foundations.get(0).placements.get(0);
+        node.footprint_max_x = 34;
+        return plan;
+    }
+
+    private static long packBlock(int x, int z) {
+        return (((long) x) << 32) ^ (z & 0xffffffffL);
     }
 }

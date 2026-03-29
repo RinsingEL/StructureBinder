@@ -106,13 +106,14 @@ public final class CityC6GroupPreviewExporter {
             }
         }
 
-        String bboxFile = "bbox_overview.png";
+        String bboxFile = "polygon_overview.png";
         String rectFile = "rect_preview.png";
         ImageIO.write(bboxImage, "png", groupDir.resolve(bboxFile).toFile());
         ImageIO.write(rectImage, "png", groupDir.resolve(rectFile).toFile());
 
         CityC6Stages.GroupDecisionInput decision = CityC6Stages.findDecisionGroup(input, area.group_id);
         if (decision != null) {
+            decision.previews.polygon_overview = CityGroupPathUtil.relativeGroupPath(cityId, area.group_id, bboxFile);
             decision.previews.bbox_overview = CityGroupPathUtil.relativeGroupPath(cityId, area.group_id, bboxFile);
             decision.previews.rect_preview = CityGroupPathUtil.relativeGroupPath(cityId, area.group_id, rectFile);
             if (decision.previews.height == null) decision.previews.height = CityGroupPathUtil.relativeGroupPath(cityId, area.group_id, "height.png");
@@ -132,13 +133,16 @@ public final class CityC6GroupPreviewExporter {
         legend.addProperty("group_id", area.group_id);
         legend.addProperty("build_area_id", area.build_area_id);
         legend.add("grid", PreviewOverlayUtil.buildGridMetadata(grid));
+        legend.addProperty("polygon_overview", bboxFile);
         legend.addProperty("bbox_overview", bboxFile);
         legend.addProperty("rect_preview", rectFile);
+        legend.addProperty("geometry_semantics", "polygon_first");
         Files.writeString(groupDir.resolve("c6_preview.legend.json"), legend.toString(), StandardCharsets.UTF_8);
 
         JsonObject item = new JsonObject();
         item.addProperty("group_id", area.group_id);
         item.addProperty("build_area_id", area.build_area_id);
+        item.addProperty("polygon_overview", CityGroupPathUtil.relativeGroupPath(cityId, area.group_id, bboxFile));
         item.addProperty("bbox_overview", CityGroupPathUtil.relativeGroupPath(cityId, area.group_id, bboxFile));
         item.addProperty("rect_preview", CityGroupPathUtil.relativeGroupPath(cityId, area.group_id, rectFile));
         item.addProperty("legend", CityGroupPathUtil.relativeGroupPath(cityId, area.group_id, "c6_preview.legend.json"));

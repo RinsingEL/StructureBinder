@@ -698,8 +698,9 @@ public class CityController {
                 return;
             }
             List<CityStage1Processor.ForbiddenBlock> forbiddenBlocks = CityStage1BinaryIO.loadForbidden(cityId);
+            CityC3OwnershipIO.OwnershipData ownership = CityC3OwnershipIO.load(cityDir);
 
-            CityC6Stages.C6Bundle bundle = CityC6Stages.generate(city, c5, heightData, c2ScanData, buildableGroups, fillStyle);
+            CityC6Stages.C6Bundle bundle = CityC6Stages.generate(city, c5, heightData, c2ScanData, buildableGroups, ownership, fillStyle);
             System.out.println("[C6] city_c6_rect_prepare generated city_id=" + cityId
                     + " group_id=" + (groupId != null ? groupId : "all")
                     + " areas=" + (bundle.summary != null && bundle.summary.areas != null ? bundle.summary.areas.size() : 0)
@@ -735,7 +736,6 @@ public class CityController {
                 }
             }
             CityC6Stages.save(cityDir, bundle);
-            CityC3OwnershipIO.OwnershipData ownership = CityC3OwnershipIO.load(cityDir);
             if (c2ScanData != null && ownership != null) {
                 CityC5GroupTerrainPreviewExporter.export(mcServer, cityId, c5, c2ScanData, ownership);
             }
@@ -1117,7 +1117,7 @@ public class CityController {
             }
 
             JsonObject preview = groupId != null && !groupId.isBlank()
-                    ? CityC8ArrangementPreviewExporter.export(mcServer, cityId, groupId, heightData, c2ScanData, c6Summary, c6Layout, responsePlan)
+                    ? CityC8ArrangementPreviewExporter.export(mcServer, cityId, groupId, heightData, c2ScanData, c6Summary, c6Layout, c6Index, responsePlan)
                     : new JsonObject();
 
             JsonObject res = new JsonObject();
@@ -1194,7 +1194,7 @@ public class CityController {
                 return;
             }
 
-            CityC8Stages.C8Plan c8Plan = CityC8Stages.load(cityDir);
+            CityC8Stages.C8Plan c8Plan = loadC9GenerationPlan(cityDir, groupId);
             if (c8Plan == null) {
                 if (c6Layout == null || heightData == null) {
                     HttpUtil.sendResponse(exchange, 404, "{\"error\": \"C8 missing and required data to regenerate C8 not found for: " + cityId + "\"}");
@@ -1298,6 +1298,7 @@ public class CityController {
                         c2ScanData,
                         c6Summary,
                         c6Layout,
+                        responseIndex,
                         responsePlan,
                         responseResult != null ? responseResult.placement : null,
                         responseResult != null ? responseResult.queue : null
@@ -2088,6 +2089,18 @@ public class CityController {
         CityC7Stages.C7Selection citySelection = CityC7Stages.load(cityDir);
         if (citySelection != null) return citySelection;
         return loadC7Selection(cityDir, groupId);
+    }
+
+    private static CityC8Stages.C8Plan loadC9GenerationPlan(Path cityDir, String groupId) throws Exception {
+        if (cityDir == null) return null;
+        if (groupId != null && !groupId.isBlank()) {
+            Path groupFile = resolveGroupDir(cityDir, groupId).resolve("c8_foundation.json");
+            if (java.nio.file.Files.exists(groupFile)) {
+                CityC8Stages.C8Plan groupPlan = new Gson().fromJson(java.nio.file.Files.readString(groupFile), CityC8Stages.C8Plan.class);
+                if (groupPlan != null) return groupPlan;
+            }
+        }
+        return CityC8Stages.load(cityDir);
     }
 
     private static CityC8Stages.C8Plan filterC8PlanByGroup(CityC8Stages.C8Plan plan, String groupId, Set<Integer> areaIds) {

@@ -111,9 +111,9 @@
 - `C6_RectDecisionInput.json`
 - `C6_RectCandidates.json`
 - `C6_RectValidation.json`
-- `C6_buildable_preview.png`
+- `C6_polygon_preview.png`
 - `C6_rect_placement_preview.png`
-- `groups/<group_id>/bbox_overview.png`
+- `groups/<group_id>/polygon_overview.png`
 - `groups/<group_id>/rect_preview.png`
 - `groups/<group_id>/c6_preview.legend.json`
 
@@ -123,14 +123,14 @@
 - 目标 group 是否在 `C6_BuildAreaSummary.json` 中存在对应 `build_area_id`
 - `C6_RectDecisionInput.json` 中该 group 是否带出：
   - `polygon_area_blocks`
-  - `mask_bbox`
+  - `polygon_reference_bbox`
   - `centroid`
   - `current_attempt_count`
   - 预览图路径
-- `groups/<group_id>/bbox_overview.png` 是否生成
+- `groups/<group_id>/polygon_overview.png` 是否生成
 - `groups/<group_id>/rect_preview.png` 是否生成
 - 未提交矩形前：
-  - `rect_preview.png` 应只看到 mask 与 anchor
+  - `rect_preview.png` 应只看到 polygon area 与 anchor
 - 提交非法矩形后：
   - `C6_RectValidation.json` 中应出现：
     - `inside_functional_blocks`
@@ -218,6 +218,7 @@
   - `rotation`
   - `anchor_module_id`
   - 连接或依附关系
+- `C8` 是否按 area block / polygon 集合判定 footprint 合法性，而不是 bbox containment
 - `C8` 是否只负责“求坐标”，而不再重新决定模板偏好
 - `groups/<group_id>/c8_arrangement_debug.json` 是否生成
 - debug 中是否能看出：
@@ -259,6 +260,9 @@
 - 如果 `apply_blocks=true`
   - `changed_blocks_total` 应大于 0
   - 不应出现明显超预算或整组空结果
+- 若某个 placement footprint 越出 area polygon
+  - 应在输出里标记 `runtime_out_of_area`
+  - 不应进入队列或实际落地
 - `C9` 是否按 `C8 placements[]` 的：
   - `template_id`
   - `x / y / z`

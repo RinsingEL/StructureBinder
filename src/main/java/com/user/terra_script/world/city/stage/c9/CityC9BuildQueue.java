@@ -13,11 +13,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 public final class CityC9BuildQueue {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
@@ -150,15 +152,20 @@ public final class CityC9BuildQueue {
             }
         }
         long nowTick = ServerTickTracker.currentTick();
+        Set<String> nextTaskIds = new HashSet<>();
+        Set<String> touchedBuildAreas = new HashSet<>();
         if (plan != null && plan.foundations != null) {
             for (CityC8Stages.FoundationItem foundation : plan.foundations) {
-                if (foundation == null || foundation.placements == null || foundation.placements.isEmpty()) continue;
+                if (foundation == null) continue;
                 if (groupId != null && !groupId.isBlank() && !groupId.equals(foundation.group_id)) continue;
+                touchedBuildAreas.add(safe(foundation.build_area_id));
+                if (foundation.placements == null || foundation.placements.isEmpty()) continue;
                 for (CityC8Stages.PlacementNode node : foundation.placements) {
                     if (node == null || node.node_id == null || node.node_id.isBlank() || node.template_id == null || node.template_id.isBlank()) {
                         continue;
                     }
                     String taskId = taskId(cityId, foundation.build_area_id, node.node_id);
+                    nextTaskIds.add(taskId);
                     BuildTask existing = byId.get(taskId);
                     String nextSignature = placementSignature(foundation, node);
                     boolean changed = existing == null || hasTaskChanged(existing, foundation, node, nextSignature);
@@ -201,6 +208,14 @@ public final class CityC9BuildQueue {
                     byId.put(taskId, task);
                 }
             }
+        }
+        if (!touchedBuildAreas.isEmpty()) {
+            byId.entrySet().removeIf(entry -> {
+                BuildTask task = entry.getValue();
+                if (task == null) return false;
+                if (!touchedBuildAreas.contains(safe(task.build_area_id))) return false;
+                return !nextTaskIds.contains(entry.getKey());
+            });
         }
         queue.tasks = new ArrayList<>(byId.values());
         queue.tasks.sort(Comparator

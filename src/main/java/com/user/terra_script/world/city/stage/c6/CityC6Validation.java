@@ -115,7 +115,7 @@ public final class CityC6Validation {
         result.test_logs.add("total_primary_area_ratio=" + result.total_primary_area_ratio
                 + ", enoughArea=" + enoughArea
                 + ", all_rects_valid=" + allValid);
-        if (allValid && enoughArea && result.structure_validation_passed) {
+        if (allValid && enoughArea) {
             result.accepted = true;
             result.decision_terminal = true;
             result.continue_allowed = false;
@@ -131,8 +131,7 @@ public final class CityC6Validation {
             result.decision_terminal = candidate.attempt_index >= attemptLimit;
             result.continue_allowed = !result.decision_terminal;
             if (!allValid) result.reason = "rect_validation_failed";
-            else if (!enoughArea) result.reason = "total_primary_area_ratio_not_enough";
-            else result.reason = "structure_fit_failed";
+            else result.reason = "total_primary_area_ratio_not_enough";
             result.test_logs.add("group rejected with reason=" + result.reason);
             System.out.println("[C6] validateSubmission group=" + result.group_id
                     + " accepted=false"
@@ -174,7 +173,7 @@ public final class CityC6Validation {
         item.coverage_ratio = item.total_rect_blocks <= 0
                 ? 0.0
                 : round3(item.inside_functional_blocks / (double) item.total_rect_blocks);
-        item.test_logs.add("inside_functional_blocks=" + item.inside_functional_blocks + "/" + item.total_rect_blocks);
+        item.test_logs.add("inside_polygon_blocks=" + item.inside_functional_blocks + "/" + item.total_rect_blocks);
         item.aspect_ratio = rect.w <= 0 || rect.h <= 0
                 ? 0.0
                 : round3(Math.max(rect.w, rect.h) / (double) Math.max(1, Math.min(rect.w, rect.h)));

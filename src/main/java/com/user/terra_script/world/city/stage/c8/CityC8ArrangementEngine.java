@@ -30,15 +30,17 @@ public final class CityC8ArrangementEngine {
 
     public static SolveResult solve(
             CityC6Stages.BuildAreaSummary area,
+            CityC8Stages.AreaGeometry geometry,
             CityC6Stages.LayoutPlan plan,
             CityC7Stages.GroupArrangementDecision arrangement,
             CityStage1BinaryIO.HeightData heightData,
             CityC2ScanBinaryIO.C2ScanData c2ScanData
     ) {
         SolveResult result = new SolveResult();
-        if (area == null || plan == null || arrangement == null || arrangement.selected_components == null || arrangement.selected_components.isEmpty()) {
+        if (area == null || geometry == null || !geometry.valid
+                || plan == null || arrangement == null || arrangement.selected_components == null || arrangement.selected_components.isEmpty()) {
             result.success = false;
-            result.errors.add("missing_required_inputs");
+            result.errors.add(geometry == null || !geometry.valid ? "missing_area_geometry" : "missing_required_inputs");
             return result;
         }
 
@@ -56,16 +58,9 @@ public final class CityC8ArrangementEngine {
         int baseZ = arrangement.seed != null && arrangement.seed.start_z != 0
                 ? arrangement.seed.start_z
                 : (anchor != null ? (int) Math.round(anchor.anchor.z) : (int) Math.round(area.centroid.z));
-        int width = Math.max(1, area.bbox.maxX - area.bbox.minX + 1);
-        int height = Math.max(1, area.bbox.maxZ - area.bbox.minZ + 1);
-        boolean longX = width >= height;
-        if ("z".equalsIgnoreCase(readStrategyString(arrangement, "primary_axis", readStrategyString(arrangement, "spine_axis", "auto")))) {
-            longX = false;
-        } else if ("x".equalsIgnoreCase(readStrategyString(arrangement, "primary_axis", readStrategyString(arrangement, "spine_axis", "auto")))) {
-            longX = true;
-        }
+        boolean longX = preferLongAxisX(arrangement, geometry);
 
-        SolveContext ctx = new SolveContext(area, arrangement, metaById, spacing, maxPieces, maxDepth, heightData, c2ScanData);
+        SolveContext ctx = new SolveContext(area, geometry, arrangement, metaById, spacing, maxPieces, maxDepth, heightData, c2ScanData);
         if (type == ArrangementType.LINEAR_DOCK) {
             solveLinearDock(ctx, arrangement, metaById, baseX, baseZ, longX);
             result.placements.addAll(ctx.nodes);
@@ -87,6 +82,18 @@ public final class CityC8ArrangementEngine {
             root.node_id = "p" + ctx.nextId++;
             applyFootprint(root, rootMeta);
             applyConnectorMetadata(root, rootMeta);
+            String reject = firstPlacementRejectReason(ctx, root, rootMeta);
+            if (reject != null) {
+                ctx.warnings.add(reject + ":seed_anchor:" + safe(root.template_id));
+                if (seed.component.required) {
+                    ctx.errors.add("required_seed_failed:" + safe(seed.component.component_id));
+                    result.success = false;
+                    result.errors.addAll(ctx.errors);
+                    result.warnings.addAll(ctx.warnings);
+                    return result;
+                }
+                continue;
+            }
             int mark = ctx.nodes.size();
             ctx.nodes.add(root);
             ctx.nodeById.put(root.node_id, root);
@@ -140,6 +147,11 @@ public final class CityC8ArrangementEngine {
         TemplateMeta rootMeta = metaById.get(root.template_id);
         applyFootprint(root, rootMeta);
         applyConnectorMetadata(root, rootMeta);
+        String reject = firstPlacementRejectReason(ctx, root, rootMeta);
+        if (reject != null) {
+            ctx.errors.add(reject + ":seed_anchor:" + safe(root.template_id));
+            return;
+        }
         ctx.nodes.add(root);
         ctx.nodeById.put(root.node_id, root);
         ctx.occupied.add(pack(root.x, root.z));
@@ -738,28 +750,12 @@ public final class CityC8ArrangementEngine {
         }
     }
 
-    private static boolean insideArea(CityC6Stages.BuildAreaSummary area, int x, int z) {
-        if (area == null || area.bbox == null) return false;
-        int pad = 8;
-        return x >= area.bbox.minX - pad && x <= area.bbox.maxX + pad
-                && z >= area.bbox.minZ - pad && z <= area.bbox.maxZ + pad;
-    }
-
-    private static boolean insideArea(CityC6Stages.BuildAreaSummary area, int x, int z, TemplateMeta meta, Direction forward) {
-        if (!insideArea(area, x, z)) return false;
-        if (area == null || area.bbox == null || meta == null || forward == null) return true;
-
-        int axisSpan = axisSpan(meta, forward);
-        int crossSpan = crossSpan(meta, forward);
-        int halfAxis = Math.max(1, axisSpan / 2);
-        int halfCross = Math.max(1, crossSpan / 2);
-        int pad = 4;
-        int minX = x - (forward.dx != 0 ? halfAxis : halfCross);
-        int maxX = x + (forward.dx != 0 ? halfAxis : halfCross);
-        int minZ = z - (forward.dz != 0 ? halfAxis : halfCross);
-        int maxZ = z + (forward.dz != 0 ? halfAxis : halfCross);
-        return minX >= area.bbox.minX - pad && maxX <= area.bbox.maxX + pad
-                && minZ >= area.bbox.minZ - pad && maxZ <= area.bbox.maxZ + pad;
+    private static boolean insideArea(CityC8Stages.AreaGeometry geometry, CityC8Stages.PlacementNode node) {
+        if (geometry == null || node == null) return false;
+        if (node.footprint_min_x == null || node.footprint_min_z == null || node.footprint_max_x == null || node.footprint_max_z == null) {
+            return CityC8Stages.containsAreaBlock(geometry, node.x, node.z);
+        }
+        return CityC8Stages.containsFootprint(geometry, node.footprint_min_x, node.footprint_min_z, node.footprint_max_x, node.footprint_max_z);
     }
 
     private static double scoreNeighbor(TemplateMeta meta, Direction dir, int depth) {
@@ -869,6 +865,15 @@ public final class CityC8ArrangementEngine {
         return alongX ? Direction.EAST : Direction.SOUTH;
     }
 
+    private static boolean preferLongAxisX(CityC7Stages.GroupArrangementDecision arrangement, CityC8Stages.AreaGeometry geometry) {
+        String axis = readStrategyString(arrangement, "primary_axis", readStrategyString(arrangement, "spine_axis", "auto"));
+        if ("z".equalsIgnoreCase(axis)) return false;
+        if ("x".equalsIgnoreCase(axis)) return true;
+        int width = geometry != null ? geometry.spanX() : 1;
+        int height = geometry != null ? geometry.spanZ() : 1;
+        return width >= height;
+    }
+
     private static CityC7Stages.SelectedComponent linearComponentFor(
             CityC7Stages.GroupArrangementDecision arrangement,
             CityC7Stages.SelectedComponent fallback,
@@ -910,7 +915,7 @@ public final class CityC8ArrangementEngine {
 
     private static String firstPlacementRejectReason(SolveContext ctx, CityC8Stages.PlacementNode node, TemplateMeta meta) {
         if (ctx.occupied.contains(pack(node.x, node.z))) return "occupied_collision";
-        if (!insideArea(ctx.area, node.x, node.z, meta, Direction.fromRotation(node.rotation))) return "out_of_bounds";
+        if (!insideArea(ctx.geometry, node)) return "out_of_area";
         if (intersectsExisting(ctx.nodes, node)) return "footprint_collision";
         if (!terrainPasses(ctx, node, meta)) return "terrain_rejected";
         return null;
@@ -918,7 +923,7 @@ public final class CityC8ArrangementEngine {
 
     private static String firstPlacementRejectReasonSkippingNode(SolveContext ctx, CityC8Stages.PlacementNode node, TemplateMeta meta) {
         if (ctx.occupied.contains(pack(node.x, node.z))) return "occupied_collision";
-        if (!insideArea(ctx.area, node.x, node.z, meta, Direction.fromRotation(node.rotation))) return "out_of_bounds";
+        if (!insideArea(ctx.geometry, node)) return "out_of_area";
         if (intersectsExistingSkippingNode(ctx.nodes, node)) return "footprint_collision";
         if (!terrainPasses(ctx, node, meta)) return "terrain_rejected";
         return null;
@@ -1117,6 +1122,7 @@ public final class CityC8ArrangementEngine {
 
     private static final class SolveContext {
         final CityC6Stages.BuildAreaSummary area;
+        final CityC8Stages.AreaGeometry geometry;
         final CityC7Stages.GroupArrangementDecision arrangement;
         final Map<String, TemplateMeta> metaById;
         final int spacing;
@@ -1135,6 +1141,7 @@ public final class CityC8ArrangementEngine {
 
         private SolveContext(
                 CityC6Stages.BuildAreaSummary area,
+                CityC8Stages.AreaGeometry geometry,
                 CityC7Stages.GroupArrangementDecision arrangement,
                 Map<String, TemplateMeta> metaById,
                 int spacing,
@@ -1144,6 +1151,7 @@ public final class CityC8ArrangementEngine {
                 CityC2ScanBinaryIO.C2ScanData c2ScanData
         ) {
             this.area = area;
+            this.geometry = geometry;
             this.arrangement = arrangement;
             this.metaById = metaById;
             this.spacing = spacing;

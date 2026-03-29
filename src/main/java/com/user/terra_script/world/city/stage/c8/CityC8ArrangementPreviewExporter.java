@@ -27,11 +27,12 @@ public final class CityC8ArrangementPreviewExporter {
             CityC2ScanBinaryIO.C2ScanData c2ScanData,
             CityC6Stages.C6Summary c6Summary,
             CityC6Stages.C6Layout c6Layout,
+            Map<Long, Integer> c6Index,
             CityC8Stages.C8Plan plan
     ) throws Exception {
         JsonObject out = new JsonObject();
         if (server == null || cityId == null || cityId.isBlank() || groupId == null || groupId.isBlank()
-                || heightData == null || c6Summary == null || c6Layout == null || plan == null) {
+                || heightData == null || c6Summary == null || c6Layout == null || c6Index == null || c6Index.isEmpty() || plan == null) {
             out.addProperty("generated", false);
             out.addProperty("reason", "invalid_input");
             return out;
@@ -40,20 +41,24 @@ public final class CityC8ArrangementPreviewExporter {
         CityC6Stages.BuildAreaSummary area = findArea(c6Summary, groupId);
         CityC6Stages.LayoutPlan layoutPlan = CityC6Stages.findPlanByGroup(c6Layout, groupId);
         CityC8Stages.FoundationItem foundation = findFoundation(plan, groupId);
-        if (area == null || layoutPlan == null || foundation == null) {
+        CityC8Stages.AreaGeometry geometry = area != null
+                ? CityC8Stages.buildAreaGeometry(area, CityC8Stages.collectAreaBlockKeys(c6Index, area.build_area_numeric_id))
+                : null;
+        if (area == null || layoutPlan == null || foundation == null || geometry == null || !geometry.valid) {
             out.addProperty("generated", false);
             out.addProperty("reason", "group_not_found");
             return out;
         }
 
-        BufferedImage image = CityStagePreviewUtil.renderBaseTerrain(heightData, c2ScanData, area);
+        CityStagePreviewUtil.AreaPreviewContext previewContext = CityStagePreviewUtil.fromGeometry(geometry);
+        BufferedImage image = CityStagePreviewUtil.renderBaseTerrain(heightData, c2ScanData, previewContext);
         Graphics2D g = image.createGraphics();
         try {
             CityStagePreviewUtil.configure(g);
-            CityStagePreviewUtil.drawMaskBounds(g, area);
-            CityStagePreviewUtil.drawPrimaryModules(g, area, layoutPlan);
-            CityStagePreviewUtil.drawPlacementNodes(g, area, buildPlacementVisuals(foundation));
-            CityStagePreviewUtil.applyGridOverlay(image, area, groupId + " / " + (foundation.arrangement_type != null ? foundation.arrangement_type : "arrangement"));
+            CityStagePreviewUtil.drawAreaShape(g, previewContext);
+            CityStagePreviewUtil.drawPrimaryModules(g, previewContext, layoutPlan);
+            CityStagePreviewUtil.drawPlacementNodes(g, previewContext, buildPlacementVisuals(foundation));
+            CityStagePreviewUtil.applyGridOverlay(image, previewContext, groupId + " / " + (foundation.arrangement_type != null ? foundation.arrangement_type : "arrangement"));
         } finally {
             g.dispose();
         }
@@ -64,6 +69,7 @@ public final class CityC8ArrangementPreviewExporter {
         legend.addProperty("arrangement_type", foundation.arrangement_type);
         legend.addProperty("preview_type", "c8_arrangement");
         legend.addProperty("image", "c8_arrangement_preview.png");
+        legend.addProperty("geometry_semantics", "polygon_blocks");
         legend.addProperty("placement_count", foundation.placements != null ? foundation.placements.size() : 0);
         legend.addProperty("has_footprints", foundation.placements != null && foundation.placements.stream().anyMatch(n ->
                 n != null && n.footprint_min_x != null && n.footprint_min_z != null && n.footprint_max_x != null && n.footprint_max_z != null));

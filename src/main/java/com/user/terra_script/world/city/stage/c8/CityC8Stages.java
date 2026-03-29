@@ -15,9 +15,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public final class CityC8Stages {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
@@ -30,7 +33,7 @@ public final class CityC8Stages {
         public String step = "C8";
         public boolean ok = true;
         public String city_id;
-        public int version = 3;
+        public int version = 4;
         public long generated_at_epoch_ms;
         public List<FoundationItem> foundations = new ArrayList<>();
     }
@@ -58,7 +61,7 @@ public final class CityC8Stages {
         public int vertical_clearance;
         public boolean vertical_capable;
         public String vertical_mode_hint = "none";
-        public TerrainImpactBBox terrain_impact_bbox = new TerrainImpactBBox();
+        public TerrainImpactExtent terrain_impact_extent = new TerrainImpactExtent();
         public List<SupportAction> supports = new ArrayList<>();
         public TerrainMetrics terrain_metrics = new TerrainMetrics();
         public List<PlacementNode> placements = new ArrayList<>();
@@ -100,11 +103,33 @@ public final class CityC8Stages {
         public Integer footprint_max_z;
     }
 
-    public static class TerrainImpactBBox {
+    public static class TerrainImpactExtent {
         public int minX;
         public int minZ;
         public int maxX;
         public int maxZ;
+    }
+
+    public static class AreaGeometry {
+        public String build_area_id;
+        public int build_area_numeric_id;
+        public int min_x;
+        public int min_z;
+        public int max_x;
+        public int max_z;
+        public double centroid_x;
+        public double centroid_z;
+        public boolean valid;
+        public List<Long> block_keys = new ArrayList<>();
+        public transient Set<Long> block_set = new LinkedHashSet<>();
+
+        public int spanX() {
+            return valid ? Math.max(1, max_x - min_x + 1) : 1;
+        }
+
+        public int spanZ() {
+            return valid ? Math.max(1, max_z - min_z + 1) : 1;
+        }
     }
 
     public static class SupportAction {
@@ -181,6 +206,7 @@ public final class CityC8Stages {
             boolean consumable = layoutPlan.validated || layoutPlan.decision_mode == null || layoutPlan.decision_mode.isBlank();
             if (!consumable) continue;
             List<Long> blockKeys = blocksByArea.getOrDefault(area.build_area_numeric_id, Collections.emptyList());
+            AreaGeometry geometry = buildAreaGeometry(area, blockKeys);
             CityC7Stages.GroupArrangementDecision arrangement = arrangements.getOrDefault(area.build_area_id, arrangements.get(area.group_id));
             CityC7Stages.TemplateSelectionItem selection = selections.getOrDefault(area.build_area_id, selections.get(area.group_id));
             System.out.println("[C8] area=" + safe(area.build_area_id)
@@ -188,7 +214,7 @@ public final class CityC8Stages {
                     + " layout_primary_count=" + (layoutPlan.primary_modules != null ? layoutPlan.primary_modules.size() : 0)
                     + " arrangement_seed_template=" + safe(arrangement != null && arrangement.seed != null ? arrangement.seed.start_template_id : "")
                     + " selection_template=" + safe(selection != null ? selection.selected_template : ""));
-            FoundationItem item = buildFoundationItem(area, layoutPlan, arrangement, selection, blockKeys, heightData, c2ScanData);
+            FoundationItem item = buildFoundationItem(area, geometry, layoutPlan, arrangement, selection, heightData, c2ScanData);
             if (item != null) plan.foundations.add(item);
         }
         return plan;
@@ -216,10 +242,10 @@ public final class CityC8Stages {
 
     private static FoundationItem buildFoundationItem(
             CityC6Stages.BuildAreaSummary area,
+            AreaGeometry geometry,
             CityC6Stages.LayoutPlan layoutPlan,
             CityC7Stages.GroupArrangementDecision arrangement,
             CityC7Stages.TemplateSelectionItem selection,
-            List<Long> blockKeys,
             CityStage1BinaryIO.HeightData heightData,
             CityC2ScanBinaryIO.C2ScanData c2ScanData
     ) {
@@ -233,7 +259,7 @@ public final class CityC8Stages {
         if (arrangement != null) {
             item.arrangement_type = arrangement.arrangement_type;
             if (arrangement.arrangement_params != null) item.arrangement_params.putAll(arrangement.arrangement_params);
-            CityC8ArrangementEngine.SolveResult solveResult = CityC8ArrangementEngine.solve(area, layoutPlan, arrangement, heightData, c2ScanData);
+            CityC8ArrangementEngine.SolveResult solveResult = CityC8ArrangementEngine.solve(area, geometry, layoutPlan, arrangement, heightData, c2ScanData);
             item.placements = solveResult.placements != null ? solveResult.placements : new ArrayList<>();
             item.arrangement_success = solveResult.success;
             item.arrangement_errors = solveResult.errors != null ? new ArrayList<>(solveResult.errors) : new ArrayList<>();
@@ -263,15 +289,15 @@ public final class CityC8Stages {
                 + " placement_count=" + (item.placements != null ? item.placements.size() : 0)
                 + " warnings=" + (item.arrangement_warnings != null ? item.arrangement_warnings.size() : 0));
 
-        TerrainStats terrain = analyzeTerrain(area, blockKeys, heightData, c2ScanData);
+        TerrainStats terrain = analyzeTerrain(area, geometry, heightData, c2ScanData);
         item.foundation_type = terrain.foundation_type;
         item.strategy = terrain.strategy;
         item.base_y = terrain.baseY;
         item.delta_height = terrain.relief;
-        item.terrain_impact_bbox.minX = terrain.minX - 1;
-        item.terrain_impact_bbox.minZ = terrain.minZ - 1;
-        item.terrain_impact_bbox.maxX = terrain.maxX + 1;
-        item.terrain_impact_bbox.maxZ = terrain.maxZ + 1;
+        item.terrain_impact_extent.minX = terrain.minX - 1;
+        item.terrain_impact_extent.minZ = terrain.minZ - 1;
+        item.terrain_impact_extent.maxX = terrain.maxX + 1;
+        item.terrain_impact_extent.maxZ = terrain.maxZ + 1;
         item.terrain_metrics.height_min = terrain.minH;
         item.terrain_metrics.height_max = terrain.maxH;
         item.terrain_metrics.height_avg = round3(terrain.avgH);
@@ -297,11 +323,12 @@ public final class CityC8Stages {
 
     private static TerrainStats analyzeTerrain(
             CityC6Stages.BuildAreaSummary area,
-            List<Long> blockKeys,
+            AreaGeometry geometry,
             CityStage1BinaryIO.HeightData heightData,
             CityC2ScanBinaryIO.C2ScanData c2ScanData
     ) {
         TerrainStats stats = new TerrainStats();
+        List<Long> blockKeys = geometry != null && geometry.block_keys != null ? geometry.block_keys : Collections.emptyList();
         List<Integer> heights = new ArrayList<>(Math.max(16, blockKeys.size()));
         long sum = 0L;
         stats.minH = Integer.MAX_VALUE;
@@ -329,10 +356,12 @@ public final class CityC8Stages {
         if (heights.isEmpty()) {
             stats.minH = safeRound(area.avg_height);
             stats.maxH = stats.minH;
-            stats.minX = area.bbox.minX;
-            stats.minZ = area.bbox.minZ;
-            stats.maxX = area.bbox.maxX;
-            stats.maxZ = area.bbox.maxZ;
+            int fallbackX = safeRound(area.centroid.x);
+            int fallbackZ = safeRound(area.centroid.z);
+            stats.minX = fallbackX;
+            stats.minZ = fallbackZ;
+            stats.maxX = fallbackX;
+            stats.maxZ = fallbackZ;
             heights.add(stats.minH);
             sum = stats.minH;
         }
@@ -487,6 +516,75 @@ public final class CityC8Stages {
 
     private static long packBlock(int x, int z) {
         return (((long) x) << 32) ^ (z & 0xffffffffL);
+    }
+
+    public static List<Long> collectAreaBlockKeys(Map<Long, Integer> indexByBlock, int buildAreaNumericId) {
+        if (indexByBlock == null || indexByBlock.isEmpty()) return Collections.emptyList();
+        List<Long> out = new ArrayList<>();
+        for (Map.Entry<Long, Integer> entry : indexByBlock.entrySet()) {
+            if (entry == null || entry.getKey() == null || entry.getValue() == null) continue;
+            if (entry.getValue() == buildAreaNumericId) out.add(entry.getKey());
+        }
+        return out;
+    }
+
+    public static AreaGeometry buildAreaGeometry(CityC6Stages.BuildAreaSummary area, List<Long> blockKeys) {
+        AreaGeometry geometry = new AreaGeometry();
+        if (area != null) {
+            geometry.build_area_id = area.build_area_id;
+            geometry.build_area_numeric_id = area.build_area_numeric_id;
+            geometry.centroid_x = area.centroid != null ? area.centroid.x : 0.0;
+            geometry.centroid_z = area.centroid != null ? area.centroid.z : 0.0;
+        }
+        if (blockKeys == null || blockKeys.isEmpty()) {
+            geometry.min_x = safeRound(geometry.centroid_x);
+            geometry.min_z = safeRound(geometry.centroid_z);
+            geometry.max_x = geometry.min_x;
+            geometry.max_z = geometry.min_z;
+            geometry.valid = false;
+            return geometry;
+        }
+        geometry.block_keys = new ArrayList<>(blockKeys);
+        geometry.block_set = new LinkedHashSet<>(blockKeys);
+        geometry.min_x = Integer.MAX_VALUE;
+        geometry.min_z = Integer.MAX_VALUE;
+        geometry.max_x = Integer.MIN_VALUE;
+        geometry.max_z = Integer.MIN_VALUE;
+        long sumX = 0L;
+        long sumZ = 0L;
+        Set<Long> seen = new HashSet<>();
+        for (Long key : blockKeys) {
+            if (key == null || !seen.add(key)) continue;
+            int x = unpackX(key);
+            int z = unpackZ(key);
+            geometry.min_x = Math.min(geometry.min_x, x);
+            geometry.min_z = Math.min(geometry.min_z, z);
+            geometry.max_x = Math.max(geometry.max_x, x);
+            geometry.max_z = Math.max(geometry.max_z, z);
+            sumX += x;
+            sumZ += z;
+        }
+        int count = Math.max(1, seen.size());
+        geometry.centroid_x = sumX / (double) count;
+        geometry.centroid_z = sumZ / (double) count;
+        geometry.valid = !geometry.block_set.isEmpty();
+        return geometry;
+    }
+
+    public static boolean containsAreaBlock(AreaGeometry geometry, int x, int z) {
+        return geometry != null && geometry.block_set != null && geometry.block_set.contains(packBlock(x, z));
+    }
+
+    public static boolean containsFootprint(AreaGeometry geometry, Integer minX, Integer minZ, Integer maxX, Integer maxZ) {
+        if (geometry == null || !geometry.valid || geometry.block_set == null || minX == null || minZ == null || maxX == null || maxZ == null) {
+            return false;
+        }
+        for (int x = minX; x <= maxX; x++) {
+            for (int z = minZ; z <= maxZ; z++) {
+                if (!containsAreaBlock(geometry, x, z)) return false;
+            }
+        }
+        return true;
     }
 
     private static int safeRound(double v) {
