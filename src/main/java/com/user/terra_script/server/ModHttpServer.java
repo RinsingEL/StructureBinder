@@ -56,7 +56,7 @@ public class ModHttpServer {
             TerritoryController territoryController = new TerritoryController();
             WorkflowController workflowController = new WorkflowController(mcServer);
             CityController cityController = new CityController(mcServer);
-            RuntimeDebugController runtimeDebugController = new RuntimeDebugController();
+            RuntimeDebugController runtimeDebugController = new RuntimeDebugController(mcServer);
 
             server.createContext("/continents", worldController::handleContinents);
             server.createContext("/world_atlas", worldController::handleWorldAtlas);
@@ -93,6 +93,7 @@ public class ModHttpServer {
             server.createContext("/workflow/status", workflowController::handleWorkflowStatus);
             server.createContext("/task_status", workflowController::handleTaskStatus);
             server.createContext("/runtime_debug_logs", runtimeDebugController::handleRuntimeDebugLogs);
+            server.createContext("/runtime_debug/task_timeout_test", runtimeDebugController::handleRuntimeTaskTimeoutTest);
 
             server.createContext("/city_heightmap", cityController::handleCityHeightmap);
             server.createContext("/city_c1_generate", cityController::handleCreateCity);

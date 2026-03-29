@@ -1,6 +1,8 @@
 import { MC_API_URL, TIMEOUTS, getJson, postJson } from "../shared/http.js";
+import { invokeMcTask } from "../shared/task/task-runner.js";
 import { ToolHandler, textResult } from "../shared/types.js";
 import { buildCreateCityPayload } from "../shared/utils.js";
+import { cityTaskPolicies } from "./policy.js";
 
 export const cityHandlers: Record<string, ToolHandler> = {
   async list_available_structures(args) {
@@ -15,25 +17,23 @@ export const cityHandlers: Record<string, ToolHandler> = {
 
   async establish_city(args) {
     const payload = buildCreateCityPayload(args);
-    const res = await postJson(`${MC_API_URL}/create_city`, payload, TIMEOUTS.workflow);
+    const res = await postJson(`${MC_API_URL}/create_city`, payload, cityTaskPolicies.city_c1_generate.requestTimeoutMs);
     return textResult(`City established! ID: ${res.data.city_id}, Size: ${res.data.actual_size} chunks.`);
   },
 
   async city_c1_generate(args) {
-    const res = await postJson(`${MC_API_URL}/city_c1_generate`, buildCreateCityPayload(args), TIMEOUTS.workflow);
-    return textResult(JSON.stringify(res.data, null, 2));
+    return invokeMcTask({ url: `${MC_API_URL}/city_c1_generate`, payload: buildCreateCityPayload(args), policy: cityTaskPolicies.city_c1_generate });
   },
 
   async city_c2_generate(args) {
     const payload: Record<string, any> = { city_id: args.city_id };
     if (args.scan_step !== undefined) payload.scan_step = Number(args.scan_step);
     if (args.scan_padding_blocks !== undefined) payload.scan_padding_blocks = Number(args.scan_padding_blocks);
-    const res = await postJson(`${MC_API_URL}/city_c2_generate`, payload, TIMEOUTS.workflow);
-    return textResult(JSON.stringify(res.data, null, 2));
+    return invokeMcTask({ url: `${MC_API_URL}/city_c2_generate`, payload, policy: cityTaskPolicies.city_c2_generate });
   },
 
   async city_c2_data(args) { return postCityJson("/city_c2_data", { city_id: args.city_id }); },
-  async city_c3_generate(args) { return postCityJson("/city_c3_generate", { city_id: args.city_id }, TIMEOUTS.workflow); },
+  async city_c3_generate(args) { return invokeMcTask({ url: `${MC_API_URL}/city_c3_generate`, payload: { city_id: args.city_id }, policy: cityTaskPolicies.city_c3_generate }); },
   async city_c3_data(args) { return postCityJson("/city_c3_data", { city_id: args.city_id }); },
 
   async place_structure(args) {
@@ -57,19 +57,19 @@ export const cityHandlers: Record<string, ToolHandler> = {
     return postCityJson("/city_c4_whitelist_generate", payload);
   },
   async city_c4_whitelist_data(args) { return postCityJson("/city_c4_whitelist_data", { city_id: args.city_id }); },
-  async city_c4_generate(args) { return postCityJson("/city_c4_generate", { city_id: args.city_id }, TIMEOUTS.workflow); },
+  async city_c4_generate(args) { return invokeMcTask({ url: `${MC_API_URL}/city_c4_generate`, payload: { city_id: args.city_id }, policy: cityTaskPolicies.city_c4_generate }); },
   async city_c4_data(args) { return postCityJson("/city_c4_data", { city_id: args.city_id }); },
   async city_c5_generate(args) {
     const payload: Record<string, any> = { city_id: args.city_id };
     if (args.cross_layer_merge !== undefined) payload.cross_layer_merge = Boolean(args.cross_layer_merge);
-    return postCityJson("/city_c5_generate", payload, TIMEOUTS.workflow);
+    return invokeMcTask({ url: `${MC_API_URL}/city_c5_generate`, payload, policy: cityTaskPolicies.city_c5_generate });
   },
   async city_c5_data(args) { return postCityJson("/city_c5_data", { city_id: args.city_id }); },
   async city_c6_generate(args) {
     const payload: Record<string, any> = { city_id: args.city_id };
     if (args.group_id !== undefined) payload.group_id = String(args.group_id);
     if (args.fill_style !== undefined) payload.fill_style = String(args.fill_style);
-    return postCityJson("/city_c6_generate", payload, TIMEOUTS.workflow);
+    return invokeMcTask({ url: `${MC_API_URL}/city_c6_generate`, payload, policy: cityTaskPolicies.city_c6_generate });
   },
   async city_c6_data(args) {
     const payload: Record<string, any> = { city_id: args.city_id };
@@ -79,7 +79,7 @@ export const cityHandlers: Record<string, ToolHandler> = {
   async city_c7_generate(args) {
     const payload: Record<string, any> = { city_id: args.city_id };
     if (args.group_id !== undefined) payload.group_id = String(args.group_id);
-    return postCityJson("/city_c7_generate", payload, TIMEOUTS.workflow);
+    return invokeMcTask({ url: `${MC_API_URL}/city_c7_generate`, payload, policy: cityTaskPolicies.city_c7_generate });
   },
   async city_c7_data(args) {
     const payload: Record<string, any> = { city_id: args.city_id };
@@ -89,7 +89,7 @@ export const cityHandlers: Record<string, ToolHandler> = {
   async city_c8_generate(args) {
     const payload: Record<string, any> = { city_id: args.city_id };
     if (args.group_id !== undefined) payload.group_id = String(args.group_id);
-    return postCityJson("/city_c8_generate", payload, TIMEOUTS.workflow);
+    return invokeMcTask({ url: `${MC_API_URL}/city_c8_generate`, payload, policy: cityTaskPolicies.city_c8_generate });
   },
   async city_c8_data(args) {
     const payload: Record<string, any> = { city_id: args.city_id };
@@ -101,7 +101,7 @@ export const cityHandlers: Record<string, ToolHandler> = {
     if (args.group_id !== undefined) payload.group_id = String(args.group_id);
     if (args.apply_blocks !== undefined) payload.apply_blocks = Boolean(args.apply_blocks);
     if (args.max_blocks !== undefined) payload.max_blocks = Number(args.max_blocks);
-    return postCityJson("/city_c9_generate", payload, TIMEOUTS.workflow);
+    return invokeMcTask({ url: `${MC_API_URL}/city_c9_generate`, payload, policy: cityTaskPolicies.city_c9_generate });
   },
   async city_c9_data(args) {
     const payload: Record<string, any> = { city_id: args.city_id };
@@ -115,7 +115,7 @@ export const cityHandlers: Record<string, ToolHandler> = {
     if (args.square_only !== undefined) payload.square_only = Boolean(args.square_only);
     if (args.square_size !== undefined) payload.square_size = Number(args.square_size);
     if (args.square_count !== undefined) payload.square_count = Number(args.square_count);
-    return postCityJson("/city_c6_pave_stone", payload, TIMEOUTS.workflow);
+    return invokeMcTask({ url: `${MC_API_URL}/city_c6_pave_stone`, payload, policy: cityTaskPolicies.city_c6_pave_stone });
   },
 };
 

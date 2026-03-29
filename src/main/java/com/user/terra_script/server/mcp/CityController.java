@@ -37,6 +37,9 @@ import com.user.terra_script.world.city.stage.c9.CityC9BuildQueue;
 import com.user.terra_script.world.city.stage.c9.CityC9PlacementPreviewExporter;
 import com.user.terra_script.domain.world.scan.ScanPixel;
 import com.user.terra_script.domain.world.scan.service.SatelliteScanner;
+import com.user.terra_script.runtime.context.RuntimeLogContext;
+import com.user.terra_script.runtime.log.RuntimeLogEvent;
+import com.user.terra_script.runtime.log.RuntimeLogger;
 import com.user.terra_script.world.city.CityBuildQueueExecutor;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
@@ -167,7 +170,26 @@ public class CityController {
                 HttpUtil.sendResponse(exchange, 400, "{\"error\": \"Missing city_id\"}");
                 return;
             }
+            String taskId = "city_c2_" + cityId;
+            RuntimeLogger logger = RuntimeLogger.forServer(
+                    mcServer,
+                    RuntimeLogContext.builder()
+                            .domain("city")
+                            .scope("task")
+                            .taskId(taskId)
+                            .stageId("C2")
+                            .cityId(cityId)
+                            .build()
+            );
+            JsonObject requestDetails = new JsonObject();
+            requestDetails.addProperty("city_id", cityId);
+            if (json.has("scan_step")) requestDetails.addProperty("scan_step", json.get("scan_step").getAsInt());
+            if (json.has("scan_padding_blocks")) requestDetails.addProperty("scan_padding_blocks", json.get("scan_padding_blocks").getAsInt());
+            logger.info(RuntimeLogEvent.TASK_STARTED, "Starting city C2 generation.", requestDetails);
             if (mcServer == null || mcServer.overworld() == null) {
+                JsonObject errorDetails = new JsonObject();
+                errorDetails.addProperty("city_id", cityId);
+                logger.error(RuntimeLogEvent.TASK_FAILED, "Minecraft server/overworld unavailable.", errorDetails);
                 HttpUtil.sendResponse(exchange, 500, "{\"error\": \"Minecraft server/overworld unavailable\"}");
                 return;
             }
@@ -230,18 +252,41 @@ public class CityController {
                 res.addProperty("scan_queue_wait_ms", waitedMs);
                 res.addProperty("scan_cache_hit", resolved.cacheHit);
                 res.addProperty("scan_cache_source", resolved.cacheSource);
+                res.addProperty("task_id", taskId);
+                res.addProperty("state", "SUCCEEDED");
                 res.add("satellite_preview", preview);
                 res.addProperty("ai_should_pause", true);
                 res.addProperty("next_action", "STOP_CURRENT_STEP_AND_REVIEW_C2_SATELLITE_PREVIEW");
                 res.addProperty("message", "C2 completed and city-local satellite preview is generated. Pause current step, save, and review preview before continuing.");
+                logger.info(RuntimeLogEvent.TASK_COMPLETED, "City C2 generation completed.", res);
                 HttpUtil.sendResponse(exchange, 200, gson.toJson(res));
             } finally {
                 C2_ACTIVE_CITY.set(null);
                 C2_SCAN_LOCK.unlock();
             }
         } catch (IllegalArgumentException | IllegalStateException e) {
+            JsonObject errorDetails = new JsonObject();
+            errorDetails.addProperty("error", e.getMessage() != null ? e.getMessage() : "Invalid city request");
+            RuntimeLogger.forServer(
+                    mcServer,
+                    RuntimeLogContext.builder()
+                            .domain("city")
+                            .scope("task")
+                            .stageId("C2")
+                            .build()
+            ).error(RuntimeLogEvent.TASK_FAILED, "City C2 generation failed.", errorDetails);
             HttpUtil.sendResponse(exchange, 400, "{\"error\": \"" + escapeJson(e.getMessage() != null ? e.getMessage() : "Invalid city request") + "\"}");
         } catch (Exception e) {
+            JsonObject errorDetails = new JsonObject();
+            errorDetails.addProperty("error", e.getMessage() != null ? e.getMessage() : "unknown");
+            RuntimeLogger.forServer(
+                    mcServer,
+                    RuntimeLogContext.builder()
+                            .domain("city")
+                            .scope("task")
+                            .stageId("C2")
+                            .build()
+            ).error(RuntimeLogEvent.TASK_FAILED, "City C2 generation crashed.", errorDetails);
             HttpUtil.handleError(exchange, e);
         }
     }
@@ -532,12 +577,16 @@ public class CityController {
             res.addProperty("status", "ok");
             res.addProperty("step", "C5");
             res.addProperty("city_id", cityId);
+            res.addProperty("review_required", true);
+            res.addProperty("next_action", "REVIEW_C5_PREVIEW_AND_MERGE_RESULT");
             res.addProperty("group_count", groups.groups != null ? groups.groups.size() : 0);
             res.addProperty("cross_layer_merge", groups.policy != null && groups.policy.cross_layer_merge);
             res.add("policy", gson.toJsonTree(groups.policy));
             res.addProperty("merge_log_count", groups.merge_log != null ? groups.merge_log.size() : 0);
             res.addProperty("file", cityDir.resolve(CitySemanticStages.C5_FILE).toString());
             res.addProperty("merge_log_file", cityDir.resolve(CitySemanticStages.C5_MERGE_LOG_FILE).toString());
+            res.addProperty("c5_groups_file", cityDir.resolve(CitySemanticStages.C5_FILE).toString());
+            res.addProperty("c5_merge_log_file", cityDir.resolve(CitySemanticStages.C5_MERGE_LOG_FILE).toString());
             res.add("module_preview", modulePreview);
             HttpUtil.sendResponse(exchange, 200, gson.toJson(res));
         } catch (Exception e) {
@@ -561,7 +610,41 @@ public class CityController {
                 HttpUtil.sendResponse(exchange, 404, "{\"error\": \"C5 data not found for: " + cityId + "\"}");
                 return;
             }
-            HttpUtil.sendResponse(exchange, 200, gson.toJson(groups));
+            CityC2ScanBinaryIO.C2ScanData scanData = CityC2ScanBinaryIO.load(cityId);
+            CityC3OwnershipIO.OwnershipData ownership = CityC3OwnershipIO.load(cityDir);
+            CityInstance city = CityManager.get().getCity(cityId);
+            JsonObject modulePreview = null;
+            if (mcServer != null && city != null && scanData != null && ownership != null) {
+                modulePreview = CityC5ModulePreviewExporter.export(mcServer, cityId, city, groups, scanData, ownership);
+            }
+
+            JsonObject res = new JsonObject();
+            res.addProperty("status", "ok");
+            res.addProperty("step", "C5");
+            res.addProperty("city_id", cityId);
+            res.addProperty("review_required", true);
+            res.addProperty("next_action", "REVIEW_C5_PREVIEW_AND_MERGE_RESULT");
+            res.addProperty("group_count", groups.groups != null ? groups.groups.size() : 0);
+            res.addProperty("merge_log_count", groups.merge_log != null ? groups.merge_log.size() : 0);
+            res.add("policy", gson.toJsonTree(groups.policy));
+            res.add("groups", gson.toJsonTree(groups.groups));
+            res.add("merge_stats", gson.toJsonTree(groups.merge_stats));
+            res.add("quality", gson.toJsonTree(groups.quality));
+            res.add("merge_log", gson.toJsonTree(groups.merge_log));
+            res.addProperty("c5_groups_file", cityDir.resolve(CitySemanticStages.C5_FILE).toString());
+            res.addProperty("c5_merge_log_file", cityDir.resolve(CitySemanticStages.C5_MERGE_LOG_FILE).toString());
+            JsonObject mergeSummary = new JsonObject();
+            mergeSummary.addProperty("group_count", groups.groups != null ? groups.groups.size() : 0);
+            mergeSummary.addProperty("merge_log_count", groups.merge_log != null ? groups.merge_log.size() : 0);
+            mergeSummary.addProperty("fragment_reduction_ratio", groups.merge_stats != null ? groups.merge_stats.fragment_reduction_ratio : 0.0);
+            mergeSummary.addProperty("disconnected_groups", groups.quality != null ? groups.quality.disconnected_groups : 0);
+            mergeSummary.addProperty("low_compactness_groups", groups.quality != null ? groups.quality.low_compactness_groups : 0);
+            res.add("merge_log_summary", mergeSummary);
+            if (modulePreview != null) {
+                res.add("module_preview", modulePreview);
+                res.add("preview_references", modulePreview.deepCopy());
+            }
+            HttpUtil.sendResponse(exchange, 200, gson.toJson(res));
         } catch (Exception e) {
             HttpUtil.handleError(exchange, e);
         }

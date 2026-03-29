@@ -2,14 +2,13 @@ package com.user.terra_script.domain.territory.stage;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.user.terra_script.core.stage.StageContext;
+import com.user.terra_script.runtime.context.RuntimeLogContext;
+import com.user.terra_script.runtime.log.RuntimeLogEvent;
+import com.user.terra_script.runtime.log.RuntimeLogger;
 
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 
 public final class TStageTraceLogger {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
@@ -28,30 +27,19 @@ public final class TStageTraceLogger {
         append(ctx, continentPath(ctx, stageId, continentId), event, details);
     }
 
-    private static void append(StageContext ctx, Path path, String event, JsonObject details) {
+    private static void append(StageContext ctx, java.nio.file.Path path, String event, JsonObject details) {
         if (ctx == null || ctx.server == null || path == null) return;
-        try {
-            Files.createDirectories(path.getParent());
-            JsonObject root = new JsonObject();
-            root.addProperty("ts_epoch_ms", System.currentTimeMillis());
-            root.addProperty("stage", stageIdFromPath(path));
-            root.addProperty("event", event == null ? "unknown" : event);
-            if (details != null) {
-                for (var entry : details.entrySet()) {
-                    JsonElement value = entry.getValue();
-                    root.add(entry.getKey(), value == null ? null : value.deepCopy());
-                }
-            }
-            Files.writeString(
-                    path,
-                    GSON.toJson(root) + System.lineSeparator(),
-                    StandardCharsets.UTF_8,
-                    StandardOpenOption.CREATE,
-                    StandardOpenOption.WRITE,
-                    StandardOpenOption.APPEND
-            );
-        } catch (Exception ignored) {
-        }
+        JsonObject payload = details == null ? new JsonObject() : details.deepCopy();
+        payload.addProperty("legacy_stage_trace_path", path.toString());
+        payload.addProperty("legacy_event", event == null ? "unknown" : event);
+        RuntimeLogger.forServer(
+                ctx.server,
+                RuntimeLogContext.builder()
+                        .domain("territory")
+                        .scope("stage")
+                        .stageId(stageIdFromPath(path))
+                        .build()
+        ).info(RuntimeLogEvent.STAGE_COMPLETED, "Territory stage trace event recorded.", payload);
     }
 
     private static Path stagePath(StageContext ctx, String stageId) {

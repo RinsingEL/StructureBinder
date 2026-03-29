@@ -1,8 +1,10 @@
 import * as fs from "fs";
 import * as path from "path";
 import { MC_API_URL, TIMEOUTS, getJson, postJson } from "../shared/http.js";
+import { invokeMcTask } from "../shared/task/task-runner.js";
 import { ToolHandler, textResult } from "../shared/types.js";
 import { clampNumber, toFiniteNumber } from "../shared/utils.js";
+import { territoryTaskPolicies } from "./policy.js";
 
 const LORE_FILE = path.join(process.cwd(), "world_lore.json");
 
@@ -139,8 +141,7 @@ export const territoryHandlers: Record<string, ToolHandler> = {
   },
 
   async scan_local_candidates(args) {
-    const res = await postJson(`${MC_API_URL}/query_region`, args, TIMEOUTS.export);
-    return textResult(JSON.stringify(res.data, null, 2));
+    return invokeMcTask({ url: `${MC_API_URL}/query_region`, payload: args, policy: territoryTaskPolicies.scan_local_candidates });
   },
 
   async query_region_pick(args) {
@@ -151,8 +152,7 @@ export const territoryHandlers: Record<string, ToolHandler> = {
   async t1_candidates_for_continent(args) {
     const continentId = Number(args.continent_id || 0);
     if (!Number.isFinite(continentId) || continentId <= 0) throw new Error("continent_id is required");
-    const res = await postJson(`${MC_API_URL}/t1_candidates_for_continent`, { continent_id: continentId }, TIMEOUTS.export);
-    return textResult(JSON.stringify(res.data, null, 2));
+    return invokeMcTask({ url: `${MC_API_URL}/t1_candidates_for_continent`, payload: { continent_id: continentId }, policy: territoryTaskPolicies.t1_candidates_for_continent });
   },
 
   async t1_select_cluster(args) {
@@ -190,8 +190,7 @@ export const territoryHandlers: Record<string, ToolHandler> = {
   async t3_run_continent(args) {
     const continentId = Number(args.continent_id || 0);
     if (!Number.isFinite(continentId) || continentId <= 0) throw new Error("continent_id is required");
-    const res = await postJson(`${MC_API_URL}/t3_run_continent`, { continent_id: continentId }, TIMEOUTS.export);
-    return textResult(JSON.stringify(res.data, null, 2));
+    return invokeMcTask({ url: `${MC_API_URL}/t3_run_continent`, payload: { continent_id: continentId }, policy: territoryTaskPolicies.t3_run_continent });
   },
 
   async establish_territory(args) {

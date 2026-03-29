@@ -4,7 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.sun.net.httpserver.HttpExchange;
-import com.user.terra_script.domain.world.scan.service.SatelliteScanner;
+import com.user.terra_script.server.mcp.facade.WorldMcpFacade;
 import com.user.terra_script.server.http.HttpUtil;
 import net.minecraft.server.MinecraftServer;
 
@@ -12,10 +12,10 @@ import java.io.IOException;
 
 public class WorldAutomationController {
     private static final Gson GSON = new Gson();
-    private final MinecraftServer server;
+    private final WorldMcpFacade facade;
 
     public WorldAutomationController(MinecraftServer server) {
-        this.server = server;
+        this.facade = new WorldMcpFacade(server);
     }
 
     public void handleWorldScanStart(HttpExchange exchange) throws IOException {
@@ -24,7 +24,7 @@ public class WorldAutomationController {
             JsonObject req = parseBody(exchange);
             int chunkRadius = req.has("chunk_radius") ? req.get("chunk_radius").getAsInt() : 500;
             int targetResolution = req.has("target_resolution") ? req.get("target_resolution").getAsInt() : 1024;
-            JsonObject res = WorldAutomationService.startWorldScan(server, chunkRadius, targetResolution);
+            JsonObject res = facade.startWorldScan(chunkRadius, targetResolution);
             HttpUtil.sendResponse(exchange, 200, GSON.toJson(res));
         } catch (IllegalArgumentException | IllegalStateException e) {
             HttpUtil.sendResponse(exchange, 400, "{\"error\": \"" + escape(e.getMessage()) + "\"}");
@@ -36,14 +36,7 @@ public class WorldAutomationController {
     public void handleWorldScanStatus(HttpExchange exchange) throws IOException {
         if (!HttpUtil.requireMethod(exchange, "GET")) return;
         try {
-            SatelliteScanner.ScanProgressSnapshot snapshot = SatelliteScanner.getProgressSnapshot();
-            JsonObject res = new JsonObject();
-            res.addProperty("in_progress", snapshot.inProgress());
-            res.addProperty("label", snapshot.label());
-            res.addProperty("done", snapshot.done());
-            res.addProperty("total", snapshot.total());
-            res.addProperty("percent", snapshot.percent());
-            res.addProperty("elapsed_ms", snapshot.elapsedMs());
+            JsonObject res = facade.worldScanStatus();
             HttpUtil.sendResponse(exchange, 200, GSON.toJson(res));
         } catch (Exception e) {
             HttpUtil.handleError(exchange, e);
@@ -52,8 +45,7 @@ public class WorldAutomationController {
 
     public void handleWorldScanCancel(HttpExchange exchange) throws IOException {
         if (!HttpUtil.requireMethod(exchange, "POST")) return;
-        SatelliteScanner.stopScanning();
-        HttpUtil.sendResponse(exchange, 200, "{\"ok\":true,\"message\":\"cancel_requested\"}");
+        HttpUtil.sendResponse(exchange, 200, GSON.toJson(facade.cancelWorldScan()));
     }
 
     public void handleW3Cluster(HttpExchange exchange) throws IOException {
@@ -63,7 +55,7 @@ public class WorldAutomationController {
             int continentMinSize = req.has("continent_min_size") ? req.get("continent_min_size").getAsInt() : 5;
             int oceanMinMultiplier = req.has("ocean_min_size_multiplier") ? req.get("ocean_min_size_multiplier").getAsInt() : 10;
             int mergeDistance = req.has("merge_distance") ? req.get("merge_distance").getAsInt() : 0;
-            JsonObject res = WorldAutomationService.clusterWorld(server, continentMinSize, oceanMinMultiplier, mergeDistance);
+            JsonObject res = facade.clusterWorld(continentMinSize, oceanMinMultiplier, mergeDistance);
             HttpUtil.sendResponse(exchange, 200, GSON.toJson(res));
         } catch (IllegalArgumentException | IllegalStateException e) {
             HttpUtil.sendResponse(exchange, 400, "{\"error\": \"" + escape(e.getMessage()) + "\"}");
@@ -80,7 +72,7 @@ public class WorldAutomationController {
             if (regionId <= 0) throw new IllegalArgumentException("region_id is required");
             int padding = req.has("padding_blocks") ? req.get("padding_blocks").getAsInt() : 128;
             int scanStep = req.has("scan_step") ? req.get("scan_step").getAsInt() : 16;
-            JsonObject res = WorldAutomationService.scanRegion(server, regionId, padding, scanStep);
+            JsonObject res = facade.scanRegion(regionId, padding, scanStep);
             HttpUtil.sendResponse(exchange, 200, GSON.toJson(res));
         } catch (IllegalArgumentException | IllegalStateException e) {
             HttpUtil.sendResponse(exchange, 400, "{\"error\": \"" + escape(e.getMessage()) + "\"}");
@@ -98,7 +90,7 @@ public class WorldAutomationController {
                 HttpUtil.sendResponse(exchange, 400, "{\"error\": \"region_id query parameter is required\"}");
                 return;
             }
-            JsonObject res = WorldAutomationService.getRegionStatus(regionId);
+            JsonObject res = facade.regionStatus(regionId);
             HttpUtil.sendResponse(exchange, 200, GSON.toJson(res));
         } catch (IllegalArgumentException e) {
             HttpUtil.sendResponse(exchange, 400, "{\"error\": \"" + escape(e.getMessage()) + "\"}");
@@ -113,7 +105,7 @@ public class WorldAutomationController {
             JsonObject req = parseBody(exchange);
             boolean allCached = req.has("all_cached_regions") && req.get("all_cached_regions").getAsBoolean();
             Integer regionId = req.has("region_id") ? req.get("region_id").getAsInt() : null;
-            JsonObject res = WorldAutomationService.exportW4(server, regionId, allCached);
+            JsonObject res = facade.exportW4(regionId, allCached);
             HttpUtil.sendResponse(exchange, 200, GSON.toJson(res));
         } catch (IllegalArgumentException | IllegalStateException e) {
             HttpUtil.sendResponse(exchange, 400, "{\"error\": \"" + escape(e.getMessage()) + "\"}");

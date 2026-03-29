@@ -121,4 +121,16 @@ export const worldTools: ToolDefinition[] = [
       required: ["task_id"],
     },
   },
+  {
+    name: "runtime_task_timeout_test",
+    description: "[TEST] 启动一个公共超时测试任务，用于验证 60 秒停止等待和 task_status 回查。",
+    inputSchema: {
+      type: "object",
+      properties: {
+        sleep_ms: { type: "number", description: "服务端测试任务休眠时长，默认 70000ms。" },
+        task_id: { type: "string", description: "可选，自定义 task_id。" },
+        message: { type: "string", description: "可选，自定义运行中状态消息。" },
+      },
+    },
+  },
 ];

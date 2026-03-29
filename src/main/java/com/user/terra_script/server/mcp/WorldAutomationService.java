@@ -23,10 +23,10 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-final class WorldAutomationService {
+public final class WorldAutomationService {
     private WorldAutomationService() {}
 
-    static JsonObject startWorldScan(MinecraftServer server, int chunkRadius, int targetResolution) throws Exception {
+    public static JsonObject startWorldScan(MinecraftServer server, int chunkRadius, int targetResolution) throws Exception {
         if (server == null || server.overworld() == null) {
             throw new IllegalStateException("Minecraft server/overworld unavailable");
         }
@@ -62,7 +62,7 @@ final class WorldAutomationService {
         return res;
     }
 
-    static JsonObject clusterWorld(MinecraftServer server, int continentMinSize, int oceanMinSizeMultiplier, int mergeDistance) throws Exception {
+    public static JsonObject clusterWorld(MinecraftServer server, int continentMinSize, int oceanMinSizeMultiplier, int mergeDistance) throws Exception {
         ScanResultHolder holder = ScanResultHolder.get();
         if (holder.lastScanData == null) {
             throw new IllegalStateException("W3 cluster requires lastScanData. Run world scan first.");
@@ -99,7 +99,7 @@ final class WorldAutomationService {
         return res;
     }
 
-    static JsonObject getRegionStatus(int regionId) {
+    public static JsonObject getRegionStatus(int regionId) {
         ScanResultHolder holder = ScanResultHolder.get();
         RegionCache cache = holder.regionCacheMap.get(regionId);
         JsonObject res = new JsonObject();
@@ -120,7 +120,7 @@ final class WorldAutomationService {
         return res;
     }
 
-    static JsonObject scanRegion(MinecraftServer server, int regionId, int paddingBlocks, int scanStep) throws Exception {
+    public static JsonObject scanRegion(MinecraftServer server, int regionId, int paddingBlocks, int scanStep) throws Exception {
         if (server == null || server.overworld() == null) {
             throw new IllegalStateException("Minecraft server/overworld unavailable");
         }
@@ -168,7 +168,7 @@ final class WorldAutomationService {
         return res;
     }
 
-    static JsonObject exportW4(MinecraftServer server, Integer regionId, boolean allCachedRegions) throws Exception {
+    public static JsonObject exportW4(MinecraftServer server, Integer regionId, boolean allCachedRegions) throws Exception {
         ScanResultHolder holder = ScanResultHolder.get();
         if (holder.regionCacheMap == null || holder.regionCacheMap.isEmpty()) {
             throw new IllegalStateException("W4 export requires region cache. Run w4_region_scan first.");
@@ -238,5 +238,25 @@ final class WorldAutomationService {
             execute(ctx);
             return W4PreviewExporter.export(ctx, holder);
         }
+    }
+
+    public static JsonObject scanStatus() {
+        SatelliteScanner.ScanProgressSnapshot snapshot = SatelliteScanner.getProgressSnapshot();
+        JsonObject res = new JsonObject();
+        res.addProperty("in_progress", snapshot.inProgress());
+        res.addProperty("label", snapshot.label());
+        res.addProperty("done", snapshot.done());
+        res.addProperty("total", snapshot.total());
+        res.addProperty("percent", snapshot.percent());
+        res.addProperty("elapsed_ms", snapshot.elapsedMs());
+        return res;
+    }
+
+    public static JsonObject cancelWorldScan() {
+        SatelliteScanner.stopScanning();
+        JsonObject res = new JsonObject();
+        res.addProperty("ok", true);
+        res.addProperty("message", "cancel_requested");
+        return res;
     }
 }

@@ -4,23 +4,16 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.sun.net.httpserver.HttpExchange;
-import com.user.terra_script.config.AiProviderConfig;
 import com.user.terra_script.core.artifact.ArtifactStore;
 import com.user.terra_script.core.stage.StageContext;
 import com.user.terra_script.core.workflow.FileStageStatusStore;
-import com.user.terra_script.core.workflow.StageRegistry;
 import com.user.terra_script.core.workflow.StageStatus;
-import com.user.terra_script.core.workflow.TaskStatusHeartbeat;
-import com.user.terra_script.core.workflow.WorkflowEngine;
-import com.user.terra_script.domain.territory.stage.T1Stage;
-import com.user.terra_script.domain.territory.stage.T2Stage;
-import com.user.terra_script.domain.territory.stage.T3Stage;
 import com.user.terra_script.domain.territory.stage.T4Stage;
-import com.user.terra_script.domain.world.stage.W3Stage;
-import com.user.terra_script.domain.world.stage.W4Stage;
+import com.user.terra_script.server.mcp.facade.WorkflowMcpFacade;
 import com.user.terra_script.server.http.HttpUtil;
-import com.user.terra_script.world.NationGenManager;
-import com.user.terra_script.world.city.CityProjectSnapshot;
+import com.user.terra_script.server.mcp.protocol.ErrorResponse;
+import com.user.terra_script.server.mcp.protocol.TaskResultResponse;
+import com.user.terra_script.server.mcp.protocol.TaskStatusResponse;
 import net.minecraft.server.MinecraftServer;
 
 import java.io.IOException;
@@ -29,17 +22,16 @@ import java.util.Locale;
 public class WorkflowController {
     private static final Gson GSON = new Gson();
     private final MinecraftServer server;
+    private final WorkflowMcpFacade facade;
 
     public WorkflowController(MinecraftServer server) {
         this.server = server;
+        this.facade = new WorkflowMcpFacade(server);
     }
 
     public void handleFreezeStatus(HttpExchange exchange) throws IOException {
         try {
-            JsonObject res = new JsonObject();
-            res.addProperty("frozen", NationGenManager.SnapshotManager.hasSnapshot());
-            res.add("ai_config", GSON.toJsonTree(AiProviderConfig.describe()));
-            HttpUtil.sendResponse(exchange, 200, res.toString());
+            HttpUtil.sendResponse(exchange, 200, GSON.toJson(facade.freezeStatus()));
         } catch (Exception e) {
             HttpUtil.handleError(exchange, e);
         }
@@ -48,12 +40,11 @@ public class WorkflowController {
     public void handleFreezeProject(HttpExchange exchange) throws IOException {
         if (!HttpUtil.requireMethod(exchange, "POST")) return;
         try {
-            CityProjectSnapshot.FreezeResult result = NationGenManager.SnapshotManager.freezeIfNotFrozen();
-            JsonObject res = new JsonObject();
-            res.addProperty("ok", result.ok);
-            res.addProperty("message", result.message);
-            int code = result.ok ? 200 : ("already frozen".equals(result.message) ? 409 : 400);
-            HttpUtil.sendResponse(exchange, code, res.toString());
+            JsonObject result = facade.freezeProject();
+            int code = result.has("ok") && result.get("ok").getAsBoolean()
+                    ? 200
+                    : ("already frozen".equals(result.get("message").getAsString()) ? 409 : 400);
+            HttpUtil.sendResponse(exchange, code, GSON.toJson(result));
         } catch (Exception e) {
             HttpUtil.handleError(exchange, e);
         }
@@ -70,42 +61,10 @@ public class WorkflowController {
                     ? req.get("stageId").getAsString().trim().toUpperCase(Locale.ROOT)
                     : "T1";
             T4Stage.RuntimeOptions requestOptions = parseT4Options(req, T4Stage.RuntimeOptions.defaults());
-            T4Stage.configure(requestOptions);
-
-            ArtifactStore artifacts = new ArtifactStore();
-            FileStageStatusStore statusStore = new FileStageStatusStore(artifacts);
-            StageContext ctx = StageContext.forServer(server, artifacts, statusStore);
-            StageRegistry registry = buildRegistry();
-            WorkflowEngine engine = new WorkflowEngine(registry);
-
-            statusStore.markRunningDetailed(stageId, ctx, "Workflow stage accepted. Processing may take several minutes.", "workflow_" + stageId.toLowerCase(Locale.ROOT));
-            try (TaskStatusHeartbeat ignored = TaskStatusHeartbeat.start(statusStore, stageId, ctx, "Workflow stage still running. Please wait and poll workflow/status.", "workflow_" + stageId.toLowerCase(Locale.ROOT))) {
-                var result = engine.runStage(stageId, ctx);
-                String triggeredStage = null;
-                String triggeredStatus = null;
-                if ("T3".equals(stageId)) {
-                    T4Stage.configure(parseT4Options(req, T4Stage.RuntimeOptions.autoTriggerDefaults()));
-                    var t4 = registry.get("T4").run(ctx);
-                    triggeredStage = "T4";
-                    triggeredStatus = t4.status.name();
-                }
-                statusStore.markDoneDetailed(stageId, ctx, result.message);
-
-                JsonObject res = new JsonObject();
-                res.addProperty("ok", true);
-                res.addProperty("stage", stageId);
-                res.addProperty("status", result.status.name());
-                res.addProperty("message", result.message);
-                res.addProperty("status_query", "/workflow/status?stageId=" + stageId);
-                res.addProperty("heartbeat_interval_seconds", FileStageStatusStore.HEARTBEAT_INTERVAL_SECONDS);
-                if (triggeredStage != null) {
-                    res.addProperty("triggered_stage", triggeredStage);
-                    res.addProperty("triggered_status", triggeredStatus);
-                }
-                HttpUtil.sendResponse(exchange, 200, GSON.toJson(res));
-            }
+            TaskResultResponse response = facade.runWorkflowStage(stageId, requestOptions);
+            HttpUtil.sendResponse(exchange, 200, GSON.toJson(response));
         } catch (IllegalArgumentException e) {
-            HttpUtil.sendResponse(exchange, 400, "{\"error\": \"" + e.getMessage() + "\"}");
+            HttpUtil.sendResponse(exchange, 400, GSON.toJson(new ErrorResponse(e.getMessage())));
         } catch (Exception e) {
             HttpUtil.handleError(exchange, e);
         }
@@ -122,8 +81,8 @@ public class WorkflowController {
             JsonObject res = new JsonObject();
             if (stageId != null && !stageId.isBlank()) {
                 String normalized = stageId.trim().toUpperCase(Locale.ROOT);
-                StageStatus status = statusStore.getStatus(normalized, ctx);
-                res.add(normalized, toJson(status));
+                TaskStatusResponse status = facade.workflowStatus(normalized);
+                res.add(normalized, GSON.toJsonTree(status));
             } else {
                 for (String id : new String[]{"W3", "W4", "T1", "T2", "T3", "T4"}) {
                     StageStatus status = statusStore.getStatus(id, ctx);
@@ -148,26 +107,14 @@ public class WorkflowController {
             ArtifactStore artifacts = new ArtifactStore();
             FileStageStatusStore statusStore = new FileStageStatusStore(artifacts);
             StageContext ctx = StageContext.forServer(server, artifacts, statusStore);
-            StageStatus status = statusStore.getTaskStatus(taskId, ctx);
             JsonObject res = new JsonObject();
             res.addProperty("task_id", taskId);
-            res.add("status", toJson(status));
+            res.add("status", GSON.toJsonTree(facade.taskStatus(taskId)));
             res.addProperty("heartbeat_interval_seconds", FileStageStatusStore.HEARTBEAT_INTERVAL_SECONDS);
             HttpUtil.sendResponse(exchange, 200, GSON.toJson(res));
         } catch (Exception e) {
             HttpUtil.handleError(exchange, e);
         }
-    }
-
-    private static StageRegistry buildRegistry() {
-        StageRegistry registry = new StageRegistry();
-        registry.register(new W3Stage());
-        registry.register(new W4Stage());
-        registry.register(new T1Stage());
-        registry.register(new T2Stage());
-        registry.register(new T3Stage());
-        registry.register(new T4Stage());
-        return registry;
     }
 
     private static JsonObject toJson(StageStatus status) {

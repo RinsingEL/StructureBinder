@@ -13,9 +13,4 @@ export type ToolDefinition = {
   inputSchema: Record<string, any>;
 };
 
-export function textResult(text: string, isError = false): ToolResult {
-  return {
-    content: [{ type: "text", text }],
-    ...(isError ? { isError: true } : {}),
-  };
-}
+export { textResult } from "./result/text-result.js";

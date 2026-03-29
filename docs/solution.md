@@ -953,14 +953,14 @@ root
   2. 调用 T1 预览图接口获取候选区域地理图（高度+等高线、山体阴影等）。
   3. 根据文明定位，定义 2~3 组兴趣条件（例如高海拔、低坡度、沿海、峡谷）。
   4. 调用 `scan_local_candidates(region_id=...)` 进入 Q1，拿到多簇候选 + ASCII + 叠图预览，并生成待选缓存。
-  5. 人工触发 Q2（`/query_region_pick`）选择最优簇和取点模式（center / north / south / east / west / random_cardinal）。
+  5. AI根据簇预览图，触发 Q2（`/query_region_pick`）选择最优簇和取点模式（center / north / south / east / west / random_cardinal）。
   6. 提交 `t1_generate_blueprint`，把最终 `target_continent_id` 与扩张参数固化。
 
 *   **程序 做什么**：
   * 提供 `W4_get_world_atlas` 和 `scan_local_candidates`。
   * 为 T1 候选区域输出 PNG 预览图（遵循 W4 同款图例规则）。
   * 返回候选簇列表（每个簇都带 `cluster_id`、关键点、ASCII 图）和 `preview_overlay`。
-  * 写入 Q1 待选缓存，等待人工触发 Q2。
+  * 写入 Q1 待选缓存，等待AI预览图片后触发 Q2。
   * 依据 `world_summary` 约束 `base_power` 合理范围（避免扩张力过大/过小）。
   * 存储蓝图到 `T1_Blueprint.json`。
 
@@ -1520,41 +1520,41 @@ private static final List<TerritoryConfig> pendingFactions = new ArrayList<>();
 
 多边形总预览图图例/参数：
 
-| 参数 | 说明 |
-| --- | --- |
-| city_id | 城市ID |
-| origin_x / origin_z | 世界坐标原点 |
-| width_blocks / height_blocks | 城市扫描尺寸 |
-| district_count | 多边形数量 |
-| district_codes | 多边形编号与 layer |
-| ownership_step | 扫描精度 |
+| 参数                           | 说明           |
+|------------------------------|--------------|
+| city_id                      | 城市ID         |
+| origin_x / origin_z          | 世界坐标原点       |
+| width_blocks / height_blocks | 城市扫描尺寸       |
+| district_count               | 多边形数量        |
+| district_codes               | 多边形编号与 layer |
+| ownership_step               | 扫描精度         |
 
 #### 2）数据输入
 
 表1：多边形基础信息表（程序生成，来源 C3 polygon ownership）
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| district_code | int | 多边形编号 |
-| district_id | int | 多边形ID |
-| layer_index | int | 城市层级 |
-| zone_type | string | 区域类型（CORE / URBAN / BUFFER） |
+| 字段            | 类型     | 说明                          |
+|---------------|--------|-----------------------------|
+| district_code | int    | 多边形编号                       |
+| district_id   | int    | 多边形ID                       |
+| layer_index   | int    | 城市层级                        |
+| zone_type     | string | 区域类型（CORE / URBAN / BUFFER） |
 
 表2：层级定义表（来源 C2 layer labels）
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| layer_index | int | 层级编号 |
-| layer_type | string | 层级名称 |
-| chunk_count | int | 面积规模 |
-| centroid_x | float | 层级中心 |
-| centroid_z | float | 层级中心 |
+| 字段          | 类型     | 说明   |
+|-------------|--------|------|
+| layer_index | int    | 层级编号 |
+| layer_type  | string | 层级名称 |
+| chunk_count | int    | 面积规模 |
+| centroid_x  | float  | 层级中心 |
+| centroid_z  | float  | 层级中心 |
 
 表3：功能枚举表（来源 C3.5 全结构功能枚举）
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| function_id | int | 功能ID |
+| 字段            | 类型     | 说明   |
+|---------------|--------|------|
+| function_id   | int    | 功能ID |
 | function_name | string | 功能名称 |
 
 示例：住宅、商业店铺、道路段、公园绿地、办公楼、工厂仓库、学校、医院诊所、宗教建筑、防御塔楼、桥梁、广场、市场、市政厅、供水设施、农场、牧场、港口。
@@ -1563,21 +1563,21 @@ private static final List<TerritoryConfig> pendingFactions = new ArrayList<>();
 
 数据输出：表4 多边形 Tag 表
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| district_code | int | 多边形编号 |
-| zone_type | string | 区域层级 |
-| function | string | 功能标签 |
-| terrain_tag | array | 地形标签 |
-| role_tag | array | 城市角色 |
+| 字段            | 类型     | 说明    |
+|---------------|--------|-------|
+| district_code | int    | 多边形编号 |
+| zone_type     | string | 区域层级  |
+| function      | string | 功能标签  |
+| terrain_tag   | array  | 地形标签  |
+| role_tag      | array  | 城市角色  |
 
 示例：
 
-| district_code | zone_type | function | terrain_tag | role_tag |
-| --- | --- | --- | --- | --- |
-| 10 | CORE | 港口 | coastal,flat | logistics_anchor |
-| 15 | BUFFER | 港口 | coastal_slope | shore_support |
-| 5 | BUFFER | 港口 | cliff | breakwater |
+| district_code | zone_type | function | terrain_tag   | role_tag         |
+|---------------|-----------|----------|---------------|------------------|
+| 10            | CORE      | 港口       | coastal,flat  | logistics_anchor |
+| 15            | BUFFER    | 港口       | coastal_slope | shore_support    |
+| 5             | BUFFER    | 港口       | cliff         | breakwater       |
 
 推荐文件产物：
 
