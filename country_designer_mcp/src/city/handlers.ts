@@ -96,6 +96,25 @@ export const cityHandlers: Record<string, ToolHandler> = {
     if (args.group_id !== undefined) payload.group_id = String(args.group_id);
     return postCityJson("/city_c8_data", payload);
   },
+  async city_c8_submit(args) {
+    const payload: Record<string, any> = { city_id: args.city_id };
+    if (args.group_id !== undefined) payload.group_id = String(args.group_id);
+    if (args.build_area_id !== undefined) payload.build_area_id = String(args.build_area_id);
+    if (args.node_id !== undefined) payload.node_id = String(args.node_id);
+    if (args.selected_template_id !== undefined) payload.selected_template_id = String(args.selected_template_id);
+    if (args.selected_connector_dir !== undefined) payload.selected_connector_dir = String(args.selected_connector_dir);
+    if (args.selected_rotation !== undefined) payload.selected_rotation = Number(args.selected_rotation);
+    if (args.x !== undefined) payload.x = Number(args.x);
+    if (args.z !== undefined) payload.z = Number(args.z);
+    if (args.terrain_relax_profile !== undefined) payload.terrain_relax_profile = args.terrain_relax_profile;
+    return postCityJson("/city_c8_submit", payload);
+  },
+  async city_c8_retry(args) {
+    const payload: Record<string, any> = { city_id: args.city_id, node_id: args.node_id };
+    if (args.group_id !== undefined) payload.group_id = String(args.group_id);
+    if (args.build_area_id !== undefined) payload.build_area_id = String(args.build_area_id);
+    return postCityJson("/city_c8_retry", payload);
+  },
   async city_c9_generate(args) {
     const payload: Record<string, any> = { city_id: args.city_id };
     if (args.group_id !== undefined) payload.group_id = String(args.group_id);

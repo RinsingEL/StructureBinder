@@ -70,6 +70,8 @@ public final class CityC7Stages {
     private static final class TagSource extends CityC35CatalogIO.TagSource {}
 
     public static class C7Selection {
+        /** 当前 C7 工头计划契约版本。 */
+        public int version = 2;
         public String step = "C7";
         public boolean ok = true;
         public String city_id;
@@ -81,8 +83,97 @@ public final class CityC7Stages {
         public int filtered_candidate_count;
         public String strict_filter_failure_reason;
         public int puzzle_depth = 0;
+        /** 兼容保留：旧版模板选择结果。 */
         public List<TemplateSelectionItem> selections = new ArrayList<>();
+        /** 兼容保留：旧版排列决策结果。 */
         public List<GroupArrangementDecision> arrangements = new ArrayList<>();
+        /** 当前主工头计划视图；group 级文件默认只保留一个。 */
+        public ForemanPlan foreman_plan;
+        /** 城市级场景下保留全部工头计划。 */
+        public List<ForemanPlan> foreman_plans = new ArrayList<>();
+        /** 当前主工头计划对应的阶段列表，便于直接读取。 */
+        public List<PhasePlan> phase_list = new ArrayList<>();
+    }
+
+    public static class ForemanPlan {
+        /** 所属组编号。 */
+        public String group_id;
+        /** 所属建造区编号。 */
+        public String build_area_id;
+        /** 全局建设目标，统一使用中文自然语言。 */
+        public String global_goal;
+        /** 唯一开工节点。 */
+        public StartNode start_node = new StartNode();
+        /** 当前工头计划的阶段列表。 */
+        public List<PhasePlan> phase_list = new ArrayList<>();
+        /** 全局硬约束说明；说明值统一中文，协议值保持稳定机器值。 */
+        public Map<String, Object> global_constraints = new LinkedHashMap<>();
+        /** 连接器目标规则。 */
+        public List<ConnectorTargetRule> connector_target_rules = new ArrayList<>();
+        /** 模板池引用。 */
+        public List<TemplatePoolRef> template_pool_refs = new ArrayList<>();
+        /** 工头备注，统一使用中文自然语言。 */
+        public String foreman_notes;
+    }
+
+    public static class PhasePlan {
+        /** 阶段稳定键，供程序排序和流转使用。 */
+        public String phase_key;
+        /** 阶段中文短句，供 AI 和调试显示使用。 */
+        public String phase_name;
+        /** 阶段目标，统一使用中文自然语言。 */
+        public String phase_goal;
+        /** 阶段禁区，统一使用中文自然语言。 */
+        public String phase_blockers;
+        /** 阶段完成提示，统一使用中文自然语言。 */
+        public String phase_done_hint;
+    }
+
+    public static class StartNode {
+        /** 节点稳定编号。 */
+        public String node_id;
+        /** 节点类型；若用于协议判定则保持稳定机器值。 */
+        public String node_type;
+        /** 所属阶段稳定键。 */
+        public String phase_key;
+        /** 所属阶段中文名称。 */
+        public String phase_name;
+        /** 节点目标职责，统一使用中文自然语言。 */
+        public String target_role;
+        /** 节点目标结构种类，统一使用中文自然语言。 */
+        public String target_structure_kind;
+        /** 来源连接器编号；根节点允许为空。 */
+        public String source_connector_id;
+        /** 允许连接方向，继续使用稳定英文枚举。 */
+        public List<String> allowed_connector_dirs = new ArrayList<>();
+        /** 模板池编号。 */
+        public String template_pool_id;
+        /** 候选模板列表。 */
+        public List<String> candidate_template_ids = new ArrayList<>();
+        /** 是否必需。 */
+        public boolean required = true;
+    }
+
+    public static class ConnectorTargetRule {
+        /** 规则所属阶段稳定键。 */
+        public String phase_key;
+        /** 来源连接器方向。 */
+        public String connector_dir;
+        /** 目标职责说明，统一使用中文自然语言。 */
+        public String target_role;
+        /** 规则说明，统一使用中文自然语言。 */
+        public String rule_note;
+    }
+
+    public static class TemplatePoolRef {
+        /** 模板池编号。 */
+        public String template_pool_id;
+        /** 模板池显示名称，统一使用中文自然语言。 */
+        public String display_name;
+        /** 引用模板列表。 */
+        public List<String> template_ids = new ArrayList<>();
+        /** 模板池说明，统一使用中文自然语言。 */
+        public String note;
     }
 
     public static class GroupArrangementDecision {
@@ -194,14 +285,15 @@ public final class CityC7Stages {
             if (plan == null || plan.primary_modules == null || plan.primary_modules.isEmpty()) continue;
             boolean consumable = plan.validated || plan.decision_mode == null || plan.decision_mode.isBlank();
             if (!consumable) continue;
-            result.arrangements.add(buildFallbackArrangement(plan, catalog, result));
+            GroupArrangementDecision arrangement = buildFallbackArrangement(plan, catalog, result);
+            result.arrangements.add(arrangement);
+            result.foreman_plans.add(buildForemanPlan(plan, arrangement, null, catalog));
             for (CityC6Stages.PrimaryModule module : plan.primary_modules) {
-                result.selections.add(buildFallbackSelection(plan, module, catalog, result));
+                TemplateSelectionItem item = buildFallbackSelection(plan, module, catalog, result);
+                result.selections.add(item);
             }
         }
-        result.selections.sort(Comparator.comparing(i -> safe(i.build_area_id) + "|" + safe(i.module_id)));
-        result.arrangements.sort(Comparator.comparing(i -> safe(i.build_area_id) + "|" + safe(i.group_id)));
-        return result;
+        return finalizeSelectionResult(result);
     }
 
     public static C7Selection fromDecisionRequest(String cityId, CityC6Stages.C6Layout c6Layout, JsonObject request) {
@@ -226,11 +318,22 @@ public final class CityC7Stages {
                 GroupArrangementDecision arrangement = parseArrangement(element.getAsJsonObject(), c6Layout);
                 if (arrangement == null) continue;
                 result.arrangements.add(arrangement);
-                result.selections.addAll(expandSelectionsFromArrangement(arrangement, catalog));
+                List<TemplateSelectionItem> expanded = expandSelectionsFromArrangement(arrangement, catalog);
+                result.selections.addAll(expanded);
+                result.foreman_plans.add(buildForemanPlan(findPlan(c6Layout, arrangement.group_id, arrangement.build_area_id), arrangement, expanded, catalog));
             }
         }
+        return finalizeSelectionResult(result);
+    }
+
+    private static C7Selection finalizeSelectionResult(C7Selection result) {
         result.selections.sort(Comparator.comparing(i -> safe(i.build_area_id) + "|" + safe(i.module_id)));
         result.arrangements.sort(Comparator.comparing(i -> safe(i.build_area_id) + "|" + safe(i.group_id)));
+        result.foreman_plans.sort(Comparator.comparing(i -> safe(i.build_area_id) + "|" + safe(i.group_id)));
+        result.foreman_plan = result.foreman_plans.isEmpty() ? null : result.foreman_plans.get(0);
+        result.phase_list = result.foreman_plan != null
+                ? new ArrayList<>(result.foreman_plan.phase_list)
+                : new ArrayList<>();
         return result;
     }
 
@@ -354,9 +457,74 @@ public final class CityC7Stages {
 
         item.selected_components.add(buildFallbackComponent(plan, module, catalog, selection));
         item.notes = catalog != null && catalog.ok && !item.top_k_templates.isEmpty()
-                ? "Catalog-driven strict fallback selection"
-                : "Strict function filter found no candidate";
+                ? "目录严格筛选后得到的默认模板方案"
+                : "严格功能筛选后没有找到可用模板";
         return item;
+    }
+
+    private static ForemanPlan buildForemanPlan(
+            CityC6Stages.LayoutPlan plan,
+            GroupArrangementDecision arrangement,
+            List<TemplateSelectionItem> expandedSelections,
+            Catalog catalog
+    ) {
+        ForemanPlan foremanPlan = new ForemanPlan();
+        foremanPlan.group_id = arrangement != null ? arrangement.group_id : (plan != null ? plan.group_id : null);
+        foremanPlan.build_area_id = arrangement != null ? arrangement.build_area_id : (plan != null ? plan.build_area_id : null);
+        foremanPlan.global_goal = inferGlobalGoal(arrangement, plan);
+        foremanPlan.foreman_notes = inferForemanNotes(arrangement, plan);
+        foremanPlan.global_constraints.put("单一起点说明", "当前阶段只允许一个起始节点，先把主线稳定下来。");
+        foremanPlan.global_constraints.put("施工顺序说明", "先按阶段推进，再按节点队列逐个施工。");
+        foremanPlan.global_constraints.put("失败处理说明", "硬约束失败后只记录原因并等待后续重试，不自动改写祖先结构。");
+        foremanPlan.global_constraints.put("允许放宽项", "当前仅允许按需放宽地形落地限制。");
+
+        List<TemplateSelectionItem> selections = expandedSelections;
+        if ((selections == null || selections.isEmpty()) && arrangement != null) {
+            selections = expandSelectionsFromArrangement(arrangement, catalog);
+        }
+        TemplateSelectionItem primarySelection = selections != null && !selections.isEmpty() ? selections.get(0) : null;
+        SelectedComponent primaryComponent = arrangement != null && arrangement.selected_components != null && !arrangement.selected_components.isEmpty()
+                ? arrangement.selected_components.get(0)
+                : null;
+        foremanPlan.phase_list.addAll(defaultPhasePlans(arrangement, primarySelection, plan));
+
+        StartNode startNode = foremanPlan.start_node;
+        startNode.node_id = "start_" + safe(foremanPlan.group_id);
+        startNode.node_type = "START";
+        startNode.phase_key = !foremanPlan.phase_list.isEmpty() ? foremanPlan.phase_list.get(0).phase_key : "phase1";
+        startNode.phase_name = !foremanPlan.phase_list.isEmpty() ? foremanPlan.phase_list.get(0).phase_name : "先立主体骨架";
+        startNode.target_role = inferStartTargetRole(arrangement, primarySelection);
+        startNode.target_structure_kind = inferTargetStructureKind(arrangement);
+        startNode.source_connector_id = null;
+        startNode.allowed_connector_dirs.addAll(defaultStartDirs(arrangement));
+        startNode.template_pool_id = inferTemplatePoolId(arrangement, primarySelection);
+        if (primarySelection != null && primarySelection.top_k_templates != null) {
+            startNode.candidate_template_ids.addAll(primarySelection.top_k_templates);
+        }
+        if (startNode.candidate_template_ids.isEmpty() && primarySelection != null && primarySelection.selected_template != null) {
+            startNode.candidate_template_ids.add(primarySelection.selected_template);
+        }
+        if (startNode.candidate_template_ids.isEmpty() && primaryComponent != null && primaryComponent.template_id != null) {
+            startNode.candidate_template_ids.add(primaryComponent.template_id);
+        }
+        startNode.required = primaryComponent == null || primaryComponent.required;
+
+        TemplatePoolRef poolRef = new TemplatePoolRef();
+        poolRef.template_pool_id = startNode.template_pool_id != null ? startNode.template_pool_id : "pool_default";
+        poolRef.display_name = "主体开工模板池";
+        poolRef.template_ids.addAll(startNode.candidate_template_ids);
+        poolRef.note = "该模板池用于当前组的首个开工节点，后续节点只能在程序允许的模板池范围内继续选择。";
+        foremanPlan.template_pool_refs.add(poolRef);
+
+        for (PhasePlan phasePlan : foremanPlan.phase_list) {
+            ConnectorTargetRule rule = new ConnectorTargetRule();
+            rule.phase_key = phasePlan.phase_key;
+            rule.connector_dir = defaultConnectorDir(arrangement != null ? arrangement.arrangement_type : null);
+            rule.target_role = phaseTargetRole(phasePlan.phase_key, arrangement);
+            rule.rule_note = phaseRuleNote(phasePlan.phase_key);
+            foremanPlan.connector_target_rules.add(rule);
+        }
+        return foremanPlan;
     }
 
     private static SelectedComponent buildFallbackComponent(CityC6Stages.LayoutPlan plan, CityC6Stages.PrimaryModule module, Catalog catalog, C7Selection selection) {
@@ -536,6 +704,136 @@ public final class CityC7Stages {
         if (normalized.contains("residential") || normalized.contains("shop")) return "SPINE_BRANCH";
         if (normalized.contains("farm")) return "TERRACE_CHAIN";
         return "RING";
+    }
+
+    private static List<PhasePlan> defaultPhasePlans(
+            GroupArrangementDecision arrangement,
+            TemplateSelectionItem primarySelection,
+            CityC6Stages.LayoutPlan plan
+    ) {
+        String functionRole = primarySelection != null ? safe(primarySelection.function_role).toLowerCase(Locale.ROOT) : "";
+        String startRole = semanticStartRole(functionRole);
+        String bodyKind = semanticBodyKind(functionRole);
+        String supportKind = semanticSupportKind(functionRole);
+        List<PhasePlan> out = new ArrayList<>();
+        out.add(phase("phase1", "先把" + startRole + "立住", "优先把" + startRole + "和第一段" + bodyKind + "稳定下来。", "不要一开始就把外围部分同时铺开。", startRole + "和首个主体连接稳定后即可进入下一阶段。"));
+        out.add(phase("phase2", "再推进主体主线", "顺着当前已经成立的主体方向继续把" + bodyKind + "往前推进。", "不要在主体主线还不稳定时四处分叉。", bodyKind + "的连续骨架形成后即可进入下一阶段。"));
+        out.add(phase("phase3", "再补整体附属", "围绕已经稳定的主体补齐" + supportKind + "和过渡节点。", "不要越过主体直接跳到最后收尾。", supportKind + "与主体的连接关系稳定后即可进入下一阶段。"));
+        out.add(phase("phase4", "最后处理边缘收尾", "处理边缘空缺、末端节点和整体收尾。", "不要回头推翻已经稳定的主体骨架。", "边缘空缺与收尾节点处理完成后即可结束本轮施工。"));
+        return out;
+    }
+
+    private static String semanticStartRole(String functionRole) {
+        return switch (safe(functionRole).toLowerCase(Locale.ROOT)) {
+            case "port" -> "起始岸线节点";
+            case "market", "commercial" -> "入口与前场";
+            case "civic_center" -> "主入口和中轴起点";
+            case "farm" -> "坡地入口节点";
+            default -> "起始节点";
+        };
+    }
+
+    private static String semanticBodyKind(String functionRole) {
+        return switch (safe(functionRole).toLowerCase(Locale.ROOT)) {
+            case "port" -> "主体岸线";
+            case "market", "commercial" -> "主体空间";
+            case "civic_center" -> "主体建筑";
+            case "farm" -> "主体平台";
+            default -> "主体部分";
+        };
+    }
+
+    private static String semanticSupportKind(String functionRole) {
+        return switch (safe(functionRole).toLowerCase(Locale.ROOT)) {
+            case "port" -> "侧向附属";
+            case "market", "commercial" -> "周边附属";
+            case "civic_center" -> "两侧附属";
+            case "farm" -> "平台附属";
+            default -> "附属部分";
+        };
+    }
+
+    private static PhasePlan phase(String key, String name, String goal, String blockers, String doneHint) {
+        PhasePlan phase = new PhasePlan();
+        phase.phase_key = key;
+        phase.phase_name = name;
+        phase.phase_goal = goal;
+        phase.phase_blockers = blockers;
+        phase.phase_done_hint = doneHint;
+        return phase;
+    }
+
+    private static String inferGlobalGoal(GroupArrangementDecision arrangement, CityC6Stages.LayoutPlan plan) {
+        String arrangementType = arrangement != null ? safe(arrangement.arrangement_type).toUpperCase(Locale.ROOT) : inferArrangementType(plan != null ? plan.group_id : null);
+        return switch (arrangementType) {
+            case "LINEAR_DOCK" -> "沿主干方向先立住核心起点，再顺着主要连接链逐段向前推进。";
+            case "COURTYARD", "RING" -> "优先围绕中心入口与前庭建立主体框架，再补足两侧和外围收尾。";
+            case "SPINE_BRANCH" -> "先把主轴搭出来，再逐步补两侧附属节点，避免一开始就四处分叉。";
+            case "TERRACE_CHAIN" -> "优先沿坡地或台地顺序修出主线，再补局部平台和收尾节点。";
+            default -> "先把主结构和入口骨架定住，再逐步向两侧和外围扩展。";
+        };
+    }
+
+    private static String inferForemanNotes(GroupArrangementDecision arrangement, CityC6Stages.LayoutPlan plan) {
+        String groupId = arrangement != null ? arrangement.group_id : (plan != null ? plan.group_id : "");
+        return "当前组 " + safe(groupId) + " 采用单一起点、逐节点推进的施工方式；每次只处理一个活跃节点，失败后先记录原因，再决定是否重试。";
+    }
+
+    private static String inferStartTargetRole(GroupArrangementDecision arrangement, TemplateSelectionItem primarySelection) {
+        if (primarySelection != null && primarySelection.function_role != null) {
+            return switch (primarySelection.function_role) {
+                case "port" -> "沿岸起始节点";
+                case "market" -> "前场入口节点";
+                case "civic_center" -> "中轴主厅节点";
+                case "farm" -> "台地主入口节点";
+                default -> "主体开工节点";
+            };
+        }
+        String arrangementType = arrangement != null ? safe(arrangement.arrangement_type).toUpperCase(Locale.ROOT) : "";
+        if ("LINEAR_DOCK".equals(arrangementType)) return "码头起始节点";
+        if ("COURTYARD".equals(arrangementType) || "RING".equals(arrangementType)) return "入口起始节点";
+        if ("SPINE_BRANCH".equals(arrangementType)) return "中轴起始节点";
+        return "主体开工节点";
+    }
+
+    private static String inferTargetStructureKind(GroupArrangementDecision arrangement) {
+        String arrangementType = arrangement != null ? safe(arrangement.arrangement_type).toUpperCase(Locale.ROOT) : "";
+        if ("LINEAR_DOCK".equals(arrangementType)) return "主码头";
+        if ("COURTYARD".equals(arrangementType) || "RING".equals(arrangementType)) return "主厅";
+        if ("SPINE_BRANCH".equals(arrangementType)) return "主轴主体";
+        if ("TERRACE_CHAIN".equals(arrangementType)) return "台地主体";
+        return "主体建筑";
+    }
+
+    private static List<String> defaultStartDirs(GroupArrangementDecision arrangement) {
+        String arrangementType = arrangement != null ? safe(arrangement.arrangement_type).toUpperCase(Locale.ROOT) : "";
+        if ("COURTYARD".equals(arrangementType) || "RING".equals(arrangementType)) return List.of("south", "east");
+        if ("SPINE_BRANCH".equals(arrangementType)) return List.of("east", "south");
+        return List.of(defaultConnectorDir(arrangementType));
+    }
+
+    private static String inferTemplatePoolId(GroupArrangementDecision arrangement, TemplateSelectionItem primarySelection) {
+        if (primarySelection != null && primarySelection.function_role != null && !primarySelection.function_role.isBlank()) {
+            return "pool_" + primarySelection.function_role.toLowerCase(Locale.ROOT);
+        }
+        if (arrangement != null && arrangement.group_id != null && !arrangement.group_id.isBlank()) {
+            return "pool_" + arrangement.group_id.toLowerCase(Locale.ROOT);
+        }
+        return "pool_default";
+    }
+
+    private static String phaseTargetRole(String phaseKey, GroupArrangementDecision arrangement) {
+        if ("phase1".equals(phaseKey)) return "前庭入口节点";
+        if ("phase2".equals(phaseKey)) return inferTargetStructureKind(arrangement);
+        if ("phase3".equals(phaseKey)) return "两侧附属节点";
+        return "外围收尾节点";
+    }
+
+    private static String phaseRuleNote(String phaseKey) {
+        if ("phase1".equals(phaseKey)) return "当前阶段优先连接入口方向，不要过早转向外围。";
+        if ("phase2".equals(phaseKey)) return "当前阶段优先维持主轴或主厅连续性。";
+        if ("phase3".equals(phaseKey)) return "当前阶段允许向两侧展开，但仍要服从主体骨架。";
+        return "当前阶段以补空缺和收尾为主，不再主动扩张主结构。";
     }
 
     private static int defaultSpacing(String arrangementType) {

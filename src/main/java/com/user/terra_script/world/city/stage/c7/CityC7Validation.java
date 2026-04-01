@@ -43,6 +43,18 @@ public final class CityC7Validation {
             return report;
         }
 
+        if (selection.foreman_plans != null && !selection.foreman_plans.isEmpty()) {
+            for (CityC7Stages.ForemanPlan foremanPlan : selection.foreman_plans) {
+                if (foremanPlan == null) continue;
+                if (groupId != null && !groupId.isBlank() && !groupId.equals(foremanPlan.group_id)) continue;
+                validateForemanPlan(report, foremanPlan);
+            }
+            if (!report.items.isEmpty()) return report;
+        } else if (selection.foreman_plan != null) {
+            validateForemanPlan(report, selection.foreman_plan);
+            if (!report.items.isEmpty()) return report;
+        }
+
         if (selection.arrangements != null && !selection.arrangements.isEmpty()) {
             for (CityC7Stages.GroupArrangementDecision arrangement : selection.arrangements) {
                 if (arrangement == null) continue;
@@ -74,6 +86,29 @@ public final class CityC7Validation {
             report.items.add(item);
         }
         return report;
+    }
+
+    private static void validateForemanPlan(Report report, CityC7Stages.ForemanPlan foremanPlan) {
+        Item item = new Item();
+        item.module_id = foremanPlan.group_id;
+        item.arrangement_type = "FOREMAN_PLAN";
+        item.selected_template = foremanPlan.start_node != null && foremanPlan.start_node.candidate_template_ids != null
+                && !foremanPlan.start_node.candidate_template_ids.isEmpty()
+                ? foremanPlan.start_node.candidate_template_ids.get(0)
+                : null;
+        if (foremanPlan.start_node == null || foremanPlan.start_node.node_id == null || foremanPlan.start_node.node_id.isBlank()) {
+            fail(report, item, "missing_start_node", "create_start_node");
+        } else if (foremanPlan.phase_list == null || foremanPlan.phase_list.isEmpty()) {
+            fail(report, item, "missing_phase_list", "create_phase_list");
+        } else if (foremanPlan.start_node.phase_key == null || foremanPlan.start_node.phase_key.isBlank()
+                || foremanPlan.start_node.phase_name == null || foremanPlan.start_node.phase_name.isBlank()) {
+            fail(report, item, "missing_phase_identity", "fill_phase_key_and_phase_name");
+        } else if (foremanPlan.start_node.candidate_template_ids == null || foremanPlan.start_node.candidate_template_ids.isEmpty()) {
+            fail(report, item, "missing_start_templates", "provide_start_candidate_templates");
+        } else {
+            accept(item);
+        }
+        report.items.add(item);
     }
 
     private static void validateArrangement(Report report, CityC7Stages.GroupArrangementDecision arrangement) {

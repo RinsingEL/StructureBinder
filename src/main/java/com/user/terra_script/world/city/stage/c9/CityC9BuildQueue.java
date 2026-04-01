@@ -56,6 +56,8 @@ public final class CityC9BuildQueue {
         public String status = Status.PLANNED.name();
         public int retry_count;
         public String last_error;
+        /** 最近一次运行时错误说明，统一使用中文自然语言。 */
+        public String last_error_message;
         public long created_at_tick;
         public long updated_at_tick;
         public String placement_signature;
@@ -159,8 +161,9 @@ public final class CityC9BuildQueue {
                 if (foundation == null) continue;
                 if (groupId != null && !groupId.isBlank() && !groupId.equals(foundation.group_id)) continue;
                 touchedBuildAreas.add(safe(foundation.build_area_id));
-                if (foundation.placements == null || foundation.placements.isEmpty()) continue;
-                for (CityC8Stages.PlacementNode node : foundation.placements) {
+                List<CityC8Stages.PlacementNode> executableNodes = executablePlacements(foundation);
+                if (executableNodes.isEmpty()) continue;
+                for (CityC8Stages.PlacementNode node : executableNodes) {
                     if (node == null || node.node_id == null || node.node_id.isBlank() || node.template_id == null || node.template_id.isBlank()) {
                         continue;
                     }
@@ -202,6 +205,7 @@ public final class CityC9BuildQueue {
                         task.status = Status.PLANNED.name();
                         task.retry_count = 0;
                         task.last_error = null;
+                        task.last_error_message = null;
                     } else if (!Status.BLOCKED.name().equals(Status.normalize(task.status))) {
                         task.status = Status.PLANNED.name();
                     }
@@ -252,6 +256,19 @@ public final class CityC9BuildQueue {
         int base = node != null && node.build_order != null ? Math.max(0, 1000 - node.build_order) : 100;
         if (node != null && node.level == 0) base += 100;
         return base;
+    }
+
+    private static List<CityC8Stages.PlacementNode> executablePlacements(CityC8Stages.FoundationItem foundation) {
+        List<CityC8Stages.PlacementNode> out = new ArrayList<>();
+        if (foundation == null) return out;
+        if (foundation.validated_nodes != null && !foundation.validated_nodes.isEmpty()) {
+            for (CityC8Stages.NodeTask task : foundation.validated_nodes) {
+                if (task != null && task.placement != null) out.add(task.placement);
+            }
+            if (!out.isEmpty()) return out;
+        }
+        if (foundation.placements != null) out.addAll(foundation.placements);
+        return out;
     }
 
     private static void normalize(BuildQueue queue) {

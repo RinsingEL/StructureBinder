@@ -60,7 +60,8 @@ class CityC9StagesTest {
         assertNotNull(result.queue);
         assertEquals(0, result.queue.tasks.size());
         assertEquals(0, result.placement.enqueued_tasks_count);
-        assertEquals("runtime_out_of_area", result.placement.items.get(0).structures.get(0).reason);
+        assertEquals("runtime_out_of_area", result.placement.items.get(0).structures.get(0).runtime_error_code);
+        assertEquals("当前节点超出了建造区范围。", result.placement.items.get(0).structures.get(0).reason);
     }
 
     private static CityC6Stages.C6Summary summary() {

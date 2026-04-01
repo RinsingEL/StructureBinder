@@ -55,6 +55,47 @@ export const cityTools: ToolDefinition[] = [
   { name: "city_c7_data", description: "读取单个功能区 group 的 C7 模板选择结果；如果没有矩形决策完成，结果可能为空。", inputSchema: { type: "object", properties: { city_id: { type: "string" }, group_id: { type: "string" } }, required: ["city_id"] } },
   { name: "city_c8_generate", description: "为单个功能区 group 生成 C8 基台规划。这个阶段不是全城总规划，而是对已完成 C7 的某一个功能区继续推进。", inputSchema: { type: "object", properties: { city_id: { type: "string" }, group_id: { type: "string" } }, required: ["city_id"] } },
   { name: "city_c8_data", description: "读取单个功能区 group 的 C8 基台规划结果。", inputSchema: { type: "object", properties: { city_id: { type: "string" }, group_id: { type: "string" } }, required: ["city_id"] } },
+  {
+    name: "city_c8_submit",
+    description: "向 C8 提交当前激活节点的模板、方向和坐标决策，并让服务端完成校验、入队和状态推进。",
+    inputSchema: {
+      type: "object",
+      properties: {
+        city_id: { type: "string" },
+        group_id: { type: "string" },
+        build_area_id: { type: "string" },
+        node_id: { type: "string" },
+        selected_template_id: { type: "string" },
+        selected_connector_dir: { type: "string" },
+        selected_rotation: { type: "number" },
+        x: { type: "number" },
+        z: { type: "number" },
+        terrain_relax_profile: {
+          type: "object",
+          properties: {
+            note: { type: "string" },
+            max_height_delta: { type: "number" },
+            max_slope: { type: "number" },
+          },
+        },
+      },
+      required: ["city_id"],
+    },
+  },
+  {
+    name: "city_c8_retry",
+    description: "把 C8 中某个失败节点重新放回待处理状态，便于 AI 重新选择模板或坐标。",
+    inputSchema: {
+      type: "object",
+      properties: {
+        city_id: { type: "string" },
+        group_id: { type: "string" },
+        build_area_id: { type: "string" },
+        node_id: { type: "string" },
+      },
+      required: ["city_id", "node_id"],
+    },
+  },
   { name: "city_c9_generate", description: "为单个功能区 group 生成 C9 放置与装饰计划。整座城市需要把每个 group 分别推进到 C9，而不是一次性完成全部区域。", inputSchema: { type: "object", properties: { city_id: { type: "string" }, group_id: { type: "string" }, apply_blocks: { type: "boolean" }, max_blocks: { type: "number" } }, required: ["city_id"] } },
   { name: "city_c9_data", description: "读取单个功能区 group 的 C9 结果。", inputSchema: { type: "object", properties: { city_id: { type: "string" }, group_id: { type: "string" } }, required: ["city_id"] } },
   { name: "city_c6_pave_stone", description: "对 C6 中选定的单个功能区 group / build_area 做铺石测试操作，用于验证该局部区域的地表处理。", inputSchema: { type: "object", properties: { city_id: { type: "string" }, group_id: { type: "string" }, build_area_id: { type: "string" }, square_only: { type: "boolean" }, square_size: { type: "number" }, square_count: { type: "number" } }, required: ["city_id"] } },

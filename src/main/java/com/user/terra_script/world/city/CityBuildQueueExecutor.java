@@ -307,6 +307,7 @@ public final class CityBuildQueueExecutor {
     private static TaskOutcome failTask(BuildTask task, String error) {
         task.retry_count++;
         task.last_error = error;
+        task.last_error_message = localizedError(error);
         task.updated_at_tick = ServerTickTracker.currentTick();
         System.out.println("[C9] fail task=" + taskLabel(task)
                 + " error=" + safe(error)
@@ -324,6 +325,14 @@ public final class CityBuildQueueExecutor {
 
     private static boolean isTerminalError(String error) {
         return "missing_parent_task".equals(error);
+    }
+
+    private static String localizedError(String error) {
+        if ("missing_parent_task".equals(error)) return "父节点任务不存在，当前节点无法继续施工。";
+        if ("waiting_for_parent".equals(error)) return "父节点尚未完成，当前节点需要继续等待。";
+        if ("runtime_footprint_collision".equals(error)) return "当前节点与已落地结构发生运行时碰撞。";
+        if ("structure_place_failed".equals(error)) return "结构写入世界失败，请检查模板和目标位置。";
+        return "当前节点运行时执行失败，请查看错误码和上下文。";
     }
 
     private static boolean intersects(ServerLevel level, StructureInjector.PlacementBounds candidateBounds, BuildTask candidate, BuildTask existing) {

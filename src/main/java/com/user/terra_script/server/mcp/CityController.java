@@ -1006,6 +1006,8 @@ public class CityController {
             if (groupId != null) res.addProperty("group_id", groupId);
             res.addProperty("selection_count", responseSelection.selections != null ? responseSelection.selections.size() : 0);
             res.addProperty("arrangement_count", responseSelection.arrangements != null ? responseSelection.arrangements.size() : 0);
+            res.addProperty("foreman_plan_count", responseSelection.foreman_plans != null ? responseSelection.foreman_plans.size() : 0);
+            res.addProperty("phase_count", responseSelection.phase_list != null ? responseSelection.phase_list.size() : 0);
             res.addProperty("catalog_source", responseSelection.catalog_source);
             res.addProperty("decision_source", responseSelection.decision_source);
             res.addProperty("selection_mode", responseSelection.selection_mode);
@@ -1126,6 +1128,13 @@ public class CityController {
             res.addProperty("city_id", cityId);
             if (groupId != null) res.addProperty("group_id", groupId);
             res.addProperty("foundation_count", responsePlan.foundations != null ? responsePlan.foundations.size() : 0);
+            CityC8Stages.FoundationItem responseFoundation = responsePlan.foundations != null && !responsePlan.foundations.isEmpty() ? responsePlan.foundations.get(0) : null;
+            res.addProperty("session_state", responseFoundation != null ? responseFoundation.session_state : "READY_FOR_AI");
+            res.addProperty("queued_node_count", responseFoundation != null && responseFoundation.node_queue != null ? responseFoundation.node_queue.size() : 0);
+            res.addProperty("validated_node_count", responseFoundation != null && responseFoundation.validated_nodes != null ? responseFoundation.validated_nodes.size() : 0);
+            if (responseFoundation != null && responseFoundation.active_node != null) {
+                res.add("active_node", gson.toJsonTree(responseFoundation.active_node));
+            }
             res.addProperty("file", outputFile.toString());
             if (groupId != null && !groupId.isBlank()) res.add("arrangement_preview", preview);
             HttpUtil.sendResponse(exchange, 200, gson.toJson(res));
@@ -1162,6 +1171,122 @@ public class CityController {
                 return;
             }
             HttpUtil.sendResponse(exchange, 200, gson.toJson(plan));
+        } catch (Exception e) {
+            HttpUtil.handleError(exchange, e);
+        }
+    }
+
+    public void handleCityC8Submit(HttpExchange exchange) throws IOException {
+        if (!HttpUtil.requireMethod(exchange, "POST")) return;
+        try {
+            String body = HttpUtil.readBody(exchange);
+            JsonObject json = JsonParser.parseString(body).getAsJsonObject();
+            String cityId = readOptionalString(json, "city_id");
+            String groupId = readOptionalString(json, "group_id");
+            String buildAreaId = readOptionalString(json, "build_area_id");
+            if (cityId == null || cityId.isBlank()) {
+                HttpUtil.sendResponse(exchange, 400, "{\"error\": \"Missing city_id\"}");
+                return;
+            }
+            Path cityDir = resolveCityDir(cityId);
+            CityC8Stages.C8Plan plan = loadC9GenerationPlan(cityDir, groupId);
+            CityC6Stages.C6Summary c6Summary = CityC6Stages.loadSummary(cityDir);
+            Map<Long, Integer> c6Index = CityC6Stages.loadIndex(cityDir);
+            CityStage1BinaryIO.HeightData heightData = CityStage1BinaryIO.loadHeightData(cityId);
+            CityC2ScanBinaryIO.C2ScanData c2ScanData = CityC2ScanBinaryIO.load(cityId);
+            if (plan == null || c6Summary == null || c6Index == null || c6Index.isEmpty()) {
+                HttpUtil.sendResponse(exchange, 404, "{\"error\": \"Required C8/C6 data not found\"}");
+                return;
+            }
+
+            CityC8Stages.FoundationItem foundation = findFoundation(plan, groupId, buildAreaId);
+            if (foundation == null) {
+                HttpUtil.sendResponse(exchange, 404, "{\"error\": \"Target C8 foundation not found\"}");
+                return;
+            }
+            CityC6Stages.BuildAreaSummary area = findArea(c6Summary, foundation.build_area_numeric_id, foundation.group_id, foundation.build_area_id);
+            if (area == null) {
+                HttpUtil.sendResponse(exchange, 404, "{\"error\": \"Target C6 area not found\"}");
+                return;
+            }
+            CityC8Stages.AreaGeometry geometry = CityC8Stages.buildAreaGeometry(
+                    area,
+                    CityC8Stages.collectAreaBlockKeys(c6Index, foundation.build_area_numeric_id)
+            );
+
+            CityC8Stages.NodeDecision decision = new CityC8Stages.NodeDecision();
+            decision.node_id = readOptionalString(json, "node_id");
+            decision.selected_template_id = readOptionalString(json, "selected_template_id");
+            decision.selected_connector_dir = readOptionalString(json, "selected_connector_dir");
+            if (json.has("selected_rotation") && !json.get("selected_rotation").isJsonNull()) {
+                decision.selected_rotation = json.get("selected_rotation").getAsInt();
+            }
+            if (json.has("x") && !json.get("x").isJsonNull()) decision.x = json.get("x").getAsInt();
+            if (json.has("z") && !json.get("z").isJsonNull()) decision.z = json.get("z").getAsInt();
+            if (json.has("terrain_relax_profile") && json.get("terrain_relax_profile").isJsonObject()) {
+                decision.terrain_relax_profile = parseTerrainRelaxProfile(json.getAsJsonObject("terrain_relax_profile"));
+            }
+
+            CityC8Stages.NodeSubmitResult submitResult = CityC8Stages.submitNodeDecision(foundation, geometry, decision, heightData, c2ScanData);
+            saveC8Plan(cityDir, groupId, plan);
+
+            JsonObject res = new JsonObject();
+            res.addProperty("status", submitResult.ok ? "ok" : "invalid");
+            res.addProperty("step", "C8_SUBMIT");
+            res.addProperty("city_id", cityId);
+            if (groupId != null) res.addProperty("group_id", groupId);
+            res.addProperty("build_area_id", foundation.build_area_id);
+            res.add("submit_result", gson.toJsonTree(submitResult));
+            res.add("queue_summary", gson.toJsonTree(foundation.queue_summary));
+            res.add("active_node", gson.toJsonTree(foundation.active_node));
+            res.add("validated_nodes", gson.toJsonTree(foundation.validated_nodes));
+            res.add("failed_attempts", gson.toJsonTree(foundation.failed_attempts));
+            HttpUtil.sendResponse(exchange, submitResult.ok ? 200 : 422, gson.toJson(res));
+        } catch (Exception e) {
+            HttpUtil.handleError(exchange, e);
+        }
+    }
+
+    public void handleCityC8Retry(HttpExchange exchange) throws IOException {
+        if (!HttpUtil.requireMethod(exchange, "POST")) return;
+        try {
+            String body = HttpUtil.readBody(exchange);
+            JsonObject json = JsonParser.parseString(body).getAsJsonObject();
+            String cityId = readOptionalString(json, "city_id");
+            String groupId = readOptionalString(json, "group_id");
+            String buildAreaId = readOptionalString(json, "build_area_id");
+            String nodeId = readOptionalString(json, "node_id");
+            if (cityId == null || cityId.isBlank() || nodeId == null || nodeId.isBlank()) {
+                HttpUtil.sendResponse(exchange, 400, "{\"error\": \"Missing city_id or node_id\"}");
+                return;
+            }
+            Path cityDir = resolveCityDir(cityId);
+            CityC8Stages.C8Plan plan = loadC9GenerationPlan(cityDir, groupId);
+            if (plan == null) {
+                HttpUtil.sendResponse(exchange, 404, "{\"error\": \"C8 plan not found\"}");
+                return;
+            }
+            CityC8Stages.FoundationItem foundation = findFoundation(plan, groupId, buildAreaId);
+            if (foundation == null) {
+                HttpUtil.sendResponse(exchange, 404, "{\"error\": \"Target C8 foundation not found\"}");
+                return;
+            }
+            CityC8Stages.NodeTask retried = CityC8Stages.retryNode(foundation, nodeId);
+            if (retried == null) {
+                HttpUtil.sendResponse(exchange, 404, "{\"error\": \"Target node not found\"}");
+                return;
+            }
+            saveC8Plan(cityDir, groupId, plan);
+
+            JsonObject res = new JsonObject();
+            res.addProperty("status", "ok");
+            res.addProperty("step", "C8_RETRY");
+            res.addProperty("city_id", cityId);
+            if (groupId != null) res.addProperty("group_id", groupId);
+            res.add("node", gson.toJsonTree(retried));
+            res.add("queue_summary", gson.toJsonTree(foundation.queue_summary));
+            res.add("active_node", gson.toJsonTree(foundation.active_node));
+            HttpUtil.sendResponse(exchange, 200, gson.toJson(res));
         } catch (Exception e) {
             HttpUtil.handleError(exchange, e);
         }
@@ -2052,6 +2177,7 @@ public class CityController {
     private static CityC7Stages.C7Selection filterC7SelectionByGroup(CityC7Stages.C7Selection selection, String groupId) {
         if (selection == null || groupId == null || groupId.isBlank()) return selection;
         CityC7Stages.C7Selection copy = new CityC7Stages.C7Selection();
+        copy.version = selection.version;
         copy.ok = selection.ok;
         copy.city_id = selection.city_id;
         copy.generated_at_epoch_ms = selection.generated_at_epoch_ms;
@@ -2062,6 +2188,15 @@ public class CityController {
         copy.filtered_candidate_count = selection.filtered_candidate_count;
         copy.strict_filter_failure_reason = selection.strict_filter_failure_reason;
         copy.puzzle_depth = selection.puzzle_depth;
+        if (selection.foreman_plans != null) {
+            for (CityC7Stages.ForemanPlan plan : selection.foreman_plans) {
+                if (plan != null && groupId.equals(plan.group_id)) copy.foreman_plans.add(plan);
+            }
+        }
+        copy.foreman_plan = !copy.foreman_plans.isEmpty() ? copy.foreman_plans.get(0) : null;
+        if (copy.foreman_plan != null && copy.foreman_plan.phase_list != null) {
+            copy.phase_list.addAll(copy.foreman_plan.phase_list);
+        }
         if (selection.selections != null) {
             for (CityC7Stages.TemplateSelectionItem item : selection.selections) {
                 if (item != null && groupId.equals(item.group_id)) copy.selections.add(item);
@@ -2151,5 +2286,53 @@ public class CityController {
 
     private static String safe(String value) {
         return value == null ? "" : value;
+    }
+
+    private static CityC8Stages.FoundationItem findFoundation(CityC8Stages.C8Plan plan, String groupId, String buildAreaId) {
+        if (plan == null || plan.foundations == null) return null;
+        for (CityC8Stages.FoundationItem item : plan.foundations) {
+            if (item == null) continue;
+            if (buildAreaId != null && !buildAreaId.isBlank() && buildAreaId.equals(item.build_area_id)) return item;
+            if (groupId != null && !groupId.isBlank() && groupId.equals(item.group_id)) return item;
+        }
+        return plan.foundations.isEmpty() ? null : plan.foundations.get(0);
+    }
+
+    private static CityC6Stages.BuildAreaSummary findArea(
+            CityC6Stages.C6Summary summary,
+            int buildAreaNumericId,
+            String groupId,
+            String buildAreaId
+    ) {
+        if (summary == null || summary.areas == null) return null;
+        for (CityC6Stages.BuildAreaSummary area : summary.areas) {
+            if (area == null) continue;
+            if (area.build_area_numeric_id == buildAreaNumericId) return area;
+            if (buildAreaId != null && buildAreaId.equals(area.build_area_id)) return area;
+            if (groupId != null && groupId.equals(area.group_id)) return area;
+        }
+        return null;
+    }
+
+    private static CityC8Stages.TerrainRelaxProfile parseTerrainRelaxProfile(JsonObject json) {
+        CityC8Stages.TerrainRelaxProfile profile = new CityC8Stages.TerrainRelaxProfile();
+        if (json == null) return profile;
+        if (json.has("note") && !json.get("note").isJsonNull()) profile.note = json.get("note").getAsString();
+        if (json.has("max_height_delta") && !json.get("max_height_delta").isJsonNull()) {
+            profile.max_height_delta = json.get("max_height_delta").getAsInt();
+        }
+        if (json.has("max_slope") && !json.get("max_slope").isJsonNull()) {
+            profile.max_slope = json.get("max_slope").getAsDouble();
+        }
+        return profile;
+    }
+
+    private static void saveC8Plan(Path cityDir, String groupId, CityC8Stages.C8Plan plan) throws Exception {
+        if (groupId != null && !groupId.isBlank()) {
+            Path groupDir = resolveGroupDir(cityDir, groupId);
+            java.nio.file.Files.writeString(groupDir.resolve("c8_foundation.json"), new Gson().toJson(plan));
+            return;
+        }
+        CityC8Stages.save(cityDir, plan);
     }
 }

@@ -79,6 +79,8 @@ public final class CityC9Stages {
         public boolean terminalized;
         public boolean placed;
         public String reason;
+        public String runtime_error_code;
+        public String runtime_error_details;
     }
 
     public static class C9Decoration {
@@ -174,27 +176,29 @@ public final class CityC9Stages {
             p.foundation_type = foundation.foundation_type;
             p.base_y = foundation.base_y;
             p.scanned_blocks = areaBlocks.size();
-            p.planned_nodes = foundation.placements != null ? foundation.placements.size() : 0;
+            List<CityC8Stages.PlacementNode> executableNodes = executablePlacements(foundation);
+            p.planned_nodes = executableNodes.size();
             p.changed_blocks = 0;
             CityC8Stages.FoundationItem executableFoundation = copyFoundationWithoutPlacements(foundation);
-            if (foundation.placements != null) {
-                for (CityC8Stages.PlacementNode node : foundation.placements) {
-                    if (node == null) continue;
-                    boolean insideArea = footprintInsideArea(areaBlocks, node);
-                    if (insideArea) {
-                        executableFoundation.placements.add(node);
-                        plannedTaskCount++;
-                    }
-                    recordStructureResult(
-                            p,
-                            node,
-                            node.y > 0 ? node.y : foundation.base_y,
-                            false,
-                            insideArea
-                                    ? (mode == Mode.DRY_RUN ? "dry_run_planned" : "queued_for_build")
-                                    : "runtime_out_of_area"
-                    );
+            for (CityC8Stages.PlacementNode node : executableNodes) {
+                if (node == null) continue;
+                boolean insideArea = footprintInsideArea(areaBlocks, node);
+                if (insideArea) {
+                    executableFoundation.placements.add(node);
+                    plannedTaskCount++;
                 }
+                recordStructureResult(
+                        p,
+                        node,
+                        node.y > 0 ? node.y : foundation.base_y,
+                        false,
+                        insideArea
+                                ? "queued_for_build"
+                                : "runtime_out_of_area",
+                        insideArea
+                                ? (mode == Mode.DRY_RUN ? "当前节点已完成规划，等待后续建造。" : "当前节点已入建造队列。")
+                                : "当前节点超出了建造区范围。"
+                );
             }
             out.placement.items.add(p);
             executablePlan.foundations.add(executableFoundation);
@@ -202,7 +206,7 @@ public final class CityC9Stages {
             DecorationItem d = new DecorationItem();
             d.build_area_id = area.build_area_id;
             d.strategy = inferDecorStrategy(foundation.foundation_type);
-            d.note = "Generated from C8 foundation type";
+            d.note = "根据当前基台类型生成的默认装饰策略。";
             out.decoration.items.add(d);
         }
 
@@ -272,7 +276,7 @@ public final class CityC9Stages {
             for (CityC8Stages.PlacementNode node : orderedNodes) {
                 if (node == null || node.template_id == null || node.template_id.isBlank()) continue;
                 if (isDescendantOfAny(node, byId, terminatedBranchRoots)) {
-                    recordStructureResult(resultItem, node, targetY, false, "skipped_terminalized_branch");
+                    recordStructureResult(resultItem, node, targetY, false, "skipped_terminalized_branch", "当前节点属于已终止分支，已跳过本次落地。");
                     continue;
                 }
                 PlacedStructure placed = new PlacedStructure();
@@ -384,6 +388,7 @@ public final class CityC9Stages {
             CityC8Stages.PlacementNode node,
             int targetY,
             boolean placedFlag,
+            String reasonCode,
             String reason
     ) {
         if (resultItem == null || node == null) return;
@@ -398,7 +403,24 @@ public final class CityC9Stages {
         placed.terminalized = node.terminalized;
         placed.placed = placedFlag;
         placed.reason = reason;
+        if (!placedFlag) {
+            placed.runtime_error_code = reasonCode;
+            placed.runtime_error_details = reason;
+        }
         resultItem.structures.add(placed);
+    }
+
+    private static List<CityC8Stages.PlacementNode> executablePlacements(CityC8Stages.FoundationItem foundation) {
+        List<CityC8Stages.PlacementNode> out = new ArrayList<>();
+        if (foundation == null) return out;
+        if (foundation.validated_nodes != null && !foundation.validated_nodes.isEmpty()) {
+            for (CityC8Stages.NodeTask task : foundation.validated_nodes) {
+                if (task != null && task.placement != null) out.add(task.placement);
+            }
+            if (!out.isEmpty()) return out;
+        }
+        if (foundation.placements != null) out.addAll(foundation.placements);
+        return out;
     }
 
     private static boolean shouldCaptureSnapshot(CityC8Stages.PlacementNode node) {
