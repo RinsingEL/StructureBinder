@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.user.terra_script.world.StructureInjector;
 import com.user.terra_script.world.city.stage.c6.CityC6Stages;
 import com.user.terra_script.world.city.stage.c8.CityC8Stages;
+import com.user.terra_script.world.city.stage.c9.CityC9BuildQueue.BuildTask;
 import com.user.terra_script.world.city.stage.c9.CityC9BuildQueue.BuildQueue;
 import com.user.terra_script.world.city.stage.c9.CityC9BuildQueue.QueueSummary;
 import net.minecraft.core.BlockPos;
@@ -221,6 +222,56 @@ public final class CityC9Stages {
         return out;
     }
 
+    public static void syncPlacementWithQueue(C9Placement placement, BuildQueue queue) {
+        if (placement == null || placement.items == null || placement.items.isEmpty() || queue == null || queue.tasks == null) {
+            return;
+        }
+        Map<String, BuildTask> tasksByNode = new HashMap<>();
+        for (BuildTask task : queue.tasks) {
+            if (task == null || task.node_id == null || task.node_id.isBlank()) continue;
+            tasksByNode.put(taskKey(task.build_area_id, task.node_id), task);
+        }
+
+        int appliedCount = 0;
+        int changedCount = 0;
+        for (PlacementItem item : placement.items) {
+            if (item == null || item.structures == null) continue;
+            item.placed_structures = 0;
+            for (PlacedStructure structure : item.structures) {
+                if (structure == null || structure.node_id == null || structure.node_id.isBlank()) continue;
+                BuildTask task = tasksByNode.get(taskKey(item.build_area_id, structure.node_id));
+                if (task == null) continue;
+                String status = CityC9BuildQueue.Status.normalize(task.status);
+                if (CityC9BuildQueue.Status.DONE.name().equals(status)) {
+                    structure.placed = true;
+                    structure.reason = "placed_from_c9_queue";
+                    structure.runtime_error_code = null;
+                    structure.runtime_error_details = null;
+                    item.placed_structures++;
+                    appliedCount++;
+                    changedCount++;
+                    continue;
+                }
+                structure.placed = false;
+                structure.runtime_error_code = task.last_error;
+                structure.runtime_error_details = task.last_error_message;
+                if (CityC9BuildQueue.Status.BLOCKED.name().equals(status)) {
+                    structure.reason = task.last_error_message != null && !task.last_error_message.isBlank()
+                            ? task.last_error_message
+                            : "blocked_in_c9_queue";
+                } else if (CityC9BuildQueue.Status.BUILDING.name().equals(status)) {
+                    structure.reason = "building_in_c9_queue";
+                } else if (CityC9BuildQueue.Status.READY.name().equals(status)) {
+                    structure.reason = "ready_in_c9_queue";
+                } else {
+                    structure.reason = "queued_for_build";
+                }
+            }
+        }
+        placement.applied_tasks_count = Math.max(placement.applied_tasks_count, appliedCount);
+        placement.changed_blocks_total = Math.max(placement.changed_blocks_total, changedCount);
+    }
+
     public static void save(Path cityDir, C9Result result) throws Exception {
         if (cityDir == null || result == null) return;
         Files.createDirectories(cityDir);
@@ -427,6 +478,14 @@ public final class CityC9Stages {
         return node != null
                 && node.fallback_terminal_template_id != null
                 && !node.fallback_terminal_template_id.isBlank();
+    }
+
+    private static String taskKey(String buildAreaId, String nodeId) {
+        return safe(buildAreaId) + "|" + safe(nodeId);
+    }
+
+    private static String safe(String value) {
+        return value == null ? "" : value;
     }
 
     private static String validateRuntimePlacement(

@@ -2,12 +2,16 @@ package com.user.terra_script.world.city.stage.c9;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.user.terra_script.world.StructureInjector;
 import com.user.terra_script.world.city.stage.CityStagePreviewUtil;
 import com.user.terra_script.world.city.stage.c1.CityStage1BinaryIO;
 import com.user.terra_script.world.city.stage.c2.CityC2ScanBinaryIO;
 import com.user.terra_script.world.city.stage.c6.CityC6Stages;
 import com.user.terra_script.world.city.stage.c8.CityC8Stages;
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.storage.LevelResource;
 
 import java.awt.BasicStroke;
@@ -66,6 +70,7 @@ public final class CityC9PlacementPreviewExporter {
         }
         String normalizedMode = safe(mode).toLowerCase();
         boolean applyPreview = "apply_now".equals(normalizedMode);
+        ServerLevel level = server.overworld();
 
         CityStagePreviewUtil.AreaPreviewContext previewContext = CityStagePreviewUtil.fromGeometry(geometry);
         BufferedImage image = CityStagePreviewUtil.renderBaseTerrain(heightData, c2ScanData, previewContext);
@@ -74,7 +79,7 @@ public final class CityC9PlacementPreviewExporter {
             CityStagePreviewUtil.configure(g);
             CityStagePreviewUtil.drawAreaShape(g, previewContext);
             CityStagePreviewUtil.drawPrimaryModules(g, previewContext, layoutPlan);
-            drawStructureRects(g, previewContext, placementItem, nodeById, queue, groupId, placementItem.build_area_id, applyPreview);
+            drawStructureRects(g, previewContext, placementItem, nodeById, queue, groupId, placementItem.build_area_id, applyPreview, level);
             CityStagePreviewUtil.applyGridOverlay(image, previewContext, groupId + " / C9 " + safe(mode));
         } finally {
             g.dispose();
@@ -93,7 +98,8 @@ public final class CityC9PlacementPreviewExporter {
         legend.addProperty("foundation_type", safe(placementItem.foundation_type));
         legend.addProperty("base_y", placementItem.base_y);
         legend.addProperty("geometry_semantics", "polygon_blocks");
-        legend.add("structures", buildStructureLegend(placementItem, nodeById, queue, groupId, placementItem.build_area_id, applyPreview));
+        legend.addProperty("structure_bounds_semantics", "mc_place_bounds");
+        legend.add("structures", buildStructureLegend(placementItem, nodeById, queue, groupId, placementItem.build_area_id, applyPreview, level));
 
         Path cityDir = server.getWorldPath(LevelResource.ROOT).resolve("terra_script").resolve("cities").resolve(cityId);
         return CityStagePreviewUtil.writeGroupPreview(
@@ -115,7 +121,8 @@ public final class CityC9PlacementPreviewExporter {
             CityC9BuildQueue.BuildQueue queue,
             String groupId,
             String buildAreaId,
-            boolean applyPreview
+            boolean applyPreview,
+            ServerLevel level
     ) {
         if (placementItem.structures == null) return;
         Map<String, CityC9BuildQueue.BuildTask> tasksByNodeId = indexTasks(queue, groupId, buildAreaId);
@@ -125,10 +132,11 @@ public final class CityC9PlacementPreviewExporter {
             CityC8Stages.PlacementNode node = structure.node_id != null ? nodeById.get(structure.node_id) : null;
             CityC9BuildQueue.BuildTask task = structure.node_id != null ? tasksByNodeId.get(structure.node_id) : null;
             Color color = previewColor(structure, task, applyPreview);
-            int minX = node != null && node.footprint_min_x != null ? node.footprint_min_x : structure.x - 1;
-            int minZ = node != null && node.footprint_min_z != null ? node.footprint_min_z : structure.z - 1;
-            int maxX = node != null && node.footprint_max_x != null ? node.footprint_max_x : structure.x + 1;
-            int maxZ = node != null && node.footprint_max_z != null ? node.footprint_max_z : structure.z + 1;
+            PreviewBounds bounds = resolvePreviewBounds(level, structure, task, node);
+            int minX = bounds.minX;
+            int minZ = bounds.minZ;
+            int maxX = bounds.maxX;
+            int maxZ = bounds.maxZ;
 
             int px0 = CityStagePreviewUtil.toPreviewCoord(previewContext, minX, true);
             int pz0 = CityStagePreviewUtil.toPreviewCoord(previewContext, minZ, false);
@@ -152,7 +160,8 @@ public final class CityC9PlacementPreviewExporter {
             CityC9BuildQueue.BuildQueue queue,
             String groupId,
             String buildAreaId,
-            boolean applyPreview
+            boolean applyPreview,
+            ServerLevel level
     ) {
         JsonArray out = new JsonArray();
         if (placementItem.structures == null) return out;
@@ -171,18 +180,54 @@ public final class CityC9PlacementPreviewExporter {
             item.addProperty("rotation", structure.rotation);
             item.addProperty("color", toHex(colorFor(structure.node_id != null ? structure.node_id : structure.template_id)));
             CityC8Stages.PlacementNode node = structure.node_id != null ? nodeById.get(structure.node_id) : null;
-            if (node != null && node.footprint_min_x != null && node.footprint_min_z != null
-                    && node.footprint_max_x != null && node.footprint_max_z != null) {
-                JsonObject footprint = new JsonObject();
-                footprint.addProperty("minX", node.footprint_min_x);
-                footprint.addProperty("minZ", node.footprint_min_z);
-                footprint.addProperty("maxX", node.footprint_max_x);
-                footprint.addProperty("maxZ", node.footprint_max_z);
-                item.add("footprint", footprint);
-            }
+            PreviewBounds bounds = resolvePreviewBounds(level, structure, task, node);
+            JsonObject footprint = new JsonObject();
+            footprint.addProperty("minX", bounds.minX);
+            footprint.addProperty("minZ", bounds.minZ);
+            footprint.addProperty("maxX", bounds.maxX);
+            footprint.addProperty("maxZ", bounds.maxZ);
+            item.add("footprint", footprint);
             out.add(item);
         }
         return out;
+    }
+
+    private static PreviewBounds resolvePreviewBounds(
+            ServerLevel level,
+            CityC9Stages.PlacedStructure structure,
+            CityC9BuildQueue.BuildTask task,
+            CityC8Stages.PlacementNode node
+    ) {
+        String templateId = task != null && task.template_id != null && !task.template_id.isBlank()
+                ? task.template_id
+                : structure != null ? structure.template_id : null;
+        Integer x = task != null ? task.x : structure != null ? structure.x : null;
+        Integer y = task != null ? task.y : structure != null ? structure.y : null;
+        Integer z = task != null ? task.z : structure != null ? structure.z : null;
+        Integer rotation = task != null ? task.rotation : structure != null ? structure.rotation : null;
+        if (level != null && templateId != null && !templateId.isBlank() && x != null && y != null && z != null) {
+            StructureInjector.PlacementBounds placed = StructureInjector.placementBounds(
+                    level,
+                    templateId,
+                    new BlockPos(x, y, z),
+                    toRotation(rotation != null ? rotation : 0)
+            );
+            if (placed != null) {
+                return new PreviewBounds(
+                        placed.minX,
+                        placed.minZ,
+                        Math.max(placed.minX, placed.maxXExclusive - 1),
+                        Math.max(placed.minZ, placed.maxZExclusive - 1)
+                );
+            }
+        }
+        if (node != null && node.footprint_min_x != null && node.footprint_min_z != null
+                && node.footprint_max_x != null && node.footprint_max_z != null) {
+            return new PreviewBounds(node.footprint_min_x, node.footprint_min_z, node.footprint_max_x, node.footprint_max_z);
+        }
+        int sx = x != null ? x : 0;
+        int sz = z != null ? z : 0;
+        return new PreviewBounds(sx - 1, sz - 1, sx + 1, sz + 1);
     }
 
     private static Color previewColor(CityC9Stages.PlacedStructure structure, CityC9BuildQueue.BuildTask task, boolean applyPreview) {
@@ -242,6 +287,16 @@ public final class CityC9PlacementPreviewExporter {
         return String.format("#%02X%02X%02X", color.getRed(), color.getGreen(), color.getBlue());
     }
 
+    private static Rotation toRotation(int rotationDegrees) {
+        int normalized = ((rotationDegrees % 360) + 360) % 360;
+        return switch (normalized) {
+            case 90 -> Rotation.CLOCKWISE_90;
+            case 180 -> Rotation.CLOCKWISE_180;
+            case 270 -> Rotation.COUNTERCLOCKWISE_90;
+            default -> Rotation.NONE;
+        };
+    }
+
     private static CityC6Stages.BuildAreaSummary findArea(CityC6Stages.C6Summary summary, String groupId) {
         CityC6Stages.BuildAreaSummary best = null;
         for (CityC6Stages.BuildAreaSummary area : summary.areas) {
@@ -270,4 +325,6 @@ public final class CityC9PlacementPreviewExporter {
     private static String safe(String value) {
         return value == null ? "" : value;
     }
+
+    private record PreviewBounds(int minX, int minZ, int maxX, int maxZ) {}
 }

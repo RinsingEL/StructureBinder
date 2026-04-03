@@ -118,6 +118,7 @@ export const cityHandlers: Record<string, ToolHandler> = {
   async city_c9_generate(args) {
     const payload: Record<string, any> = { city_id: args.city_id };
     if (args.group_id !== undefined) payload.group_id = String(args.group_id);
+    if (args.mode !== undefined) payload.mode = String(args.mode);
     if (args.apply_blocks !== undefined) payload.apply_blocks = Boolean(args.apply_blocks);
     if (args.max_blocks !== undefined) payload.max_blocks = Number(args.max_blocks);
     return invokeMcTask({ url: `${MC_API_URL}/city_c9_generate`, payload, policy: cityTaskPolicies.city_c9_generate });

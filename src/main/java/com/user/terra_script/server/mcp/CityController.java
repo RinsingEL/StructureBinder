@@ -1379,6 +1379,9 @@ public class CityController {
                                         ? CityC9BuildQueue.filtered(latestQueue, groupId)
                                         : latestQueue;
                                 holder[0].queue_summary = CityC9BuildQueue.summarize(holder[0].queue, null);
+                                if (holder[0].placement != null) {
+                                    CityC9Stages.syncPlacementWithQueue(holder[0].placement, holder[0].queue);
+                                }
                                 System.out.println("[C9] queue_after_apply city=" + cityId
                                         + " group=" + safe(groupId)
                                         + " planned=" + (holder[0].queue_summary != null ? holder[0].queue_summary.planned_count : -1)
@@ -1487,7 +1490,12 @@ public class CityController {
                 JsonObject res = new JsonObject();
                 res.addProperty("step", "C9");
                 res.addProperty("ok", true);
-                if (java.nio.file.Files.exists(placementFile)) res.add("placement", JsonParser.parseString(java.nio.file.Files.readString(placementFile)));
+                if (java.nio.file.Files.exists(placementFile)) {
+                    CityC9Stages.C9Placement placement = new Gson().fromJson(java.nio.file.Files.readString(placementFile), CityC9Stages.C9Placement.class);
+                    CityC9Stages.syncPlacementWithQueue(placement, queue);
+                    java.nio.file.Files.writeString(placementFile, gson.toJson(placement));
+                    res.add("placement", gson.toJsonTree(placement));
+                }
                 if (java.nio.file.Files.exists(decorationFile)) res.add("decoration", JsonParser.parseString(java.nio.file.Files.readString(decorationFile)));
                 res.add("queue", gson.toJsonTree(queue));
                 res.add("queue_summary", gson.toJsonTree(CityC9BuildQueue.summarize(queue, null)));

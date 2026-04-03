@@ -9,6 +9,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 class CityC9StagesTest {
     @Test
@@ -62,6 +63,31 @@ class CityC9StagesTest {
         assertEquals(0, result.placement.enqueued_tasks_count);
         assertEquals("runtime_out_of_area", result.placement.items.get(0).structures.get(0).runtime_error_code);
         assertEquals("当前节点超出了建造区范围。", result.placement.items.get(0).structures.get(0).reason);
+    }
+
+    @Test
+    void syncPlacementWithQueueMarksDoneTasksAsPlaced() {
+        CityC9Stages.C9Result result = CityC9Stages.generate(
+                "city_demo",
+                summary(),
+                index(),
+                validPlan(),
+                CityC9Stages.Mode.ENQUEUE,
+                100,
+                null
+        );
+
+        assertNotNull(result.queue);
+        result.queue.tasks.get(0).status = CityC9BuildQueue.Status.DONE.name();
+        CityC9Stages.syncPlacementWithQueue(result.placement, result.queue);
+
+        CityC9Stages.PlacedStructure structure = result.placement.items.get(0).structures.get(0);
+        assertEquals(true, structure.placed);
+        assertEquals("placed_from_c9_queue", structure.reason);
+        assertNull(structure.runtime_error_code);
+        assertNull(structure.runtime_error_details);
+        assertEquals(1, result.placement.applied_tasks_count);
+        assertEquals(1, result.placement.items.get(0).placed_structures);
     }
 
     private static CityC6Stages.C6Summary summary() {

@@ -96,7 +96,7 @@ export const cityTools: ToolDefinition[] = [
       required: ["city_id", "node_id"],
     },
   },
-  { name: "city_c9_generate", description: "为单个功能区 group 生成 C9 放置与装饰计划。整座城市需要把每个 group 分别推进到 C9，而不是一次性完成全部区域。", inputSchema: { type: "object", properties: { city_id: { type: "string" }, group_id: { type: "string" }, apply_blocks: { type: "boolean" }, max_blocks: { type: "number" } }, required: ["city_id"] } },
+  { name: "city_c9_generate", description: "为单个功能区 group 生成 C9 放置与装饰计划。可通过 mode 显式指定 dry_run、enqueue 或 apply_now；其中 apply_now 会立即尝试把当前可执行节点写入世界。", inputSchema: { type: "object", properties: { city_id: { type: "string" }, group_id: { type: "string" }, mode: { type: "string", enum: ["dry_run", "enqueue", "apply_now", "DRY_RUN", "ENQUEUE", "APPLY_NOW"] }, apply_blocks: { type: "boolean" }, max_blocks: { type: "number" } }, required: ["city_id"] } },
   { name: "city_c9_data", description: "读取单个功能区 group 的 C9 结果。", inputSchema: { type: "object", properties: { city_id: { type: "string" }, group_id: { type: "string" } }, required: ["city_id"] } },
   { name: "city_c6_pave_stone", description: "对 C6 中选定的单个功能区 group / build_area 做铺石测试操作，用于验证该局部区域的地表处理。", inputSchema: { type: "object", properties: { city_id: { type: "string" }, group_id: { type: "string" }, build_area_id: { type: "string" }, square_only: { type: "boolean" }, square_size: { type: "number" }, square_count: { type: "number" } }, required: ["city_id"] } },
 ];

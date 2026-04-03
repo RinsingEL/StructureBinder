@@ -145,6 +145,7 @@ public class StructureInjector {
         int originY = surfaceY - 1;
 
         BlockPos placePos = new BlockPos(originX, originY, originZ);
+        Bounds bounds = boundsFor(template, placePos, rotation);
 
         // 6. 配置放置参数
         StructurePlaceSettings settings = new StructurePlaceSettings()
@@ -152,7 +153,9 @@ public class StructureInjector {
                 .setMirror(Mirror.NONE)
                 .setIgnoreEntities(false); // 是否忽略结构里自带的实体(如村民)
 
-        System.out.println("[TerraScript] Placing DIRECTLY: " + structureId + " at " + placePos + " (" + rotation + ")");
+        System.out.println("[TerraScript] Placing DIRECTLY: " + structureId + " at " + placePos + " (" + rotation + ")"
+                + " bounds=(" + bounds.minX + "," + bounds.minY + "," + bounds.minZ + ")->("
+                + (bounds.maxXExclusive - 1) + "," + (bounds.maxYExclusive - 1) + "," + (bounds.maxZExclusive - 1) + ")");
 
         try {
             // 7. 强行放置 (这是最关键的一步)
@@ -175,6 +178,7 @@ public class StructureInjector {
         }
         StructureTemplate template = templateOp.get();
         Vec3i size = template.getSize();
+        Bounds bounds = boundsFor(template, origin, rotation != null ? rotation : Rotation.NONE);
         StructurePlaceSettings settings = new StructurePlaceSettings()
                 .setRotation(rotation != null ? rotation : Rotation.NONE)
                 .setMirror(Mirror.NONE)
@@ -184,10 +188,14 @@ public class StructureInjector {
                     + " origin=" + origin
                     + " rotation=" + (rotation != null ? rotation : Rotation.NONE)
                     + " size=(" + size.getX() + "," + size.getY() + "," + size.getZ() + ")"
+                    + " bounds=(" + bounds.minX + "," + bounds.minY + "," + bounds.minZ + ")->("
+                    + (bounds.maxXExclusive - 1) + "," + (bounds.maxYExclusive - 1) + "," + (bounds.maxZExclusive - 1) + ")"
                     + " clear_jigsaw=" + clearJigsawBlocks);
             boolean placed = template.placeInWorld(level, origin, origin, settings, level.random, 2);
             System.out.println("[TerraScript] spawnStructureAtBlock result template=" + structureId
                     + " origin=" + origin
+                    + " bounds=(" + bounds.minX + "," + bounds.minY + "," + bounds.minZ + ")->("
+                    + (bounds.maxXExclusive - 1) + "," + (bounds.maxYExclusive - 1) + "," + (bounds.maxZExclusive - 1) + ")"
                     + " placed=" + placed);
             if (placed && clearJigsawBlocks) {
                 clearPlacedJigsawBlocks(level, template, origin, rotation != null ? rotation : Rotation.NONE);
