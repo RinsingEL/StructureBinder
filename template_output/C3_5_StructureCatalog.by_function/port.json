@@ -1,0 +1,217 @@
+{
+  "step": "C3.5",
+  "ok": true,
+  "city_id": "city_default",
+  "catalog_version": 2,
+  "generated_at_epoch_ms": 1774447195997,
+  "function_enum_table": [
+    "civic_center",
+    "commercial",
+    "market",
+    "residential_low",
+    "residential_mid",
+    "residential_high",
+    "warehouse",
+    "port",
+    "watchtower",
+    "fortification",
+    "farm",
+    "fishing",
+    "religious",
+    "workshop",
+    "landmark"
+  ],
+  "structures": [
+    {
+      "structure_id": "trek:overworld/medium/ship_pillager",
+      "size": {
+        "length": 21,
+        "width": 13,
+        "height": 22
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "east",
+          "south",
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.0,
+        "commercial": 0.0,
+        "residential": 0.0,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.88,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "port",
+          "score": 0.93
+        }
+      ],
+      "namespace": "trek",
+      "path": "overworld/medium/ship_pillager",
+      "size_tier": "L",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "east",
+        "west",
+        "south"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "water_edge",
+      "growth_axis": "z",
+      "vertical_role": "ground",
+      "vertical_clearance": 22,
+      "preset_pool": "port_district",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "port_district",
+        "evidence": "overworld/medium/ship_pillager"
+      },
+      "function_definition": {
+        "primary_function": "port",
+        "secondary_functions": [],
+        "semantic_role": "waterfront",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 12,
+          "max_z": 20
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 22
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 12,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 20
+          },
+          {
+            "x": 12,
+            "z": 20
+          },
+          {
+            "x": 6,
+            "z": 10
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 6,
+            "y": 0,
+            "z": 20,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.18,
+        "max_height_delta": 3,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_east_6_0_6",
+          "local_pos": {
+            "x": 6,
+            "y": 0,
+            "z": 6
+          },
+          "facing": "east",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "landmark_pool"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_west_16_2_7",
+          "local_pos": {
+            "x": 16,
+            "y": 2,
+            "z": 7
+          },
+          "facing": "west",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "landmark_pool"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_south_8_15_6",
+          "local_pos": {
+            "x": 8,
+            "y": 15,
+            "z": 6
+          },
+          "facing": "south",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "landmark_pool"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "landmark": 1.25,
+        "maritime": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    }
+  ]
+}

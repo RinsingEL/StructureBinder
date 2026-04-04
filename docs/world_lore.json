@@ -1,0 +1,74 @@
+[
+  {
+    "timestamp": "2026-01-10T14:38:33.810Z",
+    "concept_name": "绿原帝国",
+    "preferred_region_id": 8,
+    "theme": "内陆草原的农骑帝国，腹地广阔、贸易繁盛。",
+    "capital_requirements": "平坦草原腹地，低坡度，远离海岸",
+    "planned_index": 1,
+    "total_planned": 8
+  },
+  {
+    "timestamp": "2026-01-10T14:38:34.458Z",
+    "concept_name": "寒杉王国",
+    "preferred_region_id": 2,
+    "theme": "寒带针叶林内陆王国，重视林业与矿石开采。",
+    "capital_requirements": "冷凉内陆平地或缓坡林地",
+    "planned_index": 2,
+    "total_planned": 8
+  },
+  {
+    "timestamp": "2026-01-10T14:38:35.940Z",
+    "concept_name": "赤沙苏丹国",
+    "preferred_region_id": 7,
+    "theme": "内陆荒漠的商贸苏丹国，绿洲与驼队支撑帝国财政。",
+    "capital_requirements": "干旱平原或沙地的缓坡内陆区",
+    "planned_index": 3,
+    "total_planned": 8
+  },
+  {
+    "timestamp": "2026-01-10T14:38:37.212Z",
+    "concept_name": "雨影邦",
+    "preferred_region_id": 1,
+    "theme": "雨林深处的小型邦国，靠木材、香料与草药贸易维生。",
+    "capital_requirements": "密林腹地缓坡或高台，规模小",
+    "planned_index": 4,
+    "total_planned": 8
+  },
+  {
+    "timestamp": "2026-01-10T14:38:38.451Z",
+    "concept_name": "燧沙城邦",
+    "preferred_region_id": 1,
+    "theme": "干旱腹地的小型沙漠城邦，井渠农业与商队维持生计。",
+    "capital_requirements": "干燥平地、规模小",
+    "planned_index": 5,
+    "total_planned": 8
+  },
+  {
+    "timestamp": "2026-01-10T14:38:39.771Z",
+    "concept_name": "雪棘自治邦",
+    "preferred_region_id": 5,
+    "theme": "冰刺平原上的小型自治邦，游牧与驯兽并存。",
+    "capital_requirements": "极寒平坦地带，规模小",
+    "planned_index": 6,
+    "total_planned": 8
+  },
+  {
+    "timestamp": "2026-01-10T14:38:41.325Z",
+    "concept_name": "赤脊矮人领",
+    "preferred_region_id": 8,
+    "theme": "内陆山脊上的矮人小国，矿脉与石堡文化并重。",
+    "capital_requirements": "山脊或峰顶，斜率较高，TPI为正，规模小",
+    "planned_index": 7,
+    "total_planned": 8
+  },
+  {
+    "timestamp": "2026-01-10T14:38:42.860Z",
+    "concept_name": "寒湾小公国",
+    "preferred_region_id": 2,
+    "theme": "冷凉内陆湖区的小国，渔猎与驿路贸易并重。",
+    "capital_requirements": "内陆平坦低地，靠近湖泊或盆地，规模小",
+    "planned_index": 8,
+    "total_planned": 8
+  }
+]

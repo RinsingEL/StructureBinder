@@ -1,0 +1,185 @@
+{
+  "step": "C3.5",
+  "ok": true,
+  "city_id": "city_default",
+  "catalog_version": 2,
+  "generated_at_epoch_ms": 1774447195997,
+  "function_enum_table": [
+    "civic_center",
+    "commercial",
+    "market",
+    "residential_low",
+    "residential_mid",
+    "residential_high",
+    "warehouse",
+    "port",
+    "watchtower",
+    "fortification",
+    "farm",
+    "fishing",
+    "religious",
+    "workshop",
+    "landmark"
+  ],
+  "structures": [
+    {
+      "structure_id": "trek:overworld/medium/dirt_hut",
+      "size": {
+        "length": 6,
+        "width": 5,
+        "height": 5
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "east"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.0,
+        "commercial": 0.1,
+        "residential": 0.85,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "residential_low",
+          "score": 0.9
+        }
+      ],
+      "namespace": "trek",
+      "path": "overworld/medium/dirt_hut",
+      "size_tier": "S",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "east"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "road_edge",
+      "growth_axis": "z",
+      "vertical_role": "ground",
+      "vertical_clearance": 5,
+      "preset_pool": "village_house_medium",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_house_medium",
+        "evidence": "overworld/medium/dirt_hut"
+      },
+      "function_definition": {
+        "primary_function": "residential_low",
+        "secondary_functions": [],
+        "semantic_role": "residential",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 4,
+          "max_z": 5
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 5
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 4,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 5
+          },
+          {
+            "x": 4,
+            "z": 5
+          },
+          {
+            "x": 2,
+            "z": 2
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 2,
+            "y": 0,
+            "z": 5,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.22,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_east_2_0_2",
+          "local_pos": {
+            "x": 2,
+            "y": 0,
+            "z": 2
+          },
+          "facing": "east",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_house_small",
+            "village_house_medium",
+            "village_market_small",
+            "village_commercial_small",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "residential_low": 1.25,
+        "residential": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    }
+  ]
+}

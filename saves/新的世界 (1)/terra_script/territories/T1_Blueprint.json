@@ -1,0 +1,34 @@
+[
+  {
+    "territory_id": "sentinel_root_a",
+    "expansion_policy": {
+      "base_power": 1,
+      "costs": {
+        "forest_penalty": 1.0,
+        "slope_penalty": 1.0,
+        "preferred_biomes": [],
+        "base_move": 1.0,
+        "water_penalty": 1.0,
+        "avoid_biomes": []
+      }
+    },
+    "name": "sentinel",
+    "target_continent_id": 1
+  },
+  {
+    "territory_id": "sentinel_root_b",
+    "expansion_policy": {
+      "base_power": 1,
+      "costs": {
+        "forest_penalty": 1.0,
+        "slope_penalty": 1.0,
+        "preferred_biomes": [],
+        "base_move": 1.0,
+        "water_penalty": 1.0,
+        "avoid_biomes": []
+      }
+    },
+    "name": "sentinel",
+    "target_continent_id": 1
+  }
+]

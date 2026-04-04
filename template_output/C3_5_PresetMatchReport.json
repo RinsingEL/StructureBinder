@@ -1,0 +1,577 @@
+{
+  "step": "C3.5",
+  "ok": true,
+  "city_id": "city_default",
+  "total_rules": 15,
+  "rule_hit_counts": {
+    "commercial_shop": 10,
+    "farm": 57
+  },
+  "unmatched_structures": [
+    "trek:overworld/very_rare/coves/coves_base"
+  ],
+  "multiple_match_structures": [
+    "trek:village/vanilla_files/village/desert/houses/desert_butcher_shop_1",
+    "trek:village/vanilla_files/village/plains/houses/plains_butcher_shop_1",
+    "trek:village/vanilla_files/village/plains/houses/plains_butcher_shop_2",
+    "trek:village/vanilla_files/village/plains/zombie/houses/plains_butcher_shop_2",
+    "trek:village/vanilla_files/village/savanna/houses/savanna_butchers_shop_1",
+    "trek:village/vanilla_files/village/savanna/houses/savanna_butchers_shop_2",
+    "trek:village/vanilla_files/village/snowy/houses/snowy_butchers_shop_1",
+    "trek:village/vanilla_files/village/snowy/houses/snowy_butchers_shop_2",
+    "trek:village/vanilla_files/village/taiga/houses/taiga_butcher_shop_1"
+  ],
+  "structure_matches": [
+    {
+      "structure_id": "trek:overworld/very_rare/coves/coves_base",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:overworld/very_rare/farm_island/farm_island_1",
+      "matched_rules": [
+        "farm"
+      ],
+      "selected_rule": "farm",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:overworld/very_rare/farm_island/farm_island_2",
+      "matched_rules": [
+        "farm"
+      ],
+      "selected_rule": "farm",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:overworld/very_rare/farm_island/farm_island_3",
+      "matched_rules": [
+        "farm"
+      ],
+      "selected_rule": "farm",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:overworld/very_rare/floating_farm_large/1",
+      "matched_rules": [
+        "farm"
+      ],
+      "selected_rule": "farm",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:overworld/very_rare/floating_farm_large/1_1",
+      "matched_rules": [
+        "farm"
+      ],
+      "selected_rule": "farm",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:overworld/very_rare/floating_farm_large/2",
+      "matched_rules": [
+        "farm"
+      ],
+      "selected_rule": "farm",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:overworld/very_rare/floating_farm_large/2_1",
+      "matched_rules": [
+        "farm"
+      ],
+      "selected_rule": "farm",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:overworld/very_rare/floating_farm_large/2_2",
+      "matched_rules": [
+        "farm"
+      ],
+      "selected_rule": "farm",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:overworld/very_rare/floating_farm_large/3",
+      "matched_rules": [
+        "farm"
+      ],
+      "selected_rule": "farm",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:overworld/very_rare/floating_farm_large/3_1",
+      "matched_rules": [
+        "farm"
+      ],
+      "selected_rule": "farm",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:overworld/very_rare/floating_farm_large/4",
+      "matched_rules": [
+        "farm"
+      ],
+      "selected_rule": "farm",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:overworld/very_rare/floating_farm_large/4_1",
+      "matched_rules": [
+        "farm"
+      ],
+      "selected_rule": "farm",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:overworld/very_rare/floating_farm_large/4_2",
+      "matched_rules": [
+        "farm"
+      ],
+      "selected_rule": "farm",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:overworld/very_rare/floating_farm_large/5",
+      "matched_rules": [
+        "farm"
+      ],
+      "selected_rule": "farm",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:overworld/very_rare/floating_farm_large/5_1",
+      "matched_rules": [
+        "farm"
+      ],
+      "selected_rule": "farm",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:overworld/very_rare/floating_farm_large/6",
+      "matched_rules": [
+        "farm"
+      ],
+      "selected_rule": "farm",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:overworld/very_rare/floating_farm_large/6_1",
+      "matched_rules": [
+        "farm"
+      ],
+      "selected_rule": "farm",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:overworld/very_rare/floating_farm_large/6_2",
+      "matched_rules": [
+        "farm"
+      ],
+      "selected_rule": "farm",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:overworld/very_rare/floating_farm_large/7",
+      "matched_rules": [
+        "farm"
+      ],
+      "selected_rule": "farm",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:overworld/very_rare/floating_farm_large/7_1",
+      "matched_rules": [
+        "farm"
+      ],
+      "selected_rule": "farm",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:overworld/very_rare/floating_farm_large/8",
+      "matched_rules": [
+        "farm"
+      ],
+      "selected_rule": "farm",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:overworld/very_rare/floating_farm_large/8_1",
+      "matched_rules": [
+        "farm"
+      ],
+      "selected_rule": "farm",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:overworld/very_rare/floating_farm_large/8_2",
+      "matched_rules": [
+        "farm"
+      ],
+      "selected_rule": "farm",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:overworld/very_rare/floating_farm_large/centre",
+      "matched_rules": [
+        "farm"
+      ],
+      "selected_rule": "farm",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:overworld/very_rare/floating_farm_large/centre_down",
+      "matched_rules": [
+        "farm"
+      ],
+      "selected_rule": "farm",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:overworld/very_rare/floating_farm_large/centre_up",
+      "matched_rules": [
+        "farm"
+      ],
+      "selected_rule": "farm",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:overworld/very_rare/floating_farm_large/centre_up_up",
+      "matched_rules": [
+        "farm"
+      ],
+      "selected_rule": "farm",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:overworld/very_rare/floating_farm_large/down_1",
+      "matched_rules": [
+        "farm"
+      ],
+      "selected_rule": "farm",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:overworld/very_rare/floating_farm_large/down_3",
+      "matched_rules": [
+        "farm"
+      ],
+      "selected_rule": "farm",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:overworld/very_rare/floating_farm_large/down_4",
+      "matched_rules": [
+        "farm"
+      ],
+      "selected_rule": "farm",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:overworld/very_rare/floating_farm_large/down_5",
+      "matched_rules": [
+        "farm"
+      ],
+      "selected_rule": "farm",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:overworld/very_rare/floating_farm_large/down_6",
+      "matched_rules": [
+        "farm"
+      ],
+      "selected_rule": "farm",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:overworld/very_rare/floating_farm_large/down_7",
+      "matched_rules": [
+        "farm"
+      ],
+      "selected_rule": "farm",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:overworld/very_rare/floating_farm_large/down_7_1",
+      "matched_rules": [
+        "farm"
+      ],
+      "selected_rule": "farm",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:overworld/very_rare/floating_farm_large/down_8",
+      "matched_rules": [
+        "farm"
+      ],
+      "selected_rule": "farm",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:overworld/very_rare/floating_farm_large/up_1",
+      "matched_rules": [
+        "farm"
+      ],
+      "selected_rule": "farm",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:overworld/very_rare/floating_farm_large/up_1_1",
+      "matched_rules": [
+        "farm"
+      ],
+      "selected_rule": "farm",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:overworld/very_rare/floating_farm_large/up_2",
+      "matched_rules": [
+        "farm"
+      ],
+      "selected_rule": "farm",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:overworld/very_rare/floating_farm_large/up_2_1",
+      "matched_rules": [
+        "farm"
+      ],
+      "selected_rule": "farm",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:overworld/very_rare/floating_farm_large/up_2_2",
+      "matched_rules": [
+        "farm"
+      ],
+      "selected_rule": "farm",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:overworld/very_rare/floating_farm_large/up_3",
+      "matched_rules": [
+        "farm"
+      ],
+      "selected_rule": "farm",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:overworld/very_rare/floating_farm_large/up_3_1",
+      "matched_rules": [
+        "farm"
+      ],
+      "selected_rule": "farm",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:overworld/very_rare/floating_farm_large/up_4",
+      "matched_rules": [
+        "farm"
+      ],
+      "selected_rule": "farm",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:overworld/very_rare/floating_farm_large/up_4_1",
+      "matched_rules": [
+        "farm"
+      ],
+      "selected_rule": "farm",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:overworld/very_rare/floating_farm_large/up_4_2",
+      "matched_rules": [
+        "farm"
+      ],
+      "selected_rule": "farm",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:overworld/very_rare/floating_farm_large/up_5",
+      "matched_rules": [
+        "farm"
+      ],
+      "selected_rule": "farm",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:overworld/very_rare/floating_farm_large/up_5_1",
+      "matched_rules": [
+        "farm"
+      ],
+      "selected_rule": "farm",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:overworld/very_rare/floating_farm_large/up_6",
+      "matched_rules": [
+        "farm"
+      ],
+      "selected_rule": "farm",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:overworld/very_rare/floating_farm_large/up_6_1",
+      "matched_rules": [
+        "farm"
+      ],
+      "selected_rule": "farm",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:overworld/very_rare/floating_farm_large/up_6_2",
+      "matched_rules": [
+        "farm"
+      ],
+      "selected_rule": "farm",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:overworld/very_rare/floating_farm_large/up_7",
+      "matched_rules": [
+        "farm"
+      ],
+      "selected_rule": "farm",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:overworld/very_rare/floating_farm_large/up_7_1",
+      "matched_rules": [
+        "farm"
+      ],
+      "selected_rule": "farm",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:overworld/very_rare/floating_farm_large/up_8",
+      "matched_rules": [
+        "farm"
+      ],
+      "selected_rule": "farm",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:overworld/very_rare/floating_farm_large/up_8_1",
+      "matched_rules": [
+        "farm"
+      ],
+      "selected_rule": "farm",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:overworld/very_rare/floating_farm_large/up_8_2",
+      "matched_rules": [
+        "farm"
+      ],
+      "selected_rule": "farm",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:overworld/very_rare/floating_farm_large/up_up_7",
+      "matched_rules": [
+        "farm"
+      ],
+      "selected_rule": "farm",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:overworld/very_rare/floating_farm_large/up_up_8",
+      "matched_rules": [
+        "farm"
+      ],
+      "selected_rule": "farm",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:village/vanilla_files/village/desert/houses/desert_butcher_shop_1",
+      "matched_rules": [
+        "commercial_shop",
+        "village_house_medium"
+      ],
+      "selected_rule": "commercial_shop",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:village/vanilla_files/village/plains/houses/plains_butcher_shop_1",
+      "matched_rules": [
+        "commercial_shop",
+        "village_house_medium"
+      ],
+      "selected_rule": "commercial_shop",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:village/vanilla_files/village/plains/houses/plains_butcher_shop_2",
+      "matched_rules": [
+        "commercial_shop",
+        "village_house_medium"
+      ],
+      "selected_rule": "commercial_shop",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:village/vanilla_files/village/plains/zombie/houses/plains_butcher_shop_2",
+      "matched_rules": [
+        "commercial_shop",
+        "village_house_medium"
+      ],
+      "selected_rule": "commercial_shop",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:village/vanilla_files/village/savanna/houses/savanna_butchers_shop_1",
+      "matched_rules": [
+        "commercial_shop",
+        "village_house_medium"
+      ],
+      "selected_rule": "commercial_shop",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:village/vanilla_files/village/savanna/houses/savanna_butchers_shop_2",
+      "matched_rules": [
+        "commercial_shop",
+        "village_house_medium"
+      ],
+      "selected_rule": "commercial_shop",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:village/vanilla_files/village/snowy/houses/snowy_butchers_shop_1",
+      "matched_rules": [
+        "commercial_shop",
+        "village_house_medium"
+      ],
+      "selected_rule": "commercial_shop",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:village/vanilla_files/village/snowy/houses/snowy_butchers_shop_2",
+      "matched_rules": [
+        "commercial_shop",
+        "village_house_medium"
+      ],
+      "selected_rule": "commercial_shop",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:village/vanilla_files/village/taiga/houses/taiga_butcher_shop_1",
+      "matched_rules": [
+        "commercial_shop",
+        "village_house_medium"
+      ],
+      "selected_rule": "commercial_shop",
+      "manual_override": false
+    },
+    {
+      "structure_id": "villager_fish_shop:smallfishinshop",
+      "matched_rules": [
+        "commercial_shop"
+      ],
+      "selected_rule": "commercial_shop",
+      "manual_override": false
+    }
+  ]
+}

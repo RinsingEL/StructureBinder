@@ -1,0 +1,4717 @@
+{
+  "step": "C3.5",
+  "ok": true,
+  "city_id": "city_default",
+  "catalog_version": 2,
+  "generated_at_epoch_ms": 1774447195997,
+  "function_enum_table": [
+    "civic_center",
+    "commercial",
+    "market",
+    "residential_low",
+    "residential_mid",
+    "residential_high",
+    "warehouse",
+    "port",
+    "watchtower",
+    "fortification",
+    "farm",
+    "fishing",
+    "religious",
+    "workshop",
+    "landmark"
+  ],
+  "structures": [
+    {
+      "structure_id": "minecraft:village/desert/houses/desert_butcher_shop_1",
+      "size": {
+        "length": 8,
+        "width": 8,
+        "height": 5
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "north",
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.02,
+        "commercial": 0.9,
+        "residential": 0.1,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "commercial",
+          "score": 0.88
+        }
+      ],
+      "namespace": "minecraft",
+      "path": "village/desert/houses/desert_butcher_shop_1",
+      "size_tier": "S",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west",
+        "north"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "front_to_plaza",
+      "growth_axis": "auto",
+      "vertical_role": "ground",
+      "vertical_clearance": 5,
+      "preset_pool": "village_commercial_small",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_commercial_small",
+        "evidence": "village/desert/houses/desert_butcher_shop_1"
+      },
+      "function_definition": {
+        "primary_function": "commercial",
+        "secondary_functions": [],
+        "semantic_role": "service",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 7,
+          "max_z": 7
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 5
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 7,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 7
+          },
+          {
+            "x": 7,
+            "z": 7
+          },
+          {
+            "x": 3,
+            "z": 3
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 3,
+            "y": 0,
+            "z": 7,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.22,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_west_0_0_3",
+          "local_pos": {
+            "x": 0,
+            "y": 0,
+            "z": 3
+          },
+          "facing": "west",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_market_small",
+            "village_commercial_small",
+            "village_house_small",
+            "village_house_medium",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_north_6_0_6",
+          "local_pos": {
+            "x": 6,
+            "y": 0,
+            "z": 6
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_market_small",
+            "village_commercial_small",
+            "village_house_small",
+            "village_house_medium",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "commercial": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "minecraft:village/plains/houses/plains_butcher_shop_1",
+      "size": {
+        "length": 11,
+        "width": 12,
+        "height": 8
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "north",
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.02,
+        "commercial": 0.9,
+        "residential": 0.1,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "commercial",
+          "score": 0.88
+        }
+      ],
+      "namespace": "minecraft",
+      "path": "village/plains/houses/plains_butcher_shop_1",
+      "size_tier": "M",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west",
+        "north"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "front_to_plaza",
+      "growth_axis": "x",
+      "vertical_role": "ground",
+      "vertical_clearance": 8,
+      "preset_pool": "village_commercial_small",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_commercial_small",
+        "evidence": "village/plains/houses/plains_butcher_shop_1"
+      },
+      "function_definition": {
+        "primary_function": "commercial",
+        "secondary_functions": [],
+        "semantic_role": "service",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 11,
+          "max_z": 10
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 8
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 11,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 10
+          },
+          {
+            "x": 11,
+            "z": 10
+          },
+          {
+            "x": 5,
+            "z": 5
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 5,
+            "y": 0,
+            "z": 10,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.18,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_west_0_0_3",
+          "local_pos": {
+            "x": 0,
+            "y": 0,
+            "z": 3
+          },
+          "facing": "west",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_market_small",
+            "village_commercial_small",
+            "village_house_small",
+            "village_house_medium",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_north_6_0_9",
+          "local_pos": {
+            "x": 6,
+            "y": 0,
+            "z": 9
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_market_small",
+            "village_commercial_small",
+            "village_house_small",
+            "village_house_medium",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "commercial": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "minecraft:village/plains/houses/plains_butcher_shop_2",
+      "size": {
+        "length": 15,
+        "width": 7,
+        "height": 12
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "north",
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.02,
+        "commercial": 0.9,
+        "residential": 0.1,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "commercial",
+          "score": 0.88
+        }
+      ],
+      "namespace": "minecraft",
+      "path": "village/plains/houses/plains_butcher_shop_2",
+      "size_tier": "M",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "north",
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "front_to_plaza",
+      "growth_axis": "z",
+      "vertical_role": "ground",
+      "vertical_clearance": 12,
+      "preset_pool": "village_commercial_small",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_commercial_small",
+        "evidence": "village/plains/houses/plains_butcher_shop_2"
+      },
+      "function_definition": {
+        "primary_function": "commercial",
+        "secondary_functions": [],
+        "semantic_role": "service",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 6,
+          "max_z": 14
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 12
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 6,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 14
+          },
+          {
+            "x": 6,
+            "z": 14
+          },
+          {
+            "x": 3,
+            "z": 7
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 3,
+            "y": 0,
+            "z": 14,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.18,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_north_0_0_0",
+          "local_pos": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_market_small",
+            "village_commercial_small",
+            "village_house_small",
+            "village_house_medium",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_north_5_0_6",
+          "local_pos": {
+            "x": 5,
+            "y": 0,
+            "z": 6
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_market_small",
+            "village_commercial_small",
+            "village_house_small",
+            "village_house_medium",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_north_12_0_3",
+          "local_pos": {
+            "x": 12,
+            "y": 0,
+            "z": 3
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_market_small",
+            "village_commercial_small",
+            "village_house_small",
+            "village_house_medium",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_north_13_0_6",
+          "local_pos": {
+            "x": 13,
+            "y": 0,
+            "z": 6
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_market_small",
+            "village_commercial_small",
+            "village_house_small",
+            "village_house_medium",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_north_14_0_0",
+          "local_pos": {
+            "x": 14,
+            "y": 0,
+            "z": 0
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_market_small",
+            "village_commercial_small",
+            "village_house_small",
+            "village_house_medium",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_west_0_1_3",
+          "local_pos": {
+            "x": 0,
+            "y": 1,
+            "z": 3
+          },
+          "facing": "west",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_market_small",
+            "village_commercial_small",
+            "village_house_small",
+            "village_house_medium",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "commercial": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "minecraft:village/plains/zombie/houses/plains_butcher_shop_2",
+      "size": {
+        "length": 15,
+        "width": 7,
+        "height": 12
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "north",
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.02,
+        "commercial": 0.9,
+        "residential": 0.1,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "commercial",
+          "score": 0.88
+        }
+      ],
+      "namespace": "minecraft",
+      "path": "village/plains/zombie/houses/plains_butcher_shop_2",
+      "size_tier": "M",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "north",
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "front_to_plaza",
+      "growth_axis": "z",
+      "vertical_role": "ground",
+      "vertical_clearance": 12,
+      "preset_pool": "village_commercial_small",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_commercial_small",
+        "evidence": "village/plains/zombie/houses/plains_butcher_shop_2"
+      },
+      "function_definition": {
+        "primary_function": "commercial",
+        "secondary_functions": [],
+        "semantic_role": "service",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 6,
+          "max_z": 14
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 12
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 6,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 14
+          },
+          {
+            "x": 6,
+            "z": 14
+          },
+          {
+            "x": 3,
+            "z": 7
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 3,
+            "y": 0,
+            "z": 14,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.18,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_north_5_0_6",
+          "local_pos": {
+            "x": 5,
+            "y": 0,
+            "z": 6
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_market_small",
+            "village_commercial_small",
+            "village_house_small",
+            "village_house_medium",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_north_11_0_6",
+          "local_pos": {
+            "x": 11,
+            "y": 0,
+            "z": 6
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_market_small",
+            "village_commercial_small",
+            "village_house_small",
+            "village_house_medium",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_north_12_0_3",
+          "local_pos": {
+            "x": 12,
+            "y": 0,
+            "z": 3
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_market_small",
+            "village_commercial_small",
+            "village_house_small",
+            "village_house_medium",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_north_13_0_6",
+          "local_pos": {
+            "x": 13,
+            "y": 0,
+            "z": 6
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_market_small",
+            "village_commercial_small",
+            "village_house_small",
+            "village_house_medium",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_north_14_0_0",
+          "local_pos": {
+            "x": 14,
+            "y": 0,
+            "z": 0
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_market_small",
+            "village_commercial_small",
+            "village_house_small",
+            "village_house_medium",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_west_0_1_3",
+          "local_pos": {
+            "x": 0,
+            "y": 1,
+            "z": 3
+          },
+          "facing": "west",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_market_small",
+            "village_commercial_small",
+            "village_house_small",
+            "village_house_medium",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "commercial": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "minecraft:village/savanna/houses/savanna_butchers_shop_1",
+      "size": {
+        "length": 11,
+        "width": 11,
+        "height": 8
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "north",
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.02,
+        "commercial": 0.9,
+        "residential": 0.1,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "commercial",
+          "score": 0.88
+        }
+      ],
+      "namespace": "minecraft",
+      "path": "village/savanna/houses/savanna_butchers_shop_1",
+      "size_tier": "M",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west",
+        "north"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "front_to_plaza",
+      "growth_axis": "auto",
+      "vertical_role": "ground",
+      "vertical_clearance": 8,
+      "preset_pool": "village_commercial_small",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_commercial_small",
+        "evidence": "village/savanna/houses/savanna_butchers_shop_1"
+      },
+      "function_definition": {
+        "primary_function": "commercial",
+        "secondary_functions": [],
+        "semantic_role": "service",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 10,
+          "max_z": 10
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 8
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 10,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 10
+          },
+          {
+            "x": 10,
+            "z": 10
+          },
+          {
+            "x": 5,
+            "z": 5
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 5,
+            "y": 0,
+            "z": 10,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.18,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_west_0_0_6",
+          "local_pos": {
+            "x": 0,
+            "y": 0,
+            "z": 6
+          },
+          "facing": "west",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_market_small",
+            "village_commercial_small",
+            "village_house_small",
+            "village_house_medium",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_north_8_0_5",
+          "local_pos": {
+            "x": 8,
+            "y": 0,
+            "z": 5
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_market_small",
+            "village_commercial_small",
+            "village_house_small",
+            "village_house_medium",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "commercial": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "minecraft:village/savanna/houses/savanna_butchers_shop_2",
+      "size": {
+        "length": 13,
+        "width": 9,
+        "height": 10
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "north",
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.02,
+        "commercial": 0.9,
+        "residential": 0.1,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "commercial",
+          "score": 0.88
+        }
+      ],
+      "namespace": "minecraft",
+      "path": "village/savanna/houses/savanna_butchers_shop_2",
+      "size_tier": "M",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "north",
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "front_to_plaza",
+      "growth_axis": "z",
+      "vertical_role": "ground",
+      "vertical_clearance": 10,
+      "preset_pool": "village_commercial_small",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_commercial_small",
+        "evidence": "village/savanna/houses/savanna_butchers_shop_2"
+      },
+      "function_definition": {
+        "primary_function": "commercial",
+        "secondary_functions": [],
+        "semantic_role": "service",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 8,
+          "max_z": 12
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 10
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 8,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 12
+          },
+          {
+            "x": 8,
+            "z": 12
+          },
+          {
+            "x": 4,
+            "z": 6
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 4,
+            "y": 0,
+            "z": 12,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.18,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_north_10_0_2",
+          "local_pos": {
+            "x": 10,
+            "y": 0,
+            "z": 2
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_market_small",
+            "village_commercial_small",
+            "village_house_small",
+            "village_house_medium",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_west_0_1_4",
+          "local_pos": {
+            "x": 0,
+            "y": 1,
+            "z": 4
+          },
+          "facing": "west",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_market_small",
+            "village_commercial_small",
+            "village_house_small",
+            "village_house_medium",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "commercial": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "minecraft:village/snowy/houses/snowy_butchers_shop_1",
+      "size": {
+        "length": 7,
+        "width": 9,
+        "height": 8
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "north"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.02,
+        "commercial": 0.9,
+        "residential": 0.1,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "commercial",
+          "score": 0.88
+        }
+      ],
+      "namespace": "minecraft",
+      "path": "village/snowy/houses/snowy_butchers_shop_1",
+      "size_tier": "S",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "north"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "front_to_plaza",
+      "growth_axis": "x",
+      "vertical_role": "ground",
+      "vertical_clearance": 8,
+      "preset_pool": "village_commercial_small",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_commercial_small",
+        "evidence": "village/snowy/houses/snowy_butchers_shop_1"
+      },
+      "function_definition": {
+        "primary_function": "commercial",
+        "secondary_functions": [],
+        "semantic_role": "service",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 8,
+          "max_z": 6
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 8
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 8,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 6
+          },
+          {
+            "x": 8,
+            "z": 6
+          },
+          {
+            "x": 4,
+            "z": 3
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 4,
+            "y": 0,
+            "z": 6,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.22,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_north_3_0_0",
+          "local_pos": {
+            "x": 3,
+            "y": 0,
+            "z": 0
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_market_small",
+            "village_commercial_small",
+            "village_house_small",
+            "village_house_medium",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_north_4_0_7",
+          "local_pos": {
+            "x": 4,
+            "y": 0,
+            "z": 7
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_market_small",
+            "village_commercial_small",
+            "village_house_small",
+            "village_house_medium",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "commercial": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "minecraft:village/snowy/houses/snowy_butchers_shop_2",
+      "size": {
+        "length": 9,
+        "width": 5,
+        "height": 5
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "north",
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.02,
+        "commercial": 0.9,
+        "residential": 0.1,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "commercial",
+          "score": 0.88
+        }
+      ],
+      "namespace": "minecraft",
+      "path": "village/snowy/houses/snowy_butchers_shop_2",
+      "size_tier": "S",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "north",
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "front_to_plaza",
+      "growth_axis": "z",
+      "vertical_role": "ground",
+      "vertical_clearance": 5,
+      "preset_pool": "village_commercial_small",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_commercial_small",
+        "evidence": "village/snowy/houses/snowy_butchers_shop_2"
+      },
+      "function_definition": {
+        "primary_function": "commercial",
+        "secondary_functions": [],
+        "semantic_role": "service",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 4,
+          "max_z": 8
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 5
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 4,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 8
+          },
+          {
+            "x": 4,
+            "z": 8
+          },
+          {
+            "x": 2,
+            "z": 4
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 2,
+            "y": 0,
+            "z": 8,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.22,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_north_5_0_2",
+          "local_pos": {
+            "x": 5,
+            "y": 0,
+            "z": 2
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_market_small",
+            "village_commercial_small",
+            "village_house_small",
+            "village_house_medium",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_west_0_1_3",
+          "local_pos": {
+            "x": 0,
+            "y": 1,
+            "z": 3
+          },
+          "facing": "west",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_market_small",
+            "village_commercial_small",
+            "village_house_small",
+            "village_house_medium",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "commercial": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "minecraft:village/taiga/houses/taiga_butcher_shop_1",
+      "size": {
+        "length": 11,
+        "width": 9,
+        "height": 7
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "north",
+          "south"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.02,
+        "commercial": 0.9,
+        "residential": 0.1,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "commercial",
+          "score": 0.88
+        }
+      ],
+      "namespace": "minecraft",
+      "path": "village/taiga/houses/taiga_butcher_shop_1",
+      "size_tier": "S",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "south",
+        "north"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "front_to_plaza",
+      "growth_axis": "z",
+      "vertical_role": "ground",
+      "vertical_clearance": 7,
+      "preset_pool": "village_commercial_small",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_commercial_small",
+        "evidence": "village/taiga/houses/taiga_butcher_shop_1"
+      },
+      "function_definition": {
+        "primary_function": "commercial",
+        "secondary_functions": [],
+        "semantic_role": "service",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 8,
+          "max_z": 10
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 7
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 8,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 10
+          },
+          {
+            "x": 8,
+            "z": 10
+          },
+          {
+            "x": 4,
+            "z": 5
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 4,
+            "y": 0,
+            "z": 10,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.22,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_south_4_0_8",
+          "local_pos": {
+            "x": 4,
+            "y": 0,
+            "z": 8
+          },
+          "facing": "south",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_market_small",
+            "village_commercial_small",
+            "village_house_small",
+            "village_house_medium",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_north_7_0_6",
+          "local_pos": {
+            "x": 7,
+            "y": 0,
+            "z": 6
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_market_small",
+            "village_commercial_small",
+            "village_house_small",
+            "village_house_medium",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "commercial": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "trek:overworld/common/cooking_pork",
+      "size": {
+        "length": 3,
+        "width": 5,
+        "height": 3
+      },
+      "orientation": {
+        "jigsaw_facing": [],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.0,
+        "commercial": 0.0,
+        "residential": 0.0,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "commercial",
+          "score": 0.8
+        }
+      ],
+      "namespace": "trek",
+      "path": "overworld/common/cooking_pork",
+      "size_tier": "S",
+      "connector_types": [],
+      "connector_dirs": [],
+      "allowed_neighbors": [],
+      "landing_hint": "front_to_plaza",
+      "growth_axis": "x",
+      "vertical_role": "ground",
+      "vertical_clearance": 3,
+      "preset_pool": "village_commercial_small",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_commercial_small",
+        "evidence": "overworld/common/cooking_pork"
+      },
+      "function_definition": {
+        "primary_function": "commercial",
+        "secondary_functions": [],
+        "semantic_role": "service",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 4,
+          "max_z": 2
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 3
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 4,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 2
+          },
+          {
+            "x": 4,
+            "z": 2
+          },
+          {
+            "x": 2,
+            "z": 1
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 2,
+            "y": 0,
+            "z": 2,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.22,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [],
+      "weight_profile": {
+        "default": 1.0,
+        "landmark": 1.25
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "trek:overworld/medium/birch_trade",
+      "size": {
+        "length": 80,
+        "width": 25,
+        "height": 68
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "north",
+          "south",
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.0,
+        "commercial": 0.0,
+        "residential": 0.0,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "commercial",
+          "score": 0.88
+        }
+      ],
+      "namespace": "trek",
+      "path": "overworld/medium/birch_trade",
+      "size_tier": "L",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west",
+        "south",
+        "north"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "front_to_plaza",
+      "growth_axis": "z",
+      "vertical_role": "ground",
+      "vertical_clearance": 68,
+      "preset_pool": "commercial_pool",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "commercial_pool",
+        "evidence": "overworld/medium/birch_trade"
+      },
+      "function_definition": {
+        "primary_function": "commercial",
+        "secondary_functions": [],
+        "semantic_role": "service",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 24,
+          "max_z": 79
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 68
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 24,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 79
+          },
+          {
+            "x": 24,
+            "z": 79
+          },
+          {
+            "x": 12,
+            "z": 39
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 12,
+            "y": 0,
+            "z": 79,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.18,
+        "max_height_delta": 3,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_west_7_11_12",
+          "local_pos": {
+            "x": 7,
+            "y": 11,
+            "z": 12
+          },
+          "facing": "west",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "commercial_pool"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_south_31_11_9",
+          "local_pos": {
+            "x": 31,
+            "y": 11,
+            "z": 9
+          },
+          "facing": "south",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "commercial_pool"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_north_31_11_15",
+          "local_pos": {
+            "x": 31,
+            "y": 11,
+            "z": 15
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "commercial_pool"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_south_39_11_7",
+          "local_pos": {
+            "x": 39,
+            "y": 11,
+            "z": 7
+          },
+          "facing": "south",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "commercial_pool"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_north_39_11_17",
+          "local_pos": {
+            "x": 39,
+            "y": 11,
+            "z": 17
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "commercial_pool"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_west_56_13_11",
+          "local_pos": {
+            "x": 56,
+            "y": 13,
+            "z": 11
+          },
+          "facing": "west",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "commercial_pool"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_west_56_13_13",
+          "local_pos": {
+            "x": 56,
+            "y": 13,
+            "z": 13
+          },
+          "facing": "west",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "commercial_pool"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "commercial": 1.25
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "trek:overworld/medium/cold_red_trade",
+      "size": {
+        "length": 41,
+        "width": 13,
+        "height": 39
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "east",
+          "north",
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.0,
+        "commercial": 0.0,
+        "residential": 0.0,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "commercial",
+          "score": 0.88
+        }
+      ],
+      "namespace": "trek",
+      "path": "overworld/medium/cold_red_trade",
+      "size_tier": "L",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west",
+        "east",
+        "north"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "front_to_plaza",
+      "growth_axis": "z",
+      "vertical_role": "ground",
+      "vertical_clearance": 39,
+      "preset_pool": "commercial_pool",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "commercial_pool",
+        "evidence": "overworld/medium/cold_red_trade"
+      },
+      "function_definition": {
+        "primary_function": "commercial",
+        "secondary_functions": [],
+        "semantic_role": "service",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 12,
+          "max_z": 40
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 39
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 12,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 40
+          },
+          {
+            "x": 12,
+            "z": 40
+          },
+          {
+            "x": 6,
+            "z": 20
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 6,
+            "y": 0,
+            "z": 40,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.18,
+        "max_height_delta": 3,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_west_27_1_6",
+          "local_pos": {
+            "x": 27,
+            "y": 1,
+            "z": 6
+          },
+          "facing": "west",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "commercial_pool"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_east_9_2_7",
+          "local_pos": {
+            "x": 9,
+            "y": 2,
+            "z": 7
+          },
+          "facing": "east",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "commercial_pool"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_east_9_2_8",
+          "local_pos": {
+            "x": 9,
+            "y": 2,
+            "z": 8
+          },
+          "facing": "east",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "commercial_pool"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_north_13_2_7",
+          "local_pos": {
+            "x": 13,
+            "y": 2,
+            "z": 7
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "commercial_pool"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_north_14_2_7",
+          "local_pos": {
+            "x": 14,
+            "y": 2,
+            "z": 7
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "commercial_pool"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_north_6_5_8",
+          "local_pos": {
+            "x": 6,
+            "y": 5,
+            "z": 8
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "commercial_pool"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "commercial": 1.25
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "trek:overworld/medium/dark_oak_trade",
+      "size": {
+        "length": 41,
+        "width": 19,
+        "height": 39
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "east",
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.0,
+        "commercial": 0.0,
+        "residential": 0.0,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "commercial",
+          "score": 0.88
+        }
+      ],
+      "namespace": "trek",
+      "path": "overworld/medium/dark_oak_trade",
+      "size_tier": "L",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "east",
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "front_to_plaza",
+      "growth_axis": "z",
+      "vertical_role": "ground",
+      "vertical_clearance": 39,
+      "preset_pool": "commercial_pool",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "commercial_pool",
+        "evidence": "overworld/medium/dark_oak_trade"
+      },
+      "function_definition": {
+        "primary_function": "commercial",
+        "secondary_functions": [],
+        "semantic_role": "service",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 18,
+          "max_z": 40
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 39
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 18,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 40
+          },
+          {
+            "x": 18,
+            "z": 40
+          },
+          {
+            "x": 9,
+            "z": 20
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 9,
+            "y": 0,
+            "z": 40,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.18,
+        "max_height_delta": 3,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_east_12_2_8",
+          "local_pos": {
+            "x": 12,
+            "y": 2,
+            "z": 8
+          },
+          "facing": "east",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "commercial_pool"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_east_12_2_10",
+          "local_pos": {
+            "x": 12,
+            "y": 2,
+            "z": 10
+          },
+          "facing": "east",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "commercial_pool"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_east_24_2_8",
+          "local_pos": {
+            "x": 24,
+            "y": 2,
+            "z": 8
+          },
+          "facing": "east",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "commercial_pool"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_west_24_2_10",
+          "local_pos": {
+            "x": 24,
+            "y": 2,
+            "z": 10
+          },
+          "facing": "west",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "commercial_pool"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "commercial": 1.25
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "trek:overworld/medium/jungle_trade",
+      "size": {
+        "length": 20,
+        "width": 11,
+        "height": 22
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "north"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.0,
+        "commercial": 0.0,
+        "residential": 0.0,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "commercial",
+          "score": 0.88
+        }
+      ],
+      "namespace": "trek",
+      "path": "overworld/medium/jungle_trade",
+      "size_tier": "M",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "north"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "front_to_plaza",
+      "growth_axis": "z",
+      "vertical_role": "ground",
+      "vertical_clearance": 22,
+      "preset_pool": "commercial_pool",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "commercial_pool",
+        "evidence": "overworld/medium/jungle_trade"
+      },
+      "function_definition": {
+        "primary_function": "commercial",
+        "secondary_functions": [],
+        "semantic_role": "service",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 10,
+          "max_z": 19
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 22
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 10,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 19
+          },
+          {
+            "x": 10,
+            "z": 19
+          },
+          {
+            "x": 5,
+            "z": 9
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 5,
+            "y": 0,
+            "z": 19,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.18,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_north_10_3_5",
+          "local_pos": {
+            "x": 10,
+            "y": 3,
+            "z": 5
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "commercial_pool"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "commercial": 1.25
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "trek:overworld/medium/small_red_trade",
+      "size": {
+        "length": 21,
+        "width": 11,
+        "height": 15
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "east"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.0,
+        "commercial": 0.0,
+        "residential": 0.0,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "commercial",
+          "score": 0.88
+        }
+      ],
+      "namespace": "trek",
+      "path": "overworld/medium/small_red_trade",
+      "size_tier": "M",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "east"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "front_to_plaza",
+      "growth_axis": "z",
+      "vertical_role": "ground",
+      "vertical_clearance": 15,
+      "preset_pool": "commercial_pool",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "commercial_pool",
+        "evidence": "overworld/medium/small_red_trade"
+      },
+      "function_definition": {
+        "primary_function": "commercial",
+        "secondary_functions": [],
+        "semantic_role": "service",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 10,
+          "max_z": 20
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 15
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 10,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 20
+          },
+          {
+            "x": 10,
+            "z": 20
+          },
+          {
+            "x": 5,
+            "z": 10
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 5,
+            "y": 0,
+            "z": 20,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.18,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_east_6_2_5",
+          "local_pos": {
+            "x": 6,
+            "y": 2,
+            "z": 5
+          },
+          "facing": "east",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "commercial_pool"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "commercial": 1.25
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "trek:village/vanilla_files/village/desert/houses/desert_butcher_shop_1",
+      "size": {
+        "length": 8,
+        "width": 8,
+        "height": 5
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "north",
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.02,
+        "commercial": 0.9,
+        "residential": 0.1,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "commercial",
+          "score": 0.88
+        }
+      ],
+      "namespace": "trek",
+      "path": "village/vanilla_files/village/desert/houses/desert_butcher_shop_1",
+      "size_tier": "S",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west",
+        "north"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "front_to_plaza",
+      "growth_axis": "auto",
+      "vertical_role": "ground",
+      "vertical_clearance": 5,
+      "preset_pool": "village_commercial_small",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_commercial_small",
+        "evidence": "village/vanilla_files/village/desert/houses/desert_butcher_shop_1"
+      },
+      "function_definition": {
+        "primary_function": "commercial",
+        "secondary_functions": [],
+        "semantic_role": "service",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 7,
+          "max_z": 7
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 5
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 7,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 7
+          },
+          {
+            "x": 7,
+            "z": 7
+          },
+          {
+            "x": 3,
+            "z": 3
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 3,
+            "y": 0,
+            "z": 7,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.22,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_west_0_0_3",
+          "local_pos": {
+            "x": 0,
+            "y": 0,
+            "z": 3
+          },
+          "facing": "west",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_market_small",
+            "village_commercial_small",
+            "village_house_small",
+            "village_house_medium",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_north_6_0_6",
+          "local_pos": {
+            "x": 6,
+            "y": 0,
+            "z": 6
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_market_small",
+            "village_commercial_small",
+            "village_house_small",
+            "village_house_medium",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "commercial": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "trek:village/vanilla_files/village/plains/houses/plains_butcher_shop_1",
+      "size": {
+        "length": 11,
+        "width": 12,
+        "height": 8
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "north",
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.02,
+        "commercial": 0.9,
+        "residential": 0.1,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "commercial",
+          "score": 0.88
+        }
+      ],
+      "namespace": "trek",
+      "path": "village/vanilla_files/village/plains/houses/plains_butcher_shop_1",
+      "size_tier": "M",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west",
+        "north"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "front_to_plaza",
+      "growth_axis": "x",
+      "vertical_role": "ground",
+      "vertical_clearance": 8,
+      "preset_pool": "village_commercial_small",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_commercial_small",
+        "evidence": "village/vanilla_files/village/plains/houses/plains_butcher_shop_1"
+      },
+      "function_definition": {
+        "primary_function": "commercial",
+        "secondary_functions": [],
+        "semantic_role": "service",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 11,
+          "max_z": 10
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 8
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 11,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 10
+          },
+          {
+            "x": 11,
+            "z": 10
+          },
+          {
+            "x": 5,
+            "z": 5
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 5,
+            "y": 0,
+            "z": 10,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.18,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_west_0_0_3",
+          "local_pos": {
+            "x": 0,
+            "y": 0,
+            "z": 3
+          },
+          "facing": "west",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_market_small",
+            "village_commercial_small",
+            "village_house_small",
+            "village_house_medium",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_north_6_0_9",
+          "local_pos": {
+            "x": 6,
+            "y": 0,
+            "z": 9
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_market_small",
+            "village_commercial_small",
+            "village_house_small",
+            "village_house_medium",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "commercial": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "trek:village/vanilla_files/village/plains/houses/plains_butcher_shop_2",
+      "size": {
+        "length": 15,
+        "width": 7,
+        "height": 12
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "north",
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.02,
+        "commercial": 0.9,
+        "residential": 0.1,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "commercial",
+          "score": 0.88
+        }
+      ],
+      "namespace": "trek",
+      "path": "village/vanilla_files/village/plains/houses/plains_butcher_shop_2",
+      "size_tier": "M",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "north",
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "front_to_plaza",
+      "growth_axis": "z",
+      "vertical_role": "ground",
+      "vertical_clearance": 12,
+      "preset_pool": "village_commercial_small",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_commercial_small",
+        "evidence": "village/vanilla_files/village/plains/houses/plains_butcher_shop_2"
+      },
+      "function_definition": {
+        "primary_function": "commercial",
+        "secondary_functions": [],
+        "semantic_role": "service",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 6,
+          "max_z": 14
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 12
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 6,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 14
+          },
+          {
+            "x": 6,
+            "z": 14
+          },
+          {
+            "x": 3,
+            "z": 7
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 3,
+            "y": 0,
+            "z": 14,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.18,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_north_0_0_0",
+          "local_pos": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_market_small",
+            "village_commercial_small",
+            "village_house_small",
+            "village_house_medium",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_north_5_0_6",
+          "local_pos": {
+            "x": 5,
+            "y": 0,
+            "z": 6
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_market_small",
+            "village_commercial_small",
+            "village_house_small",
+            "village_house_medium",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_north_12_0_3",
+          "local_pos": {
+            "x": 12,
+            "y": 0,
+            "z": 3
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_market_small",
+            "village_commercial_small",
+            "village_house_small",
+            "village_house_medium",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_north_13_0_6",
+          "local_pos": {
+            "x": 13,
+            "y": 0,
+            "z": 6
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_market_small",
+            "village_commercial_small",
+            "village_house_small",
+            "village_house_medium",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_north_14_0_0",
+          "local_pos": {
+            "x": 14,
+            "y": 0,
+            "z": 0
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_market_small",
+            "village_commercial_small",
+            "village_house_small",
+            "village_house_medium",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_west_0_1_3",
+          "local_pos": {
+            "x": 0,
+            "y": 1,
+            "z": 3
+          },
+          "facing": "west",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_market_small",
+            "village_commercial_small",
+            "village_house_small",
+            "village_house_medium",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "commercial": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "trek:village/vanilla_files/village/plains/zombie/houses/plains_butcher_shop_2",
+      "size": {
+        "length": 15,
+        "width": 7,
+        "height": 12
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "north",
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.02,
+        "commercial": 0.9,
+        "residential": 0.1,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "commercial",
+          "score": 0.88
+        }
+      ],
+      "namespace": "trek",
+      "path": "village/vanilla_files/village/plains/zombie/houses/plains_butcher_shop_2",
+      "size_tier": "M",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "north",
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "front_to_plaza",
+      "growth_axis": "z",
+      "vertical_role": "ground",
+      "vertical_clearance": 12,
+      "preset_pool": "village_commercial_small",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_commercial_small",
+        "evidence": "village/vanilla_files/village/plains/zombie/houses/plains_butcher_shop_2"
+      },
+      "function_definition": {
+        "primary_function": "commercial",
+        "secondary_functions": [],
+        "semantic_role": "service",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 6,
+          "max_z": 14
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 12
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 6,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 14
+          },
+          {
+            "x": 6,
+            "z": 14
+          },
+          {
+            "x": 3,
+            "z": 7
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 3,
+            "y": 0,
+            "z": 14,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.18,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_north_5_0_6",
+          "local_pos": {
+            "x": 5,
+            "y": 0,
+            "z": 6
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_market_small",
+            "village_commercial_small",
+            "village_house_small",
+            "village_house_medium",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_north_11_0_6",
+          "local_pos": {
+            "x": 11,
+            "y": 0,
+            "z": 6
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_market_small",
+            "village_commercial_small",
+            "village_house_small",
+            "village_house_medium",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_north_12_0_3",
+          "local_pos": {
+            "x": 12,
+            "y": 0,
+            "z": 3
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_market_small",
+            "village_commercial_small",
+            "village_house_small",
+            "village_house_medium",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_north_13_0_6",
+          "local_pos": {
+            "x": 13,
+            "y": 0,
+            "z": 6
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_market_small",
+            "village_commercial_small",
+            "village_house_small",
+            "village_house_medium",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_north_14_0_0",
+          "local_pos": {
+            "x": 14,
+            "y": 0,
+            "z": 0
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_market_small",
+            "village_commercial_small",
+            "village_house_small",
+            "village_house_medium",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_west_0_1_3",
+          "local_pos": {
+            "x": 0,
+            "y": 1,
+            "z": 3
+          },
+          "facing": "west",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_market_small",
+            "village_commercial_small",
+            "village_house_small",
+            "village_house_medium",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "commercial": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "trek:village/vanilla_files/village/savanna/houses/savanna_butchers_shop_1",
+      "size": {
+        "length": 11,
+        "width": 11,
+        "height": 8
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "north",
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.02,
+        "commercial": 0.9,
+        "residential": 0.1,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "commercial",
+          "score": 0.88
+        }
+      ],
+      "namespace": "trek",
+      "path": "village/vanilla_files/village/savanna/houses/savanna_butchers_shop_1",
+      "size_tier": "M",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west",
+        "north"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "front_to_plaza",
+      "growth_axis": "auto",
+      "vertical_role": "ground",
+      "vertical_clearance": 8,
+      "preset_pool": "village_commercial_small",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_commercial_small",
+        "evidence": "village/vanilla_files/village/savanna/houses/savanna_butchers_shop_1"
+      },
+      "function_definition": {
+        "primary_function": "commercial",
+        "secondary_functions": [],
+        "semantic_role": "service",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 10,
+          "max_z": 10
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 8
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 10,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 10
+          },
+          {
+            "x": 10,
+            "z": 10
+          },
+          {
+            "x": 5,
+            "z": 5
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 5,
+            "y": 0,
+            "z": 10,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.18,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_west_0_0_6",
+          "local_pos": {
+            "x": 0,
+            "y": 0,
+            "z": 6
+          },
+          "facing": "west",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_market_small",
+            "village_commercial_small",
+            "village_house_small",
+            "village_house_medium",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_north_8_0_5",
+          "local_pos": {
+            "x": 8,
+            "y": 0,
+            "z": 5
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_market_small",
+            "village_commercial_small",
+            "village_house_small",
+            "village_house_medium",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "commercial": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "trek:village/vanilla_files/village/savanna/houses/savanna_butchers_shop_2",
+      "size": {
+        "length": 13,
+        "width": 9,
+        "height": 10
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "north",
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.02,
+        "commercial": 0.9,
+        "residential": 0.1,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "commercial",
+          "score": 0.88
+        }
+      ],
+      "namespace": "trek",
+      "path": "village/vanilla_files/village/savanna/houses/savanna_butchers_shop_2",
+      "size_tier": "M",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "north",
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "front_to_plaza",
+      "growth_axis": "z",
+      "vertical_role": "ground",
+      "vertical_clearance": 10,
+      "preset_pool": "village_commercial_small",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_commercial_small",
+        "evidence": "village/vanilla_files/village/savanna/houses/savanna_butchers_shop_2"
+      },
+      "function_definition": {
+        "primary_function": "commercial",
+        "secondary_functions": [],
+        "semantic_role": "service",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 8,
+          "max_z": 12
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 10
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 8,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 12
+          },
+          {
+            "x": 8,
+            "z": 12
+          },
+          {
+            "x": 4,
+            "z": 6
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 4,
+            "y": 0,
+            "z": 12,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.18,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_north_10_0_2",
+          "local_pos": {
+            "x": 10,
+            "y": 0,
+            "z": 2
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_market_small",
+            "village_commercial_small",
+            "village_house_small",
+            "village_house_medium",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_west_0_1_4",
+          "local_pos": {
+            "x": 0,
+            "y": 1,
+            "z": 4
+          },
+          "facing": "west",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_market_small",
+            "village_commercial_small",
+            "village_house_small",
+            "village_house_medium",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "commercial": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "trek:village/vanilla_files/village/snowy/houses/snowy_butchers_shop_1",
+      "size": {
+        "length": 7,
+        "width": 9,
+        "height": 8
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "north"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.02,
+        "commercial": 0.9,
+        "residential": 0.1,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "commercial",
+          "score": 0.88
+        }
+      ],
+      "namespace": "trek",
+      "path": "village/vanilla_files/village/snowy/houses/snowy_butchers_shop_1",
+      "size_tier": "S",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "north"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "front_to_plaza",
+      "growth_axis": "x",
+      "vertical_role": "ground",
+      "vertical_clearance": 8,
+      "preset_pool": "village_commercial_small",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_commercial_small",
+        "evidence": "village/vanilla_files/village/snowy/houses/snowy_butchers_shop_1"
+      },
+      "function_definition": {
+        "primary_function": "commercial",
+        "secondary_functions": [],
+        "semantic_role": "service",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 8,
+          "max_z": 6
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 8
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 8,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 6
+          },
+          {
+            "x": 8,
+            "z": 6
+          },
+          {
+            "x": 4,
+            "z": 3
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 4,
+            "y": 0,
+            "z": 6,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.22,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_north_3_0_0",
+          "local_pos": {
+            "x": 3,
+            "y": 0,
+            "z": 0
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_market_small",
+            "village_commercial_small",
+            "village_house_small",
+            "village_house_medium",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_north_4_0_7",
+          "local_pos": {
+            "x": 4,
+            "y": 0,
+            "z": 7
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_market_small",
+            "village_commercial_small",
+            "village_house_small",
+            "village_house_medium",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "commercial": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "trek:village/vanilla_files/village/snowy/houses/snowy_butchers_shop_2",
+      "size": {
+        "length": 9,
+        "width": 5,
+        "height": 5
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "north",
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.02,
+        "commercial": 0.9,
+        "residential": 0.1,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "commercial",
+          "score": 0.88
+        }
+      ],
+      "namespace": "trek",
+      "path": "village/vanilla_files/village/snowy/houses/snowy_butchers_shop_2",
+      "size_tier": "S",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "north",
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "front_to_plaza",
+      "growth_axis": "z",
+      "vertical_role": "ground",
+      "vertical_clearance": 5,
+      "preset_pool": "village_commercial_small",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_commercial_small",
+        "evidence": "village/vanilla_files/village/snowy/houses/snowy_butchers_shop_2"
+      },
+      "function_definition": {
+        "primary_function": "commercial",
+        "secondary_functions": [],
+        "semantic_role": "service",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 4,
+          "max_z": 8
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 5
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 4,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 8
+          },
+          {
+            "x": 4,
+            "z": 8
+          },
+          {
+            "x": 2,
+            "z": 4
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 2,
+            "y": 0,
+            "z": 8,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.22,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_north_5_0_2",
+          "local_pos": {
+            "x": 5,
+            "y": 0,
+            "z": 2
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_market_small",
+            "village_commercial_small",
+            "village_house_small",
+            "village_house_medium",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_west_0_1_3",
+          "local_pos": {
+            "x": 0,
+            "y": 1,
+            "z": 3
+          },
+          "facing": "west",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_market_small",
+            "village_commercial_small",
+            "village_house_small",
+            "village_house_medium",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "commercial": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "trek:village/vanilla_files/village/taiga/houses/taiga_butcher_shop_1",
+      "size": {
+        "length": 11,
+        "width": 9,
+        "height": 7
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "north",
+          "south"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.02,
+        "commercial": 0.9,
+        "residential": 0.1,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "commercial",
+          "score": 0.88
+        }
+      ],
+      "namespace": "trek",
+      "path": "village/vanilla_files/village/taiga/houses/taiga_butcher_shop_1",
+      "size_tier": "S",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "south",
+        "north"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "front_to_plaza",
+      "growth_axis": "z",
+      "vertical_role": "ground",
+      "vertical_clearance": 7,
+      "preset_pool": "village_commercial_small",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_commercial_small",
+        "evidence": "village/vanilla_files/village/taiga/houses/taiga_butcher_shop_1"
+      },
+      "function_definition": {
+        "primary_function": "commercial",
+        "secondary_functions": [],
+        "semantic_role": "service",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 8,
+          "max_z": 10
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 7
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 8,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 10
+          },
+          {
+            "x": 8,
+            "z": 10
+          },
+          {
+            "x": 4,
+            "z": 5
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 4,
+            "y": 0,
+            "z": 10,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.22,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_south_4_0_8",
+          "local_pos": {
+            "x": 4,
+            "y": 0,
+            "z": 8
+          },
+          "facing": "south",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_market_small",
+            "village_commercial_small",
+            "village_house_small",
+            "village_house_medium",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        },
+        {
+          "id": "jigsaw_north_7_0_6",
+          "local_pos": {
+            "x": 7,
+            "y": 0,
+            "z": 6
+          },
+          "facing": "north",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_market_small",
+            "village_commercial_small",
+            "village_house_small",
+            "village_house_medium",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "commercial": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    }
+  ]
+}
