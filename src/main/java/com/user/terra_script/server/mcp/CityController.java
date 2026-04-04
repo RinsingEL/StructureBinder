@@ -2229,9 +2229,11 @@ public class CityController {
     }
 
     private static CityC7Stages.C7Selection loadC8GenerationSelection(Path cityDir, String groupId) throws Exception {
-        CityC7Stages.C7Selection citySelection = CityC7Stages.load(cityDir);
-        if (citySelection != null) return citySelection;
-        return loadC7Selection(cityDir, groupId);
+        if (groupId != null && !groupId.isBlank()) {
+            CityC7Stages.C7Selection groupSelection = loadC7Selection(cityDir, groupId);
+            if (groupSelection != null) return groupSelection;
+        }
+        return CityC7Stages.load(cityDir);
     }
 
     private static CityC8Stages.C8Plan loadC9GenerationPlan(Path cityDir, String groupId) throws Exception {

@@ -21,7 +21,7 @@ class CityControllerTest {
     Path tempDir;
 
     @Test
-    void c8GenerationPrefersCityWideSelectionOverGroupScopedSelection() throws Exception {
+    void c8GenerationPrefersGroupScopedSelectionWhenAvailable() throws Exception {
         Path cityDir = tempDir.resolve("city_a");
 
         CityC7Stages.C7Selection citySelection = selectionWithTemplate("test:city_wide");
@@ -34,7 +34,7 @@ class CityControllerTest {
         CityC7Stages.C7Selection resolved = invokeLoadC8GenerationSelection(cityDir, "g_market_03");
 
         assertNotNull(resolved);
-        assertEquals("test:city_wide", resolved.selections.get(0).selected_template);
+        assertEquals("test:group_only", resolved.selections.get(0).selected_template);
     }
 
     @Test

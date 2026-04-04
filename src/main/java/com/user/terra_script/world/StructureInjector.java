@@ -19,9 +19,9 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.Random;
 
 @SuppressWarnings("removal")
 @Mod.EventBusSubscriber(modid = "terra_script")
@@ -41,6 +41,10 @@ public class StructureInjector {
             this.maxXExclusive = maxXExclusive;
             this.maxYExclusive = maxYExclusive;
             this.maxZExclusive = maxZExclusive;
+        }
+
+        public static PlacementBounds of(int minX, int minY, int minZ, int maxXExclusive, int maxYExclusive, int maxZExclusive) {
+            return new PlacementBounds(minX, minY, minZ, maxXExclusive, maxYExclusive, maxZExclusive);
         }
 
         public boolean intersects(PlacementBounds other) {
@@ -66,6 +70,38 @@ public class StructureInjector {
             this.origin = origin;
             this.rotation = rotation;
             this.entries = entries;
+        }
+    }
+
+    public static final class PlacementOutcome {
+        public final boolean placed;
+        public final PlacementBounds bounds;
+        public final int clearedJigsawBlocks;
+        public final List<BlockPos> clearedJigsawSamples;
+
+        private PlacementOutcome(boolean placed, PlacementBounds bounds, int clearedJigsawBlocks, List<BlockPos> clearedJigsawSamples) {
+            this.placed = placed;
+            this.bounds = bounds;
+            this.clearedJigsawBlocks = clearedJigsawBlocks;
+            this.clearedJigsawSamples = clearedJigsawSamples;
+        }
+
+        public static PlacementOutcome of(boolean placed, PlacementBounds bounds, int clearedJigsawBlocks, List<BlockPos> clearedJigsawSamples) {
+            return new PlacementOutcome(placed, bounds, clearedJigsawBlocks, clearedJigsawSamples != null ? clearedJigsawSamples : Collections.emptyList());
+        }
+
+        public static PlacementOutcome failed(PlacementBounds bounds) {
+            return new PlacementOutcome(false, bounds, 0, Collections.emptyList());
+        }
+    }
+
+    private static final class BlockClearSummary {
+        public final int count;
+        public final List<BlockPos> samples;
+
+        private BlockClearSummary(int count, List<BlockPos> samples) {
+            this.count = count;
+            this.samples = samples;
         }
     }
 
@@ -168,17 +204,29 @@ public class StructureInjector {
     }
 
     public static boolean spawnStructureAtBlock(ServerLevel level, String structureId, BlockPos origin, Rotation rotation, boolean clearJigsawBlocks) {
-        if (level == null || structureId == null || structureId.isBlank() || origin == null) return false;
+        return placeStructureDetailed(level, structureId, origin, rotation, clearJigsawBlocks).placed;
+    }
+
+    public static PlacementOutcome placeStructureDetailed(ServerLevel level, String structureId, BlockPos origin, Rotation rotation, boolean clearJigsawBlocks) {
+        if (level == null || structureId == null || structureId.isBlank() || origin == null) return PlacementOutcome.failed(null);
         StructureTemplateManager manager = level.getStructureManager();
         ResourceLocation loc = new ResourceLocation(structureId);
         Optional<StructureTemplate> templateOp = manager.get(loc);
         if (templateOp.isEmpty()) {
             System.err.println("[TerraScript] Structure not found: " + structureId + " origin=" + origin + " rotation=" + rotation);
-            return false;
+            return PlacementOutcome.failed(null);
         }
         StructureTemplate template = templateOp.get();
         Vec3i size = template.getSize();
         Bounds bounds = boundsFor(template, origin, rotation != null ? rotation : Rotation.NONE);
+        PlacementBounds placementBounds = new PlacementBounds(
+                bounds.minX,
+                bounds.minY,
+                bounds.minZ,
+                bounds.maxXExclusive,
+                bounds.maxYExclusive,
+                bounds.maxZExclusive
+        );
         StructurePlaceSettings settings = new StructurePlaceSettings()
                 .setRotation(rotation != null ? rotation : Rotation.NONE)
                 .setMirror(Mirror.NONE)
@@ -192,21 +240,21 @@ public class StructureInjector {
                     + (bounds.maxXExclusive - 1) + "," + (bounds.maxYExclusive - 1) + "," + (bounds.maxZExclusive - 1) + ")"
                     + " clear_jigsaw=" + clearJigsawBlocks);
             boolean placed = template.placeInWorld(level, origin, origin, settings, level.random, 2);
+            BlockClearSummary clearSummary = placed && clearJigsawBlocks
+                    ? clearPlacedJigsawBlocks(level, template, origin, rotation != null ? rotation : Rotation.NONE)
+                    : new BlockClearSummary(0, Collections.emptyList());
             System.out.println("[TerraScript] spawnStructureAtBlock result template=" + structureId
                     + " origin=" + origin
                     + " bounds=(" + bounds.minX + "," + bounds.minY + "," + bounds.minZ + ")->("
                     + (bounds.maxXExclusive - 1) + "," + (bounds.maxYExclusive - 1) + "," + (bounds.maxZExclusive - 1) + ")"
                     + " placed=" + placed);
-            if (placed && clearJigsawBlocks) {
-                clearPlacedJigsawBlocks(level, template, origin, rotation != null ? rotation : Rotation.NONE);
-            }
-            return placed;
+            return new PlacementOutcome(placed, placementBounds, clearSummary.count, clearSummary.samples);
         } catch (Exception e) {
             System.err.println("[TerraScript] spawnStructureAtBlock exception template=" + structureId
                     + " origin=" + origin
                     + " rotation=" + (rotation != null ? rotation : Rotation.NONE));
             e.printStackTrace();
-            return false;
+            return PlacementOutcome.failed(placementBounds);
         }
     }
 
@@ -254,19 +302,26 @@ public class StructureInjector {
         );
     }
 
-    private static void clearPlacedJigsawBlocks(ServerLevel level, StructureTemplate template, BlockPos origin, Rotation rotation) {
-        if (level == null || template == null || origin == null) return;
+    private static BlockClearSummary clearPlacedJigsawBlocks(ServerLevel level, StructureTemplate template, BlockPos origin, Rotation rotation) {
+        if (level == null || template == null || origin == null) return new BlockClearSummary(0, Collections.emptyList());
         Bounds bounds = boundsFor(template, origin, rotation);
+        int count = 0;
+        List<BlockPos> samples = new ArrayList<>();
         for (int x = bounds.minX; x < bounds.maxXExclusive; x++) {
             for (int y = bounds.minY; y < bounds.maxYExclusive; y++) {
                 for (int z = bounds.minZ; z < bounds.maxZExclusive; z++) {
                     BlockPos pos = new BlockPos(x, y, z);
                     if (level.getBlockState(pos).is(net.minecraft.world.level.block.Blocks.JIGSAW)) {
                         level.setBlock(pos, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 3);
+                        count++;
+                        if (samples.size() < 8) {
+                            samples.add(pos.immutable());
+                        }
                     }
                 }
             }
         }
+        return new BlockClearSummary(count, samples);
     }
 
     private static StructureTemplate loadTemplate(ServerLevel level, String structureId) {

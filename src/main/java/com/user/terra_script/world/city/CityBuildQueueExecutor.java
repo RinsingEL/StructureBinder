@@ -1,16 +1,18 @@
 package com.user.terra_script.world.city;
 
 import com.user.terra_script.event.ServerTickTracker;
-import com.user.terra_script.world.StructureInjector;
+import com.user.terra_script.world.city.execution.BuildExecutionContext;
+import com.user.terra_script.world.city.execution.BuildExecutionPipeline;
+import com.user.terra_script.world.city.execution.BuildTaskDebugLogger;
+import com.user.terra_script.world.city.execution.RuntimeBuildTaskDebugLogger;
+import com.user.terra_script.world.city.execution.ServerLevelBuildWorldAccess;
+import com.user.terra_script.world.city.execution.TaskExecutionResult;
 import com.user.terra_script.world.city.stage.c9.CityC9BuildQueue;
 import com.user.terra_script.world.city.stage.c9.CityC9BuildQueue.BuildQueue;
 import com.user.terra_script.world.city.stage.c9.CityC9BuildQueue.BuildTask;
-import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.block.Rotation;
-import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.storage.LevelResource;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.level.ChunkEvent;
@@ -23,13 +25,10 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Deque;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Mod.EventBusSubscriber(modid = "terra_script")
@@ -43,6 +42,7 @@ public final class CityBuildQueueExecutor {
     private static volatile Path loadedWorldRoot;
 
     private static final int TASKS_PER_TICK = 2;
+    private static final BuildExecutionPipeline EXECUTION_PIPELINE = BuildExecutionPipeline.createDefault();
 
     private CityBuildQueueExecutor() {}
 
@@ -234,119 +234,36 @@ public final class CityBuildQueueExecutor {
 
     private static TaskOutcome executeTask(ServerLevel level, BuildTask task) {
         if (task == null) return TaskOutcome.SKIPPED;
-        if (!level.getServer().isRunning()) return TaskOutcome.SKIPPED;
-        if (!level.hasChunk(task.chunk_x, task.chunk_z)) {
-            task.status = CityC9BuildQueue.Status.PLANNED.name();
-            persist(task.city_id);
-            System.out.println("[C9] skip_not_loaded_chunk task=" + taskLabel(task)
-                    + " chunk=" + task.chunk_x + "," + task.chunk_z);
-            return TaskOutcome.SKIPPED;
-        }
-        if (level.getChunk(task.chunk_x, task.chunk_z, ChunkStatus.FULL, false) == null) {
-            task.status = CityC9BuildQueue.Status.READY.name();
-            persist(task.city_id);
-            System.out.println("[C9] skip_chunk_not_full task=" + taskLabel(task)
-                    + " chunk=" + task.chunk_x + "," + task.chunk_z);
-            return TaskOutcome.SKIPPED;
-        }
-
-        task.status = CityC9BuildQueue.Status.BUILDING.name();
-        task.updated_at_tick = ServerTickTracker.currentTick();
-        persist(task.city_id);
-
-        String error = validateTask(task);
-        if (error != null) {
-            return failTask(task, error);
-        }
-
-        boolean ok = StructureInjector.spawnStructureAtBlock(
-                level,
-                task.template_id,
-                new BlockPos(task.x, task.y, task.z),
-                toRotation(task.rotation),
-                true
-        );
-        if (!ok) {
-            return failTask(task, "structure_place_failed");
-        }
-
-        task.status = CityC9BuildQueue.Status.DONE.name();
-        task.last_error = null;
-        task.updated_at_tick = ServerTickTracker.currentTick();
-        persist(task.city_id);
-        System.out.println("[C9] completed task=" + taskLabel(task)
-                + " template=" + safe(task.template_id)
-                + " pos=" + task.x + "," + task.y + "," + task.z
-                + " rotation=" + task.rotation);
-        return TaskOutcome.COMPLETED;
-    }
-
-    private static String validateTask(BuildTask task) {
-        if (task.parent_node_id != null && !task.parent_node_id.isBlank()) {
-            BuildTask parent = findTask(CityC9BuildQueue.taskId(task.city_id, task.build_area_id, task.parent_node_id));
-            if (parent == null) return "missing_parent_task";
-            if (!CityC9BuildQueue.Status.DONE.name().equals(CityC9BuildQueue.Status.normalize(parent.status))) {
-                return "waiting_for_parent";
-            }
-        }
-        ServerLevel level = ServerLifecycleAccess.currentServer() != null ? ServerLifecycleAccess.currentServer().overworld() : null;
-        StructureInjector.PlacementBounds candidateBounds = level != null
-                ? StructureInjector.placementBounds(level, task.template_id, new BlockPos(task.x, task.y, task.z), toRotation(task.rotation))
-                : null;
         BuildQueue queue = QUEUES_BY_CITY.get(task.city_id);
-        if (queue == null || queue.tasks == null) return null;
-        for (BuildTask other : queue.tasks) {
-            if (other == null || other == task) continue;
-            if (!Objects.equals(task.build_area_id, other.build_area_id)) continue;
-            if (!CityC9BuildQueue.Status.DONE.name().equals(CityC9BuildQueue.Status.normalize(other.status))) continue;
-            if (intersects(level, candidateBounds, task, other)) return "runtime_footprint_collision";
+        ServerLevelBuildWorldAccess world = new ServerLevelBuildWorldAccess(level);
+        BuildTaskDebugLogger logger = new RuntimeBuildTaskDebugLogger(world, task);
+        TaskExecutionResult result = EXECUTION_PIPELINE.execute(new BuildExecutionContext(
+                world,
+                queue,
+                task,
+                logger,
+                () -> persist(task.city_id)
+        ));
+        if (result.outcome() == TaskExecutionResult.Outcome.COMPLETED) {
+            System.out.println("[C9] completed task=" + taskLabel(task)
+                    + " template=" + safe(task.template_id)
+                    + " pos=" + task.x + "," + task.y + "," + task.z
+                    + " rotation=" + task.rotation);
+            return TaskOutcome.COMPLETED;
         }
-        return null;
-    }
-
-    private static TaskOutcome failTask(BuildTask task, String error) {
-        task.retry_count++;
-        task.last_error = error;
-        task.last_error_message = localizedError(error);
-        task.updated_at_tick = ServerTickTracker.currentTick();
-        System.out.println("[C9] fail task=" + taskLabel(task)
-                + " error=" + safe(error)
-                + " retry_count=" + task.retry_count);
-        if (task.retry_count >= CityC9BuildQueue.MAX_RETRIES || isTerminalError(error)) {
-            task.status = CityC9BuildQueue.Status.BLOCKED.name();
-            persist(task.city_id);
+        if (result.outcome() == TaskExecutionResult.Outcome.BLOCKED) {
+            System.out.println("[C9] blocked task=" + taskLabel(task)
+                    + " error=" + safe(result.errorCode())
+                    + " retry_count=" + task.retry_count);
             return TaskOutcome.BLOCKED;
         }
-        task.status = CityC9BuildQueue.Status.READY.name();
-        persist(task.city_id);
-        queueReady(task.task_id);
-        return TaskOutcome.RETRIED;
-    }
-
-    private static boolean isTerminalError(String error) {
-        return "missing_parent_task".equals(error);
-    }
-
-    private static String localizedError(String error) {
-        if ("missing_parent_task".equals(error)) return "父节点任务不存在，当前节点无法继续施工。";
-        if ("waiting_for_parent".equals(error)) return "父节点尚未完成，当前节点需要继续等待。";
-        if ("runtime_footprint_collision".equals(error)) return "当前节点与已落地结构发生运行时碰撞。";
-        if ("structure_place_failed".equals(error)) return "结构写入世界失败，请检查模板和目标位置。";
-        return "当前节点运行时执行失败，请查看错误码和上下文。";
-    }
-
-    private static boolean intersects(ServerLevel level, StructureInjector.PlacementBounds candidateBounds, BuildTask candidate, BuildTask existing) {
-        if (level == null || candidate == null || existing == null) return false;
-        StructureInjector.PlacementBounds left = candidateBounds != null
-                ? candidateBounds
-                : StructureInjector.placementBounds(level, candidate.template_id, new BlockPos(candidate.x, candidate.y, candidate.z), toRotation(candidate.rotation));
-        StructureInjector.PlacementBounds right = StructureInjector.placementBounds(
-                level,
-                existing.template_id,
-                new BlockPos(existing.x, existing.y, existing.z),
-                toRotation(existing.rotation)
-        );
-        return left != null && left.intersects(right);
+        if (result.outcome() == TaskExecutionResult.Outcome.RETRIED) {
+            System.out.println("[C9] retry task=" + taskLabel(task)
+                    + " error=" + safe(result.errorCode())
+                    + " retry_count=" + task.retry_count);
+            return TaskOutcome.RETRIED;
+        }
+        return TaskOutcome.SKIPPED;
     }
 
     private static BuildTask findTask(String taskId) {
@@ -381,16 +298,6 @@ public final class CityBuildQueueExecutor {
 
     private static long chunkKey(int chunkX, int chunkZ) {
         return ChunkPos.asLong(chunkX, chunkZ);
-    }
-
-    private static Rotation toRotation(int degrees) {
-        int normalized = ((degrees % 360) + 360) % 360;
-        return switch (normalized) {
-            case 90 -> Rotation.CLOCKWISE_90;
-            case 180 -> Rotation.CLOCKWISE_180;
-            case 270 -> Rotation.COUNTERCLOCKWISE_90;
-            default -> Rotation.NONE;
-        };
     }
 
     private static final class ServerLifecycleAccess {
