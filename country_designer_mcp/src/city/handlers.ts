@@ -115,6 +115,16 @@ export const cityHandlers: Record<string, ToolHandler> = {
     if (args.build_area_id !== undefined) payload.build_area_id = String(args.build_area_id);
     return postCityJson("/city_c8_retry", payload);
   },
+  async city_jigsaw_solve(args) {
+    const payload: Record<string, any> = { city_id: args.city_id, parent_node_id: args.parent_node_id, selected_template_id: args.selected_template_id };
+    if (args.group_id !== undefined) payload.group_id = String(args.group_id);
+    if (args.build_area_id !== undefined) payload.build_area_id = String(args.build_area_id);
+    if (args.parent_connector_id !== undefined) payload.parent_connector_id = String(args.parent_connector_id);
+    if (args.selected_connector_dir !== undefined) payload.selected_connector_dir = String(args.selected_connector_dir);
+    if (args.selected_rotation !== undefined) payload.selected_rotation = Number(args.selected_rotation);
+    if (args.apply_now !== undefined) payload.apply_now = Boolean(args.apply_now);
+    return postCityJson("/city_jigsaw_solve", payload, args.apply_now ? TIMEOUTS.workflow : TIMEOUTS.quick);
+  },
   async city_c9_generate(args) {
     const payload: Record<string, any> = { city_id: args.city_id };
     if (args.group_id !== undefined) payload.group_id = String(args.group_id);

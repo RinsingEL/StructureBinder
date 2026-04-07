@@ -1,6 +1,8 @@
 package com.user.terra_script.world.city.stage.c8;
 
 import com.user.terra_script.world.city.stage.CityC35CatalogIO;
+import com.user.terra_script.world.city.stage.c1.CityStage1BinaryIO;
+import com.user.terra_script.world.city.stage.c2.CityC2ScanBinaryIO;
 import com.user.terra_script.world.city.stage.c6.CityC6Stages;
 import com.user.terra_script.world.city.stage.c7.CityC7Stages;
 import org.junit.jupiter.api.Test;
@@ -16,6 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityC8ArrangementEngineTest {
     @Test
@@ -190,6 +193,160 @@ class CityC8ArrangementEngineTest {
         assertEquals(true, longX);
     }
 
+    @Test
+    void solveSinglePlacementReturnsSolvedPlacementWithoutManualXZ() throws Exception {
+        Object parentMeta = newTemplateMeta("test:parent_tool", "START");
+        addConnector(parentMeta, "p_east", 4, 0, "east");
+
+        Object childMeta = newTemplateMeta("test:child_tool", "MIDDLE");
+        addConnector(childMeta, "c_north", 0, 1, "north");
+        setAllowedRotations(childMeta, List.of(270));
+
+        Object catalog = newCatalogWith(parentMeta, childMeta);
+        Method indexCatalog = CityC8ArrangementEngine.class.getDeclaredMethod("indexCatalog", catalog.getClass());
+        indexCatalog.setAccessible(true);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> metaById = (Map<String, Object>) indexCatalog.invoke(null, catalog);
+
+        CityC8Stages.PlacementNode parent = new CityC8Stages.PlacementNode();
+        parent.node_id = "parent";
+        parent.template_id = "test:parent_tool";
+        parent.x = 10;
+        parent.y = 64;
+        parent.z = 10;
+        parent.rotation = 0;
+        parent.level = 0;
+
+        CityC6Stages.BuildAreaSummary area = new CityC6Stages.BuildAreaSummary();
+        CityC8Stages.AreaGeometry geometry = rectangularGeometry(area, 0, 0, 100, 100);
+
+        @SuppressWarnings("unchecked")
+        CityC8ArrangementEngine.SinglePlacementSolveResult solved = CityC8ArrangementEngine.solveSinglePlacementWithCatalog(
+                geometry,
+                List.of(parent),
+                parent,
+                "p_east",
+                "east",
+                "test:child_tool",
+                270,
+                null,
+                null,
+                (Map) metaById
+        );
+
+        assertTrue(solved.ok);
+        assertNotNull(solved.placement);
+        assertEquals(14, solved.resolved_origin_x);
+        assertEquals(10, solved.resolved_origin_z);
+        assertEquals(270, solved.resolved_rotation);
+        assertEquals("p_east", solved.incoming_parent_connector_id);
+        assertEquals("c_north", solved.incoming_child_connector_id);
+        assertEquals(64, solved.placement.y);
+    }
+
+    @Test
+    void solveSinglePlacementRejectsWhenConnectorCannotBeResolved() throws Exception {
+        CityC8Stages.PlacementNode parent = new CityC8Stages.PlacementNode();
+        parent.node_id = "parent";
+        parent.template_id = "test:missing_meta";
+        parent.x = 0;
+        parent.z = 0;
+        CityC6Stages.BuildAreaSummary area = new CityC6Stages.BuildAreaSummary();
+        CityC8Stages.AreaGeometry geometry = rectangularGeometry(area, 0, 0, 10, 10);
+
+        CityC8ArrangementEngine.SinglePlacementSolveResult solved = CityC8ArrangementEngine.solveSinglePlacement(
+                geometry,
+                List.of(parent),
+                parent,
+                null,
+                "east",
+                "test:child_missing",
+                null,
+                null,
+                null
+        );
+
+        assertFalse(solved.ok);
+        assertEquals("missing_catalog_meta", solved.reject_reason);
+    }
+
+    @Test
+    void templatesWithoutExplicitProbePointsNoLongerUseGenericArrangementFallback() throws Exception {
+        Object meta = newTemplateMeta("test:no_probe_meta", "MIDDLE");
+        CityC8Stages.PlacementNode node = new CityC8Stages.PlacementNode();
+        node.x = 10;
+        node.z = 20;
+        node.rotation = 0;
+        node.footprint_min_x = 10;
+        node.footprint_min_z = 20;
+        node.footprint_max_x = 18;
+        node.footprint_max_z = 30;
+
+        Method resolveProbePoints = CityC8ArrangementEngine.class.getDeclaredMethod(
+                "resolveProbePoints",
+                CityC8Stages.PlacementNode.class,
+                meta.getClass()
+        );
+        resolveProbePoints.setAccessible(true);
+
+        @SuppressWarnings("unchecked")
+        List<Object> probes = (List<Object>) resolveProbePoints.invoke(null, node, meta);
+
+        assertNotNull(probes);
+        assertTrue(probes.isEmpty());
+    }
+
+    @Test
+    void explicitTerrainProbeChecksAreTemporarilyDisabledInArrangementEngine() throws Exception {
+        Object meta = newTemplateMeta("test:arrangement_explicit_probe", "MIDDLE");
+        CityC35CatalogIO.PlacementSpec placement = new CityC35CatalogIO.PlacementSpec();
+        placement.footprint.min_x = 0;
+        placement.footprint.min_z = 0;
+        placement.footprint.max_x = 8;
+        placement.footprint.max_z = 10;
+        CityC35CatalogIO.ProbePoint probeA = new CityC35CatalogIO.ProbePoint();
+        probeA.x = 0;
+        probeA.z = 0;
+        CityC35CatalogIO.ProbePoint probeB = new CityC35CatalogIO.ProbePoint();
+        probeB.x = 8;
+        probeB.z = 10;
+        placement.terrain_probe_points.add(probeA);
+        placement.terrain_probe_points.add(probeB);
+        setField(meta, "placement", placement);
+        CityC35CatalogIO.ConstraintSpec constraints = (CityC35CatalogIO.ConstraintSpec) getField(meta, "constraints");
+        constraints.max_height_delta = 1;
+        constraints.max_slope = 0.05;
+
+        CityC8Stages.PlacementNode node = new CityC8Stages.PlacementNode();
+        node.x = 10;
+        node.z = 20;
+        node.rotation = 0;
+        node.footprint_min_x = 10;
+        node.footprint_min_z = 20;
+        node.footprint_max_x = 18;
+        node.footprint_max_z = 30;
+
+        CityC6Stages.BuildAreaSummary area = new CityC6Stages.BuildAreaSummary();
+        CityC8Stages.AreaGeometry geometry = rectangularGeometry(area, 0, 0, 100, 100);
+        CityC7Stages.GroupArrangementDecision arrangement = new CityC7Stages.GroupArrangementDecision();
+        int[][] heights = new int[64][64];
+        heights[10][20] = 64;
+        heights[18][30] = 90;
+        CityStage1BinaryIO.HeightData heightData = new CityStage1BinaryIO.HeightData(0, 0, 64, 64, heights);
+        Object ctx = newSolveContext(area, geometry, arrangement, Map.of(), heightData, null);
+
+        Method terrainPasses = CityC8ArrangementEngine.class.getDeclaredMethod(
+                "terrainPasses",
+                ctx.getClass(),
+                CityC8Stages.PlacementNode.class,
+                meta.getClass()
+        );
+        terrainPasses.setAccessible(true);
+
+        boolean passes = (boolean) terrainPasses.invoke(null, ctx, node, meta);
+        assertTrue(passes);
+    }
+
     private static Object newTemplateMeta(String structureId, String pieceRole) throws Exception {
         Class<?> type = Class.forName("com.user.terra_script.world.city.stage.c8.CityC8ArrangementEngine$TemplateMeta");
         Constructor<?> ctor = type.getDeclaredConstructor();
@@ -235,6 +392,17 @@ class CityC8ArrangementEngineTest {
             CityC7Stages.GroupArrangementDecision arrangement,
             Map<String, Object> metaById
     ) throws Exception {
+        return newSolveContext(area, geometry, arrangement, metaById, null, null);
+    }
+
+    private static Object newSolveContext(
+            CityC6Stages.BuildAreaSummary area,
+            CityC8Stages.AreaGeometry geometry,
+            CityC7Stages.GroupArrangementDecision arrangement,
+            Map<String, Object> metaById,
+            CityStage1BinaryIO.HeightData heightData,
+            CityC2ScanBinaryIO.C2ScanData c2ScanData
+    ) throws Exception {
         Class<?> type = Class.forName("com.user.terra_script.world.city.stage.c8.CityC8ArrangementEngine$SolveContext");
         Constructor<?> ctor = type.getDeclaredConstructor(
                 CityC6Stages.BuildAreaSummary.class,
@@ -248,7 +416,7 @@ class CityC8ArrangementEngineTest {
                 Class.forName("com.user.terra_script.world.city.stage.c2.CityC2ScanBinaryIO$C2ScanData")
         );
         ctor.setAccessible(true);
-        return ctor.newInstance(area, geometry, arrangement, metaById, 8, 8, 4, null, null);
+        return ctor.newInstance(area, geometry, arrangement, metaById, 8, 8, 4, heightData, c2ScanData);
     }
 
     private static CityC8Stages.AreaGeometry rectangularGeometry(CityC6Stages.BuildAreaSummary area, int minX, int minZ, int maxX, int maxZ) {
@@ -271,11 +439,45 @@ class CityC8ArrangementEngineTest {
         return (((long) x) << 32) ^ (z & 0xffffffffL);
     }
 
+    private static Object newCatalogWith(Object... metas) throws Exception {
+        Class<?> type = Class.forName("com.user.terra_script.world.city.stage.c8.CityC8ArrangementEngine$Catalog");
+        Constructor<?> ctor = type.getDeclaredConstructor();
+        ctor.setAccessible(true);
+        Object catalog = ctor.newInstance();
+        @SuppressWarnings("unchecked")
+        List<Object> structures = (List<Object>) getField(catalog, "structures");
+        for (Object meta : metas) {
+            structures.add(meta);
+        }
+        return catalog;
+    }
+
     private static Object getField(Object target, String fieldName) throws Exception {
-        return target.getClass().getField(fieldName).get(target);
+        Class<?> type = target.getClass();
+        while (type != null) {
+            try {
+                java.lang.reflect.Field field = type.getDeclaredField(fieldName);
+                field.setAccessible(true);
+                return field.get(target);
+            } catch (NoSuchFieldException ignored) {
+                type = type.getSuperclass();
+            }
+        }
+        throw new NoSuchFieldException(fieldName);
     }
 
     private static void setField(Object target, String fieldName, Object value) throws Exception {
-        target.getClass().getField(fieldName).set(target, value);
+        Class<?> type = target.getClass();
+        while (type != null) {
+            try {
+                java.lang.reflect.Field field = type.getDeclaredField(fieldName);
+                field.setAccessible(true);
+                field.set(target, value);
+                return;
+            } catch (NoSuchFieldException ignored) {
+                type = type.getSuperclass();
+            }
+        }
+        throw new NoSuchFieldException(fieldName);
     }
 }

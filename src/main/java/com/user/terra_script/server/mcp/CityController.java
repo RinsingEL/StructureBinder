@@ -32,8 +32,13 @@ import com.user.terra_script.world.city.stage.c6.CityC6GroupPreviewExporter;
 import com.user.terra_script.world.city.stage.c7.CityC7Stages;
 import com.user.terra_script.world.city.stage.c8.CityC8Stages;
 import com.user.terra_script.world.city.stage.c8.CityC8ArrangementPreviewExporter;
+import com.user.terra_script.world.city.stage.c8.CityJigsawSolverDebugTrace;
+import com.user.terra_script.world.city.stage.c8.CityJigsawSolverPreviewExporter;
 import com.user.terra_script.world.city.stage.c9.CityC9Stages;
 import com.user.terra_script.world.city.stage.c9.CityC9BuildQueue;
+import com.user.terra_script.world.city.execution.ServerLevelBuildWorldAccess;
+import com.user.terra_script.world.city.execution.SolvedPlacementExecutionService;
+import com.user.terra_script.world.city.stage.c8.CityVanillaJigsawAdapterService;
 import com.user.terra_script.world.city.stage.c9.CityC9PlacementPreviewExporter;
 import com.user.terra_script.domain.world.scan.ScanPixel;
 import com.user.terra_script.domain.world.scan.service.SatelliteScanner;
@@ -73,6 +78,8 @@ public class CityController {
     private static final AtomicReference<String> C2_ACTIVE_CITY = new AtomicReference<>(null);
     private static final long C2_MEMORY_CACHE_TTL_MS = 10 * 60 * 1000L;
     private static final Map<String, C2CacheEntry> C2_SCAN_CACHE = new ConcurrentHashMap<>();
+    private static final SolvedPlacementExecutionService SOLVED_PLACEMENT_EXECUTION_SERVICE = SolvedPlacementExecutionService.createDefault();
+    private static final Gson DEBUG_GSON = new Gson();
 
     private final Gson gson = new Gson();
     private final MinecraftServer mcServer;
@@ -1098,7 +1105,16 @@ public class CityController {
                     + " group=" + safe(groupId)
                     + " c7_selection_generated_at=" + (c7Selection != null ? c7Selection.generated_at_epoch_ms : -1)
                     + " c7_selection_count=" + (c7Selection != null && c7Selection.selections != null ? c7Selection.selections.size() : -1));
-            CityC8Stages.C8Plan plan = CityC8Stages.generate(cityId, c6Summary, c6Layout, c7Selection, heightData, c2ScanData, c6Index);
+            CityC8Stages.C8Plan plan = CityC8Stages.generate(
+                    cityId,
+                    c6Summary,
+                    c6Layout,
+                    c7Selection,
+                    mcServer != null ? mcServer.overworld() : null,
+                    heightData,
+                    c2ScanData,
+                    c6Index
+            );
             if (groupId == null || groupId.isBlank()) {
                 CityC8Stages.save(cityDir, plan);
             }
@@ -1292,6 +1308,348 @@ public class CityController {
         }
     }
 
+    public void handleCityJigsawSolve(HttpExchange exchange) throws IOException {
+        if (!HttpUtil.requireMethod(exchange, "POST")) return;
+        try {
+            String body = HttpUtil.readBody(exchange);
+            JsonObject json = JsonParser.parseString(body).getAsJsonObject();
+            String cityId = readOptionalString(json, "city_id");
+            String groupId = readOptionalString(json, "group_id");
+            String buildAreaId = readOptionalString(json, "build_area_id");
+            String parentNodeId = readOptionalString(json, "parent_node_id");
+            String parentConnectorId = readOptionalString(json, "parent_connector_id");
+            String selectedTemplateId = readOptionalString(json, "selected_template_id");
+            String selectedConnectorDir = readOptionalString(json, "selected_connector_dir");
+            boolean applyNow = json.has("apply_now") && !json.get("apply_now").isJsonNull() && json.get("apply_now").getAsBoolean();
+            if (cityId == null || cityId.isBlank()
+                    || parentNodeId == null || parentNodeId.isBlank()
+                    || parentConnectorId == null || parentConnectorId.isBlank()
+                    || selectedTemplateId == null || selectedTemplateId.isBlank()) {
+                HttpUtil.sendResponse(exchange, 400, "{\"error\": \"Missing city_id, parent_node_id, parent_connector_id or selected_template_id\"}");
+                return;
+            }
+
+            Path cityDir = resolveCityDir(cityId);
+            CityC8Stages.C8Plan plan = loadC9GenerationPlan(cityDir, groupId);
+            CityC6Stages.C6Summary c6Summary = CityC6Stages.loadSummary(cityDir);
+            Map<Long, Integer> c6Index = CityC6Stages.loadIndex(cityDir);
+            if (plan == null || c6Summary == null || c6Index == null || c6Index.isEmpty()) {
+                HttpUtil.sendResponse(exchange, 404, "{\"error\": \"Required C8/C6 data not found\"}");
+                return;
+            }
+
+            CityC8Stages.FoundationItem foundation = findFoundation(plan, groupId, buildAreaId);
+            if (foundation == null) {
+                HttpUtil.sendResponse(exchange, 404, "{\"error\": \"Target C8 foundation not found\"}");
+                return;
+            }
+            CityC6Stages.BuildAreaSummary area = findArea(c6Summary, foundation.build_area_numeric_id, foundation.group_id, foundation.build_area_id);
+            if (area == null) {
+                HttpUtil.sendResponse(exchange, 404, "{\"error\": \"Target C6 area not found\"}");
+                return;
+            }
+            CityC8Stages.AreaGeometry geometry = CityC8Stages.buildAreaGeometry(
+                    area,
+                    CityC8Stages.collectAreaBlockKeys(c6Index, foundation.build_area_numeric_id)
+            );
+            CityC8Stages.PlacementNode parentPlacement = findPlacementNode(foundation, parentNodeId);
+            if (parentPlacement == null) {
+                HttpUtil.sendResponse(exchange, 404, "{\"error\": \"Parent placement not found in current C8 foundation\"}");
+                return;
+            }
+
+            List<CityC8Stages.PlacementNode> existingPlacements = collectExistingPlacements(foundation);
+            CityStage1BinaryIO.HeightData heightData = CityStage1BinaryIO.loadHeightData(cityId);
+            CityC2ScanBinaryIO.C2ScanData c2ScanData = CityC2ScanBinaryIO.load(cityId);
+            CityJigsawSolverDebugTrace debugTrace = CityJigsawSolverDebugTrace.create(
+                    mcServer,
+                    cityDir,
+                    cityId,
+                    foundation.group_id != null ? foundation.group_id : groupId
+            );
+            Integer selectedRotation = null;
+            if (json.has("selected_rotation") && !json.get("selected_rotation").isJsonNull()) {
+                selectedRotation = json.get("selected_rotation").getAsInt();
+            }
+            debugTrace.addStep(
+                    "01_request_context",
+                    "装载求解请求上下文",
+                    "确认本次求解使用的城市、功能区、parent 节点和 child 模板。",
+                    "读取当前 group 的 C8 foundation、C6 area geometry、parent placement 与已有结构上下文。",
+                    "通过 C8/C6 已落盘产物恢复建造区 polygon、parent placement 和已有 placement 列表，为后续 jigsaw 求解准备输入。",
+                    "已定位 parent 节点 `" + safe(parentNodeId) + "`，并准备对模板 `" + safe(selectedTemplateId) + "` 发起独立 jigsaw 求解。",
+                    "ok",
+                    buildJigsawRequestEvidence(
+                            foundation,
+                            geometry,
+                            parentPlacement,
+                            existingPlacements,
+                            parentConnectorId,
+                            selectedTemplateId,
+                            selectedConnectorDir,
+                            selectedRotation,
+                            applyNow
+                    )
+            );
+            CityVanillaJigsawAdapterService.SolveResult solveResult = CityVanillaJigsawAdapterService.solve(
+                    mcServer != null ? mcServer.overworld() : null,
+                    cityId,
+                    geometry,
+                    existingPlacements,
+                    parentPlacement,
+                    parentConnectorId,
+                    selectedTemplateId,
+                    selectedConnectorDir,
+                    selectedRotation,
+                    heightData,
+                    c2ScanData
+            );
+            debugTrace.addStep(
+                    "02_runtime_jigsaws",
+                    "扫描 parent 模板中的 runtime 拼图方块",
+                    "找出 parent 模板在当前放置姿态下真实存在的 jigsaw 方块。",
+                    "读取当前 parent placement 对应的真实模板，并扫描模板放置后实际存在的 jigsaw 方块。",
+                    "直接调用 StructureTemplate.filterBlocks(..., Blocks.JIGSAW) 获取 runtime jigsaw，再根据已放置 rotation 反推模板局部坐标，生成 runtime connector id。",
+                    buildRuntimeJigsawResultZh(solveResult),
+                    buildRuntimeJigsawStatus(solveResult),
+                    buildRuntimeJigsawEvidence(gson, solveResult)
+            );
+            debugTrace.addStep(
+                    "03_parent_connector_resolution",
+                    "解析本次请求使用的 parent connector",
+                    "确认请求中的 connector 是否能在 runtime 模板里命中真实 parent jigsaw。",
+                    "对比请求的 parent_connector_id、runtime 扫描结果和 catalog 投影结果，决定本次求解到底使用哪一个 parent connector。",
+                    "优先使用 runtime 模板反推出的 connector id 直接命中；若 runtime 未命中，再尝试用 catalog connector 的局部坐标和 facing 投影到世界坐标后做二次定位。",
+                    buildParentResolutionResultZh(parentConnectorId, solveResult),
+                    buildParentResolutionStatus(solveResult),
+                    buildParentResolutionEvidence(solveResult, parentConnectorId)
+            );
+            debugTrace.addStep(
+                    "04_vanilla_piece_result",
+                    "构造临时模板池并调用 vanilla jigsaw 生成 child",
+                    "验证当前 parent connector 与 child 模板是否能在 vanilla depth=1 语义下生成单个 child piece。",
+                    "为已选 child 模板构造单模板 pool，并尝试生成一个 child piece；若成功，再继续解析 child connector。",
+                    "用临时单模板 pool 限制 child 候选，并调用 JigsawPlacement.addPieces(...) 做 depth=1 vanilla child 生成；生成成功后继续按 runtime/catalog 口径解析 child connector。",
+                    buildVanillaPieceResultZh(solveResult),
+                    buildVanillaPieceStatus(solveResult),
+                    buildVanillaPieceEvidence(solveResult)
+            );
+            debugTrace.addStep(
+                    "05_validation_result",
+                    "校验 child 结构矩形是否可接受",
+                    "确认生成出的 child 结构矩形能否通过当前建造区边界与求解结果校验。",
+                    "读取生成出的 child bounds、origin、rotation，并判断本次求解是在何处被接受或拒绝。",
+                    "对生成出的结构矩形使用 containsFootprint(...) 做建造区边界判断，并结合 solve_result 的 reject_reason 汇总当前求解阶段结论。",
+                    buildValidationResultZh(solveResult),
+                    buildValidationStatus(solveResult),
+                    buildValidationEvidence(solveResult)
+            );
+
+            JsonObject res = new JsonObject();
+            res.addProperty("step", "JIGSAW_SOLVER");
+            res.addProperty("city_id", cityId);
+            if (groupId != null) res.addProperty("group_id", groupId);
+            res.addProperty("build_area_id", foundation.build_area_id);
+            res.addProperty("mode", applyNow ? "solve_and_place" : "solve");
+            res.add("solve_result", gson.toJsonTree(solveResult));
+            if (!solveResult.ok || solveResult.placement == null) {
+                res.addProperty("status", "invalid");
+                finalizeJigsawDebugArtifacts(
+                        res,
+                        debugTrace,
+                        cityDir,
+                        cityId,
+                        foundation.group_id != null ? foundation.group_id : groupId,
+                        foundation.build_area_id,
+                        heightData,
+                        c2ScanData,
+                        geometry,
+                        existingPlacements,
+                        parentPlacement,
+                        parentConnectorId,
+                        solveResult,
+                        null,
+                        applyNow
+                );
+                debugTrace.logFinal("Jigsaw 求解未通过。", false, buildValidationEvidence(solveResult));
+                HttpUtil.sendResponse(exchange, 422, gson.toJson(res));
+                return;
+            }
+
+            if (!applyNow) {
+                res.addProperty("status", "ok");
+                finalizeJigsawDebugArtifacts(
+                        res,
+                        debugTrace,
+                        cityDir,
+                        cityId,
+                        foundation.group_id != null ? foundation.group_id : groupId,
+                        foundation.build_area_id,
+                        heightData,
+                        c2ScanData,
+                        geometry,
+                        existingPlacements,
+                        parentPlacement,
+                        parentConnectorId,
+                        solveResult,
+                        null,
+                        false
+                );
+                debugTrace.logFinal("Jigsaw 求解完成。", true, buildValidationEvidence(solveResult));
+                HttpUtil.sendResponse(exchange, 200, gson.toJson(res));
+                return;
+            }
+            if (solveResult.descriptor == null || solveResult.descriptor.piece_placer == null) {
+                debugTrace.addStep(
+                        "06_apply_result",
+                        "执行求解后落地",
+                        "在 apply_now 模式下把已求解结果交给执行层落地。",
+                        "本次请求要求立即落地，但当前求解结果没有可执行的 vanilla piece descriptor。",
+                        "solve_and_place 依赖前一步生成的 vanilla piece descriptor，把 child piece 交给现有执行层继续做 chunk gate、runtime validator 和 terrain preparation。",
+                        "当前求解虽然返回了 placement，但没有形成可执行的 vanilla piece descriptor，因此未进入执行层。",
+                        "invalid",
+                        buildApplyFailureEvidence("missing_vanilla_piece_descriptor", "missing_vanilla_piece_descriptor")
+                );
+                res.addProperty("status", "invalid");
+                res.addProperty("error", "missing_vanilla_piece_descriptor");
+                finalizeJigsawDebugArtifacts(
+                        res,
+                        debugTrace,
+                        cityDir,
+                        cityId,
+                        foundation.group_id != null ? foundation.group_id : groupId,
+                        foundation.build_area_id,
+                        heightData,
+                        c2ScanData,
+                        geometry,
+                        existingPlacements,
+                        parentPlacement,
+                        parentConnectorId,
+                        solveResult,
+                        null,
+                        true
+                );
+                debugTrace.logFinal("Jigsaw 求解成功，但未能生成可执行的落地描述。", false, buildApplyFailureEvidence("missing_vanilla_piece_descriptor", "missing_vanilla_piece_descriptor"));
+                HttpUtil.sendResponse(exchange, 422, gson.toJson(res));
+                return;
+            }
+            if (mcServer == null || mcServer.overworld() == null) {
+                debugTrace.addStep(
+                        "06_apply_result",
+                        "执行求解后落地",
+                        "在 apply_now 模式下把已求解结果交给执行层落地。",
+                        "本次请求要求立即落地，但当前运行环境没有可用的 Minecraft server/overworld。",
+                        "solve_and_place 需要把求解结果派发回主线程，并通过 ServerLevelBuildWorldAccess 进入现有执行层；没有 server/overworld 时无法继续。",
+                        "当前运行环境不可用，因此未进入执行层。",
+                        "invalid",
+                        buildApplyFailureEvidence("missing_server_level", "Minecraft server/overworld unavailable")
+                );
+                res.addProperty("status", "invalid");
+                res.addProperty("error", "Minecraft server/overworld unavailable");
+                finalizeJigsawDebugArtifacts(
+                        res,
+                        debugTrace,
+                        cityDir,
+                        cityId,
+                        foundation.group_id != null ? foundation.group_id : groupId,
+                        foundation.build_area_id,
+                        heightData,
+                        c2ScanData,
+                        geometry,
+                        existingPlacements,
+                        parentPlacement,
+                        parentConnectorId,
+                        solveResult,
+                        null,
+                        true
+                );
+                debugTrace.logFinal("Jigsaw 求解成功，但运行环境不可用，无法落地。", false, buildApplyFailureEvidence("missing_server_level", "Minecraft server/overworld unavailable"));
+                HttpUtil.sendResponse(exchange, 500, gson.toJson(res));
+                return;
+            }
+
+            CityC9BuildQueue.BuildQueue existingQueue = CityC9BuildQueue.loadOrCreate(cityDir, cityId);
+            CityC9BuildQueue.BuildTask task = SolvedPlacementExecutionService.buildTask(cityId, groupId, foundation, solveResult.placement);
+            final SolvedPlacementExecutionService.ExecutionResult[] holder = new SolvedPlacementExecutionService.ExecutionResult[1];
+            CountDownLatch latch = new CountDownLatch(1);
+            mcServer.execute(() -> {
+                try {
+                    holder[0] = SOLVED_PLACEMENT_EXECUTION_SERVICE.execute(
+                            new ServerLevelBuildWorldAccess(mcServer.overworld()),
+                            existingQueue,
+                            task,
+                            parentPlacement,
+                            solveResult.descriptor,
+                            null
+                    );
+                } finally {
+                    latch.countDown();
+                }
+            });
+            latch.await();
+
+            SolvedPlacementExecutionService.ExecutionResult execution = holder[0];
+            JsonObject executionJson = new JsonObject();
+            executionJson.addProperty("outcome", execution != null && execution.result != null ? execution.result.outcome().name().toLowerCase(java.util.Locale.ROOT) : "skipped");
+            executionJson.addProperty("task_status", execution != null && execution.task != null ? safe(execution.task.status) : "");
+            executionJson.addProperty("runtime_error_code", execution != null && execution.task != null ? execution.task.last_error : null);
+            executionJson.addProperty("runtime_error_message", execution != null && execution.task != null ? execution.task.last_error_message : null);
+            if (execution != null && execution.result != null && execution.result.terrainPreparation() != null) {
+                executionJson.add("terrain_preparation", execution.result.terrainPreparation().toJson());
+            }
+            debugTrace.addStep(
+                    "06_apply_result",
+                    "执行求解后落地",
+                    "在 apply_now 模式下把已求解结果交给执行层落地。",
+                    "把 solver 产出的 placement 和 vanilla piece descriptor 派发到现有执行层，继续做 runtime 校验、地形预处理和结构落地。",
+                    "通过 SolvedPlacementExecutionService 复用 BuildExecutionPipeline，在不改 C9 默认主链的前提下完成 chunk gate、runtime validator、terrain preparation 和 piece 放置。",
+                    buildApplyResultZh(execution),
+                    buildApplyStatus(execution),
+                    executionJson
+            );
+            res.add("placement_execution", executionJson);
+            res.addProperty("status", execution != null
+                    && execution.result != null
+                    && execution.result.outcome() == com.user.terra_script.world.city.execution.TaskExecutionResult.Outcome.COMPLETED ? "ok" : "runtime_invalid");
+            finalizeJigsawDebugArtifacts(
+                    res,
+                    debugTrace,
+                    cityDir,
+                    cityId,
+                    foundation.group_id != null ? foundation.group_id : groupId,
+                    foundation.build_area_id,
+                    heightData,
+                    c2ScanData,
+                    geometry,
+                    existingPlacements,
+                    parentPlacement,
+                    parentConnectorId,
+                    solveResult,
+                    execution,
+                    true
+            );
+            debugTrace.logFinal(
+                    execution != null
+                            && execution.result != null
+                            && execution.result.outcome() == com.user.terra_script.world.city.execution.TaskExecutionResult.Outcome.COMPLETED
+                            ? "Jigsaw 求解并落地完成。"
+                            : "Jigsaw 求解完成，但落地未通过。",
+                    execution != null
+                            && execution.result != null
+                            && execution.result.outcome() == com.user.terra_script.world.city.execution.TaskExecutionResult.Outcome.COMPLETED,
+                    executionJson
+            );
+            HttpUtil.sendResponse(exchange, execution != null
+                    && execution.result != null
+                    && execution.result.outcome() == com.user.terra_script.world.city.execution.TaskExecutionResult.Outcome.COMPLETED ? 200 : 422, gson.toJson(res));
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+            HttpUtil.sendResponse(exchange, 500, "{\"error\": \"Interrupted while solving jigsaw placement\"}");
+        } catch (Exception e) {
+            HttpUtil.handleError(exchange, e);
+        }
+    }
+
     public void handleCityC9Generate(HttpExchange exchange) throws IOException {
         if (!HttpUtil.requireMethod(exchange, "POST")) return;
         try {
@@ -1326,7 +1684,16 @@ public class CityController {
                     return;
                 }
                 CityC7Stages.C7Selection c7Selection = loadC8GenerationSelection(cityDir, groupId);
-                c8Plan = CityC8Stages.generate(cityId, c6Summary, c6Layout, c7Selection, heightData, c2ScanData, c6Index);
+                c8Plan = CityC8Stages.generate(
+                        cityId,
+                        c6Summary,
+                        c6Layout,
+                        c7Selection,
+                        mcServer != null ? mcServer.overworld() : null,
+                        heightData,
+                        c2ScanData,
+                        c6Index
+                );
                 if (groupId == null || groupId.isBlank()) {
                     CityC8Stages.save(cityDir, c8Plan);
                 }
@@ -2294,8 +2661,316 @@ public class CityController {
         return copy;
     }
 
+    private static void finalizeJigsawDebugArtifacts(
+            JsonObject response,
+            CityJigsawSolverDebugTrace debugTrace,
+            Path cityDir,
+            String cityId,
+            String groupId,
+            String buildAreaId,
+            CityStage1BinaryIO.HeightData heightData,
+            CityC2ScanBinaryIO.C2ScanData c2ScanData,
+            CityC8Stages.AreaGeometry geometry,
+            List<CityC8Stages.PlacementNode> existingPlacements,
+            CityC8Stages.PlacementNode parentPlacement,
+            String parentConnectorId,
+            CityVanillaJigsawAdapterService.SolveResult solveResult,
+            SolvedPlacementExecutionService.ExecutionResult execution,
+            boolean applyNow
+    ) throws Exception {
+        if (debugTrace == null) return;
+        Map<String, String> previewPaths = CityJigsawSolverPreviewExporter.export(
+                cityDir,
+                cityId,
+                groupId,
+                debugTrace.debugRunId(),
+                buildAreaId,
+                heightData,
+                c2ScanData,
+                geometry,
+                existingPlacements,
+                parentPlacement,
+                parentConnectorId,
+                solveResult,
+                execution,
+                applyNow
+        );
+        for (Map.Entry<String, String> entry : previewPaths.entrySet()) {
+            debugTrace.attachPreview(entry.getKey(), entry.getValue());
+        }
+        debugTrace.writeTrace();
+        if (response != null) {
+            response.addProperty("debug_run_id", debugTrace.debugRunId());
+            response.addProperty("debug_artifact_dir", debugTrace.relativeArtifactDir());
+            response.add("debug_trace", debugTrace.toJson());
+            response.add("debug_preview_steps", debugTrace.previewStepsJson());
+        }
+    }
+
+    private static JsonObject buildJigsawRequestEvidence(
+            CityC8Stages.FoundationItem foundation,
+            CityC8Stages.AreaGeometry geometry,
+            CityC8Stages.PlacementNode parentPlacement,
+            List<CityC8Stages.PlacementNode> existingPlacements,
+            String parentConnectorId,
+            String selectedTemplateId,
+            String selectedConnectorDir,
+            Integer selectedRotation,
+            boolean applyNow
+    ) {
+        JsonObject out = new JsonObject();
+        if (foundation != null) {
+            out.addProperty("group_id", foundation.group_id);
+            out.addProperty("build_area_id", foundation.build_area_id);
+            out.addProperty("build_area_numeric_id", foundation.build_area_numeric_id);
+        }
+        out.addProperty("parent_connector_id", parentConnectorId);
+        out.addProperty("selected_template_id", selectedTemplateId);
+        out.addProperty("selected_connector_dir", selectedConnectorDir);
+        if (selectedRotation != null) out.addProperty("selected_rotation", selectedRotation);
+        out.addProperty("apply_now", applyNow);
+        out.addProperty("existing_placement_count", existingPlacements != null ? existingPlacements.size() : 0);
+        if (geometry != null) {
+            out.addProperty("geometry_valid", geometry.valid);
+            out.addProperty("geometry_min_x", geometry.min_x);
+            out.addProperty("geometry_min_z", geometry.min_z);
+            out.addProperty("geometry_max_x", geometry.max_x);
+            out.addProperty("geometry_max_z", geometry.max_z);
+        }
+        if (parentPlacement != null) {
+            JsonObject parent = new JsonObject();
+            parent.addProperty("node_id", parentPlacement.node_id);
+            parent.addProperty("template_id", parentPlacement.template_id);
+            parent.addProperty("x", parentPlacement.x);
+            parent.addProperty("y", parentPlacement.y);
+            parent.addProperty("z", parentPlacement.z);
+            parent.addProperty("rotation", parentPlacement.rotation);
+            if (parentPlacement.footprint_min_x != null) parent.addProperty("footprint_min_x", parentPlacement.footprint_min_x);
+            if (parentPlacement.footprint_min_z != null) parent.addProperty("footprint_min_z", parentPlacement.footprint_min_z);
+            if (parentPlacement.footprint_max_x != null) parent.addProperty("footprint_max_x", parentPlacement.footprint_max_x);
+            if (parentPlacement.footprint_max_z != null) parent.addProperty("footprint_max_z", parentPlacement.footprint_max_z);
+            out.add("parent_placement", parent);
+        }
+        return out;
+    }
+
+    private static String buildRuntimeJigsawStatus(CityVanillaJigsawAdapterService.SolveResult solveResult) {
+        return solveResult != null && solveResult.runtime_parent_connectors != null && !solveResult.runtime_parent_connectors.isEmpty()
+                ? "ok"
+                : "warning";
+    }
+
+    private static String buildRuntimeJigsawResultZh(CityVanillaJigsawAdapterService.SolveResult solveResult) {
+        int count = solveResult != null && solveResult.runtime_parent_connectors != null ? solveResult.runtime_parent_connectors.size() : 0;
+        if (count <= 0) return "当前 parent 模板中没有扫到可用于调试展示的 runtime jigsaw。";
+        int horizontal = 0;
+        int vertical = 0;
+        for (CityVanillaJigsawAdapterService.RuntimeConnectorCandidate candidate : solveResult.runtime_parent_connectors) {
+            String front = candidate != null ? safe(candidate.front) : "";
+            if ("north".equals(front) || "south".equals(front) || "east".equals(front) || "west".equals(front)) horizontal++;
+            if ("up".equals(front) || "down".equals(front)) vertical++;
+        }
+        return "共找到 " + count + " 个 runtime jigsaw，其中水平连接器 " + horizontal + " 个，垂直 jigsaw " + vertical + " 个。";
+    }
+
+    private static JsonObject buildRuntimeJigsawEvidence(Gson gson, CityVanillaJigsawAdapterService.SolveResult solveResult) {
+        JsonObject out = new JsonObject();
+        int count = solveResult != null && solveResult.runtime_parent_connectors != null ? solveResult.runtime_parent_connectors.size() : 0;
+        out.addProperty("runtime_parent_connector_count", count);
+        out.add("runtime_parent_connectors", gson.toJsonTree(
+                solveResult != null && solveResult.runtime_parent_connectors != null ? solveResult.runtime_parent_connectors : List.of()
+        ));
+        return out;
+    }
+
+    private static String buildParentResolutionStatus(CityVanillaJigsawAdapterService.SolveResult solveResult) {
+        if (solveResult != null && solveResult.debug != null && solveResult.debug.parent_connector_source != null && !solveResult.debug.parent_connector_source.isBlank()) {
+            return "ok";
+        }
+        String reject = solveResult != null ? safe(solveResult.reject_reason) : "";
+        if (reject.startsWith("parent_connector_") || "missing_parent_catalog_meta".equals(reject)) return "invalid";
+        return "warning";
+    }
+
+    private static String buildParentResolutionResultZh(String parentConnectorId, CityVanillaJigsawAdapterService.SolveResult solveResult) {
+        if (solveResult != null && solveResult.debug != null && solveResult.debug.parent_connector_source != null) {
+            if ("runtime_template".equals(solveResult.debug.parent_connector_source)) {
+                return "请求的 parent connector `" + safe(parentConnectorId) + "` 已直接命中 runtime 模板中的真实 jigsaw。";
+            }
+            if ("catalog_projection".equals(solveResult.debug.parent_connector_source)) {
+                return "请求的 parent connector `" + safe(parentConnectorId) + "` 通过 catalog 局部坐标投影后，成功定位到 runtime 模板中的 jigsaw。";
+            }
+        }
+        String reject = solveResult != null ? safe(solveResult.reject_reason) : "";
+        if ("parent_connector_not_found_in_template".equals(reject)) {
+            return "catalog 中请求的 connector 无法在当前 runtime 模板里对齐到真实 jigsaw，当前仍处于 connector 漂移排查路径。";
+        }
+        if ("parent_connector_not_found_in_catalog".equals(reject)) {
+            return "请求的 parent connector 在当前 catalog 中不存在，未能进入 runtime 模板定位。";
+        }
+        return "当前 parent connector 解析没有形成可确认的命中结果。";
+    }
+
+    private static JsonObject buildParentResolutionEvidence(CityVanillaJigsawAdapterService.SolveResult solveResult, String parentConnectorId) {
+        JsonObject out = new JsonObject();
+        out.addProperty("requested_parent_connector_id", parentConnectorId);
+        if (solveResult != null) out.addProperty("reject_reason", safe(solveResult.reject_reason));
+        if (solveResult != null && solveResult.debug != null) {
+            out.add("debug", DEBUG_GSON.toJsonTree(solveResult.debug));
+        }
+        return out;
+    }
+
+    private static String buildVanillaPieceStatus(CityVanillaJigsawAdapterService.SolveResult solveResult) {
+        if (solveResult != null && solveResult.debug != null && Boolean.TRUE.equals(solveResult.debug.piece_generated)) return "ok";
+        if (solveResult != null && "vertical_jigsaw_solver_pending".equals(solveResult.reject_reason)) return "invalid";
+        if (solveResult != null && "no_valid_jigsaw_solution".equals(solveResult.reject_reason)) return "invalid";
+        return "warning";
+    }
+
+    private static String buildVanillaPieceResultZh(CityVanillaJigsawAdapterService.SolveResult solveResult) {
+        if (solveResult != null && solveResult.debug != null && Boolean.TRUE.equals(solveResult.debug.piece_generated)) {
+            if (solveResult.debug.manual_attach_summary != null && solveResult.debug.manual_attach_summary.summary_zh != null
+                    && !solveResult.debug.manual_attach_summary.summary_zh.isBlank()) {
+                return solveResult.debug.manual_attach_summary.summary_zh;
+            }
+            return "vanilla depth=1 已生成 child piece，并继续尝试解析 child connector 与结构矩形。";
+        }
+        if (solveResult != null && "no_valid_jigsaw_solution".equals(solveResult.reject_reason)) {
+            if (solveResult.debug != null && solveResult.debug.manual_attach_summary != null
+                    && solveResult.debug.manual_attach_summary.summary_zh != null
+                    && !solveResult.debug.manual_attach_summary.summary_zh.isBlank()) {
+                return solveResult.debug.manual_attach_summary.summary_zh;
+            }
+            return "已经准备好 startPos、target 与单模板 pool，但 vanilla depth=1 没有生成有效 child piece。";
+        }
+        if (solveResult != null && "vertical_jigsaw_solver_pending".equals(solveResult.reject_reason)) {
+            if (solveResult.debug != null && solveResult.debug.manual_attach_summary != null
+                    && solveResult.debug.manual_attach_summary.summary_zh != null
+                    && !solveResult.debug.manual_attach_summary.summary_zh.isBlank()) {
+                return solveResult.debug.manual_attach_summary.summary_zh;
+            }
+            return "当前 connector 为垂直 jigsaw，已分流到独立 vertical solver，占位暂未实现。";
+        }
+        return "当前没有进入或没有完成 vanilla child piece 生成阶段。";
+    }
+
+    private static JsonObject buildVanillaPieceEvidence(CityVanillaJigsawAdapterService.SolveResult solveResult) {
+        JsonObject out = new JsonObject();
+        if (solveResult != null) out.addProperty("reject_reason", safe(solveResult.reject_reason));
+        if (solveResult != null && solveResult.debug != null) {
+            out.add("debug", DEBUG_GSON.toJsonTree(solveResult.debug));
+            out.addProperty("parent_target", safe(solveResult.debug.parent_target));
+            JsonObject startPos = new JsonObject();
+            if (solveResult.debug.start_pos_x != null) startPos.addProperty("x", solveResult.debug.start_pos_x);
+            if (solveResult.debug.start_pos_y != null) startPos.addProperty("y", solveResult.debug.start_pos_y);
+            if (solveResult.debug.start_pos_z != null) startPos.addProperty("z", solveResult.debug.start_pos_z);
+            out.add("start_pos", startPos);
+            out.addProperty("pool_template_id", safe(solveResult.debug.pool_template_id));
+            out.add("manual_child_connector_candidates", DEBUG_GSON.toJsonTree(solveResult.debug.manual_child_connector_candidates));
+            out.add("manual_attach_summary", DEBUG_GSON.toJsonTree(solveResult.debug.manual_attach_summary));
+            out.addProperty("first_blocker_stage", safe(solveResult.debug.first_blocker_stage));
+            if (solveResult.debug.vanilla_stub_generated != null) out.addProperty("vanilla_stub_generated", solveResult.debug.vanilla_stub_generated);
+            if (solveResult.debug.piece_generated != null) out.addProperty("piece_generated", solveResult.debug.piece_generated);
+            out.addProperty("incoming_child_connector_id", safe(solveResult.incoming_child_connector_id));
+        }
+        return out;
+    }
+
+    private static String buildValidationStatus(CityVanillaJigsawAdapterService.SolveResult solveResult) {
+        if (solveResult != null && solveResult.ok) return "ok";
+        if (solveResult != null && "out_of_area".equals(solveResult.reject_reason)) return "invalid";
+        return "warning";
+    }
+
+    private static String buildValidationResultZh(CityVanillaJigsawAdapterService.SolveResult solveResult) {
+        if (solveResult != null && solveResult.ok) {
+            return "当前 child 结构已经通过求解阶段的 bounds 与建造区校验，可以继续进入返回或落地阶段。";
+        }
+        if (solveResult != null && "out_of_area".equals(solveResult.reject_reason)) {
+            return "当前 child 结构矩形已生成，但 footprint 超出了当前建造区 polygon。";
+        }
+        if (solveResult != null && "vertical_jigsaw_solver_pending".equals(solveResult.reject_reason)) {
+            return "当前请求命中了垂直 jigsaw，已转交独立 vertical solver 路由，占位暂未实现。";
+        }
+        if (solveResult != null && "no_valid_jigsaw_solution".equals(solveResult.reject_reason)) {
+            return "由于上一步没有生成有效 child piece，本次没有进入最终 bounds/area 接受路径。";
+        }
+        return "当前求解未形成可接受的 child 校验结果，需要结合前序步骤继续排查。";
+    }
+
+    private static JsonObject buildValidationEvidence(CityVanillaJigsawAdapterService.SolveResult solveResult) {
+        JsonObject out = new JsonObject();
+        if (solveResult != null) {
+            out.addProperty("ok", solveResult.ok);
+            out.addProperty("reject_reason", safe(solveResult.reject_reason));
+            out.add("resolved_bounds", DEBUG_GSON.toJsonTree(solveResult.resolved_bounds));
+            out.addProperty("incoming_parent_connector_id", safe(solveResult.incoming_parent_connector_id));
+            out.addProperty("incoming_child_connector_id", safe(solveResult.incoming_child_connector_id));
+        }
+        return out;
+    }
+
+    private static String buildApplyStatus(SolvedPlacementExecutionService.ExecutionResult execution) {
+        if (execution != null && execution.result != null
+                && execution.result.outcome() == com.user.terra_script.world.city.execution.TaskExecutionResult.Outcome.COMPLETED) {
+            return "ok";
+        }
+        return "invalid";
+    }
+
+    private static String buildApplyResultZh(SolvedPlacementExecutionService.ExecutionResult execution) {
+        if (execution != null && execution.result != null
+                && execution.result.outcome() == com.user.terra_script.world.city.execution.TaskExecutionResult.Outcome.COMPLETED) {
+            return "solver 产出的 child 结构已通过执行层，并完成当前 apply_now 落地。";
+        }
+        return "solver 产出的 child 结构已经进入执行层，但 runtime 校验、地形预处理或落地阶段未完成。";
+    }
+
+    private static JsonObject buildApplyFailureEvidence(String errorCode, String errorMessage) {
+        JsonObject out = new JsonObject();
+        out.addProperty("runtime_error_code", errorCode);
+        out.addProperty("runtime_error_message", errorMessage);
+        return out;
+    }
+
     private static String safe(String value) {
         return value == null ? "" : value;
+    }
+
+    private static List<CityC8Stages.PlacementNode> collectExistingPlacements(CityC8Stages.FoundationItem foundation) {
+        List<CityC8Stages.PlacementNode> placements = new ArrayList<>();
+        if (foundation == null) return placements;
+        if (foundation.validated_nodes != null) {
+            for (CityC8Stages.NodeTask task : foundation.validated_nodes) {
+                if (task != null && task.placement != null) {
+                    placements.add(task.placement);
+                }
+            }
+        }
+        if (placements.isEmpty() && foundation.placements != null) {
+            placements.addAll(foundation.placements);
+        }
+        return placements;
+    }
+
+    private static CityC8Stages.PlacementNode findPlacementNode(CityC8Stages.FoundationItem foundation, String nodeId) {
+        if (foundation == null || nodeId == null || nodeId.isBlank()) return null;
+        if (foundation.validated_nodes != null) {
+            for (CityC8Stages.NodeTask task : foundation.validated_nodes) {
+                if (task != null && task.placement != null && nodeId.equals(task.placement.node_id)) {
+                    return task.placement;
+                }
+            }
+        }
+        if (foundation.placements != null) {
+            for (CityC8Stages.PlacementNode placement : foundation.placements) {
+                if (placement != null && nodeId.equals(placement.node_id)) {
+                    return placement;
+                }
+            }
+        }
+        return null;
     }
 
     private static CityC8Stages.FoundationItem findFoundation(CityC8Stages.C8Plan plan, String groupId, String buildAreaId) {

@@ -7,6 +7,16 @@ import com.user.terra_script.world.city.stage.c1.CityStage1BinaryIO;
 import com.user.terra_script.world.city.stage.c2.CityC2ScanBinaryIO;
 import com.user.terra_script.world.city.stage.c6.CityC6Stages;
 import com.user.terra_script.world.city.stage.c7.CityC7Stages;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.Mirror;
+import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplateManager;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -19,11 +29,16 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 public final class CityC8Stages {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final List<String> DEFAULT_HORIZONTAL_CONNECTOR_DIRS = List.of("north", "south", "east", "west");
+    private static final List<Integer> DEFAULT_START_ROTATIONS = List.of(0, 90, 180, 270);
+    private static final int START_INWARD_PROBE_STEPS = 4;
 
     public static final String C8_PLAN_FILE = "C8_FoundationPlan.json";
 
@@ -168,8 +183,41 @@ public final class CityC8Stages {
         public String last_error_message;
         /** 当前地形放宽配置。 */
         public TerrainRelaxProfile terrain_relax_profile = new TerrainRelaxProfile();
+        /** start 节点运行时求解器类型。 */
+        public String start_solver_kind;
+        /** start 节点运行时候选摘要。 */
+        public List<StartRuntimeCandidate> start_runtime_candidates = new ArrayList<>();
+        /** 当前选中的 start connector。 */
+        public String chosen_start_connector_id;
+        /** 当前选中的 start connector 朝向。 */
+        public String chosen_start_connector_front;
+        /** 当前选中的 start rotation。 */
+        public Integer chosen_start_rotation;
+        /** 当前选中的 start 中文说明。 */
+        public String chosen_start_reason_zh;
+        /** 是否发生 runtime 回退。 */
+        public Boolean runtime_fallback_used;
+        /** runtime 回退原因。 */
+        public String runtime_fallback_reason;
         /** 校验成功后生成的落位节点。 */
         public PlacementNode placement;
+    }
+
+    public static class StartRuntimeCandidate {
+        public String template_id;
+        public Integer x;
+        public Integer y;
+        public Integer z;
+        public Integer rotation;
+        public String connector_id;
+        public String connector_front;
+        public Integer horizontal_connector_count;
+        public Integer inward_score;
+        public String dry_run_reject_reason;
+        public String dry_run_first_blocker_stage;
+        public String summary_zh;
+        public Integer distance_from_anchor;
+        public boolean selected;
     }
 
     public static class FailedAttempt {
@@ -315,7 +363,7 @@ public final class CityC8Stages {
             CityStage1BinaryIO.HeightData heightData,
             Map<Long, Integer> indexByBlock
     ) {
-        return generate(cityId, c6Summary, c6Layout, null, heightData, null, indexByBlock);
+        return generate(cityId, c6Summary, c6Layout, null, null, heightData, null, indexByBlock);
     }
 
     public static C8Plan generate(
@@ -326,7 +374,7 @@ public final class CityC8Stages {
             CityC2ScanBinaryIO.C2ScanData c2ScanData,
             Map<Long, Integer> indexByBlock
     ) {
-        return generate(cityId, c6Summary, c6Layout, null, heightData, c2ScanData, indexByBlock);
+        return generate(cityId, c6Summary, c6Layout, null, null, heightData, c2ScanData, indexByBlock);
     }
 
     public static C8Plan generate(
@@ -334,6 +382,19 @@ public final class CityC8Stages {
             CityC6Stages.C6Summary c6Summary,
             CityC6Stages.C6Layout c6Layout,
             CityC7Stages.C7Selection c7Selection,
+            CityStage1BinaryIO.HeightData heightData,
+            CityC2ScanBinaryIO.C2ScanData c2ScanData,
+            Map<Long, Integer> indexByBlock
+    ) {
+        return generate(cityId, c6Summary, c6Layout, c7Selection, null, heightData, c2ScanData, indexByBlock);
+    }
+
+    public static C8Plan generate(
+            String cityId,
+            CityC6Stages.C6Summary c6Summary,
+            CityC6Stages.C6Layout c6Layout,
+            CityC7Stages.C7Selection c7Selection,
+            ServerLevel level,
             CityStage1BinaryIO.HeightData heightData,
             CityC2ScanBinaryIO.C2ScanData c2ScanData,
             Map<Long, Integer> indexByBlock
@@ -375,7 +436,7 @@ public final class CityC8Stages {
                     + " layout_primary_count=" + (layoutPlan.primary_modules != null ? layoutPlan.primary_modules.size() : 0)
                     + " arrangement_seed_template=" + safe(arrangement != null && arrangement.seed != null ? arrangement.seed.start_template_id : "")
                     + " selection_template=" + safe(selection != null ? selection.selected_template : ""));
-            FoundationItem item = buildFoundationItem(area, geometry, layoutPlan, arrangement, selection, foremanPlan, heightData, c2ScanData);
+            FoundationItem item = buildFoundationItem(cityId, level, area, geometry, layoutPlan, arrangement, selection, foremanPlan, heightData, c2ScanData);
             if (item != null) plan.foundations.add(item);
         }
         return plan;
@@ -402,6 +463,8 @@ public final class CityC8Stages {
     }
 
     private static FoundationItem buildFoundationItem(
+            String cityId,
+            ServerLevel level,
             CityC6Stages.BuildAreaSummary area,
             AreaGeometry geometry,
             CityC6Stages.LayoutPlan layoutPlan,
@@ -478,16 +541,21 @@ public final class CityC8Stages {
             addSupport(item, "stairs", "E");
         }
 
-        initializeForemanSession(item, area, layoutPlan, arrangement, selection);
+        initializeForemanSession(cityId, level, item, area, geometry, layoutPlan, arrangement, selection, heightData, c2ScanData);
         return item;
     }
 
     private static void initializeForemanSession(
+            String cityId,
+            ServerLevel level,
             FoundationItem item,
             CityC6Stages.BuildAreaSummary area,
+            AreaGeometry geometry,
             CityC6Stages.LayoutPlan layoutPlan,
             CityC7Stages.GroupArrangementDecision arrangement,
-            CityC7Stages.TemplateSelectionItem selection
+            CityC7Stages.TemplateSelectionItem selection,
+            CityStage1BinaryIO.HeightData heightData,
+            CityC2ScanBinaryIO.C2ScanData c2ScanData
     ) {
         item.session_state = "READY_FOR_AI";
         item.active_node = null;
@@ -500,7 +568,7 @@ public final class CityC8Stages {
         item.arrangement_errors.clear();
         item.arrangement_warnings.clear();
 
-        NodeTask startNode = createStartNode(item, area, layoutPlan, arrangement, selection);
+        NodeTask startNode = createStartNode(cityId, level, item, area, geometry, layoutPlan, arrangement, selection, heightData, c2ScanData);
         if (startNode == null) {
             item.session_state = "FAILED";
             item.arrangement_success = false;
@@ -512,15 +580,26 @@ public final class CityC8Stages {
         item.active_node = startNode;
         item.node_queue.add(startNode);
         item.node_debug.add(debug(startNode.node_id, "init", "已初始化起始节点，等待 AI 提交当前节点施工决策。"));
+        if (Boolean.TRUE.equals(startNode.runtime_fallback_used) && startNode.runtime_fallback_reason != null && !startNode.runtime_fallback_reason.isBlank()) {
+            item.arrangement_warnings.add(startNode.runtime_fallback_reason);
+            item.node_debug.add(debug(startNode.node_id, "start_runtime_fallback", startNode.runtime_fallback_reason));
+        } else if (startNode.chosen_start_reason_zh != null && !startNode.chosen_start_reason_zh.isBlank()) {
+            item.node_debug.add(debug(startNode.node_id, "start_runtime_selection", startNode.chosen_start_reason_zh));
+        }
         updateQueueSummary(item);
     }
 
     private static NodeTask createStartNode(
+            String cityId,
+            ServerLevel level,
             FoundationItem item,
             CityC6Stages.BuildAreaSummary area,
+            AreaGeometry geometry,
             CityC6Stages.LayoutPlan layoutPlan,
             CityC7Stages.GroupArrangementDecision arrangement,
-            CityC7Stages.TemplateSelectionItem selection
+            CityC7Stages.TemplateSelectionItem selection,
+            CityStage1BinaryIO.HeightData heightData,
+            CityC2ScanBinaryIO.C2ScanData c2ScanData
     ) {
         NodeTask node = new NodeTask();
         CityC7Stages.StartNode start = item.foreman_plan != null ? item.foreman_plan.start_node : null;
@@ -550,20 +629,699 @@ public final class CityC8Stages {
         if (node.candidate_template_ids.isEmpty() && arrangement != null && arrangement.seed != null && arrangement.seed.start_template_id != null) {
             node.candidate_template_ids.add(arrangement.seed.start_template_id);
         }
-        node.x = arrangement != null && arrangement.seed != null && arrangement.seed.start_x != 0
+        int fallbackX = arrangement != null && arrangement.seed != null && arrangement.seed.start_x != 0
                 ? arrangement.seed.start_x
                 : layoutPlan != null && layoutPlan.primary_modules != null && !layoutPlan.primary_modules.isEmpty()
                 ? safeRound(layoutPlan.primary_modules.get(0).anchor.x)
                 : safeRound(area.centroid.x);
-        node.z = arrangement != null && arrangement.seed != null && arrangement.seed.start_z != 0
+        int fallbackZ = arrangement != null && arrangement.seed != null && arrangement.seed.start_z != 0
                 ? arrangement.seed.start_z
                 : layoutPlan != null && layoutPlan.primary_modules != null && !layoutPlan.primary_modules.isEmpty()
                 ? safeRound(layoutPlan.primary_modules.get(0).anchor.z)
                 : safeRound(area.centroid.z);
         node.y = item.base_y;
-        node.selected_rotation = arrangement != null && arrangement.seed != null ? arrangement.seed.start_rotation : 0;
+        int fallbackRotation = arrangement != null && arrangement.seed != null ? arrangement.seed.start_rotation : 0;
         node.build_order = 0;
+        if (node.candidate_template_ids.isEmpty()) return null;
+        applyStartSelection(
+                cityId,
+                level,
+                item,
+                geometry,
+                selection,
+                arrangement,
+                node,
+                fallbackX,
+                fallbackZ,
+                fallbackRotation,
+                heightData,
+                c2ScanData
+        );
         return node.candidate_template_ids.isEmpty() ? null : node;
+    }
+
+    private static void applyStartSelection(
+            String cityId,
+            ServerLevel level,
+            FoundationItem item,
+            AreaGeometry geometry,
+            CityC7Stages.TemplateSelectionItem selection,
+            CityC7Stages.GroupArrangementDecision arrangement,
+            NodeTask node,
+            int fallbackX,
+            int fallbackZ,
+            int fallbackRotation,
+            CityStage1BinaryIO.HeightData heightData,
+            CityC2ScanBinaryIO.C2ScanData c2ScanData
+    ) {
+        node.start_solver_kind = "horizontal_runtime";
+        node.runtime_fallback_used = Boolean.FALSE;
+        node.runtime_fallback_reason = null;
+        node.start_runtime_candidates.clear();
+
+        StartSelectionResolution resolution = resolveRuntimeStartSelection(
+                cityId,
+                level,
+                item,
+                geometry,
+                selection,
+                arrangement,
+                node,
+                fallbackX,
+                fallbackZ,
+                fallbackRotation,
+                heightData,
+                c2ScanData
+        );
+        if (resolution != null && resolution.candidates != null) {
+            node.start_runtime_candidates.addAll(resolution.candidates);
+        }
+
+        StartRuntimeCandidate chosen = resolution != null ? resolution.bestCandidate : null;
+        if (chosen != null) {
+            node.x = chosen.x;
+            node.z = chosen.z;
+            node.y = chosen.y != null ? chosen.y : item.base_y;
+            node.selected_rotation = chosen.rotation != null ? chosen.rotation : fallbackRotation;
+            node.selected_template_id = chosen.template_id;
+            node.chosen_start_connector_id = chosen.connector_id;
+            node.chosen_start_connector_front = chosen.connector_front;
+            node.chosen_start_rotation = node.selected_rotation;
+            node.chosen_start_reason_zh = resolution.reasonZh;
+            return;
+        }
+
+        node.x = fallbackX;
+        node.z = fallbackZ;
+        node.y = item.base_y;
+        node.selected_rotation = fallbackRotation;
+        node.selected_template_id = preferredStartTemplateId(node, selection, arrangement);
+        node.chosen_start_connector_id = null;
+        node.chosen_start_connector_front = null;
+        node.chosen_start_rotation = fallbackRotation;
+        node.chosen_start_reason_zh = resolution != null && resolution.reasonZh != null && !resolution.reasonZh.isBlank()
+                ? resolution.reasonZh
+                : "当前 C8 主链未拿到可用的 runtime start 候选，已显式回退到旧 seed/anchor 起点。";
+        node.runtime_fallback_used = Boolean.TRUE;
+        node.runtime_fallback_reason = resolution != null && resolution.fallbackReason != null && !resolution.fallbackReason.isBlank()
+                ? resolution.fallbackReason
+                : "当前 C8 主链未拿到可用的 runtime start 候选，已显式回退到旧 seed/anchor 起点。";
+    }
+
+    private static StartSelectionResolution resolveRuntimeStartSelection(
+            String cityId,
+            ServerLevel level,
+            FoundationItem item,
+            AreaGeometry geometry,
+            CityC7Stages.TemplateSelectionItem selection,
+            CityC7Stages.GroupArrangementDecision arrangement,
+            NodeTask node,
+            int anchorX,
+            int anchorZ,
+            int fallbackRotation,
+            CityStage1BinaryIO.HeightData heightData,
+            CityC2ScanBinaryIO.C2ScanData c2ScanData
+    ) {
+        StartSelectionResolution resolution = new StartSelectionResolution();
+        if (level == null) {
+            resolution.fallbackReason = "当前 C8 主链拿不到 runtime ServerLevel，已显式回退到旧 seed/anchor start heuristics。";
+            resolution.reasonZh = resolution.fallbackReason;
+            return resolution;
+        }
+        if (geometry == null || !geometry.valid) {
+            resolution.fallbackReason = "当前建造区缺少有效 polygon/block 几何，无法做 runtime start 局部评分，已显式回退。";
+            resolution.reasonZh = resolution.fallbackReason;
+            return resolution;
+        }
+
+        StructureTemplateManager templateManager = level.getStructureManager();
+        if (templateManager == null) {
+            resolution.fallbackReason = "当前运行时拿不到 StructureTemplateManager，无法扫描 runtime jigsaw，已显式回退。";
+            resolution.reasonZh = resolution.fallbackReason;
+            return resolution;
+        }
+
+        List<String> allowedHorizontalDirs = horizontalAllowedConnectorDirs(node.allowed_connector_dirs);
+        List<String> candidateTemplateIds = orderedTemplateIds(node.candidate_template_ids);
+        if (candidateTemplateIds.isEmpty()) {
+            resolution.fallbackReason = "start 节点没有可用模板池，无法执行 runtime start 评分。";
+            resolution.reasonZh = resolution.fallbackReason;
+            return resolution;
+        }
+        List<String> firstHopTemplateIds = buildFirstHopTemplateIds(node, item, selection);
+        List<BlockPos> searchPositions = buildStartSearchPositions(anchorX, item.base_y, anchorZ, arrangement);
+
+        boolean sawLoadedTemplate = false;
+        boolean sawHorizontalConnector = false;
+        boolean sawAllowedHorizontalConnector = false;
+        boolean sawInsideRootBounds = false;
+        List<StartCandidateEvaluation> evaluations = new ArrayList<>();
+
+        for (String templateId : candidateTemplateIds) {
+            List<Integer> rotations = allowedStartRotations(selection, arrangement, templateId, fallbackRotation);
+            for (Integer rotationValue : rotations) {
+                int rotation = rotationValue != null ? rotationValue : fallbackRotation;
+                for (BlockPos origin : searchPositions) {
+                    BoundingBox rootBounds = templateBounds(templateManager, templateId, origin, rotation);
+                    if (rootBounds == null) {
+                        continue;
+                    }
+                    sawLoadedTemplate = true;
+
+                    PlacementNode rootPlacement = startPlacement(templateId, origin, rotation, rootBounds);
+                    List<CityVanillaJigsawAdapterService.RuntimeConnectorCandidate> runtimeConnectors =
+                            CityVanillaJigsawAdapterService.scanRuntimeConnectors(level, rootPlacement);
+                    List<CityVanillaJigsawAdapterService.RuntimeConnectorCandidate> horizontalConnectors = new ArrayList<>();
+                    List<CityVanillaJigsawAdapterService.RuntimeConnectorCandidate> allowedConnectors = new ArrayList<>();
+                    for (CityVanillaJigsawAdapterService.RuntimeConnectorCandidate connector : runtimeConnectors) {
+                        if (connector == null || !CityVanillaJigsawAdapterService.isHorizontalFront(connector.front)) continue;
+                        horizontalConnectors.add(connector);
+                        sawHorizontalConnector = true;
+                        if (allowedHorizontalDirs.contains(normalizeDirection(connector.front))) {
+                            allowedConnectors.add(connector);
+                            sawAllowedHorizontalConnector = true;
+                        }
+                    }
+                    boolean rootInsideArea = containsFootprint(
+                            geometry,
+                            rootPlacement.footprint_min_x,
+                            rootPlacement.footprint_min_z,
+                            rootPlacement.footprint_max_x,
+                            rootPlacement.footprint_max_z
+                    );
+                    if (rootInsideArea) {
+                        sawInsideRootBounds = true;
+                    }
+                    for (CityVanillaJigsawAdapterService.RuntimeConnectorCandidate connector : allowedConnectors) {
+                        StartCandidateEvaluation evaluation = buildStartCandidateEvaluation(
+                                cityId,
+                                level,
+                                geometry,
+                                heightData,
+                                c2ScanData,
+                                item,
+                                templateId,
+                                rootPlacement,
+                                connector,
+                                horizontalConnectors.size(),
+                                anchorX,
+                                anchorZ,
+                                rootInsideArea,
+                                firstHopTemplateIds
+                        );
+                        evaluations.add(evaluation);
+                        resolution.candidates.add(evaluation.candidate);
+                    }
+                }
+            }
+        }
+
+        if (evaluations.isEmpty()) {
+            if (!sawLoadedTemplate) {
+                resolution.fallbackReason = "当前 runtime 模板管理器中未能加载任何 start 候选模板，已显式回退到旧 heuristics。";
+            } else if (!sawHorizontalConnector) {
+                resolution.fallbackReason = "runtime 模板中没有扫描到可用的水平 jigsaw，当前主链暂不把 up/down 作为 start 首扩展候选，已显式回退。";
+            } else if (!sawAllowedHorizontalConnector) {
+                resolution.fallbackReason = "runtime 模板里虽然有水平 jigsaw，但都不在当前 start 允许方向内，已显式回退到旧 heuristics。";
+            } else if (!sawInsideRootBounds) {
+                resolution.fallbackReason = "anchor 周围局部搜索中能扫到水平 jigsaw，但 start 根矩形始终无法完整落入建造区，已显式回退。";
+            } else {
+                resolution.fallbackReason = "runtime start 局部搜索未形成可评分候选，已显式回退到旧 seed/anchor 起点。";
+            }
+            resolution.reasonZh = resolution.fallbackReason;
+            return resolution;
+        }
+
+        evaluations.sort((left, right) -> compareStartCandidate(left, right));
+        StartCandidateEvaluation best = evaluations.get(0);
+        best.candidate.selected = true;
+        resolution.bestCandidate = best.candidate;
+        resolution.reasonZh = buildStartSelectionReason(best, anchorX, anchorZ);
+        return resolution;
+    }
+
+    private static StartCandidateEvaluation buildStartCandidateEvaluation(
+            String cityId,
+            ServerLevel level,
+            AreaGeometry geometry,
+            CityStage1BinaryIO.HeightData heightData,
+            CityC2ScanBinaryIO.C2ScanData c2ScanData,
+            FoundationItem item,
+            String templateId,
+            PlacementNode rootPlacement,
+            CityVanillaJigsawAdapterService.RuntimeConnectorCandidate connector,
+            int horizontalConnectorCount,
+            int anchorX,
+            int anchorZ,
+            boolean rootInsideArea,
+            List<String> firstHopTemplateIds
+    ) {
+        StartRuntimeCandidate candidate = new StartRuntimeCandidate();
+        candidate.template_id = templateId;
+        candidate.x = rootPlacement.x;
+        candidate.y = rootPlacement.y;
+        candidate.z = rootPlacement.z;
+        candidate.rotation = rootPlacement.rotation;
+        candidate.connector_id = connector.id;
+        candidate.connector_front = normalizeDirection(connector.front);
+        candidate.horizontal_connector_count = horizontalConnectorCount;
+        candidate.inward_score = inwardProbeScore(geometry, connector);
+        candidate.distance_from_anchor = Math.abs(rootPlacement.x - anchorX) + Math.abs(rootPlacement.z - anchorZ);
+
+        StartCandidateEvaluation evaluation = new StartCandidateEvaluation();
+        evaluation.candidate = candidate;
+        evaluation.rootInsideArea = rootInsideArea;
+        evaluation.inwardScore = candidate.inward_score != null ? candidate.inward_score : 0;
+        evaluation.distance = candidate.distance_from_anchor != null ? candidate.distance_from_anchor : Integer.MAX_VALUE;
+        evaluation.horizontalConnectorCount = horizontalConnectorCount;
+
+        if (!rootInsideArea) {
+            candidate.dry_run_reject_reason = "start_root_out_of_area";
+            candidate.dry_run_first_blocker_stage = "bounds/area";
+            candidate.summary_zh = "根模板矩形仍有部分落在建造区外，因此当前候选不采用。";
+            evaluation.dryRunRank = 0;
+            return evaluation;
+        }
+
+        DryRunProbe probe = probeFirstHop(
+                cityId,
+                level,
+                geometry,
+                heightData,
+                c2ScanData,
+                item,
+                rootPlacement,
+                connector.id,
+                connector.front,
+                firstHopTemplateIds
+        );
+        candidate.dry_run_reject_reason = probe.rejectReason;
+        candidate.dry_run_first_blocker_stage = probe.firstBlockerStage;
+        candidate.summary_zh = buildStartCandidateSummary(candidate, probe);
+        evaluation.dryRunRank = probe.rank;
+        evaluation.areaPassCount = probe.areaPassCount;
+        evaluation.collisionFreeCount = probe.collisionFreeCount;
+        return evaluation;
+    }
+
+    private static DryRunProbe probeFirstHop(
+            String cityId,
+            ServerLevel level,
+            AreaGeometry geometry,
+            CityStage1BinaryIO.HeightData heightData,
+            CityC2ScanBinaryIO.C2ScanData c2ScanData,
+            FoundationItem item,
+            PlacementNode rootPlacement,
+            String parentConnectorId,
+            String connectorFront,
+            List<String> firstHopTemplateIds
+    ) {
+        DryRunProbe best = new DryRunProbe();
+        best.rank = -1;
+        if (level == null || rootPlacement == null || parentConnectorId == null || parentConnectorId.isBlank()) {
+            best.rank = 0;
+            best.rejectReason = "start_dry_run_unavailable";
+            best.firstBlockerStage = "runtime_unavailable";
+            best.summaryZh = "未执行第一跳 dry-run。";
+            return best;
+        }
+
+        List<String> probeTemplates = orderedTemplateIds(firstHopTemplateIds);
+        if (probeTemplates.isEmpty()) {
+            probeTemplates = List.of(rootPlacement.template_id);
+        }
+        for (String childTemplateId : probeTemplates) {
+            CityVanillaJigsawAdapterService.SolveResult solve = CityVanillaJigsawAdapterService.solve(
+                    level,
+                    cityId,
+                    geometry,
+                    List.of(rootPlacement),
+                    rootPlacement,
+                    parentConnectorId,
+                    childTemplateId,
+                    connectorFront,
+                    null,
+                    heightData,
+                    c2ScanData
+            );
+            DryRunProbe probe = toDryRunProbe(childTemplateId, solve);
+            if (best.rank < probe.rank
+                    || (best.rank == probe.rank && probe.areaPassCount > best.areaPassCount)
+                    || (best.rank == probe.rank && probe.areaPassCount == best.areaPassCount && probe.collisionFreeCount > best.collisionFreeCount)) {
+                best = probe;
+            }
+            if (best.rank >= 5) {
+                break;
+            }
+        }
+
+        if (best.rank < 0) {
+            best.rank = 0;
+            best.rejectReason = "start_dry_run_empty";
+            best.firstBlockerStage = "vanilla_empty_stub";
+            best.summaryZh = "第一跳 dry-run 没有产出可用结果。";
+        }
+        return best;
+    }
+
+    private static DryRunProbe toDryRunProbe(
+            String childTemplateId,
+            CityVanillaJigsawAdapterService.SolveResult solve
+    ) {
+        DryRunProbe probe = new DryRunProbe();
+        probe.childTemplateId = childTemplateId;
+        probe.rejectReason = solve != null ? solve.reject_reason : "start_dry_run_empty";
+        probe.firstBlockerStage = solve != null && solve.debug != null ? solve.debug.first_blocker_stage : null;
+        probe.areaPassCount = solve != null && solve.debug != null && solve.debug.manual_attach_summary != null
+                && solve.debug.manual_attach_summary.area_pass_count != null
+                ? solve.debug.manual_attach_summary.area_pass_count
+                : 0;
+        probe.collisionFreeCount = solve != null && solve.debug != null && solve.debug.manual_attach_summary != null
+                && solve.debug.manual_attach_summary.collision_free_count != null
+                ? solve.debug.manual_attach_summary.collision_free_count
+                : 0;
+        probe.summaryZh = solve != null && solve.debug != null && solve.debug.manual_attach_summary != null
+                && solve.debug.manual_attach_summary.summary_zh != null
+                ? solve.debug.manual_attach_summary.summary_zh
+                : localizedStartDryRunSummary(probe.rejectReason, probe.firstBlockerStage);
+
+        if (solve != null && solve.ok && solve.placement != null) {
+            probe.rank = 5;
+            probe.rejectReason = null;
+            probe.firstBlockerStage = "generated";
+            return probe;
+        }
+
+        String blocker = safe(probe.firstBlockerStage);
+        if ("generated".equals(blocker)) {
+            probe.rank = 5;
+        } else if ("terrain".equals(blocker) || "bounds/area".equals(blocker)) {
+            probe.rank = 4;
+        } else if ("attach".equals(blocker)) {
+            probe.rank = 3;
+        } else if ("target/name".equals(blocker)) {
+            probe.rank = 2;
+        } else if ("vertical_solver_pending".equals(blocker)) {
+            probe.rank = 1;
+        } else {
+            probe.rank = 0;
+        }
+        return probe;
+    }
+
+    private static int compareStartCandidate(StartCandidateEvaluation left, StartCandidateEvaluation right) {
+        if (left == null && right == null) return 0;
+        if (left == null) return 1;
+        if (right == null) return -1;
+        int compare = Boolean.compare(right.rootInsideArea, left.rootInsideArea);
+        if (compare != 0) return compare;
+        compare = Integer.compare(right.horizontalConnectorCount, left.horizontalConnectorCount);
+        if (compare != 0) return compare;
+        compare = Integer.compare(right.inwardScore, left.inwardScore);
+        if (compare != 0) return compare;
+        compare = Integer.compare(right.dryRunRank, left.dryRunRank);
+        if (compare != 0) return compare;
+        compare = Integer.compare(right.areaPassCount, left.areaPassCount);
+        if (compare != 0) return compare;
+        compare = Integer.compare(right.collisionFreeCount, left.collisionFreeCount);
+        if (compare != 0) return compare;
+        compare = Integer.compare(left.distance, right.distance);
+        if (compare != 0) return compare;
+        compare = safe(left.candidate.template_id).compareTo(safe(right.candidate.template_id));
+        if (compare != 0) return compare;
+        compare = safe(left.candidate.connector_id).compareTo(safe(right.candidate.connector_id));
+        if (compare != 0) return compare;
+        return Integer.compare(left.candidate.rotation != null ? left.candidate.rotation : 0, right.candidate.rotation != null ? right.candidate.rotation : 0);
+    }
+
+    private static String buildStartSelectionReason(StartCandidateEvaluation evaluation, int anchorX, int anchorZ) {
+        if (evaluation == null || evaluation.candidate == null) {
+            return "当前 C8 主链未拿到可用的 runtime start 候选，已显式回退到旧 seed/anchor 起点。";
+        }
+        StartRuntimeCandidate candidate = evaluation.candidate;
+        String dryRunResult = "generated".equals(safe(candidate.dry_run_first_blocker_stage))
+                ? "第一跳水平 dry-run 已可生成 child。"
+                : candidate.summary_zh != null && !candidate.summary_zh.isBlank()
+                ? candidate.summary_zh
+                : "第一跳 dry-run 仍未完全通过。";
+        return "运行时 start 评分选择了模板 `" + safe(candidate.template_id)
+                + "` 在 (" + candidate.x + "," + candidate.z + ")、rotation=" + candidate.rotation
+                + " 的 `" + safe(candidate.connector_id) + "` 水平口；它相对 anchor("
+                + anchorX + "," + anchorZ + ") 的位移更可控，朝内探测得分为 "
+                + evaluation.inwardScore + "，" + dryRunResult;
+    }
+
+    private static String buildStartCandidateSummary(StartRuntimeCandidate candidate, DryRunProbe probe) {
+        String blocker = probe != null ? safe(probe.firstBlockerStage) : "";
+        if ("generated".equals(blocker)) {
+            return "第一跳水平 dry-run 已通过，当前候选具备直接扩展 child 的条件。";
+        }
+        if ("bounds/area".equals(blocker)) {
+            return "第一跳 dry-run 已通过 target 与 attach，但 child 矩形仍有越界或碰撞风险。";
+        }
+        if ("terrain".equals(blocker)) {
+            return "第一跳 dry-run 已通过 attach，但 child 落位仍被地形校验拦截。";
+        }
+        if ("attach".equals(blocker)) {
+            return "当前水平口朝向可用，但第一跳 dry-run 里 child attach 仍未成立。";
+        }
+        if ("target/name".equals(blocker)) {
+            return "当前水平口存在，但第一跳 dry-run 里暂未找到 name/target 可命中的 child jigsaw。";
+        }
+        if (probe != null && probe.summaryZh != null && !probe.summaryZh.isBlank()) {
+            return probe.summaryZh;
+        }
+        return "当前候选已扫描到水平口，但第一跳 dry-run 还没有形成更强证据。";
+    }
+
+    private static String localizedStartDryRunSummary(String rejectReason, String firstBlockerStage) {
+        String blocker = safe(firstBlockerStage);
+        if ("bounds/area".equals(blocker)) return "第一跳 dry-run 已完成 attach，但 child 矩形在边界或碰撞校验阶段被拒绝。";
+        if ("terrain".equals(blocker)) return "第一跳 dry-run 已完成 attach，但 child 在地形校验阶段被拒绝。";
+        if ("attach".equals(blocker)) return "第一跳 dry-run 找到了 name 命中的 child jigsaw，但 attach 未通过。";
+        if ("target/name".equals(blocker)) return "第一跳 dry-run 没有找到 name/target 能命中的 child jigsaw。";
+        if ("vertical_solver_pending".equals(blocker)) return "第一跳 dry-run 落到了垂直 jigsaw 占位求解器。";
+        return localizedRejectReason(rejectReason);
+    }
+
+    private static List<Integer> allowedStartRotations(
+            CityC7Stages.TemplateSelectionItem selection,
+            CityC7Stages.GroupArrangementDecision arrangement,
+            String templateId,
+            int fallbackRotation
+    ) {
+        LinkedHashSet<Integer> rotations = new LinkedHashSet<>();
+        collectAllowedRotations(rotations, selection != null ? selection.selected_components : null, templateId);
+        collectAllowedRotations(rotations, arrangement != null ? arrangement.selected_components : null, templateId);
+        if (rotations.isEmpty()) {
+            rotations.add(fallbackRotation);
+            rotations.addAll(DEFAULT_START_ROTATIONS);
+        } else if (!rotations.contains(fallbackRotation)) {
+            rotations.add(fallbackRotation);
+        }
+        return new ArrayList<>(rotations);
+    }
+
+    private static void collectAllowedRotations(
+            Set<Integer> out,
+            List<CityC7Stages.SelectedComponent> components,
+            String templateId
+    ) {
+        if (out == null || components == null || templateId == null || templateId.isBlank()) return;
+        for (CityC7Stages.SelectedComponent component : components) {
+            if (component == null || !templateId.equals(component.template_id) || component.rule == null || component.rule.allowed_rotations == null) {
+                continue;
+            }
+            for (Integer rotation : component.rule.allowed_rotations) {
+                if (rotation != null) out.add(rotation);
+            }
+        }
+    }
+
+    private static List<String> buildFirstHopTemplateIds(
+            NodeTask node,
+            FoundationItem item,
+            CityC7Stages.TemplateSelectionItem selection
+    ) {
+        LinkedHashSet<String> ids = new LinkedHashSet<>();
+        if (node != null && node.candidate_template_ids != null) ids.addAll(node.candidate_template_ids);
+        if (item != null && item.top_k_templates != null) ids.addAll(item.top_k_templates);
+        if (item != null && item.fallback_chain != null) ids.addAll(item.fallback_chain);
+        if (selection != null && selection.top_k_templates != null) ids.addAll(selection.top_k_templates);
+        if (selection != null && selection.fallback_chain != null) ids.addAll(selection.fallback_chain);
+        if (selection != null && selection.selected_template != null && !selection.selected_template.isBlank()) ids.add(selection.selected_template);
+        return new ArrayList<>(ids);
+    }
+
+    private static String preferredStartTemplateId(
+            NodeTask node,
+            CityC7Stages.TemplateSelectionItem selection,
+            CityC7Stages.GroupArrangementDecision arrangement
+    ) {
+        if (selection != null && selection.selected_template != null && !selection.selected_template.isBlank()) {
+            return selection.selected_template;
+        }
+        if (arrangement != null && arrangement.seed != null && arrangement.seed.start_template_id != null && !arrangement.seed.start_template_id.isBlank()) {
+            return arrangement.seed.start_template_id;
+        }
+        return node != null && node.candidate_template_ids != null && !node.candidate_template_ids.isEmpty()
+                ? node.candidate_template_ids.get(0)
+                : null;
+    }
+
+    private static List<String> horizontalAllowedConnectorDirs(List<String> dirs) {
+        LinkedHashSet<String> normalized = new LinkedHashSet<>();
+        if (dirs != null) {
+            for (String dir : dirs) {
+                if (dir == null || dir.isBlank()) continue;
+                String value = normalizeDirection(dir);
+                if (CityVanillaJigsawAdapterService.isHorizontalFront(value)) {
+                    normalized.add(value);
+                }
+            }
+        }
+        if (normalized.isEmpty()) normalized.addAll(DEFAULT_HORIZONTAL_CONNECTOR_DIRS);
+        return new ArrayList<>(normalized);
+    }
+
+    private static List<String> orderedTemplateIds(List<String> templateIds) {
+        LinkedHashSet<String> ordered = new LinkedHashSet<>();
+        if (templateIds != null) {
+            for (String templateId : templateIds) {
+                if (templateId != null && !templateId.isBlank()) {
+                    ordered.add(templateId);
+                }
+            }
+        }
+        return new ArrayList<>(ordered);
+    }
+
+    private static List<BlockPos> buildStartSearchPositions(
+            int anchorX,
+            int baseY,
+            int anchorZ,
+            CityC7Stages.GroupArrangementDecision arrangement
+    ) {
+        int spacing = arrangementSpacing(arrangement);
+        int radius = Math.max(4, Math.min(16, spacing + 2));
+        int step = Math.max(2, Math.min(4, Math.max(2, spacing / 3)));
+        List<BlockPos> positions = new ArrayList<>();
+        for (int dx = -radius; dx <= radius; dx += step) {
+            for (int dz = -radius; dz <= radius; dz += step) {
+                positions.add(new BlockPos(anchorX + dx, baseY, anchorZ + dz));
+            }
+        }
+        positions.sort(Comparator.comparingInt(pos -> Math.abs(pos.getX() - anchorX) + Math.abs(pos.getZ() - anchorZ)));
+        return positions;
+    }
+
+    private static int arrangementSpacing(CityC7Stages.GroupArrangementDecision arrangement) {
+        int spacing = readInt(arrangement != null ? arrangement.arrangement_params.get("spacing") : null, 10);
+        return Math.max(4, spacing);
+    }
+
+    private static int readInt(Object value, int fallback) {
+        if (value instanceof Number number) {
+            return number.intValue();
+        }
+        if (value instanceof String text) {
+            try {
+                return Integer.parseInt(text.trim());
+            } catch (NumberFormatException ignored) {
+                return fallback;
+            }
+        }
+        return fallback;
+    }
+
+    private static PlacementNode startPlacement(
+            String templateId,
+            BlockPos origin,
+            int rotation,
+            BoundingBox bounds
+    ) {
+        PlacementNode placement = new PlacementNode();
+        placement.node_id = "runtime_start_probe";
+        placement.template_id = templateId;
+        placement.role = "start_probe";
+        placement.x = origin.getX();
+        placement.y = origin.getY();
+        placement.z = origin.getZ();
+        placement.rotation = rotation;
+        if (bounds != null) {
+            placement.footprint_min_x = bounds.minX();
+            placement.footprint_min_z = bounds.minZ();
+            placement.footprint_max_x = bounds.maxX();
+            placement.footprint_max_z = bounds.maxZ();
+        } else {
+            placement.footprint_min_x = placement.x;
+            placement.footprint_min_z = placement.z;
+            placement.footprint_max_x = placement.x;
+            placement.footprint_max_z = placement.z;
+        }
+        return placement;
+    }
+
+    private static BoundingBox templateBounds(
+            StructureTemplateManager templateManager,
+            String templateId,
+            BlockPos origin,
+            int rotationDegrees
+    ) {
+        if (templateManager == null || templateId == null || templateId.isBlank() || origin == null) return null;
+        ResourceLocation location = ResourceLocation.tryParse(templateId);
+        if (location == null) return null;
+        Optional<StructureTemplate> template = templateManager.get(location);
+        if (template.isEmpty()) return null;
+        StructurePlaceSettings settings = new StructurePlaceSettings()
+                .setMirror(Mirror.NONE)
+                .setRotation(toRotation(rotationDegrees));
+        return template.get().getBoundingBox(settings, origin);
+    }
+
+    private static Rotation toRotation(int rotationDegrees) {
+        int normalized = ((rotationDegrees % 360) + 360) % 360;
+        return switch (normalized) {
+            case 90 -> Rotation.CLOCKWISE_90;
+            case 180 -> Rotation.CLOCKWISE_180;
+            case 270 -> Rotation.COUNTERCLOCKWISE_90;
+            default -> Rotation.NONE;
+        };
+    }
+
+    private static int inwardProbeScore(
+            AreaGeometry geometry,
+            CityVanillaJigsawAdapterService.RuntimeConnectorCandidate connector
+    ) {
+        if (geometry == null || connector == null || connector.world_x == null || connector.world_z == null) return 0;
+        Direction direction = directionFromFront(connector.front);
+        if (direction == null || direction.getAxis().isVertical()) return 0;
+        int score = 0;
+        for (int step = 1; step <= START_INWARD_PROBE_STEPS; step++) {
+            int sampleX = connector.world_x + direction.getStepX() * step;
+            int sampleZ = connector.world_z + direction.getStepZ() * step;
+            if (containsAreaBlock(geometry, sampleX, sampleZ)) {
+                score++;
+            }
+        }
+        return score;
+    }
+
+    private static Direction directionFromFront(String front) {
+        String normalized = normalizeDirection(front);
+        return switch (normalized) {
+            case "north" -> Direction.NORTH;
+            case "south" -> Direction.SOUTH;
+            case "east" -> Direction.EAST;
+            case "west" -> Direction.WEST;
+            case "up" -> Direction.UP;
+            case "down" -> Direction.DOWN;
+            default -> null;
+        };
+    }
+
+    private static String normalizeDirection(String direction) {
+        return direction == null ? "" : direction.trim().toLowerCase(Locale.ROOT);
     }
 
     public static NodeSubmitResult submitNodeDecision(
@@ -1209,6 +1967,34 @@ public final class CityC8Stages {
 
     private static String safe(String value) {
         return value == null ? "" : value;
+    }
+
+    private static final class StartSelectionResolution {
+        StartRuntimeCandidate bestCandidate;
+        List<StartRuntimeCandidate> candidates = new ArrayList<>();
+        String reasonZh;
+        String fallbackReason;
+    }
+
+    private static final class StartCandidateEvaluation {
+        StartRuntimeCandidate candidate;
+        boolean rootInsideArea;
+        int horizontalConnectorCount;
+        int inwardScore;
+        int dryRunRank;
+        int areaPassCount;
+        int collisionFreeCount;
+        int distance;
+    }
+
+    private static final class DryRunProbe {
+        String childTemplateId;
+        String rejectReason;
+        String firstBlockerStage;
+        String summaryZh;
+        int rank;
+        int areaPassCount;
+        int collisionFreeCount;
     }
 
     private static final class TerrainStats {

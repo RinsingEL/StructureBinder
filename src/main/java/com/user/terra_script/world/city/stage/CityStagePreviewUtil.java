@@ -284,6 +284,78 @@ public final class CityStagePreviewUtil {
         }
     }
 
+    public static void drawRectangles(Graphics2D g, AreaPreviewContext ctx, List<RectVisual> rectangles) {
+        if (g == null || ctx == null || rectangles == null || rectangles.isEmpty()) return;
+        g.setFont(new Font("SansSerif", Font.BOLD, 12));
+        for (RectVisual rect : rectangles) {
+            if (rect == null) continue;
+            Color color = rect.color != null ? rect.color : new Color(255, 140, 80, 220);
+            int px0 = toPreviewCoord(ctx, rect.minX, true);
+            int pz0 = toPreviewCoord(ctx, rect.minZ, false);
+            int px1 = toPreviewCoord(ctx, rect.maxX, true);
+            int pz1 = toPreviewCoord(ctx, rect.maxZ, false);
+            int left = Math.min(px0, px1);
+            int top = Math.min(pz0, pz1);
+            int width = Math.max(1, Math.abs(px1 - px0));
+            int height = Math.max(1, Math.abs(pz1 - pz0));
+            if (rect.fill) {
+                g.setColor(new Color(color.getRed(), color.getGreen(), color.getBlue(), 52));
+                g.fillRect(left, top, width, height);
+            }
+            g.setColor(color);
+            g.setStroke(new BasicStroke(rect.strokeWidth > 0f ? rect.strokeWidth : 2f));
+            g.drawRect(left, top, width, height);
+            if (rect.label != null && !rect.label.isBlank()) {
+                drawTag(g, left + 2, top + 2, rect.label, color);
+            }
+        }
+    }
+
+    public static void drawMarkers(Graphics2D g, AreaPreviewContext ctx, List<MarkerVisual> markers) {
+        if (g == null || ctx == null || markers == null || markers.isEmpty()) return;
+        g.setFont(new Font("SansSerif", Font.BOLD, 12));
+        for (MarkerVisual marker : markers) {
+            if (marker == null) continue;
+            Color color = marker.color != null ? marker.color : new Color(255, 255, 255, 220);
+            int px = toPreviewCoord(ctx, marker.x, true);
+            int pz = toPreviewCoord(ctx, marker.z, false);
+            int radius = Math.max(3, marker.radius);
+            g.setColor(new Color(0, 0, 0, 160));
+            g.fillOval(px - radius - 1, pz - radius - 1, (radius + 1) * 2, (radius + 1) * 2);
+            g.setColor(color);
+            g.fillOval(px - radius, pz - radius, radius * 2, radius * 2);
+            g.setStroke(new BasicStroke(marker.highlight ? 3f : 2f));
+            g.drawOval(px - radius, pz - radius, radius * 2, radius * 2);
+            if (marker.dirX != null && marker.dirZ != null) {
+                int tx = toPreviewCoord(ctx, marker.x + marker.dirX, true);
+                int tz = toPreviewCoord(ctx, marker.z + marker.dirZ, false);
+                g.drawLine(px, pz, tx, tz);
+            }
+            if (marker.label != null && !marker.label.isBlank()) {
+                drawTag(g, px + radius + 4, pz - radius - 2, marker.label, color);
+            }
+        }
+    }
+
+    public static void drawDebugPanel(Graphics2D g, String title, String summary, String status) {
+        if (g == null) return;
+        g.setFont(new Font("SansSerif", Font.BOLD, 14));
+        int x = 12;
+        int y = 12;
+        int width = 320;
+        int height = 52;
+        g.setColor(new Color(0, 0, 0, 155));
+        g.fillRoundRect(x, y, width, height, 10, 10);
+        g.setColor(statusColor(status));
+        g.fillRoundRect(x + 6, y + 6, 8, height - 12, 6, 6);
+        g.setColor(Color.WHITE);
+        g.drawString(title != null ? title : "", x + 22, y + 20);
+        g.setFont(new Font("SansSerif", Font.PLAIN, 12));
+        String line = summary != null ? summary : "";
+        if (line.length() > 40) line = line.substring(0, 40) + "...";
+        g.drawString(line, x + 22, y + 40);
+    }
+
     public static void applyGridOverlay(BufferedImage image, CityC6Stages.BuildAreaSummary area, String legendText) {
         PreviewOverlayUtil.GridSpec grid = new PreviewOverlayUtil.GridSpec();
         grid.previewSize = PREVIEW_SIZE;
@@ -315,14 +387,32 @@ public final class CityStagePreviewUtil {
             JsonObject legend,
             String legendFile
     ) throws Exception {
+        return writeGroupPreview(cityDir, cityId, groupId, null, image, imageFile, legend, legendFile);
+    }
+
+    public static JsonObject writeGroupPreview(
+            Path cityDir,
+            String cityId,
+            String groupId,
+            String relativeDir,
+            BufferedImage image,
+            String imageFile,
+            JsonObject legend,
+            String legendFile
+    ) throws Exception {
         Path groupDir = CityGroupPathUtil.resolveGroupDir(cityDir, groupId);
-        ImageIO.write(image, "png", groupDir.resolve(imageFile).toFile());
-        Files.writeString(groupDir.resolve(legendFile), legend.toString(), StandardCharsets.UTF_8);
+        Path outputDir = groupDir;
+        if (relativeDir != null && !relativeDir.isBlank()) {
+            outputDir = groupDir.resolve(relativeDir.replace("/", java.io.File.separator));
+            Files.createDirectories(outputDir);
+        }
+        ImageIO.write(image, "png", outputDir.resolve(imageFile).toFile());
+        Files.writeString(outputDir.resolve(legendFile), legend.toString(), StandardCharsets.UTF_8);
 
         JsonObject out = new JsonObject();
         out.addProperty("generated", true);
-        out.addProperty("image", CityGroupPathUtil.relativeGroupPath(cityId, groupId, imageFile));
-        out.addProperty("legend", CityGroupPathUtil.relativeGroupPath(cityId, groupId, legendFile));
+        out.addProperty("image", relativeGroupPath(cityId, groupId, relativeDir, imageFile));
+        out.addProperty("legend", relativeGroupPath(cityId, groupId, relativeDir, legendFile));
         return out;
     }
 
@@ -383,6 +473,38 @@ public final class CityStagePreviewUtil {
         return (((long) x) << 32) ^ (z & 0xffffffffL);
     }
 
+    private static void drawTag(Graphics2D g, int x, int y, String label, Color accent) {
+        if (g == null || label == null || label.isBlank()) return;
+        int width = Math.min(220, label.length() * 7 + 10);
+        g.setColor(new Color(0, 0, 0, 160));
+        g.fillRoundRect(x, y, width, 16, 8, 8);
+        g.setColor(accent != null ? accent : Color.WHITE);
+        g.drawRoundRect(x, y, width, 16, 8, 8);
+        g.setColor(Color.WHITE);
+        g.drawString(label, x + 5, y + 12);
+    }
+
+    private static Color statusColor(String status) {
+        String normalized = status == null ? "" : status.trim().toLowerCase();
+        return switch (normalized) {
+            case "ok", "success", "completed" -> new Color(80, 220, 120, 235);
+            case "warning", "invalid" -> new Color(255, 196, 80, 235);
+            case "failed", "error" -> new Color(255, 96, 96, 235);
+            default -> new Color(120, 180, 255, 235);
+        };
+    }
+
+    private static String relativeGroupPath(String cityId, String groupId, String relativeDir, String fileName) {
+        StringBuilder out = new StringBuilder();
+        out.append("cities/").append(cityId).append("/groups/").append(CityGroupPathUtil.safeGroupId(groupId)).append("/");
+        if (relativeDir != null && !relativeDir.isBlank()) {
+            out.append(relativeDir.replace('\\', '/'));
+            if (!relativeDir.endsWith("/") && !relativeDir.endsWith("\\")) out.append("/");
+        }
+        out.append(fileName);
+        return out.toString();
+    }
+
     public static final class PlacementVisual {
         public final int x;
         public final int z;
@@ -417,6 +539,50 @@ public final class CityStagePreviewUtil {
             this.footprintMinZ = footprintMinZ;
             this.footprintMaxX = footprintMaxX;
             this.footprintMaxZ = footprintMaxZ;
+        }
+    }
+
+    public static final class RectVisual {
+        public final int minX;
+        public final int minZ;
+        public final int maxX;
+        public final int maxZ;
+        public final String label;
+        public final Color color;
+        public final boolean fill;
+        public final float strokeWidth;
+
+        public RectVisual(int minX, int minZ, int maxX, int maxZ, String label, Color color, boolean fill, float strokeWidth) {
+            this.minX = minX;
+            this.minZ = minZ;
+            this.maxX = maxX;
+            this.maxZ = maxZ;
+            this.label = label;
+            this.color = color;
+            this.fill = fill;
+            this.strokeWidth = strokeWidth;
+        }
+    }
+
+    public static final class MarkerVisual {
+        public final int x;
+        public final int z;
+        public final String label;
+        public final Color color;
+        public final boolean highlight;
+        public final int radius;
+        public final Integer dirX;
+        public final Integer dirZ;
+
+        public MarkerVisual(int x, int z, String label, Color color, boolean highlight, int radius, Integer dirX, Integer dirZ) {
+            this.x = x;
+            this.z = z;
+            this.label = label;
+            this.color = color;
+            this.highlight = highlight;
+            this.radius = radius;
+            this.dirX = dirX;
+            this.dirZ = dirZ;
         }
     }
 }

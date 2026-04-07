@@ -122,7 +122,18 @@ final class BuildExecutionTestSupport {
 
         @Override
         public StructureInjector.PlacementBounds placementBounds(BuildWorldAccess world, String structureId, BlockPos origin, Rotation rotation) {
-            return bounds;
+            if (origin == null || bounds == null) return bounds;
+            int width = Math.max(1, bounds.maxXExclusive - bounds.minX);
+            int height = Math.max(1, bounds.maxYExclusive - bounds.minY);
+            int depth = Math.max(1, bounds.maxZExclusive - bounds.minZ);
+            return StructureInjector.PlacementBounds.of(
+                    origin.getX(),
+                    origin.getY(),
+                    origin.getZ(),
+                    origin.getX() + width,
+                    origin.getY() + height,
+                    origin.getZ() + depth
+            );
         }
 
         @Override

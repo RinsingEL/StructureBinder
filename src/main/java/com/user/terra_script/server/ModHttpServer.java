@@ -121,6 +121,7 @@ public class ModHttpServer {
             server.createContext("/city_c8_data", cityController::handleCityC8Data);
             server.createContext("/city_c8_submit", cityController::handleCityC8Submit);
             server.createContext("/city_c8_retry", cityController::handleCityC8Retry);
+            server.createContext("/city_jigsaw_solve", cityController::handleCityJigsawSolve);
             server.createContext("/city_c9_generate", cityController::handleCityC9Generate);
             server.createContext("/city_c9_data", cityController::handleCityC9Data);
             server.createContext("/city_c9_queue_data", cityController::handleCityC9QueueData);

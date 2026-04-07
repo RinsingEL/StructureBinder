@@ -28,6 +28,144 @@ public final class CityC8ArrangementEngine {
 
     private CityC8ArrangementEngine() {}
 
+    public static SinglePlacementSolveResult solveSinglePlacement(
+            CityC8Stages.AreaGeometry geometry,
+            List<CityC8Stages.PlacementNode> existingPlacements,
+            CityC8Stages.PlacementNode parentPlacement,
+            String parentConnectorId,
+            String selectedConnectorDir,
+            String selectedTemplateId,
+            Integer selectedRotation,
+            CityStage1BinaryIO.HeightData heightData,
+            CityC2ScanBinaryIO.C2ScanData c2ScanData
+    ) {
+        SinglePlacementSolveResult result = new SinglePlacementSolveResult();
+        result.selected_template_id = selectedTemplateId;
+        result.selected_connector_dir = selectedConnectorDir;
+        result.selected_rotation = selectedRotation;
+        if (geometry == null || !geometry.valid) {
+            result.reject_reason = "missing_area_geometry";
+            return result;
+        }
+        if (parentPlacement == null || parentPlacement.template_id == null || parentPlacement.template_id.isBlank()) {
+            result.reject_reason = "missing_parent_placement";
+            return result;
+        }
+        if (selectedTemplateId == null || selectedTemplateId.isBlank()) {
+            result.reject_reason = "missing_selected_template";
+            return result;
+        }
+
+        Catalog catalog = loadCatalog();
+        Map<String, TemplateMeta> metaById = indexCatalog(catalog);
+        return solveSinglePlacementWithCatalog(
+                geometry,
+                existingPlacements,
+                parentPlacement,
+                parentConnectorId,
+                selectedConnectorDir,
+                selectedTemplateId,
+                selectedRotation,
+                heightData,
+                c2ScanData,
+                metaById
+        );
+    }
+
+    static SinglePlacementSolveResult solveSinglePlacementWithCatalog(
+            CityC8Stages.AreaGeometry geometry,
+            List<CityC8Stages.PlacementNode> existingPlacements,
+            CityC8Stages.PlacementNode parentPlacement,
+            String parentConnectorId,
+            String selectedConnectorDir,
+            String selectedTemplateId,
+            Integer selectedRotation,
+            CityStage1BinaryIO.HeightData heightData,
+            CityC2ScanBinaryIO.C2ScanData c2ScanData,
+            Map<String, TemplateMeta> metaById
+    ) {
+        SinglePlacementSolveResult result = new SinglePlacementSolveResult();
+        result.selected_template_id = selectedTemplateId;
+        result.selected_connector_dir = selectedConnectorDir;
+        result.selected_rotation = selectedRotation;
+        if (geometry == null || !geometry.valid) {
+            result.reject_reason = "missing_area_geometry";
+            return result;
+        }
+        if (parentPlacement == null || parentPlacement.template_id == null || parentPlacement.template_id.isBlank()) {
+            result.reject_reason = "missing_parent_placement";
+            return result;
+        }
+        if (selectedTemplateId == null || selectedTemplateId.isBlank()) {
+            result.reject_reason = "missing_selected_template";
+            return result;
+        }
+        if (metaById == null || metaById.isEmpty()) {
+            result.reject_reason = "missing_catalog_meta";
+            return result;
+        }
+
+        TemplateMeta parentMeta = metaById.get(parentPlacement.template_id);
+        if (parentMeta == null) {
+            result.reject_reason = "missing_parent_catalog_meta";
+            return result;
+        }
+        TemplateMeta childMeta = metaById.get(selectedTemplateId);
+        if (childMeta == null) {
+            result.reject_reason = "missing_selected_template_meta";
+            return result;
+        }
+
+        SolveContext ctx = new SolveContext(
+                new CityC6Stages.BuildAreaSummary(),
+                geometry,
+                null,
+                metaById,
+                8,
+                Math.max(2, placementCount(existingPlacements) + 2),
+                1,
+                heightData,
+                c2ScanData
+        );
+        seedExistingPlacements(ctx, existingPlacements, parentPlacement);
+
+        ConnectorView parentConnector = pickParentConnectorForTool(parentMeta, parentPlacement.rotation, parentConnectorId, selectedConnectorDir);
+        if (parentConnector == null) {
+            result.reject_reason = "missing_parent_connector";
+            return result;
+        }
+
+        CandidatePlacement candidate = choosePreciseCandidate(
+                ctx,
+                parentPlacement,
+                parentConnector,
+                childMeta,
+                null,
+                Math.max(0, parentPlacement.level),
+                "jigsaw_tool_solve",
+                selectedRotation
+        );
+        if (candidate == null) {
+            result.reject_reason = "no_valid_jigsaw_solution";
+            result.warnings.addAll(ctx.warnings);
+            return result;
+        }
+
+        CityC8Stages.PlacementNode placement = candidate.node;
+        placement.y = parentPlacement.y;
+        placement.build_order = nextBuildOrder(existingPlacements);
+        result.ok = true;
+        result.placement = placement;
+        result.resolved_origin_x = placement.x;
+        result.resolved_origin_z = placement.z;
+        result.resolved_rotation = placement.rotation;
+        result.incoming_parent_connector_id = placement.incoming_parent_connector_id;
+        result.incoming_child_connector_id = placement.incoming_child_connector_id;
+        result.resolved_bounds = ResolvedBounds.fromPlacement(placement);
+        result.warnings.addAll(ctx.warnings);
+        return result;
+    }
+
     public static SolveResult solve(
             CityC6Stages.BuildAreaSummary area,
             CityC8Stages.AreaGeometry geometry,
@@ -509,9 +647,22 @@ public final class CityC8ArrangementEngine {
             int depth,
             String placementReason
     ) {
+        return choosePreciseCandidate(ctx, parent, parentConnector, nextMeta, componentOverride, depth, placementReason, null);
+    }
+
+    private static CandidatePlacement choosePreciseCandidate(
+            SolveContext ctx,
+            CityC8Stages.PlacementNode parent,
+            ConnectorView parentConnector,
+            TemplateMeta nextMeta,
+            CityC7Stages.SelectedComponent componentOverride,
+            int depth,
+            String placementReason,
+            Integer forcedRotation
+    ) {
         if (parent == null || parentConnector == null || nextMeta == null) return null;
         String requiredSocket = parentConnector.socket != null ? safe(parentConnector.socket) : "";
-        for (ResolvedConnectorMatch match : candidateConnectorMatches(nextMeta, parentConnector, requiredSocket)) {
+        for (ResolvedConnectorMatch match : candidateConnectorMatches(nextMeta, parentConnector, requiredSocket, forcedRotation)) {
             int[] parentWorld = connectorWorldPos(parent, parentConnector);
             int[] childLocal = rotateLocal(match.connector.localX, match.connector.localZ, match.rotation);
             int childWorldX = parentWorld[0] + parentConnector.direction.dx;
@@ -559,18 +710,80 @@ public final class CityC8ArrangementEngine {
         return null;
     }
 
-    private static List<ResolvedConnectorMatch> candidateConnectorMatches(TemplateMeta candidate, ConnectorView parentConnector, String requiredSocket) {
+    private static List<ResolvedConnectorMatch> candidateConnectorMatches(
+            TemplateMeta candidate,
+            ConnectorView parentConnector,
+            String requiredSocket,
+            Integer forcedRotation
+    ) {
+        if (candidate == null || parentConnector == null) return List.of();
         List<Integer> rotations = candidate.constraints != null && candidate.constraints.allowed_rotations != null && !candidate.constraints.allowed_rotations.isEmpty()
                 ? candidate.constraints.allowed_rotations
                 : (candidate.orientation != null && candidate.orientation.rotations != null && !candidate.orientation.rotations.isEmpty()
                 ? candidate.orientation.rotations
                 : List.of(0, 90, 180, 270));
+        if (forcedRotation != null) {
+            rotations = List.of(forcedRotation);
+        }
         List<ResolvedConnectorMatch> matches = new ArrayList<>();
         for (Integer rotation : rotations) {
             if (rotation == null) continue;
             matches.addAll(matchChildConnectors(candidate, parentConnector.direction, requiredSocket, rotation));
         }
         return matches;
+    }
+
+    private static ConnectorView pickParentConnectorForTool(TemplateMeta parentMeta, int rotation, String connectorId, String selectedConnectorDir) {
+        List<ConnectorView> connectors = resolveConnectorViews(parentMeta, rotation);
+        if (connectors.isEmpty()) return null;
+        if (connectorId != null && !connectorId.isBlank()) {
+            for (ConnectorView connector : connectors) {
+                if (connector != null && connectorId.equalsIgnoreCase(connector.id)) return connector;
+            }
+        }
+        Direction requestedDir = Direction.parse(selectedConnectorDir);
+        if (requestedDir != null) {
+            for (ConnectorView connector : connectors) {
+                if (connector != null && connector.direction == requestedDir) return connector;
+            }
+        }
+        return connectors.size() == 1 ? connectors.get(0) : null;
+    }
+
+    private static void seedExistingPlacements(
+            SolveContext ctx,
+            List<CityC8Stages.PlacementNode> existingPlacements,
+            CityC8Stages.PlacementNode parentPlacement
+    ) {
+        if (ctx == null) return;
+        if (existingPlacements != null) {
+            for (CityC8Stages.PlacementNode existing : existingPlacements) {
+                registerExistingPlacement(ctx, existing);
+            }
+        }
+        registerExistingPlacement(ctx, parentPlacement);
+    }
+
+    private static void registerExistingPlacement(SolveContext ctx, CityC8Stages.PlacementNode placement) {
+        if (ctx == null || placement == null) return;
+        if (placement.node_id != null && ctx.nodeById.containsKey(placement.node_id)) return;
+        ctx.nodes.add(placement);
+        ctx.occupied.add(pack(placement.x, placement.z));
+        if (placement.node_id != null) ctx.nodeById.put(placement.node_id, placement);
+    }
+
+    private static int placementCount(List<CityC8Stages.PlacementNode> existingPlacements) {
+        return existingPlacements != null ? existingPlacements.size() : 0;
+    }
+
+    private static int nextBuildOrder(List<CityC8Stages.PlacementNode> placements) {
+        int next = 0;
+        if (placements == null) return next;
+        for (CityC8Stages.PlacementNode placement : placements) {
+            if (placement == null || placement.build_order == null) continue;
+            next = Math.max(next, placement.build_order + 1);
+        }
+        return next;
     }
 
     private static TerminalPlacement computeTerminalFallback(
@@ -978,6 +1191,7 @@ public final class CityC8ArrangementEngine {
                 || node.footprint_max_x == null || node.footprint_max_z == null) {
             return true;
         }
+        if (isTemplateTerrainProbeHardCheckDisabled()) return true;
         List<ProbeWorldPoint> probes = resolveProbePoints(node, meta);
         if (probes.isEmpty()) return true;
         int min = Integer.MAX_VALUE;
@@ -1081,10 +1295,21 @@ public final class CityC8ArrangementEngine {
             }
             return out;
         }
-        out.add(new ProbeWorldPoint(node.x, node.z));
-        if (node.footprint_min_x != null && node.footprint_min_z != null) out.add(new ProbeWorldPoint(node.footprint_min_x, node.footprint_min_z));
-        if (node.footprint_max_x != null && node.footprint_max_z != null) out.add(new ProbeWorldPoint(node.footprint_max_x, node.footprint_max_z));
+        // TEMP-C35-TERRAIN-PROBE-HARD-CHECK-DISABLED:
+        // Generic node/bounds fallback probing is intentionally disabled for now.
+        // Main-chain terrain handling is moving toward foundation / adaptation
+        // driven execution, so templates without explicit probe points should not
+        // be rejected here by a coarse generic sampler.
         return out;
+    }
+
+    private static boolean isTemplateTerrainProbeHardCheckDisabled() {
+        // TEMP-C35-TERRAIN-PROBE-HARD-CHECK-DISABLED:
+        // Template terrain probe checks are temporarily bypassed in the
+        // arrangement engine. Current city building relies on foundation /
+        // terrain adaptation to own ground fitting, so probe-derived terrain
+        // constraints should not hard-reject placements here.
+        return true;
     }
 
     private static boolean isLand(CityC2ScanBinaryIO.C2ScanData data, int worldX, int worldZ) {
@@ -1197,6 +1422,39 @@ public final class CityC8ArrangementEngine {
         public List<CityC8Stages.PlacementNode> placements = new ArrayList<>();
         public List<String> errors = new ArrayList<>();
         public List<String> warnings = new ArrayList<>();
+    }
+
+    public static final class SinglePlacementSolveResult {
+        public boolean ok;
+        public String selected_template_id;
+        public String selected_connector_dir;
+        public Integer selected_rotation;
+        public Integer resolved_origin_x;
+        public Integer resolved_origin_z;
+        public Integer resolved_rotation;
+        public String incoming_parent_connector_id;
+        public String incoming_child_connector_id;
+        public ResolvedBounds resolved_bounds;
+        public String reject_reason;
+        public CityC8Stages.PlacementNode placement;
+        public List<String> warnings = new ArrayList<>();
+    }
+
+    public static final class ResolvedBounds {
+        public Integer min_x;
+        public Integer min_z;
+        public Integer max_x;
+        public Integer max_z;
+
+        private static ResolvedBounds fromPlacement(CityC8Stages.PlacementNode placement) {
+            ResolvedBounds bounds = new ResolvedBounds();
+            if (placement == null) return bounds;
+            bounds.min_x = placement.footprint_min_x;
+            bounds.min_z = placement.footprint_min_z;
+            bounds.max_x = placement.footprint_max_x;
+            bounds.max_z = placement.footprint_max_z;
+            return bounds;
+        }
     }
 
     private static final class Catalog {
