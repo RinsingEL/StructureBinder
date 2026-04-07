@@ -20,8 +20,10 @@ public final class BuildRuntimeValidator {
         }
         CityC9BuildQueue.BuildTask task = context.task();
         CityC9BuildQueue.BuildQueue queue = context.cityQueue();
+        String parentTaskId = null;
         if (task.parent_node_id != null && !task.parent_node_id.isBlank()) {
-            CityC9BuildQueue.BuildTask parent = findTask(queue, CityC9BuildQueue.taskId(task.city_id, task.build_area_id, task.parent_node_id));
+            parentTaskId = CityC9BuildQueue.taskId(task.city_id, task.build_area_id, task.parent_node_id);
+            CityC9BuildQueue.BuildTask parent = findTask(queue, parentTaskId);
             if (parent == null) return ValidationResult.failed("missing_parent_task");
             if (!CityC9BuildQueue.Status.DONE.name().equals(CityC9BuildQueue.Status.normalize(parent.status))) {
                 return ValidationResult.failed("waiting_for_parent");
@@ -42,6 +44,7 @@ public final class BuildRuntimeValidator {
                 if (other == null || other == task) continue;
                 if (!Objects.equals(task.build_area_id, other.build_area_id)) continue;
                 if (!CityC9BuildQueue.Status.DONE.name().equals(CityC9BuildQueue.Status.normalize(other.status))) continue;
+                if (isParentTask(task, parentTaskId, other)) continue;
                 StructureInjector.PlacementBounds otherBounds = gateway.placementBounds(
                         context.world(),
                         other.template_id,
@@ -54,6 +57,19 @@ public final class BuildRuntimeValidator {
             }
         }
         return ValidationResult.success(candidateBounds);
+    }
+
+    private static boolean isParentTask(
+            CityC9BuildQueue.BuildTask task,
+            String parentTaskId,
+            CityC9BuildQueue.BuildTask other
+    ) {
+        if (task == null || other == null) return false;
+        if (task.parent_node_id != null && !task.parent_node_id.isBlank()
+                && task.parent_node_id.equals(other.node_id)) {
+            return true;
+        }
+        return parentTaskId != null && !parentTaskId.isBlank() && parentTaskId.equals(other.task_id);
     }
 
     private static CityC9BuildQueue.BuildTask findTask(CityC9BuildQueue.BuildQueue queue, String taskId) {

@@ -2832,17 +2832,29 @@ public class CityController {
         if (solveResult != null && solveResult.debug != null && Boolean.TRUE.equals(solveResult.debug.piece_generated)) {
             if (solveResult.debug.manual_attach_summary != null && solveResult.debug.manual_attach_summary.summary_zh != null
                     && !solveResult.debug.manual_attach_summary.summary_zh.isBlank()) {
-                return solveResult.debug.manual_attach_summary.summary_zh;
+                return combineVanillaStepSummary(
+                        solveResult.debug.manual_attach_summary.summary_zh,
+                        solveResult.debug.vanilla_piece_debug_summary_zh
+                );
             }
-            return "vanilla depth=1 已生成 child piece，并继续尝试解析 child connector 与结构矩形。";
+            return combineVanillaStepSummary(
+                    "vanilla depth=1 已生成 child piece，并继续尝试解析 child connector 与结构矩形。",
+                    solveResult.debug.vanilla_piece_debug_summary_zh
+            );
         }
         if (solveResult != null && "no_valid_jigsaw_solution".equals(solveResult.reject_reason)) {
             if (solveResult.debug != null && solveResult.debug.manual_attach_summary != null
                     && solveResult.debug.manual_attach_summary.summary_zh != null
                     && !solveResult.debug.manual_attach_summary.summary_zh.isBlank()) {
-                return solveResult.debug.manual_attach_summary.summary_zh;
+                return combineVanillaStepSummary(
+                        solveResult.debug.manual_attach_summary.summary_zh,
+                        solveResult.debug.vanilla_piece_debug_summary_zh
+                );
             }
-            return "已经准备好 startPos、target 与单模板 pool，但 vanilla depth=1 没有生成有效 child piece。";
+            return combineVanillaStepSummary(
+                    "已经准备好 startPos、target 与单模板 pool，但 vanilla depth=1 没有生成有效 child piece。",
+                    solveResult != null && solveResult.debug != null ? solveResult.debug.vanilla_piece_debug_summary_zh : null
+            );
         }
         if (solveResult != null && "vertical_jigsaw_solver_pending".equals(solveResult.reject_reason)) {
             if (solveResult.debug != null && solveResult.debug.manual_attach_summary != null
@@ -2872,9 +2884,27 @@ public class CityController {
             out.addProperty("first_blocker_stage", safe(solveResult.debug.first_blocker_stage));
             if (solveResult.debug.vanilla_stub_generated != null) out.addProperty("vanilla_stub_generated", solveResult.debug.vanilla_stub_generated);
             if (solveResult.debug.piece_generated != null) out.addProperty("piece_generated", solveResult.debug.piece_generated);
+            if (solveResult.debug.vanilla_piece_count != null) out.addProperty("vanilla_piece_count", solveResult.debug.vanilla_piece_count);
+            if (solveResult.debug.vanilla_pool_element_piece_count != null) {
+                out.addProperty("vanilla_pool_element_piece_count", solveResult.debug.vanilla_pool_element_piece_count);
+            }
+            if (solveResult.debug.selected_vanilla_piece_index != null) {
+                out.addProperty("selected_vanilla_piece_index", solveResult.debug.selected_vanilla_piece_index);
+            }
+            out.addProperty("vanilla_piece_extraction_stage", safe(solveResult.debug.vanilla_piece_extraction_stage));
+            out.addProperty("vanilla_piece_debug_summary_zh", safe(solveResult.debug.vanilla_piece_debug_summary_zh));
+            out.add("vanilla_piece_types", DEBUG_GSON.toJsonTree(solveResult.debug.vanilla_piece_types));
+            out.add("vanilla_piece_items", DEBUG_GSON.toJsonTree(solveResult.debug.vanilla_piece_items));
             out.addProperty("incoming_child_connector_id", safe(solveResult.incoming_child_connector_id));
         }
         return out;
+    }
+
+    private static String combineVanillaStepSummary(String primary, String detail) {
+        if (primary == null || primary.isBlank()) return detail;
+        if (detail == null || detail.isBlank()) return primary;
+        if (primary.contains(detail)) return primary;
+        return primary + " 补充诊断：" + detail;
     }
 
     private static String buildValidationStatus(CityVanillaJigsawAdapterService.SolveResult solveResult) {

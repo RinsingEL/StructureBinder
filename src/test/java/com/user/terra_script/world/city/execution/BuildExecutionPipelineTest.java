@@ -58,6 +58,38 @@ class BuildExecutionPipelineTest {
     }
 
     @Test
+    void pipelineDoesNotTreatDoneParentAsRuntimeCollision() {
+        BuildExecutionTestSupport.FakePlacementGateway gateway = new BuildExecutionTestSupport.FakePlacementGateway();
+        BuildExecutionPipeline pipeline = new BuildExecutionPipeline(
+                new BuildChunkGate(),
+                new BuildRuntimeValidator(gateway),
+                new BuildTerrainPreparationService(),
+                new BuildPlacementService(gateway)
+        );
+        BuildExecutionTestSupport.FakeWorldAccess world = new BuildExecutionTestSupport.FakeWorldAccess();
+        CityC9BuildQueue.BuildTask parent = BuildExecutionTestSupport.task("city_demo|ba_1|parent");
+        parent.node_id = "parent";
+        parent.status = CityC9BuildQueue.Status.DONE.name();
+        CityC9BuildQueue.BuildTask child = BuildExecutionTestSupport.task("city_demo|ba_1|child");
+        child.node_id = "child";
+        child.parent_node_id = "parent";
+        child.x = parent.x;
+        child.y = parent.y;
+        child.z = parent.z;
+
+        TaskExecutionResult result = pipeline.execute(new BuildExecutionContext(
+                world,
+                BuildExecutionTestSupport.queue(parent, child),
+                child,
+                new BuildExecutionTestSupport.RecordingLogger(),
+                null
+        ));
+
+        assertEquals(TaskExecutionResult.Outcome.COMPLETED, result.outcome());
+        assertEquals(CityC9BuildQueue.Status.DONE.name(), child.status);
+    }
+
+    @Test
     void pipelineBlocksWhenDoneTaskCollidesAtRuntime() {
         BuildExecutionTestSupport.FakePlacementGateway gateway = new BuildExecutionTestSupport.FakePlacementGateway();
         BuildExecutionPipeline pipeline = new BuildExecutionPipeline(

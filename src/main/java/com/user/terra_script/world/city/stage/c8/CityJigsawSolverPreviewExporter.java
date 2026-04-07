@@ -391,12 +391,21 @@ public final class CityJigsawSolverPreviewExporter {
                 && solveResult.debug.manual_attach_summary != null
                 && solveResult.debug.manual_attach_summary.summary_zh != null
                 && !solveResult.debug.manual_attach_summary.summary_zh.isBlank()) {
-            return solveResult.debug.manual_attach_summary.summary_zh;
+            return combineSummary(
+                    solveResult.debug.manual_attach_summary.summary_zh,
+                    solveResult.debug.vanilla_piece_debug_summary_zh
+            );
         }
         if (solveResult != null && Boolean.TRUE.equals(solveResult.debug != null ? solveResult.debug.piece_generated : null)) {
-            return "vanilla depth=1 已生成 child piece，并完成后续 child 连接器解析。";
+            return combineSummary(
+                    "vanilla depth=1 已生成 child piece，并完成后续 child 连接器解析。",
+                    solveResult.debug != null ? solveResult.debug.vanilla_piece_debug_summary_zh : null
+            );
         }
-        return "已经命中 parent connector，但 vanilla depth=1 没有生成有效 child piece。";
+        return combineSummary(
+                "已经命中 parent connector，但 vanilla depth=1 没有生成有效 child piece。",
+                solveResult != null && solveResult.debug != null ? solveResult.debug.vanilla_piece_debug_summary_zh : null
+        );
     }
 
     private static String runtimeStatus(CityVanillaJigsawAdapterService.SolveResult solveResult) {
@@ -511,6 +520,13 @@ public final class CityJigsawSolverPreviewExporter {
 
     private static int value(Integer input) {
         return input != null ? input : 0;
+    }
+
+    private static String combineSummary(String primary, String detail) {
+        if (primary == null || primary.isBlank()) return detail;
+        if (detail == null || detail.isBlank()) return primary;
+        if (primary.contains(detail)) return primary;
+        return primary + " 补充诊断：" + detail;
     }
 
     private static String safe(String value) {

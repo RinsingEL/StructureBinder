@@ -76,7 +76,8 @@ class CityVanillaJigsawAdapterServiceTest {
                 CityVanillaJigsawAdapterService.summarizeManualCandidates(
                         List.of(manualCandidate(false, false, false, false, false)),
                         false,
-                        false
+                        false,
+                        null
                 ).first_blocker_stage
         );
         assertEquals(
@@ -84,7 +85,8 @@ class CityVanillaJigsawAdapterServiceTest {
                 CityVanillaJigsawAdapterService.summarizeManualCandidates(
                         List.of(manualCandidate(true, false, false, false, false)),
                         false,
-                        false
+                        false,
+                        null
                 ).first_blocker_stage
         );
         assertEquals(
@@ -92,7 +94,8 @@ class CityVanillaJigsawAdapterServiceTest {
                 CityVanillaJigsawAdapterService.summarizeManualCandidates(
                         List.of(manualCandidate(true, true, false, false, false)),
                         false,
-                        false
+                        false,
+                        null
                 ).first_blocker_stage
         );
         assertEquals(
@@ -100,7 +103,8 @@ class CityVanillaJigsawAdapterServiceTest {
                 CityVanillaJigsawAdapterService.summarizeManualCandidates(
                         List.of(manualCandidate(true, true, true, false, true)),
                         false,
-                        false
+                        false,
+                        null
                 ).first_blocker_stage
         );
         assertEquals(
@@ -108,7 +112,8 @@ class CityVanillaJigsawAdapterServiceTest {
                 CityVanillaJigsawAdapterService.summarizeManualCandidates(
                         List.of(manualCandidate(true, true, true, false, false)),
                         false,
-                        false
+                        false,
+                        null
                 ).first_blocker_stage
         );
     }

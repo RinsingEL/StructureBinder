@@ -11,6 +11,7 @@ import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplateManager;
@@ -331,9 +332,33 @@ public class StructureInjector {
     }
 
     private static Bounds boundsFor(StructureTemplate template, BlockPos origin, Rotation rotation) {
+        if (template == null || origin == null) {
+            return new Bounds(0, 0, 0, 1, 1, 1, 1, 1, 1);
+        }
+        Rotation actualRotation = rotation != null ? rotation : Rotation.NONE;
+        StructurePlaceSettings settings = new StructurePlaceSettings()
+                .setRotation(actualRotation)
+                .setMirror(Mirror.NONE);
+        BoundingBox worldBounds = template.getBoundingBox(settings, origin);
+        if (worldBounds != null) {
+            int width = Math.max(1, worldBounds.maxX() - worldBounds.minX() + 1);
+            int height = Math.max(1, worldBounds.maxY() - worldBounds.minY() + 1);
+            int depth = Math.max(1, worldBounds.maxZ() - worldBounds.minZ() + 1);
+            return new Bounds(
+                    worldBounds.minX(),
+                    worldBounds.minY(),
+                    worldBounds.minZ(),
+                    worldBounds.maxX() + 1,
+                    worldBounds.maxY() + 1,
+                    worldBounds.maxZ() + 1,
+                    width,
+                    height,
+                    depth
+            );
+        }
         Vec3i size = template.getSize();
-        int width = (rotation == Rotation.CLOCKWISE_90 || rotation == Rotation.COUNTERCLOCKWISE_90) ? size.getZ() : size.getX();
-        int depth = (rotation == Rotation.CLOCKWISE_90 || rotation == Rotation.COUNTERCLOCKWISE_90) ? size.getX() : size.getZ();
+        int width = (actualRotation == Rotation.CLOCKWISE_90 || actualRotation == Rotation.COUNTERCLOCKWISE_90) ? size.getZ() : size.getX();
+        int depth = (actualRotation == Rotation.CLOCKWISE_90 || actualRotation == Rotation.COUNTERCLOCKWISE_90) ? size.getX() : size.getZ();
         int height = Math.max(1, size.getY());
         return new Bounds(
                 origin.getX(),

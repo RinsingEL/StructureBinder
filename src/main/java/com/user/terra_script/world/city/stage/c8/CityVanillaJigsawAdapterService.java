@@ -48,7 +48,10 @@ import java.util.Optional;
 
 public final class CityVanillaJigsawAdapterService {
     private static final Gson GSON = new GsonBuilder().create();
-    private static final int JIGSAW_SINGLE_CHILD_DEPTH = 0;
+    // Current solver only handles one child-expansion step per request.
+    // In vanilla JigsawPlacement semantics that means depth must be 1:
+    // depth=0 still returns a stub, but the builder stays empty.
+    private static final int JIGSAW_SINGLE_CHILD_DEPTH = 1;
     private static final int MAX_RADIUS = 128;
 
     private CityVanillaJigsawAdapterService() {}
@@ -219,6 +222,7 @@ public final class CityVanillaJigsawAdapterService {
         }
 
         VanillaGenerationAttempt generation = generateSingleChildPiece(level, stableSeed, parentContext.startPos(), poolHolder, target);
+        applyVanillaGenerationDiagnostics(result.debug, generation != null ? generation.diagnostics() : null);
         result.debug.vanilla_stub_generated = generation != null && generation.stubGenerated();
         SolveArtifact artifact = generation != null ? generation.artifact() : null;
         if (artifact == null || artifact.piece == null) {
@@ -226,7 +230,8 @@ public final class CityVanillaJigsawAdapterService {
             result.debug.manual_attach_summary = summarizeManualCandidates(
                     result.debug.manual_child_connector_candidates,
                     false,
-                    Boolean.TRUE.equals(result.debug.vanilla_stub_generated)
+                    Boolean.TRUE.equals(result.debug.vanilla_stub_generated),
+                    generation != null ? generation.diagnostics() : null
             );
             result.debug.first_blocker_stage = result.debug.manual_attach_summary != null
                     ? result.debug.manual_attach_summary.first_blocker_stage
@@ -238,7 +243,8 @@ public final class CityVanillaJigsawAdapterService {
         result.debug.manual_attach_summary = summarizeManualCandidates(
                 result.debug.manual_child_connector_candidates,
                 true,
-                Boolean.TRUE.equals(result.debug.vanilla_stub_generated)
+                Boolean.TRUE.equals(result.debug.vanilla_stub_generated),
+                generation != null ? generation.diagnostics() : null
         );
         result.debug.first_blocker_stage = result.debug.manual_attach_summary != null
                 ? result.debug.manual_attach_summary.first_blocker_stage
@@ -502,8 +508,13 @@ public final class CityVanillaJigsawAdapterService {
             Holder<StructureTemplatePool> poolHolder,
             ResourceLocation targetName
     ) {
+        VanillaGenerationDiagnostics diagnostics = new VanillaGenerationDiagnostics();
         if (level == null || startPos == null || poolHolder == null || targetName == null) {
-            return new VanillaGenerationAttempt(false, null);
+            diagnostics.extraction_stage = "missing_generation_inputs";
+            diagnostics.summary_zh = "调用 vanilla jigsaw 前缺少必要输入，本次没有进入 GenerationStub 构造。";
+            diagnostics.piece_count = 0;
+            diagnostics.pool_element_piece_count = 0;
+            return new VanillaGenerationAttempt(false, null, diagnostics);
         }
         ChunkPos chunkPos = new ChunkPos(startPos);
         WorldgenRandom random = randomFromSeed(stableSeed, chunkPos);
@@ -529,14 +540,55 @@ public final class CityVanillaJigsawAdapterService {
                 Optional.empty(),
                 MAX_RADIUS
         );
-        if (stub.isEmpty()) return new VanillaGenerationAttempt(false, null);
-        PiecesContainer piecesContainer = stub.get().getPiecesBuilder().build();
-        for (StructurePiece piece : piecesContainer.pieces()) {
-            if (piece instanceof PoolElementStructurePiece poolPiece) {
-                return new VanillaGenerationAttempt(true, new SolveArtifact(poolPiece, poolPiece.getBoundingBox(), startPos));
-            }
+        if (stub.isEmpty()) {
+            diagnostics.extraction_stage = "stub_empty";
+            diagnostics.summary_zh = "JigsawPlacement.addPieces(...) 没有返回 GenerationStub。";
+            diagnostics.piece_count = 0;
+            diagnostics.pool_element_piece_count = 0;
+            return new VanillaGenerationAttempt(false, null, diagnostics);
         }
-        return new VanillaGenerationAttempt(true, null);
+        PiecesContainer piecesContainer = stub.get().getPiecesBuilder().build();
+        LinkedHashSet<String> pieceTypes = new LinkedHashSet<>();
+        int pieceIndex = 0;
+        int poolElementPieceCount = 0;
+        PoolElementStructurePiece selectedPoolPiece = null;
+        Integer selectedPoolPieceIndex = null;
+        for (StructurePiece piece : piecesContainer.pieces()) {
+            VanillaPieceDebugItem item = describeVanillaPiece(pieceIndex, piece);
+            diagnostics.piece_items.add(item);
+            if (item != null && item.piece_type != null && !item.piece_type.isBlank()) {
+                pieceTypes.add(item.piece_type);
+            }
+            if (piece instanceof PoolElementStructurePiece poolPiece) {
+                poolElementPieceCount++;
+                if (selectedPoolPiece == null) {
+                    selectedPoolPiece = poolPiece;
+                    selectedPoolPieceIndex = pieceIndex;
+                }
+            }
+            pieceIndex++;
+        }
+        diagnostics.piece_count = pieceIndex;
+        diagnostics.pool_element_piece_count = poolElementPieceCount;
+        diagnostics.piece_types.addAll(pieceTypes);
+        diagnostics.selected_piece_index = selectedPoolPieceIndex;
+        if (selectedPoolPiece != null) {
+            diagnostics.extraction_stage = "pool_element_piece_selected";
+            diagnostics.summary_zh = "vanilla builder 共返回 " + pieceIndex
+                    + " 个 StructurePiece，其中 PoolElementStructurePiece " + poolElementPieceCount
+                    + " 个，当前已选中索引 " + selectedPoolPieceIndex + " 的 piece 作为 child。";
+            return new VanillaGenerationAttempt(true, new SolveArtifact(selectedPoolPiece, selectedPoolPiece.getBoundingBox(), startPos), diagnostics);
+        }
+        if (pieceIndex <= 0) {
+            diagnostics.extraction_stage = "builder_empty";
+            diagnostics.summary_zh = "JigsawPlacement.addPieces(...) 已返回 stub，但 piecesBuilder.build() 为空，没有任何 StructurePiece。";
+            return new VanillaGenerationAttempt(true, null, diagnostics);
+        }
+        diagnostics.extraction_stage = "no_pool_element_piece";
+        diagnostics.summary_zh = "vanilla builder 共返回 " + pieceIndex
+                + " 个 StructurePiece，但没有任何 PoolElementStructurePiece。"
+                + (pieceTypes.isEmpty() ? "" : " 当前实际类型: " + String.join(", ", pieceTypes) + "。");
+        return new VanillaGenerationAttempt(true, null, diagnostics);
     }
 
     private static List<ManualChildConnectorCandidate> analyzeManualChildConnectors(
@@ -603,16 +655,18 @@ public final class CityVanillaJigsawAdapterService {
     static ManualAttachSummary summarizeManualCandidates(
             List<ManualChildConnectorCandidate> candidates,
             boolean pieceGenerated,
-            boolean vanillaStubGenerated
+            boolean vanillaStubGenerated,
+            VanillaGenerationDiagnostics diagnostics
     ) {
         ManualAttachSummary summary = new ManualAttachSummary();
         summary.truth_source = "runtime_template";
         summary.total_candidate_count = candidates != null ? candidates.size() : 0;
         if (candidates == null || candidates.isEmpty()) {
             summary.first_blocker_stage = pieceGenerated ? "generated" : "target/name";
-            summary.summary_zh = pieceGenerated
+            String baseSummary = pieceGenerated
                     ? "vanilla 已成功生成 child piece，但当前没有可回放的手工 child 候选记录。"
                     : "child 模板中没有扫到任何 runtime jigsaw 候选。";
+            summary.summary_zh = combineZhSummary(baseSummary, diagnostics != null ? diagnostics.summary_zh : null);
             return summary;
         }
 
@@ -665,9 +719,10 @@ public final class CityVanillaJigsawAdapterService {
 
         if (pieceGenerated) {
             summary.first_blocker_stage = "generated";
-            summary.summary_zh = viable > 0
+            String baseSummary = viable > 0
                     ? "手工分析存在可行候选，vanilla 也成功生成了 child piece。"
                     : "vanilla 已成功生成 child piece，但手工候选分析未找到完整可行候选，请继续核对生成与诊断语义。";
+            summary.summary_zh = combineZhSummary(baseSummary, diagnostics != null ? diagnostics.summary_zh : null);
             return summary;
         }
         if (targetMatches <= 0) {
@@ -691,10 +746,59 @@ public final class CityVanillaJigsawAdapterService {
             return summary;
         }
         summary.first_blocker_stage = "vanilla_empty_stub";
-        summary.summary_zh = vanillaStubGenerated
-                ? "手工分析存在可行候选，但 vanilla stub 未形成可用 child piece，需要继续核对 piece 提取语义。"
-                : "手工分析存在可行候选，但 vanilla 仍返回空 stub，需要继续核对 startPos / depth / projection 语义。";
+        if (vanillaStubGenerated && diagnostics != null && diagnostics.summary_zh != null && !diagnostics.summary_zh.isBlank()) {
+            summary.summary_zh = "手工分析存在可行候选，但 vanilla stub 未形成可用 child piece。"
+                    + " 当前提取诊断："
+                    + diagnostics.summary_zh;
+        } else {
+            summary.summary_zh = vanillaStubGenerated
+                    ? "手工分析存在可行候选，但 vanilla stub 未形成可用 child piece，需要继续核对 piece 提取语义。"
+                    : "手工分析存在可行候选，但 vanilla 仍返回空 stub，需要继续核对 startPos / depth / projection 语义。";
+        }
         return summary;
+    }
+
+    private static VanillaPieceDebugItem describeVanillaPiece(int index, StructurePiece piece) {
+        VanillaPieceDebugItem item = new VanillaPieceDebugItem();
+        item.index = index;
+        if (piece == null) {
+            item.piece_type = "null";
+            item.pool_element_piece = false;
+            return item;
+        }
+        String simpleName = piece.getClass().getSimpleName();
+        item.piece_type = (simpleName == null || simpleName.isBlank()) ? piece.getClass().getName() : simpleName;
+        item.pool_element_piece = piece instanceof PoolElementStructurePiece;
+        item.bounds = ResolvedBounds.fromBoundingBox(piece.getBoundingBox());
+        if (piece instanceof PoolElementStructurePiece poolPiece) {
+            item.origin_x = poolPiece.getPosition().getX();
+            item.origin_y = poolPiece.getPosition().getY();
+            item.origin_z = poolPiece.getPosition().getZ();
+            item.rotation = toDegrees(poolPiece.getRotation());
+        }
+        return item;
+    }
+
+    private static void applyVanillaGenerationDiagnostics(DebugDetails debug, VanillaGenerationDiagnostics diagnostics) {
+        if (debug == null || diagnostics == null) return;
+        debug.vanilla_piece_count = diagnostics.piece_count;
+        debug.vanilla_pool_element_piece_count = diagnostics.pool_element_piece_count;
+        debug.vanilla_piece_extraction_stage = diagnostics.extraction_stage;
+        debug.vanilla_piece_debug_summary_zh = diagnostics.summary_zh;
+        debug.selected_vanilla_piece_index = diagnostics.selected_piece_index;
+        if (diagnostics.piece_types != null && !diagnostics.piece_types.isEmpty()) {
+            debug.vanilla_piece_types.addAll(diagnostics.piece_types);
+        }
+        if (diagnostics.piece_items != null && !diagnostics.piece_items.isEmpty()) {
+            debug.vanilla_piece_items.addAll(diagnostics.piece_items);
+        }
+    }
+
+    private static String combineZhSummary(String primary, String detail) {
+        if (primary == null || primary.isBlank()) return detail;
+        if (detail == null || detail.isBlank()) return primary;
+        if (primary.contains(detail)) return primary;
+        return primary + " 当前 vanilla builder 诊断：" + detail;
     }
 
     private static String resolveManualRejectStage(ManualChildConnectorCandidate candidate) {
@@ -1163,8 +1267,19 @@ public final class CityVanillaJigsawAdapterService {
 
     private record VanillaGenerationAttempt(
             boolean stubGenerated,
-            SolveArtifact artifact
+            SolveArtifact artifact,
+            VanillaGenerationDiagnostics diagnostics
     ) {}
+
+    private static final class VanillaGenerationDiagnostics {
+        Integer piece_count;
+        Integer pool_element_piece_count;
+        Integer selected_piece_index;
+        String extraction_stage;
+        String summary_zh;
+        final List<String> piece_types = new ArrayList<>();
+        final List<VanillaPieceDebugItem> piece_items = new ArrayList<>();
+    }
 
     private record ProbeWorldPoint(
             int x,
@@ -1256,6 +1371,13 @@ public final class CityVanillaJigsawAdapterService {
         public Integer generation_max_radius;
         public Boolean vanilla_stub_generated;
         public Boolean piece_generated;
+        public Integer vanilla_piece_count;
+        public Integer vanilla_pool_element_piece_count;
+        public Integer selected_vanilla_piece_index;
+        public String vanilla_piece_extraction_stage;
+        public String vanilla_piece_debug_summary_zh;
+        public List<String> vanilla_piece_types = new ArrayList<>();
+        public List<VanillaPieceDebugItem> vanilla_piece_items = new ArrayList<>();
         public List<ManualChildConnectorCandidate> manual_child_connector_candidates = new ArrayList<>();
         public ManualAttachSummary manual_attach_summary;
         public String first_blocker_stage;
@@ -1277,6 +1399,17 @@ public final class CityVanillaJigsawAdapterService {
         public String front;
         public String name;
         public String target;
+    }
+
+    public static final class VanillaPieceDebugItem {
+        public Integer index;
+        public String piece_type;
+        public Boolean pool_element_piece;
+        public Integer origin_x;
+        public Integer origin_y;
+        public Integer origin_z;
+        public Integer rotation;
+        public ResolvedBounds bounds;
     }
 
     public static final class ManualChildConnectorCandidate {

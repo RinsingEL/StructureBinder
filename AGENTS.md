@@ -4,9 +4,9 @@
 
 当前工作区已经拆分为两个长期并行维护的仓库：
 
-- 实现仓库：`E:\mc_dev\StructureBinder-rebuild\StructureBinder`
+- 实现仓库：`E:\Mod_Dev\StructureBinder`
   - 主要承载 Java / MCP / 运行时实现、工具代码、接口与调试过程记录
-- 文档仓库：`E:\mc_dev\StructureBinder-rebuild\designer_territoryMod`
+- 文档仓库：`E:\Mod_Dev\designer_territoryMod`
   - 主要承载当前有效的产品方案、数据契约、代码导览、测试与验收入口
 
 agent 在开始处理任务前，`MUST` 先判断本次改动属于哪个仓库：
@@ -22,10 +22,10 @@ agent 在开始处理任务前，`MUST` 先判断本次改动属于哪个仓库�
 - 实现仓库中的 `dev_docs/` `MUST` 保留，继续作为开发过程记录、联调细节、阶段讨论和提交归档依据。
 - 实现仓库中的旧 `workFlow`、旧 whitepaper、旧总览型方案文档，不再作为当前功能真值来源。
 - 当前有效的功能方案、数据契约、代码导览、测试入口，`MUST` 以文档仓库为准：
-  - `E:\mc_dev\StructureBinder-rebuild\designer_territoryMod\docs\10_product`
-  - `E:\mc_dev\StructureBinder-rebuild\designer_territoryMod\docs\20_contracts`
-  - `E:\mc_dev\StructureBinder-rebuild\designer_territoryMod\docs\30_code_guide`
-  - `E:\mc_dev\StructureBinder-rebuild\designer_territoryMod\docs\40_tests`
+  - `E:\Mod_Dev\designer_territoryMod\docs\10_product`
+  - `E:\Mod_Dev\designer_territoryMod\docs\20_contracts`
+  - `E:\Mod_Dev\designer_territoryMod\docs\30_code_guide`
+  - `E:\Mod_Dev\designer_territoryMod\docs\40_tests`
 
 agent `MUST NOT` 再把新的主方案持续写回实现仓库旧文档体系中。
 
