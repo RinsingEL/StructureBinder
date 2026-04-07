@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jigsaw 求解器回放器</title>
+  <link rel="stylesheet" href="/app.css">
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">code_process_viewer</p>
+        <h1>Jigsaw 求解器回放器</h1>
+        <p class="subtitle">只读导入真实 <code>jigsaw_solver_debug/&lt;runId&gt;</code>，检查步骤、证据、预览图和审查结论。</p>
+      </div>
+      <div class="meta" id="sessionMeta">
+        <span class="meta-pill">等待导入</span>
+      </div>
+    </header>
+
+    <section class="control-card">
+      <form id="importForm" class="import-form">
+        <label>
+          <span>调试目录</span>
+          <input id="artifactPath" name="artifact_path" type="text" placeholder="E:\path\to\jigsaw_solver_debug\20260407_123456_789" required>
+        </label>
+        <label class="checkbox">
+          <input id="replaceExisting" type="checkbox">
+          <span>同一 runId 已存在时覆盖</span>
+        </label>
+        <button type="submit">导入 Jigsaw 调试产物</button>
+      </form>
+
+      <div class="session-tools">
+        <label>
+          <span>当前会话</span>
+          <select id="sessionSelect"></select>
+        </label>
+        <a id="reportLink" class="ghost-button disabled" href="#" target="_blank" rel="noreferrer">导出 Markdown 报告</a>
+      </div>
+    </section>
+
+    <p id="flash" class="flash hidden"></p>
+
+    <main class="workspace">
+      <section class="panel panel-steps">
+        <div class="panel-head">
+          <h2>步骤流程</h2>
+          <span id="stepCount" class="panel-tip">0 个步骤</span>
+        </div>
+        <div id="stepList" class="step-list empty-state">先导入一个 Jigsaw 调试目录。</div>
+      </section>
+
+      <section class="panel panel-preview">
+        <div class="panel-head">
+          <h2>步骤预览</h2>
+          <span id="previewState" class="panel-tip">未选择步骤</span>
+        </div>
+        <div id="previewBox" class="preview-box empty-state">当前步骤没有预览图。</div>
+      </section>
+
+      <section class="panel panel-detail">
+        <div class="panel-head">
+          <h2>步骤详情</h2>
+          <span id="detailState" class="panel-tip">未选择步骤</span>
+        </div>
+        <div id="detailBox" class="detail-box empty-state">点击左侧步骤查看目标、实现说明和源码入口。</div>
+      </section>
+
+      <section class="panel panel-tables">
+        <div class="panel-head">
+          <h2>证据表格</h2>
+          <span class="panel-tip">evidence / legend</span>
+        </div>
+        <div id="tablesBox" class="tables-box empty-state">当前步骤还没有结构化表格。</div>
+      </section>
+
+      <section class="panel panel-review">
+        <div class="panel-head">
+          <h2>审查结论</h2>
+          <span class="panel-tip">保存后会持久化到 SQLite</span>
+        </div>
+        <div id="checkpointBox" class="checkpoint-box empty-state">导入后会显示当前会话检查点。</div>
+        <form id="reviewForm" class="review-form">
+          <label>
+            <span>结论</span>
+            <select id="reviewState" required>
+              <option value="pass">通过</option>
+              <option value="concern">存疑</option>
+              <option value="reject">驳回</option>
+              <option value="need_evidence">待补证据</option>
+              <option value="unchecked">未检查</option>
+            </select>
+          </label>
+          <label>
+            <span>备注</span>
+            <textarea id="reviewComment" rows="6" placeholder="记录你对这个步骤的判断、想补的日志或怀疑点。"></textarea>
+          </label>
+          <button id="saveReviewButton" type="submit" disabled>保存当前步骤审查</button>
+        </form>
+      </section>
+    </main>
+  </div>
+
+  <script src="/app.js" defer></script>
+</body>
+</html>

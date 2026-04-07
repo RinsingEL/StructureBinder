@@ -1,0 +1,8 @@
+runtime/db/*
+!runtime/db/.gitkeep
+runtime/cache/*
+!runtime/cache/.gitkeep
+runtime/tmp/*
+!runtime/tmp/.gitkeep
+*.exe
+*.test
