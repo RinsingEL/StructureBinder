@@ -12,6 +12,7 @@ import com.user.terra_script.world.city.stage.c6.CityC6Validation;
 import com.user.terra_script.world.city.stage.c7.CityC7Validation;
 import com.user.terra_script.server.http.HttpUtil;
 import com.user.terra_script.world.NationGenManager;
+import com.user.terra_script.world.StructureInjector;
 import com.user.terra_script.world.city.CityConfig;
 import com.user.terra_script.world.city.CityInstance;
 import com.user.terra_script.world.city.CityManager;
@@ -36,6 +37,7 @@ import com.user.terra_script.world.city.stage.c8.CityJigsawSolverDebugTrace;
 import com.user.terra_script.world.city.stage.c8.CityJigsawSolverPreviewExporter;
 import com.user.terra_script.world.city.stage.c9.CityC9Stages;
 import com.user.terra_script.world.city.stage.c9.CityC9BuildQueue;
+import com.user.terra_script.world.city.execution.GroupSurfaceClearService;
 import com.user.terra_script.world.city.execution.ServerLevelBuildWorldAccess;
 import com.user.terra_script.world.city.execution.SolvedPlacementExecutionService;
 import com.user.terra_script.world.city.stage.c8.CityVanillaJigsawAdapterService;
@@ -61,6 +63,7 @@ import java.util.Set;
 import java.util.ArrayList;
 import java.nio.file.Path;
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -1308,6 +1311,128 @@ public class CityController {
         }
     }
 
+    public void handleCityGroupSurfaceClear(HttpExchange exchange) throws IOException {
+        if (!HttpUtil.requireMethod(exchange, "POST")) return;
+        try {
+            String body = HttpUtil.readBody(exchange);
+            JsonObject json = JsonParser.parseString(body).getAsJsonObject();
+            String cityId = readOptionalString(json, "city_id");
+            String groupId = readOptionalString(json, "group_id");
+            String buildAreaId = readOptionalString(json, "build_area_id");
+            boolean clearSolids = !json.has("clear_solids") || json.get("clear_solids").isJsonNull() || json.get("clear_solids").getAsBoolean();
+            boolean preserveExistingPlacements = !json.has("preserve_existing_placements")
+                    || json.get("preserve_existing_placements").isJsonNull()
+                    || json.get("preserve_existing_placements").getAsBoolean();
+            if (cityId == null || cityId.isBlank() || groupId == null || groupId.isBlank()) {
+                HttpUtil.sendResponse(exchange, 400, "{\"error\": \"Missing city_id or group_id\"}");
+                return;
+            }
+            if (mcServer == null || mcServer.overworld() == null) {
+                HttpUtil.sendResponse(exchange, 500, "{\"error\": \"Minecraft server/overworld unavailable\"}");
+                return;
+            }
+
+            Path cityDir = resolveCityDir(cityId);
+            CityC8Stages.C8Plan plan = loadC9GenerationPlan(cityDir, groupId);
+            CityC6Stages.C6Summary c6Summary = CityC6Stages.loadSummary(cityDir);
+            Map<Long, Integer> c6Index = CityC6Stages.loadIndex(cityDir);
+            if (plan == null || c6Summary == null || c6Index == null || c6Index.isEmpty()) {
+                HttpUtil.sendResponse(exchange, 404, "{\"error\": \"Required C8/C6 data not found\"}");
+                return;
+            }
+
+            CityC8Stages.FoundationItem foundation = findFoundation(plan, groupId, buildAreaId);
+            if (foundation == null) {
+                HttpUtil.sendResponse(exchange, 404, "{\"error\": \"Target C8 foundation not found\"}");
+                return;
+            }
+            CityC6Stages.BuildAreaSummary area = findArea(c6Summary, foundation.build_area_numeric_id, foundation.group_id, foundation.build_area_id);
+            if (area == null) {
+                HttpUtil.sendResponse(exchange, 404, "{\"error\": \"Target C6 area not found\"}");
+                return;
+            }
+
+            CityC8Stages.AreaGeometry geometry = CityC8Stages.buildAreaGeometry(
+                    area,
+                    CityC8Stages.collectAreaBlockKeys(c6Index, foundation.build_area_numeric_id)
+            );
+            if (geometry == null || !geometry.valid) {
+                HttpUtil.sendResponse(exchange, 422, "{\"error\": \"Target build area geometry invalid\"}");
+                return;
+            }
+
+            int minY = json.has("min_y") && !json.get("min_y").isJsonNull()
+                    ? json.get("min_y").getAsInt()
+                    : foundation.base_y;
+            int maxY = json.has("max_y") && !json.get("max_y").isJsonNull()
+                    ? json.get("max_y").getAsInt()
+                    : Math.max(minY + 48, foundation.base_y + 48);
+
+            String runId = String.valueOf(System.currentTimeMillis());
+            RuntimeLogger logger = RuntimeLogger.forServer(
+                    mcServer,
+                    RuntimeLogContext.builder()
+                            .domain("city")
+                            .scope("task")
+                            .taskId("city_group_surface_clear_" + runId)
+                            .stageId("GROUP_SURFACE_CLEAR")
+                            .cityId(cityId)
+                            .build()
+            );
+            JsonObject startDetails = new JsonObject();
+            startDetails.addProperty("city_id", cityId);
+            startDetails.addProperty("group_id", groupId);
+            startDetails.addProperty("build_area_id", foundation.build_area_id);
+            startDetails.addProperty("min_y", minY);
+            startDetails.addProperty("max_y", maxY);
+            startDetails.addProperty("clear_solids", clearSolids);
+            startDetails.addProperty("preserve_existing_placements", preserveExistingPlacements);
+            logger.info(RuntimeLogEvent.TASK_STARTED, "开始执行 group 级地表清理。", startDetails);
+
+            List<StructureInjector.PlacementBounds> excludedBounds = preserveExistingPlacements
+                    ? resolvePlacementBounds(mcServer.overworld(), collectExistingPlacements(foundation))
+                    : List.of();
+            GroupSurfaceClearService.ClearResult clearResult = new GroupSurfaceClearService().clear(
+                    new ServerLevelBuildWorldAccess(mcServer.overworld()),
+                    geometry,
+                    minY,
+                    maxY,
+                    clearSolids,
+                    excludedBounds
+            );
+
+            Path artifactDir = resolveGroupDir(cityDir, foundation.group_id != null ? foundation.group_id : groupId)
+                    .resolve("group_surface_clear");
+            java.nio.file.Files.createDirectories(artifactDir);
+            Path artifactFile = artifactDir.resolve(runId + ".json");
+            JsonObject artifact = clearResult.toJson();
+            artifact.addProperty("city_id", cityId);
+            artifact.addProperty("group_id", groupId);
+            artifact.addProperty("build_area_id", foundation.build_area_id);
+            artifact.addProperty("preserve_existing_placements", preserveExistingPlacements);
+            artifact.addProperty("artifact_file", artifactFile.toString());
+            java.nio.file.Files.writeString(artifactFile, gson.toJson(artifact), StandardCharsets.UTF_8);
+
+            JsonObject res = new JsonObject();
+            res.addProperty("status", "ok");
+            res.addProperty("step", "GROUP_SURFACE_CLEAR");
+            res.addProperty("city_id", cityId);
+            res.addProperty("group_id", groupId);
+            res.addProperty("build_area_id", foundation.build_area_id);
+            res.addProperty("min_y", minY);
+            res.addProperty("max_y", maxY);
+            res.addProperty("clear_solids", clearSolids);
+            res.addProperty("preserve_existing_placements", preserveExistingPlacements);
+            res.addProperty("artifact_file", artifactFile.toString());
+            res.add("clear_result", clearResult.toJson());
+
+            logger.info(RuntimeLogEvent.TASK_COMPLETED, "group 级地表清理完成。", artifact);
+            HttpUtil.sendResponse(exchange, 200, gson.toJson(res));
+        } catch (Exception e) {
+            HttpUtil.handleError(exchange, e);
+        }
+    }
+
     public void handleCityJigsawSolve(HttpExchange exchange) throws IOException {
         if (!HttpUtil.requireMethod(exchange, "POST")) return;
         try {
@@ -1428,8 +1553,8 @@ public class CityController {
                     "04_vanilla_piece_result",
                     "构造临时模板池并调用 vanilla jigsaw 生成 child",
                     "验证当前 parent connector 与 child 模板是否能在 vanilla depth=1 语义下生成单个 child piece。",
-                    "为已选 child 模板构造单模板 pool，并尝试生成一个 child piece；若成功，再继续解析 child connector。",
-                    "用临时单模板 pool 限制 child 候选，并调用 JigsawPlacement.addPieces(...) 做 depth=1 vanilla child 生成；生成成功后继续按 runtime/catalog 口径解析 child connector。",
+                    "先读取 parent runtime jigsaw 自带的原始模板池，再把 AI 指定的 child 模板收束成该池里的唯一候选，并尝试生成一个 child piece；若成功，再继续解析 child connector。",
+                    "优先读取 parent runtime jigsaw NBT 中的原始 pool，并在 pool 原始元素里筛出 AI 指定模板对应的元素，保留原版 projection / element 语义后，再调用 JigsawPlacement.addPieces(...) 做 depth=1 vanilla child 生成；生成成功后继续按 runtime/catalog 口径解析 child connector。",
                     buildVanillaPieceResultZh(solveResult),
                     buildVanillaPieceStatus(solveResult),
                     buildVanillaPieceEvidence(solveResult)
@@ -2852,9 +2977,15 @@ public class CityController {
                 );
             }
             return combineVanillaStepSummary(
-                    "已经准备好 startPos、target 与单模板 pool，但 vanilla depth=1 没有生成有效 child piece。",
+                    "已经准备好 startPos、target 与经 runtime parent pool 收束后的候选元素，但 vanilla depth=1 没有生成有效 child piece。",
                     solveResult != null && solveResult.debug != null ? solveResult.debug.vanilla_piece_debug_summary_zh : null
             );
+        }
+        if (solveResult != null && "runtime_parent_pool_missing".equals(solveResult.reject_reason)) {
+            return "当前 parent runtime jigsaw 没有解析出可用的原始模板池，本次未进入 vanilla child 生成。";
+        }
+        if (solveResult != null && "selected_template_not_in_runtime_parent_pool".equals(solveResult.reject_reason)) {
+            return "AI 指定模板不在当前 parent runtime jigsaw 的原始模板池中，本次未进入 vanilla child 生成。";
         }
         if (solveResult != null && "vertical_jigsaw_solver_pending".equals(solveResult.reject_reason)) {
             if (solveResult.debug != null && solveResult.debug.manual_attach_summary != null
@@ -2879,6 +3010,15 @@ public class CityController {
             if (solveResult.debug.start_pos_z != null) startPos.addProperty("z", solveResult.debug.start_pos_z);
             out.add("start_pos", startPos);
             out.addProperty("pool_template_id", safe(solveResult.debug.pool_template_id));
+            out.addProperty("runtime_parent_pool_id", safe(solveResult.debug.runtime_parent_pool_id));
+            out.addProperty("runtime_parent_pool_source", safe(solveResult.debug.runtime_parent_pool_source));
+            out.addProperty("vanilla_pool_source", safe(solveResult.debug.vanilla_pool_source));
+            if (solveResult.debug.runtime_parent_pool_entry_count != null) {
+                out.addProperty("runtime_parent_pool_entry_count", solveResult.debug.runtime_parent_pool_entry_count);
+            }
+            if (solveResult.debug.runtime_selected_pool_entry_count != null) {
+                out.addProperty("runtime_selected_pool_entry_count", solveResult.debug.runtime_selected_pool_entry_count);
+            }
             out.add("manual_child_connector_candidates", DEBUG_GSON.toJsonTree(solveResult.debug.manual_child_connector_candidates));
             out.add("manual_attach_summary", DEBUG_GSON.toJsonTree(solveResult.debug.manual_attach_summary));
             out.addProperty("first_blocker_stage", safe(solveResult.debug.first_blocker_stage));
@@ -2982,6 +3122,35 @@ public class CityController {
             placements.addAll(foundation.placements);
         }
         return placements;
+    }
+
+    private static List<StructureInjector.PlacementBounds> resolvePlacementBounds(
+            ServerLevel level,
+            List<CityC8Stages.PlacementNode> placements
+    ) {
+        List<StructureInjector.PlacementBounds> out = new ArrayList<>();
+        if (level == null || placements == null || placements.isEmpty()) return out;
+        for (CityC8Stages.PlacementNode placement : placements) {
+            if (placement == null || placement.template_id == null || placement.template_id.isBlank()) continue;
+            StructureInjector.PlacementBounds bounds = StructureInjector.placementBounds(
+                    level,
+                    placement.template_id,
+                    new BlockPos(placement.x, placement.y, placement.z),
+                    toRotation(placement.rotation)
+            );
+            if (bounds != null) out.add(bounds);
+        }
+        return out;
+    }
+
+    private static net.minecraft.world.level.block.Rotation toRotation(int degrees) {
+        int normalized = ((degrees % 360) + 360) % 360;
+        return switch (normalized) {
+            case 90 -> net.minecraft.world.level.block.Rotation.CLOCKWISE_90;
+            case 180 -> net.minecraft.world.level.block.Rotation.CLOCKWISE_180;
+            case 270 -> net.minecraft.world.level.block.Rotation.COUNTERCLOCKWISE_90;
+            default -> net.minecraft.world.level.block.Rotation.NONE;
+        };
     }
 
     private static CityC8Stages.PlacementNode findPlacementNode(CityC8Stages.FoundationItem foundation, String nodeId) {

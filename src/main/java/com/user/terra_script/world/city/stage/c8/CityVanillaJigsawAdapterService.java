@@ -3,13 +3,16 @@ package com.user.terra_script.world.city.stage.c8;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.mojang.datafixers.util.Pair;
+import com.mojang.datafixers.util.Either;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.worldgen.Pools;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ChunkPos;
@@ -40,11 +43,13 @@ import com.user.terra_script.world.city.stage.c2.CityC2ScanBinaryIO;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.LinkedHashMap;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.lang.reflect.Field;
 
 public final class CityVanillaJigsawAdapterService {
     private static final Gson GSON = new GsonBuilder().create();
@@ -193,9 +198,11 @@ public final class CityVanillaJigsawAdapterService {
             );
         }
 
-        Holder<StructureTemplatePool> poolHolder = buildSingleTemplatePool(level, selectedTemplateId);
+        Holder<StructureTemplatePool> poolHolder = buildSelectedTemplatePool(level, parentContext, selectedTemplateId, result.debug);
         if (poolHolder == null) {
-            result.reject_reason = "temporary_template_pool_unavailable";
+            result.reject_reason = result.debug.runtime_parent_pool_id == null || result.debug.runtime_parent_pool_id.isBlank()
+                    ? "runtime_parent_pool_missing"
+                    : "selected_template_not_in_runtime_parent_pool";
             return result;
         }
         long stableSeed = stableSeed(level.getSeed(), cityId, parentPlacement.node_id, parentConnectorId, selectedTemplateId);
@@ -492,13 +499,151 @@ public final class CityVanillaJigsawAdapterService {
         return templateOp.get().filterBlocks(origin, settings, Blocks.JIGSAW);
     }
 
-    private static Holder<StructureTemplatePool> buildSingleTemplatePool(ServerLevel level, String templateId) {
-        if (level == null || templateId == null || templateId.isBlank()) return null;
-        Registry<StructureTemplatePool> registry = level.registryAccess().registryOrThrow(Registries.TEMPLATE_POOL);
-        Holder<StructureTemplatePool> emptyHolder = registry.getHolderOrThrow(Pools.EMPTY);
-        StructurePoolElement element = StructurePoolElement.single(templateId).apply(StructureTemplatePool.Projection.RIGID);
-        StructureTemplatePool pool = new StructureTemplatePool(emptyHolder, List.of(Pair.of(element, 1)));
-        return Holder.direct(pool);
+    private static Holder<StructureTemplatePool> buildSelectedTemplatePool(
+            ServerLevel level,
+            ParentConnectorContext parentContext,
+            String templateId,
+            DebugDetails debug
+    ) {
+        if (level == null || parentContext == null || parentContext.blockInfo() == null || parentContext.blockInfo().nbt() == null
+                || templateId == null || templateId.isBlank()) {
+            return null;
+        }
+        ResourceLocation runtimeParentPoolId = ResourceLocation.tryParse(parentContext.blockInfo().nbt().getString("pool"));
+        if (debug != null) {
+            debug.runtime_parent_pool_id = runtimeParentPoolId != null ? runtimeParentPoolId.toString() : null;
+            debug.runtime_parent_pool_source = "parent_runtime_jigsaw_nbt";
+            debug.vanilla_pool_source = "runtime_parent_pool_filtered";
+        }
+        if (runtimeParentPoolId == null) {
+            return null;
+        }
+        Registry<StructureTemplatePool> registry = templatePoolRegistry(level.registryAccess());
+        if (registry == null) {
+            if (debug != null) {
+                debug.vanilla_pool_source = "runtime_parent_pool_registry_missing";
+            }
+            return null;
+        }
+        Holder.Reference<StructureTemplatePool> originalPoolHolder = registry.getHolder(ResourceKey.create(Registries.TEMPLATE_POOL, runtimeParentPoolId)).orElse(null);
+        if (originalPoolHolder == null || originalPoolHolder.value() == null) {
+            if (debug != null) {
+                debug.vanilla_pool_source = "runtime_parent_pool_not_found";
+            }
+            return null;
+        }
+        StructureTemplatePool originalPool = originalPoolHolder.value();
+        List<Pair<StructurePoolElement, Integer>> rawTemplates = poolRawTemplates(originalPool);
+        List<Pair<StructurePoolElement, Integer>> matchedEntries = filterPoolEntriesByTemplateId(rawTemplates, templateId);
+        if (debug != null) {
+            debug.runtime_parent_pool_entry_count = rawTemplates.size();
+            debug.runtime_selected_pool_entry_count = matchedEntries.size();
+        }
+        if (matchedEntries.isEmpty()) {
+            if (debug != null) {
+                debug.vanilla_pool_source = "runtime_parent_pool_no_selected_template_match";
+            }
+            return null;
+        }
+        StructureTemplatePool filteredPool = new StructureTemplatePool(originalPool.getFallback(), matchedEntries);
+        return Holder.direct(filteredPool);
+    }
+
+    private static Registry<StructureTemplatePool> templatePoolRegistry(RegistryAccess registryAccess) {
+        if (registryAccess == null) return null;
+        return registryAccess.registryOrThrow(Registries.TEMPLATE_POOL);
+    }
+
+    static List<Pair<StructurePoolElement, Integer>> filterPoolEntriesByTemplateId(
+            List<Pair<StructurePoolElement, Integer>> rawTemplates,
+            String templateId
+    ) {
+        if (rawTemplates == null || rawTemplates.isEmpty() || templateId == null || templateId.isBlank()) {
+            return List.of();
+        }
+        List<Pair<StructurePoolElement, Integer>> matched = new ArrayList<>();
+        for (Pair<StructurePoolElement, Integer> entry : rawTemplates) {
+            if (entry == null || entry.getFirst() == null) continue;
+            if (poolElementMatchesTemplateId(entry.getFirst(), templateId)) {
+                matched.add(Pair.of(entry.getFirst(), entry.getSecond() != null ? entry.getSecond() : 1));
+            }
+        }
+        return matched;
+    }
+
+    static boolean poolElementMatchesTemplateId(StructurePoolElement element, String templateId) {
+        if (element == null || templateId == null || templateId.isBlank()) return false;
+        ResourceLocation poolTemplateId = poolElementTemplateId(element);
+        if (poolTemplateId != null && templateId.equals(poolTemplateId.toString())) {
+            return true;
+        }
+        for (StructurePoolElement child : poolElementChildren(element)) {
+            if (poolElementMatchesTemplateId(child, templateId)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<Pair<StructurePoolElement, Integer>> poolRawTemplates(StructureTemplatePool pool) {
+        if (pool == null) return List.of();
+        try {
+            Field field = StructureTemplatePool.class.getDeclaredField("rawTemplates");
+            field.setAccessible(true);
+            Object value = field.get(pool);
+            if (value instanceof List<?> list) {
+                return (List<Pair<StructurePoolElement, Integer>>) list;
+            }
+        } catch (ReflectiveOperationException ignored) {
+        }
+        return List.of();
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<StructurePoolElement> poolElementChildren(StructurePoolElement element) {
+        if (element == null) return List.of();
+        try {
+            Field field = findField(element.getClass(), "elements");
+            if (field == null) return List.of();
+            Object value = field.get(element);
+            if (value instanceof List<?> list) {
+                return (List<StructurePoolElement>) list;
+            }
+        } catch (ReflectiveOperationException ignored) {
+        }
+        return List.of();
+    }
+
+    private static ResourceLocation poolElementTemplateId(StructurePoolElement element) {
+        if (element == null) return null;
+        try {
+            Field field = findField(element.getClass(), "template");
+            if (field == null) return null;
+            Object value = field.get(element);
+            if (value instanceof Either<?, ?> either) {
+                Optional<?> left = either.left();
+                if (left.isPresent() && left.get() instanceof ResourceLocation location) {
+                    return location;
+                }
+            }
+        } catch (ReflectiveOperationException ignored) {
+        }
+        return null;
+    }
+
+    private static Field findField(Class<?> type, String fieldName) {
+        Class<?> current = type;
+        while (current != null) {
+            try {
+                Field field = current.getDeclaredField(fieldName);
+                field.setAccessible(true);
+                return field;
+            } catch (NoSuchFieldException ignored) {
+                current = current.getSuperclass();
+            }
+        }
+        return null;
     }
 
     private static VanillaGenerationAttempt generateSingleChildPiece(
@@ -1365,6 +1510,11 @@ public final class CityVanillaJigsawAdapterService {
         public Integer resolved_parent_connector_y;
         public Integer resolved_parent_connector_z;
         public String resolved_parent_connector_front;
+        public String runtime_parent_pool_id;
+        public String runtime_parent_pool_source;
+        public String vanilla_pool_source;
+        public Integer runtime_parent_pool_entry_count;
+        public Integer runtime_selected_pool_entry_count;
         public Long stable_seed;
         public String pool_template_id;
         public Integer generation_depth;
