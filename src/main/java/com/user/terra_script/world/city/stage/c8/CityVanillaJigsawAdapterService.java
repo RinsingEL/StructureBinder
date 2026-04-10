@@ -280,6 +280,7 @@ public final class CityVanillaJigsawAdapterService {
         }
 
         CityC8Stages.PlacementNode placement = toPlacementNode(
+                templateManager,
                 parentPlacement,
                 childMeta,
                 artifact,
@@ -1129,6 +1130,7 @@ public final class CityVanillaJigsawAdapterService {
     }
 
     private static CityC8Stages.PlacementNode toPlacementNode(
+            StructureTemplateManager templateManager,
             CityC8Stages.PlacementNode parentPlacement,
             CityC35CatalogIO.CatalogStructure childMeta,
             SolveArtifact artifact,
@@ -1155,6 +1157,12 @@ public final class CityVanillaJigsawAdapterService {
             placement.incoming_parent_connector_x = parentContext.blockInfo.pos().getX();
             placement.incoming_parent_connector_z = parentContext.blockInfo.pos().getZ();
             placement.incoming_connector_dir = JigsawBlock.getFrontFacing(parentContext.blockInfo.state()).getSerializedName();
+            if (parentContext.blockInfo.nbt() != null) {
+                String incomingPoolId = parentContext.blockInfo.nbt().getString("pool");
+                if (incomingPoolId != null && !incomingPoolId.isBlank()) {
+                    placement.incoming_pool_refs.add(incomingPoolId);
+                }
+            }
         }
         if (childConnectorInfo != null) {
             placement.incoming_child_connector_x = childConnectorInfo.pos().getX();
@@ -1164,23 +1172,95 @@ public final class CityVanillaJigsawAdapterService {
         placement.footprint_min_z = artifact.bounds.minZ();
         placement.footprint_max_x = artifact.bounds.maxX();
         placement.footprint_max_z = artifact.bounds.maxZ();
-        placement.outgoing_connector_ids.addAll(resolveRemainingConnectorIds(childMeta, artifact, childConnectorId));
+        placement.outgoing_connectors.addAll(resolveOutgoingConnectorRefs(templateManager, childMeta, artifact, childConnectorId, childConnectorInfo));
+        for (CityC8Stages.PlacementConnectorRef connector : placement.outgoing_connectors) {
+            if (connector != null && connector.connector_id != null && !connector.connector_id.isBlank()) {
+                placement.outgoing_connector_ids.add(connector.connector_id);
+            }
+        }
         return placement;
     }
 
-    private static List<String> resolveRemainingConnectorIds(
+    private static List<CityC8Stages.PlacementConnectorRef> resolveOutgoingConnectorRefs(
+            StructureTemplateManager templateManager,
             CityC35CatalogIO.CatalogStructure childMeta,
             SolveArtifact artifact,
-            String attachedConnectorId
+            String attachedConnectorId,
+            StructureTemplate.StructureBlockInfo attachedConnectorInfo
     ) {
-        List<String> out = new ArrayList<>();
-        if (childMeta == null || childMeta.connectors == null) return out;
-        for (CityC35CatalogIO.ConnectorSpec connector : childMeta.connectors) {
-            if (connector == null || connector.id == null || connector.id.isBlank()) continue;
-            if (Objects.equals(connector.id, attachedConnectorId)) continue;
-            out.add(connector.id);
+        List<CityC8Stages.PlacementConnectorRef> out = new ArrayList<>();
+        if (childMeta == null || artifact == null || artifact.piece == null) return out;
+        if (templateManager == null) return out;
+        List<StructureTemplate.StructureBlockInfo> childJigsaws = jigsawBlocks(
+                templateManager,
+                childMeta.structure_id,
+                artifact.piece.getPosition(),
+                artifact.piece.getRotation()
+        );
+        for (StructureTemplate.StructureBlockInfo info : childJigsaws) {
+            if (info == null) continue;
+            RuntimeConnectorCandidate runtime = runtimeConnectorCandidate(artifact.piece.getPosition(), artifact.piece.getRotation(), info);
+            if (runtime == null || runtime.id == null || runtime.id.isBlank()) continue;
+            if (Objects.equals(runtime.id, attachedConnectorId)) continue;
+            if (attachedConnectorInfo != null && attachedConnectorInfo.pos().equals(info.pos())) continue;
+            CityC8Stages.PlacementConnectorRef ref = new CityC8Stages.PlacementConnectorRef();
+            ref.connector_id = runtime.id;
+            ref.front = runtime.front;
+            List<String> runtimePoolRefs = new ArrayList<>();
+            if (info.nbt() != null) {
+                String poolId = info.nbt().getString("pool");
+                if (poolId != null && !poolId.isBlank()) {
+                    runtimePoolRefs.add(poolId);
+                }
+            }
+            CityC35CatalogIO.ConnectorSpec mapped = mappedConnectorSpec(childMeta, artifact.piece.getPosition(), artifact.piece.getRotation(), info);
+            List<String> catalogPoolRefs = mapped != null ? CityC35CatalogIO.connectorPoolRefs(mapped) : List.of();
+            ref.catalog_pool_refs.addAll(catalogPoolRefs);
+            if (!runtimePoolRefs.isEmpty()) {
+                ref.pool_refs.addAll(runtimePoolRefs);
+                ref.pool_truth_source = "runtime";
+                if (!catalogPoolRefs.isEmpty() && !samePoolRefs(runtimePoolRefs, catalogPoolRefs)) {
+                    ref.pool_mismatch = true;
+                    ref.mismatch_detail = "连接器 `" + runtime.id + "` 的 runtime pool refs " + runtimePoolRefs + " 与 catalog pool refs " + catalogPoolRefs + " 不一致，当前继续采用 runtime。";
+                } else {
+                    ref.pool_mismatch = false;
+                }
+            }
+            if (ref.pool_refs.isEmpty()) {
+                ref.pool_refs.addAll(catalogPoolRefs);
+                ref.pool_truth_source = ref.pool_refs.isEmpty() ? "missing" : "catalog";
+                ref.pool_mismatch = false;
+            }
+            out.add(ref);
         }
         return out;
+    }
+
+    private static boolean samePoolRefs(List<String> left, List<String> right) {
+        return new LinkedHashSet<>(normalizePoolRefs(left)).equals(new LinkedHashSet<>(normalizePoolRefs(right)));
+    }
+
+    private static List<String> normalizePoolRefs(List<String> poolRefs) {
+        if (poolRefs == null || poolRefs.isEmpty()) return List.of();
+        List<String> ordered = new ArrayList<>();
+        for (String poolId : poolRefs) {
+            if (poolId != null && !poolId.isBlank() && !ordered.contains(poolId)) {
+                ordered.add(poolId);
+            }
+        }
+        return ordered;
+    }
+
+    private static CityC35CatalogIO.ConnectorSpec mappedConnectorSpec(
+            CityC35CatalogIO.CatalogStructure meta,
+            BlockPos origin,
+            Rotation rotation,
+            StructureTemplate.StructureBlockInfo info
+    ) {
+        if (meta == null || info == null || meta.connectors == null) return null;
+        String connectorId = mapConnectorId(meta, origin, rotation, info);
+        if (connectorId == null || connectorId.isBlank()) return null;
+        return findConnector(meta, connectorId);
     }
 
     private static String mapConnectorId(

@@ -1,14 +1,21 @@
 package com.user.terra_script.world;
 
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.user.terra_script.config.StructurePlan;
+import com.user.terra_script.world.city.execution.TerrainClearStats;
+import com.user.terra_script.world.city.stage.StructurePlacementContract;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
@@ -77,32 +84,34 @@ public class StructureInjector {
     public static final class PlacementOutcome {
         public final boolean placed;
         public final PlacementBounds bounds;
-        public final int clearedJigsawBlocks;
-        public final List<BlockPos> clearedJigsawSamples;
+        public final TerrainClearStats postCleanup;
 
-        private PlacementOutcome(boolean placed, PlacementBounds bounds, int clearedJigsawBlocks, List<BlockPos> clearedJigsawSamples) {
+        private PlacementOutcome(boolean placed, PlacementBounds bounds, TerrainClearStats postCleanup) {
             this.placed = placed;
             this.bounds = bounds;
-            this.clearedJigsawBlocks = clearedJigsawBlocks;
-            this.clearedJigsawSamples = clearedJigsawSamples;
+            this.postCleanup = postCleanup != null ? postCleanup : new TerrainClearStats("post_cleanup");
+        }
+
+        public static PlacementOutcome of(boolean placed, PlacementBounds bounds, TerrainClearStats postCleanup) {
+            return new PlacementOutcome(placed, bounds, postCleanup);
         }
 
         public static PlacementOutcome of(boolean placed, PlacementBounds bounds, int clearedJigsawBlocks, List<BlockPos> clearedJigsawSamples) {
-            return new PlacementOutcome(placed, bounds, clearedJigsawBlocks, clearedJigsawSamples != null ? clearedJigsawSamples : Collections.emptyList());
+            TerrainClearStats postCleanup = new TerrainClearStats("post_cleanup");
+            List<BlockPos> samples = clearedJigsawSamples != null ? clearedJigsawSamples : Collections.emptyList();
+            for (BlockPos sample : samples) {
+                if (sample == null) continue;
+                postCleanup.record(sample, "minecraft:air", "jigsaw_air_fallback");
+            }
+            int remaining = Math.max(0, clearedJigsawBlocks - samples.size());
+            for (int i = 0; i < remaining; i++) {
+                postCleanup.record(null, "minecraft:air", "jigsaw_air_fallback");
+            }
+            return new PlacementOutcome(placed, bounds, postCleanup);
         }
 
         public static PlacementOutcome failed(PlacementBounds bounds) {
-            return new PlacementOutcome(false, bounds, 0, Collections.emptyList());
-        }
-    }
-
-    private static final class BlockClearSummary {
-        public final int count;
-        public final List<BlockPos> samples;
-
-        private BlockClearSummary(int count, List<BlockPos> samples) {
-            this.count = count;
-            this.samples = samples;
+            return new PlacementOutcome(false, bounds, new TerrainClearStats("post_cleanup"));
         }
     }
 
@@ -176,10 +185,8 @@ public class StructureInjector {
         int originX = centerX - (rotatedWidth / 2);
         int originZ = centerZ - (rotatedDepth / 2);
 
-        // 5. Y轴微调
-        // 大多数原版结构是以地基为 0 层的，但也有些是有地下室的
-        // 这里做一个简单的处理：如果是普通房屋，向下嵌入 1 格，防止浮空
-        int originY = surfaceY - 1;
+        // 5. Y 轴落点遵循 C3.5 placement.origin_offset.y 合同。
+        int originY = StructurePlacementContract.resolveSurfaceAlignedOriginY(structureId, surfaceY);
 
         BlockPos placePos = new BlockPos(originX, originY, originZ);
         Bounds bounds = boundsFor(template, placePos, rotation);
@@ -241,15 +248,15 @@ public class StructureInjector {
                     + (bounds.maxXExclusive - 1) + "," + (bounds.maxYExclusive - 1) + "," + (bounds.maxZExclusive - 1) + ")"
                     + " clear_jigsaw=" + clearJigsawBlocks);
             boolean placed = template.placeInWorld(level, origin, origin, settings, level.random, 2);
-            BlockClearSummary clearSummary = placed && clearJigsawBlocks
-                    ? clearPlacedJigsawBlocks(level, template, origin, rotation != null ? rotation : Rotation.NONE)
-                    : new BlockClearSummary(0, Collections.emptyList());
+            TerrainClearStats postCleanup = placed && clearJigsawBlocks
+                    ? finalizePlacedJigsaws(level, placementBounds)
+                    : new TerrainClearStats("post_cleanup");
             System.out.println("[TerraScript] spawnStructureAtBlock result template=" + structureId
                     + " origin=" + origin
                     + " bounds=(" + bounds.minX + "," + bounds.minY + "," + bounds.minZ + ")->("
                     + (bounds.maxXExclusive - 1) + "," + (bounds.maxYExclusive - 1) + "," + (bounds.maxZExclusive - 1) + ")"
                     + " placed=" + placed);
-            return new PlacementOutcome(placed, placementBounds, clearSummary.count, clearSummary.samples);
+            return new PlacementOutcome(placed, placementBounds, postCleanup);
         } catch (Exception e) {
             System.err.println("[TerraScript] spawnStructureAtBlock exception template=" + structureId
                     + " origin=" + origin
@@ -303,26 +310,54 @@ public class StructureInjector {
         );
     }
 
-    private static BlockClearSummary clearPlacedJigsawBlocks(ServerLevel level, StructureTemplate template, BlockPos origin, Rotation rotation) {
-        if (level == null || template == null || origin == null) return new BlockClearSummary(0, Collections.emptyList());
-        Bounds bounds = boundsFor(template, origin, rotation);
-        int count = 0;
-        List<BlockPos> samples = new ArrayList<>();
+    public static TerrainClearStats finalizePlacedJigsaws(ServerLevel level, PlacementBounds bounds) {
+        TerrainClearStats stats = new TerrainClearStats("post_cleanup");
+        if (level == null || bounds == null) return stats;
         for (int x = bounds.minX; x < bounds.maxXExclusive; x++) {
             for (int y = bounds.minY; y < bounds.maxYExclusive; y++) {
                 for (int z = bounds.minZ; z < bounds.maxZExclusive; z++) {
                     BlockPos pos = new BlockPos(x, y, z);
-                    if (level.getBlockState(pos).is(net.minecraft.world.level.block.Blocks.JIGSAW)) {
-                        level.setBlock(pos, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 3);
-                        count++;
-                        if (samples.size() < 8) {
-                            samples.add(pos.immutable());
-                        }
-                    }
+                    if (!level.getBlockState(pos).is(Blocks.JIGSAW)) continue;
+                    BlockState replacement = resolveFinalState(level, pos);
+                    boolean parsedFinalState = replacement != null;
+                    BlockState targetState = parsedFinalState ? replacement : Blocks.AIR.defaultBlockState();
+                    if (!level.setBlock(pos, targetState, Block.UPDATE_ALL)) continue;
+                    ResourceLocation key = BuiltInRegistries.BLOCK.getKey(targetState.getBlock());
+                    stats.record(
+                            pos,
+                            key != null ? key.toString() : "minecraft:unknown",
+                            parsedFinalState ? "jigsaw_final_state" : "jigsaw_air_fallback"
+                    );
                 }
             }
         }
-        return new BlockClearSummary(count, samples);
+        return stats;
+    }
+
+    private static BlockState resolveFinalState(ServerLevel level, BlockPos pos) {
+        if (level == null || pos == null) return null;
+        BlockEntity blockEntity = level.getBlockEntity(pos);
+        if (blockEntity == null) return null;
+        String finalState = readFinalState(blockEntity);
+        if (finalState == null || finalState.isBlank()) return null;
+        try {
+            return net.minecraft.commands.arguments.blocks.BlockStateParser
+                    .parseForBlock(BuiltInRegistries.BLOCK.asLookup(), finalState, true)
+                    .blockState();
+        } catch (CommandSyntaxException e) {
+            System.err.println("[TerraScript] Failed to parse jigsaw final_state at " + pos + ": " + finalState);
+            return null;
+        }
+    }
+
+    private static String readFinalState(BlockEntity blockEntity) {
+        if (blockEntity == null) return null;
+        try {
+            CompoundTag tag = blockEntity.saveWithoutMetadata();
+            return tag != null ? tag.getString("final_state") : null;
+        } catch (Exception ignored) {
+            return null;
+        }
     }
 
     private static StructureTemplate loadTemplate(ServerLevel level, String structureId) {

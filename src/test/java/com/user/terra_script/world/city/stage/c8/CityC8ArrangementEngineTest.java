@@ -347,6 +347,33 @@ class CityC8ArrangementEngineTest {
         assertTrue(passes);
     }
 
+    @Test
+    void resolveConnectorViewsFallsBackToRawPoolWhenPoolListMissing() throws Exception {
+        Object meta = newTemplateMeta("test:pool_fallback", "MIDDLE");
+        CityC35CatalogIO.ConnectorSpec connector = new CityC35CatalogIO.ConnectorSpec();
+        connector.id = "jigsaw_south_1_0_1";
+        connector.facing = "south";
+        connector.pool = "market_lane";
+        connector.local_pos.x = 1;
+        connector.local_pos.z = 1;
+        connector.socket = "dock";
+        @SuppressWarnings("unchecked")
+        List<CityC35CatalogIO.ConnectorSpec> connectors = (List<CityC35CatalogIO.ConnectorSpec>) getField(meta, "connectors");
+        connectors.add(connector);
+
+        Method resolveConnectorViews = CityC8ArrangementEngine.class.getDeclaredMethod("resolveConnectorViews", meta.getClass(), int.class);
+        resolveConnectorViews.setAccessible(true);
+
+        @SuppressWarnings("unchecked")
+        List<Object> views = (List<Object>) resolveConnectorViews.invoke(null, meta, 0);
+        assertEquals(1, views.size());
+
+        Method connectToPools = views.get(0).getClass().getDeclaredMethod("connectToPools");
+        @SuppressWarnings("unchecked")
+        List<String> allowedPools = (List<String>) connectToPools.invoke(views.get(0));
+        assertEquals(List.of("market_lane"), allowedPools);
+    }
+
     private static Object newTemplateMeta(String structureId, String pieceRole) throws Exception {
         Class<?> type = Class.forName("com.user.terra_script.world.city.stage.c8.CityC8ArrangementEngine$TemplateMeta");
         Constructor<?> ctor = type.getDeclaredConstructor();

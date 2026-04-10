@@ -1,5 +1,7 @@
 package com.user.terra_script.world.city.stage.c8;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.user.terra_script.world.city.stage.c1.CityStage1BinaryIO;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -10,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -68,6 +71,13 @@ class CityJigsawSolverPreviewExporterTest {
         assertFalse(previewPaths.containsKey("06_apply_result"));
         assertTrue(Files.exists(tempDir.resolve("groups").resolve("g_market_02").resolve("jigsaw_solver_debug").resolve("test_run").resolve("02_runtime_jigsaws.png")));
         assertTrue(Files.exists(tempDir.resolve("groups").resolve("g_market_02").resolve("jigsaw_solver_debug").resolve("test_run").resolve("04_vanilla_piece_result.png")));
+        JsonObject legend = JsonParser.parseString(
+                Files.readString(tempDir.resolve("groups").resolve("g_market_02").resolve("jigsaw_solver_debug").resolve("test_run").resolve("04_vanilla_piece_result.legend.json"))
+        ).getAsJsonObject();
+        assertTrue(legend.has("label_layout"));
+        assertTrue(legend.has("label_opacity"));
+        assertTrue(legend.has("label_scope"));
+        assertEquals("external_staggered", legend.get("label_layout").getAsString());
     }
 
     private static CityC8Stages.AreaGeometry geometry() {

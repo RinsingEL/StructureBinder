@@ -3,6 +3,7 @@ package com.user.terra_script.world.city.stage.c9;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.user.terra_script.event.ServerTickTracker;
+import com.user.terra_script.world.city.stage.StructurePlacementContract;
 import com.user.terra_script.world.city.stage.c8.CityC8Stages;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.ChunkPos;
@@ -186,7 +187,7 @@ public final class CityC9BuildQueue {
                     task.node_id = node.node_id;
                     task.template_id = node.template_id;
                     task.x = node.x;
-                    task.y = node.y > 0 ? node.y : foundation.base_y;
+                    task.y = resolvedNodeOriginY(foundation, node);
                     task.z = node.z;
                     task.rotation = node.rotation;
                     task.chunk_x = Math.floorDiv(node.x, 16);
@@ -303,7 +304,7 @@ public final class CityC9BuildQueue {
             return !currentSignature.equals(nextSignature);
         }
         if (!safe(existing.template_id).equals(safe(node.template_id))) return true;
-        int effectiveY = node.y > 0 ? node.y : foundation.base_y;
+        int effectiveY = resolvedNodeOriginY(foundation, node);
         if (existing.x != node.x || existing.y != effectiveY || existing.z != node.z) return true;
         if (existing.rotation != node.rotation) return true;
         if (!Objects.equals(existing.build_order, node.build_order)) return true;
@@ -323,7 +324,7 @@ public final class CityC9BuildQueue {
     }
 
     private static String placementSignature(CityC8Stages.FoundationItem foundation, CityC8Stages.PlacementNode node) {
-        int effectiveY = node.y > 0 ? node.y : foundation.base_y;
+        int effectiveY = resolvedNodeOriginY(foundation, node);
         return String.join("|",
                 safe(node.template_id),
                 Integer.toString(node.x),
@@ -339,6 +340,20 @@ public final class CityC9BuildQueue {
                 Integer.toString(node.footprint_min_z != null ? node.footprint_min_z : Integer.MIN_VALUE),
                 Integer.toString(node.footprint_max_x != null ? node.footprint_max_x : Integer.MIN_VALUE),
                 Integer.toString(node.footprint_max_z != null ? node.footprint_max_z : Integer.MIN_VALUE));
+    }
+
+    private static int resolvedNodeOriginY(
+            CityC8Stages.FoundationItem foundation,
+            CityC8Stages.PlacementNode node
+    ) {
+        int baseY = foundation != null ? foundation.base_y : 0;
+        if (node == null) {
+            return baseY;
+        }
+        if (node.y != 0 && node.y != baseY) {
+            return node.y;
+        }
+        return StructurePlacementContract.resolveSurfaceAlignedOriginY(node.template_id, baseY);
     }
 
     private static String safe(String value) {

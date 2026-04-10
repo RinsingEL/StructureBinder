@@ -1,10 +1,10 @@
 package com.user.terra_script.world.city.execution;
 
 import com.user.terra_script.world.StructureInjector;
+import com.user.terra_script.world.city.stage.StructurePlacementContract;
 import com.user.terra_script.world.city.stage.c8.CityC8Stages;
 import com.user.terra_script.world.city.stage.c8.CityVanillaJigsawAdapterService;
 import com.user.terra_script.world.city.stage.c9.CityC9BuildQueue;
-import net.minecraft.world.level.levelgen.structure.BoundingBox;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -63,9 +63,7 @@ public final class SolvedPlacementExecutionService {
         task.task_id = CityC9BuildQueue.taskId(task.city_id, task.build_area_id, task.node_id);
         task.template_id = placement != null ? placement.template_id : null;
         task.x = placement != null ? placement.x : 0;
-        task.y = placement != null
-                ? (placement.y > 0 ? placement.y : (foundation != null ? foundation.base_y : 0))
-                : (foundation != null ? foundation.base_y : 0);
+        task.y = resolvePlacementOriginY(foundation, placement);
         task.z = placement != null ? placement.z : 0;
         task.rotation = placement != null ? placement.rotation : 0;
         task.chunk_x = Math.floorDiv(task.x, 16);
@@ -122,7 +120,10 @@ public final class SolvedPlacementExecutionService {
         parentTask.node_id = task.parent_node_id;
         parentTask.template_id = parentPlacement.template_id;
         parentTask.x = parentPlacement.x;
-        parentTask.y = parentPlacement.y > 0 ? parentPlacement.y : task.y;
+        parentTask.y = resolvePlacementOriginY(null, parentPlacement);
+        if (parentTask.y == 0) {
+            parentTask.y = task.y;
+        }
         parentTask.z = parentPlacement.z;
         parentTask.rotation = parentPlacement.rotation;
         parentTask.chunk_x = Math.floorDiv(parentTask.x, 16);
@@ -153,8 +154,11 @@ public final class SolvedPlacementExecutionService {
         public StructureInjector.PlacementOutcome placeStructure(BuildWorldAccess world, String structureId, net.minecraft.core.BlockPos origin, net.minecraft.world.level.block.Rotation rotation, boolean clearJigsawBlocks) {
             if (descriptor != null && descriptor.piece_placer != null && targetTask != null && sameTask(origin, rotation, structureId)) {
                 boolean placed = descriptor.piece_placer.place(world, descriptor.start_pos, true);
+                TerrainClearStats postCleanup = placed && clearJigsawBlocks && world != null && world.level() != null
+                        ? StructureInjector.finalizePlacedJigsaws(world.level(), descriptor.bounds)
+                        : new TerrainClearStats("post_cleanup");
                 return placed
-                        ? StructureInjector.PlacementOutcome.of(true, descriptor.bounds, 0, List.of())
+                        ? StructureInjector.PlacementOutcome.of(true, descriptor.bounds, postCleanup)
                         : StructureInjector.PlacementOutcome.failed(descriptor.bounds);
             }
             return fallbackGateway != null
@@ -178,6 +182,20 @@ public final class SolvedPlacementExecutionService {
 
     private static String safe(String value) {
         return value == null ? "" : value;
+    }
+
+    private static int resolvePlacementOriginY(
+            CityC8Stages.FoundationItem foundation,
+            CityC8Stages.PlacementNode placement
+    ) {
+        int baseY = foundation != null ? foundation.base_y : 0;
+        if (placement == null) {
+            return baseY;
+        }
+        if (placement.y != 0 && placement.y != baseY) {
+            return placement.y;
+        }
+        return StructurePlacementContract.resolveSurfaceAlignedOriginY(placement.template_id, baseY);
     }
 
     public static final class ExecutionResult {

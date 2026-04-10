@@ -95,6 +95,9 @@ minecraft {
         client {
             // Comma-separated list of namespaces to load gametests from. Empty = all namespaces.
             property 'forge.enabledGameTestNamespaces', mod_id
+            if (project.hasProperty('dev_quick_play_singleplayer_world_base64') && project.property('dev_quick_play_singleplayer_world_base64').toString().trim()) {
+                property 'terra_script.devAutoLoadWorldBase64', project.property('dev_quick_play_singleplayer_world_base64').toString().trim()
+            }
         }
 
         server {

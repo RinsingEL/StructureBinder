@@ -3,7 +3,7 @@
   "ok": true,
   "city_id": "city_default",
   "catalog_version": 2,
-  "generated_at_epoch_ms": 1774447195997,
+  "generated_at_epoch_ms": 1775749261990,
   "function_enum_table": [
     "civic_center",
     "commercial",
@@ -23,14 +23,16 @@
   ],
   "structures": [
     {
-      "structure_id": "trek:overworld/common/smoldering_altar",
+      "structure_id": "minecraft:village/plains/houses/plains_temple_3",
       "size": {
-        "length": 13,
-        "width": 13,
-        "height": 5
+        "length": 11,
+        "width": 7,
+        "height": 7
       },
       "orientation": {
-        "jigsaw_facing": [],
+        "jigsaw_facing": [
+          "west"
+        ],
         "entry_facing": "unknown",
         "rotations": [
           0,
@@ -39,16 +41,319 @@
           270
         ]
       },
-      "piece_role": "SINGLE",
+      "piece_role": "START",
       "style_score": {
-        "classical": 0.0,
+        "classical": 0.6,
         "military": 0.0,
         "commercial": 0.0,
         "residential": 0.0,
-        "religious": 0.0,
+        "religious": 0.95,
         "industrial": 0.0,
         "maritime": 0.0,
-        "civic": 0.0
+        "civic": 0.15
+      },
+      "function_candidates": [
+        {
+          "function": "religious",
+          "score": 0.92
+        }
+      ],
+      "namespace": "minecraft",
+      "path": "village/plains/houses/plains_temple_3",
+      "size_tier": "S",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "road_edge",
+      "growth_axis": "z",
+      "vertical_role": "ground",
+      "vertical_clearance": 7,
+      "preset_pool": "religious_core",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "religious_core",
+        "evidence": "village/plains/houses/plains_temple_3"
+      },
+      "function_definition": {
+        "primary_function": "religious",
+        "secondary_functions": [],
+        "semantic_role": "generic",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 6,
+          "max_z": 10
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 7
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 6,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 10
+          },
+          {
+            "x": 6,
+            "z": 10
+          },
+          {
+            "x": 3,
+            "z": 5
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 3,
+            "y": 0,
+            "z": 10,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.22,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_west_0_0_3",
+          "local_pos": {
+            "x": 0,
+            "y": 0,
+            "z": 3
+          },
+          "orientation_raw": "west_up",
+          "front": "west",
+          "top": "up",
+          "facing": "west",
+          "name": "minecraft:building_entrance",
+          "target": "minecraft:building_entrance",
+          "pool": "minecraft:village/plains/streets",
+          "joint": "aligned",
+          "final_state": "minecraft:cobblestone_stairs[facing\u003deast,half\u003dbottom,shape\u003dstraight,waterlogged\u003dfalse]",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "religious_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "religious": 1.05,
+        "classical": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "minecraft:village/plains/houses/plains_temple_4",
+      "size": {
+        "length": 10,
+        "width": 7,
+        "height": 12
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "START",
+      "style_score": {
+        "classical": 0.6,
+        "military": 0.0,
+        "commercial": 0.0,
+        "residential": 0.0,
+        "religious": 0.95,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.15
+      },
+      "function_candidates": [
+        {
+          "function": "religious",
+          "score": 0.92
+        }
+      ],
+      "namespace": "minecraft",
+      "path": "village/plains/houses/plains_temple_4",
+      "size_tier": "S",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "road_edge",
+      "growth_axis": "z",
+      "vertical_role": "ground",
+      "vertical_clearance": 12,
+      "preset_pool": "religious_core",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "religious_core",
+        "evidence": "village/plains/houses/plains_temple_4"
+      },
+      "function_definition": {
+        "primary_function": "religious",
+        "secondary_functions": [],
+        "semantic_role": "generic",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 6,
+          "max_z": 9
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 12
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 6,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 9
+          },
+          {
+            "x": 6,
+            "z": 9
+          },
+          {
+            "x": 3,
+            "z": 4
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 3,
+            "y": 0,
+            "z": 9,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.22,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_west_0_0_3",
+          "local_pos": {
+            "x": 0,
+            "y": 0,
+            "z": 3
+          },
+          "orientation_raw": "west_up",
+          "front": "west",
+          "top": "up",
+          "facing": "west",
+          "name": "minecraft:building_entrance",
+          "target": "minecraft:building_entrance",
+          "pool": "minecraft:empty",
+          "joint": "aligned",
+          "final_state": "minecraft:structure_void",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "religious_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "religious": 1.05,
+        "classical": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "trek:overworld/common/smoldering_altar",
+      "size": {
+        "length": 13,
+        "width": 13,
+        "height": 5
       },
       "function_candidates": [
         {
@@ -78,74 +383,6 @@
         "semantic_role": "generic",
         "source": "mcp_path_heuristic"
       },
-      "placement": {
-        "origin_mode": "TEMPLATE_CORNER",
-        "origin_offset": {
-          "x": 0,
-          "y": 0,
-          "z": 0
-        },
-        "footprint": {
-          "min_x": 0,
-          "min_z": 0,
-          "max_x": 12,
-          "max_z": 12
-        },
-        "clearance": {
-          "min_y": 0,
-          "max_y": 5
-        },
-        "terrain_probe_points": [
-          {
-            "x": 0,
-            "z": 0
-          },
-          {
-            "x": 12,
-            "z": 0
-          },
-          {
-            "x": 0,
-            "z": 12
-          },
-          {
-            "x": 12,
-            "z": 12
-          },
-          {
-            "x": 6,
-            "z": 6
-          }
-        ],
-        "entry_points": [
-          {
-            "x": 6,
-            "y": 0,
-            "z": 12,
-            "facing": "south",
-            "kind": "main_entry"
-          }
-        ]
-      },
-      "constraints": {
-        "allowed_rotations": [
-          0,
-          90,
-          180,
-          270
-        ],
-        "max_slope": 0.18,
-        "max_height_delta": 4,
-        "avoid_water": true,
-        "avoid_lava": true,
-        "min_edge_buffer": 1,
-        "requires_solid_base": true
-      },
-      "connectors": [],
-      "weight_profile": {
-        "default": 1.0,
-        "landmark": 1.25
-      },
       "tag_source": {
         "scanner": false,
         "preset_rule": "mcp_path_heuristic",
@@ -159,6 +396,48 @@
         "length": 21,
         "width": 13,
         "height": 22
+      },
+      "function_candidates": [
+        {
+          "function": "religious",
+          "score": 0.92
+        }
+      ],
+      "namespace": "trek",
+      "path": "overworld/medium/church",
+      "size_tier": "L",
+      "connector_types": [],
+      "connector_dirs": [],
+      "allowed_neighbors": [],
+      "landing_hint": "road_edge",
+      "growth_axis": "z",
+      "vertical_role": "ground",
+      "vertical_clearance": 22,
+      "preset_pool": "religious_core",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "religious_core",
+        "evidence": "overworld/medium/church"
+      },
+      "function_definition": {
+        "primary_function": "religious",
+        "secondary_functions": [],
+        "semantic_role": "generic",
+        "source": "mcp_path_heuristic"
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "trek:village/desert/houses/desert_temple_1",
+      "size": {
+        "length": 10,
+        "width": 5,
+        "height": 16
       },
       "orientation": {
         "jigsaw_facing": [
@@ -190,8 +469,8 @@
         }
       ],
       "namespace": "trek",
-      "path": "overworld/medium/church",
-      "size_tier": "L",
+      "path": "village/desert/houses/desert_temple_1",
+      "size_tier": "S",
       "connector_types": [
         "road"
       ],
@@ -202,12 +481,12 @@
       "landing_hint": "road_edge",
       "growth_axis": "z",
       "vertical_role": "ground",
-      "vertical_clearance": 22,
+      "vertical_clearance": 16,
       "preset_pool": "religious_core",
       "preset_pool_source": {
         "source_type": "mcp_path_heuristic",
         "pool_id": "religious_core",
-        "evidence": "overworld/medium/church"
+        "evidence": "village/desert/houses/desert_temple_1"
       },
       "function_definition": {
         "primary_function": "religious",
@@ -225,12 +504,12 @@
         "footprint": {
           "min_x": 0,
           "min_z": 0,
-          "max_x": 12,
-          "max_z": 20
+          "max_x": 4,
+          "max_z": 9
         },
         "clearance": {
           "min_y": 0,
-          "max_y": 22
+          "max_y": 16
         },
         "terrain_probe_points": [
           {
@@ -238,27 +517,353 @@
             "z": 0
           },
           {
-            "x": 12,
+            "x": 4,
             "z": 0
           },
           {
             "x": 0,
-            "z": 20
+            "z": 9
           },
           {
-            "x": 12,
-            "z": 20
+            "x": 4,
+            "z": 9
           },
           {
-            "x": 6,
-            "z": 10
+            "x": 2,
+            "z": 4
           }
         ],
         "entry_points": [
           {
-            "x": 6,
+            "x": 2,
             "y": 0,
-            "z": 20,
+            "z": 9,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.22,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_west_0_0_2",
+          "local_pos": {
+            "x": 0,
+            "y": 0,
+            "z": 2
+          },
+          "orientation_raw": "west_up",
+          "front": "west",
+          "top": "up",
+          "facing": "west",
+          "name": "minecraft:building_entrance",
+          "target": "minecraft:building_entrance",
+          "pool": "minecraft:empty",
+          "joint": "rollable",
+          "final_state": "minecraft:smooth_sandstone_stairs[facing\u003deast,half\u003dbottom,shape\u003dstraight,waterlogged\u003dfalse]",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "religious_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "religious": 1.05,
+        "classical": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "trek:village/plains/houses/plains_church_1",
+      "size": {
+        "length": 18,
+        "width": 11,
+        "height": 28
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "START",
+      "style_score": {
+        "classical": 0.6,
+        "military": 0.0,
+        "commercial": 0.0,
+        "residential": 0.0,
+        "religious": 0.95,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.15
+      },
+      "function_candidates": [
+        {
+          "function": "religious",
+          "score": 0.92
+        }
+      ],
+      "namespace": "trek",
+      "path": "village/plains/houses/plains_church_1",
+      "size_tier": "M",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "road_edge",
+      "growth_axis": "z",
+      "vertical_role": "ground",
+      "vertical_clearance": 28,
+      "preset_pool": "religious_core",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "religious_core",
+        "evidence": "village/plains/houses/plains_church_1"
+      },
+      "function_definition": {
+        "primary_function": "religious",
+        "secondary_functions": [],
+        "semantic_role": "generic",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 10,
+          "max_z": 17
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 28
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 10,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 17
+          },
+          {
+            "x": 10,
+            "z": 17
+          },
+          {
+            "x": 5,
+            "z": 8
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 5,
+            "y": 0,
+            "z": 17,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.18,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_west_0_1_5",
+          "local_pos": {
+            "x": 0,
+            "y": 1,
+            "z": 5
+          },
+          "orientation_raw": "west_up",
+          "front": "west",
+          "top": "up",
+          "facing": "west",
+          "name": "minecraft:building_entrance",
+          "target": "minecraft:building_entrance",
+          "pool": "minecraft:empty",
+          "joint": "aligned",
+          "final_state": "minecraft:structure_void",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "religious_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "religious": 1.05,
+        "classical": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "trek:village/savanna/houses/savanna_temple_1",
+      "size": {
+        "length": 20,
+        "width": 17,
+        "height": 16
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "START",
+      "style_score": {
+        "classical": 0.6,
+        "military": 0.0,
+        "commercial": 0.0,
+        "residential": 0.0,
+        "religious": 0.95,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.15
+      },
+      "function_candidates": [
+        {
+          "function": "religious",
+          "score": 0.92
+        }
+      ],
+      "namespace": "trek",
+      "path": "village/savanna/houses/savanna_temple_1",
+      "size_tier": "L",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "road_edge",
+      "growth_axis": "z",
+      "vertical_role": "ground",
+      "vertical_clearance": 16,
+      "preset_pool": "religious_core",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "religious_core",
+        "evidence": "village/savanna/houses/savanna_temple_1"
+      },
+      "function_definition": {
+        "primary_function": "religious",
+        "secondary_functions": [],
+        "semantic_role": "generic",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 16,
+          "max_z": 19
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 16
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 16,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 19
+          },
+          {
+            "x": 16,
+            "z": 19
+          },
+          {
+            "x": 8,
+            "z": 9
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 8,
+            "y": 0,
+            "z": 19,
             "facing": "south",
             "kind": "main_entry"
           }
@@ -280,13 +885,184 @@
       },
       "connectors": [
         {
-          "id": "jigsaw_west_4_1_6",
+          "id": "jigsaw_west_0_1_8",
           "local_pos": {
-            "x": 4,
+            "x": 0,
             "y": 1,
-            "z": 6
+            "z": 8
           },
+          "orientation_raw": "west_up",
+          "front": "west",
+          "top": "up",
           "facing": "west",
+          "name": "minecraft:building_entrance",
+          "target": "minecraft:building_entrance",
+          "pool": "minecraft:empty",
+          "joint": "rollable",
+          "final_state": "minecraft:acacia_stairs[facing\u003deast,half\u003dbottom,shape\u003dstraight,waterlogged\u003dfalse]",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "religious_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "religious": 1.05,
+        "classical": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "trek:village/taiga/houses/taiga_church_1",
+      "size": {
+        "length": 17,
+        "width": 9,
+        "height": 30
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "START",
+      "style_score": {
+        "classical": 0.6,
+        "military": 0.0,
+        "commercial": 0.0,
+        "residential": 0.0,
+        "religious": 0.95,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.15
+      },
+      "function_candidates": [
+        {
+          "function": "religious",
+          "score": 0.92
+        }
+      ],
+      "namespace": "trek",
+      "path": "village/taiga/houses/taiga_church_1",
+      "size_tier": "M",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "road_edge",
+      "growth_axis": "z",
+      "vertical_role": "ground",
+      "vertical_clearance": 30,
+      "preset_pool": "religious_core",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "religious_core",
+        "evidence": "village/taiga/houses/taiga_church_1"
+      },
+      "function_definition": {
+        "primary_function": "religious",
+        "secondary_functions": [],
+        "semantic_role": "generic",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 8,
+          "max_z": 16
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 30
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 8,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 16
+          },
+          {
+            "x": 8,
+            "z": 16
+          },
+          {
+            "x": 4,
+            "z": 8
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 4,
+            "y": 0,
+            "z": 16,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.18,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_west_0_1_4",
+          "local_pos": {
+            "x": 0,
+            "y": 1,
+            "z": 4
+          },
+          "orientation_raw": "west_up",
+          "front": "west",
+          "top": "up",
+          "facing": "west",
+          "name": "minecraft:building_entrance",
+          "target": "minecraft:building_entrance",
+          "pool": "minecraft:empty",
+          "joint": "aligned",
+          "final_state": "minecraft:air",
           "type": "road",
           "socket": "village_street_small",
           "connect_to_pools": [

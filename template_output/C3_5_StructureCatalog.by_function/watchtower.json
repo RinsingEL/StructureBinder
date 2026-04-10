@@ -3,7 +3,7 @@
   "ok": true,
   "city_id": "city_default",
   "catalog_version": 2,
-  "generated_at_epoch_ms": 1774447195997,
+  "generated_at_epoch_ms": 1775749261990,
   "function_enum_table": [
     "civic_center",
     "commercial",
@@ -29,29 +29,6 @@
         "width": 4,
         "height": 12
       },
-      "orientation": {
-        "jigsaw_facing": [
-          "north"
-        ],
-        "entry_facing": "unknown",
-        "rotations": [
-          0,
-          90,
-          180,
-          270
-        ]
-      },
-      "piece_role": "SINGLE",
-      "style_score": {
-        "classical": 0.0,
-        "military": 0.08,
-        "commercial": 0.12,
-        "residential": 0.82,
-        "religious": 0.0,
-        "industrial": 0.0,
-        "maritime": 0.0,
-        "civic": 0.0
-      },
       "function_candidates": [
         {
           "function": "watchtower",
@@ -65,12 +42,8 @@
       "namespace": "kaisyn",
       "path": "village/beach_lighthouse/side/beach_giant_cross_1",
       "size_tier": "S",
-      "connector_types": [
-        "road"
-      ],
-      "connector_dirs": [
-        "north"
-      ],
+      "connector_types": [],
+      "connector_dirs": [],
       "allowed_neighbors": [],
       "landing_hint": "edge_guard",
       "growth_axis": "x",
@@ -90,91 +63,6 @@
         "semantic_role": "defense",
         "source": "mcp_path_heuristic"
       },
-      "placement": {
-        "origin_mode": "TEMPLATE_CORNER",
-        "origin_offset": {
-          "x": 0,
-          "y": 0,
-          "z": 0
-        },
-        "footprint": {
-          "min_x": 0,
-          "min_z": 0,
-          "max_x": 3,
-          "max_z": 2
-        },
-        "clearance": {
-          "min_y": 0,
-          "max_y": 12
-        },
-        "terrain_probe_points": [
-          {
-            "x": 0,
-            "z": 0
-          },
-          {
-            "x": 3,
-            "z": 0
-          },
-          {
-            "x": 0,
-            "z": 2
-          },
-          {
-            "x": 3,
-            "z": 2
-          },
-          {
-            "x": 1,
-            "z": 1
-          }
-        ],
-        "entry_points": [
-          {
-            "x": 1,
-            "y": 0,
-            "z": 2,
-            "facing": "south",
-            "kind": "main_entry"
-          }
-        ]
-      },
-      "constraints": {
-        "allowed_rotations": [
-          0,
-          90,
-          180,
-          270
-        ],
-        "max_slope": 0.22,
-        "max_height_delta": 4,
-        "avoid_water": true,
-        "avoid_lava": true,
-        "min_edge_buffer": 1,
-        "requires_solid_base": true
-      },
-      "connectors": [
-        {
-          "id": "jigsaw_north_1_1_0",
-          "local_pos": {
-            "x": 1,
-            "y": 1,
-            "z": 0
-          },
-          "facing": "north",
-          "type": "road",
-          "socket": "village_street_small",
-          "connect_to_pools": [
-            "landmark_pool"
-          ],
-          "required": false,
-          "max_connections": 1
-        }
-      ],
-      "weight_profile": {
-        "default": 1.0,
-        "landmark": 1.25
-      },
       "tag_source": {
         "scanner": false,
         "preset_rule": "mcp_path_heuristic",
@@ -189,30 +77,6 @@
         "width": 14,
         "height": 10
       },
-      "orientation": {
-        "jigsaw_facing": [
-          "east",
-          "north"
-        ],
-        "entry_facing": "unknown",
-        "rotations": [
-          0,
-          90,
-          180,
-          270
-        ]
-      },
-      "piece_role": "SINGLE",
-      "style_score": {
-        "classical": 0.0,
-        "military": 0.08,
-        "commercial": 0.12,
-        "residential": 0.82,
-        "religious": 0.0,
-        "industrial": 0.0,
-        "maritime": 0.0,
-        "civic": 0.0
-      },
       "function_candidates": [
         {
           "function": "watchtower",
@@ -226,13 +90,8 @@
       "namespace": "kaisyn",
       "path": "village/beach_lighthouse/side/beach_main_house_1",
       "size_tier": "M",
-      "connector_types": [
-        "road"
-      ],
-      "connector_dirs": [
-        "north",
-        "east"
-      ],
+      "connector_types": [],
+      "connector_dirs": [],
       "allowed_neighbors": [],
       "landing_hint": "edge_guard",
       "growth_axis": "x",
@@ -252,136 +111,6 @@
         "semantic_role": "defense",
         "source": "mcp_path_heuristic"
       },
-      "placement": {
-        "origin_mode": "TEMPLATE_CORNER",
-        "origin_offset": {
-          "x": 0,
-          "y": 0,
-          "z": 0
-        },
-        "footprint": {
-          "min_x": 0,
-          "min_z": 0,
-          "max_x": 13,
-          "max_z": 8
-        },
-        "clearance": {
-          "min_y": 0,
-          "max_y": 10
-        },
-        "terrain_probe_points": [
-          {
-            "x": 0,
-            "z": 0
-          },
-          {
-            "x": 13,
-            "z": 0
-          },
-          {
-            "x": 0,
-            "z": 8
-          },
-          {
-            "x": 13,
-            "z": 8
-          },
-          {
-            "x": 6,
-            "z": 4
-          }
-        ],
-        "entry_points": [
-          {
-            "x": 6,
-            "y": 0,
-            "z": 8,
-            "facing": "south",
-            "kind": "main_entry"
-          }
-        ]
-      },
-      "constraints": {
-        "allowed_rotations": [
-          0,
-          90,
-          180,
-          270
-        ],
-        "max_slope": 0.18,
-        "max_height_delta": 4,
-        "avoid_water": true,
-        "avoid_lava": true,
-        "min_edge_buffer": 1,
-        "requires_solid_base": true
-      },
-      "connectors": [
-        {
-          "id": "jigsaw_north_1_0_4",
-          "local_pos": {
-            "x": 1,
-            "y": 0,
-            "z": 4
-          },
-          "facing": "north",
-          "type": "road",
-          "socket": "village_street_small",
-          "connect_to_pools": [
-            "village_house_small",
-            "village_house_medium",
-            "village_market_small",
-            "village_commercial_small",
-            "village_civic_core"
-          ],
-          "required": false,
-          "max_connections": 1
-        },
-        {
-          "id": "jigsaw_north_4_1_0",
-          "local_pos": {
-            "x": 4,
-            "y": 1,
-            "z": 0
-          },
-          "facing": "north",
-          "type": "road",
-          "socket": "village_street_small",
-          "connect_to_pools": [
-            "village_house_small",
-            "village_house_medium",
-            "village_market_small",
-            "village_commercial_small",
-            "village_civic_core"
-          ],
-          "required": false,
-          "max_connections": 1
-        },
-        {
-          "id": "jigsaw_east_4_1_9",
-          "local_pos": {
-            "x": 4,
-            "y": 1,
-            "z": 9
-          },
-          "facing": "east",
-          "type": "road",
-          "socket": "village_street_small",
-          "connect_to_pools": [
-            "village_house_small",
-            "village_house_medium",
-            "village_market_small",
-            "village_commercial_small",
-            "village_civic_core"
-          ],
-          "required": false,
-          "max_connections": 1
-        }
-      ],
-      "weight_profile": {
-        "default": 1.0,
-        "residential_mid": 1.25,
-        "residential": 1.05
-      },
       "tag_source": {
         "scanner": false,
         "preset_rule": "mcp_path_heuristic",
@@ -396,29 +125,6 @@
         "width": 9,
         "height": 5
       },
-      "orientation": {
-        "jigsaw_facing": [
-          "south"
-        ],
-        "entry_facing": "unknown",
-        "rotations": [
-          0,
-          90,
-          180,
-          270
-        ]
-      },
-      "piece_role": "SINGLE",
-      "style_score": {
-        "classical": 0.0,
-        "military": 0.08,
-        "commercial": 0.12,
-        "residential": 0.82,
-        "religious": 0.0,
-        "industrial": 0.0,
-        "maritime": 0.0,
-        "civic": 0.0
-      },
       "function_candidates": [
         {
           "function": "watchtower",
@@ -432,12 +138,8 @@
       "namespace": "kaisyn",
       "path": "village/beach_lighthouse/side/beach_outdoor_shack_1",
       "size_tier": "S",
-      "connector_types": [
-        "road"
-      ],
-      "connector_dirs": [
-        "south"
-      ],
+      "connector_types": [],
+      "connector_dirs": [],
       "allowed_neighbors": [],
       "landing_hint": "edge_guard",
       "growth_axis": "x",
@@ -457,91 +159,6 @@
         "semantic_role": "defense",
         "source": "mcp_path_heuristic"
       },
-      "placement": {
-        "origin_mode": "TEMPLATE_CORNER",
-        "origin_offset": {
-          "x": 0,
-          "y": 0,
-          "z": 0
-        },
-        "footprint": {
-          "min_x": 0,
-          "min_z": 0,
-          "max_x": 8,
-          "max_z": 6
-        },
-        "clearance": {
-          "min_y": 0,
-          "max_y": 5
-        },
-        "terrain_probe_points": [
-          {
-            "x": 0,
-            "z": 0
-          },
-          {
-            "x": 8,
-            "z": 0
-          },
-          {
-            "x": 0,
-            "z": 6
-          },
-          {
-            "x": 8,
-            "z": 6
-          },
-          {
-            "x": 4,
-            "z": 3
-          }
-        ],
-        "entry_points": [
-          {
-            "x": 4,
-            "y": 0,
-            "z": 6,
-            "facing": "south",
-            "kind": "main_entry"
-          }
-        ]
-      },
-      "constraints": {
-        "allowed_rotations": [
-          0,
-          90,
-          180,
-          270
-        ],
-        "max_slope": 0.22,
-        "max_height_delta": 4,
-        "avoid_water": true,
-        "avoid_lava": true,
-        "min_edge_buffer": 1,
-        "requires_solid_base": true
-      },
-      "connectors": [
-        {
-          "id": "jigsaw_south_4_1_8",
-          "local_pos": {
-            "x": 4,
-            "y": 1,
-            "z": 8
-          },
-          "facing": "south",
-          "type": "road",
-          "socket": "village_street_small",
-          "connect_to_pools": [
-            "landmark_pool"
-          ],
-          "required": false,
-          "max_connections": 1
-        }
-      ],
-      "weight_profile": {
-        "default": 1.0,
-        "landmark": 1.25
-      },
       "tag_source": {
         "scanner": false,
         "preset_rule": "mcp_path_heuristic",
@@ -556,32 +173,6 @@
         "width": 29,
         "height": 35
       },
-      "orientation": {
-        "jigsaw_facing": [
-          "east",
-          "north",
-          "south",
-          "west"
-        ],
-        "entry_facing": "unknown",
-        "rotations": [
-          0,
-          90,
-          180,
-          270
-        ]
-      },
-      "piece_role": "START",
-      "style_score": {
-        "classical": 0.4,
-        "military": 0.05,
-        "commercial": 0.25,
-        "residential": 0.1,
-        "religious": 0.0,
-        "industrial": 0.0,
-        "maritime": 0.0,
-        "civic": 0.88
-      },
       "function_candidates": [
         {
           "function": "watchtower",
@@ -595,15 +186,8 @@
       "namespace": "kaisyn",
       "path": "village/beach_lighthouse/town_centers/beach_meeting_point_1",
       "size_tier": "L",
-      "connector_types": [
-        "road"
-      ],
-      "connector_dirs": [
-        "west",
-        "south",
-        "north",
-        "east"
-      ],
+      "connector_types": [],
+      "connector_dirs": [],
       "allowed_neighbors": [],
       "landing_hint": "edge_guard",
       "growth_axis": "x",
@@ -623,256 +207,6 @@
         "semantic_role": "defense",
         "source": "mcp_path_heuristic"
       },
-      "placement": {
-        "origin_mode": "TEMPLATE_CORNER",
-        "origin_offset": {
-          "x": 0,
-          "y": 0,
-          "z": 0
-        },
-        "footprint": {
-          "min_x": 0,
-          "min_z": 0,
-          "max_x": 28,
-          "max_z": 24
-        },
-        "clearance": {
-          "min_y": 0,
-          "max_y": 35
-        },
-        "terrain_probe_points": [
-          {
-            "x": 0,
-            "z": 0
-          },
-          {
-            "x": 28,
-            "z": 0
-          },
-          {
-            "x": 0,
-            "z": 24
-          },
-          {
-            "x": 28,
-            "z": 24
-          },
-          {
-            "x": 14,
-            "z": 12
-          }
-        ],
-        "entry_points": [
-          {
-            "x": 14,
-            "y": 0,
-            "z": 24,
-            "facing": "south",
-            "kind": "main_entry"
-          }
-        ]
-      },
-      "constraints": {
-        "allowed_rotations": [
-          0,
-          90,
-          180,
-          270
-        ],
-        "max_slope": 0.18,
-        "max_height_delta": 3,
-        "avoid_water": true,
-        "avoid_lava": true,
-        "min_edge_buffer": 2,
-        "requires_solid_base": true
-      },
-      "connectors": [
-        {
-          "id": "jigsaw_west_0_0_10",
-          "local_pos": {
-            "x": 0,
-            "y": 0,
-            "z": 10
-          },
-          "facing": "west",
-          "type": "road",
-          "socket": "village_street_small",
-          "connect_to_pools": [
-            "village_market_small",
-            "village_commercial_small",
-            "village_house_medium"
-          ],
-          "required": false,
-          "max_connections": 1
-        },
-        {
-          "id": "jigsaw_south_2_0_11",
-          "local_pos": {
-            "x": 2,
-            "y": 0,
-            "z": 11
-          },
-          "facing": "south",
-          "type": "road",
-          "socket": "village_street_small",
-          "connect_to_pools": [
-            "village_market_small",
-            "village_commercial_small",
-            "village_house_medium"
-          ],
-          "required": false,
-          "max_connections": 1
-        },
-        {
-          "id": "jigsaw_north_5_0_5",
-          "local_pos": {
-            "x": 5,
-            "y": 0,
-            "z": 5
-          },
-          "facing": "north",
-          "type": "road",
-          "socket": "village_street_small",
-          "connect_to_pools": [
-            "village_market_small",
-            "village_commercial_small",
-            "village_house_medium"
-          ],
-          "required": false,
-          "max_connections": 1
-        },
-        {
-          "id": "jigsaw_south_9_0_21",
-          "local_pos": {
-            "x": 9,
-            "y": 0,
-            "z": 21
-          },
-          "facing": "south",
-          "type": "road",
-          "socket": "village_street_small",
-          "connect_to_pools": [
-            "village_market_small",
-            "village_commercial_small",
-            "village_house_medium"
-          ],
-          "required": false,
-          "max_connections": 1
-        },
-        {
-          "id": "jigsaw_north_14_0_2",
-          "local_pos": {
-            "x": 14,
-            "y": 0,
-            "z": 2
-          },
-          "facing": "north",
-          "type": "road",
-          "socket": "village_street_small",
-          "connect_to_pools": [
-            "village_market_small",
-            "village_commercial_small",
-            "village_house_medium"
-          ],
-          "required": false,
-          "max_connections": 1
-        },
-        {
-          "id": "jigsaw_east_18_0_19",
-          "local_pos": {
-            "x": 18,
-            "y": 0,
-            "z": 19
-          },
-          "facing": "east",
-          "type": "road",
-          "socket": "village_street_small",
-          "connect_to_pools": [
-            "village_market_small",
-            "village_commercial_small",
-            "village_house_medium"
-          ],
-          "required": false,
-          "max_connections": 1
-        },
-        {
-          "id": "jigsaw_east_21_0_12",
-          "local_pos": {
-            "x": 21,
-            "y": 0,
-            "z": 12
-          },
-          "facing": "east",
-          "type": "road",
-          "socket": "village_street_small",
-          "connect_to_pools": [
-            "village_market_small",
-            "village_commercial_small",
-            "village_house_medium"
-          ],
-          "required": false,
-          "max_connections": 1
-        },
-        {
-          "id": "jigsaw_west_0_1_22",
-          "local_pos": {
-            "x": 0,
-            "y": 1,
-            "z": 22
-          },
-          "facing": "west",
-          "type": "road",
-          "socket": "village_street_small",
-          "connect_to_pools": [
-            "village_market_small",
-            "village_commercial_small",
-            "village_house_medium"
-          ],
-          "required": false,
-          "max_connections": 1
-        },
-        {
-          "id": "jigsaw_south_16_1_28",
-          "local_pos": {
-            "x": 16,
-            "y": 1,
-            "z": 28
-          },
-          "facing": "south",
-          "type": "road",
-          "socket": "village_street_small",
-          "connect_to_pools": [
-            "village_market_small",
-            "village_commercial_small",
-            "village_house_medium"
-          ],
-          "required": false,
-          "max_connections": 1
-        },
-        {
-          "id": "jigsaw_east_24_1_3",
-          "local_pos": {
-            "x": 24,
-            "y": 1,
-            "z": 3
-          },
-          "facing": "east",
-          "type": "road",
-          "socket": "village_street_small",
-          "connect_to_pools": [
-            "village_market_small",
-            "village_commercial_small",
-            "village_house_medium"
-          ],
-          "required": false,
-          "max_connections": 1
-        }
-      ],
-      "weight_profile": {
-        "default": 1.0,
-        "civic_center": 1.25,
-        "civic": 1.05
-      },
       "tag_source": {
         "scanner": false,
         "preset_rule": "mcp_path_heuristic",
@@ -887,29 +221,6 @@
         "width": 1,
         "height": 3
       },
-      "orientation": {
-        "jigsaw_facing": [
-          "north"
-        ],
-        "entry_facing": "unknown",
-        "rotations": [
-          0,
-          90,
-          180,
-          270
-        ]
-      },
-      "piece_role": "SINGLE",
-      "style_score": {
-        "classical": 0.0,
-        "military": 0.08,
-        "commercial": 0.12,
-        "residential": 0.82,
-        "religious": 0.0,
-        "industrial": 0.0,
-        "maritime": 0.0,
-        "civic": 0.0
-      },
       "function_candidates": [
         {
           "function": "watchtower",
@@ -919,12 +230,8 @@
       "namespace": "kaisyn",
       "path": "village/beach_lighthouse/villagers/lighthouse_master",
       "size_tier": "S",
-      "connector_types": [
-        "road"
-      ],
-      "connector_dirs": [
-        "north"
-      ],
+      "connector_types": [],
+      "connector_dirs": [],
       "allowed_neighbors": [],
       "landing_hint": "edge_guard",
       "growth_axis": "auto",
@@ -942,91 +249,6 @@
         "semantic_role": "defense",
         "source": "mcp_path_heuristic"
       },
-      "placement": {
-        "origin_mode": "TEMPLATE_CORNER",
-        "origin_offset": {
-          "x": 0,
-          "y": 0,
-          "z": 0
-        },
-        "footprint": {
-          "min_x": 0,
-          "min_z": 0,
-          "max_x": 0,
-          "max_z": 0
-        },
-        "clearance": {
-          "min_y": 0,
-          "max_y": 3
-        },
-        "terrain_probe_points": [
-          {
-            "x": 0,
-            "z": 0
-          },
-          {
-            "x": 0,
-            "z": 0
-          },
-          {
-            "x": 0,
-            "z": 0
-          },
-          {
-            "x": 0,
-            "z": 0
-          },
-          {
-            "x": 0,
-            "z": 0
-          }
-        ],
-        "entry_points": [
-          {
-            "x": 0,
-            "y": 0,
-            "z": 0,
-            "facing": "south",
-            "kind": "main_entry"
-          }
-        ]
-      },
-      "constraints": {
-        "allowed_rotations": [
-          0,
-          90,
-          180,
-          270
-        ],
-        "max_slope": 0.22,
-        "max_height_delta": 4,
-        "avoid_water": true,
-        "avoid_lava": true,
-        "min_edge_buffer": 1,
-        "requires_solid_base": true
-      },
-      "connectors": [
-        {
-          "id": "jigsaw_north_0_0_0",
-          "local_pos": {
-            "x": 0,
-            "y": 0,
-            "z": 0
-          },
-          "facing": "north",
-          "type": "road",
-          "socket": "village_street_small",
-          "connect_to_pools": [
-            "landmark_pool"
-          ],
-          "required": false,
-          "max_connections": 1
-        }
-      ],
-      "weight_profile": {
-        "default": 1.0,
-        "landmark": 1.25
-      },
       "tag_source": {
         "scanner": false,
         "preset_rule": "mcp_path_heuristic",
@@ -1041,30 +263,6 @@
         "width": 11,
         "height": 12
       },
-      "orientation": {
-        "jigsaw_facing": [
-          "north",
-          "south"
-        ],
-        "entry_facing": "unknown",
-        "rotations": [
-          0,
-          90,
-          180,
-          270
-        ]
-      },
-      "piece_role": "START",
-      "style_score": {
-        "classical": 0.0,
-        "military": 0.95,
-        "commercial": 0.0,
-        "residential": 0.0,
-        "religious": 0.0,
-        "industrial": 0.0,
-        "maritime": 0.0,
-        "civic": 0.0
-      },
       "function_candidates": [
         {
           "function": "watchtower",
@@ -1074,13 +272,8 @@
       "namespace": "trek",
       "path": "overworld/medium/mangrove_watchtower_1",
       "size_tier": "M",
-      "connector_types": [
-        "road"
-      ],
-      "connector_dirs": [
-        "south",
-        "north"
-      ],
+      "connector_types": [],
+      "connector_dirs": [],
       "allowed_neighbors": [],
       "landing_hint": "edge_guard",
       "growth_axis": "z",
@@ -1098,124 +291,6 @@
         "semantic_role": "defense",
         "source": "mcp_path_heuristic"
       },
-      "placement": {
-        "origin_mode": "TEMPLATE_CORNER",
-        "origin_offset": {
-          "x": 0,
-          "y": 0,
-          "z": 0
-        },
-        "footprint": {
-          "min_x": 0,
-          "min_z": 0,
-          "max_x": 10,
-          "max_z": 11
-        },
-        "clearance": {
-          "min_y": 0,
-          "max_y": 12
-        },
-        "terrain_probe_points": [
-          {
-            "x": 0,
-            "z": 0
-          },
-          {
-            "x": 10,
-            "z": 0
-          },
-          {
-            "x": 0,
-            "z": 11
-          },
-          {
-            "x": 10,
-            "z": 11
-          },
-          {
-            "x": 5,
-            "z": 5
-          }
-        ],
-        "entry_points": [
-          {
-            "x": 5,
-            "y": 0,
-            "z": 11,
-            "facing": "south",
-            "kind": "main_entry"
-          }
-        ]
-      },
-      "constraints": {
-        "allowed_rotations": [
-          0,
-          90,
-          180,
-          270
-        ],
-        "max_slope": 0.18,
-        "max_height_delta": 4,
-        "avoid_water": true,
-        "avoid_lava": true,
-        "min_edge_buffer": 1,
-        "requires_solid_base": true
-      },
-      "connectors": [
-        {
-          "id": "jigsaw_south_3_3_3",
-          "local_pos": {
-            "x": 3,
-            "y": 3,
-            "z": 3
-          },
-          "facing": "south",
-          "type": "road",
-          "socket": "village_street_small",
-          "connect_to_pools": [
-            "watchtower_pool"
-          ],
-          "required": false,
-          "max_connections": 1
-        },
-        {
-          "id": "jigsaw_north_7_3_7",
-          "local_pos": {
-            "x": 7,
-            "y": 3,
-            "z": 7
-          },
-          "facing": "north",
-          "type": "road",
-          "socket": "village_street_small",
-          "connect_to_pools": [
-            "watchtower_pool"
-          ],
-          "required": false,
-          "max_connections": 1
-        },
-        {
-          "id": "jigsaw_north_7_7_7",
-          "local_pos": {
-            "x": 7,
-            "y": 7,
-            "z": 7
-          },
-          "facing": "north",
-          "type": "road",
-          "socket": "village_street_small",
-          "connect_to_pools": [
-            "watchtower_pool"
-          ],
-          "required": false,
-          "max_connections": 1
-        }
-      ],
-      "weight_profile": {
-        "default": 1.0,
-        "watchtower": 1.25,
-        "military": 1.05
-      },
       "tag_source": {
         "scanner": false,
         "preset_rule": "mcp_path_heuristic",
@@ -1230,30 +305,6 @@
         "width": 11,
         "height": 23
       },
-      "orientation": {
-        "jigsaw_facing": [
-          "east",
-          "north"
-        ],
-        "entry_facing": "unknown",
-        "rotations": [
-          0,
-          90,
-          180,
-          270
-        ]
-      },
-      "piece_role": "START",
-      "style_score": {
-        "classical": 0.0,
-        "military": 0.95,
-        "commercial": 0.0,
-        "residential": 0.0,
-        "religious": 0.0,
-        "industrial": 0.0,
-        "maritime": 0.0,
-        "civic": 0.0
-      },
       "function_candidates": [
         {
           "function": "watchtower",
@@ -1263,13 +314,8 @@
       "namespace": "trek",
       "path": "overworld/medium/mangrove_watchtower_2",
       "size_tier": "M",
-      "connector_types": [
-        "road"
-      ],
-      "connector_dirs": [
-        "east",
-        "north"
-      ],
+      "connector_types": [],
+      "connector_dirs": [],
       "allowed_neighbors": [],
       "landing_hint": "edge_guard",
       "growth_axis": "z",
@@ -1286,140 +332,6 @@
         "secondary_functions": [],
         "semantic_role": "defense",
         "source": "mcp_path_heuristic"
-      },
-      "placement": {
-        "origin_mode": "TEMPLATE_CORNER",
-        "origin_offset": {
-          "x": 0,
-          "y": 0,
-          "z": 0
-        },
-        "footprint": {
-          "min_x": 0,
-          "min_z": 0,
-          "max_x": 10,
-          "max_z": 11
-        },
-        "clearance": {
-          "min_y": 0,
-          "max_y": 23
-        },
-        "terrain_probe_points": [
-          {
-            "x": 0,
-            "z": 0
-          },
-          {
-            "x": 10,
-            "z": 0
-          },
-          {
-            "x": 0,
-            "z": 11
-          },
-          {
-            "x": 10,
-            "z": 11
-          },
-          {
-            "x": 5,
-            "z": 5
-          }
-        ],
-        "entry_points": [
-          {
-            "x": 5,
-            "y": 0,
-            "z": 11,
-            "facing": "south",
-            "kind": "main_entry"
-          }
-        ]
-      },
-      "constraints": {
-        "allowed_rotations": [
-          0,
-          90,
-          180,
-          270
-        ],
-        "max_slope": 0.18,
-        "max_height_delta": 4,
-        "avoid_water": true,
-        "avoid_lava": true,
-        "min_edge_buffer": 1,
-        "requires_solid_base": true
-      },
-      "connectors": [
-        {
-          "id": "jigsaw_east_3_2_3",
-          "local_pos": {
-            "x": 3,
-            "y": 2,
-            "z": 3
-          },
-          "facing": "east",
-          "type": "road",
-          "socket": "village_street_small",
-          "connect_to_pools": [
-            "watchtower_pool"
-          ],
-          "required": false,
-          "max_connections": 1
-        },
-        {
-          "id": "jigsaw_north_7_2_7",
-          "local_pos": {
-            "x": 7,
-            "y": 2,
-            "z": 7
-          },
-          "facing": "north",
-          "type": "road",
-          "socket": "village_street_small",
-          "connect_to_pools": [
-            "watchtower_pool"
-          ],
-          "required": false,
-          "max_connections": 1
-        },
-        {
-          "id": "jigsaw_north_7_6_7",
-          "local_pos": {
-            "x": 7,
-            "y": 6,
-            "z": 7
-          },
-          "facing": "north",
-          "type": "road",
-          "socket": "village_street_small",
-          "connect_to_pools": [
-            "watchtower_pool"
-          ],
-          "required": false,
-          "max_connections": 1
-        },
-        {
-          "id": "jigsaw_east_7_17_7",
-          "local_pos": {
-            "x": 7,
-            "y": 17,
-            "z": 7
-          },
-          "facing": "east",
-          "type": "road",
-          "socket": "village_street_small",
-          "connect_to_pools": [
-            "watchtower_pool"
-          ],
-          "required": false,
-          "max_connections": 1
-        }
-      ],
-      "weight_profile": {
-        "default": 1.0,
-        "watchtower": 1.25,
-        "military": 1.05
       },
       "tag_source": {
         "scanner": false,

@@ -72,6 +72,26 @@ class CityC6StagesTest {
         assertTrue(!marketGuidance.design_notes.isEmpty());
     }
 
+    @Test
+    void growthGuidanceFallsBackToConnectorPoolWhenConnectToPoolsMissing() {
+        CityC6Stages.BuildAreaSummary market = new CityC6Stages.BuildAreaSummary();
+        market.group_id = "g_market_02";
+        market.function = "market";
+        market.area_blocks = 3600;
+
+        CityC35CatalogIO.CatalogStructure marketRoot = structure("test:market_root", "market", "M", 18, 14);
+        CityC35CatalogIO.ConnectorSpec connector = new CityC35CatalogIO.ConnectorSpec();
+        connector.facing = "south";
+        connector.pool = "market_lane";
+        marketRoot.connectors.add(connector);
+
+        CityC35CatalogIO.CatalogStructure marketChild = structureWithPool("test:market_lane_piece", "market", "S", 6, 10, "market_lane");
+
+        CityC6Stages.RectGuidance guidance = CityC6Stages.deriveRectGuidance(market, List.of(marketRoot, marketChild));
+
+        assertEquals(6, guidance.connector_reserve_by_side.get("south"));
+    }
+
     private static CityC35CatalogIO.CatalogStructure structure(String id, String function, String sizeTier, int width, int height) {
         CityC35CatalogIO.CatalogStructure structure = new CityC35CatalogIO.CatalogStructure();
         structure.structure_id = id;

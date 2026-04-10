@@ -584,7 +584,7 @@ public final class CityC8ArrangementEngine {
                         local,
                         rotate(local, nodeRotation),
                         connector.socket,
-                        connector.connect_to_pools != null ? new ArrayList<>(connector.connect_to_pools) : List.of(),
+                        CityC35CatalogIO.connectorPoolRefs(connector),
                         connector.required,
                         Math.max(1, connector.max_connections)
                 ));

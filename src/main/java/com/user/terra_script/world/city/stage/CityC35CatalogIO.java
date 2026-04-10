@@ -157,9 +157,27 @@ public final class CityC35CatalogIO {
         public String facing;
         public String type;
         public String socket;
+        public String pool;
         public List<String> connect_to_pools = new ArrayList<>();
         public boolean required;
         public int max_connections;
+    }
+
+    public static List<String> connectorPoolRefs(ConnectorSpec connector) {
+        if (connector == null) return List.of();
+        List<String> resolved = new ArrayList<>();
+        if (connector.connect_to_pools != null) {
+            for (String poolId : connector.connect_to_pools) {
+                if (poolId != null && !poolId.isBlank() && !resolved.contains(poolId)) {
+                    resolved.add(poolId);
+                }
+            }
+        }
+        if (!resolved.isEmpty()) return resolved;
+        if (connector.pool != null && !connector.pool.isBlank()) {
+            resolved.add(connector.pool);
+        }
+        return resolved;
     }
 
     public static class TagSource {

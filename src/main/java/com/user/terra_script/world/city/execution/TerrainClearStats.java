@@ -37,6 +37,21 @@ public final class TerrainClearStats {
         return totalClearedBlocks;
     }
 
+    public void mergeFrom(TerrainClearStats other) {
+        if (other == null || other == this) return;
+        totalClearedBlocks += other.totalClearedBlocks;
+        other.reasonCounts.forEach((reason, count) -> reasonCounts.merge(reason, count, Integer::sum));
+        other.blockCounts.forEach((blockId, count) -> blockCounts.merge(blockId, count, Integer::sum));
+        other.samplesByReason.forEach((reason, samples) -> {
+            if (samples == null || samples.isEmpty()) return;
+            List<ClearSample> merged = samplesByReason.computeIfAbsent(reason, ignored -> new ArrayList<>());
+            for (ClearSample sample : samples) {
+                if (sample == null || merged.size() >= SAMPLE_LIMIT_PER_REASON) continue;
+                merged.add(sample);
+            }
+        });
+    }
+
     public void record(BlockPos pos, BlockState state, String reason) {
         record(pos, blockId(state != null ? state.getBlock() : null), reason);
     }

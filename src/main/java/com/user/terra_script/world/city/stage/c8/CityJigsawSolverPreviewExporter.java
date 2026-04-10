@@ -1,6 +1,7 @@
 package com.user.terra_script.world.city.stage.c8;
 
 import com.google.gson.JsonObject;
+import com.user.terra_script.util.PreviewOverlayUtil;
 import com.user.terra_script.world.city.execution.SolvedPlacementExecutionService;
 import com.user.terra_script.world.city.execution.TaskExecutionResult;
 import com.user.terra_script.world.city.stage.CityStagePreviewUtil;
@@ -17,6 +18,8 @@ import java.util.List;
 import java.util.Map;
 
 public final class CityJigsawSolverPreviewExporter {
+    private static final int EXTERNAL_LABEL_OPACITY = 176;
+
     private CityJigsawSolverPreviewExporter() {}
 
     public static Map<String, String> export(
@@ -124,6 +127,7 @@ public final class CityJigsawSolverPreviewExporter {
             List<CityStagePreviewUtil.PlacementVisual> placements
     ) throws Exception {
         BufferedImage image = CityStagePreviewUtil.renderBaseTerrain(heightData, c2ScanData, previewContext);
+        List<PreviewOverlayUtil.RectLabelAnchor> externalAnchors = buildExternalLabelAnchors(previewContext, rectangles, markers);
         Graphics2D g = image.createGraphics();
         try {
             CityStagePreviewUtil.configure(g);
@@ -132,13 +136,14 @@ public final class CityJigsawSolverPreviewExporter {
                 CityStagePreviewUtil.drawPlacementNodes(g, previewContext, placements);
             }
             if (rectangles != null && !rectangles.isEmpty()) {
-                CityStagePreviewUtil.drawRectangles(g, previewContext, rectangles);
+                CityStagePreviewUtil.drawRectangles(g, previewContext, stripRectangleLabels(rectangles));
             }
             if (markers != null && !markers.isEmpty()) {
-                CityStagePreviewUtil.drawMarkers(g, previewContext, markers);
+                CityStagePreviewUtil.drawMarkers(g, previewContext, stripMarkerLabels(markers));
             }
             CityStagePreviewUtil.drawDebugPanel(g, title, summary, status);
             CityStagePreviewUtil.applyGridOverlay(image, previewContext, title);
+            PreviewOverlayUtil.drawExternalLabels(g, externalAnchors, image.getWidth(), image.getHeight());
         } finally {
             g.dispose();
         }
@@ -148,6 +153,9 @@ public final class CityJigsawSolverPreviewExporter {
         legend.addProperty("title_zh", title);
         legend.addProperty("summary_zh", summary);
         legend.addProperty("build_area_id", buildAreaId);
+        legend.addProperty("label_layout", "external_staggered");
+        legend.addProperty("label_opacity", EXTERNAL_LABEL_OPACITY);
+        legend.addProperty("label_scope", "rectangles_and_key_markers");
         JsonObject saved = CityStagePreviewUtil.writeGroupPreview(
                 cityDir,
                 cityId,
@@ -191,6 +199,97 @@ public final class CityJigsawSolverPreviewExporter {
             }
         }
         return out;
+    }
+
+    private static List<CityStagePreviewUtil.RectVisual> stripRectangleLabels(List<CityStagePreviewUtil.RectVisual> rectangles) {
+        List<CityStagePreviewUtil.RectVisual> out = new ArrayList<>();
+        if (rectangles == null) return out;
+        for (CityStagePreviewUtil.RectVisual rect : rectangles) {
+            if (rect == null) continue;
+            out.add(new CityStagePreviewUtil.RectVisual(
+                    rect.minX,
+                    rect.minZ,
+                    rect.maxX,
+                    rect.maxZ,
+                    null,
+                    rect.color,
+                    rect.fill,
+                    rect.strokeWidth
+            ));
+        }
+        return out;
+    }
+
+    private static List<CityStagePreviewUtil.MarkerVisual> stripMarkerLabels(List<CityStagePreviewUtil.MarkerVisual> markers) {
+        List<CityStagePreviewUtil.MarkerVisual> out = new ArrayList<>();
+        if (markers == null) return out;
+        for (CityStagePreviewUtil.MarkerVisual marker : markers) {
+            if (marker == null) continue;
+            out.add(new CityStagePreviewUtil.MarkerVisual(
+                    marker.x,
+                    marker.z,
+                    null,
+                    marker.color,
+                    marker.highlight,
+                    marker.radius,
+                    marker.dirX,
+                    marker.dirZ
+            ));
+        }
+        return out;
+    }
+
+    private static List<PreviewOverlayUtil.RectLabelAnchor> buildExternalLabelAnchors(
+            CityStagePreviewUtil.AreaPreviewContext previewContext,
+            List<CityStagePreviewUtil.RectVisual> rectangles,
+            List<CityStagePreviewUtil.MarkerVisual> markers
+    ) {
+        List<PreviewOverlayUtil.RectLabelAnchor> anchors = new ArrayList<>();
+        if (previewContext == null) return anchors;
+        if (rectangles != null) {
+            for (CityStagePreviewUtil.RectVisual rect : rectangles) {
+                if (rect == null || rect.label == null || rect.label.isBlank()) continue;
+                PreviewOverlayUtil.RectLabelAnchor anchor = new PreviewOverlayUtil.RectLabelAnchor();
+                anchor.centerX = CityStagePreviewUtil.toPreviewCoord(previewContext, (rect.minX + rect.maxX) / 2.0, true);
+                anchor.centerZ = CityStagePreviewUtil.toPreviewCoord(previewContext, (rect.minZ + rect.maxZ) / 2.0, false);
+                anchor.label = rect.label;
+                anchor.color = rect.color;
+                anchors.add(anchor);
+            }
+        }
+        if (markers != null) {
+            for (CityStagePreviewUtil.MarkerVisual marker : markers) {
+                if (!shouldExternalizeMarkerLabel(marker)) continue;
+                PreviewOverlayUtil.RectLabelAnchor anchor = new PreviewOverlayUtil.RectLabelAnchor();
+                anchor.centerX = CityStagePreviewUtil.toPreviewCoord(previewContext, marker.x, true);
+                anchor.centerZ = CityStagePreviewUtil.toPreviewCoord(previewContext, marker.z, false);
+                anchor.label = shortenMarkerLabel(marker.label);
+                anchor.color = marker.color;
+                anchors.add(anchor);
+            }
+        }
+        return anchors;
+    }
+
+    private static boolean shouldExternalizeMarkerLabel(CityStagePreviewUtil.MarkerVisual marker) {
+        if (marker == null || marker.label == null || marker.label.isBlank()) return false;
+        if (marker.highlight || marker.radius >= 6) return true;
+        String label = marker.label;
+        return label.startsWith("startPos")
+                || label.startsWith("child origin")
+                || label.startsWith("catalog期望")
+                || label.startsWith("req:")
+                || label.startsWith("viable:");
+    }
+
+    private static String shortenMarkerLabel(String label) {
+        if (label == null || label.isBlank()) return "";
+        if (label.length() <= 32) return label;
+        if (label.startsWith("jigsaw_")) {
+            int cut = label.indexOf(" / ");
+            if (cut > 0) return label.substring(0, cut);
+        }
+        return label.substring(0, 29) + "...";
     }
 
     private static List<CityStagePreviewUtil.MarkerVisual> buildRuntimeMarkers(

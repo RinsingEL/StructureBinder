@@ -1203,12 +1203,13 @@ public class CityController {
             String cityId = readOptionalString(json, "city_id");
             String groupId = readOptionalString(json, "group_id");
             String buildAreaId = readOptionalString(json, "build_area_id");
+            boolean applyNow = json.has("apply_now") && !json.get("apply_now").isJsonNull() && json.get("apply_now").getAsBoolean();
             if (cityId == null || cityId.isBlank()) {
                 HttpUtil.sendResponse(exchange, 400, "{\"error\": \"Missing city_id\"}");
                 return;
             }
             Path cityDir = resolveCityDir(cityId);
-            CityC8Stages.C8Plan plan = loadC9GenerationPlan(cityDir, groupId);
+            CityC8Stages.C8Plan plan = loadNormalizedC8Plan(cityDir, groupId);
             CityC6Stages.C6Summary c6Summary = CityC6Stages.loadSummary(cityDir);
             Map<Long, Integer> c6Index = CityC6Stages.loadIndex(cityDir);
             CityStage1BinaryIO.HeightData heightData = CityStage1BinaryIO.loadHeightData(cityId);
@@ -1237,17 +1238,42 @@ public class CityController {
             decision.node_id = readOptionalString(json, "node_id");
             decision.selected_template_id = readOptionalString(json, "selected_template_id");
             decision.selected_connector_dir = readOptionalString(json, "selected_connector_dir");
+            boolean hasDecisionMutation = false;
             if (json.has("selected_rotation") && !json.get("selected_rotation").isJsonNull()) {
                 decision.selected_rotation = json.get("selected_rotation").getAsInt();
+                hasDecisionMutation = true;
             }
-            if (json.has("x") && !json.get("x").isJsonNull()) decision.x = json.get("x").getAsInt();
-            if (json.has("z") && !json.get("z").isJsonNull()) decision.z = json.get("z").getAsInt();
+            if (json.has("x") && !json.get("x").isJsonNull()) {
+                decision.x = json.get("x").getAsInt();
+                hasDecisionMutation = true;
+            }
+            if (json.has("z") && !json.get("z").isJsonNull()) {
+                decision.z = json.get("z").getAsInt();
+                hasDecisionMutation = true;
+            }
             if (json.has("terrain_relax_profile") && json.get("terrain_relax_profile").isJsonObject()) {
                 decision.terrain_relax_profile = parseTerrainRelaxProfile(json.getAsJsonObject("terrain_relax_profile"));
+                hasDecisionMutation = true;
             }
+            if (decision.selected_template_id != null && !decision.selected_template_id.isBlank()) hasDecisionMutation = true;
+            if (decision.selected_connector_dir != null && !decision.selected_connector_dir.isBlank()) hasDecisionMutation = true;
 
-            CityC8Stages.NodeSubmitResult submitResult = CityC8Stages.submitNodeDecision(foundation, geometry, decision, heightData, c2ScanData);
-            saveC8Plan(cityDir, groupId, plan);
+            CityC8Stages.NodeSubmitResult submitResult;
+            CityC8Stages.NodeTask existingValidatedNode = !hasDecisionMutation && applyNow
+                    ? findValidatedNode(foundation, decision.node_id)
+                    : null;
+            CityC8Stages.PlacementNode existingValidatedPlacement = !hasDecisionMutation && applyNow
+                    ? findPlacementNode(foundation, decision.node_id)
+                    : null;
+            if (existingValidatedNode != null && existingValidatedPlacement != null) {
+                submitResult = new CityC8Stages.NodeSubmitResult();
+                submitResult.ok = true;
+                submitResult.node = existingValidatedNode;
+                submitResult.placement = existingValidatedPlacement;
+            } else {
+                submitResult = CityC8Stages.submitNodeDecision(foundation, geometry, decision, heightData, c2ScanData);
+                saveC8Plan(cityDir, groupId, plan);
+            }
 
             JsonObject res = new JsonObject();
             res.addProperty("status", submitResult.ok ? "ok" : "invalid");
@@ -1255,12 +1281,62 @@ public class CityController {
             res.addProperty("city_id", cityId);
             if (groupId != null) res.addProperty("group_id", groupId);
             res.addProperty("build_area_id", foundation.build_area_id);
+            res.addProperty("apply_now", applyNow);
             res.add("submit_result", gson.toJsonTree(submitResult));
             res.add("queue_summary", gson.toJsonTree(foundation.queue_summary));
             res.add("active_node", gson.toJsonTree(foundation.active_node));
             res.add("validated_nodes", gson.toJsonTree(foundation.validated_nodes));
             res.add("failed_attempts", gson.toJsonTree(foundation.failed_attempts));
-            HttpUtil.sendResponse(exchange, submitResult.ok ? 200 : 422, gson.toJson(res));
+            if (!submitResult.ok || !applyNow) {
+                HttpUtil.sendResponse(exchange, submitResult.ok ? 200 : 422, gson.toJson(res));
+                return;
+            }
+            if (mcServer == null || mcServer.overworld() == null) {
+                res.addProperty("status", "runtime_invalid");
+                res.addProperty("error", "Minecraft server/overworld unavailable");
+                res.add("placement_execution", buildApplyFailureEvidence("missing_server_level", "Minecraft server/overworld unavailable"));
+                HttpUtil.sendResponse(exchange, 500, gson.toJson(res));
+                return;
+            }
+
+            CityC8Stages.PlacementNode parentPlacement = submitResult.placement != null && submitResult.placement.parent_node_id != null
+                    ? findPlacementNode(foundation, submitResult.placement.parent_node_id)
+                    : null;
+            CityC9BuildQueue.BuildQueue existingQueue = CityC9BuildQueue.loadOrCreate(cityDir, cityId);
+            CityC9BuildQueue.BuildTask task = SolvedPlacementExecutionService.buildTask(cityId, groupId, foundation, submitResult.placement);
+            final SolvedPlacementExecutionService.ExecutionResult[] holder = new SolvedPlacementExecutionService.ExecutionResult[1];
+            CountDownLatch latch = new CountDownLatch(1);
+            mcServer.execute(() -> {
+                try {
+                    holder[0] = SOLVED_PLACEMENT_EXECUTION_SERVICE.execute(
+                            new ServerLevelBuildWorldAccess(mcServer.overworld()),
+                            existingQueue,
+                            task,
+                            parentPlacement,
+                            null,
+                            null
+                    );
+                } finally {
+                    latch.countDown();
+                }
+            });
+            latch.await();
+
+            SolvedPlacementExecutionService.ExecutionResult execution = holder[0];
+            JsonObject executionJson = new JsonObject();
+            executionJson.addProperty("outcome", execution != null && execution.result != null ? execution.result.outcome().name().toLowerCase(java.util.Locale.ROOT) : "skipped");
+            executionJson.addProperty("task_status", execution != null && execution.task != null ? safe(execution.task.status) : "");
+            executionJson.addProperty("runtime_error_code", execution != null && execution.task != null ? execution.task.last_error : null);
+            executionJson.addProperty("runtime_error_message", execution != null && execution.task != null ? execution.task.last_error_message : null);
+            if (execution != null && execution.result != null && execution.result.terrainPreparation() != null) {
+                executionJson.add("terrain_preparation", execution.result.terrainPreparation().toJson());
+            }
+            res.add("placement_execution", executionJson);
+            boolean executionOk = execution != null
+                    && execution.result != null
+                    && execution.result.outcome() == com.user.terra_script.world.city.execution.TaskExecutionResult.Outcome.COMPLETED;
+            res.addProperty("status", executionOk ? "ok" : "runtime_invalid");
+            HttpUtil.sendResponse(exchange, executionOk ? 200 : 422, gson.toJson(res));
         } catch (Exception e) {
             HttpUtil.handleError(exchange, e);
         }
@@ -1280,7 +1356,7 @@ public class CityController {
                 return;
             }
             Path cityDir = resolveCityDir(cityId);
-            CityC8Stages.C8Plan plan = loadC9GenerationPlan(cityDir, groupId);
+            CityC8Stages.C8Plan plan = loadNormalizedC8Plan(cityDir, groupId);
             if (plan == null) {
                 HttpUtil.sendResponse(exchange, 404, "{\"error\": \"C8 plan not found\"}");
                 return;
@@ -1333,7 +1409,7 @@ public class CityController {
             }
 
             Path cityDir = resolveCityDir(cityId);
-            CityC8Stages.C8Plan plan = loadC9GenerationPlan(cityDir, groupId);
+            CityC8Stages.C8Plan plan = loadNormalizedC8Plan(cityDir, groupId);
             CityC6Stages.C6Summary c6Summary = CityC6Stages.loadSummary(cityDir);
             Map<Long, Integer> c6Index = CityC6Stages.loadIndex(cityDir);
             if (plan == null || c6Summary == null || c6Index == null || c6Index.isEmpty()) {
@@ -1363,7 +1439,7 @@ public class CityController {
 
             int minY = json.has("min_y") && !json.get("min_y").isJsonNull()
                     ? json.get("min_y").getAsInt()
-                    : foundation.base_y;
+                    : foundation.base_y - 1;
             int maxY = json.has("max_y") && !json.get("max_y").isJsonNull()
                     ? json.get("max_y").getAsInt()
                     : Math.max(minY + 48, foundation.base_y + 48);
@@ -1455,7 +1531,7 @@ public class CityController {
             }
 
             Path cityDir = resolveCityDir(cityId);
-            CityC8Stages.C8Plan plan = loadC9GenerationPlan(cityDir, groupId);
+            CityC8Stages.C8Plan plan = loadNormalizedC8Plan(cityDir, groupId);
             CityC6Stages.C6Summary c6Summary = CityC6Stages.loadSummary(cityDir);
             Map<Long, Integer> c6Index = CityC6Stages.loadIndex(cityDir);
             if (plan == null || c6Summary == null || c6Index == null || c6Index.isEmpty()) {
@@ -1600,6 +1676,44 @@ public class CityController {
                 HttpUtil.sendResponse(exchange, 422, gson.toJson(res));
                 return;
             }
+
+            CityC8Stages.NodeSubmitResult persistResult = CityC8Stages.persistSolvedPlacement(
+                    foundation,
+                    parentPlacement,
+                    parentConnectorId,
+                    selectedTemplateId,
+                    selectedConnectorDir,
+                    solveResult.placement
+            );
+            if (!persistResult.ok) {
+                res.addProperty("status", "invalid");
+                res.addProperty("error", safe(persistResult.error_message));
+                finalizeJigsawDebugArtifacts(
+                        res,
+                        debugTrace,
+                        cityDir,
+                        cityId,
+                        foundation.group_id != null ? foundation.group_id : groupId,
+                        foundation.build_area_id,
+                        heightData,
+                        c2ScanData,
+                        geometry,
+                        existingPlacements,
+                        parentPlacement,
+                        parentConnectorId,
+                        solveResult,
+                        null,
+                        applyNow
+                );
+                debugTrace.logFinal("Jigsaw 求解成功，但写回 C8 会话树失败。", false, gson.toJsonTree(persistResult).getAsJsonObject());
+                HttpUtil.sendResponse(exchange, 422, gson.toJson(res));
+                return;
+            }
+            saveC8Plan(cityDir, groupId, plan);
+            res.add("queue_summary", gson.toJsonTree(foundation.queue_summary));
+            res.add("active_node", gson.toJsonTree(foundation.active_node));
+            res.add("validated_nodes", gson.toJsonTree(foundation.validated_nodes));
+            res.add("failed_attempts", gson.toJsonTree(foundation.failed_attempts));
 
             if (!applyNow) {
                 res.addProperty("status", "ok");
@@ -1802,7 +1916,7 @@ public class CityController {
                 return;
             }
 
-            CityC8Stages.C8Plan c8Plan = loadC9GenerationPlan(cityDir, groupId);
+            CityC8Stages.C8Plan c8Plan = loadNormalizedC8Plan(cityDir, groupId);
             if (c8Plan == null) {
                 if (c6Layout == null || heightData == null) {
                     HttpUtil.sendResponse(exchange, 404, "{\"error\": \"C8 missing and required data to regenerate C8 not found for: " + cityId + "\"}");
@@ -2740,6 +2854,17 @@ public class CityController {
         return CityC8Stages.load(cityDir);
     }
 
+    private CityC8Stages.C8Plan loadNormalizedC8Plan(Path cityDir, String groupId) throws Exception {
+        CityC8Stages.C8Plan plan = loadC9GenerationPlan(cityDir, groupId);
+        if (plan == null || mcServer == null || mcServer.overworld() == null) {
+            return plan;
+        }
+        if (CityC8Stages.normalizeRuntimeStartHeights(mcServer.overworld(), plan)) {
+            saveC8Plan(cityDir, groupId, plan);
+        }
+        return plan;
+    }
+
     private static CityC8Stages.C8Plan filterC8PlanByGroup(CityC8Stages.C8Plan plan, String groupId, Set<Integer> areaIds) {
         if (plan == null || groupId == null || groupId.isBlank()) return plan;
         CityC8Stages.C8Plan copy = new CityC8Stages.C8Plan();
@@ -3167,6 +3292,16 @@ public class CityController {
                 if (placement != null && nodeId.equals(placement.node_id)) {
                     return placement;
                 }
+            }
+        }
+        return null;
+    }
+
+    private static CityC8Stages.NodeTask findValidatedNode(CityC8Stages.FoundationItem foundation, String nodeId) {
+        if (foundation == null || foundation.validated_nodes == null || nodeId == null || nodeId.isBlank()) return null;
+        for (CityC8Stages.NodeTask task : foundation.validated_nodes) {
+            if (task != null && nodeId.equals(task.node_id)) {
+                return task;
             }
         }
         return null;

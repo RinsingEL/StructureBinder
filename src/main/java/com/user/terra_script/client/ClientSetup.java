@@ -3,17 +3,68 @@ package com.user.terra_script.client;
 import com.user.terra_script.client.data.ScanResultHolder;
 import com.user.terra_script.client.screen.map.StandaloneMapScreen;
 import com.user.terra_script.config.StructurePlan;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.worldselection.CreateWorldScreen;
 import net.minecraft.client.gui.screens.worldselection.WorldCreationContext;
 import net.minecraft.network.chat.Component;
-import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ScreenEvent;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
 
-@Mod.EventBusSubscriber(modid = "terra_script", value = Dist.CLIENT)
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+
 public class ClientSetup {
+    private static final int DEV_AUTO_LOAD_SCREEN_STABLE_TICKS = 20;
+    private static boolean registered = false;
+    private static boolean attemptedDevAutoLoad = false;
+    private static String lastObservedScreenName = "";
+    private static int observedScreenTicks = 0;
+
+    public static void register() {
+        if (registered) {
+            return;
+        }
+        registered = true;
+        MinecraftForge.EVENT_BUS.register(ClientSetup.class);
+        System.out.println("[TerraScript] ClientSetup registered on Forge event bus.");
+    }
+
+    @SubscribeEvent
+    public static void onClientTick(TickEvent.ClientTickEvent event) {
+        if (event.phase != TickEvent.Phase.END || attemptedDevAutoLoad) {
+            return;
+        }
+        String targetWorld = decodeDevAutoLoadWorld();
+        if (targetWorld.isBlank()) {
+            return;
+        }
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.player != null || minecraft.getSingleplayerServer() != null) {
+            attemptedDevAutoLoad = true;
+            return;
+        }
+        if (minecraft.screen == null) {
+            lastObservedScreenName = "";
+            observedScreenTicks = 0;
+            return;
+        }
+        String screenName = minecraft.screen.getClass().getName();
+        if (!screenName.equals(lastObservedScreenName)) {
+            lastObservedScreenName = screenName;
+            observedScreenTicks = 0;
+            System.out.println("[TerraScript] Dev auto load observing screen: " + screenName);
+        }
+        observedScreenTicks++;
+        if (observedScreenTicks < DEV_AUTO_LOAD_SCREEN_STABLE_TICKS) {
+            return;
+        }
+        attemptedDevAutoLoad = true;
+        System.out.println("[TerraScript] Dev auto load world from screen " + screenName + ": " + targetWorld);
+        minecraft.execute(() -> minecraft.createWorldOpenFlows().loadLevel(minecraft.screen, targetWorld));
+    }
 
     @SubscribeEvent
     public static void onScreenInit(ScreenEvent.Init.Post event) {
@@ -40,5 +91,16 @@ public class ClientSetup {
 
             }).bounds(20, 20, 150, 20).build());
         }
+    }
+
+    private static String decodeDevAutoLoadWorld() {
+        String encoded = System.getProperty("terra_script.devAutoLoadWorldBase64", "").trim();
+        if (!encoded.isBlank()) {
+            try {
+                return new String(Base64.getDecoder().decode(encoded), StandardCharsets.UTF_8).trim();
+            } catch (IllegalArgumentException ignored) {
+            }
+        }
+        return System.getProperty("terra_script.devAutoLoadWorld", "").trim();
     }
 }

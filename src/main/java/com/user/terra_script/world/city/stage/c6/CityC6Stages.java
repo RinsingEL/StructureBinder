@@ -1155,15 +1155,13 @@ public final class CityC6Stages {
                     String side = normalizeSide(connector.facing);
                     if (!stats.perSide.containsKey(side)) continue;
                     boolean resolvedPool = false;
-                    if (connector.connect_to_pools != null) {
-                        for (String poolId : connector.connect_to_pools) {
-                            List<CityC35CatalogIO.CatalogStructure> poolMembers = structuresByPool.get(safe(poolId).toLowerCase(Locale.ROOT));
-                            if (poolMembers == null || poolMembers.isEmpty()) continue;
-                            resolvedPool = true;
-                            for (CityC35CatalogIO.CatalogStructure child : poolMembers) {
-                                int axisSize = connectorAxisSize(side, child);
-                                if (axisSize > 0) stats.perSide.get(side).add(axisSize);
-                            }
+                    for (String poolId : CityC35CatalogIO.connectorPoolRefs(connector)) {
+                        List<CityC35CatalogIO.CatalogStructure> poolMembers = structuresByPool.get(safe(poolId).toLowerCase(Locale.ROOT));
+                        if (poolMembers == null || poolMembers.isEmpty()) continue;
+                        resolvedPool = true;
+                        for (CityC35CatalogIO.CatalogStructure child : poolMembers) {
+                            int axisSize = connectorAxisSize(side, child);
+                            if (axisSize > 0) stats.perSide.get(side).add(axisSize);
                         }
                     }
                     if (!resolvedPool) stats.fallbackSides.put(side, Math.max(stats.fallbackSides.get(side), 2));

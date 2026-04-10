@@ -68,20 +68,12 @@ public final class BuildExecutionPipeline {
         JsonObject placementDetails = new JsonObject();
         placementDetails.addProperty("stage", "place_structure");
         placementDetails.addProperty("placed", placementOutcome.placed);
-        placementDetails.addProperty("cleared_jigsaw_blocks", placementOutcome.clearedJigsawBlocks);
+        placementDetails.addProperty("cleared_jigsaw_blocks", placementOutcome.postCleanup.totalClearedBlocks());
         if (placementOutcome.bounds != null) {
             placementDetails.add("placement_bounds", terrain.toJson().get("placement_bounds"));
         }
         context.logger().progress("C9 placement stage completed.", placementDetails);
-        if (placementOutcome.clearedJigsawSamples != null) {
-            for (net.minecraft.core.BlockPos sample : placementOutcome.clearedJigsawSamples) {
-                terrain.postCleanup().record(sample, "minecraft:jigsaw", "jigsaw");
-            }
-        }
-        int extraJigsaws = placementOutcome.clearedJigsawBlocks - terrain.postCleanup().totalClearedBlocks();
-        for (int i = 0; i < extraJigsaws; i++) {
-            terrain.postCleanup().record(null, "minecraft:jigsaw", "jigsaw");
-        }
+        terrain.postCleanup().mergeFrom(placementOutcome.postCleanup);
         logTerrainStage(context, terrain.postCleanup());
 
         if (!placementOutcome.placed) {

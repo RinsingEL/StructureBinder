@@ -3,7 +3,7 @@
   "ok": true,
   "city_id": "city_default",
   "catalog_version": 2,
-  "generated_at_epoch_ms": 1774447195997,
+  "generated_at_epoch_ms": 1775749261990,
   "function_enum_table": [
     "civic_center",
     "commercial",
@@ -23,15 +23,15 @@
   ],
   "structures": [
     {
-      "structure_id": "trek:overworld/medium/dirt_hut",
+      "structure_id": "minecraft:village/plains/houses/plains_armorer_house_1",
       "size": {
-        "length": 6,
-        "width": 5,
-        "height": 5
+        "length": 9,
+        "width": 8,
+        "height": 8
       },
       "orientation": {
         "jigsaw_facing": [
-          "east"
+          "west"
         ],
         "entry_facing": "unknown",
         "rotations": [
@@ -44,9 +44,4077 @@
       "piece_role": "SINGLE",
       "style_score": {
         "classical": 0.0,
-        "military": 0.0,
-        "commercial": 0.1,
-        "residential": 0.85,
+        "military": 0.08,
+        "commercial": 0.12,
+        "residential": 0.82,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "residential_low",
+          "score": 0.9
+        },
+        {
+          "function": "commercial",
+          "score": 0.88
+        }
+      ],
+      "namespace": "minecraft",
+      "path": "village/plains/houses/plains_armorer_house_1",
+      "size_tier": "S",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "road_edge",
+      "growth_axis": "z",
+      "vertical_role": "ground",
+      "vertical_clearance": 8,
+      "preset_pool": "village_commercial_small",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_commercial_small",
+        "evidence": "village/plains/houses/plains_armorer_house_1"
+      },
+      "function_definition": {
+        "primary_function": "residential_low",
+        "secondary_functions": [
+          "commercial"
+        ],
+        "semantic_role": "residential",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 7,
+          "max_z": 8
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 8
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 7,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 8
+          },
+          {
+            "x": 7,
+            "z": 8
+          },
+          {
+            "x": 3,
+            "z": 4
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 3,
+            "y": 0,
+            "z": 8,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.22,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_west_0_0_4",
+          "local_pos": {
+            "x": 0,
+            "y": 0,
+            "z": 4
+          },
+          "orientation_raw": "west_up",
+          "front": "west",
+          "top": "up",
+          "facing": "west",
+          "name": "minecraft:building_entrance",
+          "target": "minecraft:building_entrance",
+          "pool": "minecraft:empty",
+          "joint": "aligned",
+          "final_state": "minecraft:cobblestone_stairs[facing\u003deast,half\u003dbottom,shape\u003dstraight,waterlogged\u003dfalse]",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_market_small",
+            "village_commercial_small",
+            "village_house_small",
+            "village_house_medium",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "residential_low": 1.25,
+        "residential": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "minecraft:village/plains/houses/plains_big_house_1",
+      "size": {
+        "length": 7,
+        "width": 11,
+        "height": 11
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.08,
+        "commercial": 0.12,
+        "residential": 0.82,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "residential_low",
+          "score": 0.9
+        }
+      ],
+      "namespace": "minecraft",
+      "path": "village/plains/houses/plains_big_house_1",
+      "size_tier": "S",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "road_edge",
+      "growth_axis": "x",
+      "vertical_role": "ground",
+      "vertical_clearance": 11,
+      "preset_pool": "village_house_medium",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_house_medium",
+        "evidence": "village/plains/houses/plains_big_house_1"
+      },
+      "function_definition": {
+        "primary_function": "residential_low",
+        "secondary_functions": [],
+        "semantic_role": "residential",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 10,
+          "max_z": 6
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 11
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 10,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 6
+          },
+          {
+            "x": 10,
+            "z": 6
+          },
+          {
+            "x": 5,
+            "z": 3
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 5,
+            "y": 0,
+            "z": 6,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.22,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_west_0_1_5",
+          "local_pos": {
+            "x": 0,
+            "y": 1,
+            "z": 5
+          },
+          "orientation_raw": "west_up",
+          "front": "west",
+          "top": "up",
+          "facing": "west",
+          "name": "minecraft:building_entrance",
+          "target": "minecraft:building_entrance",
+          "pool": "minecraft:empty",
+          "joint": "aligned",
+          "final_state": "minecraft:structure_void",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_house_small",
+            "village_house_medium",
+            "village_market_small",
+            "village_commercial_small",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "residential_low": 1.25,
+        "residential": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "minecraft:village/plains/houses/plains_fletcher_house_1",
+      "size": {
+        "length": 9,
+        "width": 11,
+        "height": 7
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.08,
+        "commercial": 0.12,
+        "residential": 0.82,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "residential_low",
+          "score": 0.9
+        },
+        {
+          "function": "commercial",
+          "score": 0.88
+        }
+      ],
+      "namespace": "minecraft",
+      "path": "village/plains/houses/plains_fletcher_house_1",
+      "size_tier": "S",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "road_edge",
+      "growth_axis": "x",
+      "vertical_role": "ground",
+      "vertical_clearance": 7,
+      "preset_pool": "village_commercial_small",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_commercial_small",
+        "evidence": "village/plains/houses/plains_fletcher_house_1"
+      },
+      "function_definition": {
+        "primary_function": "residential_low",
+        "secondary_functions": [
+          "commercial"
+        ],
+        "semantic_role": "residential",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 10,
+          "max_z": 8
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 7
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 10,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 8
+          },
+          {
+            "x": 10,
+            "z": 8
+          },
+          {
+            "x": 5,
+            "z": 4
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 5,
+            "y": 0,
+            "z": 8,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.22,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_west_0_1_6",
+          "local_pos": {
+            "x": 0,
+            "y": 1,
+            "z": 6
+          },
+          "orientation_raw": "west_up",
+          "front": "west",
+          "top": "up",
+          "facing": "west",
+          "name": "minecraft:building_entrance",
+          "target": "minecraft:building_entrance",
+          "pool": "minecraft:empty",
+          "joint": "aligned",
+          "final_state": "minecraft:oak_fence",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_market_small",
+            "village_commercial_small",
+            "village_house_small",
+            "village_house_medium",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "residential_low": 1.25,
+        "residential": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "minecraft:village/plains/houses/plains_masons_house_1",
+      "size": {
+        "length": 8,
+        "width": 9,
+        "height": 7
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.08,
+        "commercial": 0.12,
+        "residential": 0.82,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "residential_low",
+          "score": 0.9
+        }
+      ],
+      "namespace": "minecraft",
+      "path": "village/plains/houses/plains_masons_house_1",
+      "size_tier": "S",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "road_edge",
+      "growth_axis": "x",
+      "vertical_role": "ground",
+      "vertical_clearance": 7,
+      "preset_pool": "village_house_small",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_house_small",
+        "evidence": "village/plains/houses/plains_masons_house_1"
+      },
+      "function_definition": {
+        "primary_function": "residential_low",
+        "secondary_functions": [],
+        "semantic_role": "residential",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 8,
+          "max_z": 7
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 7
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 8,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 7
+          },
+          {
+            "x": 8,
+            "z": 7
+          },
+          {
+            "x": 4,
+            "z": 3
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 4,
+            "y": 0,
+            "z": 7,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.22,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_west_0_0_3",
+          "local_pos": {
+            "x": 0,
+            "y": 0,
+            "z": 3
+          },
+          "orientation_raw": "west_up",
+          "front": "west",
+          "top": "up",
+          "facing": "west",
+          "name": "minecraft:building_entrance",
+          "target": "minecraft:building_entrance",
+          "pool": "minecraft:village/plains/streets",
+          "joint": "aligned",
+          "final_state": "minecraft:cobblestone_stairs[facing\u003deast,half\u003dbottom,shape\u003dstraight,waterlogged\u003dfalse]",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_house_small",
+            "village_house_medium",
+            "village_market_small",
+            "village_commercial_small",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "residential_low": 1.25,
+        "residential": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "minecraft:village/plains/houses/plains_medium_house_2",
+      "size": {
+        "length": 7,
+        "width": 13,
+        "height": 6
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.08,
+        "commercial": 0.12,
+        "residential": 0.82,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "residential_low",
+          "score": 0.9
+        }
+      ],
+      "namespace": "minecraft",
+      "path": "village/plains/houses/plains_medium_house_2",
+      "size_tier": "S",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "road_edge",
+      "growth_axis": "x",
+      "vertical_role": "ground",
+      "vertical_clearance": 6,
+      "preset_pool": "village_house_medium",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_house_medium",
+        "evidence": "village/plains/houses/plains_medium_house_2"
+      },
+      "function_definition": {
+        "primary_function": "residential_low",
+        "secondary_functions": [],
+        "semantic_role": "residential",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 12,
+          "max_z": 6
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 6
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 12,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 6
+          },
+          {
+            "x": 12,
+            "z": 6
+          },
+          {
+            "x": 6,
+            "z": 3
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 6,
+            "y": 0,
+            "z": 6,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.22,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_west_0_0_6",
+          "local_pos": {
+            "x": 0,
+            "y": 0,
+            "z": 6
+          },
+          "orientation_raw": "west_up",
+          "front": "west",
+          "top": "up",
+          "facing": "west",
+          "name": "minecraft:building_entrance",
+          "target": "minecraft:building_entrance",
+          "pool": "minecraft:village/plains/streets",
+          "joint": "aligned",
+          "final_state": "minecraft:cobblestone_stairs[facing\u003deast,half\u003dbottom,shape\u003dstraight,waterlogged\u003dfalse]",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_house_small",
+            "village_house_medium",
+            "village_market_small",
+            "village_commercial_small",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "residential_low": 1.25,
+        "residential": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "minecraft:village/plains/houses/plains_small_house_1",
+      "size": {
+        "length": 7,
+        "width": 7,
+        "height": 7
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.05,
+        "commercial": 0.08,
+        "residential": 0.88,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "residential_low",
+          "score": 0.9
+        }
+      ],
+      "namespace": "minecraft",
+      "path": "village/plains/houses/plains_small_house_1",
+      "size_tier": "S",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "road_edge",
+      "growth_axis": "auto",
+      "vertical_role": "ground",
+      "vertical_clearance": 7,
+      "preset_pool": "village_house_small",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_house_small",
+        "evidence": "village/plains/houses/plains_small_house_1"
+      },
+      "function_definition": {
+        "primary_function": "residential_low",
+        "secondary_functions": [],
+        "semantic_role": "residential",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 6,
+          "max_z": 6
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 7
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 6,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 6
+          },
+          {
+            "x": 6,
+            "z": 6
+          },
+          {
+            "x": 3,
+            "z": 3
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 3,
+            "y": 0,
+            "z": 6,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.22,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_west_0_0_3",
+          "local_pos": {
+            "x": 0,
+            "y": 0,
+            "z": 3
+          },
+          "orientation_raw": "west_up",
+          "front": "west",
+          "top": "up",
+          "facing": "west",
+          "name": "minecraft:building_entrance",
+          "target": "minecraft:building_entrance",
+          "pool": "minecraft:village/plains/streets",
+          "joint": "aligned",
+          "final_state": "minecraft:oak_stairs[facing\u003deast,half\u003dbottom,shape\u003dstraight,waterlogged\u003dfalse]",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_house_small",
+            "village_house_medium",
+            "village_market_small",
+            "village_commercial_small",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "residential_low": 1.25,
+        "residential": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "minecraft:village/plains/houses/plains_small_house_2",
+      "size": {
+        "length": 7,
+        "width": 7,
+        "height": 7
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.05,
+        "commercial": 0.08,
+        "residential": 0.88,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "residential_low",
+          "score": 0.9
+        }
+      ],
+      "namespace": "minecraft",
+      "path": "village/plains/houses/plains_small_house_2",
+      "size_tier": "S",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "road_edge",
+      "growth_axis": "auto",
+      "vertical_role": "ground",
+      "vertical_clearance": 7,
+      "preset_pool": "village_house_small",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_house_small",
+        "evidence": "village/plains/houses/plains_small_house_2"
+      },
+      "function_definition": {
+        "primary_function": "residential_low",
+        "secondary_functions": [],
+        "semantic_role": "residential",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 6,
+          "max_z": 6
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 7
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 6,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 6
+          },
+          {
+            "x": 6,
+            "z": 6
+          },
+          {
+            "x": 3,
+            "z": 3
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 3,
+            "y": 0,
+            "z": 6,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.22,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_west_0_0_3",
+          "local_pos": {
+            "x": 0,
+            "y": 0,
+            "z": 3
+          },
+          "orientation_raw": "west_up",
+          "front": "west",
+          "top": "up",
+          "facing": "west",
+          "name": "minecraft:building_entrance",
+          "target": "minecraft:building_entrance",
+          "pool": "minecraft:village/plains/streets",
+          "joint": "aligned",
+          "final_state": "minecraft:oak_stairs[facing\u003deast,half\u003dbottom,shape\u003dstraight,waterlogged\u003dfalse]",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_house_small",
+            "village_house_medium",
+            "village_market_small",
+            "village_commercial_small",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "residential_low": 1.25,
+        "residential": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "minecraft:village/plains/houses/plains_small_house_3",
+      "size": {
+        "length": 7,
+        "width": 7,
+        "height": 7
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.05,
+        "commercial": 0.08,
+        "residential": 0.88,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "residential_low",
+          "score": 0.9
+        }
+      ],
+      "namespace": "minecraft",
+      "path": "village/plains/houses/plains_small_house_3",
+      "size_tier": "S",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "road_edge",
+      "growth_axis": "auto",
+      "vertical_role": "ground",
+      "vertical_clearance": 7,
+      "preset_pool": "village_house_small",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_house_small",
+        "evidence": "village/plains/houses/plains_small_house_3"
+      },
+      "function_definition": {
+        "primary_function": "residential_low",
+        "secondary_functions": [],
+        "semantic_role": "residential",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 6,
+          "max_z": 6
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 7
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 6,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 6
+          },
+          {
+            "x": 6,
+            "z": 6
+          },
+          {
+            "x": 3,
+            "z": 3
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 3,
+            "y": 0,
+            "z": 6,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.22,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_west_0_0_3",
+          "local_pos": {
+            "x": 0,
+            "y": 0,
+            "z": 3
+          },
+          "orientation_raw": "west_up",
+          "front": "west",
+          "top": "up",
+          "facing": "west",
+          "name": "minecraft:building_entrance",
+          "target": "minecraft:building_entrance",
+          "pool": "minecraft:village/plains/streets",
+          "joint": "aligned",
+          "final_state": "minecraft:oak_stairs[facing\u003deast,half\u003dbottom,shape\u003dstraight,waterlogged\u003dfalse]",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_house_small",
+            "village_house_medium",
+            "village_market_small",
+            "village_commercial_small",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "residential_low": 1.25,
+        "residential": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "minecraft:village/plains/houses/plains_small_house_4",
+      "size": {
+        "length": 7,
+        "width": 7,
+        "height": 7
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.05,
+        "commercial": 0.08,
+        "residential": 0.88,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "residential_low",
+          "score": 0.9
+        }
+      ],
+      "namespace": "minecraft",
+      "path": "village/plains/houses/plains_small_house_4",
+      "size_tier": "S",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "road_edge",
+      "growth_axis": "auto",
+      "vertical_role": "ground",
+      "vertical_clearance": 7,
+      "preset_pool": "village_house_small",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_house_small",
+        "evidence": "village/plains/houses/plains_small_house_4"
+      },
+      "function_definition": {
+        "primary_function": "residential_low",
+        "secondary_functions": [],
+        "semantic_role": "residential",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 6,
+          "max_z": 6
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 7
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 6,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 6
+          },
+          {
+            "x": 6,
+            "z": 6
+          },
+          {
+            "x": 3,
+            "z": 3
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 3,
+            "y": 0,
+            "z": 6,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.22,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_west_0_0_3",
+          "local_pos": {
+            "x": 0,
+            "y": 0,
+            "z": 3
+          },
+          "orientation_raw": "west_up",
+          "front": "west",
+          "top": "up",
+          "facing": "west",
+          "name": "minecraft:building_entrance",
+          "target": "minecraft:building_entrance",
+          "pool": "minecraft:village/plains/streets",
+          "joint": "aligned",
+          "final_state": "minecraft:oak_stairs[facing\u003deast,half\u003dbottom,shape\u003dstraight,waterlogged\u003dfalse]",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_house_small",
+            "village_house_medium",
+            "village_market_small",
+            "village_commercial_small",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "residential_low": 1.25,
+        "residential": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "minecraft:village/plains/houses/plains_small_house_5",
+      "size": {
+        "length": 9,
+        "width": 9,
+        "height": 11
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.05,
+        "commercial": 0.08,
+        "residential": 0.88,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "residential_low",
+          "score": 0.9
+        }
+      ],
+      "namespace": "minecraft",
+      "path": "village/plains/houses/plains_small_house_5",
+      "size_tier": "S",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "road_edge",
+      "growth_axis": "auto",
+      "vertical_role": "ground",
+      "vertical_clearance": 11,
+      "preset_pool": "village_house_small",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_house_small",
+        "evidence": "village/plains/houses/plains_small_house_5"
+      },
+      "function_definition": {
+        "primary_function": "residential_low",
+        "secondary_functions": [],
+        "semantic_role": "residential",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 8,
+          "max_z": 8
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 11
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 8,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 8
+          },
+          {
+            "x": 8,
+            "z": 8
+          },
+          {
+            "x": 4,
+            "z": 4
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 4,
+            "y": 0,
+            "z": 8,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.22,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_west_0_1_4",
+          "local_pos": {
+            "x": 0,
+            "y": 1,
+            "z": 4
+          },
+          "orientation_raw": "west_up",
+          "front": "west",
+          "top": "up",
+          "facing": "west",
+          "name": "minecraft:building_entrance",
+          "target": "minecraft:building_entrance",
+          "pool": "minecraft:village/plains/streets",
+          "joint": "aligned",
+          "final_state": "minecraft:cobblestone_stairs[facing\u003deast,half\u003dbottom,shape\u003dstraight,waterlogged\u003dfalse]",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_house_small",
+            "village_house_medium",
+            "village_market_small",
+            "village_commercial_small",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "residential_low": 1.25,
+        "residential": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "minecraft:village/plains/houses/plains_small_house_6",
+      "size": {
+        "length": 7,
+        "width": 7,
+        "height": 7
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.05,
+        "commercial": 0.08,
+        "residential": 0.88,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "residential_low",
+          "score": 0.9
+        }
+      ],
+      "namespace": "minecraft",
+      "path": "village/plains/houses/plains_small_house_6",
+      "size_tier": "S",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "road_edge",
+      "growth_axis": "auto",
+      "vertical_role": "ground",
+      "vertical_clearance": 7,
+      "preset_pool": "village_house_small",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_house_small",
+        "evidence": "village/plains/houses/plains_small_house_6"
+      },
+      "function_definition": {
+        "primary_function": "residential_low",
+        "secondary_functions": [],
+        "semantic_role": "residential",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 6,
+          "max_z": 6
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 7
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 6,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 6
+          },
+          {
+            "x": 6,
+            "z": 6
+          },
+          {
+            "x": 3,
+            "z": 3
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 3,
+            "y": 0,
+            "z": 6,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.22,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_west_0_0_3",
+          "local_pos": {
+            "x": 0,
+            "y": 0,
+            "z": 3
+          },
+          "orientation_raw": "west_up",
+          "front": "west",
+          "top": "up",
+          "facing": "west",
+          "name": "minecraft:building_entrance",
+          "target": "minecraft:building_entrance",
+          "pool": "minecraft:village/plains/streets",
+          "joint": "aligned",
+          "final_state": "minecraft:structure_void",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_house_small",
+            "village_house_medium",
+            "village_market_small",
+            "village_commercial_small",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "residential_low": 1.25,
+        "residential": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "minecraft:village/plains/houses/plains_small_house_7",
+      "size": {
+        "length": 7,
+        "width": 8,
+        "height": 7
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.05,
+        "commercial": 0.08,
+        "residential": 0.88,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "residential_low",
+          "score": 0.9
+        }
+      ],
+      "namespace": "minecraft",
+      "path": "village/plains/houses/plains_small_house_7",
+      "size_tier": "S",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "road_edge",
+      "growth_axis": "x",
+      "vertical_role": "ground",
+      "vertical_clearance": 7,
+      "preset_pool": "village_house_small",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_house_small",
+        "evidence": "village/plains/houses/plains_small_house_7"
+      },
+      "function_definition": {
+        "primary_function": "residential_low",
+        "secondary_functions": [],
+        "semantic_role": "residential",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 7,
+          "max_z": 6
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 7
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 7,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 6
+          },
+          {
+            "x": 7,
+            "z": 6
+          },
+          {
+            "x": 3,
+            "z": 3
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 3,
+            "y": 0,
+            "z": 6,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.22,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_west_0_0_4",
+          "local_pos": {
+            "x": 0,
+            "y": 0,
+            "z": 4
+          },
+          "orientation_raw": "west_up",
+          "front": "west",
+          "top": "up",
+          "facing": "west",
+          "name": "minecraft:building_entrance",
+          "target": "minecraft:building_entrance",
+          "pool": "minecraft:village/plains/streets",
+          "joint": "aligned",
+          "final_state": "minecraft:cobblestone_stairs[facing\u003deast,half\u003dbottom,shape\u003dstraight,waterlogged\u003dfalse]",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_house_small",
+            "village_house_medium",
+            "village_market_small",
+            "village_commercial_small",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "residential_low": 1.25,
+        "residential": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "minecraft:village/plains/houses/plains_small_house_8",
+      "size": {
+        "length": 8,
+        "width": 9,
+        "height": 9
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.05,
+        "commercial": 0.08,
+        "residential": 0.88,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "residential_low",
+          "score": 0.9
+        }
+      ],
+      "namespace": "minecraft",
+      "path": "village/plains/houses/plains_small_house_8",
+      "size_tier": "S",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "road_edge",
+      "growth_axis": "x",
+      "vertical_role": "ground",
+      "vertical_clearance": 9,
+      "preset_pool": "village_house_small",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_house_small",
+        "evidence": "village/plains/houses/plains_small_house_8"
+      },
+      "function_definition": {
+        "primary_function": "residential_low",
+        "secondary_functions": [],
+        "semantic_role": "residential",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 8,
+          "max_z": 7
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 9
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 8,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 7
+          },
+          {
+            "x": 8,
+            "z": 7
+          },
+          {
+            "x": 4,
+            "z": 3
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 4,
+            "y": 0,
+            "z": 7,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.22,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_west_0_2_4",
+          "local_pos": {
+            "x": 0,
+            "y": 2,
+            "z": 4
+          },
+          "orientation_raw": "west_up",
+          "front": "west",
+          "top": "up",
+          "facing": "west",
+          "name": "minecraft:building_entrance",
+          "target": "minecraft:building_entrance",
+          "pool": "minecraft:empty",
+          "joint": "aligned",
+          "final_state": "minecraft:cobblestone_stairs[facing\u003deast,half\u003dbottom,shape\u003dstraight,waterlogged\u003dfalse]",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_house_small",
+            "village_house_medium",
+            "village_market_small",
+            "village_commercial_small",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "residential_low": 1.25,
+        "residential": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "minecraft:village/plains/zombie/houses/plains_big_house_1",
+      "size": {
+        "length": 7,
+        "width": 11,
+        "height": 11
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.08,
+        "commercial": 0.12,
+        "residential": 0.82,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "residential_low",
+          "score": 0.9
+        }
+      ],
+      "namespace": "minecraft",
+      "path": "village/plains/zombie/houses/plains_big_house_1",
+      "size_tier": "S",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "road_edge",
+      "growth_axis": "x",
+      "vertical_role": "ground",
+      "vertical_clearance": 11,
+      "preset_pool": "village_house_medium",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_house_medium",
+        "evidence": "village/plains/zombie/houses/plains_big_house_1"
+      },
+      "function_definition": {
+        "primary_function": "residential_low",
+        "secondary_functions": [],
+        "semantic_role": "residential",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 10,
+          "max_z": 6
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 11
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 10,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 6
+          },
+          {
+            "x": 10,
+            "z": 6
+          },
+          {
+            "x": 5,
+            "z": 3
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 5,
+            "y": 0,
+            "z": 6,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.22,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_west_0_1_5",
+          "local_pos": {
+            "x": 0,
+            "y": 1,
+            "z": 5
+          },
+          "orientation_raw": "west_up",
+          "front": "west",
+          "top": "up",
+          "facing": "west",
+          "name": "minecraft:building_entrance",
+          "target": "minecraft:building_entrance",
+          "pool": "minecraft:empty",
+          "joint": "aligned",
+          "final_state": "minecraft:structure_void",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_house_small",
+            "village_house_medium",
+            "village_market_small",
+            "village_commercial_small",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "residential_low": 1.25,
+        "residential": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "minecraft:village/plains/zombie/houses/plains_fletcher_house_1",
+      "size": {
+        "length": 9,
+        "width": 11,
+        "height": 7
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.08,
+        "commercial": 0.12,
+        "residential": 0.82,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "residential_low",
+          "score": 0.9
+        },
+        {
+          "function": "commercial",
+          "score": 0.88
+        }
+      ],
+      "namespace": "minecraft",
+      "path": "village/plains/zombie/houses/plains_fletcher_house_1",
+      "size_tier": "S",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "road_edge",
+      "growth_axis": "x",
+      "vertical_role": "ground",
+      "vertical_clearance": 7,
+      "preset_pool": "village_commercial_small",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_commercial_small",
+        "evidence": "village/plains/zombie/houses/plains_fletcher_house_1"
+      },
+      "function_definition": {
+        "primary_function": "residential_low",
+        "secondary_functions": [
+          "commercial"
+        ],
+        "semantic_role": "residential",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 10,
+          "max_z": 8
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 7
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 10,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 8
+          },
+          {
+            "x": 10,
+            "z": 8
+          },
+          {
+            "x": 5,
+            "z": 4
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 5,
+            "y": 0,
+            "z": 8,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.22,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_west_0_1_6",
+          "local_pos": {
+            "x": 0,
+            "y": 1,
+            "z": 6
+          },
+          "orientation_raw": "west_up",
+          "front": "west",
+          "top": "up",
+          "facing": "west",
+          "name": "minecraft:building_entrance",
+          "target": "minecraft:building_entrance",
+          "pool": "minecraft:empty",
+          "joint": "aligned",
+          "final_state": "minecraft:oak_fence",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_market_small",
+            "village_commercial_small",
+            "village_house_small",
+            "village_house_medium",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "residential_low": 1.25,
+        "residential": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "minecraft:village/plains/zombie/houses/plains_medium_house_2",
+      "size": {
+        "length": 7,
+        "width": 13,
+        "height": 6
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.08,
+        "commercial": 0.12,
+        "residential": 0.82,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "residential_low",
+          "score": 0.9
+        }
+      ],
+      "namespace": "minecraft",
+      "path": "village/plains/zombie/houses/plains_medium_house_2",
+      "size_tier": "S",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "road_edge",
+      "growth_axis": "x",
+      "vertical_role": "ground",
+      "vertical_clearance": 6,
+      "preset_pool": "village_house_medium",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_house_medium",
+        "evidence": "village/plains/zombie/houses/plains_medium_house_2"
+      },
+      "function_definition": {
+        "primary_function": "residential_low",
+        "secondary_functions": [],
+        "semantic_role": "residential",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 12,
+          "max_z": 6
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 6
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 12,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 6
+          },
+          {
+            "x": 12,
+            "z": 6
+          },
+          {
+            "x": 6,
+            "z": 3
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 6,
+            "y": 0,
+            "z": 6,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.22,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_west_0_0_6",
+          "local_pos": {
+            "x": 0,
+            "y": 0,
+            "z": 6
+          },
+          "orientation_raw": "west_up",
+          "front": "west",
+          "top": "up",
+          "facing": "west",
+          "name": "minecraft:building_entrance",
+          "target": "minecraft:building_entrance",
+          "pool": "minecraft:village/plains/zombie/streets",
+          "joint": "aligned",
+          "final_state": "minecraft:cobblestone_stairs[facing\u003deast,half\u003dbottom,shape\u003dstraight,waterlogged\u003dfalse]",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_house_small",
+            "village_house_medium",
+            "village_market_small",
+            "village_commercial_small",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "residential_low": 1.25,
+        "residential": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "minecraft:village/plains/zombie/houses/plains_small_house_1",
+      "size": {
+        "length": 7,
+        "width": 7,
+        "height": 7
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.05,
+        "commercial": 0.08,
+        "residential": 0.88,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "residential_low",
+          "score": 0.9
+        }
+      ],
+      "namespace": "minecraft",
+      "path": "village/plains/zombie/houses/plains_small_house_1",
+      "size_tier": "S",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "road_edge",
+      "growth_axis": "auto",
+      "vertical_role": "ground",
+      "vertical_clearance": 7,
+      "preset_pool": "village_house_small",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_house_small",
+        "evidence": "village/plains/zombie/houses/plains_small_house_1"
+      },
+      "function_definition": {
+        "primary_function": "residential_low",
+        "secondary_functions": [],
+        "semantic_role": "residential",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 6,
+          "max_z": 6
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 7
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 6,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 6
+          },
+          {
+            "x": 6,
+            "z": 6
+          },
+          {
+            "x": 3,
+            "z": 3
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 3,
+            "y": 0,
+            "z": 6,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.22,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_west_0_0_3",
+          "local_pos": {
+            "x": 0,
+            "y": 0,
+            "z": 3
+          },
+          "orientation_raw": "west_up",
+          "front": "west",
+          "top": "up",
+          "facing": "west",
+          "name": "minecraft:building_entrance",
+          "target": "minecraft:building_entrance",
+          "pool": "minecraft:village/plains/zombie/streets",
+          "joint": "aligned",
+          "final_state": "minecraft:oak_stairs[facing\u003deast,half\u003dbottom,shape\u003dstraight,waterlogged\u003dfalse]",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_house_small",
+            "village_house_medium",
+            "village_market_small",
+            "village_commercial_small",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "residential_low": 1.25,
+        "residential": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "minecraft:village/plains/zombie/houses/plains_small_house_2",
+      "size": {
+        "length": 7,
+        "width": 7,
+        "height": 7
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.05,
+        "commercial": 0.08,
+        "residential": 0.88,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "residential_low",
+          "score": 0.9
+        }
+      ],
+      "namespace": "minecraft",
+      "path": "village/plains/zombie/houses/plains_small_house_2",
+      "size_tier": "S",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "road_edge",
+      "growth_axis": "auto",
+      "vertical_role": "ground",
+      "vertical_clearance": 7,
+      "preset_pool": "village_house_small",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_house_small",
+        "evidence": "village/plains/zombie/houses/plains_small_house_2"
+      },
+      "function_definition": {
+        "primary_function": "residential_low",
+        "secondary_functions": [],
+        "semantic_role": "residential",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 6,
+          "max_z": 6
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 7
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 6,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 6
+          },
+          {
+            "x": 6,
+            "z": 6
+          },
+          {
+            "x": 3,
+            "z": 3
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 3,
+            "y": 0,
+            "z": 6,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.22,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_west_0_0_3",
+          "local_pos": {
+            "x": 0,
+            "y": 0,
+            "z": 3
+          },
+          "orientation_raw": "west_up",
+          "front": "west",
+          "top": "up",
+          "facing": "west",
+          "name": "minecraft:building_entrance",
+          "target": "minecraft:building_entrance",
+          "pool": "minecraft:village/plains/zombie/streets",
+          "joint": "aligned",
+          "final_state": "minecraft:oak_stairs[facing\u003deast,half\u003dbottom,shape\u003dstraight,waterlogged\u003dfalse]",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_house_small",
+            "village_house_medium",
+            "village_market_small",
+            "village_commercial_small",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "residential_low": 1.25,
+        "residential": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "minecraft:village/plains/zombie/houses/plains_small_house_3",
+      "size": {
+        "length": 7,
+        "width": 7,
+        "height": 7
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.05,
+        "commercial": 0.08,
+        "residential": 0.88,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "residential_low",
+          "score": 0.9
+        }
+      ],
+      "namespace": "minecraft",
+      "path": "village/plains/zombie/houses/plains_small_house_3",
+      "size_tier": "S",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "road_edge",
+      "growth_axis": "auto",
+      "vertical_role": "ground",
+      "vertical_clearance": 7,
+      "preset_pool": "village_house_small",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_house_small",
+        "evidence": "village/plains/zombie/houses/plains_small_house_3"
+      },
+      "function_definition": {
+        "primary_function": "residential_low",
+        "secondary_functions": [],
+        "semantic_role": "residential",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 6,
+          "max_z": 6
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 7
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 6,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 6
+          },
+          {
+            "x": 6,
+            "z": 6
+          },
+          {
+            "x": 3,
+            "z": 3
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 3,
+            "y": 0,
+            "z": 6,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.22,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_west_0_0_3",
+          "local_pos": {
+            "x": 0,
+            "y": 0,
+            "z": 3
+          },
+          "orientation_raw": "west_up",
+          "front": "west",
+          "top": "up",
+          "facing": "west",
+          "name": "minecraft:building_entrance",
+          "target": "minecraft:building_entrance",
+          "pool": "minecraft:village/plains/zombie/streets",
+          "joint": "aligned",
+          "final_state": "minecraft:oak_stairs[facing\u003deast,half\u003dbottom,shape\u003dstraight,waterlogged\u003dfalse]",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_house_small",
+            "village_house_medium",
+            "village_market_small",
+            "village_commercial_small",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "residential_low": 1.25,
+        "residential": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "minecraft:village/plains/zombie/houses/plains_small_house_4",
+      "size": {
+        "length": 7,
+        "width": 7,
+        "height": 7
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.05,
+        "commercial": 0.08,
+        "residential": 0.88,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "residential_low",
+          "score": 0.9
+        }
+      ],
+      "namespace": "minecraft",
+      "path": "village/plains/zombie/houses/plains_small_house_4",
+      "size_tier": "S",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "road_edge",
+      "growth_axis": "auto",
+      "vertical_role": "ground",
+      "vertical_clearance": 7,
+      "preset_pool": "village_house_small",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_house_small",
+        "evidence": "village/plains/zombie/houses/plains_small_house_4"
+      },
+      "function_definition": {
+        "primary_function": "residential_low",
+        "secondary_functions": [],
+        "semantic_role": "residential",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 6,
+          "max_z": 6
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 7
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 6,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 6
+          },
+          {
+            "x": 6,
+            "z": 6
+          },
+          {
+            "x": 3,
+            "z": 3
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 3,
+            "y": 0,
+            "z": 6,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.22,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_west_0_0_3",
+          "local_pos": {
+            "x": 0,
+            "y": 0,
+            "z": 3
+          },
+          "orientation_raw": "west_up",
+          "front": "west",
+          "top": "up",
+          "facing": "west",
+          "name": "minecraft:building_entrance",
+          "target": "minecraft:building_entrance",
+          "pool": "minecraft:village/plains/zombie/streets",
+          "joint": "aligned",
+          "final_state": "minecraft:oak_stairs[facing\u003deast,half\u003dbottom,shape\u003dstraight,waterlogged\u003dfalse]",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_house_small",
+            "village_house_medium",
+            "village_market_small",
+            "village_commercial_small",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "residential_low": 1.25,
+        "residential": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "minecraft:village/plains/zombie/houses/plains_small_house_5",
+      "size": {
+        "length": 9,
+        "width": 9,
+        "height": 11
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.05,
+        "commercial": 0.08,
+        "residential": 0.88,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "residential_low",
+          "score": 0.9
+        }
+      ],
+      "namespace": "minecraft",
+      "path": "village/plains/zombie/houses/plains_small_house_5",
+      "size_tier": "S",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "road_edge",
+      "growth_axis": "auto",
+      "vertical_role": "ground",
+      "vertical_clearance": 11,
+      "preset_pool": "village_house_small",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_house_small",
+        "evidence": "village/plains/zombie/houses/plains_small_house_5"
+      },
+      "function_definition": {
+        "primary_function": "residential_low",
+        "secondary_functions": [],
+        "semantic_role": "residential",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 8,
+          "max_z": 8
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 11
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 8,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 8
+          },
+          {
+            "x": 8,
+            "z": 8
+          },
+          {
+            "x": 4,
+            "z": 4
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 4,
+            "y": 0,
+            "z": 8,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.22,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_west_0_1_4",
+          "local_pos": {
+            "x": 0,
+            "y": 1,
+            "z": 4
+          },
+          "orientation_raw": "west_up",
+          "front": "west",
+          "top": "up",
+          "facing": "west",
+          "name": "minecraft:building_entrance",
+          "target": "minecraft:building_entrance",
+          "pool": "minecraft:village/plains/zombie/streets",
+          "joint": "aligned",
+          "final_state": "minecraft:cobblestone_stairs[facing\u003deast,half\u003dbottom,shape\u003dstraight,waterlogged\u003dfalse]",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_house_small",
+            "village_house_medium",
+            "village_market_small",
+            "village_commercial_small",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "residential_low": 1.25,
+        "residential": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "minecraft:village/plains/zombie/houses/plains_small_house_6",
+      "size": {
+        "length": 7,
+        "width": 7,
+        "height": 7
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.05,
+        "commercial": 0.08,
+        "residential": 0.88,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "residential_low",
+          "score": 0.9
+        }
+      ],
+      "namespace": "minecraft",
+      "path": "village/plains/zombie/houses/plains_small_house_6",
+      "size_tier": "S",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "road_edge",
+      "growth_axis": "auto",
+      "vertical_role": "ground",
+      "vertical_clearance": 7,
+      "preset_pool": "village_house_small",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_house_small",
+        "evidence": "village/plains/zombie/houses/plains_small_house_6"
+      },
+      "function_definition": {
+        "primary_function": "residential_low",
+        "secondary_functions": [],
+        "semantic_role": "residential",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 6,
+          "max_z": 6
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 7
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 6,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 6
+          },
+          {
+            "x": 6,
+            "z": 6
+          },
+          {
+            "x": 3,
+            "z": 3
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 3,
+            "y": 0,
+            "z": 6,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.22,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_west_0_0_3",
+          "local_pos": {
+            "x": 0,
+            "y": 0,
+            "z": 3
+          },
+          "orientation_raw": "west_up",
+          "front": "west",
+          "top": "up",
+          "facing": "west",
+          "name": "minecraft:building_entrance",
+          "target": "minecraft:building_entrance",
+          "pool": "minecraft:village/plains/zombie/streets",
+          "joint": "aligned",
+          "final_state": "minecraft:structure_void",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_house_small",
+            "village_house_medium",
+            "village_market_small",
+            "village_commercial_small",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "residential_low": 1.25,
+        "residential": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "minecraft:village/plains/zombie/houses/plains_small_house_7",
+      "size": {
+        "length": 7,
+        "width": 8,
+        "height": 7
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.05,
+        "commercial": 0.08,
+        "residential": 0.88,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "residential_low",
+          "score": 0.9
+        }
+      ],
+      "namespace": "minecraft",
+      "path": "village/plains/zombie/houses/plains_small_house_7",
+      "size_tier": "S",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "road_edge",
+      "growth_axis": "x",
+      "vertical_role": "ground",
+      "vertical_clearance": 7,
+      "preset_pool": "village_house_small",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_house_small",
+        "evidence": "village/plains/zombie/houses/plains_small_house_7"
+      },
+      "function_definition": {
+        "primary_function": "residential_low",
+        "secondary_functions": [],
+        "semantic_role": "residential",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 7,
+          "max_z": 6
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 7
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 7,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 6
+          },
+          {
+            "x": 7,
+            "z": 6
+          },
+          {
+            "x": 3,
+            "z": 3
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 3,
+            "y": 0,
+            "z": 6,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.22,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_west_0_0_4",
+          "local_pos": {
+            "x": 0,
+            "y": 0,
+            "z": 4
+          },
+          "orientation_raw": "west_up",
+          "front": "west",
+          "top": "up",
+          "facing": "west",
+          "name": "minecraft:building_entrance",
+          "target": "minecraft:building_entrance",
+          "pool": "minecraft:village/plains/zombie/streets",
+          "joint": "aligned",
+          "final_state": "minecraft:cobblestone_stairs[facing\u003deast,half\u003dbottom,shape\u003dstraight,waterlogged\u003dfalse]",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_house_small",
+            "village_house_medium",
+            "village_market_small",
+            "village_commercial_small",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "residential_low": 1.25,
+        "residential": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "minecraft:village/plains/zombie/houses/plains_small_house_8",
+      "size": {
+        "length": 8,
+        "width": 9,
+        "height": 9
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.05,
+        "commercial": 0.08,
+        "residential": 0.88,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "residential_low",
+          "score": 0.9
+        }
+      ],
+      "namespace": "minecraft",
+      "path": "village/plains/zombie/houses/plains_small_house_8",
+      "size_tier": "S",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "road_edge",
+      "growth_axis": "x",
+      "vertical_role": "ground",
+      "vertical_clearance": 9,
+      "preset_pool": "village_house_small",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_house_small",
+        "evidence": "village/plains/zombie/houses/plains_small_house_8"
+      },
+      "function_definition": {
+        "primary_function": "residential_low",
+        "secondary_functions": [],
+        "semantic_role": "residential",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 8,
+          "max_z": 7
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 9
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 8,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 7
+          },
+          {
+            "x": 8,
+            "z": 7
+          },
+          {
+            "x": 4,
+            "z": 3
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 4,
+            "y": 0,
+            "z": 7,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.22,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_west_0_2_4",
+          "local_pos": {
+            "x": 0,
+            "y": 2,
+            "z": 4
+          },
+          "orientation_raw": "west_up",
+          "front": "west",
+          "top": "up",
+          "facing": "west",
+          "name": "minecraft:building_entrance",
+          "target": "minecraft:building_entrance",
+          "pool": "minecraft:empty",
+          "joint": "aligned",
+          "final_state": "minecraft:cobblestone_stairs[facing\u003deast,half\u003dbottom,shape\u003dstraight,waterlogged\u003dfalse]",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_house_small",
+            "village_house_medium",
+            "village_market_small",
+            "village_commercial_small",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "residential_low": 1.25,
+        "residential": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "trek:overworld/medium/dirt_hut",
+      "size": {
+        "length": 6,
+        "width": 5,
+        "height": 5
+      },
+      "function_candidates": [
+        {
+          "function": "residential_low",
+          "score": 0.9
+        }
+      ],
+      "namespace": "trek",
+      "path": "overworld/medium/dirt_hut",
+      "size_tier": "S",
+      "connector_types": [],
+      "connector_dirs": [],
+      "allowed_neighbors": [],
+      "landing_hint": "road_edge",
+      "growth_axis": "z",
+      "vertical_role": "ground",
+      "vertical_clearance": 5,
+      "preset_pool": "village_house_medium",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_house_medium",
+        "evidence": "overworld/medium/dirt_hut"
+      },
+      "function_definition": {
+        "primary_function": "residential_low",
+        "secondary_functions": [],
+        "semantic_role": "residential",
+        "source": "mcp_path_heuristic"
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "trek:village/desert/houses/desert_big_house_1",
+      "size": {
+        "length": 9,
+        "width": 9,
+        "height": 14
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.08,
+        "commercial": 0.12,
+        "residential": 0.82,
         "religious": 0.0,
         "industrial": 0.0,
         "maritime": 0.0,
@@ -59,24 +4127,525 @@
         }
       ],
       "namespace": "trek",
-      "path": "overworld/medium/dirt_hut",
+      "path": "village/desert/houses/desert_big_house_1",
       "size_tier": "S",
       "connector_types": [
         "road"
       ],
       "connector_dirs": [
-        "east"
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "road_edge",
+      "growth_axis": "auto",
+      "vertical_role": "ground",
+      "vertical_clearance": 14,
+      "preset_pool": "village_house_medium",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_house_medium",
+        "evidence": "village/desert/houses/desert_big_house_1"
+      },
+      "function_definition": {
+        "primary_function": "residential_low",
+        "secondary_functions": [],
+        "semantic_role": "residential",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 8,
+          "max_z": 8
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 14
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 8,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 8
+          },
+          {
+            "x": 8,
+            "z": 8
+          },
+          {
+            "x": 4,
+            "z": 4
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 4,
+            "y": 0,
+            "z": 8,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.22,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_west_0_0_4",
+          "local_pos": {
+            "x": 0,
+            "y": 0,
+            "z": 4
+          },
+          "orientation_raw": "west_up",
+          "front": "west",
+          "top": "up",
+          "facing": "west",
+          "name": "minecraft:building_entrance",
+          "target": "minecraft:building_entrance",
+          "pool": "minecraft:empty",
+          "joint": "aligned",
+          "final_state": "minecraft:cut_sandstone",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_house_small",
+            "village_house_medium",
+            "village_market_small",
+            "village_commercial_small",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "residential_low": 1.25,
+        "residential": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "trek:village/desert/houses/desert_medium_house_1",
+      "size": {
+        "length": 6,
+        "width": 13,
+        "height": 8
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.08,
+        "commercial": 0.12,
+        "residential": 0.82,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "residential_low",
+          "score": 0.9
+        }
+      ],
+      "namespace": "trek",
+      "path": "village/desert/houses/desert_medium_house_1",
+      "size_tier": "S",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "road_edge",
+      "growth_axis": "x",
+      "vertical_role": "ground",
+      "vertical_clearance": 8,
+      "preset_pool": "village_house_medium",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_house_medium",
+        "evidence": "village/desert/houses/desert_medium_house_1"
+      },
+      "function_definition": {
+        "primary_function": "residential_low",
+        "secondary_functions": [],
+        "semantic_role": "residential",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 12,
+          "max_z": 5
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 8
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 12,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 5
+          },
+          {
+            "x": 12,
+            "z": 5
+          },
+          {
+            "x": 6,
+            "z": 2
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 6,
+            "y": 0,
+            "z": 5,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.22,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_west_0_0_6",
+          "local_pos": {
+            "x": 0,
+            "y": 0,
+            "z": 6
+          },
+          "orientation_raw": "west_up",
+          "front": "west",
+          "top": "up",
+          "facing": "west",
+          "name": "minecraft:building_entrance",
+          "target": "minecraft:building_entrance",
+          "pool": "minecraft:empty",
+          "joint": "aligned",
+          "final_state": "minecraft:structure_void",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_house_small",
+            "village_house_medium",
+            "village_market_small",
+            "village_commercial_small",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "residential_low": 1.25,
+        "residential": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "trek:village/desert/houses/desert_medium_house_2",
+      "size": {
+        "length": 6,
+        "width": 13,
+        "height": 8
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.08,
+        "commercial": 0.12,
+        "residential": 0.82,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "residential_low",
+          "score": 0.9
+        }
+      ],
+      "namespace": "trek",
+      "path": "village/desert/houses/desert_medium_house_2",
+      "size_tier": "S",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "road_edge",
+      "growth_axis": "x",
+      "vertical_role": "ground",
+      "vertical_clearance": 8,
+      "preset_pool": "village_house_medium",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_house_medium",
+        "evidence": "village/desert/houses/desert_medium_house_2"
+      },
+      "function_definition": {
+        "primary_function": "residential_low",
+        "secondary_functions": [],
+        "semantic_role": "residential",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 12,
+          "max_z": 5
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 8
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 12,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 5
+          },
+          {
+            "x": 12,
+            "z": 5
+          },
+          {
+            "x": 6,
+            "z": 2
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 6,
+            "y": 0,
+            "z": 5,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.22,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_west_0_0_6",
+          "local_pos": {
+            "x": 0,
+            "y": 0,
+            "z": 6
+          },
+          "orientation_raw": "west_up",
+          "front": "west",
+          "top": "up",
+          "facing": "west",
+          "name": "minecraft:building_entrance",
+          "target": "minecraft:building_entrance",
+          "pool": "minecraft:empty",
+          "joint": "aligned",
+          "final_state": "minecraft:structure_void",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_house_small",
+            "village_house_medium",
+            "village_market_small",
+            "village_commercial_small",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "residential_low": 1.25,
+        "residential": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "trek:village/desert/houses/desert_small_house_1",
+      "size": {
+        "length": 6,
+        "width": 5,
+        "height": 8
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.05,
+        "commercial": 0.08,
+        "residential": 0.88,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "residential_low",
+          "score": 0.9
+        }
+      ],
+      "namespace": "trek",
+      "path": "village/desert/houses/desert_small_house_1",
+      "size_tier": "S",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west"
       ],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "z",
       "vertical_role": "ground",
-      "vertical_clearance": 5,
-      "preset_pool": "village_house_medium",
+      "vertical_clearance": 8,
+      "preset_pool": "village_house_small",
       "preset_pool_source": {
         "source_type": "mcp_path_heuristic",
-        "pool_id": "village_house_medium",
-        "evidence": "overworld/medium/dirt_hut"
+        "pool_id": "village_house_small",
+        "evidence": "village/desert/houses/desert_small_house_1"
       },
       "function_definition": {
         "primary_function": "residential_low",
@@ -99,7 +4668,7 @@
         },
         "clearance": {
           "min_y": 0,
-          "max_y": 5
+          "max_y": 8
         },
         "terrain_probe_points": [
           {
@@ -149,13 +4718,2526 @@
       },
       "connectors": [
         {
-          "id": "jigsaw_east_2_0_2",
+          "id": "jigsaw_west_0_0_2",
           "local_pos": {
-            "x": 2,
+            "x": 0,
             "y": 0,
             "z": 2
           },
-          "facing": "east",
+          "orientation_raw": "west_up",
+          "front": "west",
+          "top": "up",
+          "facing": "west",
+          "name": "minecraft:building_entrance",
+          "target": "minecraft:building_entrance",
+          "pool": "minecraft:empty",
+          "joint": "rollable",
+          "final_state": "minecraft:smooth_sandstone_stairs[facing\u003deast,half\u003dbottom,shape\u003dstraight,waterlogged\u003dfalse]",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_house_small",
+            "village_house_medium",
+            "village_market_small",
+            "village_commercial_small",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "residential_low": 1.25,
+        "residential": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "trek:village/desert/houses/desert_small_house_2",
+      "size": {
+        "length": 6,
+        "width": 5,
+        "height": 8
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.05,
+        "commercial": 0.08,
+        "residential": 0.88,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "residential_low",
+          "score": 0.9
+        }
+      ],
+      "namespace": "trek",
+      "path": "village/desert/houses/desert_small_house_2",
+      "size_tier": "S",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "road_edge",
+      "growth_axis": "z",
+      "vertical_role": "ground",
+      "vertical_clearance": 8,
+      "preset_pool": "village_house_small",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_house_small",
+        "evidence": "village/desert/houses/desert_small_house_2"
+      },
+      "function_definition": {
+        "primary_function": "residential_low",
+        "secondary_functions": [],
+        "semantic_role": "residential",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 4,
+          "max_z": 5
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 8
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 4,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 5
+          },
+          {
+            "x": 4,
+            "z": 5
+          },
+          {
+            "x": 2,
+            "z": 2
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 2,
+            "y": 0,
+            "z": 5,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.22,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_west_0_0_2",
+          "local_pos": {
+            "x": 0,
+            "y": 0,
+            "z": 2
+          },
+          "orientation_raw": "west_up",
+          "front": "west",
+          "top": "up",
+          "facing": "west",
+          "name": "minecraft:building_entrance",
+          "target": "minecraft:building_entrance",
+          "pool": "minecraft:empty",
+          "joint": "rollable",
+          "final_state": "minecraft:smooth_sandstone_stairs[facing\u003deast,half\u003dbottom,shape\u003dstraight,waterlogged\u003dfalse]",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_house_small",
+            "village_house_medium",
+            "village_market_small",
+            "village_commercial_small",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "residential_low": 1.25,
+        "residential": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "trek:village/desert/houses/desert_small_house_3",
+      "size": {
+        "length": 6,
+        "width": 5,
+        "height": 8
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.05,
+        "commercial": 0.08,
+        "residential": 0.88,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "residential_low",
+          "score": 0.9
+        }
+      ],
+      "namespace": "trek",
+      "path": "village/desert/houses/desert_small_house_3",
+      "size_tier": "S",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "road_edge",
+      "growth_axis": "z",
+      "vertical_role": "ground",
+      "vertical_clearance": 8,
+      "preset_pool": "village_house_small",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_house_small",
+        "evidence": "village/desert/houses/desert_small_house_3"
+      },
+      "function_definition": {
+        "primary_function": "residential_low",
+        "secondary_functions": [],
+        "semantic_role": "residential",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 4,
+          "max_z": 5
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 8
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 4,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 5
+          },
+          {
+            "x": 4,
+            "z": 5
+          },
+          {
+            "x": 2,
+            "z": 2
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 2,
+            "y": 0,
+            "z": 5,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.22,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_west_0_0_2",
+          "local_pos": {
+            "x": 0,
+            "y": 0,
+            "z": 2
+          },
+          "orientation_raw": "west_up",
+          "front": "west",
+          "top": "up",
+          "facing": "west",
+          "name": "minecraft:building_entrance",
+          "target": "minecraft:building_entrance",
+          "pool": "minecraft:empty",
+          "joint": "rollable",
+          "final_state": "minecraft:smooth_sandstone_stairs[facing\u003deast,half\u003dbottom,shape\u003dstraight,waterlogged\u003dfalse]",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_house_small",
+            "village_house_medium",
+            "village_market_small",
+            "village_commercial_small",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "residential_low": 1.25,
+        "residential": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "trek:village/desert/houses/desert_small_house_4",
+      "size": {
+        "length": 6,
+        "width": 5,
+        "height": 8
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.05,
+        "commercial": 0.08,
+        "residential": 0.88,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "residential_low",
+          "score": 0.9
+        }
+      ],
+      "namespace": "trek",
+      "path": "village/desert/houses/desert_small_house_4",
+      "size_tier": "S",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "road_edge",
+      "growth_axis": "z",
+      "vertical_role": "ground",
+      "vertical_clearance": 8,
+      "preset_pool": "village_house_small",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_house_small",
+        "evidence": "village/desert/houses/desert_small_house_4"
+      },
+      "function_definition": {
+        "primary_function": "residential_low",
+        "secondary_functions": [],
+        "semantic_role": "residential",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 4,
+          "max_z": 5
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 8
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 4,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 5
+          },
+          {
+            "x": 4,
+            "z": 5
+          },
+          {
+            "x": 2,
+            "z": 2
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 2,
+            "y": 0,
+            "z": 5,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.22,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_west_0_0_2",
+          "local_pos": {
+            "x": 0,
+            "y": 0,
+            "z": 2
+          },
+          "orientation_raw": "west_up",
+          "front": "west",
+          "top": "up",
+          "facing": "west",
+          "name": "minecraft:building_entrance",
+          "target": "minecraft:building_entrance",
+          "pool": "minecraft:empty",
+          "joint": "rollable",
+          "final_state": "minecraft:smooth_sandstone_stairs[facing\u003deast,half\u003dbottom,shape\u003dstraight,waterlogged\u003dfalse]",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_house_small",
+            "village_house_medium",
+            "village_market_small",
+            "village_commercial_small",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "residential_low": 1.25,
+        "residential": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "trek:village/desert/houses/desert_small_house_5",
+      "size": {
+        "length": 6,
+        "width": 5,
+        "height": 8
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.05,
+        "commercial": 0.08,
+        "residential": 0.88,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "residential_low",
+          "score": 0.9
+        }
+      ],
+      "namespace": "trek",
+      "path": "village/desert/houses/desert_small_house_5",
+      "size_tier": "S",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "road_edge",
+      "growth_axis": "z",
+      "vertical_role": "ground",
+      "vertical_clearance": 8,
+      "preset_pool": "village_house_small",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_house_small",
+        "evidence": "village/desert/houses/desert_small_house_5"
+      },
+      "function_definition": {
+        "primary_function": "residential_low",
+        "secondary_functions": [],
+        "semantic_role": "residential",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 4,
+          "max_z": 5
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 8
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 4,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 5
+          },
+          {
+            "x": 4,
+            "z": 5
+          },
+          {
+            "x": 2,
+            "z": 2
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 2,
+            "y": 0,
+            "z": 5,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.22,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_west_0_0_2",
+          "local_pos": {
+            "x": 0,
+            "y": 0,
+            "z": 2
+          },
+          "orientation_raw": "west_up",
+          "front": "west",
+          "top": "up",
+          "facing": "west",
+          "name": "minecraft:building_entrance",
+          "target": "minecraft:building_entrance",
+          "pool": "minecraft:empty",
+          "joint": "rollable",
+          "final_state": "minecraft:smooth_sandstone_stairs[facing\u003deast,half\u003dbottom,shape\u003dstraight,waterlogged\u003dfalse]",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_house_small",
+            "village_house_medium",
+            "village_market_small",
+            "village_commercial_small",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "residential_low": 1.25,
+        "residential": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "trek:village/desert/houses/desert_small_house_6",
+      "size": {
+        "length": 6,
+        "width": 5,
+        "height": 8
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.05,
+        "commercial": 0.08,
+        "residential": 0.88,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "residential_low",
+          "score": 0.9
+        }
+      ],
+      "namespace": "trek",
+      "path": "village/desert/houses/desert_small_house_6",
+      "size_tier": "S",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "road_edge",
+      "growth_axis": "z",
+      "vertical_role": "ground",
+      "vertical_clearance": 8,
+      "preset_pool": "village_house_small",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_house_small",
+        "evidence": "village/desert/houses/desert_small_house_6"
+      },
+      "function_definition": {
+        "primary_function": "residential_low",
+        "secondary_functions": [],
+        "semantic_role": "residential",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 4,
+          "max_z": 5
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 8
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 4,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 5
+          },
+          {
+            "x": 4,
+            "z": 5
+          },
+          {
+            "x": 2,
+            "z": 2
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 2,
+            "y": 0,
+            "z": 5,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.22,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_west_0_0_2",
+          "local_pos": {
+            "x": 0,
+            "y": 0,
+            "z": 2
+          },
+          "orientation_raw": "west_up",
+          "front": "west",
+          "top": "up",
+          "facing": "west",
+          "name": "minecraft:building_entrance",
+          "target": "minecraft:building_entrance",
+          "pool": "minecraft:empty",
+          "joint": "rollable",
+          "final_state": "minecraft:smooth_sandstone_stairs[facing\u003deast,half\u003dbottom,shape\u003dstraight,waterlogged\u003dfalse]",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_house_small",
+            "village_house_medium",
+            "village_market_small",
+            "village_commercial_small",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "residential_low": 1.25,
+        "residential": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "trek:village/desert/houses/desert_small_house_7",
+      "size": {
+        "length": 6,
+        "width": 5,
+        "height": 8
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.05,
+        "commercial": 0.08,
+        "residential": 0.88,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "residential_low",
+          "score": 0.9
+        }
+      ],
+      "namespace": "trek",
+      "path": "village/desert/houses/desert_small_house_7",
+      "size_tier": "S",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "road_edge",
+      "growth_axis": "z",
+      "vertical_role": "ground",
+      "vertical_clearance": 8,
+      "preset_pool": "village_house_small",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_house_small",
+        "evidence": "village/desert/houses/desert_small_house_7"
+      },
+      "function_definition": {
+        "primary_function": "residential_low",
+        "secondary_functions": [],
+        "semantic_role": "residential",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 4,
+          "max_z": 5
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 8
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 4,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 5
+          },
+          {
+            "x": 4,
+            "z": 5
+          },
+          {
+            "x": 2,
+            "z": 2
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 2,
+            "y": 0,
+            "z": 5,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.22,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_west_0_0_2",
+          "local_pos": {
+            "x": 0,
+            "y": 0,
+            "z": 2
+          },
+          "orientation_raw": "west_up",
+          "front": "west",
+          "top": "up",
+          "facing": "west",
+          "name": "minecraft:building_entrance",
+          "target": "minecraft:building_entrance",
+          "pool": "minecraft:empty",
+          "joint": "rollable",
+          "final_state": "minecraft:smooth_sandstone_stairs[facing\u003deast,half\u003dbottom,shape\u003dstraight,waterlogged\u003dfalse]",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_house_small",
+            "village_house_medium",
+            "village_market_small",
+            "village_commercial_small",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "residential_low": 1.25,
+        "residential": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "trek:village/desert/houses/desert_small_house_8",
+      "size": {
+        "length": 6,
+        "width": 5,
+        "height": 8
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.05,
+        "commercial": 0.08,
+        "residential": 0.88,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "residential_low",
+          "score": 0.9
+        }
+      ],
+      "namespace": "trek",
+      "path": "village/desert/houses/desert_small_house_8",
+      "size_tier": "S",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "road_edge",
+      "growth_axis": "z",
+      "vertical_role": "ground",
+      "vertical_clearance": 8,
+      "preset_pool": "village_house_small",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_house_small",
+        "evidence": "village/desert/houses/desert_small_house_8"
+      },
+      "function_definition": {
+        "primary_function": "residential_low",
+        "secondary_functions": [],
+        "semantic_role": "residential",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 4,
+          "max_z": 5
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 8
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 4,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 5
+          },
+          {
+            "x": 4,
+            "z": 5
+          },
+          {
+            "x": 2,
+            "z": 2
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 2,
+            "y": 0,
+            "z": 5,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.22,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_west_0_0_2",
+          "local_pos": {
+            "x": 0,
+            "y": 0,
+            "z": 2
+          },
+          "orientation_raw": "west_up",
+          "front": "west",
+          "top": "up",
+          "facing": "west",
+          "name": "minecraft:building_entrance",
+          "target": "minecraft:building_entrance",
+          "pool": "minecraft:empty",
+          "joint": "rollable",
+          "final_state": "minecraft:smooth_sandstone_stairs[facing\u003deast,half\u003dbottom,shape\u003dstraight,waterlogged\u003dfalse]",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_house_small",
+            "village_house_medium",
+            "village_market_small",
+            "village_commercial_small",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "residential_low": 1.25,
+        "residential": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "trek:village/plains/houses/plains_small_house_1",
+      "size": {
+        "length": 8,
+        "width": 7,
+        "height": 8
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.05,
+        "commercial": 0.08,
+        "residential": 0.88,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "residential_low",
+          "score": 0.9
+        }
+      ],
+      "namespace": "trek",
+      "path": "village/plains/houses/plains_small_house_1",
+      "size_tier": "S",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "road_edge",
+      "growth_axis": "z",
+      "vertical_role": "ground",
+      "vertical_clearance": 8,
+      "preset_pool": "village_house_small",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_house_small",
+        "evidence": "village/plains/houses/plains_small_house_1"
+      },
+      "function_definition": {
+        "primary_function": "residential_low",
+        "secondary_functions": [],
+        "semantic_role": "residential",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 6,
+          "max_z": 7
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 8
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 6,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 7
+          },
+          {
+            "x": 6,
+            "z": 7
+          },
+          {
+            "x": 3,
+            "z": 3
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 3,
+            "y": 0,
+            "z": 7,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.22,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_west_0_1_3",
+          "local_pos": {
+            "x": 0,
+            "y": 1,
+            "z": 3
+          },
+          "orientation_raw": "west_up",
+          "front": "west",
+          "top": "up",
+          "facing": "west",
+          "name": "minecraft:building_entrance",
+          "target": "minecraft:building_entrance",
+          "pool": "minecraft:empty",
+          "joint": "aligned",
+          "final_state": "minecraft:air",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_house_small",
+            "village_house_medium",
+            "village_market_small",
+            "village_commercial_small",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "residential_low": 1.25,
+        "residential": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "trek:village/plains/houses/plains_small_house_2",
+      "size": {
+        "length": 10,
+        "width": 7,
+        "height": 9
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.05,
+        "commercial": 0.08,
+        "residential": 0.88,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "residential_low",
+          "score": 0.9
+        }
+      ],
+      "namespace": "trek",
+      "path": "village/plains/houses/plains_small_house_2",
+      "size_tier": "S",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "road_edge",
+      "growth_axis": "z",
+      "vertical_role": "ground",
+      "vertical_clearance": 9,
+      "preset_pool": "village_house_small",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_house_small",
+        "evidence": "village/plains/houses/plains_small_house_2"
+      },
+      "function_definition": {
+        "primary_function": "residential_low",
+        "secondary_functions": [],
+        "semantic_role": "residential",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 6,
+          "max_z": 9
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 9
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 6,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 9
+          },
+          {
+            "x": 6,
+            "z": 9
+          },
+          {
+            "x": 3,
+            "z": 4
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 3,
+            "y": 0,
+            "z": 9,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.22,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_west_0_1_3",
+          "local_pos": {
+            "x": 0,
+            "y": 1,
+            "z": 3
+          },
+          "orientation_raw": "west_up",
+          "front": "west",
+          "top": "up",
+          "facing": "west",
+          "name": "minecraft:building_entrance",
+          "target": "minecraft:building_entrance",
+          "pool": "minecraft:empty",
+          "joint": "aligned",
+          "final_state": "minecraft:air",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_house_small",
+            "village_house_medium",
+            "village_market_small",
+            "village_commercial_small",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "residential_low": 1.25,
+        "residential": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "trek:village/plains/houses/plains_small_house_3",
+      "size": {
+        "length": 9,
+        "width": 7,
+        "height": 8
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.05,
+        "commercial": 0.08,
+        "residential": 0.88,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "residential_low",
+          "score": 0.9
+        }
+      ],
+      "namespace": "trek",
+      "path": "village/plains/houses/plains_small_house_3",
+      "size_tier": "S",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "road_edge",
+      "growth_axis": "z",
+      "vertical_role": "ground",
+      "vertical_clearance": 8,
+      "preset_pool": "village_house_small",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_house_small",
+        "evidence": "village/plains/houses/plains_small_house_3"
+      },
+      "function_definition": {
+        "primary_function": "residential_low",
+        "secondary_functions": [],
+        "semantic_role": "residential",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 6,
+          "max_z": 8
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 8
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 6,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 8
+          },
+          {
+            "x": 6,
+            "z": 8
+          },
+          {
+            "x": 3,
+            "z": 4
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 3,
+            "y": 0,
+            "z": 8,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.22,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_west_0_1_3",
+          "local_pos": {
+            "x": 0,
+            "y": 1,
+            "z": 3
+          },
+          "orientation_raw": "west_up",
+          "front": "west",
+          "top": "up",
+          "facing": "west",
+          "name": "minecraft:building_entrance",
+          "target": "minecraft:building_entrance",
+          "pool": "minecraft:empty",
+          "joint": "aligned",
+          "final_state": "minecraft:air",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_house_small",
+            "village_house_medium",
+            "village_market_small",
+            "village_commercial_small",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "residential_low": 1.25,
+        "residential": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "trek:village/plains/houses/plains_small_house_4",
+      "size": {
+        "length": 9,
+        "width": 7,
+        "height": 9
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.05,
+        "commercial": 0.08,
+        "residential": 0.88,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "residential_low",
+          "score": 0.9
+        }
+      ],
+      "namespace": "trek",
+      "path": "village/plains/houses/plains_small_house_4",
+      "size_tier": "S",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "road_edge",
+      "growth_axis": "z",
+      "vertical_role": "ground",
+      "vertical_clearance": 9,
+      "preset_pool": "village_house_small",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_house_small",
+        "evidence": "village/plains/houses/plains_small_house_4"
+      },
+      "function_definition": {
+        "primary_function": "residential_low",
+        "secondary_functions": [],
+        "semantic_role": "residential",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 6,
+          "max_z": 8
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 9
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 6,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 8
+          },
+          {
+            "x": 6,
+            "z": 8
+          },
+          {
+            "x": 3,
+            "z": 4
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 3,
+            "y": 0,
+            "z": 8,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.22,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_west_0_1_3",
+          "local_pos": {
+            "x": 0,
+            "y": 1,
+            "z": 3
+          },
+          "orientation_raw": "west_up",
+          "front": "west",
+          "top": "up",
+          "facing": "west",
+          "name": "minecraft:building_entrance",
+          "target": "minecraft:building_entrance",
+          "pool": "minecraft:empty",
+          "joint": "aligned",
+          "final_state": "minecraft:air",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_house_small",
+            "village_house_medium",
+            "village_market_small",
+            "village_commercial_small",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "residential_low": 1.25,
+        "residential": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "trek:village/taiga/houses/taiga_medium_house_1",
+      "size": {
+        "length": 10,
+        "width": 8,
+        "height": 13
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.08,
+        "commercial": 0.12,
+        "residential": 0.82,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "residential_low",
+          "score": 0.9
+        }
+      ],
+      "namespace": "trek",
+      "path": "village/taiga/houses/taiga_medium_house_1",
+      "size_tier": "S",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "road_edge",
+      "growth_axis": "z",
+      "vertical_role": "ground",
+      "vertical_clearance": 13,
+      "preset_pool": "village_house_medium",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_house_medium",
+        "evidence": "village/taiga/houses/taiga_medium_house_1"
+      },
+      "function_definition": {
+        "primary_function": "residential_low",
+        "secondary_functions": [],
+        "semantic_role": "residential",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 7,
+          "max_z": 9
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 13
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 7,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 9
+          },
+          {
+            "x": 7,
+            "z": 9
+          },
+          {
+            "x": 3,
+            "z": 4
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 3,
+            "y": 0,
+            "z": 9,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.22,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_west_0_1_3",
+          "local_pos": {
+            "x": 0,
+            "y": 1,
+            "z": 3
+          },
+          "orientation_raw": "west_up",
+          "front": "west",
+          "top": "up",
+          "facing": "west",
+          "name": "minecraft:building_entrance",
+          "target": "minecraft:building_entrance",
+          "pool": "minecraft:empty",
+          "joint": "aligned",
+          "final_state": "minecraft:structure_void",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_house_small",
+            "village_house_medium",
+            "village_market_small",
+            "village_commercial_small",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "residential_low": 1.25,
+        "residential": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "trek:village/taiga/houses/taiga_medium_house_2",
+      "size": {
+        "length": 10,
+        "width": 8,
+        "height": 11
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.08,
+        "commercial": 0.12,
+        "residential": 0.82,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "residential_low",
+          "score": 0.9
+        }
+      ],
+      "namespace": "trek",
+      "path": "village/taiga/houses/taiga_medium_house_2",
+      "size_tier": "S",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "road_edge",
+      "growth_axis": "z",
+      "vertical_role": "ground",
+      "vertical_clearance": 11,
+      "preset_pool": "village_house_medium",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_house_medium",
+        "evidence": "village/taiga/houses/taiga_medium_house_2"
+      },
+      "function_definition": {
+        "primary_function": "residential_low",
+        "secondary_functions": [],
+        "semantic_role": "residential",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 7,
+          "max_z": 9
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 11
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 7,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 9
+          },
+          {
+            "x": 7,
+            "z": 9
+          },
+          {
+            "x": 3,
+            "z": 4
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 3,
+            "y": 0,
+            "z": 9,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.22,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_west_0_1_3",
+          "local_pos": {
+            "x": 0,
+            "y": 1,
+            "z": 3
+          },
+          "orientation_raw": "west_up",
+          "front": "west",
+          "top": "up",
+          "facing": "west",
+          "name": "minecraft:building_entrance",
+          "target": "minecraft:building_entrance",
+          "pool": "minecraft:empty",
+          "joint": "aligned",
+          "final_state": "minecraft:air",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_house_small",
+            "village_house_medium",
+            "village_market_small",
+            "village_commercial_small",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "residential_low": 1.25,
+        "residential": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "trek:village/taiga/houses/taiga_small_house_1",
+      "size": {
+        "length": 7,
+        "width": 11,
+        "height": 9
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.05,
+        "commercial": 0.08,
+        "residential": 0.88,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "residential_low",
+          "score": 0.9
+        }
+      ],
+      "namespace": "trek",
+      "path": "village/taiga/houses/taiga_small_house_1",
+      "size_tier": "S",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "road_edge",
+      "growth_axis": "x",
+      "vertical_role": "ground",
+      "vertical_clearance": 9,
+      "preset_pool": "village_house_small",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_house_small",
+        "evidence": "village/taiga/houses/taiga_small_house_1"
+      },
+      "function_definition": {
+        "primary_function": "residential_low",
+        "secondary_functions": [],
+        "semantic_role": "residential",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 10,
+          "max_z": 6
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 9
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 10,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 6
+          },
+          {
+            "x": 10,
+            "z": 6
+          },
+          {
+            "x": 5,
+            "z": 3
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 5,
+            "y": 0,
+            "z": 6,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.22,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_west_0_1_3",
+          "local_pos": {
+            "x": 0,
+            "y": 1,
+            "z": 3
+          },
+          "orientation_raw": "west_up",
+          "front": "west",
+          "top": "up",
+          "facing": "west",
+          "name": "minecraft:building_entrance",
+          "target": "minecraft:building_entrance",
+          "pool": "minecraft:empty",
+          "joint": "aligned",
+          "final_state": "minecraft:structure_void",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_house_small",
+            "village_house_medium",
+            "village_market_small",
+            "village_commercial_small",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "residential_low": 1.25,
+        "residential": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "trek:village/taiga/houses/taiga_small_house_4",
+      "size": {
+        "length": 9,
+        "width": 7,
+        "height": 9
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.05,
+        "commercial": 0.08,
+        "residential": 0.88,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "residential_low",
+          "score": 0.9
+        }
+      ],
+      "namespace": "trek",
+      "path": "village/taiga/houses/taiga_small_house_4",
+      "size_tier": "S",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "road_edge",
+      "growth_axis": "z",
+      "vertical_role": "ground",
+      "vertical_clearance": 9,
+      "preset_pool": "village_house_small",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_house_small",
+        "evidence": "village/taiga/houses/taiga_small_house_4"
+      },
+      "function_definition": {
+        "primary_function": "residential_low",
+        "secondary_functions": [],
+        "semantic_role": "residential",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 6,
+          "max_z": 8
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 9
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 6,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 8
+          },
+          {
+            "x": 6,
+            "z": 8
+          },
+          {
+            "x": 3,
+            "z": 4
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 3,
+            "y": 0,
+            "z": 8,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.22,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_west_0_1_3",
+          "local_pos": {
+            "x": 0,
+            "y": 1,
+            "z": 3
+          },
+          "orientation_raw": "west_up",
+          "front": "west",
+          "top": "up",
+          "facing": "west",
+          "name": "minecraft:building_entrance",
+          "target": "minecraft:building_entrance",
+          "pool": "minecraft:empty",
+          "joint": "aligned",
+          "final_state": "minecraft:air",
           "type": "road",
           "socket": "village_street_small",
           "connect_to_pools": [

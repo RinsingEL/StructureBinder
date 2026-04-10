@@ -1,0 +1,686 @@
+{
+  "step": "C3.5",
+  "ok": true,
+  "city_id": "city_default",
+  "catalog_version": 2,
+  "generated_at_epoch_ms": 1775749261990,
+  "function_enum_table": [
+    "civic_center",
+    "commercial",
+    "market",
+    "residential_low",
+    "residential_mid",
+    "residential_high",
+    "warehouse",
+    "port",
+    "watchtower",
+    "fortification",
+    "farm",
+    "fishing",
+    "religious",
+    "workshop",
+    "landmark"
+  ],
+  "structures": [
+    {
+      "structure_id": "minecraft:village/plains/houses/plains_meeting_point_4",
+      "size": {
+        "length": 10,
+        "width": 16,
+        "height": 7
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "START",
+      "style_score": {
+        "classical": 0.35,
+        "military": 0.05,
+        "commercial": 0.2,
+        "residential": 0.15,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.92
+      },
+      "function_candidates": [
+        {
+          "function": "civic_center",
+          "score": 0.92
+        }
+      ],
+      "namespace": "minecraft",
+      "path": "village/plains/houses/plains_meeting_point_4",
+      "size_tier": "M",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "front_to_plaza",
+      "growth_axis": "x",
+      "vertical_role": "ground",
+      "vertical_clearance": 7,
+      "preset_pool": "village_civic_core",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_civic_core",
+        "evidence": "village/plains/houses/plains_meeting_point_4"
+      },
+      "function_definition": {
+        "primary_function": "civic_center",
+        "secondary_functions": [],
+        "semantic_role": "anchor",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 15,
+          "max_z": 9
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 7
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 15,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 9
+          },
+          {
+            "x": 15,
+            "z": 9
+          },
+          {
+            "x": 7,
+            "z": 4
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 7,
+            "y": 0,
+            "z": 9,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.18,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 2,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_west_0_1_8",
+          "local_pos": {
+            "x": 0,
+            "y": 1,
+            "z": 8
+          },
+          "orientation_raw": "west_up",
+          "front": "west",
+          "top": "up",
+          "facing": "west",
+          "name": "minecraft:building_entrance",
+          "target": "minecraft:building_entrance",
+          "pool": "minecraft:empty",
+          "joint": "aligned",
+          "final_state": "minecraft:structure_void",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_market_small",
+            "village_commercial_small",
+            "village_house_medium"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "civic_center": 1.25,
+        "civic": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "minecraft:village/plains/houses/plains_meeting_point_5",
+      "size": {
+        "length": 10,
+        "width": 11,
+        "height": 6
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "START",
+      "style_score": {
+        "classical": 0.35,
+        "military": 0.05,
+        "commercial": 0.2,
+        "residential": 0.15,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.92
+      },
+      "function_candidates": [
+        {
+          "function": "civic_center",
+          "score": 0.92
+        }
+      ],
+      "namespace": "minecraft",
+      "path": "village/plains/houses/plains_meeting_point_5",
+      "size_tier": "M",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "front_to_plaza",
+      "growth_axis": "x",
+      "vertical_role": "ground",
+      "vertical_clearance": 6,
+      "preset_pool": "village_civic_core",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_civic_core",
+        "evidence": "village/plains/houses/plains_meeting_point_5"
+      },
+      "function_definition": {
+        "primary_function": "civic_center",
+        "secondary_functions": [],
+        "semantic_role": "anchor",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 10,
+          "max_z": 9
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 6
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 10,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 9
+          },
+          {
+            "x": 10,
+            "z": 9
+          },
+          {
+            "x": 5,
+            "z": 4
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 5,
+            "y": 0,
+            "z": 9,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.18,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 2,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_west_0_1_5",
+          "local_pos": {
+            "x": 0,
+            "y": 1,
+            "z": 5
+          },
+          "orientation_raw": "west_up",
+          "front": "west",
+          "top": "up",
+          "facing": "west",
+          "name": "minecraft:building_entrance",
+          "target": "minecraft:building_entrance",
+          "pool": "minecraft:village/plains/streets",
+          "joint": "aligned",
+          "final_state": "minecraft:structure_void",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_market_small",
+            "village_commercial_small",
+            "village_house_medium"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "civic_center": 1.25,
+        "civic": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "minecraft:village/plains/zombie/houses/plains_meeting_point_4",
+      "size": {
+        "length": 10,
+        "width": 16,
+        "height": 7
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "START",
+      "style_score": {
+        "classical": 0.35,
+        "military": 0.05,
+        "commercial": 0.2,
+        "residential": 0.15,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.92
+      },
+      "function_candidates": [
+        {
+          "function": "civic_center",
+          "score": 0.92
+        }
+      ],
+      "namespace": "minecraft",
+      "path": "village/plains/zombie/houses/plains_meeting_point_4",
+      "size_tier": "M",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "front_to_plaza",
+      "growth_axis": "x",
+      "vertical_role": "ground",
+      "vertical_clearance": 7,
+      "preset_pool": "village_civic_core",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_civic_core",
+        "evidence": "village/plains/zombie/houses/plains_meeting_point_4"
+      },
+      "function_definition": {
+        "primary_function": "civic_center",
+        "secondary_functions": [],
+        "semantic_role": "anchor",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 15,
+          "max_z": 9
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 7
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 15,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 9
+          },
+          {
+            "x": 15,
+            "z": 9
+          },
+          {
+            "x": 7,
+            "z": 4
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 7,
+            "y": 0,
+            "z": 9,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.18,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 2,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_west_0_1_8",
+          "local_pos": {
+            "x": 0,
+            "y": 1,
+            "z": 8
+          },
+          "orientation_raw": "west_up",
+          "front": "west",
+          "top": "up",
+          "facing": "west",
+          "name": "minecraft:building_entrance",
+          "target": "minecraft:building_entrance",
+          "pool": "minecraft:empty",
+          "joint": "aligned",
+          "final_state": "minecraft:structure_void",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_market_small",
+            "village_commercial_small",
+            "village_house_medium"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "civic_center": 1.25,
+        "civic": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "minecraft:village/plains/zombie/houses/plains_meeting_point_5",
+      "size": {
+        "length": 10,
+        "width": 11,
+        "height": 6
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "START",
+      "style_score": {
+        "classical": 0.35,
+        "military": 0.05,
+        "commercial": 0.2,
+        "residential": 0.15,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.92
+      },
+      "function_candidates": [
+        {
+          "function": "civic_center",
+          "score": 0.92
+        }
+      ],
+      "namespace": "minecraft",
+      "path": "village/plains/zombie/houses/plains_meeting_point_5",
+      "size_tier": "M",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "front_to_plaza",
+      "growth_axis": "x",
+      "vertical_role": "ground",
+      "vertical_clearance": 6,
+      "preset_pool": "village_civic_core",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_civic_core",
+        "evidence": "village/plains/zombie/houses/plains_meeting_point_5"
+      },
+      "function_definition": {
+        "primary_function": "civic_center",
+        "secondary_functions": [],
+        "semantic_role": "anchor",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 10,
+          "max_z": 9
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 6
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 10,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 9
+          },
+          {
+            "x": 10,
+            "z": 9
+          },
+          {
+            "x": 5,
+            "z": 4
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 5,
+            "y": 0,
+            "z": 9,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.18,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 2,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_west_0_1_5",
+          "local_pos": {
+            "x": 0,
+            "y": 1,
+            "z": 5
+          },
+          "orientation_raw": "west_up",
+          "front": "west",
+          "top": "up",
+          "facing": "west",
+          "name": "minecraft:building_entrance",
+          "target": "minecraft:building_entrance",
+          "pool": "minecraft:village/plains/zombie/streets",
+          "joint": "aligned",
+          "final_state": "minecraft:structure_void",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_market_small",
+            "village_commercial_small",
+            "village_house_medium"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "civic_center": 1.25,
+        "civic": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    }
+  ]
+}

@@ -2,9 +2,11 @@ package com.user.terra_script.world.city.stage.c8;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.user.terra_script.world.city.stage.CityC35CatalogIO;
 import com.user.terra_script.world.city.stage.CityHeightResolver;
 import com.user.terra_script.world.city.stage.c1.CityStage1BinaryIO;
 import com.user.terra_script.world.city.stage.c2.CityC2ScanBinaryIO;
+import com.user.terra_script.world.city.stage.StructurePlacementContract;
 import com.user.terra_script.world.city.stage.c6.CityC6Stages;
 import com.user.terra_script.world.city.stage.c7.CityC7Stages;
 import net.minecraft.core.BlockPos;
@@ -293,12 +295,14 @@ public final class CityC8Stages {
         public Integer build_order;
         public String incoming_parent_connector_id;
         public String incoming_child_connector_id;
+        public List<String> incoming_pool_refs = new ArrayList<>();
         public Integer incoming_parent_connector_x;
         public Integer incoming_parent_connector_z;
         public Integer incoming_child_connector_x;
         public Integer incoming_child_connector_z;
         public String incoming_connector_dir;
         public List<String> outgoing_connector_ids = new ArrayList<>();
+        public List<PlacementConnectorRef> outgoing_connectors = new ArrayList<>();
         public boolean terminalized;
         public String fallback_terminal_template_id;
         public Integer fallback_terminal_x;
@@ -308,6 +312,16 @@ public final class CityC8Stages {
         public Integer footprint_min_z;
         public Integer footprint_max_x;
         public Integer footprint_max_z;
+    }
+
+    public static class PlacementConnectorRef {
+        public String connector_id;
+        public String front;
+        public List<String> pool_refs = new ArrayList<>();
+        public List<String> catalog_pool_refs = new ArrayList<>();
+        public String pool_truth_source;
+        public Boolean pool_mismatch;
+        public String mismatch_detail;
     }
 
     public static class TerrainImpactExtent {
@@ -701,9 +715,11 @@ public final class CityC8Stages {
         if (chosen != null) {
             node.x = chosen.x;
             node.z = chosen.z;
-            node.y = chosen.y != null ? chosen.y : item.base_y;
-            node.selected_rotation = chosen.rotation != null ? chosen.rotation : fallbackRotation;
             node.selected_template_id = chosen.template_id;
+            node.y = chosen.y != null
+                    ? chosen.y
+                    : StructurePlacementContract.resolveSurfaceAlignedOriginY(chosen.template_id, item.base_y);
+            node.selected_rotation = chosen.rotation != null ? chosen.rotation : fallbackRotation;
             node.chosen_start_connector_id = chosen.connector_id;
             node.chosen_start_connector_front = chosen.connector_front;
             node.chosen_start_rotation = node.selected_rotation;
@@ -713,9 +729,9 @@ public final class CityC8Stages {
 
         node.x = fallbackX;
         node.z = fallbackZ;
-        node.y = item.base_y;
         node.selected_rotation = fallbackRotation;
         node.selected_template_id = preferredStartTemplateId(node, selection, arrangement);
+        node.y = StructurePlacementContract.resolveSurfaceAlignedOriginY(node.selected_template_id, item.base_y);
         node.chosen_start_connector_id = null;
         node.chosen_start_connector_front = null;
         node.chosen_start_rotation = fallbackRotation;
@@ -781,16 +797,21 @@ public final class CityC8Stages {
             List<Integer> rotations = allowedStartRotations(selection, arrangement, templateId, fallbackRotation);
             for (Integer rotationValue : rotations) {
                 int rotation = rotationValue != null ? rotationValue : fallbackRotation;
-                for (BlockPos origin : searchPositions) {
+                for (BlockPos searchOrigin : searchPositions) {
+                    BlockPos origin = new BlockPos(
+                            searchOrigin.getX(),
+                            StructurePlacementContract.resolveSurfaceAlignedOriginY(templateId, searchOrigin.getY()),
+                            searchOrigin.getZ()
+                    );
                     BoundingBox rootBounds = templateBounds(templateManager, templateId, origin, rotation);
                     if (rootBounds == null) {
                         continue;
                     }
                     sawLoadedTemplate = true;
 
-                    PlacementNode rootPlacement = startPlacement(templateId, origin, rotation, rootBounds);
+                    PlacementNode scanPlacement = startPlacement(templateId, origin, rotation, rootBounds);
                     List<CityVanillaJigsawAdapterService.RuntimeConnectorCandidate> runtimeConnectors =
-                            CityVanillaJigsawAdapterService.scanRuntimeConnectors(level, rootPlacement);
+                            CityVanillaJigsawAdapterService.scanRuntimeConnectors(level, scanPlacement);
                     List<CityVanillaJigsawAdapterService.RuntimeConnectorCandidate> horizontalConnectors = new ArrayList<>();
                     List<CityVanillaJigsawAdapterService.RuntimeConnectorCandidate> allowedConnectors = new ArrayList<>();
                     for (CityVanillaJigsawAdapterService.RuntimeConnectorCandidate connector : runtimeConnectors) {
@@ -802,17 +823,29 @@ public final class CityC8Stages {
                             sawAllowedHorizontalConnector = true;
                         }
                     }
-                    boolean rootInsideArea = containsFootprint(
-                            geometry,
-                            rootPlacement.footprint_min_x,
-                            rootPlacement.footprint_min_z,
-                            rootPlacement.footprint_max_x,
-                            rootPlacement.footprint_max_z
-                    );
-                    if (rootInsideArea) {
-                        sawInsideRootBounds = true;
-                    }
                     for (CityVanillaJigsawAdapterService.RuntimeConnectorCandidate connector : allowedConnectors) {
+                        PlacementNode rootPlacement = runtimeAlignedStartPlacement(
+                                templateManager,
+                                templateId,
+                                scanPlacement.x,
+                                scanPlacement.z,
+                                rotation,
+                                item.base_y,
+                                connector
+                        );
+                        if (rootPlacement == null) {
+                            continue;
+                        }
+                        boolean rootInsideArea = containsFootprint(
+                                geometry,
+                                rootPlacement.footprint_min_x,
+                                rootPlacement.footprint_min_z,
+                                rootPlacement.footprint_max_x,
+                                rootPlacement.footprint_max_z
+                        );
+                        if (rootInsideArea) {
+                            sawInsideRootBounds = true;
+                        }
                         StartCandidateEvaluation evaluation = buildStartCandidateEvaluation(
                                 cityId,
                                 level,
@@ -1262,6 +1295,22 @@ public final class CityC8Stages {
         return placement;
     }
 
+    private static PlacementNode runtimeAlignedStartPlacement(
+            StructureTemplateManager templateManager,
+            String templateId,
+            int originX,
+            int originZ,
+            int rotation,
+            int baseY,
+            CityVanillaJigsawAdapterService.RuntimeConnectorCandidate connector
+    ) {
+        if (connector == null) return null;
+        BlockPos alignedOrigin = new BlockPos(originX, resolveRuntimeStartOriginY(baseY, connector.local_y), originZ);
+        BoundingBox bounds = templateBounds(templateManager, templateId, alignedOrigin, rotation);
+        if (bounds == null) return null;
+        return startPlacement(templateId, alignedOrigin, rotation, bounds);
+    }
+
     private static BoundingBox templateBounds(
             StructureTemplateManager templateManager,
             String templateId,
@@ -1379,6 +1428,8 @@ public final class CityC8Stages {
         node.last_error_code = null;
         node.last_error_message = null;
         node.y = placement.y;
+        removeNodeById(item.validated_nodes, node.node_id);
+        removePlacementByNodeId(item, node.node_id);
         item.validated_nodes.add(node);
         item.placements.add(placement);
         item.node_queue.removeIf(existing -> existing != null && decision.node_id.equals(existing.node_id));
@@ -1394,6 +1445,117 @@ public final class CityC8Stages {
         result.ok = true;
         result.node = node;
         result.placement = placement;
+        return result;
+    }
+
+    public static NodeSubmitResult persistSolvedPlacement(
+            FoundationItem item,
+            PlacementNode parentPlacement,
+            String parentConnectorId,
+            String selectedTemplateId,
+            String selectedConnectorDir,
+            PlacementNode solvedPlacement
+    ) {
+        CatalogContext catalog = loadCatalogContext();
+        return persistSolvedPlacement(item, parentPlacement, parentConnectorId, selectedTemplateId, selectedConnectorDir, solvedPlacement, catalog);
+    }
+
+    static NodeSubmitResult persistSolvedPlacement(
+            FoundationItem item,
+            PlacementNode parentPlacement,
+            String parentConnectorId,
+            String selectedTemplateId,
+            String selectedConnectorDir,
+            PlacementNode solvedPlacement,
+            CatalogContext catalog
+    ) {
+        NodeSubmitResult result = new NodeSubmitResult();
+        if (item == null || parentPlacement == null || solvedPlacement == null || solvedPlacement.node_id == null || solvedPlacement.node_id.isBlank()) {
+            result.ok = false;
+            result.error_code = "missing_solved_placement";
+            result.error_message = "当前 solved placement 不完整，无法写回 C8 会话树。";
+            return result;
+        }
+
+        NodeTask parentNode = findNode(item, parentPlacement.node_id);
+        NodeTask placeholder = findQueuedPlaceholder(item, parentPlacement.node_id, parentConnectorId);
+        NodeTask node = new NodeTask();
+        node.node_id = solvedPlacement.node_id;
+        node.parent_node_id = parentPlacement.node_id;
+        node.phase_key = placeholder != null && placeholder.phase_key != null ? placeholder.phase_key : nextPhaseKey(item, parentNode != null ? parentNode.phase_key : null);
+        node.phase_name = placeholder != null && placeholder.phase_name != null ? placeholder.phase_name : phaseName(item, node.phase_key);
+        node.target_role = placeholder != null && placeholder.target_role != null
+                ? placeholder.target_role
+                : (node.phase_key != null && node.phase_key.equals(parentNode != null ? parentNode.phase_key : null)
+                ? "继续补足当前骨架节点"
+                : "进入下一阶段的衔接节点");
+        node.target_structure_kind = placeholder != null && placeholder.target_structure_kind != null
+                ? placeholder.target_structure_kind
+                : ("phase4".equals(node.phase_key) ? "外围收尾节点" : "延伸节点");
+        node.status = "VALIDATED";
+        node.incoming_connector_id = parentConnectorId;
+        node.template_pool_id = firstIncomingPoolId(parentPlacement, parentConnectorId, solvedPlacement);
+        if ((node.template_pool_id == null || node.template_pool_id.isBlank()) && placeholder != null) {
+            node.template_pool_id = placeholder.template_pool_id;
+        }
+        if (node.template_pool_id == null || node.template_pool_id.isBlank()) {
+            node.template_pool_id = firstPoolIdForSolvedPlacement(catalog, solvedPlacement);
+        }
+        node.selected_template_id = selectedTemplateId != null && !selectedTemplateId.isBlank() ? selectedTemplateId : solvedPlacement.template_id;
+        node.selected_connector_dir = selectedConnectorDir != null && !selectedConnectorDir.isBlank() ? selectedConnectorDir : solvedPlacement.incoming_connector_dir;
+        node.selected_rotation = solvedPlacement.rotation;
+        node.x = solvedPlacement.x;
+        node.y = solvedPlacement.y;
+        node.z = solvedPlacement.z;
+        node.build_order = solvedPlacement.build_order;
+        node.retry_count = 0;
+        node.last_error_code = null;
+        node.last_error_message = null;
+        node.placement = solvedPlacement;
+        if (placeholder != null && placeholder.terrain_relax_profile != null) {
+            node.terrain_relax_profile = placeholder.terrain_relax_profile;
+        }
+        if (node.template_pool_id != null && !node.template_pool_id.isBlank()) {
+            node.candidate_template_ids.addAll(candidateTemplatesForPools(catalog, List.of(node.template_pool_id)));
+        } else {
+            node.candidate_template_ids.add(node.selected_template_id);
+        }
+
+        removePlaceholderChildren(item, parentPlacement.node_id);
+        removeSyntheticChildrenForParent(item, node.node_id);
+        removeFailedAttemptsForParent(item, parentPlacement.node_id);
+        removeFailedAttemptsForParent(item, node.node_id);
+        removeNodeById(item.node_queue, node.node_id);
+        removeNodeById(item.validated_nodes, node.node_id);
+        removePlacementByNodeId(item, node.node_id);
+
+        item.validated_nodes.add(node);
+        item.placements.add(solvedPlacement);
+        item.node_debug.add(debug(node.node_id, "validated", "jigsaw_solve 已把真实 child 写回当前 C8 会话树。"));
+        appendPoolMismatchDebug(item, node, solvedPlacement.outgoing_connectors);
+        RuntimeChildExpansionResult expansion = enqueueRuntimeChildNodes(item, node, solvedPlacement, catalog);
+        if (expansion.terminalized) {
+            solvedPlacement.terminalized = true;
+            item.node_debug.add(debug(node.node_id, "terminalized", "当前 solved 节点没有可继续扩展的 runtime connector，已按终端节点处理。"));
+        } else if (expansion.generated_count == 0) {
+            item.node_debug.add(debug(
+                    node.node_id,
+                    "pool_resolution_failed",
+                    expansion.pool_resolution_failure_count > 0
+                            ? "当前 solved 节点存在 runtime connector，但 pool 无法解析到有效候选模板，已记录为数据冲突/索引失败。"
+                            : "当前 solved 节点未生成下一层待决节点，请继续检查 connector 与 pool 真值。"
+            ));
+        }
+        if (item.active_node != null && safe(parentPlacement.node_id).equals(item.active_node.parent_node_id)) {
+            item.active_node = null;
+        }
+        item.active_node = nextReadyNode(item);
+        item.session_state = item.active_node != null ? "READY_FOR_AI" : "READY_FOR_BUILD";
+        updateQueueSummary(item);
+
+        result.ok = true;
+        result.node = node;
+        result.placement = solvedPlacement;
         return result;
     }
 
@@ -1461,6 +1623,78 @@ public final class CityC8Stages {
         }
     }
 
+    private static RuntimeChildExpansionResult enqueueRuntimeChildNodes(
+            FoundationItem item,
+            NodeTask parent,
+            PlacementNode placement,
+            CatalogContext catalog
+    ) {
+        RuntimeChildExpansionResult result = new RuntimeChildExpansionResult();
+        if (item == null || parent == null || placement == null) {
+            return result;
+        }
+        List<PlacementConnectorRef> outgoingConnectors = placement.outgoing_connectors != null && !placement.outgoing_connectors.isEmpty()
+                ? placement.outgoing_connectors
+                : legacyOutgoingConnectorRefs(catalog, placement);
+        if (outgoingConnectors.isEmpty()) {
+            result.terminalized = true;
+            return result;
+        }
+        int nextOrder = placement.build_order != null ? placement.build_order + 1 : item.validated_nodes.size();
+        int index = 1;
+        for (PlacementConnectorRef outgoing : outgoingConnectors) {
+            String connectorId = outgoing != null ? outgoing.connector_id : null;
+            if (connectorId == null || connectorId.isBlank()) continue;
+            List<String> runtimePoolRefs = normalizedPoolRefs(outgoing != null ? outgoing.pool_refs : List.of());
+            List<String> catalogPoolRefs = normalizedPoolRefs(outgoing != null ? outgoing.catalog_pool_refs : List.of());
+            List<String> effectivePoolRefs = !runtimePoolRefs.isEmpty() ? runtimePoolRefs : catalogPoolRefs;
+            if (!runtimePoolRefs.isEmpty() && !catalogPoolRefs.isEmpty() && !samePoolRefs(runtimePoolRefs, catalogPoolRefs)) {
+                item.node_debug.add(debug(
+                        parent.node_id,
+                        "pool_mismatch",
+                        "连接器 `" + connectorId + "` 的 runtime pool refs " + runtimePoolRefs + " 与 catalog pool refs " + catalogPoolRefs + " 不一致，当前继续采用 runtime。"
+                ));
+            }
+            if (effectivePoolRefs.isEmpty()) {
+                result.pool_resolution_failure_count++;
+                item.node_debug.add(debug(parent.node_id, "enqueue_skip", "连接器 `" + connectorId + "` 当前没有可用的 runtime/catalog pool refs，暂不生成下一层节点。"));
+                continue;
+            }
+            List<String> candidateTemplateIds = candidateTemplatesForPools(catalog, effectivePoolRefs);
+            if (candidateTemplateIds.isEmpty()) {
+                result.pool_resolution_failure_count++;
+                item.node_debug.add(debug(parent.node_id, "enqueue_skip", "连接器 `" + connectorId + "` 当前没有可解析的 pool 成员，暂不生成下一层节点。"));
+                continue;
+            }
+            NodeTask child = new NodeTask();
+            child.node_id = parent.node_id + "_child_" + index;
+            child.parent_node_id = parent.node_id;
+            child.phase_key = nextPhaseKey(item, parent.phase_key);
+            child.phase_name = phaseName(item, child.phase_key);
+            child.target_role = child.phase_key.equals(parent.phase_key) ? "继续补足当前骨架节点" : "进入下一阶段的衔接节点";
+            child.target_structure_kind = child.phase_key.equals("phase4") ? "外围收尾节点" : "延伸节点";
+            child.status = "READY_FOR_AI";
+            child.incoming_connector_id = connectorId;
+            child.template_pool_id = effectivePoolRefs.get(0);
+            child.candidate_template_ids.addAll(candidateTemplateIds);
+            if (outgoing != null && outgoing.front != null && !outgoing.front.isBlank()) {
+                child.allowed_connector_dirs.add(outgoing.front);
+            }
+            for (String dir : allowedConnectorDirsForTemplates(catalog, candidateTemplateIds)) {
+                if (!child.allowed_connector_dirs.contains(dir)) {
+                    child.allowed_connector_dirs.add(dir);
+                }
+            }
+            child.build_order = nextOrder + index;
+            child.y = item.base_y;
+            item.node_queue.add(child);
+            item.node_debug.add(debug(child.node_id, "enqueue", "根据真实 jigsaw child 的连接器与 pool 生成下一层待决节点。"));
+            result.generated_count++;
+            index++;
+        }
+        return result;
+    }
+
     private static NodeTask nextReadyNode(FoundationItem item) {
         if (item == null || item.node_queue == null) return null;
         item.node_queue.sort(Comparator.comparingInt(node -> node != null && node.build_order != null ? node.build_order : Integer.MAX_VALUE));
@@ -1518,13 +1752,14 @@ public final class CityC8Stages {
         placement.template_id = node.selected_template_id;
         placement.role = node.target_role;
         placement.x = node.x != null ? node.x : 0;
-        placement.y = node.y != null ? node.y : item.base_y;
+        placement.y = resolvePlacementOriginY(item, node);
         placement.z = node.z != null ? node.z : 0;
         placement.rotation = node.selected_rotation != null ? node.selected_rotation : 0;
         placement.build_order = node.build_order;
         placement.incoming_parent_connector_id = node.incoming_connector_id;
         placement.incoming_connector_dir = node.selected_connector_dir;
         placement.outgoing_connector_ids = syntheticOutgoingConnectors(node);
+        placement.outgoing_connectors = syntheticOutgoingConnectorRefs(node, placement.outgoing_connector_ids);
         placement.footprint_min_x = placement.x;
         placement.footprint_min_z = placement.z;
         placement.footprint_max_x = placement.x;
@@ -1545,6 +1780,22 @@ public final class CityC8Stages {
         return out;
     }
 
+    private static List<PlacementConnectorRef> syntheticOutgoingConnectorRefs(NodeTask node, List<String> connectorIds) {
+        List<PlacementConnectorRef> refs = new ArrayList<>();
+        if (connectorIds == null || connectorIds.isEmpty()) return refs;
+        for (int i = 0; i < connectorIds.size(); i++) {
+            String connectorId = connectorIds.get(i);
+            if (connectorId == null || connectorId.isBlank()) continue;
+            PlacementConnectorRef ref = new PlacementConnectorRef();
+            ref.connector_id = connectorId;
+            if (node != null && node.allowed_connector_dirs != null && i < node.allowed_connector_dirs.size()) {
+                ref.front = node.allowed_connector_dirs.get(i);
+            }
+            refs.add(ref);
+        }
+        return refs;
+    }
+
     private static String validatePlacement(
             FoundationItem item,
             AreaGeometry geometry,
@@ -1558,6 +1809,7 @@ public final class CityC8Stages {
         }
         for (PlacementNode existing : item.placements) {
             if (existing == null) continue;
+            if (safe(placement.node_id).equals(existing.node_id)) continue;
             boolean separated = placement.footprint_max_x < existing.footprint_min_x
                     || placement.footprint_min_x > existing.footprint_max_x
                     || placement.footprint_max_z < existing.footprint_min_z
@@ -1570,9 +1822,58 @@ public final class CityC8Stages {
                     ? node.terrain_relax_profile.max_height_delta
                     : Math.max(3, item.delta_height + 2);
             if (Math.abs(h - item.base_y) > allowed) return "terrain_rejected";
-            placement.y = item.base_y;
         }
         return null;
+    }
+
+    private static int resolvePlacementOriginY(FoundationItem item, NodeTask node) {
+        int baseY = item != null ? item.base_y : 0;
+        if (node == null) {
+            return baseY;
+        }
+        if (node.y != null && node.y != baseY) {
+            return node.y;
+        }
+        return StructurePlacementContract.resolveSurfaceAlignedOriginY(node.selected_template_id, baseY);
+    }
+
+    public static boolean normalizeRuntimeStartHeights(ServerLevel level, C8Plan plan) {
+        if (level == null || plan == null || plan.foundations == null) return false;
+        boolean changed = false;
+        for (FoundationItem item : plan.foundations) {
+            if (item == null || item.validated_nodes == null || item.validated_nodes.isEmpty()) continue;
+            for (NodeTask node : item.validated_nodes) {
+                if (!eligibleForRuntimeStartNormalization(node)) continue;
+                Integer connectorLocalY = runtimeStartConnectorLocalY(level, node);
+                if (connectorLocalY == null) continue;
+                changed |= normalizeRuntimeStartNode(item, node, connectorLocalY);
+            }
+        }
+        return changed;
+    }
+
+    static boolean normalizeRuntimeStartNode(FoundationItem item, NodeTask node, int connectorLocalY) {
+        if (item == null || !eligibleForRuntimeStartNormalization(node)) return false;
+        int expectedY = resolveRuntimeStartOriginY(item.base_y, connectorLocalY);
+        boolean changed = false;
+        if (node.y == null || node.y != expectedY) {
+            node.y = expectedY;
+            changed = true;
+        }
+        if (node.placement != null && node.placement.y != expectedY) {
+            node.placement.y = expectedY;
+            changed = true;
+        }
+        PlacementNode placement = findPlacement(item, node.node_id);
+        if (placement != null && placement.y != expectedY) {
+            placement.y = expectedY;
+            changed = true;
+        }
+        return changed;
+    }
+
+    static int resolveRuntimeStartOriginY(int baseY, int connectorLocalY) {
+        return baseY - connectorLocalY;
     }
 
     private static void registerFailure(
@@ -1612,6 +1913,284 @@ public final class CityC8Stages {
         record.stage = stage;
         record.detail = detail;
         return record;
+    }
+
+    private static boolean eligibleForRuntimeStartNormalization(NodeTask node) {
+        return node != null
+                && (node.runtime_fallback_used == null || !node.runtime_fallback_used)
+                && node.chosen_start_connector_id != null
+                && !node.chosen_start_connector_id.isBlank()
+                && node.selected_template_id != null
+                && !node.selected_template_id.isBlank()
+                && node.selected_rotation != null
+                && node.x != null
+                && node.z != null;
+    }
+
+    private static Integer runtimeStartConnectorLocalY(ServerLevel level, NodeTask node) {
+        if (level == null || !eligibleForRuntimeStartNormalization(node)) return null;
+        PlacementNode placement = new PlacementNode();
+        placement.node_id = node.node_id;
+        placement.template_id = node.selected_template_id;
+        placement.x = node.x;
+        placement.y = node.y != null ? node.y : 0;
+        placement.z = node.z;
+        placement.rotation = node.selected_rotation != null ? node.selected_rotation : 0;
+        for (CityVanillaJigsawAdapterService.RuntimeConnectorCandidate connector : CityVanillaJigsawAdapterService.scanRuntimeConnectors(level, placement)) {
+            if (connector != null && safe(node.chosen_start_connector_id).equals(connector.id)) {
+                return connector.local_y;
+            }
+        }
+        return null;
+    }
+
+    private static void removePlaceholderChildren(FoundationItem item, String parentNodeId) {
+        if (item == null || item.node_queue == null) return;
+        item.node_queue.removeIf(node -> isSyntheticPlaceholder(node, parentNodeId));
+        if (item.active_node != null && isSyntheticPlaceholder(item.active_node, parentNodeId)) {
+            item.active_node = null;
+        }
+    }
+
+    private static void removeSyntheticChildrenForParent(FoundationItem item, String parentNodeId) {
+        if (item == null || item.node_queue == null) return;
+        item.node_queue.removeIf(node -> isSyntheticPlaceholder(node, parentNodeId));
+    }
+
+    private static boolean isSyntheticPlaceholder(NodeTask node, String parentNodeId) {
+        return node != null
+                && safe(parentNodeId).equals(node.parent_node_id)
+                && node.node_id != null
+                && node.node_id.startsWith(safe(parentNodeId) + "_child_");
+    }
+
+    private static void removeFailedAttemptsForParent(FoundationItem item, String parentNodeId) {
+        if (item == null || item.failed_attempts == null || parentNodeId == null || parentNodeId.isBlank()) return;
+        item.failed_attempts.removeIf(attempt -> attempt != null
+                && attempt.node_id != null
+                && attempt.node_id.startsWith(parentNodeId + "_child_"));
+    }
+
+    private static void removeNodeById(List<NodeTask> nodes, String nodeId) {
+        if (nodes == null || nodeId == null || nodeId.isBlank()) return;
+        nodes.removeIf(node -> node != null && nodeId.equals(node.node_id));
+    }
+
+    private static void removePlacementByNodeId(FoundationItem item, String nodeId) {
+        if (item == null || item.placements == null || nodeId == null || nodeId.isBlank()) return;
+        item.placements.removeIf(placement -> placement != null && nodeId.equals(placement.node_id));
+    }
+
+    private static PlacementNode findPlacement(FoundationItem item, String nodeId) {
+        if (item == null || item.placements == null || nodeId == null || nodeId.isBlank()) return null;
+        for (PlacementNode placement : item.placements) {
+            if (placement != null && nodeId.equals(placement.node_id)) return placement;
+        }
+        return null;
+    }
+
+    private static List<PlacementConnectorRef> legacyOutgoingConnectorRefs(CatalogContext catalog, PlacementNode placement) {
+        List<PlacementConnectorRef> refs = new ArrayList<>();
+        if (catalog == null || placement == null || placement.outgoing_connector_ids == null || placement.outgoing_connector_ids.isEmpty()) {
+            return refs;
+        }
+        CityC35CatalogIO.CatalogStructure meta = catalog.byId.getOrDefault(safe(placement.template_id).toLowerCase(Locale.ROOT), null);
+        for (String connectorId : placement.outgoing_connector_ids) {
+            if (connectorId == null || connectorId.isBlank()) continue;
+            PlacementConnectorRef ref = new PlacementConnectorRef();
+            ref.connector_id = connectorId;
+            CityC35CatalogIO.ConnectorSpec connector = findConnector(meta, connectorId);
+            if (connector != null) {
+                ref.front = normalizeDirection(connector.facing);
+                ref.pool_refs.addAll(CityC35CatalogIO.connectorPoolRefs(connector));
+                ref.catalog_pool_refs.addAll(CityC35CatalogIO.connectorPoolRefs(connector));
+                ref.pool_truth_source = ref.pool_refs.isEmpty() ? "missing" : "catalog";
+                ref.pool_mismatch = false;
+            }
+            refs.add(ref);
+        }
+        return refs;
+    }
+
+    private static NodeTask findQueuedPlaceholder(FoundationItem item, String parentNodeId, String incomingConnectorId) {
+        if (item == null || item.node_queue == null) return null;
+        for (NodeTask node : item.node_queue) {
+            if (!isSyntheticPlaceholder(node, parentNodeId)) continue;
+            if (incomingConnectorId == null || incomingConnectorId.isBlank() || incomingConnectorId.equals(node.incoming_connector_id)) {
+                return node;
+            }
+        }
+        return null;
+    }
+
+    private static CatalogContext loadCatalogContext() {
+        CatalogContext context = new CatalogContext();
+        try {
+            CityC35CatalogIO.StructureCatalog catalog = CityC35CatalogIO.loadCatalog(GSON, CityC35CatalogIO.StructureCatalog.class);
+            if (catalog == null || catalog.structures == null) {
+                return context;
+            }
+            for (CityC35CatalogIO.CatalogStructure structure : catalog.structures) {
+                if (structure == null || structure.structure_id == null || structure.structure_id.isBlank()) continue;
+                String structureId = safe(structure.structure_id).toLowerCase(Locale.ROOT);
+                context.byId.putIfAbsent(structureId, structure);
+                indexStructurePools(context, structure);
+            }
+        } catch (Exception e) {
+            System.err.println("[C8] Failed to load catalog context for runtime child persistence: " + e.getMessage());
+        }
+        return context;
+    }
+
+    private static CityC35CatalogIO.ConnectorSpec findConnector(CityC35CatalogIO.CatalogStructure meta, String connectorId) {
+        if (meta == null || meta.connectors == null || connectorId == null || connectorId.isBlank()) return null;
+        for (CityC35CatalogIO.ConnectorSpec connector : meta.connectors) {
+            if (connector != null && connectorId.equals(connector.id)) return connector;
+        }
+        return null;
+    }
+
+    private static String firstPoolIdForSolvedPlacement(CatalogContext catalog, PlacementNode placement) {
+        if (catalog == null || placement == null) return null;
+        CityC35CatalogIO.CatalogStructure meta = catalog.byId.getOrDefault(safe(placement.template_id).toLowerCase(Locale.ROOT), null);
+        if (meta == null || placement.outgoing_connector_ids == null) return null;
+        for (String connectorId : placement.outgoing_connector_ids) {
+            CityC35CatalogIO.ConnectorSpec connector = findConnector(meta, connectorId);
+            List<String> refs = connector != null ? CityC35CatalogIO.connectorPoolRefs(connector) : List.of();
+            for (String ref : refs) {
+                if (ref != null && !ref.isBlank()) return ref;
+            }
+        }
+        return meta.preset_pool;
+    }
+
+    private static String firstIncomingPoolId(PlacementNode parentPlacement, String parentConnectorId, PlacementNode solvedPlacement) {
+        List<String> refs = normalizedPoolRefs(solvedPlacement != null ? solvedPlacement.incoming_pool_refs : List.of());
+        if (!refs.isEmpty()) {
+            return refs.get(0);
+        }
+        PlacementConnectorRef parentConnector = findPlacementConnector(parentPlacement, parentConnectorId);
+        List<String> parentRefs = normalizedPoolRefs(parentConnector != null ? parentConnector.pool_refs : List.of());
+        if (!parentRefs.isEmpty()) {
+            return parentRefs.get(0);
+        }
+        return null;
+    }
+
+    private static List<String> candidateTemplatesForPools(CatalogContext catalog, List<String> poolRefs) {
+        if (catalog == null || poolRefs == null || poolRefs.isEmpty()) return List.of();
+        Set<String> ordered = new LinkedHashSet<>();
+        for (String poolId : poolRefs) {
+            List<String> preferredMembers = pathDerivedMembersForPool(catalog, poolId);
+            if (!preferredMembers.isEmpty()) {
+                ordered.addAll(preferredMembers);
+                continue;
+            }
+            List<CityC35CatalogIO.CatalogStructure> members = catalog.structuresByPool.get(safe(poolId).toLowerCase(Locale.ROOT));
+            if (members == null) continue;
+            for (CityC35CatalogIO.CatalogStructure member : members) {
+                if (member != null && member.structure_id != null && !member.structure_id.isBlank()) {
+                    ordered.add(member.structure_id);
+                }
+            }
+        }
+        return new ArrayList<>(ordered);
+    }
+
+    private static List<String> pathDerivedMembersForPool(CatalogContext catalog, String poolId) {
+        if (catalog == null || poolId == null || poolId.isBlank() || !poolId.contains(":")) {
+            return List.of();
+        }
+        String path = poolId.substring(poolId.indexOf(':') + 1);
+        if (path.isBlank()) return List.of();
+        String marker = path + "/";
+        Set<String> matches = new LinkedHashSet<>();
+        for (CityC35CatalogIO.CatalogStructure structure : catalog.byId.values()) {
+            if (structure == null || structure.structure_id == null || structure.structure_id.isBlank()) continue;
+            String structureId = structure.structure_id;
+            int colon = structureId.indexOf(':');
+            String structurePath = colon >= 0 ? structureId.substring(colon + 1) : structureId;
+            if (structurePath.equals(path) || structurePath.startsWith(marker) || structurePath.contains("/" + marker)) {
+                matches.add(structureId);
+            }
+        }
+        return new ArrayList<>(matches);
+    }
+
+    private static void indexStructurePools(CatalogContext context, CityC35CatalogIO.CatalogStructure structure) {
+        if (context == null || structure == null) return;
+        indexStructurePool(context, structure, structure.preset_pool);
+        if (structure.connectors == null) return;
+        for (CityC35CatalogIO.ConnectorSpec connector : structure.connectors) {
+            if (connector == null) continue;
+            indexStructurePool(context, structure, connector.pool);
+            for (String poolId : CityC35CatalogIO.connectorPoolRefs(connector)) {
+                indexStructurePool(context, structure, poolId);
+            }
+        }
+    }
+
+    private static void indexStructurePool(CatalogContext context, CityC35CatalogIO.CatalogStructure structure, String poolId) {
+        String normalized = safe(poolId).toLowerCase(Locale.ROOT);
+        if (normalized.isBlank()) return;
+        List<CityC35CatalogIO.CatalogStructure> members = context.structuresByPool.computeIfAbsent(normalized, ignored -> new ArrayList<>());
+        boolean exists = members.stream().anyMatch(existing -> existing != null && safe(existing.structure_id).equalsIgnoreCase(structure.structure_id));
+        if (!exists) {
+            members.add(structure);
+        }
+    }
+
+    private static PlacementConnectorRef findPlacementConnector(PlacementNode placement, String connectorId) {
+        if (placement == null || connectorId == null || connectorId.isBlank()) return null;
+        if (placement.outgoing_connectors != null) {
+            for (PlacementConnectorRef ref : placement.outgoing_connectors) {
+                if (ref != null && connectorId.equals(ref.connector_id)) {
+                    return ref;
+                }
+            }
+        }
+        return null;
+    }
+
+    private static List<String> normalizedPoolRefs(List<String> poolRefs) {
+        if (poolRefs == null || poolRefs.isEmpty()) return List.of();
+        Set<String> ordered = new LinkedHashSet<>();
+        for (String poolId : poolRefs) {
+            if (poolId != null && !poolId.isBlank()) {
+                ordered.add(poolId);
+            }
+        }
+        return new ArrayList<>(ordered);
+    }
+
+    private static boolean samePoolRefs(List<String> left, List<String> right) {
+        return new LinkedHashSet<>(normalizedPoolRefs(left)).equals(new LinkedHashSet<>(normalizedPoolRefs(right)));
+    }
+
+    private static void appendPoolMismatchDebug(FoundationItem item, NodeTask node, List<PlacementConnectorRef> outgoingConnectors) {
+        if (item == null || node == null || outgoingConnectors == null || outgoingConnectors.isEmpty()) return;
+        for (PlacementConnectorRef ref : outgoingConnectors) {
+            if (ref == null || !Boolean.TRUE.equals(ref.pool_mismatch) || ref.mismatch_detail == null || ref.mismatch_detail.isBlank()) {
+                continue;
+            }
+            item.node_debug.add(debug(node.node_id, "pool_mismatch", ref.mismatch_detail));
+        }
+    }
+
+    private static List<String> allowedConnectorDirsForTemplates(CatalogContext catalog, List<String> templateIds) {
+        if (catalog == null || templateIds == null || templateIds.isEmpty()) return List.of();
+        Set<String> dirs = new LinkedHashSet<>();
+        for (String templateId : templateIds) {
+            CityC35CatalogIO.CatalogStructure meta = catalog.byId.getOrDefault(safe(templateId).toLowerCase(Locale.ROOT), null);
+            if (meta == null || meta.connectors == null) continue;
+            for (CityC35CatalogIO.ConnectorSpec connector : meta.connectors) {
+                String dir = normalizeDirection(connector != null ? connector.facing : null);
+                if (DEFAULT_HORIZONTAL_CONNECTOR_DIRS.contains(dir)) {
+                    dirs.add(dir);
+                }
+            }
+        }
+        return new ArrayList<>(dirs);
     }
 
     private static String localizedRejectReason(String rejectReason) {
@@ -1967,6 +2546,17 @@ public final class CityC8Stages {
 
     private static String safe(String value) {
         return value == null ? "" : value;
+    }
+
+    static final class CatalogContext {
+        final Map<String, CityC35CatalogIO.CatalogStructure> byId = new LinkedHashMap<>();
+        final Map<String, List<CityC35CatalogIO.CatalogStructure>> structuresByPool = new LinkedHashMap<>();
+    }
+
+    private static final class RuntimeChildExpansionResult {
+        int generated_count;
+        int pool_resolution_failure_count;
+        boolean terminalized;
     }
 
     private static final class StartSelectionResolution {

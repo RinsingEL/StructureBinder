@@ -121,12 +121,10 @@ class BuildExecutionPipelineTest {
     @Test
     void pipelineMarksTaskDoneAndLogsTerrainStagesOnSuccess() {
         BuildExecutionTestSupport.FakePlacementGateway gateway = new BuildExecutionTestSupport.FakePlacementGateway();
-        gateway.outcome = StructureInjector.PlacementOutcome.of(
-                true,
-                gateway.bounds,
-                2,
-                List.of(new BlockPos(10, 64, 20), new BlockPos(11, 64, 20))
-        );
+        TerrainClearStats postCleanup = new TerrainClearStats("post_cleanup");
+        postCleanup.record(new BlockPos(10, 64, 20), "minecraft:cobblestone", "jigsaw_final_state");
+        postCleanup.record(new BlockPos(11, 64, 20), "minecraft:air", "jigsaw_air_fallback");
+        gateway.outcome = StructureInjector.PlacementOutcome.of(true, gateway.bounds, postCleanup);
         BuildExecutionPipeline pipeline = new BuildExecutionPipeline(
                 new BuildChunkGate(),
                 new BuildRuntimeValidator(gateway),
@@ -153,6 +151,10 @@ class BuildExecutionPipelineTest {
         assertTrue(logger.entries.stream().anyMatch(entry -> "embedded_excavate".equals(entry.details().get("stage").getAsString())));
         assertTrue(logger.entries.stream().anyMatch(entry -> "post_cleanup".equals(entry.details().get("stage").getAsString())));
         assertTrue(logger.entries.stream().anyMatch(entry -> "place_structure".equals(entry.details().get("stage").getAsString())));
+        assertTrue(logger.entries.stream().anyMatch(entry ->
+                "post_cleanup".equals(entry.details().get("stage").getAsString())
+                        && entry.details().getAsJsonObject("reason_counts").get("jigsaw_final_state").getAsInt() == 1
+                        && entry.details().getAsJsonObject("reason_counts").get("jigsaw_air_fallback").getAsInt() == 1));
         assertTrue(logger.entries.stream().anyMatch(entry -> "completed".equals(entry.level())));
     }
 
