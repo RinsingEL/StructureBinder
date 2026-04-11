@@ -33,6 +33,8 @@ import com.user.terra_script.world.city.stage.c6.CityC6GroupPreviewExporter;
 import com.user.terra_script.world.city.stage.c7.CityC7Stages;
 import com.user.terra_script.world.city.stage.c8.CityC8Stages;
 import com.user.terra_script.world.city.stage.c8.CityC8ArrangementPreviewExporter;
+import com.user.terra_script.world.city.stage.c8.CityC8SubmitDebugTrace;
+import com.user.terra_script.world.city.stage.c8.CityC8SubmitPreviewExporter;
 import com.user.terra_script.world.city.stage.c8.CityJigsawSolverDebugTrace;
 import com.user.terra_script.world.city.stage.c8.CityJigsawSolverPreviewExporter;
 import com.user.terra_script.world.city.stage.c9.CityC9Stages;
@@ -49,9 +51,12 @@ import com.user.terra_script.runtime.log.RuntimeLogEvent;
 import com.user.terra_script.runtime.log.RuntimeLogger;
 import com.user.terra_script.world.city.CityBuildQueueExecutor;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.storage.LevelResource;
 
@@ -1233,6 +1238,10 @@ public class CityController {
                     area,
                     CityC8Stages.collectAreaBlockKeys(c6Index, foundation.build_area_numeric_id)
             );
+            List<CityC8Stages.PlacementNode> existingPlacements = collectExistingPlacements(foundation);
+            CityC8SubmitDebugTrace debugTrace = applyNow
+                    ? CityC8SubmitDebugTrace.create(mcServer, cityDir, cityId, foundation.group_id != null ? foundation.group_id : groupId)
+                    : null;
 
             CityC8Stages.NodeDecision decision = new CityC8Stages.NodeDecision();
             decision.node_id = readOptionalString(json, "node_id");
@@ -1257,6 +1266,18 @@ public class CityController {
             }
             if (decision.selected_template_id != null && !decision.selected_template_id.isBlank()) hasDecisionMutation = true;
             if (decision.selected_connector_dir != null && !decision.selected_connector_dir.isBlank()) hasDecisionMutation = true;
+            if (debugTrace != null) {
+                debugTrace.addStep(
+                        "01_request_context",
+                        "装载 C8 提交请求上下文",
+                        "确认本次 start/普通节点提交使用的建造区、当前节点与已有结构背景。",
+                        "读取当前 group 的 C8 foundation、C6 geometry 与本次提交节点请求参数。",
+                        "通过当前 group 的 C8/C6 落盘产物恢复 active node、已有 placement 与建造区轮廓，为后续校验和执行做输入准备。",
+                        "已定位本次 C8 提交节点 `" + safe(decision.node_id) + "`，准备对模板 `" + safe(decision.selected_template_id) + "` 发起校验与落地。",
+                        "ok",
+                        buildC8SubmitRequestEvidence(foundation, geometry, decision, existingPlacements, applyNow)
+                );
+            }
 
             CityC8Stages.NodeSubmitResult submitResult;
             CityC8Stages.NodeTask existingValidatedNode = !hasDecisionMutation && applyNow
@@ -1275,6 +1296,30 @@ public class CityController {
                 saveC8Plan(cityDir, groupId, plan);
             }
 
+            StructureInjector.PlacementBounds runtimeBounds = null;
+            if (mcServer != null && mcServer.overworld() != null && submitResult != null && submitResult.placement != null) {
+                runtimeBounds = StructureInjector.placementBounds(
+                        mcServer.overworld(),
+                        submitResult.placement.template_id,
+                        new BlockPos(submitResult.placement.x, submitResult.placement.y, submitResult.placement.z),
+                        toRotation(submitResult.placement.rotation)
+                );
+            }
+            if (debugTrace != null) {
+                debugTrace.addStep(
+                        "02_validation_result",
+                        "记录 C8 节点校验结果",
+                        "确认本次节点提交是否通过 C8 校验，并给出期望结构 bounds 与落点。",
+                        "读取 submit_result、placement 与 runtime 结构 bounds，确认当前 start/节点理论上应该如何落地。",
+                        "对通过校验的节点额外计算 runtime placementBounds，避免后续排查只能看到点位看不到完整期望矩形。",
+                        submitResult.ok
+                                ? "当前节点已通过 C8 校验，可以继续进入执行层落地。"
+                                : "当前节点未通过 C8 校验，本次提交会停在校验阶段。",
+                        submitResult.ok ? "ok" : "invalid",
+                        buildC8SubmitValidationEvidence(submitResult, runtimeBounds)
+                );
+            }
+
             JsonObject res = new JsonObject();
             res.addProperty("status", submitResult.ok ? "ok" : "invalid");
             res.addProperty("step", "C8_SUBMIT");
@@ -1288,6 +1333,24 @@ public class CityController {
             res.add("validated_nodes", gson.toJsonTree(foundation.validated_nodes));
             res.add("failed_attempts", gson.toJsonTree(foundation.failed_attempts));
             if (!submitResult.ok || !applyNow) {
+                if (debugTrace != null) {
+                    finalizeC8SubmitDebugArtifacts(
+                            res,
+                            debugTrace,
+                            cityDir,
+                            cityId,
+                            foundation.group_id != null ? foundation.group_id : groupId,
+                            foundation.build_area_id,
+                            heightData,
+                            c2ScanData,
+                            geometry,
+                            existingPlacements,
+                            submitResult != null ? submitResult.placement : null,
+                            runtimeBounds,
+                            null
+                    );
+                    debugTrace.logFinal(submitResult.ok ? "C8 节点提交完成。" : "C8 节点提交在校验阶段失败。", submitResult.ok, buildC8SubmitValidationEvidence(submitResult, runtimeBounds));
+                }
                 HttpUtil.sendResponse(exchange, submitResult.ok ? 200 : 422, gson.toJson(res));
                 return;
             }
@@ -1295,9 +1358,49 @@ public class CityController {
                 res.addProperty("status", "runtime_invalid");
                 res.addProperty("error", "Minecraft server/overworld unavailable");
                 res.add("placement_execution", buildApplyFailureEvidence("missing_server_level", "Minecraft server/overworld unavailable"));
+                if (debugTrace != null) {
+                    debugTrace.addStep(
+                            "03_apply_result",
+                            "执行 C8 落地",
+                            "把通过校验的节点提交给执行层落地。",
+                            "当前请求要求立即落地，但缺少可用的 server level。",
+                            "apply_now 依赖服务端世界对象执行 runtime validator、terrain preparation 与结构放置。",
+                            "当前 world/server 不可用，因此本次未进入执行层。",
+                            "invalid",
+                            buildApplyFailureEvidence("missing_server_level", "Minecraft server/overworld unavailable")
+                    );
+                    finalizeC8SubmitDebugArtifacts(
+                            res,
+                            debugTrace,
+                            cityDir,
+                            cityId,
+                            foundation.group_id != null ? foundation.group_id : groupId,
+                            foundation.build_area_id,
+                            heightData,
+                            c2ScanData,
+                            geometry,
+                            existingPlacements,
+                            submitResult.placement,
+                            runtimeBounds,
+                            null
+                    );
+                    debugTrace.logFinal("C8 节点提交未能进入执行层。", false, buildApplyFailureEvidence("missing_server_level", "Minecraft server/overworld unavailable"));
+                }
                 HttpUtil.sendResponse(exchange, 500, gson.toJson(res));
                 return;
             }
+
+            final JsonObject[] preSnapshotHolder = new JsonObject[1];
+            CountDownLatch preSnapshotLatch = new CountDownLatch(1);
+            StructureInjector.PlacementBounds finalRuntimeBounds = runtimeBounds;
+            mcServer.execute(() -> {
+                try {
+                    preSnapshotHolder[0] = capturePlacementWorldStats(mcServer.overworld(), submitResult.placement, finalRuntimeBounds);
+                } finally {
+                    preSnapshotLatch.countDown();
+                }
+            });
+            preSnapshotLatch.await();
 
             CityC8Stages.PlacementNode parentPlacement = submitResult.placement != null && submitResult.placement.parent_node_id != null
                     ? findPlacementNode(foundation, submitResult.placement.parent_node_id)
@@ -1336,6 +1439,54 @@ public class CityController {
                     && execution.result != null
                     && execution.result.outcome() == com.user.terra_script.world.city.execution.TaskExecutionResult.Outcome.COMPLETED;
             res.addProperty("status", executionOk ? "ok" : "runtime_invalid");
+            final JsonObject[] postSnapshotHolder = new JsonObject[1];
+            CountDownLatch postSnapshotLatch = new CountDownLatch(1);
+            mcServer.execute(() -> {
+                try {
+                    postSnapshotHolder[0] = capturePlacementWorldStats(mcServer.overworld(), submitResult.placement, finalRuntimeBounds);
+                } finally {
+                    postSnapshotLatch.countDown();
+                }
+            });
+            postSnapshotLatch.await();
+            if (debugTrace != null) {
+                debugTrace.addStep(
+                        "03_apply_result",
+                        "执行 C8 落地",
+                        "把通过校验的节点交给执行层完成清地、校验与结构放置。",
+                        "复用现有 BuildExecutionPipeline 与 SolvedPlacementExecutionService，保留当前 apply_now 主链语义。",
+                        "执行层会继续做 runtime validator、terrain preparation、模板放置与 post cleanup，再回写最终结果。",
+                        executionOk ? "当前节点已通过执行层并完成落地。" : "当前节点已进入执行层，但未完成最终落地。",
+                        executionOk ? "ok" : "invalid",
+                        buildC8SubmitApplyEvidence(executionJson, runtimeBounds)
+                );
+                debugTrace.addStep(
+                        "04_world_snapshot",
+                        "记录落地后世界快照",
+                        "在同一结构 bounds 内记录落地前后世界块统计，帮助排查“只落半截”的结构问题。",
+                        "分别在执行层前后读取目标结构 bounds 内的世界块分布、非空气数量、jigsaw 数量与分轴切片统计。",
+                        "通过同一 bounds 的 before/after 快照对比，快速判断是模板未完整放下、被 terrain preparation 清掉，还是只是视觉误判。",
+                        "已记录当前结构 bounds 的落地前后世界快照，可继续用于定位 start 半截结构。",
+                        "ok",
+                        buildC8SubmitWorldSnapshotEvidence(preSnapshotHolder[0], postSnapshotHolder[0], runtimeBounds)
+                );
+                finalizeC8SubmitDebugArtifacts(
+                        res,
+                        debugTrace,
+                        cityDir,
+                        cityId,
+                        foundation.group_id != null ? foundation.group_id : groupId,
+                        foundation.build_area_id,
+                        heightData,
+                        c2ScanData,
+                        geometry,
+                        existingPlacements,
+                        submitResult.placement,
+                        runtimeBounds,
+                        execution
+                );
+                debugTrace.logFinal(executionOk ? "C8 节点提交与落地完成。" : "C8 节点提交已到执行层，但落地未完成。", executionOk, buildC8SubmitApplyEvidence(executionJson, runtimeBounds));
+            }
             HttpUtil.sendResponse(exchange, executionOk ? 200 : 422, gson.toJson(res));
         } catch (Exception e) {
             HttpUtil.handleError(exchange, e);
@@ -2955,6 +3106,232 @@ public class CityController {
             response.add("debug_trace", debugTrace.toJson());
             response.add("debug_preview_steps", debugTrace.previewStepsJson());
         }
+    }
+
+    private static void finalizeC8SubmitDebugArtifacts(
+            JsonObject response,
+            CityC8SubmitDebugTrace debugTrace,
+            Path cityDir,
+            String cityId,
+            String groupId,
+            String buildAreaId,
+            CityStage1BinaryIO.HeightData heightData,
+            CityC2ScanBinaryIO.C2ScanData c2ScanData,
+            CityC8Stages.AreaGeometry geometry,
+            List<CityC8Stages.PlacementNode> existingPlacements,
+            CityC8Stages.PlacementNode placement,
+            StructureInjector.PlacementBounds placementBounds,
+            SolvedPlacementExecutionService.ExecutionResult execution
+    ) throws Exception {
+        if (debugTrace == null) return;
+        if (placement != null && geometry != null && geometry.valid) {
+            Map<String, String> previewPaths = CityC8SubmitPreviewExporter.export(
+                    cityDir,
+                    cityId,
+                    groupId,
+                    debugTrace.debugRunId(),
+                    buildAreaId,
+                    heightData,
+                    c2ScanData,
+                    geometry,
+                    existingPlacements,
+                    placement,
+                    placementBounds,
+                    execution
+            );
+            for (Map.Entry<String, String> entry : previewPaths.entrySet()) {
+                debugTrace.attachPreview(entry.getKey(), entry.getValue());
+            }
+        }
+        debugTrace.writeTrace();
+        if (response != null) {
+            response.addProperty("debug_run_id", debugTrace.debugRunId());
+            response.addProperty("debug_artifact_dir", debugTrace.relativeArtifactDir());
+            response.addProperty("debug_trace_file", debugTrace.relativeArtifactDir() + "/trace.json");
+            response.add("debug_preview_steps", debugTrace.previewStepsJson());
+        }
+    }
+
+    private static JsonObject buildC8SubmitRequestEvidence(
+            CityC8Stages.FoundationItem foundation,
+            CityC8Stages.AreaGeometry geometry,
+            CityC8Stages.NodeDecision decision,
+            List<CityC8Stages.PlacementNode> existingPlacements,
+            boolean applyNow
+    ) {
+        JsonObject out = new JsonObject();
+        if (foundation != null) {
+            out.addProperty("group_id", safe(foundation.group_id));
+            out.addProperty("build_area_id", safe(foundation.build_area_id));
+            out.addProperty("build_area_numeric_id", foundation.build_area_numeric_id);
+            out.addProperty("base_y", foundation.base_y);
+        }
+        if (decision != null) {
+            out.addProperty("node_id", safe(decision.node_id));
+            out.addProperty("selected_template_id", safe(decision.selected_template_id));
+            out.addProperty("selected_connector_dir", safe(decision.selected_connector_dir));
+            if (decision.selected_rotation != null) out.addProperty("selected_rotation", decision.selected_rotation);
+            if (decision.x != null) out.addProperty("requested_x", decision.x);
+            if (decision.z != null) out.addProperty("requested_z", decision.z);
+        }
+        out.addProperty("apply_now", applyNow);
+        out.addProperty("existing_placement_count", existingPlacements != null ? existingPlacements.size() : 0);
+        if (geometry != null) {
+            out.addProperty("geometry_valid", geometry.valid);
+            out.addProperty("geometry_min_x", geometry.min_x);
+            out.addProperty("geometry_min_z", geometry.min_z);
+            out.addProperty("geometry_max_x", geometry.max_x);
+            out.addProperty("geometry_max_z", geometry.max_z);
+        }
+        return out;
+    }
+
+    private static JsonObject buildC8SubmitValidationEvidence(
+            CityC8Stages.NodeSubmitResult submitResult,
+            StructureInjector.PlacementBounds placementBounds
+    ) {
+        JsonObject out = new JsonObject();
+        if (submitResult != null) {
+            out.addProperty("ok", submitResult.ok);
+            out.addProperty("error_code", safe(submitResult.error_code));
+            out.addProperty("error_message", safe(submitResult.error_message));
+            if (submitResult.node != null) {
+                out.add("node", DEBUG_GSON.toJsonTree(submitResult.node));
+            }
+            if (submitResult.placement != null) {
+                out.add("placement", DEBUG_GSON.toJsonTree(submitResult.placement));
+            }
+        }
+        if (placementBounds != null) {
+            out.add("runtime_placement_bounds", placementBoundsToJson(placementBounds));
+        }
+        return out;
+    }
+
+    private static JsonObject buildC8SubmitApplyEvidence(JsonObject executionJson, StructureInjector.PlacementBounds placementBounds) {
+        JsonObject out = new JsonObject();
+        if (executionJson != null) {
+            out.add("placement_execution", executionJson.deepCopy());
+        }
+        if (placementBounds != null) {
+            out.add("runtime_placement_bounds", placementBoundsToJson(placementBounds));
+        }
+        return out;
+    }
+
+    private static JsonObject buildC8SubmitWorldSnapshotEvidence(
+            JsonObject beforeSnapshot,
+            JsonObject afterSnapshot,
+            StructureInjector.PlacementBounds placementBounds
+    ) {
+        JsonObject out = new JsonObject();
+        if (placementBounds != null) {
+            out.add("runtime_placement_bounds", placementBoundsToJson(placementBounds));
+        }
+        if (beforeSnapshot != null) out.add("before", beforeSnapshot.deepCopy());
+        if (afterSnapshot != null) out.add("after", afterSnapshot.deepCopy());
+        return out;
+    }
+
+    private static JsonObject placementBoundsToJson(StructureInjector.PlacementBounds bounds) {
+        JsonObject out = new JsonObject();
+        if (bounds == null) return out;
+        out.addProperty("min_x", bounds.minX);
+        out.addProperty("min_y", bounds.minY);
+        out.addProperty("min_z", bounds.minZ);
+        out.addProperty("max_x_exclusive", bounds.maxXExclusive);
+        out.addProperty("max_y_exclusive", bounds.maxYExclusive);
+        out.addProperty("max_z_exclusive", bounds.maxZExclusive);
+        return out;
+    }
+
+    private static JsonObject capturePlacementWorldStats(
+            ServerLevel level,
+            CityC8Stages.PlacementNode placement,
+            StructureInjector.PlacementBounds fallbackBounds
+    ) {
+        JsonObject out = new JsonObject();
+        if (level == null || placement == null) return out;
+        StructureInjector.PlacementBounds bounds = fallbackBounds != null
+                ? fallbackBounds
+                : StructureInjector.placementBounds(
+                level,
+                placement.template_id,
+                new BlockPos(placement.x, placement.y, placement.z),
+                toRotation(placement.rotation)
+        );
+        if (bounds == null) return out;
+        out.addProperty("template_id", safe(placement.template_id));
+        out.addProperty("origin_x", placement.x);
+        out.addProperty("origin_y", placement.y);
+        out.addProperty("origin_z", placement.z);
+        out.addProperty("rotation", placement.rotation);
+        out.add("placement_bounds", placementBoundsToJson(bounds));
+
+        int nonAirCount = 0;
+        int jigsawCount = 0;
+        Map<String, Integer> blockCounts = new java.util.LinkedHashMap<>();
+        JsonArray samples = new JsonArray();
+        JsonArray byX = new JsonArray();
+        JsonArray byZ = new JsonArray();
+        for (int x = bounds.minX; x < bounds.maxXExclusive; x++) {
+            int sliceCount = 0;
+            for (int y = bounds.minY; y < bounds.maxYExclusive; y++) {
+                for (int z = bounds.minZ; z < bounds.maxZExclusive; z++) {
+                    BlockState state = level.getBlockState(new BlockPos(x, y, z));
+                    if (state.isAir()) continue;
+                    nonAirCount++;
+                    sliceCount++;
+                    if (state.is(Blocks.JIGSAW)) jigsawCount++;
+                    ResourceLocation key = BuiltInRegistries.BLOCK.getKey(state.getBlock());
+                    String blockId = key != null ? key.toString() : "minecraft:unknown";
+                    blockCounts.put(blockId, blockCounts.getOrDefault(blockId, 0) + 1);
+                    if (samples.size() < 10) {
+                        JsonObject sample = new JsonObject();
+                        sample.addProperty("x", x);
+                        sample.addProperty("y", y);
+                        sample.addProperty("z", z);
+                        sample.addProperty("block_id", blockId);
+                        samples.add(sample);
+                    }
+                }
+            }
+            JsonObject slice = new JsonObject();
+            slice.addProperty("x", x);
+            slice.addProperty("non_air_count", sliceCount);
+            byX.add(slice);
+        }
+        for (int z = bounds.minZ; z < bounds.maxZExclusive; z++) {
+            int sliceCount = 0;
+            for (int y = bounds.minY; y < bounds.maxYExclusive; y++) {
+                for (int x = bounds.minX; x < bounds.maxXExclusive; x++) {
+                    if (!level.getBlockState(new BlockPos(x, y, z)).isAir()) {
+                        sliceCount++;
+                    }
+                }
+            }
+            JsonObject slice = new JsonObject();
+            slice.addProperty("z", z);
+            slice.addProperty("non_air_count", sliceCount);
+            byZ.add(slice);
+        }
+        JsonArray topBlocks = new JsonArray();
+        blockCounts.entrySet().stream()
+                .sorted((a, b) -> Integer.compare(b.getValue(), a.getValue()))
+                .limit(12)
+                .forEach(entry -> {
+                    JsonObject item = new JsonObject();
+                    item.addProperty("block_id", entry.getKey());
+                    item.addProperty("count", entry.getValue());
+                    topBlocks.add(item);
+                });
+        out.addProperty("non_air_block_count", nonAirCount);
+        out.addProperty("jigsaw_block_count", jigsawCount);
+        out.add("top_block_counts", topBlocks);
+        out.add("sample_non_air_blocks", samples);
+        out.add("slice_non_air_by_x", byX);
+        out.add("slice_non_air_by_z", byZ);
+        return out;
     }
 
     private static JsonObject buildJigsawRequestEvidence(

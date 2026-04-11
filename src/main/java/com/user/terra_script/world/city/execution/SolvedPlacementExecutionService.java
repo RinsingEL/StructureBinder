@@ -212,5 +212,13 @@ public final class SolvedPlacementExecutionService {
             this.task = task;
             this.result = result;
         }
+
+        public static ExecutionResult of(
+                CityC9BuildQueue.BuildQueue queue,
+                CityC9BuildQueue.BuildTask task,
+                TaskExecutionResult result
+        ) {
+            return new ExecutionResult(queue, task, result);
+        }
     }
 }
