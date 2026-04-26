@@ -13,6 +13,7 @@ import com.user.terra_script.server.http.HttpUtil;
 import com.user.terra_script.territory.io.TerritoryRepository;
 import com.user.terra_script.territory.io.TerritoryResultRepository;
 import com.user.terra_script.territory.model.TerritoryBlueprint;
+import com.user.terra_script.world.TerritoryManager;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.core.BlockPos;
@@ -21,6 +22,7 @@ import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -185,18 +187,157 @@ public class TerritoryController {
                 return;
             }
             var results = TerritoryStageOrchestrator.runT3ForContinent(buildStageContext(server), continentId);
-            JsonObject res = new JsonObject();
-            res.addProperty("continent_id", continentId);
-            res.addProperty("exported_count", results.size());
-            HttpUtil.sendResponse(exchange, 200, GSON.toJson(res));
+            T3RunContinentResponse response = buildT3RunContinentResponse(continentId, results);
+            if (response.statusCode == 409) {
+                JsonArray preserved = new JsonArray();
+                if (results != null) {
+                    for (TerritoryManager.TerritoryResult result : results) {
+                        if (result == null || result.config == null || result.config.id == null) continue;
+                        int claimed = result.claimedChunks != null ? result.claimedChunks.size() : 0;
+                        int wild = result.wildChunks != null ? result.wildChunks.size() : 0;
+                        if (claimed + wild > 0) continue;
+                        if (!TerritoryResultRepository.hasNonZeroT3(server, result.config.id)) continue;
+                        JsonObject kept = new JsonObject();
+                        kept.addProperty("territory_instance_id", result.config.id);
+                        kept.addProperty("territory_id", result.config.territoryId);
+                        kept.addProperty("canonical_overwrite_skipped", true);
+                        kept.addProperty("reason", "zero_area_result_preserved_existing_nonzero_t3");
+                        preserved.add(kept);
+                    }
+                }
+                if (preserved.size() > 0) {
+                    response.body.add("preserved_existing_t3", preserved);
+                }
+            }
+            HttpUtil.sendResponse(exchange, response.statusCode, GSON.toJson(response.body));
         } catch (Exception e) {
             HttpUtil.handleError(exchange, e);
         }
     }
 
-    public void handleTerritoryStatus(HttpExchange exchange) throws IOException {
+    public void handleTerritoryT3Import(HttpExchange exchange, MinecraftServer server) throws IOException {
+        if (!HttpUtil.requireMethod(exchange, "POST")) return;
+        try {
+            JsonObject req = JsonParser.parseString(HttpUtil.readBody(exchange)).getAsJsonObject();
+            String sourceTerritoryId = req.has("source_territory_id") ? req.get("source_territory_id").getAsString() : null;
+            String targetTerritoryId = req.has("target_territory_id") ? req.get("target_territory_id").getAsString() : null;
+            boolean dryRun = req.has("dry_run") && req.get("dry_run").getAsBoolean();
+
+            if (sourceTerritoryId == null || sourceTerritoryId.isBlank()) {
+                HttpUtil.sendResponse(exchange, 400, "{\"error\":\"source_territory_id is required\"}");
+                return;
+            }
+            if (targetTerritoryId == null || targetTerritoryId.isBlank()) {
+                HttpUtil.sendResponse(exchange, 400, "{\"error\":\"target_territory_id is required\"}");
+                return;
+            }
+
+            TerritoryManager.ensureLoaded();
+            TerritoryManager.TerritoryConfig targetConfig = TerritoryManager.getTerritoryConfig(targetTerritoryId);
+            TerritoryResultRepository.T3ImportResult result =
+                    TerritoryResultRepository.importT3(server, sourceTerritoryId, targetConfig, dryRun);
+
+            JsonObject res = new JsonObject();
+            res.addProperty("step", "T3_IMPORT");
+            res.addProperty("ok", result.ok);
+            res.addProperty("dry_run", result.dryRun);
+            res.addProperty("message", result.message);
+            res.addProperty("source_territory_id", result.sourceTerritoryId);
+            res.addProperty("target_territory_id", result.targetTerritoryId);
+            res.addProperty("claimed_chunks", result.claimedChunks);
+            res.addProperty("wild_chunks", result.wildChunks);
+            res.addProperty("canonical_written", result.canonicalWritten);
+            if (result.importedResult != null) {
+                res.add("summary", TerritoryResultRepository.buildSummary(result.importedResult));
+            }
+            if (result.ok && !result.dryRun && result.importedResult != null) {
+                TerritoryManager.applyStoredResult(result.importedResult);
+                res.addProperty("runtime_restored", true);
+            } else {
+                res.addProperty("runtime_restored", false);
+            }
+
+            int status = result.ok ? 200 : 409;
+            if (!result.ok && "target territory config not found".equals(result.message)) {
+                status = 404;
+            }
+            HttpUtil.sendResponse(exchange, status, GSON.toJson(res));
+        } catch (Exception e) {
+            HttpUtil.handleError(exchange, e);
+        }
+    }
+
+    static T3RunContinentResponse buildT3RunContinentResponse(
+            int continentId,
+            Collection<TerritoryManager.TerritoryResult> results
+    ) {
+        JsonObject body = new JsonObject();
+        JsonArray territories = new JsonArray();
+        long claimedTotal = 0L;
+        long wildTotal = 0L;
+
+        List<TerritoryManager.TerritoryResult> ordered = new ArrayList<>();
+        if (results != null) {
+            for (TerritoryManager.TerritoryResult result : results) {
+                if (result != null) ordered.add(result);
+            }
+        }
+        ordered.sort(Comparator.comparing(TerritoryController::territorySortKey));
+
+        for (TerritoryManager.TerritoryResult result : ordered) {
+            int claimedChunks = result.claimedChunks != null ? result.claimedChunks.size() : 0;
+            int wildChunks = result.wildChunks != null ? result.wildChunks.size() : 0;
+            claimedTotal += claimedChunks;
+            wildTotal += wildChunks;
+
+            JsonObject territory = new JsonObject();
+            if (result.config != null) {
+                territory.addProperty("territory_id", result.config.territoryId);
+                territory.addProperty("territory_instance_id", result.config.id);
+                territory.addProperty("continent_id", result.config.selectedContinentId);
+            }
+            territory.addProperty("claimed_chunks", claimedChunks);
+            territory.addProperty("wild_chunks", wildChunks);
+            territories.add(territory);
+        }
+
+        body.addProperty("continent_id", continentId);
+        body.addProperty("exported_count", ordered.size());
+        body.addProperty("claimed_total", claimedTotal);
+        body.addProperty("wild_total", wildTotal);
+        body.add("territories", territories);
+
+        if (claimedTotal + wildTotal == 0L) {
+            body.addProperty("error", "T3 produced zero claimed chunks for continent " + continentId);
+            body.addProperty(
+                    "hint",
+                    "Likely causes: missing/invalid W3-W4 scan cache, missing cluster map, " +
+                            "or territory region_id does not match current W3 continent ids."
+            );
+            return new T3RunContinentResponse(409, body);
+        }
+        return new T3RunContinentResponse(200, body);
+    }
+
+    private static String territorySortKey(TerritoryManager.TerritoryResult result) {
+        if (result == null || result.config == null || result.config.id == null) return "";
+        return result.config.id;
+    }
+
+    static final class T3RunContinentResponse {
+        final int statusCode;
+        final JsonObject body;
+
+        T3RunContinentResponse(int statusCode, JsonObject body) {
+            this.statusCode = statusCode;
+            this.body = body;
+        }
+    }
+
+    public void handleTerritoryStatus(HttpExchange exchange, MinecraftServer server) throws IOException {
         try {
             com.user.terra_script.world.TerritoryManager.ensureLoaded();
+            TerritoryManager.restoreT3ResultsFromDisk(server);
             JsonObject root = new JsonObject();
             var allResults = com.user.terra_script.world.TerritoryManager.getAllResults();
 
@@ -289,6 +430,7 @@ public class TerritoryController {
     public void handleTerritorySummary(HttpExchange exchange, MinecraftServer server) throws IOException {
         if (!HttpUtil.requireMethod(exchange, "GET")) return;
         try {
+            TerritoryManager.restoreT3ResultsFromDisk(server);
             String territoryId = getQueryParam(exchange, "territoryId");
             String continentIdRaw = getQueryParam(exchange, "continentId");
             if (territoryId == null || territoryId.isBlank()) {
@@ -332,6 +474,7 @@ public class TerritoryController {
     public void handleTerritoryT4Window(HttpExchange exchange, MinecraftServer server) throws IOException {
         if (!HttpUtil.requireMethod(exchange, "POST")) return;
         try {
+            TerritoryManager.restoreT3ResultsFromDisk(server);
             String body = HttpUtil.readBody(exchange);
             JsonObject req = JsonParser.parseString(body).getAsJsonObject();
 
@@ -341,9 +484,10 @@ public class TerritoryController {
                 return;
             }
 
+            boolean explicitCenter = req.has("center_x") && req.has("center_z");
             int centerX;
             int centerZ;
-            if (req.has("center_x") && req.has("center_z")) {
+            if (explicitCenter) {
                 centerX = req.get("center_x").getAsInt();
                 centerZ = req.get("center_z").getAsInt();
             } else {
@@ -372,30 +516,34 @@ public class TerritoryController {
             }
 
             DecodedT4 decoded = decodeT4Dat(datOpt.get());
-            List<CellRecord> inWindow = new ArrayList<>();
-            int minX = centerX - radiusBlocks;
-            int maxX = centerX + radiusBlocks;
-            int minZ = centerZ - radiusBlocks;
-            int maxZ = centerZ + radiusBlocks;
-            for (CellRecord r : decoded.records) {
-                if (r.x >= minX && r.x <= maxX && r.z >= minZ && r.z <= maxZ) {
-                    inWindow.add(r);
-                }
-            }
+            WindowSelection selection = selectWindow(decoded.records, centerX, centerZ, radiusBlocks, !explicitCenter);
+            List<CellRecord> inWindow = selection.records;
 
             JsonObject res = new JsonObject();
             res.addProperty("step", "T4");
             res.addProperty("ok", true);
             res.addProperty("source", "artifact_t4_dat");
             res.addProperty("territory_id", territoryId);
+            if (selection.reanchored) {
+                JsonArray warnings = new JsonArray();
+                warnings.add("requested_center_outside_t4_coverage");
+                warnings.add("center_reanchored_to_nearest_t4_cell");
+                res.add("warnings", warnings);
+            }
 
             JsonObject window = new JsonObject();
-            window.addProperty("center_x", centerX);
-            window.addProperty("center_z", centerZ);
+            window.addProperty("center_x", selection.centerX);
+            window.addProperty("center_z", selection.centerZ);
             window.addProperty("radius_blocks", radiusBlocks);
             window.addProperty("sample_step", decoded.step);
             window.addProperty("matched_cells", inWindow.size());
             window.addProperty("estimated_block_count", (long) inWindow.size() * decoded.step * decoded.step);
+            window.addProperty("reanchored", selection.reanchored);
+            if (selection.reanchored) {
+                window.addProperty("requested_center_x", selection.requestedCenterX);
+                window.addProperty("requested_center_z", selection.requestedCenterZ);
+                window.addProperty("nearest_distance_blocks", round3(selection.nearestDistanceBlocks));
+            }
             res.add("window", window);
 
             JsonObject terrain = buildWindowTerrain(inWindow);
@@ -540,6 +688,69 @@ public class TerritoryController {
         }
     }
 
+    static WindowSelection selectWindow(
+            List<CellRecord> records,
+            int requestedCenterX,
+            int requestedCenterZ,
+            int radiusBlocks,
+            boolean allowReanchor
+    ) {
+        List<CellRecord> initial = filterWindowRecords(records, requestedCenterX, requestedCenterZ, radiusBlocks);
+        if (!initial.isEmpty() || !allowReanchor || records == null || records.isEmpty()) {
+            return new WindowSelection(requestedCenterX, requestedCenterZ, requestedCenterX, requestedCenterZ, false, 0.0, initial);
+        }
+        CellRecord nearest = findNearestRecord(records, requestedCenterX, requestedCenterZ);
+        if (nearest == null) {
+            return new WindowSelection(requestedCenterX, requestedCenterZ, requestedCenterX, requestedCenterZ, false, 0.0, initial);
+        }
+        List<CellRecord> reanchored = filterWindowRecords(records, nearest.x, nearest.z, radiusBlocks);
+        double distance = Math.sqrt(distanceSq(requestedCenterX, requestedCenterZ, nearest.x, nearest.z));
+        return new WindowSelection(
+                requestedCenterX,
+                requestedCenterZ,
+                nearest.x,
+                nearest.z,
+                true,
+                distance,
+                reanchored
+        );
+    }
+
+    private static List<CellRecord> filterWindowRecords(List<CellRecord> records, int centerX, int centerZ, int radiusBlocks) {
+        List<CellRecord> inWindow = new ArrayList<>();
+        if (records == null || records.isEmpty()) return inWindow;
+        int minX = centerX - radiusBlocks;
+        int maxX = centerX + radiusBlocks;
+        int minZ = centerZ - radiusBlocks;
+        int maxZ = centerZ + radiusBlocks;
+        for (CellRecord r : records) {
+            if (r.x >= minX && r.x <= maxX && r.z >= minZ && r.z <= maxZ) {
+                inWindow.add(r);
+            }
+        }
+        return inWindow;
+    }
+
+    private static CellRecord findNearestRecord(List<CellRecord> records, int centerX, int centerZ) {
+        if (records == null || records.isEmpty()) return null;
+        CellRecord best = null;
+        long bestDistance = Long.MAX_VALUE;
+        for (CellRecord r : records) {
+            long d = distanceSq(centerX, centerZ, r.x, r.z);
+            if (d < bestDistance) {
+                bestDistance = d;
+                best = r;
+            }
+        }
+        return best;
+    }
+
+    private static long distanceSq(int x1, int z1, int x2, int z2) {
+        long dx = (long) x2 - x1;
+        long dz = (long) z2 - z1;
+        return dx * dx + dz * dz;
+    }
+
     private static double round3(double v) {
         return Math.round(v * 1000.0) / 1000.0;
     }
@@ -558,7 +769,35 @@ public class TerritoryController {
         }
     }
 
-    private static final class CellRecord {
+    static final class WindowSelection {
+        final int requestedCenterX;
+        final int requestedCenterZ;
+        final int centerX;
+        final int centerZ;
+        final boolean reanchored;
+        final double nearestDistanceBlocks;
+        final List<CellRecord> records;
+
+        WindowSelection(
+                int requestedCenterX,
+                int requestedCenterZ,
+                int centerX,
+                int centerZ,
+                boolean reanchored,
+                double nearestDistanceBlocks,
+                List<CellRecord> records
+        ) {
+            this.requestedCenterX = requestedCenterX;
+            this.requestedCenterZ = requestedCenterZ;
+            this.centerX = centerX;
+            this.centerZ = centerZ;
+            this.reanchored = reanchored;
+            this.nearestDistanceBlocks = nearestDistanceBlocks;
+            this.records = records;
+        }
+    }
+
+    static final class CellRecord {
         final int x;
         final int z;
         final int height;

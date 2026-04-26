@@ -21,6 +21,8 @@ import com.user.terra_script.world.city.stage.c4.CityC5ModulePreviewExporter;
 import com.user.terra_script.world.city.stage.c4.CityC5GroupTerrainPreviewExporter;
 import com.user.terra_script.world.city.stage.c1.CityStage1BinaryIO;
 import com.user.terra_script.world.city.stage.c1.CityStage1Processor;
+import com.user.terra_script.world.city.stage.c1.CitySurvivalBoundaryExporter;
+import com.user.terra_script.world.city.stage.c1.CitySurvivalBoundaryPlanner;
 import com.user.terra_script.world.city.stage.c2.CityC2ScanBinaryIO;
 import com.user.terra_script.world.city.stage.c2.CityC3PolygonPreviewExporter;
 import com.user.terra_script.world.city.stage.c2.CityC2SatellitePreviewExporter;
@@ -2583,6 +2585,67 @@ public class CityController {
         }
     }
 
+    public void handleCitySurvivalC1Generate(HttpExchange exchange) throws IOException {
+        if (!HttpUtil.requireMethod(exchange, "POST")) return;
+        try {
+            com.user.terra_script.world.TerritoryManager.restoreT3ResultsFromDisk(mcServer);
+            String body = HttpUtil.readBody(exchange);
+            JsonObject json = JsonParser.parseString(body).getAsJsonObject();
+            CityConfig config = gson.fromJson(json, CityConfig.class);
+            if (config == null || config.territoryId == null || config.territoryId.isBlank()) {
+                HttpUtil.sendResponse(exchange, 400, "{\"error\": \"Invalid parameters (territoryId)\"}");
+                return;
+            }
+
+            String cityId = "city_" + config.centerX + "_" + config.centerZ;
+            CitySurvivalBoundaryPlanner.Request request = new CitySurvivalBoundaryPlanner.Request();
+            request.cityId = cityId;
+            request.territoryId = config.territoryId;
+            request.centerX = config.centerX;
+            request.centerZ = config.centerZ;
+            request.targetChunkCount = config.targetChunkCount;
+            request.density = config.density;
+            request.existingCityId = cityId;
+            if (json.has("search_radius_chunks")) {
+                request.searchRadiusChunks = Math.max(1, json.get("search_radius_chunks").getAsInt());
+            }
+
+            ServerLevel level = mcServer != null ? mcServer.overworld() : null;
+            CitySurvivalBoundaryPlanner.Result boundary = CitySurvivalBoundaryPlanner.plan(
+                    request,
+                    new RuntimeSurvivalChunkAccess(level, cityId)
+            );
+            if (boundary.choices.isEmpty()) {
+                JsonObject res = new JsonObject();
+                res.addProperty("status", boundary.status);
+                res.addProperty("city_id", cityId);
+                res.add("validation", CitySurvivalBoundaryExporter.toValidationJson(boundary));
+                HttpUtil.sendResponse(exchange, 409, gson.toJson(res));
+                return;
+            }
+
+            CityInstance city = CityManager.get().registerSurvivalBoundary(config, boundary);
+            JsonObject artifacts = CitySurvivalBoundaryExporter.export(mcServer, boundary);
+
+            JsonObject res = new JsonObject();
+            res.addProperty("status", "created");
+            res.addProperty("step", "C1_SURVIVAL_BOUNDARY");
+            res.addProperty("city_id", city.id);
+            res.addProperty("actual_size", city.claimedChunks.size());
+            res.addProperty("blocks_total", city.claimedChunks.size() * 256);
+            res.addProperty("boundary_status", boundary.status);
+            res.addProperty("fallback_used", boundary.fallbackUsed);
+            res.addProperty("reanchored", boundary.reanchored);
+            res.add("risk_tags", DEBUG_GSON.toJsonTree(boundary.riskTags));
+            res.add("warnings", DEBUG_GSON.toJsonTree(boundary.warnings));
+            res.add("validation", CitySurvivalBoundaryExporter.toValidationJson(boundary));
+            res.add("artifacts", artifacts);
+            HttpUtil.sendResponse(exchange, 200, gson.toJson(res));
+        } catch (Exception e) {
+            HttpUtil.handleError(exchange, e);
+        }
+    }
+
     private static CenterWaterProbe probeCenterWater(ServerLevel level, int centerX, int centerZ) {
         int waterSamples = 0;
         int totalSamples = 0;
@@ -2606,6 +2669,56 @@ public class CityController {
         int surfaceY = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
         BlockPos pos = new BlockPos(x, surfaceY - 1, z);
         return !level.getFluidState(pos).isEmpty();
+    }
+
+    private static final class RuntimeSurvivalChunkAccess implements CitySurvivalBoundaryPlanner.ChunkAccess {
+        private final ServerLevel level;
+        private final String existingCityId;
+
+        private RuntimeSurvivalChunkAccess(ServerLevel level, String existingCityId) {
+            this.level = level;
+            this.existingCityId = existingCityId;
+        }
+
+        @Override
+        public boolean isWithinSovereignty(long chunkKey, String territoryId) {
+            return com.user.terra_script.world.TerritoryManager.isChunkWithinSovereignty(chunkKey, territoryId);
+        }
+
+        @Override
+        public String cityIdAt(long chunkKey) {
+            String cityId = CityManager.get().getCityIdAt(chunkKey);
+            if (cityId != null && cityId.equals(existingCityId)) return null;
+            return cityId;
+        }
+
+        @Override
+        public double terrainRisk(int chunkX, int chunkZ) {
+            if (level == null) return 0.0;
+            int worldX = chunkX * 16 + 8;
+            int worldZ = chunkZ * 16 + 8;
+            int centerHeight = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, worldX, worldZ);
+            int maxDelta = 0;
+            int[][] offsets = {{8, 0}, {-8, 0}, {0, 8}, {0, -8}};
+            for (int[] offset : offsets) {
+                int h = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, worldX + offset[0], worldZ + offset[1]);
+                maxDelta = Math.max(maxDelta, Math.abs(h - centerHeight));
+            }
+            return Math.min(1.0, maxDelta / 24.0);
+        }
+
+        @Override
+        public boolean waterLike(int chunkX, int chunkZ) {
+            if (level == null) return false;
+            int worldX = chunkX * 16 + 8;
+            int worldZ = chunkZ * 16 + 8;
+            return isSurfaceWater(level, worldX, worldZ);
+        }
+
+        @Override
+        public boolean roughLike(int chunkX, int chunkZ) {
+            return terrainRisk(chunkX, chunkZ) >= 0.45;
+        }
     }
 
     private static String escapeJson(String text) {

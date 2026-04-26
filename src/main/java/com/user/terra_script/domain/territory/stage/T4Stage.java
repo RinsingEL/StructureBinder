@@ -72,7 +72,7 @@ public class T4Stage extends StageBase {
 
     @Override
     public List<String> dependsOn() {
-        return List.of("T3");
+        return List.of();
     }
 
     @Override
@@ -82,6 +82,7 @@ public class T4Stage extends StageBase {
 
     private static void runLegacyTerrainScan(StageContext ctx, RuntimeOptions options) throws Exception {
         TerritoryManager.ensureLoaded();
+        TerritoryManager.restoreT3ResultsFromDisk(ctx.server);
         List<TerritoryManager.TerritoryResult> results = new ArrayList<>(TerritoryManager.getAllResults());
         if (results.isEmpty()) {
             throw new IllegalStateException("T4 requires territory results from T3");

@@ -10,6 +10,7 @@ import com.user.terra_script.server.mcp.WorldController;
 import com.user.terra_script.server.mcp.WorkflowController;
 import com.user.terra_script.util.ScanDataIO;
 import com.user.terra_script.domain.world.scan.service.SatelliteScanner;
+import com.user.terra_script.world.TerritoryManager;
 import com.user.terra_script.world.city.CityBuildQueueExecutor;
 import net.minecraft.server.MinecraftServer;
 import net.minecraftforge.event.server.ServerStartedEvent;
@@ -35,6 +36,7 @@ public class ModHttpServer {
         ScanDataIO.setWorldRoot(mcServer.getWorldPath(LevelResource.ROOT));
         ScanDataIO.onServerStarted();
         ScanDataIO.loadInto(ScanResultHolder.get());
+        TerritoryManager.restoreT3ResultsFromDisk(mcServer);
         CityBuildQueueExecutor.bindServer(mcServer);
         startHttpServer();
     }
@@ -82,8 +84,9 @@ public class ModHttpServer {
             server.createContext("/t2_direction_candidates", exchange -> territoryController.handleT2DirectionCandidates(exchange, mcServer));
             server.createContext("/t2_select_direction", exchange -> territoryController.handleT2SelectDirection(exchange, mcServer));
             server.createContext("/t3_run_continent", exchange -> territoryController.handleT3RunContinent(exchange, mcServer));
+            server.createContext("/territory/t3_import", exchange -> territoryController.handleTerritoryT3Import(exchange, mcServer));
             server.createContext("/create_territory", exchange -> territoryController.handleCreateTerritory(exchange, mcServer));
-            server.createContext("/territory_status", territoryController::handleTerritoryStatus);
+            server.createContext("/territory_status", exchange -> territoryController.handleTerritoryStatus(exchange, mcServer));
             server.createContext("/territory/summary", exchange -> territoryController.handleTerritorySummary(exchange, mcServer));
             server.createContext("/territory/t4_window", exchange -> territoryController.handleTerritoryT4Window(exchange, mcServer));
 
@@ -97,6 +100,7 @@ public class ModHttpServer {
 
             server.createContext("/city_heightmap", cityController::handleCityHeightmap);
             server.createContext("/city_c1_generate", cityController::handleCreateCity);
+            server.createContext("/city_survival_c1_generate", cityController::handleCitySurvivalC1Generate);
             server.createContext("/city_c2_generate", cityController::handleCityC2Generate);
             server.createContext("/city_c2_data", cityController::handleCityStage1Data);
             server.createContext("/city_c3_generate", cityController::handleCityC3Generate);

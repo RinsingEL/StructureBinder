@@ -1,0 +1,1 @@
+{"status":"fail_safe","city_id":"city_3120_-3200","validation":{"status":"fail_safe","fallback_used":true,"blocking_errors":["no_owned_non_overlapping_chunks"],"warnings":["requested_center_outside_sovereignty"],"risk_tags":[],"claimed_chunk_count":0}}

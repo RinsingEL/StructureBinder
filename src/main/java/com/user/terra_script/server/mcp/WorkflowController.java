@@ -57,9 +57,11 @@ public class WorkflowController {
             JsonObject req = body == null || body.isBlank()
                     ? new JsonObject()
                     : JsonParser.parseString(body).getAsJsonObject();
-            String stageId = req.has("stageId")
-                    ? req.get("stageId").getAsString().trim().toUpperCase(Locale.ROOT)
-                    : "T1";
+            String stageId = parseStageId(req);
+            if (stageId == null || stageId.isBlank()) {
+                HttpUtil.sendResponse(exchange, 400, GSON.toJson(new ErrorResponse("stageId or stage_id is required")));
+                return;
+            }
             T4Stage.RuntimeOptions requestOptions = parseT4Options(req, T4Stage.RuntimeOptions.defaults());
             TaskResultResponse response = facade.runWorkflowStage(stageId, requestOptions);
             HttpUtil.sendResponse(exchange, 200, GSON.toJson(response));
@@ -74,6 +76,9 @@ public class WorkflowController {
         if (!HttpUtil.requireMethod(exchange, "GET")) return;
         try {
             String stageId = getQueryParam(exchange, "stageId");
+            if (stageId == null || stageId.isBlank()) {
+                stageId = getQueryParam(exchange, "stage_id");
+            }
             ArtifactStore artifacts = new ArtifactStore();
             FileStageStatusStore statusStore = new FileStageStatusStore(artifacts);
             StageContext ctx = StageContext.forServer(server, artifacts, statusStore);
@@ -145,7 +150,12 @@ public class WorkflowController {
         return null;
     }
 
-    private static T4Stage.RuntimeOptions parseT4Options(JsonObject req, T4Stage.RuntimeOptions fallback) {
+    static String parseStageId(JsonObject req) {
+        String raw = stringAlias(req, "stageId", "stage_id");
+        return raw == null || raw.isBlank() ? null : raw.trim().toUpperCase(Locale.ROOT);
+    }
+
+    static T4Stage.RuntimeOptions parseT4Options(JsonObject req, T4Stage.RuntimeOptions fallback) {
         if (req == null) return fallback;
         for (String deprecated : new String[]{
                 "t4_bootstrap_city",
@@ -160,15 +170,39 @@ public class WorkflowController {
                 throw new IllegalArgumentException("Deprecated T4 option is no longer supported: " + deprecated);
             }
         }
-        int stride = req.has("t4_sample_stride")
-                ? req.get("t4_sample_stride").getAsInt()
-                : fallback.sampleStride;
-        int maxChunks = req.has("t4_max_chunks")
-                ? req.get("t4_max_chunks").getAsInt()
-                : fallback.maxChunksPerTerritory;
-        boolean loadedOnly = req.has("t4_loaded_only")
-                ? req.get("t4_loaded_only").getAsBoolean()
-                : fallback.loadedOnly;
+        int stride = intAlias(req, fallback.sampleStride, "t4_sample_stride", "sample_stride");
+        int maxChunks = intAlias(req, fallback.maxChunksPerTerritory, "t4_max_chunks", "max_chunks_per_territory");
+        boolean loadedOnly = booleanAlias(req, fallback.loadedOnly, "t4_loaded_only", "loaded_only");
         return new T4Stage.RuntimeOptions(stride, maxChunks, loadedOnly);
+    }
+
+    private static String stringAlias(JsonObject req, String... keys) {
+        if (req == null || keys == null) return null;
+        for (String key : keys) {
+            if (key != null && req.has(key) && !req.get(key).isJsonNull()) {
+                return req.get(key).getAsString();
+            }
+        }
+        return null;
+    }
+
+    private static int intAlias(JsonObject req, int fallback, String... keys) {
+        if (req == null || keys == null) return fallback;
+        for (String key : keys) {
+            if (key != null && req.has(key) && !req.get(key).isJsonNull()) {
+                return req.get(key).getAsInt();
+            }
+        }
+        return fallback;
+    }
+
+    private static boolean booleanAlias(JsonObject req, boolean fallback, String... keys) {
+        if (req == null || keys == null) return fallback;
+        for (String key : keys) {
+            if (key != null && req.has(key) && !req.get(key).isJsonNull()) {
+                return req.get(key).getAsBoolean();
+            }
+        }
+        return fallback;
     }
 }

@@ -6,6 +6,8 @@ import com.google.gson.reflect.TypeToken;
 import com.user.terra_script.client.data.ScanResultHolder;
 import com.user.terra_script.client.data.ScanResultHolder.RegionCache;
 import com.user.terra_script.domain.world.scan.ScanPixel;
+import com.user.terra_script.territory.io.TerritoryResultRepository;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraftforge.fml.loading.FMLPaths;
 
@@ -274,6 +276,39 @@ public class TerritoryManager {
     public static List<TerritoryConfig> getRegisteredFactions() {
         ensureLoaded();
         return new ArrayList<>(registeredFactions);
+    }
+
+    public static synchronized int restoreT3ResultsFromDisk(MinecraftServer server) {
+        if (server == null) return 0;
+        ensureLoaded();
+        int restored = 0;
+        for (TerritoryConfig cfg : registeredFactions) {
+            if (cfg == null || cfg.id == null || cfg.id.isBlank()) continue;
+            var stored = TerritoryResultRepository.readT3Result(server, cfg.id, cfg);
+            if (stored.isEmpty()) continue;
+            TerritoryResult loaded = stored.get();
+            TerritoryResult existing = results.get(cfg.id);
+            if (existing == null || resultChunkCount(existing) == 0 || resultChunkCount(loaded) > 0) {
+                results.put(cfg.id, loaded);
+                restored++;
+            }
+        }
+        return restored;
+    }
+
+    public static synchronized void applyStoredResult(TerritoryResult result) {
+        if (result == null || result.config == null || result.config.id == null || result.config.id.isBlank()) {
+            return;
+        }
+        ensureLoaded();
+        results.put(result.config.id, result);
+    }
+
+    private static int resultChunkCount(TerritoryResult result) {
+        if (result == null) return 0;
+        int claimed = result.claimedChunks != null ? result.claimedChunks.size() : 0;
+        int wild = result.wildChunks != null ? result.wildChunks.size() : 0;
+        return claimed + wild;
     }
 
     public static TerritoryConfig getTerritoryConfig(String id) {

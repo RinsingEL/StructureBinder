@@ -8,6 +8,7 @@ import com.user.terra_script.domain.world.scan.ScanPixel;
 import com.user.terra_script.util.VoronoiComputer;
 import com.user.terra_script.world.TerritoryManager;
 import com.user.terra_script.world.city.district.District;
+import com.user.terra_script.world.city.stage.c1.CitySurvivalBoundaryPlanner;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraftforge.fml.loading.FMLPaths;
 
@@ -49,6 +50,55 @@ public class CityManager {
 
     public CityInstance getCity(String id) {
         return cities.get(id);
+    }
+
+    public synchronized CityInstance registerSurvivalBoundary(CityConfig config, CitySurvivalBoundaryPlanner.Result boundary) {
+        if (config == null) throw new IllegalArgumentException("CityConfig is required");
+        if (boundary == null || boundary.choices == null || boundary.choices.isEmpty()) {
+            throw new IllegalArgumentException("Survival boundary has no claimed chunks");
+        }
+        String uid = "city_" + config.centerX + "_" + config.centerZ;
+        config.cityInstanceId = uid;
+
+        CityInstance oldCity = cities.get(uid);
+        if (oldCity != null) {
+            for (Long chunkKey : oldCity.claimedChunks.keySet()) {
+                globalCityChunkMap.remove(chunkKey);
+            }
+        }
+
+        CityInstance city = new CityInstance(uid, config);
+        CityConfig.LayerLayout layout = city.getLayerLayout();
+        for (CitySurvivalBoundaryPlanner.ChunkChoice choice : boundary.choices) {
+            long key = ChunkPos.asLong(choice.chunkX, choice.chunkZ);
+            if (!TerritoryManager.isChunkWithinSovereignty(key, config.territoryId)) {
+                restoreOldCity(oldCity);
+                throw new IllegalStateException("Survival boundary crossed sovereignty: " + uid);
+            }
+            String occupiedBy = globalCityChunkMap.get(key);
+            if (occupiedBy != null && !occupiedBy.equals(uid)) {
+                restoreOldCity(oldCity);
+                throw new IllegalStateException("Survival boundary overlaps existing city: " + occupiedBy);
+            }
+            int layerIndex = Math.max(0, Math.min(layout.layers.size() - 1, choice.layerIndex));
+            String layerType = CityConfig.normalizeLayerType(choice.layerType);
+            if (layerType == null) layerType = layout.layerAt(layerIndex).type;
+            city.claimedChunks.put(key, new CityInstance.LayerAssignment(layerIndex, layerType));
+            globalCityChunkMap.put(key, uid);
+        }
+        computeBorderChunks(city);
+        city.districts = VoronoiComputer.computeDistricts(city);
+        cities.put(uid, city);
+        saveToFile();
+        return city;
+    }
+
+    private void restoreOldCity(CityInstance oldCity) {
+        if (oldCity == null) return;
+        cities.put(oldCity.id, oldCity);
+        for (Long chunkKey : oldCity.claimedChunks.keySet()) {
+            globalCityChunkMap.put(chunkKey, oldCity.id);
+        }
     }
 
     /**
