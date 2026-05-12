@@ -302,6 +302,22 @@ public class DevCommandHandler {
             }
             case "territory_t4_window":
                 return httpPost("/territory/t4_window", args);
+            case "territory_capital_terrain_map":
+                return httpPost("/territory/capital_terrain_map", args);
+            case "city_c1_image_intent_prepare":
+                return httpPost("/city_c1_image_intent_prepare", args);
+            case "city_c1_image_intent_import":
+                return httpPost("/city_c1_image_intent_import", args);
+            case "city_c1_image_intent_data":
+                return httpPost("/city_c1_image_intent_data", args);
+            case "city_c1_geometry_prepare":
+                return httpPost("/city_c1_geometry_prepare", args);
+            case "city_c1_geometry_import":
+                return httpPost("/city_c1_geometry_import", args);
+            case "city_c1_geometry_patch":
+                return httpPost("/city_c1_geometry_patch", args);
+            case "city_c1_geometry_data":
+                return httpPost("/city_c1_geometry_data", args);
             case "T2_run":
             case "workflow_run_t2": {
                 JsonObject payload = args != null ? args.deepCopy() : new JsonObject();
@@ -693,11 +709,19 @@ public class DevCommandHandler {
                 "get_territory_status",
                 "territory_summary",
                 "territory_t4_window",
+                "territory_capital_terrain_map",
                 "T2_run",
                 "T3_run",
                 "T4_run",
                 "workflow_status",
                 "establish_city",
+                "city_c1_image_intent_prepare",
+                "city_c1_image_intent_import",
+                "city_c1_image_intent_data",
+                "city_c1_geometry_prepare",
+                "city_c1_geometry_import",
+                "city_c1_geometry_patch",
+                "city_c1_geometry_data",
                 "place_structure",
                 "city_stage1_data",
                 "city_stage2_data",
@@ -735,8 +759,16 @@ public class DevCommandHandler {
                 "territory_status",
                 "territory/summary",
                 "territory/t4_window",
+                "territory/capital_terrain_map",
                 "workflow/run",
                 "workflow/status",
+                "city_c1_image_intent_prepare",
+                "city_c1_image_intent_import",
+                "city_c1_image_intent_data",
+                "city_c1_geometry_prepare",
+                "city_c1_geometry_import",
+                "city_c1_geometry_patch",
+                "city_c1_geometry_data",
                 "create_city",
                 "place",
                 "city_stage1_data",

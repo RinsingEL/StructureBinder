@@ -219,4 +219,19 @@ export const territoryTools: ToolDefinition[] = [
       required: ["territory_id"],
     },
   },
+  {
+    name: "territory_capital_terrain_map",
+    description: "从 T4 dat 导出首都或指定中心附近的 512 地形预览图，包含首都中心、网格、海陆/高度/坡度和国度范围暗化。",
+    inputSchema: {
+      type: "object",
+      properties: {
+        territory_id: { type: "string" },
+        center_x: { type: "number" },
+        center_z: { type: "number" },
+        radius_blocks: { type: "number" },
+        image_size: { type: "number" },
+      },
+      required: ["territory_id"],
+    },
+  },
 ];

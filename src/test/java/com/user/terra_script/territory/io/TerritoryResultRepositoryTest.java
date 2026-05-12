@@ -1,6 +1,7 @@
 package com.user.terra_script.territory.io;
 
 import com.user.terra_script.world.TerritoryManager;
+import com.google.gson.JsonObject;
 import net.minecraft.world.level.ChunkPos;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -94,6 +95,36 @@ class TerritoryResultRepositoryTest {
         assertTrue(Files.exists(Path.of(write.diagnosticFolder).resolve("TerritorySummary.json")));
         assertEquals(2, preserved.claimedCount());
         assertEquals(0, preserved.wildCount());
+    }
+
+    @Test
+    void readT3ResultKeepsT3StatsWhenT4SummaryExists() throws Exception {
+        TerritoryManager.TerritoryConfig config = config("restore@c1", "restore", 1);
+        TerritoryManager.TerritoryResult result = result(
+                config,
+                Set.of(chunk(-394, -258), chunk(-393, -258)),
+                Set.of(chunk(-392, -258))
+        );
+        TerritoryResultRepository.writeT3(tempDir, result);
+
+        JsonObject t4Summary = new JsonObject();
+        t4Summary.addProperty("schema_version", 1);
+        t4Summary.addProperty("stage", "T4");
+        t4Summary.addProperty("mode", "TERRAIN_SCAN");
+        JsonObject territory = new JsonObject();
+        territory.addProperty("id", config.id);
+        territory.addProperty("region_id", config.regionId);
+        t4Summary.add("territory", territory);
+        TerritoryResultRepository.writeT4(tempDir, config.id, t4Summary, new byte[]{0, 1, 2, 3});
+
+        TerritoryManager.TerritoryResult loaded =
+                TerritoryResultRepository.readT3Result(tempDir, config.id, config).orElseThrow();
+
+        assertEquals(2, loaded.claimedChunks.size());
+        assertEquals(1, loaded.wildChunks.size());
+        assertEquals(3L, loaded.stats.area_pixels);
+        assertTrue(loaded.stats.maxX >= loaded.stats.minX);
+        assertTrue(loaded.stats.maxZ >= loaded.stats.minZ);
     }
 
     private static TerritoryManager.TerritoryConfig config(String instanceId, String territoryId, int continentId) {

@@ -3,7 +3,9 @@ package com.user.terra_script.server.mcp;
 import com.user.terra_script.world.TerritoryManager;
 import org.junit.jupiter.api.Test;
 
+import java.awt.image.BufferedImage;
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -81,6 +83,24 @@ class TerritoryControllerTest {
         assertTrue(selection.records.isEmpty());
     }
 
+    @Test
+    void capitalTerrainMapRendersWindowImage() {
+        List<TerritoryController.CellRecord> records = List.of(
+                new TerritoryController.CellRecord(0, 0, 62, 0.0f, 0.5f, 0, 0, 100),
+                new TerritoryController.CellRecord(8, 0, 70, 1.0f, 0.7f, 0, 0, 100),
+                new TerritoryController.CellRecord(0, 8, 84, 4.0f, 0.8f, 0, 0, 100),
+                new TerritoryController.CellRecord(8, 8, 96, 8.0f, 0.8f, 0, 0, 100)
+        );
+        TerritoryController.WindowSelection selection =
+                new TerritoryController.WindowSelection(0, 0, 0, 0, false, 0.0, records);
+
+        BufferedImage image = TerritoryCapitalTerrainMapExporter.render(selection, 8, Set.of(), 64, 32);
+
+        assertEquals(64, image.getWidth());
+        assertEquals(64, image.getHeight());
+        assertTrue(hasNonBackgroundPixel(image));
+    }
+
     private static TerritoryManager.TerritoryResult result(
             String instanceId,
             String territoryId,
@@ -112,5 +132,15 @@ class TerritoryControllerTest {
             result.wildChunks.add(10_000L + i);
         }
         return result;
+    }
+
+    private static boolean hasNonBackgroundPixel(BufferedImage image) {
+        int background = image.getRGB(0, 0);
+        for (int z = 0; z < image.getHeight(); z++) {
+            for (int x = 0; x < image.getWidth(); x++) {
+                if (image.getRGB(x, z) != background) return true;
+            }
+        }
+        return false;
     }
 }

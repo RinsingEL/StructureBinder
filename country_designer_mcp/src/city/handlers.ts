@@ -2,6 +2,8 @@ import { MC_API_URL, TIMEOUTS, getJson, postJson } from "../shared/http.js";
 import { invokeMcTask } from "../shared/task/task-runner.js";
 import { ToolHandler, textResult } from "../shared/types.js";
 import { buildCreateCityPayload } from "../shared/utils.js";
+import { generateC1IntentImage, smokeTestC1IntentImage } from "./image-intent.js";
+import { generateC1GeometryIntent } from "./geometry-intent.js";
 import { cityTaskPolicies } from "./policy.js";
 
 export const cityHandlers: Record<string, ToolHandler> = {
@@ -23,6 +25,89 @@ export const cityHandlers: Record<string, ToolHandler> = {
 
   async city_c1_generate(args) {
     return invokeMcTask({ url: `${MC_API_URL}/city_c1_generate`, payload: buildCreateCityPayload(args), policy: cityTaskPolicies.city_c1_generate });
+  },
+
+  async city_c1_image_intent_prepare(args) {
+    return postCityJson("/city_c1_image_intent_prepare", normalizeImageIntentPayload(args), TIMEOUTS.workflow);
+  },
+
+  async city_c1_image_intent_generate(args) {
+    const payload = normalizeImageIntentPayload(args);
+    const preparedRes = await postJson(`${MC_API_URL}/city_c1_image_intent_prepare`, payload, TIMEOUTS.workflow);
+    const prepared = preparedRes.data;
+    const generated = await generateC1IntentImage(args, prepared);
+    if (!generated.generated) {
+      return textResult(JSON.stringify({
+        status: "prepared_offline_import_required",
+        reason: generated.reason,
+        error_code: generated.error_code,
+        error: generated.error,
+        city_id: prepared.city_id,
+        prepared,
+        next_action: "Set OPENAI_API_KEY or call city_c1_image_intent_import with image_path/image_base64.",
+      }, null, 2));
+    }
+    return textResult(JSON.stringify({
+      status: "generated_and_imported",
+      city_id: prepared.city_id,
+      prepared,
+      model: generated.model,
+      import_result: generated.import_result,
+    }, null, 2));
+  },
+
+  async city_c1_image_intent_api_smoke_test(args) {
+    const result = await smokeTestC1IntentImage(args);
+    if (!result.generated) {
+      return textResult(JSON.stringify({
+        status: "image_api_unavailable",
+        reason: result.reason,
+        error_code: result.error_code,
+        error: result.error,
+        next_action: result.reason === "missing_openai_api_key"
+          ? "Set OPENAI_API_KEY before running image API generation."
+          : "Check local network/proxy, API key billing/quota, or OPENAI_IMAGE_MODEL, then rerun this smoke test.",
+      }, null, 2));
+    }
+    return textResult(JSON.stringify({
+      status: "image_api_generated",
+      model: result.model,
+      endpoint: result.endpoint,
+      image_path: result.image_path,
+      bytes: result.bytes,
+    }, null, 2));
+  },
+
+  async city_c1_image_intent_import(args) {
+    return postCityJson("/city_c1_image_intent_import", args, TIMEOUTS.workflow);
+  },
+
+  async city_c1_image_intent_data(args) {
+    return postCityJson("/city_c1_image_intent_data", { city_id: args.city_id });
+  },
+
+  async city_c1_geometry_prepare(args) {
+    return postCityJson("/city_c1_geometry_prepare", normalizeImageIntentPayload(args), TIMEOUTS.workflow);
+  },
+
+  async city_c1_geometry_generate(args) {
+    const payload = normalizeImageIntentPayload(args);
+    const preparedRes = await postJson(`${MC_API_URL}/city_c1_geometry_prepare`, payload, TIMEOUTS.workflow);
+    const prepared = preparedRes.data;
+    const generated = await generateC1GeometryIntent(args, prepared);
+    return textResult(JSON.stringify(generated, null, 2));
+  },
+
+  async city_c1_geometry_import(args) {
+    return postCityJson("/city_c1_geometry_import", args, TIMEOUTS.workflow);
+  },
+
+  async city_c1_geometry_patch(args) {
+    return postCityJson("/city_c1_geometry_patch", args, TIMEOUTS.workflow);
+  },
+
+  async city_c1_geometry_data(args) {
+    return postCityJson("/city_c1_geometry_data", { city_id: args.city_id }, TIMEOUTS.workflow);
   },
 
   async city_c2_generate(args) {
@@ -152,4 +237,12 @@ export const cityHandlers: Record<string, ToolHandler> = {
 async function postCityJson(path: string, payload: any, timeout = TIMEOUTS.quick) {
   const res = await postJson(`${MC_API_URL}${path}`, payload, timeout);
   return textResult(JSON.stringify(res.data, null, 2));
+}
+
+function normalizeImageIntentPayload(args: any) {
+  const payload: Record<string, any> = {};
+  for (const key of ["city_id", "territory_id", "center_x", "center_z", "city_scale_bucket", "city_role", "density", "ecology", "water_policy", "radius_blocks"]) {
+    if (args[key] !== undefined) payload[key] = args[key];
+  }
+  return payload;
 }

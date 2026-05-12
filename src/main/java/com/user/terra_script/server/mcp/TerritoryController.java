@@ -576,6 +576,22 @@ public class TerritoryController {
         }
     }
 
+    public void handleTerritoryCapitalTerrainMap(HttpExchange exchange, MinecraftServer server) throws IOException {
+        if (!HttpUtil.requireMethod(exchange, "POST")) return;
+        try {
+            TerritoryManager.restoreT3ResultsFromDisk(server);
+            JsonObject req = JsonParser.parseString(HttpUtil.readBody(exchange)).getAsJsonObject();
+            JsonObject res = TerritoryCapitalTerrainMapExporter.export(server, req);
+            HttpUtil.sendResponse(exchange, 200, GSON.toJson(res));
+        } catch (IllegalArgumentException e) {
+            HttpUtil.sendResponse(exchange, 400, "{\"error\": \"" + e.getMessage() + "\"}");
+        } catch (java.io.FileNotFoundException e) {
+            HttpUtil.sendResponse(exchange, 404, "{\"error\": \"" + e.getMessage() + "\"}");
+        } catch (Exception e) {
+            HttpUtil.handleError(exchange, e);
+        }
+    }
+
     private static String getQueryParam(HttpExchange exchange, String key) {
         String raw = exchange.getRequestURI() != null ? exchange.getRequestURI().getQuery() : null;
         if (raw == null || raw.isBlank()) return null;
@@ -666,7 +682,7 @@ public class TerritoryController {
         return out;
     }
 
-    private static DecodedT4 decodeT4Dat(byte[] bytes) throws Exception {
+    public static DecodedT4 decodeT4Dat(byte[] bytes) throws Exception {
         try (DataInputStream in = new DataInputStream(new ByteArrayInputStream(bytes))) {
             int version = in.readInt();
             String territoryId = in.readUTF();
@@ -688,7 +704,7 @@ public class TerritoryController {
         }
     }
 
-    static WindowSelection selectWindow(
+    public static WindowSelection selectWindow(
             List<CellRecord> records,
             int requestedCenterX,
             int requestedCenterZ,
@@ -755,13 +771,13 @@ public class TerritoryController {
         return Math.round(v * 1000.0) / 1000.0;
     }
 
-    private static final class DecodedT4 {
-        final int version;
-        final String territoryId;
-        final int step;
-        final List<CellRecord> records;
+    public static final class DecodedT4 {
+        public final int version;
+        public final String territoryId;
+        public final int step;
+        public final List<CellRecord> records;
 
-        DecodedT4(int version, String territoryId, int step, List<CellRecord> records) {
+        public DecodedT4(int version, String territoryId, int step, List<CellRecord> records) {
             this.version = version;
             this.territoryId = territoryId;
             this.step = step;
@@ -769,16 +785,16 @@ public class TerritoryController {
         }
     }
 
-    static final class WindowSelection {
-        final int requestedCenterX;
-        final int requestedCenterZ;
-        final int centerX;
-        final int centerZ;
-        final boolean reanchored;
-        final double nearestDistanceBlocks;
-        final List<CellRecord> records;
+    public static final class WindowSelection {
+        public final int requestedCenterX;
+        public final int requestedCenterZ;
+        public final int centerX;
+        public final int centerZ;
+        public final boolean reanchored;
+        public final double nearestDistanceBlocks;
+        public final List<CellRecord> records;
 
-        WindowSelection(
+        public WindowSelection(
                 int requestedCenterX,
                 int requestedCenterZ,
                 int centerX,
@@ -797,17 +813,17 @@ public class TerritoryController {
         }
     }
 
-    static final class CellRecord {
-        final int x;
-        final int z;
-        final int height;
-        final float slope;
-        final float temperature;
-        final int distBorder;
-        final int distCapital;
-        final int strategic;
+    public static final class CellRecord {
+        public final int x;
+        public final int z;
+        public final int height;
+        public final float slope;
+        public final float temperature;
+        public final int distBorder;
+        public final int distCapital;
+        public final int strategic;
 
-        CellRecord(int x, int z, int height, float slope, float temperature, int distBorder, int distCapital, int strategic) {
+        public CellRecord(int x, int z, int height, float slope, float temperature, int distBorder, int distCapital, int strategic) {
             this.x = x;
             this.z = z;
             this.height = height;

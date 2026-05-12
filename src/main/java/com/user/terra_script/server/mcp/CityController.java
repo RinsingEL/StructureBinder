@@ -23,6 +23,9 @@ import com.user.terra_script.world.city.stage.c1.CityStage1BinaryIO;
 import com.user.terra_script.world.city.stage.c1.CityStage1Processor;
 import com.user.terra_script.world.city.stage.c1.CitySurvivalBoundaryExporter;
 import com.user.terra_script.world.city.stage.c1.CitySurvivalBoundaryPlanner;
+import com.user.terra_script.world.city.stage.c1.intent.CityC1ImageIntentModels;
+import com.user.terra_script.world.city.stage.c1.intent.CityC1ImageIntentService;
+import com.user.terra_script.world.city.stage.c1.intent.CityC1GeometryIntentService;
 import com.user.terra_script.world.city.stage.c2.CityC2ScanBinaryIO;
 import com.user.terra_script.world.city.stage.c2.CityC3PolygonPreviewExporter;
 import com.user.terra_script.world.city.stage.c2.CityC2SatellitePreviewExporter;
@@ -96,6 +99,124 @@ public class CityController {
 
     public CityController(MinecraftServer mcServer) {
         this.mcServer = mcServer;
+    }
+
+    public void handleCityC1ImageIntentPrepare(HttpExchange exchange) throws IOException {
+        if (!HttpUtil.requireMethod(exchange, "POST")) return;
+        try {
+            String body = HttpUtil.readBody(exchange);
+            JsonObject json = body == null || body.isBlank()
+                    ? new JsonObject()
+                    : JsonParser.parseString(body).getAsJsonObject();
+            CityC1ImageIntentModels.PrepareRequest request = CityC1ImageIntentModels.PrepareRequest.fromJson(json);
+            JsonObject res = CityC1ImageIntentService.prepare(mcServer, request);
+            HttpUtil.sendResponse(exchange, 200, gson.toJson(res));
+        } catch (IllegalArgumentException e) {
+            HttpUtil.sendResponse(exchange, 400, "{\"error\": \"" + escapeJson(e.getMessage()) + "\"}");
+        } catch (Exception e) {
+            HttpUtil.handleError(exchange, e);
+        }
+    }
+
+    public void handleCityC1ImageIntentImport(HttpExchange exchange) throws IOException {
+        if (!HttpUtil.requireMethod(exchange, "POST")) return;
+        try {
+            String body = HttpUtil.readBody(exchange);
+            JsonObject json = body == null || body.isBlank()
+                    ? new JsonObject()
+                    : JsonParser.parseString(body).getAsJsonObject();
+            JsonObject res = CityC1ImageIntentService.importIntentImage(mcServer, json);
+            HttpUtil.sendResponse(exchange, 200, gson.toJson(res));
+        } catch (IllegalArgumentException e) {
+            HttpUtil.sendResponse(exchange, 400, "{\"error\": \"" + escapeJson(e.getMessage()) + "\"}");
+        } catch (Exception e) {
+            HttpUtil.handleError(exchange, e);
+        }
+    }
+
+    public void handleCityC1ImageIntentData(HttpExchange exchange) throws IOException {
+        if (!HttpUtil.requireMethod(exchange, "POST")) return;
+        try {
+            String body = HttpUtil.readBody(exchange);
+            JsonObject json = body == null || body.isBlank()
+                    ? new JsonObject()
+                    : JsonParser.parseString(body).getAsJsonObject();
+            String cityId = json.has("city_id") ? json.get("city_id").getAsString() : null;
+            JsonObject res = CityC1ImageIntentService.data(mcServer, cityId);
+            HttpUtil.sendResponse(exchange, 200, gson.toJson(res));
+        } catch (IllegalArgumentException e) {
+            HttpUtil.sendResponse(exchange, 400, "{\"error\": \"" + escapeJson(e.getMessage()) + "\"}");
+        } catch (Exception e) {
+            HttpUtil.handleError(exchange, e);
+        }
+    }
+
+    public void handleCityC1GeometryPrepare(HttpExchange exchange) throws IOException {
+        if (!HttpUtil.requireMethod(exchange, "POST")) return;
+        try {
+            String body = HttpUtil.readBody(exchange);
+            JsonObject json = body == null || body.isBlank()
+                    ? new JsonObject()
+                    : JsonParser.parseString(body).getAsJsonObject();
+            CityC1ImageIntentModels.PrepareRequest request = CityC1ImageIntentModels.PrepareRequest.fromJson(json);
+            JsonObject res = CityC1GeometryIntentService.prepare(mcServer, request);
+            HttpUtil.sendResponse(exchange, 200, gson.toJson(res));
+        } catch (IllegalArgumentException e) {
+            HttpUtil.sendResponse(exchange, 400, "{\"error\": \"" + escapeJson(e.getMessage()) + "\"}");
+        } catch (java.io.FileNotFoundException e) {
+            HttpUtil.sendResponse(exchange, 404, "{\"error\": \"" + escapeJson(e.getMessage()) + "\"}");
+        } catch (Exception e) {
+            HttpUtil.handleError(exchange, e);
+        }
+    }
+
+    public void handleCityC1GeometryImport(HttpExchange exchange) throws IOException {
+        if (!HttpUtil.requireMethod(exchange, "POST")) return;
+        try {
+            String body = HttpUtil.readBody(exchange);
+            JsonObject json = body == null || body.isBlank()
+                    ? new JsonObject()
+                    : JsonParser.parseString(body).getAsJsonObject();
+            JsonObject res = CityC1GeometryIntentService.importGeometry(mcServer, json);
+            HttpUtil.sendResponse(exchange, 200, gson.toJson(res));
+        } catch (IllegalArgumentException e) {
+            HttpUtil.sendResponse(exchange, 400, "{\"error\": \"" + escapeJson(e.getMessage()) + "\"}");
+        } catch (Exception e) {
+            HttpUtil.handleError(exchange, e);
+        }
+    }
+
+    public void handleCityC1GeometryPatch(HttpExchange exchange) throws IOException {
+        if (!HttpUtil.requireMethod(exchange, "POST")) return;
+        try {
+            String body = HttpUtil.readBody(exchange);
+            JsonObject json = body == null || body.isBlank()
+                    ? new JsonObject()
+                    : JsonParser.parseString(body).getAsJsonObject();
+            JsonObject res = CityC1GeometryIntentService.patchGeometry(mcServer, json);
+            HttpUtil.sendResponse(exchange, 200, gson.toJson(res));
+        } catch (IllegalArgumentException e) {
+            HttpUtil.sendResponse(exchange, 400, "{\"error\": \"" + escapeJson(e.getMessage()) + "\"}");
+        } catch (Exception e) {
+            HttpUtil.handleError(exchange, e);
+        }
+    }
+
+    public void handleCityC1GeometryData(HttpExchange exchange) throws IOException {
+        if (!HttpUtil.requireMethod(exchange, "POST")) return;
+        try {
+            String body = HttpUtil.readBody(exchange);
+            JsonObject json = body == null || body.isBlank()
+                    ? new JsonObject()
+                    : JsonParser.parseString(body).getAsJsonObject();
+            String cityId = json.has("city_id") ? json.get("city_id").getAsString() : null;
+            JsonObject res = CityC1GeometryIntentService.data(mcServer, cityId);
+            HttpUtil.sendResponse(exchange, 200, gson.toJson(res));
+        } catch (IllegalArgumentException e) {
+            HttpUtil.sendResponse(exchange, 400, "{\"error\": \"" + escapeJson(e.getMessage()) + "\"}");
+        } catch (Exception e) {
+            HttpUtil.handleError(exchange, e);
+        }
     }
 
     public void handleCityHeightmap(HttpExchange exchange) throws IOException {

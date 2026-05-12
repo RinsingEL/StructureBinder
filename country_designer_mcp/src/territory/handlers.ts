@@ -233,4 +233,16 @@ export const territoryHandlers: Record<string, ToolHandler> = {
     const res = await postJson(`${MC_API_URL}/territory/t4_window`, payload, TIMEOUTS.quick);
     return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
   },
+
+  async territory_capital_terrain_map(args) {
+    const territoryId = String(args.territory_id || "").trim();
+    if (!territoryId) throw new Error("territory_id is required");
+    const payload: Record<string, any> = { territory_id: territoryId };
+    if (args.center_x !== undefined) payload.center_x = Number(args.center_x);
+    if (args.center_z !== undefined) payload.center_z = Number(args.center_z);
+    if (args.radius_blocks !== undefined) payload.radius_blocks = Number(args.radius_blocks);
+    if (args.image_size !== undefined) payload.image_size = Number(args.image_size);
+    const res = await postJson(`${MC_API_URL}/territory/capital_terrain_map`, payload, TIMEOUTS.workflow);
+    return textResult(JSON.stringify(res.data, null, 2));
+  },
 };

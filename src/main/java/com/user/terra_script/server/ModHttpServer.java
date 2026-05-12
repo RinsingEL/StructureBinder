@@ -89,6 +89,7 @@ public class ModHttpServer {
             server.createContext("/territory_status", exchange -> territoryController.handleTerritoryStatus(exchange, mcServer));
             server.createContext("/territory/summary", exchange -> territoryController.handleTerritorySummary(exchange, mcServer));
             server.createContext("/territory/t4_window", exchange -> territoryController.handleTerritoryT4Window(exchange, mcServer));
+            server.createContext("/territory/capital_terrain_map", exchange -> territoryController.handleTerritoryCapitalTerrainMap(exchange, mcServer));
 
             server.createContext("/freeze_status", workflowController::handleFreezeStatus);
             server.createContext("/freeze_project", workflowController::handleFreezeProject);
@@ -99,6 +100,13 @@ public class ModHttpServer {
             server.createContext("/runtime_debug/task_timeout_test", runtimeDebugController::handleRuntimeTaskTimeoutTest);
 
             server.createContext("/city_heightmap", cityController::handleCityHeightmap);
+            server.createContext("/city_c1_image_intent_prepare", cityController::handleCityC1ImageIntentPrepare);
+            server.createContext("/city_c1_image_intent_import", cityController::handleCityC1ImageIntentImport);
+            server.createContext("/city_c1_image_intent_data", cityController::handleCityC1ImageIntentData);
+            server.createContext("/city_c1_geometry_prepare", cityController::handleCityC1GeometryPrepare);
+            server.createContext("/city_c1_geometry_import", cityController::handleCityC1GeometryImport);
+            server.createContext("/city_c1_geometry_patch", cityController::handleCityC1GeometryPatch);
+            server.createContext("/city_c1_geometry_data", cityController::handleCityC1GeometryData);
             server.createContext("/city_c1_generate", cityController::handleCreateCity);
             server.createContext("/city_survival_c1_generate", cityController::handleCitySurvivalC1Generate);
             server.createContext("/city_c2_generate", cityController::handleCityC2Generate);

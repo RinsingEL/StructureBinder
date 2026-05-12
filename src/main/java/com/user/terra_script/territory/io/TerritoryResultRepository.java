@@ -216,8 +216,15 @@ public class TerritoryResultRepository {
         if (server == null || isBlank(territoryId)) {
             throw new IllegalArgumentException("invalid T4 export input");
         }
-        Path summaryPath = summaryPath(server, territoryId, T4_DIR);
-        Path datPath = datPath(server, territoryId, T4_DIR);
+        writeT4(territoryRoot(server), territoryId, summary, datBytes);
+    }
+
+    public static void writeT4(Path territoryRoot, String territoryId, JsonObject summary, byte[] datBytes) throws Exception {
+        if (territoryRoot == null || isBlank(territoryId)) {
+            throw new IllegalArgumentException("invalid T4 export input");
+        }
+        Path summaryPath = summaryPath(territoryRoot, territoryId, T4_DIR);
+        Path datPath = datPath(territoryRoot, territoryId, T4_DIR);
         writeJsonAtomic(summaryPath, summary);
         writeDatAtomic(datPath, datBytes);
     }
@@ -307,7 +314,7 @@ public class TerritoryResultRepository {
         TerritoryManager.TerritoryResult result = new TerritoryManager.TerritoryResult(configForResult);
         result.claimedChunks.addAll(dat.get().claimedChunks);
         result.wildChunks.addAll(dat.get().wildChunks);
-        Optional<JsonObject> summary = readSummary(territoryRoot, territoryId);
+        Optional<JsonObject> summary = readStageSummary(territoryRoot, territoryId, T3_DIR);
         result.stats = summary
                 .map(TerritoryResultRepository::statsFromSummary)
                 .orElseGet(() -> deriveStats(result.claimedChunks, result.wildChunks));
@@ -458,6 +465,19 @@ public class TerritoryResultRepository {
             stats.maxZ = Math.max(stats.maxZ, maxZ);
         }
         return stats;
+    }
+
+    private static Optional<JsonObject> readStageSummary(Path territoryRoot, String territoryId, String stageFolder) {
+        if (territoryRoot == null || isBlank(territoryId) || isBlank(stageFolder)) return Optional.empty();
+        try {
+            Path path = summaryPath(territoryRoot, territoryId, stageFolder);
+            if (!Files.exists(path)) return Optional.empty();
+            String json = Files.readString(path, StandardCharsets.UTF_8);
+            if (json == null || json.isBlank()) return Optional.empty();
+            return Optional.of(JsonParser.parseString(json).getAsJsonObject());
+        } catch (Exception e) {
+            return Optional.empty();
+        }
     }
 
     private static int intValue(JsonObject obj, String key, int fallback) {
