@@ -59,6 +59,12 @@ repositories {
 
 dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+    testImplementation platform('org.junit:junit-bom:5.10.2')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+}
+
+tasks.named('test', Test).configure {
+    useJUnitPlatform()
 }
 
 tasks.named('processResources', ProcessResources).configure {
@@ -74,6 +80,13 @@ tasks.named('processResources', ProcessResources).configure {
 
     filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) {
         expand replaceProperties
+    }
+
+    doLast {
+        copy {
+            from 'src/main/resources/gameteststructures'
+            into 'run/gameteststructures'
+        }
     }
 }
 
