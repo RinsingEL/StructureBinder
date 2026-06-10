@@ -6,7 +6,7 @@ import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
-import com.rinsing.geomantia.world.atlas.preview.AtlasJson;
+import com.rinsing.geomantia.systems.gis.preview.AtlasJson;
 import com.sun.net.httpserver.HttpExchange;
 import net.minecraftforge.fml.loading.FMLPaths;
 
