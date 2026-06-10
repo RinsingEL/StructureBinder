@@ -35,6 +35,12 @@ class LandformAlgorithmTest {
         assertTrue(region.cells().stream().anyMatch(cell -> cell.landformType() == LandformType.SHORE));
         assertTrue(patches.stream().anyMatch(patch -> patch.touchesWater()));
         assertTrue(patches.stream().anyMatch(patch -> patch.cellCount() > 10));
+        assertTrue(region.cells().stream()
+                .filter(cell -> cell.hasFlag(CellStateFlag.PATCH_READY))
+                .allMatch(cell -> !cell.patchId().isBlank()));
+        assertTrue(patches.stream().allMatch(patch -> region.cells().stream()
+                .filter(cell -> patch.patchId().equals(cell.patchId()))
+                .count() == patch.cellCount()));
     }
 
     @Test

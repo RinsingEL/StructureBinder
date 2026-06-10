@@ -25,6 +25,7 @@ public final class AtlasCell {
     private double tpiLarge;
     private double waterDistance = Double.POSITIVE_INFINITY;
     private LandformType landformType = LandformType.UNKNOWN;
+    private String patchId = "";
     private final EnumSet<CellStateFlag> stateFlags = EnumSet.noneOf(CellStateFlag.class);
 
     public AtlasCell(String regionId, int globalCellX, int globalCellZ, int localCellX, int localCellZ,
@@ -118,6 +119,10 @@ public final class AtlasCell {
         return landformType;
     }
 
+    public String patchId() {
+        return patchId;
+    }
+
     public Set<CellStateFlag> stateFlags() {
         return EnumSet.copyOf(stateFlags);
     }
@@ -161,6 +166,17 @@ public final class AtlasCell {
 
     public void setLandformType(LandformType landformType) {
         this.landformType = Objects.requireNonNull(landformType, "landformType");
+        this.patchId = "";
+        removeFlag(CellStateFlag.PATCH_READY);
         addFlag(CellStateFlag.LANDFORM_READY);
+    }
+
+    public void setPatchId(String patchId) {
+        this.patchId = patchId == null ? "" : patchId;
+        if (this.patchId.isBlank()) {
+            removeFlag(CellStateFlag.PATCH_READY);
+        } else {
+            addFlag(CellStateFlag.PATCH_READY);
+        }
     }
 }

@@ -93,6 +93,9 @@ public final class AtlasRegionSnapshotIo {
             if (flags.contains(CellStateFlag.LANDFORM_READY)) {
                 cell.setLandformType(LandformType.fromContractName(json.get("landformType").getAsString()));
             }
+            if (json.has("patchId") && !json.get("patchId").getAsString().isBlank()) {
+                cell.setPatchId(json.get("patchId").getAsString());
+            }
             for (var flagElement : json.getAsJsonArray("stateFlags")) {
                 CellStateFlag flag = stateFlag(flagElement.getAsString());
                 if (flag != null) {
@@ -130,6 +133,7 @@ public final class AtlasRegionSnapshotIo {
         json.addProperty("tpiLarge", cell.tpiLarge());
         json.addProperty("waterDistance", Double.isFinite(cell.waterDistance()) ? cell.waterDistance() : 9999.0);
         json.addProperty("landformType", cell.landformType().contractName());
+        json.addProperty("patchId", cell.patchId());
         JsonArray flags = new JsonArray();
         for (CellStateFlag flag : cell.stateFlags()) {
             flags.add(flag.contractName());

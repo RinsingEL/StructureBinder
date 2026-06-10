@@ -40,7 +40,7 @@ public final class PatchMerger {
                 List<AtlasCell> cells = flood(region, x, z, type, seen);
                 LandformPatch patch = summarize(region, patchSeq++, type, cells);
                 patches.add(patch);
-                cells.forEach(cell -> cell.addFlag(CellStateFlag.PATCH_READY));
+                cells.forEach(cell -> cell.setPatchId(patch.patchId()));
             }
         }
         region.replacePatches(patches);

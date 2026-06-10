@@ -4,12 +4,12 @@ import com.rinsing.geomantia.world.atlas.GisAtlasConstants;
 import com.rinsing.geomantia.world.atlas.cell.AtlasCell;
 import com.rinsing.geomantia.world.atlas.cell.CellStateFlag;
 import com.rinsing.geomantia.world.atlas.cell.LandformType;
-import com.rinsing.geomantia.world.atlas.landform.LandformPatch;
 import com.rinsing.geomantia.world.atlas.refresh.RefreshJob;
 import com.rinsing.geomantia.world.atlas.region.AtlasRegion;
 
 import javax.imageio.ImageIO;
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -21,6 +21,9 @@ import java.util.List;
 import java.util.Map;
 
 public final class PreviewExporter {
+    private static final int PATCH_CELL_PIXELS = 4;
+    private static final Color PATCH_BOUNDARY_COLOR = Color.BLACK;
+
     public void export(RefreshJob job, AtlasRegion region, Path previewDirectory) throws IOException {
         Files.createDirectories(previewDirectory);
         List<Map<String, Object>> layers = new ArrayList<>();
@@ -31,7 +34,9 @@ public final class PreviewExporter {
         layers.add(writeNumeric(region, previewDirectory, "tpiLarge", "diverging", Metric.TPI_LARGE));
         layers.add(writeLandform(region, previewDirectory));
         layers.add(writePatch(region, previewDirectory));
-        writeManifest(job, region, previewDirectory.resolve("preview_manifest.json"), layers);
+        Path legend = writeLegend(previewDirectory);
+        writeManifest(job, region, previewDirectory.resolve("preview_manifest.json"), layers,
+                legend.getFileName().toString());
     }
 
     private static Map<String, Object> writeNumeric(AtlasRegion region, Path dir, String name, String palette,
@@ -82,29 +87,135 @@ public final class PreviewExporter {
 
     private static Map<String, Object> writePatch(AtlasRegion region, Path dir) throws IOException {
         int side = region.cellsPerSide();
-        BufferedImage image = new BufferedImage(side, side, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D graphics = image.createGraphics();
+        int scale = PATCH_CELL_PIXELS;
+        BufferedImage image = new BufferedImage(side * scale, side * scale, BufferedImage.TYPE_INT_ARGB);
         for (int z = 0; z < side; z++) {
             for (int x = 0; x < side; x++) {
-                image.setRGB(x, z, colorLandform(region.cell(x, z).landformType()).darker().getRGB());
+                fillCell(image, x, z, scale, colorLandform(region.cell(x, z).landformType()));
             }
         }
-        graphics.setColor(Color.BLACK);
-        for (LandformPatch patch : region.patches()) {
-            int minX = Math.floorDiv(patch.blockMinX() - region.blockMinX(), region.cellStepBlocks());
-            int minZ = Math.floorDiv(patch.blockMinZ() - region.blockMinZ(), region.cellStepBlocks());
-            int maxX = Math.floorDiv(patch.blockMaxX() - region.blockMinX(), region.cellStepBlocks());
-            int maxZ = Math.floorDiv(patch.blockMaxZ() - region.blockMinZ(), region.cellStepBlocks());
-            graphics.drawRect(minX, minZ, Math.max(1, maxX - minX), Math.max(1, maxZ - minZ));
+        for (int z = 0; z < side; z++) {
+            for (int x = 0; x < side; x++) {
+                drawPatchBoundary(image, region, x, z, scale);
+            }
         }
-        graphics.dispose();
         Path file = dir.resolve("patch.png");
         ImageIO.write(image, "png", file.toFile());
-        return layer("patch", file.getFileName().toString(), 0.0, region.patches().size(), "patch-bounds");
+        return layer("patch", file.getFileName().toString(), 0.0, region.patches().size(), "patch-cell-boundaries");
     }
 
-    private static void writeManifest(RefreshJob job, AtlasRegion region, Path path, List<Map<String, Object>> layers)
-            throws IOException {
+    private static Path writeLegend(Path dir) throws IOException {
+        int width = 430;
+        int rowHeight = 20;
+        int top = 38;
+        int rows = LandformType.values().length + 5;
+        int height = top + rows * rowHeight + 12;
+        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D graphics = image.createGraphics();
+        graphics.setColor(new Color(245, 245, 245));
+        graphics.fillRect(0, 0, width, height);
+        graphics.setColor(Color.BLACK);
+        graphics.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 13));
+        graphics.drawString("GIS 预览图例(GIS preview legend)", 12, 20);
+        graphics.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 12));
+        int y = top;
+        for (LandformType type : LandformType.values()) {
+            drawLegendRow(graphics, y, colorLandform(type), landformLegendLabel(type));
+            y += rowHeight;
+        }
+        y += 4;
+        drawLegendRow(graphics, y, PATCH_BOUNDARY_COLOR, "黑线(patch member boundary)");
+        y += rowHeight;
+        drawLegendRow(graphics, y, new Color(80, 80, 80), "灰色(unknown / not classified)");
+        y += rowHeight;
+        drawLegendRow(graphics, y, new Color(30, 95, 190), "水体图层蓝色(water layer blue)");
+        y += rowHeight;
+        drawLegendRow(graphics, y, new Color(230, 205, 110), "岸线候选色(shore candidate)");
+        y += rowHeight;
+        drawLegendRow(graphics, y, Color.WHITE, "数值图层(numeric): manifest min/max + palette");
+        graphics.dispose();
+        Path file = dir.resolve("legend.png");
+        ImageIO.write(image, "png", file.toFile());
+        return file;
+    }
+
+    private static String landformLegendLabel(LandformType type) {
+        return switch (type) {
+            case WATER -> "水体(water)";
+            case SHORE -> "岸线(shore)";
+            case PLAIN -> "平原(plain)";
+            case TERRACE -> "台地(terrace)";
+            case SLOPE -> "坡地(slope)";
+            case CLIFF -> "悬崖(cliff)";
+            case RIDGE -> "山脊(ridge)";
+            case VALLEY -> "谷地(valley)";
+            case BASIN -> "盆地(basin)";
+            case UNKNOWN -> "未知(unknown)";
+        };
+    }
+
+    private static void drawLegendRow(Graphics2D graphics, int y, Color color, String label) {
+        graphics.setColor(color);
+        graphics.fillRect(12, y - 11, 14, 14);
+        graphics.setColor(Color.BLACK);
+        graphics.drawRect(12, y - 11, 14, 14);
+        graphics.drawString(label, 34, y);
+    }
+
+    private static void fillCell(BufferedImage image, int cellX, int cellZ, int scale, Color color) {
+        int rgb = color.getRGB();
+        int minX = cellX * scale;
+        int minZ = cellZ * scale;
+        for (int z = minZ; z < minZ + scale; z++) {
+            for (int x = minX; x < minX + scale; x++) {
+                image.setRGB(x, z, rgb);
+            }
+        }
+    }
+
+    private static void drawPatchBoundary(BufferedImage image, AtlasRegion region, int cellX, int cellZ, int scale) {
+        AtlasCell cell = region.cell(cellX, cellZ);
+        if (cell.patchId().isBlank()) {
+            return;
+        }
+        int minX = cellX * scale;
+        int minZ = cellZ * scale;
+        int maxX = minX + scale - 1;
+        int maxZ = minZ + scale - 1;
+        int rgb = PATCH_BOUNDARY_COLOR.getRGB();
+        if (isPatchBoundary(region, cell, 0, -1)) {
+            drawHorizontal(image, minX, maxX, minZ, rgb);
+        }
+        if (isPatchBoundary(region, cell, 0, 1)) {
+            drawHorizontal(image, minX, maxX, maxZ, rgb);
+        }
+        if (isPatchBoundary(region, cell, -1, 0)) {
+            drawVertical(image, minX, minZ, maxZ, rgb);
+        }
+        if (isPatchBoundary(region, cell, 1, 0)) {
+            drawVertical(image, maxX, minZ, maxZ, rgb);
+        }
+    }
+
+    private static boolean isPatchBoundary(AtlasRegion region, AtlasCell cell, int dx, int dz) {
+        AtlasCell neighbor = region.cell(cell.localCellX() + dx, cell.localCellZ() + dz);
+        return neighbor == null || !neighbor.patchId().equals(cell.patchId());
+    }
+
+    private static void drawHorizontal(BufferedImage image, int minX, int maxX, int y, int rgb) {
+        for (int x = minX; x <= maxX; x++) {
+            image.setRGB(x, y, rgb);
+        }
+    }
+
+    private static void drawVertical(BufferedImage image, int x, int minZ, int maxZ, int rgb) {
+        for (int z = minZ; z <= maxZ; z++) {
+            image.setRGB(x, z, rgb);
+        }
+    }
+
+    private static void writeManifest(RefreshJob job, AtlasRegion region, Path path, List<Map<String, Object>> layers,
+            String legendFile) throws IOException {
         Map<String, Integer> sourceCounts = new LinkedHashMap<>();
         int unknown = 0;
         boolean edgeDirty = false;
@@ -132,6 +243,7 @@ public final class PreviewExporter {
         root.put("configVersion", GisAtlasConstants.CONFIG_VERSION);
         root.put("generatedAt", System.currentTimeMillis());
         root.put("layers", layers);
+        root.put("legend", legendFile);
         root.put("hasEdgeDirty", edgeDirty);
         root.put("unknownCellCount", unknown);
         root.put("notes", "GIS v1 debug preview; JSON is not the production atlas cache.");

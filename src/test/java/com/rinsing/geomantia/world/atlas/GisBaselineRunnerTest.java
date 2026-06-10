@@ -36,6 +36,7 @@ class GisBaselineRunnerTest {
             assertTrue(Files.exists(runDir.resolve("preview").resolve("tpiLarge.png")));
             assertTrue(Files.exists(runDir.resolve("preview").resolve("landform.png")));
             assertTrue(Files.exists(runDir.resolve("preview").resolve("patch.png")));
+            assertTrue(Files.exists(runDir.resolve("preview").resolve("legend.png")));
             assertTrue(Files.exists(runDir.resolve("region_snapshot.json")));
             assertFalse(report.landformCounts().isEmpty());
         }
@@ -52,6 +53,9 @@ class GisBaselineRunnerTest {
         assertTrue(restored.patches().size() > 0);
         assertTrue(restored.cells().stream().anyMatch(cell -> cell.isWater()));
         assertTrue(restored.cells().stream().anyMatch(cell -> cell.landformType().contractName().equals("shore")));
+        assertFalse(restored.cells().stream()
+                .filter(cell -> cell.hasFlag(CellStateFlag.PATCH_READY))
+                .anyMatch(cell -> cell.patchId().isBlank()));
         assertTrue(restored.cells().stream().anyMatch(cell -> !cell.hasFlag(CellStateFlag.SAMPLED)));
         assertFalse(restored.cells().stream()
                 .filter(cell -> !cell.hasFlag(CellStateFlag.SAMPLED))
