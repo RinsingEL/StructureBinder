@@ -1,0 +1,283 @@
+package com.rinsing.geomantia.platform.http;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.rinsing.geomantia.systems.gis.GisClassifierConfig;
+import com.rinsing.geomantia.systems.gis.GisSampleConfig;
+import com.rinsing.geomantia.systems.gis.adapter.minecraft.MinecraftPriorAtlasSampler;
+import com.rinsing.geomantia.systems.gis.application.refresh.GisRefreshService;
+import com.rinsing.geomantia.systems.gis.application.refresh.RefreshPriority;
+import com.rinsing.geomantia.systems.gis.application.refresh.RefreshResult;
+import com.rinsing.geomantia.systems.gis.application.refresh.SampleMode;
+import com.rinsing.geomantia.systems.gis.domain.region.AtlasRegionStore;
+import com.rinsing.geomantia.systems.realm_planning.RealmPlanningService;
+import com.sun.net.httpserver.HttpExchange;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+
+final class RealmPlanningHttpController {
+    private final MinecraftServer server;
+
+    RealmPlanningHttpController(MinecraftServer server) {
+        this.server = server;
+    }
+
+    void handleStatus(HttpExchange exchange) {
+        handle(exchange, "GET", () -> service().status());
+    }
+
+    void handleWRefresh(HttpExchange exchange) {
+        handle(exchange, "POST", () -> {
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            return callOnServerThread(() -> {
+                RefreshResult result = runGisRefresh(request);
+                return service().runW(result, stringValue(request, "runId", ""), request.get("worldTheme"));
+            });
+        });
+    }
+
+    void handleT1Prepare(HttpExchange exchange) {
+        handle(exchange, "POST", () -> {
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            return service().prepareT1(
+                    requiredString(request, "runId"),
+                    arrayValue(request, "realmProfiles"),
+                    intValue(request, "realmCount", 3),
+                    stringValue(request, "targetContinentId", ""),
+                    booleanValue(request, "allowAiDraftProfile", true));
+        });
+    }
+
+    void handleT2SelectCoordinate(HttpExchange exchange) {
+        handle(exchange, "POST", () -> {
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            return service().selectT2(
+                    requiredString(request, "runId"),
+                    requiredString(request, "realmId"),
+                    intValue(request, "gridX", 0),
+                    intValue(request, "gridZ", 0),
+                    arrayValue(request, "alternates"),
+                    stringValue(request, "reason", ""),
+                    stringValue(request, "selectedBy", "ai"),
+                    booleanValue(request, "allowSnap", true));
+        });
+    }
+
+    void handleT3Expand(HttpExchange exchange) {
+        handle(exchange, "POST", () -> {
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            return service().expandT3(
+                    requiredString(request, "runId"),
+                    stringValue(request, "normalizationGroup", ""),
+                    booleanValue(request, "allowUnclaimedLand", false));
+        });
+    }
+
+    void handleT4BuildRegistry(HttpExchange exchange) {
+        handle(exchange, "POST", () -> {
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            return service().buildT4(requiredString(request, "runId"));
+        });
+    }
+
+    void handleAcceptance(HttpExchange exchange) {
+        handle(exchange, "POST", () -> {
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            return callOnServerThread(() -> {
+                RefreshResult result = runGisRefresh(request);
+                return service().runAcceptance(result, stringValue(request, "runId", ""),
+                        intValue(request, "realmCount", 3), arrayValue(request, "realmProfiles"),
+                        booleanValue(request, "autoSelectCoordinates", true));
+            });
+        });
+    }
+
+    private void handle(HttpExchange exchange, String method, JsonAction action) {
+        try {
+            if (!GisHttpUtil.requireMethod(exchange, method)) {
+                return;
+            }
+            GisHttpUtil.sendJson(exchange, 200, action.execute());
+        } catch (IllegalArgumentException ex) {
+            sendError(exchange, 400, ex);
+        } catch (Exception ex) {
+            sendError(exchange, 500, ex);
+        }
+    }
+
+    private RefreshResult runGisRefresh(JsonObject request) throws Exception {
+        int radiusChunks = intValue(request, "radiusChunks", 8);
+        if (radiusChunks < 1 || radiusChunks > 64) {
+            throw new IllegalArgumentException("radiusChunks must be between 1 and 64.");
+        }
+        int cellStepBlocks = intValue(request, "cellStepBlocks", 128);
+        SampleMode sampleMode = sampleModeValue(request);
+        ServerPlayer player = resolvePlayer(stringValue(request, "playerName", ""));
+        ServerLevel level = resolveLevel(stringValue(request, "dimensionId", ""), player);
+        BlockPos center = resolveCenter(request, player);
+        GisSampleConfig sampleConfig = GisSampleConfig.defaults().withCellStepBlocks(cellStepBlocks);
+        GisRefreshService gisService = new GisRefreshService(sampleConfig, GisClassifierConfig.defaults(),
+                new AtlasRegionStore(sampleConfig), new MinecraftPriorAtlasSampler(level));
+        return gisService.refresh(level.dimension().location().toString(), center.getX(), center.getZ(),
+                radiusChunks, sampleMode, RefreshPriority.DEBUG, debugRoot().resolve("gis"));
+    }
+
+    private RealmPlanningService service() {
+        return new RealmPlanningService(debugRoot());
+    }
+
+    private ServerPlayer resolvePlayer(String playerName) {
+        if (playerName != null && !playerName.isBlank()) {
+            ServerPlayer player = server.getPlayerList().getPlayerByName(playerName.trim());
+            if (player == null) {
+                throw new IllegalArgumentException("Unknown playerName: " + playerName);
+            }
+            return player;
+        }
+        return server.getPlayerList().getPlayers().stream().findFirst().orElse(null);
+    }
+
+    private ServerLevel resolveLevel(String dimensionId, ServerPlayer player) {
+        if (dimensionId != null && !dimensionId.isBlank()) {
+            for (ServerLevel level : server.getAllLevels()) {
+                if (level.dimension().location().toString().equals(dimensionId.trim())) {
+                    return level;
+                }
+            }
+            throw new IllegalArgumentException("Unknown dimensionId: " + dimensionId);
+        }
+        if (player != null) {
+            return player.serverLevel();
+        }
+        return server.overworld();
+    }
+
+    private BlockPos resolveCenter(JsonObject request, ServerPlayer player) {
+        boolean hasX = hasValue(request, "centerBlockX");
+        boolean hasZ = hasValue(request, "centerBlockZ");
+        if (hasX != hasZ) {
+            throw new IllegalArgumentException("centerBlockX and centerBlockZ must be provided together.");
+        }
+        if (hasX) {
+            return new BlockPos(intValue(request, "centerBlockX", 0), 0, intValue(request, "centerBlockZ", 0));
+        }
+        if (player != null) {
+            return player.blockPosition();
+        }
+        return new BlockPos(0, 0, 0);
+    }
+
+    private <T> T callOnServerThread(Callable<T> action) throws Exception {
+        if (server.isSameThread()) {
+            return action.call();
+        }
+        CompletableFuture<T> future = new CompletableFuture<>();
+        server.execute(() -> {
+            try {
+                future.complete(action.call());
+            } catch (Exception ex) {
+                future.completeExceptionally(ex);
+            }
+        });
+        try {
+            return future.get();
+        } catch (ExecutionException ex) {
+            Throwable cause = ex.getCause();
+            if (cause instanceof Exception exception) {
+                throw exception;
+            }
+            throw new RuntimeException(cause);
+        }
+    }
+
+    private Path debugRoot() {
+        return server.getServerDirectory().toPath().resolve("realm_debug");
+    }
+
+    private static SampleMode sampleModeValue(JsonObject object) {
+        String raw = stringValue(object, "sampleMode", SampleMode.PRIOR.contractName());
+        for (SampleMode mode : SampleMode.values()) {
+            if (mode.contractName().equalsIgnoreCase(raw.trim())) {
+                return mode;
+            }
+        }
+        throw new IllegalArgumentException("sampleMode must be one of: prior, observedIfLoaded, verifySurface.");
+    }
+
+    private static String requiredString(JsonObject object, String key) {
+        String value = stringValue(object, key, "");
+        if (value.isBlank()) {
+            throw new IllegalArgumentException(key + " is required.");
+        }
+        return value;
+    }
+
+    private static int intValue(JsonObject object, String key, int defaultValue) {
+        if (!hasValue(object, key)) {
+            return defaultValue;
+        }
+        try {
+            return object.get(key).getAsInt();
+        } catch (Exception ex) {
+            throw new IllegalArgumentException(key + " must be an integer.");
+        }
+    }
+
+    private static boolean booleanValue(JsonObject object, String key, boolean defaultValue) {
+        if (!hasValue(object, key)) {
+            return defaultValue;
+        }
+        try {
+            return object.get(key).getAsBoolean();
+        } catch (Exception ex) {
+            throw new IllegalArgumentException(key + " must be a boolean.");
+        }
+    }
+
+    private static String stringValue(JsonObject object, String key, String defaultValue) {
+        if (!hasValue(object, key)) {
+            return defaultValue;
+        }
+        try {
+            return object.get(key).getAsString();
+        } catch (Exception ex) {
+            throw new IllegalArgumentException(key + " must be a string.");
+        }
+    }
+
+    private static JsonArray arrayValue(JsonObject object, String key) {
+        if (!hasValue(object, key)) {
+            return null;
+        }
+        if (!object.get(key).isJsonArray()) {
+            throw new IllegalArgumentException(key + " must be an array.");
+        }
+        return object.getAsJsonArray(key);
+    }
+
+    private static boolean hasValue(JsonObject object, String key) {
+        return object.has(key) && !object.get(key).isJsonNull();
+    }
+
+    private static void sendError(HttpExchange exchange, int code, Exception ex) {
+        try {
+            GisHttpUtil.sendError(exchange, code, ex.getMessage());
+        } catch (IOException ioException) {
+            ioException.printStackTrace();
+        }
+    }
+
+    @FunctionalInterface
+    private interface JsonAction {
+        JsonObject execute() throws Exception;
+    }
+}

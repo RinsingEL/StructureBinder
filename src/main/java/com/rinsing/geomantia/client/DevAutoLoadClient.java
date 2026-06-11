@@ -21,7 +21,8 @@ public final class DevAutoLoadClient {
     private static final int SMOKE_READY_TICKS = 60;
     private static boolean registered;
     private static boolean attemptedAutoLoad;
-    private static boolean attemptedSmoke;
+    private static boolean attemptedGisSmoke;
+    private static boolean attemptedRealmSmoke;
     private static String lastObservedScreenName = "";
     private static int observedScreenTicks;
     private static int smokeReadyTicks;
@@ -81,7 +82,9 @@ public final class DevAutoLoadClient {
     }
 
     private static void runGisSmokeWhenReady() {
-        if (attemptedSmoke || !Boolean.getBoolean("geomantia.devGisSmoke")) {
+        boolean runGisSmoke = Boolean.getBoolean("geomantia.devGisSmoke");
+        boolean runRealmSmoke = Boolean.getBoolean("geomantia.devRealmSmoke");
+        if ((attemptedGisSmoke || !runGisSmoke) && (attemptedRealmSmoke || !runRealmSmoke)) {
             return;
         }
         Minecraft minecraft = Minecraft.getInstance();
@@ -94,21 +97,28 @@ public final class DevAutoLoadClient {
         if (smokeReadyTicks < SMOKE_READY_TICKS) {
             return;
         }
-        attemptedSmoke = true;
+        attemptedGisSmoke = true;
+        attemptedRealmSmoke = true;
         UUID playerId = minecraft.player.getUUID();
-        LOGGER.info("Geomantia temporary dev GIS smoke scheduling commands.");
-        server.execute(() -> runGisSmokeCommands(server, playerId));
+        LOGGER.info("Geomantia temporary dev smoke scheduling commands.");
+        server.execute(() -> runSmokeCommands(server, playerId, runGisSmoke, runRealmSmoke));
     }
 
-    private static void runGisSmokeCommands(MinecraftServer server, UUID playerId) {
+    private static void runSmokeCommands(MinecraftServer server, UUID playerId, boolean runGisSmoke,
+            boolean runRealmSmoke) {
         ServerPlayer player = server.getPlayerList().getPlayer(playerId);
         if (player == null) {
-            LOGGER.warn("Geomantia temporary dev GIS smoke skipped: player unavailable.");
+            LOGGER.warn("Geomantia temporary dev smoke skipped: player unavailable.");
             return;
         }
         CommandSourceStack source = player.createCommandSourceStack().withPermission(4);
-        runCommand(server, source, "/geomantia gis refresh 8 prior");
-        runCommand(server, source, "/geomantia gis test_run mixed");
+        if (runGisSmoke) {
+            runCommand(server, source, "/geomantia gis refresh 8 prior");
+            runCommand(server, source, "/geomantia gis test_run mixed");
+        }
+        if (runRealmSmoke) {
+            runCommand(server, source, "/geomantia realm acceptance 8 128");
+        }
     }
 
     private static void runCommand(MinecraftServer server, CommandSourceStack source, String command) {

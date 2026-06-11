@@ -28,6 +28,9 @@ def devAutoLoadWorldBase64 = !devAutoLoadWorldBase64Override.isBlank()
 def devGisSmoke = providers.gradleProperty('geomantiaDevGisSmoke')
         .orElse('false')
         .get()
+def devRealmSmoke = providers.gradleProperty('geomantiaDevRealmSmoke')
+        .orElse('false')
+        .get()
 
 minecraft {
     mappings channel: mapping_channel, version: mapping_version
@@ -58,6 +61,9 @@ minecraft {
             }
             if (devGisSmoke.toBoolean()) {
                 property 'geomantia.devGisSmoke', 'true'
+            }
+            if (devRealmSmoke.toBoolean()) {
+                property 'geomantia.devRealmSmoke', 'true'
             }
         }
 

@@ -41,9 +41,17 @@ public final class GeomantiaHttpServer {
         try {
             httpServer = HttpServer.create(new InetSocketAddress("127.0.0.1", port), 0);
             GisHttpController controller = new GisHttpController(minecraftServer);
+            RealmPlanningHttpController realmController = new RealmPlanningHttpController(minecraftServer);
             httpServer.createContext("/gis/status", controller::handleStatus);
             httpServer.createContext("/gis/refresh", controller::handleRefresh);
             httpServer.createContext("/gis/test_run", controller::handleTestRun);
+            httpServer.createContext("/realm/status", realmController::handleStatus);
+            httpServer.createContext("/realm/w/refresh", realmController::handleWRefresh);
+            httpServer.createContext("/realm/t1/prepare", realmController::handleT1Prepare);
+            httpServer.createContext("/realm/t2/select_coordinate", realmController::handleT2SelectCoordinate);
+            httpServer.createContext("/realm/t3/expand", realmController::handleT3Expand);
+            httpServer.createContext("/realm/t4/build_registry", realmController::handleT4BuildRegistry);
+            httpServer.createContext("/realm/acceptance/run", realmController::handleAcceptance);
             httpServer.setExecutor(Executors.newFixedThreadPool(3, runnable -> {
                 Thread thread = new Thread(runnable);
                 thread.setDaemon(true);

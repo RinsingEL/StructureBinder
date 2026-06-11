@@ -14,6 +14,7 @@ import com.rinsing.geomantia.systems.gis.domain.region.AtlasRegionStore;
 import com.rinsing.geomantia.systems.gis.adapter.minecraft.MinecraftPriorAtlasSampler;
 import com.rinsing.geomantia.systems.gis.testsupport.GisTestCase;
 import com.rinsing.geomantia.systems.gis.testsupport.GisTestRunner;
+import com.rinsing.geomantia.systems.realm_planning.RealmPlanningService;
 import net.minecraft.core.BlockPos;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -28,6 +29,9 @@ import java.nio.file.Path;
 
 @Mod.EventBusSubscriber(modid = GeomantiaMod.MOD_ID)
 public final class GisPlatformEvents {
+    private static final int DEFAULT_REALM_RADIUS_CHUNKS = 8;
+    private static final int DEFAULT_REALM_CELL_STEP_BLOCKS = 128;
+
     private GisPlatformEvents() {
     }
 
@@ -55,7 +59,24 @@ public final class GisPlatformEvents {
                                                                         "cellStepBlocks")))))))
                         .then(Commands.literal("test_run")
                                 .then(Commands.argument("caseId", StringArgumentType.word())
-                                        .executes(GisPlatformEvents::testRun)))));
+                                        .executes(GisPlatformEvents::testRun))))
+                .then(Commands.literal("realm")
+                        .then(Commands.literal("status")
+                                .executes(GisPlatformEvents::realmStatus))
+                        .then(Commands.literal("acceptance")
+                                .executes(ctx -> realmAcceptance(ctx, DEFAULT_REALM_RADIUS_CHUNKS,
+                                        DEFAULT_REALM_CELL_STEP_BLOCKS))
+                                .then(Commands.argument("radiusChunks", IntegerArgumentType.integer(1, 64))
+                                        .executes(ctx -> realmAcceptance(ctx,
+                                                IntegerArgumentType.getInteger(ctx, "radiusChunks"),
+                                                DEFAULT_REALM_CELL_STEP_BLOCKS))
+                                        .then(Commands.argument("cellStepBlocks", IntegerArgumentType.integer(
+                                                        GisSampleConfig.MIN_CELL_STEP_BLOCKS,
+                                                        GisSampleConfig.MAX_CELL_STEP_BLOCKS))
+                                                .executes(ctx -> realmAcceptance(ctx,
+                                                        IntegerArgumentType.getInteger(ctx, "radiusChunks"),
+                                                        IntegerArgumentType.getInteger(ctx,
+                                                                "cellStepBlocks"))))))));
     }
 
     private static int refresh(CommandContext<CommandSourceStack> ctx, SampleMode sampleMode, int cellStepBlocks) {
@@ -94,7 +115,48 @@ public final class GisPlatformEvents {
         }
     }
 
+    private static int realmStatus(CommandContext<CommandSourceStack> ctx) {
+        try {
+            var response = new RealmPlanningService(realmDebugRoot(ctx.getSource().getServer())).status();
+            ctx.getSource().sendSuccess(() -> Component.literal("Realm planning ready, latestRun="
+                    + response.get("runId").getAsString()), false);
+            return 1;
+        } catch (Exception ex) {
+            ctx.getSource().sendFailure(Component.literal("Realm status failed: " + ex.getMessage()));
+            return 0;
+        }
+    }
+
+    private static int realmAcceptance(CommandContext<CommandSourceStack> ctx, int radiusChunks, int cellStepBlocks) {
+        try {
+            CommandSourceStack source = ctx.getSource();
+            ServerLevel level = source.getLevel();
+            Path realmRoot = realmDebugRoot(source.getServer());
+            GisSampleConfig sampleConfig = GisSampleConfig.defaults().withCellStepBlocks(cellStepBlocks);
+            GisRefreshService gisService = new GisRefreshService(sampleConfig, GisClassifierConfig.defaults(),
+                    new AtlasRegionStore(sampleConfig), new MinecraftPriorAtlasSampler(level));
+            BlockPos center = BlockPos.containing(source.getPosition());
+            RefreshResult result = gisService.refresh(level.dimension().location().toString(),
+                    center.getX(), center.getZ(), radiusChunks, SampleMode.PRIOR,
+                    RefreshPriority.DEBUG, realmRoot.resolve("gis"));
+            var response = new RealmPlanningService(realmRoot).runAcceptance(result, "", 3, null, true);
+            boolean passed = response.get("passed").getAsBoolean();
+            String runId = response.get("runId").getAsString();
+            String runDirectory = response.getAsJsonObject("artifacts").get("runDirectory").getAsString();
+            source.sendSuccess(() -> Component.literal("Realm W/T acceptance passed=" + passed
+                    + " runId=" + runId + " dir=" + runDirectory), false);
+            return passed ? 1 : 0;
+        } catch (Exception ex) {
+            ctx.getSource().sendFailure(Component.literal("Realm W/T acceptance failed: " + ex.getMessage()));
+            return 0;
+        }
+    }
+
     private static Path debugRoot(MinecraftServer server) {
         return server.getServerDirectory().toPath().resolve("gis_debug");
+    }
+
+    private static Path realmDebugRoot(MinecraftServer server) {
+        return server.getServerDirectory().toPath().resolve("realm_debug");
     }
 }

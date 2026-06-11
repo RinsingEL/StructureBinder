@@ -3,6 +3,8 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 import { gisHandlers } from "./gis/handlers.js";
 import { gisTools } from "./gis/tools.js";
+import { realmHandlers } from "./realm/handlers.js";
+import { realmTools } from "./realm/tools.js";
 import { formatAxiosError } from "./shared/http.js";
 import { writeMcpLog } from "./shared/logging.js";
 import type { ToolDefinition, ToolHandler } from "./shared/types.js";
@@ -12,9 +14,10 @@ const server = new Server(
   { capabilities: { tools: {} } }
 );
 
-const tools: ToolDefinition[] = [...gisTools];
+const tools: ToolDefinition[] = [...gisTools, ...realmTools];
 const handlers: Record<string, ToolHandler> = {
   ...gisHandlers,
+  ...realmHandlers,
 };
 
 server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools }));
