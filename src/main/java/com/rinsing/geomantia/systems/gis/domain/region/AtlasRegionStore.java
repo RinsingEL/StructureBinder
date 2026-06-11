@@ -16,12 +16,12 @@ public final class AtlasRegionStore {
     }
 
     public AtlasRegion getOrCreate(String dimensionId, int regionX, int regionZ) {
-        RegionKey key = new RegionKey(dimensionId, regionX, regionZ);
+        RegionKey key = new RegionKey(dimensionId, config.cellStepBlocks(), regionX, regionZ);
         return regions.computeIfAbsent(key, ignored -> new AtlasRegion(dimensionId, regionX, regionZ, config));
     }
 
     public AtlasRegion get(String dimensionId, int regionX, int regionZ) {
-        return regions.get(new RegionKey(dimensionId, regionX, regionZ));
+        return regions.get(new RegionKey(dimensionId, config.cellStepBlocks(), regionX, regionZ));
     }
 
     public AtlasRegion regionForBlock(String dimensionId, int blockX, int blockZ) {

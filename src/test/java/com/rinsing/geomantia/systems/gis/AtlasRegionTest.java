@@ -5,6 +5,7 @@ import com.rinsing.geomantia.systems.gis.domain.region.AtlasRegionStore;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
 class AtlasRegionTest {
@@ -38,5 +39,19 @@ class AtlasRegionTest {
         assertEquals(-512, region.cell(0, 0).blockMinZ());
         assertEquals(512 + 127 * 4, region.cell(127, 127).blockMinX());
         assertEquals(-512 + 127 * 4, region.cell(127, 127).blockMinZ());
+    }
+
+    @Test
+    void regionIdsAreIsolatedByCellStep() {
+        GisSampleConfig defaultConfig = GisSampleConfig.defaults();
+        GisSampleConfig coarseConfig = defaultConfig.withCellStepBlocks(64);
+        AtlasRegion fine = new AtlasRegion("minecraft:overworld", 0, 0, defaultConfig);
+        AtlasRegion coarse = new AtlasRegion("minecraft:overworld", 0, 0, coarseConfig);
+
+        assertNotEquals(fine.regionId(), coarse.regionId());
+        assertEquals("minecraft:overworld:step.4:r.0.0", fine.regionId());
+        assertEquals("minecraft:overworld:step.64:r.0.0", coarse.regionId());
+        assertEquals(128, fine.cellsPerSide());
+        assertEquals(8, coarse.cellsPerSide());
     }
 }

@@ -37,23 +37,34 @@ public final class GisPlatformEvents {
                 .then(Commands.literal("gis")
                         .then(Commands.literal("refresh")
                                 .then(Commands.argument("radiusChunks", IntegerArgumentType.integer(1, 64))
-                                        .executes(ctx -> refresh(ctx, SampleMode.PRIOR))
+                                        .executes(ctx -> refresh(ctx, SampleMode.PRIOR,
+                                                GisSampleConfig.defaults().cellStepBlocks()))
                                         .then(Commands.argument("sampleMode", StringArgumentType.word())
                                                 .executes(ctx -> refresh(ctx,
                                                         SampleMode.fromContractName(StringArgumentType.getString(ctx,
-                                                                "sampleMode")))))))
+                                                                "sampleMode")),
+                                                        GisSampleConfig.defaults().cellStepBlocks()))
+                                                .then(Commands.argument("cellStepBlocks", IntegerArgumentType.integer(
+                                                                GisSampleConfig.MIN_CELL_STEP_BLOCKS,
+                                                                GisSampleConfig.MAX_CELL_STEP_BLOCKS))
+                                                        .executes(ctx -> refresh(ctx,
+                                                                SampleMode.fromContractName(
+                                                                        StringArgumentType.getString(ctx,
+                                                                                "sampleMode")),
+                                                                IntegerArgumentType.getInteger(ctx,
+                                                                        "cellStepBlocks")))))))
                         .then(Commands.literal("test_run")
                                 .then(Commands.argument("caseId", StringArgumentType.word())
                                         .executes(GisPlatformEvents::testRun)))));
     }
 
-    private static int refresh(CommandContext<CommandSourceStack> ctx, SampleMode sampleMode) {
+    private static int refresh(CommandContext<CommandSourceStack> ctx, SampleMode sampleMode, int cellStepBlocks) {
         try {
             CommandSourceStack source = ctx.getSource();
             ServerLevel level = source.getLevel();
             int radiusChunks = IntegerArgumentType.getInteger(ctx, "radiusChunks");
             Path debugRoot = debugRoot(source.getServer());
-            GisSampleConfig sampleConfig = GisSampleConfig.defaults();
+            GisSampleConfig sampleConfig = GisSampleConfig.defaults().withCellStepBlocks(cellStepBlocks);
             GisRefreshService service = new GisRefreshService(sampleConfig, GisClassifierConfig.defaults(),
                     new AtlasRegionStore(sampleConfig), new MinecraftPriorAtlasSampler(level));
             BlockPos center = BlockPos.containing(source.getPosition());

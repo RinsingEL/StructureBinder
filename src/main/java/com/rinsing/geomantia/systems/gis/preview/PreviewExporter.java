@@ -1,6 +1,7 @@
 package com.rinsing.geomantia.systems.gis.preview;
 
 import com.rinsing.geomantia.systems.gis.GisAtlasConstants;
+import com.rinsing.geomantia.systems.gis.GisSampleConfig;
 import com.rinsing.geomantia.systems.gis.domain.cell.AtlasCell;
 import com.rinsing.geomantia.systems.gis.domain.cell.CellStateFlag;
 import com.rinsing.geomantia.systems.gis.domain.cell.LandformType;
@@ -23,6 +24,15 @@ import java.util.Map;
 public final class PreviewExporter {
     private static final int PATCH_CELL_PIXELS = 4;
     private static final Color PATCH_BOUNDARY_COLOR = Color.BLACK;
+    private final GisSampleConfig sampleConfig;
+
+    public PreviewExporter() {
+        this(GisSampleConfig.defaults());
+    }
+
+    public PreviewExporter(GisSampleConfig sampleConfig) {
+        this.sampleConfig = sampleConfig;
+    }
 
     public void export(RefreshJob job, AtlasRegion region, Path previewDirectory) throws IOException {
         Files.createDirectories(previewDirectory);
@@ -214,7 +224,7 @@ public final class PreviewExporter {
         }
     }
 
-    private static void writeManifest(RefreshJob job, AtlasRegion region, Path path, List<Map<String, Object>> layers,
+    private void writeManifest(RefreshJob job, AtlasRegion region, Path path, List<Map<String, Object>> layers,
             String legendFile) throws IOException {
         Map<String, Integer> sourceCounts = new LinkedHashMap<>();
         int unknown = 0;
@@ -237,6 +247,8 @@ public final class PreviewExporter {
         root.put("centerBlockZ", job.centerBlockZ());
         root.put("radiusChunks", job.radiusChunks());
         root.put("cellStepBlocks", job.cellStepBlocks());
+        root.put("metricRadiiCells", metricRadiiCells(sampleConfig));
+        root.put("metricRadiiBlocks", metricRadiiBlocks(sampleConfig));
         root.put("sampleMode", job.sampleMode().contractName());
         root.put("sourceCounts", sourceCounts);
         root.put("atlasVersion", GisAtlasConstants.ATLAS_VERSION);
@@ -248,6 +260,31 @@ public final class PreviewExporter {
         root.put("unknownCellCount", unknown);
         root.put("notes", "GIS v1 debug preview; JSON is not the production atlas cache.");
         Files.writeString(path, AtlasJson.GSON.toJson(root));
+    }
+
+    private static Map<String, Integer> metricRadiiCells(GisSampleConfig config) {
+        return Map.of(
+                "slope", config.slopeRadiusCells(),
+                "localRelief", config.localReliefRadiusCells(),
+                "roughness", config.roughnessRadiusCells(),
+                "tpiSmall", config.tpiSmallRadiusCells(),
+                "tpiLarge", config.tpiLargeRadiusCells(),
+                "maxWaterDistance", config.maxWaterDistanceCells(),
+                "dependencyMargin", config.dependencyMarginCells()
+        );
+    }
+
+    private static Map<String, Integer> metricRadiiBlocks(GisSampleConfig config) {
+        int step = config.cellStepBlocks();
+        return Map.of(
+                "slope", config.slopeRadiusCells() * step,
+                "localRelief", config.localReliefRadiusCells() * step,
+                "roughness", config.roughnessRadiusCells() * step,
+                "tpiSmall", config.tpiSmallRadiusCells() * step,
+                "tpiLarge", config.tpiLargeRadiusCells() * step,
+                "maxWaterDistance", config.maxWaterDistanceCells() * step,
+                "dependencyMargin", config.dependencyMarginCells() * step
+        );
     }
 
     private static Range range(AtlasRegion region, Metric metric) {

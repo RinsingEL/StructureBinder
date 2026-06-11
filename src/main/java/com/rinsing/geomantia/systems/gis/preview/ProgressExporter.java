@@ -1,5 +1,6 @@
 package com.rinsing.geomantia.systems.gis.preview;
 
+import com.rinsing.geomantia.systems.gis.GisSampleConfig;
 import com.rinsing.geomantia.systems.gis.domain.cell.AtlasCell;
 import com.rinsing.geomantia.systems.gis.domain.cell.CellStateFlag;
 import com.rinsing.geomantia.systems.gis.application.refresh.RefreshJob;
@@ -15,6 +16,16 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public final class ProgressExporter {
+    private final GisSampleConfig sampleConfig;
+
+    public ProgressExporter() {
+        this(GisSampleConfig.defaults());
+    }
+
+    public ProgressExporter(GisSampleConfig sampleConfig) {
+        this.sampleConfig = sampleConfig;
+    }
+
     public void export(RefreshJob job, AtlasRegion region, Path runDirectory) throws IOException {
         Files.createDirectories(runDirectory);
         writeImage(region, runDirectory.resolve("progress.png"));
@@ -57,18 +68,32 @@ public final class ProgressExporter {
         return new Color(120, 120, 120);
     }
 
-    private static void writeManifest(RefreshJob job, AtlasRegion region, Path path) throws IOException {
+    private void writeManifest(RefreshJob job, AtlasRegion region, Path path) throws IOException {
         Map<String, Object> root = new LinkedHashMap<>();
         root.put("runId", job.jobId());
         root.put("center", Map.of("blockX", job.centerBlockX(), "blockZ", job.centerBlockZ()));
         root.put("radiusChunks", job.radiusChunks());
         root.put("cellStepBlocks", job.cellStepBlocks());
+        root.put("metricRadiiBlocks", metricRadiiBlocks(sampleConfig));
         root.put("totalCells", job.totalCells());
         root.put("counts", counts(region));
         root.put("currentRing", job.currentRing());
         root.put("status", job.status().contractName());
         root.put("updatedAt", System.currentTimeMillis());
         Files.writeString(path, AtlasJson.GSON.toJson(root));
+    }
+
+    private static Map<String, Integer> metricRadiiBlocks(GisSampleConfig config) {
+        int step = config.cellStepBlocks();
+        return Map.of(
+                "slope", config.slopeRadiusCells() * step,
+                "localRelief", config.localReliefRadiusCells() * step,
+                "roughness", config.roughnessRadiusCells() * step,
+                "tpiSmall", config.tpiSmallRadiusCells() * step,
+                "tpiLarge", config.tpiLargeRadiusCells() * step,
+                "maxWaterDistance", config.maxWaterDistanceCells() * step,
+                "dependencyMargin", config.dependencyMarginCells() * step
+        );
     }
 
     private static Map<String, Integer> counts(AtlasRegion region) {

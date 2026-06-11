@@ -36,7 +36,7 @@ public final class AtlasRegion {
         this.cellsPerSide = config.cellsPerRegionSide();
         this.blockMinX = regionX * config.regionSizeBlocks();
         this.blockMinZ = regionZ * config.regionSizeBlocks();
-        this.regionId = RegionKey.regionId(dimensionId, regionX, regionZ);
+        this.regionId = RegionKey.regionId(dimensionId, cellStepBlocks, regionX, regionZ);
         this.atlasVersion = GisAtlasConstants.ATLAS_VERSION;
         this.configVersion = GisAtlasConstants.CONFIG_VERSION;
         this.cells = new AtlasCell[cellsPerSide][cellsPerSide];

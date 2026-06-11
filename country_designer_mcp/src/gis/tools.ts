@@ -13,6 +13,10 @@ export const gisTools: ToolDefinition[] = [
       type: "object",
       properties: {
         radiusChunks: { type: "number", description: "刷新半径，单位 chunk，默认 8，范围 1-64。" },
+        cellStepBlocks: {
+          type: "number",
+          description: "可选 AtlasCell 步长，单位 block，默认 4，范围 1-256，需整除 GIS region 方块尺寸。",
+        },
         sampleMode: {
           type: "string",
           enum: ["prior", "observedIfLoaded", "verifySurface"],

@@ -47,8 +47,8 @@ public final class GisRefreshService {
         this.metricsComputer = new AtlasMetricsComputer(sampleConfig);
         this.classifier = new LandformClassifier(classifierConfig);
         this.patchMerger = new PatchMerger(classifierConfig);
-        this.progressExporter = new ProgressExporter();
-        this.previewExporter = new PreviewExporter();
+        this.progressExporter = new ProgressExporter(sampleConfig);
+        this.previewExporter = new PreviewExporter(sampleConfig);
     }
 
     public RefreshResult refresh(String dimensionId, int centerBlockX, int centerBlockZ, int radiusChunks,

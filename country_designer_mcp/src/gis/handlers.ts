@@ -10,6 +10,7 @@ export const gisHandlers: Record<string, ToolHandler> = {
   async gis_refresh(args) {
     const payload: Record<string, unknown> = {};
     assignNumber(payload, args, "radiusChunks");
+    assignNumber(payload, args, "cellStepBlocks");
     assignString(payload, args, "sampleMode");
     assignNumber(payload, args, "centerBlockX");
     assignNumber(payload, args, "centerBlockZ");

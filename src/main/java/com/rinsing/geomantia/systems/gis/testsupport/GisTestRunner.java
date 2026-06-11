@@ -88,6 +88,7 @@ public final class GisTestRunner {
             String caseId,
             String command,
             String sampleMode,
+            int cellStepBlocks,
             boolean passed,
             long durationMs,
             Map<String, Integer> cellCounts,
@@ -109,7 +110,7 @@ public final class GisTestRunner {
             artifacts.put("testReport", "test_report.json");
             artifacts.put("regionSnapshot", "region_snapshot.json");
             return new GisTestReport(result.job().jobId(), testCase.id(), "geomantia gis test_run " + testCase.id(),
-                    testCase.sampleMode().contractName(), passed, durationMs, result.cellCounts(),
+                    testCase.sampleMode().contractName(), result.job().cellStepBlocks(), passed, durationMs, result.cellCounts(),
                     result.landformCounts(), patchCounts, failures, artifacts);
         }
 
@@ -119,6 +120,7 @@ public final class GisTestRunner {
             json.put("caseId", caseId);
             json.put("command", command);
             json.put("sampleMode", sampleMode);
+            json.put("cellStepBlocks", cellStepBlocks);
             json.put("passed", passed);
             json.put("durationMs", durationMs);
             json.put("cellCounts", cellCounts);

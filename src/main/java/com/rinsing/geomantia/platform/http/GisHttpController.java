@@ -94,12 +94,13 @@ final class GisHttpController {
         if (radiusChunks < 1 || radiusChunks > 64) {
             throw new IllegalArgumentException("radiusChunks must be between 1 and 64.");
         }
+        int cellStepBlocks = intValue(request, "cellStepBlocks", GisSampleConfig.defaults().cellStepBlocks());
         SampleMode sampleMode = sampleModeValue(request);
         ServerPlayer player = resolvePlayer(stringValue(request, "playerName", ""));
         ServerLevel level = resolveLevel(stringValue(request, "dimensionId", ""), player);
         BlockPos center = resolveCenter(request, player);
 
-        GisSampleConfig sampleConfig = GisSampleConfig.defaults();
+        GisSampleConfig sampleConfig = GisSampleConfig.defaults().withCellStepBlocks(cellStepBlocks);
         GisRefreshService service = new GisRefreshService(sampleConfig, GisClassifierConfig.defaults(),
                 new AtlasRegionStore(sampleConfig), new MinecraftPriorAtlasSampler(level));
         RefreshResult result = service.refresh(level.dimension().location().toString(),
@@ -127,6 +128,7 @@ final class GisHttpController {
         response.addProperty("runId", job.jobId());
         response.addProperty("status", job.status().contractName());
         response.addProperty("sampleMode", job.sampleMode().contractName());
+        response.addProperty("cellStepBlocks", job.cellStepBlocks());
         response.addProperty("dimensionId", job.dimensionId());
         response.addProperty("centerBlockX", job.centerBlockX());
         response.addProperty("centerBlockZ", job.centerBlockZ());
