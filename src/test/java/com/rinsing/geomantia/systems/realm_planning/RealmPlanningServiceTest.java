@@ -10,8 +10,10 @@ import com.rinsing.geomantia.systems.gis.application.refresh.GisRefreshService;
 import com.rinsing.geomantia.systems.gis.application.refresh.RefreshPriority;
 import com.rinsing.geomantia.systems.gis.application.refresh.RefreshResult;
 import com.rinsing.geomantia.systems.gis.domain.region.AtlasRegionStore;
+import com.rinsing.geomantia.systems.gis.domain.cell.SurfaceType;
 import com.rinsing.geomantia.systems.gis.testsupport.GisTestCase;
 import com.rinsing.geomantia.systems.gis.testsupport.SyntheticAtlasSampler;
+import com.rinsing.geomantia.systems.gis.testsupport.SyntheticTerrainProfile;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -199,6 +201,63 @@ class RealmPlanningServiceTest {
         assertTrue(auditReport.getAsJsonObject("tagMetrics")
                 .getAsJsonObject("cliff")
                 .has("precision"));
+    }
+
+    @Test
+    void tagAuditCoversConfirmedCliffTruePositives() throws Exception {
+        SyntheticTerrainProfile cliffStrip = new SyntheticTerrainProfile() {
+            @Override
+            public double seaLevel() {
+                return 32.0;
+            }
+
+            @Override
+            public double elevationAt(double blockX, double blockZ) {
+                return 90.0 + Math.floor(blockX / 16.0) * 24.0 + Math.sin(blockZ / 24.0) * 2.0;
+            }
+
+            @Override
+            public boolean hasWaterAt(double blockX, double blockZ) {
+                return false;
+            }
+
+            @Override
+            public SurfaceType surfaceTypeAt(double blockX, double blockZ, double elevation) {
+                return SurfaceType.ROCK;
+            }
+
+            @Override
+            public String biomeAt(double blockX, double blockZ, double elevation, boolean water) {
+                return "minecraft:stony_peaks";
+            }
+        };
+        WorldSurveyRunner runner = new WorldSurveyRunner(tempDir.resolve("realm_debug"), GisClassifierConfig.defaults());
+        WorldSurveyRunner.Config config = new WorldSurveyRunner.Config(
+                "realm_cliff_audit_test",
+                "minecraft:overworld",
+                "synthetic_cliff_strip",
+                0.0,
+                0,
+                0,
+                512,
+                128,
+                RealmPlanningService.DEFAULT_MICRO_SAMPLE_STRIDE_BLOCKS,
+                WorldSurveyRunner.DEFAULT_LOCAL_SLOPE_RADIUS_BLOCKS,
+                com.rinsing.geomantia.systems.gis.application.refresh.SampleMode.PRIOR,
+                WorldSurveyRunner.ResumePolicy.RESCAN
+        );
+        SyntheticAtlasSampler sampler = new SyntheticAtlasSampler(cliffStrip);
+        WorldSurveyResult survey = runner.run(config, sampler);
+
+        RealmPlanningService service = new RealmPlanningService(tempDir.resolve("realm_debug"));
+        service.runAcceptance(survey, 1, null, true, "smoke");
+        JsonObject audit = service.runTagAudit("realm_cliff_audit_test", sampler, 36, 32, 8, 4);
+        JsonObject cliff = audit.getAsJsonObject("tagAuditReport")
+                .getAsJsonObject("tagMetrics")
+                .getAsJsonObject("cliff");
+        assertTrue(cliff.get("truePositive").getAsInt() > 0, cliff.toString());
+        assertEquals(0, cliff.get("falsePositive").getAsInt(), cliff.toString());
+        assertEquals(0, cliff.get("falseNegative").getAsInt(), cliff.toString());
     }
 
     @Test
