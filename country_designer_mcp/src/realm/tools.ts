@@ -19,6 +19,7 @@ export const realmTools: ToolDefinition[] = [
         localSlopeRadiusBlocks: { type: "number", description: "micro sample 周边局部坡度半径，默认 8 block。" },
         runTagAudit: { type: "boolean", description: "开发期调试：W 完成后抽样局部精扫并输出 tag_audit_report。" },
         tagAuditSampleCount: { type: "number", description: "Tag Audit 抽样点数量，默认 120。" },
+        tagAuditSampleSeed: { type: "string", description: "Tag Audit 抽样 seed；同一 run 可换 seed 抽另一批点。" },
         tagAuditRadiusBlocks: { type: "number", description: "Tag Audit 局部精扫半径，默认 32 block。" },
         tagAuditStrideBlocks: { type: "number", description: "Tag Audit 局部精扫步长，默认 4 block。" },
         tagAuditSlopeRadiusBlocks: { type: "number", description: "Tag Audit 局部坡度半径，默认 4 block。" },
@@ -107,6 +108,7 @@ export const realmTools: ToolDefinition[] = [
         localSlopeRadiusBlocks: { type: "number" },
         runTagAudit: { type: "boolean" },
         tagAuditSampleCount: { type: "number" },
+        tagAuditSampleSeed: { type: "string" },
         tagAuditRadiusBlocks: { type: "number" },
         tagAuditStrideBlocks: { type: "number" },
         tagAuditSlopeRadiusBlocks: { type: "number" },
@@ -134,6 +136,7 @@ export const realmTools: ToolDefinition[] = [
       properties: {
         runId: { type: "string", description: "已有 sealed W/T run ID。" },
         tagAuditSampleCount: { type: "number", description: "Tag Audit 抽样点数量，默认 120。" },
+        tagAuditSampleSeed: { type: "string", description: "Tag Audit 抽样 seed；同一 run 可换 seed 抽另一批点。" },
         tagAuditRadiusBlocks: { type: "number", description: "Tag Audit 局部精扫半径，默认 32 block。" },
         tagAuditStrideBlocks: { type: "number", description: "Tag Audit 局部精扫步长，默认 4 block。" },
         tagAuditSlopeRadiusBlocks: { type: "number", description: "Tag Audit 局部坡度半径，默认 4 block。" },

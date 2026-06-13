@@ -47,7 +47,8 @@ final class RealmPlanningHttpController {
                             intValue(request, "tagAuditSampleCount", 120),
                             intValue(request, "tagAuditRadiusBlocks", 32),
                             intValue(request, "tagAuditStrideBlocks", 4),
-                            intValue(request, "tagAuditSlopeRadiusBlocks", 4));
+                            intValue(request, "tagAuditSlopeRadiusBlocks", 4),
+                            stringValue(request, "tagAuditSampleSeed", ""));
                     response.add("tagAuditReport", audit.getAsJsonObject("tagAuditReport"));
                     response.add("artifacts", audit.getAsJsonObject("artifacts"));
                 }
@@ -118,7 +119,8 @@ final class RealmPlanningHttpController {
                             intValue(request, "tagAuditSampleCount", 120),
                             intValue(request, "tagAuditRadiusBlocks", 32),
                             intValue(request, "tagAuditStrideBlocks", 4),
-                            intValue(request, "tagAuditSlopeRadiusBlocks", 4));
+                            intValue(request, "tagAuditSlopeRadiusBlocks", 4),
+                            stringValue(request, "tagAuditSampleSeed", ""));
                     response.add("tagAuditReport", audit.getAsJsonObject("tagAuditReport"));
                     response.add("artifacts", audit.getAsJsonObject("artifacts"));
                 }
@@ -142,7 +144,8 @@ final class RealmPlanningHttpController {
                         intValue(request, "tagAuditSampleCount", 120),
                         intValue(request, "tagAuditRadiusBlocks", 32),
                         intValue(request, "tagAuditStrideBlocks", 4),
-                        intValue(request, "tagAuditSlopeRadiusBlocks", 4));
+                        intValue(request, "tagAuditSlopeRadiusBlocks", 4),
+                        stringValue(request, "tagAuditSampleSeed", ""));
                 response.addProperty("restoredFromSealedRun", true);
                 return response;
             });

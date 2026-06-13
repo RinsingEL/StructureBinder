@@ -237,7 +237,7 @@ class RealmPlanningServiceTest {
 
         RealmPlanningService auditService = new RealmPlanningService(tempDir.resolve("realm_debug"));
         JsonObject audit = auditService.runTagAudit("realm_world_survey_test",
-                new SyntheticAtlasSampler(testCase.profile()), 24, 32, 8, 4);
+                new SyntheticAtlasSampler(testCase.profile()), 24, 32, 8, 4, "manual_round_1");
         assertTrue(audit.getAsJsonObject("tagAuditReport").get("sampleCount").getAsInt() > 0);
         assertTrue(Files.exists(tempDir.resolve("realm_debug")
                 .resolve("realm_world_survey_test")
@@ -245,10 +245,23 @@ class RealmPlanningServiceTest {
         JsonObject auditReport = readJson(tempDir.resolve("realm_debug")
                 .resolve("realm_world_survey_test")
                 .resolve("tag_audit_report.json"));
+        assertEquals("manual_round_1", auditReport.get("sampleSeed").getAsString());
+        assertTrue(auditReport.getAsJsonObject("sampleLayerCounts").size() > 0);
         assertTrue(auditReport.getAsJsonObject("tagMetrics").has("cliff"));
         assertTrue(auditReport.getAsJsonObject("tagMetrics")
                 .getAsJsonObject("cliff")
                 .has("precision"));
+        JsonArray auditSamples = readJsonArray(tempDir.resolve("realm_debug")
+                .resolve("realm_world_survey_test")
+                .resolve("tag_audit_samples.json"));
+        assertFalse(auditSamples.isEmpty());
+        JsonObject firstSample = auditSamples.get(0).getAsJsonObject();
+        assertTrue(firstSample.has("auditLayer"));
+        assertTrue(firstSample.has("cellMinBlockX"));
+        assertTrue(firstSample.has("cellMinBlockZ"));
+        assertTrue(firstSample.has("tpCommand"));
+        assertEquals(firstSample.get("cellMinBlockX").getAsInt() + 64, firstSample.get("blockX").getAsInt());
+        assertEquals(firstSample.get("cellMinBlockZ").getAsInt() + 64, firstSample.get("blockZ").getAsInt());
     }
 
     @Test

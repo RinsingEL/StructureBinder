@@ -315,19 +315,29 @@ public final class RealmPlanningService {
 
     public JsonObject runTagAudit(String runId, AtlasSampler sampler, int requestedSampleCount,
             int requestedRadiusBlocks, int requestedStrideBlocks, int requestedSlopeRadiusBlocks) throws IOException {
+        return runTagAudit(runId, sampler, requestedSampleCount, requestedRadiusBlocks, requestedStrideBlocks,
+                requestedSlopeRadiusBlocks, "");
+    }
+
+    public JsonObject runTagAudit(String runId, AtlasSampler sampler, int requestedSampleCount,
+            int requestedRadiusBlocks, int requestedStrideBlocks, int requestedSlopeRadiusBlocks,
+            String requestedSampleSeed) throws IOException {
         RealmRun run = ensureRunForTagAudit(runId);
         Objects.requireNonNull(sampler, "sampler");
         int sampleCount = requestedSampleCount > 0 ? requestedSampleCount : 120;
         int radiusBlocks = requestedRadiusBlocks > 0 ? requestedRadiusBlocks : 32;
         int strideBlocks = requestedStrideBlocks > 0 ? requestedStrideBlocks : 4;
         int slopeRadiusBlocks = requestedSlopeRadiusBlocks > 0 ? requestedSlopeRadiusBlocks : 4;
+        String sampleSeed = requestedSampleSeed == null || requestedSampleSeed.isBlank()
+                ? run.runId : requestedSampleSeed.trim();
         List<TagAuditSample> samples = buildTagAuditSamples(run, sampler, sampleCount, radiusBlocks,
-                strideBlocks, slopeRadiusBlocks);
+                strideBlocks, slopeRadiusBlocks, sampleSeed);
         JsonArray sampleJson = new JsonArray();
         for (TagAuditSample sample : samples) {
             sampleJson.add(sample.asJson());
         }
-        JsonObject report = tagAuditReport(run, samples, sampleCount, radiusBlocks, strideBlocks, slopeRadiusBlocks);
+        JsonObject report = tagAuditReport(run, samples, sampleCount, radiusBlocks, strideBlocks, slopeRadiusBlocks,
+                sampleSeed);
         writeJson(run.runDirectory.resolve("tag_audit_samples.json"), sampleJson);
         writeJson(run.runDirectory.resolve("tag_audit_report.json"), report);
         run.artifacts.put("tagAuditSamples", "tag_audit_samples.json");
@@ -2524,27 +2534,28 @@ public final class RealmPlanningService {
     }
 
     private List<TagAuditSample> buildTagAuditSamples(RealmRun run, AtlasSampler sampler, int requestedSampleCount,
-            int radiusBlocks, int strideBlocks, int slopeRadiusBlocks) {
-        Map<String, WorldCell> selected = new LinkedHashMap<>();
+            int radiusBlocks, int strideBlocks, int slopeRadiusBlocks, String sampleSeed) {
+        Map<String, AuditCandidate> selected = new LinkedHashMap<>();
         int perLayer = Math.max(4, requestedSampleCount / 6);
-        addAuditLayer(selected, run.worldCells, "confirmed_cliff", perLayer,
+        addAuditLayer(selected, run.worldCells, "confirmed_cliff", perLayer, sampleSeed,
                 cell -> cell.assignableLand() && cell.landformTags().contains("cliff"));
-        addAuditLayer(selected, run.worldCells, "confirmed_steep", perLayer,
+        addAuditLayer(selected, run.worldCells, "confirmed_steep", perLayer, sampleSeed,
                 cell -> cell.assignableLand() && cell.landformTags().contains("steep"));
-        addAuditLayer(selected, run.worldCells, "coarse_cliff_micro_rejected", perLayer,
+        addAuditLayer(selected, run.worldCells, "coarse_cliff_micro_rejected", perLayer, sampleSeed,
                 cell -> cell.assignableLand() && cell.landformTags().contains("micro_contradiction"));
-        addAuditLayer(selected, run.worldCells, "coastal", perLayer,
+        addAuditLayer(selected, run.worldCells, "coastal", perLayer, sampleSeed,
                 cell -> cell.assignableLand() && cell.landformTags().contains("coastal"));
-        addAuditLayer(selected, run.worldCells, "upland_macro", perLayer,
+        addAuditLayer(selected, run.worldCells, "upland_macro", perLayer, sampleSeed,
                 cell -> cell.assignableLand() && ("upland".equals(cell.baseLandform())
                         || "ridge".equals(cell.baseLandform()) || cell.landformTags().contains("mountain_front")));
-        addAuditLayer(selected, run.worldCells, "land_baseline", requestedSampleCount,
+        addAuditLayer(selected, run.worldCells, "land_baseline", requestedSampleCount, sampleSeed,
                 WorldCell::assignableLand);
 
         List<TagAuditSample> samples = new ArrayList<>();
-        for (WorldCell cell : selected.values()) {
+        for (AuditCandidate candidate : selected.values()) {
+            WorldCell cell = candidate.cell;
             TagAuditMetrics metrics = auditLocalMetrics(run, sampler, cell, radiusBlocks, strideBlocks, slopeRadiusBlocks);
-            samples.add(TagAuditSample.from(cell, metrics));
+            samples.add(TagAuditSample.from(cell, candidate.layer, metrics));
             if (samples.size() >= requestedSampleCount) {
                 break;
             }
@@ -2552,24 +2563,26 @@ public final class RealmPlanningService {
         return samples;
     }
 
-    private void addAuditLayer(Map<String, WorldCell> selected, List<WorldCell> cells, String layer,
-            int limit, CellPredicate predicate) {
+    private void addAuditLayer(Map<String, AuditCandidate> selected, List<WorldCell> cells, String layer,
+            int limit, String sampleSeed, CellPredicate predicate) {
         int added = 0;
         List<WorldCell> ordered = cells.stream()
                 .filter(predicate::test)
-                .sorted(Comparator.comparingInt((WorldCell cell) -> auditOrder(layer, cell))
+                .sorted(Comparator.comparingInt((WorldCell cell) -> auditOrder(sampleSeed, layer, cell))
                         .thenComparingInt(cell -> cell.gridZ)
                         .thenComparingInt(cell -> cell.gridX))
                 .toList();
         for (WorldCell cell : ordered) {
-            if (selected.putIfAbsent(key(cell.gridX, cell.gridZ), cell) == null && ++added >= limit) {
+            if (selected.putIfAbsent(key(cell.gridX, cell.gridZ), new AuditCandidate(cell, layer)) == null
+                    && ++added >= limit) {
                 return;
             }
         }
     }
 
-    private int auditOrder(String layer, WorldCell cell) {
-        return Math.floorMod(Objects.hash(layer, cell.gridX, cell.gridZ, cell.blockX, cell.blockZ), 1_000_000);
+    private int auditOrder(String sampleSeed, String layer, WorldCell cell) {
+        return Math.floorMod(Objects.hash(sampleSeed, layer, cell.gridX, cell.gridZ, cell.blockX, cell.blockZ),
+                1_000_000);
     }
 
     private TagAuditMetrics auditLocalMetrics(RealmRun run, AtlasSampler sampler, WorldCell cell,
@@ -2663,16 +2676,18 @@ public final class RealmPlanningService {
     }
 
     private JsonObject tagAuditReport(RealmRun run, List<TagAuditSample> samples, int requestedSampleCount,
-            int radiusBlocks, int strideBlocks, int slopeRadiusBlocks) {
+            int radiusBlocks, int strideBlocks, int slopeRadiusBlocks, String sampleSeed) {
         JsonObject report = new JsonObject();
         report.addProperty("schemaVersion", SCHEMA_VERSION);
         report.addProperty("runId", run.runId);
+        report.addProperty("sampleSeed", sampleSeed);
         report.addProperty("requestedSampleCount", requestedSampleCount);
         report.addProperty("sampleCount", samples.size());
         report.addProperty("auditRadiusBlocks", radiusBlocks);
         report.addProperty("auditStrideBlocks", strideBlocks);
         report.addProperty("centerSlopeRadiusBlocks", slopeRadiusBlocks);
         report.addProperty("sampleMode", run.surveyResult.sampleMode().contractName());
+        report.add("sampleLayerCounts", tagAuditLayerCountsJson(samples));
         report.add("tagMetrics", tagAuditMetricsJson(samples, List.of("cliff", "steep", "coastal")));
         report.add("confusionMatrix", tagAuditConfusionJson(samples, List.of("cliff", "steep", "coastal")));
         JsonArray falsePositives = new JsonArray();
@@ -2694,6 +2709,18 @@ public final class RealmPlanningService {
         report.addProperty("microContradictionAcceptedRate", contradicted == 0 ? 0.0 : contradictedAccepted / (double) contradicted);
         report.addProperty("createdAt", Instant.now().toString());
         return report;
+    }
+
+    private JsonObject tagAuditLayerCountsJson(List<TagAuditSample> samples) {
+        Map<String, Integer> counts = new LinkedHashMap<>();
+        for (TagAuditSample sample : samples) {
+            counts.put(sample.auditLayer, counts.getOrDefault(sample.auditLayer, 0) + 1);
+        }
+        JsonObject json = new JsonObject();
+        for (Map.Entry<String, Integer> entry : counts.entrySet()) {
+            json.addProperty(entry.getKey(), entry.getValue());
+        }
+        return json;
     }
 
     private JsonObject tagAuditMetricsJson(List<TagAuditSample> samples, List<String> tags) {
@@ -3869,11 +3896,17 @@ public final class RealmPlanningService {
         }
     }
 
+    private record AuditCandidate(WorldCell cell, String layer) {
+    }
+
     private record TagAuditSample(
             int gridX,
             int gridZ,
             int blockX,
             int blockZ,
+            int cellMinBlockX,
+            int cellMinBlockZ,
+            String auditLayer,
             String baseLandform,
             String coarseLandform,
             List<String> wTags,
@@ -3888,10 +3921,13 @@ public final class RealmPlanningService {
             referenceTags = List.copyOf(referenceTags);
         }
 
-        static TagAuditSample from(WorldCell cell, TagAuditMetrics metrics) {
+        static TagAuditSample from(WorldCell cell, String auditLayer, TagAuditMetrics metrics) {
             List<String> wTags = cell.landformTags();
             List<String> referenceTags = metrics.referenceTags();
-            return new TagAuditSample(cell.gridX, cell.gridZ, cell.blockX, cell.blockZ,
+            int sampleCenterX = cell.blockX + cell.cellStepBlocks / 2;
+            int sampleCenterZ = cell.blockZ + cell.cellStepBlocks / 2;
+            return new TagAuditSample(cell.gridX, cell.gridZ, sampleCenterX, sampleCenterZ,
+                    cell.blockX, cell.blockZ, auditLayer,
                     cell.baseLandform(), cell.landform, wTags, metrics, referenceTags,
                     wTags.contains("cliff") == referenceTags.contains("cliff"),
                     wTags.contains("steep") == referenceTags.contains("steep"),
@@ -3910,6 +3946,10 @@ public final class RealmPlanningService {
             json.addProperty("gridZ", gridZ);
             json.addProperty("blockX", blockX);
             json.addProperty("blockZ", blockZ);
+            json.addProperty("cellMinBlockX", cellMinBlockX);
+            json.addProperty("cellMinBlockZ", cellMinBlockZ);
+            json.addProperty("auditLayer", auditLayer);
+            json.addProperty("tpCommand", "/tp @s " + blockX + " ~ " + blockZ);
             json.addProperty("baseLandform", baseLandform);
             json.addProperty("coarseLandform", coarseLandform);
             json.add("wTags", stringArray(wTags));
