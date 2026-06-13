@@ -379,6 +379,11 @@ class RealmPlanningServiceTest {
         JsonObject report = readJson(tempDir.resolve("realm_debug").resolve("realm_model_test").resolve("t3_report.json"));
         assertTrue(report.getAsJsonObject("territoryStatusSummary").has("wildRatio"));
         assertTrue(report.getAsJsonObject("expansionBudgets").size() > 0);
+
+        JsonObject repeatedAction = service.expandT3("realm_model_test", "", true, "strict", "action_budget");
+        JsonObject repeatedReport = readJson(tempDir.resolve("realm_debug").resolve("realm_model_test").resolve("t3_report.json"));
+        assertEquals(territory.toString(), repeatedAction.getAsJsonObject("territoryMap").toString());
+        assertEquals(report.toString(), repeatedReport.toString());
     }
 
     private RefreshResult refreshSynthetic(String caseId, int cellStepBlocks) throws Exception {

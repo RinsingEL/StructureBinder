@@ -217,6 +217,7 @@ public final class RealmPlanningService {
         run.expansionModel = normalizeExpansionModel(expansionModel, run.qualityMode);
         String group = normalizationGroup == null || normalizationGroup.isBlank()
                 ? run.profiles.get(0).scalePlan.normalizationGroup : normalizationGroup.trim();
+        resetT3DerivedState(run);
         run.territory = buildTerritory(run, group, allowUnclaimedLand);
         exportTerritory(run);
 
@@ -242,6 +243,25 @@ public final class RealmPlanningService {
         response.add("citySeedRegistry", run.registry.asJson());
         response.add("nextActions", arrayOf("review_acceptance_report"));
         return response;
+    }
+
+    private void resetT3DerivedState(RealmRun run) {
+        run.expansionBudgets.clear();
+        run.terrainCostProfiles.clear();
+        run.stopReasons.clear();
+        run.terrainCostBreakdowns.clear();
+        run.realmClaimCostSums.clear();
+        run.realmMaxClaimCosts.clear();
+        run.realmClaimCounts.clear();
+        run.territoryCellStatuses.clear();
+        run.territoryClaimCosts.clear();
+        run.territory = null;
+        run.registry = null;
+        run.scoreManifest = null;
+        for (String artifact : List.of("citySeedRegistry", "citySeedPreview", "t4Report",
+                "realmCityCandidatePackages", "scoreManifest")) {
+            run.artifacts.remove(artifact);
+        }
     }
 
     public JsonObject runAcceptance(RefreshResult refreshResult, String requestedRunId, int realmCount,
