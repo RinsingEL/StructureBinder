@@ -13,6 +13,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraftforge.gametest.GameTestHolder;
 
 import java.nio.file.Path;
+import java.nio.file.Files;
 
 @GameTestHolder("geomantia")
 public final class RealmPlanningGameTests {
@@ -38,14 +39,22 @@ public final class RealmPlanningGameTests {
                     SampleMode.PRIOR,
                     WorldSurveyRunner.ResumePolicy.RESCAN
             );
+            MinecraftPriorAtlasSampler sampler = new MinecraftPriorAtlasSampler(level);
             var survey = new WorldSurveyRunner(Path.of("realm_debug"), GisClassifierConfig.defaults())
-                    .run(config, new MinecraftPriorAtlasSampler(level));
-            JsonObject response = new RealmPlanningService(Path.of("realm_debug"))
-                    .runAcceptance(survey, 3, null, true, "smoke");
+                    .run(config, sampler);
+            RealmPlanningService service = new RealmPlanningService(Path.of("realm_debug"));
+            JsonObject response = service.runAcceptance(survey, 3, null, true, "smoke");
             JsonObject report = response.getAsJsonObject("acceptanceReport");
             if (!report.getAsJsonObject("stageResults").get("T4").getAsBoolean()
                     || !report.getAsJsonObject("artifacts").has("scoreManifest")) {
                 helper.fail("Realm planning smoke did not reach T4 score artifacts: " + response);
+                return;
+            }
+            JsonObject audit = service.runTagAudit("realm_gametest_prior", sampler, 24, 32, 8, 4);
+            if (!audit.getAsJsonObject("tagAuditReport").getAsJsonObject("tagMetrics").has("cliff")
+                    || !Files.exists(Path.of("realm_debug", "realm_gametest_prior", "tag_audit_report.json"))
+                    || !Files.exists(Path.of("realm_debug", "realm_gametest_prior", "tag_audit_samples.json"))) {
+                helper.fail("Realm planning Tag Audit did not write expected artifacts: " + audit);
                 return;
             }
             helper.succeed();
