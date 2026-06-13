@@ -18,6 +18,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
@@ -121,6 +122,28 @@ final class RealmPlanningHttpController {
                     response.add("tagAuditReport", audit.getAsJsonObject("tagAuditReport"));
                     response.add("artifacts", audit.getAsJsonObject("artifacts"));
                 }
+                return response;
+            });
+        });
+    }
+
+    void handleTagAudit(HttpExchange exchange) {
+        handle(exchange, "POST", () -> {
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            return callOnServerThread(() -> {
+                String runId = requiredString(request, "runId");
+                ServerPlayer player = resolvePlayer(stringValue(request, "playerName", ""));
+                String dimensionId = stringValue(request, "dimensionId", "");
+                if (dimensionId.isBlank()) {
+                    dimensionId = restoredRunDimensionId(runId);
+                }
+                ServerLevel level = resolveLevel(dimensionId, player);
+                JsonObject response = service().runTagAudit(runId, new MinecraftPriorAtlasSampler(level),
+                        intValue(request, "tagAuditSampleCount", 120),
+                        intValue(request, "tagAuditRadiusBlocks", 32),
+                        intValue(request, "tagAuditStrideBlocks", 4),
+                        intValue(request, "tagAuditSlopeRadiusBlocks", 4));
+                response.addProperty("restoredFromSealedRun", true);
                 return response;
             });
         });
@@ -250,6 +273,18 @@ final class RealmPlanningHttpController {
 
     private Path debugRoot() {
         return server.getServerDirectory().toPath().resolve("realm_debug");
+    }
+
+    private String restoredRunDimensionId(String runId) throws IOException {
+        Path manifestPath = debugRoot().resolve(runId).resolve("world_survey_manifest.json");
+        if (!Files.exists(manifestPath)) {
+            return "";
+        }
+        JsonObject manifest = com.google.gson.JsonParser.parseString(Files.readString(manifestPath)).getAsJsonObject();
+        if (manifest.has("config") && manifest.get("config").isJsonObject()) {
+            return stringValue(manifest.getAsJsonObject("config"), "dimensionId", "");
+        }
+        return "";
     }
 
     private static SampleMode sampleModeValue(JsonObject object) {

@@ -126,4 +126,21 @@ export const realmTools: ToolDefinition[] = [
       },
     },
   },
+  {
+    name: "realm_tag_audit",
+    description: "对已有 sealed W run 单独执行 Tag Audit 抽样局部精扫，不重跑 W/T 主链。",
+    inputSchema: {
+      type: "object",
+      properties: {
+        runId: { type: "string", description: "已有 sealed W/T run ID。" },
+        tagAuditSampleCount: { type: "number", description: "Tag Audit 抽样点数量，默认 120。" },
+        tagAuditRadiusBlocks: { type: "number", description: "Tag Audit 局部精扫半径，默认 32 block。" },
+        tagAuditStrideBlocks: { type: "number", description: "Tag Audit 局部精扫步长，默认 4 block。" },
+        tagAuditSlopeRadiusBlocks: { type: "number", description: "Tag Audit 局部坡度半径，默认 4 block。" },
+        dimensionId: { type: "string", description: "可选；省略时从 run 的 world_survey_manifest.json 恢复。" },
+        playerName: { type: "string", description: "可选；用于没有 dimensionId 时选择玩家维度。" },
+      },
+      required: ["runId"],
+    },
+  },
 ];

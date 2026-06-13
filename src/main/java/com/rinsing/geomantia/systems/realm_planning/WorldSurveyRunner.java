@@ -33,6 +33,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 public final class WorldSurveyRunner {
@@ -156,6 +157,110 @@ public final class WorldSurveyRunner {
             throw new IOException("World survey did not seal: failedTileCount=" + failed);
         }
         return result;
+    }
+
+    public WorldSurveyResult loadSealedResult(String runId) throws IOException {
+        String normalizedRunId = safeId(Objects.requireNonNull(runId, "runId").trim());
+        if (normalizedRunId.isBlank()) {
+            throw new IllegalArgumentException("runId is required.");
+        }
+        Path runDirectory = debugRoot.resolve(normalizedRunId);
+        Path manifestPath = runDirectory.resolve("world_survey_manifest.json");
+        if (!Files.exists(manifestPath)) {
+            throw new IllegalArgumentException("World survey manifest is missing for runId: " + runId);
+        }
+
+        JsonObject manifest = JsonParser.parseString(Files.readString(manifestPath)).getAsJsonObject();
+        if (!"sealed".equals(stringValue(manifest, "status", ""))) {
+            throw new IllegalArgumentException("World survey must be sealed before Tag Audit can be restored: " + runId);
+        }
+        JsonObject configJson = objectValue(manifest, "config");
+        JsonObject boundsJson = objectValue(manifest, "scanBounds");
+        JsonObject gridJson = objectValue(manifest, "grid");
+        JsonObject statsJson = objectValue(manifest, "stats");
+        String configHash = stringValue(manifest, "configHash", stringValue(statsJson, "configHash", ""));
+        GisSampleConfig sampleConfig = GisSampleConfig.defaults().withCellStepBlocks(intValue(configJson, "cellStepBlocks", DEFAULT_CELL_STEP_BLOCKS));
+        AtlasRegionSnapshotIo snapshotIo = new AtlasRegionSnapshotIo();
+
+        List<AtlasRegion> regions = new ArrayList<>();
+        List<LandformPatch> patches = new ArrayList<>();
+        JsonArray tiles = manifest.has("tiles") && manifest.get("tiles").isJsonArray()
+                ? manifest.getAsJsonArray("tiles") : new JsonArray();
+        for (var element : tiles) {
+            if (!element.isJsonObject()) {
+                continue;
+            }
+            JsonObject tile = element.getAsJsonObject();
+            if (!"scanned".equals(stringValue(tile, "status", ""))
+                    && !"cached".equals(stringValue(tile, "status", ""))) {
+                continue;
+            }
+            String cachePath = stringValue(tile, "cachePath", "");
+            if (cachePath.isBlank()) {
+                throw new IllegalArgumentException("Tile cache path is missing for runId: " + runId);
+            }
+            Path snapshotPath = runDirectory.resolve(cachePath).normalize();
+            if (!snapshotPath.startsWith(runDirectory.normalize()) || !Files.exists(snapshotPath)) {
+                throw new IllegalArgumentException("Tile cache snapshot is missing: " + cachePath);
+            }
+            if (!configHash.isBlank() && !configHash.equals(stringValue(tile, "configHash", ""))) {
+                throw new IllegalArgumentException("Tile cache config hash mismatch: " + cachePath);
+            }
+            AtlasRegion region = snapshotIo.read(snapshotPath, sampleConfig);
+            regions.add(region);
+            patches.addAll(region.patches());
+        }
+        if (regions.isEmpty()) {
+            throw new IllegalArgumentException("No tile snapshots are available for runId: " + runId);
+        }
+        regions.sort(Comparator.comparingInt(AtlasRegion::regionZ).thenComparingInt(AtlasRegion::regionX));
+        patches.sort(Comparator.comparing(LandformPatch::patchId));
+
+        MicroSamplingResult micro = Files.exists(runDirectory.resolve("world_feature_grid.json"))
+                ? readFeatureGrid(runDirectory.resolve("world_feature_grid.json"), configHash)
+                : null;
+        if (micro == null) {
+            micro = new MicroSamplingResult(Map.of(), false, 0L);
+        }
+
+        SampleMode sampleMode = SampleMode.fromContractName(stringValue(configJson, "sampleMode", SampleMode.PRIOR.contractName()));
+        return new WorldSurveyResult(
+                stringValue(manifest, "runId", normalizedRunId),
+                stringValue(manifest, "surveyId", "survey_" + normalizedRunId),
+                stringValue(configJson, "dimensionId", "minecraft:overworld"),
+                stringValue(configJson, "worldSeed", "unknown"),
+                doubleValue(configJson, "worldBorderSizeBlocks", 0.0),
+                intValue(configJson, "centerBlockX", 0),
+                intValue(configJson, "centerBlockZ", 0),
+                intValue(configJson, "planningRadiusBlocks", DEFAULT_PLANNING_RADIUS_BLOCKS),
+                intValue(boundsJson, "minBlockX", 0),
+                intValue(boundsJson, "minBlockZ", 0),
+                intValue(boundsJson, "maxBlockX", 0),
+                intValue(boundsJson, "maxBlockZ", 0),
+                intValue(configJson, "cellStepBlocks", DEFAULT_CELL_STEP_BLOCKS),
+                intValue(configJson, "microSampleStrideBlocks", RealmPlanningService.DEFAULT_MICRO_SAMPLE_STRIDE_BLOCKS),
+                intValue(configJson, "localSlopeRadiusBlocks", DEFAULT_LOCAL_SLOPE_RADIUS_BLOCKS),
+                micro.implemented,
+                micro.sampleCount,
+                configHash,
+                intValue(gridJson, "originBlockX", 0),
+                intValue(gridJson, "originBlockZ", 0),
+                intValue(gridJson, "width", 0),
+                intValue(gridJson, "height", 0),
+                sampleMode,
+                regions,
+                patches,
+                micro.features,
+                runDirectory,
+                manifestPath,
+                longValue(statsJson, "durationMs", longValue(manifest, "durationMs", 0L)),
+                intValue(statsJson, "tileCount", tiles.size()),
+                intValue(statsJson, "scannedTileCount", 0),
+                intValue(statsJson, "cachedTileCount", 0),
+                intValue(statsJson, "failedTileCount", 0),
+                longValue(statsJson, "artifactBytes", directorySize(runDirectory)),
+                true
+        );
     }
 
     private TileManifest scanTile(GisRefreshService service, AtlasRegionSnapshotIo snapshotIo, TilePlan tile,
@@ -712,6 +817,39 @@ public final class WorldSurveyRunner {
 
     private static String safeId(String value) {
         return value.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9_.-]+", "_");
+    }
+
+    private static JsonObject objectValue(JsonObject object, String key) {
+        return object.has(key) && object.get(key).isJsonObject()
+                ? object.getAsJsonObject(key) : new JsonObject();
+    }
+
+    private static int intValue(JsonObject object, String key, int defaultValue) {
+        if (!object.has(key) || object.get(key).isJsonNull()) {
+            return defaultValue;
+        }
+        return object.get(key).getAsInt();
+    }
+
+    private static long longValue(JsonObject object, String key, long defaultValue) {
+        if (!object.has(key) || object.get(key).isJsonNull()) {
+            return defaultValue;
+        }
+        return object.get(key).getAsLong();
+    }
+
+    private static double doubleValue(JsonObject object, String key, double defaultValue) {
+        if (!object.has(key) || object.get(key).isJsonNull()) {
+            return defaultValue;
+        }
+        return object.get(key).getAsDouble();
+    }
+
+    private static String stringValue(JsonObject object, String key, String defaultValue) {
+        if (!object.has(key) || object.get(key).isJsonNull()) {
+            return defaultValue;
+        }
+        return object.get(key).getAsString();
     }
 
     private static String key(int gridX, int gridZ) {

@@ -3,6 +3,7 @@ package com.rinsing.geomantia.systems.realm_planning;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.rinsing.geomantia.systems.gis.GisClassifierConfig;
 import com.rinsing.geomantia.systems.gis.application.sample.AtlasSampler;
 import com.rinsing.geomantia.systems.gis.application.sample.SampledCell;
 import com.rinsing.geomantia.systems.gis.application.refresh.RefreshResult;
@@ -294,7 +295,7 @@ public final class RealmPlanningService {
 
     public JsonObject runTagAudit(String runId, AtlasSampler sampler, int requestedSampleCount,
             int requestedRadiusBlocks, int requestedStrideBlocks, int requestedSlopeRadiusBlocks) throws IOException {
-        RealmRun run = requireRun(runId);
+        RealmRun run = ensureRunForTagAudit(runId);
         Objects.requireNonNull(sampler, "sampler");
         int sampleCount = requestedSampleCount > 0 ? requestedSampleCount : 120;
         int radiusBlocks = requestedRadiusBlocks > 0 ? requestedRadiusBlocks : 32;
@@ -2731,6 +2732,23 @@ public final class RealmPlanningService {
         if (run == null) {
             throw new IllegalArgumentException("Unknown realm runId: " + runId);
         }
+        return run;
+    }
+
+    private RealmRun ensureRunForTagAudit(String runId) throws IOException {
+        if (runId == null || runId.isBlank()) {
+            throw new IllegalArgumentException("runId is required.");
+        }
+        RealmRun run = RUNS.get(runId.trim());
+        if (run != null) {
+            return run;
+        }
+        WorldSurveyResult surveyResult = new WorldSurveyRunner(debugRoot, GisClassifierConfig.defaults())
+                .loadSealedResult(runId);
+        run = new RealmRun(surveyResult.runId(), surveyResult.runDirectory(), surveyResult);
+        buildWorld(run);
+        exportWorld(run);
+        RUNS.put(run.runId, run);
         return run;
     }
 

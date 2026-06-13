@@ -52,6 +52,7 @@ public final class GeomantiaHttpServer {
             httpServer.createContext("/realm/t3/expand", realmController::handleT3Expand);
             httpServer.createContext("/realm/t4/build_registry", realmController::handleT4BuildRegistry);
             httpServer.createContext("/realm/acceptance/run", realmController::handleAcceptance);
+            httpServer.createContext("/realm/tag_audit", realmController::handleTagAudit);
             httpServer.setExecutor(Executors.newFixedThreadPool(3, runnable -> {
                 Thread thread = new Thread(runnable);
                 thread.setDaemon(true);

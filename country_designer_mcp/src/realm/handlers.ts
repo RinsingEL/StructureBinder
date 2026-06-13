@@ -36,6 +36,11 @@ export const realmHandlers: Record<string, ToolHandler> = {
     const res = await postJson(`${MC_API_URL}/realm/acceptance/run`, payload(args), TIMEOUTS.test);
     return textResult(JSON.stringify(res.data, null, 2));
   },
+
+  async realm_tag_audit(args) {
+    const res = await postJson(`${MC_API_URL}/realm/tag_audit`, payload(args), TIMEOUTS.refresh);
+    return textResult(JSON.stringify(res.data, null, 2));
+  },
 };
 
 function payload(args: Record<string, unknown>) {
