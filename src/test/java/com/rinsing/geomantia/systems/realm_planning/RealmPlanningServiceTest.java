@@ -193,6 +193,25 @@ class RealmPlanningServiceTest {
                 .getAsJsonObject("tagMetrics")
                 .has("coastal"));
 
+        WorldSurveyResult restored = runner.loadSealedResult("realm_world_survey_test");
+        JsonObject replayedResponse = new RealmPlanningService(tempDir.resolve("realm_debug"))
+                .runAcceptance(restored, 3, null, true, "smoke");
+        assertTrue(replayedResponse.get("passed").getAsBoolean(), replayedResponse.toString());
+        JsonObject replayedSurvey = readJson(tempDir.resolve("realm_debug")
+                .resolve("realm_world_survey_test")
+                .resolve("world_survey_context.json"));
+        assertEquals(4096, replayedSurvey.get("microSampleBudget").getAsLong());
+        assertEquals(16, replayedSurvey.get("microSampleBudgetPerCell").getAsInt());
+        assertFalse(replayedSurvey.get("adaptiveSampling").getAsBoolean());
+        JsonObject replayedT3 = readJson(tempDir.resolve("realm_debug")
+                .resolve("realm_world_survey_test")
+                .resolve("t3_report.json"));
+        assertTrue(replayedT3.has("ownedAreaRatio"));
+        JsonObject replayedT4 = readJson(tempDir.resolve("realm_debug")
+                .resolve("realm_world_survey_test")
+                .resolve("t4_report.json"));
+        assertTrue(replayedT4.get("allAnchorsInOwnedTerritory").getAsBoolean());
+
         JsonObject response = new RealmPlanningService(tempDir.resolve("realm_debug"))
                 .runAcceptance(second, 3, null, true, "smoke");
         assertTrue(response.get("passed").getAsBoolean(), response.toString());
