@@ -211,6 +211,57 @@ class RealmPlanningServiceTest {
     }
 
     @Test
+    void worldSurveyRunnerRescansWhenSamplingConfigChanges() throws Exception {
+        GisTestCase testCase = GisTestCase.byId("mixed");
+        WorldSurveyRunner runner = new WorldSurveyRunner(tempDir.resolve("realm_debug"), GisClassifierConfig.defaults());
+        WorldSurveyRunner.Config stride32 = new WorldSurveyRunner.Config(
+                "realm_cache_config_test",
+                testCase.dimensionId(),
+                "synthetic",
+                0.0,
+                0,
+                0,
+                512,
+                128,
+                32,
+                8,
+                testCase.sampleMode(),
+                WorldSurveyRunner.ResumePolicy.USE_CACHE
+        );
+        WorldSurveyRunner.Config stride16 = new WorldSurveyRunner.Config(
+                "realm_cache_config_test",
+                testCase.dimensionId(),
+                "synthetic",
+                0.0,
+                0,
+                0,
+                512,
+                128,
+                16,
+                8,
+                testCase.sampleMode(),
+                WorldSurveyRunner.ResumePolicy.USE_CACHE
+        );
+
+        WorldSurveyResult first = runner.run(stride32, new SyntheticAtlasSampler(testCase.profile()));
+        WorldSurveyResult changed = runner.run(stride16, new SyntheticAtlasSampler(testCase.profile()));
+
+        assertTrue(first.sealed());
+        assertTrue(changed.sealed());
+        assertEquals(first.tileCount(), changed.scannedTileCount());
+        assertEquals(0, changed.cachedTileCount());
+        assertFalse(first.configHash().equals(changed.configHash()));
+        assertEquals(first.microSampleCount() * 4, changed.microSampleCount());
+        JsonObject manifest = readJson(changed.manifestPath());
+        assertEquals(16, manifest.getAsJsonObject("config").get("microSampleStrideBlocks").getAsInt());
+        assertEquals(changed.configHash(), manifest.get("configHash").getAsString());
+        JsonObject featureGrid = readJson(changed.runDirectory().resolve("world_feature_grid.json"));
+        assertEquals(changed.configHash(), featureGrid.get("configHash").getAsString());
+        assertEquals(16, featureGrid.get("microSampleStrideBlocks").getAsInt());
+        assertEquals(changed.microSampleCount(), featureGrid.get("microSampleCount").getAsLong());
+    }
+
+    @Test
     void tagAuditCoversConfirmedCliffTruePositives() throws Exception {
         SyntheticTerrainProfile cliffStrip = new SyntheticTerrainProfile() {
             @Override
