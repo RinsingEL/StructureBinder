@@ -4141,7 +4141,13 @@ public final class RealmPlanningService {
             json.add("terrainCostProfiles", terrainCostProfilesJson());
             json.add("warnings", stringArray(warnings));
             json.add("repairs", repairsJson());
-            json.add("territoryStatusSummary", statusSummaryJson());
+            JsonObject statusSummary = statusSummaryJson();
+            json.add("territoryStatusSummary", statusSummary);
+            json.addProperty("ownedAreaRatio", statusSummary.get("ownedRatio").getAsDouble());
+            json.addProperty("wildlandRatio", statusSummary.get("wildRatio").getAsDouble());
+            json.addProperty("contestedRatio", statusSummary.get("contestedRatio").getAsDouble());
+            json.addProperty("blockedRatio", statusSummary.get("blockedRatio").getAsDouble());
+            json.addProperty("unreachableRatio", statusSummary.get("unreachableRatio").getAsDouble());
             return json;
         }
 

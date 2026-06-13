@@ -377,7 +377,12 @@ class RealmPlanningServiceTest {
         JsonObject territory = action.getAsJsonObject("territoryMap");
         assertEquals("action_budget", territory.get("expansionModel").getAsString());
         JsonObject report = readJson(tempDir.resolve("realm_debug").resolve("realm_model_test").resolve("t3_report.json"));
-        assertTrue(report.getAsJsonObject("territoryStatusSummary").has("wildRatio"));
+        JsonObject statusSummary = report.getAsJsonObject("territoryStatusSummary");
+        assertTrue(statusSummary.has("wildRatio"));
+        assertEquals(statusSummary.get("ownedRatio").getAsDouble(), report.get("ownedAreaRatio").getAsDouble(), 0.0001);
+        assertEquals(statusSummary.get("wildRatio").getAsDouble(), report.get("wildlandRatio").getAsDouble(), 0.0001);
+        assertEquals(statusSummary.get("contestedRatio").getAsDouble(), report.get("contestedRatio").getAsDouble(), 0.0001);
+        assertEquals(statusSummary.get("blockedRatio").getAsDouble(), report.get("blockedRatio").getAsDouble(), 0.0001);
         assertTrue(report.getAsJsonObject("expansionBudgets").size() > 0);
 
         JsonObject repeatedAction = service.expandT3("realm_model_test", "", true, "strict", "action_budget");
