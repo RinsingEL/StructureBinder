@@ -177,6 +177,14 @@ class RealmPlanningServiceTest {
         assertTrue(second.microSamplingImplemented());
         assertEquals(4096, second.microSampleCount());
         assertFalse(second.featureCells().isEmpty());
+        JsonObject worldSurveyManifest = readJson(second.manifestPath());
+        JsonObject manifestConfig = worldSurveyManifest.getAsJsonObject("config");
+        JsonObject manifestStats = worldSurveyManifest.getAsJsonObject("stats");
+        assertEquals(16, manifestConfig.get("microSampleBudgetPerCell").getAsInt());
+        assertFalse(manifestConfig.get("adaptiveSampling").getAsBoolean());
+        assertEquals(4096, manifestStats.get("microSampleBudget").getAsLong());
+        assertEquals(16, manifestStats.get("microSampleBudgetPerCell").getAsInt());
+        assertFalse(manifestStats.get("adaptiveSampling").getAsBoolean());
 
         JsonObject restoredAudit = new RealmPlanningService(tempDir.resolve("realm_debug"))
                 .runTagAudit("realm_world_survey_test", new SyntheticAtlasSampler(testCase.profile()), 12, 32, 8, 4);
@@ -198,6 +206,17 @@ class RealmPlanningServiceTest {
                 .resolve("world_feature_grid.json")));
         assertTrue(survey.get("sealed").getAsBoolean());
         assertEquals(16, survey.getAsJsonObject("surveyStats").get("tileCount").getAsInt());
+        assertEquals(4096, survey.get("microSampleBudget").getAsLong());
+        assertEquals(16, survey.get("microSampleBudgetPerCell").getAsInt());
+        assertFalse(survey.get("adaptiveSampling").getAsBoolean());
+        JsonObject surveyStats = survey.getAsJsonObject("surveyStats");
+        assertEquals(4096, surveyStats.get("microSampleBudget").getAsLong());
+        assertEquals(second.microSampleCount(), surveyStats.get("microSampleCount").getAsLong());
+        assertFalse(surveyStats.get("adaptiveSampling").getAsBoolean());
+        JsonObject acceptance = readJson(tempDir.resolve("realm_debug")
+                .resolve("realm_world_survey_test")
+                .resolve("acceptance_report.json"));
+        assertEquals(4096, acceptance.getAsJsonObject("surveyStats").get("microSampleBudget").getAsLong());
 
         JsonObject patchMap = readJson(tempDir.resolve("realm_debug")
                 .resolve("realm_world_survey_test")

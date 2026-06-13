@@ -1398,7 +1398,10 @@ public final class RealmPlanningService {
         manifest.addProperty("metricSampleStrideBlocks", run.surveyResult.microSampleStrideBlocks());
         manifest.addProperty("localSlopeRadiusBlocks", run.surveyResult.localSlopeRadiusBlocks());
         manifest.addProperty("microSamplingImplemented", run.surveyResult.microSamplingImplemented());
+        manifest.addProperty("microSampleBudget", microSampleBudget(run.surveyResult));
+        manifest.addProperty("microSampleBudgetPerCell", microSampleBudgetPerCell(run.surveyResult));
         manifest.addProperty("microSampleCount", run.surveyResult.microSampleCount());
+        manifest.addProperty("adaptiveSampling", false);
         manifest.addProperty("configHash", run.surveyResult.configHash());
         manifest.addProperty("gridOriginBlockX", run.surveyResult.gridOriginBlockX());
         manifest.addProperty("gridOriginBlockZ", run.surveyResult.gridOriginBlockZ());
@@ -2058,7 +2061,10 @@ public final class RealmPlanningService {
         json.addProperty("metricSampleStrideBlocks", run.surveyResult.microSampleStrideBlocks());
         json.addProperty("localSlopeRadiusBlocks", run.surveyResult.localSlopeRadiusBlocks());
         json.addProperty("microSamplingImplemented", run.surveyResult.microSamplingImplemented());
+        json.addProperty("microSampleBudget", microSampleBudget(run.surveyResult));
+        json.addProperty("microSampleBudgetPerCell", microSampleBudgetPerCell(run.surveyResult));
         json.addProperty("microSampleCount", run.surveyResult.microSampleCount());
+        json.addProperty("adaptiveSampling", false);
         json.addProperty("configHash", run.surveyResult.configHash());
         json.addProperty("sealed", run.surveyResult.sealed());
         JsonObject origin = new JsonObject();
@@ -2146,9 +2152,27 @@ public final class RealmPlanningService {
         stats.addProperty("metricSampleStrideBlocks", result.microSampleStrideBlocks());
         stats.addProperty("localSlopeRadiusBlocks", result.localSlopeRadiusBlocks());
         stats.addProperty("microSamplingImplemented", result.microSamplingImplemented());
+        stats.addProperty("microSampleBudget", microSampleBudget(result));
+        stats.addProperty("microSampleBudgetPerCell", microSampleBudgetPerCell(result));
         stats.addProperty("microSampleCount", result.microSampleCount());
+        stats.addProperty("adaptiveSampling", false);
         stats.addProperty("configHash", result.configHash());
         return stats;
+    }
+
+    private static long microSampleBudget(WorldSurveyResult result) {
+        return (long) result.gridSizeWidth() * result.gridSizeHeight() * microSampleBudgetPerCell(result);
+    }
+
+    private static int microSampleBudgetPerCell(WorldSurveyResult result) {
+        if (!result.microSamplingImplemented()
+                || result.cellStepBlocks() <= 0
+                || result.microSampleStrideBlocks() <= 0
+                || result.microSampleStrideBlocks() >= result.cellStepBlocks()) {
+            return 0;
+        }
+        int samplesPerAxis = Math.max(1, result.cellStepBlocks() / result.microSampleStrideBlocks());
+        return samplesPerAxis * samplesPerAxis;
     }
 
     private static JsonArray profilesJson(Iterable<RealmProfile> profiles) {

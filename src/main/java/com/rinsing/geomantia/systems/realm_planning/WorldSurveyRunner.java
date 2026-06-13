@@ -521,6 +521,7 @@ public final class WorldSurveyRunner {
         grid.addProperty("cellCount", result.gridSizeWidth() * result.gridSizeHeight());
         json.add("grid", grid);
         JsonObject stats = new JsonObject();
+        long microSampleBudget = microSampleBudget(config, bounds);
         stats.addProperty("durationMs", result.durationMs());
         stats.addProperty("tileCount", result.tileCount());
         stats.addProperty("scannedTileCount", result.scannedTileCount());
@@ -528,9 +529,12 @@ public final class WorldSurveyRunner {
         stats.addProperty("failedTileCount", result.failedTileCount());
         stats.addProperty("artifactBytes", result.artifactBytes());
         stats.addProperty("microSamplingImplemented", result.microSamplingImplemented());
+        stats.addProperty("microSampleBudget", microSampleBudget);
+        stats.addProperty("microSampleBudgetPerCell", microSampleBudgetPerCell(config.cellStepBlocks, config.microSampleStrideBlocks));
         stats.addProperty("microSampleCount", result.microSampleCount());
         stats.addProperty("metricSampleStrideBlocks", result.microSampleStrideBlocks());
         stats.addProperty("localSlopeRadiusBlocks", result.localSlopeRadiusBlocks());
+        stats.addProperty("adaptiveSampling", false);
         stats.addProperty("configHash", result.configHash());
         stats.addProperty("averageTileDurationMs", averageTileDurationMs(tiles));
         stats.addProperty("maxTileDurationMs", maxTileDurationMs(tiles));
@@ -645,6 +649,8 @@ public final class WorldSurveyRunner {
             json.addProperty("microSampleStrideBlocks", microSampleStrideBlocks);
             json.addProperty("localSlopeRadiusBlocks", localSlopeRadiusBlocks);
             json.addProperty("microSamplingImplemented", microSampleStrideBlocks > 0 && microSampleStrideBlocks < cellStepBlocks);
+            json.addProperty("microSampleBudgetPerCell", microSampleBudgetPerCell(cellStepBlocks, microSampleStrideBlocks));
+            json.addProperty("adaptiveSampling", false);
             json.addProperty("sampleMode", sampleMode.contractName());
             json.addProperty("resumePolicy", resumePolicy.contractName());
             return json;
@@ -739,6 +745,19 @@ public final class WorldSurveyRunner {
                     minGridX, minGridZ, maxGridX, maxGridZ,
                     maxGridX - minGridX + 1, maxGridZ - minGridZ + 1);
         }
+    }
+
+    private static long microSampleBudget(Config config, SurveyBounds bounds) {
+        return (long) bounds.gridWidth * bounds.gridHeight
+                * microSampleBudgetPerCell(config.cellStepBlocks, config.microSampleStrideBlocks);
+    }
+
+    private static int microSampleBudgetPerCell(int cellStepBlocks, int microSampleStrideBlocks) {
+        if (cellStepBlocks <= 0 || microSampleStrideBlocks <= 0 || microSampleStrideBlocks >= cellStepBlocks) {
+            return 0;
+        }
+        int samplesPerAxis = Math.max(1, cellStepBlocks / microSampleStrideBlocks);
+        return samplesPerAxis * samplesPerAxis;
     }
 
     private record TilePlan(String dimensionId, int regionX, int regionZ, SampleMode sampleMode) {
