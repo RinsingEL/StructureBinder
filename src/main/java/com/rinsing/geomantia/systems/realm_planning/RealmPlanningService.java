@@ -1815,6 +1815,7 @@ public final class RealmPlanningService {
         }
         int duplicateAnchors = run.registry.duplicateAnchorCount();
         int spacingViolations = citySpacingViolationCount(run);
+        int offTerritoryAnchors = offTerritoryAnchorCount(run);
         long capitals = run.registry.citySeeds.stream().filter(seed -> "capital".equals(seed.role)).count();
         if (duplicateAnchors > 0) {
             hardBlocks.add("T4 city anchor hard block: duplicate non-satellite anchors=" + duplicateAnchors);
@@ -1822,16 +1823,21 @@ public final class RealmPlanningService {
         if (spacingViolations > 0) {
             hardBlocks.add("T4 city spacing hard block: overlapping non-satellite city seeds=" + spacingViolations);
         }
+        if (offTerritoryAnchors > 0) {
+            hardBlocks.add("T4 city territory hard block: city seeds outside owned territory=" + offTerritoryAnchors);
+        }
         if (capitals < run.profiles.size()) {
             hardBlocks.add("T4 city registry hard block: not every realm has a capital city seed.");
         }
         double score = 100.0 - duplicateAnchors * 20.0 - spacingViolations * 15.0
-                - Math.max(0, run.profiles.size() - capitals) * 25.0;
+                - offTerritoryAnchors * 25.0 - Math.max(0, run.profiles.size() - capitals) * 25.0;
         json.addProperty("score", Math.round(Math.max(0.0, score) * 100.0) / 100.0);
         json.addProperty("citySeedCount", run.registry.citySeeds.size());
         json.addProperty("capitalCount", capitals);
         json.addProperty("duplicateAnchorCount", duplicateAnchors);
         json.addProperty("spacingViolationCount", spacingViolations);
+        json.addProperty("offTerritoryAnchorCount", offTerritoryAnchors);
+        json.addProperty("allAnchorsInOwnedTerritory", offTerritoryAnchors == 0);
         return json;
     }
 
@@ -1892,7 +1898,25 @@ public final class RealmPlanningService {
         json.addProperty("allCitySeedIdsUnique", uniqueIds == run.registry.citySeeds.size());
         json.addProperty("duplicateAnchorCount", run.registry.duplicateAnchorCount());
         json.addProperty("spacingViolationCount", citySpacingViolationCount(run));
+        int offTerritoryAnchors = offTerritoryAnchorCount(run);
+        json.addProperty("offTerritoryAnchorCount", offTerritoryAnchors);
+        json.addProperty("allAnchorsInOwnedTerritory", offTerritoryAnchors == 0);
         return json;
+    }
+
+    private int offTerritoryAnchorCount(RealmRun run) {
+        if (run.registry == null || run.territory == null) {
+            return 0;
+        }
+        Map<String, String> owners = run.territory.ownershipByKey();
+        int violations = 0;
+        for (CitySeed seed : run.registry.citySeeds) {
+            String owner = owners.get(key(seed.anchorGrid.x, seed.anchorGrid.z));
+            if (!seed.realmId.equals(owner)) {
+                violations++;
+            }
+        }
+        return violations;
     }
 
     private int citySpacingViolationCount(RealmRun run) {

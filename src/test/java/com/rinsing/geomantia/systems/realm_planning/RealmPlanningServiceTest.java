@@ -75,6 +75,8 @@ class RealmPlanningServiceTest {
         JsonObject t4Score = score.getAsJsonObject("subScores").getAsJsonObject("T4");
         assertEquals(0, t4Score.get("duplicateAnchorCount").getAsInt());
         assertEquals(0, t4Score.get("spacingViolationCount").getAsInt());
+        assertEquals(0, t4Score.get("offTerritoryAnchorCount").getAsInt());
+        assertTrue(t4Score.get("allAnchorsInOwnedTerritory").getAsBoolean());
         JsonObject registry = readJson(runDir.resolve("city_seed_registry.json"));
         JsonArray citySeeds = registry.getAsJsonArray("citySeeds");
         assertFalse(citySeeds.isEmpty());
@@ -83,6 +85,26 @@ class RealmPlanningServiceTest {
             citySeedIds.add(citySeeds.get(i).getAsJsonObject().get("citySeedId").getAsString());
         }
         assertEquals(citySeeds.size(), citySeedIds.size());
+        JsonObject t4Report = readJson(runDir.resolve("t4_report.json"));
+        assertEquals(0, t4Report.get("offTerritoryAnchorCount").getAsInt());
+        assertTrue(t4Report.get("allAnchorsInOwnedTerritory").getAsBoolean());
+        JsonObject territory = readJson(runDir.resolve("realm_territory_map.json"));
+        Set<String> ownedAnchors = new HashSet<>();
+        JsonArray territoryCells = territory.getAsJsonArray("territoryCells");
+        for (int i = 0; i < territoryCells.size(); i++) {
+            JsonObject cell = territoryCells.get(i).getAsJsonObject();
+            if ("owned".equals(cell.get("status").getAsString())) {
+                ownedAnchors.add(cell.get("realmId").getAsString() + ":"
+                        + cell.get("gridX").getAsInt() + "," + cell.get("gridZ").getAsInt());
+            }
+        }
+        for (int i = 0; i < citySeeds.size(); i++) {
+            JsonObject seed = citySeeds.get(i).getAsJsonObject();
+            JsonObject anchor = seed.getAsJsonObject("anchorGrid");
+            String anchorKey = seed.get("realmId").getAsString() + ":"
+                    + anchor.get("x").getAsInt() + "," + anchor.get("z").getAsInt();
+            assertTrue(ownedAnchors.contains(anchorKey), seed.toString());
+        }
         JsonObject survey = readJson(runDir.resolve("world_survey_context.json"));
         JsonObject packageManifest = readJsonArray(runDir.resolve("candidate_map_packages.json"))
                 .get(0)
