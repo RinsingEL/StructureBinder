@@ -53,7 +53,8 @@ public final class RealmPlanningService {
     private static final double STEEP_SLOPE_P90_THRESHOLD = 14.0;
     private static final double STEEP_FRACTION_THRESHOLD = 0.25;
     private static final double CLIFF_SLOPE_P90_THRESHOLD = 18.0;
-    private static final double CLIFF_FRACTION_THRESHOLD = 0.30;
+    private static final double CLIFF_FRACTION_THRESHOLD = 0.35;
+    private static final double COASTAL_CLIFF_FRACTION_THRESHOLD = 0.45;
     private static final Map<String, RealmRun> RUNS = new LinkedHashMap<>();
 
     private final Path debugRoot;
@@ -2574,7 +2575,8 @@ public final class RealmPlanningService {
         if (slopeP90 >= STEEP_SLOPE_P90_THRESHOLD || steepFrac >= STEEP_FRACTION_THRESHOLD) {
             tags.add("steep");
         }
-        if (slopeP95 >= CLIFF_SLOPE_P90_THRESHOLD && steepFrac >= CLIFF_FRACTION_THRESHOLD) {
+        double cliffFractionThreshold = coastalMix(waterFrac) ? COASTAL_CLIFF_FRACTION_THRESHOLD : CLIFF_FRACTION_THRESHOLD;
+        if (slopeP95 >= CLIFF_SLOPE_P90_THRESHOLD && steepFrac >= cliffFractionThreshold) {
             tags.add("cliff");
         }
         if (waterFrac > 0.05 && waterFrac < 0.95) {
@@ -2585,6 +2587,10 @@ public final class RealmPlanningService {
 
     private double shoreMixScore(double waterFrac) {
         return waterFrac <= 0.0 || waterFrac >= 1.0 ? 0.0 : 1.0 - Math.abs(0.5 - waterFrac) * 2.0;
+    }
+
+    private static boolean coastalMix(double waterFrac) {
+        return waterFrac > 0.05 && waterFrac < 0.95;
     }
 
     private JsonObject tagAuditReport(RealmRun run, List<TagAuditSample> samples, int requestedSampleCount,
@@ -3193,7 +3199,8 @@ public final class RealmPlanningService {
                 if ("cliff".equals(landform) || localSteep()) {
                     tags.add("steep");
                 }
-                if ("cliff".equals(landform) && (steepFrac() >= 0.35 || slopeP90() >= CLIFF_SLOPE_P90_THRESHOLD)) {
+                if ("cliff".equals(landform) && (steepFrac() >= CLIFF_FRACTION_THRESHOLD
+                        || slopeP90() >= CLIFF_SLOPE_P90_THRESHOLD)) {
                     tags.add("cliff");
                 }
             }
@@ -3216,7 +3223,8 @@ public final class RealmPlanningService {
         }
 
         boolean localCliff() {
-            return steepFrac() >= CLIFF_FRACTION_THRESHOLD && slopeP90() >= CLIFF_SLOPE_P90_THRESHOLD;
+            double threshold = coastalMix(waterFrac()) ? COASTAL_CLIFF_FRACTION_THRESHOLD : CLIFF_FRACTION_THRESHOLD;
+            return steepFrac() >= threshold && slopeP90() >= CLIFF_SLOPE_P90_THRESHOLD;
         }
 
         double barrierCost() {

@@ -176,8 +176,10 @@ class RealmPlanningServiceTest {
             JsonObject cell = cells.get(i).getAsJsonObject();
             if ("cliff".equals(cell.get("landform").getAsString())) {
                 JsonObject slopeStats = cell.getAsJsonObject("slopeStats");
+                double waterFrac = cell.get("waterFrac").getAsDouble();
+                double cliffFractionThreshold = waterFrac > 0.05 && waterFrac < 0.95 ? 0.45 : 0.35;
                 boolean microConfirmsCliff = slopeStats.get("p90").getAsDouble() >= 18.0
-                        && slopeStats.get("steepFrac").getAsDouble() >= 0.30;
+                        && slopeStats.get("steepFrac").getAsDouble() >= cliffFractionThreshold;
                 JsonArray tags = cell.getAsJsonArray("landformTags");
                 assertEquals(microConfirmsCliff, contains(tags, "cliff"), cell.toString());
             }
