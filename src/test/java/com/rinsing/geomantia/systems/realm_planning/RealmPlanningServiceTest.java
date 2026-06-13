@@ -20,6 +20,7 @@ import org.junit.jupiter.api.io.TempDir;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -191,7 +192,7 @@ class RealmPlanningServiceTest {
         assertEquals("completed", restoredAudit.get("status").getAsString());
         assertTrue(restoredAudit.getAsJsonObject("tagAuditReport")
                 .getAsJsonObject("tagMetrics")
-                .has("coastal"));
+                .has("water_edge"));
 
         WorldSurveyResult restored = runner.loadSealedResult("realm_world_survey_test");
         JsonObject replayedResponse = new RealmPlanningService(tempDir.resolve("realm_debug"))
@@ -241,18 +242,41 @@ class RealmPlanningServiceTest {
                 .resolve("realm_world_survey_test")
                 .resolve("world_patch_map.json"));
         JsonArray cells = patchMap.getAsJsonArray("cells");
+        boolean hasNonMountainLand = false;
+        boolean hasTypedWaterEdge = false;
+        boolean hasNonCoastalWaterEdge = false;
         for (int i = 0; i < cells.size(); i++) {
             JsonObject cell = cells.get(i).getAsJsonObject();
+            if ("land".equals(cell.get("landWater").getAsString())
+                    && ("lowland".equals(cell.get("baseLandform").getAsString())
+                    || "plateau".equals(cell.get("baseLandform").getAsString()))) {
+                hasNonMountainLand = true;
+            }
+            JsonArray tags = cell.getAsJsonArray("landformTags");
+            if (contains(tags, "water_edge")) {
+                assertTrue(cell.has("waterEdgeType"), cell.toString());
+                String type = cell.get("waterEdgeType").getAsString();
+                assertTrue(List.of("seacoast", "riverbank", "lakeshore").contains(type), cell.toString());
+                if ("seacoast".equals(type)) {
+                    assertTrue(contains(tags, "coastal"), cell.toString());
+                } else {
+                    assertFalse(contains(tags, "coastal"), cell.toString());
+                    hasNonCoastalWaterEdge = true;
+                }
+                hasTypedWaterEdge = true;
+            }
             if ("cliff".equals(cell.get("landform").getAsString())) {
                 JsonObject slopeStats = cell.getAsJsonObject("slopeStats");
                 double waterFrac = cell.get("waterFrac").getAsDouble();
-                double cliffFractionThreshold = waterFrac > 0.05 && waterFrac < 0.95 ? 0.45 : 0.35;
+                double cliffFractionThreshold = waterFrac > 0.05 && waterFrac < 0.95 ? 0.65 : 0.55;
                 boolean microConfirmsCliff = slopeStats.get("p90").getAsDouble() >= 18.0
                         && slopeStats.get("steepFrac").getAsDouble() >= cliffFractionThreshold;
-                JsonArray tags = cell.getAsJsonArray("landformTags");
                 assertEquals(microConfirmsCliff, contains(tags, "cliff"), cell.toString());
             }
         }
+        assertTrue(hasNonMountainLand);
+        assertTrue(hasTypedWaterEdge);
+        assertTrue(hasNonCoastalWaterEdge);
 
         RealmPlanningService auditService = new RealmPlanningService(tempDir.resolve("realm_debug"));
         JsonObject audit = auditService.runTagAudit("realm_world_survey_test",

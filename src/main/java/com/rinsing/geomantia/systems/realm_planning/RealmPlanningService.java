@@ -54,8 +54,27 @@ public final class RealmPlanningService {
     private static final double STEEP_SLOPE_P90_THRESHOLD = 14.0;
     private static final double STEEP_FRACTION_THRESHOLD = 0.25;
     private static final double CLIFF_SLOPE_P90_THRESHOLD = 18.0;
-    private static final double CLIFF_FRACTION_THRESHOLD = 0.35;
-    private static final double COASTAL_CLIFF_FRACTION_THRESHOLD = 0.45;
+    private static final double CLIFF_FRACTION_THRESHOLD = 0.55;
+    private static final double COASTAL_CLIFF_FRACTION_THRESHOLD = 0.65;
+    private static final double FLAT_SLOPE_P90_THRESHOLD = 12.0;
+    private static final double FLAT_STEEP_FRACTION_THRESHOLD = 0.125;
+    private static final double FLAT_RELIEF_THRESHOLD = 24.0;
+    private static final double VERY_FLAT_SLOPE_P90_THRESHOLD = 8.0;
+    private static final double VERY_FLAT_STEEP_FRACTION_THRESHOLD = 0.0625;
+    private static final double VERY_FLAT_RELIEF_THRESHOLD = 16.0;
+    private static final double RIDGE_RELIEF_THRESHOLD = 34.0;
+    private static final double RIDGE_HIGH_RELIEF_THRESHOLD = 46.0;
+    private static final double PLATEAU_HEIGHT_RANK_THRESHOLD = 0.65;
+    private static final double LOWLAND_HEIGHT_RANK_THRESHOLD = 0.55;
+    private static final double LOWLAND_MID_FLAT_HEIGHT_RANK_THRESHOLD = 0.70;
+    private static final double UPLAND_HEIGHT_RANK_THRESHOLD = 0.72;
+    private static final double UPLAND_SLOPE_P90_THRESHOLD = 14.0;
+    private static final double UPLAND_RELIEF_THRESHOLD = 30.0;
+    private static final double WATER_COMPONENT_MIN_FRACTION = 0.65;
+    private static final int SEACOAST_COMPONENT_MIN_CELLS = 64;
+    private static final int RIVERBANK_COMPONENT_MAX_CELLS = 32;
+    private static final int RIVERBANK_COMPONENT_MAX_SPAN_CELLS = 3;
+    private static final int NEAR_WATER_COMPONENT_MAX_DISTANCE_CELLS = 2;
     private static final Map<String, RealmRun> RUNS = new LinkedHashMap<>();
 
     private final Path debugRoot;
@@ -379,8 +398,10 @@ public final class RealmPlanningService {
             }
         }
         assignContinents(cells);
+        assignWaterEdgeTypes(cells);
         run.worldCells.clear();
         run.worldCells.addAll(cells.values());
+        assignRelativeHeightRanks(run.worldCells);
         run.worldCellsByKey.clear();
         for (WorldCell cell : run.worldCells) {
             run.worldCellsByKey.put(key(cell.gridX, cell.gridZ), cell);
@@ -390,6 +411,140 @@ public final class RealmPlanningService {
         if (run.continentSummaries.isEmpty()) {
             throw new IllegalArgumentException("W refresh did not produce assignable land continents.");
         }
+    }
+
+    private void assignWaterEdgeTypes(Map<String, WorldCell> cells) {
+        WaterBounds bounds = waterBounds(cells.values());
+        Map<String, WaterComponent> components = buildWaterComponents(cells, bounds);
+        Map<String, WaterComponent> componentsByCell = new HashMap<>();
+        for (WaterComponent component : components.values()) {
+            for (String cellKey : component.cellKeys) {
+                componentsByCell.put(cellKey, component);
+            }
+        }
+        for (WorldCell cell : cells.values()) {
+            if (!cell.assignableLand()) {
+                continue;
+            }
+            if (!"shore".equals(cell.landWater) && !coastalMix(cell.waterFrac())) {
+                continue;
+            }
+            WaterComponent component = nearestWaterComponent(cells, componentsByCell, cell);
+            if (component == null) {
+                cell.waterEdgeType = localWaterEdgeType(cell);
+            } else {
+                cell.waterEdgeType = component.edgeType();
+                cell.waterComponentId = component.id;
+                cell.waterComponentAreaCells = component.size();
+            }
+        }
+    }
+
+    private Map<String, WaterComponent> buildWaterComponents(Map<String, WorldCell> cells, WaterBounds bounds) {
+        Map<String, WaterComponent> components = new LinkedHashMap<>();
+        Set<String> visited = new HashSet<>();
+        int index = 0;
+        List<WorldCell> ordered = new ArrayList<>(cells.values());
+        ordered.sort(Comparator.comparingInt((WorldCell c) -> c.gridZ).thenComparingInt(c -> c.gridX));
+        for (WorldCell start : ordered) {
+            String startKey = key(start.gridX, start.gridZ);
+            if (!waterComponentCell(start) || visited.contains(startKey)) {
+                continue;
+            }
+            WaterComponent component = new WaterComponent("water_" + index++, bounds);
+            ArrayDeque<WorldCell> queue = new ArrayDeque<>();
+            queue.add(start);
+            visited.add(startKey);
+            while (!queue.isEmpty()) {
+                WorldCell current = queue.removeFirst();
+                component.add(current);
+                for (int[] offset : DIRECTIONS) {
+                    WorldCell next = cells.get(key(current.gridX + offset[0], current.gridZ + offset[1]));
+                    if (next == null || !waterComponentCell(next)) {
+                        continue;
+                    }
+                    String nextKey = key(next.gridX, next.gridZ);
+                    if (visited.add(nextKey)) {
+                        queue.addLast(next);
+                    }
+                }
+            }
+            components.put(component.id, component);
+        }
+        return components;
+    }
+
+    private static WaterBounds waterBounds(Iterable<WorldCell> cells) {
+        int minX = Integer.MAX_VALUE;
+        int maxX = Integer.MIN_VALUE;
+        int minZ = Integer.MAX_VALUE;
+        int maxZ = Integer.MIN_VALUE;
+        boolean any = false;
+        for (WorldCell cell : cells) {
+            if (!waterComponentCell(cell)) {
+                continue;
+            }
+            any = true;
+            minX = Math.min(minX, cell.gridX);
+            maxX = Math.max(maxX, cell.gridX);
+            minZ = Math.min(minZ, cell.gridZ);
+            maxZ = Math.max(maxZ, cell.gridZ);
+        }
+        if (!any) {
+            return new WaterBounds(0, 0, 0, 0);
+        }
+        return new WaterBounds(minX, maxX, minZ, maxZ);
+    }
+
+    private static boolean waterComponentCell(WorldCell cell) {
+        return "water".equals(cell.landWater) || cell.waterFrac() >= WATER_COMPONENT_MIN_FRACTION;
+    }
+
+    private static WaterComponent nearestWaterComponent(Map<String, WorldCell> cells,
+            Map<String, WaterComponent> componentsByCell, WorldCell origin) {
+        WaterComponent best = null;
+        int bestDistance = Integer.MAX_VALUE;
+        ArrayDeque<GridDistance> queue = new ArrayDeque<>();
+        Set<String> visited = new HashSet<>();
+        queue.add(new GridDistance(origin.gridX, origin.gridZ, 0));
+        visited.add(key(origin.gridX, origin.gridZ));
+        while (!queue.isEmpty()) {
+            GridDistance current = queue.removeFirst();
+            if (current.distance > NEAR_WATER_COMPONENT_MAX_DISTANCE_CELLS) {
+                continue;
+            }
+            WorldCell cell = cells.get(key(current.x, current.z));
+            if (cell != null && waterComponentCell(cell)) {
+                WaterComponent component = componentsByCell.get(key(cell.gridX, cell.gridZ));
+                if (component != null && current.distance < bestDistance) {
+                    best = component;
+                    bestDistance = current.distance;
+                }
+            }
+            if (current.distance >= NEAR_WATER_COMPONENT_MAX_DISTANCE_CELLS) {
+                continue;
+            }
+            for (int[] offset : DIRECTIONS) {
+                int nx = current.x + offset[0];
+                int nz = current.z + offset[1];
+                String nextKey = key(nx, nz);
+                if (visited.add(nextKey) && cells.containsKey(nextKey)) {
+                    queue.addLast(new GridDistance(nx, nz, current.distance + 1));
+                }
+            }
+        }
+        return best;
+    }
+
+    private static String localWaterEdgeType(WorldCell cell) {
+        double water = cell.waterFrac();
+        if (water < 0.25 && cell.robustRelief() <= FLAT_RELIEF_THRESHOLD) {
+            return "riverbank";
+        }
+        if (water >= 0.45 || "shore".equals(cell.landWater)) {
+            return "seacoast";
+        }
+        return "lakeshore";
     }
 
     private void assignContinents(Map<String, WorldCell> cells) {
@@ -415,6 +570,20 @@ public final class RealmPlanningService {
                     }
                 }
             }
+        }
+    }
+
+    private void assignRelativeHeightRanks(List<WorldCell> cells) {
+        List<WorldCell> land = cells.stream()
+                .filter(cell -> cell.assignableLand() && !"shore".equals(cell.landWater) && cell.waterFrac() < 0.65)
+                .sorted(Comparator.comparingDouble(WorldCell::heightP50))
+                .toList();
+        if (land.isEmpty()) {
+            return;
+        }
+        int maxIndex = Math.max(1, land.size() - 1);
+        for (int i = 0; i < land.size(); i++) {
+            land.get(i).relativeHeightRank = i / (double) maxIndex;
         }
     }
 
@@ -1524,7 +1693,7 @@ public final class RealmPlanningService {
             for (WorldCell cell : run.worldCells) {
                 int x = (cell.gridX - bounds.minX) * scale;
                 int z = (cell.gridZ - bounds.minZ) * scale;
-                Color color = colorForLandform(cell.baseLandform(), cell.landWater);
+                Color color = colorForCell(cell);
                 if (highlight != null && !highlight.test(cell)) {
                     color = new Color(color.getRed() / 4, color.getGreen() / 4, color.getBlue() / 4);
                 }
@@ -1904,14 +2073,16 @@ public final class RealmPlanningService {
             score -= 0.25;
         }
         boolean mountain = "ridge".equals(cell.baseLandform()) || "upland".equals(cell.baseLandform())
+                || "plateau".equals(cell.baseLandform())
                 || cell.landformTags().contains("mountain_front");
         if (mountain) {
             score += profile.expansionStyle.mountainAffinity * 0.20;
         }
-        if ("shore".equals(cell.baseLandform()) || cell.landformTags().contains("coastal")) {
+        if ("shore".equals(cell.baseLandform()) || cell.landformTags().contains("seacoast")) {
             score += profile.expansionStyle.coastalBias * 0.16;
         }
-        if (cell.waterDistanceBlocks <= 512.0) {
+        if (cell.waterDistanceBlocks <= 512.0 || cell.landformTags().contains("riverbank")
+                || cell.landformTags().contains("lakeshore")) {
             score += profile.expansionStyle.waterAffinity * 0.08;
         }
         if (cell.landformTags().contains("steep") && profile.expansionStyle.mountainAffinity < 0.0) {
@@ -2364,6 +2535,7 @@ public final class RealmPlanningService {
         Map<String, Double> baseCosts = new LinkedHashMap<>();
         baseCosts.put("lowland", 1.0 + Math.max(0.0, -style.mountainAffinity) * 0.25);
         baseCosts.put("valley", 1.05 - style.waterAffinity * 0.15);
+        baseCosts.put("plateau", 1.25 - Math.max(0.0, style.mountainAffinity) * 0.25);
         baseCosts.put("upland", 1.45 - Math.max(0.0, style.mountainAffinity) * 0.45);
         baseCosts.put("ridge", 2.25 - Math.max(0.0, style.mountainAffinity) * 0.95);
         baseCosts.put("shore", 1.15 - style.coastalBias * 0.55);
@@ -2375,6 +2547,10 @@ public final class RealmPlanningService {
         tagCosts.put("steep", 2.2 - Math.max(0.0, style.mountainAffinity) * 1.0);
         tagCosts.put("cliff", 5.0 - Math.max(0.0, style.mountainAffinity) * 2.0);
         tagCosts.put("coastal", -style.coastalBias * 0.35);
+        tagCosts.put("seacoast", -style.coastalBias * 0.35);
+        tagCosts.put("riverbank", -style.waterAffinity * 0.25);
+        tagCosts.put("lakeshore", -style.waterAffinity * 0.18);
+        tagCosts.put("water_edge", -style.waterAffinity * 0.12);
         tagCosts.put("mountain_front", -Math.max(0.0, style.mountainAffinity) * 0.35);
         return new TerrainCostProfile(baseCosts, tagCosts);
     }
@@ -2466,8 +2642,11 @@ public final class RealmPlanningService {
             score += 10.0;
         }
         score += cell.waterDistanceBlocks / 128.0 * (1.0 - profile.expansionStyle.waterAffinity);
-        if ("shore".equals(cell.landWater)) {
+        if (cell.landformTags().contains("seacoast")) {
             score -= profile.expansionStyle.coastalBias * 5.0;
+        }
+        if (cell.landformTags().contains("riverbank") || cell.landformTags().contains("lakeshore")) {
+            score -= profile.expansionStyle.waterAffinity * 1.5;
         }
         score += Math.abs(cell.slopeAvg) * (profile.expansionStyle.mountainAffinity < 0 ? 3.0 : -1.0);
         score -= localAssignableLandCount(run, profile, cell, 5) * 0.9;
@@ -2543,11 +2722,12 @@ public final class RealmPlanningService {
                 cell -> cell.assignableLand() && cell.landformTags().contains("steep"));
         addAuditLayer(selected, run.worldCells, "coarse_cliff_micro_rejected", perLayer, sampleSeed,
                 cell -> cell.assignableLand() && cell.landformTags().contains("micro_contradiction"));
-        addAuditLayer(selected, run.worldCells, "coastal", perLayer, sampleSeed,
-                cell -> cell.assignableLand() && cell.landformTags().contains("coastal"));
+        addAuditLayer(selected, run.worldCells, "water_edge", perLayer, sampleSeed,
+                cell -> cell.assignableLand() && cell.landformTags().contains("water_edge"));
         addAuditLayer(selected, run.worldCells, "upland_macro", perLayer, sampleSeed,
                 cell -> cell.assignableLand() && ("upland".equals(cell.baseLandform())
-                        || "ridge".equals(cell.baseLandform()) || cell.landformTags().contains("mountain_front")));
+                        || "plateau".equals(cell.baseLandform()) || "ridge".equals(cell.baseLandform())
+                        || cell.landformTags().contains("mountain_front")));
         addAuditLayer(selected, run.worldCells, "land_baseline", requestedSampleCount, sampleSeed,
                 WorldCell::assignableLand);
 
@@ -2620,7 +2800,7 @@ public final class RealmPlanningService {
         long steepCount = slopes.stream().filter(value -> value >= STEEP_SLOPE_P90_THRESHOLD).count();
         double waterFrac = total == 0 ? 0.0 : water / (double) total;
         double steepFrac = total == 0 ? 0.0 : steepCount / (double) total;
-        List<String> referenceTags = referenceTags(slopeP90, slopeP95, steepFrac, waterFrac);
+        List<String> referenceTags = referenceTags(slopeP90, slopeP95, steepFrac, waterFrac, p95 - p05);
         String dominantBiome = biomeHist.entrySet().stream()
                 .max(Map.Entry.comparingByValue())
                 .map(Map.Entry::getKey)
@@ -2652,7 +2832,8 @@ public final class RealmPlanningService {
         return sampler.sampleElevation(audit, run.surveyResult.sampleMode());
     }
 
-    private List<String> referenceTags(double slopeP90, double slopeP95, double steepFrac, double waterFrac) {
+    private List<String> referenceTags(double slopeP90, double slopeP95, double steepFrac, double waterFrac,
+            double robustRelief) {
         Set<String> tags = new LinkedHashSet<>();
         if (slopeP90 >= STEEP_SLOPE_P90_THRESHOLD || steepFrac >= STEEP_FRACTION_THRESHOLD) {
             tags.add("steep");
@@ -2661,8 +2842,16 @@ public final class RealmPlanningService {
         if (slopeP95 >= CLIFF_SLOPE_P90_THRESHOLD && steepFrac >= cliffFractionThreshold) {
             tags.add("cliff");
         }
-        if (waterFrac > 0.05 && waterFrac < 0.95) {
-            tags.add("coastal");
+        if (coastalMix(waterFrac)) {
+            tags.add("water_edge");
+            if (waterFrac >= 0.45) {
+                tags.add("seacoast");
+                tags.add("coastal");
+            } else if (waterFrac < 0.25 && robustRelief <= FLAT_RELIEF_THRESHOLD) {
+                tags.add("riverbank");
+            } else {
+                tags.add("lakeshore");
+            }
         }
         return List.copyOf(tags);
     }
@@ -2688,8 +2877,9 @@ public final class RealmPlanningService {
         report.addProperty("centerSlopeRadiusBlocks", slopeRadiusBlocks);
         report.addProperty("sampleMode", run.surveyResult.sampleMode().contractName());
         report.add("sampleLayerCounts", tagAuditLayerCountsJson(samples));
-        report.add("tagMetrics", tagAuditMetricsJson(samples, List.of("cliff", "steep", "coastal")));
-        report.add("confusionMatrix", tagAuditConfusionJson(samples, List.of("cliff", "steep", "coastal")));
+        List<String> reportTags = List.of("cliff", "steep", "water_edge", "seacoast", "riverbank", "lakeshore", "coastal");
+        report.add("tagMetrics", tagAuditMetricsJson(samples, reportTags));
+        report.add("confusionMatrix", tagAuditConfusionJson(samples, reportTags));
         JsonArray falsePositives = new JsonArray();
         samples.stream()
                 .filter(sample -> sample.wTags.contains("cliff") && !sample.referenceTags.contains("cliff"))
@@ -3061,21 +3251,30 @@ public final class RealmPlanningService {
         return array;
     }
 
+    private static Color colorForCell(WorldCell cell) {
+        Color color = colorForLandform(cell.baseLandform(), cell.landWater);
+        if (cell.landformTags().contains("cliff")) {
+            return new Color(176, 72, 78);
+        }
+        return color;
+    }
+
     private static Color colorForLandform(String landform, String landWater) {
-        if ("water".equals(landWater)) {
+        if ("water".equals(landWater) || "water".equals(landform)) {
             return new Color(42, 96, 164);
         }
-        if ("shore".equals(landWater)) {
+        if ("shore".equals(landWater) || "shore".equals(landform)) {
             return new Color(214, 197, 128);
         }
         return switch (landform) {
-            case "plain" -> new Color(104, 168, 86);
-            case "terrace" -> new Color(142, 178, 96);
-            case "slope" -> new Color(148, 132, 86);
+            case "lowland", "plain" -> new Color(104, 168, 86);
+            case "plateau", "terrace" -> new Color(142, 178, 96);
+            case "upland", "slope" -> new Color(172, 156, 92);
             case "cliff" -> new Color(120, 112, 108);
-            case "ridge" -> new Color(155, 155, 150);
-            case "valley" -> new Color(82, 148, 92);
+            case "ridge" -> new Color(146, 154, 156);
+            case "valley" -> new Color(82, 148, 118);
             case "basin" -> new Color(98, 132, 106);
+            case "unknown" -> new Color(54, 58, 64);
             default -> new Color(68, 70, 74);
         };
     }
@@ -3116,6 +3315,70 @@ public final class RealmPlanningService {
     }
 
     private record GridDistance(int x, int z, int distance) {
+    }
+
+    private record WaterBounds(int minX, int maxX, int minZ, int maxZ) {
+    }
+
+    private static final class WaterComponent {
+        final String id;
+        final WaterBounds bounds;
+        final Set<String> cellKeys = new LinkedHashSet<>();
+        final Map<String, Integer> biomeHistogram = new LinkedHashMap<>();
+        int minX = Integer.MAX_VALUE;
+        int maxX = Integer.MIN_VALUE;
+        int minZ = Integer.MAX_VALUE;
+        int maxZ = Integer.MIN_VALUE;
+        boolean touchesScanEdge;
+
+        WaterComponent(String id, WaterBounds bounds) {
+            this.id = id;
+            this.bounds = bounds;
+        }
+
+        void add(WorldCell cell) {
+            cellKeys.add(key(cell.gridX, cell.gridZ));
+            minX = Math.min(minX, cell.gridX);
+            maxX = Math.max(maxX, cell.gridX);
+            minZ = Math.min(minZ, cell.gridZ);
+            maxZ = Math.max(maxZ, cell.gridZ);
+            touchesScanEdge = touchesScanEdge
+                    || cell.gridX == bounds.minX || cell.gridX == bounds.maxX
+                    || cell.gridZ == bounds.minZ || cell.gridZ == bounds.maxZ;
+            if (cell.feature != null) {
+                for (Map.Entry<String, Integer> entry : cell.feature.biomeHistogram().entrySet()) {
+                    biomeHistogram.merge(entry.getKey(), entry.getValue(), Integer::sum);
+                }
+            }
+        }
+
+        int size() {
+            return cellKeys.size();
+        }
+
+        int spanX() {
+            return maxX < minX ? 0 : maxX - minX + 1;
+        }
+
+        int spanZ() {
+            return maxZ < minZ ? 0 : maxZ - minZ + 1;
+        }
+
+        String edgeType() {
+            if (hasBiomeToken("ocean") || touchesScanEdge || size() >= SEACOAST_COMPONENT_MIN_CELLS) {
+                return "seacoast";
+            }
+            if (hasBiomeToken("river")
+                    || size() <= RIVERBANK_COMPONENT_MAX_CELLS
+                    || Math.min(spanX(), spanZ()) <= RIVERBANK_COMPONENT_MAX_SPAN_CELLS) {
+                return "riverbank";
+            }
+            return "lakeshore";
+        }
+
+        private boolean hasBiomeToken(String token) {
+            return biomeHistogram.keySet().stream().anyMatch(id -> id.toLowerCase(Locale.ROOT).contains(token));
+        }
     }
 
     private record ComponentMetrics(int componentCount, int largestComponentCells,
@@ -3194,6 +3457,10 @@ public final class RealmPlanningService {
         final List<String> flags;
         final WorldFeatureCell feature;
         final int cellStepBlocks;
+        double relativeHeightRank = 0.5;
+        String waterEdgeType = "";
+        String waterComponentId = "";
+        int waterComponentAreaCells = 0;
 
         WorldCell(int gridX, int gridZ, int blockX, int blockZ, String continentId, String patchId,
                 String landWater, String landform, double heightAvg, double slopeAvg, double waterDistanceBlocks,
@@ -3236,7 +3503,17 @@ public final class RealmPlanningService {
             json.add("landformTags", stringArray(landformTags()));
             json.addProperty("heightAvg", heightAvg);
             json.addProperty("slopeAvg", slopeAvg);
+            json.addProperty("relativeHeightRank", relativeHeightRank);
             json.addProperty("waterFrac", waterFrac());
+            if (!waterEdgeType.isBlank()) {
+                json.addProperty("waterEdgeType", waterEdgeType);
+                if (!waterComponentId.isBlank()) {
+                    json.addProperty("waterComponentId", waterComponentId);
+                }
+                if (waterComponentAreaCells > 0) {
+                    json.addProperty("waterComponentAreaCells", waterComponentAreaCells);
+                }
+            }
             json.addProperty("microSampleCount", microSampleCount());
             JsonObject heightStats = new JsonObject();
             heightStats.addProperty("p10", heightP10());
@@ -3269,6 +3546,9 @@ public final class RealmPlanningService {
             if ("unknown".equals(landWater) || "shore".equals(landWater)) {
                 return landWater;
             }
+            if (highStepLocalMetrics()) {
+                return highStepBaseLandform();
+            }
             if (robustRelief() >= 28.0 || slopeP90() >= 16.0) {
                 return "ridge";
             }
@@ -3282,6 +3562,36 @@ public final class RealmPlanningService {
                 case "slope", "cliff" -> "upland";
                 default -> landform;
             };
+        }
+
+        String highStepBaseLandform() {
+            boolean flat = flatLocalSurface();
+            boolean veryFlat = veryFlatLocalSurface();
+            boolean ridge = (slopeP90() >= 22.0 && steepFrac() >= STEEP_FRACTION_THRESHOLD
+                    && robustRelief() >= RIDGE_RELIEF_THRESHOLD)
+                    || (slopeP90() >= 20.0 && robustRelief() >= RIDGE_HIGH_RELIEF_THRESHOLD
+                    && relativeHeightRank >= PLATEAU_HEIGHT_RANK_THRESHOLD);
+            if (ridge) {
+                return "ridge";
+            }
+            if (("valley".equals(landform) || "basin".equals(landform))
+                    && relativeHeightRank <= 0.45 && slopeP90() < STEEP_SLOPE_P90_THRESHOLD) {
+                return "valley";
+            }
+            if (flat && relativeHeightRank >= PLATEAU_HEIGHT_RANK_THRESHOLD) {
+                return "plateau";
+            }
+            if ((flat && relativeHeightRank <= LOWLAND_HEIGHT_RANK_THRESHOLD)
+                    || (veryFlat && relativeHeightRank <= LOWLAND_MID_FLAT_HEIGHT_RANK_THRESHOLD)) {
+                return "lowland";
+            }
+            if (relativeHeightRank >= UPLAND_HEIGHT_RANK_THRESHOLD
+                    || slopeP90() >= UPLAND_SLOPE_P90_THRESHOLD
+                    || robustRelief() >= UPLAND_RELIEF_THRESHOLD
+                    || steepFrac() >= STEEP_FRACTION_THRESHOLD) {
+                return "upland";
+            }
+            return "lowland";
         }
 
         List<String> landformTags() {
@@ -3317,12 +3627,32 @@ public final class RealmPlanningService {
                     tags.add("cliff");
                 }
             }
-            if ("ridge".equals(landform) || "slope".equals(landform) || "cliff".equals(landform)
-                    || "ridge".equals(base) || "upland".equals(base)) {
+            if ((slopeP90() >= UPLAND_SLOPE_P90_THRESHOLD || steepFrac() >= STEEP_FRACTION_THRESHOLD
+                    || robustRelief() >= UPLAND_RELIEF_THRESHOLD)
+                    && ("ridge".equals(landform) || "slope".equals(landform) || "cliff".equals(landform)
+                    || "ridge".equals(base) || "upland".equals(base))) {
                 tags.add("mountain_front");
             }
-            if ("shore".equals(landWater) || (waterFrac() > 0.05 && waterFrac() < 0.95)) {
+            tags.addAll(waterEdgeTags());
+            return List.copyOf(tags);
+        }
+
+        List<String> waterEdgeTags() {
+            double water = waterFrac();
+            if ("water".equals(landWater) || "unknown".equals(landWater) || water >= WATER_COMPONENT_MIN_FRACTION
+                    || (!"shore".equals(landWater) && !coastalMix(water))) {
+                return List.of();
+            }
+            Set<String> tags = new LinkedHashSet<>();
+            tags.add("water_edge");
+            String edgeType = waterEdgeType.isBlank() ? localWaterEdgeType(this) : waterEdgeType;
+            if ("seacoast".equals(edgeType)) {
+                tags.add("seacoast");
                 tags.add("coastal");
+            } else if ("riverbank".equals(edgeType)) {
+                tags.add("riverbank");
+            } else {
+                tags.add("lakeshore");
             }
             return List.copyOf(tags);
         }
@@ -3338,6 +3668,18 @@ public final class RealmPlanningService {
         boolean localCliff() {
             double threshold = coastalMix(waterFrac()) ? COASTAL_CLIFF_FRACTION_THRESHOLD : CLIFF_FRACTION_THRESHOLD;
             return steepFrac() >= threshold && slopeP90() >= CLIFF_SLOPE_P90_THRESHOLD;
+        }
+
+        boolean flatLocalSurface() {
+            return slopeP90() <= FLAT_SLOPE_P90_THRESHOLD
+                    && steepFrac() <= FLAT_STEEP_FRACTION_THRESHOLD
+                    && robustRelief() <= FLAT_RELIEF_THRESHOLD;
+        }
+
+        boolean veryFlatLocalSurface() {
+            return slopeP90() <= VERY_FLAT_SLOPE_P90_THRESHOLD
+                    && steepFrac() <= VERY_FLAT_STEEP_FRACTION_THRESHOLD
+                    && robustRelief() <= VERY_FLAT_RELIEF_THRESHOLD;
         }
 
         double barrierCost() {
