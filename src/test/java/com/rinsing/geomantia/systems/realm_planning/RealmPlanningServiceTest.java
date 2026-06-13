@@ -167,6 +167,36 @@ class RealmPlanningServiceTest {
                 .resolve("world_feature_grid.json")));
         assertTrue(survey.get("sealed").getAsBoolean());
         assertEquals(16, survey.getAsJsonObject("surveyStats").get("tileCount").getAsInt());
+
+        JsonObject patchMap = readJson(tempDir.resolve("realm_debug")
+                .resolve("realm_world_survey_test")
+                .resolve("world_patch_map.json"));
+        JsonArray cells = patchMap.getAsJsonArray("cells");
+        for (int i = 0; i < cells.size(); i++) {
+            JsonObject cell = cells.get(i).getAsJsonObject();
+            if ("cliff".equals(cell.get("landform").getAsString())) {
+                JsonObject slopeStats = cell.getAsJsonObject("slopeStats");
+                boolean microConfirmsCliff = slopeStats.get("p90").getAsDouble() >= 18.0
+                        && slopeStats.get("steepFrac").getAsDouble() >= 0.30;
+                JsonArray tags = cell.getAsJsonArray("landformTags");
+                assertEquals(microConfirmsCliff, contains(tags, "cliff"), cell.toString());
+            }
+        }
+
+        RealmPlanningService auditService = new RealmPlanningService(tempDir.resolve("realm_debug"));
+        JsonObject audit = auditService.runTagAudit("realm_world_survey_test",
+                new SyntheticAtlasSampler(testCase.profile()), 24, 32, 8, 4);
+        assertTrue(audit.getAsJsonObject("tagAuditReport").get("sampleCount").getAsInt() > 0);
+        assertTrue(Files.exists(tempDir.resolve("realm_debug")
+                .resolve("realm_world_survey_test")
+                .resolve("tag_audit_samples.json")));
+        JsonObject auditReport = readJson(tempDir.resolve("realm_debug")
+                .resolve("realm_world_survey_test")
+                .resolve("tag_audit_report.json"));
+        assertTrue(auditReport.getAsJsonObject("tagMetrics").has("cliff"));
+        assertTrue(auditReport.getAsJsonObject("tagMetrics")
+                .getAsJsonObject("cliff")
+                .has("precision"));
     }
 
     @Test
@@ -209,5 +239,14 @@ class RealmPlanningServiceTest {
 
     private static JsonArray readJsonArray(Path path) throws Exception {
         return JsonParser.parseString(Files.readString(path)).getAsJsonArray();
+    }
+
+    private static boolean contains(JsonArray array, String value) {
+        for (int i = 0; i < array.size(); i++) {
+            if (value.equals(array.get(i).getAsString())) {
+                return true;
+            }
+        }
+        return false;
     }
 }

@@ -7,6 +7,7 @@ import com.rinsing.geomantia.systems.gis.GisClassifierConfig;
 import com.rinsing.geomantia.systems.gis.GisSampleConfig;
 import com.rinsing.geomantia.systems.gis.adapter.minecraft.MinecraftPriorAtlasSampler;
 import com.rinsing.geomantia.systems.gis.application.refresh.SampleMode;
+import com.rinsing.geomantia.systems.gis.application.sample.AtlasSampler;
 import com.rinsing.geomantia.systems.realm_planning.RealmPlanningService;
 import com.rinsing.geomantia.systems.realm_planning.WorldSurveyResult;
 import com.rinsing.geomantia.systems.realm_planning.WorldSurveyRunner;
@@ -37,8 +38,19 @@ final class RealmPlanningHttpController {
         handle(exchange, "POST", () -> {
             JsonObject request = GisHttpUtil.readJsonObject(exchange);
             return callOnServerThread(() -> {
-                WorldSurveyResult result = runWorldSurvey(request);
-                return service().runW(result, request.get("worldTheme"));
+                WorldSurveyExecution execution = runWorldSurvey(request);
+                RealmPlanningService service = service();
+                JsonObject response = service.runW(execution.result(), request.get("worldTheme"));
+                if (booleanValue(request, "runTagAudit", false)) {
+                    JsonObject audit = service.runTagAudit(execution.result().runId(), execution.sampler(),
+                            intValue(request, "tagAuditSampleCount", 120),
+                            intValue(request, "tagAuditRadiusBlocks", 32),
+                            intValue(request, "tagAuditStrideBlocks", 4),
+                            intValue(request, "tagAuditSlopeRadiusBlocks", 4));
+                    response.add("tagAuditReport", audit.getAsJsonObject("tagAuditReport"));
+                    response.add("artifacts", audit.getAsJsonObject("artifacts"));
+                }
+                return response;
             });
         });
     }
@@ -93,12 +105,23 @@ final class RealmPlanningHttpController {
         handle(exchange, "POST", () -> {
             JsonObject request = GisHttpUtil.readJsonObject(exchange);
             return callOnServerThread(() -> {
-                WorldSurveyResult result = runWorldSurvey(request);
-                return service().runAcceptance(result,
+                WorldSurveyExecution execution = runWorldSurvey(request);
+                RealmPlanningService service = service();
+                JsonObject response = service.runAcceptance(execution.result(),
                         intValue(request, "realmCount", 3), arrayValue(request, "realmProfiles"),
                         booleanValue(request, "autoSelectCoordinates", true),
                         stringValue(request, "qualityMode", "strict"),
                         stringValue(request, "expansionModel", ""));
+                if (booleanValue(request, "runTagAudit", false)) {
+                    JsonObject audit = service.runTagAudit(execution.result().runId(), execution.sampler(),
+                            intValue(request, "tagAuditSampleCount", 120),
+                            intValue(request, "tagAuditRadiusBlocks", 32),
+                            intValue(request, "tagAuditStrideBlocks", 4),
+                            intValue(request, "tagAuditSlopeRadiusBlocks", 4));
+                    response.add("tagAuditReport", audit.getAsJsonObject("tagAuditReport"));
+                    response.add("artifacts", audit.getAsJsonObject("artifacts"));
+                }
+                return response;
             });
         });
     }
@@ -116,7 +139,7 @@ final class RealmPlanningHttpController {
         }
     }
 
-    private WorldSurveyResult runWorldSurvey(JsonObject request) throws Exception {
+    private WorldSurveyExecution runWorldSurvey(JsonObject request) throws Exception {
         int planningRadiusBlocks = intValue(request, "planningRadiusBlocks", 0);
         if (planningRadiusBlocks <= 0) {
             int radiusChunks = intValue(request, "radiusChunks", 512);
@@ -152,8 +175,9 @@ final class RealmPlanningHttpController {
                 sampleMode,
                 WorldSurveyRunner.ResumePolicy.fromContractName(stringValue(request, "resumePolicy", "use_cache"))
         );
-        return new WorldSurveyRunner(debugRoot(), GisClassifierConfig.defaults()).run(config,
-                new MinecraftPriorAtlasSampler(level));
+        AtlasSampler sampler = new MinecraftPriorAtlasSampler(level);
+        WorldSurveyResult result = new WorldSurveyRunner(debugRoot(), GisClassifierConfig.defaults()).run(config, sampler);
+        return new WorldSurveyExecution(result, sampler);
     }
 
     private RealmPlanningService service() {
@@ -304,5 +328,8 @@ final class RealmPlanningHttpController {
     @FunctionalInterface
     private interface JsonAction {
         JsonObject execute() throws Exception;
+    }
+
+    private record WorldSurveyExecution(WorldSurveyResult result, AtlasSampler sampler) {
     }
 }

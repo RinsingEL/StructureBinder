@@ -3,6 +3,8 @@ package com.rinsing.geomantia.systems.realm_planning;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.rinsing.geomantia.systems.gis.application.sample.AtlasSampler;
+import com.rinsing.geomantia.systems.gis.application.sample.SampledCell;
 import com.rinsing.geomantia.systems.gis.application.refresh.RefreshResult;
 import com.rinsing.geomantia.systems.gis.domain.cell.AtlasCell;
 import com.rinsing.geomantia.systems.gis.domain.cell.CellStateFlag;
@@ -47,6 +49,11 @@ public final class RealmPlanningService {
     private static final double STRICT_LARGEST_COMPONENT_RATIO = 0.90;
     private static final double STRICT_DETACHED_AREA_RATIO = 0.05;
     private static final double CONTESTED_COST_EPSILON = 2.5;
+    private static final int HIGH_STEP_LOCAL_METRICS_MIN_STEP_BLOCKS = 64;
+    private static final double STEEP_SLOPE_P90_THRESHOLD = 14.0;
+    private static final double STEEP_FRACTION_THRESHOLD = 0.25;
+    private static final double CLIFF_SLOPE_P90_THRESHOLD = 18.0;
+    private static final double CLIFF_FRACTION_THRESHOLD = 0.30;
     private static final Map<String, RealmRun> RUNS = new LinkedHashMap<>();
 
     private final Path debugRoot;
@@ -284,6 +291,33 @@ public final class RealmPlanningService {
         return response;
     }
 
+    public JsonObject runTagAudit(String runId, AtlasSampler sampler, int requestedSampleCount,
+            int requestedRadiusBlocks, int requestedStrideBlocks, int requestedSlopeRadiusBlocks) throws IOException {
+        RealmRun run = requireRun(runId);
+        Objects.requireNonNull(sampler, "sampler");
+        int sampleCount = requestedSampleCount > 0 ? requestedSampleCount : 120;
+        int radiusBlocks = requestedRadiusBlocks > 0 ? requestedRadiusBlocks : 32;
+        int strideBlocks = requestedStrideBlocks > 0 ? requestedStrideBlocks : 4;
+        int slopeRadiusBlocks = requestedSlopeRadiusBlocks > 0 ? requestedSlopeRadiusBlocks : 4;
+        List<TagAuditSample> samples = buildTagAuditSamples(run, sampler, sampleCount, radiusBlocks,
+                strideBlocks, slopeRadiusBlocks);
+        JsonArray sampleJson = new JsonArray();
+        for (TagAuditSample sample : samples) {
+            sampleJson.add(sample.asJson());
+        }
+        JsonObject report = tagAuditReport(run, samples, sampleCount, radiusBlocks, strideBlocks, slopeRadiusBlocks);
+        writeJson(run.runDirectory.resolve("tag_audit_samples.json"), sampleJson);
+        writeJson(run.runDirectory.resolve("tag_audit_report.json"), report);
+        run.artifacts.put("tagAuditSamples", "tag_audit_samples.json");
+        run.artifacts.put("tagAuditReport", "tag_audit_report.json");
+
+        JsonObject response = baseResponse("tag_audit", run.runId);
+        response.addProperty("status", "completed");
+        response.add("artifacts", run.artifactsJson());
+        response.add("tagAuditReport", report);
+        return response;
+    }
+
     public GridPoint suggestedPoint(String runId, String realmId) {
         RealmRun run = requireRun(runId);
         CandidatePackage pack = run.candidatePackages.get(realmId);
@@ -307,7 +341,8 @@ public final class RealmPlanningService {
                 WorldFeatureCell feature = run.surveyResult.featureCells().get(key(cell.globalCellX(), cell.globalCellZ()));
                 WorldCell worldCell = new WorldCell(cell.globalCellX(), cell.globalCellZ(), cell.blockMinX(),
                         cell.blockMinZ(), "", cell.patchId(), landWater, cell.landformType().contractName(),
-                        cell.elevation(), cell.slope(), finiteWaterDistance(cell.waterDistance()), flagsFor(cell), feature);
+                        cell.elevation(), cell.slope(), finiteWaterDistance(cell.waterDistance()), flagsFor(cell), feature,
+                        run.surveyResult.cellStepBlocks());
                 cells.put(key(worldCell.gridX, worldCell.gridZ), worldCell);
             }
         }
@@ -1617,10 +1652,15 @@ public final class RealmPlanningService {
 
     private JsonObject wQualityScore(RealmRun run, JsonArray warnings) {
         long assignable = run.worldCells.stream().filter(WorldCell::assignableLand).count();
-        long cliff = run.worldCells.stream().filter(cell -> cell.assignableLand() && "cliff".equals(cell.baseLandform())).count();
+        long cliff = run.worldCells.stream().filter(cell -> cell.assignableLand() && cell.landformTags().contains("cliff")).count();
         long steep = run.worldCells.stream().filter(cell -> cell.assignableLand() && cell.landformTags().contains("steep")).count();
+        long coarseCliff = run.worldCells.stream().filter(cell -> cell.assignableLand() && "cliff".equals(cell.landform)).count();
+        long microContradiction = run.worldCells.stream()
+                .filter(cell -> cell.assignableLand() && cell.landformTags().contains("micro_contradiction")).count();
         double cliffRatio = assignable == 0 ? 0.0 : cliff / (double) assignable;
         double steepTagRatio = assignable == 0 ? 0.0 : steep / (double) assignable;
+        double coarseCliffCandidateRatio = assignable == 0 ? 0.0 : coarseCliff / (double) assignable;
+        double microContradictionRatio = assignable == 0 ? 0.0 : microContradiction / (double) assignable;
         long singletonPatches = run.patchSummaries.values().stream().filter(patch -> patch.areaCells <= 1).count();
         double singletonPatchRatio = run.patchSummaries.isEmpty() ? 0.0 : singletonPatches / (double) run.patchSummaries.size();
         double score = 100.0;
@@ -1638,7 +1678,17 @@ public final class RealmPlanningService {
         json.addProperty("microSamplingImplemented", run.surveyResult.microSamplingImplemented());
         json.addProperty("microSampleCount", run.surveyResult.microSampleCount());
         json.addProperty("cliffRatio", cliffRatio);
+        json.addProperty("cliffTagRatio", cliffRatio);
         json.addProperty("steepTagRatio", steepTagRatio);
+        json.addProperty("coarseCliffCandidateRatio", coarseCliffCandidateRatio);
+        json.addProperty("microContradictionRatio", microContradictionRatio);
+        json.add("baseLandformDistribution", distribution(run.worldCells.stream()
+                .filter(WorldCell::assignableLand)
+                .map(WorldCell::baseLandform)
+                .toList()));
+        json.add("landformTagDistribution", tagDistribution(run.worldCells.stream()
+                .filter(WorldCell::assignableLand)
+                .toList()));
         json.addProperty("singletonPatchRatio", singletonPatchRatio);
         return json;
     }
@@ -2403,6 +2453,224 @@ public final class RealmPlanningService {
         return false;
     }
 
+    private List<TagAuditSample> buildTagAuditSamples(RealmRun run, AtlasSampler sampler, int requestedSampleCount,
+            int radiusBlocks, int strideBlocks, int slopeRadiusBlocks) {
+        Map<String, WorldCell> selected = new LinkedHashMap<>();
+        int perLayer = Math.max(4, requestedSampleCount / 6);
+        addAuditLayer(selected, run.worldCells, "confirmed_cliff", perLayer,
+                cell -> cell.assignableLand() && cell.landformTags().contains("cliff"));
+        addAuditLayer(selected, run.worldCells, "confirmed_steep", perLayer,
+                cell -> cell.assignableLand() && cell.landformTags().contains("steep"));
+        addAuditLayer(selected, run.worldCells, "coarse_cliff_micro_rejected", perLayer,
+                cell -> cell.assignableLand() && cell.landformTags().contains("micro_contradiction"));
+        addAuditLayer(selected, run.worldCells, "coastal", perLayer,
+                cell -> cell.assignableLand() && cell.landformTags().contains("coastal"));
+        addAuditLayer(selected, run.worldCells, "upland_macro", perLayer,
+                cell -> cell.assignableLand() && ("upland".equals(cell.baseLandform())
+                        || "ridge".equals(cell.baseLandform()) || cell.landformTags().contains("mountain_front")));
+        addAuditLayer(selected, run.worldCells, "land_baseline", requestedSampleCount,
+                WorldCell::assignableLand);
+
+        List<TagAuditSample> samples = new ArrayList<>();
+        for (WorldCell cell : selected.values()) {
+            TagAuditMetrics metrics = auditLocalMetrics(run, sampler, cell, radiusBlocks, strideBlocks, slopeRadiusBlocks);
+            samples.add(TagAuditSample.from(cell, metrics));
+            if (samples.size() >= requestedSampleCount) {
+                break;
+            }
+        }
+        return samples;
+    }
+
+    private void addAuditLayer(Map<String, WorldCell> selected, List<WorldCell> cells, String layer,
+            int limit, CellPredicate predicate) {
+        int added = 0;
+        List<WorldCell> ordered = cells.stream()
+                .filter(predicate::test)
+                .sorted(Comparator.comparingInt((WorldCell cell) -> auditOrder(layer, cell))
+                        .thenComparingInt(cell -> cell.gridZ)
+                        .thenComparingInt(cell -> cell.gridX))
+                .toList();
+        for (WorldCell cell : ordered) {
+            if (selected.putIfAbsent(key(cell.gridX, cell.gridZ), cell) == null && ++added >= limit) {
+                return;
+            }
+        }
+    }
+
+    private int auditOrder(String layer, WorldCell cell) {
+        return Math.floorMod(Objects.hash(layer, cell.gridX, cell.gridZ, cell.blockX, cell.blockZ), 1_000_000);
+    }
+
+    private TagAuditMetrics auditLocalMetrics(RealmRun run, AtlasSampler sampler, WorldCell cell,
+            int radiusBlocks, int strideBlocks, int slopeRadiusBlocks) {
+        List<Double> heights = new ArrayList<>();
+        List<Double> slopes = new ArrayList<>();
+        Map<String, Integer> biomeHist = new LinkedHashMap<>();
+        int water = 0;
+        int total = 0;
+        int startX = cell.blockX + run.surveyResult.cellStepBlocks() / 2 - radiusBlocks;
+        int startZ = cell.blockZ + run.surveyResult.cellStepBlocks() / 2 - radiusBlocks;
+        int endX = cell.blockX + run.surveyResult.cellStepBlocks() / 2 + radiusBlocks;
+        int endZ = cell.blockZ + run.surveyResult.cellStepBlocks() / 2 + radiusBlocks;
+        for (int z = startZ; z <= endZ; z += Math.max(1, strideBlocks)) {
+            for (int x = startX; x <= endX; x += Math.max(1, strideBlocks)) {
+                SampledCell sample = sampleAtBlock(run, sampler, x, z);
+                double slope = localAuditSlope(run, sampler, x, z, sample.elevation(), slopeRadiusBlocks);
+                heights.add(sample.elevation());
+                slopes.add(slope);
+                if (sample.water()) {
+                    water++;
+                }
+                biomeHist.put(sample.biomeId(), biomeHist.getOrDefault(sample.biomeId(), 0) + 1);
+                total++;
+            }
+        }
+        heights.sort(Double::compareTo);
+        slopes.sort(Double::compareTo);
+        double p05 = percentile(heights, 0.05);
+        double p50 = percentile(heights, 0.50);
+        double p95 = percentile(heights, 0.95);
+        double slopeP90 = percentile(slopes, 0.90);
+        double slopeP95 = percentile(slopes, 0.95);
+        double slopeMax = slopes.isEmpty() ? 0.0 : slopes.get(slopes.size() - 1);
+        long steepCount = slopes.stream().filter(value -> value >= STEEP_SLOPE_P90_THRESHOLD).count();
+        double waterFrac = total == 0 ? 0.0 : water / (double) total;
+        double steepFrac = total == 0 ? 0.0 : steepCount / (double) total;
+        List<String> referenceTags = referenceTags(slopeP90, slopeP95, steepFrac, waterFrac);
+        String dominantBiome = biomeHist.entrySet().stream()
+                .max(Map.Entry.comparingByValue())
+                .map(Map.Entry::getKey)
+                .orElse("unknown");
+        return new TagAuditMetrics(total, p05, p50, p95, p95 - p05, slopeP90, slopeP95, slopeMax,
+                steepFrac, waterFrac, shoreMixScore(waterFrac), dominantBiome, biomeHist, referenceTags);
+    }
+
+    private SampledCell sampleAtBlock(RealmRun run, AtlasSampler sampler, int blockX, int blockZ) {
+        AtlasCell audit = new AtlasCell("tag_audit", Math.floorDiv(blockX, Math.max(1, run.surveyResult.cellStepBlocks())),
+                Math.floorDiv(blockZ, Math.max(1, run.surveyResult.cellStepBlocks())), 0, 0, blockX, blockZ);
+        return sampler.sampleFeature(audit, run.surveyResult.sampleMode());
+    }
+
+    private double localAuditSlope(RealmRun run, AtlasSampler sampler, int blockX, int blockZ,
+            double centerElevation, int radiusBlocks) {
+        int radius = Math.max(1, radiusBlocks);
+        double east = sampleElevationAtBlock(run, sampler, blockX + radius, blockZ);
+        double west = sampleElevationAtBlock(run, sampler, blockX - radius, blockZ);
+        double south = sampleElevationAtBlock(run, sampler, blockX, blockZ + radius);
+        double north = sampleElevationAtBlock(run, sampler, blockX, blockZ - radius);
+        return Math.max(Math.max(Math.abs(east - centerElevation), Math.abs(west - centerElevation)),
+                Math.max(Math.abs(south - centerElevation), Math.abs(north - centerElevation)));
+    }
+
+    private double sampleElevationAtBlock(RealmRun run, AtlasSampler sampler, int blockX, int blockZ) {
+        AtlasCell audit = new AtlasCell("tag_audit", Math.floorDiv(blockX, Math.max(1, run.surveyResult.cellStepBlocks())),
+                Math.floorDiv(blockZ, Math.max(1, run.surveyResult.cellStepBlocks())), 0, 0, blockX, blockZ);
+        return sampler.sampleElevation(audit, run.surveyResult.sampleMode());
+    }
+
+    private List<String> referenceTags(double slopeP90, double slopeP95, double steepFrac, double waterFrac) {
+        Set<String> tags = new LinkedHashSet<>();
+        if (slopeP90 >= STEEP_SLOPE_P90_THRESHOLD || steepFrac >= STEEP_FRACTION_THRESHOLD) {
+            tags.add("steep");
+        }
+        if (slopeP95 >= CLIFF_SLOPE_P90_THRESHOLD && steepFrac >= CLIFF_FRACTION_THRESHOLD) {
+            tags.add("cliff");
+        }
+        if (waterFrac > 0.05 && waterFrac < 0.95) {
+            tags.add("coastal");
+        }
+        return List.copyOf(tags);
+    }
+
+    private double shoreMixScore(double waterFrac) {
+        return waterFrac <= 0.0 || waterFrac >= 1.0 ? 0.0 : 1.0 - Math.abs(0.5 - waterFrac) * 2.0;
+    }
+
+    private JsonObject tagAuditReport(RealmRun run, List<TagAuditSample> samples, int requestedSampleCount,
+            int radiusBlocks, int strideBlocks, int slopeRadiusBlocks) {
+        JsonObject report = new JsonObject();
+        report.addProperty("schemaVersion", SCHEMA_VERSION);
+        report.addProperty("runId", run.runId);
+        report.addProperty("requestedSampleCount", requestedSampleCount);
+        report.addProperty("sampleCount", samples.size());
+        report.addProperty("auditRadiusBlocks", radiusBlocks);
+        report.addProperty("auditStrideBlocks", strideBlocks);
+        report.addProperty("centerSlopeRadiusBlocks", slopeRadiusBlocks);
+        report.addProperty("sampleMode", run.surveyResult.sampleMode().contractName());
+        report.add("tagMetrics", tagAuditMetricsJson(samples, List.of("cliff", "steep", "coastal")));
+        report.add("confusionMatrix", tagAuditConfusionJson(samples, List.of("cliff", "steep", "coastal")));
+        JsonArray falsePositives = new JsonArray();
+        samples.stream()
+                .filter(sample -> sample.wTags.contains("cliff") && !sample.referenceTags.contains("cliff"))
+                .limit(10)
+                .forEach(sample -> falsePositives.add(sample.summaryJson()));
+        report.add("cliffFalsePositiveExamples", falsePositives);
+        JsonArray falseNegatives = new JsonArray();
+        samples.stream()
+                .filter(sample -> !sample.wTags.contains("cliff") && sample.referenceTags.contains("cliff"))
+                .limit(10)
+                .forEach(sample -> falseNegatives.add(sample.summaryJson()));
+        report.add("cliffFalseNegativeExamples", falseNegatives);
+        long contradicted = samples.stream().filter(sample -> sample.wTags.contains("micro_contradiction")).count();
+        long contradictedAccepted = samples.stream()
+                .filter(sample -> sample.wTags.contains("micro_contradiction") && sample.referenceTags.contains("cliff"))
+                .count();
+        report.addProperty("microContradictionAcceptedRate", contradicted == 0 ? 0.0 : contradictedAccepted / (double) contradicted);
+        report.addProperty("createdAt", Instant.now().toString());
+        return report;
+    }
+
+    private JsonObject tagAuditMetricsJson(List<TagAuditSample> samples, List<String> tags) {
+        JsonObject json = new JsonObject();
+        for (String tag : tags) {
+            int tp = 0;
+            int fp = 0;
+            int fn = 0;
+            int tn = 0;
+            for (TagAuditSample sample : samples) {
+                boolean w = sample.wTags.contains(tag);
+                boolean reference = sample.referenceTags.contains(tag);
+                if (w && reference) {
+                    tp++;
+                } else if (w) {
+                    fp++;
+                } else if (reference) {
+                    fn++;
+                } else {
+                    tn++;
+                }
+            }
+            JsonObject item = new JsonObject();
+            item.addProperty("truePositive", tp);
+            item.addProperty("falsePositive", fp);
+            item.addProperty("falseNegative", fn);
+            item.addProperty("trueNegative", tn);
+            item.addProperty("precision", tp + fp == 0 ? 1.0 : tp / (double) (tp + fp));
+            item.addProperty("recall", tp + fn == 0 ? 1.0 : tp / (double) (tp + fn));
+            json.add(tag, item);
+        }
+        return json;
+    }
+
+    private JsonObject tagAuditConfusionJson(List<TagAuditSample> samples, List<String> tags) {
+        JsonObject matrix = new JsonObject();
+        for (String wTag : tags) {
+            JsonObject row = new JsonObject();
+            for (String referenceTag : tags) {
+                int count = 0;
+                for (TagAuditSample sample : samples) {
+                    if (sample.wTags.contains(wTag) && sample.referenceTags.contains(referenceTag)) {
+                        count++;
+                    }
+                }
+                row.addProperty(referenceTag, count);
+            }
+            matrix.add(wTag, row);
+        }
+        return matrix;
+    }
+
     private String resolveTargetContinent(RealmRun run, String targetContinentId) {
         if (targetContinentId != null && !targetContinentId.isBlank()) {
             String id = targetContinentId.trim();
@@ -2592,6 +2860,40 @@ public final class RealmPlanningService {
         return Math.round(value * 10000.0) / 10000.0;
     }
 
+    private static double percentile(List<Double> sorted, double fraction) {
+        if (sorted.isEmpty()) {
+            return 0.0;
+        }
+        int index = (int) Math.round((sorted.size() - 1) * fraction);
+        return sorted.get(Math.max(0, Math.min(sorted.size() - 1, index)));
+    }
+
+    private static JsonObject distribution(List<String> values) {
+        JsonObject json = new JsonObject();
+        Map<String, Integer> counts = new LinkedHashMap<>();
+        for (String value : values) {
+            counts.put(value, counts.getOrDefault(value, 0) + 1);
+        }
+        for (Map.Entry<String, Integer> entry : counts.entrySet()) {
+            json.addProperty(entry.getKey(), entry.getValue());
+        }
+        return json;
+    }
+
+    private static JsonObject tagDistribution(List<WorldCell> cells) {
+        JsonObject json = new JsonObject();
+        Map<String, Integer> counts = new LinkedHashMap<>();
+        for (WorldCell cell : cells) {
+            for (String tag : cell.landformTags()) {
+                counts.put(tag, counts.getOrDefault(tag, 0) + 1);
+            }
+        }
+        for (Map.Entry<String, Integer> entry : counts.entrySet()) {
+            json.addProperty(entry.getKey(), entry.getValue());
+        }
+        return json;
+    }
+
     private static int intValue(JsonObject object, String key, int defaultValue) {
         if (!object.has(key) || object.get(key).isJsonNull()) {
             return defaultValue;
@@ -2772,10 +3074,11 @@ public final class RealmPlanningService {
         final double waterDistanceBlocks;
         final List<String> flags;
         final WorldFeatureCell feature;
+        final int cellStepBlocks;
 
         WorldCell(int gridX, int gridZ, int blockX, int blockZ, String continentId, String patchId,
                 String landWater, String landform, double heightAvg, double slopeAvg, double waterDistanceBlocks,
-                List<String> flags, WorldFeatureCell feature) {
+                List<String> flags, WorldFeatureCell feature, int cellStepBlocks) {
             this.gridX = gridX;
             this.gridZ = gridZ;
             this.blockX = blockX;
@@ -2789,6 +3092,7 @@ public final class RealmPlanningService {
             this.waterDistanceBlocks = waterDistanceBlocks;
             this.flags = List.copyOf(flags);
             this.feature = feature;
+            this.cellStepBlocks = cellStepBlocks;
         }
 
         boolean assignableLand() {
@@ -2863,23 +3167,56 @@ public final class RealmPlanningService {
 
         List<String> landformTags() {
             Set<String> tags = new LinkedHashSet<>();
-            if (!landform.equals(baseLandform())) {
-                tags.add(landform);
-            }
-            if ("cliff".equals(landform) || steepFrac() >= 0.25 || slopeP90() >= 14.0) {
-                tags.add("steep");
-            }
-            if ("cliff".equals(landform) && (steepFrac() >= 0.35 || slopeP90() >= 18.0)) {
-                tags.add("cliff");
+            String base = baseLandform();
+            if (highStepLocalMetrics()) {
+                if (!landform.equals(base)) {
+                    if ("cliff".equals(landform)) {
+                        tags.add("cliff_candidate");
+                    } else if ("slope".equals(landform)) {
+                        tags.add("slope_context");
+                    } else {
+                        tags.add(landform);
+                    }
+                }
+                if (localSteep()) {
+                    tags.add("steep");
+                }
+                if (localCliff()) {
+                    tags.add("cliff");
+                } else if ("cliff".equals(landform) && !localSteep()) {
+                    tags.add("micro_contradiction");
+                }
+            } else {
+                if (!landform.equals(base)) {
+                    tags.add(landform);
+                }
+                if ("cliff".equals(landform) || localSteep()) {
+                    tags.add("steep");
+                }
+                if ("cliff".equals(landform) && (steepFrac() >= 0.35 || slopeP90() >= CLIFF_SLOPE_P90_THRESHOLD)) {
+                    tags.add("cliff");
+                }
             }
             if ("ridge".equals(landform) || "slope".equals(landform) || "cliff".equals(landform)
-                    || "ridge".equals(baseLandform()) || "upland".equals(baseLandform())) {
+                    || "ridge".equals(base) || "upland".equals(base)) {
                 tags.add("mountain_front");
             }
-            if ("shore".equals(landWater)) {
+            if ("shore".equals(landWater) || (waterFrac() > 0.05 && waterFrac() < 0.95)) {
                 tags.add("coastal");
             }
             return List.copyOf(tags);
+        }
+
+        boolean highStepLocalMetrics() {
+            return cellStepBlocks >= HIGH_STEP_LOCAL_METRICS_MIN_STEP_BLOCKS && feature != null && microSampleCount() > 0;
+        }
+
+        boolean localSteep() {
+            return steepFrac() >= STEEP_FRACTION_THRESHOLD || slopeP90() >= STEEP_SLOPE_P90_THRESHOLD;
+        }
+
+        boolean localCliff() {
+            return steepFrac() >= CLIFF_FRACTION_THRESHOLD && slopeP90() >= CLIFF_SLOPE_P90_THRESHOLD;
         }
 
         double barrierCost() {
@@ -3389,6 +3726,103 @@ public final class RealmPlanningService {
             }
             json.add("baseCosts", base);
             json.add("tagCosts", tags);
+            return json;
+        }
+    }
+
+    private record TagAuditMetrics(
+            int sampleCount,
+            double heightP05,
+            double heightP50,
+            double heightP95,
+            double reliefP95P05,
+            double slopeP90,
+            double slopeP95,
+            double slopeMax,
+            double steepFrac,
+            double waterFrac,
+            double shoreMixScore,
+            String dominantBiome,
+            Map<String, Integer> biomeHist,
+            List<String> referenceTags
+    ) {
+        TagAuditMetrics {
+            biomeHist = Map.copyOf(biomeHist);
+            referenceTags = List.copyOf(referenceTags);
+        }
+
+        JsonObject asJson() {
+            JsonObject json = new JsonObject();
+            json.addProperty("sampleCount", sampleCount);
+            json.addProperty("heightP05", heightP05);
+            json.addProperty("heightP50", heightP50);
+            json.addProperty("heightP95", heightP95);
+            json.addProperty("reliefP95P05", reliefP95P05);
+            json.addProperty("slopeP90", slopeP90);
+            json.addProperty("slopeP95", slopeP95);
+            json.addProperty("slopeMax", slopeMax);
+            json.addProperty("steepFrac", steepFrac);
+            json.addProperty("waterFrac", waterFrac);
+            json.addProperty("shoreMixScore", shoreMixScore);
+            json.addProperty("dominantBiome", dominantBiome);
+            JsonObject biomes = new JsonObject();
+            for (Map.Entry<String, Integer> entry : biomeHist.entrySet()) {
+                biomes.addProperty(entry.getKey(), entry.getValue());
+            }
+            json.add("biomeHist", biomes);
+            json.add("referenceTags", stringArray(referenceTags));
+            return json;
+        }
+    }
+
+    private record TagAuditSample(
+            int gridX,
+            int gridZ,
+            int blockX,
+            int blockZ,
+            String baseLandform,
+            String coarseLandform,
+            List<String> wTags,
+            TagAuditMetrics metrics,
+            List<String> referenceTags,
+            boolean cliffMatch,
+            boolean steepMatch,
+            boolean coastalMatch
+    ) {
+        TagAuditSample {
+            wTags = List.copyOf(wTags);
+            referenceTags = List.copyOf(referenceTags);
+        }
+
+        static TagAuditSample from(WorldCell cell, TagAuditMetrics metrics) {
+            List<String> wTags = cell.landformTags();
+            List<String> referenceTags = metrics.referenceTags();
+            return new TagAuditSample(cell.gridX, cell.gridZ, cell.blockX, cell.blockZ,
+                    cell.baseLandform(), cell.landform, wTags, metrics, referenceTags,
+                    wTags.contains("cliff") == referenceTags.contains("cliff"),
+                    wTags.contains("steep") == referenceTags.contains("steep"),
+                    wTags.contains("coastal") == referenceTags.contains("coastal"));
+        }
+
+        JsonObject asJson() {
+            JsonObject json = summaryJson();
+            json.add("auditMetrics", metrics.asJson());
+            return json;
+        }
+
+        JsonObject summaryJson() {
+            JsonObject json = new JsonObject();
+            json.addProperty("gridX", gridX);
+            json.addProperty("gridZ", gridZ);
+            json.addProperty("blockX", blockX);
+            json.addProperty("blockZ", blockZ);
+            json.addProperty("baseLandform", baseLandform);
+            json.addProperty("coarseLandform", coarseLandform);
+            json.add("wTags", stringArray(wTags));
+            json.add("referenceTags", stringArray(referenceTags));
+            json.addProperty("cliffMatch", cliffMatch);
+            json.addProperty("steepMatch", steepMatch);
+            json.addProperty("coastalMatch", coastalMatch);
             return json;
         }
     }
