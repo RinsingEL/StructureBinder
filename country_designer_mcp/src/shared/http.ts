@@ -5,8 +5,8 @@ export const MC_API_URL = (process.env.GEOMANTIA_MC_API_URL || process.env.MC_AP
 
 export const TIMEOUTS = {
   quick: 10_000,
-  test: 120_000,
-  refresh: 240_000,
+  test: 600_000,
+  refresh: 600_000,
 };
 
 export async function getJson(url: string, timeoutMs = TIMEOUTS.quick) {

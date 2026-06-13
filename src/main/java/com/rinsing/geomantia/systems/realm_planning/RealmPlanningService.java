@@ -31,13 +31,22 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.ToDoubleFunction;
 
 public final class RealmPlanningService {
-    public static final String SCHEMA_VERSION = "realm_planning.v1.1";
+    public static final String SCHEMA_VERSION = "realm_planning.v1.2";
     private static final int DEFAULT_SNAP_RADIUS_CELLS = 2;
     private static final int MIN_SEED_DISTANCE_CELLS = 2;
+    public static final int DEFAULT_MICRO_SAMPLE_STRIDE_BLOCKS = 32;
+    private static final int ACTION_BUDGET_STRICT_MIN_OWNED_CELLS = 24;
+    private static final double ACTION_BUDGET_STRICT_MIN_OWNED_RATIO = 0.0008;
+    private static final double QUOTA_URGENCY_WEIGHT = 6.0;
+    private static final double STRICT_LARGEST_COMPONENT_RATIO = 0.90;
+    private static final double STRICT_DETACHED_AREA_RATIO = 0.05;
+    private static final double CONTESTED_COST_EPSILON = 2.5;
     private static final Map<String, RealmRun> RUNS = new LinkedHashMap<>();
 
     private final Path debugRoot;
@@ -65,9 +74,21 @@ public final class RealmPlanningService {
         Objects.requireNonNull(refreshResult, "refreshResult");
         String runId = normalizeRunId(requestedRunId, refreshResult.job().jobId());
         Path runDirectory = debugRoot.resolve(runId);
+        WorldSurveyResult surveyResult = WorldSurveyResult.fromRefreshResult(runId, runDirectory, refreshResult);
+        return runW(surveyResult, worldTheme);
+    }
+
+    public JsonObject runW(WorldSurveyResult surveyResult, JsonElement worldTheme)
+            throws IOException {
+        Objects.requireNonNull(surveyResult, "surveyResult");
+        if (!surveyResult.sealed()) {
+            throw new IllegalArgumentException("World survey must be sealed before W can be consumed.");
+        }
+        String runId = surveyResult.runId();
+        Path runDirectory = surveyResult.runDirectory();
         Files.createDirectories(runDirectory);
 
-        RealmRun run = new RealmRun(runId, runDirectory, refreshResult);
+        RealmRun run = new RealmRun(runId, runDirectory, surveyResult);
         run.worldTheme = worldTheme == null || worldTheme.isJsonNull() ? null : worldTheme.deepCopy();
         buildWorld(run);
         exportWorld(run);
@@ -169,10 +190,22 @@ public final class RealmPlanningService {
     }
 
     public JsonObject expandT3(String runId, String normalizationGroup, boolean allowUnclaimedLand) throws IOException {
+        return expandT3(runId, normalizationGroup, allowUnclaimedLand, "strict", "");
+    }
+
+    public JsonObject expandT3(String runId, String normalizationGroup, boolean allowUnclaimedLand,
+            String qualityMode) throws IOException {
+        return expandT3(runId, normalizationGroup, allowUnclaimedLand, qualityMode, "");
+    }
+
+    public JsonObject expandT3(String runId, String normalizationGroup, boolean allowUnclaimedLand,
+            String qualityMode, String expansionModel) throws IOException {
         RealmRun run = requireRun(runId);
         if (run.profiles.isEmpty() || run.seeds.size() != run.profiles.size()) {
             throw new IllegalArgumentException("All realms must complete T2 before T3.");
         }
+        run.qualityMode = normalizeQualityMode(qualityMode);
+        run.expansionModel = normalizeExpansionModel(expansionModel, run.qualityMode);
         String group = normalizationGroup == null || normalizationGroup.isBlank()
                 ? run.profiles.get(0).scalePlan.normalizationGroup : normalizationGroup.trim();
         run.territory = buildTerritory(run, group, allowUnclaimedLand);
@@ -204,21 +237,40 @@ public final class RealmPlanningService {
 
     public JsonObject runAcceptance(RefreshResult refreshResult, String requestedRunId, int realmCount,
             JsonArray realmProfiles, boolean autoSelectCoordinates) throws IOException {
+        String runId = normalizeRunId(requestedRunId, refreshResult.job().jobId());
+        WorldSurveyResult surveyResult = WorldSurveyResult.fromRefreshResult(runId, debugRoot.resolve(runId), refreshResult);
+        return runAcceptance(surveyResult, realmCount, realmProfiles, autoSelectCoordinates);
+    }
+
+    public JsonObject runAcceptance(WorldSurveyResult surveyResult, int realmCount,
+            JsonArray realmProfiles, boolean autoSelectCoordinates) throws IOException {
+        return runAcceptance(surveyResult, realmCount, realmProfiles, autoSelectCoordinates, "strict");
+    }
+
+    public JsonObject runAcceptance(WorldSurveyResult surveyResult, int realmCount,
+            JsonArray realmProfiles, boolean autoSelectCoordinates, String qualityMode) throws IOException {
+        return runAcceptance(surveyResult, realmCount, realmProfiles, autoSelectCoordinates, qualityMode, "");
+    }
+
+    public JsonObject runAcceptance(WorldSurveyResult surveyResult, int realmCount,
+            JsonArray realmProfiles, boolean autoSelectCoordinates, String qualityMode, String expansionModel) throws IOException {
         long startedAt = System.nanoTime();
-        JsonObject w = runW(refreshResult, requestedRunId, null);
+        JsonObject w = runW(surveyResult, null);
         String runId = w.get("runId").getAsString();
         RealmRun run = requireRun(runId);
+        run.qualityMode = normalizeQualityMode(qualityMode);
+        run.expansionModel = normalizeExpansionModel(expansionModel, run.qualityMode);
         String continent = resolveTargetContinent(run, "");
         prepareT1(runId, realmProfiles, realmCount <= 0 ? 3 : realmCount, continent, true);
         if (autoSelectCoordinates) {
             for (RealmProfile profile : run.profiles) {
                 CandidatePackage pack = run.candidatePackages.get(profile.realmId);
-                GridPoint point = pack.suggestedPoint;
+                GridPoint point = autoAcceptancePoint(run, profile, pack);
                 selectT2(runId, profile.realmId, point.x, point.z, null,
                         "auto acceptance coordinate from candidate package", "debug", true);
             }
         }
-        expandT3(runId, continent, false);
+        expandT3(runId, continent, false, run.qualityMode, run.expansionModel);
         buildT4(runId);
         long durationMs = Math.max(0L, (System.nanoTime() - startedAt) / 1_000_000L);
         JsonObject report = acceptanceReport(run, durationMs);
@@ -242,17 +294,22 @@ public final class RealmPlanningService {
     }
 
     private void buildWorld(RealmRun run) {
-        AtlasRegion region = run.refreshResult.region();
         Map<String, WorldCell> cells = new LinkedHashMap<>();
-        for (AtlasCell cell : region.cells()) {
-            if (!cell.hasFlag(CellStateFlag.LANDFORM_READY)) {
-                continue;
+        for (AtlasRegion region : run.surveyResult.regions()) {
+            for (AtlasCell cell : region.cells()) {
+                if (!cell.hasFlag(CellStateFlag.LANDFORM_READY)) {
+                    continue;
+                }
+                if (!run.surveyResult.containsBlock(cell.blockMinX(), cell.blockMinZ())) {
+                    continue;
+                }
+                String landWater = landWater(cell);
+                WorldFeatureCell feature = run.surveyResult.featureCells().get(key(cell.globalCellX(), cell.globalCellZ()));
+                WorldCell worldCell = new WorldCell(cell.globalCellX(), cell.globalCellZ(), cell.blockMinX(),
+                        cell.blockMinZ(), "", cell.patchId(), landWater, cell.landformType().contractName(),
+                        cell.elevation(), cell.slope(), finiteWaterDistance(cell.waterDistance()), flagsFor(cell), feature);
+                cells.put(key(worldCell.gridX, worldCell.gridZ), worldCell);
             }
-            String landWater = landWater(cell);
-            WorldCell worldCell = new WorldCell(cell.globalCellX(), cell.globalCellZ(), cell.blockMinX(),
-                    cell.blockMinZ(), "", cell.patchId(), landWater, cell.landformType().contractName(),
-                    cell.elevation(), cell.slope(), finiteWaterDistance(cell.waterDistance()), flagsFor(cell));
-            cells.put(key(worldCell.gridX, worldCell.gridZ), worldCell);
         }
         assignContinents(cells);
         run.worldCells.clear();
@@ -261,7 +318,7 @@ public final class RealmPlanningService {
         for (WorldCell cell : run.worldCells) {
             run.worldCellsByKey.put(key(cell.gridX, cell.gridZ), cell);
         }
-        run.patchSummaries = buildPatchSummaries(run, run.refreshResult.patches());
+        run.patchSummaries = buildPatchSummaries(run, run.surveyResult.patches());
         run.continentSummaries = buildContinentSummaries(run);
         if (run.continentSummaries.isEmpty()) {
             throw new IllegalArgumentException("W refresh did not produce assignable land continents.");
@@ -311,7 +368,7 @@ public final class RealmPlanningService {
         }
         Map<String, PatchSummary> summaries = new LinkedHashMap<>();
         for (PatchAccumulator accumulator : accumulators.values()) {
-            PatchSummary summary = accumulator.toSummary(run.refreshResult.region().cellStepBlocks());
+            PatchSummary summary = accumulator.toSummary(run.surveyResult.cellStepBlocks());
             summaries.put(summary.patchId, summary);
         }
         return summaries;
@@ -351,12 +408,14 @@ public final class RealmPlanningService {
             throw new IllegalArgumentException("No candidate cells for realmId: " + profile.realmId);
         }
         WorldCell suggested = candidates.stream()
-                .min(Comparator.comparingDouble(cell -> candidateScore(profile, cell)))
+                .min(Comparator.comparingDouble((WorldCell cell) -> candidateScore(run, profile, cell))
+                        .thenComparingInt(cell -> cell.gridZ)
+                        .thenComparingInt(cell -> cell.gridX))
                 .orElse(candidates.get(0));
         String packageId = "candidate_" + profile.realmId;
-        AtlasRegion region = run.refreshResult.region();
         return new CandidatePackage(packageId, profile.realmId, "survey_" + run.runId, allowed, List.of(), List.of(),
-                new GridPoint(region.blockMinX(), region.blockMinZ()), region.cellStepBlocks(),
+                new GridPoint(run.surveyResult.gridOriginBlockX(), run.surveyResult.gridOriginBlockZ()),
+                run.surveyResult.cellStepBlocks(),
                 new GridPoint(suggested.gridX, suggested.gridZ), "candidates/" + profile.realmId + "_candidate_map.png");
     }
 
@@ -449,76 +508,654 @@ public final class RealmPlanningService {
         }
         Map<String, NormalizedScale> scales = normalizeScales(profiles);
         Map<String, Integer> quotas = quotas(scales, landCells.size(), allowUnclaimedLand);
-        List<Claim> claims = new ArrayList<>();
+        TerritoryBuildResult result = "action_budget".equals(run.expansionModel)
+                ? buildActionBudgetTerritory(run, profiles, landCells, quotas, allowUnclaimedLand)
+                : buildFrontierTerritory(run, profiles, landCells, quotas, allowUnclaimedLand);
+        return RealmTerritoryMap.from(run.runId, group, landCells, result.ownership, run, scales, quotas, result.repairs);
+    }
+
+    private TerritoryBuildResult buildActionBudgetTerritory(RealmRun run, List<RealmProfile> profiles,
+            List<WorldCell> landCells, Map<String, Integer> quotas, boolean allowUnclaimedLand) {
+        Map<String, WorldCell> landByKey = new LinkedHashMap<>();
         for (WorldCell cell : landCells) {
-            for (RealmProfile profile : profiles) {
-                RealmSeed seed = run.seeds.get(profile.realmId);
-                claims.add(new Claim(cell, profile.realmId, expansionCost(profile, seed, cell)));
-            }
+            landByKey.put(key(cell.gridX, cell.gridZ), cell);
         }
-        claims.sort(Comparator.comparingDouble(claim -> claim.cost));
         Map<String, String> ownership = new LinkedHashMap<>();
-        Map<String, Integer> counts = new LinkedHashMap<>();
+        Map<String, String> statusByKey = new LinkedHashMap<>();
+        Map<String, Double> bestCosts = new LinkedHashMap<>();
+        Map<String, Double> secondBestCosts = new LinkedHashMap<>();
+        List<TerritoryRepair> repairs = new ArrayList<>();
+        PriorityQueue<ActionFrontierClaim> frontier = new PriorityQueue<>(Comparator
+                .comparingDouble(ActionFrontierClaim::cumulativeCost)
+                .thenComparingLong(ActionFrontierClaim::sequence));
+        long sequence = 0L;
+
         for (RealmProfile profile : profiles) {
-            counts.put(profile.realmId, 0);
-        }
-        for (Claim claim : claims) {
-            String cellKey = key(claim.cell.gridX, claim.cell.gridZ);
-            if (ownership.containsKey(cellKey)) {
+            RealmSeed seed = run.seeds.get(profile.realmId);
+            ExpansionBudget budget = expansionBudget(profile, quotas.getOrDefault(profile.realmId, 1), landCells.size());
+            run.expansionBudgets.put(profile.realmId, budget);
+            run.terrainCostProfiles.put(profile.realmId, terrainCostProfile(profile));
+            if (seed == null) {
                 continue;
             }
-            int current = counts.getOrDefault(claim.realmId, 0);
-            if (current < quotas.getOrDefault(claim.realmId, 0)) {
-                ownership.put(cellKey, claim.realmId);
-                counts.put(claim.realmId, current + 1);
+            WorldCell seedCell = landByKey.get(key(seed.seedGrid.x, seed.seedGrid.z));
+            if (seedCell == null) {
+                repairs.add(new TerritoryRepair("missing_seed_cell", profile.realmId,
+                        "Seed is outside assignable land and cannot initialize action frontier.", 0));
+                continue;
+            }
+            frontier.add(new ActionFrontierClaim(profile.realmId, seedCell, null, 0.0, 0, sequence++));
+        }
+
+        while (!frontier.isEmpty()) {
+            ActionFrontierClaim claim = frontier.poll();
+            String cellKey = key(claim.cell.gridX, claim.cell.gridZ);
+            ExpansionBudget budget = run.expansionBudgets.get(claim.realmId);
+            if (budget == null || claim.cumulativeCost > budget.hardStopThreshold) {
+                recordStopReason(run, claim.realmId, "action_budget_exhausted", 1);
+                continue;
+            }
+            if (claim.parent != null) {
+                String parentKey = key(claim.parent.gridX, claim.parent.gridZ);
+                if (!claim.realmId.equals(ownership.get(parentKey)) || !"owned".equals(statusByKey.get(parentKey))) {
+                    recordStopReason(run, claim.realmId, "stale_frontier_parent", 1);
+                    continue;
+                }
+            }
+            double previousBest = bestCosts.getOrDefault(cellKey, Double.POSITIVE_INFINITY);
+            if (previousBest < Double.POSITIVE_INFINITY && Math.abs(previousBest - claim.cumulativeCost) <= CONTESTED_COST_EPSILON) {
+                String previousOwner = ownership.get(cellKey);
+                if (!claim.realmId.equals(previousOwner)) {
+                    if (previousOwner != null && (isSeedCell(run, previousOwner, claim.cell)
+                            || !canReleaseCellWithoutDisconnecting(previousOwner, claim.cell, ownership))) {
+                        recordStopReason(run, claim.realmId, "competition_failed", 1);
+                        continue;
+                    }
+                    statusByKey.put(cellKey, "contested");
+                    secondBestCosts.put(cellKey, Math.min(secondBestCosts.getOrDefault(cellKey, Double.POSITIVE_INFINITY),
+                            claim.cumulativeCost));
+                    recordStopReason(run, claim.realmId, "competition_contested", 1);
+                }
+                continue;
+            }
+            if (claim.cumulativeCost >= previousBest) {
+                recordStopReason(run, claim.realmId, "competition_failed", 1);
+                continue;
+            }
+            String previousOwner = ownership.get(cellKey);
+            if (previousOwner != null && !claim.realmId.equals(previousOwner)
+                    && (isSeedCell(run, previousOwner, claim.cell)
+                            || !canReleaseCellWithoutDisconnecting(previousOwner, claim.cell, ownership))) {
+                recordStopReason(run, claim.realmId, "competition_failed", 1);
+                continue;
+            }
+            if (claim.parent != null && edgeBlocked(run, claim.realmId, claim.parent, claim.cell)) {
+                statusByKey.putIfAbsent(cellKey, "blocked");
+                recordStopReason(run, claim.realmId, "barrier_blocked", 1);
+                continue;
+            }
+            ownership.put(cellKey, claim.realmId);
+            statusByKey.put(cellKey, "owned");
+            bestCosts.put(cellKey, claim.cumulativeCost);
+            secondBestCosts.remove(cellKey);
+            run.realmClaimCostSums.put(claim.realmId,
+                    run.realmClaimCostSums.getOrDefault(claim.realmId, 0.0) + claim.cumulativeCost);
+            run.realmMaxClaimCosts.put(claim.realmId,
+                    Math.max(run.realmMaxClaimCosts.getOrDefault(claim.realmId, 0.0), claim.cumulativeCost));
+            run.realmClaimCounts.put(claim.realmId, run.realmClaimCounts.getOrDefault(claim.realmId, 0) + 1);
+            recordTerrainCost(run, claim.realmId, claim.cell.baseLandform(), Math.max(0.0, claim.cumulativeCost));
+
+            for (int[] offset : DIRECTIONS) {
+                WorldCell next = landByKey.get(key(claim.cell.gridX + offset[0], claim.cell.gridZ + offset[1]));
+                if (next == null) {
+                    continue;
+                }
+                double edgeCost = actionEdgeCost(run, claim.realmId, claim.cell, next, claim.pathLength + 1);
+                if (!Double.isFinite(edgeCost)) {
+                    statusByKey.putIfAbsent(key(next.gridX, next.gridZ), "blocked");
+                    recordStopReason(run, claim.realmId, "edge_blocked", 1);
+                    continue;
+                }
+                double nextCost = claim.cumulativeCost + edgeCost;
+                if (nextCost > budget.hardStopThreshold || edgeCost > budget.maxClaimCost) {
+                    statusByKey.putIfAbsent(key(next.gridX, next.gridZ), "unreachable");
+                    recordStopReason(run, claim.realmId, "action_budget_exhausted", 1);
+                    continue;
+                }
+                frontier.add(new ActionFrontierClaim(claim.realmId, next, claim.cell, nextCost,
+                        claim.pathLength + 1, sequence++));
             }
         }
+
+        for (WorldCell cell : landCells) {
+            String cellKey = key(cell.gridX, cell.gridZ);
+            statusByKey.putIfAbsent(cellKey, ownership.containsKey(cellKey) ? "owned" : "wild");
+        }
+        run.territoryCellStatuses = statusByKey;
+        run.territoryClaimCosts = bestCosts;
+        return new TerritoryBuildResult(ownership, repairs);
+    }
+
+    private TerritoryBuildResult buildFrontierTerritory(RealmRun run, List<RealmProfile> profiles, List<WorldCell> landCells,
+            Map<String, Integer> quotas, boolean allowUnclaimedLand) {
+        Map<String, WorldCell> landByKey = new LinkedHashMap<>();
+        for (WorldCell cell : landCells) {
+            landByKey.put(key(cell.gridX, cell.gridZ), cell);
+        }
+        Map<String, RealmProfile> profilesById = new LinkedHashMap<>();
+        Map<String, String> ownership = new LinkedHashMap<>();
+        Map<String, Integer> counts = new LinkedHashMap<>();
+        Map<String, PriorityQueue<FrontierClaim>> frontiers = new LinkedHashMap<>();
+        List<TerritoryRepair> repairs = new ArrayList<>();
+        long sequence = 0L;
+
+        for (RealmProfile profile : profiles) {
+            profilesById.put(profile.realmId, profile);
+            counts.put(profile.realmId, 0);
+            frontiers.put(profile.realmId, new PriorityQueue<>(Comparator
+                    .comparingDouble(FrontierClaim::cost)
+                    .thenComparingLong(FrontierClaim::sequence)));
+            RealmSeed seed = run.seeds.get(profile.realmId);
+            if (seed == null) {
+                continue;
+            }
+            WorldCell seedCell = landByKey.get(key(seed.seedGrid.x, seed.seedGrid.z));
+            if (seedCell == null) {
+                repairs.add(new TerritoryRepair("missing_seed_cell", profile.realmId,
+                        "Seed is outside assignable land and cannot initialize frontier.", 0));
+                continue;
+            }
+            String seedKey = key(seedCell.gridX, seedCell.gridZ);
+            if (!ownership.containsKey(seedKey)) {
+                ownership.put(seedKey, profile.realmId);
+                counts.put(profile.realmId, 1);
+                sequence = enqueueFrontier(run, profile, seedCell, seedCell, 0.0, landByKey, ownership,
+                        frontiers.get(profile.realmId), sequence);
+            }
+        }
+
+        int assigned = ownership.size();
+        int targetAssigned = allowUnclaimedLand
+                ? Math.min(landCells.size(), quotas.values().stream().mapToInt(Integer::intValue).sum())
+                : landCells.size();
+        while (assigned < targetAssigned) {
+            String nextRealm = selectNextFrontierRealm(profiles, counts, quotas, frontiers);
+            if (nextRealm == null) {
+                break;
+            }
+            PriorityQueue<FrontierClaim> queue = frontiers.get(nextRealm);
+            FrontierClaim claim = pollValidClaim(queue, ownership, landByKey, nextRealm);
+            if (claim == null) {
+                continue;
+            }
+            int quota = quotas.getOrDefault(nextRealm, 0);
+            if (allowUnclaimedLand && counts.getOrDefault(nextRealm, 0) >= quota) {
+                continue;
+            }
+            String claimKey = key(claim.cell.gridX, claim.cell.gridZ);
+            ownership.put(claimKey, nextRealm);
+            counts.put(nextRealm, counts.getOrDefault(nextRealm, 0) + 1);
+            assigned++;
+            RealmProfile profile = profilesById.get(nextRealm);
+            sequence = enqueueFrontier(run, profile, claim.cell, claim.parent, claim.cost, landByKey, ownership,
+                    queue, sequence);
+        }
+
         if (!allowUnclaimedLand) {
+            assigned += attachUnclaimedCells(run, profilesById, landCells, ownership, counts, repairs);
+        }
+        rebalanceAreaQuotas(run, profiles, landByKey, ownership, quotas, repairs);
+        repairDetachedComponents(run, profiles, landByKey, ownership, repairs);
+        rebalanceAreaQuotas(run, profiles, landByKey, ownership, quotas, repairs);
+        repairDetachedComponents(run, profiles, landByKey, ownership, repairs);
+        Map<String, String> statusByKey = new LinkedHashMap<>();
+        Map<String, Double> claimCosts = new LinkedHashMap<>();
+        for (WorldCell cell : landCells) {
+            String cellKey = key(cell.gridX, cell.gridZ);
+            statusByKey.put(cellKey, ownership.containsKey(cellKey) ? "owned" : "wild");
+            claimCosts.put(cellKey, ownership.containsKey(cellKey) ? 1.0 : 0.0);
+        }
+        run.territoryCellStatuses = statusByKey;
+        run.territoryClaimCosts = claimCosts;
+        return new TerritoryBuildResult(ownership, repairs);
+    }
+
+    private long enqueueFrontier(RealmRun run, RealmProfile profile, WorldCell from, WorldCell parent, double parentCost,
+            Map<String, WorldCell> landByKey, Map<String, String> ownership, PriorityQueue<FrontierClaim> queue,
+            long sequence) {
+        if (profile == null || queue == null) {
+            return sequence;
+        }
+        RealmSeed seed = run.seeds.get(profile.realmId);
+        for (int[] offset : DIRECTIONS) {
+            WorldCell next = landByKey.get(key(from.gridX + offset[0], from.gridZ + offset[1]));
+            if (next == null || ownership.containsKey(key(next.gridX, next.gridZ))) {
+                continue;
+            }
+            double cost = frontierMoveCost(profile, seed, from, next, parentCost);
+            queue.add(new FrontierClaim(next, from, profile.realmId, cost, sequence++));
+        }
+        return sequence;
+    }
+
+    private String selectNextFrontierRealm(List<RealmProfile> profiles, Map<String, Integer> counts,
+            Map<String, Integer> quotas, Map<String, PriorityQueue<FrontierClaim>> frontiers) {
+        String bestRealm = null;
+        double bestDeficit = Double.NEGATIVE_INFINITY;
+        double bestCost = Double.POSITIVE_INFINITY;
+        for (RealmProfile profile : profiles) {
+            int quota = Math.max(1, quotas.getOrDefault(profile.realmId, 1));
+            int count = counts.getOrDefault(profile.realmId, 0);
+            if (count >= quota) {
+                continue;
+            }
+            PriorityQueue<FrontierClaim> queue = frontiers.get(profile.realmId);
+            FrontierClaim claim = queue == null ? null : queue.peek();
+            if (claim == null) {
+                continue;
+            }
+            double deficit = (quota - count) / (double) quota;
+            double claimCost = claim.cost / QUOTA_URGENCY_WEIGHT;
+            if (deficit > bestDeficit || (Math.abs(deficit - bestDeficit) < 0.0001 && claimCost < bestCost)) {
+                bestDeficit = deficit;
+                bestCost = claimCost;
+                bestRealm = profile.realmId;
+            }
+        }
+        return bestRealm;
+    }
+
+    private FrontierClaim pollValidClaim(PriorityQueue<FrontierClaim> queue, Map<String, String> ownership,
+            Map<String, WorldCell> landByKey, String realmId) {
+        while (queue != null && !queue.isEmpty()) {
+            FrontierClaim claim = queue.poll();
+            if (!landByKey.containsKey(key(claim.cell.gridX, claim.cell.gridZ))) {
+                continue;
+            }
+            if (ownership.containsKey(key(claim.cell.gridX, claim.cell.gridZ))) {
+                continue;
+            }
+            if (claim.parent != null && realmId.equals(ownership.get(key(claim.parent.gridX, claim.parent.gridZ)))) {
+                return claim;
+            }
+            if (hasOwnedNeighbor(claim.cell, realmId, ownership)) {
+                return claim;
+            }
+        }
+        return null;
+    }
+
+    private int attachUnclaimedCells(RealmRun run, Map<String, RealmProfile> profilesById, List<WorldCell> landCells,
+            Map<String, String> ownership, Map<String, Integer> counts, List<TerritoryRepair> repairs) {
+        int attached = 0;
+        boolean changed = true;
+        while (changed) {
+            changed = false;
             for (WorldCell cell : landCells) {
                 String cellKey = key(cell.gridX, cell.gridZ);
                 if (ownership.containsKey(cellKey)) {
                     continue;
                 }
-                Claim best = claims.stream()
-                        .filter(claim -> claim.cell == cell)
-                        .min(Comparator.comparingDouble(claim -> claim.cost))
-                        .orElseThrow();
-                ownership.put(cellKey, best.realmId);
-                counts.put(best.realmId, counts.getOrDefault(best.realmId, 0) + 1);
+                String owner = bestAdjacentOwner(run, profilesById, cell, ownership);
+                if (owner == null) {
+                    continue;
+                }
+                ownership.put(cellKey, owner);
+                counts.put(owner, counts.getOrDefault(owner, 0) + 1);
+                attached++;
+                changed = true;
             }
         }
-        return RealmTerritoryMap.from(run.runId, group, landCells, ownership, run, scales);
+        for (WorldCell cell : landCells) {
+            String cellKey = key(cell.gridX, cell.gridZ);
+            if (ownership.containsKey(cellKey)) {
+                continue;
+            }
+            String owner = nearestSeedOwner(run, profilesById.keySet(), cell);
+            if (owner == null) {
+                continue;
+            }
+            ownership.put(cellKey, owner);
+            counts.put(owner, counts.getOrDefault(owner, 0) + 1);
+            attached++;
+            repairs.add(new TerritoryRepair("nearest_seed_fill", owner,
+                    "Filled an unreachable unclaimed cell by nearest seed fallback.", 1));
+        }
+        if (attached > 0) {
+            repairs.add(new TerritoryRepair("attach_unclaimed_cells", "all",
+                    "Attached unclaimed cells after frontier quotas were exhausted.", attached));
+        }
+        return attached;
+    }
+
+    private String bestAdjacentOwner(RealmRun run, Map<String, RealmProfile> profilesById, WorldCell cell,
+            Map<String, String> ownership) {
+        String best = null;
+        double bestCost = Double.POSITIVE_INFINITY;
+        Set<String> adjacentOwners = new LinkedHashSet<>();
+        for (int[] offset : DIRECTIONS) {
+            String owner = ownership.get(key(cell.gridX + offset[0], cell.gridZ + offset[1]));
+            if (owner != null) {
+                adjacentOwners.add(owner);
+            }
+        }
+        for (String owner : adjacentOwners) {
+            RealmProfile profile = profilesById.get(owner);
+            RealmSeed seed = run.seeds.get(owner);
+            if (profile == null || seed == null) {
+                continue;
+            }
+            double cost = expansionCost(profile, seed, cell);
+            if (cost < bestCost) {
+                bestCost = cost;
+                best = owner;
+            }
+        }
+        return best;
+    }
+
+    private String nearestSeedOwner(RealmRun run, Set<String> realmIds, WorldCell cell) {
+        String best = null;
+        double bestDistance = Double.POSITIVE_INFINITY;
+        for (String realmId : realmIds) {
+            RealmSeed seed = run.seeds.get(realmId);
+            if (seed == null) {
+                continue;
+            }
+            double distance = distanceCells(seed.seedGrid.x, seed.seedGrid.z, cell.gridX, cell.gridZ);
+            if (distance < bestDistance) {
+                bestDistance = distance;
+                best = realmId;
+            }
+        }
+        return best;
+    }
+
+    private void repairDetachedComponents(RealmRun run, List<RealmProfile> profiles, Map<String, WorldCell> landByKey,
+            Map<String, String> ownership, List<TerritoryRepair> repairs) {
+        for (RealmProfile profile : profiles) {
+            List<Set<String>> components = componentsForRealm(profile.realmId, landByKey, ownership);
+            if (components.size() <= 1) {
+                continue;
+            }
+            components.sort(Comparator.<Set<String>>comparingInt(Set::size).reversed());
+            Set<String> main = components.get(0);
+            int changed = 0;
+            for (int i = 1; i < components.size(); i++) {
+                for (String cellKey : components.get(i)) {
+                    WorldCell cell = landByKey.get(cellKey);
+                    String replacement = bestAdjacentOwnerExcluding(run, profile.realmId, cell, ownership);
+                    if (replacement == null) {
+                        replacement = nearestMainComponentOwner(run, profile.realmId, cell, main, ownership);
+                    }
+                    if (replacement != null && !profile.realmId.equals(replacement)) {
+                        ownership.put(cellKey, replacement);
+                        changed++;
+                    }
+                }
+            }
+            if (changed > 0) {
+                repairs.add(new TerritoryRepair("detach_component_reassigned", profile.realmId,
+                        "Reassigned detached components to adjacent or nearest main territories.", changed));
+            }
+        }
+    }
+
+    private void rebalanceAreaQuotas(RealmRun run, List<RealmProfile> profiles, Map<String, WorldCell> landByKey,
+            Map<String, String> ownership, Map<String, Integer> quotas, List<TerritoryRepair> repairs) {
+        Map<String, RealmProfile> profilesById = new LinkedHashMap<>();
+        for (RealmProfile profile : profiles) {
+            profilesById.put(profile.realmId, profile);
+        }
+        int changed = 0;
+        int maxIterations = Math.max(1, landByKey.size() * 4);
+        for (int i = 0; i < maxIterations; i++) {
+            Map<String, Integer> counts = territoryCounts(profiles, ownership);
+            RebalanceCandidate candidate = bestRebalanceCandidate(run, profiles, profilesById, landByKey, ownership,
+                    counts, quotas);
+            if (candidate == null) {
+                break;
+            }
+            ownership.put(candidate.cellKey, candidate.receiverRealmId);
+            changed++;
+        }
+        if (changed > 0) {
+            repairs.add(new TerritoryRepair("quota_rebalanced", "all",
+                    "Moved border cells from over-target realms to adjacent under-target realms.", changed));
+        }
+    }
+
+    private Map<String, Integer> territoryCounts(List<RealmProfile> profiles, Map<String, String> ownership) {
+        Map<String, Integer> counts = new LinkedHashMap<>();
+        for (RealmProfile profile : profiles) {
+            counts.put(profile.realmId, 0);
+        }
+        for (String owner : ownership.values()) {
+            if (counts.containsKey(owner)) {
+                counts.put(owner, counts.get(owner) + 1);
+            }
+        }
+        return counts;
+    }
+
+    private RebalanceCandidate bestRebalanceCandidate(RealmRun run, List<RealmProfile> profiles,
+            Map<String, RealmProfile> profilesById,
+            Map<String, WorldCell> landByKey, Map<String, String> ownership, Map<String, Integer> counts,
+            Map<String, Integer> quotas) {
+        RebalanceCandidate best = null;
+        for (RealmProfile receiverProfile : profiles) {
+            String receiver = receiverProfile.realmId;
+            int receiverQuota = Math.max(1, quotas.getOrDefault(receiver, 1));
+            int receiverCount = counts.getOrDefault(receiver, 0);
+            if (receiverCount >= Math.ceil(receiverQuota * 1.2)) {
+                continue;
+            }
+            RealmSeed receiverSeed = run.seeds.get(receiver);
+            if (receiverSeed == null) {
+                continue;
+            }
+            double receiverDeficit = (receiverQuota - receiverCount) / (double) receiverQuota;
+            for (WorldCell cell : landByKey.values()) {
+                String cellKey = key(cell.gridX, cell.gridZ);
+                String donor = ownership.get(cellKey);
+                if (donor == null || donor.equals(receiver)) {
+                    continue;
+                }
+                int donorQuota = Math.max(1, quotas.getOrDefault(donor, 1));
+                if (counts.getOrDefault(donor, 0) <= donorQuota || isSeedCell(run, donor, cell)) {
+                    continue;
+                }
+                if (!hasOwnedNeighbor(cell, receiver, ownership)) {
+                    continue;
+                }
+                if (!canReleaseCellWithoutDisconnecting(donor, cell, ownership)) {
+                    continue;
+                }
+                double donorExcess = (counts.getOrDefault(donor, 0) - donorQuota) / (double) donorQuota;
+                double score = expansionCost(receiverProfile, receiverSeed, cell) - donorExcess * 4.0
+                        - receiverDeficit * 8.0;
+                if (best == null || score < best.score) {
+                    best = new RebalanceCandidate(cellKey, receiver, donor, score);
+                }
+            }
+        }
+        return best;
+    }
+
+    private boolean canReleaseCellWithoutDisconnecting(String donor, WorldCell cell, Map<String, String> ownership) {
+        List<String> remainingNeighbors = new ArrayList<>();
+        for (int[] offset : DIRECTIONS) {
+            String neighborKey = key(cell.gridX + offset[0], cell.gridZ + offset[1]);
+            if (donor.equals(ownership.get(neighborKey))) {
+                remainingNeighbors.add(neighborKey);
+            }
+        }
+        if (remainingNeighbors.size() <= 1) {
+            return true;
+        }
+        String removedKey = key(cell.gridX, cell.gridZ);
+        Set<String> targets = new HashSet<>(remainingNeighbors);
+        String start = remainingNeighbors.get(0);
+        ArrayDeque<String> queue = new ArrayDeque<>();
+        Set<String> visited = new HashSet<>();
+        queue.add(start);
+        visited.add(start);
+        while (!queue.isEmpty()) {
+            String currentKey = queue.removeFirst();
+            targets.remove(currentKey);
+            if (targets.isEmpty()) {
+                return true;
+            }
+            String[] parts = currentKey.split(",", 2);
+            int x = Integer.parseInt(parts[0]);
+            int z = Integer.parseInt(parts[1]);
+            for (int[] offset : DIRECTIONS) {
+                String nextKey = key(x + offset[0], z + offset[1]);
+                if (nextKey.equals(removedKey) || !visited.add(nextKey) || !donor.equals(ownership.get(nextKey))) {
+                    continue;
+                }
+                queue.addLast(nextKey);
+            }
+        }
+        return false;
+    }
+
+    private boolean isSeedCell(RealmRun run, String realmId, WorldCell cell) {
+        RealmSeed seed = run.seeds.get(realmId);
+        return seed != null && seed.seedGrid.x == cell.gridX && seed.seedGrid.z == cell.gridZ;
+    }
+
+    private List<Set<String>> componentsForRealm(String realmId, Map<String, WorldCell> landByKey,
+            Map<String, String> ownership) {
+        List<Set<String>> components = new ArrayList<>();
+        Set<String> visited = new HashSet<>();
+        for (String cellKey : landByKey.keySet()) {
+            if (visited.contains(cellKey) || !realmId.equals(ownership.get(cellKey))) {
+                continue;
+            }
+            Set<String> component = new LinkedHashSet<>();
+            ArrayDeque<String> queue = new ArrayDeque<>();
+            queue.add(cellKey);
+            visited.add(cellKey);
+            while (!queue.isEmpty()) {
+                String currentKey = queue.removeFirst();
+                component.add(currentKey);
+                WorldCell current = landByKey.get(currentKey);
+                for (int[] offset : DIRECTIONS) {
+                    String nextKey = key(current.gridX + offset[0], current.gridZ + offset[1]);
+                    if (!visited.contains(nextKey) && realmId.equals(ownership.get(nextKey))) {
+                        visited.add(nextKey);
+                        queue.addLast(nextKey);
+                    }
+                }
+            }
+            components.add(component);
+        }
+        return components;
+    }
+
+    private String bestAdjacentOwnerExcluding(RealmRun run, String excludedRealm, WorldCell cell,
+            Map<String, String> ownership) {
+        String best = null;
+        double bestCost = Double.POSITIVE_INFINITY;
+        Set<String> adjacentOwners = new LinkedHashSet<>();
+        for (int[] offset : DIRECTIONS) {
+            String owner = ownership.get(key(cell.gridX + offset[0], cell.gridZ + offset[1]));
+            if (owner != null && !excludedRealm.equals(owner)) {
+                adjacentOwners.add(owner);
+            }
+        }
+        for (String owner : adjacentOwners) {
+            RealmProfile profile = run.profile(owner);
+            RealmSeed seed = run.seeds.get(owner);
+            double cost = expansionCost(profile, seed, cell);
+            if (cost < bestCost) {
+                bestCost = cost;
+                best = owner;
+            }
+        }
+        return best;
+    }
+
+    private String nearestMainComponentOwner(RealmRun run, String excludedRealm, WorldCell cell, Set<String> main,
+            Map<String, String> ownership) {
+        String best = null;
+        double bestDistance = Double.POSITIVE_INFINITY;
+        for (Map.Entry<String, RealmSeed> entry : run.seeds.entrySet()) {
+            String realmId = entry.getKey();
+            if (excludedRealm.equals(realmId)) {
+                continue;
+            }
+            double distance = distanceCells(entry.getValue().seedGrid.x, entry.getValue().seedGrid.z, cell.gridX, cell.gridZ);
+            if (distance < bestDistance) {
+                bestDistance = distance;
+                best = realmId;
+            }
+        }
+        if (best != null) {
+            return best;
+        }
+        for (String key : main) {
+            String owner = ownership.get(key);
+            if (owner != null && !excludedRealm.equals(owner)) {
+                return owner;
+            }
+        }
+        return null;
     }
 
     private CitySeedRegistry buildRegistry(RealmRun run) {
         List<CitySeed> seeds = new ArrayList<>();
         for (RealmProfile profile : run.profiles) {
             CapitalCitySeed capital = run.capitals.get(profile.realmId);
-            if (capital != null) {
-                seeds.add(CitySeed.capital(capital));
-            }
             RealmStats stats = run.territory.stats.get(profile.realmId);
+            if (capital != null && stats != null) {
+                seeds.add(CitySeed.capital(capital).withCandidateMetadata(
+                        "capital_core", "capital_" + profile.realmId, nearestCityDistance(run, profile.realmId,
+                                capital.anchorGrid, seeds), ""));
+            }
             if (stats == null) {
                 continue;
             }
-            WorldCell portCell = firstOwnedCell(run, profile.realmId, cell -> "shore".equals(cell.landWater));
+            WorldCell portCell = bestCityCell(run, profile.realmId, "port", "town",
+                    cell -> "shore".equals(cell.landWater),
+                    cell -> cell.waterDistanceBlocks / 128.0 + distanceToNearestCity(run, profile.realmId, cell, seeds) * -0.15,
+                    seeds);
             if (portCell != null && stats.coastalRatio > 0.05) {
-                seeds.add(CitySeed.from("city_" + profile.realmId + "_port", profile.realmId, "port",
+                addCitySeed(run, seeds, CitySeed.from("city_" + profile.realmId + "_port", profile.realmId, "port",
                         "town", portCell, 6, List.of("land", "near_water", "inside_realm"),
-                        List.of("harbor", "market", "storage"), "player_nearby", "coastal territory"));
+                        List.of("harbor", "market", "storage"), "player_nearby", "coastal territory")
+                        .withCandidateMetadata(subregionIdFor(run, profile.realmId, portCell),
+                                "port_" + profile.realmId + "_" + portCell.gridX + "_" + portCell.gridZ,
+                                nearestCityDistance(run, profile.realmId, new GridPoint(portCell.gridX, portCell.gridZ), seeds),
+                                ""));
             }
-            WorldCell miningCell = firstOwnedCell(run, profile.realmId,
-                    cell -> cell.landform.equals("ridge") || cell.landform.equals("slope") || cell.landform.equals("cliff"));
+            WorldCell miningCell = bestCityCell(run, profile.realmId, "mining_town", "town",
+                    cell -> cell.landform.equals("ridge") || cell.landform.equals("slope") || cell.landform.equals("cliff"),
+                    cell -> -resourceHint(cell) * 4.0 + distanceToNearestCity(run, profile.realmId, cell, seeds) * -0.1,
+                    seeds);
             if (miningCell != null) {
-                seeds.add(CitySeed.from("city_" + profile.realmId + "_mining", profile.realmId, "mining_town",
+                addCitySeed(run, seeds, CitySeed.from("city_" + profile.realmId + "_mining", profile.realmId, "mining_town",
                         "town", miningCell, 5, List.of("land", "inside_realm", "near_mountain"),
-                        List.of("industry", "storage", "worker_housing"), "realm_development", "mountain landform"));
+                        List.of("industry", "storage", "worker_housing"), "realm_development", "mountain landform")
+                        .withCandidateMetadata(subregionIdFor(run, profile.realmId, miningCell),
+                                "mining_" + profile.realmId + "_" + miningCell.gridX + "_" + miningCell.gridZ,
+                                nearestCityDistance(run, profile.realmId, new GridPoint(miningCell.gridX, miningCell.gridZ), seeds),
+                                ""));
             }
-            WorldCell borderCell = firstBorderCell(run, profile.realmId);
+            WorldCell borderCell = bestCityCell(run, profile.realmId, "border_fort", "town",
+                    cell -> isBorderCell(run, profile.realmId, cell),
+                    cell -> -profile.expansionStyle.borderPressure * 3.0
+                            + distanceToNearestCity(run, profile.realmId, cell, seeds) * -0.08,
+                    seeds);
             if (borderCell != null && !stats.neighbors.isEmpty()) {
-                seeds.add(CitySeed.from("city_" + profile.realmId + "_border_fort", profile.realmId, "border_fort",
+                addCitySeed(run, seeds, CitySeed.from("city_" + profile.realmId + "_border_fort", profile.realmId, "border_fort",
                         "town", borderCell, 4, List.of("land", "inside_realm", "near_border"),
-                        List.of("defense", "barracks", "market"), "story_stage", "realm border"));
+                        List.of("defense", "barracks", "market"), "story_stage", "realm border")
+                        .withCandidateMetadata(subregionIdFor(run, profile.realmId, borderCell),
+                                "border_" + profile.realmId + "_" + borderCell.gridX + "_" + borderCell.gridZ,
+                                nearestCityDistance(run, profile.realmId, new GridPoint(borderCell.gridX, borderCell.gridZ), seeds),
+                                ""));
             }
         }
         return new CitySeedRegistry("registry_" + run.runId, run.runId, run.territory.territoryMapId, seeds);
@@ -537,6 +1174,141 @@ public final class RealmPlanningService {
             }
         }
         return null;
+    }
+
+    private WorldCell bestCityCell(RealmRun run, String realmId, String role, String scale, CellPredicate predicate,
+            ToDoubleFunction<WorldCell> scorer, List<CitySeed> selectedSeeds) {
+        if (run.territory == null) {
+            return null;
+        }
+        int planningRadius = planningRadiusCells(role, scale);
+        return run.territory.cells.stream()
+                .filter(cell -> realmId.equals(cell.realmId))
+                .map(cell -> run.worldCellsByKey.get(key(cell.gridX, cell.gridZ)))
+                .filter(Objects::nonNull)
+                .filter(predicate::test)
+                .filter(cell -> citySpacingOk(run, realmId, new GridPoint(cell.gridX, cell.gridZ), planningRadius,
+                        role, selectedSeeds))
+                .min(Comparator.comparingDouble(scorer)
+                        .thenComparingInt(cell -> cell.gridZ)
+                        .thenComparingInt(cell -> cell.gridX))
+                .orElse(null);
+    }
+
+    private void addCitySeed(RealmRun run, List<CitySeed> seeds, CitySeed candidate) {
+        if (citySpacingOk(run, candidate.realmId, candidate.anchorGrid, candidate.planningRadiusCells,
+                candidate.role, seeds)) {
+            seeds.add(candidate);
+        }
+    }
+
+    private boolean citySpacingOk(RealmRun run, String realmId, GridPoint point, int planningRadius, String role,
+            List<CitySeed> selectedSeeds) {
+        for (CitySeed seed : selectedSeeds) {
+            if (!realmId.equals(seed.realmId) || !seed.satelliteOf.isBlank() || isSatelliteRole(role)) {
+                continue;
+            }
+            double distance = graphDistanceWithinRealm(run, realmId, point, seed.anchorGrid,
+                    Math.max(32, planningRadius + seed.planningRadiusCells + 8));
+            if (!Double.isFinite(distance)) {
+                distance = distanceCells(point.x, point.z, seed.anchorGrid.x, seed.anchorGrid.z);
+            }
+            if (distance < planningRadius + seed.planningRadiusCells) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private double nearestCityDistance(RealmRun run, String realmId, GridPoint point, List<CitySeed> selectedSeeds) {
+        double best = Double.POSITIVE_INFINITY;
+        for (CitySeed seed : selectedSeeds) {
+            if (!realmId.equals(seed.realmId)) {
+                continue;
+            }
+            double distance = graphDistanceWithinRealm(run, realmId, point, seed.anchorGrid, 96);
+            if (!Double.isFinite(distance)) {
+                distance = distanceCells(point.x, point.z, seed.anchorGrid.x, seed.anchorGrid.z);
+            }
+            best = Math.min(best, distance);
+        }
+        return Double.isFinite(best) ? best : -1.0;
+    }
+
+    private double distanceToNearestCity(RealmRun run, String realmId, WorldCell cell, List<CitySeed> selectedSeeds) {
+        double distance = nearestCityDistance(run, realmId, new GridPoint(cell.gridX, cell.gridZ), selectedSeeds);
+        return distance < 0.0 ? 999.0 : distance;
+    }
+
+    private double graphDistanceWithinRealm(RealmRun run, String realmId, GridPoint from, GridPoint to, int maxDistance) {
+        if (from.equals(to)) {
+            return 0.0;
+        }
+        if (run.territory == null) {
+            return Double.POSITIVE_INFINITY;
+        }
+        Map<String, String> owners = run.territory.ownershipByKey();
+        String startKey = key(from.x, from.z);
+        String targetKey = key(to.x, to.z);
+        if (!realmId.equals(owners.get(startKey)) || !realmId.equals(owners.get(targetKey))) {
+            return Double.POSITIVE_INFINITY;
+        }
+        ArrayDeque<GridDistance> queue = new ArrayDeque<>();
+        Set<String> visited = new HashSet<>();
+        queue.add(new GridDistance(from.x, from.z, 0));
+        visited.add(startKey);
+        while (!queue.isEmpty()) {
+            GridDistance current = queue.removeFirst();
+            if (current.distance >= maxDistance) {
+                continue;
+            }
+            for (int[] offset : DIRECTIONS) {
+                int x = current.x + offset[0];
+                int z = current.z + offset[1];
+                String nextKey = key(x, z);
+                if (!visited.add(nextKey) || !realmId.equals(owners.get(nextKey))) {
+                    continue;
+                }
+                int nextDistance = current.distance + 1;
+                if (nextKey.equals(targetKey)) {
+                    return nextDistance;
+                }
+                queue.addLast(new GridDistance(x, z, nextDistance));
+            }
+        }
+        return Double.POSITIVE_INFINITY;
+    }
+
+    private String subregionIdFor(RealmRun run, String realmId, WorldCell cell) {
+        CapitalCitySeed capital = run.capitals.get(realmId);
+        if (capital == null) {
+            return realmId + "_region";
+        }
+        int dx = cell.gridX - capital.anchorGrid.x;
+        int dz = cell.gridZ - capital.anchorGrid.z;
+        if (Math.abs(dx) <= 2 && Math.abs(dz) <= 2) {
+            return realmId + "_capital_core";
+        }
+        String ns = dz < 0 ? "north" : "south";
+        String ew = dx < 0 ? "west" : "east";
+        return realmId + "_" + ns + "_" + ew;
+    }
+
+    private static boolean isSatelliteRole(String role) {
+        return "watchtower".equals(role) || "outpost".equals(role) || "satellite".equals(role);
+    }
+
+    private static int planningRadiusCells(String role, String scale) {
+        if ("border_fort".equals(role)) {
+            return 1;
+        }
+        return switch (scale) {
+            case "capital" -> 4;
+            case "large_city" -> 3;
+            case "city" -> 3;
+            case "town" -> 2;
+            default -> 1;
+        };
     }
 
     private WorldCell firstBorderCell(RealmRun run, String realmId) {
@@ -558,6 +1330,23 @@ public final class RealmPlanningService {
         return null;
     }
 
+    private boolean isBorderCell(RealmRun run, String realmId, WorldCell cell) {
+        if (run.territory == null || cell == null) {
+            return false;
+        }
+        Map<String, String> owners = run.territory.ownershipByKey();
+        if (!realmId.equals(owners.get(key(cell.gridX, cell.gridZ)))) {
+            return false;
+        }
+        for (int[] offset : DIRECTIONS) {
+            String neighbor = owners.get(key(cell.gridX + offset[0], cell.gridZ + offset[1]));
+            if (neighbor != null && !realmId.equals(neighbor)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private void exportWorld(RealmRun run) throws IOException {
         writeJson(run.runDirectory.resolve("world_survey_context.json"), surveyJson(run));
         writeJson(run.runDirectory.resolve("world_patch_map.json"), worldPatchMapJson(run));
@@ -565,11 +1354,21 @@ public final class RealmPlanningService {
         exportWorldPreview(run, run.runDirectory.resolve("grid_overlay_preview.png"), true, null);
         JsonObject manifest = new JsonObject();
         manifest.addProperty("runId", run.runId);
-        manifest.addProperty("cellStepBlocks", run.refreshResult.job().cellStepBlocks());
-        manifest.addProperty("gridOriginBlockX", run.refreshResult.region().blockMinX());
-        manifest.addProperty("gridOriginBlockZ", run.refreshResult.region().blockMinZ());
-        manifest.addProperty("gridSizeWidth", run.refreshResult.region().cellsPerSide());
-        manifest.addProperty("gridSizeHeight", run.refreshResult.region().cellsPerSide());
+        manifest.addProperty("surveyId", run.surveyResult.surveyId());
+        manifest.addProperty("sealed", run.surveyResult.sealed());
+        manifest.addProperty("cellStepBlocks", run.surveyResult.cellStepBlocks());
+        manifest.addProperty("microSampleStrideBlocks", run.surveyResult.microSampleStrideBlocks());
+        manifest.addProperty("metricSampleStrideBlocks", run.surveyResult.microSampleStrideBlocks());
+        manifest.addProperty("localSlopeRadiusBlocks", run.surveyResult.localSlopeRadiusBlocks());
+        manifest.addProperty("microSamplingImplemented", run.surveyResult.microSamplingImplemented());
+        manifest.addProperty("microSampleCount", run.surveyResult.microSampleCount());
+        manifest.addProperty("configHash", run.surveyResult.configHash());
+        manifest.addProperty("gridOriginBlockX", run.surveyResult.gridOriginBlockX());
+        manifest.addProperty("gridOriginBlockZ", run.surveyResult.gridOriginBlockZ());
+        manifest.addProperty("gridSizeWidth", run.surveyResult.gridSizeWidth());
+        manifest.addProperty("gridSizeHeight", run.surveyResult.gridSizeHeight());
+        manifest.add("scanBounds", scanBoundsJson(run.surveyResult));
+        manifest.add("surveyStats", surveyStatsJson(run.surveyResult));
         manifest.add("continents", continentsJson(run.continentSummaries.values()));
         writeJson(run.runDirectory.resolve("w_manifest.json"), manifest);
         run.artifacts.put("worldSurveyContext", "world_survey_context.json");
@@ -577,6 +1376,12 @@ public final class RealmPlanningService {
         run.artifacts.put("worldPatchPreview", "world_patch_preview.png");
         run.artifacts.put("gridOverlayPreview", "grid_overlay_preview.png");
         run.artifacts.put("wManifest", "w_manifest.json");
+        if (Files.exists(run.runDirectory.resolve("world_feature_grid.json"))) {
+            run.artifacts.put("worldFeatureGrid", "world_feature_grid.json");
+        }
+        if (Files.exists(run.surveyResult.manifestPath())) {
+            run.artifacts.put("worldSurveyManifest", run.runDirectory.relativize(run.surveyResult.manifestPath()).toString());
+        }
     }
 
     private void exportT1(RealmRun run) throws IOException {
@@ -610,19 +1415,24 @@ public final class RealmPlanningService {
     private void exportTerritory(RealmRun run) throws IOException {
         writeJson(run.runDirectory.resolve("realm_territory_map.json"), run.territory.asJson());
         writeJson(run.runDirectory.resolve("t3_report.json"), run.territory.reportJson());
+        writeJson(run.runDirectory.resolve("territory_repair_log.json"), run.territory.repairLogJson());
         exportTerritoryPreview(run, run.runDirectory.resolve("territory_preview.png"));
         run.artifacts.put("realmTerritoryMap", "realm_territory_map.json");
         run.artifacts.put("territoryPreview", "territory_preview.png");
         run.artifacts.put("t3Report", "t3_report.json");
+        run.artifacts.put("territoryRepairLog", "territory_repair_log.json");
     }
 
     private void exportRegistry(RealmRun run) throws IOException {
         writeJson(run.runDirectory.resolve("city_seed_registry.json"), run.registry.asJson());
-        writeJson(run.runDirectory.resolve("t4_report.json"), run.registry.reportJson());
+        writeJson(run.runDirectory.resolve("t4_report.json"), t4ReportJson(run));
+        writeJson(run.runDirectory.resolve("realm_city_candidate_packages.json"), cityCandidatePackagesJson(run));
         exportCitySeedPreview(run, run.runDirectory.resolve("city_seed_preview.png"));
         run.artifacts.put("citySeedRegistry", "city_seed_registry.json");
         run.artifacts.put("citySeedPreview", "city_seed_preview.png");
         run.artifacts.put("t4Report", "t4_report.json");
+        run.artifacts.put("realmCityCandidatePackages", "realm_city_candidate_packages.json");
+        exportScoreManifest(run);
     }
 
     private void exportCandidateMap(RealmRun run, CandidatePackage pack) throws IOException {
@@ -644,7 +1454,7 @@ public final class RealmPlanningService {
             for (WorldCell cell : run.worldCells) {
                 int x = (cell.gridX - bounds.minX) * scale;
                 int z = (cell.gridZ - bounds.minZ) * scale;
-                Color color = colorForLandform(cell.landform, cell.landWater);
+                Color color = colorForLandform(cell.baseLandform(), cell.landWater);
                 if (highlight != null && !highlight.test(cell)) {
                     color = new Color(color.getRed() / 4, color.getGreen() / 4, color.getBlue() / 4);
                 }
@@ -680,13 +1490,25 @@ public final class RealmPlanningService {
             for (TerritoryCell territoryCell : run.territory.cells) {
                 int x = (territoryCell.gridX - bounds.minX) * scale;
                 int z = (territoryCell.gridZ - bounds.minZ) * scale;
-                g.setColor(colors.getOrDefault(territoryCell.realmId, Color.GRAY));
+                g.setColor(territoryPreviewColor(territoryCell, colors));
                 g.fillRect(x, z, scale, scale);
             }
         } finally {
             g.dispose();
         }
         ImageIO.write(image, "png", path.toFile());
+    }
+
+    private static Color territoryPreviewColor(TerritoryCell territoryCell, Map<String, Color> realmColors) {
+        if ("owned".equals(territoryCell.status)) {
+            return realmColors.getOrDefault(territoryCell.realmId, Color.GRAY);
+        }
+        return switch (territoryCell.status) {
+            case "contested" -> new Color(236, 196, 73);
+            case "blocked" -> new Color(52, 56, 64);
+            case "unreachable" -> new Color(78, 99, 132);
+            default -> new Color(74, 112, 79);
+        };
     }
 
     private void exportCitySeedPreview(RealmRun run, Path path) throws IOException {
@@ -710,16 +1532,21 @@ public final class RealmPlanningService {
 
     private JsonObject acceptanceReport(RealmRun run, long durationMs) {
         JsonObject report = new JsonObject();
-        report.addProperty("caseId", "realm_v1_1_smoke");
+        report.addProperty("caseId", "realm_v1_2_quality_acceptance");
         report.addProperty("runId", run.runId);
         report.addProperty("durationMs", durationMs);
-        boolean passed = run.registry != null && run.territory != null && run.registry.citySeeds.stream()
+        JsonObject scoreManifest = run.scoreManifest == null ? scoreManifest(run) : run.scoreManifest;
+        boolean structurallyPassed = run.registry != null && run.territory != null && run.registry.citySeeds.stream()
                 .anyMatch(seed -> "capital".equals(seed.role));
+        boolean passed = structurallyPassed && scoreManifest.get("passed").getAsBoolean();
         report.addProperty("passed", passed);
         report.add("stageResults", stageResults(run));
         report.add("artifacts", run.artifactsJson());
+        report.add("surveyStats", surveyStatsJson(run.surveyResult));
+        report.add("scanBounds", scanBoundsJson(run.surveyResult));
         report.add("coordinateChecks", coordinateChecks(run));
         report.add("ratioChecks", ratioChecks(run));
+        report.add("scoreManifest", scoreManifest);
         JsonArray visualChecks = new JsonArray();
         for (String key : List.of("worldPatchPreview", "gridOverlayPreview", "territoryPreview", "citySeedPreview")) {
             if (run.artifacts.containsKey(key)) {
@@ -728,11 +1555,393 @@ public final class RealmPlanningService {
         }
         report.add("visualChecks", visualChecks);
         JsonArray failures = new JsonArray();
-        if (!passed) {
+        if (!structurallyPassed) {
             failures.add("W/T acceptance did not reach CitySeedRegistry with a capital city.");
+        }
+        for (JsonElement block : scoreManifest.getAsJsonArray("hardBlocks")) {
+            failures.add(block.getAsString());
         }
         report.add("failures", failures);
         return report;
+    }
+
+    private void exportScoreManifest(RealmRun run) throws IOException {
+        JsonObject score = scoreManifest(run);
+        run.scoreManifest = score;
+        writeJson(run.runDirectory.resolve("score_manifest.json"), score);
+        run.artifacts.put("scoreManifest", "score_manifest.json");
+    }
+
+    private JsonObject scoreManifest(RealmRun run) {
+        JsonArray hardBlocks = new JsonArray();
+        JsonArray warnings = new JsonArray();
+        JsonObject subScores = new JsonObject();
+
+        JsonObject wScore = wQualityScore(run, warnings);
+        JsonObject t3Score = t3QualityScore(run, hardBlocks);
+        JsonObject t4Score = t4QualityScore(run, hardBlocks);
+        subScores.add("W", wScore);
+        subScores.add("T3", t3Score);
+        subScores.add("T4", t4Score);
+
+        double totalScore = wScore.get("score").getAsDouble() * 0.25
+                + t3Score.get("score").getAsDouble() * 0.45
+                + t4Score.get("score").getAsDouble() * 0.30;
+        boolean passed = hardBlocks.size() == 0 && totalScore >= 70.0;
+
+        JsonObject manifest = new JsonObject();
+        manifest.addProperty("schemaVersion", SCHEMA_VERSION);
+        manifest.addProperty("runId", run.runId);
+        manifest.addProperty("surveyId", run.surveyResult.surveyId());
+        manifest.addProperty("qualityMode", run.qualityMode);
+        manifest.addProperty("expansionModel", run.expansionModel);
+        manifest.addProperty("totalScore", Math.round(totalScore * 100.0) / 100.0);
+        manifest.addProperty("passed", passed);
+        manifest.add("subScores", subScores);
+        manifest.add("hardBlocks", hardBlocks);
+        manifest.add("warnings", warnings);
+        manifest.add("manualReviewChecklist", arrayOf(
+                "检查 world_patch_preview.png 中 cliff 是否只作为陡坡标签而非主大陆色块。",
+                "检查 territory_preview.png 中每个非海洋国度是否连成主块，边界是否可读。",
+                "逐国查看 realm_city_candidate_packages.json，确认城市候选点覆盖首都、港口、矿业、边境功能。"));
+        JsonArray previews = new JsonArray();
+        for (String key : List.of("worldPatchPreview", "gridOverlayPreview", "territoryPreview", "citySeedPreview")) {
+            if (run.artifacts.containsKey(key)) {
+                previews.add(run.artifacts.get(key));
+            }
+        }
+        manifest.add("previewSet", previews);
+        manifest.addProperty("createdAt", Instant.now().toString());
+        return manifest;
+    }
+
+    private JsonObject wQualityScore(RealmRun run, JsonArray warnings) {
+        long assignable = run.worldCells.stream().filter(WorldCell::assignableLand).count();
+        long cliff = run.worldCells.stream().filter(cell -> cell.assignableLand() && "cliff".equals(cell.baseLandform())).count();
+        long steep = run.worldCells.stream().filter(cell -> cell.assignableLand() && cell.landformTags().contains("steep")).count();
+        double cliffRatio = assignable == 0 ? 0.0 : cliff / (double) assignable;
+        double steepTagRatio = assignable == 0 ? 0.0 : steep / (double) assignable;
+        long singletonPatches = run.patchSummaries.values().stream().filter(patch -> patch.areaCells <= 1).count();
+        double singletonPatchRatio = run.patchSummaries.isEmpty() ? 0.0 : singletonPatches / (double) run.patchSummaries.size();
+        double score = 100.0;
+        score -= Math.min(25.0, cliffRatio * 80.0);
+        score -= Math.min(20.0, singletonPatchRatio * 30.0);
+        if (!run.surveyResult.microSamplingImplemented()) {
+            warnings.add("W micro-sampling is represented as quality metadata in this build; detailed 16/32 block sub-sampling is pending GIS sampler work.");
+        }
+        JsonObject json = new JsonObject();
+        json.addProperty("score", Math.round(Math.max(0.0, score) * 100.0) / 100.0);
+        json.addProperty("cellStepBlocks", run.surveyResult.cellStepBlocks());
+        json.addProperty("microSampleStrideBlocks", run.surveyResult.microSampleStrideBlocks());
+        json.addProperty("metricSampleStrideBlocks", run.surveyResult.microSampleStrideBlocks());
+        json.addProperty("localSlopeRadiusBlocks", run.surveyResult.localSlopeRadiusBlocks());
+        json.addProperty("microSamplingImplemented", run.surveyResult.microSamplingImplemented());
+        json.addProperty("microSampleCount", run.surveyResult.microSampleCount());
+        json.addProperty("cliffRatio", cliffRatio);
+        json.addProperty("steepTagRatio", steepTagRatio);
+        json.addProperty("singletonPatchRatio", singletonPatchRatio);
+        return json;
+    }
+
+    private JsonObject t3QualityScore(RealmRun run, JsonArray hardBlocks) {
+        JsonObject json = new JsonObject();
+        if (run.territory == null) {
+            hardBlocks.add("T3 territory map is missing.");
+            json.addProperty("score", 0.0);
+            return json;
+        }
+        double minLargest = 1.0;
+        double maxDetached = 0.0;
+        double maxAreaDeviation = 0.0;
+        double avgBoundary = 0.0;
+        double avgBudget = 0.0;
+        double avgTerrainIdentity = 0.0;
+        double maxOverExpansion = 0.0;
+        int count = 0;
+        JsonArray badRealms = new JsonArray();
+        for (RealmProfile profile : run.profiles) {
+            if (!run.territory.stats.containsKey(profile.realmId)) {
+                String message = "T3 territory hard block: realm has no owned territory cells: " + profile.realmId;
+                hardBlocks.add(message);
+                badRealms.add(profile.realmId);
+            }
+        }
+        for (RealmStats stats : run.territory.stats.values()) {
+            minLargest = Math.min(minLargest, stats.largestComponentRatio);
+            maxDetached = Math.max(maxDetached, stats.detachedAreaRatio);
+            double areaDeviation = stats.targetAreaCells <= 0 ? 0.0
+                    : Math.abs(stats.areaCells - stats.targetAreaCells) / (double) stats.targetAreaCells;
+            maxAreaDeviation = Math.max(maxAreaDeviation, areaDeviation);
+            avgBoundary += stats.naturalBoundaryFit;
+            avgBudget += Math.min(1.0, stats.budgetUsedRatio);
+            avgTerrainIdentity += terrainIdentityScore(run, stats.realmId);
+            maxOverExpansion = Math.max(maxOverExpansion, Math.max(0.0, stats.budgetUsedRatio - 1.0));
+            count++;
+            if (stats.largestComponentRatio < STRICT_LARGEST_COMPONENT_RATIO
+                    || stats.detachedAreaRatio > STRICT_DETACHED_AREA_RATIO) {
+                String message = "T3 topology hard block: " + stats.realmId
+                        + " largestComponentRatio=" + round(stats.largestComponentRatio)
+                        + ", detachedAreaRatio=" + round(stats.detachedAreaRatio);
+                hardBlocks.add(message);
+                badRealms.add(stats.realmId);
+            }
+            if ("strict".equals(run.qualityMode)
+                    && !"action_budget".equals(run.expansionModel)
+                    && (stats.actualAreaRatio < stats.scaleMinAreaRatio || stats.actualAreaRatio > stats.scaleMaxAreaRatio)) {
+                String message = "T3 area quota hard block: " + stats.realmId
+                        + " areaCells=" + stats.areaCells
+                        + ", targetAreaCells=" + stats.targetAreaCells
+                        + ", actualAreaRatio=" + round(stats.actualAreaRatio)
+                        + ", allowed=[" + round(stats.scaleMinAreaRatio) + "," + round(stats.scaleMaxAreaRatio) + "]";
+                hardBlocks.add(message);
+                badRealms.add(stats.realmId);
+            }
+            if ("strict".equals(run.qualityMode) && "action_budget".equals(run.expansionModel)) {
+                int minPlayableCells = Math.min(
+                        Math.max(ACTION_BUDGET_STRICT_MIN_OWNED_CELLS,
+                                (int) Math.ceil(stats.targetAreaCells * ACTION_BUDGET_STRICT_MIN_OWNED_RATIO)),
+                        Math.max(1, (int) Math.floor(stats.targetAreaCells * 0.50)));
+                if (stats.areaCells < minPlayableCells) {
+                    String message = "T3 action budget hard block: " + stats.realmId
+                            + " ownedCells=" + stats.areaCells
+                            + ", minimumPlayableCells=" + minPlayableCells;
+                    hardBlocks.add(message);
+                    badRealms.add(stats.realmId);
+                }
+            }
+        }
+        avgBoundary = count == 0 ? 0.0 : avgBoundary / count;
+        avgBudget = count == 0 ? 0.0 : avgBudget / count;
+        avgTerrainIdentity = count == 0 ? 0.0 : avgTerrainIdentity / count;
+        JsonObject status = run.territory.statusSummaryJson();
+        double wildlandRatio = status.get("wildRatio").getAsDouble();
+        double contestedRatio = status.get("contestedRatio").getAsDouble();
+        double blockedRatio = status.get("blockedRatio").getAsDouble();
+        double ownedAreaRatio = status.get("ownedRatio").getAsDouble();
+        double wildlandScore = "action_budget".equals(run.expansionModel)
+                ? 100.0 - Math.abs(wildlandRatio - 0.18) * 180.0 : 70.0;
+        double contestedScore = 100.0 - Math.min(100.0, contestedRatio * 240.0);
+        double budgetCoherenceScore = 100.0 - Math.abs(0.82 - avgBudget) * 80.0 - maxOverExpansion * 120.0;
+        double terrainIdentityScore = avgTerrainIdentity * 100.0;
+        double score = 100.0;
+        score -= Math.max(0.0, STRICT_LARGEST_COMPONENT_RATIO - minLargest) * 160.0;
+        score -= Math.max(0.0, maxDetached - STRICT_DETACHED_AREA_RATIO) * 240.0;
+        if (!"action_budget".equals(run.expansionModel)) {
+            score -= Math.max(0.0, maxAreaDeviation - 0.15) * 120.0;
+        }
+        score -= Math.max(0.0, 0.25 - avgBoundary) * 40.0;
+        if ("action_budget".equals(run.expansionModel)) {
+            score = score * 0.45 + budgetCoherenceScore * 0.20 + terrainIdentityScore * 0.20
+                    + wildlandScore * 0.10 + contestedScore * 0.05;
+        }
+        json.addProperty("score", Math.round(Math.max(0.0, score) * 100.0) / 100.0);
+        json.addProperty("expansionModel", run.expansionModel);
+        json.addProperty("minLargestComponentRatio", minLargest);
+        json.addProperty("maxDetachedAreaRatio", maxDetached);
+        json.addProperty("maxAreaQuotaDeviation", maxAreaDeviation);
+        json.addProperty("avgNaturalBoundaryFit", avgBoundary);
+        json.addProperty("budgetCoherenceScore", Math.round(Math.max(0.0, budgetCoherenceScore) * 100.0) / 100.0);
+        json.addProperty("terrainIdentityScore", Math.round(Math.max(0.0, terrainIdentityScore) * 100.0) / 100.0);
+        json.addProperty("wildlandScore", Math.round(Math.max(0.0, wildlandScore) * 100.0) / 100.0);
+        json.addProperty("contestedReasonabilityScore", Math.round(Math.max(0.0, contestedScore) * 100.0) / 100.0);
+        json.addProperty("overExpansionPenalty", maxOverExpansion);
+        json.addProperty("wildlandRatio", wildlandRatio);
+        json.addProperty("contestedRatio", contestedRatio);
+        json.addProperty("blockedRatio", blockedRatio);
+        json.addProperty("ownedAreaRatio", ownedAreaRatio);
+        json.addProperty("repairCount", run.territory.repairs.size());
+        json.add("badRealms", badRealms);
+        return json;
+    }
+
+    private JsonObject t4QualityScore(RealmRun run, JsonArray hardBlocks) {
+        JsonObject json = new JsonObject();
+        if (run.registry == null) {
+            hardBlocks.add("T4 city seed registry is missing.");
+            json.addProperty("score", 0.0);
+            return json;
+        }
+        int duplicateAnchors = run.registry.duplicateAnchorCount();
+        int spacingViolations = citySpacingViolationCount(run);
+        long capitals = run.registry.citySeeds.stream().filter(seed -> "capital".equals(seed.role)).count();
+        if (duplicateAnchors > 0) {
+            hardBlocks.add("T4 city anchor hard block: duplicate non-satellite anchors=" + duplicateAnchors);
+        }
+        if (spacingViolations > 0) {
+            hardBlocks.add("T4 city spacing hard block: overlapping non-satellite city seeds=" + spacingViolations);
+        }
+        if (capitals < run.profiles.size()) {
+            hardBlocks.add("T4 city registry hard block: not every realm has a capital city seed.");
+        }
+        double score = 100.0 - duplicateAnchors * 20.0 - spacingViolations * 15.0
+                - Math.max(0, run.profiles.size() - capitals) * 25.0;
+        json.addProperty("score", Math.round(Math.max(0.0, score) * 100.0) / 100.0);
+        json.addProperty("citySeedCount", run.registry.citySeeds.size());
+        json.addProperty("capitalCount", capitals);
+        json.addProperty("duplicateAnchorCount", duplicateAnchors);
+        json.addProperty("spacingViolationCount", spacingViolations);
+        return json;
+    }
+
+    private double terrainIdentityScore(RealmRun run, String realmId) {
+        if (run.territory == null) {
+            return 0.0;
+        }
+        RealmProfile profile = run.profile(realmId);
+        int owned = 0;
+        double fit = 0.0;
+        for (TerritoryCell territoryCell : run.territory.cells) {
+            if (!"owned".equals(territoryCell.status) || !realmId.equals(territoryCell.realmId)) {
+                continue;
+            }
+            WorldCell cell = run.worldCellsByKey.get(key(territoryCell.gridX, territoryCell.gridZ));
+            if (cell == null) {
+                continue;
+            }
+            owned++;
+            fit += terrainFit(profile, cell);
+        }
+        return owned == 0 ? 0.0 : clamp(fit / owned, 0.0, 1.0);
+    }
+
+    private double terrainFit(RealmProfile profile, WorldCell cell) {
+        double score = 0.55;
+        if (profile.landformPreferences.contains(cell.landform) || profile.landformPreferences.contains(cell.baseLandform())) {
+            score += 0.20;
+        }
+        if (profile.avoidLandforms.contains(cell.landform) || profile.avoidLandforms.contains(cell.baseLandform())) {
+            score -= 0.25;
+        }
+        boolean mountain = "ridge".equals(cell.baseLandform()) || "upland".equals(cell.baseLandform())
+                || cell.landformTags().contains("mountain_front");
+        if (mountain) {
+            score += profile.expansionStyle.mountainAffinity * 0.20;
+        }
+        if ("shore".equals(cell.baseLandform()) || cell.landformTags().contains("coastal")) {
+            score += profile.expansionStyle.coastalBias * 0.16;
+        }
+        if (cell.waterDistanceBlocks <= 512.0) {
+            score += profile.expansionStyle.waterAffinity * 0.08;
+        }
+        if (cell.landformTags().contains("steep") && profile.expansionStyle.mountainAffinity < 0.0) {
+            score -= 0.15;
+        }
+        return clamp(score, 0.0, 1.0);
+    }
+
+    private JsonObject t4ReportJson(RealmRun run) {
+        JsonObject json = new JsonObject();
+        json.addProperty("registryId", run.registry.registryId);
+        json.addProperty("citySeedCount", run.registry.citySeeds.size());
+        long capitals = run.registry.citySeeds.stream().filter(seed -> "capital".equals(seed.role)).count();
+        json.addProperty("capitalCount", capitals);
+        long uniqueIds = run.registry.citySeeds.stream().map(seed -> seed.citySeedId).distinct().count();
+        json.addProperty("uniqueCitySeedIds", uniqueIds);
+        json.addProperty("allCitySeedIdsUnique", uniqueIds == run.registry.citySeeds.size());
+        json.addProperty("duplicateAnchorCount", run.registry.duplicateAnchorCount());
+        json.addProperty("spacingViolationCount", citySpacingViolationCount(run));
+        return json;
+    }
+
+    private int citySpacingViolationCount(RealmRun run) {
+        if (run.registry == null) {
+            return 0;
+        }
+        int violations = 0;
+        for (int i = 0; i < run.registry.citySeeds.size(); i++) {
+            CitySeed left = run.registry.citySeeds.get(i);
+            if (!left.satelliteOf.isBlank()) {
+                continue;
+            }
+            for (int j = i + 1; j < run.registry.citySeeds.size(); j++) {
+                CitySeed right = run.registry.citySeeds.get(j);
+                if (!left.realmId.equals(right.realmId) || !right.satelliteOf.isBlank()) {
+                    continue;
+                }
+                int required = left.planningRadiusCells + right.planningRadiusCells;
+                double distance = graphDistanceWithinRealm(run, left.realmId, left.anchorGrid, right.anchorGrid,
+                        Math.max(64, required + 16));
+                if (!Double.isFinite(distance)) {
+                    distance = distanceCells(left.anchorGrid.x, left.anchorGrid.z, right.anchorGrid.x, right.anchorGrid.z);
+                }
+                if (distance < required) {
+                    violations++;
+                }
+            }
+        }
+        return violations;
+    }
+
+    private JsonArray cityCandidatePackagesJson(RealmRun run) {
+        JsonArray packages = new JsonArray();
+        if (run.registry == null || run.territory == null) {
+            return packages;
+        }
+        for (RealmProfile profile : run.profiles) {
+            JsonObject pack = new JsonObject();
+            pack.addProperty("packageId", "city_candidates_" + profile.realmId);
+            pack.addProperty("realmId", profile.realmId);
+            pack.addProperty("surveyId", run.surveyResult.surveyId());
+            pack.addProperty("territoryMapId", run.territory.territoryMapId);
+            JsonObject legend = new JsonObject();
+            legend.addProperty("coordinateFormat", "gridX,gridZ");
+            legend.addProperty("cellStepBlocks", run.surveyResult.cellStepBlocks());
+            legend.add("originBlock", new GridPoint(run.surveyResult.gridOriginBlockX(),
+                    run.surveyResult.gridOriginBlockZ()).asJson());
+            pack.add("gridLegend", legend);
+            JsonArray selected = new JsonArray();
+            for (CitySeed seed : run.registry.citySeeds) {
+                if (profile.realmId.equals(seed.realmId)) {
+                    selected.add(seed.asJson());
+                }
+            }
+            pack.add("selectedCitySeeds", selected);
+            JsonObject rules = new JsonObject();
+            rules.addProperty("spacingRule", "non-satellite distance must be >= sum(planningRadiusCells)");
+            rules.addProperty("chunkPregenerationRule", "city exists only at declared anchor/candidate ids; chunk order must not create new finite cities");
+            pack.add("rules", rules);
+            pack.add("rolePools", rolePoolSummary(run, profile.realmId));
+            packages.add(pack);
+        }
+        return packages;
+    }
+
+    private JsonArray rolePoolSummary(RealmRun run, String realmId) {
+        JsonArray pools = new JsonArray();
+        pools.add(rolePool(run, realmId, "port", cell -> "shore".equals(cell.landWater)));
+        pools.add(rolePool(run, realmId, "mining_town",
+                cell -> cell.landform.equals("ridge") || cell.landform.equals("slope") || cell.landform.equals("cliff")));
+        pools.add(rolePool(run, realmId, "border_fort", cell -> isBorderCell(run, realmId, cell)));
+        return pools;
+    }
+
+    private JsonObject rolePool(RealmRun run, String realmId, String role, CellPredicate predicate) {
+        JsonObject json = new JsonObject();
+        json.addProperty("role", role);
+        int count = 0;
+        JsonArray examples = new JsonArray();
+        if (run.territory != null) {
+            for (TerritoryCell territoryCell : run.territory.cells) {
+                if (!realmId.equals(territoryCell.realmId)) {
+                    continue;
+                }
+                WorldCell cell = run.worldCellsByKey.get(key(territoryCell.gridX, territoryCell.gridZ));
+                if (cell == null || !predicate.test(cell)) {
+                    continue;
+                }
+                count++;
+                if (examples.size() < 8) {
+                    JsonObject example = new JsonObject();
+                    example.addProperty("candidateId", role + "_" + realmId + "_" + cell.gridX + "_" + cell.gridZ);
+                    example.add("grid", new GridPoint(cell.gridX, cell.gridZ).asGridJson());
+                    example.addProperty("subregionId", subregionIdFor(run, realmId, cell));
+                    examples.add(example);
+                }
+            }
+        }
+        json.addProperty("candidateCount", count);
+        json.add("examples", examples);
+        return json;
     }
 
     private JsonObject stageResults(RealmRun run) {
@@ -762,24 +1971,38 @@ public final class RealmPlanningService {
     }
 
     private JsonObject surveyJson(RealmRun run) {
-        AtlasRegion region = run.refreshResult.region();
         JsonObject json = new JsonObject();
         json.addProperty("schemaVersion", SCHEMA_VERSION);
-        json.addProperty("surveyId", "survey_" + run.runId);
-        json.addProperty("dimensionId", region.dimensionId());
-        json.addProperty("worldSeed", "unknown");
-        json.addProperty("cellStepBlocks", region.cellStepBlocks());
+        json.addProperty("surveyId", run.surveyResult.surveyId());
+        json.addProperty("dimensionId", run.surveyResult.dimensionId());
+        json.addProperty("worldSeed", run.surveyResult.worldSeed());
+        json.addProperty("worldBorderSizeBlocks", run.surveyResult.worldBorderSizeBlocks());
+        json.addProperty("cellStepBlocks", run.surveyResult.cellStepBlocks());
+        json.addProperty("microSampleStrideBlocks", run.surveyResult.microSampleStrideBlocks());
+        json.addProperty("metricSampleStrideBlocks", run.surveyResult.microSampleStrideBlocks());
+        json.addProperty("localSlopeRadiusBlocks", run.surveyResult.localSlopeRadiusBlocks());
+        json.addProperty("microSamplingImplemented", run.surveyResult.microSamplingImplemented());
+        json.addProperty("microSampleCount", run.surveyResult.microSampleCount());
+        json.addProperty("configHash", run.surveyResult.configHash());
+        json.addProperty("sealed", run.surveyResult.sealed());
         JsonObject origin = new JsonObject();
-        origin.addProperty("x", region.blockMinX());
-        origin.addProperty("z", region.blockMinZ());
+        origin.addProperty("x", run.surveyResult.gridOriginBlockX());
+        origin.addProperty("z", run.surveyResult.gridOriginBlockZ());
         json.add("gridOriginBlock", origin);
         JsonObject size = new JsonObject();
-        size.addProperty("width", region.cellsPerSide());
-        size.addProperty("height", region.cellsPerSide());
+        size.addProperty("width", run.surveyResult.gridSizeWidth());
+        size.addProperty("height", run.surveyResult.gridSizeHeight());
+        size.addProperty("cellCount", run.surveyResult.gridSizeWidth() * run.surveyResult.gridSizeHeight());
         json.add("gridSize", size);
+        json.add("scanBounds", scanBoundsJson(run.surveyResult));
+        json.add("surveyStats", surveyStatsJson(run.surveyResult));
         JsonObject source = new JsonObject();
-        source.addProperty("gisRefreshJobId", run.refreshResult.job().jobId());
-        source.addProperty("sampleMode", run.refreshResult.job().sampleMode().contractName());
+        source.addProperty("sampleMode", run.surveyResult.sampleMode().contractName());
+        source.addProperty("sourceType", run.surveyResult.tileCount() == 1 ? "single_region_refresh" : "world_survey_tiles");
+        source.addProperty("microSamplingImplemented", run.surveyResult.microSamplingImplemented());
+        if (Files.exists(run.surveyResult.manifestPath())) {
+            source.addProperty("worldSurveyManifest", run.surveyResult.manifestPath().toAbsolutePath().toString());
+        }
         json.add("source", source);
         json.addProperty("createdAt", Instant.now().toString());
         if (run.worldTheme != null) {
@@ -799,6 +2022,14 @@ public final class RealmPlanningService {
         json.add("cells", cells);
         json.add("patches", patchesJson(run.patchSummaries.values()));
         json.add("continents", continentsJson(run.continentSummaries.values()));
+        JsonObject cleaning = new JsonObject();
+        cleaning.addProperty("baseLandformField", "baseLandform");
+        cleaning.addProperty("tagField", "landformTags");
+        cleaning.addProperty("cliffAsTag", true);
+        cleaning.addProperty("globalPatchMergeImplemented", false);
+        cleaning.addProperty("microSamplingImplemented", run.surveyResult.microSamplingImplemented());
+        cleaning.addProperty("microSampleCount", run.surveyResult.microSampleCount());
+        json.add("cleaningSummary", cleaning);
         return json;
     }
 
@@ -807,8 +2038,41 @@ public final class RealmPlanningService {
         summary.addProperty("cellCount", run.worldCells.size());
         summary.addProperty("patchCount", run.patchSummaries.size());
         summary.addProperty("continentCount", run.continentSummaries.size());
+        summary.add("scanBounds", scanBoundsJson(run.surveyResult));
+        summary.add("surveyStats", surveyStatsJson(run.surveyResult));
         summary.add("continents", continentsJson(run.continentSummaries.values()));
         return summary;
+    }
+
+    private static JsonObject scanBoundsJson(WorldSurveyResult result) {
+        JsonObject bounds = new JsonObject();
+        bounds.addProperty("centerBlockX", result.centerBlockX());
+        bounds.addProperty("centerBlockZ", result.centerBlockZ());
+        bounds.addProperty("planningRadiusBlocks", result.planningRadiusBlocks());
+        bounds.addProperty("minBlockX", result.scanMinBlockX());
+        bounds.addProperty("minBlockZ", result.scanMinBlockZ());
+        bounds.addProperty("maxBlockX", result.scanMaxBlockX());
+        bounds.addProperty("maxBlockZ", result.scanMaxBlockZ());
+        bounds.addProperty("diameterBlocksX", result.scanMaxBlockX() - result.scanMinBlockX() + 1);
+        bounds.addProperty("diameterBlocksZ", result.scanMaxBlockZ() - result.scanMinBlockZ() + 1);
+        return bounds;
+    }
+
+    private static JsonObject surveyStatsJson(WorldSurveyResult result) {
+        JsonObject stats = new JsonObject();
+        stats.addProperty("durationMs", result.durationMs());
+        stats.addProperty("tileCount", result.tileCount());
+        stats.addProperty("scannedTileCount", result.scannedTileCount());
+        stats.addProperty("cachedTileCount", result.cachedTileCount());
+        stats.addProperty("failedTileCount", result.failedTileCount());
+        stats.addProperty("artifactBytes", result.artifactBytes());
+        stats.addProperty("sealed", result.sealed());
+        stats.addProperty("metricSampleStrideBlocks", result.microSampleStrideBlocks());
+        stats.addProperty("localSlopeRadiusBlocks", result.localSlopeRadiusBlocks());
+        stats.addProperty("microSamplingImplemented", result.microSamplingImplemented());
+        stats.addProperty("microSampleCount", result.microSampleCount());
+        stats.addProperty("configHash", result.configHash());
+        return stats;
     }
 
     private static JsonArray profilesJson(Iterable<RealmProfile> profiles) {
@@ -929,7 +2193,141 @@ public final class RealmPlanningService {
         return cost;
     }
 
-    private double candidateScore(RealmProfile profile, WorldCell cell) {
+    private double frontierMoveCost(RealmProfile profile, RealmSeed seed, WorldCell from, WorldCell to, double parentCost) {
+        ExpansionStyle style = profile.expansionStyle;
+        double move = 1.0 + Math.abs(to.slopeAvg - from.slopeAvg) * 1.5;
+        move += Math.max(0.0, to.slopeAvg) * (0.35 - style.mountainAffinity * 0.25);
+        move += Math.abs(to.heightAvg - from.heightAvg) / 80.0;
+        if ("shore".equals(to.landWater)) {
+            move -= style.coastalBias * 0.8;
+        }
+        move += (to.waterDistanceBlocks / 1024.0) * (0.6 - style.waterAffinity * 0.45);
+        move += landformAffinityPenalty(profile, to);
+        move -= style.resourceSeeking * resourceHint(to) * 0.25;
+        double seedDistance = seed == null ? 0.0 : distanceCells(seed.seedGrid.x, seed.seedGrid.z, to.gridX, to.gridZ);
+        move += seedDistance * (0.015 + style.compactness * 0.035);
+        return parentCost + Math.max(0.05, move);
+    }
+
+    private ExpansionBudget expansionBudget(RealmProfile profile, int targetAreaCells, int landCellCount) {
+        double priorityMultiplier = switch (profile.scalePlan.priority) {
+            case "minor" -> 0.72;
+            case "major" -> 1.25;
+            case "empire" -> 1.65;
+            default -> 1.0;
+        };
+        double styleMultiplier = 0.85 + profile.expansionStyle.borderPressure * 0.25
+                + (1.0 - profile.expansionStyle.compactness) * 0.25;
+        double base = Math.max(48.0, Math.sqrt(Math.max(1, targetAreaCells)) * 64.0);
+        double effective = base * priorityMultiplier * styleMultiplier;
+        double soft = effective * 0.72;
+        double hard = effective;
+        double maxClaim = 34.0 + priorityMultiplier * 8.0 + Math.max(0.0, profile.expansionStyle.mountainAffinity) * 5.0;
+        double wildlandTolerance = clamp(0.18 + profile.expansionStyle.compactness * 0.20
+                - profile.expansionStyle.borderPressure * 0.12, 0.05, 0.45);
+        return new ExpansionBudget(base, priorityMultiplier * styleMultiplier, effective, soft, hard,
+                Math.max(8.0, maxClaim), wildlandTolerance);
+    }
+
+    private TerrainCostProfile terrainCostProfile(RealmProfile profile) {
+        ExpansionStyle style = profile.expansionStyle;
+        Map<String, Double> baseCosts = new LinkedHashMap<>();
+        baseCosts.put("lowland", 1.0 + Math.max(0.0, -style.mountainAffinity) * 0.25);
+        baseCosts.put("valley", 1.05 - style.waterAffinity * 0.15);
+        baseCosts.put("upland", 1.45 - Math.max(0.0, style.mountainAffinity) * 0.45);
+        baseCosts.put("ridge", 2.25 - Math.max(0.0, style.mountainAffinity) * 0.95);
+        baseCosts.put("shore", 1.15 - style.coastalBias * 0.55);
+        baseCosts.put("water", "allowed".equals(style.seaCrossingPolicy) ? 2.5
+                : "limited".equals(style.seaCrossingPolicy) ? 4.0 : Double.POSITIVE_INFINITY);
+        baseCosts.put("unknown", Double.POSITIVE_INFINITY);
+
+        Map<String, Double> tagCosts = new LinkedHashMap<>();
+        tagCosts.put("steep", 2.2 - Math.max(0.0, style.mountainAffinity) * 1.0);
+        tagCosts.put("cliff", 5.0 - Math.max(0.0, style.mountainAffinity) * 2.0);
+        tagCosts.put("coastal", -style.coastalBias * 0.35);
+        tagCosts.put("mountain_front", -Math.max(0.0, style.mountainAffinity) * 0.35);
+        return new TerrainCostProfile(baseCosts, tagCosts);
+    }
+
+    private double actionEdgeCost(RealmRun run, String realmId, WorldCell from, WorldCell to, int pathLength) {
+        RealmProfile profile = run.profile(realmId);
+        TerrainCostProfile terrain = run.terrainCostProfiles.getOrDefault(realmId, terrainCostProfile(profile));
+        double base = terrain.costFor(to.baseLandform());
+        if (!Double.isFinite(base)) {
+            return Double.POSITIVE_INFINITY;
+        }
+        double tagCost = 0.0;
+        for (String tag : to.landformTags()) {
+            tagCost += terrain.tagCost(tag);
+        }
+        double barrier = Math.max(0.0, to.barrierCost() - 1.0);
+        double supply = pathLength * (0.025 + profile.expansionStyle.compactness * 0.035);
+        double compactness = from == null ? 0.0 : Math.abs(to.heightP50() - from.heightP50()) / 64.0;
+        double waterBonus = "shore".equals(to.baseLandform()) ? -profile.expansionStyle.coastalBias * 0.45 : 0.0;
+        return Math.max(0.05, base + tagCost + barrier + supply + compactness + waterBonus);
+    }
+
+    private boolean edgeBlocked(RealmRun run, String realmId, WorldCell from, WorldCell to) {
+        RealmProfile profile = run.profile(realmId);
+        if ("water".equals(to.baseLandform()) && !"allowed".equals(profile.expansionStyle.seaCrossingPolicy)) {
+            return true;
+        }
+        if (to.barrierCost() >= 9.0 && profile.expansionStyle.mountainAffinity < 0.15) {
+            return true;
+        }
+        return false;
+    }
+
+    private void recordStopReason(RealmRun run, String realmId, String reason, int count) {
+        Map<String, Integer> reasons = run.stopReasons.computeIfAbsent(realmId, ignored -> new LinkedHashMap<>());
+        reasons.put(reason, reasons.getOrDefault(reason, 0) + count);
+    }
+
+    private void recordTerrainCost(RealmRun run, String realmId, String landform, double cost) {
+        Map<String, Double> costs = run.terrainCostBreakdowns.computeIfAbsent(realmId, ignored -> new LinkedHashMap<>());
+        costs.put(landform, costs.getOrDefault(landform, 0.0) + cost);
+    }
+
+    private double landformAffinityPenalty(RealmProfile profile, WorldCell cell) {
+        double penalty = 0.0;
+        if (profile.landformPreferences.contains(cell.landform)) {
+            penalty -= 0.9;
+        }
+        if (profile.avoidLandforms.contains(cell.landform)) {
+            penalty += 1.6;
+        }
+        boolean mountain = cell.landform.equals("ridge") || cell.landform.equals("slope") || cell.landform.equals("cliff");
+        if (mountain) {
+            penalty -= profile.expansionStyle.mountainAffinity * 0.7;
+        }
+        return penalty;
+    }
+
+    private GridPoint autoAcceptancePoint(RealmRun run, RealmProfile profile, CandidatePackage pack) {
+        WorldCell best = null;
+        double bestScore = Double.POSITIVE_INFINITY;
+        for (WorldCell cell : run.worldCells) {
+            if (!cell.assignableLand()
+                    || !profile.targetContinentId.equals(cell.continentId)
+                    || !pack.allowedPatches.contains(cell.patchId)) {
+                continue;
+            }
+            List<String> errors = new ArrayList<>();
+            if (!isLegalSeedCell(profile, pack, cell, run, errors)) {
+                continue;
+            }
+            double score = candidateScore(run, profile, cell);
+            if (best == null || score < bestScore
+                    || (Math.abs(score - bestScore) < 0.0001
+                            && (cell.gridZ < best.gridZ || (cell.gridZ == best.gridZ && cell.gridX < best.gridX)))) {
+                best = cell;
+                bestScore = score;
+            }
+        }
+        return best == null ? pack.suggestedPoint : new GridPoint(best.gridX, best.gridZ);
+    }
+
+    private double candidateScore(RealmRun run, RealmProfile profile, WorldCell cell) {
         double score = 0.0;
         if (profile.landformPreferences.contains(cell.landform)) {
             score -= 10.0;
@@ -942,7 +2340,50 @@ public final class RealmPlanningService {
             score -= profile.expansionStyle.coastalBias * 5.0;
         }
         score += Math.abs(cell.slopeAvg) * (profile.expansionStyle.mountainAffinity < 0 ? 3.0 : -1.0);
+        score -= localAssignableLandCount(run, profile, cell, 5) * 0.9;
+        score -= localAssignableLandCount(run, profile, cell, 10) * 0.12;
+        score += localWaterOrUnknownCount(run, cell, 3) * 0.7;
+        score += cell.barrierCost() * 0.35;
+        for (RealmSeed seed : run.seeds.values()) {
+            double distance = distanceCells(cell.gridX, cell.gridZ, seed.seedGrid.x, seed.seedGrid.z);
+            score += Math.max(0.0, 12.0 - distance) * 6.0;
+            score -= Math.min(18.0, distance) * 0.04;
+        }
         return score;
+    }
+
+    private int localAssignableLandCount(RealmRun run, RealmProfile profile, WorldCell center, int radiusCells) {
+        int count = 0;
+        int radiusSquared = radiusCells * radiusCells;
+        for (int dz = -radiusCells; dz <= radiusCells; dz++) {
+            for (int dx = -radiusCells; dx <= radiusCells; dx++) {
+                if (dx * dx + dz * dz > radiusSquared) {
+                    continue;
+                }
+                WorldCell cell = run.worldCellsByKey.get(key(center.gridX + dx, center.gridZ + dz));
+                if (cell != null && cell.assignableLand() && profile.targetContinentId.equals(cell.continentId)) {
+                    count++;
+                }
+            }
+        }
+        return count;
+    }
+
+    private int localWaterOrUnknownCount(RealmRun run, WorldCell center, int radiusCells) {
+        int count = 0;
+        int radiusSquared = radiusCells * radiusCells;
+        for (int dz = -radiusCells; dz <= radiusCells; dz++) {
+            for (int dx = -radiusCells; dx <= radiusCells; dx++) {
+                if (dx * dx + dz * dz > radiusSquared) {
+                    continue;
+                }
+                WorldCell cell = run.worldCellsByKey.get(key(center.gridX + dx, center.gridZ + dz));
+                if (cell == null || !cell.assignableLand()) {
+                    count++;
+                }
+            }
+        }
+        return count;
     }
 
     private static double resourceHint(WorldCell cell) {
@@ -951,6 +2392,15 @@ public final class RealmPlanningService {
             case "plain", "terrace", "shore" -> 0.5;
             default -> 0.0;
         };
+    }
+
+    private static boolean hasOwnedNeighbor(WorldCell cell, String realmId, Map<String, String> ownership) {
+        for (int[] offset : DIRECTIONS) {
+            if (realmId.equals(ownership.get(key(cell.gridX + offset[0], cell.gridZ + offset[1])))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private String resolveTargetContinent(RealmRun run, String targetContinentId) {
@@ -1057,6 +2507,28 @@ public final class RealmPlanningService {
         return value.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9_.-]+", "_");
     }
 
+    private static String normalizeQualityMode(String value) {
+        if (value == null || value.isBlank()) {
+            return "strict";
+        }
+        String normalized = value.trim().toLowerCase(Locale.ROOT);
+        if ("smoke".equals(normalized) || "strict".equals(normalized)) {
+            return normalized;
+        }
+        throw new IllegalArgumentException("qualityMode must be one of: smoke, strict.");
+    }
+
+    private static String normalizeExpansionModel(String value, String qualityMode) {
+        if (value == null || value.isBlank()) {
+            return "smoke".equals(qualityMode) ? "quota_frontier" : "action_budget";
+        }
+        String normalized = value.trim().toLowerCase(Locale.ROOT);
+        if ("quota_frontier".equals(normalized) || "action_budget".equals(normalized)) {
+            return normalized;
+        }
+        throw new IllegalArgumentException("expansionModel must be one of: quota_frontier, action_budget.");
+    }
+
     private static String displayName(String id) {
         String trimmed = id.startsWith("realm_") ? id.substring("realm_".length()) : id;
         return trimmed.replace('_', ' ');
@@ -1114,6 +2586,10 @@ public final class RealmPlanningService {
 
     private static double clamp(double value, double min, double max) {
         return Math.max(min, Math.min(max, value));
+    }
+
+    private static double round(double value) {
+        return Math.round(value * 10000.0) / 10000.0;
     }
 
     private static int intValue(JsonObject object, String key, int defaultValue) {
@@ -1218,6 +2694,13 @@ public final class RealmPlanningService {
         }
     }
 
+    private record GridDistance(int x, int z, int distance) {
+    }
+
+    private record ComponentMetrics(int componentCount, int largestComponentCells,
+            double largestComponentRatio, double detachedAreaRatio) {
+    }
+
     private interface CellPredicate {
         boolean test(WorldCell cell);
     }
@@ -1225,7 +2708,7 @@ public final class RealmPlanningService {
     private static final class RealmRun {
         final String runId;
         final Path runDirectory;
-        final RefreshResult refreshResult;
+        final WorldSurveyResult surveyResult;
         final List<WorldCell> worldCells = new ArrayList<>();
         final Map<String, WorldCell> worldCellsByKey = new LinkedHashMap<>();
         final List<RealmProfile> profiles = new ArrayList<>();
@@ -1236,14 +2719,26 @@ public final class RealmPlanningService {
         final Map<String, String> artifacts = new LinkedHashMap<>();
         Map<String, PatchSummary> patchSummaries = new LinkedHashMap<>();
         Map<String, ContinentSummary> continentSummaries = new LinkedHashMap<>();
+        Map<String, ExpansionBudget> expansionBudgets = new LinkedHashMap<>();
+        Map<String, TerrainCostProfile> terrainCostProfiles = new LinkedHashMap<>();
+        Map<String, Map<String, Integer>> stopReasons = new LinkedHashMap<>();
+        Map<String, Map<String, Double>> terrainCostBreakdowns = new LinkedHashMap<>();
+        Map<String, Double> realmClaimCostSums = new LinkedHashMap<>();
+        Map<String, Double> realmMaxClaimCosts = new LinkedHashMap<>();
+        Map<String, Integer> realmClaimCounts = new LinkedHashMap<>();
+        Map<String, String> territoryCellStatuses = new LinkedHashMap<>();
+        Map<String, Double> territoryClaimCosts = new LinkedHashMap<>();
         JsonElement worldTheme;
+        String qualityMode = "strict";
+        String expansionModel = "action_budget";
         RealmTerritoryMap territory;
         CitySeedRegistry registry;
+        JsonObject scoreManifest;
 
-        RealmRun(String runId, Path runDirectory, RefreshResult refreshResult) {
+        RealmRun(String runId, Path runDirectory, WorldSurveyResult surveyResult) {
             this.runId = runId;
             this.runDirectory = runDirectory;
-            this.refreshResult = refreshResult;
+            this.surveyResult = surveyResult;
         }
 
         RealmProfile profile(String realmId) {
@@ -1276,10 +2771,11 @@ public final class RealmPlanningService {
         final double slopeAvg;
         final double waterDistanceBlocks;
         final List<String> flags;
+        final WorldFeatureCell feature;
 
         WorldCell(int gridX, int gridZ, int blockX, int blockZ, String continentId, String patchId,
                 String landWater, String landform, double heightAvg, double slopeAvg, double waterDistanceBlocks,
-                List<String> flags) {
+                List<String> flags, WorldFeatureCell feature) {
             this.gridX = gridX;
             this.gridZ = gridZ;
             this.blockX = blockX;
@@ -1292,6 +2788,7 @@ public final class RealmPlanningService {
             this.slopeAvg = slopeAvg;
             this.waterDistanceBlocks = waterDistanceBlocks;
             this.flags = List.copyOf(flags);
+            this.feature = feature;
         }
 
         boolean assignableLand() {
@@ -1312,11 +2809,124 @@ public final class RealmPlanningService {
             }
             json.addProperty("landWater", landWater);
             json.addProperty("landform", landform);
+            json.addProperty("baseLandform", baseLandform());
+            json.add("landformTags", stringArray(landformTags()));
             json.addProperty("heightAvg", heightAvg);
             json.addProperty("slopeAvg", slopeAvg);
+            json.addProperty("waterFrac", waterFrac());
+            json.addProperty("microSampleCount", microSampleCount());
+            JsonObject heightStats = new JsonObject();
+            heightStats.addProperty("p10", heightP10());
+            heightStats.addProperty("p50", heightP50());
+            heightStats.addProperty("p90", heightP90());
+            heightStats.addProperty("robustRelief", robustRelief());
+            json.add("heightStats", heightStats);
+            JsonObject slopeStats = new JsonObject();
+            slopeStats.addProperty("mean", slopeMean());
+            slopeStats.addProperty("p90", slopeP90());
+            slopeStats.addProperty("steepFrac", steepFrac());
+            json.add("slopeStats", slopeStats);
+            json.addProperty("barrierCost", barrierCost());
             json.addProperty("waterDistanceBlocks", waterDistanceBlocks);
+            JsonObject biomeHist = new JsonObject();
+            if (feature != null) {
+                for (Map.Entry<String, Integer> entry : feature.biomeHistogram().entrySet()) {
+                    biomeHist.addProperty(entry.getKey(), entry.getValue());
+                }
+            }
+            json.add("biomeHist", biomeHist);
             json.add("flags", stringArray(flags));
             return json;
+        }
+
+        String baseLandform() {
+            if (waterFrac() >= 0.65 || "water".equals(landWater)) {
+                return "water";
+            }
+            if ("unknown".equals(landWater) || "shore".equals(landWater)) {
+                return landWater;
+            }
+            if (robustRelief() >= 28.0 || slopeP90() >= 16.0) {
+                return "ridge";
+            }
+            if (robustRelief() >= 12.0 || slopeP90() >= 8.0) {
+                return "upland";
+            }
+            return switch (landform) {
+                case "plain", "terrace" -> "lowland";
+                case "valley", "basin" -> "valley";
+                case "ridge" -> "ridge";
+                case "slope", "cliff" -> "upland";
+                default -> landform;
+            };
+        }
+
+        List<String> landformTags() {
+            Set<String> tags = new LinkedHashSet<>();
+            if (!landform.equals(baseLandform())) {
+                tags.add(landform);
+            }
+            if ("cliff".equals(landform) || steepFrac() >= 0.25 || slopeP90() >= 14.0) {
+                tags.add("steep");
+            }
+            if ("cliff".equals(landform) && (steepFrac() >= 0.35 || slopeP90() >= 18.0)) {
+                tags.add("cliff");
+            }
+            if ("ridge".equals(landform) || "slope".equals(landform) || "cliff".equals(landform)
+                    || "ridge".equals(baseLandform()) || "upland".equals(baseLandform())) {
+                tags.add("mountain_front");
+            }
+            if ("shore".equals(landWater)) {
+                tags.add("coastal");
+            }
+            return List.copyOf(tags);
+        }
+
+        double barrierCost() {
+            double cost = 1.0 + Math.max(0.0, slopeP90()) / 8.0 + steepFrac() * 3.0;
+            if (landformTags().contains("cliff")) {
+                cost += 2.0;
+            }
+            if ("ridge".equals(baseLandform())) {
+                cost += 1.0;
+            }
+            return cost;
+        }
+
+        double heightP10() {
+            return feature == null ? heightAvg : feature.heightP10();
+        }
+
+        double heightP50() {
+            return feature == null ? heightAvg : feature.heightP50();
+        }
+
+        double heightP90() {
+            return feature == null ? heightAvg : feature.heightP90();
+        }
+
+        double robustRelief() {
+            return feature == null ? 0.0 : feature.robustRelief();
+        }
+
+        double slopeMean() {
+            return feature == null ? slopeAvg : feature.slopeMean();
+        }
+
+        double slopeP90() {
+            return feature == null ? slopeAvg : feature.slopeP90();
+        }
+
+        double steepFrac() {
+            return feature == null ? (slopeAvg >= 14.0 ? 1.0 : 0.0) : feature.steepFrac();
+        }
+
+        double waterFrac() {
+            return feature == null ? ("water".equals(landWater) ? 1.0 : 0.0) : feature.waterFrac();
+        }
+
+        int microSampleCount() {
+            return feature == null ? 0 : feature.microSampleCount();
         }
     }
 
@@ -1706,29 +3316,136 @@ public final class RealmPlanningService {
         }
     }
 
-    private record Claim(WorldCell cell, String realmId, double cost) {
+    private record FrontierClaim(WorldCell cell, WorldCell parent, String realmId, double cost, long sequence) {
     }
 
-    private record TerritoryCell(int gridX, int gridZ, String realmId, double claimStrength) {
+    private record ActionFrontierClaim(String realmId, WorldCell cell, WorldCell parent,
+            double cumulativeCost, int pathLength, long sequence) {
+    }
+
+    private record TerritoryBuildResult(Map<String, String> ownership, List<TerritoryRepair> repairs) {
+        TerritoryBuildResult {
+            ownership = Map.copyOf(ownership);
+            repairs = List.copyOf(repairs);
+        }
+    }
+
+    private record TerritoryRepair(String type, String realmId, String description, int affectedCells) {
+        JsonObject asJson() {
+            JsonObject json = new JsonObject();
+            json.addProperty("type", type);
+            json.addProperty("realmId", realmId);
+            json.addProperty("description", description);
+            json.addProperty("affectedCells", affectedCells);
+            return json;
+        }
+    }
+
+    private record RebalanceCandidate(String cellKey, String receiverRealmId, String donorRealmId, double score) {
+    }
+
+    private record ExpansionBudget(double baseActionBudget, double budgetMultiplier, double effectiveActionBudget,
+            double softStopThreshold, double hardStopThreshold, double maxClaimCost, double wildlandTolerance) {
+        JsonObject asJson() {
+            JsonObject json = new JsonObject();
+            json.addProperty("baseActionBudget", baseActionBudget);
+            json.addProperty("budgetMultiplier", budgetMultiplier);
+            json.addProperty("effectiveActionBudget", effectiveActionBudget);
+            json.addProperty("softStopThreshold", softStopThreshold);
+            json.addProperty("hardStopThreshold", hardStopThreshold);
+            json.addProperty("maxClaimCost", maxClaimCost);
+            json.addProperty("wildlandTolerance", wildlandTolerance);
+            return json;
+        }
+    }
+
+    private record TerrainCostProfile(Map<String, Double> baseCosts, Map<String, Double> tagCosts) {
+        TerrainCostProfile {
+            baseCosts = Map.copyOf(baseCosts);
+            tagCosts = Map.copyOf(tagCosts);
+        }
+
+        double costFor(String baseLandform) {
+            return baseCosts.getOrDefault(baseLandform, baseCosts.getOrDefault("lowland", 1.0));
+        }
+
+        double tagCost(String tag) {
+            return tagCosts.getOrDefault(tag, 0.0);
+        }
+
+        JsonObject asJson() {
+            JsonObject json = new JsonObject();
+            JsonObject base = new JsonObject();
+            for (Map.Entry<String, Double> entry : baseCosts.entrySet()) {
+                if (Double.isFinite(entry.getValue())) {
+                    base.addProperty(entry.getKey(), entry.getValue());
+                } else {
+                    base.addProperty(entry.getKey(), "blocked");
+                }
+            }
+            JsonObject tags = new JsonObject();
+            for (Map.Entry<String, Double> entry : tagCosts.entrySet()) {
+                tags.addProperty(entry.getKey(), entry.getValue());
+            }
+            json.add("baseCosts", base);
+            json.add("tagCosts", tags);
+            return json;
+        }
+    }
+
+    private record TerritoryCell(int gridX, int gridZ, String realmId, String status, double claimStrength,
+            double claimCost) {
         JsonObject asJson() {
             JsonObject json = new JsonObject();
             json.addProperty("gridX", gridX);
             json.addProperty("gridZ", gridZ);
             json.addProperty("realmId", realmId);
+            json.addProperty("status", status);
             json.addProperty("claimStrength", claimStrength);
+            json.addProperty("claimCost", claimCost);
             return json;
         }
     }
 
-    private record RealmStats(String realmId, int areaCells, double coastalRatio, List<String> primaryLandforms,
-            Set<String> neighbors) {
+    private record RealmStats(String realmId, int areaCells, int targetAreaCells, int areaDeltaCells,
+            double targetAreaRatio, double actualAreaRatio, double scaleMinAreaRatio, double scaleMaxAreaRatio,
+            double coastalRatio, List<String> primaryLandforms,
+            Set<String> neighbors, int componentCount, int largestComponentCells, double largestComponentRatio,
+            double detachedAreaRatio, double holeAreaRatio, double naturalBoundaryFit,
+            double budgetUsedRatio, double averageClaimCost, double maxClaimCost,
+            Map<String, Double> terrainCostBreakdown, Map<String, Integer> stopReasonSummary) {
         JsonObject asJson() {
             JsonObject json = new JsonObject();
             json.addProperty("realmId", realmId);
             json.addProperty("areaCells", areaCells);
+            json.addProperty("targetAreaCells", targetAreaCells);
+            json.addProperty("areaDeltaCells", areaDeltaCells);
+            json.addProperty("targetAreaRatio", targetAreaRatio);
+            json.addProperty("actualAreaRatio", actualAreaRatio);
+            json.addProperty("scaleMinAreaRatio", scaleMinAreaRatio);
+            json.addProperty("scaleMaxAreaRatio", scaleMaxAreaRatio);
             json.addProperty("coastalRatio", coastalRatio);
             json.add("primaryLandforms", stringArray(primaryLandforms));
             json.add("neighbors", stringArray(neighbors));
+            json.addProperty("componentCount", componentCount);
+            json.addProperty("largestComponentCells", largestComponentCells);
+            json.addProperty("largestComponentRatio", largestComponentRatio);
+            json.addProperty("detachedAreaRatio", detachedAreaRatio);
+            json.addProperty("holeAreaRatio", holeAreaRatio);
+            json.addProperty("naturalBoundaryFit", naturalBoundaryFit);
+            json.addProperty("budgetUsedRatio", budgetUsedRatio);
+            json.addProperty("averageClaimCost", averageClaimCost);
+            json.addProperty("maxClaimCost", maxClaimCost);
+            JsonObject terrain = new JsonObject();
+            for (Map.Entry<String, Double> entry : terrainCostBreakdown.entrySet()) {
+                terrain.addProperty(entry.getKey(), entry.getValue());
+            }
+            json.add("terrainCostBreakdown", terrain);
+            JsonObject reasons = new JsonObject();
+            for (Map.Entry<String, Integer> entry : stopReasonSummary.entrySet()) {
+                reasons.addProperty(entry.getKey(), entry.getValue());
+            }
+            json.add("stopReasonSummary", reasons);
             return json;
         }
     }
@@ -1737,35 +3454,53 @@ public final class RealmPlanningService {
         final String territoryMapId;
         final String runId;
         final String normalizationGroup;
+        final String expansionModel;
         final List<TerritoryCell> cells;
         final Map<String, RealmStats> stats;
         final Map<String, NormalizedScale> scales;
         final List<String> warnings;
+        final List<TerritoryRepair> repairs;
+        final Map<String, ExpansionBudget> expansionBudgets;
+        final Map<String, TerrainCostProfile> terrainCostProfiles;
 
         RealmTerritoryMap(String territoryMapId, String runId, String normalizationGroup, List<TerritoryCell> cells,
-                Map<String, RealmStats> stats, Map<String, NormalizedScale> scales, List<String> warnings) {
+                Map<String, RealmStats> stats, Map<String, NormalizedScale> scales, List<String> warnings,
+                List<TerritoryRepair> repairs, String expansionModel, Map<String, ExpansionBudget> expansionBudgets,
+                Map<String, TerrainCostProfile> terrainCostProfiles) {
             this.territoryMapId = territoryMapId;
             this.runId = runId;
             this.normalizationGroup = normalizationGroup;
+            this.expansionModel = expansionModel;
             this.cells = List.copyOf(cells);
             this.stats = Map.copyOf(stats);
             this.scales = Map.copyOf(scales);
             this.warnings = List.copyOf(warnings);
+            this.repairs = List.copyOf(repairs);
+            this.expansionBudgets = Map.copyOf(expansionBudgets);
+            this.terrainCostProfiles = Map.copyOf(terrainCostProfiles);
         }
 
         static RealmTerritoryMap from(String runId, String group, List<WorldCell> landCells, Map<String, String> ownership,
-                RealmRun run, Map<String, NormalizedScale> scales) {
+                RealmRun run, Map<String, NormalizedScale> scales, Map<String, Integer> quotas,
+                List<TerritoryRepair> repairs) {
             List<TerritoryCell> territoryCells = new ArrayList<>();
             for (WorldCell cell : landCells) {
-                String owner = ownership.get(key(cell.gridX, cell.gridZ));
-                if (owner != null) {
-                    territoryCells.add(new TerritoryCell(cell.gridX, cell.gridZ, owner, 1.0));
+                String cellKey = key(cell.gridX, cell.gridZ);
+                String owner = ownership.get(cellKey);
+                String status = run.territoryCellStatuses.getOrDefault(cellKey, owner == null ? "wild" : "owned");
+                if (owner != null || !"owned".equals(status)) {
+                    territoryCells.add(new TerritoryCell(cell.gridX, cell.gridZ, owner == null ? "" : owner,
+                            status, owner == null ? 0.0 : 1.0,
+                            run.territoryClaimCosts.getOrDefault(cellKey, 0.0)));
                 }
             }
             Map<String, Set<String>> neighbors = new LinkedHashMap<>();
             Map<String, List<WorldCell>> byRealm = new LinkedHashMap<>();
             Map<String, String> owners = new LinkedHashMap<>();
             for (TerritoryCell cell : territoryCells) {
+                if (!"owned".equals(cell.status)) {
+                    continue;
+                }
                 owners.put(key(cell.gridX, cell.gridZ), cell.realmId);
                 WorldCell worldCell = run.worldCellsByKey.get(key(cell.gridX, cell.gridZ));
                 if (worldCell != null) {
@@ -1773,6 +3508,9 @@ public final class RealmPlanningService {
                 }
             }
             for (TerritoryCell cell : territoryCells) {
+                if (!"owned".equals(cell.status)) {
+                    continue;
+                }
                 for (int[] offset : DIRECTIONS) {
                     String other = owners.get(key(cell.gridX + offset[0], cell.gridZ + offset[1]));
                     if (other != null && !other.equals(cell.realmId)) {
@@ -1793,21 +3531,50 @@ public final class RealmPlanningService {
                         .limit(4)
                         .map(Map.Entry::getKey)
                         .toList();
-                stats.put(entry.getKey(), new RealmStats(entry.getKey(), owned.size(), coastal, primary,
-                        neighbors.getOrDefault(entry.getKey(), Set.of())));
+                ComponentMetrics components = componentMetrics(entry.getKey(), owned, owners);
+                int target = quotas.getOrDefault(entry.getKey(), owned.size());
+                NormalizedScale scale = scales.get(entry.getKey());
+                double minRatio = scale == null ? 0.0 : scale.raw.minAreaRatio;
+                double maxRatio = scale == null ? 1.0 : scale.raw.maxAreaRatio;
+                double targetRatio = landCells.isEmpty() ? 0.0 : target / (double) landCells.size();
+                double actualRatio = landCells.isEmpty() ? 0.0 : owned.size() / (double) landCells.size();
+                ExpansionBudget budget = run.expansionBudgets.get(entry.getKey());
+                double budgetUsedRatio = budget == null || budget.effectiveActionBudget <= 0.0
+                        ? 0.0 : run.realmMaxClaimCosts.getOrDefault(entry.getKey(), 0.0) / budget.effectiveActionBudget;
+                int claimCount = Math.max(1, run.realmClaimCounts.getOrDefault(entry.getKey(), owned.size()));
+                double avgClaimCost = run.realmClaimCostSums.getOrDefault(entry.getKey(), 0.0) / claimCount;
+                stats.put(entry.getKey(), new RealmStats(entry.getKey(), owned.size(), target, owned.size() - target,
+                        targetRatio, actualRatio, minRatio, maxRatio, coastal, primary,
+                        neighbors.getOrDefault(entry.getKey(), Set.of()),
+                        components.componentCount, components.largestComponentCells,
+                        components.largestComponentRatio, components.detachedAreaRatio, 0.0,
+                        naturalBoundaryFit(entry.getKey(), owned, owners, run.worldCellsByKey),
+                        budgetUsedRatio, avgClaimCost, run.realmMaxClaimCosts.getOrDefault(entry.getKey(), 0.0),
+                        run.terrainCostBreakdowns.getOrDefault(entry.getKey(), Map.of()),
+                        run.stopReasons.getOrDefault(entry.getKey(), Map.of())));
             }
             List<String> warnings = new ArrayList<>();
             for (RealmProfile profile : run.profiles) {
                 if (!stats.containsKey(profile.realmId)) {
                     warnings.add("Realm has no territory cells: " + profile.realmId);
+                    continue;
+                }
+                RealmStats realmStats = stats.get(profile.realmId);
+                if (realmStats.largestComponentRatio < STRICT_LARGEST_COMPONENT_RATIO
+                        || realmStats.detachedAreaRatio > STRICT_DETACHED_AREA_RATIO) {
+                    warnings.add("Realm topology below strict threshold: " + profile.realmId);
                 }
             }
-            return new RealmTerritoryMap("territory_" + runId, runId, group, territoryCells, stats, scales, warnings);
+            return new RealmTerritoryMap("territory_" + runId, runId, group, territoryCells, stats, scales, warnings,
+                    repairs, run.expansionModel, run.expansionBudgets, run.terrainCostProfiles);
         }
 
         Map<String, String> ownershipByKey() {
             Map<String, String> owners = new LinkedHashMap<>();
             for (TerritoryCell cell : cells) {
+                if (!"owned".equals(cell.status)) {
+                    continue;
+                }
                 owners.put(key(cell.gridX, cell.gridZ), cell.realmId);
             }
             return owners;
@@ -1818,6 +3585,7 @@ public final class RealmPlanningService {
             json.addProperty("territoryMapId", territoryMapId);
             json.addProperty("surveyId", "survey_" + runId);
             json.addProperty("normalizationGroup", normalizationGroup);
+            json.addProperty("expansionModel", expansionModel);
             JsonArray cellArray = new JsonArray();
             for (TerritoryCell cell : cells) {
                 cellArray.add(cell.asJson());
@@ -1830,6 +3598,7 @@ public final class RealmPlanningService {
             json.add("realmStats", statsArray);
             json.add("warnings", stringArray(warnings));
             json.add("normalizedScales", scalesJson());
+            json.add("repairs", repairsJson());
             return json;
         }
 
@@ -1837,9 +3606,14 @@ public final class RealmPlanningService {
             JsonObject json = new JsonObject();
             json.addProperty("territoryMapId", territoryMapId);
             json.addProperty("normalizationGroup", normalizationGroup);
+            json.addProperty("expansionModel", expansionModel);
             json.add("realmStats", asJson().get("realmStats"));
             json.add("normalizedScales", scalesJson());
+            json.add("expansionBudgets", expansionBudgetsJson());
+            json.add("terrainCostProfiles", terrainCostProfilesJson());
             json.add("warnings", stringArray(warnings));
+            json.add("repairs", repairsJson());
+            json.add("territoryStatusSummary", statusSummaryJson());
             return json;
         }
 
@@ -1850,21 +3624,154 @@ public final class RealmPlanningService {
             }
             return json;
         }
+
+        JsonArray repairsJson() {
+            JsonArray array = new JsonArray();
+            for (TerritoryRepair repair : repairs) {
+                array.add(repair.asJson());
+            }
+            return array;
+        }
+
+        JsonObject expansionBudgetsJson() {
+            JsonObject json = new JsonObject();
+            for (Map.Entry<String, ExpansionBudget> entry : expansionBudgets.entrySet()) {
+                json.add(entry.getKey(), entry.getValue().asJson());
+            }
+            return json;
+        }
+
+        JsonObject terrainCostProfilesJson() {
+            JsonObject json = new JsonObject();
+            for (Map.Entry<String, TerrainCostProfile> entry : terrainCostProfiles.entrySet()) {
+                json.add(entry.getKey(), entry.getValue().asJson());
+            }
+            return json;
+        }
+
+        JsonObject repairLogJson() {
+            JsonObject json = new JsonObject();
+            json.addProperty("territoryMapId", territoryMapId);
+            json.addProperty("runId", runId);
+            json.add("repairs", repairsJson());
+            return json;
+        }
+
+        JsonObject statusSummaryJson() {
+            Map<String, Integer> counts = new LinkedHashMap<>();
+            for (TerritoryCell cell : cells) {
+                counts.put(cell.status, counts.getOrDefault(cell.status, 0) + 1);
+            }
+            int total = Math.max(1, cells.size());
+            JsonObject json = new JsonObject();
+            for (String status : List.of("owned", "wild", "contested", "blocked", "unreachable")) {
+                int count = counts.getOrDefault(status, 0);
+                json.addProperty(status + "Cells", count);
+                json.addProperty(status + "Ratio", count / (double) total);
+            }
+            return json;
+        }
+
+        private static ComponentMetrics componentMetrics(String realmId, List<WorldCell> owned,
+                Map<String, String> owners) {
+            Set<String> ownedKeys = new LinkedHashSet<>();
+            for (WorldCell cell : owned) {
+                ownedKeys.add(key(cell.gridX, cell.gridZ));
+            }
+            Set<String> visited = new HashSet<>();
+            int componentCount = 0;
+            int largest = 0;
+            for (String start : ownedKeys) {
+                if (visited.contains(start)) {
+                    continue;
+                }
+                componentCount++;
+                int size = 0;
+                ArrayDeque<String> queue = new ArrayDeque<>();
+                queue.add(start);
+                visited.add(start);
+                while (!queue.isEmpty()) {
+                    String currentKey = queue.removeFirst();
+                    size++;
+                    String[] parts = currentKey.split(",", 2);
+                    int x = Integer.parseInt(parts[0]);
+                    int z = Integer.parseInt(parts[1]);
+                    for (int[] offset : DIRECTIONS) {
+                        String nextKey = key(x + offset[0], z + offset[1]);
+                        if (!visited.contains(nextKey) && realmId.equals(owners.get(nextKey))) {
+                            visited.add(nextKey);
+                            queue.addLast(nextKey);
+                        }
+                    }
+                }
+                largest = Math.max(largest, size);
+            }
+            double largestRatio = owned.isEmpty() ? 0.0 : largest / (double) owned.size();
+            return new ComponentMetrics(componentCount, largest, largestRatio, 1.0 - largestRatio);
+        }
+
+        private static double naturalBoundaryFit(String realmId, List<WorldCell> owned, Map<String, String> owners,
+                Map<String, WorldCell> worldCellsByKey) {
+            int boundaryEdges = 0;
+            int naturalEdges = 0;
+            for (WorldCell cell : owned) {
+                for (int[] offset : DIRECTIONS) {
+                    String otherOwner = owners.get(key(cell.gridX + offset[0], cell.gridZ + offset[1]));
+                    if (otherOwner == null || realmId.equals(otherOwner)) {
+                        continue;
+                    }
+                    boundaryEdges++;
+                    WorldCell other = worldCellsByKey.get(key(cell.gridX + offset[0], cell.gridZ + offset[1]));
+                    if (isNaturalBoundaryEdge(cell, other)) {
+                        naturalEdges++;
+                    }
+                }
+            }
+            return boundaryEdges == 0 ? 1.0 : naturalEdges / (double) boundaryEdges;
+        }
+
+        private static boolean isNaturalBoundaryEdge(WorldCell left, WorldCell right) {
+            if (right == null) {
+                return true;
+            }
+            if ("shore".equals(left.landWater) || "shore".equals(right.landWater)) {
+                return true;
+            }
+            if (left.barrierCost() >= 3.0 || right.barrierCost() >= 3.0) {
+                return true;
+            }
+            return Math.abs(left.heightAvg - right.heightAvg) >= 24.0;
+        }
     }
 
     private record CitySeed(String citySeedId, String realmId, String role, String theoreticalScale,
-            GridPoint anchorGrid, GridPoint anchorBlock, int candidateRangeCells, List<String> requiredConditions,
-            List<String> coreFunctions, String trigger, String source) {
+            GridPoint anchorGrid, GridPoint anchorBlock, int candidateRangeCells, int planningRadiusCells,
+            String subregionId, String candidateId, double graphDistanceToNearestCity, String satelliteOf,
+            List<String> requiredConditions, List<String> coreFunctions, String trigger, String source) {
         static CitySeed capital(CapitalCitySeed capital) {
             return new CitySeed(capital.citySeedId, capital.realmId, "capital", capital.theoreticalScale,
-                    capital.anchorGrid, capital.anchorBlock, 8, List.of("land", "inside_realm"),
-                    List.of("administration", "market", "defense"), "always", "capital_city_seed");
+                    capital.anchorGrid, capital.anchorBlock, 8,
+                    RealmPlanningService.planningRadiusCells("capital", capital.theoreticalScale),
+                    capital.realmId + "_capital_core", "capital_" + capital.realmId, -1.0, "",
+                    List.of("land", "inside_realm"), List.of("administration", "market", "defense"),
+                    "always", "capital_city_seed");
         }
 
         static CitySeed from(String id, String realmId, String role, String scale, WorldCell cell,
                 int range, List<String> conditions, List<String> functions, String trigger, String source) {
             return new CitySeed(id, realmId, role, scale, new GridPoint(cell.gridX, cell.gridZ),
-                    new GridPoint(cell.blockX, cell.blockZ), range, conditions, functions, trigger, source);
+                    new GridPoint(cell.blockX, cell.blockZ), range,
+                    RealmPlanningService.planningRadiusCells(role, scale), "",
+                    id, -1.0, "", conditions, functions, trigger, source);
+        }
+
+        CitySeed withCandidateMetadata(String subregionId, String candidateId, double graphDistanceToNearestCity,
+                String satelliteOf) {
+            return new CitySeed(citySeedId, realmId, role, theoreticalScale, anchorGrid, anchorBlock,
+                    candidateRangeCells, planningRadiusCells, subregionId == null ? "" : subregionId,
+                    candidateId == null || candidateId.isBlank() ? this.candidateId : candidateId,
+                    graphDistanceToNearestCity, satelliteOf == null ? "" : satelliteOf,
+                    requiredConditions, coreFunctions, trigger, source);
         }
 
         JsonObject asJson() {
@@ -1876,6 +3783,13 @@ public final class RealmPlanningService {
             json.add("anchorGrid", anchorGrid.asJson());
             json.add("anchorBlock", anchorBlock.asJson());
             json.addProperty("candidateRangeCells", candidateRangeCells);
+            json.addProperty("planningRadiusCells", planningRadiusCells);
+            json.addProperty("subregionId", subregionId);
+            json.addProperty("candidateId", candidateId);
+            json.addProperty("graphDistanceToNearestCity", graphDistanceToNearestCity);
+            if (!satelliteOf.isBlank()) {
+                json.addProperty("satelliteOf", satelliteOf);
+            }
             json.add("requiredConditions", stringArray(requiredConditions));
             json.add("coreFunctions", stringArray(coreFunctions));
             json.addProperty("trigger", trigger);
@@ -1909,7 +3823,48 @@ public final class RealmPlanningService {
             long uniqueIds = citySeeds.stream().map(seed -> seed.citySeedId).distinct().count();
             json.addProperty("uniqueCitySeedIds", uniqueIds);
             json.addProperty("allCitySeedIdsUnique", uniqueIds == citySeeds.size());
+            json.addProperty("duplicateAnchorCount", duplicateAnchorCount());
+            json.addProperty("spacingViolationCount", spacingViolationCount());
             return json;
+        }
+
+        int duplicateAnchorCount() {
+            Map<String, Integer> anchors = new HashMap<>();
+            int duplicates = 0;
+            for (CitySeed seed : citySeeds) {
+                if (!seed.satelliteOf.isBlank()) {
+                    continue;
+                }
+                String key = seed.realmId + ":" + seed.anchorGrid.x + "," + seed.anchorGrid.z;
+                int count = anchors.getOrDefault(key, 0) + 1;
+                anchors.put(key, count);
+                if (count == 2) {
+                    duplicates++;
+                }
+            }
+            return duplicates;
+        }
+
+        int spacingViolationCount() {
+            int violations = 0;
+            for (int i = 0; i < citySeeds.size(); i++) {
+                CitySeed left = citySeeds.get(i);
+                if (!left.satelliteOf.isBlank()) {
+                    continue;
+                }
+                for (int j = i + 1; j < citySeeds.size(); j++) {
+                    CitySeed right = citySeeds.get(j);
+                    if (!left.realmId.equals(right.realmId) || !right.satelliteOf.isBlank()) {
+                        continue;
+                    }
+                    double distance = distanceCells(left.anchorGrid.x, left.anchorGrid.z,
+                            right.anchorGrid.x, right.anchorGrid.z);
+                    if (distance < left.planningRadiusCells + right.planningRadiusCells) {
+                        violations++;
+                    }
+                }
+            }
+            return violations;
         }
     }
 

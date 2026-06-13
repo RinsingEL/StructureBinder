@@ -117,7 +117,7 @@ public final class DevAutoLoadClient {
             runCommand(server, source, "/geomantia gis test_run mixed");
         }
         if (runRealmSmoke) {
-            runCommand(server, source, "/geomantia realm acceptance 8 128");
+            runCommand(server, source, "/geomantia realm acceptance 2048 128");
         }
     }
 

@@ -2,13 +2,10 @@ package com.rinsing.geomantia.systems.realm_planning.testsupport;
 
 import com.google.gson.JsonObject;
 import com.rinsing.geomantia.systems.gis.GisClassifierConfig;
-import com.rinsing.geomantia.systems.gis.GisSampleConfig;
 import com.rinsing.geomantia.systems.gis.adapter.minecraft.MinecraftPriorAtlasSampler;
-import com.rinsing.geomantia.systems.gis.application.refresh.GisRefreshService;
-import com.rinsing.geomantia.systems.gis.application.refresh.RefreshPriority;
 import com.rinsing.geomantia.systems.gis.application.refresh.SampleMode;
-import com.rinsing.geomantia.systems.gis.domain.region.AtlasRegionStore;
 import com.rinsing.geomantia.systems.realm_planning.RealmPlanningService;
+import com.rinsing.geomantia.systems.realm_planning.WorldSurveyRunner;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -27,15 +24,28 @@ public final class RealmPlanningGameTests {
         try {
             ServerLevel level = helper.getLevel();
             BlockPos center = helper.absolutePos(BlockPos.ZERO);
-            GisSampleConfig sampleConfig = GisSampleConfig.defaults().withCellStepBlocks(128);
-            GisRefreshService gisService = new GisRefreshService(sampleConfig, GisClassifierConfig.defaults(),
-                    new AtlasRegionStore(sampleConfig), new MinecraftPriorAtlasSampler(level));
-            var refresh = gisService.refresh(level.dimension().location().toString(), center.getX(), center.getZ(),
-                    8, SampleMode.PRIOR, RefreshPriority.DEBUG, Path.of("realm_debug").resolve("gametest_gis"));
+            WorldSurveyRunner.Config config = new WorldSurveyRunner.Config(
+                    "realm_gametest_prior",
+                    level.dimension().location().toString(),
+                    Long.toString(level.getSeed()),
+                    level.getWorldBorder().getSize(),
+                    center.getX(),
+                    center.getZ(),
+                    1024,
+                    128,
+                    RealmPlanningService.DEFAULT_MICRO_SAMPLE_STRIDE_BLOCKS,
+                    WorldSurveyRunner.DEFAULT_LOCAL_SLOPE_RADIUS_BLOCKS,
+                    SampleMode.PRIOR,
+                    WorldSurveyRunner.ResumePolicy.RESCAN
+            );
+            var survey = new WorldSurveyRunner(Path.of("realm_debug"), GisClassifierConfig.defaults())
+                    .run(config, new MinecraftPriorAtlasSampler(level));
             JsonObject response = new RealmPlanningService(Path.of("realm_debug"))
-                    .runAcceptance(refresh, "realm_gametest_prior", 3, null, true);
-            if (!response.get("passed").getAsBoolean()) {
-                helper.fail("Realm planning acceptance report failed: " + response);
+                    .runAcceptance(survey, 3, null, true, "smoke");
+            JsonObject report = response.getAsJsonObject("acceptanceReport");
+            if (!report.getAsJsonObject("stageResults").get("T4").getAsBoolean()
+                    || !report.getAsJsonObject("artifacts").has("scoreManifest")) {
+                helper.fail("Realm planning smoke did not reach T4 score artifacts: " + response);
                 return;
             }
             helper.succeed();

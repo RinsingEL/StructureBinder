@@ -29,13 +29,7 @@ public final class MinecraftPriorAtlasSampler implements AtlasSampler {
     public SampledCell sample(AtlasCell cell, SampleMode sampleMode) {
         int x = cell.blockMinX();
         int z = cell.blockMinZ();
-        int height = level.getChunkSource().getGenerator().getBaseHeight(
-                x,
-                z,
-                Heightmap.Types.WORLD_SURFACE_WG,
-                level,
-                level.getChunkSource().randomState()
-        );
+        int height = baseHeight(x, z);
         NoiseColumn column = level.getChunkSource().getGenerator().getBaseColumn(
                 x,
                 z,
@@ -52,6 +46,37 @@ public final class MinecraftPriorAtlasSampler implements AtlasSampler {
         );
         boolean water = isWaterColumn(column, height, seaLevel);
         double waterDepth = water ? Math.max(0, seaLevel - waterFloor) : 0.0;
+        SurfaceType surfaceType = water ? SurfaceType.WATER : surfaceType(column.getBlock(height - 1));
+        return new SampledCell(SampleSource.PRIOR, height, surfaceType,
+                biomeIdAt(x, z, height), water, waterDepth);
+    }
+
+    @Override
+    public SampledCell sampleFeature(AtlasCell cell, SampleMode sampleMode) {
+        int x = cell.blockMinX();
+        int z = cell.blockMinZ();
+        int height = baseHeight(x, z);
+        boolean water = height <= level.getSeaLevel() + 1;
+        return new SampledCell(SampleSource.PRIOR, height, water ? SurfaceType.WATER : SurfaceType.UNKNOWN,
+                biomeIdAt(x, z, height), water, 0.0);
+    }
+
+    @Override
+    public double sampleElevation(AtlasCell cell, SampleMode sampleMode) {
+        return baseHeight(cell.blockMinX(), cell.blockMinZ());
+    }
+
+    private int baseHeight(int x, int z) {
+        return level.getChunkSource().getGenerator().getBaseHeight(
+                x,
+                z,
+                Heightmap.Types.WORLD_SURFACE_WG,
+                level,
+                level.getChunkSource().randomState()
+        );
+    }
+
+    private String biomeIdAt(int x, int z, int height) {
         Holder<Biome> biome = level.getUncachedNoiseBiome(
                 Math.floorDiv(x, 4),
                 Math.floorDiv(Math.max(level.getMinBuildHeight(), height), 4),
@@ -60,9 +85,7 @@ public final class MinecraftPriorAtlasSampler implements AtlasSampler {
         ResourceLocation biomeId = level.registryAccess()
                 .registryOrThrow(net.minecraft.core.registries.Registries.BIOME)
                 .getKey(biome.value());
-        SurfaceType surfaceType = water ? SurfaceType.WATER : surfaceType(column.getBlock(height - 1));
-        return new SampledCell(SampleSource.PRIOR, height, surfaceType,
-                biomeId == null ? "unknown" : biomeId.toString(), water, waterDepth);
+        return biomeId == null ? "unknown" : biomeId.toString();
     }
 
     private static boolean isWaterColumn(NoiseColumn column, int height, int seaLevel) {

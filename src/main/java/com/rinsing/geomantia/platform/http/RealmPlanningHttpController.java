@@ -6,12 +6,10 @@ import com.google.gson.JsonObject;
 import com.rinsing.geomantia.systems.gis.GisClassifierConfig;
 import com.rinsing.geomantia.systems.gis.GisSampleConfig;
 import com.rinsing.geomantia.systems.gis.adapter.minecraft.MinecraftPriorAtlasSampler;
-import com.rinsing.geomantia.systems.gis.application.refresh.GisRefreshService;
-import com.rinsing.geomantia.systems.gis.application.refresh.RefreshPriority;
-import com.rinsing.geomantia.systems.gis.application.refresh.RefreshResult;
 import com.rinsing.geomantia.systems.gis.application.refresh.SampleMode;
-import com.rinsing.geomantia.systems.gis.domain.region.AtlasRegionStore;
 import com.rinsing.geomantia.systems.realm_planning.RealmPlanningService;
+import com.rinsing.geomantia.systems.realm_planning.WorldSurveyResult;
+import com.rinsing.geomantia.systems.realm_planning.WorldSurveyRunner;
 import com.sun.net.httpserver.HttpExchange;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
@@ -39,8 +37,8 @@ final class RealmPlanningHttpController {
         handle(exchange, "POST", () -> {
             JsonObject request = GisHttpUtil.readJsonObject(exchange);
             return callOnServerThread(() -> {
-                RefreshResult result = runGisRefresh(request);
-                return service().runW(result, stringValue(request, "runId", ""), request.get("worldTheme"));
+                WorldSurveyResult result = runWorldSurvey(request);
+                return service().runW(result, request.get("worldTheme"));
             });
         });
     }
@@ -78,7 +76,9 @@ final class RealmPlanningHttpController {
             return service().expandT3(
                     requiredString(request, "runId"),
                     stringValue(request, "normalizationGroup", ""),
-                    booleanValue(request, "allowUnclaimedLand", false));
+                    booleanValue(request, "allowUnclaimedLand", false),
+                    stringValue(request, "qualityMode", "strict"),
+                    stringValue(request, "expansionModel", ""));
         });
     }
 
@@ -93,10 +93,12 @@ final class RealmPlanningHttpController {
         handle(exchange, "POST", () -> {
             JsonObject request = GisHttpUtil.readJsonObject(exchange);
             return callOnServerThread(() -> {
-                RefreshResult result = runGisRefresh(request);
-                return service().runAcceptance(result, stringValue(request, "runId", ""),
+                WorldSurveyResult result = runWorldSurvey(request);
+                return service().runAcceptance(result,
                         intValue(request, "realmCount", 3), arrayValue(request, "realmProfiles"),
-                        booleanValue(request, "autoSelectCoordinates", true));
+                        booleanValue(request, "autoSelectCoordinates", true),
+                        stringValue(request, "qualityMode", "strict"),
+                        stringValue(request, "expansionModel", ""));
             });
         });
     }
@@ -114,21 +116,44 @@ final class RealmPlanningHttpController {
         }
     }
 
-    private RefreshResult runGisRefresh(JsonObject request) throws Exception {
-        int radiusChunks = intValue(request, "radiusChunks", 8);
-        if (radiusChunks < 1 || radiusChunks > 64) {
-            throw new IllegalArgumentException("radiusChunks must be between 1 and 64.");
+    private WorldSurveyResult runWorldSurvey(JsonObject request) throws Exception {
+        int planningRadiusBlocks = intValue(request, "planningRadiusBlocks", 0);
+        if (planningRadiusBlocks <= 0) {
+            int radiusChunks = intValue(request, "radiusChunks", 512);
+            if (radiusChunks < 1 || radiusChunks > 8192) {
+                throw new IllegalArgumentException("radiusChunks must be between 1 and 8192.");
+            }
+            planningRadiusBlocks = radiusChunks * 16;
         }
-        int cellStepBlocks = intValue(request, "cellStepBlocks", 128);
+        if (planningRadiusBlocks < 512 || planningRadiusBlocks > 262144) {
+            throw new IllegalArgumentException("planningRadiusBlocks must be between 512 and 262144.");
+        }
+        int cellStepBlocks = intValue(request, "cellStepBlocks", WorldSurveyRunner.DEFAULT_CELL_STEP_BLOCKS);
+        int microSampleStrideBlocks = intValue(request, "microSampleStrideBlocks",
+                RealmPlanningService.DEFAULT_MICRO_SAMPLE_STRIDE_BLOCKS);
+        int localSlopeRadiusBlocks = intValue(request, "localSlopeRadiusBlocks",
+                WorldSurveyRunner.DEFAULT_LOCAL_SLOPE_RADIUS_BLOCKS);
         SampleMode sampleMode = sampleModeValue(request);
         ServerPlayer player = resolvePlayer(stringValue(request, "playerName", ""));
         ServerLevel level = resolveLevel(stringValue(request, "dimensionId", ""), player);
         BlockPos center = resolveCenter(request, player);
-        GisSampleConfig sampleConfig = GisSampleConfig.defaults().withCellStepBlocks(cellStepBlocks);
-        GisRefreshService gisService = new GisRefreshService(sampleConfig, GisClassifierConfig.defaults(),
-                new AtlasRegionStore(sampleConfig), new MinecraftPriorAtlasSampler(level));
-        return gisService.refresh(level.dimension().location().toString(), center.getX(), center.getZ(),
-                radiusChunks, sampleMode, RefreshPriority.DEBUG, debugRoot().resolve("gis"));
+        String runId = stringValue(request, "runId", "");
+        WorldSurveyRunner.Config config = new WorldSurveyRunner.Config(
+                runId,
+                level.dimension().location().toString(),
+                Long.toString(level.getSeed()),
+                level.getWorldBorder().getSize(),
+                center.getX(),
+                center.getZ(),
+                planningRadiusBlocks,
+                cellStepBlocks,
+                microSampleStrideBlocks,
+                localSlopeRadiusBlocks,
+                sampleMode,
+                WorldSurveyRunner.ResumePolicy.fromContractName(stringValue(request, "resumePolicy", "use_cache"))
+        );
+        return new WorldSurveyRunner(debugRoot(), GisClassifierConfig.defaults()).run(config,
+                new MinecraftPriorAtlasSampler(level));
     }
 
     private RealmPlanningService service() {
