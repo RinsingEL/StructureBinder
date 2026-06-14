@@ -68,6 +68,10 @@ minecraft {
             if (devRealmSmoke.toBoolean()) {
                 property 'geomantia.devRealmSmoke', 'true'
             }
+            if (devUseReTerraForged.toBoolean()) {
+                property 'mixin.env.remapRefMap', 'true'
+                property 'mixin.env.refMapRemappingFile', "${project.layout.buildDirectory.get().asFile}/createSrgToMcp/output.srg"
+            }
         }
 
         server {

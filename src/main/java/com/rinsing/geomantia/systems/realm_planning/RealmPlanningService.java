@@ -64,7 +64,10 @@ public final class RealmPlanningService {
     private static final double VERY_FLAT_RELIEF_THRESHOLD = 16.0;
     private static final double RIDGE_RELIEF_THRESHOLD = 34.0;
     private static final double RIDGE_HIGH_RELIEF_THRESHOLD = 46.0;
-    private static final double PLATEAU_HEIGHT_RANK_THRESHOLD = 0.65;
+    private static final double PLATEAU_LOCAL_HEIGHT_RANK_THRESHOLD = 0.50;
+    private static final double PLATEAU_REGIONAL_HEIGHT_RANK_THRESHOLD = 0.80;
+    private static final double PLATEAU_PROMINENCE_THRESHOLD = 18.0;
+    private static final double PLATEAU_CORE_FLAT_SUPPORT_THRESHOLD = 0.65;
     private static final double LOWLAND_HEIGHT_RANK_THRESHOLD = 0.55;
     private static final double LOWLAND_MID_FLAT_HEIGHT_RANK_THRESHOLD = 0.70;
     private static final double UPLAND_HEIGHT_RANK_THRESHOLD = 0.72;
@@ -75,6 +78,12 @@ public final class RealmPlanningService {
     private static final int RIVERBANK_COMPONENT_MAX_CELLS = 32;
     private static final int RIVERBANK_COMPONENT_MAX_SPAN_CELLS = 3;
     private static final int NEAR_WATER_COMPONENT_MAX_DISTANCE_CELLS = 2;
+    public static final int LOCAL_TERRAIN_SCALE_BLOCKS = 512;
+    public static final int REGIONAL_TERRAIN_SCALE_BLOCKS = 2048;
+    public static final int PLATEAU_CORE_SCALE_BLOCKS = 512;
+    public static final int PLATEAU_OUTER_SCALE_BLOCKS = 1536;
+    private static final double TERRAIN_RANK_DRIFT_THRESHOLD = 0.25;
+    private static final double MIXED_CELL_SUPPORT_THRESHOLD = 0.65;
     private static final Map<String, RealmRun> RUNS = new LinkedHashMap<>();
 
     private final Path debugRoot;
@@ -402,6 +411,7 @@ public final class RealmPlanningService {
         run.worldCells.clear();
         run.worldCells.addAll(cells.values());
         assignRelativeHeightRanks(run.worldCells);
+        assignMultiScaleTerrainMetrics(cells, run.surveyResult.cellStepBlocks());
         run.worldCellsByKey.clear();
         for (WorldCell cell : run.worldCells) {
             run.worldCellsByKey.put(key(cell.gridX, cell.gridZ), cell);
@@ -436,6 +446,8 @@ public final class RealmPlanningService {
                 cell.waterEdgeType = component.edgeType();
                 cell.waterComponentId = component.id;
                 cell.waterComponentAreaCells = component.size();
+                cell.waterBoundaryConfidence = component.waterBoundaryConfidence();
+                cell.waterComponentType = component.componentType();
             }
         }
     }
@@ -585,6 +597,199 @@ public final class RealmPlanningService {
         for (int i = 0; i < land.size(); i++) {
             land.get(i).relativeHeightRank = i / (double) maxIndex;
         }
+    }
+
+    private void assignMultiScaleTerrainMetrics(Map<String, WorldCell> cells, int cellStepBlocks) {
+        int localRadiusCells = Math.max(1, Math.round(LOCAL_TERRAIN_SCALE_BLOCKS / (float) Math.max(1, cellStepBlocks)));
+        int regionalRadiusCells = Math.max(localRadiusCells + 1,
+                Math.round(REGIONAL_TERRAIN_SCALE_BLOCKS / (float) Math.max(1, cellStepBlocks)));
+        int plateauCoreRadiusCells = Math.max(1,
+                Math.round(PLATEAU_CORE_SCALE_BLOCKS / (float) Math.max(1, cellStepBlocks)));
+        int plateauOuterRadiusCells = Math.max(plateauCoreRadiusCells + 1,
+                Math.round(PLATEAU_OUTER_SCALE_BLOCKS / (float) Math.max(1, cellStepBlocks)));
+        for (WorldCell cell : cells.values()) {
+            if (!cell.assignableLand() || waterComponentCell(cell)) {
+                cell.localHeightRank = cell.relativeHeightRank;
+                cell.regionalHeightRank = cell.relativeHeightRank;
+                cell.heightRankStability = 1.0;
+                cell.landformConfidence = 0.35;
+                continue;
+            }
+            TerrainWindowMetrics local = terrainWindowMetrics(cells, cell, localRadiusCells);
+            TerrainWindowMetrics regional = terrainWindowMetrics(cells, cell, regionalRadiusCells);
+            PlateauContextMetrics plateau = plateauContextMetrics(cells, cell, plateauCoreRadiusCells,
+                    plateauOuterRadiusCells);
+            cell.localScaleBlocks = localRadiusCells * cellStepBlocks;
+            cell.regionalScaleBlocks = regionalRadiusCells * cellStepBlocks;
+            cell.plateauCoreScaleBlocks = plateauCoreRadiusCells * cellStepBlocks;
+            cell.plateauOuterScaleBlocks = plateauOuterRadiusCells * cellStepBlocks;
+            cell.localHeightRank = local.heightRank;
+            cell.regionalHeightRank = regional.heightRank;
+            cell.tpiLocal = local.tpi;
+            cell.tpiRegional = regional.tpi;
+            cell.devLocal = local.dev;
+            cell.devRegional = regional.dev;
+            cell.roughnessLocal = local.roughness;
+            cell.roughnessRegional = regional.roughness;
+            cell.reliefLocalP90P10 = local.reliefP90P10;
+            cell.reliefRegionalP90P10 = regional.reliefP90P10;
+            cell.plateauCoreMeanHeight = plateau.coreMeanHeight;
+            cell.plateauOuterMeanHeight = plateau.outerMeanHeight;
+            cell.plateauProminence = plateau.prominence;
+            cell.plateauCoreFlatSupport = plateau.coreFlatSupport;
+            cell.heightRankStability = 1.0 - Math.min(1.0, Math.abs(cell.localHeightRank - cell.regionalHeightRank)
+                    + Math.abs(cell.regionalHeightRank - cell.relativeHeightRank) * 0.5);
+            cell.devMaxMagnitude = Math.max(Math.abs(cell.devLocal), Math.abs(cell.devRegional));
+            cell.devMaxScaleBlocks = Math.abs(cell.devLocal) >= Math.abs(cell.devRegional)
+                    ? cell.localScaleBlocks : cell.regionalScaleBlocks;
+            cell.geomorphonClass = simplifiedGeomorphon(cells, cell, Math.max(1, localRadiusCells / 2));
+            cell.landformConfidence = landformConfidence(cell);
+        }
+    }
+
+    private static TerrainWindowMetrics terrainWindowMetrics(Map<String, WorldCell> cells, WorldCell origin,
+            int radiusCells) {
+        List<Double> heights = new ArrayList<>();
+        double sum = 0.0;
+        int lower = 0;
+        int equal = 0;
+        int comparable = 0;
+        for (int z = origin.gridZ - radiusCells; z <= origin.gridZ + radiusCells; z++) {
+            for (int x = origin.gridX - radiusCells; x <= origin.gridX + radiusCells; x++) {
+                WorldCell cell = cells.get(key(x, z));
+                if (cell == null || !cell.assignableLand() || waterComponentCell(cell)) {
+                    continue;
+                }
+                double height = cell.heightP50();
+                heights.add(height);
+                sum += height;
+                if (height < origin.heightP50()) {
+                    lower++;
+                } else if (Math.abs(height - origin.heightP50()) <= 0.0001) {
+                    equal++;
+                }
+                comparable++;
+            }
+        }
+        if (heights.isEmpty()) {
+            return new TerrainWindowMetrics(origin.relativeHeightRank, 0.0, 0.0, 0.0, 0.0);
+        }
+        heights.sort(Double::compareTo);
+        double mean = sum / heights.size();
+        double variance = 0.0;
+        for (double height : heights) {
+            double diff = height - mean;
+            variance += diff * diff;
+        }
+        double stdDev = Math.sqrt(variance / Math.max(1, heights.size()));
+        double rank = comparable <= 1 ? 0.5 : (lower + equal * 0.5) / comparable;
+        double tpi = origin.heightP50() - mean;
+        double dev = stdDev <= 0.0001 ? 0.0 : tpi / stdDev;
+        double p10 = percentile(heights, 0.10);
+        double p90 = percentile(heights, 0.90);
+        double roughness = stdDev + Math.max(0.0, p90 - p10) * 0.25;
+        return new TerrainWindowMetrics(clamp(rank, 0.0, 1.0), tpi, dev, roughness, p90 - p10);
+    }
+
+    private static PlateauContextMetrics plateauContextMetrics(Map<String, WorldCell> cells, WorldCell origin,
+            int coreRadiusCells, int outerRadiusCells) {
+        double coreSum = 0.0;
+        double outerSum = 0.0;
+        int coreCount = 0;
+        int outerCount = 0;
+        int flatSupportCount = 0;
+        for (int z = origin.gridZ - outerRadiusCells; z <= origin.gridZ + outerRadiusCells; z++) {
+            for (int x = origin.gridX - outerRadiusCells; x <= origin.gridX + outerRadiusCells; x++) {
+                WorldCell cell = cells.get(key(x, z));
+                if (cell == null || !cell.assignableLand() || waterComponentCell(cell)) {
+                    continue;
+                }
+                int distance = Math.max(Math.abs(x - origin.gridX), Math.abs(z - origin.gridZ));
+                double height = cell.heightP50();
+                if (distance <= coreRadiusCells) {
+                    coreSum += height;
+                    coreCount++;
+                    if (cell.flatLocalSurface() && height >= origin.heightP50() - 8.0) {
+                        flatSupportCount++;
+                    }
+                } else {
+                    outerSum += height;
+                    outerCount++;
+                }
+            }
+        }
+        double coreMean = coreCount == 0 ? origin.heightP50() : coreSum / coreCount;
+        double outerMean = outerCount == 0 ? coreMean : outerSum / outerCount;
+        double support = coreCount == 0 ? 0.0 : flatSupportCount / (double) coreCount;
+        double prominence = outerCount == 0 ? 0.0 : coreMean - outerMean;
+        return new PlateauContextMetrics(coreMean, outerMean, prominence, support, coreCount, outerCount);
+    }
+
+    private static String simplifiedGeomorphon(Map<String, WorldCell> cells, WorldCell cell, int radiusCells) {
+        int highDirections = 0;
+        int lowDirections = 0;
+        int missing = 0;
+        double threshold = Math.max(6.0, cell.robustRelief() * 0.25);
+        for (int[] offset : EIGHT_DIRECTIONS) {
+            WorldCell neighbor = cells.get(key(cell.gridX + offset[0] * radiusCells,
+                    cell.gridZ + offset[1] * radiusCells));
+            if (neighbor == null || !neighbor.assignableLand()) {
+                missing++;
+                continue;
+            }
+            double delta = neighbor.heightP50() - cell.heightP50();
+            if (delta >= threshold) {
+                highDirections++;
+            } else if (delta <= -threshold) {
+                lowDirections++;
+            }
+        }
+        if (missing >= 5) {
+            return "unknown";
+        }
+        if (highDirections == 0 && lowDirections == 0) {
+            return "flat";
+        }
+        if (lowDirections >= 6) {
+            return "peak";
+        }
+        if (highDirections >= 6) {
+            return "pit";
+        }
+        if (lowDirections >= 4 && highDirections <= 2) {
+            return "ridge";
+        }
+        if (highDirections >= 4 && lowDirections <= 2) {
+            return "valley";
+        }
+        if (lowDirections > highDirections) {
+            return "shoulder";
+        }
+        if (highDirections > lowDirections) {
+            return "footslope";
+        }
+        return "slope";
+    }
+
+    private static double landformConfidence(WorldCell cell) {
+        double confidence = 0.55;
+        confidence += cell.heightRankStability * 0.20;
+        if (cell.flatLocalSurface() && (cell.localHeightRank <= 0.55 || cell.localHeightRank >= 0.65)) {
+            confidence += 0.10;
+        }
+        if (cell.localSteep() || cell.devMaxMagnitude >= 1.0) {
+            confidence += 0.10;
+        }
+        if ("flat".equals(cell.geomorphonClass) && cell.flatLocalSurface()) {
+            confidence += 0.05;
+        }
+        if (Math.abs(cell.localHeightRank - cell.regionalHeightRank) > TERRAIN_RANK_DRIFT_THRESHOLD) {
+            confidence -= 0.20;
+        }
+        if (cell.waterEdgeType.equals("boundary_truncated")) {
+            confidence -= 0.15;
+        }
+        return clamp(confidence, 0.0, 1.0);
     }
 
     private Map<String, PatchSummary> buildPatchSummaries(RealmRun run, List<LandformPatch> patches) {
@@ -1596,6 +1801,7 @@ public final class RealmPlanningService {
         manifest.addProperty("microSampleStrideBlocks", run.surveyResult.microSampleStrideBlocks());
         manifest.addProperty("metricSampleStrideBlocks", run.surveyResult.microSampleStrideBlocks());
         manifest.addProperty("localSlopeRadiusBlocks", run.surveyResult.localSlopeRadiusBlocks());
+        manifest.add("metricScales", metricScalesJson());
         manifest.addProperty("microSamplingImplemented", run.surveyResult.microSamplingImplemented());
         manifest.addProperty("microSampleBudget", microSampleBudget(run.surveyResult));
         manifest.addProperty("microSampleBudgetPerCell", microSampleBudgetPerCell(run.surveyResult));
@@ -1879,6 +2085,7 @@ public final class RealmPlanningService {
         json.addProperty("microSampleStrideBlocks", run.surveyResult.microSampleStrideBlocks());
         json.addProperty("metricSampleStrideBlocks", run.surveyResult.microSampleStrideBlocks());
         json.addProperty("localSlopeRadiusBlocks", run.surveyResult.localSlopeRadiusBlocks());
+        json.add("metricScales", metricScalesJson());
         json.addProperty("microSamplingImplemented", run.surveyResult.microSamplingImplemented());
         json.addProperty("microSampleCount", run.surveyResult.microSampleCount());
         json.addProperty("cliffRatio", cliffRatio);
@@ -1894,6 +2101,21 @@ public final class RealmPlanningService {
                 .filter(WorldCell::assignableLand)
                 .toList()));
         json.addProperty("singletonPatchRatio", singletonPatchRatio);
+        return json;
+    }
+
+    private static JsonObject metricScalesJson() {
+        JsonObject json = new JsonObject();
+        json.addProperty("scanHeightRank", "scan_bounds");
+        json.addProperty("localScaleBlocks", LOCAL_TERRAIN_SCALE_BLOCKS);
+        json.addProperty("regionalScaleBlocks", REGIONAL_TERRAIN_SCALE_BLOCKS);
+        json.addProperty("plateauCoreScaleBlocks", PLATEAU_CORE_SCALE_BLOCKS);
+        json.addProperty("plateauOuterScaleBlocks", PLATEAU_OUTER_SCALE_BLOCKS);
+        json.addProperty("plateauProminenceThreshold", PLATEAU_PROMINENCE_THRESHOLD);
+        json.addProperty("plateauCoreFlatSupportThreshold", PLATEAU_CORE_FLAT_SUPPORT_THRESHOLD);
+        json.addProperty("plateauRegionalHeightRankThreshold", PLATEAU_REGIONAL_HEIGHT_RANK_THRESHOLD);
+        json.addProperty("rankDriftThreshold", TERRAIN_RANK_DRIFT_THRESHOLD);
+        json.addProperty("geomorphonApproximation", "eight_direction_height_pattern");
         return json;
     }
 
@@ -2715,7 +2937,7 @@ public final class RealmPlanningService {
     private List<TagAuditSample> buildTagAuditSamples(RealmRun run, AtlasSampler sampler, int requestedSampleCount,
             int radiusBlocks, int strideBlocks, int slopeRadiusBlocks, String sampleSeed) {
         Map<String, AuditCandidate> selected = new LinkedHashMap<>();
-        int perLayer = Math.max(4, requestedSampleCount / 6);
+        int perLayer = Math.max(3, requestedSampleCount / 9);
         addAuditLayer(selected, run.worldCells, "confirmed_cliff", perLayer, sampleSeed,
                 cell -> cell.assignableLand() && cell.landformTags().contains("cliff"));
         addAuditLayer(selected, run.worldCells, "confirmed_steep", perLayer, sampleSeed,
@@ -2724,9 +2946,16 @@ public final class RealmPlanningService {
                 cell -> cell.assignableLand() && cell.landformTags().contains("micro_contradiction"));
         addAuditLayer(selected, run.worldCells, "water_edge", perLayer, sampleSeed,
                 cell -> cell.assignableLand() && cell.landformTags().contains("water_edge"));
+        addAuditLayer(selected, run.worldCells, "ridge", perLayer, sampleSeed,
+                cell -> cell.assignableLand() && "ridge".equals(cell.baseLandform()));
+        addAuditLayer(selected, run.worldCells, "plateau", perLayer, sampleSeed,
+                cell -> cell.assignableLand() && "plateau".equals(cell.baseLandform()));
+        addAuditLayer(selected, run.worldCells, "lowland", perLayer, sampleSeed,
+                cell -> cell.assignableLand() && "lowland".equals(cell.baseLandform()));
+        addAuditLayer(selected, run.worldCells, "valley", perLayer, sampleSeed,
+                cell -> cell.assignableLand() && "valley".equals(cell.baseLandform()));
         addAuditLayer(selected, run.worldCells, "upland_macro", perLayer, sampleSeed,
                 cell -> cell.assignableLand() && ("upland".equals(cell.baseLandform())
-                        || "plateau".equals(cell.baseLandform()) || "ridge".equals(cell.baseLandform())
                         || cell.landformTags().contains("mountain_front")));
         addAuditLayer(selected, run.worldCells, "land_baseline", requestedSampleCount, sampleSeed,
                 WorldCell::assignableLand);
@@ -2734,8 +2963,11 @@ public final class RealmPlanningService {
         List<TagAuditSample> samples = new ArrayList<>();
         for (AuditCandidate candidate : selected.values()) {
             WorldCell cell = candidate.cell;
-            TagAuditMetrics metrics = auditLocalMetrics(run, sampler, cell, radiusBlocks, strideBlocks, slopeRadiusBlocks);
-            samples.add(TagAuditSample.from(cell, candidate.layer, metrics));
+            RepresentativePoints points = representativePoints(run, sampler, cell, slopeRadiusBlocks);
+            TagAuditMetrics pointMetrics = auditLocalMetrics(run, sampler, points.recommendedTpPoint().x(),
+                    points.recommendedTpPoint().z(), radiusBlocks, strideBlocks, slopeRadiusBlocks);
+            TagAuditMetrics cellMetrics = auditCellMetrics(run, sampler, cell, slopeRadiusBlocks);
+            samples.add(TagAuditSample.from(cell, candidate.layer, points, pointMetrics, cellMetrics));
             if (samples.size() >= requestedSampleCount) {
                 break;
             }
@@ -2765,17 +2997,79 @@ public final class RealmPlanningService {
                 1_000_000);
     }
 
-    private TagAuditMetrics auditLocalMetrics(RealmRun run, AtlasSampler sampler, WorldCell cell,
-            int radiusBlocks, int strideBlocks, int slopeRadiusBlocks) {
+    private RepresentativePoints representativePoints(RealmRun run, AtlasSampler sampler, WorldCell cell,
+            int slopeRadiusBlocks) {
+        AuditPoint center = new AuditPoint(cell.blockX + cell.cellStepBlocks / 2,
+                cell.blockZ + cell.cellStepBlocks / 2);
+        AuditPoint highest = center;
+        AuditPoint lowest = center;
+        AuditPoint maxSlope = center;
+        double highestElevation = Double.NEGATIVE_INFINITY;
+        double lowestElevation = Double.POSITIVE_INFINITY;
+        double maxSlopeValue = Double.NEGATIVE_INFINITY;
+        int stride = Math.max(1, run.surveyResult.microSampleStrideBlocks());
+        int samplesPerAxis = Math.max(1, cell.cellStepBlocks / stride);
+        for (int zIndex = 0; zIndex < samplesPerAxis; zIndex++) {
+            for (int xIndex = 0; xIndex < samplesPerAxis; xIndex++) {
+                int blockX = cell.blockX + Math.min(cell.cellStepBlocks - 1, xIndex * stride + stride / 2);
+                int blockZ = cell.blockZ + Math.min(cell.cellStepBlocks - 1, zIndex * stride + stride / 2);
+                SampledCell sample = sampleAtBlock(run, sampler, blockX, blockZ);
+                double slope = localAuditSlope(run, sampler, blockX, blockZ, sample.elevation(), slopeRadiusBlocks);
+                if (sample.elevation() > highestElevation) {
+                    highestElevation = sample.elevation();
+                    highest = new AuditPoint(blockX, blockZ);
+                }
+                if (sample.elevation() < lowestElevation) {
+                    lowestElevation = sample.elevation();
+                    lowest = new AuditPoint(blockX, blockZ);
+                }
+                if (slope > maxSlopeValue) {
+                    maxSlopeValue = slope;
+                    maxSlope = new AuditPoint(blockX, blockZ);
+                }
+            }
+        }
+        AuditPoint recommended = recommendedPoint(cell, center, highest, lowest, maxSlope);
+        return new RepresentativePoints(center, highest, lowest, maxSlope, recommended);
+    }
+
+    private static AuditPoint recommendedPoint(WorldCell cell, AuditPoint center, AuditPoint highest,
+            AuditPoint lowest, AuditPoint maxSlope) {
+        List<String> tags = cell.landformTags();
+        String base = cell.baseLandform();
+        if (tags.contains("cliff") || tags.contains("steep") || tags.contains("mountain_front")
+                || "ridge".equals(base)) {
+            return maxSlope;
+        }
+        if ("plateau".equals(base) || "upland".equals(base)) {
+            return highest;
+        }
+        if ("valley".equals(base) || "lowland".equals(base) || tags.contains("water_edge")) {
+            return lowest;
+        }
+        return center;
+    }
+
+    private TagAuditMetrics auditCellMetrics(RealmRun run, AtlasSampler sampler, WorldCell cell,
+            int slopeRadiusBlocks) {
+        int stride = Math.max(4, Math.min(8, Math.max(1, cell.cellStepBlocks / 16)));
+        int centerX = cell.blockX + cell.cellStepBlocks / 2;
+        int centerZ = cell.blockZ + cell.cellStepBlocks / 2;
+        return auditLocalMetrics(run, sampler, centerX, centerZ, cell.cellStepBlocks / 2,
+                stride, slopeRadiusBlocks);
+    }
+
+    private TagAuditMetrics auditLocalMetrics(RealmRun run, AtlasSampler sampler, int centerBlockX,
+            int centerBlockZ, int radiusBlocks, int strideBlocks, int slopeRadiusBlocks) {
         List<Double> heights = new ArrayList<>();
         List<Double> slopes = new ArrayList<>();
         Map<String, Integer> biomeHist = new LinkedHashMap<>();
         int water = 0;
         int total = 0;
-        int startX = cell.blockX + run.surveyResult.cellStepBlocks() / 2 - radiusBlocks;
-        int startZ = cell.blockZ + run.surveyResult.cellStepBlocks() / 2 - radiusBlocks;
-        int endX = cell.blockX + run.surveyResult.cellStepBlocks() / 2 + radiusBlocks;
-        int endZ = cell.blockZ + run.surveyResult.cellStepBlocks() / 2 + radiusBlocks;
+        int startX = centerBlockX - radiusBlocks;
+        int startZ = centerBlockZ - radiusBlocks;
+        int endX = centerBlockX + radiusBlocks;
+        int endZ = centerBlockZ + radiusBlocks;
         for (int z = startZ; z <= endZ; z += Math.max(1, strideBlocks)) {
             for (int x = startX; x <= endX; x += Math.max(1, strideBlocks)) {
                 SampledCell sample = sampleAtBlock(run, sampler, x, z);
@@ -2856,7 +3150,7 @@ public final class RealmPlanningService {
         return List.copyOf(tags);
     }
 
-    private double shoreMixScore(double waterFrac) {
+    private static double shoreMixScore(double waterFrac) {
         return waterFrac <= 0.0 || waterFrac >= 1.0 ? 0.0 : 1.0 - Math.abs(0.5 - waterFrac) * 2.0;
     }
 
@@ -2875,28 +3169,45 @@ public final class RealmPlanningService {
         report.addProperty("auditRadiusBlocks", radiusBlocks);
         report.addProperty("auditStrideBlocks", strideBlocks);
         report.addProperty("centerSlopeRadiusBlocks", slopeRadiusBlocks);
+        report.addProperty("samplingUnit", "w_coarse_cell");
+        report.addProperty("responseDesign", "cell_reference_and_representative_point");
+        report.addProperty("referenceCellStrideBlocks", Math.max(4, Math.min(8,
+                Math.max(1, run.surveyResult.cellStepBlocks() / 16))));
+        report.addProperty("referenceCellRadiusBlocks", run.surveyResult.cellStepBlocks() / 2);
         report.addProperty("sampleMode", run.surveyResult.sampleMode().contractName());
         report.add("sampleLayerCounts", tagAuditLayerCountsJson(samples));
-        List<String> reportTags = List.of("cliff", "steep", "water_edge", "seacoast", "riverbank", "lakeshore", "coastal");
+        List<String> reportTags = List.of("cliff", "steep", "water_edge", "seacoast", "riverbank",
+                "lakeshore", "coastal", "ridge", "plateau", "lowland", "valley", "boundary_truncated");
         report.add("tagMetrics", tagAuditMetricsJson(samples, reportTags));
+        report.add("cellTagMetrics", tagAuditCellMetricsJson(samples, reportTags));
+        report.add("baseLandformMetrics", baseLandformMetricsJson(samples));
         report.add("confusionMatrix", tagAuditConfusionJson(samples, reportTags));
+        report.add("cellConfusionMatrix", tagAuditCellConfusionJson(samples, reportTags));
         JsonArray falsePositives = new JsonArray();
         samples.stream()
-                .filter(sample -> sample.wTags.contains("cliff") && !sample.referenceTags.contains("cliff"))
+                .filter(sample -> sample.wTags.contains("cliff") && !sample.cellReferenceTags.contains("cliff"))
                 .limit(10)
                 .forEach(sample -> falsePositives.add(sample.summaryJson()));
         report.add("cliffFalsePositiveExamples", falsePositives);
         JsonArray falseNegatives = new JsonArray();
         samples.stream()
-                .filter(sample -> !sample.wTags.contains("cliff") && sample.referenceTags.contains("cliff"))
+                .filter(sample -> !sample.wTags.contains("cliff") && sample.cellReferenceTags.contains("cliff"))
                 .limit(10)
                 .forEach(sample -> falseNegatives.add(sample.summaryJson()));
         report.add("cliffFalseNegativeExamples", falseNegatives);
         long contradicted = samples.stream().filter(sample -> sample.wTags.contains("micro_contradiction")).count();
         long contradictedAccepted = samples.stream()
-                .filter(sample -> sample.wTags.contains("micro_contradiction") && sample.referenceTags.contains("cliff"))
+                .filter(sample -> sample.wTags.contains("micro_contradiction") && sample.cellReferenceTags.contains("cliff"))
                 .count();
         report.addProperty("microContradictionAcceptedRate", contradicted == 0 ? 0.0 : contradictedAccepted / (double) contradicted);
+        long mixedCells = samples.stream().filter(TagAuditSample::mixedCell).count();
+        long pointMismatch = samples.stream().filter(sample -> !sample.pointReferenceTags.equals(sample.cellReferenceTags)).count();
+        long rankDrift = samples.stream().filter(sample -> sample.wTags.contains("rank_drift")).count();
+        report.addProperty("mixedCellRate", samples.isEmpty() ? 0.0 : mixedCells / (double) samples.size());
+        report.addProperty("representativePointMismatchRate", samples.isEmpty() ? 0.0 : pointMismatch / (double) samples.size());
+        report.addProperty("rankDriftRate", samples.isEmpty() ? 0.0 : rankDrift / (double) samples.size());
+        report.addProperty("overallAccuracy", overallBaseAccuracy(samples));
+        report.addProperty("areaAdjustedAccuracy", overallBaseAccuracy(samples));
         report.addProperty("createdAt", Instant.now().toString());
         return report;
     }
@@ -2945,6 +3256,80 @@ public final class RealmPlanningService {
         return json;
     }
 
+    private JsonObject tagAuditCellMetricsJson(List<TagAuditSample> samples, List<String> tags) {
+        JsonObject json = new JsonObject();
+        for (String tag : tags) {
+            int tp = 0;
+            int fp = 0;
+            int fn = 0;
+            int tn = 0;
+            for (TagAuditSample sample : samples) {
+                boolean w = tagMatchesSample(sample, tag);
+                boolean reference = sample.cellReferenceTags.contains(tag);
+                if (w && reference) {
+                    tp++;
+                } else if (w) {
+                    fp++;
+                } else if (reference) {
+                    fn++;
+                } else {
+                    tn++;
+                }
+            }
+            JsonObject item = new JsonObject();
+            item.addProperty("truePositive", tp);
+            item.addProperty("falsePositive", fp);
+            item.addProperty("falseNegative", fn);
+            item.addProperty("trueNegative", tn);
+            item.addProperty("userAccuracy", tp + fp == 0 ? 1.0 : tp / (double) (tp + fp));
+            item.addProperty("producerAccuracy", tp + fn == 0 ? 1.0 : tp / (double) (tp + fn));
+            item.addProperty("precision", tp + fp == 0 ? 1.0 : tp / (double) (tp + fp));
+            item.addProperty("recall", tp + fn == 0 ? 1.0 : tp / (double) (tp + fn));
+            json.add(tag, item);
+        }
+        return json;
+    }
+
+    private static boolean tagMatchesSample(TagAuditSample sample, String tag) {
+        return sample.wTags.contains(tag) || sample.baseLandform.equals(tag);
+    }
+
+    private JsonObject baseLandformMetricsJson(List<TagAuditSample> samples) {
+        JsonObject json = new JsonObject();
+        List<String> bases = List.of("water", "shore", "lowland", "plateau", "upland", "ridge", "valley", "unknown");
+        for (String base : bases) {
+            int tp = 0;
+            int fp = 0;
+            int fn = 0;
+            int tn = 0;
+            for (TagAuditSample sample : samples) {
+                boolean w = sample.baseLandform.equals(base);
+                boolean reference = sample.cellReferenceBaseLandform.equals(base);
+                if (w && reference) {
+                    tp++;
+                } else if (w) {
+                    fp++;
+                } else if (reference) {
+                    fn++;
+                } else {
+                    tn++;
+                }
+            }
+            if (tp + fp + fn == 0) {
+                continue;
+            }
+            JsonObject item = new JsonObject();
+            item.addProperty("truePositive", tp);
+            item.addProperty("falsePositive", fp);
+            item.addProperty("falseNegative", fn);
+            item.addProperty("trueNegative", tn);
+            item.addProperty("userAccuracy", tp + fp == 0 ? 1.0 : tp / (double) (tp + fp));
+            item.addProperty("producerAccuracy", tp + fn == 0 ? 1.0 : tp / (double) (tp + fn));
+            json.add(base, item);
+        }
+        return json;
+    }
+
     private JsonObject tagAuditConfusionJson(List<TagAuditSample> samples, List<String> tags) {
         JsonObject matrix = new JsonObject();
         for (String wTag : tags) {
@@ -2961,6 +3346,35 @@ public final class RealmPlanningService {
             matrix.add(wTag, row);
         }
         return matrix;
+    }
+
+    private JsonObject tagAuditCellConfusionJson(List<TagAuditSample> samples, List<String> tags) {
+        JsonObject matrix = new JsonObject();
+        for (String wTag : tags) {
+            JsonObject row = new JsonObject();
+            for (String referenceTag : tags) {
+                int count = 0;
+                for (TagAuditSample sample : samples) {
+                    if (tagMatchesSample(sample, wTag) && sample.cellReferenceTags.contains(referenceTag)) {
+                        count++;
+                    }
+                }
+                row.addProperty(referenceTag, count);
+            }
+            matrix.add(wTag, row);
+        }
+        return matrix;
+    }
+
+    private double overallBaseAccuracy(List<TagAuditSample> samples) {
+        if (samples.isEmpty()) {
+            return 1.0;
+        }
+        long matches = samples.stream()
+                .filter(sample -> sample.baseLandform.equals(sample.cellReferenceBaseLandform)
+                        || sample.mixedCell)
+                .count();
+        return matches / (double) samples.size();
     }
 
     private String resolveTargetContinent(RealmRun run, String targetContinentId) {
@@ -3298,6 +3712,11 @@ public final class RealmPlanningService {
             {1, 0}, {-1, 0}, {0, 1}, {0, -1}
     };
 
+    private static final int[][] EIGHT_DIRECTIONS = {
+            {1, 0}, {-1, 0}, {0, 1}, {0, -1},
+            {1, 1}, {1, -1}, {-1, 1}, {-1, -1}
+    };
+
     public record GridPoint(int x, int z) {
         JsonObject asJson() {
             JsonObject json = new JsonObject();
@@ -3365,8 +3784,11 @@ public final class RealmPlanningService {
         }
 
         String edgeType() {
-            if (hasBiomeToken("ocean") || touchesScanEdge || size() >= SEACOAST_COMPONENT_MIN_CELLS) {
+            if (hasBiomeToken("ocean") || size() >= SEACOAST_COMPONENT_MIN_CELLS) {
                 return "seacoast";
+            }
+            if (touchesScanEdge) {
+                return "boundary_truncated";
             }
             if (hasBiomeToken("river")
                     || size() <= RIVERBANK_COMPONENT_MAX_CELLS
@@ -3374,6 +3796,25 @@ public final class RealmPlanningService {
                 return "riverbank";
             }
             return "lakeshore";
+        }
+
+        String componentType() {
+            if (hasBiomeToken("ocean") || size() >= SEACOAST_COMPONENT_MIN_CELLS) {
+                return "open_water";
+            }
+            if (touchesScanEdge) {
+                return "boundary_truncated";
+            }
+            if (hasBiomeToken("river")
+                    || size() <= RIVERBANK_COMPONENT_MAX_CELLS
+                    || Math.min(spanX(), spanZ()) <= RIVERBANK_COMPONENT_MAX_SPAN_CELLS) {
+                return "river_like";
+            }
+            return "lake_like";
+        }
+
+        double waterBoundaryConfidence() {
+            return touchesScanEdge && !hasBiomeToken("ocean") && size() < SEACOAST_COMPONENT_MIN_CELLS ? 0.45 : 0.90;
         }
 
         private boolean hasBiomeToken(String token) {
@@ -3458,8 +3899,33 @@ public final class RealmPlanningService {
         final WorldFeatureCell feature;
         final int cellStepBlocks;
         double relativeHeightRank = 0.5;
+        double localHeightRank = 0.5;
+        double regionalHeightRank = 0.5;
+        double heightRankStability = 1.0;
+        double tpiLocal = 0.0;
+        double tpiRegional = 0.0;
+        double devLocal = 0.0;
+        double devRegional = 0.0;
+        double devMaxMagnitude = 0.0;
+        int devMaxScaleBlocks = 0;
+        int localScaleBlocks = 0;
+        int regionalScaleBlocks = 0;
+        double roughnessLocal = 0.0;
+        double roughnessRegional = 0.0;
+        double reliefLocalP90P10 = 0.0;
+        double reliefRegionalP90P10 = 0.0;
+        int plateauCoreScaleBlocks = 0;
+        int plateauOuterScaleBlocks = 0;
+        double plateauCoreMeanHeight = 0.0;
+        double plateauOuterMeanHeight = 0.0;
+        double plateauProminence = 0.0;
+        double plateauCoreFlatSupport = 0.0;
+        String geomorphonClass = "unknown";
+        double landformConfidence = 0.5;
         String waterEdgeType = "";
         String waterComponentId = "";
+        String waterComponentType = "";
+        double waterBoundaryConfidence = 1.0;
         int waterComponentAreaCells = 0;
 
         WorldCell(int gridX, int gridZ, int blockX, int blockZ, String continentId, String patchId,
@@ -3504,9 +3970,22 @@ public final class RealmPlanningService {
             json.addProperty("heightAvg", heightAvg);
             json.addProperty("slopeAvg", slopeAvg);
             json.addProperty("relativeHeightRank", relativeHeightRank);
+            json.addProperty("scanHeightRank", relativeHeightRank);
+            json.addProperty("localHeightRank", localHeightRank);
+            json.addProperty("regionalHeightRank", regionalHeightRank);
+            json.addProperty("heightRankStability", heightRankStability);
+            json.addProperty("landformConfidence", landformConfidence);
+            json.add("landformEvidence", terrainEvidenceJson());
+            json.add("overlayTags", stringArray(overlayTags()));
+            json.add("debugReasons", stringArray(debugReasons()));
+            json.add("terrainMetrics", terrainMetricsJson());
             json.addProperty("waterFrac", waterFrac());
             if (!waterEdgeType.isBlank()) {
                 json.addProperty("waterEdgeType", waterEdgeType);
+                if (!waterComponentType.isBlank()) {
+                    json.addProperty("waterComponentType", waterComponentType);
+                }
+                json.addProperty("waterBoundaryConfidence", waterBoundaryConfidence);
                 if (!waterComponentId.isBlank()) {
                     json.addProperty("waterComponentId", waterComponentId);
                 }
@@ -3567,31 +4046,48 @@ public final class RealmPlanningService {
         String highStepBaseLandform() {
             boolean flat = flatLocalSurface();
             boolean veryFlat = veryFlatLocalSurface();
-            boolean ridge = (slopeP90() >= 22.0 && steepFrac() >= STEEP_FRACTION_THRESHOLD
-                    && robustRelief() >= RIDGE_RELIEF_THRESHOLD)
-                    || (slopeP90() >= 20.0 && robustRelief() >= RIDGE_HIGH_RELIEF_THRESHOLD
-                    && relativeHeightRank >= PLATEAU_HEIGHT_RANK_THRESHOLD);
+            boolean relativeHigh = localHeightRank >= 0.65 || regionalHeightRank >= 0.65;
+            boolean relativeLow = localHeightRank <= 0.45 || regionalHeightRank <= 0.45;
+            boolean ridgeShape = "ridge".equals(geomorphonClass) || "shoulder".equals(geomorphonClass)
+                    || "peak".equals(geomorphonClass);
+            boolean valleyShape = "valley".equals(geomorphonClass) || "footslope".equals(geomorphonClass)
+                    || "pit".equals(geomorphonClass);
+            boolean ridge = relativeHigh && ridgeShape
+                    && (slopeP90() >= 18.0 || steepFrac() >= STEEP_FRACTION_THRESHOLD
+                    || robustRelief() >= RIDGE_RELIEF_THRESHOLD || devMaxMagnitude >= 1.0);
             if (ridge) {
                 return "ridge";
             }
-            if (("valley".equals(landform) || "basin".equals(landform))
-                    && relativeHeightRank <= 0.45 && slopeP90() < STEEP_SLOPE_P90_THRESHOLD) {
+            if ((("valley".equals(landform) || "basin".equals(landform)) || valleyShape)
+                    && relativeLow && slopeP90() < STEEP_SLOPE_P90_THRESHOLD) {
                 return "valley";
             }
-            if (flat && relativeHeightRank >= PLATEAU_HEIGHT_RANK_THRESHOLD) {
+            if (strictPlateau()) {
                 return "plateau";
             }
-            if ((flat && relativeHeightRank <= LOWLAND_HEIGHT_RANK_THRESHOLD)
-                    || (veryFlat && relativeHeightRank <= LOWLAND_MID_FLAT_HEIGHT_RANK_THRESHOLD)) {
+            if ((flat && localHeightRank <= LOWLAND_HEIGHT_RANK_THRESHOLD && regionalHeightRank <= 0.65)
+                    || (veryFlat && localHeightRank <= LOWLAND_MID_FLAT_HEIGHT_RANK_THRESHOLD
+                    && devMaxMagnitude < 1.0)) {
                 return "lowland";
             }
-            if (relativeHeightRank >= UPLAND_HEIGHT_RANK_THRESHOLD
+            if (localHeightRank >= UPLAND_HEIGHT_RANK_THRESHOLD
+                    || regionalHeightRank >= UPLAND_HEIGHT_RANK_THRESHOLD
+                    || relativeHeightRank >= 0.82
                     || slopeP90() >= UPLAND_SLOPE_P90_THRESHOLD
                     || robustRelief() >= UPLAND_RELIEF_THRESHOLD
                     || steepFrac() >= STEEP_FRACTION_THRESHOLD) {
                 return "upland";
             }
             return "lowland";
+        }
+
+        boolean strictPlateau() {
+            return flatLocalSurface()
+                    && localHeightRank >= PLATEAU_LOCAL_HEIGHT_RANK_THRESHOLD
+                    && regionalHeightRank >= PLATEAU_REGIONAL_HEIGHT_RANK_THRESHOLD
+                    && plateauProminence >= PLATEAU_PROMINENCE_THRESHOLD
+                    && plateauCoreFlatSupport >= PLATEAU_CORE_FLAT_SUPPORT_THRESHOLD
+                    && roughnessLocal <= 18.0;
         }
 
         List<String> landformTags() {
@@ -3633,6 +4129,15 @@ public final class RealmPlanningService {
                     || "ridge".equals(base) || "upland".equals(base))) {
                 tags.add("mountain_front");
             }
+            if (landformConfidence < MIXED_CELL_SUPPORT_THRESHOLD) {
+                tags.add("low_confidence");
+            }
+            if (Math.abs(localHeightRank - regionalHeightRank) > TERRAIN_RANK_DRIFT_THRESHOLD) {
+                tags.add("rank_drift");
+            }
+            if (supportConfidence() < MIXED_CELL_SUPPORT_THRESHOLD) {
+                tags.add("mixed_cell");
+            }
             tags.addAll(waterEdgeTags());
             return List.copyOf(tags);
         }
@@ -3651,10 +4156,115 @@ public final class RealmPlanningService {
                 tags.add("coastal");
             } else if ("riverbank".equals(edgeType)) {
                 tags.add("riverbank");
+            } else if ("boundary_truncated".equals(edgeType)) {
+                tags.add("boundary_truncated");
+                tags.add("open_water_unknown");
             } else {
                 tags.add("lakeshore");
             }
             return List.copyOf(tags);
+        }
+
+        List<String> overlayTags() {
+            List<String> tags = landformTags();
+            return tags.stream()
+                    .filter(tag -> List.of("cliff", "steep", "water_edge", "seacoast", "riverbank",
+                            "lakeshore", "coastal", "boundary_truncated", "open_water_unknown",
+                            "mixed_cell", "low_confidence", "rank_drift", "mountain_front").contains(tag))
+                    .toList();
+        }
+
+        JsonArray terrainEvidenceJson() {
+            JsonArray array = new JsonArray();
+            addEvidence(array, "scan_height_rank", relativeHeightRank, "本次扫描内高度分位");
+            addEvidence(array, "local_height_rank", localHeightRank, "局部物理尺度高度分位");
+            addEvidence(array, "regional_height_rank", regionalHeightRank, "区域物理尺度高度分位");
+            addEvidence(array, "dev_local", devLocal, "局部 DEV 相对位置");
+            addEvidence(array, "dev_regional", devRegional, "区域 DEV 相对位置");
+            addEvidence(array, "roughness_local", roughnessLocal, "局部粗糙度");
+            addEvidence(array, "plateau_prominence", plateauProminence, "核心面域相对外圈平均高度抬升");
+            addEvidence(array, "plateau_core_flat_support", plateauCoreFlatSupport, "核心面域内连续平顶支持率");
+            addEvidence(array, "geomorphon", geomorphonClass, "简化 8 方向形态");
+            return array;
+        }
+
+        private void addEvidence(JsonArray array, String name, double value, String reason) {
+            JsonObject item = new JsonObject();
+            item.addProperty("name", name);
+            item.addProperty("value", value);
+            item.addProperty("reason", reason);
+            array.add(item);
+        }
+
+        private void addEvidence(JsonArray array, String name, String value, String reason) {
+            JsonObject item = new JsonObject();
+            item.addProperty("name", name);
+            item.addProperty("value", value);
+            item.addProperty("reason", reason);
+            array.add(item);
+        }
+
+        JsonObject terrainMetricsJson() {
+            JsonObject json = new JsonObject();
+            json.addProperty("localScaleBlocks", localScaleBlocks);
+            json.addProperty("regionalScaleBlocks", regionalScaleBlocks);
+            json.addProperty("plateauCoreScaleBlocks", plateauCoreScaleBlocks);
+            json.addProperty("plateauOuterScaleBlocks", plateauOuterScaleBlocks);
+            json.addProperty("scanHeightRank", relativeHeightRank);
+            json.addProperty("localHeightRank", localHeightRank);
+            json.addProperty("regionalHeightRank", regionalHeightRank);
+            json.addProperty("heightRankStability", heightRankStability);
+            json.addProperty("tpiLocal", tpiLocal);
+            json.addProperty("tpiRegional", tpiRegional);
+            json.addProperty("devLocal", devLocal);
+            json.addProperty("devRegional", devRegional);
+            json.addProperty("devMaxMagnitude", devMaxMagnitude);
+            json.addProperty("devMaxScaleBlocks", devMaxScaleBlocks);
+            json.addProperty("roughnessLocal", roughnessLocal);
+            json.addProperty("roughnessRegional", roughnessRegional);
+            json.addProperty("reliefLocalP90P10", reliefLocalP90P10);
+            json.addProperty("reliefRegionalP90P10", reliefRegionalP90P10);
+            json.addProperty("plateauCoreMeanHeight", plateauCoreMeanHeight);
+            json.addProperty("plateauOuterMeanHeight", plateauOuterMeanHeight);
+            json.addProperty("plateauProminence", plateauProminence);
+            json.addProperty("plateauCoreFlatSupport", plateauCoreFlatSupport);
+            json.addProperty("plateauProminenceThreshold", PLATEAU_PROMINENCE_THRESHOLD);
+            json.addProperty("plateauCoreFlatSupportThreshold", PLATEAU_CORE_FLAT_SUPPORT_THRESHOLD);
+            json.addProperty("geomorphonClass", geomorphonClass);
+            json.addProperty("supportConfidence", supportConfidence());
+            return json;
+        }
+
+        List<String> debugReasons() {
+            List<String> reasons = new ArrayList<>();
+            reasons.add("base=" + baseLandform());
+            reasons.add("scanRank=" + round(relativeHeightRank));
+            reasons.add("localRank=" + round(localHeightRank));
+            reasons.add("regionalRank=" + round(regionalHeightRank));
+            reasons.add("devMax=" + round(devMaxMagnitude) + "@" + devMaxScaleBlocks + "b");
+            reasons.add("roughLocal=" + round(roughnessLocal));
+            reasons.add("plateauProminence=" + round(plateauProminence));
+            reasons.add("plateauSupport=" + round(plateauCoreFlatSupport));
+            reasons.add("geomorphon=" + geomorphonClass);
+            reasons.add("confidence=" + round(landformConfidence));
+            if (!waterEdgeType.isBlank()) {
+                reasons.add("waterEdge=" + waterEdgeType + "/" + waterComponentType
+                        + "/confidence=" + round(waterBoundaryConfidence));
+            }
+            return reasons;
+        }
+
+        double supportConfidence() {
+            if (waterFrac() > 0.05 && waterFrac() < 0.95) {
+                return Math.max(0.35, 1.0 - shoreMixScore(waterFrac()) * 0.45);
+            }
+            if (robustRelief() >= UPLAND_RELIEF_THRESHOLD && steepFrac() < STEEP_FRACTION_THRESHOLD) {
+                return 0.60;
+            }
+            if (Math.abs(localHeightRank - regionalHeightRank) > TERRAIN_RANK_DRIFT_THRESHOLD) {
+                return 0.65;
+            }
+            return 0.90;
         }
 
         boolean highStepLocalMetrics() {
@@ -4238,7 +4848,54 @@ public final class RealmPlanningService {
         }
     }
 
+    private record AuditPoint(int x, int z) {
+        JsonObject asJson() {
+            JsonObject json = new JsonObject();
+            json.addProperty("blockX", x);
+            json.addProperty("blockZ", z);
+            json.addProperty("tpCommand", "/tp @s " + x + " ~ " + z);
+            return json;
+        }
+    }
+
+    private record RepresentativePoints(
+            AuditPoint cellCenter,
+            AuditPoint highestMicroPoint,
+            AuditPoint lowestMicroPoint,
+            AuditPoint maxSlopeMicroPoint,
+            AuditPoint recommendedTpPoint
+    ) {
+        JsonObject asJson() {
+            JsonObject json = new JsonObject();
+            json.add("cellCenter", cellCenter.asJson());
+            json.add("highestMicroPoint", highestMicroPoint.asJson());
+            json.add("lowestMicroPoint", lowestMicroPoint.asJson());
+            json.add("maxSlopeMicroPoint", maxSlopeMicroPoint.asJson());
+            json.add("recommendedTpPoint", recommendedTpPoint.asJson());
+            return json;
+        }
+    }
+
     private record AuditCandidate(WorldCell cell, String layer) {
+    }
+
+    private record TerrainWindowMetrics(
+            double heightRank,
+            double tpi,
+            double dev,
+            double roughness,
+            double reliefP90P10
+    ) {
+    }
+
+    private record PlateauContextMetrics(
+            double coreMeanHeight,
+            double outerMeanHeight,
+            double prominence,
+            double coreFlatSupport,
+            int coreCount,
+            int outerCount
+    ) {
     }
 
     private record TagAuditSample(
@@ -4252,8 +4909,15 @@ public final class RealmPlanningService {
             String baseLandform,
             String coarseLandform,
             List<String> wTags,
-            TagAuditMetrics metrics,
+            RepresentativePoints representativePoints,
+            TagAuditMetrics pointMetrics,
+            TagAuditMetrics cellMetrics,
             List<String> referenceTags,
+            List<String> pointReferenceTags,
+            List<String> cellReferenceTags,
+            String cellReferenceBaseLandform,
+            boolean mixedCell,
+            boolean representativePointMismatch,
             boolean cliffMatch,
             boolean steepMatch,
             boolean coastalMatch
@@ -4261,24 +4925,34 @@ public final class RealmPlanningService {
         TagAuditSample {
             wTags = List.copyOf(wTags);
             referenceTags = List.copyOf(referenceTags);
+            pointReferenceTags = List.copyOf(pointReferenceTags);
+            cellReferenceTags = List.copyOf(cellReferenceTags);
         }
 
-        static TagAuditSample from(WorldCell cell, String auditLayer, TagAuditMetrics metrics) {
+        static TagAuditSample from(WorldCell cell, String auditLayer, RepresentativePoints representativePoints,
+                TagAuditMetrics pointMetrics, TagAuditMetrics cellMetrics) {
             List<String> wTags = cell.landformTags();
-            List<String> referenceTags = metrics.referenceTags();
-            int sampleCenterX = cell.blockX + cell.cellStepBlocks / 2;
-            int sampleCenterZ = cell.blockZ + cell.cellStepBlocks / 2;
-            return new TagAuditSample(cell.gridX, cell.gridZ, sampleCenterX, sampleCenterZ,
+            List<String> pointReferenceTags = pointMetrics.referenceTags();
+            List<String> cellReferenceTags = cellMetrics.referenceTags();
+            String cellReferenceBase = referenceBaseLandform(cell, cellMetrics);
+            boolean mixed = mixedCell(cellMetrics);
+            boolean pointMismatch = !pointReferenceTags.equals(cellReferenceTags);
+            return new TagAuditSample(cell.gridX, cell.gridZ, representativePoints.recommendedTpPoint.x,
+                    representativePoints.recommendedTpPoint.z,
                     cell.blockX, cell.blockZ, auditLayer,
-                    cell.baseLandform(), cell.landform, wTags, metrics, referenceTags,
-                    wTags.contains("cliff") == referenceTags.contains("cliff"),
-                    wTags.contains("steep") == referenceTags.contains("steep"),
-                    wTags.contains("coastal") == referenceTags.contains("coastal"));
+                    cell.baseLandform(), cell.landform, wTags, representativePoints, pointMetrics, cellMetrics,
+                    pointReferenceTags, pointReferenceTags, cellReferenceTags, cellReferenceBase, mixed, pointMismatch,
+                    wTags.contains("cliff") == cellReferenceTags.contains("cliff"),
+                    wTags.contains("steep") == cellReferenceTags.contains("steep"),
+                    wTags.contains("coastal") == cellReferenceTags.contains("coastal"));
         }
 
         JsonObject asJson() {
             JsonObject json = summaryJson();
-            json.add("auditMetrics", metrics.asJson());
+            json.add("representativePoints", representativePoints.asJson());
+            json.add("auditMetrics", pointMetrics.asJson());
+            json.add("pointReferenceMetrics", pointMetrics.asJson());
+            json.add("cellReferenceMetrics", cellMetrics.asJson());
             return json;
         }
 
@@ -4294,12 +4968,50 @@ public final class RealmPlanningService {
             json.addProperty("tpCommand", "/tp @s " + blockX + " ~ " + blockZ);
             json.addProperty("baseLandform", baseLandform);
             json.addProperty("coarseLandform", coarseLandform);
+            json.addProperty("cellReferenceBaseLandform", cellReferenceBaseLandform);
+            json.addProperty("mixedCell", mixedCell);
+            json.addProperty("representativePointMismatch", representativePointMismatch);
             json.add("wTags", stringArray(wTags));
             json.add("referenceTags", stringArray(referenceTags));
+            json.add("pointReferenceTags", stringArray(pointReferenceTags));
+            json.add("cellReferenceTags", stringArray(cellReferenceTags));
             json.addProperty("cliffMatch", cliffMatch);
             json.addProperty("steepMatch", steepMatch);
             json.addProperty("coastalMatch", coastalMatch);
             return json;
+        }
+
+        private static String referenceBaseLandform(WorldCell cell, TagAuditMetrics metrics) {
+            if (metrics.waterFrac >= 0.65) {
+                return "water";
+            }
+            if (coastalMix(metrics.waterFrac)) {
+                return "shore";
+            }
+            boolean flat = metrics.slopeP90 <= FLAT_SLOPE_P90_THRESHOLD
+                    && metrics.steepFrac <= FLAT_STEEP_FRACTION_THRESHOLD
+                    && metrics.reliefP95P05 <= FLAT_RELIEF_THRESHOLD;
+            boolean rugged = metrics.slopeP90 >= UPLAND_SLOPE_P90_THRESHOLD
+                    || metrics.steepFrac >= STEEP_FRACTION_THRESHOLD
+                    || metrics.reliefP95P05 >= UPLAND_RELIEF_THRESHOLD;
+            if (metrics.referenceTags.contains("cliff") || (rugged && metrics.reliefP95P05 >= RIDGE_RELIEF_THRESHOLD)) {
+                return "ridge";
+            }
+            if (flat && cell.strictPlateau()) {
+                return "plateau";
+            }
+            if (flat) {
+                return "lowland";
+            }
+            return rugged ? "upland" : "lowland";
+        }
+
+        private static boolean mixedCell(TagAuditMetrics metrics) {
+            double dominantSurface = Math.max(metrics.waterFrac, 1.0 - metrics.waterFrac);
+            boolean mixedWater = metrics.waterFrac > 0.05 && metrics.waterFrac < 0.95;
+            boolean mixedRelief = metrics.reliefP95P05 >= UPLAND_RELIEF_THRESHOLD
+                    && metrics.steepFrac < STEEP_FRACTION_THRESHOLD;
+            return mixedWater || mixedRelief || dominantSurface < MIXED_CELL_SUPPORT_THRESHOLD;
         }
     }
 

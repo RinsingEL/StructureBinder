@@ -3,6 +3,7 @@ package com.rinsing.geomantia.client;
 import com.mojang.logging.LogUtils;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.common.MinecraftForge;
@@ -10,6 +11,7 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import org.slf4j.Logger;
 
+import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.UUID;
@@ -78,7 +80,22 @@ public final class DevAutoLoadClient {
         }
         attemptedAutoLoad = true;
         LOGGER.info("Geomantia dev auto-load world from screen {}: {}", screenName, targetWorld);
-        minecraft.execute(() -> minecraft.createWorldOpenFlows().loadLevel(minecraft.screen, targetWorld));
+        minecraft.execute(() -> loadLevelWithConfirmedWarning(minecraft, targetWorld));
+    }
+
+    private static void loadLevelWithConfirmedWarning(Minecraft minecraft, String targetWorld) {
+        Screen screen = minecraft.screen;
+        Object openFlows = minecraft.createWorldOpenFlows();
+        try {
+            Method doLoadLevel = openFlows.getClass()
+                    .getDeclaredMethod("doLoadLevel", Screen.class, String.class, boolean.class, boolean.class,
+                            boolean.class);
+            doLoadLevel.setAccessible(true);
+            doLoadLevel.invoke(openFlows, screen, targetWorld, false, true, true);
+        } catch (ReflectiveOperationException | RuntimeException ex) {
+            LOGGER.warn("Geomantia dev auto-load confirmed warning path failed; falling back to vanilla loadLevel.", ex);
+            minecraft.createWorldOpenFlows().loadLevel(screen, targetWorld);
+        }
     }
 
     private static void runGisSmokeWhenReady() {

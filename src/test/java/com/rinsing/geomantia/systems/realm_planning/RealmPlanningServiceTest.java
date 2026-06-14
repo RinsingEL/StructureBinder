@@ -245,6 +245,7 @@ class RealmPlanningServiceTest {
         boolean hasNonMountainLand = false;
         boolean hasTypedWaterEdge = false;
         boolean hasNonCoastalWaterEdge = false;
+        boolean hasTerrainEvidence = false;
         for (int i = 0; i < cells.size(); i++) {
             JsonObject cell = cells.get(i).getAsJsonObject();
             if ("land".equals(cell.get("landWater").getAsString())
@@ -256,7 +257,8 @@ class RealmPlanningServiceTest {
             if (contains(tags, "water_edge")) {
                 assertTrue(cell.has("waterEdgeType"), cell.toString());
                 String type = cell.get("waterEdgeType").getAsString();
-                assertTrue(List.of("seacoast", "riverbank", "lakeshore").contains(type), cell.toString());
+                assertTrue(List.of("seacoast", "riverbank", "lakeshore", "boundary_truncated").contains(type),
+                        cell.toString());
                 if ("seacoast".equals(type)) {
                     assertTrue(contains(tags, "coastal"), cell.toString());
                 } else {
@@ -264,6 +266,18 @@ class RealmPlanningServiceTest {
                     hasNonCoastalWaterEdge = true;
                 }
                 hasTypedWaterEdge = true;
+            }
+            if (cell.has("terrainMetrics")) {
+                JsonObject terrainMetrics = cell.getAsJsonObject("terrainMetrics");
+                assertTrue(terrainMetrics.has("localHeightRank"), cell.toString());
+                assertTrue(terrainMetrics.has("regionalHeightRank"), cell.toString());
+                assertTrue(terrainMetrics.has("devLocal"), cell.toString());
+                assertTrue(terrainMetrics.has("roughnessLocal"), cell.toString());
+                assertTrue(terrainMetrics.has("plateauProminence"), cell.toString());
+                assertTrue(terrainMetrics.has("plateauCoreFlatSupport"), cell.toString());
+                assertTrue(cell.has("landformEvidence"), cell.toString());
+                assertTrue(cell.has("landformConfidence"), cell.toString());
+                hasTerrainEvidence = true;
             }
             if ("cliff".equals(cell.get("landform").getAsString())) {
                 JsonObject slopeStats = cell.getAsJsonObject("slopeStats");
@@ -277,6 +291,7 @@ class RealmPlanningServiceTest {
         assertTrue(hasNonMountainLand);
         assertTrue(hasTypedWaterEdge);
         assertTrue(hasNonCoastalWaterEdge);
+        assertTrue(hasTerrainEvidence);
 
         RealmPlanningService auditService = new RealmPlanningService(tempDir.resolve("realm_debug"));
         JsonObject audit = auditService.runTagAudit("realm_world_survey_test",
@@ -303,8 +318,26 @@ class RealmPlanningServiceTest {
         assertTrue(firstSample.has("cellMinBlockX"));
         assertTrue(firstSample.has("cellMinBlockZ"));
         assertTrue(firstSample.has("tpCommand"));
-        assertEquals(firstSample.get("cellMinBlockX").getAsInt() + 64, firstSample.get("blockX").getAsInt());
-        assertEquals(firstSample.get("cellMinBlockZ").getAsInt() + 64, firstSample.get("blockZ").getAsInt());
+        assertTrue(firstSample.has("representativePoints"));
+        assertTrue(firstSample.has("cellReferenceTags"));
+        assertTrue(firstSample.has("pointReferenceTags"));
+        assertTrue(firstSample.has("cellReferenceMetrics"));
+        JsonObject representativePoints = firstSample.getAsJsonObject("representativePoints");
+        assertTrue(representativePoints.has("cellCenter"));
+        assertTrue(representativePoints.has("highestMicroPoint"));
+        assertTrue(representativePoints.has("lowestMicroPoint"));
+        assertTrue(representativePoints.has("maxSlopeMicroPoint"));
+        assertTrue(representativePoints.has("recommendedTpPoint"));
+        JsonObject cellCenter = representativePoints.getAsJsonObject("cellCenter");
+        assertEquals(firstSample.get("cellMinBlockX").getAsInt() + 64, cellCenter.get("blockX").getAsInt());
+        assertEquals(firstSample.get("cellMinBlockZ").getAsInt() + 64, cellCenter.get("blockZ").getAsInt());
+        JsonObject recommendedTp = representativePoints.getAsJsonObject("recommendedTpPoint");
+        assertEquals(recommendedTp.get("blockX").getAsInt(), firstSample.get("blockX").getAsInt());
+        assertEquals(recommendedTp.get("blockZ").getAsInt(), firstSample.get("blockZ").getAsInt());
+        assertEquals("w_coarse_cell", auditReport.get("samplingUnit").getAsString());
+        assertTrue(auditReport.has("cellTagMetrics"));
+        assertTrue(auditReport.has("baseLandformMetrics"));
+        assertTrue(auditReport.has("representativePointMismatchRate"));
     }
 
     @Test
@@ -416,6 +449,20 @@ class RealmPlanningServiceTest {
     }
 
     @Test
+    void plateauRequiresBroadProminentFlatTop() throws Exception {
+        JsonObject smallMound = centerCellForSyntheticPlateauProfile("realm_small_mound_plateau_test", 96.0);
+        assertFalse("plateau".equals(smallMound.get("baseLandform").getAsString()), smallMound.toString());
+        JsonObject smallMetrics = smallMound.getAsJsonObject("terrainMetrics");
+        assertTrue(smallMetrics.get("plateauCoreFlatSupport").getAsDouble() < 0.65, smallMetrics.toString());
+
+        JsonObject broadPlateau = centerCellForSyntheticPlateauProfile("realm_broad_plateau_test", 640.0);
+        assertEquals("plateau", broadPlateau.get("baseLandform").getAsString(), broadPlateau.toString());
+        JsonObject broadMetrics = broadPlateau.getAsJsonObject("terrainMetrics");
+        assertTrue(broadMetrics.get("plateauProminence").getAsDouble() >= 18.0, broadMetrics.toString());
+        assertTrue(broadMetrics.get("plateauCoreFlatSupport").getAsDouble() >= 0.65, broadMetrics.toString());
+    }
+
+    @Test
     void t3SupportsQuotaAndActionBudgetModels() throws Exception {
         RefreshResult result = refreshSynthetic("mixed", 64);
         RealmPlanningService service = new RealmPlanningService(tempDir.resolve("realm_debug"));
@@ -457,6 +504,69 @@ class RealmPlanningServiceTest {
                 testCase.radiusChunks(), testCase.sampleMode(), RefreshPriority.DEBUG, tempDir.resolve("gis_debug"));
         new AtlasRegionSnapshotIo().write(result.region(), result.runDirectory().resolve("region_snapshot.json"));
         return result;
+    }
+
+    private JsonObject centerCellForSyntheticPlateauProfile(String runId, double plateauHalfSizeBlocks) throws Exception {
+        SyntheticTerrainProfile profile = new SyntheticTerrainProfile() {
+            @Override
+            public double seaLevel() {
+                return 32.0;
+            }
+
+            @Override
+            public double elevationAt(double blockX, double blockZ) {
+                return Math.abs(blockX) <= plateauHalfSizeBlocks && Math.abs(blockZ) <= plateauHalfSizeBlocks
+                        ? 96.0 : 70.0;
+            }
+
+            @Override
+            public boolean hasWaterAt(double blockX, double blockZ) {
+                return false;
+            }
+
+            @Override
+            public SurfaceType surfaceTypeAt(double blockX, double blockZ, double elevation) {
+                return SurfaceType.GRASS;
+            }
+
+            @Override
+            public String biomeAt(double blockX, double blockZ, double elevation, boolean water) {
+                return "minecraft:plains";
+            }
+        };
+        WorldSurveyRunner runner = new WorldSurveyRunner(tempDir.resolve("realm_debug"), GisClassifierConfig.defaults());
+        WorldSurveyRunner.Config config = new WorldSurveyRunner.Config(
+                runId,
+                "minecraft:overworld",
+                "synthetic_plateau_" + Math.round(plateauHalfSizeBlocks),
+                0.0,
+                0,
+                0,
+                2048,
+                128,
+                RealmPlanningService.DEFAULT_MICRO_SAMPLE_STRIDE_BLOCKS,
+                WorldSurveyRunner.DEFAULT_LOCAL_SLOPE_RADIUS_BLOCKS,
+                com.rinsing.geomantia.systems.gis.application.refresh.SampleMode.PRIOR,
+                WorldSurveyRunner.ResumePolicy.RESCAN
+        );
+        WorldSurveyResult survey = runner.run(config, new SyntheticAtlasSampler(profile));
+        RealmPlanningService service = new RealmPlanningService(tempDir.resolve("realm_debug"));
+        service.runW(survey, null);
+        JsonArray cells = readJson(survey.runDirectory().resolve("world_patch_map.json")).getAsJsonArray("cells");
+        JsonObject best = null;
+        int bestDistance = Integer.MAX_VALUE;
+        for (int i = 0; i < cells.size(); i++) {
+            JsonObject cell = cells.get(i).getAsJsonObject();
+            int centerX = cell.get("blockX").getAsInt() + 64;
+            int centerZ = cell.get("blockZ").getAsInt() + 64;
+            int distance = Math.abs(centerX) + Math.abs(centerZ);
+            if (distance < bestDistance) {
+                bestDistance = distance;
+                best = cell;
+            }
+        }
+        assertTrue(best != null);
+        return best;
     }
 
     private static JsonObject readJson(Path path) throws Exception {
