@@ -114,6 +114,18 @@ class RealmPlanningServiceTest {
         JsonObject legend = packageManifest.getAsJsonObject("gridLegend");
         assertEquals(64, legend.get("cellStepBlocks").getAsInt());
         assertTrue(legend.has("originBlock"));
+        JsonArray cityCandidatePackages = readJsonArray(runDir.resolve("realm_city_candidate_packages.json"));
+        assertFalse(cityCandidatePackages.isEmpty());
+        for (int i = 0; i < cityCandidatePackages.size(); i++) {
+            JsonObject cityPackage = cityCandidatePackages.get(i).getAsJsonObject();
+            assertEquals("realm_owned_territory", cityPackage.get("mapScope").getAsString(), cityPackage.toString());
+            assertTrue(cityPackage.has("mapBounds"), cityPackage.toString());
+            JsonObject cityLegend = cityPackage.getAsJsonObject("gridLegend");
+            assertEquals(64, cityLegend.get("cellStepBlocks").getAsInt());
+            String image = cityPackage.get("candidateMapImage").getAsString();
+            assertTrue(image.startsWith("city_candidates/"), cityPackage.toString());
+            assertTrue(Files.exists(runDir.resolve(image)), cityPackage.toString());
+        }
     }
 
     @Test

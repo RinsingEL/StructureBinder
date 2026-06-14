@@ -38,6 +38,7 @@ import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.ToDoubleFunction;
+import java.util.stream.Collectors;
 
 public final class RealmPlanningService {
     public static final String SCHEMA_VERSION = "realm_planning.v1.2";
@@ -1871,6 +1872,7 @@ public final class RealmPlanningService {
     private void exportRegistry(RealmRun run) throws IOException {
         writeJson(run.runDirectory.resolve("city_seed_registry.json"), run.registry.asJson());
         writeJson(run.runDirectory.resolve("t4_report.json"), t4ReportJson(run));
+        exportRealmCityCandidateMaps(run);
         writeJson(run.runDirectory.resolve("realm_city_candidate_packages.json"), cityCandidatePackagesJson(run));
         exportCitySeedPreview(run, run.runDirectory.resolve("city_seed_preview.png"));
         run.artifacts.put("citySeedRegistry", "city_seed_registry.json");
@@ -1954,6 +1956,89 @@ public final class RealmPlanningService {
             case "unreachable" -> new Color(78, 99, 132);
             default -> new Color(74, 112, 79);
         };
+    }
+
+    private void exportRealmCityCandidateMaps(RealmRun run) throws IOException {
+        if (run.registry == null || run.territory == null) {
+            return;
+        }
+        Path directory = run.runDirectory.resolve("city_candidates");
+        Files.createDirectories(directory);
+        for (RealmProfile profile : run.profiles) {
+            exportRealmCityCandidateMap(run, profile.realmId,
+                    directory.resolve(profile.realmId + "_city_candidate_map.png"));
+        }
+    }
+
+    private void exportRealmCityCandidateMap(RealmRun run, String realmId, Path path) throws IOException {
+        GridBounds bounds = GridBounds.fromTerritory(run.territory.cells, realmId, 2);
+        int scale = Math.max(10, Math.min(28, 512 / Math.max(1, Math.max(bounds.width(), bounds.height()))));
+        BufferedImage image = new BufferedImage(Math.max(1, bounds.width() * scale),
+                Math.max(1, bounds.height() * scale), BufferedImage.TYPE_INT_ARGB);
+        Map<String, Color> colors = realmColors(run.profiles);
+        Color realmColor = colors.getOrDefault(realmId, new Color(160, 160, 160));
+        Map<String, TerritoryCell> territoryByKey = run.territory.cells.stream()
+                .collect(Collectors.toMap(cell -> key(cell.gridX, cell.gridZ), cell -> cell, (left, right) -> left));
+        Graphics2D g = image.createGraphics();
+        try {
+            g.setColor(new Color(18, 20, 24));
+            g.fillRect(0, 0, image.getWidth(), image.getHeight());
+            for (int z = bounds.minZ; z <= bounds.maxZ; z++) {
+                for (int x = bounds.minX; x <= bounds.maxX; x++) {
+                    TerritoryCell territoryCell = territoryByKey.get(key(x, z));
+                    if (territoryCell == null) {
+                        continue;
+                    }
+                    int px = (x - bounds.minX) * scale;
+                    int pz = (z - bounds.minZ) * scale;
+                    if (realmId.equals(territoryCell.realmId) && "owned".equals(territoryCell.status)) {
+                        WorldCell worldCell = run.worldCellsByKey.get(key(x, z));
+                        Color terrain = worldCell == null ? realmColor : colorForCell(worldCell);
+                        g.setColor(blend(terrain, realmColor, 0.30));
+                        g.fillRect(px, pz, scale, scale);
+                    } else if ("owned".equals(territoryCell.status)) {
+                        g.setColor(new Color(42, 44, 48));
+                        g.fillRect(px, pz, scale, scale);
+                    } else if ("contested".equals(territoryCell.status)) {
+                        g.setColor(new Color(88, 72, 34));
+                        g.fillRect(px, pz, scale, scale);
+                    }
+                }
+            }
+            g.setColor(new Color(255, 255, 255, 52));
+            g.setStroke(new BasicStroke(1f));
+            for (int x = 0; x <= bounds.width(); x++) {
+                g.drawLine(x * scale, 0, x * scale, image.getHeight());
+            }
+            for (int z = 0; z <= bounds.height(); z++) {
+                g.drawLine(0, z * scale, image.getWidth(), z * scale);
+            }
+            for (CitySeed seed : run.registry.citySeeds) {
+                if (!realmId.equals(seed.realmId) || !bounds.contains(seed.anchorGrid.x, seed.anchorGrid.z)) {
+                    continue;
+                }
+                int x = (seed.anchorGrid.x - bounds.minX) * scale + scale / 2;
+                int z = (seed.anchorGrid.z - bounds.minZ) * scale + scale / 2;
+                int radius = "capital".equals(seed.role) ? 5 : 4;
+                g.setColor("capital".equals(seed.role) ? new Color(255, 245, 180) : Color.WHITE);
+                g.fillOval(x - radius, z - radius, radius * 2, radius * 2);
+                g.setColor(new Color(16, 18, 22, 190));
+                g.drawOval(x - radius, z - radius, radius * 2, radius * 2);
+            }
+        } finally {
+            g.dispose();
+        }
+        ImageIO.write(image, "png", path.toFile());
+    }
+
+    private static Color blend(Color base, Color overlay, double overlayWeight) {
+        double weight = clamp(overlayWeight, 0.0, 1.0);
+        double baseWeight = 1.0 - weight;
+        return new Color(
+                (int) Math.round(base.getRed() * baseWeight + overlay.getRed() * weight),
+                (int) Math.round(base.getGreen() * baseWeight + overlay.getGreen() * weight),
+                (int) Math.round(base.getBlue() * baseWeight + overlay.getBlue() * weight)
+        );
     }
 
     private void exportCitySeedPreview(RealmRun run, Path path) throws IOException {
@@ -2385,6 +2470,11 @@ public final class RealmPlanningService {
             pack.addProperty("realmId", profile.realmId);
             pack.addProperty("surveyId", run.surveyResult.surveyId());
             pack.addProperty("territoryMapId", run.territory.territoryMapId);
+            String candidateMapImage = "city_candidates/" + profile.realmId + "_city_candidate_map.png";
+            pack.addProperty("candidateMapImage", candidateMapImage);
+            pack.addProperty("mapScope", "realm_owned_territory");
+            pack.addProperty("contextPolicy", "crop_to_realm_owned_bounds_with_small_neighbor_context");
+            pack.add("mapBounds", GridBounds.fromTerritory(run.territory.cells, profile.realmId, 2).asJson());
             JsonObject legend = new JsonObject();
             legend.addProperty("coordinateFormat", "gridX,gridZ");
             legend.addProperty("cellStepBlocks", run.surveyResult.cellStepBlocks());
@@ -5505,12 +5595,47 @@ public final class RealmPlanningService {
             return new GridBounds(minX, minZ, maxX, maxZ);
         }
 
+        static GridBounds fromTerritory(List<TerritoryCell> cells, String realmId, int paddingCells) {
+            int minX = Integer.MAX_VALUE;
+            int minZ = Integer.MAX_VALUE;
+            int maxX = Integer.MIN_VALUE;
+            int maxZ = Integer.MIN_VALUE;
+            for (TerritoryCell cell : cells) {
+                if (realmId.equals(cell.realmId) && "owned".equals(cell.status)) {
+                    minX = Math.min(minX, cell.gridX);
+                    minZ = Math.min(minZ, cell.gridZ);
+                    maxX = Math.max(maxX, cell.gridX);
+                    maxZ = Math.max(maxZ, cell.gridZ);
+                }
+            }
+            if (minX == Integer.MAX_VALUE) {
+                return new GridBounds(0, 0, 0, 0);
+            }
+            int padding = Math.max(0, paddingCells);
+            return new GridBounds(minX - padding, minZ - padding, maxX + padding, maxZ + padding);
+        }
+
         int width() {
             return maxX - minX + 1;
         }
 
         int height() {
             return maxZ - minZ + 1;
+        }
+
+        boolean contains(int x, int z) {
+            return x >= minX && x <= maxX && z >= minZ && z <= maxZ;
+        }
+
+        JsonObject asJson() {
+            JsonObject json = new JsonObject();
+            json.addProperty("minGridX", minX);
+            json.addProperty("minGridZ", minZ);
+            json.addProperty("maxGridX", maxX);
+            json.addProperty("maxGridZ", maxZ);
+            json.addProperty("widthCells", width());
+            json.addProperty("heightCells", height());
+            return json;
         }
     }
 }
