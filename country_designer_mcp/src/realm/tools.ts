@@ -129,6 +129,34 @@ export const realmTools: ToolDefinition[] = [
     },
   },
   {
+    name: "city_plan_d2",
+    description: "City D2: 基于已有 W/T run 的 CitySeed 构建 CitySiteContext（城市局部上下文）。需提供 runId 和 citySeedId。",
+    inputSchema: {
+      type: "object",
+      properties: {
+        runId: { type: "string", description: "已有 W/T run ID。" },
+        citySeedId: { type: "string", description: "目标城市种子的 citySeedId（来自 city_seed_registry.json）。" },
+        cellStepBlocks: { type: "number", description: "可选覆盖；未传时从 run 的 world_survey_manifest.json 恢复 W/T 采样步长。" },
+      },
+      required: ["runId", "citySeedId"],
+    },
+  },
+  {
+    name: "city_plan_d3",
+    description: "City D3: 构建 CityLandformReviewPackage（城市地貌审查包），包含 GIS 局部 patch 摘要、标签和 AI 上下文。需提供 runId 和 citySeedId，会触发局部 GIS 刷新。",
+    inputSchema: {
+      type: "object",
+      properties: {
+        runId: { type: "string", description: "已有 W/T run ID。" },
+        citySeedId: { type: "string", description: "目标城市种子的 citySeedId（来自 city_seed_registry.json）。" },
+        cellStepBlocks: { type: "number", description: "可选覆盖；未传时从 run 的 world_survey_manifest.json 恢复 W/T 采样步长。" },
+        dimensionId: { type: "string", description: "维度 ID，省略时从 run manifest 恢复。" },
+        playerName: { type: "string", description: "玩家名，用于定位维度。" },
+      },
+      required: ["runId", "citySeedId"],
+    },
+  },
+  {
     name: "realm_tag_audit",
     description: "对已有 sealed W run 单独执行 Tag Audit 抽样局部精扫，不重跑 W/T 主链。",
     inputSchema: {

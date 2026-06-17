@@ -129,6 +129,37 @@ final class RealmPlanningHttpController {
         });
     }
 
+    void handleCityPlanD2(HttpExchange exchange) {
+        handle(exchange, "POST", () -> {
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            String runId = requiredString(request, "runId");
+            String citySeedId = requiredString(request, "citySeedId");
+            Integer cellStepBlocks = hasValue(request, "cellStepBlocks")
+                    ? intValue(request, "cellStepBlocks", 4)
+                    : null;
+            return CityPlanningEndpointHandler.handlePlanD2(debugRoot(), runId, citySeedId, cellStepBlocks);
+        });
+    }
+
+    void handleCityPlanD3(HttpExchange exchange) {
+        handle(exchange, "POST", () -> callOnServerThread(() -> {
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            String runId = requiredString(request, "runId");
+            String citySeedId = requiredString(request, "citySeedId");
+            Integer cellStepBlocks = hasValue(request, "cellStepBlocks")
+                    ? intValue(request, "cellStepBlocks", 4)
+                    : null;
+            ServerPlayer player = resolvePlayer(stringValue(request, "playerName", ""));
+            String dimensionId = stringValue(request, "dimensionId", "");
+            if (dimensionId.isBlank()) {
+                dimensionId = restoredRunDimensionId(runId);
+            }
+            ServerLevel level = resolveLevel(dimensionId, player);
+            return CityPlanningEndpointHandler.handlePlanD3(debugRoot(), runId, citySeedId,
+                    cellStepBlocks, level);
+        }));
+    }
+
     void handleTagAudit(HttpExchange exchange) {
         handle(exchange, "POST", () -> {
             JsonObject request = GisHttpUtil.readJsonObject(exchange);
