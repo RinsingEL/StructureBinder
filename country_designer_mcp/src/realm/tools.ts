@@ -173,6 +173,33 @@ export const realmTools: ToolDefinition[] = [
     },
   },
   {
+    name: "city_plan_d5",
+    description: "City D5: 基于 D4 FunctionZoneMap 生成道路、边界、缓冲区意图和 BuildOperationPlan，并输出综合预览图。不修改世界。",
+    inputSchema: {
+      type: "object",
+      properties: {
+        runId: { type: "string", description: "已有 W/T run ID。" },
+        citySeedId: { type: "string", description: "目标城市种子的 citySeedId（来自 city_seed_registry.json）。" },
+      },
+      required: ["runId", "citySeedId"],
+    },
+  },
+  {
+    name: "city_execute_d5",
+    description: "City D5 Execute: 读取 city_plan_d5 已生成的 BuildOperationPlan，通过 WorldEdit 后端真实修改世界。必须显式传 confirmWorldMutation=true。",
+    inputSchema: {
+      type: "object",
+      properties: {
+        runId: { type: "string", description: "已有 W/T run ID。" },
+        citySeedId: { type: "string", description: "目标城市种子的 citySeedId。" },
+        confirmWorldMutation: { type: "boolean", description: "必须为 true；否则拒绝真实改世界。" },
+        dimensionId: { type: "string", description: "维度 ID，省略时从 run manifest 恢复。" },
+        playerName: { type: "string", description: "玩家名，用于定位维度。" },
+      },
+      required: ["runId", "citySeedId", "confirmWorldMutation"],
+    },
+  },
+  {
     name: "realm_tag_audit",
     description: "对已有 sealed W run 单独执行 Tag Audit 抽样局部精扫，不重跑 W/T 主链。",
     inputSchema: {

@@ -173,6 +173,35 @@ final class RealmPlanningHttpController {
         });
     }
 
+    void handleCityPlanD5(HttpExchange exchange) {
+        handle(exchange, "POST", () -> {
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            String runId = requiredString(request, "runId");
+            String citySeedId = requiredString(request, "citySeedId");
+            return CityPlanningEndpointHandler.handlePlanD5(debugRoot(), runId, citySeedId);
+        });
+    }
+
+    void handleCityExecuteD5(HttpExchange exchange) {
+        handle(exchange, "POST", () -> callOnServerThread(() -> {
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            String runId = requiredString(request, "runId");
+            String citySeedId = requiredString(request, "citySeedId");
+            boolean confirmWorldMutation = booleanValue(request, "confirmWorldMutation", false);
+            ServerPlayer player = resolvePlayer(stringValue(request, "playerName", ""));
+            String dimensionId = stringValue(request, "dimensionId", "");
+            if (dimensionId.isBlank()) {
+                dimensionId = restoredRunDimensionId(runId);
+            }
+            ServerLevel level = resolveLevel(dimensionId, player);
+            JsonObject response = CityPlanningEndpointHandler.handleExecuteD5(debugRoot(), server.getServerDirectory().toPath(),
+                    runId, citySeedId, confirmWorldMutation, level);
+            server.saveAllChunks(true, true, true);
+            response.addProperty("worldSaveRequested", true);
+            return response;
+        }));
+    }
+
     void handleTagAudit(HttpExchange exchange) {
         handle(exchange, "POST", () -> {
             JsonObject request = GisHttpUtil.readJsonObject(exchange);

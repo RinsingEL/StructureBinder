@@ -60,9 +60,36 @@ public record FunctionZoneTerrainStats(
         return obj;
     }
 
+    public static FunctionZoneTerrainStats fromJson(JsonObject obj) {
+        return new FunctionZoneTerrainStats(
+                RoadIntent.requiredString(obj, "zonePatchId"),
+                RoadIntent.intValue(obj, "areaBlocks", 0),
+                RoadIntent.stringValue(obj, "shapeClass", "unknown"),
+                doubleValue(obj, "heightMin", 0),
+                doubleValue(obj, "heightMax", 0),
+                doubleValue(obj, "heightMean", 0),
+                doubleValue(obj, "waterDepthMin", 0),
+                doubleValue(obj, "waterDepthMax", 0),
+                doubleValue(obj, "waterDepthMean", 0),
+                doubleValue(obj, "slopeMean", 0),
+                doubleValue(obj, "slopeP90", 0),
+                doubleValue(obj, "slopeMax", 0),
+                RoadIntent.intValue(obj, "shorelineLengthBlocks", 0),
+                doubleValue(obj, "waterContactRatio", 0),
+                RoadIntent.strings(RoadIntent.optionalArray(obj, "dominantLandformTypes")),
+                RoadIntent.strings(RoadIntent.optionalArray(obj, "gisFlags")),
+                RoadIntent.stringValue(obj, "estimatedCapacity", "0-0"));
+    }
+
     private static JsonArray stringArray(List<String> values) {
         JsonArray array = new JsonArray();
         values.forEach(array::add);
         return array;
+    }
+
+    private static double doubleValue(JsonObject obj, String key, double defaultValue) {
+        return obj.has(key) && !obj.get(key).isJsonNull()
+                ? obj.get(key).getAsDouble()
+                : defaultValue;
     }
 }

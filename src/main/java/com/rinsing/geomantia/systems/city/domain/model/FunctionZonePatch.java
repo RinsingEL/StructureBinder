@@ -78,9 +78,49 @@ public record FunctionZonePatch(
         return obj;
     }
 
+    public static FunctionZonePatch fromJson(JsonObject obj) {
+        JsonObject shape = RoadIntent.requiredObject(obj, "cellShape");
+        JsonObject bounds = RoadIntent.requiredObject(shape, "blockBounds");
+        String functionType = RoadIntent.requiredString(obj, "functionType");
+        CityFunctionType type = CityFunctionType.fromContractName(functionType);
+        if (type == null) {
+            throw new IllegalArgumentException("Unknown functionType: " + functionType);
+        }
+        return new FunctionZonePatch(
+                RoadIntent.requiredString(obj, "zonePatchId"),
+                RoadIntent.requiredString(obj, "sourceGroupId"),
+                RoadIntent.requiredString(obj, "zoneName"),
+                type,
+                RoadIntent.strings(RoadIntent.requiredArray(obj, "landformPatchRefs")),
+                new BlockBounds(
+                        RoadIntent.intValue(bounds, "minX", 0),
+                        RoadIntent.intValue(bounds, "minZ", 0),
+                        RoadIntent.intValue(bounds, "maxX", 0),
+                        RoadIntent.intValue(bounds, "maxZ", 0)),
+                memberCells(RoadIntent.optionalArray(shape, "memberCells")),
+                RoadIntent.intValue(obj, "areaBlocks", 0),
+                RoadIntent.stringValue(obj, "mainBuildingRole", ""),
+                RoadIntent.requiredString(obj, "terrainStatsRef"),
+                RoadIntent.stringValue(obj, "groupReason", ""),
+                RoadIntent.stringValue(obj, "generationNotes", ""));
+    }
+
     private static JsonArray stringArray(List<String> values) {
         JsonArray array = new JsonArray();
         values.forEach(array::add);
         return array;
+    }
+
+    private static List<PatchMemberCell> memberCells(JsonArray array) {
+        java.util.ArrayList<PatchMemberCell> cells = new java.util.ArrayList<>();
+        for (com.google.gson.JsonElement elem : array) {
+            JsonObject obj = elem.getAsJsonObject();
+            cells.add(new PatchMemberCell(
+                    RoadIntent.intValue(obj, "cellX", 0),
+                    RoadIntent.intValue(obj, "cellZ", 0),
+                    RoadIntent.intValue(obj, "blockMinX", 0),
+                    RoadIntent.intValue(obj, "blockMinZ", 0)));
+        }
+        return cells;
     }
 }

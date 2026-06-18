@@ -94,6 +94,12 @@ minecraft {
 sourceSets.main.resources { srcDir 'src/generated/resources' }
 
 repositories {
+    maven {
+        url "https://cursemaven.com"
+        content {
+            includeGroup "curse.maven"
+        }
+    }
     flatDir {
         dirs 'libs/local/reterraforged/0.0.5'
     }
@@ -101,6 +107,7 @@ repositories {
 
 dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+    implementation fg.deobf("curse.maven:worldedit-225608:4586218")
     if (devUseReTerraForged.toBoolean()) {
         runtimeOnly fg.deobf("local.reterraforged:reterraforged:0.0.5")
     }

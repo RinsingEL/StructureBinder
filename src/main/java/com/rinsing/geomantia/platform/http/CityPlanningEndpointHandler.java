@@ -6,15 +6,25 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.rinsing.geomantia.systems.city.application.CityFunctionZoneBuilder;
 import com.rinsing.geomantia.systems.city.application.CityLandformReviewBuilder;
+import com.rinsing.geomantia.systems.city.application.CityRoadBoundaryPlanner;
 import com.rinsing.geomantia.systems.city.application.CitySiteContextBuilder;
 import com.rinsing.geomantia.systems.city.application.CitySiteContextBuilder.TerritoryCellRef;
 import com.rinsing.geomantia.systems.city.domain.config.CityPlanningConfig;
+import com.rinsing.geomantia.systems.city.domain.model.BoundaryIntent;
+import com.rinsing.geomantia.systems.city.domain.model.BuildOperationPlan;
 import com.rinsing.geomantia.systems.city.domain.model.CityLandformReviewPackage;
+import com.rinsing.geomantia.systems.city.domain.model.CityQualityReport;
 import com.rinsing.geomantia.systems.city.domain.model.CitySiteContext;
+import com.rinsing.geomantia.systems.city.domain.model.FunctionZoneMap;
+import com.rinsing.geomantia.systems.city.domain.model.FunctionZoneTerrainStats;
 import com.rinsing.geomantia.systems.city.domain.model.PatchGroupPlan;
+import com.rinsing.geomantia.systems.city.domain.model.RoadIntent;
+import com.rinsing.geomantia.systems.city.domain.model.WorldMutationReport;
 import com.rinsing.geomantia.systems.city.infrastructure.json.CityJson;
+import com.rinsing.geomantia.systems.city.infrastructure.preview.CityPlanningPreviewRenderer;
 import com.rinsing.geomantia.systems.city.infrastructure.preview.CityLandformReviewMapRenderer;
 import com.rinsing.geomantia.systems.city.infrastructure.preview.FunctionZonePreviewRenderer;
+import com.rinsing.geomantia.systems.city.infrastructure.world.WorldEditMutationBackend;
 import com.rinsing.geomantia.systems.gis.GisClassifierConfig;
 import com.rinsing.geomantia.systems.gis.GisSampleConfig;
 import com.rinsing.geomantia.systems.gis.adapter.minecraft.MinecraftPriorAtlasSampler;
@@ -161,6 +171,98 @@ final class CityPlanningEndpointHandler {
         return response;
     }
 
+    static JsonObject handlePlanD5(Path debugRoot, String runId, String citySeedId) throws IOException {
+        Path runDir = debugRoot.resolve(runId);
+        JsonObject seed = loadCitySeed(runDir, runId, citySeedId);
+        RunMetadata metadata = loadRunMetadata(runDir, null, "");
+        CitySiteContext ctx = buildSiteContext(
+                new CitySiteContextBuilder(CityPlanningConfig.defaults()),
+                seed,
+                metadata,
+                loadTerritoryCells(runDir, stringValue(seed, "realmId")));
+
+        Path d3Dir = runDir.resolve("city_d3_" + safeFileName(citySeedId));
+        Path d4Dir = runDir.resolve("city_d4_" + safeFileName(citySeedId));
+        Path d3PackagePath = d3Dir.resolve("city_landform_review_package.json");
+        Path zoneMapPath = d4Dir.resolve("function_zone_map.json");
+        Path statsPath = d4Dir.resolve("function_zone_terrain_stats.json");
+        if (!Files.exists(d3PackagePath)) {
+            throw new IllegalArgumentException("D3 package not found. Run city_plan_d3 first: "
+                    + debugRef(debugRoot, d3PackagePath));
+        }
+        if (!Files.exists(zoneMapPath) || !Files.exists(statsPath)) {
+            throw new IllegalArgumentException("D4 artifacts not found. Run city_plan_d4 first: "
+                    + debugRef(debugRoot, d4Dir));
+        }
+
+        FunctionZoneMap zoneMap = FunctionZoneMap.fromJson(
+                JsonParser.parseString(Files.readString(zoneMapPath)).getAsJsonObject());
+        List<FunctionZoneTerrainStats> stats = terrainStatsFromJson(
+                JsonParser.parseString(Files.readString(statsPath)).getAsJsonArray());
+        CityRoadBoundaryPlanner.Result result = new CityRoadBoundaryPlanner().plan(ctx, zoneMap, stats);
+
+        Path outputDirectory = runDir.resolve("city_d5_" + safeFileName(citySeedId));
+        Files.createDirectories(outputDirectory);
+        Path roadPath = outputDirectory.resolve("road_intent.json");
+        Path boundaryPath = outputDirectory.resolve("boundary_intent.json");
+        Path operationPath = outputDirectory.resolve("build_operation_plan.json");
+        Path qualityPath = outputDirectory.resolve("quality_report.json");
+        Files.writeString(roadPath, CityJson.GSON.toJson(result.roadIntent().asJson()));
+        Files.writeString(boundaryPath, CityJson.GSON.toJson(result.boundaryIntent().asJson()));
+        Files.writeString(operationPath, CityJson.GSON.toJson(result.buildOperationPlan().asJson()));
+        Files.writeString(qualityPath, CityJson.GSON.toJson(result.qualityReport().asJson()));
+
+        Path previewPath = new CityPlanningPreviewRenderer()
+                .render(zoneMap, result.roadIntent(), result.boundaryIntent(),
+                        result.buildOperationPlan(), outputDirectory);
+
+        JsonObject response = result.asJson();
+        JsonObject artifacts = new JsonObject();
+        artifacts.addProperty("roadIntent", debugRef(debugRoot, roadPath));
+        artifacts.addProperty("boundaryIntent", debugRef(debugRoot, boundaryPath));
+        artifacts.addProperty("buildOperationPlan", debugRef(debugRoot, operationPath));
+        artifacts.addProperty("cityPlanningPreview", debugRef(debugRoot, previewPath));
+        artifacts.addProperty("qualityReport", debugRef(debugRoot, qualityPath));
+        artifacts.addProperty("sourceD3Package", debugRef(debugRoot, d3PackagePath));
+        artifacts.addProperty("sourceFunctionZoneMap", debugRef(debugRoot, zoneMapPath));
+        artifacts.addProperty("sourceFunctionZoneTerrainStats", debugRef(debugRoot, statsPath));
+        response.add("artifacts", artifacts);
+        return response;
+    }
+
+    static JsonObject handleExecuteD5(Path debugRoot, Path serverRoot, String runId, String citySeedId,
+                                      boolean confirmWorldMutation, ServerLevel level) throws IOException {
+        if (!confirmWorldMutation) {
+            throw new IllegalArgumentException("confirmWorldMutation=true is required for city_execute_d5.");
+        }
+        Path runDir = debugRoot.resolve(runId);
+        loadCitySeed(runDir, runId, citySeedId);
+        Path d5Dir = runDir.resolve("city_d5_" + safeFileName(citySeedId));
+        Path operationPath = d5Dir.resolve("build_operation_plan.json");
+        if (!Files.exists(operationPath)) {
+            throw new IllegalArgumentException("D5 build_operation_plan.json not found. Run city_plan_d5 first: "
+                    + debugRef(debugRoot, operationPath));
+        }
+        BuildOperationPlan plan = BuildOperationPlan.fromJson(
+                JsonParser.parseString(Files.readString(operationPath)).getAsJsonObject());
+        if (level == null) {
+            throw new IllegalArgumentException("ServerLevel is required for city_execute_d5.");
+        }
+        WorldMutationReport report = new WorldEditMutationBackend().execute(level, plan, serverRoot);
+        Files.createDirectories(d5Dir);
+        Path reportPath = d5Dir.resolve("world_mutation_report.json");
+        Files.writeString(reportPath, CityJson.GSON.toJson(report.asJson()));
+
+        JsonObject response = new JsonObject();
+        response.addProperty("ok", report.failedOperations() == 0);
+        response.add("worldMutationReport", report.asJson());
+        JsonObject artifacts = new JsonObject();
+        artifacts.addProperty("buildOperationPlan", debugRef(debugRoot, operationPath));
+        artifacts.addProperty("worldMutationReport", debugRef(debugRoot, reportPath));
+        response.add("artifacts", artifacts);
+        return response;
+    }
+
     private static CitySiteContext buildSiteContext(CitySiteContextBuilder builder, JsonObject seed,
                                                     RunMetadata metadata,
                                                     List<TerritoryCellRef> territoryCells) {
@@ -261,6 +363,14 @@ final class CityPlanningEndpointHandler {
                 continue;
             }
             result.add(new TerritoryCellRef(intValue(cell, "gridX", 0), intValue(cell, "gridZ", 0)));
+        }
+        return result;
+    }
+
+    private static List<FunctionZoneTerrainStats> terrainStatsFromJson(JsonArray array) {
+        List<FunctionZoneTerrainStats> result = new ArrayList<>();
+        for (JsonElement elem : array) {
+            result.add(FunctionZoneTerrainStats.fromJson(elem.getAsJsonObject()));
         }
         return result;
     }

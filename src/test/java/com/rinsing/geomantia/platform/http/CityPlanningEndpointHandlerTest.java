@@ -22,6 +22,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -108,6 +109,138 @@ class CityPlanningEndpointHandlerTest {
         assertTrue(Files.exists(debugRoot.resolve(artifacts.get("functionZonePreview").getAsString())));
         assertTrue(Files.exists(debugRoot.resolve(artifacts.get("qualityReport").getAsString())));
         assertFalse(response.getAsJsonArray("functionZonePatches").isEmpty());
+    }
+
+    @Test
+    void handlePlanD5_readsD4ArtifactsAndWritesPreview() throws Exception {
+        Path debugRoot = Files.createTempDirectory("city-d5-test");
+        String runId = "run_d5";
+        String citySeedId = "city_test";
+        Path runDir = debugRoot.resolve(runId);
+        Files.createDirectories(runDir);
+        Files.writeString(runDir.resolve("city_seed_registry.json"), """
+                {
+                  "citySeeds": [
+                    {
+                      "citySeedId": "city_test",
+                      "realmId": "realm_test",
+                      "role": "village",
+                      "theoreticalScale": "village",
+                      "anchorBlock": {"x": 0, "z": 0},
+                      "planningRadiusCells": 64,
+                      "candidateId": "candidate_test"
+                    }
+                  ]
+                }
+                """);
+        Files.writeString(runDir.resolve("world_survey_manifest.json"), """
+                {"config":{"cellStepBlocks":4,"dimensionId":"minecraft:overworld"}}
+                """);
+
+        CityPlanningConfig config = CityPlanningConfig.defaults();
+        CitySiteContext context = new CitySiteContextBuilder(config).build(
+                "city_test", "realm_test", "minecraft:overworld",
+                "city_test", "candidate_test", 0, 0,
+                "village", "village", 64, 4, null);
+        CityLandformReviewPackage review = new CityLandformReviewBuilder(config).build(context, List.of(
+                patch("plain", LandformType.PLAIN, -50, -50, -10, -10),
+                patch("shore", LandformType.SHORE, 0, 0, 50, 50)));
+        Path d3Dir = runDir.resolve("city_d3_city_test");
+        Files.createDirectories(d3Dir);
+        Files.writeString(d3Dir.resolve("city_landform_review_package.json"),
+                CityJson.GSON.toJson(review.asJson()));
+
+        List<LandformPatchSummary> patches = review.landformPatches();
+        PatchGroupPlan plan = new PatchGroupPlan(PatchGroupPlan.CURRENT_SCHEMA_VERSION, review.cityId(), List.of(
+                new PatchGroupPlan.Group("g1", "", "中心区", "civic_core",
+                        List.of(patches.get(0).mapLabel()), List.of(patches.get(0).landformPatchId()),
+                        "village_hall", List.of(), "测试", "", false),
+                new PatchGroupPlan.Group("g2", "", "水岸", "harbor_or_waterfront",
+                        List.of(patches.get(1).mapLabel()), List.of(patches.get(1).landformPatchId()),
+                        "dock_core", List.of(), "测试", "", false)));
+        CityPlanningEndpointHandler.handlePlanD4(debugRoot, runId, citySeedId,
+                JsonParser.parseString(CityJson.GSON.toJson(plan.asJson())).getAsJsonObject());
+
+        JsonObject response = CityPlanningEndpointHandler.handlePlanD5(debugRoot, runId, citySeedId);
+
+        assertTrue(response.get("ok").getAsBoolean());
+        assertFalse(response.getAsJsonObject("buildOperationPlan").getAsJsonArray("operations").isEmpty());
+        JsonObject artifacts = response.getAsJsonObject("artifacts");
+        assertTrue(Files.exists(debugRoot.resolve(artifacts.get("roadIntent").getAsString())));
+        assertTrue(Files.exists(debugRoot.resolve(artifacts.get("cityPlanningPreview").getAsString())));
+    }
+
+    @Test
+    void handleExecuteD5_requiresExplicitConfirmation() {
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> CityPlanningEndpointHandler.handleExecuteD5(
+                        Path.of("run/realm_debug"), Path.of("run"),
+                        "run", "city", false, null));
+        assertTrue(ex.getMessage().contains("confirmWorldMutation"));
+    }
+
+    @Test
+    void handleExecuteD5_requiresPlannedOperationFile() throws Exception {
+        Path debugRoot = Files.createTempDirectory("city-d5-execute-missing-plan");
+        String runId = "run_d5_execute";
+        String citySeedId = "city_test";
+        Path runDir = debugRoot.resolve(runId);
+        Files.createDirectories(runDir);
+        Files.writeString(runDir.resolve("city_seed_registry.json"), """
+                {
+                  "citySeeds": [
+                    {
+                      "citySeedId": "city_test",
+                      "realmId": "realm_test",
+                      "role": "village",
+                      "theoreticalScale": "village",
+                      "anchorBlock": {"x": 0, "z": 0}
+                    }
+                  ]
+                }
+                """);
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> CityPlanningEndpointHandler.handleExecuteD5(
+                        debugRoot, Files.createTempDirectory("city-d5-server-root"),
+                        runId, citySeedId, true, null));
+        assertTrue(ex.getMessage().contains("build_operation_plan.json"));
+    }
+
+    @Test
+    void handleExecuteD5_requiresLoadedWorld() throws Exception {
+        Path debugRoot = Files.createTempDirectory("city-d5-execute-no-level");
+        String runId = "run_d5_execute";
+        String citySeedId = "city_test";
+        Path runDir = debugRoot.resolve(runId);
+        Files.createDirectories(runDir.resolve("city_d5_city_test"));
+        Files.writeString(runDir.resolve("city_seed_registry.json"), """
+                {
+                  "citySeeds": [
+                    {
+                      "citySeedId": "city_test",
+                      "realmId": "realm_test",
+                      "role": "village",
+                      "theoreticalScale": "village",
+                      "anchorBlock": {"x": 0, "z": 0}
+                    }
+                  ]
+                }
+                """);
+        Files.writeString(runDir.resolve("city_d5_city_test").resolve("build_operation_plan.json"), """
+                {
+                  "schemaVersion": "build_operation_plan.v0.1",
+                  "cityId": "city_test",
+                  "templateDirectory": "geomantia_templates/d5",
+                  "operations": []
+                }
+                """);
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> CityPlanningEndpointHandler.handleExecuteD5(
+                        debugRoot, Files.createTempDirectory("city-d5-server-root"),
+                        runId, citySeedId, true, null));
+        assertTrue(ex.getMessage().contains("ServerLevel"));
     }
 
     private static LandformPatch patch(String id, LandformType type, int minX, int minZ, int maxX, int maxZ) {
