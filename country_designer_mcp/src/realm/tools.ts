@@ -143,7 +143,7 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "city_plan_d3",
-    description: "City D3: 构建 CityLandformReviewPackage（城市地貌审查包），包含 GIS 局部 patch 摘要、标签和 AI 上下文。需提供 runId 和 citySeedId，会触发局部 GIS 刷新。",
+    description: "City D3: 构建 CityLandformReviewPackage（城市地貌审查包），包含真实渲染 review PNG、GIS patch 标签、成员 cell 薄索引和 AI 上下文。需提供 runId 和 citySeedId，会触发局部 GIS 刷新。",
     inputSchema: {
       type: "object",
       properties: {
@@ -154,6 +154,22 @@ export const realmTools: ToolDefinition[] = [
         playerName: { type: "string", description: "玩家名，用于定位维度。" },
       },
       required: ["runId", "citySeedId"],
+    },
+  },
+  {
+    name: "city_plan_d4",
+    description: "City D4: 提交 AI/Codex 基于 D3 review PNG 和薄索引生成的 PatchGroupPlan，校验并实体化为 FunctionZonePatch、FunctionZoneMap 和 FunctionZoneTerrainStats。需先运行 city_plan_d3。",
+    inputSchema: {
+      type: "object",
+      properties: {
+        runId: { type: "string", description: "已有 W/T run ID。" },
+        citySeedId: { type: "string", description: "目标城市种子的 citySeedId（来自 city_seed_registry.json）。" },
+        patchGroupPlan: {
+          type: "object",
+          description: "schemaVersion=city_patch_group_plan.v0.1 的 PatchGroupPlan；由 MCP 调用方侧 AI/Codex 看 D3 review PNG 后生成，只需引用 patchLabels/landformPatchRefs 和分组理由。",
+        },
+      },
+      required: ["runId", "citySeedId", "patchGroupPlan"],
     },
   },
   {

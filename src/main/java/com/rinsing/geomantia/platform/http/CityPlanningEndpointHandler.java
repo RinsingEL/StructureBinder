@@ -4,13 +4,17 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.rinsing.geomantia.systems.city.application.CityFunctionZoneBuilder;
 import com.rinsing.geomantia.systems.city.application.CityLandformReviewBuilder;
 import com.rinsing.geomantia.systems.city.application.CitySiteContextBuilder;
 import com.rinsing.geomantia.systems.city.application.CitySiteContextBuilder.TerritoryCellRef;
 import com.rinsing.geomantia.systems.city.domain.config.CityPlanningConfig;
 import com.rinsing.geomantia.systems.city.domain.model.CityLandformReviewPackage;
 import com.rinsing.geomantia.systems.city.domain.model.CitySiteContext;
+import com.rinsing.geomantia.systems.city.domain.model.PatchGroupPlan;
+import com.rinsing.geomantia.systems.city.infrastructure.json.CityJson;
 import com.rinsing.geomantia.systems.city.infrastructure.preview.CityLandformReviewMapRenderer;
+import com.rinsing.geomantia.systems.city.infrastructure.preview.FunctionZonePreviewRenderer;
 import com.rinsing.geomantia.systems.gis.GisClassifierConfig;
 import com.rinsing.geomantia.systems.gis.GisSampleConfig;
 import com.rinsing.geomantia.systems.gis.adapter.minecraft.MinecraftPriorAtlasSampler;
@@ -89,18 +93,71 @@ final class CityPlanningEndpointHandler {
             patches = List.of();
         }
 
-        CityLandformReviewPackage reviewPkg = reviewBuilder.build(ctx, patches);
+        CityLandformReviewPackage reviewPkg = refreshResult.region() != null
+                ? reviewBuilder.build(ctx, refreshResult.region())
+                : reviewBuilder.build(ctx, patches);
         Path reviewMapPath = mapRenderer.render(ctx, reviewPkg, patches, outputDirectory);
         String reviewMapRef = debugRef(debugRoot, reviewMapPath);
         reviewPkg = reviewPkg.withReviewMap(reviewMapRef, List.of(
                 reviewMapRef,
                 debugRef(debugRoot, outputDirectory)));
+        Path packagePath = outputDirectory.resolve("city_landform_review_package.json");
+        Files.writeString(packagePath, CityJson.GSON.toJson(reviewPkg.asJson()));
 
         JsonObject response = new JsonObject();
         response.addProperty("ok", true);
         response.addProperty("patchCount", patches.size());
         response.add("citySiteContext", ctx.asJson());
         response.add("landformReviewPackage", reviewPkg.asJson());
+        JsonObject artifacts = new JsonObject();
+        artifacts.addProperty("landformReviewMap", reviewMapRef);
+        artifacts.addProperty("cityLandformReviewPackage", debugRef(debugRoot, packagePath));
+        response.add("artifacts", artifacts);
+        return response;
+    }
+
+    static JsonObject handlePlanD4(Path debugRoot, String runId, String citySeedId,
+                                    JsonObject patchGroupPlanJson) throws IOException {
+        Path runDir = debugRoot.resolve(runId);
+        loadCitySeed(runDir, runId, citySeedId);
+        Path d3Dir = runDir.resolve("city_d3_" + safeFileName(citySeedId));
+        Path d3PackagePath = d3Dir.resolve("city_landform_review_package.json");
+        if (!Files.exists(d3PackagePath)) {
+            throw new IllegalArgumentException("D3 package not found. Run city_plan_d3 first: "
+                    + debugRef(debugRoot, d3PackagePath));
+        }
+
+        CityLandformReviewPackage reviewPackage = CityLandformReviewPackage.fromJson(
+                JsonParser.parseString(Files.readString(d3PackagePath)).getAsJsonObject());
+        PatchGroupPlan patchGroupPlan = PatchGroupPlan.fromJson(patchGroupPlanJson);
+        CityFunctionZoneBuilder.Result result = new CityFunctionZoneBuilder().build(reviewPackage, patchGroupPlan);
+
+        Path outputDirectory = runDir.resolve("city_d4_" + safeFileName(citySeedId));
+        Files.createDirectories(outputDirectory);
+        Path patchGroupPlanPath = outputDirectory.resolve("patch_group_plan.json");
+        Path zoneMapPath = outputDirectory.resolve("function_zone_map.json");
+        Path statsPath = outputDirectory.resolve("function_zone_terrain_stats.json");
+        Path qualityPath = outputDirectory.resolve("quality_report.json");
+        Files.writeString(patchGroupPlanPath, CityJson.GSON.toJson(patchGroupPlan.asJson()));
+        Files.writeString(zoneMapPath, CityJson.GSON.toJson(result.functionZoneMap().asJson()));
+
+        JsonArray statsArray = new JsonArray();
+        result.functionZoneTerrainStats().forEach(stats -> statsArray.add(stats.asJson()));
+        Files.writeString(statsPath, CityJson.GSON.toJson(statsArray));
+        Files.writeString(qualityPath, CityJson.GSON.toJson(result.qualityReport().asJson()));
+
+        Path previewPath = new FunctionZonePreviewRenderer()
+                .render(reviewPackage, result.functionZoneMap(), outputDirectory);
+
+        JsonObject response = result.asJson();
+        JsonObject artifacts = new JsonObject();
+        artifacts.addProperty("patchGroupPlan", debugRef(debugRoot, patchGroupPlanPath));
+        artifacts.addProperty("functionZoneMap", debugRef(debugRoot, zoneMapPath));
+        artifacts.addProperty("functionZoneTerrainStats", debugRef(debugRoot, statsPath));
+        artifacts.addProperty("functionZonePreview", debugRef(debugRoot, previewPath));
+        artifacts.addProperty("qualityReport", debugRef(debugRoot, qualityPath));
+        artifacts.addProperty("sourceD3Package", debugRef(debugRoot, d3PackagePath));
+        response.add("artifacts", artifacts);
         return response;
     }
 

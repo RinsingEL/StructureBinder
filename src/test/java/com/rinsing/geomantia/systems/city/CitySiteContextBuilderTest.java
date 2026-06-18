@@ -56,6 +56,24 @@ class CitySiteContextBuilderTest {
     }
 
     @Test
+    void gridCellStep_townUsesGisCompatibleStep() {
+        BlockBounds bounds = new BlockBounds(0, 0, 1024, 1024);
+        PlanningGrid grid = builder.buildGrid(bounds, CityScale.TOWN, 128);
+
+        assertEquals(16, grid.cellStepBlocks());
+        assertEquals(0, 512 % grid.cellStepBlocks());
+    }
+
+    @Test
+    void gridCellStep_cityUsesGisCompatibleStep() {
+        BlockBounds bounds = new BlockBounds(0, 0, 2048, 2048);
+        PlanningGrid grid = builder.buildGrid(bounds, CityScale.CITY, 128);
+
+        assertEquals(32, grid.cellStepBlocks());
+        assertEquals(0, 512 % grid.cellStepBlocks());
+    }
+
+    @Test
     void entryCandidates_containsAnchorAndGates() {
         BlockBounds bounds = new BlockBounds(-200, -200, 200, 200);
         List<EntryCandidate> entries = builder.buildEntryCandidates(

@@ -4,9 +4,11 @@ import com.rinsing.geomantia.systems.city.application.CityLandformReviewBuilder;
 import com.rinsing.geomantia.systems.city.application.CitySiteContextBuilder;
 import com.rinsing.geomantia.systems.city.domain.config.CityPlanningConfig;
 import com.rinsing.geomantia.systems.city.domain.model.*;
+import com.rinsing.geomantia.systems.gis.GisSampleConfig;
 import com.rinsing.geomantia.systems.gis.domain.cell.LandformType;
 import com.rinsing.geomantia.systems.gis.domain.landform.LandformPatch;
 import com.rinsing.geomantia.systems.gis.domain.landform.PatchFlag;
+import com.rinsing.geomantia.systems.gis.domain.region.AtlasRegion;
 import org.junit.jupiter.api.Test;
 
 import java.util.EnumSet;
@@ -204,7 +206,29 @@ class CityLandformReviewBuilderTest {
         assertTrue(json.contains("aiPromptContext"));
         assertTrue(json.contains("debugRefs"));
         assertTrue(json.contains("mapLabel"));
+        assertTrue(json.contains("blockBounds"));
+        assertTrue(json.contains("geometryMode"));
         assertTrue(json.contains("metricsSummary"));
+    }
+
+    @Test
+    void buildFromAtlasRegion_includesPatchMemberCells() {
+        CitySiteContext ctx = siteBuilder.build("city_cells", "realm_cells", "minecraft:overworld",
+                "sc", "cc", 0, 0, "village", "village", 16, 4, null);
+        AtlasRegion region = new AtlasRegion("minecraft:overworld", 0, 0,
+                GisSampleConfig.defaults().withCellStepBlocks(4));
+        LandformPatch patch = patch("patch_cells", LandformType.PLAIN, 0, 0, 16, 16);
+        region.replacePatches(List.of(patch));
+        region.cell(0, 0).setPatchId(patch.patchId());
+        region.cell(1, 0).setPatchId(patch.patchId());
+        region.cell(0, 1).setPatchId(patch.patchId());
+
+        CityLandformReviewPackage pkg = reviewBuilder.build(ctx, region);
+        LandformPatchSummary summary = pkg.landformPatches().get(0);
+
+        assertEquals("patch_member_cells", summary.geometryMode());
+        assertEquals(3, summary.memberCells().size());
+        assertTrue(pkg.asJson().toString().contains("memberCells"));
     }
 
     private static LandformPatch patch(String id, LandformType type, int minX, int minZ, int maxX, int maxZ) {

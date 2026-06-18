@@ -160,6 +160,19 @@ final class RealmPlanningHttpController {
         }));
     }
 
+    void handleCityPlanD4(HttpExchange exchange) {
+        handle(exchange, "POST", () -> {
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            String runId = requiredString(request, "runId");
+            String citySeedId = requiredString(request, "citySeedId");
+            if (!request.has("patchGroupPlan") || !request.get("patchGroupPlan").isJsonObject()) {
+                throw new IllegalArgumentException("patchGroupPlan object is required.");
+            }
+            return CityPlanningEndpointHandler.handlePlanD4(debugRoot(), runId, citySeedId,
+                    request.getAsJsonObject("patchGroupPlan"));
+        });
+    }
+
     void handleTagAudit(HttpExchange exchange) {
         handle(exchange, "POST", () -> {
             JsonObject request = GisHttpUtil.readJsonObject(exchange);

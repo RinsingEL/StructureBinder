@@ -57,7 +57,8 @@ minecraft {
             property 'forge.enabledGameTestNamespaces', mod_id
             // TEMP dev-only convenience: auto-load a local save for smoke tests.
             // Remove this once the client validation harness no longer needs manual world entry.
-            // Enable explicitly with: ./gradlew.bat runClient -PgeomantiaDevAutoLoadWorld=<saveName>
+            // Configure with gradle.properties or override explicitly:
+            // ./gradlew.bat runClient -PgeomantiaDevAutoLoadWorld=<saveName>
             // For non-ASCII save names, prefer -PgeomantiaDevAutoLoadWorldBase64=<utf8Base64>.
             if (!devAutoLoadWorldBase64.isBlank()) {
                 property 'geomantia.devAutoLoadWorldBase64', devAutoLoadWorldBase64

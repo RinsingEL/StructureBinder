@@ -1,8 +1,11 @@
 package com.rinsing.geomantia.systems.city.domain.model;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.rinsing.geomantia.systems.gis.domain.cell.LandformType;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -95,6 +98,17 @@ public record CityLandformReviewPackage(
             center.addProperty("z", p.centerBlock().z());
             pj.add("centerBlock", center);
 
+            JsonObject bounds = new JsonObject();
+            bounds.addProperty("minX", p.blockBounds().minX());
+            bounds.addProperty("minZ", p.blockBounds().minZ());
+            bounds.addProperty("maxX", p.blockBounds().maxX());
+            bounds.addProperty("maxZ", p.blockBounds().maxZ());
+            pj.add("blockBounds", bounds);
+            pj.addProperty("geometryMode", p.geometryMode());
+            JsonArray memberCells = new JsonArray();
+            p.memberCells().forEach(cell -> memberCells.add(cell.asJson()));
+            pj.add("memberCells", memberCells);
+
             JsonObject metrics = new JsonObject();
             metrics.addProperty("meanElevation", p.metricsSummary().meanElevation());
             metrics.addProperty("minElevation", p.metricsSummary().minElevation());
@@ -134,5 +148,189 @@ public record CityLandformReviewPackage(
         obj.add("debugRefs", debugArr);
 
         return obj;
+    }
+
+    public static CityLandformReviewPackage fromJson(JsonObject obj) {
+        if (obj == null) throw new IllegalArgumentException("CityLandformReviewPackage JSON is required");
+        PlanningGrid grid = gridFromJson(requiredObject(obj, "grid"));
+        TargetScale targetScale = targetScaleFromJson(requiredObject(obj, "targetScale"));
+        return new CityLandformReviewPackage(
+                requiredString(obj, "schemaVersion"),
+                requiredString(obj, "cityId"),
+                grid,
+                targetScale,
+                stringValue(obj, "reviewMapImage", ""),
+                legendFromJson(requiredArray(obj, "legend")),
+                patchesFromJson(requiredArray(obj, "landformPatches")),
+                stringsFromArray(requiredArray(obj, "planningContext")),
+                requiredString(obj, "aiPromptContext"),
+                stringsFromArray(requiredArray(obj, "debugRefs")));
+    }
+
+    private static PlanningGrid gridFromJson(JsonObject obj) {
+        return new PlanningGrid(
+                intValue(obj, "originBlockX", 0),
+                intValue(obj, "originBlockZ", 0),
+                intValue(obj, "cellStepBlocks", 1),
+                intValue(obj, "cellsX", 1),
+                intValue(obj, "cellsZ", 1));
+    }
+
+    private static TargetScale targetScaleFromJson(JsonObject obj) {
+        return new TargetScale(
+                CityScale.fromContractName(requiredString(obj, "scale")),
+                intValue(obj, "radiusBlocks", 1),
+                intValue(obj, "cellStepBlocks", 1));
+    }
+
+    private static List<LegendEntry> legendFromJson(JsonArray array) {
+        List<LegendEntry> result = new ArrayList<>();
+        for (JsonElement elem : array) {
+            JsonObject obj = elem.getAsJsonObject();
+            result.add(new LegendEntry(
+                    requiredString(obj, "color"),
+                    requiredString(obj, "label"),
+                    requiredString(obj, "landformType")));
+        }
+        return result;
+    }
+
+    private static List<LandformPatchSummary> patchesFromJson(JsonArray array) {
+        List<LandformPatchSummary> result = new ArrayList<>();
+        for (JsonElement elem : array) {
+            JsonObject obj = elem.getAsJsonObject();
+            JsonObject center = requiredObject(obj, "centerBlock");
+            JsonObject boundsObj = obj.has("blockBounds") && obj.get("blockBounds").isJsonObject()
+                    ? obj.getAsJsonObject("blockBounds")
+                    : null;
+            BlockPoint centerBlock = new BlockPoint(intValue(center, "x", 0), intValue(center, "z", 0));
+            int areaBlocks = intValue(obj, "areaBlocks", 0);
+            int half = Math.max(1, (int) Math.round(Math.sqrt(Math.max(1, areaBlocks)) / 2.0));
+            BlockBounds bounds = boundsObj == null
+                    ? new BlockBounds(centerBlock.x() - half, centerBlock.z() - half,
+                    centerBlock.x() + half, centerBlock.z() + half)
+                    : new BlockBounds(
+                    intValue(boundsObj, "minX", centerBlock.x()),
+                    intValue(boundsObj, "minZ", centerBlock.z()),
+                    intValue(boundsObj, "maxX", centerBlock.x()),
+                    intValue(boundsObj, "maxZ", centerBlock.z()));
+
+            JsonObject metrics = requiredObject(obj, "metricsSummary");
+            MetricsSummary metricsSummary = new MetricsSummary(
+                    doubleValue(metrics, "meanElevation", 0),
+                    doubleValue(metrics, "minElevation", 0),
+                    doubleValue(metrics, "maxElevation", 0),
+                    doubleValue(metrics, "meanSlope", 0),
+                    doubleValue(metrics, "meanWaterDistance", 0));
+            result.add(new LandformPatchSummary(
+                    requiredString(obj, "landformPatchId"),
+                    requiredString(obj, "mapLabel"),
+                    requiredString(obj, "displayLandformName"),
+                    centerBlock,
+                    bounds,
+                    stringValue(obj, "geometryMode", "patch_envelope"),
+                    memberCellsFromJson(optionalArray(obj, "memberCells")),
+                    areaBlocks,
+                    intValue(obj, "cellCount", 0),
+                    landformType(requiredString(obj, "landformType")),
+                    stringsFromArray(optionalArray(obj, "landformTags")),
+                    stringsFromArray(optionalArray(obj, "overlayTags")),
+                    areaClass(requiredString(obj, "areaClass")),
+                    metricsSummary,
+                    stringsFromArray(requiredArray(obj, "summaryFacts")),
+                    stringsFromArray(requiredArray(obj, "neighborLandformPatchIds"))));
+        }
+        return result;
+    }
+
+    private static List<PatchMemberCell> memberCellsFromJson(JsonArray array) {
+        List<PatchMemberCell> result = new ArrayList<>();
+        for (JsonElement elem : array) {
+            JsonObject obj = elem.getAsJsonObject();
+            result.add(new PatchMemberCell(
+                    intValue(obj, "cellX", 0),
+                    intValue(obj, "cellZ", 0),
+                    intValue(obj, "blockMinX", 0),
+                    intValue(obj, "blockMinZ", 0)));
+        }
+        return result;
+    }
+
+    private static LandformType landformType(String raw) {
+        for (LandformType type : LandformType.values()) {
+            if (type.contractName().equalsIgnoreCase(raw)) {
+                return type;
+            }
+        }
+        return LandformType.UNKNOWN;
+    }
+
+    private static AreaClass areaClass(String raw) {
+        for (AreaClass areaClass : AreaClass.values()) {
+            if (areaClass.contractName().equalsIgnoreCase(raw)) {
+                return areaClass;
+            }
+        }
+        throw new IllegalArgumentException("Unknown areaClass: " + raw);
+    }
+
+    private static JsonObject requiredObject(JsonObject obj, String key) {
+        if (!obj.has(key) || !obj.get(key).isJsonObject()) {
+            throw new IllegalArgumentException(key + " object is required");
+        }
+        return obj.getAsJsonObject(key);
+    }
+
+    private static JsonArray requiredArray(JsonObject obj, String key) {
+        if (!obj.has(key) || !obj.get(key).isJsonArray()) {
+            throw new IllegalArgumentException(key + " array is required");
+        }
+        return obj.getAsJsonArray(key);
+    }
+
+    private static JsonArray optionalArray(JsonObject obj, String key) {
+        if (!obj.has(key) || !obj.get(key).isJsonArray()) {
+            return new JsonArray();
+        }
+        return obj.getAsJsonArray(key);
+    }
+
+    private static List<String> stringsFromArray(JsonArray array) {
+        List<String> result = new ArrayList<>();
+        for (JsonElement elem : array) {
+            if (!elem.isJsonNull()) {
+                result.add(elem.getAsString());
+            }
+        }
+        return result;
+    }
+
+    private static String requiredString(JsonObject obj, String key) {
+        String value = stringValue(obj, key, "");
+        if (value.isBlank()) {
+            throw new IllegalArgumentException(key + " is required");
+        }
+        return value;
+    }
+
+    private static String stringValue(JsonObject obj, String key, String defaultValue) {
+        if (!obj.has(key) || obj.get(key).isJsonNull()) {
+            return defaultValue;
+        }
+        return obj.get(key).getAsString();
+    }
+
+    private static int intValue(JsonObject obj, String key, int defaultValue) {
+        if (!obj.has(key) || obj.get(key).isJsonNull()) {
+            return defaultValue;
+        }
+        return obj.get(key).getAsInt();
+    }
+
+    private static double doubleValue(JsonObject obj, String key, double defaultValue) {
+        if (!obj.has(key) || obj.get(key).isJsonNull()) {
+            return defaultValue;
+        }
+        return obj.get(key).getAsDouble();
     }
 }

@@ -103,8 +103,8 @@ public record CityPlanningConfig(
         Map<CityScale, ScaleRadius> map = new EnumMap<>(CityScale.class);
         map.put(CityScale.HAMLET, new ScaleRadius(160, 240, 8, 16));
         map.put(CityScale.VILLAGE, new ScaleRadius(256, 384, 16, 16));
-        map.put(CityScale.TOWN, new ScaleRadius(512, 640, 16, 24));
-        map.put(CityScale.CITY, new ScaleRadius(768, Integer.MAX_VALUE, 24, 32));
+        map.put(CityScale.TOWN, new ScaleRadius(512, 640, 16, 16));
+        map.put(CityScale.CITY, new ScaleRadius(768, Integer.MAX_VALUE, 32, 32));
         return map;
     }
 

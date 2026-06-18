@@ -4,6 +4,7 @@ import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
 import com.rinsing.geomantia.systems.city.domain.model.CityLandformReviewPackage;
 import com.rinsing.geomantia.systems.city.domain.model.CitySiteContext;
 import com.rinsing.geomantia.systems.city.domain.model.LandformPatchSummary;
+import com.rinsing.geomantia.systems.city.domain.model.PatchMemberCell;
 import com.rinsing.geomantia.systems.gis.domain.cell.LandformType;
 import com.rinsing.geomantia.systems.gis.domain.landform.LandformPatch;
 
@@ -88,7 +89,11 @@ public final class CityLandformReviewMapRenderer {
         int maxX;
         int minZ;
         int maxZ;
-        if (sourcePatch != null) {
+        if (!patch.memberCells().isEmpty()) {
+            drawPatchCells(g, bounds, patch);
+            drawPatchLabel(g, bounds, patch);
+            return;
+        } else if (sourcePatch != null) {
             minX = clamp(sourcePatch.blockMinX(), bounds.minX(), bounds.maxX());
             maxX = clamp(sourcePatch.blockMaxX(), bounds.minX(), bounds.maxX());
             minZ = clamp(sourcePatch.blockMinZ(), bounds.minZ(), bounds.maxZ());
@@ -120,6 +125,57 @@ public final class CityLandformReviewMapRenderer {
         int labelZ = z + Math.max(metrics.getAscent() + 2, (h + metrics.getAscent()) / 2);
         g.setColor(new Color(23, 28, 24, 220));
         g.drawString(label, labelX, labelZ);
+    }
+
+    private void drawPatchCells(Graphics2D g, BlockBounds bounds, LandformPatchSummary patch) {
+        Color base = colors.getOrDefault(patch.landformType(), new Color(158, 158, 158));
+        g.setColor(new Color(base.getRed(), base.getGreen(), base.getBlue(), 185));
+        int cellStepBlocks = memberCellStepBlocks(patch);
+        for (PatchMemberCell cell : patch.memberCells()) {
+            int x = toPixelX(bounds, cell.blockMinX());
+            int z = toPixelZ(bounds, cell.blockMinZ());
+            int nextX = toPixelX(bounds, cell.blockMinX() + cellStepBlocks);
+            int nextZ = toPixelZ(bounds, cell.blockMinZ() + cellStepBlocks);
+            int w = Math.max(2, nextX - x);
+            int h = Math.max(2, nextZ - z);
+            g.fillRect(x, z, w, h);
+        }
+        g.setColor(base.darker());
+        g.setStroke(new BasicStroke(1.5f));
+        for (PatchMemberCell cell : patch.memberCells()) {
+            int x = toPixelX(bounds, cell.blockMinX());
+            int z = toPixelZ(bounds, cell.blockMinZ());
+            int px = Math.max(3, toPixelX(bounds, cell.blockMinX() + cellStepBlocks) - x);
+            int pz = Math.max(3, toPixelZ(bounds, cell.blockMinZ() + cellStepBlocks) - z);
+            g.drawRect(x, z, px, pz);
+        }
+    }
+
+    private int memberCellStepBlocks(LandformPatchSummary patch) {
+        int minStep = Integer.MAX_VALUE;
+        for (PatchMemberCell left : patch.memberCells()) {
+            for (PatchMemberCell right : patch.memberCells()) {
+                int dx = Math.abs(left.blockMinX() - right.blockMinX());
+                int dz = Math.abs(left.blockMinZ() - right.blockMinZ());
+                if (dx > 0) {
+                    minStep = Math.min(minStep, dx);
+                }
+                if (dz > 0) {
+                    minStep = Math.min(minStep, dz);
+                }
+            }
+        }
+        return minStep == Integer.MAX_VALUE ? 16 : Math.max(1, minStep);
+    }
+
+    private void drawPatchLabel(Graphics2D g, BlockBounds bounds, LandformPatchSummary patch) {
+        g.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 17));
+        String label = patch.mapLabel();
+        FontMetrics metrics = g.getFontMetrics();
+        int x = toPixelX(bounds, patch.centerBlock().x());
+        int z = toPixelZ(bounds, patch.centerBlock().z());
+        g.setColor(new Color(23, 28, 24, 230));
+        g.drawString(label, x - metrics.stringWidth(label) / 2, z + metrics.getAscent() / 2);
     }
 
     private void drawAnchor(Graphics2D g, CitySiteContext context) {

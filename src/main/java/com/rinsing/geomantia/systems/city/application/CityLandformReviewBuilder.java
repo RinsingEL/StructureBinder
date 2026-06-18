@@ -2,8 +2,10 @@ package com.rinsing.geomantia.systems.city.application;
 
 import com.rinsing.geomantia.systems.city.domain.config.CityPlanningConfig;
 import com.rinsing.geomantia.systems.city.domain.model.*;
+import com.rinsing.geomantia.systems.gis.domain.cell.AtlasCell;
 import com.rinsing.geomantia.systems.gis.domain.cell.LandformType;
 import com.rinsing.geomantia.systems.gis.domain.landform.LandformPatch;
+import com.rinsing.geomantia.systems.gis.domain.region.AtlasRegion;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -50,6 +52,33 @@ public final class CityLandformReviewBuilder {
                 planningContext,
                 aiPrompt,
                 List.of());
+    }
+
+    public CityLandformReviewPackage build(CitySiteContext context, AtlasRegion region) {
+        Objects.requireNonNull(region, "region");
+        CityLandformReviewPackage pkg = build(context, region.patches());
+        Map<String, List<PatchMemberCell>> cellsByPatch = region.cells().stream()
+                .filter(cell -> !cell.patchId().isBlank() && context.bounds().contains(cell.blockMinX(), cell.blockMinZ()))
+                .collect(Collectors.groupingBy(AtlasCell::patchId,
+                        LinkedHashMap::new,
+                        Collectors.mapping(cell -> new PatchMemberCell(
+                                cell.globalCellX(), cell.globalCellZ(), cell.blockMinX(), cell.blockMinZ()),
+                                Collectors.toList())));
+        List<LandformPatchSummary> withCells = pkg.landformPatches().stream()
+                .map(summary -> summary.withMemberCells(cellsByPatch.getOrDefault(
+                        summary.landformPatchId(), List.of())))
+                .toList();
+        return new CityLandformReviewPackage(
+                pkg.schemaVersion(),
+                pkg.cityId(),
+                pkg.grid(),
+                pkg.targetScale(),
+                pkg.reviewMapImage(),
+                pkg.legend(),
+                withCells,
+                pkg.planningContext(),
+                pkg.aiPromptContext(),
+                pkg.debugRefs());
     }
 
     public List<LandformPatch> filterPatchesByBounds(BlockBounds bounds, List<LandformPatch> allPatches) {
@@ -102,7 +131,9 @@ public final class CityLandformReviewBuilder {
                 int idx = summaries.indexOf(summary);
                 summaries.set(idx, new LandformPatchSummary(
                         summary.landformPatchId(), mapLabel, summary.displayLandformName(),
-                        summary.centerBlock(), summary.areaBlocks(), summary.cellCount(),
+                        summary.centerBlock(), summary.blockBounds(), summary.geometryMode(),
+                        summary.memberCells(),
+                        summary.areaBlocks(), summary.cellCount(),
                         summary.landformType(), summary.landformTags(), summary.overlayTags(),
                         summary.areaClass(), summary.metricsSummary(),
                         summary.summaryFacts(), summary.neighborLandformPatchIds()));
@@ -148,7 +179,9 @@ public final class CityLandformReviewBuilder {
             LandformPatchSummary orig = summaries.get(i);
             summaries.set(i, new LandformPatchSummary(
                     orig.landformPatchId(), orig.mapLabel(), orig.displayLandformName(),
-                    orig.centerBlock(), orig.areaBlocks(), orig.cellCount(),
+                    orig.centerBlock(), orig.blockBounds(), orig.geometryMode(),
+                    orig.memberCells(),
+                    orig.areaBlocks(), orig.cellCount(),
                     orig.landformType(), orig.landformTags(), orig.overlayTags(),
                     orig.areaClass(), orig.metricsSummary(),
                     facts, orig.neighborLandformPatchIds()));

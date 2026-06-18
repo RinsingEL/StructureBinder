@@ -51,6 +51,11 @@ export const realmHandlers: Record<string, ToolHandler> = {
     const res = await postJson(`${MC_API_URL}/realm/city/plan_d3`, payload(args), TIMEOUTS.refresh);
     return textResult(JSON.stringify(res.data, null, 2));
   },
+
+  async city_plan_d4(args) {
+    const res = await postJson(`${MC_API_URL}/realm/city/plan_d4`, payload(args), TIMEOUTS.quick);
+    return textResult(JSON.stringify(res.data, null, 2));
+  },
 };
 
 function payload(args: Record<string, unknown>) {
