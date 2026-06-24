@@ -226,6 +226,88 @@ final class CityStructureD6D7Test {
     }
 
     @Test
+    void d7WaitsForChunksWithoutFailingOrStartingVariableGeneration() throws Exception {
+        Fixture fixture = fixture();
+        JsonObject d6 = runD6(fixture, catalog(List.of(
+                fixed("minecraft:desert_pyramid", "structure_assembly", "minecraft_place_structure", 16, 16),
+                variable("minecraft:village_plains", "structure_assembly", "minecraft_place_structure"))),
+                choicePlan(), selectionPlan("fixed_core_cand_01"));
+
+        CityStructureD7Executor.Result result = new CityStructureD7Executor().execute(
+                fixture.zoneMap(),
+                fixture.buildableAreaMap(),
+                d6.getAsJsonObject("plannedFixedPlacementMap"),
+                d6.getAsJsonObject("structurePoolMap"),
+                12345L,
+                request -> "fixed_footprint".equals(request.footprintMode())
+                        ? CityStructureD7Executor.PlacementResult.waiting("STRUCTURE_CHUNK_NOT_LOADED", "wait")
+                        : CityStructureD7Executor.PlacementResult.placed("variable should not run"));
+
+        assertEquals("waiting", result.structureGenerationTrace().get("status").getAsString());
+        assertTrue(result.structureGenerationTrace().getAsJsonObject("waitingSummary")
+                .has("STRUCTURE_CHUNK_NOT_LOADED"));
+        assertEquals(0, result.placedStructureMap().getAsJsonArray("placedStructures").size());
+        assertEquals(0, result.startCandidateSets().size());
+        assertEquals(0, result.structureGenerationTrace().getAsJsonArray("variableAttempts").size());
+        assertFalse(result.placedStructureMap().getAsJsonObject("quality")
+                .getAsJsonArray("hardBlocks").toString().contains("FIXED_FOOTPRINT_INVALID"));
+    }
+
+    @Test
+    void d7ReusesOnlyRealPlacementLedgerEntriesAcrossCalls() throws Exception {
+        Fixture fixture = fixture();
+        JsonObject d6 = runD6(fixture, catalog(List.of(
+                fixed("minecraft:desert_pyramid", "structure_assembly", "minecraft_place_structure", 16, 16),
+                variable("minecraft:village_plains", "structure_assembly", "minecraft_place_structure"))),
+                choicePlan(), selectionPlan("fixed_core_cand_01"));
+
+        CityStructureD7Executor executor = new CityStructureD7Executor();
+        CityStructureD7Executor.Result dryRun = executor.execute(
+                fixture.zoneMap(),
+                fixture.buildableAreaMap(),
+                d6.getAsJsonObject("plannedFixedPlacementMap"),
+                d6.getAsJsonObject("structurePoolMap"),
+                12345L,
+                CityStructureD7Executor.PlacementBackend.traceOnly());
+        assertFalse(dryRun.placedStructureMap().getAsJsonArray("placedStructures")
+                .get(0).getAsJsonObject().get("worldMutationApplied").getAsBoolean());
+
+        final int[] calls = {0};
+        CityStructureD7Executor.Result realRun = executor.execute(
+                fixture.zoneMap(),
+                fixture.buildableAreaMap(),
+                d6.getAsJsonObject("plannedFixedPlacementMap"),
+                d6.getAsJsonObject("structurePoolMap"),
+                12345L,
+                request -> {
+                    calls[0]++;
+                    return CityStructureD7Executor.PlacementResult.placed("real placed");
+                },
+                dryRun.placedStructureMap());
+        assertTrue(calls[0] >= 2);
+        assertTrue(realRun.placedStructureMap().getAsJsonArray("placedStructures")
+                .get(0).getAsJsonObject().get("worldMutationApplied").getAsBoolean());
+
+        final int[] replayCalls = {0};
+        CityStructureD7Executor.Result replay = executor.execute(
+                fixture.zoneMap(),
+                fixture.buildableAreaMap(),
+                d6.getAsJsonObject("plannedFixedPlacementMap"),
+                d6.getAsJsonObject("structurePoolMap"),
+                12345L,
+                request -> {
+                    replayCalls[0]++;
+                    return CityStructureD7Executor.PlacementResult.placed("should be reused");
+                },
+                realRun.placedStructureMap());
+        assertEquals(0, replayCalls[0]);
+        assertTrue(replay.structureGenerationTrace().getAsJsonArray("fixedPlacements")
+                .toString().contains("already_placed"));
+        assertTrue(replay.structureGenerationTrace().getAsJsonArray("variableAttempts")
+                .toString().contains("already_placed"));
+    }
+
+    @Test
     void d7FailureReasonIsStructuredWhenRegistryRejectsVariableStructure() throws Exception {
         Fixture fixture = fixture();
         JsonObject d6 = runD6(fixture, catalog(List.of(
@@ -400,7 +482,7 @@ final class CityStructureD6D7Test {
         obj.add("functionTags", strings("civic_core", "residential", "market"));
         JsonObject range = new JsonObject();
         range.addProperty("minAreaBlocks", 128);
-        range.addProperty("maxAreaBlocks", 2048);
+        range.addProperty("maxAreaBlocks", 25600);
         JsonObject start = new JsonObject();
         start.addProperty("widthBlocks", 12);
         start.addProperty("depthBlocks", 12);

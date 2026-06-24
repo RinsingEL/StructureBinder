@@ -49,12 +49,20 @@ public final class MinecraftStructurePlacementBackend implements CityStructureD7
                     "Configured structure registry does not contain: " + request.structureId());
         }
         if (!executeCommands) {
-            return CityStructureD7Executor.PlacementResult.placed(
+            return CityStructureD7Executor.PlacementResult.dryRunAccepted(
                     "Dry-run confirmed configured structure registry entry: " + request.structureId());
         }
         int x = request.anchorBlock().x();
         int z = request.anchorBlock().z();
-        ChunkRange loadedChunks = preloadChunks(request.footprint());
+        ChunkRange requiredChunks = ChunkRange.from(request.requiredLoadBounds() == null
+                ? request.footprint()
+                : request.requiredLoadBounds());
+        String missingChunks = missingChunks(requiredChunks);
+        if (!missingChunks.isBlank()) {
+            return CityStructureD7Executor.PlacementResult.waiting("STRUCTURE_CHUNK_NOT_LOADED",
+                    "Waiting for loaded chunks before structure placement: requiredChunks=" + requiredChunks
+                            + ", missingChunks=" + missingChunks);
+        }
         int surfaceY = level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z);
         int y = Math.max(level.getMinBuildHeight(), Math.min(level.getMaxBuildHeight() - 1, surfaceY));
         BlockPos anchor = new BlockPos(x, y, z);
@@ -69,44 +77,44 @@ public final class MinecraftStructurePlacementBackend implements CityStructureD7
                     anchor);
             if (result <= 0) {
                 return CityStructureD7Executor.PlacementResult.failed("CONFIGURED_STRUCTURE_START_INVALID",
-                        "Command returned no success: /" + command + "; " + diagnostics(anchor, loadedChunks));
+                        "Command returned no success: /" + command + "; " + diagnostics(anchor, requiredChunks));
             }
             return CityStructureD7Executor.PlacementResult.placed("Executed /" + command + "; "
-                    + diagnostics(anchor, loadedChunks));
+                    + diagnostics(anchor, requiredChunks));
         } catch (RuntimeException ex) {
             return CityStructureD7Executor.PlacementResult.failed("STRUCTURE_COMMAND_FAILED",
-                    "Command failed: " + ex.getMessage() + "; " + diagnostics(anchor, loadedChunks));
+                    "Command failed: " + ex.getMessage() + "; " + diagnostics(anchor, requiredChunks));
         } catch (CommandSyntaxException ex) {
             return CityStructureD7Executor.PlacementResult.failed(reasonCode(ex),
                     "PlaceCommand failed: " + ex.getMessage() + "; /" + command + "; "
-                            + diagnostics(anchor, loadedChunks));
+                            + diagnostics(anchor, requiredChunks));
         }
     }
 
-    private ChunkRange preloadChunks(com.rinsing.geomantia.systems.city.domain.model.BlockBounds footprint) {
-        if (footprint == null) {
-            return ChunkRange.single(0, 0);
-        }
-        int marginChunks = 1;
-        int minChunkX = new ChunkPos(new BlockPos(footprint.minX(), level.getMinBuildHeight(), footprint.minZ())).x
-                - marginChunks;
-        int minChunkZ = new ChunkPos(new BlockPos(footprint.minX(), level.getMinBuildHeight(), footprint.minZ())).z
-                - marginChunks;
-        int maxChunkX = new ChunkPos(new BlockPos(footprint.maxX(), level.getMinBuildHeight(), footprint.maxZ())).x
-                + marginChunks;
-        int maxChunkZ = new ChunkPos(new BlockPos(footprint.maxX(), level.getMinBuildHeight(), footprint.maxZ())).z
-                + marginChunks;
-        for (int chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
-            for (int chunkZ = minChunkZ; chunkZ <= maxChunkZ; chunkZ++) {
-                level.getChunk(chunkX, chunkZ);
+    private String missingChunks(ChunkRange requiredChunks) {
+        StringBuilder missing = new StringBuilder();
+        int count = 0;
+        for (int chunkX = requiredChunks.minX(); chunkX <= requiredChunks.maxX(); chunkX++) {
+            for (int chunkZ = requiredChunks.minZ(); chunkZ <= requiredChunks.maxZ(); chunkZ++) {
+                if (!level.isLoaded(new ChunkPos(chunkX, chunkZ).getWorldPosition())) {
+                    if (count > 0) {
+                        missing.append(";");
+                    }
+                    missing.append(chunkX).append(",").append(chunkZ);
+                    count++;
+                    if (count >= 16) {
+                        missing.append(";...");
+                        return missing.toString();
+                    }
+                }
             }
         }
-        return new ChunkRange(minChunkX, minChunkZ, maxChunkX, maxChunkZ);
+        return missing.toString();
     }
 
     private String reasonCode(CommandSyntaxException ex) {
         String message = ex.getMessage() == null ? "" : ex.getMessage().toLowerCase();
-        if (message.contains("not loaded")) {
+        if (message.contains("not loaded") || message.contains("尚未被加载") || message.contains("未被加载")) {
             return "STRUCTURE_CHUNK_NOT_LOADED";
         }
         return "CONFIGURED_STRUCTURE_START_INVALID";
@@ -120,12 +128,19 @@ public final class MinecraftStructurePlacementBackend implements CityStructureD7
         return "surfaceY=" + anchor.getY()
                 + ", biome=" + (biomeId == null ? "unknown" : biomeId)
                 + ", commandChunk=" + commandChunk.x + "," + commandChunk.z
-                + ", loadedFootprintChunks=" + loadedChunks;
+                + ", requiredChunks=" + loadedChunks;
     }
 
     private record ChunkRange(int minX, int minZ, int maxX, int maxZ) {
-        static ChunkRange single(int chunkX, int chunkZ) {
-            return new ChunkRange(chunkX, chunkZ, chunkX, chunkZ);
+        static ChunkRange from(com.rinsing.geomantia.systems.city.domain.model.BlockBounds footprint) {
+            if (footprint == null) {
+                return new ChunkRange(0, 0, 0, 0);
+            }
+            int minChunkX = new ChunkPos(new BlockPos(footprint.minX(), 0, footprint.minZ())).x;
+            int minChunkZ = new ChunkPos(new BlockPos(footprint.minX(), 0, footprint.minZ())).z;
+            int maxChunkX = new ChunkPos(new BlockPos(footprint.maxX(), 0, footprint.maxZ())).x;
+            int maxChunkZ = new ChunkPos(new BlockPos(footprint.maxX(), 0, footprint.maxZ())).z;
+            return new ChunkRange(minChunkX, minChunkZ, maxChunkX, maxChunkZ);
         }
 
         @Override

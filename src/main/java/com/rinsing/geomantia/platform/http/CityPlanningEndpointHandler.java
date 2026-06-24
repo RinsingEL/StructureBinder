@@ -348,13 +348,17 @@ final class CityPlanningEndpointHandler {
         CityStructureD7Executor.PlacementBackend backend = serverHolder == null
                 ? CityStructureD7Executor.PlacementBackend.traceOnly()
                 : new MinecraftStructurePlacementBackend(serverHolder.server(), level, executeStructurePlacement);
-        CityStructureD7Executor.Result result = new CityStructureD7Executor().execute(
-                inputs.zoneMap(), inputs.buildableAreaMap(), plannedFixedMap, structurePoolMap, worldSeed, backend);
-
         Path outputDirectory = runDir.resolve("city_d7_" + safeFileName(citySeedId));
+        Path placedPath = outputDirectory.resolve("placed_structure_map.json");
+        JsonObject previousPlacedMap = executeStructurePlacement && Files.exists(placedPath)
+                ? JsonParser.parseString(Files.readString(placedPath)).getAsJsonObject()
+                : null;
+        CityStructureD7Executor.Result result = new CityStructureD7Executor().execute(
+                inputs.zoneMap(), inputs.buildableAreaMap(), plannedFixedMap, structurePoolMap, worldSeed, backend,
+                previousPlacedMap);
+
         Files.createDirectories(outputDirectory);
         Path startPath = outputDirectory.resolve("start_candidate_set.json");
-        Path placedPath = outputDirectory.resolve("placed_structure_map.json");
         Path tracePath = outputDirectory.resolve("structure_generation_trace.json");
         Path qualityPath = outputDirectory.resolve("quality_report.json");
         Files.writeString(startPath, CityJson.GSON.toJson(result.startCandidateSets()));

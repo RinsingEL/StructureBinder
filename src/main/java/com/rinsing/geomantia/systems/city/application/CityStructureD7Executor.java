@@ -35,6 +35,16 @@ public final class CityStructureD7Executor {
                           JsonObject structurePoolMap,
                           long worldSeed,
                           PlacementBackend backend) {
+        return execute(zoneMap, buildableAreaMap, plannedFixedPlacementMap, structurePoolMap, worldSeed, backend, null);
+    }
+
+    public Result execute(FunctionZoneMap zoneMap,
+                          BuildableAreaMap buildableAreaMap,
+                          JsonObject plannedFixedPlacementMap,
+                          JsonObject structurePoolMap,
+                          long worldSeed,
+                          PlacementBackend backend,
+                          JsonObject previousPlacedStructureMap) {
         if (zoneMap == null) {
             throw new IllegalArgumentException("FunctionZoneMap is required for D7.");
         }
@@ -60,14 +70,23 @@ public final class CityStructureD7Executor {
         JsonArray fixedAttempts = new JsonArray();
         JsonArray variableAttempts = new JsonArray();
         JsonArray placedStructures = new JsonArray();
-        List<Placed> placed = new ArrayList<>();
+        List<Placed> placed = previousPlaced(previousPlacedStructureMap);
+        placed.forEach(existing -> placedStructures.add(existing.asJson()));
         Map<String, Integer> remainingByZone = initialRemaining(zones);
+        placed.forEach(existing -> remainingByZone.computeIfPresent(existing.zonePatchId(),
+                (id, value) -> Math.max(0, value - existing.visibleAreaCost())));
         Map<String, Integer> failureSummary = new LinkedHashMap<>();
+        Map<String, Integer> waitingSummary = new LinkedHashMap<>();
         List<String> hardBlocks = new ArrayList<>();
+        boolean waitingForChunks = false;
 
         List<JsonObject> fixedPlacements = jsonObjects(requiredArray(plannedFixedPlacementMap, "placements"));
         fixedPlacements.sort(Comparator.comparingInt(obj -> intValue(obj, "priority", 100)));
         for (JsonObject fixed : fixedPlacements) {
+            if (alreadyPlacedFixed(fixed, placed)) {
+                fixedAttempts.add(alreadyPlacedAttempt(fixed));
+                continue;
+            }
             AttemptResult result = executeFixed(fixed, zones, placed, backend);
             fixedAttempts.add(result.attemptJson());
             if (result.placed() != null) {
@@ -75,6 +94,10 @@ public final class CityStructureD7Executor {
                 placedStructures.add(result.placed().asJson());
                 remainingByZone.computeIfPresent(result.placed().zonePatchId(),
                         (id, value) -> Math.max(0, value - result.placed().visibleAreaCost()));
+            } else if (result.waiting()) {
+                waitingForChunks = true;
+                increment(waitingSummary, result.reasonCode());
+                break;
             } else {
                 increment(failureSummary, result.reasonCode());
                 String policy = stringValue(fixed, "failurePolicy", "block_city");
@@ -86,7 +109,7 @@ public final class CityStructureD7Executor {
         }
 
         JsonArray startCandidateSets = new JsonArray();
-        if (hardBlocks.isEmpty()) {
+        if (hardBlocks.isEmpty() && !waitingForChunks) {
             for (JsonObject pool : jsonObjects(requiredArray(structurePoolMap, "zonePools"))) {
                 String zoneId = requiredString(pool, "zonePatchId");
                 ZoneInfo zone = zones.byId(zoneId);
@@ -97,6 +120,10 @@ public final class CityStructureD7Executor {
                 for (JsonElement elem : arrayValue(pool, "variableSelections", new JsonArray())) {
                     JsonObject selection = elem.getAsJsonObject();
                     VariableTask task = task(zone, selection, remainingByZone.getOrDefault(zoneId, 0));
+                    if (alreadyPlacedVariable(task, placed)) {
+                        variableAttempts.add(alreadyPlacedVariableAttempt(task, zone));
+                        continue;
+                    }
                     JsonObject startSet = buildStartCandidateSet(cityId, worldSeed, zone, task, placed);
                     startCandidateSets.add(startSet);
                     AttemptResult result = executeVariable(startSet, task, zone, placed, backend);
@@ -106,6 +133,8 @@ public final class CityStructureD7Executor {
                         placedStructures.add(result.placed().asJson());
                         remainingByZone.computeIfPresent(result.placed().zonePatchId(),
                                 (id, value) -> Math.max(0, value - result.placed().visibleAreaCost()));
+                    } else if (result.waiting()) {
+                        increment(waitingSummary, result.reasonCode());
                     } else {
                         increment(failureSummary, result.reasonCode());
                     }
@@ -115,9 +144,9 @@ public final class CityStructureD7Executor {
 
         JsonObject placedMap = placedMap(cityId, placedStructures, remainingByZone, hardBlocks);
         JsonObject trace = trace(cityId, fixedAttempts, variableAttempts, placedStructures, remainingByZone,
-                failureSummary, hardBlocks);
+                failureSummary, waitingSummary, hardBlocks);
         JsonObject quality = quality(fixedAttempts, variableAttempts, placedStructures, startCandidateSets, hardBlocks,
-                failureSummary);
+                failureSummary, waitingSummary);
         return new Result(startCandidateSets, placedMap, trace, quality);
     }
 
@@ -138,6 +167,8 @@ public final class CityStructureD7Executor {
                 placementKind, stringValue(fixed, "placementCommand", ""), landingCandidateId, anchor,
                 requiredString(fixed, "rotation"), 0);
         attempt.add("commandAnchorBlock", commandAnchor.asJson());
+        attempt.add("requiredPlacementBounds", boundsJson(clearance));
+        attempt.add("requiredChunkRange", chunkRangeJson(clearance));
         if (!isD7Eligible(structureId, sampleType, placementKind)) {
             return failed(attempt, "CONFIGURED_STRUCTURE_REGISTRY_MISSING", "Not a D7 configured structure candidate.");
         }
@@ -150,8 +181,11 @@ public final class CityStructureD7Executor {
         }
         PlacementRequest request = new PlacementRequest(structureId, placementKind,
                 stringValue(fixed, "placementCommand", ""), commandAnchor, requiredString(fixed, "rotation"), footprint,
-                "fixed_footprint");
+                clearance, "fixed_footprint");
         PlacementResult placement = backend.place(request);
+        if (placement.waiting()) {
+            return waiting(attempt, placement.reasonCode(), placement.message());
+        }
         if (!placement.success()) {
             return failed(attempt, placement.reasonCode(), placement.message());
         }
@@ -161,7 +195,8 @@ public final class CityStructureD7Executor {
         Placed placedStructure = new Placed("placed_" + placementId, placementId, landingCandidateId,
                 requiredString(fixed, "zonePatchId"), structureId, "fixed_footprint", placementKind,
                 stringValue(fixed, "placementCommand", ""), anchor, commandAnchor, requiredString(fixed, "rotation"),
-                footprint, clearance, intValue(fixed, "visibleAreaCost", area(footprint)));
+                footprint, clearance, intValue(fixed, "visibleAreaCost", area(footprint)),
+                placement.worldMutationApplied());
         return new AttemptResult(attempt, new JsonArray(), placedStructure, "");
     }
 
@@ -188,11 +223,14 @@ public final class CityStructureD7Executor {
             }
             tried.add(requiredString(candidate, "startCandidateId"));
             BlockBounds footprint = bounds(requiredObject(candidate, "candidateFootprint"));
+            BlockBounds requiredBounds = bounds(requiredObject(candidate, "requiredPlacementBounds"));
             BlockPoint anchor = blockPoint(requiredObject(candidate, "anchorBlock"));
             JsonObject attempt = baseAttempt("variable", task.taskId(), zone.zonePatchId(), task.structureId(),
                     task.placementKind(), task.placementCommand(), requiredString(candidate, "startCandidateId"),
                     anchor, requiredString(candidate, "rotation"), retry);
             attempt.add("scoreBreakdown", requiredObject(candidate, "scoreBreakdown"));
+            attempt.add("requiredPlacementBounds", boundsJson(requiredBounds));
+            attempt.add("requiredChunkRange", chunkRangeJson(requiredBounds));
             String validatorReason = validatorFailure(zone, footprint, placed, task);
             if (!validatorReason.isBlank()) {
                 lastReason = validatorReason;
@@ -200,7 +238,12 @@ public final class CityStructureD7Executor {
                 continue;
             }
             PlacementResult placement = backend.place(new PlacementRequest(task.structureId(), task.placementKind(),
-                    task.placementCommand(), anchor, requiredString(candidate, "rotation"), footprint, "variable_area"));
+                    task.placementCommand(), anchor, requiredString(candidate, "rotation"), footprint, requiredBounds,
+                    "variable_area"));
+            if (placement.waiting()) {
+                attempts.add(waitingJson(attempt, placement.reasonCode(), placement.message()));
+                return new AttemptResult(new JsonObject(), attempts, null, placement.reasonCode(), true);
+            }
             if (!placement.success()) {
                 lastReason = placement.reasonCode();
                 attempts.add(failedJson(attempt, placement.reasonCode(), placement.message()));
@@ -213,7 +256,8 @@ public final class CityStructureD7Executor {
             Placed placedStructure = new Placed("placed_" + task.taskId(), task.selectionId(),
                     requiredString(candidate, "startCandidateId"), zone.zonePatchId(), task.structureId(),
                     "variable_area", task.placementKind(), task.placementCommand(), anchor, anchor,
-                    requiredString(candidate, "rotation"), footprint, footprint, Math.min(task.targetAreaBlocks(), area(footprint)));
+                    requiredString(candidate, "rotation"), footprint, requiredBounds,
+                    Math.min(task.targetAreaBlocks(), area(footprint)), placement.worldMutationApplied());
             return new AttemptResult(new JsonObject(), attempts, placedStructure, "");
         }
         return new AttemptResult(new JsonObject(), attempts, null, lastReason);
@@ -234,11 +278,14 @@ public final class CityStructureD7Executor {
             for (String rotation : task.rotations()) {
                 BlockBounds footprint = task.startFootprint().boundsAt(anchor.blockMinX(), anchor.blockMinZ(), rotation);
                 boolean hard = zone.covers(footprint) && !conflicts(footprint, placed) && area(footprint) <= task.targetAreaBlocks();
+                BlockBounds requiredBounds = task.requiredBounds(footprint.center());
                 JsonObject candidate = new JsonObject();
                 candidate.addProperty("startCandidateId", task.taskId() + "_start_" + String.format(Locale.ROOT, "%03d", index++));
                 candidate.add("anchorBlock", footprint.center().asJson());
                 candidate.addProperty("rotation", rotation);
                 candidate.add("candidateFootprint", boundsJson(footprint));
+                candidate.add("requiredPlacementBounds", boundsJson(requiredBounds));
+                candidate.add("requiredChunkRange", chunkRangeJson(requiredBounds));
                 candidate.addProperty("hardPassed", hard);
                 double score = score(zone, footprint, worldSeed, task.seedKey());
                 candidate.addProperty("score", hard ? score : 0);
@@ -313,6 +360,8 @@ public final class CityStructureD7Executor {
         if (targetArea <= 0) {
             targetArea = Math.max(1, (int) Math.round(remainingArea * doubleValue(selection, "targetVisibleAreaRatio", 0.1)));
         }
+        JsonObject expectedRange = objectValue(selection, "expectedAreaRange", new JsonObject());
+        int maxArea = Math.max(targetArea, intValue(expectedRange, "maxAreaBlocks", targetArea));
         String seedKey = zone.zonePatchId() + ":" + taskId + ":" + structureId;
         return new VariableTask(selectionId, taskId, structureId,
                 requiredString(selection, "placementKind"),
@@ -320,6 +369,7 @@ public final class CityStructureD7Executor {
                 targetArea,
                 Math.max(1, intValue(selection, "weight", 1)),
                 footprint,
+                maxArea,
                 List.of("NONE", "CLOCKWISE_90", "CLOCKWISE_180", "COUNTERCLOCKWISE_90"),
                 seedKey,
                 MAX_ATTEMPTS_PER_TASK);
@@ -333,8 +383,19 @@ public final class CityStructureD7Executor {
         return new AttemptResult(failedJson(attempt, reasonCode, message), new JsonArray(), null, reasonCode);
     }
 
+    private AttemptResult waiting(JsonObject attempt, String reasonCode, String message) {
+        return new AttemptResult(waitingJson(attempt, reasonCode, message), new JsonArray(), null, reasonCode, true);
+    }
+
     private JsonObject failedJson(JsonObject attempt, String reasonCode, String message) {
         attempt.addProperty("status", "failed");
+        attempt.addProperty("reasonCode", reasonCode);
+        attempt.addProperty("message", message);
+        return attempt;
+    }
+
+    private JsonObject waitingJson(JsonObject attempt, String reasonCode, String message) {
+        attempt.addProperty("status", "waiting");
         attempt.addProperty("reasonCode", reasonCode);
         attempt.addProperty("message", message);
         return attempt;
@@ -371,12 +432,13 @@ public final class CityStructureD7Executor {
 
     private JsonObject trace(String cityId, JsonArray fixedAttempts, JsonArray variableAttempts,
                              JsonArray placedStructures, Map<String, Integer> remainingByZone,
-                             Map<String, Integer> failureSummary, List<String> hardBlocks) {
+                             Map<String, Integer> failureSummary, Map<String, Integer> waitingSummary,
+                             List<String> hardBlocks) {
         JsonObject obj = new JsonObject();
         obj.addProperty("schemaVersion", "city_structure_generation_trace.v0.1");
         obj.addProperty("cityId", cityId);
         obj.addProperty("status", hardBlocks.isEmpty()
-                ? (failureSummary.isEmpty() ? "passed" : "partial")
+                ? (!waitingSummary.isEmpty() ? "waiting" : (failureSummary.isEmpty() ? "passed" : "partial"))
                 : "failed");
         JsonArray attempts = new JsonArray();
         attempts.addAll(fixedAttempts);
@@ -387,6 +449,7 @@ public final class CityStructureD7Executor {
         obj.add("placedStructures", placedStructures);
         obj.add("remainingVisibleAreaByZone", remainingJson(remainingByZone));
         obj.add("failureSummary", failureJson(failureSummary));
+        obj.add("waitingSummary", failureJson(waitingSummary));
         JsonArray debugRefs = new JsonArray();
         debugRefs.add("start_candidate_preview.png");
         debugRefs.add("placed_structure_preview.png");
@@ -396,15 +459,17 @@ public final class CityStructureD7Executor {
 
     private JsonObject quality(JsonArray fixedAttempts, JsonArray variableAttempts, JsonArray placedStructures,
                                JsonArray startCandidateSets, List<String> hardBlocks,
-                               Map<String, Integer> failureSummary) {
+                               Map<String, Integer> failureSummary, Map<String, Integer> waitingSummary) {
         JsonObject metrics = new JsonObject();
         metrics.addProperty("fixedAttemptCount", fixedAttempts.size());
         metrics.addProperty("variableAttemptCount", variableAttempts.size());
         metrics.addProperty("startCandidateSetCount", startCandidateSets.size());
         metrics.addProperty("placedStructureCount", placedStructures.size());
         metrics.addProperty("failureReasonCount", failureSummary.size());
-        int score = Math.max(0, 100 - hardBlocks.size() * 50 - failureSummary.size() * 8);
-        return new CityQualityReport(hardBlocks.isEmpty(), score, hardBlocks, List.of(), List.of(), metrics).asJson();
+        metrics.addProperty("waitingReasonCount", waitingSummary.size());
+        int score = Math.max(0, 100 - hardBlocks.size() * 50 - failureSummary.size() * 8 - waitingSummary.size() * 2);
+        List<String> warnings = waitingSummary.isEmpty() ? List.of() : List.of("D7 waiting for loaded chunks.");
+        return new CityQualityReport(hardBlocks.isEmpty(), score, hardBlocks, warnings, List.of(), metrics).asJson();
     }
 
     private Map<String, Integer> initialRemaining(ZoneContext zones) {
@@ -450,6 +515,25 @@ public final class CityStructureD7Executor {
         JsonObject obj = new JsonObject();
         remaining.forEach(obj::addProperty);
         return obj;
+    }
+
+    private static JsonObject chunkRangeJson(BlockBounds bounds) {
+        JsonObject obj = new JsonObject();
+        obj.addProperty("minChunkX", chunk(bounds.minX()));
+        obj.addProperty("minChunkZ", chunk(bounds.minZ()));
+        obj.addProperty("maxChunkX", chunk(bounds.maxX()));
+        obj.addProperty("maxChunkZ", chunk(bounds.maxZ()));
+        return obj;
+    }
+
+    private static int chunk(int blockCoord) {
+        return Math.floorDiv(blockCoord, 16);
+    }
+
+    private static BlockBounds boundsAround(BlockPoint center, int radiusBlocks) {
+        int radius = Math.max(1, radiusBlocks);
+        return new BlockBounds(center.x() - radius, center.z() - radius,
+                center.x() + radius, center.z() + radius);
     }
 
     private static JsonObject metric(String key, int value) {
@@ -504,6 +588,87 @@ public final class CityStructureD7Executor {
 
     private static boolean validResourceId(String id) {
         return id != null && RESOURCE_ID.matcher(id).matches();
+    }
+
+    private static boolean alreadyPlacedFixed(JsonObject fixed, List<Placed> placed) {
+        String placementId = requiredString(fixed, "placementId");
+        String structureId = requiredString(fixed, "structureId");
+        String candidateId = requiredString(fixed, "landingCandidateId");
+        return placed.stream().anyMatch(existing -> existing.worldMutationApplied()
+                && "fixed_footprint".equals(existing.footprintMode())
+                && placementId.equals(existing.sourceSelectionId())
+                && structureId.equals(existing.structureId())
+                && candidateId.equals(existing.anchorCandidateId()));
+    }
+
+    private static boolean alreadyPlacedVariable(VariableTask task, List<Placed> placed) {
+        return placed.stream().anyMatch(existing -> existing.worldMutationApplied()
+                && "variable_area".equals(existing.footprintMode())
+                && task.selectionId().equals(existing.sourceSelectionId())
+                && task.structureId().equals(existing.structureId()));
+    }
+
+    private JsonObject alreadyPlacedAttempt(JsonObject fixed) {
+        BlockBounds footprint = bounds(requiredObject(fixed, "footprint"));
+        BlockBounds clearance = objectValue(fixed, "clearanceFootprint", null) == null
+                ? footprint
+                : bounds(requiredObject(fixed, "clearanceFootprint"));
+        JsonObject attempt = baseAttempt("fixed", requiredString(fixed, "placementId"),
+                requiredString(fixed, "zonePatchId"), requiredString(fixed, "structureId"),
+                requiredString(fixed, "placementKind"), stringValue(fixed, "placementCommand", ""),
+                requiredString(fixed, "landingCandidateId"), blockPoint(requiredObject(fixed, "validatedAnchorBlock")),
+                requiredString(fixed, "rotation"), 0);
+        attempt.add("commandAnchorBlock", commandAnchor(footprint, fixed).asJson());
+        attempt.add("requiredPlacementBounds", boundsJson(clearance));
+        attempt.add("requiredChunkRange", chunkRangeJson(clearance));
+        attempt.addProperty("status", "already_placed");
+        attempt.addProperty("reasonCode", "");
+        attempt.addProperty("message", "Existing real placement ledger entry reused.");
+        return attempt;
+    }
+
+    private JsonObject alreadyPlacedVariableAttempt(VariableTask task, ZoneInfo zone) {
+        JsonObject attempt = baseAttempt("variable", task.taskId(), zone.zonePatchId(), task.structureId(),
+                task.placementKind(), task.placementCommand(), "", BlockPoint.ORIGIN, "NONE", 0);
+        attempt.addProperty("status", "already_placed");
+        attempt.addProperty("reasonCode", "");
+        attempt.addProperty("message", "Existing real placement ledger entry reused.");
+        return attempt;
+    }
+
+    private static List<Placed> previousPlaced(JsonObject previousPlacedStructureMap) {
+        if (previousPlacedStructureMap == null || !previousPlacedStructureMap.has("placedStructures")
+                || !previousPlacedStructureMap.get("placedStructures").isJsonArray()) {
+            return new ArrayList<>();
+        }
+        List<Placed> placed = new ArrayList<>();
+        for (JsonElement elem : previousPlacedStructureMap.getAsJsonArray("placedStructures")) {
+            if (!elem.isJsonObject()) {
+                continue;
+            }
+            JsonObject obj = elem.getAsJsonObject();
+            if (!boolValue(obj, "worldMutationApplied", false)) {
+                continue;
+            }
+            BlockBounds footprint = bounds(requiredObject(obj, "footprint"));
+            placed.add(new Placed(
+                    requiredString(obj, "placedId"),
+                    requiredString(obj, "sourceSelectionId"),
+                    requiredString(obj, "anchorCandidateId"),
+                    requiredString(obj, "zonePatchId"),
+                    requiredString(obj, "structureId"),
+                    requiredString(obj, "footprintMode"),
+                    requiredString(obj, "placementKind"),
+                    stringValue(obj, "placementCommand", ""),
+                    blockPoint(requiredObject(obj, "anchorBlock")),
+                    blockPoint(requiredObject(obj, "commandAnchorBlock")),
+                    requiredString(obj, "rotation"),
+                    footprint,
+                    bounds(objectValue(obj, "clearanceFootprint", boundsJson(footprint))),
+                    intValue(obj, "visibleAreaCost", area(footprint)),
+                    true));
+        }
+        return placed;
     }
 
     private static String safeId(String raw) {
@@ -586,16 +751,26 @@ public final class CityStructureD7Executor {
 
     private record VariableTask(String selectionId, String taskId, String structureId, String placementKind,
                                 String placementCommand, int targetAreaBlocks, int weight, Footprint startFootprint,
-                                List<String> rotations, String seedKey, int retryBudget) {
+                                int maxAreaBlocks, List<String> rotations, String seedKey, int retryBudget) {
+        BlockBounds requiredBounds(BlockPoint anchor) {
+            int side = (int) Math.ceil(Math.sqrt(Math.max(maxAreaBlocks, targetAreaBlocks)));
+            int radius = Math.max(Math.max(startFootprint.widthBlocks(), startFootprint.depthBlocks()),
+                    Math.max(16, (side + 1) / 2));
+            return boundsAround(anchor, radius + 16);
+        }
     }
 
-    private record AttemptResult(JsonObject attemptJson, JsonArray attempts, Placed placed, String reasonCode) {
+    private record AttemptResult(JsonObject attemptJson, JsonArray attempts, Placed placed, String reasonCode,
+                                 boolean waiting) {
+        AttemptResult(JsonObject attemptJson, JsonArray attempts, Placed placed, String reasonCode) {
+            this(attemptJson, attempts, placed, reasonCode, false);
+        }
     }
 
     private record Placed(String placedId, String sourceSelectionId, String anchorCandidateId, String zonePatchId,
                           String structureId, String footprintMode, String placementKind, String placementCommand,
                           BlockPoint anchorBlock, BlockPoint commandAnchorBlock, String rotation, BlockBounds footprint,
-                          BlockBounds clearanceFootprint, int visibleAreaCost) {
+                          BlockBounds clearanceFootprint, int visibleAreaCost, boolean worldMutationApplied) {
         JsonObject asJson() {
             JsonObject obj = new JsonObject();
             obj.addProperty("placedId", placedId);
@@ -612,6 +787,7 @@ public final class CityStructureD7Executor {
             obj.add("footprint", boundsJson(footprint));
             obj.add("clearanceFootprint", boundsJson(clearanceFootprint));
             obj.addProperty("visibleAreaCost", visibleAreaCost);
+            obj.addProperty("worldMutationApplied", worldMutationApplied);
             return obj;
         }
     }
@@ -723,16 +899,26 @@ public final class CityStructureD7Executor {
 
     public record PlacementRequest(String structureId, String placementKind, String placementCommand,
                                    BlockPoint anchorBlock, String rotation, BlockBounds footprint,
+                                   BlockBounds requiredLoadBounds,
                                    String footprintMode) {
     }
 
-    public record PlacementResult(boolean success, String reasonCode, String message) {
+    public record PlacementResult(boolean success, boolean waiting, boolean worldMutationApplied,
+                                  String reasonCode, String message) {
         public static PlacementResult placed(String message) {
-            return new PlacementResult(true, "", message == null ? "" : message);
+            return new PlacementResult(true, false, true, "", message == null ? "" : message);
+        }
+
+        public static PlacementResult dryRunAccepted(String message) {
+            return new PlacementResult(true, false, false, "", message == null ? "" : message);
         }
 
         public static PlacementResult failed(String reasonCode, String message) {
-            return new PlacementResult(false, reasonCode, message == null ? "" : message);
+            return new PlacementResult(false, false, false, reasonCode, message == null ? "" : message);
+        }
+
+        public static PlacementResult waiting(String reasonCode, String message) {
+            return new PlacementResult(false, true, false, reasonCode, message == null ? "" : message);
         }
     }
 
@@ -741,7 +927,7 @@ public final class CityStructureD7Executor {
         PlacementResult place(PlacementRequest request);
 
         static PlacementBackend traceOnly() {
-            return request -> PlacementResult.placed("Trace-only placement backend accepted configured structure.");
+            return request -> PlacementResult.dryRunAccepted("Trace-only placement backend accepted configured structure.");
         }
     }
 

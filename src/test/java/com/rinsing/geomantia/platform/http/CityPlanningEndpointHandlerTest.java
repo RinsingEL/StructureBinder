@@ -462,7 +462,7 @@ class CityPlanningEndpointHandlerTest {
                       "qualityTags": ["debug_usable"],
                       "expectedAreaRange": {
                         "minAreaBlocks": 128,
-                        "maxAreaBlocks": 2048,
+                        "maxAreaBlocks": 25600,
                         "startFootprint": {"widthBlocks": 10, "depthBlocks": 10, "heightBlocks": 8}
                       },
                       "allowedRotations": ["NONE", "CLOCKWISE_90"],
