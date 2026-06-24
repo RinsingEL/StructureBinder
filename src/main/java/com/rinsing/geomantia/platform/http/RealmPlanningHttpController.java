@@ -202,6 +202,55 @@ final class RealmPlanningHttpController {
         }));
     }
 
+    void handleCityPlanD6(HttpExchange exchange) {
+        handle(exchange, "POST", () -> {
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            String runId = requiredString(request, "runId");
+            String citySeedId = requiredString(request, "citySeedId");
+            if (!request.has("terrasenseProfileSource") || !request.get("terrasenseProfileSource").isJsonObject()) {
+                throw new IllegalArgumentException("terrasenseProfileSource object is required.");
+            }
+            JsonObject structureChoicePlan = request.has("structureChoicePlan")
+                    && request.get("structureChoicePlan").isJsonObject()
+                    ? request.getAsJsonObject("structureChoicePlan")
+                    : null;
+            JsonObject fixedPlacementSelectionPlan = request.has("fixedPlacementSelectionPlan")
+                    && request.get("fixedPlacementSelectionPlan").isJsonObject()
+                    ? request.getAsJsonObject("fixedPlacementSelectionPlan")
+                    : null;
+            return CityPlanningEndpointHandler.handlePlanD6(debugRoot(), runId, citySeedId,
+                    request.getAsJsonObject("terrasenseProfileSource"),
+                    structureChoicePlan,
+                    fixedPlacementSelectionPlan);
+        });
+    }
+
+    void handleCityExecuteD7(HttpExchange exchange) {
+        handle(exchange, "POST", () -> callOnServerThread(() -> {
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            String runId = requiredString(request, "runId");
+            String citySeedId = requiredString(request, "citySeedId");
+            boolean executeStructurePlacement = booleanValue(request, "executeStructurePlacement", false);
+            ServerPlayer player = resolvePlayer(stringValue(request, "playerName", ""));
+            String dimensionId = stringValue(request, "dimensionId", "");
+            if (dimensionId.isBlank()) {
+                dimensionId = restoredRunDimensionId(runId);
+            }
+            ServerLevel level = resolveLevel(dimensionId, player);
+            long worldSeed = longValue(request, "worldSeed", level.getSeed());
+            JsonObject response = CityPlanningEndpointHandler.handleExecuteD7(debugRoot(), runId, citySeedId,
+                    worldSeed,
+                    executeStructurePlacement,
+                    new CityPlanningEndpointHandler.MinecraftServerHolder(server),
+                    level);
+            if (executeStructurePlacement) {
+                server.saveAllChunks(true, true, true);
+                response.addProperty("worldSaveRequested", true);
+            }
+            return response;
+        }));
+    }
+
     void handleTagAudit(HttpExchange exchange) {
         handle(exchange, "POST", () -> {
             JsonObject request = GisHttpUtil.readJsonObject(exchange);
@@ -389,6 +438,17 @@ final class RealmPlanningHttpController {
             return object.get(key).getAsInt();
         } catch (Exception ex) {
             throw new IllegalArgumentException(key + " must be an integer.");
+        }
+    }
+
+    private static long longValue(JsonObject object, String key, long defaultValue) {
+        if (!hasValue(object, key)) {
+            return defaultValue;
+        }
+        try {
+            return object.get(key).getAsLong();
+        } catch (Exception ex) {
+            throw new IllegalArgumentException(key + " must be a long.");
         }
     }
 

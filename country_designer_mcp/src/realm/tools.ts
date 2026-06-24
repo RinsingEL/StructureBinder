@@ -200,6 +200,46 @@ export const realmTools: ToolDefinition[] = [
     },
   },
   {
+    name: "city_plan_d6",
+    description: "City D6: 读取 TerraSense/debug 结构画像快照、D4/D5 产物和 AI/Codex 草案，生成结构过滤目录、固定落点候选、PlannedFixedPlacementMap、StructurePoolMap 与预览图。不修改世界，不调用 /place structure。",
+    inputSchema: {
+      type: "object",
+      properties: {
+        runId: { type: "string", description: "已有 W/T run ID。" },
+        citySeedId: { type: "string", description: "目标城市种子的 citySeedId。" },
+        terrasenseProfileSource: {
+          type: "object",
+          description: "schemaVersion=terrasense_structure_profile_source.v0.1；指向 StructureProfile.jsonl、C3_5 兼容 catalog 或 debug catalog。",
+        },
+        structureChoicePlan: {
+          type: "object",
+          description: "schemaVersion=city_structure_choice_plan.v0.1；AI/Codex 第一轮结构选择。固定结构只能选 structureId/count/priority/failurePolicy，非固定结构才填 targetVisibleAreaRatio。",
+        },
+        fixedPlacementSelectionPlan: {
+          type: "object",
+          description: "schemaVersion=city_fixed_placement_selection_plan.v0.1；AI/Codex 第二轮固定落点选择，只能引用 landingCandidateId。",
+        },
+      },
+      required: ["runId", "citySeedId", "terrasenseProfileSource"],
+    },
+  },
+  {
+    name: "city_execute_d7",
+    description: "City D7: 读取 D6 PlannedFixedPlacementMap 和 StructurePoolMap，程序生成 StartCandidateSet，并按 configured structure 放置或 dry-run 输出 PlacedStructureMap、StructureGenerationTrace 与预览图。真实放置需显式 executeStructurePlacement=true。",
+    inputSchema: {
+      type: "object",
+      properties: {
+        runId: { type: "string", description: "已有 W/T run ID。" },
+        citySeedId: { type: "string", description: "目标城市种子的 citySeedId。" },
+        executeStructurePlacement: { type: "boolean", description: "true 时真实执行 /place structure 等价入口；默认 false 只做 dry-run/trace。" },
+        worldSeed: { type: "number", description: "可选；未传时使用当前世界 seed 参与 seeded random。" },
+        dimensionId: { type: "string", description: "维度 ID，省略时从 run manifest 恢复。" },
+        playerName: { type: "string", description: "玩家名，用于定位维度。" },
+      },
+      required: ["runId", "citySeedId"],
+    },
+  },
+  {
     name: "realm_tag_audit",
     description: "对已有 sealed W run 单独执行 Tag Audit 抽样局部精扫，不重跑 W/T 主链。",
     inputSchema: {

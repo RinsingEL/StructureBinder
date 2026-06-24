@@ -26,6 +26,32 @@ final class CityRoadBoundaryPlannerTest {
                 .anyMatch(op -> op.operationType().equals("clearVegetation")));
         assertTrue(result.buildOperationPlan().operations().stream()
                 .anyMatch(op -> op.operationType().equals("pasteTemplate") && op.templateId().equals("gate_small")));
+        assertFalse(result.buildableAreaMap().zones().isEmpty());
+        assertTrue(result.buildableAreaMap().zones().stream()
+                .mapToInt(BuildableAreaMap.ZoneBuildability::reservedCellCount)
+                .sum() > 0);
+    }
+
+    @Test
+    void aStarMainRoadAvoidsNonEndpointZone() {
+        CityRoadBoundaryPlanner.Result result = new CityRoadBoundaryPlanner().plan(
+                site(List.of(entry("main_gate", -112, 0, "west"))),
+                zoneMap(List.of(
+                        zone("civic", CityFunctionType.CIVIC_CORE, 96, 0, 24, true),
+                        zone("res_blocker", CityFunctionType.RESIDENTIAL, 0, 0, 96, false))),
+                List.of(stats("civic", 0.0), stats("res_blocker", 0.0)));
+
+        RoadIntent.Edge mainRoad = result.roadIntent().edges().stream()
+                .filter(edge -> edge.edgeType().equals("main"))
+                .findFirst()
+                .orElseThrow();
+
+        assertTrue(result.qualityReport().passed());
+        assertEquals("a_star_grid_v0.1",
+                result.qualityReport().metrics().get("pathAlgorithm").getAsString());
+        assertEquals(0, result.qualityReport().metrics().get("pathFallbackCount").getAsInt());
+        assertTrue(mainRoad.polyline().stream().anyMatch(point -> Math.abs(point.z()) >= 48),
+                () -> "Expected A* to route around blocker, got " + mainRoad.polyline());
     }
 
     @Test
@@ -67,6 +93,33 @@ final class CityRoadBoundaryPlannerTest {
         assertFalse(result.qualityReport().warnings().isEmpty());
         assertTrue(result.boundaryIntent().edges().stream()
                 .anyMatch(edge -> edge.treatmentType().equals("green_buffer")));
+    }
+
+    @Test
+    void nonHarborWaterContactDoesNotTurnEveryBoundaryIntoWaterfrontRoad() {
+        CityRoadBoundaryPlanner.Result result = new CityRoadBoundaryPlanner().plan(
+                site(List.of(entry("main_gate", -80, 0, "west"))),
+                zoneMap(List.of(
+                        zone("civic", CityFunctionType.CIVIC_CORE, 0, 0, 40, true),
+                        zone("res", CityFunctionType.RESIDENTIAL, 80, 40, 48, true),
+                        zone("def", CityFunctionType.DEFENSE, -64, 64, 48, true),
+                        zone("harbor", CityFunctionType.HARBOR_OR_WATERFRONT, 64, -64, 48, true))),
+                List.of(stats("civic", 0.5), stats("res", 0.5), stats("def", 0.5), stats("harbor", 0.5)));
+
+        assertTrue(result.boundaryIntent().edges().stream()
+                .anyMatch(edge -> edge.fromZoneId().equals("res") && edge.treatmentType().equals("green_buffer")));
+        assertTrue(result.boundaryIntent().edges().stream()
+                .anyMatch(edge -> edge.fromZoneId().equals("def") && edge.treatmentType().equals("wall_hint")));
+        assertTrue(result.boundaryIntent().edges().stream()
+                .anyMatch(edge -> edge.fromZoneId().equals("harbor") && edge.treatmentType().equals("waterfront")));
+        assertTrue(result.buildOperationPlan().operations().stream()
+                .anyMatch(op -> op.operationType().equals("carveBuffer")
+                        && op.sourceIntentId().equals("boundary_03")
+                        && op.material().equals("minecraft:stone_bricks")));
+        assertTrue(result.buildOperationPlan().operations().stream()
+                .anyMatch(op -> op.operationType().equals("carveBuffer")
+                        && op.sourceIntentId().equals("boundary_02")
+                        && op.material().equals("minecraft:grass_block")));
     }
 
     private CitySiteContext site(List<EntryCandidate> entries) {

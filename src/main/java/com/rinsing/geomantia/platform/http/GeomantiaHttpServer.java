@@ -58,6 +58,8 @@ public final class GeomantiaHttpServer {
             httpServer.createContext("/realm/city/plan_d4", realmController::handleCityPlanD4);
             httpServer.createContext("/realm/city/plan_d5", realmController::handleCityPlanD5);
             httpServer.createContext("/realm/city/execute_d5", realmController::handleCityExecuteD5);
+            httpServer.createContext("/realm/city/plan_d6", realmController::handleCityPlanD6);
+            httpServer.createContext("/realm/city/execute_d7", realmController::handleCityExecuteD7);
             httpServer.setExecutor(Executors.newFixedThreadPool(3, runnable -> {
                 Thread thread = new Thread(runnable);
                 thread.setDaemon(true);

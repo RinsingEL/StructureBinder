@@ -109,11 +109,12 @@ public final class WorldEditMutationBackend implements WorldMutationBackend {
 
     private OperationOutcome clearVegetation(ServerLevel level, EditSession editSession,
                                              BuildOperationPlan.Operation operation) throws Exception {
-        Set<BlockPos> positions = corridorPositions(level, operation.polyline(), operation.widthBlocks());
+        CorridorSample samples = corridorPositions(level, operation.polyline(), operation.widthBlocks(), true);
+        Set<BlockPos> positions = samples.positions();
         int changed = 0;
         for (BlockPos surface : positions) {
-            int minY = Math.max(level.getMinBuildHeight(), surface.getY() - 1);
-            int maxY = Math.min(level.getMaxBuildHeight() - 1, surface.getY() + 8);
+            int minY = Math.max(level.getMinBuildHeight(), surface.getY());
+            int maxY = Math.min(level.getMaxBuildHeight() - 1, surface.getY() + 24);
             for (int y = maxY; y >= minY; y--) {
                 BlockPos pos = new BlockPos(surface.getX(), y, surface.getZ());
                 net.minecraft.world.level.block.state.BlockState state = level.getBlockState(pos);
@@ -125,7 +126,10 @@ public final class WorldEditMutationBackend implements WorldMutationBackend {
                 }
             }
         }
-        return OperationOutcome.executed(changed, "Cleared soft vegetation.");
+        return samples.skippedWaterColumns() > 0
+                ? OperationOutcome.executedWithWarning(changed, "Cleared soft vegetation.",
+                "Skipped " + samples.skippedWaterColumns() + " water columns for " + operation.operationId() + ".")
+                : OperationOutcome.executed(changed, "Cleared soft vegetation.");
     }
 
     private OperationOutcome surface(ServerLevel level, EditSession editSession,
@@ -135,7 +139,9 @@ public final class WorldEditMutationBackend implements WorldMutationBackend {
         if (material.isEmpty()) {
             return OperationOutcome.failed("Unknown material: " + operation.material());
         }
-        Set<BlockPos> positions = corridorPositions(level, operation.polyline(), operation.widthBlocks());
+        boolean skipWaterColumns = operation.operationType().equals("surfaceFill");
+        CorridorSample samples = corridorPositions(level, operation.polyline(), operation.widthBlocks(), skipWaterColumns);
+        Set<BlockPos> positions = samples.positions();
         int changed = 0;
         for (BlockPos pos : positions) {
             boolean preserveRoad = operation.operationType().equals("surfaceReplace")
@@ -150,7 +156,10 @@ public final class WorldEditMutationBackend implements WorldMutationBackend {
         if (operation.operationType().equals("surfaceFill")) {
             protectedRoadPositions.addAll(positions);
         }
-        return OperationOutcome.executed(changed, "Applied surface material " + operation.material() + ".");
+        return samples.skippedWaterColumns() > 0
+                ? OperationOutcome.executedWithWarning(changed, "Applied surface material " + operation.material() + ".",
+                "Skipped " + samples.skippedWaterColumns() + " water columns for " + operation.operationId() + ".")
+                : OperationOutcome.executed(changed, "Applied surface material " + operation.material() + ".");
     }
 
     private OperationOutcome pasteTemplate(ServerLevel level, EditSession editSession, BuildOperationPlan plan,
@@ -180,12 +189,14 @@ public final class WorldEditMutationBackend implements WorldMutationBackend {
         }
     }
 
-    private Set<BlockPos> corridorPositions(ServerLevel level, List<BlockPoint> polyline, int width) {
+    private CorridorSample corridorPositions(ServerLevel level, List<BlockPoint> polyline, int width,
+                                             boolean skipWaterColumns) {
         Set<BlockPos> result = new LinkedHashSet<>();
         if (polyline.size() < 2) {
-            return result;
+            return new CorridorSample(result, 0);
         }
         int radius = Math.max(0, width / 2);
+        int skippedWaterColumns = 0;
         for (int i = 1; i < polyline.size(); i++) {
             BlockPoint a = polyline.get(i - 1);
             BlockPoint b = polyline.get(i);
@@ -201,14 +212,44 @@ public final class WorldEditMutationBackend implements WorldMutationBackend {
                         }
                         int px = x + dx;
                         int pz = z + dz;
-                        int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, px, pz) - 1;
-                        y = Math.max(level.getMinBuildHeight(), Math.min(level.getMaxBuildHeight() - 1, y));
-                        result.add(new BlockPos(px, y, pz));
+                        if (skipWaterColumns && isWaterColumn(level, px, pz)) {
+                            skippedWaterColumns++;
+                            continue;
+                        }
+                        findTerrainSurface(level, px, pz).ifPresent(y -> result.add(new BlockPos(px, y, pz)));
                     }
                 }
             }
         }
-        return result;
+        return new CorridorSample(result, skippedWaterColumns);
+    }
+
+    private boolean isWaterColumn(ServerLevel level, int x, int z) {
+        int surfaceY = level.getHeight(Heightmap.Types.WORLD_SURFACE_WG, x, z) - 1;
+        surfaceY = Math.max(level.getMinBuildHeight(), Math.min(level.getMaxBuildHeight() - 1, surfaceY));
+        for (int y = surfaceY; y >= Math.max(level.getMinBuildHeight(), surfaceY - 4); y--) {
+            if (level.getFluidState(new BlockPos(x, y, z)).is(net.minecraft.tags.FluidTags.WATER)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private Optional<Integer> findTerrainSurface(ServerLevel level, int x, int z) {
+        int y = level.getHeight(Heightmap.Types.WORLD_SURFACE_WG, x, z) - 1;
+        y = Math.max(level.getMinBuildHeight(), Math.min(level.getMaxBuildHeight() - 1, y));
+        for (int scanY = y; scanY >= level.getMinBuildHeight(); scanY--) {
+            BlockPos pos = new BlockPos(x, scanY, z);
+            net.minecraft.world.level.block.state.BlockState state = level.getBlockState(pos);
+            if (state.isAir() || vegetationClearable(state)) {
+                continue;
+            }
+            if (!state.getFluidState().isEmpty()) {
+                continue;
+            }
+            return Optional.of(scanY);
+        }
+        return Optional.empty();
     }
 
     private Optional<BlockState> material(String id) {
@@ -233,15 +274,26 @@ public final class WorldEditMutationBackend implements WorldMutationBackend {
         if (protectedBlock(state)) {
             return false;
         }
+        return vegetationClearable(state)
+                || state.canBeReplaced();
+    }
+
+    private boolean vegetationClearable(net.minecraft.world.level.block.state.BlockState state) {
+        if (state == null || state.isAir() || protectedBlock(state)) {
+            return false;
+        }
         return state.is(BlockTags.LEAVES)
+                || state.is(BlockTags.LOGS)
                 || state.is(BlockTags.FLOWERS)
+                || state.is(BlockTags.SAPLINGS)
+                || state.is(BlockTags.WART_BLOCKS)
+                || state.is(BlockTags.MUSHROOM_GROW_BLOCK)
                 || state.getBlock() instanceof LeavesBlock
                 || state.getBlock() instanceof VineBlock
                 || state.getBlock() instanceof BushBlock
                 || state.getBlock() instanceof DoublePlantBlock
                 || state.getBlock() instanceof BambooStalkBlock
-                || state.getBlock() instanceof SugarCaneBlock
-                || state.canBeReplaced();
+                || state.getBlock() instanceof SugarCaneBlock;
     }
 
     private boolean protectedBlock(net.minecraft.world.level.block.state.BlockState state) {
@@ -293,9 +345,16 @@ public final class WorldEditMutationBackend implements WorldMutationBackend {
                 failures);
     }
 
+    private record CorridorSample(Set<BlockPos> positions, int skippedWaterColumns) {
+    }
+
     private record OperationOutcome(String status, int changedBlocks, String reason, String warning, String failure) {
         static OperationOutcome executed(int changedBlocks, String reason) {
             return new OperationOutcome("executed", changedBlocks, reason, "", "");
+        }
+
+        static OperationOutcome executedWithWarning(int changedBlocks, String reason, String warning) {
+            return new OperationOutcome("executed", changedBlocks, reason, warning, "");
         }
 
         static OperationOutcome skipped(String reason) {
