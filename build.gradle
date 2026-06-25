@@ -34,6 +34,9 @@ def devRealmSmoke = providers.gradleProperty('geomantiaDevRealmSmoke')
 def devUseReTerraForged = providers.gradleProperty('geomantiaDevUseReTerraForged')
         .orElse('false')
         .get()
+def devUseStructurePacks = providers.gradleProperty('geomantiaDevUseStructurePacks')
+        .orElse('false')
+        .get()
 
 minecraft {
     mappings channel: mapping_channel, version: mapping_version
@@ -102,6 +105,9 @@ repositories {
     }
     flatDir {
         dirs 'libs/local/reterraforged/0.0.5'
+        dirs 'libs/local/trek/B0.6'
+        dirs 'libs/local/t_and_t/1.12'
+        dirs 'libs/local/cristellib/1.1.6'
     }
 }
 
@@ -110,6 +116,11 @@ dependencies {
     implementation fg.deobf("curse.maven:worldedit-225608:4586218")
     if (devUseReTerraForged.toBoolean()) {
         runtimeOnly fg.deobf("local.reterraforged:reterraforged:0.0.5")
+    }
+    if (devUseStructurePacks.toBoolean()) {
+        runtimeOnly fg.deobf("local.trek:trek:B0.6")
+        runtimeOnly fg.deobf("local.t_and_t:t_and_t:1.12")
+        runtimeOnly fg.deobf("local.cristellib:cristellib:1.1.6")
     }
     testImplementation platform('org.junit:junit-bom:5.10.2')
     testImplementation 'org.junit.jupiter:junit-jupiter'
