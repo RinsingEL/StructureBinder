@@ -161,6 +161,14 @@ public final class MinecraftStructurePlacementBackend implements CityStructureD7
             pieceIndex++;
             BoundingBox box = element.getBoundingBox(level.getStructureManager(), anchor, rotation);
             BlockBounds footprint = new BlockBounds(box.minX(), box.minZ(), box.maxX(), box.maxZ());
+            BoundedJigsawTemplateInspector.PieceInspection inspection = BoundedJigsawTemplateInspector.inspect(
+                    level.getStructureManager(), element, poolName(startPool), anchor, rotation, box, pieceIndex,
+                    request.structureId().hashCode() * 31L + pieceIndex);
+            JsonObject piece = inspection.pieceJson();
+            if (!BoundedJigsawTemplateInspector.canInspectTemplate(element)) {
+                addRejectedPiece(trace, piece, "UNSUPPORTED_POOL_ELEMENT");
+                continue;
+            }
             ChunkRange pieceChunks = ChunkRange.from(footprint);
             String missingPieceChunks = missingChunks(pieceChunks);
             if (!missingPieceChunks.isBlank()) {
@@ -170,7 +178,8 @@ public final class MinecraftStructurePlacementBackend implements CityStructureD7
                         trace);
             }
             String reason = boundedPieceFailure(request.constraintField(), footprint, request.targetAreaBlocks());
-            JsonObject piece = pieceJson(element, footprint, poolName(startPool), anchor, rotation, pieceIndex);
+            piece.add("footprint", boundsJson(footprint));
+            piece.addProperty("visibleAreaCost", footprint.widthBlocks() * footprint.heightBlocks());
             if (!reason.isBlank()) {
                 addRejectedPiece(trace, piece, reason);
                 continue;
@@ -340,30 +349,6 @@ public final class MinecraftStructurePlacementBackend implements CityStructureD7
         metrics.addProperty("stoppedBranchCount", stoppedBranches);
         metrics.addProperty("visibleAreaCost", visibleAreaCost);
         return metrics;
-    }
-
-    private JsonObject pieceJson(StructurePoolElement element, BlockBounds footprint, String poolId,
-                                 BlockPos anchor, Rotation rotation, int pieceIndex) {
-        JsonObject piece = new JsonObject();
-        piece.addProperty("pieceId", "start_piece_" + pieceIndex);
-        piece.addProperty("templateId", element.toString());
-        piece.addProperty("poolId", poolId);
-        piece.addProperty("elementType", element.getType().toString());
-        piece.addProperty("element", element.toString());
-        piece.add("anchorBlock", blockPosJson(anchor));
-        piece.addProperty("rotation", rotation.name());
-        piece.add("footprint", boundsJson(footprint));
-        piece.addProperty("visibleAreaCost", footprint.widthBlocks() * footprint.heightBlocks());
-        piece.add("connectorRefs", new JsonArray());
-        return piece;
-    }
-
-    private JsonObject blockPosJson(BlockPos pos) {
-        JsonObject obj = new JsonObject();
-        obj.addProperty("x", pos.getX());
-        obj.addProperty("y", pos.getY());
-        obj.addProperty("z", pos.getZ());
-        return obj;
     }
 
     private String boundedPieceFailure(JsonObject constraintField, BlockBounds footprint, int targetAreaBlocks) {
