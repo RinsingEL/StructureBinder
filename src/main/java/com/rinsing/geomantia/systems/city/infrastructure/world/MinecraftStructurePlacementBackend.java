@@ -1,11 +1,11 @@
 package com.rinsing.geomantia.systems.city.infrastructure.world;
 
+import com.rinsing.geomantia.systems.city.application.BoundedJigsawSolver;
 import com.rinsing.geomantia.systems.city.application.CityConstraintField;
 import com.rinsing.geomantia.systems.city.application.CityStructureD7Executor;
 import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
@@ -152,7 +152,25 @@ public final class MinecraftStructurePlacementBackend implements CityStructureD7
             return CityStructureD7Executor.PlacementResult.failed("BOUNDED_JIGSAW_POOL_EMPTY",
                     "Start pool has no elements: " + poolName(startPool));
         }
-        JsonObject trace = baseBoundedTrace(request, holder.get(), startPool);
+        JsonObject solverInput = BoundedJigsawPoolAdapter.solverInput(request, startPool, level.getStructureManager(),
+                anchor, rotation, request.structureId().hashCode() * 31L
+                        + request.anchorBlock().x() * 17L + request.anchorBlock().z());
+        JsonObject trace = new BoundedJigsawSolver().solve(solverInput);
+        trace.addProperty("structureRegistryKey", holder.get().key().location().toString());
+        trace.addProperty("poolAdapterStatus", "start_pool_adapter");
+        trace.addProperty("worldPasteMode", executeCommands ? "start_piece_adapter" : "dry_run_plan_only");
+        if (!executeCommands) {
+            if (trace.getAsJsonArray("acceptedPieces").isEmpty()) {
+                return CityStructureD7Executor.PlacementResult.failed("JIGSAW_NO_ACCEPTED_PIECE",
+                        "Dry-run bounded jigsaw pool adapter found no accepted start piece: "
+                                + request.structureId(), trace);
+            }
+            BlockBounds acceptedFootprint = bounds(trace.getAsJsonArray("acceptedPieces")
+                    .get(0).getAsJsonObject().getAsJsonObject("footprint"));
+            return CityStructureD7Executor.PlacementResult.dryRunAccepted(
+                    "Dry-run accepted bounded jigsaw solver plan: " + request.structureId(),
+                    trace, acceptedFootprint, acceptedFootprint);
+        }
         int pieceIndex = 0;
         for (StructurePoolElement element : elements) {
             if (element instanceof EmptyPoolElement) {
@@ -166,7 +184,6 @@ public final class MinecraftStructurePlacementBackend implements CityStructureD7
                     request.structureId().hashCode() * 31L + pieceIndex);
             JsonObject piece = inspection.pieceJson();
             if (!BoundedJigsawTemplateInspector.canInspectTemplate(element)) {
-                addRejectedPiece(trace, piece, "UNSUPPORTED_POOL_ELEMENT");
                 continue;
             }
             ChunkRange pieceChunks = ChunkRange.from(footprint);
@@ -183,14 +200,7 @@ public final class MinecraftStructurePlacementBackend implements CityStructureD7
             piece.add("footprint", boundsJson(footprint));
             piece.addProperty("visibleAreaCost", footprint.widthBlocks() * footprint.heightBlocks());
             if (!reason.isBlank()) {
-                addRejectedPiece(trace, piece, reason);
                 continue;
-            }
-            addAcceptedPiece(trace, piece, footprint);
-            if (!executeCommands) {
-                return CityStructureD7Executor.PlacementResult.dryRunAccepted(
-                        "Dry-run accepted bounded jigsaw start piece: " + request.structureId(),
-                        trace, footprint, footprint);
             }
             boolean placed = element.place(level.getStructureManager(), level, level.structureManager(),
                     level.getChunkSource().getGenerator(), anchor, anchor, rotation, box,
@@ -240,117 +250,13 @@ public final class MinecraftStructurePlacementBackend implements CityStructureD7
         }
     }
 
-    private JsonObject baseBoundedTrace(CityStructureD7Executor.PlacementRequest request,
-                                        Holder.Reference<Structure> structure,
-                                        Holder<StructureTemplatePool> pool) {
-        JsonObject trace = new JsonObject();
-        trace.addProperty("schemaVersion", "city_bounded_jigsaw_trace.v0.1");
-        trace.addProperty("capability", "bounded_jigsaw_supported");
-        trace.addProperty("sourceStructureId", request.structureId());
-        trace.addProperty("structureRegistryKey", structure.key().location().toString());
-        trace.addProperty("startPool", poolName(pool));
-        trace.addProperty("targetAreaBlocks", request.targetAreaBlocks());
-        trace.add("acceptedPieces", new JsonArray());
-        trace.add("rejectedPieces", new JsonArray());
-        trace.add("stoppedBranches", new JsonArray());
-        trace.addProperty("fallbackUsed", false);
-        trace.add("failureSummary", new JsonObject());
-        trace.add("metrics", boundedMetrics(0, 0, 0, 0));
-        trace.add("plan", boundedPlan(request));
-        return trace;
-    }
-
     private String poolName(Holder<StructureTemplatePool> pool) {
         return pool.unwrapKey().map(key -> key.location().toString()).orElse("inline");
-    }
-
-    private JsonObject boundedPlan(CityStructureD7Executor.PlacementRequest request) {
-        JsonObject plan = new JsonObject();
-        plan.addProperty("schemaVersion", "city_bounded_jigsaw_plan.v0.1");
-        plan.addProperty("planId", "bounded_" + safeId(request.structureId()) + "_"
-                + request.anchorBlock().x() + "_" + request.anchorBlock().z() + "_"
-                + safeId(request.rotation()));
-        plan.addProperty("jobId", "job_" + safeId(request.structureId()) + "_"
-                + request.anchorBlock().x() + "_" + request.anchorBlock().z());
-        plan.addProperty("sourceStructureId", request.structureId());
-        plan.add("pieces", new JsonArray());
-        plan.add("stoppedBranches", new JsonArray());
-        BlockBounds initialBounds = request.requiredLoadBounds() == null ? request.footprint() : request.requiredLoadBounds();
-        if (initialBounds != null) {
-            plan.add("estimatedFootprint", boundsJson(initialBounds));
-            plan.add("requiredChunkRange", chunkRangeJson(ChunkRange.from(initialBounds)));
-        }
-        plan.addProperty("visibleAreaCost", 0);
-        JsonObject quality = new JsonObject();
-        quality.addProperty("acceptedPieceCount", 0);
-        quality.addProperty("stoppedBranchCount", 0);
-        quality.addProperty("startPieceOnly", true);
-        quality.add("warnings", new JsonArray());
-        plan.add("quality", quality);
-        return plan;
-    }
-
-    private void addAcceptedPiece(JsonObject trace, JsonObject piece, BlockBounds footprint) {
-        piece.addProperty("validatorResult", "passed");
-        trace.getAsJsonArray("acceptedPieces").add(piece.deepCopy());
-        JsonObject plan = trace.getAsJsonObject("plan");
-        plan.getAsJsonArray("pieces").add(piece.deepCopy());
-        plan.add("estimatedFootprint", boundsJson(footprint));
-        plan.add("requiredChunkRange", chunkRangeJson(ChunkRange.from(footprint)));
-        plan.addProperty("visibleAreaCost", footprint.widthBlocks() * footprint.heightBlocks());
-        updateBoundedMetrics(trace);
-    }
-
-    private void addRejectedPiece(JsonObject trace, JsonObject piece, String reasonCode) {
-        piece.addProperty("validatorResult", "failed");
-        piece.addProperty("reasonCode", reasonCode);
-        trace.getAsJsonArray("rejectedPieces").add(piece.deepCopy());
-        JsonObject stopped = new JsonObject();
-        String pieceId = piece.has("pieceId") ? piece.get("pieceId").getAsString() : "unknown_piece";
-        stopped.addProperty("branchId", "branch_" + pieceId);
-        stopped.addProperty("pieceId", pieceId);
-        stopped.addProperty("action", "stop_branch");
-        stopped.addProperty("reasonCode", reasonCode);
-        stopped.addProperty("endcapAttempted", false);
-        stopped.addProperty("endcapStatus", "not_implemented_start_piece_slice");
-        if (piece.has("footprint") && piece.get("footprint").isJsonObject()) {
-            stopped.add("footprint", piece.getAsJsonObject("footprint").deepCopy());
-        }
-        trace.getAsJsonArray("stoppedBranches").add(stopped.deepCopy());
-        trace.getAsJsonObject("plan").getAsJsonArray("stoppedBranches").add(stopped.deepCopy());
-        JsonObject summary = trace.getAsJsonObject("failureSummary");
-        incrementTraceFailure(trace, reasonCode);
-        updateBoundedMetrics(trace);
     }
 
     private void incrementTraceFailure(JsonObject trace, String reasonCode) {
         JsonObject summary = trace.getAsJsonObject("failureSummary");
         summary.addProperty(reasonCode, intValue(summary, reasonCode, 0) + 1);
-    }
-
-    private void updateBoundedMetrics(JsonObject trace) {
-        int accepted = trace.getAsJsonArray("acceptedPieces").size();
-        int rejected = trace.getAsJsonArray("rejectedPieces").size();
-        int stopped = trace.getAsJsonArray("stoppedBranches").size();
-        int visibleArea = 0;
-        for (JsonElement elem : trace.getAsJsonArray("acceptedPieces")) {
-            if (elem.isJsonObject()) {
-                visibleArea += intValue(elem.getAsJsonObject(), "visibleAreaCost", 0);
-            }
-        }
-        trace.add("metrics", boundedMetrics(accepted, rejected, stopped, visibleArea));
-        JsonObject quality = trace.getAsJsonObject("plan").getAsJsonObject("quality");
-        quality.addProperty("acceptedPieceCount", accepted);
-        quality.addProperty("stoppedBranchCount", stopped);
-    }
-
-    private JsonObject boundedMetrics(int acceptedPieces, int rejectedPieces, int stoppedBranches, int visibleAreaCost) {
-        JsonObject metrics = new JsonObject();
-        metrics.addProperty("acceptedPieceCount", acceptedPieces);
-        metrics.addProperty("rejectedPieceCount", rejectedPieces);
-        metrics.addProperty("stoppedBranchCount", stoppedBranches);
-        metrics.addProperty("visibleAreaCost", visibleAreaCost);
-        return metrics;
     }
 
     private static JsonObject boundsJson(BlockBounds bounds) {
@@ -360,6 +266,11 @@ public final class MinecraftStructurePlacementBackend implements CityStructureD7
         obj.addProperty("maxX", bounds.maxX());
         obj.addProperty("maxZ", bounds.maxZ());
         return obj;
+    }
+
+    private static BlockBounds bounds(JsonObject obj) {
+        return new BlockBounds(intValue(obj, "minX", 0), intValue(obj, "minZ", 0),
+                intValue(obj, "maxX", 0), intValue(obj, "maxZ", 0));
     }
 
     private static JsonObject chunkRangeJson(ChunkRange range) {
