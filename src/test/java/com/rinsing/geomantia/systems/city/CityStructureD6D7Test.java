@@ -289,6 +289,12 @@ final class CityStructureD6D7Test {
                 CityStructureD7Executor.PlacementBackend.traceOnly());
         assertFalse(dryRun.placedStructureMap().getAsJsonArray("placedStructures")
                 .get(0).getAsJsonObject().get("worldMutationApplied").getAsBoolean());
+        assertEquals(0, dryRun.placedStructureMap()
+                .getAsJsonObject("chunkMaterializationLedger")
+                .getAsJsonArray("appliedJobs").size());
+        assertTrue(dryRun.structureGenerationTrace().has("materializationJobs"));
+        assertTrue(dryRun.structureGenerationTrace().getAsJsonArray("materializationJobs")
+                .toString().contains("\"status\":\"planned\""));
 
         final int[] calls = {0};
         CityStructureD7Executor.Result realRun = executor.execute(
@@ -305,6 +311,11 @@ final class CityStructureD6D7Test {
         assertTrue(calls[0] >= 2);
         assertTrue(realRun.placedStructureMap().getAsJsonArray("placedStructures")
                 .get(0).getAsJsonObject().get("worldMutationApplied").getAsBoolean());
+        assertTrue(realRun.placedStructureMap()
+                .getAsJsonObject("chunkMaterializationLedger")
+                .getAsJsonArray("appliedJobs").size() >= 2);
+        assertEquals(realRun.placedStructureMap().getAsJsonObject("chunkMaterializationLedger").toString(),
+                realRun.structureGenerationTrace().getAsJsonObject("chunkMaterializationLedger").toString());
 
         final int[] replayCalls = {0};
         CityStructureD7Executor.Result replay = executor.execute(
@@ -323,6 +334,8 @@ final class CityStructureD6D7Test {
                 .toString().contains("already_placed"));
         assertTrue(replay.structureGenerationTrace().getAsJsonArray("variableAttempts")
                 .toString().contains("already_placed"));
+        assertTrue(replay.structureGenerationTrace().getAsJsonArray("materializationJobs")
+                .toString().contains("\"status\":\"applied\""));
     }
 
     @Test

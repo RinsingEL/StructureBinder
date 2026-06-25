@@ -142,11 +142,13 @@ public final class CityStructureD7Executor {
             }
         }
 
-        JsonObject placedMap = placedMap(cityId, placedStructures, remainingByZone, hardBlocks);
+        JsonArray materializationJobs = materializationJobs(cityId, fixedAttempts, variableAttempts);
+        JsonObject ledger = chunkMaterializationLedger(cityId, placedStructures);
+        JsonObject placedMap = placedMap(cityId, placedStructures, remainingByZone, hardBlocks, ledger);
         JsonObject trace = trace(cityId, fixedAttempts, variableAttempts, placedStructures, remainingByZone,
-                failureSummary, waitingSummary, hardBlocks);
-        JsonObject quality = quality(fixedAttempts, variableAttempts, placedStructures, startCandidateSets, hardBlocks,
-                failureSummary, waitingSummary);
+                failureSummary, waitingSummary, hardBlocks, materializationJobs, ledger);
+        JsonObject quality = quality(fixedAttempts, variableAttempts, placedStructures, startCandidateSets,
+                materializationJobs, ledger, hardBlocks, failureSummary, waitingSummary);
         return new Result(startCandidateSets, placedMap, trace, quality);
     }
 
@@ -166,6 +168,9 @@ public final class CityStructureD7Executor {
         JsonObject attempt = baseAttempt("fixed", placementId, requiredString(fixed, "zonePatchId"), structureId,
                 placementKind, stringValue(fixed, "placementCommand", ""), landingCandidateId, anchor,
                 requiredString(fixed, "rotation"), 0);
+        attempt.addProperty("materializationMode", "minecraft_place_structure");
+        attempt.addProperty("sourcePlanRef", "PlannedFixedPlacementMap:" + placementId);
+        attempt.addProperty("retryBudget", 1);
         attempt.add("commandAnchorBlock", commandAnchor.asJson());
         attempt.add("requiredPlacementBounds", boundsJson(clearance));
         attempt.add("requiredChunkRange", chunkRangeJson(clearance));
@@ -192,6 +197,7 @@ public final class CityStructureD7Executor {
         attempt.addProperty("status", "placed");
         attempt.addProperty("reasonCode", "");
         attempt.addProperty("message", placement.message());
+        attempt.addProperty("worldMutationApplied", placement.worldMutationApplied());
         Placed placedStructure = new Placed("placed_" + placementId, placementId, landingCandidateId,
                 requiredString(fixed, "zonePatchId"), structureId, "fixed_footprint", placementKind,
                 stringValue(fixed, "placementCommand", ""), anchor, commandAnchor, requiredString(fixed, "rotation"),
@@ -210,6 +216,9 @@ public final class CityStructureD7Executor {
         if (candidates.isEmpty()) {
             JsonObject attempt = baseAttempt("variable", task.taskId(), zone.zonePatchId(), task.structureId(),
                     task.placementKind(), task.placementCommand(), "", new BlockPoint(0, 0), "NONE", 0);
+            attempt.addProperty("materializationMode", task.materializationMode());
+            attempt.addProperty("sourcePlanRef", "StructurePoolMap:" + task.selectionId());
+            attempt.addProperty("retryBudget", task.retryBudget());
             attempts.add(failedJson(attempt, "NO_START_CANDIDATE", "No hard-passed StartCandidateSet candidate."));
             return new AttemptResult(new JsonObject(), attempts, null, "NO_START_CANDIDATE");
         }
@@ -228,6 +237,9 @@ public final class CityStructureD7Executor {
             JsonObject attempt = baseAttempt("variable", task.taskId(), zone.zonePatchId(), task.structureId(),
                     task.placementKind(), task.placementCommand(), requiredString(candidate, "startCandidateId"),
                     anchor, requiredString(candidate, "rotation"), retry);
+            attempt.addProperty("materializationMode", task.materializationMode());
+            attempt.addProperty("sourcePlanRef", "StructurePoolMap:" + task.selectionId());
+            attempt.addProperty("retryBudget", task.retryBudget());
             attempt.add("scoreBreakdown", requiredObject(candidate, "scoreBreakdown"));
             attempt.add("requiredPlacementBounds", boundsJson(requiredBounds));
             attempt.add("requiredChunkRange", chunkRangeJson(requiredBounds));
@@ -258,6 +270,7 @@ public final class CityStructureD7Executor {
             attempt.addProperty("status", "placed");
             attempt.addProperty("reasonCode", "");
             attempt.addProperty("message", placement.message());
+            attempt.addProperty("worldMutationApplied", placement.worldMutationApplied());
             attempts.add(attempt);
             BlockBounds placedFootprint = placement.footprint() == null ? footprint : placement.footprint();
             BlockBounds placedClearance = placement.requiredLoadBounds() == null ? requiredBounds : placement.requiredLoadBounds();
@@ -415,6 +428,7 @@ public final class CityStructureD7Executor {
         attempt.addProperty("status", "failed");
         attempt.addProperty("reasonCode", reasonCode);
         attempt.addProperty("message", message);
+        attempt.addProperty("worldMutationApplied", false);
         return attempt;
     }
 
@@ -422,6 +436,7 @@ public final class CityStructureD7Executor {
         attempt.addProperty("status", "waiting");
         attempt.addProperty("reasonCode", reasonCode);
         attempt.addProperty("message", message);
+        attempt.addProperty("worldMutationApplied", false);
         return attempt;
     }
 
@@ -443,12 +458,13 @@ public final class CityStructureD7Executor {
     }
 
     private JsonObject placedMap(String cityId, JsonArray placedStructures, Map<String, Integer> remainingByZone,
-                                 List<String> hardBlocks) {
+                                 List<String> hardBlocks, JsonObject ledger) {
         JsonObject obj = new JsonObject();
         obj.addProperty("schemaVersion", "city_placed_structure_map.v0.1");
         obj.addProperty("cityId", cityId);
         obj.add("placedStructures", placedStructures);
         obj.add("remainingVisibleAreaByZone", remainingJson(remainingByZone));
+        obj.add("chunkMaterializationLedger", ledger.deepCopy());
         obj.add("quality", new CityQualityReport(hardBlocks.isEmpty(), hardBlocks.isEmpty() ? 100 : 0,
                 hardBlocks, List.of(), List.of(), metric("placedStructureCount", placedStructures.size())).asJson());
         return obj;
@@ -457,7 +473,7 @@ public final class CityStructureD7Executor {
     private JsonObject trace(String cityId, JsonArray fixedAttempts, JsonArray variableAttempts,
                              JsonArray placedStructures, Map<String, Integer> remainingByZone,
                              Map<String, Integer> failureSummary, Map<String, Integer> waitingSummary,
-                             List<String> hardBlocks) {
+                             List<String> hardBlocks, JsonArray materializationJobs, JsonObject ledger) {
         JsonObject obj = new JsonObject();
         obj.addProperty("schemaVersion", "city_structure_generation_trace.v0.1");
         obj.addProperty("cityId", cityId);
@@ -470,7 +486,9 @@ public final class CityStructureD7Executor {
         obj.add("attempts", attempts);
         obj.add("fixedPlacements", fixedAttempts);
         obj.add("variableAttempts", variableAttempts);
+        obj.add("materializationJobs", materializationJobs);
         obj.add("placedStructures", placedStructures);
+        obj.add("chunkMaterializationLedger", ledger.deepCopy());
         obj.add("remainingVisibleAreaByZone", remainingJson(remainingByZone));
         obj.add("failureSummary", failureJson(failureSummary));
         obj.add("waitingSummary", failureJson(waitingSummary));
@@ -482,18 +500,168 @@ public final class CityStructureD7Executor {
     }
 
     private JsonObject quality(JsonArray fixedAttempts, JsonArray variableAttempts, JsonArray placedStructures,
-                               JsonArray startCandidateSets, List<String> hardBlocks,
+                               JsonArray startCandidateSets, JsonArray materializationJobs, JsonObject ledger,
+                               List<String> hardBlocks,
                                Map<String, Integer> failureSummary, Map<String, Integer> waitingSummary) {
         JsonObject metrics = new JsonObject();
         metrics.addProperty("fixedAttemptCount", fixedAttempts.size());
         metrics.addProperty("variableAttemptCount", variableAttempts.size());
         metrics.addProperty("startCandidateSetCount", startCandidateSets.size());
+        metrics.addProperty("materializationJobCount", materializationJobs.size());
+        metrics.addProperty("ledgerAppliedJobCount", ledger.getAsJsonArray("appliedJobs").size());
         metrics.addProperty("placedStructureCount", placedStructures.size());
         metrics.addProperty("failureReasonCount", failureSummary.size());
         metrics.addProperty("waitingReasonCount", waitingSummary.size());
         int score = Math.max(0, 100 - hardBlocks.size() * 50 - failureSummary.size() * 8 - waitingSummary.size() * 2);
         List<String> warnings = waitingSummary.isEmpty() ? List.of() : List.of("D7 waiting for loaded chunks.");
         return new CityQualityReport(hardBlocks.isEmpty(), score, hardBlocks, warnings, List.of(), metrics).asJson();
+    }
+
+    private JsonArray materializationJobs(String cityId, JsonArray fixedAttempts, JsonArray variableAttempts) {
+        Map<String, JsonObject> byJob = new LinkedHashMap<>();
+        collectJobs(cityId, fixedAttempts, byJob);
+        collectJobs(cityId, variableAttempts, byJob);
+        JsonArray jobs = new JsonArray();
+        byJob.values().forEach(jobs::add);
+        return jobs;
+    }
+
+    private void collectJobs(String cityId, JsonArray attempts, Map<String, JsonObject> byJob) {
+        for (JsonElement elem : attempts) {
+            if (!elem.isJsonObject()) {
+                continue;
+            }
+            JsonObject attempt = elem.getAsJsonObject();
+            String jobId = jobId(attempt);
+            JsonObject job = byJob.computeIfAbsent(jobId, id -> materializationJob(cityId, id, attempt));
+            mergeAttemptIntoJob(job, attempt);
+        }
+    }
+
+    private JsonObject materializationJob(String cityId, String jobId, JsonObject attempt) {
+        JsonObject job = new JsonObject();
+        job.addProperty("schemaVersion", "city_materialization_job.v0.1");
+        job.addProperty("jobId", jobId);
+        job.addProperty("cityId", cityId);
+        job.addProperty("zonePatchId", stringValue(attempt, "zonePatchId", ""));
+        job.addProperty("structureId", stringValue(attempt, "structureId", ""));
+        job.addProperty("footprintMode", stringValue(attempt, "footprintMode", ""));
+        job.addProperty("placementMode", placementMode(attempt));
+        job.addProperty("materializationMode", stringValue(attempt, "materializationMode", "minecraft_place_structure"));
+        job.addProperty("sourcePlanRef", stringValue(attempt, "sourcePlanRef", ""));
+        job.addProperty("status", "pending");
+        job.addProperty("retryBudget", intValue(attempt, "retryBudget", 1));
+        job.addProperty("attemptCount", 0);
+        job.add("attempts", new JsonArray());
+        return job;
+    }
+
+    private void mergeAttemptIntoJob(JsonObject job, JsonObject attempt) {
+        job.addProperty("status", mergedJobStatus(stringValue(job, "status", "pending"), jobStatus(attempt)));
+        if (attempt.has("candidateBlock") && attempt.get("candidateBlock").isJsonObject()) {
+            job.add("anchorBlock", attempt.getAsJsonObject("candidateBlock").deepCopy());
+        }
+        if (attempt.has("requiredPlacementBounds") && attempt.get("requiredPlacementBounds").isJsonObject()) {
+            job.add("requiredPlacementBounds", attempt.getAsJsonObject("requiredPlacementBounds").deepCopy());
+        }
+        if (attempt.has("requiredChunkRange") && attempt.get("requiredChunkRange").isJsonObject()) {
+            job.add("requiredChunkRange", attempt.getAsJsonObject("requiredChunkRange").deepCopy());
+        }
+        JsonObject summary = new JsonObject();
+        summary.addProperty("retryIndex", intValue(attempt, "retryIndex", 0));
+        summary.addProperty("anchorCandidateId", stringValue(attempt, "anchorCandidateId", ""));
+        summary.addProperty("status", stringValue(attempt, "status", "pending"));
+        summary.addProperty("jobStatus", jobStatus(attempt));
+        summary.addProperty("reasonCode", stringValue(attempt, "reasonCode", ""));
+        summary.addProperty("worldMutationApplied", boolValue(attempt, "worldMutationApplied", false));
+        job.getAsJsonArray("attempts").add(summary);
+        job.addProperty("attemptCount", job.getAsJsonArray("attempts").size());
+    }
+
+    private String jobStatus(JsonObject attempt) {
+        String status = stringValue(attempt, "status", "pending");
+        if ("already_placed".equals(status)) {
+            return "applied";
+        }
+        if ("placed".equals(status)) {
+            return boolValue(attempt, "worldMutationApplied", false) ? "applied" : "planned";
+        }
+        if ("waiting".equals(status)) {
+            return "waiting_chunks";
+        }
+        if ("failed".equals(status)) {
+            return "failed";
+        }
+        return status.isBlank() ? "pending" : status;
+    }
+
+    private String mergedJobStatus(String current, String next) {
+        if ("applied".equals(current) || "applied".equals(next)) {
+            return "applied";
+        }
+        return next == null || next.isBlank() ? current : next;
+    }
+
+    private String placementMode(JsonObject attempt) {
+        String footprintMode = stringValue(attempt, "footprintMode", "");
+        if ("fixed".equals(footprintMode) || "fixed_footprint".equals(footprintMode)) {
+            return "fixed_footprint";
+        }
+        return stringValue(attempt, "materializationMode", "minecraft_place_structure");
+    }
+
+    private String jobId(JsonObject attempt) {
+        String footprintMode = stringValue(attempt, "footprintMode", "");
+        String prefix = "fixed".equals(footprintMode) || "fixed_footprint".equals(footprintMode) ? "fixed" : "variable";
+        return "job_" + prefix + "_" + safeId(stringValue(attempt, "taskId", "unknown"));
+    }
+
+    private JsonObject chunkMaterializationLedger(String cityId, JsonArray placedStructures) {
+        JsonObject ledger = new JsonObject();
+        ledger.addProperty("schemaVersion", "city_chunk_materialization_ledger.v0.1");
+        ledger.addProperty("ledgerId", "ledger_" + safeId(cityId));
+        ledger.addProperty("cityId", cityId);
+        JsonArray appliedJobs = new JsonArray();
+        for (JsonElement elem : placedStructures) {
+            if (!elem.isJsonObject()) {
+                continue;
+            }
+            JsonObject placed = elem.getAsJsonObject();
+            if (!boolValue(placed, "worldMutationApplied", false)) {
+                continue;
+            }
+            JsonObject applied = new JsonObject();
+            applied.addProperty("jobId", jobIdFromPlaced(placed));
+            applied.addProperty("placedId", requiredString(placed, "placedId"));
+            applied.addProperty("idempotencyKey", idempotencyKey(placed));
+            applied.addProperty("structureId", requiredString(placed, "structureId"));
+            applied.addProperty("zonePatchId", requiredString(placed, "zonePatchId"));
+            applied.addProperty("footprintMode", requiredString(placed, "footprintMode"));
+            applied.addProperty("sourceSelectionId", requiredString(placed, "sourceSelectionId"));
+            applied.addProperty("anchorCandidateId", requiredString(placed, "anchorCandidateId"));
+            applied.add("footprint", requiredObject(placed, "footprint").deepCopy());
+            applied.add("clearanceFootprint", requiredObject(placed, "clearanceFootprint").deepCopy());
+            applied.add("requiredChunkRange", chunkRangeJson(bounds(requiredObject(placed, "clearanceFootprint"))));
+            applied.addProperty("worldMutationApplied", true);
+            appliedJobs.add(applied);
+        }
+        ledger.add("appliedJobs", appliedJobs);
+        ledger.add("appliedPieces", new JsonArray());
+        ledger.addProperty("appliedJobCount", appliedJobs.size());
+        return ledger;
+    }
+
+    private String jobIdFromPlaced(JsonObject placed) {
+        String placedId = requiredString(placed, "placedId");
+        String taskId = placedId.startsWith("placed_") ? placedId.substring("placed_".length()) : placedId;
+        String prefix = "fixed_footprint".equals(requiredString(placed, "footprintMode")) ? "fixed" : "variable";
+        return "job_" + prefix + "_" + safeId(taskId);
+    }
+
+    private String idempotencyKey(JsonObject placed) {
+        return safeId(requiredString(placed, "structureId")) + ":"
+                + safeId(requiredString(placed, "sourceSelectionId")) + ":"
+                + safeId(requiredString(placed, "anchorCandidateId"));
     }
 
     private Map<String, Integer> initialRemaining(ZoneContext zones) {
@@ -645,18 +813,26 @@ public final class CityStructureD7Executor {
         attempt.add("commandAnchorBlock", commandAnchor(footprint, fixed).asJson());
         attempt.add("requiredPlacementBounds", boundsJson(clearance));
         attempt.add("requiredChunkRange", chunkRangeJson(clearance));
+        attempt.addProperty("materializationMode", "minecraft_place_structure");
+        attempt.addProperty("sourcePlanRef", "PlannedFixedPlacementMap:" + requiredString(fixed, "placementId"));
+        attempt.addProperty("retryBudget", 1);
         attempt.addProperty("status", "already_placed");
         attempt.addProperty("reasonCode", "");
         attempt.addProperty("message", "Existing real placement ledger entry reused.");
+        attempt.addProperty("worldMutationApplied", true);
         return attempt;
     }
 
     private JsonObject alreadyPlacedVariableAttempt(VariableTask task, ZoneInfo zone) {
         JsonObject attempt = baseAttempt("variable", task.taskId(), zone.zonePatchId(), task.structureId(),
                 task.placementKind(), task.placementCommand(), "", BlockPoint.ORIGIN, "NONE", 0);
+        attempt.addProperty("materializationMode", task.materializationMode());
+        attempt.addProperty("sourcePlanRef", "StructurePoolMap:" + task.selectionId());
+        attempt.addProperty("retryBudget", task.retryBudget());
         attempt.addProperty("status", "already_placed");
         attempt.addProperty("reasonCode", "");
         attempt.addProperty("message", "Existing real placement ledger entry reused.");
+        attempt.addProperty("worldMutationApplied", true);
         return attempt;
     }
 
