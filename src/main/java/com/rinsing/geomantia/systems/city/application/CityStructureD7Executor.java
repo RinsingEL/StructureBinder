@@ -924,6 +924,11 @@ public final class CityStructureD7Executor {
                 cells.add(cellJson);
             }
             obj.add("buildableCells", cells);
+            JsonArray reserved = new JsonArray();
+            for (BuildableAreaMap.ReservedCell cell : buildable.reservedCells()) {
+                reserved.add(cell.asJson());
+            }
+            obj.add("reservedCells", reserved);
             return obj;
         }
 

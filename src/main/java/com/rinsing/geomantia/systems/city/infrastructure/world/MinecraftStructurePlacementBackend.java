@@ -1,5 +1,6 @@
 package com.rinsing.geomantia.systems.city.infrastructure.world;
 
+import com.rinsing.geomantia.systems.city.application.CityConstraintField;
 import com.rinsing.geomantia.systems.city.application.CityStructureD7Executor;
 import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -27,7 +28,6 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.phys.Vec3;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -177,7 +177,9 @@ public final class MinecraftStructurePlacementBackend implements CityStructureD7
                                 + pieceChunks + ", missingChunks=" + missingPieceChunks,
                         trace);
             }
-            String reason = boundedPieceFailure(request.constraintField(), footprint, request.targetAreaBlocks());
+            CityConstraintField.ValidationResult validation = CityConstraintField.fromJson(request.constraintField())
+                    .validatePiece(footprint, request.targetAreaBlocks());
+            String reason = validation.passed() ? "" : validation.reasonCode();
             piece.add("footprint", boundsJson(footprint));
             piece.addProperty("visibleAreaCost", footprint.widthBlocks() * footprint.heightBlocks());
             if (!reason.isBlank()) {
@@ -351,67 +353,6 @@ public final class MinecraftStructurePlacementBackend implements CityStructureD7
         return metrics;
     }
 
-    private String boundedPieceFailure(JsonObject constraintField, BlockBounds footprint, int targetAreaBlocks) {
-        if (constraintField == null || !constraintField.has("allowedArea")) {
-            return "CITY_CONSTRAINT_FIELD_MISSING";
-        }
-        if (!covers(constraintField, footprint)) {
-            return "JIGSAW_BRANCH_OUT_OF_ALLOWED_AREA";
-        }
-        if (targetAreaBlocks > 0 && footprint.widthBlocks() * footprint.heightBlocks() > targetAreaBlocks) {
-            return "JIGSAW_AREA_BUDGET_REACHED";
-        }
-        if (constraintField.has("occupiedFootprints") && constraintField.get("occupiedFootprints").isJsonArray()) {
-            for (JsonElement elem : constraintField.getAsJsonArray("occupiedFootprints")) {
-                if (elem.isJsonObject() && elem.getAsJsonObject().has("footprint")
-                        && overlaps(footprint, bounds(elem.getAsJsonObject().getAsJsonObject("footprint")))) {
-                    return "JIGSAW_PIECE_RESERVED_CONFLICT";
-                }
-            }
-        }
-        return "";
-    }
-
-    private boolean covers(JsonObject constraintField, BlockBounds footprint) {
-        JsonArray cells = constraintField.has("buildableCells") && constraintField.get("buildableCells").isJsonArray()
-                ? constraintField.getAsJsonArray("buildableCells")
-                : new JsonArray();
-        if (cells.isEmpty()) {
-            return contains(bounds(constraintField.getAsJsonObject("allowedArea")), footprint);
-        }
-        int originX = intValue(constraintField, "originBlockX", 0);
-        int originZ = intValue(constraintField, "originBlockZ", 0);
-        int cellStep = Math.max(1, intValue(constraintField, "cellStepBlocks", 16));
-        int minCellX = Math.floorDiv(footprint.minX() - originX, cellStep);
-        int maxCellX = Math.floorDiv(footprint.maxX() - originX, cellStep);
-        int minCellZ = Math.floorDiv(footprint.minZ() - originZ, cellStep);
-        int maxCellZ = Math.floorDiv(footprint.maxZ() - originZ, cellStep);
-        List<Long> allowed = new ArrayList<>();
-        for (JsonElement elem : cells) {
-            if (!elem.isJsonObject()) {
-                continue;
-            }
-            JsonObject cell = elem.getAsJsonObject();
-            int x = Math.floorDiv(intValue(cell, "blockMinX", 0) - originX, cellStep);
-            int z = Math.floorDiv(intValue(cell, "blockMinZ", 0) - originZ, cellStep);
-            allowed.add((((long) x) << 32) ^ (z & 0xffffffffL));
-        }
-        for (int x = minCellX; x <= maxCellX; x++) {
-            for (int z = minCellZ; z <= maxCellZ; z++) {
-                long key = (((long) x) << 32) ^ (z & 0xffffffffL);
-                if (!allowed.contains(key)) {
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
-
-    private static BlockBounds bounds(JsonObject obj) {
-        return new BlockBounds(intValue(obj, "minX", 0), intValue(obj, "minZ", 0),
-                intValue(obj, "maxX", 0), intValue(obj, "maxZ", 0));
-    }
-
     private static JsonObject boundsJson(BlockBounds bounds) {
         JsonObject obj = new JsonObject();
         obj.addProperty("minX", bounds.minX());
@@ -428,16 +369,6 @@ public final class MinecraftStructurePlacementBackend implements CityStructureD7
         obj.addProperty("maxChunkX", range.maxX());
         obj.addProperty("maxChunkZ", range.maxZ());
         return obj;
-    }
-
-    private static boolean contains(BlockBounds container, BlockBounds child) {
-        return child.minX() >= container.minX() && child.maxX() <= container.maxX()
-                && child.minZ() >= container.minZ() && child.maxZ() <= container.maxZ();
-    }
-
-    private static boolean overlaps(BlockBounds left, BlockBounds right) {
-        return left.minX() <= right.maxX() && left.maxX() >= right.minX()
-                && left.minZ() <= right.maxZ() && left.maxZ() >= right.minZ();
     }
 
     private static int intValue(JsonObject obj, String key, int defaultValue) {

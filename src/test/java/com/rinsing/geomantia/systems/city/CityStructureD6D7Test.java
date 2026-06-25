@@ -398,6 +398,7 @@ final class CityStructureD6D7Test {
                 boundedCalls[0]++;
                 assertEquals("bounded_jigsaw", request.materializationMode());
                 assertTrue(request.constraintField().has("buildableCells"));
+                assertTrue(request.constraintField().has("reservedCells"));
                 JsonObject trace = new JsonObject();
                 trace.addProperty("schemaVersion", "city_bounded_jigsaw_trace.v0.1");
                 trace.addProperty("capability", "bounded_jigsaw_supported");
