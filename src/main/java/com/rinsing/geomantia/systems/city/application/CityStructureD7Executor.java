@@ -716,11 +716,19 @@ public final class CityStructureD7Executor {
 
     private JsonArray boundedTracePieces(JsonObject boundedTrace) {
         JsonObject plan = objectValue(boundedTrace, "plan", null);
+        JsonArray pieces;
         if (plan != null && plan.has("pieces") && plan.get("pieces").isJsonArray()
                 && !plan.getAsJsonArray("pieces").isEmpty()) {
-            return plan.getAsJsonArray("pieces");
+            pieces = plan.getAsJsonArray("pieces");
+        } else {
+            pieces = arrayValue(boundedTrace, "acceptedPieces", new JsonArray());
         }
-        return arrayValue(boundedTrace, "acceptedPieces", new JsonArray());
+        if ("start_piece_adapter".equals(stringValue(boundedTrace, "worldPasteMode", "")) && !pieces.isEmpty()) {
+            JsonArray startOnly = new JsonArray();
+            startOnly.add(pieces.get(0).deepCopy());
+            return startOnly;
+        }
+        return pieces;
     }
 
     private Map<String, Integer> initialRemaining(ZoneContext zones) {

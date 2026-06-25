@@ -521,6 +521,57 @@ final class CityStructureD6D7Test {
     }
 
     @Test
+    void d7BoundedJigsawStartPieceAdapterLedgerDoesNotApplyUnpastedChildPieces() throws Exception {
+        Fixture fixture = fixture();
+        JsonObject choice = choicePlan();
+        choice.getAsJsonArray("zoneChoices")
+                .get(0).getAsJsonObject()
+                .getAsJsonArray("variableSelections")
+                .get(0).getAsJsonObject()
+                .addProperty("materializationMode", "bounded_jigsaw");
+        JsonObject d6 = runD6(fixture, catalog(List.of(
+                fixed("minecraft:desert_pyramid", "structure_assembly", "minecraft_place_structure", 16, 16),
+                variable("minecraft:village_plains", "structure_assembly", "minecraft_place_structure"))),
+                choice, selectionPlan("fixed_core_cand_01"));
+
+        BlockBounds startFootprint = new BlockBounds(16, 16, 23, 23);
+        BlockBounds childFootprint = new BlockBounds(24, 16, 31, 23);
+        CityStructureD7Executor.PlacementBackend backend = new CityStructureD7Executor.PlacementBackend() {
+            @Override
+            public CityStructureD7Executor.PlacementResult place(CityStructureD7Executor.PlacementRequest request) {
+                return CityStructureD7Executor.PlacementResult.placed("fixed placed");
+            }
+
+            @Override
+            public CityStructureD7Executor.PlacementResult placeBoundedJigsaw(CityStructureD7Executor.PlacementRequest request) {
+                JsonObject trace = boundedTraceWithAcceptedPiece(startFootprint);
+                trace.addProperty("worldPasteMode", "start_piece_adapter");
+                JsonObject child = boundedPiece("child_piece_1",
+                        "minecraft:village/plains/streets/straight_01",
+                        "minecraft:village/plains/streets", childFootprint);
+                trace.getAsJsonArray("acceptedPieces").add(child.deepCopy());
+                trace.getAsJsonObject("plan").getAsJsonArray("pieces").add(child.deepCopy());
+                return CityStructureD7Executor.PlacementResult.placed("bounded start piece placed",
+                        trace, startFootprint, startFootprint);
+            }
+        };
+
+        CityStructureD7Executor.Result result = new CityStructureD7Executor().execute(
+                fixture.zoneMap(),
+                fixture.buildableAreaMap(),
+                d6.getAsJsonObject("plannedFixedPlacementMap"),
+                d6.getAsJsonObject("structurePoolMap"),
+                12345L,
+                backend);
+
+        JsonObject ledger = result.placedStructureMap().getAsJsonObject("chunkMaterializationLedger");
+        assertEquals(1, ledger.getAsJsonArray("appliedPieces").size());
+        JsonObject piece = ledger.getAsJsonArray("appliedPieces").get(0).getAsJsonObject();
+        assertEquals("start_piece_1", piece.get("pieceId").getAsString());
+        assertFalse(ledger.toString().contains("child_piece_1"));
+    }
+
+    @Test
     void d7BoundedJigsawUnsupportedIsStructuredFailure() throws Exception {
         Fixture fixture = fixture();
         JsonObject choice = choicePlan();
@@ -610,19 +661,9 @@ final class CityStructureD6D7Test {
     }
 
     private JsonObject boundedTraceWithAcceptedPiece(BlockBounds footprint) {
-        JsonObject piece = new JsonObject();
-        piece.addProperty("pieceId", "start_piece_1");
-        piece.addProperty("templateId", "minecraft:village/plains/houses/plains_small_house_1");
-        piece.addProperty("poolId", "minecraft:village/plains/houses");
-        JsonObject anchor = new JsonObject();
-        anchor.addProperty("x", footprint.minX());
-        anchor.addProperty("y", 64);
-        anchor.addProperty("z", footprint.minZ());
-        piece.add("anchorBlock", anchor);
-        piece.addProperty("rotation", "NONE");
-        piece.add("footprint", boundsJson(footprint));
-        piece.addProperty("visibleAreaCost", footprint.widthBlocks() * footprint.heightBlocks());
-        piece.addProperty("validatorResult", "passed");
+        JsonObject piece = boundedPiece("start_piece_1",
+                "minecraft:village/plains/houses/plains_small_house_1",
+                "minecraft:village/plains/houses", footprint);
 
         JsonArray pieces = new JsonArray();
         pieces.add(piece);
@@ -642,6 +683,23 @@ final class CityStructureD6D7Test {
         trace.add("stoppedBranches", new JsonArray());
         trace.add("plan", plan);
         return trace;
+    }
+
+    private JsonObject boundedPiece(String pieceId, String templateId, String poolId, BlockBounds footprint) {
+        JsonObject piece = new JsonObject();
+        piece.addProperty("pieceId", pieceId);
+        piece.addProperty("templateId", templateId);
+        piece.addProperty("poolId", poolId);
+        JsonObject anchor = new JsonObject();
+        anchor.addProperty("x", footprint.minX());
+        anchor.addProperty("y", 64);
+        anchor.addProperty("z", footprint.minZ());
+        piece.add("anchorBlock", anchor);
+        piece.addProperty("rotation", "NONE");
+        piece.add("footprint", boundsJson(footprint));
+        piece.addProperty("visibleAreaCost", footprint.widthBlocks() * footprint.heightBlocks());
+        piece.addProperty("validatorResult", "passed");
+        return piece;
     }
 
     private JsonObject boundsJson(BlockBounds footprint) {

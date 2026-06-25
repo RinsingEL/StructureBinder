@@ -99,6 +99,9 @@ public final class BoundedJigsawSolver {
     }
 
     private String rejectionReason(State state, OpenBranch branch, JsonObject piece, BlockBounds footprint) {
+        if ("connector_alignment_pending".equals(stringValue(piece, "prototypePlacementStatus", ""))) {
+            return "JIGSAW_CONNECTOR_ALIGNMENT_PENDING";
+        }
         if (!matchesConnector(branch, piece)) {
             return "JIGSAW_CONNECTOR_TARGET_MISMATCH";
         }

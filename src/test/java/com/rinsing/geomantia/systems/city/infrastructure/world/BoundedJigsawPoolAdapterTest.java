@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 final class BoundedJigsawPoolAdapterTest {
     @Test
@@ -49,6 +50,49 @@ final class BoundedJigsawPoolAdapterTest {
         assertEquals("unresolved", piece.get("templateId").getAsString());
     }
 
+    @Test
+    void populatesCandidatePoolsFromConnectorRefsWithDepthLimit() {
+        JsonArray rootPieces = pieces(rawPiece("minecraft:village/plains/town_centers/plains_fountain_01",
+                connector("minecraft:village/plains/streets"),
+                connector("minecraft:village/plains/streets")));
+        JsonObject candidatePools = new JsonObject();
+
+        JsonObject report = BoundedJigsawPoolAdapter.populateCandidatePools(candidatePools, rootPieces,
+                (poolId, depth) -> switch (poolId) {
+                    case "minecraft:village/plains/streets" -> pieces(rawPiece("minecraft:village/plains/streets/corner_01",
+                            connector("minecraft:village/plains/terminators")));
+                    case "minecraft:village/plains/terminators" -> pieces(rawPiece("minecraft:village/plains/terminators/terminator_01"));
+                    default -> null;
+                }, 2, 8);
+
+        assertEquals(2, candidatePools.entrySet().size());
+        assertTrue(candidatePools.has("minecraft:village/plains/streets"));
+        assertTrue(candidatePools.has("minecraft:village/plains/terminators"));
+        JsonObject streetPiece = candidatePools.getAsJsonArray("minecraft:village/plains/streets")
+                .get(0).getAsJsonObject();
+        assertEquals("child_pool_prototype", streetPiece.get("adapterScope").getAsString());
+        assertEquals("connector_alignment_pending", streetPiece.get("prototypePlacementStatus").getAsString());
+        assertEquals(2, report.get("discoveredPoolCount").getAsInt());
+        assertEquals(0, report.get("missingPoolCount").getAsInt());
+    }
+
+    @Test
+    void reportsMissingConnectorPoolsWithoutCreatingCandidates() {
+        JsonArray rootPieces = pieces(rawPiece("minecraft:village/plains/town_centers/plains_fountain_01",
+                connector("minecraft:village/plains/missing_pool")));
+        JsonObject candidatePools = new JsonObject();
+
+        JsonObject report = BoundedJigsawPoolAdapter.populateCandidatePools(candidatePools, rootPieces,
+                (poolId, depth) -> null, 2, 8);
+
+        assertEquals(0, candidatePools.entrySet().size());
+        assertEquals(0, report.get("discoveredPoolCount").getAsInt());
+        assertEquals(1, report.get("missingPoolCount").getAsInt());
+        assertEquals("BOUNDED_JIGSAW_POOL_MISSING", report.getAsJsonArray("missingPools")
+                .get(0).getAsJsonObject()
+                .get("status").getAsString());
+    }
+
     private JsonObject rawPiece(String templateId, JsonObject... connectors) {
         JsonObject raw = new JsonObject();
         raw.addProperty("poolId", "minecraft:village/plains/houses");
@@ -64,12 +108,24 @@ final class BoundedJigsawPoolAdapterTest {
         return raw;
     }
 
+    private JsonArray pieces(JsonObject... pieces) {
+        JsonArray array = new JsonArray();
+        for (JsonObject piece : pieces) {
+            array.add(piece);
+        }
+        return array;
+    }
+
     private JsonObject connector() {
+        return connector("minecraft:village/plains/streets");
+    }
+
+    private JsonObject connector(String pool) {
         JsonObject connector = new JsonObject();
         connector.addProperty("connectorId", "jigsaw_east_15_1_7");
         connector.addProperty("name", "minecraft:street");
         connector.addProperty("target", "minecraft:street");
-        connector.addProperty("pool", "minecraft:village/plains/streets");
+        connector.addProperty("pool", pool);
         connector.add("worldBlock", block(15, 65, 7));
         connector.add("localBlock", block(15, 1, 7));
         connector.addProperty("front", "east");

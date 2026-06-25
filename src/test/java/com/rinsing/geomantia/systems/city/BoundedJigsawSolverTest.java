@@ -89,6 +89,34 @@ final class BoundedJigsawSolverTest {
     }
 
     @Test
+    void rejectsDiscoveredChildPoolPrototypeUntilConnectorAlignmentExists() {
+        JsonObject input = baseInput(1024);
+        input.add("startPieces", pieces(piece("start_piece_1", "minecraft:start_house",
+                "minecraft:village/plains/town_centers", 0, 0, 15, 15,
+                connector("door_east", "minecraft:street", "minecraft:street",
+                        "minecraft:village/plains/streets"))));
+        JsonObject pools = new JsonObject();
+        JsonObject street = piece("street_piece_1", "minecraft:street_1",
+                "minecraft:village/plains/streets", 16, 0, 31, 15);
+        street.addProperty("attachTarget", "minecraft:street");
+        street.addProperty("adapterScope", "child_pool_prototype");
+        street.addProperty("prototypePlacementStatus", "connector_alignment_pending");
+        pools.add("minecraft:village/plains/streets", pieces(street));
+        input.add("candidatePools", pools);
+
+        JsonObject trace = new BoundedJigsawSolver().solve(input);
+
+        assertEquals(1, trace.getAsJsonArray("acceptedPieces").size());
+        assertEquals(1, trace.getAsJsonArray("rejectedPieces").size());
+        assertTrue(trace.getAsJsonArray("rejectedPieces").toString()
+                .contains("JIGSAW_CONNECTOR_ALIGNMENT_PENDING"));
+        assertTrue(trace.getAsJsonArray("stoppedBranches").toString()
+                .contains("JIGSAW_CONNECTOR_ALIGNMENT_PENDING"));
+        assertTrue(trace.getAsJsonObject("plan").getAsJsonObject("quality")
+                .get("startPieceOnly").getAsBoolean());
+    }
+
+    @Test
     void reportsStructuredFailureWhenNoPieceCanBeAccepted() {
         JsonObject input = baseInput(1024);
         input.add("startPieces", pieces(piece("start_piece_outside", "minecraft:start_house",

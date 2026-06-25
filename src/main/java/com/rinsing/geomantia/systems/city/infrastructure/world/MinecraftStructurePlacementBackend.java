@@ -154,11 +154,15 @@ public final class MinecraftStructurePlacementBackend implements CityStructureD7
         }
         JsonObject solverInput = BoundedJigsawPoolAdapter.solverInput(request, startPool, level.getStructureManager(),
                 anchor, rotation, request.structureId().hashCode() * 31L
-                        + request.anchorBlock().x() * 17L + request.anchorBlock().z());
+                        + request.anchorBlock().x() * 17L + request.anchorBlock().z(),
+                this::templatePool);
         JsonObject trace = new BoundedJigsawSolver().solve(solverInput);
         trace.addProperty("structureRegistryKey", holder.get().key().location().toString());
-        trace.addProperty("poolAdapterStatus", "start_pool_adapter");
+        trace.addProperty("poolAdapterStatus", "child_pool_discovery");
         trace.addProperty("worldPasteMode", executeCommands ? "start_piece_adapter" : "dry_run_plan_only");
+        if (solverInput.has("poolAdapterReport") && solverInput.get("poolAdapterReport").isJsonObject()) {
+            trace.add("poolAdapterReport", solverInput.getAsJsonObject("poolAdapterReport").deepCopy());
+        }
         if (!executeCommands) {
             if (trace.getAsJsonArray("acceptedPieces").isEmpty()) {
                 return CityStructureD7Executor.PlacementResult.failed("JIGSAW_NO_ACCEPTED_PIECE",
@@ -240,6 +244,18 @@ public final class MinecraftStructurePlacementBackend implements CityStructureD7
         int surfaceY = level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z);
         int y = Math.max(level.getMinBuildHeight(), Math.min(level.getMaxBuildHeight() - 1, surfaceY));
         return new BlockPos(x, y, z);
+    }
+
+    private Holder<StructureTemplatePool> templatePool(String poolId) {
+        ResourceLocation id = ResourceLocation.tryParse(poolId);
+        if (id == null) {
+            return null;
+        }
+        return server.registryAccess()
+                .registryOrThrow(Registries.TEMPLATE_POOL)
+                .getHolder(ResourceKey.create(Registries.TEMPLATE_POOL, id))
+                .map(holder -> (Holder<StructureTemplatePool>) holder)
+                .orElse(null);
     }
 
     private Rotation rotation(String value) {
