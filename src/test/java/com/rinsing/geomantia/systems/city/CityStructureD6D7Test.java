@@ -98,6 +98,9 @@ final class CityStructureD6D7Test {
                 .getAsJsonArray("variableSelections")
                 .get(0).getAsJsonObject();
         assertEquals(0.25, variable.get("targetVisibleAreaRatio").getAsDouble(), 0.0001);
+        JsonObject startFootprint = variable.getAsJsonObject("startFootprint");
+        assertEquals(12, startFootprint.get("widthBlocks").getAsInt());
+        assertEquals(12, startFootprint.get("depthBlocks").getAsInt());
     }
 
     @Test

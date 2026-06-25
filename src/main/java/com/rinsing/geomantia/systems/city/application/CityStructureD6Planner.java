@@ -810,6 +810,11 @@ public final class CityStructureD6Planner {
                 source = objectValue(hardFacts, "size");
             }
         }
+        if (source.entrySet().isEmpty()
+                && (obj.has("widthBlocks") || obj.has("width") || obj.has("x")
+                || obj.has("depthBlocks") || obj.has("depth") || obj.has("z"))) {
+            source = obj;
+        }
         int width = firstInt(source, 0, "widthBlocks", "width", "x");
         int depth = firstInt(source, 0, "depthBlocks", "depth", "z");
         int height = firstInt(source, 0, "heightBlocks", "height", "y");
@@ -844,7 +849,10 @@ public final class CityStructureD6Planner {
         JsonObject source = objectValue(obj, "expectedAreaRange");
         int min = firstInt(source, 0, "minAreaBlocks", "minArea", "min");
         int max = firstInt(source, 0, "maxAreaBlocks", "maxArea", "max");
-        Footprint start = footprint(objectValue(obj, "startFootprint"));
+        Footprint start = footprint(objectValue(source, "startFootprint"));
+        if (!start.valid()) {
+            start = footprint(objectValue(obj, "startFootprint"));
+        }
         if (!start.valid()) {
             start = fixedFootprint.valid() ? fixedFootprint : new Footprint(16, 16, 12);
         }
