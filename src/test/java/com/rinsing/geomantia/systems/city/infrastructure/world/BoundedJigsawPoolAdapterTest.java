@@ -77,6 +77,23 @@ final class BoundedJigsawPoolAdapterTest {
     }
 
     @Test
+    void childPoolDiscoveryKeepsAlignedPrototypeWhenSourcePreparesIt() {
+        JsonArray rootPieces = pieces(rawPiece("minecraft:village/plains/town_centers/plains_fountain_01",
+                connector("minecraft:village/plains/streets")));
+        JsonObject candidatePools = new JsonObject();
+
+        BoundedJigsawPoolAdapter.populateCandidatePools(candidatePools, rootPieces,
+                (poolId, depth) -> pieces(rawPiece("minecraft:village/plains/streets/straight_01",
+                        connector("minecraft:village/plains/terminators"))), 1, 8);
+
+        JsonObject streetPiece = candidatePools.getAsJsonArray("minecraft:village/plains/streets")
+                .get(0).getAsJsonObject();
+        assertEquals("child_pool_prototype", streetPiece.get("adapterScope").getAsString());
+        assertEquals("connector_alignment_pending", streetPiece.get("prototypePlacementStatus").getAsString());
+        assertEquals("minecraft:village/plains/streets", streetPiece.get("sourcePoolId").getAsString());
+    }
+
+    @Test
     void reportsMissingConnectorPoolsWithoutCreatingCandidates() {
         JsonArray rootPieces = pieces(rawPiece("minecraft:village/plains/town_centers/plains_fountain_01",
                 connector("minecraft:village/plains/missing_pool")));

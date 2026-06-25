@@ -60,7 +60,7 @@ final class BoundedJigsawPoolAdapter {
             if (pool == null || pool.value() == null) {
                 return null;
             }
-            return inspectPool(pool, templateManager, anchor, rotation, seed + depth * 997L,
+            return inspectPoolRotations(pool, templateManager, anchor, seed + depth * 997L,
                     "pool_" + safeId(poolId) + "_piece");
         }, 2, 12);
         input.add("candidatePools", candidatePools);
@@ -88,6 +88,29 @@ final class BoundedJigsawPoolAdapter {
             JsonObject piece = inspectElement(templateManager, element, poolName(pool), anchor, rotation,
                     piecePrefix + "_" + pieceIndex, seed + pieceIndex);
             pieces.add(piece);
+        }
+        return pieces;
+    }
+
+    static JsonArray inspectPoolRotations(Holder<StructureTemplatePool> pool,
+                                          StructureTemplateManager templateManager,
+                                          BlockPos anchor,
+                                          long seed,
+                                          String piecePrefix) {
+        JsonArray pieces = new JsonArray();
+        if (pool == null || pool.value() == null) {
+            return pieces;
+        }
+        int rotationIndex = 0;
+        for (Rotation rotation : Rotation.values()) {
+            JsonArray rotated = inspectPool(pool, templateManager, anchor, rotation,
+                    seed + rotationIndex * 131L, piecePrefix + "_" + rotation.name().toLowerCase());
+            for (int i = 0; i < rotated.size(); i++) {
+                if (rotated.get(i).isJsonObject()) {
+                    pieces.add(rotated.get(i).getAsJsonObject());
+                }
+            }
+            rotationIndex++;
         }
         return pieces;
     }

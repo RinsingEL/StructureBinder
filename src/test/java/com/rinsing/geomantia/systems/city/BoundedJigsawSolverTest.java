@@ -89,7 +89,7 @@ final class BoundedJigsawSolverTest {
     }
 
     @Test
-    void rejectsDiscoveredChildPoolPrototypeUntilConnectorAlignmentExists() {
+    void alignsDiscoveredChildPoolPrototypeBeforeValidation() {
         JsonObject input = baseInput(1024);
         input.add("startPieces", pieces(piece("start_piece_1", "minecraft:start_house",
                 "minecraft:village/plains/town_centers", 0, 0, 15, 15,
@@ -97,8 +97,38 @@ final class BoundedJigsawSolverTest {
                         "minecraft:village/plains/streets"))));
         JsonObject pools = new JsonObject();
         JsonObject street = piece("street_piece_1", "minecraft:street_1",
-                "minecraft:village/plains/streets", 16, 0, 31, 15);
-        street.addProperty("attachTarget", "minecraft:street");
+                "minecraft:village/plains/streets", 0, 0, 15, 15,
+                connector("street_west", "minecraft:street", "minecraft:street",
+                        "minecraft:village/plains/terminators", 0, 64, 0, "west"));
+        street.addProperty("adapterScope", "child_pool_prototype");
+        street.addProperty("prototypePlacementStatus", "connector_alignment_pending");
+        pools.add("minecraft:village/plains/streets", pieces(street));
+        input.add("candidatePools", pools);
+
+        JsonObject trace = new BoundedJigsawSolver().solve(input);
+
+        assertEquals(2, trace.getAsJsonArray("acceptedPieces").size());
+        JsonObject child = trace.getAsJsonArray("acceptedPieces").get(1).getAsJsonObject();
+        assertEquals("connector_aligned", child.get("prototypePlacementStatus").getAsString());
+        assertEquals(16, child.getAsJsonObject("footprint").get("minX").getAsInt());
+        assertTrue(child.getAsJsonArray("connectorRefs").get(0).getAsJsonObject()
+                .get("consumedByParent").getAsBoolean());
+        assertFalse(trace.getAsJsonObject("plan").getAsJsonObject("quality")
+                .get("startPieceOnly").getAsBoolean());
+    }
+
+    @Test
+    void reportsAlignmentFailureForIncompatibleChildPoolPrototype() {
+        JsonObject input = baseInput(1024);
+        input.add("startPieces", pieces(piece("start_piece_1", "minecraft:start_house",
+                "minecraft:village/plains/town_centers", 0, 0, 15, 15,
+                connector("door_east", "minecraft:street", "minecraft:street",
+                        "minecraft:village/plains/streets"))));
+        JsonObject pools = new JsonObject();
+        JsonObject street = piece("street_piece_bad", "minecraft:street_1",
+                "minecraft:village/plains/streets", 0, 0, 15, 15,
+                connector("street_north", "minecraft:house", "minecraft:house",
+                        "minecraft:village/plains/terminators", 0, 64, 0, "north"));
         street.addProperty("adapterScope", "child_pool_prototype");
         street.addProperty("prototypePlacementStatus", "connector_alignment_pending");
         pools.add("minecraft:village/plains/streets", pieces(street));
@@ -109,11 +139,9 @@ final class BoundedJigsawSolverTest {
         assertEquals(1, trace.getAsJsonArray("acceptedPieces").size());
         assertEquals(1, trace.getAsJsonArray("rejectedPieces").size());
         assertTrue(trace.getAsJsonArray("rejectedPieces").toString()
-                .contains("JIGSAW_CONNECTOR_ALIGNMENT_PENDING"));
+                .contains("JIGSAW_CONNECTOR_ALIGNMENT_FAILED"));
         assertTrue(trace.getAsJsonArray("stoppedBranches").toString()
-                .contains("JIGSAW_CONNECTOR_ALIGNMENT_PENDING"));
-        assertTrue(trace.getAsJsonObject("plan").getAsJsonObject("quality")
-                .get("startPieceOnly").getAsBoolean());
+                .contains("JIGSAW_CONNECTOR_ALIGNMENT_FAILED"));
     }
 
     @Test
@@ -185,14 +213,19 @@ final class BoundedJigsawSolverTest {
     }
 
     private JsonObject connector(String connectorId, String name, String target, String pool) {
+        return connector(connectorId, name, target, pool, 15, 64, 0, "east");
+    }
+
+    private JsonObject connector(String connectorId, String name, String target, String pool,
+                                 int worldX, int worldY, int worldZ, String front) {
         JsonObject connector = new JsonObject();
         connector.addProperty("connectorId", connectorId);
         connector.addProperty("name", name);
         connector.addProperty("target", target);
         connector.addProperty("pool", pool);
-        connector.add("worldBlock", block(0, 64, 0));
+        connector.add("worldBlock", block(worldX, worldY, worldZ));
         connector.add("localBlock", block(0, 0, 0));
-        connector.addProperty("front", "east");
+        connector.addProperty("front", front);
         return connector;
     }
 

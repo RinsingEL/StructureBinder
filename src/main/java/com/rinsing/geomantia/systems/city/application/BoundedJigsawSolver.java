@@ -67,7 +67,7 @@ public final class BoundedJigsawSolver {
     private boolean acceptFirstPassing(State state, OpenBranch branch, JsonArray candidates) {
         String lastReason = "";
         for (JsonObject candidate : shuffledCandidates(candidates, state.seedKey + ":" + branch.branchId)) {
-            JsonObject piece = candidate.deepCopy();
+            JsonObject piece = alignCandidateToBranch(candidate, branch);
             applyBranch(piece, branch);
             BlockBounds footprint = footprint(piece);
             if (footprint != null && !piece.has("visibleAreaCost")) {
@@ -99,6 +99,9 @@ public final class BoundedJigsawSolver {
     }
 
     private String rejectionReason(State state, OpenBranch branch, JsonObject piece, BlockBounds footprint) {
+        if ("failed".equals(stringValue(piece, "alignmentStatus", ""))) {
+            return stringValue(piece, "alignmentReasonCode", "JIGSAW_CONNECTOR_ALIGNMENT_FAILED");
+        }
         if ("connector_alignment_pending".equals(stringValue(piece, "prototypePlacementStatus", ""))) {
             return "JIGSAW_CONNECTOR_ALIGNMENT_PENDING";
         }
@@ -189,6 +192,9 @@ public final class BoundedJigsawSolver {
                 continue;
             }
             JsonObject connector = elem.getAsJsonObject();
+            if (boolValue(connector, "consumedByParent", false)) {
+                continue;
+            }
             String pool = stringValue(connector, "pool", "");
             if (pool.isBlank()) {
                 continue;
@@ -201,8 +207,18 @@ public final class BoundedJigsawSolver {
                     pool,
                     stringValue(connector, "name", ""),
                     stringValue(connector, "target", ""),
+                    connector.deepCopy(),
                     nextDepth));
         }
+    }
+
+    private JsonObject alignCandidateToBranch(JsonObject candidate, OpenBranch branch) {
+        JsonObject piece = candidate.deepCopy();
+        if ("child_pool_prototype".equals(stringValue(piece, "adapterScope", ""))
+                && !branch.parentConnectorId.isBlank()) {
+            return BoundedJigsawConnectorAligner.alignToParentConnector(branch.connectorRef, piece);
+        }
+        return piece;
     }
 
     private void applyBranch(JsonObject piece, OpenBranch branch) {
@@ -364,10 +380,18 @@ public final class BoundedJigsawSolver {
         }
     }
 
+    private static boolean boolValue(JsonObject obj, String key, boolean defaultValue) {
+        if (obj == null || !obj.has(key) || obj.get(key).isJsonNull()) {
+            return defaultValue;
+        }
+        return obj.get(key).getAsBoolean();
+    }
+
     private record OpenBranch(String branchId, String parentPieceId, String parentConnectorId, String poolId,
-                              String name, String target, int depth) {
+                              String name, String target, JsonObject connectorRef, int depth) {
         static OpenBranch start(String startPool) {
-            return new OpenBranch("branch_start", "", "", startPool == null ? "" : startPool, "", "", 0);
+            return new OpenBranch("branch_start", "", "", startPool == null ? "" : startPool,
+                    "", "", new JsonObject(), 0);
         }
     }
 }
