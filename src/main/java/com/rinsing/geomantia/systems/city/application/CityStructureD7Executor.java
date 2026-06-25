@@ -202,7 +202,7 @@ public final class CityStructureD7Executor {
                 requiredString(fixed, "zonePatchId"), structureId, "fixed_footprint", placementKind,
                 stringValue(fixed, "placementCommand", ""), anchor, commandAnchor, requiredString(fixed, "rotation"),
                 footprint, clearance, intValue(fixed, "visibleAreaCost", area(footprint)),
-                placement.worldMutationApplied());
+                "minecraft_place_structure", null, placement.worldMutationApplied());
         return new AttemptResult(attempt, new JsonArray(), placedStructure, "");
     }
 
@@ -278,7 +278,8 @@ public final class CityStructureD7Executor {
                     requiredString(candidate, "startCandidateId"), zone.zonePatchId(), task.structureId(),
                     "variable_area", task.placementKind(), task.placementCommand(), anchor, anchor,
                     requiredString(candidate, "rotation"), placedFootprint, placedClearance,
-                    Math.min(task.targetAreaBlocks(), area(placedFootprint)), placement.worldMutationApplied());
+                    Math.min(task.targetAreaBlocks(), area(placedFootprint)), task.materializationMode(),
+                    placement.trace(), placement.worldMutationApplied());
             return new AttemptResult(new JsonObject(), attempts, placedStructure, "");
         }
         return new AttemptResult(new JsonObject(), attempts, null, lastReason);
@@ -509,6 +510,7 @@ public final class CityStructureD7Executor {
         metrics.addProperty("startCandidateSetCount", startCandidateSets.size());
         metrics.addProperty("materializationJobCount", materializationJobs.size());
         metrics.addProperty("ledgerAppliedJobCount", ledger.getAsJsonArray("appliedJobs").size());
+        metrics.addProperty("ledgerAppliedPieceCount", ledger.getAsJsonArray("appliedPieces").size());
         metrics.addProperty("placedStructureCount", placedStructures.size());
         metrics.addProperty("failureReasonCount", failureSummary.size());
         metrics.addProperty("waitingReasonCount", waitingSummary.size());
@@ -622,6 +624,7 @@ public final class CityStructureD7Executor {
         ledger.addProperty("ledgerId", "ledger_" + safeId(cityId));
         ledger.addProperty("cityId", cityId);
         JsonArray appliedJobs = new JsonArray();
+        JsonArray appliedPieces = new JsonArray();
         for (JsonElement elem : placedStructures) {
             if (!elem.isJsonObject()) {
                 continue;
@@ -630,8 +633,9 @@ public final class CityStructureD7Executor {
             if (!boolValue(placed, "worldMutationApplied", false)) {
                 continue;
             }
+            String jobId = jobIdFromPlaced(placed);
             JsonObject applied = new JsonObject();
-            applied.addProperty("jobId", jobIdFromPlaced(placed));
+            applied.addProperty("jobId", jobId);
             applied.addProperty("placedId", requiredString(placed, "placedId"));
             applied.addProperty("idempotencyKey", idempotencyKey(placed));
             applied.addProperty("structureId", requiredString(placed, "structureId"));
@@ -644,10 +648,12 @@ public final class CityStructureD7Executor {
             applied.add("requiredChunkRange", chunkRangeJson(bounds(requiredObject(placed, "clearanceFootprint"))));
             applied.addProperty("worldMutationApplied", true);
             appliedJobs.add(applied);
+            addAppliedPieces(appliedPieces, placed, jobId);
         }
         ledger.add("appliedJobs", appliedJobs);
-        ledger.add("appliedPieces", new JsonArray());
+        ledger.add("appliedPieces", appliedPieces);
         ledger.addProperty("appliedJobCount", appliedJobs.size());
+        ledger.addProperty("appliedPieceCount", appliedPieces.size());
         return ledger;
     }
 
@@ -662,6 +668,59 @@ public final class CityStructureD7Executor {
         return safeId(requiredString(placed, "structureId")) + ":"
                 + safeId(requiredString(placed, "sourceSelectionId")) + ":"
                 + safeId(requiredString(placed, "anchorCandidateId"));
+    }
+
+    private void addAppliedPieces(JsonArray appliedPieces, JsonObject placed, String jobId) {
+        JsonObject boundedTrace = objectValue(placed, "boundedJigsawTrace", null);
+        if (boundedTrace == null) {
+            return;
+        }
+        JsonArray pieces = boundedTracePieces(boundedTrace);
+        Set<String> seen = new LinkedHashSet<>();
+        int index = 0;
+        for (JsonElement elem : pieces) {
+            if (!elem.isJsonObject()) {
+                continue;
+            }
+            JsonObject piece = elem.getAsJsonObject();
+            if ("failed".equals(stringValue(piece, "validatorResult", ""))) {
+                continue;
+            }
+            String pieceId = stringValue(piece, "pieceId", "piece_" + (++index));
+            String pieceKey = idempotencyKey(placed) + ":" + safeId(pieceId);
+            if (!seen.add(pieceKey)) {
+                continue;
+            }
+            JsonObject footprint = objectValue(piece, "footprint", requiredObject(placed, "footprint"));
+            JsonObject applied = new JsonObject();
+            applied.addProperty("jobId", jobId);
+            applied.addProperty("placedId", requiredString(placed, "placedId"));
+            applied.addProperty("pieceId", pieceId);
+            applied.addProperty("idempotencyKey", pieceKey);
+            applied.addProperty("structureId", requiredString(placed, "structureId"));
+            applied.addProperty("sourceSelectionId", requiredString(placed, "sourceSelectionId"));
+            applied.addProperty("anchorCandidateId", requiredString(placed, "anchorCandidateId"));
+            applied.addProperty("templateId", stringValue(piece, "templateId", ""));
+            applied.addProperty("poolId", stringValue(piece, "poolId", ""));
+            if (piece.has("anchorBlock") && piece.get("anchorBlock").isJsonObject()) {
+                applied.add("anchorBlock", piece.getAsJsonObject("anchorBlock").deepCopy());
+            }
+            applied.addProperty("rotation", stringValue(piece, "rotation", stringValue(placed, "rotation", "NONE")));
+            applied.add("footprint", footprint.deepCopy());
+            applied.add("requiredChunkRange", chunkRangeJson(bounds(footprint)));
+            applied.addProperty("visibleAreaCost", intValue(piece, "visibleAreaCost", area(bounds(footprint))));
+            applied.addProperty("worldMutationApplied", true);
+            appliedPieces.add(applied);
+        }
+    }
+
+    private JsonArray boundedTracePieces(JsonObject boundedTrace) {
+        JsonObject plan = objectValue(boundedTrace, "plan", null);
+        if (plan != null && plan.has("pieces") && plan.get("pieces").isJsonArray()
+                && !plan.getAsJsonArray("pieces").isEmpty()) {
+            return plan.getAsJsonArray("pieces");
+        }
+        return arrayValue(boundedTrace, "acceptedPieces", new JsonArray());
     }
 
     private Map<String, Integer> initialRemaining(ZoneContext zones) {
@@ -851,6 +910,7 @@ public final class CityStructureD7Executor {
                 continue;
             }
             BlockBounds footprint = bounds(requiredObject(obj, "footprint"));
+            JsonObject boundedTrace = objectValue(obj, "boundedJigsawTrace", null);
             placed.add(new Placed(
                     requiredString(obj, "placedId"),
                     requiredString(obj, "sourceSelectionId"),
@@ -866,6 +926,8 @@ public final class CityStructureD7Executor {
                     footprint,
                     bounds(objectValue(obj, "clearanceFootprint", boundsJson(footprint))),
                     intValue(obj, "visibleAreaCost", area(footprint)),
+                    stringValue(obj, "materializationMode", "minecraft_place_structure"),
+                    boundedTrace == null ? null : boundedTrace.deepCopy(),
                     true));
         }
         return placed;
@@ -971,7 +1033,8 @@ public final class CityStructureD7Executor {
     private record Placed(String placedId, String sourceSelectionId, String anchorCandidateId, String zonePatchId,
                           String structureId, String footprintMode, String placementKind, String placementCommand,
                           BlockPoint anchorBlock, BlockPoint commandAnchorBlock, String rotation, BlockBounds footprint,
-                          BlockBounds clearanceFootprint, int visibleAreaCost, boolean worldMutationApplied) {
+                          BlockBounds clearanceFootprint, int visibleAreaCost, String materializationMode,
+                          JsonObject boundedJigsawTrace, boolean worldMutationApplied) {
         JsonObject asJson() {
             JsonObject obj = new JsonObject();
             obj.addProperty("placedId", placedId);
@@ -982,12 +1045,16 @@ public final class CityStructureD7Executor {
             obj.addProperty("footprintMode", footprintMode);
             obj.addProperty("placementKind", placementKind);
             obj.addProperty("placementCommand", placementCommand);
+            obj.addProperty("materializationMode", materializationMode);
             obj.add("anchorBlock", anchorBlock.asJson());
             obj.add("commandAnchorBlock", commandAnchorBlock.asJson());
             obj.addProperty("rotation", rotation);
             obj.add("footprint", boundsJson(footprint));
             obj.add("clearanceFootprint", boundsJson(clearanceFootprint));
             obj.addProperty("visibleAreaCost", visibleAreaCost);
+            if (boundedJigsawTrace != null) {
+                obj.add("boundedJigsawTrace", boundedJigsawTrace.deepCopy());
+            }
             obj.addProperty("worldMutationApplied", worldMutationApplied);
             return obj;
         }
