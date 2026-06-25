@@ -58,6 +58,24 @@ final class CityStructureD6D7Test {
     }
 
     @Test
+    void d6RejectsUnknownVariableMaterializationMode() {
+        Fixture fixture = fixture();
+        JsonObject badChoice = choicePlan();
+        badChoice.getAsJsonArray("zoneChoices")
+                .get(0).getAsJsonObject()
+                .getAsJsonArray("variableSelections")
+                .get(0).getAsJsonObject()
+                .addProperty("materializationMode", "global_jigsaw_mixin");
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> runD6(fixture, catalog(List.of(fixed("minecraft:desert_pyramid",
+                                "structure_assembly", "minecraft_place_structure", 16, 16),
+                        variable("minecraft:village_plains", "structure_assembly", "minecraft_place_structure"))),
+                        badChoice, selectionPlan("fixed_core_cand_01")));
+        assertTrue(ex.getMessage().contains("materializationMode"));
+    }
+
+    @Test
     void d6ProducesFixedPlanAndVariablePoolWithoutPlacingWorld() throws Exception {
         Fixture fixture = fixture();
         JsonObject result = runD6(fixture, catalog(List.of(
@@ -329,6 +347,106 @@ final class CityStructureD6D7Test {
         assertTrue(summary.has("CONFIGURED_STRUCTURE_REGISTRY_MISSING"));
         assertTrue(result.structureGenerationTrace().getAsJsonArray("variableAttempts")
                 .toString().contains("CONFIGURED_STRUCTURE_REGISTRY_MISSING"));
+    }
+
+    @Test
+    void d6PassesBoundedJigsawMaterializationModeToD7Pool() throws Exception {
+        Fixture fixture = fixture();
+        JsonObject choice = choicePlan();
+        choice.getAsJsonArray("zoneChoices")
+                .get(0).getAsJsonObject()
+                .getAsJsonArray("variableSelections")
+                .get(0).getAsJsonObject()
+                .addProperty("materializationMode", "bounded_jigsaw");
+
+        JsonObject d6 = runD6(fixture, catalog(List.of(
+                fixed("minecraft:desert_pyramid", "structure_assembly", "minecraft_place_structure", 16, 16),
+                variable("minecraft:village_plains", "structure_assembly", "minecraft_place_structure"))),
+                choice, selectionPlan("fixed_core_cand_01"));
+
+        JsonObject variable = d6.getAsJsonObject("structurePoolMap")
+                .getAsJsonArray("zonePools")
+                .get(0).getAsJsonObject()
+                .getAsJsonArray("variableSelections")
+                .get(0).getAsJsonObject();
+        assertEquals("bounded_jigsaw", variable.get("materializationMode").getAsString());
+    }
+
+    @Test
+    void d7BoundedJigsawUsesDedicatedBackendAndCarriesTrace() throws Exception {
+        Fixture fixture = fixture();
+        JsonObject choice = choicePlan();
+        choice.getAsJsonArray("zoneChoices")
+                .get(0).getAsJsonObject()
+                .getAsJsonArray("variableSelections")
+                .get(0).getAsJsonObject()
+                .addProperty("materializationMode", "bounded_jigsaw");
+        JsonObject d6 = runD6(fixture, catalog(List.of(
+                fixed("minecraft:desert_pyramid", "structure_assembly", "minecraft_place_structure", 16, 16),
+                variable("minecraft:village_plains", "structure_assembly", "minecraft_place_structure"))),
+                choice, selectionPlan("fixed_core_cand_01"));
+
+        final int[] boundedCalls = {0};
+        CityStructureD7Executor.PlacementBackend backend = new CityStructureD7Executor.PlacementBackend() {
+            @Override
+            public CityStructureD7Executor.PlacementResult place(CityStructureD7Executor.PlacementRequest request) {
+                return CityStructureD7Executor.PlacementResult.placed("fixed ok");
+            }
+
+            @Override
+            public CityStructureD7Executor.PlacementResult placeBoundedJigsaw(CityStructureD7Executor.PlacementRequest request) {
+                boundedCalls[0]++;
+                assertEquals("bounded_jigsaw", request.materializationMode());
+                assertTrue(request.constraintField().has("buildableCells"));
+                JsonObject trace = new JsonObject();
+                trace.addProperty("capability", "bounded_jigsaw_supported");
+                trace.add("acceptedPieces", new JsonArray());
+                BlockBounds footprint = new BlockBounds(16, 16, 23, 23);
+                return CityStructureD7Executor.PlacementResult.placed("bounded ok", trace, footprint, footprint);
+            }
+        };
+
+        CityStructureD7Executor.Result result = new CityStructureD7Executor().execute(
+                fixture.zoneMap(),
+                fixture.buildableAreaMap(),
+                d6.getAsJsonObject("plannedFixedPlacementMap"),
+                d6.getAsJsonObject("structurePoolMap"),
+                12345L,
+                backend);
+
+        assertEquals(1, boundedCalls[0]);
+        assertTrue(result.structureGenerationTrace().getAsJsonArray("variableAttempts")
+                .toString().contains("boundedJigsawTrace"));
+        assertTrue(result.placedStructureMap().getAsJsonArray("placedStructures")
+                .toString().contains("\"maxX\":23"));
+    }
+
+    @Test
+    void d7BoundedJigsawUnsupportedIsStructuredFailure() throws Exception {
+        Fixture fixture = fixture();
+        JsonObject choice = choicePlan();
+        choice.getAsJsonArray("zoneChoices")
+                .get(0).getAsJsonObject()
+                .getAsJsonArray("variableSelections")
+                .get(0).getAsJsonObject()
+                .addProperty("materializationMode", "bounded_jigsaw");
+        JsonObject d6 = runD6(fixture, catalog(List.of(
+                fixed("minecraft:desert_pyramid", "structure_assembly", "minecraft_place_structure", 16, 16),
+                variable("minecraft:village_plains", "structure_assembly", "minecraft_place_structure"))),
+                choice, selectionPlan("fixed_core_cand_01"));
+
+        CityStructureD7Executor.Result result = new CityStructureD7Executor().execute(
+                fixture.zoneMap(),
+                fixture.buildableAreaMap(),
+                d6.getAsJsonObject("plannedFixedPlacementMap"),
+                d6.getAsJsonObject("structurePoolMap"),
+                12345L,
+                request -> CityStructureD7Executor.PlacementResult.placed("fixed ok"));
+
+        assertTrue(result.structureGenerationTrace().getAsJsonObject("failureSummary")
+                .has("BOUNDED_JIGSAW_UNSUPPORTED"));
+        assertTrue(result.structureGenerationTrace().getAsJsonArray("variableAttempts")
+                .toString().contains("BOUNDED_JIGSAW_UNSUPPORTED"));
     }
 
     private JsonObject runD6(Fixture fixture, JsonObject catalog, JsonObject choicePlan,

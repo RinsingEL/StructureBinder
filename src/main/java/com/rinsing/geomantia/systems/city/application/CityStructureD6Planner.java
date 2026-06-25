@@ -410,6 +410,10 @@ public final class CityStructureD6Planner {
                 if (weight < 1) {
                     throw new IllegalArgumentException("variableSelections weight must be positive: " + selectionId);
                 }
+                String materializationMode = stringValue(variable, "materializationMode", "minecraft_place_structure");
+                if (!Set.of("minecraft_place_structure", "bounded_jigsaw").contains(materializationMode)) {
+                    throw new IllegalArgumentException("Unknown variable materializationMode: " + materializationMode);
+                }
                 requireD7Eligible(catalog.byId().get(structureId), "variableSelections");
             }
         }
@@ -630,6 +634,8 @@ public final class CityStructureD6Planner {
                 variable.addProperty("placementKind", profile.placementKind());
                 variable.addProperty("sampleType", profile.sampleType());
                 variable.addProperty("placementCommand", profile.placementCommand());
+                variable.addProperty("materializationMode", stringValue(variable,
+                        "materializationMode", "minecraft_place_structure"));
                 variable.add("startFootprint", profile.expectedAreaRange().startFootprint().asJson());
                 variable.add("expectedAreaRange", profile.expectedAreaRange().asJson());
                 variables.add(variable);

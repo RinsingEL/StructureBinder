@@ -237,9 +237,12 @@ public final class CityStructureD7Executor {
                 attempts.add(failedJson(attempt, validatorReason, "D7 validator rejected start candidate."));
                 continue;
             }
-            PlacementResult placement = backend.place(new PlacementRequest(task.structureId(), task.placementKind(),
+            PlacementRequest request = new PlacementRequest(task.structureId(), task.placementKind(),
                     task.placementCommand(), anchor, requiredString(candidate, "rotation"), footprint, requiredBounds,
-                    "variable_area"));
+                    "variable_area", task.materializationMode(), constraintField(zone, placed), task.targetAreaBlocks());
+            PlacementResult placement = "bounded_jigsaw".equals(task.materializationMode())
+                    ? backend.placeBoundedJigsaw(request)
+                    : backend.place(request);
             if (placement.waiting()) {
                 attempts.add(waitingJson(attempt, placement.reasonCode(), placement.message()));
                 return new AttemptResult(new JsonObject(), attempts, null, placement.reasonCode(), true);
@@ -249,15 +252,20 @@ public final class CityStructureD7Executor {
                 attempts.add(failedJson(attempt, placement.reasonCode(), placement.message()));
                 continue;
             }
+            if (placement.trace() != null) {
+                attempt.add("boundedJigsawTrace", placement.trace());
+            }
             attempt.addProperty("status", "placed");
             attempt.addProperty("reasonCode", "");
             attempt.addProperty("message", placement.message());
             attempts.add(attempt);
+            BlockBounds placedFootprint = placement.footprint() == null ? footprint : placement.footprint();
+            BlockBounds placedClearance = placement.requiredLoadBounds() == null ? requiredBounds : placement.requiredLoadBounds();
             Placed placedStructure = new Placed("placed_" + task.taskId(), task.selectionId(),
                     requiredString(candidate, "startCandidateId"), zone.zonePatchId(), task.structureId(),
                     "variable_area", task.placementKind(), task.placementCommand(), anchor, anchor,
-                    requiredString(candidate, "rotation"), footprint, requiredBounds,
-                    Math.min(task.targetAreaBlocks(), area(footprint)), placement.worldMutationApplied());
+                    requiredString(candidate, "rotation"), placedFootprint, placedClearance,
+                    Math.min(task.targetAreaBlocks(), area(placedFootprint)), placement.worldMutationApplied());
             return new AttemptResult(new JsonObject(), attempts, placedStructure, "");
         }
         return new AttemptResult(new JsonObject(), attempts, null, lastReason);
@@ -328,6 +336,21 @@ public final class CityStructureD7Executor {
         return pool.get(pool.size() - 1);
     }
 
+    private JsonObject constraintField(ZoneInfo zone, List<Placed> placed) {
+        JsonObject obj = zone.asConstraintJson();
+        JsonArray occupied = new JsonArray();
+        for (Placed existing : placed) {
+            JsonObject item = new JsonObject();
+            item.addProperty("placedId", existing.placedId());
+            item.addProperty("structureId", existing.structureId());
+            item.addProperty("footprintMode", existing.footprintMode());
+            item.add("footprint", boundsJson(existing.clearanceFootprint()));
+            occupied.add(item);
+        }
+        obj.add("occupiedFootprints", occupied);
+        return obj;
+    }
+
     private String validatorFailure(ZoneInfo zone, BlockBounds footprint, List<Placed> placed, VariableTask task) {
         if (!zone.covers(footprint)) {
             return "START_FOOTPRINT_OUT_OF_ZONE";
@@ -366,6 +389,7 @@ public final class CityStructureD7Executor {
         return new VariableTask(selectionId, taskId, structureId,
                 requiredString(selection, "placementKind"),
                 stringValue(selection, "placementCommand", ""),
+                stringValue(selection, "materializationMode", "minecraft_place_structure"),
                 targetArea,
                 Math.max(1, intValue(selection, "weight", 1)),
                 footprint,
@@ -750,8 +774,9 @@ public final class CityStructureD7Executor {
     }
 
     private record VariableTask(String selectionId, String taskId, String structureId, String placementKind,
-                                String placementCommand, int targetAreaBlocks, int weight, Footprint startFootprint,
-                                int maxAreaBlocks, List<String> rotations, String seedKey, int retryBudget) {
+                                String placementCommand, String materializationMode, int targetAreaBlocks, int weight,
+                                Footprint startFootprint, int maxAreaBlocks, List<String> rotations, String seedKey,
+                                int retryBudget) {
         BlockBounds requiredBounds(BlockPoint anchor) {
             int side = (int) Math.ceil(Math.sqrt(Math.max(maxAreaBlocks, targetAreaBlocks)));
             int radius = Math.max(Math.max(startFootprint.widthBlocks(), startFootprint.depthBlocks()),
@@ -881,6 +906,27 @@ public final class CityStructureD7Executor {
             return true;
         }
 
+        JsonObject asConstraintJson() {
+            JsonObject obj = new JsonObject();
+            obj.addProperty("schemaVersion", "city_constraint_field.v0.1");
+            obj.addProperty("zonePatchId", zonePatchId);
+            obj.add("allowedArea", boundsJson(bounds));
+            obj.addProperty("originBlockX", grid.originBlockX());
+            obj.addProperty("originBlockZ", grid.originBlockZ());
+            obj.addProperty("cellStepBlocks", grid.cellStepBlocks());
+            obj.addProperty("cellsX", grid.cellsX());
+            obj.addProperty("cellsZ", grid.cellsZ());
+            JsonArray cells = new JsonArray();
+            for (BuildableAreaMap.BuildableCell cell : buildable.buildableCells()) {
+                JsonObject cellJson = new JsonObject();
+                cellJson.addProperty("blockMinX", cell.blockMinX());
+                cellJson.addProperty("blockMinZ", cell.blockMinZ());
+                cells.add(cellJson);
+            }
+            obj.add("buildableCells", cells);
+            return obj;
+        }
+
         private int clampCellX(int x) {
             return Math.max(0, Math.min(grid.cellsX() - 1, x));
         }
@@ -900,31 +946,59 @@ public final class CityStructureD7Executor {
     public record PlacementRequest(String structureId, String placementKind, String placementCommand,
                                    BlockPoint anchorBlock, String rotation, BlockBounds footprint,
                                    BlockBounds requiredLoadBounds,
-                                   String footprintMode) {
+                                   String footprintMode, String materializationMode, JsonObject constraintField,
+                                   int targetAreaBlocks) {
+        public PlacementRequest(String structureId, String placementKind, String placementCommand,
+                                BlockPoint anchorBlock, String rotation, BlockBounds footprint,
+                                BlockBounds requiredLoadBounds,
+                                String footprintMode) {
+            this(structureId, placementKind, placementCommand, anchorBlock, rotation, footprint, requiredLoadBounds,
+                    footprintMode, "minecraft_place_structure", new JsonObject(),
+                    footprint == null ? 0 : area(footprint));
+        }
     }
 
     public record PlacementResult(boolean success, boolean waiting, boolean worldMutationApplied,
-                                  String reasonCode, String message) {
+                                  String reasonCode, String message, JsonObject trace, BlockBounds footprint,
+                                  BlockBounds requiredLoadBounds) {
         public static PlacementResult placed(String message) {
-            return new PlacementResult(true, false, true, "", message == null ? "" : message);
+            return placed(message, null, null, null);
+        }
+
+        public static PlacementResult placed(String message, JsonObject trace, BlockBounds footprint,
+                                             BlockBounds requiredLoadBounds) {
+            return new PlacementResult(true, false, true, "", message == null ? "" : message,
+                    trace, footprint, requiredLoadBounds);
         }
 
         public static PlacementResult dryRunAccepted(String message) {
-            return new PlacementResult(true, false, false, "", message == null ? "" : message);
+            return dryRunAccepted(message, null, null, null);
+        }
+
+        public static PlacementResult dryRunAccepted(String message, JsonObject trace, BlockBounds footprint,
+                                                     BlockBounds requiredLoadBounds) {
+            return new PlacementResult(true, false, false, "", message == null ? "" : message,
+                    trace, footprint, requiredLoadBounds);
         }
 
         public static PlacementResult failed(String reasonCode, String message) {
-            return new PlacementResult(false, false, false, reasonCode, message == null ? "" : message);
+            return new PlacementResult(false, false, false, reasonCode, message == null ? "" : message,
+                    null, null, null);
         }
 
         public static PlacementResult waiting(String reasonCode, String message) {
-            return new PlacementResult(false, true, false, reasonCode, message == null ? "" : message);
+            return new PlacementResult(false, true, false, reasonCode, message == null ? "" : message,
+                    null, null, null);
         }
     }
 
-    @FunctionalInterface
     public interface PlacementBackend {
         PlacementResult place(PlacementRequest request);
+
+        default PlacementResult placeBoundedJigsaw(PlacementRequest request) {
+            return PlacementResult.failed("BOUNDED_JIGSAW_UNSUPPORTED",
+                    "Placement backend does not support bounded jigsaw materialization.");
+        }
 
         static PlacementBackend traceOnly() {
             return request -> PlacementResult.dryRunAccepted("Trace-only placement backend accepted configured structure.");
