@@ -1,11 +1,11 @@
 package com.rinsing.geomantia.systems.city.infrastructure.world;
 
 import com.rinsing.geomantia.systems.city.application.BoundedJigsawSolver;
-import com.rinsing.geomantia.systems.city.application.CityConstraintField;
 import com.rinsing.geomantia.systems.city.application.CityStructureD7Executor;
 import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
@@ -28,8 +28,11 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.phys.Vec3;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public final class MinecraftStructurePlacementBackend implements CityStructureD7Executor.PlacementBackend {
     private final MinecraftServer server;
@@ -159,70 +162,144 @@ public final class MinecraftStructurePlacementBackend implements CityStructureD7
         JsonObject trace = new BoundedJigsawSolver().solve(solverInput);
         trace.addProperty("structureRegistryKey", holder.get().key().location().toString());
         trace.addProperty("poolAdapterStatus", "child_pool_discovery");
-        trace.addProperty("worldPasteMode", executeCommands ? "start_piece_adapter" : "dry_run_plan_only");
+        trace.addProperty("worldPasteMode", executeCommands ? "accepted_piece_template_paste" : "dry_run_plan_only");
         if (solverInput.has("poolAdapterReport") && solverInput.get("poolAdapterReport").isJsonObject()) {
             trace.add("poolAdapterReport", solverInput.getAsJsonObject("poolAdapterReport").deepCopy());
         }
+        JsonArray acceptedPieces = acceptedPieces(trace);
+        BlockBounds acceptedFootprint = unionFootprint(acceptedPieces);
         if (!executeCommands) {
-            if (trace.getAsJsonArray("acceptedPieces").isEmpty()) {
+            if (acceptedPieces.isEmpty()) {
                 return CityStructureD7Executor.PlacementResult.failed("JIGSAW_NO_ACCEPTED_PIECE",
                         "Dry-run bounded jigsaw pool adapter found no accepted start piece: "
                                 + request.structureId(), trace);
             }
-            BlockBounds acceptedFootprint = bounds(trace.getAsJsonArray("acceptedPieces")
-                    .get(0).getAsJsonObject().getAsJsonObject("footprint"));
             return CityStructureD7Executor.PlacementResult.dryRunAccepted(
                     "Dry-run accepted bounded jigsaw solver plan: " + request.structureId(),
                     trace, acceptedFootprint, acceptedFootprint);
         }
-        int pieceIndex = 0;
-        for (StructurePoolElement element : elements) {
-            if (element instanceof EmptyPoolElement) {
-                continue;
-            }
-            pieceIndex++;
-            BoundingBox box = element.getBoundingBox(level.getStructureManager(), anchor, rotation);
-            BlockBounds footprint = new BlockBounds(box.minX(), box.minZ(), box.maxX(), box.maxZ());
-            BoundedJigsawTemplateInspector.PieceInspection inspection = BoundedJigsawTemplateInspector.inspect(
-                    level.getStructureManager(), element, poolName(startPool), anchor, rotation, box, pieceIndex,
-                    request.structureId().hashCode() * 31L + pieceIndex);
-            JsonObject piece = inspection.pieceJson();
-            if (!BoundedJigsawTemplateInspector.canInspectTemplate(element)) {
-                continue;
-            }
-            ChunkRange pieceChunks = ChunkRange.from(footprint);
-            String missingPieceChunks = missingChunks(pieceChunks);
-            if (!missingPieceChunks.isBlank()) {
-                return CityStructureD7Executor.PlacementResult.waiting("STRUCTURE_CHUNK_NOT_LOADED",
-                        "Waiting for loaded chunks before bounded jigsaw piece placement: requiredChunks="
-                                + pieceChunks + ", missingChunks=" + missingPieceChunks,
-                        trace);
-            }
-            CityConstraintField.ValidationResult validation = CityConstraintField.fromJson(request.constraintField())
-                    .validatePiece(footprint, request.targetAreaBlocks());
-            String reason = validation.passed() ? "" : validation.reasonCode();
-            piece.add("footprint", boundsJson(footprint));
-            piece.addProperty("visibleAreaCost", footprint.widthBlocks() * footprint.heightBlocks());
-            if (!reason.isBlank()) {
-                continue;
-            }
-            boolean placed = element.place(level.getStructureManager(), level, level.structureManager(),
-                    level.getChunkSource().getGenerator(), anchor, anchor, rotation, box,
-                    RandomSource.create(request.structureId().hashCode()), false);
-            if (!placed) {
-                incrementTraceFailure(trace, "BOUNDED_JIGSAW_PIECE_PLACE_FAILED");
-                return CityStructureD7Executor.PlacementResult.failed("BOUNDED_JIGSAW_PIECE_PLACE_FAILED",
-                        "Accepted jigsaw piece returned false from place(): " + element,
-                        trace, footprint, footprint);
-            }
-            return CityStructureD7Executor.PlacementResult.placed(
-                    "Placed bounded jigsaw start piece for " + request.structureId(),
-                trace, footprint, footprint);
+        if (acceptedPieces.isEmpty() || acceptedFootprint == null) {
+            incrementTraceFailure(trace, "JIGSAW_NO_ACCEPTED_PIECE");
+            return CityStructureD7Executor.PlacementResult.failed("JIGSAW_NO_ACCEPTED_PIECE",
+                    "No accepted bounded jigsaw piece for " + request.structureId(),
+                    trace);
         }
-        incrementTraceFailure(trace, "JIGSAW_NO_ACCEPTED_PIECE");
-        return CityStructureD7Executor.PlacementResult.failed("JIGSAW_NO_ACCEPTED_PIECE",
-                "No start pool element passed CityConstraintField for " + request.structureId(),
-                trace);
+
+        ChunkRange acceptedChunks = ChunkRange.from(acceptedFootprint);
+        trace.getAsJsonObject("plan").add("requiredChunkRange", chunkRangeJson(acceptedChunks));
+        String missingAcceptedChunks = missingChunks(acceptedChunks);
+        if (!missingAcceptedChunks.isBlank()) {
+            return CityStructureD7Executor.PlacementResult.waiting("STRUCTURE_CHUNK_NOT_LOADED",
+                    "Waiting for loaded chunks before accepted bounded jigsaw piece placement: requiredChunks="
+                            + acceptedChunks + ", missingChunks=" + missingAcceptedChunks,
+                    trace);
+        }
+
+        List<RuntimePiece> runtimePieces = new ArrayList<>();
+        for (JsonElement elem : acceptedPieces) {
+            JsonObject piece = elem.getAsJsonObject();
+            ResolveResult resolved = resolveRuntimePiece(piece, startPool);
+            if (!resolved.success()) {
+                incrementTraceFailure(trace, resolved.reasonCode());
+                markPiecePasteStatus(trace, stringValue(piece, "pieceId", ""),
+                        "failed", false, resolved.reasonCode());
+                return CityStructureD7Executor.PlacementResult.failed(resolved.reasonCode(),
+                        resolved.message(), trace, acceptedFootprint, acceptedFootprint);
+            }
+            markPieceResolved(trace, stringValue(piece, "pieceId", ""),
+                    stringValue(resolved.piece().pieceJson(), "resolvedPoolId", ""),
+                    stringValue(resolved.piece().pieceJson(), "resolvedTemplateId", ""));
+            runtimePieces.add(resolved.piece());
+        }
+
+        int applied = 0;
+        for (RuntimePiece runtime : runtimePieces) {
+            JsonObject piece = runtime.pieceJson();
+            String pieceId = stringValue(piece, "pieceId", "piece_" + applied);
+            boolean placed = runtime.element().place(level.getStructureManager(), level, level.structureManager(),
+                    level.getChunkSource().getGenerator(), runtime.anchor(), runtime.anchor(), runtime.rotation(),
+                    runtime.box(), RandomSource.create(request.structureId().hashCode() * 31L + pieceId.hashCode()),
+                    false);
+            if (!placed) {
+                String reason = "BOUNDED_JIGSAW_TEMPLATE_PASTE_FAILED";
+                if (applied > 0) {
+                    incrementTraceFailure(trace, "BOUNDED_JIGSAW_PARTIAL_WORLD_MUTATION");
+                }
+                incrementTraceFailure(trace, reason);
+                markPiecePasteStatus(trace, pieceId, "failed", false, reason);
+                return CityStructureD7Executor.PlacementResult.failed(reason,
+                        "Accepted jigsaw piece returned false from place(): pieceId=" + pieceId
+                                + ", templateId=" + stringValue(piece, "templateId", ""),
+                        trace, acceptedFootprint, acceptedFootprint);
+            }
+            applied++;
+            markPiecePasteStatus(trace, pieceId, "applied", true, "");
+        }
+        JsonObject metrics = trace.getAsJsonObject("metrics");
+        metrics.addProperty("worldPasteAppliedPieceCount", applied);
+        metrics.addProperty("worldPasteMode", "accepted_piece_template_paste");
+        return CityStructureD7Executor.PlacementResult.placed(
+                "Placed " + applied + " accepted bounded jigsaw pieces for " + request.structureId(),
+                trace, acceptedFootprint, acceptedFootprint);
+    }
+
+    private ResolveResult resolveRuntimePiece(JsonObject piece, Holder<StructureTemplatePool> startPool) {
+        String pieceId = stringValue(piece, "pieceId", "");
+        String poolId = stringValue(piece, "poolId", stringValue(piece, "sourcePoolId", ""));
+        String templateId = stringValue(piece, "templateId", "");
+        JsonObject anchorJson = objectValue(piece, "anchorBlock", null);
+        JsonObject footprintJson = objectValue(piece, "footprint", null);
+        if (poolId.isBlank() || templateId.isBlank() || "unresolved".equals(templateId)
+                || anchorJson == null || footprintJson == null) {
+            return ResolveResult.failed("BOUNDED_JIGSAW_PIECE_RESOLVE_FAILED",
+                    "Accepted jigsaw piece is missing runtime source fields: pieceId=" + pieceId);
+        }
+        Holder<StructureTemplatePool> pool = poolName(startPool).equals(poolId) ? startPool : templatePool(poolId);
+        if (pool == null || pool.value() == null) {
+            return ResolveResult.failed("BOUNDED_JIGSAW_POOL_MISSING",
+                    "Accepted jigsaw piece pool is missing: pieceId=" + pieceId + ", poolId=" + poolId);
+        }
+        BlockPos pieceAnchor = blockPos(anchorJson);
+        Rotation pieceRotation = rotation(stringValue(piece, "rotation", "NONE"));
+        BlockBounds expectedFootprint = bounds(footprintJson);
+        List<RuntimePiece> matches = new ArrayList<>();
+        Set<String> signatures = new LinkedHashSet<>();
+        for (StructurePoolElement element : pool.value().getShuffledTemplates(
+                RandomSource.create((poolId + ":" + templateId).hashCode()))) {
+            if (element instanceof EmptyPoolElement || !BoundedJigsawTemplateInspector.canInspectTemplate(element)
+                    || !templateMatches(element, templateId)) {
+                continue;
+            }
+            BoundingBox box;
+            try {
+                box = element.getBoundingBox(level.getStructureManager(), pieceAnchor, pieceRotation);
+            } catch (RuntimeException ignored) {
+                continue;
+            }
+            BlockBounds actualFootprint = new BlockBounds(box.minX(), box.minZ(), box.maxX(), box.maxZ());
+            if (!sameBounds(expectedFootprint, actualFootprint)) {
+                continue;
+            }
+            String signature = templateSignature(element);
+            if (signatures.add(signature)) {
+                JsonObject runtimePiece = piece.deepCopy();
+                runtimePiece.addProperty("resolvedPoolId", poolName(pool));
+                runtimePiece.addProperty("resolvedTemplateId", templateId);
+                matches.add(new RuntimePiece(element, runtimePiece, pieceAnchor, pieceRotation, box,
+                        actualFootprint));
+            }
+        }
+        if (matches.isEmpty()) {
+            return ResolveResult.failed("BOUNDED_JIGSAW_PIECE_RESOLVE_FAILED",
+                    "Accepted jigsaw piece could not be resolved: pieceId=" + pieceId
+                            + ", poolId=" + poolId + ", templateId=" + templateId);
+        }
+        if (matches.size() > 1) {
+            return ResolveResult.failed("BOUNDED_JIGSAW_PIECE_AMBIGUOUS",
+                    "Accepted jigsaw piece resolved to multiple runtime elements: pieceId=" + pieceId
+                            + ", poolId=" + poolId + ", templateId=" + templateId);
+        }
+        return ResolveResult.ok(matches.get(0));
     }
 
     @SuppressWarnings("unchecked")
@@ -256,6 +333,146 @@ public final class MinecraftStructurePlacementBackend implements CityStructureD7
                 .getHolder(ResourceKey.create(Registries.TEMPLATE_POOL, id))
                 .map(holder -> (Holder<StructureTemplatePool>) holder)
                 .orElse(null);
+    }
+
+    private JsonArray acceptedPieces(JsonObject trace) {
+        JsonObject plan = objectValue(trace, "plan", null);
+        if (plan != null && plan.has("pieces") && plan.get("pieces").isJsonArray()) {
+            JsonArray pieces = new JsonArray();
+            for (JsonElement elem : plan.getAsJsonArray("pieces")) {
+                if (elem.isJsonObject() && acceptedPiece(elem.getAsJsonObject())) {
+                    pieces.add(elem.getAsJsonObject().deepCopy());
+                }
+            }
+            return pieces;
+        }
+        JsonArray pieces = new JsonArray();
+        for (JsonElement elem : arrayValue(trace, "acceptedPieces", new JsonArray())) {
+            if (elem.isJsonObject() && acceptedPiece(elem.getAsJsonObject())) {
+                pieces.add(elem.getAsJsonObject().deepCopy());
+            }
+        }
+        return pieces;
+    }
+
+    private boolean acceptedPiece(JsonObject piece) {
+        return !"failed".equals(stringValue(piece, "validatorResult", "passed"))
+                && !"failed".equals(stringValue(piece, "alignmentStatus", ""));
+    }
+
+    private BlockBounds unionFootprint(JsonArray pieces) {
+        BlockBounds union = null;
+        for (JsonElement elem : pieces) {
+            if (!elem.isJsonObject()) {
+                continue;
+            }
+            JsonObject footprint = objectValue(elem.getAsJsonObject(), "footprint", null);
+            if (footprint == null) {
+                continue;
+            }
+            BlockBounds bounds = bounds(footprint);
+            union = union == null ? bounds : union(union, bounds);
+        }
+        return union;
+    }
+
+    private BlockBounds union(BlockBounds left, BlockBounds right) {
+        return new BlockBounds(
+                Math.min(left.minX(), right.minX()),
+                Math.min(left.minZ(), right.minZ()),
+                Math.max(left.maxX(), right.maxX()),
+                Math.max(left.maxZ(), right.maxZ()));
+    }
+
+    private void markPiecePasteStatus(JsonObject trace, String pieceId, String status,
+                                      boolean worldMutationApplied, String reasonCode) {
+        markPieceArray(trace.getAsJsonArray("acceptedPieces"), pieceId, status, worldMutationApplied, reasonCode);
+        JsonObject plan = objectValue(trace, "plan", null);
+        if (plan != null && plan.has("pieces") && plan.get("pieces").isJsonArray()) {
+            markPieceArray(plan.getAsJsonArray("pieces"), pieceId, status, worldMutationApplied, reasonCode);
+        }
+    }
+
+    private void markPieceArray(JsonArray pieces, String pieceId, String status,
+                                boolean worldMutationApplied, String reasonCode) {
+        if (pieces == null) {
+            return;
+        }
+        for (JsonElement elem : pieces) {
+            if (!elem.isJsonObject()) {
+                continue;
+            }
+            JsonObject piece = elem.getAsJsonObject();
+            if (!pieceId.equals(stringValue(piece, "pieceId", ""))) {
+                continue;
+            }
+            piece.addProperty("pasteStatus", status);
+            piece.addProperty("worldMutationApplied", worldMutationApplied);
+            if (reasonCode != null && !reasonCode.isBlank()) {
+                piece.addProperty("pasteReasonCode", reasonCode);
+            }
+        }
+    }
+
+    private boolean templateMatches(StructurePoolElement element, String templateId) {
+        for (ResourceLocation id : BoundedJigsawTemplateInspector.templateIds(element)) {
+            if (id.toString().equals(templateId)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private String templateSignature(StructurePoolElement element) {
+        StringBuilder signature = new StringBuilder(element.getType().toString())
+                .append("|").append(String.valueOf(element));
+        for (ResourceLocation id : BoundedJigsawTemplateInspector.templateIds(element)) {
+            signature.append("|").append(id);
+        }
+        return signature.toString();
+    }
+
+    private void markPieceResolved(JsonObject trace, String pieceId, String resolvedPoolId,
+                                   String resolvedTemplateId) {
+        markPieceResolvedArray(trace.getAsJsonArray("acceptedPieces"), pieceId, resolvedPoolId, resolvedTemplateId);
+        JsonObject plan = objectValue(trace, "plan", null);
+        if (plan != null && plan.has("pieces") && plan.get("pieces").isJsonArray()) {
+            markPieceResolvedArray(plan.getAsJsonArray("pieces"), pieceId, resolvedPoolId, resolvedTemplateId);
+        }
+    }
+
+    private void markPieceResolvedArray(JsonArray pieces, String pieceId, String resolvedPoolId,
+                                        String resolvedTemplateId) {
+        if (pieces == null) {
+            return;
+        }
+        for (JsonElement elem : pieces) {
+            if (!elem.isJsonObject()) {
+                continue;
+            }
+            JsonObject piece = elem.getAsJsonObject();
+            if (!pieceId.equals(stringValue(piece, "pieceId", ""))) {
+                continue;
+            }
+            if (resolvedPoolId != null && !resolvedPoolId.isBlank()) {
+                piece.addProperty("resolvedPoolId", resolvedPoolId);
+            }
+            if (resolvedTemplateId != null && !resolvedTemplateId.isBlank()) {
+                piece.addProperty("resolvedTemplateId", resolvedTemplateId);
+            }
+        }
+    }
+
+    private static boolean sameBounds(BlockBounds left, BlockBounds right) {
+        return left != null && right != null
+                && left.minX() == right.minX()
+                && left.minZ() == right.minZ()
+                && left.maxX() == right.maxX()
+                && left.maxZ() == right.maxZ();
+    }
+
+    private static BlockPos blockPos(JsonObject obj) {
+        return new BlockPos(intValue(obj, "x", 0), intValue(obj, "y", 0), intValue(obj, "z", 0));
     }
 
     private Rotation rotation(String value) {
@@ -298,15 +515,26 @@ public final class MinecraftStructurePlacementBackend implements CityStructureD7
         return obj;
     }
 
+    private static JsonArray arrayValue(JsonObject obj, String key, JsonArray defaultValue) {
+        return obj != null && obj.has(key) && obj.get(key).isJsonArray() ? obj.getAsJsonArray(key) : defaultValue;
+    }
+
+    private static JsonObject objectValue(JsonObject obj, String key, JsonObject defaultValue) {
+        return obj != null && obj.has(key) && obj.get(key).isJsonObject() ? obj.getAsJsonObject(key) : defaultValue;
+    }
+
+    private static String stringValue(JsonObject obj, String key, String defaultValue) {
+        if (obj == null || !obj.has(key) || obj.get(key).isJsonNull()) {
+            return defaultValue;
+        }
+        return obj.get(key).getAsString();
+    }
+
     private static int intValue(JsonObject obj, String key, int defaultValue) {
         if (obj == null || !obj.has(key) || obj.get(key).isJsonNull()) {
             return defaultValue;
         }
         return obj.get(key).getAsInt();
-    }
-
-    private static String safeId(String value) {
-        return value == null || value.isBlank() ? "unknown" : value.replaceAll("[^A-Za-z0-9_]+", "_");
     }
 
     private String missingChunks(ChunkRange requiredChunks) {
@@ -364,6 +592,20 @@ public final class MinecraftStructurePlacementBackend implements CityStructureD7
         @Override
         public String toString() {
             return minX + "," + minZ + ".." + maxX + "," + maxZ;
+        }
+    }
+
+    private record RuntimePiece(StructurePoolElement element, JsonObject pieceJson, BlockPos anchor,
+                                Rotation rotation, BoundingBox box, BlockBounds footprint) {
+    }
+
+    private record ResolveResult(boolean success, String reasonCode, String message, RuntimePiece piece) {
+        static ResolveResult ok(RuntimePiece piece) {
+            return new ResolveResult(true, "", "", piece);
+        }
+
+        static ResolveResult failed(String reasonCode, String message) {
+            return new ResolveResult(false, reasonCode, message, null);
         }
     }
 }
