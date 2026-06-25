@@ -243,6 +243,9 @@ public final class CityStructureD7Executor {
             PlacementResult placement = "bounded_jigsaw".equals(task.materializationMode())
                     ? backend.placeBoundedJigsaw(request)
                     : backend.place(request);
+            if ("bounded_jigsaw".equals(task.materializationMode()) && placement.trace() != null) {
+                attempt.add("boundedJigsawTrace", placement.trace());
+            }
             if (placement.waiting()) {
                 attempts.add(waitingJson(attempt, placement.reasonCode(), placement.message()));
                 return new AttemptResult(new JsonObject(), attempts, null, placement.reasonCode(), true);
@@ -251,9 +254,6 @@ public final class CityStructureD7Executor {
                 lastReason = placement.reasonCode();
                 attempts.add(failedJson(attempt, placement.reasonCode(), placement.message()));
                 continue;
-            }
-            if (placement.trace() != null) {
-                attempt.add("boundedJigsawTrace", placement.trace());
             }
             attempt.addProperty("status", "placed");
             attempt.addProperty("reasonCode", "");
@@ -982,13 +982,26 @@ public final class CityStructureD7Executor {
         }
 
         public static PlacementResult failed(String reasonCode, String message) {
+            return failed(reasonCode, message, null, null, null);
+        }
+
+        public static PlacementResult failed(String reasonCode, String message, JsonObject trace) {
+            return failed(reasonCode, message, trace, null, null);
+        }
+
+        public static PlacementResult failed(String reasonCode, String message, JsonObject trace,
+                                             BlockBounds footprint, BlockBounds requiredLoadBounds) {
             return new PlacementResult(false, false, false, reasonCode, message == null ? "" : message,
-                    null, null, null);
+                    trace, footprint, requiredLoadBounds);
         }
 
         public static PlacementResult waiting(String reasonCode, String message) {
+            return waiting(reasonCode, message, null);
+        }
+
+        public static PlacementResult waiting(String reasonCode, String message, JsonObject trace) {
             return new PlacementResult(false, true, false, reasonCode, message == null ? "" : message,
-                    null, null, null);
+                    trace, null, null);
         }
     }
 

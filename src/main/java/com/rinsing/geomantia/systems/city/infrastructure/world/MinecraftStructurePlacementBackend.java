@@ -153,12 +153,12 @@ public final class MinecraftStructurePlacementBackend implements CityStructureD7
                     "Start pool has no elements: " + poolName(startPool));
         }
         JsonObject trace = baseBoundedTrace(request, holder.get(), startPool);
-        JsonArray rejected = trace.getAsJsonArray("rejectedPieces");
-        JsonArray accepted = trace.getAsJsonArray("acceptedPieces");
+        int pieceIndex = 0;
         for (StructurePoolElement element : elements) {
             if (element instanceof EmptyPoolElement) {
                 continue;
             }
+            pieceIndex++;
             BoundingBox box = element.getBoundingBox(level.getStructureManager(), anchor, rotation);
             BlockBounds footprint = new BlockBounds(box.minX(), box.minZ(), box.maxX(), box.maxZ());
             ChunkRange pieceChunks = ChunkRange.from(footprint);
@@ -166,16 +166,16 @@ public final class MinecraftStructurePlacementBackend implements CityStructureD7
             if (!missingPieceChunks.isBlank()) {
                 return CityStructureD7Executor.PlacementResult.waiting("STRUCTURE_CHUNK_NOT_LOADED",
                         "Waiting for loaded chunks before bounded jigsaw piece placement: requiredChunks="
-                                + pieceChunks + ", missingChunks=" + missingPieceChunks);
+                                + pieceChunks + ", missingChunks=" + missingPieceChunks,
+                        trace);
             }
             String reason = boundedPieceFailure(request.constraintField(), footprint, request.targetAreaBlocks());
-            JsonObject piece = pieceJson(element, footprint);
+            JsonObject piece = pieceJson(element, footprint, poolName(startPool), anchor, rotation, pieceIndex);
             if (!reason.isBlank()) {
-                piece.addProperty("reasonCode", reason);
-                rejected.add(piece);
+                addRejectedPiece(trace, piece, reason);
                 continue;
             }
-            accepted.add(piece);
+            addAcceptedPiece(trace, piece, footprint);
             if (!executeCommands) {
                 return CityStructureD7Executor.PlacementResult.dryRunAccepted(
                         "Dry-run accepted bounded jigsaw start piece: " + request.structureId(),
@@ -185,15 +185,19 @@ public final class MinecraftStructurePlacementBackend implements CityStructureD7
                     level.getChunkSource().getGenerator(), anchor, anchor, rotation, box,
                     RandomSource.create(request.structureId().hashCode()), false);
             if (!placed) {
+                incrementTraceFailure(trace, "BOUNDED_JIGSAW_PIECE_PLACE_FAILED");
                 return CityStructureD7Executor.PlacementResult.failed("BOUNDED_JIGSAW_PIECE_PLACE_FAILED",
-                        "Accepted jigsaw piece returned false from place(): " + element);
+                        "Accepted jigsaw piece returned false from place(): " + element,
+                        trace, footprint, footprint);
             }
             return CityStructureD7Executor.PlacementResult.placed(
                     "Placed bounded jigsaw start piece for " + request.structureId(),
-                    trace, footprint, footprint);
+                trace, footprint, footprint);
         }
+        incrementTraceFailure(trace, "JIGSAW_NO_ACCEPTED_PIECE");
         return CityStructureD7Executor.PlacementResult.failed("JIGSAW_NO_ACCEPTED_PIECE",
-                "No start pool element passed CityConstraintField for " + request.structureId());
+                "No start pool element passed CityConstraintField for " + request.structureId(),
+                trace);
     }
 
     @SuppressWarnings("unchecked")
@@ -238,6 +242,10 @@ public final class MinecraftStructurePlacementBackend implements CityStructureD7
         trace.add("acceptedPieces", new JsonArray());
         trace.add("rejectedPieces", new JsonArray());
         trace.add("stoppedBranches", new JsonArray());
+        trace.addProperty("fallbackUsed", false);
+        trace.add("failureSummary", new JsonObject());
+        trace.add("metrics", boundedMetrics(0, 0, 0, 0));
+        trace.add("plan", boundedPlan(request));
         return trace;
     }
 
@@ -245,13 +253,117 @@ public final class MinecraftStructurePlacementBackend implements CityStructureD7
         return pool.unwrapKey().map(key -> key.location().toString()).orElse("inline");
     }
 
-    private JsonObject pieceJson(StructurePoolElement element, BlockBounds footprint) {
+    private JsonObject boundedPlan(CityStructureD7Executor.PlacementRequest request) {
+        JsonObject plan = new JsonObject();
+        plan.addProperty("schemaVersion", "city_bounded_jigsaw_plan.v0.1");
+        plan.addProperty("planId", "bounded_" + safeId(request.structureId()) + "_"
+                + request.anchorBlock().x() + "_" + request.anchorBlock().z() + "_"
+                + safeId(request.rotation()));
+        plan.addProperty("jobId", "job_" + safeId(request.structureId()) + "_"
+                + request.anchorBlock().x() + "_" + request.anchorBlock().z());
+        plan.addProperty("sourceStructureId", request.structureId());
+        plan.add("pieces", new JsonArray());
+        plan.add("stoppedBranches", new JsonArray());
+        BlockBounds initialBounds = request.requiredLoadBounds() == null ? request.footprint() : request.requiredLoadBounds();
+        if (initialBounds != null) {
+            plan.add("estimatedFootprint", boundsJson(initialBounds));
+            plan.add("requiredChunkRange", chunkRangeJson(ChunkRange.from(initialBounds)));
+        }
+        plan.addProperty("visibleAreaCost", 0);
+        JsonObject quality = new JsonObject();
+        quality.addProperty("acceptedPieceCount", 0);
+        quality.addProperty("stoppedBranchCount", 0);
+        quality.addProperty("startPieceOnly", true);
+        quality.add("warnings", new JsonArray());
+        plan.add("quality", quality);
+        return plan;
+    }
+
+    private void addAcceptedPiece(JsonObject trace, JsonObject piece, BlockBounds footprint) {
+        piece.addProperty("validatorResult", "passed");
+        trace.getAsJsonArray("acceptedPieces").add(piece.deepCopy());
+        JsonObject plan = trace.getAsJsonObject("plan");
+        plan.getAsJsonArray("pieces").add(piece.deepCopy());
+        plan.add("estimatedFootprint", boundsJson(footprint));
+        plan.add("requiredChunkRange", chunkRangeJson(ChunkRange.from(footprint)));
+        plan.addProperty("visibleAreaCost", footprint.widthBlocks() * footprint.heightBlocks());
+        updateBoundedMetrics(trace);
+    }
+
+    private void addRejectedPiece(JsonObject trace, JsonObject piece, String reasonCode) {
+        piece.addProperty("validatorResult", "failed");
+        piece.addProperty("reasonCode", reasonCode);
+        trace.getAsJsonArray("rejectedPieces").add(piece.deepCopy());
+        JsonObject stopped = new JsonObject();
+        String pieceId = piece.has("pieceId") ? piece.get("pieceId").getAsString() : "unknown_piece";
+        stopped.addProperty("branchId", "branch_" + pieceId);
+        stopped.addProperty("pieceId", pieceId);
+        stopped.addProperty("action", "stop_branch");
+        stopped.addProperty("reasonCode", reasonCode);
+        stopped.addProperty("endcapAttempted", false);
+        stopped.addProperty("endcapStatus", "not_implemented_start_piece_slice");
+        if (piece.has("footprint") && piece.get("footprint").isJsonObject()) {
+            stopped.add("footprint", piece.getAsJsonObject("footprint").deepCopy());
+        }
+        trace.getAsJsonArray("stoppedBranches").add(stopped.deepCopy());
+        trace.getAsJsonObject("plan").getAsJsonArray("stoppedBranches").add(stopped.deepCopy());
+        JsonObject summary = trace.getAsJsonObject("failureSummary");
+        incrementTraceFailure(trace, reasonCode);
+        updateBoundedMetrics(trace);
+    }
+
+    private void incrementTraceFailure(JsonObject trace, String reasonCode) {
+        JsonObject summary = trace.getAsJsonObject("failureSummary");
+        summary.addProperty(reasonCode, intValue(summary, reasonCode, 0) + 1);
+    }
+
+    private void updateBoundedMetrics(JsonObject trace) {
+        int accepted = trace.getAsJsonArray("acceptedPieces").size();
+        int rejected = trace.getAsJsonArray("rejectedPieces").size();
+        int stopped = trace.getAsJsonArray("stoppedBranches").size();
+        int visibleArea = 0;
+        for (JsonElement elem : trace.getAsJsonArray("acceptedPieces")) {
+            if (elem.isJsonObject()) {
+                visibleArea += intValue(elem.getAsJsonObject(), "visibleAreaCost", 0);
+            }
+        }
+        trace.add("metrics", boundedMetrics(accepted, rejected, stopped, visibleArea));
+        JsonObject quality = trace.getAsJsonObject("plan").getAsJsonObject("quality");
+        quality.addProperty("acceptedPieceCount", accepted);
+        quality.addProperty("stoppedBranchCount", stopped);
+    }
+
+    private JsonObject boundedMetrics(int acceptedPieces, int rejectedPieces, int stoppedBranches, int visibleAreaCost) {
+        JsonObject metrics = new JsonObject();
+        metrics.addProperty("acceptedPieceCount", acceptedPieces);
+        metrics.addProperty("rejectedPieceCount", rejectedPieces);
+        metrics.addProperty("stoppedBranchCount", stoppedBranches);
+        metrics.addProperty("visibleAreaCost", visibleAreaCost);
+        return metrics;
+    }
+
+    private JsonObject pieceJson(StructurePoolElement element, BlockBounds footprint, String poolId,
+                                 BlockPos anchor, Rotation rotation, int pieceIndex) {
         JsonObject piece = new JsonObject();
+        piece.addProperty("pieceId", "start_piece_" + pieceIndex);
+        piece.addProperty("templateId", element.toString());
+        piece.addProperty("poolId", poolId);
         piece.addProperty("elementType", element.getType().toString());
         piece.addProperty("element", element.toString());
+        piece.add("anchorBlock", blockPosJson(anchor));
+        piece.addProperty("rotation", rotation.name());
         piece.add("footprint", boundsJson(footprint));
         piece.addProperty("visibleAreaCost", footprint.widthBlocks() * footprint.heightBlocks());
+        piece.add("connectorRefs", new JsonArray());
         return piece;
+    }
+
+    private JsonObject blockPosJson(BlockPos pos) {
+        JsonObject obj = new JsonObject();
+        obj.addProperty("x", pos.getX());
+        obj.addProperty("y", pos.getY());
+        obj.addProperty("z", pos.getZ());
+        return obj;
     }
 
     private String boundedPieceFailure(JsonObject constraintField, BlockBounds footprint, int targetAreaBlocks) {
@@ -324,6 +436,15 @@ public final class MinecraftStructurePlacementBackend implements CityStructureD7
         return obj;
     }
 
+    private static JsonObject chunkRangeJson(ChunkRange range) {
+        JsonObject obj = new JsonObject();
+        obj.addProperty("minChunkX", range.minX());
+        obj.addProperty("minChunkZ", range.minZ());
+        obj.addProperty("maxChunkX", range.maxX());
+        obj.addProperty("maxChunkZ", range.maxZ());
+        return obj;
+    }
+
     private static boolean contains(BlockBounds container, BlockBounds child) {
         return child.minX() >= container.minX() && child.maxX() <= container.maxX()
                 && child.minZ() >= container.minZ() && child.maxZ() <= container.maxZ();
@@ -339,6 +460,10 @@ public final class MinecraftStructurePlacementBackend implements CityStructureD7
             return defaultValue;
         }
         return obj.get(key).getAsInt();
+    }
+
+    private static String safeId(String value) {
+        return value == null || value.isBlank() ? "unknown" : value.replaceAll("[^A-Za-z0-9_]+", "_");
     }
 
     private String missingChunks(ChunkRange requiredChunks) {

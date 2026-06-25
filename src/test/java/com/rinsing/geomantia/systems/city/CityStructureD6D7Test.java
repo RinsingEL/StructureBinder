@@ -399,8 +399,14 @@ final class CityStructureD6D7Test {
                 assertEquals("bounded_jigsaw", request.materializationMode());
                 assertTrue(request.constraintField().has("buildableCells"));
                 JsonObject trace = new JsonObject();
+                trace.addProperty("schemaVersion", "city_bounded_jigsaw_trace.v0.1");
                 trace.addProperty("capability", "bounded_jigsaw_supported");
                 trace.add("acceptedPieces", new JsonArray());
+                JsonObject plan = new JsonObject();
+                plan.addProperty("schemaVersion", "city_bounded_jigsaw_plan.v0.1");
+                plan.add("pieces", new JsonArray());
+                plan.add("stoppedBranches", new JsonArray());
+                trace.add("plan", plan);
                 BlockBounds footprint = new BlockBounds(16, 16, 23, 23);
                 return CityStructureD7Executor.PlacementResult.placed("bounded ok", trace, footprint, footprint);
             }
@@ -415,8 +421,11 @@ final class CityStructureD6D7Test {
                 backend);
 
         assertEquals(1, boundedCalls[0]);
-        assertTrue(result.structureGenerationTrace().getAsJsonArray("variableAttempts")
-                .toString().contains("boundedJigsawTrace"));
+        JsonObject boundedTrace = result.structureGenerationTrace().getAsJsonArray("variableAttempts")
+                .get(0).getAsJsonObject()
+                .getAsJsonObject("boundedJigsawTrace");
+        assertEquals("city_bounded_jigsaw_plan.v0.1", boundedTrace.getAsJsonObject("plan")
+                .get("schemaVersion").getAsString());
         assertTrue(result.placedStructureMap().getAsJsonArray("placedStructures")
                 .toString().contains("\"maxX\":23"));
     }
@@ -447,6 +456,67 @@ final class CityStructureD6D7Test {
                 .has("BOUNDED_JIGSAW_UNSUPPORTED"));
         assertTrue(result.structureGenerationTrace().getAsJsonArray("variableAttempts")
                 .toString().contains("BOUNDED_JIGSAW_UNSUPPORTED"));
+    }
+
+    @Test
+    void d7BoundedJigsawFailureCarriesTraceAndPlan() throws Exception {
+        Fixture fixture = fixture();
+        JsonObject choice = choicePlan();
+        choice.getAsJsonArray("zoneChoices")
+                .get(0).getAsJsonObject()
+                .getAsJsonArray("variableSelections")
+                .get(0).getAsJsonObject()
+                .addProperty("materializationMode", "bounded_jigsaw");
+        JsonObject d6 = runD6(fixture, catalog(List.of(
+                fixed("minecraft:desert_pyramid", "structure_assembly", "minecraft_place_structure", 16, 16),
+                variable("minecraft:village_plains", "structure_assembly", "minecraft_place_structure"))),
+                choice, selectionPlan("fixed_core_cand_01"));
+
+        CityStructureD7Executor.PlacementBackend backend = new CityStructureD7Executor.PlacementBackend() {
+            @Override
+            public CityStructureD7Executor.PlacementResult place(CityStructureD7Executor.PlacementRequest request) {
+                return CityStructureD7Executor.PlacementResult.placed("fixed ok");
+            }
+
+            @Override
+            public CityStructureD7Executor.PlacementResult placeBoundedJigsaw(CityStructureD7Executor.PlacementRequest request) {
+                JsonObject trace = new JsonObject();
+                trace.addProperty("schemaVersion", "city_bounded_jigsaw_trace.v0.1");
+                trace.addProperty("capability", "bounded_jigsaw_supported");
+                trace.add("acceptedPieces", new JsonArray());
+                JsonArray stopped = new JsonArray();
+                JsonObject stoppedBranch = new JsonObject();
+                stoppedBranch.addProperty("reasonCode", "JIGSAW_BRANCH_OUT_OF_ALLOWED_AREA");
+                stopped.add(stoppedBranch);
+                trace.add("stoppedBranches", stopped);
+                JsonObject plan = new JsonObject();
+                plan.addProperty("schemaVersion", "city_bounded_jigsaw_plan.v0.1");
+                plan.add("pieces", new JsonArray());
+                plan.add("stoppedBranches", stopped.deepCopy());
+                trace.add("plan", plan);
+                return CityStructureD7Executor.PlacementResult.failed("JIGSAW_NO_ACCEPTED_PIECE",
+                        "no accepted piece", trace);
+            }
+        };
+
+        CityStructureD7Executor.Result result = new CityStructureD7Executor().execute(
+                fixture.zoneMap(),
+                fixture.buildableAreaMap(),
+                d6.getAsJsonObject("plannedFixedPlacementMap"),
+                d6.getAsJsonObject("structurePoolMap"),
+                12345L,
+                backend);
+
+        JsonObject attempt = result.structureGenerationTrace().getAsJsonArray("variableAttempts")
+                .get(0).getAsJsonObject();
+        assertEquals("failed", attempt.get("status").getAsString());
+        assertEquals("JIGSAW_NO_ACCEPTED_PIECE", attempt.get("reasonCode").getAsString());
+        assertEquals("city_bounded_jigsaw_plan.v0.1", attempt.getAsJsonObject("boundedJigsawTrace")
+                .getAsJsonObject("plan")
+                .get("schemaVersion").getAsString());
+        assertTrue(attempt.getAsJsonObject("boundedJigsawTrace")
+                .getAsJsonArray("stoppedBranches")
+                .toString().contains("JIGSAW_BRANCH_OUT_OF_ALLOWED_AREA"));
     }
 
     private JsonObject runD6(Fixture fixture, JsonObject catalog, JsonObject choicePlan,
