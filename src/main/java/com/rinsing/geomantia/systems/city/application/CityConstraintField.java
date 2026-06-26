@@ -46,33 +46,44 @@ public final class CityConstraintField {
     }
 
     public ValidationResult validatePiece(BlockBounds footprint, int targetAreaBlocks) {
+        JsonArray ruleResults = new JsonArray();
         if (allowedArea == null) {
-            return ValidationResult.failed("CITY_CONSTRAINT_FIELD_MISSING");
+            ruleResults.add(ruleResult("constraint_field", "failed", "CITY_CONSTRAINT_FIELD_MISSING"));
+            return ValidationResult.failed("CITY_CONSTRAINT_FIELD_MISSING", ruleResults);
         }
         if (footprint == null) {
-            return ValidationResult.failed("JIGSAW_PIECE_FOOTPRINT_MISSING");
+            ruleResults.add(ruleResult("piece_footprint", "failed", "JIGSAW_PIECE_FOOTPRINT_MISSING"));
+            return ValidationResult.failed("JIGSAW_PIECE_FOOTPRINT_MISSING", ruleResults);
         }
         if (!contains(allowedArea, footprint)) {
-            return ValidationResult.failed("JIGSAW_BRANCH_OUT_OF_ALLOWED_AREA");
+            ruleResults.add(ruleResult("zone_allowed_area", "failed", "JIGSAW_BRANCH_OUT_OF_ALLOWED_AREA"));
+            return ValidationResult.failed("JIGSAW_BRANCH_OUT_OF_ALLOWED_AREA", ruleResults);
         }
+        ruleResults.add(ruleResult("zone_allowed_area", "passed", ""));
         if (targetAreaBlocks > 0 && area(footprint) > targetAreaBlocks) {
-            return ValidationResult.failed("JIGSAW_AREA_BUDGET_REACHED");
+            ruleResults.add(ruleResult("visible_area_budget", "failed", "JIGSAW_AREA_BUDGET_REACHED"));
+            return ValidationResult.failed("JIGSAW_AREA_BUDGET_REACHED", ruleResults);
         }
-        String cellFailure = cellFailure(footprint);
+        ruleResults.add(ruleResult("visible_area_budget", "passed", ""));
+        String cellFailure = cellFailure(footprint, ruleResults);
         if (!cellFailure.isBlank()) {
-            return ValidationResult.failed(cellFailure);
+            return ValidationResult.failed(cellFailure, ruleResults);
         }
         for (JsonElement elem : occupiedFootprints) {
             if (elem.isJsonObject() && elem.getAsJsonObject().has("footprint")
                     && overlaps(footprint, bounds(elem.getAsJsonObject().getAsJsonObject("footprint")))) {
-                return ValidationResult.failed("JIGSAW_PIECE_RESERVED_CONFLICT");
+                ruleResults.add(ruleResult("runtime_occupied", "failed", "JIGSAW_PIECE_RESERVED_CONFLICT"));
+                return ValidationResult.failed("JIGSAW_PIECE_RESERVED_CONFLICT", ruleResults);
             }
         }
-        return ValidationResult.success();
+        ruleResults.add(ruleResult("runtime_occupied", "passed", ""));
+        return ValidationResult.success(ruleResults);
     }
 
-    private String cellFailure(BlockBounds footprint) {
+    private String cellFailure(BlockBounds footprint, JsonArray ruleResults) {
         if (buildableCells.isEmpty() && reservedCells.isEmpty()) {
+            ruleResults.add(ruleResult("buildable_cells", "passed", ""));
+            ruleResults.add(ruleResult("reserved_corridor", "passed", ""));
             return "";
         }
         int minCellX = Math.floorDiv(footprint.minX() - originBlockX, cellStepBlocks);
@@ -83,13 +94,17 @@ public final class CityConstraintField {
             for (int z = minCellZ; z <= maxCellZ; z++) {
                 long key = key(x, z);
                 if (reservedCells.contains(key)) {
+                    ruleResults.add(ruleResult("reserved_corridor", "failed", "JIGSAW_PIECE_RESERVED_CONFLICT"));
                     return "JIGSAW_PIECE_RESERVED_CONFLICT";
                 }
                 if (!buildableCells.isEmpty() && !buildableCells.contains(key)) {
+                    ruleResults.add(ruleResult("buildable_cells", "failed", "JIGSAW_BRANCH_OUT_OF_ALLOWED_AREA"));
                     return "JIGSAW_BRANCH_OUT_OF_ALLOWED_AREA";
                 }
             }
         }
+        ruleResults.add(ruleResult("reserved_corridor", "passed", ""));
+        ruleResults.add(ruleResult("buildable_cells", "passed", ""));
         return "";
     }
 
@@ -145,13 +160,26 @@ public final class CityConstraintField {
         return obj.get(key).getAsInt();
     }
 
-    public record ValidationResult(boolean passed, String reasonCode) {
-        public static ValidationResult success() {
-            return new ValidationResult(true, "");
+    private static JsonObject ruleResult(String ruleId, String status, String reasonCode) {
+        JsonObject obj = new JsonObject();
+        obj.addProperty("ruleId", ruleId);
+        obj.addProperty("status", status);
+        obj.addProperty("reasonCode", reasonCode == null ? "" : reasonCode);
+        return obj;
+    }
+
+    public record ValidationResult(boolean passed, String reasonCode, JsonArray ruleResults) {
+        public static ValidationResult success(JsonArray ruleResults) {
+            return new ValidationResult(true, "", ruleResults == null ? new JsonArray() : ruleResults);
         }
 
         public static ValidationResult failed(String reasonCode) {
-            return new ValidationResult(false, reasonCode == null ? "" : reasonCode);
+            return failed(reasonCode, new JsonArray());
+        }
+
+        public static ValidationResult failed(String reasonCode, JsonArray ruleResults) {
+            return new ValidationResult(false, reasonCode == null ? "" : reasonCode,
+                    ruleResults == null ? new JsonArray() : ruleResults);
         }
     }
 }

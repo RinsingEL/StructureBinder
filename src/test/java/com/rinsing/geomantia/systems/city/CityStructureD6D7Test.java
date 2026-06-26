@@ -180,6 +180,48 @@ final class CityStructureD6D7Test {
     }
 
     @Test
+    void d7StartCandidatesMustStayInsideFunctionZoneBounds() throws Exception {
+        Fixture fixture = narrowZoneFixture();
+        JsonObject choice = choicePlan();
+        choice.getAsJsonArray("zoneChoices")
+                .get(0).getAsJsonObject()
+                .add("fixedSelections", new JsonArray());
+        JsonObject d6 = runD6(fixture, catalog(List.of(
+                variable("minecraft:village_plains", "structure_assembly", "minecraft_place_structure"))),
+                choice, emptySelectionPlan());
+
+        CityStructureD7Executor.Result result = new CityStructureD7Executor().execute(
+                fixture.zoneMap(),
+                fixture.buildableAreaMap(),
+                d6.getAsJsonObject("plannedFixedPlacementMap"),
+                d6.getAsJsonObject("structurePoolMap"),
+                12345L,
+                CityStructureD7Executor.PlacementBackend.traceOnly());
+
+        JsonArray candidates = result.startCandidateSets().get(0).getAsJsonObject().getAsJsonArray("candidates");
+        boolean sawOutOfZoneCandidate = false;
+        boolean sawHardPassed = false;
+        for (int i = 0; i < candidates.size(); i++) {
+            JsonObject candidate = candidates.get(i).getAsJsonObject();
+            JsonObject footprint = candidate.getAsJsonObject("candidateFootprint");
+            boolean inside = footprint.get("minX").getAsInt() >= 0
+                    && footprint.get("minZ").getAsInt() >= 0
+                    && footprint.get("maxX").getAsInt() <= 15
+                    && footprint.get("maxZ").getAsInt() <= 15;
+            if (candidate.get("hardPassed").getAsBoolean()) {
+                sawHardPassed = true;
+                assertTrue(inside, candidate.toString());
+            }
+            if (footprint.get("maxX").getAsInt() > 15 || footprint.get("maxZ").getAsInt() > 15) {
+                sawOutOfZoneCandidate = true;
+                assertFalse(candidate.get("hardPassed").getAsBoolean(), candidate.toString());
+            }
+        }
+        assertTrue(sawOutOfZoneCandidate);
+        assertTrue(sawHardPassed);
+    }
+
+    @Test
     void d7UsesFootprintOriginOffsetForFixedCommandAnchor() throws Exception {
         Fixture fixture = fixture();
         JsonObject d6 = runD6(fixture, catalog(List.of(
@@ -799,6 +841,23 @@ final class CityStructureD6D7Test {
         return new Fixture(zoneMap, buildableAreaMap);
     }
 
+    private Fixture narrowZoneFixture() {
+        FunctionZoneMap zoneMap = new FunctionZoneMap(
+                FunctionZoneMap.CURRENT_SCHEMA_VERSION,
+                "city_test",
+                new PlanningGrid(0, 0, 16, 2, 2),
+                List.of(zone("core", CityFunctionType.CIVIC_CORE, 0, 0, 15, 15)),
+                List.of(),
+                new CityQualityReport(true, 100, List.of(), List.of(), List.of(), new JsonObject()));
+        BuildableAreaMap buildableAreaMap = new BuildableAreaMap(
+                BuildableAreaMap.CURRENT_SCHEMA_VERSION,
+                "city_test",
+                zoneMap.grid(),
+                List.of(buildableZone("core", CityFunctionType.CIVIC_CORE, zoneMap.grid())),
+                new CityQualityReport(true, 100, List.of(), List.of(), List.of(), new JsonObject()));
+        return new Fixture(zoneMap, buildableAreaMap);
+    }
+
     private BuildableAreaMap.ZoneBuildability buildableZone(String zoneId, CityFunctionType type, PlanningGrid grid) {
         List<BuildableAreaMap.BuildableCell> cells = new java.util.ArrayList<>();
         for (int x = 0; x < grid.cellsX(); x++) {
@@ -875,6 +934,16 @@ final class CityStructureD6D7Test {
                   ]
                 }
                 """.formatted(candidateId)).getAsJsonObject();
+    }
+
+    private JsonObject emptySelectionPlan() {
+        return JsonParser.parseString("""
+                {
+                  "schemaVersion": "city_fixed_placement_selection_plan.v0.1",
+                  "cityId": "city_test",
+                  "selections": []
+                }
+                """).getAsJsonObject();
     }
 
     private JsonObject catalog(List<JsonObject> structures) {

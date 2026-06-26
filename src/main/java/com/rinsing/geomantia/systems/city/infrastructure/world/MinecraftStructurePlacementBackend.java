@@ -2,6 +2,7 @@ package com.rinsing.geomantia.systems.city.infrastructure.world;
 
 import com.rinsing.geomantia.systems.city.application.BoundedJigsawSolver;
 import com.rinsing.geomantia.systems.city.application.CityStructureD7Executor;
+import com.rinsing.geomantia.systems.city.application.CityTerrainProbe;
 import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.google.gson.JsonArray;
@@ -24,6 +25,9 @@ import net.minecraft.world.level.levelgen.structure.pools.StructurePoolElement;
 import net.minecraft.world.level.levelgen.structure.pools.StructureTemplatePool;
 import net.minecraft.world.level.levelgen.structure.structures.JigsawStructure;
 import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.tags.FluidTags;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.phys.Vec3;
 
@@ -159,12 +163,20 @@ public final class MinecraftStructurePlacementBackend implements CityStructureD7
                 anchor, rotation, request.structureId().hashCode() * 31L
                         + request.anchorBlock().x() * 17L + request.anchorBlock().z(),
                 this::templatePool);
-        JsonObject trace = new BoundedJigsawSolver().solve(solverInput);
+        TerrainRuleEvaluator terrainRules = new TerrainRuleEvaluator(request.structureId());
+        JsonObject trace = new BoundedJigsawSolver(terrainRules).solve(solverInput);
         trace.addProperty("structureRegistryKey", holder.get().key().location().toString());
         trace.addProperty("poolAdapterStatus", "child_pool_discovery");
         trace.addProperty("worldPasteMode", executeCommands ? "accepted_piece_template_paste" : "dry_run_plan_only");
+        trace.add("terrainProbeSummary", terrainRules.summary());
         if (solverInput.has("poolAdapterReport") && solverInput.get("poolAdapterReport").isJsonObject()) {
             trace.add("poolAdapterReport", solverInput.getAsJsonObject("poolAdapterReport").deepCopy());
+        }
+        if (terrainRules.hasWaiting()) {
+            return CityStructureD7Executor.PlacementResult.waiting("STRUCTURE_CHUNK_NOT_LOADED",
+                    "Waiting for loaded chunks before bounded jigsaw terrain probe: missingChunks="
+                            + terrainRules.missingChunks(),
+                    trace);
         }
         JsonArray acceptedPieces = acceptedPieces(trace);
         BlockBounds acceptedFootprint = unionFootprint(acceptedPieces);
@@ -213,9 +225,14 @@ public final class MinecraftStructurePlacementBackend implements CityStructureD7
         }
 
         int applied = 0;
+        int clearedVegetation = 0;
         for (RuntimePiece runtime : runtimePieces) {
             JsonObject piece = runtime.pieceJson();
             String pieceId = stringValue(piece, "pieceId", "piece_" + applied);
+            int clearedForPiece = clearSoftObstacles(runtime.footprint(), runtime.anchor().getY(),
+                    runtime.box().maxY());
+            clearedVegetation += clearedForPiece;
+            markPieceVegetationCleared(trace, pieceId, clearedForPiece);
             boolean placed = runtime.element().place(level.getStructureManager(), level, level.structureManager(),
                     level.getChunkSource().getGenerator(), runtime.anchor(), runtime.anchor(), runtime.rotation(),
                     runtime.box(), RandomSource.create(request.structureId().hashCode() * 31L + pieceId.hashCode()),
@@ -238,9 +255,33 @@ public final class MinecraftStructurePlacementBackend implements CityStructureD7
         JsonObject metrics = trace.getAsJsonObject("metrics");
         metrics.addProperty("worldPasteAppliedPieceCount", applied);
         metrics.addProperty("worldPasteMode", "accepted_piece_template_paste");
+        metrics.addProperty("clearedVegetationBlocks", clearedVegetation);
         return CityStructureD7Executor.PlacementResult.placed(
                 "Placed " + applied + " accepted bounded jigsaw pieces for " + request.structureId(),
                 trace, acceptedFootprint, acceptedFootprint);
+    }
+
+    private int clearSoftObstacles(BlockBounds footprint, int minY, int maxY) {
+        if (!executeCommands || footprint == null) {
+            return 0;
+        }
+        int changed = 0;
+        int fromY = Math.max(level.getMinBuildHeight(), minY);
+        int toY = Math.min(level.getMaxBuildHeight() - 1, Math.max(maxY, minY + 12));
+        for (int x = footprint.minX(); x <= footprint.maxX(); x++) {
+            for (int z = footprint.minZ(); z <= footprint.maxZ(); z++) {
+                for (int y = toY; y >= fromY; y--) {
+                    BlockPos pos = new BlockPos(x, y, z);
+                    net.minecraft.world.level.block.state.BlockState state = level.getBlockState(pos);
+                    if (!softClearable(state)) {
+                        continue;
+                    }
+                    level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
+                    changed++;
+                }
+            }
+        }
+        return changed;
     }
 
     private ResolveResult resolveRuntimePiece(JsonObject piece, Holder<StructureTemplatePool> startPool) {
@@ -390,6 +431,30 @@ public final class MinecraftStructurePlacementBackend implements CityStructureD7
         JsonObject plan = objectValue(trace, "plan", null);
         if (plan != null && plan.has("pieces") && plan.get("pieces").isJsonArray()) {
             markPieceArray(plan.getAsJsonArray("pieces"), pieceId, status, worldMutationApplied, reasonCode);
+        }
+    }
+
+    private void markPieceVegetationCleared(JsonObject trace, String pieceId, int clearedBlocks) {
+        markPieceVegetationArray(trace.getAsJsonArray("acceptedPieces"), pieceId, clearedBlocks);
+        JsonObject plan = objectValue(trace, "plan", null);
+        if (plan != null && plan.has("pieces") && plan.get("pieces").isJsonArray()) {
+            markPieceVegetationArray(plan.getAsJsonArray("pieces"), pieceId, clearedBlocks);
+        }
+    }
+
+    private void markPieceVegetationArray(JsonArray pieces, String pieceId, int clearedBlocks) {
+        if (pieces == null) {
+            return;
+        }
+        for (JsonElement elem : pieces) {
+            if (!elem.isJsonObject()) {
+                continue;
+            }
+            JsonObject piece = elem.getAsJsonObject();
+            if (!pieceId.equals(stringValue(piece, "pieceId", ""))) {
+                continue;
+            }
+            piece.addProperty("clearedVegetationBlocks", clearedBlocks);
         }
     }
 
@@ -575,6 +640,130 @@ public final class MinecraftStructurePlacementBackend implements CityStructureD7
                 + ", biome=" + (biomeId == null ? "unknown" : biomeId)
                 + ", commandChunk=" + commandChunk.x + "," + commandChunk.z
                 + ", requiredChunks=" + loadedChunks;
+    }
+
+    private CityTerrainProbe.Result probeTerrain(String probeId, String candidateId, BlockBounds footprint) {
+        ChunkRange chunks = ChunkRange.from(footprint);
+        String missing = missingChunks(chunks);
+        if (!missing.isBlank()) {
+            return CityTerrainProbe.waitingForChunks(probeId, candidateId, footprint, missing);
+        }
+        List<CityTerrainProbe.Sample> samples = terrainSamples(footprint);
+        return CityTerrainProbe.evaluate(probeId, candidateId, footprint, samples);
+    }
+
+    private List<CityTerrainProbe.Sample> terrainSamples(BlockBounds footprint) {
+        List<CityTerrainProbe.Sample> samples = new ArrayList<>();
+        if (footprint == null) {
+            return samples;
+        }
+        int stepX = Math.max(1, Math.max(footprint.widthBlocks() / 3, 4));
+        int stepZ = Math.max(1, Math.max(footprint.heightBlocks() / 3, 4));
+        for (int x = footprint.minX(); x <= footprint.maxX(); x += stepX) {
+            for (int z = footprint.minZ(); z <= footprint.maxZ(); z += stepZ) {
+                samples.add(terrainSample(x, z));
+            }
+        }
+        samples.add(terrainSample(footprint.maxX(), footprint.minZ()));
+        samples.add(terrainSample(footprint.minX(), footprint.maxZ()));
+        samples.add(terrainSample(footprint.maxX(), footprint.maxZ()));
+        samples.add(terrainSample(footprint.center().x(), footprint.center().z()));
+        return samples;
+    }
+
+    private CityTerrainProbe.Sample terrainSample(int x, int z) {
+        int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
+        y = Math.max(level.getMinBuildHeight(), Math.min(level.getMaxBuildHeight() - 1, y));
+        boolean fluid = false;
+        boolean support = false;
+        for (int scanY = y + 1; scanY >= Math.max(level.getMinBuildHeight(), y - 3); scanY--) {
+            BlockPos pos = new BlockPos(x, scanY, z);
+            if (level.getFluidState(pos).is(FluidTags.WATER)) {
+                fluid = true;
+            }
+        }
+        net.minecraft.world.level.block.state.BlockState supportState = level.getBlockState(new BlockPos(x, y, z));
+        support = !supportState.isAir() && supportState.getFluidState().isEmpty() && !softClearable(supportState);
+        return new CityTerrainProbe.Sample(x, z, y, fluid, support);
+    }
+
+    private boolean softClearable(net.minecraft.world.level.block.state.BlockState state) {
+        if (state == null || state.isAir() || protectedBlock(state)) {
+            return false;
+        }
+        return state.is(BlockTags.LEAVES)
+                || state.is(BlockTags.LOGS)
+                || state.is(BlockTags.FLOWERS)
+                || state.is(BlockTags.SAPLINGS)
+                || state.is(BlockTags.WART_BLOCKS)
+                || state.is(BlockTags.MUSHROOM_GROW_BLOCK)
+                || state.canBeReplaced();
+    }
+
+    private boolean protectedBlock(net.minecraft.world.level.block.state.BlockState state) {
+        return state.is(Blocks.BEDROCK)
+                || state.is(Blocks.BARRIER)
+                || state.is(Blocks.COMMAND_BLOCK)
+                || state.is(Blocks.CHAIN_COMMAND_BLOCK)
+                || state.is(Blocks.REPEATING_COMMAND_BLOCK)
+                || state.is(Blocks.STRUCTURE_BLOCK)
+                || state.is(Blocks.END_PORTAL_FRAME);
+    }
+
+    private final class TerrainRuleEvaluator implements BoundedJigsawSolver.PieceRuleEvaluator {
+        private final String sourceStructureId;
+        private final JsonArray probes = new JsonArray();
+        private boolean waiting;
+        private String missingChunks = "";
+
+        private TerrainRuleEvaluator(String sourceStructureId) {
+            this.sourceStructureId = sourceStructureId == null ? "" : sourceStructureId;
+        }
+
+        @Override
+        public BoundedJigsawSolver.PieceDecision evaluate(JsonObject piece, BlockBounds footprint,
+                                                          int visibleAreaCostSoFar, int targetAreaBlocks) {
+            String pieceId = stringValue(piece, "pieceId", "piece");
+            CityTerrainProbe.Result result = probeTerrain("terrain_" + safeProbeId(sourceStructureId)
+                            + "_" + safeProbeId(pieceId),
+                    pieceId, footprint);
+            probes.add(result.probe().deepCopy());
+            piece.add("terrainProbe", result.probe().deepCopy());
+            JsonArray ruleResults = new JsonArray();
+            ruleResults.add(CityTerrainProbe.ruleResult(result));
+            if ("JIGSAW_RULE_CHUNK_WAITING".equals(result.reasonCode())) {
+                waiting = true;
+                String missing = stringValue(result.probe(), "missingChunks", "");
+                if (!missing.isBlank()) {
+                    missingChunks = missingChunks.isBlank() ? missing : missingChunks + ";" + missing;
+                }
+            }
+            return result.accepted()
+                    ? BoundedJigsawSolver.PieceDecision.accept(ruleResults)
+                    : BoundedJigsawSolver.PieceDecision.reject(result.reasonCode(), ruleResults);
+        }
+
+        private boolean hasWaiting() {
+            return waiting;
+        }
+
+        private String missingChunks() {
+            return missingChunks;
+        }
+
+        private JsonObject summary() {
+            JsonObject obj = new JsonObject();
+            obj.addProperty("schemaVersion", "city_terrain_probe_summary.v0.1");
+            obj.addProperty("waiting", waiting);
+            obj.addProperty("missingChunks", missingChunks);
+            obj.addProperty("probeCount", probes.size());
+            obj.add("probes", probes.deepCopy());
+            return obj;
+        }
+    }
+
+    private static String safeProbeId(String raw) {
+        return raw == null || raw.isBlank() ? "unknown" : raw.replaceAll("[^A-Za-z0-9._-]", "_");
     }
 
     private record ChunkRange(int minX, int minZ, int maxX, int maxZ) {

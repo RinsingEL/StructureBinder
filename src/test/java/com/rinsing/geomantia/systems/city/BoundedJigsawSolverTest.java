@@ -62,6 +62,9 @@ final class BoundedJigsawSolverTest {
         assertTrue(trace.getAsJsonArray("stoppedBranches").toString()
                 .contains("JIGSAW_BRANCH_OUT_OF_ALLOWED_AREA"));
         assertEquals(1, trace.getAsJsonObject("plan").getAsJsonArray("pieces").size());
+        JsonObject rejected = trace.getAsJsonArray("rejectedPieces").get(0).getAsJsonObject();
+        assertEquals("reject", rejected.getAsJsonObject("ruleDecision").get("decision").getAsString());
+        assertTrue(rejected.getAsJsonArray("ruleResults").toString().contains("zone_allowed_area"));
     }
 
     @Test
@@ -159,6 +162,65 @@ final class BoundedJigsawSolverTest {
                 .contains("JIGSAW_BRANCH_OUT_OF_ALLOWED_AREA"));
         assertTrue(trace.getAsJsonArray("stoppedBranches").toString()
                 .contains("JIGSAW_BRANCH_OUT_OF_ALLOWED_AREA"));
+    }
+
+    @Test
+    void runtimeRuleRejectsChildPieceBeforeItCanBeAccepted() {
+        JsonObject input = baseInput(1024);
+        input.add("startPieces", pieces(piece("start_piece_1", "minecraft:start_house",
+                "minecraft:village/plains/town_centers", 0, 0, 15, 15,
+                connector("door_east", "minecraft:street", "minecraft:street",
+                        "minecraft:village/plains/streets"))));
+        JsonObject pools = new JsonObject();
+        JsonObject street = piece("street_piece_1", "minecraft:street_1",
+                "minecraft:village/plains/streets", 16, 0, 31, 15);
+        street.addProperty("attachTarget", "minecraft:street");
+        pools.add("minecraft:village/plains/streets", pieces(street));
+        input.add("candidatePools", pools);
+
+        JsonObject trace = new BoundedJigsawSolver((piece, footprint, visibleAreaCostSoFar, targetAreaBlocks) -> {
+            JsonArray rules = new JsonArray();
+            JsonObject rule = new JsonObject();
+            rule.addProperty("ruleId", "terrain_probe");
+            rule.addProperty("status", "failed");
+            rule.addProperty("reasonCode", "JIGSAW_RULE_TERRAIN_TOO_UNEVEN");
+            rules.add(rule);
+            if ("street_piece_1".equals(piece.get("pieceId").getAsString())) {
+                return BoundedJigsawSolver.PieceDecision.reject("JIGSAW_RULE_TERRAIN_TOO_UNEVEN", rules);
+            }
+            return BoundedJigsawSolver.PieceDecision.accept(new JsonArray());
+        }).solve(input);
+
+        assertEquals(1, trace.getAsJsonArray("acceptedPieces").size());
+        assertEquals("start_piece_1", trace.getAsJsonArray("acceptedPieces")
+                .get(0).getAsJsonObject().get("pieceId").getAsString());
+        assertTrue(trace.getAsJsonArray("rejectedPieces").toString()
+                .contains("JIGSAW_RULE_TERRAIN_TOO_UNEVEN"));
+        assertTrue(trace.getAsJsonArray("rejectedPieces").toString().contains("terrain_probe"));
+    }
+
+    @Test
+    void rejectsChildPieceOverlappingAcceptedPiece() {
+        JsonObject input = baseInput(1024);
+        input.add("startPieces", pieces(piece("start_piece_1", "minecraft:start_house",
+                "minecraft:village/plains/town_centers", 0, 0, 15, 15,
+                connector("door_east", "minecraft:street", "minecraft:street",
+                        "minecraft:village/plains/streets"))));
+        JsonObject pools = new JsonObject();
+        JsonObject overlapping = piece("street_piece_overlap", "minecraft:street_1",
+                "minecraft:village/plains/streets", 8, 0, 23, 15);
+        overlapping.addProperty("attachTarget", "minecraft:street");
+        pools.add("minecraft:village/plains/streets", pieces(overlapping));
+        input.add("candidatePools", pools);
+
+        JsonObject trace = new BoundedJigsawSolver().solve(input);
+
+        assertEquals(1, trace.getAsJsonArray("acceptedPieces").size());
+        assertEquals("start_piece_1", trace.getAsJsonArray("acceptedPieces")
+                .get(0).getAsJsonObject().get("pieceId").getAsString());
+        JsonObject rejected = trace.getAsJsonArray("rejectedPieces").get(0).getAsJsonObject();
+        assertEquals("JIGSAW_PIECE_RESERVED_CONFLICT", rejected.get("reasonCode").getAsString());
+        assertTrue(rejected.getAsJsonArray("ruleResults").toString().contains("runtime_occupied"));
     }
 
     private JsonObject baseInput(int targetAreaBlocks) {

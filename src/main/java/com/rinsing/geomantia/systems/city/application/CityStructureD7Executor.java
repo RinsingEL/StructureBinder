@@ -1143,6 +1143,17 @@ public final class CityStructureD7Executor {
             if (bounds == null) {
                 return false;
             }
+            if (this.bounds == null || !contains(this.bounds, bounds)) {
+                return false;
+            }
+            int rawMinCellX = grid.blockToCellX(bounds.minX());
+            int rawMaxCellX = grid.blockToCellX(bounds.maxX());
+            int rawMinCellZ = grid.blockToCellZ(bounds.minZ());
+            int rawMaxCellZ = grid.blockToCellZ(bounds.maxZ());
+            if (rawMinCellX < 0 || rawMaxCellX >= grid.cellsX()
+                    || rawMinCellZ < 0 || rawMaxCellZ >= grid.cellsZ()) {
+                return false;
+            }
             int minCellX = clampCellX(grid.blockToCellX(bounds.minX()));
             int maxCellX = clampCellX(grid.blockToCellX(bounds.maxX()));
             int minCellZ = clampCellZ(grid.blockToCellZ(bounds.minZ()));
@@ -1193,6 +1204,11 @@ public final class CityStructureD7Executor {
 
         private long key(int x, int z) {
             return (((long) x) << 32) ^ (z & 0xffffffffL);
+        }
+
+        private boolean contains(BlockBounds container, BlockBounds child) {
+            return child.minX() >= container.minX() && child.maxX() <= container.maxX()
+                    && child.minZ() >= container.minZ() && child.maxZ() <= container.maxZ();
         }
     }
 

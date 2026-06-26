@@ -13,6 +13,16 @@ import java.util.Queue;
 import java.util.Random;
 
 public final class BoundedJigsawSolver {
+    private final PieceRuleEvaluator ruleEvaluator;
+
+    public BoundedJigsawSolver() {
+        this(PieceRuleEvaluator.noop());
+    }
+
+    public BoundedJigsawSolver(PieceRuleEvaluator ruleEvaluator) {
+        this.ruleEvaluator = ruleEvaluator == null ? PieceRuleEvaluator.noop() : ruleEvaluator;
+    }
+
     public JsonObject solve(JsonObject input) {
         JsonObject spec = input == null ? new JsonObject() : input;
         String sourceStructureId = stringValue(spec, "sourceStructureId", "");
@@ -23,7 +33,8 @@ public final class BoundedJigsawSolver {
         CityConstraintField constraintField = CityConstraintField.fromJson(objectValue(spec, "constraintField", new JsonObject()));
         JsonObject candidatePools = objectValue(spec, "candidatePools", new JsonObject());
         JsonObject trace = traceSkeleton(spec, sourceStructureId, targetAreaBlocks);
-        State state = new State(trace, constraintField, targetAreaBlocks, maxPieces, maxDepth, seedKey);
+        State state = new State(trace, constraintField, targetAreaBlocks, maxPieces, maxDepth, seedKey,
+                ruleEvaluator);
 
         JsonArray startPieces = arrayValue(spec, "startPieces", new JsonArray());
         if (startPieces.isEmpty()) {
@@ -73,14 +84,16 @@ public final class BoundedJigsawSolver {
             if (footprint != null && !piece.has("visibleAreaCost")) {
                 piece.addProperty("visibleAreaCost", area(footprint));
             }
-            String reason = rejectionReason(state, branch, piece, footprint);
-            if (reason.isBlank()) {
+            PieceDecision decision = pieceDecision(state, branch, piece, footprint);
+            piece.add("ruleResults", decision.ruleResults().deepCopy());
+            piece.add("ruleDecision", decision.asJson());
+            if (decision.accepted()) {
                 addAcceptedPiece(state, piece, footprint);
                 enqueueOpenConnectors(state, piece, branch.depth + 1);
                 return true;
             }
-            lastReason = reason;
-            addRejectedPiece(state, piece, reason);
+            lastReason = decision.reasonCode();
+            addRejectedPiece(state, piece, decision.reasonCode());
         }
         addStoppedBranch(state, branch, lastReason.isBlank() ? "JIGSAW_NO_ACCEPTED_PIECE" : lastReason,
                 false, lastReason.isBlank());
@@ -98,31 +111,52 @@ public final class BoundedJigsawSolver {
         return list;
     }
 
-    private String rejectionReason(State state, OpenBranch branch, JsonObject piece, BlockBounds footprint) {
+    private PieceDecision pieceDecision(State state, OpenBranch branch, JsonObject piece, BlockBounds footprint) {
+        JsonArray ruleResults = new JsonArray();
         if ("failed".equals(stringValue(piece, "alignmentStatus", ""))) {
-            return stringValue(piece, "alignmentReasonCode", "JIGSAW_CONNECTOR_ALIGNMENT_FAILED");
+            String reason = stringValue(piece, "alignmentReasonCode", "JIGSAW_CONNECTOR_ALIGNMENT_FAILED");
+            ruleResults.add(ruleResult("connector_alignment", "failed", reason));
+            return PieceDecision.reject(reason, ruleResults);
         }
         if ("connector_alignment_pending".equals(stringValue(piece, "prototypePlacementStatus", ""))) {
-            return "JIGSAW_CONNECTOR_ALIGNMENT_PENDING";
+            ruleResults.add(ruleResult("connector_alignment", "failed", "JIGSAW_CONNECTOR_ALIGNMENT_PENDING"));
+            return PieceDecision.reject("JIGSAW_CONNECTOR_ALIGNMENT_PENDING", ruleResults);
         }
         if (!matchesConnector(branch, piece)) {
-            return "JIGSAW_CONNECTOR_TARGET_MISMATCH";
+            ruleResults.add(ruleResult("connector_alignment", "failed", "JIGSAW_CONNECTOR_TARGET_MISMATCH"));
+            return PieceDecision.reject("JIGSAW_CONNECTOR_TARGET_MISMATCH", ruleResults);
         }
+        ruleResults.add(ruleResult("connector_alignment", "passed", ""));
         if (footprint == null) {
-            return "JIGSAW_PIECE_FOOTPRINT_MISSING";
+            ruleResults.add(ruleResult("piece_footprint", "failed", "JIGSAW_PIECE_FOOTPRINT_MISSING"));
+            return PieceDecision.reject("JIGSAW_PIECE_FOOTPRINT_MISSING", ruleResults);
         }
         int pieceArea = intValue(piece, "visibleAreaCost", area(footprint));
         if (state.targetAreaBlocks > 0 && state.visibleAreaCost + pieceArea > state.targetAreaBlocks) {
-            return "JIGSAW_AREA_BUDGET_REACHED";
+            ruleResults.add(ruleResult("visible_area_budget", "failed", "JIGSAW_AREA_BUDGET_REACHED"));
+            return PieceDecision.reject("JIGSAW_AREA_BUDGET_REACHED", ruleResults);
         }
+        ruleResults.add(ruleResult("visible_area_budget", "passed", ""));
         for (BlockBounds accepted : state.acceptedFootprints) {
             if (accepted.overlaps(footprint)) {
-                return "JIGSAW_PIECE_RESERVED_CONFLICT";
+                ruleResults.add(ruleResult("runtime_occupied", "failed", "JIGSAW_PIECE_RESERVED_CONFLICT"));
+                return PieceDecision.reject("JIGSAW_PIECE_RESERVED_CONFLICT", ruleResults);
             }
         }
+        ruleResults.add(ruleResult("runtime_occupied", "passed", ""));
         CityConstraintField.ValidationResult validation = state.constraintField.validatePiece(footprint,
                 Math.max(0, state.targetAreaBlocks - state.visibleAreaCost));
-        return validation.passed() ? "" : validation.reasonCode();
+        append(ruleResults, validation.ruleResults());
+        if (!validation.passed()) {
+            return PieceDecision.reject(validation.reasonCode(), ruleResults);
+        }
+        PieceDecision runtimeDecision = state.ruleEvaluator.evaluate(piece, footprint, state.visibleAreaCost,
+                state.targetAreaBlocks);
+        append(ruleResults, runtimeDecision.ruleResults());
+        if (!runtimeDecision.accepted()) {
+            return PieceDecision.reject(runtimeDecision.reasonCode(), ruleResults);
+        }
+        return PieceDecision.accept(ruleResults);
     }
 
     private boolean matchesConnector(OpenBranch branch, JsonObject piece) {
@@ -176,6 +210,10 @@ public final class BoundedJigsawSolver {
         stopped.addProperty("depth", branch.depth);
         stopped.addProperty("action", "stop_branch");
         stopped.addProperty("reasonCode", reasonCode);
+        JsonArray ruleResults = new JsonArray();
+        ruleResults.add(ruleResult("branch_stop", reasonCode == null || reasonCode.isBlank() ? "warning" : "failed",
+                reasonCode));
+        stopped.add("ruleResults", ruleResults);
         stopped.addProperty("endcapAttempted", endcapAttempted);
         stopped.addProperty("endcapStatus", endcapAttempted ? "not_implemented" : "not_attempted");
         state.trace.getAsJsonArray("stoppedBranches").add(stopped.deepCopy());
@@ -290,6 +328,23 @@ public final class BoundedJigsawSolver {
         summary.addProperty(reasonCode, intValue(summary, reasonCode, 0) + 1);
     }
 
+    private static void append(JsonArray target, JsonArray source) {
+        if (target == null || source == null) {
+            return;
+        }
+        for (JsonElement elem : source) {
+            target.add(elem.deepCopy());
+        }
+    }
+
+    private static JsonObject ruleResult(String ruleId, String status, String reasonCode) {
+        JsonObject obj = new JsonObject();
+        obj.addProperty("ruleId", ruleId);
+        obj.addProperty("status", status);
+        obj.addProperty("reasonCode", reasonCode == null ? "" : reasonCode);
+        return obj;
+    }
+
     private static BlockBounds footprint(JsonObject piece) {
         JsonObject obj = objectValue(piece, "footprint", null);
         return obj == null ? null : bounds(obj);
@@ -363,6 +418,7 @@ public final class BoundedJigsawSolver {
         private final int maxPieces;
         private final int maxDepth;
         private final String seedKey;
+        private final PieceRuleEvaluator ruleEvaluator;
         private final Queue<OpenBranch> openBranches = new ArrayDeque<>();
         private final List<BlockBounds> acceptedFootprints = new ArrayList<>();
         private int acceptedPieces;
@@ -370,13 +426,14 @@ public final class BoundedJigsawSolver {
         private BlockBounds estimatedFootprint;
 
         private State(JsonObject trace, CityConstraintField constraintField, int targetAreaBlocks,
-                      int maxPieces, int maxDepth, String seedKey) {
+                      int maxPieces, int maxDepth, String seedKey, PieceRuleEvaluator ruleEvaluator) {
             this.trace = trace;
             this.constraintField = constraintField;
             this.targetAreaBlocks = targetAreaBlocks;
             this.maxPieces = maxPieces;
             this.maxDepth = maxDepth;
             this.seedKey = seedKey;
+            this.ruleEvaluator = ruleEvaluator == null ? PieceRuleEvaluator.noop() : ruleEvaluator;
         }
     }
 
@@ -392,6 +449,38 @@ public final class BoundedJigsawSolver {
         static OpenBranch start(String startPool) {
             return new OpenBranch("branch_start", "", "", startPool == null ? "" : startPool,
                     "", "", new JsonObject(), 0);
+        }
+    }
+
+    public interface PieceRuleEvaluator {
+        PieceDecision evaluate(JsonObject piece, BlockBounds footprint, int visibleAreaCostSoFar,
+                               int targetAreaBlocks);
+
+        static PieceRuleEvaluator noop() {
+            return (piece, footprint, visibleAreaCostSoFar, targetAreaBlocks) -> PieceDecision.accept(new JsonArray());
+        }
+    }
+
+    public record PieceDecision(String decision, String reasonCode, JsonArray ruleResults) {
+        public static PieceDecision accept(JsonArray ruleResults) {
+            return new PieceDecision("accept", "", ruleResults == null ? new JsonArray() : ruleResults);
+        }
+
+        public static PieceDecision reject(String reasonCode, JsonArray ruleResults) {
+            return new PieceDecision("reject", reasonCode == null ? "" : reasonCode,
+                    ruleResults == null ? new JsonArray() : ruleResults);
+        }
+
+        public boolean accepted() {
+            return "accept".equals(decision);
+        }
+
+        public JsonObject asJson() {
+            JsonObject obj = new JsonObject();
+            obj.addProperty("decision", decision);
+            obj.addProperty("reasonCode", reasonCode);
+            obj.add("ruleResults", ruleResults.deepCopy());
+            return obj;
         }
     }
 }
