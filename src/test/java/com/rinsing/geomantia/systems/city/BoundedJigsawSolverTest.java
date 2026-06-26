@@ -68,8 +68,32 @@ final class BoundedJigsawSolverTest {
     }
 
     @Test
-    void stopsBranchWhenAreaBudgetWouldOverflow() {
+    void softBudgetAllowsSlightOverflowAndReportsWarning() {
+        JsonObject input = baseInput(450);
+        input.add("startPieces", pieces(piece("start_piece_1", "minecraft:start_house",
+                "minecraft:village/plains/town_centers", 0, 0, 15, 15,
+                connector("door_east", "minecraft:street", "minecraft:street",
+                        "minecraft:village/plains/streets"))));
+        JsonObject pools = new JsonObject();
+        JsonObject street = piece("street_piece_1", "minecraft:street_1",
+                "minecraft:village/plains/streets", 16, 0, 31, 15);
+        street.addProperty("attachTarget", "minecraft:street");
+        pools.add("minecraft:village/plains/streets", pieces(street));
+        input.add("candidatePools", pools);
+
+        JsonObject trace = new BoundedJigsawSolver().solve(input);
+
+        assertEquals(2, trace.getAsJsonArray("acceptedPieces").size());
+        assertTrue(trace.getAsJsonArray("acceptedPieces").toString()
+                .contains("JIGSAW_AREA_SOFT_BUDGET_EXCEEDED"));
+        assertEquals(512, trace.getAsJsonObject("metrics").get("visibleAreaCost").getAsInt());
+        assertTrue(trace.getAsJsonObject("terminationReport").has("NO_FRONTIER"));
+    }
+
+    @Test
+    void rejectsWhenAreaHardCapWouldOverflow() {
         JsonObject input = baseInput(300);
+        input.addProperty("budgetHardCapRatio", 1.1);
         input.add("startPieces", pieces(piece("start_piece_1", "minecraft:start_house",
                 "minecraft:village/plains/town_centers", 0, 0, 15, 15,
                 connector("door_east", "minecraft:street", "minecraft:street",
@@ -85,10 +109,38 @@ final class BoundedJigsawSolverTest {
 
         assertEquals(1, trace.getAsJsonArray("acceptedPieces").size());
         assertTrue(trace.getAsJsonArray("rejectedPieces").toString()
-                .contains("JIGSAW_AREA_BUDGET_REACHED"));
-        assertTrue(trace.getAsJsonArray("stoppedBranches").toString()
-                .contains("JIGSAW_AREA_BUDGET_REACHED"));
+                .contains("JIGSAW_AREA_HARD_CAP_REACHED"));
+        assertTrue(trace.getAsJsonObject("rejectionReport").get("AREA_HARD_CAP_REACHED").getAsInt() > 0);
         assertEquals(256, trace.getAsJsonObject("metrics").get("visibleAreaCost").getAsInt());
+    }
+
+    @Test
+    void choosesAcceptedCandidateThatBestFitsTargetArea() {
+        JsonObject input = baseInput(500);
+        input.addProperty("maxPieces", 1);
+        input.add("startPieces", pieces(
+                piece("start_small", "minecraft:start_small",
+                        "minecraft:village/plains/town_centers", 0, 0, 7, 7),
+                piece("start_better", "minecraft:start_better",
+                        "minecraft:village/plains/town_centers", 0, 0, 19, 19),
+                piece("start_tiny", "minecraft:start_tiny",
+                        "minecraft:village/plains/town_centers", 0, 0, 3, 3)));
+        input.add("candidatePools", new JsonObject());
+
+        JsonObject trace = new BoundedJigsawSolver().solve(input);
+
+        assertEquals(1, trace.getAsJsonArray("acceptedPieces").size());
+        JsonObject accepted = trace.getAsJsonArray("acceptedPieces").get(0).getAsJsonObject();
+        assertEquals("start_better", accepted.get("pieceId").getAsString());
+        assertEquals(400, trace.getAsJsonObject("metrics").get("visibleAreaCost").getAsInt());
+        assertEquals(100, trace.getAsJsonObject("metrics")
+                .get("areaDistanceToTargetBlocks").getAsInt());
+        assertEquals(0.8d, trace.getAsJsonObject("plan").getAsJsonObject("quality")
+                .get("areaFillRatio").getAsDouble());
+        assertTrue(accepted.getAsJsonArray("ruleResults").toString()
+                .contains("visible_area_target_fit"));
+        assertEquals(400, accepted.getAsJsonObject("areaTargetFit")
+                .get("projectedVisibleAreaCost").getAsInt());
     }
 
     @Test
@@ -118,6 +170,38 @@ final class BoundedJigsawSolverTest {
                 .get("consumedByParent").getAsBoolean());
         assertFalse(trace.getAsJsonObject("plan").getAsJsonObject("quality")
                 .get("startPieceOnly").getAsBoolean());
+    }
+
+    @Test
+    void assignsUniqueInstanceIdsWhenPrototypePieceIsAcceptedMoreThanOnce() {
+        JsonObject input = baseInput(2048);
+        input.addProperty("maxPieces", 3);
+        input.add("startPieces", pieces(piece("start_piece_1", "minecraft:start_house",
+                "minecraft:village/plains/town_centers", 0, 0, 7, 7,
+                connector("door_east_a", "minecraft:street", "minecraft:street",
+                        "minecraft:village/plains/streets", 7, 64, 0, "east"),
+                connector("door_east_b", "minecraft:street", "minecraft:street",
+                        "minecraft:village/plains/streets", 7, 64, 8, "east"))));
+        JsonObject pools = new JsonObject();
+        JsonObject prototype = piece("street_piece_1", "minecraft:street_1",
+                "minecraft:village/plains/streets", 0, 0, 7, 7,
+                connector("street_west", "minecraft:street", "minecraft:street",
+                        "minecraft:village/plains/terminators", 0, 64, 0, "west"));
+        prototype.addProperty("adapterScope", "child_pool_prototype");
+        prototype.addProperty("prototypePlacementStatus", "connector_alignment_pending");
+        pools.add("minecraft:village/plains/streets", pieces(prototype));
+        input.add("candidatePools", pools);
+
+        JsonObject trace = new BoundedJigsawSolver().solve(input);
+
+        JsonArray accepted = trace.getAsJsonArray("acceptedPieces");
+        assertEquals(3, accepted.size());
+        assertEquals("street_piece_1", accepted.get(1).getAsJsonObject()
+                .get("pieceId").getAsString());
+        assertEquals("street_piece_1_inst_2", accepted.get(2).getAsJsonObject()
+                .get("pieceId").getAsString());
+        assertEquals("street_piece_1", accepted.get(2).getAsJsonObject()
+                .get("sourcePieceId").getAsString());
     }
 
     @Test

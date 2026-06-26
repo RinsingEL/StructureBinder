@@ -43,13 +43,20 @@ final class BoundedJigsawPoolAdapter {
                                   long seed,
                                   PoolLookup poolLookup) {
         JsonObject input = new JsonObject();
+        JsonObject config = request.boundedJigsawConfig() == null ? new JsonObject()
+                : request.boundedJigsawConfig();
+        int maxDepth = Math.max(0, intValue(config, "maxDepth", 2));
+        int maxPools = Math.max(1, intValue(config, "maxPools", 12));
+        int maxPieces = Math.max(1, intValue(config, "maxPieces", 4));
+        double budgetHardCapRatio = Math.max(1.0d, doubleValue(config, "budgetHardCapRatio", 1.2d));
         input.addProperty("sourceStructureId", request.structureId());
         input.addProperty("seedKey", request.structureId() + ":" + request.anchorBlock().x() + ":"
-                + request.anchorBlock().z() + ":" + request.rotation());
+                + request.anchorBlock().z() + ":" + request.rotation() + ":" + request.planSampleKey());
         input.addProperty("startPool", poolName(startPool));
         input.addProperty("targetAreaBlocks", request.targetAreaBlocks());
-        input.addProperty("maxPieces", 4);
-        input.addProperty("maxDepth", 2);
+        input.addProperty("maxPieces", maxPieces);
+        input.addProperty("maxDepth", maxDepth);
+        input.addProperty("budgetHardCapRatio", budgetHardCapRatio);
         input.add("constraintField", request.constraintField() == null ? new JsonObject()
                 : request.constraintField().deepCopy());
         JsonArray startPieces = inspectPool(startPool, templateManager, anchor, rotation, seed, "start_piece");
@@ -62,7 +69,7 @@ final class BoundedJigsawPoolAdapter {
             }
             return inspectPoolRotations(pool, templateManager, anchor, seed + depth * 997L,
                     "pool_" + safeId(poolId) + "_piece");
-        }, 2, 12);
+        }, maxDepth, maxPools);
         input.add("candidatePools", candidatePools);
         input.add("poolAdapterReport", report);
         return input;
@@ -299,6 +306,20 @@ final class BoundedJigsawPoolAdapter {
 
     private static int area(BoundingBox box) {
         return (box.maxX() - box.minX() + 1) * (box.maxZ() - box.minZ() + 1);
+    }
+
+    private static int intValue(JsonObject obj, String key, int defaultValue) {
+        if (obj == null || !obj.has(key) || obj.get(key).isJsonNull()) {
+            return defaultValue;
+        }
+        return obj.get(key).getAsInt();
+    }
+
+    private static double doubleValue(JsonObject obj, String key, double defaultValue) {
+        if (obj == null || !obj.has(key) || obj.get(key).isJsonNull()) {
+            return defaultValue;
+        }
+        return obj.get(key).getAsDouble();
     }
 
     interface PoolLookup {

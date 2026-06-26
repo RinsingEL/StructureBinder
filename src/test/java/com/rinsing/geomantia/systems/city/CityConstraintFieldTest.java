@@ -57,11 +57,11 @@ final class CityConstraintFieldTest {
     }
 
     @Test
-    void rejectsAreaBudgetOverflow() {
+    void rejectsAreaHardCapOverflow() {
         CityConstraintField.ValidationResult result = CityConstraintField.fromJson(field())
                 .validatePiece(new BlockBounds(0, 0, 31, 31), 128);
 
-        assertEquals("JIGSAW_AREA_BUDGET_REACHED", result.reasonCode());
+        assertEquals("JIGSAW_AREA_HARD_CAP_REACHED", result.reasonCode());
     }
 
     @Test

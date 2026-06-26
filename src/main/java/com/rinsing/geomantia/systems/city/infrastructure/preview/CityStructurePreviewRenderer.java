@@ -51,9 +51,11 @@ public final class CityStructurePreviewRenderer {
         Files.createDirectories(outputDirectory);
         Path start = outputDirectory.resolve("start_candidate_preview.png");
         Path placed = outputDirectory.resolve("placed_structure_preview.png");
+        Path pieces = outputDirectory.resolve("bounded_piece_preview.png");
         drawD7Start(zoneMap, buildableAreaMap, startCandidateSets, placedStructureMap, start);
         drawD7Placed(zoneMap, buildableAreaMap, placedStructureMap, placed);
-        return new D7PreviewPaths(start, placed);
+        drawD7BoundedPieces(zoneMap, buildableAreaMap, placedStructureMap, pieces);
+        return new D7PreviewPaths(start, placed, pieces);
     }
 
     private void drawD6Choice(FunctionZoneMap zoneMap, BuildableAreaMap buildableAreaMap,
@@ -196,6 +198,73 @@ public final class CityStructurePreviewRenderer {
         ImageIO.write(image, "png", path.toFile());
     }
 
+    private void drawD7BoundedPieces(FunctionZoneMap zoneMap, BuildableAreaMap buildableAreaMap,
+                                     JsonObject placedMap, Path path) throws IOException {
+        BufferedImage image = baseImage();
+        Graphics2D g = image.createGraphics();
+        try {
+            setup(g);
+            Transform t = transform(zoneMap.grid());
+            drawZones(g, t, zoneMap);
+            drawBuildable(g, t, zoneMap.grid(), buildableAreaMap);
+            for (JsonElement elem : array(placedMap, "placedStructures")) {
+                JsonObject placed = elem.getAsJsonObject();
+                boolean fixed = "fixed_footprint".equals(string(placed, "footprintMode"));
+                g.setColor(fixed ? new Color(47, 79, 173, 45) : new Color(42, 138, 104, 42));
+                fillBounds(g, t, bounds(placed.getAsJsonObject("footprint")));
+                g.setColor(fixed ? new Color(22, 48, 138, 135) : new Color(25, 101, 77, 135));
+                g.setStroke(new BasicStroke(fixed ? 2.4f : 2.0f));
+                drawBounds(g, t, bounds(placed.getAsJsonObject("footprint")));
+            }
+            int pieceIndex = 1;
+            int summaryY = 68;
+            for (JsonElement placedElem : array(placedMap, "placedStructures")) {
+                JsonObject placed = placedElem.getAsJsonObject();
+                JsonObject trace = object(placed, "boundedJigsawTrace");
+                if (trace == null) {
+                    continue;
+                }
+                g.setColor(new Color(30, 32, 30));
+                g.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 12));
+                String summary = "selected " + string(placed, "anchorCandidateId")
+                        + " score=" + number(trace, "selectedPlanScore")
+                        + " feasibility=" + string(trace, "feasibility")
+                        + " stop=" + dominantReportKey(object(trace, "terminationReport"));
+                g.drawString(summary, 20, summaryY);
+                summaryY += 16;
+                for (JsonElement pieceElem : array(trace, "acceptedPieces")) {
+                    JsonObject piece = pieceElem.getAsJsonObject();
+                    if (!piece.has("footprint") || !piece.get("footprint").isJsonObject()) {
+                        continue;
+                    }
+                    boolean applied = !"failed".equals(string(piece, "pasteStatus"))
+                            && (!piece.has("worldMutationApplied") || bool(piece, "worldMutationApplied"));
+                    BlockBounds footprint = bounds(piece.getAsJsonObject("footprint"));
+                    g.setColor(applied ? new Color(222, 182, 64, 108) : new Color(190, 88, 70, 92));
+                    fillBounds(g, t, footprint);
+                    g.setColor(applied ? new Color(150, 98, 18, 235) : new Color(148, 50, 41, 220));
+                    g.setStroke(new BasicStroke(2.0f));
+                    drawBounds(g, t, footprint);
+                    BlockPoint center = footprint.center();
+                    String label = string(piece, "pieceId");
+                    if (label.isBlank()) {
+                        label = "piece_" + pieceIndex;
+                    }
+                    g.drawString(label, t.x(center.x()), t.z(center.z()));
+                    pieceIndex++;
+                }
+            }
+            g.setColor(new Color(30, 32, 30));
+            g.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 16));
+            g.drawString("City D7 bounded piece preview", 20, 26);
+            g.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 13));
+            g.drawString("blue=fixed green=variable footprint yellow=accepted piece red=failed/unapplied piece", 20, 46);
+        } finally {
+            g.dispose();
+        }
+        ImageIO.write(image, "png", path.toFile());
+    }
+
     private BufferedImage baseImage() {
         BufferedImage image = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = image.createGraphics();
@@ -288,6 +357,45 @@ public final class CityStructurePreviewRenderer {
         return obj != null && obj.has(key) && !obj.get(key).isJsonNull() ? obj.get(key).getAsString() : "";
     }
 
+    private String number(JsonObject obj, String key) {
+        if (obj == null || !obj.has(key) || obj.get(key).isJsonNull()) {
+            return "";
+        }
+        try {
+            return String.format(java.util.Locale.ROOT, "%.1f", obj.get(key).getAsDouble());
+        } catch (RuntimeException ignored) {
+            return obj.get(key).getAsString();
+        }
+    }
+
+    private JsonObject object(JsonObject obj, String key) {
+        return obj != null && obj.has(key) && obj.get(key).isJsonObject() ? obj.getAsJsonObject(key) : null;
+    }
+
+    private String dominantReportKey(JsonObject report) {
+        if (report == null) {
+            return "";
+        }
+        String best = "";
+        int bestValue = 0;
+        for (String key : report.keySet()) {
+            if (key.startsWith("total")) {
+                continue;
+            }
+            int value;
+            try {
+                value = report.get(key).getAsInt();
+            } catch (RuntimeException ignored) {
+                value = 0;
+            }
+            if (value > bestValue) {
+                bestValue = value;
+                best = key;
+            }
+        }
+        return best;
+    }
+
     private BlockBounds bounds(JsonObject obj) {
         return new BlockBounds(value(obj, "minX"), value(obj, "minZ"), value(obj, "maxX"), value(obj, "maxZ"));
     }
@@ -317,6 +425,7 @@ public final class CityStructurePreviewRenderer {
     public record D6PreviewPaths(Path structureChoicePreview, Path fixedPlacementPreview) {
     }
 
-    public record D7PreviewPaths(Path startCandidatePreview, Path placedStructurePreview) {
+    public record D7PreviewPaths(Path startCandidatePreview, Path placedStructurePreview,
+                                 Path boundedPiecePreview) {
     }
 }

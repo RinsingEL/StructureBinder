@@ -61,8 +61,8 @@ public final class CityConstraintField {
         }
         ruleResults.add(ruleResult("zone_allowed_area", "passed", ""));
         if (targetAreaBlocks > 0 && area(footprint) > targetAreaBlocks) {
-            ruleResults.add(ruleResult("visible_area_budget", "failed", "JIGSAW_AREA_BUDGET_REACHED"));
-            return ValidationResult.failed("JIGSAW_AREA_BUDGET_REACHED", ruleResults);
+            ruleResults.add(ruleResult("visible_area_budget", "failed", "JIGSAW_AREA_HARD_CAP_REACHED"));
+            return ValidationResult.failed("JIGSAW_AREA_HARD_CAP_REACHED", ruleResults);
         }
         ruleResults.add(ruleResult("visible_area_budget", "passed", ""));
         String cellFailure = cellFailure(footprint, ruleResults);

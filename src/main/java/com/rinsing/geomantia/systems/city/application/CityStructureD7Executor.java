@@ -28,6 +28,10 @@ public final class CityStructureD7Executor {
     private static final Pattern RESOURCE_ID = Pattern.compile("[a-z0-9_.-]+:[a-z0-9_./-]+");
     private static final int MAX_CANDIDATES_PER_TASK = 96;
     private static final int MAX_ATTEMPTS_PER_TASK = 4;
+    private static final int MAX_SATELLITE_STARTS_PER_VARIABLE_SELECTION = 4;
+    private static final int DEFAULT_SAMPLE_CANDIDATE_COUNT = 8;
+    private static final int DEFAULT_SAMPLE_SEEDS_PER_CANDIDATE = 2;
+    private static final double DEFAULT_BUDGET_HARD_CAP_RATIO = 1.2d;
 
     public Result execute(FunctionZoneMap zoneMap,
                           BuildableAreaMap buildableAreaMap,
@@ -120,23 +124,56 @@ public final class CityStructureD7Executor {
                 for (JsonElement elem : arrayValue(pool, "variableSelections", new JsonArray())) {
                     JsonObject selection = elem.getAsJsonObject();
                     VariableTask task = task(zone, selection, remainingByZone.getOrDefault(zoneId, 0));
-                    if (alreadyPlacedVariable(task, placed)) {
+                    VariableProgress progress = variableProgress(task, placed);
+                    if (progress.remainingTargetBlocks() <= 0) {
                         variableAttempts.add(alreadyPlacedVariableAttempt(task, zone));
                         continue;
                     }
-                    JsonObject startSet = buildStartCandidateSet(cityId, worldSeed, zone, task, placed);
-                    startCandidateSets.add(startSet);
-                    AttemptResult result = executeVariable(startSet, task, zone, placed, backend);
-                    variableAttempts.addAll(result.attempts());
-                    if (result.placed() != null) {
-                        placed.add(result.placed());
-                        placedStructures.add(result.placed().asJson());
-                        remainingByZone.computeIfPresent(result.placed().zonePatchId(),
-                                (id, value) -> Math.max(0, value - result.placed().visibleAreaCost()));
-                    } else if (result.waiting()) {
-                        increment(waitingSummary, result.reasonCode());
-                    } else {
-                        increment(failureSummary, result.reasonCode());
+                    if (progress.placedCount() > 0 && !task.boundedConfig().enableSatelliteStarts()) {
+                        variableAttempts.add(singleStartAlreadyMaterializedAttempt(task, zone, progress));
+                        continue;
+                    }
+                    int starts = progress.placedCount();
+                    int failedStarts = 0;
+                    Set<String> blockedStartCandidateIds = new HashSet<>(progress.anchorCandidateIds());
+                    int maxStarts = task.boundedConfig().enableSatelliteStarts()
+                            ? MAX_SATELLITE_STARTS_PER_VARIABLE_SELECTION
+                            : 1;
+                    while (starts < maxStarts) {
+                        int remainingTarget = remainingTargetBlocks(task, placed);
+                        int remainingZoneArea = remainingByZone.getOrDefault(zoneId, 0);
+                        int runTarget = Math.min(remainingTarget, remainingZoneArea);
+                        if (hardCapBlocks(runTarget, task.boundedConfig()) < task.startAreaBlocks()) {
+                            break;
+                        }
+                        VariableTask runTask = task.withTargetAreaBlocks(runTarget);
+                        JsonObject startSet = buildStartCandidateSet(cityId, worldSeed, zone, runTask,
+                                placed, blockedStartCandidateIds, starts);
+                        startCandidateSets.add(startSet);
+                        AttemptResult result = executeVariable(startSet, runTask, zone, placed, backend);
+                        variableAttempts.addAll(result.attempts());
+                        blockedStartCandidateIds.addAll(result.attemptedStartCandidateIds());
+                        if (result.placed() != null) {
+                            placed.add(result.placed());
+                            placedStructures.add(result.placed().asJson());
+                            remainingByZone.computeIfPresent(result.placed().zonePatchId(),
+                                    (id, value) -> Math.max(0, value - result.placed().visibleAreaCost()));
+                            blockedStartCandidateIds.add(result.placed().anchorCandidateId());
+                            starts++;
+                            failedStarts = 0;
+                        } else if (result.waiting()) {
+                            increment(waitingSummary, result.reasonCode());
+                            break;
+                        } else {
+                            failedStarts++;
+                            increment(failureSummary, result.reasonCode());
+                            if (!task.boundedConfig().enableSatelliteStarts()
+                                    || "NO_START_CANDIDATE".equals(result.reasonCode())
+                                    || "START_RETRY_BUDGET_EXHAUSTED".equals(result.reasonCode())
+                                    || failedStarts >= MAX_ATTEMPTS_PER_TASK) {
+                                break;
+                            }
+                        }
                     }
                 }
             }
@@ -208,6 +245,9 @@ public final class CityStructureD7Executor {
 
     private AttemptResult executeVariable(JsonObject startSet, VariableTask task, ZoneInfo zone,
                                           List<Placed> placed, PlacementBackend backend) {
+        if ("bounded_jigsaw".equals(task.materializationMode())) {
+            return executeBoundedVariable(startSet, task, zone, placed, backend);
+        }
         JsonArray attempts = new JsonArray();
         List<JsonObject> candidates = jsonObjects(requiredArray(startSet, "candidates")).stream()
                 .filter(candidate -> boolValue(candidate, "hardPassed", false))
@@ -223,14 +263,18 @@ public final class CityStructureD7Executor {
             return new AttemptResult(new JsonObject(), attempts, null, "NO_START_CANDIDATE");
         }
         Set<String> tried = new HashSet<>();
+        Set<String> attemptedStartCandidateIds = new LinkedHashSet<>();
         String lastReason = "START_RETRY_BUDGET_EXHAUSTED";
         for (int retry = 0; retry < Math.min(task.retryBudget(), MAX_ATTEMPTS_PER_TASK); retry++) {
-            JsonObject candidate = chooseCandidate(candidates, task.seedKey() + ":" + retry, tried);
+            JsonObject candidate = chooseCandidate(candidates, stringValue(startSet, "seedKey", task.seedKey())
+                    + ":" + retry, tried);
             if (candidate == null) {
                 lastReason = "START_RETRY_BUDGET_EXHAUSTED";
                 break;
             }
-            tried.add(requiredString(candidate, "startCandidateId"));
+            String startCandidateId = requiredString(candidate, "startCandidateId");
+            tried.add(startCandidateId);
+            attemptedStartCandidateIds.add(startCandidateId);
             BlockBounds footprint = bounds(requiredObject(candidate, "candidateFootprint"));
             BlockBounds requiredBounds = bounds(requiredObject(candidate, "requiredPlacementBounds"));
             BlockPoint anchor = blockPoint(requiredObject(candidate, "anchorBlock"));
@@ -256,11 +300,12 @@ public final class CityStructureD7Executor {
                     ? backend.placeBoundedJigsaw(request)
                     : backend.place(request);
             if ("bounded_jigsaw".equals(task.materializationMode()) && placement.trace() != null) {
-                attempt.add("boundedJigsawTrace", placement.trace());
+                attempt.add("boundedJigsawTrace", compactBoundedTrace(placement.trace(), true));
             }
             if (placement.waiting()) {
                 attempts.add(waitingJson(attempt, placement.reasonCode(), placement.message()));
-                return new AttemptResult(new JsonObject(), attempts, null, placement.reasonCode(), true);
+                return new AttemptResult(new JsonObject(), attempts, null, placement.reasonCode(), true,
+                        attemptedStartCandidateIds);
             }
             if (!placement.success()) {
                 lastReason = placement.reasonCode();
@@ -274,50 +319,225 @@ public final class CityStructureD7Executor {
             attempts.add(attempt);
             BlockBounds placedFootprint = placement.footprint() == null ? footprint : placement.footprint();
             BlockBounds placedClearance = placement.requiredLoadBounds() == null ? requiredBounds : placement.requiredLoadBounds();
-            Placed placedStructure = new Placed("placed_" + task.taskId(), task.selectionId(),
-                    requiredString(candidate, "startCandidateId"), zone.zonePatchId(), task.structureId(),
+            Placed placedStructure = new Placed("placed_" + task.taskId() + "_" + safeId(startCandidateId),
+                    task.selectionId(), startCandidateId, zone.zonePatchId(), task.structureId(),
                     "variable_area", task.placementKind(), task.placementCommand(), anchor, anchor,
                     requiredString(candidate, "rotation"), placedFootprint, placedClearance,
-                    Math.min(task.targetAreaBlocks(), area(placedFootprint)), task.materializationMode(),
-                    placement.trace(), placement.worldMutationApplied());
-            return new AttemptResult(new JsonObject(), attempts, placedStructure, "");
+                    Math.min(task.targetAreaBlocks(), visibleAreaCost(placement, placedFootprint)),
+                    task.materializationMode(),
+                    compactBoundedTrace(placement.trace(), true), placement.worldMutationApplied());
+            return new AttemptResult(new JsonObject(), attempts, placedStructure, "", false,
+                    attemptedStartCandidateIds);
         }
-        return new AttemptResult(new JsonObject(), attempts, null, lastReason);
+        return new AttemptResult(new JsonObject(), attempts, null, lastReason, false, attemptedStartCandidateIds);
+    }
+
+    private AttemptResult executeBoundedVariable(JsonObject startSet, VariableTask task, ZoneInfo zone,
+                                                 List<Placed> placed, PlacementBackend backend) {
+        JsonArray attempts = new JsonArray();
+        List<JsonObject> candidates = jsonObjects(requiredArray(startSet, "candidates")).stream()
+                .filter(candidate -> boolValue(candidate, "hardPassed", false))
+                .sorted(Comparator.comparingDouble(candidate -> -doubleValue(candidate, "score", 0)))
+                .limit(Math.max(1, task.boundedConfig().sampleCandidateCount()))
+                .toList();
+        if (candidates.isEmpty()) {
+            JsonObject attempt = baseAttempt("variable", task.taskId(), zone.zonePatchId(), task.structureId(),
+                    task.placementKind(), task.placementCommand(), "", new BlockPoint(0, 0), "NONE", 0);
+            attempt.addProperty("materializationMode", task.materializationMode());
+            attempt.addProperty("sourcePlanRef", "StructurePoolMap:" + task.selectionId());
+            attempt.addProperty("retryBudget", task.retryBudget());
+            attempts.add(failedJson(attempt, "NO_START_CANDIDATE", "No hard-passed StartCandidateSet candidate."));
+            return new AttemptResult(new JsonObject(), attempts, null, "NO_START_CANDIDATE");
+        }
+
+        JsonArray samples = new JsonArray();
+        Set<String> attemptedStartCandidateIds = new LinkedHashSet<>();
+        PlanSample selected = null;
+        String lastReason = "JIGSAW_NO_ACCEPTED_PIECE";
+        JsonObject lastPlanTrace = null;
+        int sampleIndex = 0;
+        for (JsonObject candidate : candidates) {
+            String startCandidateId = requiredString(candidate, "startCandidateId");
+            attemptedStartCandidateIds.add(startCandidateId);
+            BlockBounds footprint = bounds(requiredObject(candidate, "candidateFootprint"));
+            String validatorReason = validatorFailure(zone, footprint, placed, task);
+            for (int seedIndex = 0; seedIndex < Math.max(1, task.boundedConfig().sampleSeedsPerCandidate()); seedIndex++) {
+                sampleIndex++;
+                JsonObject sample = sampleBase(task, zone, candidate, sampleIndex, seedIndex);
+                if (!validatorReason.isBlank()) {
+                    sample.addProperty("status", "failed");
+                    sample.addProperty("reasonCode", validatorReason);
+                    sample.addProperty("message", "D7 validator rejected start candidate before bounded planning.");
+                    sample.add("terminationReport", terminationReportForReason(validatorReason));
+                    sample.add("rejectionReport", new JsonObject());
+                    sample.addProperty("feasibility", "FAILED");
+                    sample.addProperty("score", 0.0d);
+                    sample.add("scoreBreakdown", new JsonObject());
+                    samples.add(sample);
+                    lastReason = validatorReason;
+                    continue;
+                }
+                PlacementRequest request = boundedRequest(task, zone, placed, candidate,
+                        "sample_" + sampleIndex + "_seed_" + seedIndex);
+                PlacementResult planned = backend.planBoundedJigsaw(request);
+                if (planned.trace() != null) {
+                    sample.add("boundedJigsawTraceSummary", boundedTraceSummary(planned.trace()));
+                    lastPlanTrace = planned.trace().deepCopy();
+                }
+                sample.addProperty("status", planned.waiting() ? "waiting" : planned.success() ? "planned" : "failed");
+                sample.addProperty("reasonCode", planned.reasonCode());
+                sample.addProperty("message", planned.message());
+                sample.addProperty("worldMutationApplied", planned.worldMutationApplied());
+                Score score = scoreSample(planned.trace(), planned.success(), planned.waiting(), planned.reasonCode(),
+                        task.boundedConfig());
+                sample.addProperty("score", score.value());
+                sample.addProperty("feasibility", score.feasibility());
+                sample.addProperty("limitingFactor", score.limitingFactor());
+                sample.add("scoreBreakdown", score.breakdown());
+                sample.add("terminationReport", reportFromTrace(planned.trace(), "terminationReport",
+                        terminationReportForReason(planned.reasonCode())));
+                sample.add("rejectionReport", reportFromTrace(planned.trace(), "rejectionReport", new JsonObject()));
+                samples.add(sample);
+                if (planned.waiting()) {
+                    return new AttemptResult(new JsonObject(), attemptsWithPlanning(attempts, task, zone, candidate,
+                            samples, sample, planned, "waiting"), null, planned.reasonCode(), true,
+                            attemptedStartCandidateIds);
+                }
+                if (!planned.success()) {
+                    lastReason = planned.reasonCode().isBlank() ? lastReason : planned.reasonCode();
+                    continue;
+                }
+                PlanSample candidateSample = new PlanSample(sample.deepCopy(), request, planned, score,
+                        startCandidateId, candidate.deepCopy());
+                if (selected == null || candidateSample.score().value() > selected.score().value()) {
+                    selected = candidateSample;
+                }
+            }
+        }
+
+        if (selected == null) {
+            JsonObject attempt = baseAttempt("variable", task.taskId(), zone.zonePatchId(), task.structureId(),
+                    task.placementKind(), task.placementCommand(), "", BlockPoint.ORIGIN, "NONE", 0);
+            attempt.addProperty("materializationMode", task.materializationMode());
+            attempt.addProperty("sourcePlanRef", "StructurePoolMap:" + task.selectionId());
+            attempt.addProperty("retryBudget", task.retryBudget());
+            attempt.add("boundedJigsawSamples", samples);
+            attempt.add("terminationReport", aggregateSampleReport(samples, "terminationReport"));
+            attempt.add("rejectionReport", aggregateSampleReport(samples, "rejectionReport"));
+            attempt.addProperty("feasibility", "FAILED");
+            attempt.addProperty("limitingFactor", dominantLimitingFactor(samples));
+            if (lastPlanTrace != null) {
+                attempt.add("boundedJigsawTrace", compactBoundedTrace(lastPlanTrace, true));
+            }
+            attempts.add(failedJson(attempt, lastReason, "No bounded dry-run sample produced an accepted plan."));
+            return new AttemptResult(new JsonObject(), attempts, null, lastReason, false, attemptedStartCandidateIds);
+        }
+
+        JsonObject selectedCandidate = selected.candidate();
+        PlacementResult materialized = backend.materializeBoundedJigsaw(selected.request(), selected.result().trace());
+        JsonObject attempt = baseAttempt("variable", task.taskId(), zone.zonePatchId(), task.structureId(),
+                task.placementKind(), task.placementCommand(), selected.startCandidateId(),
+                blockPoint(requiredObject(selectedCandidate, "anchorBlock")),
+                requiredString(selectedCandidate, "rotation"), 0);
+        attempt.addProperty("materializationMode", task.materializationMode());
+        attempt.addProperty("sourcePlanRef", "StructurePoolMap:" + task.selectionId());
+        attempt.addProperty("retryBudget", task.retryBudget());
+        attempt.add("scoreBreakdown", selected.score().breakdown());
+        attempt.add("requiredPlacementBounds", requiredObject(selectedCandidate, "requiredPlacementBounds").deepCopy());
+        attempt.add("requiredChunkRange", requiredObject(selectedCandidate, "requiredChunkRange").deepCopy());
+        attempt.add("boundedJigsawSamples", samples);
+        attempt.addProperty("selectedSampleId", stringValue(selected.sample(), "sampleId", ""));
+        attempt.addProperty("selectedPlanScore", selected.score().value());
+        attempt.addProperty("feasibility", selected.score().feasibility());
+        attempt.addProperty("limitingFactor", selected.score().limitingFactor());
+        attempt.add("terminationReport", reportFromTrace(selected.result().trace(), "terminationReport",
+                terminationReportForReason(selected.result().reasonCode())));
+        attempt.add("rejectionReport", reportFromTrace(selected.result().trace(), "rejectionReport", new JsonObject()));
+        JsonObject finalTrace = materialized.trace() == null ? selected.result().trace() : materialized.trace();
+        if (finalTrace != null) {
+            finalTrace.addProperty("selectedSampleId", stringValue(selected.sample(), "sampleId", ""));
+            finalTrace.addProperty("selectedPlanScore", selected.score().value());
+            finalTrace.addProperty("feasibility", selected.score().feasibility());
+            finalTrace.addProperty("limitingFactor", selected.score().limitingFactor());
+            finalTrace.add("scoreBreakdown", selected.score().breakdown().deepCopy());
+            attempt.add("boundedJigsawTrace", compactBoundedTrace(finalTrace, true));
+        }
+        if (materialized.waiting()) {
+            attempts.add(waitingJson(attempt, materialized.reasonCode(), materialized.message()));
+            return new AttemptResult(new JsonObject(), attempts, null, materialized.reasonCode(), true,
+                    attemptedStartCandidateIds);
+        }
+        if (!materialized.success()) {
+            attempts.add(failedJson(attempt, materialized.reasonCode(), materialized.message()));
+            return new AttemptResult(new JsonObject(), attempts, null, materialized.reasonCode(), false,
+                    attemptedStartCandidateIds);
+        }
+        attempt.addProperty("status", "placed");
+        attempt.addProperty("reasonCode", "");
+        attempt.addProperty("message", materialized.message());
+        attempt.addProperty("worldMutationApplied", materialized.worldMutationApplied());
+        attempts.add(attempt);
+
+        BlockBounds placedFootprint = materialized.footprint() == null
+                ? bounds(requiredObject(selectedCandidate, "candidateFootprint"))
+                : materialized.footprint();
+        BlockBounds placedClearance = materialized.requiredLoadBounds() == null
+                ? bounds(requiredObject(selectedCandidate, "requiredPlacementBounds"))
+                : materialized.requiredLoadBounds();
+        Placed placedStructure = new Placed("placed_" + task.taskId() + "_" + safeId(selected.startCandidateId()),
+                task.selectionId(), selected.startCandidateId(), zone.zonePatchId(), task.structureId(),
+                "variable_area", task.placementKind(), task.placementCommand(),
+                blockPoint(requiredObject(selectedCandidate, "anchorBlock")),
+                blockPoint(requiredObject(selectedCandidate, "anchorBlock")),
+                requiredString(selectedCandidate, "rotation"), placedFootprint, placedClearance,
+                visibleAreaCost(materialized, placedFootprint), task.materializationMode(),
+                compactBoundedTrace(finalTrace, true), materialized.worldMutationApplied());
+        return new AttemptResult(new JsonObject(), attempts, placedStructure, "", false, attemptedStartCandidateIds);
     }
 
     private JsonObject buildStartCandidateSet(String cityId, long worldSeed, ZoneInfo zone, VariableTask task,
                                               List<Placed> placed) {
+        return buildStartCandidateSet(cityId, worldSeed, zone, task, placed, Set.of(), 0);
+    }
+
+    private JsonObject buildStartCandidateSet(String cityId, long worldSeed, ZoneInfo zone, VariableTask task,
+                                              List<Placed> placed, Set<String> blockedStartCandidateIds,
+                                              int startIndex) {
         JsonObject set = new JsonObject();
         set.addProperty("schemaVersion", "city_start_candidate_set.v0.1");
         set.addProperty("cityId", cityId);
         set.addProperty("zonePatchId", zone.zonePatchId());
         set.addProperty("taskId", task.taskId());
         set.addProperty("structureId", task.structureId());
-        set.addProperty("seedKey", task.seedKey());
+        set.addProperty("startIndex", startIndex);
+        set.addProperty("remainingTargetAreaBlocks", task.targetAreaBlocks());
+        set.addProperty("seedKey", task.seedKey() + ":" + startIndex);
         JsonArray candidates = new JsonArray();
         int index = 1;
         for (CellAnchor anchor : zone.anchors()) {
             for (String rotation : task.rotations()) {
                 BlockBounds footprint = task.startFootprint().boundsAt(anchor.blockMinX(), anchor.blockMinZ(), rotation);
-                boolean hard = zone.covers(footprint) && !conflicts(footprint, placed) && area(footprint) <= task.targetAreaBlocks();
+                String candidateId = task.taskId() + "_start_" + String.format(Locale.ROOT, "%03d", index++);
+                boolean blocked = blockedStartCandidateIds.contains(candidateId);
+                boolean hard = !blocked && zone.covers(footprint) && !conflicts(footprint, placed)
+                        && area(footprint) <= hardCapBlocks(task.targetAreaBlocks(), task.boundedConfig());
                 BlockBounds requiredBounds = task.requiredBounds(footprint.center());
                 JsonObject candidate = new JsonObject();
-                candidate.addProperty("startCandidateId", task.taskId() + "_start_" + String.format(Locale.ROOT, "%03d", index++));
+                candidate.addProperty("startCandidateId", candidateId);
                 candidate.add("anchorBlock", footprint.center().asJson());
                 candidate.addProperty("rotation", rotation);
                 candidate.add("candidateFootprint", boundsJson(footprint));
                 candidate.add("requiredPlacementBounds", boundsJson(requiredBounds));
                 candidate.add("requiredChunkRange", chunkRangeJson(requiredBounds));
                 candidate.addProperty("hardPassed", hard);
-                double score = score(zone, footprint, worldSeed, task.seedKey());
-                candidate.addProperty("score", hard ? score : 0);
-                JsonObject scoreBreakdown = new JsonObject();
-                scoreBreakdown.addProperty("interiorScore", score);
+                StartCandidateScore score = score(zone, footprint, worldSeed, task.seedKey());
+                candidate.addProperty("score", hard ? score.value() : 0);
+                JsonObject scoreBreakdown = score.asJson();
                 scoreBreakdown.addProperty("buildableFit", hard ? 1.0 : 0.0);
                 candidate.add("scoreBreakdown", scoreBreakdown);
                 JsonArray risks = new JsonArray();
                 if (!hard) {
-                    risks.add("hard_filter_failed");
+                    risks.add(blocked ? "previously_selected_start" : "hard_filter_failed");
                 }
                 candidate.add("riskFlags", risks);
                 candidates.add(candidate);
@@ -350,6 +570,64 @@ public final class CityStructureD7Executor {
         return pool.get(pool.size() - 1);
     }
 
+    private PlacementRequest boundedRequest(VariableTask task, ZoneInfo zone, List<Placed> placed,
+                                            JsonObject candidate, String sampleKey) {
+        return new PlacementRequest(task.structureId(), task.placementKind(), task.placementCommand(),
+                blockPoint(requiredObject(candidate, "anchorBlock")), requiredString(candidate, "rotation"),
+                bounds(requiredObject(candidate, "candidateFootprint")),
+                bounds(requiredObject(candidate, "requiredPlacementBounds")),
+                "variable_area", task.materializationMode(), constraintField(zone, placed), task.targetAreaBlocks(),
+                task.boundedConfig().asJson(), sampleKey == null ? "" : sampleKey);
+    }
+
+    private JsonObject sampleBase(VariableTask task, ZoneInfo zone, JsonObject candidate, int sampleIndex,
+                                  int seedIndex) {
+        JsonObject sample = new JsonObject();
+        sample.addProperty("sampleId", task.taskId() + "_sample_" + sampleIndex);
+        sample.addProperty("sampleIndex", sampleIndex);
+        sample.addProperty("seedIndex", seedIndex);
+        sample.addProperty("taskId", task.taskId());
+        sample.addProperty("zonePatchId", zone.zonePatchId());
+        sample.addProperty("structureId", task.structureId());
+        sample.addProperty("anchorCandidateId", requiredString(candidate, "startCandidateId"));
+        sample.add("candidateBlock", requiredObject(candidate, "anchorBlock").deepCopy());
+        sample.addProperty("rotation", requiredString(candidate, "rotation"));
+        sample.addProperty("startCandidateScore", doubleValue(candidate, "score", 0));
+        sample.add("startCandidateScoreBreakdown", requiredObject(candidate, "scoreBreakdown").deepCopy());
+        sample.add("requiredPlacementBounds", requiredObject(candidate, "requiredPlacementBounds").deepCopy());
+        sample.add("requiredChunkRange", requiredObject(candidate, "requiredChunkRange").deepCopy());
+        sample.add("boundedJigsawConfig", task.boundedConfig().asJson());
+        return sample;
+    }
+
+    private JsonArray attemptsWithPlanning(JsonArray attempts, VariableTask task, ZoneInfo zone, JsonObject candidate,
+                                           JsonArray samples, JsonObject selectedSample, PlacementResult result,
+                                           String status) {
+        JsonObject attempt = baseAttempt("variable", task.taskId(), zone.zonePatchId(), task.structureId(),
+                task.placementKind(), task.placementCommand(), requiredString(candidate, "startCandidateId"),
+                blockPoint(requiredObject(candidate, "anchorBlock")), requiredString(candidate, "rotation"), 0);
+        attempt.addProperty("materializationMode", task.materializationMode());
+        attempt.addProperty("sourcePlanRef", "StructurePoolMap:" + task.selectionId());
+        attempt.addProperty("retryBudget", task.retryBudget());
+        attempt.add("scoreBreakdown", objectValue(selectedSample, "scoreBreakdown", new JsonObject()).deepCopy());
+        attempt.add("boundedJigsawSamples", samples.deepCopy());
+        attempt.addProperty("selectedSampleId", stringValue(selectedSample, "sampleId", ""));
+        attempt.addProperty("selectedPlanScore", doubleValue(selectedSample, "score", 0));
+        attempt.addProperty("feasibility", stringValue(selectedSample, "feasibility", "FAILED"));
+        attempt.addProperty("limitingFactor", stringValue(selectedSample, "limitingFactor", ""));
+        attempt.add("terminationReport", objectValue(selectedSample, "terminationReport", new JsonObject()).deepCopy());
+        attempt.add("rejectionReport", objectValue(selectedSample, "rejectionReport", new JsonObject()).deepCopy());
+        attempt.add("requiredPlacementBounds", requiredObject(candidate, "requiredPlacementBounds").deepCopy());
+        attempt.add("requiredChunkRange", requiredObject(candidate, "requiredChunkRange").deepCopy());
+        if (result.trace() != null) {
+            attempt.add("boundedJigsawTrace", compactBoundedTrace(result.trace(), true));
+        }
+        attempts.add("waiting".equals(status)
+                ? waitingJson(attempt, result.reasonCode(), result.message())
+                : failedJson(attempt, result.reasonCode(), result.message()));
+        return attempts;
+    }
+
     private JsonObject constraintField(ZoneInfo zone, List<Placed> placed) {
         JsonObject obj = zone.asConstraintJson();
         JsonArray occupied = new JsonArray();
@@ -372,8 +650,8 @@ public final class CityStructureD7Executor {
         if (conflicts(footprint, placed)) {
             return "START_RUNTIME_OCCUPIED";
         }
-        if (area(footprint) > task.targetAreaBlocks()) {
-            return "START_BUDGET_EXCEEDED";
+        if (area(footprint) > hardCapBlocks(task.targetAreaBlocks(), task.boundedConfig())) {
+            return "JIGSAW_AREA_HARD_CAP_REACHED";
         }
         return "";
     }
@@ -400,6 +678,7 @@ public final class CityStructureD7Executor {
         JsonObject expectedRange = objectValue(selection, "expectedAreaRange", new JsonObject());
         int maxArea = Math.max(targetArea, intValue(expectedRange, "maxAreaBlocks", targetArea));
         String seedKey = zone.zonePatchId() + ":" + taskId + ":" + structureId;
+        BoundedJigsawConfig boundedConfig = boundedConfig(selection, structureId);
         return new VariableTask(selectionId, taskId, structureId,
                 requiredString(selection, "placementKind"),
                 stringValue(selection, "placementCommand", ""),
@@ -410,11 +689,431 @@ public final class CityStructureD7Executor {
                 maxArea,
                 List.of("NONE", "CLOCKWISE_90", "CLOCKWISE_180", "COUNTERCLOCKWISE_90"),
                 seedKey,
-                MAX_ATTEMPTS_PER_TASK);
+                MAX_ATTEMPTS_PER_TASK,
+                boundedConfig);
+    }
+
+    private BoundedJigsawConfig boundedConfig(JsonObject selection, String structureId) {
+        boolean village = structureId != null && structureId.contains("village");
+        JsonObject config = objectValue(selection, "boundedJigsawConfig", new JsonObject());
+        int defaultMaxPieces = village ? 16 : 8;
+        int defaultMaxDepth = village ? 4 : 3;
+        int defaultMaxPools = village ? 24 : 12;
+        return new BoundedJigsawConfig(
+                Math.max(1, intValue(config, "maxPieces", defaultMaxPieces)),
+                Math.max(0, intValue(config, "maxDepth", defaultMaxDepth)),
+                Math.max(1, intValue(config, "maxPools", defaultMaxPools)),
+                Math.max(1.0d, doubleValue(config, "budgetHardCapRatio", DEFAULT_BUDGET_HARD_CAP_RATIO)),
+                Math.max(1, intValue(config, "sampleCandidateCount", DEFAULT_SAMPLE_CANDIDATE_COUNT)),
+                Math.max(1, intValue(config, "sampleSeedsPerCandidate", DEFAULT_SAMPLE_SEEDS_PER_CANDIDATE)),
+                boolValue(config, "enableSatelliteStarts", false));
     }
 
     private boolean conflicts(BlockBounds bounds, List<Placed> placed) {
         return placed.stream().anyMatch(existing -> existing.clearanceFootprint().overlaps(bounds));
+    }
+
+    private VariableProgress variableProgress(VariableTask task, List<Placed> placed) {
+        int visibleArea = 0;
+        int count = 0;
+        Set<String> anchorCandidateIds = new LinkedHashSet<>();
+        for (Placed existing : placed) {
+            if (!"variable_area".equals(existing.footprintMode())
+                    || !task.selectionId().equals(existing.sourceSelectionId())
+                    || !task.structureId().equals(existing.structureId())) {
+                continue;
+            }
+            visibleArea += existing.visibleAreaCost();
+            count++;
+            anchorCandidateIds.add(existing.anchorCandidateId());
+        }
+        return new VariableProgress(visibleArea, Math.max(0, task.targetAreaBlocks() - visibleArea),
+                count, anchorCandidateIds);
+    }
+
+    private int remainingTargetBlocks(VariableTask task, List<Placed> placed) {
+        return variableProgress(task, placed).remainingTargetBlocks();
+    }
+
+    private int visibleAreaCost(PlacementResult placement, BlockBounds placedFootprint) {
+        if (placement.trace() != null && placement.trace().has("metrics")
+                && placement.trace().get("metrics").isJsonObject()) {
+            int visibleArea = intValue(placement.trace().getAsJsonObject("metrics"), "visibleAreaCost", 0);
+            if (visibleArea > 0) {
+                return visibleArea;
+            }
+        }
+        if (placement.trace() != null && placement.trace().has("plan")
+                && placement.trace().get("plan").isJsonObject()) {
+            int visibleArea = intValue(placement.trace().getAsJsonObject("plan"), "visibleAreaCost", 0);
+            if (visibleArea > 0) {
+                return visibleArea;
+            }
+        }
+        return area(placedFootprint);
+    }
+
+    private Score scoreSample(JsonObject trace, boolean success, boolean waiting, String reasonCode,
+                              BoundedJigsawConfig config) {
+        JsonObject metrics = objectValue(trace, "metrics", new JsonObject());
+        JsonObject plan = objectValue(trace, "plan", new JsonObject());
+        JsonObject quality = objectValue(plan, "quality", new JsonObject());
+        JsonArray rejected = arrayValue(trace, "rejectedPieces", new JsonArray());
+        JsonArray stopped = arrayValue(trace, "stoppedBranches", new JsonArray());
+        int acceptedPieces = intValue(metrics, "acceptedPieceCount",
+                arrayValue(trace, "acceptedPieces", new JsonArray()).size());
+        int visibleArea = intValue(metrics, "visibleAreaCost", intValue(plan, "visibleAreaCost", 0));
+        int targetArea = intValue(metrics, "targetAreaBlocks", intValue(trace, "targetAreaBlocks", 0));
+        double fillRatio = targetArea <= 0 ? 0.0d : visibleArea / (double) targetArea;
+        boolean startPieceOnly = boolValue(quality, "startPieceOnly", acceptedPieces <= 1);
+        double compactness = doubleValue(metrics, "compactness", doubleValue(quality, "compactness", 0.0d));
+        int maxDepth = Math.max(1, intValue(metrics, "maxDepth", config.maxDepth()));
+        int maxAcceptedDepth = intValue(metrics, "maxAcceptedDepth", intValue(quality, "maxAcceptedDepth", 0));
+        double rejectionRatio = rejected.size() + acceptedPieces + stopped.size() == 0
+                ? 0.0d
+                : rejected.size() / (double) (rejected.size() + acceptedPieces + stopped.size());
+        JsonObject rejectionReport = reportFromTrace(trace, "rejectionReport", new JsonObject());
+        double boundaryRatio = ratio(rejectionReport, "BOUNDARY_LIMITED", rejected.size());
+        double terrainRatio = ratio(rejectionReport, "TERRAIN_LIMITED", rejected.size());
+        double occupiedRatio = ratio(rejectionReport, "OCCUPIED_LIMITED", rejected.size());
+
+        double pieceScore = Math.min(1.0d, acceptedPieces / Math.max(1.0d, config.maxPieces() * 0.6d)) * 25.0d;
+        double fillScore = targetArea <= 0 ? 10.0d : Math.min(fillRatio, 1.0d) * 25.0d;
+        double overshootPenalty = Math.max(0.0d, fillRatio - 1.0d) * 12.0d;
+        double startOnlyPenalty = startPieceOnly ? 20.0d : 0.0d;
+        double compactnessScore = compactness * 15.0d;
+        double depthScore = Math.min(1.0d, maxAcceptedDepth / (double) maxDepth) * 10.0d;
+        double rejectionPenalty = rejectionRatio * 10.0d;
+        double failurePenalty = (boundaryRatio + terrainRatio + occupiedRatio) * 8.0d;
+        double statusPenalty = waiting ? 30.0d : success ? 0.0d : 45.0d;
+        double value = Math.max(0.0d, Math.min(100.0d,
+                pieceScore + fillScore + compactnessScore + depthScore
+                        - overshootPenalty - startOnlyPenalty - rejectionPenalty - failurePenalty - statusPenalty));
+
+        String feasibility;
+        if (!success || acceptedPieces == 0) {
+            feasibility = "FAILED";
+        } else if (acceptedPieces < 6 || fillRatio < 0.25d || startPieceOnly) {
+            feasibility = "HAMLET";
+        } else if (fillRatio < 0.70d) {
+            feasibility = "PARTIAL";
+        } else {
+            feasibility = "FULL";
+        }
+        String limitingFactor = dominantLimitingFactor(reportFromTrace(trace, "terminationReport",
+                terminationReportForReason(reasonCode)), rejectionReport, reasonCode, feasibility);
+
+        JsonObject breakdown = new JsonObject();
+        breakdown.addProperty("acceptedPieceCount", acceptedPieces);
+        breakdown.addProperty("visibleArea", visibleArea);
+        breakdown.addProperty("targetArea", targetArea);
+        breakdown.addProperty("fillRatio", fillRatio);
+        breakdown.addProperty("startPieceOnly", startPieceOnly);
+        breakdown.addProperty("compactness", compactness);
+        breakdown.addProperty("maxAcceptedDepth", maxAcceptedDepth);
+        breakdown.addProperty("maxDepth", maxDepth);
+        breakdown.addProperty("rejectionRatio", rejectionRatio);
+        breakdown.addProperty("boundaryFailureRatio", boundaryRatio);
+        breakdown.addProperty("terrainFailureRatio", terrainRatio);
+        breakdown.addProperty("occupiedFailureRatio", occupiedRatio);
+        breakdown.addProperty("pieceScore", pieceScore);
+        breakdown.addProperty("fillScore", fillScore);
+        breakdown.addProperty("compactnessScore", compactnessScore);
+        breakdown.addProperty("depthScore", depthScore);
+        breakdown.addProperty("overshootPenalty", overshootPenalty);
+        breakdown.addProperty("startOnlyPenalty", startOnlyPenalty);
+        breakdown.addProperty("rejectionPenalty", rejectionPenalty);
+        breakdown.addProperty("failurePenalty", failurePenalty);
+        breakdown.addProperty("statusPenalty", statusPenalty);
+        breakdown.addProperty("score", value);
+        breakdown.addProperty("feasibility", feasibility);
+        breakdown.addProperty("limitingFactor", limitingFactor);
+        return new Score(value, feasibility, limitingFactor, breakdown);
+    }
+
+    private static double ratio(JsonObject report, String key, int total) {
+        if (total <= 0) {
+            return 0.0d;
+        }
+        return intValue(report, key, 0) / (double) total;
+    }
+
+    private static String dominantLimitingFactor(JsonObject terminationReport, JsonObject rejectionReport,
+                                                 String fallbackReason, String feasibility) {
+        String best = "";
+        int bestCount = 0;
+        for (String key : List.of("BOUNDARY_LIMITED", "TERRAIN_LIMITED", "OCCUPIED_LIMITED", "POOL_LIMITED",
+                "CONNECTOR_LIMITED", "MAX_PIECES_REACHED", "MAX_DEPTH_REACHED", "AREA_HARD_CAP_REACHED",
+                "NO_FRONTIER")) {
+            int count = intValue(terminationReport, key, 0) + intValue(rejectionReport, key, 0);
+            if (count > bestCount) {
+                best = key;
+                bestCount = count;
+            }
+        }
+        if (!best.isBlank()) {
+            return best;
+        }
+        if (!fallbackReason.isBlank()) {
+            return terminationCategory(fallbackReason);
+        }
+        return "FULL".equals(feasibility) ? "" : "NO_FRONTIER";
+    }
+
+    private static String dominantLimitingFactor(JsonArray samples) {
+        JsonObject aggregate = aggregateSampleReport(samples, "terminationReport");
+        JsonObject rejections = aggregateSampleReport(samples, "rejectionReport");
+        return dominantLimitingFactor(aggregate, rejections, "", "FAILED");
+    }
+
+    private static JsonObject reportFromTrace(JsonObject trace, String key, JsonObject fallback) {
+        return trace != null && trace.has(key) && trace.get(key).isJsonObject()
+                ? trace.getAsJsonObject(key).deepCopy()
+                : fallback.deepCopy();
+    }
+
+    private static JsonObject compactBoundedTrace(JsonObject trace, boolean includePieceDetails) {
+        if (trace == null) {
+            return null;
+        }
+        JsonObject compact = new JsonObject();
+        copyString(trace, compact, "schemaVersion");
+        copyString(trace, compact, "capability");
+        copyString(trace, compact, "sourceStructureId");
+        copyString(trace, compact, "startPool");
+        copyInt(trace, compact, "targetAreaBlocks");
+        copyInt(trace, compact, "maxPieces");
+        copyInt(trace, compact, "maxDepth");
+        copyDouble(trace, compact, "budgetHardCapRatio");
+        copyInt(trace, compact, "areaHardCapBlocks");
+        copyBoolean(trace, compact, "fallbackUsed");
+        copyString(trace, compact, "worldPasteMode");
+        copyString(trace, compact, "selectedSampleId");
+        copyDouble(trace, compact, "selectedPlanScore");
+        copyString(trace, compact, "feasibility");
+        copyString(trace, compact, "limitingFactor");
+        copyObject(trace, compact, "scoreBreakdown");
+        copyObject(trace, compact, "failureSummary");
+        copyObject(trace, compact, "rejectionReport");
+        copyObject(trace, compact, "terminationReport");
+        copyObject(trace, compact, "metrics");
+        JsonObject terrainSummary = compactTerrainProbeSummary(objectValue(trace, "terrainProbeSummary", null));
+        if (terrainSummary != null) {
+            compact.add("terrainProbeSummary", terrainSummary);
+        }
+        copyObject(trace, compact, "poolAdapterReport");
+        if (includePieceDetails) {
+            copyArray(trace, compact, "acceptedPieces");
+            copyArray(trace, compact, "rejectedPieces", 24);
+            copyArray(trace, compact, "stoppedBranches", 24);
+            JsonObject plan = compactPlan(objectValue(trace, "plan", null));
+            if (plan != null) {
+                compact.add("plan", plan);
+            }
+        } else {
+            compact.add("acceptedPieces", pieceSummary(arrayValue(trace, "acceptedPieces", new JsonArray())));
+            compact.add("rejectedPieces", limitedArray(arrayValue(trace, "rejectedPieces", new JsonArray()), 8));
+            compact.add("stoppedBranches", limitedArray(arrayValue(trace, "stoppedBranches", new JsonArray()), 8));
+        }
+        compact.addProperty("acceptedPieceCount", arrayValue(trace, "acceptedPieces", new JsonArray()).size());
+        compact.addProperty("rejectedPieceCount", arrayValue(trace, "rejectedPieces", new JsonArray()).size());
+        compact.addProperty("stoppedBranchCount", arrayValue(trace, "stoppedBranches", new JsonArray()).size());
+        return compact;
+    }
+
+    private static JsonObject boundedTraceSummary(JsonObject trace) {
+        return compactBoundedTrace(trace, false);
+    }
+
+    private static JsonObject compactPlan(JsonObject plan) {
+        if (plan == null) {
+            return null;
+        }
+        JsonObject compact = new JsonObject();
+        copyString(plan, compact, "schemaVersion");
+        copyString(plan, compact, "planId");
+        copyString(plan, compact, "jobId");
+        copyString(plan, compact, "sourceStructureId");
+        copyInt(plan, compact, "visibleAreaCost");
+        copyObject(plan, compact, "estimatedFootprint");
+        copyObject(plan, compact, "requiredChunkRange");
+        copyObject(plan, compact, "quality");
+        copyArray(plan, compact, "pieces");
+        copyArray(plan, compact, "stoppedBranches", 24);
+        return compact;
+    }
+
+    private static JsonObject compactTerrainProbeSummary(JsonObject summary) {
+        if (summary == null) {
+            return null;
+        }
+        JsonObject compact = new JsonObject();
+        copyString(summary, compact, "schemaVersion");
+        copyBoolean(summary, compact, "waiting");
+        copyString(summary, compact, "missingChunks");
+        copyInt(summary, compact, "probeCount");
+        if (summary.has("probes") && summary.get("probes").isJsonArray()) {
+            compact.add("probeSamples", limitedArray(summary.getAsJsonArray("probes"), 12));
+        }
+        return compact;
+    }
+
+    private static JsonArray pieceSummary(JsonArray pieces) {
+        JsonArray summary = new JsonArray();
+        for (JsonElement elem : pieces) {
+            if (!elem.isJsonObject()) {
+                continue;
+            }
+            JsonObject piece = elem.getAsJsonObject();
+            JsonObject item = new JsonObject();
+            copyString(piece, item, "pieceId");
+            copyString(piece, item, "templateId");
+            copyString(piece, item, "poolId");
+            copyString(piece, item, "rotation");
+            copyInt(piece, item, "depth");
+            copyInt(piece, item, "visibleAreaCost");
+            copyObject(piece, item, "anchorBlock");
+            copyObject(piece, item, "footprint");
+            copyString(piece, item, "validatorResult");
+            copyString(piece, item, "pasteStatus");
+            copyBoolean(piece, item, "worldMutationApplied");
+            summary.add(item);
+        }
+        return summary;
+    }
+
+    private static JsonArray limitedArray(JsonArray array, int limit) {
+        JsonArray limited = new JsonArray();
+        int count = Math.min(array.size(), Math.max(0, limit));
+        for (int i = 0; i < count; i++) {
+            limited.add(array.get(i).deepCopy());
+        }
+        if (array.size() > count) {
+            JsonObject omitted = new JsonObject();
+            omitted.addProperty("omittedCount", array.size() - count);
+            omitted.addProperty("truncated", true);
+            limited.add(omitted);
+        }
+        return limited;
+    }
+
+    private static void copyArray(JsonObject source, JsonObject target, String key) {
+        if (source != null && source.has(key) && source.get(key).isJsonArray()) {
+            target.add(key, source.getAsJsonArray(key).deepCopy());
+        }
+    }
+
+    private static void copyArray(JsonObject source, JsonObject target, String key, int limit) {
+        if (source != null && source.has(key) && source.get(key).isJsonArray()) {
+            target.add(key, limitedArray(source.getAsJsonArray(key), limit));
+        }
+    }
+
+    private static void copyObject(JsonObject source, JsonObject target, String key) {
+        if (source != null && source.has(key) && source.get(key).isJsonObject()) {
+            target.add(key, source.getAsJsonObject(key).deepCopy());
+        }
+    }
+
+    private static void copyString(JsonObject source, JsonObject target, String key) {
+        if (source != null && source.has(key) && !source.get(key).isJsonNull()) {
+            String value = source.get(key).getAsString();
+            if (!value.isBlank()) {
+                target.addProperty(key, value);
+            }
+        }
+    }
+
+    private static void copyInt(JsonObject source, JsonObject target, String key) {
+        if (source != null && source.has(key) && !source.get(key).isJsonNull()) {
+            target.addProperty(key, source.get(key).getAsInt());
+        }
+    }
+
+    private static void copyDouble(JsonObject source, JsonObject target, String key) {
+        if (source != null && source.has(key) && !source.get(key).isJsonNull()) {
+            target.addProperty(key, source.get(key).getAsDouble());
+        }
+    }
+
+    private static void copyBoolean(JsonObject source, JsonObject target, String key) {
+        if (source != null && source.has(key) && !source.get(key).isJsonNull()) {
+            target.addProperty(key, source.get(key).getAsBoolean());
+        }
+    }
+
+    private static JsonObject terminationReportForReason(String reasonCode) {
+        JsonObject report = reportSkeleton();
+        String category = terminationCategory(reasonCode);
+        if (!category.isBlank()) {
+            report.addProperty(category, 1);
+            report.addProperty("totalTerminationEvents", 1);
+        }
+        return report;
+    }
+
+    private static JsonObject aggregateSampleReport(JsonArray samples, String key) {
+        JsonObject aggregate = reportSkeleton();
+        for (JsonElement elem : samples) {
+            if (!elem.isJsonObject()) {
+                continue;
+            }
+            JsonObject report = objectValue(elem.getAsJsonObject(), key, null);
+            if (report == null) {
+                continue;
+            }
+            for (String reportKey : report.keySet()) {
+                aggregate.addProperty(reportKey, intValue(aggregate, reportKey, 0)
+                        + intValue(report, reportKey, 0));
+            }
+        }
+        return aggregate;
+    }
+
+    private static JsonObject reportSkeleton() {
+        JsonObject report = new JsonObject();
+        report.addProperty("MAX_PIECES_REACHED", 0);
+        report.addProperty("MAX_DEPTH_REACHED", 0);
+        report.addProperty("NO_FRONTIER", 0);
+        report.addProperty("AREA_HARD_CAP_REACHED", 0);
+        report.addProperty("BOUNDARY_LIMITED", 0);
+        report.addProperty("TERRAIN_LIMITED", 0);
+        report.addProperty("OCCUPIED_LIMITED", 0);
+        report.addProperty("POOL_LIMITED", 0);
+        report.addProperty("CONNECTOR_LIMITED", 0);
+        report.addProperty("OTHER_LIMITED", 0);
+        report.addProperty("totalTerminationEvents", 0);
+        return report;
+    }
+
+    private static String terminationCategory(String reasonCode) {
+        if (reasonCode == null || reasonCode.isBlank()) {
+            return "OTHER_LIMITED";
+        }
+        return switch (reasonCode) {
+            case "JIGSAW_PIECE_BUDGET_REACHED" -> "MAX_PIECES_REACHED";
+            case "JIGSAW_BRANCH_DEPTH_LIMIT" -> "MAX_DEPTH_REACHED";
+            case "JIGSAW_AREA_HARD_CAP_REACHED", "START_BUDGET_EXCEEDED" -> "AREA_HARD_CAP_REACHED";
+            case "JIGSAW_BRANCH_OUT_OF_ALLOWED_AREA", "START_FOOTPRINT_OUT_OF_ZONE",
+                    "FOOTPRINT_OUT_OF_ZONE" -> "BOUNDARY_LIMITED";
+            case "JIGSAW_RULE_TERRAIN_TOO_UNEVEN", "JIGSAW_RULE_FLUID_OVERLAP",
+                    "JIGSAW_RULE_TERRAIN_SUPPORT_TOO_LOW", "JIGSAW_RULE_CHUNK_WAITING",
+                    "STRUCTURE_CHUNK_NOT_LOADED" -> "TERRAIN_LIMITED";
+            case "JIGSAW_PIECE_RESERVED_CONFLICT", "START_RUNTIME_OCCUPIED", "AABB_OCCUPIED" -> "OCCUPIED_LIMITED";
+            case "BOUNDED_JIGSAW_POOL_EMPTY", "BOUNDED_JIGSAW_POOL_MISSING",
+                    "UNSUPPORTED_POOL_ELEMENT", "BOUNDED_JIGSAW_UNSUPPORTED" -> "POOL_LIMITED";
+            case "JIGSAW_CONNECTOR_ALIGNMENT_PENDING", "JIGSAW_CONNECTOR_ALIGNMENT_FAILED",
+                    "JIGSAW_CONNECTOR_TARGET_MISMATCH", "JIGSAW_NO_ACCEPTED_PIECE" -> "CONNECTOR_LIMITED";
+            default -> "OTHER_LIMITED";
+        };
+    }
+
+    private static int hardCapBlocks(int targetAreaBlocks, BoundedJigsawConfig config) {
+        if (targetAreaBlocks <= 0) {
+            return 0;
+        }
+        return Math.max(targetAreaBlocks,
+                (int) Math.ceil(targetAreaBlocks * Math.max(1.0d, config.budgetHardCapRatio())));
     }
 
     private AttemptResult failed(JsonObject attempt, String reasonCode, String message) {
@@ -496,6 +1195,7 @@ public final class CityStructureD7Executor {
         JsonArray debugRefs = new JsonArray();
         debugRefs.add("start_candidate_preview.png");
         debugRefs.add("placed_structure_preview.png");
+        debugRefs.add("bounded_piece_preview.png");
         obj.add("debugRefs", debugRefs);
         return obj;
     }
@@ -615,7 +1315,10 @@ public final class CityStructureD7Executor {
     private String jobId(JsonObject attempt) {
         String footprintMode = stringValue(attempt, "footprintMode", "");
         String prefix = "fixed".equals(footprintMode) || "fixed_footprint".equals(footprintMode) ? "fixed" : "variable";
-        return "job_" + prefix + "_" + safeId(stringValue(attempt, "taskId", "unknown"));
+        String suffix = "variable".equals(prefix) || "variable_area".equals(footprintMode)
+                ? "_" + safeId(stringValue(attempt, "anchorCandidateId", "unknown"))
+                : "";
+        return "job_" + prefix + "_" + safeId(stringValue(attempt, "taskId", "unknown")) + suffix;
     }
 
     private JsonObject chunkMaterializationLedger(String cityId, JsonArray placedStructures) {
@@ -660,8 +1363,10 @@ public final class CityStructureD7Executor {
     private String jobIdFromPlaced(JsonObject placed) {
         String placedId = requiredString(placed, "placedId");
         String taskId = placedId.startsWith("placed_") ? placedId.substring("placed_".length()) : placedId;
-        String prefix = "fixed_footprint".equals(requiredString(placed, "footprintMode")) ? "fixed" : "variable";
-        return "job_" + prefix + "_" + safeId(taskId);
+        if ("fixed_footprint".equals(requiredString(placed, "footprintMode"))) {
+            return "job_fixed_" + safeId(taskId);
+        }
+        return "job_variable_" + safeId(taskId);
     }
 
     private String idempotencyKey(JsonObject placed) {
@@ -745,12 +1450,21 @@ public final class CityStructureD7Executor {
                 && "minecraft_place_structure".equals(placementKind);
     }
 
-    private static double score(ZoneInfo zone, BlockBounds footprint, long worldSeed, String seedKey) {
+    private static StartCandidateScore score(ZoneInfo zone, BlockBounds footprint, long worldSeed, String seedKey) {
         BlockPoint center = footprint.center();
         BlockPoint zoneCenter = zone.bounds().center();
         double distance = Math.hypot(center.x() - zoneCenter.x(), center.z() - zoneCenter.z());
         double jitter = new Random((seedKey + ":" + worldSeed + ":" + center.x() + ":" + center.z()).hashCode()).nextDouble();
-        return Math.max(1.0, 1000.0 - distance + jitter);
+        double interiorScore = Math.max(1.0, 1000.0 - distance + jitter);
+        ExpansionMetrics expansion = zone.expansionMetrics(footprint, 3);
+        double expansionScore = expansion.buildableRatio() * 420.0d;
+        double corridorScore = Math.min(1.0d, expansion.corridorReachCells() / 12.0d) * 180.0d;
+        double reservedPenalty = expansion.reservedRatio() * 360.0d
+                + Math.max(0, 3 - expansion.nearestReservedDistanceCells()) * 45.0d;
+        double value = Math.max(1.0d, interiorScore + expansionScore + corridorScore - reservedPenalty);
+        return new StartCandidateScore(value, interiorScore, expansionScore, corridorScore, reservedPenalty,
+                expansion.buildableRatio(), expansion.reservedRatio(), expansion.nearestReservedDistanceCells(),
+                expansion.corridorReachCells(), jitter);
     }
 
     private static int area(BlockBounds bounds) {
@@ -860,13 +1574,6 @@ public final class CityStructureD7Executor {
                 && candidateId.equals(existing.anchorCandidateId()));
     }
 
-    private static boolean alreadyPlacedVariable(VariableTask task, List<Placed> placed) {
-        return placed.stream().anyMatch(existing -> existing.worldMutationApplied()
-                && "variable_area".equals(existing.footprintMode())
-                && task.selectionId().equals(existing.sourceSelectionId())
-                && task.structureId().equals(existing.structureId()));
-    }
-
     private JsonObject alreadyPlacedAttempt(JsonObject fixed) {
         BlockBounds footprint = bounds(requiredObject(fixed, "footprint"));
         BlockBounds clearance = objectValue(fixed, "clearanceFootprint", null) == null
@@ -900,6 +1607,24 @@ public final class CityStructureD7Executor {
         attempt.addProperty("reasonCode", "");
         attempt.addProperty("message", "Existing real placement ledger entry reused.");
         attempt.addProperty("worldMutationApplied", true);
+        return attempt;
+    }
+
+    private JsonObject singleStartAlreadyMaterializedAttempt(VariableTask task, ZoneInfo zone,
+                                                             VariableProgress progress) {
+        JsonObject attempt = baseAttempt("variable", task.taskId(), zone.zonePatchId(), task.structureId(),
+                task.placementKind(), task.placementCommand(), "", BlockPoint.ORIGIN, "NONE", 0);
+        attempt.addProperty("materializationMode", task.materializationMode());
+        attempt.addProperty("sourcePlanRef", "StructurePoolMap:" + task.selectionId());
+        attempt.addProperty("retryBudget", task.retryBudget());
+        attempt.addProperty("status", "already_placed");
+        attempt.addProperty("reasonCode", "SINGLE_START_ALREADY_PLACED");
+        attempt.addProperty("message", "Default D7 v2 single-start strategy keeps existing main start and does not open satellite starts.");
+        attempt.addProperty("worldMutationApplied", true);
+        attempt.addProperty("feasibility", progress.visibleAreaCost() >= task.targetAreaBlocks() * 0.7d
+                ? "FULL" : "PARTIAL");
+        attempt.addProperty("visibleAreaCost", progress.visibleAreaCost());
+        attempt.addProperty("remainingTargetBlocks", progress.remainingTargetBlocks());
         return attempt;
     }
 
@@ -1022,7 +1747,17 @@ public final class CityStructureD7Executor {
     private record VariableTask(String selectionId, String taskId, String structureId, String placementKind,
                                 String placementCommand, String materializationMode, int targetAreaBlocks, int weight,
                                 Footprint startFootprint, int maxAreaBlocks, List<String> rotations, String seedKey,
-                                int retryBudget) {
+                                int retryBudget, BoundedJigsawConfig boundedConfig) {
+        int startAreaBlocks() {
+            return startFootprint.widthBlocks() * startFootprint.depthBlocks();
+        }
+
+        VariableTask withTargetAreaBlocks(int targetAreaBlocks) {
+            return new VariableTask(selectionId, taskId, structureId, placementKind, placementCommand,
+                    materializationMode, targetAreaBlocks, weight, startFootprint, maxAreaBlocks, rotations,
+                    seedKey, retryBudget, boundedConfig);
+        }
+
         BlockBounds requiredBounds(BlockPoint anchor) {
             int side = (int) Math.ceil(Math.sqrt(Math.max(maxAreaBlocks, targetAreaBlocks)));
             int radius = Math.max(Math.max(startFootprint.widthBlocks(), startFootprint.depthBlocks()),
@@ -1031,11 +1766,74 @@ public final class CityStructureD7Executor {
         }
     }
 
-    private record AttemptResult(JsonObject attemptJson, JsonArray attempts, Placed placed, String reasonCode,
-                                 boolean waiting) {
-        AttemptResult(JsonObject attemptJson, JsonArray attempts, Placed placed, String reasonCode) {
-            this(attemptJson, attempts, placed, reasonCode, false);
+    private record VariableProgress(int visibleAreaCost, int remainingTargetBlocks, int placedCount,
+                                    Set<String> anchorCandidateIds) {
+        VariableProgress {
+            anchorCandidateIds = Set.copyOf(anchorCandidateIds);
         }
+    }
+
+    private record AttemptResult(JsonObject attemptJson, JsonArray attempts, Placed placed, String reasonCode,
+                                 boolean waiting, Set<String> attemptedStartCandidateIds) {
+        AttemptResult {
+            attemptedStartCandidateIds = Set.copyOf(attemptedStartCandidateIds);
+        }
+
+        AttemptResult(JsonObject attemptJson, JsonArray attempts, Placed placed, String reasonCode) {
+            this(attemptJson, attempts, placed, reasonCode, false, Set.of());
+        }
+
+        AttemptResult(JsonObject attemptJson, JsonArray attempts, Placed placed, String reasonCode,
+                      boolean waiting) {
+            this(attemptJson, attempts, placed, reasonCode, waiting, Set.of());
+        }
+    }
+
+    private record BoundedJigsawConfig(int maxPieces, int maxDepth, int maxPools, double budgetHardCapRatio,
+                                       int sampleCandidateCount, int sampleSeedsPerCandidate,
+                                       boolean enableSatelliteStarts) {
+        JsonObject asJson() {
+            JsonObject obj = new JsonObject();
+            obj.addProperty("maxPieces", maxPieces);
+            obj.addProperty("maxDepth", maxDepth);
+            obj.addProperty("maxPools", maxPools);
+            obj.addProperty("budgetHardCapRatio", budgetHardCapRatio);
+            obj.addProperty("sampleCandidateCount", sampleCandidateCount);
+            obj.addProperty("sampleSeedsPerCandidate", sampleSeedsPerCandidate);
+            obj.addProperty("enableSatelliteStarts", enableSatelliteStarts);
+            return obj;
+        }
+    }
+
+    private record Score(double value, String feasibility, String limitingFactor, JsonObject breakdown) {
+    }
+
+    private record PlanSample(JsonObject sample, PlacementRequest request, PlacementResult result, Score score,
+                               String startCandidateId, JsonObject candidate) {
+    }
+
+    private record StartCandidateScore(double value, double interiorScore, double expansionScore,
+                                       double corridorScore, double reservedPenalty, double localBuildableRatio,
+                                       double localReservedRatio, int nearestReservedDistanceCells,
+                                       int corridorReachCells, double jitter) {
+        JsonObject asJson() {
+            JsonObject obj = new JsonObject();
+            obj.addProperty("interiorScore", interiorScore);
+            obj.addProperty("expansionScore", expansionScore);
+            obj.addProperty("corridorScore", corridorScore);
+            obj.addProperty("reservedPenalty", reservedPenalty);
+            obj.addProperty("localBuildableRatio", localBuildableRatio);
+            obj.addProperty("localReservedRatio", localReservedRatio);
+            obj.addProperty("nearestReservedDistanceCells", nearestReservedDistanceCells);
+            obj.addProperty("corridorReachCells", corridorReachCells);
+            obj.addProperty("jitter", jitter);
+            obj.addProperty("score", value);
+            return obj;
+        }
+    }
+
+    private record ExpansionMetrics(double buildableRatio, double reservedRatio, int nearestReservedDistanceCells,
+                                    int corridorReachCells) {
     }
 
     private record Placed(String placedId, String sourceSelectionId, String anchorCandidateId, String zonePatchId,
@@ -1105,6 +1903,7 @@ public final class CityStructureD7Executor {
         private final BlockBounds bounds;
         private final BuildableAreaMap.ZoneBuildability buildable;
         private final Set<Long> buildableCells = new LinkedHashSet<>();
+        private final Set<Long> reservedCells = new LinkedHashSet<>();
         private final List<CellAnchor> anchors = new ArrayList<>();
 
         ZoneInfo(PlanningGrid grid, String zonePatchId, CityFunctionType functionType, BlockBounds bounds,
@@ -1119,6 +1918,9 @@ public final class CityStructureD7Executor {
                 int z = grid.blockToCellZ(cell.blockMinZ());
                 buildableCells.add(key(x, z));
                 anchors.add(new CellAnchor(cell.blockMinX(), cell.blockMinZ()));
+            }
+            for (BuildableAreaMap.ReservedCell cell : buildable.reservedCells()) {
+                reservedCells.add(key(grid.blockToCellX(cell.blockMinX()), grid.blockToCellZ(cell.blockMinZ())));
             }
             anchors.sort(Comparator.comparingInt(CellAnchor::blockMinX).thenComparingInt(CellAnchor::blockMinZ));
         }
@@ -1168,6 +1970,43 @@ public final class CityStructureD7Executor {
             return true;
         }
 
+        ExpansionMetrics expansionMetrics(BlockBounds footprint, int radiusCells) {
+            if (footprint == null) {
+                return new ExpansionMetrics(0.0d, 1.0d, 0, 0);
+            }
+            int radius = Math.max(1, radiusCells);
+            int minCellX = clampCellX(grid.blockToCellX(footprint.minX()) - radius);
+            int maxCellX = clampCellX(grid.blockToCellX(footprint.maxX()) + radius);
+            int minCellZ = clampCellZ(grid.blockToCellZ(footprint.minZ()) - radius);
+            int maxCellZ = clampCellZ(grid.blockToCellZ(footprint.maxZ()) + radius);
+            int total = 0;
+            int buildable = 0;
+            int reserved = 0;
+            int nearestReserved = Integer.MAX_VALUE;
+            int centerCellX = grid.blockToCellX(footprint.center().x());
+            int centerCellZ = grid.blockToCellZ(footprint.center().z());
+            for (int x = minCellX; x <= maxCellX; x++) {
+                for (int z = minCellZ; z <= maxCellZ; z++) {
+                    total++;
+                    long key = key(x, z);
+                    if (buildableCells.contains(key)) {
+                        buildable++;
+                    }
+                    if (reservedCells.contains(key)) {
+                        reserved++;
+                        nearestReserved = Math.min(nearestReserved,
+                                Math.abs(x - centerCellX) + Math.abs(z - centerCellZ));
+                    }
+                }
+            }
+            if (nearestReserved == Integer.MAX_VALUE) {
+                nearestReserved = radius + 1;
+            }
+            int corridorReach = corridorReach(centerCellX, centerCellZ, radius + 3);
+            return new ExpansionMetrics(total == 0 ? 0.0d : buildable / (double) total,
+                    total == 0 ? 0.0d : reserved / (double) total, nearestReserved, corridorReach);
+        }
+
         JsonObject asConstraintJson() {
             JsonObject obj = new JsonObject();
             obj.addProperty("schemaVersion", "city_constraint_field.v0.1");
@@ -1202,6 +2041,30 @@ public final class CityStructureD7Executor {
             return Math.max(0, Math.min(grid.cellsZ() - 1, z));
         }
 
+        private int corridorReach(int centerCellX, int centerCellZ, int maxCells) {
+            return corridorReach(centerCellX, centerCellZ, 1, 0, maxCells)
+                    + corridorReach(centerCellX, centerCellZ, -1, 0, maxCells)
+                    + corridorReach(centerCellX, centerCellZ, 0, 1, maxCells)
+                    + corridorReach(centerCellX, centerCellZ, 0, -1, maxCells);
+        }
+
+        private int corridorReach(int centerCellX, int centerCellZ, int dx, int dz, int maxCells) {
+            int reach = 0;
+            for (int step = 1; step <= maxCells; step++) {
+                int x = centerCellX + dx * step;
+                int z = centerCellZ + dz * step;
+                if (x < 0 || x >= grid.cellsX() || z < 0 || z >= grid.cellsZ()) {
+                    break;
+                }
+                long key = key(x, z);
+                if (!buildableCells.contains(key) || reservedCells.contains(key)) {
+                    break;
+                }
+                reach++;
+            }
+            return reach;
+        }
+
         private long key(int x, int z) {
             return (((long) x) << 32) ^ (z & 0xffffffffL);
         }
@@ -1219,14 +2082,23 @@ public final class CityStructureD7Executor {
                                    BlockPoint anchorBlock, String rotation, BlockBounds footprint,
                                    BlockBounds requiredLoadBounds,
                                    String footprintMode, String materializationMode, JsonObject constraintField,
-                                   int targetAreaBlocks) {
+                                   int targetAreaBlocks, JsonObject boundedJigsawConfig, String planSampleKey) {
         public PlacementRequest(String structureId, String placementKind, String placementCommand,
                                 BlockPoint anchorBlock, String rotation, BlockBounds footprint,
                                 BlockBounds requiredLoadBounds,
                                 String footprintMode) {
             this(structureId, placementKind, placementCommand, anchorBlock, rotation, footprint, requiredLoadBounds,
                     footprintMode, "minecraft_place_structure", new JsonObject(),
-                    footprint == null ? 0 : area(footprint));
+                    footprint == null ? 0 : area(footprint), new JsonObject(), "");
+        }
+
+        public PlacementRequest(String structureId, String placementKind, String placementCommand,
+                                BlockPoint anchorBlock, String rotation, BlockBounds footprint,
+                                BlockBounds requiredLoadBounds,
+                                String footprintMode, String materializationMode, JsonObject constraintField,
+                                int targetAreaBlocks) {
+            this(structureId, placementKind, placementCommand, anchorBlock, rotation, footprint, requiredLoadBounds,
+                    footprintMode, materializationMode, constraintField, targetAreaBlocks, new JsonObject(), "");
         }
     }
 
@@ -1285,8 +2157,27 @@ public final class CityStructureD7Executor {
                     "Placement backend does not support bounded jigsaw materialization.");
         }
 
+        default PlacementResult planBoundedJigsaw(PlacementRequest request) {
+            return placeBoundedJigsaw(request);
+        }
+
+        default PlacementResult materializeBoundedJigsaw(PlacementRequest request, JsonObject selectedPlanTrace) {
+            if (selectedPlanTrace == null) {
+                return PlacementResult.failed("JIGSAW_NO_ACCEPTED_PIECE",
+                        "Selected bounded jigsaw plan trace is missing.");
+            }
+            BlockBounds footprint = traceFootprint(selectedPlanTrace);
+            return PlacementResult.placed("Materialized selected bounded jigsaw plan through default backend.",
+                    selectedPlanTrace.deepCopy(), footprint, footprint);
+        }
+
         static PlacementBackend traceOnly() {
-            return request -> PlacementResult.dryRunAccepted("Trace-only placement backend accepted configured structure.");
+            return new PlacementBackend() {
+                @Override
+                public PlacementResult place(PlacementRequest request) {
+                    return PlacementResult.dryRunAccepted("Trace-only placement backend accepted configured structure.");
+                }
+            };
         }
     }
 
@@ -1301,5 +2192,32 @@ public final class CityStructureD7Executor {
             obj.add("qualityReport", qualityReport);
             return obj;
         }
+    }
+
+    private static BlockBounds traceFootprint(JsonObject trace) {
+        JsonObject plan = objectValue(trace, "plan", null);
+        if (plan != null && plan.has("estimatedFootprint") && plan.get("estimatedFootprint").isJsonObject()) {
+            return bounds(plan.getAsJsonObject("estimatedFootprint"));
+        }
+        BlockBounds union = null;
+        JsonArray pieces = plan != null && plan.has("pieces") && plan.get("pieces").isJsonArray()
+                ? plan.getAsJsonArray("pieces")
+                : arrayValue(trace, "acceptedPieces", new JsonArray());
+        for (JsonElement elem : pieces) {
+            if (!elem.isJsonObject()) {
+                continue;
+            }
+            JsonObject footprint = objectValue(elem.getAsJsonObject(), "footprint", null);
+            if (footprint == null) {
+                continue;
+            }
+            BlockBounds bounds = bounds(footprint);
+            union = union == null ? bounds : new BlockBounds(
+                    Math.min(union.minX(), bounds.minX()),
+                    Math.min(union.minZ(), bounds.minZ()),
+                    Math.max(union.maxX(), bounds.maxX()),
+                    Math.max(union.maxZ(), bounds.maxZ()));
+        }
+        return union;
     }
 }

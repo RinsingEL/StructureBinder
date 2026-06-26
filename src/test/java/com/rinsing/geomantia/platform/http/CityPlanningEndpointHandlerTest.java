@@ -223,6 +223,7 @@ class CityPlanningEndpointHandlerTest {
         assertTrue(Files.exists(debugRoot.resolve(d7Artifacts.get("structureGenerationTrace").getAsString())));
         assertTrue(Files.exists(debugRoot.resolve(d7Artifacts.get("startCandidatePreview").getAsString())));
         assertTrue(Files.exists(debugRoot.resolve(d7Artifacts.get("placedStructurePreview").getAsString())));
+        assertTrue(Files.exists(debugRoot.resolve(d7Artifacts.get("boundedPiecePreview").getAsString())));
         assertTrue(d7.getAsJsonObject("placedStructureMap")
                 .getAsJsonArray("placedStructures")
                 .size() >= 2);

@@ -114,10 +114,19 @@ public final class MinecraftStructurePlacementBackend implements CityStructureD7
 
     @Override
     public CityStructureD7Executor.PlacementResult placeBoundedJigsaw(CityStructureD7Executor.PlacementRequest request) {
+        CityStructureD7Executor.PlacementResult planned = planBoundedJigsaw(request);
+        if (!planned.success()) {
+            return planned;
+        }
+        return materializeBoundedJigsaw(request, planned.trace());
+    }
+
+    @Override
+    public CityStructureD7Executor.PlacementResult planBoundedJigsaw(CityStructureD7Executor.PlacementRequest request) {
         if (server == null || level == null) {
             return CityStructureD7Executor.PlacementResult.failed(
                     "CONFIGURED_STRUCTURE_REGISTRY_MISSING",
-                    "Minecraft server and ServerLevel are required for bounded jigsaw materialization.");
+                    "Minecraft server and ServerLevel are required for bounded jigsaw planning.");
         }
         ResourceLocation id = ResourceLocation.tryParse(request.structureId());
         if (id == null) {
@@ -148,7 +157,7 @@ public final class MinecraftStructurePlacementBackend implements CityStructureD7
         String missingChunks = missingChunks(requiredChunks);
         if (!missingChunks.isBlank()) {
             return CityStructureD7Executor.PlacementResult.waiting("STRUCTURE_CHUNK_NOT_LOADED",
-                    "Waiting for loaded chunks before bounded jigsaw materialization: requiredChunks="
+                    "Waiting for loaded chunks before bounded jigsaw planning: requiredChunks="
                             + requiredChunks + ", missingChunks=" + missingChunks);
         }
 
@@ -167,7 +176,7 @@ public final class MinecraftStructurePlacementBackend implements CityStructureD7
         JsonObject trace = new BoundedJigsawSolver(terrainRules).solve(solverInput);
         trace.addProperty("structureRegistryKey", holder.get().key().location().toString());
         trace.addProperty("poolAdapterStatus", "child_pool_discovery");
-        trace.addProperty("worldPasteMode", executeCommands ? "accepted_piece_template_paste" : "dry_run_plan_only");
+        trace.addProperty("worldPasteMode", "dry_run_plan_only");
         trace.add("terrainProbeSummary", terrainRules.summary());
         if (solverInput.has("poolAdapterReport") && solverInput.get("poolAdapterReport").isJsonObject()) {
             trace.add("poolAdapterReport", solverInput.getAsJsonObject("poolAdapterReport").deepCopy());
@@ -180,21 +189,68 @@ public final class MinecraftStructurePlacementBackend implements CityStructureD7
         }
         JsonArray acceptedPieces = acceptedPieces(trace);
         BlockBounds acceptedFootprint = unionFootprint(acceptedPieces);
-        if (!executeCommands) {
-            if (acceptedPieces.isEmpty()) {
-                return CityStructureD7Executor.PlacementResult.failed("JIGSAW_NO_ACCEPTED_PIECE",
-                        "Dry-run bounded jigsaw pool adapter found no accepted start piece: "
-                                + request.structureId(), trace);
-            }
-            return CityStructureD7Executor.PlacementResult.dryRunAccepted(
-                    "Dry-run accepted bounded jigsaw solver plan: " + request.structureId(),
-                    trace, acceptedFootprint, acceptedFootprint);
-        }
         if (acceptedPieces.isEmpty() || acceptedFootprint == null) {
             incrementTraceFailure(trace, "JIGSAW_NO_ACCEPTED_PIECE");
             return CityStructureD7Executor.PlacementResult.failed("JIGSAW_NO_ACCEPTED_PIECE",
-                    "No accepted bounded jigsaw piece for " + request.structureId(),
+                    "Dry-run bounded jigsaw found no accepted piece for " + request.structureId(),
                     trace);
+        }
+        trace.getAsJsonObject("plan").add("requiredChunkRange", chunkRangeJson(ChunkRange.from(acceptedFootprint)));
+        return CityStructureD7Executor.PlacementResult.dryRunAccepted(
+                "Dry-run accepted bounded jigsaw solver plan: " + request.structureId(),
+                trace, acceptedFootprint, acceptedFootprint);
+    }
+
+    @Override
+    public CityStructureD7Executor.PlacementResult materializeBoundedJigsaw(
+            CityStructureD7Executor.PlacementRequest request, JsonObject selectedPlanTrace) {
+        if (selectedPlanTrace == null) {
+            return CityStructureD7Executor.PlacementResult.failed("JIGSAW_NO_ACCEPTED_PIECE",
+                    "Selected bounded jigsaw plan trace is missing.");
+        }
+        if (server == null || level == null) {
+            return CityStructureD7Executor.PlacementResult.failed(
+                    "CONFIGURED_STRUCTURE_REGISTRY_MISSING",
+                    "Minecraft server and ServerLevel are required for bounded jigsaw materialization.",
+                    selectedPlanTrace);
+        }
+        ResourceLocation id = ResourceLocation.tryParse(request.structureId());
+        if (id == null) {
+            return CityStructureD7Executor.PlacementResult.failed("CONFIGURED_STRUCTURE_REGISTRY_MISSING",
+                    "Invalid configured structure id: " + request.structureId(), selectedPlanTrace);
+        }
+        Optional<Holder.Reference<Structure>> holder = server.registryAccess()
+                .registryOrThrow(Registries.STRUCTURE)
+                .getHolder(ResourceKey.create(Registries.STRUCTURE, id));
+        if (holder.isEmpty()) {
+            return CityStructureD7Executor.PlacementResult.failed("CONFIGURED_STRUCTURE_REGISTRY_MISSING",
+                    "Configured structure registry does not contain: " + request.structureId(), selectedPlanTrace);
+        }
+        if (!(holder.get().value() instanceof JigsawStructure jigsaw)) {
+            return CityStructureD7Executor.PlacementResult.failed("BOUNDED_JIGSAW_UNSUPPORTED",
+                    "Configured structure is not a vanilla-like JigsawStructure: " + request.structureId(),
+                    selectedPlanTrace);
+        }
+        Holder<StructureTemplatePool> startPool = startPool(jigsaw);
+        if (startPool == null || startPool.value() == null) {
+            return CityStructureD7Executor.PlacementResult.failed("BOUNDED_JIGSAW_POOL_MISSING",
+                    "Could not resolve JigsawStructure start pool: " + request.structureId(), selectedPlanTrace);
+        }
+        JsonObject trace = selectedPlanTrace.deepCopy();
+        trace.addProperty("structureRegistryKey", holder.get().key().location().toString());
+        JsonArray acceptedPieces = acceptedPieces(trace);
+        BlockBounds acceptedFootprint = unionFootprint(acceptedPieces);
+        if (acceptedPieces.isEmpty() || acceptedFootprint == null) {
+            incrementTraceFailure(trace, "JIGSAW_NO_ACCEPTED_PIECE");
+            return CityStructureD7Executor.PlacementResult.failed("JIGSAW_NO_ACCEPTED_PIECE",
+                    "Selected bounded jigsaw plan has no accepted piece for " + request.structureId(),
+                    trace);
+        }
+        if (!executeCommands) {
+            trace.addProperty("worldPasteMode", "dry_run_plan_only");
+            return CityStructureD7Executor.PlacementResult.dryRunAccepted(
+                    "Dry-run selected bounded jigsaw plan only: " + request.structureId(),
+                    trace, acceptedFootprint, acceptedFootprint);
         }
 
         ChunkRange acceptedChunks = ChunkRange.from(acceptedFootprint);

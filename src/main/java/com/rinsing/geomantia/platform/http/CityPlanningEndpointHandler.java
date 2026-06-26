@@ -377,6 +377,7 @@ final class CityPlanningEndpointHandler {
         artifacts.addProperty("structureGenerationTrace", debugRef(debugRoot, tracePath));
         artifacts.addProperty("startCandidatePreview", debugRef(debugRoot, previews.startCandidatePreview()));
         artifacts.addProperty("placedStructurePreview", debugRef(debugRoot, previews.placedStructurePreview()));
+        artifacts.addProperty("boundedPiecePreview", debugRef(debugRoot, previews.boundedPiecePreview()));
         artifacts.addProperty("qualityReport", debugRef(debugRoot, qualityPath));
         artifacts.addProperty("sourcePlannedFixedPlacementMap", debugRef(debugRoot, plannedPath));
         artifacts.addProperty("sourceStructurePoolMap", debugRef(debugRoot, poolPath));
