@@ -55,6 +55,7 @@ public final class GeomantiaHttpServer {
             httpServer.createContext("/realm/tag_audit", realmController::handleTagAudit);
             httpServer.createContext("/realm/city/plan_d2", realmController::handleCityPlanD2);
             httpServer.createContext("/realm/city/plan_d3", realmController::handleCityPlanD3);
+            httpServer.createContext("/realm/city/profile_structure_envelopes", realmController::handleCityProfileStructureEnvelopes);
             httpServer.createContext("/realm/city/plan_d4", realmController::handleCityPlanD4);
             httpServer.createContext("/realm/city/plan_d5", realmController::handleCityPlanD5);
             httpServer.createContext("/realm/city/execute_d5", realmController::handleCityExecuteD5);

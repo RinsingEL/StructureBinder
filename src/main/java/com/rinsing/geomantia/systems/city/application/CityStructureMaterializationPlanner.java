@@ -18,12 +18,19 @@ public final class CityStructureMaterializationPlanner {
     public static final String INFERRED_SCHEMA = "city_inferred_function_area_map.v0.1";
 
     public Result planWorldgen(JsonObject structureAnchorMap, ChunkStatusInspector inspector, JsonObject previousLedger) {
+        return planWorldgen(structureAnchorMap, inspector, null, previousLedger);
+    }
+
+    public Result planWorldgen(JsonObject structureAnchorMap, ChunkStatusInspector inspector,
+                               PlacementBackend preflightBackend, JsonObject previousLedger) {
         long started = System.nanoTime();
         if (structureAnchorMap == null || !structureAnchorMap.has("anchors")) {
             throw new IllegalArgumentException("structure_anchor_map.json is required for D6.");
         }
         String cityId = requiredString(structureAnchorMap, "cityId");
         ChunkStatusInspector statusInspector = inspector == null ? ChunkStatusInspector.plannedOnly() : inspector;
+        PlacementBackend backend = preflightBackend == null ? PlacementBackend.traceOnly() : preflightBackend;
+        List<BlockBounds> occupied = ledgerBounds(previousLedger);
         JsonArray planned = new JsonArray();
         JsonArray attempts = new JsonArray();
         JsonArray waiting = new JsonArray();
@@ -37,17 +44,72 @@ public final class CityStructureMaterializationPlanner {
             attempt.addProperty("status", status.status());
             attempt.addProperty("reasonCode", status.reasonCode());
             attempt.addProperty("message", status.message());
-            attempts.add(attempt);
-            planned.add(task.asWorldgenPlanJson(status));
             if (status.failure()) {
+                attempts.add(attempt);
+                planned.add(task.asWorldgenPlanJson(status));
                 failures.add(status.reasonCode());
+                continue;
             }
+            PlacementResult preflight = backend.plan(task);
+            if (preflight.waiting()) {
+                attempt.addProperty("preflightStatus", "waiting");
+                attempt.addProperty("preflightReasonCode", preflight.reasonCode());
+                attempt.addProperty("preflightMessage", preflight.message());
+                waiting.add(preflight.reasonCode());
+                attempts.add(attempt);
+                planned.add(task.asWorldgenPlanJson(status));
+                continue;
+            }
+            if (!preflight.success()) {
+                attempt.addProperty("status", "failed");
+                attempt.addProperty("reasonCode", preflight.reasonCode());
+                attempt.addProperty("message", preflight.message());
+                failures.add(preflight.reasonCode());
+                attempts.add(attempt);
+                planned.add(task.asWorldgenPlanJson(new ChunkStatusResult(
+                        "invalid_anchor", preflight.reasonCode(), preflight.message(), true)));
+                continue;
+            }
+            BlockBounds bbox = preflight.actualFootprint() == null
+                    ? task.plannedFootprint() : preflight.actualFootprint();
+            if (!contains(task.reservedEnvelope(), bbox)) {
+                attempt.addProperty("status", "failed");
+                attempt.addProperty("reasonCode", "RESERVED_ENVELOPE_EXCEEDED");
+                attempt.addProperty("message", "Preflight bbox exceeded D4 collisionEnvelope.");
+                attempt.add("actualFootprint", boundsJson(bbox));
+                failures.add("RESERVED_ENVELOPE_EXCEEDED");
+                attempts.add(attempt);
+                planned.add(task.asWorldgenPlanJson(new ChunkStatusResult(
+                        "invalid_anchor", "RESERVED_ENVELOPE_EXCEEDED",
+                        "Preflight bbox exceeded D4 collisionEnvelope.", true)));
+                continue;
+            }
+            if (overlaps(occupied, bbox)) {
+                attempt.addProperty("status", "failed");
+                attempt.addProperty("reasonCode", "LEDGER_OCCUPIED_OVERLAP");
+                attempt.addProperty("message", "Preflight bbox overlaps previous or planned structure ledger.");
+                attempt.add("actualFootprint", boundsJson(bbox));
+                failures.add("LEDGER_OCCUPIED_OVERLAP");
+                attempts.add(attempt);
+                planned.add(task.asWorldgenPlanJson(new ChunkStatusResult(
+                        "invalid_anchor", "LEDGER_OCCUPIED_OVERLAP",
+                        "Preflight bbox overlaps previous or planned structure ledger.", true)));
+                continue;
+            }
+            occupied.add(bbox);
+            attempt.addProperty("preflightStatus", "accepted");
+            attempt.add("actualFootprint", boundsJson(bbox));
+            attempt.addProperty("startSignature", preflight.startSignature());
+            attempt.add("pieceBoxes", preflight.pieceBoxes());
+            attempts.add(attempt);
+            planned.add(task.asWorldgenPlanJson(status, bbox, preflight.startSignature(), preflight.pieceBoxes()));
         }
 
         JsonObject plan = new JsonObject();
         plan.addProperty("schemaVersion", PLAN_SCHEMA);
         plan.addProperty("cityId", cityId);
         plan.addProperty("dryRunMode", "worldgen_time_planned_registry");
+        plan.addProperty("preflightMode", "registry_structure_start_no_world_mutation");
         plan.addProperty("worldgenPlacementMode", true);
         plan.add("plannedWorldgenStructures", planned);
         plan.add("structures", new JsonArray());
@@ -583,7 +645,9 @@ public final class CityStructureMaterializationPlanner {
                     bounds(requiredObject(item, "reservedEnvelope")),
                     strings(item.getAsJsonArray("semanticTerms")),
                     strings(item.getAsJsonArray("functionTerms")),
-                    stringValue(item, "startSignature", ""),
+                    !stringValue(item, "expectedStartSignature", "").isBlank()
+                            ? stringValue(item, "expectedStartSignature", "")
+                            : stringValue(item, "startSignature", ""),
                     item.deepCopy());
         }
 
@@ -596,6 +660,11 @@ public final class CityStructureMaterializationPlanner {
         }
 
         JsonObject asWorldgenPlanJson(ChunkStatusResult status) {
+            return asWorldgenPlanJson(status, null, expectedStartSignature, new JsonArray());
+        }
+
+        JsonObject asWorldgenPlanJson(ChunkStatusResult status, BlockBounds actualFootprint,
+                                      String startSignature, JsonArray pieceBoxes) {
             JsonObject obj = sourceAnchor.deepCopy();
             if (!obj.has("commandAnchorBlock")) {
                 obj.add("commandAnchorBlock", anchorBlock.asJson());
@@ -605,7 +674,11 @@ public final class CityStructureMaterializationPlanner {
             chunk.addProperty("z", Math.floorDiv(anchorBlock.z(), 16));
             obj.add("anchorChunk", chunk);
             obj.add("requiredChunkRange", chunkRangeJson(reservedEnvelope));
-            obj.addProperty("expectedStartSignature", expectedStartSignature == null ? "" : expectedStartSignature);
+            obj.addProperty("expectedStartSignature", startSignature == null ? "" : startSignature);
+            if (actualFootprint != null) {
+                obj.add("actualFootprint", boundsJson(actualFootprint));
+            }
+            obj.add("pieceBoxes", pieceBoxes == null ? new JsonArray() : pieceBoxes);
             obj.addProperty("worldgenPlacementMode", true);
             obj.addProperty("status", status.status());
             obj.addProperty("reasonCode", status.reasonCode());

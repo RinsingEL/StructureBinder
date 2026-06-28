@@ -13,6 +13,8 @@ import com.rinsing.geomantia.systems.city.application.CitySiteContextBuilder.Ter
 import com.rinsing.geomantia.systems.city.application.CityStructureD6Planner;
 import com.rinsing.geomantia.systems.city.application.CityStructureD7Executor;
 import com.rinsing.geomantia.systems.city.application.CityStructureAnchorPlanner;
+import com.rinsing.geomantia.systems.city.application.CityStructureEnvelopeFacts;
+import com.rinsing.geomantia.systems.city.application.CityStructureEnvelopeProfiler;
 import com.rinsing.geomantia.systems.city.application.CityStructureMaterializationPlanner;
 import com.rinsing.geomantia.systems.city.application.CityStructureProfileCatalog;
 import com.rinsing.geomantia.systems.city.domain.config.CityPlanningConfig;
@@ -36,6 +38,7 @@ import com.rinsing.geomantia.systems.city.infrastructure.preview.CityStructurePr
 import com.rinsing.geomantia.systems.city.infrastructure.preview.FunctionZonePreviewRenderer;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityReservationMaskRegistry;
 import com.rinsing.geomantia.systems.city.infrastructure.world.MinecraftCityStructureMaterializationBackend;
+import com.rinsing.geomantia.systems.city.infrastructure.world.MinecraftCityStructureEnvelopeSampler;
 import com.rinsing.geomantia.systems.city.infrastructure.world.MinecraftCityWorldgenStatusInspector;
 import com.rinsing.geomantia.systems.city.infrastructure.world.MinecraftStructurePlacementBackend;
 import com.rinsing.geomantia.systems.city.infrastructure.world.WorldEditMutationBackend;
@@ -143,6 +146,13 @@ final class CityPlanningEndpointHandler {
     static JsonObject handlePlanD4(Path debugRoot, String runId, String citySeedId,
                                     JsonObject terraSenseProfileSource,
                                     JsonObject structureAnchorPlan) throws IOException {
+        return handlePlanD4(debugRoot, runId, citySeedId, terraSenseProfileSource, structureAnchorPlan, null);
+    }
+
+    static JsonObject handlePlanD4(Path debugRoot, String runId, String citySeedId,
+                                    JsonObject terraSenseProfileSource,
+                                    JsonObject structureAnchorPlan,
+                                    JsonObject structureEnvelopeFactsSource) throws IOException {
         Path runDir = debugRoot.resolve(runId);
         loadCitySeed(runDir, runId, citySeedId);
         Path d3Dir = runDir.resolve("city_d3_" + safeFileName(citySeedId));
@@ -154,8 +164,10 @@ final class CityPlanningEndpointHandler {
 
         CityLandformReviewPackage reviewPackage = CityLandformReviewPackage.fromJson(
                 JsonParser.parseString(Files.readString(d3PackagePath)).getAsJsonObject());
+        Path envelopeFactsPath = envelopeFactsPath(runDir, citySeedId, structureEnvelopeFactsSource);
+        CityStructureEnvelopeFacts envelopeFacts = CityStructureEnvelopeFacts.load(envelopeFactsPath);
         CityStructureAnchorPlanner.Result result = new CityStructureAnchorPlanner()
-                .plan(runDir, reviewPackage, terraSenseProfileSource, structureAnchorPlan);
+                .plan(runDir, reviewPackage, terraSenseProfileSource, structureAnchorPlan, envelopeFacts);
 
         Path outputDirectory = runDir.resolve("city_d4_" + safeFileName(citySeedId));
         Files.createDirectories(outputDirectory);
@@ -180,6 +192,52 @@ final class CityPlanningEndpointHandler {
         artifacts.addProperty("structureAnchorPreview", debugRef(debugRoot, previewPath));
         artifacts.addProperty("qualityReport", debugRef(debugRoot, qualityPath));
         artifacts.addProperty("sourceD3Package", debugRef(debugRoot, d3PackagePath));
+        if (envelopeFactsPath != null && Files.exists(envelopeFactsPath)) {
+            artifacts.addProperty("sourceStructureEnvelopeFacts", debugRef(debugRoot, envelopeFactsPath));
+        }
+        response.add("artifacts", artifacts);
+        return response;
+    }
+
+    static JsonObject handleProfileStructureEnvelopes(Path debugRoot, String runId, String citySeedId,
+                                                       JsonObject terraSenseProfileSource,
+                                                       JsonArray structureIds,
+                                                       int sampleCount,
+                                                       MinecraftServerHolder serverHolder,
+                                                       ServerLevel level) throws IOException {
+        Path runDir = debugRoot.resolve(runId);
+        JsonObject seed = loadCitySeed(runDir, runId, citySeedId);
+        int anchorBlockX = blockCoord(seed, "x", 4);
+        int anchorBlockZ = blockCoord(seed, "z", 4);
+        List<String> ids = new ArrayList<>();
+        if (structureIds != null) {
+            for (JsonElement elem : structureIds) {
+                if (!elem.isJsonNull()) {
+                    ids.add(elem.getAsString());
+                }
+            }
+        }
+        CityStructureEnvelopeProfiler.StructureEnvelopeSampler sampler = serverHolder == null
+                ? (profile, sampleIndex) -> CityStructureEnvelopeProfiler.EnvelopeSample.invalid(sampleIndex,
+                "CONFIGURED_STRUCTURE_REGISTRY_MISSING", "", "")
+                : new MinecraftCityStructureEnvelopeSampler(serverHolder.server(), level, anchorBlockX, anchorBlockZ);
+        CityStructureEnvelopeProfiler.Result result = new CityStructureEnvelopeProfiler()
+                .profile(runDir, terraSenseProfileSource, ids, sampleCount, sampler);
+
+        Path outputDirectory = runDir.resolve("city_structure_envelopes_" + safeFileName(citySeedId));
+        Files.createDirectories(outputDirectory);
+        Path factsPath = outputDirectory.resolve("structure_envelope_facts.json");
+        Path qualityPath = outputDirectory.resolve("quality_report.json");
+        Files.writeString(factsPath, CityJson.GSON.toJson(result.structureEnvelopeFacts()));
+        Files.writeString(qualityPath, CityJson.GSON.toJson(result.qualityReport()));
+        Path previewPath = new CityStructureLandingPreviewRenderer()
+                .renderEnvelopeFacts(result.structureEnvelopeFacts(), outputDirectory);
+
+        JsonObject response = result.asJson();
+        JsonObject artifacts = new JsonObject();
+        artifacts.addProperty("structureEnvelopeFacts", debugRef(debugRoot, factsPath));
+        artifacts.addProperty("structureEnvelopeProfilePreview", debugRef(debugRoot, previewPath));
+        artifacts.addProperty("qualityReport", debugRef(debugRoot, qualityPath));
         response.add("artifacts", artifacts);
         return response;
     }
@@ -270,7 +328,13 @@ final class CityPlanningEndpointHandler {
         }
         JsonObject maskPlan = JsonParser.parseString(Files.readString(maskPath)).getAsJsonObject();
         JsonObject anchorMap = JsonParser.parseString(Files.readString(anchorMapPath)).getAsJsonObject();
-        JsonObject activeRegistry = CityReservationMaskRegistry.activate(maskPlan, anchorMap, runId, citySeedId, serverRoot);
+        Path d6PlanPath = runDir.resolve("city_d6_" + safeFileName(citySeedId))
+                .resolve("structure_materialization_plan.json");
+        JsonObject materializationPlan = Files.exists(d6PlanPath)
+                ? JsonParser.parseString(Files.readString(d6PlanPath)).getAsJsonObject()
+                : null;
+        JsonObject activeRegistry = CityReservationMaskRegistry.activate(maskPlan, anchorMap, materializationPlan,
+                runId, citySeedId, serverRoot);
         BuildOperationPlan plan = BuildOperationPlan.fromJson(
                 JsonParser.parseString(Files.readString(operationPath)).getAsJsonObject());
         WorldMutationReport report = skippedWorldMutationReport(plan,
@@ -328,10 +392,13 @@ final class CityPlanningEndpointHandler {
         CityStructureMaterializationPlanner.ChunkStatusInspector inspector = CityReservationMaskRegistry
                 .hasActivePlannedStructuresFor(runId, citySeedId, stringValue(anchorMap, "cityId"))
                 ? new MinecraftCityWorldgenStatusInspector(level)
-                : task -> CityStructureMaterializationPlanner.ChunkStatusResult.registryMissing(
-                        "Run city_execute_d5 confirmWorldMutation=true before loading target chunks.");
+                : task -> CityStructureMaterializationPlanner.ChunkStatusResult.plannedWorldgen(
+                        "D6 preflight accepted before city_execute_d5; run execute_d5 before loading target chunks.");
+        CityStructureMaterializationPlanner.PlacementBackend preflightBackend = serverHolder == null
+                ? CityStructureMaterializationPlanner.PlacementBackend.traceOnly()
+                : new MinecraftCityStructureMaterializationBackend(serverHolder.server(), level, false);
         CityStructureMaterializationPlanner.Result result = new CityStructureMaterializationPlanner()
-                .planWorldgen(anchorMap, inspector, null);
+                .planWorldgen(anchorMap, inspector, preflightBackend, null);
 
         Path outputDirectory = runDir.resolve("city_d6_" + safeFileName(citySeedId));
         Files.createDirectories(outputDirectory);
@@ -414,6 +481,9 @@ final class CityPlanningEndpointHandler {
         }
 
         Files.createDirectories(outputDirectory);
+        JsonObject roadPostprocessReport = maybeRunDeferredRoadPostprocess(
+                debugRoot, runDir, citySeedId, materializationPlan, result.placedStructureLedger(),
+                executeStructurePlacement, debugLateMaterialize, serverHolder, level, outputDirectory);
         Path tracePath = outputDirectory.resolve("structure_materialization_trace.json");
         Path inferredPath = outputDirectory.resolve("inferred_function_area_map.json");
         Path qualityPath = outputDirectory.resolve("quality_report.json");
@@ -434,6 +504,11 @@ final class CityPlanningEndpointHandler {
         artifacts.addProperty("placedStructurePreview", debugRef(debugRoot, previewPath));
         artifacts.addProperty("qualityReport", debugRef(debugRoot, qualityPath));
         artifacts.addProperty("sourceStructureMaterializationPlan", debugRef(debugRoot, planPath));
+        if (roadPostprocessReport != null) {
+            artifacts.addProperty("deferredRoadPostprocessReport",
+                    debugRef(debugRoot, outputDirectory.resolve("deferred_road_postprocess_report.json")));
+            response.add("deferredRoadPostprocessReport", roadPostprocessReport);
+        }
         response.add("artifacts", artifacts);
         response.addProperty("structurePlacementExecuted", executeStructurePlacement);
         response.addProperty("debugLateMaterialize", debugLateMaterialize);
@@ -627,6 +702,96 @@ final class CityPlanningEndpointHandler {
                 List.of());
     }
 
+    private static JsonObject maybeRunDeferredRoadPostprocess(Path debugRoot,
+                                                              Path runDir,
+                                                              String citySeedId,
+                                                              JsonObject materializationPlan,
+                                                              JsonObject placedLedger,
+                                                              boolean executeStructurePlacement,
+                                                              boolean debugLateMaterialize,
+                                                              MinecraftServerHolder serverHolder,
+                                                              ServerLevel level,
+                                                              Path outputDirectory) throws IOException {
+        if (debugLateMaterialize || !executeStructurePlacement
+                || !allPlannedWorldgenStructuresRecorded(materializationPlan, placedLedger)) {
+            return null;
+        }
+        Path reportPath = outputDirectory.resolve("deferred_road_postprocess_report.json");
+        if (Files.exists(reportPath)) {
+            return JsonParser.parseString(Files.readString(reportPath)).getAsJsonObject();
+        }
+        Path operationPath = runDir.resolve("city_d5_" + safeFileName(citySeedId))
+                .resolve("build_operation_plan.json");
+        if (!Files.exists(operationPath)) {
+            return null;
+        }
+        BuildOperationPlan fullPlan = BuildOperationPlan.fromJson(
+                JsonParser.parseString(Files.readString(operationPath)).getAsJsonObject());
+        BuildOperationPlan roadPlan = deferredRoadPlan(fullPlan);
+        WorldMutationReport report;
+        if (roadPlan.operations().isEmpty()) {
+            report = skippedWorldMutationReport(fullPlan,
+                    "D7 deferred road postprocess found no road surface/clear operations.");
+        } else if (serverHolder == null || level == null) {
+            report = skippedWorldMutationReport(roadPlan,
+                    "D7 deferred road postprocess requires an active Minecraft server.");
+        } else {
+            report = new WorldEditMutationBackend().execute(
+                    level, roadPlan, serverHolder.server().getServerDirectory().toPath());
+        }
+        JsonObject reportJson = report.asJson();
+        reportJson.addProperty("postprocessStage", "d7_after_worldgen_ledger_complete");
+        reportJson.addProperty("sourceBuildOperationPlan", debugRef(debugRoot, operationPath));
+        Files.writeString(reportPath, CityJson.GSON.toJson(reportJson));
+        return reportJson;
+    }
+
+    private static BuildOperationPlan deferredRoadPlan(BuildOperationPlan plan) {
+        List<BuildOperationPlan.Operation> operations = new ArrayList<>();
+        for (BuildOperationPlan.Operation operation : plan.operations()) {
+            if (switch (operation.operationType()) {
+                case "clearVegetation", "surfaceFill", "surfaceReplace", "carveBuffer" -> true;
+                default -> false;
+            }) {
+                operations.add(operation);
+            }
+        }
+        return new BuildOperationPlan(plan.schemaVersion(), plan.cityId(), plan.templateDirectory(), operations);
+    }
+
+    private static boolean allPlannedWorldgenStructuresRecorded(JsonObject materializationPlan,
+                                                               JsonObject placedLedger) {
+        JsonArray planned = materializationPlan != null && materializationPlan.has("plannedWorldgenStructures")
+                && materializationPlan.get("plannedWorldgenStructures").isJsonArray()
+                ? materializationPlan.getAsJsonArray("plannedWorldgenStructures")
+                : new JsonArray();
+        JsonArray placed = placedLedger != null && placedLedger.has("placedStructures")
+                && placedLedger.get("placedStructures").isJsonArray()
+                ? placedLedger.getAsJsonArray("placedStructures")
+                : new JsonArray();
+        List<String> placedIds = new ArrayList<>();
+        for (JsonElement elem : placed) {
+            if (elem.isJsonObject()) {
+                placedIds.add(stringValue(elem.getAsJsonObject(), "anchorId"));
+            }
+        }
+        int required = 0;
+        for (JsonElement elem : planned) {
+            if (!elem.isJsonObject()) {
+                continue;
+            }
+            JsonObject item = elem.getAsJsonObject();
+            if (!"planned_worldgen".equals(stringValue(item, "status"))) {
+                return false;
+            }
+            required++;
+            if (!placedIds.contains(stringValue(item, "anchorId"))) {
+                return false;
+            }
+        }
+        return required > 0;
+    }
+
     private static void rejectLegacyArtifacts(Path directory, String stage) throws IOException {
         if (directory == null || !Files.isDirectory(directory)) {
             return;
@@ -639,6 +804,18 @@ final class CityPlanningEndpointHandler {
                         + " is no longer accepted by the City D3-D6 structure landing flow.");
             }
         }
+    }
+
+    private static Path envelopeFactsPath(Path runDir, String citySeedId, JsonObject source) {
+        if (source != null) {
+            String raw = stringValue(source, "factsPath");
+            if (!raw.isBlank()) {
+                Path path = Path.of(raw);
+                return path.isAbsolute() ? path.normalize() : runDir.resolve(path).normalize();
+            }
+        }
+        return runDir.resolve("city_structure_envelopes_" + safeFileName(citySeedId))
+                .resolve("structure_envelope_facts.json");
     }
 
     private static String safeFileName(String raw) {

@@ -214,7 +214,7 @@ class CityPlanningEndpointHandlerTest {
     }
 
     @Test
-    void handlePlanD6_requiresActiveWorldgenRegistry() throws Exception {
+    void handlePlanD6_allowsPreflightBeforeActiveWorldgenRegistry() throws Exception {
         Path debugRoot = Files.createTempDirectory("city-d6-registry-missing");
         String runId = "run_d6_missing_registry";
         String citySeedId = "city_test";
@@ -227,9 +227,13 @@ class CityPlanningEndpointHandlerTest {
                 null,
                 null);
 
-        assertFalse(d6.get("ok").getAsBoolean());
-        assertEquals("registry_missing", d6.get("status").getAsString());
-        assertEquals("CITY_WORLDGEN_STRUCTURE_HOOK_UNAVAILABLE", d6.get("reasonCode").getAsString());
+        assertTrue(d6.get("ok").getAsBoolean());
+        assertEquals("worldgen_time_planned_registry",
+                d6.getAsJsonObject("structureMaterializationPlan").get("dryRunMode").getAsString());
+        JsonObject planned = d6.getAsJsonObject("structureMaterializationPlan")
+                .getAsJsonArray("plannedWorldgenStructures").get(0).getAsJsonObject();
+        assertEquals("planned_worldgen", planned.get("status").getAsString());
+        assertEquals("WAITING_FOR_WORLDGEN", planned.get("reasonCode").getAsString());
     }
 
     @Test

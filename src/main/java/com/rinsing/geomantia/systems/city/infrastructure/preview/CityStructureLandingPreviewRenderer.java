@@ -50,6 +50,41 @@ public final class CityStructureLandingPreviewRenderer {
         return path;
     }
 
+    public Path renderEnvelopeFacts(JsonObject facts, Path outputDirectory) throws IOException {
+        Files.createDirectories(outputDirectory);
+        Path path = outputDirectory.resolve("structure_envelope_profile_preview.png");
+        BufferedImage image = baseImage();
+        Graphics2D g = image.createGraphics();
+        try {
+            setup(g);
+            BlockBounds bounds = envelopeFactsBounds(facts);
+            Transform t = transform(bounds);
+            drawGrid(g, t, bounds);
+            int i = 0;
+            for (JsonElement elem : array(facts, "structures")) {
+                JsonObject structure = elem.getAsJsonObject();
+                i++;
+                int offsetX = ((i - 1) % 4) * 180;
+                int offsetZ = ((i - 1) / 4) * 160;
+                BlockPoint origin = new BlockPoint(bounds.minX() + 60 + offsetX, bounds.minZ() + 70 + offsetZ);
+                drawLocal(g, t, origin, bounds(structure, "maxObservedEnvelope"),
+                        new Color(98, 96, 89, 32), new Color(89, 82, 70, 125), 1.0f);
+                drawLocal(g, t, origin, bounds(structure, "localEnvelopeP99"),
+                        new Color(202, 108, 62, 48), new Color(178, 84, 46, 165), 1.5f);
+                drawLocal(g, t, origin, bounds(structure, "localEnvelopeP95"),
+                        new Color(65, 145, 108, 85), new Color(39, 111, 78, 210), 2.0f);
+                drawLabel(g, t, origin, trim(string(structure, "structureId"), 24));
+            }
+            title(g, "City structure envelope facts preview",
+                    "green=P95 orange=P99 gray=maxObserved structures=" + array(facts, "structures").size());
+            sideSummary(g, facts, "structures");
+        } finally {
+            g.dispose();
+        }
+        ImageIO.write(image, "png", path.toFile());
+        return path;
+    }
+
     public Path renderD5(JsonObject reservationMaskPlan, Path outputDirectory) throws IOException {
         Files.createDirectories(outputDirectory);
         Path path = outputDirectory.resolve("reservation_mask_preview.png");
@@ -250,6 +285,15 @@ public final class CityStructureLandingPreviewRenderer {
         drawBounds(g, t, bounds);
     }
 
+    private static void drawLocal(Graphics2D g, Transform t, BlockPoint origin, BlockBounds local,
+                                  Color fill, Color stroke, float strokeWidth) {
+        drawRect(g, t, new BlockBounds(
+                origin.x() + local.minX(),
+                origin.z() + local.minZ(),
+                origin.x() + local.maxX(),
+                origin.z() + local.maxZ()), fill, stroke, strokeWidth);
+    }
+
     private static void drawLabel(Graphics2D g, Transform t, BlockPoint point, String label) {
         if (label == null || label.isBlank()) {
             return;
@@ -316,6 +360,14 @@ public final class CityStructureLandingPreviewRenderer {
         int cellsX = intValue(grid, "cellsX", 64);
         int cellsZ = intValue(grid, "cellsZ", 64);
         return new BlockBounds(minX, minZ, minX + cellsX * step, minZ + cellsZ * step);
+    }
+
+    private static BlockBounds envelopeFactsBounds(JsonObject facts) {
+        int count = array(facts, "structures").size();
+        int width = Math.max(360, Math.min(4, Math.max(1, count)) * 180 + 160);
+        int rows = Math.max(1, (int) Math.ceil(count / 4.0));
+        int height = Math.max(260, rows * 160 + 160);
+        return new BlockBounds(0, 0, width, height);
     }
 
     private static JsonArray array(JsonObject obj, String key) {

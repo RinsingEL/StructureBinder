@@ -5,6 +5,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.rinsing.geomantia.systems.city.application.CityReservationMaskPlanner;
 import com.rinsing.geomantia.systems.city.application.CityStructureAnchorPlanner;
+import com.rinsing.geomantia.systems.city.application.CityStructureEnvelopeFacts;
+import com.rinsing.geomantia.systems.city.application.CityStructureEnvelopeProfiler;
 import com.rinsing.geomantia.systems.city.application.CityStructureMaterializationPlanner;
 import com.rinsing.geomantia.systems.city.domain.config.CityPlanningConfig;
 import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
@@ -48,6 +50,56 @@ final class CityStructureLandingFlowTest {
         assertEquals(8, fixed.get("reservedEnvelopeRadiusBlocks").getAsInt());
         assertEquals(78, jigsaw.get("reservedEnvelopeRadiusBlocks").getAsInt());
         assertEquals("function.village", jigsaw.getAsJsonArray("functionTerms").get(0).getAsString());
+    }
+
+    @Test
+    void envelopeProfilerBuildsPercentileFactsAndD4ConsumesThem() throws Exception {
+        Fixture fixture = fixture();
+        CityStructureEnvelopeProfiler.Result factsResult = new CityStructureEnvelopeProfiler()
+                .profile(fixture.baseDir(), fixture.terraSenseSource(), List.of("minecraft:village_plains"), 20,
+                        (profile, sampleIndex) -> CityStructureEnvelopeProfiler.EnvelopeSample.valid(sampleIndex,
+                                new BlockBounds(-10 - sampleIndex, -12, 20 + sampleIndex, 24),
+                                4 + sampleIndex,
+                                "config_hash",
+                                "pack_hash"));
+        Path factsPath = fixture.baseDir().resolve("structure_envelope_facts.json");
+        Files.writeString(factsPath, CityJson.GSON.toJson(factsResult.structureEnvelopeFacts()));
+
+        JsonObject anchorMap = new CityStructureAnchorPlanner()
+                .plan(fixture.baseDir(), fixture.review(), fixture.terraSenseSource(), anchorPlan(fixture.review()),
+                        CityStructureEnvelopeFacts.load(factsPath))
+                .structureAnchorMap();
+
+        JsonObject jigsaw = anchorMap.getAsJsonArray("anchors").get(1).getAsJsonObject();
+        assertEquals("structureEnvelopeFacts:P95+clearance/P99+vegetationMargin",
+                jigsaw.get("reservedEnvelopePolicy").getAsString());
+        assertTrue(jigsaw.has("maskEnvelope"));
+        assertTrue(jigsaw.has("safetyEnvelope"));
+        assertTrue(jigsaw.has("structureEnvelopeFact"));
+    }
+
+    @Test
+    void d4RequiresEnvelopeFactsForTrekStructures() throws Exception {
+        Fixture fixture = fixture();
+        Path catalogPath = fixture.baseDir().resolve("trek_debug_catalog.json");
+        Files.writeString(catalogPath, trekDebugCatalog());
+        JsonObject source = new JsonObject();
+        source.addProperty("schemaVersion", "terrasense_structure_profile_source.v0.1");
+        source.addProperty("sourceType", "debug_catalog");
+        source.addProperty("catalogMode", "debug");
+        source.addProperty("debugCatalogPath", catalogPath.toString());
+
+        JsonObject plan = singleAnchorPlan(fixture.review());
+        plan.getAsJsonArray("anchors").get(0).getAsJsonObject()
+                .addProperty("structureId", "trek:overworld/medium/farm");
+        JsonObject result = new CityStructureAnchorPlanner()
+                .plan(fixture.baseDir(), fixture.review(), source, plan)
+                .asJson();
+
+        assertFalse(result.get("ok").getAsBoolean());
+        assertTrue(result.getAsJsonObject("qualityReport").getAsJsonArray("hardBlocks")
+                .toString()
+                .contains("structure envelope facts are required"));
     }
 
     @Test
@@ -146,16 +198,24 @@ final class CityStructureLandingFlowTest {
 
         CityStructureMaterializationPlanner planner = new CityStructureMaterializationPlanner();
         CityStructureMaterializationPlanner.Result dryRun = planner.planWorldgen(anchorMap,
-                CityStructureMaterializationPlanner.ChunkStatusInspector.plannedOnly(), null);
+                CityStructureMaterializationPlanner.ChunkStatusInspector.plannedOnly(), backend, null);
 
         assertEquals("worldgen_time_planned_registry",
                 dryRun.structureMaterializationPlan().get("dryRunMode").getAsString());
+        assertEquals("registry_structure_start_no_world_mutation",
+                dryRun.structureMaterializationPlan().get("preflightMode").getAsString());
         assertEquals(2, dryRun.structureMaterializationPlan().getAsJsonArray("plannedWorldgenStructures").size());
         assertEquals(0, dryRun.structureMaterializationPlan().getAsJsonArray("structures").size());
         assertEquals(0, dryRun.placedStructureLedger().getAsJsonArray("placedStructures").size());
-        assertEquals(0, backend.planCalls);
+        assertEquals(2, backend.planCalls);
         assertEquals(0, backend.placeCalls);
+        JsonObject planned = dryRun.structureMaterializationPlan()
+                .getAsJsonArray("plannedWorldgenStructures").get(0).getAsJsonObject();
+        assertTrue(planned.has("expectedStartSignature"));
+        assertTrue(planned.has("pieceBoxes"));
 
+        backend.planCalls = 0;
+        backend.placeCalls = 0;
         CityStructureMaterializationPlanner.Result recheck = planner.executeWorldgen(
                 dryRun.structureMaterializationPlan(), new JsonObject(),
                 CityStructureMaterializationPlanner.ChunkStatusInspector.plannedOnly(), true);
@@ -329,6 +389,42 @@ final class CityStructureLandingFlowTest {
                     "needsReview": [],
                     "metrics": {}
                   }
+                }
+                """;
+    }
+
+    private static String trekDebugCatalog() {
+        return """
+                {
+                  "schemaVersion": "city_structure_profile_catalog.v0.1",
+                  "catalogMode": "debug",
+                  "source": {"basis": "synthetic trek unit-test fixture"},
+                  "structures": [
+                    {
+                      "structureId": "trek:overworld/medium/farm",
+                      "sourceProfileRef": "synthetic://unit-test/trek_farm",
+                      "profileType": "jigsaw_system",
+                      "sampleType": "structure_assembly",
+                      "placementKind": "minecraft_place_structure",
+                      "placementCommand": "place structure trek:overworld/medium/farm <x> <y> <z>",
+                      "footprintMode": "variable_area",
+                      "semanticTerms": ["function.farm", "quality.debug_usable"],
+                      "functionTerms": ["function.farm"],
+                      "styleTerms": ["style.trek"],
+                      "placementTerms": ["placement.plains"],
+                      "usageTerms": ["usage.test"],
+                      "qualityTerms": ["quality.debug_usable"],
+                      "expectedAreaRange": {
+                        "minAreaBlocks": 128,
+                        "maxAreaBlocks": 4096,
+                        "startFootprint": {"widthBlocks": 17, "depthBlocks": 23, "heightBlocks": 11}
+                      },
+                      "maxDistanceFromCenter": 64,
+                      "allowedRotations": ["NONE"],
+                      "clearanceBlocks": 0
+                    }
+                  ],
+                  "quality": {"passed": true, "score": 100, "hardBlocks": [], "warnings": [], "needsReview": [], "metrics": {}}
                 }
                 """;
     }

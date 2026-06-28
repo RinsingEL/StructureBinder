@@ -102,17 +102,7 @@ public final class MinecraftCityStructureMaterializationBackend implements CityS
             return GeneratedStart.failed("CONFIGURED_STRUCTURE_REGISTRY_MISSING",
                     "Configured structure registry does not contain: " + task.structureId());
         }
-        BlockPos anchor = new BlockPos(task.anchorBlock().x(),
-                level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE,
-                        task.anchorBlock().x(), task.anchorBlock().z()),
-                task.anchorBlock().z());
-        ChunkRange required = ChunkRange.from(task.reservedEnvelope());
-        String missing = missingChunks(required);
-        if (!missing.isBlank()) {
-            return GeneratedStart.waiting("STRUCTURE_CHUNK_NOT_LOADED",
-                    "Waiting for loaded chunks before dry-run: requiredChunks=" + required
-                            + ", missingChunks=" + missing);
-        }
+        BlockPos anchor = new BlockPos(task.anchorBlock().x(), level.getMinBuildHeight(), task.anchorBlock().z());
         ChunkGenerator generator = level.getChunkSource().getGenerator();
         StructureStart start = holder.get().value().generate(
                 server.registryAccess(),

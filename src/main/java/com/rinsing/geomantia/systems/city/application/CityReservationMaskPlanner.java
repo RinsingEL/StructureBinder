@@ -50,14 +50,16 @@ public final class CityReservationMaskPlanner {
             index++;
             String anchorId = requiredString(anchor, "anchorId");
             BlockBounds envelope = bounds(requiredObject(anchor, "reservedEnvelope"));
+            BlockBounds maskEnvelope = anchor.has("maskEnvelope") && anchor.get("maskEnvelope").isJsonObject()
+                    ? bounds(requiredObject(anchor, "maskEnvelope")) : envelope;
             BlockBounds footprint = bounds(requiredObject(anchor, "plannedFootprint"));
             BlockPoint anchorBlock = blockPoint(requiredObject(anchor, "anchorBlock"));
-            addMask(noVegetation, anchorId + "_no_vegetation", envelope, "structure_envelope", anchorId);
+            addMask(noVegetation, anchorId + "_no_vegetation", maskEnvelope, "structure_mask_envelope", anchorId);
             addMask(vegetationLimited, anchorId + "_vegetation_limited",
-                    CityStructureAnchorPlanner.expand(envelope, 4), "structure_transition", anchorId);
-            addMask(noVanillaStructure, anchorId + "_no_vanilla_structure", envelope,
+                    CityStructureAnchorPlanner.expand(maskEnvelope, 4), "structure_transition", anchorId);
+            addMask(noVanillaStructure, anchorId + "_no_vanilla_structure", maskEnvelope,
                     "planned_structure", anchorId);
-            addReason(reasons, anchorId, "structure", envelope, "protect planned structure landing envelope");
+            addReason(reasons, anchorId, "structure", maskEnvelope, "protect planned structure mask envelope");
             addReason(reasons, anchorId, "footprint", footprint, "planned footprint");
 
             RoadIntent.Node structureNode = new RoadIntent.Node("structure_" + safe(anchorId), "structure_anchor",

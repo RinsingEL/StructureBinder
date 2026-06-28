@@ -157,6 +157,30 @@ export const realmTools: ToolDefinition[] = [
     },
   },
   {
+    name: "city_profile_structure_envelopes",
+    description: "City 结构大小区间回归：对指定 configured structure 做非写世界 bbox 采样，输出 structure_envelope_facts、P95/P99/maxObserved 与预览。需在 D4 前运行。",
+    inputSchema: {
+      type: "object",
+      properties: {
+        runId: { type: "string", description: "已有 W/T run ID。" },
+        citySeedId: { type: "string", description: "目标城市种子的 citySeedId。" },
+        terrasenseProfileSource: {
+          type: "object",
+          description: "schemaVersion=terrasense_structure_profile_source.v0.1；sourceType=structure_profile_jsonl 或 debug_catalog。",
+        },
+        structureIds: {
+          type: "array",
+          description: "要采样的 configured structure id 列表；为空时采样 catalog 全部结构。",
+          items: { type: "string" },
+        },
+        sampleCount: { type: "number", description: "每个结构采样次数，默认 256。" },
+        dimensionId: { type: "string", description: "维度 ID，省略时从 run manifest 恢复。" },
+        playerName: { type: "string", description: "玩家名，用于定位维度。" },
+      },
+      required: ["runId", "citySeedId", "terrasenseProfileSource"],
+    },
+  },
+  {
     name: "city_plan_d4",
     description: "City D4: 提交 AI/Codex 基于 D3 patch 真值生成的 StructureAnchorPlan，校验 TerraSense 白名单、anchor、reservedEnvelope 与防撞；输出 structure_anchor_map 和预览。旧 PatchGroupPlan/function zone payload 会被拒绝。",
     inputSchema: {
@@ -171,6 +195,10 @@ export const realmTools: ToolDefinition[] = [
         structureAnchorPlan: {
           type: "object",
           description: "schemaVersion=city_structure_anchor_plan.v0.1；anchors[] 包含 anchorId、structureId、sourcePatchIds、anchorBlock{x,z}、rotation、intentTerms、priority、roadAccessIntent。",
+        },
+        structureEnvelopeFactsSource: {
+          type: "object",
+          description: "可选；factsPath 指向 structure_envelope_facts.json。未传时读取当前 run/city 默认产物。",
         },
       },
       required: ["runId", "citySeedId", "terrasenseProfileSource", "structureAnchorPlan"],

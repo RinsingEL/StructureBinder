@@ -175,8 +175,34 @@ final class RealmPlanningHttpController {
             }
             return CityPlanningEndpointHandler.handlePlanD4(debugRoot(), runId, citySeedId,
                     request.getAsJsonObject("terrasenseProfileSource"),
-                    request.getAsJsonObject("structureAnchorPlan"));
+                    request.getAsJsonObject("structureAnchorPlan"),
+                    request.has("structureEnvelopeFactsSource") && request.get("structureEnvelopeFactsSource").isJsonObject()
+                            ? request.getAsJsonObject("structureEnvelopeFactsSource") : null);
         });
+    }
+
+    void handleCityProfileStructureEnvelopes(HttpExchange exchange) {
+        handle(exchange, "POST", () -> callOnServerThread(() -> {
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            String runId = requiredString(request, "runId");
+            String citySeedId = requiredString(request, "citySeedId");
+            if (!request.has("terrasenseProfileSource") || !request.get("terrasenseProfileSource").isJsonObject()) {
+                throw new IllegalArgumentException("terrasenseProfileSource object is required.");
+            }
+            ServerPlayer player = resolvePlayer(stringValue(request, "playerName", ""));
+            String dimensionId = stringValue(request, "dimensionId", "");
+            if (dimensionId.isBlank()) {
+                dimensionId = restoredRunDimensionId(runId);
+            }
+            ServerLevel level = resolveLevel(dimensionId, player);
+            return CityPlanningEndpointHandler.handleProfileStructureEnvelopes(debugRoot(), runId, citySeedId,
+                    request.getAsJsonObject("terrasenseProfileSource"),
+                    request.has("structureIds") && request.get("structureIds").isJsonArray()
+                            ? request.getAsJsonArray("structureIds") : new JsonArray(),
+                    intValue(request, "sampleCount", 256),
+                    new CityPlanningEndpointHandler.MinecraftServerHolder(server),
+                    level);
+        }));
     }
 
     void handleCityPlanD5(HttpExchange exchange) {

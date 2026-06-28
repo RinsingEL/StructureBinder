@@ -56,16 +56,28 @@ public final class CityReservationMaskRegistry {
                                                    String runId,
                                                    String citySeedId,
                                                    Path serverRoot) throws IOException {
+        return activate(reservationMaskPlan, structureAnchorMap, null, runId, citySeedId, serverRoot);
+    }
+
+    public static synchronized JsonObject activate(JsonObject reservationMaskPlan,
+                                                   JsonObject structureAnchorMap,
+                                                   JsonObject materializationPlan,
+                                                   String runId,
+                                                   String citySeedId,
+                                                   Path serverRoot) throws IOException {
         activeServerRoot = serverRoot;
         activeMask = ActiveMask.from(reservationMaskPlan);
-        if (structureAnchorMap != null) {
+        if (materializationPlan != null) {
+            activePlannedStructures = ActivePlannedStructures.fromMaterializationPlan(
+                    materializationPlan, runId, citySeedId);
+        } else if (structureAnchorMap != null) {
             activePlannedStructures = ActivePlannedStructures.from(structureAnchorMap, runId, citySeedId);
         }
         if (serverRoot != null) {
             Path dir = activeDir(serverRoot);
             Files.createDirectories(dir);
             Files.writeString(dir.resolve(ACTIVE_MASK_FILE), CityJson.GSON.toJson(reservationMaskPlan));
-            if (structureAnchorMap != null) {
+            if (materializationPlan != null || structureAnchorMap != null) {
                 Files.writeString(dir.resolve(ACTIVE_PLANNED_FILE),
                         CityJson.GSON.toJson(activePlannedStructures.asJson()));
             }
@@ -440,6 +452,25 @@ public final class CityReservationMaskRegistry {
                     if (elem.isJsonObject()) {
                         structures.add(PlannedStructure.fromAnchor(
                                 elem.getAsJsonObject(), runId, citySeedId, cityId));
+                    }
+                }
+            }
+            return new ActivePlannedStructures(PLANNED_REGISTRY_SCHEMA,
+                    nullToEmpty(runId), nullToEmpty(citySeedId), cityId, List.copyOf(structures));
+        }
+
+        static ActivePlannedStructures fromMaterializationPlan(JsonObject plan, String runId, String citySeedId) {
+            String cityId = stringValue(plan, "cityId", "");
+            List<PlannedStructure> structures = new ArrayList<>();
+            JsonArray planned = plan == null ? null : plan.getAsJsonArray("plannedWorldgenStructures");
+            if (planned != null) {
+                for (JsonElement elem : planned) {
+                    if (elem.isJsonObject()) {
+                        JsonObject item = elem.getAsJsonObject();
+                        String status = stringValue(item, "status", "");
+                        if ("planned_worldgen".equals(status)) {
+                            structures.add(PlannedStructure.fromAnchor(item, runId, citySeedId, cityId));
+                        }
                     }
                 }
             }
