@@ -165,11 +165,17 @@ final class RealmPlanningHttpController {
             JsonObject request = GisHttpUtil.readJsonObject(exchange);
             String runId = requiredString(request, "runId");
             String citySeedId = requiredString(request, "citySeedId");
-            if (!request.has("patchGroupPlan") || !request.get("patchGroupPlan").isJsonObject()) {
-                throw new IllegalArgumentException("patchGroupPlan object is required.");
+            rejectLegacyCityFields(request, "patchGroupPlan", "zoneChoices", "functionType", "functionTag",
+                    "function_candidates");
+            if (!request.has("terrasenseProfileSource") || !request.get("terrasenseProfileSource").isJsonObject()) {
+                throw new IllegalArgumentException("terrasenseProfileSource object is required.");
+            }
+            if (!request.has("structureAnchorPlan") || !request.get("structureAnchorPlan").isJsonObject()) {
+                throw new IllegalArgumentException("structureAnchorPlan object is required.");
             }
             return CityPlanningEndpointHandler.handlePlanD4(debugRoot(), runId, citySeedId,
-                    request.getAsJsonObject("patchGroupPlan"));
+                    request.getAsJsonObject("terrasenseProfileSource"),
+                    request.getAsJsonObject("structureAnchorPlan"));
         });
     }
 
@@ -196,33 +202,29 @@ final class RealmPlanningHttpController {
             ServerLevel level = resolveLevel(dimensionId, player);
             JsonObject response = CityPlanningEndpointHandler.handleExecuteD5(debugRoot(), server.getServerDirectory().toPath(),
                     runId, citySeedId, confirmWorldMutation, level);
-            server.saveAllChunks(true, true, true);
-            response.addProperty("worldSaveRequested", true);
+            response.addProperty("worldSaveRequested", false);
             return response;
         }));
     }
 
     void handleCityPlanD6(HttpExchange exchange) {
-        handle(exchange, "POST", () -> {
+        handle(exchange, "POST", () -> callOnServerThread(() -> {
             JsonObject request = GisHttpUtil.readJsonObject(exchange);
             String runId = requiredString(request, "runId");
             String citySeedId = requiredString(request, "citySeedId");
-            if (!request.has("terrasenseProfileSource") || !request.get("terrasenseProfileSource").isJsonObject()) {
-                throw new IllegalArgumentException("terrasenseProfileSource object is required.");
+            rejectLegacyCityFields(request, "terrasenseProfileSource", "structureChoicePlan",
+                    "fixedPlacementSelectionPlan", "functionZoneMap", "buildableAreaMap",
+                    "plannedFixedPlacementMap", "structurePoolMap");
+            ServerPlayer player = resolvePlayer(stringValue(request, "playerName", ""));
+            String dimensionId = stringValue(request, "dimensionId", "");
+            if (dimensionId.isBlank()) {
+                dimensionId = restoredRunDimensionId(runId);
             }
-            JsonObject structureChoicePlan = request.has("structureChoicePlan")
-                    && request.get("structureChoicePlan").isJsonObject()
-                    ? request.getAsJsonObject("structureChoicePlan")
-                    : null;
-            JsonObject fixedPlacementSelectionPlan = request.has("fixedPlacementSelectionPlan")
-                    && request.get("fixedPlacementSelectionPlan").isJsonObject()
-                    ? request.getAsJsonObject("fixedPlacementSelectionPlan")
-                    : null;
+            ServerLevel level = resolveLevel(dimensionId, player);
             return CityPlanningEndpointHandler.handlePlanD6(debugRoot(), runId, citySeedId,
-                    request.getAsJsonObject("terrasenseProfileSource"),
-                    structureChoicePlan,
-                    fixedPlacementSelectionPlan);
-        });
+                    new CityPlanningEndpointHandler.MinecraftServerHolder(server),
+                    level);
+        }));
     }
 
     void handleCityExecuteD7(HttpExchange exchange) {
@@ -238,14 +240,18 @@ final class RealmPlanningHttpController {
             }
             ServerLevel level = resolveLevel(dimensionId, player);
             long worldSeed = longValue(request, "worldSeed", level.getSeed());
+            boolean debugLateMaterialize = booleanValue(request, "debugLateMaterialize", false);
             JsonObject response = CityPlanningEndpointHandler.handleExecuteD7(debugRoot(), runId, citySeedId,
                     worldSeed,
                     executeStructurePlacement,
+                    debugLateMaterialize,
                     new CityPlanningEndpointHandler.MinecraftServerHolder(server),
                     level);
-            if (executeStructurePlacement) {
+            if (executeStructurePlacement && debugLateMaterialize) {
                 server.saveAllChunks(true, true, true);
                 response.addProperty("worldSaveRequested", true);
+            } else {
+                response.addProperty("worldSaveRequested", false);
             }
             return response;
         }));
@@ -486,6 +492,15 @@ final class RealmPlanningHttpController {
 
     private static boolean hasValue(JsonObject object, String key) {
         return object.has(key) && !object.get(key).isJsonNull();
+    }
+
+    private static void rejectLegacyCityFields(JsonObject request, String... fields) {
+        for (String field : fields) {
+            if (hasValue(request, field)) {
+                throw new IllegalArgumentException("LEGACY_CITY_FUNCTION_ZONE_FLOW_REMOVED: field "
+                        + field + " is no longer accepted by the City D3-D6 structure landing flow.");
+            }
+        }
     }
 
     private static void sendError(HttpExchange exchange, int code, Exception ex) {

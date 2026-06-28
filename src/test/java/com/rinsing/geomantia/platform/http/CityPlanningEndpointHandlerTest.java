@@ -8,7 +8,6 @@ import com.rinsing.geomantia.systems.city.domain.config.CityPlanningConfig;
 import com.rinsing.geomantia.systems.city.domain.model.CityLandformReviewPackage;
 import com.rinsing.geomantia.systems.city.domain.model.CitySiteContext;
 import com.rinsing.geomantia.systems.city.domain.model.LandformPatchSummary;
-import com.rinsing.geomantia.systems.city.domain.model.PatchGroupPlan;
 import com.rinsing.geomantia.systems.city.infrastructure.json.CityJson;
 import com.rinsing.geomantia.systems.gis.domain.cell.LandformType;
 import com.rinsing.geomantia.systems.gis.domain.landform.LandformPatch;
@@ -60,7 +59,7 @@ class CityPlanningEndpointHandlerTest {
         String runId = "run_d4";
         String citySeedId = "city_test";
         Path runDir = debugRoot.resolve(runId);
-        Files.createDirectories(runDir);
+        Files.createDirectories(runDir.resolve("city_d4_city_test"));
         Files.writeString(runDir.resolve("city_seed_registry.json"), """
                 {
                   "citySeeds": [
@@ -90,26 +89,20 @@ class CityPlanningEndpointHandlerTest {
         Files.writeString(d3Dir.resolve("city_landform_review_package.json"),
                 CityJson.GSON.toJson(review.asJson()));
 
-        LandformPatchSummary plain = review.landformPatches().stream()
-                .filter(p -> p.landformType() == LandformType.PLAIN)
-                .findFirst()
-                .orElseThrow();
-        PatchGroupPlan plan = new PatchGroupPlan(PatchGroupPlan.CURRENT_SCHEMA_VERSION, review.cityId(), List.of(
-                new PatchGroupPlan.Group("g1", "", "中心区", "civic_core",
-                        List.of("function.landmark"),
-                        List.of(plain.mapLabel()), List.of(plain.landformPatchId()),
-                        "village_hall", List.of(), "测试", "", false)));
+        Path catalogPath = runDir.resolve("debug_structure_profile_catalog.json");
+        Files.writeString(catalogPath, debugStructureCatalog());
 
         JsonObject response = CityPlanningEndpointHandler.handlePlanD4(
                 debugRoot, runId, citySeedId,
-                JsonParser.parseString(CityJson.GSON.toJson(plan.asJson())).getAsJsonObject());
+                terraSenseSource(catalogPath),
+                structureAnchorPlan(review, 1));
 
         assertTrue(response.get("ok").getAsBoolean());
         JsonObject artifacts = response.getAsJsonObject("artifacts");
-        assertTrue(Files.exists(debugRoot.resolve(artifacts.get("functionZoneMap").getAsString())));
-        assertTrue(Files.exists(debugRoot.resolve(artifacts.get("functionZonePreview").getAsString())));
+        assertTrue(Files.exists(debugRoot.resolve(artifacts.get("structureAnchorMap").getAsString())));
+        assertTrue(Files.exists(debugRoot.resolve(artifacts.get("structureAnchorPreview").getAsString())));
         assertTrue(Files.exists(debugRoot.resolve(artifacts.get("qualityReport").getAsString())));
-        assertFalse(response.getAsJsonArray("functionZonePatches").isEmpty());
+        assertFalse(response.getAsJsonObject("structureAnchorMap").getAsJsonArray("anchors").isEmpty());
     }
 
     @Test
@@ -151,29 +144,20 @@ class CityPlanningEndpointHandlerTest {
         Files.writeString(d3Dir.resolve("city_landform_review_package.json"),
                 CityJson.GSON.toJson(review.asJson()));
 
-        List<LandformPatchSummary> patches = review.landformPatches();
-        PatchGroupPlan plan = new PatchGroupPlan(PatchGroupPlan.CURRENT_SCHEMA_VERSION, review.cityId(), List.of(
-                new PatchGroupPlan.Group("g1", "", "中心区", "civic_core",
-                        List.of("function.landmark"),
-                        List.of(patches.get(0).mapLabel()), List.of(patches.get(0).landformPatchId()),
-                        "village_hall", List.of(), "测试", "", false),
-                new PatchGroupPlan.Group("g2", "", "水岸", "harbor_or_waterfront",
-                        List.of("function.灯塔", "function.贸易船"),
-                        List.of(patches.get(1).mapLabel()), List.of(patches.get(1).landformPatchId()),
-                        "dock_core", List.of(), "测试", "", false)));
+        Path catalogPath = runDir.resolve("debug_structure_profile_catalog.json");
+        Files.writeString(catalogPath, debugStructureCatalog());
         CityPlanningEndpointHandler.handlePlanD4(debugRoot, runId, citySeedId,
-                JsonParser.parseString(CityJson.GSON.toJson(plan.asJson())).getAsJsonObject());
+                terraSenseSource(catalogPath), structureAnchorPlan(review, 2));
 
         JsonObject response = CityPlanningEndpointHandler.handlePlanD5(debugRoot, runId, citySeedId);
 
         assertTrue(response.get("ok").getAsBoolean());
         assertFalse(response.getAsJsonObject("buildOperationPlan").getAsJsonArray("operations").isEmpty());
-        assertFalse(response.getAsJsonObject("buildableAreaMap").getAsJsonArray("zones").isEmpty());
+        assertFalse(response.getAsJsonObject("reservationMaskPlan").getAsJsonArray("noVegetationMask").isEmpty());
         JsonObject artifacts = response.getAsJsonObject("artifacts");
-        assertTrue(Files.exists(debugRoot.resolve(artifacts.get("roadIntent").getAsString())));
-        assertTrue(Files.exists(debugRoot.resolve(artifacts.get("cityPlanningPreview").getAsString())));
-        assertTrue(Files.exists(debugRoot.resolve(artifacts.get("buildableAreaMap").getAsString())));
-        assertTrue(Files.exists(debugRoot.resolve(artifacts.get("cityBuildabilityPreview").getAsString())));
+        assertTrue(Files.exists(debugRoot.resolve(artifacts.get("reservationMaskPlan").getAsString())));
+        assertTrue(Files.exists(debugRoot.resolve(artifacts.get("roadAccessPlan").getAsString())));
+        assertTrue(Files.exists(debugRoot.resolve(artifacts.get("reservationMaskPreview").getAsString())));
     }
 
     @Test
@@ -182,33 +166,28 @@ class CityPlanningEndpointHandlerTest {
         String runId = "run_d6d7";
         String citySeedId = "city_test";
         prepareD5Artifacts(debugRoot, runId, citySeedId);
-
-        Path catalogPath = debugRoot.resolve(runId).resolve("debug_structure_profile_catalog.json");
-        Files.writeString(catalogPath, debugStructureCatalog());
-        JsonObject source = new JsonObject();
-        source.addProperty("schemaVersion", "terrasense_structure_profile_source.v0.1");
-        source.addProperty("sourceType", "debug_catalog");
-        source.addProperty("catalogMode", "debug");
-        source.addProperty("debugCatalogPath", catalogPath.toString());
-        source.add("quality", qualityJson());
-        String civicZoneId = civicZoneId(debugRoot, runId, citySeedId);
+        CityPlanningEndpointHandler.handleExecuteD5(
+                debugRoot, Files.createTempDirectory("city-d6d7-server-root"),
+                runId, citySeedId, true, null);
 
         JsonObject d6 = CityPlanningEndpointHandler.handlePlanD6(
                 debugRoot,
                 runId,
                 citySeedId,
-                source,
-                structureChoicePlan(civicZoneId),
-                fixedPlacementSelectionPlan());
+                null,
+                null);
 
         assertTrue(d6.get("ok").getAsBoolean());
+        assertEquals("worldgen_time_planned_registry",
+                d6.getAsJsonObject("structureMaterializationPlan").get("dryRunMode").getAsString());
+        assertFalse(d6.getAsJsonObject("structureMaterializationPlan")
+                .getAsJsonArray("plannedWorldgenStructures")
+                .isEmpty());
         JsonObject d6Artifacts = d6.getAsJsonObject("artifacts");
-        assertTrue(Files.exists(debugRoot.resolve(d6Artifacts.get("structureProfileCatalog").getAsString())));
-        assertTrue(Files.exists(debugRoot.resolve(d6Artifacts.get("filteredStructureCatalog").getAsString())));
-        assertTrue(Files.exists(debugRoot.resolve(d6Artifacts.get("plannedFixedPlacementMap").getAsString())));
-        assertTrue(Files.exists(debugRoot.resolve(d6Artifacts.get("structurePoolMap").getAsString())));
-        assertTrue(Files.exists(debugRoot.resolve(d6Artifacts.get("structureChoicePreview").getAsString())));
-        assertTrue(Files.exists(debugRoot.resolve(d6Artifacts.get("fixedPlacementPreview").getAsString())));
+        assertTrue(Files.exists(debugRoot.resolve(d6Artifacts.get("structureMaterializationPlan").getAsString())));
+        assertTrue(Files.exists(debugRoot.resolve(d6Artifacts.get("placedStructureLedger").getAsString())));
+        assertTrue(Files.exists(debugRoot.resolve(d6Artifacts.get("structureMaterializationTrace").getAsString())));
+        assertTrue(Files.exists(debugRoot.resolve(d6Artifacts.get("structureMaterializationPreview").getAsString())));
 
         JsonObject d7 = CityPlanningEndpointHandler.handleExecuteD7(
                 debugRoot,
@@ -216,20 +195,41 @@ class CityPlanningEndpointHandlerTest {
                 citySeedId,
                 12345L,
                 false,
+                false,
                 null,
                 null);
 
         assertTrue(d7.get("ok").getAsBoolean());
+        assertTrue(d7.get("worldgenPlacementMode").getAsBoolean());
         JsonObject d7Artifacts = d7.getAsJsonObject("artifacts");
-        assertTrue(Files.exists(debugRoot.resolve(d7Artifacts.get("startCandidateSet").getAsString())));
-        assertTrue(Files.exists(debugRoot.resolve(d7Artifacts.get("placedStructureMap").getAsString())));
-        assertTrue(Files.exists(debugRoot.resolve(d7Artifacts.get("structureGenerationTrace").getAsString())));
-        assertTrue(Files.exists(debugRoot.resolve(d7Artifacts.get("startCandidatePreview").getAsString())));
+        assertTrue(Files.exists(debugRoot.resolve(d7Artifacts.get("placedStructureLedger").getAsString())));
+        assertTrue(Files.exists(debugRoot.resolve(d7Artifacts.get("structureMaterializationTrace").getAsString())));
         assertTrue(Files.exists(debugRoot.resolve(d7Artifacts.get("placedStructurePreview").getAsString())));
-        assertTrue(Files.exists(debugRoot.resolve(d7Artifacts.get("boundedPiecePreview").getAsString())));
-        assertTrue(d7.getAsJsonObject("placedStructureMap")
+        assertEquals(0, d7.getAsJsonObject("placedStructureLedger")
                 .getAsJsonArray("placedStructures")
-                .size() >= 2);
+                .size());
+        assertTrue(d7.getAsJsonObject("structureMaterializationTrace")
+                .getAsJsonObject("waitingSummary")
+                .has("WAITING_FOR_WORLDGEN"));
+    }
+
+    @Test
+    void handlePlanD6_requiresActiveWorldgenRegistry() throws Exception {
+        Path debugRoot = Files.createTempDirectory("city-d6-registry-missing");
+        String runId = "run_d6_missing_registry";
+        String citySeedId = "city_test";
+        prepareD5Artifacts(debugRoot, runId, citySeedId);
+
+        JsonObject d6 = CityPlanningEndpointHandler.handlePlanD6(
+                debugRoot,
+                runId,
+                citySeedId,
+                null,
+                null);
+
+        assertFalse(d6.get("ok").getAsBoolean());
+        assertEquals("registry_missing", d6.get("status").getAsString());
+        assertEquals("CITY_WORLDGEN_STRUCTURE_HOOK_UNAVAILABLE", d6.get("reasonCode").getAsString());
     }
 
     @Test
@@ -247,7 +247,7 @@ class CityPlanningEndpointHandlerTest {
         String runId = "run_d5_execute";
         String citySeedId = "city_test";
         Path runDir = debugRoot.resolve(runId);
-        Files.createDirectories(runDir);
+        Files.createDirectories(runDir.resolve("city_d4_city_test"));
         Files.writeString(runDir.resolve("city_seed_registry.json"), """
                 {
                   "citySeeds": [
@@ -261,20 +261,28 @@ class CityPlanningEndpointHandlerTest {
                   ]
                 }
                 """);
+        Files.writeString(runDir.resolve("city_d4_city_test").resolve("structure_anchor_map.json"), """
+                {
+                  "schemaVersion": "city_structure_anchor_map.v0.1",
+                  "cityId": "city_test",
+                  "anchors": []
+                }
+                """);
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
                 () -> CityPlanningEndpointHandler.handleExecuteD5(
                         debugRoot, Files.createTempDirectory("city-d5-server-root"),
                         runId, citySeedId, true, null));
-        assertTrue(ex.getMessage().contains("build_operation_plan.json"));
+        assertTrue(ex.getMessage().contains("reservation_mask_plan.json"));
     }
 
     @Test
-    void handleExecuteD5_requiresLoadedWorld() throws Exception {
+    void handleExecuteD5_activatesRegistryWithoutLoadedWorld() throws Exception {
         Path debugRoot = Files.createTempDirectory("city-d5-execute-no-level");
         String runId = "run_d5_execute";
         String citySeedId = "city_test";
         Path runDir = debugRoot.resolve(runId);
+        Files.createDirectories(runDir.resolve("city_d4_city_test"));
         Files.createDirectories(runDir.resolve("city_d5_city_test"));
         Files.writeString(runDir.resolve("city_seed_registry.json"), """
                 {
@@ -289,6 +297,26 @@ class CityPlanningEndpointHandlerTest {
                   ]
                 }
                 """);
+        Files.writeString(runDir.resolve("city_d4_city_test").resolve("structure_anchor_map.json"), """
+                {
+                  "schemaVersion": "city_structure_anchor_map.v0.1",
+                  "cityId": "city_test",
+                  "anchors": [
+                    {
+                      "anchorId": "anchor_test",
+                      "structureId": "minecraft:village_plains",
+                      "anchorBlock": {"x": 0, "z": 0},
+                      "commandAnchorBlock": {"x": 0, "z": 0},
+                      "rotation": "NONE",
+                      "plannedFootprint": {"minX": -4, "minZ": -4, "maxX": 4, "maxZ": 4},
+                      "reservedEnvelope": {"minX": -32, "minZ": -32, "maxX": 32, "maxZ": 32},
+                      "sourcePatches": [],
+                      "semanticTerms": [],
+                      "functionTerms": []
+                    }
+                  ]
+                }
+                """);
         Files.writeString(runDir.resolve("city_d5_city_test").resolve("build_operation_plan.json"), """
                 {
                   "schemaVersion": "build_operation_plan.v0.1",
@@ -297,12 +325,24 @@ class CityPlanningEndpointHandlerTest {
                   "operations": []
                 }
                 """);
+        Files.writeString(runDir.resolve("city_d5_city_test").resolve("reservation_mask_plan.json"), """
+                {
+                  "schemaVersion": "city_reservation_mask_plan.v0.1",
+                  "cityId": "city_test",
+                  "noVegetationMask": [],
+                  "vegetationLimitedMask": [],
+                  "noVanillaStructureMask": [],
+                  "reservationReason": []
+                }
+                """);
 
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> CityPlanningEndpointHandler.handleExecuteD5(
-                        debugRoot, Files.createTempDirectory("city-d5-server-root"),
-                        runId, citySeedId, true, null));
-        assertTrue(ex.getMessage().contains("ServerLevel"));
+        JsonObject response = CityPlanningEndpointHandler.handleExecuteD5(
+                debugRoot, Files.createTempDirectory("city-d5-server-root"),
+                runId, citySeedId, true, null);
+        assertTrue(response.get("ok").getAsBoolean());
+        assertTrue(response.get("worldgenPlacementMode").getAsBoolean());
+        assertEquals(1, response.get("activePlannedStructureCount").getAsInt());
+        assertFalse(response.getAsJsonObject("worldMutationReport").get("executed").getAsBoolean());
     }
 
     private static LandformPatch patch(String id, LandformType type, int minX, int minZ, int maxX, int maxZ) {
@@ -349,83 +389,62 @@ class CityPlanningEndpointHandlerTest {
         Files.writeString(d3Dir.resolve("city_landform_review_package.json"),
                 CityJson.GSON.toJson(review.asJson()));
 
-        List<LandformPatchSummary> patches = review.landformPatches();
-        PatchGroupPlan plan = new PatchGroupPlan(PatchGroupPlan.CURRENT_SCHEMA_VERSION, review.cityId(), List.of(
-                new PatchGroupPlan.Group("g1", "", "中心区", "civic_core",
-                        List.of("function.landmark"),
-                        List.of(patches.get(0).mapLabel()), List.of(patches.get(0).landformPatchId()),
-                        "village_hall", List.of(), "测试", "", false),
-                new PatchGroupPlan.Group("g2", "", "水岸", "harbor_or_waterfront",
-                        List.of("function.灯塔", "function.贸易船"),
-                        List.of(patches.get(1).mapLabel()), List.of(patches.get(1).landformPatchId()),
-                        "dock_core", List.of(), "测试", "", false)));
+        Path catalogPath = runDir.resolve("debug_structure_profile_catalog.json");
+        Files.writeString(catalogPath, debugStructureCatalog());
         CityPlanningEndpointHandler.handlePlanD4(debugRoot, runId, citySeedId,
-                JsonParser.parseString(CityJson.GSON.toJson(plan.asJson())).getAsJsonObject());
+                terraSenseSource(catalogPath), structureAnchorPlan(review, 2));
         CityPlanningEndpointHandler.handlePlanD5(debugRoot, runId, citySeedId);
     }
 
-    private static String civicZoneId(Path debugRoot, String runId, String citySeedId) throws Exception {
-        Path zoneMapPath = debugRoot.resolve(runId)
-                .resolve("city_d4_" + citySeedId)
-                .resolve("function_zone_map.json");
-        JsonObject zoneMap = JsonParser.parseString(Files.readString(zoneMapPath)).getAsJsonObject();
-        for (com.google.gson.JsonElement elem : zoneMap.getAsJsonArray("zones")) {
-            JsonObject zone = elem.getAsJsonObject();
-            if ("civic_core".equals(zone.get("functionType").getAsString())) {
-                return zone.get("zonePatchId").getAsString();
-            }
-        }
-        throw new IllegalStateException("No civic_core zone in test fixture.");
+    private static JsonObject terraSenseSource(Path catalogPath) {
+        JsonObject source = new JsonObject();
+        source.addProperty("schemaVersion", "terrasense_structure_profile_source.v0.1");
+        source.addProperty("sourceType", "debug_catalog");
+        source.addProperty("catalogMode", "debug");
+        source.addProperty("debugCatalogPath", catalogPath.toString());
+        return source;
     }
 
-    private static JsonObject structureChoicePlan(String civicZoneId) {
+    private static JsonObject structureAnchorPlan(CityLandformReviewPackage review, int anchorCount) {
+        List<LandformPatchSummary> patches = review.landformPatches();
+        LandformPatchSummary first = patches.get(0);
+        LandformPatchSummary second = patches.size() > 1 ? patches.get(1) : first;
+        String secondAnchor = anchorCount > 1 ? """
+                    {
+                      "anchorId": "anchor_village",
+                      "structureId": "minecraft:village_plains",
+                      "sourcePatchIds": ["%s"],
+                      "anchorBlock": {"x": %d, "z": %d},
+                      "rotation": "NONE",
+                      "intentTerms": ["function.village"],
+                      "priority": 2,
+                      "roadAccessIntent": "secondary_access",
+                      "clearanceBlocks": 8,
+                      "roadAccessMarginBlocks": 6
+                    }
+                """.formatted(second.landformPatchId(), second.centerBlock().x(), second.centerBlock().z()) : "";
         return JsonParser.parseString("""
                 {
-                  "schemaVersion": "city_structure_choice_plan.v0.1",
+                  "schemaVersion": "city_structure_anchor_plan.v0.1",
                   "cityId": "city_test",
-                  "zoneChoices": [
+                  "anchors": [
                     {
-                      "zonePatchId": "%s",
-                      "functionType": "civic_core",
-                      "fixedSelections": [
-                        {
-                          "selectionId": "fixed_core",
-                          "structureId": "minecraft:desert_pyramid",
-                          "count": 1,
-                          "priority": 1,
-                          "failurePolicy": "block_city",
-                          "reason": "temporary configured structure fixture"
-                        }
-                      ],
-                      "variableSelections": [
-                        {
-                          "selectionId": "var_core",
-                          "structureId": "minecraft:village_plains",
-                          "targetVisibleAreaRatio": 0.25,
-                          "weight": 2,
-                          "reason": "temporary variable configured structure fixture"
-                        }
-                      ]
+                      "anchorId": "anchor_pyramid",
+                      "structureId": "minecraft:desert_pyramid",
+                      "sourcePatchIds": ["%s"],
+                      "anchorBlock": {"x": %d, "z": %d},
+                      "rotation": "NONE",
+                      "intentTerms": ["function.landmark"],
+                      "priority": 1,
+                      "roadAccessIntent": "primary_access",
+                      "clearanceBlocks": 8,
+                      "roadAccessMarginBlocks": 6
                     }
+                    %s
                   ]
                 }
-                """.formatted(civicZoneId)).getAsJsonObject();
-    }
-
-    private static JsonObject fixedPlacementSelectionPlan() {
-        return JsonParser.parseString("""
-                {
-                  "schemaVersion": "city_fixed_placement_selection_plan.v0.1",
-                  "cityId": "city_test",
-                  "selections": [
-                    {
-                      "selectionId": "fixed_core",
-                      "landingCandidateId": "fixed_core_cand_01",
-                      "reason": "choose first program candidate"
-                    }
-                  ]
-                }
-                """).getAsJsonObject();
+                """.formatted(first.landformPatchId(), first.centerBlock().x(), first.centerBlock().z(),
+                secondAnchor.isBlank() ? "" : "," + secondAnchor)).getAsJsonObject();
     }
 
     private static String debugStructureCatalog() {
@@ -489,14 +508,4 @@ class CityPlanningEndpointHandlerTest {
                 """;
     }
 
-    private static JsonObject qualityJson() {
-        JsonObject quality = new JsonObject();
-        quality.addProperty("passed", true);
-        quality.addProperty("score", 100);
-        quality.add("hardBlocks", new com.google.gson.JsonArray());
-        quality.add("warnings", new com.google.gson.JsonArray());
-        quality.add("needsReview", new com.google.gson.JsonArray());
-        quality.add("metrics", new JsonObject());
-        return quality;
-    }
 }

@@ -1,9 +1,11 @@
 package com.rinsing.geomantia;
 
 import com.mojang.logging.LogUtils;
+import com.rinsing.geomantia.systems.city.infrastructure.world.CityReservationMaskRegistry;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.server.ServerAboutToStartEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
@@ -24,6 +26,11 @@ public final class GeomantiaMod {
 
     private void onCommonSetup(final FMLCommonSetupEvent event) {
         LOGGER.info("Geomantia initialized.");
+    }
+
+    @net.minecraftforge.eventbus.api.SubscribeEvent
+    public void onServerAboutToStart(ServerAboutToStartEvent event) {
+        CityReservationMaskRegistry.load(event.getServer().getServerDirectory().toPath());
     }
 
     private void registerTemporaryClientDevHooks() {

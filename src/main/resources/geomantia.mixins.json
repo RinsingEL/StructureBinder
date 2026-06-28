@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.rinsing.geomantia.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "mixins": [
+    "ConfiguredFeatureMaskMixin",
+    "ChunkGeneratorStructureMaskMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

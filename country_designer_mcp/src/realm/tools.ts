@@ -158,23 +158,27 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "city_plan_d4",
-    description: "City D4: 提交 AI/Codex 基于 D3 review PNG 和薄索引生成的 PatchGroupPlan，校验并实体化为 FunctionZonePatch、FunctionZoneMap 和 FunctionZoneTerrainStats。需先运行 city_plan_d3。",
+    description: "City D4: 提交 AI/Codex 基于 D3 patch 真值生成的 StructureAnchorPlan，校验 TerraSense 白名单、anchor、reservedEnvelope 与防撞；输出 structure_anchor_map 和预览。旧 PatchGroupPlan/function zone payload 会被拒绝。",
     inputSchema: {
       type: "object",
       properties: {
         runId: { type: "string", description: "已有 W/T run ID。" },
         citySeedId: { type: "string", description: "目标城市种子的 citySeedId（来自 city_seed_registry.json）。" },
-        patchGroupPlan: {
+        terrasenseProfileSource: {
           type: "object",
-          description: "schemaVersion=city_patch_group_plan.v0.1 的 PatchGroupPlan；由 MCP 调用方侧 AI/Codex 看 D3 review PNG 后生成，只需引用 patchLabels/landformPatchRefs 和分组理由。",
+          description: "schemaVersion=terrasense_structure_profile_source.v0.1；sourceType=structure_profile_jsonl 或 debug_catalog。",
+        },
+        structureAnchorPlan: {
+          type: "object",
+          description: "schemaVersion=city_structure_anchor_plan.v0.1；anchors[] 包含 anchorId、structureId、sourcePatchIds、anchorBlock{x,z}、rotation、intentTerms、priority、roadAccessIntent。",
         },
       },
-      required: ["runId", "citySeedId", "patchGroupPlan"],
+      required: ["runId", "citySeedId", "terrasenseProfileSource", "structureAnchorPlan"],
     },
   },
   {
     name: "city_plan_d5",
-    description: "City D5: 基于 D4 FunctionZoneMap 生成道路、边界、缓冲区意图和 BuildOperationPlan，并输出综合预览图。不修改世界。",
+    description: "City D5: 基于 D4 StructureAnchorMap 生成 reservation mask、road access、BuildOperationPlan 与预览；不修改世界。",
     inputSchema: {
       type: "object",
       properties: {
@@ -186,7 +190,7 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "city_execute_d5",
-    description: "City D5 Execute: 读取 city_plan_d5 已生成的 BuildOperationPlan，通过 WorldEdit 后端真实修改世界。必须显式传 confirmWorldMutation=true。",
+    description: "City D5 Execute: 激活 reservation mask registry 与 worldgen-time planned structure registry；正式路径不主动执行 WorldEdit 道路/清理，避免提前生成目标 chunk。必须显式传 confirmWorldMutation=true；mask/worldgen hook 不可用会 hard fail。",
     inputSchema: {
       type: "object",
       properties: {
@@ -201,37 +205,28 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "city_plan_d6",
-    description: "City D6: 读取 TerraSense/debug 结构画像快照、D4/D5 产物和 AI/Codex 草案，生成结构过滤目录、固定落点候选、PlannedFixedPlacementMap、StructurePoolMap 与预览图。不修改世界，不调用 /place structure。",
+    description: "City D6: 读取 D4/D5 结构 anchor 与 reservation mask，输出 planned_worldgen 计划校验、reserved envelope、anchor chunk 与 required chunk range；不要求 chunk loaded，不修改世界。",
     inputSchema: {
       type: "object",
       properties: {
         runId: { type: "string", description: "已有 W/T run ID。" },
         citySeedId: { type: "string", description: "目标城市种子的 citySeedId。" },
-        terrasenseProfileSource: {
-          type: "object",
-          description: "schemaVersion=terrasense_structure_profile_source.v0.1；指向 StructureProfile.jsonl、C3_5 兼容 catalog 或 debug catalog。",
-        },
-        structureChoicePlan: {
-          type: "object",
-          description: "schemaVersion=city_structure_choice_plan.v0.1；AI/Codex 第一轮结构选择。固定结构只能选 structureId/count/priority/failurePolicy，非固定结构才填 targetVisibleAreaRatio。",
-        },
-        fixedPlacementSelectionPlan: {
-          type: "object",
-          description: "schemaVersion=city_fixed_placement_selection_plan.v0.1；AI/Codex 第二轮固定落点选择，只能引用 landingCandidateId。",
-        },
+        dimensionId: { type: "string", description: "维度 ID，省略时从 run manifest 恢复。" },
+        playerName: { type: "string", description: "玩家名，用于定位维度。" },
       },
-      required: ["runId", "citySeedId", "terrasenseProfileSource"],
+      required: ["runId", "citySeedId"],
     },
   },
   {
     name: "city_execute_d7",
-    description: "City D7: 读取 D6 PlannedFixedPlacementMap 和 StructurePoolMap，程序生成 StartCandidateSet，并按 configured structure 放置或 dry-run 输出 PlacedStructureMap、StructureGenerationTrace 与预览图。真实放置需显式 executeStructurePlacement=true。",
+    description: "City Execute D7: 保留入口名但正式语义为 worldgen ledger 检查。executeStructurePlacement=true 不再 late paste；未生成 chunk 返回 WAITING_FOR_WORLDGEN，已生成未记录返回 STRUCTURE_CHUNK_ALREADY_GENERATED。debugLateMaterialize=true 才允许旧诊断 paste。",
     inputSchema: {
       type: "object",
       properties: {
         runId: { type: "string", description: "已有 W/T run ID。" },
         citySeedId: { type: "string", description: "目标城市种子的 citySeedId。" },
-        executeStructurePlacement: { type: "boolean", description: "true 时真实执行 /place structure 等价入口；默认 false 只做 dry-run/trace。" },
+        executeStructurePlacement: { type: "boolean", description: "true 时检查 worldgen ledger/状态；正式路径不 late paste。" },
+        debugLateMaterialize: { type: "boolean", description: "开发诊断开关；true 时才允许旧 StructureStart.placeInChunk 路径，trace 会标记 lateMaterialization=true。" },
         worldSeed: { type: "number", description: "可选；未传时使用当前世界 seed 参与 seeded random。" },
         dimensionId: { type: "string", description: "维度 ID，省略时从 run manifest 恢复。" },
         playerName: { type: "string", description: "玩家名，用于定位维度。" },
