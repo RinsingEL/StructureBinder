@@ -96,6 +96,7 @@ class CityPlanningEndpointHandlerTest {
                 .orElseThrow();
         PatchGroupPlan plan = new PatchGroupPlan(PatchGroupPlan.CURRENT_SCHEMA_VERSION, review.cityId(), List.of(
                 new PatchGroupPlan.Group("g1", "", "中心区", "civic_core",
+                        List.of("function.landmark"),
                         List.of(plain.mapLabel()), List.of(plain.landformPatchId()),
                         "village_hall", List.of(), "测试", "", false)));
 
@@ -153,9 +154,11 @@ class CityPlanningEndpointHandlerTest {
         List<LandformPatchSummary> patches = review.landformPatches();
         PatchGroupPlan plan = new PatchGroupPlan(PatchGroupPlan.CURRENT_SCHEMA_VERSION, review.cityId(), List.of(
                 new PatchGroupPlan.Group("g1", "", "中心区", "civic_core",
+                        List.of("function.landmark"),
                         List.of(patches.get(0).mapLabel()), List.of(patches.get(0).landformPatchId()),
                         "village_hall", List.of(), "测试", "", false),
                 new PatchGroupPlan.Group("g2", "", "水岸", "harbor_or_waterfront",
+                        List.of("function.灯塔", "function.贸易船"),
                         List.of(patches.get(1).mapLabel()), List.of(patches.get(1).landformPatchId()),
                         "dock_core", List.of(), "测试", "", false)));
         CityPlanningEndpointHandler.handlePlanD4(debugRoot, runId, citySeedId,
@@ -349,9 +352,11 @@ class CityPlanningEndpointHandlerTest {
         List<LandformPatchSummary> patches = review.landformPatches();
         PatchGroupPlan plan = new PatchGroupPlan(PatchGroupPlan.CURRENT_SCHEMA_VERSION, review.cityId(), List.of(
                 new PatchGroupPlan.Group("g1", "", "中心区", "civic_core",
+                        List.of("function.landmark"),
                         List.of(patches.get(0).mapLabel()), List.of(patches.get(0).landformPatchId()),
                         "village_hall", List.of(), "测试", "", false),
                 new PatchGroupPlan.Group("g2", "", "水岸", "harbor_or_waterfront",
+                        List.of("function.灯塔", "function.贸易船"),
                         List.of(patches.get(1).mapLabel()), List.of(patches.get(1).landformPatchId()),
                         "dock_core", List.of(), "测试", "", false)));
         CityPlanningEndpointHandler.handlePlanD4(debugRoot, runId, citySeedId,
@@ -438,11 +443,12 @@ class CityPlanningEndpointHandlerTest {
                       "placementKind": "minecraft_place_structure",
                       "placementCommand": "place structure minecraft:desert_pyramid <x> <y> <z>",
                       "footprintMode": "fixed_footprint",
-                      "functionTags": ["civic_core"],
-                      "styleTags": ["debug"],
-                      "placementTags": ["inside_zone"],
-                      "usageTags": ["public_core"],
-                      "qualityTags": ["debug_usable"],
+                      "semanticTerms": ["function.landmark", "style.debug", "placement.inside_zone", "usage.public_core", "quality.debug_usable"],
+                      "functionTerms": ["function.landmark"],
+                      "styleTerms": ["style.debug"],
+                      "placementTerms": ["placement.inside_zone"],
+                      "usageTerms": ["usage.public_core"],
+                      "qualityTerms": ["quality.debug_usable"],
                       "fixedFootprint": {"widthBlocks": 12, "depthBlocks": 12, "heightBlocks": 10},
                       "visibleAreaCost": 256,
                       "allowedRotations": ["NONE", "CLOCKWISE_90"],
@@ -456,11 +462,12 @@ class CityPlanningEndpointHandlerTest {
                       "placementKind": "minecraft_place_structure",
                       "placementCommand": "place structure minecraft:village_plains <x> <y> <z>",
                       "footprintMode": "variable_area",
-                      "functionTags": ["civic_core", "residential", "market"],
-                      "styleTags": ["debug"],
-                      "placementTags": ["inside_zone"],
-                      "usageTags": ["filler"],
-                      "qualityTags": ["debug_usable"],
+                      "semanticTerms": ["function.村庄", "style.debug", "placement.inside_zone", "usage.filler", "quality.debug_usable"],
+                      "functionTerms": ["function.村庄"],
+                      "styleTerms": ["style.debug"],
+                      "placementTerms": ["placement.inside_zone"],
+                      "usageTerms": ["usage.filler"],
+                      "qualityTerms": ["quality.debug_usable"],
                       "expectedAreaRange": {
                         "minAreaBlocks": 128,
                         "maxAreaBlocks": 25600,

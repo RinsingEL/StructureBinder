@@ -72,6 +72,7 @@ public final class CityFunctionZoneBuilder {
                     group.groupId(),
                     group.zoneName(),
                     functionType,
+                    group.semanticTerms(),
                     resolved.stream().map(LandformPatchSummary::landformPatchId).distinct().toList(),
                     zoneBounds,
                     zoneCells,

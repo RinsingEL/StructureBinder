@@ -10,6 +10,7 @@ public record FunctionZonePatch(
         String sourceGroupId,
         String zoneName,
         CityFunctionType functionType,
+        List<String> semanticTerms,
         List<String> landformPatchRefs,
         BlockBounds cellShape,
         List<PatchMemberCell> memberCells,
@@ -31,6 +32,10 @@ public record FunctionZonePatch(
         }
         if (functionType == null) {
             throw new IllegalArgumentException("functionType is required");
+        }
+        semanticTerms = List.copyOf(semanticTerms);
+        if (semanticTerms.isEmpty()) {
+            throw new IllegalArgumentException("semanticTerms is required");
         }
         landformPatchRefs = List.copyOf(landformPatchRefs);
         if (landformPatchRefs.isEmpty()) {
@@ -57,6 +62,7 @@ public record FunctionZonePatch(
         obj.addProperty("sourceGroupId", sourceGroupId);
         obj.addProperty("zoneName", zoneName);
         obj.addProperty("functionType", functionType.contractName());
+        obj.add("semanticTerms", stringArray(semanticTerms));
         obj.add("landformPatchRefs", stringArray(landformPatchRefs));
         JsonObject shape = new JsonObject();
         shape.addProperty("geometryMode", memberCells.isEmpty() ? "patch_envelope_union" : "patch_member_cells_union");
@@ -91,6 +97,7 @@ public record FunctionZonePatch(
                 RoadIntent.requiredString(obj, "sourceGroupId"),
                 RoadIntent.requiredString(obj, "zoneName"),
                 type,
+                RoadIntent.strings(RoadIntent.requiredArray(obj, "semanticTerms")),
                 RoadIntent.strings(RoadIntent.requiredArray(obj, "landformPatchRefs")),
                 new BlockBounds(
                         RoadIntent.intValue(bounds, "minX", 0),

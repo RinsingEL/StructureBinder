@@ -50,7 +50,7 @@ class CityFunctionZoneBuilderTest {
     void build_unknownPatchLabel_hardBlocks() {
         CityLandformReviewPackage review = reviewPackage();
         PatchGroupPlan.Group group = new PatchGroupPlan.Group(
-                "g_bad", "", "坏引用", "market", List.of("不存在01"), List.of(),
+                "g_bad", "", "坏引用", "market", List.of("function.market"), List.of("不存在01"), List.of(),
                 "market_core", List.of(), "测试", "", false);
         PatchGroupPlan plan = new PatchGroupPlan(PatchGroupPlan.CURRENT_SCHEMA_VERSION, review.cityId(), List.of(group));
 
@@ -66,7 +66,8 @@ class CityFunctionZoneBuilderTest {
         CityLandformReviewPackage review = reviewPackage();
         LandformPatchSummary plain = patchByType(review, LandformType.PLAIN);
         PatchGroupPlan.Group group = new PatchGroupPlan.Group(
-                "g_type", "", "中心区", "invented_function", List.of(plain.mapLabel()), List.of(plain.landformPatchId()),
+                "g_type", "", "中心区", "invented_function", List.of("function.landmark"),
+                List.of(plain.mapLabel()), List.of(plain.landformPatchId()),
                 "village_hall", List.of(), "测试", "", false);
         PatchGroupPlan plan = new PatchGroupPlan(PatchGroupPlan.CURRENT_SCHEMA_VERSION, review.cityId(), List.of(group));
 
@@ -116,7 +117,8 @@ class CityFunctionZoneBuilderTest {
         CityLandformReviewPackage review = reviewPackage();
         LandformPatchSummary plain = patchByType(review, LandformType.PLAIN);
         PatchGroupPlan.Group group = new PatchGroupPlan.Group(
-                "g_split", "", "中心区", "civic_core", List.of(plain.mapLabel()), List.of(plain.landformPatchId()),
+                "g_split", "", "中心区", "civic_core", List.of("function.landmark"),
+                List.of(plain.mapLabel()), List.of(plain.landformPatchId()),
                 "village_hall", List.of(), "需要后续裁剪", "", true);
         PatchGroupPlan plan = new PatchGroupPlan(PatchGroupPlan.CURRENT_SCHEMA_VERSION, review.cityId(), List.of(group));
 
@@ -159,8 +161,23 @@ class CityFunctionZoneBuilderTest {
 
     private PatchGroupPlan.Group group(String id, String zoneName, String functionType, LandformPatchSummary patch) {
         return new PatchGroupPlan.Group(
-                id, "", zoneName, functionType, List.of(patch.mapLabel()), List.of(patch.landformPatchId()),
+                id, "", zoneName, functionType, semanticTerms(functionType),
+                List.of(patch.mapLabel()), List.of(patch.landformPatchId()),
                 "main_role", List.of(), "测试分组理由", "", false);
+    }
+
+    private List<String> semanticTerms(String functionType) {
+        return switch (functionType) {
+            case "civic_core" -> List.of("function.landmark");
+            case "residential" -> List.of("function.村庄");
+            case "production" -> List.of("function.utility");
+            case "market" -> List.of("function.trade");
+            case "farm_or_pasture" -> List.of("function.农场");
+            case "defense" -> List.of("function.瞭望塔");
+            case "harbor_or_waterfront" -> List.of("function.灯塔", "function.贸易船");
+            case "sacred_or_cultural" -> List.of("function.教堂");
+            default -> List.of("function.landmark");
+        };
     }
 
     private LandformPatchSummary patchByType(CityLandformReviewPackage review, LandformType type) {

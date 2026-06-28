@@ -158,6 +158,68 @@ final class CityStructureD6D7Test {
     }
 
     @Test
+    void d6RejectsLegacyCompatCatalogSource() throws Exception {
+        Fixture fixture = fixture();
+        Path dir = Files.createTempDirectory("city-d6-legacy-compat");
+        Path compatPath = dir.resolve("C3_5_StructureCatalog.preprocessed.json");
+        Files.writeString(compatPath, "[]");
+        JsonObject source = new JsonObject();
+        source.addProperty("schemaVersion", "terrasense_structure_profile_source.v0.1");
+        source.addProperty("sourceType", "c3_5_compat_catalog");
+        source.addProperty("catalogMode", "compat");
+        source.addProperty("compatCatalogPath", compatPath.toString());
+        source.add("quality", qualityJson(true));
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> new CityStructureD6Planner().plan(dir, fixture.zoneMap(), fixture.buildableAreaMap(),
+                        source, choicePlan(), selectionPlan("fixed_core_cand_01")));
+        assertTrue(ex.getMessage().contains("compat"));
+        assertTrue(ex.getMessage().contains("StructureProfile.jsonl"));
+    }
+
+    @Test
+    void d6RejectsLegacySemanticFieldsInCatalog() {
+        Fixture fixture = fixture();
+        JsonObject legacy = fixed("minecraft:desert_pyramid",
+                "structure_assembly", "minecraft_place_structure", 16, 16);
+        legacy.remove("semanticTerms");
+        legacy.remove("functionTerms");
+        legacy.add("functionTags", strings("civic_core"));
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> runD6(fixture, catalog(List.of(legacy,
+                                variable("minecraft:village_plains", "structure_assembly", "minecraft_place_structure"))),
+                        choicePlan(), selectionPlan("fixed_core_cand_01")));
+        assertTrue(ex.getMessage().contains("legacy semantic field functionTags"));
+    }
+
+    @Test
+    void d6ReadsOfficialStructureProfileJsonlWithTerraSenseTerms() throws Exception {
+        Fixture fixture = fixture();
+        Path dir = Files.createTempDirectory("city-d6-official-profile");
+        Path profilePath = dir.resolve("StructureProfile.jsonl");
+        Files.writeString(profilePath, fixed("minecraft:desert_pyramid",
+                "structure_assembly", "minecraft_place_structure", 16, 16) + "\n"
+                + variable("minecraft:village_plains",
+                "structure_assembly", "minecraft_place_structure") + "\n");
+        JsonObject source = new JsonObject();
+        source.addProperty("schemaVersion", "terrasense_structure_profile_source.v0.1");
+        source.addProperty("sourceType", "structure_profile_jsonl");
+        source.addProperty("catalogMode", "official");
+        source.addProperty("profilePath", profilePath.toString());
+        source.add("quality", qualityJson(true));
+
+        JsonObject result = new CityStructureD6Planner().plan(dir, fixture.zoneMap(), fixture.buildableAreaMap(),
+                source, choicePlan(), selectionPlan("fixed_core_cand_01")).asJson();
+
+        JsonObject profile = result.getAsJsonObject("structureProfileCatalog")
+                .getAsJsonArray("structures")
+                .get(0).getAsJsonObject();
+        assertEquals("function.landmark", profile.getAsJsonArray("functionTerms").get(0).getAsString());
+        assertTrue(result.getAsJsonObject("filteredStructureCatalog").toString().contains("semanticTerms"));
+    }
+
+    @Test
     void d7GeneratesStartCandidatesAndIsSeedReproducible() throws Exception {
         Fixture fixture = fixture();
         JsonObject d6 = runD6(fixture, catalog(List.of(
@@ -1451,6 +1513,7 @@ final class CityStructureD6D7Test {
                 "group_" + id,
                 id,
                 type,
+                semanticTerms(type),
                 List.of("patch_" + id),
                 new BlockBounds(minX, minZ, maxX, maxZ),
                 List.of(),
@@ -1459,6 +1522,19 @@ final class CityStructureD6D7Test {
                 id + "_stats",
                 "",
                 "");
+    }
+
+    private List<String> semanticTerms(CityFunctionType type) {
+        return switch (type) {
+            case CIVIC_CORE -> List.of("function.landmark");
+            case RESIDENTIAL -> List.of("function.村庄");
+            case PRODUCTION -> List.of("function.utility");
+            case MARKET -> List.of("function.trade");
+            case FARM_OR_PASTURE -> List.of("function.农场");
+            case DEFENSE -> List.of("function.瞭望塔");
+            case HARBOR_OR_WATERFRONT -> List.of("function.灯塔", "function.贸易船");
+            case SACRED_OR_CULTURAL -> List.of("function.教堂");
+        };
     }
 
     private JsonObject choicePlan() {
@@ -1542,7 +1618,9 @@ final class CityStructureD6D7Test {
     private JsonObject fixed(String id, String sampleType, String placementKind,
                              int width, int depth, int originOffsetX, int originOffsetZ) {
         JsonObject obj = base(id, sampleType, placementKind, "fixed_footprint");
-        obj.add("functionTags", strings("civic_core", "market", "harbor_or_waterfront"));
+        obj.add("semanticTerms", strings("function.landmark", "style.debug", "placement.inside_zone",
+                "usage.public_core", "quality.debug_usable"));
+        obj.add("functionTerms", strings("function.landmark"));
         JsonObject footprint = new JsonObject();
         footprint.addProperty("widthBlocks", width);
         footprint.addProperty("depthBlocks", depth);
@@ -1559,7 +1637,9 @@ final class CityStructureD6D7Test {
 
     private JsonObject variable(String id, String sampleType, String placementKind) {
         JsonObject obj = base(id, sampleType, placementKind, "variable_area");
-        obj.add("functionTags", strings("civic_core", "residential", "market"));
+        obj.add("semanticTerms", strings("function.村庄", "style.debug", "placement.inside_zone",
+                "usage.filler", "quality.debug_usable"));
+        obj.add("functionTerms", strings("function.村庄"));
         JsonObject range = new JsonObject();
         range.addProperty("minAreaBlocks", 128);
         range.addProperty("maxAreaBlocks", 25600);
@@ -1581,10 +1661,10 @@ final class CityStructureD6D7Test {
         obj.addProperty("placementKind", placementKind);
         obj.addProperty("placementCommand", "place structure " + id + " <x> <y> <z>");
         obj.addProperty("footprintMode", footprintMode);
-        obj.add("styleTags", strings("debug"));
-        obj.add("placementTags", strings("inside_zone"));
-        obj.add("usageTags", strings("public_core"));
-        obj.add("qualityTags", strings("debug_usable"));
+        obj.add("styleTerms", strings("style.debug"));
+        obj.add("placementTerms", strings("placement.inside_zone"));
+        obj.add("usageTerms", strings("usage.public_core"));
+        obj.add("qualityTerms", strings("quality.debug_usable"));
         obj.add("allowedRotations", strings("NONE", "CLOCKWISE_90", "CLOCKWISE_180", "COUNTERCLOCKWISE_90"));
         return obj;
     }

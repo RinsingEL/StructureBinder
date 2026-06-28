@@ -33,6 +33,7 @@ public record PatchGroupPlan(
             String groupName,
             String zoneName,
             String functionType,
+            List<String> semanticTerms,
             List<String> patchLabels,
             List<String> landformPatchRefs,
             String mainBuildingRole,
@@ -50,6 +51,10 @@ public record PatchGroupPlan(
             }
             if (functionType == null || functionType.isBlank()) {
                 throw new IllegalArgumentException("functionType is required");
+            }
+            semanticTerms = List.copyOf(Objects.requireNonNullElse(semanticTerms, List.of()));
+            if (semanticTerms.isEmpty()) {
+                throw new IllegalArgumentException("semanticTerms is required");
             }
             patchLabels = List.copyOf(Objects.requireNonNullElse(patchLabels, List.of()));
             landformPatchRefs = List.copyOf(Objects.requireNonNullElse(landformPatchRefs, List.of()));
@@ -75,6 +80,7 @@ public record PatchGroupPlan(
             groupObj.addProperty("groupName", group.groupName());
             groupObj.addProperty("zoneName", group.zoneName());
             groupObj.addProperty("functionType", group.functionType());
+            groupObj.add("semanticTerms", stringArray(group.semanticTerms()));
             groupObj.add("patchLabels", stringArray(group.patchLabels()));
             groupObj.add("landformPatchRefs", stringArray(group.landformPatchRefs()));
             groupObj.addProperty("mainBuildingRole", group.mainBuildingRole());
@@ -101,6 +107,7 @@ public record PatchGroupPlan(
                     stringValue(groupObj, "groupName", ""),
                     requiredString(groupObj, "zoneName"),
                     requiredString(groupObj, "functionType"),
+                    strings(requiredArray(groupObj, "semanticTerms")),
                     strings(optionalArray(groupObj, "patchLabels")),
                     strings(optionalArray(groupObj, "landformPatchRefs")),
                     stringValue(groupObj, "mainBuildingRole", ""),

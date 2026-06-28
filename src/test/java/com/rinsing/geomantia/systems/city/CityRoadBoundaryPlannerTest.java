@@ -166,6 +166,7 @@ final class CityRoadBoundaryPlannerTest {
                 "group_" + id,
                 id,
                 type,
+                semanticTerms(type),
                 List.of("patch_" + id),
                 new BlockBounds(x - size / 2, z - size / 2, x + size / 2, z + size / 2),
                 cells,
@@ -174,6 +175,19 @@ final class CityRoadBoundaryPlannerTest {
                 id + "_stats",
                 "",
                 "");
+    }
+
+    private List<String> semanticTerms(CityFunctionType type) {
+        return switch (type) {
+            case CIVIC_CORE -> List.of("function.landmark");
+            case RESIDENTIAL -> List.of("function.村庄");
+            case PRODUCTION -> List.of("function.utility");
+            case MARKET -> List.of("function.trade");
+            case FARM_OR_PASTURE -> List.of("function.农场");
+            case DEFENSE -> List.of("function.瞭望塔");
+            case HARBOR_OR_WATERFRONT -> List.of("function.灯塔", "function.贸易船");
+            case SACRED_OR_CULTURAL -> List.of("function.教堂");
+        };
     }
 
     private FunctionZoneTerrainStats stats(String id, double waterContactRatio) {

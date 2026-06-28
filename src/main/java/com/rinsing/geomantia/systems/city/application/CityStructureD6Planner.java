@@ -42,6 +42,12 @@ public final class CityStructureD6Planner {
     private static final Set<String> SELECTION_FORBIDDEN_FIELDS = Set.of(
             "anchorBlock", "validatedAnchorBlock", "finalBlock", "candidateBlock",
             "x", "z", "blockX", "blockZ", "footprint");
+    private static final Set<String> LEGACY_SEMANTIC_FIELDS = Set.of(
+            "functionTags", "function_tags", "function_candidates", "functionAffinity", "function_affinity",
+            "styleTags", "style_tags", "styleAffinity", "style_affinity",
+            "placementTags", "placement_tags", "placementAffinity", "placement_affinity",
+            "usageTags", "usage_tags", "usageAffinity", "usage_affinity",
+            "qualityTags", "quality_tags");
 
     public Result plan(Path baseDirectory,
                        FunctionZoneMap zoneMap,
@@ -99,10 +105,15 @@ public final class CityStructureD6Planner {
     private ImportedCatalog importCatalog(Path baseDirectory, JsonObject source) throws IOException {
         String sourceType = stringValue(source, "sourceType", "debug_catalog");
         String catalogMode = stringValue(source, "catalogMode", sourceType.equals("debug_catalog") ? "debug" : "official");
+        if ("compat".equals(catalogMode)) {
+            throw new IllegalArgumentException(
+                    "catalogMode=compat is no longer supported; export StructureProfile.jsonl with TerraSense semantic terms.");
+        }
         Path inputPath = switch (sourceType) {
             case "structure_profile_jsonl" -> resolve(baseDirectory, requiredString(source, "profilePath"));
-            case "c3_5_compat_catalog" -> resolve(baseDirectory, requiredString(source, "compatCatalogPath"));
             case "debug_catalog" -> resolve(baseDirectory, requiredString(source, "debugCatalogPath"));
+            case "c3_5_compat_catalog" -> throw new IllegalArgumentException(
+                    "sourceType=c3_5_compat_catalog is no longer supported; export StructureProfile.jsonl with semanticTerms/functionTerms.");
             default -> throw new IllegalArgumentException("Unsupported TerraSense sourceType: " + sourceType);
         };
         if (!Files.exists(inputPath)) {
@@ -112,7 +123,6 @@ public final class CityStructureD6Planner {
         List<String> needsReview = new ArrayList<>();
         List<StructureProfile> profiles = switch (sourceType) {
             case "structure_profile_jsonl" -> readJsonlProfiles(inputPath, source, catalogMode, warnings, needsReview);
-            case "c3_5_compat_catalog" -> readCompatCatalog(inputPath, source, catalogMode, warnings, needsReview);
             case "debug_catalog" -> readDebugCatalog(inputPath, source, catalogMode, warnings, needsReview);
             default -> List.of();
         };
@@ -150,39 +160,6 @@ public final class CityStructureD6Planner {
         return profiles;
     }
 
-    private List<StructureProfile> readCompatCatalog(Path path, JsonObject source, String catalogMode,
-                                                     List<String> warnings, List<String> needsReview) throws IOException {
-        JsonElement root = JsonParser.parseString(Files.readString(path));
-        JsonArray structures;
-        if (root.isJsonArray()) {
-            structures = root.getAsJsonArray();
-        } else {
-            JsonObject obj = root.getAsJsonObject();
-            structures = arrayValue(obj, "structures", arrayValue(obj, "entries", new JsonArray()));
-        }
-        List<StructureProfile> profiles = new ArrayList<>();
-        int index = 0;
-        for (JsonElement elem : structures) {
-            index++;
-            if (!elem.isJsonObject()) {
-                continue;
-            }
-            JsonObject compat = elem.getAsJsonObject();
-            if (!compat.has("structureId") && compat.has("structure_id")) {
-                compat.addProperty("structureId", compat.get("structure_id").getAsString());
-            }
-            if (!compat.has("functionTags") && compat.has("function_candidates")) {
-                compat.add("functionTags", compat.get("function_candidates"));
-            }
-            if (!compat.has("sourceProfileRef")) {
-                compat.addProperty("sourceProfileRef", "compat catalog entry " + index);
-            }
-            profileFromJson(compat, source, catalogMode, "compat catalog entry " + index, warnings, needsReview)
-                    .ifPresent(profiles::add);
-        }
-        return profiles;
-    }
-
     private List<StructureProfile> readDebugCatalog(Path path, JsonObject source, String catalogMode,
                                                     List<String> warnings, List<String> needsReview) throws IOException {
         JsonObject obj = JsonParser.parseString(Files.readString(path)).getAsJsonObject();
@@ -215,11 +192,6 @@ public final class CityStructureD6Planner {
             needsReview.add(sourceRef + ": invalid resource id " + structureId);
             return Optional.empty();
         }
-        List<String> qualityTags = strings(firstArray(obj, "qualityTags", "quality_tags"));
-        if (qualityTags.stream().anyMatch(tag -> tag.equalsIgnoreCase("reject"))) {
-            needsReview.add(structureId + ": rejected by quality_tags");
-            return Optional.empty();
-        }
         if (!"debug".equals(catalogMode)) {
             String reviewState = firstString(obj, "reviewState", "review_state");
             if (!reviewState.isBlank() && !"approved".equalsIgnoreCase(reviewState)) {
@@ -229,6 +201,7 @@ public final class CityStructureD6Planner {
         }
 
         JsonObject curation = objectValue(obj, "curation");
+        rejectLegacySemanticFields(obj, curation, sourceRef);
         String sourceProfileRef = firstString(obj, "sourceProfileRef", "source_profile_ref");
         if (sourceProfileRef.isBlank()) {
             sourceProfileRef = sourceRef;
@@ -255,11 +228,26 @@ public final class CityStructureD6Planner {
         }
         AreaRange expectedAreaRange = areaRange(obj, fixedFootprint);
         OriginOffset footprintOriginOffset = originOffset(obj);
-        List<String> functions = firstStrings(obj, curation, "functionTags", "function_tags", "function_affinity",
-                "function_candidates");
-        List<String> styles = firstStrings(obj, curation, "styleTags", "style_tags", "style_affinity");
-        List<String> placementTags = firstStrings(obj, curation, "placementTags", "placement_tags", "placement_affinity");
-        List<String> usageTags = firstStrings(obj, curation, "usageTags", "usage_tags", "usage_affinity");
+        List<String> semanticTerms = firstStrings(obj, curation, "semanticTerms", "semantic_terms");
+        List<String> functionTerms = firstStrings(obj, curation, "functionTerms", "function_terms", "function");
+        if (functionTerms.isEmpty()) {
+            needsReview.add(structureId + ": missing TerraSense function terms");
+            return Optional.empty();
+        }
+        List<String> styleTerms = firstStrings(obj, curation, "styleTerms", "style_terms", "style");
+        List<String> placementTerms = firstStrings(obj, curation, "placementTerms", "placement_terms", "placement");
+        List<String> usageTerms = firstStrings(obj, curation, "usageTerms", "usage_terms", "usage");
+        List<String> templateRoleTerms = firstStrings(obj, curation, "templateRoleTerms", "template_role_terms",
+                "template_role");
+        List<String> qualityTerms = firstStrings(obj, curation, "qualityTerms", "quality_terms", "quality");
+        if (qualityTerms.stream().anyMatch(tag -> tag.equals("reject") || tag.equals("quality.reject"))) {
+            needsReview.add(structureId + ": rejected by quality terms");
+            return Optional.empty();
+        }
+        if (semanticTerms.isEmpty()) {
+            semanticTerms = semanticTerms(functionTerms, styleTerms, placementTerms, usageTerms, templateRoleTerms,
+                    qualityTerms);
+        }
         List<String> rotations = rotations(firstArray(obj, "allowedRotations", "allowed_rotations"));
         if (rotations.isEmpty()) {
             rotations = List.of("NONE");
@@ -270,9 +258,10 @@ public final class CityStructureD6Planner {
             profileType = "single";
         }
         return Optional.of(new StructureProfile(structureId, sourceProfileRef, profileType, sampleType,
-                placementKind, placementCommand, footprintMode, functions, styles, placementTags, usageTags,
-                qualityTags, fixedFootprint, footprintOriginOffset, visibleAreaCost, rotations, clearance, expectedAreaRange,
-                connectorsRef, stringValue(source, "catalogMode", catalogMode)));
+                placementKind, placementCommand, footprintMode, semanticTerms, functionTerms, styleTerms,
+                placementTerms, usageTerms, templateRoleTerms, qualityTerms, fixedFootprint, footprintOriginOffset,
+                visibleAreaCost, rotations, clearance, expectedAreaRange, connectorsRef,
+                stringValue(source, "catalogMode", catalogMode)));
     }
 
     private JsonObject buildFilteredCatalog(String cityId, ZoneContext zones, ImportedCatalog catalog) {
@@ -285,6 +274,7 @@ public final class CityStructureD6Planner {
             JsonObject zoneObj = new JsonObject();
             zoneObj.addProperty("zonePatchId", zone.zonePatchId());
             zoneObj.addProperty("functionType", zone.functionType().contractName());
+            zoneObj.add("semanticTerms", stringArray(zone.semanticTerms()));
             zoneObj.addProperty("visibleBuildableArea", zone.buildableAreaBlocks());
             JsonArray fixed = new JsonArray();
             JsonArray variable = new JsonArray();
@@ -316,10 +306,6 @@ public final class CityStructureD6Planner {
         if (!d7Eligible(profile)) {
             return new FilterDecision("filtered", "NOT_CONFIGURED_STRUCTURE_ENTRY",
                     "D7 candidates must be structure_assembly + minecraft_place_structure.");
-        }
-        if (!functionMatches(profile, zone.functionType())) {
-            return new FilterDecision("filtered", "FUNCTION_TAG_MISMATCH",
-                    "Structure function tags do not match zone functionType.");
         }
         if ("fixed_footprint".equals(profile.footprintMode())) {
             if (!profile.fixedFootprint().valid()) {
@@ -747,26 +733,19 @@ public final class CityStructureD6Planner {
                 && validResourceId(profile.structureId());
     }
 
-    private boolean functionMatches(StructureProfile profile, CityFunctionType type) {
-        if (profile.functionTags().isEmpty() || profile.functionTags().contains("any")) {
-            return true;
-        }
-        return profile.functionTags().stream()
-                .map(tag -> tag.toLowerCase(Locale.ROOT))
-                .anyMatch(tag -> tag.equals(type.contractName()));
-    }
-
     private JsonObject profileCandidate(StructureProfile profile) {
         JsonObject obj = new JsonObject();
         obj.addProperty("structureId", profile.structureId());
         obj.addProperty("footprintMode", profile.footprintMode());
         obj.addProperty("placementKind", profile.placementKind());
         obj.addProperty("sampleType", profile.sampleType());
-        obj.add("functionTags", stringArray(profile.functionTags()));
-        obj.add("styleTags", stringArray(profile.styleTags()));
-        obj.add("placementTags", stringArray(profile.placementTags()));
-        obj.add("usageTags", stringArray(profile.usageTags()));
-        obj.add("qualityTags", stringArray(profile.qualityTags()));
+        obj.add("semanticTerms", stringArray(profile.semanticTerms()));
+        obj.add("functionTerms", stringArray(profile.functionTerms()));
+        obj.add("styleTerms", stringArray(profile.styleTerms()));
+        obj.add("placementTerms", stringArray(profile.placementTerms()));
+        obj.add("usageTerms", stringArray(profile.usageTerms()));
+        obj.add("templateRoleTerms", stringArray(profile.templateRoleTerms()));
+        obj.add("qualityTerms", stringArray(profile.qualityTerms()));
         obj.addProperty("visibleAreaCost", profile.visibleAreaCost());
         obj.add("fixedFootprint", profile.fixedFootprint().asJson());
         obj.add("expectedAreaRange", profile.expectedAreaRange().asJson());
@@ -969,6 +948,32 @@ public final class CityStructureD6Planner {
         return List.of();
     }
 
+    private static List<String> semanticTerms(List<String> functionTerms,
+                                              List<String> styleTerms,
+                                              List<String> placementTerms,
+                                              List<String> usageTerms,
+                                              List<String> templateRoleTerms,
+                                              List<String> qualityTerms) {
+        LinkedHashSet<String> terms = new LinkedHashSet<>();
+        terms.addAll(functionTerms);
+        terms.addAll(styleTerms);
+        terms.addAll(placementTerms);
+        terms.addAll(usageTerms);
+        terms.addAll(templateRoleTerms);
+        terms.addAll(qualityTerms);
+        return List.copyOf(terms);
+    }
+
+    private static void rejectLegacySemanticFields(JsonObject obj, JsonObject nested, String sourceRef) {
+        for (String field : LEGACY_SEMANTIC_FIELDS) {
+            if ((obj != null && obj.has(field)) || (nested != null && nested.has(field))) {
+                throw new IllegalArgumentException(
+                        sourceRef + " uses legacy semantic field " + field
+                                + "; export semanticTerms/functionTerms from TerraSense instead.");
+            }
+        }
+    }
+
     private static List<String> strings(JsonArray array) {
         List<String> values = new ArrayList<>();
         for (JsonElement elem : array) {
@@ -1073,18 +1078,21 @@ public final class CityStructureD6Planner {
 
     private record StructureProfile(String structureId, String sourceProfileRef, String profileType,
                                     String sampleType, String placementKind, String placementCommand,
-                                    String footprintMode, List<String> functionTags, List<String> styleTags,
-                                    List<String> placementTags, List<String> usageTags, List<String> qualityTags,
+                                    String footprintMode, List<String> semanticTerms, List<String> functionTerms,
+                                    List<String> styleTerms, List<String> placementTerms, List<String> usageTerms,
+                                    List<String> templateRoleTerms, List<String> qualityTerms,
                                     Footprint fixedFootprint, OriginOffset footprintOriginOffset,
                                     int visibleAreaCost, List<String> allowedRotations,
                                     int clearanceBlocks, AreaRange expectedAreaRange, String connectorsRef,
                                     String catalogMode) {
         StructureProfile {
-            functionTags = List.copyOf(functionTags);
-            styleTags = List.copyOf(styleTags);
-            placementTags = List.copyOf(placementTags);
-            usageTags = List.copyOf(usageTags);
-            qualityTags = List.copyOf(qualityTags);
+            semanticTerms = List.copyOf(semanticTerms);
+            functionTerms = List.copyOf(functionTerms);
+            styleTerms = List.copyOf(styleTerms);
+            placementTerms = List.copyOf(placementTerms);
+            usageTerms = List.copyOf(usageTerms);
+            templateRoleTerms = List.copyOf(templateRoleTerms);
+            qualityTerms = List.copyOf(qualityTerms);
             footprintOriginOffset = footprintOriginOffset == null ? OriginOffset.ZERO : footprintOriginOffset;
             allowedRotations = List.copyOf(allowedRotations);
         }
@@ -1098,11 +1106,13 @@ public final class CityStructureD6Planner {
             obj.addProperty("placementKind", placementKind);
             obj.addProperty("placementCommand", placementCommand);
             obj.addProperty("footprintMode", footprintMode);
-            obj.add("functionTags", stringArray(functionTags));
-            obj.add("styleTags", stringArray(styleTags));
-            obj.add("placementTags", stringArray(placementTags));
-            obj.add("usageTags", stringArray(usageTags));
-            obj.add("qualityTags", stringArray(qualityTags));
+            obj.add("semanticTerms", stringArray(semanticTerms));
+            obj.add("functionTerms", stringArray(functionTerms));
+            obj.add("styleTerms", stringArray(styleTerms));
+            obj.add("placementTerms", stringArray(placementTerms));
+            obj.add("usageTerms", stringArray(usageTerms));
+            obj.add("templateRoleTerms", stringArray(templateRoleTerms));
+            obj.add("qualityTerms", stringArray(qualityTerms));
             obj.add("fixedFootprint", fixedFootprint.asJson());
             obj.add("footprintOriginOffset", footprintOriginOffset.asJson());
             obj.addProperty("visibleAreaCost", visibleAreaCost);
@@ -1250,6 +1260,10 @@ public final class CityStructureD6Planner {
 
         CityFunctionType functionType() {
             return zone.functionType();
+        }
+
+        List<String> semanticTerms() {
+            return zone.semanticTerms();
         }
 
         BlockBounds bounds() {
