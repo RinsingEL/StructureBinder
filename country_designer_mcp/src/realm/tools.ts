@@ -158,7 +158,7 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "city_profile_structure_envelopes",
-    description: "City 结构大小区间回归：对指定 configured structure 做非写世界 bbox 采样，输出 structure_envelope_facts、P95/P99/maxObserved 与预览。需在 D4 前运行。",
+    description: "City 结构大小区间回归：对指定 configured structure 做非写世界 bbox 采样，输出 validSamples、bboxGroups、generationConfigHash、P95/P99/maxObserved 与预览。需在 D4 前运行。",
     inputSchema: {
       type: "object",
       properties: {
@@ -182,7 +182,7 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "city_plan_d4",
-    description: "City D4: 提交 AI/Codex 基于 D3 patch 真值生成的 StructureAnchorPlan，校验 TerraSense 白名单、anchor、reservedEnvelope 与防撞；输出 structure_anchor_map 和预览。旧 PatchGroupPlan/function zone payload 会被拒绝。",
+    description: "City D4: 提交 AI/Codex 基于 D3 patch 真值生成的 StructureAnchorPlan，校验 TerraSense 白名单、anchor、envelope facts 与防撞；固定/近固定结构可走 bboxGroups+smallClearance，非固定结构走 P95/P99。旧 PatchGroupPlan/function zone payload 会被拒绝。",
     inputSchema: {
       type: "object",
       properties: {
@@ -194,7 +194,7 @@ export const realmTools: ToolDefinition[] = [
         },
         structureAnchorPlan: {
           type: "object",
-          description: "schemaVersion=city_structure_anchor_plan.v0.1；anchors[] 包含 anchorId、structureId、sourcePatchIds、anchorBlock{x,z}、rotation、intentTerms、priority、roadAccessIntent。",
+          description: "schemaVersion=city_structure_anchor_plan.v0.1；anchors[] 包含 anchorId、structureId、sourcePatchIds、anchorBlock{x,z}、rotation、intentTerms、priority、roadAccessIntent；可选 envelopeGroupKey、smallClearanceBlocks。",
         },
         structureEnvelopeFactsSource: {
           type: "object",
@@ -206,7 +206,7 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "city_plan_d5",
-    description: "City D5: 基于 D4 StructureAnchorMap 生成 reservation mask、road access、BuildOperationPlan 与预览；不修改世界。",
+    description: "City D5: 基于 D4 StructureAnchorMap 生成 reservation mask 与预览；road_access_plan/build_operation_plan 只保留占位空操作，标记道路延后到 D7 基于真实 ledger bbox 生成；不修改世界。",
     inputSchema: {
       type: "object",
       properties: {
@@ -218,7 +218,7 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "city_execute_d5",
-    description: "City D5 Execute: 激活 reservation mask registry 与 worldgen-time planned structure registry；正式路径不主动执行 WorldEdit 道路/清理，避免提前生成目标 chunk。必须显式传 confirmWorldMutation=true；mask/worldgen hook 不可用会 hard fail。",
+    description: "City D5 Execute: 必须先有 D6 locked materialization plan；激活 locked reservation mask registry 与 worldgen-time planned structure registry；正式路径不主动执行 WorldEdit 道路/清理，避免提前生成目标 chunk。必须显式传 confirmWorldMutation=true；mask/worldgen hook 不可用会 hard fail。",
     inputSchema: {
       type: "object",
       properties: {
@@ -233,7 +233,7 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "city_plan_d6",
-    description: "City D6: 读取 D4/D5 结构 anchor 与 reservation mask，输出 planned_worldgen 计划校验、reserved envelope、anchor chunk 与 required chunk range；不要求 chunk loaded，不修改世界。",
+    description: "City D6: 读取 D4/D5 结构 anchor 与 reservation mask，做 non-mutating configured-structure probe，锁定 actualFootprint、actualBBoxGroupKey、expectedStartSignature 与 lockedCollisionEnvelope，并用 locked bbox 做最终防撞；不要求 chunk loaded，不修改世界。",
     inputSchema: {
       type: "object",
       properties: {
@@ -247,7 +247,7 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "city_execute_d7",
-    description: "City Execute D7: 保留入口名但正式语义为 worldgen ledger 检查。executeStructurePlacement=true 不再 late paste；未生成 chunk 返回 WAITING_FOR_WORLDGEN，已生成未记录返回 STRUCTURE_CHUNK_ALREADY_GENERATED。debugLateMaterialize=true 才允许旧诊断 paste。",
+    description: "City Execute D7: 保留入口名但正式语义为 worldgen ledger 检查。executeStructurePlacement=true 不再 late paste；未生成 chunk 返回 WAITING_FOR_WORLDGEN，已生成未记录返回 STRUCTURE_CHUNK_ALREADY_GENERATED；所有 ledger 完整后基于真实 actualFootprint 生成道路/边界后处理。debugLateMaterialize=true 才允许旧诊断 paste。",
     inputSchema: {
       type: "object",
       properties: {

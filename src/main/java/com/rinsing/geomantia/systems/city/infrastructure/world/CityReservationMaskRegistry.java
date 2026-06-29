@@ -214,6 +214,26 @@ public final class CityReservationMaskRegistry {
         return ledgerContains(anchorId);
     }
 
+    public static boolean overlapsWorldgenLedger(BlockBounds candidate, String exceptAnchorId) {
+        if (candidate == null) {
+            return false;
+        }
+        for (JsonElement elem : ledgerPlacedStructures()) {
+            if (!elem.isJsonObject()) {
+                continue;
+            }
+            JsonObject obj = elem.getAsJsonObject();
+            if (exceptAnchorId != null && exceptAnchorId.equals(stringValue(obj, "anchorId", ""))) {
+                continue;
+            }
+            if (obj.has("actualFootprint") && obj.get("actualFootprint").isJsonObject()
+                    && bounds(obj.getAsJsonObject("actualFootprint")).overlaps(candidate)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static synchronized void recordWorldgenPlacement(PlannedStructure planned,
                                                             BlockBounds actualFootprint,
                                                             String startSignature,
@@ -513,12 +533,17 @@ public final class CityReservationMaskRegistry {
     public record PlannedStructure(String runId, String citySeedId, String cityId, String anchorId,
                                    String structureId, int anchorChunkX, int anchorChunkZ,
                                    BlockPoint anchorBlock, String rotation, BlockBounds plannedFootprint,
-                                   BlockBounds reservedEnvelope, String expectedStartSignature,
+                                   BlockBounds reservedEnvelope, BlockBounds lockedActualFootprint,
+                                   BlockBounds collisionEnvelope,
+                                   BlockBounds maskEnvelope, BlockBounds safetyEnvelope,
+                                   String envelopeMode, String selectedEnvelopeGroupKey,
+                                   String expectedStartSignature,
                                    JsonArray sourcePatchIds, JsonArray semanticTerms, JsonArray functionTerms,
                                    JsonArray styleTerms, JsonArray placementTerms, JsonArray usageTerms,
                                    JsonArray qualityTerms) {
         static PlannedStructure fromAnchor(JsonObject anchor, String runId, String citySeedId, String cityId) {
             BlockPoint anchorBlock = blockPoint(requiredObject(anchor, "anchorBlock"));
+            BlockBounds reserved = bounds(requiredObject(anchor, "reservedEnvelope"));
             return new PlannedStructure(
                     nullToEmpty(runId),
                     nullToEmpty(citySeedId),
@@ -530,7 +555,14 @@ public final class CityReservationMaskRegistry {
                     anchorBlock,
                     stringValue(anchor, "rotation", "NONE"),
                     bounds(requiredObject(anchor, "plannedFootprint")),
-                    bounds(requiredObject(anchor, "reservedEnvelope")),
+                    reserved,
+                    optionalBounds(anchor, "lockedActualFootprint", optionalBounds(anchor, "actualFootprint",
+                            bounds(requiredObject(anchor, "plannedFootprint")))),
+                    optionalBounds(anchor, "collisionEnvelope", reserved),
+                    optionalBounds(anchor, "maskEnvelope", reserved),
+                    optionalBounds(anchor, "safetyEnvelope", reserved),
+                    stringValue(anchor, "envelopeMode", ""),
+                    stringValue(anchor, "selectedEnvelopeGroupKey", ""),
                     stringValue(anchor, "expectedStartSignature", ""),
                     sourcePatchIdsFromPatches(anchor.getAsJsonArray("sourcePatches")),
                     copyArray(anchor.getAsJsonArray("semanticTerms")),
@@ -544,6 +576,7 @@ public final class CityReservationMaskRegistry {
         static PlannedStructure fromRegistry(JsonObject obj) {
             JsonObject anchorBlock = requiredObject(obj, "anchorBlock");
             JsonObject anchorChunk = requiredObject(obj, "anchorChunk");
+            BlockBounds reserved = bounds(requiredObject(obj, "reservedEnvelope"));
             return new PlannedStructure(
                     stringValue(obj, "runId", ""),
                     stringValue(obj, "citySeedId", ""),
@@ -555,7 +588,14 @@ public final class CityReservationMaskRegistry {
                     blockPoint(anchorBlock),
                     stringValue(obj, "rotation", "NONE"),
                     bounds(requiredObject(obj, "plannedFootprint")),
-                    bounds(requiredObject(obj, "reservedEnvelope")),
+                    reserved,
+                    optionalBounds(obj, "lockedActualFootprint", optionalBounds(obj, "actualFootprint",
+                            bounds(requiredObject(obj, "plannedFootprint")))),
+                    optionalBounds(obj, "collisionEnvelope", reserved),
+                    optionalBounds(obj, "maskEnvelope", reserved),
+                    optionalBounds(obj, "safetyEnvelope", reserved),
+                    stringValue(obj, "envelopeMode", ""),
+                    stringValue(obj, "selectedEnvelopeGroupKey", ""),
                     stringValue(obj, "expectedStartSignature", ""),
                     copyArray(obj.getAsJsonArray("sourcePatchIds")),
                     copyArray(obj.getAsJsonArray("semanticTerms")),
@@ -581,6 +621,14 @@ public final class CityReservationMaskRegistry {
             obj.addProperty("rotation", rotation);
             obj.add("plannedFootprint", boundsJson(plannedFootprint));
             obj.add("reservedEnvelope", boundsJson(reservedEnvelope));
+            obj.add("lockedActualFootprint", boundsJson(lockedActualFootprint));
+            obj.add("collisionEnvelope", boundsJson(collisionEnvelope));
+            obj.addProperty("locked", !expectedStartSignature.isBlank());
+            obj.add("lockedCollisionEnvelope", boundsJson(collisionEnvelope));
+            obj.add("maskEnvelope", boundsJson(maskEnvelope));
+            obj.add("safetyEnvelope", boundsJson(safetyEnvelope));
+            obj.addProperty("envelopeMode", envelopeMode);
+            obj.addProperty("selectedEnvelopeGroupKey", selectedEnvelopeGroupKey);
             obj.addProperty("expectedStartSignature", expectedStartSignature);
             obj.add("sourcePatchIds", sourcePatchIds.deepCopy());
             obj.add("semanticTerms", semanticTerms.deepCopy());
@@ -595,6 +643,7 @@ public final class CityReservationMaskRegistry {
         JsonObject asLedgerJson(BlockBounds actualFootprint, String startSignature, JsonArray pieceBoxes) {
             JsonObject obj = asJson();
             obj.add("actualFootprint", boundsJson(actualFootprint));
+            obj.add("lockedActualFootprint", boundsJson(actualFootprint));
             obj.addProperty("startSignature", startSignature == null ? "" : startSignature);
             obj.add("pieceBoxes", pieceBoxes == null ? new JsonArray() : pieceBoxes.deepCopy());
             obj.addProperty("worldMutationApplied", true);
@@ -654,6 +703,12 @@ public final class CityReservationMaskRegistry {
     private static BlockBounds bounds(JsonObject obj) {
         return new BlockBounds(intValue(obj, "minX", 0), intValue(obj, "minZ", 0),
                 intValue(obj, "maxX", 0), intValue(obj, "maxZ", 0));
+    }
+
+    private static BlockBounds optionalBounds(JsonObject obj, String key, BlockBounds fallback) {
+        return obj != null && obj.has(key) && obj.get(key).isJsonObject()
+                ? bounds(obj.getAsJsonObject(key))
+                : fallback;
     }
 
     private static JsonObject boundsJson(BlockBounds bounds) {

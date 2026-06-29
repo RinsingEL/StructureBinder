@@ -10,6 +10,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLEnvironment;
+import net.minecraft.world.level.storage.LevelResource;
 import org.slf4j.Logger;
 
 @Mod(GeomantiaMod.MOD_ID)
@@ -30,7 +31,7 @@ public final class GeomantiaMod {
 
     @net.minecraftforge.eventbus.api.SubscribeEvent
     public void onServerAboutToStart(ServerAboutToStartEvent event) {
-        CityReservationMaskRegistry.load(event.getServer().getServerDirectory().toPath());
+        CityReservationMaskRegistry.load(event.getServer().getWorldPath(LevelResource.ROOT));
     }
 
     private void registerTemporaryClientDevHooks() {

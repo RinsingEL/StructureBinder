@@ -35,13 +35,18 @@ public final class CityStructureLandingPreviewRenderer {
             for (JsonElement elem : array(anchorMap, "anchors")) {
                 JsonObject anchor = elem.getAsJsonObject();
                 i++;
-                drawRect(g, t, bounds(anchor, "reservedEnvelope"), new Color(204, 79, 63, 55),
-                        new Color(158, 59, 49, 150), 1.4f);
+                drawRect(g, t, bounds(anchor, "safetyEnvelope"), new Color(98, 96, 89, 18),
+                        new Color(89, 82, 70, 80), 0.9f);
+                drawRect(g, t, bounds(anchor, "maskEnvelope"), new Color(202, 108, 62, 35),
+                        new Color(178, 84, 46, 125), 1.1f);
+                drawRect(g, t, bounds(anchor, "collisionEnvelope"), new Color(204, 79, 63, 45),
+                        new Color(158, 59, 49, 160), 1.5f);
                 drawRect(g, t, bounds(anchor, "plannedFootprint"), color(i, 120), color(i, 235), 2.4f);
                 drawLabel(g, t, point(anchor, "anchorBlock"), string(anchor, "anchorId"));
             }
             title(g, "City D4 structure anchor preview",
-                    "green=planned footprint red=reserved envelope anchors=" + array(anchorMap, "anchors").size());
+                    "green=planned red=collision orange=mask gray=safety anchors="
+                            + array(anchorMap, "anchors").size());
             sideSummary(g, anchorMap, "anchors");
         } finally {
             g.dispose();
@@ -73,10 +78,17 @@ public final class CityStructureLandingPreviewRenderer {
                         new Color(202, 108, 62, 48), new Color(178, 84, 46, 165), 1.5f);
                 drawLocal(g, t, origin, bounds(structure, "localEnvelopeP95"),
                         new Color(65, 145, 108, 85), new Color(39, 111, 78, 210), 2.0f);
+                JsonArray groups = array(structure, "bboxGroups");
+                if (!groups.isEmpty()) {
+                    JsonObject dominant = groups.get(0).getAsJsonObject();
+                    drawLocal(g, t, origin, bounds(dominant, "localEnvelope"),
+                            new Color(72, 126, 193, 44), new Color(50, 88, 156, 190), 2.4f);
+                }
                 drawLabel(g, t, origin, trim(string(structure, "structureId"), 24));
             }
             title(g, "City structure envelope facts preview",
-                    "green=P95 orange=P99 gray=maxObserved structures=" + array(facts, "structures").size());
+                    "blue=dominant bbox group green=P95 orange=P99 gray=maxObserved structures="
+                            + array(facts, "structures").size());
             sideSummary(g, facts, "structures");
         } finally {
             g.dispose();
@@ -136,7 +148,9 @@ public final class CityStructureLandingPreviewRenderer {
             for (JsonElement elem : structures) {
                 JsonObject structure = elem.getAsJsonObject();
                 i++;
-                drawRect(g, t, bounds(structure, "reservedEnvelope"), new Color(207, 81, 70, 36),
+                drawRect(g, t, bounds(structure, "maskEnvelope"), new Color(202, 108, 62, 28),
+                        new Color(178, 84, 46, 110), 0.9f);
+                drawRect(g, t, bounds(structure, "collisionEnvelope"), new Color(207, 81, 70, 36),
                         new Color(150, 62, 52, 110), 1.1f);
                 String footprintKey = object(structure, "actualFootprint").size() > 0
                         ? "actualFootprint" : "plannedFootprint";
@@ -146,7 +160,8 @@ public final class CityStructureLandingPreviewRenderer {
             }
             title(g, "City D6 worldgen plan preview",
                     "planned worldgen structures=" + structures.size()
-                            + " failures=" + object(trace, "failureSummary").size());
+                            + " failures=" + object(trace, "failureSummary").size()
+                            + " blue/green=actual red=collision orange=mask");
             traceSummary(g, trace);
         } finally {
             g.dispose();
@@ -169,7 +184,9 @@ public final class CityStructureLandingPreviewRenderer {
             for (JsonElement elem : array(ledger, "placedStructures")) {
                 JsonObject placed = elem.getAsJsonObject();
                 i++;
-                drawRect(g, t, bounds(placed, "reservedEnvelope"), new Color(207, 81, 70, 34),
+                drawRect(g, t, bounds(placed, "maskEnvelope"), new Color(202, 108, 62, 25),
+                        new Color(178, 84, 46, 100), 0.9f);
+                drawRect(g, t, bounds(placed, "collisionEnvelope"), new Color(207, 81, 70, 34),
                         new Color(150, 62, 52, 115), 1.0f);
                 drawRect(g, t, bounds(placed, "actualFootprint"), color(i, 118), color(i, 235), 2.5f);
                 drawPieces(g, t, placed);

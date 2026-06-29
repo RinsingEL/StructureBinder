@@ -9,7 +9,9 @@ import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.LinkedHashMap;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Optional;
 
@@ -47,8 +49,12 @@ public final class CityStructureEnvelopeFacts {
         if (fact == null) {
             return Optional.empty();
         }
-        String expected = CityStructureEnvelopeProfiler.profileHash(profile);
-        return fact.profileHash().equals(expected) ? Optional.of(fact) : Optional.empty();
+        String expectedProfile = CityStructureEnvelopeProfiler.profileHash(profile);
+        String expectedGeneration = CityStructureEnvelopeProfiler.generationConfigHash(profile,
+                fact.structureConfigHash());
+        return fact.profileHash().equals(expectedProfile) && fact.generationConfigHash().equals(expectedGeneration)
+                ? Optional.of(fact)
+                : Optional.empty();
     }
 
     public Optional<Fact> factFor(String structureId) {
@@ -60,20 +66,51 @@ public final class CityStructureEnvelopeFacts {
     }
 
     public record Fact(String structureId, String profileHash, String structureConfigHash, String sourcePackHash,
-                       int sampleCount, int validSampleCount, double invalidRatio,
-                       BlockBounds p95Envelope, BlockBounds p99Envelope, BlockBounds maxObservedEnvelope) {
+                       String generationConfigHash, int sampleCount, int validSampleCount, double invalidRatio,
+                       BlockBounds p95Envelope, BlockBounds p99Envelope, BlockBounds maxObservedEnvelope,
+                       int pieceCountP50, int pieceCountP95, int pieceCountMax, List<BBoxGroup> bboxGroups) {
+        public Fact {
+            bboxGroups = List.copyOf(bboxGroups);
+        }
+
         static Fact from(JsonObject obj) {
+            JsonObject pieceCount = objectValue(obj, "pieceCount");
             return new Fact(
                     stringValue(obj, "structureId", ""),
                     stringValue(obj, "profileHash", ""),
                     stringValue(obj, "structureConfigHash", ""),
                     stringValue(obj, "sourcePackHash", ""),
+                    stringValue(obj, "generationConfigHash", ""),
                     intValue(obj, "sampleCount", 0),
                     intValue(obj, "validSampleCount", 0),
                     doubleValue(obj, "invalidRatio", 1.0),
                     bounds(obj, "localEnvelopeP95"),
                     bounds(obj, "localEnvelopeP99"),
-                    bounds(obj, "maxObservedEnvelope"));
+                    bounds(obj, "maxObservedEnvelope"),
+                    intValue(pieceCount, "p50", 0),
+                    intValue(pieceCount, "p95", 0),
+                    intValue(pieceCount, "max", 0),
+                    parseBBoxGroups(obj));
+        }
+
+        public boolean nearFixedByFacts() {
+            return validSampleCount > 0
+                    && !bboxGroups.isEmpty()
+                    && bboxGroups.size() <= 16
+                    && pieceCountP50 > 0
+                    && pieceCountP50 == pieceCountP95
+                    && pieceCountP95 == pieceCountMax;
+        }
+
+        public Optional<BBoxGroup> dominantGroup() {
+            return bboxGroups.stream().findFirst();
+        }
+
+        public Optional<BBoxGroup> groupByKey(String groupKey) {
+            if (groupKey == null || groupKey.isBlank()) {
+                return Optional.empty();
+            }
+            return bboxGroups.stream().filter(group -> group.groupKey().equals(groupKey)).findFirst();
         }
 
         public JsonObject asSummaryJson() {
@@ -82,14 +119,56 @@ public final class CityStructureEnvelopeFacts {
             obj.addProperty("profileHash", profileHash);
             obj.addProperty("structureConfigHash", structureConfigHash);
             obj.addProperty("sourcePackHash", sourcePackHash);
+            obj.addProperty("generationConfigHash", generationConfigHash);
             obj.addProperty("sampleCount", sampleCount);
             obj.addProperty("validSampleCount", validSampleCount);
             obj.addProperty("invalidRatio", invalidRatio);
+            obj.addProperty("bboxGroupCount", bboxGroups.size());
+            obj.addProperty("nearFixedByFacts", nearFixedByFacts());
             obj.add("localEnvelopeP95", boundsJson(p95Envelope));
             obj.add("localEnvelopeP99", boundsJson(p99Envelope));
             obj.add("maxObservedEnvelope", boundsJson(maxObservedEnvelope));
+            dominantGroup().ifPresent(group -> obj.add("dominantBBoxGroup", group.asJson()));
             return obj;
         }
+    }
+
+    public record BBoxGroup(String groupKey, int sampleCount, double ratio, BlockBounds localEnvelope,
+                            int pieceCount, int areaBlocks) {
+        static BBoxGroup from(JsonObject obj) {
+            BlockBounds localEnvelope = bounds(obj, "localEnvelope");
+            return new BBoxGroup(
+                    stringValue(obj, "groupKey", ""),
+                    intValue(obj, "sampleCount", 0),
+                    doubleValue(obj, "ratio", 0.0),
+                    localEnvelope,
+                    intValue(obj, "pieceCount", 0),
+                    intValue(obj, "areaBlocks", localEnvelope.widthBlocks() * localEnvelope.heightBlocks()));
+        }
+
+        public JsonObject asJson() {
+            JsonObject obj = new JsonObject();
+            obj.addProperty("groupKey", groupKey);
+            obj.addProperty("sampleCount", sampleCount);
+            obj.addProperty("ratio", ratio);
+            obj.add("localEnvelope", boundsJson(localEnvelope));
+            obj.addProperty("pieceCount", pieceCount);
+            obj.addProperty("areaBlocks", areaBlocks);
+            return obj;
+        }
+    }
+
+    private static List<BBoxGroup> parseBBoxGroups(JsonObject obj) {
+        JsonArray array = obj != null && obj.has("bboxGroups") && obj.get("bboxGroups").isJsonArray()
+                ? obj.getAsJsonArray("bboxGroups")
+                : new JsonArray();
+        List<BBoxGroup> result = new ArrayList<>();
+        for (JsonElement elem : array) {
+            if (elem.isJsonObject()) {
+                result.add(BBoxGroup.from(elem.getAsJsonObject()));
+            }
+        }
+        return result;
     }
 
     private static BlockBounds bounds(JsonObject obj, String key) {
@@ -100,6 +179,10 @@ public final class CityStructureEnvelopeFacts {
                 intValue(source, "minZ", 0),
                 intValue(source, "maxX", 0),
                 intValue(source, "maxZ", 0));
+    }
+
+    private static JsonObject objectValue(JsonObject obj, String key) {
+        return obj != null && obj.has(key) && obj.get(key).isJsonObject() ? obj.getAsJsonObject(key) : new JsonObject();
     }
 
     private static JsonObject boundsJson(BlockBounds bounds) {

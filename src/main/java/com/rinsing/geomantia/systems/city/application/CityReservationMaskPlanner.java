@@ -53,7 +53,6 @@ public final class CityReservationMaskPlanner {
             BlockBounds maskEnvelope = anchor.has("maskEnvelope") && anchor.get("maskEnvelope").isJsonObject()
                     ? bounds(requiredObject(anchor, "maskEnvelope")) : envelope;
             BlockBounds footprint = bounds(requiredObject(anchor, "plannedFootprint"));
-            BlockPoint anchorBlock = blockPoint(requiredObject(anchor, "anchorBlock"));
             addMask(noVegetation, anchorId + "_no_vegetation", maskEnvelope, "structure_mask_envelope", anchorId);
             addMask(vegetationLimited, anchorId + "_vegetation_limited",
                     CityStructureAnchorPlanner.expand(maskEnvelope, 4), "structure_transition", anchorId);
@@ -61,23 +60,6 @@ public final class CityReservationMaskPlanner {
                     "planned_structure", anchorId);
             addReason(reasons, anchorId, "structure", maskEnvelope, "protect planned structure mask envelope");
             addReason(reasons, anchorId, "footprint", footprint, "planned footprint");
-
-            RoadIntent.Node structureNode = new RoadIntent.Node("structure_" + safe(anchorId), "structure_anchor",
-                    anchorId, anchorBlock, anchorId);
-            nodes.add(structureNode);
-            String edgeId = "road_access_" + safe(anchorId);
-            List<BlockPoint> polyline = List.of(entryNode.block(), anchorBlock);
-            edges.add(new RoadIntent.Edge(edgeId, index == 1 ? "primary_access" : "secondary_access",
-                    entryNode.nodeId(), structureNode.nodeId(), polyline, 5,
-                    List.of(edgeId + "_clear", edgeId + "_surface"), "connect city entry to planned structure"));
-            operations.add(new BuildOperationPlan.Operation(edgeId + "_clear", "clearVegetation", edgeId,
-                    polyline, 7, "", "", "", BlockPoint.ORIGIN,
-                    "clear vegetation for structure access road"));
-            operations.add(new BuildOperationPlan.Operation(edgeId + "_surface", "surfaceFill", edgeId,
-                    polyline, 5, "minecraft:gravel", "minecraft:coarse_dirt", "", BlockPoint.ORIGIN,
-                    "surface access road"));
-            addMask(noVegetation, edgeId + "_no_vegetation", corridorBounds(polyline, 8), "road_access", edgeId);
-            addReason(reasons, edgeId, "road", corridorBounds(polyline, 8), "protect access road from vegetation");
         }
 
         JsonObject mask = new JsonObject();
@@ -96,6 +78,8 @@ public final class CityReservationMaskPlanner {
         hook.addProperty("plannedStructureHook", "ChunkGenerator.createStructures TAIL");
         hook.addProperty("unavailableReasonCode", "CITY_WORLDGEN_STRUCTURE_HOOK_UNAVAILABLE");
         mask.add("hookRequirements", hook);
+        mask.addProperty("requiresLockedMaterializationPlan", true);
+        mask.addProperty("roadPlanningStage", "d7_after_worldgen_ledger");
         mask.add("timingMs", timing(started));
 
         JsonObject quality = new JsonObject();
@@ -105,6 +89,7 @@ public final class CityReservationMaskPlanner {
         metrics.addProperty("anchorCount", anchors.size());
         metrics.addProperty("noVegetationMaskCount", noVegetation.size());
         metrics.addProperty("noVanillaStructureMaskCount", noVanillaStructure.size());
+        metrics.addProperty("d5RoadOperationCount", 0);
         quality.add("metrics", metrics);
 
         RoadIntent roadIntent = new RoadIntent(RoadIntent.CURRENT_SCHEMA_VERSION, cityId, nodes, edges,
@@ -131,20 +116,6 @@ public final class CityReservationMaskPlanner {
         obj.addProperty("reason", reason);
         obj.add("blockBounds", boundsJson(bounds));
         array.add(obj);
-    }
-
-    private static BlockBounds corridorBounds(List<BlockPoint> points, int margin) {
-        int minX = Integer.MAX_VALUE;
-        int minZ = Integer.MAX_VALUE;
-        int maxX = Integer.MIN_VALUE;
-        int maxZ = Integer.MIN_VALUE;
-        for (BlockPoint point : points) {
-            minX = Math.min(minX, point.x());
-            minZ = Math.min(minZ, point.z());
-            maxX = Math.max(maxX, point.x());
-            maxZ = Math.max(maxZ, point.z());
-        }
-        return new BlockBounds(minX - margin, minZ - margin, maxX + margin, maxZ + margin);
     }
 
     private static CityQualityReport simpleQuality(boolean passed, int edgeCount) {

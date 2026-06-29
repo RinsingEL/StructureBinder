@@ -94,10 +94,16 @@ public final class MinecraftCityWorldgenStructurePlacer {
         }
 
         BlockBounds footprint = footprint(start.getBoundingBox());
-        if (!contains(item.reservedEnvelope(), footprint)) {
+        if (!contains(item.collisionEnvelope(), footprint)) {
             CityReservationMaskRegistry.recordWorldgenFailure(item, chunkPos,
                     "RESERVED_ENVELOPE_EXCEEDED",
-                    "Worldgen StructureStart bbox exceeded D4 reservedEnvelope.");
+                    "Worldgen StructureStart bbox exceeded D6 locked collisionEnvelope.");
+            return;
+        }
+        if (CityReservationMaskRegistry.overlapsWorldgenLedger(footprint, item.anchorId())) {
+            CityReservationMaskRegistry.recordWorldgenFailure(item, chunkPos,
+                    "LEDGER_OCCUPIED_OVERLAP",
+                    "Worldgen StructureStart bbox overlaps existing City worldgen ledger.");
             return;
         }
         String signature = signature(item, start);

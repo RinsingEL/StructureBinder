@@ -19,6 +19,8 @@ import com.rinsing.geomantia.systems.city.application.CityStructureMaterializati
 import com.rinsing.geomantia.systems.city.application.CityStructureProfileCatalog;
 import com.rinsing.geomantia.systems.city.domain.config.CityPlanningConfig;
 import com.rinsing.geomantia.systems.city.domain.model.BoundaryIntent;
+import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
+import com.rinsing.geomantia.systems.city.domain.model.BlockPoint;
 import com.rinsing.geomantia.systems.city.domain.model.BuildOperationPlan;
 import com.rinsing.geomantia.systems.city.domain.model.BuildableAreaMap;
 import com.rinsing.geomantia.systems.city.domain.model.CityLandformReviewPackage;
@@ -55,6 +57,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 final class CityPlanningEndpointHandler {
@@ -306,9 +309,11 @@ final class CityPlanningEndpointHandler {
         loadCitySeed(runDir, runId, citySeedId);
         Path d4Dir = runDir.resolve("city_d4_" + safeFileName(citySeedId));
         Path d5Dir = runDir.resolve("city_d5_" + safeFileName(citySeedId));
-        Path anchorMapPath = d4Dir.resolve("structure_anchor_map.json");
         Path maskPath = d5Dir.resolve("reservation_mask_plan.json");
         Path operationPath = d5Dir.resolve("build_operation_plan.json");
+        Path d6PlanPath = runDir.resolve("city_d6_" + safeFileName(citySeedId))
+                .resolve("structure_materialization_plan.json");
+        Path anchorMapPath = d4Dir.resolve("structure_anchor_map.json");
         if (!Files.exists(anchorMapPath)) {
             rejectLegacyArtifacts(d4Dir, "D4");
             throw new IllegalArgumentException("D4 structure_anchor_map.json not found. Run city_plan_d4 first: "
@@ -323,17 +328,18 @@ final class CityPlanningEndpointHandler {
             throw new IllegalArgumentException("D5 build_operation_plan.json not found. Run city_plan_d5 first: "
                     + debugRef(debugRoot, operationPath));
         }
+        if (!Files.exists(d6PlanPath)) {
+            throw new IllegalArgumentException("D6 locked structure_materialization_plan.json not found. "
+                    + "Run city_plan_d6 before city_execute_d5: " + debugRef(debugRoot, d6PlanPath));
+        }
         if (!CityReservationMaskRegistry.hooksAvailable()) {
             throw new IllegalArgumentException("CITY_MASK_HOOK_UNAVAILABLE: required City reservation mixins are not available.");
         }
         JsonObject maskPlan = JsonParser.parseString(Files.readString(maskPath)).getAsJsonObject();
-        JsonObject anchorMap = JsonParser.parseString(Files.readString(anchorMapPath)).getAsJsonObject();
-        Path d6PlanPath = runDir.resolve("city_d6_" + safeFileName(citySeedId))
-                .resolve("structure_materialization_plan.json");
-        JsonObject materializationPlan = Files.exists(d6PlanPath)
-                ? JsonParser.parseString(Files.readString(d6PlanPath)).getAsJsonObject()
-                : null;
-        JsonObject activeRegistry = CityReservationMaskRegistry.activate(maskPlan, anchorMap, materializationPlan,
+        JsonObject materializationPlan = JsonParser.parseString(Files.readString(d6PlanPath)).getAsJsonObject();
+        validateLockedMaterializationPlan(materializationPlan);
+        JsonObject activeMaskPlan = maskPlanWithLockedEnvelopes(maskPlan, materializationPlan);
+        JsonObject activeRegistry = CityReservationMaskRegistry.activate(activeMaskPlan, null, materializationPlan,
                 runId, citySeedId, serverRoot);
         BuildOperationPlan plan = BuildOperationPlan.fromJson(
                 JsonParser.parseString(Files.readString(operationPath)).getAsJsonObject());
@@ -355,11 +361,14 @@ final class CityPlanningEndpointHandler {
         response.addProperty("plannedStructureRegistryPath",
                 CityReservationMaskRegistry.plannedRegistryPath(serverRoot).toString());
         response.addProperty("worldgenPlacementMode", true);
+        response.addProperty("requiresLockedMaterializationPlan", true);
+        response.addProperty("roadPlanningStage", "d7_after_worldgen_ledger");
         response.add("worldMutationReport", report.asJson());
         response.add("timingMs", timing(started));
         JsonObject artifacts = new JsonObject();
         artifacts.addProperty("reservationMaskPlan", debugRef(debugRoot, maskPath));
         artifacts.addProperty("buildOperationPlan", debugRef(debugRoot, operationPath));
+        artifacts.addProperty("sourceStructureMaterializationPlan", debugRef(debugRoot, d6PlanPath));
         artifacts.addProperty("worldMutationReport", debugRef(debugRoot, reportPath));
         artifacts.addProperty("activeMaskSummary", debugRef(debugRoot, activeMaskPath));
         artifacts.addProperty("activePlannedStructureRegistry", debugRef(debugRoot, activePlannedPath));
@@ -702,6 +711,87 @@ final class CityPlanningEndpointHandler {
                 List.of());
     }
 
+    private static void validateLockedMaterializationPlan(JsonObject materializationPlan) {
+        if (materializationPlan == null
+                || !materializationPlan.has("plannedWorldgenStructures")
+                || !materializationPlan.get("plannedWorldgenStructures").isJsonArray()) {
+            throw new IllegalArgumentException("D6 locked structure_materialization_plan.json is required.");
+        }
+        if (!materializationPlan.has("locked") || !materializationPlan.get("locked").getAsBoolean()) {
+            throw new IllegalArgumentException("D6 materialization plan is not locked; rerun city_plan_d6 before city_execute_d5.");
+        }
+        JsonArray planned = materializationPlan.getAsJsonArray("plannedWorldgenStructures");
+        if (planned.isEmpty()) {
+            throw new IllegalArgumentException("D6 locked materialization plan contains no planned structures.");
+        }
+        for (JsonElement elem : planned) {
+            if (!elem.isJsonObject()) {
+                throw new IllegalArgumentException("D6 locked materialization plan has an invalid structure item.");
+            }
+            JsonObject item = elem.getAsJsonObject();
+            if (!"planned_worldgen".equals(stringValue(item, "status"))) {
+                throw new IllegalArgumentException("D6 locked materialization plan contains non-planned item "
+                        + stringValue(item, "anchorId") + ": " + stringValue(item, "reasonCode"));
+            }
+            if (!item.has("locked") || !item.get("locked").getAsBoolean()
+                    || !item.has("lockedActualFootprint") || !item.has("lockedCollisionEnvelope")
+                    || stringValue(item, "expectedStartSignature").isBlank()) {
+                throw new IllegalArgumentException("D6 planned structure is not fully locked: "
+                        + stringValue(item, "anchorId"));
+            }
+        }
+    }
+
+    private static JsonObject maskPlanWithLockedEnvelopes(JsonObject maskPlan, JsonObject materializationPlan) {
+        JsonObject copy = maskPlan.deepCopy();
+        JsonArray noVegetation = new JsonArray();
+        JsonArray vegetationLimited = new JsonArray();
+        JsonArray noVanilla = new JsonArray();
+        JsonArray reasons = new JsonArray();
+        for (JsonElement elem : materializationPlan.getAsJsonArray("plannedWorldgenStructures")) {
+            JsonObject item = elem.getAsJsonObject();
+            String anchorId = stringValue(item, "anchorId");
+            BlockBounds collision = bounds(requiredObject(item, "lockedCollisionEnvelope"));
+            BlockBounds mask = CityStructureMaterializationPlanner.expand(collision, 4);
+            addMask(noVegetation, anchorId + "_locked_no_vegetation", mask,
+                    "locked_structure_mask_envelope", anchorId);
+            addMask(vegetationLimited, anchorId + "_locked_vegetation_limited",
+                    CityStructureMaterializationPlanner.expand(mask, 4),
+                    "locked_structure_transition", anchorId);
+            addMask(noVanilla, anchorId + "_locked_no_vanilla_structure", mask,
+                    "locked_planned_structure", anchorId);
+            addReason(reasons, anchorId, "locked_structure", mask,
+                    "protect D6 locked actual footprint and collision envelope");
+        }
+        copy.add("noVegetationMask", noVegetation);
+        copy.add("vegetationLimitedMask", vegetationLimited);
+        copy.add("noVanillaStructureMask", noVanilla);
+        copy.add("reservationReason", reasons);
+        copy.addProperty("requiresLockedMaterializationPlan", true);
+        copy.addProperty("roadPlanningStage", "d7_after_worldgen_ledger");
+        copy.add("sourceLockedMaterializationPlan", materializationPlan.deepCopy());
+        return copy;
+    }
+
+    private static void addMask(JsonArray array, String id, BlockBounds bounds, String type, String sourceRef) {
+        JsonObject obj = new JsonObject();
+        obj.addProperty("maskId", id);
+        obj.addProperty("maskType", type);
+        obj.addProperty("sourceRef", sourceRef);
+        obj.add("blockBounds", boundsJson(bounds));
+        array.add(obj);
+    }
+
+    private static void addReason(JsonArray array, String sourceRef, String sourceType,
+                                  BlockBounds bounds, String reason) {
+        JsonObject obj = new JsonObject();
+        obj.addProperty("sourceRef", sourceRef);
+        obj.addProperty("sourceType", sourceType);
+        obj.addProperty("reason", reason);
+        obj.add("blockBounds", boundsJson(bounds));
+        array.add(obj);
+    }
+
     private static JsonObject maybeRunDeferredRoadPostprocess(Path debugRoot,
                                                               Path runDir,
                                                               String citySeedId,
@@ -720,18 +810,11 @@ final class CityPlanningEndpointHandler {
         if (Files.exists(reportPath)) {
             return JsonParser.parseString(Files.readString(reportPath)).getAsJsonObject();
         }
-        Path operationPath = runDir.resolve("city_d5_" + safeFileName(citySeedId))
-                .resolve("build_operation_plan.json");
-        if (!Files.exists(operationPath)) {
-            return null;
-        }
-        BuildOperationPlan fullPlan = BuildOperationPlan.fromJson(
-                JsonParser.parseString(Files.readString(operationPath)).getAsJsonObject());
-        BuildOperationPlan roadPlan = deferredRoadPlan(fullPlan);
+        BuildOperationPlan roadPlan = ledgerRoadPlan(materializationPlan, placedLedger);
         WorldMutationReport report;
         if (roadPlan.operations().isEmpty()) {
-            report = skippedWorldMutationReport(fullPlan,
-                    "D7 deferred road postprocess found no road surface/clear operations.");
+            report = skippedWorldMutationReport(roadPlan,
+                    "D7 ledger road postprocess found no valid actual footprint road operations.");
         } else if (serverHolder == null || level == null) {
             report = skippedWorldMutationReport(roadPlan,
                     "D7 deferred road postprocess requires an active Minecraft server.");
@@ -741,22 +824,137 @@ final class CityPlanningEndpointHandler {
         }
         JsonObject reportJson = report.asJson();
         reportJson.addProperty("postprocessStage", "d7_after_worldgen_ledger_complete");
-        reportJson.addProperty("sourceBuildOperationPlan", debugRef(debugRoot, operationPath));
+        reportJson.addProperty("roadPostprocessSource", "worldgen_ledger_actual_footprint");
+        reportJson.addProperty("roadAvoidanceMarginBlocks", 3);
+        reportJson.addProperty("roadBlockedByStructureCount", placedLedger.getAsJsonArray("placedStructures").size());
+        reportJson.addProperty("boundarySource", "actual_footprint_union");
+        reportJson.add("generatedBuildOperationPlan", roadPlan.asJson());
         Files.writeString(reportPath, CityJson.GSON.toJson(reportJson));
         return reportJson;
     }
 
-    private static BuildOperationPlan deferredRoadPlan(BuildOperationPlan plan) {
-        List<BuildOperationPlan.Operation> operations = new ArrayList<>();
-        for (BuildOperationPlan.Operation operation : plan.operations()) {
-            if (switch (operation.operationType()) {
-                case "clearVegetation", "surfaceFill", "surfaceReplace", "carveBuffer" -> true;
-                default -> false;
-            }) {
-                operations.add(operation);
+    private static BuildOperationPlan ledgerRoadPlan(JsonObject materializationPlan, JsonObject placedLedger) {
+        String cityId = stringValue(materializationPlan, "cityId");
+        JsonArray placed = placedLedger != null && placedLedger.has("placedStructures")
+                && placedLedger.get("placedStructures").isJsonArray()
+                ? placedLedger.getAsJsonArray("placedStructures")
+                : new JsonArray();
+        List<JsonObject> structures = new ArrayList<>();
+        for (JsonElement elem : placed) {
+            if (elem.isJsonObject() && elem.getAsJsonObject().has("actualFootprint")) {
+                structures.add(elem.getAsJsonObject());
             }
         }
-        return new BuildOperationPlan(plan.schemaVersion(), plan.cityId(), plan.templateDirectory(), operations);
+        structures.sort(Comparator.comparingInt(a -> intValue(a, "priority", 0)));
+        List<BuildOperationPlan.Operation> operations = new ArrayList<>();
+        if (structures.isEmpty()) {
+            return new BuildOperationPlan(BuildOperationPlan.CURRENT_SCHEMA_VERSION,
+                    cityId.isBlank() ? "unknown_city" : cityId, "geomantia_templates/d5", operations);
+        }
+        List<BlockBounds> obstacles = structures.stream()
+                .map(obj -> CityStructureMaterializationPlanner.expand(bounds(obj.getAsJsonObject("actualFootprint")), 3))
+                .toList();
+        BlockPoint entry = outerConnectionPoint(bounds(structures.get(0).getAsJsonObject("actualFootprint")), obstacles);
+        int index = 0;
+        for (JsonObject structure : structures) {
+            index++;
+            String anchorId = stringValue(structure, "anchorId");
+            BlockBounds actual = bounds(structure.getAsJsonObject("actualFootprint"));
+            BlockPoint target = nearestConnectionPoint(entry, actual, obstacles);
+            String edgeId = "ledger_road_access_" + safeFileName(anchorId.isBlank() ? "structure_" + index : anchorId);
+            List<BlockPoint> polyline = avoidObstacles(entry, target, obstacles);
+            operations.add(new BuildOperationPlan.Operation(edgeId + "_clear", "clearVegetation", edgeId,
+                    polyline, 7, "", "", "", BlockPoint.ORIGIN,
+                    "clear vegetation for D7 actual-footprint road"));
+            operations.add(new BuildOperationPlan.Operation(edgeId + "_surface", "surfaceFill", edgeId,
+                    polyline, 5, "minecraft:gravel", "minecraft:coarse_dirt", "", BlockPoint.ORIGIN,
+                    "surface D7 actual-footprint road"));
+        }
+        return new BuildOperationPlan(BuildOperationPlan.CURRENT_SCHEMA_VERSION,
+                cityId.isBlank() ? "unknown_city" : cityId, "geomantia_templates/d5", operations);
+    }
+
+    private static BlockPoint outerConnectionPoint(BlockBounds first, List<BlockBounds> obstacles) {
+        return nearestClearPoint(new BlockPoint(first.center().x() - 48, first.center().z()), obstacles);
+    }
+
+    private static BlockPoint nearestConnectionPoint(BlockPoint from, BlockBounds actual, List<BlockBounds> obstacles) {
+        List<BlockPoint> candidates = List.of(
+                new BlockPoint(actual.minX() - 2, actual.center().z()),
+                new BlockPoint(actual.maxX() + 2, actual.center().z()),
+                new BlockPoint(actual.center().x(), actual.minZ() - 2),
+                new BlockPoint(actual.center().x(), actual.maxZ() + 2));
+        return candidates.stream()
+                .map(candidate -> nearestClearPoint(candidate, obstacles))
+                .min(Comparator.comparingInt(candidate -> manhattan(from, candidate)))
+                .orElse(candidates.get(0));
+    }
+
+    private static BlockPoint nearestClearPoint(BlockPoint point, List<BlockBounds> obstacles) {
+        if (!insideAny(point, obstacles)) {
+            return point;
+        }
+        for (int radius = 1; radius <= 64; radius++) {
+            for (int dx = -radius; dx <= radius; dx++) {
+                for (int dz = -radius; dz <= radius; dz++) {
+                    if (Math.abs(dx) != radius && Math.abs(dz) != radius) {
+                        continue;
+                    }
+                    BlockPoint candidate = new BlockPoint(point.x() + dx, point.z() + dz);
+                    if (!insideAny(candidate, obstacles)) {
+                        return candidate;
+                    }
+                }
+            }
+        }
+        return point;
+    }
+
+    private static List<BlockPoint> avoidObstacles(BlockPoint from, BlockPoint to, List<BlockBounds> obstacles) {
+        if (!segmentIntersects(from, to, obstacles)) {
+            return List.of(from, to);
+        }
+        BlockPoint bendA = new BlockPoint(from.x(), to.z());
+        if (!segmentIntersects(from, bendA, obstacles) && !segmentIntersects(bendA, to, obstacles)) {
+            return List.of(from, bendA, to);
+        }
+        BlockPoint bendB = new BlockPoint(to.x(), from.z());
+        if (!segmentIntersects(from, bendB, obstacles) && !segmentIntersects(bendB, to, obstacles)) {
+            return List.of(from, bendB, to);
+        }
+        BlockBounds blocking = obstacles.stream()
+                .filter(bounds -> segmentIntersects(from, to, List.of(bounds)))
+                .findFirst()
+                .orElse(null);
+        if (blocking != null) {
+            int offsetZ = Math.abs(from.z() - blocking.minZ()) < Math.abs(from.z() - blocking.maxZ())
+                    ? blocking.minZ() - 2 : blocking.maxZ() + 2;
+            BlockPoint detourA = new BlockPoint(from.x(), offsetZ);
+            BlockPoint detourB = new BlockPoint(to.x(), offsetZ);
+            return List.of(from, detourA, detourB, to);
+        }
+        return List.of(from, bendA, to);
+    }
+
+    private static boolean segmentIntersects(BlockPoint from, BlockPoint to, List<BlockBounds> obstacles) {
+        int steps = Math.max(Math.abs(to.x() - from.x()), Math.abs(to.z() - from.z()));
+        steps = Math.max(1, steps);
+        for (int i = 0; i <= steps; i++) {
+            int x = from.x() + Math.round((to.x() - from.x()) * (i / (float) steps));
+            int z = from.z() + Math.round((to.z() - from.z()) * (i / (float) steps));
+            if (insideAny(new BlockPoint(x, z), obstacles)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean insideAny(BlockPoint point, List<BlockBounds> obstacles) {
+        return obstacles.stream().anyMatch(bounds -> bounds.contains(point.x(), point.z()));
+    }
+
+    private static int manhattan(BlockPoint a, BlockPoint b) {
+        return Math.abs(a.x() - b.x()) + Math.abs(a.z() - b.z());
     }
 
     private static boolean allPlannedWorldgenStructuresRecorded(JsonObject materializationPlan,
@@ -822,13 +1020,34 @@ final class CityPlanningEndpointHandler {
         return raw.replaceAll("[^A-Za-z0-9._-]", "_");
     }
 
+    private static BlockBounds bounds(JsonObject obj) {
+        return new BlockBounds(intValue(obj, "minX", 0), intValue(obj, "minZ", 0),
+                intValue(obj, "maxX", 0), intValue(obj, "maxZ", 0));
+    }
+
+    private static JsonObject boundsJson(BlockBounds bounds) {
+        JsonObject obj = new JsonObject();
+        obj.addProperty("minX", bounds.minX());
+        obj.addProperty("minZ", bounds.minZ());
+        obj.addProperty("maxX", bounds.maxX());
+        obj.addProperty("maxZ", bounds.maxZ());
+        return obj;
+    }
+
+    private static JsonObject requiredObject(JsonObject obj, String key) {
+        if (obj == null || !obj.has(key) || !obj.get(key).isJsonObject()) {
+            throw new IllegalArgumentException(key + " object is required.");
+        }
+        return obj.getAsJsonObject(key);
+    }
+
     private static String stringValue(JsonObject obj, String key) {
-        if (!obj.has(key) || obj.get(key).isJsonNull()) return "";
+        if (obj == null || !obj.has(key) || obj.get(key).isJsonNull()) return "";
         return obj.get(key).getAsString();
     }
 
     private static int intValue(JsonObject obj, String key, int defaultValue) {
-        if (!obj.has(key) || obj.get(key).isJsonNull()) return defaultValue;
+        if (obj == null || !obj.has(key) || obj.get(key).isJsonNull()) return defaultValue;
         return obj.get(key).getAsInt();
     }
 

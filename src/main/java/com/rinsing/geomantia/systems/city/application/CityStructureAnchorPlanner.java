@@ -23,6 +23,7 @@ public final class CityStructureAnchorPlanner {
     public static final String PLAN_SCHEMA = "city_structure_anchor_plan.v0.1";
     public static final String MAP_SCHEMA = "city_structure_anchor_map.v0.1";
     public static final int DEFAULT_CLEARANCE_BLOCKS = 8;
+    public static final int DEFAULT_SMALL_CLEARANCE_BLOCKS = 4;
     public static final int DEFAULT_ROAD_ACCESS_MARGIN_BLOCKS = 6;
     public static final int DEFAULT_VEGETATION_MARGIN_BLOCKS = 8;
     public static final int DEFAULT_JIGSAW_RADIUS_BLOCKS = 96;
@@ -94,8 +95,11 @@ public final class CityStructureAnchorPlanner {
             String rotation = stringValue(anchor, "rotation", "NONE").toUpperCase(Locale.ROOT);
             int clearance = Math.max(DEFAULT_CLEARANCE_BLOCKS,
                     intValue(anchor, "clearanceBlocks", profile.clearanceBlocks()));
+            int smallClearance = Math.max(0,
+                    intValue(anchor, "smallClearanceBlocks", DEFAULT_SMALL_CLEARANCE_BLOCKS));
             int roadMargin = intValue(anchor, "roadAccessMarginBlocks", DEFAULT_ROAD_ACCESS_MARGIN_BLOCKS);
             int vegetationMargin = intValue(anchor, "vegetationMarginBlocks", DEFAULT_VEGETATION_MARGIN_BLOCKS);
+            String envelopeGroupKey = stringValue(anchor, "envelopeGroupKey", "");
             CityStructureProfileCatalog.Footprint footprint = profile.planningFootprint();
             if (!footprint.valid()) {
                 hardBlocks.add(anchorId + ": structure profile has no usable footprint.");
@@ -103,10 +107,14 @@ public final class CityStructureAnchorPlanner {
             }
             BlockBounds plannedFootprint = footprint.centeredAt(anchorBlock.x(), anchorBlock.z(), rotation);
             EnvelopeDecision envelope = envelopeDecision(anchorBlock, plannedFootprint, profile, facts,
-                    clearance, roadMargin, vegetationMargin);
+                    clearance, smallClearance, roadMargin, vegetationMargin, envelopeGroupKey);
             if (envelope.requiredFactsMissing()) {
                 hardBlocks.add(anchorId + ": structure envelope facts are required for Trek structure "
                         + structureId + " but are missing or hash-mismatched.");
+                continue;
+            }
+            if (!envelope.hardBlockReason().isBlank()) {
+                hardBlocks.add(anchorId + ": " + envelope.hardBlockReason());
                 continue;
             }
             BlockBounds reservedEnvelope = envelope.collisionEnvelope();
@@ -116,7 +124,7 @@ public final class CityStructureAnchorPlanner {
             }
             reserved.add(reservedEnvelope);
             anchors.add(anchorJson(anchor, profile, sourcePatches, anchorBlock, rotation, plannedFootprint,
-                    envelope, clearance, roadMargin, vegetationMargin));
+                    envelope, clearance, smallClearance, roadMargin, vegetationMargin));
         }
 
         JsonObject anchorMap = new JsonObject();
@@ -140,6 +148,7 @@ public final class CityStructureAnchorPlanner {
                                   BlockBounds plannedFootprint,
                                   EnvelopeDecision envelope,
                                   int clearance,
+                                  int smallClearance,
                                   int roadMargin,
                                   int vegetationMargin) {
         JsonObject obj = new JsonObject();
@@ -174,13 +183,21 @@ public final class CityStructureAnchorPlanner {
         obj.add("collisionEnvelope", boundsJson(envelope.collisionEnvelope()));
         obj.add("maskEnvelope", boundsJson(envelope.maskEnvelope()));
         obj.add("safetyEnvelope", boundsJson(envelope.safetyEnvelope()));
-        obj.addProperty("clearanceBlocks", clearance);
+        obj.addProperty("clearanceBlocks", envelope.usesSmallClearance() ? smallClearance : clearance);
+        obj.addProperty("defaultClearanceBlocks", clearance);
+        obj.addProperty("smallClearanceBlocks", smallClearance);
         obj.addProperty("roadAccessMarginBlocks", roadMargin);
         obj.addProperty("vegetationMarginBlocks", vegetationMargin);
         obj.addProperty("reservedEnvelopeRadiusBlocks", envelope.envelopeRadiusBlocks());
         obj.addProperty("reservedEnvelopePolicy", envelope.policy());
+        obj.addProperty("envelopeMode", envelope.envelopeMode());
+        obj.addProperty("selectedEnvelopeGroupKey", envelope.selectedEnvelopeGroupKey());
+        if (envelope.selectedGroup() != null) {
+            obj.add("selectedEnvelopeGroup", envelope.selectedGroup().asJson());
+        }
         if (envelope.fact() != null) {
             obj.add("structureEnvelopeFact", envelope.fact().asSummaryJson());
+            obj.add("availableEnvelopeGroupKeys", bboxGroupKeys(envelope.fact()));
         }
         return obj;
     }
@@ -190,21 +207,48 @@ public final class CityStructureAnchorPlanner {
                                                      CityStructureProfileCatalog.StructureProfile profile,
                                                      CityStructureEnvelopeFacts facts,
                                                      int clearance,
+                                                     int smallClearance,
                                                      int roadMargin,
-                                                     int vegetationMargin) {
+                                                     int vegetationMargin,
+                                                     String requestedEnvelopeGroupKey) {
         java.util.Optional<CityStructureEnvelopeFacts.Fact> fact = facts.validFactFor(profile);
         if (fact.isPresent()) {
             CityStructureEnvelopeFacts.Fact value = fact.get();
+            boolean fixedGroupMode = "fixed_footprint".equals(profile.footprintMode()) || value.nearFixedByFacts();
+            if (fixedGroupMode) {
+                java.util.Optional<CityStructureEnvelopeFacts.BBoxGroup> selected = requestedEnvelopeGroupKey.isBlank()
+                        ? value.dominantGroup()
+                        : value.groupByKey(requestedEnvelopeGroupKey);
+                if (selected.isEmpty()) {
+                    String reason = requestedEnvelopeGroupKey.isBlank()
+                            ? "structure envelope facts have no bboxGroups for fixed bbox mode."
+                            : "requested envelopeGroupKey is not in structure envelope facts: "
+                            + requestedEnvelopeGroupKey;
+                    return new EnvelopeDecision(plannedFootprint, plannedFootprint, plannedFootprint, 0,
+                            "structureEnvelopeFacts:fixedBBoxGroupMissing", "fixed_bbox_group",
+                            requestedEnvelopeGroupKey, null, value, false, reason, true);
+                }
+                CityStructureEnvelopeFacts.BBoxGroup group = selected.get();
+                BlockBounds collision = fromLocal(anchorBlock, expand(group.localEnvelope(), smallClearance));
+                BlockBounds mask = fromLocal(anchorBlock, expand(group.localEnvelope(), vegetationMargin));
+                BlockBounds safety = fromLocal(anchorBlock, expand(value.maxObservedEnvelope(),
+                        Math.max(smallClearance, roadMargin)));
+                return new EnvelopeDecision(collision, mask, safety, 0,
+                        "structureEnvelopeFacts:fixedBBoxGroup+smallClearance", "fixed_bbox_group",
+                        group.groupKey(), group, value, false, "", true);
+            }
             BlockBounds collision = fromLocal(anchorBlock, expand(value.p95Envelope(), clearance));
             BlockBounds mask = fromLocal(anchorBlock, expand(value.p99Envelope(), vegetationMargin));
             BlockBounds safety = fromLocal(anchorBlock, expand(value.maxObservedEnvelope(),
                     Math.max(clearance, roadMargin)));
             return new EnvelopeDecision(collision, mask, safety, 0,
-                    "structureEnvelopeFacts:P95+clearance/P99+vegetationMargin", value, false);
+                    "structureEnvelopeFacts:fixedDepthP95+clearance/fixedDepthP99+vegetationMargin",
+                    "fixed_depth_statistics", "", null, value, false, "", false);
         }
         if (profile.structureId().startsWith("trek:")) {
             return new EnvelopeDecision(plannedFootprint, plannedFootprint, plannedFootprint,
-                    0, "structureEnvelopeFactsRequired", null, true);
+                    0, "structureEnvelopeFactsRequired", "missing_structure_envelope_facts",
+                    "", null, null, true, "", false);
         }
         int envelopeRadius = profile.jigsawLike()
                 ? profile.jigsawExpansionRadius(DEFAULT_JIGSAW_RADIUS_BLOCKS) + clearance + roadMargin
@@ -212,7 +256,9 @@ public final class CityStructureAnchorPlanner {
         BlockBounds collision = expand(plannedFootprint, envelopeRadius);
         return new EnvelopeDecision(collision, collision, collision, envelopeRadius, profile.jigsawLike()
                 ? "startFootprint+jigsawMaxExpansionRadius+clearance+roadAccessMargin"
-                : "fixedFootprint+clearance", null, false);
+                : "fixedFootprint+clearance", profile.jigsawLike()
+                ? "fallback_jigsaw_radius" : "fallback_fixed_footprint",
+                "", null, null, false, "", false);
     }
 
     private static BlockBounds fromLocal(BlockPoint anchorBlock, BlockBounds local) {
@@ -291,8 +337,11 @@ public final class CityStructureAnchorPlanner {
 
     private record EnvelopeDecision(BlockBounds collisionEnvelope, BlockBounds maskEnvelope,
                                     BlockBounds safetyEnvelope, int envelopeRadiusBlocks,
-                                    String policy, CityStructureEnvelopeFacts.Fact fact,
-                                    boolean requiredFactsMissing) {
+                                    String policy, String envelopeMode, String selectedEnvelopeGroupKey,
+                                    CityStructureEnvelopeFacts.BBoxGroup selectedGroup,
+                                    CityStructureEnvelopeFacts.Fact fact,
+                                    boolean requiredFactsMissing, String hardBlockReason,
+                                    boolean usesSmallClearance) {
     }
 
     private static JsonObject quality(List<String> hardBlocks, List<String> warnings,
@@ -327,6 +376,12 @@ public final class CityStructureAnchorPlanner {
     private static JsonArray stringArray(List<String> values) {
         JsonArray array = new JsonArray();
         values.forEach(array::add);
+        return array;
+    }
+
+    private static JsonArray bboxGroupKeys(CityStructureEnvelopeFacts.Fact fact) {
+        JsonArray array = new JsonArray();
+        fact.bboxGroups().forEach(group -> array.add(group.groupKey()));
         return array;
     }
 

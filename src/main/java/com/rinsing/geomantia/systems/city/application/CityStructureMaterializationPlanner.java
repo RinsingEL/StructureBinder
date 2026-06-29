@@ -16,6 +16,7 @@ public final class CityStructureMaterializationPlanner {
     public static final String LEDGER_SCHEMA = "city_placed_structure_ledger.v0.1";
     public static final String TRACE_SCHEMA = "city_structure_materialization_trace.v0.1";
     public static final String INFERRED_SCHEMA = "city_inferred_function_area_map.v0.1";
+    public static final int DEFAULT_COLLISION_CLEARANCE_BLOCKS = 4;
 
     public Result planWorldgen(JsonObject structureAnchorMap, ChunkStatusInspector inspector, JsonObject previousLedger) {
         return planWorldgen(structureAnchorMap, inspector, null, previousLedger);
@@ -30,11 +31,12 @@ public final class CityStructureMaterializationPlanner {
         String cityId = requiredString(structureAnchorMap, "cityId");
         ChunkStatusInspector statusInspector = inspector == null ? ChunkStatusInspector.plannedOnly() : inspector;
         PlacementBackend backend = preflightBackend == null ? PlacementBackend.traceOnly() : preflightBackend;
-        List<BlockBounds> occupied = ledgerBounds(previousLedger);
+        List<BlockBounds> occupied = expandedLedgerBounds(previousLedger, DEFAULT_COLLISION_CLEARANCE_BLOCKS);
         JsonArray planned = new JsonArray();
         JsonArray attempts = new JsonArray();
         JsonArray waiting = new JsonArray();
         JsonArray failures = new JsonArray();
+        int lockedCount = 0;
 
         for (JsonElement elem : requiredArray(structureAnchorMap, "anchors")) {
             JsonObject anchor = elem.getAsJsonObject();
@@ -72,37 +74,53 @@ public final class CityStructureMaterializationPlanner {
             }
             BlockBounds bbox = preflight.actualFootprint() == null
                     ? task.plannedFootprint() : preflight.actualFootprint();
-            if (!contains(task.reservedEnvelope(), bbox)) {
+            BlockBounds lockedCollision = expand(bbox, DEFAULT_COLLISION_CLEARANCE_BLOCKS);
+            String lockedGroupKey = actualBBoxGroupKey(task, bbox, preflight.pieceBoxes());
+            if (!task.acceptsBBoxGroupKey(lockedGroupKey)) {
                 attempt.addProperty("status", "failed");
-                attempt.addProperty("reasonCode", "RESERVED_ENVELOPE_EXCEEDED");
-                attempt.addProperty("message", "Preflight bbox exceeded D4 collisionEnvelope.");
+                attempt.addProperty("reasonCode", "BBOX_GROUP_NOT_IN_FACTS");
+                attempt.addProperty("message", "Locked preflight bbox group is not present in structure envelope facts.");
                 attempt.add("actualFootprint", boundsJson(bbox));
-                failures.add("RESERVED_ENVELOPE_EXCEEDED");
+                attempt.add("actualLocalBounds", boundsJson(localBounds(task, bbox)));
+                attempt.addProperty("actualBBoxGroupKey", lockedGroupKey);
+                attempt.add("availableEnvelopeGroupKeys", stringArray(task.availableEnvelopeGroupKeys()));
+                failures.add("BBOX_GROUP_NOT_IN_FACTS");
                 attempts.add(attempt);
                 planned.add(task.asWorldgenPlanJson(new ChunkStatusResult(
-                        "invalid_anchor", "RESERVED_ENVELOPE_EXCEEDED",
-                        "Preflight bbox exceeded D4 collisionEnvelope.", true)));
+                        "invalid_anchor", "BBOX_GROUP_NOT_IN_FACTS",
+                        "Locked preflight bbox group is not present in structure envelope facts.", true)));
                 continue;
             }
-            if (overlaps(occupied, bbox)) {
+            if (overlaps(occupied, lockedCollision)) {
                 attempt.addProperty("status", "failed");
                 attempt.addProperty("reasonCode", "LEDGER_OCCUPIED_OVERLAP");
-                attempt.addProperty("message", "Preflight bbox overlaps previous or planned structure ledger.");
+                attempt.addProperty("message", "Locked preflight collision envelope overlaps previous or planned structure ledger.");
                 attempt.add("actualFootprint", boundsJson(bbox));
+                attempt.add("lockedActualFootprint", boundsJson(bbox));
+                attempt.add("lockedCollisionEnvelope", boundsJson(lockedCollision));
                 failures.add("LEDGER_OCCUPIED_OVERLAP");
                 attempts.add(attempt);
                 planned.add(task.asWorldgenPlanJson(new ChunkStatusResult(
                         "invalid_anchor", "LEDGER_OCCUPIED_OVERLAP",
-                        "Preflight bbox overlaps previous or planned structure ledger.", true)));
+                        "Locked preflight collision envelope overlaps previous or planned structure ledger.", true)));
                 continue;
             }
-            occupied.add(bbox);
+            occupied.add(lockedCollision);
+            lockedCount++;
             attempt.addProperty("preflightStatus", "accepted");
             attempt.add("actualFootprint", boundsJson(bbox));
+            attempt.addProperty("locked", true);
+            attempt.add("lockedActualFootprint", boundsJson(bbox));
+            attempt.add("lockedCollisionEnvelope", boundsJson(lockedCollision));
+            attempt.add("actualLocalBounds", boundsJson(localBounds(task, bbox)));
+            attempt.addProperty("actualBBoxGroupKey", lockedGroupKey);
+            attempt.addProperty("lockedBBoxGroupKey", lockedGroupKey);
+            attempt.add("availableEnvelopeGroupKeys", stringArray(task.availableEnvelopeGroupKeys()));
             attempt.addProperty("startSignature", preflight.startSignature());
             attempt.add("pieceBoxes", preflight.pieceBoxes());
             attempts.add(attempt);
-            planned.add(task.asWorldgenPlanJson(status, bbox, preflight.startSignature(), preflight.pieceBoxes()));
+            planned.add(task.asWorldgenPlanJson(status, bbox, lockedCollision, lockedGroupKey,
+                    preflight.startSignature(), preflight.pieceBoxes()));
         }
 
         JsonObject plan = new JsonObject();
@@ -111,6 +129,9 @@ public final class CityStructureMaterializationPlanner {
         plan.addProperty("dryRunMode", "worldgen_time_planned_registry");
         plan.addProperty("preflightMode", "registry_structure_start_no_world_mutation");
         plan.addProperty("worldgenPlacementMode", true);
+        plan.addProperty("locked", failures.isEmpty() && waiting.isEmpty()
+                && lockedCount == planned.size() && lockedCount > 0);
+        plan.addProperty("collisionClearanceBlocks", DEFAULT_COLLISION_CLEARANCE_BLOCKS);
         plan.add("plannedWorldgenStructures", planned);
         plan.add("structures", new JsonArray());
         plan.add("sourceStructureAnchorMap", structureAnchorMap.deepCopy());
@@ -184,7 +205,7 @@ public final class CityStructureMaterializationPlanner {
             throw new IllegalArgumentException("structure_anchor_map.json is required for D6.");
         }
         String cityId = requiredString(structureAnchorMap, "cityId");
-        List<BlockBounds> occupied = ledgerBounds(previousLedger);
+        List<BlockBounds> occupied = expandedLedgerBounds(previousLedger, 0);
         JsonArray planned = new JsonArray();
         JsonArray attempts = new JsonArray();
         JsonArray waiting = new JsonArray();
@@ -215,8 +236,11 @@ public final class CityStructureMaterializationPlanner {
             if (!contains(task.reservedEnvelope(), bbox)) {
                 attempt.addProperty("status", "failed");
                 attempt.addProperty("reasonCode", "RESERVED_ENVELOPE_EXCEEDED");
-                attempt.addProperty("message", "Dry-run bbox exceeded D4 reservedEnvelope.");
+                attempt.addProperty("message",
+                        "Legacy debug late-materialize dry-run bbox exceeded planned reservedEnvelope.");
                 attempt.add("actualFootprint", boundsJson(bbox));
+                attempt.add("actualLocalBounds", boundsJson(localBounds(task, bbox)));
+                attempt.addProperty("actualBBoxGroupKey", actualBBoxGroupKey(task, bbox, result.pieceBoxes()));
                 failures.add("RESERVED_ENVELOPE_EXCEEDED");
                 attempts.add(attempt);
                 continue;
@@ -234,6 +258,8 @@ public final class CityStructureMaterializationPlanner {
             attempt.addProperty("status", "planned");
             attempt.addProperty("reasonCode", "REGISTRY_DRY_RUN_ACCEPTED");
             attempt.add("actualFootprint", boundsJson(bbox));
+            attempt.add("actualLocalBounds", boundsJson(localBounds(task, bbox)));
+            attempt.addProperty("actualBBoxGroupKey", actualBBoxGroupKey(task, bbox, result.pieceBoxes()));
             attempt.addProperty("startSignature", result.startSignature());
             attempt.add("pieceBoxes", result.pieceBoxes());
             attempts.add(attempt);
@@ -297,7 +323,7 @@ public final class CityStructureMaterializationPlanner {
             if (!expectedSignature.isBlank() && !expectedSignature.equals(result.startSignature())) {
                 attempt.addProperty("status", "failed");
                 attempt.addProperty("reasonCode", "START_SIGNATURE_MISMATCH");
-                attempt.addProperty("message", "Generated StructureStart differs from selected dry-run plan.");
+                attempt.addProperty("message", "Generated StructureStart differs from selected locked plan.");
                 attempt.addProperty("expectedStartSignature", expectedSignature);
                 attempt.addProperty("actualStartSignature", result.startSignature());
                 failures.add("START_SIGNATURE_MISMATCH");
@@ -308,6 +334,11 @@ public final class CityStructureMaterializationPlanner {
             if (!contains(task.reservedEnvelope(), bbox)) {
                 attempt.addProperty("status", "failed");
                 attempt.addProperty("reasonCode", "RESERVED_ENVELOPE_EXCEEDED");
+                attempt.addProperty("message",
+                        "Legacy debug late-materialize bbox exceeded planned reservedEnvelope.");
+                attempt.add("actualFootprint", boundsJson(bbox));
+                attempt.add("actualLocalBounds", boundsJson(localBounds(task, bbox)));
+                attempt.addProperty("actualBBoxGroupKey", actualBBoxGroupKey(task, bbox, result.pieceBoxes()));
                 failures.add("RESERVED_ENVELOPE_EXCEEDED");
                 attempts.add(attempt);
                 continue;
@@ -324,6 +355,8 @@ public final class CityStructureMaterializationPlanner {
             attempt.addProperty("reasonCode", executeWorldMutation ? "STRUCTURE_PLACED" : "REGISTRY_DRY_RUN_ACCEPTED");
             attempt.addProperty("worldMutationApplied", result.worldMutationApplied());
             attempt.add("actualFootprint", boundsJson(bbox));
+            attempt.add("actualLocalBounds", boundsJson(localBounds(task, bbox)));
+            attempt.addProperty("actualBBoxGroupKey", actualBBoxGroupKey(task, bbox, result.pieceBoxes()));
             attempts.add(attempt);
             if (executeWorldMutation) {
                 placed.add(task.asPlacedJson(bbox, result));
@@ -355,6 +388,11 @@ public final class CityStructureMaterializationPlanner {
         obj.add("anchorBlock", task.anchorBlock().asJson());
         obj.add("plannedFootprint", boundsJson(task.plannedFootprint()));
         obj.add("reservedEnvelope", boundsJson(task.reservedEnvelope()));
+        obj.add("collisionEnvelope", boundsJson(task.collisionEnvelope()));
+        obj.add("maskEnvelope", boundsJson(task.maskEnvelope()));
+        obj.add("safetyEnvelope", boundsJson(task.safetyEnvelope()));
+        obj.addProperty("envelopeMode", task.envelopeMode());
+        obj.addProperty("selectedEnvelopeGroupKey", task.selectedEnvelopeGroupKey());
         return obj;
     }
 
@@ -442,6 +480,14 @@ public final class CityStructureMaterializationPlanner {
         return result;
     }
 
+    private static List<BlockBounds> expandedLedgerBounds(JsonObject ledger, int amount) {
+        List<BlockBounds> result = new ArrayList<>();
+        for (BlockBounds bounds : ledgerBounds(ledger)) {
+            result.add(expand(bounds, amount));
+        }
+        return result;
+    }
+
     private static boolean ledgerContains(JsonArray placed, String anchorId) {
         for (JsonElement elem : placed) {
             if (elem.isJsonObject() && anchorId.equals(stringValue(elem.getAsJsonObject(), "anchorId", ""))) {
@@ -474,6 +520,27 @@ public final class CityStructureMaterializationPlanner {
                 && container.minZ() <= child.minZ()
                 && container.maxX() >= child.maxX()
                 && container.maxZ() >= child.maxZ();
+    }
+
+    public static BlockBounds expand(BlockBounds bounds, int amount) {
+        int margin = Math.max(0, amount);
+        return new BlockBounds(bounds.minX() - margin, bounds.minZ() - margin,
+                bounds.maxX() + margin, bounds.maxZ() + margin);
+    }
+
+    private static BlockBounds localBounds(StructureTask task, BlockBounds worldBounds) {
+        int originX = Math.floorDiv(task.anchorBlock().x(), 16) * 16;
+        int originZ = Math.floorDiv(task.anchorBlock().z(), 16) * 16;
+        return new BlockBounds(
+                worldBounds.minX() - originX,
+                worldBounds.minZ() - originZ,
+                worldBounds.maxX() - originX,
+                worldBounds.maxZ() - originZ);
+    }
+
+    private static String actualBBoxGroupKey(StructureTask task, BlockBounds worldBounds, JsonArray pieceBoxes) {
+        int pieceCount = pieceBoxes == null ? 0 : pieceBoxes.size();
+        return CityStructureEnvelopeProfiler.bboxGroupKey(localBounds(task, worldBounds), pieceCount);
     }
 
     private static BlockBounds union(JsonArray structures) {
@@ -510,6 +577,12 @@ public final class CityStructureMaterializationPlanner {
         obj.addProperty("maxX", bounds.maxX());
         obj.addProperty("maxZ", bounds.maxZ());
         return obj;
+    }
+
+    private static JsonArray stringArray(List<String> values) {
+        JsonArray array = new JsonArray();
+        values.forEach(array::add);
+        return array;
     }
 
     private static String requiredString(JsonObject obj, String key) {
@@ -619,16 +692,26 @@ public final class CityStructureMaterializationPlanner {
 
     public record StructureTask(String anchorId, String structureId, BlockPoint anchorBlock, String rotation,
                                 BlockBounds plannedFootprint, BlockBounds reservedEnvelope,
+                                BlockBounds collisionEnvelope, BlockBounds maskEnvelope, BlockBounds safetyEnvelope,
+                                String envelopeMode, String selectedEnvelopeGroupKey,
+                                List<String> availableEnvelopeGroupKeys,
                                 List<String> semanticTerms, List<String> functionTerms,
                                 String expectedStartSignature, JsonObject sourceAnchor) {
         static StructureTask from(JsonObject anchor) {
+            BlockBounds reserved = bounds(requiredObject(anchor, "reservedEnvelope"));
             return new StructureTask(
                     requiredString(anchor, "anchorId"),
                     requiredString(anchor, "structureId"),
                     blockPoint(requiredObject(anchor, "commandAnchorBlock")),
                     stringValue(anchor, "rotation", "NONE"),
                     bounds(requiredObject(anchor, "plannedFootprint")),
-                    bounds(requiredObject(anchor, "reservedEnvelope")),
+                    reserved,
+                    optionalBounds(anchor, "collisionEnvelope", reserved),
+                    optionalBounds(anchor, "maskEnvelope", reserved),
+                    optionalBounds(anchor, "safetyEnvelope", reserved),
+                    stringValue(anchor, "envelopeMode", ""),
+                    stringValue(anchor, "selectedEnvelopeGroupKey", ""),
+                    strings(anchor.getAsJsonArray("availableEnvelopeGroupKeys")),
                     strings(anchor.getAsJsonArray("semanticTerms")),
                     strings(anchor.getAsJsonArray("functionTerms")),
                     "",
@@ -636,13 +719,20 @@ public final class CityStructureMaterializationPlanner {
         }
 
         static StructureTask fromPlan(JsonObject item) {
+            BlockBounds reserved = bounds(requiredObject(item, "reservedEnvelope"));
             return new StructureTask(
                     requiredString(item, "anchorId"),
                     requiredString(item, "structureId"),
                     blockPoint(requiredObject(item, "commandAnchorBlock")),
                     stringValue(item, "rotation", "NONE"),
                     bounds(requiredObject(item, "plannedFootprint")),
-                    bounds(requiredObject(item, "reservedEnvelope")),
+                    reserved,
+                    optionalBounds(item, "collisionEnvelope", reserved),
+                    optionalBounds(item, "maskEnvelope", reserved),
+                    optionalBounds(item, "safetyEnvelope", reserved),
+                    stringValue(item, "envelopeMode", ""),
+                    stringValue(item, "selectedEnvelopeGroupKey", ""),
+                    strings(item.getAsJsonArray("availableEnvelopeGroupKeys")),
                     strings(item.getAsJsonArray("semanticTerms")),
                     strings(item.getAsJsonArray("functionTerms")),
                     !stringValue(item, "expectedStartSignature", "").isBlank()
@@ -659,11 +749,29 @@ public final class CityStructureMaterializationPlanner {
             return obj;
         }
 
+        boolean acceptsBBoxGroupKey(String actualGroupKey) {
+            if (!"fixed_bbox_group".equals(envelopeMode) || availableEnvelopeGroupKeys.isEmpty()) {
+                return true;
+            }
+            return availableEnvelopeGroupKeys.contains(actualGroupKey);
+        }
+
         JsonObject asWorldgenPlanJson(ChunkStatusResult status) {
             return asWorldgenPlanJson(status, null, expectedStartSignature, new JsonArray());
         }
 
         JsonObject asWorldgenPlanJson(ChunkStatusResult status, BlockBounds actualFootprint,
+                                      String startSignature, JsonArray pieceBoxes) {
+            BlockBounds lockedCollision = actualFootprint == null
+                    ? null : expand(actualFootprint, DEFAULT_COLLISION_CLEARANCE_BLOCKS);
+            String lockedGroupKey = actualFootprint == null
+                    ? "" : actualBBoxGroupKey(this, actualFootprint, pieceBoxes);
+            return asWorldgenPlanJson(status, actualFootprint, lockedCollision, lockedGroupKey,
+                    startSignature, pieceBoxes);
+        }
+
+        JsonObject asWorldgenPlanJson(ChunkStatusResult status, BlockBounds actualFootprint,
+                                      BlockBounds lockedCollisionEnvelope, String lockedBBoxGroupKey,
                                       String startSignature, JsonArray pieceBoxes) {
             JsonObject obj = sourceAnchor.deepCopy();
             if (!obj.has("commandAnchorBlock")) {
@@ -673,11 +781,25 @@ public final class CityStructureMaterializationPlanner {
             chunk.addProperty("x", Math.floorDiv(anchorBlock.x(), 16));
             chunk.addProperty("z", Math.floorDiv(anchorBlock.z(), 16));
             obj.add("anchorChunk", chunk);
-            obj.add("requiredChunkRange", chunkRangeJson(reservedEnvelope));
+            BlockBounds chunkRangeSource = lockedCollisionEnvelope == null ? reservedEnvelope : lockedCollisionEnvelope;
+            obj.add("requiredChunkRange", chunkRangeJson(chunkRangeSource));
             obj.addProperty("expectedStartSignature", startSignature == null ? "" : startSignature);
             if (actualFootprint != null) {
                 obj.add("actualFootprint", boundsJson(actualFootprint));
+                obj.addProperty("locked", true);
+                obj.add("lockedActualFootprint", boundsJson(actualFootprint));
+                obj.addProperty("d4SelectedEnvelopeGroupKey", selectedEnvelopeGroupKey);
+                obj.addProperty("selectedEnvelopeGroupKey", lockedBBoxGroupKey == null ? "" : lockedBBoxGroupKey);
+                obj.addProperty("actualBBoxGroupKey", lockedBBoxGroupKey == null ? "" : lockedBBoxGroupKey);
+                obj.addProperty("lockedBBoxGroupKey", lockedBBoxGroupKey == null ? "" : lockedBBoxGroupKey);
             }
+            if (lockedCollisionEnvelope != null) {
+                obj.add("reservedEnvelope", boundsJson(lockedCollisionEnvelope));
+                obj.add("collisionEnvelope", boundsJson(lockedCollisionEnvelope));
+                obj.add("lockedCollisionEnvelope", boundsJson(lockedCollisionEnvelope));
+                obj.add("maskEnvelope", boundsJson(expand(lockedCollisionEnvelope, 4)));
+            }
+            obj.addProperty("collisionClearanceBlocks", DEFAULT_COLLISION_CLEARANCE_BLOCKS);
             obj.add("pieceBoxes", pieceBoxes == null ? new JsonArray() : pieceBoxes);
             obj.addProperty("worldgenPlacementMode", true);
             obj.addProperty("status", status.status());
@@ -695,6 +817,11 @@ public final class CityStructureMaterializationPlanner {
             obj.add("plannedFootprint", boundsJson(plannedFootprint));
             obj.add("actualFootprint", boundsJson(actualFootprint));
             obj.add("reservedEnvelope", boundsJson(reservedEnvelope));
+            obj.add("collisionEnvelope", boundsJson(collisionEnvelope));
+            obj.add("maskEnvelope", boundsJson(maskEnvelope));
+            obj.add("safetyEnvelope", boundsJson(safetyEnvelope));
+            obj.addProperty("envelopeMode", envelopeMode);
+            obj.addProperty("selectedEnvelopeGroupKey", selectedEnvelopeGroupKey);
             obj.add("semanticTerms", stringArray(semanticTerms));
             obj.add("functionTerms", stringArray(functionTerms));
             obj.addProperty("worldMutationApplied", result.worldMutationApplied());
@@ -723,6 +850,10 @@ public final class CityStructureMaterializationPlanner {
 
         private static BlockPoint blockPoint(JsonObject obj) {
             return new BlockPoint(intValue(obj, "x", 0), intValue(obj, "z", 0));
+        }
+
+        private static BlockBounds optionalBounds(JsonObject obj, String key, BlockBounds fallback) {
+            return obj.has(key) && obj.get(key).isJsonObject() ? bounds(obj.getAsJsonObject(key)) : fallback;
         }
     }
 

@@ -100,6 +100,7 @@ public final class CityStructureEnvelopeProfiler {
         obj.addProperty("profileHash", profileHash(profile));
         obj.addProperty("structureConfigHash", structureConfigHash);
         obj.addProperty("sourcePackHash", sourcePackHash);
+        obj.addProperty("generationConfigHash", generationConfigHash(profile, structureConfigHash));
         obj.addProperty("sampleCount", sampleCount);
         obj.addProperty("validSampleCount", valid.size());
         obj.addProperty("invalidSampleCount", sampleCount - valid.size());
@@ -114,18 +115,48 @@ public final class CityStructureEnvelopeProfiler {
         obj.add("areaBlocks", percentileNumbers(valid.stream()
                 .mapToInt(sample -> sample.localBounds().widthBlocks() * sample.localBounds().heightBlocks())
                 .boxed().toList()));
+        obj.add("validSamples", validSamples(valid));
+        obj.add("bboxGroups", bboxGroups(valid));
         JsonArray samplePreview = new JsonArray();
         for (int i = 0; i < Math.min(16, valid.size()); i++) {
-            EnvelopeSample sample = valid.get(i);
-            JsonObject sampleObj = new JsonObject();
-            sampleObj.addProperty("sampleIndex", sample.sampleIndex());
-            sampleObj.add("localBounds", boundsJson(sample.localBounds()));
-            sampleObj.addProperty("pieceCount", sample.pieceCount());
-            samplePreview.add(sampleObj);
+            samplePreview.add(sampleJson(valid.get(i)));
         }
         obj.add("samplePreview", samplePreview);
         obj.add("failureSummary", summarize(failures));
         return obj;
+    }
+
+    private static JsonArray validSamples(List<EnvelopeSample> valid) {
+        JsonArray array = new JsonArray();
+        for (EnvelopeSample sample : valid) {
+            array.add(sampleJson(sample));
+        }
+        return array;
+    }
+
+    private static JsonArray bboxGroups(List<EnvelopeSample> valid) {
+        Map<String, BBoxGroupAccumulator> groups = new LinkedHashMap<>();
+        for (EnvelopeSample sample : valid) {
+            String key = bboxGroupKey(sample.localBounds(), sample.pieceCount());
+            groups.computeIfAbsent(key, ignored -> new BBoxGroupAccumulator(key, sample.localBounds(),
+                    sample.pieceCount())).add(sample);
+        }
+        JsonArray array = new JsonArray();
+        groups.values().stream()
+                .sorted(Comparator.comparingInt(BBoxGroupAccumulator::sampleCount).reversed()
+                        .thenComparing(BBoxGroupAccumulator::groupKey))
+                .forEach(group -> array.add(group.asJson(valid.size())));
+        return array;
+    }
+
+    private static JsonObject sampleJson(EnvelopeSample sample) {
+        JsonObject sampleObj = new JsonObject();
+        sampleObj.addProperty("sampleIndex", sample.sampleIndex());
+        sampleObj.add("localBounds", boundsJson(sample.localBounds()));
+        sampleObj.addProperty("pieceCount", sample.pieceCount());
+        sampleObj.addProperty("areaBlocks", sample.localBounds().widthBlocks() * sample.localBounds().heightBlocks());
+        sampleObj.addProperty("bboxGroupKey", bboxGroupKey(sample.localBounds(), sample.pieceCount()));
+        return sampleObj;
     }
 
     private static JsonObject percentileNumbers(List<Integer> values) {
@@ -230,6 +261,25 @@ public final class CityStructureEnvelopeProfiler {
         return sha256(CityJson.GSON.toJson(profile.asJson()));
     }
 
+    public static String generationConfigHash(CityStructureProfileCatalog.StructureProfile profile,
+                                              String structureConfigHash) {
+        JsonObject obj = new JsonObject();
+        obj.addProperty("structureId", profile.structureId());
+        obj.addProperty("profileType", profile.profileType());
+        obj.addProperty("footprintMode", profile.footprintMode());
+        obj.add("fixedFootprint", profile.fixedFootprint().asJson());
+        obj.add("expectedAreaRange", profile.expectedAreaRange().asJson());
+        obj.addProperty("maxDistanceFromCenterBlocks", profile.maxDistanceFromCenterBlocks());
+        obj.addProperty("structureConfigHash", structureConfigHash == null ? "" : structureConfigHash);
+        return sha256(CityJson.GSON.toJson(obj));
+    }
+
+    public static String bboxGroupKey(BlockBounds bounds, int pieceCount) {
+        String raw = pieceCount + ":" + bounds.minX() + ":" + bounds.minZ() + ":"
+                + bounds.maxX() + ":" + bounds.maxZ();
+        return "bbox_" + sha256(raw).substring(0, 16);
+    }
+
     public static String sha256(String value) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
@@ -252,6 +302,47 @@ public final class CityStructureEnvelopeProfiler {
 
     private enum Axis {
         MIN_X, MIN_Z, MAX_X, MAX_Z
+    }
+
+    private static final class BBoxGroupAccumulator {
+        private final String groupKey;
+        private final BlockBounds localEnvelope;
+        private final int pieceCount;
+        private final List<Integer> sampleIndexes = new ArrayList<>();
+
+        private BBoxGroupAccumulator(String groupKey, BlockBounds localEnvelope, int pieceCount) {
+            this.groupKey = groupKey;
+            this.localEnvelope = localEnvelope;
+            this.pieceCount = pieceCount;
+        }
+
+        void add(EnvelopeSample sample) {
+            sampleIndexes.add(sample.sampleIndex());
+        }
+
+        String groupKey() {
+            return groupKey;
+        }
+
+        int sampleCount() {
+            return sampleIndexes.size();
+        }
+
+        JsonObject asJson(int totalValidSamples) {
+            JsonObject obj = new JsonObject();
+            obj.addProperty("groupKey", groupKey);
+            obj.addProperty("sampleCount", sampleIndexes.size());
+            obj.addProperty("ratio", totalValidSamples == 0 ? 0.0 : sampleIndexes.size() / (double) totalValidSamples);
+            obj.add("localEnvelope", boundsJson(localEnvelope));
+            obj.addProperty("pieceCount", pieceCount);
+            obj.addProperty("areaBlocks", localEnvelope.widthBlocks() * localEnvelope.heightBlocks());
+            JsonArray examples = new JsonArray();
+            for (int i = 0; i < Math.min(8, sampleIndexes.size()); i++) {
+                examples.add(sampleIndexes.get(i));
+            }
+            obj.add("exampleSampleIndexes", examples);
+            return obj;
+        }
     }
 
     public interface StructureEnvelopeSampler {

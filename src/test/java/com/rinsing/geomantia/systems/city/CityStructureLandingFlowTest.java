@@ -62,6 +62,12 @@ final class CityStructureLandingFlowTest {
                                 4 + sampleIndex,
                                 "config_hash",
                                 "pack_hash"));
+        JsonObject fact = factsResult.structureEnvelopeFacts().getAsJsonArray("structures")
+                .get(0).getAsJsonObject();
+        assertTrue(fact.has("generationConfigHash"));
+        assertEquals(20, fact.getAsJsonArray("validSamples").size());
+        assertEquals(20, fact.getAsJsonArray("bboxGroups").size());
+        assertTrue(fact.getAsJsonArray("validSamples").get(0).getAsJsonObject().has("bboxGroupKey"));
         Path factsPath = fixture.baseDir().resolve("structure_envelope_facts.json");
         Files.writeString(factsPath, CityJson.GSON.toJson(factsResult.structureEnvelopeFacts()));
 
@@ -71,11 +77,76 @@ final class CityStructureLandingFlowTest {
                 .structureAnchorMap();
 
         JsonObject jigsaw = anchorMap.getAsJsonArray("anchors").get(1).getAsJsonObject();
-        assertEquals("structureEnvelopeFacts:P95+clearance/P99+vegetationMargin",
+        assertEquals("structureEnvelopeFacts:fixedDepthP95+clearance/fixedDepthP99+vegetationMargin",
                 jigsaw.get("reservedEnvelopePolicy").getAsString());
+        assertEquals("fixed_depth_statistics", jigsaw.get("envelopeMode").getAsString());
         assertTrue(jigsaw.has("maskEnvelope"));
         assertTrue(jigsaw.has("safetyEnvelope"));
         assertTrue(jigsaw.has("structureEnvelopeFact"));
+    }
+
+    @Test
+    void d4UsesDominantFixedBBoxGroupWithSmallClearance() throws Exception {
+        Fixture fixture = fixture();
+        CityStructureEnvelopeProfiler.Result factsResult = new CityStructureEnvelopeProfiler()
+                .profile(fixture.baseDir(), fixture.terraSenseSource(), List.of("minecraft:desert_pyramid"), 6,
+                        (profile, sampleIndex) -> {
+                            BlockBounds dominant = new BlockBounds(-4, -5, 15, 6);
+                            BlockBounds rotated = new BlockBounds(-7, -2, 4, 17);
+                            return CityStructureEnvelopeProfiler.EnvelopeSample.valid(sampleIndex,
+                                    sampleIndex < 4 ? dominant : rotated, 1,
+                                    "fixed_config_hash", "pack_hash");
+                        });
+        Path factsPath = fixture.baseDir().resolve("fixed_structure_envelope_facts.json");
+        Files.writeString(factsPath, CityJson.GSON.toJson(factsResult.structureEnvelopeFacts()));
+
+        JsonObject anchorMap = new CityStructureAnchorPlanner()
+                .plan(fixture.baseDir(), fixture.review(), fixture.terraSenseSource(), singleAnchorPlan(fixture.review()),
+                        CityStructureEnvelopeFacts.load(factsPath))
+                .structureAnchorMap();
+
+        JsonObject fixed = anchorMap.getAsJsonArray("anchors").get(0).getAsJsonObject();
+        JsonObject group = fixed.getAsJsonObject("selectedEnvelopeGroup");
+        JsonObject collision = fixed.getAsJsonObject("collisionEnvelope");
+        JsonObject anchorBlock = fixed.getAsJsonObject("anchorBlock");
+        int originX = Math.floorDiv(anchorBlock.get("x").getAsInt(), 16) * 16;
+        int originZ = Math.floorDiv(anchorBlock.get("z").getAsInt(), 16) * 16;
+
+        assertEquals("fixed_bbox_group", fixed.get("envelopeMode").getAsString());
+        assertEquals("structureEnvelopeFacts:fixedBBoxGroup+smallClearance",
+                fixed.get("reservedEnvelopePolicy").getAsString());
+        assertEquals(4, fixed.get("clearanceBlocks").getAsInt());
+        assertEquals(4, fixed.get("smallClearanceBlocks").getAsInt());
+        assertEquals(4, group.get("sampleCount").getAsInt());
+        assertEquals(originX - 8, collision.get("minX").getAsInt());
+        assertEquals(originZ - 9, collision.get("minZ").getAsInt());
+        assertEquals(originX + 19, collision.get("maxX").getAsInt());
+        assertEquals(originZ + 10, collision.get("maxZ").getAsInt());
+    }
+
+    @Test
+    void d4RejectsUnknownFixedBBoxGroupKey() throws Exception {
+        Fixture fixture = fixture();
+        CityStructureEnvelopeProfiler.Result factsResult = new CityStructureEnvelopeProfiler()
+                .profile(fixture.baseDir(), fixture.terraSenseSource(), List.of("minecraft:desert_pyramid"), 2,
+                        (profile, sampleIndex) -> CityStructureEnvelopeProfiler.EnvelopeSample.valid(sampleIndex,
+                                new BlockBounds(-4, -5, 15, 6), 1,
+                                "fixed_config_hash", "pack_hash"));
+        Path factsPath = fixture.baseDir().resolve("fixed_structure_envelope_facts.json");
+        Files.writeString(factsPath, CityJson.GSON.toJson(factsResult.structureEnvelopeFacts()));
+        JsonObject plan = singleAnchorPlan(fixture.review());
+        plan.getAsJsonArray("anchors").get(0).getAsJsonObject()
+                .addProperty("envelopeGroupKey", "missing_group");
+
+        JsonObject result = new CityStructureAnchorPlanner()
+                .plan(fixture.baseDir(), fixture.review(), fixture.terraSenseSource(), plan,
+                        CityStructureEnvelopeFacts.load(factsPath))
+                .asJson();
+
+        assertFalse(result.get("ok").getAsBoolean());
+        assertTrue(result.getAsJsonObject("qualityReport").getAsJsonArray("hardBlocks")
+                .toString()
+                .contains("requested envelopeGroupKey is not in structure envelope facts"));
     }
 
     @Test
@@ -146,7 +217,7 @@ final class CityStructureLandingFlowTest {
     }
 
     @Test
-    void d5ReservationMaskCoversStructureEnvelopeAndRoadAccess() throws Exception {
+    void d5ReservationMaskCoversStructureEnvelopeWithoutFixedRoadAccess() throws Exception {
         Fixture fixture = fixture();
         JsonObject anchorMap = new CityStructureAnchorPlanner()
                 .plan(fixture.baseDir(), fixture.review(), fixture.terraSenseSource(), anchorPlan(fixture.review()))
@@ -158,11 +229,13 @@ final class CityStructureLandingFlowTest {
         JsonObject mask = result.reservationMaskPlan();
         assertTrue(result.asJson().get("ok").getAsBoolean());
         assertEquals(2, mask.getAsJsonArray("noVanillaStructureMask").size());
-        assertTrue(mask.getAsJsonArray("noVegetationMask").size() >= 4);
+        assertEquals(2, mask.getAsJsonArray("noVegetationMask").size());
         assertTrue(mask.getAsJsonObject("hookRequirements").get("required").getAsBoolean());
+        assertTrue(mask.get("requiresLockedMaterializationPlan").getAsBoolean());
+        assertEquals("d7_after_worldgen_ledger", mask.get("roadPlanningStage").getAsString());
         String operations = result.buildOperationPlan().getAsJsonArray("operations").toString();
-        assertTrue(operations.contains("clearVegetation"));
-        assertTrue(operations.contains("surfaceFill"));
+        assertFalse(operations.contains("clearVegetation"));
+        assertFalse(operations.contains("surfaceFill"));
     }
 
     @Test
@@ -182,10 +255,51 @@ final class CityStructureLandingFlowTest {
         assertEquals(1, active.getAsJsonArray("plannedStructures").size());
         assertTrue(Files.exists(CityReservationMaskRegistry.plannedRegistryPath(serverRoot)));
         JsonObject planned = active.getAsJsonArray("plannedStructures").get(0).getAsJsonObject();
+        assertTrue(planned.has("collisionEnvelope"));
+        assertTrue(planned.has("maskEnvelope"));
+        assertTrue(planned.has("safetyEnvelope"));
+        assertTrue(planned.has("envelopeMode"));
         ChunkPos anchorChunk = new ChunkPos(
                 planned.getAsJsonObject("anchorChunk").get("x").getAsInt(),
                 planned.getAsJsonObject("anchorChunk").get("z").getAsInt());
         assertEquals(1, CityReservationMaskRegistry.plannedStructuresForChunk(anchorChunk).size());
+    }
+
+    @Test
+    void d5ActiveRegistryLedgerIsScopedToWorldRoot() throws Exception {
+        Fixture fixture = fixture();
+        JsonObject anchorMap = new CityStructureAnchorPlanner()
+                .plan(fixture.baseDir(), fixture.review(), fixture.terraSenseSource(), singleAnchorPlan(fixture.review()))
+                .structureAnchorMap();
+        JsonObject mask = new CityReservationMaskPlanner()
+                .plan(fixture.context(), anchorMap)
+                .reservationMaskPlan();
+        Path worldRootA = Files.createTempDirectory("city-mask-world-a");
+        Path worldRootB = Files.createTempDirectory("city-mask-world-b");
+
+        JsonObject activeA = CityReservationMaskRegistry.activate(mask, anchorMap,
+                "run_a", fixture.context().cityId(), worldRootA);
+        JsonObject plannedJson = activeA.getAsJsonArray("plannedStructures").get(0).getAsJsonObject();
+        JsonObject anchorChunkJson = plannedJson.getAsJsonObject("anchorChunk");
+        ChunkPos anchorChunk = new ChunkPos(
+                anchorChunkJson.get("x").getAsInt(),
+                anchorChunkJson.get("z").getAsInt());
+        CityReservationMaskRegistry.PlannedStructure plannedA = CityReservationMaskRegistry
+                .plannedStructuresForChunk(anchorChunk)
+                .get(0);
+        CityReservationMaskRegistry.recordWorldgenPlacement(plannedA, plannedA.plannedFootprint(),
+                "sig_a", new JsonArray(), anchorChunk,
+                "WORLDGEN_PLACEMENT_RECORDED", "test placement");
+        assertEquals(1, CityReservationMaskRegistry.ledgerForCity(fixture.context().cityId())
+                .getAsJsonArray("placedStructures").size());
+
+        CityReservationMaskRegistry.activate(mask, anchorMap,
+                "run_b", fixture.context().cityId(), worldRootB);
+
+        assertTrue(Files.exists(CityReservationMaskRegistry.worldgenLedgerPath(worldRootA)));
+        assertTrue(Files.exists(CityReservationMaskRegistry.worldgenLedgerPath(worldRootB)));
+        assertEquals(0, CityReservationMaskRegistry.ledgerForCity(fixture.context().cityId())
+                .getAsJsonArray("placedStructures").size());
     }
 
     @Test
@@ -211,6 +325,11 @@ final class CityStructureLandingFlowTest {
         assertEquals(0, backend.placeCalls);
         JsonObject planned = dryRun.structureMaterializationPlan()
                 .getAsJsonArray("plannedWorldgenStructures").get(0).getAsJsonObject();
+        assertTrue(dryRun.structureMaterializationPlan().get("locked").getAsBoolean());
+        assertTrue(planned.get("locked").getAsBoolean());
+        assertTrue(planned.has("lockedActualFootprint"));
+        assertTrue(planned.has("lockedCollisionEnvelope"));
+        assertTrue(planned.has("lockedBBoxGroupKey"));
         assertTrue(planned.has("expectedStartSignature"));
         assertTrue(planned.has("pieceBoxes"));
 
@@ -225,6 +344,89 @@ final class CityStructureLandingFlowTest {
         assertTrue(recheck.structureMaterializationTrace()
                 .getAsJsonObject("waitingSummary")
                 .has("WAITING_FOR_WORLDGEN"));
+    }
+
+    @Test
+    void d6PreflightLocksActualBBoxEvenWhenItDiffersFromD4Envelope() throws Exception {
+        Fixture fixture = fixture();
+        CityStructureEnvelopeProfiler.Result factsResult = new CityStructureEnvelopeProfiler()
+                .profile(fixture.baseDir(), fixture.terraSenseSource(), List.of("minecraft:desert_pyramid"), 2,
+                        (profile, sampleIndex) -> CityStructureEnvelopeProfiler.EnvelopeSample.valid(sampleIndex,
+                                new BlockBounds(-4, -5, 15, 6), 1,
+                                "fixed_config_hash", "pack_hash"));
+        Path factsPath = fixture.baseDir().resolve("fixed_structure_envelope_facts.json");
+        Files.writeString(factsPath, CityJson.GSON.toJson(factsResult.structureEnvelopeFacts()));
+        JsonObject anchorMap = new CityStructureAnchorPlanner()
+                .plan(fixture.baseDir(), fixture.review(), fixture.terraSenseSource(), singleAnchorPlan(fixture.review()),
+                        CityStructureEnvelopeFacts.load(factsPath))
+                .structureAnchorMap();
+        JsonObject anchor = anchorMap.getAsJsonArray("anchors").get(0).getAsJsonObject();
+        JsonObject anchorBlock = anchor.getAsJsonObject("anchorBlock");
+        int originX = Math.floorDiv(anchorBlock.get("x").getAsInt(), 16) * 16;
+        int originZ = Math.floorDiv(anchorBlock.get("z").getAsInt(), 16) * 16;
+        BlockBounds actual = new BlockBounds(originX - 4, originZ - 5, originX + 15, originZ + 6);
+
+        CityStructureMaterializationPlanner.Result result = new CityStructureMaterializationPlanner()
+                .planWorldgen(anchorMap, CityStructureMaterializationPlanner.ChunkStatusInspector.plannedOnly(),
+                        new FakePlacementBackend("sig", true, actual), null);
+
+        JsonObject attempt = result.structureMaterializationTrace()
+                .getAsJsonArray("attempts").get(0).getAsJsonObject();
+        assertTrue(result.asJson().get("ok").getAsBoolean());
+        assertTrue(attempt.get("locked").getAsBoolean());
+        assertTrue(attempt.has("actualLocalBounds"));
+        assertTrue(attempt.has("actualBBoxGroupKey"));
+        assertTrue(attempt.has("lockedCollisionEnvelope"));
+    }
+
+    @Test
+    void d6PreflightRejectsFixedBBoxGroupMissingFromFacts() throws Exception {
+        Fixture fixture = fixture();
+        CityStructureEnvelopeProfiler.Result factsResult = new CityStructureEnvelopeProfiler()
+                .profile(fixture.baseDir(), fixture.terraSenseSource(), List.of("minecraft:desert_pyramid"), 2,
+                        (profile, sampleIndex) -> CityStructureEnvelopeProfiler.EnvelopeSample.valid(sampleIndex,
+                                new BlockBounds(-4, -5, 15, 6), 1,
+                                "fixed_config_hash", "pack_hash"));
+        Path factsPath = fixture.baseDir().resolve("fixed_structure_envelope_facts.json");
+        Files.writeString(factsPath, CityJson.GSON.toJson(factsResult.structureEnvelopeFacts()));
+        JsonObject anchorMap = new CityStructureAnchorPlanner()
+                .plan(fixture.baseDir(), fixture.review(), fixture.terraSenseSource(), singleAnchorPlan(fixture.review()),
+                        CityStructureEnvelopeFacts.load(factsPath))
+                .structureAnchorMap();
+        JsonObject anchor = anchorMap.getAsJsonArray("anchors").get(0).getAsJsonObject();
+        JsonObject anchorBlock = anchor.getAsJsonObject("anchorBlock");
+        int originX = Math.floorDiv(anchorBlock.get("x").getAsInt(), 16) * 16;
+        int originZ = Math.floorDiv(anchorBlock.get("z").getAsInt(), 16) * 16;
+        BlockBounds unprofiledShape = new BlockBounds(originX - 9, originZ - 5, originX + 15, originZ + 6);
+
+        CityStructureMaterializationPlanner.Result result = new CityStructureMaterializationPlanner()
+                .planWorldgen(anchorMap, CityStructureMaterializationPlanner.ChunkStatusInspector.plannedOnly(),
+                        new FakePlacementBackend("sig", true, unprofiledShape), null);
+
+        assertFalse(result.asJson().get("ok").getAsBoolean());
+        JsonObject attempt = result.structureMaterializationTrace()
+                .getAsJsonArray("attempts").get(0).getAsJsonObject();
+        assertEquals("BBOX_GROUP_NOT_IN_FACTS", attempt.get("reasonCode").getAsString());
+        assertTrue(attempt.has("availableEnvelopeGroupKeys"));
+    }
+
+    @Test
+    void d6PreflightRejectsOverlappingLockedCollisionEnvelope() throws Exception {
+        Fixture fixture = fixture();
+        JsonObject anchorMap = new CityStructureAnchorPlanner()
+                .plan(fixture.baseDir(), fixture.review(), fixture.terraSenseSource(), anchorPlan(fixture.review()))
+                .structureAnchorMap();
+        JsonObject anchor = anchorMap.getAsJsonArray("anchors").get(0).getAsJsonObject();
+        BlockBounds first = bounds(anchor.getAsJsonObject("reservedEnvelope"));
+
+        CityStructureMaterializationPlanner.Result result = new CityStructureMaterializationPlanner()
+                .planWorldgen(anchorMap, CityStructureMaterializationPlanner.ChunkStatusInspector.plannedOnly(),
+                        new FakePlacementBackend("sig", true, first), null);
+
+        assertFalse(result.asJson().get("ok").getAsBoolean());
+        assertTrue(result.structureMaterializationTrace()
+                .getAsJsonObject("failureSummary")
+                .has("LEDGER_OCCUPIED_OVERLAP"));
     }
 
     @Test
@@ -438,6 +640,14 @@ final class CityStructureLandingFlowTest {
         return obj;
     }
 
+    private static BlockBounds bounds(JsonObject obj) {
+        return new BlockBounds(
+                obj.get("minX").getAsInt(),
+                obj.get("minZ").getAsInt(),
+                obj.get("maxX").getAsInt(),
+                obj.get("maxZ").getAsInt());
+    }
+
     private record Fixture(Path baseDir, CitySiteContext context, CityLandformReviewPackage review,
                            JsonObject terraSenseSource) {
     }
@@ -445,12 +655,18 @@ final class CityStructureLandingFlowTest {
     private static final class FakePlacementBackend implements CityStructureMaterializationPlanner.PlacementBackend {
         private final String signaturePrefix;
         private final boolean success;
+        private final BlockBounds actualFootprintOverride;
         private int planCalls;
         private int placeCalls;
 
         private FakePlacementBackend(String signaturePrefix, boolean success) {
+            this(signaturePrefix, success, null);
+        }
+
+        private FakePlacementBackend(String signaturePrefix, boolean success, BlockBounds actualFootprintOverride) {
             this.signaturePrefix = signaturePrefix;
             this.success = success;
+            this.actualFootprintOverride = actualFootprintOverride;
         }
 
         @Override
@@ -479,7 +695,8 @@ final class CityStructureLandingFlowTest {
             piece.addProperty("type", "synthetic");
             pieces.add(piece);
             return CityStructureMaterializationPlanner.PlacementResult.success(applied, "ok",
-                    task.plannedFootprint(), signaturePrefix + ":" + task.anchorId(), pieces);
+                    actualFootprintOverride == null ? task.plannedFootprint() : actualFootprintOverride,
+                    signaturePrefix + ":" + task.anchorId(), pieces);
         }
     }
 }

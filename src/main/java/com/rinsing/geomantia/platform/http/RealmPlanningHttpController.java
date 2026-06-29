@@ -16,6 +16,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.storage.LevelResource;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -226,7 +227,8 @@ final class RealmPlanningHttpController {
                 dimensionId = restoredRunDimensionId(runId);
             }
             ServerLevel level = resolveLevel(dimensionId, player);
-            JsonObject response = CityPlanningEndpointHandler.handleExecuteD5(debugRoot(), server.getServerDirectory().toPath(),
+            JsonObject response = CityPlanningEndpointHandler.handleExecuteD5(debugRoot(),
+                    server.getWorldPath(LevelResource.ROOT),
                     runId, citySeedId, confirmWorldMutation, level);
             response.addProperty("worldSaveRequested", false);
             return response;
