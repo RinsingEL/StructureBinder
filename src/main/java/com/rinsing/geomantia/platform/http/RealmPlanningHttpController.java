@@ -182,6 +182,50 @@ final class RealmPlanningHttpController {
         });
     }
 
+    void handleCityPlanD4Candidates(HttpExchange exchange) {
+        handle(exchange, "POST", () -> {
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            String runId = requiredString(request, "runId");
+            String citySeedId = requiredString(request, "citySeedId");
+            rejectLegacyCityFields(request, "patchGroupPlan", "zoneChoices", "functionType", "functionTag",
+                    "function_candidates");
+            if (!request.has("terrasenseProfileSource") || !request.get("terrasenseProfileSource").isJsonObject()) {
+                throw new IllegalArgumentException("terrasenseProfileSource object is required.");
+            }
+            if (!request.has("designSlotPlan") || !request.get("designSlotPlan").isJsonObject()) {
+                throw new IllegalArgumentException("designSlotPlan object is required.");
+            }
+            return CityPlanningEndpointHandler.handlePlanD4Candidates(debugRoot(), runId, citySeedId,
+                    request.getAsJsonObject("terrasenseProfileSource"),
+                    request.getAsJsonObject("designSlotPlan"),
+                    request.has("structureEnvelopeFactsSource") && request.get("structureEnvelopeFactsSource").isJsonObject()
+                            ? request.getAsJsonObject("structureEnvelopeFactsSource") : null);
+        });
+    }
+
+    void handleCitySelectD4Candidates(HttpExchange exchange) {
+        handle(exchange, "POST", () -> {
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            String runId = requiredString(request, "runId");
+            String citySeedId = requiredString(request, "citySeedId");
+            rejectLegacyCityFields(request, "patchGroupPlan", "zoneChoices", "functionType", "functionTag",
+                    "function_candidates");
+            if (!request.has("terrasenseProfileSource") || !request.get("terrasenseProfileSource").isJsonObject()) {
+                throw new IllegalArgumentException("terrasenseProfileSource object is required.");
+            }
+            if (!request.has("anchorSelectionPlan") || !request.get("anchorSelectionPlan").isJsonObject()) {
+                throw new IllegalArgumentException("anchorSelectionPlan object is required.");
+            }
+            return CityPlanningEndpointHandler.handleSelectD4Candidates(debugRoot(), runId, citySeedId,
+                    request.getAsJsonObject("terrasenseProfileSource"),
+                    request.getAsJsonObject("anchorSelectionPlan"),
+                    request.has("structureEnvelopeFactsSource") && request.get("structureEnvelopeFactsSource").isJsonObject()
+                            ? request.getAsJsonObject("structureEnvelopeFactsSource") : null,
+                    request.has("anchorCandidateSetSource") && request.get("anchorCandidateSetSource").isJsonObject()
+                            ? request.getAsJsonObject("anchorCandidateSetSource") : null);
+        });
+    }
+
     void handleCityProfileStructureEnvelopes(HttpExchange exchange) {
         handle(exchange, "POST", () -> callOnServerThread(() -> {
             JsonObject request = GisHttpUtil.readJsonObject(exchange);

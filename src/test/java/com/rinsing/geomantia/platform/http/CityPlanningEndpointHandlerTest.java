@@ -111,6 +111,83 @@ class CityPlanningEndpointHandlerTest {
     }
 
     @Test
+    void handlePlanD4CandidatesAndSelect_writeCandidateAndStandardD4Artifacts() throws Exception {
+        Path debugRoot = Files.createTempDirectory("city-d4-candidates-test");
+        String runId = "run_d4_candidates";
+        String citySeedId = "city_test";
+        Path runDir = debugRoot.resolve(runId);
+        Files.createDirectories(runDir);
+        Files.writeString(runDir.resolve("city_seed_registry.json"), """
+                {
+                  "citySeeds": [
+                    {
+                      "citySeedId": "city_test",
+                      "realmId": "realm_test",
+                      "role": "village",
+                      "theoreticalScale": "village",
+                      "anchorBlock": {"x": 0, "z": 0},
+                      "planningRadiusCells": 64,
+                      "candidateId": "candidate_test"
+                    }
+                  ]
+                }
+                """);
+
+        CityPlanningConfig config = CityPlanningConfig.defaults();
+        CitySiteContext context = new CitySiteContextBuilder(config).build(
+                "city_test", "realm_test", "overworld",
+                "city_test", "candidate_test", 0, 0,
+                "village", "village", 64, 4, null);
+        CityLandformReviewPackage review = new CityLandformReviewBuilder(config).build(context, List.of(
+                patch("plain", LandformType.PLAIN, -50, -50, -10, -10),
+                patch("shore", LandformType.SHORE, 0, 0, 50, 50)));
+        Path d3Dir = runDir.resolve("city_d3_city_test");
+        Files.createDirectories(d3Dir);
+        Files.writeString(d3Dir.resolve("city_landform_review_package.json"),
+                CityJson.GSON.toJson(review.asJson()));
+
+        Path catalogPath = runDir.resolve("debug_structure_profile_catalog.json");
+        Files.writeString(catalogPath, debugStructureCatalog());
+        JsonObject candidates = CityPlanningEndpointHandler.handlePlanD4Candidates(
+                debugRoot, runId, citySeedId, terraSenseSource(catalogPath),
+                designSlotPlan(review), null);
+
+        assertTrue(candidates.get("ok").getAsBoolean());
+        JsonObject artifacts = candidates.getAsJsonObject("artifacts");
+        assertTrue(Files.exists(debugRoot.resolve(artifacts.get("anchorCandidateSet").getAsString())));
+        assertTrue(Files.exists(debugRoot.resolve(artifacts.get("anchorCandidatePreview").getAsString())));
+        JsonObject firstCandidate = candidates.getAsJsonObject("anchorCandidateSet")
+                .getAsJsonArray("slotCandidates").get(0).getAsJsonObject()
+                .getAsJsonArray("candidates").get(0).getAsJsonObject();
+        JsonObject selectionPlan = JsonParser.parseString("""
+                {
+                  "schemaVersion": "city_d4_anchor_selection_plan.v0.1",
+                  "cityId": "city_test",
+                  "selectedCandidates": [
+                    {
+                      "slotId": "admin_core",
+                      "candidateId": "%s",
+                      "anchorId": "admin_core_01",
+                      "selectionReason": "test selection"
+                    }
+                  ]
+                }
+                """.formatted(firstCandidate.get("candidateId").getAsString())).getAsJsonObject();
+
+        JsonObject selected = CityPlanningEndpointHandler.handleSelectD4Candidates(
+                debugRoot, runId, citySeedId, terraSenseSource(catalogPath),
+                selectionPlan, null, null);
+
+        assertTrue(selected.get("ok").getAsBoolean());
+        JsonObject selectedArtifacts = selected.getAsJsonObject("artifacts");
+        assertTrue(Files.exists(debugRoot.resolve(selectedArtifacts.get("structureAnchorMap").getAsString())));
+        assertTrue(Files.exists(debugRoot.resolve(selectedArtifacts.get("sourceAnchorCandidateSet").getAsString())));
+        assertEquals("admin_core_01", selected.getAsJsonObject("structureAnchorMap")
+                .getAsJsonArray("anchors").get(0).getAsJsonObject()
+                .get("anchorId").getAsString());
+    }
+
+    @Test
     void handlePlanD5_readsD4ArtifactsAndWritesPreview() throws Exception {
         Path debugRoot = Files.createTempDirectory("city-d5-test");
         String runId = "run_d5";
@@ -553,6 +630,37 @@ class CityPlanningEndpointHandlerTest {
                 }
                 """.formatted(first.landformPatchId(), first.centerBlock().x(), first.centerBlock().z(),
                 secondAnchor.isBlank() ? "" : "," + secondAnchor)).getAsJsonObject();
+    }
+
+    private static JsonObject designSlotPlan(CityLandformReviewPackage review) {
+        List<LandformPatchSummary> patches = review.landformPatches();
+        LandformPatchSummary first = patches.get(0);
+        LandformPatchSummary second = patches.size() > 1 ? patches.get(1) : first;
+        return JsonParser.parseString("""
+                {
+                  "schemaVersion": "city_d4_design_slot_plan.v0.1",
+                  "cityId": "city_test",
+                  "placementOrder": ["admin_core", "residential_01"],
+                  "slots": [
+                    {
+                      "slotId": "admin_core",
+                      "displayRole": "行政核心",
+                      "candidatePatchRefs": ["%s"],
+                      "structureIds": ["minecraft:desert_pyramid"],
+                      "relationHints": []
+                    },
+                    {
+                      "slotId": "residential_01",
+                      "displayRole": "住宅",
+                      "candidatePatchRefs": ["%s"],
+                      "structureIds": ["minecraft:desert_pyramid"],
+                      "relationHints": [
+                        {"targetSlotId": "admin_core", "distanceBand": "near"}
+                      ]
+                    }
+                  ]
+                }
+                """.formatted(first.landformPatchId(), second.landformPatchId())).getAsJsonObject();
     }
 
     private static String debugStructureCatalog() {

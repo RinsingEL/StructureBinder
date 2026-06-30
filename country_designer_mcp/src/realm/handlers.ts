@@ -62,6 +62,16 @@ export const realmHandlers: Record<string, ToolHandler> = {
     return textResult(JSON.stringify(res.data, null, 2));
   },
 
+  async city_plan_d4_candidates(args) {
+    const res = await postJson(`${MC_API_URL}/realm/city/plan_d4_candidates`, payload(args), TIMEOUTS.quick);
+    return textResult(JSON.stringify(res.data, null, 2));
+  },
+
+  async city_select_d4_candidates(args) {
+    const res = await postJson(`${MC_API_URL}/realm/city/select_d4_candidates`, payload(args), TIMEOUTS.quick);
+    return textResult(JSON.stringify(res.data, null, 2));
+  },
+
   async city_plan_d5(args) {
     const res = await postJson(`${MC_API_URL}/realm/city/plan_d5`, payload(args), TIMEOUTS.quick);
     return textResult(JSON.stringify(res.data, null, 2));

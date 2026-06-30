@@ -205,6 +205,58 @@ export const realmTools: ToolDefinition[] = [
     },
   },
   {
+    name: "city_plan_d4_candidates",
+    description: "City D4 候选闭环：提交设计 slot 和 patch/距离意图，按 D3 patch、TerraSense profile、envelope facts 生成少量安全 anchor 候选点和预览；不直接进入 D5。",
+    inputSchema: {
+      type: "object",
+      properties: {
+        runId: { type: "string", description: "已有 W/T run ID。" },
+        citySeedId: { type: "string", description: "目标城市种子的 citySeedId。" },
+        terrasenseProfileSource: {
+          type: "object",
+          description: "schemaVersion=terrasense_structure_profile_source.v0.1；sourceType=structure_profile_jsonl 或 debug_catalog。",
+        },
+        designSlotPlan: {
+          type: "object",
+          description: "schemaVersion=city_d4_design_slot_plan.v0.1；placementOrder 与 slots[]，slot 含 slotId、displayRole、candidatePatchRefs、structureId 或 structureIds、relationHints。",
+        },
+        structureEnvelopeFactsSource: {
+          type: "object",
+          description: "可选；factsPath 指向 structure_envelope_facts.json。未传时读取当前 run/city 默认产物。",
+        },
+      },
+      required: ["runId", "citySeedId", "terrasenseProfileSource", "designSlotPlan"],
+    },
+  },
+  {
+    name: "city_select_d4_candidates",
+    description: "City D4 候选选择：读取 anchor_candidate_set，提交 AnchorSelectionPlan，生成标准 StructureAnchorPlan/StructureAnchorMap，并继续复用 D5-D7 主链。",
+    inputSchema: {
+      type: "object",
+      properties: {
+        runId: { type: "string", description: "已有 W/T run ID。" },
+        citySeedId: { type: "string", description: "目标城市种子的 citySeedId。" },
+        terrasenseProfileSource: {
+          type: "object",
+          description: "schemaVersion=terrasense_structure_profile_source.v0.1；sourceType=structure_profile_jsonl 或 debug_catalog。",
+        },
+        anchorSelectionPlan: {
+          type: "object",
+          description: "schemaVersion=city_d4_anchor_selection_plan.v0.1；selectedCandidates[] 含 slotId、candidateId、anchorId、selectionReason。",
+        },
+        anchorCandidateSetSource: {
+          type: "object",
+          description: "可选；candidateSetPath 指向 anchor_candidate_set.json。未传时读取当前 run/city 默认候选产物。",
+        },
+        structureEnvelopeFactsSource: {
+          type: "object",
+          description: "可选；factsPath 指向 structure_envelope_facts.json。未传时读取当前 run/city 默认产物。",
+        },
+      },
+      required: ["runId", "citySeedId", "terrasenseProfileSource", "anchorSelectionPlan"],
+    },
+  },
+  {
     name: "city_plan_d5",
     description: "City D5: 基于 D4 StructureAnchorMap 生成 reservation mask 与预览；road_access_plan/build_operation_plan 只保留占位空操作，标记道路延后到 D7 基于真实 ledger bbox 生成；不修改世界。",
     inputSchema: {

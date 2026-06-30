@@ -55,6 +55,43 @@ public final class CityStructureLandingPreviewRenderer {
         return path;
     }
 
+    public Path renderD4Candidates(JsonObject candidateSet, Path outputDirectory) throws IOException {
+        Files.createDirectories(outputDirectory);
+        Path path = outputDirectory.resolve("anchor_candidate_preview.png");
+        BufferedImage image = baseImage();
+        Graphics2D g = image.createGraphics();
+        try {
+            setup(g);
+            Transform t = transform(gridBounds(candidateSet));
+            drawGrid(g, t, gridBounds(candidateSet));
+            int i = 0;
+            for (JsonElement slotElem : array(candidateSet, "slotCandidates")) {
+                JsonObject slot = slotElem.getAsJsonObject();
+                for (JsonElement candElem : array(slot, "candidates")) {
+                    JsonObject candidate = candElem.getAsJsonObject();
+                    i++;
+                    drawRect(g, t, bounds(candidate, "estimatedSafetyEnvelope"), new Color(98, 96, 89, 14),
+                            new Color(89, 82, 70, 64), 0.8f);
+                    drawRect(g, t, bounds(candidate, "estimatedMaskEnvelope"), new Color(202, 108, 62, 24),
+                            new Color(178, 84, 46, 105), 1.0f);
+                    drawRect(g, t, bounds(candidate, "estimatedCollisionEnvelope"), new Color(204, 79, 63, 34),
+                            new Color(158, 59, 49, 145), 1.4f);
+                    BlockPoint anchor = point(candidate, "anchorBlock");
+                    drawPoint(g, t, anchor, color(i, 235));
+                    drawLabel(g, t, anchor, string(candidate, "candidateId"));
+                }
+            }
+            title(g, "City D4 anchor candidate preview",
+                    "red=estimated collision orange=mask gray=safety candidates="
+                            + candidateCount(candidateSet));
+            candidateSummary(g, candidateSet);
+        } finally {
+            g.dispose();
+        }
+        ImageIO.write(image, "png", path.toFile());
+        return path;
+    }
+
     public Path renderEnvelopeFacts(JsonObject facts, Path outputDirectory) throws IOException {
         Files.createDirectories(outputDirectory);
         Path path = outputDirectory.resolve("structure_envelope_profile_preview.png");
@@ -225,6 +262,50 @@ public final class CityStructureLandingPreviewRenderer {
         }
     }
 
+    private static void drawPoint(Graphics2D g, Transform t, BlockPoint point, Color color) {
+        int x = t.x(point.x());
+        int z = t.z(point.z());
+        g.setColor(color);
+        g.fillOval(x - 5, z - 5, 10, 10);
+        g.setColor(new Color(38, 42, 38, 210));
+        g.setStroke(new BasicStroke(1.2f));
+        g.drawOval(x - 5, z - 5, 10, 10);
+    }
+
+    private static void candidateSummary(Graphics2D g, JsonObject candidateSet) {
+        int x = 820;
+        int y = 90;
+        g.setColor(new Color(32, 34, 34));
+        g.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 14));
+        g.drawString("slot candidates", x, y);
+        y += 24;
+        g.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 11));
+        for (JsonElement slotElem : array(candidateSet, "slotCandidates")) {
+            JsonObject slot = slotElem.getAsJsonObject();
+            g.drawString(trim(string(slot, "slotId") + " " + string(slot, "displayRole"), 54), x, y);
+            y += 16;
+            int shown = 0;
+            for (JsonElement candElem : array(slot, "candidates")) {
+                if (shown >= 3 || y > HEIGHT - 40) {
+                    break;
+                }
+                JsonObject candidate = candElem.getAsJsonObject();
+                String score = object(candidate, "scoreBreakdown").has("total")
+                        ? String.format(java.util.Locale.ROOT, "%.2f",
+                        object(candidate, "scoreBreakdown").get("total").getAsDouble())
+                        : "";
+                g.drawString("  " + trim(string(candidate, "candidateKind") + " " + score
+                        + " " + string(candidate, "structureId"), 56), x, y);
+                y += 15;
+                shown++;
+            }
+            y += 3;
+            if (y > HEIGHT - 40) {
+                break;
+            }
+        }
+    }
+
     private static void sideSummary(Graphics2D g, JsonObject obj, String arrayKey) {
         int x = 820;
         int y = 90;
@@ -268,6 +349,14 @@ public final class CityStructureLandingPreviewRenderer {
             y += 16;
         }
         return y;
+    }
+
+    private static int candidateCount(JsonObject candidateSet) {
+        int count = 0;
+        for (JsonElement elem : array(candidateSet, "slotCandidates")) {
+            count += array(elem.getAsJsonObject(), "candidates").size();
+        }
+        return count;
     }
 
     private static void title(Graphics2D g, String title, String subtitle) {

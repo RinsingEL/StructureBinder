@@ -5,6 +5,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.rinsing.geomantia.systems.city.application.CityReservationMaskPlanner;
 import com.rinsing.geomantia.systems.city.application.CityStructureAnchorPlanner;
+import com.rinsing.geomantia.systems.city.application.CityStructureAnchorCandidatePlanner;
 import com.rinsing.geomantia.systems.city.application.CityStructureEnvelopeFacts;
 import com.rinsing.geomantia.systems.city.application.CityStructureEnvelopeProfiler;
 import com.rinsing.geomantia.systems.city.application.CityStructureMaterializationPlanner;
@@ -24,7 +25,9 @@ import org.junit.jupiter.api.Test;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -182,6 +185,88 @@ final class CityStructureLandingFlowTest {
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
                 () -> new CityStructureAnchorPlanner()
                         .plan(fixture.baseDir(), fixture.review(), fixture.terraSenseSource(), legacy));
+        assertTrue(ex.getMessage().contains("LEGACY_CITY_FUNCTION_ZONE_FLOW_REMOVED"));
+    }
+
+    @Test
+    void d4CandidatePlannerBuildsSafeCandidatesAndSelectionAnchorPlan() throws Exception {
+        Fixture fixture = fixture();
+        CityStructureAnchorCandidatePlanner planner = new CityStructureAnchorCandidatePlanner();
+
+        CityStructureAnchorCandidatePlanner.Result result = planner.plan(
+                fixture.baseDir(), fixture.review(), fixture.terraSenseSource(),
+                designSlotPlan(fixture.review()), CityStructureEnvelopeFacts.empty());
+
+        JsonObject candidateSet = result.anchorCandidateSet();
+        assertTrue(result.asJson().get("ok").getAsBoolean());
+        assertEquals("city_d4_anchor_candidate_set.v0.1", candidateSet.get("schemaVersion").getAsString());
+        assertEquals(2, candidateSet.getAsJsonArray("slotCandidates").size());
+        JsonObject firstSlot = candidateSet.getAsJsonArray("slotCandidates").get(0).getAsJsonObject();
+        assertFalse(firstSlot.getAsJsonArray("candidates").isEmpty());
+        JsonObject firstCandidate = firstSlot.getAsJsonArray("candidates").get(0).getAsJsonObject();
+        Set<String> candidateIds = new HashSet<>();
+        for (int i = 0; i < firstSlot.getAsJsonArray("candidates").size(); i++) {
+            String candidateId = firstSlot.getAsJsonArray("candidates").get(i).getAsJsonObject()
+                    .get("candidateId").getAsString();
+            assertTrue(candidateIds.add(candidateId), "duplicate candidateId: " + candidateId);
+        }
+        assertTrue(firstCandidate.has("estimatedCollisionEnvelope"));
+        assertTrue(firstCandidate.has("scoreBreakdown"));
+        assertEquals("fallback_fixed_footprint", firstCandidate.get("envelopeMode").getAsString());
+
+        JsonObject selectionPlan = JsonParser.parseString("""
+                {
+                  "schemaVersion": "city_d4_anchor_selection_plan.v0.1",
+                  "cityId": "city_test",
+                  "selectedCandidates": [
+                    {
+                      "slotId": "admin_core",
+                      "candidateId": "%s",
+                      "anchorId": "admin_core_01",
+                      "selectionReason": "test"
+                    }
+                  ]
+                }
+                """.formatted(firstCandidate.get("candidateId").getAsString())).getAsJsonObject();
+        JsonObject anchorPlan = planner.select(candidateSet, selectionPlan);
+
+        assertEquals(CityStructureAnchorPlanner.PLAN_SCHEMA, anchorPlan.get("schemaVersion").getAsString());
+        JsonObject anchor = anchorPlan.getAsJsonArray("anchors").get(0).getAsJsonObject();
+        assertEquals("admin_core_01", anchor.get("anchorId").getAsString());
+        assertEquals(firstCandidate.get("structureId").getAsString(), anchor.get("structureId").getAsString());
+        assertTrue(anchorPlan.has("candidateSelectionTrace"));
+    }
+
+    @Test
+    void d4CandidatePlannerAcceptsSingleStructureIdSlot() throws Exception {
+        Fixture fixture = fixture();
+        JsonObject plan = designSlotPlan(fixture.review());
+        JsonObject slot = plan.getAsJsonArray("slots").get(0).getAsJsonObject();
+        slot.addProperty("structureId", slot.getAsJsonArray("structureIds").get(0).getAsString());
+        slot.remove("structureIds");
+
+        CityStructureAnchorCandidatePlanner.Result result = new CityStructureAnchorCandidatePlanner()
+                .plan(fixture.baseDir(), fixture.review(), fixture.terraSenseSource(), plan,
+                        CityStructureEnvelopeFacts.empty());
+
+        JsonArray candidates = result.anchorCandidateSet().getAsJsonArray("slotCandidates")
+                .get(0).getAsJsonObject().getAsJsonArray("candidates");
+        assertFalse(candidates.isEmpty());
+        assertEquals("minecraft:desert_pyramid",
+                candidates.get(0).getAsJsonObject().get("structureId").getAsString());
+    }
+
+    @Test
+    void d4CandidatePlannerRejectsLegacyPayload() throws Exception {
+        Fixture fixture = fixture();
+        JsonObject plan = designSlotPlan(fixture.review());
+        plan.addProperty("functionType", "civic_core");
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> new CityStructureAnchorCandidatePlanner()
+                        .plan(fixture.baseDir(), fixture.review(), fixture.terraSenseSource(),
+                                plan, CityStructureEnvelopeFacts.empty()));
+
         assertTrue(ex.getMessage().contains("LEGACY_CITY_FUNCTION_ZONE_FLOW_REMOVED"));
     }
 
@@ -502,6 +587,37 @@ final class CityStructureLandingFlowTest {
                 }
                 """.formatted(first.landformPatchId(), first.centerBlock().x(), first.centerBlock().z(),
                 second.landformPatchId(), second.centerBlock().x(), second.centerBlock().z())).getAsJsonObject();
+    }
+
+    private static JsonObject designSlotPlan(CityLandformReviewPackage review) {
+        List<LandformPatchSummary> patches = review.landformPatches();
+        LandformPatchSummary first = patches.get(0);
+        LandformPatchSummary second = patches.size() > 1 ? patches.get(1) : first;
+        return JsonParser.parseString("""
+                {
+                  "schemaVersion": "city_d4_design_slot_plan.v0.1",
+                  "cityId": "city_test",
+                  "placementOrder": ["admin_core", "residential_01"],
+                  "slots": [
+                    {
+                      "slotId": "admin_core",
+                      "displayRole": "行政核心",
+                      "candidatePatchRefs": ["%s"],
+                      "structureIds": ["minecraft:desert_pyramid"],
+                      "relationHints": []
+                    },
+                    {
+                      "slotId": "residential_01",
+                      "displayRole": "住宅",
+                      "candidatePatchRefs": ["%s"],
+                      "structureIds": ["minecraft:desert_pyramid"],
+                      "relationHints": [
+                        {"targetSlotId": "admin_core", "distanceBand": "near"}
+                      ]
+                    }
+                  ]
+                }
+                """.formatted(first.landformPatchId(), second.landformPatchId())).getAsJsonObject();
     }
 
     private static JsonObject singleAnchorPlan(CityLandformReviewPackage review) {

@@ -13,6 +13,7 @@ import com.rinsing.geomantia.systems.city.application.CitySiteContextBuilder.Ter
 import com.rinsing.geomantia.systems.city.application.CityStructureD6Planner;
 import com.rinsing.geomantia.systems.city.application.CityStructureD7Executor;
 import com.rinsing.geomantia.systems.city.application.CityStructureAnchorPlanner;
+import com.rinsing.geomantia.systems.city.application.CityStructureAnchorCandidatePlanner;
 import com.rinsing.geomantia.systems.city.application.CityStructureEnvelopeFacts;
 import com.rinsing.geomantia.systems.city.application.CityStructureEnvelopeProfiler;
 import com.rinsing.geomantia.systems.city.application.CityStructureMaterializationPlanner;
@@ -199,6 +200,76 @@ final class CityPlanningEndpointHandler {
             artifacts.addProperty("sourceStructureEnvelopeFacts", debugRef(debugRoot, envelopeFactsPath));
         }
         response.add("artifacts", artifacts);
+        return response;
+    }
+
+    static JsonObject handlePlanD4Candidates(Path debugRoot, String runId, String citySeedId,
+                                             JsonObject terraSenseProfileSource,
+                                             JsonObject designSlotPlan,
+                                             JsonObject structureEnvelopeFactsSource) throws IOException {
+        Path runDir = debugRoot.resolve(runId);
+        loadCitySeed(runDir, runId, citySeedId);
+        Path d3Dir = runDir.resolve("city_d3_" + safeFileName(citySeedId));
+        Path d3PackagePath = d3Dir.resolve("city_landform_review_package.json");
+        if (!Files.exists(d3PackagePath)) {
+            throw new IllegalArgumentException("D3 package not found. Run city_plan_d3 first: "
+                    + debugRef(debugRoot, d3PackagePath));
+        }
+        CityLandformReviewPackage reviewPackage = CityLandformReviewPackage.fromJson(
+                JsonParser.parseString(Files.readString(d3PackagePath)).getAsJsonObject());
+        Path envelopeFactsPath = envelopeFactsPath(runDir, citySeedId, structureEnvelopeFactsSource);
+        CityStructureEnvelopeFacts envelopeFacts = CityStructureEnvelopeFacts.load(envelopeFactsPath);
+        CityStructureAnchorCandidatePlanner.Result result = new CityStructureAnchorCandidatePlanner()
+                .plan(runDir, reviewPackage, terraSenseProfileSource, designSlotPlan, envelopeFacts);
+
+        Path outputDirectory = runDir.resolve("city_d4_candidates_" + safeFileName(citySeedId));
+        Files.createDirectories(outputDirectory);
+        Path slotPlanPath = outputDirectory.resolve("design_slot_plan.json");
+        Path candidateSetPath = outputDirectory.resolve("anchor_candidate_set.json");
+        Path qualityPath = outputDirectory.resolve("quality_report.json");
+        Files.writeString(slotPlanPath, CityJson.GSON.toJson(result.designSlotPlan()));
+        Files.writeString(candidateSetPath, CityJson.GSON.toJson(result.anchorCandidateSet()));
+        Files.writeString(qualityPath, CityJson.GSON.toJson(result.qualityReport()));
+
+        Path previewPath = new CityStructureLandingPreviewRenderer()
+                .renderD4Candidates(result.anchorCandidateSet(), outputDirectory);
+
+        JsonObject response = result.asJson();
+        JsonObject artifacts = new JsonObject();
+        artifacts.addProperty("designSlotPlan", debugRef(debugRoot, slotPlanPath));
+        artifacts.addProperty("anchorCandidateSet", debugRef(debugRoot, candidateSetPath));
+        artifacts.addProperty("anchorCandidatePreview", debugRef(debugRoot, previewPath));
+        artifacts.addProperty("qualityReport", debugRef(debugRoot, qualityPath));
+        artifacts.addProperty("sourceD3Package", debugRef(debugRoot, d3PackagePath));
+        if (envelopeFactsPath != null && Files.exists(envelopeFactsPath)) {
+            artifacts.addProperty("sourceStructureEnvelopeFacts", debugRef(debugRoot, envelopeFactsPath));
+        }
+        response.add("artifacts", artifacts);
+        return response;
+    }
+
+    static JsonObject handleSelectD4Candidates(Path debugRoot, String runId, String citySeedId,
+                                               JsonObject terraSenseProfileSource,
+                                               JsonObject anchorSelectionPlan,
+                                               JsonObject structureEnvelopeFactsSource,
+                                               JsonObject anchorCandidateSetSource) throws IOException {
+        Path runDir = debugRoot.resolve(runId);
+        loadCitySeed(runDir, runId, citySeedId);
+        Path candidateSetPath = anchorCandidateSetPath(runDir, citySeedId, anchorCandidateSetSource);
+        if (!Files.exists(candidateSetPath)) {
+            throw new IllegalArgumentException("D4 anchor_candidate_set.json not found. Run city_plan_d4_candidates first: "
+                    + debugRef(debugRoot, candidateSetPath));
+        }
+        JsonObject candidateSet = JsonParser.parseString(Files.readString(candidateSetPath)).getAsJsonObject();
+        JsonObject structureAnchorPlan = new CityStructureAnchorCandidatePlanner()
+                .select(candidateSet, anchorSelectionPlan);
+
+        JsonObject response = handlePlanD4(debugRoot, runId, citySeedId, terraSenseProfileSource,
+                structureAnchorPlan, structureEnvelopeFactsSource);
+        response.add("anchorSelectionPlan", anchorSelectionPlan.deepCopy());
+        response.add("anchorCandidateSet", candidateSet.deepCopy());
+        JsonObject artifacts = response.getAsJsonObject("artifacts");
+        artifacts.addProperty("sourceAnchorCandidateSet", debugRef(debugRoot, candidateSetPath));
         return response;
     }
 
@@ -1014,6 +1085,18 @@ final class CityPlanningEndpointHandler {
         }
         return runDir.resolve("city_structure_envelopes_" + safeFileName(citySeedId))
                 .resolve("structure_envelope_facts.json");
+    }
+
+    private static Path anchorCandidateSetPath(Path runDir, String citySeedId, JsonObject source) {
+        if (source != null) {
+            String raw = stringValue(source, "candidateSetPath");
+            if (!raw.isBlank()) {
+                Path path = Path.of(raw);
+                return path.isAbsolute() ? path.normalize() : runDir.resolve(path).normalize();
+            }
+        }
+        return runDir.resolve("city_d4_candidates_" + safeFileName(citySeedId))
+                .resolve("anchor_candidate_set.json");
     }
 
     private static String safeFileName(String raw) {
