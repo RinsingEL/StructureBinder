@@ -469,6 +469,90 @@ final class CityStructureLandingFlowTest {
     }
 
     @Test
+    void wallReservationV3BuildsStructureSeededDomainHullAndMaskContribution() throws Exception {
+        Fixture fixture = fixture();
+        JsonObject anchorMap = new CityStructureAnchorPlanner()
+                .plan(fixture.baseDir(), fixture.review(), fixture.terraSenseSource(), anchorPlan(fixture.review()))
+                .structureAnchorMap();
+
+        JsonObject reservation = new CityWallReservationPlanner().plan(
+                fixture.review(), anchorMap, "v3", 24, 15, 4,
+                new CityWallReservationPlanner.V3Options(24, 2, 64, 0.6));
+
+        assertEquals("city_wall_reservation_plan.v0.3", reservation.get("schemaVersion").getAsString());
+        assertEquals("structure_seeded_patch_region_hull", reservation.get("boundarySource").getAsString());
+        assertFalse(reservation.getAsJsonArray("seedPatches").isEmpty());
+        assertFalse(reservation.getAsJsonArray("cityDomainMask").isEmpty());
+        assertFalse(reservation.getAsJsonArray("wallCenterline").isEmpty());
+        assertTrue(reservation.getAsJsonObject("domainCleanupReport").has("filledCellCount"));
+
+        JsonObject mask = new CityReservationMaskPlanner()
+                .plan(fixture.context(), anchorMap, reservation)
+                .reservationMaskPlan();
+        assertTrue(mask.getAsJsonArray("noVegetationMask").toString().contains("wall_reservation_corridor"));
+        assertTrue(mask.getAsJsonArray("noVanillaStructureMask").toString().contains("wall_reservation_corridor"));
+    }
+
+    @Test
+    void wallPlannerV3ClustersExternalRoadGatesAndIgnoresInsideRoads() throws Exception {
+        Fixture fixture = fixture();
+        JsonObject anchorMap = new CityStructureAnchorPlanner()
+                .plan(fixture.baseDir(), fixture.review(), fixture.terraSenseSource(), singleAnchorPlan(fixture.review()))
+                .structureAnchorMap();
+        JsonObject reservation = new CityWallReservationPlanner().plan(
+                fixture.review(), anchorMap, "v3", 24, 15, 4,
+                new CityWallReservationPlanner.V3Options(24, 2, 64, 0.6));
+        JsonObject line = reservation.getAsJsonArray("wallCenterline").get(0).getAsJsonObject();
+        BlockBounds lineBounds = bounds(line.getAsJsonObject("blockBounds"));
+        BlockBounds domain = bounds(reservation.getAsJsonArray("cityDomainMask").get(0)
+                .getAsJsonObject().getAsJsonObject("blockBounds"));
+        int roadX = lineBounds.center().x();
+        int roadZ = lineBounds.center().z();
+        BlockBounds externalRoad = lineBounds.widthBlocks() >= lineBounds.heightBlocks()
+                ? new BlockBounds(roadX - 1, lineBounds.minZ() - 2, roadX + 1, lineBounds.maxZ() + 2)
+                : new BlockBounds(lineBounds.minX() - 2, roadZ - 1, lineBounds.maxX() + 2, roadZ + 1);
+        int insideX = domain.center().x();
+        int insideZ = domain.center().z();
+        JsonObject actualRoadMask = JsonParser.parseString("""
+                {
+                  "schemaVersion": "city_actual_road_mask.v0.2",
+                  "cityId": "city_test",
+                  "status": "observed",
+                  "roadMask": [
+                    {"maskId": "road_external_a", "maskType": "actual_road", "blockBounds": {"minX": %d, "minZ": %d, "maxX": %d, "maxZ": %d}},
+                    {"maskId": "road_external_b", "maskType": "actual_road", "blockBounds": {"minX": %d, "minZ": %d, "maxX": %d, "maxZ": %d}},
+                    {"maskId": "road_inside_a", "maskType": "actual_road", "blockBounds": {"minX": %d, "minZ": %d, "maxX": %d, "maxZ": %d}},
+                    {"maskId": "road_inside_b", "maskType": "actual_road", "blockBounds": {"minX": %d, "minZ": %d, "maxX": %d, "maxZ": %d}}
+                  ]
+                }
+                """.formatted(
+                externalRoad.minX(), externalRoad.minZ(), externalRoad.maxX(), externalRoad.maxZ(),
+                externalRoad.minX() + 1, externalRoad.minZ(), externalRoad.maxX() + 1, externalRoad.maxZ(),
+                insideX, insideZ, insideX, insideZ,
+                insideX + 16, insideZ, insideX + 16, insideZ)).getAsJsonObject();
+        JsonObject ledger = JsonParser.parseString("""
+                {
+                  "schemaVersion": "city_placed_structure_ledger.v0.1",
+                  "cityId": "city_test",
+                  "placedStructures": [
+                    {"anchorId": "a", "actualFootprint": {"minX": -8, "minZ": -8, "maxX": 8, "maxZ": 8}}
+                  ]
+                }
+                """).getAsJsonObject();
+
+        JsonObject wallPlan = new CityWallPlanner().planV3(ledger, reservation, actualRoadMask, 9, 2, 8, 7,
+                new CityWallPlanner.V3Options(24, 5));
+
+        assertEquals("city_wall_plan.v0.3", wallPlan.get("schemaVersion").getAsString());
+        assertEquals("v3", wallPlan.get("wallVersion").getAsString());
+        assertEquals("structure_seeded_patch_region_hull", wallPlan.get("wallBoundaryMode").getAsString());
+        assertFalse(wallPlan.getAsJsonArray("gateClusters").isEmpty());
+        assertTrue(wallPlan.getAsJsonArray("classifiedRoadComponents").toString().contains("insideRoad"));
+        assertTrue(wallPlan.getAsJsonArray("insideRoadIgnoredIntersections").toString().contains("insideRoad"));
+        assertTrue(wallPlan.getAsJsonArray("wallSegments").toString().contains("DOMAIN_HULL_WALL_SEGMENT"));
+    }
+
+    @Test
     void d5ActivateWritesPlannedStructureRegistryForWorldgenHook() throws Exception {
         Fixture fixture = fixture();
         JsonObject anchorMap = new CityStructureAnchorPlanner()

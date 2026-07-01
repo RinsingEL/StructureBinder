@@ -8,6 +8,8 @@ import com.rinsing.geomantia.systems.gis.GisSampleConfig;
 import com.rinsing.geomantia.systems.gis.adapter.minecraft.MinecraftPriorAtlasSampler;
 import com.rinsing.geomantia.systems.gis.application.refresh.SampleMode;
 import com.rinsing.geomantia.systems.gis.application.sample.AtlasSampler;
+import com.rinsing.geomantia.systems.city.application.CityWallPlanner;
+import com.rinsing.geomantia.systems.city.application.CityWallReservationPlanner;
 import com.rinsing.geomantia.systems.realm_planning.RealmPlanningService;
 import com.rinsing.geomantia.systems.realm_planning.WorldSurveyResult;
 import com.rinsing.geomantia.systems.realm_planning.WorldSurveyRunner;
@@ -323,7 +325,16 @@ final class RealmPlanningHttpController {
                     stringValue(request, "wallVersion", "v2"),
                     intValue(request, "wallMarginBlocks", 24),
                     intValue(request, "segmentLengthBlocks", 15),
-                    intValue(request, "wallCorridorHalfWidthBlocks", 4));
+                    intValue(request, "wallCorridorHalfWidthBlocks", 4),
+                    new CityWallReservationPlanner.V3Options(
+                            intValue(request, "wallBreathingRoomBlocks",
+                                    CityWallReservationPlanner.DEFAULT_WALL_BREATHING_ROOM_BLOCKS),
+                            intValue(request, "patchExpansionMaxRounds",
+                                    CityWallReservationPlanner.DEFAULT_PATCH_EXPANSION_MAX_ROUNDS),
+                            intValue(request, "concavityOpeningMaxBlocks",
+                                    CityWallReservationPlanner.DEFAULT_CONCAVITY_OPENING_MAX_BLOCKS),
+                            doubleValue(request, "concavityDepthRatioMin",
+                                    CityWallReservationPlanner.DEFAULT_CONCAVITY_DEPTH_RATIO_MIN)));
         });
     }
 
@@ -418,7 +429,12 @@ final class RealmPlanningHttpController {
                     intValue(request, "roadScanMarginBlocks", 8),
                     intValue(request, "roadProtectionMarginBlocks", 2),
                     intValue(request, "maxFoundationDepthBlocks", 8),
-                    intValue(request, "maxSegmentHeightDeltaBlocks", 7));
+                    intValue(request, "maxSegmentHeightDeltaBlocks", 7),
+                    new CityWallPlanner.V3Options(
+                            intValue(request, "gateClusterRadiusBlocks",
+                                    CityWallPlanner.DEFAULT_GATE_CLUSTER_RADIUS_BLOCKS),
+                            intValue(request, "terrainFitUnitLengthBlocks",
+                                    CityWallPlanner.DEFAULT_TERRAIN_FIT_UNIT_LENGTH_BLOCKS)));
         }));
     }
 
@@ -435,7 +451,9 @@ final class RealmPlanningHttpController {
             }
             ServerLevel level = resolveLevel(dimensionId, player);
             JsonObject response = CityPlanningEndpointHandler.handleExecuteCityWalls(debugRoot(), runId, citySeedId,
-                    confirmWorldMutation, level);
+                    confirmWorldMutation, level,
+                    booleanValue(request, "debugScan", false),
+                    intValue(request, "debugScanStepBlocks", 1));
             if (response.get("ok").getAsBoolean()) {
                 server.saveAllChunks(true, true, true);
                 response.addProperty("worldSaveRequested", true);
@@ -644,6 +662,17 @@ final class RealmPlanningHttpController {
             return object.get(key).getAsLong();
         } catch (Exception ex) {
             throw new IllegalArgumentException(key + " must be a long.");
+        }
+    }
+
+    private static double doubleValue(JsonObject object, String key, double defaultValue) {
+        if (!hasValue(object, key)) {
+            return defaultValue;
+        }
+        try {
+            return object.get(key).getAsDouble();
+        } catch (Exception ex) {
+            throw new IllegalArgumentException(key + " must be a number.");
         }
     }
 

@@ -491,6 +491,16 @@ final class CityPlanningEndpointHandler {
                                    int wallMarginBlocks,
                                    int segmentLengthBlocks,
                                    int wallCorridorHalfWidthBlocks) throws IOException {
+        return handlePlanD5(debugRoot, runId, citySeedId, wallVersion, wallMarginBlocks, segmentLengthBlocks,
+                wallCorridorHalfWidthBlocks, CityWallReservationPlanner.V3Options.defaults());
+    }
+
+    static JsonObject handlePlanD5(Path debugRoot, String runId, String citySeedId,
+                                   String wallVersion,
+                                   int wallMarginBlocks,
+                                   int segmentLengthBlocks,
+                                   int wallCorridorHalfWidthBlocks,
+                                   CityWallReservationPlanner.V3Options wallV3Options) throws IOException {
         Path runDir = debugRoot.resolve(runId);
         JsonObject seed = loadCitySeed(runDir, runId, citySeedId);
         RunMetadata metadata = loadRunMetadata(runDir, null, "");
@@ -519,7 +529,7 @@ final class CityPlanningEndpointHandler {
                 JsonParser.parseString(Files.readString(d3PackagePath)).getAsJsonObject());
         JsonObject wallReservationPlan = new CityWallReservationPlanner().plan(
                 reviewPackage, anchorMap, wallVersion, wallMarginBlocks, segmentLengthBlocks,
-                wallCorridorHalfWidthBlocks);
+                wallCorridorHalfWidthBlocks, wallV3Options);
         CityReservationMaskPlanner.Result result = new CityReservationMaskPlanner().plan(ctx, anchorMap,
                 wallReservationPlan);
 
@@ -829,7 +839,8 @@ final class CityPlanningEndpointHandler {
                                           int wallMarginBlocks, int segmentLengthBlocks,
                                           int gateWidthBlocks) throws IOException {
         return handlePlanCityWalls(debugRoot, runId, citySeedId, wallMarginBlocks, segmentLengthBlocks,
-                gateWidthBlocks, "v2", null, 8, 2, 8, 7);
+                gateWidthBlocks, "v2", null, 8, 2, 8, 7,
+                CityWallPlanner.V3Options.defaults());
     }
 
     static JsonObject handlePlanCityWalls(Path debugRoot, String runId, String citySeedId,
@@ -841,6 +852,21 @@ final class CityPlanningEndpointHandler {
                                           int roadProtectionMarginBlocks,
                                           int maxFoundationDepthBlocks,
                                           int maxSegmentHeightDeltaBlocks) throws IOException {
+        return handlePlanCityWalls(debugRoot, runId, citySeedId, wallMarginBlocks, segmentLengthBlocks,
+                gateWidthBlocks, wallVersion, level, roadScanMarginBlocks, roadProtectionMarginBlocks,
+                maxFoundationDepthBlocks, maxSegmentHeightDeltaBlocks, CityWallPlanner.V3Options.defaults());
+    }
+
+    static JsonObject handlePlanCityWalls(Path debugRoot, String runId, String citySeedId,
+                                          int wallMarginBlocks, int segmentLengthBlocks,
+                                          int gateWidthBlocks,
+                                          String wallVersion,
+                                          ServerLevel level,
+                                          int roadScanMarginBlocks,
+                                          int roadProtectionMarginBlocks,
+                                          int maxFoundationDepthBlocks,
+                                          int maxSegmentHeightDeltaBlocks,
+                                          CityWallPlanner.V3Options wallV3Options) throws IOException {
         Path runDir = debugRoot.resolve(runId);
         loadCitySeed(runDir, runId, citySeedId);
         Path d7Dir = runDir.resolve("city_d7_" + safeFileName(citySeedId));
@@ -867,8 +893,14 @@ final class CityPlanningEndpointHandler {
             JsonObject wallReservationPlan = JsonParser.parseString(Files.readString(wallReservationPath))
                     .getAsJsonObject();
             actualRoadMask = new CityRoadMaskScanner().scan(level, wallReservationPlan, roadScanMarginBlocks);
-            wallPlan = new CityWallPlanner().planV2(ledger, wallReservationPlan, actualRoadMask, gateWidthBlocks,
-                    roadProtectionMarginBlocks, maxFoundationDepthBlocks, maxSegmentHeightDeltaBlocks);
+            if (CityWallReservationPlanner.V3.equals(normalizedWallVersion)) {
+                wallPlan = new CityWallPlanner().planV3(ledger, wallReservationPlan, actualRoadMask, gateWidthBlocks,
+                        roadProtectionMarginBlocks, maxFoundationDepthBlocks, maxSegmentHeightDeltaBlocks,
+                        wallV3Options);
+            } else {
+                wallPlan = new CityWallPlanner().planV2(ledger, wallReservationPlan, actualRoadMask, gateWidthBlocks,
+                        roadProtectionMarginBlocks, maxFoundationDepthBlocks, maxSegmentHeightDeltaBlocks);
+            }
         }
         Path planPath = new CityWallPlanner().writeArtifacts(wallPlan, outputDirectory);
         if (actualRoadMask != null) {
@@ -898,7 +930,13 @@ final class CityPlanningEndpointHandler {
     }
 
     static JsonObject handleExecuteCityWalls(Path debugRoot, String runId, String citySeedId,
-                                             boolean confirmWorldMutation, ServerLevel level) throws IOException {
+                                              boolean confirmWorldMutation, ServerLevel level) throws IOException {
+        return handleExecuteCityWalls(debugRoot, runId, citySeedId, confirmWorldMutation, level, false, 1);
+    }
+
+    static JsonObject handleExecuteCityWalls(Path debugRoot, String runId, String citySeedId,
+                                             boolean confirmWorldMutation, ServerLevel level,
+                                             boolean debugScan, int debugScanStepBlocks) throws IOException {
         if (!confirmWorldMutation) {
             throw new IllegalArgumentException("confirmWorldMutation=true is required for city_execute_city_walls.");
         }
@@ -911,7 +949,7 @@ final class CityPlanningEndpointHandler {
                     + debugRef(debugRoot, planPath));
         }
         JsonObject wallPlan = JsonParser.parseString(Files.readString(planPath)).getAsJsonObject();
-        JsonObject report = new CityWallPlacementBackend().execute(level, wallPlan);
+        JsonObject report = new CityWallPlacementBackend().execute(level, wallPlan, debugScan, debugScanStepBlocks);
         Path reportPath = outputDirectory.resolve("city_wall_placement_report.json");
         Files.writeString(reportPath, CityJson.GSON.toJson(report));
         JsonObject response = new JsonObject();
@@ -920,8 +958,24 @@ final class CityPlanningEndpointHandler {
         JsonObject artifacts = new JsonObject();
         artifacts.addProperty("cityWallPlan", debugRef(debugRoot, planPath));
         artifacts.addProperty("cityWallPlacementReport", debugRef(debugRoot, reportPath));
+        writeOptionalDebugReport(debugRoot, outputDirectory, report, artifacts,
+                "wallTerrainDebugScan", "wall_terrain_debug_scan.json", "wallTerrainDebugScan");
+        writeOptionalDebugReport(debugRoot, outputDirectory, report, artifacts,
+                "wallMaskConflictReport", "wall_mask_conflict_report.json", "wallMaskConflictReport");
+        writeOptionalDebugReport(debugRoot, outputDirectory, report, artifacts,
+                "wallGapDebugReport", "wall_gap_debug_report.json", "wallGapDebugReport");
         response.add("artifacts", artifacts);
         return response;
+    }
+
+    private static void writeOptionalDebugReport(Path debugRoot, Path outputDirectory, JsonObject report,
+                                                 JsonObject artifacts, String reportKey, String fileName,
+                                                 String artifactKey) throws IOException {
+        if (report.has(reportKey) && report.get(reportKey).isJsonObject()) {
+            Path path = outputDirectory.resolve(fileName);
+            Files.writeString(path, CityJson.GSON.toJson(report.getAsJsonObject(reportKey)));
+            artifacts.addProperty(artifactKey, debugRef(debugRoot, path));
+        }
     }
 
     private static CitySiteContext buildSiteContext(CitySiteContextBuilder builder, JsonObject seed,

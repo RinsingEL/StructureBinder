@@ -20,11 +20,18 @@ import java.util.Set;
 
 public final class CityWallReservationPlanner {
     public static final String SCHEMA = "city_wall_reservation_plan.v0.2";
+    public static final String SCHEMA_V3 = "city_wall_reservation_plan.v0.3";
     public static final String DEFAULT_WALL_VERSION = "v2";
     public static final String V1_DEBUG = "v1_debug";
+    public static final String V2 = "v2";
+    public static final String V3 = "v3";
     public static final int DEFAULT_WALL_CORRIDOR_HALF_WIDTH_BLOCKS = 4;
     public static final int DEFAULT_WALL_MARGIN_BLOCKS = 24;
     public static final int DEFAULT_SEGMENT_LENGTH_BLOCKS = 15;
+    public static final int DEFAULT_WALL_BREATHING_ROOM_BLOCKS = 24;
+    public static final int DEFAULT_PATCH_EXPANSION_MAX_ROUNDS = 4;
+    public static final int DEFAULT_CONCAVITY_OPENING_MAX_BLOCKS = 64;
+    public static final double DEFAULT_CONCAVITY_DEPTH_RATIO_MIN = 0.6;
 
     public JsonObject plan(CityLandformReviewPackage reviewPackage,
                            JsonObject anchorMap,
@@ -32,6 +39,17 @@ public final class CityWallReservationPlanner {
                            int wallMarginBlocks,
                            int segmentLengthBlocks,
                            int wallCorridorHalfWidthBlocks) {
+        return plan(reviewPackage, anchorMap, requestedWallVersion, wallMarginBlocks, segmentLengthBlocks,
+                wallCorridorHalfWidthBlocks, V3Options.defaults());
+    }
+
+    public JsonObject plan(CityLandformReviewPackage reviewPackage,
+                           JsonObject anchorMap,
+                           String requestedWallVersion,
+                           int wallMarginBlocks,
+                           int segmentLengthBlocks,
+                           int wallCorridorHalfWidthBlocks,
+                           V3Options v3Options) {
         String wallVersion = normalizeWallVersion(requestedWallVersion);
         int margin = wallMarginBlocks <= 0 ? DEFAULT_WALL_MARGIN_BLOCKS : wallMarginBlocks;
         int segmentLength = segmentLengthBlocks <= 0 ? DEFAULT_SEGMENT_LENGTH_BLOCKS : segmentLengthBlocks;
@@ -42,6 +60,11 @@ public final class CityWallReservationPlanner {
         }
         if (anchorMap == null || !anchorMap.has("anchors") || !anchorMap.get("anchors").isJsonArray()) {
             throw new IllegalArgumentException("D4 structure_anchor_map.json is required for wall reservation.");
+        }
+
+        if (V3.equals(wallVersion)) {
+            return planV3(reviewPackage, anchorMap, margin, segmentLength, halfWidth,
+                    v3Options == null ? V3Options.defaults() : v3Options);
         }
 
         List<Cell> selectedCells = V1_DEBUG.equals(wallVersion)
@@ -80,7 +103,329 @@ public final class CityWallReservationPlanner {
         if (raw == null || raw.isBlank()) {
             return DEFAULT_WALL_VERSION;
         }
-        return V1_DEBUG.equalsIgnoreCase(raw) ? V1_DEBUG : DEFAULT_WALL_VERSION;
+        if (V1_DEBUG.equalsIgnoreCase(raw)) {
+            return V1_DEBUG;
+        }
+        if (V3.equalsIgnoreCase(raw)) {
+            return V3;
+        }
+        return DEFAULT_WALL_VERSION;
+    }
+
+    private static JsonObject planV3(CityLandformReviewPackage reviewPackage,
+                                     JsonObject anchorMap,
+                                     int margin,
+                                     int segmentLength,
+                                     int halfWidth,
+                                     V3Options options) {
+        int step = Math.max(1, reviewPackage.grid().cellStepBlocks());
+        Map<String, LandformPatchSummary> patchesByRef = patchesByRef(reviewPackage);
+        Map<Cell, LandformPatchSummary> patchByCell = patchByCell(reviewPackage);
+        Set<Cell> seedCells = seedCells(reviewPackage, anchorMap, patchesByRef, options.wallBreathingRoomBlocks());
+        if (seedCells.isEmpty()) {
+            throw new IllegalArgumentException("WALL_PATCH_BOUNDARY_UNAVAILABLE: no seed patch cells are available for City wall v3.");
+        }
+
+        List<JsonObject> expansionTrace = new ArrayList<>();
+        Set<Cell> domain = new LinkedHashSet<>(seedCells);
+        for (int round = 1; round <= Math.max(0, options.patchExpansionMaxRounds()); round++) {
+            Set<Cell> additions = new LinkedHashSet<>();
+            for (Cell cell : domain) {
+                for (Cell neighbor : neighbors(cell, step)) {
+                    if (domain.contains(neighbor)) {
+                        continue;
+                    }
+                    LandformPatchSummary patch = patchByCell.get(neighbor);
+                    if (patch == null) {
+                        continue;
+                    }
+                    if (shouldAbsorbPatchCell(patch, round)) {
+                        additions.add(neighbor);
+                        expansionTrace.add(traceCell("PATCH_ABSORBED_COMPACTNESS", round, neighbor, patch));
+                    } else if (round == 1 && boundaryFriendly(patch.landformType())) {
+                        additions.add(neighbor);
+                        expansionTrace.add(traceCell("PATCH_ABSORBED_NATURAL_BOUNDARY", round, neighbor, patch));
+                    } else {
+                        expansionTrace.add(traceCell(rejectReason(patch), round, neighbor, patch));
+                    }
+                }
+            }
+            if (additions.isEmpty()) {
+                break;
+            }
+            domain.addAll(additions);
+        }
+
+        CleanupResult cleanup = cleanupDomain(domain, step, options);
+        Set<Cell> cleaned = cleanup.cells();
+        List<Segment> segments = boundarySegments(new ArrayList<>(cleaned), step, halfWidth);
+        if (segments.isEmpty()) {
+            throw new IllegalArgumentException("WALL_PATCH_BOUNDARY_UNAVAILABLE: v3 city domain produced no wall boundary.");
+        }
+
+        JsonObject plan = new JsonObject();
+        plan.addProperty("schemaVersion", SCHEMA_V3);
+        plan.addProperty("cityId", reviewPackage.cityId());
+        plan.addProperty("wallVersion", V3);
+        plan.addProperty("boundarySource", "structure_seeded_patch_region_hull");
+        plan.addProperty("wallPlanningStage", "d5_reservation_mask");
+        plan.addProperty("wallCorridorHalfWidthBlocks", halfWidth);
+        plan.addProperty("wallMarginBlocks", margin);
+        plan.addProperty("segmentLengthBlocks", segmentLength);
+        plan.addProperty("wallBreathingRoomBlocks", options.wallBreathingRoomBlocks());
+        plan.addProperty("patchExpansionMaxRounds", options.patchExpansionMaxRounds());
+        plan.addProperty("concavityOpeningMaxBlocks", options.concavityOpeningMaxBlocks());
+        plan.addProperty("concavityDepthRatioMin", options.concavityDepthRatioMin());
+        plan.add("sourcePatchRefs", sourcePatchRefs(reviewPackage, anchorMap));
+        plan.add("seedPatches", seedPatchRefs(reviewPackage, seedCells, patchByCell));
+        plan.add("patchExpansionTrace", jsonArray(expansionTrace));
+        plan.add("cityDomainMask", cellMasks(cleaned, step, "city_domain_cell", "city_domain_hull"));
+        plan.add("domainCleanupReport", cleanup.report());
+        plan.add("outerWallRing", centerlines(segments));
+        plan.add("wallCenterline", centerlines(segments));
+        plan.add("wallCorridorMask", corridorMasks(segments));
+        plan.add("towerCandidatePoints", towerCandidates(segments));
+        plan.add("gateCandidateZones", gateCandidates(segments));
+        plan.add("maskContribution", maskContribution(segments));
+        plan.add("wallBounds", boundsJson(union(segments)));
+        JsonObject debug = new JsonObject();
+        debug.addProperty("seedCellCount", seedCells.size());
+        debug.addProperty("domainCellCount", cleaned.size());
+        debug.addProperty("wallSegmentCount", segments.size());
+        debug.addProperty("cellStepBlocks", step);
+        plan.add("wallReservationDebug", debug);
+        return plan;
+    }
+
+    private static boolean shouldAbsorbPatchCell(LandformPatchSummary patch, int round) {
+        if (round == 1) {
+            return true;
+        }
+        LandformType type = patch.landformType();
+        return type != LandformType.CLIFF && type != LandformType.WATER;
+    }
+
+    private static String rejectReason(LandformPatchSummary patch) {
+        return switch (patch.landformType()) {
+            case CLIFF -> "PATCH_REJECTED_TERRAIN_STEEP";
+            case WATER -> "PATCH_REJECTED_DEEP_WATER";
+            default -> "PATCH_REJECTED_LOW_GAIN";
+        };
+    }
+
+    private static Map<Cell, LandformPatchSummary> patchByCell(CityLandformReviewPackage reviewPackage) {
+        Map<Cell, LandformPatchSummary> out = new LinkedHashMap<>();
+        for (LandformPatchSummary patch : reviewPackage.landformPatches()) {
+            for (Cell cell : cellsForPatch(reviewPackage, patch)) {
+                out.putIfAbsent(cell, patch);
+            }
+        }
+        return out;
+    }
+
+    private static Set<Cell> seedCells(CityLandformReviewPackage reviewPackage,
+                                       JsonObject anchorMap,
+                                       Map<String, LandformPatchSummary> patchesByRef,
+                                       int breathingRoomBlocks) {
+        int step = Math.max(1, reviewPackage.grid().cellStepBlocks());
+        int breathingCells = Math.max(1, (int) Math.ceil(breathingRoomBlocks / (double) step));
+        Set<Cell> seed = new LinkedHashSet<>();
+        for (String ref : selectedPatchRefs(anchorMap)) {
+            LandformPatchSummary patch = patchesByRef.get(ref);
+            if (patch != null) {
+                seed.addAll(cellsForPatch(reviewPackage, patch));
+            }
+        }
+        for (JsonElement anchorElem : array(anchorMap, "anchors")) {
+            if (!anchorElem.isJsonObject()) {
+                continue;
+            }
+            JsonObject anchor = anchorElem.getAsJsonObject();
+            JsonObject footprint = anchor.has("plannedFootprint") && anchor.get("plannedFootprint").isJsonObject()
+                    ? anchor.getAsJsonObject("plannedFootprint")
+                    : anchor.has("reservedEnvelope") && anchor.get("reservedEnvelope").isJsonObject()
+                    ? anchor.getAsJsonObject("reservedEnvelope") : null;
+            if (footprint != null) {
+                BlockBounds expanded = expand(bounds(footprint), breathingRoomBlocks);
+                for (int x = floorToStep(expanded.minX(), step); x <= expanded.maxX(); x += step) {
+                    for (int z = floorToStep(expanded.minZ(), step); z <= expanded.maxZ(); z += step) {
+                        seed.add(new Cell(x, z));
+                    }
+                }
+            }
+            if (anchor.has("anchorBlock") && anchor.get("anchorBlock").isJsonObject()) {
+                JsonObject block = anchor.getAsJsonObject("anchorBlock");
+                Cell center = new Cell(floorToStep(intValue(block, "x", 0), step),
+                        floorToStep(intValue(block, "z", 0), step));
+                for (int dx = -breathingCells; dx <= breathingCells; dx++) {
+                    for (int dz = -breathingCells; dz <= breathingCells; dz++) {
+                        seed.add(new Cell(center.x() + dx * step, center.z() + dz * step));
+                    }
+                }
+            }
+        }
+        return seed;
+    }
+
+    private static CleanupResult cleanupDomain(Set<Cell> domain, int step, V3Options options) {
+        Set<Cell> cells = new LinkedHashSet<>(domain);
+        JsonObject report = new JsonObject();
+        JsonArray events = new JsonArray();
+        int filled = 0;
+        for (int pass = 0; pass < 4; pass++) {
+            List<Cell> additions = new ArrayList<>();
+            for (Cell candidate : candidateHoleCells(cells, step)) {
+                int neighbors = neighborCount(cells, candidate, step);
+                if (neighbors >= 3) {
+                    additions.add(candidate);
+                }
+            }
+            if (additions.isEmpty()) {
+                break;
+            }
+            for (Cell cell : additions) {
+                if (cells.add(cell)) {
+                    filled++;
+                    JsonObject event = new JsonObject();
+                    event.addProperty("reasonCode", "DOMAIN_CONCAVITY_FILLED");
+                    event.addProperty("cellX", cell.x());
+                    event.addProperty("cellZ", cell.z());
+                    events.add(event);
+                }
+            }
+        }
+
+        Set<Cell> main = largestComponent(cells, step);
+        int trimmed = cells.size() - main.size();
+        report.addProperty("inputCellCount", domain.size());
+        report.addProperty("outputCellCount", main.size());
+        report.addProperty("filledCellCount", filled);
+        report.addProperty("trimmedDisconnectedCellCount", trimmed);
+        report.addProperty("concavityOpeningMaxBlocks", options.concavityOpeningMaxBlocks());
+        report.addProperty("concavityDepthRatioMin", options.concavityDepthRatioMin());
+        report.add("events", events);
+        if (trimmed > 0) {
+            JsonObject event = new JsonObject();
+            event.addProperty("reasonCode", "DOMAIN_APPENDAGE_TRIMMED");
+            event.addProperty("trimmedCellCount", trimmed);
+            events.add(event);
+        }
+        return new CleanupResult(main, report);
+    }
+
+    private static Set<Cell> largestComponent(Set<Cell> cells, int step) {
+        Set<Cell> remaining = new LinkedHashSet<>(cells);
+        Set<Cell> largest = new LinkedHashSet<>();
+        while (!remaining.isEmpty()) {
+            Cell start = remaining.iterator().next();
+            Set<Cell> component = new LinkedHashSet<>();
+            List<Cell> queue = new ArrayList<>();
+            queue.add(start);
+            remaining.remove(start);
+            for (int i = 0; i < queue.size(); i++) {
+                Cell cell = queue.get(i);
+                component.add(cell);
+                for (Cell neighbor : neighbors(cell, step)) {
+                    if (remaining.remove(neighbor)) {
+                        queue.add(neighbor);
+                    }
+                }
+            }
+            if (component.size() > largest.size()) {
+                largest = component;
+            }
+        }
+        return largest;
+    }
+
+    private static List<Cell> candidateHoleCells(Set<Cell> cells, int step) {
+        List<Cell> out = new ArrayList<>();
+        if (cells.isEmpty()) {
+            return out;
+        }
+        BlockBounds bounds = cellBounds(cells, step);
+        for (int x = bounds.minX(); x <= bounds.maxX(); x += step) {
+            for (int z = bounds.minZ(); z <= bounds.maxZ(); z += step) {
+                Cell cell = new Cell(x, z);
+                if (!cells.contains(cell) && neighborCount(cells, cell, step) >= 2) {
+                    out.add(cell);
+                }
+            }
+        }
+        return out;
+    }
+
+    private static int neighborCount(Set<Cell> cells, Cell cell, int step) {
+        int count = 0;
+        for (Cell neighbor : neighbors(cell, step)) {
+            if (cells.contains(neighbor)) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private static List<Cell> neighbors(Cell cell, int step) {
+        return List.of(
+                new Cell(cell.x(), cell.z() - step),
+                new Cell(cell.x() + step, cell.z()),
+                new Cell(cell.x(), cell.z() + step),
+                new Cell(cell.x() - step, cell.z()));
+    }
+
+    private static JsonObject traceCell(String reasonCode, int round, Cell cell, LandformPatchSummary patch) {
+        JsonObject obj = new JsonObject();
+        obj.addProperty("reasonCode", reasonCode);
+        obj.addProperty("round", round);
+        obj.addProperty("cellX", cell.x());
+        obj.addProperty("cellZ", cell.z());
+        obj.addProperty("landformPatchId", patch.landformPatchId());
+        obj.addProperty("mapLabel", patch.mapLabel());
+        obj.addProperty("landformType", patch.landformType().contractName());
+        return obj;
+    }
+
+    private static JsonArray seedPatchRefs(CityLandformReviewPackage reviewPackage,
+                                           Set<Cell> seedCells,
+                                           Map<Cell, LandformPatchSummary> patchByCell) {
+        JsonArray out = new JsonArray();
+        Set<String> seen = new LinkedHashSet<>();
+        for (Cell cell : seedCells) {
+            LandformPatchSummary patch = patchByCell.get(cell);
+            if (patch == null || !seen.add(patch.landformPatchId())) {
+                continue;
+            }
+            JsonObject obj = new JsonObject();
+            obj.addProperty("landformPatchId", patch.landformPatchId());
+            obj.addProperty("mapLabel", patch.mapLabel());
+            obj.addProperty("landformType", patch.landformType().contractName());
+            obj.add("blockBounds", boundsJson(patch.blockBounds()));
+            out.add(obj);
+        }
+        return out;
+    }
+
+    private static JsonArray cellMasks(Set<Cell> cells, int step, String maskType, String sourceRef) {
+        JsonArray out = new JsonArray();
+        int index = 0;
+        for (Cell cell : cells) {
+            JsonObject obj = new JsonObject();
+            obj.addProperty("maskId", maskType + "_" + index++);
+            obj.addProperty("maskType", maskType);
+            obj.addProperty("sourceRef", sourceRef);
+            obj.add("blockBounds", boundsJson(new BlockBounds(cell.x(), cell.z(),
+                    cell.x() + step - 1, cell.z() + step - 1)));
+            out.add(obj);
+        }
+        return out;
+    }
+
+    private static JsonArray jsonArray(List<JsonObject> objects) {
+        JsonArray out = new JsonArray();
+        for (JsonObject object : objects) {
+            out.add(object);
+        }
+        return out;
     }
 
     private static List<Cell> patchBoundaryCells(CityLandformReviewPackage reviewPackage,
@@ -400,6 +745,21 @@ public final class CityWallReservationPlanner {
                 bounds.maxX() + margin, bounds.maxZ() + margin);
     }
 
+    private static BlockBounds cellBounds(Set<Cell> cells, int step) {
+        Cell first = cells.iterator().next();
+        int minX = first.x();
+        int minZ = first.z();
+        int maxX = first.x() + step - 1;
+        int maxZ = first.z() + step - 1;
+        for (Cell cell : cells) {
+            minX = Math.min(minX, cell.x());
+            minZ = Math.min(minZ, cell.z());
+            maxX = Math.max(maxX, cell.x() + step - 1);
+            maxZ = Math.max(maxZ, cell.z() + step - 1);
+        }
+        return new BlockBounds(minX, minZ, maxX, maxZ);
+    }
+
     private static int floorToStep(int value, int step) {
         return Math.floorDiv(value, step) * step;
     }
@@ -438,5 +798,21 @@ public final class CityWallReservationPlanner {
     }
 
     private record Segment(String side, BlockPoint from, BlockPoint to, BlockBounds bounds) {
+    }
+
+    public record V3Options(int wallBreathingRoomBlocks,
+                            int patchExpansionMaxRounds,
+                            int concavityOpeningMaxBlocks,
+                            double concavityDepthRatioMin) {
+        public static V3Options defaults() {
+            return new V3Options(
+                    DEFAULT_WALL_BREATHING_ROOM_BLOCKS,
+                    DEFAULT_PATCH_EXPANSION_MAX_ROUNDS,
+                    DEFAULT_CONCAVITY_OPENING_MAX_BLOCKS,
+                    DEFAULT_CONCAVITY_DEPTH_RATIO_MIN);
+        }
+    }
+
+    private record CleanupResult(Set<Cell> cells, JsonObject report) {
     }
 }

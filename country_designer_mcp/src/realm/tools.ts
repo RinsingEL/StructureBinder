@@ -350,12 +350,16 @@ export const realmTools: ToolDefinition[] = [
         citySeedId: { type: "string", description: "目标城市种子的 citySeedId（来自 city_seed_registry.json）。" },
         wallVersion: {
           type: "string",
-          enum: ["v2", "v1_debug"],
-          description: "城墙 reservation 版本；默认 v2。v1_debug 使用旧矩形调试墙带。",
+          enum: ["v3", "v2", "v1_debug"],
+          description: "城墙 reservation 版本；默认 v2。v3 使用结构种子 patch region hull；v1_debug 使用旧矩形调试墙带。",
         },
         wallMarginBlocks: { type: "number", description: "墙带生成外扩距离，默认 24。" },
         segmentLengthBlocks: { type: "number", description: "墙段基础长度，默认 15。" },
         wallCorridorHalfWidthBlocks: { type: "number", description: "墙带 corridor 半宽，默认 4。" },
+        wallBreathingRoomBlocks: { type: "number", description: "v3 城市外环对结构 footprint/source patch 的呼吸空间，默认 24。" },
+        patchExpansionMaxRounds: { type: "number", description: "v3 patch 邻接扩张最大轮数，默认 4。" },
+        concavityOpeningMaxBlocks: { type: "number", description: "v3 凹陷填充开口阈值，默认 64。" },
+        concavityDepthRatioMin: { type: "number", description: "v3 凹陷填充深宽比阈值，默认 0.6。" },
       },
       required: ["runId", "citySeedId"],
     },
@@ -413,7 +417,7 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "city_plan_city_walls",
-    description: "City 城墙规划：默认 v2 读取 D5 wall reservation、D7 placed ledger 和世界实际 RoadWeaver 路面，按 D3 patch 贴边墙带裁出城门；wallVersion=v1_debug 可生成旧矩形调试墙。",
+    description: "City 城墙规划：默认 v2 读取 D5 wall reservation、D7 placed ledger 和世界实际 RoadWeaver 路面裁门；wallVersion=v3 使用结构种子城市外环 hull + 道路聚类裁门；wallVersion=v1_debug 可生成旧矩形调试墙。",
     inputSchema: {
       type: "object",
       properties: {
@@ -421,9 +425,10 @@ export const realmTools: ToolDefinition[] = [
         citySeedId: { type: "string", description: "目标城市种子的 citySeedId。" },
         wallVersion: {
           type: "string",
-          enum: ["v2", "v1_debug"],
-          description: "城墙版本；默认 v2。v2 使用 D3 patch 贴边 wall reservation + actual road mask 裁门。",
+          enum: ["v3", "v2", "v1_debug"],
+          description: "城墙版本；默认 v2。v3 使用 structure-seeded patch region hull + road gate clusters。",
         },
+        wallBoundaryMode: { type: "string", description: "v3 兼容字段；推荐 structure_seeded_patch_region_hull。" },
         wallMarginBlocks: { type: "number", description: "actualFootprint union 外扩距离，默认 24。" },
         segmentLengthBlocks: { type: "number", description: "城墙 straight segment 长度，默认 15。" },
         wallCorridorHalfWidthBlocks: { type: "number", description: "D5 wall reservation 墙带半宽，默认 4；此接口仅记录兼容，D5 阶段生效。" },
@@ -432,6 +437,8 @@ export const realmTools: ToolDefinition[] = [
         roadProtectionMarginBlocks: { type: "number", description: "道路保护边距，默认 2。" },
         maxFoundationDepthBlocks: { type: "number", description: "foundation 最大向下补齐深度，默认 8。" },
         maxSegmentHeightDeltaBlocks: { type: "number", description: "单段最大可接受高差，默认 7。" },
+        gateClusterRadiusBlocks: { type: "number", description: "v3 raw road-wall intersections 聚类半径，默认 24。" },
+        terrainFitUnitLengthBlocks: { type: "number", description: "v3 墙段地形适配 unit 长度，默认 5。" },
         dimensionId: { type: "string", description: "维度 ID，省略时从 run manifest 恢复。" },
         playerName: { type: "string", description: "玩家名，用于定位维度。" },
       },
@@ -440,13 +447,15 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "city_execute_city_walls",
-    description: "City 城墙执行：读取 city_wall_plan，用原版/Forge setBlock 放置临时石砖城墙和塔楼；需要 confirmWorldMutation=true。",
+    description: "City 城墙执行：读取 city_wall_plan，用原版/Forge setBlock 放置临时石砖城墙和塔楼；v3 可开启 debugScan 输出地形/mask/gap 报告；需要 confirmWorldMutation=true。",
     inputSchema: {
       type: "object",
       properties: {
         runId: { type: "string", description: "已有 W/T run ID。" },
         citySeedId: { type: "string", description: "目标城市种子的 citySeedId。" },
         confirmWorldMutation: { type: "boolean", description: "必须为 true；否则拒绝真实改世界。" },
+        debugScan: { type: "boolean", description: "v3 调试开关；true 时输出 step=1 地形扫描、mask 冲突和 gap 报告。" },
+        debugScanStepBlocks: { type: "number", description: "debug scan 步长，默认 1。" },
         dimensionId: { type: "string", description: "维度 ID，省略时从 run manifest 恢复。" },
         playerName: { type: "string", description: "玩家名，用于定位维度。" },
       },

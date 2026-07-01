@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.rinsing.geomantia.systems.city.application.CityLandformReviewBuilder;
 import com.rinsing.geomantia.systems.city.application.CitySiteContextBuilder;
+import com.rinsing.geomantia.systems.city.application.CityWallReservationPlanner;
 import com.rinsing.geomantia.systems.city.domain.config.CityPlanningConfig;
 import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
 import com.rinsing.geomantia.systems.city.domain.model.CityLandformReviewPackage;
@@ -703,6 +704,28 @@ class CityPlanningEndpointHandlerTest {
         CompoundTag straight = NbtIo.readCompressed(templateDir.resolve("wall_straight_15.nbt").toFile());
         assertEquals(15, straight.getList("size", 3).getInt(0));
         assertFalse(straight.getList("blocks", 10).isEmpty());
+    }
+
+    @Test
+    void handlePlanD5CanWriteV3WallReservationArtifacts() throws Exception {
+        Path debugRoot = Files.createTempDirectory("city-wall-v3-d5-test");
+        String runId = "run_wall_v3_d5";
+        String citySeedId = "city_test";
+        prepareD5Artifacts(debugRoot, runId, citySeedId);
+
+        JsonObject response = CityPlanningEndpointHandler.handlePlanD5(debugRoot, runId, citySeedId,
+                "v3", 24, 15, 4, new CityWallReservationPlanner.V3Options(24, 2, 64, 0.6));
+
+        assertTrue(response.get("ok").getAsBoolean());
+        JsonObject artifacts = response.getAsJsonObject("artifacts");
+        Path reservationPath = debugRoot.resolve(artifacts.get("wallReservationPlan").getAsString());
+        Path previewPath = debugRoot.resolve(artifacts.get("wallReservationPreview").getAsString());
+        assertTrue(Files.exists(reservationPath));
+        assertTrue(Files.exists(previewPath));
+        JsonObject reservation = JsonParser.parseString(Files.readString(reservationPath)).getAsJsonObject();
+        assertEquals("city_wall_reservation_plan.v0.3", reservation.get("schemaVersion").getAsString());
+        assertEquals("structure_seeded_patch_region_hull", reservation.get("boundarySource").getAsString());
+        assertFalse(reservation.getAsJsonArray("cityDomainMask").isEmpty());
     }
 
     private static LandformPatch patch(String id, LandformType type, int minX, int minZ, int maxX, int maxZ) {
