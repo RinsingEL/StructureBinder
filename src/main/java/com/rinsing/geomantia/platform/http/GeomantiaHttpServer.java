@@ -58,11 +58,17 @@ public final class GeomantiaHttpServer {
             httpServer.createContext("/realm/city/profile_structure_envelopes", realmController::handleCityProfileStructureEnvelopes);
             httpServer.createContext("/realm/city/plan_d4_candidates", realmController::handleCityPlanD4Candidates);
             httpServer.createContext("/realm/city/select_d4_candidates", realmController::handleCitySelectD4Candidates);
+            httpServer.createContext("/realm/city/create_d4_candidate_session", realmController::handleCityCreateD4CandidateSession);
+            httpServer.createContext("/realm/city/plan_d4_next_candidates", realmController::handleCityPlanD4NextCandidates);
+            httpServer.createContext("/realm/city/select_d4_candidate", realmController::handleCitySelectD4Candidate);
+            httpServer.createContext("/realm/city/finalize_d4_candidate_session", realmController::handleCityFinalizeD4CandidateSession);
             httpServer.createContext("/realm/city/plan_d4", realmController::handleCityPlanD4);
             httpServer.createContext("/realm/city/plan_d5", realmController::handleCityPlanD5);
             httpServer.createContext("/realm/city/execute_d5", realmController::handleCityExecuteD5);
             httpServer.createContext("/realm/city/plan_d6", realmController::handleCityPlanD6);
             httpServer.createContext("/realm/city/execute_d7", realmController::handleCityExecuteD7);
+            httpServer.createContext("/realm/city/plan_city_walls", realmController::handleCityPlanCityWalls);
+            httpServer.createContext("/realm/city/execute_city_walls", realmController::handleCityExecuteCityWalls);
             httpServer.setExecutor(Executors.newFixedThreadPool(3, runnable -> {
                 Thread thread = new Thread(runnable);
                 thread.setDaemon(true);

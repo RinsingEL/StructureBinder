@@ -72,6 +72,26 @@ export const realmHandlers: Record<string, ToolHandler> = {
     return textResult(JSON.stringify(res.data, null, 2));
   },
 
+  async city_create_d4_candidate_session(args) {
+    const res = await postJson(`${MC_API_URL}/realm/city/create_d4_candidate_session`, payload(args), TIMEOUTS.quick);
+    return textResult(JSON.stringify(res.data, null, 2));
+  },
+
+  async city_plan_d4_next_candidates(args) {
+    const res = await postJson(`${MC_API_URL}/realm/city/plan_d4_next_candidates`, payload(args), TIMEOUTS.quick);
+    return textResult(JSON.stringify(res.data, null, 2));
+  },
+
+  async city_select_d4_candidate(args) {
+    const res = await postJson(`${MC_API_URL}/realm/city/select_d4_candidate`, payload(args), TIMEOUTS.quick);
+    return textResult(JSON.stringify(res.data, null, 2));
+  },
+
+  async city_finalize_d4_candidate_session(args) {
+    const res = await postJson(`${MC_API_URL}/realm/city/finalize_d4_candidate_session`, payload(args), TIMEOUTS.quick);
+    return textResult(JSON.stringify(res.data, null, 2));
+  },
+
   async city_plan_d5(args) {
     const res = await postJson(`${MC_API_URL}/realm/city/plan_d5`, payload(args), TIMEOUTS.quick);
     return textResult(JSON.stringify(res.data, null, 2));
@@ -89,6 +109,16 @@ export const realmHandlers: Record<string, ToolHandler> = {
 
   async city_execute_d7(args) {
     const res = await postJson(`${MC_API_URL}/realm/city/execute_d7`, payload(args), TIMEOUTS.refresh);
+    return textResult(JSON.stringify(res.data, null, 2));
+  },
+
+  async city_plan_city_walls(args) {
+    const res = await postJson(`${MC_API_URL}/realm/city/plan_city_walls`, payload(args), TIMEOUTS.quick);
+    return textResult(JSON.stringify(res.data, null, 2));
+  },
+
+  async city_execute_city_walls(args) {
+    const res = await postJson(`${MC_API_URL}/realm/city/execute_city_walls`, payload(args), TIMEOUTS.refresh);
     return textResult(JSON.stringify(res.data, null, 2));
   },
 };

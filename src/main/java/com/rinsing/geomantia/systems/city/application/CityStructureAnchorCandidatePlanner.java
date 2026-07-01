@@ -12,6 +12,7 @@ import com.rinsing.geomantia.systems.city.domain.model.PlanningGrid;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -27,6 +28,9 @@ public final class CityStructureAnchorCandidatePlanner {
     public static final String DESIGN_SLOT_PLAN_SCHEMA = "city_d4_design_slot_plan.v0.1";
     public static final String CANDIDATE_SET_SCHEMA = "city_d4_anchor_candidate_set.v0.1";
     public static final String SELECTION_PLAN_SCHEMA = "city_d4_anchor_selection_plan.v0.1";
+    public static final String SESSION_SCHEMA = "city_d4_candidate_session.v0.2";
+    public static final String SLOT_CANDIDATE_SET_SCHEMA = "city_d4_slot_candidate_set.v0.2";
+    public static final String DESIGN_TIME_REPORT_SCHEMA = "city_d4_design_time_report.v0.2";
 
     private static final int MAX_CANDIDATES_PER_SLOT = 5;
     private static final int DEFAULT_SMALL_CLEARANCE_BLOCKS = 4;
@@ -93,7 +97,7 @@ public final class CityStructureAnchorCandidatePlanner {
         JsonObject candidateSet = new JsonObject();
         candidateSet.addProperty("schemaVersion", CANDIDATE_SET_SCHEMA);
         candidateSet.addProperty("cityId", reviewPackage.cityId());
-        candidateSet.addProperty("planningMode", "all_slots_tentative_order");
+        candidateSet.addProperty("planningMode", "all_slots_tentative_order_debug");
         candidateSet.add("grid", reviewPackage.grid().asJson());
         candidateSet.add("sourceDesignSlotPlan", designSlotPlan.deepCopy());
         candidateSet.add("sourceTerraSenseProfileSource", terraSenseProfileSource.deepCopy());
@@ -172,6 +176,275 @@ public final class CityStructureAnchorCandidatePlanner {
         trace.addProperty("selectedAnchorCount", anchors.size());
         plan.add("candidateSelectionTrace", trace);
         return plan;
+    }
+
+    public SessionResult createSession(Path baseDirectory,
+                                       CityLandformReviewPackage reviewPackage,
+                                       JsonObject terraSenseProfileSource,
+                                       JsonObject designSlotPlan,
+                                       String requestedSessionId) throws IOException {
+        long started = System.nanoTime();
+        if (reviewPackage == null) {
+            throw new IllegalArgumentException("CityLandformReviewPackage is required for D4 candidate session.");
+        }
+        rejectLegacyPayload(designSlotPlan);
+        if (designSlotPlan == null || !designSlotPlan.has("slots")) {
+            throw new IllegalArgumentException("designSlotPlan.slots array is required.");
+        }
+        String cityId = stringValue(designSlotPlan, "cityId", reviewPackage.cityId());
+        if (!reviewPackage.cityId().equals(cityId)) {
+            throw new IllegalArgumentException("DesignSlotPlan cityId mismatch.");
+        }
+        CityStructureProfileCatalog.ImportedCatalog catalog =
+                CityStructureProfileCatalog.importCatalog(baseDirectory, terraSenseProfileSource);
+        Map<String, JsonObject> slots = slotsById(designSlotPlan);
+        List<String> order = placementOrder(designSlotPlan, slots.keySet());
+        List<String> hardBlocks = new ArrayList<>();
+        for (String slotId : order) {
+            if (!slots.containsKey(slotId)) {
+                hardBlocks.add(slotId + ": placementOrder references missing slot.");
+            }
+        }
+        JsonObject session = new JsonObject();
+        session.addProperty("schemaVersion", SESSION_SCHEMA);
+        session.addProperty("sessionId", requestedSessionId == null || requestedSessionId.isBlank()
+                ? cityId + "_d4_session" : requestedSessionId);
+        session.addProperty("cityId", cityId);
+        session.addProperty("planningMode", "sequential_slot_session");
+        session.add("sourceDesignSlotPlan", designSlotPlan.deepCopy());
+        session.add("sourceTerraSenseProfileSource", terraSenseProfileSource.deepCopy());
+        session.add("structureProfileCatalog", catalog.asJson());
+        session.add("placementOrder", stringArray(order));
+        session.addProperty("currentSlotIndex", order.isEmpty() ? -1 : 0);
+        session.addProperty("currentSlotId", order.isEmpty() ? "" : order.get(0));
+        session.addProperty("selectedAnchorCount", 0);
+        session.addProperty("remainingSlotCount", order.size());
+        session.add("selectedAnchors", new JsonArray());
+        session.add("occupiedEnvelopes", new JsonArray());
+        session.add("rejectedSelections", new JsonArray());
+        session.add("candidateHistory", new JsonArray());
+        JsonObject timing = new JsonObject();
+        long now = System.currentTimeMillis();
+        timing.addProperty("createdAt", Instant.ofEpochMilli(now).toString());
+        timing.addProperty("updatedAt", Instant.ofEpochMilli(now).toString());
+        timing.addProperty("createdAtEpochMs", now);
+        timing.addProperty("updatedAtEpochMs", now);
+        timing.addProperty("toolRuntimeMs", elapsedMs(started));
+        timing.addProperty("agentThinkTimeMs", 0);
+        timing.addProperty("totalWallClockMs", 0);
+        timing.add("stepTimings", new JsonArray());
+        session.add("timing", timing);
+        JsonObject quality = quality(hardBlocks, new ArrayList<>(catalog.warnings()),
+                new ArrayList<>(catalog.needsReview()), new JsonArray());
+        session.add("quality", quality);
+        return new SessionResult(session, quality, designTimeReport(session));
+    }
+
+    public NextCandidateResult planNext(Path baseDirectory,
+                                        CityLandformReviewPackage reviewPackage,
+                                        JsonObject session,
+                                        CityStructureEnvelopeFacts envelopeFacts) throws IOException {
+        long started = System.nanoTime();
+        ensureSession(session);
+        if (reviewPackage == null) {
+            throw new IllegalArgumentException("CityLandformReviewPackage is required for D4 candidate session.");
+        }
+        String cityId = requiredString(session, "cityId");
+        if (!reviewPackage.cityId().equals(cityId)) {
+            throw new IllegalArgumentException("D4 candidate session cityId mismatch.");
+        }
+        JsonObject designSlotPlan = requiredObject(session, "sourceDesignSlotPlan");
+        JsonObject profileSource = requiredObject(session, "sourceTerraSenseProfileSource");
+        CityStructureProfileCatalog.ImportedCatalog catalog =
+                CityStructureProfileCatalog.importCatalog(baseDirectory, profileSource);
+        Map<String, CityStructureProfileCatalog.StructureProfile> profiles = catalog.byId();
+        CityStructureEnvelopeFacts facts = envelopeFacts == null ? CityStructureEnvelopeFacts.empty() : envelopeFacts;
+        Map<String, LandformPatchSummary> patches = patchesByRef(reviewPackage);
+        Map<String, JsonObject> slots = slotsById(designSlotPlan);
+        List<String> order = placementOrder(designSlotPlan, slots.keySet());
+        int currentIndex = firstUnselectedIndex(session, order);
+        if (currentIndex < 0) {
+            throw new IllegalArgumentException("D4_SESSION_ALREADY_FINALIZABLE: all design slots are selected.");
+        }
+        String slotId = order.get(currentIndex);
+        JsonObject slot = slots.get(slotId);
+        if (slot == null) {
+            throw new IllegalArgumentException("D4_SLOT_ORDER_VIOLATION: placementOrder references missing slot "
+                    + slotId + ".");
+        }
+        Map<String, BlockPoint> plannedSlotCenters = plannedSlotCenters(session);
+        Map<String, BlockPoint> plannedAnchorCenters = plannedAnchorCenters(session);
+        List<BlockBounds> occupied = occupiedBounds(session);
+        SlotPlanResult slotResult = candidatesForSlot(currentIndex + 1, slot, reviewPackage.grid(), patches,
+                profiles, facts, occupied, plannedSlotCenters, plannedAnchorCenters);
+        JsonArray slotCandidates = new JsonArray();
+        slotCandidates.add(slotResult.asJson());
+        List<String> warnings = new ArrayList<>(catalog.warnings());
+        warnings.addAll(slotResult.warnings());
+        List<String> hardBlocks = new ArrayList<>(slotResult.hardBlocks());
+        JsonObject quality = quality(hardBlocks, warnings, new ArrayList<>(catalog.needsReview()), slotCandidates);
+
+        JsonObject candidateSet = new JsonObject();
+        candidateSet.addProperty("schemaVersion", SLOT_CANDIDATE_SET_SCHEMA);
+        candidateSet.addProperty("cityId", cityId);
+        candidateSet.addProperty("sessionId", requiredString(session, "sessionId"));
+        candidateSet.addProperty("planningMode", "sequential_current_slot");
+        candidateSet.addProperty("currentSlotIndex", currentIndex);
+        candidateSet.addProperty("currentSlotId", slotId);
+        candidateSet.addProperty("quickPreflightStatus", "deferred_to_d6");
+        candidateSet.add("grid", reviewPackage.grid().asJson());
+        candidateSet.add("sourceDesignSlotPlan", designSlotPlan.deepCopy());
+        candidateSet.add("sourceTerraSenseProfileSource", profileSource.deepCopy());
+        candidateSet.add("structureProfileCatalog", catalog.asJson());
+        candidateSet.add("selectedAnchors", optionalArray(session, "selectedAnchors").deepCopy());
+        candidateSet.add("occupiedEnvelopes", optionalArray(session, "occupiedEnvelopes").deepCopy());
+        candidateSet.add("slotCandidates", slotCandidates);
+        candidateSet.add("quality", quality.deepCopy());
+        candidateSet.add("timingMs", timing(started));
+
+        JsonObject updatedSession = session.deepCopy();
+        updatedSession.addProperty("currentSlotIndex", currentIndex);
+        updatedSession.addProperty("currentSlotId", slotId);
+        updatedSession.addProperty("selectedAnchorCount", optionalArray(updatedSession, "selectedAnchors").size());
+        updatedSession.addProperty("remainingSlotCount", Math.max(0,
+                order.size() - optionalArray(updatedSession, "selectedAnchors").size()));
+        long now = System.currentTimeMillis();
+        updatedSession.addProperty("lastCandidateReturnedAtEpochMs", now);
+        updatedSession.addProperty("lastCandidateSlotId", slotId);
+        JsonObject history = new JsonObject();
+        history.addProperty("slotId", slotId);
+        history.addProperty("generatedAt", Instant.ofEpochMilli(now).toString());
+        history.addProperty("candidateCount", slotResult.candidates().size());
+        history.addProperty("hardBlockCount", hardBlocks.size());
+        history.addProperty("warningCount", warnings.size());
+        optionalArray(updatedSession, "candidateHistory").add(history);
+        long elapsed = elapsedMs(started);
+        updateTiming(updatedSession, elapsed, 0);
+        JsonObject step = stepTiming(updatedSession, slotId);
+        step.addProperty("candidateGenerationMs", longValue(step, "candidateGenerationMs", 0) + elapsed);
+        step.addProperty("candidateCount", slotResult.candidates().size());
+        step.addProperty("rejectedSelectionCount", intValue(step, "rejectedSelectionCount", 0));
+        if (!step.has("previewRenderMs")) {
+            step.addProperty("previewRenderMs", 0);
+        }
+        updatedSession.add("quality", quality.deepCopy());
+        return new NextCandidateResult(updatedSession, candidateSet, quality);
+    }
+
+    public SelectionResult selectSession(JsonObject session,
+                                         JsonObject slotCandidateSet,
+                                         String slotId,
+                                         String candidateId,
+                                         String anchorId,
+                                         String selectionReason,
+                                         boolean quickPreflight) {
+        long started = System.nanoTime();
+        ensureSession(session);
+        if (slotCandidateSet == null || !slotCandidateSet.has("slotCandidates")) {
+            throw new IllegalArgumentException("slotCandidateSet.slotCandidates array is required.");
+        }
+        String currentSlotId = requiredString(session, "currentSlotId");
+        if (!currentSlotId.equals(slotId)) {
+            throw new IllegalArgumentException("D4_SLOT_ORDER_VIOLATION: current slot is " + currentSlotId
+                    + " but selection targets " + slotId + ".");
+        }
+        if (selectedSlotIds(session).contains(slotId)) {
+            throw new IllegalArgumentException("D4_SLOT_ALREADY_SELECTED: slot already selected: " + slotId);
+        }
+        JsonObject candidate = findCandidate(slotCandidateSet, slotId, candidateId)
+                .orElseThrow(() -> new IllegalArgumentException("D4_SELECTED_CANDIDATE_NOT_FOUND: "
+                        + slotId + "/" + candidateId));
+        BlockBounds selectedBounds = sessionOccupiedBounds(candidate);
+        for (JsonObject occupied : occupiedEnvelopeObjects(session)) {
+            BlockBounds existing = bounds(requiredObject(occupied, "blockBounds"));
+            if (existing.overlaps(selectedBounds)) {
+                JsonObject rejection = rejection(slotId, candidateId,
+                        "D4_SELECTED_CANDIDATE_OCCUPIED_OVERLAP",
+                        "Selected candidate estimated envelope overlaps frozen occupied envelope.");
+                optionalArray(session, "rejectedSelections").add(rejection);
+                throw new IllegalArgumentException("D4_SELECTED_CANDIDATE_OCCUPIED_OVERLAP: selected candidate "
+                        + candidateId + " overlaps " + stringValue(occupied, "sourceAnchorId", "occupied"));
+            }
+        }
+        JsonObject updatedSession = session.deepCopy();
+        JsonObject selected = candidate.deepCopy();
+        selected.addProperty("anchorId", anchorId == null || anchorId.isBlank() ? slotId + "_01" : anchorId);
+        selected.addProperty("selectionReason", selectionReason == null ? "" : selectionReason);
+        selected.addProperty("selectedAt", Instant.now().toString());
+        selected.addProperty("quickPreflightStatus", "deferred_to_d6");
+        selected.addProperty("quickPreflightRequested", quickPreflight);
+        selected.addProperty("selectedOrder", optionalArray(updatedSession, "selectedAnchors").size() + 1);
+        optionalArray(updatedSession, "selectedAnchors").add(selected);
+        JsonObject occupied = new JsonObject();
+        occupied.addProperty("sourceAnchorId", requiredString(selected, "anchorId"));
+        occupied.addProperty("sourceSlotId", slotId);
+        occupied.addProperty("sourceCandidateId", candidateId);
+        occupied.addProperty("envelopeType", selected.has("estimatedSafetyEnvelope")
+                ? "estimated_safety" : "estimated_collision");
+        occupied.add("blockBounds", boundsJson(sessionOccupiedBounds(selected)));
+        if (selected.has("estimatedCollisionEnvelope")) {
+            occupied.add("estimatedCollisionEnvelope",
+                    selected.getAsJsonObject("estimatedCollisionEnvelope").deepCopy());
+        }
+        if (selected.has("estimatedSafetyEnvelope")) {
+            occupied.add("estimatedSafetyEnvelope",
+                    selected.getAsJsonObject("estimatedSafetyEnvelope").deepCopy());
+        }
+        optionalArray(updatedSession, "occupiedEnvelopes").add(occupied);
+
+        JsonObject designSlotPlan = requiredObject(updatedSession, "sourceDesignSlotPlan");
+        List<String> order = placementOrder(designSlotPlan, slotsById(designSlotPlan).keySet());
+        int nextIndex = firstUnselectedIndex(updatedSession, order);
+        updatedSession.addProperty("currentSlotIndex", nextIndex);
+        updatedSession.addProperty("currentSlotId", nextIndex < 0 ? "" : order.get(nextIndex));
+        updatedSession.addProperty("selectedAnchorCount", optionalArray(updatedSession, "selectedAnchors").size());
+        updatedSession.addProperty("remainingSlotCount", nextIndex < 0 ? 0
+                : order.size() - optionalArray(updatedSession, "selectedAnchors").size());
+
+        long agentThink = agentThinkTimeMs(session, slotId);
+        long elapsed = elapsedMs(started);
+        updateTiming(updatedSession, elapsed, agentThink);
+        JsonObject step = stepTiming(updatedSession, slotId);
+        step.addProperty("selectionValidationMs", longValue(step, "selectionValidationMs", 0) + elapsed);
+        step.addProperty("agentThinkTimeMs", longValue(step, "agentThinkTimeMs", 0) + agentThink);
+        step.addProperty("quickPreflightMs", longValue(step, "quickPreflightMs", 0));
+        step.addProperty("selectedCandidateId", candidateId);
+        step.addProperty("selectedAnchorId", requiredString(selected, "anchorId"));
+        step.addProperty("quickPreflightStatus", "deferred_to_d6");
+
+        JsonObject quickReport = new JsonObject();
+        quickReport.addProperty("status", "deferred_to_d6");
+        quickReport.addProperty("reasonCode", "D4_QUICK_PREFLIGHT_DEFERRED_TO_D6");
+        quickReport.addProperty("quickPreflightRequested", quickPreflight);
+        quickReport.addProperty("message", "D4 v0.2 defers MC actual bbox probe to D6.");
+        return new SelectionResult(updatedSession, selected, quickReport, designTimeReport(updatedSession));
+    }
+
+    public FinalizeResult finalizeSession(JsonObject session) {
+        ensureSession(session);
+        JsonObject designSlotPlan = requiredObject(session, "sourceDesignSlotPlan");
+        List<String> order = placementOrder(designSlotPlan, slotsById(designSlotPlan).keySet());
+        if (firstUnselectedIndex(session, order) >= 0) {
+            throw new IllegalArgumentException("D4_SESSION_NOT_FINALIZABLE: all placementOrder slots must be selected.");
+        }
+        JsonArray anchors = new JsonArray();
+        int index = 0;
+        for (JsonElement elem : optionalArray(session, "selectedAnchors")) {
+            index++;
+            anchors.add(anchorFromSelected(elem.getAsJsonObject(), index));
+        }
+        JsonObject plan = new JsonObject();
+        plan.addProperty("schemaVersion", CityStructureAnchorPlanner.PLAN_SCHEMA);
+        plan.addProperty("cityId", requiredString(session, "cityId"));
+        plan.add("anchors", anchors);
+        JsonObject trace = new JsonObject();
+        trace.addProperty("schemaVersion", SELECTION_PLAN_SCHEMA);
+        trace.addProperty("planningMode", "sequential_slot_session");
+        trace.addProperty("sessionId", requiredString(session, "sessionId"));
+        trace.addProperty("selectedAnchorCount", anchors.size());
+        trace.add("sourceSession", session.deepCopy());
+        plan.add("candidateSelectionTrace", trace);
+        return new FinalizeResult(session.deepCopy(), plan, designTimeReport(session));
     }
 
     private SlotPlanResult candidatesForSlot(int slotIndex,
@@ -632,6 +905,219 @@ public final class CityStructureAnchorCandidatePlanner {
         return timing;
     }
 
+    private static long elapsedMs(long started) {
+        return (System.nanoTime() - started) / 1_000_000L;
+    }
+
+    private static void ensureSession(JsonObject session) {
+        if (session == null || !SESSION_SCHEMA.equals(stringValue(session, "schemaVersion", ""))) {
+            throw new IllegalArgumentException("D4_CANDIDATE_SESSION_NOT_FOUND: "
+                    + "city_d4_candidate_session.v0.2 session object is required.");
+        }
+    }
+
+    private static int firstUnselectedIndex(JsonObject session, List<String> order) {
+        Set<String> selected = selectedSlotIds(session);
+        for (int i = 0; i < order.size(); i++) {
+            if (!selected.contains(order.get(i))) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private static Set<String> selectedSlotIds(JsonObject session) {
+        Set<String> result = new LinkedHashSet<>();
+        for (JsonElement elem : optionalArray(session, "selectedAnchors")) {
+            if (elem.isJsonObject()) {
+                result.add(stringValue(elem.getAsJsonObject(), "slotId", ""));
+            }
+        }
+        return result;
+    }
+
+    private static Map<String, BlockPoint> plannedSlotCenters(JsonObject session) {
+        Map<String, BlockPoint> result = new LinkedHashMap<>();
+        for (JsonElement elem : optionalArray(session, "selectedAnchors")) {
+            if (!elem.isJsonObject()) {
+                continue;
+            }
+            JsonObject selected = elem.getAsJsonObject();
+            result.put(requiredString(selected, "slotId"), point(selected, "anchorBlock"));
+        }
+        return result;
+    }
+
+    private static Map<String, BlockPoint> plannedAnchorCenters(JsonObject session) {
+        Map<String, BlockPoint> result = new LinkedHashMap<>();
+        for (JsonElement elem : optionalArray(session, "selectedAnchors")) {
+            if (!elem.isJsonObject()) {
+                continue;
+            }
+            JsonObject selected = elem.getAsJsonObject();
+            result.put(requiredString(selected, "anchorId"), point(selected, "anchorBlock"));
+        }
+        return result;
+    }
+
+    private static List<BlockBounds> occupiedBounds(JsonObject session) {
+        List<BlockBounds> result = new ArrayList<>();
+        for (JsonObject occupied : occupiedEnvelopeObjects(session)) {
+            result.add(bounds(requiredObject(occupied, "blockBounds")));
+        }
+        return result;
+    }
+
+    private static BlockBounds sessionOccupiedBounds(JsonObject candidate) {
+        if (candidate.has("estimatedSafetyEnvelope") && candidate.get("estimatedSafetyEnvelope").isJsonObject()) {
+            return bounds(candidate, "estimatedSafetyEnvelope");
+        }
+        return bounds(candidate, "estimatedCollisionEnvelope");
+    }
+
+    private static List<JsonObject> occupiedEnvelopeObjects(JsonObject session) {
+        List<JsonObject> result = new ArrayList<>();
+        for (JsonElement elem : optionalArray(session, "occupiedEnvelopes")) {
+            if (elem.isJsonObject()) {
+                result.add(elem.getAsJsonObject());
+            }
+        }
+        return result;
+    }
+
+    private static Optional<JsonObject> findCandidate(JsonObject slotCandidateSet, String slotId, String candidateId) {
+        for (JsonElement slotElem : requiredArray(slotCandidateSet, "slotCandidates")) {
+            JsonObject slot = slotElem.getAsJsonObject();
+            if (!slotId.equals(stringValue(slot, "slotId", ""))) {
+                continue;
+            }
+            for (JsonElement candElem : optionalArray(slot, "candidates")) {
+                if (!candElem.isJsonObject()) {
+                    continue;
+                }
+                JsonObject candidate = candElem.getAsJsonObject();
+                if (candidateId.equals(stringValue(candidate, "candidateId", ""))) {
+                    return Optional.of(candidate);
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
+    private static JsonObject rejection(String slotId, String candidateId, String reasonCode, String message) {
+        JsonObject obj = new JsonObject();
+        obj.addProperty("slotId", slotId);
+        obj.addProperty("candidateId", candidateId);
+        obj.addProperty("reasonCode", reasonCode);
+        obj.addProperty("message", message);
+        obj.addProperty("rejectedAt", Instant.now().toString());
+        return obj;
+    }
+
+    private static JsonObject anchorFromSelected(JsonObject selected, int index) {
+        JsonObject anchor = new JsonObject();
+        anchor.addProperty("anchorId", requiredString(selected, "anchorId"));
+        anchor.addProperty("slotId", requiredString(selected, "slotId"));
+        anchor.addProperty("candidateId", requiredString(selected, "candidateId"));
+        anchor.addProperty("displayRole", stringValue(selected, "displayRole", requiredString(selected, "slotId")));
+        anchor.addProperty("structureId", requiredString(selected, "structureId"));
+        anchor.add("sourcePatchIds", selected.getAsJsonArray("sourcePatchRefs").deepCopy());
+        anchor.add("anchorBlock", selected.getAsJsonObject("anchorBlock").deepCopy());
+        anchor.addProperty("rotation", stringValue(selected, "rotation", "NONE"));
+        anchor.add("intentTerms", selected.has("intentTerms") && selected.get("intentTerms").isJsonArray()
+                ? selected.getAsJsonArray("intentTerms").deepCopy()
+                : defaultIntentTerms(requiredString(selected, "slotId"), stringValue(selected, "displayRole", "")));
+        anchor.addProperty("priority", intValue(selected, "priority", index));
+        anchor.addProperty("roadAccessIntent", stringValue(selected, "roadAccessIntent", "connect_to_city_entry"));
+        if (!stringValue(selected, "selectedEnvelopeGroupKey", "").isBlank()) {
+            anchor.addProperty("envelopeGroupKey", stringValue(selected, "selectedEnvelopeGroupKey", ""));
+        }
+        anchor.addProperty("smallClearanceBlocks",
+                intValue(selected, "smallClearanceBlocks", DEFAULT_SMALL_CLEARANCE_BLOCKS));
+        anchor.addProperty("selectionReason", stringValue(selected, "selectionReason", ""));
+        return anchor;
+    }
+
+    private static long agentThinkTimeMs(JsonObject session, String slotId) {
+        if (!slotId.equals(stringValue(session, "lastCandidateSlotId", ""))) {
+            return 0;
+        }
+        long returnedAt = longValue(session, "lastCandidateReturnedAtEpochMs", 0);
+        if (returnedAt <= 0) {
+            return 0;
+        }
+        return Math.max(0, System.currentTimeMillis() - returnedAt);
+    }
+
+    private static void updateTiming(JsonObject session, long toolRuntimeMs, long agentThinkTimeMs) {
+        JsonObject timing = session.has("timing") && session.get("timing").isJsonObject()
+                ? session.getAsJsonObject("timing")
+                : new JsonObject();
+        long now = System.currentTimeMillis();
+        if (!timing.has("createdAtEpochMs")) {
+            timing.addProperty("createdAtEpochMs", now);
+            timing.addProperty("createdAt", Instant.ofEpochMilli(now).toString());
+        }
+        timing.addProperty("updatedAtEpochMs", now);
+        timing.addProperty("updatedAt", Instant.ofEpochMilli(now).toString());
+        timing.addProperty("toolRuntimeMs", longValue(timing, "toolRuntimeMs", 0) + toolRuntimeMs);
+        timing.addProperty("agentThinkTimeMs", longValue(timing, "agentThinkTimeMs", 0) + agentThinkTimeMs);
+        timing.addProperty("totalWallClockMs", Math.max(0,
+                now - longValue(timing, "createdAtEpochMs", now)));
+        if (!timing.has("stepTimings") || !timing.get("stepTimings").isJsonArray()) {
+            timing.add("stepTimings", new JsonArray());
+        }
+        session.add("timing", timing);
+    }
+
+    private static JsonObject stepTiming(JsonObject session, String slotId) {
+        JsonObject timing = requiredObject(session, "timing");
+        JsonArray steps = optionalArray(timing, "stepTimings");
+        for (JsonElement elem : steps) {
+            if (elem.isJsonObject() && slotId.equals(stringValue(elem.getAsJsonObject(), "slotId", ""))) {
+                return elem.getAsJsonObject();
+            }
+        }
+        JsonObject step = new JsonObject();
+        step.addProperty("slotId", slotId);
+        step.addProperty("candidateGenerationMs", 0);
+        step.addProperty("selectionValidationMs", 0);
+        step.addProperty("quickPreflightMs", 0);
+        step.addProperty("previewRenderMs", 0);
+        step.addProperty("agentThinkTimeMs", 0);
+        step.addProperty("rejectedSelectionCount", 0);
+        steps.add(step);
+        return step;
+    }
+
+    private static JsonObject designTimeReport(JsonObject session) {
+        ensureSession(session);
+        JsonObject timing = session.has("timing") && session.get("timing").isJsonObject()
+                ? session.getAsJsonObject("timing")
+                : new JsonObject();
+        JsonObject report = new JsonObject();
+        report.addProperty("schemaVersion", DESIGN_TIME_REPORT_SCHEMA);
+        report.addProperty("cityId", requiredString(session, "cityId"));
+        report.addProperty("sessionId", requiredString(session, "sessionId"));
+        report.addProperty("slotCount", optionalArray(session, "placementOrder").size());
+        report.addProperty("selectedAnchorCount", optionalArray(session, "selectedAnchors").size());
+        report.addProperty("rejectedSelectionCount", optionalArray(session, "rejectedSelections").size());
+        report.addProperty("totalWallClockMs", longValue(timing, "totalWallClockMs", 0));
+        report.addProperty("toolRuntimeMs", longValue(timing, "toolRuntimeMs", 0));
+        report.addProperty("agentThinkTimeMs", longValue(timing, "agentThinkTimeMs", 0));
+        report.add("stepTimings", optionalArray(timing, "stepTimings").deepCopy());
+        JsonObject failureReasons = new JsonObject();
+        for (JsonElement elem : optionalArray(session, "rejectedSelections")) {
+            if (!elem.isJsonObject()) {
+                continue;
+            }
+            String reason = stringValue(elem.getAsJsonObject(), "reasonCode", "UNKNOWN");
+            failureReasons.addProperty(reason, intValue(failureReasons, reason, 0) + 1);
+        }
+        report.add("failureReasons", failureReasons);
+        return report;
+    }
+
     private static JsonArray defaultIntentTerms(String slotId, String displayRole) {
         JsonArray terms = new JsonArray();
         terms.add("slot." + slotId);
@@ -741,6 +1227,10 @@ public final class CityStructureAnchorCandidatePlanner {
         return obj != null && obj.has(key) && !obj.get(key).isJsonNull() ? obj.get(key).getAsInt() : defaultValue;
     }
 
+    private static long longValue(JsonObject obj, String key, long defaultValue) {
+        return obj != null && obj.has(key) && !obj.get(key).isJsonNull() ? obj.get(key).getAsLong() : defaultValue;
+    }
+
     private static int manhattan(BlockPoint a, BlockPoint b) {
         return Math.abs(a.x() - b.x()) + Math.abs(a.z() - b.z());
     }
@@ -761,6 +1251,70 @@ public final class CityStructureAnchorCandidatePlanner {
             obj.add("anchorCandidateSet", anchorCandidateSet.deepCopy());
             obj.add("qualityReport", qualityReport.deepCopy());
             obj.add("timingMs", anchorCandidateSet.getAsJsonObject("timingMs").deepCopy());
+            return obj;
+        }
+    }
+
+    public record SessionResult(JsonObject session, JsonObject qualityReport, JsonObject designTimeReport) {
+        public JsonObject asJson() {
+            JsonObject obj = new JsonObject();
+            obj.addProperty("ok", qualityReport.get("passed").getAsBoolean());
+            obj.addProperty("sessionId", session.get("sessionId").getAsString());
+            obj.addProperty("currentSlotId", stringValue(session, "currentSlotId", ""));
+            obj.addProperty("selectedAnchorCount", intValue(session, "selectedAnchorCount", 0));
+            obj.addProperty("remainingSlotCount", intValue(session, "remainingSlotCount", 0));
+            obj.addProperty("quickPreflightStatus", "deferred_to_d6");
+            obj.add("session", session.deepCopy());
+            obj.add("qualityReport", qualityReport.deepCopy());
+            obj.add("designTimeReport", designTimeReport.deepCopy());
+            obj.add("timingMs", requiredObject(session, "timing").deepCopy());
+            return obj;
+        }
+    }
+
+    public record NextCandidateResult(JsonObject session, JsonObject slotCandidateSet, JsonObject qualityReport) {
+        public JsonObject asJson() {
+            JsonObject obj = new JsonObject();
+            obj.addProperty("ok", qualityReport.get("passed").getAsBoolean());
+            obj.addProperty("sessionId", slotCandidateSet.get("sessionId").getAsString());
+            obj.addProperty("currentSlotId", stringValue(slotCandidateSet, "currentSlotId", ""));
+            obj.addProperty("quickPreflightStatus", "deferred_to_d6");
+            obj.add("session", session.deepCopy());
+            obj.add("slotCandidateSet", slotCandidateSet.deepCopy());
+            obj.add("qualityReport", qualityReport.deepCopy());
+            obj.add("timingMs", slotCandidateSet.getAsJsonObject("timingMs").deepCopy());
+            return obj;
+        }
+    }
+
+    public record SelectionResult(JsonObject session, JsonObject selectedAnchor,
+                                  JsonObject quickPreflightReport, JsonObject designTimeReport) {
+        public JsonObject asJson() {
+            JsonObject obj = new JsonObject();
+            obj.addProperty("ok", true);
+            obj.addProperty("sessionId", session.get("sessionId").getAsString());
+            obj.addProperty("selectedAnchorCount", intValue(session, "selectedAnchorCount", 0));
+            obj.addProperty("remainingSlotCount", intValue(session, "remainingSlotCount", 0));
+            obj.addProperty("nextSlotId", stringValue(session, "currentSlotId", ""));
+            obj.add("selectedAnchor", selectedAnchor.deepCopy());
+            obj.add("quickPreflightReport", quickPreflightReport.deepCopy());
+            obj.add("session", session.deepCopy());
+            obj.add("designTimeReport", designTimeReport.deepCopy());
+            obj.add("timingMs", requiredObject(session, "timing").deepCopy());
+            return obj;
+        }
+    }
+
+    public record FinalizeResult(JsonObject session, JsonObject structureAnchorPlan, JsonObject designTimeReport) {
+        public JsonObject asJson() {
+            JsonObject obj = new JsonObject();
+            obj.addProperty("ok", true);
+            obj.addProperty("sessionId", session.get("sessionId").getAsString());
+            obj.addProperty("status", "finalized");
+            obj.addProperty("selectedAnchorCount", intValue(session, "selectedAnchorCount", 0));
+            obj.add("structureAnchorPlan", structureAnchorPlan.deepCopy());
+            obj.add("designTimeReport", designTimeReport.deepCopy());
+            obj.add("timingMs", requiredObject(session, "timing").deepCopy());
             return obj;
         }
     }

@@ -257,13 +257,105 @@ export const realmTools: ToolDefinition[] = [
     },
   },
   {
+    name: "city_create_d4_candidate_session",
+    description: "City D4 v2 顺序候选 session：提交 DesignSlotPlan，创建逐 slot 生成/选择/冻结的 D4 candidate session，并开始记录 D4 设计耗时。",
+    inputSchema: {
+      type: "object",
+      properties: {
+        runId: { type: "string", description: "已有 W/T run ID。" },
+        citySeedId: { type: "string", description: "目标城市种子的 citySeedId。" },
+        sessionId: { type: "string", description: "可选 sessionId；未传时使用 cityId_d4_session。" },
+        terrasenseProfileSource: {
+          type: "object",
+          description: "schemaVersion=terrasense_structure_profile_source.v0.1；sourceType=structure_profile_jsonl 或 debug_catalog。",
+        },
+        designSlotPlan: {
+          type: "object",
+          description: "schemaVersion=city_d4_design_slot_plan.v0.1；placementOrder 与 slots[]，slot 含 slotId、displayRole、candidatePatchRefs、structureId 或 structureIds、relationHints。",
+        },
+        structureEnvelopeFactsSource: {
+          type: "object",
+          description: "可选；factsPath 指向 structure_envelope_facts.json。未传时读取当前 run/city 默认产物。",
+        },
+      },
+      required: ["runId", "citySeedId", "terrasenseProfileSource", "designSlotPlan"],
+    },
+  },
+  {
+    name: "city_plan_d4_next_candidates",
+    description: "City D4 v2 顺序候选：只为当前未选择 slot 生成 3-5 个候选，候选会避开 session 已冻结 occupied envelopes。",
+    inputSchema: {
+      type: "object",
+      properties: {
+        runId: { type: "string", description: "已有 W/T run ID。" },
+        citySeedId: { type: "string", description: "目标城市种子的 citySeedId。" },
+        sessionId: { type: "string", description: "兼容字段；当前实现按 run/city 读取默认 session artifact。" },
+        structureEnvelopeFactsSource: {
+          type: "object",
+          description: "可选；factsPath 指向 structure_envelope_facts.json。未传时读取当前 run/city 默认产物。",
+        },
+      },
+      required: ["runId", "citySeedId"],
+    },
+  },
+  {
+    name: "city_select_d4_candidate",
+    description: "City D4 v2 顺序候选选择：选择当前 slot 的一个 candidate，优先冻结 estimatedSafetyEnvelope（缺失时回退 estimatedCollisionEnvelope），更新 session，并记录 agentThinkTimeMs。quickPreflight 本轮 deferred_to_d6。",
+    inputSchema: {
+      type: "object",
+      properties: {
+        runId: { type: "string", description: "已有 W/T run ID。" },
+        citySeedId: { type: "string", description: "目标城市种子的 citySeedId。" },
+        sessionId: { type: "string", description: "可选；用于校验当前 D4 candidate session。" },
+        slotId: { type: "string", description: "必须等于当前 session currentSlotId。" },
+        candidateId: { type: "string", description: "来自 city_plan_d4_next_candidates 返回的 candidateId。" },
+        anchorId: { type: "string", description: "可选；未传时使用 slotId_01。" },
+        selectionReason: { type: "string", description: "人/AI 选择理由，进入 trace。" },
+        quickPreflight: {
+          type: "boolean",
+          description: "本轮接受但不执行 MC probe；返回 quickPreflightStatus=deferred_to_d6。",
+        },
+      },
+      required: ["runId", "citySeedId", "slotId", "candidateId"],
+    },
+  },
+  {
+    name: "city_finalize_d4_candidate_session",
+    description: "City D4 v2 finalize：所有 slot 选择完毕后，把 session selectedAnchors 转为标准 StructureAnchorPlan，并调用现有 D4 hard validation 输出 StructureAnchorMap。",
+    inputSchema: {
+      type: "object",
+      properties: {
+        runId: { type: "string", description: "已有 W/T run ID。" },
+        citySeedId: { type: "string", description: "目标城市种子的 citySeedId。" },
+        sessionId: { type: "string", description: "可选；用于校验当前 D4 candidate session。" },
+        terrasenseProfileSource: {
+          type: "object",
+          description: "schemaVersion=terrasense_structure_profile_source.v0.1；sourceType=structure_profile_jsonl 或 debug_catalog。",
+        },
+        structureEnvelopeFactsSource: {
+          type: "object",
+          description: "可选；factsPath 指向 structure_envelope_facts.json。未传时读取当前 run/city 默认产物。",
+        },
+      },
+      required: ["runId", "citySeedId", "terrasenseProfileSource"],
+    },
+  },
+  {
     name: "city_plan_d5",
-    description: "City D5: 基于 D4 StructureAnchorMap 生成 reservation mask 与预览；road_access_plan/build_operation_plan 只保留占位空操作，标记道路延后到 D7 基于真实 ledger bbox 生成；不修改世界。",
+    description: "City D5: 基于 D4 StructureAnchorMap 生成 reservation mask 与预览；默认生成 v2 D3 patch 贴边 wall reservation corridor 并合入禁植被/禁自然结构 mask；road/build 仍为空占位，不修改世界。",
     inputSchema: {
       type: "object",
       properties: {
         runId: { type: "string", description: "已有 W/T run ID。" },
         citySeedId: { type: "string", description: "目标城市种子的 citySeedId（来自 city_seed_registry.json）。" },
+        wallVersion: {
+          type: "string",
+          enum: ["v2", "v1_debug"],
+          description: "城墙 reservation 版本；默认 v2。v1_debug 使用旧矩形调试墙带。",
+        },
+        wallMarginBlocks: { type: "number", description: "墙带生成外扩距离，默认 24。" },
+        segmentLengthBlocks: { type: "number", description: "墙段基础长度，默认 15。" },
+        wallCorridorHalfWidthBlocks: { type: "number", description: "墙带 corridor 半宽，默认 4。" },
       },
       required: ["runId", "citySeedId"],
     },
@@ -277,6 +369,11 @@ export const realmTools: ToolDefinition[] = [
         runId: { type: "string", description: "已有 W/T run ID。" },
         citySeedId: { type: "string", description: "目标城市种子的 citySeedId。" },
         confirmWorldMutation: { type: "boolean", description: "必须为 true；否则拒绝真实改世界。" },
+        roadProvider: {
+          type: "string",
+          enum: ["auto", "roadweaver", "worldedit_debug", "none"],
+          description: "道路提供者；默认 auto。RoadWeaver 存在则注册连接，缺失时 auto 保留 D7 WorldEdit 调试 fallback。",
+        },
         dimensionId: { type: "string", description: "维度 ID，省略时从 run manifest 恢复。" },
         playerName: { type: "string", description: "玩家名，用于定位维度。" },
       },
@@ -312,6 +409,48 @@ export const realmTools: ToolDefinition[] = [
         playerName: { type: "string", description: "玩家名，用于定位维度。" },
       },
       required: ["runId", "citySeedId"],
+    },
+  },
+  {
+    name: "city_plan_city_walls",
+    description: "City 城墙规划：默认 v2 读取 D5 wall reservation、D7 placed ledger 和世界实际 RoadWeaver 路面，按 D3 patch 贴边墙带裁出城门；wallVersion=v1_debug 可生成旧矩形调试墙。",
+    inputSchema: {
+      type: "object",
+      properties: {
+        runId: { type: "string", description: "已有 W/T run ID。" },
+        citySeedId: { type: "string", description: "目标城市种子的 citySeedId。" },
+        wallVersion: {
+          type: "string",
+          enum: ["v2", "v1_debug"],
+          description: "城墙版本；默认 v2。v2 使用 D3 patch 贴边 wall reservation + actual road mask 裁门。",
+        },
+        wallMarginBlocks: { type: "number", description: "actualFootprint union 外扩距离，默认 24。" },
+        segmentLengthBlocks: { type: "number", description: "城墙 straight segment 长度，默认 15。" },
+        wallCorridorHalfWidthBlocks: { type: "number", description: "D5 wall reservation 墙带半宽，默认 4；此接口仅记录兼容，D5 阶段生效。" },
+        gateWidthBlocks: { type: "number", description: "城门缺口宽度，默认 9。" },
+        roadScanMarginBlocks: { type: "number", description: "扫描实际 RoadWeaver 路面的墙带外扩距离，默认 8。" },
+        roadProtectionMarginBlocks: { type: "number", description: "道路保护边距，默认 2。" },
+        maxFoundationDepthBlocks: { type: "number", description: "foundation 最大向下补齐深度，默认 8。" },
+        maxSegmentHeightDeltaBlocks: { type: "number", description: "单段最大可接受高差，默认 7。" },
+        dimensionId: { type: "string", description: "维度 ID，省略时从 run manifest 恢复。" },
+        playerName: { type: "string", description: "玩家名，用于定位维度。" },
+      },
+      required: ["runId", "citySeedId"],
+    },
+  },
+  {
+    name: "city_execute_city_walls",
+    description: "City 城墙执行：读取 city_wall_plan，用原版/Forge setBlock 放置临时石砖城墙和塔楼；需要 confirmWorldMutation=true。",
+    inputSchema: {
+      type: "object",
+      properties: {
+        runId: { type: "string", description: "已有 W/T run ID。" },
+        citySeedId: { type: "string", description: "目标城市种子的 citySeedId。" },
+        confirmWorldMutation: { type: "boolean", description: "必须为 true；否则拒绝真实改世界。" },
+        dimensionId: { type: "string", description: "维度 ID，省略时从 run manifest 恢复。" },
+        playerName: { type: "string", description: "玩家名，用于定位维度。" },
+      },
+      required: ["runId", "citySeedId", "confirmWorldMutation"],
     },
   },
   {

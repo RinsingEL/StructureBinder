@@ -239,6 +239,7 @@ public final class CityReservationMaskRegistry {
                                                             String startSignature,
                                                             JsonArray pieceBoxes,
                                                             ChunkPos generatingChunk,
+                                                            String terrainAdaptation,
                                                             String reasonCode,
                                                             String message) {
         JsonArray placed = ledgerPlacedStructures();
@@ -255,6 +256,11 @@ public final class CityReservationMaskRegistry {
         obj.addProperty("generatingChunkX", generatingChunk.x);
         obj.addProperty("generatingChunkZ", generatingChunk.z);
         obj.addProperty("featureStagePending", true);
+        obj.addProperty("terrainAdaptation", terrainAdaptation == null || terrainAdaptation.isBlank()
+                ? "unknown" : terrainAdaptation);
+        obj.addProperty("terrainAdaptationHookAvailable", false);
+        obj.addProperty("beardifierSeen", false);
+        obj.addProperty("terrainAdaptationReasonCode", "CITY_TERRAIN_ADAPTATION_HOOK_UNAVAILABLE");
         placed.add(obj);
         persistWorldgenLedger();
         LOGGER.info("Recorded City worldgen placement {} {} at chunk {},{} footprint {}",

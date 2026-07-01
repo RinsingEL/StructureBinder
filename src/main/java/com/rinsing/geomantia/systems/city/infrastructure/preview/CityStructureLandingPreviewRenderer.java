@@ -5,17 +5,24 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
 import com.rinsing.geomantia.systems.city.domain.model.BlockPoint;
+import com.rinsing.geomantia.systems.city.domain.model.CityLandformReviewPackage;
+import com.rinsing.geomantia.systems.city.domain.model.LandformPatchSummary;
+import com.rinsing.geomantia.systems.city.domain.model.PatchMemberCell;
+import com.rinsing.geomantia.systems.gis.domain.cell.LandformType;
 
 import javax.imageio.ImageIO;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.EnumMap;
+import java.util.Map;
 
 public final class CityStructureLandingPreviewRenderer {
     private static final int WIDTH = 1280;
@@ -23,14 +30,21 @@ public final class CityStructureLandingPreviewRenderer {
     private static final int PAD = 64;
 
     public Path renderD4(JsonObject anchorMap, Path outputDirectory) throws IOException {
+        return renderD4(anchorMap, null, outputDirectory);
+    }
+
+    public Path renderD4(JsonObject anchorMap, CityLandformReviewPackage reviewPackage,
+                         Path outputDirectory) throws IOException {
         Files.createDirectories(outputDirectory);
         Path path = outputDirectory.resolve("structure_anchor_preview.png");
         BufferedImage image = baseImage();
         Graphics2D g = image.createGraphics();
         try {
             setup(g);
-            Transform t = transform(gridBounds(anchorMap));
-            drawGrid(g, t, gridBounds(anchorMap));
+            BlockBounds gridBounds = gridBounds(anchorMap);
+            Transform t = transform(gridBounds);
+            drawPatchBackdrop(g, t, gridBounds, reviewPackage);
+            drawGrid(g, t, gridBounds);
             int i = 0;
             for (JsonElement elem : array(anchorMap, "anchors")) {
                 JsonObject anchor = elem.getAsJsonObject();
@@ -45,7 +59,7 @@ public final class CityStructureLandingPreviewRenderer {
                 drawLabel(g, t, point(anchor, "anchorBlock"), string(anchor, "anchorId"));
             }
             title(g, "City D4 structure anchor preview",
-                    "green=planned red=collision orange=mask gray=safety anchors="
+                    "patch backdrop + green=planned red=collision orange=mask gray=safety anchors="
                             + array(anchorMap, "anchors").size());
             sideSummary(g, anchorMap, "anchors");
         } finally {
@@ -56,20 +70,29 @@ public final class CityStructureLandingPreviewRenderer {
     }
 
     public Path renderD4Candidates(JsonObject candidateSet, Path outputDirectory) throws IOException {
+        return renderD4Candidates(candidateSet, null, outputDirectory);
+    }
+
+    public Path renderD4Candidates(JsonObject candidateSet, CityLandformReviewPackage reviewPackage,
+                                   Path outputDirectory) throws IOException {
         Files.createDirectories(outputDirectory);
         Path path = outputDirectory.resolve("anchor_candidate_preview.png");
         BufferedImage image = baseImage();
         Graphics2D g = image.createGraphics();
         try {
             setup(g);
-            Transform t = transform(gridBounds(candidateSet));
-            drawGrid(g, t, gridBounds(candidateSet));
+            BlockBounds gridBounds = gridBounds(candidateSet);
+            Transform t = transform(gridBounds);
+            drawPatchBackdrop(g, t, gridBounds, reviewPackage);
+            drawGrid(g, t, gridBounds);
+            drawFrozenAnchors(g, t, candidateSet);
             int i = 0;
             for (JsonElement slotElem : array(candidateSet, "slotCandidates")) {
                 JsonObject slot = slotElem.getAsJsonObject();
                 for (JsonElement candElem : array(slot, "candidates")) {
                     JsonObject candidate = candElem.getAsJsonObject();
                     i++;
+                    String code = "C" + i;
                     drawRect(g, t, bounds(candidate, "estimatedSafetyEnvelope"), new Color(98, 96, 89, 14),
                             new Color(89, 82, 70, 64), 0.8f);
                     drawRect(g, t, bounds(candidate, "estimatedMaskEnvelope"), new Color(202, 108, 62, 24),
@@ -78,11 +101,11 @@ public final class CityStructureLandingPreviewRenderer {
                             new Color(158, 59, 49, 145), 1.4f);
                     BlockPoint anchor = point(candidate, "anchorBlock");
                     drawPoint(g, t, anchor, color(i, 235));
-                    drawLabel(g, t, anchor, string(candidate, "candidateId"));
+                    drawBadge(g, t, anchor, code, color(i, 235));
                 }
             }
             title(g, "City D4 anchor candidate preview",
-                    "red=estimated collision orange=mask gray=safety candidates="
+                    "patch backdrop + blue=frozen selected C*=current candidates red=collision orange=mask gray=safety candidates="
                             + candidateCount(candidateSet));
             candidateSummary(g, candidateSet);
         } finally {
@@ -262,6 +285,86 @@ public final class CityStructureLandingPreviewRenderer {
         }
     }
 
+    private static void drawPatchBackdrop(Graphics2D g, Transform t, BlockBounds gridBounds,
+                                          CityLandformReviewPackage reviewPackage) {
+        if (reviewPackage == null) {
+            return;
+        }
+        for (LandformPatchSummary patch : reviewPackage.landformPatches()) {
+            Color base = landformColor(patch.landformType());
+            if (!patch.memberCells().isEmpty()) {
+                drawPatchCells(g, t, patch, memberCellStepBlocks(patch, reviewPackage.grid().cellStepBlocks()), base);
+            } else {
+                BlockBounds clipped = clip(patch.blockBounds(), gridBounds);
+                drawRect(g, t, clipped, withAlpha(base, 54), withAlpha(base.darker(), 82), 0.7f);
+            }
+        }
+        for (LandformPatchSummary patch : reviewPackage.landformPatches()) {
+            drawPatchLabel(g, t, patch);
+        }
+    }
+
+    private static void drawPatchCells(Graphics2D g, Transform t, LandformPatchSummary patch,
+                                       int cellStepBlocks, Color base) {
+        g.setColor(withAlpha(base, 58));
+        for (PatchMemberCell cell : patch.memberCells()) {
+            int x1 = t.x(cell.blockMinX());
+            int z1 = t.z(cell.blockMinZ());
+            int x2 = t.x(cell.blockMinX() + cellStepBlocks);
+            int z2 = t.z(cell.blockMinZ() + cellStepBlocks);
+            g.fillRect(Math.min(x1, x2), Math.min(z1, z2), Math.max(1, Math.abs(x2 - x1)),
+                    Math.max(1, Math.abs(z2 - z1)));
+        }
+        g.setColor(withAlpha(base.darker(), 42));
+        g.setStroke(new BasicStroke(0.6f));
+        for (PatchMemberCell cell : patch.memberCells()) {
+            int x1 = t.x(cell.blockMinX());
+            int z1 = t.z(cell.blockMinZ());
+            int x2 = t.x(cell.blockMinX() + cellStepBlocks);
+            int z2 = t.z(cell.blockMinZ() + cellStepBlocks);
+            g.drawRect(Math.min(x1, x2), Math.min(z1, z2), Math.max(1, Math.abs(x2 - x1)),
+                    Math.max(1, Math.abs(z2 - z1)));
+        }
+    }
+
+    private static void drawPatchLabel(Graphics2D g, Transform t, LandformPatchSummary patch) {
+        String label = patch.mapLabel();
+        if (label == null || label.isBlank()) {
+            return;
+        }
+        int x = t.x(patch.centerBlock().x());
+        int z = t.z(patch.centerBlock().z());
+        g.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 10));
+        FontMetrics metrics = g.getFontMetrics();
+        g.setColor(new Color(32, 38, 32, 118));
+        g.drawString(trim(label, 10), x - metrics.stringWidth(trim(label, 10)) / 2,
+                z + metrics.getAscent() / 2);
+    }
+
+    private static void drawFrozenAnchors(Graphics2D g, Transform t, JsonObject candidateSet) {
+        int index = 0;
+        for (JsonElement elem : array(candidateSet, "occupiedEnvelopes")) {
+            if (!elem.isJsonObject()) {
+                continue;
+            }
+            index++;
+            JsonObject occupied = elem.getAsJsonObject();
+            drawRect(g, t, bounds(occupied, "blockBounds"), new Color(67, 112, 178, 34),
+                    new Color(47, 86, 148, 150), 1.6f);
+        }
+        index = 0;
+        for (JsonElement elem : array(candidateSet, "selectedAnchors")) {
+            if (!elem.isJsonObject()) {
+                continue;
+            }
+            index++;
+            JsonObject anchor = elem.getAsJsonObject();
+            BlockPoint point = point(anchor, "anchorBlock");
+            drawPoint(g, t, point, new Color(67, 112, 178, 235));
+            drawBadge(g, t, point, "S" + index, new Color(67, 112, 178, 235));
+        }
+    }
+
     private static void drawPoint(Graphics2D g, Transform t, BlockPoint point, Color color) {
         int x = t.x(point.x());
         int z = t.z(point.z());
@@ -272,32 +375,64 @@ public final class CityStructureLandingPreviewRenderer {
         g.drawOval(x - 5, z - 5, 10, 10);
     }
 
+    private static void drawBadge(Graphics2D g, Transform t, BlockPoint point, String label, Color fill) {
+        int x = t.x(point.x());
+        int z = t.z(point.z());
+        g.setFont(new Font(Font.MONOSPACED, Font.BOLD, 11));
+        FontMetrics metrics = g.getFontMetrics();
+        int w = Math.max(20, metrics.stringWidth(label) + 8);
+        int h = 16;
+        int left = x + 7;
+        int top = z - h / 2;
+        g.setColor(new Color(fill.getRed(), fill.getGreen(), fill.getBlue(), 220));
+        g.fillRoundRect(left, top, w, h, 5, 5);
+        g.setColor(new Color(35, 39, 35, 210));
+        g.setStroke(new BasicStroke(1.0f));
+        g.drawRoundRect(left, top, w, h, 5, 5);
+        g.setColor(Color.WHITE);
+        g.drawString(label, left + 4, top + 12);
+    }
+
     private static void candidateSummary(Graphics2D g, JsonObject candidateSet) {
         int x = 820;
         int y = 90;
         g.setColor(new Color(32, 34, 34));
         g.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 14));
-        g.drawString("slot candidates", x, y);
+        g.drawString("candidate legend", x, y);
         y += 24;
         g.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 11));
+        int selectedIndex = 0;
+        for (JsonElement selectedElem : array(candidateSet, "selectedAnchors")) {
+            if (!selectedElem.isJsonObject() || y > HEIGHT - 60) {
+                continue;
+            }
+            selectedIndex++;
+            JsonObject selected = selectedElem.getAsJsonObject();
+            g.drawString("S" + selectedIndex + " selected "
+                    + trim(string(selected, "slotId") + " " + string(selected, "candidateId"), 48), x, y);
+            y += 15;
+        }
+        if (selectedIndex > 0) {
+            y += 8;
+        }
+        int candidateIndex = 0;
         for (JsonElement slotElem : array(candidateSet, "slotCandidates")) {
             JsonObject slot = slotElem.getAsJsonObject();
             g.drawString(trim(string(slot, "slotId") + " " + string(slot, "displayRole"), 54), x, y);
             y += 16;
-            int shown = 0;
             for (JsonElement candElem : array(slot, "candidates")) {
-                if (shown >= 3 || y > HEIGHT - 40) {
+                if (y > HEIGHT - 40) {
                     break;
                 }
                 JsonObject candidate = candElem.getAsJsonObject();
+                candidateIndex++;
                 String score = object(candidate, "scoreBreakdown").has("total")
                         ? String.format(java.util.Locale.ROOT, "%.2f",
                         object(candidate, "scoreBreakdown").get("total").getAsDouble())
                         : "";
-                g.drawString("  " + trim(string(candidate, "candidateKind") + " " + score
-                        + " " + string(candidate, "structureId"), 56), x, y);
+                g.drawString("  C" + candidateIndex + " " + score + " "
+                        + trim(string(candidate, "candidateId"), 42), x, y);
                 y += 15;
-                shown++;
             }
             y += 3;
             if (y > HEIGHT - 40) {
@@ -426,6 +561,58 @@ public final class CityStructureLandingPreviewRenderer {
         };
         Color base = colors[Math.floorMod(index, colors.length)];
         return new Color(base.getRed(), base.getGreen(), base.getBlue(), alpha);
+    }
+
+    private static Color landformColor(LandformType type) {
+        Map<LandformType, Color> colors = landformColors();
+        return colors.getOrDefault(type, new Color(158, 158, 158));
+    }
+
+    private static Map<LandformType, Color> landformColors() {
+        Map<LandformType, Color> map = new EnumMap<>(LandformType.class);
+        map.put(LandformType.WATER, new Color(54, 132, 196));
+        map.put(LandformType.SHORE, new Color(225, 206, 104));
+        map.put(LandformType.PLAIN, new Color(89, 160, 91));
+        map.put(LandformType.TERRACE, new Color(126, 176, 86));
+        map.put(LandformType.SLOPE, new Color(215, 139, 55));
+        map.put(LandformType.CLIFF, new Color(121, 85, 72));
+        map.put(LandformType.RIDGE, new Color(142, 92, 166));
+        map.put(LandformType.VALLEY, new Color(60, 173, 164));
+        map.put(LandformType.BASIN, new Color(103, 124, 134));
+        map.put(LandformType.UNKNOWN, new Color(158, 158, 158));
+        return map;
+    }
+
+    private static Color withAlpha(Color color, int alpha) {
+        return new Color(color.getRed(), color.getGreen(), color.getBlue(), alpha);
+    }
+
+    private static int memberCellStepBlocks(LandformPatchSummary patch, int fallbackStepBlocks) {
+        int minStep = Integer.MAX_VALUE;
+        for (PatchMemberCell left : patch.memberCells()) {
+            for (PatchMemberCell right : patch.memberCells()) {
+                int dx = Math.abs(left.blockMinX() - right.blockMinX());
+                int dz = Math.abs(left.blockMinZ() - right.blockMinZ());
+                if (dx > 0) {
+                    minStep = Math.min(minStep, dx);
+                }
+                if (dz > 0) {
+                    minStep = Math.min(minStep, dz);
+                }
+            }
+        }
+        if (minStep == Integer.MAX_VALUE) {
+            return Math.max(1, fallbackStepBlocks);
+        }
+        return Math.max(1, minStep);
+    }
+
+    private static BlockBounds clip(BlockBounds bounds, BlockBounds clip) {
+        return new BlockBounds(
+                Math.max(bounds.minX(), clip.minX()),
+                Math.max(bounds.minZ(), clip.minZ()),
+                Math.min(bounds.maxX(), clip.maxX()),
+                Math.min(bounds.maxZ(), clip.maxZ()));
     }
 
     private static BufferedImage baseImage() {

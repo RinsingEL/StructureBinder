@@ -9,6 +9,8 @@ import com.rinsing.geomantia.systems.city.application.CityStructureAnchorCandida
 import com.rinsing.geomantia.systems.city.application.CityStructureEnvelopeFacts;
 import com.rinsing.geomantia.systems.city.application.CityStructureEnvelopeProfiler;
 import com.rinsing.geomantia.systems.city.application.CityStructureMaterializationPlanner;
+import com.rinsing.geomantia.systems.city.application.CityWallPlanner;
+import com.rinsing.geomantia.systems.city.application.CityWallReservationPlanner;
 import com.rinsing.geomantia.systems.city.domain.config.CityPlanningConfig;
 import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
 import com.rinsing.geomantia.systems.city.domain.model.CityLandformReviewPackage;
@@ -271,6 +273,95 @@ final class CityStructureLandingFlowTest {
     }
 
     @Test
+    void d4CandidateSessionPlansOneSlotThenFreezesSelectionForNextSlot() throws Exception {
+        Fixture fixture = fixture();
+        CityStructureAnchorCandidatePlanner planner = new CityStructureAnchorCandidatePlanner();
+        JsonObject design = designSlotPlan(fixture.review());
+        CityStructureAnchorCandidatePlanner.SessionResult sessionResult = planner.createSession(
+                fixture.baseDir(), fixture.review(), fixture.terraSenseSource(), design, "session_test");
+
+        assertEquals("admin_core", sessionResult.session().get("currentSlotId").getAsString());
+        assertEquals(0, sessionResult.session().getAsJsonArray("selectedAnchors").size());
+
+        CityStructureAnchorCandidatePlanner.NextCandidateResult first = planner.planNext(
+                fixture.baseDir(), fixture.review(), sessionResult.session(), CityStructureEnvelopeFacts.empty());
+        JsonObject firstSlot = first.slotCandidateSet().getAsJsonArray("slotCandidates").get(0).getAsJsonObject();
+        assertEquals("admin_core", firstSlot.get("slotId").getAsString());
+        JsonObject firstCandidate = firstSlot.getAsJsonArray("candidates").get(0).getAsJsonObject();
+
+        CityStructureAnchorCandidatePlanner.SelectionResult selected = planner.selectSession(
+                first.session(), first.slotCandidateSet(), "admin_core",
+                firstCandidate.get("candidateId").getAsString(), "admin_core_01", "test", false);
+
+        assertEquals(1, selected.session().getAsJsonArray("selectedAnchors").size());
+        assertEquals(1, selected.session().getAsJsonArray("occupiedEnvelopes").size());
+        JsonObject occupied = selected.session().getAsJsonArray("occupiedEnvelopes")
+                .get(0).getAsJsonObject();
+        assertEquals("estimated_safety", occupied.get("envelopeType").getAsString());
+        assertTrue(occupied.has("estimatedCollisionEnvelope"));
+        assertTrue(occupied.has("estimatedSafetyEnvelope"));
+        assertEquals("residential_01", selected.session().get("currentSlotId").getAsString());
+        assertEquals("deferred_to_d6",
+                selected.quickPreflightReport().get("status").getAsString());
+
+        CityStructureAnchorCandidatePlanner.NextCandidateResult second = planner.planNext(
+                fixture.baseDir(), fixture.review(), selected.session(), CityStructureEnvelopeFacts.empty());
+        JsonObject secondSlot = second.slotCandidateSet().getAsJsonArray("slotCandidates").get(0).getAsJsonObject();
+        assertEquals("residential_01", secondSlot.get("slotId").getAsString());
+        assertEquals(1, second.slotCandidateSet().getAsJsonArray("occupiedEnvelopes").size());
+        assertTrue(second.slotCandidateSet().has("selectedAnchors"));
+        assertTrue(second.session().getAsJsonObject("timing").has("stepTimings"));
+    }
+
+    @Test
+    void d4CandidateSessionRejectsOutOfOrderSelectionAndIncompleteFinalize() throws Exception {
+        Fixture fixture = fixture();
+        CityStructureAnchorCandidatePlanner planner = new CityStructureAnchorCandidatePlanner();
+        CityStructureAnchorCandidatePlanner.SessionResult sessionResult = planner.createSession(
+                fixture.baseDir(), fixture.review(), fixture.terraSenseSource(),
+                designSlotPlan(fixture.review()), "session_test");
+        CityStructureAnchorCandidatePlanner.NextCandidateResult first = planner.planNext(
+                fixture.baseDir(), fixture.review(), sessionResult.session(), CityStructureEnvelopeFacts.empty());
+        JsonObject firstCandidate = first.slotCandidateSet().getAsJsonArray("slotCandidates")
+                .get(0).getAsJsonObject().getAsJsonArray("candidates").get(0).getAsJsonObject();
+
+        IllegalArgumentException order = assertThrows(IllegalArgumentException.class,
+                () -> planner.selectSession(first.session(), first.slotCandidateSet(), "residential_01",
+                        firstCandidate.get("candidateId").getAsString(), "bad", "bad", false));
+        assertTrue(order.getMessage().contains("D4_SLOT_ORDER_VIOLATION"));
+
+        IllegalArgumentException finalize = assertThrows(IllegalArgumentException.class,
+                () -> planner.finalizeSession(first.session()));
+        assertTrue(finalize.getMessage().contains("D4_SESSION_NOT_FINALIZABLE"));
+    }
+
+    @Test
+    void d4CandidateSessionFinalizesStandardAnchorPlan() throws Exception {
+        Fixture fixture = fixture();
+        CityStructureAnchorCandidatePlanner planner = new CityStructureAnchorCandidatePlanner();
+        JsonObject session = planner.createSession(
+                fixture.baseDir(), fixture.review(), fixture.terraSenseSource(),
+                designSlotPlan(fixture.review()), "session_test").session();
+
+        for (String slotId : List.of("admin_core", "residential_01")) {
+            CityStructureAnchorCandidatePlanner.NextCandidateResult next = planner.planNext(
+                    fixture.baseDir(), fixture.review(), session, CityStructureEnvelopeFacts.empty());
+            JsonObject candidate = next.slotCandidateSet().getAsJsonArray("slotCandidates")
+                    .get(0).getAsJsonObject().getAsJsonArray("candidates").get(0).getAsJsonObject();
+            session = planner.selectSession(next.session(), next.slotCandidateSet(), slotId,
+                    candidate.get("candidateId").getAsString(), slotId + "_anchor", "test", false).session();
+        }
+
+        CityStructureAnchorCandidatePlanner.FinalizeResult finalized = planner.finalizeSession(session);
+        JsonObject plan = finalized.structureAnchorPlan();
+        assertEquals(CityStructureAnchorPlanner.PLAN_SCHEMA, plan.get("schemaVersion").getAsString());
+        assertEquals(2, plan.getAsJsonArray("anchors").size());
+        assertTrue(plan.has("candidateSelectionTrace"));
+        assertEquals("city_d4_design_time_report.v0.2",
+                finalized.designTimeReport().get("schemaVersion").getAsString());
+    }
+
+    @Test
     void d4OfficialProfileRequiresApprovedReviewState() throws Exception {
         Fixture fixture = fixture();
         Path profilePath = fixture.baseDir().resolve("StructureProfile.jsonl");
@@ -324,6 +415,60 @@ final class CityStructureLandingFlowTest {
     }
 
     @Test
+    void wallReservationAddsNonRectangularCorridorAndRoadMaskCutsGate() throws Exception {
+        Fixture fixture = fixture();
+        JsonObject anchorMap = new CityStructureAnchorPlanner()
+                .plan(fixture.baseDir(), fixture.review(), fixture.terraSenseSource(), anchorPlan(fixture.review()))
+                .structureAnchorMap();
+        JsonObject reservation = new CityWallReservationPlanner().plan(
+                fixture.review(), anchorMap, "v2", 24, 15, 4);
+
+        assertEquals("city_wall_reservation_plan.v0.2", reservation.get("schemaVersion").getAsString());
+        assertEquals("d3_patch_member_cell_outer_boundary", reservation.get("boundarySource").getAsString());
+        assertFalse(reservation.getAsJsonArray("wallCenterline").isEmpty());
+        assertFalse(reservation.getAsJsonArray("wallCorridorMask").isEmpty());
+
+        JsonObject mask = new CityReservationMaskPlanner()
+                .plan(fixture.context(), anchorMap, reservation)
+                .reservationMaskPlan();
+        assertTrue(mask.getAsJsonArray("noVegetationMask").toString().contains("wall_reservation_corridor"));
+        assertTrue(mask.getAsJsonArray("noVanillaStructureMask").toString().contains("wall_reservation_corridor"));
+
+        JsonObject firstLine = reservation.getAsJsonArray("wallCenterline").get(0).getAsJsonObject();
+        JsonObject lineBounds = firstLine.getAsJsonObject("blockBounds");
+        int roadX = (lineBounds.get("minX").getAsInt() + lineBounds.get("maxX").getAsInt()) / 2;
+        int roadZ = (lineBounds.get("minZ").getAsInt() + lineBounds.get("maxZ").getAsInt()) / 2;
+        JsonObject actualRoadMask = JsonParser.parseString("""
+                {
+                  "schemaVersion": "city_actual_road_mask.v0.2",
+                  "cityId": "city_test",
+                  "status": "observed",
+                  "roadMask": [
+                    {
+                      "maskId": "road_0",
+                      "maskType": "actual_road",
+                      "blockBounds": {"minX": %d, "minZ": %d, "maxX": %d, "maxZ": %d}
+                    }
+                  ]
+                }
+                """.formatted(roadX, roadZ, roadX, roadZ)).getAsJsonObject();
+        JsonObject ledger = JsonParser.parseString("""
+                {
+                  "schemaVersion": "city_placed_structure_ledger.v0.1",
+                  "cityId": "city_test",
+                  "placedStructures": [
+                    {"anchorId": "a", "actualFootprint": {"minX": -8, "minZ": -8, "maxX": 8, "maxZ": 8}}
+                  ]
+                }
+                """).getAsJsonObject();
+
+        JsonObject wallPlan = new CityWallPlanner().planV2(ledger, reservation, actualRoadMask, 9, 2, 8, 7);
+        assertEquals("city_wall_plan.v0.2", wallPlan.get("schemaVersion").getAsString());
+        assertFalse(wallPlan.getAsJsonArray("generatedGates").isEmpty());
+        assertTrue(wallPlan.getAsJsonArray("wallSegments").toString().contains("WALL_GATE_FROM_ROAD"));
+    }
+
+    @Test
     void d5ActivateWritesPlannedStructureRegistryForWorldgenHook() throws Exception {
         Fixture fixture = fixture();
         JsonObject anchorMap = new CityStructureAnchorPlanner()
@@ -374,7 +519,7 @@ final class CityStructureLandingFlowTest {
                 .get(0);
         CityReservationMaskRegistry.recordWorldgenPlacement(plannedA, plannedA.plannedFootprint(),
                 "sig_a", new JsonArray(), anchorChunk,
-                "WORLDGEN_PLACEMENT_RECORDED", "test placement");
+                "none", "WORLDGEN_PLACEMENT_RECORDED", "test placement");
         assertEquals(1, CityReservationMaskRegistry.ledgerForCity(fixture.context().cityId())
                 .getAsJsonArray("placedStructures").size());
 

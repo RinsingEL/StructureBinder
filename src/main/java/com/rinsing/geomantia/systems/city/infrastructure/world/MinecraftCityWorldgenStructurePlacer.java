@@ -117,6 +117,7 @@ public final class MinecraftCityWorldgenStructurePlacer {
         chunk.setStartForStructure(structure, start);
         chunk.setUnsaved(true);
         CityReservationMaskRegistry.recordWorldgenPlacement(item, footprint, signature, pieces(start), chunkPos,
+                structure.terrainAdaptation().getSerializedName(),
                 "WORLDGEN_PLACEMENT_RECORDED",
                 "Planned StructureStart injected during ChunkGenerator.createStructures.");
     }

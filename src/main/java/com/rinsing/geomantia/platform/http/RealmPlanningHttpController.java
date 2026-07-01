@@ -226,6 +226,70 @@ final class RealmPlanningHttpController {
         });
     }
 
+    void handleCityCreateD4CandidateSession(HttpExchange exchange) {
+        handle(exchange, "POST", () -> {
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            String runId = requiredString(request, "runId");
+            String citySeedId = requiredString(request, "citySeedId");
+            rejectLegacyCityFields(request, "patchGroupPlan", "zoneChoices", "functionType", "functionTag",
+                    "function_candidates");
+            if (!request.has("terrasenseProfileSource") || !request.get("terrasenseProfileSource").isJsonObject()) {
+                throw new IllegalArgumentException("terrasenseProfileSource object is required.");
+            }
+            if (!request.has("designSlotPlan") || !request.get("designSlotPlan").isJsonObject()) {
+                throw new IllegalArgumentException("designSlotPlan object is required.");
+            }
+            return CityPlanningEndpointHandler.handleCreateD4CandidateSession(debugRoot(), runId, citySeedId,
+                    request.getAsJsonObject("terrasenseProfileSource"),
+                    request.getAsJsonObject("designSlotPlan"),
+                    request.has("structureEnvelopeFactsSource") && request.get("structureEnvelopeFactsSource").isJsonObject()
+                            ? request.getAsJsonObject("structureEnvelopeFactsSource") : null,
+                    stringValue(request, "sessionId", ""));
+        });
+    }
+
+    void handleCityPlanD4NextCandidates(HttpExchange exchange) {
+        handle(exchange, "POST", () -> {
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            String runId = requiredString(request, "runId");
+            String citySeedId = requiredString(request, "citySeedId");
+            return CityPlanningEndpointHandler.handlePlanD4NextCandidates(debugRoot(), runId, citySeedId,
+                    request.has("structureEnvelopeFactsSource") && request.get("structureEnvelopeFactsSource").isJsonObject()
+                            ? request.getAsJsonObject("structureEnvelopeFactsSource") : null);
+        });
+    }
+
+    void handleCitySelectD4Candidate(HttpExchange exchange) {
+        handle(exchange, "POST", () -> {
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            String runId = requiredString(request, "runId");
+            String citySeedId = requiredString(request, "citySeedId");
+            return CityPlanningEndpointHandler.handleSelectD4Candidate(debugRoot(), runId, citySeedId,
+                    stringValue(request, "sessionId", ""),
+                    requiredString(request, "slotId"),
+                    requiredString(request, "candidateId"),
+                    stringValue(request, "anchorId", ""),
+                    stringValue(request, "selectionReason", ""),
+                    booleanValue(request, "quickPreflight", false));
+        });
+    }
+
+    void handleCityFinalizeD4CandidateSession(HttpExchange exchange) {
+        handle(exchange, "POST", () -> {
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            String runId = requiredString(request, "runId");
+            String citySeedId = requiredString(request, "citySeedId");
+            if (!request.has("terrasenseProfileSource") || !request.get("terrasenseProfileSource").isJsonObject()) {
+                throw new IllegalArgumentException("terrasenseProfileSource object is required.");
+            }
+            return CityPlanningEndpointHandler.handleFinalizeD4CandidateSession(debugRoot(), runId, citySeedId,
+                    request.getAsJsonObject("terrasenseProfileSource"),
+                    request.has("structureEnvelopeFactsSource") && request.get("structureEnvelopeFactsSource").isJsonObject()
+                            ? request.getAsJsonObject("structureEnvelopeFactsSource") : null,
+                    stringValue(request, "sessionId", ""));
+        });
+    }
+
     void handleCityProfileStructureEnvelopes(HttpExchange exchange) {
         handle(exchange, "POST", () -> callOnServerThread(() -> {
             JsonObject request = GisHttpUtil.readJsonObject(exchange);
@@ -255,7 +319,11 @@ final class RealmPlanningHttpController {
             JsonObject request = GisHttpUtil.readJsonObject(exchange);
             String runId = requiredString(request, "runId");
             String citySeedId = requiredString(request, "citySeedId");
-            return CityPlanningEndpointHandler.handlePlanD5(debugRoot(), runId, citySeedId);
+            return CityPlanningEndpointHandler.handlePlanD5(debugRoot(), runId, citySeedId,
+                    stringValue(request, "wallVersion", "v2"),
+                    intValue(request, "wallMarginBlocks", 24),
+                    intValue(request, "segmentLengthBlocks", 15),
+                    intValue(request, "wallCorridorHalfWidthBlocks", 4));
         });
     }
 
@@ -265,6 +333,7 @@ final class RealmPlanningHttpController {
             String runId = requiredString(request, "runId");
             String citySeedId = requiredString(request, "citySeedId");
             boolean confirmWorldMutation = booleanValue(request, "confirmWorldMutation", false);
+            String roadProvider = stringValue(request, "roadProvider", "auto");
             ServerPlayer player = resolvePlayer(stringValue(request, "playerName", ""));
             String dimensionId = stringValue(request, "dimensionId", "");
             if (dimensionId.isBlank()) {
@@ -273,7 +342,7 @@ final class RealmPlanningHttpController {
             ServerLevel level = resolveLevel(dimensionId, player);
             JsonObject response = CityPlanningEndpointHandler.handleExecuteD5(debugRoot(),
                     server.getWorldPath(LevelResource.ROOT),
-                    runId, citySeedId, confirmWorldMutation, level);
+                    runId, citySeedId, confirmWorldMutation, level, roadProvider);
             response.addProperty("worldSaveRequested", false);
             return response;
         }));
@@ -320,6 +389,54 @@ final class RealmPlanningHttpController {
                     new CityPlanningEndpointHandler.MinecraftServerHolder(server),
                     level);
             if (executeStructurePlacement && debugLateMaterialize) {
+                server.saveAllChunks(true, true, true);
+                response.addProperty("worldSaveRequested", true);
+            } else {
+                response.addProperty("worldSaveRequested", false);
+            }
+            return response;
+        }));
+    }
+
+    void handleCityPlanCityWalls(HttpExchange exchange) {
+        handle(exchange, "POST", () -> callOnServerThread(() -> {
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            String runId = requiredString(request, "runId");
+            String citySeedId = requiredString(request, "citySeedId");
+            ServerPlayer player = resolvePlayer(stringValue(request, "playerName", ""));
+            String dimensionId = stringValue(request, "dimensionId", "");
+            if (dimensionId.isBlank()) {
+                dimensionId = restoredRunDimensionId(runId);
+            }
+            ServerLevel level = resolveLevel(dimensionId, player);
+            return CityPlanningEndpointHandler.handlePlanCityWalls(debugRoot(), runId, citySeedId,
+                    intValue(request, "wallMarginBlocks", 24),
+                    intValue(request, "segmentLengthBlocks", 15),
+                    intValue(request, "gateWidthBlocks", 9),
+                    stringValue(request, "wallVersion", "v2"),
+                    level,
+                    intValue(request, "roadScanMarginBlocks", 8),
+                    intValue(request, "roadProtectionMarginBlocks", 2),
+                    intValue(request, "maxFoundationDepthBlocks", 8),
+                    intValue(request, "maxSegmentHeightDeltaBlocks", 7));
+        }));
+    }
+
+    void handleCityExecuteCityWalls(HttpExchange exchange) {
+        handle(exchange, "POST", () -> callOnServerThread(() -> {
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            String runId = requiredString(request, "runId");
+            String citySeedId = requiredString(request, "citySeedId");
+            boolean confirmWorldMutation = booleanValue(request, "confirmWorldMutation", false);
+            ServerPlayer player = resolvePlayer(stringValue(request, "playerName", ""));
+            String dimensionId = stringValue(request, "dimensionId", "");
+            if (dimensionId.isBlank()) {
+                dimensionId = restoredRunDimensionId(runId);
+            }
+            ServerLevel level = resolveLevel(dimensionId, player);
+            JsonObject response = CityPlanningEndpointHandler.handleExecuteCityWalls(debugRoot(), runId, citySeedId,
+                    confirmWorldMutation, level);
+            if (response.get("ok").getAsBoolean()) {
                 server.saveAllChunks(true, true, true);
                 response.addProperty("worldSaveRequested", true);
             } else {

@@ -18,6 +18,10 @@ public final class CityReservationMaskPlanner {
     public static final String MASK_SCHEMA = "city_reservation_mask_plan.v0.1";
 
     public Result plan(CitySiteContext context, JsonObject structureAnchorMap) {
+        return plan(context, structureAnchorMap, null);
+    }
+
+    public Result plan(CitySiteContext context, JsonObject structureAnchorMap, JsonObject wallReservationPlan) {
         long started = System.nanoTime();
         if (context == null) {
             throw new IllegalArgumentException("CitySiteContext is required for D5.");
@@ -61,6 +65,7 @@ public final class CityReservationMaskPlanner {
             addReason(reasons, anchorId, "structure", maskEnvelope, "protect planned structure mask envelope");
             addReason(reasons, anchorId, "footprint", footprint, "planned footprint");
         }
+        appendWallReservation(noVegetation, vegetationLimited, noVanillaStructure, reasons, wallReservationPlan);
 
         JsonObject mask = new JsonObject();
         mask.addProperty("schemaVersion", MASK_SCHEMA);
@@ -71,6 +76,9 @@ public final class CityReservationMaskPlanner {
         mask.add("noVanillaStructureMask", noVanillaStructure);
         mask.add("reservationReason", reasons);
         mask.add("sourceStructureAnchorMap", structureAnchorMap.deepCopy());
+        if (wallReservationPlan != null) {
+            mask.add("wallReservationPlan", wallReservationPlan.deepCopy());
+        }
         JsonObject hook = new JsonObject();
         hook.addProperty("required", true);
         hook.addProperty("featureHook", "ConfiguredFeature.place HEAD");
@@ -89,6 +97,8 @@ public final class CityReservationMaskPlanner {
         metrics.addProperty("anchorCount", anchors.size());
         metrics.addProperty("noVegetationMaskCount", noVegetation.size());
         metrics.addProperty("noVanillaStructureMaskCount", noVanillaStructure.size());
+        metrics.addProperty("wallReservationMaskCount", wallReservationPlan == null ? 0
+                : wallReservationPlan.getAsJsonArray("wallCorridorMask").size());
         metrics.addProperty("d5RoadOperationCount", 0);
         quality.add("metrics", metrics);
 
@@ -106,6 +116,33 @@ public final class CityReservationMaskPlanner {
         obj.addProperty("sourceRef", sourceRef);
         obj.add("blockBounds", boundsJson(bounds));
         array.add(obj);
+    }
+
+    private static void appendWallReservation(JsonArray noVegetation,
+                                              JsonArray vegetationLimited,
+                                              JsonArray noVanillaStructure,
+                                              JsonArray reasons,
+                                              JsonObject wallReservationPlan) {
+        if (wallReservationPlan == null || !wallReservationPlan.has("wallCorridorMask")) {
+            return;
+        }
+        for (JsonElement elem : wallReservationPlan.getAsJsonArray("wallCorridorMask")) {
+            if (!elem.isJsonObject()) {
+                continue;
+            }
+            JsonObject mask = elem.getAsJsonObject();
+            String maskId = stringValue(mask, "maskId", "wall_corridor");
+            BlockBounds bounds = bounds(requiredObject(mask, "blockBounds"));
+            addMask(noVegetation, maskId + "_no_vegetation", bounds,
+                    "wall_reservation_corridor", maskId);
+            addMask(vegetationLimited, maskId + "_vegetation_limited",
+                    CityStructureAnchorPlanner.expand(bounds, 4),
+                    "wall_reservation_transition", maskId);
+            addMask(noVanillaStructure, maskId + "_no_vanilla_structure", bounds,
+                    "wall_reservation_corridor", maskId);
+            addReason(reasons, maskId, "wall_reservation", bounds,
+                    "protect planned City wall corridor before road gates are cut");
+        }
     }
 
     private static void addReason(JsonArray array, String sourceRef, String sourceType,
