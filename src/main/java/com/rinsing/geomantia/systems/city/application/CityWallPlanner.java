@@ -18,6 +18,11 @@ public final class CityWallPlanner {
     public static final int DEFAULT_ROAD_PROTECTION_MARGIN_BLOCKS = 2;
     public static final int DEFAULT_GATE_CLUSTER_RADIUS_BLOCKS = 24;
     public static final int DEFAULT_TERRAIN_FIT_UNIT_LENGTH_BLOCKS = 5;
+    public static final String DEFAULT_WALL_TERRAIN_POLICY = "v3";
+    public static final int DEFAULT_FLAT_MAX_DELTA_BLOCKS = 7;
+    public static final int DEFAULT_STEPPED_MAX_DELTA_BLOCKS = 16;
+    public static final int DEFAULT_MOUNTAIN_PROBE_DISTANCE_BLOCKS = 6;
+    public static final int DEFAULT_NATURAL_BOUNDARY_MIN_DELTA_BLOCKS = 17;
     private static final int WALL_HALF_THICKNESS_BLOCKS = 2;
 
     public JsonObject plan(JsonObject placedLedger, int wallMarginBlocks, int segmentLengthBlocks,
@@ -151,6 +156,7 @@ public final class CityWallPlanner {
         plan.addProperty("roadProtectionMarginBlocks", roadMargin);
         plan.addProperty("gateClusterRadiusBlocks", opts.gateClusterRadiusBlocks());
         plan.addProperty("terrainFitUnitLengthBlocks", opts.terrainFitUnitLengthBlocks());
+        plan.addProperty("wallTerrainPolicy", opts.normalizedWallTerrainPolicy());
         plan.addProperty("maxFoundationDepthBlocks", maxFoundationDepthBlocks <= 0 ? 8 : maxFoundationDepthBlocks);
         plan.addProperty("maxSegmentHeightDeltaBlocks", maxSegmentHeightDeltaBlocks <= 0 ? 7 : maxSegmentHeightDeltaBlocks);
         plan.add("wallReservationSource", wallReservationPlan == null ? new JsonObject() : wallReservationPlan.deepCopy());
@@ -263,8 +269,16 @@ public final class CityWallPlanner {
         plan.add("wallSegments", segments);
         plan.add("templateLibrary", CityWallTemplateLibrary.libraryJson());
         JsonObject terrain = new JsonObject();
+        terrain.addProperty("policyVersion", opts.normalizedWallTerrainPolicy());
+        terrain.addProperty("flatMaxDeltaBlocks", opts.normalizedFlatMaxDeltaBlocks());
+        terrain.addProperty("steppedMaxDeltaBlocks", opts.normalizedSteppedMaxDeltaBlocks());
+        terrain.addProperty("mountainProbeDistanceBlocks", opts.normalizedMountainProbeDistanceBlocks());
+        terrain.addProperty("naturalBoundaryMinDeltaBlocks", opts.normalizedNaturalBoundaryMinDeltaBlocks());
+        terrain.addProperty("embeddedSlopeTower", opts.embeddedSlopeTower());
         terrain.addProperty("foundationMode", "per_unit_column_foundation");
-        terrain.addProperty("slopeMode", "terrain_units_step_or_skip");
+        terrain.addProperty("slopeMode", "v3.1".equals(opts.normalizedWallTerrainPolicy())
+                ? "low_flat_mid_stepped_high_embedded_or_cliff"
+                : "terrain_units_step_or_skip");
         terrain.addProperty("roadProtection", true);
         terrain.addProperty("debugScanSupported", true);
         plan.add("terrainFitPolicy", terrain);
@@ -536,12 +550,18 @@ public final class CityWallPlanner {
     private static JsonObject segment(String id, String type, String templateId,
                                       int minX, int minZ, int maxX, int maxZ) {
         JsonObject obj = new JsonObject();
+        BlockBounds bounds = new BlockBounds(Math.min(minX, maxX), Math.min(minZ, maxZ),
+                Math.max(minX, maxX), Math.max(minZ, maxZ));
         obj.addProperty("segmentId", id);
         obj.addProperty("segmentType", type);
         obj.addProperty("templateId", templateId);
-        obj.add("blockBounds", boundsJson(new BlockBounds(Math.min(minX, maxX), Math.min(minZ, maxZ),
-                Math.max(minX, maxX), Math.max(minZ, maxZ))));
+        obj.addProperty("wallAxis", wallAxis(bounds));
+        obj.add("blockBounds", boundsJson(bounds));
         return obj;
+    }
+
+    private static String wallAxis(BlockBounds bounds) {
+        return bounds.widthBlocks() >= bounds.heightBlocks() ? "X" : "Z";
     }
 
     private static BlockBounds unionPlaced(JsonObject ledger) {
@@ -623,9 +643,53 @@ public final class CityWallPlanner {
         return obj != null && obj.has(key) && !obj.get(key).isJsonNull() ? obj.get(key).getAsString() : fallback;
     }
 
-    public record V3Options(int gateClusterRadiusBlocks, int terrainFitUnitLengthBlocks) {
+    public record V3Options(int gateClusterRadiusBlocks,
+                            int terrainFitUnitLengthBlocks,
+                            String wallTerrainPolicy,
+                            int flatMaxDeltaBlocks,
+                            int steppedMaxDeltaBlocks,
+                            int mountainProbeDistanceBlocks,
+                            int naturalBoundaryMinDeltaBlocks,
+                            boolean embeddedSlopeTower) {
+        public V3Options(int gateClusterRadiusBlocks, int terrainFitUnitLengthBlocks) {
+            this(gateClusterRadiusBlocks, terrainFitUnitLengthBlocks,
+                    DEFAULT_WALL_TERRAIN_POLICY,
+                    DEFAULT_FLAT_MAX_DELTA_BLOCKS,
+                    DEFAULT_STEPPED_MAX_DELTA_BLOCKS,
+                    DEFAULT_MOUNTAIN_PROBE_DISTANCE_BLOCKS,
+                    DEFAULT_NATURAL_BOUNDARY_MIN_DELTA_BLOCKS,
+                    true);
+        }
+
         public static V3Options defaults() {
             return new V3Options(DEFAULT_GATE_CLUSTER_RADIUS_BLOCKS, DEFAULT_TERRAIN_FIT_UNIT_LENGTH_BLOCKS);
+        }
+
+        public String normalizedWallTerrainPolicy() {
+            return "v3.1".equalsIgnoreCase(wallTerrainPolicy == null ? "" : wallTerrainPolicy.trim())
+                    ? "v3.1" : DEFAULT_WALL_TERRAIN_POLICY;
+        }
+
+        public int normalizedFlatMaxDeltaBlocks() {
+            return flatMaxDeltaBlocks <= 0 ? DEFAULT_FLAT_MAX_DELTA_BLOCKS : flatMaxDeltaBlocks;
+        }
+
+        public int normalizedSteppedMaxDeltaBlocks() {
+            return steppedMaxDeltaBlocks <= 0
+                    ? DEFAULT_STEPPED_MAX_DELTA_BLOCKS
+                    : Math.max(normalizedFlatMaxDeltaBlocks(), steppedMaxDeltaBlocks);
+        }
+
+        public int normalizedMountainProbeDistanceBlocks() {
+            return mountainProbeDistanceBlocks <= 0
+                    ? DEFAULT_MOUNTAIN_PROBE_DISTANCE_BLOCKS
+                    : mountainProbeDistanceBlocks;
+        }
+
+        public int normalizedNaturalBoundaryMinDeltaBlocks() {
+            return naturalBoundaryMinDeltaBlocks <= 0
+                    ? DEFAULT_NATURAL_BOUNDARY_MIN_DELTA_BLOCKS
+                    : Math.max(normalizedSteppedMaxDeltaBlocks() + 1, naturalBoundaryMinDeltaBlocks);
         }
     }
 

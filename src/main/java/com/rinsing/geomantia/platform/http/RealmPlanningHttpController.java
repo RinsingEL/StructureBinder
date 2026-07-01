@@ -434,7 +434,18 @@ final class RealmPlanningHttpController {
                             intValue(request, "gateClusterRadiusBlocks",
                                     CityWallPlanner.DEFAULT_GATE_CLUSTER_RADIUS_BLOCKS),
                             intValue(request, "terrainFitUnitLengthBlocks",
-                                    CityWallPlanner.DEFAULT_TERRAIN_FIT_UNIT_LENGTH_BLOCKS)));
+                                    CityWallPlanner.DEFAULT_TERRAIN_FIT_UNIT_LENGTH_BLOCKS),
+                            stringValue(request, "wallTerrainPolicy",
+                                    CityWallPlanner.DEFAULT_WALL_TERRAIN_POLICY),
+                            intValue(request, "flatMaxDeltaBlocks",
+                                    CityWallPlanner.DEFAULT_FLAT_MAX_DELTA_BLOCKS),
+                            intValue(request, "steppedMaxDeltaBlocks",
+                                    CityWallPlanner.DEFAULT_STEPPED_MAX_DELTA_BLOCKS),
+                            intValue(request, "mountainProbeDistanceBlocks",
+                                    CityWallPlanner.DEFAULT_MOUNTAIN_PROBE_DISTANCE_BLOCKS),
+                            intValue(request, "naturalBoundaryMinDeltaBlocks",
+                                    CityWallPlanner.DEFAULT_NATURAL_BOUNDARY_MIN_DELTA_BLOCKS),
+                            booleanValue(request, "embeddedSlopeTower", true)));
         }));
     }
 

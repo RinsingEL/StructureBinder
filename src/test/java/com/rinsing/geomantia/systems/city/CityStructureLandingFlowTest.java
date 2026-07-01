@@ -24,6 +24,7 @@ import com.rinsing.geomantia.systems.gis.domain.landform.PatchFlag;
 import net.minecraft.world.level.ChunkPos;
 import org.junit.jupiter.api.Test;
 
+import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.EnumSet;
@@ -550,6 +551,110 @@ final class CityStructureLandingFlowTest {
         assertTrue(wallPlan.getAsJsonArray("classifiedRoadComponents").toString().contains("insideRoad"));
         assertTrue(wallPlan.getAsJsonArray("insideRoadIgnoredIntersections").toString().contains("insideRoad"));
         assertTrue(wallPlan.getAsJsonArray("wallSegments").toString().contains("DOMAIN_HULL_WALL_SEGMENT"));
+        assertEquals("v3", wallPlan.getAsJsonObject("terrainFitPolicy").get("policyVersion").getAsString());
+    }
+
+    @Test
+    void wallPlannerV3CanEmitTerrainPolicyV31() {
+        JsonObject reservation = JsonParser.parseString("""
+                {
+                  "schemaVersion": "city_wall_reservation_plan.v0.3",
+                  "cityId": "city_test",
+                  "wallBounds": {"minX": -32, "minZ": -32, "maxX": 32, "maxZ": 32},
+                  "cityDomainMask": [
+                    {"blockBounds": {"minX": -16, "minZ": -16, "maxX": 16, "maxZ": 16}}
+                  ],
+                  "wallCenterline": [
+                    {"segmentId": "north", "blockBounds": {"minX": -32, "minZ": -32, "maxX": 32, "maxZ": -28}}
+                  ],
+                  "gateCandidateZones": []
+                }
+                """).getAsJsonObject();
+        JsonObject actualRoadMask = JsonParser.parseString("""
+                {"schemaVersion":"city_actual_road_mask.v0.1","cityId":"city_test","roadMask":[]}
+                """).getAsJsonObject();
+        JsonObject ledger = JsonParser.parseString("""
+                {
+                  "schemaVersion": "city_placed_structure_ledger.v0.1",
+                  "cityId": "city_test",
+                  "placedStructures": [
+                    {"anchorId": "a", "actualFootprint": {"minX": -8, "minZ": -8, "maxX": 8, "maxZ": 8}}
+                  ]
+                }
+                """).getAsJsonObject();
+
+        JsonObject wallPlan = new CityWallPlanner().planV3(ledger, reservation, actualRoadMask, 9, 2, 8, 7,
+                new CityWallPlanner.V3Options(24, 5, "v3.1", 7, 16, 6, 17, true));
+
+        JsonObject policy = wallPlan.getAsJsonObject("terrainFitPolicy");
+        assertEquals("v3.1", wallPlan.get("wallTerrainPolicy").getAsString());
+        assertEquals("v3.1", policy.get("policyVersion").getAsString());
+        assertEquals(7, policy.get("flatMaxDeltaBlocks").getAsInt());
+        assertEquals(16, policy.get("steppedMaxDeltaBlocks").getAsInt());
+        assertEquals(6, policy.get("mountainProbeDistanceBlocks").getAsInt());
+        assertEquals(17, policy.get("naturalBoundaryMinDeltaBlocks").getAsInt());
+        assertTrue(policy.get("embeddedSlopeTower").getAsBoolean());
+        assertEquals("low_flat_mid_stepped_high_embedded_or_cliff", policy.get("slopeMode").getAsString());
+    }
+
+    @Test
+    void wallPlannerV3MarksWallAxisForExecution() {
+        JsonObject reservation = JsonParser.parseString("""
+                {
+                  "schemaVersion": "city_wall_reservation_plan.v0.3",
+                  "cityId": "city_test",
+                  "wallBounds": {"minX": -40, "minZ": -40, "maxX": 40, "maxZ": 40},
+                  "cityDomainMask": [
+                    {"blockBounds": {"minX": -16, "minZ": -16, "maxX": 16, "maxZ": 16}}
+                  ],
+                  "wallCenterline": [
+                    {"segmentId": "north", "blockBounds": {"minX": -32, "minZ": -32, "maxX": 32, "maxZ": -24}},
+                    {"segmentId": "west", "blockBounds": {"minX": -32, "minZ": -32, "maxX": -24, "maxZ": 32}}
+                  ],
+                  "gateCandidateZones": []
+                }
+                """).getAsJsonObject();
+        JsonObject actualRoadMask = JsonParser.parseString("""
+                {"schemaVersion":"city_actual_road_mask.v0.1","cityId":"city_test","roadMask":[]}
+                """).getAsJsonObject();
+        JsonObject ledger = JsonParser.parseString("""
+                {
+                  "schemaVersion": "city_placed_structure_ledger.v0.1",
+                  "cityId": "city_test",
+                  "placedStructures": [
+                    {"anchorId": "a", "actualFootprint": {"minX": -8, "minZ": -8, "maxX": 8, "maxZ": 8}}
+                  ]
+                }
+                """).getAsJsonObject();
+
+        JsonObject wallPlan = new CityWallPlanner().planV3(ledger, reservation, actualRoadMask, 9, 2, 8, 7,
+                new CityWallPlanner.V3Options(24, 5, "v3.1", 7, 16, 6, 17, true));
+
+        String segments = wallPlan.getAsJsonArray("wallSegments").toString();
+        assertTrue(segments.contains("\"wallAxis\":\"X\""));
+        assertTrue(segments.contains("\"wallAxis\":\"Z\""));
+    }
+
+    @Test
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    void wallBackendSplitsTerrainUnitsAlongWallAxis() throws Exception {
+        Class<?> axisClass = Class.forName("com.rinsing.geomantia.systems.city.infrastructure.world.CityWallPlacementBackend$Axis");
+        Object zAxis = Enum.valueOf((Class<Enum>) axisClass, "Z");
+        Method split = Class.forName("com.rinsing.geomantia.systems.city.infrastructure.world.CityWallPlacementBackend")
+                .getDeclaredMethod("splitUnits", BlockBounds.class, int.class, axisClass);
+        split.setAccessible(true);
+
+        List<BlockBounds> units = (List<BlockBounds>) split.invoke(null, new BlockBounds(-4, 0, 4, 31), 8, zAxis);
+
+        assertEquals(4, units.size());
+        for (BlockBounds unit : units) {
+            assertEquals(-4, unit.minX());
+            assertEquals(4, unit.maxX());
+        }
+        assertEquals(0, units.get(0).minZ());
+        assertEquals(7, units.get(0).maxZ());
+        assertEquals(24, units.get(3).minZ());
+        assertEquals(31, units.get(3).maxZ());
     }
 
     @Test
