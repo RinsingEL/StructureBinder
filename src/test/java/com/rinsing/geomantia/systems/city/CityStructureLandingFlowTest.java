@@ -694,6 +694,97 @@ final class CityStructureLandingFlowTest {
     }
 
     @Test
+    void wallPlannerV33ProjectsNearbyExternalRoadIntoGatehouse() {
+        JsonObject wallPlan = new CityWallPlanner().planV3(syntheticWallLedger(), syntheticEastWallReservation(),
+                roadMaskFromBlocks("city_test",
+                        new int[][]{
+                                {70, 0}, {71, 0}, {72, 0}, {73, 0},
+                                {74, 0}, {75, 0}, {76, 0}, {77, 0}
+                        }),
+                9, 2, 8, 7, v33Options());
+
+        assertEquals("v3.3", wallPlan.get("wallDesignPolicy").getAsString());
+        assertTrue(wallPlan.getAsJsonArray("generatedGates").toString()
+                        .contains("WALL_GATE_FROM_ROAD_PROJECTION"),
+                wallPlan.toString());
+        assertFalse(wallPlan.getAsJsonArray("projectedRoadGateCandidates").isEmpty());
+        assertTrue(wallPlan.getAsJsonArray("wallSegments").toString().contains("\"segmentType\":\"gatehouse\""));
+    }
+
+    @Test
+    void wallPlannerV33DoesNotProjectInsideRoads() {
+        JsonObject wallPlan = new CityWallPlanner().planV3(syntheticWallLedger(), syntheticEastWallReservation(),
+                roadMaskFromBlocks("city_test",
+                        new int[][]{
+                                {0, 0}, {1, 0}, {2, 0}, {3, 0},
+                                {4, 0}, {5, 0}, {6, 0}, {7, 0}
+                        }),
+                9, 2, 8, 7, v33Options());
+
+        assertTrue(wallPlan.getAsJsonArray("projectedRoadGateCandidates").isEmpty());
+        assertTrue(wallPlan.getAsJsonArray("insideRoadIgnoredIntersections").toString().contains("insideRoad"));
+        assertEquals("NO_VALID_GATE_CANDIDATE_AFTER_FILTER",
+                wallPlan.get("gateFallbackReasonCode").getAsString());
+    }
+
+    @Test
+    void wallPlannerV33KeepsTouchOnlyRoadsSkipped() {
+        JsonObject wallPlan = new CityWallPlanner().planV3(syntheticWallLedger(), syntheticEastWallReservation(),
+                roadMaskFromBlocks("city_test", new int[][]{{70, 0}}),
+                9, 2, 8, 7, v33Options());
+
+        assertTrue(wallPlan.getAsJsonArray("projectedRoadGateCandidates").isEmpty());
+        assertTrue(wallPlan.getAsJsonArray("roadTrendSkippedIntersections").toString()
+                .contains("WALL_ROAD_TOUCH_ONLY_SKIP"));
+        assertTrue(wallPlan.getAsJsonArray("roadProjectionSkippedIntersections").toString()
+                .contains("WALL_ROAD_TOUCH_ONLY_SKIP"));
+    }
+
+    @Test
+    void wallPlannerV33DoesNotProjectParallelRoads() {
+        JsonObject wallPlan = new CityWallPlanner().planV3(syntheticWallLedger(), syntheticEastWallReservation(),
+                roadMaskFromBlocks("city_test",
+                        new int[][]{
+                                {70, 0}, {70, 1}, {70, 2}, {70, 3},
+                                {70, 4}, {70, 5}, {70, 6}, {70, 7}
+                        }),
+                9, 2, 8, 7, v33Options());
+
+        assertTrue(wallPlan.getAsJsonArray("projectedRoadGateCandidates").isEmpty());
+        assertTrue(wallPlan.getAsJsonArray("roadProjectionSkippedIntersections").toString()
+                .contains("WALL_ROAD_PROJECTION_NOT_ALIGNED"));
+    }
+
+    @Test
+    void wallPlannerV33MergesNearbyProjectedGatesBySpacing() {
+        JsonObject wallPlan = new CityWallPlanner().planV3(syntheticWallLedger(), syntheticEastWallReservation(),
+                roadMaskFromBlocks("city_test",
+                        new int[][]{
+                                {70, 0}, {71, 0}, {72, 0}, {73, 0},
+                                {74, 0}, {75, 0}, {76, 0}, {77, 0},
+                                {70, 20}, {71, 20}, {72, 20}, {73, 20},
+                                {74, 20}, {75, 20}, {76, 20}, {77, 20}
+                        }),
+                9, 2, 8, 7, v33Options());
+
+        assertEquals(2, wallPlan.getAsJsonArray("projectedRoadGateCandidates").size());
+        assertEquals(1, wallPlan.getAsJsonArray("gateClusters").size());
+        assertEquals(1, wallPlan.getAsJsonArray("generatedGates").size());
+    }
+
+    @Test
+    void wallPlannerV33FallbackReasonDistinguishesFilteredRoadsFromEmptyRoadMask() {
+        JsonObject wallPlan = new CityWallPlanner().planV3(syntheticWallLedger(), syntheticEastWallReservation(),
+                roadMaskFromBlocks("city_test", new int[][]{}),
+                9, 2, 8, 7, v33Options());
+
+        assertEquals("NO_VALID_GATE_CANDIDATE_AFTER_FILTER",
+                wallPlan.get("gateFallbackReasonCode").getAsString());
+        assertTrue(wallPlan.getAsJsonArray("generatedGates").toString()
+                .contains("NO_VALID_GATE_CANDIDATE_AFTER_FILTER"));
+    }
+
+    @Test
     void wallTemplateLibraryIncludesGatehousesAndUsableTowers() {
         String library = CityWallTemplateLibrary.libraryJson().toString();
 
@@ -1191,6 +1282,60 @@ final class CityStructureLandingFlowTest {
         obj.addProperty("maxX", bounds.maxX());
         obj.addProperty("maxZ", bounds.maxZ());
         return obj;
+    }
+
+    private static JsonObject syntheticWallLedger() {
+        return JsonParser.parseString("""
+                {
+                  "schemaVersion": "city_placed_structure_ledger.v0.1",
+                  "cityId": "city_test",
+                  "placedStructures": [
+                    {"anchorId": "a", "actualFootprint": {"minX": -8, "minZ": -8, "maxX": 8, "maxZ": 8}}
+                  ]
+                }
+                """).getAsJsonObject();
+    }
+
+    private static JsonObject syntheticEastWallReservation() {
+        return JsonParser.parseString("""
+                {
+                  "schemaVersion": "city_wall_reservation_plan.v0.3",
+                  "cityId": "city_test",
+                  "wallBounds": {"minX": -64, "minZ": -64, "maxX": 64, "maxZ": 64},
+                  "cityDomainMask": [
+                    {"blockBounds": {"minX": -32, "minZ": -32, "maxX": 32, "maxZ": 32}}
+                  ],
+                  "wallCenterline": [
+                    {"segmentId": "east", "blockBounds": {"minX": 60, "minZ": -64, "maxX": 64, "maxZ": 64}}
+                  ],
+                  "gateCandidateZones": [
+                    {"blockBounds": {"minX": 60, "minZ": -4, "maxX": 64, "maxZ": 4}}
+                  ]
+                }
+                """).getAsJsonObject();
+    }
+
+    private static JsonObject roadMaskFromBlocks(String cityId, int[][] blocks) {
+        JsonObject obj = new JsonObject();
+        obj.addProperty("schemaVersion", "city_actual_road_mask.v0.2");
+        obj.addProperty("cityId", cityId);
+        obj.addProperty("status", blocks.length == 0 ? "empty" : "observed");
+        JsonArray roadMask = new JsonArray();
+        for (int i = 0; i < blocks.length; i++) {
+            JsonObject mask = new JsonObject();
+            mask.addProperty("maskId", "road_" + i);
+            mask.addProperty("maskType", "actual_road");
+            mask.add("blockBounds", boundsJson(new BlockBounds(blocks[i][0], blocks[i][1], blocks[i][0], blocks[i][1])));
+            roadMask.add(mask);
+        }
+        obj.add("roadMask", roadMask);
+        return obj;
+    }
+
+    private static CityWallPlanner.V3Options v33Options() {
+        return new CityWallPlanner.V3Options(
+                24, 5, "v3.1", 7, 16, 6, 17, true,
+                "v3.3", 48, 24, 4096, 32);
     }
 
     private static BlockBounds bounds(JsonObject obj) {

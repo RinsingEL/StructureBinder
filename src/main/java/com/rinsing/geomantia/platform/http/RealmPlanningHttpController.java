@@ -455,7 +455,9 @@ final class RealmPlanningHttpController {
                             intValue(request, "minGateRoadLengthBlocks",
                                     CityWallPlanner.DEFAULT_MIN_GATE_ROAD_LENGTH_BLOCKS),
                             intValue(request, "naturalWaterBoundaryMinAreaBlocks",
-                                    CityWallPlanner.DEFAULT_NATURAL_WATER_BOUNDARY_MIN_AREA_BLOCKS)));
+                                    CityWallPlanner.DEFAULT_NATURAL_WATER_BOUNDARY_MIN_AREA_BLOCKS),
+                            intValue(request, "roadProjectionMaxDistanceBlocks",
+                                    CityWallPlanner.DEFAULT_ROAD_PROJECTION_MAX_DISTANCE_BLOCKS)));
         }));
     }
 
