@@ -126,6 +126,19 @@ public final class CityWallPlacementBackend {
             return new SegmentResult("skipped", "WALL_GATE_GAP", 0,
                     "Temporary gate gap is intentionally left empty.");
         }
+        if ("gatehouse".equals(type)) {
+            SegmentResult result = placeGatehouseSegment(level, segment, context, debugScan, terrainDebug);
+            if ("skipped".equals(result.status())) {
+                addGap(gapDebug, segment, result.reasonCode(), result.message());
+            }
+            return result;
+        }
+        if ("natural_boundary".equals(type)) {
+            addGap(gapDebug, segment, stringValue(segment, "reasonCode", "NATURAL_BOUNDARY_NO_WALL"),
+                    "Natural boundary intentionally skips continuous wall.");
+            return new SegmentResult("skipped", stringValue(segment, "reasonCode", "NATURAL_BOUNDARY_NO_WALL"), 0,
+                    "Natural boundary intentionally skips continuous wall.");
+        }
         if ("skipped_wall_segment".equals(type)) {
             String reason = stringValue(segment, "reasonCode", "WALL_SEGMENT_SKIPPED");
             addGap(gapDebug, segment, reason, "Wall segment intentionally skipped by planner.");
@@ -287,6 +300,74 @@ public final class CityWallPlacementBackend {
                 terrainDeltaBand(terrain.delta(), context), new JsonArray(), probe.asJson());
     }
 
+    private SegmentResult placeGatehouseSegment(ServerLevel level, JsonObject segment, PlacementContext context,
+                                                boolean debugScan, JsonObject terrainDebug) {
+        BlockBounds bounds = bounds(segment.getAsJsonObject("blockBounds"));
+        Axis axis = axisForSegment(segment, bounds);
+        TerrainSample terrain = sampleTerrain(level, bounds, debugScan);
+        int baseY = terrain.maxY() + 1;
+        if (debugScan) {
+            addTerrainSamples(terrainDebug, segment, bounds, context, terrain.surfaceSamples(), baseY,
+                    "GATEHOUSE_PLACED");
+        }
+        int changed = placeGatehouse(level, bounds, baseY, context, axis);
+        return new SegmentResult("executed", "GATEHOUSE_PLACED", changed,
+                "Placed independent gatehouse template with full inner/outer road opening.");
+    }
+
+    private int placeGatehouse(ServerLevel level, BlockBounds bounds, int baseY, PlacementContext context, Axis axis) {
+        int changed = 0;
+        int minAlong = axis == Axis.X ? bounds.minX() : bounds.minZ();
+        int maxAlong = axis == Axis.X ? bounds.maxX() : bounds.maxZ();
+        int minAcross = axis == Axis.X ? bounds.minZ() : bounds.minX();
+        int maxAcross = axis == Axis.X ? bounds.maxZ() : bounds.maxX();
+        int centerAlong = (minAlong + maxAlong) / 2;
+        int halfOpening = Math.max(2, Math.min(4, (maxAlong - minAlong + 1) / 4));
+        for (int along = minAlong; along <= maxAlong; along++) {
+            for (int across = minAcross; across <= maxAcross; across++) {
+                int x = axis == Axis.X ? along : across;
+                int z = axis == Axis.X ? across : along;
+                boolean opening = Math.abs(along - centerAlong) <= halfOpening;
+                boolean sidePier = !opening && (along <= minAlong + 2 || along >= maxAlong - 2);
+                boolean sideWall = !opening && (along <= centerAlong - halfOpening - 1 || along >= centerAlong + halfOpening + 1);
+                if (opening) {
+                    clearGateColumn(level, x, z, baseY, 5);
+                    continue;
+                }
+                changed += placeFoundation(level, x, z, baseY, context);
+                for (int y = 0; y < 9; y++) {
+                    BlockState state = sidePier
+                            ? (y >= 7 ? Blocks.STONE_BRICK_WALL.defaultBlockState() : Blocks.STONE_BRICKS.defaultBlockState())
+                            : sideWall && (y <= 5 || y >= 7)
+                            ? Blocks.STONE_BRICKS.defaultBlockState()
+                            : null;
+                    if (state != null && set(level, x, baseY + y, z, state)) {
+                        changed++;
+                    }
+                }
+            }
+        }
+        for (int along = centerAlong - halfOpening - 1; along <= centerAlong + halfOpening + 1; along++) {
+            for (int across = minAcross; across <= maxAcross; across++) {
+                int x = axis == Axis.X ? along : across;
+                int z = axis == Axis.X ? across : along;
+                if (set(level, x, baseY + 5, z, Blocks.OAK_LOG.defaultBlockState())) {
+                    changed++;
+                }
+                if (set(level, x, baseY + 6, z, Blocks.OAK_PLANKS.defaultBlockState())) {
+                    changed++;
+                }
+            }
+        }
+        return changed;
+    }
+
+    private void clearGateColumn(ServerLevel level, int x, int z, int baseY, int height) {
+        for (int y = 0; y <= height; y++) {
+            level.setBlock(new BlockPos(x, baseY + y, z), Blocks.AIR.defaultBlockState(), 3);
+        }
+    }
+
     private int placeWall(ServerLevel level, BlockBounds bounds, int baseY, PlacementContext context, Axis axis) {
         int changed = 0;
         for (int x = bounds.minX(); x <= bounds.maxX(); x++) {
@@ -322,15 +403,20 @@ public final class CityWallPlacementBackend {
                     continue;
                 }
                 boolean edge = x == bounds.minX() || x == bounds.maxX() || z == bounds.minZ() || z == bounds.maxZ();
+                boolean doorway = z == bounds.minZ() && x == bounds.center().x();
                 changed += placeFoundation(level, x, z, baseY, context);
                 for (int y = 0; y < 12; y++) {
-                    if (!edge && y < 10) {
-                        continue;
+                    BlockState state = null;
+                    if (doorway && y >= 1 && y <= 3) {
+                        state = Blocks.AIR.defaultBlockState();
+                    } else if (edge) {
+                        state = y == 0 ? Blocks.DEEPSLATE_BRICKS.defaultBlockState()
+                                : y >= 10 ? Blocks.STONE_BRICK_WALL.defaultBlockState()
+                                : Blocks.STONE_BRICKS.defaultBlockState();
+                    } else if (y == 0 || y == 9) {
+                        state = Blocks.STONE_BRICKS.defaultBlockState();
                     }
-                    BlockState state = y == 0 ? Blocks.DEEPSLATE_BRICKS.defaultBlockState()
-                            : y >= 10 ? Blocks.STONE_BRICK_WALL.defaultBlockState()
-                            : Blocks.STONE_BRICKS.defaultBlockState();
-                    if (set(level, x, baseY + y, z, state)) {
+                    if (state != null && set(level, x, baseY + y, z, state)) {
                         changed++;
                     }
                 }

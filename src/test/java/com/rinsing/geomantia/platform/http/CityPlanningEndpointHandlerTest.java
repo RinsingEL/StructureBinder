@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.rinsing.geomantia.systems.city.application.CityLandformReviewBuilder;
 import com.rinsing.geomantia.systems.city.application.CitySiteContextBuilder;
+import com.rinsing.geomantia.systems.city.application.CityWallPlanner;
 import com.rinsing.geomantia.systems.city.application.CityWallReservationPlanner;
 import com.rinsing.geomantia.systems.city.domain.config.CityPlanningConfig;
 import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
@@ -704,6 +705,50 @@ class CityPlanningEndpointHandlerTest {
         CompoundTag straight = NbtIo.readCompressed(templateDir.resolve("wall_straight_15.nbt").toFile());
         assertEquals(15, straight.getList("size", 3).getInt(0));
         assertFalse(straight.getList("blocks", 10).isEmpty());
+    }
+
+    @Test
+    void handlePlanCityWallsAcceptsV32DesignPolicyAndWritesDesignTemplates() throws Exception {
+        Path debugRoot = Files.createTempDirectory("city-wall-v32-plan-test");
+        String runId = "run_wall_v32_plan";
+        String citySeedId = "city_test";
+        prepareD5Artifacts(debugRoot, runId, citySeedId);
+        CityPlanningEndpointHandler.handlePlanD5(debugRoot, runId, citySeedId,
+                "v3", 24, 15, 4, new CityWallReservationPlanner.V3Options(24, 2, 64, 0.6));
+
+        Path d7Dir = debugRoot.resolve(runId).resolve("city_d7_" + citySeedId);
+        Files.createDirectories(d7Dir);
+        Files.writeString(d7Dir.resolve("placed_structure_ledger.json"), """
+                {
+                  "schemaVersion": "city_placed_structure_ledger.v0.1",
+                  "cityId": "city_test",
+                  "placedStructures": [
+                    {
+                      "anchorId": "admin_core",
+                      "structureId": "minecraft:desert_pyramid",
+                      "actualFootprint": {"minX": -10, "minZ": -12, "maxX": 18, "maxZ": 20}
+                    }
+                  ]
+                }
+                """);
+
+        JsonObject response = CityPlanningEndpointHandler.handlePlanCityWalls(
+                debugRoot, runId, citySeedId, 24, 15, 9,
+                "v3", null, 8, 2, 8, 7,
+                new CityWallPlanner.V3Options(24, 5, "v3.1", 7, 16, 6, 17, true,
+                        "v3.2", 48, 24, 4096));
+
+        assertTrue(response.get("ok").getAsBoolean());
+        JsonObject wallPlan = response.getAsJsonObject("cityWallPlan");
+        assertEquals("v3.2", wallPlan.get("wallDesignPolicy").getAsString());
+        assertEquals("domain_hull_then_natural_boundary_and_gatehouse_nodes",
+                wallPlan.get("wallPlanningMode").getAsString());
+        Path templateDir = debugRoot.resolve(response.getAsJsonObject("artifacts")
+                .get("cityWallTemplateDirectory").getAsString());
+        assertTrue(Files.exists(templateDir.resolve("gatehouse_9.nbt")));
+        assertTrue(Files.exists(templateDir.resolve("gatehouse_13.nbt")));
+        assertTrue(Files.exists(templateDir.resolve("watchtower_5x5.nbt")));
+        assertTrue(Files.exists(templateDir.resolve("beacon_5x5.nbt")));
     }
 
     @Test

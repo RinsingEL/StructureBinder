@@ -25,8 +25,20 @@ public final class CityWallTemplateLibrary {
                 "stone_wall_tower_segment_15x5x12 straight wall portion"));
         templates.add(template("wall_tower_small", 5, 5, 12,
                 "square stone buttress tower"));
+        templates.add(template("watchtower_5x5", 5, 5, 12,
+                "usable 5x5 watchtower with hollow interior"));
+        templates.add(template("beacon_5x5", 5, 5, 13,
+                "usable 5x5 beacon tower node"));
         templates.add(template("wall_gap_gate_7", 7, 5, 1,
                 "temporary empty gate gap"));
+        templates.add(template("gatehouse_9", 9, 7, 9,
+                "independent stone and timber gatehouse with full road opening"));
+        templates.add(template("gatehouse_13", 13, 7, 9,
+                "wide independent stone and timber gatehouse with full road opening"));
+        templates.add(template("natural_water_boundary", 15, 1, 1,
+                "natural water boundary marker; no continuous wall"));
+        templates.add(template("natural_cliff_boundary", 15, 1, 1,
+                "natural cliff boundary marker; no continuous wall"));
         obj.add("templates", templates);
         return obj;
     }
@@ -36,7 +48,13 @@ public final class CityWallTemplateLibrary {
         Files.writeString(directory.resolve("wall_template_library.json"), CityJson.GSON.toJson(libraryJson()));
         writeStraightWallNbt(directory.resolve("wall_straight_15.nbt"));
         writeTowerNbt(directory.resolve("wall_tower_small.nbt"));
-        writeGateGapNbt(directory.resolve("wall_gap_gate_7.nbt"));
+        writeTowerNbt(directory.resolve("watchtower_5x5.nbt"));
+        writeTowerNbt(directory.resolve("beacon_5x5.nbt"));
+        writeEmptyNbt(directory.resolve("wall_gap_gate_7.nbt"), 7, 1, 5);
+        writeGatehouseNbt(directory.resolve("gatehouse_9.nbt"), 9);
+        writeGatehouseNbt(directory.resolve("gatehouse_13.nbt"), 13);
+        writeEmptyNbt(directory.resolve("natural_water_boundary.nbt"), 15, 1, 1);
+        writeEmptyNbt(directory.resolve("natural_cliff_boundary.nbt"), 15, 1, 1);
     }
 
     private static JsonObject template(String id, int width, int depth, int height, String note) {
@@ -94,8 +112,36 @@ public final class CityWallTemplateLibrary {
         writeTemplate(path, 5, 12, 5, blocks);
     }
 
-    private static void writeGateGapNbt(Path path) throws IOException {
-        writeTemplate(path, 7, 1, 5, new ListTag());
+    private static void writeEmptyNbt(Path path, int width, int height, int depth) throws IOException {
+        writeTemplate(path, width, height, depth, new ListTag());
+    }
+
+    private static void writeGatehouseNbt(Path path, int width) throws IOException {
+        ListTag blocks = new ListTag();
+        int center = width / 2;
+        int halfOpening = width >= 13 ? 3 : 2;
+        for (int x = 0; x < width; x++) {
+            for (int z = 0; z < 7; z++) {
+                boolean opening = Math.abs(x - center) <= halfOpening;
+                boolean pier = !opening && (x <= 2 || x >= width - 3);
+                for (int y = 0; y < 9; y++) {
+                    int state = -1;
+                    if (opening && y <= 4) {
+                        state = -1;
+                    } else if (pier) {
+                        state = y >= 7 ? 3 : 1;
+                    } else if (!opening && (y <= 5 || y >= 7)) {
+                        state = 1;
+                    } else if (opening && (y == 5 || y == 6)) {
+                        state = 7;
+                    }
+                    if (state >= 0) {
+                        addBlock(blocks, x, y, z, state);
+                    }
+                }
+            }
+        }
+        writeTemplate(path, width, 9, 7, blocks);
     }
 
     private static int wallState(int y, int across, int along) {
@@ -147,6 +193,7 @@ public final class CityWallTemplateLibrary {
         palette.add(state("minecraft:stone_brick_slab"));
         palette.add(state("minecraft:mossy_stone_bricks"));
         palette.add(state("minecraft:cracked_stone_bricks"));
+        palette.add(state("minecraft:oak_planks"));
         return palette;
     }
 

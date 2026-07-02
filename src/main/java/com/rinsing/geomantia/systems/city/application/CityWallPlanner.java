@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
+import com.rinsing.geomantia.systems.city.domain.model.BlockPoint;
 import com.rinsing.geomantia.systems.city.infrastructure.json.CityJson;
 
 import java.io.IOException;
@@ -23,6 +24,10 @@ public final class CityWallPlanner {
     public static final int DEFAULT_STEPPED_MAX_DELTA_BLOCKS = 16;
     public static final int DEFAULT_MOUNTAIN_PROBE_DISTANCE_BLOCKS = 6;
     public static final int DEFAULT_NATURAL_BOUNDARY_MIN_DELTA_BLOCKS = 17;
+    public static final String DEFAULT_WALL_DESIGN_POLICY = "v3";
+    public static final int DEFAULT_MIN_GATE_SPACING_BLOCKS = 48;
+    public static final int DEFAULT_MIN_GATE_ROAD_LENGTH_BLOCKS = 24;
+    public static final int DEFAULT_NATURAL_WATER_BOUNDARY_MIN_AREA_BLOCKS = 4096;
     private static final int WALL_HALF_THICKNESS_BLOCKS = 2;
 
     public JsonObject plan(JsonObject placedLedger, int wallMarginBlocks, int segmentLengthBlocks,
@@ -150,11 +155,17 @@ public final class CityWallPlanner {
         plan.addProperty("wallVersion", "v3");
         plan.addProperty("boundaryMode", "structure_seeded_patch_region_hull");
         plan.addProperty("wallBoundaryMode", "structure_seeded_patch_region_hull");
-        plan.addProperty("wallPlanningMode", "domain_hull_then_road_gate_cluster");
+        plan.addProperty("wallPlanningMode", opts.isV32DesignPolicy()
+                ? "domain_hull_then_natural_boundary_and_gatehouse_nodes"
+                : "domain_hull_then_road_gate_cluster");
+        plan.addProperty("wallDesignPolicy", opts.normalizedWallDesignPolicy());
         plan.addProperty("roadMaskSource", "actual_world_blocks");
         plan.addProperty("gateWidthBlocks", gateWidth);
         plan.addProperty("roadProtectionMarginBlocks", roadMargin);
         plan.addProperty("gateClusterRadiusBlocks", opts.gateClusterRadiusBlocks());
+        plan.addProperty("minGateSpacingBlocks", opts.normalizedMinGateSpacingBlocks());
+        plan.addProperty("minGateRoadLengthBlocks", opts.normalizedMinGateRoadLengthBlocks());
+        plan.addProperty("naturalWaterBoundaryMinAreaBlocks", opts.normalizedNaturalWaterBoundaryMinAreaBlocks());
         plan.addProperty("terrainFitUnitLengthBlocks", opts.terrainFitUnitLengthBlocks());
         plan.addProperty("wallTerrainPolicy", opts.normalizedWallTerrainPolicy());
         plan.addProperty("maxFoundationDepthBlocks", maxFoundationDepthBlocks <= 0 ? 8 : maxFoundationDepthBlocks);
@@ -173,6 +184,7 @@ public final class CityWallPlanner {
         java.util.Map<String, RoadClass> roadClasses = new java.util.LinkedHashMap<>();
         JsonArray classifiedRoads = new JsonArray();
         JsonArray ignoredInside = new JsonArray();
+        JsonArray roadTrendSkipped = new JsonArray();
         JsonArray rawIntersections = new JsonArray();
         List<GateCluster> gateClusters = new java.util.ArrayList<>();
         for (RoadComponent component : roadComponents) {
@@ -186,6 +198,17 @@ public final class CityWallPlanner {
             classifiedRoads.add(roadObj);
             if (roadClass == RoadClass.INSIDE) {
                 ignoredInside.add(roadObj.deepCopy());
+                continue;
+            }
+            RoadTrend trend = roadTrend(component, wallBounds, wallReservationPlan);
+            roadObj.addProperty("trendClass", trend.trendClass());
+            roadObj.addProperty("estimatedCrossingLengthBlocks", trend.crossingLengthBlocks());
+            roadObj.addProperty("touchOnly", trend.touchOnly());
+            if (opts.isV32DesignPolicy() && !trend.opensGate(opts.normalizedMinGateRoadLengthBlocks())) {
+                JsonObject skipped = roadObj.deepCopy();
+                skipped.addProperty("reasonCode", trend.touchOnly()
+                        ? "WALL_ROAD_TOUCH_ONLY_SKIP" : "WALL_ROAD_TREND_TOO_SHORT_SKIP");
+                roadTrendSkipped.add(skipped);
                 continue;
             }
             if (roadClass == RoadClass.EXTERNAL || roadClass == RoadClass.AMBIGUOUS) {
@@ -204,7 +227,8 @@ public final class CityWallPlanner {
                         raw.addProperty("reasonCode", "ROAD_WALL_INTERSECTION");
                         raw.add("blockBounds", boundsJson(gate));
                         rawIntersections.add(raw);
-                        mergeGateCluster(gateClusters, component.id(), gate, opts.gateClusterRadiusBlocks());
+                        mergeGateCluster(gateClusters, component.id(), gate, opts.gateClusterRadiusBlocks(),
+                                opts.isV32DesignPolicy() ? opts.normalizedMinGateSpacingBlocks() : 0);
                     }
                 }
             }
@@ -222,16 +246,24 @@ public final class CityWallPlanner {
             gateCluster.addProperty("reasonCode", "GATE_CLUSTER_FROM_EXTERNAL_ROAD");
             gateCluster.add("blockBounds", boundsJson(gateBounds));
             gateClusterJson.add(gateCluster);
-            JsonObject gate = segment(gateId, "gate_gap", "wall_gap_gate_7",
+            boolean gatehouse = opts.isV32DesignPolicy();
+            JsonObject gate = segment(gateId, gatehouse ? "gatehouse" : "gate_gap",
+                    gatehouse ? gatehouseTemplate(gateBounds) : "wall_gap_gate_7",
                     gateBounds.minX(), gateBounds.minZ(), gateBounds.maxX(), gateBounds.maxZ());
-            gate.addProperty("reasonCode", "GATE_CLUSTER_FROM_EXTERNAL_ROAD");
+            gate.addProperty("reasonCode", gatehouse ? "GATEHOUSE_FROM_ROAD_TREND" : "GATE_CLUSTER_FROM_EXTERNAL_ROAD");
             gate.addProperty("gateWidthBlocks", Math.max(gateBounds.widthBlocks(), gateBounds.heightBlocks()));
+            if (gatehouse) {
+                gate.addProperty("gatehouse", true);
+                gate.addProperty("gateStructurePolicy", "independent_gate_template");
+            }
             gates.add(gate.deepCopy());
             segments.add(gate);
             addFlankingTowers(segments, gateId, gateBounds);
         }
 
         int index = 0;
+        JsonArray naturalBoundaries = new JsonArray();
+        JsonArray naturalBoundarySkippedWalls = new JsonArray();
         for (JsonElement elem : array(wallReservationPlan, "wallCenterline")) {
             if (!elem.isJsonObject()) {
                 continue;
@@ -239,6 +271,22 @@ public final class CityWallPlanner {
             JsonObject centerline = elem.getAsJsonObject();
             BlockBounds bounds = bounds(centerline.getAsJsonObject("blockBounds"));
             if (overlapsAnyGate(bounds, gates)) {
+                index++;
+                continue;
+            }
+            NaturalBoundary boundary = opts.isV32DesignPolicy()
+                    ? naturalBoundaryFor(bounds, wallReservationPlan, opts)
+                    : NaturalBoundary.none();
+            if (boundary.applies()) {
+                JsonObject natural = segment("natural_boundary_" + index, "natural_boundary",
+                        boundary.templateId(), bounds.minX(), bounds.minZ(), bounds.maxX(), bounds.maxZ());
+                natural.addProperty("boundaryType", boundary.boundaryType());
+                natural.addProperty("reasonCode", boundary.reasonCode());
+                natural.addProperty("sourcePatchRef", boundary.sourcePatchRef());
+                natural.addProperty("continuousWallSkipped", true);
+                naturalBoundaries.add(natural.deepCopy());
+                naturalBoundarySkippedWalls.add(natural.deepCopy());
+                segments.add(natural);
                 index++;
                 continue;
             }
@@ -261,9 +309,12 @@ public final class CityWallPlanner {
             addFallbackGate(plan, wallReservationPlan, segments, gates);
         }
         plan.add("classifiedRoadComponents", classifiedRoads);
+        plan.add("roadTrendSkippedIntersections", roadTrendSkipped);
         plan.add("rawRoadWallIntersections", rawIntersections);
         plan.add("insideRoadIgnoredIntersections", ignoredInside);
         plan.add("gateClusters", gateClusterJson);
+        plan.add("naturalBoundaries", naturalBoundaries);
+        plan.add("naturalBoundarySkippedWalls", naturalBoundarySkippedWalls);
         plan.add("wallRoadIntersections", rawIntersections);
         plan.add("generatedGates", gates);
         plan.add("wallSegments", segments);
@@ -352,34 +403,29 @@ public final class CityWallPlanner {
             }
         }
         List<RoadComponent> components = new java.util.ArrayList<>();
-        boolean[] used = new boolean[blocks.size()];
+        boolean[] assigned = new boolean[blocks.size()];
         for (int i = 0; i < blocks.size(); i++) {
-            if (used[i]) {
+            if (assigned[i]) {
                 continue;
             }
-            used[i] = true;
+            java.util.List<Integer> componentIndexes = new java.util.ArrayList<>();
+            componentIndexes.add(i);
+            assigned[i] = true;
             BlockBounds union = blocks.get(i);
-            int count = 0;
             boolean changed;
             do {
                 changed = false;
-                count = 0;
-                for (int j = 0; j < blocks.size(); j++) {
-                    if (used[j]) {
-                        count++;
-                        union = union(union, blocks.get(j));
-                    }
-                }
                 BlockBounds expanded = expand(union, Math.max(2, clusterRadius / 3));
                 for (int j = 0; j < blocks.size(); j++) {
-                    if (!used[j] && expanded.overlaps(blocks.get(j))) {
-                        used[j] = true;
+                    if (!assigned[j] && expanded.overlaps(blocks.get(j))) {
+                        assigned[j] = true;
+                        componentIndexes.add(j);
                         union = union(union, blocks.get(j));
                         changed = true;
                     }
                 }
             } while (changed);
-            components.add(new RoadComponent("road_component_" + components.size(), union, count));
+            components.add(new RoadComponent("road_component_" + components.size(), union, componentIndexes.size()));
         }
         return components;
     }
@@ -407,16 +453,94 @@ public final class CityWallPlanner {
     }
 
     private static void mergeGateCluster(List<GateCluster> clusters, String roadComponentId,
-                                         BlockBounds gate, int radius) {
-        BlockBounds expanded = expand(gate, radius);
+                                         BlockBounds gate, int radius, int minGateSpacingBlocks) {
+        BlockBounds expanded = expand(gate, Math.max(radius, Math.max(0, minGateSpacingBlocks / 2)));
         for (int i = 0; i < clusters.size(); i++) {
             GateCluster cluster = clusters.get(i);
-            if (cluster.roadComponentId().equals(roadComponentId) && expanded.overlaps(cluster.bounds())) {
-                clusters.set(i, new GateCluster(roadComponentId, union(cluster.bounds(), gate)));
+            if ((minGateSpacingBlocks > 0 || cluster.roadComponentId().equals(roadComponentId))
+                    && expanded.overlaps(cluster.bounds())) {
+                String mergedRoadId = cluster.roadComponentId().equals(roadComponentId)
+                        ? roadComponentId
+                        : cluster.roadComponentId() + "+" + roadComponentId;
+                clusters.set(i, new GateCluster(mergedRoadId, union(cluster.bounds(), gate)));
                 return;
             }
         }
         clusters.add(new GateCluster(roadComponentId, gate));
+    }
+
+    private static RoadTrend roadTrend(RoadComponent component, BlockBounds wallBounds, JsonObject reservation) {
+        BlockBounds bounds = component.bounds();
+        int major = Math.max(bounds.widthBlocks(), bounds.heightBlocks());
+        int minor = Math.min(bounds.widthBlocks(), bounds.heightBlocks());
+        boolean touchesOuterEdge = bounds.minX() <= wallBounds.minX()
+                || bounds.maxX() >= wallBounds.maxX()
+                || bounds.minZ() <= wallBounds.minZ()
+                || bounds.maxZ() >= wallBounds.maxZ();
+        boolean touchOnly = (major <= 2 && minor <= 2)
+                || (minor <= 2 && major < DEFAULT_MIN_GATE_ROAD_LENGTH_BLOCKS);
+        boolean crossesDomain = false;
+        boolean outsideDomain = false;
+        for (JsonElement elem : array(reservation, "cityDomainMask")) {
+            if (!elem.isJsonObject() || !elem.getAsJsonObject().has("blockBounds")) {
+                continue;
+            }
+            BlockBounds domainCell = bounds(elem.getAsJsonObject().getAsJsonObject("blockBounds"));
+            if (bounds.overlaps(domainCell)) {
+                crossesDomain = true;
+                break;
+            }
+        }
+        if (!wallBounds.contains(bounds.center().x(), bounds.center().z()) || touchesOuterEdge) {
+            outsideDomain = true;
+        }
+        String trendClass = crossesDomain && outsideDomain ? "external_to_internal"
+                : touchesOuterEdge ? "touches_outer_boundary"
+                : "ambiguous";
+        return new RoadTrend(trendClass, major, touchOnly || !crossesDomain && !outsideDomain);
+    }
+
+    private static NaturalBoundary naturalBoundaryFor(BlockBounds wall,
+                                                      JsonObject reservation,
+                                                      V3Options options) {
+        NaturalBoundary best = NaturalBoundary.none();
+        for (JsonElement elem : array(reservation, "seedPatches")) {
+            if (!elem.isJsonObject() || !elem.getAsJsonObject().has("blockBounds")) {
+                continue;
+            }
+            JsonObject patch = elem.getAsJsonObject();
+            String type = stringValue(patch, "landformType", "");
+            BlockBounds patchBounds = bounds(patch.getAsJsonObject("blockBounds"));
+            int patchArea = patchBounds.widthBlocks() * patchBounds.heightBlocks();
+            if ("shore".equals(type) && expand(patchBounds, 12).overlaps(wall)) {
+                return new NaturalBoundary(true, "NATURAL_WATER_BOUNDARY", "NATURAL_WATER_BOUNDARY_FROM_SHORE_PATCH",
+                        "natural_water_boundary", stringValue(patch, "landformPatchId", ""));
+            }
+            if ("water".equals(type)
+                    && patchArea >= options.normalizedNaturalWaterBoundaryMinAreaBlocks()
+                    && nearPatchOuterEdge(wall, patchBounds, 16)) {
+                return new NaturalBoundary(true, "NATURAL_WATER_BOUNDARY", "NATURAL_WATER_BOUNDARY_FROM_LARGE_WATER_PATCH",
+                        "natural_water_boundary", stringValue(patch, "landformPatchId", ""));
+            }
+            if ("cliff".equals(type) && expand(patchBounds, 8).overlaps(wall)) {
+                best = new NaturalBoundary(true, "NATURAL_CLIFF_BOUNDARY", "NATURAL_CLIFF_BOUNDARY_FROM_CLIFF_PATCH",
+                        "natural_cliff_boundary", stringValue(patch, "landformPatchId", ""));
+            }
+        }
+        return best;
+    }
+
+    private static boolean nearPatchOuterEdge(BlockBounds wall, BlockBounds patch, int margin) {
+        BlockPoint center = wall.center();
+        return Math.abs(center.x() - patch.minX()) <= margin
+                || Math.abs(center.x() - patch.maxX()) <= margin
+                || Math.abs(center.z() - patch.minZ()) <= margin
+                || Math.abs(center.z() - patch.maxZ()) <= margin;
+    }
+
+    private static String gatehouseTemplate(BlockBounds gateBounds) {
+        int width = Math.max(gateBounds.widthBlocks(), gateBounds.heightBlocks());
+        return width >= 13 ? "gatehouse_13" : "gatehouse_9";
     }
 
     private static boolean overlapsAnyGate(BlockBounds bounds, JsonArray gates) {
@@ -650,7 +774,11 @@ public final class CityWallPlanner {
                             int steppedMaxDeltaBlocks,
                             int mountainProbeDistanceBlocks,
                             int naturalBoundaryMinDeltaBlocks,
-                            boolean embeddedSlopeTower) {
+                            boolean embeddedSlopeTower,
+                            String wallDesignPolicy,
+                            int minGateSpacingBlocks,
+                            int minGateRoadLengthBlocks,
+                            int naturalWaterBoundaryMinAreaBlocks) {
         public V3Options(int gateClusterRadiusBlocks, int terrainFitUnitLengthBlocks) {
             this(gateClusterRadiusBlocks, terrainFitUnitLengthBlocks,
                     DEFAULT_WALL_TERRAIN_POLICY,
@@ -658,7 +786,25 @@ public final class CityWallPlanner {
                     DEFAULT_STEPPED_MAX_DELTA_BLOCKS,
                     DEFAULT_MOUNTAIN_PROBE_DISTANCE_BLOCKS,
                     DEFAULT_NATURAL_BOUNDARY_MIN_DELTA_BLOCKS,
-                    true);
+                    true,
+                    DEFAULT_WALL_DESIGN_POLICY,
+                    DEFAULT_MIN_GATE_SPACING_BLOCKS,
+                    DEFAULT_MIN_GATE_ROAD_LENGTH_BLOCKS,
+                    DEFAULT_NATURAL_WATER_BOUNDARY_MIN_AREA_BLOCKS);
+        }
+
+        public V3Options(int gateClusterRadiusBlocks,
+                         int terrainFitUnitLengthBlocks,
+                         String wallTerrainPolicy,
+                         int flatMaxDeltaBlocks,
+                         int steppedMaxDeltaBlocks,
+                         int mountainProbeDistanceBlocks,
+                         int naturalBoundaryMinDeltaBlocks,
+                         boolean embeddedSlopeTower) {
+            this(gateClusterRadiusBlocks, terrainFitUnitLengthBlocks, wallTerrainPolicy, flatMaxDeltaBlocks,
+                    steppedMaxDeltaBlocks, mountainProbeDistanceBlocks, naturalBoundaryMinDeltaBlocks,
+                    embeddedSlopeTower, DEFAULT_WALL_DESIGN_POLICY, DEFAULT_MIN_GATE_SPACING_BLOCKS,
+                    DEFAULT_MIN_GATE_ROAD_LENGTH_BLOCKS, DEFAULT_NATURAL_WATER_BOUNDARY_MIN_AREA_BLOCKS);
         }
 
         public static V3Options defaults() {
@@ -668,6 +814,15 @@ public final class CityWallPlanner {
         public String normalizedWallTerrainPolicy() {
             return "v3.1".equalsIgnoreCase(wallTerrainPolicy == null ? "" : wallTerrainPolicy.trim())
                     ? "v3.1" : DEFAULT_WALL_TERRAIN_POLICY;
+        }
+
+        public String normalizedWallDesignPolicy() {
+            return "v3.2".equalsIgnoreCase(wallDesignPolicy == null ? "" : wallDesignPolicy.trim())
+                    ? "v3.2" : DEFAULT_WALL_DESIGN_POLICY;
+        }
+
+        public boolean isV32DesignPolicy() {
+            return "v3.2".equals(normalizedWallDesignPolicy());
         }
 
         public int normalizedFlatMaxDeltaBlocks() {
@@ -691,12 +846,43 @@ public final class CityWallPlanner {
                     ? DEFAULT_NATURAL_BOUNDARY_MIN_DELTA_BLOCKS
                     : Math.max(normalizedSteppedMaxDeltaBlocks() + 1, naturalBoundaryMinDeltaBlocks);
         }
+
+        public int normalizedMinGateSpacingBlocks() {
+            return minGateSpacingBlocks <= 0 ? DEFAULT_MIN_GATE_SPACING_BLOCKS : minGateSpacingBlocks;
+        }
+
+        public int normalizedMinGateRoadLengthBlocks() {
+            return minGateRoadLengthBlocks <= 0 ? DEFAULT_MIN_GATE_ROAD_LENGTH_BLOCKS : minGateRoadLengthBlocks;
+        }
+
+        public int normalizedNaturalWaterBoundaryMinAreaBlocks() {
+            return naturalWaterBoundaryMinAreaBlocks <= 0
+                    ? DEFAULT_NATURAL_WATER_BOUNDARY_MIN_AREA_BLOCKS
+                    : naturalWaterBoundaryMinAreaBlocks;
+        }
     }
 
     private record RoadComponent(String id, BlockBounds bounds, int blockCount) {
     }
 
     private record GateCluster(String roadComponentId, BlockBounds bounds) {
+    }
+
+    private record RoadTrend(String trendClass, int crossingLengthBlocks, boolean touchOnly) {
+        boolean opensGate(int minLengthBlocks) {
+            return !touchOnly && crossingLengthBlocks >= Math.max(1, minLengthBlocks)
+                    && ("external_to_internal".equals(trendClass) || "touches_outer_boundary".equals(trendClass));
+        }
+    }
+
+    private record NaturalBoundary(boolean applies,
+                                   String boundaryType,
+                                   String reasonCode,
+                                   String templateId,
+                                   String sourcePatchRef) {
+        static NaturalBoundary none() {
+            return new NaturalBoundary(false, "", "", "", "");
+        }
     }
 
     private enum RoadClass {

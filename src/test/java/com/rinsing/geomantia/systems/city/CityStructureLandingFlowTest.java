@@ -11,6 +11,7 @@ import com.rinsing.geomantia.systems.city.application.CityStructureEnvelopeProfi
 import com.rinsing.geomantia.systems.city.application.CityStructureMaterializationPlanner;
 import com.rinsing.geomantia.systems.city.application.CityWallPlanner;
 import com.rinsing.geomantia.systems.city.application.CityWallReservationPlanner;
+import com.rinsing.geomantia.systems.city.application.CityWallTemplateLibrary;
 import com.rinsing.geomantia.systems.city.domain.config.CityPlanningConfig;
 import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
 import com.rinsing.geomantia.systems.city.domain.model.CityLandformReviewPackage;
@@ -633,6 +634,73 @@ final class CityStructureLandingFlowTest {
         String segments = wallPlan.getAsJsonArray("wallSegments").toString();
         assertTrue(segments.contains("\"wallAxis\":\"X\""));
         assertTrue(segments.contains("\"wallAxis\":\"Z\""));
+    }
+
+    @Test
+    void wallPlannerV32EmitsNaturalBoundariesGatehousesAndTrendSkips() {
+        JsonObject reservation = JsonParser.parseString("""
+                {
+                  "schemaVersion": "city_wall_reservation_plan.v0.3",
+                  "cityId": "city_test",
+                  "wallBounds": {"minX": -64, "minZ": -64, "maxX": 64, "maxZ": 64},
+                  "seedPatches": [
+                    {"landformPatchId": "water_big", "mapLabel": "水域01", "landformType": "water",
+                     "blockBounds": {"minX": -96, "minZ": -96, "maxX": 96, "maxZ": -48}},
+                    {"landformPatchId": "shore_01", "mapLabel": "海岸01", "landformType": "shore",
+                     "blockBounds": {"minX": -64, "minZ": -48, "maxX": 64, "maxZ": -32}}
+                  ],
+                  "cityDomainMask": [
+                    {"blockBounds": {"minX": -32, "minZ": -32, "maxX": 32, "maxZ": 32}}
+                  ],
+                  "wallCenterline": [
+                    {"segmentId": "north", "blockBounds": {"minX": -64, "minZ": -64, "maxX": 64, "maxZ": -60}},
+                    {"segmentId": "east", "blockBounds": {"minX": 60, "minZ": -64, "maxX": 64, "maxZ": 64}}
+                  ],
+                  "gateCandidateZones": []
+                }
+                """).getAsJsonObject();
+        JsonObject actualRoadMask = JsonParser.parseString("""
+                {
+                  "schemaVersion": "city_actual_road_mask.v0.2",
+                  "cityId": "city_test",
+                  "status": "observed",
+                  "roadMask": [
+                    {"maskId": "road_long_0", "maskType": "actual_road", "blockBounds": {"minX": 16, "minZ": -48, "maxX": 64, "maxZ": 16}},
+                    {"maskId": "road_touch_0", "maskType": "actual_road", "blockBounds": {"minX": -4, "minZ": -64, "maxX": -3, "maxZ": -63}}
+                  ]
+                }
+                """).getAsJsonObject();
+        JsonObject ledger = JsonParser.parseString("""
+                {
+                  "schemaVersion": "city_placed_structure_ledger.v0.1",
+                  "cityId": "city_test",
+                  "placedStructures": [
+                    {"anchorId": "a", "actualFootprint": {"minX": -8, "minZ": -8, "maxX": 8, "maxZ": 8}}
+                  ]
+                }
+                """).getAsJsonObject();
+
+        JsonObject wallPlan = new CityWallPlanner().planV3(ledger, reservation, actualRoadMask, 9, 2, 8, 7,
+                new CityWallPlanner.V3Options(24, 5, "v3.1", 7, 16, 6, 17, true,
+                        "v3.2", 48, 24, 4096));
+
+        assertEquals("v3.2", wallPlan.get("wallDesignPolicy").getAsString());
+        assertTrue(wallPlan.getAsJsonArray("wallSegments").toString().contains("\"segmentType\":\"gatehouse\""),
+                wallPlan.toString());
+        assertTrue(wallPlan.getAsJsonArray("wallSegments").toString().contains("\"segmentType\":\"natural_boundary\""));
+        assertTrue(wallPlan.getAsJsonArray("roadTrendSkippedIntersections").toString()
+                .contains("WALL_ROAD_TOUCH_ONLY_SKIP"));
+        assertTrue(wallPlan.getAsJsonArray("naturalBoundaries").toString().contains("NATURAL_WATER_BOUNDARY"));
+    }
+
+    @Test
+    void wallTemplateLibraryIncludesGatehousesAndUsableTowers() {
+        String library = CityWallTemplateLibrary.libraryJson().toString();
+
+        assertTrue(library.contains("gatehouse_9"));
+        assertTrue(library.contains("gatehouse_13"));
+        assertTrue(library.contains("watchtower_5x5"));
+        assertTrue(library.contains("beacon_5x5"));
     }
 
     @Test

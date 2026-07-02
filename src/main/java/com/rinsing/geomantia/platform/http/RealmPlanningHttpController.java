@@ -445,7 +445,15 @@ final class RealmPlanningHttpController {
                                     CityWallPlanner.DEFAULT_MOUNTAIN_PROBE_DISTANCE_BLOCKS),
                             intValue(request, "naturalBoundaryMinDeltaBlocks",
                                     CityWallPlanner.DEFAULT_NATURAL_BOUNDARY_MIN_DELTA_BLOCKS),
-                            booleanValue(request, "embeddedSlopeTower", true)));
+                            booleanValue(request, "embeddedSlopeTower", true),
+                            stringValue(request, "wallDesignPolicy",
+                                    CityWallPlanner.DEFAULT_WALL_DESIGN_POLICY),
+                            intValue(request, "minGateSpacingBlocks",
+                                    CityWallPlanner.DEFAULT_MIN_GATE_SPACING_BLOCKS),
+                            intValue(request, "minGateRoadLengthBlocks",
+                                    CityWallPlanner.DEFAULT_MIN_GATE_ROAD_LENGTH_BLOCKS),
+                            intValue(request, "naturalWaterBoundaryMinAreaBlocks",
+                                    CityWallPlanner.DEFAULT_NATURAL_WATER_BOUNDARY_MIN_AREA_BLOCKS)));
         }));
     }
 
