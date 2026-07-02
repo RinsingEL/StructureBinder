@@ -14,10 +14,12 @@ import com.rinsing.geomantia.systems.realm_planning.RealmPlanningService;
 import com.rinsing.geomantia.systems.realm_planning.WorldSurveyResult;
 import com.rinsing.geomantia.systems.realm_planning.WorldSurveyRunner;
 import com.sun.net.httpserver.HttpExchange;
+import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.level.storage.LevelResource;
 
 import java.io.IOException;
@@ -504,6 +506,64 @@ final class RealmPlanningHttpController {
                 return response;
             });
         });
+    }
+
+    void handleDebugCommand(HttpExchange exchange) {
+        handle(exchange, "POST", () -> callOnServerThread(() -> {
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            if (!booleanValue(request, "confirmCommandExecution", false)) {
+                throw new IllegalArgumentException("confirmCommandExecution=true is required for realm_debug_command.");
+            }
+            String normalizedCommand = RealmDebugCommandSupport.normalizeCommand(requiredString(request, "command"));
+            RealmDebugCommandSupport.requireSafeOrExplicit(normalizedCommand,
+                    booleanValue(request, "allowUnsafeCommand", false));
+
+            String requestedMode = RealmDebugCommandSupport.normalizeSourceMode(stringValue(request, "sourceMode", "auto"));
+            String playerName = stringValue(request, "playerName", "");
+            ServerPlayer player = playerName.isBlank()
+                    ? server.getPlayerList().getPlayers().stream().findFirst().orElse(null)
+                    : resolvePlayer(playerName);
+            String dimensionId = stringValue(request, "dimensionId", "");
+            ServerLevel level = resolveLevel(dimensionId, player);
+            CommandSourceStack source = commandSource(requestedMode, player, level);
+            String actualMode = player != null && !"server".equals(requestedMode) ? "player" : "server";
+            int result = server.getCommands().performPrefixedCommand(source,
+                    RealmDebugCommandSupport.prefixedCommand(normalizedCommand));
+            boolean saveAfter = booleanValue(request, "saveAfter", false);
+            if (saveAfter) {
+                server.saveAllChunks(true, true, true);
+            }
+
+            JsonObject response = new JsonObject();
+            response.addProperty("ok", result > 0);
+            response.addProperty("status", result > 0 ? "executed" : "completed_without_success");
+            response.addProperty("reasonCode", result > 0 ? "DEBUG_COMMAND_EXECUTED" : "DEBUG_COMMAND_NO_SUCCESS");
+            response.addProperty("command", "/" + normalizedCommand);
+            response.addProperty("normalizedCommand", normalizedCommand);
+            response.addProperty("result", result);
+            response.addProperty("sourceMode", actualMode);
+            response.addProperty("requestedSourceMode", requestedMode);
+            response.addProperty("playerName", player == null ? "" : player.getGameProfile().getName());
+            response.addProperty("dimensionId", level.dimension().location().toString());
+            response.addProperty("worldSaveRequested", saveAfter);
+            return response;
+        }));
+    }
+
+    private CommandSourceStack commandSource(String sourceMode, ServerPlayer player, ServerLevel level) {
+        if ("player".equals(sourceMode) && player == null) {
+            throw new IllegalArgumentException("sourceMode=player requires an online playerName or an online player.");
+        }
+        if (player != null && !"server".equals(sourceMode)) {
+            return player.createCommandSourceStack()
+                    .withPermission(4)
+                    .withLevel(level)
+                    .withPosition(Vec3.atLowerCornerOf(player.blockPosition()));
+        }
+        return server.createCommandSourceStack()
+                .withLevel(level)
+                .withPosition(Vec3.atLowerCornerOf(level.getSharedSpawnPos()))
+                .withPermission(4);
     }
 
     private void handle(HttpExchange exchange, String method, JsonAction action) {

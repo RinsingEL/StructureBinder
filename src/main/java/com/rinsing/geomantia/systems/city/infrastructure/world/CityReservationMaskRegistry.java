@@ -200,7 +200,7 @@ public final class CityReservationMaskRegistry {
         List<PlannedStructure> result = new ArrayList<>();
         for (PlannedStructure planned : registry.plannedStructures) {
             if (planned.anchorChunkX() == chunkPos.x && planned.anchorChunkZ() == chunkPos.z
-                    && !ledgerContains(planned.anchorId())) {
+                    && !ledgerContains(planned)) {
                 result.add(planned);
             }
         }
@@ -211,7 +211,7 @@ public final class CityReservationMaskRegistry {
     }
 
     public static boolean hasWorldgenLedger(String anchorId) {
-        return ledgerContains(anchorId);
+        return ledgerContains(activePlannedStructures.cityId(), anchorId);
     }
 
     public static boolean overlapsWorldgenLedger(BlockBounds candidate, String exceptAnchorId) {
@@ -244,7 +244,7 @@ public final class CityReservationMaskRegistry {
                                                             String message) {
         JsonArray placed = ledgerPlacedStructures();
         for (JsonElement elem : placed) {
-            if (elem.isJsonObject() && planned.anchorId().equals(stringValue(elem.getAsJsonObject(), "anchorId", ""))) {
+            if (elem.isJsonObject() && ledgerIdentityMatches(planned, elem.getAsJsonObject())) {
                 return;
             }
         }
@@ -366,13 +366,44 @@ public final class CityReservationMaskRegistry {
         }
     }
 
-    private static boolean ledgerContains(String anchorId) {
+    private static boolean ledgerContains(PlannedStructure planned) {
         for (JsonElement elem : ledgerPlacedStructures()) {
-            if (elem.isJsonObject() && anchorId.equals(stringValue(elem.getAsJsonObject(), "anchorId", ""))) {
+            if (elem.isJsonObject() && ledgerIdentityMatches(planned, elem.getAsJsonObject())) {
                 return true;
             }
         }
         return false;
+    }
+
+    private static boolean ledgerContains(String cityId, String anchorId) {
+        for (JsonElement elem : ledgerPlacedStructures()) {
+            if (!elem.isJsonObject()) {
+                continue;
+            }
+            JsonObject obj = elem.getAsJsonObject();
+            if (anchorId.equals(stringValue(obj, "anchorId", ""))
+                    && (cityId == null || cityId.isBlank() || cityId.equals(stringValue(obj, "cityId", "")))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean ledgerIdentityMatches(PlannedStructure planned, JsonObject obj) {
+        if (planned == null || obj == null
+                || !planned.anchorId().equals(stringValue(obj, "anchorId", ""))) {
+            return false;
+        }
+        if (!planned.cityId().isBlank()) {
+            return planned.cityId().equals(stringValue(obj, "cityId", ""));
+        }
+        if (!planned.citySeedId().isBlank()) {
+            return planned.citySeedId().equals(stringValue(obj, "citySeedId", ""));
+        }
+        if (!planned.runId().isBlank()) {
+            return planned.runId().equals(stringValue(obj, "runId", ""));
+        }
+        return true;
     }
 
     private static JsonArray ledgerPlacedStructures() {

@@ -790,6 +790,41 @@ final class CityStructureLandingFlowTest {
     }
 
     @Test
+    void worldgenLedgerDeduplicationIsScopedToCityIdentity() throws Exception {
+        Fixture fixture = fixture();
+        JsonObject anchorMap = new CityStructureAnchorPlanner()
+                .plan(fixture.baseDir(), fixture.review(), fixture.terraSenseSource(), singleAnchorPlan(fixture.review()))
+                .structureAnchorMap();
+        JsonObject mask = new CityReservationMaskPlanner()
+                .plan(fixture.context(), anchorMap)
+                .reservationMaskPlan();
+        Path worldRoot = Files.createTempDirectory("city-mask-shared-world");
+
+        JsonObject activeA = CityReservationMaskRegistry.activate(mask, anchorMap,
+                "run_a", fixture.context().cityId(), worldRoot);
+        JsonObject plannedJson = activeA.getAsJsonArray("plannedStructures").get(0).getAsJsonObject();
+        JsonObject anchorChunkJson = plannedJson.getAsJsonObject("anchorChunk");
+        ChunkPos anchorChunk = new ChunkPos(
+                anchorChunkJson.get("x").getAsInt(),
+                anchorChunkJson.get("z").getAsInt());
+        CityReservationMaskRegistry.PlannedStructure plannedA = CityReservationMaskRegistry
+                .plannedStructuresForChunk(anchorChunk)
+                .get(0);
+        CityReservationMaskRegistry.recordWorldgenPlacement(plannedA, plannedA.plannedFootprint(),
+                "sig_a", new JsonArray(), anchorChunk,
+                "none", "WORLDGEN_PLACEMENT_RECORDED", "test placement");
+
+        JsonObject secondCityAnchorMap = anchorMap.deepCopy();
+        secondCityAnchorMap.addProperty("cityId", "city_other_with_same_anchor_ids");
+        CityReservationMaskRegistry.activate(mask, secondCityAnchorMap,
+                "run_b", "city_other_with_same_anchor_ids", worldRoot);
+
+        assertEquals(1, CityReservationMaskRegistry.plannedStructuresForChunk(anchorChunk).size());
+        assertEquals(0, CityReservationMaskRegistry.ledgerForCity("city_other_with_same_anchor_ids")
+                .getAsJsonArray("placedStructures").size());
+    }
+
+    @Test
     void d6WorldgenPlanDoesNotCallLatePlacementBackend() throws Exception {
         Fixture fixture = fixture();
         JsonObject anchorMap = new CityStructureAnchorPlanner()

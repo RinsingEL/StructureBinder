@@ -34,6 +34,13 @@ public abstract class ChunkGeneratorStructureMaskMixin {
         if (CityReservationMaskRegistry.suppressVanillaStructure(entry.structure().value(), chunkPos)) {
             cir.setReturnValue(false);
         }
+        MinecraftCityWorldgenStructurePlacer.injectPlannedStructures(
+                (ChunkGenerator) (Object) this,
+                registryAccess,
+                randomState,
+                seed,
+                chunk,
+                templateManager);
     }
 
     @Inject(method = "createStructures", at = @At("TAIL"))

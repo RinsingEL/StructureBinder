@@ -13,6 +13,7 @@ import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.chunk.ChunkGeneratorStructureState;
+import net.minecraft.world.level.levelgen.RandomState;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.StructurePiece;
@@ -39,13 +40,32 @@ public final class MinecraftCityWorldgenStructurePlacer {
             return;
         }
         for (CityReservationMaskRegistry.PlannedStructure item : planned) {
-            tryInject(generator, registryAccess, structureState, chunk, templateManager, chunkPos, item);
+            tryInject(generator, registryAccess, structureState.randomState(), structureState.getLevelSeed(),
+                    chunk, templateManager, chunkPos, item);
+        }
+    }
+
+    public static void injectPlannedStructures(ChunkGenerator generator,
+                                               RegistryAccess registryAccess,
+                                               RandomState randomState,
+                                               long levelSeed,
+                                               ChunkAccess chunk,
+                                               StructureTemplateManager templateManager) {
+        ChunkPos chunkPos = chunk.getPos();
+        List<CityReservationMaskRegistry.PlannedStructure> planned =
+                CityReservationMaskRegistry.plannedStructuresForChunk(chunkPos);
+        if (planned.isEmpty()) {
+            return;
+        }
+        for (CityReservationMaskRegistry.PlannedStructure item : planned) {
+            tryInject(generator, registryAccess, randomState, levelSeed, chunk, templateManager, chunkPos, item);
         }
     }
 
     private static void tryInject(ChunkGenerator generator,
                                   RegistryAccess registryAccess,
-                                  ChunkGeneratorStructureState structureState,
+                                  RandomState randomState,
+                                  long levelSeed,
                                   ChunkAccess chunk,
                                   StructureTemplateManager templateManager,
                                   ChunkPos chunkPos,
@@ -79,9 +99,9 @@ public final class MinecraftCityWorldgenStructurePlacer {
                 registryAccess,
                 generator,
                 generator.getBiomeSource(),
-                structureState.randomState(),
+                randomState,
                 templateManager,
-                structureState.getLevelSeed(),
+                levelSeed,
                 new ChunkPos(item.anchorChunkX(), item.anchorChunkZ()),
                 0,
                 chunk.getHeightAccessorForGeneration(),

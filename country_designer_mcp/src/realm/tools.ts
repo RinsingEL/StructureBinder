@@ -129,6 +129,45 @@ export const realmTools: ToolDefinition[] = [
     },
   },
   {
+    name: "realm_debug_command",
+    description: "开发调试：通过 Minecraft server command dispatcher 执行一条命令，例如 tp/time/weather/gamemode。必须显式 confirmCommandExecution=true；默认拦截 stop/reload/op/ban 等高风险管理命令，除非 allowUnsafeCommand=true。",
+    inputSchema: {
+      type: "object",
+      properties: {
+        command: {
+          type: "string",
+          description: "要执行的 Minecraft 命令，可带或不带开头 /；必须是单行。",
+        },
+        confirmCommandExecution: {
+          type: "boolean",
+          description: "必须为 true；用于确认这是有副作用的调试命令执行。",
+        },
+        sourceMode: {
+          type: "string",
+          enum: ["auto", "player", "server"],
+          description: "命令源；默认 auto。player 使用玩家上下文，server 使用服务端上下文。",
+        },
+        playerName: {
+          type: "string",
+          description: "玩家名；用于 sourceMode=player 或 auto 下选择玩家上下文，例如 Rinsing。",
+        },
+        dimensionId: {
+          type: "string",
+          description: "维度 ID；省略时使用玩家维度或 overworld。",
+        },
+        saveAfter: {
+          type: "boolean",
+          description: "执行后是否请求保存世界，默认 false。TP 通常不需要。",
+        },
+        allowUnsafeCommand: {
+          type: "boolean",
+          description: "允许执行 stop/reload/op/ban 等高风险管理命令，默认 false。",
+        },
+      },
+      required: ["command", "confirmCommandExecution"],
+    },
+  },
+  {
     name: "city_plan_d2",
     description: "City D2: 基于已有 W/T run 的 CitySeed 构建 CitySiteContext（城市局部上下文）。需提供 runId 和 citySeedId。",
     inputSchema: {
