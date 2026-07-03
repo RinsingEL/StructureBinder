@@ -857,6 +857,41 @@ final class CityStructureLandingFlowTest {
     }
 
     @Test
+    void wallPlannerV4UsesDomainCellsToBreakRectangularLandRing() {
+        JsonObject wallPlan = new CityWallPlanner().planV4(syntheticWallLedger(),
+                syntheticV4TerrainContourReservation(), roadMaskFromBlocks("city_test", new int[][]{}),
+                9, 2, 8, 7,
+                new CityWallPlanner.V3Options(24, 5, "v3.1", 7, 16, 6, 17, true),
+                CityWallPlanner.V4Options.defaults());
+
+        assertEquals("terrain_adaptive_domain_guided_land_ring",
+                wallPlan.get("wallContourMode").getAsString());
+        assertFalse(wallPlan.getAsJsonArray("terrainContourEvents").isEmpty(), wallPlan.toString());
+        assertTrue(wallPlan.getAsJsonObject("wallGraphValidation")
+                .get("terrainContourAdjustedUnitCount").getAsInt() > 0, wallPlan.toString());
+        assertTrue(wallPlan.getAsJsonObject("wallGraphValidation")
+                .get("terrainContourLinkUnitCount").getAsInt() > 0, wallPlan.toString());
+
+        Set<Integer> northWallZ = new HashSet<>();
+        boolean sawContourLink = false;
+        for (com.google.gson.JsonElement elem : wallPlan.getAsJsonArray("wallUnits")) {
+            JsonObject unit = elem.getAsJsonObject();
+            if (!unit.get("terrainContourAdjusted").getAsBoolean()) {
+                continue;
+            }
+            if (unit.get("terrainContourLink").getAsBoolean()) {
+                sawContourLink = true;
+            }
+            if ("north".equals(unit.get("side").getAsString())
+                    && "X".equals(unit.get("wallAxis").getAsString())) {
+                northWallZ.add(bounds(unit.getAsJsonObject("blockBounds")).center().z());
+            }
+        }
+        assertTrue(sawContourLink, wallPlan.getAsJsonArray("wallUnits").toString());
+        assertTrue(northWallZ.size() > 1, wallPlan.getAsJsonArray("wallUnits").toString());
+    }
+
+    @Test
     void landformReviewBuilderIncludesPaddingCellsAcrossGisRegions() {
         GisSampleConfig sampleConfig = GisSampleConfig.defaults().withCellStepBlocks(16);
         AtlasRegion west = new AtlasRegion("minecraft:overworld", 0, 0, sampleConfig);
@@ -1670,6 +1705,38 @@ final class CityStructureLandingFlowTest {
                   ],
                   "cityDomainMask": [
                     {"blockBounds": {"minX": -32, "minZ": -32, "maxX": 32, "maxZ": 32}}
+                  ],
+                  "wallCenterline": [],
+                  "gateCandidateZones": []
+                }
+                """).getAsJsonObject();
+    }
+
+    private static JsonObject syntheticV4TerrainContourReservation() {
+        return JsonParser.parseString("""
+                {
+                  "schemaVersion": "city_wall_reservation_plan.v0.3",
+                  "cityId": "city_test",
+                  "wallVersion": "v4",
+                  "boundarySource": "actual_footprint_land_ring_deferred_to_d7",
+                  "wallBounds": {"minX": -64, "minZ": -64, "maxX": 64, "maxZ": 64},
+                  "seedPatches": [
+                    {"landformPatchId": "plain_0", "landformType": "plain",
+                     "blockBounds": {"minX": -96, "minZ": -96, "maxX": 96, "maxZ": 96}}
+                  ],
+                  "cityDomainMask": [
+                    {"maskId": "city_domain_cell_0", "maskType": "city_domain_cell", "blockBounds": {"minX": -32, "minZ": -32, "maxX": -17, "maxZ": -17}},
+                    {"maskId": "city_domain_cell_1", "maskType": "city_domain_cell", "blockBounds": {"minX": -16, "minZ": -32, "maxX": -1, "maxZ": -17}},
+                    {"maskId": "city_domain_cell_2", "maskType": "city_domain_cell", "blockBounds": {"minX": 0, "minZ": -32, "maxX": 15, "maxZ": -17}},
+                    {"maskId": "city_domain_cell_3", "maskType": "city_domain_cell", "blockBounds": {"minX": 16, "minZ": -16, "maxX": 31, "maxZ": -1}},
+                    {"maskId": "city_domain_cell_4", "maskType": "city_domain_cell", "blockBounds": {"minX": -32, "minZ": -16, "maxX": -17, "maxZ": -1}},
+                    {"maskId": "city_domain_cell_5", "maskType": "city_domain_cell", "blockBounds": {"minX": -16, "minZ": -16, "maxX": -1, "maxZ": -1}},
+                    {"maskId": "city_domain_cell_6", "maskType": "city_domain_cell", "blockBounds": {"minX": 0, "minZ": -16, "maxX": 15, "maxZ": -1}},
+                    {"maskId": "city_domain_cell_7", "maskType": "city_domain_cell", "blockBounds": {"minX": 16, "minZ": 0, "maxX": 31, "maxZ": 15}},
+                    {"maskId": "city_domain_cell_8", "maskType": "city_domain_cell", "blockBounds": {"minX": -32, "minZ": 0, "maxX": -17, "maxZ": 15}},
+                    {"maskId": "city_domain_cell_9", "maskType": "city_domain_cell", "blockBounds": {"minX": -16, "minZ": 0, "maxX": -1, "maxZ": 15}},
+                    {"maskId": "city_domain_cell_10", "maskType": "city_domain_cell", "blockBounds": {"minX": 0, "minZ": 0, "maxX": 15, "maxZ": 15}},
+                    {"maskId": "city_domain_cell_11", "maskType": "city_domain_cell", "blockBounds": {"minX": 16, "minZ": 16, "maxX": 31, "maxZ": 31}}
                   ],
                   "wallCenterline": [],
                   "gateCandidateZones": []

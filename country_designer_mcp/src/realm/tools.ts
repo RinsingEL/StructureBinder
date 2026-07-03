@@ -457,7 +457,7 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "city_plan_city_walls",
-    description: "City 城墙规划：默认 v2 读取 D5 wall reservation、D7 placed ledger 和世界实际 RoadWeaver 路面裁门；wallVersion=v4 使用 actualFootprint land ring 墙图（wallNodes/wallUnits/nodeConnectorUnits + datum）；wallVersion=v3 使用结构种子城市外环 hull + 道路聚类裁门；wallVersion=v1_debug 可生成旧矩形调试墙。",
+    description: "City 城墙规划：默认 v2 读取 D5 wall reservation、D7 placed ledger 和世界实际 RoadWeaver 路面裁门；wallVersion=v4 使用 actualFootprint 硬约束 + D5 cityDomain cell 轻量贴形墙图（wallNodes/wallUnits/nodeConnectorUnits + datum + terrainContourEvents）；wallVersion=v3 使用结构种子城市外环 hull + 道路聚类裁门；wallVersion=v1_debug 可生成旧矩形调试墙。",
     inputSchema: {
       type: "object",
       properties: {

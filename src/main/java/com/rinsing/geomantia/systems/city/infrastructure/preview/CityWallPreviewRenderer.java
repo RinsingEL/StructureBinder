@@ -45,7 +45,7 @@ public final class CityWallPreviewRenderer {
             g.setFont(new Font("SansSerif", Font.PLAIN, 13));
             boolean v4 = "city_wall_plan.v0.4".equals(string(wallPlan, "schemaVersion"));
             g.drawString(v4
-                            ? "patch backdrop brown=unit purple=stair connector green=terrace red=gate blue=footprint cyan=road"
+                            ? "patch backdrop brown=unit olive=terrain contour purple=stair connector green=terrace red=gate blue=footprint cyan=road"
                             : "patch backdrop brown=wall red=gate dark=tower blue=actual footprint cyan=actual road",
                     36, 64);
             drawPatchBackdrop(g, t, bounds, d3Package);
@@ -228,14 +228,18 @@ public final class CityWallPreviewRenderer {
             }
             JsonObject unit = elem.getAsJsonObject();
             String type = string(unit, "unitType");
-            Color fill = switch (type) {
+            boolean terrainContourLink = bool(unit, "terrainContourLink");
+            boolean terrainContourAdjusted = bool(unit, "terrainContourAdjusted");
+            Color fill = terrainContourLink ? new Color(74, 146, 112, 150)
+                    : terrainContourAdjusted ? new Color(150, 129, 60, 154) : switch (type) {
                 case "skipped_wall_unit" -> new Color(196, 62, 55, 96);
                 case "natural_boundary_gap" -> new Color(48, 134, 185, 90);
                 case "stepped_wall_unit" -> new Color(210, 141, 48, 150);
                 case "terraced_wall_unit" -> new Color(114, 93, 178, 138);
                 default -> new Color(136, 96, 57, 142);
             };
-            Color stroke = switch (type) {
+            Color stroke = terrainContourLink ? new Color(34, 112, 82, 235)
+                    : terrainContourAdjusted ? new Color(112, 92, 31, 230) : switch (type) {
                 case "skipped_wall_unit" -> new Color(168, 43, 38, 220);
                 case "natural_boundary_gap" -> new Color(25, 101, 154, 210);
                 case "stepped_wall_unit" -> new Color(165, 96, 30, 225);
@@ -384,6 +388,10 @@ public final class CityWallPreviewRenderer {
 
     private static int intValue(JsonObject obj, String key, int fallback) {
         return obj != null && obj.has(key) && !obj.get(key).isJsonNull() ? obj.get(key).getAsInt() : fallback;
+    }
+
+    private static boolean bool(JsonObject obj, String key) {
+        return obj != null && obj.has(key) && !obj.get(key).isJsonNull() && obj.get(key).getAsBoolean();
     }
 
     private static String string(JsonObject obj, String key) {

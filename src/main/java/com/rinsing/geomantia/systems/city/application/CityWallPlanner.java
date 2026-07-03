@@ -36,6 +36,7 @@ public final class CityWallPlanner {
     public static final int DEFAULT_HEIGHT_DATUM_CLAMP_BLOCKS = 6;
     public static final int DEFAULT_LOCAL_MEDIAN_WINDOW_UNITS = 3;
     private static final int V4_NODE_INTERVAL_UNITS = 4;
+    private static final int V4_TERRAIN_CONTOUR_MAX_SHIFT_UNITS = 2;
     private static final int WALL_HALF_THICKNESS_BLOCKS = 2;
 
     public JsonObject plan(JsonObject placedLedger, int wallMarginBlocks, int segmentLengthBlocks,
@@ -410,6 +411,8 @@ public final class CityWallPlanner {
         java.util.List<BlockBounds> waterPatches = v4WaterPatches(wallReservationPlan);
         java.util.List<V4UnitDraft> drafts = v4RingUnits(wallBounds, unitLength);
         BlockBounds knownPatchBounds = v4KnownPatchBounds(wallReservationPlan, wallBounds);
+        JsonArray terrainContourEvents = adaptV4TerrainContour(drafts, wallReservationPlan, footprintUnion,
+                footprints, knownPatchBounds, waterPatches, opts);
         JsonArray waterRetreatEvents = retreatWaterRuns(drafts, waterPatches, opts, knownPatchBounds);
 
         java.util.List<Integer> surfaces = new java.util.ArrayList<>();
@@ -473,6 +476,10 @@ public final class CityWallPlanner {
             unit.addProperty("waterOverlapAfterRetreat", waterOverlap);
             unit.addProperty("waterRetreated", draft.waterRetreated);
             unit.addProperty("waterRetreatSteps", draft.waterRetreatSteps);
+            unit.addProperty("terrainContourAdjusted", draft.terrainContoured);
+            unit.addProperty("terrainContourLink", draft.terrainContourLink);
+            unit.addProperty("terrainContourShiftBlocks", draft.terrainContourShiftBlocks);
+            unit.addProperty("terrainContourReason", draft.terrainContourReason);
             unit.addProperty("templateId", "wall_straight_15");
             unit.addProperty("reasonCode", "V4_LAND_RING_WALL_UNIT");
 
@@ -561,6 +568,9 @@ public final class CityWallPlanner {
         plan.addProperty("boundaryMode", "actual_footprint_land_ring");
         plan.addProperty("wallBoundaryMode", "actual_footprint_land_ring");
         plan.addProperty("wallPlanningMode", "actual_footprint_land_ring_wall_graph");
+        plan.addProperty("wallContourMode", "terrain_adaptive_domain_guided_land_ring");
+        plan.addProperty("terrainContourMaxShiftBlocks",
+                opts.normalizedWallUnitLengthBlocks() * V4_TERRAIN_CONTOUR_MAX_SHIFT_UNITS);
         plan.addProperty("roadMaskSource", "actual_world_blocks");
         plan.addProperty("wallUnitLengthBlocks", unitLength);
         plan.addProperty("waterRunMinUnits", opts.normalizedWaterRunMinUnits());
@@ -583,6 +593,7 @@ public final class CityWallPlanner {
         }
         plan.add("knownPatchBounds", boundsJson(knownPatchBounds));
         plan.add("wallBounds", boundsJson(wallBounds));
+        plan.add("terrainContourEvents", terrainContourEvents);
         plan.add("waterRetreatEvents", waterRetreatEvents);
         plan.add("generatedGates", generatedGates);
         plan.add("wallNodes", nodes);
@@ -614,6 +625,8 @@ public final class CityWallPlanner {
         validation.addProperty("actualFootprintInsideKnownPatch", containsBounds(knownPatchBounds, footprintUnion));
         validation.addProperty("wallBoundsInsideKnownPatch", containsBounds(knownPatchBounds, wallBounds));
         validation.addProperty("outsideKnownPatchUnitCount", outsideKnownPatchUnits.size());
+        validation.addProperty("terrainContourAdjustedUnitCount", countTerrainContoured(drafts));
+        validation.addProperty("terrainContourLinkUnitCount", countTerrainContourLinks(drafts));
         validation.addProperty("ordinaryWallUnitsInWater", ordinaryWaterHits);
         validation.addProperty("naturalBoundaryGapCount", naturalBoundaryGaps);
         validation.addProperty("skippedMaskBreakCount", skippedMaskBreaks);
@@ -1248,6 +1261,252 @@ public final class CityWallPlanner {
                 : expand(union, WALL_HALF_THICKNESS_BLOCKS * 2);
     }
 
+    private static JsonArray adaptV4TerrainContour(java.util.List<V4UnitDraft> drafts,
+                                                   JsonObject reservation,
+                                                   BlockBounds footprintUnion,
+                                                   java.util.List<BlockBounds> footprints,
+                                                   BlockBounds knownPatchBounds,
+                                                   java.util.List<BlockBounds> waterPatches,
+                                                   V4Options options) {
+        JsonArray events = new JsonArray();
+        java.util.List<BlockBounds> domainCells = v4DomainGuideCells(reservation);
+        if (drafts.isEmpty() || domainCells.isEmpty()) {
+            return events;
+        }
+        int unitLength = options.normalizedWallUnitLengthBlocks();
+        int maxShift = unitLength * V4_TERRAIN_CONTOUR_MAX_SHIFT_UNITS;
+        int safeMargin = Math.max(WALL_HALF_THICKNESS_BLOCKS + 2,
+                Math.min(unitLength, options.normalizedStructureWallBreathingRoomBlocks() / 2));
+        int originalCount = drafts.size();
+        for (int i = 0; i < originalCount; i++) {
+            V4UnitDraft draft = drafts.get(i);
+            Integer guideCoordinate = v4ContourGuideCoordinate(draft, domainCells);
+            if (guideCoordinate == null) {
+                continue;
+            }
+            int currentCoordinate = v4ContourCoordinate(draft);
+            int targetCoordinate = v4ConstrainedContourCoordinate(draft.side, guideCoordinate,
+                    currentCoordinate, maxShift, footprintUnion, safeMargin);
+            int delta = targetCoordinate - currentCoordinate;
+            if (Math.abs(delta) < Math.max(1, unitLength / 2)) {
+                continue;
+            }
+            BlockBounds before = draft.bounds;
+            BlockBounds shifted = v4ShiftToContourCoordinate(draft, targetCoordinate);
+            if (!isValidTerrainContourCandidate(shifted, knownPatchBounds, waterPatches, footprints)) {
+                continue;
+            }
+            draft.bounds = shifted;
+            draft.terrainContoured = true;
+            draft.terrainContourShiftBlocks = delta;
+            draft.terrainContourReason = "TERRAIN_CONTOUR_DOMAIN_GUIDE";
+
+            JsonObject event = new JsonObject();
+            event.addProperty("unitId", draft.unitId);
+            event.addProperty("reasonCode", draft.terrainContourReason);
+            event.addProperty("side", draft.side);
+            event.addProperty("guideCoordinate", guideCoordinate);
+            event.addProperty("shiftBlocks", delta);
+            event.add("beforeBounds", boundsJson(before));
+            event.add("afterBounds", boundsJson(draft.bounds));
+            events.add(event);
+        }
+
+        java.util.List<V4UnitDraft> linked = v4InsertTerrainContourLinks(drafts,
+                unitLength, knownPatchBounds, events);
+        drafts.clear();
+        drafts.addAll(linked);
+        return events;
+    }
+
+    private static java.util.List<BlockBounds> v4DomainGuideCells(JsonObject reservation) {
+        java.util.List<BlockBounds> out = new java.util.ArrayList<>();
+        for (JsonElement elem : array(reservation, "cityDomainMask")) {
+            if (!elem.isJsonObject() || !elem.getAsJsonObject().has("blockBounds")) {
+                continue;
+            }
+            JsonObject mask = elem.getAsJsonObject();
+            if (!"city_domain_cell".equals(stringValue(mask, "maskType", ""))) {
+                continue;
+            }
+            out.add(bounds(mask.getAsJsonObject("blockBounds")));
+        }
+        if (!out.isEmpty()) {
+            return out;
+        }
+        for (JsonElement elem : array(reservation, "seedPatches")) {
+            if (!elem.isJsonObject()) {
+                continue;
+            }
+            JsonObject patch = elem.getAsJsonObject();
+            if ("water".equalsIgnoreCase(stringValue(patch, "landformType", ""))) {
+                continue;
+            }
+            int cellStep = Math.max(1, intValue(patch, "cellStepBlocks", DEFAULT_WALL_UNIT_LENGTH_BLOCKS));
+            for (JsonElement cellElem : array(patch, "memberCells")) {
+                if (!cellElem.isJsonObject()) {
+                    continue;
+                }
+                JsonObject cell = cellElem.getAsJsonObject();
+                int minX = intValue(cell, "blockMinX", Integer.MIN_VALUE);
+                int minZ = intValue(cell, "blockMinZ", Integer.MIN_VALUE);
+                if (minX == Integer.MIN_VALUE || minZ == Integer.MIN_VALUE) {
+                    continue;
+                }
+                out.add(new BlockBounds(minX, minZ, minX + cellStep - 1, minZ + cellStep - 1));
+            }
+        }
+        return out;
+    }
+
+    private static Integer v4ContourGuideCoordinate(V4UnitDraft draft, java.util.List<BlockBounds> domainCells) {
+        Integer guide = null;
+        for (BlockBounds cell : domainCells) {
+            switch (draft.side) {
+                case "north" -> {
+                    if (rangesOverlap(cell.minX(), cell.maxX(), draft.bounds.minX(), draft.bounds.maxX())) {
+                        guide = guide == null ? cell.minZ() : Math.min(guide, cell.minZ());
+                    }
+                }
+                case "south" -> {
+                    if (rangesOverlap(cell.minX(), cell.maxX(), draft.bounds.minX(), draft.bounds.maxX())) {
+                        guide = guide == null ? cell.maxZ() : Math.max(guide, cell.maxZ());
+                    }
+                }
+                case "east" -> {
+                    if (rangesOverlap(cell.minZ(), cell.maxZ(), draft.bounds.minZ(), draft.bounds.maxZ())) {
+                        guide = guide == null ? cell.maxX() : Math.max(guide, cell.maxX());
+                    }
+                }
+                case "west" -> {
+                    if (rangesOverlap(cell.minZ(), cell.maxZ(), draft.bounds.minZ(), draft.bounds.maxZ())) {
+                        guide = guide == null ? cell.minX() : Math.min(guide, cell.minX());
+                    }
+                }
+                default -> {
+                }
+            }
+        }
+        return guide;
+    }
+
+    private static int v4ContourCoordinate(V4UnitDraft draft) {
+        return switch (draft.side) {
+            case "north", "south" -> draft.bounds.center().z();
+            case "east", "west" -> draft.bounds.center().x();
+            default -> 0;
+        };
+    }
+
+    private static int v4ConstrainedContourCoordinate(String side,
+                                                      int guideCoordinate,
+                                                      int currentCoordinate,
+                                                      int maxShift,
+                                                      BlockBounds footprintUnion,
+                                                      int safeMargin) {
+        int target = clamp(guideCoordinate, currentCoordinate - maxShift, currentCoordinate + maxShift);
+        return switch (side) {
+            case "north" -> Math.min(target, footprintUnion.minZ() - safeMargin);
+            case "south" -> Math.max(target, footprintUnion.maxZ() + safeMargin);
+            case "east" -> Math.max(target, footprintUnion.maxX() + safeMargin);
+            case "west" -> Math.min(target, footprintUnion.minX() - safeMargin);
+            default -> currentCoordinate;
+        };
+    }
+
+    private static BlockBounds v4ShiftToContourCoordinate(V4UnitDraft draft, int targetCoordinate) {
+        int currentCoordinate = v4ContourCoordinate(draft);
+        int delta = targetCoordinate - currentCoordinate;
+        return switch (draft.side) {
+            case "north", "south" -> shift(draft.bounds, 0, delta);
+            case "east", "west" -> shift(draft.bounds, delta, 0);
+            default -> draft.bounds;
+        };
+    }
+
+    private static boolean isValidTerrainContourCandidate(BlockBounds candidate,
+                                                          BlockBounds knownPatchBounds,
+                                                          java.util.List<BlockBounds> waterPatches,
+                                                          java.util.List<BlockBounds> footprints) {
+        return containsBounds(knownPatchBounds, candidate)
+                && !overlapsAny(candidate, waterPatches)
+                && !overlapsAny(candidate, footprints);
+    }
+
+    private static java.util.List<V4UnitDraft> v4InsertTerrainContourLinks(java.util.List<V4UnitDraft> drafts,
+                                                                           int unitLength,
+                                                                           BlockBounds knownPatchBounds,
+                                                                           JsonArray events) {
+        java.util.List<V4UnitDraft> linked = new java.util.ArrayList<>();
+        int linkIndex = 0;
+        for (int i = 0; i < drafts.size(); i++) {
+            V4UnitDraft current = drafts.get(i);
+            linked.add(current);
+            if (i == drafts.size() - 1) {
+                continue;
+            }
+            V4UnitDraft next = drafts.get(i + 1);
+            if (!current.side.equals(next.side)) {
+                continue;
+            }
+            V4UnitDraft link = v4TerrainContourLink(current, next, "terrain_contour_link_" + linkIndex, unitLength);
+            if (link == null || !containsBounds(knownPatchBounds, link.bounds)) {
+                continue;
+            }
+            linkIndex++;
+            linked.add(link);
+            JsonObject event = new JsonObject();
+            event.addProperty("unitId", link.unitId);
+            event.addProperty("reasonCode", "TERRAIN_CONTOUR_STEP_LINK_INSERTED");
+            event.addProperty("side", current.side);
+            event.add("blockBounds", boundsJson(link.bounds));
+            events.add(event);
+        }
+        return linked;
+    }
+
+    private static V4UnitDraft v4TerrainContourLink(V4UnitDraft current,
+                                                    V4UnitDraft next,
+                                                    String unitId,
+                                                    int unitLength) {
+        int minStep = Math.max(WALL_HALF_THICKNESS_BLOCKS + 1, unitLength / 2);
+        if ("X".equals(current.axis) && "X".equals(next.axis)) {
+            int z1 = current.bounds.center().z();
+            int z2 = next.bounds.center().z();
+            if (Math.abs(z1 - z2) < minStep) {
+                return null;
+            }
+            int x = "south".equals(current.side) ? current.bounds.minX() : current.bounds.maxX();
+            BlockBounds bounds = new BlockBounds(x - WALL_HALF_THICKNESS_BLOCKS, Math.min(z1, z2),
+                    x + WALL_HALF_THICKNESS_BLOCKS, Math.max(z1, z2));
+            V4UnitDraft link = new V4UnitDraft(unitId, current.side, "Z", bounds,
+                    x, z1, x, z2, current.inwardDx, current.inwardDz);
+            link.terrainContoured = true;
+            link.terrainContourLink = true;
+            link.terrainContourShiftBlocks = Math.abs(z1 - z2);
+            link.terrainContourReason = "TERRAIN_CONTOUR_STEP_LINK";
+            return link;
+        }
+        if ("Z".equals(current.axis) && "Z".equals(next.axis)) {
+            int x1 = current.bounds.center().x();
+            int x2 = next.bounds.center().x();
+            if (Math.abs(x1 - x2) < minStep) {
+                return null;
+            }
+            int z = "west".equals(current.side) ? current.bounds.minZ() : current.bounds.maxZ();
+            BlockBounds bounds = new BlockBounds(Math.min(x1, x2), z - WALL_HALF_THICKNESS_BLOCKS,
+                    Math.max(x1, x2), z + WALL_HALF_THICKNESS_BLOCKS);
+            V4UnitDraft link = new V4UnitDraft(unitId, current.side, "X", bounds,
+                    x1, z, x2, z, current.inwardDx, current.inwardDz);
+            link.terrainContoured = true;
+            link.terrainContourLink = true;
+            link.terrainContourShiftBlocks = Math.abs(x1 - x2);
+            link.terrainContourReason = "TERRAIN_CONTOUR_STEP_LINK";
+            return link;
+        }
+        return null;
+    }
+
     private static java.util.List<V4UnitDraft> v4RingUnits(BlockBounds bounds, int unitLength) {
         java.util.List<V4UnitDraft> out = new java.util.ArrayList<>();
         int index = 0;
@@ -1574,6 +1833,26 @@ public final class CityWallPlanner {
         return out;
     }
 
+    private static int countTerrainContoured(java.util.List<V4UnitDraft> drafts) {
+        int count = 0;
+        for (V4UnitDraft draft : drafts) {
+            if (draft.terrainContoured) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private static int countTerrainContourLinks(java.util.List<V4UnitDraft> drafts) {
+        int count = 0;
+        for (V4UnitDraft draft : drafts) {
+            if (draft.terrainContourLink) {
+                count++;
+            }
+        }
+        return count;
+    }
+
     private static void addGeneratedGate(JsonArray generatedGates, V4UnitDraft draft, int gateWidth) {
         JsonObject gate = new JsonObject();
         gate.addProperty("gateId", "v4_gatehouse_" + generatedGates.size());
@@ -1687,6 +1966,10 @@ public final class CityWallPlanner {
         private boolean waterRetreated;
         private int waterRetreatSteps;
         private int waterRunLength;
+        private boolean terrainContoured;
+        private boolean terrainContourLink;
+        private int terrainContourShiftBlocks;
+        private String terrainContourReason = "none";
         private int surfaceMedianY;
         private int localMedianY;
         private int targetY;
