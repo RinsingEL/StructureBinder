@@ -19,9 +19,13 @@ import com.rinsing.geomantia.systems.city.domain.model.CitySiteContext;
 import com.rinsing.geomantia.systems.city.domain.model.LandformPatchSummary;
 import com.rinsing.geomantia.systems.city.infrastructure.json.CityJson;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityReservationMaskRegistry;
+import com.rinsing.geomantia.systems.gis.GisClassifierConfig;
+import com.rinsing.geomantia.systems.gis.GisSampleConfig;
+import com.rinsing.geomantia.systems.gis.algorithm.landform.PatchMerger;
 import com.rinsing.geomantia.systems.gis.domain.cell.LandformType;
 import com.rinsing.geomantia.systems.gis.domain.landform.LandformPatch;
 import com.rinsing.geomantia.systems.gis.domain.landform.PatchFlag;
+import com.rinsing.geomantia.systems.gis.domain.region.AtlasRegion;
 import net.minecraft.world.level.ChunkPos;
 import org.junit.jupiter.api.Test;
 
@@ -496,6 +500,52 @@ final class CityStructureLandingFlowTest {
     }
 
     @Test
+    void wallReservationV4KeepsD5MaskButDefersFinalBoundaryToD7Graph() throws Exception {
+        Fixture fixture = fixture();
+        JsonObject anchorMap = new CityStructureAnchorPlanner()
+                .plan(fixture.baseDir(), fixture.review(), fixture.terraSenseSource(), anchorPlan(fixture.review()))
+                .structureAnchorMap();
+
+        JsonObject reservation = new CityWallReservationPlanner().plan(
+                fixture.review(), anchorMap, "v4", 24, 15, 4,
+                new CityWallReservationPlanner.V3Options(24, 2, 64, 0.6));
+
+        assertEquals("city_wall_reservation_plan.v0.3", reservation.get("schemaVersion").getAsString());
+        assertEquals("v4", reservation.get("wallVersion").getAsString());
+        assertEquals("actual_footprint_land_ring_deferred_to_d7",
+                reservation.get("boundarySource").getAsString());
+        assertTrue(reservation.get("finalBoundaryDeferredToD7").getAsBoolean());
+        assertFalse(reservation.getAsJsonArray("wallCorridorMask").isEmpty());
+    }
+
+    @Test
+    void wallReservationV4CarriesPatchMemberCellsIntoSeedPatches() {
+        CityLandformReviewPackage review = preciseMemberCellReview();
+        JsonObject anchorMap = JsonParser.parseString("""
+                {
+                  "schemaVersion": "city_structure_anchor_map.v0.2",
+                  "cityId": "city_test",
+                  "anchors": [
+                    {
+                      "anchorId": "a",
+                      "sourcePatchIds": ["water_cells"],
+                      "anchorBlock": {"x": 0, "z": 0}
+                    }
+                  ]
+                }
+                """).getAsJsonObject();
+
+        JsonObject reservation = new CityWallReservationPlanner().plan(
+                review, anchorMap, "v4", 24, 15, 4,
+                new CityWallReservationPlanner.V3Options(24, 1, 64, 0.6));
+
+        assertTrue(reservation.getAsJsonArray("seedPatches").toString().contains("\"memberCells\""),
+                reservation.getAsJsonArray("seedPatches").toString());
+        assertTrue(reservation.getAsJsonArray("seedPatches").toString().contains("\"cellStepBlocks\":16"),
+                reservation.getAsJsonArray("seedPatches").toString());
+    }
+
+    @Test
     void wallPlannerV3ClustersExternalRoadGatesAndIgnoresInsideRoads() throws Exception {
         Fixture fixture = fixture();
         JsonObject anchorMap = new CityStructureAnchorPlanner()
@@ -782,6 +832,188 @@ final class CityStructureLandingFlowTest {
                 wallPlan.get("gateFallbackReasonCode").getAsString());
         assertTrue(wallPlan.getAsJsonArray("generatedGates").toString()
                 .contains("NO_VALID_GATE_CANDIDATE_AFTER_FILTER"));
+    }
+
+    @Test
+    void wallPlannerV4EmitsGraphDatumAndIncludesActualFootprintOutsidePatch() {
+        JsonObject wallPlan = new CityWallPlanner().planV4(syntheticWideWallLedger(), syntheticV4Reservation(),
+                roadMaskFromBlocks("city_test", new int[][]{}), 9, 2, 8, 7,
+                new CityWallPlanner.V3Options(24, 5, "v3.1", 7, 16, 6, 17, true),
+                CityWallPlanner.V4Options.defaults());
+
+        assertEquals("city_wall_plan.v0.4", wallPlan.get("schemaVersion").getAsString());
+        assertEquals("v4", wallPlan.get("wallVersion").getAsString());
+        assertEquals("actual_footprint_land_ring", wallPlan.get("wallBoundaryMode").getAsString());
+        assertTrue(wallPlan.has("cityWallDatumY"));
+        assertFalse(wallPlan.getAsJsonArray("wallNodes").isEmpty());
+        assertFalse(wallPlan.getAsJsonArray("wallUnits").isEmpty());
+        assertFalse(wallPlan.getAsJsonArray("nodeConnectorUnits").isEmpty());
+        BlockBounds wallBounds = bounds(wallPlan.getAsJsonObject("wallBounds"));
+        assertTrue(wallBounds.contains(132, 12), wallPlan.toString());
+        assertTrue(wallPlan.getAsJsonArray("wallUnits").toString().contains("\"targetY\""));
+        assertTrue(wallPlan.getAsJsonArray("wallNodes").toString().contains("\"surfaceMedianY\""));
+        assertTrue(wallPlan.getAsJsonObject("wallGraphValidation").has("breaks"));
+        assertTrue(wallPlan.getAsJsonObject("wallGraphValidation").has("outsideKnownPatchUnitCount"));
+    }
+
+    @Test
+    void landformReviewBuilderIncludesPaddingCellsAcrossGisRegions() {
+        GisSampleConfig sampleConfig = GisSampleConfig.defaults().withCellStepBlocks(16);
+        AtlasRegion west = new AtlasRegion("minecraft:overworld", 0, 0, sampleConfig);
+        AtlasRegion east = new AtlasRegion("minecraft:overworld", 1, 0, sampleConfig);
+        west.cell(31, 8).setLandformType(LandformType.PLAIN);
+        east.cell(0, 8).setLandformType(LandformType.SLOPE);
+        PatchMerger merger = new PatchMerger(GisClassifierConfig.defaults());
+        merger.merge(west);
+        merger.merge(east);
+
+        CityPlanningConfig config = CityPlanningConfig.defaults();
+        CitySiteContext context = new com.rinsing.geomantia.systems.city.application.CitySiteContextBuilder(config)
+                .build("city_region_edge", "realm_test", "minecraft:overworld",
+                        "city_region_edge", "candidate_region_edge", 500, 128,
+                        "village", "village", 8, 16, null);
+        BlockBounds padded = new BlockBounds(context.bounds().minX() - 128, context.bounds().minZ() - 128,
+                context.bounds().maxX() + 128, context.bounds().maxZ() + 128);
+
+        CityLandformReviewPackage review = new com.rinsing.geomantia.systems.city.application.CityLandformReviewBuilder(config)
+                .buildFromRegions(context, List.of(west, east), padded);
+
+        assertTrue(review.landformPatches().stream()
+                        .flatMap(patch -> patch.memberCells().stream())
+                        .anyMatch(cell -> cell.blockMinX() == 512),
+                review.asJson().toString());
+    }
+
+    @Test
+    void wallPlannerV4AlignsNodesWithWallUnitsInsteadOfCreatingInnerColumnRing() {
+        JsonObject wallPlan = new CityWallPlanner().planV4(syntheticWideWallLedger(), syntheticV4Reservation(),
+                roadMaskFromBlocks("city_test", new int[][]{}), 9, 2, 8, 7,
+                new CityWallPlanner.V3Options(24, 5, "v3.1", 7, 16, 6, 17, true),
+                CityWallPlanner.V4Options.defaults());
+
+        java.util.Map<String, BlockBounds> nodeBoundsById = new java.util.HashMap<>();
+        int junctionCount = 0;
+        for (com.google.gson.JsonElement elem : wallPlan.getAsJsonArray("wallNodes")) {
+            JsonObject node = elem.getAsJsonObject();
+            nodeBoundsById.put(node.get("nodeId").getAsString(), bounds(node.getAsJsonObject("blockBounds")));
+            if ("junction".equals(node.get("nodeType").getAsString())) {
+                junctionCount++;
+                assertEquals("graph_only", node.get("placementRole").getAsString());
+            }
+        }
+        assertTrue(junctionCount > 0, wallPlan.getAsJsonArray("wallNodes").toString());
+
+        for (com.google.gson.JsonElement elem : wallPlan.getAsJsonArray("wallUnits")) {
+            JsonObject unit = elem.getAsJsonObject();
+            if ("natural_boundary_gap".equals(unit.get("unitType").getAsString())) {
+                continue;
+            }
+            BlockBounds unitBounds = bounds(unit.getAsJsonObject("blockBounds"));
+            BlockBounds fromNodeBounds = nodeBoundsById.get(unit.get("fromNodeId").getAsString());
+            assertTrue(fromNodeBounds != null, unit.toString());
+            assertTrue(fromNodeBounds.overlaps(unitBounds), unit.toString() + " node=" + fromNodeBounds);
+        }
+    }
+
+    @Test
+    void wallPlannerV4PlacesGatehouseNodeOnSkippedRoadUnit() {
+        JsonObject wallPlan = new CityWallPlanner().planV4(syntheticWideWallLedger(), syntheticV4Reservation(),
+                roadMaskFromBlocks("city_test", new int[][]{{175, 0}, {175, 1}, {175, 2}}),
+                9, 2, 8, 7,
+                new CityWallPlanner.V3Options(24, 5, "v3.1", 7, 16, 6, 17, true),
+                CityWallPlanner.V4Options.defaults());
+
+        java.util.Map<String, BlockBounds> nodeBoundsById = new java.util.HashMap<>();
+        java.util.Map<String, String> nodeTypesById = new java.util.HashMap<>();
+        for (com.google.gson.JsonElement elem : wallPlan.getAsJsonArray("wallNodes")) {
+            JsonObject node = elem.getAsJsonObject();
+            nodeBoundsById.put(node.get("nodeId").getAsString(), bounds(node.getAsJsonObject("blockBounds")));
+            nodeTypesById.put(node.get("nodeId").getAsString(), node.get("nodeType").getAsString());
+        }
+
+        boolean sawGatehouseOpening = false;
+        for (com.google.gson.JsonElement elem : wallPlan.getAsJsonArray("wallUnits")) {
+            JsonObject unit = elem.getAsJsonObject();
+            if (!"skipped_wall_unit".equals(unit.get("unitType").getAsString())) {
+                continue;
+            }
+            if (!"ROAD_MASK_GATEHOUSE_OPENING".equals(unit.get("reasonCode").getAsString())) {
+                continue;
+            }
+            sawGatehouseOpening = true;
+            String fromNodeId = unit.get("fromNodeId").getAsString();
+            assertEquals("gatehouse", nodeTypesById.get(fromNodeId), unit.toString());
+            assertTrue(nodeBoundsById.get(fromNodeId).overlaps(bounds(unit.getAsJsonObject("blockBounds"))),
+                    unit.toString());
+        }
+        assertTrue(sawGatehouseOpening, wallPlan.toString());
+    }
+
+    @Test
+    void wallPlannerV4IgnoresMasonryRoadMaskFalsePositives() {
+        JsonObject wallPlan = new CityWallPlanner().planV4(syntheticWideWallLedger(), syntheticV4Reservation(),
+                roadMaskFromBlocks("city_test", new int[][]{{175, 0}, {175, 1}, {175, 2}},
+                        "minecraft:stone_bricks"),
+                9, 2, 8, 7,
+                new CityWallPlanner.V3Options(24, 5, "v3.1", 7, 16, 6, 17, true),
+                CityWallPlanner.V4Options.defaults());
+
+        assertFalse(wallPlan.getAsJsonArray("wallUnits").toString().contains("ROAD_MASK_GATEHOUSE_OPENING"),
+                wallPlan.toString());
+    }
+
+    @Test
+    void wallPlannerV4RetreatsContinuousWaterRunAndLeavesNoOrdinaryWaterUnits() {
+        JsonObject wallPlan = new CityWallPlanner().planV4(syntheticWallLedger(), syntheticV4WaterReservation(),
+                roadMaskFromBlocks("city_test", new int[][]{}), 9, 2, 8, 7,
+                new CityWallPlanner.V3Options(24, 5, "v3.1", 7, 16, 6, 17, true),
+                CityWallPlanner.V4Options.defaults());
+
+        assertFalse(wallPlan.getAsJsonArray("waterRetreatEvents").isEmpty(), wallPlan.toString());
+        assertEquals(0, wallPlan.getAsJsonObject("wallGraphValidation")
+                .get("ordinaryWallUnitsInWater").getAsInt(), wallPlan.toString());
+        for (com.google.gson.JsonElement elem : wallPlan.getAsJsonArray("wallUnits")) {
+            JsonObject unit = elem.getAsJsonObject();
+            if (unit.get("placementAllowed").getAsBoolean()) {
+                assertFalse(unit.get("waterOverlapAfterRetreat").getAsBoolean(), unit.toString());
+            }
+        }
+    }
+
+    @Test
+    void wallPlannerV4UsesWaterMemberCellsInsteadOfPatchEnvelope() {
+        JsonObject wallPlan = new CityWallPlanner().planV4(syntheticWallLedger(),
+                syntheticV4PreciseWaterReservation(), roadMaskFromBlocks("city_test", new int[][]{}),
+                9, 2, 8, 7,
+                new CityWallPlanner.V3Options(24, 5, "v3.1", 7, 16, 6, 17, true),
+                CityWallPlanner.V4Options.defaults());
+
+        int wallUnitCount = wallPlan.getAsJsonArray("wallUnits").size();
+        int naturalGapCount = wallPlan.getAsJsonObject("wallGraphValidation")
+                .get("naturalBoundaryGapCount").getAsInt();
+        assertTrue(naturalGapCount < wallUnitCount, wallPlan.toString());
+        assertTrue(wallPlan.getAsJsonArray("wallUnits").toString().contains("\"unitType\":\"wall_unit\""),
+                wallPlan.toString());
+        assertEquals(0, wallPlan.getAsJsonObject("wallGraphValidation")
+                .get("ordinaryWallUnitsInWater").getAsInt(), wallPlan.toString());
+    }
+
+    @Test
+    void wallPlannerV4CreatesSteppedUnitsTerraceNodesAndConnectorsForHeightBands() {
+        JsonObject wallPlan = new CityWallPlanner().planV4(syntheticWallLedger(), syntheticV4Reservation(),
+                roadMaskFromBlocks("city_test", new int[][]{}), 9, 2, 8, 7,
+                new CityWallPlanner.V3Options(24, 5, "v3.1", 7, 16, 6, 17, true),
+                CityWallPlanner.V4Options.defaults());
+
+        assertTrue(wallPlan.getAsJsonArray("wallUnits").toString().contains("\"unitType\":\"stepped_wall_unit\"")
+                        || wallPlan.getAsJsonArray("wallUnits").toString().contains("\"unitType\":\"terraced_wall_unit\""),
+                wallPlan.toString());
+        assertTrue(wallPlan.getAsJsonArray("wallNodes").toString().contains("\"nodeType\":\"terrace_node\""),
+                wallPlan.toString());
+        assertTrue(wallPlan.getAsJsonArray("nodeConnectorUnits").toString()
+                .contains("\"connectorStatus\":\"stepped\""));
+        assertTrue(wallPlan.getAsJsonObject("wallGraphValidation")
+                .get("heightBreakCount").getAsInt() > 0);
     }
 
     @Test
@@ -1083,6 +1315,63 @@ final class CityStructureLandingFlowTest {
         return new Fixture(baseDir, context, review, source);
     }
 
+    private static CityLandformReviewPackage preciseMemberCellReview() {
+        return CityLandformReviewPackage.fromJson(JsonParser.parseString("""
+                {
+                  "schemaVersion": "city_landform_review.v0.1",
+                  "cityId": "city_test",
+                  "grid": {
+                    "originBlockX": -32,
+                    "originBlockZ": -32,
+                    "cellStepBlocks": 16,
+                    "cellsX": 4,
+                    "cellsZ": 4
+                  },
+                  "targetScale": {
+                    "scale": "town",
+                    "radiusBlocks": 64,
+                    "cellStepBlocks": 16
+                  },
+                  "reviewMapImage": "review.png",
+                  "legend": [
+                    {"color": "#2196F3", "label": "水域", "landformType": "water"}
+                  ],
+                  "landformPatches": [
+                    {
+                      "landformPatchId": "water_cells",
+                      "mapLabel": "水域01",
+                      "displayLandformName": "水域",
+                      "landformType": "water",
+                      "areaBlocks": 512,
+                      "cellCount": 2,
+                      "areaClass": "small",
+                      "centerBlock": {"x": 8, "z": 8},
+                      "blockBounds": {"minX": 0, "minZ": 0, "maxX": 31, "maxZ": 15},
+                      "geometryMode": "patch_member_cells",
+                      "memberCells": [
+                        {"cellX": 0, "cellZ": 0, "blockMinX": 0, "blockMinZ": 0},
+                        {"cellX": 1, "cellZ": 0, "blockMinX": 16, "blockMinZ": 0}
+                      ],
+                      "metricsSummary": {
+                        "meanElevation": 63,
+                        "minElevation": 62,
+                        "maxElevation": 64,
+                        "meanSlope": 0.1,
+                        "meanWaterDistance": 0
+                      },
+                      "landformTags": [],
+                      "overlayTags": [],
+                      "summaryFacts": ["精细水体格子"],
+                      "neighborLandformPatchIds": []
+                    }
+                  ],
+                  "planningContext": [],
+                  "aiPromptContext": "city test",
+                  "debugRefs": []
+                }
+                """).getAsJsonObject());
+    }
+
     private static JsonObject anchorPlan(CityLandformReviewPackage review) {
         LandformPatchSummary first = review.landformPatches().get(0);
         LandformPatchSummary second = review.landformPatches().get(1);
@@ -1296,6 +1585,98 @@ final class CityStructureLandingFlowTest {
                 """).getAsJsonObject();
     }
 
+    private static JsonObject syntheticWideWallLedger() {
+        return JsonParser.parseString("""
+                {
+                  "schemaVersion": "city_placed_structure_ledger.v0.1",
+                  "cityId": "city_test",
+                  "placedStructures": [
+                    {"anchorId": "a", "actualFootprint": {"minX": -8, "minZ": -8, "maxX": 8, "maxZ": 8}},
+                    {"anchorId": "b", "actualFootprint": {"minX": 108, "minZ": -4, "maxX": 132, "maxZ": 12}}
+                  ]
+                }
+                """).getAsJsonObject();
+    }
+
+    private static JsonObject syntheticV4Reservation() {
+        return JsonParser.parseString("""
+                {
+                  "schemaVersion": "city_wall_reservation_plan.v0.3",
+                  "cityId": "city_test",
+                  "wallVersion": "v4",
+                  "boundarySource": "actual_footprint_land_ring_deferred_to_d7",
+                  "wallBounds": {"minX": -32, "minZ": -32, "maxX": 32, "maxZ": 32},
+                  "seedPatches": [
+                    {"landformPatchId": "plain_0", "landformType": "plain",
+                     "blockBounds": {"minX": -64, "minZ": -64, "maxX": 64, "maxZ": 64}}
+                  ],
+                  "cityDomainMask": [
+                    {"blockBounds": {"minX": -32, "minZ": -32, "maxX": 32, "maxZ": 32}}
+                  ],
+                  "wallCenterline": [],
+                  "gateCandidateZones": []
+                }
+                """).getAsJsonObject();
+    }
+
+    private static JsonObject syntheticV4WaterReservation() {
+        return JsonParser.parseString("""
+                {
+                  "schemaVersion": "city_wall_reservation_plan.v0.3",
+                  "cityId": "city_test",
+                  "wallVersion": "v4",
+                  "boundarySource": "actual_footprint_land_ring_deferred_to_d7",
+                  "wallBounds": {"minX": -32, "minZ": -32, "maxX": 32, "maxZ": 32},
+                  "seedPatches": [
+                    {"landformPatchId": "lake_big", "landformType": "water",
+                     "blockBounds": {"minX": -80, "minZ": -72, "maxX": 80, "maxZ": -40}},
+                    {"landformPatchId": "plain_0", "landformType": "plain",
+                     "blockBounds": {"minX": -80, "minZ": -32, "maxX": 80, "maxZ": 80}}
+                  ],
+                  "cityDomainMask": [
+                    {"blockBounds": {"minX": -32, "minZ": -32, "maxX": 32, "maxZ": 32}}
+                  ],
+                  "wallCenterline": [],
+                  "gateCandidateZones": []
+                }
+                """).getAsJsonObject();
+    }
+
+    private static JsonObject syntheticV4PreciseWaterReservation() {
+        return JsonParser.parseString("""
+                {
+                  "schemaVersion": "city_wall_reservation_plan.v0.3",
+                  "cityId": "city_test",
+                  "wallVersion": "v4",
+                  "boundarySource": "actual_footprint_land_ring_deferred_to_d7",
+                  "wallBounds": {"minX": -32, "minZ": -32, "maxX": 32, "maxZ": 32},
+                  "seedPatches": [
+                    {
+                      "landformPatchId": "lake_big",
+                      "landformType": "water",
+                      "geometryMode": "patch_member_cells",
+                      "cellStepBlocks": 16,
+                      "blockBounds": {"minX": -80, "minZ": -80, "maxX": 80, "maxZ": 80},
+                      "memberCells": [
+                        {"cellX": -2, "cellZ": -3, "blockMinX": -32, "blockMinZ": -48},
+                        {"cellX": -1, "cellZ": -3, "blockMinX": -16, "blockMinZ": -48},
+                        {"cellX": 0, "cellZ": -3, "blockMinX": 0, "blockMinZ": -48},
+                        {"cellX": 1, "cellZ": -3, "blockMinX": 16, "blockMinZ": -48},
+                        {"cellX": 2, "cellZ": -3, "blockMinX": 32, "blockMinZ": -48}
+                      ]
+                    },
+                    {"landformPatchId": "plain_0", "landformType": "plain",
+                     "blockBounds": {"minX": -80, "minZ": -32, "maxX": 80, "maxZ": 80}}
+                  ],
+                  "cityDomainMask": [
+                    {"blockBounds": {"minX": -32, "minZ": -32, "maxX": 32, "maxZ": 32}}
+                  ],
+                  "wallCenterline": [],
+                  "gateCandidateZones": []
+                }
+                """).getAsJsonObject();
+    }
+
     private static JsonObject syntheticEastWallReservation() {
         return JsonParser.parseString("""
                 {
@@ -1316,6 +1697,10 @@ final class CityStructureLandingFlowTest {
     }
 
     private static JsonObject roadMaskFromBlocks(String cityId, int[][] blocks) {
+        return roadMaskFromBlocks(cityId, blocks, "");
+    }
+
+    private static JsonObject roadMaskFromBlocks(String cityId, int[][] blocks, String blockId) {
         JsonObject obj = new JsonObject();
         obj.addProperty("schemaVersion", "city_actual_road_mask.v0.2");
         obj.addProperty("cityId", cityId);
@@ -1325,6 +1710,9 @@ final class CityStructureLandingFlowTest {
             JsonObject mask = new JsonObject();
             mask.addProperty("maskId", "road_" + i);
             mask.addProperty("maskType", "actual_road");
+            if (!blockId.isBlank()) {
+                mask.addProperty("blockId", blockId);
+            }
             mask.add("blockBounds", boundsJson(new BlockBounds(blocks[i][0], blocks[i][1], blocks[i][0], blocks[i][1])));
             roadMask.add(mask);
         }

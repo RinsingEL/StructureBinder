@@ -54,20 +54,27 @@ import com.rinsing.geomantia.systems.city.infrastructure.world.WorldEditMutation
 import com.rinsing.geomantia.systems.gis.GisClassifierConfig;
 import com.rinsing.geomantia.systems.gis.GisSampleConfig;
 import com.rinsing.geomantia.systems.gis.adapter.minecraft.MinecraftPriorAtlasSampler;
+import com.rinsing.geomantia.systems.gis.application.refresh.RefreshPriority;
 import com.rinsing.geomantia.systems.gis.application.refresh.GisRefreshService;
 import com.rinsing.geomantia.systems.gis.application.refresh.RefreshResult;
+import com.rinsing.geomantia.systems.gis.application.refresh.SampleMode;
 import com.rinsing.geomantia.systems.gis.domain.landform.LandformPatch;
+import com.rinsing.geomantia.systems.gis.domain.region.AtlasRegion;
 import com.rinsing.geomantia.systems.gis.domain.region.AtlasRegionStore;
 import net.minecraft.server.level.ServerLevel;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 final class CityPlanningEndpointHandler {
+    static final int DEFAULT_D3_PATCH_SCAN_PADDING_BLOCKS = 128;
 
     private CityPlanningEndpointHandler() {
     }
@@ -92,6 +99,12 @@ final class CityPlanningEndpointHandler {
 
     static JsonObject handlePlanD3(Path debugRoot, String runId, String citySeedId,
                                     Integer requestedCellStepBlocks, ServerLevel level) throws IOException {
+        return handlePlanD3(debugRoot, runId, citySeedId, requestedCellStepBlocks, null, level);
+    }
+
+    static JsonObject handlePlanD3(Path debugRoot, String runId, String citySeedId,
+                                    Integer requestedCellStepBlocks, Integer requestedPatchScanPaddingBlocks,
+                                    ServerLevel level) throws IOException {
         Path runDir = debugRoot.resolve(runId);
         JsonObject seed = loadCitySeed(runDir, runId, citySeedId);
         RunMetadata metadata = loadRunMetadata(runDir, requestedCellStepBlocks,
@@ -105,52 +118,114 @@ final class CityPlanningEndpointHandler {
         List<TerritoryCellRef> territoryCells = loadTerritoryCells(runDir, stringValue(seed, "realmId"));
         CitySiteContext ctx = buildSiteContext(siteBuilder, seed, metadata, territoryCells);
 
-        // Run local GIS refresh within city bounds to get terrain patches
-        int cityRadiusBlocks = ctx.planningRadiusBlocks();
-        int chunks = Math.max(1, cityRadiusBlocks / 16 + 2);
+        int patchScanPaddingBlocks = normalizeD3PatchScanPaddingBlocks(requestedPatchScanPaddingBlocks);
+        BlockBounds patchContextBounds = expandBounds(ctx.bounds(), patchScanPaddingBlocks);
         int localCellStepBlocks = ctx.grid().cellStepBlocks();
         GisSampleConfig sampleConfig = GisSampleConfig.defaults().withCellStepBlocks(localCellStepBlocks);
         AtlasRegionStore store = new AtlasRegionStore(sampleConfig);
         GisRefreshService gisService = new GisRefreshService(sampleConfig, GisClassifierConfig.defaults(),
                 store, new MinecraftPriorAtlasSampler(level));
         Path outputDirectory = runDir.resolve("city_d3_" + safeFileName(citySeedId));
-        RefreshResult refreshResult = gisService.refresh(
-                level.dimension().location().toString(),
-                ctx.anchorBlock().x(), ctx.anchorBlock().z(), chunks,
-                com.rinsing.geomantia.systems.gis.application.refresh.SampleMode.PRIOR,
-                com.rinsing.geomantia.systems.gis.application.refresh.RefreshPriority.DEBUG,
-                outputDirectory);
+        List<RefreshResult> refreshResults = refreshCityD3Regions(gisService, sampleConfig,
+                level.dimension().location().toString(), patchContextBounds, outputDirectory);
 
-        List<LandformPatch> patches;
-        if (refreshResult.patches() != null && !refreshResult.patches().isEmpty()) {
-            patches = refreshResult.patches();
-        } else if (refreshResult.region() != null) {
-            patches = new ArrayList<>(refreshResult.region().patches());
-        } else {
-            patches = List.of();
-        }
+        List<AtlasRegion> regions = refreshResults.stream()
+                .map(RefreshResult::region)
+                .filter(java.util.Objects::nonNull)
+                .toList();
+        List<LandformPatch> patches = refreshResults.stream()
+                .flatMap(result -> {
+                    if (result.patches() != null && !result.patches().isEmpty()) {
+                        return result.patches().stream();
+                    }
+                    return result.region() == null ? java.util.stream.Stream.<LandformPatch>empty()
+                            : result.region().patches().stream();
+                })
+                .toList();
 
-        CityLandformReviewPackage reviewPkg = refreshResult.region() != null
-                ? reviewBuilder.build(ctx, refreshResult.region())
-                : reviewBuilder.build(ctx, patches);
+        CityLandformReviewPackage reviewPkg = regions.isEmpty()
+                ? reviewBuilder.build(ctx, patches)
+                : reviewBuilder.buildFromRegions(ctx, regions, patchContextBounds);
         Path reviewMapPath = mapRenderer.render(ctx, reviewPkg, patches, outputDirectory);
         String reviewMapRef = debugRef(debugRoot, reviewMapPath);
         reviewPkg = reviewPkg.withReviewMap(reviewMapRef, List.of(
                 reviewMapRef,
                 debugRef(debugRoot, outputDirectory)));
         Path packagePath = outputDirectory.resolve("city_landform_review_package.json");
-        Files.writeString(packagePath, CityJson.GSON.toJson(reviewPkg.asJson()));
+        JsonObject packageJson = reviewPkg.asJson();
+        addD3PatchScanMetadata(packageJson, patchScanPaddingBlocks, patchContextBounds, refreshResults);
+        Files.writeString(packagePath, CityJson.GSON.toJson(packageJson));
 
         JsonObject response = new JsonObject();
         response.addProperty("ok", true);
-        response.addProperty("patchCount", patches.size());
+        response.addProperty("patchCount", reviewPkg.landformPatches().size());
+        response.addProperty("refreshedRegionCount", refreshResults.size());
+        response.addProperty("patchScanPaddingBlocks", patchScanPaddingBlocks);
         response.add("citySiteContext", ctx.asJson());
-        response.add("landformReviewPackage", reviewPkg.asJson());
+        response.add("landformReviewPackage", packageJson);
         JsonObject artifacts = new JsonObject();
         artifacts.addProperty("landformReviewMap", reviewMapRef);
         artifacts.addProperty("cityLandformReviewPackage", debugRef(debugRoot, packagePath));
         response.add("artifacts", artifacts);
         return response;
+    }
+
+    private static int normalizeD3PatchScanPaddingBlocks(Integer requestedPatchScanPaddingBlocks) {
+        if (requestedPatchScanPaddingBlocks == null) {
+            return DEFAULT_D3_PATCH_SCAN_PADDING_BLOCKS;
+        }
+        return Math.max(0, requestedPatchScanPaddingBlocks);
+    }
+
+    private static List<RefreshResult> refreshCityD3Regions(GisRefreshService gisService,
+                                                            GisSampleConfig sampleConfig,
+                                                            String dimensionId,
+                                                            BlockBounds patchContextBounds,
+                                                            Path outputDirectory) throws IOException {
+        int regionSizeBlocks = sampleConfig.regionSizeBlocks();
+        int minRegionX = Math.floorDiv(patchContextBounds.minX(), regionSizeBlocks);
+        int maxRegionX = Math.floorDiv(patchContextBounds.maxX(), regionSizeBlocks);
+        int minRegionZ = Math.floorDiv(patchContextBounds.minZ(), regionSizeBlocks);
+        int maxRegionZ = Math.floorDiv(patchContextBounds.maxZ(), regionSizeBlocks);
+        List<RefreshResult> results = new ArrayList<>();
+        for (int regionX = minRegionX; regionX <= maxRegionX; regionX++) {
+            for (int regionZ = minRegionZ; regionZ <= maxRegionZ; regionZ++) {
+                int centerX = regionX * regionSizeBlocks + regionSizeBlocks / 2;
+                int centerZ = regionZ * regionSizeBlocks + regionSizeBlocks / 2;
+                Path regionOutput = outputDirectory.resolve("gis_region_" + regionX + "_" + regionZ);
+                results.add(gisService.refresh(dimensionId, centerX, centerZ,
+                        sampleConfig.regionSizeChunks(), SampleMode.PRIOR, RefreshPriority.DEBUG, regionOutput));
+            }
+        }
+        return results;
+    }
+
+    private static void addD3PatchScanMetadata(JsonObject packageJson,
+                                               int patchScanPaddingBlocks,
+                                               BlockBounds patchContextBounds,
+                                               List<RefreshResult> refreshResults) {
+        packageJson.addProperty("patchScanPaddingBlocks", patchScanPaddingBlocks);
+        packageJson.add("patchContextBounds", boundsJson(patchContextBounds));
+        JsonArray regions = new JsonArray();
+        for (RefreshResult result : refreshResults) {
+            if (result.region() == null) {
+                continue;
+            }
+            JsonObject region = new JsonObject();
+            region.addProperty("regionId", result.region().regionId());
+            region.addProperty("regionX", result.region().regionX());
+            region.addProperty("regionZ", result.region().regionZ());
+            region.addProperty("patchCount", result.patches() == null
+                    ? result.region().patches().size() : result.patches().size());
+            regions.add(region);
+        }
+        packageJson.add("refreshedRegions", regions);
+    }
+
+    private static BlockBounds expandBounds(BlockBounds bounds, int margin) {
+        int normalized = Math.max(0, margin);
+        return new BlockBounds(bounds.minX() - normalized, bounds.minZ() - normalized,
+                bounds.maxX() + normalized, bounds.maxZ() + normalized);
     }
 
     static JsonObject handlePlanD4(Path debugRoot, String runId, String citySeedId,
@@ -840,7 +915,7 @@ final class CityPlanningEndpointHandler {
                                           int gateWidthBlocks) throws IOException {
         return handlePlanCityWalls(debugRoot, runId, citySeedId, wallMarginBlocks, segmentLengthBlocks,
                 gateWidthBlocks, "v2", null, 8, 2, 8, 7,
-                CityWallPlanner.V3Options.defaults());
+                CityWallPlanner.V3Options.defaults(), CityWallPlanner.V4Options.defaults());
     }
 
     static JsonObject handlePlanCityWalls(Path debugRoot, String runId, String citySeedId,
@@ -854,7 +929,8 @@ final class CityPlanningEndpointHandler {
                                           int maxSegmentHeightDeltaBlocks) throws IOException {
         return handlePlanCityWalls(debugRoot, runId, citySeedId, wallMarginBlocks, segmentLengthBlocks,
                 gateWidthBlocks, wallVersion, level, roadScanMarginBlocks, roadProtectionMarginBlocks,
-                maxFoundationDepthBlocks, maxSegmentHeightDeltaBlocks, CityWallPlanner.V3Options.defaults());
+                maxFoundationDepthBlocks, maxSegmentHeightDeltaBlocks, CityWallPlanner.V3Options.defaults(),
+                CityWallPlanner.V4Options.defaults());
     }
 
     static JsonObject handlePlanCityWalls(Path debugRoot, String runId, String citySeedId,
@@ -867,16 +943,38 @@ final class CityPlanningEndpointHandler {
                                           int maxFoundationDepthBlocks,
                                           int maxSegmentHeightDeltaBlocks,
                                           CityWallPlanner.V3Options wallV3Options) throws IOException {
+        return handlePlanCityWalls(debugRoot, runId, citySeedId, wallMarginBlocks, segmentLengthBlocks,
+                gateWidthBlocks, wallVersion, level, roadScanMarginBlocks, roadProtectionMarginBlocks,
+                maxFoundationDepthBlocks, maxSegmentHeightDeltaBlocks, wallV3Options,
+                CityWallPlanner.V4Options.defaults());
+    }
+
+    static JsonObject handlePlanCityWalls(Path debugRoot, String runId, String citySeedId,
+                                          int wallMarginBlocks, int segmentLengthBlocks,
+                                          int gateWidthBlocks,
+                                          String wallVersion,
+                                          ServerLevel level,
+                                          int roadScanMarginBlocks,
+                                          int roadProtectionMarginBlocks,
+                                          int maxFoundationDepthBlocks,
+                                          int maxSegmentHeightDeltaBlocks,
+                                          CityWallPlanner.V3Options wallV3Options,
+                                          CityWallPlanner.V4Options wallV4Options) throws IOException {
         Path runDir = debugRoot.resolve(runId);
         loadCitySeed(runDir, runId, citySeedId);
         Path d7Dir = runDir.resolve("city_d7_" + safeFileName(citySeedId));
         Path d5Dir = runDir.resolve("city_d5_" + safeFileName(citySeedId));
+        Path d3Dir = runDir.resolve("city_d3_" + safeFileName(citySeedId));
         Path ledgerPath = d7Dir.resolve("placed_structure_ledger.json");
         if (!Files.exists(ledgerPath)) {
             throw new IllegalArgumentException("D7 placed_structure_ledger.json not found. Run city_execute_d7 first: "
                     + debugRef(debugRoot, ledgerPath));
         }
         JsonObject ledger = JsonParser.parseString(Files.readString(ledgerPath)).getAsJsonObject();
+        Path d3PackagePath = d3Dir.resolve("city_landform_review_package.json");
+        JsonObject d3Package = Files.exists(d3PackagePath)
+                ? JsonParser.parseString(Files.readString(d3PackagePath)).getAsJsonObject()
+                : null;
         String normalizedWallVersion = CityWallReservationPlanner.normalizeWallVersion(wallVersion);
         JsonObject wallPlan;
         Path outputDirectory = runDir.resolve("city_walls_" + safeFileName(citySeedId));
@@ -887,18 +985,23 @@ final class CityPlanningEndpointHandler {
             wallPlan = new CityWallPlanner().plan(ledger, wallMarginBlocks, segmentLengthBlocks, gateWidthBlocks);
         } else {
             if (!Files.exists(wallReservationPath)) {
-                throw new IllegalArgumentException("wall_reservation_plan.json not found. Run city_plan_d5 with wallVersion=v2 first: "
+                throw new IllegalArgumentException("wall_reservation_plan.json not found. Run city_plan_d5 with matching wallVersion first: "
                         + debugRef(debugRoot, wallReservationPath));
             }
             JsonObject wallReservationPlan = JsonParser.parseString(Files.readString(wallReservationPath))
                     .getAsJsonObject();
-            actualRoadMask = new CityRoadMaskScanner().scan(level, wallReservationPlan, roadScanMarginBlocks);
-            if (CityWallReservationPlanner.V3.equals(normalizedWallVersion)) {
-                wallPlan = new CityWallPlanner().planV3(ledger, wallReservationPlan, actualRoadMask, gateWidthBlocks,
+            JsonObject wallReservationForPlan = enrichWallReservationWithD3Cells(wallReservationPlan, d3Package);
+            actualRoadMask = new CityRoadMaskScanner().scan(level, wallReservationForPlan, roadScanMarginBlocks);
+            if (CityWallReservationPlanner.V4.equals(normalizedWallVersion)) {
+                wallPlan = new CityWallPlanner().planV4(ledger, wallReservationForPlan, actualRoadMask, gateWidthBlocks,
+                        roadProtectionMarginBlocks, maxFoundationDepthBlocks, maxSegmentHeightDeltaBlocks,
+                        wallV3Options, wallV4Options);
+            } else if (CityWallReservationPlanner.V3.equals(normalizedWallVersion)) {
+                wallPlan = new CityWallPlanner().planV3(ledger, wallReservationForPlan, actualRoadMask, gateWidthBlocks,
                         roadProtectionMarginBlocks, maxFoundationDepthBlocks, maxSegmentHeightDeltaBlocks,
                         wallV3Options);
             } else {
-                wallPlan = new CityWallPlanner().planV2(ledger, wallReservationPlan, actualRoadMask, gateWidthBlocks,
+                wallPlan = new CityWallPlanner().planV2(ledger, wallReservationForPlan, actualRoadMask, gateWidthBlocks,
                         roadProtectionMarginBlocks, maxFoundationDepthBlocks, maxSegmentHeightDeltaBlocks);
             }
         }
@@ -906,7 +1009,7 @@ final class CityPlanningEndpointHandler {
         if (actualRoadMask != null) {
             Files.writeString(roadMaskPath, CityJson.GSON.toJson(actualRoadMask));
         }
-        Path previewPath = new CityWallPreviewRenderer().render(wallPlan, ledger, outputDirectory);
+        Path previewPath = new CityWallPreviewRenderer().render(wallPlan, ledger, d3Package, outputDirectory);
         JsonObject response = new JsonObject();
         response.addProperty("ok", true);
         response.add("cityWallPlan", wallPlan);
@@ -919,6 +1022,9 @@ final class CityPlanningEndpointHandler {
         artifacts.addProperty("cityWallTemplateDirectory",
                 debugRef(debugRoot, outputDirectory.resolve("city_wall_templates")));
         artifacts.addProperty("sourcePlacedStructureLedger", debugRef(debugRoot, ledgerPath));
+        if (Files.exists(d3PackagePath)) {
+            artifacts.addProperty("sourceD3Package", debugRef(debugRoot, d3PackagePath));
+        }
         if (Files.exists(wallReservationPath)) {
             artifacts.addProperty("sourceWallReservationPlan", debugRef(debugRoot, wallReservationPath));
         }
@@ -966,6 +1072,421 @@ final class CityPlanningEndpointHandler {
                 "wallGapDebugReport", "wall_gap_debug_report.json", "wallGapDebugReport");
         response.add("artifacts", artifacts);
         return response;
+    }
+
+    static JsonObject handleRunWorkflow(Path debugRoot,
+                                        Path serverRoot,
+                                        String runId,
+                                        String citySeedId,
+                                        JsonObject request,
+                                        MinecraftServerHolder serverHolder,
+                                        ServerLevel level) throws IOException {
+        Path runDir = debugRoot.resolve(runId);
+        loadCitySeed(runDir, runId, citySeedId);
+        Path outputDirectory = runDir.resolve("city_workflow_" + safeFileName(citySeedId));
+        Files.createDirectories(outputDirectory);
+        Path reportPath = outputDirectory.resolve("city_workflow_report.json");
+
+        JsonObject report = new JsonObject();
+        report.addProperty("schemaVersion", "city_workflow_report.v0.1");
+        report.addProperty("workflowMode", "city_structure_landing_fast_loop");
+        report.addProperty("runId", runId);
+        report.addProperty("citySeedId", citySeedId);
+        report.addProperty("startedAt", Instant.now().toString());
+        report.addProperty("status", "running");
+        report.addProperty("skipExisting", booleanValue(request, "skipExisting", true));
+        report.addProperty("planWalls", booleanValue(request, "planWalls", false));
+        report.addProperty("executeWalls", booleanValue(request, "executeWalls", false));
+        JsonArray steps = new JsonArray();
+        report.add("steps", steps);
+        JsonObject artifacts = new JsonObject();
+        artifacts.addProperty("workflowReport", debugRef(debugRoot, reportPath));
+        report.add("artifacts", artifacts);
+        long workflowStarted = System.nanoTime();
+
+        WorkflowContext ctx = new WorkflowContext(debugRoot, serverRoot, runDir, outputDirectory, reportPath,
+                runId, citySeedId, request, serverHolder, level, report, steps);
+
+        if (!workflowStep(ctx, "city_plan_d3", d3PackagePath(runDir, citySeedId), () -> handlePlanD3(
+                debugRoot, runId, citySeedId,
+                hasValue(request, "cellStepBlocks") ? intValue(request, "cellStepBlocks", 4) : null,
+                hasValue(request, "patchScanPaddingBlocks")
+                        ? intValue(request, "patchScanPaddingBlocks", DEFAULT_D3_PATCH_SCAN_PADDING_BLOCKS) : null,
+                level))) {
+            return finalizeWorkflow(ctx, workflowStarted, "failed");
+        }
+
+        if (!workflowStep(ctx, "city_profile_structure_envelopes", envelopeFactsPath(runDir, citySeedId, null),
+                () -> {
+                    requireObject(request, "terrasenseProfileSource", "city_profile_structure_envelopes");
+                    return handleProfileStructureEnvelopes(debugRoot, runId, citySeedId,
+                            request.getAsJsonObject("terrasenseProfileSource"),
+                            request.has("structureIds") && request.get("structureIds").isJsonArray()
+                                    ? request.getAsJsonArray("structureIds") : new JsonArray(),
+                            intValue(request, "sampleCount", 256),
+                            serverHolder,
+                            level);
+                })) {
+            return finalizeWorkflow(ctx, workflowStarted, "failed");
+        }
+
+        if (!workflowRunD4Session(ctx)) {
+            return finalizeWorkflow(ctx, workflowStarted, "failed");
+        }
+
+        if (!workflowStep(ctx, "city_plan_d5", runDir.resolve("city_d5_" + safeFileName(citySeedId))
+                .resolve("reservation_mask_plan.json"), () -> handlePlanD5(debugRoot, runId, citySeedId,
+                stringValue(request, "wallVersion", "v3"),
+                intValue(request, "wallMarginBlocks", 24),
+                intValue(request, "segmentLengthBlocks", 15),
+                intValue(request, "wallCorridorHalfWidthBlocks", 4),
+                new CityWallReservationPlanner.V3Options(
+                        intValue(request, "wallBreathingRoomBlocks",
+                                CityWallReservationPlanner.DEFAULT_WALL_BREATHING_ROOM_BLOCKS),
+                        intValue(request, "patchExpansionMaxRounds",
+                                CityWallReservationPlanner.DEFAULT_PATCH_EXPANSION_MAX_ROUNDS),
+                        intValue(request, "concavityOpeningMaxBlocks",
+                                CityWallReservationPlanner.DEFAULT_CONCAVITY_OPENING_MAX_BLOCKS),
+                        doubleValue(request, "concavityDepthRatioMin",
+                                CityWallReservationPlanner.DEFAULT_CONCAVITY_DEPTH_RATIO_MIN))))) {
+            return finalizeWorkflow(ctx, workflowStarted, "failed");
+        }
+
+        if (!workflowStep(ctx, "city_plan_d6", runDir.resolve("city_d6_" + safeFileName(citySeedId))
+                .resolve("structure_materialization_plan.json"), () -> handlePlanD6(debugRoot, runId, citySeedId,
+                serverHolder, level))) {
+            return finalizeWorkflow(ctx, workflowStarted, "failed");
+        }
+
+        if (!booleanValue(request, "confirmWorldMutation", false)) {
+            addWorkflowStop(ctx, "city_execute_d5", "needs_confirmation",
+                    "WORKFLOW_CONFIRM_WORLD_MUTATION_REQUIRED",
+                    "Pass confirmWorldMutation=true to activate masks/planned structures.");
+            return finalizeWorkflow(ctx, workflowStarted, "waiting_for_confirmation");
+        }
+
+        if (!workflowStep(ctx, "city_execute_d5", runDir.resolve("city_d5_" + safeFileName(citySeedId))
+                .resolve("active_planned_structure_registry.json"), () -> handleExecuteD5(debugRoot, serverRoot,
+                runId, citySeedId, true, level, stringValue(request, "roadProvider", "auto")))) {
+            return finalizeWorkflow(ctx, workflowStarted, "failed");
+        }
+
+        if (!workflowStep(ctx, "city_execute_d7", null, () -> handleExecuteD7(debugRoot, runId, citySeedId,
+                level.getSeed(),
+                true,
+                booleanValue(request, "debugLateMaterialize", false),
+                serverHolder,
+                level))) {
+            return finalizeWorkflow(ctx, workflowStarted, "failed");
+        }
+        JsonObject d7Step = steps.get(steps.size() - 1).getAsJsonObject();
+        String d7Status = stringValue(d7Step, "responseStatus", "");
+        String d7Reason = stringValue(d7Step, "reasonCode", "");
+        if ("WAITING_FOR_WORLDGEN".equals(d7Reason) || "waiting_for_worldgen".equals(d7Status)) {
+            addWorkflowStop(ctx, "worldgen_wait", "waiting_for_worldgen", "WAITING_FOR_WORLDGEN",
+                    "TP/load target chunks, then rerun this workflow with the same runId/citySeedId.");
+            return finalizeWorkflow(ctx, workflowStarted, "waiting_for_worldgen");
+        }
+
+        if (booleanValue(request, "planWalls", false)) {
+            Path wallPlanPath = runDir.resolve("city_walls_" + safeFileName(citySeedId))
+                    .resolve("city_wall_plan.json");
+            Path wallSkipArtifact = workflowWallPlanMatchesRequest(wallPlanPath, request) ? wallPlanPath : null;
+            if (!workflowStep(ctx, "city_plan_city_walls", wallSkipArtifact, () -> handlePlanCityWalls(debugRoot, runId, citySeedId,
+                    intValue(request, "wallMarginBlocks", 24),
+                    intValue(request, "segmentLengthBlocks", 15),
+                    intValue(request, "gateWidthBlocks", 9),
+                    stringValue(request, "wallVersion", "v3"),
+                    level,
+                    intValue(request, "roadScanMarginBlocks", 8),
+                    intValue(request, "roadProtectionMarginBlocks", 2),
+                    intValue(request, "maxFoundationDepthBlocks", 8),
+                    intValue(request, "maxSegmentHeightDeltaBlocks", 7),
+                    workflowWallV3Options(request),
+                    workflowWallV4Options(request)))) {
+                return finalizeWorkflow(ctx, workflowStarted, "failed");
+            }
+        }
+
+        if (booleanValue(request, "executeWalls", false)) {
+            if (!workflowStep(ctx, "city_execute_city_walls", null,
+                    () -> handleExecuteCityWalls(debugRoot, runId, citySeedId, true, level,
+                            booleanValue(request, "debugScan", true),
+                            intValue(request, "debugScanStepBlocks", 1)))) {
+                return finalizeWorkflow(ctx, workflowStarted, "failed");
+            }
+        }
+
+        return finalizeWorkflow(ctx, workflowStarted, "completed");
+    }
+
+    private static boolean workflowRunD4Session(WorkflowContext ctx) throws IOException {
+        Path anchorMapPath = ctx.runDir().resolve("city_d4_" + safeFileName(ctx.citySeedId()))
+                .resolve("structure_anchor_map.json");
+        if (booleanValue(ctx.request(), "skipExisting", true) && Files.exists(anchorMapPath)) {
+            addSkippedWorkflowStep(ctx, "city_d4_session", anchorMapPath,
+                    "Existing structure_anchor_map.json found.");
+            return true;
+        }
+        if (!workflowStep(ctx, "city_create_d4_candidate_session", d4SessionDir(ctx.runDir(), ctx.citySeedId())
+                .resolve("d4_candidate_session.json"), () -> {
+            requireObject(ctx.request(), "terrasenseProfileSource", "city_create_d4_candidate_session");
+            requireObject(ctx.request(), "designSlotPlan", "city_create_d4_candidate_session");
+            return handleCreateD4CandidateSession(ctx.debugRoot(), ctx.runId(), ctx.citySeedId(),
+                    ctx.request().getAsJsonObject("terrasenseProfileSource"),
+                    ctx.request().getAsJsonObject("designSlotPlan"),
+                    ctx.request().has("structureEnvelopeFactsSource")
+                            && ctx.request().get("structureEnvelopeFactsSource").isJsonObject()
+                            ? ctx.request().getAsJsonObject("structureEnvelopeFactsSource") : null,
+                    stringValue(ctx.request(), "sessionId", ""));
+        })) {
+            return false;
+        }
+
+        Path sessionPath = d4SessionDir(ctx.runDir(), ctx.citySeedId()).resolve("d4_candidate_session.json");
+        for (int guard = 0; guard < 64; guard++) {
+            JsonObject session = JsonParser.parseString(Files.readString(sessionPath)).getAsJsonObject();
+            String currentSlotId = stringValue(session, "currentSlotId");
+            if (currentSlotId.isBlank()) {
+                break;
+            }
+            if (!workflowStep(ctx, "city_plan_d4_next_candidates", null,
+                    () -> handlePlanD4NextCandidates(ctx.debugRoot(), ctx.runId(), ctx.citySeedId(),
+                            ctx.request().has("structureEnvelopeFactsSource")
+                                    && ctx.request().get("structureEnvelopeFactsSource").isJsonObject()
+                                    ? ctx.request().getAsJsonObject("structureEnvelopeFactsSource") : null))) {
+                return false;
+            }
+            Path candidatePath = d4SessionDir(ctx.runDir(), ctx.citySeedId()).resolve("slot_candidate_set.json");
+            JsonObject candidateSet = JsonParser.parseString(Files.readString(candidatePath)).getAsJsonObject();
+            JsonObject choice = chooseWorkflowCandidate(candidateSet);
+            if (!workflowStep(ctx, "city_select_d4_candidate", null,
+                    () -> handleSelectD4Candidate(ctx.debugRoot(), ctx.runId(), ctx.citySeedId(),
+                            stringValue(ctx.request(), "sessionId", ""),
+                            stringValue(choice, "slotId"),
+                            stringValue(choice, "candidateId"),
+                            stringValue(choice, "slotId"),
+                            "workflow auto-select highest scored candidate",
+                            false))) {
+                return false;
+            }
+        }
+        return workflowStep(ctx, "city_finalize_d4_candidate_session", anchorMapPath, () -> {
+            requireObject(ctx.request(), "terrasenseProfileSource", "city_finalize_d4_candidate_session");
+            return handleFinalizeD4CandidateSession(ctx.debugRoot(), ctx.runId(), ctx.citySeedId(),
+                    ctx.request().getAsJsonObject("terrasenseProfileSource"),
+                    ctx.request().has("structureEnvelopeFactsSource")
+                            && ctx.request().get("structureEnvelopeFactsSource").isJsonObject()
+                            ? ctx.request().getAsJsonObject("structureEnvelopeFactsSource") : null,
+                    stringValue(ctx.request(), "sessionId", ""));
+        });
+    }
+
+    private static boolean workflowStep(WorkflowContext ctx, String name, Path skipArtifact,
+                                        WorkflowAction action) throws IOException {
+        if (skipArtifact != null && booleanValue(ctx.request(), "skipExisting", true) && Files.exists(skipArtifact)) {
+            addSkippedWorkflowStep(ctx, name, skipArtifact, "Existing artifact found.");
+            return true;
+        }
+        JsonObject step = new JsonObject();
+        step.addProperty("name", name);
+        step.addProperty("startedAt", Instant.now().toString());
+        ctx.steps().add(step);
+        long started = System.nanoTime();
+        try {
+            JsonObject response = action.run();
+            boolean ok = response == null || !response.has("ok") || response.get("ok").getAsBoolean();
+            step.addProperty("status", ok ? "success" : "failed");
+            step.addProperty("ok", ok);
+            step.addProperty("responseStatus", stringValue(response, "status"));
+            step.addProperty("reasonCode", stringValue(response, "reasonCode"));
+            if (response != null && response.has("artifacts") && response.get("artifacts").isJsonObject()) {
+                step.add("artifacts", response.getAsJsonObject("artifacts").deepCopy());
+            }
+            if (response != null && response.has("cityWallPlan") && response.get("cityWallPlan").isJsonObject()) {
+                step.addProperty("wallSegmentCount",
+                        array(response.getAsJsonObject("cityWallPlan"), "wallSegments").size());
+                step.addProperty("wallNodeCount",
+                        array(response.getAsJsonObject("cityWallPlan"), "wallNodes").size());
+                step.addProperty("wallUnitCount",
+                        array(response.getAsJsonObject("cityWallPlan"), "wallUnits").size());
+            }
+            if (response != null && response.has("d4CandidateSession") && response.get("d4CandidateSession").isJsonObject()) {
+                JsonObject session = response.getAsJsonObject("d4CandidateSession");
+                step.addProperty("selectedAnchorCount", intValue(session, "selectedAnchorCount", 0));
+                step.addProperty("remainingSlotCount", intValue(session, "remainingSlotCount", 0));
+            }
+            step.addProperty("endedAt", Instant.now().toString());
+            step.addProperty("durationMs", (System.nanoTime() - started) / 1_000_000L);
+            writeWorkflowReport(ctx);
+            return ok;
+        } catch (Exception ex) {
+            step.addProperty("status", "failed");
+            step.addProperty("ok", false);
+            step.addProperty("error", ex.getMessage() == null ? ex.getClass().getSimpleName() : ex.getMessage());
+            step.addProperty("reasonCode", workflowReasonFromError(ex));
+            step.addProperty("endedAt", Instant.now().toString());
+            step.addProperty("durationMs", (System.nanoTime() - started) / 1_000_000L);
+            writeWorkflowReport(ctx);
+            return false;
+        }
+    }
+
+    private static void addSkippedWorkflowStep(WorkflowContext ctx, String name, Path artifact, String message)
+            throws IOException {
+        JsonObject step = new JsonObject();
+        step.addProperty("name", name);
+        step.addProperty("status", "skipped");
+        step.addProperty("ok", true);
+        step.addProperty("reasonCode", "WORKFLOW_EXISTING_ARTIFACT");
+        step.addProperty("message", message);
+        step.addProperty("artifact", debugRef(ctx.debugRoot(), artifact));
+        step.addProperty("startedAt", Instant.now().toString());
+        step.addProperty("endedAt", Instant.now().toString());
+        step.addProperty("durationMs", 0);
+        ctx.steps().add(step);
+        writeWorkflowReport(ctx);
+    }
+
+    private static void addWorkflowStop(WorkflowContext ctx, String name, String status, String reasonCode,
+                                        String message) throws IOException {
+        JsonObject step = new JsonObject();
+        step.addProperty("name", name);
+        step.addProperty("status", status);
+        step.addProperty("ok", true);
+        step.addProperty("reasonCode", reasonCode);
+        step.addProperty("message", message);
+        step.addProperty("startedAt", Instant.now().toString());
+        step.addProperty("endedAt", Instant.now().toString());
+        step.addProperty("durationMs", 0);
+        ctx.steps().add(step);
+        writeWorkflowReport(ctx);
+    }
+
+    private static JsonObject finalizeWorkflow(WorkflowContext ctx, long workflowStarted, String status)
+            throws IOException {
+        ctx.report().addProperty("status", status);
+        ctx.report().addProperty("ok", "completed".equals(status)
+                || "waiting_for_worldgen".equals(status)
+                || "waiting_for_confirmation".equals(status));
+        ctx.report().addProperty("endedAt", Instant.now().toString());
+        ctx.report().addProperty("durationMs", (System.nanoTime() - workflowStarted) / 1_000_000L);
+        writeWorkflowReport(ctx);
+        JsonObject response = new JsonObject();
+        response.addProperty("ok", ctx.report().get("ok").getAsBoolean());
+        response.addProperty("status", status);
+        response.add("workflowReport", ctx.report().deepCopy());
+        response.add("artifacts", ctx.report().getAsJsonObject("artifacts").deepCopy());
+        return response;
+    }
+
+    private static void writeWorkflowReport(WorkflowContext ctx) throws IOException {
+        Files.writeString(ctx.reportPath(), CityJson.GSON.toJson(ctx.report()));
+    }
+
+    private static JsonObject chooseWorkflowCandidate(JsonObject candidateSet) {
+        JsonObject best = null;
+        double bestScore = Double.NEGATIVE_INFINITY;
+        for (JsonElement slotElem : array(candidateSet, "slotCandidates")) {
+            JsonObject slot = slotElem.getAsJsonObject();
+            String slotId = stringValue(slot, "slotId", stringValue(candidateSet, "currentSlotId"));
+            for (JsonElement candidateElem : array(slot, "candidates")) {
+                JsonObject candidate = candidateElem.getAsJsonObject();
+                double score = 0;
+                JsonObject scoreBreakdown = candidate.has("scoreBreakdown")
+                        && candidate.get("scoreBreakdown").isJsonObject()
+                        ? candidate.getAsJsonObject("scoreBreakdown") : new JsonObject();
+                if (scoreBreakdown.has("total") && !scoreBreakdown.get("total").isJsonNull()) {
+                    score = scoreBreakdown.get("total").getAsDouble();
+                }
+                if (best == null || score > bestScore) {
+                    best = candidate;
+                    bestScore = score;
+                    if (!best.has("slotId")) {
+                        best.addProperty("slotId", slotId);
+                    }
+                }
+            }
+        }
+        if (best == null) {
+            throw new IllegalArgumentException("WORKFLOW_NO_D4_CANDIDATE: current slot produced no candidate.");
+        }
+        return best;
+    }
+
+    private static boolean workflowWallPlanMatchesRequest(Path wallPlanPath, JsonObject request) throws IOException {
+        if (!booleanValue(request, "skipExisting", true) || !Files.exists(wallPlanPath)) {
+            return false;
+        }
+        JsonObject existing = JsonParser.parseString(Files.readString(wallPlanPath)).getAsJsonObject();
+        String expectedVersion = CityWallReservationPlanner.normalizeWallVersion(stringValue(request, "wallVersion", "v3"));
+        String actualVersion = stringValue(existing, "wallVersion", "");
+        if (!expectedVersion.equals(actualVersion)) {
+            return false;
+        }
+        if (request.has("wallDesignPolicy") && !request.get("wallDesignPolicy").isJsonNull()
+                && !stringValue(request, "wallDesignPolicy", "").isBlank()
+                && !stringValue(request, "wallDesignPolicy", "").equals(stringValue(existing, "wallDesignPolicy", ""))) {
+            return false;
+        }
+        if (request.has("wallTerrainPolicy") && !request.get("wallTerrainPolicy").isJsonNull()
+                && !stringValue(request, "wallTerrainPolicy", "").isBlank()
+                && !stringValue(request, "wallTerrainPolicy", "").equals(stringValue(existing, "wallTerrainPolicy", ""))) {
+            return false;
+        }
+        if (CityWallReservationPlanner.V4.equals(expectedVersion)
+                && !"city_wall_plan.v0.4".equals(stringValue(existing, "schemaVersion", ""))) {
+            return false;
+        }
+        return true;
+    }
+
+    private static CityWallPlanner.V3Options workflowWallV3Options(JsonObject request) {
+        return new CityWallPlanner.V3Options(
+                intValue(request, "gateClusterRadiusBlocks", CityWallPlanner.DEFAULT_GATE_CLUSTER_RADIUS_BLOCKS),
+                intValue(request, "terrainFitUnitLengthBlocks", CityWallPlanner.DEFAULT_TERRAIN_FIT_UNIT_LENGTH_BLOCKS),
+                stringValue(request, "wallTerrainPolicy", CityWallPlanner.DEFAULT_WALL_TERRAIN_POLICY),
+                intValue(request, "flatMaxDeltaBlocks", CityWallPlanner.DEFAULT_FLAT_MAX_DELTA_BLOCKS),
+                intValue(request, "steppedMaxDeltaBlocks", CityWallPlanner.DEFAULT_STEPPED_MAX_DELTA_BLOCKS),
+                intValue(request, "mountainProbeDistanceBlocks",
+                        CityWallPlanner.DEFAULT_MOUNTAIN_PROBE_DISTANCE_BLOCKS),
+                intValue(request, "naturalBoundaryMinDeltaBlocks",
+                        CityWallPlanner.DEFAULT_NATURAL_BOUNDARY_MIN_DELTA_BLOCKS),
+                booleanValue(request, "embeddedSlopeTower", true),
+                stringValue(request, "wallDesignPolicy", CityWallPlanner.DEFAULT_WALL_DESIGN_POLICY),
+                intValue(request, "minGateSpacingBlocks", CityWallPlanner.DEFAULT_MIN_GATE_SPACING_BLOCKS),
+                intValue(request, "minGateRoadLengthBlocks", CityWallPlanner.DEFAULT_MIN_GATE_ROAD_LENGTH_BLOCKS),
+                intValue(request, "naturalWaterBoundaryMinAreaBlocks",
+                        CityWallPlanner.DEFAULT_NATURAL_WATER_BOUNDARY_MIN_AREA_BLOCKS),
+                intValue(request, "roadProjectionMaxDistanceBlocks",
+                        CityWallPlanner.DEFAULT_ROAD_PROJECTION_MAX_DISTANCE_BLOCKS));
+    }
+
+    private static CityWallPlanner.V4Options workflowWallV4Options(JsonObject request) {
+        return new CityWallPlanner.V4Options(
+                intValue(request, "wallUnitLengthBlocks", CityWallPlanner.DEFAULT_WALL_UNIT_LENGTH_BLOCKS),
+                intValue(request, "waterRunMinUnits", CityWallPlanner.DEFAULT_WATER_RUN_MIN_UNITS),
+                intValue(request, "waterRetreatMaxCells", CityWallPlanner.DEFAULT_WATER_RETREAT_MAX_CELLS),
+                intValue(request, "structureWallBreathingRoomBlocks",
+                        intValue(request, "wallMarginBlocks", CityWallPlanner.DEFAULT_STRUCTURE_WALL_BREATHING_ROOM_BLOCKS)),
+                intValue(request, "heightDatumClampBlocks", CityWallPlanner.DEFAULT_HEIGHT_DATUM_CLAMP_BLOCKS),
+                intValue(request, "localMedianWindowUnits", CityWallPlanner.DEFAULT_LOCAL_MEDIAN_WINDOW_UNITS));
+    }
+
+    private static void requireObject(JsonObject request, String key, String stepName) {
+        if (request == null || !request.has(key) || !request.get(key).isJsonObject()) {
+            throw new IllegalArgumentException(stepName + " requires " + key + " object.");
+        }
+    }
+
+    private static String workflowReasonFromError(Exception ex) {
+        String message = ex.getMessage();
+        if (message == null || message.isBlank()) {
+            return ex.getClass().getSimpleName();
+        }
+        int colon = message.indexOf(':');
+        String prefix = colon > 0 ? message.substring(0, colon) : message;
+        return prefix.length() <= 80 ? prefix : prefix.substring(0, 80);
     }
 
     private static void writeOptionalDebugReport(Path debugRoot, Path outputDirectory, JsonObject report,
@@ -1581,10 +2102,14 @@ final class CityPlanningEndpointHandler {
                 .resolve("structure_envelope_facts.json");
     }
 
+    private static Path d3PackagePath(Path runDir, String citySeedId) {
+        return runDir.resolve("city_d3_" + safeFileName(citySeedId))
+                .resolve("city_landform_review_package.json");
+    }
+
     private static CityLandformReviewPackage loadD3Package(Path debugRoot, Path runDir, String citySeedId)
             throws IOException {
-        Path d3PackagePath = runDir.resolve("city_d3_" + safeFileName(citySeedId))
-                .resolve("city_landform_review_package.json");
+        Path d3PackagePath = d3PackagePath(runDir, citySeedId);
         if (!Files.exists(d3PackagePath)) {
             throw new IllegalArgumentException("D3 package not found. Run city_plan_d3 first: "
                     + debugRef(debugRoot, d3PackagePath));
@@ -1665,6 +2190,55 @@ final class CityPlanningEndpointHandler {
         return obj;
     }
 
+    private static JsonObject enrichWallReservationWithD3Cells(JsonObject reservation, JsonObject d3Package) {
+        if (reservation == null || d3Package == null) {
+            return reservation;
+        }
+        Map<String, JsonObject> patchesByRef = new LinkedHashMap<>();
+        for (JsonElement elem : array(d3Package, "landformPatches")) {
+            if (!elem.isJsonObject()) {
+                continue;
+            }
+            JsonObject patch = elem.getAsJsonObject();
+            rememberPatchRef(patchesByRef, patch, "landformPatchId");
+            rememberPatchRef(patchesByRef, patch, "mapLabel");
+        }
+        if (patchesByRef.isEmpty()) {
+            return reservation;
+        }
+        JsonObject copy = reservation.deepCopy();
+        for (JsonElement elem : array(copy, "seedPatches")) {
+            if (!elem.isJsonObject()) {
+                continue;
+            }
+            JsonObject seedPatch = elem.getAsJsonObject();
+            if (!array(seedPatch, "memberCells").isEmpty()) {
+                continue;
+            }
+            JsonObject sourcePatch = patchesByRef.get(stringValue(seedPatch, "landformPatchId"));
+            if (sourcePatch == null) {
+                sourcePatch = patchesByRef.get(stringValue(seedPatch, "mapLabel"));
+            }
+            JsonArray memberCells = array(sourcePatch, "memberCells");
+            if (memberCells.isEmpty()) {
+                continue;
+            }
+            seedPatch.addProperty("geometryMode", stringValue(sourcePatch, "geometryMode", "patch_member_cells"));
+            JsonObject grid = d3Package.has("grid") && d3Package.get("grid").isJsonObject()
+                    ? d3Package.getAsJsonObject("grid") : null;
+            seedPatch.addProperty("cellStepBlocks", intValue(grid, "cellStepBlocks", 16));
+            seedPatch.add("memberCells", memberCells.deepCopy());
+        }
+        return copy;
+    }
+
+    private static void rememberPatchRef(Map<String, JsonObject> patchesByRef, JsonObject patch, String key) {
+        String ref = stringValue(patch, key);
+        if (!ref.isBlank()) {
+            patchesByRef.putIfAbsent(ref, patch);
+        }
+    }
+
     private static JsonObject requiredObject(JsonObject obj, String key) {
         if (obj == null || !obj.has(key) || !obj.get(key).isJsonObject()) {
             throw new IllegalArgumentException(key + " object is required.");
@@ -1689,6 +2263,41 @@ final class CityPlanningEndpointHandler {
     private static boolean booleanValue(JsonObject obj, String key, boolean defaultValue) {
         if (obj == null || !obj.has(key) || obj.get(key).isJsonNull()) return defaultValue;
         return obj.get(key).getAsBoolean();
+    }
+
+    private static double doubleValue(JsonObject obj, String key, double defaultValue) {
+        if (obj == null || !obj.has(key) || obj.get(key).isJsonNull()) return defaultValue;
+        return obj.get(key).getAsDouble();
+    }
+
+    private static JsonArray array(JsonObject obj, String key) {
+        if (obj == null || !obj.has(key) || obj.get(key).isJsonNull() || !obj.get(key).isJsonArray()) {
+            return new JsonArray();
+        }
+        return obj.getAsJsonArray(key);
+    }
+
+    private static boolean hasValue(JsonObject obj, String key) {
+        return obj != null && obj.has(key) && !obj.get(key).isJsonNull();
+    }
+
+    @FunctionalInterface
+    private interface WorkflowAction {
+        JsonObject run() throws Exception;
+    }
+
+    private record WorkflowContext(Path debugRoot,
+                                   Path serverRoot,
+                                   Path runDir,
+                                   Path outputDirectory,
+                                   Path reportPath,
+                                   String runId,
+                                   String citySeedId,
+                                   JsonObject request,
+                                   MinecraftServerHolder serverHolder,
+                                   ServerLevel level,
+                                   JsonObject report,
+                                   JsonArray steps) {
     }
 
     private record RunMetadata(int cellStepBlocks, String dimensionId) {

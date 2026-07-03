@@ -25,6 +25,7 @@ public final class CityWallReservationPlanner {
     public static final String V1_DEBUG = "v1_debug";
     public static final String V2 = "v2";
     public static final String V3 = "v3";
+    public static final String V4 = "v4";
     public static final int DEFAULT_WALL_CORRIDOR_HALF_WIDTH_BLOCKS = 4;
     public static final int DEFAULT_WALL_MARGIN_BLOCKS = 24;
     public static final int DEFAULT_SEGMENT_LENGTH_BLOCKS = 15;
@@ -62,9 +63,16 @@ public final class CityWallReservationPlanner {
             throw new IllegalArgumentException("D4 structure_anchor_map.json is required for wall reservation.");
         }
 
-        if (V3.equals(wallVersion)) {
-            return planV3(reviewPackage, anchorMap, margin, segmentLength, halfWidth,
+        if (V3.equals(wallVersion) || V4.equals(wallVersion)) {
+            JsonObject plan = planV3(reviewPackage, anchorMap, margin, segmentLength, halfWidth,
                     v3Options == null ? V3Options.defaults() : v3Options);
+            if (V4.equals(wallVersion)) {
+                plan.addProperty("wallVersion", V4);
+                plan.addProperty("boundarySource", "actual_footprint_land_ring_deferred_to_d7");
+                plan.addProperty("wallPlanningStage", "d5_reservation_mask_for_d7_v4_graph");
+                plan.addProperty("finalBoundaryDeferredToD7", true);
+            }
+            return plan;
         }
 
         List<Cell> selectedCells = V1_DEBUG.equals(wallVersion)
@@ -108,6 +116,9 @@ public final class CityWallReservationPlanner {
         }
         if (V3.equalsIgnoreCase(raw)) {
             return V3;
+        }
+        if (V4.equalsIgnoreCase(raw)) {
+            return V4;
         }
         return DEFAULT_WALL_VERSION;
     }
@@ -399,7 +410,16 @@ public final class CityWallReservationPlanner {
             obj.addProperty("landformPatchId", patch.landformPatchId());
             obj.addProperty("mapLabel", patch.mapLabel());
             obj.addProperty("landformType", patch.landformType().contractName());
+            obj.addProperty("geometryMode", patch.geometryMode());
+            obj.addProperty("cellStepBlocks", Math.max(1, reviewPackage.grid().cellStepBlocks()));
             obj.add("blockBounds", boundsJson(patch.blockBounds()));
+            if (!patch.memberCells().isEmpty()) {
+                JsonArray cells = new JsonArray();
+                for (PatchMemberCell memberCell : patch.memberCells()) {
+                    cells.add(memberCell.asJson());
+                }
+                obj.add("memberCells", cells);
+            }
             out.add(obj);
         }
         return out;

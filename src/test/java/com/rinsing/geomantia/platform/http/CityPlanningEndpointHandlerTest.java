@@ -752,6 +752,57 @@ class CityPlanningEndpointHandlerTest {
     }
 
     @Test
+    void handlePlanCityWallsAcceptsV4AndWritesWallGraphPreview() throws Exception {
+        Path debugRoot = Files.createTempDirectory("city-wall-v4-plan-test");
+        String runId = "run_wall_v4_plan";
+        String citySeedId = "city_test";
+        prepareD5Artifacts(debugRoot, runId, citySeedId);
+        CityPlanningEndpointHandler.handlePlanD5(debugRoot, runId, citySeedId,
+                "v4", 24, 15, 4, new CityWallReservationPlanner.V3Options(24, 2, 64, 0.6));
+
+        Path d7Dir = debugRoot.resolve(runId).resolve("city_d7_" + citySeedId);
+        Files.createDirectories(d7Dir);
+        Files.writeString(d7Dir.resolve("placed_structure_ledger.json"), """
+                {
+                  "schemaVersion": "city_placed_structure_ledger.v0.1",
+                  "cityId": "city_test",
+                  "placedStructures": [
+                    {
+                      "anchorId": "admin_core",
+                      "structureId": "minecraft:desert_pyramid",
+                      "actualFootprint": {"minX": -10, "minZ": -12, "maxX": 18, "maxZ": 20}
+                    },
+                    {
+                      "anchorId": "outside_patch_structure",
+                      "structureId": "minecraft:village_plains",
+                      "actualFootprint": {"minX": 108, "minZ": 8, "maxX": 136, "maxZ": 32}
+                    }
+                  ]
+                }
+                """);
+
+        JsonObject response = CityPlanningEndpointHandler.handlePlanCityWalls(
+                debugRoot, runId, citySeedId, 24, 15, 9,
+                "v4", null, 8, 2, 8, 7,
+                new CityWallPlanner.V3Options(24, 5, "v3.1", 7, 16, 6, 17, true),
+                CityWallPlanner.V4Options.defaults());
+
+        assertTrue(response.get("ok").getAsBoolean());
+        JsonObject wallPlan = response.getAsJsonObject("cityWallPlan");
+        assertEquals("city_wall_plan.v0.4", wallPlan.get("schemaVersion").getAsString());
+        assertEquals("actual_footprint_land_ring", wallPlan.get("wallBoundaryMode").getAsString());
+        assertFalse(wallPlan.getAsJsonArray("wallNodes").isEmpty());
+        assertFalse(wallPlan.getAsJsonArray("wallUnits").isEmpty());
+        assertFalse(wallPlan.getAsJsonArray("nodeConnectorUnits").isEmpty());
+        assertTrue(wallPlan.has("cityWallDatumY"));
+        BlockBounds wallBounds = bounds(wallPlan.getAsJsonObject("wallBounds"));
+        assertTrue(wallBounds.contains(136, 32), wallPlan.toString());
+        JsonObject artifacts = response.getAsJsonObject("artifacts");
+        assertTrue(Files.exists(debugRoot.resolve(artifacts.get("cityWallPlan").getAsString())));
+        assertTrue(Files.exists(debugRoot.resolve(artifacts.get("cityWallPreview").getAsString())));
+    }
+
+    @Test
     void handlePlanD5CanWriteV3WallReservationArtifacts() throws Exception {
         Path debugRoot = Files.createTempDirectory("city-wall-v3-d5-test");
         String runId = "run_wall_v3_d5";
@@ -771,6 +822,49 @@ class CityPlanningEndpointHandlerTest {
         assertEquals("city_wall_reservation_plan.v0.3", reservation.get("schemaVersion").getAsString());
         assertEquals("structure_seeded_patch_region_hull", reservation.get("boundarySource").getAsString());
         assertFalse(reservation.getAsJsonArray("cityDomainMask").isEmpty());
+    }
+
+    @Test
+    void handleRunWorkflowSkipsExistingArtifactsAndWritesTimingReport() throws Exception {
+        Path debugRoot = Files.createTempDirectory("city-workflow-test");
+        String runId = "run_workflow";
+        String citySeedId = "city_test";
+        Path runDir = debugRoot.resolve(runId);
+        prepareD5Artifacts(debugRoot, runId, citySeedId);
+        Files.createDirectories(runDir.resolve("city_structure_envelopes_" + citySeedId));
+        Files.writeString(runDir.resolve("city_structure_envelopes_" + citySeedId)
+                .resolve("structure_envelope_facts.json"), "{}");
+        Files.createDirectories(runDir.resolve("city_d6_" + citySeedId));
+        Files.writeString(runDir.resolve("city_d6_" + citySeedId)
+                .resolve("structure_materialization_plan.json"), "{}");
+
+        JsonObject request = JsonParser.parseString("""
+                {
+                  "runId": "run_workflow",
+                  "citySeedId": "city_test",
+                  "skipExisting": true
+                }
+                """).getAsJsonObject();
+
+        JsonObject response = CityPlanningEndpointHandler.handleRunWorkflow(
+                debugRoot,
+                Files.createTempDirectory("city-workflow-server-root"),
+                runId,
+                citySeedId,
+                request,
+                null,
+                null);
+
+        assertTrue(response.get("ok").getAsBoolean());
+        assertEquals("waiting_for_confirmation", response.get("status").getAsString());
+        JsonObject report = response.getAsJsonObject("workflowReport");
+        assertEquals("city_workflow_report.v0.1", report.get("schemaVersion").getAsString());
+        assertTrue(report.has("durationMs"));
+        assertTrue(report.getAsJsonArray("steps").toString().contains("WORKFLOW_EXISTING_ARTIFACT"));
+        assertTrue(report.getAsJsonArray("steps").toString().contains("WORKFLOW_CONFIRM_WORLD_MUTATION_REQUIRED"));
+        Path reportPath = debugRoot.resolve(response.getAsJsonObject("artifacts")
+                .get("workflowReport").getAsString());
+        assertTrue(Files.exists(reportPath));
     }
 
     private static LandformPatch patch(String id, LandformType type, int minX, int minZ, int maxX, int maxZ) {
@@ -904,6 +998,14 @@ class CityPlanningEndpointHandlerTest {
                   ]
                 }
                 """.formatted(first.landformPatchId(), second.landformPatchId())).getAsJsonObject();
+    }
+
+    private static BlockBounds bounds(JsonObject obj) {
+        return new BlockBounds(
+                obj.get("minX").getAsInt(),
+                obj.get("minZ").getAsInt(),
+                obj.get("maxX").getAsInt(),
+                obj.get("maxZ").getAsInt());
     }
 
     private static String debugStructureCatalog() {

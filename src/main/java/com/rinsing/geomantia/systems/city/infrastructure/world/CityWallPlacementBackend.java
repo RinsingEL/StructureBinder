@@ -21,13 +21,17 @@ public final class CityWallPlacementBackend {
     public JsonObject execute(ServerLevel level, JsonObject wallPlan, boolean debugScan, int debugScanStepBlocks) {
         JsonObject report = new JsonObject();
         boolean v3 = "city_wall_plan.v0.3".equals(stringValue(wallPlan, "schemaVersion", ""));
-        report.addProperty("schemaVersion", v3 ? "city_wall_placement_report.v0.3" : "city_wall_placement_report.v0.1");
+        boolean v4 = "city_wall_plan.v0.4".equals(stringValue(wallPlan, "schemaVersion", ""));
+        report.addProperty("schemaVersion", v4 ? "city_wall_placement_report.v0.4"
+                : v3 ? "city_wall_placement_report.v0.3" : "city_wall_placement_report.v0.1");
         report.addProperty("cityId", stringValue(wallPlan, "cityId", "unknown_city"));
         report.addProperty("backend", "vanilla_setblock");
         report.addProperty("debugScan", debugScan);
         report.addProperty("debugScanStepBlocks", Math.max(1, debugScanStepBlocks));
         JsonArray results = new JsonArray();
         JsonArray unitResults = new JsonArray();
+        JsonArray nodeResults = new JsonArray();
+        JsonArray connectorResults = new JsonArray();
         JsonObject terrainDebug = debugReport("city_wall_terrain_debug_scan.v0.1", report.get("cityId").getAsString());
         JsonObject maskDebug = debugReport("city_wall_mask_conflict_report.v0.1", report.get("cityId").getAsString());
         JsonObject gapDebug = debugReport("city_wall_gap_debug_report.v0.1", report.get("cityId").getAsString());
@@ -43,21 +47,79 @@ public final class CityWallPlacementBackend {
         }
         PlacementContext context = PlacementContext.from(wallPlan);
         report.addProperty("terrainPolicyVersion", context.wallTerrainPolicy());
-        for (JsonElement elem : array(wallPlan, "wallSegments")) {
-            if (!elem.isJsonObject()) {
-                continue;
+        if (v4) {
+            for (JsonElement elem : array(wallPlan, "wallNodes")) {
+                if (!elem.isJsonObject()) {
+                    continue;
+                }
+                JsonObject node = elem.getAsJsonObject();
+                JsonObject segment = pseudoSegment(node, "nodeId", v4NodeSegmentType(node));
+                SegmentResult result = placeWallNodeV4(level, segment, context, debugScan, terrainDebug, gapDebug);
+                if ("executed".equals(result.status())) {
+                    executed++;
+                    changed += result.changedBlocks();
+                } else {
+                    skipped++;
+                }
+                nodeResults.add(result.asJson(segment));
             }
-            JsonObject segment = elem.getAsJsonObject();
-            SegmentResult result = v3
-                    ? placeSegmentV3(level, segment, context, debugScan, terrainDebug, maskDebug, gapDebug, unitResults)
-                    : placeSegment(level, segment, context);
-            if ("executed".equals(result.status())) {
-                executed++;
-                changed += result.changedBlocks();
-            } else {
-                skipped++;
+            for (JsonElement elem : array(wallPlan, "wallUnits")) {
+                if (!elem.isJsonObject()) {
+                    continue;
+                }
+                JsonObject unit = elem.getAsJsonObject();
+                UnitResult result = placeGraphUnitV4(level, unit, context, debugScan, terrainDebug, maskDebug, gapDebug);
+                JsonObject unitJson = result.asJson(stringValue(unit, "unitId", ""));
+                unitJson.addProperty("unitId", stringValue(unit, "unitId", ""));
+                unitJson.addProperty("unitType", stringValue(unit, "unitType", ""));
+                unitJson.addProperty("plannedTargetY", intValue(unit, "targetY", 0));
+                unitJson.addProperty("plannedHeightMode", stringValue(unit, "heightMode", ""));
+                unitJson.addProperty("wallAxis", stringValue(unit, "wallAxis", ""));
+                unitResults.add(unitJson);
+                if ("executed".equals(result.status())) {
+                    executed++;
+                    changed += result.changedBlocks();
+                } else {
+                    skipped++;
+                }
             }
-            results.add(result.asJson(segment));
+            for (JsonElement elem : array(wallPlan, "nodeConnectorUnits")) {
+                if (!elem.isJsonObject()) {
+                    continue;
+                }
+                JsonObject connector = elem.getAsJsonObject();
+                UnitResult result = placeConnectorUnitV4(level, connector, context, debugScan,
+                        terrainDebug, maskDebug, gapDebug);
+                JsonObject connectorJson = result.asJson(stringValue(connector, "connectorId", ""));
+                connectorJson.addProperty("connectorId", stringValue(connector, "connectorId", ""));
+                connectorJson.addProperty("nodeId", stringValue(connector, "nodeId", ""));
+                connectorJson.addProperty("connectorStatus", stringValue(connector, "connectorStatus", ""));
+                connectorJson.addProperty("connectorMode", stringValue(connector, "connectorMode", ""));
+                connectorResults.add(connectorJson);
+                if ("executed".equals(result.status())) {
+                    executed++;
+                    changed += result.changedBlocks();
+                } else {
+                    skipped++;
+                }
+            }
+        } else {
+            for (JsonElement elem : array(wallPlan, "wallSegments")) {
+                if (!elem.isJsonObject()) {
+                    continue;
+                }
+                JsonObject segment = elem.getAsJsonObject();
+                SegmentResult result = v3
+                        ? placeSegmentV3(level, segment, context, debugScan, terrainDebug, maskDebug, gapDebug, unitResults)
+                        : placeSegment(level, segment, context);
+                if ("executed".equals(result.status())) {
+                    executed++;
+                    changed += result.changedBlocks();
+                } else {
+                    skipped++;
+                }
+                results.add(result.asJson(segment));
+            }
         }
         report.addProperty("ok", true);
         report.addProperty("executedSegments", executed);
@@ -65,8 +127,13 @@ public final class CityWallPlacementBackend {
         report.addProperty("changedBlocks", changed);
         report.addProperty("roadProtectedBlockCount", context.roadMasks().size());
         report.add("segmentResults", results);
-        if (v3) {
+        if (v3 || v4) {
             report.add("placementUnitResults", unitResults);
+        }
+        if (v4) {
+            report.add("wallNodeResults", nodeResults);
+            report.add("wallUnitResults", unitResults.deepCopy());
+            report.add("connectorResults", connectorResults);
         }
         if (debugScan) {
             report.add("wallTerrainDebugScan", terrainDebug);
@@ -74,6 +141,79 @@ public final class CityWallPlacementBackend {
             report.add("wallGapDebugReport", gapDebug);
         }
         return report;
+    }
+
+    private SegmentResult placeWallNodeV4(ServerLevel level, JsonObject segment, PlacementContext context,
+                                          boolean debugScan, JsonObject terrainDebug, JsonObject gapDebug) {
+        String type = stringValue(segment, "segmentType", "");
+        if ("natural_boundary_endpoint".equals(type)) {
+            addGap(gapDebug, segment, "NATURAL_BOUNDARY_ENDPOINT",
+                    "Natural boundary endpoint node is informational.");
+            return new SegmentResult("skipped", "NATURAL_BOUNDARY_ENDPOINT", 0,
+                    "Natural boundary endpoint node is informational.");
+        }
+        if ("junction".equals(type) || "beacon_tower".equals(type)) {
+            addGap(gapDebug, segment, "V4_GRAPH_NODE_NO_INDEPENDENT_PLACEMENT",
+                    "V4 graph connector node is represented by adjacent wall and connector units.");
+            return new SegmentResult("skipped", "V4_GRAPH_NODE_NO_INDEPENDENT_PLACEMENT", 0,
+                    "V4 graph connector node is represented by adjacent wall and connector units.");
+        }
+        if ("gatehouse".equals(type)) {
+            SegmentResult result = placeGatehouseSegment(level, segment, context, debugScan, terrainDebug);
+            if ("skipped".equals(result.status())) {
+                addGap(gapDebug, segment, result.reasonCode(), result.message());
+            }
+            return result;
+        }
+        return placeSegment(level, segment, context);
+    }
+
+    private UnitResult placeGraphUnitV4(ServerLevel level, JsonObject unit, PlacementContext context,
+                                       boolean debugScan, JsonObject terrainDebug,
+                                       JsonObject maskDebug, JsonObject gapDebug) {
+        String unitType = stringValue(unit, "unitType", "");
+        String reason = stringValue(unit, "reasonCode", "V4_WALL_UNIT");
+        BlockBounds bounds = bounds(unit.getAsJsonObject("blockBounds"));
+        if (!booleanValue(unit, "placementAllowed", true)
+                || "natural_boundary_gap".equals(unitType)
+                || "skipped_wall_unit".equals(unitType)) {
+            addGap(gapDebug, pseudoSegment(unit, "unitId", unitType), reason,
+                    "Graph unit intentionally skipped by v4 planner.", bounds);
+            return new UnitResult("skipped", reason, unitType, 0,
+                    "Graph unit intentionally skipped by v4 planner.", bounds, 0, 0, 0,
+                    context.wallTerrainPolicy(), "LOW", new JsonArray(), new JsonObject());
+        }
+        JsonObject segment = pseudoSegment(unit, "unitId", "wall_segment");
+        Axis axis = axisForSegment(segment, bounds);
+        return placeUnit(level, segment, bounds, axis, context, debugScan, terrainDebug, maskDebug);
+    }
+
+    private UnitResult placeConnectorUnitV4(ServerLevel level, JsonObject connector, PlacementContext context,
+                                           boolean debugScan, JsonObject terrainDebug,
+                                           JsonObject maskDebug, JsonObject gapDebug) {
+        String status = stringValue(connector, "connectorStatus", "");
+        BlockBounds bounds = bounds(connector.getAsJsonObject("blockBounds"));
+        if ("skipped".equals(status) || "blocked".equals(status)) {
+            String reason = "blocked".equals(status) ? "NODE_CONNECTOR_BLOCKED" : "NODE_CONNECTOR_SKIPPED";
+            addGap(gapDebug, pseudoSegment(connector, "connectorId", "node_connector"), reason,
+                    "Node connector intentionally skipped by v4 graph.", bounds);
+            return new UnitResult("skipped", reason, status, 0,
+                    "Node connector intentionally skipped by v4 graph.", bounds, 0, 0, 0,
+                    context.wallTerrainPolicy(), "LOW", new JsonArray(), new JsonObject());
+        }
+        JsonObject segment = pseudoSegment(connector, "connectorId", "wall_segment");
+        Axis axis = axisForSegment(segment, bounds);
+        UnitResult result = placeUnit(level, segment, bounds, axis, context, debugScan, terrainDebug, maskDebug);
+        if ("executed".equals(result.status()) && "stepped".equals(status)) {
+            int baseY = Math.max(result.maxSurfaceY() + 1, intValue(connector, "targetY", result.maxSurfaceY() + 1));
+            int changed = placeConnectorCap(level, bounds, baseY, context);
+            return new UnitResult("executed", result.reasonCode(), "STAIR_CONNECTOR_PLACED",
+                    result.changedBlocks() + changed, "Placed stepped node connector.",
+                    bounds, result.minSurfaceY(), result.maxSurfaceY(), result.protectedCellCount(),
+                    result.terrainPolicyVersion(), result.terrainDeltaBand(), result.stepSlices(),
+                    result.mountainProbe());
+        }
+        return result;
     }
 
     private SegmentResult placeSegment(ServerLevel level, JsonObject segment, PlacementContext context) {
@@ -368,6 +508,30 @@ public final class CityWallPlacementBackend {
         }
     }
 
+    private int placeConnectorCap(ServerLevel level, BlockBounds bounds, int baseY, PlacementContext context) {
+        int changed = 0;
+        for (int x = bounds.minX(); x <= bounds.maxX(); x++) {
+            for (int z = bounds.minZ(); z <= bounds.maxZ(); z++) {
+                if (context.protectsAny(x, z)) {
+                    continue;
+                }
+                changed += placeFoundation(level, x, z, baseY, context);
+                if (set(level, x, baseY, z, Blocks.STONE_BRICKS.defaultBlockState())) {
+                    changed++;
+                }
+                if (set(level, x, baseY + 1, z, Blocks.STONE_BRICK_STAIRS.defaultBlockState())) {
+                    changed++;
+                }
+                boolean edge = x == bounds.minX() || x == bounds.maxX()
+                        || z == bounds.minZ() || z == bounds.maxZ();
+                if (edge && set(level, x, baseY + 2, z, Blocks.STONE_BRICK_WALL.defaultBlockState())) {
+                    changed++;
+                }
+            }
+        }
+        return changed;
+    }
+
     private int placeWall(ServerLevel level, BlockBounds bounds, int baseY, PlacementContext context, Axis axis) {
         int changed = 0;
         for (int x = bounds.minX(); x <= bounds.maxX(); x++) {
@@ -541,7 +705,10 @@ public final class CityWallPlacementBackend {
                 || state.is(Blocks.DEEPSLATE_BRICKS)
                 || state.is(Blocks.COBBLESTONE)
                 || state.is(Blocks.STONE_BRICK_WALL)
-                || state.is(Blocks.STONE_BRICK_SLAB);
+                || state.is(Blocks.STONE_BRICK_SLAB)
+                || state.is(Blocks.STONE_BRICK_STAIRS)
+                || state.is(Blocks.OAK_LOG)
+                || state.is(Blocks.OAK_PLANKS);
     }
 
     private TerrainSample sampleTerrain(ServerLevel level, BlockBounds bounds, boolean keepSamples) {
@@ -656,6 +823,37 @@ public final class CityWallPlacementBackend {
             return Axis.Z;
         }
         return bounds.widthBlocks() >= bounds.heightBlocks() ? Axis.X : Axis.Z;
+    }
+
+    private static String v4NodeSegmentType(JsonObject node) {
+        String nodeType = stringValue(node, "nodeType", "");
+        if ("gatehouse".equals(nodeType)) {
+            return "gatehouse";
+        }
+        if ("natural_boundary_endpoint".equals(nodeType)) {
+            return "natural_boundary_endpoint";
+        }
+        if ("junction".equals(nodeType)) {
+            return "junction";
+        }
+        if ("beacon_tower".equals(nodeType)) {
+            return "beacon_tower";
+        }
+        return "tower";
+    }
+
+    private static JsonObject pseudoSegment(JsonObject source, String idKey, String segmentType) {
+        JsonObject segment = new JsonObject();
+        segment.addProperty("segmentId", stringValue(source, idKey, stringValue(source, "segmentId", "")));
+        segment.addProperty("segmentType", segmentType);
+        segment.addProperty("templateId", stringValue(source, "templateId", ""));
+        if (source.has("wallAxis") && !source.get("wallAxis").isJsonNull()) {
+            segment.addProperty("wallAxis", source.get("wallAxis").getAsString());
+        }
+        if (source.has("blockBounds") && source.get("blockBounds").isJsonObject()) {
+            segment.add("blockBounds", source.getAsJsonObject("blockBounds").deepCopy());
+        }
+        return segment;
     }
 
     enum Axis {
@@ -871,7 +1069,8 @@ public final class CityWallPlacementBackend {
             return new PlacementContext(roads, footprints,
                     intValue(wallPlan, "maxFoundationDepthBlocks", 8),
                     intValue(wallPlan, "maxSegmentHeightDeltaBlocks", MAX_SEGMENT_HEIGHT_DELTA),
-                    Math.max(1, intValue(wallPlan, "terrainFitUnitLengthBlocks", 5)),
+                    Math.max(1, intValue(wallPlan, "terrainFitUnitLengthBlocks",
+                            intValue(wallPlan, "wallUnitLengthBlocks", 5))),
                     POLICY_V31.equalsIgnoreCase(policy == null ? "" : policy.trim()) ? POLICY_V31 : "v3",
                     flatMax,
                     steppedMax,

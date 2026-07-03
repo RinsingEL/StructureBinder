@@ -70,6 +70,7 @@ public final class GeomantiaHttpServer {
             httpServer.createContext("/realm/city/execute_d7", realmController::handleCityExecuteD7);
             httpServer.createContext("/realm/city/plan_city_walls", realmController::handleCityPlanCityWalls);
             httpServer.createContext("/realm/city/execute_city_walls", realmController::handleCityExecuteCityWalls);
+            httpServer.createContext("/realm/city/run_workflow", realmController::handleCityRunWorkflow);
             httpServer.setExecutor(Executors.newFixedThreadPool(3, runnable -> {
                 Thread thread = new Thread(runnable);
                 thread.setDaemon(true);

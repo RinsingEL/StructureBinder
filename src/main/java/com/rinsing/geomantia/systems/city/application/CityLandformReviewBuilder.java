@@ -26,7 +26,12 @@ public final class CityLandformReviewBuilder {
         Objects.requireNonNull(context, "context");
         Objects.requireNonNull(patches, "patches");
 
-        List<LandformPatch> filtered = filterPatchesByBounds(context.bounds(), patches);
+        return build(context, patches, context.bounds());
+    }
+
+    private CityLandformReviewPackage build(CitySiteContext context, List<LandformPatch> patches,
+                                            BlockBounds patchContextBounds) {
+        List<LandformPatch> filtered = filterPatchesByBounds(patchContextBounds, patches);
         List<LandformPatchSummary> summaries = buildSummaries(filtered);
         assignLabels(summaries);
         detectNeighborsForAll(filtered, summaries);
@@ -56,9 +61,24 @@ public final class CityLandformReviewBuilder {
 
     public CityLandformReviewPackage build(CitySiteContext context, AtlasRegion region) {
         Objects.requireNonNull(region, "region");
-        CityLandformReviewPackage pkg = build(context, region.patches());
-        Map<String, List<PatchMemberCell>> cellsByPatch = region.cells().stream()
-                .filter(cell -> !cell.patchId().isBlank() && context.bounds().contains(cell.blockMinX(), cell.blockMinZ()))
+        return buildFromRegions(context, List.of(region), context.bounds());
+    }
+
+    public CityLandformReviewPackage buildFromRegions(CitySiteContext context, List<AtlasRegion> regions,
+                                                      BlockBounds patchContextBounds) {
+        Objects.requireNonNull(context, "context");
+        Objects.requireNonNull(regions, "regions");
+        BlockBounds contextBounds = patchContextBounds == null ? context.bounds() : patchContextBounds;
+        List<LandformPatch> patches = regions.stream()
+                .filter(Objects::nonNull)
+                .flatMap(region -> region.patches().stream())
+                .toList();
+        CityLandformReviewPackage pkg = build(context, patches, contextBounds);
+        Map<String, List<PatchMemberCell>> cellsByPatch = regions.stream()
+                .filter(Objects::nonNull)
+                .flatMap(region -> region.cells().stream())
+                .filter(cell -> !cell.patchId().isBlank()
+                        && contextBounds.contains(cell.blockMinX(), cell.blockMinZ()))
                 .collect(Collectors.groupingBy(AtlasCell::patchId,
                         LinkedHashMap::new,
                         Collectors.mapping(cell -> new PatchMemberCell(

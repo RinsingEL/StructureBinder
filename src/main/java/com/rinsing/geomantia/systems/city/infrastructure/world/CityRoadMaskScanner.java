@@ -85,13 +85,8 @@ public final class CityRoadMaskScanner {
         return state.is(Blocks.DIRT_PATH)
                 || state.is(Blocks.GRAVEL)
                 || state.is(Blocks.COARSE_DIRT)
-                || state.is(Blocks.COBBLESTONE)
-                || state.is(Blocks.MOSSY_COBBLESTONE)
                 || state.is(Blocks.PACKED_MUD)
-                || state.is(Blocks.MUD_BRICKS)
-                || state.is(Blocks.ANDESITE)
-                || state.is(Blocks.POLISHED_ANDESITE)
-                || state.is(Blocks.STONE_BRICKS);
+                || state.is(Blocks.MUD_BRICKS);
     }
 
     private static BlockBounds expand(BlockBounds bounds, int margin) {

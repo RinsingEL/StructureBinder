@@ -161,7 +161,12 @@ final class RealmPlanningHttpController {
             }
             ServerLevel level = resolveLevel(dimensionId, player);
             return CityPlanningEndpointHandler.handlePlanD3(debugRoot(), runId, citySeedId,
-                    cellStepBlocks, level);
+                    cellStepBlocks,
+                    hasValue(request, "patchScanPaddingBlocks")
+                            ? intValue(request, "patchScanPaddingBlocks",
+                            CityPlanningEndpointHandler.DEFAULT_D3_PATCH_SCAN_PADDING_BLOCKS)
+                            : null,
+                    level);
         }));
     }
 
@@ -457,7 +462,21 @@ final class RealmPlanningHttpController {
                             intValue(request, "naturalWaterBoundaryMinAreaBlocks",
                                     CityWallPlanner.DEFAULT_NATURAL_WATER_BOUNDARY_MIN_AREA_BLOCKS),
                             intValue(request, "roadProjectionMaxDistanceBlocks",
-                                    CityWallPlanner.DEFAULT_ROAD_PROJECTION_MAX_DISTANCE_BLOCKS)));
+                                    CityWallPlanner.DEFAULT_ROAD_PROJECTION_MAX_DISTANCE_BLOCKS)),
+                    new CityWallPlanner.V4Options(
+                            intValue(request, "wallUnitLengthBlocks",
+                                    CityWallPlanner.DEFAULT_WALL_UNIT_LENGTH_BLOCKS),
+                            intValue(request, "waterRunMinUnits",
+                                    CityWallPlanner.DEFAULT_WATER_RUN_MIN_UNITS),
+                            intValue(request, "waterRetreatMaxCells",
+                                    CityWallPlanner.DEFAULT_WATER_RETREAT_MAX_CELLS),
+                            intValue(request, "structureWallBreathingRoomBlocks",
+                                    intValue(request, "wallMarginBlocks",
+                                            CityWallPlanner.DEFAULT_STRUCTURE_WALL_BREATHING_ROOM_BLOCKS)),
+                            intValue(request, "heightDatumClampBlocks",
+                                    CityWallPlanner.DEFAULT_HEIGHT_DATUM_CLAMP_BLOCKS),
+                            intValue(request, "localMedianWindowUnits",
+                                    CityWallPlanner.DEFAULT_LOCAL_MEDIAN_WINDOW_UNITS)));
         }));
     }
 
@@ -483,6 +502,34 @@ final class RealmPlanningHttpController {
             } else {
                 response.addProperty("worldSaveRequested", false);
             }
+            return response;
+        }));
+    }
+
+    void handleCityRunWorkflow(HttpExchange exchange) {
+        handle(exchange, "POST", () -> callOnServerThread(() -> {
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            String runId = requiredString(request, "runId");
+            String citySeedId = requiredString(request, "citySeedId");
+            ServerPlayer player = resolvePlayer(stringValue(request, "playerName", ""));
+            String dimensionId = stringValue(request, "dimensionId", "");
+            if (dimensionId.isBlank()) {
+                dimensionId = restoredRunDimensionId(runId);
+            }
+            ServerLevel level = resolveLevel(dimensionId, player);
+            JsonObject response = CityPlanningEndpointHandler.handleRunWorkflow(debugRoot(),
+                    server.getWorldPath(LevelResource.ROOT),
+                    runId, citySeedId, request,
+                    new CityPlanningEndpointHandler.MinecraftServerHolder(server),
+                    level);
+            boolean saveAfter = booleanValue(request, "executeWalls", false)
+                    && response.has("ok")
+                    && response.get("ok").getAsBoolean()
+                    && "completed".equals(stringValue(response, "status", ""));
+            if (saveAfter) {
+                server.saveAllChunks(true, true, true);
+            }
+            response.addProperty("worldSaveRequested", saveAfter);
             return response;
         }));
     }

@@ -29,6 +29,13 @@ public final class CityWallPlanner {
     public static final int DEFAULT_MIN_GATE_ROAD_LENGTH_BLOCKS = 24;
     public static final int DEFAULT_NATURAL_WATER_BOUNDARY_MIN_AREA_BLOCKS = 4096;
     public static final int DEFAULT_ROAD_PROJECTION_MAX_DISTANCE_BLOCKS = 32;
+    public static final int DEFAULT_WALL_UNIT_LENGTH_BLOCKS = 16;
+    public static final int DEFAULT_WATER_RUN_MIN_UNITS = 3;
+    public static final int DEFAULT_WATER_RETREAT_MAX_CELLS = 4;
+    public static final int DEFAULT_STRUCTURE_WALL_BREATHING_ROOM_BLOCKS = 32;
+    public static final int DEFAULT_HEIGHT_DATUM_CLAMP_BLOCKS = 6;
+    public static final int DEFAULT_LOCAL_MEDIAN_WINDOW_UNITS = 3;
+    private static final int V4_NODE_INTERVAL_UNITS = 4;
     private static final int WALL_HALF_THICKNESS_BLOCKS = 2;
 
     public JsonObject plan(JsonObject placedLedger, int wallMarginBlocks, int segmentLengthBlocks,
@@ -373,6 +380,247 @@ public final class CityWallPlanner {
         terrain.addProperty("roadProtection", true);
         terrain.addProperty("debugScanSupported", true);
         plan.add("terrainFitPolicy", terrain);
+        return plan;
+    }
+
+    public JsonObject planV4(JsonObject placedLedger,
+                             JsonObject wallReservationPlan,
+                             JsonObject actualRoadMask,
+                             int gateWidthBlocks,
+                             int roadProtectionMarginBlocks,
+                             int maxFoundationDepthBlocks,
+                             int maxSegmentHeightDeltaBlocks,
+                             V3Options terrainOptions,
+                             V4Options options) {
+        V4Options opts = options == null ? V4Options.defaults() : options;
+        V3Options terrainOpts = terrainOptions == null ? V3Options.defaults() : terrainOptions;
+        int unitLength = opts.normalizedWallUnitLengthBlocks();
+        int roadMargin = roadProtectionMarginBlocks <= 0
+                ? DEFAULT_ROAD_PROTECTION_MARGIN_BLOCKS : roadProtectionMarginBlocks;
+        int gateWidth = gateWidthBlocks <= 0 ? 9 : gateWidthBlocks;
+        JsonObject roadMask = actualRoadMask == null
+                ? emptyRoadMask(stringValue(placedLedger, "cityId", "unknown_city"))
+                : actualRoadMask.deepCopy();
+        BlockBounds footprintUnion = unionPlaced(placedLedger);
+        BlockBounds wallBounds = snap(expand(snap(footprintUnion, unitLength),
+                opts.normalizedStructureWallBreathingRoomBlocks()), unitLength);
+
+        java.util.List<BlockBounds> roads = v4RoadBounds(roadMask);
+        java.util.List<BlockBounds> footprints = footprintBounds(placedLedger);
+        java.util.List<BlockBounds> waterPatches = v4WaterPatches(wallReservationPlan);
+        java.util.List<V4UnitDraft> drafts = v4RingUnits(wallBounds, unitLength);
+        BlockBounds knownPatchBounds = v4KnownPatchBounds(wallReservationPlan, wallBounds);
+        JsonArray waterRetreatEvents = retreatWaterRuns(drafts, waterPatches, opts, knownPatchBounds);
+
+        java.util.List<Integer> surfaces = new java.util.ArrayList<>();
+        for (V4UnitDraft draft : drafts) {
+            draft.surfaceMedianY = estimatedSurfaceY(draft.bounds);
+            surfaces.add(draft.surfaceMedianY);
+        }
+        int datumY = trimmedMedian(surfaces, 64);
+        for (int i = 0; i < drafts.size(); i++) {
+            V4UnitDraft draft = drafts.get(i);
+            draft.localMedianY = localMedianY(drafts, i, opts.normalizedLocalMedianWindowUnits(), datumY);
+            draft.targetY = clamp(draft.localMedianY, datumY - opts.normalizedHeightDatumClampBlocks(),
+                    datumY + opts.normalizedHeightDatumClampBlocks());
+        }
+
+        JsonArray nodes = new JsonArray();
+        JsonArray wallUnits = new JsonArray();
+        JsonArray connectorUnits = new JsonArray();
+        JsonArray generatedGates = new JsonArray();
+        JsonArray validationBreaks = new JsonArray();
+        int ordinaryWaterHits = 0;
+        int heightBreaks = 0;
+        int naturalBoundaryGaps = 0;
+        int skippedMaskBreaks = 0;
+        int terraceCount = 0;
+
+        for (int i = 0; i < drafts.size(); i++) {
+            V4UnitDraft draft = drafts.get(i);
+            String nodeType = v4NodeType(drafts, i);
+            if (overlapsAny(expand(draft.bounds, roadMargin), roads)) {
+                nodeType = "gatehouse";
+            }
+            BlockPoint nodePoint = v4NodePoint(drafts, i);
+            BlockBounds nodeBounds = v4NodeBounds(nodeType, draft, nodePoint);
+            nodes.add(v4Node("wall_node_" + i, nodeType, nodePoint.x(), nodePoint.z(), nodeBounds,
+                    draft.surfaceMedianY, draft.targetY, draft.nodeHeightMode()));
+        }
+
+        for (int i = 0; i < drafts.size(); i++) {
+            V4UnitDraft draft = drafts.get(i);
+            V4UnitDraft next = drafts.get((i + 1) % drafts.size());
+            boolean roadOverlap = overlapsAny(expand(draft.bounds, roadMargin), roads);
+            boolean structureOverlap = overlapsAny(draft.bounds, footprints);
+            boolean waterOverlap = overlapsAny(draft.bounds, waterPatches);
+            JsonObject unit = new JsonObject();
+            unit.addProperty("unitId", draft.unitId);
+            unit.addProperty("unitType", "wall_unit");
+            unit.addProperty("fromNodeId", "wall_node_" + i);
+            unit.addProperty("toNodeId", "wall_node_" + ((i + 1) % drafts.size()));
+            unit.addProperty("side", draft.side);
+            unit.addProperty("wallAxis", draft.axis);
+            unit.addProperty("wallUnitLengthBlocks", unitLength);
+            unit.add("blockBounds", boundsJson(draft.bounds));
+            unit.addProperty("surfaceMedianY", draft.surfaceMedianY);
+            unit.addProperty("localMedianY", draft.localMedianY);
+            unit.addProperty("targetY", draft.targetY);
+            unit.addProperty("toTargetY", next.targetY);
+            unit.addProperty("heightDeltaToNextNode", Math.abs(next.targetY - draft.targetY));
+            unit.addProperty("heightMode", "flat_wall");
+            unit.addProperty("placementAllowed", true);
+            unit.addProperty("waterOverlapAfterRetreat", waterOverlap);
+            unit.addProperty("waterRetreated", draft.waterRetreated);
+            unit.addProperty("waterRetreatSteps", draft.waterRetreatSteps);
+            unit.addProperty("templateId", "wall_straight_15");
+            unit.addProperty("reasonCode", "V4_LAND_RING_WALL_UNIT");
+
+            if (draft.naturalBoundary) {
+                unit.addProperty("unitType", "natural_boundary_gap");
+                unit.addProperty("placementAllowed", false);
+                unit.addProperty("heightMode", "natural_boundary");
+                unit.addProperty("reasonCode", "NATURAL_WATER_BOUNDARY_GAP_AFTER_RETREAT_FAIL");
+                addValidationBreak(validationBreaks, draft.unitId, "NATURAL_WATER_BOUNDARY_GAP",
+                        "Continuous water run could not retreat to land side.", draft.bounds);
+                naturalBoundaryGaps++;
+            } else if (roadOverlap) {
+                unit.addProperty("unitType", "skipped_wall_unit");
+                unit.addProperty("placementAllowed", false);
+                unit.addProperty("heightMode", "gatehouse_opening");
+                unit.addProperty("reasonCode", "ROAD_MASK_GATEHOUSE_OPENING");
+                addValidationBreak(validationBreaks, draft.unitId, "ROAD_MASK_GATEHOUSE_OPENING",
+                        "Wall unit intersects protected actual road mask; gatehouse node owns the opening.",
+                        draft.bounds);
+                addGeneratedGate(generatedGates, draft, gateWidth);
+                skippedMaskBreaks++;
+            } else if (structureOverlap) {
+                unit.addProperty("unitType", "skipped_wall_unit");
+                unit.addProperty("placementAllowed", false);
+                unit.addProperty("heightMode", "blocked_by_structure_mask");
+                unit.addProperty("reasonCode", "STRUCTURE_MASK_WALL_UNIT_SKIP");
+                addValidationBreak(validationBreaks, draft.unitId, "STRUCTURE_MASK_WALL_UNIT_SKIP",
+                        "Wall unit intersects placed structure actualFootprint.", draft.bounds);
+                skippedMaskBreaks++;
+            } else {
+                int delta = Math.abs(next.targetY - draft.targetY);
+                if (delta > 6) {
+                    String terraceId = "terrace_node_" + terraceCount++;
+                    unit.addProperty("unitType", "terraced_wall_unit");
+                    unit.addProperty("heightMode", "terrace_node_inserted");
+                    unit.addProperty("reasonCode", "HEIGHT_BREAK_TERRACE_INSERTED");
+                    unit.addProperty("terraceNodeId", terraceId);
+                    int terraceY = (draft.targetY + next.targetY) / 2;
+                    nodes.add(v4Node(terraceId, "terrace_node", draft.bounds.center().x(), draft.bounds.center().z(),
+                            towerBounds(draft.bounds.center().x(), draft.bounds.center().z(), 5),
+                            draft.surfaceMedianY, terraceY, "elevation_band"));
+                    connectorUnits.add(v4Connector("connector_" + connectorUnits.size(), terraceId,
+                            "terrace_node", draft.bounds.center(), towerBounds(draft.bounds.center().x(),
+                                    draft.bounds.center().z(), 3),
+                            draft.surfaceMedianY, terraceY, "stepped", "stair_link"));
+                    addValidationBreak(validationBreaks, draft.unitId, "HEIGHT_BREAK_TERRACE_INSERTED",
+                            "Adjacent node targetY delta exceeded 6 blocks; inserted terrace_node.", draft.bounds);
+                    heightBreaks++;
+                } else if (delta >= 3) {
+                    unit.addProperty("unitType", "stepped_wall_unit");
+                    unit.addProperty("heightMode", "stepped_wall_unit");
+                    unit.addProperty("reasonCode", "HEIGHT_DELTA_STEPPED_UNIT");
+                    heightBreaks++;
+                }
+                if (waterOverlap) {
+                    ordinaryWaterHits++;
+                }
+            }
+            wallUnits.add(unit);
+        }
+
+        for (int i = 0; i < drafts.size(); i++) {
+            V4UnitDraft draft = drafts.get(i);
+            String nodeType = v4NodeType(drafts, i);
+            if (draft.naturalBoundary) {
+                connectorUnits.add(v4Connector("connector_" + connectorUnits.size(), "wall_node_" + i,
+                        nodeType, v4NodePoint(drafts, i), v4ConnectorBounds(draft),
+                        draft.surfaceMedianY, draft.targetY,
+                        "skipped", "natural_boundary_endpoint"));
+                continue;
+            }
+            V4UnitDraft prev = drafts.get((i - 1 + drafts.size()) % drafts.size());
+            int connectorDelta = Math.max(Math.abs(draft.targetY - prev.targetY),
+                    Math.abs(draft.targetY - drafts.get((i + 1) % drafts.size()).targetY));
+            String status = connectorDelta >= 3 ? "stepped" : "connected";
+            connectorUnits.add(v4Connector("connector_" + connectorUnits.size(), "wall_node_" + i,
+                    nodeType, v4NodePoint(drafts, i), v4ConnectorBounds(draft),
+                    draft.surfaceMedianY, draft.targetY,
+                    status, connectorDelta >= 3 ? "stair_link" : "short_wall_link"));
+        }
+
+        JsonObject plan = new JsonObject();
+        plan.addProperty("schemaVersion", "city_wall_plan.v0.4");
+        plan.addProperty("cityId", stringValue(placedLedger, "cityId", "unknown_city"));
+        plan.addProperty("wallVersion", "v4");
+        plan.addProperty("boundaryMode", "actual_footprint_land_ring");
+        plan.addProperty("wallBoundaryMode", "actual_footprint_land_ring");
+        plan.addProperty("wallPlanningMode", "actual_footprint_land_ring_wall_graph");
+        plan.addProperty("roadMaskSource", "actual_world_blocks");
+        plan.addProperty("wallUnitLengthBlocks", unitLength);
+        plan.addProperty("waterRunMinUnits", opts.normalizedWaterRunMinUnits());
+        plan.addProperty("waterRetreatMaxCells", opts.normalizedWaterRetreatMaxCells());
+        plan.addProperty("structureWallBreathingRoomBlocks", opts.normalizedStructureWallBreathingRoomBlocks());
+        plan.addProperty("cityWallDatumY", datumY);
+        plan.addProperty("heightDatumClampBlocks", opts.normalizedHeightDatumClampBlocks());
+        plan.addProperty("localMedianWindowUnits", opts.normalizedLocalMedianWindowUnits());
+        plan.addProperty("gateWidthBlocks", gateWidth);
+        plan.addProperty("roadProtectionMarginBlocks", roadMargin);
+        plan.addProperty("maxFoundationDepthBlocks", maxFoundationDepthBlocks <= 0 ? 8 : maxFoundationDepthBlocks);
+        plan.addProperty("maxSegmentHeightDeltaBlocks", maxSegmentHeightDeltaBlocks <= 0 ? 7 : maxSegmentHeightDeltaBlocks);
+        plan.addProperty("wallTerrainPolicy", terrainOpts.normalizedWallTerrainPolicy());
+        plan.add("wallReservationSource", wallReservationPlan == null ? new JsonObject() : wallReservationPlan.deepCopy());
+        plan.add("actualRoadMask", roadMask);
+        plan.add("sourcePlacedStructureLedger", placedLedger == null ? new JsonObject() : placedLedger.deepCopy());
+        plan.add("sourceActualFootprintUnion", boundsJson(footprintUnion));
+        if (wallReservationPlan != null && wallReservationPlan.has("wallBounds")) {
+            plan.add("sourcePatchContextBounds", wallReservationPlan.getAsJsonObject("wallBounds").deepCopy());
+        }
+        plan.add("knownPatchBounds", boundsJson(knownPatchBounds));
+        plan.add("wallBounds", boundsJson(wallBounds));
+        plan.add("waterRetreatEvents", waterRetreatEvents);
+        plan.add("generatedGates", generatedGates);
+        plan.add("wallNodes", nodes);
+        plan.add("wallUnits", wallUnits);
+        plan.add("nodeConnectorUnits", connectorUnits);
+        plan.add("wallSegments", new JsonArray());
+        plan.add("templateLibrary", CityWallTemplateLibrary.libraryJson());
+
+        JsonObject terrain = new JsonObject();
+        terrain.addProperty("policyVersion", terrainOpts.normalizedWallTerrainPolicy());
+        terrain.addProperty("heightStrategy", "global_datum_plus_local_median");
+        terrain.addProperty("cityWallDatumY", datumY);
+        terrain.addProperty("heightDatumClampBlocks", opts.normalizedHeightDatumClampBlocks());
+        terrain.addProperty("localMedianWindowUnits", opts.normalizedLocalMedianWindowUnits());
+        terrain.addProperty("connectorMode", "node_connector_units");
+        terrain.addProperty("foundationMode", "per_graph_unit_column_foundation");
+        terrain.addProperty("slopeMode", "flat_stepped_terrace_or_natural_boundary");
+        terrain.addProperty("roadProtection", true);
+        terrain.addProperty("debugScanSupported", true);
+        plan.add("terrainFitPolicy", terrain);
+
+        JsonObject validation = new JsonObject();
+        JsonArray outsideKnownPatchUnits = outsideKnownPatchUnits(wallUnits, knownPatchBounds);
+        validation.addProperty("status", validationBreaks.isEmpty() && ordinaryWaterHits == 0 ? "valid" : "valid_with_breaks");
+        validation.addProperty("closedLoopCandidate", naturalBoundaryGaps == 0);
+        validation.addProperty("wallNodeCount", nodes.size());
+        validation.addProperty("wallUnitCount", wallUnits.size());
+        validation.addProperty("nodeConnectorUnitCount", connectorUnits.size());
+        validation.addProperty("actualFootprintInsideKnownPatch", containsBounds(knownPatchBounds, footprintUnion));
+        validation.addProperty("wallBoundsInsideKnownPatch", containsBounds(knownPatchBounds, wallBounds));
+        validation.addProperty("outsideKnownPatchUnitCount", outsideKnownPatchUnits.size());
+        validation.addProperty("ordinaryWallUnitsInWater", ordinaryWaterHits);
+        validation.addProperty("naturalBoundaryGapCount", naturalBoundaryGaps);
+        validation.addProperty("skippedMaskBreakCount", skippedMaskBreaks);
+        validation.addProperty("heightBreakCount", heightBreaks);
+        validation.add("outsideKnownPatchUnits", outsideKnownPatchUnits);
+        validation.add("breaks", validationBreaks);
+        plan.add("wallGraphValidation", validation);
         return plan;
     }
 
@@ -908,6 +1156,559 @@ public final class CityWallPlanner {
 
     private static String stringValue(JsonObject obj, String key, String fallback) {
         return obj != null && obj.has(key) && !obj.get(key).isJsonNull() ? obj.get(key).getAsString() : fallback;
+    }
+
+    private static java.util.List<BlockBounds> boundsList(JsonObject obj, String key) {
+        java.util.List<BlockBounds> out = new java.util.ArrayList<>();
+        for (JsonElement elem : array(obj, key)) {
+            if (elem.isJsonObject() && elem.getAsJsonObject().has("blockBounds")) {
+                out.add(bounds(elem.getAsJsonObject().getAsJsonObject("blockBounds")));
+            }
+        }
+        return out;
+    }
+
+    private static java.util.List<BlockBounds> v4RoadBounds(JsonObject roadMask) {
+        java.util.List<BlockBounds> out = new java.util.ArrayList<>();
+        for (JsonElement elem : array(roadMask, "roadMask")) {
+            if (!elem.isJsonObject() || !elem.getAsJsonObject().has("blockBounds")) {
+                continue;
+            }
+            JsonObject road = elem.getAsJsonObject();
+            if (v4WallMaterialRoadFalsePositive(stringValue(road, "blockId", ""))) {
+                continue;
+            }
+            out.add(bounds(road.getAsJsonObject("blockBounds")));
+        }
+        return out;
+    }
+
+    private static boolean v4WallMaterialRoadFalsePositive(String blockId) {
+        return "minecraft:stone_bricks".equals(blockId)
+                || "minecraft:cobblestone".equals(blockId)
+                || "minecraft:mossy_cobblestone".equals(blockId)
+                || "minecraft:andesite".equals(blockId)
+                || "minecraft:polished_andesite".equals(blockId);
+    }
+
+    private static java.util.List<BlockBounds> footprintBounds(JsonObject ledger) {
+        java.util.List<BlockBounds> out = new java.util.ArrayList<>();
+        for (JsonElement elem : array(ledger, "placedStructures")) {
+            if (elem.isJsonObject() && elem.getAsJsonObject().has("actualFootprint")) {
+                out.add(bounds(elem.getAsJsonObject().getAsJsonObject("actualFootprint")));
+            }
+        }
+        if (out.isEmpty()) {
+            out.add(unionPlaced(ledger));
+        }
+        return out;
+    }
+
+    private static java.util.List<BlockBounds> v4WaterPatches(JsonObject reservation) {
+        java.util.List<BlockBounds> out = new java.util.ArrayList<>();
+        for (JsonElement elem : array(reservation, "seedPatches")) {
+            if (!elem.isJsonObject() || !elem.getAsJsonObject().has("blockBounds")) {
+                continue;
+            }
+            JsonObject patch = elem.getAsJsonObject();
+            String type = stringValue(patch, "landformType", "");
+            if ("water".equalsIgnoreCase(type)) {
+                int before = out.size();
+                int cellStep = Math.max(1, intValue(patch, "cellStepBlocks", DEFAULT_WALL_UNIT_LENGTH_BLOCKS));
+                for (JsonElement cellElem : array(patch, "memberCells")) {
+                    if (!cellElem.isJsonObject()) {
+                        continue;
+                    }
+                    JsonObject cell = cellElem.getAsJsonObject();
+                    int minX = intValue(cell, "blockMinX", Integer.MIN_VALUE);
+                    int minZ = intValue(cell, "blockMinZ", Integer.MIN_VALUE);
+                    if (minX == Integer.MIN_VALUE || minZ == Integer.MIN_VALUE) {
+                        continue;
+                    }
+                    out.add(new BlockBounds(minX, minZ, minX + cellStep - 1, minZ + cellStep - 1));
+                }
+                if (out.size() == before) {
+                    out.add(bounds(patch.getAsJsonObject("blockBounds")));
+                }
+            }
+        }
+        return out;
+    }
+
+    private static BlockBounds v4KnownPatchBounds(JsonObject reservation, BlockBounds fallback) {
+        BlockBounds union = null;
+        for (JsonElement elem : array(reservation, "seedPatches")) {
+            if (!elem.isJsonObject() || !elem.getAsJsonObject().has("blockBounds")) {
+                continue;
+            }
+            BlockBounds bounds = bounds(elem.getAsJsonObject().getAsJsonObject("blockBounds"));
+            union = union == null ? bounds : union(union, bounds);
+        }
+        return union == null ? expand(fallback, WALL_HALF_THICKNESS_BLOCKS)
+                : expand(union, WALL_HALF_THICKNESS_BLOCKS * 2);
+    }
+
+    private static java.util.List<V4UnitDraft> v4RingUnits(BlockBounds bounds, int unitLength) {
+        java.util.List<V4UnitDraft> out = new java.util.ArrayList<>();
+        int index = 0;
+        for (int x = bounds.minX(); x <= bounds.maxX(); x += unitLength) {
+            int x2 = Math.min(bounds.maxX(), x + unitLength - 1);
+            out.add(new V4UnitDraft("wall_unit_" + index++, "north", "X",
+                    new BlockBounds(x, bounds.minZ() - WALL_HALF_THICKNESS_BLOCKS,
+                            x2, bounds.minZ() + WALL_HALF_THICKNESS_BLOCKS),
+                    x, bounds.minZ(), x2, bounds.minZ(), 0, 1));
+        }
+        for (int z = bounds.minZ(); z <= bounds.maxZ(); z += unitLength) {
+            int z2 = Math.min(bounds.maxZ(), z + unitLength - 1);
+            out.add(new V4UnitDraft("wall_unit_" + index++, "east", "Z",
+                    new BlockBounds(bounds.maxX() - WALL_HALF_THICKNESS_BLOCKS, z,
+                            bounds.maxX() + WALL_HALF_THICKNESS_BLOCKS, z2),
+                    bounds.maxX(), z, bounds.maxX(), z2, -1, 0));
+        }
+        for (int x = bounds.maxX(); x >= bounds.minX(); x -= unitLength) {
+            int x2 = Math.max(bounds.minX(), x - unitLength + 1);
+            out.add(new V4UnitDraft("wall_unit_" + index++, "south", "X",
+                    new BlockBounds(x2, bounds.maxZ() - WALL_HALF_THICKNESS_BLOCKS,
+                            x, bounds.maxZ() + WALL_HALF_THICKNESS_BLOCKS),
+                    x, bounds.maxZ(), x2, bounds.maxZ(), 0, -1));
+        }
+        for (int z = bounds.maxZ(); z >= bounds.minZ(); z -= unitLength) {
+            int z2 = Math.max(bounds.minZ(), z - unitLength + 1);
+            out.add(new V4UnitDraft("wall_unit_" + index++, "west", "Z",
+                    new BlockBounds(bounds.minX() - WALL_HALF_THICKNESS_BLOCKS, z2,
+                            bounds.minX() + WALL_HALF_THICKNESS_BLOCKS, z),
+                    bounds.minX(), z, bounds.minX(), z2, 1, 0));
+        }
+        return out;
+    }
+
+    private static JsonArray retreatWaterRuns(java.util.List<V4UnitDraft> drafts,
+                                              java.util.List<BlockBounds> waterPatches,
+                                              V4Options options,
+                                              BlockBounds knownPatchBounds) {
+        JsonArray events = new JsonArray();
+        if (drafts.isEmpty() || waterPatches.isEmpty()) {
+            return events;
+        }
+        int runStart = -1;
+        for (int i = 0; i <= drafts.size(); i++) {
+            boolean water = i < drafts.size() && overlapsAny(drafts.get(i).bounds, waterPatches);
+            if (water && runStart < 0) {
+                runStart = i;
+            }
+            if ((!water || i == drafts.size()) && runStart >= 0) {
+                int runEnd = i - 1;
+                int runLength = runEnd - runStart + 1;
+                for (int j = runStart; j <= runEnd; j++) {
+                    drafts.get(j).waterRunLength = runLength;
+                }
+                if (runLength >= options.normalizedWaterRunMinUnits()) {
+                    for (int j = runStart; j <= runEnd; j++) {
+                        V4UnitDraft draft = drafts.get(j);
+                        BlockBounds before = draft.bounds;
+                        boolean retreated = false;
+                        for (int step = 1; step <= options.normalizedWaterRetreatMaxCells(); step++) {
+                            int distance = options.normalizedWallUnitLengthBlocks() * step;
+                            int[][] candidates = {
+                                    {draft.inwardDx * distance, draft.inwardDz * distance},
+                                    {0, distance},
+                                    {0, -distance},
+                                    {distance, 0},
+                                    {-distance, 0}
+                            };
+                            for (int[] candidate : candidates) {
+                                BlockBounds shifted = shift(before, candidate[0], candidate[1]);
+                                if (isValidWaterRetreatCandidate(shifted, waterPatches,
+                                        knownPatchBounds, drafts, j)) {
+                                    draft.bounds = shifted;
+                                    draft.waterRetreated = true;
+                                    draft.waterRetreatSteps = step;
+                                    retreated = true;
+                                    break;
+                                }
+                            }
+                            if (retreated) {
+                                break;
+                            }
+                        }
+                        JsonObject event = new JsonObject();
+                        event.addProperty("unitId", draft.unitId);
+                        event.addProperty("runStartIndex", runStart);
+                        event.addProperty("runEndIndex", runEnd);
+                        event.addProperty("runLengthUnits", runLength);
+                        event.addProperty("retreated", retreated);
+                        event.addProperty("retreatSteps", draft.waterRetreatSteps);
+                        event.add("beforeBounds", boundsJson(before));
+                        event.add("afterBounds", boundsJson(draft.bounds));
+                        if (!retreated) {
+                            draft.naturalBoundary = true;
+                            event.addProperty("reasonCode", "NATURAL_WATER_BOUNDARY_GAP_AFTER_RETREAT_FAIL");
+                        } else {
+                            event.addProperty("reasonCode", "WATER_RUN_RETIRED_TO_LAND_SIDE");
+                        }
+                        events.add(event);
+                    }
+                }
+                runStart = -1;
+            }
+        }
+        for (V4UnitDraft draft : drafts) {
+            if (draft.naturalBoundary || !overlapsAny(draft.bounds, waterPatches)) {
+                continue;
+            }
+            BlockBounds before = draft.bounds;
+            boolean retreated = false;
+            for (int step = 1; step <= options.normalizedWaterRetreatMaxCells(); step++) {
+                int distance = options.normalizedWallUnitLengthBlocks() * step;
+                int[][] candidates = {
+                        {draft.inwardDx * distance, draft.inwardDz * distance},
+                        {0, distance},
+                        {0, -distance},
+                        {distance, 0},
+                        {-distance, 0}
+                };
+                for (int[] candidate : candidates) {
+                    BlockBounds shifted = shift(before, candidate[0], candidate[1]);
+                    if (isValidWaterRetreatCandidate(shifted, waterPatches,
+                            knownPatchBounds, drafts, drafts.indexOf(draft))) {
+                        draft.bounds = shifted;
+                        draft.waterRetreated = true;
+                        draft.waterRetreatSteps = step;
+                        retreated = true;
+                        break;
+                    }
+                }
+                if (retreated) {
+                    break;
+                }
+            }
+            JsonObject event = new JsonObject();
+            event.addProperty("unitId", draft.unitId);
+            event.addProperty("runStartIndex", -1);
+            event.addProperty("runEndIndex", -1);
+            event.addProperty("runLengthUnits", draft.waterRunLength);
+            event.addProperty("retreated", retreated);
+            event.addProperty("retreatSteps", draft.waterRetreatSteps);
+            event.add("beforeBounds", boundsJson(before));
+            event.add("afterBounds", boundsJson(draft.bounds));
+            if (!retreated) {
+                draft.naturalBoundary = true;
+                event.addProperty("reasonCode", "NATURAL_WATER_BOUNDARY_GAP_AFTER_CORNER_RETREAT_FAIL");
+            } else {
+                event.addProperty("reasonCode", "WATER_CORNER_RETIRED_TO_LAND_SIDE");
+            }
+            events.add(event);
+        }
+        return events;
+    }
+
+    private static int estimatedSurfaceY(BlockBounds bounds) {
+        int cx = Math.floorDiv(bounds.center().x(), DEFAULT_WALL_UNIT_LENGTH_BLOCKS);
+        int cz = Math.floorDiv(bounds.center().z(), DEFAULT_WALL_UNIT_LENGTH_BLOCKS);
+        return 64 + Math.floorMod(cx * 5 + cz * 7, 17);
+    }
+
+    private static int trimmedMedian(java.util.List<Integer> values, int fallback) {
+        if (values.isEmpty()) {
+            return fallback;
+        }
+        java.util.List<Integer> sorted = new java.util.ArrayList<>(values);
+        sorted.sort(Integer::compareTo);
+        int trim = sorted.size() >= 10 ? Math.max(1, sorted.size() / 10) : 0;
+        return median(sorted.subList(trim, sorted.size() - trim), fallback);
+    }
+
+    private static int median(java.util.List<Integer> values, int fallback) {
+        if (values.isEmpty()) {
+            return fallback;
+        }
+        java.util.List<Integer> sorted = new java.util.ArrayList<>(values);
+        sorted.sort(Integer::compareTo);
+        return sorted.get(sorted.size() / 2);
+    }
+
+    private static int localMedianY(java.util.List<V4UnitDraft> drafts, int index, int window, int fallback) {
+        if (drafts.isEmpty()) {
+            return fallback;
+        }
+        int radius = Math.max(0, window / 2);
+        java.util.List<Integer> samples = new java.util.ArrayList<>();
+        for (int offset = -radius; offset <= radius; offset++) {
+            V4UnitDraft sample = drafts.get(Math.floorMod(index + offset, drafts.size()));
+            samples.add(sample.surfaceMedianY);
+        }
+        return median(samples, fallback);
+    }
+
+    private static String v4NodeType(java.util.List<V4UnitDraft> drafts, int index) {
+        V4UnitDraft draft = drafts.get(index);
+        V4UnitDraft previous = drafts.get(Math.floorMod(index - 1, drafts.size()));
+        if (draft.naturalBoundary || previous.naturalBoundary) {
+            return "natural_boundary_endpoint";
+        }
+        if (!draft.side.equals(previous.side)) {
+            return "corner_tower";
+        }
+        return index % V4_NODE_INTERVAL_UNITS == 0 ? "beacon_tower" : "junction";
+    }
+
+    private static JsonObject v4Node(String nodeId, String nodeType, int x, int z, BlockBounds blockBounds,
+                                     int surfaceMedianY, int targetY, String heightMode) {
+        JsonObject node = new JsonObject();
+        node.addProperty("nodeId", nodeId);
+        node.addProperty("nodeType", nodeType);
+        node.addProperty("x", x);
+        node.addProperty("z", z);
+        node.add("blockBounds", boundsJson(blockBounds));
+        node.addProperty("surfaceMedianY", surfaceMedianY);
+        node.addProperty("targetY", targetY);
+        node.addProperty("heightMode", heightMode);
+        node.addProperty("templateId", switch (nodeType) {
+            case "gatehouse" -> "gatehouse_9";
+            case "beacon_tower" -> "beacon_5x5";
+            case "corner_tower" -> "watchtower_5x5";
+            case "junction" -> "wall_node_connector";
+            default -> "wall_tower_small";
+        });
+        node.addProperty("placementRole", switch (nodeType) {
+            case "corner_tower", "gatehouse", "terrace_node" -> "structural_node";
+            case "beacon_tower" -> "visual_marker";
+            default -> "graph_only";
+        });
+        return node;
+    }
+
+    private static JsonObject v4Connector(String connectorId, String nodeId, String nodeType,
+                                          BlockPoint point, BlockBounds blockBounds,
+                                          int surfaceMedianY, int targetY,
+                                          String connectorStatus, String connectorMode) {
+        JsonObject connector = new JsonObject();
+        connector.addProperty("connectorId", connectorId);
+        connector.addProperty("nodeId", nodeId);
+        connector.addProperty("nodeType", nodeType);
+        connector.addProperty("x", point.x());
+        connector.addProperty("z", point.z());
+        connector.addProperty("unitType", "node_connector");
+        connector.addProperty("connectorStatus", connectorStatus);
+        connector.addProperty("connectorMode", connectorMode);
+        connector.addProperty("heightMode", "stepped".equals(connectorStatus) ? "stair_link" : connectorMode);
+        connector.addProperty("surfaceMedianY", surfaceMedianY);
+        connector.addProperty("targetY", targetY);
+        connector.addProperty("templateId", "stair_link".equals(connectorMode)
+                ? "wall_stair_connector" : "wall_node_connector");
+        connector.add("blockBounds", boundsJson(blockBounds));
+        return connector;
+    }
+
+    private static BlockPoint v4NodePoint(java.util.List<V4UnitDraft> drafts, int index) {
+        V4UnitDraft draft = drafts.get(index);
+        return switch (draft.side) {
+            case "north" -> new BlockPoint(draft.bounds.minX(), draft.bounds.center().z());
+            case "east" -> new BlockPoint(draft.bounds.center().x(), draft.bounds.minZ());
+            case "south" -> new BlockPoint(draft.bounds.maxX(), draft.bounds.center().z());
+            case "west" -> new BlockPoint(draft.bounds.center().x(), draft.bounds.maxZ());
+            default -> draft.bounds.center();
+        };
+    }
+
+    private static BlockPoint v4ConnectorPoint(V4UnitDraft draft) {
+        return switch (draft.side) {
+            case "north" -> new BlockPoint(draft.bounds.minX(), draft.bounds.center().z());
+            case "east" -> new BlockPoint(draft.bounds.center().x(), draft.bounds.minZ());
+            case "south" -> new BlockPoint(draft.bounds.maxX(), draft.bounds.center().z());
+            case "west" -> new BlockPoint(draft.bounds.center().x(), draft.bounds.maxZ());
+            default -> draft.bounds.center();
+        };
+    }
+
+    private static BlockBounds v4PointBounds(BlockPoint point) {
+        return new BlockBounds(point.x(), point.z(), point.x(), point.z());
+    }
+
+    private static BlockBounds v4NodeBounds(String nodeType, V4UnitDraft draft, BlockPoint point) {
+        if ("gatehouse".equals(nodeType)) {
+            return expand(draft.bounds, 2);
+        }
+        if ("junction".equals(nodeType) || "natural_boundary_endpoint".equals(nodeType)) {
+            return v4PointBounds(point);
+        }
+        return towerBounds(point.x(), point.z(), 5);
+    }
+
+    private static BlockBounds v4ConnectorBounds(V4UnitDraft draft) {
+        return v4PointBounds(v4ConnectorPoint(draft));
+    }
+
+    private static void addValidationBreak(JsonArray validationBreaks, String unitId,
+                                           String reasonCode, String message, BlockBounds bounds) {
+        JsonObject obj = new JsonObject();
+        obj.addProperty("breakId", "wall_graph_break_" + validationBreaks.size());
+        obj.addProperty("unitId", unitId);
+        obj.addProperty("reasonCode", reasonCode);
+        obj.addProperty("message", message);
+        obj.add("blockBounds", boundsJson(bounds));
+        validationBreaks.add(obj);
+    }
+
+    private static JsonArray outsideKnownPatchUnits(JsonArray wallUnits, BlockBounds knownPatchBounds) {
+        JsonArray out = new JsonArray();
+        for (JsonElement elem : wallUnits) {
+            if (!elem.isJsonObject()) {
+                continue;
+            }
+            JsonObject unit = elem.getAsJsonObject();
+            if (!unit.has("blockBounds") || !unit.get("blockBounds").isJsonObject()) {
+                continue;
+            }
+            BlockBounds unitBounds = bounds(unit.getAsJsonObject("blockBounds"));
+            if (containsBounds(knownPatchBounds, unitBounds)) {
+                continue;
+            }
+            JsonObject item = new JsonObject();
+            item.addProperty("unitId", stringValue(unit, "unitId", ""));
+            item.addProperty("unitType", stringValue(unit, "unitType", ""));
+            item.addProperty("reasonCode", stringValue(unit, "reasonCode", ""));
+            item.add("blockBounds", boundsJson(unitBounds));
+            out.add(item);
+        }
+        return out;
+    }
+
+    private static void addGeneratedGate(JsonArray generatedGates, V4UnitDraft draft, int gateWidth) {
+        JsonObject gate = new JsonObject();
+        gate.addProperty("gateId", "v4_gatehouse_" + generatedGates.size());
+        gate.addProperty("nodeType", "gatehouse");
+        gate.addProperty("reasonCode", "ROAD_MASK_GATEHOUSE_OPENING");
+        gate.addProperty("gateWidthBlocks", gateWidth);
+        gate.add("blockBounds", boundsJson(draft.bounds));
+        generatedGates.add(gate);
+    }
+
+    private static boolean overlapsAny(BlockBounds bounds, java.util.List<BlockBounds> candidates) {
+        for (BlockBounds candidate : candidates) {
+            if (bounds.overlaps(candidate)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static BlockBounds shift(BlockBounds bounds, int dx, int dz) {
+        return new BlockBounds(bounds.minX() + dx, bounds.minZ() + dz,
+                bounds.maxX() + dx, bounds.maxZ() + dz);
+    }
+
+    private static boolean isValidWaterRetreatCandidate(BlockBounds shifted,
+                                                        java.util.List<BlockBounds> waterPatches,
+                                                        BlockBounds knownPatchBounds,
+                                                        java.util.List<V4UnitDraft> drafts,
+                                                        int selfIndex) {
+        return !overlapsAny(shifted, waterPatches)
+                && containsBounds(knownPatchBounds, shifted)
+                && !overlapsOtherDraft(drafts, selfIndex, shifted);
+    }
+
+    private static boolean containsBounds(BlockBounds outer, BlockBounds inner) {
+        return outer.contains(inner.minX(), inner.minZ())
+                && outer.contains(inner.maxX(), inner.maxZ());
+    }
+
+    private static boolean overlapsOtherDraft(java.util.List<V4UnitDraft> drafts, int selfIndex, BlockBounds bounds) {
+        for (int i = 0; i < drafts.size(); i++) {
+            if (i == selfIndex) {
+                continue;
+            }
+            if (bounds.overlaps(drafts.get(i).bounds)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static BlockBounds towerBounds(int centerX, int centerZ, int size) {
+        int radius = Math.max(1, size / 2);
+        return new BlockBounds(centerX - radius, centerZ - radius, centerX + radius, centerZ + radius);
+    }
+
+    public record V4Options(int wallUnitLengthBlocks,
+                            int waterRunMinUnits,
+                            int waterRetreatMaxCells,
+                            int structureWallBreathingRoomBlocks,
+                            int heightDatumClampBlocks,
+                            int localMedianWindowUnits) {
+        public static V4Options defaults() {
+            return new V4Options(
+                    DEFAULT_WALL_UNIT_LENGTH_BLOCKS,
+                    DEFAULT_WATER_RUN_MIN_UNITS,
+                    DEFAULT_WATER_RETREAT_MAX_CELLS,
+                    DEFAULT_STRUCTURE_WALL_BREATHING_ROOM_BLOCKS,
+                    DEFAULT_HEIGHT_DATUM_CLAMP_BLOCKS,
+                    DEFAULT_LOCAL_MEDIAN_WINDOW_UNITS);
+        }
+
+        public int normalizedWallUnitLengthBlocks() {
+            return wallUnitLengthBlocks <= 0 ? DEFAULT_WALL_UNIT_LENGTH_BLOCKS : wallUnitLengthBlocks;
+        }
+
+        public int normalizedWaterRunMinUnits() {
+            return waterRunMinUnits <= 0 ? DEFAULT_WATER_RUN_MIN_UNITS : waterRunMinUnits;
+        }
+
+        public int normalizedWaterRetreatMaxCells() {
+            return waterRetreatMaxCells <= 0 ? DEFAULT_WATER_RETREAT_MAX_CELLS : waterRetreatMaxCells;
+        }
+
+        public int normalizedStructureWallBreathingRoomBlocks() {
+            return structureWallBreathingRoomBlocks <= 0
+                    ? DEFAULT_STRUCTURE_WALL_BREATHING_ROOM_BLOCKS
+                    : structureWallBreathingRoomBlocks;
+        }
+
+        public int normalizedHeightDatumClampBlocks() {
+            return heightDatumClampBlocks <= 0 ? DEFAULT_HEIGHT_DATUM_CLAMP_BLOCKS : heightDatumClampBlocks;
+        }
+
+        public int normalizedLocalMedianWindowUnits() {
+            int value = localMedianWindowUnits <= 0 ? DEFAULT_LOCAL_MEDIAN_WINDOW_UNITS : localMedianWindowUnits;
+            return value % 2 == 0 ? value + 1 : value;
+        }
+    }
+
+    private static final class V4UnitDraft {
+        private final String unitId;
+        private final String side;
+        private final String axis;
+        private final int startX;
+        private final int startZ;
+        private final int inwardDx;
+        private final int inwardDz;
+        private BlockBounds bounds;
+        private boolean naturalBoundary;
+        private boolean waterRetreated;
+        private int waterRetreatSteps;
+        private int waterRunLength;
+        private int surfaceMedianY;
+        private int localMedianY;
+        private int targetY;
+
+        private V4UnitDraft(String unitId, String side, String axis, BlockBounds bounds,
+                            int startX, int startZ, int endX, int endZ, int inwardDx, int inwardDz) {
+            this.unitId = unitId;
+            this.side = side;
+            this.axis = axis;
+            this.bounds = bounds;
+            this.startX = startX;
+            this.startZ = startZ;
+            this.inwardDx = inwardDx;
+            this.inwardDz = inwardDz;
+        }
+
+        private String nodeHeightMode() {
+            if (naturalBoundary) {
+                return "natural_boundary";
+            }
+            return targetY == localMedianY ? "local_median" : "datum_clamped";
+        }
     }
 
     public record V3Options(int gateClusterRadiusBlocks,
