@@ -21,14 +21,18 @@ import java.util.Set;
 public final class CityWallReservationPlanner {
     public static final String SCHEMA = "city_wall_reservation_plan.v0.2";
     public static final String SCHEMA_V3 = "city_wall_reservation_plan.v0.3";
+    public static final String SCHEMA_V5 = "city_wall_reservation_plan.v0.5";
     public static final String DEFAULT_WALL_VERSION = "v2";
     public static final String V1_DEBUG = "v1_debug";
     public static final String V2 = "v2";
     public static final String V3 = "v3";
     public static final String V4 = "v4";
+    public static final String V5 = "v5";
     public static final int DEFAULT_WALL_CORRIDOR_HALF_WIDTH_BLOCKS = 4;
     public static final int DEFAULT_WALL_MARGIN_BLOCKS = 24;
     public static final int DEFAULT_SEGMENT_LENGTH_BLOCKS = 15;
+    public static final int DEFAULT_V5_WALL_UNIT_LENGTH_BLOCKS = 8;
+    public static final int DEFAULT_V5_COVERAGE_RESCAN_MARGIN_BLOCKS = 16;
     public static final int DEFAULT_WALL_BREATHING_ROOM_BLOCKS = 24;
     public static final int DEFAULT_PATCH_EXPANSION_MAX_ROUNDS = 4;
     public static final int DEFAULT_CONCAVITY_OPENING_MAX_BLOCKS = 64;
@@ -61,6 +65,10 @@ public final class CityWallReservationPlanner {
         }
         if (anchorMap == null || !anchorMap.has("anchors") || !anchorMap.get("anchors").isJsonArray()) {
             throw new IllegalArgumentException("D4 structure_anchor_map.json is required for wall reservation.");
+        }
+
+        if (V5.equals(wallVersion)) {
+            return planV5(reviewPackage, anchorMap, margin, halfWidth);
         }
 
         if (V3.equals(wallVersion) || V4.equals(wallVersion)) {
@@ -120,7 +128,94 @@ public final class CityWallReservationPlanner {
         if (V4.equalsIgnoreCase(raw)) {
             return V4;
         }
+        if (V5.equalsIgnoreCase(raw)) {
+            return V5;
+        }
         return DEFAULT_WALL_VERSION;
+    }
+
+    private static JsonObject planV5(CityLandformReviewPackage reviewPackage,
+                                     JsonObject anchorMap,
+                                     int margin,
+                                     int halfWidth) {
+        BlockBounds plannedFootprintUnion = anchorBoundsUnion(anchorMap, "plannedFootprint");
+        BlockBounds envelopeUnion = anchorEnvelopeUnion(anchorMap);
+        BlockBounds structureUnion = envelopeUnion == null ? plannedFootprintUnion : envelopeUnion;
+        if (structureUnion == null) {
+            throw new IllegalArgumentException("D5_V5_STRUCTURE_FOOTPRINT_UNAVAILABLE: D4 anchors have no plannedFootprint/reservedEnvelope.");
+        }
+
+        int unitLength = DEFAULT_V5_WALL_UNIT_LENGTH_BLOCKS;
+        BlockBounds wallBounds = snap(expand(structureUnion, Math.max(margin, halfWidth + unitLength)), unitLength);
+        List<Segment> segments = rectangleSegments(wallBounds, halfWidth);
+        BlockBounds corridorBounds = union(segments);
+        int rescanMargin = Math.max(DEFAULT_V5_COVERAGE_RESCAN_MARGIN_BLOCKS, halfWidth + unitLength);
+        BlockBounds requiredCoverage = expand(corridorBounds, rescanMargin);
+        BlockBounds d3Coverage = new BlockBounds(
+                reviewPackage.grid().blockMinX(),
+                reviewPackage.grid().blockMinZ(),
+                reviewPackage.grid().blockMaxX() - 1,
+                reviewPackage.grid().blockMaxZ() - 1);
+        if (!containsBounds(d3Coverage, requiredCoverage)) {
+            throw new IllegalArgumentException("D5_V5_REQUIRES_PATCH_RESCAN: wall/structure reservation requires "
+                    + boundsText(requiredCoverage) + " but D3 coverage is " + boundsText(d3Coverage) + ".");
+        }
+
+        JsonArray wallLine = wallLine(segments);
+        JsonArray wallCorridorMask = corridorMasks(segments);
+        JsonArray gateSlots = v5GateSlots(segments, halfWidth);
+        JsonArray wallNodeSlots = v5WallNodeSlots(segments, gateSlots);
+
+        JsonObject plan = new JsonObject();
+        plan.addProperty("schemaVersion", SCHEMA_V5);
+        plan.addProperty("cityId", reviewPackage.cityId());
+        plan.addProperty("wallVersion", V5);
+        plan.addProperty("boundarySource", "d4_planned_footprint_envelope_rectilinear_hull");
+        plan.addProperty("wallPlanningStage", "d5_final_plane_and_worldgen_mask_v5");
+        plan.addProperty("finalBoundaryAuthority", "d5");
+        plan.addProperty("finalBoundaryDeferredToD7", false);
+        plan.addProperty("patchUsage", "semantic_and_coverage_check_only");
+        plan.addProperty("wallCorridorHalfWidthBlocks", halfWidth);
+        plan.addProperty("wallMarginBlocks", margin);
+        plan.addProperty("wallUnitLengthBlocks", unitLength);
+        plan.addProperty("segmentLengthBlocks", unitLength);
+        plan.add("sourcePatchRefs", sourcePatchRefs(reviewPackage, anchorMap));
+        plan.add("sourcePlannedFootprintUnion", plannedFootprintUnion == null
+                ? new JsonObject() : boundsJson(plannedFootprintUnion));
+        plan.add("sourceEnvelopeUnion", envelopeUnion == null ? new JsonObject() : boundsJson(envelopeUnion));
+        plan.add("sourceD3CoverageBounds", boundsJson(d3Coverage));
+        plan.add("requiredD3CoverageBounds", boundsJson(requiredCoverage));
+        plan.add("wallBounds", boundsJson(wallBounds));
+        plan.add("wallCoverageBounds", boundsJson(requiredCoverage));
+        plan.add("wallLine", wallLine.deepCopy());
+        plan.add("wallCenterline", wallLine.deepCopy());
+        plan.add("outerWallRing", wallLine.deepCopy());
+        plan.add("wallCorridorMask", wallCorridorMask.deepCopy());
+        plan.add("gateSlots", gateSlots.deepCopy());
+        plan.add("gateCorridorMask", gateSlotMasks(gateSlots));
+        plan.add("wallNodeSlots", wallNodeSlots);
+        plan.add("towerCandidatePoints", v5TowerCandidates(wallNodeSlots));
+        plan.add("gateCandidateZones", gateSlots.deepCopy());
+        plan.add("plannedCityStructureAllowlist", plannedCityStructureAllowlist(anchorMap));
+        plan.add("maskContribution", maskContributionV5(wallCorridorMask, gateSlots, anchorMap));
+        plan.add("maskChannels", maskChannels(wallCorridorMask, gateSlots, anchorMap));
+
+        JsonObject coverage = new JsonObject();
+        coverage.addProperty("status", "passed");
+        coverage.addProperty("reasonCode", "D5_V5_COVERAGE_OK");
+        coverage.addProperty("patchBoundaryIsFinalWallLine", false);
+        coverage.addProperty("rescanMarginBlocks", rescanMargin);
+        coverage.add("requiredCoverageBounds", boundsJson(requiredCoverage));
+        coverage.add("d3CoverageBounds", boundsJson(d3Coverage));
+        plan.add("coverageCheck", coverage);
+
+        JsonObject debug = new JsonObject();
+        debug.addProperty("wallLineSegmentCount", segments.size());
+        debug.addProperty("gateSlotCount", gateSlots.size());
+        debug.addProperty("wallNodeSlotCount", wallNodeSlots.size());
+        debug.addProperty("anchorCount", array(anchorMap, "anchors").size());
+        plan.add("wallReservationDebug", debug);
+        return plan;
     }
 
     private static JsonObject planV3(CityLandformReviewPackage reviewPackage,
@@ -603,6 +698,55 @@ public final class CityWallReservationPlanner {
         return List.copyOf(set);
     }
 
+    private static BlockBounds anchorEnvelopeUnion(JsonObject anchorMap) {
+        BlockBounds union = null;
+        for (JsonElement elem : array(anchorMap, "anchors")) {
+            if (!elem.isJsonObject()) {
+                continue;
+            }
+            JsonObject anchor = elem.getAsJsonObject();
+            BlockBounds bounds = null;
+            for (String key : List.of("reservedEnvelope", "collisionEnvelope", "maskEnvelope", "plannedFootprint")) {
+                if (anchor.has(key) && anchor.get(key).isJsonObject()) {
+                    BlockBounds candidate = bounds(anchor.getAsJsonObject(key));
+                    bounds = bounds == null ? candidate : union(bounds, candidate);
+                }
+            }
+            if (bounds != null) {
+                union = union == null ? bounds : union(union, bounds);
+            }
+        }
+        return union;
+    }
+
+    private static BlockBounds anchorBoundsUnion(JsonObject anchorMap, String key) {
+        BlockBounds union = null;
+        for (JsonElement elem : array(anchorMap, "anchors")) {
+            if (!elem.isJsonObject()) {
+                continue;
+            }
+            JsonObject anchor = elem.getAsJsonObject();
+            if (!anchor.has(key) || !anchor.get(key).isJsonObject()) {
+                continue;
+            }
+            BlockBounds bounds = bounds(anchor.getAsJsonObject(key));
+            union = union == null ? bounds : union(union, bounds);
+        }
+        return union;
+    }
+
+    private static List<Segment> rectangleSegments(BlockBounds bounds, int halfWidth) {
+        return List.of(
+                segment("north", new BlockPoint(bounds.minX(), bounds.minZ()),
+                        new BlockPoint(bounds.maxX(), bounds.minZ()), halfWidth),
+                segment("east", new BlockPoint(bounds.maxX(), bounds.minZ()),
+                        new BlockPoint(bounds.maxX(), bounds.maxZ()), halfWidth),
+                segment("south", new BlockPoint(bounds.maxX(), bounds.maxZ()),
+                        new BlockPoint(bounds.minX(), bounds.maxZ()), halfWidth),
+                segment("west", new BlockPoint(bounds.minX(), bounds.maxZ()),
+                        new BlockPoint(bounds.minX(), bounds.minZ()), halfWidth));
+    }
+
     private static List<Segment> boundarySegments(List<Cell> cells, int step, int halfWidth) {
         Set<Cell> set = new LinkedHashSet<>(cells);
         List<Segment> segments = new ArrayList<>();
@@ -683,6 +827,23 @@ public final class CityWallReservationPlanner {
         return out;
     }
 
+    private static JsonArray wallLine(List<Segment> segments) {
+        JsonArray out = new JsonArray();
+        int index = 0;
+        for (Segment segment : segments) {
+            JsonObject obj = new JsonObject();
+            obj.addProperty("lineId", "d5_v5_wall_line_" + index);
+            obj.addProperty("segmentId", "d5_v5_wall_line_" + index++);
+            obj.addProperty("sideHint", segment.side);
+            obj.addProperty("authority", "d5_final_wall_plane");
+            obj.add("from", segment.from.asJson());
+            obj.add("to", segment.to.asJson());
+            obj.add("blockBounds", boundsJson(segment.bounds));
+            out.add(obj);
+        }
+        return out;
+    }
+
     private static JsonArray corridorMasks(List<Segment> segments) {
         JsonArray out = new JsonArray();
         int index = 0;
@@ -730,6 +891,186 @@ public final class CityWallReservationPlanner {
         return out;
     }
 
+    private static JsonArray v5GateSlots(List<Segment> segments, int halfWidth) {
+        JsonArray out = new JsonArray();
+        if (segments.isEmpty()) {
+            return out;
+        }
+        Segment segment = segments.stream()
+                .max(Comparator.comparingInt(s -> Math.max(s.bounds.widthBlocks(), s.bounds.heightBlocks())))
+                .orElse(segments.get(0));
+        int gateHalfLength = 4;
+        boolean horizontal = segment.bounds.widthBlocks() >= segment.bounds.heightBlocks();
+        BlockPoint center = segment.bounds.center();
+        BlockBounds bounds = horizontal
+                ? new BlockBounds(center.x() - gateHalfLength, center.z() - halfWidth,
+                center.x() + gateHalfLength, center.z() + halfWidth)
+                : new BlockBounds(center.x() - halfWidth, center.z() - gateHalfLength,
+                center.x() + halfWidth, center.z() + gateHalfLength);
+        JsonObject gate = new JsonObject();
+        gate.addProperty("gateSlotId", "d5_v5_gate_slot_0");
+        gate.addProperty("gateCandidateId", "d5_v5_gate_slot_0");
+        gate.addProperty("sideHint", segment.side);
+        gate.addProperty("gateWidthBlocks", Math.max(bounds.widthBlocks(), bounds.heightBlocks()));
+        gate.addProperty("reasonCode", "D5_V5_DEFAULT_GATE_CORRIDOR");
+        gate.addProperty("placementPolicy", "gate_opening_or_downgrade_without_reline");
+        gate.add("center", center.asJson());
+        gate.add("blockBounds", boundsJson(bounds));
+        out.add(gate);
+        return out;
+    }
+
+    private static JsonArray gateSlotMasks(JsonArray gateSlots) {
+        JsonArray out = new JsonArray();
+        int index = 0;
+        for (JsonElement elem : gateSlots) {
+            if (!elem.isJsonObject() || !elem.getAsJsonObject().has("blockBounds")) {
+                continue;
+            }
+            JsonObject gate = elem.getAsJsonObject();
+            JsonObject mask = new JsonObject();
+            mask.addProperty("maskId", "gate_corridor_" + index++);
+            mask.addProperty("maskType", "gate_corridor");
+            mask.addProperty("sourceRef", stringValue(gate, "gateSlotId", "gate_slot"));
+            mask.addProperty("roadPassthroughAllowed", true);
+            mask.add("blockBounds", gate.getAsJsonObject("blockBounds").deepCopy());
+            out.add(mask);
+        }
+        return out;
+    }
+
+    private static JsonArray v5WallNodeSlots(List<Segment> segments, JsonArray gateSlots) {
+        JsonArray out = new JsonArray();
+        Set<String> corners = new LinkedHashSet<>();
+        for (Segment segment : segments) {
+            addNodeSlot(out, corners, segment.from, "corner_tower", "D5_V5_RECTILINEAR_CORNER");
+        }
+        int spacing = 32;
+        int index = 0;
+        for (Segment segment : segments) {
+            boolean horizontal = segment.from.z() == segment.to.z();
+            int length = horizontal
+                    ? Math.abs(segment.to.x() - segment.from.x())
+                    : Math.abs(segment.to.z() - segment.from.z());
+            int steps = Math.max(0, length / spacing);
+            for (int i = 1; i <= steps; i++) {
+                int x = horizontal
+                        ? segment.from.x() + Integer.signum(segment.to.x() - segment.from.x()) * i * spacing
+                        : segment.from.x();
+                int z = horizontal
+                        ? segment.from.z()
+                        : segment.from.z() + Integer.signum(segment.to.z() - segment.from.z()) * i * spacing;
+                BlockBounds tower = new BlockBounds(x - 2, z - 2, x + 2, z + 2);
+                if (overlapsAny(tower, gateSlots)) {
+                    continue;
+                }
+                JsonObject slot = new JsonObject();
+                slot.addProperty("nodeSlotId", "d5_v5_beacon_slot_" + index++);
+                slot.addProperty("nodeType", "beacon_tower");
+                slot.addProperty("templateId", "beacon_5x5");
+                slot.addProperty("reasonCode", "D5_V5_INTERVAL_BEACON_SLOT");
+                slot.add("block", new BlockPoint(x, z).asJson());
+                slot.add("blockBounds", boundsJson(tower));
+                out.add(slot);
+            }
+        }
+        return out;
+    }
+
+    private static void addNodeSlot(JsonArray out, Set<String> seen, BlockPoint point,
+                                    String nodeType, String reasonCode) {
+        String key = point.x() + "," + point.z();
+        if (!seen.add(key)) {
+            return;
+        }
+        JsonObject slot = new JsonObject();
+        slot.addProperty("nodeSlotId", "d5_v5_node_slot_" + (out.size()));
+        slot.addProperty("nodeType", nodeType);
+        slot.addProperty("templateId", "corner_tower".equals(nodeType) ? "watchtower_5x5" : "beacon_5x5");
+        slot.addProperty("reasonCode", reasonCode);
+        slot.add("block", point.asJson());
+        slot.add("blockBounds", boundsJson(new BlockBounds(point.x() - 2, point.z() - 2,
+                point.x() + 2, point.z() + 2)));
+        out.add(slot);
+    }
+
+    private static boolean overlapsAny(BlockBounds bounds, JsonArray objects) {
+        for (JsonElement elem : objects) {
+            if (elem.isJsonObject() && elem.getAsJsonObject().has("blockBounds")
+                    && bounds.overlaps(bounds(elem.getAsJsonObject().getAsJsonObject("blockBounds")))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static JsonArray v5TowerCandidates(JsonArray wallNodeSlots) {
+        JsonArray out = new JsonArray();
+        for (JsonElement elem : wallNodeSlots) {
+            if (!elem.isJsonObject()) {
+                continue;
+            }
+            JsonObject slot = elem.getAsJsonObject();
+            if (!slot.has("block")) {
+                continue;
+            }
+            JsonObject obj = new JsonObject();
+            obj.addProperty("towerId", stringValue(slot, "nodeSlotId", "wall_node_slot"));
+            obj.addProperty("nodeType", stringValue(slot, "nodeType", ""));
+            obj.add("block", slot.getAsJsonObject("block").deepCopy());
+            obj.addProperty("reasonCode", stringValue(slot, "reasonCode", "D5_V5_WALL_NODE_SLOT"));
+            out.add(obj);
+        }
+        return out;
+    }
+
+    private static JsonArray plannedCityStructureAllowlist(JsonObject anchorMap) {
+        JsonArray out = new JsonArray();
+        for (JsonElement elem : array(anchorMap, "anchors")) {
+            if (!elem.isJsonObject()) {
+                continue;
+            }
+            JsonObject anchor = elem.getAsJsonObject();
+            JsonObject item = new JsonObject();
+            item.addProperty("anchorId", stringValue(anchor, "anchorId", ""));
+            item.addProperty("structureId", stringValue(anchor, "structureId", ""));
+            if (anchor.has("reservedEnvelope") && anchor.get("reservedEnvelope").isJsonObject()) {
+                item.add("blockBounds", anchor.getAsJsonObject("reservedEnvelope").deepCopy());
+            } else if (anchor.has("plannedFootprint") && anchor.get("plannedFootprint").isJsonObject()) {
+                item.add("blockBounds", anchor.getAsJsonObject("plannedFootprint").deepCopy());
+            }
+            out.add(item);
+        }
+        return out;
+    }
+
+    private static JsonObject maskContributionV5(JsonArray wallCorridorMask, JsonArray gateSlots,
+                                                 JsonObject anchorMap) {
+        JsonObject obj = new JsonObject();
+        obj.addProperty("noVegetationMaskType", "wall_reservation_corridor");
+        obj.addProperty("vegetationLimitedMaskType", "wall_reservation_transition");
+        obj.addProperty("noVanillaStructureMaskType", "wall_reservation_corridor");
+        obj.addProperty("noRoadsideStructureMaskType", "wall_reservation_corridor");
+        obj.addProperty("gateCorridorMaskType", "gate_corridor");
+        obj.addProperty("wallCorridorMaskCount", wallCorridorMask.size());
+        obj.addProperty("gateCorridorMaskCount", gateSlots.size());
+        obj.addProperty("plannedCityStructureAllowlistCount", array(anchorMap, "anchors").size());
+        obj.addProperty("roadPassthroughAllowedAtGateCorridor", true);
+        return obj;
+    }
+
+    private static JsonObject maskChannels(JsonArray wallCorridorMask, JsonArray gateSlots, JsonObject anchorMap) {
+        JsonObject channels = new JsonObject();
+        channels.add("wallCorridor", wallCorridorMask.deepCopy());
+        channels.add("gateCorridor", gateSlotMasks(gateSlots));
+        channels.add("noVegetation", wallCorridorMask.deepCopy());
+        channels.add("noSurfaceFeature", wallCorridorMask.deepCopy());
+        channels.add("noVanillaStructure", wallCorridorMask.deepCopy());
+        channels.add("noRoadsideStructure", wallCorridorMask.deepCopy());
+        channels.add("plannedCityStructureAllowlist", plannedCityStructureAllowlist(anchorMap));
+        return channels;
+    }
+
     private static JsonObject maskContribution(List<Segment> segments) {
         JsonObject obj = new JsonObject();
         obj.addProperty("noVegetationMaskType", "wall_reservation_corridor");
@@ -752,6 +1093,14 @@ public final class CityWallReservationPlanner {
         return union;
     }
 
+    private static BlockBounds union(BlockBounds a, BlockBounds b) {
+        return new BlockBounds(
+                Math.min(a.minX(), b.minX()),
+                Math.min(a.minZ(), b.minZ()),
+                Math.max(a.maxX(), b.maxX()),
+                Math.max(a.maxZ(), b.maxZ()));
+    }
+
     private static BlockBounds corridorBounds(BlockPoint from, BlockPoint to, int halfWidth) {
         return new BlockBounds(
                 Math.min(from.x(), to.x()) - halfWidth,
@@ -763,6 +1112,25 @@ public final class CityWallReservationPlanner {
     private static BlockBounds expand(BlockBounds bounds, int margin) {
         return new BlockBounds(bounds.minX() - margin, bounds.minZ() - margin,
                 bounds.maxX() + margin, bounds.maxZ() + margin);
+    }
+
+    private static BlockBounds snap(BlockBounds bounds, int step) {
+        int normalized = Math.max(1, step);
+        return new BlockBounds(
+                Math.floorDiv(bounds.minX(), normalized) * normalized,
+                Math.floorDiv(bounds.minZ(), normalized) * normalized,
+                Math.floorDiv(bounds.maxX() + normalized - 1, normalized) * normalized - 1,
+                Math.floorDiv(bounds.maxZ() + normalized - 1, normalized) * normalized - 1);
+    }
+
+    private static boolean containsBounds(BlockBounds outer, BlockBounds inner) {
+        return outer.contains(inner.minX(), inner.minZ())
+                && outer.contains(inner.maxX(), inner.maxZ());
+    }
+
+    private static String boundsText(BlockBounds bounds) {
+        return "[" + bounds.minX() + "," + bounds.minZ() + " -> "
+                + bounds.maxX() + "," + bounds.maxZ() + "]";
     }
 
     private static BlockBounds cellBounds(Set<Cell> cells, int step) {
@@ -812,6 +1180,10 @@ public final class CityWallReservationPlanner {
 
     private static int intValue(JsonObject obj, String key, int fallback) {
         return obj != null && obj.has(key) && !obj.get(key).isJsonNull() ? obj.get(key).getAsInt() : fallback;
+    }
+
+    private static String stringValue(JsonObject obj, String key, String fallback) {
+        return obj != null && obj.has(key) && !obj.get(key).isJsonNull() ? obj.get(key).getAsString() : fallback;
     }
 
     private record Cell(int x, int z) {

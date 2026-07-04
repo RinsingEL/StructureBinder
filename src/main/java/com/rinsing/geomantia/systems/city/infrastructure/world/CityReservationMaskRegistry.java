@@ -462,19 +462,24 @@ public final class CityReservationMaskRegistry {
                 || value.contains("forest");
     }
 
-    private record ActiveMask(String cityId, List<BlockBounds> noVegetation, List<BlockBounds> noVanillaStructure) {
+    private record ActiveMask(String cityId, List<BlockBounds> noVegetation, List<BlockBounds> noVanillaStructure,
+                              List<BlockBounds> gateCorridor, List<BlockBounds> noRoadsideStructure) {
         static ActiveMask empty() {
-            return new ActiveMask("", List.of(), List.of());
+            return new ActiveMask("", List.of(), List.of(), List.of(), List.of());
         }
 
         static ActiveMask from(JsonObject plan) {
             if (plan == null) {
                 return empty();
             }
+            JsonObject channels = plan.has("worldgenMaskChannels") && plan.get("worldgenMaskChannels").isJsonObject()
+                    ? plan.getAsJsonObject("worldgenMaskChannels") : new JsonObject();
             return new ActiveMask(
                     stringValue(plan, "cityId", ""),
                     masks(plan.getAsJsonArray("noVegetationMask")),
-                    masks(plan.getAsJsonArray("noVanillaStructureMask")));
+                    masks(plan.getAsJsonArray("noVanillaStructureMask")),
+                    masks(plan.getAsJsonArray("gateCorridorMask")),
+                    masks(channels.getAsJsonArray("noRoadsideStructure")));
         }
 
         boolean containsNoVegetation(int x, int z) {
@@ -490,6 +495,8 @@ public final class CityReservationMaskRegistry {
             obj.addProperty("cityId", cityId);
             obj.addProperty("noVegetationMaskCount", noVegetation.size());
             obj.addProperty("noVanillaStructureMaskCount", noVanillaStructure.size());
+            obj.addProperty("gateCorridorMaskCount", gateCorridor.size());
+            obj.addProperty("noRoadsideStructureMaskCount", noRoadsideStructure.size());
             return obj;
         }
     }

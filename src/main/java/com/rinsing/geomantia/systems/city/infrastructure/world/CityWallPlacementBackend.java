@@ -5,8 +5,10 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.LadderBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
 
@@ -22,7 +24,9 @@ public final class CityWallPlacementBackend {
         JsonObject report = new JsonObject();
         boolean v3 = "city_wall_plan.v0.3".equals(stringValue(wallPlan, "schemaVersion", ""));
         boolean v4 = "city_wall_plan.v0.4".equals(stringValue(wallPlan, "schemaVersion", ""));
-        report.addProperty("schemaVersion", v4 ? "city_wall_placement_report.v0.4"
+        boolean v5 = "city_wall_plan.v0.5".equals(stringValue(wallPlan, "schemaVersion", ""))
+                || "v5".equals(stringValue(wallPlan, "wallVersion", ""));
+        report.addProperty("schemaVersion", v5 ? "city_wall_placement_report.v0.5" : v4 ? "city_wall_placement_report.v0.4"
                 : v3 ? "city_wall_placement_report.v0.3" : "city_wall_placement_report.v0.1");
         report.addProperty("cityId", stringValue(wallPlan, "cityId", "unknown_city"));
         report.addProperty("backend", "vanilla_setblock");
@@ -47,7 +51,7 @@ public final class CityWallPlacementBackend {
         }
         PlacementContext context = PlacementContext.from(wallPlan);
         report.addProperty("terrainPolicyVersion", context.wallTerrainPolicy());
-        if (v4) {
+        if (v4 || v5) {
             for (JsonElement elem : array(wallPlan, "wallNodes")) {
                 if (!elem.isJsonObject()) {
                     continue;
@@ -63,12 +67,17 @@ public final class CityWallPlacementBackend {
                 }
                 nodeResults.add(result.asJson(segment));
             }
-            for (JsonElement elem : array(wallPlan, "wallUnits")) {
-                if (!elem.isJsonObject()) {
-                    continue;
-                }
-                JsonObject unit = elem.getAsJsonObject();
-                UnitResult result = placeGraphUnitV4(level, unit, context, debugScan, terrainDebug, maskDebug, gapDebug);
+            java.util.List<JsonObject> graphUnits = jsonObjects(array(wallPlan, "wallUnits"));
+            java.util.Map<String, V5SurfaceSample> v5Samples = v5
+                    ? v5SurfaceSamples(level, graphUnits, debugScan) : java.util.Map.of();
+            java.util.Set<String> v5WaterBoundaryUnits = v5
+                    ? v5WaterBoundaryUnits(graphUnits, v5Samples, context) : java.util.Set.of();
+            for (JsonObject unit : graphUnits) {
+                UnitResult result = v5
+                        ? placeGraphUnitV5(level, unit, context, debugScan, terrainDebug, maskDebug, gapDebug,
+                        v5Samples.get(stringValue(unit, "unitId", "")),
+                        v5WaterBoundaryUnits.contains(stringValue(unit, "unitId", "")))
+                        : placeGraphUnitV4(level, unit, context, debugScan, terrainDebug, maskDebug, gapDebug);
                 JsonObject unitJson = result.asJson(stringValue(unit, "unitId", ""));
                 unitJson.addProperty("unitId", stringValue(unit, "unitId", ""));
                 unitJson.addProperty("unitType", stringValue(unit, "unitType", ""));
@@ -130,7 +139,10 @@ public final class CityWallPlacementBackend {
         if (v3 || v4) {
             report.add("placementUnitResults", unitResults);
         }
-        if (v4) {
+        if (v5) {
+            report.add("placementUnitResults", unitResults);
+        }
+        if (v4 || v5) {
             report.add("wallNodeResults", nodeResults);
             report.add("wallUnitResults", unitResults.deepCopy());
             report.add("connectorResults", connectorResults);
@@ -152,7 +164,7 @@ public final class CityWallPlacementBackend {
             return new SegmentResult("skipped", "NATURAL_BOUNDARY_ENDPOINT", 0,
                     "Natural boundary endpoint node is informational.");
         }
-        if ("junction".equals(type) || "beacon_tower".equals(type)) {
+        if ("junction".equals(type)) {
             addGap(gapDebug, segment, "V4_GRAPH_NODE_NO_INDEPENDENT_PLACEMENT",
                     "V4 graph connector node is represented by adjacent wall and connector units.");
             return new SegmentResult("skipped", "V4_GRAPH_NODE_NO_INDEPENDENT_PLACEMENT", 0,
@@ -186,6 +198,66 @@ public final class CityWallPlacementBackend {
         JsonObject segment = pseudoSegment(unit, "unitId", "wall_segment");
         Axis axis = axisForSegment(segment, bounds);
         return placeUnit(level, segment, bounds, axis, context, debugScan, terrainDebug, maskDebug);
+    }
+
+    private UnitResult placeGraphUnitV5(ServerLevel level, JsonObject unit, PlacementContext context,
+                                       boolean debugScan, JsonObject terrainDebug,
+                                       JsonObject maskDebug, JsonObject gapDebug,
+                                       V5SurfaceSample surfaceSample,
+                                       boolean naturalWaterBoundary) {
+        String unitType = stringValue(unit, "unitType", "");
+        String reason = stringValue(unit, "reasonCode", "D5_V5_WALL_UNIT");
+        BlockBounds bounds = bounds(unit.getAsJsonObject("blockBounds"));
+        if (!booleanValue(unit, "placementAllowed", true) || "gate_gap".equals(unitType)) {
+            addGap(gapDebug, pseudoSegment(unit, "unitId", unitType), reason,
+                    "D5 v5 gate/corridor unit intentionally left open.", bounds);
+            return new UnitResult("skipped", reason, unitType, 0,
+                    "D5 v5 gate/corridor unit intentionally left open.", bounds, 0, 0, 0,
+                    "v5", "LOW", new JsonArray(), new JsonObject());
+        }
+        int protectedCells = protectedCellCount(bounds, context);
+        if (protectedCells > 0 && protectedCells >= bounds.widthBlocks() * bounds.heightBlocks()) {
+            addMaskConflict(maskDebug, pseudoSegment(unit, "unitId", unitType), bounds,
+                    "WALL_UNIT_SKIPPED_MASK", protectedCells);
+            return new UnitResult("skipped", "WALL_UNIT_SKIPPED_MASK", "SKIPPED_PROTECTED_MASK", 0,
+                    "All unit cells are protected by road/structure mask.", bounds, 0, 0, protectedCells,
+                    "v5", "LOW", new JsonArray(), new JsonObject());
+        }
+        V5SurfaceSample sample = surfaceSample == null ? sampleSurfaceV5(level, bounds, debugScan) : surfaceSample;
+        if (naturalWaterBoundary) {
+            addGap(gapDebug, pseudoSegment(unit, "unitId", unitType), "NATURAL_WATER_BOUNDARY_NO_WALL",
+                    "Continuous water boundary detected by v5 surface cache; wall not placed.", bounds);
+            if (debugScan) {
+                addTerrainSamples(terrainDebug, pseudoSegment(unit, "unitId", unitType), bounds, context,
+                        sample.surfaceSamples(), -1, "NATURAL_WATER_BOUNDARY_NO_WALL");
+            }
+            JsonObject water = new JsonObject();
+            water.addProperty("fluidCoverageRatio", sample.fluidRatio());
+            water.addProperty("waterRunMinBlocks", context.v5WaterRunMinBlocks());
+            return new UnitResult("skipped", "NATURAL_WATER_BOUNDARY_NO_WALL",
+                    "NATURAL_WATER_BOUNDARY_NO_WALL", 0,
+                    "Continuous water boundary detected by v5 surface cache.",
+                    bounds, sample.minY(), sample.maxY(), protectedCells, "v5",
+                    terrainDeltaBand(sample.delta(), context), new JsonArray(), water);
+        }
+        int baseY = sample.medianY() + 1;
+        if (debugScan) {
+            addTerrainSamples(terrainDebug, pseudoSegment(unit, "unitId", unitType), bounds, context,
+                    sample.surfaceSamples(), baseY, "V5_SURFACE_MEDIAN_PLACED");
+        }
+        JsonObject segment = pseudoSegment(unit, "unitId", "wall_segment");
+        Axis axis = axisForSegment(segment, bounds);
+        int changed = placePitFloor(level, bounds, baseY - 1, context, sample);
+        changed += placeWallV5(level, bounds, baseY, context, axis);
+        String mode = sample.minY() < sample.medianY() - 1
+                ? "V5_MEDIAN_WALL_WITH_HORIZONTAL_PIT_FLOOR"
+                : sample.maxY() > sample.medianY() + 1
+                ? "V5_MEDIAN_WALL_CONNECTED_TO_RAISED_GROUND"
+                : "V5_MEDIAN_WALL_PLACED";
+        return new UnitResult("executed", "WALL_UNIT_PLACED", mode, changed,
+                "Placed v5 wall unit using 1-block surface median.",
+                bounds, sample.minY(), sample.maxY(), protectedCells, "v5",
+                terrainDeltaBand(sample.delta(), context), new JsonArray(), new JsonObject());
     }
 
     private UnitResult placeConnectorUnitV4(ServerLevel level, JsonObject connector, PlacementContext context,
@@ -250,7 +322,9 @@ public final class CityWallPlacementBackend {
                     "Segment terrain delta " + (maxY - minY) + " exceeds " + maxDelta + ".");
         }
         int baseY = maxY + 1;
-        int changed = "tower".equals(stringValue(segment, "segmentType", ""))
+        int changed = "beacon_tower".equals(stringValue(segment, "segmentType", ""))
+                ? placeBeaconTower(level, bounds, baseY, context)
+                : "tower".equals(stringValue(segment, "segmentType", ""))
                 ? placeTower(level, bounds, baseY, context)
                 : placeWall(level, bounds, baseY, context, axisForSegment(segment, bounds));
         return new SegmentResult("executed", "WALL_SEGMENT_PLACED", changed,
@@ -559,6 +633,54 @@ public final class CityWallPlacementBackend {
         return changed;
     }
 
+    private int placeWallV5(ServerLevel level, BlockBounds bounds, int baseY, PlacementContext context, Axis axis) {
+        int changed = 0;
+        int wallHeight = Math.max(3, context.v5NominalWallHeightBlocks());
+        for (int x = bounds.minX(); x <= bounds.maxX(); x++) {
+            for (int z = bounds.minZ(); z <= bounds.maxZ(); z++) {
+                if (context.protectsAny(x, z)) {
+                    continue;
+                }
+                int across = axis == Axis.X ? z - bounds.minZ() : x - bounds.minX();
+                if (across < 0 || across > 4) {
+                    continue;
+                }
+                changed += placeFoundation(level, x, z, baseY, context);
+                for (int y = 0; y < wallHeight; y++) {
+                    BlockState state = wallState(Math.min(y, 8), across);
+                    if (state != null && set(level, x, baseY + y, z, state)) {
+                        changed++;
+                    }
+                }
+                if ((axis == Axis.X ? x : z) % 2 == 0 && (across == 0 || across == 4)
+                        && set(level, x, baseY + wallHeight, z, Blocks.STONE_BRICK_WALL.defaultBlockState())) {
+                    changed++;
+                }
+            }
+        }
+        return changed;
+    }
+
+    private int placePitFloor(ServerLevel level, BlockBounds bounds, int floorY, PlacementContext context,
+                              V5SurfaceSample sample) {
+        if (sample.minY() >= sample.medianY() - 1) {
+            return 0;
+        }
+        int changed = 0;
+        for (int x = bounds.minX(); x <= bounds.maxX(); x++) {
+            for (int z = bounds.minZ(); z <= bounds.maxZ(); z++) {
+                if (context.protectsAny(x, z)) {
+                    continue;
+                }
+                int surface = surfaceY(level, x, z);
+                if (surface < floorY && set(level, x, floorY, z, Blocks.DEEPSLATE_BRICKS.defaultBlockState())) {
+                    changed++;
+                }
+            }
+        }
+        return changed;
+    }
+
     private int placeTower(ServerLevel level, BlockBounds bounds, int baseY, PlacementContext context) {
         int changed = 0;
         for (int x = bounds.minX(); x <= bounds.maxX(); x++) {
@@ -578,6 +700,49 @@ public final class CityWallPlacementBackend {
                                 : y >= 10 ? Blocks.STONE_BRICK_WALL.defaultBlockState()
                                 : Blocks.STONE_BRICKS.defaultBlockState();
                     } else if (y == 0 || y == 9) {
+                        state = Blocks.STONE_BRICKS.defaultBlockState();
+                    }
+                    if (state != null && set(level, x, baseY + y, z, state)) {
+                        changed++;
+                    }
+                }
+            }
+        }
+        return changed;
+    }
+
+    private int placeBeaconTower(ServerLevel level, BlockBounds bounds, int baseY, PlacementContext context) {
+        int changed = 0;
+        int centerX = bounds.center().x();
+        int ladderZ = bounds.maxZ() - 1;
+        BlockState ladder = Blocks.LADDER.defaultBlockState()
+                .setValue(LadderBlock.FACING, Direction.NORTH);
+        for (int x = bounds.minX(); x <= bounds.maxX(); x++) {
+            for (int z = bounds.minZ(); z <= bounds.maxZ(); z++) {
+                if (context.protectsAny(x, z)) {
+                    continue;
+                }
+                boolean edge = x == bounds.minX() || x == bounds.maxX()
+                        || z == bounds.minZ() || z == bounds.maxZ();
+                boolean doorway = z == bounds.minZ() && x == centerX;
+                boolean ladderColumn = x == centerX && z == ladderZ;
+                boolean topOpening = ladderColumn;
+                changed += placeFoundation(level, x, z, baseY, context);
+                for (int y = 0; y < 13; y++) {
+                    BlockState state = null;
+                    if (doorway && y >= 1 && y <= 3) {
+                        state = Blocks.AIR.defaultBlockState();
+                    } else if (ladderColumn && y >= 1 && y <= 10) {
+                        state = ladder;
+                    } else if (edge) {
+                        if (y == 0) {
+                            state = Blocks.DEEPSLATE_BRICKS.defaultBlockState();
+                        } else if (y == 11 || (y == 12 && ((x + z) & 1) == 0)) {
+                            state = Blocks.STONE_BRICK_WALL.defaultBlockState();
+                        } else if (y < 11) {
+                            state = Blocks.STONE_BRICKS.defaultBlockState();
+                        }
+                    } else if (y == 0 || (y == 10 && !topOpening)) {
                         state = Blocks.STONE_BRICKS.defaultBlockState();
                     }
                     if (state != null && set(level, x, baseY + y, z, state)) {
@@ -707,6 +872,7 @@ public final class CityWallPlacementBackend {
                 || state.is(Blocks.STONE_BRICK_WALL)
                 || state.is(Blocks.STONE_BRICK_SLAB)
                 || state.is(Blocks.STONE_BRICK_STAIRS)
+                || state.is(Blocks.LADDER)
                 || state.is(Blocks.OAK_LOG)
                 || state.is(Blocks.OAK_PLANKS);
     }
@@ -730,6 +896,103 @@ public final class CityWallPlacementBackend {
             maxY = 0;
         }
         return new TerrainSample(minY, maxY, samples);
+    }
+
+    private V5SurfaceSample sampleSurfaceV5(ServerLevel level, BlockBounds bounds, boolean keepSamples) {
+        int minY = Integer.MAX_VALUE;
+        int maxY = Integer.MIN_VALUE;
+        java.util.List<Integer> values = new java.util.ArrayList<>();
+        java.util.Map<String, Integer> samples = keepSamples ? new java.util.LinkedHashMap<>() : java.util.Map.of();
+        int fluidCells = 0;
+        int totalCells = 0;
+        for (int x = bounds.minX(); x <= bounds.maxX(); x++) {
+            for (int z = bounds.minZ(); z <= bounds.maxZ(); z++) {
+                int y = surfaceY(level, x, z);
+                minY = Math.min(minY, y);
+                maxY = Math.max(maxY, y);
+                values.add(y);
+                if (isFluidSurface(level, x, y, z)) {
+                    fluidCells++;
+                }
+                totalCells++;
+                if (keepSamples) {
+                    samples.put(x + "," + z, y);
+                }
+            }
+        }
+        if (values.isEmpty()) {
+            minY = 0;
+            maxY = 0;
+        }
+        values.sort(Integer::compareTo);
+        int medianY = values.isEmpty() ? 0 : values.get(values.size() / 2);
+        return new V5SurfaceSample(minY, maxY, medianY, fluidCells, Math.max(1, totalCells), samples);
+    }
+
+    private java.util.Map<String, V5SurfaceSample> v5SurfaceSamples(ServerLevel level,
+                                                                    java.util.List<JsonObject> units,
+                                                                    boolean keepSamples) {
+        java.util.Map<String, V5SurfaceSample> out = new java.util.LinkedHashMap<>();
+        for (JsonObject unit : units) {
+            if (!unit.has("blockBounds") || !unit.get("blockBounds").isJsonObject()) {
+                continue;
+            }
+            out.put(stringValue(unit, "unitId", ""), sampleSurfaceV5(level,
+                    bounds(unit.getAsJsonObject("blockBounds")), keepSamples));
+        }
+        return out;
+    }
+
+    private java.util.Set<String> v5WaterBoundaryUnits(java.util.List<JsonObject> units,
+                                                       java.util.Map<String, V5SurfaceSample> samples,
+                                                       PlacementContext context) {
+        java.util.Set<String> out = new java.util.LinkedHashSet<>();
+        int runStart = -1;
+        int runLength = 0;
+        String runLineId = "";
+        for (int i = 0; i <= units.size(); i++) {
+            JsonObject unit = i < units.size() ? units.get(i) : null;
+            String unitId = unit == null ? "" : stringValue(unit, "unitId", "");
+            String lineId = unit == null ? "" : stringValue(unit, "sourceLineId", "");
+            V5SurfaceSample sample = unit == null ? null : samples.get(unitId);
+            boolean water = unit != null
+                    && booleanValue(unit, "placementAllowed", true)
+                    && !"gate_gap".equals(stringValue(unit, "unitType", ""))
+                    && sample != null
+                    && sample.fluidRatio() >= context.v5WaterFluidRatioMin();
+            if (water && (runStart < 0 || lineId.equals(runLineId))) {
+                if (runStart < 0) {
+                    runStart = i;
+                    runLineId = lineId;
+                }
+                runLength += majorLength(bounds(unit.getAsJsonObject("blockBounds")));
+                continue;
+            }
+            if (runStart >= 0 && runLength >= context.v5WaterRunMinBlocks()) {
+                for (int j = runStart; j < i; j++) {
+                    out.add(stringValue(units.get(j), "unitId", ""));
+                }
+            }
+            runStart = -1;
+            runLength = 0;
+            runLineId = "";
+            if (water) {
+                runStart = i;
+                runLineId = lineId;
+                runLength = majorLength(bounds(unit.getAsJsonObject("blockBounds")));
+            }
+        }
+        return out;
+    }
+
+    private boolean isFluidSurface(ServerLevel level, int x, int surfaceY, int z) {
+        int topY = Math.max(level.getMinBuildHeight(), surfaceY - 1);
+        return !level.getFluidState(new BlockPos(x, topY, z)).isEmpty()
+                || !level.getFluidState(new BlockPos(x, surfaceY, z)).isEmpty();
+    }
+
+    private static int majorLength(BlockBounds bounds) {
+        return Math.max(bounds.widthBlocks(), bounds.heightBlocks());
     }
 
     private MountainProbe probeMountain(ServerLevel level, BlockBounds unit, Axis axis, PlacementContext context,
@@ -954,6 +1217,16 @@ public final class CityWallPlacementBackend {
                 : new JsonArray();
     }
 
+    private static java.util.List<JsonObject> jsonObjects(JsonArray array) {
+        java.util.List<JsonObject> out = new java.util.ArrayList<>();
+        for (JsonElement elem : array) {
+            if (elem.isJsonObject()) {
+                out.add(elem.getAsJsonObject());
+            }
+        }
+        return out;
+    }
+
     private static BlockBounds bounds(JsonObject obj) {
         return new BlockBounds(intValue(obj, "minX", 0), intValue(obj, "minZ", 0),
                 intValue(obj, "maxX", 0), intValue(obj, "maxZ", 0));
@@ -974,6 +1247,10 @@ public final class CityWallPlacementBackend {
 
     private static int intValue(JsonObject obj, String key, int fallback) {
         return obj != null && obj.has(key) && !obj.get(key).isJsonNull() ? obj.get(key).getAsInt() : fallback;
+    }
+
+    private static double doubleValue(JsonObject obj, String key, double fallback) {
+        return obj != null && obj.has(key) && !obj.get(key).isJsonNull() ? obj.get(key).getAsDouble() : fallback;
     }
 
     private static boolean booleanValue(JsonObject obj, String key, boolean fallback) {
@@ -1032,7 +1309,10 @@ public final class CityWallPlacementBackend {
                                     int steppedMaxDeltaBlocks,
                                     int mountainProbeDistanceBlocks,
                                     int naturalBoundaryMinDeltaBlocks,
-                                    boolean embeddedSlopeTower) {
+                                    boolean embeddedSlopeTower,
+                                    int v5NominalWallHeightBlocks,
+                                    int v5WaterRunMinBlocks,
+                                    double v5WaterFluidRatioMin) {
         static PlacementContext from(JsonObject wallPlan) {
             java.util.List<BlockBounds> roads = new java.util.ArrayList<>();
             JsonObject roadMask = wallPlan != null && wallPlan.has("actualRoadMask")
@@ -1076,7 +1356,10 @@ public final class CityWallPlacementBackend {
                     steppedMax,
                     Math.max(1, intValue(terrainPolicy, "mountainProbeDistanceBlocks", 6)),
                     Math.max(steppedMax + 1, intValue(terrainPolicy, "naturalBoundaryMinDeltaBlocks", 17)),
-                    booleanValue(terrainPolicy, "embeddedSlopeTower", true));
+                    booleanValue(terrainPolicy, "embeddedSlopeTower", true),
+                    Math.max(3, intValue(wallPlan, "nominalWallHeightBlocks", 9)),
+                    Math.max(1, intValue(wallPlan, "waterRunMinBlocks", 32)),
+                    Math.max(0.0D, doubleValue(wallPlan, "waterFluidRatioMin", 0.8D)));
         }
 
         boolean isV31Policy() {
@@ -1114,6 +1397,17 @@ public final class CityWallPlacementBackend {
     private record TerrainSample(int minY, int maxY, java.util.Map<String, Integer> surfaceSamples) {
         int delta() {
             return Math.max(0, maxY - minY);
+        }
+    }
+
+    private record V5SurfaceSample(int minY, int maxY, int medianY, int fluidCells, int totalCells,
+                                   java.util.Map<String, Integer> surfaceSamples) {
+        int delta() {
+            return Math.max(0, maxY - minY);
+        }
+
+        double fluidRatio() {
+            return totalCells <= 0 ? 0.0D : (double) fluidCells / totalCells;
         }
     }
 

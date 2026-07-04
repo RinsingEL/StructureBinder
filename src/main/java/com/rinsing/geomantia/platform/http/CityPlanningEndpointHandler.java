@@ -45,6 +45,7 @@ import com.rinsing.geomantia.systems.city.infrastructure.preview.FunctionZonePre
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityReservationMaskRegistry;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityRoadMaskScanner;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityRoadWeaverBridge;
+import com.rinsing.geomantia.systems.city.infrastructure.world.CitySurfaceCache;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityWallPlacementBackend;
 import com.rinsing.geomantia.systems.city.infrastructure.world.MinecraftCityStructureMaterializationBackend;
 import com.rinsing.geomantia.systems.city.infrastructure.world.MinecraftCityStructureEnvelopeSampler;
@@ -765,6 +766,7 @@ final class CityPlanningEndpointHandler {
         Path d5Dir = runDir.resolve("city_d5_" + safeFileName(citySeedId));
         Path anchorMapPath = d4Dir.resolve("structure_anchor_map.json");
         Path maskPath = d5Dir.resolve("reservation_mask_plan.json");
+        Path wallReservationPath = d5Dir.resolve("wall_reservation_plan.json");
         if (!Files.exists(anchorMapPath)) {
             rejectLegacyArtifacts(d4Dir, "D4");
             throw new IllegalArgumentException("D4 structure_anchor_map.json not found. Run city_plan_d4 first: "
@@ -786,6 +788,8 @@ final class CityPlanningEndpointHandler {
                 : new MinecraftCityStructureMaterializationBackend(serverHolder.server(), level, false);
         CityStructureMaterializationPlanner.Result result = new CityStructureMaterializationPlanner()
                 .planWorldgen(anchorMap, inspector, preflightBackend, null);
+        validateD5V5FootprintsWithinReservation(wallReservationPath, result.structureMaterializationPlan(),
+                "plannedWorldgenStructures", "D6");
 
         Path outputDirectory = runDir.resolve("city_d6_" + safeFileName(citySeedId));
         Files.createDirectories(outputDirectory);
@@ -825,6 +829,7 @@ final class CityPlanningEndpointHandler {
         Path d6Dir = runDir.resolve("city_d6_" + safeFileName(citySeedId));
         Path d5Dir = runDir.resolve("city_d5_" + safeFileName(citySeedId));
         Path planPath = d6Dir.resolve("structure_materialization_plan.json");
+        Path wallReservationPath = d5Dir.resolve("wall_reservation_plan.json");
         if (!Files.exists(planPath)) {
             rejectLegacyArtifacts(d6Dir, "D6");
             throw new IllegalArgumentException("D6 artifacts not found. Run city_plan_d6 first: "
@@ -871,6 +876,8 @@ final class CityPlanningEndpointHandler {
         Files.createDirectories(outputDirectory);
         result.structureMaterializationTrace().add("terrainAdaptationReport",
                 terrainAdaptationReport(result.placedStructureLedger()));
+        validateD5V5FootprintsWithinReservation(wallReservationPath, result.placedStructureLedger(),
+                "placedStructures", "D7");
         JsonObject roadProviderState = loadRoadProviderState(d5Dir);
         JsonObject roadPostprocessReport = maybeRunDeferredRoadPostprocess(
                 debugRoot, runDir, citySeedId, materializationPlan, result.placedStructureLedger(),
@@ -915,7 +922,8 @@ final class CityPlanningEndpointHandler {
                                           int gateWidthBlocks) throws IOException {
         return handlePlanCityWalls(debugRoot, runId, citySeedId, wallMarginBlocks, segmentLengthBlocks,
                 gateWidthBlocks, "v2", null, 8, 2, 8, 7,
-                CityWallPlanner.V3Options.defaults(), CityWallPlanner.V4Options.defaults());
+                CityWallPlanner.V3Options.defaults(), CityWallPlanner.V4Options.defaults(),
+                CityWallPlanner.V5Options.defaults());
     }
 
     static JsonObject handlePlanCityWalls(Path debugRoot, String runId, String citySeedId,
@@ -930,7 +938,7 @@ final class CityPlanningEndpointHandler {
         return handlePlanCityWalls(debugRoot, runId, citySeedId, wallMarginBlocks, segmentLengthBlocks,
                 gateWidthBlocks, wallVersion, level, roadScanMarginBlocks, roadProtectionMarginBlocks,
                 maxFoundationDepthBlocks, maxSegmentHeightDeltaBlocks, CityWallPlanner.V3Options.defaults(),
-                CityWallPlanner.V4Options.defaults());
+                CityWallPlanner.V4Options.defaults(), CityWallPlanner.V5Options.defaults());
     }
 
     static JsonObject handlePlanCityWalls(Path debugRoot, String runId, String citySeedId,
@@ -946,7 +954,7 @@ final class CityPlanningEndpointHandler {
         return handlePlanCityWalls(debugRoot, runId, citySeedId, wallMarginBlocks, segmentLengthBlocks,
                 gateWidthBlocks, wallVersion, level, roadScanMarginBlocks, roadProtectionMarginBlocks,
                 maxFoundationDepthBlocks, maxSegmentHeightDeltaBlocks, wallV3Options,
-                CityWallPlanner.V4Options.defaults());
+                CityWallPlanner.V4Options.defaults(), CityWallPlanner.V5Options.defaults());
     }
 
     static JsonObject handlePlanCityWalls(Path debugRoot, String runId, String citySeedId,
@@ -960,6 +968,24 @@ final class CityPlanningEndpointHandler {
                                           int maxSegmentHeightDeltaBlocks,
                                           CityWallPlanner.V3Options wallV3Options,
                                           CityWallPlanner.V4Options wallV4Options) throws IOException {
+        return handlePlanCityWalls(debugRoot, runId, citySeedId, wallMarginBlocks, segmentLengthBlocks,
+                gateWidthBlocks, wallVersion, level, roadScanMarginBlocks, roadProtectionMarginBlocks,
+                maxFoundationDepthBlocks, maxSegmentHeightDeltaBlocks, wallV3Options, wallV4Options,
+                CityWallPlanner.V5Options.defaults());
+    }
+
+    static JsonObject handlePlanCityWalls(Path debugRoot, String runId, String citySeedId,
+                                          int wallMarginBlocks, int segmentLengthBlocks,
+                                          int gateWidthBlocks,
+                                          String wallVersion,
+                                          ServerLevel level,
+                                          int roadScanMarginBlocks,
+                                          int roadProtectionMarginBlocks,
+                                          int maxFoundationDepthBlocks,
+                                          int maxSegmentHeightDeltaBlocks,
+                                          CityWallPlanner.V3Options wallV3Options,
+                                          CityWallPlanner.V4Options wallV4Options,
+                                          CityWallPlanner.V5Options wallV5Options) throws IOException {
         Path runDir = debugRoot.resolve(runId);
         loadCitySeed(runDir, runId, citySeedId);
         Path d7Dir = runDir.resolve("city_d7_" + safeFileName(citySeedId));
@@ -979,6 +1005,7 @@ final class CityPlanningEndpointHandler {
         JsonObject wallPlan;
         Path outputDirectory = runDir.resolve("city_walls_" + safeFileName(citySeedId));
         JsonObject actualRoadMask = null;
+        JsonObject surfaceCacheBackfill = null;
         Path roadMaskPath = outputDirectory.resolve("actual_road_mask.json");
         Path wallReservationPath = d5Dir.resolve("wall_reservation_plan.json");
         if (CityWallReservationPlanner.V1_DEBUG.equals(normalizedWallVersion)) {
@@ -992,7 +1019,16 @@ final class CityPlanningEndpointHandler {
                     .getAsJsonObject();
             JsonObject wallReservationForPlan = enrichWallReservationWithD3Cells(wallReservationPlan, d3Package);
             actualRoadMask = new CityRoadMaskScanner().scan(level, wallReservationForPlan, roadScanMarginBlocks);
-            if (CityWallReservationPlanner.V4.equals(normalizedWallVersion)) {
+            if (CityWallReservationPlanner.V5.equals(normalizedWallVersion)) {
+                Files.createDirectories(outputDirectory);
+                surfaceCacheBackfill = CitySurfaceCache.writeBackfill(level,
+                        v5SurfaceBackfillBounds(wallReservationForPlan),
+                        outputDirectory,
+                        stringValue(wallReservationForPlan, "cityId", citySeedId));
+                wallPlan = new CityWallPlanner().planV5(ledger, wallReservationForPlan, actualRoadMask,
+                        wallV5Options);
+                wallPlan.add("surfaceCacheBackfill", surfaceCacheBackfill.deepCopy());
+            } else if (CityWallReservationPlanner.V4.equals(normalizedWallVersion)) {
                 wallPlan = new CityWallPlanner().planV4(ledger, wallReservationForPlan, actualRoadMask, gateWidthBlocks,
                         roadProtectionMarginBlocks, maxFoundationDepthBlocks, maxSegmentHeightDeltaBlocks,
                         wallV3Options, wallV4Options);
@@ -1008,6 +1044,10 @@ final class CityPlanningEndpointHandler {
         Path planPath = new CityWallPlanner().writeArtifacts(wallPlan, outputDirectory);
         if (actualRoadMask != null) {
             Files.writeString(roadMaskPath, CityJson.GSON.toJson(actualRoadMask));
+        }
+        Path surfaceCachePath = outputDirectory.resolve("surface_cache_backfill_report.json");
+        if (surfaceCacheBackfill != null) {
+            Files.writeString(surfaceCachePath, CityJson.GSON.toJson(surfaceCacheBackfill));
         }
         Path previewPath = new CityWallPreviewRenderer().render(wallPlan, ledger, d3Package, outputDirectory);
         JsonObject response = new JsonObject();
@@ -1030,6 +1070,9 @@ final class CityPlanningEndpointHandler {
         }
         if (actualRoadMask != null) {
             artifacts.addProperty("actualRoadMask", debugRef(debugRoot, roadMaskPath));
+        }
+        if (surfaceCacheBackfill != null) {
+            artifacts.addProperty("surfaceCacheBackfill", debugRef(debugRoot, surfaceCachePath));
         }
         response.add("artifacts", artifacts);
         return response;
@@ -1203,7 +1246,8 @@ final class CityPlanningEndpointHandler {
                     intValue(request, "maxFoundationDepthBlocks", 8),
                     intValue(request, "maxSegmentHeightDeltaBlocks", 7),
                     workflowWallV3Options(request),
-                    workflowWallV4Options(request)))) {
+                    workflowWallV4Options(request),
+                    workflowWallV5Options(request)))) {
                 return finalizeWorkflow(ctx, workflowStarted, "failed");
             }
         }
@@ -1438,6 +1482,10 @@ final class CityPlanningEndpointHandler {
                 && !"city_wall_plan.v0.4".equals(stringValue(existing, "schemaVersion", ""))) {
             return false;
         }
+        if (CityWallReservationPlanner.V5.equals(expectedVersion)
+                && !"city_wall_plan.v0.5".equals(stringValue(existing, "schemaVersion", ""))) {
+            return false;
+        }
         return true;
     }
 
@@ -1471,6 +1519,14 @@ final class CityPlanningEndpointHandler {
                         intValue(request, "wallMarginBlocks", CityWallPlanner.DEFAULT_STRUCTURE_WALL_BREATHING_ROOM_BLOCKS)),
                 intValue(request, "heightDatumClampBlocks", CityWallPlanner.DEFAULT_HEIGHT_DATUM_CLAMP_BLOCKS),
                 intValue(request, "localMedianWindowUnits", CityWallPlanner.DEFAULT_LOCAL_MEDIAN_WINDOW_UNITS));
+    }
+
+    private static CityWallPlanner.V5Options workflowWallV5Options(JsonObject request) {
+        return new CityWallPlanner.V5Options(
+                intValue(request, "wallUnitLengthBlocks", CityWallPlanner.DEFAULT_V5_WALL_UNIT_LENGTH_BLOCKS),
+                intValue(request, "nominalWallHeightBlocks", CityWallPlanner.DEFAULT_V5_NOMINAL_WALL_HEIGHT_BLOCKS),
+                intValue(request, "waterRunMinBlocks", CityWallPlanner.DEFAULT_V5_WATER_RUN_MIN_BLOCKS),
+                doubleValue(request, "waterFluidRatioMin", CityWallPlanner.DEFAULT_V5_WATER_FLUID_RATIO_MIN));
     }
 
     private static void requireObject(JsonObject request, String key, String stepName) {
@@ -1712,6 +1768,47 @@ final class CityPlanningEndpointHandler {
                 throw new IllegalArgumentException("D6 planned structure is not fully locked: "
                         + stringValue(item, "anchorId"));
             }
+        }
+    }
+
+    private static void validateD5V5FootprintsWithinReservation(Path wallReservationPath,
+                                                                JsonObject source,
+                                                                String arrayKey,
+                                                                String stage) throws IOException {
+        if (wallReservationPath == null || !Files.exists(wallReservationPath)) {
+            return;
+        }
+        JsonObject reservation = JsonParser.parseString(Files.readString(wallReservationPath)).getAsJsonObject();
+        if (!CityWallReservationPlanner.V5.equals(stringValue(reservation, "wallVersion", ""))) {
+            return;
+        }
+        BlockBounds coverage = reservation.has("wallCoverageBounds")
+                && reservation.get("wallCoverageBounds").isJsonObject()
+                ? bounds(reservation.getAsJsonObject("wallCoverageBounds"))
+                : bounds(requiredObject(reservation, "wallBounds"));
+        for (JsonElement elem : array(source, arrayKey)) {
+            if (!elem.isJsonObject()) {
+                continue;
+            }
+            JsonObject item = elem.getAsJsonObject();
+            JsonObject footprint = item.has("lockedActualFootprint")
+                    && item.get("lockedActualFootprint").isJsonObject()
+                    ? item.getAsJsonObject("lockedActualFootprint")
+                    : item.has("actualFootprint") && item.get("actualFootprint").isJsonObject()
+                    ? item.getAsJsonObject("actualFootprint")
+                    : item.has("plannedFootprint") && item.get("plannedFootprint").isJsonObject()
+                    ? item.getAsJsonObject("plannedFootprint")
+                    : null;
+            if (footprint == null) {
+                continue;
+            }
+            BlockBounds footprintBounds = bounds(footprint);
+            if (containsBounds(coverage, footprintBounds)) {
+                continue;
+            }
+            throw new IllegalArgumentException("D5_V5_LOCKED_FOOTPRINT_OUTSIDE_RESERVATION: " + stage
+                    + " footprint for " + stringValue(item, "anchorId", "unknown_anchor")
+                    + " exceeds D5 v5 reservation coverage. Return to D5 and expand/rescan reservation.");
         }
     }
 
@@ -2176,6 +2273,18 @@ final class CityPlanningEndpointHandler {
         return raw.replaceAll("[^A-Za-z0-9._-]", "_");
     }
 
+    private static BlockBounds v5SurfaceBackfillBounds(JsonObject wallReservationPlan) {
+        if (wallReservationPlan != null && wallReservationPlan.has("wallCoverageBounds")
+                && wallReservationPlan.get("wallCoverageBounds").isJsonObject()) {
+            return bounds(wallReservationPlan.getAsJsonObject("wallCoverageBounds"));
+        }
+        if (wallReservationPlan != null && wallReservationPlan.has("wallBounds")
+                && wallReservationPlan.get("wallBounds").isJsonObject()) {
+            return expandBounds(bounds(wallReservationPlan.getAsJsonObject("wallBounds")), 16);
+        }
+        return new BlockBounds(-64, -64, 64, 64);
+    }
+
     private static BlockBounds bounds(JsonObject obj) {
         return new BlockBounds(intValue(obj, "minX", 0), intValue(obj, "minZ", 0),
                 intValue(obj, "maxX", 0), intValue(obj, "maxZ", 0));
@@ -2188,6 +2297,11 @@ final class CityPlanningEndpointHandler {
         obj.addProperty("maxX", bounds.maxX());
         obj.addProperty("maxZ", bounds.maxZ());
         return obj;
+    }
+
+    private static boolean containsBounds(BlockBounds outer, BlockBounds inner) {
+        return outer.contains(inner.minX(), inner.minZ())
+                && outer.contains(inner.maxX(), inner.maxZ());
     }
 
     private static JsonObject enrichWallReservationWithD3Cells(JsonObject reservation, JsonObject d3Package) {

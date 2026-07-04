@@ -74,6 +74,14 @@ public final class CityReservationMaskPlanner {
         mask.add("noVegetationMask", noVegetation);
         mask.add("vegetationLimitedMask", vegetationLimited);
         mask.add("noVanillaStructureMask", noVanillaStructure);
+        if (wallReservationPlan != null && wallReservationPlan.has("maskChannels")
+                && wallReservationPlan.get("maskChannels").isJsonObject()) {
+            mask.add("worldgenMaskChannels", wallReservationPlan.getAsJsonObject("maskChannels").deepCopy());
+        }
+        if (wallReservationPlan != null && wallReservationPlan.has("gateCorridorMask")
+                && wallReservationPlan.get("gateCorridorMask").isJsonArray()) {
+            mask.add("gateCorridorMask", wallReservationPlan.getAsJsonArray("gateCorridorMask").deepCopy());
+        }
         mask.add("reservationReason", reasons);
         mask.add("sourceStructureAnchorMap", structureAnchorMap.deepCopy());
         if (wallReservationPlan != null) {
@@ -99,6 +107,10 @@ public final class CityReservationMaskPlanner {
         metrics.addProperty("noVanillaStructureMaskCount", noVanillaStructure.size());
         metrics.addProperty("wallReservationMaskCount", wallReservationPlan == null ? 0
                 : wallReservationPlan.getAsJsonArray("wallCorridorMask").size());
+        metrics.addProperty("gateCorridorMaskCount", wallReservationPlan != null
+                && wallReservationPlan.has("gateCorridorMask")
+                && wallReservationPlan.get("gateCorridorMask").isJsonArray()
+                ? wallReservationPlan.getAsJsonArray("gateCorridorMask").size() : 0);
         metrics.addProperty("d5RoadOperationCount", 0);
         quality.add("metrics", metrics);
 

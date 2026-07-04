@@ -26,6 +26,9 @@ import com.rinsing.geomantia.systems.gis.domain.cell.LandformType;
 import com.rinsing.geomantia.systems.gis.domain.landform.LandformPatch;
 import com.rinsing.geomantia.systems.gis.domain.landform.PatchFlag;
 import com.rinsing.geomantia.systems.gis.domain.region.AtlasRegion;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtIo;
 import net.minecraft.world.level.ChunkPos;
 import org.junit.jupiter.api.Test;
 
@@ -516,6 +519,53 @@ final class CityStructureLandingFlowTest {
                 reservation.get("boundarySource").getAsString());
         assertTrue(reservation.get("finalBoundaryDeferredToD7").getAsBoolean());
         assertFalse(reservation.getAsJsonArray("wallCorridorMask").isEmpty());
+    }
+
+    @Test
+    void wallPlannerV5KeepsD5WallLineAndDeclaresNoRelineDowngradePolicies() {
+        JsonObject reservation = syntheticV5Reservation();
+        JsonObject wallPlan = new CityWallPlanner().planV5(syntheticWallLedger(), reservation,
+                roadMaskFromBlocks("city_test", new int[][]{}), CityWallPlanner.V5Options.defaults());
+
+        assertEquals("city_wall_plan.v0.5", wallPlan.get("schemaVersion").getAsString());
+        assertEquals("d5_final_wall_line", wallPlan.get("wallBoundaryMode").getAsString());
+        assertEquals(reservation.getAsJsonArray("wallLine").toString(),
+                wallPlan.getAsJsonArray("wallLine").toString());
+        assertEquals("disabled_v5_no_reline_after_d5", wallPlan.get("wallContourMode").getAsString());
+        assertEquals("keep_gate_opening_or_downgrade_without_reline",
+                wallPlan.get("gateFailurePolicy").getAsString());
+        assertEquals("downgrade_to_wall_or_skip_without_reline",
+                wallPlan.get("beaconFailurePolicy").getAsString());
+        assertEquals(8, wallPlan.get("wallUnitLengthBlocks").getAsInt());
+        assertEquals(9, wallPlan.get("nominalWallHeightBlocks").getAsInt());
+        assertEquals(32, wallPlan.get("waterRunMinBlocks").getAsInt());
+        assertEquals("surfaceY/topBlock/fluid/biome/temperature/flags",
+                wallPlan.getAsJsonObject("surfaceCachePolicy").get("requiredFields").getAsString());
+        assertTrue(wallPlan.getAsJsonArray("wallUnits").toString()
+                .contains("surface_cache_1_block_median_at_execute"));
+        assertTrue(wallPlan.getAsJsonArray("wallUnits").toString().contains("D5_V5_GATE_SLOT_OPENING"));
+        assertTrue(wallPlan.getAsJsonArray("wallNodes").toString().contains("beacon_5x5"));
+        assertTrue(wallPlan.getAsJsonObject("wallGraphValidation").get("noRelineAfterD5").getAsBoolean());
+    }
+
+    @Test
+    void wallPlannerV5HardStopsWhenD7ActualFootprintExceedsD5Coverage() {
+        JsonObject reservation = syntheticV5Reservation();
+        JsonObject ledger = JsonParser.parseString("""
+                {
+                  "schemaVersion": "city_placed_structure_ledger.v0.1",
+                  "cityId": "city_test",
+                  "placedStructures": [
+                    {"anchorId": "outside", "actualFootprint": {"minX": 120, "minZ": 0, "maxX": 140, "maxZ": 20}}
+                  ]
+                }
+                """).getAsJsonObject();
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> new CityWallPlanner().planV5(ledger, reservation,
+                        roadMaskFromBlocks("city_test", new int[][]{}), CityWallPlanner.V5Options.defaults()));
+
+        assertTrue(ex.getMessage().contains("D5_V5_LOCKED_FOOTPRINT_OUTSIDE_RESERVATION"));
     }
 
     @Test
@@ -1059,6 +1109,41 @@ final class CityStructureLandingFlowTest {
         assertTrue(library.contains("gatehouse_13"));
         assertTrue(library.contains("watchtower_5x5"));
         assertTrue(library.contains("beacon_5x5"));
+    }
+
+    @Test
+    void beaconTemplateKeepsWalkableCenterAndStraightClimbAccess() throws Exception {
+        Path dir = Files.createTempDirectory("city-wall-beacon-template-test");
+        CityWallTemplateLibrary.writeTemplates(dir);
+
+        CompoundTag beacon = NbtIo.readCompressed(dir.resolve("beacon_5x5.nbt").toFile());
+        assertEquals(5, beacon.getList("size", 3).getInt(0));
+        assertEquals(13, beacon.getList("size", 3).getInt(1));
+        assertEquals(5, beacon.getList("size", 3).getInt(2));
+
+        ListTag palette = beacon.getList("palette", 10);
+        int ladderState = -1;
+        for (int i = 0; i < palette.size(); i++) {
+            if ("minecraft:ladder".equals(palette.getCompound(i).getString("Name"))) {
+                ladderState = i;
+                break;
+            }
+        }
+        assertTrue(ladderState >= 0, beacon.toString());
+
+        ListTag blocks = beacon.getList("blocks", 10);
+        for (int y = 1; y <= 9; y++) {
+            assertFalse(hasTemplateBlockAt(blocks, 2, y, 2),
+                    "center walkway must stay open at y=" + y);
+        }
+        for (int y = 1; y <= 3; y++) {
+            assertFalse(hasTemplateBlockAt(blocks, 2, y, 0),
+                    "front doorway must stay open at y=" + y);
+        }
+        for (int y = 1; y <= 10; y++) {
+            assertEquals(ladderState, templateStateAt(blocks, 2, y, 3),
+                    "straight climb access must be continuous at y=" + y);
+        }
     }
 
     @Test
@@ -1633,6 +1718,41 @@ final class CityStructureLandingFlowTest {
                 """).getAsJsonObject();
     }
 
+    private static JsonObject syntheticV5Reservation() {
+        return JsonParser.parseString("""
+                {
+                  "schemaVersion": "city_wall_reservation_plan.v0.5",
+                  "cityId": "city_test",
+                  "wallVersion": "v5",
+                  "boundarySource": "d4_planned_footprint_envelope_rectilinear_hull",
+                  "wallBounds": {"minX": -64, "minZ": -64, "maxX": 64, "maxZ": 64},
+                  "wallCoverageBounds": {"minX": -96, "minZ": -96, "maxX": 96, "maxZ": 96},
+                  "wallLine": [
+                    {"lineId": "north", "segmentId": "north", "sideHint": "north",
+                     "blockBounds": {"minX": -64, "minZ": -68, "maxX": 64, "maxZ": -60}},
+                    {"lineId": "east", "segmentId": "east", "sideHint": "east",
+                     "blockBounds": {"minX": 60, "minZ": -64, "maxX": 68, "maxZ": 64}}
+                  ],
+                  "wallCorridorMask": [
+                    {"maskId": "wall_corridor_0", "maskType": "wall_reservation_corridor",
+                     "blockBounds": {"minX": -64, "minZ": -68, "maxX": 64, "maxZ": -60}},
+                    {"maskId": "wall_corridor_1", "maskType": "wall_reservation_corridor",
+                     "blockBounds": {"minX": 60, "minZ": -64, "maxX": 68, "maxZ": 64}}
+                  ],
+                  "gateSlots": [
+                    {"gateSlotId": "gate_0", "sideHint": "north",
+                     "blockBounds": {"minX": -4, "minZ": -68, "maxX": 4, "maxZ": -60}}
+                  ],
+                  "wallNodeSlots": [
+                    {"nodeSlotId": "node_0", "nodeType": "beacon_tower", "templateId": "beacon_5x5",
+                     "blockBounds": {"minX": -34, "minZ": -66, "maxX": -30, "maxZ": -62}},
+                    {"nodeSlotId": "node_1", "nodeType": "corner_tower", "templateId": "watchtower_5x5",
+                     "blockBounds": {"minX": 62, "minZ": -66, "maxX": 66, "maxZ": -62}}
+                  ]
+                }
+                """).getAsJsonObject();
+    }
+
     private static JsonObject syntheticV4Reservation() {
         return JsonParser.parseString("""
                 {
@@ -1799,6 +1919,21 @@ final class CityStructureLandingFlowTest {
                 obj.get("minZ").getAsInt(),
                 obj.get("maxX").getAsInt(),
                 obj.get("maxZ").getAsInt());
+    }
+
+    private static boolean hasTemplateBlockAt(ListTag blocks, int x, int y, int z) {
+        return templateStateAt(blocks, x, y, z) >= 0;
+    }
+
+    private static int templateStateAt(ListTag blocks, int x, int y, int z) {
+        for (int i = 0; i < blocks.size(); i++) {
+            CompoundTag block = blocks.getCompound(i);
+            ListTag pos = block.getList("pos", 3);
+            if (pos.getInt(0) == x && pos.getInt(1) == y && pos.getInt(2) == z) {
+                return block.getInt("state");
+            }
+        }
+        return -1;
     }
 
     private record Fixture(Path baseDir, CitySiteContext context, CityLandformReviewPackage review,

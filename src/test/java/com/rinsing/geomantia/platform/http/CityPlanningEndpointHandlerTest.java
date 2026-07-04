@@ -803,6 +803,126 @@ class CityPlanningEndpointHandlerTest {
     }
 
     @Test
+    void handlePlanD5CanWriteV5FinalWallReservationArtifacts() throws Exception {
+        Path debugRoot = Files.createTempDirectory("city-wall-v5-d5-test");
+        String runId = "run_wall_v5_d5";
+        String citySeedId = "city_test";
+        prepareD5Artifacts(debugRoot, runId, citySeedId);
+
+        JsonObject response = CityPlanningEndpointHandler.handlePlanD5(debugRoot, runId, citySeedId,
+                "v5", 24, 15, 4, CityWallReservationPlanner.V3Options.defaults());
+
+        JsonObject reservation = response.getAsJsonObject("wallReservationPlan");
+        assertEquals("city_wall_reservation_plan.v0.5", reservation.get("schemaVersion").getAsString());
+        assertEquals("v5", reservation.get("wallVersion").getAsString());
+        assertEquals("d4_planned_footprint_envelope_rectilinear_hull",
+                reservation.get("boundarySource").getAsString());
+        assertEquals("semantic_and_coverage_check_only", reservation.get("patchUsage").getAsString());
+        assertFalse(reservation.get("finalBoundaryDeferredToD7").getAsBoolean());
+        assertFalse(reservation.getAsJsonArray("wallLine").isEmpty());
+        assertFalse(reservation.getAsJsonArray("wallCorridorMask").isEmpty());
+        assertFalse(reservation.getAsJsonArray("gateSlots").isEmpty());
+        assertFalse(reservation.getAsJsonArray("wallNodeSlots").isEmpty());
+        assertFalse(reservation.getAsJsonObject("coverageCheck")
+                .get("patchBoundaryIsFinalWallLine").getAsBoolean());
+        JsonObject mask = response.getAsJsonObject("reservationMaskPlan");
+        assertTrue(mask.has("gateCorridorMask"));
+        assertTrue(mask.has("worldgenMaskChannels"));
+        assertTrue(mask.getAsJsonObject("worldgenMaskChannels").has("noRoadsideStructure"));
+    }
+
+    @Test
+    void handlePlanD5V5RequiresPatchRescanWhenReservationTouchesD3Boundary() throws Exception {
+        Path debugRoot = Files.createTempDirectory("city-wall-v5-rescan-test");
+        String runId = "run_wall_v5_rescan";
+        String citySeedId = "city_test";
+        prepareD5Artifacts(debugRoot, runId, citySeedId);
+        Path d3Path = debugRoot.resolve(runId).resolve("city_d3_" + citySeedId)
+                .resolve("city_landform_review_package.json");
+        JsonObject d3 = JsonParser.parseString(Files.readString(d3Path)).getAsJsonObject();
+        JsonObject grid = d3.getAsJsonObject("grid");
+        grid.addProperty("originBlockX", -16);
+        grid.addProperty("originBlockZ", -16);
+        grid.addProperty("cellStepBlocks", 4);
+        grid.addProperty("cellsX", 8);
+        grid.addProperty("cellsZ", 8);
+        Files.writeString(d3Path, CityJson.GSON.toJson(d3));
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> CityPlanningEndpointHandler.handlePlanD5(debugRoot, runId, citySeedId,
+                        "v5", 24, 15, 4, CityWallReservationPlanner.V3Options.defaults()));
+
+        assertTrue(ex.getMessage().contains("D5_V5_REQUIRES_PATCH_RESCAN"));
+    }
+
+    @Test
+    void handlePlanCityWallsV5KeepsD5WallLineAndBackfillsSurfaceCacheReport() throws Exception {
+        Path debugRoot = Files.createTempDirectory("city-wall-v5-plan-test");
+        String runId = "run_wall_v5_plan";
+        String citySeedId = "city_test";
+        prepareD5Artifacts(debugRoot, runId, citySeedId);
+        CityPlanningEndpointHandler.handlePlanD5(debugRoot, runId, citySeedId,
+                "v5", 24, 15, 4, CityWallReservationPlanner.V3Options.defaults());
+        Path reservationPath = debugRoot.resolve(runId).resolve("city_d5_" + citySeedId)
+                .resolve("wall_reservation_plan.json");
+        JsonObject reservation = JsonParser.parseString(Files.readString(reservationPath)).getAsJsonObject();
+
+        Path d7Dir = debugRoot.resolve(runId).resolve("city_d7_" + citySeedId);
+        Files.createDirectories(d7Dir);
+        Files.writeString(d7Dir.resolve("placed_structure_ledger.json"), """
+                {
+                  "schemaVersion": "city_placed_structure_ledger.v0.1",
+                  "cityId": "city_test",
+                  "placedStructures": [
+                    {
+                      "anchorId": "admin_core",
+                      "structureId": "minecraft:desert_pyramid",
+                      "actualFootprint": {"minX": -10, "minZ": -12, "maxX": 18, "maxZ": 20}
+                    }
+                  ]
+                }
+                """);
+
+        JsonObject response = CityPlanningEndpointHandler.handlePlanCityWalls(
+                debugRoot, runId, citySeedId, 24, 15, 9,
+                "v5", null, 8, 2, 8, 7);
+
+        JsonObject wallPlan = response.getAsJsonObject("cityWallPlan");
+        assertEquals("city_wall_plan.v0.5", wallPlan.get("schemaVersion").getAsString());
+        assertEquals("d5_final_wall_line", wallPlan.get("wallBoundaryMode").getAsString());
+        assertEquals(reservation.getAsJsonArray("wallLine").toString(),
+                wallPlan.getAsJsonArray("wallLine").toString());
+        assertEquals(8, wallPlan.get("wallUnitLengthBlocks").getAsInt());
+        assertEquals(9, wallPlan.get("nominalWallHeightBlocks").getAsInt());
+        assertTrue(wallPlan.getAsJsonObject("wallGraphValidation").get("noRelineAfterD5").getAsBoolean());
+        assertTrue(wallPlan.getAsJsonArray("wallUnits").toString().contains("surface_cache_1_block_median_at_execute"));
+        assertEquals("skipped", wallPlan.getAsJsonObject("surfaceCacheBackfill").get("status").getAsString());
+        assertTrue(response.getAsJsonObject("artifacts").has("surfaceCacheBackfill"));
+    }
+
+    @Test
+    void handlePlanD6HardStopsWhenV5LockedFootprintExceedsD5Coverage() throws Exception {
+        Path debugRoot = Files.createTempDirectory("city-wall-v5-d6-stop-test");
+        String runId = "run_wall_v5_d6_stop";
+        String citySeedId = "city_test";
+        prepareD5Artifacts(debugRoot, runId, citySeedId);
+        CityPlanningEndpointHandler.handlePlanD5(debugRoot, runId, citySeedId,
+                "v5", 24, 15, 4, CityWallReservationPlanner.V3Options.defaults());
+        Path reservationPath = debugRoot.resolve(runId).resolve("city_d5_" + citySeedId)
+                .resolve("wall_reservation_plan.json");
+        JsonObject reservation = JsonParser.parseString(Files.readString(reservationPath)).getAsJsonObject();
+        reservation.add("wallCoverageBounds", JsonParser.parseString("""
+                {"minX": -4, "minZ": -4, "maxX": 4, "maxZ": 4}
+                """).getAsJsonObject());
+        Files.writeString(reservationPath, CityJson.GSON.toJson(reservation));
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> CityPlanningEndpointHandler.handlePlanD6(debugRoot, runId, citySeedId, null, null));
+
+        assertTrue(ex.getMessage().contains("D5_V5_LOCKED_FOOTPRINT_OUTSIDE_RESERVATION"));
+    }
+
+    @Test
     void handlePlanD5CanWriteV3WallReservationArtifacts() throws Exception {
         Path debugRoot = Files.createTempDirectory("city-wall-v3-d5-test");
         String runId = "run_wall_v3_d5";

@@ -35,6 +35,10 @@ public final class CityWallPlanner {
     public static final int DEFAULT_STRUCTURE_WALL_BREATHING_ROOM_BLOCKS = 32;
     public static final int DEFAULT_HEIGHT_DATUM_CLAMP_BLOCKS = 6;
     public static final int DEFAULT_LOCAL_MEDIAN_WINDOW_UNITS = 3;
+    public static final int DEFAULT_V5_WALL_UNIT_LENGTH_BLOCKS = 8;
+    public static final int DEFAULT_V5_NOMINAL_WALL_HEIGHT_BLOCKS = 9;
+    public static final int DEFAULT_V5_WATER_RUN_MIN_BLOCKS = 32;
+    public static final double DEFAULT_V5_WATER_FLUID_RATIO_MIN = 0.8D;
     private static final int V4_NODE_INTERVAL_UNITS = 4;
     private static final int V4_TERRAIN_CONTOUR_MAX_SHIFT_UNITS = 2;
     private static final int WALL_HALF_THICKNESS_BLOCKS = 2;
@@ -637,6 +641,157 @@ public final class CityWallPlanner {
         return plan;
     }
 
+    public JsonObject planV5(JsonObject placedLedger,
+                             JsonObject wallReservationPlan,
+                             JsonObject actualRoadMask,
+                             V5Options options) {
+        V5Options opts = options == null ? V5Options.defaults() : options;
+        if (wallReservationPlan == null
+                || !"v5".equalsIgnoreCase(stringValue(wallReservationPlan, "wallVersion", ""))) {
+            throw new IllegalArgumentException("WALL_V5_REQUIRES_D5_V5_RESERVATION: Run city_plan_d5 wallVersion=v5 first.");
+        }
+        JsonArray line = array(wallReservationPlan, "wallLine");
+        if (line.isEmpty()) {
+            line = array(wallReservationPlan, "wallCenterline");
+        }
+        if (line.isEmpty()) {
+            throw new IllegalArgumentException("WALL_V5_WALL_LINE_UNAVAILABLE: D5 v5 reservation has no wallLine.");
+        }
+
+        BlockBounds coverage = wallReservationPlan.has("wallCoverageBounds")
+                && wallReservationPlan.get("wallCoverageBounds").isJsonObject()
+                ? bounds(wallReservationPlan.getAsJsonObject("wallCoverageBounds"))
+                : wallReservationPlan.has("wallBounds") && wallReservationPlan.get("wallBounds").isJsonObject()
+                ? expand(bounds(wallReservationPlan.getAsJsonObject("wallBounds")), DEFAULT_V5_WALL_UNIT_LENGTH_BLOCKS)
+                : expand(unionPlaced(placedLedger), DEFAULT_WALL_MARGIN_BLOCKS);
+        JsonArray footprintViolations = v5LockedFootprintViolations(placedLedger, coverage);
+        if (!footprintViolations.isEmpty()) {
+            throw new IllegalArgumentException("D5_V5_LOCKED_FOOTPRINT_OUTSIDE_RESERVATION: D7 actual/locked footprint exceeds D5 v5 coverage.");
+        }
+
+        int unitLength = opts.normalizedWallUnitLengthBlocks();
+        JsonArray gateSlots = array(wallReservationPlan, "gateSlots");
+        JsonArray generatedGates = new JsonArray();
+        JsonArray wallUnits = new JsonArray();
+        int unitIndex = 0;
+        for (JsonElement elem : line) {
+            if (!elem.isJsonObject() || !elem.getAsJsonObject().has("blockBounds")) {
+                continue;
+            }
+            JsonObject sourceLine = elem.getAsJsonObject();
+            BlockBounds sourceBounds = bounds(sourceLine.getAsJsonObject("blockBounds"));
+            String axis = wallAxis(sourceBounds);
+            BlockBounds placementBounds = v5PlacementBounds(sourceBounds, axis);
+            for (BlockBounds unitBounds : splitBounds(placementBounds, unitLength, axis)) {
+                JsonObject unit = new JsonObject();
+                unit.addProperty("unitId", "v5_wall_unit_" + unitIndex++);
+                unit.addProperty("sourceLineId", stringValue(sourceLine, "lineId",
+                        stringValue(sourceLine, "segmentId", "")));
+                unit.addProperty("sideHint", stringValue(sourceLine, "sideHint", ""));
+                unit.addProperty("wallAxis", axis);
+                unit.addProperty("heightMode", "surface_cache_1_block_median_at_execute");
+                unit.addProperty("targetY", 0);
+                unit.add("blockBounds", boundsJson(unitBounds));
+                JsonObject gate = overlappingGate(unitBounds, gateSlots);
+                if (gate != null) {
+                    unit.addProperty("unitType", "gate_gap");
+                    unit.addProperty("templateId", "wall_gap_gate_9");
+                    unit.addProperty("placementAllowed", false);
+                    unit.addProperty("reasonCode", "D5_V5_GATE_SLOT_OPENING");
+                    unit.addProperty("gateSlotId", stringValue(gate, "gateSlotId", ""));
+                    addGeneratedGateV5(generatedGates, gate, unitBounds);
+                } else {
+                    unit.addProperty("unitType", "wall_unit_v5");
+                    unit.addProperty("templateId", "wall_straight_8");
+                    unit.addProperty("placementAllowed", true);
+                    unit.addProperty("reasonCode", "D5_V5_WALL_LINE_UNIT");
+                }
+                wallUnits.add(unit);
+            }
+        }
+
+        JsonArray wallNodes = new JsonArray();
+        int nodeIndex = 0;
+        for (JsonElement elem : array(wallReservationPlan, "wallNodeSlots")) {
+            if (!elem.isJsonObject() || !elem.getAsJsonObject().has("blockBounds")) {
+                continue;
+            }
+            JsonObject slot = elem.getAsJsonObject();
+            BlockBounds bounds = bounds(slot.getAsJsonObject("blockBounds"));
+            JsonObject node = v4Node("v5_wall_node_" + nodeIndex++,
+                    stringValue(slot, "nodeType", "beacon_tower"),
+                    bounds.center().x(), bounds.center().z(), bounds, 0, 0,
+                    "surface_cache_1_block_median_at_execute");
+            node.addProperty("sourceNodeSlotId", stringValue(slot, "nodeSlotId", ""));
+            node.addProperty("reasonCode", stringValue(slot, "reasonCode", "D5_V5_WALL_NODE_SLOT"));
+            wallNodes.add(node);
+        }
+
+        JsonObject plan = new JsonObject();
+        plan.addProperty("schemaVersion", "city_wall_plan.v0.5");
+        plan.addProperty("cityId", stringValue(placedLedger, "cityId", "unknown_city"));
+        plan.addProperty("wallVersion", "v5");
+        plan.addProperty("boundaryMode", "d5_final_wall_line");
+        plan.addProperty("wallBoundaryMode", "d5_final_wall_line");
+        plan.addProperty("wallPlanningMode", "d5_plane_then_surface_cache_height_fit");
+        plan.addProperty("wallContourMode", "disabled_v5_no_reline_after_d5");
+        plan.addProperty("roadMaskSource", "actual_world_blocks_for_gate_conflict_diagnostics_only");
+        plan.addProperty("wallUnitLengthBlocks", unitLength);
+        plan.addProperty("nominalWallHeightBlocks", opts.normalizedNominalWallHeightBlocks());
+        plan.addProperty("waterRunMinBlocks", opts.normalizedWaterRunMinBlocks());
+        plan.addProperty("waterFluidRatioMin", opts.normalizedWaterFluidRatioMin());
+        plan.addProperty("maxFoundationDepthBlocks", 64);
+        plan.addProperty("maxSegmentHeightDeltaBlocks", 9999);
+        plan.addProperty("gateFailurePolicy", "keep_gate_opening_or_downgrade_without_reline");
+        plan.addProperty("beaconFailurePolicy", "downgrade_to_wall_or_skip_without_reline");
+        plan.add("wallReservationSource", wallReservationPlan.deepCopy());
+        plan.add("actualRoadMask", actualRoadMask == null
+                ? emptyRoadMask(plan.get("cityId").getAsString()) : actualRoadMask.deepCopy());
+        plan.add("sourcePlacedStructureLedger", placedLedger == null ? new JsonObject() : placedLedger.deepCopy());
+        plan.add("sourceActualFootprintUnion", boundsJson(unionPlaced(placedLedger)));
+        plan.add("wallCoverageBounds", boundsJson(coverage));
+        if (wallReservationPlan.has("wallBounds") && wallReservationPlan.get("wallBounds").isJsonObject()) {
+            plan.add("wallBounds", wallReservationPlan.getAsJsonObject("wallBounds").deepCopy());
+        }
+        plan.add("wallLine", line.deepCopy());
+        plan.add("generatedGates", generatedGates);
+        plan.add("wallNodes", wallNodes);
+        plan.add("wallUnits", wallUnits);
+        plan.add("nodeConnectorUnits", new JsonArray());
+        plan.add("wallSegments", new JsonArray());
+        plan.add("templateLibrary", CityWallTemplateLibrary.libraryJson());
+
+        JsonObject surface = new JsonObject();
+        surface.addProperty("cacheSchema", "city_surface_cache.v0.1");
+        surface.addProperty("storageFormat", ".dat");
+        surface.addProperty("sampleGranularityBlocks", 1);
+        surface.addProperty("requiredFields", "surfaceY/topBlock/fluid/biome/temperature/flags");
+        surface.addProperty("backfillStage", "d7_or_city_plan_city_walls_before_v5_execute");
+        plan.add("surfaceCachePolicy", surface);
+
+        JsonObject terrain = new JsonObject();
+        terrain.addProperty("policyVersion", "v5");
+        terrain.addProperty("heightStrategy", "placement_unit_surface_median");
+        terrain.addProperty("pitPolicy", "fill_horizontal_floor_inside_corridor");
+        terrain.addProperty("raisedGroundPolicy", "connect_wall_into_existing_ground");
+        terrain.addProperty("waterPolicy", "continuous_water_boundary_no_wall");
+        terrain.addProperty("debugScanSupported", true);
+        plan.add("terrainFitPolicy", terrain);
+
+        JsonObject validation = new JsonObject();
+        validation.addProperty("status", "valid");
+        validation.addProperty("d5PlaneAuthority", true);
+        validation.addProperty("noRelineAfterD5", true);
+        validation.addProperty("patchBoundaryUsedAsFinalWallLine", false);
+        validation.addProperty("wallNodeCount", wallNodes.size());
+        validation.addProperty("wallUnitCount", wallUnits.size());
+        validation.addProperty("generatedGateCount", generatedGates.size());
+        validation.addProperty("lockedFootprintViolationCount", footprintViolations.size());
+        validation.add("lockedFootprintViolations", footprintViolations);
+        plan.add("wallGraphValidation", validation);
+        return plan;
+    }
+
     public Path writeArtifacts(JsonObject plan, Path outputDirectory) throws IOException {
         Files.createDirectories(outputDirectory);
         Path planPath = outputDirectory.resolve("city_wall_plan.json");
@@ -663,6 +818,95 @@ public final class CityWallPlanner {
         addTower(out, "gate_west_tower", gateCenterX - gateWidth / 2 - 3, bounds.minZ());
         addTower(out, "gate_east_tower", gateCenterX + gateWidth / 2 + 3, bounds.minZ());
         return out;
+    }
+
+    private static JsonArray v5LockedFootprintViolations(JsonObject ledger, BlockBounds coverage) {
+        JsonArray out = new JsonArray();
+        for (JsonElement elem : array(ledger, "placedStructures")) {
+            if (!elem.isJsonObject()) {
+                continue;
+            }
+            JsonObject structure = elem.getAsJsonObject();
+            JsonObject source = structure.has("lockedActualFootprint")
+                    && structure.get("lockedActualFootprint").isJsonObject()
+                    ? structure.getAsJsonObject("lockedActualFootprint")
+                    : structure.has("actualFootprint") && structure.get("actualFootprint").isJsonObject()
+                    ? structure.getAsJsonObject("actualFootprint")
+                    : null;
+            if (source == null) {
+                continue;
+            }
+            BlockBounds footprint = bounds(source);
+            if (containsBounds(coverage, footprint)) {
+                continue;
+            }
+            JsonObject violation = new JsonObject();
+            violation.addProperty("anchorId", stringValue(structure, "anchorId", ""));
+            violation.addProperty("structureId", stringValue(structure, "structureId", ""));
+            violation.addProperty("reasonCode", "D5_V5_LOCKED_FOOTPRINT_OUTSIDE_RESERVATION");
+            violation.add("footprint", boundsJson(footprint));
+            violation.add("coverageBounds", boundsJson(coverage));
+            out.add(violation);
+        }
+        return out;
+    }
+
+    private static BlockBounds v5PlacementBounds(BlockBounds source, String axis) {
+        if ("X".equals(axis)) {
+            int centerZ = source.center().z();
+            return new BlockBounds(source.minX(), centerZ - WALL_HALF_THICKNESS_BLOCKS,
+                    source.maxX(), centerZ + WALL_HALF_THICKNESS_BLOCKS);
+        }
+        int centerX = source.center().x();
+        return new BlockBounds(centerX - WALL_HALF_THICKNESS_BLOCKS, source.minZ(),
+                centerX + WALL_HALF_THICKNESS_BLOCKS, source.maxZ());
+    }
+
+    private static java.util.List<BlockBounds> splitBounds(BlockBounds bounds, int unitLength, String axis) {
+        int length = Math.max(1, unitLength);
+        java.util.List<BlockBounds> out = new java.util.ArrayList<>();
+        if ("X".equals(axis)) {
+            for (int x = bounds.minX(); x <= bounds.maxX(); x += length) {
+                out.add(new BlockBounds(x, bounds.minZ(), Math.min(bounds.maxX(), x + length - 1), bounds.maxZ()));
+            }
+        } else {
+            for (int z = bounds.minZ(); z <= bounds.maxZ(); z += length) {
+                out.add(new BlockBounds(bounds.minX(), z, bounds.maxX(), Math.min(bounds.maxZ(), z + length - 1)));
+            }
+        }
+        return out;
+    }
+
+    private static JsonObject overlappingGate(BlockBounds unitBounds, JsonArray gateSlots) {
+        for (JsonElement elem : gateSlots) {
+            if (!elem.isJsonObject() || !elem.getAsJsonObject().has("blockBounds")) {
+                continue;
+            }
+            JsonObject gate = elem.getAsJsonObject();
+            if (unitBounds.overlaps(bounds(gate.getAsJsonObject("blockBounds")))) {
+                return gate;
+            }
+        }
+        return null;
+    }
+
+    private static void addGeneratedGateV5(JsonArray generatedGates, JsonObject gate, BlockBounds unitBounds) {
+        String gateSlotId = stringValue(gate, "gateSlotId", "d5_v5_gate_slot");
+        for (JsonElement elem : generatedGates) {
+            if (elem.isJsonObject()
+                    && gateSlotId.equals(stringValue(elem.getAsJsonObject(), "gateSlotId", ""))) {
+                return;
+            }
+        }
+        JsonObject generated = new JsonObject();
+        generated.addProperty("gateId", "v5_gate_" + generatedGates.size());
+        generated.addProperty("gateSlotId", gateSlotId);
+        generated.addProperty("nodeType", "gate_opening");
+        generated.addProperty("reasonCode", "D5_V5_GATE_SLOT_OPENING");
+        generated.addProperty("failurePolicy", "keep_gate_opening_or_downgrade_without_reline");
+        generated.addProperty("gateWidthBlocks", Math.max(unitBounds.widthBlocks(), unitBounds.heightBlocks()));
+        generated.add("blockBounds", gate.getAsJsonObject("blockBounds").deepCopy());
+        generatedGates.add(generated);
     }
 
     private static void addFlankingTowers(JsonArray segments, String gateId, BlockBounds gateBounds) {
@@ -1950,6 +2194,35 @@ public final class CityWallPlanner {
         public int normalizedLocalMedianWindowUnits() {
             int value = localMedianWindowUnits <= 0 ? DEFAULT_LOCAL_MEDIAN_WINDOW_UNITS : localMedianWindowUnits;
             return value % 2 == 0 ? value + 1 : value;
+        }
+    }
+
+    public record V5Options(int wallUnitLengthBlocks,
+                            int nominalWallHeightBlocks,
+                            int waterRunMinBlocks,
+                            double waterFluidRatioMin) {
+        public static V5Options defaults() {
+            return new V5Options(DEFAULT_V5_WALL_UNIT_LENGTH_BLOCKS,
+                    DEFAULT_V5_NOMINAL_WALL_HEIGHT_BLOCKS,
+                    DEFAULT_V5_WATER_RUN_MIN_BLOCKS,
+                    DEFAULT_V5_WATER_FLUID_RATIO_MIN);
+        }
+
+        public int normalizedWallUnitLengthBlocks() {
+            return wallUnitLengthBlocks <= 0 ? DEFAULT_V5_WALL_UNIT_LENGTH_BLOCKS : wallUnitLengthBlocks;
+        }
+
+        public int normalizedNominalWallHeightBlocks() {
+            return nominalWallHeightBlocks <= 0 ? DEFAULT_V5_NOMINAL_WALL_HEIGHT_BLOCKS : nominalWallHeightBlocks;
+        }
+
+        public int normalizedWaterRunMinBlocks() {
+            return waterRunMinBlocks <= 0 ? DEFAULT_V5_WATER_RUN_MIN_BLOCKS : waterRunMinBlocks;
+        }
+
+        public double normalizedWaterFluidRatioMin() {
+            return waterFluidRatioMin <= 0.0D ? DEFAULT_V5_WATER_FLUID_RATIO_MIN
+                    : Math.min(1.0D, waterFluidRatioMin);
         }
     }
 
