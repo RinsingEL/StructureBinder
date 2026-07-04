@@ -295,8 +295,10 @@ public final class CityStructureLandingPreviewRenderer {
             if (!patch.memberCells().isEmpty()) {
                 drawPatchCells(g, t, patch, memberCellStepBlocks(patch, reviewPackage.grid().cellStepBlocks()), base);
             } else {
-                BlockBounds clipped = clip(patch.blockBounds(), gridBounds);
-                drawRect(g, t, clipped, withAlpha(base, 54), withAlpha(base.darker(), 82), 0.7f);
+                if (patch.blockBounds().overlaps(gridBounds)) {
+                    BlockBounds clipped = clip(patch.blockBounds(), gridBounds);
+                    drawRect(g, t, clipped, withAlpha(base, 54), withAlpha(base.darker(), 82), 0.7f);
+                }
             }
         }
         for (LandformPatchSummary patch : reviewPackage.landformPatches()) {

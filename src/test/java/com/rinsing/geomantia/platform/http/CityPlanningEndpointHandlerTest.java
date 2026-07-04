@@ -223,7 +223,8 @@ class CityPlanningEndpointHandlerTest {
                 "village", "village", 64, 4, null);
         CityLandformReviewPackage review = new CityLandformReviewBuilder(config).build(context, List.of(
                 patch("plain", LandformType.PLAIN, -50, -50, -10, -10),
-                patch("shore", LandformType.SHORE, 0, 0, 50, 50)));
+                patch("shore", LandformType.SHORE, 0, 0, 50, 50),
+                patch("offscreen_plain", LandformType.PLAIN, 1000, 1000, 1040, 1040)));
         Path d3Dir = runDir.resolve("city_d3_city_test");
         Files.createDirectories(d3Dir);
         Files.writeString(d3Dir.resolve("city_landform_review_package.json"),

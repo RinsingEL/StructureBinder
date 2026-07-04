@@ -69,7 +69,7 @@ public final class CityWallPlacementBackend {
             }
             java.util.List<JsonObject> graphUnits = jsonObjects(array(wallPlan, "wallUnits"));
             java.util.Map<String, V5SurfaceSample> v5Samples = v5
-                    ? v5SurfaceSamples(level, graphUnits, debugScan) : java.util.Map.of();
+                    ? v5SurfaceSamples(level, graphUnits, true) : java.util.Map.of();
             java.util.Set<String> v5WaterBoundaryUnits = v5
                     ? v5WaterBoundaryUnits(graphUnits, v5Samples, context) : java.util.Set.of();
             for (JsonObject unit : graphUnits) {
@@ -248,7 +248,7 @@ public final class CityWallPlacementBackend {
         JsonObject segment = pseudoSegment(unit, "unitId", "wall_segment");
         Axis axis = axisForSegment(segment, bounds);
         int changed = placePitFloor(level, bounds, baseY - 1, context, sample);
-        changed += placeWallV5(level, bounds, baseY, context, axis);
+        changed += placeWallV5(level, bounds, baseY, context, axis, sample);
         String mode = sample.minY() < sample.medianY() - 1
                 ? "V5_MEDIAN_WALL_WITH_HORIZONTAL_PIT_FLOOR"
                 : sample.maxY() > sample.medianY() + 1
@@ -322,11 +322,12 @@ public final class CityWallPlacementBackend {
                     "Segment terrain delta " + (maxY - minY) + " exceeds " + maxDelta + ".");
         }
         int baseY = maxY + 1;
+        Axis axis = axisForSegment(segment, bounds);
         int changed = "beacon_tower".equals(stringValue(segment, "segmentType", ""))
-                ? placeBeaconTower(level, bounds, baseY, context)
+                ? placeBeaconTower(level, bounds, baseY, context, axis)
                 : "tower".equals(stringValue(segment, "segmentType", ""))
                 ? placeTower(level, bounds, baseY, context)
-                : placeWall(level, bounds, baseY, context, axisForSegment(segment, bounds));
+                : placeWall(level, bounds, baseY, context, axis);
         return new SegmentResult("executed", "WALL_SEGMENT_PLACED", changed,
                 "Placed temporary stone wall segment.");
     }
@@ -536,21 +537,31 @@ public final class CityWallPlacementBackend {
         int minAcross = axis == Axis.X ? bounds.minZ() : bounds.minX();
         int maxAcross = axis == Axis.X ? bounds.maxZ() : bounds.maxX();
         int centerAlong = (minAlong + maxAlong) / 2;
-        int halfOpening = Math.max(2, Math.min(4, (maxAlong - minAlong + 1) / 4));
+        int openingWidth = gatehouseOpeningWidth(maxAlong - minAlong + 1);
+        int openingMin = centerAlong - openingWidth / 2;
+        int openingMax = openingMin + openingWidth - 1;
         for (int along = minAlong; along <= maxAlong; along++) {
             for (int across = minAcross; across <= maxAcross; across++) {
                 int x = axis == Axis.X ? along : across;
                 int z = axis == Axis.X ? across : along;
-                boolean opening = Math.abs(along - centerAlong) <= halfOpening;
+                boolean opening = along >= openingMin && along <= openingMax;
+                boolean openingFence = opening && (along == openingMin || along == openingMax);
+                boolean openingAir = opening && !openingFence;
                 boolean sidePier = !opening && (along <= minAlong + 2 || along >= maxAlong - 2);
-                boolean sideWall = !opening && (along <= centerAlong - halfOpening - 1 || along >= centerAlong + halfOpening + 1);
-                if (opening) {
-                    clearGateColumn(level, x, z, baseY, 5);
-                    continue;
+                boolean sideWall = !opening;
+                if (openingAir) {
+                    clearGateColumn(level, x, z, baseY, 4);
+                } else {
+                    changed += placeFoundation(level, x, z, baseY, context);
                 }
-                changed += placeFoundation(level, x, z, baseY, context);
                 for (int y = 0; y < 9; y++) {
-                    BlockState state = sidePier
+                    BlockState state = openingAir
+                            ? (y == 5 || y == 6 ? Blocks.STONE_BRICKS.defaultBlockState() : null)
+                            : openingFence
+                            ? (y <= 4 ? Blocks.OAK_FENCE.defaultBlockState()
+                            : y <= 6 ? Blocks.STONE_BRICKS.defaultBlockState()
+                            : null)
+                            : sidePier
                             ? (y >= 7 ? Blocks.STONE_BRICK_WALL.defaultBlockState() : Blocks.STONE_BRICKS.defaultBlockState())
                             : sideWall && (y <= 5 || y >= 7)
                             ? Blocks.STONE_BRICKS.defaultBlockState()
@@ -558,18 +569,6 @@ public final class CityWallPlacementBackend {
                     if (state != null && set(level, x, baseY + y, z, state)) {
                         changed++;
                     }
-                }
-            }
-        }
-        for (int along = centerAlong - halfOpening - 1; along <= centerAlong + halfOpening + 1; along++) {
-            for (int across = minAcross; across <= maxAcross; across++) {
-                int x = axis == Axis.X ? along : across;
-                int z = axis == Axis.X ? across : along;
-                if (set(level, x, baseY + 5, z, Blocks.OAK_LOG.defaultBlockState())) {
-                    changed++;
-                }
-                if (set(level, x, baseY + 6, z, Blocks.OAK_PLANKS.defaultBlockState())) {
-                    changed++;
                 }
             }
         }
@@ -633,7 +632,8 @@ public final class CityWallPlacementBackend {
         return changed;
     }
 
-    private int placeWallV5(ServerLevel level, BlockBounds bounds, int baseY, PlacementContext context, Axis axis) {
+    private int placeWallV5(ServerLevel level, BlockBounds bounds, int baseY, PlacementContext context, Axis axis,
+                            V5SurfaceSample sample) {
         int changed = 0;
         int wallHeight = Math.max(3, context.v5NominalWallHeightBlocks());
         for (int x = bounds.minX(); x <= bounds.maxX(); x++) {
@@ -645,7 +645,7 @@ public final class CityWallPlacementBackend {
                 if (across < 0 || across > 4) {
                     continue;
                 }
-                changed += placeFoundation(level, x, z, baseY, context);
+                changed += placeFoundation(level, x, z, baseY, context, sample.surfaceYAt(x, z, surfaceY(level, x, z)));
                 for (int y = 0; y < wallHeight; y++) {
                     BlockState state = wallState(Math.min(y, 8), across);
                     if (state != null && set(level, x, baseY + y, z, state)) {
@@ -672,9 +672,11 @@ public final class CityWallPlacementBackend {
                 if (context.protectsAny(x, z)) {
                     continue;
                 }
-                int surface = surfaceY(level, x, z);
-                if (surface < floorY && set(level, x, floorY, z, Blocks.DEEPSLATE_BRICKS.defaultBlockState())) {
-                    changed++;
+                int surface = sample.surfaceYAt(x, z, surfaceY(level, x, z));
+                for (int y = surface + 1; y <= floorY; y++) {
+                    if (set(level, x, y, z, Blocks.DEEPSLATE_BRICKS.defaultBlockState())) {
+                        changed++;
+                    }
                 }
             }
         }
@@ -711,12 +713,16 @@ public final class CityWallPlacementBackend {
         return changed;
     }
 
-    private int placeBeaconTower(ServerLevel level, BlockBounds bounds, int baseY, PlacementContext context) {
+    private int placeBeaconTower(ServerLevel level, BlockBounds bounds, int baseY, PlacementContext context, Axis axis) {
         int changed = 0;
         int centerX = bounds.center().x();
-        int ladderZ = bounds.maxZ() - 1;
+        int centerZ = bounds.center().z();
+        int ladderX = axis == Axis.X ? centerX : bounds.maxX() - 1;
+        int ladderZ = axis == Axis.X ? bounds.maxZ() - 1 : centerZ;
+        int topFloorY = 13;
+        int wallPassageFloorY = 7;
         BlockState ladder = Blocks.LADDER.defaultBlockState()
-                .setValue(LadderBlock.FACING, Direction.NORTH);
+                .setValue(LadderBlock.FACING, axis == Axis.X ? Direction.NORTH : Direction.WEST);
         for (int x = bounds.minX(); x <= bounds.maxX(); x++) {
             for (int z = bounds.minZ(); z <= bounds.maxZ(); z++) {
                 if (context.protectsAny(x, z)) {
@@ -724,25 +730,29 @@ public final class CityWallPlacementBackend {
                 }
                 boolean edge = x == bounds.minX() || x == bounds.maxX()
                         || z == bounds.minZ() || z == bounds.maxZ();
-                boolean doorway = z == bounds.minZ() && x == centerX;
-                boolean ladderColumn = x == centerX && z == ladderZ;
+                boolean doorway = isBeaconDoorway(bounds, x, z, centerX, centerZ);
+                boolean wallPassage = axis == Axis.X ? z == centerZ : x == centerX;
+                boolean ladderColumn = x == ladderX && z == ladderZ;
                 boolean topOpening = ladderColumn;
                 changed += placeFoundation(level, x, z, baseY, context);
-                for (int y = 0; y < 13; y++) {
+                for (int y = 0; y < 16; y++) {
                     BlockState state = null;
-                    if (doorway && y >= 1 && y <= 3) {
+                    if (wallPassage && y == wallPassageFloorY) {
+                        state = Blocks.STONE_BRICKS.defaultBlockState();
+                    } else if ((doorway && y >= 1 && y <= 3)
+                            || (wallPassage && y >= wallPassageFloorY + 1 && y <= wallPassageFloorY + 4)) {
                         state = Blocks.AIR.defaultBlockState();
-                    } else if (ladderColumn && y >= 1 && y <= 10) {
+                    } else if (ladderColumn && y >= 1 && y <= topFloorY) {
                         state = ladder;
                     } else if (edge) {
                         if (y == 0) {
                             state = Blocks.DEEPSLATE_BRICKS.defaultBlockState();
-                        } else if (y == 11 || (y == 12 && ((x + z) & 1) == 0)) {
+                        } else if (y == topFloorY + 1 || (y == topFloorY + 2 && ((x + z) & 1) == 0)) {
                             state = Blocks.STONE_BRICK_WALL.defaultBlockState();
-                        } else if (y < 11) {
+                        } else if (y <= topFloorY) {
                             state = Blocks.STONE_BRICKS.defaultBlockState();
                         }
-                    } else if (y == 0 || (y == 10 && !topOpening)) {
+                    } else if (y == 0 || (y == topFloorY && !topOpening)) {
                         state = Blocks.STONE_BRICKS.defaultBlockState();
                     }
                     if (state != null && set(level, x, baseY + y, z, state)) {
@@ -752,6 +762,11 @@ public final class CityWallPlacementBackend {
             }
         }
         return changed;
+    }
+
+    private static boolean isBeaconDoorway(BlockBounds bounds, int x, int z, int centerX, int centerZ) {
+        return (x == centerX && (z == bounds.minZ() || z == bounds.maxZ()))
+                || (z == centerZ && (x == bounds.minX() || x == bounds.maxX()));
     }
 
     private int placeStoneCap(ServerLevel level, BlockBounds bounds, int baseY, PlacementContext context) {
@@ -816,18 +831,36 @@ public final class CityWallPlacementBackend {
     }
 
     private int placeFoundation(ServerLevel level, int x, int z, int baseY, PlacementContext context) {
+        return placeFoundation(level, x, z, baseY, context, surfaceY(level, x, z));
+    }
+
+    private int placeFoundation(ServerLevel level, int x, int z, int baseY, PlacementContext context,
+                                int originalSurfaceY) {
         if (context.protectsAny(x, z)) {
             return 0;
         }
         int changed = 0;
-        int surface = surfaceY(level, x, z);
-        int depth = Math.min(context.effectiveFoundationDepthBlocks(), Math.max(0, baseY - surface));
+        int depth = foundationDepth(baseY, originalSurfaceY, context.effectiveFoundationDepthBlocks());
         for (int y = 1; y <= depth; y++) {
             if (set(level, x, baseY - y, z, Blocks.DEEPSLATE_BRICKS.defaultBlockState())) {
                 changed++;
             }
         }
         return changed;
+    }
+
+    static int foundationDepth(int baseY, int surfaceY, int maxDepth) {
+        return Math.min(Math.max(0, maxDepth), Math.max(0, baseY - surfaceY));
+    }
+
+    static int gatehouseOpeningWidth(int alongLength) {
+        int length = Math.max(3, alongLength);
+        int width = Math.max(3, (length + 1) / 3);
+        if (width % 2 == 0) {
+            width++;
+        }
+        int maxWidth = Math.max(3, length - 2);
+        return Math.min(width, maxWidth);
     }
 
     private BlockState wallState(int y, int across) {
@@ -872,6 +905,7 @@ public final class CityWallPlacementBackend {
                 || state.is(Blocks.STONE_BRICK_WALL)
                 || state.is(Blocks.STONE_BRICK_SLAB)
                 || state.is(Blocks.STONE_BRICK_STAIRS)
+                || state.is(Blocks.OAK_FENCE)
                 || state.is(Blocks.LADDER)
                 || state.is(Blocks.OAK_LOG)
                 || state.is(Blocks.OAK_PLANKS);
@@ -1408,6 +1442,13 @@ public final class CityWallPlacementBackend {
 
         double fluidRatio() {
             return totalCells <= 0 ? 0.0D : (double) fluidCells / totalCells;
+        }
+
+        int surfaceYAt(int x, int z, int fallback) {
+            if (surfaceSamples == null || surfaceSamples.isEmpty()) {
+                return fallback;
+            }
+            return surfaceSamples.getOrDefault(x + "," + z, fallback);
         }
     }
 

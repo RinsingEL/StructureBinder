@@ -545,6 +545,8 @@ final class CityStructureLandingFlowTest {
                 .contains("surface_cache_1_block_median_at_execute"));
         assertTrue(wallPlan.getAsJsonArray("wallUnits").toString().contains("D5_V5_GATE_SLOT_OPENING"));
         assertTrue(wallPlan.getAsJsonArray("wallNodes").toString().contains("beacon_5x5"));
+        assertEquals("X", wallNodeAxis(wallPlan, "node_0"));
+        assertEquals("Z", wallNodeAxis(wallPlan, "node_2"));
         assertTrue(wallPlan.getAsJsonObject("wallGraphValidation").get("noRelineAfterD5").getAsBoolean());
     }
 
@@ -1118,11 +1120,12 @@ final class CityStructureLandingFlowTest {
 
         CompoundTag beacon = NbtIo.readCompressed(dir.resolve("beacon_5x5.nbt").toFile());
         assertEquals(5, beacon.getList("size", 3).getInt(0));
-        assertEquals(13, beacon.getList("size", 3).getInt(1));
+        assertEquals(16, beacon.getList("size", 3).getInt(1));
         assertEquals(5, beacon.getList("size", 3).getInt(2));
 
         ListTag palette = beacon.getList("palette", 10);
         int ladderState = -1;
+        int stoneBricks = paletteState(beacon, "minecraft:stone_bricks");
         for (int i = 0; i < palette.size(); i++) {
             if ("minecraft:ladder".equals(palette.getCompound(i).getString("Name"))) {
                 ladderState = i;
@@ -1132,18 +1135,64 @@ final class CityStructureLandingFlowTest {
         assertTrue(ladderState >= 0, beacon.toString());
 
         ListTag blocks = beacon.getList("blocks", 10);
-        for (int y = 1; y <= 9; y++) {
+        for (int y = 1; y <= 6; y++) {
             assertFalse(hasTemplateBlockAt(blocks, 2, y, 2),
                     "center walkway must stay open at y=" + y);
+        }
+        assertEquals(stoneBricks, templateStateAt(blocks, 2, 7, 2),
+                "wall-top passage floor must be walkable");
+        for (int y = 8; y <= 12; y++) {
+            assertFalse(hasTemplateBlockAt(blocks, 2, y, 2),
+                    "wall-top passage headroom must stay open at y=" + y);
+        }
+        for (int y = 8; y <= 11; y++) {
+            assertFalse(hasTemplateBlockAt(blocks, 0, y, 2),
+                    "left wall-top connection must stay open at y=" + y);
+            assertFalse(hasTemplateBlockAt(blocks, 4, y, 2),
+                    "right wall-top connection must stay open at y=" + y);
         }
         for (int y = 1; y <= 3; y++) {
             assertFalse(hasTemplateBlockAt(blocks, 2, y, 0),
                     "front doorway must stay open at y=" + y);
+            assertFalse(hasTemplateBlockAt(blocks, 2, y, 4),
+                    "back doorway must stay open at y=" + y);
+            assertFalse(hasTemplateBlockAt(blocks, 0, y, 2),
+                    "left wall connection doorway must stay open at y=" + y);
+            assertFalse(hasTemplateBlockAt(blocks, 4, y, 2),
+                    "right wall connection doorway must stay open at y=" + y);
         }
-        for (int y = 1; y <= 10; y++) {
+        for (int y = 1; y <= 13; y++) {
             assertEquals(ladderState, templateStateAt(blocks, 2, y, 3),
                     "straight climb access must be continuous at y=" + y);
         }
+    }
+
+    @Test
+    void gatehouseTemplateUsesCompactStoneCappedOpening() throws Exception {
+        Path dir = Files.createTempDirectory("city-wall-gatehouse-template-test");
+        CityWallTemplateLibrary.writeTemplates(dir);
+
+        CompoundTag gatehouse = NbtIo.readCompressed(dir.resolve("gatehouse_9.nbt").toFile());
+        int stoneBricks = paletteState(gatehouse, "minecraft:stone_bricks");
+        int oakFence = paletteState(gatehouse, "minecraft:oak_fence");
+        ListTag blocks = gatehouse.getList("blocks", 10);
+
+        assertEquals(oakFence, templateStateAt(blocks, 3, 1, 3));
+        assertFalse(hasTemplateBlockAt(blocks, 4, 1, 3));
+        assertEquals(oakFence, templateStateAt(blocks, 5, 1, 3));
+        assertEquals(stoneBricks, templateStateAt(blocks, 4, 5, 3));
+        assertEquals(stoneBricks, templateStateAt(blocks, 4, 6, 3));
+    }
+
+    @Test
+    void wallBackendFoundationDepthUsesOriginalV5SurfaceHeight() throws Exception {
+        Method depth = Class.forName("com.rinsing.geomantia.systems.city.infrastructure.world.CityWallPlacementBackend")
+                .getDeclaredMethod("foundationDepth", int.class, int.class, int.class);
+        depth.setAccessible(true);
+
+        assertEquals(3, ((Number) depth.invoke(null, 70, 67, 64)).intValue());
+        assertEquals(0, ((Number) depth.invoke(null, 70, 71, 64)).intValue());
+        assertEquals(2, ((Number) depth.invoke(null, 70, 60, 2)).intValue());
     }
 
     @Test
@@ -1747,7 +1796,9 @@ final class CityStructureLandingFlowTest {
                     {"nodeSlotId": "node_0", "nodeType": "beacon_tower", "templateId": "beacon_5x5",
                      "blockBounds": {"minX": -34, "minZ": -66, "maxX": -30, "maxZ": -62}},
                     {"nodeSlotId": "node_1", "nodeType": "corner_tower", "templateId": "watchtower_5x5",
-                     "blockBounds": {"minX": 62, "minZ": -66, "maxX": 66, "maxZ": -62}}
+                     "blockBounds": {"minX": 62, "minZ": -66, "maxX": 66, "maxZ": -62}},
+                    {"nodeSlotId": "node_2", "nodeType": "beacon_tower", "templateId": "beacon_5x5",
+                     "blockBounds": {"minX": 62, "minZ": 30, "maxX": 66, "maxZ": 34}}
                   ]
                 }
                 """).getAsJsonObject();
@@ -1923,6 +1974,26 @@ final class CityStructureLandingFlowTest {
 
     private static boolean hasTemplateBlockAt(ListTag blocks, int x, int y, int z) {
         return templateStateAt(blocks, x, y, z) >= 0;
+    }
+
+    private static String wallNodeAxis(JsonObject wallPlan, String sourceNodeSlotId) {
+        for (com.google.gson.JsonElement elem : wallPlan.getAsJsonArray("wallNodes")) {
+            JsonObject node = elem.getAsJsonObject();
+            if (sourceNodeSlotId.equals(node.get("sourceNodeSlotId").getAsString())) {
+                return node.get("wallAxis").getAsString();
+            }
+        }
+        return "";
+    }
+
+    private static int paletteState(CompoundTag template, String blockName) {
+        ListTag palette = template.getList("palette", 10);
+        for (int i = 0; i < palette.size(); i++) {
+            if (blockName.equals(palette.getCompound(i).getString("Name"))) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     private static int templateStateAt(ListTag blocks, int x, int y, int z) {

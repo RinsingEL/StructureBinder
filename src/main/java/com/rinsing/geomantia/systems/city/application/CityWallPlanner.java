@@ -724,6 +724,7 @@ public final class CityWallPlanner {
                     "surface_cache_1_block_median_at_execute");
             node.addProperty("sourceNodeSlotId", stringValue(slot, "nodeSlotId", ""));
             node.addProperty("reasonCode", stringValue(slot, "reasonCode", "D5_V5_WALL_NODE_SLOT"));
+            node.addProperty("wallAxis", wallAxisForNode(bounds, line));
             wallNodes.add(node);
         }
 
@@ -1334,6 +1335,34 @@ public final class CityWallPlanner {
 
     private static String wallAxis(BlockBounds bounds) {
         return bounds.widthBlocks() >= bounds.heightBlocks() ? "X" : "Z";
+    }
+
+    private static String wallAxisForNode(BlockBounds nodeBounds, JsonArray wallLine) {
+        String fallback = wallAxis(nodeBounds);
+        int bestDistance = Integer.MAX_VALUE;
+        String bestAxis = fallback;
+        for (JsonElement elem : wallLine) {
+            if (!elem.isJsonObject() || !elem.getAsJsonObject().has("blockBounds")) {
+                continue;
+            }
+            BlockBounds lineBounds = bounds(elem.getAsJsonObject().getAsJsonObject("blockBounds"));
+            int distance = distanceBetweenBounds(nodeBounds, lineBounds);
+            if (distance < bestDistance) {
+                bestDistance = distance;
+                bestAxis = wallAxis(lineBounds);
+            }
+        }
+        return bestAxis;
+    }
+
+    private static int distanceBetweenBounds(BlockBounds a, BlockBounds b) {
+        int dx = a.maxX() < b.minX()
+                ? b.minX() - a.maxX()
+                : b.maxX() < a.minX() ? a.minX() - b.maxX() : 0;
+        int dz = a.maxZ() < b.minZ()
+                ? b.minZ() - a.maxZ()
+                : b.maxZ() < a.minZ() ? a.minZ() - b.maxZ() : 0;
+        return dx + dz;
     }
 
     private static BlockBounds unionPlaced(JsonObject ledger) {

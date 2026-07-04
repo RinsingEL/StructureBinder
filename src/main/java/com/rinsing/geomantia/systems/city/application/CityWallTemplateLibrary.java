@@ -27,7 +27,7 @@ public final class CityWallTemplateLibrary {
                 "square stone buttress tower"));
         templates.add(template("watchtower_5x5", 5, 5, 12,
                 "usable 5x5 watchtower with hollow interior"));
-        templates.add(template("beacon_5x5", 5, 5, 13,
+        templates.add(template("beacon_5x5", 5, 5, 16,
                 "usable 5x5 beacon tower node with hollow center and straight climb access"));
         templates.add(template("wall_gap_gate_7", 7, 5, 1,
                 "temporary empty gate gap"));
@@ -74,6 +74,7 @@ public final class CityWallTemplateLibrary {
         palette.addProperty("battlement", "minecraft:stone_brick_wall");
         palette.addProperty("walkway", "minecraft:stone_brick_slab");
         palette.addProperty("climbAccess", "minecraft:ladder");
+        palette.addProperty("gateOpeningFence", "minecraft:oak_fence");
         obj.add("palette", palette);
         return obj;
     }
@@ -118,17 +119,20 @@ public final class CityWallTemplateLibrary {
         for (int x = 0; x < 5; x++) {
             for (int z = 0; z < 5; z++) {
                 boolean edge = x == 0 || x == 4 || z == 0 || z == 4;
-                boolean doorway = x == 2 && z == 0;
-                for (int y = 0; y < 13; y++) {
+                boolean doorway = beaconDoorway(x, z);
+                boolean wallPassage = beaconTemplateWallPassage(x, z);
+                for (int y = 0; y < 16; y++) {
                     int accessState = beaconAccessState(x, y, z);
                     int state = -1;
-                    if (doorway && y >= 1 && y <= 3) {
+                    if (wallPassage && y == 7) {
+                        state = 1;
+                    } else if ((doorway && y >= 1 && y <= 3) || (wallPassage && y >= 8 && y <= 11)) {
                         state = -1;
                     } else if (accessState >= 0) {
                         state = accessState;
                     } else if (edge) {
                         state = y == 0 ? 0 : beaconEdgeState(x, y, z);
-                    } else if (y == 0 || (y == 10 && !beaconTopOpening(x, z))) {
+                    } else if (y == 0 || (y == 13 && !beaconTopOpening(x, z))) {
                         state = 1;
                     }
                     if (state >= 0) {
@@ -137,7 +141,7 @@ public final class CityWallTemplateLibrary {
                 }
             }
         }
-        writeTemplate(path, 5, 13, 5, blocks);
+        writeTemplate(path, 5, 16, 5, blocks);
     }
 
     private static void writeEmptyNbt(Path path, int width, int height, int depth) throws IOException {
@@ -147,21 +151,27 @@ public final class CityWallTemplateLibrary {
     private static void writeGatehouseNbt(Path path, int width) throws IOException {
         ListTag blocks = new ListTag();
         int center = width / 2;
-        int halfOpening = width >= 13 ? 3 : 2;
+        int openingWidth = gatehouseOpeningWidth(width);
+        int openingMin = center - openingWidth / 2;
+        int openingMax = openingMin + openingWidth - 1;
         for (int x = 0; x < width; x++) {
             for (int z = 0; z < 7; z++) {
-                boolean opening = Math.abs(x - center) <= halfOpening;
+                boolean opening = x >= openingMin && x <= openingMax;
+                boolean openingFence = opening && (x == openingMin || x == openingMax);
+                boolean openingAir = opening && !openingFence;
                 boolean pier = !opening && (x <= 2 || x >= width - 3);
                 for (int y = 0; y < 9; y++) {
                     int state = -1;
-                    if (opening && y <= 4) {
+                    if (openingAir && y <= 4) {
                         state = -1;
+                    } else if (openingAir && (y == 5 || y == 6)) {
+                        state = 1;
+                    } else if (openingFence) {
+                        state = y <= 4 ? 9 : y <= 6 ? 1 : -1;
                     } else if (pier) {
                         state = y >= 7 ? 3 : 1;
                     } else if (!opening && (y <= 5 || y >= 7)) {
                         state = 1;
-                    } else if (opening && (y == 5 || y == 6)) {
-                        state = 7;
                     }
                     if (state >= 0) {
                         addBlock(blocks, x, y, z, state);
@@ -203,14 +213,22 @@ public final class CityWallTemplateLibrary {
     }
 
     private static int beaconEdgeState(int x, int y, int z) {
-        if (y == 11) {
+        if (y == 14) {
             return 3;
         }
         boolean corner = (x == 0 || x == 4) && (z == 0 || z == 4);
-        if (y == 12) {
+        if (y == 15) {
             return corner || Math.floorMod(x + z, 2) == 0 ? 3 : -1;
         }
         return weatheredStoneState(x, y, z);
+    }
+
+    private static boolean beaconDoorway(int x, int z) {
+        return (x == 2 && (z == 0 || z == 4)) || (z == 2 && (x == 0 || x == 4));
+    }
+
+    private static boolean beaconTemplateWallPassage(int x, int z) {
+        return z == 2;
     }
 
     private static boolean beaconTopOpening(int x, int z) {
@@ -218,7 +236,17 @@ public final class CityWallTemplateLibrary {
     }
 
     private static int beaconAccessState(int x, int y, int z) {
-        return x == 2 && z == 3 && y >= 1 && y <= 10 ? 8 : -1;
+        return x == 2 && z == 3 && y >= 1 && y <= 13 ? 8 : -1;
+    }
+
+    private static int gatehouseOpeningWidth(int alongLength) {
+        int length = Math.max(3, alongLength);
+        int width = Math.max(3, (length + 1) / 3);
+        if (width % 2 == 0) {
+            width++;
+        }
+        int maxWidth = Math.max(3, length - 2);
+        return Math.min(width, maxWidth);
     }
 
     private static void writeTemplate(Path path, int width, int height, int depth, ListTag blocks) throws IOException {
@@ -242,6 +270,7 @@ public final class CityWallTemplateLibrary {
         palette.add(state("minecraft:cracked_stone_bricks"));
         palette.add(state("minecraft:oak_planks"));
         palette.add(ladderState("minecraft:ladder", "north"));
+        palette.add(state("minecraft:oak_fence"));
         return palette;
     }
 
