@@ -301,6 +301,33 @@ export const realmTools: ToolDefinition[] = [
     },
   },
   {
+    name: "city_plan_d4_structure_cluster_groups",
+    description: "City D4 结构群整组候选：提交 DesignSlotPlan，一次生成多组完整 slot 落脚方案；预览图中一种颜色代表一整组，bbox 默认不画在主图里。每组含 expandedStructureAnchorPlan，可整组选中后进入标准 D4。",
+    inputSchema: {
+      type: "object",
+      properties: {
+        runId: { type: "string", description: "已有 W/T run ID。" },
+        citySeedId: { type: "string", description: "目标城市种子的 citySeedId。" },
+        terrasenseProfileSource: {
+          type: "object",
+          description: "schemaVersion=terrasense_structure_profile_source.v0.1；sourceType=structure_profile_jsonl 或 debug_catalog。",
+        },
+        designSlotPlan: {
+          type: "object",
+          description: "schemaVersion=city_d4_design_slot_plan.v0.1；placementOrder 与 slots[]，slot 含 slotId、displayRole、candidatePatchRefs、structureId 或 structureIds、relationHints。",
+        },
+        structureEnvelopeFactsSource: {
+          type: "object",
+          description: "可选；factsPath 指向 structure_envelope_facts.json。未传时读取当前 run/city 默认产物。",
+        },
+        groupCount: { type: "number", description: "可选；返回完整候选组数量，默认 5。" },
+        candidatesPerSlot: { type: "number", description: "可选；每个 slot 用于 beam 扩展的候选数，默认 5。" },
+        beamWidth: { type: "number", description: "可选；beam search 保留的 partial group 数，默认 groupCount*candidatesPerSlot。" },
+      },
+      required: ["runId", "citySeedId", "terrasenseProfileSource", "designSlotPlan"],
+    },
+  },
+  {
     name: "city_select_d4_candidates",
     description: "City D4 候选选择：读取 anchor_candidate_set，提交 AnchorSelectionPlan，生成标准 StructureAnchorPlan/StructureAnchorMap，并继续复用 D5-D7 主链。",
     inputSchema: {
@@ -326,6 +353,34 @@ export const realmTools: ToolDefinition[] = [
         },
       },
       required: ["runId", "citySeedId", "terrasenseProfileSource", "anchorSelectionPlan"],
+    },
+  },
+  {
+    name: "city_select_d4_structure_cluster_group",
+    description: "City D4 结构群整组选中：按 groupCandidateId 从 structure_cluster_group_candidate_set.json 选中一整组，展开为标准 StructureAnchorPlan/StructureAnchorMap，后续 D5-D7 不需要特殊分支。",
+    inputSchema: {
+      type: "object",
+      properties: {
+        runId: { type: "string", description: "已有 W/T run ID。" },
+        citySeedId: { type: "string", description: "目标城市种子的 citySeedId。" },
+        terrasenseProfileSource: {
+          type: "object",
+          description: "schemaVersion=terrasense_structure_profile_source.v0.1；sourceType=structure_profile_jsonl 或 debug_catalog。",
+        },
+        groupCandidateId: {
+          type: "string",
+          description: "来自 city_plan_d4_structure_cluster_groups 返回的 groupCandidateId。",
+        },
+        structureClusterGroupCandidateSetSource: {
+          type: "object",
+          description: "可选；candidateSetPath 或 structureClusterGroupCandidateSetPath 指向 structure_cluster_group_candidate_set.json。未传时读取当前 run/city 默认产物。",
+        },
+        structureEnvelopeFactsSource: {
+          type: "object",
+          description: "可选；factsPath 指向 structure_envelope_facts.json。未传时读取当前 run/city 默认产物。",
+        },
+      },
+      required: ["runId", "citySeedId", "terrasenseProfileSource", "groupCandidateId"],
     },
   },
   {
@@ -566,7 +621,7 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "city_run_workflow",
-    description: "City 快速验收 workflow：串联 D3 -> envelope profiling -> D4 v2 顺序候选自动选择 -> D5 -> D6 -> execute_d5 -> D7 ledger 检查，并可选规划/执行城墙；每步写时间戳、耗时、失败原因。遇到 WAITING_FOR_WORLDGEN 会停住，加载区块后可用同一请求复跑并跳过已有 artifact。",
+    description: "City 快速验收 workflow：串联 D3 -> envelope profiling -> D4 -> D5 -> D6 -> execute_d5 -> D7 ledger 检查，并可选规划/执行城墙；默认 D4 key_then_array：关键结构逐个定锚，再按 array_fill 阵列填充。",
     inputSchema: {
       type: "object",
       properties: {
@@ -578,7 +633,7 @@ export const realmTools: ToolDefinition[] = [
         },
         designSlotPlan: {
           type: "object",
-          description: "D4 v2 设计 slot plan；首次创建 session 时需要。",
+          description: "D4 设计 slot plan；默认 key_then_array 模式下 slot 可设置 placementStrategy=key_structure|single_ai_selected|array_fill。array_fill 需要 arrayCount，可选 variantSelectionMode=seeded_random|weighted_random|round_robin。",
         },
         structureIds: {
           type: "array",
@@ -589,6 +644,14 @@ export const realmTools: ToolDefinition[] = [
           type: "object",
           description: "可选；factsPath 指向已有 structure_envelope_facts.json。",
         },
+        d4CandidateMode: {
+          type: "string",
+          enum: ["key_then_array", "sequential_session", "structure_cluster_groups"],
+          description: "D4 workflow 模式；默认 key_then_array，强制先处理 key_structure/single_ai_selected slot，再处理 array_fill slot；sequential_session 和 structure_cluster_groups 仅作显式调试/兼容路径。",
+        },
+        groupCount: { type: "number", description: "结构群整组候选数量，默认 5。" },
+        candidatesPerSlot: { type: "number", description: "结构群整组候选每个 slot 的扩展候选数，默认 5。" },
+        beamWidth: { type: "number", description: "结构群整组候选 beam width，默认 groupCount*candidatesPerSlot。" },
         sessionId: { type: "string", description: "可选 D4 sessionId。" },
         sampleCount: { type: "number", description: "每结构 envelope profiling 样本数，默认 256。" },
         cellStepBlocks: { type: "number", description: "D3 cell step，未传则使用默认。" },

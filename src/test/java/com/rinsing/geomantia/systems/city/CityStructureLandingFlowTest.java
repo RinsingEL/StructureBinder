@@ -8,6 +8,7 @@ import com.rinsing.geomantia.systems.city.application.CityReservationMaskPlanner
 import com.rinsing.geomantia.systems.city.application.CityStructureAnchorPlanner;
 import com.rinsing.geomantia.systems.city.application.CityStructureAnchorCandidatePlanner;
 import com.rinsing.geomantia.systems.city.application.CityStructureArrayCandidatePlanner;
+import com.rinsing.geomantia.systems.city.application.CityStructureClusterGroupCandidatePlanner;
 import com.rinsing.geomantia.systems.city.application.CityStructureEnvelopeFacts;
 import com.rinsing.geomantia.systems.city.application.CityStructureEnvelopeProfiler;
 import com.rinsing.geomantia.systems.city.application.CityStructureMaterializationPlanner;
@@ -398,6 +399,32 @@ final class CityStructureLandingFlowTest {
         assertEquals(10, firstGroup.getAsJsonObject("expandedStructureAnchorPlan")
                 .getAsJsonArray("anchors").size());
         assertGroupItemsDoNotOverlap(firstGroup);
+    }
+
+    @Test
+    void d4StructureClusterGroupPlannerBuildsFiveCompleteNonOverlappingGroups() throws Exception {
+        Fixture fixture = arrayFixture();
+        CityStructureClusterGroupCandidatePlanner.Result result =
+                new CityStructureClusterGroupCandidatePlanner()
+                        .plan(fixture.baseDir(), fixture.review(), fixture.terraSenseSource(),
+                                designSlotPlan(fixture.review()), CityStructureEnvelopeFacts.empty(),
+                                CityStructureClusterGroupCandidatePlanner.Options.defaults());
+
+        JsonObject candidateSet = result.structureClusterGroupCandidateSet();
+        assertTrue(result.asJson().get("ok").getAsBoolean());
+        assertEquals(CityStructureClusterGroupCandidatePlanner.CANDIDATE_SET_SCHEMA,
+                candidateSet.get("schemaVersion").getAsString());
+        assertEquals("structure_cluster_group_candidates",
+                candidateSet.get("planningMode").getAsString());
+        JsonArray groups = candidateSet.getAsJsonArray("groupCandidates");
+        assertEquals(5, groups.size());
+        for (JsonElement groupElem : groups) {
+            JsonObject group = groupElem.getAsJsonObject();
+            assertEquals(2, group.getAsJsonArray("items").size());
+            assertEquals(2, group.getAsJsonObject("expandedStructureAnchorPlan")
+                    .getAsJsonArray("anchors").size());
+            assertClusterGroupItemsDoNotOverlap(group);
+        }
     }
 
     @Test
@@ -2151,6 +2178,19 @@ final class CityStructureLandingFlowTest {
                 BlockBounds b = bounds(items.get(j).getAsJsonObject()
                         .getAsJsonObject("estimatedCollisionEnvelope"));
                 assertFalse(a.overlaps(b), "array items overlap: " + i + " / " + j);
+            }
+        }
+    }
+
+    private static void assertClusterGroupItemsDoNotOverlap(JsonObject group) {
+        JsonArray items = group.getAsJsonArray("items");
+        for (int i = 0; i < items.size(); i++) {
+            BlockBounds a = bounds(items.get(i).getAsJsonObject()
+                    .getAsJsonObject("estimatedSafetyEnvelope"));
+            for (int j = i + 1; j < items.size(); j++) {
+                BlockBounds b = bounds(items.get(j).getAsJsonObject()
+                        .getAsJsonObject("estimatedSafetyEnvelope"));
+                assertFalse(a.overlaps(b), "cluster group items overlap: " + i + " / " + j);
             }
         }
     }

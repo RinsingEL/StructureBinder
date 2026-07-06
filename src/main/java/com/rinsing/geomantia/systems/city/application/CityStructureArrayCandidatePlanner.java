@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.SplittableRandom;
 
 public final class CityStructureArrayCandidatePlanner {
     public static final String PLAN_SCHEMA = "city_d4_array_candidate_plan.v0.1";
@@ -156,7 +157,7 @@ public final class CityStructureArrayCandidatePlanner {
         int pointCursor = 0;
 
         for (int itemIndex = 0; itemIndex < arrayCount; itemIndex++) {
-            String structureId = structureIds.get(itemIndex % structureIds.size());
+            String structureId = structureIdForItem(plan, pattern, candidateIndex, itemIndex + 1, structureIds);
             CityStructureProfileCatalog.StructureProfile profile = profiles.get(structureId);
             JsonObject itemOptions = plan.deepCopy();
             itemOptions.addProperty("rotation", "NONE");
@@ -269,6 +270,7 @@ public final class CityStructureArrayCandidatePlanner {
         obj.add("anchorBlock", point.asJson());
         obj.add("roadPoint", point.asJson());
         obj.addProperty("rotation", "NONE");
+        obj.addProperty("variantSelectionMode", variantSelectionMode(plan));
         obj.add("sourcePatchRefs", patchRefs(patch));
         obj.add("plannedFootprint", CityStructureCandidateEnvelope.boundsJson(estimate.plannedFootprint()));
         obj.add("estimatedCollisionEnvelope",
@@ -300,6 +302,7 @@ public final class CityStructureArrayCandidatePlanner {
         anchor.add("sourcePatchIds", patchRefs(patch));
         anchor.add("anchorBlock", point.asJson());
         anchor.addProperty("rotation", "NONE");
+        anchor.addProperty("variantSelectionMode", variantSelectionMode(plan));
         anchor.add("intentTerms", intentTerms(arrayId, stringValue(plan, "displayRole", arrayId), pattern));
         anchor.addProperty("priority", intValue(plan, "priority", 100) + itemIndex);
         anchor.addProperty("roadAccessIntent", "array_connect_deferred_to_d7");
@@ -427,6 +430,61 @@ public final class CityStructureArrayCandidatePlanner {
             }
         }
         return max;
+    }
+
+    private static String structureIdForItem(JsonObject plan,
+                                             String pattern,
+                                             int candidateIndex,
+                                             int itemIndex,
+                                             List<String> structureIds) {
+        if (structureIds.isEmpty()) {
+            return "";
+        }
+        String mode = variantSelectionMode(plan);
+        if (!"seeded_random".equals(mode) && !"weighted_random".equals(mode) && !"random".equals(mode)) {
+            return structureIds.get((itemIndex - 1) % structureIds.size());
+        }
+        double totalWeight = 0.0;
+        List<Double> weights = new ArrayList<>();
+        JsonObject configuredWeights = optionalObject(plan, "structureWeights");
+        for (String structureId : structureIds) {
+            double weight = doubleValue(configuredWeights, structureId, 1.0);
+            weight = weight > 0.0 ? weight : 0.0;
+            weights.add(weight);
+            totalWeight += weight;
+        }
+        if (totalWeight <= 0.0) {
+            return structureIds.get((itemIndex - 1) % structureIds.size());
+        }
+        String arrayId = requiredString(plan, "arrayId");
+        long seed = stableSeed(stringValue(plan, "variantSeed", "")
+                + ":" + arrayId + ":" + pattern + ":" + candidateIndex + ":" + itemIndex);
+        double pick = new SplittableRandom(seed).nextDouble(totalWeight);
+        double cursor = 0.0;
+        for (int i = 0; i < structureIds.size(); i++) {
+            cursor += weights.get(i);
+            if (pick < cursor) {
+                return structureIds.get(i);
+            }
+        }
+        return structureIds.get(structureIds.size() - 1);
+    }
+
+    private static String variantSelectionMode(JsonObject plan) {
+        String mode = stringValue(plan, "variantSelectionMode",
+                stringValue(plan, "selectionMode", "round_robin"));
+        if ("weighted_random".equals(mode) || "seeded_random".equals(mode) || "random".equals(mode)) {
+            return mode;
+        }
+        return "round_robin";
+    }
+
+    private static long stableSeed(String value) {
+        long hash = 1125899906842597L;
+        for (int i = 0; i < value.length(); i++) {
+            hash = 31 * hash + value.charAt(i);
+        }
+        return hash;
     }
 
     private static JsonObject score(String pattern,
@@ -664,6 +722,11 @@ public final class CityStructureArrayCandidatePlanner {
         return obj != null && obj.has(key) && obj.get(key).isJsonArray() ? obj.getAsJsonArray(key) : new JsonArray();
     }
 
+    private static JsonObject optionalObject(JsonObject obj, String key) {
+        return obj != null && obj.has(key) && obj.get(key).isJsonObject()
+                ? obj.getAsJsonObject(key) : new JsonObject();
+    }
+
     private static String requiredString(JsonObject obj, String key) {
         String value = stringValue(obj, key, "");
         if (value.isBlank()) {
@@ -678,6 +741,10 @@ public final class CityStructureArrayCandidatePlanner {
 
     private static int intValue(JsonObject obj, String key, int defaultValue) {
         return obj != null && obj.has(key) && !obj.get(key).isJsonNull() ? obj.get(key).getAsInt() : defaultValue;
+    }
+
+    private static double doubleValue(JsonObject obj, String key, double defaultValue) {
+        return obj != null && obj.has(key) && !obj.get(key).isJsonNull() ? obj.get(key).getAsDouble() : defaultValue;
     }
 
     private static List<String> strings(JsonArray array) {

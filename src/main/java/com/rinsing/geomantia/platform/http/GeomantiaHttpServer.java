@@ -59,7 +59,9 @@ public final class GeomantiaHttpServer {
             httpServer.createContext("/realm/city/profile_structure_envelopes", realmController::handleCityProfileStructureEnvelopes);
             httpServer.createContext("/realm/city/plan_d4_candidates", realmController::handleCityPlanD4Candidates);
             httpServer.createContext("/realm/city/plan_d4_array_candidates", realmController::handleCityPlanD4ArrayCandidates);
+            httpServer.createContext("/realm/city/plan_d4_structure_cluster_groups", realmController::handleCityPlanD4StructureClusterGroups);
             httpServer.createContext("/realm/city/select_d4_candidates", realmController::handleCitySelectD4Candidates);
+            httpServer.createContext("/realm/city/select_d4_structure_cluster_group", realmController::handleCitySelectD4StructureClusterGroup);
             httpServer.createContext("/realm/city/create_d4_candidate_session", realmController::handleCityCreateD4CandidateSession);
             httpServer.createContext("/realm/city/plan_d4_next_candidates", realmController::handleCityPlanD4NextCandidates);
             httpServer.createContext("/realm/city/select_d4_candidate", realmController::handleCitySelectD4Candidate);

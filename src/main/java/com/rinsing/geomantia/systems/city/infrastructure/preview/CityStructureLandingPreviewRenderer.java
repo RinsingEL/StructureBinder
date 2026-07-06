@@ -22,6 +22,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public final class CityStructureLandingPreviewRenderer {
@@ -69,6 +71,32 @@ public final class CityStructureLandingPreviewRenderer {
         return path;
     }
 
+    public Path renderD4SlotCandidateDebugOverview(JsonObject candidateSet, CityLandformReviewPackage reviewPackage,
+                                                   Path outputDirectory) throws IOException {
+        Files.createDirectories(outputDirectory);
+        Path path = outputDirectory.resolve("structure_slot_candidate_debug_overview.png");
+        BufferedImage image = baseImage();
+        Graphics2D g = image.createGraphics();
+        try {
+            setup(g);
+            BlockBounds gridBounds = gridBounds(candidateSet);
+            Transform t = transform(gridBounds);
+            Map<String, Integer> slotIndexes = slotIndexes(candidateSet);
+            drawPatchBackdrop(g, t, gridBounds, reviewPackage);
+            drawGrid(g, t, gridBounds);
+            drawClusterRelationshipLines(g, t, candidateSet, slotIndexes);
+            drawClusterSelectedAnchors(g, t, candidateSet, slotIndexes);
+            drawClusterCandidates(g, t, candidateSet, slotIndexes);
+            title(g, "City D4 slot candidate debug overview",
+                    "debug only; same-slot color; filled=selected; hollow=current candidates; red dashed=overlap; AUTO=top candidate");
+            clusterCandidateSummary(g, candidateSet, slotIndexes);
+        } finally {
+            g.dispose();
+        }
+        ImageIO.write(image, "png", path.toFile());
+        return path;
+    }
+
     public Path renderD4Candidates(JsonObject candidateSet, Path outputDirectory) throws IOException {
         return renderD4Candidates(candidateSet, null, outputDirectory);
     }
@@ -108,6 +136,49 @@ public final class CityStructureLandingPreviewRenderer {
                     "patch backdrop + blue=frozen selected C*=current candidates red=collision orange=mask gray=safety candidates="
                             + candidateCount(candidateSet));
             candidateSummary(g, candidateSet);
+        } finally {
+            g.dispose();
+        }
+        ImageIO.write(image, "png", path.toFile());
+        return path;
+    }
+
+    public Path renderD4StructureClusterGroupCandidates(JsonObject candidateSet,
+                                                        CityLandformReviewPackage reviewPackage,
+                                                        Path outputDirectory) throws IOException {
+        Files.createDirectories(outputDirectory);
+        Path path = outputDirectory.resolve("structure_cluster_group_candidates.png");
+        BufferedImage image = baseImage();
+        Graphics2D g = image.createGraphics();
+        try {
+            setup(g);
+            BlockBounds gridBounds = gridBounds(candidateSet);
+            Transform t = transform(gridBounds);
+            drawPatchBackdrop(g, t, gridBounds, reviewPackage);
+            drawGrid(g, t, gridBounds);
+            int groupIndex = 0;
+            for (JsonElement groupElem : array(candidateSet, "groupCandidates")) {
+                if (!groupElem.isJsonObject()) {
+                    continue;
+                }
+                groupIndex++;
+                JsonObject group = groupElem.getAsJsonObject();
+                Color groupColor = color(groupIndex, 235);
+                drawStructureClusterGroupRelations(g, t, candidateSet, group, groupColor);
+                for (JsonElement itemElem : array(group, "items")) {
+                    if (!itemElem.isJsonObject()) {
+                        continue;
+                    }
+                    JsonObject item = itemElem.getAsJsonObject();
+                    BlockPoint anchor = point(item, "anchorBlock");
+                    drawPoint(g, t, anchor, groupColor);
+                    drawBadge(g, t, anchor, slotLabel(item), groupColor);
+                }
+            }
+            title(g, "City D4 structure cluster group candidates",
+                    "same color = one complete group; labels = structure slots; bbox hidden from main preview; groups="
+                            + array(candidateSet, "groupCandidates").size());
+            structureClusterGroupSummary(g, candidateSet);
         } finally {
             g.dispose();
         }
@@ -417,6 +488,303 @@ public final class CityStructureLandingPreviewRenderer {
         }
     }
 
+    private static void drawClusterRelationshipLines(Graphics2D g, Transform t, JsonObject candidateSet,
+                                                     Map<String, Integer> slotIndexes) {
+        Map<String, BlockPoint> selectedCenters = selectedSlotCenters(candidateSet);
+        for (JsonElement slotElem : array(object(candidateSet, "sourceDesignSlotPlan"), "slots")) {
+            if (!slotElem.isJsonObject()) {
+                continue;
+            }
+            JsonObject slot = slotElem.getAsJsonObject();
+            String slotId = string(slot, "slotId");
+            BlockPoint source = selectedCenters.get(slotId);
+            if (source == null) {
+                continue;
+            }
+            Color color = slotColor(slotId, slotIndexes, 105);
+            for (JsonElement hintElem : array(slot, "relationHints")) {
+                JsonObject hint = hintElem.getAsJsonObject();
+                BlockPoint target = selectedCenters.get(string(hint, "targetSlotId"));
+                if (target != null) {
+                    drawLine(g, t, source, target, color, 1.0f, false);
+                }
+            }
+        }
+
+        for (JsonElement slotElem : array(candidateSet, "slotCandidates")) {
+            if (!slotElem.isJsonObject()) {
+                continue;
+            }
+            JsonObject slot = slotElem.getAsJsonObject();
+            JsonObject designSlot = designSlot(candidateSet, string(slot, "slotId"));
+            Color color = slotColor(string(slot, "slotId"), slotIndexes, 85);
+            for (JsonElement candElem : array(slot, "candidates")) {
+                JsonObject candidate = candElem.getAsJsonObject();
+                BlockPoint source = point(candidate, "anchorBlock");
+                for (JsonElement hintElem : array(designSlot, "relationHints")) {
+                    JsonObject hint = hintElem.getAsJsonObject();
+                    BlockPoint target = selectedCenters.get(string(hint, "targetSlotId"));
+                    if (target != null) {
+                        drawLine(g, t, source, target, color, 0.8f, true);
+                    }
+                }
+            }
+        }
+    }
+
+    private static void drawClusterSelectedAnchors(Graphics2D g, Transform t, JsonObject candidateSet,
+                                                  Map<String, Integer> slotIndexes) {
+        for (JsonElement elem : array(candidateSet, "occupiedEnvelopes")) {
+            if (!elem.isJsonObject()) {
+                continue;
+            }
+            JsonObject occupied = elem.getAsJsonObject();
+            String slotId = string(occupied, "sourceSlotId");
+            Color color = slotColor(slotId, slotIndexes, 42);
+            Color stroke = slotColor(slotId, slotIndexes, 145);
+            drawRect(g, t, bounds(occupied, "blockBounds"), color, stroke, 1.4f);
+        }
+
+        int index = 0;
+        for (JsonElement elem : array(candidateSet, "selectedAnchors")) {
+            if (!elem.isJsonObject()) {
+                continue;
+            }
+            index++;
+            JsonObject anchor = elem.getAsJsonObject();
+            String slotId = string(anchor, "slotId");
+            Color color = slotColor(slotId, slotIndexes, 122);
+            Color stroke = slotColor(slotId, slotIndexes, 235);
+            drawOptionalRect(g, t, anchor, "estimatedSafetyEnvelope", slotColor(slotId, slotIndexes, 26),
+                    slotColor(slotId, slotIndexes, 110), 1.0f);
+            drawOptionalRect(g, t, anchor, "estimatedCollisionEnvelope", color, stroke, 2.2f);
+            BlockPoint point = point(anchor, "anchorBlock");
+            drawPoint(g, t, point, stroke);
+            drawBadge(g, t, point, "S" + index, stroke);
+            drawLabel(g, t, point, trim(slotId, 18));
+        }
+    }
+
+    private static void drawClusterCandidates(Graphics2D g, Transform t, JsonObject candidateSet,
+                                              Map<String, Integer> slotIndexes) {
+        JsonArray occupied = array(candidateSet, "occupiedEnvelopes");
+        for (JsonElement slotElem : array(candidateSet, "slotCandidates")) {
+            if (!slotElem.isJsonObject()) {
+                continue;
+            }
+            JsonObject slot = slotElem.getAsJsonObject();
+            String slotId = string(slot, "slotId");
+            Color base = slotColor(slotId, slotIndexes, 235);
+            int candidateIndex = 0;
+            for (JsonElement candElem : array(slot, "candidates")) {
+                if (!candElem.isJsonObject()) {
+                    continue;
+                }
+                candidateIndex++;
+                JsonObject candidate = candElem.getAsJsonObject();
+                BlockBounds safety = bounds(candidate, "estimatedSafetyEnvelope");
+                boolean overlap = overlapsAny(safety, occupied);
+                boolean autoPick = candidateIndex == 1;
+                if (overlap) {
+                    drawDashedRect(g, t, safety, new Color(214, 70, 64, 34),
+                            new Color(196, 49, 44, 230), autoPick ? 3.0f : 2.0f);
+                } else {
+                    drawRect(g, t, safety, withAlpha(base, autoPick ? 34 : 18),
+                            withAlpha(base, autoPick ? 235 : 180), autoPick ? 2.8f : 1.7f);
+                }
+                drawOptionalRect(g, t, candidate, "estimatedCollisionEnvelope",
+                        overlap ? new Color(214, 70, 64, 44) : withAlpha(base, 58),
+                        overlap ? new Color(151, 34, 32, 210) : withAlpha(base.darker(), 210),
+                        autoPick ? 2.1f : 1.3f);
+                BlockPoint point = point(candidate, "anchorBlock");
+                drawPoint(g, t, point, overlap ? new Color(214, 70, 64, 235) : base);
+                String label = candidateOrdinal(candidate, candidateIndex);
+                drawBadge(g, t, point, autoPick ? "AUTO " + label : label,
+                        overlap ? new Color(214, 70, 64, 235) : base);
+            }
+        }
+    }
+
+    private static void clusterCandidateSummary(Graphics2D g, JsonObject candidateSet,
+                                                Map<String, Integer> slotIndexes) {
+        int x = 820;
+        int y = 90;
+        g.setColor(new Color(32, 34, 34));
+        g.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 14));
+        g.drawString("cluster overview", x, y);
+        y += 22;
+        g.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 11));
+        g.drawString("current=" + trim(string(candidateSet, "currentSlotId"), 42), x, y);
+        y += 16;
+        g.drawString("selected=" + array(candidateSet, "selectedAnchors").size()
+                + " occupied=" + array(candidateSet, "occupiedEnvelopes").size()
+                + " candidates=" + candidateCount(candidateSet), x, y);
+        y += 24;
+        y = legendRow(g, x, y, new Color(67, 112, 178, 235), "filled selected footprint");
+        y = legendRow(g, x, y, new Color(61, 151, 113, 235), "hollow current candidate");
+        y = legendRow(g, x, y, new Color(214, 70, 64, 235), "red dashed overlap risk");
+        y += 10;
+
+        JsonArray occupied = array(candidateSet, "occupiedEnvelopes");
+        for (JsonElement slotElem : array(candidateSet, "slotCandidates")) {
+            if (!slotElem.isJsonObject() || y > HEIGHT - 70) {
+                break;
+            }
+            JsonObject slot = slotElem.getAsJsonObject();
+            String slotId = string(slot, "slotId");
+            Color color = slotColor(slotId, slotIndexes, 235);
+            y = legendRow(g, x, y, color, trim(slotId + " " + string(slot, "displayRole"), 46));
+            int candidateIndex = 0;
+            for (JsonElement candElem : array(slot, "candidates")) {
+                if (!candElem.isJsonObject() || y > HEIGHT - 45) {
+                    break;
+                }
+                candidateIndex++;
+                JsonObject candidate = candElem.getAsJsonObject();
+                String score = object(candidate, "scoreBreakdown").has("total")
+                        ? String.format(java.util.Locale.ROOT, "%.2f",
+                        object(candidate, "scoreBreakdown").get("total").getAsDouble())
+                        : "";
+                boolean overlap = overlapsAny(bounds(candidate, "estimatedSafetyEnvelope"), occupied);
+                g.setColor(overlap ? new Color(168, 42, 38) : new Color(32, 34, 34));
+                g.drawString("  " + (candidateIndex == 1 ? "AUTO " : "     ")
+                        + candidateOrdinal(candidate, candidateIndex)
+                        + " " + score + " " + (overlap ? "overlap " : "")
+                        + trim(string(candidate, "candidateId"), 26), x, y);
+                y += 15;
+            }
+            y += 4;
+        }
+    }
+
+    private static int legendRow(Graphics2D g, int x, int y, Color color, String text) {
+        g.setColor(withAlpha(color, 120));
+        g.fillRect(x, y - 10, 13, 10);
+        g.setColor(color);
+        g.drawRect(x, y - 10, 13, 10);
+        g.setColor(new Color(32, 34, 34));
+        g.drawString(text, x + 20, y);
+        return y + 16;
+    }
+
+    private static Map<String, Integer> slotIndexes(JsonObject candidateSet) {
+        Map<String, Integer> indexes = new LinkedHashMap<>();
+        int index = 0;
+        for (JsonElement elem : array(object(candidateSet, "sourceDesignSlotPlan"), "placementOrder")) {
+            String slotId = elem.isJsonPrimitive() ? elem.getAsString() : "";
+            if (!slotId.isBlank() && !indexes.containsKey(slotId)) {
+                indexes.put(slotId, index++);
+            }
+        }
+        for (JsonElement elem : array(candidateSet, "selectedAnchors")) {
+            if (elem.isJsonObject()) {
+                String slotId = string(elem.getAsJsonObject(), "slotId");
+                if (!slotId.isBlank() && !indexes.containsKey(slotId)) {
+                    indexes.put(slotId, index++);
+                }
+            }
+        }
+        for (JsonElement elem : array(candidateSet, "slotCandidates")) {
+            if (elem.isJsonObject()) {
+                String slotId = string(elem.getAsJsonObject(), "slotId");
+                if (!slotId.isBlank() && !indexes.containsKey(slotId)) {
+                    indexes.put(slotId, index++);
+                }
+            }
+        }
+        return indexes;
+    }
+
+    private static Map<String, BlockPoint> selectedSlotCenters(JsonObject candidateSet) {
+        Map<String, BlockPoint> result = new HashMap<>();
+        for (JsonElement elem : array(candidateSet, "selectedAnchors")) {
+            if (elem.isJsonObject()) {
+                JsonObject anchor = elem.getAsJsonObject();
+                result.put(string(anchor, "slotId"), point(anchor, "anchorBlock"));
+            }
+        }
+        return result;
+    }
+
+    private static JsonObject designSlot(JsonObject candidateSet, String slotId) {
+        for (JsonElement elem : array(object(candidateSet, "sourceDesignSlotPlan"), "slots")) {
+            if (elem.isJsonObject()) {
+                JsonObject slot = elem.getAsJsonObject();
+                if (slotId.equals(string(slot, "slotId"))) {
+                    return slot;
+                }
+            }
+        }
+        return new JsonObject();
+    }
+
+    private static boolean overlapsAny(BlockBounds bounds, JsonArray occupiedEnvelopes) {
+        for (JsonElement elem : occupiedEnvelopes) {
+            if (!elem.isJsonObject()) {
+                continue;
+            }
+            JsonObject occupied = elem.getAsJsonObject();
+            if (bounds.overlaps(bounds(occupied, "blockBounds"))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static void drawOptionalRect(Graphics2D g, Transform t, JsonObject obj, String key,
+                                         Color fill, Color stroke, float strokeWidth) {
+        if (obj == null || !obj.has(key) || !obj.get(key).isJsonObject()) {
+            return;
+        }
+        drawRect(g, t, bounds(obj, key), fill, stroke, strokeWidth);
+    }
+
+    private static void drawDashedRect(Graphics2D g, Transform t, BlockBounds bounds,
+                                       Color fill, Color stroke, float strokeWidth) {
+        g.setColor(fill);
+        fillBounds(g, t, bounds);
+        g.setColor(stroke);
+        g.setStroke(new BasicStroke(strokeWidth, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER,
+                10.0f, new float[]{7.0f, 5.0f}, 0.0f));
+        drawBounds(g, t, bounds);
+    }
+
+    private static void drawLine(Graphics2D g, Transform t, BlockPoint from, BlockPoint to,
+                                 Color color, float width, boolean dashed) {
+        g.setColor(color);
+        if (dashed) {
+            g.setStroke(new BasicStroke(width, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER,
+                    10.0f, new float[]{6.0f, 5.0f}, 0.0f));
+        } else {
+            g.setStroke(new BasicStroke(width));
+        }
+        g.drawLine(t.x(from.x()), t.z(from.z()), t.x(to.x()), t.z(to.z()));
+    }
+
+    private static Color slotColor(String slotId, Map<String, Integer> slotIndexes, int alpha) {
+        int index = slotIndexes.getOrDefault(slotId, Math.floorMod(slotId.hashCode(), 12));
+        return color(index + 1, alpha);
+    }
+
+    private static String candidateOrdinal(JsonObject candidate, int fallbackIndex) {
+        String id = string(candidate, "candidateId");
+        int underscore = id.lastIndexOf('_');
+        if (underscore >= 0 && underscore + 1 < id.length()) {
+            String suffix = id.substring(underscore + 1);
+            boolean numeric = true;
+            for (int i = 0; i < suffix.length(); i++) {
+                if (!Character.isDigit(suffix.charAt(i))) {
+                    numeric = false;
+                    break;
+                }
+            }
+            if (numeric) {
+                return suffix;
+            }
+        }
+        return "C" + fallbackIndex;
+    }
+
     private static void drawPoint(Graphics2D g, Transform t, BlockPoint point, Color color) {
         int x = t.x(point.x());
         int z = t.z(point.z());
@@ -519,6 +887,115 @@ public final class CityStructureLandingPreviewRenderer {
                     + " items=" + array(group, "items").size(), x, y);
             y += 18;
         }
+    }
+
+    private static void drawStructureClusterGroupRelations(Graphics2D g, Transform t, JsonObject candidateSet,
+                                                           JsonObject group, Color groupColor) {
+        Map<String, BlockPoint> pointsBySlot = new LinkedHashMap<>();
+        for (JsonElement itemElem : array(group, "items")) {
+            if (itemElem.isJsonObject()) {
+                JsonObject item = itemElem.getAsJsonObject();
+                pointsBySlot.put(string(item, "slotId"), point(item, "anchorBlock"));
+            }
+        }
+        boolean drewRelation = false;
+        for (JsonElement slotElem : array(object(candidateSet, "sourceDesignSlotPlan"), "slots")) {
+            if (!slotElem.isJsonObject()) {
+                continue;
+            }
+            JsonObject slot = slotElem.getAsJsonObject();
+            BlockPoint source = pointsBySlot.get(string(slot, "slotId"));
+            if (source == null) {
+                continue;
+            }
+            for (JsonElement hintElem : array(slot, "relationHints")) {
+                if (!hintElem.isJsonObject()) {
+                    continue;
+                }
+                BlockPoint target = pointsBySlot.get(string(hintElem.getAsJsonObject(), "targetSlotId"));
+                if (target != null) {
+                    drawLine(g, t, source, target, withAlpha(groupColor, 138), 1.2f, false);
+                    drewRelation = true;
+                }
+            }
+        }
+        if (drewRelation) {
+            return;
+        }
+        BlockPoint previous = null;
+        for (JsonElement itemElem : array(group, "items")) {
+            if (!itemElem.isJsonObject()) {
+                continue;
+            }
+            BlockPoint current = point(itemElem.getAsJsonObject(), "anchorBlock");
+            if (previous != null) {
+                drawLine(g, t, previous, current, withAlpha(groupColor, 96), 1.0f, true);
+            }
+            previous = current;
+        }
+    }
+
+    private static void structureClusterGroupSummary(Graphics2D g, JsonObject candidateSet) {
+        int x = 820;
+        int y = 90;
+        g.setColor(new Color(32, 34, 34));
+        g.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 14));
+        g.drawString("group candidate legend", x, y);
+        y += 22;
+        g.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 11));
+        g.drawString("bbox hidden; select one whole group", x, y);
+        y += 20;
+        int groupIndex = 0;
+        for (JsonElement groupElem : array(candidateSet, "groupCandidates")) {
+            if (!groupElem.isJsonObject() || y > HEIGHT - 70) {
+                break;
+            }
+            JsonObject group = groupElem.getAsJsonObject();
+            groupIndex++;
+            Color groupColor = color(groupIndex, 235);
+            String score = object(group, "scoreBreakdown").has("total")
+                    ? String.format(java.util.Locale.ROOT, "%.2f",
+                    object(group, "scoreBreakdown").get("total").getAsDouble())
+                    : "";
+            y = legendRow(g, x, y, groupColor, "G" + groupIndex + " score=" + score
+                    + " items=" + array(group, "items").size());
+            g.setColor(new Color(32, 34, 34));
+            g.drawString("  " + trim(string(group, "groupCandidateId"), 46), x, y);
+            y += 15;
+            String risks = risksText(array(group, "risks"));
+            if (!risks.isBlank()) {
+                g.drawString("  risks=" + trim(risks, 44), x, y);
+                y += 15;
+            }
+            y += 5;
+        }
+    }
+
+    private static String slotLabel(JsonObject item) {
+        String slotId = string(item, "slotId");
+        if (slotId.isBlank()) {
+            return "slot";
+        }
+        String[] parts = slotId.split("_");
+        String label = parts.length == 0 ? slotId : parts[0];
+        if ("residence".equals(label) && parts.length > 1) {
+            label = "res";
+        }
+        return trim(label, 8);
+    }
+
+    private static String risksText(JsonArray risks) {
+        StringBuilder builder = new StringBuilder();
+        for (JsonElement elem : risks) {
+            if (elem.isJsonNull()) {
+                continue;
+            }
+            if (!builder.isEmpty()) {
+                builder.append(",");
+            }
+            builder.append(elem.getAsString());
+        }
+        return builder.toString();
     }
 
     private static void sideSummary(Graphics2D g, JsonObject obj, String arrayKey) {

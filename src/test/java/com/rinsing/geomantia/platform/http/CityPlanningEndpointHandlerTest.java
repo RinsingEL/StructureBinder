@@ -255,6 +255,65 @@ class CityPlanningEndpointHandlerTest {
     }
 
     @Test
+    void handlePlanD4StructureClusterGroups_writesGroupArtifactsAndSelectsWholeGroup() throws Exception {
+        Path debugRoot = Files.createTempDirectory("city-d4-cluster-groups-test");
+        String runId = "run_d4_cluster_groups";
+        String citySeedId = "city_test";
+        Path runDir = debugRoot.resolve(runId);
+        Files.createDirectories(runDir);
+        Files.writeString(runDir.resolve("city_seed_registry.json"), """
+                {
+                  "citySeeds": [
+                    {
+                      "citySeedId": "city_test",
+                      "realmId": "realm_test",
+                      "role": "village",
+                      "theoreticalScale": "village",
+                      "anchorBlock": {"x": 0, "z": 0},
+                      "planningRadiusCells": 128,
+                      "candidateId": "candidate_test"
+                    }
+                  ]
+                }
+                """);
+
+        CityPlanningConfig config = CityPlanningConfig.defaults();
+        CitySiteContext context = new CitySiteContextBuilder(config).build(
+                "city_test", "realm_test", "overworld",
+                "city_test", "candidate_test", 0, 0,
+                "village", "village", 128, 4, null);
+        CityLandformReviewPackage review = new CityLandformReviewBuilder(config).build(context, List.of(
+                patch("plain_cluster", LandformType.PLAIN, -220, -220, 220, 220)));
+        Path d3Dir = runDir.resolve("city_d3_city_test");
+        Files.createDirectories(d3Dir);
+        Files.writeString(d3Dir.resolve("city_landform_review_package.json"),
+                CityJson.GSON.toJson(review.asJson()));
+
+        Path catalogPath = runDir.resolve("debug_structure_profile_catalog.json");
+        Files.writeString(catalogPath, debugStructureCatalog());
+        JsonObject planned = CityPlanningEndpointHandler.handlePlanD4StructureClusterGroups(
+                debugRoot, runId, citySeedId, terraSenseSource(catalogPath),
+                designSlotPlan(review), null, null, null, null);
+
+        assertTrue(planned.get("ok").getAsBoolean());
+        JsonObject artifacts = planned.getAsJsonObject("artifacts");
+        assertTrue(Files.exists(debugRoot.resolve(artifacts.get("structureClusterGroupCandidateSet").getAsString())));
+        assertTrue(Files.exists(debugRoot.resolve(artifacts.get("structureClusterGroupCandidatesPreview").getAsString())));
+        JsonObject firstGroup = planned.getAsJsonObject("structureClusterGroupCandidateSet")
+                .getAsJsonArray("groupCandidates").get(0).getAsJsonObject();
+        assertEquals(2, firstGroup.getAsJsonArray("items").size());
+
+        JsonObject selected = CityPlanningEndpointHandler.handleSelectD4StructureClusterGroup(
+                debugRoot, runId, citySeedId, terraSenseSource(catalogPath),
+                firstGroup.get("groupCandidateId").getAsString(), null, null);
+
+        assertTrue(selected.get("ok").getAsBoolean());
+        assertTrue(selected.getAsJsonObject("artifacts").has("sourceStructureClusterGroupCandidateSet"));
+        assertEquals(2, selected.getAsJsonObject("structureAnchorMap")
+                .getAsJsonArray("anchors").size());
+    }
+
+    @Test
     void handleD4CandidateSession_writesSequentialArtifactsAndFinalizesD4() throws Exception {
         Path debugRoot = Files.createTempDirectory("city-d4-session-test");
         String runId = "run_d4_session";
@@ -304,6 +363,7 @@ class CityPlanningEndpointHandlerTest {
         JsonObject next = CityPlanningEndpointHandler.handlePlanD4NextCandidates(
                 debugRoot, runId, citySeedId, null);
         assertTrue(next.get("ok").getAsBoolean());
+        assertFalse(next.getAsJsonObject("artifacts").has("structureClusterCandidateOverview"));
         JsonObject firstCandidate = next.getAsJsonObject("slotCandidateSet")
                 .getAsJsonArray("slotCandidates").get(0).getAsJsonObject()
                 .getAsJsonArray("candidates").get(0).getAsJsonObject();
@@ -1070,6 +1130,150 @@ class CityPlanningEndpointHandlerTest {
         assertTrue(Files.exists(reportPath));
     }
 
+    @Test
+    void handleRunWorkflowDefaultD4PlacesKeyStructuresBeforeArrayStages() throws Exception {
+        Path debugRoot = Files.createTempDirectory("city-workflow-staged-d4-test");
+        String runId = "run_workflow_staged_d4";
+        String citySeedId = "city_test";
+        Path runDir = debugRoot.resolve(runId);
+        Files.createDirectories(runDir);
+        Files.writeString(runDir.resolve("city_seed_registry.json"), """
+                {
+                  "citySeeds": [
+                    {
+                      "citySeedId": "city_test",
+                      "realmId": "realm_test",
+                      "role": "village",
+                      "theoreticalScale": "village",
+                      "anchorBlock": {"x": 0, "z": 0},
+                      "planningRadiusCells": 128,
+                      "candidateId": "candidate_test"
+                    }
+                  ]
+                }
+                """);
+        Files.writeString(runDir.resolve("world_survey_manifest.json"), """
+                {"config":{"cellStepBlocks":4,"dimensionId":"minecraft:overworld"}}
+                """);
+        CityPlanningConfig config = CityPlanningConfig.defaults();
+        CitySiteContext context = new CitySiteContextBuilder(config).build(
+                "city_test", "realm_test", "minecraft:overworld",
+                "city_test", "candidate_test", 0, 0,
+                "village", "village", 128, 4, null);
+        CityLandformReviewPackage review = new CityLandformReviewBuilder(config).build(context, List.of(
+                patch("plain_array", LandformType.PLAIN, -220, -220, 220, 220)));
+        Path d3Dir = runDir.resolve("city_d3_" + citySeedId);
+        Files.createDirectories(d3Dir);
+        Files.writeString(d3Dir.resolve("city_landform_review_package.json"),
+                CityJson.GSON.toJson(review.asJson()));
+        Files.createDirectories(runDir.resolve("city_structure_envelopes_" + citySeedId));
+        Files.writeString(runDir.resolve("city_structure_envelopes_" + citySeedId)
+                .resolve("structure_envelope_facts.json"), "{}");
+        Files.createDirectories(runDir.resolve("city_d6_" + citySeedId));
+        Files.writeString(runDir.resolve("city_d6_" + citySeedId)
+                .resolve("structure_materialization_plan.json"), "{}");
+        Path catalogPath = runDir.resolve("debug_structure_profile_catalog.json");
+        Files.writeString(catalogPath, debugStructureCatalog());
+
+        JsonObject request = new JsonObject();
+        request.addProperty("runId", runId);
+        request.addProperty("citySeedId", citySeedId);
+        request.addProperty("skipExisting", true);
+        request.add("terrasenseProfileSource", terraSenseSource(catalogPath));
+        request.add("designSlotPlan", stagedDesignSlotPlan(review));
+
+        JsonObject response = CityPlanningEndpointHandler.handleRunWorkflow(
+                debugRoot,
+                Files.createTempDirectory("city-workflow-staged-d4-server-root"),
+                runId,
+                citySeedId,
+                request,
+                null,
+                null);
+
+        assertTrue(response.get("ok").getAsBoolean());
+        assertEquals("waiting_for_confirmation", response.get("status").getAsString());
+        JsonObject report = response.getAsJsonObject("workflowReport");
+        assertEquals("key_then_array", report.get("d4CandidateMode").getAsString());
+        String steps = report.getAsJsonArray("steps").toString();
+        assertTrue(steps.indexOf("city_d4_key_structure_finalize_session")
+                < steps.indexOf("city_plan_d4_array_stage_residential_array"));
+        JsonObject artifacts = response.getAsJsonObject("artifacts");
+        assertTrue(Files.exists(debugRoot.resolve(artifacts.get("d4StagedPlan").getAsString())));
+        assertTrue(Files.exists(debugRoot.resolve(artifacts.get("d4StagedTrace").getAsString())));
+
+        JsonObject anchorMap = JsonParser.parseString(Files.readString(runDir
+                .resolve("city_d4_" + citySeedId)
+                .resolve("structure_anchor_map.json"))).getAsJsonObject();
+        assertEquals(5, anchorMap.getAsJsonArray("anchors").size());
+    }
+
+    @Test
+    void handleRunWorkflowRejectsArrayStageBeforeKeyStructureStage() throws Exception {
+        Path debugRoot = Files.createTempDirectory("city-workflow-staged-d4-order-test");
+        String runId = "run_workflow_staged_d4_order";
+        String citySeedId = "city_test";
+        Path runDir = debugRoot.resolve(runId);
+        Files.createDirectories(runDir);
+        Files.writeString(runDir.resolve("city_seed_registry.json"), """
+                {
+                  "citySeeds": [
+                    {
+                      "citySeedId": "city_test",
+                      "realmId": "realm_test",
+                      "role": "village",
+                      "theoreticalScale": "village",
+                      "anchorBlock": {"x": 0, "z": 0},
+                      "planningRadiusCells": 128,
+                      "candidateId": "candidate_test"
+                    }
+                  ]
+                }
+                """);
+        CityPlanningConfig config = CityPlanningConfig.defaults();
+        CitySiteContext context = new CitySiteContextBuilder(config).build(
+                "city_test", "realm_test", "minecraft:overworld",
+                "city_test", "candidate_test", 0, 0,
+                "village", "village", 128, 4, null);
+        CityLandformReviewPackage review = new CityLandformReviewBuilder(config).build(context, List.of(
+                patch("plain_array", LandformType.PLAIN, -220, -220, 220, 220)));
+        Path d3Dir = runDir.resolve("city_d3_" + citySeedId);
+        Files.createDirectories(d3Dir);
+        Files.writeString(d3Dir.resolve("city_landform_review_package.json"),
+                CityJson.GSON.toJson(review.asJson()));
+        Files.createDirectories(runDir.resolve("city_structure_envelopes_" + citySeedId));
+        Files.writeString(runDir.resolve("city_structure_envelopes_" + citySeedId)
+                .resolve("structure_envelope_facts.json"), "{}");
+        Path catalogPath = runDir.resolve("debug_structure_profile_catalog.json");
+        Files.writeString(catalogPath, debugStructureCatalog());
+
+        JsonObject plan = stagedDesignSlotPlan(review);
+        plan.add("placementOrder", JsonParser.parseString("""
+                ["residential_array", "admin_core"]
+                """).getAsJsonArray());
+        JsonObject request = new JsonObject();
+        request.addProperty("runId", runId);
+        request.addProperty("citySeedId", citySeedId);
+        request.addProperty("skipExisting", true);
+        request.add("terrasenseProfileSource", terraSenseSource(catalogPath));
+        request.add("designSlotPlan", plan);
+
+        JsonObject response = CityPlanningEndpointHandler.handleRunWorkflow(
+                debugRoot,
+                Files.createTempDirectory("city-workflow-staged-d4-order-server-root"),
+                runId,
+                citySeedId,
+                request,
+                null,
+                null);
+
+        assertFalse(response.get("ok").getAsBoolean());
+        assertEquals("failed", response.get("status").getAsString());
+        assertTrue(response.getAsJsonObject("workflowReport").getAsJsonArray("steps")
+                .toString()
+                .contains("D4_KEY_STRUCTURES_MUST_PRECEDE_ARRAYS"));
+    }
+
     private static void assertPreviewHasPatchBackdrop(Path previewPath) throws Exception {
         BufferedImage image = ImageIO.read(previewPath.toFile());
         int patchPixels = 0;
@@ -1219,6 +1423,37 @@ class CityPlanningEndpointHandlerTest {
                   ]
                 }
                 """.formatted(first.landformPatchId(), second.landformPatchId())).getAsJsonObject();
+    }
+
+    private static JsonObject stagedDesignSlotPlan(CityLandformReviewPackage review) {
+        LandformPatchSummary first = review.landformPatches().get(0);
+        return JsonParser.parseString("""
+                {
+                  "schemaVersion": "city_d4_design_slot_plan.v0.1",
+                  "cityId": "city_test",
+                  "placementOrder": ["admin_core", "residential_array"],
+                  "slots": [
+                    {
+                      "slotId": "admin_core",
+                      "placementStrategy": "key_structure",
+                      "displayRole": "行政核心",
+                      "candidatePatchRefs": ["%s"],
+                      "structureIds": ["minecraft:desert_pyramid"],
+                      "relationHints": []
+                    },
+                    {
+                      "slotId": "residential_array",
+                      "placementStrategy": "array_fill",
+                      "displayRole": "住宅阵列",
+                      "candidatePatchRefs": ["%s"],
+                      "structureIds": ["minecraft:desert_pyramid"],
+                      "arrayCount": 4,
+                      "variantSelectionMode": "seeded_random",
+                      "patterns": ["loose_cluster", "patch_axis_band", "scattered"]
+                    }
+                  ]
+                }
+                """.formatted(first.landformPatchId(), first.landformPatchId())).getAsJsonObject();
     }
 
     private static JsonObject arrayCandidatePlan(CityLandformReviewPackage review) {
