@@ -23,6 +23,8 @@ import net.minecraft.nbt.NbtIo;
 import net.minecraft.world.level.ChunkPos;
 import org.junit.jupiter.api.Test;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.EnumSet;
@@ -191,6 +193,65 @@ class CityPlanningEndpointHandlerTest {
         assertEquals("admin_core_01", selected.getAsJsonObject("structureAnchorMap")
                 .getAsJsonArray("anchors").get(0).getAsJsonObject()
                 .get("anchorId").getAsString());
+    }
+
+    @Test
+    void handlePlanD4ArrayCandidates_writesArtifactsAndFeedsStandardD4() throws Exception {
+        Path debugRoot = Files.createTempDirectory("city-d4-array-candidates-test");
+        String runId = "run_d4_array_candidates";
+        String citySeedId = "city_test";
+        Path runDir = debugRoot.resolve(runId);
+        Files.createDirectories(runDir);
+        Files.writeString(runDir.resolve("city_seed_registry.json"), """
+                {
+                  "citySeeds": [
+                    {
+                      "citySeedId": "city_test",
+                      "realmId": "realm_test",
+                      "role": "village",
+                      "theoreticalScale": "village",
+                      "anchorBlock": {"x": 0, "z": 0},
+                      "planningRadiusCells": 128,
+                      "candidateId": "candidate_test"
+                    }
+                  ]
+                }
+                """);
+
+        CityPlanningConfig config = CityPlanningConfig.defaults();
+        CitySiteContext context = new CitySiteContextBuilder(config).build(
+                "city_test", "realm_test", "overworld",
+                "city_test", "candidate_test", 0, 0,
+                "village", "village", 128, 4, null);
+        CityLandformReviewPackage review = new CityLandformReviewBuilder(config).build(context, List.of(
+                patch("plain_array", LandformType.PLAIN, -220, -220, 220, 220)));
+        Path d3Dir = runDir.resolve("city_d3_city_test");
+        Files.createDirectories(d3Dir);
+        Files.writeString(d3Dir.resolve("city_landform_review_package.json"),
+                CityJson.GSON.toJson(review.asJson()));
+
+        Path catalogPath = runDir.resolve("debug_structure_profile_catalog.json");
+        Files.writeString(catalogPath, debugStructureCatalog());
+        JsonObject arrayCandidates = CityPlanningEndpointHandler.handlePlanD4ArrayCandidates(
+                debugRoot, runId, citySeedId, terraSenseSource(catalogPath),
+                arrayCandidatePlan(review), null, null, new JsonArray());
+
+        assertTrue(arrayCandidates.get("ok").getAsBoolean());
+        JsonObject artifacts = arrayCandidates.getAsJsonObject("artifacts");
+        assertTrue(Files.exists(debugRoot.resolve(artifacts.get("arrayCandidateSet").getAsString())));
+        assertTrue(Files.exists(debugRoot.resolve(artifacts.get("arrayCandidatePreview").getAsString())));
+        JsonObject firstGroup = arrayCandidates.getAsJsonObject("arrayCandidateSet")
+                .getAsJsonArray("arrayCandidates").get(0).getAsJsonObject();
+        JsonObject expandedPlan = firstGroup.getAsJsonObject("expandedStructureAnchorPlan");
+        assertEquals(4, expandedPlan.getAsJsonArray("anchors").size());
+
+        JsonObject d4 = CityPlanningEndpointHandler.handlePlanD4(
+                debugRoot, runId, citySeedId, terraSenseSource(catalogPath),
+                expandedPlan, null);
+
+        assertTrue(d4.get("ok").getAsBoolean());
+        assertEquals(4, d4.getAsJsonObject("structureAnchorMap")
+                .getAsJsonArray("anchors").size());
     }
 
     @Test
@@ -384,7 +445,10 @@ class CityPlanningEndpointHandlerTest {
         JsonObject d7Artifacts = d7.getAsJsonObject("artifacts");
         assertTrue(Files.exists(debugRoot.resolve(d7Artifacts.get("placedStructureLedger").getAsString())));
         assertTrue(Files.exists(debugRoot.resolve(d7Artifacts.get("structureMaterializationTrace").getAsString())));
-        assertTrue(Files.exists(debugRoot.resolve(d7Artifacts.get("placedStructurePreview").getAsString())));
+        Path placedPreview = debugRoot.resolve(d7Artifacts.get("placedStructurePreview").getAsString());
+        assertTrue(Files.exists(placedPreview));
+        assertTrue(d7Artifacts.has("sourceD3Package"));
+        assertPreviewHasPatchBackdrop(placedPreview);
         assertEquals(0, d7.getAsJsonObject("placedStructureLedger")
                 .getAsJsonArray("placedStructures")
                 .size());
@@ -403,25 +467,9 @@ class CityPlanningEndpointHandlerTest {
 
         JsonObject d6 = CityPlanningEndpointHandler.handlePlanD6(
                 debugRoot, runId, citySeedId, null, null);
-        CityPlanningEndpointHandler.handleExecuteD5(debugRoot, serverRoot, runId, citySeedId, true, null, "auto");
-        JsonObject plannedRegistry = CityReservationMaskRegistry.plannedRegistrySummary();
-        for (JsonElement elem : plannedRegistry.getAsJsonArray("plannedStructures")) {
-            JsonObject plannedJson = elem.getAsJsonObject();
-            JsonObject chunkJson = plannedJson.getAsJsonObject("anchorChunk");
-            ChunkPos chunk = new ChunkPos(chunkJson.get("x").getAsInt(), chunkJson.get("z").getAsInt());
-            CityReservationMaskRegistry.PlannedStructure planned = CityReservationMaskRegistry
-                    .plannedStructuresForChunk(chunk)
-                    .get(0);
-            JsonObject actualJson = plannedJson.getAsJsonObject("lockedActualFootprint");
-            BlockBounds actual = new BlockBounds(
-                    actualJson.get("minX").getAsInt(),
-                    actualJson.get("minZ").getAsInt(),
-                    actualJson.get("maxX").getAsInt(),
-                    actualJson.get("maxZ").getAsInt());
-            CityReservationMaskRegistry.recordWorldgenPlacement(planned, actual,
-                    planned.expectedStartSignature(), new JsonArray(), chunk,
-                    "none", "WORLDGEN_PLACEMENT_RECORDED", "test placement");
-        }
+        CityPlanningEndpointHandler.handleExecuteD5(debugRoot, serverRoot, runId, citySeedId, true, null,
+                "worldedit_debug");
+        recordPlannedWorldgenPlacementsFromRegistry();
 
         JsonObject d7 = CityPlanningEndpointHandler.handleExecuteD7(
                 debugRoot, runId, citySeedId, 12345L,
@@ -438,6 +486,40 @@ class CityPlanningEndpointHandlerTest {
         assertEquals(d6.getAsJsonObject("structureMaterializationPlan")
                         .getAsJsonArray("plannedWorldgenStructures").size(),
                 d7.getAsJsonObject("placedStructureLedger").getAsJsonArray("placedStructures").size());
+    }
+
+    @Test
+    void handleExecuteD7SkipsLegacyRoadWhenAutoRoadWeaverMissing() throws Exception {
+        Path debugRoot = Files.createTempDirectory("city-d7-auto-road-skip-test");
+        Path serverRoot = Files.createTempDirectory("city-d7-auto-road-skip-server-root");
+        String runId = "run_d7_auto_road_skip";
+        String citySeedId = "city_test";
+        prepareD5Artifacts(debugRoot, runId, citySeedId);
+
+        CityPlanningEndpointHandler.handlePlanD6(debugRoot, runId, citySeedId, null, null);
+        JsonObject d5 = CityPlanningEndpointHandler.handleExecuteD5(debugRoot, serverRoot, runId, citySeedId,
+                true, null, "auto");
+        JsonObject providerState = d5.getAsJsonObject("roadProviderState");
+        assertFalse(providerState.get("useWorldEditDebugFallback").getAsBoolean());
+        assertEquals("skipped",
+                providerState.getAsJsonObject("roadWeaverRegistrationReport").get("status").getAsString());
+        assertEquals("ROADWEAVER_UNAVAILABLE",
+                providerState.getAsJsonObject("roadWeaverRegistrationReport").get("reasonCode").getAsString());
+        providerState.addProperty("useWorldEditDebugFallback", true);
+        Files.writeString(debugRoot.resolve(d5.getAsJsonObject("artifacts").get("roadProviderState").getAsString()),
+                CityJson.GSON.toJson(providerState));
+        recordPlannedWorldgenPlacementsFromRegistry();
+
+        JsonObject d7 = CityPlanningEndpointHandler.handleExecuteD7(
+                debugRoot, runId, citySeedId, 12345L,
+                true, false, null, null);
+
+        JsonObject roadReport = d7.getAsJsonObject("deferredRoadPostprocessReport");
+        assertEquals("skipped", roadReport.get("status").getAsString());
+        assertEquals("ROADWEAVER_UNAVAILABLE", roadReport.get("reasonCode").getAsString());
+        assertEquals("none", roadReport.get("roadPostprocessSource").getAsString());
+        assertFalse(roadReport.has("generatedBuildOperationPlan"));
+        assertTrue(d7.getAsJsonObject("roadProviderState").get("useWorldEditDebugFallback").getAsBoolean());
     }
 
     @Test
@@ -988,6 +1070,24 @@ class CityPlanningEndpointHandlerTest {
         assertTrue(Files.exists(reportPath));
     }
 
+    private static void assertPreviewHasPatchBackdrop(Path previewPath) throws Exception {
+        BufferedImage image = ImageIO.read(previewPath.toFile());
+        int patchPixels = 0;
+        for (int y = 0; y < image.getHeight(); y++) {
+            for (int x = 0; x < image.getWidth(); x++) {
+                int argb = image.getRGB(x, y);
+                int alpha = (argb >>> 24) & 0xff;
+                int red = (argb >>> 16) & 0xff;
+                int green = (argb >>> 8) & 0xff;
+                int blue = argb & 0xff;
+                if (alpha > 0 && green > red + 6 && green > blue + 12 && red > 150 && blue > 140) {
+                    patchPixels++;
+                }
+            }
+        }
+        assertTrue(patchPixels > 500, "D7 placed preview should include D3 patch backdrop colors");
+    }
+
     private static LandformPatch patch(String id, LandformType type, int minX, int minZ, int maxX, int maxZ) {
         boolean water = type == LandformType.SHORE || type == LandformType.WATER;
         return new LandformPatch(id, "region_0", type,
@@ -1121,12 +1221,49 @@ class CityPlanningEndpointHandlerTest {
                 """.formatted(first.landformPatchId(), second.landformPatchId())).getAsJsonObject();
     }
 
+    private static JsonObject arrayCandidatePlan(CityLandformReviewPackage review) {
+        LandformPatchSummary first = review.landformPatches().get(0);
+        return JsonParser.parseString("""
+                {
+                  "schemaVersion": "city_d4_array_candidate_plan.v0.1",
+                  "cityId": "city_test",
+                  "arrayId": "residential_cluster",
+                  "displayRole": "住宅阵列",
+                  "candidatePatchRefs": ["%s"],
+                  "structureIds": ["minecraft:desert_pyramid"],
+                  "arrayCount": 4,
+                  "patterns": ["loose_cluster", "patch_axis_band", "scattered"]
+                }
+                """.formatted(first.landformPatchId())).getAsJsonObject();
+    }
+
     private static BlockBounds bounds(JsonObject obj) {
         return new BlockBounds(
                 obj.get("minX").getAsInt(),
                 obj.get("minZ").getAsInt(),
                 obj.get("maxX").getAsInt(),
                 obj.get("maxZ").getAsInt());
+    }
+
+    private static void recordPlannedWorldgenPlacementsFromRegistry() {
+        JsonObject plannedRegistry = CityReservationMaskRegistry.plannedRegistrySummary();
+        for (JsonElement elem : plannedRegistry.getAsJsonArray("plannedStructures")) {
+            JsonObject plannedJson = elem.getAsJsonObject();
+            JsonObject chunkJson = plannedJson.getAsJsonObject("anchorChunk");
+            ChunkPos chunk = new ChunkPos(chunkJson.get("x").getAsInt(), chunkJson.get("z").getAsInt());
+            CityReservationMaskRegistry.PlannedStructure planned = CityReservationMaskRegistry
+                    .plannedStructuresForChunk(chunk)
+                    .get(0);
+            JsonObject actualJson = plannedJson.getAsJsonObject("lockedActualFootprint");
+            BlockBounds actual = new BlockBounds(
+                    actualJson.get("minX").getAsInt(),
+                    actualJson.get("minZ").getAsInt(),
+                    actualJson.get("maxX").getAsInt(),
+                    actualJson.get("maxZ").getAsInt());
+            CityReservationMaskRegistry.recordWorldgenPlacement(planned, actual,
+                    planned.expectedStartSignature(), new JsonArray(), chunk,
+                    "none", "WORLDGEN_PLACEMENT_RECORDED", "test placement");
+        }
     }
 
     private static String debugStructureCatalog() {

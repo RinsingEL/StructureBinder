@@ -84,9 +84,11 @@ public final class CityRoadWeaverBridge {
                 report.addProperty("reasonCode", "ROADWEAVER_UNAVAILABLE");
                 report.addProperty("message", "RoadWeaver mod is not loaded.");
             } else {
-                report.addProperty("status", "fallback");
+                report.addProperty("status", "skipped");
                 report.addProperty("reasonCode", "ROADWEAVER_UNAVAILABLE");
-                report.addProperty("message", "RoadWeaver mod is not loaded; D7 debug road fallback remains available.");
+                report.addProperty("message",
+                        "RoadWeaver mod is not loaded; automatic WorldEdit debug road fallback is disabled. "
+                                + "Use roadProvider=worldedit_debug for legacy debug roads.");
             }
             return report;
         }
@@ -153,14 +155,7 @@ public final class CityRoadWeaverBridge {
 
     public static boolean shouldRunWorldEditDebugFallback(String requestedProvider, JsonObject registrationReport) {
         String provider = normalizeProvider(requestedProvider);
-        if (PROVIDER_WORLDEDIT_DEBUG.equals(provider)) {
-            return true;
-        }
-        if (!PROVIDER_AUTO.equals(provider)) {
-            return false;
-        }
-        String status = stringValue(registrationReport, "status", "");
-        return "fallback".equals(status);
+        return PROVIDER_WORLDEDIT_DEBUG.equals(provider);
     }
 
     public static boolean roadWeaverRegistered(JsonObject registrationReport) {

@@ -24,7 +24,8 @@ public record LandformPatchSummary(
         AreaClass areaClass,
         MetricsSummary metricsSummary,
         List<String> summaryFacts,
-        List<String> neighborLandformPatchIds) {
+        List<String> neighborLandformPatchIds,
+        BiomeSummary biomeSummary) {
 
     public LandformPatchSummary {
         Objects.requireNonNull(landformPatchId, "landformPatchId");
@@ -41,8 +42,31 @@ public record LandformPatchSummary(
         overlayTags = List.copyOf(overlayTags);
         summaryFacts = List.copyOf(summaryFacts);
         neighborLandformPatchIds = List.copyOf(neighborLandformPatchIds);
+        biomeSummary = biomeSummary == null ? BiomeSummary.empty() : biomeSummary;
         if (areaBlocks < 0) throw new IllegalArgumentException("areaBlocks must be >= 0");
         if (cellCount < 0) throw new IllegalArgumentException("cellCount must be >= 0");
+    }
+
+    public LandformPatchSummary(
+            String landformPatchId,
+            String mapLabel,
+            String displayLandformName,
+            BlockPoint centerBlock,
+            BlockBounds blockBounds,
+            String geometryMode,
+            List<PatchMemberCell> memberCells,
+            int areaBlocks,
+            int cellCount,
+            LandformType landformType,
+            List<String> landformTags,
+            List<String> overlayTags,
+            AreaClass areaClass,
+            MetricsSummary metricsSummary,
+            List<String> summaryFacts,
+            List<String> neighborLandformPatchIds) {
+        this(landformPatchId, mapLabel, displayLandformName, centerBlock, blockBounds, geometryMode,
+                memberCells, areaBlocks, cellCount, landformType, landformTags, overlayTags,
+                areaClass, metricsSummary, summaryFacts, neighborLandformPatchIds, BiomeSummary.empty());
     }
 
     public static LandformPatchSummary fromGisPatch(LandformPatch patch, String mapLabel,
@@ -62,7 +86,7 @@ public record LandformPatchSummary(
                 new ArrayList<>(),
                 areaEstimate, patch.cellCount(), patch.landformType(),
                 new ArrayList<>(), new ArrayList<>(),
-                areaClass, metrics, summaryFacts, new ArrayList<>());
+                areaClass, metrics, summaryFacts, new ArrayList<>(), BiomeSummary.empty());
     }
 
     public LandformPatchSummary withMemberCells(List<PatchMemberCell> cells) {
@@ -71,7 +95,7 @@ public record LandformPatchSummary(
                 blockBounds, mode, cells == null ? List.of() : cells,
                 areaBlocks, cellCount, landformType,
                 landformTags, overlayTags, areaClass, metricsSummary,
-                summaryFacts, neighborLandformPatchIds);
+                summaryFacts, neighborLandformPatchIds, biomeSummary);
     }
 
     public LandformPatchSummary withTags(List<String> landformTags, List<String> overlayTags) {
@@ -79,7 +103,7 @@ public record LandformPatchSummary(
                 blockBounds, geometryMode, memberCells,
                 areaBlocks, cellCount, landformType,
                 landformTags, overlayTags, areaClass, metricsSummary,
-                summaryFacts, neighborLandformPatchIds);
+                summaryFacts, neighborLandformPatchIds, biomeSummary);
     }
 
     public LandformPatchSummary withNeighbors(List<String> neighbors) {
@@ -87,6 +111,22 @@ public record LandformPatchSummary(
                 blockBounds, geometryMode, memberCells,
                 areaBlocks, cellCount, landformType,
                 landformTags, overlayTags, areaClass, metricsSummary,
-                summaryFacts, neighbors);
+                summaryFacts, neighbors, biomeSummary);
+    }
+
+    public LandformPatchSummary withSummaryFacts(List<String> facts) {
+        return new LandformPatchSummary(landformPatchId, mapLabel, displayLandformName, centerBlock,
+                blockBounds, geometryMode, memberCells,
+                areaBlocks, cellCount, landformType,
+                landformTags, overlayTags, areaClass, metricsSummary,
+                facts, neighborLandformPatchIds, biomeSummary);
+    }
+
+    public LandformPatchSummary withBiomeSummary(BiomeSummary summary) {
+        return new LandformPatchSummary(landformPatchId, mapLabel, displayLandformName, centerBlock,
+                blockBounds, geometryMode, memberCells,
+                areaBlocks, cellCount, landformType,
+                landformTags, overlayTags, areaClass, metricsSummary,
+                summaryFacts, neighborLandformPatchIds, summary);
     }
 }

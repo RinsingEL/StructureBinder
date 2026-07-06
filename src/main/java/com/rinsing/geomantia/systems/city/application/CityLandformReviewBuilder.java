@@ -84,9 +84,11 @@ public final class CityLandformReviewBuilder {
                         Collectors.mapping(cell -> new PatchMemberCell(
                                 cell.globalCellX(), cell.globalCellZ(), cell.blockMinX(), cell.blockMinZ()),
                                 Collectors.toList())));
+        Map<String, BiomeSummary> biomeSummaryByPatch = buildBiomeSummaries(regions, contextBounds);
         List<LandformPatchSummary> withCells = pkg.landformPatches().stream()
-                .map(summary -> summary.withMemberCells(cellsByPatch.getOrDefault(
-                        summary.landformPatchId(), List.of())))
+                .map(summary -> enrichPatchSummary(
+                        summary.withMemberCells(cellsByPatch.getOrDefault(summary.landformPatchId(), List.of())),
+                        biomeSummaryByPatch.getOrDefault(summary.landformPatchId(), BiomeSummary.empty())))
                 .toList();
         return new CityLandformReviewPackage(
                 pkg.schemaVersion(),
@@ -156,7 +158,7 @@ public final class CityLandformReviewBuilder {
                         summary.areaBlocks(), summary.cellCount(),
                         summary.landformType(), summary.landformTags(), summary.overlayTags(),
                         summary.areaClass(), summary.metricsSummary(),
-                        summary.summaryFacts(), summary.neighborLandformPatchIds()));
+                        summary.summaryFacts(), summary.neighborLandformPatchIds(), summary.biomeSummary()));
             }
         }
     }
@@ -204,7 +206,7 @@ public final class CityLandformReviewBuilder {
                     orig.areaBlocks(), orig.cellCount(),
                     orig.landformType(), orig.landformTags(), orig.overlayTags(),
                     orig.areaClass(), orig.metricsSummary(),
-                    facts, orig.neighborLandformPatchIds()));
+                    facts, orig.neighborLandformPatchIds(), orig.biomeSummary()));
         }
     }
 
@@ -351,6 +353,61 @@ public final class CityLandformReviewBuilder {
         if (patch.flags().stream().anyMatch(f -> f.name().equals("FRAGMENT")))
             overlays.add("fragment");
         return overlays;
+    }
+
+    private Map<String, BiomeSummary> buildBiomeSummaries(List<AtlasRegion> regions, BlockBounds contextBounds) {
+        Map<String, Map<String, Integer>> histograms = new LinkedHashMap<>();
+        for (AtlasRegion region : regions) {
+            if (region == null) {
+                continue;
+            }
+            for (AtlasCell cell : region.cells()) {
+                if (cell.patchId().isBlank() || !contextBounds.contains(cell.blockMinX(), cell.blockMinZ())) {
+                    continue;
+                }
+                String biomeId = normalizeBiomeId(cell.biomeId());
+                if (biomeId.isBlank()) {
+                    continue;
+                }
+                histograms.computeIfAbsent(cell.patchId(), ignored -> new LinkedHashMap<>())
+                        .merge(biomeId, 1, Integer::sum);
+            }
+        }
+        Map<String, BiomeSummary> summaries = new LinkedHashMap<>();
+        for (Map.Entry<String, Map<String, Integer>> entry : histograms.entrySet()) {
+            summaries.put(entry.getKey(), BiomeSummary.fromHistogram(entry.getValue()));
+        }
+        return summaries;
+    }
+
+    private LandformPatchSummary enrichPatchSummary(LandformPatchSummary summary, BiomeSummary biomeSummary) {
+        LandformPatchSummary enriched = summary.withBiomeSummary(biomeSummary);
+        String biomeFact = buildBiomeFact(biomeSummary);
+        if (biomeFact.isBlank() || enriched.summaryFacts().contains(biomeFact)) {
+            return enriched;
+        }
+        List<String> facts = new ArrayList<>(enriched.summaryFacts());
+        facts.add(biomeFact);
+        return enriched.withSummaryFacts(facts);
+    }
+
+    private String buildBiomeFact(BiomeSummary biomeSummary) {
+        if (biomeSummary == null || !biomeSummary.hasKnownBiome()) {
+            return "";
+        }
+        if (biomeSummary.mixedBiome()) {
+            return String.format("主要群系为%s，包含%d种群系混合",
+                    biomeSummary.dominantBiome(), biomeSummary.biomeHistogram().size());
+        }
+        return "主要群系为" + biomeSummary.dominantBiome();
+    }
+
+    private String normalizeBiomeId(String raw) {
+        if (raw == null) {
+            return "";
+        }
+        String normalized = raw.trim();
+        return normalized.isBlank() || "unknown".equalsIgnoreCase(normalized) ? "" : normalized;
     }
 
     double meanSlope(List<LandformPatchSummary> summaries) {

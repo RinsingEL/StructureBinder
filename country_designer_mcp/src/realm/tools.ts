@@ -269,6 +269,38 @@ export const realmTools: ToolDefinition[] = [
     },
   },
   {
+    name: "city_plan_d4_array_candidates",
+    description: "City D4 阵列候选：提交 arrayCandidatePlan，按 D3 patch、TerraSense profile、envelope facts 生成 3-5 组已防碰撞的批量结构候选；不沿道路、不改世界。候选组内含 expandedStructureAnchorPlan，可直接交给 city_plan_d4。",
+    inputSchema: {
+      type: "object",
+      properties: {
+        runId: { type: "string", description: "已有 W/T run ID。" },
+        citySeedId: { type: "string", description: "目标城市种子的 citySeedId。" },
+        terrasenseProfileSource: {
+          type: "object",
+          description: "schemaVersion=terrasense_structure_profile_source.v0.1；sourceType=structure_profile_jsonl 或 debug_catalog。",
+        },
+        arrayCandidatePlan: {
+          type: "object",
+          description: "schemaVersion=city_d4_array_candidate_plan.v0.1；必填 cityId、arrayId、candidatePatchRefs[]、structureIds[]、arrayCount；可选 displayRole、patterns[]=loose_cluster/patch_axis_band/scattered。",
+        },
+        structureEnvelopeFactsSource: {
+          type: "object",
+          description: "可选；factsPath 指向 structure_envelope_facts.json。未传时读取当前 run/city 默认产物。",
+        },
+        occupiedStructureAnchorMapSource: {
+          type: "object",
+          description: "可选；anchorMapPath 或 structureAnchorMapPath 指向既有 structure_anchor_map.json，用于避开已选结构。",
+        },
+        occupiedEnvelopes: {
+          type: "array",
+          description: "可选；额外 occupied envelope，可直接写 {minX,minZ,maxX,maxZ} 或 {blockBounds:{...}}。",
+        },
+      },
+      required: ["runId", "citySeedId", "terrasenseProfileSource", "arrayCandidatePlan"],
+    },
+  },
+  {
     name: "city_select_d4_candidates",
     description: "City D4 候选选择：读取 anchor_candidate_set，提交 AnchorSelectionPlan，生成标准 StructureAnchorPlan/StructureAnchorMap，并继续复用 D5-D7 主链。",
     inputSchema: {
@@ -416,7 +448,7 @@ export const realmTools: ToolDefinition[] = [
         roadProvider: {
           type: "string",
           enum: ["auto", "roadweaver", "worldedit_debug", "none"],
-          description: "道路提供者；默认 auto。RoadWeaver 存在则注册连接，缺失时 auto 保留 D7 WorldEdit 调试 fallback。",
+          description: "道路提供者；默认 auto。RoadWeaver 存在则注册连接，缺失时 auto 跳过道路并记录 ROADWEAVER_UNAVAILABLE；只有 worldedit_debug 会铺旧版调试路。",
         },
         dimensionId: { type: "string", description: "维度 ID，省略时从 run manifest 恢复。" },
         playerName: { type: "string", description: "玩家名，用于定位维度。" },
@@ -496,10 +528,12 @@ export const realmTools: ToolDefinition[] = [
         flatMaxDeltaBlocks: { type: "number", description: "wallTerrainPolicy=v3.1 低高差阈值，默认 7。" },
         steppedMaxDeltaBlocks: { type: "number", description: "wallTerrainPolicy=v3.1 阶梯墙最大高差，默认 16。" },
         mountainProbeDistanceBlocks: { type: "number", description: "wallTerrainPolicy=v3.1 嵌坡山体侧探测距离，默认 6。" },
-        naturalBoundaryMinDeltaBlocks: { type: "number", description: "wallTerrainPolicy=v3.1 天然峭壁边界最小高差，默认 17。" },
+        naturalBoundaryMinDeltaBlocks: { type: "number", description: "wallTerrainPolicy=v3.1 天然峭壁边界最小高差；wallVersion=v5 时为高差天然屏障断墙阈值，默认 17。" },
         embeddedSlopeTower: { type: "boolean", description: "wallTerrainPolicy=v3.1 嵌坡/峭壁边界是否放塔楼或石砌封头，默认 true。" },
         wallUnitLengthBlocks: { type: "number", description: "wallVersion=v5 的 placement unit 默认 8；wallVersion=v4 的 graph unit 默认 16，和 step 对齐。" },
         nominalWallHeightBlocks: { type: "number", description: "wallVersion=v5 名义墙高，默认 9。" },
+        heightSegmentMaxDeltaBlocks: { type: "number", description: "wallVersion=v5 分段统一墙顶高度的并段高差阈值，默认 7；同段内共用 surface median datum。" },
+        heightSteppedTransitionMaxDeltaBlocks: { type: "number", description: "wallVersion=v5 段间阶梯过渡最大高差，默认 16；超过 naturalBoundaryMinDeltaBlocks 则不筑墙。" },
         waterRunMinBlocks: { type: "number", description: "wallVersion=v5 连续水体边界判定最小长度，默认 32 blocks。" },
         waterFluidRatioMin: { type: "number", description: "wallVersion=v5 单 unit fluid 覆盖率阈值，默认 0.8。" },
         waterRunMinUnits: { type: "number", description: "wallVersion=v4 连续多少个 unit 命中水体才判定为湖/海并退避，默认 3。" },
@@ -564,7 +598,7 @@ export const realmTools: ToolDefinition[] = [
         roadProvider: {
           type: "string",
           enum: ["auto", "roadweaver", "worldedit_debug", "none"],
-          description: "传给 city_execute_d5 的道路提供者，默认 auto。",
+          description: "传给 city_execute_d5 的道路提供者，默认 auto；缺 RoadWeaver 时不再自动铺旧路，旧版调试路必须显式传 worldedit_debug。",
         },
         planWalls: { type: "boolean", description: "D7 ledger 完整后是否调用 city_plan_city_walls。" },
         executeWalls: { type: "boolean", description: "planWalls 后是否执行 city_execute_city_walls。" },
@@ -588,6 +622,9 @@ export const realmTools: ToolDefinition[] = [
         roadProjectionMaxDistanceBlocks: { type: "number" },
         wallUnitLengthBlocks: { type: "number" },
         nominalWallHeightBlocks: { type: "number" },
+        heightSegmentMaxDeltaBlocks: { type: "number" },
+        heightSteppedTransitionMaxDeltaBlocks: { type: "number" },
+        naturalBoundaryMinDeltaBlocks: { type: "number" },
         waterRunMinBlocks: { type: "number" },
         waterFluidRatioMin: { type: "number" },
         waterRunMinUnits: { type: "number" },

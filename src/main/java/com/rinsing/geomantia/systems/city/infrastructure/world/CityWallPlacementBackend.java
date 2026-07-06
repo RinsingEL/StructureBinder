@@ -72,14 +72,21 @@ public final class CityWallPlacementBackend {
                     ? v5SurfaceSamples(level, graphUnits, true) : java.util.Map.of();
             java.util.Set<String> v5WaterBoundaryUnits = v5
                     ? v5WaterBoundaryUnits(graphUnits, v5Samples, context) : java.util.Set.of();
+            V5HeightPlan v5HeightPlan = v5
+                    ? v5HeightPlan(graphUnits, v5Samples, v5WaterBoundaryUnits, context) : V5HeightPlan.empty();
+            if (v5) {
+                report.add("v5HeightSegmentation", v5HeightPlan.asJson());
+            }
             for (JsonObject unit : graphUnits) {
+                String unitId = stringValue(unit, "unitId", "");
                 UnitResult result = v5
                         ? placeGraphUnitV5(level, unit, context, debugScan, terrainDebug, maskDebug, gapDebug,
-                        v5Samples.get(stringValue(unit, "unitId", "")),
-                        v5WaterBoundaryUnits.contains(stringValue(unit, "unitId", "")))
+                        v5Samples.get(unitId),
+                        v5WaterBoundaryUnits.contains(unitId),
+                        v5HeightPlan.decision(unitId))
                         : placeGraphUnitV4(level, unit, context, debugScan, terrainDebug, maskDebug, gapDebug);
-                JsonObject unitJson = result.asJson(stringValue(unit, "unitId", ""));
-                unitJson.addProperty("unitId", stringValue(unit, "unitId", ""));
+                JsonObject unitJson = result.asJson(unitId);
+                unitJson.addProperty("unitId", unitId);
                 unitJson.addProperty("unitType", stringValue(unit, "unitType", ""));
                 unitJson.addProperty("plannedTargetY", intValue(unit, "targetY", 0));
                 unitJson.addProperty("plannedHeightMode", stringValue(unit, "heightMode", ""));
@@ -201,10 +208,11 @@ public final class CityWallPlacementBackend {
     }
 
     private UnitResult placeGraphUnitV5(ServerLevel level, JsonObject unit, PlacementContext context,
-                                       boolean debugScan, JsonObject terrainDebug,
-                                       JsonObject maskDebug, JsonObject gapDebug,
-                                       V5SurfaceSample surfaceSample,
-                                       boolean naturalWaterBoundary) {
+                                        boolean debugScan, JsonObject terrainDebug,
+                                        JsonObject maskDebug, JsonObject gapDebug,
+                                        V5SurfaceSample surfaceSample,
+                                        boolean naturalWaterBoundary,
+                                        V5HeightDecision heightDecision) {
         String unitType = stringValue(unit, "unitType", "");
         String reason = stringValue(unit, "reasonCode", "D5_V5_WALL_UNIT");
         BlockBounds bounds = bounds(unit.getAsJsonObject("blockBounds"));
@@ -240,10 +248,22 @@ public final class CityWallPlacementBackend {
                     bounds, sample.minY(), sample.maxY(), protectedCells, "v5",
                     terrainDeltaBand(sample.delta(), context), new JsonArray(), water);
         }
-        int baseY = sample.medianY() + 1;
+        if (heightDecision != null && heightDecision.naturalBoundary()) {
+            addGap(gapDebug, pseudoSegment(unit, "unitId", unitType), heightDecision.reasonCode(),
+                    heightDecision.message(), bounds);
+            if (debugScan) {
+                addTerrainSamples(terrainDebug, pseudoSegment(unit, "unitId", unitType), bounds, context,
+                        sample.surfaceSamples(), -1, heightDecision.reasonCode());
+            }
+            return new UnitResult("skipped", heightDecision.reasonCode(), heightDecision.terrainFitMode(), 0,
+                    heightDecision.message(), bounds, sample.minY(), sample.maxY(), protectedCells, "v5",
+                    terrainDeltaBand(sample.delta(), context), new JsonArray(), heightDecision.asJson(sample));
+        }
+        int baseY = heightDecision == null ? sample.medianY() + 1 : heightDecision.baseY();
         if (debugScan) {
             addTerrainSamples(terrainDebug, pseudoSegment(unit, "unitId", unitType), bounds, context,
-                    sample.surfaceSamples(), baseY, "V5_SURFACE_MEDIAN_PLACED");
+                    sample.surfaceSamples(), baseY,
+                    heightDecision == null ? "V5_SURFACE_MEDIAN_PLACED" : heightDecision.reasonCode());
         }
         JsonObject segment = pseudoSegment(unit, "unitId", "wall_segment");
         Axis axis = axisForSegment(segment, bounds);
@@ -254,10 +274,16 @@ public final class CityWallPlacementBackend {
                 : sample.maxY() > sample.medianY() + 1
                 ? "V5_MEDIAN_WALL_CONNECTED_TO_RAISED_GROUND"
                 : "V5_MEDIAN_WALL_PLACED";
+        if (heightDecision != null) {
+            mode = heightDecision.terrainFitMode();
+        }
         return new UnitResult("executed", "WALL_UNIT_PLACED", mode, changed,
-                "Placed v5 wall unit using 1-block surface median.",
+                heightDecision == null
+                        ? "Placed v5 wall unit using 1-block surface median."
+                        : heightDecision.message(),
                 bounds, sample.minY(), sample.maxY(), protectedCells, "v5",
-                terrainDeltaBand(sample.delta(), context), new JsonArray(), new JsonObject());
+                terrainDeltaBand(sample.delta(), context), new JsonArray(),
+                heightDecision == null ? new JsonObject() : heightDecision.asJson(sample));
     }
 
     private UnitResult placeConnectorUnitV4(ServerLevel level, JsonObject connector, PlacementContext context,
@@ -1019,6 +1045,157 @@ public final class CityWallPlacementBackend {
         return out;
     }
 
+    static JsonObject debugV5HeightPlan(JsonArray unitsJson, JsonObject medianByUnitId,
+                                        int segmentMaxDeltaBlocks,
+                                        int steppedTransitionMaxDeltaBlocks,
+                                        int naturalBoundaryMinDeltaBlocks) {
+        java.util.List<JsonObject> units = jsonObjects(unitsJson);
+        java.util.Map<String, V5SurfaceSample> samples = new java.util.LinkedHashMap<>();
+        for (String key : medianByUnitId.keySet()) {
+            int median = medianByUnitId.get(key).getAsInt();
+            samples.put(key, new V5SurfaceSample(median, median, median, 0, 1,
+                    java.util.Map.of("0,0", median)));
+        }
+        int segmentMax = segmentMaxDeltaBlocks <= 0 ? 7 : segmentMaxDeltaBlocks;
+        int steppedMax = Math.max(segmentMax,
+                steppedTransitionMaxDeltaBlocks <= 0 ? 16 : steppedTransitionMaxDeltaBlocks);
+        int naturalMin = Math.max(steppedMax + 1,
+                naturalBoundaryMinDeltaBlocks <= 0 ? 17 : naturalBoundaryMinDeltaBlocks);
+        PlacementContext context = new PlacementContext(java.util.List.of(), java.util.List.of(),
+                64, naturalMin - 1, 8, "v5", segmentMax, steppedMax, 6, naturalMin,
+                true, 9, 32, 0.8D, segmentMax, steppedMax, naturalMin);
+        return v5HeightPlan(units, samples, java.util.Set.of(), context).asJson();
+    }
+
+    private static V5HeightPlan v5HeightPlan(java.util.List<JsonObject> units,
+                                             java.util.Map<String, V5SurfaceSample> samples,
+                                             java.util.Set<String> waterBoundaryUnits,
+                                             PlacementContext context) {
+        java.util.List<Integer> eligibleMedians = new java.util.ArrayList<>();
+        for (JsonObject unit : units) {
+            String unitId = stringValue(unit, "unitId", "");
+            V5SurfaceSample sample = samples.get(unitId);
+            if (v5HeightEligible(unit, unitId, sample, waterBoundaryUnits)) {
+                eligibleMedians.add(sample.medianY());
+            }
+        }
+        int baselineY = highTrimmedMedian(eligibleMedians, 0);
+        java.util.List<V5HeightGroup> groups = new java.util.ArrayList<>();
+        V5HeightGroup current = null;
+        for (JsonObject unit : units) {
+            String unitId = stringValue(unit, "unitId", "");
+            V5SurfaceSample sample = samples.get(unitId);
+            if (!v5HeightEligible(unit, unitId, sample, waterBoundaryUnits)) {
+                current = null;
+                continue;
+            }
+            String lineId = stringValue(unit, "sourceLineId", "");
+            boolean forceNatural = sample.delta() >= context.v5NaturalBoundaryMinDeltaBlocks();
+            boolean exceedsSegmentDelta = current != null
+                    && current.deltaIfAdded(sample) > context.v5HeightSegmentMaxDeltaBlocks();
+            if (current == null
+                    || !current.lineId.equals(lineId)
+                    || forceNatural
+                    || exceedsSegmentDelta) {
+                current = new V5HeightGroup("v5_height_segment_" + groups.size(), lineId);
+                groups.add(current);
+            }
+            current.add(unitId, sample);
+            if (forceNatural) {
+                current.forceNatural = true;
+                current.forceNaturalReason = "unit_terrain_delta";
+                current = null;
+            }
+        }
+
+        for (V5HeightGroup group : groups) {
+            if (group.medianY() - baselineY >= context.v5NaturalBoundaryMinDeltaBlocks()) {
+                group.forceNatural = true;
+                group.forceNaturalReason = "high_segment_above_baseline";
+            }
+        }
+        for (int i = 1; i < groups.size(); i++) {
+            V5HeightGroup previous = groups.get(i - 1);
+            V5HeightGroup currentGroup = groups.get(i);
+            if (!previous.lineId.equals(currentGroup.lineId)) {
+                continue;
+            }
+            int delta = Math.abs(currentGroup.medianY() - previous.medianY());
+            if (delta >= context.v5NaturalBoundaryMinDeltaBlocks()) {
+                V5HeightGroup high = currentGroup.medianY() >= previous.medianY() ? currentGroup : previous;
+                high.forceNatural = true;
+                high.forceNaturalReason = "adjacent_segment_cliff";
+                continue;
+            }
+            if (previous.forceNatural || currentGroup.forceNatural) {
+                continue;
+            } else if (delta > context.v5HeightSegmentMaxDeltaBlocks()
+                    && delta <= context.v5HeightSteppedTransitionMaxDeltaBlocks()) {
+                currentGroup.transitionMode = currentGroup.medianY() > previous.medianY()
+                        ? "stepped_transition_up" : "stepped_transition_down";
+                previous.transitionMode = "uniform_segment".equals(previous.transitionMode)
+                        ? "stepped_transition_peer" : previous.transitionMode;
+            }
+        }
+
+        java.util.Map<String, V5HeightDecision> decisions = new java.util.LinkedHashMap<>();
+        for (V5HeightGroup group : groups) {
+            int segmentMedianY = group.medianY();
+            int baseY = segmentMedianY + 1;
+            for (String unitId : group.unitIds) {
+                V5SurfaceSample sample = samples.get(unitId);
+                boolean natural = group.forceNatural;
+                String reason = natural ? "NATURAL_CLIFF_BOUNDARY_NO_WALL" : "V5_SEGMENTED_WALL_PLACED";
+                String fitMode = natural ? "NATURAL_CLIFF_BOUNDARY_NO_WALL"
+                        : group.transitionMode.startsWith("stepped")
+                        ? "V5_SEGMENTED_WALL_WITH_STEPPED_TRANSITION"
+                        : "V5_SEGMENTED_WALL_PLACED";
+                String message = natural
+                        ? "Large v5 height segment treated as natural cliff boundary; wall not placed."
+                        : "Placed v5 wall unit using segmented uniform wall-top datum.";
+                decisions.put(unitId, new V5HeightDecision(group.groupId, baseY, segmentMedianY,
+                        sample == null ? segmentMedianY : sample.medianY(), baselineY,
+                        group.transitionMode, group.forceNaturalReason, natural, reason, fitMode, message));
+            }
+        }
+        return new V5HeightPlan(decisions, groups, baselineY,
+                context.v5HeightSegmentMaxDeltaBlocks(),
+                context.v5HeightSteppedTransitionMaxDeltaBlocks(),
+                context.v5NaturalBoundaryMinDeltaBlocks());
+    }
+
+    private static boolean v5HeightEligible(JsonObject unit, String unitId, V5SurfaceSample sample,
+                                            java.util.Set<String> waterBoundaryUnits) {
+        return unit != null
+                && sample != null
+                && !unitId.isBlank()
+                && booleanValue(unit, "placementAllowed", true)
+                && !"gate_gap".equals(stringValue(unit, "unitType", ""))
+                && !waterBoundaryUnits.contains(unitId);
+    }
+
+    private static int highTrimmedMedian(java.util.List<Integer> values, int fallback) {
+        if (values.isEmpty()) {
+            return fallback;
+        }
+        java.util.List<Integer> sorted = new java.util.ArrayList<>(values);
+        sorted.sort(Integer::compareTo);
+        int end = sorted.size();
+        if (sorted.size() >= 4) {
+            end = Math.max(1, sorted.size() - Math.max(1, sorted.size() / 10));
+        }
+        return median(sorted.subList(0, end), fallback);
+    }
+
+    private static int median(java.util.List<Integer> values, int fallback) {
+        if (values.isEmpty()) {
+            return fallback;
+        }
+        java.util.List<Integer> sorted = new java.util.ArrayList<>(values);
+        sorted.sort(Integer::compareTo);
+        return sorted.get(sorted.size() / 2);
+    }
+
     private boolean isFluidSurface(ServerLevel level, int x, int surfaceY, int z) {
         int topY = Math.max(level.getMinBuildHeight(), surfaceY - 1);
         return !level.getFluidState(new BlockPos(x, topY, z)).isEmpty()
@@ -1327,7 +1504,13 @@ public final class CityWallPlacementBackend {
             obj.add("manualInspectTp", manualInspectTp(bounds));
             obj.add("stepSlices", stepSlices == null ? new JsonArray() : stepSlices.deepCopy());
             if (mountainProbe != null && !mountainProbe.entrySet().isEmpty()) {
-                obj.add("mountainProbe", mountainProbe.deepCopy());
+                if (mountainProbe.has("heightSegmentId")) {
+                    obj.add("heightDecision", mountainProbe.deepCopy());
+                } else if (mountainProbe.has("fluidCoverageRatio")) {
+                    obj.add("waterBoundary", mountainProbe.deepCopy());
+                } else {
+                    obj.add("mountainProbe", mountainProbe.deepCopy());
+                }
             }
             return obj;
         }
@@ -1346,7 +1529,10 @@ public final class CityWallPlacementBackend {
                                     boolean embeddedSlopeTower,
                                     int v5NominalWallHeightBlocks,
                                     int v5WaterRunMinBlocks,
-                                    double v5WaterFluidRatioMin) {
+                                    double v5WaterFluidRatioMin,
+                                    int v5HeightSegmentMaxDeltaBlocks,
+                                    int v5HeightSteppedTransitionMaxDeltaBlocks,
+                                    int v5NaturalBoundaryMinDeltaBlocks) {
         static PlacementContext from(JsonObject wallPlan) {
             java.util.List<BlockBounds> roads = new java.util.ArrayList<>();
             JsonObject roadMask = wallPlan != null && wallPlan.has("actualRoadMask")
@@ -1378,14 +1564,24 @@ public final class CityWallPlacementBackend {
                     ? wallPlan.getAsJsonObject("terrainFitPolicy") : new JsonObject();
             String policy = stringValue(terrainPolicy, "policyVersion",
                     stringValue(wallPlan, "wallTerrainPolicy", "v3"));
+            String normalizedPolicy = "v5".equalsIgnoreCase(policy == null ? "" : policy.trim())
+                    ? "v5" : POLICY_V31.equalsIgnoreCase(policy == null ? "" : policy.trim()) ? POLICY_V31 : "v3";
             int flatMax = intValue(terrainPolicy, "flatMaxDeltaBlocks", 7);
             int steppedMax = Math.max(flatMax, intValue(terrainPolicy, "steppedMaxDeltaBlocks", 16));
+            int v5SegmentMax = intValue(terrainPolicy, "heightSegmentMaxDeltaBlocks",
+                    intValue(wallPlan, "heightSegmentMaxDeltaBlocks", flatMax));
+            int v5SteppedMax = Math.max(v5SegmentMax,
+                    intValue(terrainPolicy, "heightSteppedTransitionMaxDeltaBlocks",
+                            intValue(wallPlan, "heightSteppedTransitionMaxDeltaBlocks", steppedMax)));
+            int v5NaturalMin = Math.max(v5SteppedMax + 1,
+                    intValue(terrainPolicy, "naturalBoundaryMinDeltaBlocks",
+                            intValue(wallPlan, "naturalBoundaryMinDeltaBlocks", steppedMax + 1)));
             return new PlacementContext(roads, footprints,
                     intValue(wallPlan, "maxFoundationDepthBlocks", 8),
                     intValue(wallPlan, "maxSegmentHeightDeltaBlocks", MAX_SEGMENT_HEIGHT_DELTA),
                     Math.max(1, intValue(wallPlan, "terrainFitUnitLengthBlocks",
                             intValue(wallPlan, "wallUnitLengthBlocks", 5))),
-                    POLICY_V31.equalsIgnoreCase(policy == null ? "" : policy.trim()) ? POLICY_V31 : "v3",
+                    normalizedPolicy,
                     flatMax,
                     steppedMax,
                     Math.max(1, intValue(terrainPolicy, "mountainProbeDistanceBlocks", 6)),
@@ -1393,7 +1589,10 @@ public final class CityWallPlacementBackend {
                     booleanValue(terrainPolicy, "embeddedSlopeTower", true),
                     Math.max(3, intValue(wallPlan, "nominalWallHeightBlocks", 9)),
                     Math.max(1, intValue(wallPlan, "waterRunMinBlocks", 32)),
-                    Math.max(0.0D, doubleValue(wallPlan, "waterFluidRatioMin", 0.8D)));
+                    Math.max(0.0D, doubleValue(wallPlan, "waterFluidRatioMin", 0.8D)),
+                    Math.max(1, v5SegmentMax),
+                    Math.max(v5SegmentMax, v5SteppedMax),
+                    v5NaturalMin);
         }
 
         boolean isV31Policy() {
@@ -1449,6 +1648,114 @@ public final class CityWallPlacementBackend {
                 return fallback;
             }
             return surfaceSamples.getOrDefault(x + "," + z, fallback);
+        }
+    }
+
+    private record V5HeightDecision(String heightSegmentId, int baseY, int segmentMedianY, int unitMedianY,
+                                    int baselineSurfaceY, String transitionMode, String naturalReason,
+                                    boolean naturalBoundary, String reasonCode, String terrainFitMode,
+                                    String message) {
+        JsonObject asJson(V5SurfaceSample sample) {
+            JsonObject obj = new JsonObject();
+            obj.addProperty("heightSegmentId", heightSegmentId);
+            obj.addProperty("executedBaseY", baseY);
+            obj.addProperty("segmentMedianSurfaceY", segmentMedianY);
+            obj.addProperty("unitMedianSurfaceY", unitMedianY);
+            obj.addProperty("baselineSurfaceY", baselineSurfaceY);
+            obj.addProperty("transitionMode", transitionMode);
+            obj.addProperty("naturalBoundary", naturalBoundary);
+            obj.addProperty("naturalReason", naturalReason);
+            obj.addProperty("heightDeltaFromSegment", sample == null ? 0 : sample.medianY() - segmentMedianY);
+            return obj;
+        }
+    }
+
+    private record V5HeightPlan(java.util.Map<String, V5HeightDecision> decisions,
+                                java.util.List<V5HeightGroup> groups,
+                                int baselineSurfaceY,
+                                int segmentMaxDeltaBlocks,
+                                int steppedTransitionMaxDeltaBlocks,
+                                int naturalBoundaryMinDeltaBlocks) {
+        static V5HeightPlan empty() {
+            return new V5HeightPlan(java.util.Map.of(), java.util.List.of(), 0, 0, 0, 0);
+        }
+
+        V5HeightDecision decision(String unitId) {
+            return decisions.get(unitId);
+        }
+
+        JsonObject asJson() {
+            JsonObject obj = new JsonObject();
+            obj.addProperty("schemaVersion", "city_wall_v5_height_segmentation.v0.1");
+            obj.addProperty("baselineSurfaceY", baselineSurfaceY);
+            obj.addProperty("heightSegmentMaxDeltaBlocks", segmentMaxDeltaBlocks);
+            obj.addProperty("heightSteppedTransitionMaxDeltaBlocks", steppedTransitionMaxDeltaBlocks);
+            obj.addProperty("naturalBoundaryMinDeltaBlocks", naturalBoundaryMinDeltaBlocks);
+            obj.addProperty("heightSegmentCount", groups.size());
+            int naturalCount = 0;
+            JsonArray arr = new JsonArray();
+            for (V5HeightGroup group : groups) {
+                if (group.forceNatural) {
+                    naturalCount++;
+                }
+                arr.add(group.asJson());
+            }
+            obj.addProperty("naturalBoundarySegmentCount", naturalCount);
+            obj.add("heightSegments", arr);
+            return obj;
+        }
+    }
+
+    private static final class V5HeightGroup {
+        private final String groupId;
+        private final String lineId;
+        private final java.util.List<String> unitIds = new java.util.ArrayList<>();
+        private final java.util.List<Integer> medians = new java.util.ArrayList<>();
+        private boolean forceNatural;
+        private String forceNaturalReason = "";
+        private String transitionMode = "uniform_segment";
+
+        private V5HeightGroup(String groupId, String lineId) {
+            this.groupId = groupId;
+            this.lineId = lineId;
+        }
+
+        private void add(String unitId, V5SurfaceSample sample) {
+            unitIds.add(unitId);
+            medians.add(sample.medianY());
+        }
+
+        private int medianY() {
+            return median(medians, 0);
+        }
+
+        private int deltaIfAdded(V5SurfaceSample sample) {
+            int min = sample.medianY();
+            int max = sample.medianY();
+            for (Integer median : medians) {
+                min = Math.min(min, median);
+                max = Math.max(max, median);
+            }
+            return Math.max(0, max - min);
+        }
+
+        private JsonObject asJson() {
+            JsonObject obj = new JsonObject();
+            obj.addProperty("heightSegmentId", groupId);
+            obj.addProperty("sourceLineId", lineId);
+            obj.addProperty("segmentMedianSurfaceY", medianY());
+            obj.addProperty("baseY", medianY() + 1);
+            obj.addProperty("unitCount", unitIds.size());
+            obj.addProperty("transitionMode", transitionMode);
+            obj.addProperty("naturalBoundary", forceNatural);
+            obj.addProperty("naturalReason", forceNaturalReason);
+            if (forceNatural) {
+                obj.addProperty("reasonCode", "NATURAL_CLIFF_BOUNDARY_NO_WALL");
+            }
+            JsonArray units = new JsonArray();
+            unitIds.forEach(units::add);
+            obj.add("unitIds", units);
+            return obj;
         }
     }
 

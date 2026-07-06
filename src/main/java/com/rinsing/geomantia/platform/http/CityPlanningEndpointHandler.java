@@ -14,6 +14,7 @@ import com.rinsing.geomantia.systems.city.application.CityStructureD6Planner;
 import com.rinsing.geomantia.systems.city.application.CityStructureD7Executor;
 import com.rinsing.geomantia.systems.city.application.CityStructureAnchorPlanner;
 import com.rinsing.geomantia.systems.city.application.CityStructureAnchorCandidatePlanner;
+import com.rinsing.geomantia.systems.city.application.CityStructureArrayCandidatePlanner;
 import com.rinsing.geomantia.systems.city.application.CityStructureEnvelopeFacts;
 import com.rinsing.geomantia.systems.city.application.CityStructureEnvelopeProfiler;
 import com.rinsing.geomantia.systems.city.application.CityStructureMaterializationPlanner;
@@ -325,6 +326,68 @@ final class CityPlanningEndpointHandler {
         artifacts.addProperty("sourceD3Package", debugRef(debugRoot, d3PackagePath));
         if (envelopeFactsPath != null && Files.exists(envelopeFactsPath)) {
             artifacts.addProperty("sourceStructureEnvelopeFacts", debugRef(debugRoot, envelopeFactsPath));
+        }
+        response.add("artifacts", artifacts);
+        return response;
+    }
+
+    static JsonObject handlePlanD4ArrayCandidates(Path debugRoot, String runId, String citySeedId,
+                                                  JsonObject terraSenseProfileSource,
+                                                  JsonObject arrayCandidatePlan,
+                                                  JsonObject structureEnvelopeFactsSource,
+                                                  JsonObject occupiedStructureAnchorMapSource,
+                                                  JsonArray occupiedEnvelopes) throws IOException {
+        Path runDir = debugRoot.resolve(runId);
+        loadCitySeed(runDir, runId, citySeedId);
+        Path d3Dir = runDir.resolve("city_d3_" + safeFileName(citySeedId));
+        Path d3PackagePath = d3Dir.resolve("city_landform_review_package.json");
+        if (!Files.exists(d3PackagePath)) {
+            throw new IllegalArgumentException("D3 package not found. Run city_plan_d3 first: "
+                    + debugRef(debugRoot, d3PackagePath));
+        }
+        CityLandformReviewPackage reviewPackage = CityLandformReviewPackage.fromJson(
+                JsonParser.parseString(Files.readString(d3PackagePath)).getAsJsonObject());
+        Path envelopeFactsPath = envelopeFactsPath(runDir, citySeedId, structureEnvelopeFactsSource);
+        CityStructureEnvelopeFacts envelopeFacts = CityStructureEnvelopeFacts.load(envelopeFactsPath);
+        Path occupiedAnchorMapPath = occupiedStructureAnchorMapPath(runDir, occupiedStructureAnchorMapSource);
+        JsonObject occupiedAnchorMap = new JsonObject();
+        if (occupiedAnchorMapPath != null) {
+            if (!Files.exists(occupiedAnchorMapPath)) {
+                throw new IllegalArgumentException("occupiedStructureAnchorMapSource not found: "
+                        + debugRef(debugRoot, occupiedAnchorMapPath));
+            }
+            occupiedAnchorMap = JsonParser.parseString(Files.readString(occupiedAnchorMapPath)).getAsJsonObject();
+        }
+        CityStructureArrayCandidatePlanner.Result result = new CityStructureArrayCandidatePlanner()
+                .plan(runDir, reviewPackage, terraSenseProfileSource, arrayCandidatePlan,
+                        envelopeFacts, occupiedAnchorMap,
+                        occupiedEnvelopes == null ? new JsonArray() : occupiedEnvelopes);
+
+        Path outputDirectory = runDir.resolve("city_d4_array_candidates_" + safeFileName(citySeedId));
+        Files.createDirectories(outputDirectory);
+        Path planPath = outputDirectory.resolve("d4_array_candidate_plan.json");
+        Path candidateSetPath = outputDirectory.resolve("d4_array_candidate_set.json");
+        Path qualityPath = outputDirectory.resolve("quality_report.json");
+        Files.writeString(planPath, CityJson.GSON.toJson(result.arrayCandidatePlan()));
+        Files.writeString(candidateSetPath, CityJson.GSON.toJson(result.arrayCandidateSet()));
+        Files.writeString(qualityPath, CityJson.GSON.toJson(result.qualityReport()));
+
+        Path previewPath = new CityStructureLandingPreviewRenderer()
+                .renderD4ArrayCandidates(result.arrayCandidateSet(), reviewPackage, outputDirectory);
+
+        JsonObject response = result.asJson();
+        JsonObject artifacts = new JsonObject();
+        artifacts.addProperty("arrayCandidatePlan", debugRef(debugRoot, planPath));
+        artifacts.addProperty("arrayCandidateSet", debugRef(debugRoot, candidateSetPath));
+        artifacts.addProperty("arrayCandidatePreview", debugRef(debugRoot, previewPath));
+        artifacts.addProperty("d4ArrayCandidatePreview", debugRef(debugRoot, previewPath));
+        artifacts.addProperty("qualityReport", debugRef(debugRoot, qualityPath));
+        artifacts.addProperty("sourceD3Package", debugRef(debugRoot, d3PackagePath));
+        if (envelopeFactsPath != null && Files.exists(envelopeFactsPath)) {
+            artifacts.addProperty("sourceStructureEnvelopeFacts", debugRef(debugRoot, envelopeFactsPath));
+        }
+        if (occupiedAnchorMapPath != null && Files.exists(occupiedAnchorMapPath)) {
+            artifacts.addProperty("sourceOccupiedStructureAnchorMap", debugRef(debugRoot, occupiedAnchorMapPath));
         }
         response.add("artifacts", artifacts);
         return response;
@@ -829,6 +892,7 @@ final class CityPlanningEndpointHandler {
         Path d6Dir = runDir.resolve("city_d6_" + safeFileName(citySeedId));
         Path d5Dir = runDir.resolve("city_d5_" + safeFileName(citySeedId));
         Path planPath = d6Dir.resolve("structure_materialization_plan.json");
+        Path d3PackagePath = d3PackagePath(runDir, citySeedId);
         Path wallReservationPath = d5Dir.resolve("wall_reservation_plan.json");
         if (!Files.exists(planPath)) {
             rejectLegacyArtifacts(d6Dir, "D6");
@@ -836,6 +900,11 @@ final class CityPlanningEndpointHandler {
                     + debugRef(debugRoot, d6Dir));
         }
         JsonObject materializationPlan = JsonParser.parseString(Files.readString(planPath)).getAsJsonObject();
+        CityLandformReviewPackage reviewPackage = null;
+        if (Files.exists(d3PackagePath)) {
+            reviewPackage = CityLandformReviewPackage.fromJson(
+                    JsonParser.parseString(Files.readString(d3PackagePath)).getAsJsonObject());
+        }
         Path outputDirectory = runDir.resolve("city_d7_" + safeFileName(citySeedId));
         Path ledgerPath = outputDirectory.resolve("placed_structure_ledger.json");
         CityStructureMaterializationPlanner.Result result;
@@ -860,6 +929,8 @@ final class CityPlanningEndpointHandler {
             result.qualityReport().addProperty("score", 0);
         } else {
             JsonObject runtimeLedger = CityReservationMaskRegistry.ledgerForCity(
+                    runId,
+                    citySeedId,
                     stringValue(materializationPlan, "cityId"));
             CityStructureMaterializationPlanner.ChunkStatusInspector inspector = CityReservationMaskRegistry
                     .hasActivePlannedStructuresFor(runId, citySeedId, stringValue(materializationPlan, "cityId"))
@@ -893,7 +964,7 @@ final class CityPlanningEndpointHandler {
 
         Path previewPath = new CityStructureLandingPreviewRenderer()
                 .renderD7(result.placedStructureLedger(), result.structureMaterializationTrace(),
-                        materializationPlan, outputDirectory);
+                        materializationPlan, reviewPackage, outputDirectory);
 
         JsonObject response = result.asJson();
         JsonObject artifacts = new JsonObject();
@@ -903,6 +974,9 @@ final class CityPlanningEndpointHandler {
         artifacts.addProperty("placedStructurePreview", debugRef(debugRoot, previewPath));
         artifacts.addProperty("qualityReport", debugRef(debugRoot, qualityPath));
         artifacts.addProperty("sourceStructureMaterializationPlan", debugRef(debugRoot, planPath));
+        if (Files.exists(d3PackagePath)) {
+            artifacts.addProperty("sourceD3Package", debugRef(debugRoot, d3PackagePath));
+        }
         if (roadPostprocessReport != null) {
             artifacts.addProperty("deferredRoadPostprocessReport",
                     debugRef(debugRoot, outputDirectory.resolve("deferred_road_postprocess_report.json")));
@@ -1526,7 +1600,13 @@ final class CityPlanningEndpointHandler {
                 intValue(request, "wallUnitLengthBlocks", CityWallPlanner.DEFAULT_V5_WALL_UNIT_LENGTH_BLOCKS),
                 intValue(request, "nominalWallHeightBlocks", CityWallPlanner.DEFAULT_V5_NOMINAL_WALL_HEIGHT_BLOCKS),
                 intValue(request, "waterRunMinBlocks", CityWallPlanner.DEFAULT_V5_WATER_RUN_MIN_BLOCKS),
-                doubleValue(request, "waterFluidRatioMin", CityWallPlanner.DEFAULT_V5_WATER_FLUID_RATIO_MIN));
+                doubleValue(request, "waterFluidRatioMin", CityWallPlanner.DEFAULT_V5_WATER_FLUID_RATIO_MIN),
+                intValue(request, "heightSegmentMaxDeltaBlocks",
+                        CityWallPlanner.DEFAULT_V5_SEGMENT_MAX_DELTA_BLOCKS),
+                intValue(request, "heightSteppedTransitionMaxDeltaBlocks",
+                        CityWallPlanner.DEFAULT_V5_STEPPED_TRANSITION_MAX_DELTA_BLOCKS),
+                intValue(request, "naturalBoundaryMinDeltaBlocks",
+                        CityWallPlanner.DEFAULT_V5_NATURAL_BOUNDARY_MIN_DELTA_BLOCKS));
     }
 
     private static void requireObject(JsonObject request, String key, String stepName) {
@@ -1908,15 +1988,10 @@ final class CityPlanningEndpointHandler {
                 || !allPlannedWorldgenStructuresRecorded(materializationPlan, placedLedger)) {
             return null;
         }
-        if (!booleanValue(roadProviderState, "useWorldEditDebugFallback", true)) {
-            JsonObject skipped = new JsonObject();
-            skipped.addProperty("schemaVersion", "city_deferred_road_postprocess_report.v0.1");
-            skipped.addProperty("status", "skipped");
-            skipped.addProperty("reasonCode", "ROADWEAVER_REGISTERED");
-            skipped.addProperty("message", "RoadWeaver owns road generation; WorldEdit debug road fallback skipped.");
-            skipped.addProperty("roadPostprocessSource", "roadweaver");
-            skipped.addProperty("boundarySource", "actual_footprint_union");
-            skipped.add("roadProviderState", roadProviderState.deepCopy());
+        String roadProvider = stringValue(roadProviderState, "roadProvider", CityRoadWeaverBridge.PROVIDER_AUTO);
+        boolean explicitWorldEditDebug = CityRoadWeaverBridge.PROVIDER_WORLDEDIT_DEBUG.equals(roadProvider);
+        if (!explicitWorldEditDebug || !booleanValue(roadProviderState, "useWorldEditDebugFallback", false)) {
+            JsonObject skipped = skippedDeferredRoadPostprocessReport(roadProviderState);
             Path reportPath = outputDirectory.resolve("deferred_road_postprocess_report.json");
             Files.writeString(reportPath, CityJson.GSON.toJson(skipped));
             return skipped;
@@ -1950,6 +2025,55 @@ final class CityPlanningEndpointHandler {
         return reportJson;
     }
 
+    private static JsonObject skippedDeferredRoadPostprocessReport(JsonObject roadProviderState) {
+        String provider = stringValue(roadProviderState, "roadProvider", CityRoadWeaverBridge.PROVIDER_AUTO);
+        JsonObject registration = roadProviderState != null
+                && roadProviderState.has("roadWeaverRegistrationReport")
+                && roadProviderState.get("roadWeaverRegistrationReport").isJsonObject()
+                ? roadProviderState.getAsJsonObject("roadWeaverRegistrationReport")
+                : new JsonObject();
+        String registrationReason = stringValue(registration, "reasonCode", "");
+        String stateReason = stringValue(roadProviderState, "reasonCode", "");
+        boolean roadWeaverRegistered = booleanValue(roadProviderState, "roadWeaverRegistered", false);
+
+        String reasonCode;
+        String message;
+        String source;
+        if (roadWeaverRegistered) {
+            reasonCode = "ROADWEAVER_REGISTERED";
+            message = "RoadWeaver owns road generation; WorldEdit debug road fallback skipped.";
+            source = "roadweaver";
+        } else if (CityRoadWeaverBridge.PROVIDER_NONE.equals(provider)) {
+            reasonCode = "ROAD_PROVIDER_NONE";
+            message = "Road generation disabled by roadProvider=none.";
+            source = "none";
+        } else if ("ROAD_PROVIDER_STATE_MISSING".equals(stateReason)) {
+            reasonCode = "ROAD_PROVIDER_STATE_MISSING";
+            message = "Missing D5 road provider state; automatic WorldEdit debug road fallback is disabled.";
+            source = "none";
+        } else if (CityRoadWeaverBridge.PROVIDER_AUTO.equals(provider)
+                && "ROADWEAVER_UNAVAILABLE".equals(registrationReason)) {
+            reasonCode = "ROADWEAVER_UNAVAILABLE";
+            message = "RoadWeaver is unavailable and roadProvider=auto no longer runs legacy WorldEdit debug roads. "
+                    + "Use roadProvider=worldedit_debug for diagnostic roads.";
+            source = "none";
+        } else {
+            reasonCode = "ROAD_DEBUG_FALLBACK_DISABLED";
+            message = "WorldEdit debug road fallback is disabled for this road provider.";
+            source = "none";
+        }
+
+        JsonObject skipped = new JsonObject();
+        skipped.addProperty("schemaVersion", "city_deferred_road_postprocess_report.v0.1");
+        skipped.addProperty("status", "skipped");
+        skipped.addProperty("reasonCode", reasonCode);
+        skipped.addProperty("message", message);
+        skipped.addProperty("roadPostprocessSource", source);
+        skipped.addProperty("boundarySource", "actual_footprint_union");
+        skipped.add("roadProviderState", roadProviderState.deepCopy());
+        return skipped;
+    }
+
     private static JsonObject loadRoadProviderState(Path d5Dir) throws IOException {
         Path path = d5Dir.resolve("road_provider_state.json");
         if (Files.exists(path)) {
@@ -1960,9 +2084,9 @@ final class CityPlanningEndpointHandler {
         obj.addProperty("roadProvider", CityRoadWeaverBridge.PROVIDER_AUTO);
         obj.addProperty("roadWeaverRegistered", false);
         obj.addProperty("roadWeaverAvailable", false);
-        obj.addProperty("useWorldEditDebugFallback", true);
+        obj.addProperty("useWorldEditDebugFallback", false);
         obj.addProperty("reasonCode", "ROAD_PROVIDER_STATE_MISSING");
-        obj.addProperty("message", "Missing D5 road provider state; using legacy WorldEdit debug fallback.");
+        obj.addProperty("message", "Missing D5 road provider state; automatic WorldEdit debug road fallback is disabled.");
         return obj;
     }
 
@@ -2267,6 +2391,21 @@ final class CityPlanningEndpointHandler {
         }
         return runDir.resolve("city_d4_candidates_" + safeFileName(citySeedId))
                 .resolve("anchor_candidate_set.json");
+    }
+
+    private static Path occupiedStructureAnchorMapPath(Path runDir, JsonObject source) {
+        if (source == null) {
+            return null;
+        }
+        String raw = stringValue(source, "anchorMapPath");
+        if (raw.isBlank()) {
+            raw = stringValue(source, "structureAnchorMapPath");
+        }
+        if (raw.isBlank()) {
+            return null;
+        }
+        Path path = Path.of(raw);
+        return path.isAbsolute() ? path.normalize() : runDir.resolve(path).normalize();
     }
 
     private static String safeFileName(String raw) {

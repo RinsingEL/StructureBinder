@@ -1,11 +1,13 @@
 package com.rinsing.geomantia.systems.city;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.rinsing.geomantia.systems.city.application.CityReservationMaskPlanner;
 import com.rinsing.geomantia.systems.city.application.CityStructureAnchorPlanner;
 import com.rinsing.geomantia.systems.city.application.CityStructureAnchorCandidatePlanner;
+import com.rinsing.geomantia.systems.city.application.CityStructureArrayCandidatePlanner;
 import com.rinsing.geomantia.systems.city.application.CityStructureEnvelopeFacts;
 import com.rinsing.geomantia.systems.city.application.CityStructureEnvelopeProfiler;
 import com.rinsing.geomantia.systems.city.application.CityStructureMaterializationPlanner;
@@ -371,6 +373,73 @@ final class CityStructureLandingFlowTest {
     }
 
     @Test
+    void d4ArrayCandidatePlannerBuildsCompleteNonOverlappingGroups() throws Exception {
+        Fixture fixture = arrayFixture();
+        CityStructureArrayCandidatePlanner.Result result = new CityStructureArrayCandidatePlanner()
+                .plan(fixture.baseDir(), fixture.review(), fixture.terraSenseSource(),
+                        arrayCandidatePlan(fixture.review(), 10), CityStructureEnvelopeFacts.empty(),
+                        new JsonObject(), new JsonArray());
+
+        JsonObject candidateSet = result.arrayCandidateSet();
+        assertTrue(result.asJson().get("ok").getAsBoolean());
+        assertEquals("city_d4_array_candidate_set.v0.1", candidateSet.get("schemaVersion").getAsString());
+        JsonArray groups = candidateSet.getAsJsonArray("arrayCandidates");
+        assertFalse(groups.isEmpty());
+        Set<String> patterns = new HashSet<>();
+        for (JsonElement elem : groups) {
+            patterns.add(elem.getAsJsonObject().get("arrayPattern").getAsString());
+        }
+        assertTrue(patterns.contains("loose_cluster"));
+        assertTrue(patterns.contains("patch_axis_band"));
+        assertTrue(patterns.contains("scattered"));
+
+        JsonObject firstGroup = groups.get(0).getAsJsonObject();
+        assertEquals(10, firstGroup.getAsJsonArray("items").size());
+        assertEquals(10, firstGroup.getAsJsonObject("expandedStructureAnchorPlan")
+                .getAsJsonArray("anchors").size());
+        assertGroupItemsDoNotOverlap(firstGroup);
+    }
+
+    @Test
+    void d4ArrayCandidatePlannerAvoidsOccupiedEnvelopes() throws Exception {
+        Fixture fixture = arrayFixture();
+        JsonArray occupied = JsonParser.parseString("""
+                [
+                  {"blockBounds": {"minX": -72, "minZ": -72, "maxX": 72, "maxZ": 72}}
+                ]
+                """).getAsJsonArray();
+        CityStructureArrayCandidatePlanner.Result result = new CityStructureArrayCandidatePlanner()
+                .plan(fixture.baseDir(), fixture.review(), fixture.terraSenseSource(),
+                        arrayCandidatePlan(fixture.review(), 10), CityStructureEnvelopeFacts.empty(),
+                        new JsonObject(), occupied);
+
+        assertTrue(result.asJson().get("ok").getAsBoolean());
+        BlockBounds occupiedBounds = bounds(occupied.get(0).getAsJsonObject().getAsJsonObject("blockBounds"));
+        for (JsonElement groupElem : result.arrayCandidateSet().getAsJsonArray("arrayCandidates")) {
+            JsonObject group = groupElem.getAsJsonObject();
+            for (JsonElement itemElem : group.getAsJsonArray("items")) {
+                BlockBounds collision = bounds(itemElem.getAsJsonObject()
+                        .getAsJsonObject("estimatedCollisionEnvelope"));
+                assertFalse(collision.overlaps(occupiedBounds));
+            }
+        }
+    }
+
+    @Test
+    void d4ArrayCandidatePlannerHardFailsWhenArrayCountCannotBeSatisfied() throws Exception {
+        Fixture fixture = fixture();
+        CityStructureArrayCandidatePlanner.Result result = new CityStructureArrayCandidatePlanner()
+                .plan(fixture.baseDir(), fixture.review(), fixture.terraSenseSource(),
+                        arrayCandidatePlan(fixture.review(), 10), CityStructureEnvelopeFacts.empty(),
+                        new JsonObject(), new JsonArray());
+
+        assertFalse(result.asJson().get("ok").getAsBoolean());
+        assertTrue(result.qualityReport().getAsJsonArray("hardBlocks").toString()
+                .contains("D4_ARRAY_COUNT_UNSATISFIED"));
+        assertTrue(result.arrayCandidateSet().getAsJsonArray("arrayCandidates").isEmpty());
+    }
+
+    @Test
     void d4OfficialProfileRequiresApprovedReviewState() throws Exception {
         Fixture fixture = fixture();
         Path profilePath = fixture.baseDir().resolve("StructureProfile.jsonl");
@@ -539,6 +608,12 @@ final class CityStructureLandingFlowTest {
         assertEquals(8, wallPlan.get("wallUnitLengthBlocks").getAsInt());
         assertEquals(9, wallPlan.get("nominalWallHeightBlocks").getAsInt());
         assertEquals(32, wallPlan.get("waterRunMinBlocks").getAsInt());
+        assertEquals(7, wallPlan.get("heightSegmentMaxDeltaBlocks").getAsInt());
+        assertEquals(16, wallPlan.get("heightSteppedTransitionMaxDeltaBlocks").getAsInt());
+        assertEquals(17, wallPlan.get("naturalBoundaryMinDeltaBlocks").getAsInt());
+        JsonObject terrain = wallPlan.getAsJsonObject("terrainFitPolicy");
+        assertEquals("segmented_surface_datum", terrain.get("heightStrategy").getAsString());
+        assertEquals("natural_cliff_boundary_no_wall", terrain.get("cliffPolicy").getAsString());
         assertEquals("surfaceY/topBlock/fluid/biome/temperature/flags",
                 wallPlan.getAsJsonObject("surfaceCachePolicy").get("requiredFields").getAsString());
         assertTrue(wallPlan.getAsJsonArray("wallUnits").toString()
@@ -1317,6 +1392,43 @@ final class CityStructureLandingFlowTest {
     }
 
     @Test
+    void worldgenLedgerDeduplicationIsScopedToRunIdentity() throws Exception {
+        Fixture fixture = fixture();
+        JsonObject anchorMap = new CityStructureAnchorPlanner()
+                .plan(fixture.baseDir(), fixture.review(), fixture.terraSenseSource(), singleAnchorPlan(fixture.review()))
+                .structureAnchorMap();
+        JsonObject mask = new CityReservationMaskPlanner()
+                .plan(fixture.context(), anchorMap)
+                .reservationMaskPlan();
+        Path worldRoot = Files.createTempDirectory("city-mask-shared-run");
+
+        JsonObject activeA = CityReservationMaskRegistry.activate(mask, anchorMap,
+                "run_a", fixture.context().cityId(), worldRoot);
+        JsonObject plannedJson = activeA.getAsJsonArray("plannedStructures").get(0).getAsJsonObject();
+        JsonObject anchorChunkJson = plannedJson.getAsJsonObject("anchorChunk");
+        ChunkPos anchorChunk = new ChunkPos(
+                anchorChunkJson.get("x").getAsInt(),
+                anchorChunkJson.get("z").getAsInt());
+        CityReservationMaskRegistry.PlannedStructure plannedA = CityReservationMaskRegistry
+                .plannedStructuresForChunk(anchorChunk)
+                .get(0);
+        CityReservationMaskRegistry.recordWorldgenPlacement(plannedA, plannedA.plannedFootprint(),
+                "sig_a", new JsonArray(), anchorChunk,
+                "none", "WORLDGEN_PLACEMENT_RECORDED", "test placement");
+
+        CityReservationMaskRegistry.activate(mask, anchorMap,
+                "run_b", fixture.context().cityId(), worldRoot);
+
+        assertEquals(1, CityReservationMaskRegistry.plannedStructuresForChunk(anchorChunk).size());
+        assertEquals(0, CityReservationMaskRegistry.ledgerForCity(
+                        "run_b", fixture.context().cityId(), fixture.context().cityId())
+                .getAsJsonArray("placedStructures").size());
+        assertEquals(1, CityReservationMaskRegistry.ledgerForCity(
+                        "run_a", fixture.context().cityId(), fixture.context().cityId())
+                .getAsJsonArray("placedStructures").size());
+    }
+
+    @Test
     void d6WorldgenPlanDoesNotCallLatePlacementBackend() throws Exception {
         Fixture fixture = fixture();
         JsonObject anchorMap = new CityStructureAnchorPlanner()
@@ -1484,6 +1596,26 @@ final class CityStructureLandingFlowTest {
         return new Fixture(baseDir, context, review, source);
     }
 
+    private static Fixture arrayFixture() throws Exception {
+        Path baseDir = Files.createTempDirectory("city-structure-array");
+        CityPlanningConfig config = CityPlanningConfig.defaults();
+        CitySiteContext context = new com.rinsing.geomantia.systems.city.application.CitySiteContextBuilder(config)
+                .build("city_test", "realm_test", "minecraft:overworld",
+                        "city_test", "candidate_test", 0, 0,
+                        "village", "village", 220, 4, null);
+        CityLandformReviewPackage review = new com.rinsing.geomantia.systems.city.application.CityLandformReviewBuilder(config)
+                .build(context, List.of(
+                        patch("plain_big", LandformType.PLAIN, -320, -320, 320, 320)));
+        Path catalogPath = baseDir.resolve("debug_structure_profile_catalog.json");
+        Files.writeString(catalogPath, debugStructureCatalog());
+        JsonObject source = new JsonObject();
+        source.addProperty("schemaVersion", "terrasense_structure_profile_source.v0.1");
+        source.addProperty("sourceType", "debug_catalog");
+        source.addProperty("catalogMode", "debug");
+        source.addProperty("debugCatalogPath", catalogPath.toString());
+        return new Fixture(baseDir, context, review, source);
+    }
+
     private static CityLandformReviewPackage preciseMemberCellReview() {
         return CityLandformReviewPackage.fromJson(JsonParser.parseString("""
                 {
@@ -1606,6 +1738,26 @@ final class CityStructureLandingFlowTest {
                 """.formatted(first.landformPatchId(), second.landformPatchId())).getAsJsonObject();
     }
 
+    private static JsonObject arrayCandidatePlan(CityLandformReviewPackage review, int arrayCount) {
+        LandformPatchSummary first = review.landformPatches().get(0);
+        return JsonParser.parseString("""
+                {
+                  "schemaVersion": "city_d4_array_candidate_plan.v0.1",
+                  "cityId": "city_test",
+                  "arrayId": "residential_cluster",
+                  "displayRole": "住宅阵列",
+                  "candidatePatchRefs": ["%s"],
+                  "structureIds": [
+                    "minecraft:desert_pyramid",
+                    "minecraft:jungle_pyramid",
+                    "minecraft:village_plains"
+                  ],
+                  "arrayCount": %d,
+                  "patterns": ["loose_cluster", "patch_axis_band", "scattered"]
+                }
+                """.formatted(first.landformPatchId(), arrayCount)).getAsJsonObject();
+    }
+
     private static JsonObject singleAnchorPlan(CityLandformReviewPackage review) {
         LandformPatchSummary first = review.landformPatches().get(0);
         return JsonParser.parseString("""
@@ -1658,6 +1810,24 @@ final class CityStructureLandingFlowTest {
                       "usageTerms": ["usage.public_core"],
                       "qualityTerms": ["quality.debug_usable"],
                       "fixedFootprint": {"widthBlocks": 20, "depthBlocks": 12, "heightBlocks": 10},
+                      "allowedRotations": ["NONE", "CLOCKWISE_90"],
+                      "clearanceBlocks": 2
+                    },
+                    {
+                      "structureId": "minecraft:jungle_pyramid",
+                      "sourceProfileRef": "synthetic://unit-test/jungle_pyramid",
+                      "profileType": "single",
+                      "sampleType": "structure_assembly",
+                      "placementKind": "minecraft_place_structure",
+                      "placementCommand": "place structure minecraft:jungle_pyramid <x> <y> <z>",
+                      "footprintMode": "fixed_footprint",
+                      "semanticTerms": ["function.house", "style.debug", "placement.inside_zone", "usage.residential", "quality.debug_usable"],
+                      "functionTerms": ["function.house"],
+                      "styleTerms": ["style.debug"],
+                      "placementTerms": ["placement.inside_zone"],
+                      "usageTerms": ["usage.residential"],
+                      "qualityTerms": ["quality.debug_usable"],
+                      "fixedFootprint": {"widthBlocks": 16, "depthBlocks": 16, "heightBlocks": 10},
                       "allowedRotations": ["NONE", "CLOCKWISE_90"],
                       "clearanceBlocks": 2
                     },
@@ -1970,6 +2140,19 @@ final class CityStructureLandingFlowTest {
                 obj.get("minZ").getAsInt(),
                 obj.get("maxX").getAsInt(),
                 obj.get("maxZ").getAsInt());
+    }
+
+    private static void assertGroupItemsDoNotOverlap(JsonObject group) {
+        JsonArray items = group.getAsJsonArray("items");
+        for (int i = 0; i < items.size(); i++) {
+            BlockBounds a = bounds(items.get(i).getAsJsonObject()
+                    .getAsJsonObject("estimatedCollisionEnvelope"));
+            for (int j = i + 1; j < items.size(); j++) {
+                BlockBounds b = bounds(items.get(j).getAsJsonObject()
+                        .getAsJsonObject("estimatedCollisionEnvelope"));
+                assertFalse(a.overlaps(b), "array items overlap: " + i + " / " + j);
+            }
+        }
     }
 
     private static boolean hasTemplateBlockAt(ListTag blocks, int x, int y, int z) {

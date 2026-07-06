@@ -33,12 +33,6 @@ public final class CityStructureAnchorCandidatePlanner {
     public static final String DESIGN_TIME_REPORT_SCHEMA = "city_d4_design_time_report.v0.2";
 
     private static final int MAX_CANDIDATES_PER_SLOT = 5;
-    private static final int DEFAULT_SMALL_CLEARANCE_BLOCKS = 4;
-    private static final int DEFAULT_CLEARANCE_BLOCKS = 8;
-    private static final int DEFAULT_VEGETATION_MARGIN_BLOCKS = 8;
-    private static final int DEFAULT_ROAD_ACCESS_MARGIN_BLOCKS = 6;
-    private static final int DEFAULT_JIGSAW_RADIUS_BLOCKS = 96;
-
     public Result plan(Path baseDirectory,
                        CityLandformReviewPackage reviewPackage,
                        JsonObject terraSenseProfileSource,
@@ -161,7 +155,8 @@ public final class CityStructureAnchorCandidatePlanner {
                 anchor.addProperty("envelopeGroupKey", stringValue(candidate, "selectedEnvelopeGroupKey", ""));
             }
             anchor.addProperty("smallClearanceBlocks",
-                    intValue(candidate, "smallClearanceBlocks", DEFAULT_SMALL_CLEARANCE_BLOCKS));
+                    intValue(candidate, "smallClearanceBlocks",
+                            CityStructureCandidateEnvelope.DEFAULT_SMALL_CLEARANCE_BLOCKS));
             anchor.addProperty("selectionReason", stringValue(selection, "selectionReason", ""));
             anchors.add(anchor);
         }
@@ -494,7 +489,8 @@ public final class CityStructureAnchorCandidatePlanner {
                 if (sourcePatch == null) {
                     continue;
                 }
-                EnvelopeEstimate estimate = estimateEnvelope(point, profile, facts, slot);
+                CityStructureCandidateEnvelope.Estimate estimate =
+                        CityStructureCandidateEnvelope.estimate(point, profile, facts, slot);
                 if (estimate.requiredFactsMissing()) {
                     hardBlocks.add(slotId + ": structure envelope facts are required for Trek structure "
                             + structureId + " but are missing or hash-mismatched.");
@@ -555,7 +551,7 @@ public final class CityStructureAnchorCandidatePlanner {
         obj.addProperty("geometryStatus", "available");
         obj.addProperty("envelopeMode", draft.estimate().envelopeMode());
         obj.addProperty("selectedEnvelopeGroupKey", draft.estimate().selectedEnvelopeGroupKey());
-        obj.addProperty("smallClearanceBlocks", DEFAULT_SMALL_CLEARANCE_BLOCKS);
+        obj.addProperty("smallClearanceBlocks", CityStructureCandidateEnvelope.DEFAULT_SMALL_CLEARANCE_BLOCKS);
         obj.addProperty("priority", draft.slotIndex());
         obj.addProperty("roadAccessIntent", "connect_to_city_entry");
         obj.add("intentTerms", defaultIntentTerms(draft.slotId(), draft.displayRole()));
@@ -661,67 +657,6 @@ public final class CityStructureAnchorCandidatePlanner {
             return 1.0;
         }
         return clamp01(1.0 - ((distance - max) / 256.0));
-    }
-
-    private static EnvelopeEstimate estimateEnvelope(BlockPoint anchorBlock,
-                                                     CityStructureProfileCatalog.StructureProfile profile,
-                                                     CityStructureEnvelopeFacts facts,
-                                                     JsonObject slot) {
-        CityStructureProfileCatalog.Footprint footprint = profile.planningFootprint();
-        if (!footprint.valid()) {
-            return new EnvelopeEstimate(new BlockBounds(0, 0, 0, 0), new BlockBounds(0, 0, 0, 0),
-                    new BlockBounds(0, 0, 0, 0), "", "", true,
-                    "structure profile has no usable footprint.");
-        }
-        int clearance = Math.max(DEFAULT_CLEARANCE_BLOCKS,
-                intValue(slot, "clearanceBlocks", profile.clearanceBlocks()));
-        int smallClearance = Math.max(0, intValue(slot, "smallClearanceBlocks", DEFAULT_SMALL_CLEARANCE_BLOCKS));
-        int vegetationMargin = Math.max(0, intValue(slot, "vegetationMarginBlocks", DEFAULT_VEGETATION_MARGIN_BLOCKS));
-        BlockBounds plannedFootprint = footprint.centeredAt(anchorBlock.x(), anchorBlock.z(), "NONE");
-        Optional<CityStructureEnvelopeFacts.Fact> fact = facts.validFactFor(profile);
-        if (fact.isPresent()) {
-            CityStructureEnvelopeFacts.Fact value = fact.get();
-            boolean fixedGroupMode = "fixed_footprint".equals(profile.footprintMode()) || value.nearFixedByFacts();
-            if (fixedGroupMode) {
-                Optional<CityStructureEnvelopeFacts.BBoxGroup> selected = value.dominantGroup();
-                if (selected.isEmpty()) {
-                    return new EnvelopeEstimate(plannedFootprint, plannedFootprint, plannedFootprint,
-                            "fixed_bbox_group", "", false,
-                            "structure envelope facts have no bboxGroups for fixed bbox mode.");
-                }
-                CityStructureEnvelopeFacts.BBoxGroup group = selected.get();
-                BlockBounds collision = fromLocal(anchorBlock,
-                        CityStructureAnchorPlanner.expand(group.localEnvelope(), smallClearance));
-                BlockBounds mask = fromLocal(anchorBlock,
-                        CityStructureAnchorPlanner.expand(group.localEnvelope(), vegetationMargin));
-                BlockBounds safety = fromLocal(anchorBlock,
-                        CityStructureAnchorPlanner.expand(value.maxObservedEnvelope(),
-                                Math.max(smallClearance, DEFAULT_ROAD_ACCESS_MARGIN_BLOCKS)));
-                return new EnvelopeEstimate(collision, mask, safety, "fixed_bbox_group",
-                        group.groupKey(), false, "");
-            }
-            BlockBounds collision = fromLocal(anchorBlock,
-                    CityStructureAnchorPlanner.expand(value.p95Envelope(), clearance));
-            BlockBounds mask = fromLocal(anchorBlock,
-                    CityStructureAnchorPlanner.expand(value.p99Envelope(), vegetationMargin));
-            BlockBounds safety = fromLocal(anchorBlock,
-                    CityStructureAnchorPlanner.expand(value.maxObservedEnvelope(),
-                            Math.max(clearance, DEFAULT_ROAD_ACCESS_MARGIN_BLOCKS)));
-            return new EnvelopeEstimate(collision, mask, safety, "fixed_depth_statistics",
-                    "", false, "");
-        }
-        if (profile.structureId().startsWith("trek:")) {
-            return new EnvelopeEstimate(plannedFootprint, plannedFootprint, plannedFootprint,
-                    "missing_structure_envelope_facts", "", true, "");
-        }
-        int radius = profile.jigsawLike()
-                ? profile.jigsawExpansionRadius(DEFAULT_JIGSAW_RADIUS_BLOCKS)
-                + clearance + DEFAULT_ROAD_ACCESS_MARGIN_BLOCKS
-                : clearance;
-        BlockBounds collision = CityStructureAnchorPlanner.expand(plannedFootprint, radius);
-        return new EnvelopeEstimate(collision, collision, collision,
-                profile.jigsawLike() ? "fallback_jigsaw_radius" : "fallback_fixed_footprint",
-                "", false, "");
     }
 
     private static List<BlockPoint> representativePoints(PlanningGrid grid,
@@ -871,13 +806,6 @@ public final class CityStructureAnchorCandidatePlanner {
     private static boolean gridContains(PlanningGrid grid, BlockBounds bounds) {
         return grid.containsBlock(bounds.minX(), bounds.minZ())
                 && grid.containsBlock(bounds.maxX(), bounds.maxZ());
-    }
-
-    private static BlockBounds fromLocal(BlockPoint anchorBlock, BlockBounds local) {
-        int originX = Math.floorDiv(anchorBlock.x(), 16) * 16;
-        int originZ = Math.floorDiv(anchorBlock.z(), 16) * 16;
-        return new BlockBounds(originX + local.minX(), originZ + local.minZ(),
-                originX + local.maxX(), originZ + local.maxZ());
     }
 
     private static JsonObject quality(List<String> hardBlocks, List<String> warnings,
@@ -1033,7 +961,8 @@ public final class CityStructureAnchorCandidatePlanner {
             anchor.addProperty("envelopeGroupKey", stringValue(selected, "selectedEnvelopeGroupKey", ""));
         }
         anchor.addProperty("smallClearanceBlocks",
-                intValue(selected, "smallClearanceBlocks", DEFAULT_SMALL_CLEARANCE_BLOCKS));
+                intValue(selected, "smallClearanceBlocks",
+                        CityStructureCandidateEnvelope.DEFAULT_SMALL_CLEARANCE_BLOCKS));
         anchor.addProperty("selectionReason", stringValue(selected, "selectionReason", ""));
         return anchor;
     }
@@ -1338,13 +1267,7 @@ public final class CityStructureAnchorCandidatePlanner {
 
     private record CandidateDraft(int slotIndex, String slotId, String displayRole, String structureId,
                                   BlockPoint anchorBlock, LandformPatchSummary patch, String kind,
-                                  EnvelopeEstimate estimate, Score score) {
-    }
-
-    private record EnvelopeEstimate(BlockBounds collisionEnvelope, BlockBounds maskEnvelope,
-                                    BlockBounds safetyEnvelope, String envelopeMode,
-                                    String selectedEnvelopeGroupKey, boolean requiredFactsMissing,
-                                    String hardBlockReason) {
+                                  CityStructureCandidateEnvelope.Estimate estimate, Score score) {
     }
 
     private record Score(double total, double terrainFit, double relationFit, double collisionSafety,

@@ -212,6 +212,32 @@ final class RealmPlanningHttpController {
         });
     }
 
+    void handleCityPlanD4ArrayCandidates(HttpExchange exchange) {
+        handle(exchange, "POST", () -> {
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            String runId = requiredString(request, "runId");
+            String citySeedId = requiredString(request, "citySeedId");
+            rejectLegacyCityFields(request, "patchGroupPlan", "zoneChoices", "functionType", "functionTag",
+                    "function_candidates");
+            if (!request.has("terrasenseProfileSource") || !request.get("terrasenseProfileSource").isJsonObject()) {
+                throw new IllegalArgumentException("terrasenseProfileSource object is required.");
+            }
+            if (!request.has("arrayCandidatePlan") || !request.get("arrayCandidatePlan").isJsonObject()) {
+                throw new IllegalArgumentException("arrayCandidatePlan object is required.");
+            }
+            return CityPlanningEndpointHandler.handlePlanD4ArrayCandidates(debugRoot(), runId, citySeedId,
+                    request.getAsJsonObject("terrasenseProfileSource"),
+                    request.getAsJsonObject("arrayCandidatePlan"),
+                    request.has("structureEnvelopeFactsSource") && request.get("structureEnvelopeFactsSource").isJsonObject()
+                            ? request.getAsJsonObject("structureEnvelopeFactsSource") : null,
+                    request.has("occupiedStructureAnchorMapSource")
+                            && request.get("occupiedStructureAnchorMapSource").isJsonObject()
+                            ? request.getAsJsonObject("occupiedStructureAnchorMapSource") : null,
+                    request.has("occupiedEnvelopes") && request.get("occupiedEnvelopes").isJsonArray()
+                            ? request.getAsJsonArray("occupiedEnvelopes") : new JsonArray());
+        });
+    }
+
     void handleCitySelectD4Candidates(HttpExchange exchange) {
         handle(exchange, "POST", () -> {
             JsonObject request = GisHttpUtil.readJsonObject(exchange);
@@ -476,7 +502,22 @@ final class RealmPlanningHttpController {
                             intValue(request, "heightDatumClampBlocks",
                                     CityWallPlanner.DEFAULT_HEIGHT_DATUM_CLAMP_BLOCKS),
                             intValue(request, "localMedianWindowUnits",
-                                    CityWallPlanner.DEFAULT_LOCAL_MEDIAN_WINDOW_UNITS)));
+                                    CityWallPlanner.DEFAULT_LOCAL_MEDIAN_WINDOW_UNITS)),
+                    new CityWallPlanner.V5Options(
+                            intValue(request, "wallUnitLengthBlocks",
+                                    CityWallPlanner.DEFAULT_V5_WALL_UNIT_LENGTH_BLOCKS),
+                            intValue(request, "nominalWallHeightBlocks",
+                                    CityWallPlanner.DEFAULT_V5_NOMINAL_WALL_HEIGHT_BLOCKS),
+                            intValue(request, "waterRunMinBlocks",
+                                    CityWallPlanner.DEFAULT_V5_WATER_RUN_MIN_BLOCKS),
+                            doubleValue(request, "waterFluidRatioMin",
+                                    CityWallPlanner.DEFAULT_V5_WATER_FLUID_RATIO_MIN),
+                            intValue(request, "heightSegmentMaxDeltaBlocks",
+                                    CityWallPlanner.DEFAULT_V5_SEGMENT_MAX_DELTA_BLOCKS),
+                            intValue(request, "heightSteppedTransitionMaxDeltaBlocks",
+                                    CityWallPlanner.DEFAULT_V5_STEPPED_TRANSITION_MAX_DELTA_BLOCKS),
+                            intValue(request, "naturalBoundaryMinDeltaBlocks",
+                                    CityWallPlanner.DEFAULT_V5_NATURAL_BOUNDARY_MIN_DELTA_BLOCKS)));
         }));
     }
 

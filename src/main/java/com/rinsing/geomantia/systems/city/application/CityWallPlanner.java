@@ -39,6 +39,9 @@ public final class CityWallPlanner {
     public static final int DEFAULT_V5_NOMINAL_WALL_HEIGHT_BLOCKS = 9;
     public static final int DEFAULT_V5_WATER_RUN_MIN_BLOCKS = 32;
     public static final double DEFAULT_V5_WATER_FLUID_RATIO_MIN = 0.8D;
+    public static final int DEFAULT_V5_SEGMENT_MAX_DELTA_BLOCKS = DEFAULT_FLAT_MAX_DELTA_BLOCKS;
+    public static final int DEFAULT_V5_STEPPED_TRANSITION_MAX_DELTA_BLOCKS = DEFAULT_STEPPED_MAX_DELTA_BLOCKS;
+    public static final int DEFAULT_V5_NATURAL_BOUNDARY_MIN_DELTA_BLOCKS = DEFAULT_NATURAL_BOUNDARY_MIN_DELTA_BLOCKS;
     private static final int V4_NODE_INTERVAL_UNITS = 4;
     private static final int V4_TERRAIN_CONTOUR_MAX_SHIFT_UNITS = 2;
     private static final int WALL_HALF_THICKNESS_BLOCKS = 2;
@@ -741,8 +744,13 @@ public final class CityWallPlanner {
         plan.addProperty("nominalWallHeightBlocks", opts.normalizedNominalWallHeightBlocks());
         plan.addProperty("waterRunMinBlocks", opts.normalizedWaterRunMinBlocks());
         plan.addProperty("waterFluidRatioMin", opts.normalizedWaterFluidRatioMin());
+        plan.addProperty("heightSegmentMaxDeltaBlocks", opts.normalizedHeightSegmentMaxDeltaBlocks());
+        plan.addProperty("heightSteppedTransitionMaxDeltaBlocks",
+                opts.normalizedHeightSteppedTransitionMaxDeltaBlocks());
+        plan.addProperty("naturalBoundaryMinDeltaBlocks", opts.normalizedNaturalBoundaryMinDeltaBlocks());
         plan.addProperty("maxFoundationDepthBlocks", 64);
-        plan.addProperty("maxSegmentHeightDeltaBlocks", 9999);
+        plan.addProperty("maxSegmentHeightDeltaBlocks",
+                Math.max(0, opts.normalizedNaturalBoundaryMinDeltaBlocks() - 1));
         plan.addProperty("gateFailurePolicy", "keep_gate_opening_or_downgrade_without_reline");
         plan.addProperty("beaconFailurePolicy", "downgrade_to_wall_or_skip_without_reline");
         plan.add("wallReservationSource", wallReservationPlan.deepCopy());
@@ -772,10 +780,16 @@ public final class CityWallPlanner {
 
         JsonObject terrain = new JsonObject();
         terrain.addProperty("policyVersion", "v5");
-        terrain.addProperty("heightStrategy", "placement_unit_surface_median");
+        terrain.addProperty("heightStrategy", "segmented_surface_datum");
+        terrain.addProperty("heightSegmentMaxDeltaBlocks", opts.normalizedHeightSegmentMaxDeltaBlocks());
+        terrain.addProperty("heightSteppedTransitionMaxDeltaBlocks",
+                opts.normalizedHeightSteppedTransitionMaxDeltaBlocks());
+        terrain.addProperty("naturalBoundaryMinDeltaBlocks", opts.normalizedNaturalBoundaryMinDeltaBlocks());
+        terrain.addProperty("transitionPolicy", "segmented_step_transition_until_natural_boundary_threshold");
         terrain.addProperty("pitPolicy", "fill_horizontal_floor_inside_corridor");
         terrain.addProperty("raisedGroundPolicy", "connect_wall_into_existing_ground");
         terrain.addProperty("waterPolicy", "continuous_water_boundary_no_wall");
+        terrain.addProperty("cliffPolicy", "natural_cliff_boundary_no_wall");
         terrain.addProperty("debugScanSupported", true);
         plan.add("terrainFitPolicy", terrain);
 
@@ -2229,12 +2243,18 @@ public final class CityWallPlanner {
     public record V5Options(int wallUnitLengthBlocks,
                             int nominalWallHeightBlocks,
                             int waterRunMinBlocks,
-                            double waterFluidRatioMin) {
+                            double waterFluidRatioMin,
+                            int heightSegmentMaxDeltaBlocks,
+                            int heightSteppedTransitionMaxDeltaBlocks,
+                            int naturalBoundaryMinDeltaBlocks) {
         public static V5Options defaults() {
             return new V5Options(DEFAULT_V5_WALL_UNIT_LENGTH_BLOCKS,
                     DEFAULT_V5_NOMINAL_WALL_HEIGHT_BLOCKS,
                     DEFAULT_V5_WATER_RUN_MIN_BLOCKS,
-                    DEFAULT_V5_WATER_FLUID_RATIO_MIN);
+                    DEFAULT_V5_WATER_FLUID_RATIO_MIN,
+                    DEFAULT_V5_SEGMENT_MAX_DELTA_BLOCKS,
+                    DEFAULT_V5_STEPPED_TRANSITION_MAX_DELTA_BLOCKS,
+                    DEFAULT_V5_NATURAL_BOUNDARY_MIN_DELTA_BLOCKS);
         }
 
         public int normalizedWallUnitLengthBlocks() {
@@ -2252,6 +2272,24 @@ public final class CityWallPlanner {
         public double normalizedWaterFluidRatioMin() {
             return waterFluidRatioMin <= 0.0D ? DEFAULT_V5_WATER_FLUID_RATIO_MIN
                     : Math.min(1.0D, waterFluidRatioMin);
+        }
+
+        public int normalizedHeightSegmentMaxDeltaBlocks() {
+            return heightSegmentMaxDeltaBlocks <= 0
+                    ? DEFAULT_V5_SEGMENT_MAX_DELTA_BLOCKS : heightSegmentMaxDeltaBlocks;
+        }
+
+        public int normalizedHeightSteppedTransitionMaxDeltaBlocks() {
+            int segmentMax = normalizedHeightSegmentMaxDeltaBlocks();
+            int steppedMax = heightSteppedTransitionMaxDeltaBlocks <= 0
+                    ? DEFAULT_V5_STEPPED_TRANSITION_MAX_DELTA_BLOCKS : heightSteppedTransitionMaxDeltaBlocks;
+            return Math.max(segmentMax, steppedMax);
+        }
+
+        public int normalizedNaturalBoundaryMinDeltaBlocks() {
+            return Math.max(normalizedHeightSteppedTransitionMaxDeltaBlocks() + 1,
+                    naturalBoundaryMinDeltaBlocks <= 0
+                            ? DEFAULT_V5_NATURAL_BOUNDARY_MIN_DELTA_BLOCKS : naturalBoundaryMinDeltaBlocks);
         }
     }
 

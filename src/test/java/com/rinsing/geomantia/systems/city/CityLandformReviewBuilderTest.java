@@ -6,6 +6,8 @@ import com.rinsing.geomantia.systems.city.domain.config.CityPlanningConfig;
 import com.rinsing.geomantia.systems.city.domain.model.*;
 import com.rinsing.geomantia.systems.gis.GisSampleConfig;
 import com.rinsing.geomantia.systems.gis.domain.cell.LandformType;
+import com.rinsing.geomantia.systems.gis.domain.cell.SampleSource;
+import com.rinsing.geomantia.systems.gis.domain.cell.SurfaceType;
 import com.rinsing.geomantia.systems.gis.domain.landform.LandformPatch;
 import com.rinsing.geomantia.systems.gis.domain.landform.PatchFlag;
 import com.rinsing.geomantia.systems.gis.domain.region.AtlasRegion;
@@ -219,8 +221,14 @@ class CityLandformReviewBuilderTest {
                 GisSampleConfig.defaults().withCellStepBlocks(4));
         LandformPatch patch = patch("patch_cells", LandformType.PLAIN, 0, 0, 16, 16);
         region.replacePatches(List.of(patch));
+        region.cell(0, 0).setSample(SampleSource.PRIOR, 70.0, SurfaceType.GRASS,
+                "minecraft:plains", false, 0.0);
         region.cell(0, 0).setPatchId(patch.patchId());
+        region.cell(1, 0).setSample(SampleSource.PRIOR, 70.0, SurfaceType.GRASS,
+                "minecraft:plains", false, 0.0);
         region.cell(1, 0).setPatchId(patch.patchId());
+        region.cell(0, 1).setSample(SampleSource.PRIOR, 70.0, SurfaceType.GRASS,
+                "minecraft:forest", false, 0.0);
         region.cell(0, 1).setPatchId(patch.patchId());
 
         CityLandformReviewPackage pkg = reviewBuilder.build(ctx, region);
@@ -228,7 +236,20 @@ class CityLandformReviewBuilderTest {
 
         assertEquals("patch_member_cells", summary.geometryMode());
         assertEquals(3, summary.memberCells().size());
-        assertTrue(pkg.asJson().toString().contains("memberCells"));
+        assertEquals("minecraft:plains", summary.biomeSummary().dominantBiome());
+        assertEquals(2, summary.biomeSummary().biomeHistogram().get("minecraft:plains"));
+        assertEquals(1, summary.biomeSummary().biomeHistogram().get("minecraft:forest"));
+        assertTrue(summary.biomeSummary().mixedBiome());
+        assertTrue(summary.summaryFacts().stream().anyMatch(fact -> fact.contains("主要群系")));
+        String json = pkg.asJson().toString();
+        assertTrue(json.contains("memberCells"));
+        assertTrue(json.contains("biomeSummary"));
+        assertTrue(json.contains("minecraft:plains"));
+
+        CityLandformReviewPackage restored = CityLandformReviewPackage.fromJson(pkg.asJson());
+        LandformPatchSummary restoredSummary = restored.landformPatches().get(0);
+        assertEquals("minecraft:plains", restoredSummary.biomeSummary().dominantBiome());
+        assertEquals(3, restoredSummary.biomeSummary().sampledCellCount());
     }
 
     private static LandformPatch patch(String id, LandformType type, int minX, int minZ, int maxX, int maxZ) {

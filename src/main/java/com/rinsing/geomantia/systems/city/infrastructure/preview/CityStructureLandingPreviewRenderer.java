@@ -115,6 +115,49 @@ public final class CityStructureLandingPreviewRenderer {
         return path;
     }
 
+    public Path renderD4ArrayCandidates(JsonObject candidateSet, CityLandformReviewPackage reviewPackage,
+                                        Path outputDirectory) throws IOException {
+        Files.createDirectories(outputDirectory);
+        Path path = outputDirectory.resolve("d4_array_candidate_preview.png");
+        BufferedImage image = baseImage();
+        Graphics2D g = image.createGraphics();
+        try {
+            setup(g);
+            BlockBounds gridBounds = gridBounds(candidateSet);
+            Transform t = transform(gridBounds);
+            drawPatchBackdrop(g, t, gridBounds, reviewPackage);
+            drawGrid(g, t, gridBounds);
+            int groupIndex = 0;
+            for (JsonElement groupElem : array(candidateSet, "arrayCandidates")) {
+                JsonObject group = groupElem.getAsJsonObject();
+                groupIndex++;
+                drawRect(g, t, bounds(group, "groupMaskEnvelope"), new Color(202, 108, 62, 20),
+                        new Color(178, 84, 46, 95), 1.0f);
+                drawRect(g, t, bounds(group, "groupCollisionEnvelope"), new Color(204, 79, 63, 24),
+                        new Color(158, 59, 49, 125), 1.4f);
+                int itemIndex = 0;
+                for (JsonElement itemElem : array(group, "items")) {
+                    JsonObject item = itemElem.getAsJsonObject();
+                    itemIndex++;
+                    drawRect(g, t, bounds(item, "estimatedCollisionEnvelope"), color(groupIndex, 20),
+                            color(groupIndex, 115), 0.9f);
+                    BlockPoint anchor = point(item, "anchorBlock");
+                    drawPoint(g, t, anchor, color(groupIndex + itemIndex, 235));
+                    drawBadge(g, t, anchor, "G" + groupIndex + "." + itemIndex,
+                            color(groupIndex + itemIndex, 235));
+                }
+            }
+            title(g, "City D4 array candidate preview",
+                    "patch backdrop + G=item group candidates groups="
+                            + array(candidateSet, "arrayCandidates").size());
+            arrayCandidateSummary(g, candidateSet);
+        } finally {
+            g.dispose();
+        }
+        ImageIO.write(image, "png", path.toFile());
+        return path;
+    }
+
     public Path renderEnvelopeFacts(JsonObject facts, Path outputDirectory) throws IOException {
         Files.createDirectories(outputDirectory);
         Path path = outputDirectory.resolve("structure_envelope_profile_preview.png");
@@ -232,14 +275,21 @@ public final class CityStructureLandingPreviewRenderer {
 
     public Path renderD7(JsonObject ledger, JsonObject trace, JsonObject materializationPlan,
                          Path outputDirectory) throws IOException {
+        return renderD7(ledger, trace, materializationPlan, null, outputDirectory);
+    }
+
+    public Path renderD7(JsonObject ledger, JsonObject trace, JsonObject materializationPlan,
+                         CityLandformReviewPackage reviewPackage, Path outputDirectory) throws IOException {
         Files.createDirectories(outputDirectory);
         Path path = outputDirectory.resolve("placed_structure_preview.png");
         BufferedImage image = baseImage();
         Graphics2D g = image.createGraphics();
         try {
             setup(g);
-            Transform t = transform(gridBounds(object(materializationPlan, "sourceStructureAnchorMap")));
-            drawGrid(g, t, gridBounds(object(materializationPlan, "sourceStructureAnchorMap")));
+            BlockBounds gridBounds = gridBounds(object(materializationPlan, "sourceStructureAnchorMap"));
+            Transform t = transform(gridBounds);
+            drawPatchBackdrop(g, t, gridBounds, reviewPackage);
+            drawGrid(g, t, gridBounds);
             int i = 0;
             for (JsonElement elem : array(ledger, "placedStructures")) {
                 JsonObject placed = elem.getAsJsonObject();
@@ -252,8 +302,8 @@ public final class CityStructureLandingPreviewRenderer {
                 drawPieces(g, t, placed);
                 drawLabel(g, t, bounds(placed, "actualFootprint").center(), string(placed, "anchorId"));
             }
-            title(g, "City D6 true-run materialization preview",
-                    "placed=" + array(ledger, "placedStructures").size()
+            title(g, "City D7 placed structure preview",
+                    "patch backdrop + placed=" + array(ledger, "placedStructures").size()
                             + " waiting=" + object(trace, "waitingSummary").size()
                             + " failures=" + object(trace, "failureSummary").size());
             traceSummary(g, trace);
@@ -440,6 +490,34 @@ public final class CityStructureLandingPreviewRenderer {
             if (y > HEIGHT - 40) {
                 break;
             }
+        }
+    }
+
+    private static void arrayCandidateSummary(Graphics2D g, JsonObject candidateSet) {
+        int x = 820;
+        int y = 90;
+        g.setColor(new Color(32, 34, 34));
+        g.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 14));
+        g.drawString("array candidate legend", x, y);
+        y += 24;
+        g.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 11));
+        int groupIndex = 0;
+        for (JsonElement groupElem : array(candidateSet, "arrayCandidates")) {
+            if (y > HEIGHT - 45) {
+                break;
+            }
+            JsonObject group = groupElem.getAsJsonObject();
+            groupIndex++;
+            String score = object(group, "scoreBreakdown").has("total")
+                    ? String.format(java.util.Locale.ROOT, "%.2f",
+                    object(group, "scoreBreakdown").get("total").getAsDouble())
+                    : "";
+            g.drawString("G" + groupIndex + " " + score + " "
+                    + trim(string(group, "arrayCandidateId"), 48), x, y);
+            y += 15;
+            g.drawString("  pattern=" + trim(string(group, "arrayPattern"), 40)
+                    + " items=" + array(group, "items").size(), x, y);
+            y += 18;
         }
     }
 

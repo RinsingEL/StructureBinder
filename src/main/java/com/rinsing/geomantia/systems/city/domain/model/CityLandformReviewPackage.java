@@ -6,7 +6,9 @@ import com.google.gson.JsonObject;
 import com.rinsing.geomantia.systems.gis.domain.cell.LandformType;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 public record CityLandformReviewPackage(
@@ -125,6 +127,8 @@ public record CityLandformReviewPackage(
             p.overlayTags().forEach(overlays::add);
             pj.add("overlayTags", overlays);
 
+            pj.add("biomeSummary", biomeSummaryToJson(p.biomeSummary()));
+
             JsonArray facts = new JsonArray();
             p.summaryFacts().forEach(facts::add);
             pj.add("summaryFacts", facts);
@@ -238,9 +242,45 @@ public record CityLandformReviewPackage(
                     areaClass(requiredString(obj, "areaClass")),
                     metricsSummary,
                     stringsFromArray(requiredArray(obj, "summaryFacts")),
-                    stringsFromArray(requiredArray(obj, "neighborLandformPatchIds"))));
+                    stringsFromArray(requiredArray(obj, "neighborLandformPatchIds")),
+                    biomeSummaryFromJson(optionalObject(obj, "biomeSummary"))));
         }
         return result;
+    }
+
+    private static JsonObject biomeSummaryToJson(BiomeSummary summary) {
+        BiomeSummary normalized = summary == null ? BiomeSummary.empty() : summary;
+        JsonObject obj = new JsonObject();
+        obj.addProperty("dominantBiome", normalized.dominantBiome());
+        JsonObject histogram = new JsonObject();
+        for (Map.Entry<String, Integer> entry : normalized.biomeHistogram().entrySet()) {
+            histogram.addProperty(entry.getKey(), entry.getValue());
+        }
+        obj.add("biomeHistogram", histogram);
+        obj.addProperty("mixedBiome", normalized.mixedBiome());
+        obj.addProperty("sampledCellCount", normalized.sampledCellCount());
+        return obj;
+    }
+
+    private static BiomeSummary biomeSummaryFromJson(JsonObject obj) {
+        if (obj == null || obj.size() == 0) {
+            return BiomeSummary.empty();
+        }
+        JsonObject histogramJson = optionalObject(obj, "biomeHistogram");
+        Map<String, Integer> histogram = new LinkedHashMap<>();
+        for (Map.Entry<String, JsonElement> entry : histogramJson.entrySet()) {
+            if (!entry.getValue().isJsonNull()) {
+                histogram.put(entry.getKey(), entry.getValue().getAsInt());
+            }
+        }
+        if (!histogram.isEmpty()) {
+            return BiomeSummary.fromHistogram(histogram);
+        }
+        return new BiomeSummary(
+                stringValue(obj, "dominantBiome", "unknown"),
+                histogram,
+                booleanValue(obj, "mixedBiome", false),
+                intValue(obj, "sampledCellCount", 0));
     }
 
     private static List<PatchMemberCell> memberCellsFromJson(JsonArray array) {
@@ -295,6 +335,13 @@ public record CityLandformReviewPackage(
         return obj.getAsJsonArray(key);
     }
 
+    private static JsonObject optionalObject(JsonObject obj, String key) {
+        if (obj == null || !obj.has(key) || !obj.get(key).isJsonObject()) {
+            return new JsonObject();
+        }
+        return obj.getAsJsonObject(key);
+    }
+
     private static List<String> stringsFromArray(JsonArray array) {
         List<String> result = new ArrayList<>();
         for (JsonElement elem : array) {
@@ -325,6 +372,13 @@ public record CityLandformReviewPackage(
             return defaultValue;
         }
         return obj.get(key).getAsInt();
+    }
+
+    private static boolean booleanValue(JsonObject obj, String key, boolean defaultValue) {
+        if (!obj.has(key) || obj.get(key).isJsonNull()) {
+            return defaultValue;
+        }
+        return obj.get(key).getAsBoolean();
     }
 
     private static double doubleValue(JsonObject obj, String key, double defaultValue) {
