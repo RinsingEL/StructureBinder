@@ -62,10 +62,12 @@ final class CityStructureLandingFlowTest {
         JsonObject fixed = anchorMap.getAsJsonArray("anchors").get(0).getAsJsonObject();
         JsonObject jigsaw = anchorMap.getAsJsonArray("anchors").get(1).getAsJsonObject();
         assertEquals("fixedFootprint+clearance", fixed.get("reservedEnvelopePolicy").getAsString());
-        assertEquals("startFootprint+jigsawMaxExpansionRadius+clearance+roadAccessMargin",
+        assertEquals("startFootprint+jigsawMaxExpansionRadius+clearance",
                 jigsaw.get("reservedEnvelopePolicy").getAsString());
         assertEquals(8, fixed.get("reservedEnvelopeRadiusBlocks").getAsInt());
-        assertEquals(78, jigsaw.get("reservedEnvelopeRadiusBlocks").getAsInt());
+        assertEquals(72, jigsaw.get("reservedEnvelopeRadiusBlocks").getAsInt());
+        assertTrue(bounds(jigsaw.getAsJsonObject("safetyEnvelope")).widthBlocks()
+                > bounds(jigsaw.getAsJsonObject("collisionEnvelope")).widthBlocks());
         assertEquals("function.village", jigsaw.getAsJsonArray("functionTerms").get(0).getAsString());
     }
 
@@ -309,7 +311,7 @@ final class CityStructureLandingFlowTest {
         assertEquals(1, selected.session().getAsJsonArray("occupiedEnvelopes").size());
         JsonObject occupied = selected.session().getAsJsonArray("occupiedEnvelopes")
                 .get(0).getAsJsonObject();
-        assertEquals("estimated_safety", occupied.get("envelopeType").getAsString());
+        assertEquals("estimated_collision", occupied.get("envelopeType").getAsString());
         assertTrue(occupied.has("estimatedCollisionEnvelope"));
         assertTrue(occupied.has("estimatedSafetyEnvelope"));
         assertEquals("residential_01", selected.session().get("currentSlotId").getAsString());
@@ -2186,10 +2188,10 @@ final class CityStructureLandingFlowTest {
         JsonArray items = group.getAsJsonArray("items");
         for (int i = 0; i < items.size(); i++) {
             BlockBounds a = bounds(items.get(i).getAsJsonObject()
-                    .getAsJsonObject("estimatedSafetyEnvelope"));
+                    .getAsJsonObject("estimatedCollisionEnvelope"));
             for (int j = i + 1; j < items.size(); j++) {
                 BlockBounds b = bounds(items.get(j).getAsJsonObject()
-                        .getAsJsonObject("estimatedSafetyEnvelope"));
+                        .getAsJsonObject("estimatedCollisionEnvelope"));
                 assertFalse(a.overlaps(b), "cluster group items overlap: " + i + " / " + j);
             }
         }

@@ -70,10 +70,13 @@ final class CityStructureCandidateEnvelope {
                     "missing_structure_envelope_facts", "", true, "");
         }
         int radius = profile.jigsawLike()
-                ? profile.jigsawExpansionRadius(DEFAULT_JIGSAW_RADIUS_BLOCKS) + clearance + roadMargin
+                ? profile.jigsawExpansionRadius(DEFAULT_JIGSAW_RADIUS_BLOCKS) + clearance
                 : clearance;
         BlockBounds collision = CityStructureAnchorPlanner.expand(plannedFootprint, radius);
-        return new Estimate(plannedFootprint, collision, collision, collision,
+        BlockBounds safety = profile.jigsawLike()
+                ? CityStructureAnchorPlanner.expand(plannedFootprint, radius + roadMargin)
+                : collision;
+        return new Estimate(plannedFootprint, collision, collision, safety,
                 profile.jigsawLike() ? "fallback_jigsaw_radius" : "fallback_fixed_footprint",
                 "", false, "");
     }

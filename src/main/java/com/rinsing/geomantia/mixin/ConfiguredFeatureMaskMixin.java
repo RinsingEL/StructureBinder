@@ -1,6 +1,7 @@
 package com.rinsing.geomantia.mixin;
 
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityReservationMaskRegistry;
+import com.rinsing.geomantia.systems.city.infrastructure.world.CityDressingWorldgenRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.WorldGenLevel;
@@ -19,6 +20,7 @@ public abstract class ConfiguredFeatureMaskMixin {
                                                   RandomSource random,
                                                   BlockPos origin,
                                                   CallbackInfoReturnable<Boolean> cir) {
+        CityDressingWorldgenRegistry.applyForFeatureOrigin(level, origin);
         if (CityReservationMaskRegistry.suppressFeature((ConfiguredFeature<?, ?>) (Object) this, origin)) {
             cir.setReturnValue(false);
         }

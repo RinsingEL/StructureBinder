@@ -251,11 +251,14 @@ public final class CityStructureAnchorPlanner {
                     "", null, null, true, "", false);
         }
         int envelopeRadius = profile.jigsawLike()
-                ? profile.jigsawExpansionRadius(DEFAULT_JIGSAW_RADIUS_BLOCKS) + clearance + roadMargin
+                ? profile.jigsawExpansionRadius(DEFAULT_JIGSAW_RADIUS_BLOCKS) + clearance
                 : clearance;
         BlockBounds collision = expand(plannedFootprint, envelopeRadius);
-        return new EnvelopeDecision(collision, collision, collision, envelopeRadius, profile.jigsawLike()
-                ? "startFootprint+jigsawMaxExpansionRadius+clearance+roadAccessMargin"
+        BlockBounds safety = profile.jigsawLike()
+                ? expand(plannedFootprint, envelopeRadius + roadMargin)
+                : collision;
+        return new EnvelopeDecision(collision, collision, safety, envelopeRadius, profile.jigsawLike()
+                ? "startFootprint+jigsawMaxExpansionRadius+clearance"
                 : "fixedFootprint+clearance", profile.jigsawLike()
                 ? "fallback_jigsaw_radius" : "fallback_fixed_footprint",
                 "", null, null, false, "", false);

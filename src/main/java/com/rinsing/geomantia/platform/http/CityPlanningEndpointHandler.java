@@ -5,6 +5,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.rinsing.geomantia.systems.city.application.CityFunctionZoneBuilder;
+import com.rinsing.geomantia.systems.city.application.CityDressingLayerPlanner;
+import com.rinsing.geomantia.systems.city.application.CityDressingTemplateLibrary;
 import com.rinsing.geomantia.systems.city.application.CityLandformReviewBuilder;
 import com.rinsing.geomantia.systems.city.application.CityReservationMaskPlanner;
 import com.rinsing.geomantia.systems.city.application.CityRoadBoundaryPlanner;
@@ -15,6 +17,7 @@ import com.rinsing.geomantia.systems.city.application.CityStructureD7Executor;
 import com.rinsing.geomantia.systems.city.application.CityStructureAnchorPlanner;
 import com.rinsing.geomantia.systems.city.application.CityStructureAnchorCandidatePlanner;
 import com.rinsing.geomantia.systems.city.application.CityStructureArrayCandidatePlanner;
+import com.rinsing.geomantia.systems.city.application.CityStructureArrayLayoutLoopPlanner;
 import com.rinsing.geomantia.systems.city.application.CityStructureClusterGroupCandidatePlanner;
 import com.rinsing.geomantia.systems.city.application.CityStructureEnvelopeFacts;
 import com.rinsing.geomantia.systems.city.application.CityStructureEnvelopeProfiler;
@@ -38,6 +41,7 @@ import com.rinsing.geomantia.systems.city.domain.model.RoadIntent;
 import com.rinsing.geomantia.systems.city.domain.model.WorldMutationReport;
 import com.rinsing.geomantia.systems.city.infrastructure.json.CityJson;
 import com.rinsing.geomantia.systems.city.infrastructure.preview.CityBuildabilityPreviewRenderer;
+import com.rinsing.geomantia.systems.city.infrastructure.preview.CityDressingPreviewRenderer;
 import com.rinsing.geomantia.systems.city.infrastructure.preview.CityPlanningPreviewRenderer;
 import com.rinsing.geomantia.systems.city.infrastructure.preview.CityLandformReviewMapRenderer;
 import com.rinsing.geomantia.systems.city.infrastructure.preview.CityStructureLandingPreviewRenderer;
@@ -45,6 +49,7 @@ import com.rinsing.geomantia.systems.city.infrastructure.preview.CityStructurePr
 import com.rinsing.geomantia.systems.city.infrastructure.preview.CityWallPreviewRenderer;
 import com.rinsing.geomantia.systems.city.infrastructure.preview.FunctionZonePreviewRenderer;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityReservationMaskRegistry;
+import com.rinsing.geomantia.systems.city.infrastructure.world.CityDressingWorldgenRegistry;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityRoadMaskScanner;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityRoadWeaverBridge;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CitySurfaceCache;
@@ -393,6 +398,90 @@ final class CityPlanningEndpointHandler {
             artifacts.addProperty("sourceOccupiedStructureAnchorMap", debugRef(debugRoot, occupiedAnchorMapPath));
         }
         response.add("artifacts", artifacts);
+        return response;
+    }
+
+    static JsonObject handleCreateD4ArrayLayoutLoop(Path debugRoot, String runId, String citySeedId,
+                                                    JsonObject terraSenseProfileSource,
+                                                    JsonObject arrayLayoutPlan,
+                                                    JsonObject structureEnvelopeFactsSource,
+                                                    JsonObject baseStructureAnchorPlanSource,
+                                                    JsonObject occupiedStructureAnchorMapSource) throws IOException {
+        Path runDir = debugRoot.resolve(runId);
+        loadCitySeed(runDir, runId, citySeedId);
+        CityLandformReviewPackage reviewPackage = loadD3Package(debugRoot, runDir, citySeedId);
+        Path envelopeFactsPath = envelopeFactsPath(runDir, citySeedId, structureEnvelopeFactsSource);
+        CityStructureEnvelopeFacts envelopeFacts = CityStructureEnvelopeFacts.load(envelopeFactsPath);
+        JsonObject basePlan = loadOptionalStructureAnchorPlan(debugRoot, runDir, citySeedId,
+                baseStructureAnchorPlanSource);
+        JsonObject occupiedAnchorMap = loadOptionalOccupiedAnchorMap(debugRoot, runDir, citySeedId,
+                occupiedStructureAnchorMapSource);
+        CityStructureArrayLayoutLoopPlanner.CreateResult result = new CityStructureArrayLayoutLoopPlanner()
+                .create(runDir, reviewPackage, terraSenseProfileSource, arrayLayoutPlan, envelopeFacts,
+                        basePlan, occupiedAnchorMap);
+        JsonObject response = result.asJson();
+        response.add("artifacts", writeD4ArrayLayoutLoopArtifacts(debugRoot, runDir, citySeedId,
+                result.loopState(), reviewPackage, envelopeFactsPath));
+        return response;
+    }
+
+    static JsonObject handleExecuteD4ArrayLayoutItem(Path debugRoot, String runId, String citySeedId,
+                                                     JsonObject terraSenseProfileSource,
+                                                     String stateId,
+                                                     JsonObject nextArrayLayoutPlanItem,
+                                                     JsonObject arrayLayoutLoopStateSource,
+                                                     JsonObject structureEnvelopeFactsSource) throws IOException {
+        Path runDir = debugRoot.resolve(runId);
+        loadCitySeed(runDir, runId, citySeedId);
+        CityLandformReviewPackage reviewPackage = loadD3Package(debugRoot, runDir, citySeedId);
+        JsonObject currentState = loadArrayLayoutLoopState(debugRoot, runDir, citySeedId, arrayLayoutLoopStateSource);
+        String currentStateId = stringValue(currentState, "stateId");
+        if (stateId != null && !stateId.isBlank() && !stateId.equals(currentStateId)) {
+            throw new IllegalArgumentException("D4_ARRAY_LAYOUT_LOOP_STATE_STALE: requested " + stateId
+                    + " but current state is " + currentStateId + ".");
+        }
+        Path envelopeFactsPath = envelopeFactsPath(runDir, citySeedId, structureEnvelopeFactsSource);
+        CityStructureEnvelopeFacts envelopeFacts = CityStructureEnvelopeFacts.load(envelopeFactsPath);
+        CityStructureArrayLayoutLoopPlanner.ExecuteResult result = new CityStructureArrayLayoutLoopPlanner()
+                .execute(runDir, reviewPackage, terraSenseProfileSource, currentState,
+                        nextArrayLayoutPlanItem, envelopeFacts);
+        JsonObject response = result.asJson();
+        response.add("artifacts", writeD4ArrayLayoutLoopArtifacts(debugRoot, runDir, citySeedId,
+                result.loopState(), reviewPackage, envelopeFactsPath));
+        return response;
+    }
+
+    static JsonObject handleFinalizeD4ArrayLayoutLoop(Path debugRoot, String runId, String citySeedId,
+                                                      JsonObject terraSenseProfileSource,
+                                                      String stateId,
+                                                      JsonObject arrayLayoutLoopStateSource,
+                                                      JsonObject structureEnvelopeFactsSource) throws IOException {
+        Path runDir = debugRoot.resolve(runId);
+        loadCitySeed(runDir, runId, citySeedId);
+        JsonObject currentState = loadArrayLayoutLoopState(debugRoot, runDir, citySeedId, arrayLayoutLoopStateSource);
+        String currentStateId = stringValue(currentState, "stateId");
+        if (stateId != null && !stateId.isBlank() && !stateId.equals(currentStateId)) {
+            throw new IllegalArgumentException("D4_ARRAY_LAYOUT_LOOP_STATE_STALE: requested " + stateId
+                    + " but current state is " + currentStateId + ".");
+        }
+        CityStructureArrayLayoutLoopPlanner.FinalizeResult finalized =
+                new CityStructureArrayLayoutLoopPlanner().finalizeLoop(currentState);
+        JsonObject response = handlePlanD4(debugRoot, runId, citySeedId, terraSenseProfileSource,
+                finalized.structureAnchorPlan(), structureEnvelopeFactsSource);
+        CityLandformReviewPackage reviewPackage = loadD3Package(debugRoot, runDir, citySeedId);
+        Path envelopeFactsPath = envelopeFactsPath(runDir, citySeedId, structureEnvelopeFactsSource);
+        JsonObject loopArtifacts = writeD4ArrayLayoutLoopArtifacts(debugRoot, runDir, citySeedId,
+                currentState, reviewPackage, envelopeFactsPath);
+        JsonObject artifacts = response.has("artifacts") && response.get("artifacts").isJsonObject()
+                ? response.getAsJsonObject("artifacts") : new JsonObject();
+        for (Map.Entry<String, JsonElement> entry : loopArtifacts.entrySet()) {
+            artifacts.add(entry.getKey(), entry.getValue().deepCopy());
+        }
+        response.add("artifacts", artifacts);
+        response.addProperty("planningMode", stringValue(currentState, "planningMode",
+                CityStructureArrayLayoutLoopPlanner.PLANNING_MODE_V02));
+        response.add("arrayLayoutLoopState", currentState.deepCopy());
+        response.add("arrayLayoutFinalizedPlan", finalized.structureAnchorPlan().deepCopy());
         return response;
     }
 
@@ -834,8 +923,16 @@ final class CityPlanningEndpointHandler {
         JsonObject materializationPlan = JsonParser.parseString(Files.readString(d6PlanPath)).getAsJsonObject();
         validateLockedMaterializationPlan(materializationPlan);
         JsonObject activeMaskPlan = maskPlanWithLockedEnvelopes(maskPlan, materializationPlan);
+        JsonObject dressingActivationPlan = loadDressingActivationPlan(runDir, citySeedId, runId);
+        if (dressingActivationPlan.size() > 0) {
+            activeMaskPlan = maskPlanWithDressingEffectiveMask(activeMaskPlan,
+                    object(dressingActivationPlan, "effectiveMask"));
+        }
         JsonObject activeRegistry = CityReservationMaskRegistry.activate(activeMaskPlan, null, materializationPlan,
                 runId, citySeedId, serverRoot);
+        JsonObject activeDressingSummary = dressingActivationPlan.size() > 0
+                ? CityDressingWorldgenRegistry.activate(dressingActivationPlan, serverRoot)
+                : CityDressingWorldgenRegistry.activeSummary();
         JsonObject roadWeaverConnectionPlan = CityRoadWeaverBridge.createConnectionPlan(materializationPlan);
         JsonObject roadWeaverRegistrationReport = CityRoadWeaverBridge.register(level, roadWeaverConnectionPlan,
                 roadProvider);
@@ -857,6 +954,7 @@ final class CityPlanningEndpointHandler {
         Path roadWeaverPlanPath = d5Dir.resolve("roadweaver_connection_plan.json");
         Path roadWeaverReportPath = d5Dir.resolve("roadweaver_registration_report.json");
         Path roadProviderStatePath = d5Dir.resolve("road_provider_state.json");
+        Path activeDressingPath = d5Dir.resolve("active_city_dressing_summary.json");
         Files.writeString(reportPath, CityJson.GSON.toJson(report.asJson()));
         Files.writeString(activeMaskPath, CityJson.GSON.toJson(CityReservationMaskRegistry.activeSummary()));
         Files.writeString(activePlannedPath, CityJson.GSON.toJson(activeRegistry));
@@ -873,6 +971,7 @@ final class CityPlanningEndpointHandler {
                 CityRoadWeaverBridge.shouldRunWorldEditDebugFallback(roadProvider, roadWeaverRegistrationReport));
         roadProviderState.add("roadWeaverRegistrationReport", roadWeaverRegistrationReport.deepCopy());
         Files.writeString(roadProviderStatePath, CityJson.GSON.toJson(roadProviderState));
+        Files.writeString(activeDressingPath, CityJson.GSON.toJson(activeDressingSummary));
 
         JsonObject response = new JsonObject();
         response.addProperty("ok", report.failedOperations() == 0);
@@ -881,6 +980,7 @@ final class CityPlanningEndpointHandler {
         response.addProperty("plannedStructureRegistryPath",
                 CityReservationMaskRegistry.plannedRegistryPath(serverRoot).toString());
         response.addProperty("worldgenPlacementMode", true);
+        response.addProperty("dressingWorldgenMode", dressingActivationPlan.size() > 0);
         response.addProperty("requiresLockedMaterializationPlan", true);
         response.addProperty("roadPlanningStage", "d7_after_worldgen_ledger");
         response.addProperty("roadProvider", roadProvider);
@@ -888,6 +988,7 @@ final class CityPlanningEndpointHandler {
         response.add("roadWeaverConnectionPlan", roadWeaverConnectionPlan);
         response.add("roadWeaverRegistrationReport", roadWeaverRegistrationReport);
         response.add("roadProviderState", roadProviderState);
+        response.add("activeDressingSummary", activeDressingSummary);
         response.add("worldMutationReport", report.asJson());
         response.add("timingMs", timing(started));
         JsonObject artifacts = new JsonObject();
@@ -902,6 +1003,99 @@ final class CityPlanningEndpointHandler {
         artifacts.addProperty("roadWeaverConnectionPlan", debugRef(debugRoot, roadWeaverPlanPath));
         artifacts.addProperty("roadWeaverRegistrationReport", debugRef(debugRoot, roadWeaverReportPath));
         artifacts.addProperty("roadProviderState", debugRef(debugRoot, roadProviderStatePath));
+        artifacts.addProperty("activeDressingSummary", debugRef(debugRoot, activeDressingPath));
+        if (dressingActivationPlan.size() > 0) {
+            artifacts.addProperty("serverActiveDressingPlan",
+                    CityDressingWorldgenRegistry.activeDressingPath(serverRoot).toString());
+        }
+        response.add("artifacts", artifacts);
+        return response;
+    }
+
+    static JsonObject handlePlanCityDressing(Path debugRoot, String runId, String citySeedId,
+                                             JsonObject dressingBrushPlan) throws IOException {
+        Path runDir = debugRoot.resolve(runId);
+        loadCitySeed(runDir, runId, citySeedId);
+        CityLandformReviewPackage reviewPackage = loadD3Package(debugRoot, runDir, citySeedId);
+        Path d4Dir = runDir.resolve("city_d4_" + safeFileName(citySeedId));
+        Path d5Dir = runDir.resolve("city_d5_" + safeFileName(citySeedId));
+        Path d6Dir = runDir.resolve("city_d6_" + safeFileName(citySeedId));
+        Path anchorMapPath = d4Dir.resolve("structure_anchor_map.json");
+        Path reservationMaskPath = d5Dir.resolve("reservation_mask_plan.json");
+        Path wallReservationPath = d5Dir.resolve("wall_reservation_plan.json");
+        Path materializationPath = d6Dir.resolve("structure_materialization_plan.json");
+        if (!Files.exists(anchorMapPath)) {
+            rejectLegacyArtifacts(d4Dir, "D4");
+            throw new IllegalArgumentException("D4 structure_anchor_map.json not found. Run city_plan_d4 first: "
+                    + debugRef(debugRoot, anchorMapPath));
+        }
+        if (!Files.exists(reservationMaskPath)) {
+            rejectLegacyArtifacts(d5Dir, "D5");
+            throw new IllegalArgumentException("D5 reservation_mask_plan.json not found. Run city_plan_d5 first: "
+                    + debugRef(debugRoot, reservationMaskPath));
+        }
+        if (!Files.exists(materializationPath)) {
+            throw new IllegalArgumentException("D6 structure_materialization_plan.json not found. Run city_plan_d6 first: "
+                    + debugRef(debugRoot, materializationPath));
+        }
+
+        JsonObject anchorMap = JsonParser.parseString(Files.readString(anchorMapPath)).getAsJsonObject();
+        JsonObject reservationMask = JsonParser.parseString(Files.readString(reservationMaskPath)).getAsJsonObject();
+        JsonObject wallReservation = Files.exists(wallReservationPath)
+                ? JsonParser.parseString(Files.readString(wallReservationPath)).getAsJsonObject() : new JsonObject();
+        JsonObject materializationPlan = JsonParser.parseString(Files.readString(materializationPath)).getAsJsonObject();
+        JsonObject roadConnectionPlan = CityRoadWeaverBridge.createConnectionPlan(materializationPlan);
+        JsonObject functionalArrayZones = loadOptionalJson(d4ArrayLayoutDir(runDir, citySeedId)
+                .resolve("d4_functional_array_zones.json"));
+
+        CityDressingLayerPlanner.Result result = new CityDressingLayerPlanner().plan(runDir, reviewPackage,
+                dressingBrushPlan, anchorMap, materializationPlan, reservationMask, wallReservation,
+                roadConnectionPlan, functionalArrayZones);
+
+        Path outputDirectory = dressingDir(runDir, citySeedId);
+        Files.createDirectories(outputDirectory);
+        Path brushPath = outputDirectory.resolve("city_dressing_brush_plan.json");
+        Path effectiveMaskPath = outputDirectory.resolve("city_dressing_effective_mask.json");
+        Path tracePath = outputDirectory.resolve("city_dressing_execution_trace.json");
+        Path surfacePath = outputDirectory.resolve("city_dressing_surface_operation_plan.json");
+        Path placementPath = outputDirectory.resolve("city_dressing_decoration_placement_plan.json");
+        Path occupiedPath = outputDirectory.resolve("city_dressing_occupied_field.json");
+        Path zonesPath = outputDirectory.resolve("city_dressing_zones.json");
+        Path qualityPath = outputDirectory.resolve("quality_report.json");
+        Path templateDir = outputDirectory.resolve("city_dressing_templates");
+        Files.writeString(brushPath, CityJson.GSON.toJson(result.brushPlan()));
+        Files.writeString(effectiveMaskPath, CityJson.GSON.toJson(result.effectiveMask()));
+        Files.writeString(tracePath, CityJson.GSON.toJson(result.executionTrace()));
+        Files.writeString(surfacePath, CityJson.GSON.toJson(result.surfaceOperationPlan()));
+        Files.writeString(placementPath, CityJson.GSON.toJson(result.decorationPlacementPlan()));
+        Files.writeString(occupiedPath, CityJson.GSON.toJson(result.occupiedField()));
+        Files.writeString(zonesPath, CityJson.GSON.toJson(result.dressingZones()));
+        Files.writeString(qualityPath, CityJson.GSON.toJson(result.qualityReport()));
+        CityDressingTemplateLibrary.writeTemplates(templateDir);
+        JsonObject previewIndex = new CityDressingPreviewRenderer()
+                .render(result.dressingZones(), result.surfaceOperationPlan(),
+                        result.decorationPlacementPlan(), outputDirectory);
+        Path previewIndexPath = outputDirectory.resolve("city_dressing_preview_index.json");
+        Files.writeString(previewIndexPath, CityJson.GSON.toJson(previewIndex));
+
+        JsonObject response = result.asJson();
+        JsonObject artifacts = new JsonObject();
+        artifacts.addProperty("dressingBrushPlan", debugRef(debugRoot, brushPath));
+        artifacts.addProperty("dressingEffectiveMask", debugRef(debugRoot, effectiveMaskPath));
+        artifacts.addProperty("dressingExecutionTrace", debugRef(debugRoot, tracePath));
+        artifacts.addProperty("dressingSurfaceOperationPlan", debugRef(debugRoot, surfacePath));
+        artifacts.addProperty("dressingDecorationPlacementPlan", debugRef(debugRoot, placementPath));
+        artifacts.addProperty("dressingOccupiedField", debugRef(debugRoot, occupiedPath));
+        artifacts.addProperty("dressingZones", debugRef(debugRoot, zonesPath));
+        artifacts.addProperty("dressingPreviewIndex", debugRef(debugRoot, previewIndexPath));
+        artifacts.addProperty("dressingTemplateLibrary",
+                debugRef(debugRoot, templateDir.resolve("city_dressing_template_library.json")));
+        artifacts.addProperty("qualityReport", debugRef(debugRoot, qualityPath));
+        artifacts.addProperty("sourceD3Package", debugRef(debugRoot, d3PackagePath(runDir, citySeedId)));
+        artifacts.addProperty("sourceStructureAnchorMap", debugRef(debugRoot, anchorMapPath));
+        artifacts.addProperty("sourceReservationMaskPlan", debugRef(debugRoot, reservationMaskPath));
+        artifacts.addProperty("sourceStructureMaterializationPlan", debugRef(debugRoot, materializationPath));
+        response.add("dressingPreviewIndex", previewIndex);
         response.add("artifacts", artifacts);
         return response;
     }
@@ -1335,7 +1529,9 @@ final class CityPlanningEndpointHandler {
         }
 
         if (!workflowRunD4(ctx)) {
-            return finalizeWorkflow(ctx, workflowStarted, "failed");
+            String requestedStatus = stringValue(ctx.report(), "requestedWorkflowStatus");
+            return finalizeWorkflow(ctx, workflowStarted,
+                    requestedStatus.isBlank() ? "failed" : requestedStatus);
         }
 
         if (!workflowStep(ctx, "city_plan_d5", runDir.resolve("city_d5_" + safeFileName(citySeedId))
@@ -1360,6 +1556,20 @@ final class CityPlanningEndpointHandler {
                 .resolve("structure_materialization_plan.json"), () -> handlePlanD6(debugRoot, runId, citySeedId,
                 serverHolder, level))) {
             return finalizeWorkflow(ctx, workflowStarted, "failed");
+        }
+
+        if (booleanValue(request, "enableDressingLayer", false) || request.has("dressingBrushPlan")) {
+            if (!workflowStep(ctx, "city_plan_city_dressing", dressingDir(runDir, citySeedId)
+                    .resolve("city_dressing_effective_mask.json"), () -> {
+                if (!request.has("dressingBrushPlan") || !request.get("dressingBrushPlan").isJsonObject()) {
+                    throw new IllegalArgumentException("CITY_DRESSING_BRUSH_PLAN_REQUIRED: "
+                            + "dressingBrushPlan object is required when enableDressingLayer=true.");
+                }
+                return handlePlanCityDressing(debugRoot, runId, citySeedId,
+                        request.getAsJsonObject("dressingBrushPlan"));
+            })) {
+                return finalizeWorkflow(ctx, workflowStarted, "failed");
+            }
         }
 
         if (!booleanValue(request, "confirmWorldMutation", false)) {
@@ -1429,6 +1639,9 @@ final class CityPlanningEndpointHandler {
         String mode = stringValue(ctx.request(), "d4CandidateMode", "key_then_array");
         if ("key_then_array".equals(mode) || "staged_key_then_array".equals(mode)) {
             return workflowRunD4KeyThenArray(ctx);
+        }
+        if ("array_layout_loop_v0_2".equals(mode) || "array_layout_loop_v0_3".equals(mode)) {
+            return workflowRunD4ArrayLayoutLoop(ctx);
         }
         if ("structure_cluster_groups".equals(mode)) {
             return workflowRunD4StructureClusterGroups(ctx);
@@ -1519,6 +1732,91 @@ final class CityPlanningEndpointHandler {
         }
         writeWorkflowD4StageTrace(ctx, stageTrace);
         return true;
+    }
+
+    private static boolean workflowRunD4ArrayLayoutLoop(WorkflowContext ctx) throws IOException {
+        Path anchorMapPath = ctx.runDir().resolve("city_d4_" + safeFileName(ctx.citySeedId()))
+                .resolve("structure_anchor_map.json");
+        if (booleanValue(ctx.request(), "skipExisting", true) && Files.exists(anchorMapPath)) {
+            addSkippedWorkflowStep(ctx, "city_d4_array_layout_loop", anchorMapPath,
+                    "Existing structure_anchor_map.json found.");
+            return true;
+        }
+        D4StagePlan[] stagePlanRef = new D4StagePlan[1];
+        if (!workflowStep(ctx, "city_validate_d4_array_layout_loop_plan", null, () -> {
+            requireObject(ctx.request(), "designSlotPlan", "city_run_workflow array_layout_loop_v0_2");
+            stagePlanRef[0] = d4StagePlan(ctx.request().getAsJsonObject("designSlotPlan"));
+            writeWorkflowD4StagePlan(ctx, stagePlanRef[0]);
+            JsonObject response = new JsonObject();
+            response.addProperty("ok", true);
+            response.addProperty("planningMode", "array_layout_loop_v0_2");
+            response.addProperty("arrayStageCount", stagePlanRef[0].arraySlots().size());
+            return response;
+        })) {
+            return false;
+        }
+        D4StagePlan stagePlan = stagePlanRef[0];
+        if (!workflowRunD4Session(ctx, stagePlan.keyDesignSlotPlan(), "city_d4_key_structure")) {
+            return false;
+        }
+        String mode = stringValue(ctx.request(), "d4CandidateMode", "array_layout_loop_v0_2");
+        JsonObject arrayLayoutPlan = ctx.request().has("arrayLayoutPlan")
+                && ctx.request().get("arrayLayoutPlan").isJsonObject()
+                ? ctx.request().getAsJsonObject("arrayLayoutPlan").deepCopy()
+                : minimalArrayLayoutPlan(stagePlan.sourceDesignSlotPlan(), mode);
+        if (!workflowStep(ctx, "city_create_d4_array_layout_loop", null, () -> {
+            requireObject(ctx.request(), "terrasenseProfileSource", "city_create_d4_array_layout_loop");
+            return handleCreateD4ArrayLayoutLoop(ctx.debugRoot(), ctx.runId(), ctx.citySeedId(),
+                    ctx.request().getAsJsonObject("terrasenseProfileSource"),
+                    arrayLayoutPlan,
+                    ctx.request().has("structureEnvelopeFactsSource")
+                            && ctx.request().get("structureEnvelopeFactsSource").isJsonObject()
+                            ? ctx.request().getAsJsonObject("structureEnvelopeFactsSource") : null,
+                    null,
+                    null);
+        })) {
+            return false;
+        }
+        JsonArray layoutPlans = array(arrayLayoutPlan, "layoutPlans");
+        if (layoutPlans.isEmpty()) {
+            ctx.report().addProperty("requestedWorkflowStatus", "waiting_for_array_layout_input");
+            addWorkflowStop(ctx, "city_d4_array_layout_loop_waiting_for_item",
+                    "waiting_for_array_layout_input", "D4_ARRAY_LAYOUT_LOOP_WAITING_FOR_ITEM",
+                    "Array layout loop created; submit nextArrayLayoutPlanItem before continuing.");
+            return false;
+        }
+        for (JsonElement elem : layoutPlans) {
+            if (!elem.isJsonObject()) {
+                continue;
+            }
+            JsonObject item = elem.getAsJsonObject();
+            String arrayId = stringValue(item, "arrayId", "array");
+            if (!workflowStep(ctx, "city_execute_d4_array_layout_item_" + safeFileName(arrayId), null, () -> {
+                JsonObject state = loadArrayLayoutLoopState(ctx.debugRoot(), ctx.runDir(), ctx.citySeedId(), null);
+                requireObject(ctx.request(), "terrasenseProfileSource", "city_execute_d4_array_layout_item");
+                return handleExecuteD4ArrayLayoutItem(ctx.debugRoot(), ctx.runId(), ctx.citySeedId(),
+                        ctx.request().getAsJsonObject("terrasenseProfileSource"),
+                        stringValue(state, "stateId"),
+                        item,
+                        null,
+                        ctx.request().has("structureEnvelopeFactsSource")
+                                && ctx.request().get("structureEnvelopeFactsSource").isJsonObject()
+                                ? ctx.request().getAsJsonObject("structureEnvelopeFactsSource") : null);
+            })) {
+                return false;
+            }
+        }
+        return workflowStep(ctx, "city_finalize_d4_array_layout_loop", null, () -> {
+            JsonObject state = loadArrayLayoutLoopState(ctx.debugRoot(), ctx.runDir(), ctx.citySeedId(), null);
+            requireObject(ctx.request(), "terrasenseProfileSource", "city_finalize_d4_array_layout_loop");
+            return handleFinalizeD4ArrayLayoutLoop(ctx.debugRoot(), ctx.runId(), ctx.citySeedId(),
+                    ctx.request().getAsJsonObject("terrasenseProfileSource"),
+                    stringValue(state, "stateId"),
+                    null,
+                    ctx.request().has("structureEnvelopeFactsSource")
+                            && ctx.request().get("structureEnvelopeFactsSource").isJsonObject()
+                            ? ctx.request().getAsJsonObject("structureEnvelopeFactsSource") : null);
+        });
     }
 
     private static boolean workflowRunD4StructureClusterGroups(WorkflowContext ctx) throws IOException {
@@ -1931,6 +2229,29 @@ final class CityPlanningEndpointHandler {
         return plan;
     }
 
+    private static JsonObject minimalArrayLayoutPlan(JsonObject sourceDesignSlotPlan) {
+        return minimalArrayLayoutPlan(sourceDesignSlotPlan, CityStructureArrayLayoutLoopPlanner.PLANNING_MODE_V02);
+    }
+
+    private static JsonObject minimalArrayLayoutPlan(JsonObject sourceDesignSlotPlan, String planningMode) {
+        JsonObject plan = new JsonObject();
+        boolean v03 = CityStructureArrayLayoutLoopPlanner.PLANNING_MODE_V03.equals(planningMode);
+        plan.addProperty("schemaVersion", v03
+                ? CityStructureArrayLayoutLoopPlanner.PLAN_SCHEMA_V03
+                : CityStructureArrayLayoutLoopPlanner.PLAN_SCHEMA);
+        plan.addProperty("planningMode", v03
+                ? CityStructureArrayLayoutLoopPlanner.PLANNING_MODE_V03
+                : CityStructureArrayLayoutLoopPlanner.PLANNING_MODE_V02);
+        plan.addProperty("cityId", stringValue(sourceDesignSlotPlan, "cityId"));
+        plan.addProperty("cityScale", stringValue(sourceDesignSlotPlan, "cityScale", "town"));
+        JsonObject intent = new JsonObject();
+        intent.addProperty("summary", "created by " + (v03 ? "array_layout_loop_v0_3" : "array_layout_loop_v0_2")
+                + " workflow");
+        plan.add("designIntent", intent);
+        plan.add("layoutPlans", new JsonArray());
+        return plan;
+    }
+
     private static JsonObject workflowPlanD4ArrayStage(WorkflowContext ctx,
                                                        JsonObject arrayCandidatePlan,
                                                        JsonObject occupiedAnchorMap) throws IOException {
@@ -2051,6 +2372,70 @@ final class CityPlanningEndpointHandler {
     private static Path d4ArrayStageDir(Path runDir, String citySeedId, String arrayId) {
         return runDir.resolve("city_d4_array_candidates_" + safeFileName(citySeedId)
                 + "_" + safeFileName(arrayId));
+    }
+
+    private static Path d4ArrayLayoutDir(Path runDir, String citySeedId) {
+        return runDir.resolve("city_d4_array_layout_" + safeFileName(citySeedId));
+    }
+
+    private static Path dressingDir(Path runDir, String citySeedId) {
+        return runDir.resolve("city_dressing_" + safeFileName(citySeedId));
+    }
+
+    private static JsonObject loadOptionalJson(Path path) throws IOException {
+        if (path == null || !Files.exists(path)) {
+            return new JsonObject();
+        }
+        return JsonParser.parseString(Files.readString(path)).getAsJsonObject();
+    }
+
+    private static JsonObject writeD4ArrayLayoutLoopArtifacts(Path debugRoot,
+                                                              Path runDir,
+                                                              String citySeedId,
+                                                              JsonObject loopState,
+                                                              CityLandformReviewPackage reviewPackage,
+                                                              Path envelopeFactsPath) throws IOException {
+        Path outputDirectory = d4ArrayLayoutDir(runDir, citySeedId);
+        Files.createDirectories(outputDirectory);
+        Path planPath = outputDirectory.resolve("d4_array_layout_plan.json");
+        Path statePath = outputDirectory.resolve("d4_array_layout_loop_state.json");
+        Path tracePath = outputDirectory.resolve("d4_array_layout_execution_trace.json");
+        Path occupiedPath = outputDirectory.resolve("d4_array_occupied_field.json");
+        Path patchAvailabilityPath = outputDirectory.resolve("d4_array_patch_availability.json");
+        Path zonesPath = outputDirectory.resolve("d4_functional_array_zones.json");
+        Path qualityPath = outputDirectory.resolve("quality_report.json");
+        Files.writeString(planPath, CityJson.GSON.toJson(object(loopState, "accumulatedArrayLayoutPlan")));
+        Files.writeString(statePath, CityJson.GSON.toJson(loopState));
+        Files.writeString(tracePath, CityJson.GSON.toJson(object(loopState, "executionTrace")));
+        JsonObject occupied = new JsonObject();
+        occupied.addProperty("schemaVersion", CityStructureArrayLayoutLoopPlanner.OCCUPIED_SCHEMA);
+        occupied.addProperty("planningMode", stringValue(loopState, "planningMode",
+                CityStructureArrayLayoutLoopPlanner.PLANNING_MODE_V02));
+        occupied.add("occupiedEnvelopes", array(loopState, "occupiedEnvelopes").deepCopy());
+        Files.writeString(occupiedPath, CityJson.GSON.toJson(occupied));
+        Files.writeString(patchAvailabilityPath, CityJson.GSON.toJson(object(loopState, "patchAvailability")));
+        Files.writeString(zonesPath, CityJson.GSON.toJson(object(loopState, "functionalArrayZones")));
+        Files.writeString(qualityPath, CityJson.GSON.toJson(object(loopState, "quality")));
+        Path previewPath = new CityStructureLandingPreviewRenderer()
+                .renderD4ArrayLayoutLoop(loopState, reviewPackage, outputDirectory);
+
+        JsonObject artifacts = new JsonObject();
+        artifacts.addProperty("arrayLayoutPlan", debugRef(debugRoot, planPath));
+        artifacts.addProperty("arrayLayoutLoopState", debugRef(debugRoot, statePath));
+        artifacts.addProperty("arrayLayoutExecutionTrace", debugRef(debugRoot, tracePath));
+        artifacts.addProperty("arrayLayoutOccupiedField", debugRef(debugRoot, occupiedPath));
+        artifacts.addProperty("arrayLayoutPatchAvailability", debugRef(debugRoot, patchAvailabilityPath));
+        artifacts.addProperty("functionalArrayZones", debugRef(debugRoot, zonesPath));
+        artifacts.addProperty("arrayLayoutPreview", debugRef(debugRoot, previewPath));
+        artifacts.addProperty("qualityReport", debugRef(debugRoot, qualityPath));
+        Path d3Path = d3PackagePath(runDir, citySeedId);
+        if (Files.exists(d3Path)) {
+            artifacts.addProperty("sourceD3Package", debugRef(debugRoot, d3Path));
+        }
+        if (envelopeFactsPath != null && Files.exists(envelopeFactsPath)) {
+            artifacts.addProperty("sourceStructureEnvelopeFacts", debugRef(debugRoot, envelopeFactsPath));
+        }
+        return artifacts;
     }
 
     private static void writeWorkflowD4StagePlan(WorkflowContext ctx, D4StagePlan stagePlan) throws IOException {
@@ -2490,6 +2875,53 @@ final class CityPlanningEndpointHandler {
         copy.addProperty("requiresLockedMaterializationPlan", true);
         copy.addProperty("roadPlanningStage", "d7_after_worldgen_ledger");
         copy.add("sourceLockedMaterializationPlan", materializationPlan.deepCopy());
+        return copy;
+    }
+
+    private static JsonObject loadDressingActivationPlan(Path runDir, String citySeedId, String runId) throws IOException {
+        Path dir = dressingDir(runDir, citySeedId);
+        Path effectiveMaskPath = dir.resolve("city_dressing_effective_mask.json");
+        Path surfacePath = dir.resolve("city_dressing_surface_operation_plan.json");
+        Path placementPath = dir.resolve("city_dressing_decoration_placement_plan.json");
+        if (!Files.exists(effectiveMaskPath) || !Files.exists(surfacePath) || !Files.exists(placementPath)) {
+            return new JsonObject();
+        }
+        JsonObject effectiveMask = JsonParser.parseString(Files.readString(effectiveMaskPath)).getAsJsonObject();
+        JsonObject surfacePlan = JsonParser.parseString(Files.readString(surfacePath)).getAsJsonObject();
+        JsonObject placementPlan = JsonParser.parseString(Files.readString(placementPath)).getAsJsonObject();
+        JsonObject active = new JsonObject();
+        active.addProperty("schemaVersion", "city_active_dressing_worldgen_plan.v0.1");
+        active.addProperty("runId", runId);
+        active.addProperty("citySeedId", citySeedId);
+        active.addProperty("cityId", stringValue(effectiveMask, "cityId", citySeedId));
+        active.add("effectiveMask", effectiveMask);
+        active.add("surfaceOperationPlan", surfacePlan);
+        active.add("decorationPlacementPlan", placementPlan);
+        return active;
+    }
+
+    private static JsonObject maskPlanWithDressingEffectiveMask(JsonObject maskPlan, JsonObject effectiveMask) {
+        if (effectiveMask == null || effectiveMask.size() == 0) {
+            return maskPlan;
+        }
+        JsonObject copy = maskPlan.deepCopy();
+        JsonArray noVegetation = array(copy, "noVegetationMask").deepCopy();
+        JsonArray reasons = array(copy, "reservationReason").deepCopy();
+        for (JsonElement elem : array(effectiveMask, "effectiveDressingZones")) {
+            if (!elem.isJsonObject()) {
+                continue;
+            }
+            JsonObject zone = elem.getAsJsonObject();
+            String itemId = stringValue(zone, "itemId", "dressing");
+            BlockBounds bounds = bounds(requiredObject(zone, "blockBounds"));
+            addMask(noVegetation, itemId + "_dressing_no_vegetation", bounds,
+                    "dressing_effective_mask", itemId);
+            addReason(reasons, itemId, "dressing_effective_mask", bounds,
+                    "reserve low-priority dressing area after structure/wall/road deduction");
+        }
+        copy.add("noVegetationMask", noVegetation);
+        copy.add("reservationReason", reasons);
+        copy.add("cityDressingEffectiveMask", effectiveMask.deepCopy());
         return copy;
     }
 
@@ -3010,6 +3442,70 @@ final class CityPlanningEndpointHandler {
         return path.isAbsolute() ? path.normalize() : runDir.resolve(path).normalize();
     }
 
+    private static JsonObject loadOptionalStructureAnchorPlan(Path debugRoot, Path runDir, String citySeedId,
+                                                              JsonObject source) throws IOException {
+        Path path = structureAnchorPlanPath(runDir, citySeedId, source);
+        if (path == null || !Files.exists(path)) {
+            return new JsonObject();
+        }
+        return JsonParser.parseString(Files.readString(path)).getAsJsonObject();
+    }
+
+    private static JsonObject loadOptionalOccupiedAnchorMap(Path debugRoot, Path runDir, String citySeedId,
+                                                           JsonObject source) throws IOException {
+        Path path = source == null
+                ? runDir.resolve("city_d4_" + safeFileName(citySeedId)).resolve("structure_anchor_map.json")
+                : occupiedStructureAnchorMapPath(runDir, source);
+        if (path == null || !Files.exists(path)) {
+            return new JsonObject();
+        }
+        return JsonParser.parseString(Files.readString(path)).getAsJsonObject();
+    }
+
+    private static Path structureAnchorPlanPath(Path runDir, String citySeedId, JsonObject source) {
+        if (source != null) {
+            String raw = stringValue(source, "structureAnchorPlanPath");
+            if (raw.isBlank()) {
+                raw = stringValue(source, "anchorPlanPath");
+            }
+            if (raw.isBlank()) {
+                raw = stringValue(source, "planPath");
+            }
+            if (!raw.isBlank()) {
+                Path path = Path.of(raw);
+                return path.isAbsolute() ? path.normalize() : runDir.resolve(path).normalize();
+            }
+        }
+        return runDir.resolve("city_d4_" + safeFileName(citySeedId)).resolve("structure_anchor_plan.json");
+    }
+
+    private static JsonObject loadArrayLayoutLoopState(Path debugRoot, Path runDir, String citySeedId,
+                                                       JsonObject source) throws IOException {
+        Path path = arrayLayoutLoopStatePath(runDir, citySeedId, source);
+        if (!Files.exists(path)) {
+            throw new IllegalArgumentException("D4_ARRAY_LAYOUT_LOOP_STATE_NOT_FOUND: "
+                    + debugRef(debugRoot, path));
+        }
+        return JsonParser.parseString(Files.readString(path)).getAsJsonObject();
+    }
+
+    private static Path arrayLayoutLoopStatePath(Path runDir, String citySeedId, JsonObject source) {
+        if (source != null) {
+            String raw = stringValue(source, "arrayLayoutLoopStatePath");
+            if (raw.isBlank()) {
+                raw = stringValue(source, "loopStatePath");
+            }
+            if (raw.isBlank()) {
+                raw = stringValue(source, "statePath");
+            }
+            if (!raw.isBlank()) {
+                Path path = Path.of(raw);
+                return path.isAbsolute() ? path.normalize() : runDir.resolve(path).normalize();
+            }
+        }
+        return d4ArrayLayoutDir(runDir, citySeedId).resolve("d4_array_layout_loop_state.json");
+    }
+
     private static String safeFileName(String raw) {
         return raw.replaceAll("[^A-Za-z0-9._-]", "_");
     }
@@ -3130,6 +3626,13 @@ final class CityPlanningEndpointHandler {
             return new JsonArray();
         }
         return obj.getAsJsonArray(key);
+    }
+
+    private static JsonObject object(JsonObject obj, String key) {
+        if (obj == null || !obj.has(key) || obj.get(key).isJsonNull() || !obj.get(key).isJsonObject()) {
+            return new JsonObject();
+        }
+        return obj.getAsJsonObject(key);
     }
 
     private static boolean hasValue(JsonObject obj, String key) {

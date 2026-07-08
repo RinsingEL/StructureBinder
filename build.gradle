@@ -31,13 +31,13 @@ def devGisSmoke = providers.gradleProperty('geomantiaDevGisSmoke')
 def devRealmSmoke = providers.gradleProperty('geomantiaDevRealmSmoke')
         .orElse('false')
         .get()
-def devUseReTerraForged = providers.gradleProperty('geomantiaDevUseReTerraForged')
-        .orElse('false')
-        .get()
 def devUseStructurePacks = providers.gradleProperty('geomantiaDevUseStructurePacks')
         .orElse('false')
         .get()
 def devUseRoadWeaver = providers.gradleProperty('geomantiaDevUseRoadWeaver')
+        .orElse('false')
+        .get()
+def devUseTectonic = providers.gradleProperty('geomantiaDevUseTectonic')
         .orElse('false')
         .get()
 def devRoadWeaverVersion = '2.2.2-1.20.1'
@@ -45,6 +45,8 @@ def devRoadWeaverModrinthVersionId = '2Jo2Wr3J'
 def devRoadWeaverJarName = "roadweaver-forge-${devRoadWeaverVersion}.jar"
 def devRoadWeaverJarFile = layout.projectDirectory.file("libs/local/roadweaver/${devRoadWeaverVersion}/${devRoadWeaverJarName}")
 def devRoadWeaverJarUrl = "https://cdn.modrinth.com/data/6jk8Pote/versions/${devRoadWeaverModrinthVersionId}/${devRoadWeaverJarName}"
+def devTectonicModrinthProjectId = 'lWDHr9jE'
+def devTectonicModrinthVersionId = 'ubqOXeYf'
 
 tasks.register('downloadDevRoadWeaverForge') {
     outputs.file(devRoadWeaverJarFile)
@@ -114,7 +116,7 @@ minecraft {
             if (devRealmSmoke.toBoolean()) {
                 property 'geomantia.devRealmSmoke', 'true'
             }
-            if (devUseReTerraForged.toBoolean() || devUseRoadWeaver.toBoolean()) {
+            if (devUseRoadWeaver.toBoolean()) {
                 property 'mixin.env.remapRefMap', 'true'
                 property 'mixin.env.refMapRemappingFile', "${project.layout.buildDirectory.get().asFile}/createSrgToMcp/output.srg"
             }
@@ -165,7 +167,6 @@ repositories {
         }
     }
     flatDir {
-        dirs 'libs/local/reterraforged/0.0.5'
         dirs 'libs/local/trek/B0.6'
         dirs 'libs/local/t_and_t/1.12'
         dirs 'libs/local/cristellib/1.1.6'
@@ -176,9 +177,6 @@ repositories {
 dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
     implementation fg.deobf("curse.maven:worldedit-225608:4586218")
-    if (devUseReTerraForged.toBoolean()) {
-        runtimeOnly fg.deobf("local.reterraforged:reterraforged:0.0.5")
-    }
     if (devUseStructurePacks.toBoolean()) {
         runtimeOnly fg.deobf("local.trek:trek:B0.6")
         runtimeOnly fg.deobf("local.t_and_t:t_and_t:1.12")
@@ -188,6 +186,9 @@ dependencies {
         runtimeOnly fg.deobf("local.roadweaver:roadweaver-forge:${devRoadWeaverVersion}")
         runtimeOnly fg.deobf("dev.architectury:architectury-forge:9.2.14")
         runtimeOnly fg.deobf("me.shedaniel.cloth:cloth-config-forge:11.1.136")
+    }
+    if (devUseTectonic.toBoolean()) {
+        runtimeOnly fg.deobf("maven.modrinth:${devTectonicModrinthProjectId}:${devTectonicModrinthVersionId}")
     }
     testImplementation platform('org.junit:junit-bom:5.10.2')
     testImplementation 'org.junit.jupiter:junit-jupiter'

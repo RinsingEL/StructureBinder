@@ -229,6 +229,60 @@ public final class CityStructureLandingPreviewRenderer {
         return path;
     }
 
+    public Path renderD4ArrayLayoutLoop(JsonObject loopState, CityLandformReviewPackage reviewPackage,
+                                        Path outputDirectory) throws IOException {
+        Files.createDirectories(outputDirectory);
+        Path path = outputDirectory.resolve("d4_array_layout_preview.png");
+        BufferedImage image = baseImage();
+        Graphics2D g = image.createGraphics();
+        try {
+            setup(g);
+            BlockBounds gridBounds = gridBounds(loopState);
+            Transform t = transform(gridBounds);
+            drawPatchBackdrop(g, t, gridBounds, reviewPackage);
+            drawGrid(g, t, gridBounds);
+            JsonObject zones = object(loopState, "functionalArrayZones");
+            int zoneIndex = 0;
+            for (JsonElement zoneElem : array(zones, "arrayZones")) {
+                if (!zoneElem.isJsonObject()) {
+                    continue;
+                }
+                zoneIndex++;
+                JsonObject zone = zoneElem.getAsJsonObject();
+                Color zoneColor = color(zoneIndex, 235);
+                drawArrayLayoutSubZones(g, t, zone, zoneColor);
+                drawArrayLayoutZoneRelations(g, t, zone, zoneColor);
+                int itemIndex = 0;
+                for (JsonElement itemElem : array(zone, "items")) {
+                    if (!itemElem.isJsonObject()) {
+                        continue;
+                    }
+                    itemIndex++;
+                    JsonObject item = itemElem.getAsJsonObject();
+                    BlockPoint anchor = point(item, "anchorBlock");
+                    drawPoint(g, t, anchor, zoneColor);
+                    drawBadge(g, t, anchor, arrayLayoutItemLabel(item, itemIndex), zoneColor);
+                }
+                for (JsonElement accessElem : array(zone, "roadAccessPoints")) {
+                    if (!accessElem.isJsonObject()) {
+                        continue;
+                    }
+                    JsonObject access = accessElem.getAsJsonObject();
+                    BlockPoint gateway = point(access, "anchorBlock");
+                    drawGateway(g, t, gateway, zoneColor);
+                }
+            }
+            title(g, "City D4 array layout loop preview",
+                    "bbox hidden; parent/subZones shown for v0.3; square = RoadWeaver gateway; iteration="
+                            + intValue(loopState, "iteration", 0));
+            arrayLayoutLoopSummary(g, loopState);
+        } finally {
+            g.dispose();
+        }
+        ImageIO.write(image, "png", path.toFile());
+        return path;
+    }
+
     public Path renderEnvelopeFacts(JsonObject facts, Path outputDirectory) throws IOException {
         Files.createDirectories(outputDirectory);
         Path path = outputDirectory.resolve("structure_envelope_profile_preview.png");
@@ -885,6 +939,95 @@ public final class CityStructureLandingPreviewRenderer {
             y += 15;
             g.drawString("  pattern=" + trim(string(group, "arrayPattern"), 40)
                     + " items=" + array(group, "items").size(), x, y);
+            y += 18;
+        }
+    }
+
+    private static void drawArrayLayoutZoneRelations(Graphics2D g, Transform t, JsonObject zone, Color zoneColor) {
+        BlockPoint previous = null;
+        g.setColor(withAlpha(zoneColor, 118));
+        g.setStroke(new BasicStroke(1.5f));
+        for (JsonElement itemElem : array(zone, "items")) {
+            if (!itemElem.isJsonObject()) {
+                continue;
+            }
+            BlockPoint current = point(itemElem.getAsJsonObject(), "anchorBlock");
+            if (previous != null) {
+                g.drawLine(t.x(previous.x()), t.z(previous.z()), t.x(current.x()), t.z(current.z()));
+            }
+            previous = current;
+        }
+    }
+
+    private static void drawArrayLayoutSubZones(Graphics2D g, Transform t, JsonObject zone, Color zoneColor) {
+        JsonArray subZones = array(zone, "subZones");
+        if (subZones.isEmpty()) {
+            return;
+        }
+        int index = 0;
+        for (JsonElement elem : subZones) {
+            if (!elem.isJsonObject()) {
+                continue;
+            }
+            index++;
+            JsonObject subZone = elem.getAsJsonObject();
+            BlockBounds bounds = bounds(subZone, "blockBounds");
+            drawRect(g, t, bounds, withAlpha(zoneColor, 18), withAlpha(zoneColor, 118), 1.1f);
+            drawLabel(g, t, bounds.center(), "S" + index);
+        }
+    }
+
+    private static void drawGateway(Graphics2D g, Transform t, BlockPoint point, Color color) {
+        int x = t.x(point.x());
+        int z = t.z(point.z());
+        g.setColor(withAlpha(color, 230));
+        g.fillRect(x - 6, z - 6, 12, 12);
+        g.setColor(new Color(32, 35, 34, 230));
+        g.setStroke(new BasicStroke(1.4f));
+        g.drawRect(x - 6, z - 6, 12, 12);
+    }
+
+    private static String arrayLayoutItemLabel(JsonObject item, int fallbackIndex) {
+        String itemId = string(item, "itemId");
+        if (itemId.isBlank()) {
+            itemId = "I" + fallbackIndex;
+        }
+        return trim(itemId, 12);
+    }
+
+    private static void arrayLayoutLoopSummary(Graphics2D g, JsonObject loopState) {
+        int x = 820;
+        int y = 90;
+        g.setColor(new Color(32, 34, 34));
+        g.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 14));
+        g.drawString("array layout loop", x, y);
+        y += 22;
+        g.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 11));
+        g.drawString("state=" + trim(string(loopState, "stateId"), 36)
+                + " status=" + trim(string(loopState, "status"), 22), x, y);
+        y += 16;
+        g.drawString("iteration=" + intValue(loopState, "iteration", 0)
+                + " max=" + intValue(loopState, "maxArrayPlans", 0), x, y);
+        y += 22;
+        JsonObject zones = object(loopState, "functionalArrayZones");
+        int zoneIndex = 0;
+        for (JsonElement zoneElem : array(zones, "arrayZones")) {
+            if (!zoneElem.isJsonObject() || y > HEIGHT - 55) {
+                break;
+            }
+            zoneIndex++;
+            JsonObject zone = zoneElem.getAsJsonObject();
+            g.setColor(color(zoneIndex, 235));
+            g.fillRect(x, y - 10, 10, 10);
+            g.setColor(new Color(32, 34, 34));
+            String prefix = "parent_composite".equals(string(zone, "zoneKind")) ? "P" : "Z";
+            g.drawString(prefix + zoneIndex + " " + trim(string(zone, "arrayId"), 34)
+                    + " items=" + array(zone, "items").size(), x + 16, y);
+            y += 15;
+            String parent = string(zone, "parentArrayId").isBlank() ? "" : " parent=" + trim(string(zone, "parentArrayId"), 16);
+            g.drawString("  " + trim(string(zone, "zoneKind"), 18) + " "
+                    + trim(string(zone, "plannerType"), 24) + parent
+                    + " gateways=" + array(zone, "roadAccessPoints").size(), x, y);
             y += 18;
         }
     }

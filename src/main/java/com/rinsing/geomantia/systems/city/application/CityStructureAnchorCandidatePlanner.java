@@ -374,8 +374,7 @@ public final class CityStructureAnchorCandidatePlanner {
         occupied.addProperty("sourceAnchorId", requiredString(selected, "anchorId"));
         occupied.addProperty("sourceSlotId", slotId);
         occupied.addProperty("sourceCandidateId", candidateId);
-        occupied.addProperty("envelopeType", selected.has("estimatedSafetyEnvelope")
-                ? "estimated_safety" : "estimated_collision");
+        occupied.addProperty("envelopeType", "estimated_collision");
         occupied.add("blockBounds", boundsJson(sessionOccupiedBounds(selected)));
         if (selected.has("estimatedCollisionEnvelope")) {
             occupied.add("estimatedCollisionEnvelope",
@@ -897,9 +896,6 @@ public final class CityStructureAnchorCandidatePlanner {
     }
 
     private static BlockBounds sessionOccupiedBounds(JsonObject candidate) {
-        if (candidate.has("estimatedSafetyEnvelope") && candidate.get("estimatedSafetyEnvelope").isJsonObject()) {
-            return bounds(candidate, "estimatedSafetyEnvelope");
-        }
         return bounds(candidate, "estimatedCollisionEnvelope");
     }
 

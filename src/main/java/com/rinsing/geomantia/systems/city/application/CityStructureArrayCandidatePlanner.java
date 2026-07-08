@@ -328,7 +328,8 @@ public final class CityStructureArrayCandidatePlanner {
             case "scattered" -> scattered(points, patches, grid, spacing, arrayCount);
             default -> looseCluster(points, pivot, patches, spacing, arrayCount);
         }
-        return new ArrayList<>(points);
+        return memberCellCandidatePoints(patches, grid, unionBounds(patches), pivot.centerBlock(),
+                new ArrayList<>(points));
     }
 
     private static void looseCluster(LinkedHashSet<BlockPoint> points,
@@ -387,17 +388,14 @@ public final class CityStructureArrayCandidatePlanner {
                                   int arrayCount) {
         for (LandformPatchSummary patch : patches) {
             if (!patch.memberCells().isEmpty()) {
-                int stride = Math.max(1, spacing / Math.max(1, grid.cellStepBlocks()));
-                int index = 0;
                 for (PatchMemberCell cell : patch.memberCells()) {
-                    if (index++ % stride == 0) {
-                        points.add(new BlockPoint(cell.blockMinX() + grid.cellStepBlocks() / 2,
-                                cell.blockMinZ() + grid.cellStepBlocks() / 2));
-                    }
+                    points.add(new BlockPoint(cell.blockMinX() + grid.cellStepBlocks() / 2,
+                            cell.blockMinZ() + grid.cellStepBlocks() / 2));
                 }
+                continue;
             }
             BlockBounds b = patch.blockBounds();
-            int step = Math.max(8, spacing);
+            int step = Math.max(1, grid.cellStepBlocks());
             for (int z = b.minZ() + step / 2; z <= b.maxZ(); z += step) {
                 for (int x = b.minX() + step / 2; x <= b.maxX(); x += step) {
                     points.add(new BlockPoint(x, z));
@@ -418,18 +416,115 @@ public final class CityStructureArrayCandidatePlanner {
                 continue;
             }
             CityStructureProfileCatalog.Footprint footprint = profile.planningFootprint();
-            if (profile.jigsawLike()) {
-                int radius = profile.jigsawExpansionRadius(CityStructureCandidateEnvelope.DEFAULT_JIGSAW_RADIUS_BLOCKS)
-                        + CityStructureCandidateEnvelope.DEFAULT_CLEARANCE_BLOCKS
-                        + CityStructureCandidateEnvelope.DEFAULT_ROAD_ACCESS_MARGIN_BLOCKS;
-                max = Math.max(max, radius * 2 + 8);
-            } else if (footprint.valid()) {
+            if (footprint.valid()) {
                 max = Math.max(max, Math.max(footprint.widthBlocks(), footprint.depthBlocks())
-                        + CityStructureCandidateEnvelope.DEFAULT_CLEARANCE_BLOCKS * 2
-                        + CityStructureCandidateEnvelope.DEFAULT_ROAD_ACCESS_MARGIN_BLOCKS);
+                        + CityStructureCandidateEnvelope.DEFAULT_SMALL_CLEARANCE_BLOCKS * 2);
+            } else if (profile.jigsawLike()) {
+                int radius = profile.jigsawExpansionRadius(CityStructureCandidateEnvelope.DEFAULT_JIGSAW_RADIUS_BLOCKS)
+                        + CityStructureCandidateEnvelope.DEFAULT_CLEARANCE_BLOCKS;
+                max = Math.max(max, radius * 2);
             }
         }
         return max;
+    }
+
+    private static List<BlockPoint> memberCellCandidatePoints(List<LandformPatchSummary> patches,
+                                                              PlanningGrid grid,
+                                                              BlockBounds bounds,
+                                                              BlockPoint start,
+                                                              List<BlockPoint> guidePoints) {
+        List<BlockPoint> memberPoints = memberCellCenters(patches, grid, bounds);
+        if (memberPoints.isEmpty()) {
+            return List.of();
+        }
+        LinkedHashSet<BlockPoint> ordered = new LinkedHashSet<>();
+        for (BlockPoint guide : guidePoints) {
+            BlockPoint nearest = nearestUnused(memberPoints, ordered, guide);
+            if (nearest != null) {
+                ordered.add(nearest);
+            }
+        }
+        memberPoints.stream()
+                .sorted(Comparator
+                        .comparingLong((BlockPoint point) -> distanceSquared(point, start))
+                        .thenComparingInt(BlockPoint::x)
+                        .thenComparingInt(BlockPoint::z))
+                .forEach(ordered::add);
+        return new ArrayList<>(ordered);
+    }
+
+    private static List<BlockPoint> memberCellCenters(List<LandformPatchSummary> patches,
+                                                      PlanningGrid grid,
+                                                      BlockBounds bounds) {
+        LinkedHashSet<BlockPoint> centers = new LinkedHashSet<>();
+        int step = Math.max(1, grid.cellStepBlocks());
+        for (LandformPatchSummary patch : patches) {
+            if (!patch.blockBounds().overlaps(bounds)) {
+                continue;
+            }
+            if (!patch.memberCells().isEmpty()) {
+                for (PatchMemberCell cell : patch.memberCells()) {
+                    BlockBounds cellBounds = new BlockBounds(cell.blockMinX(), cell.blockMinZ(),
+                            cell.blockMinX() + step - 1, cell.blockMinZ() + step - 1);
+                    if (!cellBounds.overlaps(bounds)) {
+                        continue;
+                    }
+                    BlockPoint point = new BlockPoint(
+                            clamp(cell.blockMinX() + step / 2, bounds.minX(), bounds.maxX()),
+                            clamp(cell.blockMinZ() + step / 2, bounds.minZ(), bounds.maxZ()));
+                    if (grid.containsBlock(point.x(), point.z()) && patchContains(patch, grid, point)) {
+                        centers.add(point);
+                    }
+                }
+                continue;
+            }
+            int minX = Math.max(patch.blockBounds().minX(), bounds.minX());
+            int minZ = Math.max(patch.blockBounds().minZ(), bounds.minZ());
+            int maxX = Math.min(patch.blockBounds().maxX(), bounds.maxX());
+            int maxZ = Math.min(patch.blockBounds().maxZ(), bounds.maxZ());
+            for (int z = minZ; z <= maxZ; z += step) {
+                for (int x = minX; x <= maxX; x += step) {
+                    BlockPoint point = new BlockPoint(clamp(x + step / 2, minX, maxX),
+                            clamp(z + step / 2, minZ, maxZ));
+                    if (grid.containsBlock(point.x(), point.z()) && patchContains(patch, grid, point)) {
+                        centers.add(point);
+                    }
+                }
+            }
+        }
+        return new ArrayList<>(centers);
+    }
+
+    private static BlockBounds unionBounds(List<LandformPatchSummary> patches) {
+        BlockBounds bounds = patches.get(0).blockBounds();
+        for (int i = 1; i < patches.size(); i++) {
+            bounds = CityStructureCandidateEnvelope.union(bounds, patches.get(i).blockBounds());
+        }
+        return bounds;
+    }
+
+    private static BlockPoint nearestUnused(List<BlockPoint> points, Set<BlockPoint> used, BlockPoint guide) {
+        BlockPoint best = null;
+        long bestDistance = Long.MAX_VALUE;
+        for (BlockPoint point : points) {
+            if (used.contains(point)) {
+                continue;
+            }
+            long distance = distanceSquared(point, guide);
+            if (distance < bestDistance
+                    || (distance == bestDistance && best != null
+                    && (point.x() < best.x() || point.x() == best.x() && point.z() < best.z()))) {
+                best = point;
+                bestDistance = distance;
+            }
+        }
+        return best;
+    }
+
+    private static long distanceSquared(BlockPoint a, BlockPoint b) {
+        long dx = (long) a.x() - b.x();
+        long dz = (long) a.z() - b.z();
+        return dx * dx + dz * dz;
     }
 
     private static String structureIdForItem(JsonObject plan,
@@ -629,6 +724,7 @@ public final class CityStructureArrayCandidatePlanner {
                     return true;
                 }
             }
+            return false;
         }
         return patch.blockBounds().contains(point.x(), point.z());
     }

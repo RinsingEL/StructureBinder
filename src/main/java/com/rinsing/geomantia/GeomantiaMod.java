@@ -1,6 +1,7 @@
 package com.rinsing.geomantia;
 
 import com.mojang.logging.LogUtils;
+import com.rinsing.geomantia.systems.city.infrastructure.world.CityDressingWorldgenRegistry;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityReservationMaskRegistry;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -31,7 +32,9 @@ public final class GeomantiaMod {
 
     @net.minecraftforge.eventbus.api.SubscribeEvent
     public void onServerAboutToStart(ServerAboutToStartEvent event) {
-        CityReservationMaskRegistry.load(event.getServer().getWorldPath(LevelResource.ROOT));
+        java.nio.file.Path serverRoot = event.getServer().getWorldPath(LevelResource.ROOT);
+        CityReservationMaskRegistry.load(serverRoot);
+        CityDressingWorldgenRegistry.load(serverRoot);
     }
 
     private void registerTemporaryClientDevHooks() {
