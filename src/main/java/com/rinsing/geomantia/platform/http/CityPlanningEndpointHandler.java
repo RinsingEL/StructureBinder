@@ -1530,7 +1530,12 @@ final class CityPlanningEndpointHandler {
             return finalizeWorkflow(ctx, workflowStarted, "failed");
         }
 
-        if (!workflowStep(ctx, "city_profile_structure_envelopes", null,
+        boolean refreshStructureProfile = booleanValue(request, "forceRefresh", false)
+                || "rescan".equals(stringValue(request, "cacheMode", ""));
+        Path structureEnvelopeFactsPath = runDir.resolve("city_structure_envelopes_" + safeFileName(citySeedId))
+                .resolve("structure_envelope_facts.json");
+        if (!workflowStep(ctx, "city_profile_structure_envelopes",
+                refreshStructureProfile ? null : structureEnvelopeFactsPath,
                 () -> {
                     requireObject(request, "terrasenseProfileSource", "city_profile_structure_envelopes");
                     return handleProfileStructureEnvelopes(debugRoot, runId, citySeedId,
@@ -1538,8 +1543,7 @@ final class CityPlanningEndpointHandler {
                             request.has("structureIds") && request.get("structureIds").isJsonArray()
                                     ? request.getAsJsonArray("structureIds") : new JsonArray(),
                             intValue(request, "sampleCount", 256),
-                            booleanValue(request, "forceRefresh", false)
-                                    || "rescan".equals(stringValue(request, "cacheMode", "")),
+                            refreshStructureProfile,
                             serverHolder,
                             level);
                 })) {

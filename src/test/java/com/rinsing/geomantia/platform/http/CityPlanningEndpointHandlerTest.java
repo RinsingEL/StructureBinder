@@ -1241,6 +1241,57 @@ class CityPlanningEndpointHandlerTest {
     }
 
     @Test
+    void handleRunWorkflowRescanForcesProfileRefreshWhenFactsExist() throws Exception {
+        Path debugRoot = Files.createTempDirectory("city-workflow-profile-rescan-test");
+        String runId = "run_workflow_profile_rescan";
+        String citySeedId = "city_test";
+        Path runDir = debugRoot.resolve(runId);
+        prepareD5Artifacts(debugRoot, runId, citySeedId);
+        Path factsPath = runDir.resolve("city_structure_envelopes_" + citySeedId)
+                .resolve("structure_envelope_facts.json");
+        Files.createDirectories(factsPath.getParent());
+        Files.writeString(factsPath, "{}");
+        Files.createDirectories(runDir.resolve("city_d6_" + citySeedId));
+        Files.writeString(runDir.resolve("city_d6_" + citySeedId)
+                .resolve("structure_materialization_plan.json"), "{}");
+        Path catalogPath = runDir.resolve("debug_structure_profile_catalog.json");
+
+        JsonObject request = new JsonObject();
+        request.addProperty("runId", runId);
+        request.addProperty("citySeedId", citySeedId);
+        request.addProperty("skipExisting", true);
+        request.addProperty("cacheMode", "rescan");
+        request.addProperty("sampleCount", 1);
+        request.add("terrasenseProfileSource", terraSenseSource(catalogPath));
+        request.add("structureIds", JsonParser.parseString("""
+                ["minecraft:desert_pyramid"]
+                """).getAsJsonArray());
+
+        JsonObject response = CityPlanningEndpointHandler.handleRunWorkflow(
+                debugRoot,
+                Files.createTempDirectory("city-workflow-profile-rescan-server-root"),
+                runId,
+                citySeedId,
+                request,
+                null,
+                null);
+
+        assertTrue(response.get("ok").getAsBoolean());
+        JsonObject profileStep = response.getAsJsonObject("workflowReport")
+                .getAsJsonArray("steps").asList().stream()
+                .map(JsonElement::getAsJsonObject)
+                .filter(step -> "city_profile_structure_envelopes".equals(step.get("name").getAsString()))
+                .findFirst()
+                .orElseThrow();
+        assertEquals("success", profileStep.get("status").getAsString());
+        assertFalse(profileStep.has("reasonCode")
+                && "WORKFLOW_EXISTING_ARTIFACT".equals(profileStep.get("reasonCode").getAsString()));
+        JsonObject facts = JsonParser.parseString(Files.readString(factsPath)).getAsJsonObject();
+        assertEquals("city_structure_envelope_facts.v0.1", facts.get("schemaVersion").getAsString());
+        assertTrue(facts.getAsJsonObject("profileCache").get("forceRefresh").getAsBoolean());
+    }
+
+    @Test
     void handleRunWorkflowDefaultD4PlacesKeyStructuresBeforeArrayStages() throws Exception {
         Path debugRoot = Files.createTempDirectory("city-workflow-staged-d4-test");
         String runId = "run_workflow_staged_d4";
