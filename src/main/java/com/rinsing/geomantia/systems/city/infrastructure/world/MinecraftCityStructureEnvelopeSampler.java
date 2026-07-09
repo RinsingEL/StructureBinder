@@ -75,8 +75,20 @@ public final class MinecraftCityStructureEnvelopeSampler implements CityStructur
         }
         BlockBounds local = localFootprint(start.getBoundingBox(), chunk);
         return CityStructureEnvelopeProfiler.EnvelopeSample.valid(sampleIndex, local, start.getPieces().size(),
-                profile.structureId() + "#" + profile.maxDistanceFromCenterBlocks(),
-                "minecraft_runtime_registry");
+                structureConfigHash(profile),
+                sourcePackHash());
+    }
+
+    @Override
+    public CityStructureEnvelopeProfiler.CacheIdentity cacheIdentity(
+            CityStructureProfileCatalog.StructureProfile profile) {
+        if (server == null || level == null) {
+            return CityStructureEnvelopeProfiler.CacheIdentity.unknown();
+        }
+        return new CityStructureEnvelopeProfiler.CacheIdentity(
+                structureConfigHash(profile),
+                sourcePackHash(),
+                generationContextHash());
     }
 
     private ChunkPos sampleChunk(int sampleIndex) {
@@ -94,5 +106,23 @@ public final class MinecraftCityStructureEnvelopeSampler implements CityStructur
                 box.minZ() - origin.getZ(),
                 box.maxX() - origin.getX(),
                 box.maxZ() - origin.getZ());
+    }
+
+    private static String structureConfigHash(CityStructureProfileCatalog.StructureProfile profile) {
+        return profile.structureId() + "#" + profile.maxDistanceFromCenterBlocks();
+    }
+
+    private String sourcePackHash() {
+        String raw = level.dimension().location() + ":"
+                + level.getChunkSource().getGenerator().getClass().getName();
+        return "minecraft_runtime_registry:" + CityStructureEnvelopeProfiler.sha256(raw).substring(0, 16);
+    }
+
+    private String generationContextHash() {
+        String raw = level.dimension().location() + ":"
+                + level.getSeed() + ":"
+                + level.getChunkSource().getGenerator().getClass().getName() + ":"
+                + centerChunkX + ":" + centerChunkZ;
+        return CityStructureEnvelopeProfiler.sha256(raw);
     }
 }

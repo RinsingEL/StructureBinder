@@ -756,6 +756,17 @@ final class CityPlanningEndpointHandler {
                                                        int sampleCount,
                                                        MinecraftServerHolder serverHolder,
                                                        ServerLevel level) throws IOException {
+        return handleProfileStructureEnvelopes(debugRoot, runId, citySeedId, terraSenseProfileSource,
+                structureIds, sampleCount, false, serverHolder, level);
+    }
+
+    static JsonObject handleProfileStructureEnvelopes(Path debugRoot, String runId, String citySeedId,
+                                                       JsonObject terraSenseProfileSource,
+                                                       JsonArray structureIds,
+                                                       int sampleCount,
+                                                       boolean forceRefresh,
+                                                       MinecraftServerHolder serverHolder,
+                                                       ServerLevel level) throws IOException {
         Path runDir = debugRoot.resolve(runId);
         JsonObject seed = loadCitySeed(runDir, runId, citySeedId);
         int anchorBlockX = blockCoord(seed, "x", 4);
@@ -772,10 +783,14 @@ final class CityPlanningEndpointHandler {
                 ? (profile, sampleIndex) -> CityStructureEnvelopeProfiler.EnvelopeSample.invalid(sampleIndex,
                 "CONFIGURED_STRUCTURE_REGISTRY_MISSING", "", "")
                 : new MinecraftCityStructureEnvelopeSampler(serverHolder.server(), level, anchorBlockX, anchorBlockZ);
-        CityStructureEnvelopeProfiler.Result result = new CityStructureEnvelopeProfiler()
-                .profile(runDir, terraSenseProfileSource, ids, sampleCount, sampler);
-
         Path outputDirectory = runDir.resolve("city_structure_envelopes_" + safeFileName(citySeedId));
+        Path cacheDirectory = runDir.resolve("city_structure_profile_cache_" + safeFileName(citySeedId));
+        String contextProfileHash = CityStructureEnvelopeProfiler.sha256(CityJson.GSON.toJson(seed));
+        CityStructureEnvelopeProfiler.Result result = new CityStructureEnvelopeProfiler()
+                .profile(runDir, terraSenseProfileSource, ids, sampleCount, sampler,
+                        CityStructureEnvelopeProfiler.CacheOptions.enabled(
+                                cacheDirectory, contextProfileHash, forceRefresh));
+
         Files.createDirectories(outputDirectory);
         Path factsPath = outputDirectory.resolve("structure_envelope_facts.json");
         Path qualityPath = outputDirectory.resolve("quality_report.json");
@@ -788,6 +803,7 @@ final class CityPlanningEndpointHandler {
         JsonObject artifacts = new JsonObject();
         artifacts.addProperty("structureEnvelopeFacts", debugRef(debugRoot, factsPath));
         artifacts.addProperty("structureEnvelopeProfilePreview", debugRef(debugRoot, previewPath));
+        artifacts.addProperty("structureProfileCacheDirectory", debugRef(debugRoot, cacheDirectory));
         artifacts.addProperty("qualityReport", debugRef(debugRoot, qualityPath));
         response.add("artifacts", artifacts);
         return response;
@@ -1514,7 +1530,7 @@ final class CityPlanningEndpointHandler {
             return finalizeWorkflow(ctx, workflowStarted, "failed");
         }
 
-        if (!workflowStep(ctx, "city_profile_structure_envelopes", envelopeFactsPath(runDir, citySeedId, null),
+        if (!workflowStep(ctx, "city_profile_structure_envelopes", null,
                 () -> {
                     requireObject(request, "terrasenseProfileSource", "city_profile_structure_envelopes");
                     return handleProfileStructureEnvelopes(debugRoot, runId, citySeedId,
@@ -1522,6 +1538,8 @@ final class CityPlanningEndpointHandler {
                             request.has("structureIds") && request.get("structureIds").isJsonArray()
                                     ? request.getAsJsonArray("structureIds") : new JsonArray(),
                             intValue(request, "sampleCount", 256),
+                            booleanValue(request, "forceRefresh", false)
+                                    || "rescan".equals(stringValue(request, "cacheMode", "")),
                             serverHolder,
                             level);
                 })) {

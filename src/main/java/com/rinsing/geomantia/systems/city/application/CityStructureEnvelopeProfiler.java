@@ -3,11 +3,13 @@ package com.rinsing.geomantia.systems.city.application;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
 import com.rinsing.geomantia.systems.city.infrastructure.json.CityJson;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -26,10 +28,21 @@ public final class CityStructureEnvelopeProfiler {
                           List<String> structureIds,
                           int sampleCount,
                           StructureEnvelopeSampler sampler) throws IOException {
+        return profile(baseDirectory, terraSenseProfileSource, structureIds, sampleCount, sampler,
+                CacheOptions.disabled());
+    }
+
+    public Result profile(Path baseDirectory,
+                          JsonObject terraSenseProfileSource,
+                          List<String> structureIds,
+                          int sampleCount,
+                          StructureEnvelopeSampler sampler,
+                          CacheOptions cacheOptions) throws IOException {
         long started = System.nanoTime();
         if (sampler == null) {
             throw new IllegalArgumentException("StructureEnvelopeSampler is required.");
         }
+        CacheOptions effectiveCache = cacheOptions == null ? CacheOptions.disabled() : cacheOptions;
         int requestedSamples = sampleCount <= 0 ? DEFAULT_SAMPLE_COUNT : sampleCount;
         CityStructureProfileCatalog.ImportedCatalog catalog =
                 CityStructureProfileCatalog.importCatalog(baseDirectory, terraSenseProfileSource);
@@ -51,13 +64,14 @@ public final class CityStructureEnvelopeProfiler {
                 hardBlocks.add(structureId + ": structureId is not in TerraSense catalog.");
                 continue;
             }
-            structures.add(profileOne(profile, requestedSamples, sampler));
+            structures.add(profileOne(profile, requestedSamples, sampler, effectiveCache));
         }
 
         JsonObject facts = new JsonObject();
         facts.addProperty("schemaVersion", FACTS_SCHEMA);
         facts.addProperty("sampleCountRequested", requestedSamples);
         facts.add("sourceTerraSenseProfileSource", terraSenseProfileSource.deepCopy());
+        facts.add("profileCache", cacheSummary(effectiveCache, structures));
         facts.add("structures", structures);
         JsonObject quality = new JsonObject();
         quality.addProperty("passed", hardBlocks.isEmpty());
@@ -67,6 +81,7 @@ public final class CityStructureEnvelopeProfiler {
         quality.add("needsReview", needsReview);
         JsonObject metrics = new JsonObject();
         metrics.addProperty("structureCount", structures.size());
+        addCacheMetrics(metrics, structures);
         quality.add("metrics", metrics);
         facts.add("quality", quality);
         facts.add("timingMs", timing(started));
@@ -75,7 +90,55 @@ public final class CityStructureEnvelopeProfiler {
 
     private JsonObject profileOne(CityStructureProfileCatalog.StructureProfile profile,
                                   int sampleCount,
-                                  StructureEnvelopeSampler sampler) {
+                                  StructureEnvelopeSampler sampler,
+                                  CacheOptions cacheOptions) throws IOException {
+        if (!cacheOptions.enabled()) {
+            JsonObject fresh = profileOneFresh(profile, sampleCount, sampler);
+            annotateCacheNotUsed(fresh);
+            return fresh;
+        }
+        Files.createDirectories(cacheOptions.cacheDirectory());
+        Path cachePath = cachePath(cacheOptions, profile.structureId());
+        CacheIdentity expectedIdentity = sampler.cacheIdentity(profile);
+        String expectedCacheKey = expectedIdentity.hasStableInputs()
+                ? cacheKey(profile, sampleCount, expectedIdentity, cacheOptions.contextProfileHash())
+                : "";
+        String recomputeReason = "CACHE_MISS";
+        if (!cacheOptions.forceRefresh() && Files.exists(cachePath)) {
+            JsonObject cached = JsonParser.parseString(Files.readString(cachePath)).getAsJsonObject();
+            if (!expectedCacheKey.isBlank()
+                    && expectedCacheKey.equals(stringValue(cached, "cacheKey", ""))
+                    && sampleCount == intValue(cached, "sampleCount", -1)
+                    && profileHash(profile).equals(stringValue(cached, "profileHash", ""))) {
+                JsonObject hit = cached.deepCopy();
+                hit.addProperty("cacheStatus", "hit");
+                hit.addProperty("cacheReason", "CACHE_KEY_MATCH");
+                hit.addProperty("cachePath", cachePath.toAbsolutePath().toString());
+                return hit;
+            }
+            recomputeReason = "CACHE_KEY_STALE";
+        } else if (cacheOptions.forceRefresh()) {
+            recomputeReason = "FORCE_REFRESH";
+        }
+
+        JsonObject fresh = profileOneFresh(profile, sampleCount, sampler);
+        CacheIdentity finalIdentity = CacheIdentity.fromProfileFact(fresh, expectedIdentity.generationContextHash());
+        String finalCacheKey = cacheKey(profile, sampleCount, finalIdentity, cacheOptions.contextProfileHash());
+        JsonObject identity = cacheIdentityJson(profile, sampleCount, finalIdentity,
+                cacheOptions.contextProfileHash());
+        fresh.add("cacheIdentity", identity);
+        fresh.addProperty("cacheKey", finalCacheKey);
+        fresh.addProperty("cacheStatus", "CACHE_KEY_STALE".equals(recomputeReason)
+                ? "stale_recomputed" : "miss_recomputed");
+        fresh.addProperty("cacheReason", recomputeReason);
+        fresh.addProperty("cachePath", cachePath.toAbsolutePath().toString());
+        Files.writeString(cachePath, CityJson.GSON.toJson(fresh));
+        return fresh;
+    }
+
+    private JsonObject profileOneFresh(CityStructureProfileCatalog.StructureProfile profile,
+                                       int sampleCount,
+                                       StructureEnvelopeSampler sampler) {
         List<EnvelopeSample> valid = new ArrayList<>();
         List<String> failures = new ArrayList<>();
         String structureConfigHash = "";
@@ -124,6 +187,48 @@ public final class CityStructureEnvelopeProfiler {
         obj.add("samplePreview", samplePreview);
         obj.add("failureSummary", summarize(failures));
         return obj;
+    }
+
+    private static void annotateCacheNotUsed(JsonObject obj) {
+        obj.addProperty("cacheStatus", "not_used");
+        obj.addProperty("cacheReason", "CACHE_DISABLED");
+    }
+
+    private static void addCacheMetrics(JsonObject metrics, JsonArray structures) {
+        int hit = 0;
+        int miss = 0;
+        int stale = 0;
+        int notUsed = 0;
+        for (JsonElement elem : structures) {
+            if (!elem.isJsonObject()) {
+                continue;
+            }
+            String status = stringValue(elem.getAsJsonObject(), "cacheStatus", "");
+            switch (status) {
+                case "hit" -> hit++;
+                case "miss_recomputed" -> miss++;
+                case "stale_recomputed" -> stale++;
+                case "not_used" -> notUsed++;
+                default -> {
+                }
+            }
+        }
+        metrics.addProperty("cacheHitCount", hit);
+        metrics.addProperty("cacheMissRecomputedCount", miss);
+        metrics.addProperty("cacheStaleRecomputedCount", stale);
+        metrics.addProperty("cacheNotUsedCount", notUsed);
+    }
+
+    private static JsonObject cacheSummary(CacheOptions cacheOptions, JsonArray structures) {
+        JsonObject summary = new JsonObject();
+        summary.addProperty("enabled", cacheOptions.enabled());
+        summary.addProperty("cacheDirectory", cacheOptions.enabled()
+                ? cacheOptions.cacheDirectory().toAbsolutePath().toString() : "");
+        summary.addProperty("forceRefresh", cacheOptions.forceRefresh());
+        JsonObject metrics = new JsonObject();
+        addCacheMetrics(metrics, structures);
+        summary.add("metrics", metrics);
+        return summary;
     }
 
     private static JsonArray validSamples(List<EnvelopeSample> valid) {
@@ -280,6 +385,13 @@ public final class CityStructureEnvelopeProfiler {
         return "bbox_" + sha256(raw).substring(0, 16);
     }
 
+    public static String cacheKey(CityStructureProfileCatalog.StructureProfile profile,
+                                  int sampleCount,
+                                  CacheIdentity identity,
+                                  String contextProfileHash) {
+        return sha256(CityJson.GSON.toJson(cacheIdentityJson(profile, sampleCount, identity, contextProfileHash)));
+    }
+
     public static String sha256(String value) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
@@ -298,6 +410,36 @@ public final class CityStructureEnvelopeProfiler {
         JsonObject timing = new JsonObject();
         timing.addProperty("total", (System.nanoTime() - started) / 1_000_000L);
         return timing;
+    }
+
+    private static JsonObject cacheIdentityJson(CityStructureProfileCatalog.StructureProfile profile,
+                                                int sampleCount,
+                                                CacheIdentity identity,
+                                                String contextProfileHash) {
+        CacheIdentity safeIdentity = identity == null ? CacheIdentity.unknown() : identity;
+        JsonObject obj = new JsonObject();
+        obj.addProperty("schemaVersion", "city_structure_profile_cache_key.v0.1");
+        obj.addProperty("structureId", profile.structureId());
+        obj.addProperty("profileHash", profileHash(profile));
+        obj.addProperty("structureConfigHash", safeIdentity.structureConfigHash());
+        obj.addProperty("sourcePackHash", safeIdentity.sourcePackHash());
+        obj.addProperty("generationConfigHash", generationConfigHash(profile, safeIdentity.structureConfigHash()));
+        obj.addProperty("generationContextHash", safeIdentity.generationContextHash());
+        obj.addProperty("d2ContextProfileHash", contextProfileHash == null ? "" : contextProfileHash);
+        obj.addProperty("sampleCount", sampleCount);
+        return obj;
+    }
+
+    private static Path cachePath(CacheOptions options, String structureId) {
+        return options.cacheDirectory().resolve("structure_" + sha256(structureId).substring(0, 24) + ".json");
+    }
+
+    private static String stringValue(JsonObject obj, String key, String defaultValue) {
+        return obj != null && obj.has(key) && !obj.get(key).isJsonNull() ? obj.get(key).getAsString() : defaultValue;
+    }
+
+    private static int intValue(JsonObject obj, String key, int defaultValue) {
+        return obj != null && obj.has(key) && !obj.get(key).isJsonNull() ? obj.get(key).getAsInt() : defaultValue;
     }
 
     private enum Axis {
@@ -347,6 +489,51 @@ public final class CityStructureEnvelopeProfiler {
 
     public interface StructureEnvelopeSampler {
         EnvelopeSample sample(CityStructureProfileCatalog.StructureProfile profile, int sampleIndex);
+
+        default CacheIdentity cacheIdentity(CityStructureProfileCatalog.StructureProfile profile) {
+            return CacheIdentity.unknown();
+        }
+    }
+
+    public record CacheOptions(Path cacheDirectory, String contextProfileHash, boolean forceRefresh) {
+        public static CacheOptions disabled() {
+            return new CacheOptions(null, "", false);
+        }
+
+        public static CacheOptions enabled(Path cacheDirectory, String contextProfileHash, boolean forceRefresh) {
+            if (cacheDirectory == null) {
+                return disabled();
+            }
+            return new CacheOptions(cacheDirectory, contextProfileHash == null ? "" : contextProfileHash,
+                    forceRefresh);
+        }
+
+        boolean enabled() {
+            return cacheDirectory != null;
+        }
+    }
+
+    public record CacheIdentity(String structureConfigHash, String sourcePackHash, String generationContextHash) {
+        public CacheIdentity {
+            structureConfigHash = structureConfigHash == null ? "" : structureConfigHash;
+            sourcePackHash = sourcePackHash == null ? "" : sourcePackHash;
+            generationContextHash = generationContextHash == null ? "" : generationContextHash;
+        }
+
+        public static CacheIdentity unknown() {
+            return new CacheIdentity("", "", "");
+        }
+
+        static CacheIdentity fromProfileFact(JsonObject fact, String generationContextHash) {
+            return new CacheIdentity(
+                    stringValue(fact, "structureConfigHash", ""),
+                    stringValue(fact, "sourcePackHash", ""),
+                    generationContextHash);
+        }
+
+        boolean hasStableInputs() {
+            return !structureConfigHash.isBlank() && !sourcePackHash.isBlank();
+        }
     }
 
     public record EnvelopeSample(int sampleIndex, boolean valid, BlockBounds localBounds, int pieceCount,

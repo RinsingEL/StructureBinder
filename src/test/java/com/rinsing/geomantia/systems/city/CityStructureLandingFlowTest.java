@@ -107,6 +107,82 @@ final class CityStructureLandingFlowTest {
     }
 
     @Test
+    void envelopeProfilerUsesCacheAndInvalidatesStaleKeys() throws Exception {
+        Fixture fixture = fixture();
+        Path cacheDir = fixture.baseDir().resolve("profile-cache");
+        CityStructureEnvelopeProfiler.CacheOptions cacheOptions =
+                CityStructureEnvelopeProfiler.CacheOptions.enabled(cacheDir, "city_context_hash", false);
+        int[] firstCalls = {0};
+        CityStructureEnvelopeProfiler.StructureEnvelopeSampler firstSampler =
+                new CityStructureEnvelopeProfiler.StructureEnvelopeSampler() {
+                    @Override
+                    public CityStructureEnvelopeProfiler.EnvelopeSample sample(
+                            com.rinsing.geomantia.systems.city.application.CityStructureProfileCatalog.StructureProfile profile,
+                            int sampleIndex) {
+                        firstCalls[0]++;
+                        return CityStructureEnvelopeProfiler.EnvelopeSample.valid(sampleIndex,
+                                new BlockBounds(-4, -5, 15, 6), 1,
+                                "config_hash_a", "pack_hash_a");
+                    }
+
+                    @Override
+                    public CityStructureEnvelopeProfiler.CacheIdentity cacheIdentity(
+                            com.rinsing.geomantia.systems.city.application.CityStructureProfileCatalog.StructureProfile profile) {
+                        return new CityStructureEnvelopeProfiler.CacheIdentity(
+                                "config_hash_a", "pack_hash_a", "generation_context_a");
+                    }
+                };
+
+        CityStructureEnvelopeProfiler.Result miss = new CityStructureEnvelopeProfiler()
+                .profile(fixture.baseDir(), fixture.terraSenseSource(), List.of("minecraft:desert_pyramid"), 3,
+                        firstSampler, cacheOptions);
+        JsonObject missFact = miss.structureEnvelopeFacts().getAsJsonArray("structures").get(0).getAsJsonObject();
+        assertEquals(3, firstCalls[0]);
+        assertEquals("miss_recomputed", missFact.get("cacheStatus").getAsString());
+        assertTrue(missFact.has("cacheKey"));
+        assertTrue(missFact.has("cacheIdentity"));
+        assertEquals(1, miss.structureEnvelopeFacts().getAsJsonObject("profileCache")
+                .getAsJsonObject("metrics").get("cacheMissRecomputedCount").getAsInt());
+
+        CityStructureEnvelopeProfiler.Result hit = new CityStructureEnvelopeProfiler()
+                .profile(fixture.baseDir(), fixture.terraSenseSource(), List.of("minecraft:desert_pyramid"), 3,
+                        firstSampler, cacheOptions);
+        JsonObject hitFact = hit.structureEnvelopeFacts().getAsJsonArray("structures").get(0).getAsJsonObject();
+        assertEquals(3, firstCalls[0]);
+        assertEquals("hit", hitFact.get("cacheStatus").getAsString());
+        assertEquals(missFact.get("cacheKey").getAsString(), hitFact.get("cacheKey").getAsString());
+
+        int[] staleCalls = {0};
+        CityStructureEnvelopeProfiler.StructureEnvelopeSampler staleSampler =
+                new CityStructureEnvelopeProfiler.StructureEnvelopeSampler() {
+                    @Override
+                    public CityStructureEnvelopeProfiler.EnvelopeSample sample(
+                            com.rinsing.geomantia.systems.city.application.CityStructureProfileCatalog.StructureProfile profile,
+                            int sampleIndex) {
+                        staleCalls[0]++;
+                        return CityStructureEnvelopeProfiler.EnvelopeSample.valid(sampleIndex,
+                                new BlockBounds(-6, -5, 17, 6), 1,
+                                "config_hash_a", "pack_hash_b");
+                    }
+
+                    @Override
+                    public CityStructureEnvelopeProfiler.CacheIdentity cacheIdentity(
+                            com.rinsing.geomantia.systems.city.application.CityStructureProfileCatalog.StructureProfile profile) {
+                        return new CityStructureEnvelopeProfiler.CacheIdentity(
+                                "config_hash_a", "pack_hash_b", "generation_context_a");
+                    }
+                };
+        CityStructureEnvelopeProfiler.Result stale = new CityStructureEnvelopeProfiler()
+                .profile(fixture.baseDir(), fixture.terraSenseSource(), List.of("minecraft:desert_pyramid"), 3,
+                        staleSampler, cacheOptions);
+        JsonObject staleFact = stale.structureEnvelopeFacts().getAsJsonArray("structures").get(0).getAsJsonObject();
+        assertEquals(3, staleCalls[0]);
+        assertEquals("stale_recomputed", staleFact.get("cacheStatus").getAsString());
+        assertEquals("CACHE_KEY_STALE", staleFact.get("cacheReason").getAsString());
+        assertFalse(missFact.get("cacheKey").getAsString().equals(staleFact.get("cacheKey").getAsString()));
+    }
+
+    @Test
     void d4UsesDominantFixedBBoxGroupWithSmallClearance() throws Exception {
         Fixture fixture = fixture();
         CityStructureEnvelopeProfiler.Result factsResult = new CityStructureEnvelopeProfiler()

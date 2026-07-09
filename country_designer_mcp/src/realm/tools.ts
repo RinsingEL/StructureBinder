@@ -198,7 +198,7 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "city_profile_structure_envelopes",
-    description: "City 结构大小区间回归：对指定 configured structure 做非写世界 bbox 采样，输出 validSamples、bboxGroups、generationConfigHash、P95/P99/maxObserved 与预览。需在 D4 前运行。",
+    description: "City 结构大小区间回归：cache-backed dry-run profiling，对指定 configured structure 做非写世界 bbox 采样，输出 validSamples、bboxGroups、generationConfigHash、P95/P99/maxObserved 与预览。需在 D4 前运行。",
     inputSchema: {
       type: "object",
       properties: {
@@ -214,6 +214,8 @@ export const realmTools: ToolDefinition[] = [
           items: { type: "string" },
         },
         sampleCount: { type: "number", description: "每个结构采样次数，默认 256。" },
+        cacheMode: { type: "string", enum: ["use_cache", "rescan"], description: "profiling cache 模式；默认 use_cache，rescan 强制重算。" },
+        forceRefresh: { type: "boolean", description: "true 时忽略本地 profile cache 并重新 dry-run 采样。" },
         dimensionId: { type: "string", description: "维度 ID，省略时从 run manifest 恢复。" },
         playerName: { type: "string", description: "玩家名，用于定位维度。" },
       },

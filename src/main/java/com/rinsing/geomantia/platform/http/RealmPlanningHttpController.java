@@ -477,6 +477,8 @@ final class RealmPlanningHttpController {
                     request.has("structureIds") && request.get("structureIds").isJsonArray()
                             ? request.getAsJsonArray("structureIds") : new JsonArray(),
                     intValue(request, "sampleCount", 256),
+                    booleanValue(request, "forceRefresh", false)
+                            || "rescan".equals(stringValue(request, "cacheMode", "")),
                     new CityPlanningEndpointHandler.MinecraftServerHolder(server),
                     level);
         }));
