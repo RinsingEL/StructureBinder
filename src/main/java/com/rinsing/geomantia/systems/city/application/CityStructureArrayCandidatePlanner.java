@@ -31,6 +31,9 @@ public final class CityStructureArrayCandidatePlanner {
     private static final int MAX_GROUP_CANDIDATES = 5;
     private static final List<String> DEFAULT_PATTERNS =
             List.of("loose_cluster", "patch_axis_band", "scattered");
+    private static final List<String> SUPPORTED_PATTERNS =
+            List.of("loose_cluster", "patch_axis_band", "scattered", "compound_cluster",
+                    "grid", "courtyard", "l_shape", "u_shape", "organic_compact");
 
     public Result plan(Path baseDirectory,
                        CityLandformReviewPackage reviewPackage,
@@ -147,7 +150,9 @@ public final class CityStructureArrayCandidatePlanner {
         String displayRole = stringValue(plan, "displayRole", arrayId);
         int arrayCount = intValue(plan, "arrayCount", 0);
         List<String> structureIds = structureIds(plan);
-        List<BlockPoint> rawPoints = rawPoints(pattern, pivot, sourcePatches, grid, structureIds, profiles, arrayCount);
+        int spacing = configuredSpacing(plan, structureIds, profiles);
+        List<BlockPoint> rawPoints = rawPoints(pattern, pivot, sourcePatches, grid, plan,
+                structureIds, profiles, arrayCount);
         List<BlockBounds> groupCollision = new ArrayList<>();
         JsonArray items = new JsonArray();
         JsonArray anchors = new JsonArray();
@@ -201,7 +206,7 @@ public final class CityStructureArrayCandidatePlanner {
                 acceptedPoint = point;
                 acceptedEstimate = estimate;
                 acceptedPatch = pointPatch;
-                accepted = itemJson(plan, pattern, candidateIndex, itemIndex + 1, structureId,
+                accepted = itemJson(plan, pattern, spacing, candidateIndex, itemIndex + 1, structureId,
                         point, pointPatch, estimate);
                 break;
             }
@@ -225,6 +230,8 @@ public final class CityStructureArrayCandidatePlanner {
         candidate.addProperty("arrayCandidateId", arrayId + "_" + pattern + "_"
                 + String.format(Locale.ROOT, "%02d", candidateIndex));
         candidate.addProperty("arrayPattern", pattern);
+        candidate.addProperty("arrayShape", compoundShape(plan, pattern));
+        candidate.addProperty("spacingBlocks", spacing);
         candidate.addProperty("arrayId", arrayId);
         candidate.addProperty("displayRole", displayRole);
         candidate.addProperty("placedItemCount", items.size());
@@ -243,6 +250,8 @@ public final class CityStructureArrayCandidatePlanner {
         trace.addProperty("schemaVersion", PLAN_SCHEMA);
         trace.addProperty("arrayId", arrayId);
         trace.addProperty("arrayPattern", pattern);
+        trace.addProperty("arrayShape", compoundShape(plan, pattern));
+        trace.addProperty("spacingBlocks", spacing);
         trace.addProperty("arrayCandidateId", candidate.get("arrayCandidateId").getAsString());
         trace.addProperty("itemCount", items.size());
         expanded.add("arrayCandidateTrace", trace);
@@ -255,6 +264,7 @@ public final class CityStructureArrayCandidatePlanner {
 
     private static JsonObject itemJson(JsonObject plan,
                                        String pattern,
+                                       int spacing,
                                        int candidateIndex,
                                        int itemIndex,
                                        String structureId,
@@ -267,6 +277,8 @@ public final class CityStructureArrayCandidatePlanner {
         obj.addProperty("itemIndex", itemIndex);
         obj.addProperty("structureId", structureId);
         obj.addProperty("arrayPattern", pattern);
+        obj.addProperty("arrayShape", compoundShape(plan, pattern));
+        obj.addProperty("spacingBlocks", spacing);
         obj.add("anchorBlock", point.asJson());
         obj.add("roadPoint", point.asJson());
         obj.addProperty("rotation", "NONE");
@@ -319,18 +331,67 @@ public final class CityStructureArrayCandidatePlanner {
                                               LandformPatchSummary pivot,
                                               List<LandformPatchSummary> patches,
                                               PlanningGrid grid,
+                                              JsonObject plan,
                                               List<String> structureIds,
                                               Map<String, CityStructureProfileCatalog.StructureProfile> profiles,
                                               int arrayCount) {
-        int spacing = spacing(structureIds, profiles);
+        int spacing = configuredSpacing(plan, structureIds, profiles);
         LinkedHashSet<BlockPoint> points = new LinkedHashSet<>();
         switch (pattern) {
             case "patch_axis_band" -> axisBand(points, pivot, patches, spacing, arrayCount);
             case "scattered" -> scattered(points, patches, grid, spacing, arrayCount);
+            case "compound_cluster", "grid", "courtyard", "l_shape", "u_shape", "organic_compact" ->
+                    compoundCluster(points, plan, pattern, pivot, patches, spacing, arrayCount);
             default -> looseCluster(points, pivot, patches, spacing, arrayCount);
         }
         return memberCellCandidatePoints(patches, grid, unionBounds(patches), pivot.centerBlock(),
                 new ArrayList<>(points));
+    }
+
+    private static void compoundCluster(LinkedHashSet<BlockPoint> points,
+                                        JsonObject plan,
+                                        String pattern,
+                                        LandformPatchSummary pivot,
+                                        List<LandformPatchSummary> patches,
+                                        int spacing,
+                                        int arrayCount) {
+        String shape = compoundShape(plan, pattern);
+        if (!"organic_compact".equals(shape)) {
+            ShapeGrid grid = shapeGrid(plan, arrayCount);
+            structuredGrid(points, pivot.centerBlock(), grid.rows(), grid.columns(), spacing, shape);
+        }
+        looseCluster(points, pivot, patches, spacing, arrayCount);
+    }
+
+    private static void structuredGrid(LinkedHashSet<BlockPoint> points,
+                                       BlockPoint center,
+                                       int rows,
+                                       int columns,
+                                       int spacing,
+                                       String shape) {
+        for (int row = 0; row < rows; row++) {
+            for (int col = 0; col < columns; col++) {
+                if (!includesCell(shape, row, col, rows, columns)) {
+                    continue;
+                }
+                int x = center.x() + (int) Math.round((col - (columns - 1) / 2.0) * spacing);
+                int z = center.z() + (int) Math.round((row - (rows - 1) / 2.0) * spacing);
+                points.add(new BlockPoint(x, z));
+            }
+        }
+    }
+
+    private static boolean includesCell(String shape, int row, int col, int rows, int columns) {
+        if ("courtyard".equals(shape) && rows > 2 && columns > 2) {
+            return row == 0 || row == rows - 1 || col == 0 || col == columns - 1;
+        }
+        if ("l_shape".equals(shape) && rows > 1 && columns > 1) {
+            return row == rows - 1 || col == 0;
+        }
+        if ("u_shape".equals(shape) && rows > 1 && columns > 2) {
+            return row == rows - 1 || col == 0 || col == columns - 1;
+        }
+        return true;
     }
 
     private static void looseCluster(LinkedHashSet<BlockPoint> points,
@@ -427,6 +488,52 @@ public final class CityStructureArrayCandidatePlanner {
             }
         }
         return max;
+    }
+
+    private static int configuredSpacing(JsonObject plan,
+                                         List<String> structureIds,
+                                         Map<String, CityStructureProfileCatalog.StructureProfile> profiles) {
+        int configured = compoundInt(plan, "spacingBlocks", 0);
+        return configured > 0 ? configured : spacing(structureIds, profiles);
+    }
+
+    private static ShapeGrid shapeGrid(JsonObject plan, int requestedCount) {
+        int requested = Math.max(1, requestedCount);
+        int rows = compoundInt(plan, "rows", 0);
+        int columns = compoundInt(plan, "columns", 0);
+        if (rows <= 0 && columns <= 0) {
+            columns = Math.max(1, (int) Math.ceil(Math.sqrt(requested)));
+            rows = Math.max(1, (int) Math.ceil(requested / (double) columns));
+        } else if (rows <= 0) {
+            rows = Math.max(1, (int) Math.ceil(requested / (double) Math.max(1, columns)));
+        } else if (columns <= 0) {
+            columns = Math.max(1, (int) Math.ceil(requested / (double) rows));
+        }
+        return new ShapeGrid(Math.max(1, rows), Math.max(1, columns));
+    }
+
+    private static String compoundShape(JsonObject plan, String pattern) {
+        if ("grid".equals(pattern) || "courtyard".equals(pattern)
+                || "l_shape".equals(pattern) || "u_shape".equals(pattern)
+                || "organic_compact".equals(pattern)) {
+            return pattern;
+        }
+        String shape = compoundString(plan, "shape",
+                compoundString(plan, "clusterShape", "organic_compact"));
+        return switch (shape) {
+            case "grid", "courtyard", "l_shape", "u_shape", "organic_compact" -> shape;
+            default -> "organic_compact";
+        };
+    }
+
+    private static int compoundInt(JsonObject plan, String key, int defaultValue) {
+        JsonObject compound = optionalObject(plan, "compoundCluster");
+        return intValue(compound, key, intValue(plan, key, defaultValue));
+    }
+
+    private static String compoundString(JsonObject plan, String key, String defaultValue) {
+        JsonObject compound = optionalObject(plan, "compoundCluster");
+        return stringValue(compound, key, stringValue(plan, key, defaultValue));
     }
 
     private static List<BlockPoint> memberCellCandidatePoints(List<LandformPatchSummary> patches,
@@ -760,7 +867,7 @@ public final class CityStructureArrayCandidatePlanner {
         for (JsonElement elem : array) {
             if (!elem.isJsonNull()) {
                 String value = elem.getAsString();
-                if (DEFAULT_PATTERNS.contains(value)) {
+                if (SUPPORTED_PATTERNS.contains(value)) {
                     values.add(value);
                 }
             }
@@ -887,5 +994,8 @@ public final class CityStructureArrayCandidatePlanner {
             report.add("rejectedPoints", rejected);
             return new GroupBuildResult(null, report);
         }
+    }
+
+    private record ShapeGrid(int rows, int columns) {
     }
 }

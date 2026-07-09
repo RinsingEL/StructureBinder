@@ -219,7 +219,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
         JsonArray hardBlocks = new JsonArray();
         JsonArray warnings = new JsonArray();
         LandformPatchSummary pivot = sourcePatches.get(0);
-        int spacing = spacing(desiredItems, profiles);
+        int spacing = spacing(item, desiredItems, profiles);
         BlockBounds effectiveBounds = placementBounds == null ? pivot.blockBounds() : placementBounds;
         BlockPoint start = sectorPoint(effectiveBounds, stringValue(item, "startSector", "center"));
         List<BlockPoint> guidePoints = placementBounds == null
@@ -301,7 +301,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
                 continue;
             }
             CityStructureCandidateEnvelope.Estimate estimate = accepted.estimate();
-            JsonObject itemJson = itemJson(item, plannerType, placedItems.size() + 1, accepted);
+            JsonObject itemJson = itemJson(item, plannerType, spacing, placedItems.size() + 1, accepted);
             JsonObject anchorJson = anchorJson(item, plannerType, placedItems.size() + 1, accepted);
             placedItems.add(itemJson);
             anchors.add(anchorJson);
@@ -316,11 +316,13 @@ public final class CityStructureArrayLayoutLoopPlanner {
             hardBlocks.add("D4_ARRAY_LAYOUT_MIN_COUNT_UNSATISFIED: " + arrayId
                     + " placed " + placedItems.size() + " of minCount " + minCount + ".");
         }
-        JsonObject zone = zone(item, plannerType, placedItems, groupCollisionUnion, groupMaskUnion,
+        JsonObject zone = zone(item, plannerType, spacing, placedItems, groupCollisionUnion, groupMaskUnion,
                 roadAccessPoints(item, placedItems));
         JsonObject trace = new JsonObject();
         trace.addProperty("arrayId", arrayId);
         trace.addProperty("plannerType", plannerType);
+        trace.addProperty("arrayShape", arrayShape(item, plannerType));
+        trace.addProperty("spacingBlocks", spacing);
         trace.addProperty("status", hardBlocks.isEmpty() ? "accepted" : "hard_blocked");
         trace.addProperty("placedItemCount", placedItems.size());
         trace.addProperty("requestedItemCount", desiredItems.size());
@@ -454,7 +456,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
             }
         }
 
-        JsonObject parentZone = zone(item, "composite_array", new JsonArray(), groupCollisionUnion,
+        JsonObject parentZone = zone(item, "composite_array", 0, new JsonArray(), groupCollisionUnion,
                 groupMaskUnion, new JsonArray());
         parentZone.addProperty("zoneKind", "parent_composite");
         parentZone.addProperty("parentPlannerType", stringValue(item, "parentPlannerType",
@@ -543,7 +545,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
         return points;
     }
 
-    private JsonObject zone(JsonObject item, String plannerType, JsonArray placedItems,
+    private JsonObject zone(JsonObject item, String plannerType, int spacing, JsonArray placedItems,
                             BlockBounds groupCollisionUnion, BlockBounds groupMaskUnion,
                             JsonArray roadAccessPoints) {
         JsonObject zone = new JsonObject();
@@ -552,6 +554,8 @@ public final class CityStructureArrayLayoutLoopPlanner {
         zone.addProperty("zoneKind", "array_zone");
         zone.addProperty("role", stringValue(item, "role", stringValue(item, "displayRole", "")));
         zone.addProperty("plannerType", plannerType);
+        zone.addProperty("arrayShape", arrayShape(item, plannerType));
+        zone.addProperty("spacingBlocks", spacing);
         zone.addProperty("itemCount", placedItems.size());
         zone.add("items", placedItems.deepCopy());
         zone.add("groupCollisionEnvelope", CityStructureCandidateEnvelope.boundsJson(nonNullBounds(groupCollisionUnion)));
@@ -560,7 +564,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
         return zone;
     }
 
-    private JsonObject itemJson(JsonObject sourceItem, String plannerType, int index, Accepted accepted) {
+    private JsonObject itemJson(JsonObject sourceItem, String plannerType, int spacing, int index, Accepted accepted) {
         JsonObject obj = new JsonObject();
         obj.addProperty("itemId", accepted.desired().itemId());
         obj.addProperty("itemIndex", index);
@@ -568,6 +572,8 @@ public final class CityStructureArrayLayoutLoopPlanner {
         obj.addProperty("structureId", accepted.desired().structureId());
         obj.addProperty("arrayId", stringValue(sourceItem, "arrayId"));
         obj.addProperty("plannerType", plannerType);
+        obj.addProperty("arrayShape", arrayShape(sourceItem, plannerType));
+        obj.addProperty("spacingBlocks", spacing);
         obj.add("anchorBlock", accepted.point().asJson());
         obj.add("roadPoint", accepted.point().asJson());
         obj.addProperty("rotation", "NONE");
@@ -743,19 +749,10 @@ public final class CityStructureArrayLayoutLoopPlanner {
 
     private void compoundCluster(LinkedHashSet<BlockPoint> points, JsonObject item, BlockPoint start,
                                  LandformPatchSummary pivot, int spacing, int requested) {
-        String shape = stringValue(item, "clusterShape", stringValue(item, "shape", "organic_compact"));
-        if ("grid".equals(shape) || "courtyard".equals(shape)) {
-            int side = Math.max(2, (int) Math.ceil(Math.sqrt(requested)));
-            for (int z = 0; z < side; z++) {
-                for (int x = 0; x < side; x++) {
-                    if ("courtyard".equals(shape) && x > 0 && z > 0 && x < side - 1 && z < side - 1) {
-                        continue;
-                    }
-                    int bx = start.x() + (x - side / 2) * spacing;
-                    int bz = start.z() + (z - side / 2) * spacing;
-                    points.add(new BlockPoint(bx, bz));
-                }
-            }
+        String shape = compoundShape(item);
+        if (!"organic_compact".equals(shape)) {
+            ShapeGrid grid = shapeGrid(item, requested);
+            structuredGrid(points, start, grid.rows(), grid.columns(), spacing, shape, null);
         }
         double golden = Math.PI * (3.0 - Math.sqrt(5.0));
         for (int i = 0; i < requested * 24; i++) {
@@ -839,20 +836,10 @@ public final class CityStructureArrayLayoutLoopPlanner {
 
     private void compoundClusterBounds(LinkedHashSet<BlockPoint> points, JsonObject item, BlockBounds bounds,
                                        BlockPoint start, int spacing, int requested) {
-        String shape = stringValue(item, "clusterShape", stringValue(item, "shape", "organic_compact"));
-        if ("grid".equals(shape) || "courtyard".equals(shape)) {
-            int side = Math.max(2, (int) Math.ceil(Math.sqrt(requested)));
-            for (int z = 0; z < side; z++) {
-                for (int x = 0; x < side; x++) {
-                    if ("courtyard".equals(shape) && x > 0 && z > 0 && x < side - 1 && z < side - 1) {
-                        continue;
-                    }
-                    int bx = start.x() + (x - side / 2) * spacing;
-                    int bz = start.z() + (z - side / 2) * spacing;
-                    points.add(new BlockPoint(clamp(bx, bounds.minX(), bounds.maxX()),
-                            clamp(bz, bounds.minZ(), bounds.maxZ())));
-                }
-            }
+        String shape = compoundShape(item);
+        if (!"organic_compact".equals(shape)) {
+            ShapeGrid grid = shapeGrid(item, requested);
+            structuredGrid(points, start, grid.rows(), grid.columns(), spacing, shape, bounds);
         }
         double golden = Math.PI * (3.0 - Math.sqrt(5.0));
         for (int i = 0; i < requested * 24; i++) {
@@ -937,11 +924,52 @@ public final class CityStructureArrayLayoutLoopPlanner {
         return last.isJsonObject() ? requiredString(last.getAsJsonObject(), "structureId") : last.getAsString();
     }
 
-    private int spacing(List<DesiredItem> items,
+    private void structuredGrid(LinkedHashSet<BlockPoint> points,
+                                BlockPoint center,
+                                int rows,
+                                int columns,
+                                int spacing,
+                                String shape,
+                                BlockBounds clampBounds) {
+        for (int row = 0; row < rows; row++) {
+            for (int col = 0; col < columns; col++) {
+                if (!includesCell(shape, row, col, rows, columns)) {
+                    continue;
+                }
+                int x = center.x() + (int) Math.round((col - (columns - 1) / 2.0) * spacing);
+                int z = center.z() + (int) Math.round((row - (rows - 1) / 2.0) * spacing);
+                if (clampBounds != null) {
+                    x = clamp(x, clampBounds.minX(), clampBounds.maxX());
+                    z = clamp(z, clampBounds.minZ(), clampBounds.maxZ());
+                }
+                points.add(new BlockPoint(x, z));
+            }
+        }
+    }
+
+    private boolean includesCell(String shape, int row, int col, int rows, int columns) {
+        if ("courtyard".equals(shape) && rows > 2 && columns > 2) {
+            return row == 0 || row == rows - 1 || col == 0 || col == columns - 1;
+        }
+        if ("l_shape".equals(shape) && rows > 1 && columns > 1) {
+            return row == rows - 1 || col == 0;
+        }
+        if ("u_shape".equals(shape) && rows > 1 && columns > 2) {
+            return row == rows - 1 || col == 0 || col == columns - 1;
+        }
+        return true;
+    }
+
+    private int spacing(JsonObject item,
+                        List<DesiredItem> items,
                         Map<String, CityStructureProfileCatalog.StructureProfile> profiles) {
+        int configured = compoundInt(item, "spacingBlocks", 0);
+        if (configured > 0) {
+            return configured;
+        }
         int max = 16;
-        for (DesiredItem item : items) {
-            CityStructureProfileCatalog.StructureProfile profile = profiles.get(item.structureId());
+        for (DesiredItem desired : items) {
+            CityStructureProfileCatalog.StructureProfile profile = profiles.get(desired.structureId());
             if (profile == null) {
                 continue;
             }
@@ -956,6 +984,44 @@ public final class CityStructureArrayLayoutLoopPlanner {
             }
         }
         return max;
+    }
+
+    private ShapeGrid shapeGrid(JsonObject item, int requestedCount) {
+        int requested = Math.max(1, requestedCount);
+        int rows = compoundInt(item, "rows", 0);
+        int columns = compoundInt(item, "columns", 0);
+        if (rows <= 0 && columns <= 0) {
+            columns = Math.max(1, (int) Math.ceil(Math.sqrt(requested)));
+            rows = Math.max(1, (int) Math.ceil(requested / (double) columns));
+        } else if (rows <= 0) {
+            rows = Math.max(1, (int) Math.ceil(requested / (double) Math.max(1, columns)));
+        } else if (columns <= 0) {
+            columns = Math.max(1, (int) Math.ceil(requested / (double) rows));
+        }
+        return new ShapeGrid(Math.max(1, rows), Math.max(1, columns));
+    }
+
+    private String compoundShape(JsonObject item) {
+        String shape = compoundString(item, "shape",
+                compoundString(item, "clusterShape", "organic_compact"));
+        return switch (shape) {
+            case "grid", "courtyard", "l_shape", "u_shape", "organic_compact" -> shape;
+            default -> "organic_compact";
+        };
+    }
+
+    private String arrayShape(JsonObject item, String plannerType) {
+        return "compound_cluster".equals(plannerType) ? compoundShape(item) : plannerType;
+    }
+
+    private int compoundInt(JsonObject item, String key, int defaultValue) {
+        JsonObject compound = object(item, "compoundCluster");
+        return intValue(compound, key, intValue(item, key, defaultValue));
+    }
+
+    private String compoundString(JsonObject item, String key, String defaultValue) {
+        JsonObject compound = object(item, "compoundCluster");
+        return stringValue(compound, key, stringValue(item, key, defaultValue));
     }
 
     private JsonObject normalizePlan(JsonObject source, String cityId) {
@@ -1491,6 +1557,9 @@ public final class CityStructureArrayLayoutLoopPlanner {
     private double doubleValue(JsonObject obj, String key, double defaultValue) {
         return obj != null && obj.has(key) && !obj.get(key).isJsonNull()
                 ? obj.get(key).getAsDouble() : defaultValue;
+    }
+
+    private record ShapeGrid(int rows, int columns) {
     }
 
     public record CreateResult(JsonObject loopState,

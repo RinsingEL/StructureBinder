@@ -24,6 +24,7 @@ import org.junit.jupiter.api.Test;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 
@@ -54,6 +55,17 @@ class CityStructureArrayLayoutLoopPlannerTest {
             assertNoItemCollisionOverlap(executed.functionalArrayZones().getAsJsonArray("arrayZones")
                     .get(0).getAsJsonObject());
         }
+    }
+
+    @Test
+    void compoundClusterSupportsShapeRowsColumnsAndSpacing() throws Exception {
+        Fixture fixture = fixture();
+        CityStructureArrayLayoutLoopPlanner planner = new CityStructureArrayLayoutLoopPlanner();
+        assertCompoundClusterShape(planner, fixture, "grid", 2, 2, 4);
+        assertCompoundClusterShape(planner, fixture, "courtyard", 3, 3, 8);
+        assertCompoundClusterShape(planner, fixture, "l_shape", 3, 3, 5);
+        assertCompoundClusterShape(planner, fixture, "u_shape", 3, 3, 7);
+        assertCompoundClusterShape(planner, fixture, "organic_compact", 3, 4, 6);
     }
 
     @Test
@@ -100,6 +112,32 @@ class CityStructureArrayLayoutLoopPlannerTest {
         assertNoItemCollisionOverlap(zone);
         assertFalse(zone.has("groupSafetyEnvelope"));
         assertAnyItemDiagnosticMaxObservedOverlap(zone);
+    }
+
+    @Test
+    void spacingUsesCollisionEnvelopeEvenWhenMaskEnvelopesOverlap() throws Exception {
+        Fixture fixture = fixture();
+        CityStructureArrayLayoutLoopPlanner planner = new CityStructureArrayLayoutLoopPlanner();
+        CityStructureArrayLayoutLoopPlanner.CreateResult created = planner.create(
+                fixture.baseDir(), fixture.review(), fixture.terraSenseSource(),
+                arrayLayoutPlan(), CityStructureEnvelopeFacts.empty(), new JsonObject(), new JsonObject());
+        JsonObject item = layoutItem(fixture.review(), "compound_cluster", "mask_overlap_spacing", 2);
+        item.add("fillPool", JsonParser.parseString("""
+                [{"structureId": "minecraft:desert_pyramid", "weight": 1}]
+                """).getAsJsonArray());
+        item.add("compoundCluster", JsonParser.parseString("""
+                {"shape": "grid", "rows": 1, "columns": 2, "spacingBlocks": 40}
+                """).getAsJsonObject());
+
+        CityStructureArrayLayoutLoopPlanner.ExecuteResult executed = planner.execute(
+                fixture.baseDir(), fixture.review(), fixture.terraSenseSource(),
+                created.loopState(), item, CityStructureEnvelopeFacts.empty());
+
+        assertTrue(executed.asJson().get("ok").getAsBoolean());
+        JsonObject zone = executed.functionalArrayZones().getAsJsonArray("arrayZones").get(0).getAsJsonObject();
+        assertEquals(2, zone.getAsJsonArray("items").size());
+        assertNoItemCollisionOverlap(zone);
+        assertAnyItemMaskOverlap(zone);
     }
 
     @Test
@@ -257,6 +295,116 @@ class CityStructureArrayLayoutLoopPlannerTest {
         }
     }
 
+    private static void assertCompoundClusterShape(CityStructureArrayLayoutLoopPlanner planner,
+                                                   Fixture fixture,
+                                                   String shape,
+                                                   int rows,
+                                                   int columns,
+                                                   int targetCount) throws Exception {
+        CityStructureArrayLayoutLoopPlanner.CreateResult created = planner.create(
+                fixture.baseDir(), fixture.review(), fixture.terraSenseSource(),
+                arrayLayoutPlan(), CityStructureEnvelopeFacts.empty(), new JsonObject(), new JsonObject());
+        JsonObject item = layoutItem(fixture.review(), "compound_cluster", shape + "_array", targetCount);
+        item.add("compoundCluster", JsonParser.parseString("""
+                {"shape": "%s", "rows": %d, "columns": %d, "spacingBlocks": 64}
+                """.formatted(shape, rows, columns)).getAsJsonObject());
+
+        CityStructureArrayLayoutLoopPlanner.ExecuteResult executed = planner.execute(
+                fixture.baseDir(), fixture.review(), fixture.terraSenseSource(),
+                created.loopState(), item, CityStructureEnvelopeFacts.empty());
+
+        assertTrue(executed.asJson().get("ok").getAsBoolean(), shape);
+        JsonObject zone = executed.functionalArrayZones().getAsJsonArray("arrayZones").get(0).getAsJsonObject();
+        assertEquals(shape, zone.get("arrayShape").getAsString());
+        assertEquals(64, zone.get("spacingBlocks").getAsInt());
+        assertEquals(targetCount, zone.getAsJsonArray("items").size(), shape);
+        assertNoItemCollisionOverlap(zone);
+        assertShapePoints(shape, zone.getAsJsonArray("items"));
+    }
+
+    private static void assertShapePoints(String shape, JsonArray items) {
+        List<Integer> xs = sortedUniqueCoordinates(items, "x");
+        List<Integer> zs = sortedUniqueCoordinates(items, "z");
+        switch (shape) {
+            case "grid" -> {
+                assertEquals(2, xs.size(), "grid should form two columns");
+                assertEquals(2, zs.size(), "grid should form two rows");
+                assertTrue(hasPoint(items, xs.get(0), zs.get(0)), "grid should contain northwest corner");
+                assertTrue(hasPoint(items, xs.get(1), zs.get(0)), "grid should contain northeast corner");
+                assertTrue(hasPoint(items, xs.get(0), zs.get(1)), "grid should contain southwest corner");
+                assertTrue(hasPoint(items, xs.get(1), zs.get(1)), "grid should contain southeast corner");
+            }
+            case "courtyard" -> {
+                assertEquals(3, xs.size(), "courtyard should keep three columns around the court");
+                assertEquals(3, zs.size(), "courtyard should keep three rows around the court");
+                int minX = xs.get(0);
+                int maxX = xs.get(xs.size() - 1);
+                int minZ = zs.get(0);
+                int maxZ = zs.get(zs.size() - 1);
+                assertPointCountOnOuterRule(items, point ->
+                        point.x() == minX || point.x() == maxX || point.z() == minZ || point.z() == maxZ);
+                assertFalse(hasPoint(items, xs.get(1), zs.get(1)), "courtyard center must stay open");
+            }
+            case "l_shape" -> {
+                assertEquals(3, xs.size(), "l_shape should expose three columns");
+                assertEquals(3, zs.size(), "l_shape should expose three rows");
+                int minX = xs.get(0);
+                int maxZ = zs.get(zs.size() - 1);
+                assertPointCountOnOuterRule(items, point -> point.x() == minX || point.z() == maxZ);
+            }
+            case "u_shape" -> {
+                assertEquals(3, xs.size(), "u_shape should expose three columns");
+                assertEquals(3, zs.size(), "u_shape should expose three rows");
+                int minX = xs.get(0);
+                int maxX = xs.get(xs.size() - 1);
+                int maxZ = zs.get(zs.size() - 1);
+                assertPointCountOnOuterRule(items, point ->
+                        point.x() == minX || point.x() == maxX || point.z() == maxZ);
+                assertFalse(hasPoint(items, xs.get(1), zs.get(0)), "u_shape should keep its open side empty");
+                assertFalse(hasPoint(items, xs.get(1), zs.get(1)), "u_shape center must stay open");
+            }
+            case "organic_compact" -> {
+                assertTrue(xs.size() >= 2, "organic_compact should not collapse to one column");
+                assertTrue(zs.size() >= 2, "organic_compact should not collapse to one row");
+                assertTrue(xs.get(xs.size() - 1) - xs.get(0) <= 256,
+                        "organic_compact should remain locally compact");
+                assertTrue(zs.get(zs.size() - 1) - zs.get(0) <= 256,
+                        "organic_compact should remain locally compact");
+            }
+            default -> throw new AssertionError("unexpected shape " + shape);
+        }
+    }
+
+    private static List<Integer> sortedUniqueCoordinates(JsonArray items, String axis) {
+        List<Integer> values = new ArrayList<>();
+        for (JsonElement elem : items) {
+            int value = elem.getAsJsonObject().getAsJsonObject("anchorBlock").get(axis).getAsInt();
+            if (!values.contains(value)) {
+                values.add(value);
+            }
+        }
+        Collections.sort(values);
+        return values;
+    }
+
+    private static boolean hasPoint(JsonArray items, int x, int z) {
+        for (JsonElement elem : items) {
+            JsonObject point = elem.getAsJsonObject().getAsJsonObject("anchorBlock");
+            if (point.get("x").getAsInt() == x && point.get("z").getAsInt() == z) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static void assertPointCountOnOuterRule(JsonArray items, PointRule rule) {
+        for (JsonElement elem : items) {
+            JsonObject point = elem.getAsJsonObject().getAsJsonObject("anchorBlock");
+            assertTrue(rule.accepts(new TestPoint(point.get("x").getAsInt(), point.get("z").getAsInt())),
+                    "point should match expected shape outline: " + point);
+        }
+    }
+
     private static void assertAnyItemDiagnosticMaxObservedOverlap(JsonObject zone) {
         JsonArray items = zone.getAsJsonArray("items");
         boolean found = false;
@@ -272,6 +420,23 @@ class CityStructureArrayLayoutLoopPlannerTest {
             }
         }
         assertTrue(found, "diagnostic max observed envelopes should be allowed to overlap");
+    }
+
+    private static void assertAnyItemMaskOverlap(JsonObject zone) {
+        JsonArray items = zone.getAsJsonArray("items");
+        boolean found = false;
+        for (int i = 0; i < items.size(); i++) {
+            JsonObject item = items.get(i).getAsJsonObject();
+            assertFalse(item.has("estimatedSafetyEnvelope"));
+            BlockBounds a = bounds(item.getAsJsonObject("estimatedMaskEnvelope"));
+            for (int j = i + 1; j < items.size(); j++) {
+                JsonObject other = items.get(j).getAsJsonObject();
+                assertFalse(other.has("estimatedSafetyEnvelope"));
+                BlockBounds b = bounds(other.getAsJsonObject("estimatedMaskEnvelope"));
+                found |= a.overlaps(b);
+            }
+        }
+        assertTrue(found, "mask envelopes should be allowed to overlap when collision envelopes are clear");
     }
 
     private static void assertNoOccupiedOverlap(JsonArray occupiedEnvelopes) {
@@ -478,6 +643,13 @@ class CityStructureArrayLayoutLoopPlannerTest {
                   ]
                 }
                 """;
+    }
+
+    private interface PointRule {
+        boolean accepts(TestPoint point);
+    }
+
+    private record TestPoint(int x, int z) {
     }
 
     private record Fixture(Path baseDir, CityLandformReviewPackage review, JsonObject terraSenseSource) {

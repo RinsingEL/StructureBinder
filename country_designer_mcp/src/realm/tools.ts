@@ -284,7 +284,7 @@ export const realmTools: ToolDefinition[] = [
         },
         arrayCandidatePlan: {
           type: "object",
-          description: "schemaVersion=city_d4_array_candidate_plan.v0.1；必填 cityId、arrayId、candidatePatchRefs[]、structureIds[]、arrayCount；可选 displayRole、patterns[]=loose_cluster/patch_axis_band/scattered。",
+          description: "schemaVersion=city_d4_array_candidate_plan.v0.1；必填 cityId、arrayId、candidatePatchRefs[]、structureIds[]、arrayCount；可选 displayRole、patterns[]=loose_cluster/patch_axis_band/scattered/compound_cluster/grid/courtyard/l_shape/u_shape/organic_compact、compoundCluster={shape,rows,columns,spacingBlocks}。",
         },
         structureEnvelopeFactsSource: {
           type: "object",
@@ -723,8 +723,8 @@ export const realmTools: ToolDefinition[] = [
         },
         d4CandidateMode: {
           type: "string",
-          enum: ["key_then_array", "sequential_session", "structure_cluster_groups"],
-          description: "D4 workflow 模式；默认 key_then_array，强制先处理 key_structure/single_ai_selected slot，再处理 array_fill slot；sequential_session 和 structure_cluster_groups 仅作显式调试/兼容路径。",
+          enum: ["key_then_array", "array_layout_loop_v0_2", "array_layout_loop_v0_3", "sequential_session", "structure_cluster_groups"],
+          description: "D4 workflow 模式；默认 key_then_array，强制先处理 key_structure/single_ai_selected slot，再处理 array_fill slot；array_layout_loop_v0_2/v0_3 为显式多轮阵列布局 replay；sequential_session 和 structure_cluster_groups 仅作显式调试/兼容路径。",
         },
         groupCount: { type: "number", description: "结构群整组候选数量，默认 5。" },
         candidatesPerSlot: { type: "number", description: "结构群整组候选每个 slot 的扩展候选数，默认 5。" },
