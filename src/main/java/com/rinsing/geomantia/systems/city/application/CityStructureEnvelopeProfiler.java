@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public final class CityStructureEnvelopeProfiler {
@@ -173,13 +174,16 @@ public final class CityStructureEnvelopeProfiler {
         obj.add("localEnvelopeP90", boundsJson(percentileBounds(valid, 90)));
         obj.add("localEnvelopeP95", boundsJson(percentileBounds(valid, 95)));
         obj.add("localEnvelopeP99", boundsJson(percentileBounds(valid, 99)));
-        obj.add("maxObservedEnvelope", boundsJson(maxObserved(valid)));
+        BlockBounds maxObservedEnvelope = maxObserved(valid);
+        obj.add("maxObservedEnvelope", boundsJson(maxObservedEnvelope));
         obj.add("pieceCount", percentileNumbers(valid.stream().mapToInt(EnvelopeSample::pieceCount).boxed().toList()));
         obj.add("areaBlocks", percentileNumbers(valid.stream()
                 .mapToInt(sample -> sample.localBounds().widthBlocks() * sample.localBounds().heightBlocks())
                 .boxed().toList()));
         obj.add("validSamples", validSamples(valid));
-        obj.add("bboxGroups", bboxGroups(valid));
+        JsonArray bboxGroups = bboxGroups(valid);
+        obj.add("bboxGroups", bboxGroups);
+        addStabilityFacts(obj, profile, sampleCount, valid, bboxGroups, maxObservedEnvelope);
         JsonArray samplePreview = new JsonArray();
         for (int i = 0; i < Math.min(16, valid.size()); i++) {
             samplePreview.add(sampleJson(valid.get(i)));
@@ -252,6 +256,190 @@ public final class CityStructureEnvelopeProfiler {
                         .thenComparing(BBoxGroupAccumulator::groupKey))
                 .forEach(group -> array.add(group.asJson(valid.size())));
         return array;
+    }
+
+    private static void addStabilityFacts(JsonObject obj,
+                                          CityStructureProfileCatalog.StructureProfile profile,
+                                          int sampleCount,
+                                          List<EnvelopeSample> valid,
+                                          JsonArray bboxGroups,
+                                          BlockBounds maxObservedEnvelope) {
+        BBoxVarianceSummary summary = BBoxVarianceSummary.from(sampleCount, valid, bboxGroups);
+        StabilityDecision decision = classify(profile, summary);
+        obj.addProperty("stabilityClassification", decision.classification());
+        obj.addProperty("requiresReview", decision.requiresReview());
+        obj.add("requiresReviewReasons", decision.requiresReviewReasons());
+        if (summary.hasDominantGroup()) {
+            obj.add("dominantBBoxGroup", summary.dominantGroup().deepCopy());
+        }
+        obj.add("stableMaxEnvelope", boundsJson(maxObservedEnvelope));
+        obj.add("bboxVarianceSummary", summary.asJson());
+        obj.add("profileConfidence", profileConfidence(decision, summary));
+        obj.add("placementRecommendation", placementRecommendation(decision, summary));
+    }
+
+    private static StabilityDecision classify(CityStructureProfileCatalog.StructureProfile profile,
+                                              BBoxVarianceSummary summary) {
+        JsonArray reasons = new JsonArray();
+        if (!summary.hasValidSamples()) {
+            reasons.add("NO_VALID_SAMPLES");
+            return new StabilityDecision("exception", true, reasons, "NO_VALID_SAMPLES", 5,
+                    "manual_review_required", "none", false);
+        }
+
+        boolean villageLike = villageLike(profile);
+        boolean strongRandomExpansion = strongRandomExpansion(profile);
+        boolean highlyDiffuse = highlyDiffuse(summary);
+        boolean wideVariance = wideVariance(summary);
+        if (villageLike || strongRandomExpansion) {
+            if (villageLike) {
+                reasons.add("VILLAGE_LIKE_STRUCTURE");
+            }
+            if (strongRandomExpansion) {
+                reasons.add("STRONG_RANDOM_EXPANSION");
+            }
+            return new StabilityDecision("exception", true, reasons, "PROFILE_EXCEPTION_REQUIRES_REVIEW", 12,
+                    "manual_review_required", "none", false);
+        }
+
+        if (profile.jigsawLike()) {
+            if (controlledJigsaw(summary)) {
+                return new StabilityDecision("jigsaw_variable", false, reasons, "JIGSAW_VARIABLE_CONTROLLED", 72,
+                        "use_stable_max_envelope", "stableMaxEnvelope", true);
+            }
+            if (highlyDiffuse) {
+                reasons.add("BBOX_DISTRIBUTION_TOO_SCATTERED");
+            }
+            if (wideVariance) {
+                reasons.add("BBOX_VARIANCE_TOO_WIDE");
+            }
+            return new StabilityDecision("unstable", true, reasons, "UNSTABLE_BBOX_DISTRIBUTION", 28,
+                    "avoid_compact_array", "none", false);
+        }
+
+        if (summary.bboxGroupCount() == 1 && summary.dominantGroupRatio() == 1.0) {
+            return new StabilityDecision("fixed", false, reasons, "FIXED_BBOX_GROUP", 98,
+                    "use_dominant_bbox_group", "dominantBBoxGroup", true);
+        }
+        if (nearFixed(summary)) {
+            return new StabilityDecision("near_fixed", false, reasons, "NEAR_FIXED_BBOX_VARIANCE", 88,
+                    "use_dominant_bbox_group", "dominantBBoxGroup", true);
+        }
+        if (highlyDiffuse) {
+            reasons.add("BBOX_DISTRIBUTION_TOO_SCATTERED");
+        }
+        if (wideVariance) {
+            reasons.add("BBOX_VARIANCE_TOO_WIDE");
+        }
+        if (reasons.isEmpty()) {
+            reasons.add("BBOX_DISTRIBUTION_REQUIRES_REVIEW");
+        }
+        return new StabilityDecision("unstable", true, reasons, "UNSTABLE_BBOX_DISTRIBUTION", 34,
+                "avoid_compact_array", "none", false);
+    }
+
+    private static boolean nearFixed(BBoxVarianceSummary summary) {
+        return summary.hasValidSamples()
+                && summary.bboxGroupCount() <= 8
+                && summary.dominantGroupRatio() >= 0.5
+                && summary.widthRange() <= 4
+                && summary.depthRange() <= 4
+                && summary.areaRange() <= 96
+                && summary.pieceCountRange() <= 1;
+    }
+
+    private static boolean controlledJigsaw(BBoxVarianceSummary summary) {
+        return summary.hasValidSamples()
+                && !highlyDiffuse(summary)
+                && summary.widthRange() <= 16
+                && summary.depthRange() <= 16
+                && summary.areaRange() <= 512
+                && summary.pieceCountRange() <= 8;
+    }
+
+    private static boolean highlyDiffuse(BBoxVarianceSummary summary) {
+        if (!summary.hasValidSamples()) {
+            return true;
+        }
+        int groupLimit = Math.max(8, summary.validSampleCount() / 2);
+        return summary.bboxGroupCount() > groupLimit && summary.dominantGroupRatio() < 0.35;
+    }
+
+    private static boolean wideVariance(BBoxVarianceSummary summary) {
+        return summary.widthRange() > 32 || summary.depthRange() > 32 || summary.areaRange() > 2048;
+    }
+
+    private static boolean villageLike(CityStructureProfileCatalog.StructureProfile profile) {
+        String id = profile.structureId().toLowerCase(Locale.ROOT);
+        return id.contains("village") || id.contains("villager") || id.contains("town")
+                || termsContain(profile.semanticTerms(), "village", "settlement", "village.")
+                || termsContain(profile.functionTerms(), "village", "settlement", "village.")
+                || termsContain(profile.usageTerms(), "village", "settlement", "village.")
+                || termsContain(profile.templateRoleTerms(), "village", "settlement", "village.");
+    }
+
+    private static boolean strongRandomExpansion(CityStructureProfileCatalog.StructureProfile profile) {
+        int minArea = profile.expectedAreaRange().minAreaBlocks();
+        int maxArea = profile.expectedAreaRange().maxAreaBlocks();
+        boolean largeAreaSpread = minArea > 0 && maxArea >= 4096 && maxArea / Math.max(1.0, minArea) >= 8.0;
+        return profile.maxDistanceFromCenterBlocks() >= 96
+                || largeAreaSpread
+                || termsContain(profile.semanticTerms(), "random_expansion", "strong_random", "sprawl")
+                || termsContain(profile.functionTerms(), "random_expansion", "strong_random", "sprawl")
+                || termsContain(profile.placementTerms(), "random_expansion", "strong_random", "sprawl");
+    }
+
+    private static boolean termsContain(List<String> terms, String... needles) {
+        for (String term : terms) {
+            String lower = term.toLowerCase(Locale.ROOT);
+            for (String needle : needles) {
+                if (lower.contains(needle)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private static JsonObject profileConfidence(StabilityDecision decision, BBoxVarianceSummary summary) {
+        JsonObject obj = new JsonObject();
+        int score = decision.confidenceScore();
+        if (summary.invalidRatio() > 0.0) {
+            score -= (int) Math.round(summary.invalidRatio() * 30.0);
+        }
+        score = Math.max(0, Math.min(100, score));
+        obj.addProperty("score", score);
+        obj.addProperty("level", confidenceLevel(score, decision.requiresReview()));
+        obj.addProperty("reasonCode", decision.reasonCode());
+        obj.addProperty("sampleCoverageRatio", summary.sampleCoverageRatio());
+        obj.addProperty("dominantGroupRatio", summary.dominantGroupRatio());
+        return obj;
+    }
+
+    private static String confidenceLevel(int score, boolean requiresReview) {
+        if (requiresReview) {
+            return "review_required";
+        }
+        if (score >= 85) {
+            return "high";
+        }
+        if (score >= 65) {
+            return "medium";
+        }
+        return "low";
+    }
+
+    private static JsonObject placementRecommendation(StabilityDecision decision, BBoxVarianceSummary summary) {
+        JsonObject obj = new JsonObject();
+        obj.addProperty("recommendation", decision.recommendation());
+        obj.addProperty("collisionEnvelopeSource", decision.collisionEnvelopeSource());
+        obj.addProperty("allowCompactArray", decision.allowCompactArray());
+        obj.addProperty("requiresReview", decision.requiresReview());
+        obj.addProperty("reasonCode", decision.reasonCode());
+        if (summary.hasDominantGroup()) {
+            obj.addProperty("dominantGroupKey", summary.dominantGroupKey());
+        }
+        return obj;
     }
 
     private static JsonObject sampleJson(EnvelopeSample sample) {
@@ -418,7 +606,7 @@ public final class CityStructureEnvelopeProfiler {
                                                 String contextProfileHash) {
         CacheIdentity safeIdentity = identity == null ? CacheIdentity.unknown() : identity;
         JsonObject obj = new JsonObject();
-        obj.addProperty("schemaVersion", "city_structure_profile_cache_key.v0.1");
+        obj.addProperty("schemaVersion", "city_structure_profile_cache_key.v0.2");
         obj.addProperty("structureId", profile.structureId());
         obj.addProperty("profileHash", profileHash(profile));
         obj.addProperty("structureConfigHash", safeIdentity.structureConfigHash());
@@ -444,6 +632,106 @@ public final class CityStructureEnvelopeProfiler {
 
     private enum Axis {
         MIN_X, MIN_Z, MAX_X, MAX_Z
+    }
+
+    private record StabilityDecision(String classification, boolean requiresReview, JsonArray requiresReviewReasons,
+                                     String reasonCode, int confidenceScore, String recommendation,
+                                     String collisionEnvelopeSource, boolean allowCompactArray) {
+    }
+
+    private record BBoxVarianceSummary(int sampleCount, int validSampleCount, int bboxGroupCount,
+                                       String dominantGroupKey, double dominantGroupRatio, JsonObject dominantGroup,
+                                       int widthMin, int widthMax, int depthMin, int depthMax,
+                                       int areaMin, int areaMax, int pieceCountMin, int pieceCountMax) {
+        static BBoxVarianceSummary from(int sampleCount, List<EnvelopeSample> valid, JsonArray bboxGroups) {
+            int groupCount = bboxGroups == null ? 0 : bboxGroups.size();
+            JsonObject dominant = groupCount > 0 && bboxGroups.get(0).isJsonObject()
+                    ? bboxGroups.get(0).getAsJsonObject()
+                    : new JsonObject();
+            String dominantKey = stringValue(dominant, "groupKey", "");
+            double dominantRatio = dominant.has("ratio") ? dominant.get("ratio").getAsDouble() : 0.0;
+            if (valid.isEmpty()) {
+                return new BBoxVarianceSummary(sampleCount, 0, groupCount, dominantKey, dominantRatio, dominant,
+                        0, 0, 0, 0, 0, 0, 0, 0);
+            }
+            int widthMin = Integer.MAX_VALUE;
+            int widthMax = Integer.MIN_VALUE;
+            int depthMin = Integer.MAX_VALUE;
+            int depthMax = Integer.MIN_VALUE;
+            int areaMin = Integer.MAX_VALUE;
+            int areaMax = Integer.MIN_VALUE;
+            int pieceMin = Integer.MAX_VALUE;
+            int pieceMax = Integer.MIN_VALUE;
+            for (EnvelopeSample sample : valid) {
+                int width = sample.localBounds().widthBlocks();
+                int depth = sample.localBounds().heightBlocks();
+                int area = width * depth;
+                widthMin = Math.min(widthMin, width);
+                widthMax = Math.max(widthMax, width);
+                depthMin = Math.min(depthMin, depth);
+                depthMax = Math.max(depthMax, depth);
+                areaMin = Math.min(areaMin, area);
+                areaMax = Math.max(areaMax, area);
+                pieceMin = Math.min(pieceMin, sample.pieceCount());
+                pieceMax = Math.max(pieceMax, sample.pieceCount());
+            }
+            return new BBoxVarianceSummary(sampleCount, valid.size(), groupCount, dominantKey, dominantRatio,
+                    dominant, widthMin, widthMax, depthMin, depthMax, areaMin, areaMax, pieceMin, pieceMax);
+        }
+
+        boolean hasValidSamples() {
+            return validSampleCount > 0;
+        }
+
+        boolean hasDominantGroup() {
+            return !dominantGroupKey.isBlank();
+        }
+
+        int widthRange() {
+            return widthMax - widthMin;
+        }
+
+        int depthRange() {
+            return depthMax - depthMin;
+        }
+
+        int areaRange() {
+            return areaMax - areaMin;
+        }
+
+        int pieceCountRange() {
+            return pieceCountMax - pieceCountMin;
+        }
+
+        double invalidRatio() {
+            return sampleCount == 0 ? 1.0 : (sampleCount - validSampleCount) / (double) sampleCount;
+        }
+
+        double sampleCoverageRatio() {
+            return sampleCount == 0 ? 0.0 : validSampleCount / (double) sampleCount;
+        }
+
+        JsonObject asJson() {
+            JsonObject obj = new JsonObject();
+            obj.addProperty("sampleCount", sampleCount);
+            obj.addProperty("validSampleCount", validSampleCount);
+            obj.addProperty("bboxGroupCount", bboxGroupCount);
+            obj.addProperty("dominantGroupKey", dominantGroupKey);
+            obj.addProperty("dominantGroupRatio", dominantGroupRatio);
+            obj.addProperty("widthMin", widthMin);
+            obj.addProperty("widthMax", widthMax);
+            obj.addProperty("widthRange", widthRange());
+            obj.addProperty("depthMin", depthMin);
+            obj.addProperty("depthMax", depthMax);
+            obj.addProperty("depthRange", depthRange());
+            obj.addProperty("areaMin", areaMin);
+            obj.addProperty("areaMax", areaMax);
+            obj.addProperty("areaRange", areaRange());
+            obj.addProperty("pieceCountMin", pieceCountMin);
+            obj.addProperty("pieceCountMax", pieceCountMax);
+            obj.addProperty("pieceCountRange", pieceCountRange());
+            return obj;
+        }
     }
 
     private static final class BBoxGroupAccumulator {
