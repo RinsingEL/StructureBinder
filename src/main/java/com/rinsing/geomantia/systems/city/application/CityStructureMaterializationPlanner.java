@@ -696,7 +696,7 @@ public final class CityStructureMaterializationPlanner {
                                 String envelopeMode, String selectedEnvelopeGroupKey,
                                 List<String> availableEnvelopeGroupKeys,
                                 List<String> semanticTerms, List<String> functionTerms,
-                                String expectedStartSignature, JsonObject sourceAnchor) {
+                                String expectedStartSignature, int maskMarginBlocks, JsonObject sourceAnchor) {
         static StructureTask from(JsonObject anchor) {
             BlockBounds reserved = bounds(requiredObject(anchor, "reservedEnvelope"));
             return new StructureTask(
@@ -715,6 +715,7 @@ public final class CityStructureMaterializationPlanner {
                     strings(anchor.getAsJsonArray("semanticTerms")),
                     strings(anchor.getAsJsonArray("functionTerms")),
                     "",
+                    maskMarginBlocks(anchor),
                     anchor.deepCopy());
         }
 
@@ -738,6 +739,7 @@ public final class CityStructureMaterializationPlanner {
                     !stringValue(item, "expectedStartSignature", "").isBlank()
                             ? stringValue(item, "expectedStartSignature", "")
                             : stringValue(item, "startSignature", ""),
+                    maskMarginBlocks(item),
                     item.deepCopy());
         }
 
@@ -797,7 +799,8 @@ public final class CityStructureMaterializationPlanner {
                 obj.add("reservedEnvelope", boundsJson(lockedCollisionEnvelope));
                 obj.add("collisionEnvelope", boundsJson(lockedCollisionEnvelope));
                 obj.add("lockedCollisionEnvelope", boundsJson(lockedCollisionEnvelope));
-                obj.add("maskEnvelope", boundsJson(expand(lockedCollisionEnvelope, 4)));
+                obj.add("maskEnvelope", boundsJson(expand(lockedCollisionEnvelope, maskMarginBlocks)));
+                obj.addProperty("maskMarginBlocks", maskMarginBlocks);
             }
             obj.addProperty("collisionClearanceBlocks", DEFAULT_COLLISION_CLEARANCE_BLOCKS);
             obj.add("pieceBoxes", pieceBoxes == null ? new JsonArray() : pieceBoxes);
@@ -840,6 +843,11 @@ public final class CityStructureMaterializationPlanner {
                 }
             }
             return List.copyOf(result);
+        }
+
+        private static int maskMarginBlocks(JsonObject obj) {
+            return Math.max(0, intValue(obj, "maskMarginBlocks",
+                    intValue(obj, "d5MaskMarginBlocks", CityStructureAnchorPlanner.DEFAULT_MASK_MARGIN_BLOCKS)));
         }
 
         private static JsonArray stringArray(List<String> values) {

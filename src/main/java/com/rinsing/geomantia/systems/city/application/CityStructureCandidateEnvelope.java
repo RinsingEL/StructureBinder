@@ -7,6 +7,7 @@ import com.rinsing.geomantia.systems.city.domain.model.BlockPoint;
 final class CityStructureCandidateEnvelope {
     static final int DEFAULT_SMALL_CLEARANCE_BLOCKS = 4;
     static final int DEFAULT_CLEARANCE_BLOCKS = 8;
+    static final int DEFAULT_MASK_MARGIN_BLOCKS = 8;
     static final int DEFAULT_VEGETATION_MARGIN_BLOCKS = 8;
     static final int DEFAULT_ROAD_ACCESS_MARGIN_BLOCKS = 6;
     static final int DEFAULT_JIGSAW_RADIUS_BLOCKS = 96;
@@ -30,6 +31,9 @@ final class CityStructureCandidateEnvelope {
         int smallClearance = Math.max(0, intValue(options, "smallClearanceBlocks", DEFAULT_SMALL_CLEARANCE_BLOCKS));
         int vegetationMargin = Math.max(0,
                 intValue(options, "vegetationMarginBlocks", DEFAULT_VEGETATION_MARGIN_BLOCKS));
+        int maskMargin = Math.max(0,
+                intValue(options, "maskMarginBlocks",
+                        intValue(options, "d5MaskMarginBlocks", DEFAULT_MASK_MARGIN_BLOCKS)));
         int roadMargin = Math.max(0,
                 intValue(options, "roadAccessMarginBlocks", DEFAULT_ROAD_ACCESS_MARGIN_BLOCKS));
         BlockBounds plannedFootprint = footprint.centeredAt(anchorBlock.x(), anchorBlock.z(), rotation);
@@ -48,8 +52,7 @@ final class CityStructureCandidateEnvelope {
                 CityStructureEnvelopeFacts.BBoxGroup group = selected.get();
                 BlockBounds collision = fromLocal(anchorBlock,
                         CityStructureAnchorPlanner.expand(group.localEnvelope(), smallClearance));
-                BlockBounds mask = fromLocal(anchorBlock,
-                        CityStructureAnchorPlanner.expand(group.localEnvelope(), vegetationMargin));
+                BlockBounds mask = CityStructureAnchorPlanner.expand(collision, maskMargin);
                 BlockBounds safety = fromLocal(anchorBlock,
                         CityStructureAnchorPlanner.expand(value.maxObservedEnvelope(),
                                 Math.max(smallClearance, roadMargin)));
@@ -58,8 +61,7 @@ final class CityStructureCandidateEnvelope {
             }
             BlockBounds collision = fromLocal(anchorBlock,
                     CityStructureAnchorPlanner.expand(value.p95Envelope(), clearance));
-            BlockBounds mask = fromLocal(anchorBlock,
-                    CityStructureAnchorPlanner.expand(value.p99Envelope(), vegetationMargin));
+            BlockBounds mask = CityStructureAnchorPlanner.expand(collision, maskMargin);
             BlockBounds safety = fromLocal(anchorBlock,
                     CityStructureAnchorPlanner.expand(value.maxObservedEnvelope(), Math.max(clearance, roadMargin)));
             return new Estimate(plannedFootprint, collision, mask, safety, "fixed_depth_statistics",
@@ -73,10 +75,11 @@ final class CityStructureCandidateEnvelope {
                 ? profile.jigsawExpansionRadius(DEFAULT_JIGSAW_RADIUS_BLOCKS) + clearance
                 : clearance;
         BlockBounds collision = CityStructureAnchorPlanner.expand(plannedFootprint, radius);
+        BlockBounds mask = CityStructureAnchorPlanner.expand(collision, maskMargin);
         BlockBounds safety = profile.jigsawLike()
                 ? CityStructureAnchorPlanner.expand(plannedFootprint, radius + roadMargin)
                 : collision;
-        return new Estimate(plannedFootprint, collision, collision, safety,
+        return new Estimate(plannedFootprint, collision, mask, safety,
                 profile.jigsawLike() ? "fallback_jigsaw_radius" : "fallback_fixed_footprint",
                 "", false, "");
     }

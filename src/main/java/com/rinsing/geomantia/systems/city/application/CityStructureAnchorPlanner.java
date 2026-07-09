@@ -24,6 +24,7 @@ public final class CityStructureAnchorPlanner {
     public static final String MAP_SCHEMA = "city_structure_anchor_map.v0.1";
     public static final int DEFAULT_CLEARANCE_BLOCKS = 8;
     public static final int DEFAULT_SMALL_CLEARANCE_BLOCKS = 4;
+    public static final int DEFAULT_MASK_MARGIN_BLOCKS = 8;
     public static final int DEFAULT_ROAD_ACCESS_MARGIN_BLOCKS = 6;
     public static final int DEFAULT_VEGETATION_MARGIN_BLOCKS = 8;
     public static final int DEFAULT_JIGSAW_RADIUS_BLOCKS = 96;
@@ -99,6 +100,8 @@ public final class CityStructureAnchorPlanner {
                     intValue(anchor, "smallClearanceBlocks", DEFAULT_SMALL_CLEARANCE_BLOCKS));
             int roadMargin = intValue(anchor, "roadAccessMarginBlocks", DEFAULT_ROAD_ACCESS_MARGIN_BLOCKS);
             int vegetationMargin = intValue(anchor, "vegetationMarginBlocks", DEFAULT_VEGETATION_MARGIN_BLOCKS);
+            int maskMargin = intValue(anchor, "maskMarginBlocks",
+                    intValue(anchor, "d5MaskMarginBlocks", DEFAULT_MASK_MARGIN_BLOCKS));
             String envelopeGroupKey = stringValue(anchor, "envelopeGroupKey", "");
             CityStructureProfileCatalog.Footprint footprint = profile.planningFootprint();
             if (!footprint.valid()) {
@@ -107,7 +110,7 @@ public final class CityStructureAnchorPlanner {
             }
             BlockBounds plannedFootprint = footprint.centeredAt(anchorBlock.x(), anchorBlock.z(), rotation);
             EnvelopeDecision envelope = envelopeDecision(anchorBlock, plannedFootprint, profile, facts,
-                    clearance, smallClearance, roadMargin, vegetationMargin, envelopeGroupKey);
+                    clearance, smallClearance, roadMargin, vegetationMargin, maskMargin, envelopeGroupKey);
             if (envelope.requiredFactsMissing()) {
                 hardBlocks.add(anchorId + ": structure envelope facts are required for Trek structure "
                         + structureId + " but are missing or hash-mismatched.");
@@ -124,7 +127,7 @@ public final class CityStructureAnchorPlanner {
             }
             reserved.add(reservedEnvelope);
             anchors.add(anchorJson(anchor, profile, sourcePatches, anchorBlock, rotation, plannedFootprint,
-                    envelope, clearance, smallClearance, roadMargin, vegetationMargin));
+                    envelope, clearance, smallClearance, roadMargin, vegetationMargin, maskMargin));
         }
 
         JsonObject anchorMap = new JsonObject();
@@ -150,7 +153,8 @@ public final class CityStructureAnchorPlanner {
                                   int clearance,
                                   int smallClearance,
                                   int roadMargin,
-                                  int vegetationMargin) {
+                                  int vegetationMargin,
+                                  int maskMargin) {
         JsonObject obj = new JsonObject();
         obj.addProperty("anchorId", requiredString(source, "anchorId"));
         obj.addProperty("structureId", profile.structureId());
@@ -188,6 +192,7 @@ public final class CityStructureAnchorPlanner {
         obj.addProperty("smallClearanceBlocks", smallClearance);
         obj.addProperty("roadAccessMarginBlocks", roadMargin);
         obj.addProperty("vegetationMarginBlocks", vegetationMargin);
+        obj.addProperty("maskMarginBlocks", maskMargin);
         obj.addProperty("reservedEnvelopeRadiusBlocks", envelope.envelopeRadiusBlocks());
         obj.addProperty("reservedEnvelopePolicy", envelope.policy());
         obj.addProperty("envelopeMode", envelope.envelopeMode());
@@ -210,6 +215,7 @@ public final class CityStructureAnchorPlanner {
                                                      int smallClearance,
                                                      int roadMargin,
                                                      int vegetationMargin,
+                                                     int maskMargin,
                                                      String requestedEnvelopeGroupKey) {
         java.util.Optional<CityStructureEnvelopeFacts.Fact> fact = facts.validFactFor(profile);
         if (fact.isPresent()) {
@@ -230,7 +236,7 @@ public final class CityStructureAnchorPlanner {
                 }
                 CityStructureEnvelopeFacts.BBoxGroup group = selected.get();
                 BlockBounds collision = fromLocal(anchorBlock, expand(group.localEnvelope(), smallClearance));
-                BlockBounds mask = fromLocal(anchorBlock, expand(group.localEnvelope(), vegetationMargin));
+                BlockBounds mask = expand(collision, maskMargin);
                 BlockBounds safety = fromLocal(anchorBlock, expand(value.maxObservedEnvelope(),
                         Math.max(smallClearance, roadMargin)));
                 return new EnvelopeDecision(collision, mask, safety, 0,
@@ -238,7 +244,7 @@ public final class CityStructureAnchorPlanner {
                         group.groupKey(), group, value, false, "", true);
             }
             BlockBounds collision = fromLocal(anchorBlock, expand(value.p95Envelope(), clearance));
-            BlockBounds mask = fromLocal(anchorBlock, expand(value.p99Envelope(), vegetationMargin));
+            BlockBounds mask = expand(collision, maskMargin);
             BlockBounds safety = fromLocal(anchorBlock, expand(value.maxObservedEnvelope(),
                     Math.max(clearance, roadMargin)));
             return new EnvelopeDecision(collision, mask, safety, 0,
@@ -254,10 +260,11 @@ public final class CityStructureAnchorPlanner {
                 ? profile.jigsawExpansionRadius(DEFAULT_JIGSAW_RADIUS_BLOCKS) + clearance
                 : clearance;
         BlockBounds collision = expand(plannedFootprint, envelopeRadius);
+        BlockBounds mask = expand(collision, maskMargin);
         BlockBounds safety = profile.jigsawLike()
                 ? expand(plannedFootprint, envelopeRadius + roadMargin)
                 : collision;
-        return new EnvelopeDecision(collision, collision, safety, envelopeRadius, profile.jigsawLike()
+        return new EnvelopeDecision(collision, mask, safety, envelopeRadius, profile.jigsawLike()
                 ? "startFootprint+jigsawMaxExpansionRadius+clearance"
                 : "fixedFootprint+clearance", profile.jigsawLike()
                 ? "fallback_jigsaw_radius" : "fallback_fixed_footprint",

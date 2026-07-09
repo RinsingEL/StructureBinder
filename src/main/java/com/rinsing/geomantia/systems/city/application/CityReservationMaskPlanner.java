@@ -53,9 +53,12 @@ public final class CityReservationMaskPlanner {
         for (JsonObject anchor : anchors) {
             index++;
             String anchorId = requiredString(anchor, "anchorId");
-            BlockBounds envelope = bounds(requiredObject(anchor, "reservedEnvelope"));
-            BlockBounds maskEnvelope = anchor.has("maskEnvelope") && anchor.get("maskEnvelope").isJsonObject()
-                    ? bounds(requiredObject(anchor, "maskEnvelope")) : envelope;
+            BlockBounds envelope = anchor.has("collisionEnvelope") && anchor.get("collisionEnvelope").isJsonObject()
+                    ? bounds(requiredObject(anchor, "collisionEnvelope"))
+                    : bounds(requiredObject(anchor, "reservedEnvelope"));
+            int maskMargin = Math.max(0, intValue(anchor, "maskMarginBlocks",
+                    intValue(anchor, "d5MaskMarginBlocks", CityStructureAnchorPlanner.DEFAULT_MASK_MARGIN_BLOCKS)));
+            BlockBounds maskEnvelope = CityStructureAnchorPlanner.expand(envelope, maskMargin);
             BlockBounds footprint = bounds(requiredObject(anchor, "plannedFootprint"));
             addMask(noVegetation, anchorId + "_no_vegetation", maskEnvelope, "structure_mask_envelope", anchorId);
             addMask(vegetationLimited, anchorId + "_vegetation_limited",

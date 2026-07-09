@@ -222,7 +222,7 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "city_plan_d4",
-    description: "City D4: 提交 AI/Codex 基于 D3 patch 真值生成的 StructureAnchorPlan，校验 TerraSense 白名单、anchor、envelope facts 与防撞；固定/近固定结构可走 bboxGroups+smallClearance，非固定结构走 P95/P99。旧 PatchGroupPlan/function zone payload 会被拒绝。",
+    description: "City D4: 提交 AI/Codex 基于 D3 patch 真值生成的 StructureAnchorPlan，校验 TerraSense 白名单、anchor、envelope facts 与防撞；固定/近固定结构可走 bboxGroups+smallClearance，非固定结构走 P95 collision，mask 由 collision+maskMargin 派生。旧 PatchGroupPlan/function zone payload 会被拒绝。",
     inputSchema: {
       type: "object",
       properties: {
@@ -427,7 +427,7 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "city_select_d4_candidate",
-    description: "City D4 v2 顺序候选选择：选择当前 slot 的一个 candidate，优先冻结 estimatedSafetyEnvelope（缺失时回退 estimatedCollisionEnvelope），更新 session，并记录 agentThinkTimeMs。quickPreflight 本轮 deferred_to_d6。",
+    description: "City D4 v2 顺序候选选择：选择当前 slot 的一个 candidate，冻结 estimatedCollisionEnvelope 作为 occupiedField；estimatedSafetyEnvelope 仅作诊断，quickPreflight 本轮 deferred_to_d6。",
     inputSchema: {
       type: "object",
       properties: {

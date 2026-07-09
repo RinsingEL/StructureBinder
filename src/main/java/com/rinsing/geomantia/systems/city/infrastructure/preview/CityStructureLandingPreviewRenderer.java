@@ -636,20 +636,18 @@ public final class CityStructureLandingPreviewRenderer {
                 }
                 candidateIndex++;
                 JsonObject candidate = candElem.getAsJsonObject();
-                BlockBounds safety = bounds(candidate, "estimatedSafetyEnvelope");
-                boolean overlap = overlapsAny(safety, occupied);
+                BlockBounds collision = bounds(candidate, "estimatedCollisionEnvelope");
+                boolean overlap = overlapsAny(collision, occupied);
                 boolean autoPick = candidateIndex == 1;
+                drawOptionalRect(g, t, candidate, "estimatedSafetyEnvelope", withAlpha(base, autoPick ? 20 : 12),
+                        withAlpha(base, autoPick ? 90 : 64), 1.0f);
                 if (overlap) {
-                    drawDashedRect(g, t, safety, new Color(214, 70, 64, 34),
+                    drawDashedRect(g, t, collision, new Color(214, 70, 64, 34),
                             new Color(196, 49, 44, 230), autoPick ? 3.0f : 2.0f);
                 } else {
-                    drawRect(g, t, safety, withAlpha(base, autoPick ? 34 : 18),
+                    drawRect(g, t, collision, withAlpha(base, autoPick ? 34 : 18),
                             withAlpha(base, autoPick ? 235 : 180), autoPick ? 2.8f : 1.7f);
                 }
-                drawOptionalRect(g, t, candidate, "estimatedCollisionEnvelope",
-                        overlap ? new Color(214, 70, 64, 44) : withAlpha(base, 58),
-                        overlap ? new Color(151, 34, 32, 210) : withAlpha(base.darker(), 210),
-                        autoPick ? 2.1f : 1.3f);
                 BlockPoint point = point(candidate, "anchorBlock");
                 drawPoint(g, t, point, overlap ? new Color(214, 70, 64, 235) : base);
                 String label = candidateOrdinal(candidate, candidateIndex);
@@ -676,7 +674,7 @@ public final class CityStructureLandingPreviewRenderer {
         y += 24;
         y = legendRow(g, x, y, new Color(67, 112, 178, 235), "filled selected footprint");
         y = legendRow(g, x, y, new Color(61, 151, 113, 235), "hollow current candidate");
-        y = legendRow(g, x, y, new Color(214, 70, 64, 235), "red dashed overlap risk");
+        y = legendRow(g, x, y, new Color(214, 70, 64, 235), "red dashed collision conflict");
         y += 10;
 
         JsonArray occupied = array(candidateSet, "occupiedEnvelopes");
@@ -699,7 +697,7 @@ public final class CityStructureLandingPreviewRenderer {
                         ? String.format(java.util.Locale.ROOT, "%.2f",
                         object(candidate, "scoreBreakdown").get("total").getAsDouble())
                         : "";
-                boolean overlap = overlapsAny(bounds(candidate, "estimatedSafetyEnvelope"), occupied);
+                boolean overlap = overlapsAny(bounds(candidate, "estimatedCollisionEnvelope"), occupied);
                 g.setColor(overlap ? new Color(168, 42, 38) : new Color(32, 34, 34));
                 g.drawString("  " + (candidateIndex == 1 ? "AUTO " : "     ")
                         + candidateOrdinal(candidate, candidateIndex)

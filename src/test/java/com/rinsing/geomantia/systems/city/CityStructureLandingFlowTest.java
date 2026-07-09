@@ -522,6 +522,43 @@ final class CityStructureLandingFlowTest {
     }
 
     @Test
+    void d5AndD6DeriveMaskFromCollisionAndAnchorMaskMargin() throws Exception {
+        assertD5AndD6MaskMargin(5);
+        assertD5AndD6MaskMargin(10);
+    }
+
+    private static void assertD5AndD6MaskMargin(int maskMarginBlocks) throws Exception {
+        Fixture fixture = fixture();
+        JsonObject plan = singleAnchorPlan(fixture.review());
+        plan.getAsJsonArray("anchors").get(0).getAsJsonObject()
+                .addProperty("maskMarginBlocks", maskMarginBlocks);
+        JsonObject anchorMap = new CityStructureAnchorPlanner()
+                .plan(fixture.baseDir(), fixture.review(), fixture.terraSenseSource(), plan)
+                .structureAnchorMap();
+        JsonObject anchor = anchorMap.getAsJsonArray("anchors").get(0).getAsJsonObject();
+        anchor.add("maskEnvelope", boundsJson(new BlockBounds(-999, -999, 999, 999)));
+
+        JsonObject mask = new CityReservationMaskPlanner()
+                .plan(fixture.context(), anchorMap)
+                .reservationMaskPlan();
+
+        BlockBounds collision = bounds(anchor.getAsJsonObject("collisionEnvelope"));
+        JsonObject noVegetation = mask.getAsJsonArray("noVegetationMask").get(0).getAsJsonObject();
+        JsonObject noVanilla = mask.getAsJsonArray("noVanillaStructureMask").get(0).getAsJsonObject();
+        assertEquals(expand(collision, maskMarginBlocks), bounds(noVegetation.getAsJsonObject("blockBounds")));
+        assertEquals(expand(collision, maskMarginBlocks), bounds(noVanilla.getAsJsonObject("blockBounds")));
+
+        CityStructureMaterializationPlanner.Result d6 = new CityStructureMaterializationPlanner()
+                .planWorldgen(anchorMap, CityStructureMaterializationPlanner.ChunkStatusInspector.plannedOnly(),
+                        new FakePlacementBackend("sig", true), null);
+        JsonObject planned = d6.structureMaterializationPlan()
+                .getAsJsonArray("plannedWorldgenStructures").get(0).getAsJsonObject();
+        assertEquals(maskMarginBlocks, planned.get("maskMarginBlocks").getAsInt());
+        assertEquals(expand(bounds(planned.getAsJsonObject("lockedCollisionEnvelope")), maskMarginBlocks),
+                bounds(planned.getAsJsonObject("maskEnvelope")));
+    }
+
+    @Test
     void wallReservationAddsNonRectangularCorridorAndRoadMaskCutsGate() throws Exception {
         Fixture fixture = fixture();
         JsonObject anchorMap = new CityStructureAnchorPlanner()
@@ -1487,6 +1524,8 @@ final class CityStructureLandingFlowTest {
         assertTrue(planned.has("lockedBBoxGroupKey"));
         assertTrue(planned.has("expectedStartSignature"));
         assertTrue(planned.has("pieceBoxes"));
+        assertEquals(expand(bounds(planned.getAsJsonObject("lockedCollisionEnvelope")), 8),
+                bounds(planned.getAsJsonObject("maskEnvelope")));
 
         backend.planCalls = 0;
         backend.placeCalls = 0;
@@ -2169,6 +2208,11 @@ final class CityStructureLandingFlowTest {
                 obj.get("minZ").getAsInt(),
                 obj.get("maxX").getAsInt(),
                 obj.get("maxZ").getAsInt());
+    }
+
+    private static BlockBounds expand(BlockBounds bounds, int margin) {
+        return new BlockBounds(bounds.minX() - margin, bounds.minZ() - margin,
+                bounds.maxX() + margin, bounds.maxZ() + margin);
     }
 
     private static void assertGroupItemsDoNotOverlap(JsonObject group) {
