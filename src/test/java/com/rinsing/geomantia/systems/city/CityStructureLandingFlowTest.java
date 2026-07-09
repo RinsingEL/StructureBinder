@@ -66,7 +66,8 @@ final class CityStructureLandingFlowTest {
                 jigsaw.get("reservedEnvelopePolicy").getAsString());
         assertEquals(8, fixed.get("reservedEnvelopeRadiusBlocks").getAsInt());
         assertEquals(72, jigsaw.get("reservedEnvelopeRadiusBlocks").getAsInt());
-        assertTrue(bounds(jigsaw.getAsJsonObject("safetyEnvelope")).widthBlocks()
+        assertFalse(jigsaw.has("safetyEnvelope"));
+        assertTrue(bounds(jigsaw.getAsJsonObject("maskEnvelope")).widthBlocks()
                 > bounds(jigsaw.getAsJsonObject("collisionEnvelope")).widthBlocks());
         assertEquals("function.village", jigsaw.getAsJsonArray("functionTerms").get(0).getAsString());
     }
@@ -96,12 +97,13 @@ final class CityStructureLandingFlowTest {
                 .structureAnchorMap();
 
         JsonObject jigsaw = anchorMap.getAsJsonArray("anchors").get(1).getAsJsonObject();
-        assertEquals("structureEnvelopeFacts:fixedDepthP95+clearance/fixedDepthP99+vegetationMargin",
+        assertEquals("structureEnvelopeFacts:fixedDepthP95+clearance/collision+maskMargin",
                 jigsaw.get("reservedEnvelopePolicy").getAsString());
         assertEquals("fixed_depth_statistics", jigsaw.get("envelopeMode").getAsString());
         assertTrue(jigsaw.has("maskEnvelope"));
-        assertTrue(jigsaw.has("safetyEnvelope"));
+        assertFalse(jigsaw.has("safetyEnvelope"));
         assertTrue(jigsaw.has("structureEnvelopeFact"));
+        assertTrue(jigsaw.getAsJsonObject("structureEnvelopeFact").has("maxObservedEnvelope"));
     }
 
     @Test
@@ -313,7 +315,8 @@ final class CityStructureLandingFlowTest {
                 .get(0).getAsJsonObject();
         assertEquals("estimated_collision", occupied.get("envelopeType").getAsString());
         assertTrue(occupied.has("estimatedCollisionEnvelope"));
-        assertTrue(occupied.has("estimatedSafetyEnvelope"));
+        assertFalse(occupied.has("estimatedSafetyEnvelope"));
+        assertTrue(firstCandidate.has("diagnosticMaxObservedEnvelope"));
         assertEquals("residential_01", selected.session().get("currentSlotId").getAsString());
         assertEquals("deferred_to_d6",
                 selected.quickPreflightReport().get("status").getAsString());
@@ -1377,12 +1380,21 @@ final class CityStructureLandingFlowTest {
         JsonObject planned = active.getAsJsonArray("plannedStructures").get(0).getAsJsonObject();
         assertTrue(planned.has("collisionEnvelope"));
         assertTrue(planned.has("maskEnvelope"));
-        assertTrue(planned.has("safetyEnvelope"));
+        assertFalse(planned.has("safetyEnvelope"));
         assertTrue(planned.has("envelopeMode"));
         ChunkPos anchorChunk = new ChunkPos(
                 planned.getAsJsonObject("anchorChunk").get("x").getAsInt(),
                 planned.getAsJsonObject("anchorChunk").get("z").getAsInt());
-        assertEquals(1, CityReservationMaskRegistry.plannedStructuresForChunk(anchorChunk).size());
+        java.util.List<CityReservationMaskRegistry.PlannedStructure> plannedStructures =
+                CityReservationMaskRegistry.plannedStructuresForChunk(anchorChunk);
+        assertEquals(1, plannedStructures.size());
+        CityReservationMaskRegistry.PlannedStructure plannedStructure = plannedStructures.get(0);
+        CityReservationMaskRegistry.recordWorldgenPlacement(plannedStructure, plannedStructure.plannedFootprint(),
+                "sig_registry", new JsonArray(), anchorChunk,
+                "none", "WORLDGEN_PLACEMENT_RECORDED", "test placement");
+        JsonObject ledgerItem = CityReservationMaskRegistry.ledgerForCity(fixture.context().cityId())
+                .getAsJsonArray("placedStructures").get(0).getAsJsonObject();
+        assertFalse(ledgerItem.has("safetyEnvelope"));
     }
 
     @Test
@@ -1524,6 +1536,7 @@ final class CityStructureLandingFlowTest {
         assertTrue(planned.has("lockedBBoxGroupKey"));
         assertTrue(planned.has("expectedStartSignature"));
         assertTrue(planned.has("pieceBoxes"));
+        assertFalse(planned.has("safetyEnvelope"));
         assertEquals(expand(bounds(planned.getAsJsonObject("lockedCollisionEnvelope")), 8),
                 bounds(planned.getAsJsonObject("maskEnvelope")));
 

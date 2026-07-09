@@ -390,7 +390,6 @@ public final class CityStructureMaterializationPlanner {
         obj.add("reservedEnvelope", boundsJson(task.reservedEnvelope()));
         obj.add("collisionEnvelope", boundsJson(task.collisionEnvelope()));
         obj.add("maskEnvelope", boundsJson(task.maskEnvelope()));
-        obj.add("safetyEnvelope", boundsJson(task.safetyEnvelope()));
         obj.addProperty("envelopeMode", task.envelopeMode());
         obj.addProperty("selectedEnvelopeGroupKey", task.selectedEnvelopeGroupKey());
         return obj;
@@ -692,7 +691,7 @@ public final class CityStructureMaterializationPlanner {
 
     public record StructureTask(String anchorId, String structureId, BlockPoint anchorBlock, String rotation,
                                 BlockBounds plannedFootprint, BlockBounds reservedEnvelope,
-                                BlockBounds collisionEnvelope, BlockBounds maskEnvelope, BlockBounds safetyEnvelope,
+                                BlockBounds collisionEnvelope, BlockBounds maskEnvelope,
                                 String envelopeMode, String selectedEnvelopeGroupKey,
                                 List<String> availableEnvelopeGroupKeys,
                                 List<String> semanticTerms, List<String> functionTerms,
@@ -708,7 +707,6 @@ public final class CityStructureMaterializationPlanner {
                     reserved,
                     optionalBounds(anchor, "collisionEnvelope", reserved),
                     optionalBounds(anchor, "maskEnvelope", reserved),
-                    optionalBounds(anchor, "safetyEnvelope", reserved),
                     stringValue(anchor, "envelopeMode", ""),
                     stringValue(anchor, "selectedEnvelopeGroupKey", ""),
                     strings(anchor.getAsJsonArray("availableEnvelopeGroupKeys")),
@@ -730,7 +728,6 @@ public final class CityStructureMaterializationPlanner {
                     reserved,
                     optionalBounds(item, "collisionEnvelope", reserved),
                     optionalBounds(item, "maskEnvelope", reserved),
-                    optionalBounds(item, "safetyEnvelope", reserved),
                     stringValue(item, "envelopeMode", ""),
                     stringValue(item, "selectedEnvelopeGroupKey", ""),
                     strings(item.getAsJsonArray("availableEnvelopeGroupKeys")),
@@ -744,7 +741,7 @@ public final class CityStructureMaterializationPlanner {
         }
 
         JsonObject asPlanJson(BlockBounds actualFootprint, String startSignature, JsonArray pieceBoxes) {
-            JsonObject obj = sourceAnchor.deepCopy();
+            JsonObject obj = outputAnchorJson();
             obj.add("actualFootprint", boundsJson(actualFootprint));
             obj.addProperty("startSignature", startSignature == null ? "" : startSignature);
             obj.add("pieceBoxes", pieceBoxes == null ? new JsonArray() : pieceBoxes);
@@ -775,7 +772,7 @@ public final class CityStructureMaterializationPlanner {
         JsonObject asWorldgenPlanJson(ChunkStatusResult status, BlockBounds actualFootprint,
                                       BlockBounds lockedCollisionEnvelope, String lockedBBoxGroupKey,
                                       String startSignature, JsonArray pieceBoxes) {
-            JsonObject obj = sourceAnchor.deepCopy();
+            JsonObject obj = outputAnchorJson();
             if (!obj.has("commandAnchorBlock")) {
                 obj.add("commandAnchorBlock", anchorBlock.asJson());
             }
@@ -822,7 +819,6 @@ public final class CityStructureMaterializationPlanner {
             obj.add("reservedEnvelope", boundsJson(reservedEnvelope));
             obj.add("collisionEnvelope", boundsJson(collisionEnvelope));
             obj.add("maskEnvelope", boundsJson(maskEnvelope));
-            obj.add("safetyEnvelope", boundsJson(safetyEnvelope));
             obj.addProperty("envelopeMode", envelopeMode);
             obj.addProperty("selectedEnvelopeGroupKey", selectedEnvelopeGroupKey);
             obj.add("semanticTerms", stringArray(semanticTerms));
@@ -830,6 +826,14 @@ public final class CityStructureMaterializationPlanner {
             obj.addProperty("worldMutationApplied", result.worldMutationApplied());
             obj.addProperty("startSignature", result.startSignature());
             obj.add("pieceBoxes", result.pieceBoxes());
+            return obj;
+        }
+
+        private JsonObject outputAnchorJson() {
+            JsonObject obj = sourceAnchor.deepCopy();
+            obj.remove("safetyEnvelope");
+            obj.remove("estimatedSafetyEnvelope");
+            obj.remove("groupSafetyEnvelope");
             return obj;
         }
 

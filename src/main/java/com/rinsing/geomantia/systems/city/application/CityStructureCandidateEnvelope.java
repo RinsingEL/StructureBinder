@@ -53,18 +53,18 @@ final class CityStructureCandidateEnvelope {
                 BlockBounds collision = fromLocal(anchorBlock,
                         CityStructureAnchorPlanner.expand(group.localEnvelope(), smallClearance));
                 BlockBounds mask = CityStructureAnchorPlanner.expand(collision, maskMargin);
-                BlockBounds safety = fromLocal(anchorBlock,
+                BlockBounds diagnosticMaxObserved = fromLocal(anchorBlock,
                         CityStructureAnchorPlanner.expand(value.maxObservedEnvelope(),
                                 Math.max(smallClearance, roadMargin)));
-                return new Estimate(plannedFootprint, collision, mask, safety, "fixed_bbox_group",
+                return new Estimate(plannedFootprint, collision, mask, diagnosticMaxObserved, "fixed_bbox_group",
                         group.groupKey(), false, "");
             }
             BlockBounds collision = fromLocal(anchorBlock,
                     CityStructureAnchorPlanner.expand(value.p95Envelope(), clearance));
             BlockBounds mask = CityStructureAnchorPlanner.expand(collision, maskMargin);
-            BlockBounds safety = fromLocal(anchorBlock,
+            BlockBounds diagnosticMaxObserved = fromLocal(anchorBlock,
                     CityStructureAnchorPlanner.expand(value.maxObservedEnvelope(), Math.max(clearance, roadMargin)));
-            return new Estimate(plannedFootprint, collision, mask, safety, "fixed_depth_statistics",
+            return new Estimate(plannedFootprint, collision, mask, diagnosticMaxObserved, "fixed_depth_statistics",
                     "", false, "");
         }
         if (profile.structureId().startsWith("trek:")) {
@@ -76,10 +76,10 @@ final class CityStructureCandidateEnvelope {
                 : clearance;
         BlockBounds collision = CityStructureAnchorPlanner.expand(plannedFootprint, radius);
         BlockBounds mask = CityStructureAnchorPlanner.expand(collision, maskMargin);
-        BlockBounds safety = profile.jigsawLike()
+        BlockBounds diagnosticMaxObserved = profile.jigsawLike()
                 ? CityStructureAnchorPlanner.expand(plannedFootprint, radius + roadMargin)
                 : collision;
-        return new Estimate(plannedFootprint, collision, mask, safety,
+        return new Estimate(plannedFootprint, collision, mask, diagnosticMaxObserved,
                 profile.jigsawLike() ? "fallback_jigsaw_radius" : "fallback_fixed_footprint",
                 "", false, "");
     }
@@ -123,7 +123,7 @@ final class CityStructureCandidateEnvelope {
     record Estimate(BlockBounds plannedFootprint,
                     BlockBounds collisionEnvelope,
                     BlockBounds maskEnvelope,
-                    BlockBounds safetyEnvelope,
+                    BlockBounds diagnosticMaxObservedEnvelope,
                     String envelopeMode,
                     String selectedEnvelopeGroupKey,
                     boolean requiredFactsMissing,

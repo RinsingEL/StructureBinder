@@ -51,8 +51,6 @@ public final class CityStructureLandingPreviewRenderer {
             for (JsonElement elem : array(anchorMap, "anchors")) {
                 JsonObject anchor = elem.getAsJsonObject();
                 i++;
-                drawRect(g, t, bounds(anchor, "safetyEnvelope"), new Color(98, 96, 89, 18),
-                        new Color(89, 82, 70, 80), 0.9f);
                 drawRect(g, t, bounds(anchor, "maskEnvelope"), new Color(202, 108, 62, 35),
                         new Color(178, 84, 46, 125), 1.1f);
                 drawRect(g, t, bounds(anchor, "collisionEnvelope"), new Color(204, 79, 63, 45),
@@ -61,7 +59,7 @@ public final class CityStructureLandingPreviewRenderer {
                 drawLabel(g, t, point(anchor, "anchorBlock"), string(anchor, "anchorId"));
             }
             title(g, "City D4 structure anchor preview",
-                    "patch backdrop + green=planned red=collision orange=mask gray=safety anchors="
+                    "patch backdrop + green=planned red=collision orange=mask anchors="
                             + array(anchorMap, "anchors").size());
             sideSummary(g, anchorMap, "anchors");
         } finally {
@@ -121,8 +119,6 @@ public final class CityStructureLandingPreviewRenderer {
                     JsonObject candidate = candElem.getAsJsonObject();
                     i++;
                     String code = "C" + i;
-                    drawRect(g, t, bounds(candidate, "estimatedSafetyEnvelope"), new Color(98, 96, 89, 14),
-                            new Color(89, 82, 70, 64), 0.8f);
                     drawRect(g, t, bounds(candidate, "estimatedMaskEnvelope"), new Color(202, 108, 62, 24),
                             new Color(178, 84, 46, 105), 1.0f);
                     drawRect(g, t, bounds(candidate, "estimatedCollisionEnvelope"), new Color(204, 79, 63, 34),
@@ -133,7 +129,7 @@ public final class CityStructureLandingPreviewRenderer {
                 }
             }
             title(g, "City D4 anchor candidate preview",
-                    "patch backdrop + blue=frozen selected C*=current candidates red=collision orange=mask gray=safety candidates="
+                    "patch backdrop + blue=frozen selected C*=current candidates red=collision orange=mask candidates="
                             + candidateCount(candidateSet));
             candidateSummary(g, candidateSet);
         } finally {
@@ -609,8 +605,6 @@ public final class CityStructureLandingPreviewRenderer {
             String slotId = string(anchor, "slotId");
             Color color = slotColor(slotId, slotIndexes, 122);
             Color stroke = slotColor(slotId, slotIndexes, 235);
-            drawOptionalRect(g, t, anchor, "estimatedSafetyEnvelope", slotColor(slotId, slotIndexes, 26),
-                    slotColor(slotId, slotIndexes, 110), 1.0f);
             drawOptionalRect(g, t, anchor, "estimatedCollisionEnvelope", color, stroke, 2.2f);
             BlockPoint point = point(anchor, "anchorBlock");
             drawPoint(g, t, point, stroke);
@@ -639,8 +633,6 @@ public final class CityStructureLandingPreviewRenderer {
                 BlockBounds collision = bounds(candidate, "estimatedCollisionEnvelope");
                 boolean overlap = overlapsAny(collision, occupied);
                 boolean autoPick = candidateIndex == 1;
-                drawOptionalRect(g, t, candidate, "estimatedSafetyEnvelope", withAlpha(base, autoPick ? 20 : 12),
-                        withAlpha(base, autoPick ? 90 : 64), 1.0f);
                 if (overlap) {
                     drawDashedRect(g, t, collision, new Color(214, 70, 64, 34),
                             new Color(196, 49, 44, 230), autoPick ? 3.0f : 2.0f);

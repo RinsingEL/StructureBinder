@@ -493,8 +493,8 @@ public final class CityDressingLayerPlanner {
         for (JsonElement elem : array(functionalArrayZones, "arrayZones")) {
             if (elem.isJsonObject()) {
                 JsonObject zone = elem.getAsJsonObject();
-                JsonObject source = zone.has("groupSafetyEnvelope") && zone.get("groupSafetyEnvelope").isJsonObject()
-                        ? zone.getAsJsonObject("groupSafetyEnvelope") : zone.getAsJsonObject("groupCollisionEnvelope");
+                JsonObject source = zone.has("groupMaskEnvelope") && zone.get("groupMaskEnvelope").isJsonObject()
+                        ? zone.getAsJsonObject("groupMaskEnvelope") : zone.getAsJsonObject("groupCollisionEnvelope");
                 if (source != null) {
                     result.put("array_zone:" + stringValue(zone, "arrayId", result.size() + ""),
                             expand(bounds(source), 8));

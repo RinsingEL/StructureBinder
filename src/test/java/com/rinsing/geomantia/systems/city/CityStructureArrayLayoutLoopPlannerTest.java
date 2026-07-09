@@ -79,9 +79,9 @@ class CityStructureArrayLayoutLoopPlannerTest {
     }
 
     @Test
-    void collisionOverlapRulesAllowDiagnosticSafetyOverlap() throws Exception {
+    void collisionOverlapRulesAllowDiagnosticMaxObservedOverlap() throws Exception {
         Fixture fixture = fixture();
-        CityStructureEnvelopeFacts facts = wideSafetyFacts(fixture, "minecraft:desert_pyramid");
+        CityStructureEnvelopeFacts facts = wideDiagnosticFacts(fixture, "minecraft:desert_pyramid");
         CityStructureArrayLayoutLoopPlanner planner = new CityStructureArrayLayoutLoopPlanner();
         CityStructureArrayLayoutLoopPlanner.CreateResult created = planner.create(
                 fixture.baseDir(), fixture.review(), fixture.terraSenseSource(),
@@ -98,7 +98,8 @@ class CityStructureArrayLayoutLoopPlannerTest {
         assertTrue(executed.asJson().get("ok").getAsBoolean());
         JsonObject zone = executed.functionalArrayZones().getAsJsonArray("arrayZones").get(0).getAsJsonObject();
         assertNoItemCollisionOverlap(zone);
-        assertAnyItemSafetyOverlap(zone);
+        assertFalse(zone.has("groupSafetyEnvelope"));
+        assertAnyItemDiagnosticMaxObservedOverlap(zone);
     }
 
     @Test
@@ -221,8 +222,7 @@ class CityStructureArrayLayoutLoopPlannerTest {
                   "anchors": [
                     {
                       "anchorId": "key_core",
-                      "collisionEnvelope": {"minX": -420, "minZ": -420, "maxX": 420, "maxZ": 420},
-                      "safetyEnvelope": {"minX": -620, "minZ": -620, "maxX": 620, "maxZ": 620}
+                      "collisionEnvelope": {"minX": -420, "minZ": -420, "maxX": 420, "maxZ": 420}
                     }
                   ]
                 }
@@ -257,17 +257,21 @@ class CityStructureArrayLayoutLoopPlannerTest {
         }
     }
 
-    private static void assertAnyItemSafetyOverlap(JsonObject zone) {
+    private static void assertAnyItemDiagnosticMaxObservedOverlap(JsonObject zone) {
         JsonArray items = zone.getAsJsonArray("items");
         boolean found = false;
         for (int i = 0; i < items.size(); i++) {
-            BlockBounds a = bounds(items.get(i).getAsJsonObject().getAsJsonObject("estimatedSafetyEnvelope"));
+            JsonObject item = items.get(i).getAsJsonObject();
+            assertFalse(item.has("estimatedSafetyEnvelope"));
+            BlockBounds a = bounds(item.getAsJsonObject("diagnosticMaxObservedEnvelope"));
             for (int j = i + 1; j < items.size(); j++) {
-                BlockBounds b = bounds(items.get(j).getAsJsonObject().getAsJsonObject("estimatedSafetyEnvelope"));
+                JsonObject other = items.get(j).getAsJsonObject();
+                assertFalse(other.has("estimatedSafetyEnvelope"));
+                BlockBounds b = bounds(other.getAsJsonObject("diagnosticMaxObservedEnvelope"));
                 found |= a.overlaps(b);
             }
         }
-        assertTrue(found, "diagnostic safety envelopes should be allowed to overlap");
+        assertTrue(found, "diagnostic max observed envelopes should be allowed to overlap");
     }
 
     private static void assertNoOccupiedOverlap(JsonArray occupiedEnvelopes) {
@@ -405,7 +409,7 @@ class CityStructureArrayLayoutLoopPlannerTest {
         return new Fixture(baseDir, review, source);
     }
 
-    private static CityStructureEnvelopeFacts wideSafetyFacts(Fixture fixture, String structureId) throws Exception {
+    private static CityStructureEnvelopeFacts wideDiagnosticFacts(Fixture fixture, String structureId) throws Exception {
         CityStructureEnvelopeProfiler.Result result = new CityStructureEnvelopeProfiler()
                 .profile(fixture.baseDir(), fixture.terraSenseSource(), List.of(structureId), 6,
                         (profile, sampleIndex) -> CityStructureEnvelopeProfiler.EnvelopeSample.valid(sampleIndex,
@@ -413,7 +417,7 @@ class CityStructureArrayLayoutLoopPlannerTest {
                                         ? new BlockBounds(-3, -3, 3, 3)
                                         : new BlockBounds(-90, -90, 90, 90),
                                 1, "fixed_config_hash", "pack_hash"));
-        Path factsPath = fixture.baseDir().resolve("wide_safety_structure_envelope_facts.json");
+        Path factsPath = fixture.baseDir().resolve("wide_diagnostic_structure_envelope_facts.json");
         Files.writeString(factsPath, CityJson.GSON.toJson(result.structureEnvelopeFacts()));
         return CityStructureEnvelopeFacts.load(factsPath);
     }

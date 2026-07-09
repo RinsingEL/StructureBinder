@@ -276,7 +276,8 @@ public final class CityStructureArrayCandidatePlanner {
         obj.add("estimatedCollisionEnvelope",
                 CityStructureCandidateEnvelope.boundsJson(estimate.collisionEnvelope()));
         obj.add("estimatedMaskEnvelope", CityStructureCandidateEnvelope.boundsJson(estimate.maskEnvelope()));
-        obj.add("estimatedSafetyEnvelope", CityStructureCandidateEnvelope.boundsJson(estimate.safetyEnvelope()));
+        obj.add("diagnosticMaxObservedEnvelope",
+                CityStructureCandidateEnvelope.boundsJson(estimate.diagnosticMaxObservedEnvelope()));
         obj.addProperty("geometryStatus", "available");
         obj.addProperty("envelopeMode", estimate.envelopeMode());
         obj.addProperty("selectedEnvelopeGroupKey", estimate.selectedEnvelopeGroupKey());

@@ -134,7 +134,6 @@ public final class CityStructureClusterGroupCandidatePlanner {
         JsonArray items = new JsonArray();
         BlockBounds groupCollision = null;
         BlockBounds groupMask = null;
-        BlockBounds groupSafety = null;
         int itemIndex = 0;
         for (JsonElement elem : array(group.session(), "selectedAnchors")) {
             if (!elem.isJsonObject()) {
@@ -146,7 +145,6 @@ public final class CityStructureClusterGroupCandidatePlanner {
             items.add(item);
             groupCollision = unionIfPresent(groupCollision, selected, "estimatedCollisionEnvelope");
             groupMask = unionIfPresent(groupMask, selected, "estimatedMaskEnvelope");
-            groupSafety = unionIfPresent(groupSafety, selected, "estimatedSafetyEnvelope");
         }
 
         JsonObject expandedPlan = finalized.structureAnchorPlan().deepCopy();
@@ -170,9 +168,6 @@ public final class CityStructureClusterGroupCandidatePlanner {
         }
         if (groupMask != null) {
             candidate.add("groupMaskEnvelope", boundsJson(groupMask));
-        }
-        if (groupSafety != null) {
-            candidate.add("groupSafetyEnvelope", boundsJson(groupSafety));
         }
         candidate.add("scoreBreakdown", groupScore(items, groupCollision));
         candidate.add("risks", groupRisks(items, group.rejectedExtensionCount()));
@@ -204,7 +199,7 @@ public final class CityStructureClusterGroupCandidatePlanner {
         copyArray(selected, item, "intentTerms");
         copyObject(selected, item, "estimatedCollisionEnvelope");
         copyObject(selected, item, "estimatedMaskEnvelope");
-        copyObject(selected, item, "estimatedSafetyEnvelope");
+        copyObject(selected, item, "diagnosticMaxObservedEnvelope");
         copyObject(selected, item, "scoreBreakdown");
         copyArray(selected, item, "risks");
         return item;

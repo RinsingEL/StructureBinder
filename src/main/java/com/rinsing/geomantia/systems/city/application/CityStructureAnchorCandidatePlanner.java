@@ -380,10 +380,6 @@ public final class CityStructureAnchorCandidatePlanner {
             occupied.add("estimatedCollisionEnvelope",
                     selected.getAsJsonObject("estimatedCollisionEnvelope").deepCopy());
         }
-        if (selected.has("estimatedSafetyEnvelope")) {
-            occupied.add("estimatedSafetyEnvelope",
-                    selected.getAsJsonObject("estimatedSafetyEnvelope").deepCopy());
-        }
         optionalArray(updatedSession, "occupiedEnvelopes").add(occupied);
 
         JsonObject designSlotPlan = requiredObject(updatedSession, "sourceDesignSlotPlan");
@@ -546,7 +542,7 @@ public final class CityStructureAnchorCandidatePlanner {
         obj.add("sourcePatchRefs", refs);
         obj.add("estimatedCollisionEnvelope", boundsJson(draft.estimate().collisionEnvelope()));
         obj.add("estimatedMaskEnvelope", boundsJson(draft.estimate().maskEnvelope()));
-        obj.add("estimatedSafetyEnvelope", boundsJson(draft.estimate().safetyEnvelope()));
+        obj.add("diagnosticMaxObservedEnvelope", boundsJson(draft.estimate().diagnosticMaxObservedEnvelope()));
         obj.addProperty("geometryStatus", "available");
         obj.addProperty("envelopeMode", draft.estimate().envelopeMode());
         obj.addProperty("selectedEnvelopeGroupKey", draft.estimate().selectedEnvelopeGroupKey());

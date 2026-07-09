@@ -186,7 +186,6 @@ public final class CityStructureAnchorPlanner {
         obj.add("reservedEnvelope", boundsJson(envelope.collisionEnvelope()));
         obj.add("collisionEnvelope", boundsJson(envelope.collisionEnvelope()));
         obj.add("maskEnvelope", boundsJson(envelope.maskEnvelope()));
-        obj.add("safetyEnvelope", boundsJson(envelope.safetyEnvelope()));
         obj.addProperty("clearanceBlocks", envelope.usesSmallClearance() ? smallClearance : clearance);
         obj.addProperty("defaultClearanceBlocks", clearance);
         obj.addProperty("smallClearanceBlocks", smallClearance);
@@ -237,18 +236,18 @@ public final class CityStructureAnchorPlanner {
                 CityStructureEnvelopeFacts.BBoxGroup group = selected.get();
                 BlockBounds collision = fromLocal(anchorBlock, expand(group.localEnvelope(), smallClearance));
                 BlockBounds mask = expand(collision, maskMargin);
-                BlockBounds safety = fromLocal(anchorBlock, expand(value.maxObservedEnvelope(),
+                BlockBounds diagnosticMaxObserved = fromLocal(anchorBlock, expand(value.maxObservedEnvelope(),
                         Math.max(smallClearance, roadMargin)));
-                return new EnvelopeDecision(collision, mask, safety, 0,
+                return new EnvelopeDecision(collision, mask, diagnosticMaxObserved, 0,
                         "structureEnvelopeFacts:fixedBBoxGroup+smallClearance", "fixed_bbox_group",
                         group.groupKey(), group, value, false, "", true);
             }
             BlockBounds collision = fromLocal(anchorBlock, expand(value.p95Envelope(), clearance));
             BlockBounds mask = expand(collision, maskMargin);
-            BlockBounds safety = fromLocal(anchorBlock, expand(value.maxObservedEnvelope(),
+            BlockBounds diagnosticMaxObserved = fromLocal(anchorBlock, expand(value.maxObservedEnvelope(),
                     Math.max(clearance, roadMargin)));
-            return new EnvelopeDecision(collision, mask, safety, 0,
-                    "structureEnvelopeFacts:fixedDepthP95+clearance/fixedDepthP99+vegetationMargin",
+            return new EnvelopeDecision(collision, mask, diagnosticMaxObserved, 0,
+                    "structureEnvelopeFacts:fixedDepthP95+clearance/collision+maskMargin",
                     "fixed_depth_statistics", "", null, value, false, "", false);
         }
         if (profile.structureId().startsWith("trek:")) {
@@ -261,10 +260,10 @@ public final class CityStructureAnchorPlanner {
                 : clearance;
         BlockBounds collision = expand(plannedFootprint, envelopeRadius);
         BlockBounds mask = expand(collision, maskMargin);
-        BlockBounds safety = profile.jigsawLike()
+        BlockBounds diagnosticMaxObserved = profile.jigsawLike()
                 ? expand(plannedFootprint, envelopeRadius + roadMargin)
                 : collision;
-        return new EnvelopeDecision(collision, mask, safety, envelopeRadius, profile.jigsawLike()
+        return new EnvelopeDecision(collision, mask, diagnosticMaxObserved, envelopeRadius, profile.jigsawLike()
                 ? "startFootprint+jigsawMaxExpansionRadius+clearance"
                 : "fixedFootprint+clearance", profile.jigsawLike()
                 ? "fallback_jigsaw_radius" : "fallback_fixed_footprint",
@@ -346,7 +345,7 @@ public final class CityStructureAnchorPlanner {
     }
 
     private record EnvelopeDecision(BlockBounds collisionEnvelope, BlockBounds maskEnvelope,
-                                    BlockBounds safetyEnvelope, int envelopeRadiusBlocks,
+                                    BlockBounds diagnosticMaxObservedEnvelope, int envelopeRadiusBlocks,
                                     String policy, String envelopeMode, String selectedEnvelopeGroupKey,
                                     CityStructureEnvelopeFacts.BBoxGroup selectedGroup,
                                     CityStructureEnvelopeFacts.Fact fact,

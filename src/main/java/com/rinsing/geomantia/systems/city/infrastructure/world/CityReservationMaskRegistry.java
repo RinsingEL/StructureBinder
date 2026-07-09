@@ -595,7 +595,7 @@ public final class CityReservationMaskRegistry {
                                    BlockPoint anchorBlock, String rotation, BlockBounds plannedFootprint,
                                    BlockBounds reservedEnvelope, BlockBounds lockedActualFootprint,
                                    BlockBounds collisionEnvelope,
-                                   BlockBounds maskEnvelope, BlockBounds safetyEnvelope,
+                                   BlockBounds maskEnvelope,
                                    String envelopeMode, String selectedEnvelopeGroupKey,
                                    String expectedStartSignature,
                                    JsonArray sourcePatchIds, JsonArray semanticTerms, JsonArray functionTerms,
@@ -620,7 +620,6 @@ public final class CityReservationMaskRegistry {
                             bounds(requiredObject(anchor, "plannedFootprint")))),
                     optionalBounds(anchor, "collisionEnvelope", reserved),
                     optionalBounds(anchor, "maskEnvelope", reserved),
-                    optionalBounds(anchor, "safetyEnvelope", reserved),
                     stringValue(anchor, "envelopeMode", ""),
                     stringValue(anchor, "selectedEnvelopeGroupKey", ""),
                     stringValue(anchor, "expectedStartSignature", ""),
@@ -653,7 +652,6 @@ public final class CityReservationMaskRegistry {
                             bounds(requiredObject(obj, "plannedFootprint")))),
                     optionalBounds(obj, "collisionEnvelope", reserved),
                     optionalBounds(obj, "maskEnvelope", reserved),
-                    optionalBounds(obj, "safetyEnvelope", reserved),
                     stringValue(obj, "envelopeMode", ""),
                     stringValue(obj, "selectedEnvelopeGroupKey", ""),
                     stringValue(obj, "expectedStartSignature", ""),
@@ -686,7 +684,6 @@ public final class CityReservationMaskRegistry {
             obj.addProperty("locked", !expectedStartSignature.isBlank());
             obj.add("lockedCollisionEnvelope", boundsJson(collisionEnvelope));
             obj.add("maskEnvelope", boundsJson(maskEnvelope));
-            obj.add("safetyEnvelope", boundsJson(safetyEnvelope));
             obj.addProperty("envelopeMode", envelopeMode);
             obj.addProperty("selectedEnvelopeGroupKey", selectedEnvelopeGroupKey);
             obj.addProperty("expectedStartSignature", expectedStartSignature);

@@ -251,7 +251,6 @@ public final class CityStructureArrayLayoutLoopPlanner {
         List<BlockBounds> groupCollision = new ArrayList<>();
         BlockBounds groupCollisionUnion = null;
         BlockBounds groupMaskUnion = null;
-        BlockBounds groupSafetyUnion = null;
         int pointCursor = 0;
 
         for (int i = 0; i < desiredItems.size(); i++) {
@@ -310,7 +309,6 @@ public final class CityStructureArrayLayoutLoopPlanner {
             groupCollision.add(estimate.collisionEnvelope());
             groupCollisionUnion = union(groupCollisionUnion, estimate.collisionEnvelope());
             groupMaskUnion = union(groupMaskUnion, estimate.maskEnvelope());
-            groupSafetyUnion = union(groupSafetyUnion, estimate.safetyEnvelope());
         }
         int minCount = minCount(item, desiredItems.size());
         int targetShortfallCount = Math.max(0, desiredItems.size() - placedItems.size());
@@ -318,7 +316,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
             hardBlocks.add("D4_ARRAY_LAYOUT_MIN_COUNT_UNSATISFIED: " + arrayId
                     + " placed " + placedItems.size() + " of minCount " + minCount + ".");
         }
-        JsonObject zone = zone(item, plannerType, placedItems, groupCollisionUnion, groupMaskUnion, groupSafetyUnion,
+        JsonObject zone = zone(item, plannerType, placedItems, groupCollisionUnion, groupMaskUnion,
                 roadAccessPoints(item, placedItems));
         JsonObject trace = new JsonObject();
         trace.addProperty("arrayId", arrayId);
@@ -374,7 +372,6 @@ public final class CityStructureArrayLayoutLoopPlanner {
         List<BlockBounds> localOccupied = new ArrayList<>(occupied);
         BlockBounds groupCollisionUnion = null;
         BlockBounds groupMaskUnion = null;
-        BlockBounds groupSafetyUnion = null;
 
         int childIndex = 0;
         for (JsonElement elem : childPlans) {
@@ -438,11 +435,8 @@ public final class CityStructureArrayLayoutLoopPlanner {
                 JsonObject placed = placedElem.getAsJsonObject();
                 BlockBounds collision = CityStructureCandidateEnvelope.bounds(
                         object(placed, "estimatedCollisionEnvelope"));
-                BlockBounds safety = CityStructureCandidateEnvelope.bounds(
-                        object(placed, "estimatedSafetyEnvelope"));
                 localOccupied.add(collision);
                 groupCollisionUnion = union(groupCollisionUnion, collision);
-                groupSafetyUnion = union(groupSafetyUnion, safety);
                 groupMaskUnion = union(groupMaskUnion, CityStructureCandidateEnvelope.bounds(
                         object(placed, "estimatedMaskEnvelope")));
             }
@@ -461,7 +455,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
         }
 
         JsonObject parentZone = zone(item, "composite_array", new JsonArray(), groupCollisionUnion,
-                groupMaskUnion, groupSafetyUnion, new JsonArray());
+                groupMaskUnion, new JsonArray());
         parentZone.addProperty("zoneKind", "parent_composite");
         parentZone.addProperty("parentPlannerType", stringValue(item, "parentPlannerType",
                 stringValue(item, "subZonePolicy", "grid")));
@@ -550,7 +544,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
     }
 
     private JsonObject zone(JsonObject item, String plannerType, JsonArray placedItems,
-                            BlockBounds groupCollisionUnion, BlockBounds groupMaskUnion, BlockBounds groupSafetyUnion,
+                            BlockBounds groupCollisionUnion, BlockBounds groupMaskUnion,
                             JsonArray roadAccessPoints) {
         JsonObject zone = new JsonObject();
         zone.addProperty("arrayZoneId", stringValue(item, "arrayId"));
@@ -562,7 +556,6 @@ public final class CityStructureArrayLayoutLoopPlanner {
         zone.add("items", placedItems.deepCopy());
         zone.add("groupCollisionEnvelope", CityStructureCandidateEnvelope.boundsJson(nonNullBounds(groupCollisionUnion)));
         zone.add("groupMaskEnvelope", CityStructureCandidateEnvelope.boundsJson(nonNullBounds(groupMaskUnion)));
-        zone.add("groupSafetyEnvelope", CityStructureCandidateEnvelope.boundsJson(nonNullBounds(groupSafetyUnion)));
         zone.add("roadAccessPoints", roadAccessPoints);
         return zone;
     }
@@ -583,7 +576,8 @@ public final class CityStructureArrayLayoutLoopPlanner {
         obj.add("estimatedCollisionEnvelope",
                 CityStructureCandidateEnvelope.boundsJson(accepted.estimate().collisionEnvelope()));
         obj.add("estimatedMaskEnvelope", CityStructureCandidateEnvelope.boundsJson(accepted.estimate().maskEnvelope()));
-        obj.add("estimatedSafetyEnvelope", CityStructureCandidateEnvelope.boundsJson(accepted.estimate().safetyEnvelope()));
+        obj.add("diagnosticMaxObservedEnvelope",
+                CityStructureCandidateEnvelope.boundsJson(accepted.estimate().diagnosticMaxObservedEnvelope()));
         obj.addProperty("envelopeMode", accepted.estimate().envelopeMode());
         obj.addProperty("selectedEnvelopeGroupKey", accepted.estimate().selectedEnvelopeGroupKey());
         obj.addProperty("roadAccessIntent", "array_zone_gateway_deferred_to_roadweaver");

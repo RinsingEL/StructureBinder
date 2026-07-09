@@ -427,7 +427,7 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "city_select_d4_candidate",
-    description: "City D4 v2 顺序候选选择：选择当前 slot 的一个 candidate，冻结 estimatedCollisionEnvelope 作为 occupiedField；estimatedSafetyEnvelope 仅作诊断，quickPreflight 本轮 deferred_to_d6。",
+    description: "City D4 v2 顺序候选选择：选择当前 slot 的一个 candidate，冻结 estimatedCollisionEnvelope 作为 occupiedField；结构大小诊断回到 profile/maxObserved facts，quickPreflight 本轮 deferred_to_d6。",
     inputSchema: {
       type: "object",
       properties: {

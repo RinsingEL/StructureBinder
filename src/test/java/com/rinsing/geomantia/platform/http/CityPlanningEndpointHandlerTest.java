@@ -856,7 +856,6 @@ class CityPlanningEndpointHandlerTest {
                       "lockedActualFootprint": {"minX": -4, "minZ": -4, "maxX": 4, "maxZ": 4},
                       "lockedCollisionEnvelope": {"minX": -8, "minZ": -8, "maxX": 8, "maxZ": 8},
                       "maskEnvelope": {"minX": -12, "minZ": -12, "maxX": 12, "maxZ": 12},
-                      "safetyEnvelope": {"minX": -16, "minZ": -16, "maxX": 16, "maxZ": 16},
                       "locked": true,
                       "expectedStartSignature": "sig_anchor_test",
                       "status": "planned_worldgen",
