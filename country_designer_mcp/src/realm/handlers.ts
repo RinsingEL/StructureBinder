@@ -77,6 +77,26 @@ export const realmHandlers: Record<string, ToolHandler> = {
     return textResult(JSON.stringify(res.data, null, 2));
   },
 
+  async city_create_d4_design_loop_state(args) {
+    const res = await postJson(`${MC_API_URL}/realm/city/create_d4_design_loop_state`, payload(args), TIMEOUTS.quick);
+    return textResult(JSON.stringify(res.data, null, 2));
+  },
+
+  async city_read_d4_design_loop_state(args) {
+    const res = await postJson(`${MC_API_URL}/realm/city/read_d4_design_loop_state`, payload(args), TIMEOUTS.quick);
+    return textResult(JSON.stringify(res.data, null, 2));
+  },
+
+  async city_append_d4_design_loop_round(args) {
+    const res = await postJson(`${MC_API_URL}/realm/city/append_d4_design_loop_round`, payload(args), TIMEOUTS.quick);
+    return textResult(JSON.stringify(res.data, null, 2));
+  },
+
+  async city_write_d4_design_loop_state(args) {
+    const res = await postJson(`${MC_API_URL}/realm/city/write_d4_design_loop_state`, payload(args), TIMEOUTS.quick);
+    return textResult(JSON.stringify(res.data, null, 2));
+  },
+
   async city_plan_d4_structure_cluster_groups(args) {
     const res = await postJson(`${MC_API_URL}/realm/city/plan_d4_structure_cluster_groups`, payload(args), TIMEOUTS.quick);
     return textResult(JSON.stringify(res.data, null, 2));

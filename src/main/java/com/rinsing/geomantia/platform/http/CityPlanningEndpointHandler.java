@@ -4,9 +4,10 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.rinsing.geomantia.systems.city.application.CityFunctionZoneBuilder;
+import com.rinsing.geomantia.systems.city.application.CityD4DesignLoopStatePlanner;
 import com.rinsing.geomantia.systems.city.application.CityDressingLayerPlanner;
 import com.rinsing.geomantia.systems.city.application.CityDressingTemplateLibrary;
+import com.rinsing.geomantia.systems.city.application.CityFunctionZoneBuilder;
 import com.rinsing.geomantia.systems.city.application.CityLandformReviewBuilder;
 import com.rinsing.geomantia.systems.city.application.CityReservationMaskPlanner;
 import com.rinsing.geomantia.systems.city.application.CityRoadBoundaryPlanner;
@@ -422,6 +423,71 @@ final class CityPlanningEndpointHandler {
         JsonObject response = result.asJson();
         response.add("artifacts", writeD4ArrayLayoutLoopArtifacts(debugRoot, runDir, citySeedId,
                 result.loopState(), reviewPackage, envelopeFactsPath));
+        return response;
+    }
+
+    static JsonObject handleCreateD4DesignLoopState(Path debugRoot, String runId, String citySeedId,
+                                                    JsonObject designLoopOptions,
+                                                    JsonObject baseStructureAnchorMapSource) throws IOException {
+        Path runDir = debugRoot.resolve(runId);
+        loadCitySeed(runDir, runId, citySeedId);
+        CityLandformReviewPackage reviewPackage = loadD3Package(debugRoot, runDir, citySeedId);
+        JsonObject baseAnchorMap = loadOptionalDesignLoopAnchorMap(runDir, baseStructureAnchorMapSource);
+        CityD4DesignLoopStatePlanner.CreateResult result = new CityD4DesignLoopStatePlanner()
+                .create(reviewPackage, designLoopOptions, baseAnchorMap);
+        JsonObject response = result.asJson();
+        response.add("artifacts", writeD4DesignLoopArtifacts(debugRoot, runDir, citySeedId, result.loopState()));
+        return response;
+    }
+
+    static JsonObject handleReadD4DesignLoopState(Path debugRoot, String runId, String citySeedId,
+                                                  JsonObject designLoopStateSource) throws IOException {
+        Path runDir = debugRoot.resolve(runId);
+        loadCitySeed(runDir, runId, citySeedId);
+        JsonObject state = loadD4DesignLoopState(debugRoot, runDir, citySeedId, designLoopStateSource);
+        CityD4DesignLoopStatePlanner.ReadResult result = new CityD4DesignLoopStatePlanner().read(state);
+        JsonObject response = result.asJson();
+        response.add("artifacts", d4DesignLoopArtifactRefs(debugRoot, runDir, citySeedId));
+        return response;
+    }
+
+    static JsonObject handleAppendD4DesignLoopRound(Path debugRoot, String runId, String citySeedId,
+                                                    String stateId,
+                                                    JsonObject designLoopRound,
+                                                    JsonObject designLoopStateSource) throws IOException {
+        Path runDir = debugRoot.resolve(runId);
+        loadCitySeed(runDir, runId, citySeedId);
+        JsonObject currentState = loadD4DesignLoopState(debugRoot, runDir, citySeedId, designLoopStateSource);
+        String currentStateId = stringValue(currentState, "stateId");
+        if (stateId != null && !stateId.isBlank() && !stateId.equals(currentStateId)) {
+            throw new IllegalArgumentException("D4_DESIGN_LOOP_STATE_STALE: requested " + stateId
+                    + " but current state is " + currentStateId + ".");
+        }
+        CityD4DesignLoopStatePlanner.AppendResult result = new CityD4DesignLoopStatePlanner()
+                .appendOneRound(currentState, designLoopRound);
+        JsonObject response = result.asJson();
+        response.add("artifacts", writeD4DesignLoopArtifacts(debugRoot, runDir, citySeedId, result.loopState()));
+        return response;
+    }
+
+    static JsonObject handleWriteD4DesignLoopState(Path debugRoot, String runId, String citySeedId,
+                                                   String stateId,
+                                                   JsonObject designLoopState) throws IOException {
+        Path runDir = debugRoot.resolve(runId);
+        loadCitySeed(runDir, runId, citySeedId);
+        Path currentPath = d4DesignLoopStatePath(runDir, citySeedId, null);
+        if (stateId != null && !stateId.isBlank() && Files.exists(currentPath)) {
+            JsonObject current = JsonParser.parseString(Files.readString(currentPath)).getAsJsonObject();
+            String currentStateId = stringValue(current, "stateId");
+            if (!stateId.equals(currentStateId)) {
+                throw new IllegalArgumentException("D4_DESIGN_LOOP_STATE_STALE: requested " + stateId
+                        + " but current state is " + currentStateId + ".");
+            }
+        }
+        CityD4DesignLoopStatePlanner.WriteBackResult result = new CityD4DesignLoopStatePlanner()
+                .writeBack(designLoopState);
+        JsonObject response = result.asJson();
+        response.add("artifacts", writeD4DesignLoopArtifacts(debugRoot, runDir, citySeedId, result.loopState()));
         return response;
     }
 
@@ -2400,6 +2466,10 @@ final class CityPlanningEndpointHandler {
         return runDir.resolve("city_d4_array_layout_" + safeFileName(citySeedId));
     }
 
+    private static Path d4DesignLoopDir(Path runDir, String citySeedId) {
+        return runDir.resolve("city_d4_design_loop_" + safeFileName(citySeedId));
+    }
+
     private static Path dressingDir(Path runDir, String citySeedId) {
         return runDir.resolve("city_dressing_" + safeFileName(citySeedId));
     }
@@ -2458,6 +2528,61 @@ final class CityPlanningEndpointHandler {
             artifacts.addProperty("sourceStructureEnvelopeFacts", debugRef(debugRoot, envelopeFactsPath));
         }
         return artifacts;
+    }
+
+    private static JsonObject writeD4DesignLoopArtifacts(Path debugRoot,
+                                                         Path runDir,
+                                                         String citySeedId,
+                                                         JsonObject loopState) throws IOException {
+        Path outputDirectory = d4DesignLoopDir(runDir, citySeedId);
+        Files.createDirectories(outputDirectory);
+        Path statePath = outputDirectory.resolve("d4_design_loop_state.json");
+        Path occupiedPath = outputDirectory.resolve("d4_design_loop_occupied_field.json");
+        Path functionZonesPath = outputDirectory.resolve("d4_design_loop_function_zones.json");
+        Path arrayZonesPath = outputDirectory.resolve("d4_design_loop_array_zones.json");
+        Path patchAvailabilityPath = outputDirectory.resolve("d4_design_loop_patch_availability.json");
+        Path summaryPath = outputDirectory.resolve("d4_design_loop_next_ai_context_summary.json");
+        Path tracePath = outputDirectory.resolve("d4_design_loop_execution_trace.json");
+        Path qualityPath = outputDirectory.resolve("quality_report.json");
+        Files.writeString(statePath, CityJson.GSON.toJson(loopState));
+        Files.writeString(occupiedPath, CityJson.GSON.toJson(object(loopState, "occupiedField")));
+        Files.writeString(functionZonesPath, CityJson.GSON.toJson(object(loopState, "functionZones")));
+        Files.writeString(arrayZonesPath, CityJson.GSON.toJson(object(loopState, "arrayZones")));
+        Files.writeString(patchAvailabilityPath, CityJson.GSON.toJson(object(loopState, "patchAvailability")));
+        Files.writeString(summaryPath, CityJson.GSON.toJson(object(loopState, "nextAiContextSummary")));
+        Files.writeString(tracePath, CityJson.GSON.toJson(object(loopState, "executionTrace")));
+        Files.writeString(qualityPath, CityJson.GSON.toJson(object(loopState, "quality")));
+        return d4DesignLoopArtifactRefs(debugRoot, runDir, citySeedId);
+    }
+
+    private static JsonObject d4DesignLoopArtifactRefs(Path debugRoot, Path runDir, String citySeedId) {
+        Path outputDirectory = d4DesignLoopDir(runDir, citySeedId);
+        JsonObject artifacts = new JsonObject();
+        addArtifactIfExists(debugRoot, artifacts, "designLoopState",
+                outputDirectory.resolve("d4_design_loop_state.json"));
+        addArtifactIfExists(debugRoot, artifacts, "designLoopOccupiedField",
+                outputDirectory.resolve("d4_design_loop_occupied_field.json"));
+        addArtifactIfExists(debugRoot, artifacts, "designLoopFunctionZones",
+                outputDirectory.resolve("d4_design_loop_function_zones.json"));
+        addArtifactIfExists(debugRoot, artifacts, "designLoopArrayZones",
+                outputDirectory.resolve("d4_design_loop_array_zones.json"));
+        addArtifactIfExists(debugRoot, artifacts, "designLoopPatchAvailability",
+                outputDirectory.resolve("d4_design_loop_patch_availability.json"));
+        addArtifactIfExists(debugRoot, artifacts, "designLoopNextAiContextSummary",
+                outputDirectory.resolve("d4_design_loop_next_ai_context_summary.json"));
+        addArtifactIfExists(debugRoot, artifacts, "designLoopExecutionTrace",
+                outputDirectory.resolve("d4_design_loop_execution_trace.json"));
+        addArtifactIfExists(debugRoot, artifacts, "qualityReport",
+                outputDirectory.resolve("quality_report.json"));
+        Path d3Path = d3PackagePath(runDir, citySeedId);
+        addArtifactIfExists(debugRoot, artifacts, "sourceD3Package", d3Path);
+        return artifacts;
+    }
+
+    private static void addArtifactIfExists(Path debugRoot, JsonObject artifacts, String key, Path path) {
+        if (Files.exists(path)) {
+            artifacts.addProperty(key, debugRef(debugRoot, path));
+        }
     }
 
     private static void writeWorkflowD4StagePlan(WorkflowContext ctx, D4StagePlan stagePlan) throws IOException {
@@ -3484,6 +3609,14 @@ final class CityPlanningEndpointHandler {
         return JsonParser.parseString(Files.readString(path)).getAsJsonObject();
     }
 
+    private static JsonObject loadOptionalDesignLoopAnchorMap(Path runDir, JsonObject source) throws IOException {
+        Path path = occupiedStructureAnchorMapPath(runDir, source);
+        if (path == null || !Files.exists(path)) {
+            return new JsonObject();
+        }
+        return JsonParser.parseString(Files.readString(path)).getAsJsonObject();
+    }
+
     private static Path structureAnchorPlanPath(Path runDir, String citySeedId, JsonObject source) {
         if (source != null) {
             String raw = stringValue(source, "structureAnchorPlanPath");
@@ -3511,6 +3644,16 @@ final class CityPlanningEndpointHandler {
         return JsonParser.parseString(Files.readString(path)).getAsJsonObject();
     }
 
+    private static JsonObject loadD4DesignLoopState(Path debugRoot, Path runDir, String citySeedId,
+                                                    JsonObject source) throws IOException {
+        Path path = d4DesignLoopStatePath(runDir, citySeedId, source);
+        if (!Files.exists(path)) {
+            throw new IllegalArgumentException("D4_DESIGN_LOOP_STATE_NOT_FOUND: "
+                    + debugRef(debugRoot, path));
+        }
+        return JsonParser.parseString(Files.readString(path)).getAsJsonObject();
+    }
+
     private static Path arrayLayoutLoopStatePath(Path runDir, String citySeedId, JsonObject source) {
         if (source != null) {
             String raw = stringValue(source, "arrayLayoutLoopStatePath");
@@ -3526,6 +3669,23 @@ final class CityPlanningEndpointHandler {
             }
         }
         return d4ArrayLayoutDir(runDir, citySeedId).resolve("d4_array_layout_loop_state.json");
+    }
+
+    private static Path d4DesignLoopStatePath(Path runDir, String citySeedId, JsonObject source) {
+        if (source != null) {
+            String raw = stringValue(source, "designLoopStatePath");
+            if (raw.isBlank()) {
+                raw = stringValue(source, "loopStatePath");
+            }
+            if (raw.isBlank()) {
+                raw = stringValue(source, "statePath");
+            }
+            if (!raw.isBlank()) {
+                Path path = Path.of(raw);
+                return path.isAbsolute() ? path.normalize() : runDir.resolve(path).normalize();
+            }
+        }
+        return d4DesignLoopDir(runDir, citySeedId).resolve("d4_design_loop_state.json");
     }
 
     private static String safeFileName(String raw) {

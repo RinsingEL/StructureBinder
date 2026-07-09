@@ -303,6 +303,81 @@ export const realmTools: ToolDefinition[] = [
     },
   },
   {
+    name: "city_create_d4_design_loop_state",
+    description: "City D4 多轮设计 loop state：基于 D3 patch 创建 design loop state artifact；只写状态，不触发 D5/D6/dressing/roads/worldgen。",
+    inputSchema: {
+      type: "object",
+      properties: {
+        runId: { type: "string", description: "已有 W/T run ID。" },
+        citySeedId: { type: "string", description: "目标城市种子的 citySeedId。" },
+        planningMode: { type: "string", description: "可选；默认 d4_multi_round_design_loop_v0_1。" },
+        designLoopOptions: {
+          type: "object",
+          description: "可选；可传 cityId、planningMode 等状态创建选项。",
+        },
+        baseStructureAnchorMapSource: {
+          type: "object",
+          description: "可选；anchorMapPath 或 structureAnchorMapPath 指向既有 structure_anchor_map.json，用 collisionEnvelope/bodyEnvelope 初始化 occupiedField。",
+        },
+      },
+      required: ["runId", "citySeedId"],
+    },
+  },
+  {
+    name: "city_read_d4_design_loop_state",
+    description: "City D4 多轮设计 loop state 读取：返回当前 state、occupiedField、functionZones、arrayZones、patchAvailability、nextAiContextSummary 和 trace；只读，不触发提交阶段。",
+    inputSchema: {
+      type: "object",
+      properties: {
+        runId: { type: "string", description: "已有 W/T run ID。" },
+        citySeedId: { type: "string", description: "目标城市种子的 citySeedId。" },
+        designLoopStateSource: {
+          type: "object",
+          description: "可选；designLoopStatePath、loopStatePath 或 statePath 指向 d4_design_loop_state.json。",
+        },
+      },
+      required: ["runId", "citySeedId"],
+    },
+  },
+  {
+    name: "city_append_d4_design_loop_round",
+    description: "City D4 多轮设计 loop 追加一轮：读取当前 state，追加本轮 anchors/placedStructures/zones，并用 collisionEnvelope/bodyEnvelope 写回 occupiedField；不触发 D5/D6/dressing/roads/worldgen。",
+    inputSchema: {
+      type: "object",
+      properties: {
+        runId: { type: "string", description: "已有 W/T run ID。" },
+        citySeedId: { type: "string", description: "目标城市种子的 citySeedId。" },
+        stateId: { type: "string", description: "可选；用于 stale state 校验。" },
+        designLoopRound: {
+          type: "object",
+          description: "本轮增量；可含 roundId、anchors[]、placedStructures[]、functionZones、arrayZones、nextAiContextSummary、executionTrace。anchors/placedStructures 必须带 collisionEnvelope 或 bodyEnvelope。",
+        },
+        designLoopStateSource: {
+          type: "object",
+          description: "可选；designLoopStatePath、loopStatePath 或 statePath 指向 d4_design_loop_state.json。",
+        },
+      },
+      required: ["runId", "citySeedId", "designLoopRound"],
+    },
+  },
+  {
+    name: "city_write_d4_design_loop_state",
+    description: "City D4 多轮设计 loop state 写回：校验并重写 state artifact 及拆分产物；只做状态 write-back，不触发提交阶段。",
+    inputSchema: {
+      type: "object",
+      properties: {
+        runId: { type: "string", description: "已有 W/T run ID。" },
+        citySeedId: { type: "string", description: "目标城市种子的 citySeedId。" },
+        stateId: { type: "string", description: "可选；用于 stale state 校验。" },
+        designLoopState: {
+          type: "object",
+          description: "schemaVersion=city_d4_design_loop_state.v0.1 的完整 state；write-back 会重建 occupiedField 派生产物。",
+        },
+      },
+      required: ["runId", "citySeedId", "designLoopState"],
+    },
+  },
+  {
     name: "city_plan_d4_structure_cluster_groups",
     description: "City D4 结构群整组候选：提交 DesignSlotPlan，一次生成多组完整 slot 落脚方案；预览图中一种颜色代表一整组，bbox 默认不画在主图里。每组含 expandedStructureAnchorPlan，可整组选中后进入标准 D4。",
     inputSchema: {

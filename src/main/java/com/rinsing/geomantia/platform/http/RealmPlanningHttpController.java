@@ -265,6 +265,69 @@ final class RealmPlanningHttpController {
         });
     }
 
+    void handleCityCreateD4DesignLoopState(HttpExchange exchange) {
+        handle(exchange, "POST", () -> {
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            String runId = requiredString(request, "runId");
+            String citySeedId = requiredString(request, "citySeedId");
+            rejectLegacyCityFields(request, "patchGroupPlan", "zoneChoices", "functionType", "functionTag",
+                    "function_candidates");
+            JsonObject options = request.has("designLoopOptions") && request.get("designLoopOptions").isJsonObject()
+                    ? request.getAsJsonObject("designLoopOptions") : request;
+            return CityPlanningEndpointHandler.handleCreateD4DesignLoopState(debugRoot(), runId, citySeedId,
+                    options,
+                    request.has("baseStructureAnchorMapSource")
+                            && request.get("baseStructureAnchorMapSource").isJsonObject()
+                            ? request.getAsJsonObject("baseStructureAnchorMapSource") : null);
+        });
+    }
+
+    void handleCityReadD4DesignLoopState(HttpExchange exchange) {
+        handle(exchange, "POST", () -> {
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            String runId = requiredString(request, "runId");
+            String citySeedId = requiredString(request, "citySeedId");
+            rejectLegacyCityFields(request, "patchGroupPlan", "zoneChoices", "functionType", "functionTag",
+                    "function_candidates");
+            return CityPlanningEndpointHandler.handleReadD4DesignLoopState(debugRoot(), runId, citySeedId,
+                    request.has("designLoopStateSource") && request.get("designLoopStateSource").isJsonObject()
+                            ? request.getAsJsonObject("designLoopStateSource") : null);
+        });
+    }
+
+    void handleCityAppendD4DesignLoopRound(HttpExchange exchange) {
+        handle(exchange, "POST", () -> {
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            String runId = requiredString(request, "runId");
+            String citySeedId = requiredString(request, "citySeedId");
+            rejectLegacyCityFields(request, "patchGroupPlan", "zoneChoices", "functionType", "functionTag",
+                    "function_candidates");
+            if (!request.has("designLoopRound") || !request.get("designLoopRound").isJsonObject()) {
+                throw new IllegalArgumentException("designLoopRound object is required.");
+            }
+            return CityPlanningEndpointHandler.handleAppendD4DesignLoopRound(debugRoot(), runId, citySeedId,
+                    stringValue(request, "stateId", ""),
+                    request.getAsJsonObject("designLoopRound"),
+                    request.has("designLoopStateSource") && request.get("designLoopStateSource").isJsonObject()
+                            ? request.getAsJsonObject("designLoopStateSource") : null);
+        });
+    }
+
+    void handleCityWriteD4DesignLoopState(HttpExchange exchange) {
+        handle(exchange, "POST", () -> {
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            String runId = requiredString(request, "runId");
+            String citySeedId = requiredString(request, "citySeedId");
+            rejectLegacyCityFields(request, "patchGroupPlan", "zoneChoices", "functionType", "functionTag",
+                    "function_candidates");
+            if (!request.has("designLoopState") || !request.get("designLoopState").isJsonObject()) {
+                throw new IllegalArgumentException("designLoopState object is required.");
+            }
+            return CityPlanningEndpointHandler.handleWriteD4DesignLoopState(debugRoot(), runId, citySeedId,
+                    stringValue(request, "stateId", ""), request.getAsJsonObject("designLoopState"));
+        });
+    }
+
     void handleCityExecuteD4ArrayLayoutItem(HttpExchange exchange) {
         handle(exchange, "POST", () -> {
             JsonObject request = GisHttpUtil.readJsonObject(exchange);

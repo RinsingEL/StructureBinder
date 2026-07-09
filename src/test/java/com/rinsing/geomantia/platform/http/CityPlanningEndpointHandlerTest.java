@@ -331,6 +331,125 @@ class CityPlanningEndpointHandlerTest {
     }
 
     @Test
+    void handleD4DesignLoopState_writesReadsAppendsTwoRoundsAndWriteBack() throws Exception {
+        Path debugRoot = Files.createTempDirectory("city-d4-design-loop-state-test");
+        String runId = "run_d4_design_loop_state";
+        String citySeedId = "city_test";
+        Path runDir = debugRoot.resolve(runId);
+        Files.createDirectories(runDir);
+        Files.writeString(runDir.resolve("city_seed_registry.json"), """
+                {
+                  "citySeeds": [
+                    {
+                      "citySeedId": "city_test",
+                      "realmId": "realm_test",
+                      "role": "town",
+                      "theoreticalScale": "town",
+                      "anchorBlock": {"x": 0, "z": 0},
+                      "planningRadiusCells": 128,
+                      "candidateId": "candidate_test"
+                    }
+                  ]
+                }
+                """);
+        CityPlanningConfig config = CityPlanningConfig.defaults();
+        CitySiteContext context = new CitySiteContextBuilder(config).build(
+                "city_test", "realm_test", "overworld",
+                "city_test", "candidate_test", 0, 0,
+                "town", "town", 128, 4, null);
+        CityLandformReviewPackage review = new CityLandformReviewBuilder(config).build(context, List.of(
+                patch("plain_design", LandformType.PLAIN, -160, -160, 160, 160)));
+        Path d3Dir = runDir.resolve("city_d3_city_test");
+        Files.createDirectories(d3Dir);
+        Files.writeString(d3Dir.resolve("city_landform_review_package.json"),
+                CityJson.GSON.toJson(review.asJson()));
+
+        JsonObject created = CityPlanningEndpointHandler.handleCreateD4DesignLoopState(
+                debugRoot, runId, citySeedId, new JsonObject(), null);
+        assertTrue(created.get("ok").getAsBoolean());
+        assertEquals("d4_design_loop_state_0000", created.getAsJsonObject("designLoopState")
+                .get("stateId").getAsString());
+        JsonObject createArtifacts = created.getAsJsonObject("artifacts");
+        assertTrue(Files.exists(debugRoot.resolve(createArtifacts.get("designLoopState").getAsString())));
+        assertTrue(Files.exists(debugRoot.resolve(createArtifacts.get("designLoopOccupiedField").getAsString())));
+
+        JsonObject firstRound = JsonParser.parseString("""
+                {
+                  "roundId": "round_01",
+                  "anchors": [
+                    {
+                      "anchorId": "admin_core",
+                      "structureId": "minecraft:desert_pyramid",
+                      "collisionEnvelope": {"minX": -8, "minZ": -8, "maxX": 8, "maxZ": 8},
+                      "safetyEnvelope": {"minX": -80, "minZ": -80, "maxX": 80, "maxZ": 80}
+                    }
+                  ],
+                  "functionZones": [
+                    {"zoneId": "civic_core", "blockBounds": {"minX": -16, "minZ": -16, "maxX": 16, "maxZ": 16}}
+                  ],
+                  "arrayZones": {
+                    "arrayZones": [
+                      {"arrayId": "core_ring", "blockBounds": {"minX": -24, "minZ": -24, "maxX": 24, "maxZ": 24}}
+                    ]
+                  },
+                  "nextAiContextSummary": {"summary": "admin core placed"}
+                }
+                """).getAsJsonObject();
+        JsonObject first = CityPlanningEndpointHandler.handleAppendD4DesignLoopRound(
+                debugRoot, runId, citySeedId,
+                created.getAsJsonObject("designLoopState").get("stateId").getAsString(),
+                firstRound, null);
+        JsonObject firstOccupied = first.getAsJsonObject("occupiedField")
+                .getAsJsonArray("occupied").get(0).getAsJsonObject();
+        assertEquals("collisionEnvelope", firstOccupied.get("envelopeSource").getAsString());
+        assertEquals(8, firstOccupied.getAsJsonObject("blockBounds").get("maxX").getAsInt());
+        assertFalse(first.getAsJsonObject("designLoopState")
+                .getAsJsonArray("anchors").get(0).getAsJsonObject().has("safetyEnvelope"));
+
+        JsonObject read = CityPlanningEndpointHandler.handleReadD4DesignLoopState(
+                debugRoot, runId, citySeedId, null);
+        assertEquals("d4_design_loop_state_0001", read.getAsJsonObject("designLoopState")
+                .get("stateId").getAsString());
+
+        JsonObject secondRound = JsonParser.parseString("""
+                {
+                  "roundId": "round_02",
+                  "anchors": [
+                    {
+                      "anchorId": "market_01",
+                      "structureId": "minecraft:jungle_pyramid",
+                      "collisionEnvelope": {"minX": 40, "minZ": 40, "maxX": 58, "maxZ": 58}
+                    }
+                  ],
+                  "nextAiContextSummary": {"summary": "market can avoid admin occupied field"}
+                }
+                """).getAsJsonObject();
+        JsonObject second = CityPlanningEndpointHandler.handleAppendD4DesignLoopRound(
+                debugRoot, runId, citySeedId,
+                read.getAsJsonObject("designLoopState").get("stateId").getAsString(),
+                secondRound, null);
+        JsonArray occupied = second.getAsJsonObject("occupiedField").getAsJsonArray("occupied");
+        assertEquals(2, occupied.size());
+        assertEquals(8, occupied.get(0).getAsJsonObject()
+                .getAsJsonObject("blockBounds").get("maxX").getAsInt());
+        assertEquals(40, occupied.get(1).getAsJsonObject()
+                .getAsJsonObject("blockBounds").get("minX").getAsInt());
+        assertEquals(2, second.getAsJsonObject("nextAiContextSummary")
+                .get("occupiedEnvelopeCount").getAsInt());
+
+        JsonObject written = CityPlanningEndpointHandler.handleWriteD4DesignLoopState(
+                debugRoot, runId, citySeedId,
+                second.getAsJsonObject("designLoopState").get("stateId").getAsString(),
+                second.getAsJsonObject("designLoopState"));
+        assertTrue(written.get("ok").getAsBoolean());
+        JsonObject writeArtifacts = written.getAsJsonObject("artifacts");
+        assertTrue(Files.exists(debugRoot.resolve(writeArtifacts
+                .get("designLoopNextAiContextSummary").getAsString())));
+        assertTrue(Files.exists(debugRoot.resolve(writeArtifacts
+                .get("designLoopExecutionTrace").getAsString())));
+    }
+
+    @Test
     void handlePlanD4StructureClusterGroups_writesGroupArtifactsAndSelectsWholeGroup() throws Exception {
         Path debugRoot = Files.createTempDirectory("city-d4-cluster-groups-test");
         String runId = "run_d4_cluster_groups";
