@@ -582,8 +582,13 @@ class CityStructureArrayLayoutLoopPlannerTest {
                                         ? new BlockBounds(-3, -3, 3, 3)
                                         : new BlockBounds(-90, -90, 90, 90),
                                 1, "fixed_config_hash", "pack_hash"));
+        JsonObject factsJson = result.structureEnvelopeFacts().deepCopy();
+        JsonObject fact = factsJson.getAsJsonArray("structures").get(0).getAsJsonObject();
+        fact.addProperty("stabilityClassification", "stable");
+        fact.getAsJsonObject("placementRecommendation").addProperty("allowCompactArray", true);
+        fact.addProperty("requiresReview", false);
         Path factsPath = fixture.baseDir().resolve("wide_diagnostic_structure_envelope_facts.json");
-        Files.writeString(factsPath, CityJson.GSON.toJson(result.structureEnvelopeFacts()));
+        Files.writeString(factsPath, CityJson.GSON.toJson(factsJson));
         return CityStructureEnvelopeFacts.load(factsPath);
     }
 
@@ -655,3 +660,4 @@ class CityStructureArrayLayoutLoopPlannerTest {
     private record Fixture(Path baseDir, CityLandformReviewPackage review, JsonObject terraSenseSource) {
     }
 }
+

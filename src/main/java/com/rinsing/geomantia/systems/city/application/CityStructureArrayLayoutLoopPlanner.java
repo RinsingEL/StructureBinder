@@ -258,6 +258,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
             CityStructureProfileCatalog.StructureProfile profile = profiles.get(desired.structureId());
             JsonObject options = item.deepCopy();
             options.addProperty("rotation", "NONE");
+            options.addProperty("compactArraySubmission", true);
             Accepted accepted = null;
             while (pointCursor < rawPoints.size()) {
                 BlockPoint point = rawPoints.get(pointCursor++);

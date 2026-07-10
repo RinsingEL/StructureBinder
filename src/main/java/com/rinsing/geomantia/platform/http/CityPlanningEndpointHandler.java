@@ -2941,7 +2941,9 @@ final class CityPlanningEndpointHandler {
                         + stringValue(item, "anchorId") + ": " + stringValue(item, "reasonCode"));
             }
             if (!item.has("locked") || !item.get("locked").getAsBoolean()
-                    || !item.has("lockedActualFootprint") || !item.has("lockedCollisionEnvelope")
+                    || !item.has("actualFootprint") || !item.has("lockedActualFootprint")
+                    || !item.has("pieceBoxes") || !item.get("pieceBoxes").isJsonArray()
+                    || !item.has("lockedCollisionEnvelope") || !item.has("lockedBBoxGroupKey")
                     || stringValue(item, "expectedStartSignature").isBlank()) {
                 throw new IllegalArgumentException("D6 planned structure is not fully locked: "
                         + stringValue(item, "anchorId"));

@@ -86,7 +86,7 @@ public final class CityReservationMaskPlanner {
             mask.add("gateCorridorMask", wallReservationPlan.getAsJsonArray("gateCorridorMask").deepCopy());
         }
         mask.add("reservationReason", reasons);
-        mask.add("sourceStructureAnchorMap", structureAnchorMap.deepCopy());
+        mask.add("sourceStructureAnchorMap", stripRetiredSafetyEnvelopes(structureAnchorMap));
         if (wallReservationPlan != null) {
             mask.add("wallReservationPlan", wallReservationPlan.deepCopy());
         }
@@ -131,6 +131,30 @@ public final class CityReservationMaskPlanner {
         obj.addProperty("sourceRef", sourceRef);
         obj.add("blockBounds", boundsJson(bounds));
         array.add(obj);
+    }
+
+    private static JsonElement stripRetiredSafetyEnvelopes(JsonElement element) {
+        if (element == null || element.isJsonNull()) {
+            return element;
+        }
+        if (element.isJsonArray()) {
+            JsonArray array = new JsonArray();
+            for (JsonElement child : element.getAsJsonArray()) {
+                array.add(stripRetiredSafetyEnvelopes(child));
+            }
+            return array;
+        }
+        if (!element.isJsonObject()) {
+            return element.deepCopy();
+        }
+        JsonObject cleaned = element.getAsJsonObject().deepCopy();
+        cleaned.remove("safetyEnvelope");
+        cleaned.remove("estimatedSafetyEnvelope");
+        cleaned.remove("groupSafetyEnvelope");
+        for (String key : new ArrayList<>(cleaned.keySet())) {
+            cleaned.add(key, stripRetiredSafetyEnvelopes(cleaned.get(key)));
+        }
+        return cleaned;
     }
 
     private static void appendWallReservation(JsonArray noVegetation,

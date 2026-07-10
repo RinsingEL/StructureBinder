@@ -41,6 +41,11 @@ final class CityStructureCandidateEnvelope {
         java.util.Optional<CityStructureEnvelopeFacts.Fact> fact = safeFacts.validFactFor(profile);
         if (fact.isPresent()) {
             CityStructureEnvelopeFacts.Fact value = fact.get();
+            if (booleanValue(options, "compactArraySubmission", false) && value.blocksCompactArray()) {
+                return new Estimate(plannedFootprint, plannedFootprint, plannedFootprint, plannedFootprint,
+                        "", "", false,
+                        "D4_COMPACT_ARRAY_STRUCTURE_REQUIRES_REVIEW: " + profile.structureId());
+            }
             boolean fixedGroupMode = "fixed_footprint".equals(profile.footprintMode()) || value.nearFixedByFacts();
             if (fixedGroupMode) {
                 java.util.Optional<CityStructureEnvelopeFacts.BBoxGroup> selected = value.dominantGroup();
@@ -118,6 +123,11 @@ final class CityStructureCandidateEnvelope {
     private static int intValue(JsonObject obj, String key, int defaultValue) {
         return obj != null && obj.has(key) && !obj.get(key).isJsonNull()
                 ? obj.get(key).getAsInt() : defaultValue;
+    }
+
+    private static boolean booleanValue(JsonObject obj, String key, boolean defaultValue) {
+        return obj != null && obj.has(key) && !obj.get(key).isJsonNull()
+                ? obj.get(key).getAsBoolean() : defaultValue;
     }
 
     record Estimate(BlockBounds plannedFootprint,

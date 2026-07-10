@@ -447,6 +447,30 @@ class CityPlanningEndpointHandlerTest {
                 .get("designLoopNextAiContextSummary").getAsString())));
         assertTrue(Files.exists(debugRoot.resolve(writeArtifacts
                 .get("designLoopExecutionTrace").getAsString())));
+
+        IllegalArgumentException d5 = assertThrows(IllegalArgumentException.class,
+                () -> CityPlanningEndpointHandler.handlePlanD5(debugRoot, runId, citySeedId));
+        assertTrue(d5.getMessage().contains("D4 artifacts not found"));
+
+        IllegalArgumentException d6 = assertThrows(IllegalArgumentException.class,
+                () -> CityPlanningEndpointHandler.handlePlanD6(debugRoot, runId, citySeedId, null, null));
+        assertTrue(d6.getMessage().contains("D4 structure_anchor_map.json not found"));
+
+        IllegalArgumentException dressing = assertThrows(IllegalArgumentException.class,
+                () -> CityPlanningEndpointHandler.handlePlanCityDressing(
+                        debugRoot, runId, citySeedId, dressingBrushPlan()));
+        assertTrue(dressing.getMessage().contains("D4 structure_anchor_map.json not found"));
+
+        IllegalArgumentException executeD5 = assertThrows(IllegalArgumentException.class,
+                () -> CityPlanningEndpointHandler.handleExecuteD5(
+                        debugRoot, Files.createTempDirectory("city-d4-loop-submit-server-root"),
+                        runId, citySeedId, true, null, "auto"));
+        assertTrue(executeD5.getMessage().contains("D4 structure_anchor_map.json not found"));
+
+        IllegalArgumentException executeD7 = assertThrows(IllegalArgumentException.class,
+                () -> CityPlanningEndpointHandler.handleExecuteD7(
+                        debugRoot, runId, citySeedId, 12345L, false, false, null, null));
+        assertTrue(executeD7.getMessage().contains("D6 artifacts not found"));
     }
 
     @Test
@@ -897,6 +921,7 @@ class CityPlanningEndpointHandlerTest {
     @Test
     void handleExecuteD5_activatesRegistryWithoutLoadedWorld() throws Exception {
         Path debugRoot = Files.createTempDirectory("city-d5-execute-no-level");
+        Path serverRoot = Files.createTempDirectory("city-d5-server-root");
         String runId = "run_d5_execute";
         String citySeedId = "city_test";
         Path runDir = debugRoot.resolve(runId);
@@ -972,8 +997,13 @@ class CityPlanningEndpointHandlerTest {
                       "plannedFootprint": {"minX": -4, "minZ": -4, "maxX": 4, "maxZ": 4},
                       "reservedEnvelope": {"minX": -8, "minZ": -8, "maxX": 8, "maxZ": 8},
                       "collisionEnvelope": {"minX": -8, "minZ": -8, "maxX": 8, "maxZ": 8},
+                      "actualFootprint": {"minX": -4, "minZ": -4, "maxX": 4, "maxZ": 4},
                       "lockedActualFootprint": {"minX": -4, "minZ": -4, "maxX": 4, "maxZ": 4},
                       "lockedCollisionEnvelope": {"minX": -8, "minZ": -8, "maxX": 8, "maxZ": 8},
+                      "lockedBBoxGroupKey": "anchor_test@0,0",
+                      "pieceBoxes": [
+                        {"pieceId": "anchor_test_start", "blockBounds": {"minX": -4, "minZ": -4, "maxX": 4, "maxZ": 4}}
+                      ],
                       "maskEnvelope": {"minX": -12, "minZ": -12, "maxX": 12, "maxZ": 12},
                       "locked": true,
                       "expectedStartSignature": "sig_anchor_test",
@@ -988,12 +1018,28 @@ class CityPlanningEndpointHandlerTest {
                 """);
 
         JsonObject response = CityPlanningEndpointHandler.handleExecuteD5(
-                debugRoot, Files.createTempDirectory("city-d5-server-root"),
-                runId, citySeedId, true, null, "auto");
+                debugRoot, serverRoot, runId, citySeedId, true, null, "auto");
         assertTrue(response.get("ok").getAsBoolean());
         assertTrue(response.get("worldgenPlacementMode").getAsBoolean());
         assertEquals(1, response.get("activePlannedStructureCount").getAsInt());
         assertFalse(response.getAsJsonObject("worldMutationReport").get("executed").getAsBoolean());
+
+        JsonObject activeMask = JsonParser.parseString(Files.readString(serverRoot
+                .resolve("geomantia_city_masks")
+                .resolve("active_reservation_mask_plan.json"))).getAsJsonObject();
+        JsonObject activeNoVegetation = activeMask.getAsJsonArray("noVegetationMask")
+                .get(0).getAsJsonObject().getAsJsonObject("blockBounds");
+        assertEquals(-12, activeNoVegetation.get("minX").getAsInt());
+        assertEquals(12, activeNoVegetation.get("maxX").getAsInt());
+        assertFalse(activeMask.toString().contains("safetyEnvelope"));
+
+        JsonObject activeRegistry = JsonParser.parseString(Files.readString(
+                CityReservationMaskRegistry.plannedRegistryPath(serverRoot))).getAsJsonObject();
+        JsonObject planned = activeRegistry.getAsJsonArray("plannedStructures").get(0).getAsJsonObject();
+        assertEquals("sig_anchor_test", planned.get("expectedStartSignature").getAsString());
+        assertEquals(4, planned.getAsJsonObject("lockedActualFootprint").get("maxX").getAsInt());
+        assertEquals(8, planned.getAsJsonObject("lockedCollisionEnvelope").get("maxX").getAsInt());
+        assertFalse(planned.has("safetyEnvelope"));
     }
 
     @Test

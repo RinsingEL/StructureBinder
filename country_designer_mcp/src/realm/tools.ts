@@ -546,7 +546,7 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "city_plan_d5",
-    description: "City D5: 基于 D4 StructureAnchorMap 生成 reservation mask 与预览；默认生成 v2 D3 patch 贴边 wall reservation corridor 并合入禁植被/禁自然结构 mask；road/build 仍为空占位，不修改世界。",
+    description: "City D5: 读取最终 D4 StructureAnchorMap，按 collisionEnvelope + maskMarginBlocks 生成轻量 reservation mask 预案；忽略旧 safetyEnvelope 字段；road/build 仍为空占位，不生成真实道路或修改世界。",
     inputSchema: {
       type: "object",
       properties: {
@@ -570,7 +570,7 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "city_execute_d5",
-    description: "City D5 Execute: 必须先有 D6 locked materialization plan；激活 locked reservation mask registry 与 worldgen-time planned structure registry；正式路径不主动执行 WorldEdit 道路/清理，避免提前生成目标 chunk。必须显式传 confirmWorldMutation=true；mask/worldgen hook 不可用会 hard fail。",
+    description: "City D5 Execute: 必须先有完整 D6 locked materialization plan；用 D6 locked collision/actualFootprint/signature 激活 reservation mask registry 与 worldgen-time planned structure registry；正式路径不主动执行 WorldEdit 道路/清理，避免提前生成目标 chunk。必须显式传 confirmWorldMutation=true；mask/worldgen hook 不可用会 hard fail。",
     inputSchema: {
       type: "object",
       properties: {
@@ -590,7 +590,7 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "city_plan_d6",
-    description: "City D6: 读取 D4/D5 结构 anchor 与 reservation mask，做 non-mutating configured-structure probe，锁定 actualFootprint、actualBBoxGroupKey、expectedStartSignature 与 lockedCollisionEnvelope，并用 locked bbox 做最终防撞；不要求 chunk loaded，不修改世界。",
+    description: "City D6: 读取最终 D4/D5 结构 anchor 与 reservation mask，做 non-mutating configured-structure probe，锁定 actualFootprint、pieceBoxes、lockedActualFootprint、lockedBBoxGroupKey、expectedStartSignature 与 lockedCollisionEnvelope，并用 locked bbox 做最终防撞；不要求 chunk loaded，不修改世界。",
     inputSchema: {
       type: "object",
       properties: {
@@ -698,7 +698,7 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "city_run_workflow",
-    description: "City 快速验收 workflow：串联 D3 -> envelope profiling -> D4 -> D5 -> D6 -> execute_d5 -> D7 ledger 检查，并可选规划/执行城墙；默认 D4 key_then_array：关键结构逐个定锚，再按 array_fill 阵列填充。",
+    description: "City 快速验收 workflow：串联 D3 -> envelope profiling -> final D4 -> plan_d5 轻量预案 -> D6 lock -> execute_d5 locked 激活 -> D7 ledger 检查，并可选规划/执行城墙；默认 D4 key_then_array：关键结构逐个定锚，再按 array_fill 阵列填充。",
     inputSchema: {
       type: "object",
       properties: {

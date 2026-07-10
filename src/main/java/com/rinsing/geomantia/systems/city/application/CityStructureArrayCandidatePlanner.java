@@ -166,6 +166,7 @@ public final class CityStructureArrayCandidatePlanner {
             CityStructureProfileCatalog.StructureProfile profile = profiles.get(structureId);
             JsonObject itemOptions = plan.deepCopy();
             itemOptions.addProperty("rotation", "NONE");
+            itemOptions.addProperty("compactArraySubmission", true);
             JsonObject accepted = null;
             BlockPoint acceptedPoint = null;
             CityStructureCandidateEnvelope.Estimate acceptedEstimate = null;

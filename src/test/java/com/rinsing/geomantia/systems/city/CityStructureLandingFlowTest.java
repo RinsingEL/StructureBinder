@@ -586,6 +586,34 @@ final class CityStructureLandingFlowTest {
     }
 
     @Test
+    void d4ArrayCandidatePlannerRejectsReviewRequiredVillageForCompactSubmission() throws Exception {
+        Fixture fixture = arrayFixture();
+        CityStructureEnvelopeProfiler.Result factsResult = new CityStructureEnvelopeProfiler()
+                .profile(fixture.baseDir(), fixture.terraSenseSource(), List.of("minecraft:village_plains"), 8,
+                        (profile, sampleIndex) -> CityStructureEnvelopeProfiler.EnvelopeSample.valid(sampleIndex,
+                                new BlockBounds(-32 - sampleIndex, -28, 36 + sampleIndex, 34),
+                                12 + sampleIndex,
+                                "village_config_hash",
+                                "pack_hash"));
+        Path factsPath = fixture.baseDir().resolve("village_structure_envelope_facts.json");
+        Files.writeString(factsPath, CityJson.GSON.toJson(factsResult.structureEnvelopeFacts()));
+        JsonObject plan = arrayCandidatePlan(fixture.review(), 1);
+        plan.add("structureIds", JsonParser.parseString("""
+                ["minecraft:village_plains"]
+                """).getAsJsonArray());
+
+        CityStructureArrayCandidatePlanner.Result result = new CityStructureArrayCandidatePlanner()
+                .plan(fixture.baseDir(), fixture.review(), fixture.terraSenseSource(),
+                        plan, CityStructureEnvelopeFacts.load(factsPath),
+                        new JsonObject(), new JsonArray());
+
+        assertFalse(result.asJson().get("ok").getAsBoolean());
+        assertTrue(result.arrayCandidateSet().getAsJsonArray("arrayCandidates").isEmpty());
+        assertTrue(result.arrayCandidateSet().getAsJsonArray("generationReports").toString()
+                .contains("D4_COMPACT_ARRAY_STRUCTURE_REQUIRES_REVIEW"));
+    }
+
+    @Test
     void d4OfficialProfileRequiresApprovedReviewState() throws Exception {
         Fixture fixture = fixture();
         Path profilePath = fixture.baseDir().resolve("StructureProfile.jsonl");
@@ -654,6 +682,9 @@ final class CityStructureLandingFlowTest {
                 .structureAnchorMap();
         JsonObject anchor = anchorMap.getAsJsonArray("anchors").get(0).getAsJsonObject();
         anchor.add("maskEnvelope", boundsJson(new BlockBounds(-999, -999, 999, 999)));
+        anchor.add("safetyEnvelope", boundsJson(new BlockBounds(-999, -999, 999, 999)));
+        anchor.add("estimatedSafetyEnvelope", boundsJson(new BlockBounds(-888, -888, 888, 888)));
+        anchor.add("groupSafetyEnvelope", boundsJson(new BlockBounds(-777, -777, 777, 777)));
 
         JsonObject mask = new CityReservationMaskPlanner()
                 .plan(fixture.context(), anchorMap)
@@ -664,6 +695,7 @@ final class CityStructureLandingFlowTest {
         JsonObject noVanilla = mask.getAsJsonArray("noVanillaStructureMask").get(0).getAsJsonObject();
         assertEquals(expand(collision, maskMarginBlocks), bounds(noVegetation.getAsJsonObject("blockBounds")));
         assertEquals(expand(collision, maskMarginBlocks), bounds(noVanilla.getAsJsonObject("blockBounds")));
+        assertFalse(mask.toString().contains("safetyEnvelope"));
 
         CityStructureMaterializationPlanner.Result d6 = new CityStructureMaterializationPlanner()
                 .planWorldgen(anchorMap, CityStructureMaterializationPlanner.ChunkStatusInspector.plannedOnly(),
@@ -671,6 +703,10 @@ final class CityStructureLandingFlowTest {
         JsonObject planned = d6.structureMaterializationPlan()
                 .getAsJsonArray("plannedWorldgenStructures").get(0).getAsJsonObject();
         assertEquals(maskMarginBlocks, planned.get("maskMarginBlocks").getAsInt());
+        assertTrue(planned.has("actualFootprint"));
+        assertTrue(planned.has("lockedActualFootprint"));
+        assertTrue(planned.has("pieceBoxes"));
+        assertTrue(planned.has("lockedCollisionEnvelope"));
         assertEquals(expand(bounds(planned.getAsJsonObject("lockedCollisionEnvelope")), maskMarginBlocks),
                 bounds(planned.getAsJsonObject("maskEnvelope")));
     }

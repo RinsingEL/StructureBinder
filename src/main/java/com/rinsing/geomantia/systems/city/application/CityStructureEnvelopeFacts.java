@@ -68,13 +68,16 @@ public final class CityStructureEnvelopeFacts {
     public record Fact(String structureId, String profileHash, String structureConfigHash, String sourcePackHash,
                        String generationConfigHash, int sampleCount, int validSampleCount, double invalidRatio,
                        BlockBounds p95Envelope, BlockBounds p99Envelope, BlockBounds maxObservedEnvelope,
-                       int pieceCountP50, int pieceCountP95, int pieceCountMax, List<BBoxGroup> bboxGroups) {
+                       int pieceCountP50, int pieceCountP95, int pieceCountMax,
+                       String stabilityClassification, boolean requiresReview, boolean allowCompactArray,
+                       List<BBoxGroup> bboxGroups) {
         public Fact {
             bboxGroups = List.copyOf(bboxGroups);
         }
 
         static Fact from(JsonObject obj) {
             JsonObject pieceCount = objectValue(obj, "pieceCount");
+            JsonObject placementRecommendation = objectValue(obj, "placementRecommendation");
             return new Fact(
                     stringValue(obj, "structureId", ""),
                     stringValue(obj, "profileHash", ""),
@@ -90,6 +93,9 @@ public final class CityStructureEnvelopeFacts {
                     intValue(pieceCount, "p50", 0),
                     intValue(pieceCount, "p95", 0),
                     intValue(pieceCount, "max", 0),
+                    stringValue(obj, "stabilityClassification", ""),
+                    booleanValue(obj, "requiresReview", false),
+                    booleanValue(placementRecommendation, "allowCompactArray", true),
                     parseBBoxGroups(obj));
         }
 
@@ -113,6 +119,13 @@ public final class CityStructureEnvelopeFacts {
             return bboxGroups.stream().filter(group -> group.groupKey().equals(groupKey)).findFirst();
         }
 
+        public boolean blocksCompactArray() {
+            return requiresReview
+                    || !allowCompactArray
+                    || "exception".equals(stabilityClassification)
+                    || "unstable".equals(stabilityClassification);
+        }
+
         public JsonObject asSummaryJson() {
             JsonObject obj = new JsonObject();
             obj.addProperty("structureId", structureId);
@@ -124,6 +137,9 @@ public final class CityStructureEnvelopeFacts {
             obj.addProperty("validSampleCount", validSampleCount);
             obj.addProperty("invalidRatio", invalidRatio);
             obj.addProperty("bboxGroupCount", bboxGroups.size());
+            obj.addProperty("stabilityClassification", stabilityClassification);
+            obj.addProperty("requiresReview", requiresReview);
+            obj.addProperty("allowCompactArray", allowCompactArray);
             obj.addProperty("nearFixedByFacts", nearFixedByFacts());
             obj.add("localEnvelopeP95", boundsJson(p95Envelope));
             obj.add("localEnvelopeP99", boundsJson(p99Envelope));
@@ -204,5 +220,9 @@ public final class CityStructureEnvelopeFacts {
 
     private static double doubleValue(JsonObject obj, String key, double defaultValue) {
         return obj != null && obj.has(key) && !obj.get(key).isJsonNull() ? obj.get(key).getAsDouble() : defaultValue;
+    }
+
+    private static boolean booleanValue(JsonObject obj, String key, boolean defaultValue) {
+        return obj != null && obj.has(key) && !obj.get(key).isJsonNull() ? obj.get(key).getAsBoolean() : defaultValue;
     }
 }

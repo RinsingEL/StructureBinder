@@ -35,3 +35,7 @@ country_designer_mcp/*
 !country_designer_mcp/tsconfig.json
 !country_designer_mcp/src/
 !country_designer_mcp/src/**
+
+# local acceptance artifacts
+run-data/
+run_logs/
