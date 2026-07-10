@@ -30,6 +30,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityStructureArrayLayoutLoopPlannerTest {
@@ -253,6 +254,188 @@ class CityStructureArrayLayoutLoopPlannerTest {
     }
 
     @Test
+    void v04ExpansionCandidatesDoNotMutateStateUntilWholeCandidateIsSelected() throws Exception {
+        Fixture fixture = fixture();
+        JsonObject occupiedMap = JsonParser.parseString("""
+                {
+                  "anchors": [
+                    {"anchorId":"manor_core", "collisionEnvelope":{"minX":-48,"minZ":-48,"maxX":48,"maxZ":48}}
+                  ]
+                }
+                """).getAsJsonObject();
+        CityStructureArrayLayoutLoopPlanner planner = new CityStructureArrayLayoutLoopPlanner();
+        CityStructureArrayLayoutLoopPlanner.CreateResult created = planner.create(
+                fixture.baseDir(), fixture.review(), fixture.terraSenseSource(), arrayLayoutPlanV04(),
+                CityStructureEnvelopeFacts.empty(), new JsonObject(), occupiedMap);
+        JsonObject request = expansionRequest(fixture.review());
+
+        CityStructureArrayLayoutLoopPlanner.ExpansionSpaceResult space = planner.queryExpansionSpace(
+                fixture.review(), created.loopState(), request);
+        assertEquals("focus_nearby_expansion", space.expansionSpace().get("searchScope").getAsString());
+        assertTrue(space.expansionSpace().getAsJsonArray("nearbyPatches").size() > 0);
+        assertTrue(space.expansionSpace().get("selectedRemainingCapacity").getAsInt() > 0);
+
+        CityStructureArrayLayoutLoopPlanner.ExpansionCandidateSetResult planned = planner.planExpansionCandidates(
+                fixture.baseDir(), fixture.review(), fixture.terraSenseSource(), created.loopState(), request,
+                CityStructureEnvelopeFacts.empty());
+        assertEquals(3, planned.candidateSet().getAsJsonArray("arrayCandidates").size());
+        assertEquals(0, created.loopState().getAsJsonArray("arrayAnchors").size(),
+                "candidate generation must not commit anchors");
+        assertEquals(0, created.loopState().get("iteration").getAsInt(),
+                "candidate generation must not advance the loop state");
+        for (JsonElement candidateElem : planned.candidateSet().getAsJsonArray("arrayCandidates")) {
+            for (JsonElement itemElem : candidateElem.getAsJsonObject().getAsJsonArray("items")) {
+                BlockBounds collision = bounds(itemElem.getAsJsonObject().getAsJsonObject("estimatedCollisionEnvelope"));
+                assertTrue(collision.minX() > 48, "east expansion must not refill the manor occupied side");
+            }
+        }
+
+        assertThrows(IllegalArgumentException.class, () -> planner.selectExpansionCandidate(
+                fixture.review(), created.loopState(), planned.candidateSet(), "", false, ""));
+        String candidateId = planned.candidateSet().getAsJsonArray("arrayCandidates").get(0)
+                .getAsJsonObject().get("candidateId").getAsString();
+        CityStructureArrayLayoutLoopPlanner.ExpansionSelectionResult selected = planner.selectExpansionCandidate(
+                fixture.review(), created.loopState(), planned.candidateSet(), candidateId, false, "AI 选择东侧住宅簇");
+        assertEquals(1, selected.loopState().get("iteration").getAsInt());
+        assertEquals(2, selected.loopState().getAsJsonArray("arrayAnchors").size());
+        assertEquals(1, selected.loopState().getAsJsonObject("functionalArrayZones")
+                .getAsJsonArray("arrayZones").size());
+        JsonObject trace = selected.loopState().getAsJsonObject("executionTrace")
+                .getAsJsonArray("items").get(0).getAsJsonObject();
+        assertEquals("ai_or_human_selected", trace.get("decisionSource").getAsString());
+        assertTrue(selected.loopState().has("remainingExpansionSpace"));
+
+        CityStructureArrayLayoutLoopPlanner.ExpansionSelectionResult autoSelected = planner.selectExpansionCandidate(
+                fixture.review(), created.loopState(), planned.candidateSet(), "", true, "");
+        JsonObject autoTrace = autoSelected.loopState().getAsJsonObject("executionTrace")
+                .getAsJsonArray("items").get(0).getAsJsonObject();
+        assertEquals("auto_highest_score_explicit", autoTrace.get("decisionSource").getAsString());
+    }
+
+    @Test
+    void v04OutwardCompositeKeepsParentSubZonesAndHalfRingChildArray() throws Exception {
+        Fixture fixture = fixture();
+        JsonObject occupiedMap = JsonParser.parseString("""
+                {"anchors":[{"anchorId":"manor_core","collisionEnvelope":{"minX":-48,"minZ":-48,"maxX":48,"maxZ":48}}]}
+                """).getAsJsonObject();
+        CityStructureArrayLayoutLoopPlanner planner = new CityStructureArrayLayoutLoopPlanner();
+        CityStructureArrayLayoutLoopPlanner.CreateResult created = planner.create(
+                fixture.baseDir(), fixture.review(), fixture.terraSenseSource(), arrayLayoutPlanV04(),
+                CityStructureEnvelopeFacts.empty(), new JsonObject(), occupiedMap);
+        JsonObject request = expansionRequest(fixture.review());
+        request.add("nextArrayLayoutPlanItem", outwardCompositeItem());
+
+        CityStructureArrayLayoutLoopPlanner.ExpansionCandidateSetResult planned = planner.planExpansionCandidates(
+                fixture.baseDir(), fixture.review(), fixture.terraSenseSource(), created.loopState(), request,
+                CityStructureEnvelopeFacts.empty());
+        JsonObject firstCandidate = planned.candidateSet().getAsJsonArray("arrayCandidates").get(0).getAsJsonObject();
+        JsonArray zones = firstCandidate.getAsJsonArray("arrayZones");
+        assertEquals(3, zones.size());
+        assertEquals("parent_composite", zones.get(0).getAsJsonObject().get("zoneKind").getAsString());
+        assertEquals("plaza_ring", zones.get(1).getAsJsonObject().get("plannerType").getAsString());
+        assertEquals("child_array", zones.get(1).getAsJsonObject().get("zoneKind").getAsString());
+        for (JsonElement itemElem : firstCandidate.getAsJsonArray("items")) {
+            assertTrue(bounds(itemElem.getAsJsonObject().getAsJsonObject("estimatedCollisionEnvelope")).minX() > 48);
+        }
+
+        CityStructureArrayLayoutLoopPlanner.ExpansionSelectionResult selected = planner.selectExpansionCandidate(
+                fixture.review(), created.loopState(), planned.candidateSet(),
+                firstCandidate.get("candidateId").getAsString(), false, "庄园东侧半环住宅簇");
+        assertEquals(3, selected.loopState().getAsJsonObject("functionalArrayZones")
+                .getAsJsonArray("arrayZones").size());
+        assertNoOccupiedOverlap(selected.loopState().getAsJsonArray("occupiedEnvelopes"));
+    }
+
+    @Test
+    void v04OutwardGuideLineDualSideKeepsCandidatesTentativeAndCommitsOnlyTheSelectedWholeArray() throws Exception {
+        Fixture fixture = fixture();
+        JsonObject occupiedMap = JsonParser.parseString("""
+                {"anchors":[{"anchorId":"manor_core","collisionEnvelope":{"minX":-48,"minZ":-48,"maxX":48,"maxZ":48}}]}
+                """).getAsJsonObject();
+        CityStructureArrayLayoutLoopPlanner planner = new CityStructureArrayLayoutLoopPlanner();
+        CityStructureArrayLayoutLoopPlanner.CreateResult created = planner.create(
+                fixture.baseDir(), fixture.review(), fixture.terraSenseSource(), arrayLayoutPlanV04(),
+                CityStructureEnvelopeFacts.empty(), new JsonObject(), occupiedMap);
+        JsonObject request = expansionRequest(fixture.review());
+        JsonObject item = request.getAsJsonObject("nextArrayLayoutPlanItem");
+        item.addProperty("arrayId", "east_dual_side_theme");
+        item.addProperty("plannerType", "guide_line_dual_side");
+
+        CityStructureArrayLayoutLoopPlanner.ExpansionCandidateSetResult planned = planner.planExpansionCandidates(
+                fixture.baseDir(), fixture.review(), fixture.terraSenseSource(), created.loopState(), request,
+                CityStructureEnvelopeFacts.empty());
+        assertEquals(3, planned.candidateSet().getAsJsonArray("arrayCandidates").size());
+        assertEquals(0, created.loopState().get("iteration").getAsInt());
+        assertEquals(0, created.loopState().getAsJsonArray("arrayAnchors").size());
+        assertExpansionCandidatesAvoidManor(planned.candidateSet(), new BlockBounds(-48, -48, 48, 48));
+
+        JsonObject candidate = planned.candidateSet().getAsJsonArray("arrayCandidates").get(0).getAsJsonObject();
+        CityStructureArrayLayoutLoopPlanner.ExpansionSelectionResult selected = planner.selectExpansionCandidate(
+                fixture.review(), created.loopState(), planned.candidateSet(), candidate.get("candidateId").getAsString(),
+                false, "AI 选择东侧沿线两侧布局");
+        assertEquals(1, selected.loopState().get("iteration").getAsInt());
+        assertEquals(2, selected.loopState().getAsJsonArray("arrayAnchors").size());
+        assertNoOccupiedOverlap(selected.loopState().getAsJsonArray("occupiedEnvelopes"));
+    }
+
+    @Test
+    void v04GlobalNewFunctionalAreaSearchRequiresExplicitPatchSelectionAndHardFailsWhenNoCapacity() throws Exception {
+        Fixture fixture = fixture();
+        CityLandformReviewPackage globalReview = reviewWithGlobalPatches(fixture.review());
+        CityStructureArrayLayoutLoopPlanner planner = new CityStructureArrayLayoutLoopPlanner();
+        CityStructureArrayLayoutLoopPlanner.CreateResult created = planner.create(
+                fixture.baseDir(), globalReview, fixture.terraSenseSource(), arrayLayoutPlanV04(),
+                CityStructureEnvelopeFacts.empty(), new JsonObject(), new JsonObject());
+        JsonObject search = globalExpansionRequest();
+
+        CityStructureArrayLayoutLoopPlanner.ExpansionSpaceResult space = planner.queryExpansionSpace(
+                globalReview, created.loopState(), search);
+        JsonObject searchResult = space.expansionSpace();
+        assertEquals("explicit_global_new_functional_area", searchResult.get("searchScope").getAsString());
+        assertTrue(searchResult.get("selectedGlobalPatchRequired").getAsBoolean());
+        JsonArray globalCandidates = searchResult.getAsJsonArray("globalPatchCandidates");
+        assertEquals("global_large", globalCandidates.get(0).getAsJsonObject().get("patchRef").getAsString());
+        assertTrue(globalCandidates.get(0).getAsJsonObject().get("available").getAsBoolean());
+        assertTrue(globalCandidates.get(0).getAsJsonObject().has("expansionEntryPoint"));
+
+        JsonObject unselectedPlan = search.deepCopy();
+        unselectedPlan.add("nextArrayLayoutPlanItem", globalCompoundItem());
+        IllegalArgumentException selectionRequired = assertThrows(IllegalArgumentException.class,
+                () -> planner.planExpansionCandidates(fixture.baseDir(), globalReview, fixture.terraSenseSource(),
+                        created.loopState(), unselectedPlan, CityStructureEnvelopeFacts.empty()));
+        assertTrue(selectionRequired.getMessage().contains("D4_ARRAY_LAYOUT_GLOBAL_PATCH_SELECTION_REQUIRED"));
+
+        JsonObject selectedPlan = unselectedPlan.deepCopy();
+        selectedPlan.addProperty("selectedGlobalPatchRef", "global_large");
+        CityStructureArrayLayoutLoopPlanner.ExpansionCandidateSetResult planned = planner.planExpansionCandidates(
+                fixture.baseDir(), globalReview, fixture.terraSenseSource(), created.loopState(), selectedPlan,
+                CityStructureEnvelopeFacts.empty());
+        assertEquals(3, planned.candidateSet().getAsJsonArray("arrayCandidates").size());
+        assertEquals(0, created.loopState().get("iteration").getAsInt(),
+                "global candidate planning must remain tentative");
+        JsonObject selectedCandidate = planned.candidateSet().getAsJsonArray("arrayCandidates").get(0).getAsJsonObject();
+        assertTrue(selectedCandidate.get("newFunctionalArea").getAsBoolean());
+        assertEquals("global_large", selectedCandidate.get("selectedGlobalPatchRef").getAsString());
+
+        CityStructureArrayLayoutLoopPlanner.ExpansionSelectionResult committed = planner.selectExpansionCandidate(
+                globalReview, created.loopState(), planned.candidateSet(),
+                selectedCandidate.get("candidateId").getAsString(), false, "AI 选择新功能区 patch");
+        assertEquals(1, committed.loopState().get("iteration").getAsInt());
+        assertNoOccupiedOverlap(committed.loopState().getAsJsonArray("occupiedEnvelopes"));
+
+        JsonObject fullyOccupied = JsonParser.parseString("""
+                {"anchors":[{"anchorId":"blocked_patch","collisionEnvelope":{"minX":-1000,"minZ":-1000,"maxX":1000,"maxZ":1000}}]}
+                """).getAsJsonObject();
+        CityStructureArrayLayoutLoopPlanner.CreateResult blocked = planner.create(
+                fixture.baseDir(), globalReview, fixture.terraSenseSource(), arrayLayoutPlanV04(),
+                CityStructureEnvelopeFacts.empty(), new JsonObject(), fullyOccupied);
+        IllegalArgumentException noCapacity = assertThrows(IllegalArgumentException.class,
+                () -> planner.planExpansionCandidates(fixture.baseDir(), globalReview, fixture.terraSenseSource(),
+                        blocked.loopState(), selectedPlan, CityStructureEnvelopeFacts.empty()));
+        assertTrue(noCapacity.getMessage().contains("D4_ARRAY_LAYOUT_GLOBAL_PATCH_NO_CAPACITY"));
+    }
+
+    @Test
     void requiredItemFailureHardBlocksButDoesNotThrow() throws Exception {
         Fixture fixture = fixture();
         JsonObject occupiedMap = JsonParser.parseString("""
@@ -449,6 +632,16 @@ class CityStructureArrayLayoutLoopPlannerTest {
         }
     }
 
+    private static void assertExpansionCandidatesAvoidManor(JsonObject candidateSet, BlockBounds manor) {
+        for (JsonElement candidateElement : candidateSet.getAsJsonArray("arrayCandidates")) {
+            for (JsonElement itemElement : candidateElement.getAsJsonObject().getAsJsonArray("items")) {
+                BlockBounds collision = bounds(itemElement.getAsJsonObject()
+                        .getAsJsonObject("estimatedCollisionEnvelope"));
+                assertFalse(collision.overlaps(manor), "expansion collision must not overlap base occupied");
+            }
+        }
+    }
+
     private static JsonObject arrayLayoutPlan() {
         return JsonParser.parseString("""
                 {
@@ -470,6 +663,91 @@ class CityStructureArrayLayoutLoopPlannerTest {
                   "cityScale": "town",
                   "maxArrayPlans": 8,
                   "layoutPlans": []
+                }
+                """).getAsJsonObject();
+    }
+
+    private static JsonObject arrayLayoutPlanV04() {
+        return JsonParser.parseString("""
+                {
+                  "schemaVersion": "city_d4_array_layout_plan.v0.4",
+                  "planningMode": "array_candidate_selection_loop_v0_4",
+                  "cityId": "city_test",
+                  "cityScale": "town",
+                  "maxArrayPlans": 8,
+                  "layoutPlans": []
+                }
+                """).getAsJsonObject();
+    }
+
+    private static JsonObject expansionRequest(CityLandformReviewPackage review) {
+        LandformPatchSummary first = review.landformPatches().get(0);
+        return JsonParser.parseString("""
+                {
+                  "focusRef": {"anchorId": "manor_core"},
+                  "direction": "east",
+                  "targetPatchRef": "%s",
+                  "candidateCount": 3,
+                  "minCandidateCount": 3,
+                  "nextArrayLayoutPlanItem": {
+                    "arrayId": "east_residential_theme",
+                    "plannerType": "compound_cluster",
+                    "role": "residential",
+                    "fillPool": [{"structureId": "minecraft:desert_pyramid", "weight": 1}],
+                    "countPolicy": {"minCount": 2, "targetCount": 2, "maxCount": 2},
+                    "variantSelectionMode": "round_robin"
+                  }
+                }
+                """.formatted(first.landformPatchId())).getAsJsonObject();
+    }
+
+    private static JsonObject globalExpansionRequest() {
+        return JsonParser.parseString("""
+                {
+                  "newFunctionalArea": true,
+                  "candidateCount": 3,
+                  "minCandidateCount": 3
+                }
+                """).getAsJsonObject();
+    }
+
+    private static JsonObject globalCompoundItem() {
+        return JsonParser.parseString("""
+                {
+                  "arrayId": "global_residential_theme",
+                  "plannerType": "compound_cluster",
+                  "role": "residential",
+                  "fillPool": [{"structureId": "minecraft:desert_pyramid", "weight": 1}],
+                  "countPolicy": {"minCount": 2, "targetCount": 2, "maxCount": 2},
+                  "variantSelectionMode": "round_robin"
+                }
+                """).getAsJsonObject();
+    }
+
+    private static JsonObject outwardCompositeItem() {
+        return JsonParser.parseString("""
+                {
+                  "arrayId": "manor_outward_composite",
+                  "plannerType": "composite_array",
+                  "subZonePolicy": "grid",
+                  "childLayoutPlans": [
+                    {
+                      "arrayId": "outward_half_ring",
+                      "plannerType": "plaza_ring",
+                      "targetSubZoneId": "subzone_01",
+                      "fillPool": [{"structureId": "minecraft:desert_pyramid", "weight": 1}],
+                      "countPolicy": {"minCount": 2, "targetCount": 2, "maxCount": 2},
+                      "variantSelectionMode": "round_robin"
+                    },
+                    {
+                      "arrayId": "outward_residential_clusters",
+                      "plannerType": "compound_cluster",
+                      "targetSubZoneId": "subzone_02",
+                      "fillPool": [{"structureId": "minecraft:jungle_pyramid", "weight": 1}],
+                      "countPolicy": {"minCount": 2, "targetCount": 2, "maxCount": 2},
+                      "variantSelectionMode": "round_robin"
+                    }
+                  ]
                 }
                 """).getAsJsonObject();
     }
@@ -598,6 +876,19 @@ class CityStructureArrayLayoutLoopPlannerTest {
         patches.set(0, patches.get(0).withMemberCells(cells));
         return new CityLandformReviewPackage(review.schemaVersion(), review.cityId(), review.grid(),
                 review.targetScale(), review.reviewMapImage(), review.legend(), patches,
+                review.planningContext(), review.aiPromptContext(), review.debugRefs());
+    }
+
+    private static CityLandformReviewPackage reviewWithGlobalPatches(CityLandformReviewPackage review) {
+        LandformPatchSummary template = review.landformPatches().get(0);
+        return new CityLandformReviewPackage(review.schemaVersion(), review.cityId(), review.grid(),
+                review.targetScale(), review.reviewMapImage(), review.legend(), List.of(
+                LandformPatchSummary.fromGisPatch(
+                        patch("global_large", LandformType.PLAIN, -250, -250, -50, -50),
+                        "global_large", "global_large", template.areaClass(), List.of()),
+                LandformPatchSummary.fromGisPatch(
+                        patch("global_small", LandformType.PLAIN, 80, 80, 120, 120),
+                        "global_small", "global_small", template.areaClass(), List.of())),
                 review.planningContext(), review.aiPromptContext(), review.debugRefs());
     }
 

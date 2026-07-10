@@ -77,6 +77,31 @@ export const realmHandlers: Record<string, ToolHandler> = {
     return textResult(JSON.stringify(res.data, null, 2));
   },
 
+  async city_create_d4_array_layout_loop(args) {
+    const res = await postJson(`${MC_API_URL}/realm/city/create_d4_array_layout_loop`, payload(args), TIMEOUTS.quick);
+    return textResult(JSON.stringify(res.data, null, 2));
+  },
+
+  async city_query_d4_array_expansion_space(args) {
+    const res = await postJson(`${MC_API_URL}/realm/city/query_d4_array_expansion_space`, payload(args), TIMEOUTS.quick);
+    return textResult(JSON.stringify(res.data, null, 2));
+  },
+
+  async city_plan_d4_array_expansion_candidates(args) {
+    const res = await postJson(`${MC_API_URL}/realm/city/plan_d4_array_expansion_candidates`, payload(args), TIMEOUTS.quick);
+    return textResult(JSON.stringify(res.data, null, 2));
+  },
+
+  async city_select_d4_array_expansion_candidate(args) {
+    const res = await postJson(`${MC_API_URL}/realm/city/select_d4_array_expansion_candidate`, payload(args), TIMEOUTS.quick);
+    return textResult(JSON.stringify(res.data, null, 2));
+  },
+
+  async city_finalize_d4_array_layout_loop(args) {
+    const res = await postJson(`${MC_API_URL}/realm/city/finalize_d4_array_layout_loop`, payload(args), TIMEOUTS.quick);
+    return textResult(JSON.stringify(res.data, null, 2));
+  },
+
   async city_create_d4_design_loop_state(args) {
     const res = await postJson(`${MC_API_URL}/realm/city/create_d4_design_loop_state`, payload(args), TIMEOUTS.quick);
     return textResult(JSON.stringify(res.data, null, 2));

@@ -517,6 +517,72 @@ final class CityPlanningEndpointHandler {
         return response;
     }
 
+    static JsonObject handleQueryD4ArrayExpansionSpace(Path debugRoot, String runId, String citySeedId,
+                                                       String stateId,
+                                                       JsonObject expansionRequest,
+                                                       JsonObject arrayLayoutLoopStateSource) throws IOException {
+        Path runDir = debugRoot.resolve(runId);
+        loadCitySeed(runDir, runId, citySeedId);
+        CityLandformReviewPackage reviewPackage = loadD3Package(debugRoot, runDir, citySeedId);
+        JsonObject currentState = loadArrayLayoutLoopState(debugRoot, runDir, citySeedId, arrayLayoutLoopStateSource);
+        requireCurrentArrayLayoutState(stateId, currentState);
+        CityStructureArrayLayoutLoopPlanner.ExpansionSpaceResult result = new CityStructureArrayLayoutLoopPlanner()
+                .queryExpansionSpace(reviewPackage, currentState, expansionRequest);
+        JsonObject response = result.asJson();
+        response.add("artifacts", writeD4ArrayExpansionSpaceArtifact(debugRoot, runDir, citySeedId,
+                result.expansionSpace()));
+        return response;
+    }
+
+    static JsonObject handlePlanD4ArrayExpansionCandidates(Path debugRoot, String runId, String citySeedId,
+                                                            JsonObject terraSenseProfileSource,
+                                                            String stateId,
+                                                            JsonObject expansionRequest,
+                                                            JsonObject arrayLayoutLoopStateSource,
+                                                            JsonObject structureEnvelopeFactsSource) throws IOException {
+        Path runDir = debugRoot.resolve(runId);
+        loadCitySeed(runDir, runId, citySeedId);
+        CityLandformReviewPackage reviewPackage = loadD3Package(debugRoot, runDir, citySeedId);
+        JsonObject currentState = loadArrayLayoutLoopState(debugRoot, runDir, citySeedId, arrayLayoutLoopStateSource);
+        requireCurrentArrayLayoutState(stateId, currentState);
+        Path envelopeFactsPath = envelopeFactsPath(runDir, citySeedId, structureEnvelopeFactsSource);
+        CityStructureEnvelopeFacts envelopeFacts = CityStructureEnvelopeFacts.load(envelopeFactsPath);
+        CityStructureArrayLayoutLoopPlanner.ExpansionCandidateSetResult result =
+                new CityStructureArrayLayoutLoopPlanner().planExpansionCandidates(runDir, reviewPackage,
+                        terraSenseProfileSource, currentState, expansionRequest, envelopeFacts);
+        JsonObject response = result.asJson();
+        response.add("artifacts", writeD4ArrayExpansionCandidateArtifacts(debugRoot, runDir, citySeedId,
+                result.candidateSet(), reviewPackage, envelopeFactsPath));
+        return response;
+    }
+
+    static JsonObject handleSelectD4ArrayExpansionCandidate(Path debugRoot, String runId, String citySeedId,
+                                                             String stateId,
+                                                             String candidateId,
+                                                             boolean autoSelectHighestScore,
+                                                             String selectionReason,
+                                                             JsonObject arrayExpansionCandidateSetSource,
+                                                             JsonObject arrayLayoutLoopStateSource,
+                                                             JsonObject structureEnvelopeFactsSource) throws IOException {
+        Path runDir = debugRoot.resolve(runId);
+        loadCitySeed(runDir, runId, citySeedId);
+        CityLandformReviewPackage reviewPackage = loadD3Package(debugRoot, runDir, citySeedId);
+        JsonObject currentState = loadArrayLayoutLoopState(debugRoot, runDir, citySeedId, arrayLayoutLoopStateSource);
+        requireCurrentArrayLayoutState(stateId, currentState);
+        JsonObject candidateSet = loadD4ArrayExpansionCandidateSet(debugRoot, runDir, citySeedId,
+                arrayExpansionCandidateSetSource);
+        CityStructureArrayLayoutLoopPlanner.ExpansionSelectionResult result =
+                new CityStructureArrayLayoutLoopPlanner().selectExpansionCandidate(reviewPackage, currentState,
+                        candidateSet, candidateId, autoSelectHighestScore, selectionReason);
+        JsonObject response = result.asJson();
+        Path envelopeFactsPath = envelopeFactsPath(runDir, citySeedId, structureEnvelopeFactsSource);
+        JsonObject artifacts = writeD4ArrayLayoutLoopArtifacts(debugRoot, runDir, citySeedId,
+                result.loopState(), reviewPackage, envelopeFactsPath);
+        artifacts.add("arrayExpansionCandidates", d4ArrayExpansionCandidateArtifactRefs(debugRoot, runDir, citySeedId));
+        response.add("artifacts", artifacts);
+        return response;
+    }
+
     static JsonObject handleFinalizeD4ArrayLayoutLoop(Path debugRoot, String runId, String citySeedId,
                                                       JsonObject terraSenseProfileSource,
                                                       String stateId,
@@ -2530,6 +2596,58 @@ final class CityPlanningEndpointHandler {
         return artifacts;
     }
 
+    private static JsonObject writeD4ArrayExpansionSpaceArtifact(Path debugRoot,
+                                                                   Path runDir,
+                                                                   String citySeedId,
+                                                                   JsonObject expansionSpace) throws IOException {
+        Path outputDirectory = d4ArrayLayoutDir(runDir, citySeedId);
+        Files.createDirectories(outputDirectory);
+        Path spacePath = outputDirectory.resolve("d4_array_expansion_space.json");
+        Files.writeString(spacePath, CityJson.GSON.toJson(expansionSpace));
+        JsonObject artifacts = new JsonObject();
+        artifacts.addProperty("arrayExpansionSpace", debugRef(debugRoot, spacePath));
+        return artifacts;
+    }
+
+    private static JsonObject writeD4ArrayExpansionCandidateArtifacts(Path debugRoot,
+                                                                        Path runDir,
+                                                                        String citySeedId,
+                                                                        JsonObject candidateSet,
+                                                                        CityLandformReviewPackage reviewPackage,
+                                                                        Path envelopeFactsPath) throws IOException {
+        Path outputDirectory = d4ArrayLayoutDir(runDir, citySeedId);
+        Files.createDirectories(outputDirectory);
+        Path setPath = d4ArrayExpansionCandidateSetPath(runDir, citySeedId, null);
+        Path spacePath = outputDirectory.resolve("d4_array_expansion_space.json");
+        Path previewPath = new CityStructureLandingPreviewRenderer()
+                .renderD4ArrayExpansionCandidates(candidateSet, reviewPackage, outputDirectory);
+        Path qualityPath = outputDirectory.resolve("d4_array_expansion_candidate_quality_report.json");
+        Files.writeString(setPath, CityJson.GSON.toJson(candidateSet));
+        Files.writeString(spacePath, CityJson.GSON.toJson(object(candidateSet, "expansionSpace")));
+        Files.writeString(qualityPath, CityJson.GSON.toJson(object(candidateSet, "qualityReport")));
+        JsonObject artifacts = d4ArrayExpansionCandidateArtifactRefs(debugRoot, runDir, citySeedId);
+        artifacts.addProperty("arrayExpansionCandidatePreview", debugRef(debugRoot, previewPath));
+        artifacts.addProperty("arrayExpansionCandidateQualityReport", debugRef(debugRoot, qualityPath));
+        if (envelopeFactsPath != null && Files.exists(envelopeFactsPath)) {
+            artifacts.addProperty("sourceStructureEnvelopeFacts", debugRef(debugRoot, envelopeFactsPath));
+        }
+        return artifacts;
+    }
+
+    private static JsonObject d4ArrayExpansionCandidateArtifactRefs(Path debugRoot, Path runDir, String citySeedId) {
+        Path outputDirectory = d4ArrayLayoutDir(runDir, citySeedId);
+        JsonObject artifacts = new JsonObject();
+        addArtifactIfExists(debugRoot, artifacts, "arrayExpansionCandidateSet",
+                outputDirectory.resolve("d4_array_expansion_candidate_set.json"));
+        addArtifactIfExists(debugRoot, artifacts, "arrayExpansionSpace",
+                outputDirectory.resolve("d4_array_expansion_space.json"));
+        addArtifactIfExists(debugRoot, artifacts, "arrayExpansionCandidatePreview",
+                outputDirectory.resolve("d4_array_expansion_candidates.png"));
+        addArtifactIfExists(debugRoot, artifacts, "arrayExpansionCandidateQualityReport",
+                outputDirectory.resolve("d4_array_expansion_candidate_quality_report.json"));
+        return artifacts;
+    }
+
     private static JsonObject writeD4DesignLoopArtifacts(Path debugRoot,
                                                          Path runDir,
                                                          String citySeedId,
@@ -3646,6 +3764,16 @@ final class CityPlanningEndpointHandler {
         return JsonParser.parseString(Files.readString(path)).getAsJsonObject();
     }
 
+    private static JsonObject loadD4ArrayExpansionCandidateSet(Path debugRoot, Path runDir, String citySeedId,
+                                                                 JsonObject source) throws IOException {
+        Path path = d4ArrayExpansionCandidateSetPath(runDir, citySeedId, source);
+        if (!Files.exists(path)) {
+            throw new IllegalArgumentException("D4_ARRAY_LAYOUT_CANDIDATE_SET_NOT_FOUND: "
+                    + debugRef(debugRoot, path));
+        }
+        return JsonParser.parseString(Files.readString(path)).getAsJsonObject();
+    }
+
     private static JsonObject loadD4DesignLoopState(Path debugRoot, Path runDir, String citySeedId,
                                                     JsonObject source) throws IOException {
         Path path = d4DesignLoopStatePath(runDir, citySeedId, source);
@@ -3671,6 +3799,28 @@ final class CityPlanningEndpointHandler {
             }
         }
         return d4ArrayLayoutDir(runDir, citySeedId).resolve("d4_array_layout_loop_state.json");
+    }
+
+    private static Path d4ArrayExpansionCandidateSetPath(Path runDir, String citySeedId, JsonObject source) {
+        if (source != null) {
+            String raw = stringValue(source, "arrayExpansionCandidateSetPath");
+            if (raw.isBlank()) {
+                raw = stringValue(source, "candidateSetPath");
+            }
+            if (!raw.isBlank()) {
+                Path path = Path.of(raw);
+                return path.isAbsolute() ? path.normalize() : runDir.resolve(path).normalize();
+            }
+        }
+        return d4ArrayLayoutDir(runDir, citySeedId).resolve("d4_array_expansion_candidate_set.json");
+    }
+
+    private static void requireCurrentArrayLayoutState(String requestedStateId, JsonObject currentState) {
+        String currentStateId = stringValue(currentState, "stateId");
+        if (requestedStateId != null && !requestedStateId.isBlank() && !requestedStateId.equals(currentStateId)) {
+            throw new IllegalArgumentException("D4_ARRAY_LAYOUT_LOOP_STATE_STALE: requested " + requestedStateId
+                    + " but current state is " + currentStateId + ".");
+        }
     }
 
     private static Path d4DesignLoopStatePath(Path runDir, String citySeedId, JsonObject source) {

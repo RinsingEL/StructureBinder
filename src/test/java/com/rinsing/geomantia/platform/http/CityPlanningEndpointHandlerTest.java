@@ -331,6 +331,105 @@ class CityPlanningEndpointHandlerTest {
     }
 
     @Test
+    void handleD4ArrayExpansionCandidatesStayTentativeUntilSelected() throws Exception {
+        Path debugRoot = Files.createTempDirectory("city-d4-array-expansion-test");
+        String runId = "run_d4_array_expansion";
+        String citySeedId = "city_test";
+        Path runDir = debugRoot.resolve(runId);
+        Files.createDirectories(runDir);
+        Files.writeString(runDir.resolve("city_seed_registry.json"), """
+                {"citySeeds":[{"citySeedId":"city_test","realmId":"realm_test","role":"town",
+                "theoreticalScale":"town","anchorBlock":{"x":0,"z":0},"planningRadiusCells":128,
+                "candidateId":"candidate_test"}]}
+                """);
+        CityPlanningConfig config = CityPlanningConfig.defaults();
+        CitySiteContext context = new CitySiteContextBuilder(config).build(
+                "city_test", "realm_test", "overworld", "city_test", "candidate_test", 0, 0,
+                "town", "town", 128, 4, null);
+        CityLandformReviewPackage review = new CityLandformReviewBuilder(config).build(context, List.of(
+                patch("plain_expansion", LandformType.PLAIN, -260, -260, 260, 260)));
+        Path d3Dir = runDir.resolve("city_d3_city_test");
+        Files.createDirectories(d3Dir);
+        Files.writeString(d3Dir.resolve("city_landform_review_package.json"), CityJson.GSON.toJson(review.asJson()));
+        Path catalogPath = runDir.resolve("debug_structure_profile_catalog.json");
+        Files.writeString(catalogPath, debugStructureCatalog());
+        Path occupiedMapPath = runDir.resolve("manor_occupied_anchor_map.json");
+        Files.writeString(occupiedMapPath, """
+                {"anchors":[{"anchorId":"manor_core","collisionEnvelope":{"minX":-48,"minZ":-48,"maxX":48,"maxZ":48}}]}
+                """);
+        JsonObject occupiedSource = new JsonObject();
+        occupiedSource.addProperty("anchorMapPath", occupiedMapPath.toString());
+
+        JsonObject created = CityPlanningEndpointHandler.handleCreateD4ArrayLayoutLoop(
+                debugRoot, runId, citySeedId, terraSenseSource(catalogPath), arrayLayoutPlanV04(),
+                null, null, occupiedSource);
+        String stateId = created.getAsJsonObject("arrayLayoutLoopState").get("stateId").getAsString();
+        JsonObject request = arrayExpansionRequest(review);
+
+        JsonObject space = CityPlanningEndpointHandler.handleQueryD4ArrayExpansionSpace(
+                debugRoot, runId, citySeedId, stateId, request, null);
+        assertTrue(space.get("ok").getAsBoolean());
+        assertTrue(Files.exists(debugRoot.resolve(space.getAsJsonObject("artifacts")
+                .get("arrayExpansionSpace").getAsString())));
+
+        JsonObject globalRequest = JsonParser.parseString("""
+                {
+                  "newFunctionalArea": true,
+                  "candidateCount": 3,
+                  "minCandidateCount": 3,
+                  "nextArrayLayoutPlanItem": {
+                    "arrayId": "global_residential_theme",
+                    "plannerType": "compound_cluster",
+                    "role": "residential",
+                    "fillPool": [{"structureId": "minecraft:desert_pyramid", "weight": 1}],
+                    "countPolicy": {"minCount": 2, "targetCount": 2, "maxCount": 2},
+                    "variantSelectionMode": "round_robin"
+                  }
+                }
+                """).getAsJsonObject();
+        JsonObject globalSpace = CityPlanningEndpointHandler.handleQueryD4ArrayExpansionSpace(
+                debugRoot, runId, citySeedId, stateId, globalRequest, null);
+        JsonObject globalSpaceResult = JsonParser.parseString(Files.readString(debugRoot.resolve(globalSpace
+                .getAsJsonObject("artifacts").get("arrayExpansionSpace").getAsString()))).getAsJsonObject();
+        assertEquals("explicit_global_new_functional_area", globalSpaceResult.get("searchScope").getAsString());
+        assertTrue(globalSpaceResult.get("selectedGlobalPatchRequired").getAsBoolean());
+        String globalPatchRef = globalSpaceResult.getAsJsonArray("globalPatchCandidates").get(0).getAsJsonObject()
+                .get("patchRef").getAsString();
+        IllegalArgumentException globalSelectionRequired = assertThrows(IllegalArgumentException.class,
+                () -> CityPlanningEndpointHandler.handlePlanD4ArrayExpansionCandidates(
+                        debugRoot, runId, citySeedId, terraSenseSource(catalogPath), stateId,
+                        globalRequest, null, null));
+        assertTrue(globalSelectionRequired.getMessage().contains("D4_ARRAY_LAYOUT_GLOBAL_PATCH_SELECTION_REQUIRED"));
+        globalRequest.addProperty("selectedGlobalPatchRef", globalPatchRef);
+        JsonObject globalPlanned = CityPlanningEndpointHandler.handlePlanD4ArrayExpansionCandidates(
+                debugRoot, runId, citySeedId, terraSenseSource(catalogPath), stateId, globalRequest, null, null);
+        assertTrue(globalPlanned.get("ok").getAsBoolean());
+        assertEquals(globalPatchRef, globalPlanned.getAsJsonObject("arrayExpansionCandidateSet")
+                .getAsJsonArray("arrayCandidates").get(0).getAsJsonObject()
+                .get("selectedGlobalPatchRef").getAsString());
+
+        JsonObject planned = CityPlanningEndpointHandler.handlePlanD4ArrayExpansionCandidates(
+                debugRoot, runId, citySeedId, terraSenseSource(catalogPath), stateId, request, null, null);
+        assertTrue(planned.get("ok").getAsBoolean());
+        assertEquals(3, planned.getAsJsonObject("arrayExpansionCandidateSet")
+                .getAsJsonArray("arrayCandidates").size());
+        assertEquals(stateId, planned.getAsJsonObject("arrayExpansionCandidateSet")
+                .get("sourceStateId").getAsString());
+        JsonObject candidateArtifacts = planned.getAsJsonObject("artifacts");
+        assertTrue(Files.exists(debugRoot.resolve(candidateArtifacts.get("arrayExpansionCandidateSet").getAsString())));
+        assertTrue(Files.exists(debugRoot.resolve(candidateArtifacts.get("arrayExpansionCandidatePreview").getAsString())));
+
+        String candidateId = planned.getAsJsonObject("arrayExpansionCandidateSet").getAsJsonArray("arrayCandidates")
+                .get(0).getAsJsonObject().get("candidateId").getAsString();
+        JsonObject selected = CityPlanningEndpointHandler.handleSelectD4ArrayExpansionCandidate(
+                debugRoot, runId, citySeedId, stateId, candidateId, false, "AI 选择东侧阵列", null, null, null);
+        assertTrue(selected.get("ok").getAsBoolean());
+        assertEquals(1, selected.getAsJsonObject("arrayLayoutLoopState").get("iteration").getAsInt());
+        assertEquals("ai_or_human_selected", selected.getAsJsonObject("executionTrace").getAsJsonArray("items")
+                .get(0).getAsJsonObject().get("decisionSource").getAsString());
+    }
+
+    @Test
     void handleD4DesignLoopState_writesReadsAppendsTwoRoundsAndWriteBack() throws Exception {
         Path debugRoot = Files.createTempDirectory("city-d4-design-loop-state-test");
         String runId = "run_d4_design_loop_state";
@@ -1889,6 +1988,40 @@ class CityPlanningEndpointHandlerTest {
                   "layoutPlans": []
                 }
                 """).getAsJsonObject();
+    }
+
+    private static JsonObject arrayLayoutPlanV04() {
+        return JsonParser.parseString("""
+                {
+                  "schemaVersion": "city_d4_array_layout_plan.v0.4",
+                  "planningMode": "array_candidate_selection_loop_v0_4",
+                  "cityId": "city_test",
+                  "cityScale": "town",
+                  "maxArrayPlans": 4,
+                  "layoutPlans": []
+                }
+                """).getAsJsonObject();
+    }
+
+    private static JsonObject arrayExpansionRequest(CityLandformReviewPackage review) {
+        LandformPatchSummary first = review.landformPatches().get(0);
+        return JsonParser.parseString("""
+                {
+                  "focusRef": {"anchorId": "manor_core"},
+                  "direction": "east",
+                  "targetPatchRef": "%s",
+                  "candidateCount": 3,
+                  "minCandidateCount": 3,
+                  "nextArrayLayoutPlanItem": {
+                    "arrayId": "east_residential_theme",
+                    "plannerType": "compound_cluster",
+                    "role": "residential",
+                    "fillPool": [{"structureId": "minecraft:desert_pyramid", "weight": 1}],
+                    "countPolicy": {"minCount": 2, "targetCount": 2, "maxCount": 2},
+                    "variantSelectionMode": "round_robin"
+                  }
+                }
+                """.formatted(first.landformPatchId())).getAsJsonObject();
     }
 
     private static JsonObject arrayLayoutPlanWithItem(CityLandformReviewPackage review) {

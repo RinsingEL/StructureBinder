@@ -27,21 +27,29 @@ import java.util.SplittableRandom;
 public final class CityStructureArrayLayoutLoopPlanner {
     public static final String PLAN_SCHEMA = "city_d4_array_layout_plan.v0.2";
     public static final String PLAN_SCHEMA_V03 = "city_d4_array_layout_plan.v0.3";
+    public static final String PLAN_SCHEMA_V04 = "city_d4_array_layout_plan.v0.4";
     public static final String STATE_SCHEMA = "city_d4_array_layout_loop_state.v0.2";
     public static final String STATE_SCHEMA_V03 = "city_d4_array_layout_loop_state.v0.3";
+    public static final String STATE_SCHEMA_V04 = "city_d4_array_layout_loop_state.v0.4";
     public static final String TRACE_SCHEMA = "city_d4_array_layout_execution_trace.v0.2";
     public static final String TRACE_SCHEMA_V03 = "city_d4_array_layout_execution_trace.v0.3";
+    public static final String TRACE_SCHEMA_V04 = "city_d4_array_layout_execution_trace.v0.4";
     public static final String OCCUPIED_SCHEMA = "city_d4_array_occupied_field.v0.2";
     public static final String PATCH_AVAILABILITY_SCHEMA = "city_d4_array_patch_availability.v0.2";
     public static final String ZONES_SCHEMA = "city_d4_functional_array_zones.v0.2";
+    public static final String EXPANSION_SPACE_SCHEMA_V04 = "city_d4_array_expansion_space.v0.4";
+    public static final String EXPANSION_CANDIDATE_SCHEMA_V04 = "city_d4_array_expansion_candidate_set.v0.4";
     public static final String PLANNING_MODE_V02 = "array_layout_loop_v0_2";
     public static final String PLANNING_MODE_V03 = "array_layout_loop_v0_3";
+    public static final String PLANNING_MODE_V04 = "array_candidate_selection_loop_v0_4";
 
     private static final Set<String> PLANNER_TYPES = Set.of(
             "plaza_ring", "compound_cluster", "guide_line_dual_side", "riverbank_dual_side", "contour_band",
             "composite_array");
     private static final List<String> SECTORS = List.of(
             "center", "north", "south", "east", "west", "northeast", "northwest", "southeast", "southwest");
+    private static final List<String> EXPANSION_DIRECTIONS = List.of(
+            "north", "south", "east", "west", "northeast", "northwest", "southeast", "southwest");
 
     public CreateResult create(Path baseDirectory,
                                CityLandformReviewPackage reviewPackage,
@@ -65,7 +73,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
         JsonArray occupied = occupiedFromAnchorMap(normalizedBaseMap);
         String planningMode = planningMode(normalizedPlan);
         JsonObject state = new JsonObject();
-        state.addProperty("schemaVersion", PLANNING_MODE_V03.equals(planningMode) ? STATE_SCHEMA_V03 : STATE_SCHEMA);
+        state.addProperty("schemaVersion", stateSchema(planningMode));
         state.addProperty("planningMode", planningMode);
         state.addProperty("loopId", reviewPackage.cityId() + "/d4_array_layout");
         state.addProperty("stateId", stateId(0));
@@ -112,6 +120,10 @@ public final class CityStructureArrayLayoutLoopPlanner {
         if (nextItem == null) {
             throw new IllegalArgumentException("nextArrayLayoutPlanItem object is required.");
         }
+        if (PLANNING_MODE_V04.equals(planningMode(currentState))) {
+            throw new IllegalArgumentException("D4_ARRAY_LAYOUT_V04_CANDIDATE_SELECTION_REQUIRED: "
+                    + "generate candidates and select one complete candidate before committing state.");
+        }
         if (nextItem.has("layoutPlans")) {
             throw new IllegalArgumentException("D4_ARRAY_LAYOUT_ONE_ITEM_PER_EXECUTE: execute accepts one item only.");
         }
@@ -154,7 +166,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
         if (hardBlocks.isEmpty()) {
             BuildResult build = "composite_array".equals(plannerType)
                     ? buildCompositeArrayItem(nextItem, sourcePatches, reviewPackage, profiles, facts,
-                    occupiedBounds(array(state, "occupiedEnvelopes")))
+                    occupiedBounds(array(state, "occupiedEnvelopes")), null)
                     : buildArrayItem(nextItem, plannerType, sourcePatches, reviewPackage, profiles,
                     facts, occupiedBounds(array(state, "occupiedEnvelopes")), desiredItems, null);
             itemTrace = build.trace();
@@ -179,6 +191,230 @@ public final class CityStructureArrayLayoutLoopPlanner {
                 state.getAsJsonObject("executionTrace"), state.getAsJsonArray("occupiedEnvelopes"),
                 state.getAsJsonObject("patchAvailability"), state.getAsJsonObject("functionalArrayZones"),
                 state.getAsJsonObject("quality"));
+    }
+
+    /**
+     * Reads the space around an already planned collision envelope. The result is deliberately
+     * separate from loop state so inspecting possible growth never reserves a patch.
+     */
+    public ExpansionSpaceResult queryExpansionSpace(CityLandformReviewPackage reviewPackage,
+                                                     JsonObject currentState,
+                                                     JsonObject request) {
+        requireV04State(currentState);
+        ExpansionContext context = expansionContext(reviewPackage, currentState, request);
+        return new ExpansionSpaceResult(expansionSpace(reviewPackage, currentState, context));
+    }
+
+    /**
+     * Builds complete, mutually independent choices for one array theme. It must not mutate the
+     * supplied state: only {@link #selectExpansionCandidate} can reserve occupied space.
+     */
+    public ExpansionCandidateSetResult planExpansionCandidates(Path baseDirectory,
+                                                                CityLandformReviewPackage reviewPackage,
+                                                                JsonObject terraSenseProfileSource,
+                                                                JsonObject currentState,
+                                                                JsonObject request,
+                                                                CityStructureEnvelopeFacts envelopeFacts) throws IOException {
+        long started = System.nanoTime();
+        requireV04State(currentState);
+        JsonObject submittedItem = object(request, "nextArrayLayoutPlanItem");
+        if (submittedItem.size() == 0) {
+            submittedItem = object(request, "arrayLayoutPlanItem");
+        }
+        if (submittedItem.size() == 0) {
+            throw new IllegalArgumentException("D4_ARRAY_LAYOUT_CANDIDATE_ITEM_REQUIRED: "
+                    + "nextArrayLayoutPlanItem is required.");
+        }
+        if (submittedItem.has("layoutPlans")) {
+            throw new IllegalArgumentException("D4_ARRAY_LAYOUT_ONE_ITEM_PER_EXECUTE: candidate planning accepts one item only.");
+        }
+        String submittedArrayId = requiredString(submittedItem, "arrayId");
+        if (containsString(array(currentState, "executedArrayIds"), submittedArrayId)) {
+            throw new IllegalArgumentException("D4_ARRAY_LAYOUT_DUPLICATE_ARRAY_ID: " + submittedArrayId);
+        }
+        if (intValue(currentState, "iteration", 0) >= intValue(currentState, "maxArrayPlans", 7)) {
+            throw new IllegalArgumentException("D4_ARRAY_LAYOUT_LOOP_MAX_ITERATIONS: maxArrayPlans reached.");
+        }
+        ExpansionContext context = expansionContext(reviewPackage, currentState, request);
+        if (context.targetPatch() == null) {
+            throw new IllegalArgumentException("D4_ARRAY_LAYOUT_GLOBAL_PATCH_SELECTION_REQUIRED: "
+                    + "query with newFunctionalArea=true, then provide selectedGlobalPatchRef when planning candidates.");
+        }
+        CityStructureProfileCatalog.ImportedCatalog catalog =
+                CityStructureProfileCatalog.importCatalog(baseDirectory, terraSenseProfileSource);
+        Map<String, CityStructureProfileCatalog.StructureProfile> profiles = catalog.byId();
+        CityStructureEnvelopeFacts facts = envelopeFacts == null ? CityStructureEnvelopeFacts.empty() : envelopeFacts;
+        int candidateCount = clamp(intValue(request, "candidateCount", 5), 3, 5);
+        int minCandidateCount = clamp(intValue(request, "minCandidateCount", 3), 3, candidateCount);
+        JsonArray candidates = new JsonArray();
+        Set<String> signatures = new LinkedHashSet<>();
+        List<String> sectors = expansionCandidateSectors(context.direction());
+        int attemptLimit = Math.max(candidateCount * 4, 12);
+        List<LandformPatchSummary> targetPatch = List.of(context.targetPatch());
+        List<BlockBounds> occupied = occupiedBounds(array(currentState, "occupiedEnvelopes"));
+
+        for (int attempt = 0; attempt < attemptLimit && candidates.size() < candidateCount; attempt++) {
+            JsonObject item = submittedItem.deepCopy();
+            String sector = sectors.get(attempt % sectors.size());
+            BlockPoint variantOrigin = expansionVariantOrigin(context, sector);
+            item.add("candidatePatchRefs", singleStringArray(context.targetPatch().landformPatchId()));
+            item.addProperty("startSector", sector);
+            item.addProperty("outwardDirection", context.direction());
+            item.add("expansionOrigin", variantOrigin.asJson());
+            item.add("expansionAvailableBounds", CityStructureCandidateEnvelope.boundsJson(context.availableBounds()));
+            item.addProperty("candidateVariant", "v" + (attempt + 1));
+
+            String plannerType = stringValue(item, "plannerType", "compound_cluster");
+            if (!PLANNER_TYPES.contains(plannerType)) {
+                throw new IllegalArgumentException("D4_ARRAY_LAYOUT_PLANNER_TYPE_UNSUPPORTED: " + plannerType);
+            }
+            BuildResult build;
+            if ("composite_array".equals(plannerType)) {
+                build = buildCompositeArrayItem(item, targetPatch, reviewPackage, profiles, facts, occupied,
+                        context.availableBounds());
+            } else {
+                List<DesiredItem> desiredItems = desiredItems(item);
+                if (desiredItems.isEmpty()) {
+                    throw new IllegalArgumentException("D4_ARRAY_LAYOUT_CANDIDATE_ITEM_REQUIRED: "
+                            + "the array item must provide requiredItems, featuredItems or fillPool.");
+                }
+                for (DesiredItem desired : desiredItems) {
+                    if (!profiles.containsKey(desired.structureId())) {
+                        throw new IllegalArgumentException("D4_ARRAY_LAYOUT_STRUCTURE_PROFILE_UNAVAILABLE: "
+                                + desired.structureId());
+                    }
+                }
+                build = buildArrayItem(item, plannerType, targetPatch, reviewPackage, profiles, facts,
+                        occupied, desiredItems, context.availableBounds());
+            }
+            if (!build.hardBlocks().isEmpty()) {
+                continue;
+            }
+            String signature = candidateSignature(build.items());
+            if (!signatures.add(signature)) {
+                continue;
+            }
+            int ordinal = candidates.size() + 1;
+            JsonObject candidate = new JsonObject();
+            candidate.addProperty("candidateId", stringValue(item, "arrayId") + "_candidate_"
+                    + String.format(Locale.ROOT, "%02d", ordinal));
+            candidate.addProperty("candidateOrdinal", ordinal);
+            candidate.addProperty("sourceStateId", stringValue(currentState, "stateId"));
+            candidate.addProperty("plannerType", plannerType);
+            candidate.addProperty("score", candidateScore(build));
+            candidate.add("scoreBreakdown", candidateScoreBreakdown(build));
+            candidate.add("focusRef", context.focusRef().deepCopy());
+            candidate.addProperty("direction", context.direction());
+            candidate.addProperty("targetPatchRef", context.targetPatch().landformPatchId());
+            candidate.addProperty("newFunctionalArea", context.newFunctionalArea());
+            if (context.newFunctionalArea()) {
+                candidate.addProperty("selectedGlobalPatchRef", context.targetPatch().landformPatchId());
+            }
+            candidate.add("expansionEntryPoint", variantOrigin.asJson());
+            candidate.add("expansionAvailableBounds", CityStructureCandidateEnvelope.boundsJson(context.availableBounds()));
+            candidate.add("candidateArrayLayoutPlanItem", item.deepCopy());
+            candidate.add("items", build.items().deepCopy());
+            candidate.add("anchors", build.anchors().deepCopy());
+            candidate.add("arrayZones", build.zones().deepCopy());
+            candidate.add("executionTrace", build.trace().deepCopy());
+            candidates.add(candidate);
+        }
+        if (candidates.size() < minCandidateCount) {
+            throw new IllegalArgumentException("D4_ARRAY_LAYOUT_CANDIDATES_UNSATISFIED: generated "
+                    + candidates.size() + " complete candidates, requires at least " + minCandidateCount + ".");
+        }
+        JsonObject set = new JsonObject();
+        set.addProperty("schemaVersion", EXPANSION_CANDIDATE_SCHEMA_V04);
+        set.addProperty("planningMode", PLANNING_MODE_V04);
+        set.addProperty("cityId", reviewPackage.cityId());
+        set.addProperty("sourceStateId", stringValue(currentState, "stateId"));
+        set.addProperty("generatedAt", Instant.now().toString());
+        set.add("grid", reviewPackage.grid().asJson());
+        set.add("expansionSpace", expansionSpace(reviewPackage, currentState, context));
+        set.add("arrayCandidates", candidates);
+        set.add("qualityReport", quality(List.of(), catalog.warnings(), catalog.needsReview(), 100));
+        set.add("timingMs", timing(started));
+        return new ExpansionCandidateSetResult(set, set.getAsJsonObject("qualityReport"));
+    }
+
+    /**
+     * Applies one previously generated complete candidate to a matching v0.4 state. The caller
+     * writes the returned snapshot once, which keeps anchors, occupied envelopes and zones atomic.
+     */
+    public ExpansionSelectionResult selectExpansionCandidate(CityLandformReviewPackage reviewPackage,
+                                                              JsonObject currentState,
+                                                              JsonObject candidateSet,
+                                                              String candidateId,
+                                                              boolean autoSelectHighestScore,
+                                                              String selectionReason) {
+        long started = System.nanoTime();
+        requireV04State(currentState);
+        if (intValue(currentState, "iteration", 0) >= intValue(currentState, "maxArrayPlans", 7)) {
+            throw new IllegalArgumentException("D4_ARRAY_LAYOUT_LOOP_MAX_ITERATIONS: maxArrayPlans reached.");
+        }
+        if (!EXPANSION_CANDIDATE_SCHEMA_V04.equals(stringValue(candidateSet, "schemaVersion"))) {
+            throw new IllegalArgumentException("D4_ARRAY_LAYOUT_CANDIDATE_SET_REQUIRED: v0.4 candidate set is required.");
+        }
+        String stateId = stringValue(currentState, "stateId");
+        if (!stateId.equals(stringValue(candidateSet, "sourceStateId"))) {
+            throw new IllegalArgumentException("D4_ARRAY_LAYOUT_CANDIDATE_SET_STALE: candidate set targets "
+                    + stringValue(candidateSet, "sourceStateId") + " but current state is " + stateId + ".");
+        }
+        JsonObject selected = null;
+        if (candidateId != null && !candidateId.isBlank()) {
+            for (JsonElement elem : array(candidateSet, "arrayCandidates")) {
+                if (elem.isJsonObject() && candidateId.equals(stringValue(elem.getAsJsonObject(), "candidateId"))) {
+                    selected = elem.getAsJsonObject();
+                    break;
+                }
+            }
+            if (selected == null) {
+                throw new IllegalArgumentException("D4_ARRAY_LAYOUT_CANDIDATE_NOT_FOUND: " + candidateId);
+            }
+        } else if (autoSelectHighestScore) {
+            for (JsonElement elem : array(candidateSet, "arrayCandidates")) {
+                if (!elem.isJsonObject()) {
+                    continue;
+                }
+                JsonObject candidate = elem.getAsJsonObject();
+                if (selected == null || doubleValue(candidate, "score", 0.0) > doubleValue(selected, "score", 0.0)) {
+                    selected = candidate;
+                }
+            }
+            if (selected == null) {
+                throw new IllegalArgumentException("D4_ARRAY_LAYOUT_CANDIDATE_NOT_FOUND: candidate set is empty.");
+            }
+        } else {
+            throw new IllegalArgumentException("D4_ARRAY_LAYOUT_CANDIDATE_SELECTION_REQUIRED: candidateId is required; "
+                    + "automatic highest-score selection is disabled by default.");
+        }
+        if (!stateId.equals(stringValue(selected, "sourceStateId"))) {
+            throw new IllegalArgumentException("D4_ARRAY_LAYOUT_CANDIDATE_SET_STALE: selected candidate was built for another state.");
+        }
+        JsonObject state = currentState.deepCopy();
+        BuildResult build = new BuildResult(array(selected, "items").deepCopy(), array(selected, "anchors").deepCopy(),
+                array(selected, "arrayZones").deepCopy(), object(selected, "executionTrace").deepCopy(),
+                new JsonArray(), new JsonArray());
+        JsonObject selectedItem = object(selected, "candidateArrayLayoutPlanItem");
+        applyBuild(state, selectedItem, build);
+        int nextIteration = intValue(state, "iteration", 0) + 1;
+        state.addProperty("iteration", nextIteration);
+        state.addProperty("stateId", stateId(nextIteration));
+        state.addProperty("status", "ready_for_next_item");
+        JsonObject trace = build.trace().deepCopy();
+        trace.addProperty("candidateId", stringValue(selected, "candidateId"));
+        trace.addProperty("decisionSource", autoSelectHighestScore && (candidateId == null || candidateId.isBlank())
+                ? "auto_highest_score_explicit" : "ai_or_human_selected");
+        if (selectionReason != null && !selectionReason.isBlank()) {
+            trace.addProperty("selectionReason", selectionReason);
+        }
+        appendTrace(state, trace);
+        ExpansionContext context = expansionContext(reviewPackage, state, selected);
+        state.add("remainingExpansionSpace", expansionSpace(reviewPackage, state, context));
+        state.add("patchAvailability", patchAvailability(reviewPackage, array(state, "occupiedEnvelopes")));
+        state.add("quality", quality(List.of(), List.of(), List.of(), 100));
+        state.add("timingMs", timing(started));
+        return new ExpansionSelectionResult(state, selected.deepCopy(), state.getAsJsonObject("quality"));
     }
 
     public FinalizeResult finalizeLoop(JsonObject state) {
@@ -342,7 +578,8 @@ public final class CityStructureArrayLayoutLoopPlanner {
                                                 CityLandformReviewPackage reviewPackage,
                                                 Map<String, CityStructureProfileCatalog.StructureProfile> profiles,
                                                 CityStructureEnvelopeFacts facts,
-                                                List<BlockBounds> occupied) {
+                                                List<BlockBounds> occupied,
+                                                BlockBounds placementBounds) {
         String arrayId = requiredString(item, "arrayId");
         JsonArray hardBlocks = new JsonArray();
         JsonArray warnings = new JsonArray();
@@ -360,7 +597,8 @@ public final class CityStructureArrayLayoutLoopPlanner {
         }
 
         LandformPatchSummary pivot = sourcePatches.get(0);
-        List<SubZone> subZones = subZones(item, pivot.blockBounds(),
+        BlockBounds parentBounds = placementBounds == null ? pivot.blockBounds() : placementBounds;
+        List<SubZone> subZones = subZones(item, parentBounds,
                 Math.max(intValue(item, "subZoneCount", 0), childPlans.size()));
         Map<String, SubZone> subZonesById = new LinkedHashMap<>();
         for (SubZone subZone : subZones) {
@@ -400,6 +638,13 @@ public final class CityStructureArrayLayoutLoopPlanner {
             }
             if (stringValue(child, "startSector").isBlank()) {
                 child.addProperty("startSector", stringValue(item, "startSector", "center"));
+            }
+            if (stringValue(child, "outwardDirection").isBlank() && item.has("outwardDirection")) {
+                child.addProperty("outwardDirection", stringValue(item, "outwardDirection"));
+            }
+            if (!child.has("expansionOrigin") && item.has("expansionOrigin")
+                    && item.get("expansionOrigin").isJsonObject()) {
+                child.add("expansionOrigin", item.getAsJsonObject("expansionOrigin").deepCopy());
             }
 
             SubZone subZone = childSubZone(child, subZones, subZonesById, childIndex);
@@ -496,6 +741,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
             occ.addProperty("source", "array_layout_loop");
             occ.addProperty("arrayId", stringValue(item, "arrayId", stringValue(sourceItem, "arrayId")));
             occ.addProperty("itemId", stringValue(item, "itemId"));
+            occ.addProperty("anchorId", stringValue(item, "anchorId"));
             occ.addProperty("envelopeType", "estimatedCollisionEnvelope");
             occ.add("blockBounds", object(item, "estimatedCollisionEnvelope").deepCopy());
             occupied.add(occ);
@@ -572,6 +818,8 @@ public final class CityStructureArrayLayoutLoopPlanner {
         obj.addProperty("itemKind", accepted.desired().kind());
         obj.addProperty("structureId", accepted.desired().structureId());
         obj.addProperty("arrayId", stringValue(sourceItem, "arrayId"));
+        obj.addProperty("anchorId", stringValue(sourceItem, "arrayId") + "_"
+                + safeId(accepted.desired().itemId(), index));
         obj.addProperty("plannerType", plannerType);
         obj.addProperty("arrayShape", arrayShape(sourceItem, plannerType));
         obj.addProperty("spacingBlocks", spacing);
@@ -620,7 +868,14 @@ public final class CityStructureArrayLayoutLoopPlanner {
                                        BlockPoint start, int spacing, int requested) {
         LinkedHashSet<BlockPoint> points = new LinkedHashSet<>();
         switch (plannerType) {
-            case "plaza_ring" -> plazaRing(points, start, spacing, requested);
+            case "plaza_ring" -> {
+                String direction = stringValue(item, "outwardDirection", "");
+                if (EXPANSION_DIRECTIONS.contains(direction)) {
+                    outwardPlazaRing(points, point(item, "expansionOrigin", start), direction, spacing, requested);
+                } else {
+                    plazaRing(points, start, spacing, requested);
+                }
+            }
             case "guide_line_dual_side", "riverbank_dual_side" ->
                     dualSideBand(points, pivot, patches, start, spacing, requested);
             case "contour_band" -> contourBand(points, pivot, patches, start, spacing, requested);
@@ -633,7 +888,14 @@ public final class CityStructureArrayLayoutLoopPlanner {
                                                BlockPoint start, int spacing, int requested) {
         LinkedHashSet<BlockPoint> points = new LinkedHashSet<>();
         switch (plannerType) {
-            case "plaza_ring" -> plazaRing(points, start, spacing, requested);
+            case "plaza_ring" -> {
+                String direction = stringValue(item, "outwardDirection", "");
+                if (EXPANSION_DIRECTIONS.contains(direction)) {
+                    outwardPlazaRing(points, point(item, "expansionOrigin", start), direction, spacing, requested);
+                } else {
+                    plazaRing(points, start, spacing, requested);
+                }
+            }
             case "guide_line_dual_side", "riverbank_dual_side" ->
                     dualSideBounds(points, bounds, start, spacing, requested);
             case "contour_band" -> contourBounds(points, bounds, start, spacing, requested);
@@ -748,6 +1010,31 @@ public final class CityStructureArrayLayoutLoopPlanner {
         }
     }
 
+    private void outwardPlazaRing(LinkedHashSet<BlockPoint> points, BlockPoint origin, String direction,
+                                  int spacing, int requested) {
+        double baseAngle = switch (direction) {
+            case "north" -> -Math.PI / 2.0;
+            case "south" -> Math.PI / 2.0;
+            case "east" -> 0.0;
+            case "west" -> Math.PI;
+            case "northeast" -> -Math.PI / 4.0;
+            case "northwest" -> -Math.PI * 3.0 / 4.0;
+            case "southeast" -> Math.PI / 4.0;
+            case "southwest" -> Math.PI * 3.0 / 4.0;
+            default -> 0.0;
+        };
+        int rings = Math.max(1, (int) Math.ceil(requested / 6.0));
+        for (int ring = 1; ring <= rings; ring++) {
+            double radius = Math.max(spacing, spacing * 0.9 * ring);
+            int steps = Math.max(7, requested * 3);
+            for (int step = 0; step < steps; step++) {
+                double angle = baseAngle - Math.PI / 2.0 + Math.PI * step / (steps - 1.0);
+                points.add(new BlockPoint(origin.x() + (int) Math.round(Math.cos(angle) * radius),
+                        origin.z() + (int) Math.round(Math.sin(angle) * radius)));
+            }
+        }
+    }
+
     private void compoundCluster(LinkedHashSet<BlockPoint> points, JsonObject item, BlockPoint start,
                                  LandformPatchSummary pivot, int spacing, int requested) {
         String shape = compoundShape(item);
@@ -788,12 +1075,13 @@ public final class CityStructureArrayLayoutLoopPlanner {
         boolean xAxis = b.widthBlocks() >= b.heightBlocks();
         int length = xAxis ? b.widthBlocks() : b.heightBlocks();
         int steps = Math.max(requested * 6, Math.max(1, length / Math.max(8, spacing / 2)));
+        int stride = Math.max(8, spacing / 2);
         for (int step = 0; step <= steps; step++) {
-            int along = spacing / 2 + step * Math.max(8, spacing / 2);
+            int along = (step - steps / 2) * stride;
             int side = step % 2 == 0 ? 1 : -1;
             int cross = side * Math.max(8, spacing / 3);
-            int x = xAxis ? b.minX() + Math.min(length - 1, along) : start.x() + cross;
-            int z = xAxis ? start.z() + cross : b.minZ() + Math.min(length - 1, along);
+            int x = xAxis ? start.x() + along : start.x() + cross;
+            int z = xAxis ? start.z() + cross : start.z() + along;
             points.add(new BlockPoint(clamp(x, b.minX(), b.maxX()), clamp(z, b.minZ(), b.maxZ())));
         }
     }
@@ -1025,13 +1313,346 @@ public final class CityStructureArrayLayoutLoopPlanner {
         return stringValue(compound, key, stringValue(item, key, defaultValue));
     }
 
+    private void requireV04State(JsonObject state) {
+        if (state == null || !STATE_SCHEMA_V04.equals(stringValue(state, "schemaVersion"))
+                || !PLANNING_MODE_V04.equals(planningMode(state))) {
+            throw new IllegalArgumentException("D4_ARRAY_LAYOUT_V04_STATE_REQUIRED: create an explicit v0.4 array candidate loop first.");
+        }
+    }
+
+    private String stateSchema(String planningMode) {
+        return switch (planningMode) {
+            case PLANNING_MODE_V04 -> STATE_SCHEMA_V04;
+            case PLANNING_MODE_V03 -> STATE_SCHEMA_V03;
+            default -> STATE_SCHEMA;
+        };
+    }
+
+    private ExpansionContext expansionContext(CityLandformReviewPackage reviewPackage,
+                                              JsonObject state,
+                                              JsonObject request) {
+        boolean newFunctionalArea = booleanValue(request, "newFunctionalArea", false);
+        if (newFunctionalArea) {
+            String selectedGlobalPatchRef = stringValue(request, "selectedGlobalPatchRef", "");
+            if (selectedGlobalPatchRef.isBlank()) {
+                return new ExpansionContext(new JsonObject(), null, "", null, null, null, true);
+            }
+            LandformPatchSummary targetPatch = patchByRef(reviewPackage, selectedGlobalPatchRef);
+            if (targetPatch == null) {
+                throw new IllegalArgumentException("D4_ARRAY_LAYOUT_GLOBAL_PATCH_UNAVAILABLE: " + selectedGlobalPatchRef);
+            }
+            List<BlockBounds> occupied = occupiedBounds(array(state, "occupiedEnvelopes"));
+            BlockBounds available = targetPatch.blockBounds();
+            BlockPoint entry = nearestAvailablePoint(targetPatch, reviewPackage.grid(), available, occupied,
+                    targetPatch.centerBlock());
+            if (entry == null) {
+                throw new IllegalArgumentException("D4_ARRAY_LAYOUT_GLOBAL_PATCH_NO_CAPACITY: " + selectedGlobalPatchRef);
+            }
+            return new ExpansionContext(new JsonObject(), null, "", targetPatch, available, entry, true);
+        }
+        JsonObject focusRef = object(request, "focusRef");
+        if (focusRef.size() == 0) {
+            throw new IllegalArgumentException("D4_ARRAY_LAYOUT_FOCUS_REQUIRED: focusRef must identify planned collision occupied structure(s).");
+        }
+        String targetPatchRef = stringValue(request, "targetPatchRef", stringValue(request, "targetPatch", ""));
+        if (targetPatchRef.isBlank()) {
+            throw new IllegalArgumentException("D4_ARRAY_LAYOUT_TARGET_PATCH_REQUIRED: targetPatchRef is required.");
+        }
+        LandformPatchSummary targetPatch = patchByRef(reviewPackage, targetPatchRef);
+        if (targetPatch == null) {
+            throw new IllegalArgumentException("D4_ARRAY_LAYOUT_TARGET_PATCH_UNAVAILABLE: " + targetPatchRef);
+        }
+        BlockBounds focusBounds = focusBounds(state, focusRef);
+        String direction = normalizedDirection(requiredString(request, "direction"));
+        BlockBounds available = directionalIntersection(focusBounds, direction, targetPatch.blockBounds());
+        if (available == null) {
+            throw new IllegalArgumentException("D4_ARRAY_LAYOUT_EXPANSION_DIRECTION_UNAVAILABLE: " + direction
+                    + " does not reach target patch " + targetPatchRef + " from the focus collision envelope.");
+        }
+        BlockPoint entry = nearestAvailablePoint(targetPatch, reviewPackage.grid(), available,
+                occupiedBounds(array(state, "occupiedEnvelopes")), focusBounds.center());
+        return new ExpansionContext(focusRef.deepCopy(), focusBounds, direction, targetPatch, available,
+                entry == null ? available.center() : entry, false);
+    }
+
+    private JsonObject expansionSpace(CityLandformReviewPackage reviewPackage,
+                                      JsonObject state,
+                                      ExpansionContext selected) {
+        List<BlockBounds> occupied = occupiedBounds(array(state, "occupiedEnvelopes"));
+        JsonObject result = new JsonObject();
+        result.addProperty("schemaVersion", EXPANSION_SPACE_SCHEMA_V04);
+        result.addProperty("planningMode", PLANNING_MODE_V04);
+        result.addProperty("cityId", reviewPackage.cityId());
+        result.addProperty("sourceStateId", stringValue(state, "stateId"));
+        result.addProperty("searchScope", selected.newFunctionalArea()
+                ? "explicit_global_new_functional_area" : "focus_nearby_expansion");
+        result.add("focusRef", selected.focusRef().deepCopy());
+        if (selected.newFunctionalArea()) {
+            result.add("globalPatchCandidates", globalPatchCandidates(reviewPackage, occupied));
+            result.addProperty("selectedGlobalPatchRequired", selected.targetPatch() == null);
+            if (selected.targetPatch() == null) {
+                result.addProperty("selectionReasonCode", "D4_ARRAY_LAYOUT_GLOBAL_PATCH_SELECTION_REQUIRED");
+                return result;
+            }
+        }
+        if (selected.focusBounds() != null) {
+            result.add("focusCollisionEnvelope", CityStructureCandidateEnvelope.boundsJson(selected.focusBounds()));
+        }
+        result.addProperty("selectedDirection", selected.direction());
+        result.addProperty("selectedTargetPatchRef", selected.targetPatch().landformPatchId());
+        result.add("selectedExpansionAvailableBounds", CityStructureCandidateEnvelope.boundsJson(selected.availableBounds()));
+        result.add("selectedExpansionEntryPoint", selected.entryPoint().asJson());
+        result.addProperty("selectedRemainingCapacity", capacity(selected.targetPatch(), reviewPackage.grid(),
+                selected.availableBounds(), occupied));
+
+        JsonArray nearby = new JsonArray();
+        List<LandformPatchSummary> ordered = new ArrayList<>(reviewPackage.landformPatches());
+        ordered.sort(Comparator.<LandformPatchSummary>comparingDouble(patch -> selected.focusBounds() == null ? 0.0
+                : boundsDistance(selected.focusBounds(), patch.blockBounds()))
+                .thenComparing(LandformPatchSummary::landformPatchId));
+        for (LandformPatchSummary patch : ordered) {
+            JsonObject patchJson = new JsonObject();
+            patchJson.addProperty("patchRef", patch.landformPatchId());
+            patchJson.addProperty("mapLabel", patch.mapLabel());
+            patchJson.add("blockBounds", CityStructureCandidateEnvelope.boundsJson(patch.blockBounds()));
+            patchJson.addProperty("distanceBlocks", selected.focusBounds() == null ? 0.0
+                    : boundsDistance(selected.focusBounds(), patch.blockBounds()));
+            patchJson.addProperty("remainingCapacity", capacity(patch, reviewPackage.grid(), patch.blockBounds(), occupied));
+            JsonArray directions = new JsonArray();
+            if (selected.focusBounds() != null) {
+                for (String direction : EXPANSION_DIRECTIONS) {
+                    BlockBounds available = directionalIntersection(selected.focusBounds(), direction, patch.blockBounds());
+                    JsonObject option = new JsonObject();
+                    option.addProperty("direction", direction);
+                    option.addProperty("available", available != null);
+                    if (available != null) {
+                        option.add("availableBounds", CityStructureCandidateEnvelope.boundsJson(available));
+                        option.addProperty("remainingCapacity", capacity(patch, reviewPackage.grid(), available, occupied));
+                        BlockPoint entry = nearestAvailablePoint(patch, reviewPackage.grid(), available, occupied,
+                                selected.focusBounds().center());
+                        if (entry != null) {
+                            option.add("expansionEntryPoint", entry.asJson());
+                        }
+                    }
+                    directions.add(option);
+                }
+            }
+            patchJson.add("availableDirections", directions);
+            nearby.add(patchJson);
+        }
+        result.add("nearbyPatches", nearby);
+        return result;
+    }
+
+    private JsonArray globalPatchCandidates(CityLandformReviewPackage reviewPackage,
+                                            List<BlockBounds> occupied) {
+        List<GlobalPatchCandidate> candidates = new ArrayList<>();
+        for (LandformPatchSummary patch : reviewPackage.landformPatches()) {
+            int remainingCapacity = capacity(patch, reviewPackage.grid(), patch.blockBounds(), occupied);
+            BlockPoint entry = nearestAvailablePoint(patch, reviewPackage.grid(), patch.blockBounds(), occupied,
+                    patch.centerBlock());
+            candidates.add(new GlobalPatchCandidate(patch, remainingCapacity, entry));
+        }
+        candidates.sort(Comparator.comparing(GlobalPatchCandidate::available).reversed()
+                .thenComparing(GlobalPatchCandidate::remainingCapacity, Comparator.reverseOrder())
+                .thenComparing(candidate -> candidate.patch().landformPatchId()));
+
+        JsonArray result = new JsonArray();
+        int rank = 1;
+        for (GlobalPatchCandidate candidate : candidates) {
+            JsonObject patch = new JsonObject();
+            patch.addProperty("globalRank", rank++);
+            patch.addProperty("patchRef", candidate.patch().landformPatchId());
+            patch.addProperty("mapLabel", candidate.patch().mapLabel());
+            patch.add("blockBounds", CityStructureCandidateEnvelope.boundsJson(candidate.patch().blockBounds()));
+            patch.addProperty("remainingCapacity", candidate.remainingCapacity());
+            patch.addProperty("available", candidate.available());
+            patch.addProperty("availabilityReason", candidate.available()
+                    ? "member_cells_available" : "collision_occupied_or_no_member_cells");
+            if (candidate.entryPoint() != null) {
+                patch.add("expansionEntryPoint", candidate.entryPoint().asJson());
+            }
+            result.add(patch);
+        }
+        return result;
+    }
+
+    private BlockBounds focusBounds(JsonObject state, JsonObject focusRef) {
+        String anchorId = stringValue(focusRef, "anchorId", stringValue(focusRef, "focusId", ""));
+        String arrayId = stringValue(focusRef, "arrayId", "");
+        if (anchorId.isBlank() && arrayId.isBlank()) {
+            throw new IllegalArgumentException("D4_ARRAY_LAYOUT_FOCUS_REQUIRED: focusRef requires anchorId or arrayId.");
+        }
+        BlockBounds union = null;
+        for (JsonElement elem : array(state, "occupiedEnvelopes")) {
+            if (!elem.isJsonObject()) {
+                continue;
+            }
+            JsonObject occupied = elem.getAsJsonObject();
+            boolean matches = !anchorId.isBlank() && anchorId.equals(stringValue(occupied, "anchorId"));
+            matches |= !arrayId.isBlank() && arrayId.equals(stringValue(occupied, "arrayId"));
+            if (matches) {
+                union = union(union, CityStructureCandidateEnvelope.bounds(object(occupied, "blockBounds")));
+            }
+        }
+        if (union == null) {
+            throw new IllegalArgumentException("D4_ARRAY_LAYOUT_FOCUS_NOT_OCCUPIED: focusRef must resolve to planned collision occupied data.");
+        }
+        return union;
+    }
+
+    private LandformPatchSummary patchByRef(CityLandformReviewPackage reviewPackage, String ref) {
+        for (LandformPatchSummary patch : reviewPackage.landformPatches()) {
+            if (ref.equals(patch.landformPatchId()) || ref.equals(patch.mapLabel())) {
+                return patch;
+            }
+        }
+        return null;
+    }
+
+    private String normalizedDirection(String raw) {
+        String direction = raw == null ? "" : raw.trim().toLowerCase(Locale.ROOT);
+        if (!EXPANSION_DIRECTIONS.contains(direction)) {
+            throw new IllegalArgumentException("D4_ARRAY_LAYOUT_EXPANSION_DIRECTION_UNSUPPORTED: " + raw);
+        }
+        return direction;
+    }
+
+    private BlockBounds directionalIntersection(BlockBounds focus, String direction, BlockBounds target) {
+        int minX = target.minX();
+        int maxX = target.maxX();
+        int minZ = target.minZ();
+        int maxZ = target.maxZ();
+        if (direction.contains("east")) {
+            minX = Math.max(minX, focus.maxX() + 1);
+        }
+        if (direction.contains("west")) {
+            maxX = Math.min(maxX, focus.minX() - 1);
+        }
+        if (direction.contains("north")) {
+            maxZ = Math.min(maxZ, focus.minZ() - 1);
+        }
+        if (direction.contains("south")) {
+            minZ = Math.max(minZ, focus.maxZ() + 1);
+        }
+        return minX > maxX || minZ > maxZ ? null : new BlockBounds(minX, minZ, maxX, maxZ);
+    }
+
+    private int capacity(LandformPatchSummary patch, PlanningGrid grid, BlockBounds bounds,
+                         List<BlockBounds> occupied) {
+        int count = 0;
+        for (BlockPoint point : memberCellCenters(List.of(patch), grid, bounds)) {
+            boolean blocked = false;
+            for (BlockBounds existing : occupied) {
+                if (existing.contains(point.x(), point.z())) {
+                    blocked = true;
+                    break;
+                }
+            }
+            if (!blocked) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private BlockPoint nearestAvailablePoint(LandformPatchSummary patch, PlanningGrid grid, BlockBounds bounds,
+                                             List<BlockBounds> occupied, BlockPoint reference) {
+        BlockPoint best = null;
+        long bestDistance = Long.MAX_VALUE;
+        for (BlockPoint point : memberCellCenters(List.of(patch), grid, bounds)) {
+            boolean blocked = false;
+            for (BlockBounds existing : occupied) {
+                if (existing.contains(point.x(), point.z())) {
+                    blocked = true;
+                    break;
+                }
+            }
+            if (blocked) {
+                continue;
+            }
+            long distance = distanceSquared(point, reference);
+            if (distance < bestDistance || distance == bestDistance && best != null
+                    && (point.x() < best.x() || point.x() == best.x() && point.z() < best.z())) {
+                best = point;
+                bestDistance = distance;
+            }
+        }
+        return best;
+    }
+
+    private double boundsDistance(BlockBounds a, BlockBounds b) {
+        int dx = a.maxX() < b.minX() ? b.minX() - a.maxX() : b.maxX() < a.minX() ? a.minX() - b.maxX() : 0;
+        int dz = a.maxZ() < b.minZ() ? b.minZ() - a.maxZ() : b.maxZ() < a.minZ() ? a.minZ() - b.maxZ() : 0;
+        return Math.sqrt((double) dx * dx + (double) dz * dz);
+    }
+
+    private List<String> expansionCandidateSectors(String direction) {
+        return switch (direction) {
+            case "north" -> List.of("north", "northeast", "northwest", "center", "east");
+            case "south" -> List.of("south", "southeast", "southwest", "center", "west");
+            case "east" -> List.of("east", "northeast", "southeast", "center", "north");
+            case "west" -> List.of("west", "northwest", "southwest", "center", "south");
+            case "northeast" -> List.of("northeast", "north", "east", "center", "southeast");
+            case "northwest" -> List.of("northwest", "north", "west", "center", "southwest");
+            case "southeast" -> List.of("southeast", "south", "east", "center", "northeast");
+            case "southwest" -> List.of("southwest", "south", "west", "center", "northwest");
+            default -> List.of("center", "north", "south", "east", "west");
+        };
+    }
+
+    private BlockPoint expansionVariantOrigin(ExpansionContext context, String sector) {
+        if (context.focusBounds() == null || context.direction().isBlank()) {
+            return sectorPoint(context.availableBounds(), sector);
+        }
+        BlockBounds available = context.availableBounds();
+        BlockPoint variation = sectorPoint(available, sector);
+        if ((context.direction().contains("east") || context.direction().contains("west"))
+                && (context.direction().contains("north") || context.direction().contains("south"))) {
+            return variation;
+        }
+        // The available bounds already exclude the focus side. Keeping the sector origin inside
+        // that bounded area gives line-based layouts distinct complete variants without backfilling.
+        return variation;
+    }
+
+    private String candidateSignature(JsonArray items) {
+        StringBuilder signature = new StringBuilder();
+        for (JsonElement elem : items) {
+            JsonObject item = elem.getAsJsonObject();
+            JsonObject point = object(item, "anchorBlock");
+            signature.append(stringValue(item, "structureId")).append('@')
+                    .append(intValue(point, "x", 0)).append(',').append(intValue(point, "z", 0)).append(';');
+        }
+        return signature.toString();
+    }
+
+    private double candidateScore(BuildResult build) {
+        return build.items().size() * 100.0 - build.warnings().size() * 5.0;
+    }
+
+    private JsonObject candidateScoreBreakdown(BuildResult build) {
+        JsonObject score = new JsonObject();
+        score.addProperty("completeItemCount", build.items().size());
+        score.addProperty("warningCount", build.warnings().size());
+        score.addProperty("score", candidateScore(build));
+        return score;
+    }
+
+    private JsonArray singleStringArray(String value) {
+        JsonArray values = new JsonArray();
+        values.add(value);
+        return values;
+    }
+
     private JsonObject normalizePlan(JsonObject source, String cityId) {
         JsonObject plan = source.deepCopy();
         String rawSchema = stringValue(plan, "schemaVersion", PLAN_SCHEMA);
         String rawMode = stringValue(plan, "planningMode", "");
+        boolean v04 = PLAN_SCHEMA_V04.equals(rawSchema) || PLANNING_MODE_V04.equals(rawMode);
         boolean v03 = PLAN_SCHEMA_V03.equals(rawSchema) || PLANNING_MODE_V03.equals(rawMode);
-        plan.addProperty("schemaVersion", v03 ? PLAN_SCHEMA_V03 : PLAN_SCHEMA);
-        plan.addProperty("planningMode", v03 ? PLANNING_MODE_V03 : PLANNING_MODE_V02);
+        plan.addProperty("schemaVersion", v04 ? PLAN_SCHEMA_V04 : v03 ? PLAN_SCHEMA_V03 : PLAN_SCHEMA);
+        plan.addProperty("planningMode", v04 ? PLANNING_MODE_V04 : v03 ? PLANNING_MODE_V03 : PLANNING_MODE_V02);
         if (stringValue(plan, "cityId").isBlank()) {
             plan.addProperty("cityId", cityId);
         }
@@ -1043,6 +1664,10 @@ public final class CityStructureArrayLayoutLoopPlanner {
         }
         if (!plan.has("layoutPlans")) {
             plan.add("layoutPlans", new JsonArray());
+        }
+        if (v04 && !array(plan, "layoutPlans").isEmpty()) {
+            throw new IllegalArgumentException("D4_ARRAY_LAYOUT_V04_ONE_THEME_PER_ROUND: "
+                    + "create the v0.4 loop with an empty layoutPlans array and submit one candidate item per round.");
         }
         return plan;
     }
@@ -1116,7 +1741,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
 
     private JsonObject executionTrace(JsonArray items, String planningMode) {
         JsonObject obj = new JsonObject();
-        obj.addProperty("schemaVersion", PLANNING_MODE_V03.equals(planningMode) ? TRACE_SCHEMA_V03 : TRACE_SCHEMA);
+        obj.addProperty("schemaVersion", traceSchemaForMode(planningMode));
         obj.addProperty("planningMode", planningMode);
         obj.add("items", items);
         return obj;
@@ -1327,6 +1952,12 @@ public final class CityStructureArrayLayoutLoopPlanner {
                 bounds.minZ() + (int) Math.round((bounds.heightBlocks() - 1) * fz));
     }
 
+    private BlockPoint point(JsonObject source, String key, BlockPoint fallback) {
+        JsonObject point = object(source, key);
+        return point.has("x") && point.has("z")
+                ? new BlockPoint(point.get("x").getAsInt(), point.get("z").getAsInt()) : fallback;
+    }
+
     private JsonArray patchRefs(LandformPatchSummary patch) {
         JsonArray refs = new JsonArray();
         refs.add(patch.landformPatchId());
@@ -1460,16 +2091,27 @@ public final class CityStructureArrayLayoutLoopPlanner {
     }
 
     private boolean validStateSchema(String schema) {
-        return STATE_SCHEMA.equals(schema) || STATE_SCHEMA_V03.equals(schema);
+        return STATE_SCHEMA.equals(schema) || STATE_SCHEMA_V03.equals(schema) || STATE_SCHEMA_V04.equals(schema);
     }
 
     private String planningMode(JsonObject obj) {
         String mode = stringValue(obj, "planningMode", "");
+        if (PLANNING_MODE_V04.equals(mode)) {
+            return PLANNING_MODE_V04;
+        }
         return PLANNING_MODE_V03.equals(mode) ? PLANNING_MODE_V03 : PLANNING_MODE_V02;
     }
 
     private String traceSchema(JsonObject obj) {
-        return PLANNING_MODE_V03.equals(planningMode(obj)) ? TRACE_SCHEMA_V03 : TRACE_SCHEMA;
+        return traceSchemaForMode(planningMode(obj));
+    }
+
+    private String traceSchemaForMode(String planningMode) {
+        return switch (planningMode) {
+            case PLANNING_MODE_V04 -> TRACE_SCHEMA_V04;
+            case PLANNING_MODE_V03 -> TRACE_SCHEMA_V03;
+            default -> TRACE_SCHEMA;
+        };
     }
 
     private List<String> toStrings(JsonArray array) {
@@ -1560,6 +2202,11 @@ public final class CityStructureArrayLayoutLoopPlanner {
                 ? obj.get(key).getAsDouble() : defaultValue;
     }
 
+    private boolean booleanValue(JsonObject obj, String key, boolean defaultValue) {
+        return obj != null && obj.has(key) && !obj.get(key).isJsonNull()
+                ? obj.get(key).getAsBoolean() : defaultValue;
+    }
+
     private record ShapeGrid(int rows, int columns) {
     }
 
@@ -1620,6 +2267,53 @@ public final class CityStructureArrayLayoutLoopPlanner {
         }
     }
 
+    public record ExpansionSpaceResult(JsonObject expansionSpace) {
+        public JsonObject asJson() {
+            JsonObject obj = new JsonObject();
+            obj.addProperty("ok", true);
+            obj.add("expansionSpace", expansionSpace.deepCopy());
+            return obj;
+        }
+    }
+
+    public record ExpansionCandidateSetResult(JsonObject candidateSet, JsonObject qualityReport) {
+        public JsonObject asJson() {
+            JsonObject obj = new JsonObject();
+            obj.addProperty("ok", qualityReport.get("passed").getAsBoolean());
+            obj.addProperty("planningMode", PLANNING_MODE_V04);
+            obj.add("arrayExpansionCandidateSet", candidateSet.deepCopy());
+            obj.add("qualityReport", qualityReport.deepCopy());
+            return obj;
+        }
+    }
+
+    public record ExpansionSelectionResult(JsonObject loopState, JsonObject selectedCandidate,
+                                           JsonObject qualityReport) {
+        public JsonObject asJson() {
+            JsonObject obj = new JsonObject();
+            obj.addProperty("ok", qualityReport.get("passed").getAsBoolean());
+            obj.addProperty("planningMode", PLANNING_MODE_V04);
+            obj.add("arrayLayoutLoopState", loopState.deepCopy());
+            obj.add("selectedArrayCandidate", selectedCandidate.deepCopy());
+            obj.add("executionTrace", objectForResult(loopState, "executionTrace"));
+            obj.add("occupiedEnvelopes", arrayForResult(loopState, "occupiedEnvelopes"));
+            obj.add("functionalArrayZones", objectForResult(loopState, "functionalArrayZones"));
+            obj.add("remainingExpansionSpace", objectForResult(loopState, "remainingExpansionSpace"));
+            obj.add("qualityReport", qualityReport.deepCopy());
+            return obj;
+        }
+
+        private static JsonObject objectForResult(JsonObject source, String key) {
+            return source != null && source.has(key) && source.get(key).isJsonObject()
+                    ? source.getAsJsonObject(key).deepCopy() : new JsonObject();
+        }
+
+        private static JsonArray arrayForResult(JsonObject source, String key) {
+            return source != null && source.has(key) && source.get(key).isJsonArray()
+                    ? source.getAsJsonArray(key).deepCopy() : new JsonArray();
+        }
+    }
+
     private record DesiredItem(String itemId, String structureId, String kind, String failurePolicy) {
     }
 
@@ -1638,5 +2332,22 @@ public final class CityStructureArrayLayoutLoopPlanner {
     }
 
     private record SubZone(String subZoneId, BlockBounds bounds) {
+    }
+
+    private record GlobalPatchCandidate(LandformPatchSummary patch,
+                                        int remainingCapacity,
+                                        BlockPoint entryPoint) {
+        private boolean available() {
+            return remainingCapacity > 0 && entryPoint != null;
+        }
+    }
+
+    private record ExpansionContext(JsonObject focusRef,
+                                    BlockBounds focusBounds,
+                                    String direction,
+                                    LandformPatchSummary targetPatch,
+                                    BlockBounds availableBounds,
+                                    BlockPoint entryPoint,
+                                    boolean newFunctionalArea) {
     }
 }

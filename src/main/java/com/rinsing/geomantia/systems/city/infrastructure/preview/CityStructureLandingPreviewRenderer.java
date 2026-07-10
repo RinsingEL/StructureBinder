@@ -225,6 +225,62 @@ public final class CityStructureLandingPreviewRenderer {
         return path;
     }
 
+    public Path renderD4ArrayExpansionCandidates(JsonObject candidateSet,
+                                                  CityLandformReviewPackage reviewPackage,
+                                                  Path outputDirectory) throws IOException {
+        Files.createDirectories(outputDirectory);
+        Path path = outputDirectory.resolve("d4_array_expansion_candidates.png");
+        BufferedImage image = baseImage();
+        Graphics2D g = image.createGraphics();
+        try {
+            setup(g);
+            BlockBounds gridBounds = gridBounds(candidateSet);
+            Transform t = transform(gridBounds);
+            drawPatchBackdrop(g, t, gridBounds, reviewPackage);
+            drawGrid(g, t, gridBounds);
+            JsonObject space = object(candidateSet, "expansionSpace");
+            drawOptionalRect(g, t, space, "focusCollisionEnvelope", new Color(204, 79, 63, 38),
+                    new Color(158, 59, 49, 190), 1.6f);
+            drawOptionalRect(g, t, space, "selectedExpansionAvailableBounds", new Color(65, 145, 108, 22),
+                    new Color(39, 111, 78, 150), 1.2f);
+            if (space.has("selectedExpansionEntryPoint") && space.get("selectedExpansionEntryPoint").isJsonObject()) {
+                drawGateway(g, t, point(space, "selectedExpansionEntryPoint"), new Color(39, 111, 78));
+            }
+            int candidateIndex = 0;
+            for (JsonElement candidateElem : array(candidateSet, "arrayCandidates")) {
+                if (!candidateElem.isJsonObject()) {
+                    continue;
+                }
+                candidateIndex++;
+                JsonObject candidate = candidateElem.getAsJsonObject();
+                Color candidateColor = color(candidateIndex, 235);
+                int itemIndex = 0;
+                BlockPoint previous = null;
+                for (JsonElement itemElem : array(candidate, "items")) {
+                    if (!itemElem.isJsonObject()) {
+                        continue;
+                    }
+                    itemIndex++;
+                    JsonObject item = itemElem.getAsJsonObject();
+                    BlockPoint anchor = point(item, "anchorBlock");
+                    if (previous != null) {
+                        drawLine(g, t, previous, anchor, withAlpha(candidateColor, 115), 1.3f, false);
+                    }
+                    drawPoint(g, t, anchor, candidateColor);
+                    drawBadge(g, t, anchor, "E" + candidateIndex + "." + itemIndex, candidateColor);
+                    previous = anchor;
+                }
+            }
+            title(g, "City D4 outward array candidates",
+                    "red=focus collision green=outward available square=growth entry; one color = complete candidate group");
+            expansionCandidateSummary(g, candidateSet);
+        } finally {
+            g.dispose();
+        }
+        ImageIO.write(image, "png", path.toFile());
+        return path;
+    }
+
     public Path renderD4ArrayLayoutLoop(JsonObject loopState, CityLandformReviewPackage reviewPackage,
                                         Path outputDirectory) throws IOException {
         Files.createDirectories(outputDirectory);
@@ -929,6 +985,35 @@ public final class CityStructureLandingPreviewRenderer {
             y += 15;
             g.drawString("  pattern=" + trim(string(group, "arrayPattern"), 40)
                     + " items=" + array(group, "items").size(), x, y);
+            y += 18;
+        }
+    }
+
+    private static void expansionCandidateSummary(Graphics2D g, JsonObject candidateSet) {
+        int x = 820;
+        int y = 90;
+        g.setColor(new Color(32, 34, 34));
+        g.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 14));
+        g.drawString("outward candidate legend", x, y);
+        y += 24;
+        g.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 11));
+        JsonObject space = object(candidateSet, "expansionSpace");
+        g.drawString("direction=" + trim(string(space, "selectedDirection"), 18), x, y);
+        y += 15;
+        g.drawString("patch=" + trim(string(space, "selectedTargetPatchRef"), 42), x, y);
+        y += 20;
+        int candidateIndex = 0;
+        for (JsonElement candidateElem : array(candidateSet, "arrayCandidates")) {
+            if (!candidateElem.isJsonObject() || y > HEIGHT - 42) {
+                continue;
+            }
+            candidateIndex++;
+            JsonObject candidate = candidateElem.getAsJsonObject();
+            g.drawString("E" + candidateIndex + " score="
+                    + String.format(java.util.Locale.ROOT, "%.0f", candidate.get("score").getAsDouble()), x, y);
+            y += 15;
+            g.drawString("  " + trim(string(candidate, "candidateId"), 48)
+                    + " items=" + array(candidate, "items").size(), x, y);
             y += 18;
         }
     }

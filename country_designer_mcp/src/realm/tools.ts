@@ -303,6 +303,96 @@ export const realmTools: ToolDefinition[] = [
     },
   },
   {
+    name: "city_create_d4_array_layout_loop",
+    description: "City D4 阵列 loop 创建：显式传 schemaVersion=city_d4_array_layout_plan.v0.4、planningMode=array_candidate_selection_loop_v0_4，创建只读候选/选择闭环初始 state；不生成阵列、不改 occupied。v0.4 不切默认 workflow。",
+    inputSchema: {
+      type: "object",
+      properties: {
+        runId: { type: "string" },
+        citySeedId: { type: "string" },
+        terrasenseProfileSource: { type: "object", description: "TerraSense structure profile 来源。" },
+        arrayLayoutPlan: { type: "object", description: "v0.4 计划；layoutPlans 必须为空，后续每轮通过候选工具提交一个阵列主题。" },
+        structureEnvelopeFactsSource: { type: "object" },
+        baseStructureAnchorPlanSource: { type: "object", description: "可选 base anchor plan。" },
+        occupiedStructureAnchorMapSource: { type: "object", description: "已 Plan 的 anchor map；其 collisionEnvelope 初始化 focus 可用 occupied。" },
+      },
+      required: ["runId", "citySeedId", "terrasenseProfileSource", "arrayLayoutPlan"],
+    },
+  },
+  {
+    name: "city_query_d4_array_expansion_space",
+    description: "City D4 v0.4 外扩空间查询：常规路径以已 Plan 的 collision occupied focusRef 返回附近 patch、方向、容量和入口；只读、不预留。显式 newFunctionalArea=true 时无需 focusRef/direction/targetPatchRef，返回按可用性和容量排序的 globalPatchCandidates[]，再由后续候选请求显式选择 patch。",
+    inputSchema: {
+      type: "object",
+      properties: {
+        runId: { type: "string" },
+        citySeedId: { type: "string" },
+        stateId: { type: "string", description: "建议传当前 loop stateId，防止读取过期 state。" },
+        arrayExpansionRequest: {
+          type: "object",
+          description: "常规外扩需 focusRef={anchorId 或 arrayId}、direction=north|south|east|west|northeast|northwest|southeast|southwest、targetPatchRef。全局新功能区只传 newFunctionalArea=true，不传 focusRef/direction/targetPatchRef。",
+        },
+        arrayLayoutLoopStateSource: { type: "object" },
+      },
+      required: ["runId", "citySeedId", "arrayExpansionRequest"],
+    },
+  },
+  {
+    name: "city_plan_d4_array_expansion_candidates",
+    description: "City D4 v0.4 外扩候选：常规路径基于 focus collision 外缘、方向和目标 patch 生成 3-5 组完整候选与预览；显式新功能区路径必须先查询 globalPatchCandidates[]，再传 selectedGlobalPatchRef。候选不修改 loop state、occupied、array zones 或剩余空间；空间不足 hard fail，不删点凑数。",
+    inputSchema: {
+      type: "object",
+      properties: {
+        runId: { type: "string" },
+        citySeedId: { type: "string" },
+        terrasenseProfileSource: { type: "object" },
+        stateId: { type: "string" },
+        arrayExpansionRequest: {
+          type: "object",
+          description: "常规外扩传 focusRef、direction、targetPatchRef；全局新功能区传 newFunctionalArea=true + selectedGlobalPatchRef（不传 focusRef/direction/targetPatchRef）。二者都传 candidateCount=3..5、可选 minCandidateCount 和一个 nextArrayLayoutPlanItem（compound_cluster、guide_line_dual_side、plaza_ring 或 composite_array；composite 保留 childLayoutPlans）。",
+        },
+        arrayLayoutLoopStateSource: { type: "object" },
+        structureEnvelopeFactsSource: { type: "object" },
+      },
+      required: ["runId", "citySeedId", "terrasenseProfileSource", "arrayExpansionRequest"],
+    },
+  },
+  {
+    name: "city_select_d4_array_expansion_candidate",
+    description: "City D4 v0.4 外扩候选提交：选中一整组候选后原子写入 loop state、collision occupied、array zones、剩余空间和 trace。默认必须传 candidateId；autoSelectHighestScore=true 才允许显式快测自动选择，并记录 decisionSource。",
+    inputSchema: {
+      type: "object",
+      properties: {
+        runId: { type: "string" },
+        citySeedId: { type: "string" },
+        stateId: { type: "string" },
+        candidateId: { type: "string", description: "默认必填；来自外扩候选集合。" },
+        autoSelectHighestScore: { type: "boolean", description: "仅快测显式开启；省略或 false 时不会自动选择。" },
+        selectionReason: { type: "string" },
+        arrayExpansionCandidateSetSource: { type: "object" },
+        arrayLayoutLoopStateSource: { type: "object" },
+        structureEnvelopeFactsSource: { type: "object" },
+      },
+      required: ["runId", "citySeedId"],
+    },
+  },
+  {
+    name: "city_finalize_d4_array_layout_loop",
+    description: "City D4 阵列 loop finalize：把已选 v0.4 阵列和 base key anchors 写为标准 StructureAnchorPlan/Map，供 D5/D6/D7 消费。未选候选不会进入标准 D4。",
+    inputSchema: {
+      type: "object",
+      properties: {
+        runId: { type: "string" },
+        citySeedId: { type: "string" },
+        terrasenseProfileSource: { type: "object" },
+        stateId: { type: "string" },
+        arrayLayoutLoopStateSource: { type: "object" },
+        structureEnvelopeFactsSource: { type: "object" },
+      },
+      required: ["runId", "citySeedId", "terrasenseProfileSource"],
+    },
+  },
+  {
     name: "city_create_d4_design_loop_state",
     description: "City D4 多轮设计 loop state：基于 D3 patch 创建 design loop state artifact；只写状态，不触发 D5/D6/dressing/roads/worldgen。",
     inputSchema: {

@@ -353,6 +353,66 @@ final class RealmPlanningHttpController {
         });
     }
 
+    void handleCityQueryD4ArrayExpansionSpace(HttpExchange exchange) {
+        handle(exchange, "POST", () -> {
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            String runId = requiredString(request, "runId");
+            String citySeedId = requiredString(request, "citySeedId");
+            rejectLegacyCityFields(request, "patchGroupPlan", "zoneChoices", "functionType", "functionTag",
+                    "function_candidates");
+            if (!request.has("arrayExpansionRequest") || !request.get("arrayExpansionRequest").isJsonObject()) {
+                throw new IllegalArgumentException("arrayExpansionRequest object is required.");
+            }
+            return CityPlanningEndpointHandler.handleQueryD4ArrayExpansionSpace(debugRoot(), runId, citySeedId,
+                    stringValue(request, "stateId", ""), request.getAsJsonObject("arrayExpansionRequest"),
+                    request.has("arrayLayoutLoopStateSource") && request.get("arrayLayoutLoopStateSource").isJsonObject()
+                            ? request.getAsJsonObject("arrayLayoutLoopStateSource") : null);
+        });
+    }
+
+    void handleCityPlanD4ArrayExpansionCandidates(HttpExchange exchange) {
+        handle(exchange, "POST", () -> {
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            String runId = requiredString(request, "runId");
+            String citySeedId = requiredString(request, "citySeedId");
+            rejectLegacyCityFields(request, "patchGroupPlan", "zoneChoices", "functionType", "functionTag",
+                    "function_candidates");
+            if (!request.has("terrasenseProfileSource") || !request.get("terrasenseProfileSource").isJsonObject()) {
+                throw new IllegalArgumentException("terrasenseProfileSource object is required.");
+            }
+            if (!request.has("arrayExpansionRequest") || !request.get("arrayExpansionRequest").isJsonObject()) {
+                throw new IllegalArgumentException("arrayExpansionRequest object is required.");
+            }
+            return CityPlanningEndpointHandler.handlePlanD4ArrayExpansionCandidates(debugRoot(), runId, citySeedId,
+                    request.getAsJsonObject("terrasenseProfileSource"), stringValue(request, "stateId", ""),
+                    request.getAsJsonObject("arrayExpansionRequest"),
+                    request.has("arrayLayoutLoopStateSource") && request.get("arrayLayoutLoopStateSource").isJsonObject()
+                            ? request.getAsJsonObject("arrayLayoutLoopStateSource") : null,
+                    request.has("structureEnvelopeFactsSource") && request.get("structureEnvelopeFactsSource").isJsonObject()
+                            ? request.getAsJsonObject("structureEnvelopeFactsSource") : null);
+        });
+    }
+
+    void handleCitySelectD4ArrayExpansionCandidate(HttpExchange exchange) {
+        handle(exchange, "POST", () -> {
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            String runId = requiredString(request, "runId");
+            String citySeedId = requiredString(request, "citySeedId");
+            rejectLegacyCityFields(request, "patchGroupPlan", "zoneChoices", "functionType", "functionTag",
+                    "function_candidates");
+            return CityPlanningEndpointHandler.handleSelectD4ArrayExpansionCandidate(debugRoot(), runId, citySeedId,
+                    stringValue(request, "stateId", ""), stringValue(request, "candidateId", ""),
+                    booleanValue(request, "autoSelectHighestScore", false), stringValue(request, "selectionReason", ""),
+                    request.has("arrayExpansionCandidateSetSource")
+                            && request.get("arrayExpansionCandidateSetSource").isJsonObject()
+                            ? request.getAsJsonObject("arrayExpansionCandidateSetSource") : null,
+                    request.has("arrayLayoutLoopStateSource") && request.get("arrayLayoutLoopStateSource").isJsonObject()
+                            ? request.getAsJsonObject("arrayLayoutLoopStateSource") : null,
+                    request.has("structureEnvelopeFactsSource") && request.get("structureEnvelopeFactsSource").isJsonObject()
+                            ? request.getAsJsonObject("structureEnvelopeFactsSource") : null);
+        });
+    }
+
     void handleCityFinalizeD4ArrayLayoutLoop(HttpExchange exchange) {
         handle(exchange, "POST", () -> {
             JsonObject request = GisHttpUtil.readJsonObject(exchange);
