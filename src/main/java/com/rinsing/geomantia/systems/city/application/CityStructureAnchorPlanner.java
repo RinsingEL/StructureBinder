@@ -219,8 +219,7 @@ public final class CityStructureAnchorPlanner {
         java.util.Optional<CityStructureEnvelopeFacts.Fact> fact = facts.validFactFor(profile);
         if (fact.isPresent()) {
             CityStructureEnvelopeFacts.Fact value = fact.get();
-            boolean fixedGroupMode = "fixed_footprint".equals(profile.footprintMode()) || value.nearFixedByFacts();
-            if (fixedGroupMode) {
+            if (value.usesDominantBBoxGroup()) {
                 java.util.Optional<CityStructureEnvelopeFacts.BBoxGroup> selected = requestedEnvelopeGroupKey.isBlank()
                         ? value.dominantGroup()
                         : value.groupByKey(requestedEnvelopeGroupKey);
@@ -241,6 +240,22 @@ public final class CityStructureAnchorPlanner {
                 return new EnvelopeDecision(collision, mask, diagnosticMaxObserved, 0,
                         "structureEnvelopeFacts:fixedBBoxGroup+smallClearance", "fixed_bbox_group",
                         group.groupKey(), group, value, false, "", true);
+            }
+            if (!requestedEnvelopeGroupKey.isBlank()) {
+                return new EnvelopeDecision(plannedFootprint, plannedFootprint, plannedFootprint, 0,
+                        "structureEnvelopeFacts:requestedGroupNotRecommended", "d2_recommended_envelope",
+                        requestedEnvelopeGroupKey, null, value, false,
+                        "requested envelopeGroupKey is only valid when D2 recommends dominantBBoxGroup.", false);
+            }
+            BlockBounds recommended = value.recommendedEnvelope();
+            if (value.usesStableMaxEnvelope()) {
+                BlockBounds collision = fromLocal(anchorBlock, expand(recommended, clearance));
+                BlockBounds mask = expand(collision, maskMargin);
+                BlockBounds diagnosticMaxObserved = fromLocal(anchorBlock, expand(value.maxObservedEnvelope(),
+                        Math.max(clearance, roadMargin)));
+                return new EnvelopeDecision(collision, mask, diagnosticMaxObserved, 0,
+                        "structureEnvelopeFacts:stableMaxEnvelope+clearance/collision+maskMargin",
+                        "d2_stable_max_envelope", "", null, value, false, "", false);
             }
             BlockBounds collision = fromLocal(anchorBlock, expand(value.p95Envelope(), clearance));
             BlockBounds mask = expand(collision, maskMargin);

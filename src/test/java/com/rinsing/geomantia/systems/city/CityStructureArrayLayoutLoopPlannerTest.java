@@ -110,6 +110,7 @@ class CityStructureArrayLayoutLoopPlannerTest {
 
         assertTrue(executed.asJson().get("ok").getAsBoolean());
         JsonObject zone = executed.functionalArrayZones().getAsJsonArray("arrayZones").get(0).getAsJsonObject();
+        assertEquals(23, zone.get("spacingBlocks").getAsInt());
         assertNoItemCollisionOverlap(zone);
         assertFalse(zone.has("groupSafetyEnvelope"));
         assertAnyItemDiagnosticMaxObservedOverlap(zone);
@@ -310,6 +311,277 @@ class CityStructureArrayLayoutLoopPlannerTest {
         JsonObject autoTrace = autoSelected.loopState().getAsJsonObject("executionTrace")
                 .getAsJsonArray("items").get(0).getAsJsonObject();
         assertEquals("auto_highest_score_explicit", autoTrace.get("decisionSource").getAsString());
+    }
+
+    @Test
+    void v04ContinuousExpansionUsesParentBodyGapWithoutTargetPatch() throws Exception {
+        Fixture fixture = fixture();
+        JsonObject occupiedMap = JsonParser.parseString("""
+                {"anchors":[{"anchorId":"manor_core",
+                "plannedFootprint":{"minX":-40,"minZ":-40,"maxX":40,"maxZ":40},
+                "collisionEnvelope":{"minX":-48,"minZ":-48,"maxX":48,"maxZ":48}}]}
+                """).getAsJsonObject();
+        CityStructureArrayLayoutLoopPlanner planner = new CityStructureArrayLayoutLoopPlanner();
+        CityStructureArrayLayoutLoopPlanner.CreateResult created = planner.create(
+                fixture.baseDir(), fixture.review(), fixture.terraSenseSource(), arrayLayoutPlanV04(),
+                CityStructureEnvelopeFacts.empty(), new JsonObject(), occupiedMap);
+        JsonObject request = expansionRequest(fixture.review());
+        request.remove("targetPatchRef");
+        request.add("expansionPolicy", JsonParser.parseString("""
+                {"actualBodyGapMin":16,"actualBodyGapMax":30,"frontierExpansionStepBlocks":16}
+                """).getAsJsonObject());
+
+        CityStructureArrayLayoutLoopPlanner.ExpansionSpaceResult space = planner.queryExpansionSpace(
+                fixture.review(), created.loopState(), request);
+        assertEquals("continuous_focus_frontier", space.expansionSpace().get("searchScope").getAsString());
+        assertEquals(-40, space.expansionSpace().getAsJsonObject("focusBodyEnvelope").get("minX").getAsInt());
+
+        CityStructureArrayLayoutLoopPlanner.ExpansionCandidateSetResult planned = planner.planExpansionCandidates(
+                fixture.baseDir(), fixture.review(), fixture.terraSenseSource(), created.loopState(), request,
+                CityStructureEnvelopeFacts.empty());
+        assertEquals(3, planned.candidateSet().getAsJsonArray("arrayCandidates").size());
+        for (JsonElement candidateElement : planned.candidateSet().getAsJsonArray("arrayCandidates")) {
+            JsonObject candidate = candidateElement.getAsJsonObject();
+            assertEquals("continuous_focus_frontier", candidate.get("expansionMode").getAsString());
+            assertFalse(candidate.has("targetPatchRef"));
+            assertTrue(candidate.get("actualBodyGapBlocks").getAsInt() >= 16);
+            assertTrue(candidate.get("actualBodyGapBlocks").getAsInt() <= 30);
+            assertFalse(candidate.getAsJsonArray("terrainPatchRefs").isEmpty());
+        }
+    }
+
+    @Test
+    void v04ContinuousExpansionAllowsExplicitTwoCandidateMinimumButDefaultsToThree() throws Exception {
+        Fixture fixture = fixture();
+        CityLandformReviewPackage sparse = reviewWithMemberCells(fixture.review(), List.of(
+                memberCell(fixture.review(), 80, 0), memberCell(fixture.review(), 80, 28)));
+        JsonObject occupiedMap = JsonParser.parseString("""
+                {"anchors":[{"anchorId":"manor_core",
+                "plannedFootprint":{"minX":-40,"minZ":-40,"maxX":40,"maxZ":40},
+                "collisionEnvelope":{"minX":-48,"minZ":-48,"maxX":48,"maxZ":48}}]}
+                """).getAsJsonObject();
+        CityStructureArrayLayoutLoopPlanner planner = new CityStructureArrayLayoutLoopPlanner();
+        CityStructureArrayLayoutLoopPlanner.CreateResult created = planner.create(
+                fixture.baseDir(), sparse, fixture.terraSenseSource(), arrayLayoutPlanV04(),
+                CityStructureEnvelopeFacts.empty(), new JsonObject(), occupiedMap);
+        JsonObject request = expansionRequest(sparse);
+        request.remove("targetPatchRef");
+        request.getAsJsonObject("nextArrayLayoutPlanItem").add("countPolicy", JsonParser.parseString("""
+                {"minCount":1,"targetCount":1,"maxCount":1}
+                """).getAsJsonObject());
+
+        IllegalArgumentException defaultThree = assertThrows(IllegalArgumentException.class,
+                () -> planner.planExpansionCandidates(fixture.baseDir(), sparse, fixture.terraSenseSource(),
+                        created.loopState(), request, CityStructureEnvelopeFacts.empty()));
+        assertTrue(defaultThree.getMessage().contains("D4_ARRAY_LAYOUT_CONTINUOUS_FRONTIER_UNSATISFIED"));
+
+        request.addProperty("minCandidateCount", 2);
+        CityStructureArrayLayoutLoopPlanner.ExpansionCandidateSetResult planned = planner.planExpansionCandidates(
+                fixture.baseDir(), sparse, fixture.terraSenseSource(), created.loopState(), request,
+                CityStructureEnvelopeFacts.empty());
+        assertEquals(2, planned.candidateSet().getAsJsonArray("arrayCandidates").size());
+    }
+
+    @Test
+    void v04ContinuousExpansionOnlyMovesToMidRingAfterNearRingHasNoCompleteCandidate() throws Exception {
+        Fixture fixture = fixture();
+        CityLandformReviewPackage sparse = reviewWithMemberCells(fixture.review(), List.of(
+                memberCell(fixture.review(), 88, -84), memberCell(fixture.review(), 92, -56),
+                memberCell(fixture.review(), 88, -28), memberCell(fixture.review(), 92, 0),
+                memberCell(fixture.review(), 88, 28), memberCell(fixture.review(), 92, 56),
+                memberCell(fixture.review(), 88, 84), memberCell(fixture.review(), 92, 112)));
+        JsonObject occupiedMap = JsonParser.parseString("""
+                {"anchors":[{"anchorId":"manor_core",
+                "plannedFootprint":{"minX":-40,"minZ":-40,"maxX":40,"maxZ":40},
+                "collisionEnvelope":{"minX":-48,"minZ":-48,"maxX":48,"maxZ":48}}]}
+                """).getAsJsonObject();
+        CityStructureArrayLayoutLoopPlanner planner = new CityStructureArrayLayoutLoopPlanner();
+        CityStructureArrayLayoutLoopPlanner.CreateResult created = planner.create(
+                fixture.baseDir(), sparse, fixture.terraSenseSource(), arrayLayoutPlanV04(),
+                CityStructureEnvelopeFacts.empty(), new JsonObject(), occupiedMap);
+        JsonObject request = expansionRequest(sparse);
+        request.remove("targetPatchRef");
+        request.add("expansionPolicy", JsonParser.parseString("""
+                {"actualBodyGapMin":16,"actualBodyGapMax":30,"frontierExpansionStepBlocks":16}
+                """).getAsJsonObject());
+
+        CityStructureArrayLayoutLoopPlanner.ExpansionCandidateSetResult planned = planner.planExpansionCandidates(
+                fixture.baseDir(), sparse, fixture.terraSenseSource(), created.loopState(), request,
+                CityStructureEnvelopeFacts.empty());
+        JsonArray trace = planned.candidateSet().getAsJsonArray("frontierSearchTrace");
+        assertEquals("near", trace.get(0).getAsJsonObject().get("frontierRing").getAsString());
+        assertEquals("skipped", trace.get(0).getAsJsonObject().get("result").getAsString());
+        assertEquals("D4_ARRAY_LAYOUT_FRONTIER_BODY_GAP_UNSATISFIED",
+                trace.get(0).getAsJsonObject().get("reasonCode").getAsString());
+        for (JsonElement candidateElement : planned.candidateSet().getAsJsonArray("arrayCandidates")) {
+            assertEquals("mid", candidateElement.getAsJsonObject().get("frontierRing").getAsString());
+        }
+    }
+
+    @Test
+    void v04ContinuousExpansionTreatsPatchesAsTerrainFiltersAndCanCrossTheirBoundary() throws Exception {
+        Fixture fixture = fixture();
+        CityLandformReviewPackage split = reviewWithSplitPatches(fixture.review());
+        JsonObject occupiedMap = JsonParser.parseString("""
+                {"anchors":[{"anchorId":"manor_core",
+                "plannedFootprint":{"minX":-40,"minZ":-40,"maxX":40,"maxZ":40},
+                "collisionEnvelope":{"minX":-48,"minZ":-48,"maxX":48,"maxZ":48}}]}
+                """).getAsJsonObject();
+        CityStructureArrayLayoutLoopPlanner planner = new CityStructureArrayLayoutLoopPlanner();
+        CityStructureArrayLayoutLoopPlanner.CreateResult created = planner.create(
+                fixture.baseDir(), split, fixture.terraSenseSource(), arrayLayoutPlanV04(),
+                CityStructureEnvelopeFacts.empty(), new JsonObject(), occupiedMap);
+        JsonObject request = expansionRequest(split);
+        request.remove("targetPatchRef");
+
+        CityStructureArrayLayoutLoopPlanner.ExpansionCandidateSetResult planned = planner.planExpansionCandidates(
+                fixture.baseDir(), split, fixture.terraSenseSource(), created.loopState(), request,
+                CityStructureEnvelopeFacts.empty());
+        JsonObject candidate = planned.candidateSet().getAsJsonArray("arrayCandidates").get(0).getAsJsonObject();
+        assertFalse(candidate.has("targetPatchRef"));
+        assertTrue(candidate.getAsJsonArray("terrainPatchRefs").size() >= 2,
+                "one continuous cluster should retain terrain membership on both sides of the D3 patch boundary");
+    }
+
+    @Test
+    void v04ContinuousExpansionUsesD2ParentAndChildBodiesForTheFrontierGap() throws Exception {
+        Fixture fixture = fixture();
+        CityStructureEnvelopeFacts childFacts = stableD2Facts(fixture, "minecraft:desert_pyramid", 24);
+        JsonObject parentFact = JsonParser.parseString("""
+                {"collisionEnvelopeSource":"stableMaxEnvelope",
+                "localEnvelopeP95":{"minX":-18,"minZ":-18,"maxX":18,"maxZ":18},
+                "stableMaxEnvelope":{"minX":-18,"minZ":-18,"maxX":18,"maxZ":18}}
+                """).getAsJsonObject();
+        JsonObject occupiedMap = JsonParser.parseString("""
+                {"anchors":[{"anchorId":"manor_core","structureId":"minecraft:desert_pyramid",
+                "anchorBlock":{"x":0,"z":0},
+                "plannedFootprint":{"minX":-10,"minZ":-6,"maxX":9,"maxZ":5},
+                "collisionEnvelope":{"minX":-26,"minZ":-26,"maxX":26,"maxZ":26}}]}
+                """).getAsJsonObject();
+        occupiedMap.getAsJsonArray("anchors").get(0).getAsJsonObject().add("structureEnvelopeFact", parentFact);
+        CityStructureArrayLayoutLoopPlanner planner = new CityStructureArrayLayoutLoopPlanner();
+        CityStructureArrayLayoutLoopPlanner.CreateResult created = planner.create(
+                fixture.baseDir(), fixture.review(), fixture.terraSenseSource(), arrayLayoutPlanV04(),
+                childFacts, new JsonObject(), occupiedMap);
+        JsonObject occupied = created.loopState().getAsJsonArray("occupiedEnvelopes").get(0).getAsJsonObject();
+        assertEquals("d2_structure_envelope_fact", occupied.get("bodyEnvelopeSource").getAsString());
+        assertEquals(-18, occupied.getAsJsonObject("bodyBounds").get("minX").getAsInt());
+        assertEquals(18, occupied.getAsJsonObject("bodyBounds").get("maxX").getAsInt());
+
+        JsonObject request = expansionRequest(fixture.review());
+        request.remove("targetPatchRef");
+        request.getAsJsonObject("nextArrayLayoutPlanItem").add("countPolicy", JsonParser.parseString("""
+                {"minCount":1,"targetCount":1,"maxCount":1}
+                """).getAsJsonObject());
+        CityStructureArrayLayoutLoopPlanner.ExpansionCandidateSetResult planned = planner.planExpansionCandidates(
+                fixture.baseDir(), fixture.review(), fixture.terraSenseSource(), created.loopState(), request,
+                childFacts);
+        for (JsonElement candidateElement : planned.candidateSet().getAsJsonArray("arrayCandidates")) {
+            int gap = candidateElement.getAsJsonObject().get("actualBodyGapBlocks").getAsInt();
+            assertTrue(gap >= 16 && gap <= 30,
+                    "D2 37-block parent and 49-block child must still use the requested body gap, not spacing");
+        }
+    }
+
+    @Test
+    void v04SouthFourHouseGridKeepsItsFirstBodyInsideTheNearFrontierRing() throws Exception {
+        Fixture fixture = fixture();
+        CityStructureEnvelopeFacts childFacts = stableD2Facts(fixture, "minecraft:desert_pyramid", 24);
+        JsonObject parentFact = JsonParser.parseString("""
+                {"collisionEnvelopeSource":"stableMaxEnvelope",
+                "localEnvelopeP95":{"minX":-55,"minZ":-55,"maxX":55,"maxZ":55},
+                "stableMaxEnvelope":{"minX":-55,"minZ":-55,"maxX":55,"maxZ":55}}
+                """).getAsJsonObject();
+        JsonObject occupiedMap = JsonParser.parseString("""
+                {"anchors":[{"anchorId":"manor_core","structureId":"minecraft:desert_pyramid",
+                "anchorBlock":{"x":0,"z":0},
+                "plannedFootprint":{"minX":-10,"minZ":-6,"maxX":9,"maxZ":5},
+                "collisionEnvelope":{"minX":-63,"minZ":-63,"maxX":63,"maxZ":63}}]}
+                """).getAsJsonObject();
+        occupiedMap.getAsJsonArray("anchors").get(0).getAsJsonObject().add("structureEnvelopeFact", parentFact);
+        CityStructureArrayLayoutLoopPlanner planner = new CityStructureArrayLayoutLoopPlanner();
+        CityStructureArrayLayoutLoopPlanner.CreateResult created = planner.create(
+                fixture.baseDir(), fixture.review(), fixture.terraSenseSource(), arrayLayoutPlanV04(),
+                childFacts, new JsonObject(), occupiedMap);
+        JsonObject request = expansionRequest(fixture.review());
+        request.remove("targetPatchRef");
+        request.addProperty("direction", "south");
+        JsonObject item = request.getAsJsonObject("nextArrayLayoutPlanItem");
+        item.add("countPolicy", JsonParser.parseString("""
+                {"minCount":4,"targetCount":4,"maxCount":4}
+                """).getAsJsonObject());
+        item.add("compoundCluster", JsonParser.parseString("""
+                {"shape":"grid","rows":2,"columns":2,"spacingBlocks":80}
+                """).getAsJsonObject());
+
+        CityStructureArrayLayoutLoopPlanner.ExpansionCandidateSetResult planned = planner.planExpansionCandidates(
+                fixture.baseDir(), fixture.review(), fixture.terraSenseSource(), created.loopState(), request,
+                childFacts);
+        assertEquals(3, planned.candidateSet().getAsJsonArray("arrayCandidates").size());
+        for (JsonElement candidateElement : planned.candidateSet().getAsJsonArray("arrayCandidates")) {
+            JsonObject candidate = candidateElement.getAsJsonObject();
+            assertEquals("near", candidate.get("frontierRing").getAsString());
+            assertTrue(candidate.get("actualBodyGapBlocks").getAsInt() >= 16);
+            assertTrue(candidate.get("actualBodyGapBlocks").getAsInt() <= 30);
+            assertEquals(4, candidate.getAsJsonArray("items").size());
+        }
+    }
+
+    @Test
+    void v04ContinuousExpansionRejectsWaterForGroundedStructuresBeforeExpanding() throws Exception {
+        Fixture fixture = fixture();
+        CityLandformReviewPackage waterFrontier = reviewWithWaterFrontier(fixture.review());
+        JsonObject occupiedMap = JsonParser.parseString("""
+                {"anchors":[{"anchorId":"manor_core",
+                "plannedFootprint":{"minX":-40,"minZ":-40,"maxX":40,"maxZ":40},
+                "collisionEnvelope":{"minX":-48,"minZ":-48,"maxX":48,"maxZ":48}}]}
+                """).getAsJsonObject();
+        CityStructureArrayLayoutLoopPlanner planner = new CityStructureArrayLayoutLoopPlanner();
+        CityStructureArrayLayoutLoopPlanner.CreateResult created = planner.create(
+                fixture.baseDir(), waterFrontier, fixture.terraSenseSource(), arrayLayoutPlanV04(),
+                CityStructureEnvelopeFacts.empty(), new JsonObject(), occupiedMap);
+        JsonObject request = expansionRequest(waterFrontier);
+        request.remove("targetPatchRef");
+
+        CityStructureArrayLayoutLoopPlanner.ExpansionCandidateSetResult planned = planner.planExpansionCandidates(
+                fixture.baseDir(), waterFrontier, fixture.terraSenseSource(), created.loopState(), request,
+                CityStructureEnvelopeFacts.empty());
+        JsonObject near = planned.candidateSet().getAsJsonArray("frontierSearchTrace").get(0).getAsJsonObject();
+        assertEquals("near", near.get("frontierRing").getAsString());
+        assertTrue(near.getAsJsonArray("excludedTerrainPatches").toString()
+                .contains("D4_ARRAY_LAYOUT_FRONTIER_WATER_REJECTED_FOR_GROUNDED_STRUCTURE"));
+        for (JsonElement candidateElement : planned.candidateSet().getAsJsonArray("arrayCandidates")) {
+            assertFalse(candidateElement.getAsJsonObject().getAsJsonArray("terrainPatchRefs").toString()
+                    .contains("water_frontier"));
+        }
+    }
+
+    @Test
+    void v04ContinuousExpansionAllowsGroundedStructuresOnNearWaterGentleSlope() throws Exception {
+        Fixture fixture = fixture();
+        CityLandformReviewPackage nearWaterSlope = reviewWithNearWaterGentleSlope(fixture.review());
+        JsonObject occupiedMap = JsonParser.parseString("""
+                {"anchors":[{"anchorId":"manor_core",
+                "plannedFootprint":{"minX":-40,"minZ":-40,"maxX":40,"maxZ":40},
+                "collisionEnvelope":{"minX":-48,"minZ":-48,"maxX":48,"maxZ":48}}]}
+                """).getAsJsonObject();
+        CityStructureArrayLayoutLoopPlanner planner = new CityStructureArrayLayoutLoopPlanner();
+        CityStructureArrayLayoutLoopPlanner.CreateResult created = planner.create(
+                fixture.baseDir(), nearWaterSlope, fixture.terraSenseSource(), arrayLayoutPlanV04(),
+                CityStructureEnvelopeFacts.empty(), new JsonObject(), occupiedMap);
+        JsonObject request = expansionRequest(nearWaterSlope);
+        request.remove("targetPatchRef");
+
+        CityStructureArrayLayoutLoopPlanner.ExpansionCandidateSetResult planned = planner.planExpansionCandidates(
+                fixture.baseDir(), nearWaterSlope, fixture.terraSenseSource(), created.loopState(), request,
+                CityStructureEnvelopeFacts.empty());
+        JsonObject near = planned.candidateSet().getAsJsonArray("frontierSearchTrace").get(0).getAsJsonObject();
+        assertFalse(near.getAsJsonArray("excludedTerrainPatches").toString()
+                .contains("D4_ARRAY_LAYOUT_FRONTIER_WATER_REJECTED_FOR_GROUNDED_STRUCTURE"));
+        for (JsonElement candidateElement : planned.candidateSet().getAsJsonArray("arrayCandidates")) {
+            assertTrue(candidateElement.getAsJsonObject().getAsJsonArray("terrainPatchRefs").toString()
+                    .contains("near_water_slope"));
+        }
     }
 
     @Test
@@ -854,18 +1126,47 @@ class CityStructureArrayLayoutLoopPlannerTest {
 
     private static CityStructureEnvelopeFacts wideDiagnosticFacts(Fixture fixture, String structureId) throws Exception {
         CityStructureEnvelopeProfiler.Result result = new CityStructureEnvelopeProfiler()
-                .profile(fixture.baseDir(), fixture.terraSenseSource(), List.of(structureId), 6,
+                .profile(fixture.baseDir(), fixture.terraSenseSource(), List.of(structureId), 21,
                         (profile, sampleIndex) -> CityStructureEnvelopeProfiler.EnvelopeSample.valid(sampleIndex,
-                                sampleIndex < 5
+                                sampleIndex < 20
                                         ? new BlockBounds(-3, -3, 3, 3)
                                         : new BlockBounds(-90, -90, 90, 90),
                                 1, "fixed_config_hash", "pack_hash"));
         JsonObject factsJson = result.structureEnvelopeFacts().deepCopy();
         JsonObject fact = factsJson.getAsJsonArray("structures").get(0).getAsJsonObject();
+        fact.add("localEnvelopeP95", JsonParser.parseString("""
+                {"minX": -3, "minZ": -3, "maxX": 3, "maxZ": 3}
+                """).getAsJsonObject());
         fact.addProperty("stabilityClassification", "stable");
         fact.getAsJsonObject("placementRecommendation").addProperty("allowCompactArray", true);
+        fact.getAsJsonObject("placementRecommendation").addProperty("collisionEnvelopeSource",
+                "localEnvelopeP95");
         fact.addProperty("requiresReview", false);
         Path factsPath = fixture.baseDir().resolve("wide_diagnostic_structure_envelope_facts.json");
+        Files.writeString(factsPath, CityJson.GSON.toJson(factsJson));
+        return CityStructureEnvelopeFacts.load(factsPath);
+    }
+
+    private static CityStructureEnvelopeFacts stableD2Facts(Fixture fixture, String structureId,
+                                                            int halfExtent) throws Exception {
+        CityStructureEnvelopeProfiler.Result result = new CityStructureEnvelopeProfiler()
+                .profile(fixture.baseDir(), fixture.terraSenseSource(), List.of(structureId), 16,
+                        (profile, sampleIndex) -> CityStructureEnvelopeProfiler.EnvelopeSample.valid(sampleIndex,
+                                new BlockBounds(-halfExtent, -halfExtent, halfExtent, halfExtent),
+                                1, "fixed_config_hash", "pack_hash"));
+        JsonObject factsJson = result.structureEnvelopeFacts().deepCopy();
+        JsonObject fact = factsJson.getAsJsonArray("structures").get(0).getAsJsonObject();
+        JsonObject bounds = JsonParser.parseString("""
+                {"minX":%d,"minZ":%d,"maxX":%d,"maxZ":%d}
+                """.formatted(-halfExtent, -halfExtent, halfExtent, halfExtent)).getAsJsonObject();
+        fact.add("localEnvelopeP95", bounds.deepCopy());
+        fact.add("stableMaxEnvelope", bounds.deepCopy());
+        fact.addProperty("stabilityClassification", "stable");
+        fact.getAsJsonObject("placementRecommendation").addProperty("allowCompactArray", true);
+        fact.getAsJsonObject("placementRecommendation").addProperty("collisionEnvelopeSource",
+                "stableMaxEnvelope");
+        fact.addProperty("requiresReview", false);
+        Path factsPath = fixture.baseDir().resolve("stable_d2_structure_envelope_facts.json");
         Files.writeString(factsPath, CityJson.GSON.toJson(factsJson));
         return CityStructureEnvelopeFacts.load(factsPath);
     }
@@ -889,6 +1190,43 @@ class CityStructureArrayLayoutLoopPlannerTest {
                 LandformPatchSummary.fromGisPatch(
                         patch("global_small", LandformType.PLAIN, 80, 80, 120, 120),
                         "global_small", "global_small", template.areaClass(), List.of())),
+                review.planningContext(), review.aiPromptContext(), review.debugRefs());
+    }
+
+    private static CityLandformReviewPackage reviewWithSplitPatches(CityLandformReviewPackage review) {
+        LandformPatchSummary template = review.landformPatches().get(0);
+        return new CityLandformReviewPackage(review.schemaVersion(), review.cityId(), review.grid(),
+                review.targetScale(), review.reviewMapImage(), review.legend(), List.of(
+                LandformPatchSummary.fromGisPatch(
+                        patch("frontier_west", LandformType.PLAIN, -320, -320, 100, 320),
+                        "frontier_west", "frontier_west", template.areaClass(), List.of()),
+                LandformPatchSummary.fromGisPatch(
+                        patch("frontier_east", LandformType.PLAIN, 100, -320, 320, 320),
+                        "frontier_east", "frontier_east", template.areaClass(), List.of())),
+                review.planningContext(), review.aiPromptContext(), review.debugRefs());
+    }
+
+    private static CityLandformReviewPackage reviewWithWaterFrontier(CityLandformReviewPackage review) {
+        LandformPatchSummary template = review.landformPatches().get(0);
+        return new CityLandformReviewPackage(review.schemaVersion(), review.cityId(), review.grid(),
+                review.targetScale(), review.reviewMapImage(), review.legend(), List.of(
+                LandformPatchSummary.fromGisPatch(
+                        patch("water_frontier", LandformType.WATER, -320, -320, 100, 320),
+                        "water_frontier", "water_frontier", template.areaClass(), List.of()),
+                LandformPatchSummary.fromGisPatch(
+                        patch("ground_beyond_water", LandformType.PLAIN, 100, -320, 320, 320),
+                        "ground_beyond_water", "ground_beyond_water", template.areaClass(), List.of())),
+                review.planningContext(), review.aiPromptContext(), review.debugRefs());
+    }
+
+    private static CityLandformReviewPackage reviewWithNearWaterGentleSlope(CityLandformReviewPackage review) {
+        LandformPatchSummary template = review.landformPatches().get(0);
+        LandformPatchSummary slope = LandformPatchSummary.fromGisPatch(
+                        patch("near_water_slope", LandformType.SLOPE, -320, -320, 320, 320),
+                        "near_water_slope", "near_water_slope", template.areaClass(), List.of())
+                .withTags(List.of("gentle", "low_confidence"), List.of("near_water"));
+        return new CityLandformReviewPackage(review.schemaVersion(), review.cityId(), review.grid(),
+                review.targetScale(), review.reviewMapImage(), review.legend(), List.of(slope),
                 review.planningContext(), review.aiPromptContext(), review.debugRefs());
     }
 

@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "city_decoration_style_profile.v0.1",
+  "styleProfileId": "medieval_coastal",
+  "mappings": [
+    {
+      "semanticRef": "crop_tile",
+      "variants": [
+        {"contentRef": "geomantia:decoration/crop_tile", "weight": 1.0}
+      ]
+    },
+    {
+      "semanticRef": "water_channel_tile",
+      "variants": [
+        {"contentRef": "geomantia:decoration/water_channel_tile", "weight": 1.0}
+      ]
+    },
+    {
+      "semanticRef": "field_border",
+      "variants": [
+        {"contentRef": "geomantia:decoration/field_border", "weight": 1.0}
+      ]
+    },
+    {
+      "semanticRef": "gravel_path_tile",
+      "variants": [
+        {"contentRef": "geomantia:decoration/gravel_path_tile", "weight": 1.0}
+      ]
+    }
+  ]
+}

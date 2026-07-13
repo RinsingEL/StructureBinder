@@ -70,7 +70,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
         JsonObject normalizedPlan = normalizePlan(arrayLayoutPlan, reviewPackage.cityId());
         JsonObject normalizedBasePlan = normalizeBaseAnchorPlan(baseStructureAnchorPlan, reviewPackage.cityId());
         JsonObject normalizedBaseMap = baseStructureAnchorMap == null ? new JsonObject() : baseStructureAnchorMap.deepCopy();
-        JsonArray occupied = occupiedFromAnchorMap(normalizedBaseMap);
+        JsonArray occupied = occupiedFromAnchorMap(normalizedBaseMap, catalog.byId(), envelopeFacts);
         String planningMode = planningMode(normalizedPlan);
         JsonObject state = new JsonObject();
         state.addProperty("schemaVersion", stateSchema(planningMode));
@@ -236,6 +236,10 @@ public final class CityStructureArrayLayoutLoopPlanner {
             throw new IllegalArgumentException("D4_ARRAY_LAYOUT_LOOP_MAX_ITERATIONS: maxArrayPlans reached.");
         }
         ExpansionContext context = expansionContext(reviewPackage, currentState, request);
+        if (context.continuousFrontier()) {
+            return planContinuousExpansionCandidates(baseDirectory, reviewPackage, terraSenseProfileSource,
+                    currentState, submittedItem, request, context, envelopeFacts, started);
+        }
         if (context.targetPatch() == null) {
             throw new IllegalArgumentException("D4_ARRAY_LAYOUT_GLOBAL_PATCH_SELECTION_REQUIRED: "
                     + "query with newFunctionalArea=true, then provide selectedGlobalPatchRef when planning candidates.");
@@ -245,7 +249,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
         Map<String, CityStructureProfileCatalog.StructureProfile> profiles = catalog.byId();
         CityStructureEnvelopeFacts facts = envelopeFacts == null ? CityStructureEnvelopeFacts.empty() : envelopeFacts;
         int candidateCount = clamp(intValue(request, "candidateCount", 5), 3, 5);
-        int minCandidateCount = clamp(intValue(request, "minCandidateCount", 3), 3, candidateCount);
+        int minCandidateCount = clamp(intValue(request, "minCandidateCount", 3), 2, candidateCount);
         JsonArray candidates = new JsonArray();
         Set<String> signatures = new LinkedHashSet<>();
         List<String> sectors = expansionCandidateSectors(context.direction());
@@ -331,6 +335,196 @@ public final class CityStructureArrayLayoutLoopPlanner {
         set.addProperty("generatedAt", Instant.now().toString());
         set.add("grid", reviewPackage.grid().asJson());
         set.add("expansionSpace", expansionSpace(reviewPackage, currentState, context));
+        set.add("arrayCandidates", candidates);
+        set.add("qualityReport", quality(List.of(), catalog.warnings(), catalog.needsReview(), 100));
+        set.add("timingMs", timing(started));
+        return new ExpansionCandidateSetResult(set, set.getAsJsonObject("qualityReport"));
+    }
+
+    /**
+     * Continuous outward growth deliberately starts from the resolved parent body envelope. D3
+     * patches are only used to admit / score member cells after the physical frontier is known;
+     * they are not a discontinuous placement target.
+     */
+    private ExpansionCandidateSetResult planContinuousExpansionCandidates(Path baseDirectory,
+                                                                            CityLandformReviewPackage reviewPackage,
+                                                                            JsonObject terraSenseProfileSource,
+                                                                            JsonObject currentState,
+                                                                            JsonObject submittedItem,
+                                                                            JsonObject request,
+                                                                            ExpansionContext context,
+                                                                            CityStructureEnvelopeFacts envelopeFacts,
+                                                                            long started) throws IOException {
+        CityStructureProfileCatalog.ImportedCatalog catalog =
+                CityStructureProfileCatalog.importCatalog(baseDirectory, terraSenseProfileSource);
+        Map<String, CityStructureProfileCatalog.StructureProfile> profiles = catalog.byId();
+        CityStructureEnvelopeFacts facts = envelopeFacts == null ? CityStructureEnvelopeFacts.empty() : envelopeFacts;
+        int candidateCount = clamp(intValue(request, "candidateCount", 5), 3, 5);
+        int minCandidateCount = clamp(intValue(request, "minCandidateCount", 3), 2, candidateCount);
+        String plannerType = stringValue(submittedItem, "plannerType", "compound_cluster");
+        if (!PLANNER_TYPES.contains(plannerType)) {
+            throw new IllegalArgumentException("D4_ARRAY_LAYOUT_PLANNER_TYPE_UNSUPPORTED: " + plannerType);
+        }
+        List<DesiredItem> desired = "composite_array".equals(plannerType)
+                ? List.of() : desiredItems(submittedItem);
+        if (!"composite_array".equals(plannerType) && desired.isEmpty()) {
+            throw new IllegalArgumentException("D4_ARRAY_LAYOUT_CANDIDATE_ITEM_REQUIRED: "
+                    + "the array item must provide requiredItems, featuredItems or fillPool.");
+        }
+        for (DesiredItem item : desired) {
+            if (!profiles.containsKey(item.structureId())) {
+                throw new IllegalArgumentException("D4_ARRAY_LAYOUT_STRUCTURE_PROFILE_UNAVAILABLE: " + item.structureId());
+            }
+        }
+
+        FrontierReference reference = frontierReference(submittedItem, plannerType, desired, profiles, facts);
+        int spacing = reference.spacingBlocks();
+        TerrainPlacementPolicy terrainPolicy = terrainPlacementPolicy(submittedItem, plannerType, desired, profiles);
+        JsonArray candidates = new JsonArray();
+        JsonArray frontierTrace = new JsonArray();
+        Set<String> signatures = new LinkedHashSet<>();
+        List<BlockBounds> occupied = occupiedBounds(array(currentState, "occupiedEnvelopes"));
+        ExpansionPolicy policy = context.expansionPolicy();
+
+        for (int ring = 0; ring < policy.maxExpansionRounds() && candidates.isEmpty(); ring++) {
+            int gapMin = policy.actualBodyGapMin() + ring * policy.frontierExpansionStepBlocks();
+            int gapMax = policy.actualBodyGapMax() + ring * policy.frontierExpansionStepBlocks();
+            BlockPoint firstAnchor = continuousFrontierAnchor(context.focusBodyBounds(), context.direction(),
+                    reference.localFootprint(), gapMin, gapMax, spacing, reviewPackage.grid());
+            BlockPoint firstGuideOffset = continuousFirstGuideOffset(submittedItem, plannerType,
+                    Math.max(1, desired.size()), spacing);
+            BlockPoint origin = clampToGrid(new BlockPoint(firstAnchor.x() - firstGuideOffset.x(),
+                    firstAnchor.z() - firstGuideOffset.z()), reviewPackage.grid());
+            BlockBounds frontierBounds = continuousFrontierBounds(context.focusBodyBounds(), context.direction(),
+                    origin, spacing, Math.max(2, desired.size()), reviewPackage.grid());
+            TerrainPatchSelection terrain = terrainPatchesForFrontier(reviewPackage, frontierBounds, terrainPolicy);
+            List<LandformPatchSummary> sourcePatches = terrain.acceptedPatches();
+            JsonObject ringTrace = new JsonObject();
+            ringTrace.addProperty("frontierRing", frontierRingName(ring));
+            ringTrace.addProperty("frontierRingIndex", ring);
+            ringTrace.addProperty("actualBodyGapMin", gapMin);
+            ringTrace.addProperty("actualBodyGapMax", gapMax);
+            ringTrace.add("frontierBounds", CityStructureCandidateEnvelope.boundsJson(frontierBounds));
+            ringTrace.add("terrainPatchRefs", patchRefs(sourcePatches));
+            ringTrace.add("excludedTerrainPatches", terrain.excludedPatches());
+            if (sourcePatches.isEmpty()) {
+                ringTrace.addProperty("result", "skipped");
+                ringTrace.addProperty("reasonCode", terrain.hasGroundedWaterRejection()
+                        ? "D4_ARRAY_LAYOUT_FRONTIER_GROUNDED_TERRAIN_UNAVAILABLE"
+                        : "D4_ARRAY_LAYOUT_FRONTIER_NO_TERRAIN_PATCH");
+                frontierTrace.add(ringTrace);
+                continue;
+            }
+
+            int produced = 0;
+            int rejectedForGap = 0;
+            int rejectedForBuild = 0;
+            JsonArray observedBodyGaps = new JsonArray();
+            int attemptLimit = Math.max(candidateCount * 8, 24);
+            for (int attempt = 0; attempt < attemptLimit && candidates.size() < candidateCount; attempt++) {
+                JsonObject item = submittedItem.deepCopy();
+                String sector = expansionCandidateSectors(context.direction())
+                        .get(attempt % expansionCandidateSectors(context.direction()).size());
+                BlockPoint variantOrigin = continuousVariantOrigin(frontierBounds, origin, context.direction(),
+                        attempt, spacing);
+                item.add("candidatePatchRefs", patchRefs(sourcePatches));
+                item.addProperty("startSector", sector);
+                item.addProperty("outwardDirection", context.direction());
+                item.addProperty("continuousFrontier", true);
+                item.add("expansionOrigin", variantOrigin.asJson());
+                item.add("expansionAvailableBounds", CityStructureCandidateEnvelope.boundsJson(frontierBounds));
+                item.addProperty("candidateVariant", "frontier_" + frontierRingName(ring) + "_" + (attempt + 1));
+
+                BuildResult build = "composite_array".equals(plannerType)
+                        ? buildCompositeArrayItem(item, sourcePatches, reviewPackage, profiles, facts, occupied,
+                        frontierBounds)
+                        : buildArrayItem(item, plannerType, sourcePatches, reviewPackage, profiles, facts,
+                        occupied, desired, frontierBounds);
+                if (!build.hardBlocks().isEmpty()) {
+                    rejectedForBuild++;
+                    continue;
+                }
+                FrontierGapValidation gap = validateFrontierBodyGap(context.focusBodyBounds(), context.direction(),
+                        build.items(), gapMin, gapMax);
+                if (!gap.accepted()) {
+                    rejectedForGap++;
+                    if (observedBodyGaps.size() < 8) {
+                        observedBodyGaps.add(gap.actualBodyGapBlocks());
+                    }
+                    continue;
+                }
+                String signature = candidateSignature(build.items());
+                if (!signatures.add(signature)) {
+                    continue;
+                }
+                int ordinal = candidates.size() + 1;
+                JsonObject candidate = new JsonObject();
+                candidate.addProperty("candidateId", stringValue(item, "arrayId") + "_candidate_"
+                        + String.format(Locale.ROOT, "%02d", ordinal));
+                candidate.addProperty("candidateOrdinal", ordinal);
+                candidate.addProperty("sourceStateId", stringValue(currentState, "stateId"));
+                candidate.addProperty("plannerType", plannerType);
+                candidate.addProperty("score", candidateScore(build));
+                candidate.add("scoreBreakdown", candidateScoreBreakdown(build));
+                candidate.addProperty("expansionMode", "continuous_focus_frontier");
+                candidate.add("focusRef", context.focusRef().deepCopy());
+                candidate.addProperty("direction", context.direction());
+                candidate.add("parentCollisionEnvelope",
+                        CityStructureCandidateEnvelope.boundsJson(context.focusBounds()));
+                candidate.add("parentBodyEnvelope", CityStructureCandidateEnvelope.boundsJson(context.focusBodyBounds()));
+                candidate.add("expansionPolicy", policy.asJson());
+                candidate.addProperty("frontierRing", frontierRingName(ring));
+                candidate.addProperty("frontierLevel", frontierRingName(ring));
+                candidate.addProperty("frontierRingIndex", ring);
+                candidate.addProperty("actualBodyGapBlocks", gap.actualBodyGapBlocks());
+                candidate.addProperty("bodyGapBlocks", gap.actualBodyGapBlocks());
+                candidate.add("terrainPatchRefs", patchRefs(sourcePatches));
+                candidate.add("memberTerrainPatchRefs", terrainPatchRefs(build.items()));
+                candidate.add("expansionEntryPoint", variantOrigin.asJson());
+                candidate.add("expansionAvailableBounds", CityStructureCandidateEnvelope.boundsJson(frontierBounds));
+                candidate.add("candidateArrayLayoutPlanItem", item.deepCopy());
+                candidate.add("items", build.items().deepCopy());
+                candidate.add("anchors", build.anchors().deepCopy());
+                candidate.add("arrayZones", build.zones().deepCopy());
+                candidate.add("executionTrace", build.trace().deepCopy());
+                JsonObject candidateTrace = ringTrace.deepCopy();
+                candidateTrace.addProperty("result", "accepted");
+                candidateTrace.addProperty("actualBodyGapBlocks", gap.actualBodyGapBlocks());
+                candidate.add("frontierTrace", candidateTrace);
+                candidates.add(candidate);
+                produced++;
+            }
+            ringTrace.addProperty("candidateCount", produced);
+            ringTrace.addProperty("rejectedForBodyGap", rejectedForGap);
+            ringTrace.addProperty("rejectedForBuild", rejectedForBuild);
+            ringTrace.add("observedBodyGaps", observedBodyGaps);
+            if (produced == 0) {
+                ringTrace.addProperty("result", "skipped");
+                ringTrace.addProperty("reasonCode", rejectedForGap > 0
+                        ? "D4_ARRAY_LAYOUT_FRONTIER_BODY_GAP_UNSATISFIED"
+                        : "D4_ARRAY_LAYOUT_FRONTIER_COMPLETE_CLUSTER_UNAVAILABLE");
+            } else {
+                ringTrace.addProperty("result", "accepted");
+            }
+            frontierTrace.add(ringTrace);
+        }
+        if (candidates.size() < minCandidateCount) {
+            throw new IllegalArgumentException("D4_ARRAY_LAYOUT_CONTINUOUS_FRONTIER_UNSATISFIED: generated "
+                    + candidates.size() + " complete candidates; frontier trace=" + frontierTrace + ".");
+        }
+        JsonObject set = new JsonObject();
+        set.addProperty("schemaVersion", EXPANSION_CANDIDATE_SCHEMA_V04);
+        set.addProperty("planningMode", PLANNING_MODE_V04);
+        set.addProperty("cityId", reviewPackage.cityId());
+        set.addProperty("sourceStateId", stringValue(currentState, "stateId"));
+        set.addProperty("generatedAt", Instant.now().toString());
+        set.addProperty("expansionMode", "continuous_focus_frontier");
+        set.add("focusCollisionEnvelope", CityStructureCandidateEnvelope.boundsJson(context.focusBounds()));
+        set.add("focusBodyEnvelope", CityStructureCandidateEnvelope.boundsJson(context.focusBodyBounds()));
+        set.add("expansionPolicy", context.expansionPolicy().asJson());
+        set.add("grid", reviewPackage.grid().asJson());
+        set.add("expansionSpace", expansionSpace(reviewPackage, currentState, context));
+        set.add("frontierSearchTrace", frontierTrace);
         set.add("arrayCandidates", candidates);
         set.add("qualityReport", quality(List.of(), catalog.warnings(), catalog.needsReview(), 100));
         set.add("timingMs", timing(started));
@@ -455,16 +649,22 @@ public final class CityStructureArrayLayoutLoopPlanner {
         JsonArray hardBlocks = new JsonArray();
         JsonArray warnings = new JsonArray();
         LandformPatchSummary pivot = sourcePatches.get(0);
-        int spacing = spacing(item, desiredItems, profiles);
+        int spacing = spacing(item, desiredItems, profiles, facts);
         BlockBounds effectiveBounds = placementBounds == null ? pivot.blockBounds() : placementBounds;
-        BlockPoint start = sectorPoint(effectiveBounds, stringValue(item, "startSector", "center"));
+        BlockPoint sectorStart = sectorPoint(effectiveBounds, stringValue(item, "startSector", "center"));
+        BlockPoint requestedOrigin = point(item, "expansionOrigin", sectorStart);
+        BlockPoint start = placementBounds == null ? sectorStart : new BlockPoint(
+                clamp(requestedOrigin.x(), effectiveBounds.minX(), effectiveBounds.maxX()),
+                clamp(requestedOrigin.z(), effectiveBounds.minZ(), effectiveBounds.maxZ()));
         List<BlockPoint> guidePoints = placementBounds == null
                 ? rawPoints(plannerType, item, pivot, sourcePatches, reviewPackage.grid(),
                 start, spacing, Math.max(1, desiredItems.size()))
                 : rawPointsInBounds(plannerType, item, effectiveBounds, start, spacing,
                 Math.max(1, desiredItems.size()));
-        List<BlockPoint> rawPoints = memberCellCandidatePoints(sourcePatches, reviewPackage.grid(),
-                effectiveBounds, start, guidePoints);
+        List<BlockPoint> rawPoints = booleanValue(item, "continuousFrontier", false)
+                ? continuousMemberCellCandidatePoints(sourcePatches, reviewPackage.grid(), effectiveBounds,
+                start, guidePoints)
+                : memberCellCandidatePoints(sourcePatches, reviewPackage.grid(), effectiveBounds, start, guidePoints);
         if (rawPoints.isEmpty()) {
             hardBlocks.add("D4_ARRAY_LAYOUT_NO_CAPACITY: " + arrayId
                     + " has no member-cell candidate points in selected patches.");
@@ -744,6 +944,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
             occ.addProperty("anchorId", stringValue(item, "anchorId"));
             occ.addProperty("envelopeType", "estimatedCollisionEnvelope");
             occ.add("blockBounds", object(item, "estimatedCollisionEnvelope").deepCopy());
+            occ.add("bodyBounds", object(item, "plannedFootprint").deepCopy());
             occupied.add(occ);
         }
         JsonArray executed = array(state, "executedArrayIds");
@@ -926,6 +1127,29 @@ public final class CityStructureArrayLayoutLoopPlanner {
                         .thenComparingInt(BlockPoint::x)
                         .thenComparingInt(BlockPoint::z))
                 .forEach(ordered::add);
+        return new ArrayList<>(ordered);
+    }
+
+    /** Keeps D3 member-cell eligibility but does not snap continuous frontier anchors to a coarse cell center. */
+    private List<BlockPoint> continuousMemberCellCandidatePoints(List<LandformPatchSummary> patches,
+                                                                 PlanningGrid grid,
+                                                                 BlockBounds bounds,
+                                                                 BlockPoint start,
+                                                                 List<BlockPoint> guidePoints) {
+        LinkedHashSet<BlockPoint> ordered = new LinkedHashSet<>();
+        for (BlockPoint guide : guidePoints) {
+            if (!bounds.contains(guide.x(), guide.z()) || !grid.containsBlock(guide.x(), guide.z())) {
+                continue;
+            }
+            if (pointPatch(patches, grid, guide) != null) {
+                ordered.add(guide);
+            }
+        }
+        for (BlockPoint point : memberCellCenters(patches, grid, bounds).stream()
+                .sorted(Comparator.comparingLong((BlockPoint point) -> distanceSquared(point, start))
+                        .thenComparingInt(BlockPoint::x).thenComparingInt(BlockPoint::z)).toList()) {
+            ordered.add(point);
+        }
         return new ArrayList<>(ordered);
     }
 
@@ -1251,7 +1475,8 @@ public final class CityStructureArrayLayoutLoopPlanner {
 
     private int spacing(JsonObject item,
                         List<DesiredItem> items,
-                        Map<String, CityStructureProfileCatalog.StructureProfile> profiles) {
+                        Map<String, CityStructureProfileCatalog.StructureProfile> profiles,
+                        CityStructureEnvelopeFacts facts) {
         int configured = compoundInt(item, "spacingBlocks", 0);
         if (configured > 0) {
             return configured;
@@ -1262,15 +1487,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
             if (profile == null) {
                 continue;
             }
-            CityStructureProfileCatalog.Footprint footprint = profile.planningFootprint();
-            if (footprint.valid()) {
-                max = Math.max(max, Math.max(footprint.widthBlocks(), footprint.depthBlocks())
-                        + CityStructureCandidateEnvelope.DEFAULT_SMALL_CLEARANCE_BLOCKS * 2);
-            } else if (profile.jigsawLike()) {
-                int radius = profile.jigsawExpansionRadius(CityStructureCandidateEnvelope.DEFAULT_JIGSAW_RADIUS_BLOCKS)
-                        + CityStructureCandidateEnvelope.DEFAULT_CLEARANCE_BLOCKS;
-                max = Math.max(max, radius * 2);
-            }
+            max = Math.max(max, CityStructureCandidateEnvelope.automaticSpacing(profile, facts, item));
         }
         return max;
     }
@@ -1335,7 +1552,8 @@ public final class CityStructureArrayLayoutLoopPlanner {
         if (newFunctionalArea) {
             String selectedGlobalPatchRef = stringValue(request, "selectedGlobalPatchRef", "");
             if (selectedGlobalPatchRef.isBlank()) {
-                return new ExpansionContext(new JsonObject(), null, "", null, null, null, true);
+                return new ExpansionContext(new JsonObject(), null, null, "", null, null, null,
+                        true, false, ExpansionPolicy.defaults());
             }
             LandformPatchSummary targetPatch = patchByRef(reviewPackage, selectedGlobalPatchRef);
             if (targetPatch == null) {
@@ -1348,22 +1566,26 @@ public final class CityStructureArrayLayoutLoopPlanner {
             if (entry == null) {
                 throw new IllegalArgumentException("D4_ARRAY_LAYOUT_GLOBAL_PATCH_NO_CAPACITY: " + selectedGlobalPatchRef);
             }
-            return new ExpansionContext(new JsonObject(), null, "", targetPatch, available, entry, true);
+            return new ExpansionContext(new JsonObject(), null, null, "", targetPatch, available, entry,
+                    true, false, ExpansionPolicy.defaults());
         }
         JsonObject focusRef = object(request, "focusRef");
         if (focusRef.size() == 0) {
             throw new IllegalArgumentException("D4_ARRAY_LAYOUT_FOCUS_REQUIRED: focusRef must identify planned collision occupied structure(s).");
         }
+        BlockBounds focusBounds = focusBounds(state, focusRef);
+        BlockBounds focusBodyBounds = focusBodyBounds(state, focusRef, focusBounds);
+        String direction = normalizedDirection(requiredString(request, "direction"));
+        ExpansionPolicy policy = expansionPolicy(request);
         String targetPatchRef = stringValue(request, "targetPatchRef", stringValue(request, "targetPatch", ""));
         if (targetPatchRef.isBlank()) {
-            throw new IllegalArgumentException("D4_ARRAY_LAYOUT_TARGET_PATCH_REQUIRED: targetPatchRef is required.");
+            return new ExpansionContext(focusRef.deepCopy(), focusBounds, focusBodyBounds, direction,
+                    null, null, focusBodyBounds.center(), false, true, policy);
         }
         LandformPatchSummary targetPatch = patchByRef(reviewPackage, targetPatchRef);
         if (targetPatch == null) {
             throw new IllegalArgumentException("D4_ARRAY_LAYOUT_TARGET_PATCH_UNAVAILABLE: " + targetPatchRef);
         }
-        BlockBounds focusBounds = focusBounds(state, focusRef);
-        String direction = normalizedDirection(requiredString(request, "direction"));
         BlockBounds available = directionalIntersection(focusBounds, direction, targetPatch.blockBounds());
         if (available == null) {
             throw new IllegalArgumentException("D4_ARRAY_LAYOUT_EXPANSION_DIRECTION_UNAVAILABLE: " + direction
@@ -1371,8 +1593,8 @@ public final class CityStructureArrayLayoutLoopPlanner {
         }
         BlockPoint entry = nearestAvailablePoint(targetPatch, reviewPackage.grid(), available,
                 occupiedBounds(array(state, "occupiedEnvelopes")), focusBounds.center());
-        return new ExpansionContext(focusRef.deepCopy(), focusBounds, direction, targetPatch, available,
-                entry == null ? available.center() : entry, false);
+        return new ExpansionContext(focusRef.deepCopy(), focusBounds, focusBodyBounds, direction, targetPatch,
+                available, entry == null ? available.center() : entry, false, false, policy);
     }
 
     private JsonObject expansionSpace(CityLandformReviewPackage reviewPackage,
@@ -1385,7 +1607,8 @@ public final class CityStructureArrayLayoutLoopPlanner {
         result.addProperty("cityId", reviewPackage.cityId());
         result.addProperty("sourceStateId", stringValue(state, "stateId"));
         result.addProperty("searchScope", selected.newFunctionalArea()
-                ? "explicit_global_new_functional_area" : "focus_nearby_expansion");
+                ? "explicit_global_new_functional_area"
+                : selected.continuousFrontier() ? "continuous_focus_frontier" : "focus_nearby_expansion");
         result.add("focusRef", selected.focusRef().deepCopy());
         if (selected.newFunctionalArea()) {
             result.add("globalPatchCandidates", globalPatchCandidates(reviewPackage, occupied));
@@ -1398,12 +1621,22 @@ public final class CityStructureArrayLayoutLoopPlanner {
         if (selected.focusBounds() != null) {
             result.add("focusCollisionEnvelope", CityStructureCandidateEnvelope.boundsJson(selected.focusBounds()));
         }
+        if (selected.focusBodyBounds() != null) {
+            result.add("focusBodyEnvelope", CityStructureCandidateEnvelope.boundsJson(selected.focusBodyBounds()));
+        }
+        if (selected.continuousFrontier()) {
+            result.addProperty("expansionMode", "continuous_focus_frontier");
+            result.add("expansionPolicy", selected.expansionPolicy().asJson());
+            result.add("frontierRings", frontierRingPreview(reviewPackage, selected));
+        }
         result.addProperty("selectedDirection", selected.direction());
-        result.addProperty("selectedTargetPatchRef", selected.targetPatch().landformPatchId());
-        result.add("selectedExpansionAvailableBounds", CityStructureCandidateEnvelope.boundsJson(selected.availableBounds()));
-        result.add("selectedExpansionEntryPoint", selected.entryPoint().asJson());
-        result.addProperty("selectedRemainingCapacity", capacity(selected.targetPatch(), reviewPackage.grid(),
-                selected.availableBounds(), occupied));
+        if (selected.targetPatch() != null) {
+            result.addProperty("selectedTargetPatchRef", selected.targetPatch().landformPatchId());
+            result.add("selectedExpansionAvailableBounds", CityStructureCandidateEnvelope.boundsJson(selected.availableBounds()));
+            result.add("selectedExpansionEntryPoint", selected.entryPoint().asJson());
+            result.addProperty("selectedRemainingCapacity", capacity(selected.targetPatch(), reviewPackage.grid(),
+                    selected.availableBounds(), occupied));
+        }
 
         JsonArray nearby = new JsonArray();
         List<LandformPatchSummary> ordered = new ArrayList<>(reviewPackage.landformPatches());
@@ -1499,6 +1732,364 @@ public final class CityStructureArrayLayoutLoopPlanner {
             throw new IllegalArgumentException("D4_ARRAY_LAYOUT_FOCUS_NOT_OCCUPIED: focusRef must resolve to planned collision occupied data.");
         }
         return union;
+    }
+
+    private BlockBounds focusBodyBounds(JsonObject state, JsonObject focusRef, BlockBounds fallback) {
+        String anchorId = stringValue(focusRef, "anchorId", stringValue(focusRef, "focusId", ""));
+        String arrayId = stringValue(focusRef, "arrayId", "");
+        BlockBounds union = null;
+        for (JsonElement elem : array(state, "occupiedEnvelopes")) {
+            if (!elem.isJsonObject()) {
+                continue;
+            }
+            JsonObject occupied = elem.getAsJsonObject();
+            boolean matches = !anchorId.isBlank() && anchorId.equals(stringValue(occupied, "anchorId"));
+            matches |= !arrayId.isBlank() && arrayId.equals(stringValue(occupied, "arrayId"));
+            if (!matches) {
+                continue;
+            }
+            JsonObject body = object(occupied, "bodyBounds");
+            union = union(union, body.size() == 0
+                    ? CityStructureCandidateEnvelope.bounds(object(occupied, "blockBounds"))
+                    : CityStructureCandidateEnvelope.bounds(body));
+        }
+        return union == null ? fallback : union;
+    }
+
+    private ExpansionPolicy expansionPolicy(JsonObject request) {
+        JsonObject policy = object(request, "expansionPolicy");
+        int min = Math.max(0, intValue(policy, "actualBodyGapMin",
+                intValue(request, "actualBodyGapMin", 16)));
+        int max = Math.max(min, intValue(policy, "actualBodyGapMax",
+                intValue(request, "actualBodyGapMax", 30)));
+        int step = Math.max(4, intValue(policy, "frontierExpansionStepBlocks",
+                intValue(request, "frontierExpansionStepBlocks", Math.max(16, max - min + 1))));
+        int rounds = clamp(intValue(policy, "frontierMaxExpansionRounds",
+                intValue(request, "frontierMaxExpansionRounds", 3)), 1, 3);
+        return new ExpansionPolicy(min, max, step, rounds);
+    }
+
+    private FrontierReference frontierReference(JsonObject submittedItem,
+                                                String plannerType,
+                                                List<DesiredItem> desired,
+                                                Map<String, CityStructureProfileCatalog.StructureProfile> profiles,
+                                                CityStructureEnvelopeFacts facts) {
+        String structureId = desired.isEmpty() ? firstStructureId(submittedItem, plannerType) : desired.get(0).structureId();
+        CityStructureProfileCatalog.StructureProfile profile = profiles.get(structureId);
+        if (profile == null) {
+            return new FrontierReference(new BlockBounds(-8, -8, 8, 8), 32);
+        }
+        CityStructureCandidateEnvelope.Estimate estimate = CityStructureCandidateEnvelope.estimate(
+                new BlockPoint(0, 0), profile, facts, submittedItem);
+        int spacing = desired.isEmpty()
+                ? Math.max(16, CityStructureCandidateEnvelope.automaticSpacing(profile, facts, submittedItem))
+                : spacing(submittedItem, desired, profiles, facts);
+        return new FrontierReference(estimate.plannedFootprint(), spacing);
+    }
+
+    private String firstStructureId(JsonObject item, String plannerType) {
+        if (!"composite_array".equals(plannerType)) {
+            List<DesiredItem> items = desiredItems(item);
+            return items.isEmpty() ? "" : items.get(0).structureId();
+        }
+        for (JsonElement child : array(item, "childLayoutPlans")) {
+            if (!child.isJsonObject()) {
+                continue;
+            }
+            JsonObject childItem = child.getAsJsonObject();
+            String id = firstStructureId(childItem, stringValue(childItem, "plannerType", "compound_cluster"));
+            if (!id.isBlank()) {
+                return id;
+            }
+        }
+        return "";
+    }
+
+    private BlockPoint continuousFrontierAnchor(BlockBounds parentBody,
+                                                String direction,
+                                                BlockBounds localFootprint,
+                                                int gapMin,
+                                                int gapMax,
+                                                int spacing,
+                                                PlanningGrid grid) {
+        int x = parentBody.center().x();
+        int z = parentBody.center().z();
+        if (direction.contains("east")) {
+            x = alignedFrontierAnchor(parentBody.maxX() + gapMin + 1 - localFootprint.minX(),
+                    parentBody.maxX() + gapMax + 1 - localFootprint.minX());
+        } else if (direction.contains("west")) {
+            x = alignedFrontierAnchor(parentBody.minX() - gapMax - 1 - localFootprint.maxX(),
+                    parentBody.minX() - gapMin - 1 - localFootprint.maxX());
+        }
+        if (direction.contains("south")) {
+            z = alignedFrontierAnchor(parentBody.maxZ() + gapMin + 1 - localFootprint.minZ(),
+                    parentBody.maxZ() + gapMax + 1 - localFootprint.minZ());
+        } else if (direction.contains("north")) {
+            z = alignedFrontierAnchor(parentBody.minZ() - gapMax - 1 - localFootprint.maxZ(),
+                    parentBody.minZ() - gapMin - 1 - localFootprint.maxZ());
+        }
+        return clampToGrid(new BlockPoint(x, z), grid);
+    }
+
+    private int alignedFrontierAnchor(int minimum, int maximum) {
+        int aligned = ceilToMultiple(minimum, 16);
+        if (aligned <= maximum) {
+            return aligned;
+        }
+        int midpoint = (minimum + maximum) / 2;
+        int lower = Math.floorDiv(midpoint, 16) * 16;
+        int upper = lower + 16;
+        return Math.abs(lower - midpoint) <= Math.abs(upper - midpoint) ? lower : upper;
+    }
+
+    private int ceilToMultiple(int value, int multiple) {
+        return -Math.floorDiv(-value, multiple) * multiple;
+    }
+
+    private BlockPoint continuousFirstGuideOffset(JsonObject item,
+                                                  String plannerType,
+                                                  int requested,
+                                                  int spacing) {
+        if (!"compound_cluster".equals(plannerType) || "organic_compact".equals(compoundShape(item))) {
+            return new BlockPoint(0, 0);
+        }
+        ShapeGrid shape = shapeGrid(item, requested);
+        return new BlockPoint((int) Math.round(-(shape.columns() - 1) * spacing / 2.0),
+                (int) Math.round(-(shape.rows() - 1) * spacing / 2.0));
+    }
+
+    private BlockBounds continuousFrontierBounds(BlockBounds parentBody,
+                                                  String direction,
+                                                  BlockPoint origin,
+                                                  int spacing,
+                                                  int requested,
+                                                  PlanningGrid grid) {
+        int reach = Math.max(spacing * 2, spacing * (requested + 1));
+        int minX = origin.x() - reach;
+        int maxX = origin.x() + reach;
+        int minZ = origin.z() - reach;
+        int maxZ = origin.z() + reach;
+        if (direction.contains("east")) {
+            minX = Math.max(minX, parentBody.maxX() + 1);
+        }
+        if (direction.contains("west")) {
+            maxX = Math.min(maxX, parentBody.minX() - 1);
+        }
+        if (direction.contains("south")) {
+            minZ = Math.max(minZ, parentBody.maxZ() + 1);
+        }
+        if (direction.contains("north")) {
+            maxZ = Math.min(maxZ, parentBody.minZ() - 1);
+        }
+        return clampBounds(new BlockBounds(minX, minZ, maxX, maxZ), gridBounds(grid));
+    }
+
+    private BlockPoint continuousVariantOrigin(BlockBounds bounds,
+                                                BlockPoint base,
+                                                String direction,
+                                                int attempt,
+                                                int spacing) {
+        int[] offsets = {0, 1, -1, 2, -2, 3, -3, 4};
+        int offset = offsets[attempt % offsets.length] * Math.max(4, spacing);
+        int x = base.x();
+        int z = base.z();
+        if ("east".equals(direction) || "west".equals(direction)) {
+            z += offset;
+        } else if ("north".equals(direction) || "south".equals(direction)) {
+            x += offset;
+        } else if (direction.contains("east")) {
+            x -= offset;
+            z += offset;
+        } else {
+            x += offset;
+            z += offset;
+        }
+        return new BlockPoint(clamp(x, bounds.minX(), bounds.maxX()), clamp(z, bounds.minZ(), bounds.maxZ()));
+    }
+
+    private FrontierGapValidation validateFrontierBodyGap(BlockBounds parentBody,
+                                                           String direction,
+                                                           JsonArray items,
+                                                           int gapMin,
+                                                           int gapMax) {
+        if (items.isEmpty()) {
+            return new FrontierGapValidation(false, -1);
+        }
+        BlockBounds body = CityStructureCandidateEnvelope.bounds(
+                object(items.get(0).getAsJsonObject(), "plannedFootprint"));
+        int gap = directionalBodyGap(parentBody, body, direction);
+        return new FrontierGapValidation(gap >= gapMin && gap <= gapMax, gap);
+    }
+
+    private int directionalBodyGap(BlockBounds parent, BlockBounds child, String direction) {
+        int xGap = direction.contains("east") ? child.minX() - parent.maxX() - 1
+                : direction.contains("west") ? parent.minX() - child.maxX() - 1 : Integer.MAX_VALUE;
+        int zGap = direction.contains("south") ? child.minZ() - parent.maxZ() - 1
+                : direction.contains("north") ? parent.minZ() - child.maxZ() - 1 : Integer.MAX_VALUE;
+        if (xGap != Integer.MAX_VALUE && zGap != Integer.MAX_VALUE) {
+            return Math.min(xGap, zGap);
+        }
+        return xGap != Integer.MAX_VALUE ? xGap : zGap;
+    }
+
+    private TerrainPlacementPolicy terrainPlacementPolicy(JsonObject item,
+                                                          String plannerType,
+                                                          List<DesiredItem> desired,
+                                                          Map<String, CityStructureProfileCatalog.StructureProfile> profiles) {
+        List<String> structureIds = new ArrayList<>();
+        for (DesiredItem value : desired) {
+            structureIds.add(value.structureId());
+        }
+        if (structureIds.isEmpty()) {
+            collectStructureIds(item, plannerType, structureIds);
+        }
+        boolean waterAllowed = !structureIds.isEmpty();
+        for (String structureId : structureIds) {
+            CityStructureProfileCatalog.StructureProfile profile = profiles.get(structureId);
+            waterAllowed &= profile != null && explicitlyWaterPlaced(profile);
+        }
+        return new TerrainPlacementPolicy(waterAllowed);
+    }
+
+    private void collectStructureIds(JsonObject item, String plannerType, List<String> target) {
+        if ("composite_array".equals(plannerType)) {
+            for (JsonElement child : array(item, "childLayoutPlans")) {
+                if (!child.isJsonObject()) {
+                    continue;
+                }
+                JsonObject childItem = child.getAsJsonObject();
+                collectStructureIds(childItem, stringValue(childItem, "plannerType", "compound_cluster"), target);
+            }
+            return;
+        }
+        for (DesiredItem desired : desiredItems(item)) {
+            target.add(desired.structureId());
+        }
+    }
+
+    private boolean explicitlyWaterPlaced(CityStructureProfileCatalog.StructureProfile profile) {
+        for (String term : profile.placementTerms()) {
+            String normalized = term.toLowerCase(Locale.ROOT);
+            if (normalized.contains("water") || normalized.contains("aquatic") || term.contains("水上")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private TerrainPatchSelection terrainPatchesForFrontier(CityLandformReviewPackage reviewPackage,
+                                                             BlockBounds bounds,
+                                                             TerrainPlacementPolicy policy) {
+        List<LandformPatchSummary> patches = new ArrayList<>();
+        JsonArray excluded = new JsonArray();
+        boolean groundedWaterRejection = false;
+        for (LandformPatchSummary patch : reviewPackage.landformPatches()) {
+            if (!patch.blockBounds().overlaps(bounds)) {
+                continue;
+            }
+            String rejection = terrainPatchRejection(patch, policy);
+            if (rejection.isBlank()) {
+                patches.add(patch);
+            } else {
+                JsonObject skipped = new JsonObject();
+                skipped.addProperty("patchRef", patch.landformPatchId());
+                skipped.addProperty("reasonCode", rejection);
+                skipped.add("blockBounds", CityStructureCandidateEnvelope.boundsJson(patch.blockBounds()));
+                excluded.add(skipped);
+                groundedWaterRejection |= "D4_ARRAY_LAYOUT_FRONTIER_WATER_REJECTED_FOR_GROUNDED_STRUCTURE"
+                        .equals(rejection);
+            }
+        }
+        patches.sort(Comparator.comparing(LandformPatchSummary::landformPatchId));
+        return new TerrainPatchSelection(patches, excluded, groundedWaterRejection);
+    }
+
+    private String terrainPatchRejection(LandformPatchSummary patch, TerrainPlacementPolicy policy) {
+        if (explicitlyUnusableTerrain(patch)) {
+            return "D4_ARRAY_LAYOUT_FRONTIER_STEEP_OR_UNAVAILABLE_PATCH";
+        }
+        if (!policy.waterAllowed() && waterPatch(patch)) {
+            return "D4_ARRAY_LAYOUT_FRONTIER_WATER_REJECTED_FOR_GROUNDED_STRUCTURE";
+        }
+        return "";
+    }
+
+    private boolean waterPatch(LandformPatchSummary patch) {
+        if (patch.landformType() == LandformType.WATER) {
+            return true;
+        }
+        return terrainTerms(patch).stream().anyMatch(this::explicitWaterBodyTag);
+    }
+
+    private boolean explicitWaterBodyTag(String raw) {
+        String term = raw == null ? "" : raw.trim().toLowerCase(Locale.ROOT)
+                .replace('-', '_').replace(' ', '_');
+        if ("near_water".equals(term) || "nearwater".equals(term) || "waterfront".equals(term)) {
+            return false;
+        }
+        return "water".equals(term) || "water_body".equals(term) || "waterbody".equals(term)
+                || "open_water".equals(term) || "surface_water".equals(term)
+                || "水体".equals(term) || "水域".equals(term) || "水面".equals(term);
+    }
+
+    private boolean explicitlyUnusableTerrain(LandformPatchSummary patch) {
+        if (patch.landformType() == LandformType.CLIFF) {
+            return true;
+        }
+        return terrainTerms(patch).stream().anyMatch(term -> term.contains("steep") || term.contains("cliff")
+                || term.contains("unavailable") || term.contains("no_build") || term.contains("blocked")
+                || term.contains("陡") || term.contains("不可用"));
+    }
+
+    private List<String> terrainTerms(LandformPatchSummary patch) {
+        List<String> values = new ArrayList<>();
+        patch.landformTags().forEach(value -> values.add(value.toLowerCase(Locale.ROOT)));
+        patch.overlayTags().forEach(value -> values.add(value.toLowerCase(Locale.ROOT)));
+        patch.summaryFacts().forEach(value -> values.add(value.toLowerCase(Locale.ROOT)));
+        return values;
+    }
+
+    private JsonArray terrainPatchRefs(JsonArray items) {
+        LinkedHashSet<String> refs = new LinkedHashSet<>();
+        for (JsonElement item : items) {
+            for (JsonElement ref : array(item.getAsJsonObject(), "sourcePatchRefs")) {
+                refs.add(ref.getAsString());
+            }
+        }
+        return stringArray(new ArrayList<>(refs));
+    }
+
+    private JsonArray frontierRingPreview(CityLandformReviewPackage reviewPackage, ExpansionContext context) {
+        JsonArray rings = new JsonArray();
+        for (int ring = 0; ring < context.expansionPolicy().maxExpansionRounds(); ring++) {
+            JsonObject value = new JsonObject();
+            value.addProperty("frontierRing", frontierRingName(ring));
+            value.addProperty("frontierRingIndex", ring);
+            value.addProperty("actualBodyGapMin", context.expansionPolicy().actualBodyGapMin()
+                    + ring * context.expansionPolicy().frontierExpansionStepBlocks());
+            value.addProperty("actualBodyGapMax", context.expansionPolicy().actualBodyGapMax()
+                    + ring * context.expansionPolicy().frontierExpansionStepBlocks());
+            rings.add(value);
+        }
+        return rings;
+    }
+
+    private String frontierRingName(int ring) {
+        return switch (ring) {
+            case 0 -> "near";
+            case 1 -> "mid";
+            default -> "far";
+        };
+    }
+
+    private BlockBounds gridBounds(PlanningGrid grid) {
+        return new BlockBounds(grid.blockMinX(), grid.blockMinZ(), grid.blockMaxX() - 1, grid.blockMaxZ() - 1);
+    }
+
+    private BlockPoint clampToGrid(BlockPoint point, PlanningGrid grid) {
+        BlockBounds bounds = gridBounds(grid);
+        return new BlockPoint(clamp(point.x(), bounds.minX(), bounds.maxX()),
+                clamp(point.z(), bounds.minZ(), bounds.maxZ()));
     }
 
     private LandformPatchSummary patchByRef(CityLandformReviewPackage reviewPackage, String ref) {
@@ -1684,7 +2275,9 @@ public final class CityStructureArrayLayoutLoopPlanner {
         return plan;
     }
 
-    private JsonArray occupiedFromAnchorMap(JsonObject anchorMap) {
+    private JsonArray occupiedFromAnchorMap(JsonObject anchorMap,
+                                            Map<String, CityStructureProfileCatalog.StructureProfile> profiles,
+                                            CityStructureEnvelopeFacts envelopeFacts) {
         JsonArray occupied = new JsonArray();
         for (JsonElement elem : array(anchorMap, "anchors")) {
             if (!elem.isJsonObject()) {
@@ -1706,9 +2299,67 @@ public final class CityStructureArrayLayoutLoopPlanner {
             obj.addProperty("anchorId", stringValue(anchor, "anchorId"));
             obj.addProperty("envelopeType", "collisionEnvelope");
             obj.add("blockBounds", bounds.deepCopy());
+            BodyBoundsResolution body = baseAnchorBodyBounds(anchor, profiles, envelopeFacts, bounds);
+            obj.add("bodyBounds", CityStructureCandidateEnvelope.boundsJson(body.bounds()));
+            obj.addProperty("bodyEnvelopeSource", body.source());
             occupied.add(obj);
         }
         return occupied;
+    }
+
+    private BodyBoundsResolution baseAnchorBodyBounds(JsonObject anchor,
+                                                       Map<String, CityStructureProfileCatalog.StructureProfile> profiles,
+                                                       CityStructureEnvelopeFacts envelopeFacts,
+                                                       JsonObject fallbackCollision) {
+        BlockPoint anchorBlock = point(anchor, "anchorBlock", null);
+        JsonObject embeddedFact = object(anchor, "structureEnvelopeFact");
+        if (anchorBlock != null && embeddedFact.size() > 0) {
+            BlockBounds local = d2RecommendedLocalEnvelope(embeddedFact);
+            if (local != null) {
+                return new BodyBoundsResolution(fromLocal(anchorBlock, local),
+                        "d2_structure_envelope_fact");
+            }
+        }
+        CityStructureProfileCatalog.StructureProfile profile = profiles.get(stringValue(anchor, "structureId"));
+        if (anchorBlock != null && profile != null) {
+            CityStructureCandidateEnvelope.Estimate estimate = CityStructureCandidateEnvelope.estimate(anchorBlock,
+                    profile, envelopeFacts == null ? CityStructureEnvelopeFacts.empty() : envelopeFacts,
+                    anchor);
+            if (!estimate.requiredFactsMissing()) {
+                return new BodyBoundsResolution(estimate.plannedFootprint(), "d2_envelope_facts_or_profile_fallback");
+            }
+        }
+        JsonObject actual = object(anchor, "actualFootprint");
+        if (actual.size() > 0) {
+            return new BodyBoundsResolution(CityStructureCandidateEnvelope.bounds(actual), "actual_footprint");
+        }
+        JsonObject planned = object(anchor, "plannedFootprint");
+        if (planned.size() > 0) {
+            return new BodyBoundsResolution(CityStructureCandidateEnvelope.bounds(planned), "static_planned_footprint_fallback");
+        }
+        return new BodyBoundsResolution(CityStructureCandidateEnvelope.bounds(fallbackCollision),
+                "collision_envelope_fallback");
+    }
+
+    private BlockBounds d2RecommendedLocalEnvelope(JsonObject fact) {
+        String source = stringValue(fact, "collisionEnvelopeSource", "localEnvelopeP95");
+        if ("dominantBBoxGroup".equals(source)) {
+            JsonObject dominant = object(fact, "dominantBBoxGroup");
+            JsonObject local = object(dominant, "localEnvelope");
+            if (local.size() > 0) {
+                return CityStructureCandidateEnvelope.bounds(local);
+            }
+        }
+        JsonObject local = "stableMaxEnvelope".equals(source)
+                ? object(fact, "stableMaxEnvelope") : object(fact, "localEnvelopeP95");
+        return local.size() == 0 ? null : CityStructureCandidateEnvelope.bounds(local);
+    }
+
+    private BlockBounds fromLocal(BlockPoint anchorBlock, BlockBounds local) {
+        int originX = Math.floorDiv(anchorBlock.x(), 16) * 16;
+        int originZ = Math.floorDiv(anchorBlock.z(), 16) * 16;
+        return new BlockBounds(originX + local.minX(), originZ + local.minZ(),
+                originX + local.maxX(), originZ + local.maxZ());
     }
 
     private JsonObject patchAvailability(CityLandformReviewPackage reviewPackage, JsonArray occupiedEnvelopes) {
@@ -1965,6 +2616,14 @@ public final class CityStructureArrayLayoutLoopPlanner {
             refs.add(patch.mapLabel());
         }
         return refs;
+    }
+
+    private JsonArray patchRefs(List<LandformPatchSummary> patches) {
+        LinkedHashSet<String> refs = new LinkedHashSet<>();
+        for (LandformPatchSummary patch : patches) {
+            refs.add(patch.landformPatchId());
+        }
+        return stringArray(new ArrayList<>(refs));
     }
 
     private JsonArray intentTerms(String arrayId, String role, String plannerType) {
@@ -2344,10 +3003,48 @@ public final class CityStructureArrayLayoutLoopPlanner {
 
     private record ExpansionContext(JsonObject focusRef,
                                     BlockBounds focusBounds,
+                                    BlockBounds focusBodyBounds,
                                     String direction,
                                     LandformPatchSummary targetPatch,
                                     BlockBounds availableBounds,
                                     BlockPoint entryPoint,
-                                    boolean newFunctionalArea) {
+                                    boolean newFunctionalArea,
+                                    boolean continuousFrontier,
+                                    ExpansionPolicy expansionPolicy) {
+    }
+
+    private record ExpansionPolicy(int actualBodyGapMin,
+                                   int actualBodyGapMax,
+                                   int frontierExpansionStepBlocks,
+                                   int maxExpansionRounds) {
+        private static ExpansionPolicy defaults() {
+            return new ExpansionPolicy(16, 30, 16, 3);
+        }
+
+        private JsonObject asJson() {
+            JsonObject obj = new JsonObject();
+            obj.addProperty("actualBodyGapMin", actualBodyGapMin);
+            obj.addProperty("actualBodyGapMax", actualBodyGapMax);
+            obj.addProperty("frontierExpansionStepBlocks", frontierExpansionStepBlocks);
+            obj.addProperty("frontierMaxExpansionRounds", maxExpansionRounds);
+            return obj;
+        }
+    }
+
+    private record FrontierReference(BlockBounds localFootprint, int spacingBlocks) {
+    }
+
+    private record FrontierGapValidation(boolean accepted, int actualBodyGapBlocks) {
+    }
+
+    private record TerrainPlacementPolicy(boolean waterAllowed) {
+    }
+
+    private record TerrainPatchSelection(List<LandformPatchSummary> acceptedPatches,
+                                         JsonArray excludedPatches,
+                                         boolean hasGroundedWaterRejection) {
+    }
+
+    private record BodyBoundsResolution(BlockBounds bounds, String source) {
     }
 }

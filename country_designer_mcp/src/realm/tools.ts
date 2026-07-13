@@ -1,5 +1,150 @@
 import type { ToolDefinition } from "../shared/types.js";
 
+const decorationShapeSchema: Record<string, unknown> = {
+  oneOf: [
+    decorationVariant("target_mask", {}),
+    decorationVariant("rectangle", {
+      minU: integer("局部 U 最小值。"),
+      minV: integer("局部 V 最小值。"),
+      maxU: integer("局部 U 最大值。"),
+      maxV: integer("局部 V 最大值。"),
+    }, ["minU", "minV", "maxU", "maxV"]),
+    decorationVariant("ellipse", {
+      centerU: integer("局部 U 中心。"),
+      centerV: integer("局部 V 中心。"),
+      radiusU: positiveInteger("U 半径；与 radiusV 相等时为圆形。"),
+      radiusV: positiveInteger("V 半径；与 radiusU 相等时为圆形。"),
+    }, ["centerU", "centerV", "radiusU", "radiusV"]),
+    decorationVariant("ring", {
+      centerU: integer("局部 U 中心。"),
+      centerV: integer("局部 V 中心。"),
+      innerRadiusU: positiveInteger("U 内半径。"),
+      innerRadiusV: positiveInteger("V 内半径。"),
+      outerRadiusU: positiveInteger("U 外半径，必须大于内半径。"),
+      outerRadiusV: positiveInteger("V 外半径，必须大于内半径。"),
+    }, ["centerU", "centerV", "innerRadiusU", "innerRadiusV", "outerRadiusU", "outerRadiusV"]),
+    decorationVariant("polygon", {
+      vertices: {
+        type: "array",
+        minItems: 3,
+        description: "局部 U/V 顶点；不是世界坐标。",
+        items: strictObject({ u: integer("局部 U。"), v: integer("局部 V。") }, ["u", "v"]),
+      },
+    }, ["vertices"]),
+  ],
+};
+
+const decorationPatternSchema: Record<string, unknown> = {
+  oneOf: [
+    decorationVariant("uniform_fill", {
+      paletteSlotId: nonEmptyString("要填充的 content palette slot。"),
+    }, ["paletteSlotId"]),
+    decorationVariant("cross_section_repeat", {
+      axis: { type: "string", enum: ["u", "v"] },
+      offsetBlocks: integer("横断面相对局部原点偏移。"),
+      bands: {
+        type: "array",
+        minItems: 1,
+        items: strictObject({
+          paletteSlotId: nonEmptyString("该带使用的 content palette slot。"),
+          widthBlocks: positiveInteger("带宽。"),
+        }, ["paletteSlotId", "widthBlocks"]),
+      },
+    }, ["axis", "offsetBlocks", "bands"]),
+    decorationVariant("parallel_rows", {
+      axis: { type: "string", enum: ["u", "v"] },
+      paletteSlotId: nonEmptyString("行列使用的 content palette slot。"),
+      rowWidthBlocks: positiveInteger("单行宽度。"),
+      spacingBlocks: positiveInteger("行列周期，必须不小于行宽。"),
+      offsetBlocks: integer("相对局部原点偏移。"),
+    }, ["axis", "paletteSlotId", "rowWidthBlocks", "spacingBlocks", "offsetBlocks"]),
+    decorationVariant("edge_repeat", {
+      paletteSlotId: nonEmptyString("边缘节点使用的 content palette slot。"),
+      spacingBlocks: positiveInteger("沿边间距。"),
+      offsetBlocks: integer("沿边起始偏移。"),
+    }, ["paletteSlotId", "spacingBlocks", "offsetBlocks"]),
+    decorationVariant("grid_repeat", {
+      paletteSlotId: nonEmptyString("网格节点使用的 content palette slot。"),
+      spacingUBlocks: positiveInteger("U 方向间距。"),
+      spacingVBlocks: positiveInteger("V 方向间距。"),
+      offsetUBlocks: integer("U 方向偏移。"),
+      offsetVBlocks: integer("V 方向偏移。"),
+    }, ["paletteSlotId", "spacingUBlocks", "spacingVBlocks", "offsetUBlocks", "offsetVBlocks"]),
+    decorationVariant("deterministic_scatter", {
+      paletteSlotId: nonEmptyString("散点使用的 content palette slot。"),
+      cellSizeBlocks: positiveInteger("确定性散点网格尺寸。"),
+      densityPermille: { type: "integer", minimum: 0, maximum: 1000, description: "千分比密度。" },
+    }, ["paletteSlotId", "cellSizeBlocks", "densityPermille"]),
+  ],
+};
+
+const decorationContentPaletteSchema = strictObject({
+  slots: {
+    type: "array",
+    minItems: 1,
+    items: strictObject({
+      slotId: nonEmptyString("Pattern 引用的稳定 slot ID。"),
+      phase: { type: "string", enum: ["skeleton", "surface", "major", "minor"] },
+      entries: {
+        type: "array",
+        minItems: 1,
+        description: "填写当前 style profile 暴露的语义槽位，例如 market_stall、field_border；不填写具体 NBT/content ID。",
+        items: strictObject({
+          contentRef: nonEmptyString("来自 city_query_decoration_catalog 的 semanticRefs。"),
+          weight: { type: "number", exclusiveMinimum: 0 },
+        }, ["contentRef", "weight"]),
+      },
+      required: { type: "boolean" },
+    }, ["slotId", "phase", "entries", "required"]),
+  },
+}, ["slots"]);
+
+const decorationProgramPlanSchema = strictObject({
+  schemaVersion: { type: "string", enum: ["city_decoration_program_plan.v0.2"] },
+  cityId: nonEmptyString("必须与 citySeedId 对应的 City 一致。"),
+  catalogHash: nonEmptyString("city_query_decoration_catalog 返回的当前 catalogHash。"),
+  styleProfileId: nonEmptyString("city_query_decoration_catalog 返回的 styleProfileId。"),
+  styleProfileHash: nonEmptyString("所选 styleProfile 对应的 styleProfileHash。"),
+  programs: {
+    type: "array",
+    minItems: 1,
+    items: strictObject({
+      programId: nonEmptyString("稳定 program ID。"),
+      targetArea: strictObject({
+        sourceType: {
+          type: "string",
+          enum: ["patch"],
+          description: "首期只允许 patch；不得提交 targetBounds/memberBounds。",
+        },
+        ref: nonEmptyString("D3 landform patch ref。"),
+        insetBlocks: { type: "integer", minimum: 0 },
+      }, ["sourceType", "ref", "insetBlocks"]),
+      coordinateFrame: strictObject({
+        originMode: { type: "string", enum: ["target_centroid"] },
+        orientationMode: { type: "string", enum: ["patch_long_axis"] },
+        quarterTurns: { type: "integer", minimum: 0, maximum: 3 },
+        offsetUBlocks: integer("局部 U 偏移。"),
+        offsetVBlocks: integer("局部 V 偏移。"),
+      }, ["originMode", "orientationMode", "quarterTurns", "offsetUBlocks", "offsetVBlocks"]),
+      shape: decorationShapeSchema,
+      pattern: decorationPatternSchema,
+      contentPalette: decorationContentPaletteSchema,
+      terrainPolicy: strictObject({
+        maxSlopeDelta: { type: "integer", minimum: 0 },
+        allowWater: { type: "boolean" },
+        invalidTerrainAction: { type: "string", enum: ["skip", "clip"] },
+      }, ["maxSlopeDelta", "allowWater", "invalidTerrainAction"]),
+      conflictPolicy: strictObject({
+        onConflict: { type: "string", enum: ["skip", "replace_lower_priority"] },
+        clearanceBlocks: { type: "integer", minimum: 0 },
+      }, ["onConflict", "clearanceBlocks"]),
+      priority: integer("跨 program 优先级，高值先执行。"),
+      seed: integer("全局固定随机种子；使用 JavaScript 安全整数。"),
+    }, ["programId", "targetArea", "coordinateFrame", "shape", "pattern", "contentPalette",
+      "terrainPolicy", "conflictPolicy", "priority", "seed"]),
+  },
+}, ["schemaVersion", "cityId", "catalogHash", "styleProfileId", "styleProfileHash", "programs"]);
+
 export const realmTools: ToolDefinition[] = [
   {
     name: "realm_status",
@@ -321,7 +466,7 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "city_query_d4_array_expansion_space",
-    description: "City D4 v0.4 外扩空间查询：常规路径以已 Plan 的 collision occupied focusRef 返回附近 patch、方向、容量和入口；只读、不预留。显式 newFunctionalArea=true 时无需 focusRef/direction/targetPatchRef，返回按可用性和容量排序的 globalPatchCandidates[]，再由后续候选请求显式选择 patch。",
+    description: "City D4 v0.4/v0.5 外扩空间查询：常规连续外扩以已 Plan 的 focusRef、direction 和可选 expansionPolicy 从父结构 D2 body 前沿生成近中远候选带；D3 patch 仅返回地形筛选与归属。targetPatchRef 仅保留为显式兼容约束。只读、不预留。newFunctionalArea=true 保持独立全局 patch 搜索。",
     inputSchema: {
       type: "object",
       properties: {
@@ -330,7 +475,7 @@ export const realmTools: ToolDefinition[] = [
         stateId: { type: "string", description: "建议传当前 loop stateId，防止读取过期 state。" },
         arrayExpansionRequest: {
           type: "object",
-          description: "常规外扩需 focusRef={anchorId 或 arrayId}、direction=north|south|east|west|northeast|northwest|southeast|southwest、targetPatchRef。全局新功能区只传 newFunctionalArea=true，不传 focusRef/direction/targetPatchRef。",
+          description: "常规连续外扩传 focusRef={anchorId 或 arrayId}、direction=north|south|east|west|northeast|northwest|southeast|southwest，以及可选 expansionPolicy={actualBodyGapMin,actualBodyGapMax,frontierExpansionStepBlocks,frontierMaxExpansionRounds}；省略 targetPatchRef 即按父 bbox 前沿搜索，显式传 targetPatchRef 仅走兼容约束。全局新功能区只传 newFunctionalArea=true。",
         },
         arrayLayoutLoopStateSource: { type: "object" },
       },
@@ -339,7 +484,7 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "city_plan_d4_array_expansion_candidates",
-    description: "City D4 v0.4 外扩候选：常规路径基于 focus collision 外缘、方向和目标 patch 生成 3-5 组完整候选与预览；显式新功能区路径必须先查询 globalPatchCandidates[]，再传 selectedGlobalPatchRef。候选不修改 loop state、occupied、array zones 或剩余空间；空间不足 hard fail，不删点凑数。",
+    description: "City D4 v0.4/v0.5 外扩候选：常规路径基于父结构 D2 body bbox、方向和 expansionPolicy 生成 3-5 组连续候选，D3 patch 只做后置地形筛选；未传 targetPatchRef 时优先近圈，近圈无完整候选才外扩并写原因。显式新功能区路径仍先查询 globalPatchCandidates[]，再传 selectedGlobalPatchRef。候选不修改 loop state、occupied、array zones 或剩余空间。",
     inputSchema: {
       type: "object",
       properties: {
@@ -349,7 +494,7 @@ export const realmTools: ToolDefinition[] = [
         stateId: { type: "string" },
         arrayExpansionRequest: {
           type: "object",
-          description: "常规外扩传 focusRef、direction、targetPatchRef；全局新功能区传 newFunctionalArea=true + selectedGlobalPatchRef（不传 focusRef/direction/targetPatchRef）。二者都传 candidateCount=3..5、可选 minCandidateCount 和一个 nextArrayLayoutPlanItem（compound_cluster、guide_line_dual_side、plaza_ring 或 composite_array；composite 保留 childLayoutPlans）。",
+          description: "常规连续外扩传 focusRef、direction、可选 expansionPolicy 和 nextArrayLayoutPlanItem；不传 targetPatchRef 即按父 bbox 前沿搜索，显式 targetPatchRef 仅保留兼容约束。全局新功能区传 newFunctionalArea=true + selectedGlobalPatchRef。二者都可传 candidateCount=3..5、minCandidateCount；nextArrayLayoutPlanItem 支持 compound_cluster、guide_line_dual_side、plaza_ring 或 composite_array（composite 保留 childLayoutPlans）。",
         },
         arrayLayoutLoopStateSource: { type: "object" },
         structureEnvelopeFactsSource: { type: "object" },
@@ -659,6 +804,56 @@ export const realmTools: ToolDefinition[] = [
     },
   },
   {
+    name: "city_query_decoration_catalog",
+    description: "查询 City Decoration v0.2 素材目录与 style profiles。AI 从所选 profile 的 semanticRefs 引用内容；只读，不返回原始 NBT 或任意 block operation。",
+    inputSchema: strictObject({}, []),
+  },
+  {
+    name: "city_probe_decoration_terrain",
+    description: "只读检查已编译 City Decoration 的真实已加载区块地表。返回每个 program / palette slot 的加载覆盖、高度起伏、相邻槽位高差和连续带剖面；不会生成区块、不会写世界，也不会阻止后续 activate。",
+    inputSchema: strictObject({
+      runId: nonEmptyString("已有 W/T run ID。"),
+      citySeedId: nonEmptyString("目标城市种子的 citySeedId。"),
+      dimensionId: nonEmptyString("可选；省略时使用 run 记录的维度。"),
+      playerName: nonEmptyString("可选；用于定位玩家当前维度。"),
+    }, ["runId", "citySeedId"]),
+  },
+  {
+    name: "city_query_structure_catalog",
+    description: "按 TerraSense 已审核结构标签检索模板。支持 canonical termId，或来自 terrasenseProfileSource.vocabularySnapshotPath 的中文标签/别名；只读，不触发 D4-D7 或世界写入。",
+    inputSchema: strictObject({
+      terrasenseProfileSource: {
+        type: "object",
+        description: "schemaVersion=terrasense_structure_profile_source.v0.1；sourceType=structure_profile_jsonl 或 debug_catalog。中文标签/别名检索需附 vocabularySnapshotPath。",
+      },
+      allOfTerms: {
+        type: "array",
+        description: "AND：候选必须同时拥有的 TerraSense term；可用 canonical termId 或词表标签/别名。",
+        items: nonEmptyString("TerraSense canonical termId、词表 display label 或 alias。"),
+      },
+      anyOfTerms: {
+        type: "array",
+        description: "OR：候选至少拥有一个的 TerraSense term。",
+        items: nonEmptyString("TerraSense canonical termId、词表 display label 或 alias。"),
+      },
+      excludeTerms: {
+        type: "array",
+        description: "排除：拥有任一 term 的候选不会返回。",
+        items: nonEmptyString("TerraSense canonical termId、词表 display label 或 alias。"),
+      },
+      limit: { type: "integer", minimum: 1, maximum: 100, description: "最多返回数量，默认 20。" },
+    }, ["terrasenseProfileSource"]),
+  },
+  {
+    name: "city_plan_city_dressing",
+    description: "City DecorationProgram v0.2 规划：选择 style profile 并提交语义 contentRef；程序在规划期解析为具体 prefab，再从 D3 patch 解析 mask 与局部坐标系。禁止 v0.1 dressingBrushPlan、targetBounds/memberBounds、世界 origin/x/z、内联 NBT 和 block operation。",
+    inputSchema: strictObject({
+      runId: nonEmptyString("已有 W/T run ID。"),
+      citySeedId: nonEmptyString("目标城市种子的 citySeedId。"),
+      decorationProgramPlan: decorationProgramPlanSchema,
+    }, ["runId", "citySeedId", "decorationProgramPlan"]),
+  },
+  {
     name: "city_execute_d5",
     description: "City D5 Execute: 必须先有完整 D6 locked materialization plan；用 D6 locked collision/actualFootprint/signature 激活 reservation mask registry 与 worldgen-time planned structure registry；正式路径不主动执行 WorldEdit 道路/清理，避免提前生成目标 chunk。必须显式传 confirmWorldMutation=true；mask/worldgen hook 不可用会 hard fail。",
     inputSchema: {
@@ -887,3 +1082,31 @@ export const realmTools: ToolDefinition[] = [
     },
   },
 ];
+
+function decorationVariant(type: string, params: Record<string, unknown>, required: string[] = []) {
+  return strictObject({
+    type: { type: "string", enum: [type] },
+    params: strictObject(params, required),
+  }, ["type", "params"]);
+}
+
+function strictObject(properties: Record<string, unknown>, required: string[]) {
+  return {
+    type: "object",
+    properties,
+    required,
+    additionalProperties: false,
+  };
+}
+
+function nonEmptyString(description: string) {
+  return { type: "string", minLength: 1, description };
+}
+
+function integer(description: string) {
+  return { type: "integer", description };
+}
+
+function positiveInteger(description: string) {
+  return { type: "integer", minimum: 1, description };
+}

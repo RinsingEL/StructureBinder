@@ -8,17 +8,21 @@ import com.rinsing.geomantia.systems.city.application.CityLandformReviewBuilder;
 import com.rinsing.geomantia.systems.city.application.CitySiteContextBuilder;
 import com.rinsing.geomantia.systems.city.application.CityWallPlanner;
 import com.rinsing.geomantia.systems.city.application.CityWallReservationPlanner;
+import com.rinsing.geomantia.systems.city.application.dressing.CityDecorationTerrainProbe;
 import com.rinsing.geomantia.systems.city.domain.config.CityPlanningConfig;
 import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
 import com.rinsing.geomantia.systems.city.domain.model.CityLandformReviewPackage;
 import com.rinsing.geomantia.systems.city.domain.model.CitySiteContext;
 import com.rinsing.geomantia.systems.city.domain.model.LandformPatchSummary;
 import com.rinsing.geomantia.systems.city.infrastructure.json.CityJson;
+import com.rinsing.geomantia.systems.city.infrastructure.world.CityDecorationWorldgenRegistry;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityReservationMaskRegistry;
 import com.rinsing.geomantia.systems.gis.domain.cell.LandformType;
 import com.rinsing.geomantia.systems.gis.domain.landform.LandformPatch;
 import com.rinsing.geomantia.systems.gis.domain.landform.PatchFlag;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.IntTag;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.world.level.ChunkPos;
 import org.junit.jupiter.api.Test;
@@ -558,7 +562,7 @@ class CityPlanningEndpointHandlerTest {
         IllegalArgumentException dressing = assertThrows(IllegalArgumentException.class,
                 () -> CityPlanningEndpointHandler.handlePlanCityDressing(
                         debugRoot, runId, citySeedId, dressingBrushPlan()));
-        assertTrue(dressing.getMessage().contains("D4 structure_anchor_map.json not found"));
+        assertTrue(dressing.getMessage().contains("CITY_DRESSING_LEGACY_SCHEMA_REMOVED"));
 
         IllegalArgumentException executeD5 = assertThrows(IllegalArgumentException.class,
                 () -> CityPlanningEndpointHandler.handleExecuteD5(
@@ -836,38 +840,301 @@ class CityPlanningEndpointHandlerTest {
     }
 
     @Test
-    void handlePlanCityDressingWritesArtifactsAndExecuteD5ActivatesDressing() throws Exception {
+    void handlePlanCityDressingWritesV02ArtifactsAndAvoidsHardObstacles() throws Exception {
         Path debugRoot = Files.createTempDirectory("city-dressing-http-test");
-        Path serverRoot = Files.createTempDirectory("city-dressing-server-root");
+        Path catalogRoot = createDecorationCatalog();
         String runId = "run_city_dressing";
         String citySeedId = "city_test";
         prepareD5Artifacts(debugRoot, runId, citySeedId);
+        addPatchMemberCells(debugRoot, runId, citySeedId, "plain");
         CityPlanningEndpointHandler.handlePlanD6(debugRoot, runId, citySeedId, null, null);
+        ensureTwoPlannedRoadEndpoints(debugRoot, runId, citySeedId);
+        JsonObject catalog = CityPlanningEndpointHandler.handleQueryDecorationCatalog(catalogRoot);
+        String styleProfileHash = catalog.getAsJsonArray("styleProfiles").get(0).getAsJsonObject()
+                .get("styleProfileHash").getAsString();
 
         JsonObject dressing = CityPlanningEndpointHandler.handlePlanCityDressing(
-                debugRoot, runId, citySeedId, dressingBrushPlan());
+                debugRoot, runId, citySeedId,
+                decorationProgramPlan(catalog.get("catalogHash").getAsString(), styleProfileHash,
+                        "plain", "market_stall"),
+                catalogRoot);
 
         assertTrue(dressing.get("ok").getAsBoolean());
         JsonObject artifacts = dressing.getAsJsonObject("artifacts");
-        assertTrue(Files.exists(debugRoot.resolve(artifacts.get("dressingBrushPlan").getAsString())));
-        assertTrue(Files.exists(debugRoot.resolve(artifacts.get("dressingEffectiveMask").getAsString())));
-        assertTrue(Files.exists(debugRoot.resolve(artifacts.get("dressingSurfaceOperationPlan").getAsString())));
-        assertTrue(Files.exists(debugRoot.resolve(artifacts.get("dressingDecorationPlacementPlan").getAsString())));
-        assertTrue(Files.exists(debugRoot.resolve(artifacts.get("dressingPreviewIndex").getAsString())));
-        assertTrue(Files.exists(debugRoot.resolve(artifacts.get("dressingTemplateLibrary").getAsString())));
-        JsonObject previewIndex = dressing.getAsJsonObject("dressingPreviewIndex");
-        assertFalse(previewIndex.getAsJsonArray("previews").isEmpty());
-        Path previewPath = debugRoot.resolve("run_city_dressing/city_dressing_city_test/"
-                + previewIndex.getAsJsonArray("previews").get(0).getAsJsonObject().get("fileName").getAsString());
-        assertTrue(Files.exists(previewPath));
+        for (String key : List.of("decorationProgramPlan", "compiledDecorationProgramPlan",
+                "decorationSlotProjection", "qualityReport", "planningTrace", "decorationPreviewIndex",
+                "styleResolution", "planningComplete")) {
+            assertTrue(Files.exists(debugRoot.resolve(artifacts.get(key).getAsString())), key);
+        }
+        JsonObject previewIndex = dressing.getAsJsonObject("decorationPreviewIndex");
+        assertEquals("city_decoration_preview_index.v0.2",
+                previewIndex.get("schemaVersion").getAsString());
+        assertTrue(Files.exists(Path.of(previewIndex.getAsJsonArray("previews").get(0).getAsJsonObject()
+                .get("path").getAsString())));
+        assertFalse(artifacts.has("dressingSurfaceOperationPlan"));
+        assertFalse(artifacts.has("dressingDecorationPlacementPlan"));
+        assertEquals("market_stall", dressing.getAsJsonObject("decorationProgramPlan")
+                .getAsJsonArray("programs").get(0).getAsJsonObject()
+                .getAsJsonObject("contentPalette").getAsJsonArray("slots").get(0).getAsJsonObject()
+                .getAsJsonArray("entries").get(0).getAsJsonObject().get("contentRef").getAsString());
+        assertEquals("geomantia:test_bench", dressing.getAsJsonObject("compiledDecorationProgramPlan")
+                .getAsJsonArray("programs").get(0).getAsJsonObject()
+                .getAsJsonObject("contentPalette").getAsJsonArray("slots").get(0).getAsJsonObject()
+                .getAsJsonArray("entries").get(0).getAsJsonObject().get("contentRef").getAsString());
+        assertEquals("city_decoration_style_resolution.v0.1", dressing.getAsJsonObject("styleResolution")
+                .get("schemaVersion").getAsString());
 
-        JsonObject d5 = CityPlanningEndpointHandler.handleExecuteD5(debugRoot, serverRoot,
-                runId, citySeedId, true, null, "auto");
+        JsonArray obstacles = dressing.getAsJsonObject("compiledDecorationProgramPlan")
+                .getAsJsonArray("hardObstacles");
+        assertTrue(obstacles.asList().stream().anyMatch(element -> element.getAsJsonObject()
+                .get("obstacleType").getAsString().startsWith("structure_")));
+        assertTrue(obstacles.asList().stream().anyMatch(element -> element.getAsJsonObject()
+                .get("obstacleType").getAsString().equals("wall_corridor")));
+        assertTrue(obstacles.asList().stream().anyMatch(element -> element.getAsJsonObject()
+                .get("obstacleType").getAsString().equals("planned_road_corridor")));
+        for (JsonElement slotElement : dressing.getAsJsonObject("slotProjection").getAsJsonArray("slots")) {
+            JsonObject anchor = slotElement.getAsJsonObject().getAsJsonObject("worldAnchor");
+            int x = anchor.get("x").getAsInt();
+            int z = anchor.get("z").getAsInt();
+            for (JsonElement obstacleElement : obstacles) {
+                assertFalse(bounds(obstacleElement.getAsJsonObject().getAsJsonObject("blockBounds")).contains(x, z),
+                        "projected slot must not enter a compiled hard obstacle");
+            }
+        }
 
-        assertTrue(d5.get("ok").getAsBoolean());
-        assertTrue(d5.get("dressingWorldgenMode").getAsBoolean());
-        assertTrue(d5.getAsJsonObject("activeDressingSummary").get("active").getAsBoolean());
-        assertTrue(Files.exists(serverRoot.resolve("geomantia_city_masks").resolve("active_city_dressing_plan.json")));
+        Path serverRoot = Files.createTempDirectory("city-decoration-activation-root");
+        Path compiledPath = debugRoot.resolve(artifacts.get("compiledDecorationProgramPlan").getAsString());
+        JsonObject compiledJson = JsonParser.parseString(Files.readString(compiledPath)).getAsJsonObject();
+        JsonObject wrongCity = compiledJson.deepCopy();
+        wrongCity.addProperty("cityId", "wrong_city");
+        Files.writeString(compiledPath, CityJson.GSON.toJson(wrongCity));
+        IllegalArgumentException wrongCityFailure = assertThrows(IllegalArgumentException.class,
+                () -> CityPlanningEndpointHandler.handleExecuteD5(
+                        debugRoot, serverRoot, runId, citySeedId, true, null, "auto", catalogRoot));
+        assertTrue(wrongCityFailure.getMessage().contains("CITY_DECORATION_CITY_ID_MISMATCH"));
+        assertFalse(Files.exists(CityReservationMaskRegistry.plannedRegistryPath(serverRoot)),
+                "decoration preflight must fail before the structure registry is activated");
+        Files.writeString(compiledPath, CityJson.GSON.toJson(compiledJson));
+
+        Path completePath = debugRoot.resolve(artifacts.get("planningComplete").getAsString());
+        JsonObject completionJson = JsonParser.parseString(Files.readString(completePath)).getAsJsonObject();
+        JsonObject wrongCompletion = completionJson.deepCopy();
+        wrongCompletion.addProperty("catalogHash", "stale_catalog");
+        Files.writeString(completePath, CityJson.GSON.toJson(wrongCompletion));
+        IllegalArgumentException completionFailure = assertThrows(IllegalArgumentException.class,
+                () -> CityPlanningEndpointHandler.handleExecuteD5(
+                        debugRoot, serverRoot, runId, citySeedId, true, null, "auto", catalogRoot));
+        assertTrue(completionFailure.getMessage().contains("CITY_DECORATION_PLAN_INCOMPLETE"));
+        assertFalse(Files.exists(CityReservationMaskRegistry.plannedRegistryPath(serverRoot)),
+                "completion preflight must fail before the structure registry is activated");
+        Files.writeString(completePath, CityJson.GSON.toJson(completionJson));
+
+        JsonObject activation = CityPlanningEndpointHandler.handleExecuteD5(
+                debugRoot, serverRoot, runId, citySeedId, true, null, "auto", catalogRoot);
+        assertTrue(activation.get("decorationWorldgenMode").getAsBoolean());
+        assertEquals(1, activation.getAsJsonObject("activeDecorationSummary")
+                .get("activePlanCount").getAsInt());
+        assertTrue(Files.exists(CityDecorationWorldgenRegistry.activePlansPath(serverRoot)));
+        assertTrue(Files.exists(CityDecorationWorldgenRegistry.worldgenLedgerPath(serverRoot)));
+        assertEquals(CityDecorationWorldgenRegistry.ACTIVE_SCHEMA,
+                JsonParser.parseString(Files.readString(CityDecorationWorldgenRegistry.activePlansPath(serverRoot)))
+                        .getAsJsonObject().get("schemaVersion").getAsString());
+        assertEquals(CityDecorationWorldgenRegistry.LEDGER_SCHEMA,
+                JsonParser.parseString(Files.readString(CityDecorationWorldgenRegistry.worldgenLedgerPath(serverRoot)))
+                        .getAsJsonObject().get("schemaVersion").getAsString());
+
+        Files.delete(completePath);
+        IllegalArgumentException incomplete = assertThrows(IllegalArgumentException.class,
+                () -> CityPlanningEndpointHandler.handleExecuteD5(
+                        debugRoot, serverRoot, runId, citySeedId, true, null, "auto", catalogRoot));
+        assertTrue(incomplete.getMessage().contains("CITY_DECORATION_PLAN_INCOMPLETE"));
+        Files.delete(compiledPath);
+        JsonObject deactivation = CityPlanningEndpointHandler.handleExecuteD5(
+                debugRoot, serverRoot, runId, citySeedId, true, null, "auto", catalogRoot);
+        assertFalse(deactivation.get("decorationWorldgenMode").getAsBoolean());
+        assertEquals(0, deactivation.getAsJsonObject("activeDecorationSummary")
+                .get("activePlanCount").getAsInt());
+
+        Path legacyDirectory = debugRoot.resolve(runId).resolve("city_dressing_" + citySeedId);
+        Files.createDirectories(legacyDirectory);
+        Files.writeString(legacyDirectory.resolve("preview.png"), "legacy");
+        IllegalArgumentException legacyArtifact = assertThrows(IllegalArgumentException.class,
+                () -> CityPlanningEndpointHandler.handleExecuteD5(
+                        debugRoot, serverRoot, runId, citySeedId, true, null, "auto", catalogRoot));
+        assertTrue(legacyArtifact.getMessage().contains("CITY_DRESSING_LEGACY_SCHEMA_REMOVED"));
+    }
+
+    @Test
+    void decorationTerrainProbeReadsExistingArtifactsWithoutWritingOrGeneratingUnavailableTerrain() throws Exception {
+        Path debugRoot = Files.createTempDirectory("city-decoration-terrain-probe-test");
+        Path catalogRoot = createDecorationCatalog();
+        String runId = "run_city_decoration_terrain";
+        String citySeedId = "city_test";
+        prepareD5Artifacts(debugRoot, runId, citySeedId);
+        addPatchMemberCells(debugRoot, runId, citySeedId, "plain");
+        CityPlanningEndpointHandler.handlePlanD6(debugRoot, runId, citySeedId, null, null);
+        JsonObject catalog = CityPlanningEndpointHandler.handleQueryDecorationCatalog(catalogRoot);
+        String styleProfileHash = catalog.getAsJsonArray("styleProfiles").get(0).getAsJsonObject()
+                .get("styleProfileHash").getAsString();
+        CityPlanningEndpointHandler.handlePlanCityDressing(debugRoot, runId, citySeedId,
+                decorationProgramPlan(catalog.get("catalogHash").getAsString(), styleProfileHash,
+                        "plain", "market_stall"), catalogRoot);
+
+        Path decorationDirectory = debugRoot.resolve(runId).resolve("city_decoration_" + citySeedId);
+        List<String> before = relativeFiles(decorationDirectory);
+        JsonObject response = CityPlanningEndpointHandler.handleProbeDecorationTerrain(debugRoot, runId, citySeedId,
+                (worldX, worldZ) -> CityDecorationTerrainProbe.Sample.unavailable());
+
+        assertTrue(response.get("ok").getAsBoolean());
+        assertTrue(response.get("loadedChunksOnly").getAsBoolean());
+        assertFalse(response.get("mutatesWorld").getAsBoolean());
+        assertEquals("await_chunk_load", response.getAsJsonObject("overall")
+                .get("activationRecommendation").getAsString());
+        assertTrue(response.getAsJsonObject("overall").get("unavailableSlotCount").getAsInt() > 0);
+        assertEquals(before, relativeFiles(decorationDirectory),
+                "terrain probing must not publish an artifact or modify the compiled plan");
+        assertFalse(Files.exists(decorationDirectory.resolve("city_decoration_terrain_probe.json")));
+    }
+
+    @Test
+    void decorationCatalogQueryAndPlanningFailuresAreExplicit() throws Exception {
+        Path catalogRoot = createDecorationCatalog();
+        JsonObject query = CityPlanningEndpointHandler.handleQueryDecorationCatalog(catalogRoot);
+        assertEquals("city_decoration_catalog_query.v0.2", query.get("schemaVersion").getAsString());
+        assertEquals(1, query.getAsJsonArray("contents").size());
+        JsonObject summary = query.getAsJsonArray("contents").get(0).getAsJsonObject();
+        assertEquals("geomantia:test_bench", summary.get("contentRef").getAsString());
+        assertEquals("above_surface", summary.get("placementMode").getAsString());
+        assertFalse(summary.has("template"));
+        assertFalse(summary.has("nbtFile"));
+        JsonObject styleProfile = query.getAsJsonArray("styleProfiles").get(0).getAsJsonObject();
+        assertEquals("forest_village", styleProfile.get("styleProfileId").getAsString());
+        assertTrue(styleProfile.get("styleProfileHash").getAsString().startsWith("sha256:"));
+        assertEquals("market_stall", styleProfile.getAsJsonArray("semanticRefs").get(0).getAsString());
+
+        Path debugRoot = Files.createTempDirectory("city-decoration-errors-test");
+        String runId = "run_city_decoration_errors";
+        String citySeedId = "city_test";
+        prepareD5Artifacts(debugRoot, runId, citySeedId);
+        addPatchMemberCells(debugRoot, runId, citySeedId, "plain");
+        CityPlanningEndpointHandler.handlePlanD6(debugRoot, runId, citySeedId, null, null);
+        String hash = query.get("catalogHash").getAsString();
+        String styleProfileHash = styleProfile.get("styleProfileHash").getAsString();
+
+        IllegalArgumentException mismatch = assertThrows(IllegalArgumentException.class,
+                () -> CityPlanningEndpointHandler.handlePlanCityDressing(debugRoot, runId, citySeedId,
+                        decorationProgramPlan("stale_hash", styleProfileHash, "plain", "market_stall"), catalogRoot));
+        assertTrue(mismatch.getMessage().contains("CITY_DECORATION_CATALOG_HASH_MISMATCH"));
+
+        IllegalArgumentException unknownPatch = assertThrows(IllegalArgumentException.class,
+                () -> CityPlanningEndpointHandler.handlePlanCityDressing(debugRoot, runId, citySeedId,
+                        decorationProgramPlan(hash, styleProfileHash, "missing_patch", "market_stall"), catalogRoot));
+        assertTrue(unknownPatch.getMessage().contains("CITY_DECORATION_TARGET_PATCH_UNKNOWN"));
+
+        IllegalArgumentException unknownContent = assertThrows(IllegalArgumentException.class,
+                () -> CityPlanningEndpointHandler.handlePlanCityDressing(debugRoot, runId, citySeedId,
+                        decorationProgramPlan(hash, styleProfileHash, "plain", "missing_semantic"), catalogRoot));
+        assertTrue(unknownContent.getMessage().contains("CITY_DECORATION_STYLE_SEMANTIC_REF_UNKNOWN"));
+
+        IllegalArgumentException legacy = assertThrows(IllegalArgumentException.class,
+                () -> CityPlanningEndpointHandler.handlePlanCityDressing(debugRoot, runId, citySeedId,
+                        dressingBrushPlan(), catalogRoot));
+        assertTrue(legacy.getMessage().contains("CITY_DRESSING_LEGACY_SCHEMA_REMOVED"));
+    }
+
+    @Test
+    void structureCatalogQueryResolvesVocabularyTagsFiltersAndStaysReadOnly() throws Exception {
+        Path baseDirectory = Files.createTempDirectory("city-structure-catalog-query-test");
+        Path catalogPath = baseDirectory.resolve("debug_structure_profile_catalog.json");
+        Path vocabularyPath = baseDirectory.resolve("StructureVocabulary.snapshot.json");
+        Files.writeString(catalogPath, """
+                {
+                  "catalogMode": "debug",
+                  "structures": [
+                    {
+                      "structureId": "test:windmill",
+                      "sourceProfileRef": "terrasense://windmill",
+                      "profileType": "single",
+                      "footprintMode": "fixed_footprint",
+                      "functionTerms": ["function.agriculture"],
+                      "styleTerms": ["style.medieval"],
+                      "usageTerms": ["usage.production"],
+                      "qualityTerms": ["quality.usable"],
+                      "fixedFootprint": {"widthBlocks": 11, "depthBlocks": 9, "heightBlocks": 17},
+                      "allowedRotations": ["NONE", "CLOCKWISE_90"],
+                      "clearanceBlocks": 2
+                    },
+                    {
+                      "structureId": "test:fishing_boat",
+                      "sourceProfileRef": "terrasense://fishing_boat",
+                      "profileType": "single",
+                      "footprintMode": "fixed_footprint",
+                      "functionTerms": ["function.harbor"],
+                      "styleTerms": ["style.medieval"],
+                      "usageTerms": ["usage.commercial"],
+                      "qualityTerms": ["quality.usable"],
+                      "fixedFootprint": {"widthBlocks": 7, "depthBlocks": 19, "heightBlocks": 8},
+                      "allowedRotations": ["NONE"],
+                      "clearanceBlocks": 1
+                    }
+                  ]
+                }
+                """);
+        Files.writeString(vocabularyPath, """
+                {
+                  "terms": [
+                    {"term_id": "function.agriculture", "label": "农业", "aliases": ["farm"], "status": "approved"},
+                    {"term_id": "function.harbor", "label": "港口", "aliases": ["harbor"], "status": "approved"},
+                    {"term_id": "style.medieval", "label": "中世纪", "aliases": ["medieval"], "status": "approved"}
+                  ]
+                }
+                """);
+        JsonObject source = new JsonObject();
+        source.addProperty("sourceType", "debug_catalog");
+        source.addProperty("debugCatalogPath", catalogPath.toString());
+        source.addProperty("vocabularySnapshotPath", vocabularyPath.toString());
+
+        JsonObject query = JsonParser.parseString("""
+                {
+                  "allOfTerms": ["中世纪"],
+                  "anyOfTerms": ["farm", "港口"],
+                  "excludeTerms": ["港口"],
+                  "limit": 10
+                }
+                """).getAsJsonObject();
+        JsonObject response = CityPlanningEndpointHandler.handleQueryStructureCatalog(baseDirectory, source, query);
+        assertTrue(response.get("ok").getAsBoolean());
+        assertTrue(response.get("readOnly").getAsBoolean());
+        assertTrue(response.getAsJsonObject("vocabulary").get("available").getAsBoolean());
+        assertEquals(1, response.get("matchedCount").getAsInt());
+        JsonObject windmill = response.getAsJsonArray("candidates").get(0).getAsJsonObject();
+        assertEquals("test:windmill", windmill.get("structureId").getAsString());
+        assertEquals("style.medieval", windmill.getAsJsonArray("matchedCanonicalTerms").get(0).getAsString());
+        assertEquals("function.agriculture", windmill.getAsJsonArray("matchedCanonicalTerms").get(1).getAsString());
+        assertEquals(11, windmill.getAsJsonObject("hardFacts").getAsJsonObject("fixedFootprint")
+                .get("widthBlocks").getAsInt());
+        assertEquals("debug", windmill.getAsJsonObject("profileSource").get("catalogMode").getAsString());
+
+        JsonObject canonicalQuery = JsonParser.parseString("""
+                {"allOfTerms": ["function.harbor"]}
+                """).getAsJsonObject();
+        JsonObject canonicalResponse = CityPlanningEndpointHandler.handleQueryStructureCatalog(
+                baseDirectory, source, canonicalQuery);
+        assertEquals("test:fishing_boat", canonicalResponse.getAsJsonArray("candidates").get(0)
+                .getAsJsonObject().get("structureId").getAsString());
+
+        JsonObject chineseLabelQuery = JsonParser.parseString("""
+                {"allOfTerms": ["农业"]}
+                """).getAsJsonObject();
+        JsonObject chineseLabelResponse = CityPlanningEndpointHandler.handleQueryStructureCatalog(
+                baseDirectory, source, chineseLabelQuery);
+        assertEquals("test:windmill", chineseLabelResponse.getAsJsonArray("candidates").get(0)
+                .getAsJsonObject().get("structureId").getAsString());
+
+        IllegalArgumentException unresolved = assertThrows(IllegalArgumentException.class,
+                () -> CityPlanningEndpointHandler.handleQueryStructureCatalog(baseDirectory, source,
+                        JsonParser.parseString("{\"allOfTerms\":[\"未定义标签\"]}").getAsJsonObject()));
+        assertTrue(unresolved.getMessage().contains("CITY_STRUCTURE_QUERY_TERM_UNRESOLVED"));
     }
 
     @Test
@@ -1149,12 +1416,15 @@ class CityPlanningEndpointHandlerTest {
         prepareD5Artifacts(debugRoot, runId, citySeedId);
         CityPlanningEndpointHandler.handlePlanD6(debugRoot, runId, citySeedId, null, null);
 
+        Path serverRoot = Files.createTempDirectory("city-d5-roadweaver-server-root");
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
                 () -> CityPlanningEndpointHandler.handleExecuteD5(
-                        debugRoot, Files.createTempDirectory("city-d5-roadweaver-server-root"),
+                        debugRoot, serverRoot,
                         runId, citySeedId, true, null, "roadweaver"));
 
         assertTrue(ex.getMessage().contains("ROADWEAVER_UNAVAILABLE"));
+        assertFalse(Files.exists(CityReservationMaskRegistry.plannedRegistryPath(serverRoot)),
+                "RoadWeaver preflight must fail before the structure registry is activated");
     }
 
     @Test
@@ -2075,6 +2345,198 @@ class CityPlanningEndpointHandlerTest {
                   ]
                 }
                 """).getAsJsonObject();
+    }
+
+    private static List<String> relativeFiles(Path root) throws Exception {
+        try (var paths = Files.walk(root)) {
+            return paths.filter(Files::isRegularFile)
+                    .map(path -> root.relativize(path).toString().replace('\\', '/'))
+                    .sorted()
+                    .toList();
+        }
+    }
+
+    private static Path createDecorationCatalog() throws Exception {
+        Path root = Files.createTempDirectory("city-decoration-catalog");
+        Path templates = root.resolve("templates");
+        Files.createDirectories(templates);
+        writeDecorationTemplate(templates.resolve("bench.nbt"));
+        Files.writeString(root.resolve("content_index.json"), """
+                {
+                  "schemaVersion": "city_decoration_content_index.v0.2",
+                  "contents": [
+                    {
+                      "contentId": "geomantia:test_bench",
+                      "contentKind": "prefab",
+                      "nbtFile": "templates/bench.nbt",
+                      "allowedRotations": [0, 90, 180, 270],
+                      "tags": ["test", "seating"]
+                    }
+                  ]
+                }
+                """);
+        Path styles = root.resolve("styles");
+        Files.createDirectories(styles);
+        Files.writeString(styles.resolve("forest_village.json"), """
+                {
+                  "schemaVersion": "city_decoration_style_profile.v0.1",
+                  "styleProfileId": "forest_village",
+                  "mappings": [
+                    {
+                      "semanticRef": "market_stall",
+                      "variants": [
+                        {"contentRef": "geomantia:test_bench", "weight": 1.0}
+                      ]
+                    }
+                  ]
+                }
+                """);
+        return root;
+    }
+
+    private static void writeDecorationTemplate(Path path) throws Exception {
+        CompoundTag root = new CompoundTag();
+        ListTag size = new ListTag();
+        size.add(IntTag.valueOf(1));
+        size.add(IntTag.valueOf(1));
+        size.add(IntTag.valueOf(1));
+        root.put("size", size);
+
+        CompoundTag state = new CompoundTag();
+        state.putString("Name", "minecraft:oak_planks");
+        ListTag palette = new ListTag();
+        palette.add(state);
+        root.put("palette", palette);
+
+        CompoundTag block = new CompoundTag();
+        ListTag position = new ListTag();
+        position.add(IntTag.valueOf(0));
+        position.add(IntTag.valueOf(0));
+        position.add(IntTag.valueOf(0));
+        block.put("pos", position);
+        block.putInt("state", 0);
+        ListTag blocks = new ListTag();
+        blocks.add(block);
+        root.put("blocks", blocks);
+        root.put("entities", new ListTag());
+        NbtIo.writeCompressed(root, path.toFile());
+    }
+
+    private static JsonObject decorationProgramPlan(String catalogHash,
+                                                    String styleProfileHash,
+                                                    String patchRef,
+                                                    String contentRef) {
+        return JsonParser.parseString("""
+                {
+                  "schemaVersion": "city_decoration_program_plan.v0.2",
+                  "cityId": "city_test",
+                  "catalogHash": "%s",
+                  "styleProfileId": "forest_village",
+                  "styleProfileHash": "%s",
+                  "programs": [
+                    {
+                      "programId": "patch_fill",
+                      "targetArea": {"sourceType": "patch", "ref": "%s", "insetBlocks": 0},
+                      "coordinateFrame": {
+                        "originMode": "target_centroid",
+                        "orientationMode": "patch_long_axis",
+                        "quarterTurns": 0,
+                        "offsetUBlocks": 0,
+                        "offsetVBlocks": 0
+                      },
+                      "shape": {"type": "target_mask", "params": {}},
+                      "pattern": {"type": "uniform_fill", "params": {"paletteSlotId": "surface"}},
+                      "contentPalette": {
+                        "slots": [
+                          {
+                            "slotId": "surface",
+                            "phase": "surface",
+                            "entries": [{"contentRef": "%s", "weight": 1.0}],
+                            "required": true
+                          }
+                        ]
+                      },
+                      "terrainPolicy": {
+                        "maxSlopeDelta": 2,
+                        "allowWater": false,
+                        "invalidTerrainAction": "clip"
+                      },
+                      "conflictPolicy": {"onConflict": "skip", "clearanceBlocks": 1},
+                      "priority": 10,
+                      "seed": 42
+                    }
+                  ]
+                }
+                """.formatted(catalogHash, styleProfileHash, patchRef, contentRef)).getAsJsonObject();
+    }
+
+    private static void addPatchMemberCells(Path debugRoot, String runId, String citySeedId,
+                                            String patchRef) throws Exception {
+        Path path = debugRoot.resolve(runId).resolve("city_d3_" + citySeedId)
+                .resolve("city_landform_review_package.json");
+        JsonObject d3 = JsonParser.parseString(Files.readString(path)).getAsJsonObject();
+        JsonObject grid = d3.getAsJsonObject("grid");
+        int step = grid.get("cellStepBlocks").getAsInt();
+        int originX = grid.get("originBlockX").getAsInt();
+        int originZ = grid.get("originBlockZ").getAsInt();
+        for (JsonElement element : d3.getAsJsonArray("landformPatches")) {
+            JsonObject patch = element.getAsJsonObject();
+            if (!patchRef.equals(patch.get("landformPatchId").getAsString())) {
+                continue;
+            }
+            JsonObject patchBounds = patch.getAsJsonObject("blockBounds");
+            JsonArray cells = new JsonArray();
+            for (int z = patchBounds.get("minZ").getAsInt();
+                 z + step - 1 <= patchBounds.get("maxZ").getAsInt(); z += step) {
+                for (int x = patchBounds.get("minX").getAsInt();
+                     x + step - 1 <= patchBounds.get("maxX").getAsInt(); x += step) {
+                    JsonObject cell = new JsonObject();
+                    cell.addProperty("cellX", Math.floorDiv(x - originX, step));
+                    cell.addProperty("cellZ", Math.floorDiv(z - originZ, step));
+                    cell.addProperty("blockMinX", x);
+                    cell.addProperty("blockMinZ", z);
+                    cells.add(cell);
+                }
+            }
+            patch.addProperty("geometryMode", "patch_member_cells");
+            patch.add("memberCells", cells);
+            Files.writeString(path, CityJson.GSON.toJson(d3));
+            return;
+        }
+        throw new IllegalArgumentException("test patch not found: " + patchRef);
+    }
+
+    private static void ensureTwoPlannedRoadEndpoints(Path debugRoot, String runId, String citySeedId)
+            throws Exception {
+        Path path = debugRoot.resolve(runId).resolve("city_d6_" + citySeedId)
+                .resolve("structure_materialization_plan.json");
+        JsonObject plan = JsonParser.parseString(Files.readString(path)).getAsJsonObject();
+        JsonArray structures = plan.getAsJsonArray("plannedWorldgenStructures");
+        assertFalse(structures.isEmpty());
+        for (JsonElement element : structures) {
+            element.getAsJsonObject().addProperty("status", "planned_worldgen");
+        }
+        if (structures.size() == 1) {
+            JsonObject copy = structures.get(0).getAsJsonObject().deepCopy();
+            copy.addProperty("anchorId", "test_road_endpoint_2");
+            copy.addProperty("priority", 999);
+            JsonObject actual = new JsonObject();
+            actual.addProperty("minX", 36);
+            actual.addProperty("minZ", 36);
+            actual.addProperty("maxX", 42);
+            actual.addProperty("maxZ", 42);
+            JsonObject collision = new JsonObject();
+            collision.addProperty("minX", 32);
+            collision.addProperty("minZ", 32);
+            collision.addProperty("maxX", 46);
+            collision.addProperty("maxZ", 46);
+            copy.add("actualFootprint", actual.deepCopy());
+            copy.add("lockedActualFootprint", actual);
+            copy.add("collisionEnvelope", collision.deepCopy());
+            copy.add("lockedCollisionEnvelope", collision);
+            structures.add(copy);
+        }
+        Files.writeString(path, CityJson.GSON.toJson(plan));
     }
 
     private static BlockBounds bounds(JsonObject obj) {

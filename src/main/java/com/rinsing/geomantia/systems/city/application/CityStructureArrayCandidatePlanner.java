@@ -150,9 +150,9 @@ public final class CityStructureArrayCandidatePlanner {
         String displayRole = stringValue(plan, "displayRole", arrayId);
         int arrayCount = intValue(plan, "arrayCount", 0);
         List<String> structureIds = structureIds(plan);
-        int spacing = configuredSpacing(plan, structureIds, profiles);
+        int spacing = configuredSpacing(plan, structureIds, profiles, facts);
         List<BlockPoint> rawPoints = rawPoints(pattern, pivot, sourcePatches, grid, plan,
-                structureIds, profiles, arrayCount);
+                structureIds, profiles, facts, arrayCount);
         List<BlockBounds> groupCollision = new ArrayList<>();
         JsonArray items = new JsonArray();
         JsonArray anchors = new JsonArray();
@@ -335,8 +335,9 @@ public final class CityStructureArrayCandidatePlanner {
                                               JsonObject plan,
                                               List<String> structureIds,
                                               Map<String, CityStructureProfileCatalog.StructureProfile> profiles,
+                                              CityStructureEnvelopeFacts facts,
                                               int arrayCount) {
-        int spacing = configuredSpacing(plan, structureIds, profiles);
+        int spacing = configuredSpacing(plan, structureIds, profiles, facts);
         LinkedHashSet<BlockPoint> points = new LinkedHashSet<>();
         switch (pattern) {
             case "patch_axis_band" -> axisBand(points, pivot, patches, spacing, arrayCount);
@@ -471,31 +472,26 @@ public final class CityStructureArrayCandidatePlanner {
     }
 
     private static int spacing(List<String> structureIds,
-                               Map<String, CityStructureProfileCatalog.StructureProfile> profiles) {
+                               Map<String, CityStructureProfileCatalog.StructureProfile> profiles,
+                               CityStructureEnvelopeFacts facts,
+                               JsonObject options) {
         int max = 16;
         for (String structureId : structureIds) {
             CityStructureProfileCatalog.StructureProfile profile = profiles.get(structureId);
             if (profile == null) {
                 continue;
             }
-            CityStructureProfileCatalog.Footprint footprint = profile.planningFootprint();
-            if (footprint.valid()) {
-                max = Math.max(max, Math.max(footprint.widthBlocks(), footprint.depthBlocks())
-                        + CityStructureCandidateEnvelope.DEFAULT_SMALL_CLEARANCE_BLOCKS * 2);
-            } else if (profile.jigsawLike()) {
-                int radius = profile.jigsawExpansionRadius(CityStructureCandidateEnvelope.DEFAULT_JIGSAW_RADIUS_BLOCKS)
-                        + CityStructureCandidateEnvelope.DEFAULT_CLEARANCE_BLOCKS;
-                max = Math.max(max, radius * 2);
-            }
+            max = Math.max(max, CityStructureCandidateEnvelope.automaticSpacing(profile, facts, options));
         }
         return max;
     }
 
     private static int configuredSpacing(JsonObject plan,
                                          List<String> structureIds,
-                                         Map<String, CityStructureProfileCatalog.StructureProfile> profiles) {
+                                         Map<String, CityStructureProfileCatalog.StructureProfile> profiles,
+                                         CityStructureEnvelopeFacts facts) {
         int configured = compoundInt(plan, "spacingBlocks", 0);
-        return configured > 0 ? configured : spacing(structureIds, profiles);
+        return configured > 0 ? configured : spacing(structureIds, profiles, facts, plan);
     }
 
     private static ShapeGrid shapeGrid(JsonObject plan, int requestedCount) {

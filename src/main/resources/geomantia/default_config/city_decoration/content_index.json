@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "city_decoration_content_index.v0.2",
+  "contents": [
+    {
+      "contentId": "geomantia:decoration/crop_tile",
+      "contentKind": "prefab",
+      "nbtFile": "templates/crop_tile.nbt",
+      "allowedRotations": [0, 90, 180, 270],
+      "placementMode": "replace_surface",
+      "replacePolicy": "surface_replaceable",
+      "comfortMarginBlocks": 0,
+      "tags": ["agriculture", "crop"]
+    },
+    {
+      "contentId": "geomantia:decoration/water_channel_tile",
+      "contentKind": "prefab",
+      "nbtFile": "templates/water_channel_tile.nbt",
+      "allowedRotations": [0, 90, 180, 270],
+      "placementMode": "replace_surface",
+      "replacePolicy": "surface_replaceable",
+      "comfortMarginBlocks": 0,
+      "tags": ["agriculture", "water_channel"]
+    },
+    {
+      "contentId": "geomantia:decoration/field_border",
+      "contentKind": "prefab",
+      "nbtFile": "templates/field_border.nbt",
+      "allowedRotations": [0, 90, 180, 270],
+      "comfortMarginBlocks": 0,
+      "tags": ["agriculture", "field_border"]
+    },
+    {
+      "contentId": "geomantia:decoration/gravel_path_tile",
+      "contentKind": "prefab",
+      "nbtFile": "templates/gravel_path_tile.nbt",
+      "allowedRotations": [0, 90, 180, 270],
+      "placementMode": "replace_surface",
+      "replacePolicy": "surface_replaceable",
+      "comfortMarginBlocks": 0,
+      "tags": ["path", "agriculture"]
+    }
+  ]
+}

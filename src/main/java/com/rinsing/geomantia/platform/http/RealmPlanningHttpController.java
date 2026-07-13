@@ -441,11 +441,48 @@ final class RealmPlanningHttpController {
             String citySeedId = requiredString(request, "citySeedId");
             rejectLegacyCityFields(request, "patchGroupPlan", "zoneChoices", "functionType", "functionTag",
                     "function_candidates");
-            JsonObject dressingBrushPlan = request.has("dressingBrushPlan")
-                    && request.get("dressingBrushPlan").isJsonObject()
-                    ? request.getAsJsonObject("dressingBrushPlan") : request;
+            if (request.has("dressingBrushPlan")
+                    || "city_dressing_brush_plan.v0.1".equals(stringValue(request, "schemaVersion", ""))) {
+                throw new IllegalArgumentException("CITY_DRESSING_LEGACY_SCHEMA_REMOVED: "
+                        + "plan_city_dressing accepts decorationProgramPlan only.");
+            }
+            if (!request.has("decorationProgramPlan") || !request.get("decorationProgramPlan").isJsonObject()) {
+                throw new IllegalArgumentException("CITY_DECORATION_PROGRAM_PLAN_REQUIRED: "
+                        + "decorationProgramPlan object is required.");
+            }
             return CityPlanningEndpointHandler.handlePlanCityDressing(debugRoot(), runId, citySeedId,
-                    dressingBrushPlan);
+                    request.getAsJsonObject("decorationProgramPlan"));
+        });
+    }
+
+    void handleCityQueryDecorationCatalog(HttpExchange exchange) {
+        handle(exchange, "GET", CityPlanningEndpointHandler::handleQueryDecorationCatalog);
+    }
+
+    void handleCityProbeDecorationTerrain(HttpExchange exchange) {
+        handle(exchange, "POST", () -> callOnServerThread(() -> {
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            String runId = requiredString(request, "runId");
+            String citySeedId = requiredString(request, "citySeedId");
+            ServerPlayer player = resolvePlayer(stringValue(request, "playerName", ""));
+            String dimensionId = stringValue(request, "dimensionId", "");
+            if (dimensionId.isBlank()) {
+                dimensionId = restoredRunDimensionId(runId);
+            }
+            ServerLevel level = resolveLevel(dimensionId, player);
+            return CityPlanningEndpointHandler.handleProbeDecorationTerrain(debugRoot(), runId, citySeedId, level);
+        }));
+    }
+
+    void handleCityQueryStructureCatalog(HttpExchange exchange) {
+        handle(exchange, "POST", () -> {
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            rejectLegacyCityFields(request, "functionTags", "function_tags", "function_candidates");
+            if (!request.has("terrasenseProfileSource") || !request.get("terrasenseProfileSource").isJsonObject()) {
+                throw new IllegalArgumentException("terrasenseProfileSource object is required.");
+            }
+            return CityPlanningEndpointHandler.handleQueryStructureCatalog(debugRoot(),
+                    request.getAsJsonObject("terrasenseProfileSource"), request);
         });
     }
 

@@ -22,14 +22,24 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.EnumMap;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 public final class CityStructureLandingPreviewRenderer {
     private static final int WIDTH = 1280;
     private static final int HEIGHT = 900;
     private static final int PAD = 64;
+    private static final int D4_CLUSTER_LINK_GAP_BLOCKS = 64;
+    private static final Color D2_BODY_FILL = new Color(50, 126, 184, 96);
+    private static final Color D2_BODY_STROKE = new Color(28, 81, 140, 238);
+    private static final Color COLLISION_FILL = new Color(204, 79, 63, 45);
+    private static final Color COLLISION_STROKE = new Color(158, 59, 49, 170);
+    private static final Color MASK_FILL = new Color(202, 108, 62, 35);
+    private static final Color MASK_STROKE = new Color(178, 84, 46, 135);
 
     public Path renderD4(JsonObject anchorMap, Path outputDirectory) throws IOException {
         return renderD4(anchorMap, null, outputDirectory);
@@ -51,21 +61,18 @@ public final class CityStructureLandingPreviewRenderer {
             for (JsonElement elem : array(anchorMap, "anchors")) {
                 JsonObject anchor = elem.getAsJsonObject();
                 i++;
-                drawRect(g, t, bounds(anchor, "maskEnvelope"), new Color(202, 108, 62, 35),
-                        new Color(178, 84, 46, 125), 1.1f);
-                drawRect(g, t, bounds(anchor, "collisionEnvelope"), new Color(204, 79, 63, 45),
-                        new Color(158, 59, 49, 160), 1.5f);
-                drawRect(g, t, bounds(anchor, "plannedFootprint"), color(i, 120), color(i, 235), 2.4f);
-                drawLabel(g, t, point(anchor, "anchorBlock"), string(anchor, "anchorId"));
+                drawD4Geometry(g, t, d4AnchorGeometry(anchor));
+                drawBadge(g, t, point(anchor, "anchorBlock"), "A" + i, color(i, 235));
             }
             title(g, "City D4 structure anchor preview",
-                    "patch backdrop + green=planned red=collision orange=mask anchors="
+                    "D2 body=blue collision=red mask=orange; A*=anchor index; anchors="
                             + array(anchorMap, "anchors").size());
-            sideSummary(g, anchorMap, "anchors");
+            d4AnchorSummary(g, anchorMap);
         } finally {
             g.dispose();
         }
         ImageIO.write(image, "png", path.toFile());
+        renderD4AnchorClusterDetail(anchorMap, reviewPackage, outputDirectory);
         return path;
     }
 
@@ -239,6 +246,7 @@ public final class CityStructureLandingPreviewRenderer {
             drawPatchBackdrop(g, t, gridBounds, reviewPackage);
             drawGrid(g, t, gridBounds);
             JsonObject space = object(candidateSet, "expansionSpace");
+            drawOptionalRect(g, t, space, "focusBodyEnvelope", D2_BODY_FILL, D2_BODY_STROKE, 2.3f);
             drawOptionalRect(g, t, space, "focusCollisionEnvelope", new Color(204, 79, 63, 38),
                     new Color(158, 59, 49, 190), 1.6f);
             drawOptionalRect(g, t, space, "selectedExpansionAvailableBounds", new Color(65, 145, 108, 22),
@@ -266,18 +274,20 @@ public final class CityStructureLandingPreviewRenderer {
                     if (previous != null) {
                         drawLine(g, t, previous, anchor, withAlpha(candidateColor, 115), 1.3f, false);
                     }
+                    drawD4Geometry(g, t, d4CandidateGeometry(item));
                     drawPoint(g, t, anchor, candidateColor);
                     drawBadge(g, t, anchor, "E" + candidateIndex + "." + itemIndex, candidateColor);
                     previous = anchor;
                 }
             }
             title(g, "City D4 outward array candidates",
-                    "red=focus collision green=outward available square=growth entry; one color = complete candidate group");
+                    "blue=D2 body red=collision orange=mask green=outward space; one color = candidate group");
             expansionCandidateSummary(g, candidateSet);
         } finally {
             g.dispose();
         }
         ImageIO.write(image, "png", path.toFile());
+        renderD4ArrayExpansionCandidateDetail(candidateSet, reviewPackage, outputDirectory);
         return path;
     }
 
@@ -333,6 +343,294 @@ public final class CityStructureLandingPreviewRenderer {
         }
         ImageIO.write(image, "png", path.toFile());
         return path;
+    }
+
+    private static void renderD4AnchorClusterDetail(JsonObject anchorMap,
+                                                    CityLandformReviewPackage reviewPackage,
+                                                    Path outputDirectory) throws IOException {
+        List<AnchorPreview> cluster = densestAnchorCluster(anchorMap);
+        if (cluster.isEmpty()) {
+            return;
+        }
+        Path path = outputDirectory.resolve("structure_anchor_cluster_preview.png");
+        BufferedImage image = baseImage();
+        Graphics2D g = image.createGraphics();
+        try {
+            setup(g);
+            BlockBounds viewport = expand(unionMasks(cluster), 24);
+            Transform t = detailTransform(viewport);
+            drawPatchBackdrop(g, t, viewport, reviewPackage);
+            drawGrid(g, t, viewport);
+            for (AnchorPreview preview : cluster) {
+                drawD4Geometry(g, t, preview.geometry());
+                drawBadge(g, t, point(preview.anchor(), "anchorBlock"), "A" + preview.index(),
+                        color(preview.index(), 235));
+            }
+            title(g, "City D4 local structure cluster",
+                    "D2 body=blue collision=red mask=orange; cluster anchors=" + cluster.size());
+            drawD4DetailLegend(g, cluster);
+        } finally {
+            g.dispose();
+        }
+        ImageIO.write(image, "png", path.toFile());
+    }
+
+    private static void renderD4ArrayExpansionCandidateDetail(JsonObject candidateSet,
+                                                               CityLandformReviewPackage reviewPackage,
+                                                               Path outputDirectory) throws IOException {
+        JsonArray candidates = array(candidateSet, "arrayCandidates");
+        if (candidates.isEmpty() || !candidates.get(0).isJsonObject()) {
+            return;
+        }
+        JsonObject candidate = candidates.get(0).getAsJsonObject();
+        List<PreviewGeometry> geometries = new ArrayList<>();
+        for (JsonElement itemElem : array(candidate, "items")) {
+            if (itemElem.isJsonObject()) {
+                geometries.add(d4CandidateGeometry(itemElem.getAsJsonObject()));
+            }
+        }
+        if (geometries.isEmpty()) {
+            return;
+        }
+
+        JsonObject space = object(candidateSet, "expansionSpace");
+        BlockBounds viewport = expand(unionGeometryAndFocus(geometries,
+                hasBounds(space, "focusCollisionEnvelope") ? bounds(space, "focusCollisionEnvelope") : null), 24);
+        Path path = outputDirectory.resolve("d4_array_expansion_candidate_detail.png");
+        BufferedImage image = baseImage();
+        Graphics2D g = image.createGraphics();
+        try {
+            setup(g);
+            Transform t = detailTransform(viewport);
+            drawPatchBackdrop(g, t, viewport, reviewPackage);
+            drawGrid(g, t, viewport);
+            drawOptionalRect(g, t, space, "selectedExpansionAvailableBounds", new Color(65, 145, 108, 20),
+                    new Color(39, 111, 78, 135), 1.1f);
+            drawOptionalRect(g, t, space, "focusBodyEnvelope", D2_BODY_FILL, D2_BODY_STROKE, 2.4f);
+            drawOptionalRect(g, t, space, "focusCollisionEnvelope", new Color(204, 79, 63, 28),
+                    new Color(158, 59, 49, 200), 1.8f);
+            if (hasBounds(space, "focusCollisionEnvelope")) {
+                drawBadge(g, t, bounds(space, "focusCollisionEnvelope").center(), "F", new Color(158, 59, 49));
+            }
+            int itemIndex = 0;
+            for (JsonElement itemElem : array(candidate, "items")) {
+                if (!itemElem.isJsonObject()) {
+                    continue;
+                }
+                itemIndex++;
+                JsonObject item = itemElem.getAsJsonObject();
+                drawD4Geometry(g, t, d4CandidateGeometry(item));
+                BlockPoint anchor = point(item, "anchorBlock");
+                drawPoint(g, t, anchor, color(itemIndex, 235));
+                drawBadge(g, t, anchor, "E1." + itemIndex, color(itemIndex, 235));
+            }
+            title(g, "City D4 outward candidate local detail",
+                    "E1=" + trim(string(candidate, "candidateId"), 42)
+                            + " | blue=D2 body red=collision orange=mask F=focus collision");
+            drawExpansionDetailLegend(g, candidate, space);
+        } finally {
+            g.dispose();
+        }
+        ImageIO.write(image, "png", path.toFile());
+    }
+
+    /**
+     * D4 anchor maps historically retained the TerraSense static footprint in plannedFootprint.
+     * Preview the D2 body when the anchor carries its frozen envelope fact; keep the static field only
+     * as a compatibility fallback for old artifacts without D2 facts.
+     */
+    static BlockBounds d2BodyBounds(JsonObject item) {
+        if (hasBounds(item, "d2BodyEnvelope")) {
+            return bounds(item, "d2BodyEnvelope");
+        }
+        JsonObject fact = object(item, "structureEnvelopeFact");
+        if (fact.size() > 0 && item.has("anchorBlock") && item.get("anchorBlock").isJsonObject()) {
+            String envelopeMode = string(item, "envelopeMode");
+            String source = string(fact, "collisionEnvelopeSource");
+            JsonObject localEnvelope = new JsonObject();
+            if ("fixed_bbox_group".equals(envelopeMode) || "dominantBBoxGroup".equals(source)) {
+                JsonObject selectedGroup = object(item, "selectedEnvelopeGroup");
+                if (hasBounds(selectedGroup, "localEnvelope")) {
+                    localEnvelope = object(selectedGroup, "localEnvelope");
+                } else {
+                    JsonObject dominantGroup = object(fact, "dominantBBoxGroup");
+                    if (hasBounds(dominantGroup, "localEnvelope")) {
+                        localEnvelope = object(dominantGroup, "localEnvelope");
+                    }
+                }
+            } else if ("d2_stable_max_envelope".equals(envelopeMode)
+                    || "stableMaxEnvelope".equals(source)) {
+                localEnvelope = object(fact, "stableMaxEnvelope");
+            } else {
+                localEnvelope = object(fact, "localEnvelopeP95");
+            }
+            if (isBounds(localEnvelope)) {
+                return fromLocal(point(item, "anchorBlock"), bounds(localEnvelope));
+            }
+        }
+        if (hasBounds(item, "plannedFootprint")) {
+            return bounds(item, "plannedFootprint");
+        }
+        BlockPoint anchor = point(item, "anchorBlock");
+        return new BlockBounds(anchor.x(), anchor.z(), anchor.x(), anchor.z());
+    }
+
+    private static PreviewGeometry d4AnchorGeometry(JsonObject anchor) {
+        BlockBounds body = d2BodyBounds(anchor);
+        BlockBounds collision = firstBounds(anchor, body, "collisionEnvelope", "reservedEnvelope");
+        BlockBounds mask = firstBounds(anchor, collision, "maskEnvelope");
+        return new PreviewGeometry(body, collision, mask);
+    }
+
+    private static PreviewGeometry d4CandidateGeometry(JsonObject item) {
+        BlockBounds body = d2BodyBounds(item);
+        BlockBounds collision = firstBounds(item, body, "estimatedCollisionEnvelope", "collisionEnvelope");
+        BlockBounds mask = firstBounds(item, collision, "estimatedMaskEnvelope", "maskEnvelope");
+        return new PreviewGeometry(body, collision, mask);
+    }
+
+    private static void drawD4Geometry(Graphics2D g, Transform t, PreviewGeometry geometry) {
+        drawRect(g, t, geometry.mask(), MASK_FILL, MASK_STROKE, 1.0f);
+        drawRect(g, t, geometry.collision(), COLLISION_FILL, COLLISION_STROKE, 1.5f);
+        drawRect(g, t, geometry.body(), D2_BODY_FILL, D2_BODY_STROKE, 2.5f);
+    }
+
+    private static List<AnchorPreview> densestAnchorCluster(JsonObject anchorMap) {
+        List<AnchorPreview> anchors = new ArrayList<>();
+        int index = 0;
+        for (JsonElement elem : array(anchorMap, "anchors")) {
+            if (elem.isJsonObject()) {
+                index++;
+                JsonObject anchor = elem.getAsJsonObject();
+                anchors.add(new AnchorPreview(index, anchor, d4AnchorGeometry(anchor)));
+            }
+        }
+        List<AnchorPreview> best = List.of();
+        for (AnchorPreview seed : anchors) {
+            List<AnchorPreview> component = new ArrayList<>();
+            component.add(seed);
+            for (int cursor = 0; cursor < component.size(); cursor++) {
+                AnchorPreview current = component.get(cursor);
+                for (AnchorPreview candidate : anchors) {
+                    if (!component.contains(candidate)
+                            && expand(current.geometry().collision(), D4_CLUSTER_LINK_GAP_BLOCKS)
+                            .overlaps(candidate.geometry().collision())) {
+                        component.add(candidate);
+                    }
+                }
+            }
+            if (component.size() > best.size()
+                    || component.size() == best.size() && unionMasks(component).widthBlocks()
+                    * unionMasks(component).heightBlocks() < unionMasks(best).widthBlocks()
+                    * unionMasks(best).heightBlocks()) {
+                best = component;
+            }
+        }
+        best.sort(Comparator.comparingInt(AnchorPreview::index));
+        return best;
+    }
+
+    private static BlockBounds unionMasks(List<AnchorPreview> previews) {
+        BlockBounds union = previews.get(0).geometry().mask();
+        for (int i = 1; i < previews.size(); i++) {
+            union = union(union, previews.get(i).geometry().mask());
+        }
+        return union;
+    }
+
+    private static BlockBounds unionGeometryAndFocus(List<PreviewGeometry> geometries, BlockBounds focus) {
+        BlockBounds union = focus == null ? geometries.get(0).mask() : focus;
+        for (PreviewGeometry geometry : geometries) {
+            union = union(union, geometry.mask());
+        }
+        return union;
+    }
+
+    private static void d4AnchorSummary(Graphics2D g, JsonObject anchorMap) {
+        int x = 820;
+        int y = 90;
+        g.setColor(new Color(32, 34, 34));
+        g.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 14));
+        g.drawString("D4 geometry legend", x, y);
+        y += 22;
+        g.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 11));
+        y = legendRow(g, x, y, D2_BODY_STROKE, "blue = D2 body");
+        y = legendRow(g, x, y, COLLISION_STROKE, "red = collision clearance");
+        y = legendRow(g, x, y, MASK_STROKE, "orange = mask margin");
+        y += 8;
+        int index = 0;
+        for (JsonElement elem : array(anchorMap, "anchors")) {
+            if (!elem.isJsonObject() || y > HEIGHT - 44) {
+                break;
+            }
+            index++;
+            JsonObject anchor = elem.getAsJsonObject();
+            PreviewGeometry geometry = d4AnchorGeometry(anchor);
+            g.setColor(new Color(32, 34, 34));
+            g.drawString("A" + index + " " + shortStructureName(string(anchor, "structureId"))
+                    + " D2 " + dimensions(geometry.body()), x, y);
+            y += 15;
+            g.drawString("   C " + dimensions(geometry.collision()) + " M " + dimensions(geometry.mask()), x, y);
+            y += 18;
+        }
+    }
+
+    private static void drawD4DetailLegend(Graphics2D g, List<AnchorPreview> cluster) {
+        int x = 24;
+        int y = HEIGHT - 58;
+        g.setColor(new Color(250, 248, 240, 228));
+        g.fillRoundRect(x - 8, y - 20, 610, 54, 5, 5);
+        g.setColor(new Color(48, 48, 42, 170));
+        g.drawRoundRect(x - 8, y - 20, 610, 54, 5, 5);
+        g.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 11));
+        StringBuilder summary = new StringBuilder();
+        for (AnchorPreview preview : cluster) {
+            if (!summary.isEmpty()) {
+                summary.append(" | ");
+            }
+            summary.append("A").append(preview.index()).append(" ")
+                    .append(shortStructureName(string(preview.anchor(), "structureId")))
+                    .append(" ").append(dimensions(preview.geometry().body()));
+        }
+        g.setColor(new Color(32, 34, 34));
+        g.drawString(trim(summary.toString(), 82), x, y);
+        g.drawString("D2 body dimensions; collision and mask remain visible around each body.", x, y + 17);
+    }
+
+    private static void drawExpansionDetailLegend(Graphics2D g, JsonObject candidate, JsonObject space) {
+        int x = 24;
+        int y = HEIGHT - 58;
+        g.setColor(new Color(250, 248, 240, 228));
+        g.fillRoundRect(x - 8, y - 20, 700, 54, 5, 5);
+        g.setColor(new Color(48, 48, 42, 170));
+        g.drawRoundRect(x - 8, y - 20, 700, 54, 5, 5);
+        g.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 11));
+        StringBuilder summary = new StringBuilder();
+        int index = 0;
+        for (JsonElement itemElem : array(candidate, "items")) {
+            if (!itemElem.isJsonObject()) {
+                continue;
+            }
+            index++;
+            JsonObject item = itemElem.getAsJsonObject();
+            if (!summary.isEmpty()) {
+                summary.append(" | ");
+            }
+            summary.append("E1.").append(index).append(" ")
+                    .append(shortStructureName(string(item, "structureId"))).append(" ")
+                    .append(dimensions(d4CandidateGeometry(item).body()));
+        }
+        g.setColor(new Color(32, 34, 34));
+        g.drawString(trim(summary.toString(), 94), x, y);
+        if (hasBounds(space, "focusBodyEnvelope") && !array(candidate, "items").isEmpty()
+                && array(candidate, "items").get(0).isJsonObject()) {
+            BlockBounds parent = bounds(space, "focusBodyEnvelope");
+            BlockBounds firstBody = d4CandidateGeometry(array(candidate, "items").get(0).getAsJsonObject()).body();
+            g.drawString("F -> E1.1 D2 body edge gap=" + formatDistance(edgeDistanceBlocks(parent, firstBody))
+                    + " blocks", x, y + 17);
+        } else {
+            g.drawString("Focus D2 body unavailable in this legacy artifact; red box is its collision boundary.", x, y + 17);
+        }
     }
 
     public Path renderEnvelopeFacts(JsonObject facts, Path outputDirectory) throws IOException {
@@ -1390,6 +1688,78 @@ public final class CityStructureLandingPreviewRenderer {
                 Math.min(bounds.maxZ(), clip.maxZ()));
     }
 
+    private static BlockBounds firstBounds(JsonObject item, BlockBounds fallback, String... keys) {
+        for (String key : keys) {
+            if (hasBounds(item, key)) {
+                return bounds(item, key);
+            }
+        }
+        return fallback;
+    }
+
+    private static boolean hasBounds(JsonObject item, String key) {
+        return item != null && item.has(key) && item.get(key).isJsonObject()
+                && isBounds(item.getAsJsonObject(key));
+    }
+
+    private static boolean isBounds(JsonObject value) {
+        return value != null && value.has("minX") && value.has("minZ")
+                && value.has("maxX") && value.has("maxZ");
+    }
+
+    private static BlockBounds fromLocal(BlockPoint anchor, BlockBounds local) {
+        int originX = Math.floorDiv(anchor.x(), 16) * 16;
+        int originZ = Math.floorDiv(anchor.z(), 16) * 16;
+        return new BlockBounds(originX + local.minX(), originZ + local.minZ(),
+                originX + local.maxX(), originZ + local.maxZ());
+    }
+
+    private static BlockBounds expand(BlockBounds bounds, int amount) {
+        int normalized = Math.max(0, amount);
+        return new BlockBounds(bounds.minX() - normalized, bounds.minZ() - normalized,
+                bounds.maxX() + normalized, bounds.maxZ() + normalized);
+    }
+
+    private static BlockBounds union(BlockBounds left, BlockBounds right) {
+        return new BlockBounds(Math.min(left.minX(), right.minX()), Math.min(left.minZ(), right.minZ()),
+                Math.max(left.maxX(), right.maxX()), Math.max(left.maxZ(), right.maxZ()));
+    }
+
+    private static String dimensions(BlockBounds bounds) {
+        return bounds.widthBlocks() + "x" + bounds.heightBlocks();
+    }
+
+    private static String shortStructureName(String structureId) {
+        if (structureId == null || structureId.isBlank()) {
+            return "structure";
+        }
+        int slash = structureId.lastIndexOf('/');
+        return trim(slash >= 0 ? structureId.substring(slash + 1) : structureId, 18);
+    }
+
+    private static double edgeDistanceBlocks(BlockBounds left, BlockBounds right) {
+        int gapX = axisGap(left.minX(), left.maxX(), right.minX(), right.maxX());
+        int gapZ = axisGap(left.minZ(), left.maxZ(), right.minZ(), right.maxZ());
+        return Math.hypot(gapX, gapZ);
+    }
+
+    private static int axisGap(int firstMin, int firstMax, int secondMin, int secondMax) {
+        if (firstMax < secondMin) {
+            return secondMin - firstMax - 1;
+        }
+        if (secondMax < firstMin) {
+            return firstMin - secondMax - 1;
+        }
+        return 0;
+    }
+
+    private static String formatDistance(double distance) {
+        if (Math.abs(distance - Math.rint(distance)) < 0.001d) {
+            return Integer.toString((int) Math.rint(distance));
+        }
+        return String.format(java.util.Locale.ROOT, "%.1f", distance);
+    }
+
     private static BufferedImage baseImage() {
         BufferedImage image = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = image.createGraphics();
@@ -1409,6 +1779,12 @@ public final class CityStructureLandingPreviewRenderer {
 
     private static Transform transform(BlockBounds bounds) {
         double sx = (800 - PAD * 2) / (double) Math.max(1, bounds.widthBlocks());
+        double sz = (HEIGHT - PAD * 2) / (double) Math.max(1, bounds.heightBlocks());
+        return new Transform(bounds.minX(), bounds.minZ(), Math.min(sx, sz));
+    }
+
+    private static Transform detailTransform(BlockBounds bounds) {
+        double sx = (WIDTH - PAD * 2) / (double) Math.max(1, bounds.widthBlocks());
         double sz = (HEIGHT - PAD * 2) / (double) Math.max(1, bounds.heightBlocks());
         return new Transform(bounds.minX(), bounds.minZ(), Math.min(sx, sz));
     }
@@ -1514,5 +1890,11 @@ public final class CityStructureLandingPreviewRenderer {
         int z(int blockZ) {
             return PAD + (int) Math.round((blockZ - minZ) * scale);
         }
+    }
+
+    private record PreviewGeometry(BlockBounds body, BlockBounds collision, BlockBounds mask) {
+    }
+
+    private record AnchorPreview(int index, JsonObject anchor, PreviewGeometry geometry) {
     }
 }

@@ -162,6 +162,27 @@ export const realmHandlers: Record<string, ToolHandler> = {
     return textResult(JSON.stringify(res.data, null, 2));
   },
 
+  async city_query_decoration_catalog() {
+    const res = await getJson(`${MC_API_URL}/realm/city/query_decoration_catalog`, TIMEOUTS.quick);
+    return textResult(JSON.stringify(res.data, null, 2));
+  },
+
+  async city_probe_decoration_terrain(args) {
+    const res = await postJson(`${MC_API_URL}/realm/city/probe_decoration_terrain`, payload(args), TIMEOUTS.quick);
+    return textResult(JSON.stringify(res.data, null, 2));
+  },
+
+  async city_query_structure_catalog(args) {
+    const res = await postJson(`${MC_API_URL}/realm/city/query_structure_catalog`, payload(args), TIMEOUTS.quick);
+    return textResult(JSON.stringify(res.data, null, 2));
+  },
+
+  async city_plan_city_dressing(args) {
+    assertDecorationIntentRequest(args);
+    const res = await postJson(`${MC_API_URL}/realm/city/plan_city_dressing`, payload(args), TIMEOUTS.quick);
+    return textResult(JSON.stringify(res.data, null, 2));
+  },
+
   async city_execute_d5(args) {
     const res = await postJson(`${MC_API_URL}/realm/city/execute_d5`, payload(args), TIMEOUTS.refresh);
     return textResult(JSON.stringify(res.data, null, 2));
@@ -201,4 +222,77 @@ function payload(args: Record<string, unknown>) {
     }
   }
   return result;
+}
+
+const FORBIDDEN_DECORATION_INTENT_FIELDS = new Set([
+  "targetBounds",
+  "targetMask",
+  "memberBounds",
+  "origin",
+  "axisU",
+  "axisV",
+  "anchorBlock",
+  "x",
+  "y",
+  "z",
+  "blockOperation",
+  "blockOperations",
+  "blockState",
+  "blocks",
+  "nbtFile",
+  "templateRef",
+]);
+
+const LEGACY_DECORATION_FIELDS = new Set([
+  "dressingBrushPlan",
+  "dressingLayoutItems",
+  "itemType",
+  "fillAlgorithm",
+]);
+
+function assertDecorationIntentRequest(args: Record<string, unknown>) {
+  rejectForbiddenDecorationFields(args, "request");
+  if (!isObject(args.decorationProgramPlan)) {
+    throw new Error("CITY_DECORATION_PROGRAM_PLAN_REQUIRED: decorationProgramPlan object is required.");
+  }
+  const plan = args.decorationProgramPlan;
+  if (typeof plan.styleProfileId !== "string" || plan.styleProfileId.trim() === "") {
+    throw new Error("CITY_DECORATION_STYLE_PROFILE_ID_REQUIRED: decorationProgramPlan.styleProfileId is required.");
+  }
+  if (typeof plan.styleProfileHash !== "string" || plan.styleProfileHash.trim() === "") {
+    throw new Error("CITY_DECORATION_STYLE_PROFILE_HASH_REQUIRED: decorationProgramPlan.styleProfileHash is required.");
+  }
+  const programs = plan.programs;
+  if (!Array.isArray(programs) || programs.length === 0) {
+    throw new Error("CITY_DECORATION_PROGRAMS_REQUIRED: decorationProgramPlan.programs[] is required.");
+  }
+  for (let index = 0; index < programs.length; index++) {
+    const program = programs[index];
+    if (!isObject(program) || !isObject(program.targetArea) || program.targetArea.sourceType !== "patch") {
+      throw new Error(`CITY_DECORATION_TARGET_SOURCE_TYPE_UNSUPPORTED: programs[${index}] only accepts sourceType=patch.`);
+    }
+  }
+}
+
+function rejectForbiddenDecorationFields(value: unknown, path: string) {
+  if (Array.isArray(value)) {
+    value.forEach((item, index) => rejectForbiddenDecorationFields(item, `${path}[${index}]`));
+    return;
+  }
+  if (!isObject(value)) {
+    return;
+  }
+  for (const [key, child] of Object.entries(value)) {
+    if (LEGACY_DECORATION_FIELDS.has(key)) {
+      throw new Error(`CITY_DRESSING_LEGACY_SCHEMA_REMOVED: ${path}.${key} is not accepted.`);
+    }
+    if (FORBIDDEN_DECORATION_INTENT_FIELDS.has(key)) {
+      throw new Error(`CITY_DECORATION_INTENT_FIELD_FORBIDDEN: ${path}.${key} is not accepted.`);
+    }
+    rejectForbiddenDecorationFields(child, `${path}.${key}`);
+  }
+}
+
+function isObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }

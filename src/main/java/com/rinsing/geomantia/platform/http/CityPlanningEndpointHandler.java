@@ -5,8 +5,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.rinsing.geomantia.systems.city.application.CityD4DesignLoopStatePlanner;
-import com.rinsing.geomantia.systems.city.application.CityDressingLayerPlanner;
-import com.rinsing.geomantia.systems.city.application.CityDressingTemplateLibrary;
 import com.rinsing.geomantia.systems.city.application.CityFunctionZoneBuilder;
 import com.rinsing.geomantia.systems.city.application.CityLandformReviewBuilder;
 import com.rinsing.geomantia.systems.city.application.CityReservationMaskPlanner;
@@ -24,8 +22,19 @@ import com.rinsing.geomantia.systems.city.application.CityStructureEnvelopeFacts
 import com.rinsing.geomantia.systems.city.application.CityStructureEnvelopeProfiler;
 import com.rinsing.geomantia.systems.city.application.CityStructureMaterializationPlanner;
 import com.rinsing.geomantia.systems.city.application.CityStructureProfileCatalog;
+import com.rinsing.geomantia.systems.city.application.CityStructureCatalogQueryService;
 import com.rinsing.geomantia.systems.city.application.CityWallPlanner;
 import com.rinsing.geomantia.systems.city.application.CityWallReservationPlanner;
+import com.rinsing.geomantia.systems.city.application.dressing.CityDecorationProgramPlanner;
+import com.rinsing.geomantia.systems.city.application.dressing.CityDecorationTerrainProbe;
+import com.rinsing.geomantia.systems.city.application.dressing.CompiledDecorationProgram;
+import com.rinsing.geomantia.systems.city.application.dressing.CompiledDecorationProgramCodec;
+import com.rinsing.geomantia.systems.city.application.dressing.CompiledDecorationProgramPlan;
+import com.rinsing.geomantia.systems.city.application.dressing.D3PatchDecorationProgramContextResolver;
+import com.rinsing.geomantia.systems.city.application.dressing.DecorationProgramIntent;
+import com.rinsing.geomantia.systems.city.application.dressing.DecorationProgramIntentCodec;
+import com.rinsing.geomantia.systems.city.application.dressing.DecorationProgramIntentPlan;
+import com.rinsing.geomantia.systems.city.application.dressing.DecorationSlot;
 import com.rinsing.geomantia.systems.city.domain.config.CityPlanningConfig;
 import com.rinsing.geomantia.systems.city.domain.model.BoundaryIntent;
 import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
@@ -42,15 +51,21 @@ import com.rinsing.geomantia.systems.city.domain.model.RoadIntent;
 import com.rinsing.geomantia.systems.city.domain.model.WorldMutationReport;
 import com.rinsing.geomantia.systems.city.infrastructure.json.CityJson;
 import com.rinsing.geomantia.systems.city.infrastructure.preview.CityBuildabilityPreviewRenderer;
-import com.rinsing.geomantia.systems.city.infrastructure.preview.CityDressingPreviewRenderer;
+import com.rinsing.geomantia.systems.city.infrastructure.preview.CityDecorationPreviewRenderer;
 import com.rinsing.geomantia.systems.city.infrastructure.preview.CityPlanningPreviewRenderer;
 import com.rinsing.geomantia.systems.city.infrastructure.preview.CityLandformReviewMapRenderer;
 import com.rinsing.geomantia.systems.city.infrastructure.preview.CityStructureLandingPreviewRenderer;
 import com.rinsing.geomantia.systems.city.infrastructure.preview.CityStructurePreviewRenderer;
 import com.rinsing.geomantia.systems.city.infrastructure.preview.CityWallPreviewRenderer;
 import com.rinsing.geomantia.systems.city.infrastructure.preview.FunctionZonePreviewRenderer;
+import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationContentCatalog;
+import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationContentCatalogLoader;
+import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationDefaultCatalogBootstrap;
+import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationStyleProfileCatalog;
+import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationStyleProfileCatalogLoader;
+import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationStyleProfileResolver;
+import com.rinsing.geomantia.systems.city.infrastructure.world.CityDecorationWorldgenRegistry;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityReservationMaskRegistry;
-import com.rinsing.geomantia.systems.city.infrastructure.world.CityDressingWorldgenRegistry;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityRoadMaskScanner;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityRoadWeaverBridge;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CitySurfaceCache;
@@ -71,6 +86,10 @@ import com.rinsing.geomantia.systems.gis.domain.landform.LandformPatch;
 import com.rinsing.geomantia.systems.gis.domain.region.AtlasRegion;
 import com.rinsing.geomantia.systems.gis.domain.region.AtlasRegionStore;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.chunk.ChunkStatus;
+import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraftforge.fml.loading.FMLPaths;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -1032,6 +1051,13 @@ final class CityPlanningEndpointHandler {
     static JsonObject handleExecuteD5(Path debugRoot, Path serverRoot, String runId, String citySeedId,
                                       boolean confirmWorldMutation, ServerLevel level,
                                       String requestedRoadProvider) throws IOException {
+        return handleExecuteD5(debugRoot, serverRoot, runId, citySeedId, confirmWorldMutation, level,
+                requestedRoadProvider, null);
+    }
+
+    static JsonObject handleExecuteD5(Path debugRoot, Path serverRoot, String runId, String citySeedId,
+                                      boolean confirmWorldMutation, ServerLevel level,
+                                      String requestedRoadProvider, Path requestedDecorationCatalogRoot) throws IOException {
         long started = System.nanoTime();
         if (!confirmWorldMutation) {
             throw new IllegalArgumentException("confirmWorldMutation=true is required for city_execute_d5.");
@@ -1071,17 +1097,60 @@ final class CityPlanningEndpointHandler {
         JsonObject materializationPlan = JsonParser.parseString(Files.readString(d6PlanPath)).getAsJsonObject();
         validateLockedMaterializationPlan(materializationPlan);
         JsonObject activeMaskPlan = maskPlanWithLockedEnvelopes(maskPlan, materializationPlan);
-        JsonObject dressingActivationPlan = loadDressingActivationPlan(runDir, citySeedId, runId);
-        if (dressingActivationPlan.size() > 0) {
-            activeMaskPlan = maskPlanWithDressingEffectiveMask(activeMaskPlan,
-                    object(dressingActivationPlan, "effectiveMask"));
+        Path decorationDirectory = decorationDir(runDir, citySeedId);
+        rejectLegacyDressingArtifacts(decorationDirectory, false);
+        rejectLegacyDressingArtifacts(runDir.resolve("city_dressing_" + safeFileName(citySeedId)), true);
+        Path compiledDecorationPath = decorationDirectory.resolve("city_decoration_compiled_program_plan.json");
+        Path decorationCompletePath = decorationDirectory.resolve("city_decoration_planning_complete.json");
+        boolean compiledDecorationExists = Files.isRegularFile(compiledDecorationPath);
+        boolean decorationCompleteExists = Files.isRegularFile(decorationCompletePath);
+        if (compiledDecorationExists != decorationCompleteExists) {
+            throw new IllegalArgumentException("CITY_DECORATION_PLAN_INCOMPLETE: compiled plan and completion marker "
+                    + "must both exist; rerun city_plan_city_dressing.");
         }
-        JsonObject activeRegistry = CityReservationMaskRegistry.activate(activeMaskPlan, null, materializationPlan,
-                runId, citySeedId, serverRoot);
-        JsonObject activeDressingSummary = dressingActivationPlan.size() > 0
-                ? CityDressingWorldgenRegistry.activate(dressingActivationPlan, serverRoot)
-                : CityDressingWorldgenRegistry.activeSummary();
+        boolean decorationWorldgenMode = compiledDecorationExists;
+        Path decorationCatalogRoot = requestedDecorationCatalogRoot;
+        if (decorationWorldgenMode && decorationCatalogRoot == null) {
+            decorationCatalogRoot = defaultDecorationCatalogRoot();
+        } else if (decorationCatalogRoot == null) {
+            decorationCatalogRoot = optionalDefaultDecorationCatalogRoot();
+        }
+        RunMetadata metadata = loadRunMetadata(runDir, null, "");
+        CompiledDecorationProgramPlan compiledDecorationPlan = null;
+        if (decorationWorldgenMode) {
+            JsonObject completion = readDecorationCompletion(decorationCompletePath);
+            JsonObject compiledDecorationJson = JsonParser.parseString(
+                    Files.readString(compiledDecorationPath)).getAsJsonObject();
+            compiledDecorationPlan = new CompiledDecorationProgramCodec().parsePlan(compiledDecorationJson);
+            String expectedCityId = stringValue(materializationPlan, "cityId", citySeedId);
+            if (!expectedCityId.equals(compiledDecorationPlan.cityId())) {
+                throw new IllegalArgumentException("CITY_DECORATION_CITY_ID_MISMATCH: expected "
+                        + expectedCityId + " but found " + compiledDecorationPlan.cityId());
+            }
+            validateDecorationCompletion(completion, compiledDecorationPlan, expectedCityId);
+            CityDecorationContentCatalog catalog = new CityDecorationContentCatalogLoader()
+                    .load(decorationCatalogRoot);
+            if (!catalog.catalogHash().equals(compiledDecorationPlan.catalogHash())) {
+                throw new IllegalArgumentException("CITY_DECORATION_CATALOG_HASH_MISMATCH: expected "
+                        + catalog.catalogHash() + " but found " + compiledDecorationPlan.catalogHash());
+            }
+            validateCompiledDecorationContentRefs(compiledDecorationPlan, catalog);
+            validateCompiledDecorationStyleProfile(compiledDecorationPlan, catalog, decorationCatalogRoot);
+        }
+        String decorationCityId = stringValue(materializationPlan, "cityId", citySeedId);
+        if (decorationWorldgenMode) {
+            CityDecorationWorldgenRegistry.preflightActivate(metadata.dimensionId(), compiledDecorationPlan,
+                    serverRoot, decorationCatalogRoot);
+        } else {
+            CityDecorationWorldgenRegistry.preflightDeactivate(metadata.dimensionId(), decorationCityId,
+                    serverRoot, decorationCatalogRoot);
+        }
         JsonObject roadWeaverConnectionPlan = CityRoadWeaverBridge.createConnectionPlan(materializationPlan);
+        BuildOperationPlan plan = BuildOperationPlan.fromJson(
+                JsonParser.parseString(Files.readString(operationPath)).getAsJsonObject());
+        WorldMutationReport report = skippedWorldMutationReport(plan,
+                "D5 active path only activates worldgen-time mask/planned-structure registry; "
+                        + "WorldEdit road operations are deferred to avoid generating chunks before structures.");
         JsonObject roadWeaverRegistrationReport = CityRoadWeaverBridge.register(level, roadWeaverConnectionPlan,
                 roadProvider);
         if (CityRoadWeaverBridge.PROVIDER_ROADWEAVER.equals(roadProvider)
@@ -1090,11 +1159,13 @@ final class CityPlanningEndpointHandler {
                     "ROADWEAVER_REGISTRATION_FAILED") + ": "
                     + stringValue(roadWeaverRegistrationReport, "message", ""));
         }
-        BuildOperationPlan plan = BuildOperationPlan.fromJson(
-                JsonParser.parseString(Files.readString(operationPath)).getAsJsonObject());
-        WorldMutationReport report = skippedWorldMutationReport(plan,
-                "D5 active path only activates worldgen-time mask/planned-structure registry; "
-                        + "WorldEdit road operations are deferred to avoid generating chunks before structures.");
+        JsonObject activeRegistry = CityReservationMaskRegistry.activate(activeMaskPlan, null, materializationPlan,
+                runId, citySeedId, serverRoot);
+        JsonObject activeDecorationSummary = decorationWorldgenMode
+                ? CityDecorationWorldgenRegistry.activate(metadata.dimensionId(), compiledDecorationPlan,
+                        serverRoot, decorationCatalogRoot)
+                : CityDecorationWorldgenRegistry.deactivate(metadata.dimensionId(),
+                        decorationCityId, serverRoot, decorationCatalogRoot);
         Files.createDirectories(d5Dir);
         Path reportPath = d5Dir.resolve("world_mutation_report.json");
         Path activeMaskPath = d5Dir.resolve("active_mask_summary.json");
@@ -1102,7 +1173,7 @@ final class CityPlanningEndpointHandler {
         Path roadWeaverPlanPath = d5Dir.resolve("roadweaver_connection_plan.json");
         Path roadWeaverReportPath = d5Dir.resolve("roadweaver_registration_report.json");
         Path roadProviderStatePath = d5Dir.resolve("road_provider_state.json");
-        Path activeDressingPath = d5Dir.resolve("active_city_dressing_summary.json");
+        Path activeDecorationPath = d5Dir.resolve("active_city_decoration_summary.json");
         Files.writeString(reportPath, CityJson.GSON.toJson(report.asJson()));
         Files.writeString(activeMaskPath, CityJson.GSON.toJson(CityReservationMaskRegistry.activeSummary()));
         Files.writeString(activePlannedPath, CityJson.GSON.toJson(activeRegistry));
@@ -1119,7 +1190,7 @@ final class CityPlanningEndpointHandler {
                 CityRoadWeaverBridge.shouldRunWorldEditDebugFallback(roadProvider, roadWeaverRegistrationReport));
         roadProviderState.add("roadWeaverRegistrationReport", roadWeaverRegistrationReport.deepCopy());
         Files.writeString(roadProviderStatePath, CityJson.GSON.toJson(roadProviderState));
-        Files.writeString(activeDressingPath, CityJson.GSON.toJson(activeDressingSummary));
+        Files.writeString(activeDecorationPath, CityJson.GSON.toJson(activeDecorationSummary));
 
         JsonObject response = new JsonObject();
         response.addProperty("ok", report.failedOperations() == 0);
@@ -1128,7 +1199,7 @@ final class CityPlanningEndpointHandler {
         response.addProperty("plannedStructureRegistryPath",
                 CityReservationMaskRegistry.plannedRegistryPath(serverRoot).toString());
         response.addProperty("worldgenPlacementMode", true);
-        response.addProperty("dressingWorldgenMode", dressingActivationPlan.size() > 0);
+        response.addProperty("decorationWorldgenMode", decorationWorldgenMode);
         response.addProperty("requiresLockedMaterializationPlan", true);
         response.addProperty("roadPlanningStage", "d7_after_worldgen_ledger");
         response.addProperty("roadProvider", roadProvider);
@@ -1136,7 +1207,7 @@ final class CityPlanningEndpointHandler {
         response.add("roadWeaverConnectionPlan", roadWeaverConnectionPlan);
         response.add("roadWeaverRegistrationReport", roadWeaverRegistrationReport);
         response.add("roadProviderState", roadProviderState);
-        response.add("activeDressingSummary", activeDressingSummary);
+        response.add("activeDecorationSummary", activeDecorationSummary);
         response.add("worldMutationReport", report.asJson());
         response.add("timingMs", timing(started));
         JsonObject artifacts = new JsonObject();
@@ -1151,17 +1222,134 @@ final class CityPlanningEndpointHandler {
         artifacts.addProperty("roadWeaverConnectionPlan", debugRef(debugRoot, roadWeaverPlanPath));
         artifacts.addProperty("roadWeaverRegistrationReport", debugRef(debugRoot, roadWeaverReportPath));
         artifacts.addProperty("roadProviderState", debugRef(debugRoot, roadProviderStatePath));
-        artifacts.addProperty("activeDressingSummary", debugRef(debugRoot, activeDressingPath));
-        if (dressingActivationPlan.size() > 0) {
-            artifacts.addProperty("serverActiveDressingPlan",
-                    CityDressingWorldgenRegistry.activeDressingPath(serverRoot).toString());
+        artifacts.addProperty("activeDecorationSummary", debugRef(debugRoot, activeDecorationPath));
+        if (decorationWorldgenMode) {
+            artifacts.addProperty("sourceCompiledDecorationProgramPlan",
+                    debugRef(debugRoot, compiledDecorationPath));
+            artifacts.addProperty("serverActiveDecorationPlans",
+                    CityDecorationWorldgenRegistry.activePlansPath(serverRoot).toString());
+            artifacts.addProperty("serverDecorationWorldgenLedger",
+                    CityDecorationWorldgenRegistry.worldgenLedgerPath(serverRoot).toString());
         }
         response.add("artifacts", artifacts);
         return response;
     }
 
+    static JsonObject handleQueryDecorationCatalog() {
+        return handleQueryDecorationCatalog(defaultDecorationCatalogRoot());
+    }
+
+    static JsonObject handleQueryDecorationCatalog(Path catalogRoot) {
+        CityDecorationContentCatalog catalog = new CityDecorationContentCatalogLoader().load(catalogRoot);
+        CityDecorationStyleProfileCatalog styles = new CityDecorationStyleProfileCatalogLoader()
+                .load(catalogRoot, catalog);
+        return decorationCatalogSummary(catalog, styles);
+    }
+
+    static JsonObject handleProbeDecorationTerrain(Path debugRoot, String runId, String citySeedId,
+                                                   ServerLevel level) throws IOException {
+        if (level == null) {
+            throw new IllegalArgumentException("CITY_DECORATION_TERRAIN_PROBE_LEVEL_REQUIRED");
+        }
+        return handleProbeDecorationTerrain(debugRoot, runId, citySeedId,
+                new LoadedChunkDecorationTerrainView(level));
+    }
+
+    static JsonObject handleProbeDecorationTerrain(Path debugRoot, String runId, String citySeedId,
+                                                   CityDecorationTerrainProbe.TerrainView terrain) throws IOException {
+        if (terrain == null) {
+            throw new IllegalArgumentException("CITY_DECORATION_TERRAIN_PROBE_TERRAIN_VIEW_REQUIRED");
+        }
+        Path runDir = debugRoot.resolve(runId);
+        loadCitySeed(runDir, runId, citySeedId);
+        Path outputDirectory = decorationDir(runDir, citySeedId);
+        Path compiledPath = outputDirectory.resolve("city_decoration_compiled_program_plan.json");
+        Path slotProjectionPath = outputDirectory.resolve("city_decoration_slot_projection.json");
+        if (!Files.isRegularFile(compiledPath) || !Files.isRegularFile(slotProjectionPath)) {
+            throw new IllegalArgumentException("CITY_DECORATION_TERRAIN_PROBE_PLAN_INCOMPLETE: "
+                    + "compiled plan and slot projection are both required.");
+        }
+        CompiledDecorationProgramPlan compiled = new CompiledDecorationProgramCodec().parsePlan(
+                JsonParser.parseString(Files.readString(compiledPath)).getAsJsonObject());
+        if (!citySeedId.equals(compiled.cityId())) {
+            throw new IllegalArgumentException("CITY_DECORATION_TERRAIN_PROBE_CITY_ID_MISMATCH: expected "
+                    + citySeedId + " but found " + compiled.cityId());
+        }
+        JsonObject projection = JsonParser.parseString(Files.readString(slotProjectionPath)).getAsJsonObject();
+        List<DecorationSlot> slots = parseDecorationTerrainSlots(projection, compiled);
+        JsonObject response = new CityDecorationTerrainProbe().probe(compiled, slots, terrain);
+        response.addProperty("ok", true);
+        response.addProperty("samplingMode", "heightmap_motion_blocking_no_leaves");
+        response.addProperty("unavailableBehavior", "slot_is_reported_unavailable_without_chunk_generation");
+        JsonObject artifacts = new JsonObject();
+        artifacts.addProperty("sourceCompiledDecorationProgramPlan", debugRef(debugRoot, compiledPath));
+        artifacts.addProperty("sourceDecorationSlotProjection", debugRef(debugRoot, slotProjectionPath));
+        response.add("artifacts", artifacts);
+        return response;
+    }
+
+    private static List<DecorationSlot> parseDecorationTerrainSlots(JsonObject projection,
+                                                                      CompiledDecorationProgramPlan compiled) {
+        if (!"city_decoration_slot_projection.v0.2".equals(stringValue(projection, "schemaVersion", ""))) {
+            throw new IllegalArgumentException("CITY_DECORATION_TERRAIN_PROBE_SLOT_PROJECTION_SCHEMA_UNSUPPORTED");
+        }
+        if (!compiled.cityId().equals(stringValue(projection, "cityId", ""))
+                || !compiled.catalogHash().equals(stringValue(projection, "catalogHash", ""))) {
+            throw new IllegalArgumentException("CITY_DECORATION_TERRAIN_PROBE_SLOT_PROJECTION_MISMATCH");
+        }
+        if (!projection.has("slots") || !projection.get("slots").isJsonArray()) {
+            throw new IllegalArgumentException("CITY_DECORATION_TERRAIN_PROBE_SLOT_PROJECTION_INVALID");
+        }
+        List<DecorationSlot> result = new ArrayList<>();
+        for (JsonElement element : projection.getAsJsonArray("slots")) {
+            if (!element.isJsonObject()) {
+                throw new IllegalArgumentException("CITY_DECORATION_TERRAIN_PROBE_SLOT_PROJECTION_INVALID");
+            }
+            JsonObject slot = element.getAsJsonObject();
+            JsonObject worldAnchor = requiredTerrainProbeObject(slot, "worldAnchor");
+            JsonObject localAnchor = requiredTerrainProbeObject(slot, "localAnchor");
+            result.add(new DecorationSlot(requiredString(slot, "slotId"), requiredString(slot, "programId"),
+                    requiredString(slot, "paletteSlotId"),
+                    new BlockPoint(requiredTerrainProbeInt(worldAnchor, "x"),
+                            requiredTerrainProbeInt(worldAnchor, "z")),
+                    new CompiledDecorationProgram.LocalPoint(requiredTerrainProbeInt(localAnchor, "u"),
+                            requiredTerrainProbeInt(localAnchor, "v")),
+                    requiredTerrainProbeInt(slot, "rotationQuarterTurns")));
+        }
+        return List.copyOf(result);
+    }
+
+    private static JsonObject requiredTerrainProbeObject(JsonObject source, String key) {
+        if (!source.has(key) || !source.get(key).isJsonObject()) {
+            throw new IllegalArgumentException("CITY_DECORATION_TERRAIN_PROBE_SLOT_PROJECTION_INVALID: " + key);
+        }
+        return source.getAsJsonObject(key);
+    }
+
+    private static int requiredTerrainProbeInt(JsonObject source, String key) {
+        if (!source.has(key) || !source.get(key).isJsonPrimitive()
+                || !source.getAsJsonPrimitive(key).isNumber()) {
+            throw new IllegalArgumentException("CITY_DECORATION_TERRAIN_PROBE_SLOT_PROJECTION_INVALID: " + key);
+        }
+        return source.get(key).getAsInt();
+    }
+
+    static JsonObject handleQueryStructureCatalog(Path baseDirectory, JsonObject terraSenseProfileSource,
+                                                   JsonObject query) throws IOException {
+        return new CityStructureCatalogQueryService().query(baseDirectory, terraSenseProfileSource, query);
+    }
+
     static JsonObject handlePlanCityDressing(Path debugRoot, String runId, String citySeedId,
-                                             JsonObject dressingBrushPlan) throws IOException {
+                                             JsonObject decorationProgramPlan) throws IOException {
+        rejectLegacyDressingPlan(decorationProgramPlan);
+        return handlePlanCityDressing(debugRoot, runId, citySeedId, decorationProgramPlan,
+                defaultDecorationCatalogRoot());
+    }
+
+    static JsonObject handlePlanCityDressing(Path debugRoot, String runId, String citySeedId,
+                                             JsonObject decorationProgramPlan,
+                                             Path catalogRoot) throws IOException {
+        rejectLegacyDressingPlan(decorationProgramPlan);
         Path runDir = debugRoot.resolve(runId);
         loadCitySeed(runDir, runId, citySeedId);
         CityLandformReviewPackage reviewPackage = loadD3Package(debugRoot, runDir, citySeedId);
@@ -1186,64 +1374,98 @@ final class CityPlanningEndpointHandler {
             throw new IllegalArgumentException("D6 structure_materialization_plan.json not found. Run city_plan_d6 first: "
                     + debugRef(debugRoot, materializationPath));
         }
-
-        JsonObject anchorMap = JsonParser.parseString(Files.readString(anchorMapPath)).getAsJsonObject();
-        JsonObject reservationMask = JsonParser.parseString(Files.readString(reservationMaskPath)).getAsJsonObject();
-        JsonObject wallReservation = Files.exists(wallReservationPath)
-                ? JsonParser.parseString(Files.readString(wallReservationPath)).getAsJsonObject() : new JsonObject();
         JsonObject materializationPlan = JsonParser.parseString(Files.readString(materializationPath)).getAsJsonObject();
+        JsonObject wallReservationPlan = Files.exists(wallReservationPath)
+                ? JsonParser.parseString(Files.readString(wallReservationPath)).getAsJsonObject() : new JsonObject();
         JsonObject roadConnectionPlan = CityRoadWeaverBridge.createConnectionPlan(materializationPlan);
-        JsonObject functionalArrayZones = loadOptionalJson(d4ArrayLayoutDir(runDir, citySeedId)
-                .resolve("d4_functional_array_zones.json"));
+        List<CompiledDecorationProgramPlan.HardObstacle> hardObstacles =
+                decorationHardObstacles(materializationPlan, wallReservationPlan, roadConnectionPlan);
+        CityDecorationContentCatalog catalog = new CityDecorationContentCatalogLoader().load(catalogRoot);
+        CityDecorationStyleProfileCatalog styleProfiles = new CityDecorationStyleProfileCatalogLoader()
+                .load(catalogRoot, catalog);
+        CityDecorationProgramPlanner planner = new CityDecorationProgramPlanner();
+        DecorationProgramIntentPlan intentPlan = planner.parse(decorationProgramPlan);
+        if (!reviewPackage.cityId().equals(intentPlan.cityId())) {
+            throw new IllegalArgumentException("CITY_DECORATION_CITY_ID_MISMATCH: expected "
+                    + reviewPackage.cityId() + " but found " + intentPlan.cityId());
+        }
+        if (!catalog.catalogHash().equals(intentPlan.catalogHash())) {
+            throw new IllegalArgumentException("CITY_DECORATION_CATALOG_HASH_MISMATCH: expected "
+                    + catalog.catalogHash() + " but found " + intentPlan.catalogHash());
+        }
+        CityDecorationStyleProfileCatalog.StyleProfile styleProfile = styleProfiles
+                .requireProfile(intentPlan.styleProfileId());
+        CityDecorationStyleProfileResolver.Resolution styleResolution = new CityDecorationStyleProfileResolver()
+                .resolve(intentPlan, styleProfile);
+        DecorationProgramIntentPlan resolvedIntent = styleResolution.resolvedIntent();
+        validateDecorationContentRefs(resolvedIntent, catalog);
+        CompiledDecorationProgramPlan compiled = planner.compile(resolvedIntent,
+                new D3PatchDecorationProgramContextResolver(reviewPackage, hardObstacles), hardObstacles);
+        BlockBounds projectionBounds = decorationProjectionBounds(compiled.programs());
+        List<DecorationSlot> slots = planner.project(compiled, projectionBounds);
 
-        CityDressingLayerPlanner.Result result = new CityDressingLayerPlanner().plan(runDir, reviewPackage,
-                dressingBrushPlan, anchorMap, materializationPlan, reservationMask, wallReservation,
-                roadConnectionPlan, functionalArrayZones);
+        DecorationProgramIntentCodec intentCodec = new DecorationProgramIntentCodec();
+        CompiledDecorationProgramCodec compiledCodec = new CompiledDecorationProgramCodec();
+        JsonObject normalizedIntent = intentCodec.toJson(intentPlan);
+        JsonObject compiledJson = compiledCodec.toJson(compiled);
+        JsonObject slotProjection = decorationSlotProjection(compiled, slots);
+        JsonObject quality = decorationPlanningQuality(intentPlan, compiled, slots);
+        JsonObject trace = decorationPlanningTrace(intentPlan, compiled, slots);
 
-        Path outputDirectory = dressingDir(runDir, citySeedId);
+        Path outputDirectory = decorationDir(runDir, citySeedId);
         Files.createDirectories(outputDirectory);
-        Path brushPath = outputDirectory.resolve("city_dressing_brush_plan.json");
-        Path effectiveMaskPath = outputDirectory.resolve("city_dressing_effective_mask.json");
-        Path tracePath = outputDirectory.resolve("city_dressing_execution_trace.json");
-        Path surfacePath = outputDirectory.resolve("city_dressing_surface_operation_plan.json");
-        Path placementPath = outputDirectory.resolve("city_dressing_decoration_placement_plan.json");
-        Path occupiedPath = outputDirectory.resolve("city_dressing_occupied_field.json");
-        Path zonesPath = outputDirectory.resolve("city_dressing_zones.json");
+        Path intentPath = outputDirectory.resolve("city_decoration_program_plan.json");
+        Path compiledPath = outputDirectory.resolve("city_decoration_compiled_program_plan.json");
+        Path slotsPath = outputDirectory.resolve("city_decoration_slot_projection.json");
         Path qualityPath = outputDirectory.resolve("quality_report.json");
-        Path templateDir = outputDirectory.resolve("city_dressing_templates");
-        Files.writeString(brushPath, CityJson.GSON.toJson(result.brushPlan()));
-        Files.writeString(effectiveMaskPath, CityJson.GSON.toJson(result.effectiveMask()));
-        Files.writeString(tracePath, CityJson.GSON.toJson(result.executionTrace()));
-        Files.writeString(surfacePath, CityJson.GSON.toJson(result.surfaceOperationPlan()));
-        Files.writeString(placementPath, CityJson.GSON.toJson(result.decorationPlacementPlan()));
-        Files.writeString(occupiedPath, CityJson.GSON.toJson(result.occupiedField()));
-        Files.writeString(zonesPath, CityJson.GSON.toJson(result.dressingZones()));
-        Files.writeString(qualityPath, CityJson.GSON.toJson(result.qualityReport()));
-        CityDressingTemplateLibrary.writeTemplates(templateDir);
-        JsonObject previewIndex = new CityDressingPreviewRenderer()
-                .render(result.dressingZones(), result.surfaceOperationPlan(),
-                        result.decorationPlacementPlan(), outputDirectory);
-        Path previewIndexPath = outputDirectory.resolve("city_dressing_preview_index.json");
-        Files.writeString(previewIndexPath, CityJson.GSON.toJson(previewIndex));
+        Path tracePath = outputDirectory.resolve("city_decoration_planning_trace.json");
+        Path styleResolutionPath = outputDirectory.resolve("city_decoration_style_resolution.json");
+        Path previewIndexPath = outputDirectory.resolve("city_decoration_preview_index.json");
+        Path completePath = outputDirectory.resolve("city_decoration_planning_complete.json");
+        Files.deleteIfExists(completePath);
+        JsonObject previewIndex = new CityDecorationPreviewRenderer().render(compiled, slots, outputDirectory);
+        Files.writeString(intentPath, CityJson.GSON.toJson(normalizedIntent));
+        Files.writeString(compiledPath, CityJson.GSON.toJson(compiledJson));
+        Files.writeString(slotsPath, CityJson.GSON.toJson(slotProjection));
+        Files.writeString(qualityPath, CityJson.GSON.toJson(quality));
+        Files.writeString(tracePath, CityJson.GSON.toJson(trace));
+        Files.writeString(styleResolutionPath, CityJson.GSON.toJson(styleResolution.trace()));
+        JsonObject completion = new JsonObject();
+        completion.addProperty("schemaVersion", "city_decoration_planning_complete.v0.2");
+        completion.addProperty("cityId", compiled.cityId());
+        completion.addProperty("catalogHash", compiled.catalogHash());
+        completion.addProperty("styleProfileId", compiled.styleProfileId());
+        completion.addProperty("styleProfileHash", compiled.styleProfileHash());
+        completion.addProperty("completedAt", Instant.now().toString());
+        Files.writeString(completePath, CityJson.GSON.toJson(completion));
 
-        JsonObject response = result.asJson();
+        JsonObject response = new JsonObject();
+        response.addProperty("ok", true);
+        response.addProperty("planningMode", "city_decoration_program_v0_2");
+        response.add("decorationProgramPlan", normalizedIntent.deepCopy());
+        response.add("compiledDecorationProgramPlan", compiledJson.deepCopy());
+        response.add("slotProjection", slotProjection.deepCopy());
+        response.add("qualityReport", quality.deepCopy());
+        response.add("planningTrace", trace.deepCopy());
+        response.add("styleResolution", styleResolution.trace().deepCopy());
+        response.add("decorationPreviewIndex", previewIndex.deepCopy());
+        response.add("planningComplete", completion.deepCopy());
         JsonObject artifacts = new JsonObject();
-        artifacts.addProperty("dressingBrushPlan", debugRef(debugRoot, brushPath));
-        artifacts.addProperty("dressingEffectiveMask", debugRef(debugRoot, effectiveMaskPath));
-        artifacts.addProperty("dressingExecutionTrace", debugRef(debugRoot, tracePath));
-        artifacts.addProperty("dressingSurfaceOperationPlan", debugRef(debugRoot, surfacePath));
-        artifacts.addProperty("dressingDecorationPlacementPlan", debugRef(debugRoot, placementPath));
-        artifacts.addProperty("dressingOccupiedField", debugRef(debugRoot, occupiedPath));
-        artifacts.addProperty("dressingZones", debugRef(debugRoot, zonesPath));
-        artifacts.addProperty("dressingPreviewIndex", debugRef(debugRoot, previewIndexPath));
-        artifacts.addProperty("dressingTemplateLibrary",
-                debugRef(debugRoot, templateDir.resolve("city_dressing_template_library.json")));
+        artifacts.addProperty("decorationProgramPlan", debugRef(debugRoot, intentPath));
+        artifacts.addProperty("compiledDecorationProgramPlan", debugRef(debugRoot, compiledPath));
+        artifacts.addProperty("decorationSlotProjection", debugRef(debugRoot, slotsPath));
         artifacts.addProperty("qualityReport", debugRef(debugRoot, qualityPath));
+        artifacts.addProperty("planningTrace", debugRef(debugRoot, tracePath));
+        artifacts.addProperty("styleResolution", debugRef(debugRoot, styleResolutionPath));
+        artifacts.addProperty("decorationPreviewIndex", debugRef(debugRoot, previewIndexPath));
+        artifacts.addProperty("planningComplete", debugRef(debugRoot, completePath));
         artifacts.addProperty("sourceD3Package", debugRef(debugRoot, d3PackagePath(runDir, citySeedId)));
         artifacts.addProperty("sourceStructureAnchorMap", debugRef(debugRoot, anchorMapPath));
         artifacts.addProperty("sourceReservationMaskPlan", debugRef(debugRoot, reservationMaskPath));
+        if (Files.exists(wallReservationPath)) {
+            artifacts.addProperty("sourceWallReservationPlan", debugRef(debugRoot, wallReservationPath));
+        }
         artifacts.addProperty("sourceStructureMaterializationPlan", debugRef(debugRoot, materializationPath));
-        response.add("dressingPreviewIndex", previewIndex);
         response.add("artifacts", artifacts);
         return response;
     }
@@ -1712,15 +1934,20 @@ final class CityPlanningEndpointHandler {
             return finalizeWorkflow(ctx, workflowStarted, "failed");
         }
 
-        if (booleanValue(request, "enableDressingLayer", false) || request.has("dressingBrushPlan")) {
-            if (!workflowStep(ctx, "city_plan_city_dressing", dressingDir(runDir, citySeedId)
-                    .resolve("city_dressing_effective_mask.json"), () -> {
-                if (!request.has("dressingBrushPlan") || !request.get("dressingBrushPlan").isJsonObject()) {
-                    throw new IllegalArgumentException("CITY_DRESSING_BRUSH_PLAN_REQUIRED: "
-                            + "dressingBrushPlan object is required when enableDressingLayer=true.");
+        if (booleanValue(request, "enableDressingLayer", false)
+                || request.has("decorationProgramPlan") || request.has("dressingBrushPlan")) {
+            if (request.has("dressingBrushPlan")) {
+                throw new IllegalArgumentException("CITY_DRESSING_LEGACY_SCHEMA_REMOVED: "
+                        + "workflow no longer accepts dressingBrushPlan.");
+            }
+            if (!workflowStep(ctx, "city_plan_city_dressing", decorationDir(runDir, citySeedId)
+                    .resolve("city_decoration_planning_complete.json"), () -> {
+                if (!request.has("decorationProgramPlan") || !request.get("decorationProgramPlan").isJsonObject()) {
+                    throw new IllegalArgumentException("CITY_DECORATION_PROGRAM_PLAN_REQUIRED: "
+                            + "decorationProgramPlan object is required when enableDressingLayer=true.");
                 }
                 return handlePlanCityDressing(debugRoot, runId, citySeedId,
-                        request.getAsJsonObject("dressingBrushPlan"));
+                        request.getAsJsonObject("decorationProgramPlan"));
             })) {
                 return finalizeWorkflow(ctx, workflowStarted, "failed");
             }
@@ -2536,8 +2763,304 @@ final class CityPlanningEndpointHandler {
         return runDir.resolve("city_d4_design_loop_" + safeFileName(citySeedId));
     }
 
-    private static Path dressingDir(Path runDir, String citySeedId) {
-        return runDir.resolve("city_dressing_" + safeFileName(citySeedId));
+    private static Path defaultDecorationCatalogRoot() {
+        Path catalogRoot = optionalDefaultDecorationCatalogRoot();
+        if (catalogRoot == null) {
+            throw new IllegalArgumentException("CITY_DECORATION_CATALOG_ROOT_UNAVAILABLE: Forge config directory is not initialized.");
+        }
+        try {
+            return CityDecorationDefaultCatalogBootstrap.ensureInstalled(catalogRoot);
+        } catch (IOException ex) {
+            throw new IllegalArgumentException("CITY_DECORATION_DEFAULT_CATALOG_BOOTSTRAP_FAILED: "
+                    + catalogRoot, ex);
+        }
+    }
+
+    private static Path optionalDefaultDecorationCatalogRoot() {
+        Path configDir = FMLPaths.CONFIGDIR.get();
+        if (configDir == null) {
+            return null;
+        }
+        return configDir.resolve("geomantia").resolve("city_decoration");
+    }
+
+    private static void rejectLegacyDressingPlan(JsonObject plan) {
+        if (plan == null) {
+            throw new IllegalArgumentException("CITY_DECORATION_PROGRAM_PLAN_REQUIRED: decorationProgramPlan is required.");
+        }
+        String schema = stringValue(plan, "schemaVersion", "");
+        if (schema.startsWith("city_dressing_brush_plan.v0.1")
+                || plan.has("dressingLayoutItems") || plan.has("brushes") || plan.has("dressingBrushPlan")) {
+            throw new IllegalArgumentException("CITY_DRESSING_LEGACY_SCHEMA_REMOVED: v0.1 dressingBrushPlan is no longer accepted.");
+        }
+    }
+
+    private static JsonObject decorationCatalogSummary(CityDecorationContentCatalog catalog,
+                                                       CityDecorationStyleProfileCatalog styleProfiles) {
+        JsonObject response = new JsonObject();
+        response.addProperty("schemaVersion", "city_decoration_catalog_query.v0.2");
+        response.addProperty("catalogHash", catalog.catalogHash());
+        JsonArray contents = new JsonArray();
+        for (CityDecorationContentCatalog.Content content : catalog.contents().values()) {
+            JsonObject summary = new JsonObject();
+            summary.addProperty("contentRef", content.contentId());
+            summary.addProperty("contentKind", content.contentKind());
+            JsonArray rotations = new JsonArray();
+            content.allowedRotations().forEach(rotations::add);
+            summary.add("allowedRotations", rotations);
+            summary.addProperty("supportMode", content.supportMode());
+            summary.addProperty("placementMode", content.placementMode());
+            summary.addProperty("replacePolicy", content.replacePolicy());
+            summary.addProperty("maxFootprintHeightSpreadBlocks", content.maxFootprintHeightSpreadBlocks());
+            summary.addProperty("comfortMarginBlocks", content.comfortMarginBlocks());
+            JsonArray tags = new JsonArray();
+            content.tags().forEach(tags::add);
+            summary.add("tags", tags);
+            JsonObject size = new JsonObject();
+            size.addProperty("widthBlocks", content.size().widthBlocks());
+            size.addProperty("heightBlocks", content.size().heightBlocks());
+            size.addProperty("depthBlocks", content.size().depthBlocks());
+            summary.add("size", size);
+            summary.addProperty("contentHash", content.contentHash());
+            contents.add(summary);
+        }
+        response.add("contents", contents);
+        JsonArray profiles = new JsonArray();
+        styleProfiles.profiles().values().forEach(profile -> {
+            JsonObject summary = new JsonObject();
+            summary.addProperty("styleProfileId", profile.styleProfileId());
+            summary.addProperty("styleProfileHash", profile.styleProfileHash());
+            JsonArray semanticRefs = new JsonArray();
+            profile.mappings().keySet().stream().sorted().forEach(semanticRefs::add);
+            summary.add("semanticRefs", semanticRefs);
+            profiles.add(summary);
+        });
+        response.add("styleProfiles", profiles);
+        return response;
+    }
+
+    private static void validateDecorationContentRefs(DecorationProgramIntentPlan plan,
+                                                      CityDecorationContentCatalog catalog) {
+        for (DecorationProgramIntent program : plan.programs()) {
+            for (CompiledDecorationProgram.PaletteSlot slot : program.contentPalette().slots()) {
+                for (CompiledDecorationProgram.ContentEntry entry : slot.entries()) {
+                    catalog.requireContent(entry.contentRef());
+                }
+            }
+        }
+    }
+
+    private static void validateCompiledDecorationContentRefs(CompiledDecorationProgramPlan plan,
+                                                              CityDecorationContentCatalog catalog) {
+        for (CompiledDecorationProgram program : plan.programs()) {
+            for (CompiledDecorationProgram.PaletteSlot slot : program.contentPalette().slots()) {
+                for (CompiledDecorationProgram.ContentEntry entry : slot.entries()) {
+                    catalog.requireContent(entry.contentRef());
+                }
+            }
+        }
+    }
+
+    private static void validateCompiledDecorationStyleProfile(CompiledDecorationProgramPlan plan,
+                                                               CityDecorationContentCatalog catalog,
+                                                               Path catalogRoot) {
+        CityDecorationStyleProfileCatalog styles = new CityDecorationStyleProfileCatalogLoader()
+                .load(catalogRoot, catalog);
+        CityDecorationStyleProfileCatalog.StyleProfile profile = styles.requireProfile(plan.styleProfileId());
+        if (!profile.styleProfileHash().equals(plan.styleProfileHash())) {
+            throw new IllegalArgumentException("CITY_DECORATION_STYLE_PROFILE_HASH_MISMATCH: expected "
+                    + profile.styleProfileHash() + " but found " + plan.styleProfileHash());
+        }
+    }
+
+    private static void validateDecorationCompletion(JsonObject completion,
+                                                     CompiledDecorationProgramPlan compiledPlan,
+                                                     String expectedCityId) {
+        if (!"city_decoration_planning_complete.v0.2".equals(stringValue(completion, "schemaVersion", ""))) {
+            throw new IllegalArgumentException("CITY_DECORATION_PLAN_INCOMPLETE: completion schema is invalid.");
+        }
+        if (!expectedCityId.equals(stringValue(completion, "cityId", ""))
+                || !compiledPlan.cityId().equals(stringValue(completion, "cityId", ""))) {
+            throw new IllegalArgumentException("CITY_DECORATION_PLAN_INCOMPLETE: completion cityId does not match compiled plan.");
+        }
+        if (!compiledPlan.catalogHash().equals(stringValue(completion, "catalogHash", ""))) {
+            throw new IllegalArgumentException("CITY_DECORATION_PLAN_INCOMPLETE: completion catalogHash does not match compiled plan.");
+        }
+        if (!compiledPlan.styleProfileId().equals(stringValue(completion, "styleProfileId", ""))
+                || !compiledPlan.styleProfileHash().equals(stringValue(completion, "styleProfileHash", ""))) {
+            throw new IllegalArgumentException("CITY_DECORATION_PLAN_INCOMPLETE: completion style profile does not match compiled plan.");
+        }
+        if (stringValue(completion, "completedAt", "").isBlank()) {
+            throw new IllegalArgumentException("CITY_DECORATION_PLAN_INCOMPLETE: completion completedAt is required.");
+        }
+    }
+
+    private static JsonObject readDecorationCompletion(Path completionPath) throws IOException {
+        try {
+            JsonElement parsed = JsonParser.parseString(Files.readString(completionPath));
+            if (!parsed.isJsonObject()) {
+                throw new IllegalArgumentException("completion root must be an object");
+            }
+            return parsed.getAsJsonObject();
+        } catch (RuntimeException ex) {
+            throw new IllegalArgumentException("CITY_DECORATION_PLAN_INCOMPLETE: completion marker is invalid: "
+                    + completionPath, ex);
+        }
+    }
+
+    private static List<CompiledDecorationProgramPlan.HardObstacle> decorationHardObstacles(
+            JsonObject materializationPlan,
+            JsonObject wallReservationPlan,
+            JsonObject roadConnectionPlan) {
+        List<CompiledDecorationProgramPlan.HardObstacle> result = new ArrayList<>();
+        for (JsonElement element : array(materializationPlan, "plannedWorldgenStructures")) {
+            if (!element.isJsonObject()) {
+                continue;
+            }
+            JsonObject structure = element.getAsJsonObject();
+            String sourceRef = stringValue(structure, "anchorId", "planned_structure");
+            for (String field : List.of("lockedCollisionEnvelope", "lockedActualFootprint")) {
+                if (structure.has(field) && structure.get(field).isJsonObject()) {
+                    result.add(new CompiledDecorationProgramPlan.HardObstacle(
+                            "structure_" + field, sourceRef, bounds(structure.getAsJsonObject(field))));
+                }
+            }
+        }
+        appendDecorationMaskObstacles(result, wallReservationPlan, "wallCorridorMask", "wall_corridor");
+        appendDecorationMaskObstacles(result, wallReservationPlan, "gateCorridorMask", "gate_corridor");
+        for (JsonElement element : array(roadConnectionPlan, "connections")) {
+            if (!element.isJsonObject()) {
+                continue;
+            }
+            JsonObject connection = element.getAsJsonObject();
+            JsonObject from = object(connection, "from");
+            JsonObject to = object(connection, "to");
+            BlockBounds segment = new BlockBounds(
+                    Math.min(intValue(from, "x", 0), intValue(to, "x", 0)),
+                    Math.min(intValue(from, "z", 0), intValue(to, "z", 0)),
+                    Math.max(intValue(from, "x", 0), intValue(to, "x", 0)),
+                    Math.max(intValue(from, "z", 0), intValue(to, "z", 0)));
+            result.add(new CompiledDecorationProgramPlan.HardObstacle("planned_road_corridor",
+                    stringValue(connection, "connectionId", "planned_road"), expandBounds(segment, 4)));
+        }
+        return List.copyOf(result);
+    }
+
+    private static void appendDecorationMaskObstacles(
+            List<CompiledDecorationProgramPlan.HardObstacle> target,
+            JsonObject plan,
+            String arrayKey,
+            String obstacleType) {
+        int index = 0;
+        for (JsonElement element : array(plan, arrayKey)) {
+            if (!element.isJsonObject()) {
+                continue;
+            }
+            JsonObject mask = element.getAsJsonObject();
+            if (!mask.has("blockBounds") || !mask.get("blockBounds").isJsonObject()) {
+                continue;
+            }
+            target.add(new CompiledDecorationProgramPlan.HardObstacle(obstacleType,
+                    stringValue(mask, "maskId", arrayKey + "_" + index),
+                    bounds(mask.getAsJsonObject("blockBounds"))));
+            index++;
+        }
+    }
+
+    private static BlockBounds decorationProjectionBounds(List<CompiledDecorationProgram> programs) {
+        int minX = Integer.MAX_VALUE;
+        int minZ = Integer.MAX_VALUE;
+        int maxX = Integer.MIN_VALUE;
+        int maxZ = Integer.MIN_VALUE;
+        for (CompiledDecorationProgram program : programs) {
+            BlockBounds bounds = program.targetMask().bounds();
+            minX = Math.min(minX, bounds.minX());
+            minZ = Math.min(minZ, bounds.minZ());
+            maxX = Math.max(maxX, bounds.maxX());
+            maxZ = Math.max(maxZ, bounds.maxZ());
+        }
+        return new BlockBounds(minX, minZ, maxX, maxZ);
+    }
+
+    private static JsonObject decorationSlotProjection(CompiledDecorationProgramPlan plan,
+                                                       List<DecorationSlot> slots) {
+        JsonObject projection = new JsonObject();
+        projection.addProperty("schemaVersion", "city_decoration_slot_projection.v0.2");
+        projection.addProperty("cityId", plan.cityId());
+        projection.addProperty("catalogHash", plan.catalogHash());
+        JsonArray array = new JsonArray();
+        for (DecorationSlot slot : slots) {
+            JsonObject item = new JsonObject();
+            item.addProperty("slotId", slot.slotId());
+            item.addProperty("programId", slot.programId());
+            item.addProperty("paletteSlotId", slot.paletteSlotId());
+            item.add("worldAnchor", slot.worldAnchor().asJson());
+            JsonObject local = new JsonObject();
+            local.addProperty("u", slot.localAnchor().u());
+            local.addProperty("v", slot.localAnchor().v());
+            item.add("localAnchor", local);
+            item.addProperty("rotationQuarterTurns", slot.rotationQuarterTurns());
+            array.add(item);
+        }
+        projection.add("slots", array);
+        return projection;
+    }
+
+    private static JsonObject decorationPlanningQuality(DecorationProgramIntentPlan intent,
+                                                        CompiledDecorationProgramPlan compiled,
+                                                        List<DecorationSlot> slots) {
+        JsonObject quality = new JsonObject();
+        quality.addProperty("schemaVersion", "city_decoration_quality_report.v0.2");
+        quality.addProperty("passed", true);
+        quality.addProperty("score", 100);
+        quality.add("warnings", new JsonArray());
+        quality.add("hardBlocks", new JsonArray());
+        JsonObject metrics = new JsonObject();
+        metrics.addProperty("intentProgramCount", intent.programs().size());
+        metrics.addProperty("compiledProgramCount", compiled.programs().size());
+        metrics.addProperty("projectedSlotCount", slots.size());
+        quality.add("metrics", metrics);
+        return quality;
+    }
+
+    private static JsonObject decorationPlanningTrace(DecorationProgramIntentPlan intent,
+                                                      CompiledDecorationProgramPlan compiled,
+                                                      List<DecorationSlot> slots) {
+        JsonObject trace = new JsonObject();
+        trace.addProperty("schemaVersion", "city_decoration_planning_trace.v0.2");
+        trace.addProperty("cityId", intent.cityId());
+        trace.addProperty("catalogHash", intent.catalogHash());
+        trace.addProperty("projectedSlotCount", slots.size());
+        trace.addProperty("hardObstacleCount", compiled.hardObstacles().size());
+        JsonArray obstacles = new JsonArray();
+        for (CompiledDecorationProgramPlan.HardObstacle obstacle : compiled.hardObstacles()) {
+            JsonObject item = new JsonObject();
+            item.addProperty("obstacleType", obstacle.obstacleType());
+            item.addProperty("sourceRef", obstacle.sourceRef());
+            item.add("blockBounds", boundsJson(obstacle.blockBounds()));
+            obstacles.add(item);
+        }
+        trace.add("hardObstacles", obstacles);
+        JsonArray programs = new JsonArray();
+        for (int i = 0; i < intent.programs().size(); i++) {
+            DecorationProgramIntent source = intent.programs().get(i);
+            CompiledDecorationProgram resolved = compiled.programs().get(i);
+            JsonObject item = new JsonObject();
+            item.addProperty("programId", source.programId());
+            item.addProperty("targetSourceType", source.targetArea().sourceType());
+            item.addProperty("targetRef", source.targetArea().ref());
+            item.addProperty("resolvedMaskMemberCount", resolved.targetMask().memberBounds().size());
+            item.add("resolvedOrigin", resolved.coordinateFrame().origin().asJson());
+            item.addProperty("shapeType", source.shape().type());
+            item.addProperty("patternType", source.pattern().type());
+            programs.add(item);
+        }
+        trace.add("programs", programs);
+        return trace;
+    }
+
+    private static Path decorationDir(Path runDir, String citySeedId) {
+        return runDir.resolve("city_decoration_" + safeFileName(citySeedId));
     }
 
     private static JsonObject loadOptionalJson(Path path) throws IOException {
@@ -3145,51 +3668,21 @@ final class CityPlanningEndpointHandler {
         return copy;
     }
 
-    private static JsonObject loadDressingActivationPlan(Path runDir, String citySeedId, String runId) throws IOException {
-        Path dir = dressingDir(runDir, citySeedId);
-        Path effectiveMaskPath = dir.resolve("city_dressing_effective_mask.json");
-        Path surfacePath = dir.resolve("city_dressing_surface_operation_plan.json");
-        Path placementPath = dir.resolve("city_dressing_decoration_placement_plan.json");
-        if (!Files.exists(effectiveMaskPath) || !Files.exists(surfacePath) || !Files.exists(placementPath)) {
-            return new JsonObject();
+    private static void rejectLegacyDressingArtifacts(Path directory, boolean rejectAnyFile) throws IOException {
+        if (!Files.isDirectory(directory)) {
+            return;
         }
-        JsonObject effectiveMask = JsonParser.parseString(Files.readString(effectiveMaskPath)).getAsJsonObject();
-        JsonObject surfacePlan = JsonParser.parseString(Files.readString(surfacePath)).getAsJsonObject();
-        JsonObject placementPlan = JsonParser.parseString(Files.readString(placementPath)).getAsJsonObject();
-        JsonObject active = new JsonObject();
-        active.addProperty("schemaVersion", "city_active_dressing_worldgen_plan.v0.1");
-        active.addProperty("runId", runId);
-        active.addProperty("citySeedId", citySeedId);
-        active.addProperty("cityId", stringValue(effectiveMask, "cityId", citySeedId));
-        active.add("effectiveMask", effectiveMask);
-        active.add("surfaceOperationPlan", surfacePlan);
-        active.add("decorationPlacementPlan", placementPlan);
-        return active;
-    }
-
-    private static JsonObject maskPlanWithDressingEffectiveMask(JsonObject maskPlan, JsonObject effectiveMask) {
-        if (effectiveMask == null || effectiveMask.size() == 0) {
-            return maskPlan;
-        }
-        JsonObject copy = maskPlan.deepCopy();
-        JsonArray noVegetation = array(copy, "noVegetationMask").deepCopy();
-        JsonArray reasons = array(copy, "reservationReason").deepCopy();
-        for (JsonElement elem : array(effectiveMask, "effectiveDressingZones")) {
-            if (!elem.isJsonObject()) {
-                continue;
+        try (var paths = Files.walk(directory)) {
+            Path legacyPath = paths.filter(Files::isRegularFile)
+                    .filter(path -> rejectAnyFile
+                            || path.getFileName().toString().startsWith("city_dressing_")
+                            || path.getFileName().toString().startsWith("active_city_dressing_"))
+                    .findFirst().orElse(null);
+            if (legacyPath != null) {
+                throw new IllegalArgumentException("CITY_DRESSING_LEGACY_SCHEMA_REMOVED: legacy artifact found: "
+                        + legacyPath);
             }
-            JsonObject zone = elem.getAsJsonObject();
-            String itemId = stringValue(zone, "itemId", "dressing");
-            BlockBounds bounds = bounds(requiredObject(zone, "blockBounds"));
-            addMask(noVegetation, itemId + "_dressing_no_vegetation", bounds,
-                    "dressing_effective_mask", itemId);
-            addReason(reasons, itemId, "dressing_effective_mask", bounds,
-                    "reserve low-priority dressing area after structure/wall/road deduction");
         }
-        copy.add("noVegetationMask", noVegetation);
-        copy.add("reservationReason", reasons);
-        copy.add("cityDressingEffectiveMask", effectiveMask.deepCopy());
-        return copy;
     }
 
     private static void appendMasksByType(JsonObject source, JsonArray target, String arrayKey, String sourceTypePrefix) {
@@ -4002,6 +4495,27 @@ final class CityPlanningEndpointHandler {
 
     private record CityInputs(FunctionZoneMap zoneMap, BuildableAreaMap buildableAreaMap,
                               Path zoneMapPath, Path terrainStatsPath, Path buildablePath) {
+    }
+
+    private static final class LoadedChunkDecorationTerrainView implements CityDecorationTerrainProbe.TerrainView {
+        private final ServerLevel level;
+
+        private LoadedChunkDecorationTerrainView(ServerLevel level) {
+            this.level = level;
+        }
+
+        @Override
+        public CityDecorationTerrainProbe.Sample sample(int worldX, int worldZ) {
+            int chunkX = Math.floorDiv(worldX, 16);
+            int chunkZ = Math.floorDiv(worldZ, 16);
+            ChunkAccess chunk = level.getChunkSource().getChunk(chunkX, chunkZ, ChunkStatus.FULL, false);
+            if (chunk == null) {
+                return CityDecorationTerrainProbe.Sample.unavailable();
+            }
+            int surfaceY = Math.max(level.getMinBuildHeight(),
+                    level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, worldX, worldZ) - 1);
+            return new CityDecorationTerrainProbe.Sample(true, surfaceY);
+        }
     }
 
     record MinecraftServerHolder(net.minecraft.server.MinecraftServer server) {

@@ -2,6 +2,7 @@ package com.rinsing.geomantia.systems.city.infrastructure.preview;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -157,58 +158,81 @@ final class CityStructureLandingPreviewRendererTest {
     }
 
     @Test
-    void dressingPreviewWritesZoomedPerZoneImages(@TempDir Path tempDir) throws Exception {
-        JsonObject zones = JsonParser.parseString("""
+    void d4AnchorPreviewUsesD2BodyInsteadOfLegacyStaticPlannedFootprint(@TempDir Path tempDir) throws Exception {
+        JsonObject anchorMap = JsonParser.parseString("""
                 {
-                  "schemaVersion": "city_dressing_zones.v0.1",
-                  "dressingZones": [
+                  "grid": {"blockBounds": {"minX": 0, "minZ": 0, "maxX": 256, "maxZ": 256}},
+                  "anchors": [
                     {
-                      "dressingZoneId": "vineyard_rows",
-                      "itemId": "vineyard_rows",
-                      "itemType": "parallel_rows_dressing_item",
-                      "blockBounds": {"minX": 0, "minZ": 0, "maxX": 64, "maxZ": 48},
-                      "surfaceOperationCount": 1,
-                      "decorationPlacementCount": 2
-                    }
-                  ]
-                }
-                """).getAsJsonObject();
-        JsonObject surface = JsonParser.parseString("""
-                {
-                  "surfaceOperations": [
-                    {
-                      "operationId": "row_1",
-                      "itemId": "vineyard_rows",
-                      "operationType": "farmland_strip",
-                      "blockBounds": {"minX": 4, "minZ": 16, "maxX": 58, "maxZ": 16}
-                    }
-                  ]
-                }
-                """).getAsJsonObject();
-        JsonObject placements = JsonParser.parseString("""
-                {
-                  "decorationPlacements": [
-                    {
-                      "placementId": "p1",
-                      "itemId": "vineyard_rows",
-                      "pieceId": "vine_trellis_segment",
-                      "anchorBlock": {"x": 8, "z": 16},
-                      "bodyEnvelope": {"minX": 8, "minZ": 16, "maxX": 9, "maxZ": 20},
-                      "comfortEnvelope": {"minX": 7, "minZ": 15, "maxX": 10, "maxZ": 21}
+                      "anchorId": "long_legacy_anchor_name_that_must_not_be_the_map_label",
+                      "structureId": "test:medium/variable_house",
+                      "anchorBlock": {"x": 48, "z": 80},
+                      "plannedFootprint": {"minX": 44, "minZ": 76, "maxX": 52, "maxZ": 84},
+                      "collisionEnvelope": {"minX": 24, "minZ": 48, "maxX": 72, "maxZ": 112},
+                      "maskEnvelope": {"minX": 16, "minZ": 40, "maxX": 80, "maxZ": 120},
+                      "envelopeMode": "d2_stable_max_envelope",
+                      "structureEnvelopeFact": {
+                        "collisionEnvelopeSource": "stableMaxEnvelope",
+                        "stableMaxEnvelope": {"minX": -16, "minZ": -24, "maxX": 16, "maxZ": 24},
+                        "localEnvelopeP95": {"minX": -8, "minZ": -8, "maxX": 8, "maxZ": 8}
+                      }
                     }
                   ]
                 }
                 """).getAsJsonObject();
 
-        JsonObject index = new CityDressingPreviewRenderer().render(zones, surface, placements, tempDir);
+        BlockBounds body = CityStructureLandingPreviewRenderer.d2BodyBounds(
+                anchorMap.getAsJsonArray("anchors").get(0).getAsJsonObject());
 
-        assertEquals(1, index.getAsJsonArray("previews").size());
-        Path preview = tempDir.resolve(index.getAsJsonArray("previews").get(0).getAsJsonObject()
-                .get("fileName").getAsString());
-        assertTrue(Files.exists(preview));
-        BufferedImage image = ImageIO.read(preview.toFile());
+        assertEquals(new BlockBounds(32, 56, 64, 104), body);
+        Path overview = new CityStructureLandingPreviewRenderer().renderD4(anchorMap, null, tempDir);
+        assertTrue(Files.exists(overview));
+        assertTrue(Files.exists(tempDir.resolve("structure_anchor_cluster_preview.png")));
+        BufferedImage image = ImageIO.read(overview.toFile());
         assertNotNull(image);
-        assertEquals(960, image.getWidth());
-        assertEquals(960, image.getHeight());
+        assertEquals(1280, image.getWidth());
     }
+
+    @Test
+    void outwardCandidatePreviewWritesD2GeometryDetail(@TempDir Path tempDir) throws Exception {
+        JsonObject candidateSet = JsonParser.parseString("""
+                {
+                  "grid": {"blockBounds": {"minX": 0, "minZ": 0, "maxX": 256, "maxZ": 256}},
+                  "expansionSpace": {
+                    "focusBodyEnvelope": {"minX": 104, "minZ": 104, "maxX": 120, "maxZ": 120},
+                    "focusCollisionEnvelope": {"minX": 96, "minZ": 96, "maxX": 128, "maxZ": 128},
+                    "selectedExpansionAvailableBounds": {"minX": 32, "minZ": 32, "maxX": 95, "maxZ": 160},
+                    "selectedDirection": "west"
+                  },
+                  "arrayCandidates": [
+                    {
+                      "candidateId": "west_residential_01",
+                      "score": 94,
+                      "items": [
+                        {
+                          "itemId": "house_01",
+                          "structureId": "test:medium/d2_house",
+                          "anchorBlock": {"x": 64, "z": 80},
+                          "plannedFootprint": {"minX": 48, "minZ": 64, "maxX": 80, "maxZ": 96},
+                          "estimatedCollisionEnvelope": {"minX": 40, "minZ": 56, "maxX": 88, "maxZ": 104},
+                          "estimatedMaskEnvelope": {"minX": 32, "minZ": 48, "maxX": 96, "maxZ": 112},
+                          "envelopeMode": "d2_stable_max_envelope"
+                        }
+                      ]
+                    }
+                  ]
+                }
+                """).getAsJsonObject();
+
+        Path overview = new CityStructureLandingPreviewRenderer()
+                .renderD4ArrayExpansionCandidates(candidateSet, null, tempDir);
+
+        assertTrue(Files.exists(overview));
+        assertTrue(Files.exists(tempDir.resolve("d4_array_expansion_candidate_detail.png")));
+        BufferedImage detail = ImageIO.read(tempDir.resolve("d4_array_expansion_candidate_detail.png").toFile());
+        assertNotNull(detail);
+        assertEquals(1280, detail.getWidth());
+        assertEquals(900, detail.getHeight());
+    }
+
 }

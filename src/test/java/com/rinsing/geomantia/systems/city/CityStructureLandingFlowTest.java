@@ -191,7 +191,7 @@ final class CityStructureLandingFlowTest {
                 .profile(fixture.baseDir(), fixture.terraSenseSource(), List.of("minecraft:desert_pyramid"), 6,
                         (profile, sampleIndex) -> {
                             BlockBounds dominant = new BlockBounds(-4, -5, 15, 6);
-                            BlockBounds rotated = new BlockBounds(-7, -2, 4, 17);
+                            BlockBounds rotated = new BlockBounds(-3, -4, 16, 7);
                             return CityStructureEnvelopeProfiler.EnvelopeSample.valid(sampleIndex,
                                     sampleIndex < 4 ? dominant : rotated, 1,
                                     "fixed_config_hash", "pack_hash");
@@ -518,6 +518,52 @@ final class CityStructureLandingFlowTest {
         assertEquals(2, group.getAsJsonArray("items").size());
         assertGroupItemsDoNotOverlap(group);
         assertAnyArrayItemMaskOverlap(group);
+    }
+
+    @Test
+    void d4ArrayUsesD2StableMaxEnvelopeInsteadOfStaticJigsawFootprint() throws Exception {
+        Fixture fixture = arrayFixture();
+        JsonObject source = staticJigsawSource(fixture);
+        String structureId = "trek:overworld/medium/farm";
+        CityStructureEnvelopeProfiler.Result factsResult = new CityStructureEnvelopeProfiler()
+                .profile(fixture.baseDir(), source, List.of(structureId), 8,
+                        (profile, sampleIndex) -> CityStructureEnvelopeProfiler.EnvelopeSample.valid(sampleIndex,
+                                new BlockBounds(-40, -40, 40, 40), 3,
+                                "static_jigsaw_config_hash", "pack_hash"));
+        Path factsPath = fixture.baseDir().resolve("static_jigsaw_structure_envelope_facts.json");
+        Files.writeString(factsPath, CityJson.GSON.toJson(factsResult.structureEnvelopeFacts()));
+        CityStructureEnvelopeFacts facts = CityStructureEnvelopeFacts.load(factsPath);
+
+        JsonObject plan = arrayCandidatePlan(fixture.review(), 2);
+        plan.add("structureIds", JsonParser.parseString("""
+                ["trek:overworld/medium/farm"]
+                """).getAsJsonArray());
+        plan.add("patterns", JsonParser.parseString("""
+                ["compound_cluster"]
+                """).getAsJsonArray());
+        plan.add("compoundCluster", JsonParser.parseString("""
+                {"shape": "grid", "rows": 1, "columns": 2}
+                """).getAsJsonObject());
+
+        CityStructureArrayCandidatePlanner.Result result = new CityStructureArrayCandidatePlanner()
+                .plan(fixture.baseDir(), fixture.review(), source, plan, facts,
+                        new JsonObject(), new JsonArray());
+
+        assertTrue(result.asJson().get("ok").getAsBoolean());
+        JsonObject group = result.arrayCandidateSet().getAsJsonArray("arrayCandidates").get(0).getAsJsonObject();
+        assertEquals(97, group.get("spacingBlocks").getAsInt());
+        JsonObject candidateItem = group.getAsJsonArray("items").get(0).getAsJsonObject();
+        assertEquals("d2_stable_max_envelope", candidateItem.get("envelopeMode").getAsString());
+        assertEquals(81, bounds(candidateItem.getAsJsonObject("plannedFootprint")).widthBlocks());
+        assertEquals(97, bounds(candidateItem.getAsJsonObject("estimatedCollisionEnvelope")).widthBlocks());
+
+        JsonObject anchorMap = new CityStructureAnchorPlanner()
+                .plan(fixture.baseDir(), fixture.review(), source,
+                        group.getAsJsonObject("expandedStructureAnchorPlan"), facts)
+                .structureAnchorMap();
+        JsonObject finalized = anchorMap.getAsJsonArray("anchors").get(0).getAsJsonObject();
+        assertEquals("d2_stable_max_envelope", finalized.get("envelopeMode").getAsString());
+        assertEquals(97, bounds(finalized.getAsJsonObject("collisionEnvelope")).widthBlocks());
     }
 
     @Test
@@ -2131,6 +2177,28 @@ final class CityStructureLandingFlowTest {
                   "quality": {"passed": true, "score": 100, "hardBlocks": [], "warnings": [], "needsReview": [], "metrics": {}}
                 }
                 """;
+    }
+
+    private static JsonObject staticJigsawSource(Fixture fixture) throws Exception {
+        JsonObject catalog = JsonParser.parseString(trekDebugCatalog()).getAsJsonObject();
+        JsonObject structure = catalog.getAsJsonArray("structures").get(0).getAsJsonObject();
+        structure.addProperty("footprintMode", "fixed_footprint");
+        structure.add("fixedFootprint", JsonParser.parseString("""
+                {"widthBlocks": 17, "depthBlocks": 23, "heightBlocks": 11}
+                """).getAsJsonObject());
+        structure.add("expectedAreaRange", JsonParser.parseString("""
+                {"minAreaBlocks": 256, "maxAreaBlocks": 1024,
+                 "startFootprint": {"widthBlocks": 17, "depthBlocks": 23, "heightBlocks": 11}}
+                """).getAsJsonObject());
+        structure.addProperty("maxDistanceFromCenterBlocks", 24);
+        Path catalogPath = fixture.baseDir().resolve("static_jigsaw_debug_catalog.json");
+        Files.writeString(catalogPath, CityJson.GSON.toJson(catalog));
+        JsonObject source = new JsonObject();
+        source.addProperty("schemaVersion", "terrasense_structure_profile_source.v0.1");
+        source.addProperty("sourceType", "debug_catalog");
+        source.addProperty("catalogMode", "debug");
+        source.addProperty("debugCatalogPath", catalogPath.toString());
+        return source;
     }
 
     private static JsonObject boundsJson(BlockBounds bounds) {

@@ -68,6 +68,7 @@ public final class CityStructureEnvelopeFacts {
     public record Fact(String structureId, String profileHash, String structureConfigHash, String sourcePackHash,
                        String generationConfigHash, int sampleCount, int validSampleCount, double invalidRatio,
                        BlockBounds p95Envelope, BlockBounds p99Envelope, BlockBounds maxObservedEnvelope,
+                       BlockBounds stableMaxEnvelope, String collisionEnvelopeSource,
                        int pieceCountP50, int pieceCountP95, int pieceCountMax,
                        String stabilityClassification, boolean requiresReview, boolean allowCompactArray,
                        List<BBoxGroup> bboxGroups) {
@@ -90,6 +91,8 @@ public final class CityStructureEnvelopeFacts {
                     bounds(obj, "localEnvelopeP95"),
                     bounds(obj, "localEnvelopeP99"),
                     bounds(obj, "maxObservedEnvelope"),
+                    bounds(obj, "stableMaxEnvelope"),
+                    stringValue(placementRecommendation, "collisionEnvelopeSource", "localEnvelopeP95"),
                     intValue(pieceCount, "p50", 0),
                     intValue(pieceCount, "p95", 0),
                     intValue(pieceCount, "max", 0),
@@ -119,6 +122,21 @@ public final class CityStructureEnvelopeFacts {
             return bboxGroups.stream().filter(group -> group.groupKey().equals(groupKey)).findFirst();
         }
 
+        public boolean usesDominantBBoxGroup() {
+            return "dominantBBoxGroup".equals(collisionEnvelopeSource);
+        }
+
+        public boolean usesStableMaxEnvelope() {
+            return "stableMaxEnvelope".equals(collisionEnvelopeSource);
+        }
+
+        public BlockBounds recommendedEnvelope() {
+            if (usesStableMaxEnvelope()) {
+                return stableMaxEnvelope;
+            }
+            return p95Envelope;
+        }
+
         public boolean blocksCompactArray() {
             return requiresReview
                     || !allowCompactArray
@@ -140,10 +158,12 @@ public final class CityStructureEnvelopeFacts {
             obj.addProperty("stabilityClassification", stabilityClassification);
             obj.addProperty("requiresReview", requiresReview);
             obj.addProperty("allowCompactArray", allowCompactArray);
+            obj.addProperty("collisionEnvelopeSource", collisionEnvelopeSource);
             obj.addProperty("nearFixedByFacts", nearFixedByFacts());
             obj.add("localEnvelopeP95", boundsJson(p95Envelope));
             obj.add("localEnvelopeP99", boundsJson(p99Envelope));
             obj.add("maxObservedEnvelope", boundsJson(maxObservedEnvelope));
+            obj.add("stableMaxEnvelope", boundsJson(stableMaxEnvelope));
             dominantGroup().ifPresent(group -> obj.add("dominantBBoxGroup", group.asJson()));
             return obj;
         }
