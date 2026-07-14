@@ -600,7 +600,7 @@ public final class CityReservationMaskRegistry {
                                    String expectedStartSignature,
                                    JsonArray sourcePatchIds, JsonArray semanticTerms, JsonArray functionTerms,
                                    JsonArray styleTerms, JsonArray placementTerms, JsonArray usageTerms,
-                                   JsonArray qualityTerms) {
+                                   JsonArray qualityTerms, JsonObject sourcePlan) {
         static PlannedStructure fromAnchor(JsonObject anchor, String runId, String citySeedId, String cityId) {
             BlockPoint anchorBlock = blockPoint(requiredObject(anchor, "anchorBlock"));
             BlockBounds reserved = bounds(requiredObject(anchor, "reservedEnvelope"));
@@ -629,7 +629,8 @@ public final class CityReservationMaskRegistry {
                     copyArray(anchor.getAsJsonArray("styleTerms")),
                     copyArray(anchor.getAsJsonArray("placementTerms")),
                     copyArray(anchor.getAsJsonArray("usageTerms")),
-                    copyArray(anchor.getAsJsonArray("qualityTerms")));
+                    copyArray(anchor.getAsJsonArray("qualityTerms")),
+                    anchor.deepCopy());
         }
 
         static PlannedStructure fromRegistry(JsonObject obj) {
@@ -661,7 +662,21 @@ public final class CityReservationMaskRegistry {
                     copyArray(obj.getAsJsonArray("styleTerms")),
                     copyArray(obj.getAsJsonArray("placementTerms")),
                     copyArray(obj.getAsJsonArray("usageTerms")),
-                    copyArray(obj.getAsJsonArray("qualityTerms")));
+                    copyArray(obj.getAsJsonArray("qualityTerms")),
+                    obj.deepCopy());
+        }
+
+        public boolean isTemplatePlacement() {
+            return sourcePlan != null
+                    && (sourcePlan.has("templateRef")
+                    || sourcePlan.has("templateHash")
+                    || sourcePlan.has("structureTemplate")
+                    || "structure_template_nbt".equals(stringValue(sourcePlan,
+                    "materializationSource", "")));
+        }
+
+        public JsonObject templatePlan() {
+            return sourcePlan == null ? new JsonObject() : sourcePlan.deepCopy();
         }
 
         public JsonObject asJson() {
@@ -694,6 +709,15 @@ public final class CityReservationMaskRegistry {
             obj.add("placementTerms", placementTerms.deepCopy());
             obj.add("usageTerms", usageTerms.deepCopy());
             obj.add("qualityTerms", qualityTerms.deepCopy());
+            if (isTemplatePlacement()) {
+                for (String key : List.of("templateId", "templateRef", "templateHash", "variantId", "mirror",
+                        "materializationSource", "templateFootprint", "lockedActualFootprint",
+                        "transformed", "transformedRoadEntrances", "structureTemplate")) {
+                    if (sourcePlan.has(key)) {
+                        obj.add(key, sourcePlan.get(key).deepCopy());
+                    }
+                }
+            }
             return obj;
         }
 

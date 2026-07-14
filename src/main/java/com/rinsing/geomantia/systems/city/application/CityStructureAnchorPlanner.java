@@ -71,11 +71,16 @@ public final class CityStructureAnchorPlanner {
             index++;
             JsonObject anchor = elem.getAsJsonObject();
             String anchorId = requiredString(anchor, "anchorId");
-            String structureId = requiredString(anchor, "structureId");
-            CityStructureProfileCatalog.StructureProfile profile = profiles.get(structureId);
-            if (profile == null) {
-                hardBlocks.add(anchorId + ": structureId is not in approved TerraSense catalog: " + structureId);
-                continue;
+            boolean templatePlacement = isTemplatePlacement(anchor);
+            String structureId = stringValue(anchor, "structureId", "");
+            CityStructureProfileCatalog.StructureProfile profile = null;
+            if (!templatePlacement) {
+                structureId = requiredString(anchor, "structureId");
+                profile = profiles.get(structureId);
+                if (profile == null) {
+                    hardBlocks.add(anchorId + ": structureId is not in approved TerraSense catalog: " + structureId);
+                    continue;
+                }
             }
             JsonObject anchorBlockJson = requiredObject(anchor, "anchorBlock");
             BlockPoint anchorBlock = new BlockPoint(intValue(anchorBlockJson, "x", 0),
@@ -91,6 +96,20 @@ public final class CityStructureAnchorPlanner {
             }
             if (sourcePatches.stream().noneMatch(patch -> patchContains(patch, reviewPackage.grid(), anchorBlock))) {
                 hardBlocks.add(anchorId + ": anchorBlock is outside sourcePatchIds.");
+                continue;
+            }
+            if (templatePlacement) {
+                TemplateAnchorDecision template = templateAnchorDecision(anchor, anchorBlock);
+                if (!template.hardBlockReason().isBlank()) {
+                    hardBlocks.add(anchorId + ": " + template.hardBlockReason());
+                    continue;
+                }
+                if (reservedEnvelopeOverlaps(reserved, template.collisionEnvelope())) {
+                    hardBlocks.add(anchorId + ": reservedEnvelope overlaps an earlier planned structure.");
+                    continue;
+                }
+                reserved.add(template.collisionEnvelope());
+                anchors.add(templateAnchorJson(anchor, sourcePatches, anchorBlock, template));
                 continue;
             }
             String rotation = stringValue(anchor, "rotation", "NONE").toUpperCase(Locale.ROOT);
@@ -204,6 +223,114 @@ public final class CityStructureAnchorPlanner {
             obj.add("availableEnvelopeGroupKeys", bboxGroupKeys(envelope.fact()));
         }
         return obj;
+    }
+
+    private static JsonObject templateAnchorJson(JsonObject source,
+                                                  List<LandformPatchSummary> patches,
+                                                  BlockPoint anchorBlock,
+                                                  TemplateAnchorDecision template) {
+        JsonObject obj = source.deepCopy();
+        String templateRef = template.templateRef();
+        obj.addProperty("anchorId", requiredString(source, "anchorId"));
+        obj.addProperty("structureId", "template:" + templateRef);
+        obj.addProperty("templateId", stringValue(source, "templateId", templateRef));
+        obj.addProperty("templateRef", templateRef);
+        obj.addProperty("templateHash", template.templateHash());
+        obj.addProperty("variantId", template.variantId());
+        obj.addProperty("rotation", template.rotation());
+        obj.addProperty("mirror", template.mirror());
+        obj.addProperty("materializationSource", CityStructureMaterializationPlanner.TEMPLATE_MATERIALIZATION_SOURCE);
+        obj.add("anchorBlock", anchorBlock.asJson());
+        obj.add("commandAnchorBlock", anchorBlock.asJson());
+        obj.add("sourcePatches", patchRefs(patches));
+        obj.add("plannedFootprint", boundsJson(template.actualFootprint()));
+        obj.add("templateFootprint", boundsJson(template.actualFootprint()));
+        obj.add("lockedActualFootprint", boundsJson(template.actualFootprint()));
+        obj.add("reservedEnvelope", boundsJson(template.collisionEnvelope()));
+        obj.add("collisionEnvelope", boundsJson(template.collisionEnvelope()));
+        obj.add("maskEnvelope", boundsJson(template.maskEnvelope()));
+        obj.addProperty("clearanceBlocks", template.clearanceBlocks());
+        obj.addProperty("maskMarginBlocks", template.maskMarginBlocks());
+        obj.addProperty("reservedEnvelopePolicy", "structureTemplateFootprint+clearance");
+        obj.addProperty("envelopeMode", "structure_template_nbt");
+        obj.addProperty("selectedEnvelopeGroupKey", "");
+        return obj;
+    }
+
+    private static JsonArray patchRefs(List<LandformPatchSummary> patches) {
+        JsonArray refs = new JsonArray();
+        for (LandformPatchSummary patch : patches) {
+            JsonObject ref = new JsonObject();
+            ref.addProperty("landformPatchId", patch.landformPatchId());
+            ref.addProperty("mapLabel", patch.mapLabel());
+            ref.addProperty("landformType", patch.landformType().contractName());
+            ref.add("blockBounds", boundsJson(patch.blockBounds()));
+            refs.add(ref);
+        }
+        return refs;
+    }
+
+    private static TemplateAnchorDecision templateAnchorDecision(JsonObject source, BlockPoint anchorBlock) {
+        JsonObject nested = source.has("structureTemplate") && source.get("structureTemplate").isJsonObject()
+                ? source.getAsJsonObject("structureTemplate") : null;
+        String templateRef = firstTemplateString(source, nested, "templateRef", "nbtFile");
+        String templateHash = firstTemplateString(source, nested, "templateHash", "contentHash");
+        String variantId = firstTemplateString(source, nested, "variantId", "variant");
+        String rotation = firstTemplateString(source, nested, "rotation", "").toUpperCase(Locale.ROOT);
+        String mirror = firstTemplateString(source, nested, "mirror", "").toUpperCase(Locale.ROOT);
+        BlockBounds footprint = firstTemplateBounds(source, nested, "templateFootprint", "actualFootprint");
+        int clearance = Math.max(0, intValue(source, "clearanceBlocks", 0));
+        int maskMargin = Math.max(0, intValue(source, "maskMarginBlocks", DEFAULT_MASK_MARGIN_BLOCKS));
+        List<String> errors = new ArrayList<>();
+        if (templateRef.isBlank()) errors.add("TEMPLATE_REF_MISSING");
+        if (templateHash.isBlank()) errors.add("TEMPLATE_HASH_MISSING");
+        if (variantId.isBlank()) errors.add("TEMPLATE_VARIANT_MISSING");
+        if (rotation.isBlank() || mirror.isBlank()) errors.add("TEMPLATE_TRANSFORM_MISSING");
+        if (footprint == null) errors.add("TEMPLATE_FOOTPRINT_MISSING");
+        if (footprint != null && (footprint.maxX() < footprint.minX() || footprint.maxZ() < footprint.minZ())) {
+            errors.add("TEMPLATE_BBOX_INVALID");
+        }
+        BlockBounds collision = footprint == null ? null : expand(footprint, clearance);
+        BlockBounds mask = collision == null ? null : expand(collision, maskMargin);
+        String reason = errors.isEmpty() ? "" : String.join(",", errors);
+        return new TemplateAnchorDecision(templateRef, templateHash, variantId, rotation, mirror, footprint,
+                collision, mask, clearance, maskMargin, reason);
+    }
+
+    private static boolean isTemplatePlacement(JsonObject source) {
+        return source != null && (source.has("templateRef") || source.has("templateHash")
+                || source.has("templateFootprint") || source.has("structureTemplate")
+                || CityStructureMaterializationPlanner.TEMPLATE_MATERIALIZATION_SOURCE.equals(
+                stringValue(source, "materializationSource", "")));
+    }
+
+    private static String firstTemplateString(JsonObject source, JsonObject nested, String... keys) {
+        for (String key : keys) {
+            String value = stringValue(source, key, "");
+            if (!value.isBlank()) return value;
+            value = stringValue(nested, key, "");
+            if (!value.isBlank()) return value;
+        }
+        return "";
+    }
+
+    private static BlockBounds firstTemplateBounds(JsonObject source, JsonObject nested, String... keys) {
+        for (String key : keys) {
+            JsonObject value = source != null && source.has(key) && source.get(key).isJsonObject()
+                    ? source.getAsJsonObject(key) : null;
+            if (value == null && nested != null && nested.has(key) && nested.get(key).isJsonObject()) {
+                value = nested.getAsJsonObject(key);
+            }
+            if (value != null) return new BlockBounds(intValue(value, "minX", 0), intValue(value, "minZ", 0),
+                    intValue(value, "maxX", 0), intValue(value, "maxZ", 0));
+        }
+        return null;
+    }
+
+    private record TemplateAnchorDecision(String templateRef, String templateHash, String variantId,
+                                          String rotation, String mirror, BlockBounds actualFootprint,
+                                          BlockBounds collisionEnvelope, BlockBounds maskEnvelope,
+                                          int clearanceBlocks, int maskMarginBlocks, String hardBlockReason) {
     }
 
     private static EnvelopeDecision envelopeDecision(BlockPoint anchorBlock,

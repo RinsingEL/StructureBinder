@@ -16,6 +16,7 @@ public final class CityStructureMaterializationPlanner {
     public static final String LEDGER_SCHEMA = "city_placed_structure_ledger.v0.1";
     public static final String TRACE_SCHEMA = "city_structure_materialization_trace.v0.1";
     public static final String INFERRED_SCHEMA = "city_inferred_function_area_map.v0.1";
+    public static final String TEMPLATE_MATERIALIZATION_SOURCE = "structure_template_nbt";
     public static final int DEFAULT_COLLISION_CLEARANCE_BLOCKS = 4;
 
     public Result planWorldgen(JsonObject structureAnchorMap, ChunkStatusInspector inspector, JsonObject previousLedger) {
@@ -37,11 +38,50 @@ public final class CityStructureMaterializationPlanner {
         JsonArray waiting = new JsonArray();
         JsonArray failures = new JsonArray();
         int lockedCount = 0;
+        boolean hasTemplatePlan = false;
 
         for (JsonElement elem : requiredArray(structureAnchorMap, "anchors")) {
             JsonObject anchor = elem.getAsJsonObject();
             StructureTask task = StructureTask.from(anchor);
             JsonObject attempt = baseAttempt(task, "worldgen_plan_check");
+            if (task.templateSemantic()) {
+                hasTemplatePlan = true;
+                TemplateValidation validation = task.validateTemplate(false);
+                if (!validation.valid()) {
+                    addTemplateFailure(attempt, validation);
+                    failures.add(validation.reasonCode());
+                    attempts.add(attempt);
+                    planned.add(task.asWorldgenPlanJson(templateFailureStatus(validation)));
+                    continue;
+                }
+                BlockBounds bbox = task.templateFootprint();
+                if (overlaps(occupied, bbox)) {
+                    addFailure(attempt, "LEDGER_OCCUPIED_OVERLAP",
+                            "Template footprint overlaps previous or planned structure ledger.");
+                    attempt.add("templateFootprint", boundsJson(bbox));
+                    failures.add("LEDGER_OCCUPIED_OVERLAP");
+                    attempts.add(attempt);
+                    planned.add(task.asWorldgenPlanJson(new ChunkStatusResult(
+                            "invalid_anchor", "LEDGER_OCCUPIED_OVERLAP",
+                            "Template footprint overlaps previous or planned structure ledger.", true)));
+                    continue;
+                }
+                occupied.add(bbox);
+                lockedCount++;
+                attempt.addProperty("status", "planned_worldgen");
+                attempt.addProperty("reasonCode", "WAITING_FOR_TEMPLATE_MATERIALIZATION");
+                attempt.addProperty("message", "Structure template footprint is locked without StructureStart preflight.");
+                attempt.addProperty("preflightStatus", "accepted");
+                attempt.addProperty("locked", true);
+                attempt.add("templateFootprint", boundsJson(bbox));
+                attempt.add("lockedActualFootprint", boundsJson(bbox));
+                attempt.add("lockedCollisionEnvelope", boundsJson(bbox));
+                attempts.add(attempt);
+                planned.add(task.asWorldgenPlanJson(
+                        ChunkStatusResult.plannedWorldgen("Template materialization is pending."),
+                        bbox, bbox, "", "", new JsonArray()));
+                continue;
+            }
             ChunkStatusResult status = statusInspector.inspect(task);
             attempt.addProperty("status", status.status());
             attempt.addProperty("reasonCode", status.reasonCode());
@@ -129,6 +169,10 @@ public final class CityStructureMaterializationPlanner {
         plan.addProperty("dryRunMode", "worldgen_time_planned_registry");
         plan.addProperty("preflightMode", "registry_structure_start_no_world_mutation");
         plan.addProperty("worldgenPlacementMode", true);
+        if (hasTemplatePlan) {
+            plan.addProperty("materializationSource", TEMPLATE_MATERIALIZATION_SOURCE);
+            plan.addProperty("preflightMode", "structure_template_nbt_no_registry");
+        }
         plan.addProperty("locked", failures.isEmpty() && waiting.isEmpty()
                 && lockedCount == planned.size() && lockedCount > 0);
         plan.addProperty("collisionClearanceBlocks", DEFAULT_COLLISION_CLEARANCE_BLOCKS);
@@ -166,6 +210,37 @@ public final class CityStructureMaterializationPlanner {
             JsonObject ledgerItem = ledgerItem(runtimePlaced, task.anchorId());
             JsonObject attempt = baseAttempt(task, executeStructurePlacement
                     ? "worldgen_ledger_check" : "worldgen_status_check");
+            if (task.templateSemantic()) {
+                TemplateValidation validation = task.validateTemplate(true);
+                if (!validation.valid()) {
+                    addTemplateFailure(attempt, validation);
+                    failures.add(validation.reasonCode());
+                    attempts.add(attempt);
+                    continue;
+                }
+                if (ledgerItem != null) {
+                    String driftReason = templateLedgerDriftReason(task, ledgerItem);
+                    if (driftReason != null) {
+                        addFailure(attempt, driftReason, "Runtime template ledger differs from the locked D6 template plan.");
+                        failures.add(driftReason);
+                        attempts.add(attempt);
+                        continue;
+                    }
+                    placed.add(task.asTemplateLedgerJson(ledgerItem));
+                    attempt.addProperty("status", "applied");
+                    attempt.addProperty("reasonCode", "TEMPLATE_MATERIALIZATION_RECORDED");
+                    attempt.addProperty("message", "Template materialization ledger matches the locked D6 plan.");
+                    attempt.addProperty("worldMutationApplied", stringValue(ledgerItem, "worldMutationApplied", "true"));
+                    attempts.add(attempt);
+                } else {
+                    attempt.addProperty("status", "planned_worldgen");
+                    attempt.addProperty("reasonCode", "WAITING_FOR_TEMPLATE_MATERIALIZATION");
+                    attempt.addProperty("message", "No template materialization ledger entry exists yet.");
+                    waiting.add("WAITING_FOR_TEMPLATE_MATERIALIZATION");
+                    attempts.add(attempt);
+                }
+                continue;
+            }
             if (ledgerItem != null) {
                 placed.add(ledgerItem.deepCopy());
                 attempt.addProperty("status", "applied");
@@ -210,11 +285,38 @@ public final class CityStructureMaterializationPlanner {
         JsonArray attempts = new JsonArray();
         JsonArray waiting = new JsonArray();
         JsonArray failures = new JsonArray();
+        boolean hasTemplatePlan = false;
 
         for (JsonElement elem : requiredArray(structureAnchorMap, "anchors")) {
             JsonObject anchor = elem.getAsJsonObject();
             StructureTask task = StructureTask.from(anchor);
             JsonObject attempt = baseAttempt(task, "dry_run");
+            if (task.templateSemantic()) {
+                hasTemplatePlan = true;
+                TemplateValidation validation = task.validateTemplate(false);
+                if (!validation.valid()) {
+                    addTemplateFailure(attempt, validation);
+                    failures.add(validation.reasonCode());
+                    attempts.add(attempt);
+                    continue;
+                }
+                BlockBounds bbox = task.templateFootprint();
+                if (overlaps(occupied, bbox)) {
+                    addFailure(attempt, "LEDGER_OCCUPIED_OVERLAP",
+                            "Template footprint overlaps previous or planned structure ledger.");
+                    failures.add("LEDGER_OCCUPIED_OVERLAP");
+                    attempts.add(attempt);
+                    continue;
+                }
+                occupied.add(bbox);
+                attempt.addProperty("status", "planned");
+                attempt.addProperty("reasonCode", "STRUCTURE_TEMPLATE_ACCEPTED");
+                attempt.add("templateFootprint", boundsJson(bbox));
+                attempt.add("lockedActualFootprint", boundsJson(bbox));
+                attempts.add(attempt);
+                planned.add(task.asPlanJson(bbox, "", new JsonArray()));
+                continue;
+            }
             PlacementResult result = backend.plan(task);
             if (result.waiting()) {
                 attempt.addProperty("status", "waiting");
@@ -270,6 +372,10 @@ public final class CityStructureMaterializationPlanner {
         plan.addProperty("schemaVersion", PLAN_SCHEMA);
         plan.addProperty("cityId", cityId);
         plan.addProperty("dryRunMode", "registry_dry_run_with_profile_bbox");
+        if (hasTemplatePlan) {
+            plan.addProperty("materializationSource", TEMPLATE_MATERIALIZATION_SOURCE);
+            plan.addProperty("dryRunMode", "structure_template_nbt");
+        }
         plan.add("structures", planned);
         plan.add("sourceStructureAnchorMap", structureAnchorMap.deepCopy());
         plan.add("timingMs", timing(started));
@@ -297,6 +403,35 @@ public final class CityStructureMaterializationPlanner {
         for (JsonElement elem : materializationPlan.getAsJsonArray("structures")) {
             JsonObject item = elem.getAsJsonObject();
             StructureTask task = StructureTask.fromPlan(item);
+            if (task.templateSemantic()) {
+                TemplateValidation validation = task.validateTemplate(true);
+                JsonObject attempt = baseAttempt(task, executeWorldMutation ? "true_run" : "dry_run_recheck");
+                if (!validation.valid()) {
+                    addTemplateFailure(attempt, validation);
+                    failures.add(validation.reasonCode());
+                    attempts.add(attempt);
+                    continue;
+                }
+                JsonObject existing = ledgerItem(placed, task.anchorId());
+                if (existing != null) {
+                    String driftReason = templateLedgerDriftReason(task, existing);
+                    if (driftReason != null) {
+                        addFailure(attempt, driftReason, "Runtime template ledger differs from the locked D6 template plan.");
+                        failures.add(driftReason);
+                        attempts.add(attempt);
+                    } else {
+                        attempts.add(skipped(task, "LEDGER_ALREADY_APPLIED",
+                                "Template structure already exists in ledger."));
+                    }
+                    continue;
+                }
+                attempt.addProperty("status", "waiting");
+                attempt.addProperty("reasonCode", "WAITING_FOR_TEMPLATE_MATERIALIZATION");
+                attempt.addProperty("message", "Template materialization is owned by the template execution adapter.");
+                waiting.add("WAITING_FOR_TEMPLATE_MATERIALIZATION");
+                attempts.add(attempt);
+                continue;
+            }
             String expectedSignature = stringValue(item, "startSignature", "");
             if (ledgerContains(placed, task.anchorId())) {
                 attempts.add(skipped(task, "LEDGER_ALREADY_APPLIED", "Structure already exists in ledger."));
@@ -393,6 +528,74 @@ public final class CityStructureMaterializationPlanner {
         obj.addProperty("envelopeMode", task.envelopeMode());
         obj.addProperty("selectedEnvelopeGroupKey", task.selectedEnvelopeGroupKey());
         return obj;
+    }
+
+    private static void addFailure(JsonObject attempt, String reasonCode, String message) {
+        attempt.addProperty("status", "failed");
+        attempt.addProperty("reasonCode", reasonCode);
+        attempt.addProperty("message", message);
+    }
+
+    private static void addTemplateFailure(JsonObject attempt, TemplateValidation validation) {
+        addFailure(attempt, validation.reasonCode(), validation.message());
+        JsonArray errors = new JsonArray();
+        validation.errors().forEach(errors::add);
+        attempt.add("templateValidationErrors", errors);
+        attempt.addProperty("materializationSource", TEMPLATE_MATERIALIZATION_SOURCE);
+    }
+
+    private static ChunkStatusResult templateFailureStatus(TemplateValidation validation) {
+        return new ChunkStatusResult("invalid_anchor", validation.reasonCode(), validation.message(), true);
+    }
+
+    private static String templateLedgerDriftReason(StructureTask task, JsonObject ledgerItem) {
+        TemplateFacts expected = task.templateFacts();
+        TemplateFacts actual = TemplateFacts.from(ledgerItem);
+        JsonObject nested = ledgerItem.has("structureTemplate")
+                && ledgerItem.get("structureTemplate").isJsonObject()
+                ? ledgerItem.getAsJsonObject("structureTemplate") : null;
+        if (hasValue(ledgerItem, "templateHash")
+                && !expected.templateHash().equals(stringValue(ledgerItem, "templateHash", ""))) {
+            return "STRUCTURE_TEMPLATE_HASH_DRIFT";
+        }
+        if (hasValue(nested, "templateHash")
+                && !expected.templateHash().equals(stringValue(nested, "templateHash", ""))) {
+            return "STRUCTURE_TEMPLATE_HASH_DRIFT";
+        }
+        if (hasValue(ledgerItem, "templateId") && !expected.templateId().equals(actual.templateId())) {
+            return "STRUCTURE_TEMPLATE_FIELD_DRIFT";
+        }
+        if (hasValue(ledgerItem, "templateRef") && !expected.templateRef().equals(actual.templateRef())) {
+            return "STRUCTURE_TEMPLATE_FIELD_DRIFT";
+        }
+        if (hasValue(ledgerItem, "variantId") && !expected.variantId().equals(actual.variantId())) {
+            return "STRUCTURE_TEMPLATE_FIELD_DRIFT";
+        }
+        if (hasValue(ledgerItem, "rotation") && !expected.rotation().equals(actual.rotation())) {
+            return "STRUCTURE_TEMPLATE_FIELD_DRIFT";
+        }
+        if (hasValue(ledgerItem, "mirror") && !expected.mirror().equals(actual.mirror())) {
+            return "STRUCTURE_TEMPLATE_FIELD_DRIFT";
+        }
+        BlockBounds actualFootprint = optionalBoundsValue(ledgerItem, "actualFootprint");
+        if (actualFootprint != null && !expected.templateFootprint().equals(actualFootprint)) {
+            return "STRUCTURE_TEMPLATE_FOOTPRINT_DRIFT";
+        }
+        BlockBounds lockedFootprint = actual.lockedActualFootprint();
+        if (lockedFootprint != null && !expected.templateFootprint().equals(lockedFootprint)) {
+            return "STRUCTURE_TEMPLATE_FOOTPRINT_DRIFT";
+        }
+        return null;
+    }
+
+    private static BlockBounds optionalBoundsValue(JsonObject object, String key) {
+        return object != null && object.has(key) && object.get(key).isJsonObject()
+                ? bounds(object.getAsJsonObject(key)) : null;
+    }
+
+    private static boolean hasValue(JsonObject object, String key) {
+        return object != null && object.has(key) && !object.get(key).isJsonNull()
+                && (!object.get(key).isJsonPrimitive() || !object.get(key).getAsString().isBlank());
     }
 
     private static JsonObject trace(String cityId, JsonArray attempts, JsonArray waiting,
@@ -717,6 +920,22 @@ public final class CityStructureMaterializationPlanner {
                     anchor.deepCopy());
         }
 
+        boolean templateSemantic() {
+            return templateFacts().semantic();
+        }
+
+        TemplateFacts templateFacts() {
+            return TemplateFacts.from(sourceAnchor);
+        }
+
+        BlockBounds templateFootprint() {
+            return templateFacts().templateFootprint();
+        }
+
+        TemplateValidation validateTemplate(boolean requireLockedFootprint) {
+            return templateFacts().validate(requireLockedFootprint);
+        }
+
         static StructureTask fromPlan(JsonObject item) {
             BlockBounds reserved = bounds(requiredObject(item, "reservedEnvelope"));
             return new StructureTask(
@@ -745,6 +964,12 @@ public final class CityStructureMaterializationPlanner {
             obj.add("actualFootprint", boundsJson(actualFootprint));
             obj.addProperty("startSignature", startSignature == null ? "" : startSignature);
             obj.add("pieceBoxes", pieceBoxes == null ? new JsonArray() : pieceBoxes);
+            if (templateSemantic()) {
+                obj.add("reservedEnvelope", boundsJson(actualFootprint));
+                obj.add("collisionEnvelope", boundsJson(actualFootprint));
+                obj.add("maskEnvelope", boundsJson(expand(actualFootprint, maskMarginBlocks)));
+                addTemplateFields(obj, templateFacts(), actualFootprint);
+            }
             return obj;
         }
 
@@ -805,6 +1030,9 @@ public final class CityStructureMaterializationPlanner {
             obj.addProperty("status", status.status());
             obj.addProperty("reasonCode", status.reasonCode());
             obj.addProperty("message", status.message());
+            if (templateSemantic()) {
+                addTemplateFields(obj, templateFacts(), actualFootprint);
+            }
             return obj;
         }
 
@@ -829,12 +1057,61 @@ public final class CityStructureMaterializationPlanner {
             return obj;
         }
 
+        JsonObject asTemplateLedgerJson(JsonObject runtimeLedgerItem) {
+            JsonObject obj = runtimeLedgerItem.deepCopy();
+            BlockBounds footprint = templateFootprint();
+            obj.addProperty("anchorId", anchorId);
+            obj.addProperty("structureId", structureId);
+            obj.add("anchorBlock", anchorBlock.asJson());
+            obj.add("plannedFootprint", boundsJson(footprint));
+            obj.add("actualFootprint", boundsJson(footprint));
+            obj.add("reservedEnvelope", boundsJson(footprint));
+            obj.add("collisionEnvelope", boundsJson(footprint));
+            obj.add("maskEnvelope", boundsJson(expand(footprint, maskMarginBlocks)));
+            obj.add("pieceBoxes", new JsonArray());
+            obj.remove("startSignature");
+            obj.remove("expectedStartSignature");
+            addTemplateFields(obj, templateFacts(), footprint);
+            return obj;
+        }
+
         private JsonObject outputAnchorJson() {
             JsonObject obj = sourceAnchor.deepCopy();
             obj.remove("safetyEnvelope");
             obj.remove("estimatedSafetyEnvelope");
             obj.remove("groupSafetyEnvelope");
             return obj;
+        }
+
+        private static void addTemplateFields(JsonObject target, TemplateFacts facts, BlockBounds lockedFootprint) {
+            target.addProperty("templateId", facts.templateId());
+            target.addProperty("templateRef", facts.templateRef());
+            target.addProperty("templateHash", facts.templateHash());
+            target.addProperty("variantId", facts.variantId());
+            target.addProperty("rotation", facts.rotation());
+            target.addProperty("mirror", facts.mirror());
+            target.addProperty("materializationSource", TEMPLATE_MATERIALIZATION_SOURCE);
+            if (facts.templateFootprint() != null) {
+                target.add("templateFootprint", boundsJson(facts.templateFootprint()));
+            }
+            if (lockedFootprint != null) {
+                target.add("lockedActualFootprint", boundsJson(lockedFootprint));
+            }
+            JsonObject template = new JsonObject();
+            template.addProperty("templateId", facts.templateId());
+            template.addProperty("templateRef", facts.templateRef());
+            template.addProperty("templateHash", facts.templateHash());
+            template.addProperty("variantId", facts.variantId());
+            template.addProperty("rotation", facts.rotation());
+            template.addProperty("mirror", facts.mirror());
+            template.addProperty("materializationSource", TEMPLATE_MATERIALIZATION_SOURCE);
+            if (facts.templateFootprint() != null) {
+                template.add("templateFootprint", boundsJson(facts.templateFootprint()));
+            }
+            if (lockedFootprint != null) {
+                template.add("lockedActualFootprint", boundsJson(lockedFootprint));
+            }
+            target.add("structureTemplate", template);
         }
 
         private static List<String> strings(JsonArray array) {
@@ -866,6 +1143,96 @@ public final class CityStructureMaterializationPlanner {
 
         private static BlockBounds optionalBounds(JsonObject obj, String key, BlockBounds fallback) {
             return obj.has(key) && obj.get(key).isJsonObject() ? bounds(obj.getAsJsonObject(key)) : fallback;
+        }
+    }
+
+    private record TemplateFacts(boolean semantic, String templateId, String templateRef, String templateHash,
+                                 String variantId, String rotation, String mirror,
+                                 BlockBounds templateFootprint, BlockBounds lockedActualFootprint,
+                                 String materializationSource) {
+        static TemplateFacts from(JsonObject source) {
+            JsonObject nested = source != null && source.has("structureTemplate")
+                    && source.get("structureTemplate").isJsonObject()
+                    ? source.getAsJsonObject("structureTemplate") : null;
+            boolean semantic = nested != null
+                    || TEMPLATE_MATERIALIZATION_SOURCE.equals(stringValue(source, "materializationSource", ""))
+                    || hasAny(source, "templateHash", "templateRef", "variantId", "mirror", "templateFootprint")
+                    || hasAny(nested, "templateHash", "templateRef", "variantId", "mirror", "templateFootprint");
+            String templateId = readString(nested, source, "templateId", "");
+            String templateRef = readString(nested, source, "templateRef", "");
+            if (templateRef.isBlank()) {
+                templateRef = readString(nested, source, "nbtFile", "");
+            }
+            String templateHash = readString(nested, source, "templateHash", "");
+            if (templateHash.isBlank()) {
+                templateHash = readString(nested, source, "contentHash", "");
+            }
+            String variantId = readString(nested, source, "variantId", "");
+            String rotation = readString(nested, source, "rotation", "");
+            String mirror = readString(nested, source, "mirror", "");
+            BlockBounds templateFootprint = readBounds(nested, source, "templateFootprint");
+            BlockBounds lockedFootprint = readBounds(nested, source, "lockedActualFootprint");
+            if (templateFootprint == null) {
+                templateFootprint = lockedFootprint;
+            }
+            return new TemplateFacts(semantic, templateId, templateRef, templateHash, variantId,
+                    rotation, mirror, templateFootprint, lockedFootprint,
+                    readString(nested, source, "materializationSource", ""));
+        }
+
+        TemplateValidation validate(boolean requireLockedFootprint) {
+            if (!semantic) {
+                return TemplateValidation.ok();
+            }
+            List<String> errors = new ArrayList<>();
+            if (templateId.isBlank()) errors.add("STRUCTURE_TEMPLATE_MISSING_TEMPLATE_ID");
+            if (templateRef.isBlank()) errors.add("STRUCTURE_TEMPLATE_MISSING_TEMPLATE_REF");
+            if (templateHash.isBlank()) errors.add("STRUCTURE_TEMPLATE_MISSING_TEMPLATE_HASH");
+            if (variantId.isBlank()) errors.add("STRUCTURE_TEMPLATE_MISSING_VARIANT_ID");
+            if (rotation.isBlank() || mirror.isBlank()) errors.add("STRUCTURE_TEMPLATE_MISSING_TRANSFORM");
+            if (templateFootprint == null) errors.add("STRUCTURE_TEMPLATE_MISSING_FOOTPRINT");
+            if (requireLockedFootprint && lockedActualFootprint == null) {
+                errors.add("STRUCTURE_TEMPLATE_MISSING_LOCKED_ACTUAL_FOOTPRINT");
+            }
+            if (templateFootprint != null && lockedActualFootprint != null
+                    && !templateFootprint.equals(lockedActualFootprint)) {
+                errors.add("STRUCTURE_TEMPLATE_FOOTPRINT_DRIFT");
+            }
+            if (!materializationSource.isBlank() && !TEMPLATE_MATERIALIZATION_SOURCE.equals(materializationSource)) {
+                errors.add("STRUCTURE_TEMPLATE_MATERIALIZATION_SOURCE_INVALID");
+            }
+            if (errors.isEmpty()) {
+            return TemplateValidation.ok();
+            }
+            return new TemplateValidation(false, "STRUCTURE_TEMPLATE_PLAN_INVALID", errors,
+                    "Structure template plan is missing or has inconsistent locked template fields.");
+        }
+
+        private static boolean hasAny(JsonObject object, String... keys) {
+            if (object == null) return false;
+            for (String key : keys) {
+                if (object.has(key)) return true;
+            }
+            return false;
+        }
+
+        private static String readString(JsonObject nested, JsonObject source, String key, String fallback) {
+            String value = stringValue(nested, key, "");
+            return value.isBlank() ? stringValue(source, key, fallback) : value;
+        }
+
+        private static BlockBounds readBounds(JsonObject nested, JsonObject source, String key) {
+            if (nested != null && nested.has(key) && nested.get(key).isJsonObject()) {
+                return bounds(nested.getAsJsonObject(key));
+            }
+            return source != null && source.has(key) && source.get(key).isJsonObject()
+                    ? bounds(source.getAsJsonObject(key)) : null;
+        }
+    }
+
+    private record TemplateValidation(boolean valid, String reasonCode, List<String> errors, String message) {
+        static TemplateValidation ok() {
+            return new TemplateValidation(true, "", List.of(), "");
         }
     }
 

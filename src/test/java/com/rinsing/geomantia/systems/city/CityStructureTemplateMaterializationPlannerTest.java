@@ -1,0 +1,106 @@
+package com.rinsing.geomantia.systems.city;
+
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.rinsing.geomantia.systems.city.application.CityStructureMaterializationPlanner;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+class CityStructureTemplateMaterializationPlannerTest {
+    @Test
+    void templatePlanLocksNbtFootprintWithoutStructureStartFields() {
+        JsonObject result = new CityStructureMaterializationPlanner()
+                .planWorldgen(anchorMap(), CityStructureMaterializationPlanner.ChunkStatusInspector.plannedOnly(),
+                        emptyLedger())
+                .structureMaterializationPlan();
+
+        assertEquals("structure_template_nbt", result.get("materializationSource").getAsString());
+        assertEquals("structure_template_nbt_no_registry", result.get("preflightMode").getAsString());
+        JsonObject item = result.getAsJsonArray("plannedWorldgenStructures").get(0).getAsJsonObject();
+        assertEquals("city:house", item.get("templateId").getAsString());
+        assertEquals("sha256:house", item.get("templateHash").getAsString());
+        assertEquals("structure_template_nbt", item.get("materializationSource").getAsString());
+        assertEquals(item.getAsJsonObject("templateFootprint"), item.getAsJsonObject("lockedActualFootprint"));
+        assertFalse(item.has("pieceBoxes") && item.getAsJsonArray("pieceBoxes").size() > 0);
+        assertTrue(result.get("locked").getAsBoolean());
+    }
+
+    @Test
+    void templateLedgerDriftIsRejected() {
+        JsonObject plan = new CityStructureMaterializationPlanner()
+                .planWorldgen(anchorMap(), CityStructureMaterializationPlanner.ChunkStatusInspector.plannedOnly(),
+                        emptyLedger())
+                .structureMaterializationPlan();
+        JsonObject ledger = emptyLedger();
+        JsonObject placed = templateFields();
+        placed.addProperty("templateHash", "sha256:changed");
+        placed.add("actualFootprint", bounds(10, 10, 20, 20));
+        ledger.getAsJsonArray("placedStructures").add(placed);
+
+        JsonObject result = new CityStructureMaterializationPlanner()
+                .executeWorldgen(plan, ledger, CityStructureMaterializationPlanner.ChunkStatusInspector.plannedOnly(),
+                        false)
+                .structureMaterializationTrace();
+        assertTrue(result.toString().contains("STRUCTURE_TEMPLATE_HASH_DRIFT"));
+    }
+
+    private static JsonObject anchorMap() {
+        JsonObject root = JsonParser.parseString("""
+                {
+                  "schemaVersion": "city_structure_anchor_map.v0.1",
+                  "cityId": "city_template_test",
+                  "anchors": [{
+                    "anchorId": "house_1",
+                    "structureId": "legacy:ignored",
+                    "commandAnchorBlock": {"x": 10, "z": 10},
+                    "plannedFootprint": {"minX": 10, "minZ": 10, "maxX": 17, "maxZ": 15},
+                    "reservedEnvelope": {"minX": 10, "minZ": 10, "maxX": 17, "maxZ": 15},
+                    "collisionEnvelope": {"minX": 10, "minZ": 10, "maxX": 17, "maxZ": 15},
+                    "templateId": "city:house",
+                    "templateRef": "city:house",
+                    "templateHash": "sha256:house",
+                    "variantId": "oak",
+                    "rotation": "NONE",
+                    "mirror": "NONE",
+                    "templateFootprint": {"minX": 10, "minZ": 10, "maxX": 17, "maxZ": 15},
+                    "lockedActualFootprint": {"minX": 10, "minZ": 10, "maxX": 17, "maxZ": 15},
+                    "materializationSource": "structure_template_nbt"
+                  }]
+                }
+                """).getAsJsonObject();
+        return root;
+    }
+
+    private static JsonObject emptyLedger() {
+        JsonObject ledger = new JsonObject();
+        ledger.add("placedStructures", new com.google.gson.JsonArray());
+        return ledger;
+    }
+
+    private static JsonObject templateFields() {
+        JsonObject item = new JsonObject();
+        item.addProperty("anchorId", "house_1");
+        item.addProperty("templateId", "city:house");
+        item.addProperty("templateRef", "city:house");
+        item.addProperty("templateHash", "sha256:house");
+        item.addProperty("variantId", "oak");
+        item.addProperty("rotation", "NONE");
+        item.addProperty("mirror", "NONE");
+        item.add("templateFootprint", bounds(10, 10, 17, 15));
+        item.add("lockedActualFootprint", bounds(10, 10, 17, 15));
+        item.addProperty("materializationSource", "structure_template_nbt");
+        return item;
+    }
+
+    private static JsonObject bounds(int minX, int minZ, int maxX, int maxZ) {
+        JsonObject bounds = new JsonObject();
+        bounds.addProperty("minX", minX);
+        bounds.addProperty("minZ", minZ);
+        bounds.addProperty("maxX", maxX);
+        bounds.addProperty("maxZ", maxZ);
+        return bounds;
+    }
+}

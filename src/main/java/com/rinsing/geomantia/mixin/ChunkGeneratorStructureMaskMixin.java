@@ -6,6 +6,7 @@ import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.SectionPos;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.StructureManager;
+import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.chunk.ChunkGeneratorStructureState;
@@ -58,5 +59,13 @@ public abstract class ChunkGeneratorStructureMaskMixin {
                 structureManager,
                 chunk,
                 templateManager);
+    }
+
+    @Inject(method = "applyBiomeDecoration", at = @At("HEAD"))
+    private void geomantia$placeCityTemplateFragments(WorldGenLevel level,
+                                                       ChunkAccess chunk,
+                                                       StructureManager structureManager,
+                                                       CallbackInfo ci) {
+        MinecraftCityWorldgenStructurePlacer.injectPlannedTemplateStructures(level, chunk);
     }
 }

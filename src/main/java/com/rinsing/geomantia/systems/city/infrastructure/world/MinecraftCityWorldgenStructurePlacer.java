@@ -3,6 +3,8 @@ package com.rinsing.geomantia.systems.city.infrastructure.world;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
+import com.rinsing.geomantia.systems.city.domain.model.BlockPoint;
+import com.rinsing.geomantia.systems.city.application.CityTemplatePlacementGeometry;
 import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.Registries;
@@ -19,12 +21,61 @@ import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.StructurePiece;
 import net.minecraft.world.level.levelgen.structure.StructureStart;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplateManager;
+import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.block.Mirror;
+import net.minecraft.world.level.block.Rotation;
 
 import java.util.List;
 import java.util.Optional;
 
 public final class MinecraftCityWorldgenStructurePlacer {
     private MinecraftCityWorldgenStructurePlacer() {
+    }
+
+    public static void injectPlannedTemplateStructures(WorldGenLevel level, ChunkAccess chunk) {
+        if (level == null || chunk == null) {
+            return;
+        }
+        List<CityReservationMaskRegistry.PlannedStructure> planned =
+                CityReservationMaskRegistry.plannedStructuresForChunk(chunk.getPos());
+        if (planned.isEmpty()) {
+            return;
+        }
+        StructureTemplateManager manager = level.getLevel().getStructureManager();
+        MinecraftCityTemplateWorldgenPlacer placer = new MinecraftCityTemplateWorldgenPlacer(manager);
+        for (CityReservationMaskRegistry.PlannedStructure item : planned) {
+            if (!item.isTemplatePlacement()) {
+                continue;
+            }
+            JsonObject plan = item.templatePlan();
+            try {
+                String templateRef = text(plan, "templateRef", nestedText(plan, "structureTemplate", "templateRef"));
+                String templateHash = text(plan, "templateHash", nestedText(plan, "structureTemplate", "templateHash"));
+                BlockPoint anchor = point(plan, "anchorBlock", item.anchorBlock());
+                CityTemplatePlacementGeometry.Rotation rotation = CityTemplatePlacementGeometry.Rotation.valueOf(
+                        text(plan, "rotation", "NONE"));
+                CityTemplatePlacementGeometry.Mirror mirror = CityTemplatePlacementGeometry.Mirror.valueOf(
+                        text(plan, "mirror", "NONE"));
+                int datum = intValue(plan, "templateDatumY", intValue(plan, "datumY", level.getMinBuildHeight()));
+                MinecraftCityTemplateWorldgenPlacer.PlacementRequest request =
+                        new MinecraftCityTemplateWorldgenPlacer.PlacementRequest(templateRef, templateHash,
+                                anchor, rotation, mirror, datum, chunk.getPos());
+                MinecraftCityTemplateWorldgenPlacer.PlacementResult result = placer.place(request,
+                        new MinecraftCityTemplateWorldgenPlacer.WorldGenLevelWriter(level, chunk.getPos()));
+                if (!result.success() && !result.waiting()) {
+                    CityReservationMaskRegistry.recordWorldgenFailure(item, chunk.getPos(),
+                            result.reasonCode(), result.message());
+                } else if (result.success() && result.worldMutationApplied()
+                        && result.templateFootprint() != null) {
+                    CityReservationMaskRegistry.recordWorldgenPlacement(item, result.templateFootprint(),
+                            templateSignature(item, templateHash, rotation, mirror), new JsonArray(), chunk.getPos(),
+                            "", result.reasonCode(), result.message());
+                }
+            } catch (RuntimeException ex) {
+                CityReservationMaskRegistry.recordWorldgenFailure(item, chunk.getPos(),
+                        "TEMPLATE_PLACEMENT_FAILED", ex.getMessage());
+            }
+        }
     }
 
     public static void injectPlannedStructures(ChunkGenerator generator,
@@ -70,6 +121,9 @@ public final class MinecraftCityWorldgenStructurePlacer {
                                   StructureTemplateManager templateManager,
                                   ChunkPos chunkPos,
                                   CityReservationMaskRegistry.PlannedStructure item) {
+        if (item.isTemplatePlacement()) {
+            return;
+        }
         ResourceLocation id = ResourceLocation.tryParse(item.structureId());
         if (id == null) {
             CityReservationMaskRegistry.recordWorldgenFailure(item, chunkPos,
@@ -178,5 +232,36 @@ public final class MinecraftCityWorldgenStructurePlacer {
         obj.addProperty("maxX", bounds.maxX());
         obj.addProperty("maxZ", bounds.maxZ());
         return obj;
+    }
+
+    private static String templateSignature(CityReservationMaskRegistry.PlannedStructure item, String hash,
+                                             CityTemplatePlacementGeometry.Rotation rotation,
+                                             CityTemplatePlacementGeometry.Mirror mirror) {
+        return "template:" + item.anchorId() + "#" + hash + "#" + rotation + "#" + mirror;
+    }
+
+    private static String text(JsonObject object, String key, String fallback) {
+        return object != null && object.has(key) && !object.get(key).isJsonNull()
+                ? object.get(key).getAsString() : fallback;
+    }
+
+    private static String nestedText(JsonObject object, String nestedKey, String key) {
+        if (object != null && object.has(nestedKey) && object.get(nestedKey).isJsonObject()) {
+            return text(object.getAsJsonObject(nestedKey), key, "");
+        }
+        return "";
+    }
+
+    private static int intValue(JsonObject object, String key, int fallback) {
+        return object != null && object.has(key) && !object.get(key).isJsonNull()
+                ? object.get(key).getAsInt() : fallback;
+    }
+
+    private static BlockPoint point(JsonObject object, String key, BlockPoint fallback) {
+        if (object != null && object.has(key) && object.get(key).isJsonObject()) {
+            JsonObject value = object.getAsJsonObject(key);
+            return new BlockPoint(value.get("x").getAsInt(), value.get("z").getAsInt());
+        }
+        return fallback;
     }
 }

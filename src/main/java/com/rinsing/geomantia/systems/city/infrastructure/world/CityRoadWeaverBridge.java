@@ -13,12 +13,16 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 
 public final class CityRoadWeaverBridge {
     public static final String PROVIDER_AUTO = "auto";
     public static final String PROVIDER_ROADWEAVER = "roadweaver";
     public static final String PROVIDER_WORLDEDIT_DEBUG = "worldedit_debug";
     public static final String PROVIDER_NONE = "none";
+
+    public static final String REASON_TEMPLATE_ROAD_ENTRANCE_MISSING = "TEMPLATE_ROAD_ENTRANCE_MISSING";
+    public static final String REASON_REGISTRATION_FAILED = "ROADWEAVER_REGISTRATION_FAILED";
 
     private CityRoadWeaverBridge() {
     }
@@ -31,106 +35,196 @@ public final class CityRoadWeaverBridge {
         };
     }
 
+    /** Extracts only placement-plan transformed entrances; it never derives an entrance from a bbox. */
+    public static EndpointExtraction extractRoadEndpoints(JsonObject materializationPlan) {
+        List<RoadEndpoint> endpoints = new ArrayList<>();
+        JsonArray errors = new JsonArray();
+        int index = 0;
+        for (JsonElement elem : array(materializationPlan, "plannedWorldgenStructures")) {
+            if (!elem.isJsonObject()) {
+                addError(errors, "", REASON_TEMPLATE_ROAD_ENTRANCE_MISSING,
+                        "Planned structure item is not an object.");
+                continue;
+            }
+            JsonObject item = elem.getAsJsonObject();
+            if (!"planned_worldgen".equals(stringValue(item, "status", ""))) {
+                continue;
+            }
+            String anchorId = stringValue(item, "anchorId", "anchor_" + index++);
+            JsonObject placement = placementPlan(item);
+            if (placement == null) {
+                addError(errors, anchorId, REASON_TEMPLATE_ROAD_ENTRANCE_MISSING,
+                        "Template placement plan with transformed roadEntrances[] is required.");
+                continue;
+            }
+            String templateId = firstText(placement, item, "templateId", "templateRef");
+            String templateHash = firstText(placement, item, "templateHash", "contentHash");
+            JsonObject transformed = jsonObject(placement, "transformed");
+            JsonArray entrances = transformed == null ? null : jsonArray(transformed, "roadEntrances");
+            if (entrances == null) {
+                entrances = jsonArray(placement, "transformedRoadEntrances");
+            }
+            if (entrances == null) {
+                addError(errors, anchorId, REASON_TEMPLATE_ROAD_ENTRANCE_MISSING,
+                        "Template placement plan is missing transformed.roadEntrances[].");
+                continue;
+            }
+            if (templateId.isBlank() || templateHash.isBlank() || entrances.isEmpty()) {
+                addError(errors, anchorId, REASON_TEMPLATE_ROAD_ENTRANCE_MISSING,
+                        "templateId, templateHash and at least one transformed road entrance are required.");
+                continue;
+            }
+            BlockPoint anchor = placementAnchor(placement, item);
+            for (int entranceIndex = 0; entranceIndex < entrances.size(); entranceIndex++) {
+                JsonElement entranceElement = entrances.get(entranceIndex);
+                if (!entranceElement.isJsonObject()) {
+                    addError(errors, anchorId, REASON_TEMPLATE_ROAD_ENTRANCE_MISSING,
+                            "transformed.roadEntrances[" + entranceIndex + "] is not an object.");
+                    continue;
+                }
+                JsonObject entrance = entranceElement.getAsJsonObject();
+                String entranceId = stringValue(entrance, "entranceId", "entrance_" + entranceIndex);
+                String direction = stringValue(entrance, "direction", "");
+                BlockPoint roadPoint = entranceWorldPoint(entrance, anchor);
+                if (direction.isBlank() || roadPoint == null) {
+                    addError(errors, anchorId, REASON_TEMPLATE_ROAD_ENTRANCE_MISSING,
+                            "Each transformed road entrance needs direction and relative/world coordinates.");
+                    continue;
+                }
+                endpoints.add(new RoadEndpoint(
+                        anchorId + "::" + entranceId,
+                        anchorId,
+                        entranceId,
+                        stringValue(item, "structureId", "unknown"),
+                        templateId,
+                        templateHash,
+                        intValue(item, "priority", index),
+                        optionalBounds(item, "lockedActualFootprint", "actualFootprint"),
+                        roadPoint,
+                        direction));
+            }
+        }
+        endpoints.sort(Comparator.comparingInt(RoadEndpoint::priority).thenComparing(RoadEndpoint::endpointId));
+        return new EndpointExtraction(List.copyOf(endpoints), errors);
+    }
+
     public static JsonObject createConnectionPlan(JsonObject materializationPlan) {
+        EndpointExtraction extraction = extractRoadEndpoints(materializationPlan);
         JsonObject plan = new JsonObject();
         plan.addProperty("schemaVersion", "city_roadweaver_connection_plan.v0.1");
         plan.addProperty("cityId", stringValue(materializationPlan, "cityId", ""));
         plan.addProperty("connectionStrategy", "priority_chain");
         plan.addProperty("generateImmediately", false);
+        plan.addProperty("transactional", true);
+        plan.addProperty("validationStatus", extraction.valid() ? "valid" : "failed");
+        if (!extraction.valid()) {
+            plan.addProperty("reasonCode", REASON_TEMPLATE_ROAD_ENTRANCE_MISSING);
+            plan.add("validationErrors", extraction.errors().deepCopy());
+        }
 
-        List<Endpoint> endpoints = endpoints(materializationPlan);
         JsonArray endpointArray = new JsonArray();
-        endpoints.forEach(endpoint -> endpointArray.add(endpoint.asJson()));
+        extraction.endpoints().forEach(endpoint -> endpointArray.add(endpoint.asJson()));
         plan.add("endpoints", endpointArray);
 
         JsonArray connections = new JsonArray();
-        for (int i = 1; i < endpoints.size(); i++) {
-            JsonObject connection = new JsonObject();
-            connection.addProperty("connectionId", "roadweaver_" + endpoints.get(i - 1).anchorId()
-                    + "_to_" + endpoints.get(i).anchorId());
-            connection.addProperty("fromAnchorId", endpoints.get(i - 1).anchorId());
-            connection.addProperty("toAnchorId", endpoints.get(i).anchorId());
-            connection.add("from", endpoints.get(i - 1).roadPoint().asJson());
-            connection.add("to", endpoints.get(i).roadPoint().asJson());
-            connections.add(connection);
+        if (extraction.valid()) {
+            for (int i = 1; i < extraction.endpoints().size(); i++) {
+                RoadEndpoint from = extraction.endpoints().get(i - 1);
+                RoadEndpoint to = extraction.endpoints().get(i);
+                JsonObject connection = new JsonObject();
+                connection.addProperty("connectionId", "roadweaver_" + from.endpointId() + "_to_"
+                        + to.endpointId());
+                connection.addProperty("fromAnchorId", from.anchorId());
+                connection.addProperty("toAnchorId", to.anchorId());
+                connection.addProperty("fromEndpointId", from.endpointId());
+                connection.addProperty("toEndpointId", to.endpointId());
+                connection.add("from", from.roadPoint().asJson());
+                connection.add("to", to.roadPoint().asJson());
+                connections.add(connection);
+            }
         }
         plan.add("connections", connections);
+        plan.addProperty("endpointCount", endpointArray.size());
+        plan.addProperty("connectionCount", connections.size());
         return plan;
     }
 
     public static JsonObject register(ServerLevel level, JsonObject connectionPlan, String requestedProvider) {
         String provider = normalizeProvider(requestedProvider);
-        JsonObject report = new JsonObject();
-        report.addProperty("schemaVersion", "city_roadweaver_registration_report.v0.1");
-        report.addProperty("requestedProvider", provider);
-        report.addProperty("roadweaverAvailable", available());
-        report.addProperty("generateImmediately", false);
+        JsonObject report = baseReport(provider);
+        boolean roadWeaverAvailable = available();
+        report.addProperty("roadweaverAvailable", roadWeaverAvailable);
 
         if (PROVIDER_NONE.equals(provider)) {
-            report.addProperty("status", "skipped");
-            report.addProperty("reasonCode", "ROAD_PROVIDER_NONE");
-            report.addProperty("message", "Road generation disabled by request.");
-            return report;
+            return skipped(report, "ROAD_PROVIDER_NONE", "Road generation disabled by request.");
         }
         if (PROVIDER_WORLDEDIT_DEBUG.equals(provider)) {
-            report.addProperty("status", "skipped");
-            report.addProperty("reasonCode", "ROAD_PROVIDER_WORLDEDIT_DEBUG");
-            report.addProperty("message", "D7 debug road fallback will run after ledger completion.");
-            return report;
+            return skipped(report, "ROAD_PROVIDER_WORLDEDIT_DEBUG",
+                    "D7 debug road fallback will run after ledger completion.");
         }
-        if (!available()) {
-            if (PROVIDER_ROADWEAVER.equals(provider)) {
-                report.addProperty("status", "failed");
-                report.addProperty("reasonCode", "ROADWEAVER_UNAVAILABLE");
-                report.addProperty("message", "RoadWeaver mod is not loaded.");
-            } else {
-                report.addProperty("status", "skipped");
-                report.addProperty("reasonCode", "ROADWEAVER_UNAVAILABLE");
-                report.addProperty("message",
+        if (!roadWeaverAvailable) {
+            if (PROVIDER_AUTO.equals(provider)) {
+                return skipped(report, "ROADWEAVER_UNAVAILABLE",
                         "RoadWeaver mod is not loaded; automatic WorldEdit debug road fallback is disabled. "
                                 + "Use roadProvider=worldedit_debug for legacy debug roads.");
             }
-            return report;
+            throwRegistrationFailure(failure(report, "ROADWEAVER_UNAVAILABLE",
+                    "RoadWeaver mod is not loaded.", false));
         }
         if (level == null) {
-            report.addProperty("status", "failed");
-            report.addProperty("reasonCode", "ROADWEAVER_LEVEL_UNAVAILABLE");
-            report.addProperty("message", "ServerLevel is required for RoadWeaver registration.");
-            return report;
+            throwRegistrationFailure(failure(report, "ROADWEAVER_LEVEL_UNAVAILABLE",
+                    "ServerLevel is required for RoadWeaver registration.", false));
         }
 
-        try {
-            Class<?> api = Class.forName("net.shiroha233.roadweaver.api.RoadNetworkApi");
-            Method registerEndpoint = api.getMethod("registerStructureEndpoint",
-                    ServerLevel.class, BlockPos.class, String.class, boolean.class);
-            Method ensureConnection = api.getMethod("ensureConnection",
-                    ServerLevel.class, BlockPos.class, BlockPos.class, boolean.class);
+        JsonArray validationErrors = validateRegistrationPlan(connectionPlan);
+        if (!validationErrors.isEmpty()) {
+            JsonObject failed = failure(report, firstReason(validationErrors, REASON_REGISTRATION_FAILED),
+                    "RoadWeaver registration plan failed validation.", false);
+            failed.add("validationErrors", validationErrors.deepCopy());
+            throwRegistrationFailure(failed);
+        }
 
-            JsonArray endpointResults = new JsonArray();
+        JsonArray endpointResults = new JsonArray();
+        JsonArray connectionResults = new JsonArray();
+        boolean registrationStarted = false;
+        report.add("endpointResults", endpointResults);
+        report.add("connectionResults", connectionResults);
+        try {
+            Class<?> api;
+            Method registerEndpoint;
+            Method ensureConnection;
+            try {
+                api = Class.forName("net.shiroha233.roadweaver.api.RoadNetworkApi");
+                registerEndpoint = api.getMethod("registerStructureEndpoint",
+                        ServerLevel.class, BlockPos.class, String.class, boolean.class);
+                ensureConnection = api.getMethod("ensureConnection",
+                        ServerLevel.class, BlockPos.class, BlockPos.class, boolean.class);
+            } catch (ReflectiveOperationException ex) {
+                JsonObject failed = failure(report, "ROADWEAVER_API_UNAVAILABLE", message(ex), false);
+                throwRegistrationFailure(failed);
+                return failed;
+            }
+
             for (JsonElement elem : array(connectionPlan, "endpoints")) {
-                if (!elem.isJsonObject()) {
-                    continue;
-                }
                 JsonObject endpoint = elem.getAsJsonObject();
-                BlockPos pos = blockPos(endpoint.getAsJsonObject("roadPoint"));
-                registerEndpoint.invoke(null, level, pos, stringValue(endpoint, "structureId", ""), false);
+                registrationStarted = true;
+                registerEndpoint.invoke(null, level, blockPos(endpoint.getAsJsonObject("roadPoint")),
+                        stringValue(endpoint, "templateId", ""), false);
                 JsonObject item = new JsonObject();
+                item.addProperty("endpointId", stringValue(endpoint, "endpointId", ""));
                 item.addProperty("anchorId", stringValue(endpoint, "anchorId", ""));
+                item.addProperty("entranceId", stringValue(endpoint, "entranceId", ""));
                 item.add("roadPoint", endpoint.getAsJsonObject("roadPoint").deepCopy());
                 item.addProperty("status", "registered");
                 endpointResults.add(item);
             }
 
-            JsonArray connectionResults = new JsonArray();
             for (JsonElement elem : array(connectionPlan, "connections")) {
-                if (!elem.isJsonObject()) {
-                    continue;
-                }
                 JsonObject connection = elem.getAsJsonObject();
+                registrationStarted = true;
                 ensureConnection.invoke(null, level,
                         blockPos(connection.getAsJsonObject("from")),
-                        blockPos(connection.getAsJsonObject("to")),
-                        false);
+                        blockPos(connection.getAsJsonObject("to")), false);
                 JsonObject item = new JsonObject();
                 item.addProperty("connectionId", stringValue(connection, "connectionId", ""));
                 item.addProperty("fromAnchorId", stringValue(connection, "fromAnchorId", ""));
@@ -142,14 +236,19 @@ public final class CityRoadWeaverBridge {
             report.addProperty("status", "registered");
             report.addProperty("reasonCode", "ROADWEAVER_CONNECTIONS_REGISTERED");
             report.addProperty("message", "Registered City endpoints and planned RoadWeaver connections.");
-            report.add("endpointResults", endpointResults);
-            report.add("connectionResults", connectionResults);
+            report.addProperty("roadWeaverRegistered", true);
+            report.addProperty("partialRegistration", false);
+            report.addProperty("registrationStarted", true);
             return report;
-        } catch (ReflectiveOperationException ex) {
-            report.addProperty("status", "failed");
-            report.addProperty("reasonCode", "ROADWEAVER_API_UNAVAILABLE");
-            report.addProperty("message", ex.getMessage() == null ? ex.toString() : ex.getMessage());
-            return report;
+        } catch (RegistrationException ex) {
+            throw ex;
+        } catch (Throwable ex) {
+            JsonObject failed = failure(report, "ROADWEAVER_REGISTRATION_FAILED", message(ex),
+                    registrationStarted || endpointResults.size() > 0 || connectionResults.size() > 0);
+            failed.add("endpointResults", endpointResults.deepCopy());
+            failed.add("connectionResults", connectionResults.deepCopy());
+            throwRegistrationFailure(failed);
+            return failed;
         }
     }
 
@@ -159,7 +258,8 @@ public final class CityRoadWeaverBridge {
     }
 
     public static boolean roadWeaverRegistered(JsonObject registrationReport) {
-        return "registered".equals(stringValue(registrationReport, "status", ""));
+        return "registered".equals(stringValue(registrationReport, "status", ""))
+                && !booleanValue(registrationReport, "partialRegistration", false);
     }
 
     public static boolean available() {
@@ -171,75 +271,292 @@ public final class CityRoadWeaverBridge {
         }
     }
 
-    private static List<Endpoint> endpoints(JsonObject materializationPlan) {
-        List<Endpoint> endpoints = new ArrayList<>();
-        int index = 0;
-        for (JsonElement elem : array(materializationPlan, "plannedWorldgenStructures")) {
-            if (!elem.isJsonObject()) {
-                continue;
-            }
-            JsonObject item = elem.getAsJsonObject();
-            if (!"planned_worldgen".equals(stringValue(item, "status", ""))) {
-                continue;
-            }
-            BlockBounds actual = bounds(item.has("lockedActualFootprint") && item.get("lockedActualFootprint").isJsonObject()
-                    ? item.getAsJsonObject("lockedActualFootprint")
-                    : item.getAsJsonObject("actualFootprint"));
-            BlockPoint point = endpoint(actual);
-            endpoints.add(new Endpoint(
-                    stringValue(item, "anchorId", "anchor_" + index),
-                    stringValue(item, "structureId", "unknown"),
-                    intValue(item, "priority", index),
-                    actual,
-                    point));
-            index++;
+    private static JsonObject baseReport(String provider) {
+        JsonObject report = new JsonObject();
+        report.addProperty("schemaVersion", "city_roadweaver_registration_report.v0.1");
+        report.addProperty("requestedProvider", provider);
+        report.addProperty("generateImmediately", false);
+        report.addProperty("transactional", true);
+        report.addProperty("roadWeaverRegistered", false);
+        report.addProperty("partialRegistration", false);
+        report.addProperty("registrationStarted", false);
+        return report;
+    }
+
+    private static JsonObject skipped(JsonObject report, String reasonCode, String message) {
+        report.addProperty("status", "skipped");
+        report.addProperty("reasonCode", reasonCode);
+        report.addProperty("message", message);
+        return report;
+    }
+
+    private static JsonObject failure(JsonObject report, String reasonCode, String message,
+                                      boolean partialRegistration) {
+        report.addProperty("status", "failed");
+        report.addProperty("reasonCode", reasonCode);
+        report.addProperty("message", message);
+        report.addProperty("roadWeaverRegistered", false);
+        report.addProperty("partialRegistration", partialRegistration);
+        report.addProperty("registrationStarted", partialRegistration);
+        return report;
+    }
+
+    private static void throwRegistrationFailure(JsonObject report) {
+        throw new RegistrationException(report);
+    }
+
+    private static JsonArray validateRegistrationPlan(JsonObject connectionPlan) {
+        JsonArray errors = new JsonArray();
+        if (connectionPlan == null) {
+            addError(errors, "", REASON_REGISTRATION_FAILED,
+                    "Connection plan must be created from a fully validated transformed entrance plan.");
+            return errors;
         }
-        endpoints.sort(Comparator.comparingInt(Endpoint::priority).thenComparing(Endpoint::anchorId));
-        return List.copyOf(endpoints);
+        if ("failed".equals(stringValue(connectionPlan, "validationStatus", ""))) {
+            if (connectionPlan.has("validationErrors")
+                    && connectionPlan.get("validationErrors").isJsonArray()) {
+                return connectionPlan.getAsJsonArray("validationErrors").deepCopy();
+            }
+            addError(errors, "", REASON_REGISTRATION_FAILED,
+                    "Connection plan must be created from a fully validated transformed entrance plan.");
+            return errors;
+        }
+        JsonArray endpoints = array(connectionPlan, "endpoints");
+        if (endpoints.isEmpty()) {
+            addError(errors, "", REASON_REGISTRATION_FAILED,
+                    "At least one transformed road entrance is required for RoadWeaver registration.");
+            return errors;
+        }
+        for (JsonElement elem : endpoints) {
+            if (!elem.isJsonObject()) {
+                addError(errors, "", REASON_REGISTRATION_FAILED, "Endpoint is not an object.");
+                continue;
+            }
+            JsonObject endpoint = elem.getAsJsonObject();
+            JsonObject point = jsonObject(endpoint, "roadPoint");
+            if (point == null || !point.has("x") || !point.has("z")
+                    || stringValue(endpoint, "direction", "").isBlank()
+                    || stringValue(endpoint, "templateId", "").isBlank()
+                    || stringValue(endpoint, "templateHash", "").isBlank()) {
+                addError(errors, stringValue(endpoint, "anchorId", ""), REASON_REGISTRATION_FAILED,
+                        "Endpoint coordinates, direction, templateId and templateHash are required.");
+            }
+        }
+        for (JsonElement elem : array(connectionPlan, "connections")) {
+            if (!elem.isJsonObject()) {
+                addError(errors, "", REASON_REGISTRATION_FAILED, "Connection is not an object.");
+                continue;
+            }
+            JsonObject connection = elem.getAsJsonObject();
+            JsonObject from = jsonObject(connection, "from");
+            JsonObject to = jsonObject(connection, "to");
+            if (from == null || to == null || !from.has("x") || !from.has("z")
+                    || !to.has("x") || !to.has("z")
+                    || stringValue(connection, "connectionId", "").isBlank()) {
+                addError(errors, "", REASON_REGISTRATION_FAILED,
+                        "Connection endpoints and connectionId are required.");
+            }
+        }
+        return errors;
     }
 
-    private static BlockPoint endpoint(BlockBounds bounds) {
-        return new BlockPoint(bounds.center().x(), bounds.maxZ() + 3);
+    private static String firstReason(JsonArray errors, String fallback) {
+        if (!errors.isEmpty() && errors.get(0).isJsonObject()) {
+            return stringValue(errors.get(0).getAsJsonObject(), "reasonCode", fallback);
+        }
+        return fallback;
     }
 
-    private static JsonArray array(JsonObject obj, String key) {
-        return obj != null && obj.has(key) && obj.get(key).isJsonArray()
-                ? obj.getAsJsonArray(key)
-                : new JsonArray();
+    private static JsonObject placementPlan(JsonObject item) {
+        for (String key : List.of("templatePlacementPlan", "placementPlan", "templatePlacement")) {
+            JsonObject value = jsonObject(item, key);
+            if (value != null) {
+                return value;
+            }
+        }
+        return item.has("transformed") || item.has("transformedRoadEntrances") ? item : null;
+    }
+
+    private static BlockPoint placementAnchor(JsonObject placement, JsonObject item) {
+        BlockPoint point = point(jsonObject(placement, "anchorBlock"));
+        if (point != null) {
+            return point;
+        }
+        point = point(jsonObject(placement, "worldAnchor"));
+        if (point != null) {
+            return point;
+        }
+        point = point(jsonObject(item, "anchorBlock"));
+        if (point != null) {
+            return point;
+        }
+        point = point(jsonObject(item, "worldAnchor"));
+        return point != null ? point : point(jsonObject(item, "commandAnchorBlock"));
+    }
+
+    private static BlockPoint entranceWorldPoint(JsonObject entrance, BlockPoint anchor) {
+        BlockPoint world = point(jsonObject(entrance, "worldPosition"));
+        if (world == null) {
+            world = point(jsonObject(entrance, "worldPoint"));
+        }
+        if (world == null) {
+            world = point(jsonObject(entrance, "roadPoint"));
+        }
+        if (world != null) {
+            return world;
+        }
+        JsonObject relative = jsonObject(entrance, "relativePosition");
+        if (relative == null) {
+            relative = jsonObject(entrance, "position");
+        }
+        BlockPoint relativePoint = point(relative);
+        return relativePoint == null || anchor == null
+                ? null : new BlockPoint(anchor.x() + relativePoint.x(), anchor.z() + relativePoint.z());
+    }
+
+    private static JsonObject jsonObject(JsonObject object, String key) {
+        return object != null && object.has(key) && object.get(key).isJsonObject()
+                ? object.getAsJsonObject(key) : null;
+    }
+
+    private static JsonArray jsonArray(JsonObject object, String key) {
+        return object != null && object.has(key) && object.get(key).isJsonArray()
+                ? object.getAsJsonArray(key) : null;
+    }
+
+    private static BlockPoint point(JsonObject object) {
+        return object != null && object.has("x") && object.has("z")
+                ? new BlockPoint(object.get("x").getAsInt(), object.get("z").getAsInt()) : null;
     }
 
     private static BlockPos blockPos(JsonObject obj) {
         return new BlockPos(intValue(obj, "x", 0), 0, intValue(obj, "z", 0));
     }
 
-    private static BlockBounds bounds(JsonObject obj) {
-        return new BlockBounds(intValue(obj, "minX", 0), intValue(obj, "minZ", 0),
-                intValue(obj, "maxX", 0), intValue(obj, "maxZ", 0));
+    private static BlockBounds optionalBounds(JsonObject object, String... keys) {
+        for (String key : keys) {
+            JsonObject value = jsonObject(object, key);
+            if (value != null && value.has("minX") && value.has("minZ")
+                    && value.has("maxX") && value.has("maxZ")) {
+                return new BlockBounds(intValue(value, "minX", 0), intValue(value, "minZ", 0),
+                        intValue(value, "maxX", 0), intValue(value, "maxZ", 0));
+            }
+        }
+        return null;
+    }
+
+    private static String firstText(JsonObject primary, JsonObject secondary, String... keys) {
+        for (String key : keys) {
+            String value = stringValue(primary, key, "");
+            if (!value.isBlank()) {
+                return value;
+            }
+            value = stringValue(secondary, key, "");
+            if (!value.isBlank()) {
+                return value;
+            }
+        }
+        return "";
+    }
+
+    private static JsonArray array(JsonObject obj, String key) {
+        return jsonArray(obj, key) == null ? new JsonArray() : jsonArray(obj, key);
+    }
+
+    private static void addError(JsonArray errors, String anchorId, String reasonCode, String message) {
+        JsonObject error = new JsonObject();
+        error.addProperty("anchorId", anchorId == null ? "" : anchorId);
+        error.addProperty("reasonCode", reasonCode);
+        error.addProperty("message", message);
+        errors.add(error);
+    }
+
+    private static String message(Throwable ex) {
+        Throwable cause = ex;
+        if (ex.getCause() != null) {
+            cause = ex.getCause();
+        }
+        return cause.getMessage() == null ? cause.toString() : cause.getMessage();
     }
 
     private static String stringValue(JsonObject obj, String key, String fallback) {
         return obj != null && obj.has(key) && !obj.get(key).isJsonNull()
-                ? obj.get(key).getAsString()
-                : fallback;
+                ? obj.get(key).getAsString() : fallback;
     }
 
     private static int intValue(JsonObject obj, String key, int fallback) {
         return obj != null && obj.has(key) && !obj.get(key).isJsonNull()
-                ? obj.get(key).getAsInt()
-                : fallback;
+                ? obj.get(key).getAsInt() : fallback;
     }
 
-    private record Endpoint(String anchorId, String structureId, int priority, BlockBounds footprint,
-                            BlockPoint roadPoint) {
-        JsonObject asJson() {
+    private static boolean booleanValue(JsonObject obj, String key, boolean fallback) {
+        return obj != null && obj.has(key) && !obj.get(key).isJsonNull()
+                ? obj.get(key).getAsBoolean() : fallback;
+    }
+
+    public record EndpointExtraction(List<RoadEndpoint> endpoints, JsonArray errors) {
+        public EndpointExtraction {
+            endpoints = List.copyOf(Objects.requireNonNull(endpoints, "endpoints"));
+            errors = Objects.requireNonNull(errors, "errors").deepCopy();
+        }
+
+        public boolean valid() {
+            return errors.isEmpty();
+        }
+    }
+
+    public record RoadEndpoint(String endpointId, String anchorId, String entranceId, String structureId,
+                               String templateId, String templateHash, int priority, BlockBounds footprint,
+                               BlockPoint roadPoint, String direction) {
+        public RoadEndpoint {
+            endpointId = requireText(endpointId, "endpointId");
+            anchorId = requireText(anchorId, "anchorId");
+            entranceId = requireText(entranceId, "entranceId");
+            structureId = requireText(structureId, "structureId");
+            templateId = requireText(templateId, "templateId");
+            templateHash = requireText(templateHash, "templateHash");
+            Objects.requireNonNull(roadPoint, "roadPoint");
+            direction = requireText(direction, "direction");
+        }
+
+        public JsonObject asJson() {
             JsonObject obj = new JsonObject();
+            obj.addProperty("endpointId", endpointId);
             obj.addProperty("anchorId", anchorId);
+            obj.addProperty("entranceId", entranceId);
             obj.addProperty("structureId", structureId);
+            obj.addProperty("templateId", templateId);
+            obj.addProperty("templateHash", templateHash);
             obj.addProperty("priority", priority);
-            obj.add("lockedActualFootprint", boundsJson(footprint));
+            obj.addProperty("direction", direction);
+            obj.addProperty("coordinateSource", "transformed_road_entrance");
             obj.add("roadPoint", roadPoint.asJson());
+            if (footprint != null) {
+                obj.add("lockedActualFootprint", boundsJson(footprint));
+            }
             return obj;
         }
+    }
+
+    public static final class RegistrationException extends IllegalArgumentException {
+        private final JsonObject report;
+
+        public RegistrationException(JsonObject report) {
+            super(stringValue(report, "reasonCode", REASON_REGISTRATION_FAILED) + ": "
+                    + stringValue(report, "message", "RoadWeaver registration failed."));
+            this.report = report.deepCopy();
+        }
+
+        public JsonObject report() {
+            return report.deepCopy();
+        }
+    }
+
+    private static String requireText(String value, String field) {
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException(field + " must not be blank.");
+        }
+        return value.trim();
     }
 
     private static JsonObject boundsJson(BlockBounds bounds) {
