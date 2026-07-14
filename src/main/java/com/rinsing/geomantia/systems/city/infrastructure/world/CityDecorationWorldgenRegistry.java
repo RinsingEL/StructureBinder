@@ -96,13 +96,13 @@ public final class CityDecorationWorldgenRegistry {
         }
         validateStyleProfile(plan, STYLE_LOADER.load(catalogPath, catalog));
         synchronized (CityDecorationWorldgenRegistry.class) {
+            ActiveKey key = new ActiveKey(dimension, plan.cityId());
             for (ActivePlan existing : ACTIVE.values()) {
-                if (!existing.plan().catalogHash().equals(catalog.catalogHash())) {
+                if (!existing.key().equals(key) && !existing.plan().catalogHash().equals(catalog.catalogHash())) {
                     throw new IllegalArgumentException("CITY_DECORATION_ACTIVE_CATALOG_HASH_MISMATCH: "
                             + existing.key().dimensionId() + "/" + existing.key().cityId());
                 }
             }
-            ActiveKey key = new ActiveKey(dimension, plan.cityId());
             ACTIVE.put(key, new ActivePlan(key, plan, catalog));
             SUPPRESSIONS.entrySet().removeIf(entry -> entry.getValue().key().equals(key));
             FEATURE_OWNER_APPLICATIONS.clear();
@@ -135,7 +135,7 @@ public final class CityDecorationWorldgenRegistry {
                     + plan.catalogHash() + ", catalog=" + catalog.catalogHash());
         }
         validateStyleProfile(plan, STYLE_LOADER.load(catalogPath, catalog));
-        readState(server, catalogPath, null);
+        readState(server, catalogPath, null, false);
     }
 
     public static void preflightDeactivate(String dimensionId,
@@ -154,7 +154,7 @@ public final class CityDecorationWorldgenRegistry {
                 return;
             }
         }
-        readState(server, catalogPath, key);
+        readState(server, catalogPath, key, false);
     }
 
     public static JsonObject deactivate(String dimensionId,
@@ -196,7 +196,7 @@ public final class CityDecorationWorldgenRegistry {
         Path server = normalized(serverRoot, "CITY_DECORATION_SERVER_ROOT_REQUIRED");
         Path catalogPath = catalogRoot == null ? null
                 : normalized(catalogRoot, "CITY_DECORATION_CATALOG_ROOT_REQUIRED");
-        LoadedState loaded = readState(server, catalogPath, excludedKey);
+        LoadedState loaded = readState(server, catalogPath, excludedKey, true);
         ACTIVE.clear();
         ACTIVE.putAll(loaded.activePlans());
         SUPPRESSIONS.clear();
@@ -207,6 +207,11 @@ public final class CityDecorationWorldgenRegistry {
         ledger = loaded.ledger();
         ledgerPersistencePending = false;
         nextLedgerPersistenceRetryNanos = 0L;
+        if (loaded.staleCatalogPlanCount() > 0) {
+            persistActive();
+            LOGGER.warn("Discarded {} stale City decoration active plan(s) after catalog change; replan before activation.",
+                    loaded.staleCatalogPlanCount());
+        }
         if (!loaded.ledgerExists()) {
             persistLedger();
         }
@@ -214,8 +219,12 @@ public final class CityDecorationWorldgenRegistry {
                 ACTIVE.size(), appliedEntries().size());
     }
 
-    private static LoadedState readState(Path server, Path catalogPath, ActiveKey excludedKey) {
+    private static LoadedState readState(Path server,
+                                         Path catalogPath,
+                                         ActiveKey excludedKey,
+                                         boolean discardStaleCatalogPlans) {
         Map<ActiveKey, ActivePlan> loadedActive = new LinkedHashMap<>();
+        int staleCatalogPlanCount = 0;
 
         Path activePath = activePath(server);
         if (Files.isRegularFile(activePath)) {
@@ -250,11 +259,17 @@ public final class CityDecorationWorldgenRegistry {
                 if (!cityId.equals(plan.cityId())) {
                     throw new IllegalArgumentException("CITY_DECORATION_ACTIVE_CITY_ID_MISMATCH: " + cityId);
                 }
-                if (!plan.catalogHash().equals(catalog.catalogHash())) {
-                    throw new IllegalArgumentException("CITY_DECORATION_CATALOG_HASH_MISMATCH: " + cityId);
-                }
                 if (!requiredString(entry, "catalogHash").equals(plan.catalogHash())) {
                     throw new IllegalArgumentException("CITY_DECORATION_ACTIVE_CATALOG_HASH_MISMATCH: " + cityId);
+                }
+                if (!plan.catalogHash().equals(catalog.catalogHash())) {
+                    if (!discardStaleCatalogPlans) {
+                        throw new IllegalArgumentException("CITY_DECORATION_CATALOG_HASH_MISMATCH: " + cityId);
+                    }
+                    staleCatalogPlanCount++;
+                    LOGGER.warn("Discarding stale City decoration plan {}/{} because catalog hash changed; replan is required.",
+                            dimension, cityId);
+                    continue;
                 }
                 validateStyleProfile(plan, styles);
                 ActiveKey key = new ActiveKey(dimension, cityId);
@@ -269,7 +284,7 @@ public final class CityDecorationWorldgenRegistry {
         JsonObject loadedLedger = ledgerExists
                 ? readObject(ledgerPath, "CITY_DECORATION_LEDGER_READ_FAILED") : emptyLedger();
         requireSchema(loadedLedger, LEDGER_SCHEMA, "CITY_DECORATION_LEDGER_SCHEMA_UNSUPPORTED");
-        return new LoadedState(Map.copyOf(loadedActive), loadedLedger, ledgerExists);
+        return new LoadedState(Map.copyOf(loadedActive), loadedLedger, ledgerExists, staleCatalogPlanCount);
     }
 
     private static void validateStyleProfile(CompiledDecorationProgramPlan plan,
@@ -529,6 +544,31 @@ public final class CityDecorationWorldgenRegistry {
         return ledgerPath(serverRoot);
     }
 
+    /**
+     * Stops every active decoration program after a confirmed catalog migration. Ledger entries are retained so a
+     * newly compiled program never reinterprets already-written world state as its own output.
+     */
+    public static synchronized JsonObject deactivateAllForCatalogUpgrade(Path serverRoot) {
+        Path server = normalized(serverRoot, "CITY_DECORATION_SERVER_ROOT_REQUIRED");
+        int deactivatedCount;
+        if (server.equals(activeServerRoot)) {
+            deactivatedCount = ACTIVE.size();
+            ACTIVE.clear();
+            SUPPRESSIONS.clear();
+            IN_FLIGHT.clear();
+            FEATURE_OWNER_APPLICATIONS.clear();
+            persistActive();
+        } else {
+            deactivatedCount = persistedActivePlanCount(server);
+            atomicWrite(activePath(server), emptyActivePlans(), "CITY_DECORATION_ACTIVE_PLAN_WRITE_FAILED");
+        }
+        JsonObject response = new JsonObject();
+        response.addProperty("deactivatedPlanCount", deactivatedCount);
+        response.addProperty("ledgerRetained", true);
+        response.addProperty("activePlansPath", activePath(server).toString());
+        return response;
+    }
+
     static synchronized void resetForTests() {
         ACTIVE.clear();
         SUPPRESSIONS.clear();
@@ -675,9 +715,12 @@ public final class CityDecorationWorldgenRegistry {
     }
 
     private static synchronized void persistActive() {
-        JsonObject root = new JsonObject();
-        root.addProperty("schemaVersion", ACTIVE_SCHEMA);
-        JsonArray plans = new JsonArray();
+        atomicWrite(activePath(activeServerRoot), activePlansDocument(), "CITY_DECORATION_ACTIVE_PLAN_WRITE_FAILED");
+    }
+
+    private static JsonObject activePlansDocument() {
+        JsonObject root = emptyActivePlans();
+        JsonArray plans = root.getAsJsonArray("plans");
         ACTIVE.values().stream().sorted(Comparator.comparing(ActivePlan::key)).forEach(active -> {
             JsonObject entry = new JsonObject();
             entry.addProperty("dimensionId", active.key().dimensionId());
@@ -686,8 +729,24 @@ public final class CityDecorationWorldgenRegistry {
             entry.add("compiledPlan", CODEC.toJson(active.plan()));
             plans.add(entry);
         });
-        root.add("plans", plans);
-        atomicWrite(activePath(activeServerRoot), root, "CITY_DECORATION_ACTIVE_PLAN_WRITE_FAILED");
+        return root;
+    }
+
+    private static JsonObject emptyActivePlans() {
+        JsonObject root = new JsonObject();
+        root.addProperty("schemaVersion", ACTIVE_SCHEMA);
+        root.add("plans", new JsonArray());
+        return root;
+    }
+
+    private static int persistedActivePlanCount(Path serverRoot) {
+        Path path = activePath(serverRoot);
+        if (!Files.isRegularFile(path)) {
+            return 0;
+        }
+        JsonObject persisted = readObject(path, "CITY_DECORATION_ACTIVE_PLAN_READ_FAILED");
+        requireSchema(persisted, ACTIVE_SCHEMA, "CITY_DECORATION_ACTIVE_PLAN_SCHEMA_UNSUPPORTED");
+        return requiredArray(persisted, "plans").size();
     }
 
     private static synchronized void ensureLedgerFile() {
@@ -855,7 +914,8 @@ public final class CityDecorationWorldgenRegistry {
 
     private record LoadedState(Map<ActiveKey, ActivePlan> activePlans,
                                JsonObject ledger,
-                               boolean ledgerExists) {
+                               boolean ledgerExists,
+                               int staleCatalogPlanCount) {
     }
 
     private record SuppressionRecord(ActiveKey key, String fragmentId,

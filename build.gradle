@@ -40,8 +40,8 @@ def devUseRoadWeaver = providers.gradleProperty('geomantiaDevUseRoadWeaver')
 def devUseTectonic = providers.gradleProperty('geomantiaDevUseTectonic')
         .orElse('false')
         .get()
-def devRoadWeaverVersion = '2.2.2-1.20.1'
-def devRoadWeaverModrinthVersionId = '2Jo2Wr3J'
+def devRoadWeaverVersion = '2.3.0-1.20.1'
+def devRoadWeaverModrinthVersionId = '7dhS67wp'
 def devRoadWeaverJarName = "roadweaver-forge-${devRoadWeaverVersion}.jar"
 def devRoadWeaverJarFile = layout.projectDirectory.file("libs/local/roadweaver/${devRoadWeaverVersion}/${devRoadWeaverJarName}")
 def devRoadWeaverJarUrl = "https://cdn.modrinth.com/data/6jk8Pote/versions/${devRoadWeaverModrinthVersionId}/${devRoadWeaverJarName}"

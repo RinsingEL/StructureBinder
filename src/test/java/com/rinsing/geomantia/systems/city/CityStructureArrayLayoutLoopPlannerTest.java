@@ -16,6 +16,7 @@ import com.rinsing.geomantia.systems.city.domain.model.CitySiteContext;
 import com.rinsing.geomantia.systems.city.domain.model.LandformPatchSummary;
 import com.rinsing.geomantia.systems.city.domain.model.PatchMemberCell;
 import com.rinsing.geomantia.systems.city.infrastructure.json.CityJson;
+import com.rinsing.geomantia.systems.city.infrastructure.world.CityRoadWeaverBridge;
 import com.rinsing.geomantia.systems.gis.domain.cell.LandformType;
 import com.rinsing.geomantia.systems.gis.domain.landform.LandformPatch;
 import com.rinsing.geomantia.systems.gis.domain.landform.PatchFlag;
@@ -27,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -34,6 +36,94 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityStructureArrayLayoutLoopPlannerTest {
+
+    @Test
+    void templateArrayUsesNbtFootprintsAndEmitsRoadWeaverEntrances() throws Exception {
+        Fixture fixture = fixture();
+        JsonObject plan = arrayLayoutPlan();
+        plan.add("templateCatalog", templateCatalog());
+        CityStructureArrayLayoutLoopPlanner planner = new CityStructureArrayLayoutLoopPlanner();
+        CityStructureArrayLayoutLoopPlanner.CreateResult created = planner.create(
+                fixture.baseDir(), fixture.review(), fixture.terraSenseSource(), plan,
+                CityStructureEnvelopeFacts.empty(), new JsonObject(), new JsonObject());
+
+        JsonObject item = JsonParser.parseString("""
+                {
+                  "arrayId": "template_market_row",
+                  "plannerType": "compound_cluster",
+                  "role": "commercial",
+                  "candidatePatchRefs": ["plain_big"],
+                  "startSector": "center",
+                  "fillPool": [
+                    {"templateId":"test:market_stall","variantId":"oak","rotation":"CLOCKWISE_90"}
+                  ],
+                  "countPolicy":{"minCount":2,"targetCount":2,"maxCount":2},
+                  "variantSelectionMode":"round_robin"
+                }
+                """).getAsJsonObject();
+        CityStructureArrayLayoutLoopPlanner.ExecuteResult executed = planner.execute(
+                fixture.baseDir(), fixture.review(), fixture.terraSenseSource(), created.loopState(), item,
+                CityStructureEnvelopeFacts.empty());
+
+        assertTrue(executed.asJson().get("ok").getAsBoolean());
+        JsonArray anchors = executed.loopState().getAsJsonArray("arrayAnchors");
+        assertEquals(2, anchors.size());
+        for (JsonElement anchorElement : anchors) {
+            JsonObject anchor = anchorElement.getAsJsonObject();
+            assertEquals("template:test:market/stall", anchor.get("structureId").getAsString());
+            assertEquals("test:market_stall", anchor.get("templateId").getAsString());
+            assertEquals("CLOCKWISE_90", anchor.get("rotation").getAsString());
+            BlockBounds footprint = bounds(anchor.getAsJsonObject("actualFootprint"));
+            assertEquals(5, footprint.widthBlocks());
+            assertEquals(9, footprint.heightBlocks());
+            assertEquals(9, anchor.getAsJsonObject("templateSize").get("width").getAsInt());
+            assertFalse(anchor.has("templateFootprint"));
+            JsonObject placement = anchor.getAsJsonObject("templatePlacementPlan");
+            assertEquals(9, placement.getAsJsonObject("templateSize").get("width").getAsInt());
+            assertEquals(1, placement.getAsJsonObject("transformed").getAsJsonArray("roadEntrances").size());
+        }
+
+        JsonObject materialization = new JsonObject();
+        JsonArray plannedWorldgenStructures = anchors.deepCopy();
+        for (JsonElement element : plannedWorldgenStructures) {
+            element.getAsJsonObject().addProperty("status", "planned_worldgen");
+        }
+        materialization.add("plannedWorldgenStructures", plannedWorldgenStructures);
+        CityRoadWeaverBridge.EndpointExtraction endpoints = CityRoadWeaverBridge.extractRoadEndpoints(materialization);
+        assertTrue(endpoints.valid(), endpoints.errors().toString());
+        assertEquals(2, endpoints.endpoints().size());
+    }
+
+    @Test
+    void templateArrayRejectsCallerSuppliedFootprintGeometry() throws Exception {
+        Fixture fixture = fixture();
+        JsonObject plan = arrayLayoutPlan();
+        plan.add("templateCatalog", templateCatalog());
+        CityStructureArrayLayoutLoopPlanner planner = new CityStructureArrayLayoutLoopPlanner();
+        CityStructureArrayLayoutLoopPlanner.CreateResult created = planner.create(
+                fixture.baseDir(), fixture.review(), fixture.terraSenseSource(), plan,
+                CityStructureEnvelopeFacts.empty(), new JsonObject(), new JsonObject());
+
+        JsonObject item = JsonParser.parseString("""
+                {
+                  "arrayId": "invalid_template_geometry",
+                  "plannerType": "compound_cluster",
+                  "candidatePatchRefs": ["plain_big"],
+                  "startSector": "center",
+                  "fillPool": [{
+                    "templateId":"test:market_stall",
+                    "variantId":"oak",
+                    "templateFootprint":{"minX":0,"minZ":0,"maxX":99,"maxZ":99}
+                  }],
+                  "countPolicy":{"minCount":1,"targetCount":1,"maxCount":1}
+                }
+                """).getAsJsonObject();
+
+        IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
+                () -> planner.execute(fixture.baseDir(), fixture.review(), fixture.terraSenseSource(),
+                        created.loopState(), item, CityStructureEnvelopeFacts.empty()));
+        assertTrue(error.getMessage().contains("D4_ARRAY_LAYOUT_TEMPLATE_GEOMETRY_INPUT_FORBIDDEN"));
+    }
 
     @Test
     void loopExecutesFivePlannerTypesAndProducesNonOverlappingAnchors() throws Exception {
@@ -484,6 +574,114 @@ class CityStructureArrayLayoutLoopPlannerTest {
     }
 
     @Test
+    void v05ContinuousGuideLineKeepsItsInnerRowAtTheRequestedBodyGap() throws Exception {
+        Fixture fixture = fixture();
+        CityStructureEnvelopeFacts childFacts = stableD2Facts(fixture, "minecraft:desert_pyramid", 24);
+        JsonObject parentFact = JsonParser.parseString("""
+                {"collisionEnvelopeSource":"stableMaxEnvelope",
+                "localEnvelopeP95":{"minX":-18,"minZ":-18,"maxX":18,"maxZ":18},
+                "stableMaxEnvelope":{"minX":-18,"minZ":-18,"maxX":18,"maxZ":18}}
+                """).getAsJsonObject();
+        JsonObject occupiedMap = JsonParser.parseString("""
+                {"anchors":[{"anchorId":"manor_core","structureId":"minecraft:desert_pyramid",
+                "anchorBlock":{"x":0,"z":0},
+                "plannedFootprint":{"minX":-10,"minZ":-6,"maxX":9,"maxZ":5},
+                "collisionEnvelope":{"minX":-26,"minZ":-26,"maxX":26,"maxZ":26}}]}
+                """).getAsJsonObject();
+        occupiedMap.getAsJsonArray("anchors").get(0).getAsJsonObject().add("structureEnvelopeFact", parentFact);
+        CityStructureArrayLayoutLoopPlanner planner = new CityStructureArrayLayoutLoopPlanner();
+        CityStructureArrayLayoutLoopPlanner.CreateResult created = planner.create(
+                fixture.baseDir(), fixture.review(), fixture.terraSenseSource(), arrayLayoutPlanV04(),
+                childFacts, new JsonObject(), occupiedMap);
+        JsonObject request = expansionRequest(fixture.review());
+        request.remove("targetPatchRef");
+        request.add("expansionPolicy", JsonParser.parseString("""
+                {"actualBodyGapMin":16,"actualBodyGapMax":30,"frontierExpansionStepBlocks":16}
+                """).getAsJsonObject());
+        JsonObject item = request.getAsJsonObject("nextArrayLayoutPlanItem");
+        item.addProperty("arrayId", "market_street");
+        item.addProperty("plannerType", "guide_line_dual_side");
+        item.add("countPolicy", JsonParser.parseString("""
+                {"minCount":4,"targetCount":4,"maxCount":4}
+                """).getAsJsonObject());
+
+        CityStructureArrayLayoutLoopPlanner.ExpansionCandidateSetResult planned = planner.planExpansionCandidates(
+                fixture.baseDir(), fixture.review(), fixture.terraSenseSource(), created.loopState(), request,
+                childFacts);
+        assertEquals(3, planned.candidateSet().getAsJsonArray("arrayCandidates").size());
+        for (JsonElement candidateElement : planned.candidateSet().getAsJsonArray("arrayCandidates")) {
+            JsonObject candidate = candidateElement.getAsJsonObject();
+            assertEquals(4, candidate.getAsJsonArray("items").size());
+            assertTrue(candidate.get("actualBodyGapBlocks").getAsInt() >= 16);
+            assertTrue(candidate.get("actualBodyGapBlocks").getAsInt() <= 30);
+            for (JsonElement itemElement : candidate.getAsJsonArray("items")) {
+                JsonObject body = itemElement.getAsJsonObject().getAsJsonObject("plannedFootprint");
+                assertTrue(body.get("minX").getAsInt() - 18 - 1 >= 16,
+                        "every guide-line member must remain beyond the continuous frontier minimum gap");
+            }
+        }
+    }
+
+    @Test
+    void v05ContinuousMixedBodyClusterUsesTheLargestChildForItsFrontier() throws Exception {
+        Fixture fixture = fixture();
+        CityStructureEnvelopeFacts childFacts = stableD2Facts(fixture, Map.of(
+                "minecraft:desert_pyramid", 24,
+                "minecraft:jungle_pyramid", 52));
+        JsonObject parentFact = JsonParser.parseString("""
+                {"collisionEnvelopeSource":"stableMaxEnvelope",
+                "localEnvelopeP95":{"minX":-18,"minZ":-18,"maxX":18,"maxZ":18},
+                "stableMaxEnvelope":{"minX":-18,"minZ":-18,"maxX":18,"maxZ":18}}
+                """).getAsJsonObject();
+        JsonObject occupiedMap = JsonParser.parseString("""
+                {"anchors":[{"anchorId":"manor_core","structureId":"minecraft:desert_pyramid",
+                "anchorBlock":{"x":0,"z":0},
+                "plannedFootprint":{"minX":-10,"minZ":-6,"maxX":9,"maxZ":5},
+                "collisionEnvelope":{"minX":-26,"minZ":-26,"maxX":26,"maxZ":26}}]}
+                """).getAsJsonObject();
+        occupiedMap.getAsJsonArray("anchors").get(0).getAsJsonObject().add("structureEnvelopeFact", parentFact);
+        CityStructureArrayLayoutLoopPlanner planner = new CityStructureArrayLayoutLoopPlanner();
+        CityStructureArrayLayoutLoopPlanner.CreateResult created = planner.create(
+                fixture.baseDir(), fixture.review(), fixture.terraSenseSource(), arrayLayoutPlanV04(),
+                childFacts, new JsonObject(), occupiedMap);
+        JsonObject request = expansionRequest(fixture.review());
+        request.remove("targetPatchRef");
+        request.addProperty("direction", "north");
+        request.add("expansionPolicy", JsonParser.parseString("""
+                {"actualBodyGapMin":16,"actualBodyGapMax":30,"frontierExpansionStepBlocks":16}
+                """).getAsJsonObject());
+        JsonObject item = request.getAsJsonObject("nextArrayLayoutPlanItem");
+        item.addProperty("arrayId", "mixed_farmstead");
+        item.add("fillPool", JsonParser.parseString("""
+                [{"structureId":"minecraft:desert_pyramid","weight":1},
+                 {"structureId":"minecraft:jungle_pyramid","weight":1}]
+                """).getAsJsonArray());
+        item.add("countPolicy", JsonParser.parseString("""
+                {"minCount":2,"targetCount":2,"maxCount":2}
+                """).getAsJsonObject());
+        item.add("compoundCluster", JsonParser.parseString("""
+                {"shape":"grid","rows":1,"columns":2}
+                """).getAsJsonObject());
+
+        CityStructureArrayLayoutLoopPlanner.ExpansionCandidateSetResult planned = planner.planExpansionCandidates(
+                fixture.baseDir(), fixture.review(), fixture.terraSenseSource(), created.loopState(), request,
+                childFacts);
+        assertEquals(3, planned.candidateSet().getAsJsonArray("arrayCandidates").size());
+        for (JsonElement candidateElement : planned.candidateSet().getAsJsonArray("arrayCandidates")) {
+            JsonObject candidate = candidateElement.getAsJsonObject();
+            assertEquals(2, candidate.getAsJsonArray("items").size());
+            assertTrue(candidate.get("actualBodyGapBlocks").getAsInt() >= 16);
+            assertTrue(candidate.get("actualBodyGapBlocks").getAsInt() <= 30);
+            int nearestGap = Integer.MAX_VALUE;
+            for (JsonElement itemElement : candidate.getAsJsonArray("items")) {
+                JsonObject body = itemElement.getAsJsonObject().getAsJsonObject("plannedFootprint");
+                nearestGap = Math.min(nearestGap, -18 - body.get("maxZ").getAsInt() - 1);
+            }
+            assertEquals(candidate.get("actualBodyGapBlocks").getAsInt(), nearestGap);
+        }
+    }
+
+    @Test
     void v04SouthFourHouseGridKeepsItsFirstBodyInsideTheNearFrontierRing() throws Exception {
         Fixture fixture = fixture();
         CityStructureEnvelopeFacts childFacts = stableD2Facts(fixture, "minecraft:desert_pyramid", 24);
@@ -914,6 +1112,31 @@ class CityStructureArrayLayoutLoopPlannerTest {
         }
     }
 
+    private static JsonObject templateCatalog() {
+        return JsonParser.parseString("""
+                {
+                  "schemaVersion":"city_template_catalog.v0.1",
+                  "templates":[
+                    {
+                      "buildingSemantic":"commerce.market_stall",
+                      "style":"oak",
+                      "templateId":"test:market_stall",
+                      "templateRef":"test:market/stall",
+                      "contentHash":"market-stall-v1",
+                      "variantId":"oak",
+                      "rawSize":{"width":9,"height":5,"depth":5},
+                      "allowedRotations":["NONE","CLOCKWISE_90"],
+                      "allowedMirrors":["NONE"],
+                      "roadEntrances":[{"entranceId":"front","x":4,"z":0,"direction":"NORTH"}],
+                      "terrainPosePolicy":"grounded",
+                      "supportPolicy":"none",
+                      "clearanceBlocks":2
+                    }
+                  ]
+                }
+                """).getAsJsonObject();
+    }
+
     private static JsonObject arrayLayoutPlan() {
         return JsonParser.parseString("""
                 {
@@ -1149,23 +1372,33 @@ class CityStructureArrayLayoutLoopPlannerTest {
 
     private static CityStructureEnvelopeFacts stableD2Facts(Fixture fixture, String structureId,
                                                             int halfExtent) throws Exception {
+        return stableD2Facts(fixture, Map.of(structureId, halfExtent));
+    }
+
+    private static CityStructureEnvelopeFacts stableD2Facts(Fixture fixture,
+                                                            Map<String, Integer> halfExtents) throws Exception {
         CityStructureEnvelopeProfiler.Result result = new CityStructureEnvelopeProfiler()
-                .profile(fixture.baseDir(), fixture.terraSenseSource(), List.of(structureId), 16,
+                .profile(fixture.baseDir(), fixture.terraSenseSource(), new ArrayList<>(halfExtents.keySet()), 16,
                         (profile, sampleIndex) -> CityStructureEnvelopeProfiler.EnvelopeSample.valid(sampleIndex,
-                                new BlockBounds(-halfExtent, -halfExtent, halfExtent, halfExtent),
+                                new BlockBounds(-halfExtents.get(profile.structureId()),
+                                        -halfExtents.get(profile.structureId()), halfExtents.get(profile.structureId()),
+                                        halfExtents.get(profile.structureId())),
                                 1, "fixed_config_hash", "pack_hash"));
         JsonObject factsJson = result.structureEnvelopeFacts().deepCopy();
-        JsonObject fact = factsJson.getAsJsonArray("structures").get(0).getAsJsonObject();
-        JsonObject bounds = JsonParser.parseString("""
-                {"minX":%d,"minZ":%d,"maxX":%d,"maxZ":%d}
-                """.formatted(-halfExtent, -halfExtent, halfExtent, halfExtent)).getAsJsonObject();
-        fact.add("localEnvelopeP95", bounds.deepCopy());
-        fact.add("stableMaxEnvelope", bounds.deepCopy());
-        fact.addProperty("stabilityClassification", "stable");
-        fact.getAsJsonObject("placementRecommendation").addProperty("allowCompactArray", true);
-        fact.getAsJsonObject("placementRecommendation").addProperty("collisionEnvelopeSource",
-                "stableMaxEnvelope");
-        fact.addProperty("requiresReview", false);
+        for (JsonElement element : factsJson.getAsJsonArray("structures")) {
+            JsonObject fact = element.getAsJsonObject();
+            int halfExtent = halfExtents.get(fact.get("structureId").getAsString());
+            JsonObject bounds = JsonParser.parseString("""
+                    {"minX":%d,"minZ":%d,"maxX":%d,"maxZ":%d}
+                    """.formatted(-halfExtent, -halfExtent, halfExtent, halfExtent)).getAsJsonObject();
+            fact.add("localEnvelopeP95", bounds.deepCopy());
+            fact.add("stableMaxEnvelope", bounds.deepCopy());
+            fact.addProperty("stabilityClassification", "stable");
+            fact.getAsJsonObject("placementRecommendation").addProperty("allowCompactArray", true);
+            fact.getAsJsonObject("placementRecommendation").addProperty("collisionEnvelopeSource",
+                    "stableMaxEnvelope");
+            fact.addProperty("requiresReview", false);
+        }
         Path factsPath = fixture.baseDir().resolve("stable_d2_structure_envelope_facts.json");
         Files.writeString(factsPath, CityJson.GSON.toJson(factsJson));
         return CityStructureEnvelopeFacts.load(factsPath);

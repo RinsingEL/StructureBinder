@@ -54,11 +54,11 @@ public final class CityStructureMaterializationPlanner {
                     planned.add(task.asWorldgenPlanJson(templateFailureStatus(validation)));
                     continue;
                 }
-                BlockBounds bbox = task.templateFootprint();
+                BlockBounds bbox = task.templateActualFootprint();
                 if (overlaps(occupied, bbox)) {
                     addFailure(attempt, "LEDGER_OCCUPIED_OVERLAP",
                             "Template footprint overlaps previous or planned structure ledger.");
-                    attempt.add("templateFootprint", boundsJson(bbox));
+                    attempt.add("actualFootprint", boundsJson(bbox));
                     failures.add("LEDGER_OCCUPIED_OVERLAP");
                     attempts.add(attempt);
                     planned.add(task.asWorldgenPlanJson(new ChunkStatusResult(
@@ -73,7 +73,7 @@ public final class CityStructureMaterializationPlanner {
                 attempt.addProperty("message", "Structure template footprint is locked without StructureStart preflight.");
                 attempt.addProperty("preflightStatus", "accepted");
                 attempt.addProperty("locked", true);
-                attempt.add("templateFootprint", boundsJson(bbox));
+                attempt.add("actualFootprint", boundsJson(bbox));
                 attempt.add("lockedActualFootprint", boundsJson(bbox));
                 attempt.add("lockedCollisionEnvelope", boundsJson(bbox));
                 attempts.add(attempt);
@@ -300,7 +300,7 @@ public final class CityStructureMaterializationPlanner {
                     attempts.add(attempt);
                     continue;
                 }
-                BlockBounds bbox = task.templateFootprint();
+                BlockBounds bbox = task.templateActualFootprint();
                 if (overlaps(occupied, bbox)) {
                     addFailure(attempt, "LEDGER_OCCUPIED_OVERLAP",
                             "Template footprint overlaps previous or planned structure ledger.");
@@ -311,7 +311,7 @@ public final class CityStructureMaterializationPlanner {
                 occupied.add(bbox);
                 attempt.addProperty("status", "planned");
                 attempt.addProperty("reasonCode", "STRUCTURE_TEMPLATE_ACCEPTED");
-                attempt.add("templateFootprint", boundsJson(bbox));
+                attempt.add("actualFootprint", boundsJson(bbox));
                 attempt.add("lockedActualFootprint", boundsJson(bbox));
                 attempts.add(attempt);
                 planned.add(task.asPlanJson(bbox, "", new JsonArray()));
@@ -550,7 +550,7 @@ public final class CityStructureMaterializationPlanner {
 
     private static String templateLedgerDriftReason(StructureTask task, JsonObject ledgerItem) {
         TemplateFacts expected = task.templateFacts();
-        TemplateFacts actual = TemplateFacts.from(ledgerItem);
+        TemplateFacts actual = TemplateFacts.from(ledgerItem, task.anchorBlock());
         JsonObject nested = ledgerItem.has("structureTemplate")
                 && ledgerItem.get("structureTemplate").isJsonObject()
                 ? ledgerItem.getAsJsonObject("structureTemplate") : null;
@@ -578,11 +578,11 @@ public final class CityStructureMaterializationPlanner {
             return "STRUCTURE_TEMPLATE_FIELD_DRIFT";
         }
         BlockBounds actualFootprint = optionalBoundsValue(ledgerItem, "actualFootprint");
-        if (actualFootprint != null && !expected.templateFootprint().equals(actualFootprint)) {
+        if (actualFootprint != null && !expected.actualFootprint().equals(actualFootprint)) {
             return "STRUCTURE_TEMPLATE_FOOTPRINT_DRIFT";
         }
         BlockBounds lockedFootprint = actual.lockedActualFootprint();
-        if (lockedFootprint != null && !expected.templateFootprint().equals(lockedFootprint)) {
+        if (lockedFootprint != null && !expected.actualFootprint().equals(lockedFootprint)) {
             return "STRUCTURE_TEMPLATE_FOOTPRINT_DRIFT";
         }
         return null;
@@ -781,6 +781,14 @@ public final class CityStructureMaterializationPlanner {
         return obj;
     }
 
+    private static JsonObject sizeJson(CityTemplatePlacementGeometry.Size size) {
+        JsonObject obj = new JsonObject();
+        obj.addProperty("width", size.width());
+        obj.addProperty("height", size.height());
+        obj.addProperty("depth", size.depth());
+        return obj;
+    }
+
     private static JsonArray stringArray(List<String> values) {
         JsonArray array = new JsonArray();
         values.forEach(array::add);
@@ -925,11 +933,11 @@ public final class CityStructureMaterializationPlanner {
         }
 
         TemplateFacts templateFacts() {
-            return TemplateFacts.from(sourceAnchor);
+            return TemplateFacts.from(sourceAnchor, anchorBlock);
         }
 
-        BlockBounds templateFootprint() {
-            return templateFacts().templateFootprint();
+        BlockBounds templateActualFootprint() {
+            return templateFacts().actualFootprint();
         }
 
         TemplateValidation validateTemplate(boolean requireLockedFootprint) {
@@ -1059,7 +1067,7 @@ public final class CityStructureMaterializationPlanner {
 
         JsonObject asTemplateLedgerJson(JsonObject runtimeLedgerItem) {
             JsonObject obj = runtimeLedgerItem.deepCopy();
-            BlockBounds footprint = templateFootprint();
+            BlockBounds footprint = templateActualFootprint();
             obj.addProperty("anchorId", anchorId);
             obj.addProperty("structureId", structureId);
             obj.add("anchorBlock", anchorBlock.asJson());
@@ -1080,6 +1088,10 @@ public final class CityStructureMaterializationPlanner {
             obj.remove("safetyEnvelope");
             obj.remove("estimatedSafetyEnvelope");
             obj.remove("groupSafetyEnvelope");
+            if (templateSemantic()) {
+                // Historical artifacts may carry this snapshot, but new plans derive it from templateSize.
+                obj.remove("templateFootprint");
+            }
             return obj;
         }
 
@@ -1091,8 +1103,8 @@ public final class CityStructureMaterializationPlanner {
             target.addProperty("rotation", facts.rotation());
             target.addProperty("mirror", facts.mirror());
             target.addProperty("materializationSource", TEMPLATE_MATERIALIZATION_SOURCE);
-            if (facts.templateFootprint() != null) {
-                target.add("templateFootprint", boundsJson(facts.templateFootprint()));
+            if (facts.templateSize() != null) {
+                target.add("templateSize", sizeJson(facts.templateSize()));
             }
             if (lockedFootprint != null) {
                 target.add("lockedActualFootprint", boundsJson(lockedFootprint));
@@ -1105,8 +1117,8 @@ public final class CityStructureMaterializationPlanner {
             template.addProperty("rotation", facts.rotation());
             template.addProperty("mirror", facts.mirror());
             template.addProperty("materializationSource", TEMPLATE_MATERIALIZATION_SOURCE);
-            if (facts.templateFootprint() != null) {
-                template.add("templateFootprint", boundsJson(facts.templateFootprint()));
+            if (facts.templateSize() != null) {
+                template.add("templateSize", sizeJson(facts.templateSize()));
             }
             if (lockedFootprint != null) {
                 template.add("lockedActualFootprint", boundsJson(lockedFootprint));
@@ -1148,16 +1160,19 @@ public final class CityStructureMaterializationPlanner {
 
     private record TemplateFacts(boolean semantic, String templateId, String templateRef, String templateHash,
                                  String variantId, String rotation, String mirror,
-                                 BlockBounds templateFootprint, BlockBounds lockedActualFootprint,
-                                 String materializationSource) {
-        static TemplateFacts from(JsonObject source) {
+                                 CityTemplatePlacementGeometry.Size templateSize,
+                                 BlockBounds actualFootprint, BlockBounds suppliedFootprint,
+                                 BlockBounds lockedActualFootprint, String materializationSource) {
+        static TemplateFacts from(JsonObject source, BlockPoint fallbackAnchor) {
             JsonObject nested = source != null && source.has("structureTemplate")
                     && source.get("structureTemplate").isJsonObject()
                     ? source.getAsJsonObject("structureTemplate") : null;
             boolean semantic = nested != null
                     || TEMPLATE_MATERIALIZATION_SOURCE.equals(stringValue(source, "materializationSource", ""))
-                    || hasAny(source, "templateHash", "templateRef", "variantId", "mirror", "templateFootprint")
-                    || hasAny(nested, "templateHash", "templateRef", "variantId", "mirror", "templateFootprint");
+                    || hasAny(source, "templateHash", "templateRef", "variantId", "mirror", "templateSize",
+                    "templateFootprint")
+                    || hasAny(nested, "templateHash", "templateRef", "variantId", "mirror", "templateSize",
+                    "templateFootprint");
             String templateId = readString(nested, source, "templateId", "");
             String templateRef = readString(nested, source, "templateRef", "");
             if (templateRef.isBlank()) {
@@ -1170,13 +1185,23 @@ public final class CityStructureMaterializationPlanner {
             String variantId = readString(nested, source, "variantId", "");
             String rotation = readString(nested, source, "rotation", "");
             String mirror = readString(nested, source, "mirror", "");
-            BlockBounds templateFootprint = readBounds(nested, source, "templateFootprint");
+            CityTemplatePlacementGeometry.Size templateSize = readSize(nested, source);
+            BlockBounds suppliedFootprint = readBounds(nested, source, "actualFootprint");
+            if (suppliedFootprint == null) {
+                // Read-only legacy fallback. New D4/D6/D7 artifacts never emit templateFootprint.
+                suppliedFootprint = readBounds(nested, source, "templateFootprint");
+            }
             BlockBounds lockedFootprint = readBounds(nested, source, "lockedActualFootprint");
-            if (templateFootprint == null) {
-                templateFootprint = lockedFootprint;
+            if (suppliedFootprint == null) {
+                suppliedFootprint = lockedFootprint;
+            }
+            BlockPoint anchor = readAnchor(nested, source, fallbackAnchor);
+            BlockBounds actualFootprint = derivedFootprint(templateSize, rotation, mirror, anchor);
+            if (actualFootprint == null) {
+                actualFootprint = suppliedFootprint;
             }
             return new TemplateFacts(semantic, templateId, templateRef, templateHash, variantId,
-                    rotation, mirror, templateFootprint, lockedFootprint,
+                    rotation, mirror, templateSize, actualFootprint, suppliedFootprint, lockedFootprint,
                     readString(nested, source, "materializationSource", ""));
         }
 
@@ -1190,12 +1215,15 @@ public final class CityStructureMaterializationPlanner {
             if (templateHash.isBlank()) errors.add("STRUCTURE_TEMPLATE_MISSING_TEMPLATE_HASH");
             if (variantId.isBlank()) errors.add("STRUCTURE_TEMPLATE_MISSING_VARIANT_ID");
             if (rotation.isBlank() || mirror.isBlank()) errors.add("STRUCTURE_TEMPLATE_MISSING_TRANSFORM");
-            if (templateFootprint == null) errors.add("STRUCTURE_TEMPLATE_MISSING_FOOTPRINT");
+            if (actualFootprint == null) errors.add("STRUCTURE_TEMPLATE_MISSING_FOOTPRINT");
+            if (templateSize != null && suppliedFootprint != null && !actualFootprint.equals(suppliedFootprint)) {
+                errors.add("STRUCTURE_TEMPLATE_FOOTPRINT_DRIFT");
+            }
             if (requireLockedFootprint && lockedActualFootprint == null) {
                 errors.add("STRUCTURE_TEMPLATE_MISSING_LOCKED_ACTUAL_FOOTPRINT");
             }
-            if (templateFootprint != null && lockedActualFootprint != null
-                    && !templateFootprint.equals(lockedActualFootprint)) {
+            if (actualFootprint != null && lockedActualFootprint != null
+                    && !actualFootprint.equals(lockedActualFootprint)) {
                 errors.add("STRUCTURE_TEMPLATE_FOOTPRINT_DRIFT");
             }
             if (!materializationSource.isBlank() && !TEMPLATE_MATERIALIZATION_SOURCE.equals(materializationSource)) {
@@ -1227,6 +1255,55 @@ public final class CityStructureMaterializationPlanner {
             }
             return source != null && source.has(key) && source.get(key).isJsonObject()
                     ? bounds(source.getAsJsonObject(key)) : null;
+        }
+
+        private static CityTemplatePlacementGeometry.Size readSize(JsonObject nested, JsonObject source) {
+            JsonObject value = readObject(nested, source, "templateSize");
+            if (value == null) {
+                value = readObject(nested, source, "rawSize");
+            }
+            if (value == null) {
+                return null;
+            }
+            try {
+                return new CityTemplatePlacementGeometry.Size(intValue(value, "width", 0),
+                        intValue(value, "height", 0), intValue(value, "depth", 0));
+            } catch (IllegalArgumentException ex) {
+                return null;
+            }
+        }
+
+        private static BlockPoint readAnchor(JsonObject nested, JsonObject source, BlockPoint fallback) {
+            JsonObject value = readObject(nested, source, "anchorBlock");
+            if (value == null) {
+                value = readObject(nested, source, "commandAnchorBlock");
+            }
+            return value == null ? fallback : new BlockPoint(intValue(value, "x", fallback.x()),
+                    intValue(value, "z", fallback.z()));
+        }
+
+        private static JsonObject readObject(JsonObject nested, JsonObject source, String key) {
+            if (nested != null && nested.has(key) && nested.get(key).isJsonObject()) {
+                return nested.getAsJsonObject(key);
+            }
+            return source != null && source.has(key) && source.get(key).isJsonObject()
+                    ? source.getAsJsonObject(key) : null;
+        }
+
+        private static BlockBounds derivedFootprint(CityTemplatePlacementGeometry.Size size,
+                                                     String rotation, String mirror, BlockPoint anchor) {
+            if (size == null || anchor == null || rotation == null || rotation.isBlank()
+                    || mirror == null || mirror.isBlank()) {
+                return null;
+            }
+            try {
+                return CityTemplatePlacementGeometry.of(size,
+                        CityTemplatePlacementGeometry.Rotation.valueOf(rotation),
+                        CityTemplatePlacementGeometry.Mirror.valueOf(mirror), List.of())
+                        .worldBounds(anchor);
+            } catch (IllegalArgumentException ex) {
+                return null;
+            }
         }
     }
 

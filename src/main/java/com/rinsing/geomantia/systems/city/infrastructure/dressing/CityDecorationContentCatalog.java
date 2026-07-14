@@ -57,6 +57,7 @@ public final class CityDecorationContentCatalog {
         private final List<String> allowedSurfaceTags;
         private final List<String> blockedSurfaceTags;
         private final List<String> tags;
+        private final String terrainDropFallbackContentRef;
         private final Size size;
         private final Envelope bodyEnvelope;
         private final Envelope comfortEnvelope;
@@ -76,6 +77,7 @@ public final class CityDecorationContentCatalog {
                 List<String> allowedSurfaceTags,
                 List<String> blockedSurfaceTags,
                 List<String> tags,
+                String terrainDropFallbackContentRef,
                 Size size,
                 String contentHash,
                 CompoundTag template) {
@@ -92,6 +94,7 @@ public final class CityDecorationContentCatalog {
             this.allowedSurfaceTags = List.copyOf(allowedSurfaceTags);
             this.blockedSurfaceTags = List.copyOf(blockedSurfaceTags);
             this.tags = List.copyOf(tags);
+            this.terrainDropFallbackContentRef = terrainDropFallbackContentRef;
             this.size = size;
             this.bodyEnvelope = new Envelope(0, 0, 0,
                     size.widthBlocks() - 1, size.heightBlocks() - 1, size.depthBlocks() - 1);
@@ -153,6 +156,10 @@ public final class CityDecorationContentCatalog {
 
         public List<String> tags() {
             return tags;
+        }
+
+        public String terrainDropFallbackContentRef() {
+            return terrainDropFallbackContentRef;
         }
 
         public Size size() {

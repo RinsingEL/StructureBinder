@@ -19,6 +19,7 @@
       "placementMode": "replace_surface",
       "replacePolicy": "surface_replaceable",
       "comfortMarginBlocks": 0,
+      "terrainDropFallbackContentRef": "geomantia:decoration/crop_tile",
       "tags": ["agriculture", "water_channel"]
     },
     {

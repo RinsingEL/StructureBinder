@@ -70,8 +70,10 @@ public final class GeomantiaHttpServer {
             httpServer.createContext("/realm/city/select_d4_array_expansion_candidate", realmController::handleCitySelectD4ArrayExpansionCandidate);
             httpServer.createContext("/realm/city/finalize_d4_array_layout_loop", realmController::handleCityFinalizeD4ArrayLayoutLoop);
             httpServer.createContext("/realm/city/query_decoration_catalog", realmController::handleCityQueryDecorationCatalog);
+            httpServer.createContext("/realm/city/upgrade_default_decoration_catalog", realmController::handleCityUpgradeDefaultDecorationCatalog);
             httpServer.createContext("/realm/city/probe_decoration_terrain", realmController::handleCityProbeDecorationTerrain);
             httpServer.createContext("/realm/city/query_structure_catalog", realmController::handleCityQueryStructureCatalog);
+            httpServer.createContext("/realm/city/query_template_metadata", realmController::handleCityQueryTemplateMetadata);
             httpServer.createContext("/realm/city/plan_city_dressing", realmController::handleCityPlanDressing);
             httpServer.createContext("/realm/city/plan_d4_structure_cluster_groups", realmController::handleCityPlanD4StructureClusterGroups);
             httpServer.createContext("/realm/city/select_d4_candidates", realmController::handleCitySelectD4Candidates);

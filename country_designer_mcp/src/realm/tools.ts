@@ -809,6 +809,13 @@ export const realmTools: ToolDefinition[] = [
     inputSchema: strictObject({}, []),
   },
   {
+    name: "city_upgrade_default_decoration_catalog",
+    description: "显式升级未改动的 Geomantia 默认装饰目录，为水渠补下坡收尾内容。会备份旧 content index、停用旧 hash 的 active decoration plans，但不改 ledger 或已落地方块；完成后必须重新查询 catalog、重规划并重新激活。",
+    inputSchema: strictObject({
+      confirmConfigMutation: { type: "boolean", description: "必须为 true；否则不修改运行时 config。" },
+    }, ["confirmConfigMutation"]),
+  },
+  {
     name: "city_probe_decoration_terrain",
     description: "只读检查已编译 City Decoration 的真实已加载区块地表。返回每个 program / palette slot 的加载覆盖、高度起伏、相邻槽位高差和连续带剖面；不会生成区块、不会写世界，也不会阻止后续 activate。",
     inputSchema: strictObject({
@@ -843,6 +850,21 @@ export const realmTools: ToolDefinition[] = [
       },
       limit: { type: "integer", minimum: 1, maximum: 100, description: "最多返回数量，默认 20。" },
     }, ["terrasenseProfileSource"]),
+  },
+  {
+    name: "city_query_template_metadata",
+    description: "从当前 Minecraft StructureTemplateManager 只读校验指定 templateRef，返回运行时 NBT 的尺寸、内容 hash 与来源；不加载目标区块，不执行 D4-D7，也不放置方块。",
+    inputSchema: strictObject({
+      templateRefs: {
+        type: "array",
+        minItems: 1,
+        maxItems: 32,
+        description: "待校验的 ResourceLocation，例如 geomantia:d6d7_fixture/house。",
+        items: nonEmptyString("有效的 template ResourceLocation。"),
+      },
+      dimensionId: nonEmptyString("可选；省略时取玩家当前维度。"),
+      playerName: nonEmptyString("可选；用于定位当前维度。"),
+    }, ["templateRefs"]),
   },
   {
     name: "city_plan_city_dressing",

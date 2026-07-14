@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityStructureTemplateMaterializationPlannerTest {
     @Test
-    void templatePlanLocksNbtFootprintWithoutStructureStartFields() {
+    void templatePlanDerivesAndLocksNbtFootprintWithoutStructureStartFields() {
         JsonObject result = new CityStructureMaterializationPlanner()
                 .planWorldgen(anchorMap(), CityStructureMaterializationPlanner.ChunkStatusInspector.plannedOnly(),
                         emptyLedger())
@@ -23,7 +23,10 @@ class CityStructureTemplateMaterializationPlannerTest {
         assertEquals("city:house", item.get("templateId").getAsString());
         assertEquals("sha256:house", item.get("templateHash").getAsString());
         assertEquals("structure_template_nbt", item.get("materializationSource").getAsString());
-        assertEquals(item.getAsJsonObject("templateFootprint"), item.getAsJsonObject("lockedActualFootprint"));
+        assertEquals(8, item.getAsJsonObject("templateSize").get("width").getAsInt());
+        assertEquals(bounds(10, 10, 17, 15), item.getAsJsonObject("actualFootprint"));
+        assertEquals(item.getAsJsonObject("actualFootprint"), item.getAsJsonObject("lockedActualFootprint"));
+        assertFalse(item.has("templateFootprint"));
         assertFalse(item.has("pieceBoxes") && item.getAsJsonArray("pieceBoxes").size() > 0);
         assertTrue(result.get("locked").getAsBoolean());
     }
@@ -65,8 +68,7 @@ class CityStructureTemplateMaterializationPlannerTest {
                     "variantId": "oak",
                     "rotation": "NONE",
                     "mirror": "NONE",
-                    "templateFootprint": {"minX": 10, "minZ": 10, "maxX": 17, "maxZ": 15},
-                    "lockedActualFootprint": {"minX": 10, "minZ": 10, "maxX": 17, "maxZ": 15},
+                    "templateSize": {"width": 8, "height": 5, "depth": 6},
                     "materializationSource": "structure_template_nbt"
                   }]
                 }
@@ -89,7 +91,6 @@ class CityStructureTemplateMaterializationPlannerTest {
         item.addProperty("variantId", "oak");
         item.addProperty("rotation", "NONE");
         item.addProperty("mirror", "NONE");
-        item.add("templateFootprint", bounds(10, 10, 17, 15));
         item.add("lockedActualFootprint", bounds(10, 10, 17, 15));
         item.addProperty("materializationSource", "structure_template_nbt");
         return item;

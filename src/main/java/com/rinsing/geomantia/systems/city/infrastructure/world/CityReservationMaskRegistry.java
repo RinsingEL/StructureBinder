@@ -711,7 +711,7 @@ public final class CityReservationMaskRegistry {
             obj.add("qualityTerms", qualityTerms.deepCopy());
             if (isTemplatePlacement()) {
                 for (String key : List.of("templateId", "templateRef", "templateHash", "variantId", "mirror",
-                        "materializationSource", "templateFootprint", "lockedActualFootprint",
+                        "materializationSource", "templateSize", "lockedActualFootprint",
                         "transformed", "transformedRoadEntrances", "structureTemplate")) {
                     if (sourcePlan.has(key)) {
                         obj.add(key, sourcePlan.get(key).deepCopy());

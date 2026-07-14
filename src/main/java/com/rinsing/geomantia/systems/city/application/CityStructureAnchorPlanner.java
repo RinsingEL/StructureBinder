@@ -230,6 +230,8 @@ public final class CityStructureAnchorPlanner {
                                                   BlockPoint anchorBlock,
                                                   TemplateAnchorDecision template) {
         JsonObject obj = source.deepCopy();
+        obj.remove("templateFootprint");
+        obj.remove("lockedActualFootprint");
         String templateRef = template.templateRef();
         obj.addProperty("anchorId", requiredString(source, "anchorId"));
         obj.addProperty("structureId", "template:" + templateRef);
@@ -243,9 +245,11 @@ public final class CityStructureAnchorPlanner {
         obj.add("anchorBlock", anchorBlock.asJson());
         obj.add("commandAnchorBlock", anchorBlock.asJson());
         obj.add("sourcePatches", patchRefs(patches));
+        if (template.templateSize() != null) {
+            obj.add("templateSize", sizeJson(template.templateSize()));
+        }
         obj.add("plannedFootprint", boundsJson(template.actualFootprint()));
-        obj.add("templateFootprint", boundsJson(template.actualFootprint()));
-        obj.add("lockedActualFootprint", boundsJson(template.actualFootprint()));
+        obj.add("actualFootprint", boundsJson(template.actualFootprint()));
         obj.add("reservedEnvelope", boundsJson(template.collisionEnvelope()));
         obj.add("collisionEnvelope", boundsJson(template.collisionEnvelope()));
         obj.add("maskEnvelope", boundsJson(template.maskEnvelope()));
@@ -278,7 +282,8 @@ public final class CityStructureAnchorPlanner {
         String variantId = firstTemplateString(source, nested, "variantId", "variant");
         String rotation = firstTemplateString(source, nested, "rotation", "").toUpperCase(Locale.ROOT);
         String mirror = firstTemplateString(source, nested, "mirror", "").toUpperCase(Locale.ROOT);
-        BlockBounds footprint = firstTemplateBounds(source, nested, "templateFootprint", "actualFootprint");
+        CityTemplatePlacementGeometry.Size templateSize = firstTemplateSize(source, nested);
+        BlockBounds suppliedFootprint = firstTemplateBounds(source, nested, "actualFootprint", "templateFootprint");
         int clearance = Math.max(0, intValue(source, "clearanceBlocks", 0));
         int maskMargin = Math.max(0, intValue(source, "maskMarginBlocks", DEFAULT_MASK_MARGIN_BLOCKS));
         List<String> errors = new ArrayList<>();
@@ -286,20 +291,36 @@ public final class CityStructureAnchorPlanner {
         if (templateHash.isBlank()) errors.add("TEMPLATE_HASH_MISSING");
         if (variantId.isBlank()) errors.add("TEMPLATE_VARIANT_MISSING");
         if (rotation.isBlank() || mirror.isBlank()) errors.add("TEMPLATE_TRANSFORM_MISSING");
-        if (footprint == null) errors.add("TEMPLATE_FOOTPRINT_MISSING");
-        if (footprint != null && (footprint.maxX() < footprint.minX() || footprint.maxZ() < footprint.minZ())) {
+        if (templateSize == null && suppliedFootprint == null) errors.add("TEMPLATE_SIZE_MISSING");
+        if (suppliedFootprint != null
+                && (suppliedFootprint.maxX() < suppliedFootprint.minX()
+                || suppliedFootprint.maxZ() < suppliedFootprint.minZ())) {
             errors.add("TEMPLATE_BBOX_INVALID");
+        }
+        BlockBounds footprint = suppliedFootprint;
+        if (templateSize != null && !rotation.isBlank() && !mirror.isBlank()) {
+            try {
+                CityTemplatePlacementGeometry geometry = CityTemplatePlacementGeometry.of(templateSize,
+                        CityTemplatePlacementGeometry.Rotation.valueOf(rotation),
+                        CityTemplatePlacementGeometry.Mirror.valueOf(mirror), List.of());
+                footprint = geometry.worldBounds(anchorBlock);
+                if (suppliedFootprint != null && !footprint.equals(suppliedFootprint)) {
+                    errors.add("TEMPLATE_FOOTPRINT_DRIFT");
+                }
+            } catch (IllegalArgumentException ex) {
+                errors.add("TEMPLATE_TRANSFORM_INVALID");
+            }
         }
         BlockBounds collision = footprint == null ? null : expand(footprint, clearance);
         BlockBounds mask = collision == null ? null : expand(collision, maskMargin);
         String reason = errors.isEmpty() ? "" : String.join(",", errors);
-        return new TemplateAnchorDecision(templateRef, templateHash, variantId, rotation, mirror, footprint,
+        return new TemplateAnchorDecision(templateRef, templateHash, variantId, rotation, mirror, templateSize, footprint,
                 collision, mask, clearance, maskMargin, reason);
     }
 
     private static boolean isTemplatePlacement(JsonObject source) {
         return source != null && (source.has("templateRef") || source.has("templateHash")
-                || source.has("templateFootprint") || source.has("structureTemplate")
+                || source.has("templateSize") || source.has("templateFootprint") || source.has("structureTemplate")
                 || CityStructureMaterializationPlanner.TEMPLATE_MATERIALIZATION_SOURCE.equals(
                 stringValue(source, "materializationSource", "")));
     }
@@ -327,8 +348,44 @@ public final class CityStructureAnchorPlanner {
         return null;
     }
 
+    private static CityTemplatePlacementGeometry.Size firstTemplateSize(JsonObject source, JsonObject nested) {
+        JsonObject size = firstTemplateObject(source, nested, "templateSize", "rawSize");
+        if (size == null) {
+            return null;
+        }
+        int width = intValue(size, "width", 0);
+        int height = intValue(size, "height", 0);
+        int depth = intValue(size, "depth", 0);
+        try {
+            return new CityTemplatePlacementGeometry.Size(width, height, depth);
+        } catch (IllegalArgumentException ex) {
+            return null;
+        }
+    }
+
+    private static JsonObject firstTemplateObject(JsonObject source, JsonObject nested, String... keys) {
+        for (String key : keys) {
+            if (source != null && source.has(key) && source.get(key).isJsonObject()) {
+                return source.getAsJsonObject(key);
+            }
+            if (nested != null && nested.has(key) && nested.get(key).isJsonObject()) {
+                return nested.getAsJsonObject(key);
+            }
+        }
+        return null;
+    }
+
+    private static JsonObject sizeJson(CityTemplatePlacementGeometry.Size size) {
+        JsonObject obj = new JsonObject();
+        obj.addProperty("width", size.width());
+        obj.addProperty("height", size.height());
+        obj.addProperty("depth", size.depth());
+        return obj;
+    }
+
     private record TemplateAnchorDecision(String templateRef, String templateHash, String variantId,
-                                          String rotation, String mirror, BlockBounds actualFootprint,
+                                          String rotation, String mirror, CityTemplatePlacementGeometry.Size templateSize,
+                                          BlockBounds actualFootprint,
                                           BlockBounds collisionEnvelope, BlockBounds maskEnvelope,
                                           int clearanceBlocks, int maskMarginBlocks, String hardBlockReason) {
     }

@@ -257,6 +257,37 @@ class CityDecorationChunkCompilerTest {
         org.junit.jupiter.api.Assertions.assertNotEquals(firstHash, secondHash);
     }
 
+    @Test
+    void clipsDownhillWaterChannelToConfiguredCropEndcap(@TempDir Path root) throws Exception {
+        CityDecorationContentCatalog catalog = catalog(root,
+                spec("city:prefab/crop", 1, 1, 1, List.of(0), 1, 0),
+                spec("city:prefab/channel", 1, 1, 1, List.of(0), 1, 0,
+                        null, List.of("water_channel"), "city:prefab/crop"));
+        CompiledDecorationProgram program = new CompiledDecorationProgram(
+                CompiledDecorationProgram.SCHEMA, "channel", 1, 131L,
+                new CompiledDecorationProgram.TargetMask("channel_mask", List.of(new BlockBounds(5, 5, 5, 5))),
+                new CompiledDecorationProgram.CoordinateFrame(BlockPoint.ORIGIN,
+                        new CompiledDecorationProgram.Vector2(1, 0),
+                        new CompiledDecorationProgram.Vector2(0, 1)),
+                new CompiledDecorationProgram.TargetMaskShape(),
+                new CompiledDecorationProgram.GridRepeatPattern("channel", 1, 1, 0, 0),
+                new CompiledDecorationProgram.ContentPalette(List.of(
+                        new CompiledDecorationProgram.PaletteSlot("channel", CompiledDecorationProgram.Phase.SURFACE,
+                                entries("city:prefab/channel"), true))),
+                new CompiledDecorationProgram.TerrainPolicy(1, false,
+                        CompiledDecorationProgram.InvalidTerrainAction.CLIP),
+                new CompiledDecorationProgram.ConflictPolicy(
+                        CompiledDecorationProgram.ConflictAction.SKIP, 0));
+        FakeTerrain terrain = new FakeTerrain().height(6, 5, 62);
+
+        CityDecorationChunkCompiler.Fragment fragment = only(new CityDecorationChunkCompiler()
+                .compile(plan(catalog, program), catalog, 0, 0, terrain));
+
+        assertEquals(CityDecorationChunkCompiler.Status.READY, fragment.status());
+        assertEquals("city:prefab/crop", fragment.contentRef());
+        assertEquals("CITY_DECORATION_TERRAIN_DOWNHILL_EDGE_FALLBACK", fragment.reasonCode());
+    }
+
     private static CityDecorationChunkCompiler.Fragment only(CityDecorationChunkCompiler.CompilationResult result) {
         assertEquals(1, result.fragments().size());
         return result.fragments().get(0);
@@ -351,6 +382,14 @@ class CityDecorationChunkCompilerTest {
                 spec.blockedSurfaceTags().forEach(blocked::add);
                 content.add("blockedSurfaceTags", blocked);
             }
+            if (!spec.tags().isEmpty()) {
+                JsonArray tags = new JsonArray();
+                spec.tags().forEach(tags::add);
+                content.add("tags", tags);
+            }
+            if (spec.terrainDropFallbackContentRef() != null) {
+                content.addProperty("terrainDropFallbackContentRef", spec.terrainDropFallbackContentRef());
+            }
             contents.add(content);
         }
         index.add("contents", contents);
@@ -368,7 +407,15 @@ class CityDecorationChunkCompilerTest {
                                     List<Integer> rotations, int maxSpread, int comfortMargin,
                                     List<String> blockedSurfaceTags) {
         return new ContentSpec(id, width, height, depth, rotations, maxSpread, comfortMargin,
-                blockedSurfaceTags);
+                blockedSurfaceTags, List.of(), null);
+    }
+
+    private static ContentSpec spec(String id, int width, int height, int depth,
+                                    List<Integer> rotations, int maxSpread, int comfortMargin,
+                                    List<String> blockedSurfaceTags, List<String> tags,
+                                    String terrainDropFallbackContentRef) {
+        return new ContentSpec(id, width, height, depth, rotations, maxSpread, comfortMargin,
+                blockedSurfaceTags, tags, terrainDropFallbackContentRef);
     }
 
     private static void writeTemplate(Path path, int width, int height, int depth) throws Exception {
@@ -441,6 +488,7 @@ class CityDecorationChunkCompilerTest {
 
     private record ContentSpec(String contentId, int width, int height, int depth,
                                List<Integer> rotations, int maxSpread, int comfortMargin,
-                               List<String> blockedSurfaceTags) {
+                               List<String> blockedSurfaceTags, List<String> tags,
+                               String terrainDropFallbackContentRef) {
     }
 }

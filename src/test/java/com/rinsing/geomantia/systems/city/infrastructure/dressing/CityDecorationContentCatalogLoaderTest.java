@@ -179,6 +179,81 @@ class CityDecorationContentCatalogLoaderTest {
         assertEquals("CITY_DECORATION_CONTENT_UNKNOWN", unknown.reasonCode());
     }
 
+    @Test
+    void validatesTerrainDropFallbackReferenceAndPlacementCompatibility(@TempDir Path root) throws Exception {
+        writeTemplate(root.resolve("templates/crop.nbt"), 1, 1, 1, "minecraft:wheat", false);
+        writeTemplate(root.resolve("templates/channel.nbt"), 1, 1, 1, "minecraft:water", false);
+        writeIndex(root, """
+                {
+                  "schemaVersion": "city_decoration_content_index.v0.2",
+                  "contents": [
+                    {
+                      "contentId": "city:prefab/crop",
+                      "contentKind": "prefab",
+                      "nbtFile": "templates/crop.nbt",
+                      "placementMode": "replace_surface",
+                      "replacePolicy": "surface_replaceable"
+                    },
+                    {
+                      "contentId": "city:prefab/channel",
+                      "contentKind": "prefab",
+                      "nbtFile": "templates/channel.nbt",
+                      "placementMode": "replace_surface",
+                      "replacePolicy": "surface_replaceable",
+                      "terrainDropFallbackContentRef": "city:prefab/crop"
+                    }
+                  ]
+                }
+                """);
+
+        CityDecorationContentCatalog catalog = new CityDecorationContentCatalogLoader().load(root);
+        assertEquals("city:prefab/crop",
+                catalog.requireContent("city:prefab/channel").terrainDropFallbackContentRef());
+
+        writeIndex(root, """
+                {
+                  "schemaVersion": "city_decoration_content_index.v0.2",
+                  "contents": [
+                    {
+                      "contentId": "city:prefab/channel",
+                      "contentKind": "prefab",
+                      "nbtFile": "templates/channel.nbt",
+                      "terrainDropFallbackContentRef": "city:prefab/missing"
+                    }
+                  ]
+                }
+                """);
+        CityDecorationContentCatalog.CatalogException unknown = assertThrows(
+                CityDecorationContentCatalog.CatalogException.class,
+                () -> new CityDecorationContentCatalogLoader().load(root));
+        assertEquals("CITY_DECORATION_TERRAIN_FALLBACK_UNKNOWN", unknown.reasonCode());
+
+        writeIndex(root, """
+                {
+                  "schemaVersion": "city_decoration_content_index.v0.2",
+                  "contents": [
+                    {
+                      "contentId": "city:prefab/crop",
+                      "contentKind": "prefab",
+                      "nbtFile": "templates/crop.nbt"
+                    },
+                    {
+                      "contentId": "city:prefab/channel",
+                      "contentKind": "prefab",
+                      "nbtFile": "templates/channel.nbt",
+                      "placementMode": "replace_surface",
+                      "replacePolicy": "surface_replaceable",
+                      "terrainDropFallbackContentRef": "city:prefab/crop"
+                    }
+                  ]
+                }
+                """);
+        CityDecorationContentCatalog.CatalogException incompatible = assertThrows(
+                CityDecorationContentCatalog.CatalogException.class,
+                () -> new CityDecorationContentCatalogLoader().load(root));
+        assertEquals("CITY_DECORATION_TERRAIN_FALLBACK_PLACEMENT_MISMATCH", incompatible.reasonCode());
+    }
+
     private static String content(String contentId, String nbtFile, String extraFields) {
         return "{\n  \"schemaVersion\": \"city_decoration_content_index.v0.2\",\n"
                 + "  \"contents\": [" + contentEntry(contentId, nbtFile, extraFields) + "]\n}";

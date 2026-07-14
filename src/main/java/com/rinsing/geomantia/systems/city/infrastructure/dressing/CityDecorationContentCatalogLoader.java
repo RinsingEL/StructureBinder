@@ -48,7 +48,7 @@ public final class CityDecorationContentCatalogLoader {
     private static final Set<String> CONTENT_FIELDS = Set.of(
             "contentId", "contentKind", "nbtFile", "allowedRotations", "supportMode", "placementMode", "replacePolicy",
             "maxFootprintHeightSpreadBlocks", "comfortMarginBlocks", "allowedSurfaceTags",
-            "blockedSurfaceTags", "tags");
+            "blockedSurfaceTags", "tags", "terrainDropFallbackContentRef");
     private static final Set<String> FORBIDDEN_DERIVED_FIELDS = Set.of(
             "size", "widthBlocks", "heightBlocks", "depthBlocks", "bodyEnvelope", "comfortEnvelope");
     private static final List<Integer> DEFAULT_ROTATIONS = List.of(0);
@@ -86,6 +86,7 @@ public final class CityDecorationContentCatalogLoader {
             }
             contents.put(parsed.contentId(), parsed.asContent());
         }
+        validateTerrainDropFallbacks(contents);
         return new CityDecorationContentCatalog(root, catalogHash(contents), contents);
     }
 
@@ -129,16 +130,43 @@ public final class CityDecorationContentCatalogLoader {
         List<String> blockedSurfaceTags = strings(entry, "blockedSurfaceTags",
                 DEFAULT_BLOCKED_SURFACE_TAGS, contentId);
         List<String> tags = strings(entry, "tags", List.of(), contentId);
+        String terrainDropFallbackContentRef = optionalNullableString(entry, "terrainDropFallbackContentRef");
 
         CompoundTag template = readTemplate(nbtPath, contentId);
         CityDecorationContentCatalog.Size size = validateTemplate(template, contentId);
         String normalizedNbtFile = Path.of(nbtFile).normalize().toString().replace('\\', '/');
         String contentHash = contentHash(contentId, contentKind, normalizedNbtFile, allowedRotations,
                 supportMode, placementMode, replacePolicy, maxHeightSpread, comfortMargin, allowedSurfaceTags,
-                blockedSurfaceTags, tags, template);
+                blockedSurfaceTags, tags, terrainDropFallbackContentRef, template);
         return new ParsedContent(contentId, contentKind, normalizedNbtFile, nbtPath, allowedRotations,
                 supportMode, placementMode, replacePolicy, maxHeightSpread, comfortMargin, allowedSurfaceTags,
-                blockedSurfaceTags, tags, size, contentHash, template);
+                blockedSurfaceTags, tags, terrainDropFallbackContentRef, size, contentHash, template);
+    }
+
+    private static void validateTerrainDropFallbacks(Map<String, CityDecorationContentCatalog.Content> contents) {
+        for (CityDecorationContentCatalog.Content content : contents.values()) {
+            String fallbackRef = content.terrainDropFallbackContentRef();
+            if (fallbackRef == null) {
+                continue;
+            }
+            CityDecorationContentCatalog.Content fallback = contents.get(fallbackRef);
+            if (fallback == null) {
+                throw fail("CITY_DECORATION_TERRAIN_FALLBACK_UNKNOWN",
+                        "terrainDropFallbackContentRef is not present in the catalog: " + fallbackRef);
+            }
+            if (content.size().widthBlocks() != 1 || content.size().depthBlocks() != 1
+                    || fallback.size().widthBlocks() != 1 || fallback.size().depthBlocks() != 1) {
+                throw fail("CITY_DECORATION_TERRAIN_FALLBACK_TILE_REQUIRED",
+                        "terrainDropFallbackContentRef requires one-by-one source and fallback tiles: "
+                                + content.contentId());
+            }
+            if (!content.placementMode().equals(fallback.placementMode())
+                    || !content.replacePolicy().equals(fallback.replacePolicy())) {
+                throw fail("CITY_DECORATION_TERRAIN_FALLBACK_PLACEMENT_MISMATCH",
+                        "terrainDropFallbackContentRef must use the same placement mode and replace policy: "
+                                + content.contentId());
+            }
+        }
     }
 
     private static Path realDirectory(Path catalogRoot) {
@@ -381,6 +409,7 @@ public final class CityDecorationContentCatalogLoader {
                                       List<String> allowedSurfaceTags,
                                       List<String> blockedSurfaceTags,
                                       List<String> tags,
+                                      String terrainDropFallbackContentRef,
                                       CompoundTag template) {
         return hash(out -> {
             writeString(out, CityDecorationContentCatalog.SCHEMA);
@@ -396,6 +425,7 @@ public final class CityDecorationContentCatalogLoader {
             writeStrings(out, allowedSurfaceTags);
             writeStrings(out, blockedSurfaceTags);
             writeStrings(out, tags);
+            writeNullableString(out, terrainDropFallbackContentRef);
             writeTag(out, template);
         });
     }
@@ -508,6 +538,13 @@ public final class CityDecorationContentCatalogLoader {
         out.write(bytes);
     }
 
+    private static void writeNullableString(DataOutputStream out, String value) throws IOException {
+        out.writeBoolean(value != null);
+        if (value != null) {
+            writeString(out, value);
+        }
+    }
+
     private static void rejectUnknownFields(JsonObject object, Set<String> allowed, String owner) {
         for (String key : object.keySet()) {
             if (!allowed.contains(key)) {
@@ -536,6 +573,10 @@ public final class CityDecorationContentCatalogLoader {
 
     private static String optionalString(JsonObject object, String key, String fallback) {
         return object.has(key) ? requiredString(object, key) : fallback;
+    }
+
+    private static String optionalNullableString(JsonObject object, String key) {
+        return object.has(key) ? requiredString(object, key) : null;
     }
 
     private static JsonArray requiredArray(JsonObject object, String key) {
@@ -571,13 +612,15 @@ public final class CityDecorationContentCatalogLoader {
                                  List<String> allowedSurfaceTags,
                                  List<String> blockedSurfaceTags,
                                  List<String> tags,
+                                 String terrainDropFallbackContentRef,
                                  CityDecorationContentCatalog.Size size,
                                  String contentHash,
                                  CompoundTag template) {
         CityDecorationContentCatalog.Content asContent() {
             return new CityDecorationContentCatalog.Content(contentId, contentKind, nbtFile, nbtPath,
                     allowedRotations, supportMode, placementMode, replacePolicy, maxFootprintHeightSpreadBlocks,
-                    comfortMarginBlocks, allowedSurfaceTags, blockedSurfaceTags, tags, size, contentHash, template);
+                    comfortMarginBlocks, allowedSurfaceTags, blockedSurfaceTags, tags, terrainDropFallbackContentRef,
+                    size, contentHash, template);
         }
     }
 }

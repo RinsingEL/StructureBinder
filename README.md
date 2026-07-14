@@ -72,7 +72,7 @@ StructureBinder 当前围绕 `terra_script` Mod 与配套 MCP 工具展开，核
 ./gradlew test
 ```
 
-`runClient` 默认会进入开发运行目录中的 `run/saves/新的世界 (3)`，复用其中的测试数据。需要临时改用其他存档时，传入该存档名的 UTF-8 Base64：
+`runClient` 默认会进入开发运行目录中的 `run/saves/落地测试`，复用其中的测试数据。需要临时改用其他存档时，传入该存档名的 UTF-8 Base64：
 
 ```powershell
 $name = '目标存档名'

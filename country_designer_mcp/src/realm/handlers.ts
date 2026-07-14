@@ -167,6 +167,11 @@ export const realmHandlers: Record<string, ToolHandler> = {
     return textResult(JSON.stringify(res.data, null, 2));
   },
 
+  async city_upgrade_default_decoration_catalog(args) {
+    const res = await postJson(`${MC_API_URL}/realm/city/upgrade_default_decoration_catalog`, payload(args), TIMEOUTS.quick);
+    return textResult(JSON.stringify(res.data, null, 2));
+  },
+
   async city_probe_decoration_terrain(args) {
     const res = await postJson(`${MC_API_URL}/realm/city/probe_decoration_terrain`, payload(args), TIMEOUTS.quick);
     return textResult(JSON.stringify(res.data, null, 2));
@@ -174,6 +179,11 @@ export const realmHandlers: Record<string, ToolHandler> = {
 
   async city_query_structure_catalog(args) {
     const res = await postJson(`${MC_API_URL}/realm/city/query_structure_catalog`, payload(args), TIMEOUTS.quick);
+    return textResult(JSON.stringify(res.data, null, 2));
+  },
+
+  async city_query_template_metadata(args) {
+    const res = await postJson(`${MC_API_URL}/realm/city/query_template_metadata`, payload(args), TIMEOUTS.quick);
     return textResult(JSON.stringify(res.data, null, 2));
   },
 

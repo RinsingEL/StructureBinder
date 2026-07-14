@@ -132,6 +132,25 @@ class CityDecorationWorldgenRegistryTest {
     }
 
     @Test
+    void replacesTheSameCityWithAReplannedCatalogHash(@TempDir Path temp) throws Exception {
+        Path catalogRoot = temp.resolve("catalog");
+        Path serverRoot = temp.resolve("server");
+        CityDecorationContentCatalog original = catalog(catalogRoot, "minecraft:stone");
+        CityDecorationWorldgenRegistry.activate("minecraft:overworld",
+                plan(original, "city_a", "field", 1L, 4, 4), serverRoot, catalogRoot);
+        CityDecorationContentCatalog replanned = catalog(catalogRoot, "minecraft:dirt");
+
+        CityDecorationWorldgenRegistry.activate("minecraft:overworld",
+                plan(replanned, "city_a", "field", 2L, 4, 4), serverRoot, catalogRoot);
+
+        JsonObject active = JsonParser.parseString(Files.readString(
+                CityDecorationWorldgenRegistry.activePlansPath(serverRoot))).getAsJsonObject();
+        assertEquals(1, active.getAsJsonArray("plans").size());
+        assertEquals(replanned.catalogHash(), active.getAsJsonArray("plans").get(0).getAsJsonObject()
+                .get("catalogHash").getAsString());
+    }
+
+    @Test
     void writesOnlyTriggeredOwnerChunkAndDefersItsUnavailableFragment(@TempDir Path temp) throws Exception {
         Path catalogRoot = temp.resolve("catalog");
         Path serverRoot = temp.resolve("server");
@@ -320,7 +339,7 @@ class CityDecorationWorldgenRegistryTest {
     }
 
     @Test
-    void loadRejectsCatalogChangedAfterActivation(@TempDir Path temp) throws Exception {
+    void loadDiscardsCatalogChangedPlanAndPreservesLedger(@TempDir Path temp) throws Exception {
         Path catalogRoot = temp.resolve("catalog");
         Path serverRoot = temp.resolve("server");
         CityDecorationContentCatalog catalog = catalog(catalogRoot, "minecraft:stone");
@@ -329,9 +348,14 @@ class CityDecorationWorldgenRegistryTest {
 
         catalog(catalogRoot, "minecraft:cobblestone");
         CityDecorationWorldgenRegistry.resetForTests();
-        assertTrue(assertThrows(IllegalArgumentException.class,
-                () -> CityDecorationWorldgenRegistry.load(serverRoot, catalogRoot))
-                .getMessage().contains("CATALOG_HASH_MISMATCH"));
+        CityDecorationWorldgenRegistry.load(serverRoot, catalogRoot);
+
+        assertEquals(0, CityDecorationWorldgenRegistry.activeSummary()
+                .get("activePlanCount").getAsInt());
+        JsonObject active = JsonParser.parseString(Files.readString(
+                CityDecorationWorldgenRegistry.activePlansPath(serverRoot))).getAsJsonObject();
+        assertEquals(0, active.getAsJsonArray("plans").size());
+        assertTrue(Files.isRegularFile(CityDecorationWorldgenRegistry.worldgenLedgerPath(serverRoot)));
     }
 
     @Test

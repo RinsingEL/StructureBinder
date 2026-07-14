@@ -459,6 +459,17 @@ final class RealmPlanningHttpController {
         handle(exchange, "GET", CityPlanningEndpointHandler::handleQueryDecorationCatalog);
     }
 
+    void handleCityUpgradeDefaultDecorationCatalog(HttpExchange exchange) {
+        handle(exchange, "POST", () -> callOnServerThread(() -> {
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            return CityPlanningEndpointHandler.handleUpgradeDefaultDecorationCatalog(
+                    server.getWorldPath(LevelResource.ROOT),
+                    net.minecraftforge.fml.loading.FMLPaths.CONFIGDIR.get()
+                            .resolve("geomantia").resolve("city_decoration"),
+                    booleanValue(request, "confirmConfigMutation", false));
+        }));
+    }
+
     void handleCityProbeDecorationTerrain(HttpExchange exchange) {
         handle(exchange, "POST", () -> callOnServerThread(() -> {
             JsonObject request = GisHttpUtil.readJsonObject(exchange);
@@ -484,6 +495,19 @@ final class RealmPlanningHttpController {
             return CityPlanningEndpointHandler.handleQueryStructureCatalog(debugRoot(),
                     request.getAsJsonObject("terrasenseProfileSource"), request);
         });
+    }
+
+    void handleCityQueryTemplateMetadata(HttpExchange exchange) {
+        handle(exchange, "POST", () -> callOnServerThread(() -> {
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            if (!request.has("templateRefs") || !request.get("templateRefs").isJsonArray()) {
+                throw new IllegalArgumentException("templateRefs array is required.");
+            }
+            ServerPlayer player = resolvePlayer(stringValue(request, "playerName", ""));
+            ServerLevel level = resolveLevel(stringValue(request, "dimensionId", ""), player);
+            return CityPlanningEndpointHandler.handleQueryTemplateMetadata(level,
+                    request.getAsJsonArray("templateRefs"));
+        }));
     }
 
     void handleCityPlanD4StructureClusterGroups(HttpExchange exchange) {

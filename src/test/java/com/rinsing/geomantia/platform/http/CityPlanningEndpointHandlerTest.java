@@ -15,8 +15,10 @@ import com.rinsing.geomantia.systems.city.domain.model.CityLandformReviewPackage
 import com.rinsing.geomantia.systems.city.domain.model.CitySiteContext;
 import com.rinsing.geomantia.systems.city.domain.model.LandformPatchSummary;
 import com.rinsing.geomantia.systems.city.infrastructure.json.CityJson;
+import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationDefaultCatalogBootstrap;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityDecorationWorldgenRegistry;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityReservationMaskRegistry;
+import com.rinsing.geomantia.systems.city.infrastructure.world.CityRoadWeaverBridge;
 import com.rinsing.geomantia.systems.gis.domain.cell.LandformType;
 import com.rinsing.geomantia.systems.gis.domain.landform.LandformPatch;
 import com.rinsing.geomantia.systems.gis.domain.landform.PatchFlag;
@@ -35,12 +37,41 @@ import java.util.EnumSet;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityPlanningEndpointHandlerTest {
+
+    @Test
+    void lockedTemplatePlanDoesNotRequireStructureStartSignature() {
+        JsonObject plan = JsonParser.parseString("""
+                {
+                  "locked": true,
+                  "plannedWorldgenStructures": [{
+                    "status": "planned_worldgen",
+                    "anchorId": "template_house",
+                    "materializationSource": "structure_template_nbt",
+                    "templateRef": "geomantia:d6d7_fixture/house",
+                    "locked": true,
+                    "actualFootprint": {"minX":0,"minZ":0,"maxX":10,"maxZ":10},
+                    "lockedActualFootprint": {"minX":0,"minZ":0,"maxX":10,"maxZ":10},
+                    "lockedCollisionEnvelope": {"minX":0,"minZ":0,"maxX":10,"maxZ":10},
+                    "lockedBBoxGroupKey": "",
+                    "expectedStartSignature": "",
+                    "pieceBoxes": []
+                  }]
+                }
+                """).getAsJsonObject();
+
+        assertDoesNotThrow(() -> CityPlanningEndpointHandler.validateLockedMaterializationPlan(plan));
+        plan.getAsJsonArray("plannedWorldgenStructures").get(0).getAsJsonObject().remove("templateRef");
+        plan.getAsJsonArray("plannedWorldgenStructures").get(0).getAsJsonObject().remove("materializationSource");
+        assertThrows(IllegalArgumentException.class,
+                () -> CityPlanningEndpointHandler.validateLockedMaterializationPlan(plan));
+    }
 
     @Test
     void handlePlanD2_restoresSealedRunMetadataWhenCellStepOmitted() throws Exception {
@@ -904,6 +935,8 @@ class CityPlanningEndpointHandlerTest {
 
         Path serverRoot = Files.createTempDirectory("city-decoration-activation-root");
         Path compiledPath = debugRoot.resolve(artifacts.get("compiledDecorationProgramPlan").getAsString());
+        Path slotProjectionPath = debugRoot.resolve(artifacts.get("decorationSlotProjection").getAsString());
+        String slotProjectionJson = Files.readString(slotProjectionPath);
         JsonObject compiledJson = JsonParser.parseString(Files.readString(compiledPath)).getAsJsonObject();
         JsonObject wrongCity = compiledJson.deepCopy();
         wrongCity.addProperty("cityId", "wrong_city");
@@ -929,9 +962,18 @@ class CityPlanningEndpointHandlerTest {
                 "completion preflight must fail before the structure registry is activated");
         Files.writeString(completePath, CityJson.GSON.toJson(completionJson));
 
+        Files.delete(slotProjectionPath);
+        IllegalArgumentException missingProjection = assertThrows(IllegalArgumentException.class,
+                () -> CityPlanningEndpointHandler.handleExecuteD5(
+                        debugRoot, serverRoot, runId, citySeedId, true, null, "auto", catalogRoot));
+        assertTrue(missingProjection.getMessage().contains("CITY_DECORATION_PLAN_INCOMPLETE"));
+        Files.writeString(slotProjectionPath, slotProjectionJson);
+
         JsonObject activation = CityPlanningEndpointHandler.handleExecuteD5(
                 debugRoot, serverRoot, runId, citySeedId, true, null, "auto", catalogRoot);
         assertTrue(activation.get("decorationWorldgenMode").getAsBoolean());
+        assertEquals(1, activation.get("decorationVegetationMaskCount").getAsInt());
+        assertEquals(1, activation.get("decorationStructureMaskCount").getAsInt());
         assertEquals(1, activation.getAsJsonObject("activeDecorationSummary")
                 .get("activePlanCount").getAsInt());
         assertTrue(Files.exists(CityDecorationWorldgenRegistry.activePlansPath(serverRoot)));
@@ -942,6 +984,19 @@ class CityPlanningEndpointHandlerTest {
         assertEquals(CityDecorationWorldgenRegistry.LEDGER_SCHEMA,
                 JsonParser.parseString(Files.readString(CityDecorationWorldgenRegistry.worldgenLedgerPath(serverRoot)))
                         .getAsJsonObject().get("schemaVersion").getAsString());
+        JsonObject activeMask = JsonParser.parseString(Files.readString(serverRoot
+                .resolve("geomantia_city_masks")
+                .resolve("active_reservation_mask_plan.json"))).getAsJsonObject();
+        BlockBounds expectedDecorationBounds = decorationSlotBounds(
+                dressing.getAsJsonObject("slotProjection").getAsJsonArray("slots"));
+        BlockBounds vegetationBounds = decorationMaskBounds(activeMask, "noVegetationMask",
+                "decoration_patch_fill_no_vegetation");
+        BlockBounds structureBounds = decorationMaskBounds(activeMask, "noVanillaStructureMask",
+                "decoration_patch_fill_no_vanilla_structure");
+        assertEquals(expectedDecorationBounds, vegetationBounds);
+        assertEquals(expectedDecorationBounds, structureBounds);
+        assertNotEquals(new BlockBounds(-64, -64, 63, 63), vegetationBounds,
+                "D5 must not treat the entire target patch as the decoration projection mask");
 
         Files.delete(completePath);
         IllegalArgumentException incomplete = assertThrows(IllegalArgumentException.class,
@@ -1040,6 +1095,33 @@ class CityPlanningEndpointHandlerTest {
                 () -> CityPlanningEndpointHandler.handlePlanCityDressing(debugRoot, runId, citySeedId,
                         dressingBrushPlan(), catalogRoot));
         assertTrue(legacy.getMessage().contains("CITY_DRESSING_LEGACY_SCHEMA_REMOVED"));
+    }
+
+    @Test
+    void managedDefaultDecorationCatalogUpgradeRequiresConfirmationAndForcesReplan() throws Exception {
+        Path catalogRoot = Files.createTempDirectory("city-decoration-default-upgrade").resolve("catalog");
+        CityDecorationDefaultCatalogBootstrap.ensureInstalled(catalogRoot);
+        Path indexPath = catalogRoot.resolve("content_index.json");
+        JsonObject index = JsonParser.parseString(Files.readString(indexPath)).getAsJsonObject();
+        index.getAsJsonArray("contents").forEach(entry -> {
+            JsonObject content = entry.getAsJsonObject();
+            if ("geomantia:decoration/water_channel_tile".equals(content.get("contentId").getAsString())) {
+                content.remove("terrainDropFallbackContentRef");
+            }
+        });
+        Files.writeString(indexPath, CityJson.GSON.toJson(index));
+
+        IllegalArgumentException unconfirmed = assertThrows(IllegalArgumentException.class,
+                () -> CityPlanningEndpointHandler.handleUpgradeDefaultDecorationCatalog(
+                        Files.createTempDirectory("city-decoration-default-upgrade-server"), catalogRoot, false));
+        assertTrue(unconfirmed.getMessage().contains("CITY_DECORATION_DEFAULT_CATALOG_UPGRADE_CONFIRMATION_REQUIRED"));
+
+        JsonObject response = CityPlanningEndpointHandler.handleUpgradeDefaultDecorationCatalog(
+                Files.createTempDirectory("city-decoration-default-upgrade-server"), catalogRoot, true);
+        assertTrue(response.get("catalogChanged").getAsBoolean());
+        assertTrue(response.get("requiresReplan").getAsBoolean());
+        assertTrue(response.get("contentIndexChanged").getAsBoolean());
+        assertTrue(Files.isRegularFile(Path.of(response.get("backupPath").getAsString())));
     }
 
     @Test
@@ -1200,6 +1282,84 @@ class CityPlanningEndpointHandlerTest {
         assertEquals("none", roadReport.get("roadPostprocessSource").getAsString());
         assertFalse(roadReport.has("generatedBuildOperationPlan"));
         assertTrue(d7.getAsJsonObject("roadProviderState").get("useWorldEditDebugFallback").getAsBoolean());
+    }
+
+    @Test
+    void roadWeaverConnectionPlanUsesTransformedTemplateEntranceMetadata() {
+        JsonObject materializationPlan = JsonParser.parseString("""
+                {
+                  "schemaVersion": "city_structure_materialization_plan.v0.1",
+                  "cityId": "city_test",
+                  "plannedWorldgenStructures": [
+                    {
+                      "status": "planned_worldgen",
+                      "anchorId": "template_house_01",
+                      "structureId": "city:house",
+                      "priority": 4,
+                      "commandAnchorBlock": {"x": 100, "z": 200},
+                      "lockedActualFootprint": {"minX": 100, "minZ": 200, "maxX": 112, "maxZ": 212},
+                      "templatePlacementPlan": {
+                        "templateId": "city:house",
+                        "templateHash": "sha256:house",
+                        "anchorBlock": {"x": 100, "z": 200},
+                        "transformed": {
+                          "roadEntrances": [
+                            {
+                              "entranceId": "front",
+                              "relativePosition": {"x": 4, "z": 0},
+                              "direction": "NORTH"
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                }
+                """).getAsJsonObject();
+
+        JsonObject plan = CityRoadWeaverBridge.createConnectionPlan(materializationPlan);
+        JsonObject endpoint = plan.getAsJsonArray("endpoints").get(0).getAsJsonObject();
+
+        assertEquals("valid", plan.get("validationStatus").getAsString());
+        assertFalse(plan.get("generateImmediately").getAsBoolean());
+        assertTrue(plan.get("transactional").getAsBoolean());
+        assertEquals(104, endpoint.getAsJsonObject("roadPoint").get("x").getAsInt());
+        assertEquals(200, endpoint.getAsJsonObject("roadPoint").get("z").getAsInt());
+        assertEquals("NORTH", endpoint.get("direction").getAsString());
+        assertEquals("city:house", endpoint.get("templateId").getAsString());
+        assertEquals("sha256:house", endpoint.get("templateHash").getAsString());
+        assertEquals("transformed_road_entrance", endpoint.get("coordinateSource").getAsString());
+        assertNotEquals(215, endpoint.getAsJsonObject("roadPoint").get("z").getAsInt(),
+                "Road endpoint must not be fabricated from bbox.maxZ()+3");
+    }
+
+    @Test
+    void roadWeaverConnectionPlanReportsMissingTemplateEntranceWithoutBboxFallback() {
+        JsonObject materializationPlan = JsonParser.parseString("""
+                {
+                  "cityId": "city_test",
+                  "plannedWorldgenStructures": [{
+                    "status": "planned_worldgen",
+                    "anchorId": "template_house_missing_entrance",
+                    "structureId": "city:house",
+                    "commandAnchorBlock": {"x": 100, "z": 200},
+                    "lockedActualFootprint": {"minX": 100, "minZ": 200, "maxX": 112, "maxZ": 212},
+                    "templatePlacementPlan": {
+                      "templateId": "city:house",
+                      "templateHash": "sha256:house",
+                      "transformed": {}
+                    }
+                  }]
+                }
+                """).getAsJsonObject();
+
+        JsonObject plan = CityRoadWeaverBridge.createConnectionPlan(materializationPlan);
+
+        assertEquals("failed", plan.get("validationStatus").getAsString());
+        assertEquals("TEMPLATE_ROAD_ENTRANCE_MISSING", plan.get("reasonCode").getAsString());
+        assertTrue(plan.getAsJsonArray("endpoints").isEmpty());
+        assertTrue(plan.getAsJsonArray("connections").isEmpty());
+        assertFalse(plan.toString().contains("maxZ()+3"));
     }
 
     @Test
@@ -1423,6 +1583,11 @@ class CityPlanningEndpointHandlerTest {
                         runId, citySeedId, true, null, "roadweaver"));
 
         assertTrue(ex.getMessage().contains("ROADWEAVER_UNAVAILABLE"));
+        assertTrue(ex instanceof CityRoadWeaverBridge.RegistrationException);
+        assertEquals("failed", ((CityRoadWeaverBridge.RegistrationException) ex).report()
+                .get("status").getAsString());
+        assertFalse(((CityRoadWeaverBridge.RegistrationException) ex).report()
+                .get("partialRegistration").getAsBoolean());
         assertFalse(Files.exists(CityReservationMaskRegistry.plannedRegistryPath(serverRoot)),
                 "RoadWeaver preflight must fail before the structure registry is activated");
     }
@@ -2444,7 +2609,7 @@ class CityPlanningEndpointHandlerTest {
                         "offsetUBlocks": 0,
                         "offsetVBlocks": 0
                       },
-                      "shape": {"type": "target_mask", "params": {}},
+                      "shape": {"type": "rectangle", "params": {"minU": -35, "minV": -35, "maxU": -25, "maxV": -25}},
                       "pattern": {"type": "uniform_fill", "params": {"paletteSlotId": "surface"}},
                       "contentPalette": {
                         "slots": [
@@ -2468,6 +2633,35 @@ class CityPlanningEndpointHandlerTest {
                   ]
                 }
                 """.formatted(catalogHash, styleProfileHash, patchRef, contentRef)).getAsJsonObject();
+    }
+
+    private static BlockBounds decorationSlotBounds(JsonArray slots) {
+        int minX = Integer.MAX_VALUE;
+        int minZ = Integer.MAX_VALUE;
+        int maxX = Integer.MIN_VALUE;
+        int maxZ = Integer.MIN_VALUE;
+        for (JsonElement element : slots) {
+            JsonObject worldAnchor = element.getAsJsonObject().getAsJsonObject("worldAnchor");
+            int x = worldAnchor.get("x").getAsInt();
+            int z = worldAnchor.get("z").getAsInt();
+            minX = Math.min(minX, x);
+            minZ = Math.min(minZ, z);
+            maxX = Math.max(maxX, x);
+            maxZ = Math.max(maxZ, z);
+        }
+        return new BlockBounds(minX, minZ, maxX, maxZ);
+    }
+
+    private static BlockBounds decorationMaskBounds(JsonObject activeMask, String channel, String maskId) {
+        for (JsonElement element : activeMask.getAsJsonArray(channel)) {
+            JsonObject mask = element.getAsJsonObject();
+            if (maskId.equals(mask.get("maskId").getAsString())) {
+                JsonObject bounds = mask.getAsJsonObject("blockBounds");
+                return new BlockBounds(bounds.get("minX").getAsInt(), bounds.get("minZ").getAsInt(),
+                        bounds.get("maxX").getAsInt(), bounds.get("maxZ").getAsInt());
+            }
+        }
+        throw new AssertionError("missing mask: " + maskId);
     }
 
     private static void addPatchMemberCells(Path debugRoot, String runId, String citySeedId,

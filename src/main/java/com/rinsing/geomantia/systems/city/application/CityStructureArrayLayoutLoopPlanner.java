@@ -68,6 +68,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
         CityStructureProfileCatalog.ImportedCatalog catalog =
                 CityStructureProfileCatalog.importCatalog(baseDirectory, terraSenseProfileSource);
         JsonObject normalizedPlan = normalizePlan(arrayLayoutPlan, reviewPackage.cityId());
+        TemplateCatalogContext templateCatalog = templateCatalog(normalizedPlan);
         JsonObject normalizedBasePlan = normalizeBaseAnchorPlan(baseStructureAnchorPlan, reviewPackage.cityId());
         JsonObject normalizedBaseMap = baseStructureAnchorMap == null ? new JsonObject() : baseStructureAnchorMap.deepCopy();
         JsonArray occupied = occupiedFromAnchorMap(normalizedBaseMap, catalog.byId(), envelopeFacts);
@@ -91,6 +92,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
         state.add("sourceTerraSenseProfileSource", terraSenseProfileSource == null ? new JsonObject()
                 : terraSenseProfileSource.deepCopy());
         state.add("structureProfileCatalog", catalog.asJson());
+        state.add("templateCatalog", templateCatalog.source().deepCopy());
         state.add("baseStructureAnchorPlan", normalizedBasePlan);
         state.add("baseStructureAnchorMap", normalizedBaseMap);
         state.add("arrayAnchors", new JsonArray());
@@ -136,6 +138,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
         CityStructureProfileCatalog.ImportedCatalog catalog =
                 CityStructureProfileCatalog.importCatalog(baseDirectory, terraSenseProfileSource);
         Map<String, CityStructureProfileCatalog.StructureProfile> profiles = catalog.byId();
+        TemplateCatalogContext templateCatalog = templateCatalog(currentState);
         CityStructureEnvelopeFacts facts = envelopeFacts == null ? CityStructureEnvelopeFacts.empty() : envelopeFacts;
         JsonArray hardBlocks = new JsonArray();
         JsonArray warnings = new JsonArray();
@@ -152,12 +155,12 @@ public final class CityStructureArrayLayoutLoopPlanner {
         if (sourcePatches.isEmpty()) {
             hardBlocks.add("D4_ARRAY_LAYOUT_PATCH_UNAVAILABLE: " + arrayId);
         }
-        List<DesiredItem> desiredItems = desiredItems(nextItem);
+        List<DesiredItem> desiredItems = desiredItems(nextItem, templateCatalog);
         if (desiredItems.isEmpty() && !"composite_array".equals(plannerType)) {
             hardBlocks.add(arrayId + ": requiredItems, featuredItems or fillPool must provide structures.");
         }
         for (DesiredItem item : desiredItems) {
-            if (!profiles.containsKey(item.structureId())) {
+            if (!item.isTemplate() && !profiles.containsKey(item.structureId())) {
                 hardBlocks.add(arrayId + ": structureId is not in approved TerraSense catalog: " + item.structureId());
             }
         }
@@ -165,7 +168,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
         JsonObject itemTrace;
         if (hardBlocks.isEmpty()) {
             BuildResult build = "composite_array".equals(plannerType)
-                    ? buildCompositeArrayItem(nextItem, sourcePatches, reviewPackage, profiles, facts,
+                    ? buildCompositeArrayItem(nextItem, sourcePatches, reviewPackage, profiles, templateCatalog, facts,
                     occupiedBounds(array(state, "occupiedEnvelopes")), null)
                     : buildArrayItem(nextItem, plannerType, sourcePatches, reviewPackage, profiles,
                     facts, occupiedBounds(array(state, "occupiedEnvelopes")), desiredItems, null);
@@ -247,6 +250,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
         CityStructureProfileCatalog.ImportedCatalog catalog =
                 CityStructureProfileCatalog.importCatalog(baseDirectory, terraSenseProfileSource);
         Map<String, CityStructureProfileCatalog.StructureProfile> profiles = catalog.byId();
+        TemplateCatalogContext templateCatalog = templateCatalog(currentState);
         CityStructureEnvelopeFacts facts = envelopeFacts == null ? CityStructureEnvelopeFacts.empty() : envelopeFacts;
         int candidateCount = clamp(intValue(request, "candidateCount", 5), 3, 5);
         int minCandidateCount = clamp(intValue(request, "minCandidateCount", 3), 2, candidateCount);
@@ -274,16 +278,16 @@ public final class CityStructureArrayLayoutLoopPlanner {
             }
             BuildResult build;
             if ("composite_array".equals(plannerType)) {
-                build = buildCompositeArrayItem(item, targetPatch, reviewPackage, profiles, facts, occupied,
+                build = buildCompositeArrayItem(item, targetPatch, reviewPackage, profiles, templateCatalog, facts, occupied,
                         context.availableBounds());
             } else {
-                List<DesiredItem> desiredItems = desiredItems(item);
+                List<DesiredItem> desiredItems = desiredItems(item, templateCatalog);
                 if (desiredItems.isEmpty()) {
                     throw new IllegalArgumentException("D4_ARRAY_LAYOUT_CANDIDATE_ITEM_REQUIRED: "
                             + "the array item must provide requiredItems, featuredItems or fillPool.");
                 }
                 for (DesiredItem desired : desiredItems) {
-                    if (!profiles.containsKey(desired.structureId())) {
+                    if (!desired.isTemplate() && !profiles.containsKey(desired.structureId())) {
                         throw new IllegalArgumentException("D4_ARRAY_LAYOUT_STRUCTURE_PROFILE_UNAVAILABLE: "
                                 + desired.structureId());
                     }
@@ -358,6 +362,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
         CityStructureProfileCatalog.ImportedCatalog catalog =
                 CityStructureProfileCatalog.importCatalog(baseDirectory, terraSenseProfileSource);
         Map<String, CityStructureProfileCatalog.StructureProfile> profiles = catalog.byId();
+        TemplateCatalogContext templateCatalog = templateCatalog(currentState);
         CityStructureEnvelopeFacts facts = envelopeFacts == null ? CityStructureEnvelopeFacts.empty() : envelopeFacts;
         int candidateCount = clamp(intValue(request, "candidateCount", 5), 3, 5);
         int minCandidateCount = clamp(intValue(request, "minCandidateCount", 3), 2, candidateCount);
@@ -366,20 +371,21 @@ public final class CityStructureArrayLayoutLoopPlanner {
             throw new IllegalArgumentException("D4_ARRAY_LAYOUT_PLANNER_TYPE_UNSUPPORTED: " + plannerType);
         }
         List<DesiredItem> desired = "composite_array".equals(plannerType)
-                ? List.of() : desiredItems(submittedItem);
+                ? List.of() : desiredItems(submittedItem, templateCatalog);
         if (!"composite_array".equals(plannerType) && desired.isEmpty()) {
             throw new IllegalArgumentException("D4_ARRAY_LAYOUT_CANDIDATE_ITEM_REQUIRED: "
                     + "the array item must provide requiredItems, featuredItems or fillPool.");
         }
         for (DesiredItem item : desired) {
-            if (!profiles.containsKey(item.structureId())) {
+            if (!item.isTemplate() && !profiles.containsKey(item.structureId())) {
                 throw new IllegalArgumentException("D4_ARRAY_LAYOUT_STRUCTURE_PROFILE_UNAVAILABLE: " + item.structureId());
             }
         }
 
         FrontierReference reference = frontierReference(submittedItem, plannerType, desired, profiles, facts);
         int spacing = reference.spacingBlocks();
-        TerrainPlacementPolicy terrainPolicy = terrainPlacementPolicy(submittedItem, plannerType, desired, profiles);
+        TerrainPlacementPolicy terrainPolicy = terrainPlacementPolicy(submittedItem, plannerType, desired, profiles,
+                templateCatalog);
         JsonArray candidates = new JsonArray();
         JsonArray frontierTrace = new JsonArray();
         Set<String> signatures = new LinkedHashSet<>();
@@ -436,7 +442,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
                 item.addProperty("candidateVariant", "frontier_" + frontierRingName(ring) + "_" + (attempt + 1));
 
                 BuildResult build = "composite_array".equals(plannerType)
-                        ? buildCompositeArrayItem(item, sourcePatches, reviewPackage, profiles, facts, occupied,
+                        ? buildCompositeArrayItem(item, sourcePatches, reviewPackage, profiles, templateCatalog, facts, occupied,
                         frontierBounds)
                         : buildArrayItem(item, plannerType, sourcePatches, reviewPackage, profiles, facts,
                         occupied, desired, frontierBounds);
@@ -691,7 +697,8 @@ public final class CityStructureArrayLayoutLoopPlanner {
 
         for (int i = 0; i < desiredItems.size(); i++) {
             DesiredItem desired = desiredItems.get(i);
-            CityStructureProfileCatalog.StructureProfile profile = profiles.get(desired.structureId());
+            CityStructureProfileCatalog.StructureProfile profile = desired.isTemplate() ? null
+                    : profiles.get(desired.structureId());
             JsonObject options = item.deepCopy();
             options.addProperty("rotation", "NONE");
             options.addProperty("compactArraySubmission", true);
@@ -707,8 +714,11 @@ public final class CityStructureArrayLayoutLoopPlanner {
                     rejected.add(rejection(desired, point, "POINT_OUTSIDE_PATCH"));
                     continue;
                 }
-                CityStructureCandidateEnvelope.Estimate estimate =
-                        CityStructureCandidateEnvelope.estimate(point, profile, facts, options);
+                TemplatePlacement templatePlacement = desired.isTemplate()
+                        ? templatePlacement(desired.template(), point, options) : null;
+                CityStructureCandidateEnvelope.Estimate estimate = templatePlacement == null
+                        ? CityStructureCandidateEnvelope.estimate(point, profile, facts, options)
+                        : templatePlacement.estimate();
                 if (estimate.requiredFactsMissing()) {
                     hardBlocks.add("D4_ARRAY_LAYOUT_STRUCTURE_ENVELOPE_FACTS_REQUIRED: " + desired.structureId());
                     break;
@@ -726,7 +736,8 @@ public final class CityStructureArrayLayoutLoopPlanner {
                     rejected.add(rejection(desired, point, "D4_ARRAY_LAYOUT_OCCUPIED_CONFLICT"));
                     continue;
                 }
-                accepted = new Accepted(desired, point, patch, estimate);
+                accepted = new Accepted(desired, point, templatePlacement == null ? point : templatePlacement.anchorBlock(),
+                        patch, estimate);
                 break;
             }
             if (accepted == null) {
@@ -777,6 +788,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
                                                 List<LandformPatchSummary> sourcePatches,
                                                 CityLandformReviewPackage reviewPackage,
                                                 Map<String, CityStructureProfileCatalog.StructureProfile> profiles,
+                                                TemplateCatalogContext templateCatalog,
                                                 CityStructureEnvelopeFacts facts,
                                                 List<BlockBounds> occupied,
                                                 BlockBounds placementBounds) {
@@ -851,13 +863,13 @@ public final class CityStructureArrayLayoutLoopPlanner {
             child.addProperty("parentArrayId", arrayId);
             child.addProperty("targetSubZoneId", subZone.subZoneId());
 
-            List<DesiredItem> desiredItems = desiredItems(child);
+            List<DesiredItem> desiredItems = desiredItems(child, templateCatalog);
             if (desiredItems.isEmpty()) {
                 hardBlocks.add(stringValue(child, "arrayId") + ": requiredItems, featuredItems or fillPool must provide structures.");
                 break;
             }
             for (DesiredItem desired : desiredItems) {
-                if (!profiles.containsKey(desired.structureId())) {
+                if (!desired.isTemplate() && !profiles.containsKey(desired.structureId())) {
                     hardBlocks.add(stringValue(child, "arrayId") + ": structureId is not in approved TerraSense catalog: "
                             + desired.structureId());
                 }
@@ -1024,9 +1036,11 @@ public final class CityStructureArrayLayoutLoopPlanner {
         obj.addProperty("plannerType", plannerType);
         obj.addProperty("arrayShape", arrayShape(sourceItem, plannerType));
         obj.addProperty("spacingBlocks", spacing);
-        obj.add("anchorBlock", accepted.point().asJson());
-        obj.add("roadPoint", accepted.point().asJson());
-        obj.addProperty("rotation", "NONE");
+        obj.add("anchorBlock", accepted.anchorBlock().asJson());
+        obj.add("roadPoint", accepted.desired().isTemplate()
+                ? templateRoadPoint(accepted.desired().template(), accepted.anchorBlock()) : accepted.point().asJson());
+        obj.addProperty("rotation", accepted.desired().isTemplate()
+                ? accepted.desired().template().rotation().name() : "NONE");
         obj.add("sourcePatchRefs", patchRefs(accepted.patch()));
         obj.add("plannedFootprint", CityStructureCandidateEnvelope.boundsJson(accepted.estimate().plannedFootprint()));
         obj.add("estimatedCollisionEnvelope",
@@ -1037,6 +1051,9 @@ public final class CityStructureArrayLayoutLoopPlanner {
         obj.addProperty("envelopeMode", accepted.estimate().envelopeMode());
         obj.addProperty("selectedEnvelopeGroupKey", accepted.estimate().selectedEnvelopeGroupKey());
         obj.addProperty("roadAccessIntent", "array_zone_gateway_deferred_to_roadweaver");
+        if (accepted.desired().isTemplate()) {
+            addTemplatePlacementFields(obj, accepted.desired().template(), accepted.anchorBlock(), accepted.estimate());
+        }
         return obj;
     }
 
@@ -1049,8 +1066,9 @@ public final class CityStructureArrayLayoutLoopPlanner {
         anchor.addProperty("arrayPlannerType", plannerType);
         anchor.addProperty("structureId", accepted.desired().structureId());
         anchor.add("sourcePatchIds", patchRefs(accepted.patch()));
-        anchor.add("anchorBlock", accepted.point().asJson());
-        anchor.addProperty("rotation", "NONE");
+        anchor.add("anchorBlock", accepted.anchorBlock().asJson());
+        anchor.addProperty("rotation", accepted.desired().isTemplate()
+                ? accepted.desired().template().rotation().name() : "NONE");
         anchor.add("intentTerms", intentTerms(arrayId, stringValue(sourceItem, "role",
                 stringValue(sourceItem, "displayRole", arrayId)), plannerType));
         anchor.addProperty("priority", intValue(sourceItem, "priority", 100) + index);
@@ -1061,7 +1079,86 @@ public final class CityStructureArrayLayoutLoopPlanner {
         anchor.addProperty("smallClearanceBlocks", CityStructureCandidateEnvelope.DEFAULT_SMALL_CLEARANCE_BLOCKS);
         anchor.addProperty("selectionReason", "Selected from D4 array layout loop " + arrayId
                 + " planner " + plannerType);
+        if (accepted.desired().isTemplate()) {
+            addTemplatePlacementFields(anchor, accepted.desired().template(), accepted.anchorBlock(), accepted.estimate());
+        }
         return anchor;
+    }
+
+    private TemplatePlacement templatePlacement(TemplateSelection template, BlockPoint center, JsonObject options) {
+        CityTemplatePlacementGeometry geometry = template.template().geometry(template.rotation(), template.mirror());
+        CityStructureProfileCatalog.Footprint centeredFootprint = new CityStructureProfileCatalog.Footprint(
+                geometry.transformedSize().width(), geometry.transformedSize().depth(), geometry.transformedSize().height());
+        BlockBounds actualFootprint = centeredFootprint.centeredAt(center.x(), center.z(), "NONE");
+        BlockPoint anchor = new BlockPoint(actualFootprint.minX(), actualFootprint.minZ());
+        int maskMargin = Math.max(0, intValue(options, "maskMarginBlocks",
+                intValue(options, "d5MaskMarginBlocks", CityStructureCandidateEnvelope.DEFAULT_MASK_MARGIN_BLOCKS)));
+        BlockBounds collision = CityStructureAnchorPlanner.expand(actualFootprint, template.template().clearanceBlocks());
+        BlockBounds mask = CityStructureAnchorPlanner.expand(collision, maskMargin);
+        CityStructureCandidateEnvelope.Estimate estimate = new CityStructureCandidateEnvelope.Estimate(actualFootprint,
+                collision, mask, collision, "structure_template_nbt", "", false, "");
+        return new TemplatePlacement(anchor, estimate);
+    }
+
+    private JsonObject templateRoadPoint(TemplateSelection template, BlockPoint anchor) {
+        CityTemplatePlacementGeometry geometry = template.template().geometry(template.rotation(), template.mirror());
+        if (geometry.roadEntrances().isEmpty()) {
+            return anchor.asJson();
+        }
+        return geometry.roadEntrances().get(0).worldPosition(anchor).asJson();
+    }
+
+    private void addTemplatePlacementFields(JsonObject target, TemplateSelection selection, BlockPoint anchor,
+                                            CityStructureCandidateEnvelope.Estimate estimate) {
+        CityTemplateCatalog.Template template = selection.template();
+        target.addProperty("templateId", template.templateId());
+        target.addProperty("templateRef", template.templateRef());
+        target.addProperty("templateHash", template.contentHash());
+        target.addProperty("variantId", template.variantId());
+        target.addProperty("rotation", selection.rotation().name());
+        target.addProperty("mirror", selection.mirror().name());
+        target.addProperty("materializationSource", CityStructureMaterializationPlanner.TEMPLATE_MATERIALIZATION_SOURCE);
+        CityTemplatePlacementGeometry geometry = template.geometry(selection.rotation(), selection.mirror());
+        // NBT source dimensions are the only local geometry. The world footprint is derived from them.
+        target.add("templateSize", sizeJson(geometry.sourceSize()));
+        target.add("actualFootprint", CityStructureCandidateEnvelope.boundsJson(estimate.plannedFootprint()));
+        target.add("templatePlacementPlan", templatePlacementPlan(selection, anchor));
+    }
+
+    private JsonObject templatePlacementPlan(TemplateSelection selection, BlockPoint anchor) {
+        CityTemplateCatalog.Template template = selection.template();
+        CityTemplatePlacementGeometry geometry = template.geometry(selection.rotation(), selection.mirror());
+        JsonObject plan = new JsonObject();
+        plan.addProperty("templateId", template.templateId());
+        plan.addProperty("templateRef", template.templateRef());
+        plan.addProperty("templateHash", template.contentHash());
+        plan.addProperty("variantId", template.variantId());
+        plan.addProperty("rotation", selection.rotation().name());
+        plan.addProperty("mirror", selection.mirror().name());
+        plan.add("anchorBlock", anchor.asJson());
+        plan.add("templateSize", sizeJson(geometry.sourceSize()));
+        JsonObject transformed = new JsonObject();
+        transformed.add("size", sizeJson(geometry.transformedSize()));
+        JsonArray entrances = new JsonArray();
+        for (CityTemplatePlacementGeometry.TransformedRoadEntrance entrance : geometry.roadEntrances()) {
+            JsonObject entry = new JsonObject();
+            entry.addProperty("entranceId", entrance.entranceId());
+            entry.addProperty("direction", entrance.direction().name());
+            entry.add("relativePosition", entrance.relativePosition().asJson());
+            entry.add("worldPosition", entrance.worldPosition(anchor).asJson());
+            entrances.add(entry);
+        }
+        transformed.add("roadEntrances", entrances);
+        plan.add("transformed", transformed);
+        return plan;
+    }
+
+    private static JsonObject sizeJson(CityTemplatePlacementGeometry.Size size) {
+        JsonObject obj = new JsonObject();
+        obj.addProperty("width", size.width());
+        obj.addProperty("height", size.height());
+        obj.addProperty("depth", size.depth());
+        return obj;
     }
 
     private List<BlockPoint> rawPoints(String plannerType, JsonObject item, LandformPatchSummary pivot,
@@ -1097,8 +1194,15 @@ public final class CityStructureArrayLayoutLoopPlanner {
                     plazaRing(points, start, spacing, requested);
                 }
             }
-            case "guide_line_dual_side", "riverbank_dual_side" ->
+            case "guide_line_dual_side", "riverbank_dual_side" -> {
+                String direction = stringValue(item, "outwardDirection", "");
+                if (booleanValue(item, "continuousFrontier", false)
+                        && EXPANSION_DIRECTIONS.contains(direction)) {
+                    continuousDualSideBounds(points, bounds, start, spacing, requested, direction);
+                } else {
                     dualSideBounds(points, bounds, start, spacing, requested);
+                }
+            }
             case "contour_band" -> contourBounds(points, bounds, start, spacing, requested);
             default -> compoundClusterBounds(points, item, bounds, start, spacing, requested);
         }
@@ -1310,6 +1414,38 @@ public final class CityStructureArrayLayoutLoopPlanner {
         }
     }
 
+    /**
+     * A continuous frontier has a physical gap contract. Start its inner row exactly at the
+     * resolved frontier, then place the second row farther out instead of letting a dual-side
+     * cross offset move the whole array away from its parent.
+     */
+    private void continuousDualSideBounds(LinkedHashSet<BlockPoint> points, BlockBounds bounds, BlockPoint start,
+                                          int spacing, int requested, String direction) {
+        int outwardX = direction.contains("east") ? 1 : direction.contains("west") ? -1 : 0;
+        int outwardZ = direction.contains("south") ? 1 : direction.contains("north") ? -1 : 0;
+        int lateralX = -outwardZ;
+        int lateralZ = outwardX;
+        int stride = Math.max(8, spacing);
+        int rowSeparation = Math.max(8, spacing);
+        points.add(new BlockPoint(clamp(start.x(), bounds.minX(), bounds.maxX()),
+                clamp(start.z(), bounds.minZ(), bounds.maxZ())));
+        int pointCount = Math.max(requested * 6, 12);
+        for (int index = 1; index < pointCount; index++) {
+            int longitudinalPair = (index - 1) / 2;
+            int longitudinalDistance = ((longitudinalPair + 1) / 2) * stride;
+            if (longitudinalPair % 2 != 0) {
+                longitudinalDistance = -longitudinalDistance;
+            }
+            boolean outerRow = index % 2 == 1;
+            int x = start.x() + lateralX * longitudinalDistance
+                    + (outerRow ? outwardX * rowSeparation : 0);
+            int z = start.z() + lateralZ * longitudinalDistance
+                    + (outerRow ? outwardZ * rowSeparation : 0);
+            points.add(new BlockPoint(clamp(x, bounds.minX(), bounds.maxX()),
+                    clamp(z, bounds.minZ(), bounds.maxZ())));
+        }
+    }
+
     private void contourBand(LinkedHashSet<BlockPoint> points, LandformPatchSummary pivot,
                              List<LandformPatchSummary> patches, BlockPoint start, int spacing, int requested) {
         for (LandformPatchSummary patch : orderedPatches(pivot, patches)) {
@@ -1366,10 +1502,10 @@ public final class CityStructureArrayLayoutLoopPlanner {
         points.add(bounds.center());
     }
 
-    private List<DesiredItem> desiredItems(JsonObject item) {
+    private List<DesiredItem> desiredItems(JsonObject item, TemplateCatalogContext templateCatalog) {
         List<DesiredItem> desired = new ArrayList<>();
-        addExplicitItems(desired, array(item, "requiredItems"), "required");
-        addExplicitItems(desired, array(item, "featuredItems"), "featured");
+        addExplicitItems(desired, array(item, "requiredItems"), "required", templateCatalog);
+        addExplicitItems(desired, array(item, "featuredItems"), "featured", templateCatalog);
         JsonArray fillPool = array(item, "fillPool");
         int target = countValue(item, "targetCount", Math.max(desired.size(), fillPool.isEmpty() ? desired.size() : 1));
         int max = countValue(item, "maxCount", Math.max(target, desired.size()));
@@ -1377,37 +1513,50 @@ public final class CityStructureArrayLayoutLoopPlanner {
         int fillIndex = 0;
         while (desired.size() < target && !fillPool.isEmpty()) {
             fillIndex++;
-            String structureId = fillStructureId(item, fillPool, fillIndex);
-            desired.add(new DesiredItem("fill_" + String.format(Locale.ROOT, "%02d", fillIndex),
-                    structureId, "fill", "skip_with_warning"));
+            desired.add(desiredItem("fill_" + String.format(Locale.ROOT, "%02d", fillIndex),
+                    fillEntry(item, fillPool, fillIndex), "fill", "skip_with_warning", templateCatalog));
         }
         return desired;
     }
 
-    private void addExplicitItems(List<DesiredItem> desired, JsonArray items, String kind) {
+    private void addExplicitItems(List<DesiredItem> desired, JsonArray items, String kind,
+                                  TemplateCatalogContext templateCatalog) {
         int index = 0;
         for (JsonElement elem : items) {
             index++;
-            if (elem.isJsonPrimitive()) {
-                String structureId = elem.getAsString();
-                desired.add(new DesiredItem(kind + "_" + String.format(Locale.ROOT, "%02d", index),
-                        structureId, kind, "required".equals(kind) ? "hard_block" : "skip_with_warning"));
-            } else if (elem.isJsonObject()) {
-                JsonObject obj = elem.getAsJsonObject();
-                String structureId = requiredString(obj, "structureId");
-                String itemId = stringValue(obj, "itemId", kind + "_" + String.format(Locale.ROOT, "%02d", index));
-                desired.add(new DesiredItem(itemId, structureId, kind,
-                        stringValue(obj, "failurePolicy", "required".equals(kind) ? "hard_block" : "skip_with_warning")));
-            }
+            String fallbackId = kind + "_" + String.format(Locale.ROOT, "%02d", index);
+            String fallbackPolicy = "required".equals(kind) ? "hard_block" : "skip_with_warning";
+            String itemId = elem.isJsonObject() ? stringValue(elem.getAsJsonObject(), "itemId", fallbackId) : fallbackId;
+            String failurePolicy = elem.isJsonObject()
+                    ? stringValue(elem.getAsJsonObject(), "failurePolicy", fallbackPolicy) : fallbackPolicy;
+            desired.add(desiredItem(itemId, elem, kind, failurePolicy, templateCatalog));
         }
     }
 
-    private String fillStructureId(JsonObject item, JsonArray fillPool, int itemIndex) {
+    private DesiredItem desiredItem(String itemId, JsonElement entry, String kind, String failurePolicy,
+                                    TemplateCatalogContext templateCatalog) {
+        if (entry == null || entry.isJsonNull()) {
+            throw new IllegalArgumentException("D4_ARRAY_LAYOUT_ITEM_INVALID: structure/template entry is required.");
+        }
+        if (entry.isJsonPrimitive()) {
+            return new DesiredItem(itemId, entry.getAsString(), kind, failurePolicy, null);
+        }
+        if (!entry.isJsonObject()) {
+            throw new IllegalArgumentException("D4_ARRAY_LAYOUT_ITEM_INVALID: item must be a string or object.");
+        }
+        JsonObject obj = entry.getAsJsonObject();
+        if (!stringValue(obj, "templateId").isBlank()) {
+            TemplateSelection template = templateCatalog.select(obj);
+            return new DesiredItem(itemId, "template:" + template.template().templateRef(), kind, failurePolicy,
+                    template);
+        }
+        return new DesiredItem(itemId, requiredString(obj, "structureId"), kind, failurePolicy, null);
+    }
+
+    private JsonElement fillEntry(JsonObject item, JsonArray fillPool, int itemIndex) {
         String mode = stringValue(item, "variantSelectionMode", "weighted_random");
         if (!"seeded_random".equals(mode) && !"weighted_random".equals(mode) && !"random".equals(mode)) {
-            return fillPool.get((itemIndex - 1) % fillPool.size()).isJsonObject()
-                    ? requiredString(fillPool.get((itemIndex - 1) % fillPool.size()).getAsJsonObject(), "structureId")
-                    : fillPool.get((itemIndex - 1) % fillPool.size()).getAsString();
+            return fillPool.get((itemIndex - 1) % fillPool.size());
         }
         double total = 0.0;
         List<Double> weights = new ArrayList<>();
@@ -1418,9 +1567,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
             total += weight;
         }
         if (total <= 0.0) {
-            return fillPool.get((itemIndex - 1) % fillPool.size()).isJsonObject()
-                    ? requiredString(fillPool.get((itemIndex - 1) % fillPool.size()).getAsJsonObject(), "structureId")
-                    : fillPool.get((itemIndex - 1) % fillPool.size()).getAsString();
+            return fillPool.get((itemIndex - 1) % fillPool.size());
         }
         long seed = stableSeed(stringValue(item, "variantSeed", "") + ":" + stringValue(item, "arrayId")
                 + ":" + itemIndex);
@@ -1429,12 +1576,10 @@ public final class CityStructureArrayLayoutLoopPlanner {
         for (int i = 0; i < fillPool.size(); i++) {
             cursor += weights.get(i);
             if (pick < cursor) {
-                JsonElement elem = fillPool.get(i);
-                return elem.isJsonObject() ? requiredString(elem.getAsJsonObject(), "structureId") : elem.getAsString();
+                return fillPool.get(i);
             }
         }
-        JsonElement last = fillPool.get(fillPool.size() - 1);
-        return last.isJsonObject() ? requiredString(last.getAsJsonObject(), "structureId") : last.getAsString();
+        return fillPool.get(fillPool.size() - 1);
     }
 
     private void structuredGrid(LinkedHashSet<BlockPoint> points,
@@ -1483,6 +1628,13 @@ public final class CityStructureArrayLayoutLoopPlanner {
         }
         int max = 16;
         for (DesiredItem desired : items) {
+            if (desired.isTemplate()) {
+                CityTemplatePlacementGeometry geometry = desired.template().template().geometry(
+                        desired.template().rotation(), desired.template().mirror());
+                max = Math.max(max, Math.max(geometry.transformedSize().width(), geometry.transformedSize().depth())
+                        + desired.template().template().clearanceBlocks() * 2);
+                continue;
+            }
             CityStructureProfileCatalog.StructureProfile profile = profiles.get(desired.structureId());
             if (profile == null) {
                 continue;
@@ -1774,22 +1926,59 @@ public final class CityStructureArrayLayoutLoopPlanner {
                                                 List<DesiredItem> desired,
                                                 Map<String, CityStructureProfileCatalog.StructureProfile> profiles,
                                                 CityStructureEnvelopeFacts facts) {
-        String structureId = desired.isEmpty() ? firstStructureId(submittedItem, plannerType) : desired.get(0).structureId();
-        CityStructureProfileCatalog.StructureProfile profile = profiles.get(structureId);
-        if (profile == null) {
+        BlockBounds footprint = null;
+        int automaticSpacing = 16;
+        for (DesiredItem item : desired) {
+            if (item.isTemplate()) {
+                CityTemplatePlacementGeometry geometry = item.template().template().geometry(
+                        item.template().rotation(), item.template().mirror());
+                CityStructureProfileCatalog.Footprint centered = new CityStructureProfileCatalog.Footprint(
+                        geometry.transformedSize().width(), geometry.transformedSize().depth(),
+                        geometry.transformedSize().height());
+                footprint = union(footprint, centered.centeredAt(0, 0, "NONE"));
+                automaticSpacing = Math.max(automaticSpacing,
+                        Math.max(geometry.transformedSize().width(), geometry.transformedSize().depth())
+                                + item.template().template().clearanceBlocks() * 2);
+                continue;
+            }
+            String structureId = item.structureId();
+            CityStructureProfileCatalog.StructureProfile profile = profiles.get(structureId);
+            if (profile == null) {
+                continue;
+            }
+            CityStructureCandidateEnvelope.Estimate estimate = CityStructureCandidateEnvelope.estimate(
+                    new BlockPoint(0, 0), profile, facts, submittedItem);
+            footprint = union(footprint, estimate.plannedFootprint());
+            automaticSpacing = Math.max(automaticSpacing,
+                    CityStructureCandidateEnvelope.automaticSpacing(profile, facts, submittedItem));
+        }
+        if (footprint == null) {
+            List<String> structureIds = new ArrayList<>();
+            collectStructureIds(submittedItem, plannerType, structureIds, TemplateCatalogContext.empty());
+            for (String structureId : structureIds) {
+                CityStructureProfileCatalog.StructureProfile profile = profiles.get(structureId);
+                if (profile == null) {
+                    continue;
+                }
+                CityStructureCandidateEnvelope.Estimate estimate = CityStructureCandidateEnvelope.estimate(
+                        new BlockPoint(0, 0), profile, facts, submittedItem);
+                footprint = union(footprint, estimate.plannedFootprint());
+                automaticSpacing = Math.max(automaticSpacing,
+                        CityStructureCandidateEnvelope.automaticSpacing(profile, facts, submittedItem));
+            }
+        }
+        if (footprint == null) {
             return new FrontierReference(new BlockBounds(-8, -8, 8, 8), 32);
         }
-        CityStructureCandidateEnvelope.Estimate estimate = CityStructureCandidateEnvelope.estimate(
-                new BlockPoint(0, 0), profile, facts, submittedItem);
         int spacing = desired.isEmpty()
-                ? Math.max(16, CityStructureCandidateEnvelope.automaticSpacing(profile, facts, submittedItem))
+                ? automaticSpacing
                 : spacing(submittedItem, desired, profiles, facts);
-        return new FrontierReference(estimate.plannedFootprint(), spacing);
+        return new FrontierReference(footprint, spacing);
     }
 
     private String firstStructureId(JsonObject item, String plannerType) {
         if (!"composite_array".equals(plannerType)) {
-            List<DesiredItem> items = desiredItems(item);
+            List<DesiredItem> items = desiredItems(item, TemplateCatalogContext.empty());
             return items.isEmpty() ? "" : items.get(0).structureId();
         }
         for (JsonElement child : array(item, "childLayoutPlans")) {
@@ -1915,9 +2104,18 @@ public final class CityStructureArrayLayoutLoopPlanner {
         if (items.isEmpty()) {
             return new FrontierGapValidation(false, -1);
         }
-        BlockBounds body = CityStructureCandidateEnvelope.bounds(
-                object(items.get(0).getAsJsonObject(), "plannedFootprint"));
-        int gap = directionalBodyGap(parentBody, body, direction);
+        int gap = Integer.MAX_VALUE;
+        for (JsonElement item : items) {
+            if (!item.isJsonObject()) {
+                continue;
+            }
+            BlockBounds body = CityStructureCandidateEnvelope.bounds(
+                    object(item.getAsJsonObject(), "plannedFootprint"));
+            gap = Math.min(gap, directionalBodyGap(parentBody, body, direction));
+        }
+        if (gap == Integer.MAX_VALUE) {
+            return new FrontierGapValidation(false, -1);
+        }
         return new FrontierGapValidation(gap >= gapMin && gap <= gapMax, gap);
     }
 
@@ -1935,15 +2133,21 @@ public final class CityStructureArrayLayoutLoopPlanner {
     private TerrainPlacementPolicy terrainPlacementPolicy(JsonObject item,
                                                           String plannerType,
                                                           List<DesiredItem> desired,
-                                                          Map<String, CityStructureProfileCatalog.StructureProfile> profiles) {
+                                                          Map<String, CityStructureProfileCatalog.StructureProfile> profiles,
+                                                          TemplateCatalogContext templateCatalog) {
         List<String> structureIds = new ArrayList<>();
+        boolean waterAllowed = !desired.isEmpty();
         for (DesiredItem value : desired) {
-            structureIds.add(value.structureId());
+            if (value.isTemplate()) {
+                waterAllowed = false;
+            } else {
+                structureIds.add(value.structureId());
+            }
         }
-        if (structureIds.isEmpty()) {
-            collectStructureIds(item, plannerType, structureIds);
+        if (desired.isEmpty()) {
+            collectStructureIds(item, plannerType, structureIds, templateCatalog);
+            waterAllowed = !structureIds.isEmpty();
         }
-        boolean waterAllowed = !structureIds.isEmpty();
         for (String structureId : structureIds) {
             CityStructureProfileCatalog.StructureProfile profile = profiles.get(structureId);
             waterAllowed &= profile != null && explicitlyWaterPlaced(profile);
@@ -1951,18 +2155,20 @@ public final class CityStructureArrayLayoutLoopPlanner {
         return new TerrainPlacementPolicy(waterAllowed);
     }
 
-    private void collectStructureIds(JsonObject item, String plannerType, List<String> target) {
+    private void collectStructureIds(JsonObject item, String plannerType, List<String> target,
+                                     TemplateCatalogContext templateCatalog) {
         if ("composite_array".equals(plannerType)) {
             for (JsonElement child : array(item, "childLayoutPlans")) {
                 if (!child.isJsonObject()) {
                     continue;
                 }
                 JsonObject childItem = child.getAsJsonObject();
-                collectStructureIds(childItem, stringValue(childItem, "plannerType", "compound_cluster"), target);
+                collectStructureIds(childItem, stringValue(childItem, "plannerType", "compound_cluster"), target,
+                        templateCatalog);
             }
             return;
         }
-        for (DesiredItem desired : desiredItems(item)) {
+        for (DesiredItem desired : desiredItems(item, templateCatalog)) {
             target.add(desired.structureId());
         }
     }
@@ -2234,6 +2440,12 @@ public final class CityStructureArrayLayoutLoopPlanner {
         JsonArray values = new JsonArray();
         values.add(value);
         return values;
+    }
+
+    private TemplateCatalogContext templateCatalog(JsonObject source) {
+        JsonObject catalogSource = object(source, "templateCatalog");
+        return catalogSource.size() == 0 ? TemplateCatalogContext.empty()
+                : new TemplateCatalogContext(new CityTemplateCatalogLoader().load(catalogSource), catalogSource);
     }
 
     private JsonObject normalizePlan(JsonObject source, String cityId) {
@@ -2973,13 +3185,80 @@ public final class CityStructureArrayLayoutLoopPlanner {
         }
     }
 
-    private record DesiredItem(String itemId, String structureId, String kind, String failurePolicy) {
+    private record DesiredItem(String itemId, String structureId, String kind, String failurePolicy,
+                               TemplateSelection template) {
+        boolean isTemplate() {
+            return template != null;
+        }
     }
 
     private record Accepted(DesiredItem desired,
                             BlockPoint point,
+                            BlockPoint anchorBlock,
                             LandformPatchSummary patch,
                             CityStructureCandidateEnvelope.Estimate estimate) {
+    }
+
+    private record TemplatePlacement(BlockPoint anchorBlock, CityStructureCandidateEnvelope.Estimate estimate) {
+    }
+
+    private record TemplateSelection(CityTemplateCatalog.Template template,
+                                     CityTemplatePlacementGeometry.Rotation rotation,
+                                     CityTemplatePlacementGeometry.Mirror mirror) {
+    }
+
+    private record TemplateCatalogContext(CityTemplateCatalog catalog, JsonObject source) {
+        TemplateCatalogContext {
+            source = source == null ? new JsonObject() : source.deepCopy();
+        }
+
+        static TemplateCatalogContext empty() {
+            return new TemplateCatalogContext(null, new JsonObject());
+        }
+
+        TemplateSelection select(JsonObject source) {
+            if (catalog == null) {
+                throw new IllegalArgumentException("D4_ARRAY_LAYOUT_TEMPLATE_CATALOG_REQUIRED: "
+                        + "template item requires arrayLayoutPlan.templateCatalog.");
+            }
+            for (String forbidden : List.of("templateFootprint", "footprint", "bbox", "actualFootprint",
+                    "lockedActualFootprint", "templateSize", "rawSize")) {
+                if (source.has(forbidden)) {
+                    throw new IllegalArgumentException("D4_ARRAY_LAYOUT_TEMPLATE_GEOMETRY_INPUT_FORBIDDEN: "
+                            + "template item geometry comes from catalog NBT size, not " + forbidden + ".");
+                }
+            }
+            String templateId = source.has("templateId") ? source.get("templateId").getAsString().trim() : "";
+            String variantId = source.has("variantId") ? source.get("variantId").getAsString().trim()
+                    : source.has("variant") ? source.get("variant").getAsString().trim() : "";
+            if (templateId.isBlank()) {
+                throw new IllegalArgumentException("D4_ARRAY_LAYOUT_TEMPLATE_ID_REQUIRED: templateId is required.");
+            }
+            if (variantId.isBlank()) {
+                throw new IllegalArgumentException("D4_ARRAY_LAYOUT_TEMPLATE_VARIANT_REQUIRED: "
+                        + "template item requires variantId.");
+            }
+            CityTemplateCatalog.Template template = catalog.requireTemplate(templateId, variantId);
+            CityTemplatePlacementGeometry.Rotation rotation = enumValue(source, "rotation",
+                    template.allowedRotations().get(0), CityTemplatePlacementGeometry.Rotation.class);
+            CityTemplatePlacementGeometry.Mirror mirror = enumValue(source, "mirror",
+                    template.allowedMirrors().get(0), CityTemplatePlacementGeometry.Mirror.class);
+            template.geometry(rotation, mirror);
+            return new TemplateSelection(template, rotation, mirror);
+        }
+
+        private static <T extends Enum<T>> T enumValue(JsonObject source, String key, T fallback, Class<T> type) {
+            String raw = source.has(key) ? source.get(key).getAsString() : "";
+            if (raw.isBlank()) {
+                return fallback;
+            }
+            try {
+                return Enum.valueOf(type, raw.toUpperCase(Locale.ROOT));
+            } catch (IllegalArgumentException ex) {
+                throw new IllegalArgumentException("D4_ARRAY_LAYOUT_TEMPLATE_TRANSFORM_INVALID: " + key + "=" + raw,
+                        ex);
+            }
+        }
     }
 
     private record BuildResult(JsonArray items,

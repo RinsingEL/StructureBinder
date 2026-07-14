@@ -69,8 +69,9 @@ public final class CityDecorationChunkCompiler {
             if (program == null) {
                 throw new IllegalArgumentException("CITY_DECORATION_SLOT_PROGRAM_UNKNOWN: " + slot.programId());
             }
-            candidates.add(resolveCandidate(program, programHashes.get(program.programId()), slot, catalog,
-                    plan.hardObstacles(), terrain));
+            Candidate candidate = resolveCandidate(program, programHashes.get(program.programId()), slot, catalog,
+                    plan.hardObstacles(), terrain);
+            candidates.add(applyTerrainDropFallback(candidate, catalog, plan.hardObstacles(), terrain));
         }
         candidates.sort(candidateOrder());
 
@@ -104,6 +105,18 @@ public final class CityDecorationChunkCompiler {
         CompiledDecorationProgram.PaletteSlot paletteSlot = program.contentPalette().requireSlot(slot.paletteSlotId());
         CompiledDecorationProgram.ContentEntry selected = selectContent(program, slot, paletteSlot);
         CityDecorationContentCatalog.Content content = catalog.requireContent(selected.contentRef());
+        return resolveCandidate(program, programHash, paletteSlot, slot, content, hardObstacles, terrain,
+                "CITY_DECORATION_FRAGMENT_READY");
+    }
+
+    private Candidate resolveCandidate(CompiledDecorationProgram program,
+                                       String programHash,
+                                       CompiledDecorationProgram.PaletteSlot paletteSlot,
+                                       DecorationSlot slot,
+                                       CityDecorationContentCatalog.Content content,
+                                       List<CompiledDecorationProgramPlan.HardObstacle> hardObstacles,
+                                       TerrainView terrain,
+                                       String readyReasonCode) {
         int rotation = slot.rotationQuarterTurns() * 90;
         BlockBounds footprint = rotatedFootprint(slot.worldAnchor().x(), slot.worldAnchor().z(),
                 content.size().widthBlocks(), content.size().depthBlocks(), rotation);
@@ -171,7 +184,45 @@ public final class CityDecorationChunkCompiler {
         }
         int datumY = heights.get(heights.size() / 2);
         return new Candidate(program, programHash, paletteSlot, slot, content, rotation, footprint,
-                conflictBounds, fragmentId, Status.READY, "CITY_DECORATION_FRAGMENT_READY", datumY);
+                conflictBounds, fragmentId, Status.READY, readyReasonCode, datumY);
+    }
+
+    private Candidate applyTerrainDropFallback(Candidate candidate,
+                                                CityDecorationContentCatalog catalog,
+                                                List<CompiledDecorationProgramPlan.HardObstacle> hardObstacles,
+                                                TerrainView terrain) {
+        if (candidate.status() != Status.READY
+                || candidate.content().terrainDropFallbackContentRef() == null
+                || !hasDownhillOpenEdge(candidate, terrain)) {
+            return candidate;
+        }
+        if (candidate.program().terrainPolicy().invalidTerrainAction()
+                == CompiledDecorationProgram.InvalidTerrainAction.SKIP) {
+            return candidate.skipped("CITY_DECORATION_TERRAIN_DOWNHILL_EDGE");
+        }
+        CityDecorationContentCatalog.Content fallback = catalog.requireContent(
+                candidate.content().terrainDropFallbackContentRef());
+        return resolveCandidate(candidate.program(), candidate.programHash(), candidate.paletteSlot(),
+                candidate.slot(), fallback, hardObstacles, terrain,
+                "CITY_DECORATION_TERRAIN_DOWNHILL_EDGE_FALLBACK");
+    }
+
+    private static boolean hasDownhillOpenEdge(Candidate candidate, TerrainView terrain) {
+        int sourceY = candidate.datumY();
+        int maxDrop = candidate.program().terrainPolicy().maxSlopeDelta();
+        int x = candidate.slot().worldAnchor().x();
+        int z = candidate.slot().worldAnchor().z();
+        for (int[] offset : List.of(new int[]{1, 0}, new int[]{-1, 0}, new int[]{0, 1}, new int[]{0, -1})) {
+            TerrainSample neighbour = terrain.sample(x + offset[0], z + offset[1]);
+            if (neighbour == null || neighbour.blocked()
+                    || neighbour.surfaceTags().contains("unavailable")) {
+                continue;
+            }
+            if (sourceY - neighbour.surfaceY() > maxDrop) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static Candidate skippedTerrain(CompiledDecorationProgram program,

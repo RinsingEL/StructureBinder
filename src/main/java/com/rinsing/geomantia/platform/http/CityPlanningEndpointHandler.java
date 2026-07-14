@@ -72,6 +72,7 @@ import com.rinsing.geomantia.systems.city.infrastructure.world.CitySurfaceCache;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityWallPlacementBackend;
 import com.rinsing.geomantia.systems.city.infrastructure.world.MinecraftCityStructureMaterializationBackend;
 import com.rinsing.geomantia.systems.city.infrastructure.world.MinecraftCityStructureEnvelopeSampler;
+import com.rinsing.geomantia.systems.city.infrastructure.world.MinecraftCityTemplateReader;
 import com.rinsing.geomantia.systems.city.infrastructure.world.MinecraftCityWorldgenStatusInspector;
 import com.rinsing.geomantia.systems.city.infrastructure.world.MinecraftStructurePlacementBackend;
 import com.rinsing.geomantia.systems.city.infrastructure.world.WorldEditMutationBackend;
@@ -1101,12 +1102,15 @@ final class CityPlanningEndpointHandler {
         rejectLegacyDressingArtifacts(decorationDirectory, false);
         rejectLegacyDressingArtifacts(runDir.resolve("city_dressing_" + safeFileName(citySeedId)), true);
         Path compiledDecorationPath = decorationDirectory.resolve("city_decoration_compiled_program_plan.json");
+        Path decorationSlotProjectionPath = decorationDirectory.resolve("city_decoration_slot_projection.json");
         Path decorationCompletePath = decorationDirectory.resolve("city_decoration_planning_complete.json");
         boolean compiledDecorationExists = Files.isRegularFile(compiledDecorationPath);
+        boolean decorationSlotProjectionExists = Files.isRegularFile(decorationSlotProjectionPath);
         boolean decorationCompleteExists = Files.isRegularFile(decorationCompletePath);
-        if (compiledDecorationExists != decorationCompleteExists) {
-            throw new IllegalArgumentException("CITY_DECORATION_PLAN_INCOMPLETE: compiled plan and completion marker "
-                    + "must both exist; rerun city_plan_city_dressing.");
+        if ((compiledDecorationExists && (!decorationCompleteExists || !decorationSlotProjectionExists))
+                || (!compiledDecorationExists && decorationCompleteExists)) {
+            throw new IllegalArgumentException("CITY_DECORATION_PLAN_INCOMPLETE: compiled plan, slot projection and "
+                    + "completion marker must all exist; rerun city_plan_city_dressing.");
         }
         boolean decorationWorldgenMode = compiledDecorationExists;
         Path decorationCatalogRoot = requestedDecorationCatalogRoot;
@@ -1117,6 +1121,7 @@ final class CityPlanningEndpointHandler {
         }
         RunMetadata metadata = loadRunMetadata(runDir, null, "");
         CompiledDecorationProgramPlan compiledDecorationPlan = null;
+        DecorationMaskCounts decorationMaskCounts = DecorationMaskCounts.empty();
         if (decorationWorldgenMode) {
             JsonObject completion = readDecorationCompletion(decorationCompletePath);
             JsonObject compiledDecorationJson = JsonParser.parseString(
@@ -1136,6 +1141,14 @@ final class CityPlanningEndpointHandler {
             }
             validateCompiledDecorationContentRefs(compiledDecorationPlan, catalog);
             validateCompiledDecorationStyleProfile(compiledDecorationPlan, catalog, decorationCatalogRoot);
+            JsonObject projection = JsonParser.parseString(Files.readString(decorationSlotProjectionPath))
+                    .getAsJsonObject();
+            List<DecorationSlot> decorationSlots = parseDecorationProjectionSlots(projection, compiledDecorationPlan,
+                    "CITY_DECORATION_D5_SLOT_PROJECTION");
+            validateDecorationSlotProjection(compiledDecorationPlan, decorationSlots,
+                    "CITY_DECORATION_D5_SLOT_PROJECTION_MISMATCH");
+            decorationMaskCounts = appendDecorationProjectionMasks(activeMaskPlan, compiledDecorationPlan,
+                    decorationSlots);
         }
         String decorationCityId = stringValue(materializationPlan, "cityId", citySeedId);
         if (decorationWorldgenMode) {
@@ -1200,6 +1213,8 @@ final class CityPlanningEndpointHandler {
                 CityReservationMaskRegistry.plannedRegistryPath(serverRoot).toString());
         response.addProperty("worldgenPlacementMode", true);
         response.addProperty("decorationWorldgenMode", decorationWorldgenMode);
+        response.addProperty("decorationVegetationMaskCount", decorationMaskCounts.vegetationMaskCount());
+        response.addProperty("decorationStructureMaskCount", decorationMaskCounts.structureMaskCount());
         response.addProperty("requiresLockedMaterializationPlan", true);
         response.addProperty("roadPlanningStage", "d7_after_worldgen_ledger");
         response.addProperty("roadProvider", roadProvider);
@@ -1226,6 +1241,8 @@ final class CityPlanningEndpointHandler {
         if (decorationWorldgenMode) {
             artifacts.addProperty("sourceCompiledDecorationProgramPlan",
                     debugRef(debugRoot, compiledDecorationPath));
+            artifacts.addProperty("sourceDecorationSlotProjection",
+                    debugRef(debugRoot, decorationSlotProjectionPath));
             artifacts.addProperty("serverActiveDecorationPlans",
                     CityDecorationWorldgenRegistry.activePlansPath(serverRoot).toString());
             artifacts.addProperty("serverDecorationWorldgenLedger",
@@ -1244,6 +1261,38 @@ final class CityPlanningEndpointHandler {
         CityDecorationStyleProfileCatalog styles = new CityDecorationStyleProfileCatalogLoader()
                 .load(catalogRoot, catalog);
         return decorationCatalogSummary(catalog, styles);
+    }
+
+    static JsonObject handleUpgradeDefaultDecorationCatalog(Path serverRoot,
+                                                            Path catalogRoot,
+                                                            boolean confirmConfigMutation) throws IOException {
+        if (!confirmConfigMutation) {
+            throw new IllegalArgumentException("CITY_DECORATION_DEFAULT_CATALOG_UPGRADE_CONFIRMATION_REQUIRED");
+        }
+        Path installedCatalogRoot = CityDecorationDefaultCatalogBootstrap.ensureInstalled(catalogRoot);
+        CityDecorationContentCatalogLoader loader = new CityDecorationContentCatalogLoader();
+        CityDecorationContentCatalog before = loader.load(installedCatalogRoot);
+        CityDecorationDefaultCatalogBootstrap.UpgradeResult upgrade =
+                CityDecorationDefaultCatalogBootstrap.upgradeManagedDefault(installedCatalogRoot);
+        CityDecorationContentCatalog after = loader.load(installedCatalogRoot);
+
+        JsonObject response = decorationCatalogSummary(after,
+                new CityDecorationStyleProfileCatalogLoader().load(installedCatalogRoot, after));
+        boolean catalogChanged = !before.catalogHash().equals(after.catalogHash());
+        response.addProperty("configMutationConfirmed", true);
+        response.addProperty("previousCatalogHash", before.catalogHash());
+        response.addProperty("catalogChanged", catalogChanged);
+        response.addProperty("requiresReplan", catalogChanged);
+        response.addProperty("contentIndexChanged", upgrade.contentIndexChanged());
+        response.addProperty("manifestChanged", upgrade.manifestChanged());
+        if (upgrade.backupPath() != null) {
+            response.addProperty("backupPath", upgrade.backupPath().toString());
+        }
+        if (upgrade.contentIndexChanged()) {
+            response.add("deactivatedActivePlans", CityDecorationWorldgenRegistry
+                    .deactivateAllForCatalogUpgrade(serverRoot));
+        }
+        return response;
     }
 
     static JsonObject handleProbeDecorationTerrain(Path debugRoot, String runId, String citySeedId,
@@ -1290,46 +1339,61 @@ final class CityPlanningEndpointHandler {
 
     private static List<DecorationSlot> parseDecorationTerrainSlots(JsonObject projection,
                                                                       CompiledDecorationProgramPlan compiled) {
+        return parseDecorationProjectionSlots(projection, compiled,
+                "CITY_DECORATION_TERRAIN_PROBE_SLOT_PROJECTION");
+    }
+
+    private static List<DecorationSlot> parseDecorationProjectionSlots(JsonObject projection,
+                                                                         CompiledDecorationProgramPlan compiled,
+                                                                         String reasonPrefix) {
         if (!"city_decoration_slot_projection.v0.2".equals(stringValue(projection, "schemaVersion", ""))) {
-            throw new IllegalArgumentException("CITY_DECORATION_TERRAIN_PROBE_SLOT_PROJECTION_SCHEMA_UNSUPPORTED");
+            throw new IllegalArgumentException(reasonPrefix + "_SCHEMA_UNSUPPORTED");
         }
         if (!compiled.cityId().equals(stringValue(projection, "cityId", ""))
                 || !compiled.catalogHash().equals(stringValue(projection, "catalogHash", ""))) {
-            throw new IllegalArgumentException("CITY_DECORATION_TERRAIN_PROBE_SLOT_PROJECTION_MISMATCH");
+            throw new IllegalArgumentException(reasonPrefix + "_MISMATCH");
         }
         if (!projection.has("slots") || !projection.get("slots").isJsonArray()) {
-            throw new IllegalArgumentException("CITY_DECORATION_TERRAIN_PROBE_SLOT_PROJECTION_INVALID");
+            throw new IllegalArgumentException(reasonPrefix + "_INVALID");
         }
+        Set<String> programIds = new LinkedHashSet<>();
+        compiled.programs().forEach(program -> programIds.add(program.programId()));
+        Set<String> slotIds = new LinkedHashSet<>();
         List<DecorationSlot> result = new ArrayList<>();
         for (JsonElement element : projection.getAsJsonArray("slots")) {
             if (!element.isJsonObject()) {
-                throw new IllegalArgumentException("CITY_DECORATION_TERRAIN_PROBE_SLOT_PROJECTION_INVALID");
+                throw new IllegalArgumentException(reasonPrefix + "_INVALID");
             }
             JsonObject slot = element.getAsJsonObject();
-            JsonObject worldAnchor = requiredTerrainProbeObject(slot, "worldAnchor");
-            JsonObject localAnchor = requiredTerrainProbeObject(slot, "localAnchor");
-            result.add(new DecorationSlot(requiredString(slot, "slotId"), requiredString(slot, "programId"),
+            String slotId = requiredString(slot, "slotId");
+            String programId = requiredString(slot, "programId");
+            if (!programIds.contains(programId) || !slotIds.add(slotId)) {
+                throw new IllegalArgumentException(reasonPrefix + "_MISMATCH");
+            }
+            JsonObject worldAnchor = requiredDecorationProjectionObject(slot, "worldAnchor", reasonPrefix);
+            JsonObject localAnchor = requiredDecorationProjectionObject(slot, "localAnchor", reasonPrefix);
+            result.add(new DecorationSlot(slotId, programId,
                     requiredString(slot, "paletteSlotId"),
-                    new BlockPoint(requiredTerrainProbeInt(worldAnchor, "x"),
-                            requiredTerrainProbeInt(worldAnchor, "z")),
-                    new CompiledDecorationProgram.LocalPoint(requiredTerrainProbeInt(localAnchor, "u"),
-                            requiredTerrainProbeInt(localAnchor, "v")),
-                    requiredTerrainProbeInt(slot, "rotationQuarterTurns")));
+                    new BlockPoint(requiredDecorationProjectionInt(worldAnchor, "x", reasonPrefix),
+                            requiredDecorationProjectionInt(worldAnchor, "z", reasonPrefix)),
+                    new CompiledDecorationProgram.LocalPoint(requiredDecorationProjectionInt(localAnchor, "u", reasonPrefix),
+                            requiredDecorationProjectionInt(localAnchor, "v", reasonPrefix)),
+                    requiredDecorationProjectionInt(slot, "rotationQuarterTurns", reasonPrefix)));
         }
         return List.copyOf(result);
     }
 
-    private static JsonObject requiredTerrainProbeObject(JsonObject source, String key) {
+    private static JsonObject requiredDecorationProjectionObject(JsonObject source, String key, String reasonPrefix) {
         if (!source.has(key) || !source.get(key).isJsonObject()) {
-            throw new IllegalArgumentException("CITY_DECORATION_TERRAIN_PROBE_SLOT_PROJECTION_INVALID: " + key);
+            throw new IllegalArgumentException(reasonPrefix + "_INVALID: " + key);
         }
         return source.getAsJsonObject(key);
     }
 
-    private static int requiredTerrainProbeInt(JsonObject source, String key) {
+    private static int requiredDecorationProjectionInt(JsonObject source, String key, String reasonPrefix) {
         if (!source.has(key) || !source.get(key).isJsonPrimitive()
                 || !source.getAsJsonPrimitive(key).isNumber()) {
-            throw new IllegalArgumentException("CITY_DECORATION_TERRAIN_PROBE_SLOT_PROJECTION_INVALID: " + key);
+            throw new IllegalArgumentException(reasonPrefix + "_INVALID: " + key);
         }
         return source.get(key).getAsInt();
     }
@@ -1337,6 +1401,44 @@ final class CityPlanningEndpointHandler {
     static JsonObject handleQueryStructureCatalog(Path baseDirectory, JsonObject terraSenseProfileSource,
                                                    JsonObject query) throws IOException {
         return new CityStructureCatalogQueryService().query(baseDirectory, terraSenseProfileSource, query);
+    }
+
+    static JsonObject handleQueryTemplateMetadata(ServerLevel level, JsonArray templateRefs) {
+        if (level == null) {
+            throw new IllegalArgumentException("CITY_TEMPLATE_METADATA_LEVEL_REQUIRED");
+        }
+        if (templateRefs == null || templateRefs.isEmpty()) {
+            throw new IllegalArgumentException("CITY_TEMPLATE_METADATA_REFS_REQUIRED");
+        }
+        MinecraftCityTemplateReader reader = new MinecraftCityTemplateReader(level.getStructureManager());
+        JsonArray templates = new JsonArray();
+        for (JsonElement element : templateRefs) {
+            if (!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isString()) {
+                throw new IllegalArgumentException("CITY_TEMPLATE_METADATA_REF_INVALID");
+            }
+            String templateRef = element.getAsString().trim();
+            MinecraftCityTemplateReader.ReadResult result = reader.read(templateRef);
+            JsonObject item = new JsonObject();
+            item.addProperty("templateRef", result.templateRef() == null ? templateRef : result.templateRef());
+            item.addProperty("readable", result.readable());
+            item.addProperty("failureCode", result.failureCode().name());
+            item.addProperty("failureDetail", result.failureDetail());
+            if (result.readable()) {
+                JsonObject rawSize = new JsonObject();
+                rawSize.addProperty("width", result.size().getX());
+                rawSize.addProperty("height", result.size().getY());
+                rawSize.addProperty("depth", result.size().getZ());
+                item.add("rawSize", rawSize);
+                item.addProperty("templateHash", result.contentHash());
+                item.addProperty("sourceId", result.sourceId());
+            }
+            templates.add(item);
+        }
+        JsonObject response = new JsonObject();
+        response.addProperty("schemaVersion", "city_template_metadata_query.v0.1");
+        response.addProperty("dimensionId", level.dimension().location().toString());
+        response.add("templates", templates);
+        return response;
     }
 
     static JsonObject handlePlanCityDressing(Path debugRoot, String runId, String citySeedId,
@@ -2982,6 +3084,78 @@ final class CityPlanningEndpointHandler {
         return new BlockBounds(minX, minZ, maxX, maxZ);
     }
 
+    private static void validateDecorationSlotProjection(CompiledDecorationProgramPlan compiledDecorationPlan,
+                                                         List<DecorationSlot> projectedSlots,
+                                                         String mismatchCode) {
+        List<DecorationSlot> expectedSlots = new CityDecorationProgramPlanner().project(compiledDecorationPlan,
+                decorationProjectionBounds(compiledDecorationPlan.programs()));
+        if (expectedSlots.size() != projectedSlots.size()) {
+            throw new IllegalArgumentException(mismatchCode);
+        }
+        Map<String, DecorationSlot> expectedById = new LinkedHashMap<>();
+        for (DecorationSlot expected : expectedSlots) {
+            if (expectedById.put(expected.slotId(), expected) != null) {
+                throw new IllegalArgumentException(mismatchCode);
+            }
+        }
+        for (DecorationSlot projected : projectedSlots) {
+            if (!projected.equals(expectedById.remove(projected.slotId()))) {
+                throw new IllegalArgumentException(mismatchCode);
+            }
+        }
+        if (!expectedById.isEmpty()) {
+            throw new IllegalArgumentException(mismatchCode);
+        }
+    }
+
+    private static DecorationMaskCounts appendDecorationProjectionMasks(JsonObject activeMaskPlan,
+                                                                          CompiledDecorationProgramPlan compiledDecorationPlan,
+                                                                          List<DecorationSlot> projectedSlots) {
+        JsonArray noVegetation = activeMaskPlan.has("noVegetationMask")
+                && activeMaskPlan.get("noVegetationMask").isJsonArray()
+                ? activeMaskPlan.getAsJsonArray("noVegetationMask") : new JsonArray();
+        JsonArray noVanillaStructure = activeMaskPlan.has("noVanillaStructureMask")
+                && activeMaskPlan.get("noVanillaStructureMask").isJsonArray()
+                ? activeMaskPlan.getAsJsonArray("noVanillaStructureMask") : new JsonArray();
+        JsonArray reasons = activeMaskPlan.has("reservationReason")
+                && activeMaskPlan.get("reservationReason").isJsonArray()
+                ? activeMaskPlan.getAsJsonArray("reservationReason") : new JsonArray();
+        Map<String, BlockBounds> projectionBoundsByProgram = new LinkedHashMap<>();
+        for (DecorationSlot slot : projectedSlots) {
+            BlockBounds slotBounds = new BlockBounds(slot.worldAnchor().x(), slot.worldAnchor().z(),
+                    slot.worldAnchor().x(), slot.worldAnchor().z());
+            projectionBoundsByProgram.merge(slot.programId(), slotBounds,
+                    CityPlanningEndpointHandler::unionBounds);
+        }
+        int vegetationMaskCount = 0;
+        int structureMaskCount = 0;
+        for (CompiledDecorationProgram program : compiledDecorationPlan.programs()) {
+            BlockBounds projection = projectionBoundsByProgram.get(program.programId());
+            if (projection == null) {
+                continue;
+            }
+            String sourceRef = "decoration_program:" + program.programId();
+            addMask(noVegetation, "decoration_" + program.programId() + "_no_vegetation", projection,
+                    "decoration_projection", sourceRef);
+            addMask(noVanillaStructure, "decoration_" + program.programId() + "_no_vanilla_structure",
+                    projection, "decoration_projection", sourceRef);
+            addReason(reasons, program.programId(), "decoration_projection", projection,
+                    "suppress vegetation and normal worldgen structure starts in the planned decoration projection "
+                            + "before worldgen placement");
+            vegetationMaskCount++;
+            structureMaskCount++;
+        }
+        activeMaskPlan.add("noVegetationMask", noVegetation);
+        activeMaskPlan.add("noVanillaStructureMask", noVanillaStructure);
+        activeMaskPlan.add("reservationReason", reasons);
+        return new DecorationMaskCounts(vegetationMaskCount, structureMaskCount);
+    }
+
+    private static BlockBounds unionBounds(BlockBounds first, BlockBounds second) {
+        return new BlockBounds(Math.min(first.minX(), second.minX()), Math.min(first.minZ(), second.minZ()),
+                Math.max(first.maxX(), second.maxX()), Math.max(first.maxZ(), second.maxZ()));
+    }
+
     private static JsonObject decorationSlotProjection(CompiledDecorationProgramPlan plan,
                                                        List<DecorationSlot> slots) {
         JsonObject projection = new JsonObject();
@@ -3559,7 +3733,7 @@ final class CityPlanningEndpointHandler {
                 List.of());
     }
 
-    private static void validateLockedMaterializationPlan(JsonObject materializationPlan) {
+    static void validateLockedMaterializationPlan(JsonObject materializationPlan) {
         if (materializationPlan == null
                 || !materializationPlan.has("plannedWorldgenStructures")
                 || !materializationPlan.get("plannedWorldgenStructures").isJsonArray()) {
@@ -3581,11 +3755,13 @@ final class CityPlanningEndpointHandler {
                 throw new IllegalArgumentException("D6 locked materialization plan contains non-planned item "
                         + stringValue(item, "anchorId") + ": " + stringValue(item, "reasonCode"));
             }
+            boolean templatePlacement = CityStructureMaterializationPlanner.TEMPLATE_MATERIALIZATION_SOURCE.equals(
+                    stringValue(item, "materializationSource")) || hasValue(item, "templateRef");
             if (!item.has("locked") || !item.get("locked").getAsBoolean()
                     || !item.has("actualFootprint") || !item.has("lockedActualFootprint")
                     || !item.has("pieceBoxes") || !item.get("pieceBoxes").isJsonArray()
                     || !item.has("lockedCollisionEnvelope") || !item.has("lockedBBoxGroupKey")
-                    || stringValue(item, "expectedStartSignature").isBlank()) {
+                    || (!templatePlacement && stringValue(item, "expectedStartSignature").isBlank())) {
                 throw new IllegalArgumentException("D6 planned structure is not fully locked: "
                         + stringValue(item, "anchorId"));
             }
@@ -4488,6 +4664,12 @@ final class CityPlanningEndpointHandler {
     private record D4StagePlan(JsonObject sourceDesignSlotPlan,
                                JsonObject keyDesignSlotPlan,
                                List<JsonObject> arraySlots) {
+    }
+
+    private record DecorationMaskCounts(int vegetationMaskCount, int structureMaskCount) {
+        static DecorationMaskCounts empty() {
+            return new DecorationMaskCounts(0, 0);
+        }
     }
 
     private record RunMetadata(int cellStepBlocks, String dimensionId) {
