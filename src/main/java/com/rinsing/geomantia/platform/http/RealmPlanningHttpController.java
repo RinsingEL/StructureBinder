@@ -10,6 +10,7 @@ import com.rinsing.geomantia.systems.gis.application.refresh.SampleMode;
 import com.rinsing.geomantia.systems.gis.application.sample.AtlasSampler;
 import com.rinsing.geomantia.systems.city.application.CityWallPlanner;
 import com.rinsing.geomantia.systems.city.application.CityWallReservationPlanner;
+import com.rinsing.geomantia.platform.RealmPlanningServices;
 import com.rinsing.geomantia.systems.realm_planning.RealmPlanningService;
 import com.rinsing.geomantia.systems.realm_planning.WorldSurveyResult;
 import com.rinsing.geomantia.systems.realm_planning.WorldSurveyRunner;
@@ -31,13 +32,15 @@ import java.util.concurrent.ExecutionException;
 
 final class RealmPlanningHttpController {
     private final MinecraftServer server;
+    private final RealmPlanningService realmPlanningService;
 
     RealmPlanningHttpController(MinecraftServer server) {
         this.server = server;
+        this.realmPlanningService = RealmPlanningServices.forServer(server);
     }
 
     void handleStatus(HttpExchange exchange) {
-        handle(exchange, "GET", () -> service().status());
+        handle(exchange, "GET", () -> callOnServerThread(realmPlanningService::status));
     }
 
     void handleWRefresh(HttpExchange exchange) {
@@ -45,10 +48,9 @@ final class RealmPlanningHttpController {
             JsonObject request = GisHttpUtil.readJsonObject(exchange);
             return callOnServerThread(() -> {
                 WorldSurveyExecution execution = runWorldSurvey(request);
-                RealmPlanningService service = service();
-                JsonObject response = service.runW(execution.result(), request.get("worldTheme"));
+                JsonObject response = realmPlanningService.runW(execution.result(), request.get("worldTheme"));
                 if (booleanValue(request, "runTagAudit", false)) {
-                    JsonObject audit = service.runTagAudit(execution.result().runId(), execution.sampler(),
+                    JsonObject audit = realmPlanningService.runTagAudit(execution.result().runId(), execution.sampler(),
                             intValue(request, "tagAuditSampleCount", 120),
                             intValue(request, "tagAuditRadiusBlocks", 32),
                             intValue(request, "tagAuditStrideBlocks", 4),
@@ -65,19 +67,19 @@ final class RealmPlanningHttpController {
     void handleT1Prepare(HttpExchange exchange) {
         handle(exchange, "POST", () -> {
             JsonObject request = GisHttpUtil.readJsonObject(exchange);
-            return service().prepareT1(
+            return callOnServerThread(() -> realmPlanningService.prepareT1(
                     requiredString(request, "runId"),
                     arrayValue(request, "realmProfiles"),
                     intValue(request, "realmCount", 3),
                     stringValue(request, "targetContinentId", ""),
-                    booleanValue(request, "allowAiDraftProfile", true));
+                    booleanValue(request, "allowAiDraftProfile", true)));
         });
     }
 
     void handleT2SelectCoordinate(HttpExchange exchange) {
         handle(exchange, "POST", () -> {
             JsonObject request = GisHttpUtil.readJsonObject(exchange);
-            return service().selectT2(
+            return callOnServerThread(() -> realmPlanningService.selectT2(
                     requiredString(request, "runId"),
                     requiredString(request, "realmId"),
                     intValue(request, "gridX", 0),
@@ -85,26 +87,26 @@ final class RealmPlanningHttpController {
                     arrayValue(request, "alternates"),
                     stringValue(request, "reason", ""),
                     stringValue(request, "selectedBy", "ai"),
-                    booleanValue(request, "allowSnap", true));
+                    booleanValue(request, "allowSnap", true)));
         });
     }
 
     void handleT3Expand(HttpExchange exchange) {
         handle(exchange, "POST", () -> {
             JsonObject request = GisHttpUtil.readJsonObject(exchange);
-            return service().expandT3(
+            return callOnServerThread(() -> realmPlanningService.expandT3(
                     requiredString(request, "runId"),
                     stringValue(request, "normalizationGroup", ""),
                     booleanValue(request, "allowUnclaimedLand", false),
                     stringValue(request, "qualityMode", "strict"),
-                    stringValue(request, "expansionModel", ""));
+                    stringValue(request, "expansionModel", "")));
         });
     }
 
     void handleT4BuildRegistry(HttpExchange exchange) {
         handle(exchange, "POST", () -> {
             JsonObject request = GisHttpUtil.readJsonObject(exchange);
-            return service().buildT4(requiredString(request, "runId"));
+            return callOnServerThread(() -> realmPlanningService.buildT4(requiredString(request, "runId")));
         });
     }
 
@@ -113,14 +115,13 @@ final class RealmPlanningHttpController {
             JsonObject request = GisHttpUtil.readJsonObject(exchange);
             return callOnServerThread(() -> {
                 WorldSurveyExecution execution = runWorldSurvey(request);
-                RealmPlanningService service = service();
-                JsonObject response = service.runAcceptance(execution.result(),
+                JsonObject response = realmPlanningService.runAcceptance(execution.result(),
                         intValue(request, "realmCount", 3), arrayValue(request, "realmProfiles"),
                         booleanValue(request, "autoSelectCoordinates", true),
                         stringValue(request, "qualityMode", "strict"),
                         stringValue(request, "expansionModel", ""));
                 if (booleanValue(request, "runTagAudit", false)) {
-                    JsonObject audit = service.runTagAudit(execution.result().runId(), execution.sampler(),
+                    JsonObject audit = realmPlanningService.runTagAudit(execution.result().runId(), execution.sampler(),
                             intValue(request, "tagAuditSampleCount", 120),
                             intValue(request, "tagAuditRadiusBlocks", 32),
                             intValue(request, "tagAuditStrideBlocks", 4),
@@ -905,7 +906,7 @@ final class RealmPlanningHttpController {
                     dimensionId = restoredRunDimensionId(runId);
                 }
                 ServerLevel level = resolveLevel(dimensionId, player);
-                JsonObject response = service().runTagAudit(runId, new MinecraftPriorAtlasSampler(level),
+                JsonObject response = realmPlanningService.runTagAudit(runId, new MinecraftPriorAtlasSampler(level),
                         intValue(request, "tagAuditSampleCount", 120),
                         intValue(request, "tagAuditRadiusBlocks", 32),
                         intValue(request, "tagAuditStrideBlocks", 4),
@@ -1027,10 +1028,6 @@ final class RealmPlanningHttpController {
         AtlasSampler sampler = new MinecraftPriorAtlasSampler(level);
         WorldSurveyResult result = new WorldSurveyRunner(debugRoot(), GisClassifierConfig.defaults()).run(config, sampler);
         return new WorldSurveyExecution(result, sampler);
-    }
-
-    private RealmPlanningService service() {
-        return new RealmPlanningService(debugRoot());
     }
 
     private ServerPlayer resolvePlayer(String playerName) {

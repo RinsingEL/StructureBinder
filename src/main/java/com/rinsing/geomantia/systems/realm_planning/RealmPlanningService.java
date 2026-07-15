@@ -85,9 +85,8 @@ public final class RealmPlanningService {
     public static final int PLATEAU_OUTER_SCALE_BLOCKS = 1536;
     private static final double TERRAIN_RANK_DRIFT_THRESHOLD = 0.25;
     private static final double MIXED_CELL_SUPPORT_THRESHOLD = 0.65;
-    private static final Map<String, RealmRun> RUNS = new LinkedHashMap<>();
-
     private final Path debugRoot;
+    private final Map<String, RealmRun> runs = new LinkedHashMap<>();
 
     public RealmPlanningService(Path debugRoot) {
         this.debugRoot = Objects.requireNonNull(debugRoot, "debugRoot");
@@ -130,7 +129,7 @@ public final class RealmPlanningService {
         run.worldTheme = worldTheme == null || worldTheme.isJsonNull() ? null : worldTheme.deepCopy();
         buildWorld(run);
         exportWorld(run);
-        RUNS.put(runId, run);
+        runs.put(runId, run);
 
         JsonObject response = baseResponse("W", runId);
         response.addProperty("status", "completed");
@@ -3517,7 +3516,7 @@ public final class RealmPlanningService {
         if (runId == null || runId.isBlank()) {
             throw new IllegalArgumentException("runId is required.");
         }
-        RealmRun run = RUNS.get(runId.trim());
+        RealmRun run = runs.get(runId.trim());
         if (run == null) {
             throw new IllegalArgumentException("Unknown realm runId: " + runId);
         }
@@ -3528,7 +3527,7 @@ public final class RealmPlanningService {
         if (runId == null || runId.isBlank()) {
             throw new IllegalArgumentException("runId is required.");
         }
-        RealmRun run = RUNS.get(runId.trim());
+        RealmRun run = runs.get(runId.trim());
         if (run != null) {
             return run;
         }
@@ -3537,13 +3536,13 @@ public final class RealmPlanningService {
         run = new RealmRun(surveyResult.runId(), surveyResult.runDirectory(), surveyResult);
         buildWorld(run);
         exportWorld(run);
-        RUNS.put(run.runId, run);
+        runs.put(run.runId, run);
         return run;
     }
 
     private String latestRunId() {
         String latest = "";
-        for (String runId : RUNS.keySet()) {
+        for (String runId : runs.keySet()) {
             latest = runId;
         }
         return latest;
@@ -3551,7 +3550,7 @@ public final class RealmPlanningService {
 
     private JsonArray knownRuns() {
         JsonArray array = new JsonArray();
-        for (RealmRun run : RUNS.values()) {
+        for (RealmRun run : runs.values()) {
             JsonObject item = new JsonObject();
             item.addProperty("runId", run.runId);
             item.addProperty("runDirectory", run.runDirectory.toAbsolutePath().toString());

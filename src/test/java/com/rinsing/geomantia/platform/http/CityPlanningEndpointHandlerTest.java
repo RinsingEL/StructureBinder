@@ -2713,13 +2713,16 @@ class CityPlanningEndpointHandlerTest {
         JsonObject plan = JsonParser.parseString(Files.readString(path)).getAsJsonObject();
         JsonArray structures = plan.getAsJsonArray("plannedWorldgenStructures");
         assertFalse(structures.isEmpty());
-        for (JsonElement element : structures) {
-            element.getAsJsonObject().addProperty("status", "planned_worldgen");
+        for (int index = 0; index < structures.size(); index++) {
+            JsonObject structure = structures.get(index).getAsJsonObject();
+            structure.addProperty("status", "planned_worldgen");
+            addTestTemplateRoadEntrance(structure, index * 36, index * 36);
         }
         if (structures.size() == 1) {
             JsonObject copy = structures.get(0).getAsJsonObject().deepCopy();
             copy.addProperty("anchorId", "test_road_endpoint_2");
             copy.addProperty("priority", 999);
+            addTestTemplateRoadEntrance(copy, 36, 36);
             JsonObject actual = new JsonObject();
             actual.addProperty("minX", 36);
             actual.addProperty("minZ", 36);
@@ -2737,6 +2740,29 @@ class CityPlanningEndpointHandlerTest {
             structures.add(copy);
         }
         Files.writeString(path, CityJson.GSON.toJson(plan));
+    }
+
+    private static void addTestTemplateRoadEntrance(JsonObject structure, int anchorX, int anchorZ) {
+        JsonObject anchor = new JsonObject();
+        anchor.addProperty("x", anchorX);
+        anchor.addProperty("z", anchorZ);
+        JsonObject relativePosition = new JsonObject();
+        relativePosition.addProperty("x", 0);
+        relativePosition.addProperty("z", 0);
+        JsonObject entrance = new JsonObject();
+        entrance.addProperty("entranceId", "front");
+        entrance.add("relativePosition", relativePosition);
+        entrance.addProperty("direction", "NORTH");
+        JsonArray entrances = new JsonArray();
+        entrances.add(entrance);
+        JsonObject transformed = new JsonObject();
+        transformed.add("roadEntrances", entrances);
+        JsonObject placement = new JsonObject();
+        placement.addProperty("templateId", "geomantia:test_road_endpoint");
+        placement.addProperty("templateHash", "sha256:test-road-endpoint");
+        placement.add("anchorBlock", anchor);
+        placement.add("transformed", transformed);
+        structure.add("templatePlacementPlan", placement);
     }
 
     private static BlockBounds bounds(JsonObject obj) {

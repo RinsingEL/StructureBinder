@@ -118,7 +118,7 @@ public final class GisPlatformEvents {
 
     private static int realmStatus(CommandContext<CommandSourceStack> ctx) {
         try {
-            var response = new RealmPlanningService(realmDebugRoot(ctx.getSource().getServer())).status();
+            var response = RealmPlanningServices.forServer(ctx.getSource().getServer()).status();
             ctx.getSource().sendSuccess(() -> Component.literal("Realm planning ready, latestRun="
                     + response.get("runId").getAsString()), false);
             return 1;
@@ -150,7 +150,7 @@ public final class GisPlatformEvents {
             );
             var survey = new WorldSurveyRunner(realmRoot, GisClassifierConfig.defaults()).run(config,
                     new MinecraftPriorAtlasSampler(level));
-            var response = new RealmPlanningService(realmRoot).runAcceptance(survey, 3, null, true);
+            var response = RealmPlanningServices.forServer(source.getServer()).runAcceptance(survey, 3, null, true);
             boolean passed = response.get("passed").getAsBoolean();
             String runId = response.get("runId").getAsString();
             String runDirectory = response.getAsJsonObject("artifacts").get("runDirectory").getAsString();

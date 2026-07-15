@@ -25,6 +25,8 @@ import com.rinsing.geomantia.systems.city.application.CityStructureProfileCatalo
 import com.rinsing.geomantia.systems.city.application.CityStructureCatalogQueryService;
 import com.rinsing.geomantia.systems.city.application.CityWallPlanner;
 import com.rinsing.geomantia.systems.city.application.CityWallReservationPlanner;
+import com.rinsing.geomantia.systems.city.application.CityWorkflowCandidateSelector;
+import com.rinsing.geomantia.systems.city.application.CityWorkflowStepRunner;
 import com.rinsing.geomantia.systems.city.application.dressing.CityDecorationProgramPlanner;
 import com.rinsing.geomantia.systems.city.application.dressing.CityDecorationTerrainProbe;
 import com.rinsing.geomantia.systems.city.application.dressing.CompiledDecorationProgram;
@@ -106,6 +108,8 @@ import java.util.Set;
 
 final class CityPlanningEndpointHandler {
     static final int DEFAULT_D3_PATCH_SCAN_PADDING_BLOCKS = 128;
+    private static final CityWorkflowCandidateSelector WORKFLOW_CANDIDATE_SELECTOR =
+            new CityWorkflowCandidateSelector();
 
     private CityPlanningEndpointHandler() {
     }
@@ -1973,24 +1977,27 @@ final class CityPlanningEndpointHandler {
         artifacts.addProperty("workflowReport", debugRef(debugRoot, reportPath));
         report.add("artifacts", artifacts);
         long workflowStarted = System.nanoTime();
+        CityWorkflowStepRunner workflow = new CityWorkflowStepRunner(report, steps,
+                booleanValue(request, "skipExisting", true),
+                artifact -> debugRef(debugRoot, artifact),
+                currentReport -> Files.writeString(reportPath, CityJson.GSON.toJson(currentReport)));
 
-        WorkflowContext ctx = new WorkflowContext(debugRoot, serverRoot, runDir, outputDirectory, reportPath,
-                runId, citySeedId, request, serverHolder, level, report, steps);
+        WorkflowContext ctx = new WorkflowContext(debugRoot, runDir, runId, citySeedId, request, report, workflow);
 
-        if (!workflowStep(ctx, "city_plan_d3", d3PackagePath(runDir, citySeedId), () -> handlePlanD3(
+        if (!ctx.workflow().runStep("city_plan_d3", d3PackagePath(runDir, citySeedId), () -> handlePlanD3(
                 debugRoot, runId, citySeedId,
                 hasValue(request, "cellStepBlocks") ? intValue(request, "cellStepBlocks", 4) : null,
                 hasValue(request, "patchScanPaddingBlocks")
                         ? intValue(request, "patchScanPaddingBlocks", DEFAULT_D3_PATCH_SCAN_PADDING_BLOCKS) : null,
                 level))) {
-            return finalizeWorkflow(ctx, workflowStarted, "failed");
+            return ctx.workflow().finish(workflowStarted, "failed");
         }
 
         boolean refreshStructureProfile = booleanValue(request, "forceRefresh", false)
                 || "rescan".equals(stringValue(request, "cacheMode", ""));
         Path structureEnvelopeFactsPath = runDir.resolve("city_structure_envelopes_" + safeFileName(citySeedId))
                 .resolve("structure_envelope_facts.json");
-        if (!workflowStep(ctx, "city_profile_structure_envelopes",
+        if (!ctx.workflow().runStep("city_profile_structure_envelopes",
                 refreshStructureProfile ? null : structureEnvelopeFactsPath,
                 () -> {
                     requireObject(request, "terrasenseProfileSource", "city_profile_structure_envelopes");
@@ -2003,16 +2010,16 @@ final class CityPlanningEndpointHandler {
                             serverHolder,
                             level);
                 })) {
-            return finalizeWorkflow(ctx, workflowStarted, "failed");
+            return ctx.workflow().finish(workflowStarted, "failed");
         }
 
         if (!workflowRunD4(ctx)) {
             String requestedStatus = stringValue(ctx.report(), "requestedWorkflowStatus");
-            return finalizeWorkflow(ctx, workflowStarted,
+            return ctx.workflow().finish(workflowStarted,
                     requestedStatus.isBlank() ? "failed" : requestedStatus);
         }
 
-        if (!workflowStep(ctx, "city_plan_d5", runDir.resolve("city_d5_" + safeFileName(citySeedId))
+        if (!ctx.workflow().runStep("city_plan_d5", runDir.resolve("city_d5_" + safeFileName(citySeedId))
                 .resolve("reservation_mask_plan.json"), () -> handlePlanD5(debugRoot, runId, citySeedId,
                 stringValue(request, "wallVersion", "v3"),
                 intValue(request, "wallMarginBlocks", 24),
@@ -2027,13 +2034,13 @@ final class CityPlanningEndpointHandler {
                                 CityWallReservationPlanner.DEFAULT_CONCAVITY_OPENING_MAX_BLOCKS),
                         doubleValue(request, "concavityDepthRatioMin",
                                 CityWallReservationPlanner.DEFAULT_CONCAVITY_DEPTH_RATIO_MIN))))) {
-            return finalizeWorkflow(ctx, workflowStarted, "failed");
+            return ctx.workflow().finish(workflowStarted, "failed");
         }
 
-        if (!workflowStep(ctx, "city_plan_d6", runDir.resolve("city_d6_" + safeFileName(citySeedId))
+        if (!ctx.workflow().runStep("city_plan_d6", runDir.resolve("city_d6_" + safeFileName(citySeedId))
                 .resolve("structure_materialization_plan.json"), () -> handlePlanD6(debugRoot, runId, citySeedId,
                 serverHolder, level))) {
-            return finalizeWorkflow(ctx, workflowStarted, "failed");
+            return ctx.workflow().finish(workflowStarted, "failed");
         }
 
         if (booleanValue(request, "enableDressingLayer", false)
@@ -2042,7 +2049,7 @@ final class CityPlanningEndpointHandler {
                 throw new IllegalArgumentException("CITY_DRESSING_LEGACY_SCHEMA_REMOVED: "
                         + "workflow no longer accepts dressingBrushPlan.");
             }
-            if (!workflowStep(ctx, "city_plan_city_dressing", decorationDir(runDir, citySeedId)
+            if (!ctx.workflow().runStep("city_plan_city_dressing", decorationDir(runDir, citySeedId)
                     .resolve("city_decoration_planning_complete.json"), () -> {
                 if (!request.has("decorationProgramPlan") || !request.get("decorationProgramPlan").isJsonObject()) {
                     throw new IllegalArgumentException("CITY_DECORATION_PROGRAM_PLAN_REQUIRED: "
@@ -2051,45 +2058,45 @@ final class CityPlanningEndpointHandler {
                 return handlePlanCityDressing(debugRoot, runId, citySeedId,
                         request.getAsJsonObject("decorationProgramPlan"));
             })) {
-                return finalizeWorkflow(ctx, workflowStarted, "failed");
+                return ctx.workflow().finish(workflowStarted, "failed");
             }
         }
 
         if (!booleanValue(request, "confirmWorldMutation", false)) {
-            addWorkflowStop(ctx, "city_execute_d5", "needs_confirmation",
+            ctx.workflow().addStop("city_execute_d5", "needs_confirmation",
                     "WORKFLOW_CONFIRM_WORLD_MUTATION_REQUIRED",
                     "Pass confirmWorldMutation=true to activate masks/planned structures.");
-            return finalizeWorkflow(ctx, workflowStarted, "waiting_for_confirmation");
+            return ctx.workflow().finish(workflowStarted, "waiting_for_confirmation");
         }
 
-        if (!workflowStep(ctx, "city_execute_d5", runDir.resolve("city_d5_" + safeFileName(citySeedId))
+        if (!ctx.workflow().runStep("city_execute_d5", runDir.resolve("city_d5_" + safeFileName(citySeedId))
                 .resolve("active_planned_structure_registry.json"), () -> handleExecuteD5(debugRoot, serverRoot,
                 runId, citySeedId, true, level, stringValue(request, "roadProvider", "auto")))) {
-            return finalizeWorkflow(ctx, workflowStarted, "failed");
+            return ctx.workflow().finish(workflowStarted, "failed");
         }
 
-        if (!workflowStep(ctx, "city_execute_d7", null, () -> handleExecuteD7(debugRoot, runId, citySeedId,
+        if (!ctx.workflow().runStep("city_execute_d7", null, () -> handleExecuteD7(debugRoot, runId, citySeedId,
                 level.getSeed(),
                 true,
                 booleanValue(request, "debugLateMaterialize", false),
                 serverHolder,
                 level))) {
-            return finalizeWorkflow(ctx, workflowStarted, "failed");
+            return ctx.workflow().finish(workflowStarted, "failed");
         }
         JsonObject d7Step = steps.get(steps.size() - 1).getAsJsonObject();
         String d7Status = stringValue(d7Step, "responseStatus", "");
         String d7Reason = stringValue(d7Step, "reasonCode", "");
         if ("WAITING_FOR_WORLDGEN".equals(d7Reason) || "waiting_for_worldgen".equals(d7Status)) {
-            addWorkflowStop(ctx, "worldgen_wait", "waiting_for_worldgen", "WAITING_FOR_WORLDGEN",
+            ctx.workflow().addStop("worldgen_wait", "waiting_for_worldgen", "WAITING_FOR_WORLDGEN",
                     "TP/load target chunks, then rerun this workflow with the same runId/citySeedId.");
-            return finalizeWorkflow(ctx, workflowStarted, "waiting_for_worldgen");
+            return ctx.workflow().finish(workflowStarted, "waiting_for_worldgen");
         }
 
         if (booleanValue(request, "planWalls", false)) {
             Path wallPlanPath = runDir.resolve("city_walls_" + safeFileName(citySeedId))
                     .resolve("city_wall_plan.json");
             Path wallSkipArtifact = workflowWallPlanMatchesRequest(wallPlanPath, request) ? wallPlanPath : null;
-            if (!workflowStep(ctx, "city_plan_city_walls", wallSkipArtifact, () -> handlePlanCityWalls(debugRoot, runId, citySeedId,
+            if (!ctx.workflow().runStep("city_plan_city_walls", wallSkipArtifact, () -> handlePlanCityWalls(debugRoot, runId, citySeedId,
                     intValue(request, "wallMarginBlocks", 24),
                     intValue(request, "segmentLengthBlocks", 15),
                     intValue(request, "gateWidthBlocks", 9),
@@ -2102,20 +2109,20 @@ final class CityPlanningEndpointHandler {
                     workflowWallV3Options(request),
                     workflowWallV4Options(request),
                     workflowWallV5Options(request)))) {
-                return finalizeWorkflow(ctx, workflowStarted, "failed");
+                return ctx.workflow().finish(workflowStarted, "failed");
             }
         }
 
         if (booleanValue(request, "executeWalls", false)) {
-            if (!workflowStep(ctx, "city_execute_city_walls", null,
+            if (!ctx.workflow().runStep("city_execute_city_walls", null,
                     () -> handleExecuteCityWalls(debugRoot, runId, citySeedId, true, level,
                             booleanValue(request, "debugScan", true),
                             intValue(request, "debugScanStepBlocks", 1)))) {
-                return finalizeWorkflow(ctx, workflowStarted, "failed");
+                return ctx.workflow().finish(workflowStarted, "failed");
             }
         }
 
-        return finalizeWorkflow(ctx, workflowStarted, "completed");
+        return ctx.workflow().finish(workflowStarted, "completed");
     }
 
     private static boolean workflowRunD4(WorkflowContext ctx) throws IOException {
@@ -2139,12 +2146,12 @@ final class CityPlanningEndpointHandler {
         Path anchorMapPath = ctx.runDir().resolve("city_d4_" + safeFileName(ctx.citySeedId()))
                 .resolve("structure_anchor_map.json");
         if (booleanValue(ctx.request(), "skipExisting", true) && Files.exists(anchorMapPath)) {
-            addSkippedWorkflowStep(ctx, "city_d4_key_then_array", anchorMapPath,
+            ctx.workflow().addSkippedStep("city_d4_key_then_array", anchorMapPath,
                     "Existing structure_anchor_map.json found.");
             return true;
         }
         D4StagePlan[] stagePlanRef = new D4StagePlan[1];
-        if (!workflowStep(ctx, "city_validate_d4_staged_plan", null, () -> {
+        if (!ctx.workflow().runStep("city_validate_d4_staged_plan", null, () -> {
             requireObject(ctx.request(), "designSlotPlan", "city_run_workflow key_then_array");
             stagePlanRef[0] = d4StagePlan(ctx.request().getAsJsonObject("designSlotPlan"));
             writeWorkflowD4StagePlan(ctx, stagePlanRef[0]);
@@ -2180,12 +2187,12 @@ final class CityPlanningEndpointHandler {
             JsonObject occupiedAnchorMap = JsonParser.parseString(Files.readString(anchorMapPath)).getAsJsonObject();
             Path candidateSetPath = d4ArrayStageDir(ctx.runDir(), ctx.citySeedId(), arrayId)
                     .resolve("d4_array_candidate_set.json");
-            if (!workflowStep(ctx, "city_plan_d4_array_stage_" + safeFileName(arrayId), null,
+            if (!ctx.workflow().runStep("city_plan_d4_array_stage_" + safeFileName(arrayId), null,
                     () -> workflowPlanD4ArrayStage(ctx, arrayCandidatePlan, occupiedAnchorMap))) {
                 return false;
             }
             JsonObject candidateSet = JsonParser.parseString(Files.readString(candidateSetPath)).getAsJsonObject();
-            JsonObject chosen = chooseWorkflowArrayCandidate(candidateSet);
+            JsonObject chosen = WORKFLOW_CANDIDATE_SELECTOR.chooseArrayCandidate(candidateSet);
             JsonObject expandedPlan = chosen.getAsJsonObject("expandedStructureAnchorPlan");
             JsonObject arrayTrace = new JsonObject();
             arrayTrace.addProperty("stageType", "array_fill");
@@ -2198,7 +2205,7 @@ final class CityPlanningEndpointHandler {
             currentPlan = mergeStructureAnchorPlans(currentPlan, expandedPlan,
                     stringValue(stagePlan.sourceDesignSlotPlan(), "cityId"), stageTrace);
             JsonObject mergedPlan = currentPlan.deepCopy();
-            if (!workflowStep(ctx, "city_plan_d4_merge_array_stage_" + safeFileName(arrayId), null, () -> {
+            if (!ctx.workflow().runStep("city_plan_d4_merge_array_stage_" + safeFileName(arrayId), null, () -> {
                 requireObject(ctx.request(), "terrasenseProfileSource", "city_plan_d4 merge array stage");
                 JsonObject response = handlePlanD4(ctx.debugRoot(), ctx.runId(), ctx.citySeedId(),
                         ctx.request().getAsJsonObject("terrasenseProfileSource"), mergedPlan,
@@ -2221,12 +2228,12 @@ final class CityPlanningEndpointHandler {
         Path anchorMapPath = ctx.runDir().resolve("city_d4_" + safeFileName(ctx.citySeedId()))
                 .resolve("structure_anchor_map.json");
         if (booleanValue(ctx.request(), "skipExisting", true) && Files.exists(anchorMapPath)) {
-            addSkippedWorkflowStep(ctx, "city_d4_array_layout_loop", anchorMapPath,
+            ctx.workflow().addSkippedStep("city_d4_array_layout_loop", anchorMapPath,
                     "Existing structure_anchor_map.json found.");
             return true;
         }
         D4StagePlan[] stagePlanRef = new D4StagePlan[1];
-        if (!workflowStep(ctx, "city_validate_d4_array_layout_loop_plan", null, () -> {
+        if (!ctx.workflow().runStep("city_validate_d4_array_layout_loop_plan", null, () -> {
             requireObject(ctx.request(), "designSlotPlan", "city_run_workflow array_layout_loop_v0_2");
             stagePlanRef[0] = d4StagePlan(ctx.request().getAsJsonObject("designSlotPlan"));
             writeWorkflowD4StagePlan(ctx, stagePlanRef[0]);
@@ -2247,7 +2254,7 @@ final class CityPlanningEndpointHandler {
                 && ctx.request().get("arrayLayoutPlan").isJsonObject()
                 ? ctx.request().getAsJsonObject("arrayLayoutPlan").deepCopy()
                 : minimalArrayLayoutPlan(stagePlan.sourceDesignSlotPlan(), mode);
-        if (!workflowStep(ctx, "city_create_d4_array_layout_loop", null, () -> {
+        if (!ctx.workflow().runStep("city_create_d4_array_layout_loop", null, () -> {
             requireObject(ctx.request(), "terrasenseProfileSource", "city_create_d4_array_layout_loop");
             return handleCreateD4ArrayLayoutLoop(ctx.debugRoot(), ctx.runId(), ctx.citySeedId(),
                     ctx.request().getAsJsonObject("terrasenseProfileSource"),
@@ -2263,7 +2270,7 @@ final class CityPlanningEndpointHandler {
         JsonArray layoutPlans = array(arrayLayoutPlan, "layoutPlans");
         if (layoutPlans.isEmpty()) {
             ctx.report().addProperty("requestedWorkflowStatus", "waiting_for_array_layout_input");
-            addWorkflowStop(ctx, "city_d4_array_layout_loop_waiting_for_item",
+            ctx.workflow().addStop("city_d4_array_layout_loop_waiting_for_item",
                     "waiting_for_array_layout_input", "D4_ARRAY_LAYOUT_LOOP_WAITING_FOR_ITEM",
                     "Array layout loop created; submit nextArrayLayoutPlanItem before continuing.");
             return false;
@@ -2274,7 +2281,7 @@ final class CityPlanningEndpointHandler {
             }
             JsonObject item = elem.getAsJsonObject();
             String arrayId = stringValue(item, "arrayId", "array");
-            if (!workflowStep(ctx, "city_execute_d4_array_layout_item_" + safeFileName(arrayId), null, () -> {
+            if (!ctx.workflow().runStep("city_execute_d4_array_layout_item_" + safeFileName(arrayId), null, () -> {
                 JsonObject state = loadArrayLayoutLoopState(ctx.debugRoot(), ctx.runDir(), ctx.citySeedId(), null);
                 requireObject(ctx.request(), "terrasenseProfileSource", "city_execute_d4_array_layout_item");
                 return handleExecuteD4ArrayLayoutItem(ctx.debugRoot(), ctx.runId(), ctx.citySeedId(),
@@ -2289,7 +2296,7 @@ final class CityPlanningEndpointHandler {
                 return false;
             }
         }
-        return workflowStep(ctx, "city_finalize_d4_array_layout_loop", null, () -> {
+        return ctx.workflow().runStep("city_finalize_d4_array_layout_loop", null, () -> {
             JsonObject state = loadArrayLayoutLoopState(ctx.debugRoot(), ctx.runDir(), ctx.citySeedId(), null);
             requireObject(ctx.request(), "terrasenseProfileSource", "city_finalize_d4_array_layout_loop");
             return handleFinalizeD4ArrayLayoutLoop(ctx.debugRoot(), ctx.runId(), ctx.citySeedId(),
@@ -2306,14 +2313,14 @@ final class CityPlanningEndpointHandler {
         Path anchorMapPath = ctx.runDir().resolve("city_d4_" + safeFileName(ctx.citySeedId()))
                 .resolve("structure_anchor_map.json");
         if (booleanValue(ctx.request(), "skipExisting", true) && Files.exists(anchorMapPath)) {
-            addSkippedWorkflowStep(ctx, "city_d4_structure_cluster_groups", anchorMapPath,
+            ctx.workflow().addSkippedStep("city_d4_structure_cluster_groups", anchorMapPath,
                     "Existing structure_anchor_map.json found.");
             return true;
         }
         Path candidateSetPath = ctx.runDir()
                 .resolve("city_d4_structure_cluster_groups_" + safeFileName(ctx.citySeedId()))
                 .resolve("structure_cluster_group_candidate_set.json");
-        if (!workflowStep(ctx, "city_plan_d4_structure_cluster_groups", candidateSetPath, () -> {
+        if (!ctx.workflow().runStep("city_plan_d4_structure_cluster_groups", candidateSetPath, () -> {
             requireObject(ctx.request(), "terrasenseProfileSource", "city_plan_d4_structure_cluster_groups");
             requireObject(ctx.request(), "designSlotPlan", "city_plan_d4_structure_cluster_groups");
             return handlePlanD4StructureClusterGroups(ctx.debugRoot(), ctx.runId(), ctx.citySeedId(),
@@ -2330,8 +2337,8 @@ final class CityPlanningEndpointHandler {
             return false;
         }
         JsonObject candidateSet = JsonParser.parseString(Files.readString(candidateSetPath)).getAsJsonObject();
-        JsonObject choice = chooseWorkflowStructureClusterGroup(candidateSet);
-        return workflowStep(ctx, "city_select_d4_structure_cluster_group", anchorMapPath, () -> {
+        JsonObject choice = WORKFLOW_CANDIDATE_SELECTOR.chooseStructureClusterGroup(candidateSet);
+        return ctx.workflow().runStep("city_select_d4_structure_cluster_group", anchorMapPath, () -> {
             requireObject(ctx.request(), "terrasenseProfileSource", "city_select_d4_structure_cluster_group");
             return handleSelectD4StructureClusterGroup(ctx.debugRoot(), ctx.runId(), ctx.citySeedId(),
                     ctx.request().getAsJsonObject("terrasenseProfileSource"),
@@ -2354,11 +2361,11 @@ final class CityPlanningEndpointHandler {
         Path anchorMapPath = ctx.runDir().resolve("city_d4_" + safeFileName(ctx.citySeedId()))
                 .resolve("structure_anchor_map.json");
         if (booleanValue(ctx.request(), "skipExisting", true) && Files.exists(anchorMapPath)) {
-            addSkippedWorkflowStep(ctx, stepPrefix, anchorMapPath,
+            ctx.workflow().addSkippedStep(stepPrefix, anchorMapPath,
                     "Existing structure_anchor_map.json found.");
             return true;
         }
-        if (!workflowStep(ctx, d4SessionStepName(stepPrefix, "create_session", "city_create_d4_candidate_session"),
+        if (!ctx.workflow().runStep(d4SessionStepName(stepPrefix, "create_session", "city_create_d4_candidate_session"),
                 d4SessionDir(ctx.runDir(), ctx.citySeedId())
                 .resolve("d4_candidate_session.json"), () -> {
             requireObject(ctx.request(), "terrasenseProfileSource", stepPrefix + "_create_session");
@@ -2380,7 +2387,7 @@ final class CityPlanningEndpointHandler {
             if (currentSlotId.isBlank()) {
                 break;
             }
-            if (!workflowStep(ctx, d4SessionStepName(stepPrefix, "plan_next_candidates",
+            if (!ctx.workflow().runStep(d4SessionStepName(stepPrefix, "plan_next_candidates",
                     "city_plan_d4_next_candidates"), null,
                     () -> handlePlanD4NextCandidates(ctx.debugRoot(), ctx.runId(), ctx.citySeedId(),
                             ctx.request().has("structureEnvelopeFactsSource")
@@ -2390,8 +2397,8 @@ final class CityPlanningEndpointHandler {
             }
             Path candidatePath = d4SessionDir(ctx.runDir(), ctx.citySeedId()).resolve("slot_candidate_set.json");
             JsonObject candidateSet = JsonParser.parseString(Files.readString(candidatePath)).getAsJsonObject();
-            JsonObject choice = chooseWorkflowCandidate(candidateSet);
-            if (!workflowStep(ctx, d4SessionStepName(stepPrefix, "select_candidate",
+            JsonObject choice = WORKFLOW_CANDIDATE_SELECTOR.chooseAnchorCandidate(candidateSet);
+            if (!ctx.workflow().runStep(d4SessionStepName(stepPrefix, "select_candidate",
                     "city_select_d4_candidate"), null,
                     () -> handleSelectD4Candidate(ctx.debugRoot(), ctx.runId(), ctx.citySeedId(),
                             stringValue(ctx.request(), "sessionId", ""),
@@ -2403,7 +2410,7 @@ final class CityPlanningEndpointHandler {
                 return false;
             }
         }
-        return workflowStep(ctx, d4SessionStepName(stepPrefix, "finalize_session",
+        return ctx.workflow().runStep(d4SessionStepName(stepPrefix, "finalize_session",
                 "city_finalize_d4_candidate_session"), anchorMapPath, () -> {
             requireObject(ctx.request(), "terrasenseProfileSource", stepPrefix + "_finalize_session");
             return handleFinalizeD4CandidateSession(ctx.debugRoot(), ctx.runId(), ctx.citySeedId(),
@@ -2417,186 +2424,6 @@ final class CityPlanningEndpointHandler {
 
     private static String d4SessionStepName(String prefix, String suffix, String legacyName) {
         return "city_d4_session".equals(prefix) ? legacyName : prefix + "_" + suffix;
-    }
-
-    private static boolean workflowStep(WorkflowContext ctx, String name, Path skipArtifact,
-                                        WorkflowAction action) throws IOException {
-        if (skipArtifact != null && booleanValue(ctx.request(), "skipExisting", true) && Files.exists(skipArtifact)) {
-            addSkippedWorkflowStep(ctx, name, skipArtifact, "Existing artifact found.");
-            return true;
-        }
-        JsonObject step = new JsonObject();
-        step.addProperty("name", name);
-        step.addProperty("startedAt", Instant.now().toString());
-        ctx.steps().add(step);
-        long started = System.nanoTime();
-        try {
-            JsonObject response = action.run();
-            boolean ok = response == null || !response.has("ok") || response.get("ok").getAsBoolean();
-            step.addProperty("status", ok ? "success" : "failed");
-            step.addProperty("ok", ok);
-            step.addProperty("responseStatus", stringValue(response, "status"));
-            step.addProperty("reasonCode", stringValue(response, "reasonCode"));
-            if (response != null && response.has("artifacts") && response.get("artifacts").isJsonObject()) {
-                step.add("artifacts", response.getAsJsonObject("artifacts").deepCopy());
-            }
-            if (response != null && response.has("cityWallPlan") && response.get("cityWallPlan").isJsonObject()) {
-                step.addProperty("wallSegmentCount",
-                        array(response.getAsJsonObject("cityWallPlan"), "wallSegments").size());
-                step.addProperty("wallNodeCount",
-                        array(response.getAsJsonObject("cityWallPlan"), "wallNodes").size());
-                step.addProperty("wallUnitCount",
-                        array(response.getAsJsonObject("cityWallPlan"), "wallUnits").size());
-            }
-            if (response != null && response.has("d4CandidateSession") && response.get("d4CandidateSession").isJsonObject()) {
-                JsonObject session = response.getAsJsonObject("d4CandidateSession");
-                step.addProperty("selectedAnchorCount", intValue(session, "selectedAnchorCount", 0));
-                step.addProperty("remainingSlotCount", intValue(session, "remainingSlotCount", 0));
-            }
-            step.addProperty("endedAt", Instant.now().toString());
-            step.addProperty("durationMs", (System.nanoTime() - started) / 1_000_000L);
-            writeWorkflowReport(ctx);
-            return ok;
-        } catch (Exception ex) {
-            step.addProperty("status", "failed");
-            step.addProperty("ok", false);
-            step.addProperty("error", ex.getMessage() == null ? ex.getClass().getSimpleName() : ex.getMessage());
-            step.addProperty("reasonCode", workflowReasonFromError(ex));
-            step.addProperty("endedAt", Instant.now().toString());
-            step.addProperty("durationMs", (System.nanoTime() - started) / 1_000_000L);
-            writeWorkflowReport(ctx);
-            return false;
-        }
-    }
-
-    private static void addSkippedWorkflowStep(WorkflowContext ctx, String name, Path artifact, String message)
-            throws IOException {
-        JsonObject step = new JsonObject();
-        step.addProperty("name", name);
-        step.addProperty("status", "skipped");
-        step.addProperty("ok", true);
-        step.addProperty("reasonCode", "WORKFLOW_EXISTING_ARTIFACT");
-        step.addProperty("message", message);
-        step.addProperty("artifact", debugRef(ctx.debugRoot(), artifact));
-        step.addProperty("startedAt", Instant.now().toString());
-        step.addProperty("endedAt", Instant.now().toString());
-        step.addProperty("durationMs", 0);
-        ctx.steps().add(step);
-        writeWorkflowReport(ctx);
-    }
-
-    private static void addWorkflowStop(WorkflowContext ctx, String name, String status, String reasonCode,
-                                        String message) throws IOException {
-        JsonObject step = new JsonObject();
-        step.addProperty("name", name);
-        step.addProperty("status", status);
-        step.addProperty("ok", true);
-        step.addProperty("reasonCode", reasonCode);
-        step.addProperty("message", message);
-        step.addProperty("startedAt", Instant.now().toString());
-        step.addProperty("endedAt", Instant.now().toString());
-        step.addProperty("durationMs", 0);
-        ctx.steps().add(step);
-        writeWorkflowReport(ctx);
-    }
-
-    private static JsonObject finalizeWorkflow(WorkflowContext ctx, long workflowStarted, String status)
-            throws IOException {
-        ctx.report().addProperty("status", status);
-        ctx.report().addProperty("ok", "completed".equals(status)
-                || "waiting_for_worldgen".equals(status)
-                || "waiting_for_confirmation".equals(status));
-        ctx.report().addProperty("endedAt", Instant.now().toString());
-        ctx.report().addProperty("durationMs", (System.nanoTime() - workflowStarted) / 1_000_000L);
-        writeWorkflowReport(ctx);
-        JsonObject response = new JsonObject();
-        response.addProperty("ok", ctx.report().get("ok").getAsBoolean());
-        response.addProperty("status", status);
-        response.add("workflowReport", ctx.report().deepCopy());
-        response.add("artifacts", ctx.report().getAsJsonObject("artifacts").deepCopy());
-        return response;
-    }
-
-    private static void writeWorkflowReport(WorkflowContext ctx) throws IOException {
-        Files.writeString(ctx.reportPath(), CityJson.GSON.toJson(ctx.report()));
-    }
-
-    private static JsonObject chooseWorkflowCandidate(JsonObject candidateSet) {
-        JsonObject best = null;
-        double bestScore = Double.NEGATIVE_INFINITY;
-        for (JsonElement slotElem : array(candidateSet, "slotCandidates")) {
-            JsonObject slot = slotElem.getAsJsonObject();
-            String slotId = stringValue(slot, "slotId", stringValue(candidateSet, "currentSlotId"));
-            for (JsonElement candidateElem : array(slot, "candidates")) {
-                JsonObject candidate = candidateElem.getAsJsonObject();
-                double score = 0;
-                JsonObject scoreBreakdown = candidate.has("scoreBreakdown")
-                        && candidate.get("scoreBreakdown").isJsonObject()
-                        ? candidate.getAsJsonObject("scoreBreakdown") : new JsonObject();
-                if (scoreBreakdown.has("total") && !scoreBreakdown.get("total").isJsonNull()) {
-                    score = scoreBreakdown.get("total").getAsDouble();
-                }
-                if (best == null || score > bestScore) {
-                    best = candidate;
-                    bestScore = score;
-                    if (!best.has("slotId")) {
-                        best.addProperty("slotId", slotId);
-                    }
-                }
-            }
-        }
-        if (best == null) {
-            throw new IllegalArgumentException("WORKFLOW_NO_D4_CANDIDATE: current slot produced no candidate.");
-        }
-        return best;
-    }
-
-    private static JsonObject chooseWorkflowStructureClusterGroup(JsonObject candidateSet) {
-        JsonObject best = null;
-        double bestScore = Double.NEGATIVE_INFINITY;
-        for (JsonElement groupElem : array(candidateSet, "groupCandidates")) {
-            if (!groupElem.isJsonObject()) {
-                continue;
-            }
-            JsonObject group = groupElem.getAsJsonObject();
-            JsonObject scoreBreakdown = group.has("scoreBreakdown")
-                    && group.get("scoreBreakdown").isJsonObject()
-                    ? group.getAsJsonObject("scoreBreakdown") : new JsonObject();
-            double score = scoreBreakdown.has("total") && !scoreBreakdown.get("total").isJsonNull()
-                    ? scoreBreakdown.get("total").getAsDouble() : 0.0;
-            if (best == null || score > bestScore) {
-                best = group;
-                bestScore = score;
-            }
-        }
-        if (best == null) {
-            throw new IllegalArgumentException("WORKFLOW_NO_D4_STRUCTURE_CLUSTER_GROUP: no complete group candidate.");
-        }
-        return best;
-    }
-
-    private static JsonObject chooseWorkflowArrayCandidate(JsonObject candidateSet) {
-        JsonObject best = null;
-        double bestScore = Double.NEGATIVE_INFINITY;
-        for (JsonElement groupElem : array(candidateSet, "arrayCandidates")) {
-            if (!groupElem.isJsonObject()) {
-                continue;
-            }
-            JsonObject group = groupElem.getAsJsonObject();
-            JsonObject scoreBreakdown = group.has("scoreBreakdown")
-                    && group.get("scoreBreakdown").isJsonObject()
-                    ? group.getAsJsonObject("scoreBreakdown") : new JsonObject();
-            double score = scoreBreakdown.has("total") && !scoreBreakdown.get("total").isJsonNull()
-                    ? scoreBreakdown.get("total").getAsDouble() : 0.0;
-            if (best == null || score > bestScore) {
-                best = group;
-                bestScore = score;
-            }
-        }
-        if (best == null) {
-            throw new IllegalArgumentException("WORKFLOW_NO_D4_ARRAY_CANDIDATE: no complete array candidate.");
-        }
-        return best;
     }
 
     private static D4StagePlan d4StagePlan(JsonObject designSlotPlan) {
@@ -3420,7 +3247,7 @@ final class CityPlanningEndpointHandler {
         obj.add("arrayStages", arrays);
         Files.writeString(path, CityJson.GSON.toJson(obj));
         ctx.report().getAsJsonObject("artifacts").addProperty("d4StagedPlan", debugRef(ctx.debugRoot(), path));
-        writeWorkflowReport(ctx);
+        ctx.workflow().writeReport();
     }
 
     private static void writeWorkflowD4StageTrace(WorkflowContext ctx, JsonArray stageTrace) throws IOException {
@@ -3434,7 +3261,7 @@ final class CityPlanningEndpointHandler {
         obj.add("stages", stageTrace.deepCopy());
         Files.writeString(path, CityJson.GSON.toJson(obj));
         ctx.report().getAsJsonObject("artifacts").addProperty("d4StagedTrace", debugRef(ctx.debugRoot(), path));
-        writeWorkflowReport(ctx);
+        ctx.workflow().writeReport();
     }
 
     private static boolean workflowWallPlanMatchesRequest(Path wallPlanPath, JsonObject request) throws IOException {
@@ -3526,16 +3353,6 @@ final class CityPlanningEndpointHandler {
             throw new IllegalArgumentException(key + " is required.");
         }
         return value;
-    }
-
-    private static String workflowReasonFromError(Exception ex) {
-        String message = ex.getMessage();
-        if (message == null || message.isBlank()) {
-            return ex.getClass().getSimpleName();
-        }
-        int colon = message.indexOf(':');
-        String prefix = colon > 0 ? message.substring(0, colon) : message;
-        return prefix.length() <= 80 ? prefix : prefix.substring(0, 80);
     }
 
     private static void writeOptionalDebugReport(Path debugRoot, Path outputDirectory, JsonObject report,
@@ -4647,23 +4464,13 @@ final class CityPlanningEndpointHandler {
         return obj != null && obj.has(key) && !obj.get(key).isJsonNull();
     }
 
-    @FunctionalInterface
-    private interface WorkflowAction {
-        JsonObject run() throws Exception;
-    }
-
     private record WorkflowContext(Path debugRoot,
-                                   Path serverRoot,
                                    Path runDir,
-                                   Path outputDirectory,
-                                   Path reportPath,
                                    String runId,
                                    String citySeedId,
                                    JsonObject request,
-                                   MinecraftServerHolder serverHolder,
-                                   ServerLevel level,
                                    JsonObject report,
-                                   JsonArray steps) {
+                                   CityWorkflowStepRunner workflow) {
     }
 
     private record D4StagePlan(JsonObject sourceDesignSlotPlan,

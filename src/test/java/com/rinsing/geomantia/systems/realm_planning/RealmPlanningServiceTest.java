@@ -25,6 +25,7 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class RealmPlanningServiceTest {
@@ -140,6 +141,21 @@ class RealmPlanningServiceTest {
 
         assertEquals("failed", response.get("status").getAsString());
         assertFalse(response.getAsJsonArray("errors").isEmpty());
+    }
+
+    @Test
+    void runStateIsScopedToServiceInstance() throws Exception {
+        RefreshResult result = refreshSynthetic("plain", 64);
+        Path debugRoot = tempDir.resolve("realm_debug");
+        RealmPlanningService first = new RealmPlanningService(debugRoot);
+        RealmPlanningService second = new RealmPlanningService(debugRoot);
+
+        first.runW(result, "realm_instance_scope_test", null);
+
+        assertEquals(1, first.status().getAsJsonArray("knownRuns").size());
+        assertTrue(second.status().getAsJsonArray("knownRuns").isEmpty());
+        assertThrows(IllegalArgumentException.class,
+                () -> second.prepareT1("realm_instance_scope_test", null, 1, "", true));
     }
 
     @Test
