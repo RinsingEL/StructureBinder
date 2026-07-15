@@ -158,6 +158,7 @@ public final class CityStructureAnchorCandidatePlanner {
                     intValue(candidate, "smallClearanceBlocks",
                             CityStructureCandidateEnvelope.DEFAULT_SMALL_CLEARANCE_BLOCKS));
             anchor.addProperty("selectionReason", stringValue(selection, "selectionReason", ""));
+            CityStructureAnchorPlanner.applyPlacementProvenance(anchor, anchor);
             anchors.add(anchor);
         }
 
@@ -956,6 +957,7 @@ public final class CityStructureAnchorCandidatePlanner {
                 intValue(selected, "smallClearanceBlocks",
                         CityStructureCandidateEnvelope.DEFAULT_SMALL_CLEARANCE_BLOCKS));
         anchor.addProperty("selectionReason", stringValue(selected, "selectionReason", ""));
+        CityStructureAnchorPlanner.applyPlacementProvenance(anchor, anchor);
         return anchor;
     }
 

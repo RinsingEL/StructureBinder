@@ -732,6 +732,22 @@ final class RealmPlanningHttpController {
         }));
     }
 
+    void handleCityPlanLandUse(HttpExchange exchange) {
+        handle(exchange, "POST", () -> {
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            String runId = requiredString(request, "runId");
+            String citySeedId = requiredString(request, "citySeedId");
+            JsonObject intent = null;
+            if (request.has("landUseIntentPlan") && !request.get("landUseIntentPlan").isJsonNull()) {
+                if (!request.get("landUseIntentPlan").isJsonObject()) {
+                    throw new IllegalArgumentException("LAND_USE_INTENT_OBJECT_REQUIRED");
+                }
+                intent = request.getAsJsonObject("landUseIntentPlan");
+            }
+            return CityPlanningEndpointHandler.handlePlanLandUse(debugRoot(), runId, citySeedId, intent);
+        });
+    }
+
     void handleCityExecuteD7(HttpExchange exchange) {
         handle(exchange, "POST", () -> callOnServerThread(() -> {
             JsonObject request = GisHttpUtil.readJsonObject(exchange);

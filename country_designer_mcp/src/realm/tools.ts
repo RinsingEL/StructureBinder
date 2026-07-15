@@ -145,6 +145,45 @@ const decorationProgramPlanSchema = strictObject({
   },
 }, ["schemaVersion", "cityId", "catalogHash", "styleProfileId", "styleProfileHash", "programs"]);
 
+const landUseIntentPlanSchema = strictObject({
+  schemaVersion: { type: "string", enum: ["city_land_use_intent_plan.v0.1"] },
+  cityId: nonEmptyString("必须与 citySeedId 对应的 City 一致。"),
+  seedSalt: nonEmptyString("可选确定性扰动盐；相同输入与 seedSalt 必须得到相同结果。"),
+  groupOverrides: {
+    type: "array",
+    description: "把 D4 anchors 显式归为同一土地使用主体；不提交面积、行动力或成本参数。",
+    items: strictObject({
+      groupId: nonEmptyString("稳定的土地使用 group ID。"),
+      memberAnchorIds: {
+        type: "array",
+        minItems: 1,
+        uniqueItems: true,
+        items: nonEmptyString("D6 locked plan 中存在的 anchorId。"),
+      },
+      ruleRef: nonEmptyString("可选 LandUseRuleCatalog 规则引用；省略时由成员结构语义解析。"),
+    }, ["groupId", "memberAnchorIds"]),
+  },
+  subjectOverrides: {
+    type: "array",
+    description: "对已解析的 group 或独立 anchor 设置规则或排除；后项不得提交裸数值参数。",
+    items: {
+      oneOf: [
+        strictObject({
+          targetType: { type: "string", enum: ["group", "anchor"] },
+          targetId: nonEmptyString("目标 groupId 或 anchorId。"),
+          mode: { type: "string", enum: ["set_rule"] },
+          ruleRef: nonEmptyString("LandUseRuleCatalog 中存在的规则引用。"),
+        }, ["targetType", "targetId", "mode", "ruleRef"]),
+        strictObject({
+          targetType: { type: "string", enum: ["group", "anchor"] },
+          targetId: nonEmptyString("目标 groupId 或 anchorId。"),
+          mode: { type: "string", enum: ["exclude"] },
+        }, ["targetType", "targetId", "mode"]),
+      ],
+    },
+  },
+}, ["schemaVersion", "cityId"]);
+
 export const realmTools: ToolDefinition[] = [
   {
     name: "realm_status",
@@ -381,7 +420,7 @@ export const realmTools: ToolDefinition[] = [
         },
         structureAnchorPlan: {
           type: "object",
-          description: "schemaVersion=city_structure_anchor_plan.v0.1；anchors[] 包含 anchorId、structureId、sourcePatchIds、anchorBlock{x,z}、rotation、intentTerms、priority、roadAccessIntent；可选 envelopeGroupKey、smallClearanceBlocks。",
+          description: "schemaVersion=city_structure_anchor_plan.v0.2；anchors[] 除 anchorId、structureId、sourcePatchIds、anchorBlock{x,z}、rotation、intentTerms、priority、roadAccessIntent 外，必须保留 placementGroupId 与 placementProvenance{slotId,arrayId,parentArrayId,subZoneId}；可选 envelopeGroupKey、smallClearanceBlocks。",
         },
         structureEnvelopeFactsSource: {
           type: "object",
@@ -876,6 +915,15 @@ export const realmTools: ToolDefinition[] = [
     }, ["runId", "citySeedId", "decorationProgramPlan"]),
   },
   {
+    name: "city_plan_land_use",
+    description: "City 建筑驱动 LandUse v0.1 规划：读取 D3 block terrain field 与 D6 locked footprint，把 D4 显式 group 或独立 anchor 解析为扩张主体，生成 block 级土地使用区域。只接受稳定 ruleRef 覆写，不接受裸面积、行动力或成本参数；不加载未生成 chunk，也不修改世界。",
+    inputSchema: strictObject({
+      runId: nonEmptyString("已有 W/T run ID。"),
+      citySeedId: nonEmptyString("目标城市种子的 citySeedId。"),
+      landUseIntentPlan: landUseIntentPlanSchema,
+    }, ["runId", "citySeedId"]),
+  },
+  {
     name: "city_execute_d5",
     description: "City D5 Execute: 必须先有完整 D6 locked materialization plan；用 D6 locked collision/actualFootprint/signature 激活 reservation mask registry 与 worldgen-time planned structure registry；正式路径不主动执行 WorldEdit 道路/清理，避免提前生成目标 chunk。必须显式传 confirmWorldMutation=true；mask/worldgen hook 不可用会 hard fail。",
     inputSchema: {
@@ -1040,6 +1088,8 @@ export const realmTools: ToolDefinition[] = [
         sampleCount: { type: "number", description: "每结构 envelope profiling 样本数，默认 256。" },
         cellStepBlocks: { type: "number", description: "D3 cell step，未传则使用默认。" },
         patchScanPaddingBlocks: { type: "number", description: "D3 patch 上下文额外扫描 padding，默认 128；workflow 首跑 D3 时用于覆盖结构和城墙 breathing room。" },
+        enableLandUseLayer: { type: "boolean", description: "单次请求覆写；省略时读取 city_land_use settings（bundled 默认 false）。启用后在 D6 locked footprint 之后、Decoration 和 execute_d5 之前运行 city_plan_land_use。" },
+        landUseIntentPlan: landUseIntentPlanSchema,
         skipExisting: { type: "boolean", description: "默认 true；已有 artifact 时跳过对应步骤，用于等待 worldgen 后快速续跑。" },
         confirmWorldMutation: { type: "boolean", description: "true 才执行 D5 激活 mask/registry；未传时 workflow 会停在 waiting_for_confirmation。" },
         roadProvider: {

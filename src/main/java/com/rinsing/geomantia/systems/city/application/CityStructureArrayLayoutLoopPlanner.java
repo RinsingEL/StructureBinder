@@ -1082,6 +1082,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
         if (accepted.desired().isTemplate()) {
             addTemplatePlacementFields(anchor, accepted.desired().template(), accepted.anchorBlock(), accepted.estimate());
         }
+        CityStructureAnchorPlanner.applyPlacementProvenance(sourceItem, anchor);
         return anchor;
     }
 
@@ -2951,7 +2952,9 @@ public final class CityStructureArrayLayoutLoopPlanner {
                 throw new IllegalArgumentException("D4_ARRAY_LAYOUT_DUPLICATE_ANCHOR_ID: "
                         + anchorId + " from " + source + ".");
             }
-            target.add(anchor.deepCopy());
+            JsonObject normalized = anchor.deepCopy();
+            CityStructureAnchorPlanner.applyPlacementProvenance(normalized, normalized);
+            target.add(normalized);
         }
     }
 

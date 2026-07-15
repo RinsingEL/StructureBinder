@@ -6,10 +6,13 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.rinsing.geomantia.systems.city.application.CityLandformReviewBuilder;
 import com.rinsing.geomantia.systems.city.application.CitySiteContextBuilder;
+import com.rinsing.geomantia.systems.city.application.CityStructureEnvelopeProfiler;
 import com.rinsing.geomantia.systems.city.application.CityWallPlanner;
 import com.rinsing.geomantia.systems.city.application.CityWallReservationPlanner;
 import com.rinsing.geomantia.systems.city.application.dressing.CityDecorationTerrainProbe;
+import com.rinsing.geomantia.systems.city.application.landuse.LandUseAreaPlanCodec;
 import com.rinsing.geomantia.systems.city.domain.config.CityPlanningConfig;
+import com.rinsing.geomantia.systems.city.domain.landuse.rules.LandUseRuleCatalog;
 import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
 import com.rinsing.geomantia.systems.city.domain.model.CityLandformReviewPackage;
 import com.rinsing.geomantia.systems.city.domain.model.CitySiteContext;
@@ -19,6 +22,7 @@ import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecoration
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityDecorationWorldgenRegistry;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityReservationMaskRegistry;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityRoadWeaverBridge;
+import com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityLandUseWorldgenRegistry;
 import com.rinsing.geomantia.systems.gis.domain.cell.LandformType;
 import com.rinsing.geomantia.systems.gis.domain.landform.LandformPatch;
 import com.rinsing.geomantia.systems.gis.domain.landform.PatchFlag;
@@ -1414,6 +1418,79 @@ class CityPlanningEndpointHandlerTest {
     }
 
     @Test
+    void handleExecuteD5RejectsInvalidLandUseCompletionBeforeRegistryMutation() throws Exception {
+        Path debugRoot = Files.createTempDirectory("city-land-use-completion-test");
+        Path serverRoot = Files.createTempDirectory("city-land-use-completion-server-root");
+        String runId = "run_land_use_completion";
+        String citySeedId = "city_test";
+        prepareD5Artifacts(debugRoot, runId, citySeedId);
+        CityPlanningEndpointHandler.handlePlanD6(debugRoot, runId, citySeedId, null, null);
+
+        Path completionPath = writeEmptyLandUseArtifacts(debugRoot, runId, citySeedId);
+        JsonObject valid = JsonParser.parseString(Files.readString(completionPath)).getAsJsonObject();
+        List<MarkerMutation> invalidMarkers = List.of(
+                new MarkerMutation("schemaVersion", "city_land_use_planning_complete.v0.0",
+                        "CITY_LAND_USE_PLAN_INCOMPLETE", "completion schema is invalid"),
+                new MarkerMutation("cityId", "wrong_city",
+                        "CITY_LAND_USE_PLAN_INCOMPLETE", "completion cityId does not match plan"),
+                new MarkerMutation("planHash", "stale_plan_hash",
+                        "CITY_LAND_USE_PLAN_INCOMPLETE", "completion planHash does not match plan"),
+                new MarkerMutation("ruleProfileHash", "",
+                        "CITY_LAND_USE_RULE_PROFILE_HASH_MISMATCH", ""),
+                new MarkerMutation("sourceD6Hash", "",
+                        "CITY_LAND_USE_SOURCE_D6_HASH_MISMATCH", ""),
+                new MarkerMutation("completedAt", "",
+                        "CITY_LAND_USE_PLAN_INCOMPLETE", "completion completedAt is required"));
+
+        for (MarkerMutation mutation : invalidMarkers) {
+            JsonObject invalid = valid.deepCopy();
+            invalid.addProperty(mutation.field(), mutation.value());
+            Files.writeString(completionPath, CityJson.GSON.toJson(invalid));
+
+            IllegalArgumentException failure = assertThrows(IllegalArgumentException.class,
+                    () -> CityPlanningEndpointHandler.handleExecuteD5(
+                            debugRoot, serverRoot, runId, citySeedId, true, null,
+                            "auto", null, true), mutation.field());
+
+            assertTrue(failure.getMessage().contains(mutation.reasonCode()), mutation.field());
+            assertTrue(mutation.message().isBlank()
+                    || failure.getMessage().contains(mutation.message()), mutation.field());
+            assertFalse(Files.exists(CityLandUseWorldgenRegistry.activePlansPath(serverRoot)),
+                    "invalid completion must fail before LandUse registry mutation: " + mutation.field());
+        }
+    }
+
+    @Test
+    void handleExecuteD5ExplicitFalseIgnoresIncompleteArtifactAndDeactivatesLandUse() throws Exception {
+        Path debugRoot = Files.createTempDirectory("city-land-use-explicit-disable-test");
+        Path serverRoot = Files.createTempDirectory("city-land-use-explicit-disable-server-root");
+        String runId = "run_land_use_explicit_disable";
+        String citySeedId = "city_test";
+        prepareD5Artifacts(debugRoot, runId, citySeedId);
+        CityPlanningEndpointHandler.handlePlanD6(debugRoot, runId, citySeedId, null, null);
+        Path completionPath = writeEmptyLandUseArtifacts(debugRoot, runId, citySeedId);
+
+        JsonObject activation = CityPlanningEndpointHandler.handleExecuteD5(
+                debugRoot, serverRoot, runId, citySeedId, true, null,
+                "auto", null, true);
+        assertTrue(activation.get("landUseWorldgenMode").getAsBoolean());
+        assertEquals(1, activation.getAsJsonObject("activeLandUseSummary")
+                .get("activePlanCount").getAsInt());
+
+        Files.delete(completionPath);
+        JsonObject deactivation = CityPlanningEndpointHandler.handleExecuteD5(
+                debugRoot, serverRoot, runId, citySeedId, true, null,
+                "auto", null, false);
+
+        assertFalse(deactivation.get("landUseWorldgenMode").getAsBoolean());
+        assertEquals(0, deactivation.getAsJsonObject("activeLandUseSummary")
+                .get("activePlanCount").getAsInt());
+        JsonObject persisted = JsonParser.parseString(Files.readString(
+                CityLandUseWorldgenRegistry.activePlansPath(serverRoot))).getAsJsonObject();
+        assertTrue(persisted.getAsJsonArray("plans").isEmpty());
+    }
+
+    @Test
     void handlePlanD6_allowsPreflightBeforeActiveWorldgenRegistry() throws Exception {
         Path debugRoot = Files.createTempDirectory("city-d6-registry-missing");
         String runId = "run_d6_missing_registry";
@@ -1967,8 +2044,11 @@ class CityPlanningEndpointHandlerTest {
         assertEquals("waiting_for_confirmation", response.get("status").getAsString());
         JsonObject report = response.getAsJsonObject("workflowReport");
         assertEquals("city_workflow_report.v0.1", report.get("schemaVersion").getAsString());
+        assertFalse(report.get("enableLandUseLayer").getAsBoolean(),
+                "workflow must default LandUse off when no explicit request/config is available");
         assertTrue(report.has("durationMs"));
         assertTrue(report.getAsJsonArray("steps").toString().contains("WORKFLOW_EXISTING_ARTIFACT"));
+        assertFalse(report.getAsJsonArray("steps").toString().contains("city_plan_land_use"));
         assertTrue(report.getAsJsonArray("steps").toString().contains("WORKFLOW_CONFIRM_WORLD_MUTATION_REQUIRED"));
         Path reportPath = debugRoot.resolve(response.getAsJsonObject("artifacts")
                 .get("workflowReport").getAsString());
@@ -2318,6 +2398,44 @@ class CityPlanningEndpointHandlerTest {
         CityPlanningEndpointHandler.handlePlanD4(debugRoot, runId, citySeedId,
                 terraSenseSource(catalogPath), structureAnchorPlan(review, 2));
         CityPlanningEndpointHandler.handlePlanD5(debugRoot, runId, citySeedId);
+    }
+
+    private static Path writeEmptyLandUseArtifacts(Path debugRoot, String runId, String citySeedId) throws Exception {
+        Path directory = debugRoot.resolve(runId).resolve("city_land_use_" + citySeedId);
+        Files.createDirectories(directory);
+        LandUseAreaPlanCodec codec = new LandUseAreaPlanCodec();
+        JsonObject unhashed = JsonParser.parseString("""
+                {
+                  "schemaVersion": "city_land_use_area_plan.v0.1",
+                  "ruleVersion": "city_land_use_rules.v0.1",
+                  "cityId": "city_test",
+                  "planningBounds": {"minX": -64, "minZ": -64, "maxX": 64, "maxZ": 64},
+                  "areas": [],
+                  "unclaimedSpans": [],
+                  "corridorExclusions": [],
+                  "warnings": []
+                }
+                """).getAsJsonObject();
+        var plan = codec.withComputedHash(codec.fromJson(unhashed));
+        Files.writeString(directory.resolve("city_land_use_area_plan.json"),
+                CityJson.GSON.toJson(codec.toJson(plan)));
+        JsonObject completion = new JsonObject();
+        completion.addProperty("schemaVersion", "city_land_use_planning_complete.v0.1");
+        completion.addProperty("cityId", citySeedId);
+        completion.addProperty("planHash", plan.planHash());
+        completion.addProperty("ruleProfileHash", LandUseRuleCatalog.defaults().profileHash());
+        Path d6Path = debugRoot.resolve(runId).resolve("city_d6_" + citySeedId)
+                .resolve("structure_materialization_plan.json");
+        JsonObject d6 = JsonParser.parseString(Files.readString(d6Path)).getAsJsonObject();
+        completion.addProperty("sourceD6Hash",
+                CityStructureEnvelopeProfiler.sha256(CityJson.GSON.toJson(d6)));
+        completion.addProperty("completedAt", "2026-07-15T00:00:00Z");
+        Path completionPath = directory.resolve("city_land_use_planning_complete.json");
+        Files.writeString(completionPath, CityJson.GSON.toJson(completion));
+        return completionPath;
+    }
+
+    private record MarkerMutation(String field, String value, String reasonCode, String message) {
     }
 
     private static JsonObject terraSenseSource(Path catalogPath) {

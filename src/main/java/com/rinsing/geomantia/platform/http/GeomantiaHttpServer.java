@@ -90,6 +90,7 @@ public final class GeomantiaHttpServer {
             createdServer.createContext("/realm/city/plan_d5", realmController::handleCityPlanD5);
             createdServer.createContext("/realm/city/execute_d5", realmController::handleCityExecuteD5);
             createdServer.createContext("/realm/city/plan_d6", realmController::handleCityPlanD6);
+            createdServer.createContext("/realm/city/plan_land_use", realmController::handleCityPlanLandUse);
             createdServer.createContext("/realm/city/execute_d7", realmController::handleCityExecuteD7);
             createdServer.createContext("/realm/city/plan_city_walls", realmController::handleCityPlanCityWalls);
             createdServer.createContext("/realm/city/execute_city_walls", realmController::handleCityExecuteCityWalls);

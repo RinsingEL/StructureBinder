@@ -32,6 +32,9 @@ class CityStructureTemplateMaterializationPlannerTest {
         assertEquals(item.getAsJsonObject("actualFootprint"), item.getAsJsonObject("lockedActualFootprint"));
         assertFalse(item.has("templateFootprint"));
         assertFalse(item.has("pieceBoxes") && item.getAsJsonArray("pieceBoxes").size() > 0);
+        assertEquals("residential_row", item.get("placementGroupId").getAsString());
+        assertEquals("row_north", item.getAsJsonObject("placementProvenance")
+                .get("subZoneId").getAsString());
         assertTrue(result.get("locked").getAsBoolean());
     }
 
@@ -57,10 +60,17 @@ class CityStructureTemplateMaterializationPlannerTest {
     private static JsonObject anchorMap() {
         JsonObject root = JsonParser.parseString("""
                 {
-                  "schemaVersion": "city_structure_anchor_map.v0.1",
+                  "schemaVersion": "city_structure_anchor_map.v0.2",
                   "cityId": "city_template_test",
                   "anchors": [{
                     "anchorId": "house_1",
+                    "placementGroupId": "residential_row",
+                    "placementProvenance": {
+                      "slotId": "house_slot",
+                      "arrayId": "residential_row",
+                      "parentArrayId": "residential_block",
+                      "subZoneId": "row_north"
+                    },
                     "structureId": "legacy:ignored",
                     "commandAnchorBlock": {"x": 10, "z": 10},
                     "plannedFootprint": {"minX": 10, "minZ": 10, "maxX": 17, "maxZ": 15},

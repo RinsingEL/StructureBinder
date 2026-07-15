@@ -73,6 +73,11 @@ public final class CityD4StagedPlanCompiler {
         if (stringValue(plan, "arrayId").isBlank()) {
             plan.addProperty("arrayId", stringValue(slot, "arrayId", slotId));
         }
+        plan.addProperty("sourceSlotId", slotId);
+        if (stringValue(plan, "placementGroupId").isBlank()) {
+            plan.addProperty("placementGroupId", stringValue(slot, "placementGroupId",
+                    stringValue(plan, "arrayId", slotId)));
+        }
         if (stringValue(plan, "displayRole").isBlank() && slot.has("displayRole")) {
             plan.addProperty("displayRole", stringValue(slot, "displayRole", slotId));
         }
@@ -181,7 +186,9 @@ public final class CityD4StagedPlanCompiler {
                 throw new IllegalArgumentException("D4_STAGED_DUPLICATE_ANCHOR_ID: " + anchorId
                         + " from " + source + ".");
             }
-            anchors.add(anchor.deepCopy());
+            JsonObject normalized = anchor.deepCopy();
+            CityStructureAnchorPlanner.applyPlacementProvenance(normalized, normalized);
+            anchors.add(normalized);
         }
     }
 

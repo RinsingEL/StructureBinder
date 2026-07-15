@@ -374,6 +374,15 @@ public final class CityDecorationWorldgenRegistry {
                 alreadyApplied, failed, skipped);
     }
 
+    /** Applies decoration fragments from the chunk-level biome-decoration hook. */
+    public static ApplySummary applyForChunk(WorldGenLevel level, net.minecraft.world.level.chunk.ChunkAccess chunk) {
+        if (level == null || chunk == null) {
+            throw new IllegalArgumentException("CITY_DECORATION_OWNER_CHUNK_REQUIRED");
+        }
+        return applyForChunk(dimensionId(level), chunk.getPos().x, chunk.getPos().z,
+                new WorldGenTerrainView(level), new CityDecorationNbtPlacer.WorldGenPlacementWorld(level));
+    }
+
     private static ProgramProjection projectProgram(ActivePlan active,
                                                      CompiledDecorationProgram program,
                                                      ChunkRef owner,

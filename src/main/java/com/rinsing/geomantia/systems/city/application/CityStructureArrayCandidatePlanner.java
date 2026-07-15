@@ -325,6 +325,7 @@ public final class CityStructureArrayCandidatePlanner {
         }
         anchor.addProperty("smallClearanceBlocks", CityStructureCandidateEnvelope.DEFAULT_SMALL_CLEARANCE_BLOCKS);
         anchor.addProperty("selectionReason", "Selected from D4 array candidate " + arrayId + " pattern " + pattern);
+        CityStructureAnchorPlanner.applyPlacementProvenance(anchor, anchor);
         return anchor;
     }
 

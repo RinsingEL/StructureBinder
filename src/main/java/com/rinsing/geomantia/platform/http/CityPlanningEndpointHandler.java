@@ -25,6 +25,7 @@ import com.rinsing.geomantia.systems.city.application.CityWallReservationPlanner
 import com.rinsing.geomantia.systems.city.application.CityWorkflowCandidateSelector;
 import com.rinsing.geomantia.systems.city.application.CityWorkflowStepRunner;
 import com.rinsing.geomantia.systems.city.application.dressing.CityDecorationProgramPlanner;
+import com.rinsing.geomantia.systems.city.application.dressing.CityDecorationProgramContextResolver;
 import com.rinsing.geomantia.systems.city.application.dressing.CityDecorationTerrainProbe;
 import com.rinsing.geomantia.systems.city.application.dressing.CompiledDecorationProgram;
 import com.rinsing.geomantia.systems.city.application.dressing.CompiledDecorationProgramCodec;
@@ -34,7 +35,16 @@ import com.rinsing.geomantia.systems.city.application.dressing.DecorationProgram
 import com.rinsing.geomantia.systems.city.application.dressing.DecorationProgramIntentCodec;
 import com.rinsing.geomantia.systems.city.application.dressing.DecorationProgramIntentPlan;
 import com.rinsing.geomantia.systems.city.application.dressing.DecorationSlot;
+import com.rinsing.geomantia.systems.city.application.dressing.LandUseAreaDecorationProgramContextResolver;
+import com.rinsing.geomantia.systems.city.application.landuse.LandUseAreaPlanCodec;
+import com.rinsing.geomantia.systems.city.application.landuse.LandUsePlanningService;
+import com.rinsing.geomantia.systems.city.application.landuse.LandUseTerrainFieldCodec;
+import com.rinsing.geomantia.systems.city.application.landuse.LandUseTerrainFieldCompiler;
 import com.rinsing.geomantia.systems.city.domain.config.CityPlanningConfig;
+import com.rinsing.geomantia.systems.city.domain.landuse.LandUseAreaPlan;
+import com.rinsing.geomantia.systems.city.domain.landuse.LandUseTerrainField;
+import com.rinsing.geomantia.systems.city.domain.landuse.rules.LandUseRuleCatalog;
+import com.rinsing.geomantia.systems.city.domain.landuse.rules.LandUseSettings;
 import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
 import com.rinsing.geomantia.systems.city.domain.model.BlockPoint;
 import com.rinsing.geomantia.systems.city.domain.model.BuildOperationPlan;
@@ -43,6 +53,7 @@ import com.rinsing.geomantia.systems.city.domain.model.CitySiteContext;
 import com.rinsing.geomantia.systems.city.domain.model.WorldMutationReport;
 import com.rinsing.geomantia.systems.city.infrastructure.json.CityJson;
 import com.rinsing.geomantia.systems.city.infrastructure.preview.CityDecorationPreviewRenderer;
+import com.rinsing.geomantia.systems.city.infrastructure.preview.CityLandUsePreviewRenderer;
 import com.rinsing.geomantia.systems.city.infrastructure.preview.CityLandformReviewMapRenderer;
 import com.rinsing.geomantia.systems.city.infrastructure.preview.CityStructureLandingPreviewRenderer;
 import com.rinsing.geomantia.systems.city.infrastructure.preview.CityWallPreviewRenderer;
@@ -52,6 +63,8 @@ import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecoration
 import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationStyleProfileCatalog;
 import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationStyleProfileCatalogLoader;
 import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationStyleProfileResolver;
+import com.rinsing.geomantia.systems.city.infrastructure.landuse.LandUseDefaultConfigBootstrap;
+import com.rinsing.geomantia.systems.city.infrastructure.landuse.LandUseSettingsLoader;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityDecorationWorldgenRegistry;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityReservationMaskRegistry;
 import com.rinsing.geomantia.systems.city.infrastructure.world.MinecraftCityWallArtifactWriter;
@@ -64,6 +77,8 @@ import com.rinsing.geomantia.systems.city.infrastructure.world.MinecraftCityStru
 import com.rinsing.geomantia.systems.city.infrastructure.world.MinecraftCityTemplateReader;
 import com.rinsing.geomantia.systems.city.infrastructure.world.MinecraftCityWorldgenStatusInspector;
 import com.rinsing.geomantia.systems.city.infrastructure.world.WorldEditMutationBackend;
+import com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityLandUseChunkStatusPreflight;
+import com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityLandUseWorldgenRegistry;
 import com.rinsing.geomantia.systems.gis.GisClassifierConfig;
 import com.rinsing.geomantia.systems.gis.GisSampleConfig;
 import com.rinsing.geomantia.systems.gis.adapter.minecraft.MinecraftPriorAtlasSampler;
@@ -81,8 +96,10 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraftforge.fml.loading.FMLPaths;
 
 import java.io.IOException;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -179,16 +196,28 @@ final class CityPlanningEndpointHandler {
         addD3PatchScanMetadata(packageJson, patchScanPaddingBlocks, patchContextBounds, refreshResults);
         Files.writeString(packagePath, CityJson.GSON.toJson(packageJson));
 
+        LandUseTerrainField landUseTerrainField = new LandUseTerrainFieldCompiler().compile(reviewPkg, regions);
+        Path landUseDirectory = runDir.resolve("city_land_use_" + safeFileName(citySeedId));
+        Files.createDirectories(landUseDirectory);
+        Path landUseTerrainFieldPath = landUseDirectory.resolve("land_use_terrain_field.json");
+        Files.writeString(landUseTerrainFieldPath, CityJson.GSON.toJson(
+                new LandUseTerrainFieldCodec().toJson(landUseTerrainField)));
+        Files.deleteIfExists(landUseDirectory.resolve("city_land_use_planning_complete.json"));
+        Files.deleteIfExists(decorationDir(runDir, citySeedId)
+                .resolve("city_decoration_planning_complete.json"));
+
         JsonObject response = new JsonObject();
         response.addProperty("ok", true);
         response.addProperty("patchCount", reviewPkg.landformPatches().size());
         response.addProperty("refreshedRegionCount", refreshResults.size());
         response.addProperty("patchScanPaddingBlocks", patchScanPaddingBlocks);
+        response.addProperty("landUseTerrainCellCount", landUseTerrainField.cells().size());
         response.add("citySiteContext", ctx.asJson());
         response.add("landformReviewPackage", packageJson);
         JsonObject artifacts = new JsonObject();
         artifacts.addProperty("landformReviewMap", reviewMapRef);
         artifacts.addProperty("cityLandformReviewPackage", debugRef(debugRoot, packagePath));
+        artifacts.addProperty("landUseTerrainField", debugRef(debugRoot, landUseTerrainFieldPath));
         response.add("artifacts", artifacts);
         return response;
     }
@@ -1041,16 +1070,128 @@ final class CityPlanningEndpointHandler {
         return response;
     }
 
+    static JsonObject handlePlanLandUse(Path debugRoot,
+                                        String runId,
+                                        String citySeedId,
+                                        JsonObject optionalIntent) throws IOException {
+        long started = System.nanoTime();
+        Path runDir = debugRoot.resolve(runId);
+        loadCitySeed(runDir, runId, citySeedId);
+        Path outputDirectory = runDir.resolve("city_land_use_" + safeFileName(citySeedId));
+        Path terrainPath = outputDirectory.resolve("land_use_terrain_field.json");
+        Path d4AnchorMapPath = runDir.resolve("city_d4_" + safeFileName(citySeedId))
+                .resolve("structure_anchor_map.json");
+        Path d5MaskPath = runDir.resolve("city_d5_" + safeFileName(citySeedId))
+                .resolve("reservation_mask_plan.json");
+        Path d6Directory = runDir.resolve("city_d6_" + safeFileName(citySeedId));
+        Path d6PlanPath = d6Directory.resolve("structure_materialization_plan.json");
+        if (!Files.isRegularFile(terrainPath)) {
+            throw new IllegalArgumentException("LAND_USE_TERRAIN_FIELD_MISSING: run city_plan_d3 first: "
+                    + debugRef(debugRoot, terrainPath));
+        }
+        if (!Files.isRegularFile(d4AnchorMapPath)) {
+            throw new IllegalArgumentException("LAND_USE_D4_PROVENANCE_MISSING: run city_plan_d4 first: "
+                    + debugRef(debugRoot, d4AnchorMapPath));
+        }
+        if (!Files.isRegularFile(d5MaskPath)) {
+            throw new IllegalArgumentException("LAND_USE_D5_PLAN_MISSING: run city_plan_d5 first: "
+                    + debugRef(debugRoot, d5MaskPath));
+        }
+        if (!Files.isRegularFile(d6PlanPath)) {
+            throw new IllegalArgumentException("LAND_USE_D6_PLAN_MISSING: run city_plan_d6 first: "
+                    + debugRef(debugRoot, d6PlanPath));
+        }
+        JsonObject d4AnchorMap = JsonParser.parseString(Files.readString(d4AnchorMapPath)).getAsJsonObject();
+        if (!"city_structure_anchor_map.v0.2".equals(stringValue(d4AnchorMap, "schemaVersion", ""))) {
+            throw new IllegalArgumentException("LAND_USE_D4_V02_PROVENANCE_REQUIRED");
+        }
+        JsonObject d6Plan = JsonParser.parseString(Files.readString(d6PlanPath)).getAsJsonObject();
+        validateLockedMaterializationPlan(d6Plan);
+        JsonObject d5MaskPlan = JsonParser.parseString(Files.readString(d5MaskPath)).getAsJsonObject();
+        String cityId = stringValue(d6Plan, "cityId", citySeedId);
+        LandUseTerrainField terrainField = new LandUseTerrainFieldCodec().fromJson(
+                JsonParser.parseString(Files.readString(terrainPath)).getAsJsonObject());
+        if (!cityId.equals(terrainField.cityId())) {
+            throw new IllegalArgumentException("LAND_USE_TERRAIN_CITY_ID_MISMATCH: expected "
+                    + cityId + " but found " + terrainField.cityId());
+        }
+
+        LandUseSettings settings = loadLandUseSettings();
+        LandUseRuleCatalog rules = LandUseRuleCatalog.defaults();
+        JsonObject functionalArrayZones = loadOptionalLandUseFunctionalArrayZones(runDir, citySeedId);
+        Path completePath = outputDirectory.resolve("city_land_use_planning_complete.json");
+        Files.deleteIfExists(completePath);
+        LandUsePlanningService.Result result = new LandUsePlanningService().plan(
+                d6Plan, optionalIntent, functionalArrayZones, d5MaskPlan, terrainField, rules);
+        LandUseAreaPlanCodec planCodec = new LandUseAreaPlanCodec();
+        JsonObject planJson = planCodec.toJson(result.plan());
+        Path planPath = outputDirectory.resolve("city_land_use_area_plan.json");
+        Path tracePath = outputDirectory.resolve("land_use_plan_trace.json");
+        Path qualityPath = outputDirectory.resolve("quality_report.json");
+        Files.createDirectories(outputDirectory);
+        Files.writeString(planPath, CityJson.GSON.toJson(planJson));
+        Files.writeString(tracePath, CityJson.GSON.toJson(result.trace()));
+        Files.writeString(qualityPath, CityJson.GSON.toJson(result.quality()));
+        JsonObject preview = new CityLandUsePreviewRenderer().render(
+                terrainField, result.plan(), outputDirectory);
+        Path previewPath = outputDirectory.resolve(stringValue(preview, "fileName", "land_use_preview.png"));
+
+        JsonObject completion = new JsonObject();
+        completion.addProperty("schemaVersion", "city_land_use_planning_complete.v0.1");
+        completion.addProperty("cityId", cityId);
+        completion.addProperty("planHash", result.plan().planHash());
+        completion.addProperty("ruleProfileHash", rules.profileHash());
+        completion.addProperty("sourceD6Hash", CityStructureEnvelopeProfiler.sha256(
+                CityJson.GSON.toJson(d6Plan)));
+        completion.addProperty("completedAt", Instant.now().toString());
+        Files.deleteIfExists(decorationDir(runDir, citySeedId)
+                .resolve("city_decoration_planning_complete.json"));
+        writePlanningCompletion(completePath, completion);
+
+        JsonObject response = new JsonObject();
+        response.addProperty("ok", true);
+        response.addProperty("explicitPlanning", true);
+        response.addProperty("workflowEnabledByDefault", settings.enabledInWorkflow());
+        response.addProperty("profileId", settings.profileId());
+        response.addProperty("ruleProfileHash", rules.profileHash());
+        response.addProperty("areaCount", result.plan().areas().size());
+        response.addProperty("planHash", result.plan().planHash());
+        response.add("landUseAreaPlan", planJson);
+        response.add("qualityReport", result.quality());
+        response.add("landUsePreview", preview);
+        response.add("timingMs", timing(started));
+        JsonObject artifacts = new JsonObject();
+        artifacts.addProperty("landUseTerrainField", debugRef(debugRoot, terrainPath));
+        artifacts.addProperty("landUseAreaPlan", debugRef(debugRoot, planPath));
+        artifacts.addProperty("landUsePlanTrace", debugRef(debugRoot, tracePath));
+        artifacts.addProperty("qualityReport", debugRef(debugRoot, qualityPath));
+        artifacts.addProperty("landUsePreview", debugRef(debugRoot, previewPath));
+        artifacts.addProperty("planningComplete", debugRef(debugRoot, completePath));
+        artifacts.addProperty("sourceD4AnchorMap", debugRef(debugRoot, d4AnchorMapPath));
+        artifacts.addProperty("sourceD5ReservationMaskPlan", debugRef(debugRoot, d5MaskPath));
+        artifacts.addProperty("sourceD6MaterializationPlan", debugRef(debugRoot, d6PlanPath));
+        response.add("artifacts", artifacts);
+        return response;
+    }
+
     static JsonObject handleExecuteD5(Path debugRoot, Path serverRoot, String runId, String citySeedId,
                                       boolean confirmWorldMutation, ServerLevel level,
                                       String requestedRoadProvider) throws IOException {
         return handleExecuteD5(debugRoot, serverRoot, runId, citySeedId, confirmWorldMutation, level,
-                requestedRoadProvider, null);
+                requestedRoadProvider, null, null);
     }
 
     static JsonObject handleExecuteD5(Path debugRoot, Path serverRoot, String runId, String citySeedId,
                                       boolean confirmWorldMutation, ServerLevel level,
                                       String requestedRoadProvider, Path requestedDecorationCatalogRoot) throws IOException {
+        return handleExecuteD5(debugRoot, serverRoot, runId, citySeedId, confirmWorldMutation, level,
+                requestedRoadProvider, requestedDecorationCatalogRoot, null);
+    }
+
+    static JsonObject handleExecuteD5(Path debugRoot, Path serverRoot, String runId, String citySeedId,
+                                      boolean confirmWorldMutation, ServerLevel level,
+                                      String requestedRoadProvider, Path requestedDecorationCatalogRoot,
+                                      Boolean requestedLandUseLayer) throws IOException {
         long started = System.nanoTime();
         if (!confirmWorldMutation) {
             throw new IllegalArgumentException("confirmWorldMutation=true is required for city_execute_d5.");
@@ -1064,6 +1205,9 @@ final class CityPlanningEndpointHandler {
         Path operationPath = d5Dir.resolve("build_operation_plan.json");
         Path d6PlanPath = runDir.resolve("city_d6_" + safeFileName(citySeedId))
                 .resolve("structure_materialization_plan.json");
+        Path landUseDirectory = runDir.resolve("city_land_use_" + safeFileName(citySeedId));
+        Path landUsePlanPath = landUseDirectory.resolve("city_land_use_area_plan.json");
+        Path landUseCompletePath = landUseDirectory.resolve("city_land_use_planning_complete.json");
         Path anchorMapPath = d4Dir.resolve("structure_anchor_map.json");
         if (!Files.exists(anchorMapPath)) {
             rejectLegacyArtifacts(d4Dir, "D4");
@@ -1090,6 +1234,31 @@ final class CityPlanningEndpointHandler {
         JsonObject materializationPlan = JsonParser.parseString(Files.readString(d6PlanPath)).getAsJsonObject();
         validateLockedMaterializationPlan(materializationPlan);
         JsonObject activeMaskPlan = maskPlanWithLockedEnvelopes(maskPlan, materializationPlan);
+        boolean landUsePlanExists = Files.isRegularFile(landUsePlanPath);
+        boolean landUseCompleteExists = Files.isRegularFile(landUseCompletePath);
+        boolean landUseWorldgenMode = requestedLandUseLayer == null
+                ? landUsePlanExists && landUseCompleteExists : requestedLandUseLayer;
+        if (!Boolean.FALSE.equals(requestedLandUseLayer) && landUsePlanExists != landUseCompleteExists) {
+            throw new IllegalArgumentException("CITY_LAND_USE_PLAN_INCOMPLETE: area plan and completion marker "
+                    + "must both exist; rerun city_plan_land_use.");
+        }
+        if (landUseWorldgenMode && !landUsePlanExists) {
+            throw new IllegalArgumentException("CITY_LAND_USE_PLAN_MISSING: run city_plan_land_use first.");
+        }
+        LandUseAreaPlan landUsePlan = null;
+        if (landUseWorldgenMode) {
+            landUsePlan = new LandUseAreaPlanCodec().fromJson(
+                    JsonParser.parseString(Files.readString(landUsePlanPath)).getAsJsonObject());
+            String expectedCityId = stringValue(materializationPlan, "cityId", citySeedId);
+            if (!expectedCityId.equals(landUsePlan.cityId())) {
+                throw new IllegalArgumentException("CITY_LAND_USE_CITY_ID_MISMATCH: expected "
+                        + expectedCityId + " but found " + landUsePlan.cityId());
+            }
+            validateLandUseCompletion(JsonParser.parseString(Files.readString(landUseCompletePath))
+                    .getAsJsonObject(), landUsePlan, expectedCityId,
+                    LandUseRuleCatalog.defaults().profileHash(),
+                    CityStructureEnvelopeProfiler.sha256(CityJson.GSON.toJson(materializationPlan)));
+        }
         Path decorationDirectory = decorationDir(runDir, citySeedId);
         rejectLegacyDressingArtifacts(decorationDirectory, false);
         rejectLegacyDressingArtifacts(runDir.resolve("city_dressing_" + safeFileName(citySeedId)), true);
@@ -1112,6 +1281,19 @@ final class CityPlanningEndpointHandler {
             decorationCatalogRoot = optionalDefaultDecorationCatalogRoot();
         }
         RunMetadata metadata = loadRunMetadata(runDir, null, "");
+        CityLandUseChunkStatusPreflight.PreflightResult landUseChunkPreflight = null;
+        if (landUsePlan != null) {
+            CityLandUseWorldgenRegistry.preflightActivate(metadata.dimensionId(), landUsePlan, serverRoot);
+            landUseChunkPreflight = CityLandUseWorldgenRegistry.preflightChunkStatus(landUsePlan,
+                    new CityLandUseChunkStatusPreflight.MinecraftChunkStatusProbe(level));
+            if (!landUseChunkPreflight.eligible()) {
+                throw new IllegalArgumentException(landUseChunkPreflight.reasonCode()
+                        + ": LandUse only applies during first worldgen FEATURES; ownerChunks="
+                        + landUseChunkPreflight.ownerChunkCount() + ", featuresOrLater="
+                        + landUseChunkPreflight.featuresOrLaterCount() + ", unknown="
+                        + landUseChunkPreflight.unknownCount());
+            }
+        }
         CompiledDecorationProgramPlan compiledDecorationPlan = null;
         DecorationMaskCounts decorationMaskCounts = DecorationMaskCounts.empty();
         if (decorationWorldgenMode) {
@@ -1171,6 +1353,9 @@ final class CityPlanningEndpointHandler {
                         serverRoot, decorationCatalogRoot)
                 : CityDecorationWorldgenRegistry.deactivate(metadata.dimensionId(),
                         decorationCityId, serverRoot, decorationCatalogRoot);
+        JsonObject activeLandUseSummary = landUsePlan != null
+                ? CityLandUseWorldgenRegistry.activate(metadata.dimensionId(), landUsePlan, serverRoot)
+                : CityLandUseWorldgenRegistry.deactivate(metadata.dimensionId(), decorationCityId, serverRoot);
         Files.createDirectories(d5Dir);
         Path reportPath = d5Dir.resolve("world_mutation_report.json");
         Path activeMaskPath = d5Dir.resolve("active_mask_summary.json");
@@ -1179,6 +1364,7 @@ final class CityPlanningEndpointHandler {
         Path roadWeaverReportPath = d5Dir.resolve("roadweaver_registration_report.json");
         Path roadProviderStatePath = d5Dir.resolve("road_provider_state.json");
         Path activeDecorationPath = d5Dir.resolve("active_city_decoration_summary.json");
+        Path activeLandUsePath = d5Dir.resolve("active_city_land_use_summary.json");
         Files.writeString(reportPath, CityJson.GSON.toJson(report.asJson()));
         Files.writeString(activeMaskPath, CityJson.GSON.toJson(CityReservationMaskRegistry.activeSummary()));
         Files.writeString(activePlannedPath, CityJson.GSON.toJson(activeRegistry));
@@ -1196,6 +1382,7 @@ final class CityPlanningEndpointHandler {
         roadProviderState.add("roadWeaverRegistrationReport", roadWeaverRegistrationReport.deepCopy());
         Files.writeString(roadProviderStatePath, CityJson.GSON.toJson(roadProviderState));
         Files.writeString(activeDecorationPath, CityJson.GSON.toJson(activeDecorationSummary));
+        Files.writeString(activeLandUsePath, CityJson.GSON.toJson(activeLandUseSummary));
 
         JsonObject response = new JsonObject();
         response.addProperty("ok", report.failedOperations() == 0);
@@ -1207,6 +1394,8 @@ final class CityPlanningEndpointHandler {
         response.addProperty("decorationWorldgenMode", decorationWorldgenMode);
         response.addProperty("decorationVegetationMaskCount", decorationMaskCounts.vegetationMaskCount());
         response.addProperty("decorationStructureMaskCount", decorationMaskCounts.structureMaskCount());
+        response.addProperty("landUseWorldgenMode", landUsePlan != null);
+        response.addProperty("landUseGeometryMaskDuplicated", false);
         response.addProperty("requiresLockedMaterializationPlan", true);
         response.addProperty("roadPlanningStage", "d7_after_worldgen_ledger");
         response.addProperty("roadProvider", roadProvider);
@@ -1215,6 +1404,10 @@ final class CityPlanningEndpointHandler {
         response.add("roadWeaverRegistrationReport", roadWeaverRegistrationReport);
         response.add("roadProviderState", roadProviderState);
         response.add("activeDecorationSummary", activeDecorationSummary);
+        response.add("activeLandUseSummary", activeLandUseSummary);
+        if (landUseChunkPreflight != null) {
+            response.add("landUseChunkPreflight", landUseChunkPreflightJson(landUseChunkPreflight));
+        }
         response.add("worldMutationReport", report.asJson());
         response.add("timingMs", timing(started));
         JsonObject artifacts = new JsonObject();
@@ -1230,6 +1423,7 @@ final class CityPlanningEndpointHandler {
         artifacts.addProperty("roadWeaverRegistrationReport", debugRef(debugRoot, roadWeaverReportPath));
         artifacts.addProperty("roadProviderState", debugRef(debugRoot, roadProviderStatePath));
         artifacts.addProperty("activeDecorationSummary", debugRef(debugRoot, activeDecorationPath));
+        artifacts.addProperty("activeLandUseSummary", debugRef(debugRoot, activeLandUsePath));
         if (decorationWorldgenMode) {
             artifacts.addProperty("sourceCompiledDecorationProgramPlan",
                     debugRef(debugRoot, compiledDecorationPath));
@@ -1239,6 +1433,14 @@ final class CityPlanningEndpointHandler {
                     CityDecorationWorldgenRegistry.activePlansPath(serverRoot).toString());
             artifacts.addProperty("serverDecorationWorldgenLedger",
                     CityDecorationWorldgenRegistry.worldgenLedgerPath(serverRoot).toString());
+        }
+        if (landUsePlan != null) {
+            artifacts.addProperty("sourceLandUseAreaPlan", debugRef(debugRoot, landUsePlanPath));
+            artifacts.addProperty("sourceLandUsePlanningComplete", debugRef(debugRoot, landUseCompletePath));
+            artifacts.addProperty("serverActiveLandUsePlans",
+                    CityLandUseWorldgenRegistry.activePlansPath(serverRoot).toString());
+            artifacts.addProperty("serverLandUseWorldgenLedger",
+                    CityLandUseWorldgenRegistry.worldgenLedgerPath(serverRoot).toString());
         }
         response.add("artifacts", artifacts);
         return response;
@@ -1450,6 +1652,10 @@ final class CityPlanningEndpointHandler {
         Path d4Dir = runDir.resolve("city_d4_" + safeFileName(citySeedId));
         Path d5Dir = runDir.resolve("city_d5_" + safeFileName(citySeedId));
         Path d6Dir = runDir.resolve("city_d6_" + safeFileName(citySeedId));
+        Path landUsePath = runDir.resolve("city_land_use_" + safeFileName(citySeedId))
+                .resolve("city_land_use_area_plan.json");
+        Path landUseCompletePath = runDir.resolve("city_land_use_" + safeFileName(citySeedId))
+                .resolve("city_land_use_planning_complete.json");
         Path anchorMapPath = d4Dir.resolve("structure_anchor_map.json");
         Path reservationMaskPath = d5Dir.resolve("reservation_mask_plan.json");
         Path wallReservationPath = d5Dir.resolve("wall_reservation_plan.json");
@@ -1472,8 +1678,8 @@ final class CityPlanningEndpointHandler {
         JsonObject wallReservationPlan = Files.exists(wallReservationPath)
                 ? JsonParser.parseString(Files.readString(wallReservationPath)).getAsJsonObject() : new JsonObject();
         JsonObject roadConnectionPlan = CityRoadWeaverBridge.createConnectionPlan(materializationPlan);
-        List<CompiledDecorationProgramPlan.HardObstacle> hardObstacles =
-                decorationHardObstacles(materializationPlan, wallReservationPlan, roadConnectionPlan);
+        List<CompiledDecorationProgramPlan.HardObstacle> hardObstacles = new ArrayList<>(
+                decorationHardObstacles(materializationPlan, wallReservationPlan, roadConnectionPlan));
         CityDecorationContentCatalog catalog = new CityDecorationContentCatalogLoader().load(catalogRoot);
         CityDecorationStyleProfileCatalog styleProfiles = new CityDecorationStyleProfileCatalogLoader()
                 .load(catalogRoot, catalog);
@@ -1493,8 +1699,31 @@ final class CityPlanningEndpointHandler {
                 .resolve(intentPlan, styleProfile);
         DecorationProgramIntentPlan resolvedIntent = styleResolution.resolvedIntent();
         validateDecorationContentRefs(resolvedIntent, catalog);
+        LandUseAreaDecorationProgramContextResolver landUseResolver = null;
+        boolean requiresLandUse = resolvedIntent.programs().stream()
+                .anyMatch(program -> "land_use_area".equals(program.targetArea().sourceType()));
+        if (requiresLandUse) {
+            if (!Files.isRegularFile(landUsePath) || !Files.isRegularFile(landUseCompletePath)) {
+                throw new IllegalArgumentException("CITY_DECORATION_LAND_USE_PLAN_REQUIRED: run city_plan_land_use first.");
+            }
+            LandUseAreaPlan typedLandUsePlan = new LandUseAreaPlanCodec().fromJson(
+                    JsonParser.parseString(Files.readString(landUsePath)).getAsJsonObject());
+            if (!reviewPackage.cityId().equals(typedLandUsePlan.cityId())) {
+                throw new IllegalArgumentException("CITY_DECORATION_LAND_USE_CITY_ID_MISMATCH: expected "
+                        + reviewPackage.cityId() + " but found " + typedLandUsePlan.cityId());
+            }
+            validateLandUseCompletion(JsonParser.parseString(Files.readString(landUseCompletePath)).getAsJsonObject(),
+                    typedLandUsePlan, reviewPackage.cityId(), LandUseRuleCatalog.defaults().profileHash(),
+                    CityStructureEnvelopeProfiler.sha256(CityJson.GSON.toJson(materializationPlan)));
+            appendLandUseDecorationObstacles(hardObstacles, typedLandUsePlan);
+            landUseResolver = new LandUseAreaDecorationProgramContextResolver(
+                    new LandUseAreaPlanCodec().toJson(typedLandUsePlan), hardObstacles);
+        }
         CompiledDecorationProgramPlan compiled = planner.compile(resolvedIntent,
-                new D3PatchDecorationProgramContextResolver(reviewPackage, hardObstacles), hardObstacles);
+                new CityDecorationProgramContextResolver(
+                        new D3PatchDecorationProgramContextResolver(reviewPackage, hardObstacles),
+                        landUseResolver),
+                hardObstacles);
         BlockBounds projectionBounds = decorationProjectionBounds(compiled.programs());
         List<DecorationSlot> slots = planner.project(compiled, projectionBounds);
 
@@ -1560,6 +1789,10 @@ final class CityPlanningEndpointHandler {
             artifacts.addProperty("sourceWallReservationPlan", debugRef(debugRoot, wallReservationPath));
         }
         artifacts.addProperty("sourceStructureMaterializationPlan", debugRef(debugRoot, materializationPath));
+        if (requiresLandUse) {
+            artifacts.addProperty("sourceLandUseAreaPlan", debugRef(debugRoot, landUsePath));
+            artifacts.addProperty("sourceLandUsePlanningComplete", debugRef(debugRoot, landUseCompletePath));
+        }
         response.add("artifacts", artifacts);
         return response;
     }
@@ -1613,6 +1846,10 @@ final class CityPlanningEndpointHandler {
 
         Path previewPath = new CityStructureLandingPreviewRenderer()
                 .renderD6(result.structureMaterializationPlan(), result.structureMaterializationTrace(), outputDirectory);
+        Files.deleteIfExists(runDir.resolve("city_land_use_" + safeFileName(citySeedId))
+                .resolve("city_land_use_planning_complete.json"));
+        Files.deleteIfExists(decorationDir(runDir, citySeedId)
+                .resolve("city_decoration_planning_complete.json"));
 
         JsonObject response = result.asJson();
         JsonObject artifacts = new JsonObject();
@@ -1972,7 +2209,18 @@ final class CityPlanningEndpointHandler {
 
         WorkflowContext ctx = new WorkflowContext(debugRoot, runDir, runId, citySeedId, request, report, workflow);
 
-        if (!ctx.workflow().runStep("city_plan_d3", d3PackagePath(runDir, citySeedId), () -> handlePlanD3(
+        LandUseSettings landUseSettings = loadWorkflowLandUseSettings();
+        boolean enableLandUseLayer = hasValue(request, "enableLandUseLayer")
+                ? booleanValue(request, "enableLandUseLayer", landUseSettings.enabledInWorkflow())
+                : landUseSettings.enabledInWorkflow();
+        report.addProperty("enableLandUseLayer", enableLandUseLayer);
+        report.addProperty("landUseProfileId", landUseSettings.profileId());
+        Path d3WorkflowArtifact = enableLandUseLayer
+                ? runDir.resolve("city_land_use_" + safeFileName(citySeedId))
+                        .resolve("land_use_terrain_field.json")
+                : d3PackagePath(runDir, citySeedId);
+
+        if (!ctx.workflow().runStep("city_plan_d3", d3WorkflowArtifact, () -> handlePlanD3(
                 debugRoot, runId, citySeedId,
                 hasValue(request, "cellStepBlocks") ? intValue(request, "cellStepBlocks", 4) : null,
                 hasValue(request, "patchScanPaddingBlocks")
@@ -2031,6 +2279,21 @@ final class CityPlanningEndpointHandler {
             return ctx.workflow().finish(workflowStarted, "failed");
         }
 
+        if (enableLandUseLayer) {
+            if (request.has("landUseIntentPlan") && !request.get("landUseIntentPlan").isJsonNull()
+                    && !request.get("landUseIntentPlan").isJsonObject()) {
+                throw new IllegalArgumentException("LAND_USE_INTENT_OBJECT_REQUIRED");
+            }
+            if (!ctx.workflow().runStep("city_plan_land_use",
+                    runDir.resolve("city_land_use_" + safeFileName(citySeedId))
+                            .resolve("city_land_use_planning_complete.json"),
+                    () -> handlePlanLandUse(debugRoot, runId, citySeedId,
+                            request.has("landUseIntentPlan") && request.get("landUseIntentPlan").isJsonObject()
+                                    ? request.getAsJsonObject("landUseIntentPlan") : null))) {
+                return ctx.workflow().finish(workflowStarted, "failed");
+            }
+        }
+
         if (booleanValue(request, "enableDressingLayer", false)
                 || request.has("decorationProgramPlan") || request.has("dressingBrushPlan")) {
             if (request.has("dressingBrushPlan")) {
@@ -2059,7 +2322,8 @@ final class CityPlanningEndpointHandler {
 
         if (!ctx.workflow().runStep("city_execute_d5", runDir.resolve("city_d5_" + safeFileName(citySeedId))
                 .resolve("active_planned_structure_registry.json"), () -> handleExecuteD5(debugRoot, serverRoot,
-                runId, citySeedId, true, level, stringValue(request, "roadProvider", "auto")))) {
+                runId, citySeedId, true, level, stringValue(request, "roadProvider", "auto"),
+                null, enableLandUseLayer))) {
             return ctx.workflow().finish(workflowStarted, "failed");
         }
 
@@ -2469,6 +2733,46 @@ final class CityPlanningEndpointHandler {
         return runDir.resolve("city_d4_design_loop_" + safeFileName(citySeedId));
     }
 
+    private static JsonObject loadOptionalLandUseFunctionalArrayZones(Path runDir,
+                                                                      String citySeedId) throws IOException {
+        for (Path candidate : List.of(
+                d4DesignLoopDir(runDir, citySeedId).resolve("d4_design_loop_array_zones.json"),
+                d4ArrayLayoutDir(runDir, citySeedId).resolve("d4_functional_array_zones.json"))) {
+            if (Files.isRegularFile(candidate)) {
+                JsonElement parsed = JsonParser.parseString(Files.readString(candidate));
+                if (!parsed.isJsonObject()) {
+                    throw new IllegalArgumentException("LAND_USE_FUNCTIONAL_ARRAY_ZONES_INVALID: " + candidate);
+                }
+                return parsed.getAsJsonObject();
+            }
+        }
+        return null;
+    }
+
+    private static LandUseSettings loadLandUseSettings() {
+        Path root = defaultLandUseConfigRoot();
+        try {
+            return new LandUseSettingsLoader().load(LandUseDefaultConfigBootstrap.ensureInstalled(root));
+        } catch (IOException ex) {
+            throw new IllegalArgumentException("LAND_USE_DEFAULT_CONFIG_BOOTSTRAP_FAILED: " + root, ex);
+        }
+    }
+
+    private static LandUseSettings loadWorkflowLandUseSettings() {
+        if (FMLPaths.CONFIGDIR.get() == null) {
+            return new LandUseSettings(LandUseSettings.SCHEMA, false, LandUseSettings.DEFAULT_PROFILE_ID);
+        }
+        return loadLandUseSettings();
+    }
+
+    private static Path defaultLandUseConfigRoot() {
+        Path configDir = FMLPaths.CONFIGDIR.get();
+        if (configDir == null) {
+            throw new IllegalArgumentException("LAND_USE_CONFIG_ROOT_UNAVAILABLE: Forge config directory is not initialized.");
+        }
+        return configDir.resolve("geomantia").resolve("city_land_use");
+    }
+
     private static Path defaultDecorationCatalogRoot() {
         Path catalogRoot = optionalDefaultDecorationCatalogRoot();
         if (catalogRoot == null) {
@@ -2579,6 +2883,48 @@ final class CityPlanningEndpointHandler {
         }
     }
 
+    private static void validateLandUseCompletion(JsonObject completion,
+                                                  LandUseAreaPlan plan,
+                                                  String expectedCityId,
+                                                  String expectedRuleProfileHash,
+                                                  String expectedSourceD6Hash) {
+        if (!"city_land_use_planning_complete.v0.1".equals(
+                stringValue(completion, "schemaVersion", ""))) {
+            throw new IllegalArgumentException("CITY_LAND_USE_PLAN_INCOMPLETE: completion schema is invalid.");
+        }
+        if (!expectedCityId.equals(stringValue(completion, "cityId", ""))
+                || !plan.cityId().equals(stringValue(completion, "cityId", ""))) {
+            throw new IllegalArgumentException("CITY_LAND_USE_PLAN_INCOMPLETE: completion cityId does not match plan.");
+        }
+        if (plan.planHash().isBlank()
+                || !plan.planHash().equals(stringValue(completion, "planHash", ""))) {
+            throw new IllegalArgumentException("CITY_LAND_USE_PLAN_INCOMPLETE: completion planHash does not match plan.");
+        }
+        if (!LandUseRuleCatalog.RULE_VERSION.equals(plan.ruleVersion())) {
+            throw new IllegalArgumentException("CITY_LAND_USE_RULE_VERSION_MISMATCH: " + plan.ruleVersion());
+        }
+        if (!expectedRuleProfileHash.equals(stringValue(completion, "ruleProfileHash", ""))) {
+            throw new IllegalArgumentException("CITY_LAND_USE_RULE_PROFILE_HASH_MISMATCH");
+        }
+        if (!expectedSourceD6Hash.equals(stringValue(completion, "sourceD6Hash", ""))) {
+            throw new IllegalArgumentException("CITY_LAND_USE_SOURCE_D6_HASH_MISMATCH");
+        }
+        if (stringValue(completion, "completedAt", "").isBlank()) {
+            throw new IllegalArgumentException("CITY_LAND_USE_PLAN_INCOMPLETE: completion completedAt is required.");
+        }
+    }
+
+    private static JsonObject landUseChunkPreflightJson(
+            CityLandUseChunkStatusPreflight.PreflightResult result) {
+        JsonObject json = new JsonObject();
+        json.addProperty("eligible", result.eligible());
+        json.addProperty("reasonCode", result.reasonCode());
+        json.addProperty("ownerChunkCount", result.ownerChunkCount());
+        json.addProperty("featuresOrLaterCount", result.featuresOrLaterCount());
+        json.addProperty("unknownCount", result.unknownCount());
+        return json;
+    }
+
     private static void validateDecorationCompletion(JsonObject completion,
                                                      CompiledDecorationProgramPlan compiledPlan,
                                                      String expectedCityId) {
@@ -2650,6 +2996,22 @@ final class CityPlanningEndpointHandler {
                     stringValue(connection, "connectionId", "planned_road"), expandBounds(segment, 4)));
         }
         return List.copyOf(result);
+    }
+
+    private static void appendLandUseDecorationObstacles(
+            List<CompiledDecorationProgramPlan.HardObstacle> target,
+            LandUseAreaPlan plan) {
+        for (LandUseAreaPlan.CorridorExclusion corridor : plan.corridorExclusions()) {
+            target.add(new CompiledDecorationProgramPlan.HardObstacle(
+                    "land_use_entrance_corridor", corridor.exclusionId(), corridor.blockBounds()));
+        }
+        for (LandUseAreaPlan.Area area : plan.areas()) {
+            for (LandUseAreaPlan.GateSlot gate : area.gateSlots()) {
+                target.add(new CompiledDecorationProgramPlan.HardObstacle(
+                        "land_use_gate", gate.gateId(),
+                        new BlockBounds(gate.block().x(), gate.block().z(), gate.block().x(), gate.block().z())));
+            }
+        }
     }
 
     private static void appendDecorationMaskObstacles(
@@ -4204,6 +4566,22 @@ final class CityPlanningEndpointHandler {
 
     private static boolean hasValue(JsonObject obj, String key) {
         return obj != null && obj.has(key) && !obj.get(key).isJsonNull();
+    }
+
+    private static void writePlanningCompletion(Path path, JsonObject completion) throws IOException {
+        Files.createDirectories(path.getParent());
+        Path temporary = Files.createTempFile(path.getParent(), "." + path.getFileName(), ".tmp");
+        try {
+            Files.writeString(temporary, CityJson.GSON.toJson(completion));
+            try {
+                Files.move(temporary, path, StandardCopyOption.REPLACE_EXISTING,
+                        StandardCopyOption.ATOMIC_MOVE);
+            } catch (AtomicMoveNotSupportedException ignored) {
+                Files.move(temporary, path, StandardCopyOption.REPLACE_EXISTING);
+            }
+        } finally {
+            Files.deleteIfExists(temporary);
+        }
     }
 
     private record WorkflowContext(Path debugRoot,

@@ -3,6 +3,8 @@ package com.rinsing.geomantia;
 import com.mojang.logging.LogUtils;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityDecorationWorldgenRegistry;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityReservationMaskRegistry;
+import com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityLandUseWorldgenRegistry;
+import com.rinsing.geomantia.systems.city.infrastructure.landuse.LandUseDefaultConfigBootstrap;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.common.MinecraftForge;
@@ -35,6 +37,14 @@ public final class GeomantiaMod {
     public void onServerAboutToStart(ServerAboutToStartEvent event) {
         java.nio.file.Path serverRoot = event.getServer().getWorldPath(LevelResource.ROOT);
         CityReservationMaskRegistry.load(serverRoot);
+        CityLandUseWorldgenRegistry.load(serverRoot);
+        java.nio.file.Path landUseRoot = FMLPaths.CONFIGDIR.get()
+                .resolve("geomantia").resolve("city_land_use");
+        try {
+            LandUseDefaultConfigBootstrap.ensureInstalled(landUseRoot);
+        } catch (java.io.IOException ex) {
+            LOGGER.error("Failed to install default City LandUse settings at {}.", landUseRoot, ex);
+        }
         java.nio.file.Path catalogRoot = FMLPaths.CONFIGDIR.get()
                 .resolve("geomantia").resolve("city_decoration");
         CityDecorationWorldgenRegistry.load(serverRoot, catalogRoot);

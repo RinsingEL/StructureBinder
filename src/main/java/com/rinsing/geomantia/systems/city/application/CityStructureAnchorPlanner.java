@@ -20,8 +20,8 @@ import java.util.Locale;
 import java.util.Map;
 
 public final class CityStructureAnchorPlanner {
-    public static final String PLAN_SCHEMA = "city_structure_anchor_plan.v0.1";
-    public static final String MAP_SCHEMA = "city_structure_anchor_map.v0.1";
+    public static final String PLAN_SCHEMA = "city_structure_anchor_plan.v0.2";
+    public static final String MAP_SCHEMA = "city_structure_anchor_map.v0.2";
     public static final int DEFAULT_CLEARANCE_BLOCKS = 8;
     public static final int DEFAULT_SMALL_CLEARANCE_BLOCKS = 4;
     public static final int DEFAULT_MASK_MARGIN_BLOCKS = 8;
@@ -159,7 +159,12 @@ public final class CityStructureAnchorPlanner {
         JsonObject quality = quality(hardBlocks, warnings, needsReview, anchors.size());
         anchorMap.add("quality", quality);
         anchorMap.add("timingMs", timing(started));
-        return new Result(structureAnchorPlan.deepCopy(), anchorMap, quality);
+        JsonObject normalizedPlan = structureAnchorPlan.deepCopy();
+        normalizedPlan.addProperty("schemaVersion", PLAN_SCHEMA);
+        for (JsonElement elem : requiredArray(normalizedPlan, "anchors")) {
+            if (elem.isJsonObject()) applyPlacementProvenance(elem.getAsJsonObject(), elem.getAsJsonObject());
+        }
+        return new Result(normalizedPlan, anchorMap, quality);
     }
 
     private JsonObject anchorJson(JsonObject source,
@@ -222,6 +227,7 @@ public final class CityStructureAnchorPlanner {
             obj.add("structureEnvelopeFact", envelope.fact().asSummaryJson());
             obj.add("availableEnvelopeGroupKeys", bboxGroupKeys(envelope.fact()));
         }
+        applyPlacementProvenance(source, obj);
         return obj;
     }
 
@@ -258,7 +264,43 @@ public final class CityStructureAnchorPlanner {
         obj.addProperty("reservedEnvelopePolicy", "structureTemplateFootprint+clearance");
         obj.addProperty("envelopeMode", "structure_template_nbt");
         obj.addProperty("selectedEnvelopeGroupKey", "");
+        applyPlacementProvenance(source, obj);
         return obj;
+    }
+
+    public static void applyPlacementProvenance(JsonObject source, JsonObject target) {
+        JsonObject nested = source != null && source.has("placementProvenance")
+                && source.get("placementProvenance").isJsonObject()
+                ? source.getAsJsonObject("placementProvenance") : new JsonObject();
+        String slotId = firstString(source, nested, "slotId", "sourceSlotId");
+        String arrayId = firstString(source, nested, "arrayId");
+        String parentArrayId = firstString(source, nested, "parentArrayId");
+        String subZoneId = firstString(source, nested, "subZoneId", "targetSubZoneId");
+        String groupId = firstString(source, nested, "placementGroupId", "groupId");
+        if (groupId.isBlank()) {
+            groupId = !parentArrayId.isBlank() ? parentArrayId
+                    : !arrayId.isBlank() ? arrayId
+                    : !slotId.isBlank() ? slotId
+                    : stringValue(source, "anchorId", stringValue(target, "anchorId", ""));
+        }
+        if (groupId.isBlank()) throw new IllegalArgumentException("D4 placementGroupId cannot be derived");
+        target.addProperty("placementGroupId", groupId);
+        JsonObject provenance = new JsonObject();
+        provenance.addProperty("slotId", slotId);
+        provenance.addProperty("arrayId", arrayId);
+        provenance.addProperty("parentArrayId", parentArrayId);
+        provenance.addProperty("subZoneId", subZoneId);
+        target.add("placementProvenance", provenance);
+    }
+
+    private static String firstString(JsonObject source, JsonObject nested, String... keys) {
+        for (String key : keys) {
+            String value = stringValue(source, key, "");
+            if (!value.isBlank()) return value;
+            value = stringValue(nested, key, "");
+            if (!value.isBlank()) return value;
+        }
+        return "";
     }
 
     private static JsonArray patchRefs(List<LandformPatchSummary> patches) {
