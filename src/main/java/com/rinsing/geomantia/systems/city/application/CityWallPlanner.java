@@ -5,11 +5,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
 import com.rinsing.geomantia.systems.city.domain.model.BlockPoint;
-import com.rinsing.geomantia.systems.city.infrastructure.json.CityJson;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.List;
 
 public final class CityWallPlanner {
@@ -64,7 +59,7 @@ public final class CityWallPlanner {
         plan.add("sourceActualFootprintUnion", boundsJson(cityBounds));
         plan.add("wallBounds", boundsJson(wallBounds));
         plan.add("wallSegments", segments(wallBounds, segmentLength, gateWidth));
-        plan.add("templateLibrary", CityWallTemplateLibrary.libraryJson());
+        plan.add("templateLibrary", CityWallTemplateCatalog.libraryJson());
         return plan;
     }
 
@@ -144,7 +139,7 @@ public final class CityWallPlanner {
         plan.add("wallRoadIntersections", roadIntersections);
         plan.add("generatedGates", gates);
         plan.add("wallSegments", segments);
-        plan.add("templateLibrary", CityWallTemplateLibrary.libraryJson());
+        plan.add("templateLibrary", CityWallTemplateCatalog.libraryJson());
         JsonObject terrain = new JsonObject();
         terrain.addProperty("foundationMode", "step_to_surface");
         terrain.addProperty("slopeMode", "skip_or_embed");
@@ -373,7 +368,7 @@ public final class CityWallPlanner {
         plan.add("wallRoadIntersections", rawIntersections);
         plan.add("generatedGates", gates);
         plan.add("wallSegments", segments);
-        plan.add("templateLibrary", CityWallTemplateLibrary.libraryJson());
+        plan.add("templateLibrary", CityWallTemplateCatalog.libraryJson());
         JsonObject terrain = new JsonObject();
         terrain.addProperty("policyVersion", opts.normalizedWallTerrainPolicy());
         terrain.addProperty("flatMaxDeltaBlocks", opts.normalizedFlatMaxDeltaBlocks());
@@ -607,7 +602,7 @@ public final class CityWallPlanner {
         plan.add("wallUnits", wallUnits);
         plan.add("nodeConnectorUnits", connectorUnits);
         plan.add("wallSegments", new JsonArray());
-        plan.add("templateLibrary", CityWallTemplateLibrary.libraryJson());
+        plan.add("templateLibrary", CityWallTemplateCatalog.libraryJson());
 
         JsonObject terrain = new JsonObject();
         terrain.addProperty("policyVersion", terrainOpts.normalizedWallTerrainPolicy());
@@ -768,7 +763,7 @@ public final class CityWallPlanner {
         plan.add("wallUnits", wallUnits);
         plan.add("nodeConnectorUnits", new JsonArray());
         plan.add("wallSegments", new JsonArray());
-        plan.add("templateLibrary", CityWallTemplateLibrary.libraryJson());
+        plan.add("templateLibrary", CityWallTemplateCatalog.libraryJson());
 
         JsonObject surface = new JsonObject();
         surface.addProperty("cacheSchema", "city_surface_cache.v0.1");
@@ -805,14 +800,6 @@ public final class CityWallPlanner {
         validation.add("lockedFootprintViolations", footprintViolations);
         plan.add("wallGraphValidation", validation);
         return plan;
-    }
-
-    public Path writeArtifacts(JsonObject plan, Path outputDirectory) throws IOException {
-        Files.createDirectories(outputDirectory);
-        Path planPath = outputDirectory.resolve("city_wall_plan.json");
-        Files.writeString(planPath, CityJson.GSON.toJson(plan));
-        CityWallTemplateLibrary.writeTemplates(outputDirectory.resolve("city_wall_templates"));
-        return planPath;
     }
 
     private static JsonArray segments(BlockBounds bounds, int segmentLength, int gateWidth) {

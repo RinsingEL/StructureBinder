@@ -1,11 +1,12 @@
 package com.rinsing.geomantia.systems.city.application;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
-import com.rinsing.geomantia.systems.city.infrastructure.json.CityJson;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -23,6 +24,10 @@ import java.util.Map;
 public final class CityStructureEnvelopeProfiler {
     public static final String FACTS_SCHEMA = "city_structure_envelope_facts.v0.1";
     public static final int DEFAULT_SAMPLE_COUNT = 256;
+    private static final Gson PRETTY_GSON = new GsonBuilder()
+            .disableHtmlEscaping()
+            .setPrettyPrinting()
+            .create();
 
     public Result profile(Path baseDirectory,
                           JsonObject terraSenseProfileSource,
@@ -133,7 +138,7 @@ public final class CityStructureEnvelopeProfiler {
                 ? "stale_recomputed" : "miss_recomputed");
         fresh.addProperty("cacheReason", recomputeReason);
         fresh.addProperty("cachePath", cachePath.toAbsolutePath().toString());
-        Files.writeString(cachePath, CityJson.GSON.toJson(fresh));
+        Files.writeString(cachePath, PRETTY_GSON.toJson(fresh));
         return fresh;
     }
 
@@ -551,7 +556,7 @@ public final class CityStructureEnvelopeProfiler {
     }
 
     public static String profileHash(CityStructureProfileCatalog.StructureProfile profile) {
-        return sha256(CityJson.GSON.toJson(profile.asJson()));
+        return sha256(PRETTY_GSON.toJson(profile.asJson()));
     }
 
     public static String generationConfigHash(CityStructureProfileCatalog.StructureProfile profile,
@@ -564,7 +569,7 @@ public final class CityStructureEnvelopeProfiler {
         obj.add("expectedAreaRange", profile.expectedAreaRange().asJson());
         obj.addProperty("maxDistanceFromCenterBlocks", profile.maxDistanceFromCenterBlocks());
         obj.addProperty("structureConfigHash", structureConfigHash == null ? "" : structureConfigHash);
-        return sha256(CityJson.GSON.toJson(obj));
+        return sha256(PRETTY_GSON.toJson(obj));
     }
 
     public static String bboxGroupKey(BlockBounds bounds, int pieceCount) {
@@ -577,7 +582,7 @@ public final class CityStructureEnvelopeProfiler {
                                   int sampleCount,
                                   CacheIdentity identity,
                                   String contextProfileHash) {
-        return sha256(CityJson.GSON.toJson(cacheIdentityJson(profile, sampleCount, identity, contextProfileHash)));
+        return sha256(PRETTY_GSON.toJson(cacheIdentityJson(profile, sampleCount, identity, contextProfileHash)));
     }
 
     public static String sha256(String value) {

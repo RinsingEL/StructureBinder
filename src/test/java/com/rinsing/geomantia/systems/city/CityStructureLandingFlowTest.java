@@ -14,7 +14,7 @@ import com.rinsing.geomantia.systems.city.application.CityStructureEnvelopeProfi
 import com.rinsing.geomantia.systems.city.application.CityStructureMaterializationPlanner;
 import com.rinsing.geomantia.systems.city.application.CityWallPlanner;
 import com.rinsing.geomantia.systems.city.application.CityWallReservationPlanner;
-import com.rinsing.geomantia.systems.city.application.CityWallTemplateLibrary;
+import com.rinsing.geomantia.systems.city.application.CityWallTemplateCatalog;
 import com.rinsing.geomantia.systems.city.domain.config.CityPlanningConfig;
 import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
 import com.rinsing.geomantia.systems.city.domain.model.CityLandformReviewPackage;
@@ -22,6 +22,7 @@ import com.rinsing.geomantia.systems.city.domain.model.CitySiteContext;
 import com.rinsing.geomantia.systems.city.domain.model.LandformPatchSummary;
 import com.rinsing.geomantia.systems.city.infrastructure.json.CityJson;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityReservationMaskRegistry;
+import com.rinsing.geomantia.systems.city.infrastructure.world.MinecraftCityWallArtifactWriter;
 import com.rinsing.geomantia.systems.gis.GisClassifierConfig;
 import com.rinsing.geomantia.systems.gis.GisSampleConfig;
 import com.rinsing.geomantia.systems.gis.algorithm.landform.PatchMerger;
@@ -143,6 +144,8 @@ final class CityStructureLandingFlowTest {
         assertEquals("miss_recomputed", missFact.get("cacheStatus").getAsString());
         assertTrue(missFact.has("cacheKey"));
         assertTrue(missFact.has("cacheIdentity"));
+        assertEquals(CityJson.GSON.toJson(missFact),
+                Files.readString(Path.of(missFact.get("cachePath").getAsString())));
         assertEquals(1, miss.structureEnvelopeFacts().getAsJsonObject("profileCache")
                 .getAsJsonObject("metrics").get("cacheMissRecomputedCount").getAsInt());
 
@@ -1445,7 +1448,7 @@ final class CityStructureLandingFlowTest {
 
     @Test
     void wallTemplateLibraryIncludesGatehousesAndUsableTowers() {
-        String library = CityWallTemplateLibrary.libraryJson().toString();
+        String library = CityWallTemplateCatalog.libraryJson().toString();
 
         assertTrue(library.contains("gatehouse_9"));
         assertTrue(library.contains("gatehouse_13"));
@@ -1456,7 +1459,7 @@ final class CityStructureLandingFlowTest {
     @Test
     void beaconTemplateKeepsWalkableCenterAndStraightClimbAccess() throws Exception {
         Path dir = Files.createTempDirectory("city-wall-beacon-template-test");
-        CityWallTemplateLibrary.writeTemplates(dir);
+        new MinecraftCityWallArtifactWriter().writeTemplates(dir);
 
         CompoundTag beacon = NbtIo.readCompressed(dir.resolve("beacon_5x5.nbt").toFile());
         assertEquals(5, beacon.getList("size", 3).getInt(0));
@@ -1510,7 +1513,7 @@ final class CityStructureLandingFlowTest {
     @Test
     void gatehouseTemplateUsesCompactStoneCappedOpening() throws Exception {
         Path dir = Files.createTempDirectory("city-wall-gatehouse-template-test");
-        CityWallTemplateLibrary.writeTemplates(dir);
+        new MinecraftCityWallArtifactWriter().writeTemplates(dir);
 
         CompoundTag gatehouse = NbtIo.readCompressed(dir.resolve("gatehouse_9.nbt").toFile());
         int stoneBricks = paletteState(gatehouse, "minecraft:stone_bricks");

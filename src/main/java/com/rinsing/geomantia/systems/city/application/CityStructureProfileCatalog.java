@@ -5,7 +5,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
-import com.rinsing.geomantia.systems.city.infrastructure.json.CityJson;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -389,10 +388,6 @@ public final class CityStructureProfileCatalog {
             quality.add("needsReview", stringArray(needsReview));
             obj.add("quality", quality);
             return obj;
-        }
-
-        public String pretty() {
-            return CityJson.GSON.toJson(asJson());
         }
     }
 

@@ -877,6 +877,36 @@ class CityPlanningEndpointHandlerTest {
     }
 
     @Test
+    void activeD6AndD7RejectLegacyCityArtifacts() throws Exception {
+        Path debugRoot = Files.createTempDirectory("city-legacy-artifact-rejection-test");
+        String runId = "run_legacy_artifacts";
+        String citySeedId = "city_test";
+        prepareD5Artifacts(debugRoot, runId, citySeedId);
+        Path runDir = debugRoot.resolve(runId);
+        Path d4Dir = runDir.resolve("city_d4_" + citySeedId);
+        Files.delete(d4Dir.resolve("structure_anchor_map.json"));
+        Files.writeString(d4Dir.resolve("function_zone_map.json"), "{}");
+
+        IllegalArgumentException d6Error = assertThrows(IllegalArgumentException.class,
+                () -> CityPlanningEndpointHandler.handlePlanD6(
+                        debugRoot, runId, citySeedId, null, null));
+
+        assertTrue(d6Error.getMessage().contains("LEGACY_CITY_FUNCTION_ZONE_FLOW_REMOVED"));
+        assertTrue(d6Error.getMessage().contains("D4 legacy artifact function_zone_map.json"));
+
+        Path d6Dir = runDir.resolve("city_d6_" + citySeedId);
+        Files.createDirectories(d6Dir);
+        Files.writeString(d6Dir.resolve("buildable_area_map.json"), "{}");
+
+        IllegalArgumentException d7Error = assertThrows(IllegalArgumentException.class,
+                () -> CityPlanningEndpointHandler.handleExecuteD7(
+                        debugRoot, runId, citySeedId, 12345L, false, false, null, null));
+
+        assertTrue(d7Error.getMessage().contains("LEGACY_CITY_FUNCTION_ZONE_FLOW_REMOVED"));
+        assertTrue(d7Error.getMessage().contains("D6 legacy artifact buildable_area_map.json"));
+    }
+
+    @Test
     void handlePlanCityDressingWritesV02ArtifactsAndAvoidsHardObstacles() throws Exception {
         Path debugRoot = Files.createTempDirectory("city-dressing-http-test");
         Path catalogRoot = createDecorationCatalog();

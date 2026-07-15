@@ -5,14 +5,11 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.rinsing.geomantia.systems.city.application.CityD4DesignLoopStatePlanner;
-import com.rinsing.geomantia.systems.city.application.CityFunctionZoneBuilder;
+import com.rinsing.geomantia.systems.city.application.CityD4StagedPlanCompiler;
 import com.rinsing.geomantia.systems.city.application.CityLandformReviewBuilder;
 import com.rinsing.geomantia.systems.city.application.CityReservationMaskPlanner;
-import com.rinsing.geomantia.systems.city.application.CityRoadBoundaryPlanner;
 import com.rinsing.geomantia.systems.city.application.CitySiteContextBuilder;
 import com.rinsing.geomantia.systems.city.application.CitySiteContextBuilder.TerritoryCellRef;
-import com.rinsing.geomantia.systems.city.application.CityStructureD6Planner;
-import com.rinsing.geomantia.systems.city.application.CityStructureD7Executor;
 import com.rinsing.geomantia.systems.city.application.CityStructureAnchorPlanner;
 import com.rinsing.geomantia.systems.city.application.CityStructureAnchorCandidatePlanner;
 import com.rinsing.geomantia.systems.city.application.CityStructureArrayCandidatePlanner;
@@ -38,28 +35,17 @@ import com.rinsing.geomantia.systems.city.application.dressing.DecorationProgram
 import com.rinsing.geomantia.systems.city.application.dressing.DecorationProgramIntentPlan;
 import com.rinsing.geomantia.systems.city.application.dressing.DecorationSlot;
 import com.rinsing.geomantia.systems.city.domain.config.CityPlanningConfig;
-import com.rinsing.geomantia.systems.city.domain.model.BoundaryIntent;
 import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
 import com.rinsing.geomantia.systems.city.domain.model.BlockPoint;
 import com.rinsing.geomantia.systems.city.domain.model.BuildOperationPlan;
-import com.rinsing.geomantia.systems.city.domain.model.BuildableAreaMap;
 import com.rinsing.geomantia.systems.city.domain.model.CityLandformReviewPackage;
-import com.rinsing.geomantia.systems.city.domain.model.CityQualityReport;
 import com.rinsing.geomantia.systems.city.domain.model.CitySiteContext;
-import com.rinsing.geomantia.systems.city.domain.model.FunctionZoneMap;
-import com.rinsing.geomantia.systems.city.domain.model.FunctionZoneTerrainStats;
-import com.rinsing.geomantia.systems.city.domain.model.PatchGroupPlan;
-import com.rinsing.geomantia.systems.city.domain.model.RoadIntent;
 import com.rinsing.geomantia.systems.city.domain.model.WorldMutationReport;
 import com.rinsing.geomantia.systems.city.infrastructure.json.CityJson;
-import com.rinsing.geomantia.systems.city.infrastructure.preview.CityBuildabilityPreviewRenderer;
 import com.rinsing.geomantia.systems.city.infrastructure.preview.CityDecorationPreviewRenderer;
-import com.rinsing.geomantia.systems.city.infrastructure.preview.CityPlanningPreviewRenderer;
 import com.rinsing.geomantia.systems.city.infrastructure.preview.CityLandformReviewMapRenderer;
 import com.rinsing.geomantia.systems.city.infrastructure.preview.CityStructureLandingPreviewRenderer;
-import com.rinsing.geomantia.systems.city.infrastructure.preview.CityStructurePreviewRenderer;
 import com.rinsing.geomantia.systems.city.infrastructure.preview.CityWallPreviewRenderer;
-import com.rinsing.geomantia.systems.city.infrastructure.preview.FunctionZonePreviewRenderer;
 import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationContentCatalog;
 import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationContentCatalogLoader;
 import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationDefaultCatalogBootstrap;
@@ -68,6 +54,7 @@ import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecoration
 import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationStyleProfileResolver;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityDecorationWorldgenRegistry;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityReservationMaskRegistry;
+import com.rinsing.geomantia.systems.city.infrastructure.world.MinecraftCityWallArtifactWriter;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityRoadMaskScanner;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityRoadWeaverBridge;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CitySurfaceCache;
@@ -76,7 +63,6 @@ import com.rinsing.geomantia.systems.city.infrastructure.world.MinecraftCityStru
 import com.rinsing.geomantia.systems.city.infrastructure.world.MinecraftCityStructureEnvelopeSampler;
 import com.rinsing.geomantia.systems.city.infrastructure.world.MinecraftCityTemplateReader;
 import com.rinsing.geomantia.systems.city.infrastructure.world.MinecraftCityWorldgenStatusInspector;
-import com.rinsing.geomantia.systems.city.infrastructure.world.MinecraftStructurePlacementBackend;
 import com.rinsing.geomantia.systems.city.infrastructure.world.WorldEditMutationBackend;
 import com.rinsing.geomantia.systems.gis.GisClassifierConfig;
 import com.rinsing.geomantia.systems.gis.GisSampleConfig;
@@ -108,6 +94,8 @@ import java.util.Set;
 
 final class CityPlanningEndpointHandler {
     static final int DEFAULT_D3_PATCH_SCAN_PADDING_BLOCKS = 128;
+    private static final CityD4StagedPlanCompiler D4_STAGED_PLAN_COMPILER =
+            new CityD4StagedPlanCompiler();
     private static final CityWorkflowCandidateSelector WORKFLOW_CANDIDATE_SELECTOR =
             new CityWorkflowCandidateSelector();
 
@@ -1871,7 +1859,7 @@ final class CityPlanningEndpointHandler {
                         roadProtectionMarginBlocks, maxFoundationDepthBlocks, maxSegmentHeightDeltaBlocks);
             }
         }
-        Path planPath = new CityWallPlanner().writeArtifacts(wallPlan, outputDirectory);
+        Path planPath = new MinecraftCityWallArtifactWriter().writeArtifacts(wallPlan, outputDirectory);
         if (actualRoadMask != null) {
             Files.writeString(roadMaskPath, CityJson.GSON.toJson(actualRoadMask));
         }
@@ -2150,10 +2138,11 @@ final class CityPlanningEndpointHandler {
                     "Existing structure_anchor_map.json found.");
             return true;
         }
-        D4StagePlan[] stagePlanRef = new D4StagePlan[1];
+        CityD4StagedPlanCompiler.StagePlan[] stagePlanRef = new CityD4StagedPlanCompiler.StagePlan[1];
         if (!ctx.workflow().runStep("city_validate_d4_staged_plan", null, () -> {
             requireObject(ctx.request(), "designSlotPlan", "city_run_workflow key_then_array");
-            stagePlanRef[0] = d4StagePlan(ctx.request().getAsJsonObject("designSlotPlan"));
+            stagePlanRef[0] = D4_STAGED_PLAN_COMPILER.compile(
+                    ctx.request().getAsJsonObject("designSlotPlan"));
             writeWorkflowD4StagePlan(ctx, stagePlanRef[0]);
             JsonObject response = new JsonObject();
             response.addProperty("ok", true);
@@ -2163,7 +2152,7 @@ final class CityPlanningEndpointHandler {
         })) {
             return false;
         }
-        D4StagePlan stagePlan = stagePlanRef[0];
+        CityD4StagedPlanCompiler.StagePlan stagePlan = stagePlanRef[0];
 
         if (!workflowRunD4Session(ctx, stagePlan.keyDesignSlotPlan(), "city_d4_key_structure")) {
             return false;
@@ -2183,7 +2172,8 @@ final class CityPlanningEndpointHandler {
 
         for (JsonObject arraySlot : stagePlan.arraySlots()) {
             String arrayId = stringValue(arraySlot, "slotId");
-            JsonObject arrayCandidatePlan = arrayCandidatePlanFromSlot(stagePlan.sourceDesignSlotPlan(), arraySlot);
+            JsonObject arrayCandidatePlan = D4_STAGED_PLAN_COMPILER.arrayCandidatePlanFromSlot(
+                    stagePlan.sourceDesignSlotPlan(), arraySlot);
             JsonObject occupiedAnchorMap = JsonParser.parseString(Files.readString(anchorMapPath)).getAsJsonObject();
             Path candidateSetPath = d4ArrayStageDir(ctx.runDir(), ctx.citySeedId(), arrayId)
                     .resolve("d4_array_candidate_set.json");
@@ -2202,7 +2192,7 @@ final class CityPlanningEndpointHandler {
             arrayTrace.addProperty("variantSelectionMode", stringValue(arrayCandidatePlan,
                     "variantSelectionMode", "seeded_random"));
             stageTrace.add(arrayTrace);
-            currentPlan = mergeStructureAnchorPlans(currentPlan, expandedPlan,
+            currentPlan = D4_STAGED_PLAN_COMPILER.mergeStructureAnchorPlans(currentPlan, expandedPlan,
                     stringValue(stagePlan.sourceDesignSlotPlan(), "cityId"), stageTrace);
             JsonObject mergedPlan = currentPlan.deepCopy();
             if (!ctx.workflow().runStep("city_plan_d4_merge_array_stage_" + safeFileName(arrayId), null, () -> {
@@ -2232,10 +2222,11 @@ final class CityPlanningEndpointHandler {
                     "Existing structure_anchor_map.json found.");
             return true;
         }
-        D4StagePlan[] stagePlanRef = new D4StagePlan[1];
+        CityD4StagedPlanCompiler.StagePlan[] stagePlanRef = new CityD4StagedPlanCompiler.StagePlan[1];
         if (!ctx.workflow().runStep("city_validate_d4_array_layout_loop_plan", null, () -> {
             requireObject(ctx.request(), "designSlotPlan", "city_run_workflow array_layout_loop_v0_2");
-            stagePlanRef[0] = d4StagePlan(ctx.request().getAsJsonObject("designSlotPlan"));
+            stagePlanRef[0] = D4_STAGED_PLAN_COMPILER.compile(
+                    ctx.request().getAsJsonObject("designSlotPlan"));
             writeWorkflowD4StagePlan(ctx, stagePlanRef[0]);
             JsonObject response = new JsonObject();
             response.addProperty("ok", true);
@@ -2245,7 +2236,7 @@ final class CityPlanningEndpointHandler {
         })) {
             return false;
         }
-        D4StagePlan stagePlan = stagePlanRef[0];
+        CityD4StagedPlanCompiler.StagePlan stagePlan = stagePlanRef[0];
         if (!workflowRunD4Session(ctx, stagePlan.keyDesignSlotPlan(), "city_d4_key_structure")) {
             return false;
         }
@@ -2253,7 +2244,7 @@ final class CityPlanningEndpointHandler {
         JsonObject arrayLayoutPlan = ctx.request().has("arrayLayoutPlan")
                 && ctx.request().get("arrayLayoutPlan").isJsonObject()
                 ? ctx.request().getAsJsonObject("arrayLayoutPlan").deepCopy()
-                : minimalArrayLayoutPlan(stagePlan.sourceDesignSlotPlan(), mode);
+                : D4_STAGED_PLAN_COMPILER.minimalArrayLayoutPlan(stagePlan.sourceDesignSlotPlan(), mode);
         if (!ctx.workflow().runStep("city_create_d4_array_layout_loop", null, () -> {
             requireObject(ctx.request(), "terrasenseProfileSource", "city_create_d4_array_layout_loop");
             return handleCreateD4ArrayLayoutLoop(ctx.debugRoot(), ctx.runId(), ctx.citySeedId(),
@@ -2426,142 +2417,6 @@ final class CityPlanningEndpointHandler {
         return "city_d4_session".equals(prefix) ? legacyName : prefix + "_" + suffix;
     }
 
-    private static D4StagePlan d4StagePlan(JsonObject designSlotPlan) {
-        if (designSlotPlan == null || !designSlotPlan.has("slots")
-                || !designSlotPlan.get("slots").isJsonArray()) {
-            throw new IllegalArgumentException("D4_STAGED_PLAN_REQUIRES_SLOTS: designSlotPlan.slots is required.");
-        }
-        Map<String, JsonObject> slots = new LinkedHashMap<>();
-        for (JsonElement elem : array(designSlotPlan, "slots")) {
-            if (!elem.isJsonObject()) {
-                continue;
-            }
-            JsonObject slot = elem.getAsJsonObject();
-            String slotId = requiredString(slot, "slotId");
-            slots.put(slotId, slot);
-        }
-        List<String> order = d4PlacementOrder(designSlotPlan, slots.keySet());
-        JsonArray keySlots = new JsonArray();
-        List<String> keyOrder = new ArrayList<>();
-        List<JsonObject> arraySlots = new ArrayList<>();
-        boolean seenArray = false;
-        for (String slotId : order) {
-            JsonObject slot = slots.get(slotId);
-            if (slot == null) {
-                throw new IllegalArgumentException("D4_SLOT_ORDER_VIOLATION: placementOrder references missing slot "
-                        + slotId + ".");
-            }
-            String strategy = normalizeD4PlacementStrategy(slot);
-            if ("array_fill".equals(strategy)) {
-                seenArray = true;
-                arraySlots.add(slot.deepCopy());
-                continue;
-            }
-            if (seenArray) {
-                throw new IllegalArgumentException("D4_KEY_STRUCTURES_MUST_PRECEDE_ARRAYS: key slot "
-                        + slotId + " appears after an array_fill slot.");
-            }
-            keySlots.add(slot.deepCopy());
-            keyOrder.add(slotId);
-        }
-        if (!arraySlots.isEmpty() && keySlots.isEmpty()) {
-            throw new IllegalArgumentException("D4_KEY_STRUCTURE_STAGE_REQUIRED: array_fill requires at least one "
-                    + "key_structure slot before arrays.");
-        }
-        JsonObject keyPlan = designSlotPlan.deepCopy();
-        keyPlan.addProperty("planningMode", "key_structure_stage");
-        keyPlan.add("slots", keySlots);
-        keyPlan.add("placementOrder", stringArray(keyOrder));
-        return new D4StagePlan(designSlotPlan.deepCopy(), keyPlan, arraySlots);
-    }
-
-    private static List<String> d4PlacementOrder(JsonObject designSlotPlan, Set<String> slotIds) {
-        JsonArray explicit = array(designSlotPlan, "placementOrder");
-        List<String> order = new ArrayList<>();
-        if (!explicit.isEmpty()) {
-            for (JsonElement elem : explicit) {
-                if (!elem.isJsonNull()) {
-                    order.add(elem.getAsString());
-                }
-            }
-            return order;
-        }
-        order.addAll(slotIds);
-        return order;
-    }
-
-    private static String normalizeD4PlacementStrategy(JsonObject slot) {
-        String raw = stringValue(slot, "placementStrategy", "key_structure");
-        return switch (raw) {
-            case "array_fill", "array", "array_group" -> "array_fill";
-            case "key_structure", "single_ai_selected", "single_anchor", "manual_anchor" -> "key_structure";
-            default -> throw new IllegalArgumentException("D4_PLACEMENT_STRATEGY_UNSUPPORTED: "
-                    + requiredString(slot, "slotId") + " uses " + raw + ".");
-        };
-    }
-
-    private static JsonObject arrayCandidatePlanFromSlot(JsonObject sourceDesignSlotPlan, JsonObject slot) {
-        JsonObject plan = slot.has("arrayCandidatePlan") && slot.get("arrayCandidatePlan").isJsonObject()
-                ? slot.getAsJsonObject("arrayCandidatePlan").deepCopy() : new JsonObject();
-        String cityId = stringValue(sourceDesignSlotPlan, "cityId");
-        String slotId = requiredString(slot, "slotId");
-        plan.addProperty("schemaVersion", CityStructureArrayCandidatePlanner.PLAN_SCHEMA);
-        if (stringValue(plan, "cityId").isBlank()) {
-            plan.addProperty("cityId", cityId);
-        }
-        if (stringValue(plan, "arrayId").isBlank()) {
-            plan.addProperty("arrayId", stringValue(slot, "arrayId", slotId));
-        }
-        if (stringValue(plan, "displayRole").isBlank() && slot.has("displayRole")) {
-            plan.addProperty("displayRole", stringValue(slot, "displayRole", slotId));
-        }
-        if (!plan.has("candidatePatchRefs")) {
-            plan.add("candidatePatchRefs", requiredArrayCopy(slot, "candidatePatchRefs"));
-        }
-        if (!plan.has("structureIds")) {
-            plan.add("structureIds", slotStructureIds(slot));
-        }
-        if (!plan.has("arrayCount")) {
-            int arrayCount = intValue(slot, "arrayCount", 0);
-            if (arrayCount <= 0) {
-                throw new IllegalArgumentException("D4_ARRAY_COUNT_REQUIRED: array_fill slot "
-                        + slotId + " must set arrayCount.");
-            }
-            plan.addProperty("arrayCount", arrayCount);
-        }
-        if (!plan.has("variantSelectionMode")) {
-            plan.addProperty("variantSelectionMode", stringValue(slot, "variantSelectionMode", "seeded_random"));
-        }
-        for (String key : List.of("patterns", "structureWeights", "variantSeed", "priority",
-                "clearanceBlocks", "smallClearanceBlocks", "vegetationMarginBlocks", "roadAccessMarginBlocks")) {
-            copyIfPresent(slot, plan, key);
-        }
-        return plan;
-    }
-
-    private static JsonObject minimalArrayLayoutPlan(JsonObject sourceDesignSlotPlan) {
-        return minimalArrayLayoutPlan(sourceDesignSlotPlan, CityStructureArrayLayoutLoopPlanner.PLANNING_MODE_V02);
-    }
-
-    private static JsonObject minimalArrayLayoutPlan(JsonObject sourceDesignSlotPlan, String planningMode) {
-        JsonObject plan = new JsonObject();
-        boolean v03 = CityStructureArrayLayoutLoopPlanner.PLANNING_MODE_V03.equals(planningMode);
-        plan.addProperty("schemaVersion", v03
-                ? CityStructureArrayLayoutLoopPlanner.PLAN_SCHEMA_V03
-                : CityStructureArrayLayoutLoopPlanner.PLAN_SCHEMA);
-        plan.addProperty("planningMode", v03
-                ? CityStructureArrayLayoutLoopPlanner.PLANNING_MODE_V03
-                : CityStructureArrayLayoutLoopPlanner.PLANNING_MODE_V02);
-        plan.addProperty("cityId", stringValue(sourceDesignSlotPlan, "cityId"));
-        plan.addProperty("cityScale", stringValue(sourceDesignSlotPlan, "cityScale", "town"));
-        JsonObject intent = new JsonObject();
-        intent.addProperty("summary", "created by " + (v03 ? "array_layout_loop_v0_3" : "array_layout_loop_v0_2")
-                + " workflow");
-        plan.add("designIntent", intent);
-        plan.add("layoutPlans", new JsonArray());
-        return plan;
-    }
-
     private static JsonObject workflowPlanD4ArrayStage(WorkflowContext ctx,
                                                        JsonObject arrayCandidatePlan,
                                                        JsonObject occupiedAnchorMap) throws IOException {
@@ -2599,84 +2454,6 @@ final class CityPlanningEndpointHandler {
         }
         response.add("artifacts", artifacts);
         return response;
-    }
-
-    private static JsonObject mergeStructureAnchorPlans(JsonObject basePlan,
-                                                        JsonObject appendedPlan,
-                                                        String cityId,
-                                                        JsonArray stageTrace) {
-        String normalizedCityId = cityId == null || cityId.isBlank()
-                ? stringValue(basePlan, "cityId", stringValue(appendedPlan, "cityId")) : cityId;
-        JsonArray anchors = new JsonArray();
-        Set<String> anchorIds = new LinkedHashSet<>();
-        appendAnchors(anchors, anchorIds, basePlan, "base");
-        appendAnchors(anchors, anchorIds, appendedPlan, "array");
-        JsonObject plan = new JsonObject();
-        plan.addProperty("schemaVersion", CityStructureAnchorPlanner.PLAN_SCHEMA);
-        plan.addProperty("cityId", normalizedCityId);
-        plan.add("anchors", anchors);
-        JsonObject trace = new JsonObject();
-        trace.addProperty("schemaVersion", "city_d4_staged_key_then_array_trace.v0.1");
-        trace.addProperty("planningMode", "key_then_array");
-        trace.addProperty("stageCount", stageTrace.size());
-        trace.add("stages", stageTrace.deepCopy());
-        plan.add("stagedD4Trace", trace);
-        return plan;
-    }
-
-    private static void appendAnchors(JsonArray anchors,
-                                      Set<String> anchorIds,
-                                      JsonObject plan,
-                                      String source) {
-        for (JsonElement elem : array(plan, "anchors")) {
-            if (!elem.isJsonObject()) {
-                continue;
-            }
-            JsonObject anchor = elem.getAsJsonObject();
-            String anchorId = requiredString(anchor, "anchorId");
-            if (!anchorIds.add(anchorId)) {
-                throw new IllegalArgumentException("D4_STAGED_DUPLICATE_ANCHOR_ID: " + anchorId
-                        + " from " + source + ".");
-            }
-            anchors.add(anchor.deepCopy());
-        }
-    }
-
-    private static JsonArray slotStructureIds(JsonObject slot) {
-        JsonArray ids = new JsonArray();
-        if (slot.has("structureIds") && slot.get("structureIds").isJsonArray()) {
-            for (JsonElement elem : slot.getAsJsonArray("structureIds")) {
-                if (!elem.isJsonNull()) {
-                    ids.add(elem.getAsString());
-                }
-            }
-        } else if (slot.has("structureId") && !slot.get("structureId").isJsonNull()) {
-            ids.add(slot.get("structureId").getAsString());
-        }
-        if (ids.isEmpty()) {
-            throw new IllegalArgumentException("D4_ARRAY_STRUCTURE_IDS_REQUIRED: array_fill slot "
-                    + requiredString(slot, "slotId") + " must set structureId or structureIds[].");
-        }
-        return ids;
-    }
-
-    private static JsonArray requiredArrayCopy(JsonObject obj, String key) {
-        if (obj == null || !obj.has(key) || !obj.get(key).isJsonArray()) {
-            throw new IllegalArgumentException(key + " array is required.");
-        }
-        return obj.getAsJsonArray(key).deepCopy();
-    }
-
-    private static void copyIfPresent(JsonObject source, JsonObject target, String key) {
-        if (source != null && source.has(key) && !target.has(key)) {
-            target.add(key, source.get(key).deepCopy());
-        }
-    }
-
-    private static JsonArray stringArray(List<String> values) {
-        JsonArray array = new JsonArray();
-        values.forEach(array::add);
-        return array;
     }
 
     private static Path d4ArrayStageDir(Path runDir, String citySeedId, String arrayId) {
@@ -3064,13 +2841,6 @@ final class CityPlanningEndpointHandler {
         return runDir.resolve("city_decoration_" + safeFileName(citySeedId));
     }
 
-    private static JsonObject loadOptionalJson(Path path) throws IOException {
-        if (path == null || !Files.exists(path)) {
-            return new JsonObject();
-        }
-        return JsonParser.parseString(Files.readString(path)).getAsJsonObject();
-    }
-
     private static JsonObject writeD4ArrayLayoutLoopArtifacts(Path debugRoot,
                                                               Path runDir,
                                                               String citySeedId,
@@ -3227,7 +2997,8 @@ final class CityPlanningEndpointHandler {
         }
     }
 
-    private static void writeWorkflowD4StagePlan(WorkflowContext ctx, D4StagePlan stagePlan) throws IOException {
+    private static void writeWorkflowD4StagePlan(WorkflowContext ctx,
+                                                 CityD4StagedPlanCompiler.StagePlan stagePlan) throws IOException {
         Path outputDirectory = ctx.runDir().resolve("city_d4_staged_" + safeFileName(ctx.citySeedId()));
         Files.createDirectories(outputDirectory);
         Path path = outputDirectory.resolve("d4_staged_plan.json");
@@ -3467,35 +3238,6 @@ final class CityPlanningEndpointHandler {
             result.add(new TerritoryCellRef(intValue(cell, "gridX", 0), intValue(cell, "gridZ", 0)));
         }
         return result;
-    }
-
-    private static List<FunctionZoneTerrainStats> terrainStatsFromJson(JsonArray array) {
-        List<FunctionZoneTerrainStats> result = new ArrayList<>();
-        for (JsonElement elem : array) {
-            result.add(FunctionZoneTerrainStats.fromJson(elem.getAsJsonObject()));
-        }
-        return result;
-    }
-
-    private static CityInputs loadCityInputs(Path debugRoot, Path runDir, String citySeedId) throws IOException {
-        Path d4Dir = runDir.resolve("city_d4_" + safeFileName(citySeedId));
-        Path d5Dir = runDir.resolve("city_d5_" + safeFileName(citySeedId));
-        Path zoneMapPath = d4Dir.resolve("function_zone_map.json");
-        Path statsPath = d4Dir.resolve("function_zone_terrain_stats.json");
-        Path buildablePath = d5Dir.resolve("buildable_area_map.json");
-        if (!Files.exists(zoneMapPath) || !Files.exists(statsPath)) {
-            throw new IllegalArgumentException("D4 artifacts not found. Run city_plan_d4 first: "
-                    + debugRef(debugRoot, d4Dir));
-        }
-        if (!Files.exists(buildablePath)) {
-            throw new IllegalArgumentException("D5 buildable_area_map.json not found. Run city_plan_d5 first: "
-                    + debugRef(debugRoot, buildablePath));
-        }
-        FunctionZoneMap zoneMap = FunctionZoneMap.fromJson(
-                JsonParser.parseString(Files.readString(zoneMapPath)).getAsJsonObject());
-        BuildableAreaMap buildableAreaMap = BuildableAreaMap.fromJson(
-                JsonParser.parseString(Files.readString(buildablePath)).getAsJsonObject());
-        return new CityInputs(zoneMap, buildableAreaMap, zoneMapPath, statsPath, buildablePath);
     }
 
     private static int blockCoord(JsonObject seed, String axis, int cellStepBlocks) {
@@ -4473,11 +4215,6 @@ final class CityPlanningEndpointHandler {
                                    CityWorkflowStepRunner workflow) {
     }
 
-    private record D4StagePlan(JsonObject sourceDesignSlotPlan,
-                               JsonObject keyDesignSlotPlan,
-                               List<JsonObject> arraySlots) {
-    }
-
     private record DecorationMaskCounts(int vegetationMaskCount, int structureMaskCount) {
         static DecorationMaskCounts empty() {
             return new DecorationMaskCounts(0, 0);
@@ -4485,10 +4222,6 @@ final class CityPlanningEndpointHandler {
     }
 
     private record RunMetadata(int cellStepBlocks, String dimensionId) {
-    }
-
-    private record CityInputs(FunctionZoneMap zoneMap, BuildableAreaMap buildableAreaMap,
-                              Path zoneMapPath, Path terrainStatsPath, Path buildablePath) {
     }
 
     private static final class LoadedChunkDecorationTerrainView implements CityDecorationTerrainProbe.TerrainView {
