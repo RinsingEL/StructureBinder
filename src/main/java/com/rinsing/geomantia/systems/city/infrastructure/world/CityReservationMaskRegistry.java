@@ -268,6 +268,42 @@ public final class CityReservationMaskRegistry {
                 planned.anchorId(), planned.structureId(), generatingChunk.x, generatingChunk.z, actualFootprint);
     }
 
+    public static synchronized void recordTemplateWorldgenPlacement(PlannedStructure planned,
+                                                                    BlockBounds actualFootprint,
+                                                                    String startSignature,
+                                                                    JsonArray pieceBoxes,
+                                                                    ChunkPos generatingChunk,
+                                                                    int templateDatumY,
+                                                                    String terrainAdaptation,
+                                                                    String reasonCode,
+                                                                    String message) {
+        JsonArray placed = ledgerPlacedStructures();
+        for (JsonElement elem : placed) {
+            if (elem.isJsonObject() && ledgerIdentityMatches(planned, elem.getAsJsonObject())) {
+                return;
+            }
+        }
+        JsonObject obj = planned.asLedgerJson(actualFootprint, startSignature, pieceBoxes);
+        obj.addProperty("templateDatumY", templateDatumY);
+        obj.addProperty("reasonCode", reasonCode == null || reasonCode.isBlank()
+                ? "WORLDGEN_PLACEMENT_RECORDED" : reasonCode);
+        obj.addProperty("message", message == null ? "" : message);
+        obj.addProperty("generatedAt", Instant.now().toString());
+        obj.addProperty("generatingChunkX", generatingChunk.x);
+        obj.addProperty("generatingChunkZ", generatingChunk.z);
+        obj.addProperty("featureStagePending", true);
+        obj.addProperty("terrainAdaptation", terrainAdaptation == null || terrainAdaptation.isBlank()
+                ? "unknown" : terrainAdaptation);
+        obj.addProperty("terrainAdaptationHookAvailable", false);
+        obj.addProperty("beardifierSeen", false);
+        obj.addProperty("terrainAdaptationReasonCode", "CITY_TERRAIN_ADAPTATION_HOOK_UNAVAILABLE");
+        placed.add(obj);
+        persistWorldgenLedger();
+        LOGGER.info("Recorded City template worldgen placement {} {} at datum {} chunk {},{} footprint {}",
+                planned.anchorId(), planned.structureId(), templateDatumY, generatingChunk.x, generatingChunk.z,
+                actualFootprint);
+    }
+
     public static synchronized void recordWorldgenFailure(PlannedStructure planned,
                                                           ChunkPos generatingChunk,
                                                           String reasonCode,
@@ -711,7 +747,7 @@ public final class CityReservationMaskRegistry {
             obj.add("qualityTerms", qualityTerms.deepCopy());
             if (isTemplatePlacement()) {
                 for (String key : List.of("templateId", "templateRef", "templateHash", "variantId", "mirror",
-                        "materializationSource", "templateSize", "lockedActualFootprint",
+                        "materializationSource", "templateDatumPolicy", "templateSize", "lockedActualFootprint",
                         "transformed", "transformedRoadEntrances", "structureTemplate")) {
                     if (sourcePlan.has(key)) {
                         obj.add(key, sourcePlan.get(key).deepCopy());

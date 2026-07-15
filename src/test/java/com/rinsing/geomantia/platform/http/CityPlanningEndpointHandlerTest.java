@@ -55,6 +55,7 @@ class CityPlanningEndpointHandlerTest {
                     "anchorId": "template_house",
                     "materializationSource": "structure_template_nbt",
                     "templateRef": "geomantia:d6d7_fixture/house",
+                    "templateDatumPolicy": "worldgen_surface_motion_blocking_no_leaves",
                     "locked": true,
                     "actualFootprint": {"minX":0,"minZ":0,"maxX":10,"maxZ":10},
                     "lockedActualFootprint": {"minX":0,"minZ":0,"maxX":10,"maxZ":10},
@@ -67,6 +68,11 @@ class CityPlanningEndpointHandlerTest {
                 """).getAsJsonObject();
 
         assertDoesNotThrow(() -> CityPlanningEndpointHandler.validateLockedMaterializationPlan(plan));
+        plan.getAsJsonArray("plannedWorldgenStructures").get(0).getAsJsonObject().remove("templateDatumPolicy");
+        assertThrows(IllegalArgumentException.class,
+                () -> CityPlanningEndpointHandler.validateLockedMaterializationPlan(plan));
+        plan.getAsJsonArray("plannedWorldgenStructures").get(0).getAsJsonObject()
+                .addProperty("templateDatumPolicy", "worldgen_surface_motion_blocking_no_leaves");
         plan.getAsJsonArray("plannedWorldgenStructures").get(0).getAsJsonObject().remove("templateRef");
         plan.getAsJsonArray("plannedWorldgenStructures").get(0).getAsJsonObject().remove("materializationSource");
         assertThrows(IllegalArgumentException.class,

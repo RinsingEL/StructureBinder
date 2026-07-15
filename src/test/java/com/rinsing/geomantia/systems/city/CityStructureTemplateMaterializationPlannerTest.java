@@ -23,6 +23,10 @@ class CityStructureTemplateMaterializationPlannerTest {
         assertEquals("city:house", item.get("templateId").getAsString());
         assertEquals("sha256:house", item.get("templateHash").getAsString());
         assertEquals("structure_template_nbt", item.get("materializationSource").getAsString());
+        assertEquals(CityStructureMaterializationPlanner.TEMPLATE_DATUM_POLICY_WORLDGEN_SURFACE,
+                item.get("templateDatumPolicy").getAsString());
+        assertEquals(CityStructureMaterializationPlanner.TEMPLATE_DATUM_POLICY_WORLDGEN_SURFACE,
+                item.getAsJsonObject("structureTemplate").get("templateDatumPolicy").getAsString());
         assertEquals(8, item.getAsJsonObject("templateSize").get("width").getAsInt());
         assertEquals(bounds(10, 10, 17, 15), item.getAsJsonObject("actualFootprint"));
         assertEquals(item.getAsJsonObject("actualFootprint"), item.getAsJsonObject("lockedActualFootprint"));

@@ -3765,6 +3765,11 @@ final class CityPlanningEndpointHandler {
                 throw new IllegalArgumentException("D6 planned structure is not fully locked: "
                         + stringValue(item, "anchorId"));
             }
+            if (templatePlacement && !CityStructureMaterializationPlanner.TEMPLATE_DATUM_POLICY_WORLDGEN_SURFACE.equals(
+                    stringValue(item, "templateDatumPolicy"))) {
+                throw new IllegalArgumentException("D6 template placement is missing a supported datum policy: "
+                        + stringValue(item, "anchorId"));
+            }
         }
     }
 

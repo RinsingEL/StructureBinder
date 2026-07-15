@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
 import com.rinsing.geomantia.systems.city.domain.model.BlockPoint;
+import com.rinsing.geomantia.systems.city.application.CityStructureMaterializationPlanner;
 import com.rinsing.geomantia.systems.city.application.CityTemplatePlacementGeometry;
 import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
@@ -16,6 +17,7 @@ import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.chunk.ChunkGeneratorStructureState;
 import net.minecraft.world.level.levelgen.RandomState;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.StructurePiece;
@@ -56,7 +58,21 @@ public final class MinecraftCityWorldgenStructurePlacer {
                         text(plan, "rotation", "NONE"));
                 CityTemplatePlacementGeometry.Mirror mirror = CityTemplatePlacementGeometry.Mirror.valueOf(
                         text(plan, "mirror", "NONE"));
-                int datum = intValue(plan, "templateDatumY", intValue(plan, "datumY", level.getMinBuildHeight()));
+                String datumPolicy = text(plan, "templateDatumPolicy", "");
+                if (!CityStructureMaterializationPlanner.TEMPLATE_DATUM_POLICY_WORLDGEN_SURFACE.equals(datumPolicy)) {
+                    CityReservationMaskRegistry.recordWorldgenFailure(item, chunk.getPos(),
+                            "TEMPLATE_DATUM_POLICY_INVALID",
+                            "Template placement requires templateDatumPolicy="
+                                    + CityStructureMaterializationPlanner.TEMPLATE_DATUM_POLICY_WORLDGEN_SURFACE + ".");
+                    continue;
+                }
+                int datum = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, anchor.x(), anchor.z());
+                if (datum <= level.getMinBuildHeight()) {
+                    CityReservationMaskRegistry.recordWorldgenFailure(item, chunk.getPos(),
+                            "TEMPLATE_DATUM_SURFACE_UNAVAILABLE",
+                            "Worldgen heightmap did not provide a usable template surface datum.");
+                    continue;
+                }
                 MinecraftCityTemplateWorldgenPlacer.PlacementRequest request =
                         new MinecraftCityTemplateWorldgenPlacer.PlacementRequest(templateRef, templateHash,
                                 anchor, rotation, mirror, datum, chunk.getPos());
@@ -67,9 +83,9 @@ public final class MinecraftCityWorldgenStructurePlacer {
                             result.reasonCode(), result.message());
                 } else if (result.success() && result.worldMutationApplied()
                         && result.templateFootprint() != null) {
-                    CityReservationMaskRegistry.recordWorldgenPlacement(item, result.templateFootprint(),
+                    CityReservationMaskRegistry.recordTemplateWorldgenPlacement(item, result.templateFootprint(),
                             templateSignature(item, templateHash, rotation, mirror), new JsonArray(), chunk.getPos(),
-                            "", result.reasonCode(), result.message());
+                            datum, "", result.reasonCode(), result.message());
                 }
             } catch (RuntimeException ex) {
                 CityReservationMaskRegistry.recordWorldgenFailure(item, chunk.getPos(),

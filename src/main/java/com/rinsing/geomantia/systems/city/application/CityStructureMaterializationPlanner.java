@@ -17,6 +17,8 @@ public final class CityStructureMaterializationPlanner {
     public static final String TRACE_SCHEMA = "city_structure_materialization_trace.v0.1";
     public static final String INFERRED_SCHEMA = "city_inferred_function_area_map.v0.1";
     public static final String TEMPLATE_MATERIALIZATION_SOURCE = "structure_template_nbt";
+    public static final String TEMPLATE_DATUM_POLICY_WORLDGEN_SURFACE =
+            "worldgen_surface_motion_blocking_no_leaves";
     public static final int DEFAULT_COLLISION_CLEARANCE_BLOCKS = 4;
 
     public Result planWorldgen(JsonObject structureAnchorMap, ChunkStatusInspector inspector, JsonObject previousLedger) {
@@ -1103,6 +1105,7 @@ public final class CityStructureMaterializationPlanner {
             target.addProperty("rotation", facts.rotation());
             target.addProperty("mirror", facts.mirror());
             target.addProperty("materializationSource", TEMPLATE_MATERIALIZATION_SOURCE);
+            target.addProperty("templateDatumPolicy", TEMPLATE_DATUM_POLICY_WORLDGEN_SURFACE);
             if (facts.templateSize() != null) {
                 target.add("templateSize", sizeJson(facts.templateSize()));
             }
@@ -1117,6 +1120,7 @@ public final class CityStructureMaterializationPlanner {
             template.addProperty("rotation", facts.rotation());
             template.addProperty("mirror", facts.mirror());
             template.addProperty("materializationSource", TEMPLATE_MATERIALIZATION_SOURCE);
+            template.addProperty("templateDatumPolicy", TEMPLATE_DATUM_POLICY_WORLDGEN_SURFACE);
             if (facts.templateSize() != null) {
                 template.add("templateSize", sizeJson(facts.templateSize()));
             }
