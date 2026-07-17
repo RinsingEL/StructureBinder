@@ -9,10 +9,11 @@ public record CompiledDecorationProgramPlan(String schemaVersion, String cityId,
                                             String styleProfileId, String styleProfileHash,
                                             List<HardObstacle> hardObstacles,
                                             List<CompiledDecorationProgram> programs) {
-    public static final String SCHEMA = "city_decoration_compiled_program_plan.v0.2";
+    public static final String SCHEMA = "city_decoration_compiled_program_plan.v0.3";
+    public static final String LEGACY_SCHEMA = "city_decoration_compiled_program_plan.v0.2";
 
     public CompiledDecorationProgramPlan {
-        if (!SCHEMA.equals(schemaVersion)) {
+        if (!SCHEMA.equals(schemaVersion) && !LEGACY_SCHEMA.equals(schemaVersion)) {
             throw new IllegalArgumentException("CITY_DECORATION_PROGRAM_PLAN_SCHEMA_UNSUPPORTED: " + schemaVersion);
         }
         if (cityId == null || cityId.isBlank()) {

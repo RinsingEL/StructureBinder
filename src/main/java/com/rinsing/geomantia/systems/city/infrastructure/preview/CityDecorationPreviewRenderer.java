@@ -8,6 +8,7 @@ import com.rinsing.geomantia.systems.city.application.dressing.DecorationShapeEv
 import com.rinsing.geomantia.systems.city.application.dressing.DecorationSlot;
 import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
 import com.rinsing.geomantia.systems.city.infrastructure.json.CityJson;
+import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationTerrainRunCompiler;
 
 import javax.imageio.ImageIO;
 import java.awt.BasicStroke;
@@ -45,6 +46,13 @@ public final class CityDecorationPreviewRenderer {
     public JsonObject render(CompiledDecorationProgramPlan plan,
                              List<DecorationSlot> slotProjection,
                              Path outputDirectory) throws IOException {
+        return render(plan, slotProjection, null, outputDirectory);
+    }
+
+    public JsonObject render(CompiledDecorationProgramPlan plan,
+                             List<DecorationSlot> slotProjection,
+                             CityDecorationTerrainRunCompiler.FrozenPlan frozenTerrainPlan,
+                             Path outputDirectory) throws IOException {
         if (plan == null || plan.programs().isEmpty()) {
             throw new IllegalArgumentException("CITY_DECORATION_PREVIEW_PLAN_REQUIRED");
         }
@@ -57,13 +65,19 @@ public final class CityDecorationPreviewRenderer {
         Map<String, CompiledDecorationProgram> programs = new LinkedHashMap<>();
         plan.programsInExecutionOrder().forEach(program -> programs.put(program.programId(), program));
         Map<String, List<DecorationSlot>> slotsByProgram = validateAndGroup(plan, programs, slotProjection);
+        Map<String, CityDecorationTerrainRunCompiler.SlotOutcome> terrainOutcomes = frozenTerrainPlan == null
+                ? Map.of() : frozenTerrainPlan.outcomesBySlotId();
 
         Files.createDirectories(outputDirectory);
         JsonObject index = new JsonObject();
-        index.addProperty("schemaVersion", "city_decoration_preview_index.v0.2");
+        index.addProperty("schemaVersion", "city_decoration_preview_index.v0.3");
         index.addProperty("cityId", plan.cityId());
         index.addProperty("catalogHash", plan.catalogHash());
         index.addProperty("previewMode", "per_program_zoomed");
+        index.addProperty("terrainOutcomeAvailable", frozenTerrainPlan != null);
+        index.addProperty("frozenRunCount", frozenTerrainPlan == null ? 0 : frozenTerrainPlan.runs().size());
+        index.addProperty("foundationSegmentCount", frozenTerrainPlan == null
+                ? 0 : frozenTerrainPlan.foundationSegments().size());
         JsonArray previews = new JsonArray();
         for (CompiledDecorationProgram program : plan.programsInExecutionOrder()) {
             List<DecorationSlot> slots = slotsByProgram.get(program.programId());
@@ -76,8 +90,8 @@ public final class CityDecorationPreviewRenderer {
             List<CompiledDecorationProgramPlan.HardObstacle> obstacles = plan.hardObstacles().stream()
                     .filter(obstacle -> obstacle.blockBounds().overlaps(program.targetMask().bounds()))
                     .toList();
-            renderProgram(program, slots, obstacles, imagePath);
-            previews.add(previewEntry(program, slots, obstacles, imagePath));
+            renderProgram(program, slots, obstacles, terrainOutcomes, imagePath);
+            previews.add(previewEntry(program, slots, obstacles, terrainOutcomes, imagePath));
         }
         index.add("previews", previews);
         Path indexPath = outputDirectory.resolve("city_decoration_preview_index.json");
@@ -117,6 +131,7 @@ public final class CityDecorationPreviewRenderer {
     private void renderProgram(CompiledDecorationProgram program,
                                List<DecorationSlot> slots,
                                List<CompiledDecorationProgramPlan.HardObstacle> obstacles,
+                               Map<String, CityDecorationTerrainRunCompiler.SlotOutcome> terrainOutcomes,
                                Path imagePath) throws IOException {
         BufferedImage image = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = image.createGraphics();
@@ -133,7 +148,7 @@ public final class CityDecorationPreviewRenderer {
             drawTargetMembers(g, transform, program.targetMask().memberBounds());
             drawShape(g, transform, program);
             drawObstacles(g, transform, obstacles);
-            drawSlots(g, transform, slots);
+            drawSlots(g, transform, slots, terrainOutcomes);
             drawHeader(g, program, slots, obstacles);
             drawLegend(g, program);
             g.setColor(new Color(80, 84, 80));
@@ -189,9 +204,11 @@ public final class CityDecorationPreviewRenderer {
         }
     }
 
-    private void drawSlots(Graphics2D g, Transform transform, List<DecorationSlot> slots) {
+    private void drawSlots(Graphics2D g, Transform transform, List<DecorationSlot> slots,
+                           Map<String, CityDecorationTerrainRunCompiler.SlotOutcome> terrainOutcomes) {
         for (DecorationSlot slot : slots) {
-            Color color = slotColor(slot.paletteSlotId());
+            CityDecorationTerrainRunCompiler.SlotOutcome outcome = terrainOutcomes.get(slot.slotId());
+            Color color = outcomeColor(slot.paletteSlotId(), outcome);
             int x = transform.x(slot.worldAnchor().x());
             int z = transform.z(slot.worldAnchor().z());
             int size = Math.max(4, (int) Math.ceil(transform.scale()));
@@ -200,7 +217,29 @@ public final class CityDecorationPreviewRenderer {
             g.setColor(new Color(30, 32, 30, 210));
             g.setStroke(new BasicStroke(0.9f));
             g.drawOval(x - size / 2, z - size / 2, size, size);
+            if (outcome != null && (outcome.decision() == CityDecorationTerrainRunCompiler.Decision.TERMINATE
+                    || outcome.decision() == CityDecorationTerrainRunCompiler.Decision.DEFER)) {
+                g.drawLine(x - size / 2, z - size / 2, x + size / 2, z + size / 2);
+                g.drawLine(x + size / 2, z - size / 2, x - size / 2, z + size / 2);
+            } else if (outcome != null && outcome.targetY() > outcome.surfaceY()) {
+                g.setColor(new Color(24, 132, 164, 230));
+                g.setStroke(new BasicStroke(2.0f));
+                g.drawRect(x - size / 2 - 2, z - size / 2 - 2, size + 4, size + 4);
+            }
         }
+    }
+
+    private static Color outcomeColor(String paletteSlotId,
+                                      CityDecorationTerrainRunCompiler.SlotOutcome outcome) {
+        if (outcome == null || outcome.decision() == CityDecorationTerrainRunCompiler.Decision.PLACE) {
+            return slotColor(paletteSlotId);
+        }
+        return switch (outcome.decision()) {
+            case END_CAP -> new Color(228, 168, 44);
+            case TERMINATE -> new Color(196, 58, 52);
+            case DEFER -> new Color(116, 120, 124);
+            case PLACE -> slotColor(paletteSlotId);
+        };
     }
 
     private void drawHeader(Graphics2D g, CompiledDecorationProgram program,
@@ -248,6 +287,7 @@ public final class CityDecorationPreviewRenderer {
     private JsonObject previewEntry(CompiledDecorationProgram program,
                                     List<DecorationSlot> slots,
                                     List<CompiledDecorationProgramPlan.HardObstacle> obstacles,
+                                    Map<String, CityDecorationTerrainRunCompiler.SlotOutcome> terrainOutcomes,
                                     Path imagePath) {
         JsonObject entry = new JsonObject();
         entry.addProperty("programId", program.programId());
@@ -258,6 +298,17 @@ public final class CityDecorationPreviewRenderer {
         entry.addProperty("slotCount", slots.size());
         entry.addProperty("targetMemberCount", program.targetMask().memberBounds().size());
         entry.addProperty("hardObstacleCount", obstacles.size());
+        List<CityDecorationTerrainRunCompiler.SlotOutcome> outcomes = slots.stream()
+                .map(slot -> terrainOutcomes.get(slot.slotId())).filter(java.util.Objects::nonNull).toList();
+        entry.addProperty("terrainOutcomeCount", outcomes.size());
+        entry.addProperty("endCapCount", outcomes.stream().filter(outcome ->
+                outcome.decision() == CityDecorationTerrainRunCompiler.Decision.END_CAP).count());
+        entry.addProperty("terminatedSlotCount", outcomes.stream().filter(outcome ->
+                outcome.decision() == CityDecorationTerrainRunCompiler.Decision.TERMINATE).count());
+        entry.addProperty("deferredSlotCount", outcomes.stream().filter(outcome ->
+                outcome.decision() == CityDecorationTerrainRunCompiler.Decision.DEFER).count());
+        entry.addProperty("foundationSlotCount", outcomes.stream().filter(outcome ->
+                outcome.targetY() > outcome.surfaceY()).count());
         JsonArray legend = new JsonArray();
         for (CompiledDecorationProgram.PaletteSlot slot : program.contentPalette().slots()) {
             JsonObject item = new JsonObject();

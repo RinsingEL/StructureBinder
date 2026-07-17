@@ -16,7 +16,8 @@ public final class DecorationProgramIntentCodec {
         requireOnly(source, Set.of("schemaVersion", "cityId", "catalogHash", "styleProfileId", "styleProfileHash",
                 "programs"), "program plan");
         String schema = requiredString(source, "schemaVersion");
-        if (!DecorationProgramIntentPlan.SCHEMA.equals(schema)) {
+        boolean legacySchema = DecorationProgramIntentPlan.LEGACY_SCHEMA.equals(schema);
+        if (!DecorationProgramIntentPlan.SCHEMA.equals(schema) && !legacySchema) {
             throw new IllegalArgumentException("CITY_DECORATION_PROGRAM_PLAN_SCHEMA_UNSUPPORTED: " + schema);
         }
         List<DecorationProgramIntent> programs = new ArrayList<>();
@@ -24,7 +25,7 @@ public final class DecorationProgramIntentCodec {
             if (!element.isJsonObject()) {
                 throw new IllegalArgumentException("CITY_DECORATION_PROGRAM_INVALID: programs[] entries must be objects");
             }
-            programs.add(parseIntent(element.getAsJsonObject()));
+            programs.add(parseIntent(element.getAsJsonObject(), legacySchema));
         }
         return new DecorationProgramIntentPlan(schema, requiredString(source, "cityId"),
                 requiredString(source, "catalogHash"), requiredString(source, "styleProfileId"),
@@ -32,6 +33,10 @@ public final class DecorationProgramIntentCodec {
     }
 
     public DecorationProgramIntent parseIntent(JsonObject source) {
+        return parseIntent(source, false);
+    }
+
+    private DecorationProgramIntent parseIntent(JsonObject source, boolean legacySchema) {
         requireOnly(source, Set.of("programId", "targetArea", "coordinateFrame", "shape", "pattern",
                 "contentPalette", "terrainPolicy", "conflictPolicy", "priority", "seed"), "program");
         DecorationProgramIntent.TargetArea targetArea = parseTargetArea(requiredObject(source, "targetArea"));
@@ -45,7 +50,7 @@ public final class DecorationProgramIntentCodec {
             palette.requireSlot(paletteSlotId);
         }
         return new DecorationProgramIntent(requiredString(source, "programId"), targetArea, frame, shape, pattern,
-                palette, primitiveCodec.parseTerrainPolicy(requiredObject(source, "terrainPolicy")),
+                palette, primitiveCodec.parseTerrainPolicy(requiredObject(source, "terrainPolicy"), legacySchema),
                 primitiveCodec.parseConflictPolicy(requiredObject(source, "conflictPolicy")),
                 requiredInt(source, "priority"), requiredLong(source, "seed"));
     }
@@ -85,6 +90,11 @@ public final class DecorationProgramIntentCodec {
         terrain.addProperty("maxSlopeDelta", intent.terrainPolicy().maxSlopeDelta());
         terrain.addProperty("allowWater", intent.terrainPolicy().allowWater());
         terrain.addProperty("invalidTerrainAction", intent.terrainPolicy().invalidTerrainAction().serializedName());
+        terrain.addProperty("maxContinuousDropBlocks", intent.terrainPolicy().maxContinuousDropBlocks());
+        terrain.addProperty("continuousDropWindowBlocks", intent.terrainPolicy().continuousDropWindowBlocks());
+        terrain.addProperty("foundationMode", intent.terrainPolicy().foundationMode().serializedName());
+        terrain.addProperty("maxFoundationDepthBlocks", intent.terrainPolicy().maxFoundationDepthBlocks());
+        terrain.addProperty("foundationShoulderBlocks", intent.terrainPolicy().foundationShoulderBlocks());
         obj.add("terrainPolicy", terrain);
         JsonObject conflict = new JsonObject();
         conflict.addProperty("onConflict", intent.conflictPolicy().onConflict().serializedName());

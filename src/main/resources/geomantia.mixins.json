@@ -4,8 +4,10 @@
   "package": "com.rinsing.geomantia.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
+    "CityDecorationBeardifierMixin",
     "ConfiguredFeatureMaskMixin",
-    "ChunkGeneratorStructureMaskMixin"
+    "ChunkGeneratorStructureMaskMixin",
+    "StructureManagerAccessor"
   ],
   "injectors": {
     "defaultRequire": 1

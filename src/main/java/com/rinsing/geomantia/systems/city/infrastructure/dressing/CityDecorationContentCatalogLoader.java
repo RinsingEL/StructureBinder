@@ -45,8 +45,13 @@ public final class CityDecorationContentCatalogLoader {
     private static final String INDEX_FILE = "content_index.json";
     private static final String TEMPLATES_DIR = "templates";
     private static final Set<String> TOP_LEVEL_FIELDS = Set.of("schemaVersion", "contents");
+    private static final Set<String> LEGACY_CONTENT_FIELDS = Set.of(
+            "contentId", "contentKind", "nbtFile", "allowedRotations", "supportMode", "placementMode", "replacePolicy",
+            "maxFootprintHeightSpreadBlocks", "comfortMarginBlocks", "allowedSurfaceTags",
+            "blockedSurfaceTags", "tags", "terrainDropFallbackContentRef");
     private static final Set<String> CONTENT_FIELDS = Set.of(
             "contentId", "contentKind", "nbtFile", "allowedRotations", "supportMode", "placementMode", "replacePolicy",
+            "groundPlaneLocalY", "embedDepthBlocks", "clearanceMode",
             "maxFootprintHeightSpreadBlocks", "comfortMarginBlocks", "allowedSurfaceTags",
             "blockedSurfaceTags", "tags", "terrainDropFallbackContentRef");
     private static final Set<String> FORBIDDEN_DERIVED_FIELDS = Set.of(
@@ -62,7 +67,8 @@ public final class CityDecorationContentCatalogLoader {
         JsonObject index = readIndex(root.resolve(INDEX_FILE));
         rejectUnknownFields(index, TOP_LEVEL_FIELDS, "content index");
         String schemaVersion = requiredString(index, "schemaVersion");
-        if (!CityDecorationContentCatalog.SCHEMA.equals(schemaVersion)) {
+        boolean legacySchema = CityDecorationContentCatalog.LEGACY_SCHEMA.equals(schemaVersion);
+        if (!CityDecorationContentCatalog.SCHEMA.equals(schemaVersion) && !legacySchema) {
             throw fail("CITY_DECORATION_CONTENT_INDEX_SCHEMA_UNSUPPORTED",
                     "Expected " + CityDecorationContentCatalog.SCHEMA + " but found " + schemaVersion + ".");
         }
@@ -79,7 +85,8 @@ public final class CityDecorationContentCatalogLoader {
                 throw fail("CITY_DECORATION_CONTENT_ENTRY_INVALID",
                         "contents[" + indexPosition + "] must be an object.");
             }
-            ParsedContent parsed = parseContent(element.getAsJsonObject(), root, templatesRoot, indexPosition);
+            ParsedContent parsed = parseContent(element.getAsJsonObject(), root, templatesRoot, indexPosition,
+                    schemaVersion, legacySchema);
             if (contents.containsKey(parsed.contentId())) {
                 throw fail("CITY_DECORATION_CONTENT_ID_DUPLICATE",
                         "Duplicate contentId: " + parsed.contentId());
@@ -87,12 +94,14 @@ public final class CityDecorationContentCatalogLoader {
             contents.put(parsed.contentId(), parsed.asContent());
         }
         validateTerrainDropFallbacks(contents);
-        return new CityDecorationContentCatalog(root, catalogHash(contents), contents);
+        return new CityDecorationContentCatalog(root, schemaVersion, catalogHash(schemaVersion, contents), contents);
     }
 
-    private ParsedContent parseContent(JsonObject entry, Path root, Path templatesRoot, int indexPosition) {
+    private ParsedContent parseContent(JsonObject entry, Path root, Path templatesRoot, int indexPosition,
+                                       String schemaVersion, boolean legacySchema) {
         rejectDerivedFields(entry, indexPosition);
-        rejectUnknownFields(entry, CONTENT_FIELDS, "contents[" + indexPosition + "]");
+        rejectUnknownFields(entry, legacySchema ? LEGACY_CONTENT_FIELDS : CONTENT_FIELDS,
+                "contents[" + indexPosition + "]");
         String contentId = requiredString(entry, "contentId");
         ResourceLocation parsedId = ResourceLocation.tryParse(contentId);
         if (parsedId == null || !parsedId.toString().equals(contentId)) {
@@ -113,13 +122,15 @@ public final class CityDecorationContentCatalogLoader {
                     "Only supportMode=full_footprint is supported in v0.2: " + contentId);
         }
         String placementMode = optionalString(entry, "placementMode", "above_surface");
-        if (!"above_surface".equals(placementMode) && !"replace_surface".equals(placementMode)) {
+        if (!"above_surface".equals(placementMode) && !"replace_surface".equals(placementMode)
+                && (legacySchema || !"embed_surface".equals(placementMode))) {
             throw fail("CITY_DECORATION_PLACEMENT_MODE_UNSUPPORTED",
-                    "placementMode must be above_surface or replace_surface: " + contentId);
+                    "placementMode must be above_surface, replace_surface or embed_surface: " + contentId);
         }
         String replacePolicy = optionalString(entry, "replacePolicy", "replaceable_only");
         boolean validReplacePair = "above_surface".equals(placementMode) && "replaceable_only".equals(replacePolicy)
-                || "replace_surface".equals(placementMode) && "surface_replaceable".equals(replacePolicy);
+                || ("replace_surface".equals(placementMode) || "embed_surface".equals(placementMode))
+                && "surface_replaceable".equals(replacePolicy);
         if (!validReplacePair) {
             throw fail("CITY_DECORATION_PLACEMENT_REPLACE_POLICY_MISMATCH",
                     "placementMode=" + placementMode + " cannot use replacePolicy=" + replacePolicy + ": " + contentId);
@@ -134,13 +145,30 @@ public final class CityDecorationContentCatalogLoader {
 
         CompoundTag template = readTemplate(nbtPath, contentId);
         CityDecorationContentCatalog.Size size = validateTemplate(template, contentId);
+        int groundPlaneLocalY = legacySchema ? 0 : requiredNonNegativeInt(entry, "groundPlaneLocalY", contentId);
+        int embedDepthBlocks = legacySchema ? 0 : requiredNonNegativeInt(entry, "embedDepthBlocks", contentId);
+        String clearanceMode = legacySchema ? "preserve" : requiredString(entry, "clearanceMode");
+        if (groundPlaneLocalY >= size.heightBlocks()) {
+            throw fail("CITY_DECORATION_GROUND_PLANE_INVALID",
+                    "groundPlaneLocalY must be inside the template height: " + contentId);
+        }
+        if (!"preserve".equals(clearanceMode) && !"clear_template_air".equals(clearanceMode)) {
+            throw fail("CITY_DECORATION_CLEARANCE_MODE_UNSUPPORTED",
+                    "clearanceMode must be preserve or clear_template_air: " + contentId);
+        }
+        if ("embed_surface".equals(placementMode) ? embedDepthBlocks <= 0 : embedDepthBlocks != 0) {
+            throw fail("CITY_DECORATION_EMBED_DEPTH_INVALID",
+                    "embed_surface requires positive embedDepthBlocks and other modes require zero: " + contentId);
+        }
         String normalizedNbtFile = Path.of(nbtFile).normalize().toString().replace('\\', '/');
-        String contentHash = contentHash(contentId, contentKind, normalizedNbtFile, allowedRotations,
-                supportMode, placementMode, replacePolicy, maxHeightSpread, comfortMargin, allowedSurfaceTags,
-                blockedSurfaceTags, tags, terrainDropFallbackContentRef, template);
+        String contentHash = contentHash(schemaVersion, contentId, contentKind, normalizedNbtFile, allowedRotations,
+                supportMode, placementMode, replacePolicy, groundPlaneLocalY, embedDepthBlocks, clearanceMode,
+                maxHeightSpread, comfortMargin, allowedSurfaceTags, blockedSurfaceTags, tags,
+                terrainDropFallbackContentRef, template);
         return new ParsedContent(contentId, contentKind, normalizedNbtFile, nbtPath, allowedRotations,
-                supportMode, placementMode, replacePolicy, maxHeightSpread, comfortMargin, allowedSurfaceTags,
-                blockedSurfaceTags, tags, terrainDropFallbackContentRef, size, contentHash, template);
+                supportMode, placementMode, replacePolicy, groundPlaneLocalY, embedDepthBlocks, clearanceMode,
+                maxHeightSpread, comfortMargin, allowedSurfaceTags, blockedSurfaceTags, tags,
+                terrainDropFallbackContentRef, size, contentHash, template);
     }
 
     private static void validateTerrainDropFallbacks(Map<String, CityDecorationContentCatalog.Content> contents) {
@@ -397,13 +425,17 @@ public final class CityDecorationContentCatalogLoader {
         }
     }
 
-    private static String contentHash(String contentId,
+    private static String contentHash(String schemaVersion,
+                                      String contentId,
                                       String contentKind,
                                       String nbtFile,
                                       List<Integer> rotations,
                                       String supportMode,
                                       String placementMode,
                                       String replacePolicy,
+                                      int groundPlaneLocalY,
+                                      int embedDepthBlocks,
+                                      String clearanceMode,
                                       int maxHeightSpread,
                                       int comfortMargin,
                                       List<String> allowedSurfaceTags,
@@ -412,7 +444,7 @@ public final class CityDecorationContentCatalogLoader {
                                       String terrainDropFallbackContentRef,
                                       CompoundTag template) {
         return hash(out -> {
-            writeString(out, CityDecorationContentCatalog.SCHEMA);
+            writeString(out, schemaVersion);
             writeString(out, contentId);
             writeString(out, contentKind);
             writeString(out, nbtFile);
@@ -420,6 +452,11 @@ public final class CityDecorationContentCatalogLoader {
             writeString(out, supportMode);
             writeString(out, placementMode);
             writeString(out, replacePolicy);
+            if (CityDecorationContentCatalog.SCHEMA.equals(schemaVersion)) {
+                out.writeInt(groundPlaneLocalY);
+                out.writeInt(embedDepthBlocks);
+                writeString(out, clearanceMode);
+            }
             out.writeInt(maxHeightSpread);
             out.writeInt(comfortMargin);
             writeStrings(out, allowedSurfaceTags);
@@ -437,9 +474,10 @@ public final class CityDecorationContentCatalogLoader {
         return element.getAsBigDecimal().intValueExact();
     }
 
-    private static String catalogHash(Map<String, CityDecorationContentCatalog.Content> contents) {
+    private static String catalogHash(String schemaVersion,
+                                      Map<String, CityDecorationContentCatalog.Content> contents) {
         return hash(out -> {
-            writeString(out, CityDecorationContentCatalog.SCHEMA);
+            writeString(out, schemaVersion);
             List<CityDecorationContentCatalog.Content> sorted = contents.values().stream()
                     .sorted(Comparator.comparing(CityDecorationContentCatalog.Content::contentId))
                     .toList();
@@ -571,6 +609,25 @@ public final class CityDecorationContentCatalogLoader {
         return object.get(key).getAsString().trim();
     }
 
+    private static int requiredNonNegativeInt(JsonObject object, String key, String contentId) {
+        if (!object.has(key)) {
+            throw fail("CITY_DECORATION_CONTENT_FIELD_MISSING", "Required integer field is missing: " + key);
+        }
+        try {
+            int value = exactInt(object.get(key));
+            if (value < 0) {
+                throw fail("CITY_DECORATION_CONTENT_FIELD_INVALID",
+                        key + " must be non-negative: " + contentId);
+            }
+            return value;
+        } catch (CatalogException ex) {
+            throw ex;
+        } catch (RuntimeException ex) {
+            throw fail("CITY_DECORATION_CONTENT_FIELD_INVALID",
+                    key + " must be an integer: " + contentId, ex);
+        }
+    }
+
     private static String optionalString(JsonObject object, String key, String fallback) {
         return object.has(key) ? requiredString(object, key) : fallback;
     }
@@ -607,6 +664,9 @@ public final class CityDecorationContentCatalogLoader {
                                  String supportMode,
                                  String placementMode,
                                  String replacePolicy,
+                                 int groundPlaneLocalY,
+                                 int embedDepthBlocks,
+                                 String clearanceMode,
                                  int maxFootprintHeightSpreadBlocks,
                                  int comfortMarginBlocks,
                                  List<String> allowedSurfaceTags,
@@ -618,9 +678,10 @@ public final class CityDecorationContentCatalogLoader {
                                  CompoundTag template) {
         CityDecorationContentCatalog.Content asContent() {
             return new CityDecorationContentCatalog.Content(contentId, contentKind, nbtFile, nbtPath,
-                    allowedRotations, supportMode, placementMode, replacePolicy, maxFootprintHeightSpreadBlocks,
-                    comfortMarginBlocks, allowedSurfaceTags, blockedSurfaceTags, tags, terrainDropFallbackContentRef,
-                    size, contentHash, template);
+                    allowedRotations, supportMode, placementMode, replacePolicy, groundPlaneLocalY,
+                    embedDepthBlocks, clearanceMode, maxFootprintHeightSpreadBlocks, comfortMarginBlocks,
+                    allowedSurfaceTags, blockedSurfaceTags, tags, terrainDropFallbackContentRef, size,
+                    contentHash, template);
         }
     }
 }

@@ -377,6 +377,9 @@ class CityDecorationChunkCompilerTest {
             content.add("allowedRotations", rotations);
             content.addProperty("maxFootprintHeightSpreadBlocks", spec.maxSpread());
             content.addProperty("comfortMarginBlocks", spec.comfortMargin());
+            content.addProperty("groundPlaneLocalY", 0);
+            content.addProperty("embedDepthBlocks", 0);
+            content.addProperty("clearanceMode", "preserve");
             if (spec.blockedSurfaceTags() != null) {
                 JsonArray blocked = new JsonArray();
                 spec.blockedSurfaceTags().forEach(blocked::add);

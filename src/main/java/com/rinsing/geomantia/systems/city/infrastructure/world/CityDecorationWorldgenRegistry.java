@@ -13,8 +13,10 @@ import com.rinsing.geomantia.systems.city.application.dressing.DecorationSlot;
 import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationChunkCompiler;
 import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationContentCatalog;
 import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationContentCatalogLoader;
+import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationFrozenTerrainPlanCodec;
 import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationStyleProfileCatalog;
 import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationStyleProfileCatalogLoader;
+import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationTerrainRunCompiler;
 import com.rinsing.geomantia.systems.city.infrastructure.json.CityJson;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -47,14 +49,18 @@ import java.util.Set;
 import java.util.WeakHashMap;
 
 public final class CityDecorationWorldgenRegistry {
-    public static final String ACTIVE_SCHEMA = "city_active_decoration_program_plans.v0.2";
-    public static final String LEDGER_SCHEMA = "city_decoration_worldgen_ledger.v0.2";
+    public static final String ACTIVE_SCHEMA = "city_active_decoration_program_plans.v0.3";
+    public static final String LEGACY_ACTIVE_SCHEMA = "city_active_decoration_program_plans.v0.2";
+    public static final String LEDGER_SCHEMA = "city_decoration_worldgen_ledger.v0.3";
+    public static final String LEGACY_LEDGER_SCHEMA = "city_decoration_worldgen_ledger.v0.2";
 
     private static final Logger LOGGER = LogUtils.getLogger();
     private static final String ACTIVE_DIR = "geomantia_city_masks";
     private static final String ACTIVE_FILE = "active_city_decoration_program_plans.json";
     private static final String LEDGER_FILE = "city_decoration_worldgen_ledger.json";
     private static final CompiledDecorationProgramCodec CODEC = new CompiledDecorationProgramCodec();
+    private static final CityDecorationFrozenTerrainPlanCodec FROZEN_TERRAIN_CODEC =
+            new CityDecorationFrozenTerrainPlanCodec();
     private static final CityDecorationContentCatalogLoader CATALOG_LOADER = new CityDecorationContentCatalogLoader();
     private static final CityDecorationStyleProfileCatalogLoader STYLE_LOADER =
             new CityDecorationStyleProfileCatalogLoader();
@@ -76,6 +82,7 @@ public final class CityDecorationWorldgenRegistry {
     private static LedgerPersistenceWriter ledgerPersistenceWriter = CityDecorationWorldgenRegistry::atomicWrite;
     private static Path activeServerRoot;
     private static Path activeCatalogRoot;
+    private static int lastLoadLegacyReactivationRequiredPlanCount;
 
     private CityDecorationWorldgenRegistry() {
     }
@@ -84,7 +91,17 @@ public final class CityDecorationWorldgenRegistry {
                                       CompiledDecorationProgramPlan plan,
                                       Path serverRoot,
                                       Path catalogRoot) {
+        requireNoFrozenTerrainRuns(plan);
+        return activate(dimensionId, plan, emptyFrozenPlan(plan), serverRoot, catalogRoot);
+    }
+
+    public static JsonObject activate(String dimensionId,
+                                      CompiledDecorationProgramPlan plan,
+                                      CityDecorationTerrainRunCompiler.FrozenPlan frozenTerrainPlan,
+                                      Path serverRoot,
+                                      Path catalogRoot) {
         Objects.requireNonNull(plan, "plan");
+        validateFrozenPlan(plan, frozenTerrainPlan);
         String dimension = dimensionId(dimensionId);
         Path server = normalized(serverRoot, "CITY_DECORATION_SERVER_ROOT_REQUIRED");
         Path catalogPath = normalized(catalogRoot, "CITY_DECORATION_CATALOG_ROOT_REQUIRED");
@@ -103,7 +120,7 @@ public final class CityDecorationWorldgenRegistry {
                             + existing.key().dimensionId() + "/" + existing.key().cityId());
                 }
             }
-            ACTIVE.put(key, new ActivePlan(key, plan, catalog));
+            ACTIVE.put(key, new ActivePlan(key, plan, catalog, frozenTerrainPlan));
             SUPPRESSIONS.entrySet().removeIf(entry -> entry.getValue().key().equals(key));
             FEATURE_OWNER_APPLICATIONS.clear();
             activeServerRoot = server;
@@ -125,7 +142,17 @@ public final class CityDecorationWorldgenRegistry {
                                          CompiledDecorationProgramPlan plan,
                                          Path serverRoot,
                                          Path catalogRoot) {
+        requireNoFrozenTerrainRuns(plan);
+        preflightActivate(dimensionId, plan, emptyFrozenPlan(plan), serverRoot, catalogRoot);
+    }
+
+    public static void preflightActivate(String dimensionId,
+                                         CompiledDecorationProgramPlan plan,
+                                         CityDecorationTerrainRunCompiler.FrozenPlan frozenTerrainPlan,
+                                         Path serverRoot,
+                                         Path catalogRoot) {
         Objects.requireNonNull(plan, "plan");
+        validateFrozenPlan(plan, frozenTerrainPlan);
         dimensionId(dimensionId);
         Path server = normalized(serverRoot, "CITY_DECORATION_SERVER_ROOT_REQUIRED");
         Path catalogPath = normalized(catalogRoot, "CITY_DECORATION_CATALOG_ROOT_REQUIRED");
@@ -136,6 +163,53 @@ public final class CityDecorationWorldgenRegistry {
         }
         validateStyleProfile(plan, STYLE_LOADER.load(catalogPath, catalog));
         readState(server, catalogPath, null, false);
+    }
+
+    private static void validateFrozenPlan(CompiledDecorationProgramPlan plan,
+                                           CityDecorationTerrainRunCompiler.FrozenPlan frozenTerrainPlan) {
+        Objects.requireNonNull(frozenTerrainPlan, "frozenTerrainPlan");
+        if (!CityDecorationTerrainRunCompiler.SCHEMA.equals(frozenTerrainPlan.schemaVersion())) {
+            throw new IllegalArgumentException("CITY_DECORATION_FROZEN_TERRAIN_SCHEMA_UNSUPPORTED: "
+                    + frozenTerrainPlan.schemaVersion());
+        }
+        if (!plan.cityId().equals(frozenTerrainPlan.cityId())) {
+            throw new IllegalArgumentException("CITY_DECORATION_FROZEN_TERRAIN_CITY_ID_MISMATCH");
+        }
+        if (!plan.catalogHash().equals(frozenTerrainPlan.catalogHash())) {
+            throw new IllegalArgumentException("CITY_DECORATION_FROZEN_TERRAIN_CATALOG_HASH_MISMATCH");
+        }
+        Map<String, CityDecorationTerrainRunCompiler.SlotOutcome> outcomes = frozenTerrainPlan.outcomesBySlotId();
+        for (CompiledDecorationProgram program : plan.programsInExecutionOrder()) {
+            if (!(program.pattern() instanceof CompiledDecorationProgram.CrossSectionRepeatPattern)
+                    && !(program.pattern() instanceof CompiledDecorationProgram.ParallelRowsPattern)) {
+                continue;
+            }
+            for (DecorationSlot slot : PROGRAM_PLANNER.project(program, program.targetMask().bounds())) {
+                if (!outcomes.containsKey(slot.slotId())) {
+                    throw new IllegalArgumentException("CITY_DECORATION_FROZEN_TERRAIN_SLOT_MISSING: "
+                            + slot.slotId());
+                }
+            }
+        }
+    }
+
+    private static CityDecorationTerrainRunCompiler.FrozenPlan emptyFrozenPlan(
+            CompiledDecorationProgramPlan plan) {
+        return new CityDecorationTerrainRunCompiler.FrozenPlan(CityDecorationTerrainRunCompiler.SCHEMA,
+                plan.cityId(), plan.catalogHash(), List.of(), List.of());
+    }
+
+    private static void requireNoFrozenTerrainRuns(CompiledDecorationProgramPlan plan) {
+        Objects.requireNonNull(plan, "plan");
+        if (requiresFrozenTerrain(plan)) {
+            throw new IllegalArgumentException("CITY_DECORATION_FROZEN_TERRAIN_PLAN_REQUIRED");
+        }
+    }
+
+    private static boolean requiresFrozenTerrain(CompiledDecorationProgramPlan plan) {
+        return plan.programsInExecutionOrder().stream().anyMatch(program ->
+                program.pattern() instanceof CompiledDecorationProgram.CrossSectionRepeatPattern
+                        || program.pattern() instanceof CompiledDecorationProgram.ParallelRowsPattern);
     }
 
     public static void preflightDeactivate(String dimensionId,
@@ -207,15 +281,21 @@ public final class CityDecorationWorldgenRegistry {
         ledger = loaded.ledger();
         ledgerPersistencePending = false;
         nextLedgerPersistenceRetryNanos = 0L;
+        lastLoadLegacyReactivationRequiredPlanCount = loaded.reactivationRequiredPlanCount();
         if (loaded.staleCatalogPlanCount() > 0) {
             persistActive();
             LOGGER.warn("Discarded {} stale City decoration active plan(s) after catalog change; replan before activation.",
                     loaded.staleCatalogPlanCount());
         }
+        if (loaded.reactivationRequiredPlanCount() > 0) {
+            persistActive();
+            LOGGER.warn("Discarded {} legacy City decoration continuous plan(s); rerun city_execute_d5 to freeze terrain.",
+                    loaded.reactivationRequiredPlanCount());
+        }
         if (!loaded.ledgerExists()) {
             persistLedger();
         }
-        LOGGER.info("Loaded City decoration v0.2 registry: activePlans={}, appliedFragments={}",
+        LOGGER.info("Loaded City decoration v0.3 registry: activePlans={}, appliedFragments={}",
                 ACTIVE.size(), appliedEntries().size());
     }
 
@@ -225,11 +305,13 @@ public final class CityDecorationWorldgenRegistry {
                                          boolean discardStaleCatalogPlans) {
         Map<ActiveKey, ActivePlan> loadedActive = new LinkedHashMap<>();
         int staleCatalogPlanCount = 0;
+        int reactivationRequiredPlanCount = 0;
 
         Path activePath = activePath(server);
         if (Files.isRegularFile(activePath)) {
             JsonObject persisted = readObject(activePath, "CITY_DECORATION_ACTIVE_PLAN_READ_FAILED");
-            requireSchema(persisted, ACTIVE_SCHEMA, "CITY_DECORATION_ACTIVE_PLAN_SCHEMA_UNSUPPORTED");
+            String activeSchema = requireOneOfSchemas(persisted, "CITY_DECORATION_ACTIVE_PLAN_SCHEMA_UNSUPPORTED",
+                    ACTIVE_SCHEMA, LEGACY_ACTIVE_SCHEMA);
             JsonArray plans = requiredArray(persisted, "plans");
             List<JsonObject> retainedPlans = new ArrayList<>();
             for (JsonElement element : plans) {
@@ -272,8 +354,18 @@ public final class CityDecorationWorldgenRegistry {
                     continue;
                 }
                 validateStyleProfile(plan, styles);
+                if (LEGACY_ACTIVE_SCHEMA.equals(activeSchema) && requiresFrozenTerrain(plan)) {
+                    reactivationRequiredPlanCount++;
+                    LOGGER.warn("Discarding legacy continuous City decoration plan {}/{}; D5 reactivation is required.",
+                            dimension, cityId);
+                    continue;
+                }
+                CityDecorationTerrainRunCompiler.FrozenPlan frozenTerrainPlan = ACTIVE_SCHEMA.equals(activeSchema)
+                        ? FROZEN_TERRAIN_CODEC.parse(requiredObject(entry, "frozenTerrainPlan"))
+                        : emptyFrozenPlan(plan);
+                validateFrozenPlan(plan, frozenTerrainPlan);
                 ActiveKey key = new ActiveKey(dimension, cityId);
-                if (loadedActive.putIfAbsent(key, new ActivePlan(key, plan, catalog)) != null) {
+                if (loadedActive.putIfAbsent(key, new ActivePlan(key, plan, catalog, frozenTerrainPlan)) != null) {
                     throw new IllegalArgumentException("CITY_DECORATION_ACTIVE_KEY_DUPLICATE: " + dimension + "/" + cityId);
                 }
             }
@@ -283,8 +375,14 @@ public final class CityDecorationWorldgenRegistry {
         boolean ledgerExists = Files.isRegularFile(ledgerPath);
         JsonObject loadedLedger = ledgerExists
                 ? readObject(ledgerPath, "CITY_DECORATION_LEDGER_READ_FAILED") : emptyLedger();
-        requireSchema(loadedLedger, LEDGER_SCHEMA, "CITY_DECORATION_LEDGER_SCHEMA_UNSUPPORTED");
-        return new LoadedState(Map.copyOf(loadedActive), loadedLedger, ledgerExists, staleCatalogPlanCount);
+        String ledgerSchema = requireOneOfSchemas(loadedLedger, "CITY_DECORATION_LEDGER_SCHEMA_UNSUPPORTED",
+                LEDGER_SCHEMA, LEGACY_LEDGER_SCHEMA);
+        if (LEGACY_LEDGER_SCHEMA.equals(ledgerSchema)) {
+            loadedLedger.addProperty("schemaVersion", LEDGER_SCHEMA);
+            loadedLedger.add("fragmentOutcomes", new JsonArray());
+        }
+        return new LoadedState(Map.copyOf(loadedActive), loadedLedger, ledgerExists, staleCatalogPlanCount,
+                reactivationRequiredPlanCount);
     }
 
     private static void validateStyleProfile(CompiledDecorationProgramPlan plan,
@@ -396,7 +494,8 @@ public final class CityDecorationWorldgenRegistry {
             return new ProgramProjection(program, List.of());
         }
         CityDecorationChunkCompiler.CompilationResult compilation = COMPILER.compile(
-                active.plan(), active.catalog(), owner.chunkX(), owner.chunkZ(), terrain);
+                active.plan(), active.catalog(), owner.chunkX(), owner.chunkZ(), terrain,
+                active.frozenTerrainPlan());
         List<OwnedFragment> fragments = compilation.fragments().stream()
                 .filter(fragment -> program.programId().equals(fragment.programId()))
                 .map(fragment -> new OwnedFragment(owner, fragment))
@@ -432,15 +531,19 @@ public final class CityDecorationWorldgenRegistry {
         List<OwnedFragment> pending = new ArrayList<>();
         for (OwnedFragment owned : projection.fragments()) {
             CityDecorationChunkCompiler.Fragment fragment = owned.fragment();
+            String ledgerKey = ledgerKey(active.key(), fragment, active.plan().catalogHash(),
+                    owned.owner().chunkX(), owned.owner().chunkZ());
             if (fragment.status() != CityDecorationChunkCompiler.Status.READY) {
+                String outcomeStatus = "DEFER".equals(fragment.runDecision())
+                        || defersProgram(fragment.reasonCode()) ? "deferred" : "skipped";
+                recordOutcome(ledgerKey, active.key(), fragment, active.plan().catalogHash(),
+                        owned.owner().chunkX(), owned.owner().chunkZ(), outcomeStatus, fragment.reasonCode());
                 skipped++;
                 continue;
             }
             // The feature hook calls us before the current feature writes trees or ground cover.
             registerSuppression(active.key(), fragment);
             ready++;
-            String ledgerKey = ledgerKey(active.key(), fragment, active.plan().catalogHash(),
-                    owned.owner().chunkX(), owned.owner().chunkZ());
             if (ledgerContains(ledgerKey)) {
                 alreadyApplied++;
             } else {
@@ -455,6 +558,13 @@ public final class CityDecorationWorldgenRegistry {
         for (OwnedFragment owned : pending) {
             CityDecorationNbtPlacer.PreflightResult preflight = PLACER.preflight(owned.fragment(), placementWorld);
             if (!preflight.ready()) {
+                CityDecorationChunkCompiler.Fragment fragment = owned.fragment();
+                String ledgerKey = ledgerKey(active.key(), fragment, active.plan().catalogHash(),
+                        owned.owner().chunkX(), owned.owner().chunkZ());
+                recordOutcome(ledgerKey, active.key(), fragment, active.plan().catalogHash(),
+                        owned.owner().chunkX(), owned.owner().chunkZ(),
+                        defersProgram(preflight.reasonCode()) ? "deferred" : "skipped",
+                        preflight.reasonCode());
                 if (defersProgram(preflight.reasonCode())) {
                     skipped++;
                     continue;
@@ -484,6 +594,8 @@ public final class CityDecorationWorldgenRegistry {
                             owned.owner().chunkX(), owned.owner().chunkZ(), result);
                     applied++;
                 } else {
+                    recordOutcome(ledgerKey, active.key(), fragment, active.plan().catalogHash(),
+                            owned.owner().chunkX(), owned.owner().chunkZ(), "failed", result.reasonCode());
                     failed++;
                 }
             } finally {
@@ -526,9 +638,21 @@ public final class CityDecorationWorldgenRegistry {
 
     public static synchronized JsonObject activeSummary() {
         JsonObject summary = new JsonObject();
-        summary.addProperty("schemaVersion", "city_active_decoration_summary.v0.2");
+        summary.addProperty("schemaVersion", "city_active_decoration_summary.v0.3");
         summary.addProperty("activePlanCount", ACTIVE.size());
         summary.addProperty("appliedFragmentCount", appliedEntries().size());
+        summary.addProperty("fragmentOutcomeCount", outcomeEntries().size());
+        summary.addProperty("frozenRunCount", ACTIVE.values().stream()
+                .mapToInt(active -> active.frozenTerrainPlan().runs().size()).sum());
+        summary.addProperty("foundationSegmentCount", ACTIVE.values().stream()
+                .mapToInt(active -> active.frozenTerrainPlan().foundationSegments().size()).sum());
+        summary.addProperty("lastLoadLegacyReactivationRequiredPlanCount",
+                lastLoadLegacyReactivationRequiredPlanCount);
+        JsonArray reasonCodes = new JsonArray();
+        if (lastLoadLegacyReactivationRequiredPlanCount > 0) {
+            reasonCodes.add("CITY_DECORATION_LEGACY_CONTINUOUS_REACTIVATION_REQUIRED");
+        }
+        summary.add("reasonCodes", reasonCodes);
         JsonArray keys = new JsonArray();
         ACTIVE.keySet().stream().sorted().forEach(key -> {
             JsonObject item = new JsonObject();
@@ -590,6 +714,7 @@ public final class CityDecorationWorldgenRegistry {
         ledgerPersistenceWriter = CityDecorationWorldgenRegistry::atomicWrite;
         activeServerRoot = null;
         activeCatalogRoot = null;
+        lastLoadLegacyReactivationRequiredPlanCount = 0;
     }
 
     static boolean enterFeatureOwnerForTests(Object generationScope,
@@ -642,6 +767,36 @@ public final class CityDecorationWorldgenRegistry {
                 .toList();
     }
 
+    /** Returns an immutable activation snapshot for noise generation; performs no world or file access. */
+    public static synchronized List<CityDecorationTerrainRunCompiler.FoundationSegment> foundationSegmentsForChunk(
+            String dimensionId, ChunkPos chunkPos) {
+        String dimension = dimensionId(dimensionId);
+        Objects.requireNonNull(chunkPos, "chunkPos");
+        int minX = chunkPos.getMinBlockX();
+        int maxX = chunkPos.getMaxBlockX();
+        int minZ = chunkPos.getMinBlockZ();
+        int maxZ = chunkPos.getMaxBlockZ();
+        List<CityDecorationTerrainRunCompiler.FoundationSegment> segments = new ArrayList<>();
+        for (ActivePlan active : ACTIVE.values()) {
+            if (!active.key().dimensionId().equals(dimension)) {
+                continue;
+            }
+            for (CityDecorationTerrainRunCompiler.FoundationSegment segment
+                    : active.frozenTerrainPlan().foundationSegments()) {
+                int expansion = segment.halfWidth() + segment.shoulderBlocks();
+                int segmentMinX = Math.min(segment.x0(), segment.x1()) - expansion;
+                int segmentMaxX = Math.max(segment.x0(), segment.x1()) + expansion;
+                int segmentMinZ = Math.min(segment.z0(), segment.z1()) - expansion;
+                int segmentMaxZ = Math.max(segment.z0(), segment.z1()) + expansion;
+                if (segmentMinX <= maxX && segmentMaxX >= minX
+                        && segmentMinZ <= maxZ && segmentMaxZ >= minZ) {
+                    segments.add(segment);
+                }
+            }
+        }
+        return List.copyOf(segments);
+    }
+
     private static synchronized boolean hasActiveDimension(String dimensionId) {
         return ACTIVE.keySet().stream().anyMatch(key -> key.dimensionId().equals(dimensionId));
     }
@@ -687,12 +842,27 @@ public final class CityDecorationWorldgenRegistry {
         entry.addProperty("contentRef", fragment.contentRef());
         entry.addProperty("contentHash", fragment.contentHash());
         entry.addProperty("placementMode", fragment.placementMode());
+        entry.addProperty("groundPlaneLocalY", fragment.groundPlaneLocalY());
+        entry.addProperty("embedDepthBlocks", fragment.embedDepthBlocks());
+        entry.addProperty("clearanceMode", fragment.clearanceMode());
         entry.addProperty("rotationDegrees", fragment.rotationDegrees());
         entry.addProperty("datumY", fragment.datumY());
         entry.addProperty("baseY", result.baseY());
         entry.addProperty("targetCount", result.targetCount());
+        if (fragment.runId() != null) {
+            entry.addProperty("runId", fragment.runId());
+            entry.addProperty("runOrdinal", fragment.runOrdinal());
+            entry.addProperty("terrainClass", fragment.terrainClass());
+            entry.addProperty("runDecision", fragment.runDecision());
+            entry.addProperty("foundationTargetY", fragment.foundationTargetY());
+            entry.addProperty("foundationPlanned", fragment.foundationPlanned());
+            entry.addProperty("foundationMaterialized", fragment.foundationMaterialized());
+            entry.addProperty("foundationApplied", fragment.foundationApplied());
+        }
         entry.addProperty("appliedAt", Instant.now().toString());
         appliedEntries().add(entry);
+        recordOutcome(ledgerKey, key, fragment, catalogHash, chunkX, chunkZ,
+                "applied", result.reasonCode());
         // World blocks are already placed at this point.  Keep the in-memory entry for
         // same-session idempotency; applyForChunk persists all successful fragments once.
         ledgerPersistencePending = true;
@@ -723,6 +893,65 @@ public final class CityDecorationWorldgenRegistry {
         return ledger.getAsJsonArray("appliedFragments");
     }
 
+    private static JsonArray outcomeEntries() {
+        if (!ledger.has("fragmentOutcomes") || !ledger.get("fragmentOutcomes").isJsonArray()) {
+            ledger.add("fragmentOutcomes", new JsonArray());
+        }
+        return ledger.getAsJsonArray("fragmentOutcomes");
+    }
+
+    private static synchronized void recordOutcome(String outcomeKey,
+                                                   ActiveKey key,
+                                                   CityDecorationChunkCompiler.Fragment fragment,
+                                                   String catalogHash,
+                                                   int chunkX,
+                                                   int chunkZ,
+                                                   String status,
+                                                   String reasonCode) {
+        JsonObject entry = new JsonObject();
+        entry.addProperty("outcomeKey", outcomeKey);
+        entry.addProperty("dimensionId", key.dimensionId());
+        entry.addProperty("cityId", key.cityId());
+        entry.addProperty("programId", fragment.programId());
+        entry.addProperty("programHash", fragment.programHash());
+        entry.addProperty("catalogHash", catalogHash);
+        entry.addProperty("chunkX", chunkX);
+        entry.addProperty("chunkZ", chunkZ);
+        entry.addProperty("fragmentId", fragment.fragmentId());
+        entry.addProperty("slotId", fragment.slotId());
+        entry.addProperty("contentRef", fragment.contentRef());
+        entry.addProperty("placementMode", fragment.placementMode());
+        entry.addProperty("groundPlaneLocalY", fragment.groundPlaneLocalY());
+        entry.addProperty("embedDepthBlocks", fragment.embedDepthBlocks());
+        entry.addProperty("clearanceMode", fragment.clearanceMode());
+        entry.addProperty("status", status);
+        entry.addProperty("reasonCode", reasonCode);
+        if (fragment.runId() != null) {
+            entry.addProperty("runId", fragment.runId());
+            entry.addProperty("runOrdinal", fragment.runOrdinal());
+            entry.addProperty("terrainClass", fragment.terrainClass());
+            entry.addProperty("runDecision", fragment.runDecision());
+            entry.addProperty("frozenSurfaceY", fragment.frozenSurfaceY());
+            entry.addProperty("foundationTargetY", fragment.foundationTargetY());
+            entry.addProperty("foundationPlanned", fragment.foundationPlanned());
+            entry.addProperty("foundationMaterialized", fragment.foundationMaterialized());
+            entry.addProperty("foundationApplied", fragment.foundationApplied());
+        }
+        entry.addProperty("observedAt", Instant.now().toString());
+        JsonArray outcomes = outcomeEntries();
+        for (int index = 0; index < outcomes.size(); index++) {
+            JsonElement existing = outcomes.get(index);
+            if (existing.isJsonObject() && outcomeKey.equals(
+                    stringValue(existing.getAsJsonObject(), "outcomeKey", ""))) {
+                outcomes.set(index, entry);
+                ledgerPersistencePending = true;
+                return;
+            }
+        }
+        outcomes.add(entry);
+        ledgerPersistencePending = true;
+    }
+
     private static synchronized void persistActive() {
         atomicWrite(activePath(activeServerRoot), activePlansDocument(), "CITY_DECORATION_ACTIVE_PLAN_WRITE_FAILED");
     }
@@ -736,6 +965,7 @@ public final class CityDecorationWorldgenRegistry {
             entry.addProperty("cityId", active.key().cityId());
             entry.addProperty("catalogHash", active.plan().catalogHash());
             entry.add("compiledPlan", CODEC.toJson(active.plan()));
+            entry.add("frozenTerrainPlan", FROZEN_TERRAIN_CODEC.toJson(active.frozenTerrainPlan()));
             plans.add(entry);
         });
         return root;
@@ -754,7 +984,8 @@ public final class CityDecorationWorldgenRegistry {
             return 0;
         }
         JsonObject persisted = readObject(path, "CITY_DECORATION_ACTIVE_PLAN_READ_FAILED");
-        requireSchema(persisted, ACTIVE_SCHEMA, "CITY_DECORATION_ACTIVE_PLAN_SCHEMA_UNSUPPORTED");
+        requireOneOfSchemas(persisted, "CITY_DECORATION_ACTIVE_PLAN_SCHEMA_UNSUPPORTED",
+                ACTIVE_SCHEMA, LEGACY_ACTIVE_SCHEMA);
         return requiredArray(persisted, "plans").size();
     }
 
@@ -836,6 +1067,7 @@ public final class CityDecorationWorldgenRegistry {
         JsonObject root = new JsonObject();
         root.addProperty("schemaVersion", LEDGER_SCHEMA);
         root.add("appliedFragments", new JsonArray());
+        root.add("fragmentOutcomes", new JsonArray());
         return root;
     }
 
@@ -844,6 +1076,16 @@ public final class CityDecorationWorldgenRegistry {
         if (!expected.equals(actual)) {
             throw new IllegalArgumentException(reasonCode + ": " + actual);
         }
+    }
+
+    private static String requireOneOfSchemas(JsonObject object, String reasonCode, String... supported) {
+        String actual = requiredString(object, "schemaVersion");
+        for (String expected : supported) {
+            if (expected.equals(actual)) {
+                return actual;
+            }
+        }
+        throw new IllegalArgumentException(reasonCode + ": " + actual);
     }
 
     private static JsonArray requiredArray(JsonObject object, String key) {
@@ -918,13 +1160,15 @@ public final class CityDecorationWorldgenRegistry {
 
     private record ActivePlan(ActiveKey key,
                               CompiledDecorationProgramPlan plan,
-                              CityDecorationContentCatalog catalog) {
+                              CityDecorationContentCatalog catalog,
+                              CityDecorationTerrainRunCompiler.FrozenPlan frozenTerrainPlan) {
     }
 
     private record LoadedState(Map<ActiveKey, ActivePlan> activePlans,
                                JsonObject ledger,
                                boolean ledgerExists,
-                               int staleCatalogPlanCount) {
+                               int staleCatalogPlanCount,
+                               int reactivationRequiredPlanCount) {
     }
 
     private record SuppressionRecord(ActiveKey key, String fragmentId,

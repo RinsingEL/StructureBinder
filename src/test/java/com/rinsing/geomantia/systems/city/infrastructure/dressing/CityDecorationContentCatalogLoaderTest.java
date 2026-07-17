@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -130,6 +131,85 @@ class CityDecorationContentCatalogLoaderTest {
                 CityDecorationContentCatalog.CatalogException.class,
                 () -> new CityDecorationContentCatalogLoader().load(root));
         assertEquals("CITY_DECORATION_PLACEMENT_REPLACE_POLICY_MISMATCH", mismatch.reasonCode());
+    }
+
+    @Test
+    void v3RequiresAndHashesExplicitPlacementPose(@TempDir Path root) throws Exception {
+        writeTemplate(root.resolve("templates/channel.nbt"), 1, 3, 1, "minecraft:water", false);
+        writeIndex(root, v3Content("city:prefab/channel", "templates/channel.nbt", """
+                ,
+                      "placementMode": "embed_surface",
+                      "replacePolicy": "surface_replaceable",
+                      "groundPlaneLocalY": 1,
+                      "embedDepthBlocks": 2,
+                      "clearanceMode": "clear_template_air"
+                """));
+
+        CityDecorationContentCatalog catalog = new CityDecorationContentCatalogLoader().load(root);
+        CityDecorationContentCatalog.Content content = catalog.requireContent("city:prefab/channel");
+        assertEquals(CityDecorationContentCatalog.SCHEMA, catalog.schemaVersion());
+        assertFalse(catalog.legacySchema());
+        assertEquals(1, content.groundPlaneLocalY());
+        assertEquals(2, content.embedDepthBlocks());
+        assertEquals("clear_template_air", content.clearanceMode());
+
+        String firstHash = content.contentHash();
+        writeIndex(root, v3Content("city:prefab/channel", "templates/channel.nbt", """
+                ,
+                      "placementMode": "embed_surface",
+                      "replacePolicy": "surface_replaceable",
+                      "groundPlaneLocalY": 1,
+                      "embedDepthBlocks": 1,
+                      "clearanceMode": "clear_template_air"
+                """));
+        assertNotEquals(firstHash, new CityDecorationContentCatalogLoader().load(root)
+                .requireContent("city:prefab/channel").contentHash());
+    }
+
+    @Test
+    void v3RejectsMissingOrInvalidPoseFields(@TempDir Path root) throws Exception {
+        writeTemplate(root.resolve("templates/channel.nbt"), 1, 2, 1, "minecraft:water", false);
+        writeIndex(root, """
+                {
+                  "schemaVersion": "city_decoration_content_index.v0.3",
+                  "contents": [{
+                    "contentId": "city:prefab/channel",
+                    "contentKind": "prefab",
+                    "nbtFile": "templates/channel.nbt"
+                  }]
+                }
+                """);
+        assertEquals("CITY_DECORATION_CONTENT_FIELD_MISSING", assertThrows(
+                CityDecorationContentCatalog.CatalogException.class,
+                () -> new CityDecorationContentCatalogLoader().load(root)).reasonCode());
+
+        writeIndex(root, v3Content("city:prefab/channel", "templates/channel.nbt", """
+                ,
+                      "placementMode": "embed_surface",
+                      "replacePolicy": "surface_replaceable",
+                      "groundPlaneLocalY": 2,
+                      "embedDepthBlocks": 0,
+                      "clearanceMode": "unknown"
+                """));
+        assertEquals("CITY_DECORATION_GROUND_PLANE_INVALID", assertThrows(
+                CityDecorationContentCatalog.CatalogException.class,
+                () -> new CityDecorationContentCatalogLoader().load(root)).reasonCode());
+    }
+
+    @Test
+    void v2CatalogRemainsReadOnlyCompatibleWithLegacyPoseDefaults(@TempDir Path root) throws Exception {
+        writeTemplate(root.resolve("templates/legacy.nbt"), 1, 1, 1, "minecraft:stone", false);
+        writeIndex(root, content("city:prefab/legacy", "templates/legacy.nbt", ""));
+
+        CityDecorationContentCatalog catalog = new CityDecorationContentCatalogLoader().load(root);
+        CityDecorationContentCatalog.Content content = catalog.requireContent("city:prefab/legacy");
+        assertEquals(CityDecorationContentCatalog.LEGACY_SCHEMA, catalog.schemaVersion());
+        assertTrue(catalog.legacySchema());
+        assertEquals(0, content.groundPlaneLocalY());
+        assertEquals(0, content.embedDepthBlocks());
+        assertEquals("preserve", content.clearanceMode());
+        assertTrue(Files.readString(root.resolve("content_index.json"))
+                .contains("city_decoration_content_index.v0.2"));
     }
 
     @Test
@@ -256,6 +336,11 @@ class CityDecorationContentCatalogLoaderTest {
 
     private static String content(String contentId, String nbtFile, String extraFields) {
         return "{\n  \"schemaVersion\": \"city_decoration_content_index.v0.2\",\n"
+                + "  \"contents\": [" + contentEntry(contentId, nbtFile, extraFields) + "]\n}";
+    }
+
+    private static String v3Content(String contentId, String nbtFile, String extraFields) {
+        return "{\n  \"schemaVersion\": \"city_decoration_content_index.v0.3\",\n"
                 + "  \"contents\": [" + contentEntry(contentId, nbtFile, extraFields) + "]\n}";
     }
 

@@ -10,20 +10,32 @@ import java.util.Map;
 import java.util.Objects;
 
 public final class CityDecorationContentCatalog {
-    public static final String SCHEMA = "city_decoration_content_index.v0.2";
+    public static final String SCHEMA = "city_decoration_content_index.v0.3";
+    public static final String LEGACY_SCHEMA = "city_decoration_content_index.v0.2";
 
     private final Path catalogRoot;
+    private final String schemaVersion;
     private final String catalogHash;
     private final Map<String, Content> contents;
 
-    CityDecorationContentCatalog(Path catalogRoot, String catalogHash, Map<String, Content> contents) {
+    CityDecorationContentCatalog(Path catalogRoot, String schemaVersion, String catalogHash,
+                                 Map<String, Content> contents) {
         this.catalogRoot = Objects.requireNonNull(catalogRoot, "catalogRoot");
+        this.schemaVersion = Objects.requireNonNull(schemaVersion, "schemaVersion");
         this.catalogHash = Objects.requireNonNull(catalogHash, "catalogHash");
         this.contents = Collections.unmodifiableMap(new LinkedHashMap<>(contents));
     }
 
     public Path catalogRoot() {
         return catalogRoot;
+    }
+
+    public String schemaVersion() {
+        return schemaVersion;
+    }
+
+    public boolean legacySchema() {
+        return LEGACY_SCHEMA.equals(schemaVersion);
     }
 
     public String catalogHash() {
@@ -52,6 +64,9 @@ public final class CityDecorationContentCatalog {
         private final String supportMode;
         private final String placementMode;
         private final String replacePolicy;
+        private final int groundPlaneLocalY;
+        private final int embedDepthBlocks;
+        private final String clearanceMode;
         private final int maxFootprintHeightSpreadBlocks;
         private final int comfortMarginBlocks;
         private final List<String> allowedSurfaceTags;
@@ -72,6 +87,9 @@ public final class CityDecorationContentCatalog {
                 String supportMode,
                 String placementMode,
                 String replacePolicy,
+                int groundPlaneLocalY,
+                int embedDepthBlocks,
+                String clearanceMode,
                 int maxFootprintHeightSpreadBlocks,
                 int comfortMarginBlocks,
                 List<String> allowedSurfaceTags,
@@ -89,6 +107,9 @@ public final class CityDecorationContentCatalog {
             this.supportMode = supportMode;
             this.placementMode = placementMode;
             this.replacePolicy = replacePolicy;
+            this.groundPlaneLocalY = groundPlaneLocalY;
+            this.embedDepthBlocks = embedDepthBlocks;
+            this.clearanceMode = clearanceMode;
             this.maxFootprintHeightSpreadBlocks = maxFootprintHeightSpreadBlocks;
             this.comfortMarginBlocks = comfortMarginBlocks;
             this.allowedSurfaceTags = List.copyOf(allowedSurfaceTags);
@@ -136,6 +157,18 @@ public final class CityDecorationContentCatalog {
 
         public String replacePolicy() {
             return replacePolicy;
+        }
+
+        public int groundPlaneLocalY() {
+            return groundPlaneLocalY;
+        }
+
+        public int embedDepthBlocks() {
+            return embedDepthBlocks;
+        }
+
+        public String clearanceMode() {
+            return clearanceMode;
         }
 
         public int maxFootprintHeightSpreadBlocks() {

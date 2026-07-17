@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "city_decoration_content_index.v0.2",
+  "schemaVersion": "city_decoration_content_index.v0.3",
   "contents": [
     {
       "contentId": "geomantia:decoration/crop_tile",
@@ -8,6 +8,9 @@
       "allowedRotations": [0, 90, 180, 270],
       "placementMode": "replace_surface",
       "replacePolicy": "surface_replaceable",
+      "groundPlaneLocalY": 0,
+      "embedDepthBlocks": 0,
+      "clearanceMode": "preserve",
       "comfortMarginBlocks": 0,
       "tags": ["agriculture", "crop"]
     },
@@ -18,6 +21,9 @@
       "allowedRotations": [0, 90, 180, 270],
       "placementMode": "replace_surface",
       "replacePolicy": "surface_replaceable",
+      "groundPlaneLocalY": 0,
+      "embedDepthBlocks": 0,
+      "clearanceMode": "preserve",
       "comfortMarginBlocks": 0,
       "terrainDropFallbackContentRef": "geomantia:decoration/crop_tile",
       "tags": ["agriculture", "water_channel"]
@@ -27,6 +33,9 @@
       "contentKind": "prefab",
       "nbtFile": "templates/field_border.nbt",
       "allowedRotations": [0, 90, 180, 270],
+      "groundPlaneLocalY": 0,
+      "embedDepthBlocks": 0,
+      "clearanceMode": "preserve",
       "comfortMarginBlocks": 0,
       "tags": ["agriculture", "field_border"]
     },
@@ -37,6 +46,9 @@
       "allowedRotations": [0, 90, 180, 270],
       "placementMode": "replace_surface",
       "replacePolicy": "surface_replaceable",
+      "groundPlaneLocalY": 0,
+      "embedDepthBlocks": 0,
+      "clearanceMode": "preserve",
       "comfortMarginBlocks": 0,
       "tags": ["path", "agriculture"]
     }

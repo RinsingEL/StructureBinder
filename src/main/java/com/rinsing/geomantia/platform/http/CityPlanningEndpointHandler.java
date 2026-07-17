@@ -60,9 +60,11 @@ import com.rinsing.geomantia.systems.city.infrastructure.preview.CityWallPreview
 import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationContentCatalog;
 import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationContentCatalogLoader;
 import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationDefaultCatalogBootstrap;
+import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationFrozenTerrainPlanCodec;
 import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationStyleProfileCatalog;
 import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationStyleProfileCatalogLoader;
 import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationStyleProfileResolver;
+import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationTerrainRunCompiler;
 import com.rinsing.geomantia.systems.city.infrastructure.landuse.LandUseDefaultConfigBootstrap;
 import com.rinsing.geomantia.systems.city.infrastructure.landuse.LandUseSettingsLoader;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityDecorationWorldgenRegistry;
@@ -74,6 +76,7 @@ import com.rinsing.geomantia.systems.city.infrastructure.world.CitySurfaceCache;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityWallPlacementBackend;
 import com.rinsing.geomantia.systems.city.infrastructure.world.MinecraftCityStructureMaterializationBackend;
 import com.rinsing.geomantia.systems.city.infrastructure.world.MinecraftCityStructureEnvelopeSampler;
+import com.rinsing.geomantia.systems.city.infrastructure.world.MinecraftCityDecorationTerrainSampler;
 import com.rinsing.geomantia.systems.city.infrastructure.world.MinecraftCityTemplateReader;
 import com.rinsing.geomantia.systems.city.infrastructure.world.MinecraftCityWorldgenStatusInspector;
 import com.rinsing.geomantia.systems.city.infrastructure.world.WorldEditMutationBackend;
@@ -1295,6 +1298,8 @@ final class CityPlanningEndpointHandler {
             }
         }
         CompiledDecorationProgramPlan compiledDecorationPlan = null;
+        CityDecorationTerrainRunCompiler.FrozenPlan frozenDecorationTerrainPlan = null;
+        List<DecorationSlot> decorationSlots = List.of();
         DecorationMaskCounts decorationMaskCounts = DecorationMaskCounts.empty();
         if (decorationWorldgenMode) {
             JsonObject completion = readDecorationCompletion(decorationCompletePath);
@@ -1317,17 +1322,29 @@ final class CityPlanningEndpointHandler {
             validateCompiledDecorationStyleProfile(compiledDecorationPlan, catalog, decorationCatalogRoot);
             JsonObject projection = JsonParser.parseString(Files.readString(decorationSlotProjectionPath))
                     .getAsJsonObject();
-            List<DecorationSlot> decorationSlots = parseDecorationProjectionSlots(projection, compiledDecorationPlan,
+            decorationSlots = parseDecorationProjectionSlots(projection, compiledDecorationPlan,
                     "CITY_DECORATION_D5_SLOT_PROJECTION");
             validateDecorationSlotProjection(compiledDecorationPlan, decorationSlots,
                     "CITY_DECORATION_D5_SLOT_PROJECTION_MISMATCH");
             decorationMaskCounts = appendDecorationProjectionMasks(activeMaskPlan, compiledDecorationPlan,
                     decorationSlots);
+            boolean requiresTerrainSampler = compiledDecorationPlan.programsInExecutionOrder().stream()
+                    .anyMatch(program -> program.pattern() instanceof CompiledDecorationProgram.CrossSectionRepeatPattern
+                            || program.pattern() instanceof CompiledDecorationProgram.ParallelRowsPattern);
+            if (requiresTerrainSampler && level == null) {
+                throw new IllegalArgumentException("CITY_DECORATION_TERRAIN_SAMPLER_LEVEL_REQUIRED: "
+                        + "load the target ServerLevel before city_execute_d5 so continuous runs can be frozen.");
+            }
+            frozenDecorationTerrainPlan = requiresTerrainSampler
+                    ? new CityDecorationTerrainRunCompiler().compile(compiledDecorationPlan, catalog,
+                    new MinecraftCityDecorationTerrainSampler(level))
+                    : new CityDecorationTerrainRunCompiler.FrozenPlan(CityDecorationTerrainRunCompiler.SCHEMA,
+                    compiledDecorationPlan.cityId(), compiledDecorationPlan.catalogHash(), List.of(), List.of());
         }
         String decorationCityId = stringValue(materializationPlan, "cityId", citySeedId);
         if (decorationWorldgenMode) {
             CityDecorationWorldgenRegistry.preflightActivate(metadata.dimensionId(), compiledDecorationPlan,
-                    serverRoot, decorationCatalogRoot);
+                    frozenDecorationTerrainPlan, serverRoot, decorationCatalogRoot);
         } else {
             CityDecorationWorldgenRegistry.preflightDeactivate(metadata.dimensionId(), decorationCityId,
                     serverRoot, decorationCatalogRoot);
@@ -1350,7 +1367,7 @@ final class CityPlanningEndpointHandler {
                 runId, citySeedId, serverRoot);
         JsonObject activeDecorationSummary = decorationWorldgenMode
                 ? CityDecorationWorldgenRegistry.activate(metadata.dimensionId(), compiledDecorationPlan,
-                        serverRoot, decorationCatalogRoot)
+                        frozenDecorationTerrainPlan, serverRoot, decorationCatalogRoot)
                 : CityDecorationWorldgenRegistry.deactivate(metadata.dimensionId(),
                         decorationCityId, serverRoot, decorationCatalogRoot);
         JsonObject activeLandUseSummary = landUsePlan != null
@@ -1364,6 +1381,9 @@ final class CityPlanningEndpointHandler {
         Path roadWeaverReportPath = d5Dir.resolve("roadweaver_registration_report.json");
         Path roadProviderStatePath = d5Dir.resolve("road_provider_state.json");
         Path activeDecorationPath = d5Dir.resolve("active_city_decoration_summary.json");
+        Path frozenDecorationTerrainPath = d5Dir.resolve("frozen_city_decoration_terrain_plan.json");
+        Path decorationTerrainTracePath = d5Dir.resolve("city_decoration_terrain_activation_trace.json");
+        Path decorationActivationPreviewPath = d5Dir.resolve("city_decoration_preview_index.json");
         Path activeLandUsePath = d5Dir.resolve("active_city_land_use_summary.json");
         Files.writeString(reportPath, CityJson.GSON.toJson(report.asJson()));
         Files.writeString(activeMaskPath, CityJson.GSON.toJson(CityReservationMaskRegistry.activeSummary()));
@@ -1382,6 +1402,16 @@ final class CityPlanningEndpointHandler {
         roadProviderState.add("roadWeaverRegistrationReport", roadWeaverRegistrationReport.deepCopy());
         Files.writeString(roadProviderStatePath, CityJson.GSON.toJson(roadProviderState));
         Files.writeString(activeDecorationPath, CityJson.GSON.toJson(activeDecorationSummary));
+        JsonObject decorationTerrainTrace = null;
+        JsonObject decorationActivationPreview = null;
+        if (frozenDecorationTerrainPlan != null) {
+            Files.writeString(frozenDecorationTerrainPath, CityJson.GSON.toJson(
+                    new CityDecorationFrozenTerrainPlanCodec().toJson(frozenDecorationTerrainPlan)));
+            decorationTerrainTrace = decorationTerrainActivationTrace(frozenDecorationTerrainPlan);
+            Files.writeString(decorationTerrainTracePath, CityJson.GSON.toJson(decorationTerrainTrace));
+            decorationActivationPreview = new CityDecorationPreviewRenderer().render(
+                    compiledDecorationPlan, decorationSlots, frozenDecorationTerrainPlan, d5Dir);
+        }
         Files.writeString(activeLandUsePath, CityJson.GSON.toJson(activeLandUseSummary));
 
         JsonObject response = new JsonObject();
@@ -1404,6 +1434,12 @@ final class CityPlanningEndpointHandler {
         response.add("roadWeaverRegistrationReport", roadWeaverRegistrationReport);
         response.add("roadProviderState", roadProviderState);
         response.add("activeDecorationSummary", activeDecorationSummary);
+        if (frozenDecorationTerrainPlan != null) {
+            response.add("frozenDecorationTerrainPlan",
+                    new CityDecorationFrozenTerrainPlanCodec().toJson(frozenDecorationTerrainPlan));
+            response.add("decorationTerrainActivationTrace", decorationTerrainTrace);
+            response.add("decorationActivationPreviewIndex", decorationActivationPreview);
+        }
         response.add("activeLandUseSummary", activeLandUseSummary);
         if (landUseChunkPreflight != null) {
             response.add("landUseChunkPreflight", landUseChunkPreflightJson(landUseChunkPreflight));
@@ -1429,6 +1465,12 @@ final class CityPlanningEndpointHandler {
                     debugRef(debugRoot, compiledDecorationPath));
             artifacts.addProperty("sourceDecorationSlotProjection",
                     debugRef(debugRoot, decorationSlotProjectionPath));
+            artifacts.addProperty("frozenDecorationTerrainPlan",
+                    debugRef(debugRoot, frozenDecorationTerrainPath));
+            artifacts.addProperty("decorationTerrainActivationTrace",
+                    debugRef(debugRoot, decorationTerrainTracePath));
+            artifacts.addProperty("decorationActivationPreviewIndex",
+                    debugRef(debugRoot, decorationActivationPreviewPath));
             artifacts.addProperty("serverActiveDecorationPlans",
                     CityDecorationWorldgenRegistry.activePlansPath(serverRoot).toString());
             artifacts.addProperty("serverDecorationWorldgenLedger",
@@ -2808,7 +2850,13 @@ final class CityPlanningEndpointHandler {
     private static JsonObject decorationCatalogSummary(CityDecorationContentCatalog catalog,
                                                        CityDecorationStyleProfileCatalog styleProfiles) {
         JsonObject response = new JsonObject();
-        response.addProperty("schemaVersion", "city_decoration_catalog_query.v0.2");
+        response.addProperty("schemaVersion", "city_decoration_catalog_query.v0.3");
+        response.addProperty("contentIndexSchemaVersion", catalog.schemaVersion());
+        boolean contentPoseUpgradeRequired = CityDecorationContentCatalog.LEGACY_SCHEMA
+                .equals(catalog.schemaVersion());
+        response.addProperty("contentPoseUpgradeRequired", contentPoseUpgradeRequired);
+        response.addProperty("upgradeMode", contentPoseUpgradeRequired
+                ? "explicit_managed_default_only" : "none");
         response.addProperty("catalogHash", catalog.catalogHash());
         JsonArray contents = new JsonArray();
         for (CityDecorationContentCatalog.Content content : catalog.contents().values()) {
@@ -2823,6 +2871,9 @@ final class CityPlanningEndpointHandler {
             summary.addProperty("replacePolicy", content.replacePolicy());
             summary.addProperty("maxFootprintHeightSpreadBlocks", content.maxFootprintHeightSpreadBlocks());
             summary.addProperty("comfortMarginBlocks", content.comfortMarginBlocks());
+            summary.addProperty("groundPlaneLocalY", content.groundPlaneLocalY());
+            summary.addProperty("embedDepthBlocks", content.embedDepthBlocks());
+            summary.addProperty("clearanceMode", content.clearanceMode());
             JsonArray tags = new JsonArray();
             content.tags().forEach(tags::add);
             summary.add("tags", tags);
@@ -3197,6 +3248,49 @@ final class CityPlanningEndpointHandler {
         }
         trace.add("programs", programs);
         return trace;
+    }
+
+    private static JsonObject decorationTerrainActivationTrace(
+            CityDecorationTerrainRunCompiler.FrozenPlan frozen) {
+        JsonObject trace = new JsonObject();
+        trace.addProperty("schemaVersion", "city_decoration_terrain_activation_trace.v0.1");
+        trace.addProperty("cityId", frozen.cityId());
+        trace.addProperty("catalogHash", frozen.catalogHash());
+        trace.addProperty("runCount", frozen.runs().size());
+        trace.addProperty("foundationSegmentCount", frozen.foundationSegments().size());
+        Map<String, Integer> decisionCounts = new java.util.TreeMap<>();
+        Map<String, Integer> terrainClassCounts = new java.util.TreeMap<>();
+        Map<String, Integer> reasonCounts = new java.util.TreeMap<>();
+        JsonArray runs = new JsonArray();
+        for (CityDecorationTerrainRunCompiler.Run run : frozen.runs()) {
+            JsonObject item = new JsonObject();
+            item.addProperty("runId", run.runId());
+            item.addProperty("programId", run.programId());
+            item.addProperty("paletteSlotId", run.paletteSlotId());
+            item.addProperty("continuationAxis", run.continuationAxis().serializedName());
+            item.addProperty("crossCoordinate", run.crossCoordinate());
+            item.addProperty("slotCount", run.slots().size());
+            item.addProperty("terminationOrdinal", run.terminationOrdinal());
+            item.addProperty("terminationReasonCode", run.terminationReasonCode());
+            item.addProperty("foundationSegmentCount", run.foundationSegments().size());
+            runs.add(item);
+            for (CityDecorationTerrainRunCompiler.SlotOutcome outcome : run.slots()) {
+                decisionCounts.merge(outcome.decision().name(), 1, Integer::sum);
+                terrainClassCounts.merge(outcome.terrainClass().name(), 1, Integer::sum);
+                reasonCounts.merge(outcome.reasonCode(), 1, Integer::sum);
+            }
+        }
+        trace.add("runs", runs);
+        trace.add("decisionCounts", countMapJson(decisionCounts));
+        trace.add("terrainClassCounts", countMapJson(terrainClassCounts));
+        trace.add("reasonCounts", countMapJson(reasonCounts));
+        return trace;
+    }
+
+    private static JsonObject countMapJson(Map<String, Integer> counts) {
+        JsonObject result = new JsonObject();
+        counts.forEach(result::addProperty);
+        return result;
     }
 
     private static Path decorationDir(Path runDir, String citySeedId) {

@@ -19,6 +19,7 @@ import com.rinsing.geomantia.systems.city.domain.model.CitySiteContext;
 import com.rinsing.geomantia.systems.city.domain.model.LandformPatchSummary;
 import com.rinsing.geomantia.systems.city.infrastructure.json.CityJson;
 import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationDefaultCatalogBootstrap;
+import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationContentCatalog;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityDecorationWorldgenRegistry;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityReservationMaskRegistry;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityRoadWeaverBridge;
@@ -938,7 +939,7 @@ class CityPlanningEndpointHandlerTest {
             assertTrue(Files.exists(debugRoot.resolve(artifacts.get(key).getAsString())), key);
         }
         JsonObject previewIndex = dressing.getAsJsonObject("decorationPreviewIndex");
-        assertEquals("city_decoration_preview_index.v0.2",
+        assertEquals("city_decoration_preview_index.v0.3",
                 previewIndex.get("schemaVersion").getAsString());
         assertTrue(Files.exists(Path.of(previewIndex.getAsJsonArray("previews").get(0).getAsJsonObject()
                 .get("path").getAsString())));
@@ -1095,11 +1096,18 @@ class CityPlanningEndpointHandlerTest {
     void decorationCatalogQueryAndPlanningFailuresAreExplicit() throws Exception {
         Path catalogRoot = createDecorationCatalog();
         JsonObject query = CityPlanningEndpointHandler.handleQueryDecorationCatalog(catalogRoot);
-        assertEquals("city_decoration_catalog_query.v0.2", query.get("schemaVersion").getAsString());
+        assertEquals("city_decoration_catalog_query.v0.3", query.get("schemaVersion").getAsString());
+        assertEquals(CityDecorationContentCatalog.LEGACY_SCHEMA,
+                query.get("contentIndexSchemaVersion").getAsString());
+        assertTrue(query.get("contentPoseUpgradeRequired").getAsBoolean());
+        assertEquals("explicit_managed_default_only", query.get("upgradeMode").getAsString());
         assertEquals(1, query.getAsJsonArray("contents").size());
         JsonObject summary = query.getAsJsonArray("contents").get(0).getAsJsonObject();
         assertEquals("geomantia:test_bench", summary.get("contentRef").getAsString());
         assertEquals("above_surface", summary.get("placementMode").getAsString());
+        assertEquals(0, summary.get("groundPlaneLocalY").getAsInt());
+        assertEquals(0, summary.get("embedDepthBlocks").getAsInt());
+        assertEquals("preserve", summary.get("clearanceMode").getAsString());
         assertFalse(summary.has("template"));
         assertFalse(summary.has("nbtFile"));
         JsonObject styleProfile = query.getAsJsonArray("styleProfiles").get(0).getAsJsonObject();

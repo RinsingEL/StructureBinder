@@ -98,6 +98,34 @@ class CityDecorationDefaultCatalogBootstrapTest {
     }
 
     @Test
+    void explicitlyUpgradesUnmodifiedManagedV2CatalogToStrictV3PoseFields(@TempDir Path temp) throws Exception {
+        Path root = CityDecorationDefaultCatalogBootstrap.ensureInstalled(
+                temp.resolve("config/geomantia/city_decoration"));
+        Path indexPath = root.resolve("content_index.json");
+        JsonObject index = JsonParser.parseString(Files.readString(indexPath)).getAsJsonObject();
+        index.addProperty("schemaVersion", CityDecorationContentCatalog.LEGACY_SCHEMA);
+        index.getAsJsonArray("contents").forEach(entry -> {
+            JsonObject content = entry.getAsJsonObject();
+            content.remove("groundPlaneLocalY");
+            content.remove("embedDepthBlocks");
+            content.remove("clearanceMode");
+        });
+        Files.writeString(indexPath, index.toString());
+
+        CityDecorationDefaultCatalogBootstrap.UpgradeResult result =
+                CityDecorationDefaultCatalogBootstrap.upgradeManagedDefault(root);
+        JsonObject upgradedIndex = JsonParser.parseString(Files.readString(indexPath)).getAsJsonObject();
+        CityDecorationContentCatalog upgraded = new CityDecorationContentCatalogLoader().load(root);
+
+        assertTrue(result.contentIndexChanged());
+        assertEquals(CityDecorationContentCatalog.SCHEMA,
+                upgradedIndex.get("schemaVersion").getAsString());
+        assertEquals(0, upgraded.requireContent("geomantia:decoration/crop_tile").groundPlaneLocalY());
+        assertEquals("preserve", upgraded.requireContent("geomantia:decoration/crop_tile").clearanceMode());
+        assertTrue(Files.isRegularFile(result.backupPath()));
+    }
+
+    @Test
     void refusesToUpgradeCustomizedLegacyWaterChannel(@TempDir Path temp) throws Exception {
         Path root = CityDecorationDefaultCatalogBootstrap.ensureInstalled(
                 temp.resolve("config/geomantia/city_decoration"));

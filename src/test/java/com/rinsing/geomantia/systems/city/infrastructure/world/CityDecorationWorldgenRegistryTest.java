@@ -1,9 +1,11 @@
 package com.rinsing.geomantia.systems.city.infrastructure.world;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.rinsing.geomantia.systems.city.application.dressing.CompiledDecorationProgram;
+import com.rinsing.geomantia.systems.city.application.dressing.CompiledDecorationProgramCodec;
 import com.rinsing.geomantia.systems.city.application.dressing.CompiledDecorationProgramPlan;
 import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
 import com.rinsing.geomantia.systems.city.domain.model.BlockPoint;
@@ -12,6 +14,7 @@ import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecoration
 import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationContentCatalogLoader;
 import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationStyleProfileCatalog;
 import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationStyleProfileCatalogLoader;
+import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationTerrainRunCompiler;
 import com.rinsing.geomantia.systems.city.infrastructure.json.CityJson;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -19,6 +22,7 @@ import net.minecraft.nbt.IntTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.ChunkPos;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -179,6 +183,14 @@ class CityDecorationWorldgenRegistryTest {
         assertEquals(1, appliedCount());
         assertTrue(CityDecorationWorldgenRegistry.suppressesVegetation(
                 "minecraft:overworld", "minecraft:oak_tree", 16, 0));
+        JsonObject deferredOutcome = CityDecorationWorldgenRegistry.ledgerSnapshot()
+                .getAsJsonArray("fragmentOutcomes").asList().stream()
+                .map(JsonElement::getAsJsonObject)
+                .filter(outcome -> outcome.get("chunkX").getAsInt() == 1)
+                .findFirst().orElseThrow();
+        assertEquals("deferred", deferredOutcome.get("status").getAsString());
+        assertEquals("CITY_DECORATION_TARGET_NOT_WRITABLE",
+                deferredOutcome.get("reasonCode").getAsString());
 
         world.denyAtOrAfterX(Integer.MAX_VALUE);
         CityDecorationWorldgenRegistry.ApplySummary secondOwner = CityDecorationWorldgenRegistry.applyForChunk(
@@ -434,6 +446,111 @@ class CityDecorationWorldgenRegistryTest {
                 .get("cityId").getAsString());
     }
 
+    @Test
+    void persistsAndFiltersImmutableFoundationSnapshotsByDimensionAndChunk(@TempDir Path temp) throws Exception {
+        Path catalogRoot = temp.resolve("catalog");
+        Path serverRoot = temp.resolve("server");
+        CityDecorationContentCatalog catalog = catalog(catalogRoot, "minecraft:stone");
+        CompiledDecorationProgramPlan plan = foundationContinuousPlan(
+                twoChunkPlan(catalog, "city_a", "program", 15, 4));
+        CityDecorationTerrainRunCompiler.FrozenPlan frozen = new CityDecorationTerrainRunCompiler().compile(
+                plan, catalog, (x, z) -> new CityDecorationTerrainRunCompiler.TerrainSample(
+                        x == 15 ? 68 : 70, false, true));
+        CityDecorationTerrainRunCompiler.FoundationSegment segment = frozen.foundationSegments().get(0);
+
+        CityDecorationWorldgenRegistry.activate("minecraft:overworld", plan, frozen, serverRoot, catalogRoot);
+
+        List<CityDecorationTerrainRunCompiler.FoundationSegment> west =
+                CityDecorationWorldgenRegistry.foundationSegmentsForChunk(
+                        "minecraft:overworld", new ChunkPos(0, 0));
+        assertEquals(List.of(segment), west);
+        assertEquals(List.of(segment), CityDecorationWorldgenRegistry.foundationSegmentsForChunk(
+                "minecraft:overworld", new ChunkPos(1, 0)));
+        assertTrue(CityDecorationWorldgenRegistry.foundationSegmentsForChunk(
+                "minecraft:overworld", new ChunkPos(3, 0)).isEmpty());
+        assertTrue(CityDecorationWorldgenRegistry.foundationSegmentsForChunk(
+                "minecraft:the_nether", new ChunkPos(0, 0)).isEmpty());
+        assertThrows(UnsupportedOperationException.class, () -> west.add(segment));
+
+        CityDecorationWorldgenRegistry.ApplySummary summary = CityDecorationWorldgenRegistry.applyForChunk(
+                "minecraft:overworld", 0, 0,
+                (x, z) -> new CityDecorationChunkCompiler.TerrainSample(
+                        x == 15 ? 68 : 70, Set.of("minecraft:grass_block"), false),
+                new FakePlacementWorld(true));
+        assertEquals(1, summary.skippedFragmentCount());
+        JsonObject outcome = CityDecorationWorldgenRegistry.ledgerSnapshot()
+                .getAsJsonArray("fragmentOutcomes").get(0).getAsJsonObject();
+        assertEquals("skipped", outcome.get("status").getAsString());
+        assertEquals("CITY_DECORATION_FOUNDATION_NOT_MATERIALIZED",
+                outcome.get("reasonCode").getAsString());
+        assertTrue(outcome.get("foundationPlanned").getAsBoolean());
+        assertFalse(outcome.get("foundationMaterialized").getAsBoolean());
+        assertFalse(outcome.get("foundationApplied").getAsBoolean());
+
+        CityDecorationWorldgenRegistry.resetForTests();
+        CityDecorationWorldgenRegistry.load(serverRoot, catalogRoot);
+        assertEquals(List.of(segment), CityDecorationWorldgenRegistry.foundationSegmentsForChunk(
+                "minecraft:overworld", new ChunkPos(0, 0)));
+        JsonObject persisted = JsonParser.parseString(Files.readString(
+                CityDecorationWorldgenRegistry.activePlansPath(serverRoot))).getAsJsonObject();
+        assertEquals(1, persisted.getAsJsonArray("plans").get(0).getAsJsonObject()
+                .getAsJsonObject("frozenTerrainPlan").getAsJsonArray("foundationSegments").size());
+    }
+
+    @Test
+    void continuousPlansCannotBypassFrozenTerrainActivation(@TempDir Path temp) throws Exception {
+        Path catalogRoot = temp.resolve("catalog");
+        Path serverRoot = temp.resolve("server");
+        CityDecorationContentCatalog catalog = catalog(catalogRoot, "minecraft:stone");
+        CompiledDecorationProgramPlan base = plan(catalog, "city_a", "channel", 41L, 4, 4);
+        CompiledDecorationProgramPlan continuousPlan = continuousPlan(base, false);
+
+        assertTrue(assertThrows(IllegalArgumentException.class, () ->
+                CityDecorationWorldgenRegistry.activate("minecraft:overworld", continuousPlan,
+                        serverRoot, catalogRoot)).getMessage().contains("FROZEN_TERRAIN_PLAN_REQUIRED"));
+        CityDecorationTerrainRunCompiler.FrozenPlan empty =
+                new CityDecorationTerrainRunCompiler.FrozenPlan(CityDecorationTerrainRunCompiler.SCHEMA,
+                        continuousPlan.cityId(), continuousPlan.catalogHash(), List.of(), List.of());
+        assertTrue(assertThrows(IllegalArgumentException.class, () ->
+                CityDecorationWorldgenRegistry.activate("minecraft:overworld", continuousPlan, empty,
+                        serverRoot, catalogRoot)).getMessage().contains("FROZEN_TERRAIN_SLOT_MISSING"));
+    }
+
+    @Test
+    void loadingLegacyContinuousActivePlanDisablesItAndReportsReactivationReason(@TempDir Path temp)
+            throws Exception {
+        Path catalogRoot = temp.resolve("catalog");
+        Path serverRoot = temp.resolve("server");
+        CityDecorationContentCatalog catalog = catalog(catalogRoot, "minecraft:stone");
+        CompiledDecorationProgramPlan legacy = continuousPlan(
+                plan(catalog, "city_a", "channel", 42L, 4, 4), true);
+        JsonObject entry = new JsonObject();
+        entry.addProperty("dimensionId", "minecraft:overworld");
+        entry.addProperty("cityId", legacy.cityId());
+        entry.addProperty("catalogHash", legacy.catalogHash());
+        entry.add("compiledPlan", new CompiledDecorationProgramCodec().toJson(legacy));
+        JsonArray plans = new JsonArray();
+        plans.add(entry);
+        JsonObject active = new JsonObject();
+        active.addProperty("schemaVersion", CityDecorationWorldgenRegistry.LEGACY_ACTIVE_SCHEMA);
+        active.add("plans", plans);
+        Path activePath = CityDecorationWorldgenRegistry.activePlansPath(serverRoot);
+        Files.createDirectories(activePath.getParent());
+        Files.writeString(activePath, CityJson.GSON.toJson(active));
+
+        CityDecorationWorldgenRegistry.load(serverRoot, catalogRoot);
+
+        JsonObject summary = CityDecorationWorldgenRegistry.activeSummary();
+        assertEquals(0, summary.get("activePlanCount").getAsInt());
+        assertEquals(1, summary.get("lastLoadLegacyReactivationRequiredPlanCount").getAsInt());
+        assertEquals("CITY_DECORATION_LEGACY_CONTINUOUS_REACTIVATION_REQUIRED",
+                summary.getAsJsonArray("reasonCodes").get(0).getAsString());
+        JsonObject rewritten = JsonParser.parseString(Files.readString(activePath)).getAsJsonObject();
+        assertEquals(CityDecorationWorldgenRegistry.ACTIVE_SCHEMA,
+                rewritten.get("schemaVersion").getAsString());
+        assertEquals(0, rewritten.getAsJsonArray("plans").size());
+    }
+
     private static int appliedCount() {
         return CityDecorationWorldgenRegistry.ledgerSnapshot()
                 .getAsJsonArray("appliedFragments").size();
@@ -505,6 +622,35 @@ class CityDecorationWorldgenRegistryTest {
                 List.of(), List.of(program));
     }
 
+    private static CompiledDecorationProgramPlan continuousPlan(CompiledDecorationProgramPlan base,
+                                                                  boolean legacySchema) {
+        CompiledDecorationProgram source = base.programs().get(0);
+        String programSchema = legacySchema ? CompiledDecorationProgram.LEGACY_SCHEMA : source.schemaVersion();
+        String planSchema = legacySchema ? CompiledDecorationProgramPlan.LEGACY_SCHEMA : base.schemaVersion();
+        CompiledDecorationProgram continuous = new CompiledDecorationProgram(programSchema,
+                source.programId(), source.priority(), source.seed(), source.targetMask(), source.coordinateFrame(),
+                source.shape(), new CompiledDecorationProgram.CrossSectionRepeatPattern(
+                CompiledDecorationProgram.Axis.V, 0,
+                List.of(new CompiledDecorationProgram.CrossSectionBand("item", 1))),
+                source.contentPalette(), source.terrainPolicy(), source.conflictPolicy());
+        return new CompiledDecorationProgramPlan(planSchema, base.cityId(), base.catalogHash(),
+                base.styleProfileId(), base.styleProfileHash(), base.hardObstacles(), List.of(continuous));
+    }
+
+    private static CompiledDecorationProgramPlan foundationContinuousPlan(CompiledDecorationProgramPlan base) {
+        CompiledDecorationProgram source = base.programs().get(0);
+        CompiledDecorationProgram continuous = new CompiledDecorationProgram(source.schemaVersion(),
+                source.programId(), source.priority(), source.seed(), source.targetMask(), source.coordinateFrame(),
+                source.shape(), new CompiledDecorationProgram.ParallelRowsPattern(
+                CompiledDecorationProgram.Axis.U, "item", 1, 1, 0), source.contentPalette(),
+                new CompiledDecorationProgram.TerrainPolicy(20, false,
+                        CompiledDecorationProgram.InvalidTerrainAction.CLIP, 100, 8,
+                        CompiledDecorationProgram.FoundationMode.FILL_ONLY, 4, 2),
+                source.conflictPolicy());
+        return new CompiledDecorationProgramPlan(base.schemaVersion(), base.cityId(), base.catalogHash(),
+                base.styleProfileId(), base.styleProfileHash(), base.hardObstacles(), List.of(continuous));
+    }
+
     private static CityDecorationContentCatalog catalog(Path root, String blockName) throws Exception {
         Files.createDirectories(root.resolve("templates"));
         CompoundTag template = new CompoundTag();
@@ -530,6 +676,9 @@ class CityDecorationWorldgenRegistryTest {
         content.addProperty("contentKind", "prefab");
         content.addProperty("nbtFile", "templates/test.nbt");
         content.addProperty("comfortMarginBlocks", 0);
+        content.addProperty("groundPlaneLocalY", 0);
+        content.addProperty("embedDepthBlocks", 0);
+        content.addProperty("clearanceMode", "preserve");
         JsonArray contents = new JsonArray();
         contents.add(content);
         index.add("contents", contents);
@@ -600,7 +749,8 @@ class CityDecorationWorldgenRegistryTest {
         }
 
         @Override
-        public boolean placeTemplate(CompoundTag templateNbt, BlockPos origin, Rotation rotation, long seed) {
+        public boolean placeTemplate(CompoundTag templateNbt, BlockPos origin, Rotation rotation, long seed,
+                                     boolean ignoreTemplateAir) {
             placeCalls++;
             placementOrigins.add(origin);
             return succeed;

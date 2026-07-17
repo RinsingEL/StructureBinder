@@ -74,7 +74,9 @@ public final class CityLandUseChunkCompiler {
             String landUseType = area.landUseType();
             String surfacePolicy = area.surfacePolicy().name();
             String boundaryPolicy = area.boundaryPolicy().name();
-            String surfaceBlock = palette.surfaceMaterial(surfacePolicy);
+            // Agriculture interiors are owned by Decoration prefabs, not LandUse column replacement.
+            String surfaceBlock = area.surfacePolicy() == com.rinsing.geomantia.systems.city.domain.landuse.SurfacePolicy.CULTIVATE
+                    ? null : palette.surfaceMaterial(surfacePolicy);
             String boundaryBlock = palette.boundaryMaterial(boundaryPolicy);
             Set<BlockCell> footprints = new HashSet<>();
             area.structureFootprintExclusions().forEach(bounds -> addBoundsClipped(footprints, bounds,
@@ -186,7 +188,6 @@ public final class CityLandUseChunkCompiler {
         public static MaterialPalette defaults() {
             Map<String, String> surfaces = new LinkedHashMap<>();
             surfaces.put("PAVE", "minecraft:stone_bricks");
-            surfaces.put("CULTIVATE", "minecraft:farmland");
             Map<String, String> boundaries = new LinkedHashMap<>();
             boundaries.put("FENCE", "minecraft:oak_fence");
             boundaries.put("HEDGE", "minecraft:oak_leaves");

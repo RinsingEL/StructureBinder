@@ -21,13 +21,14 @@ public record CompiledDecorationProgram(
         TerrainPolicy terrainPolicy,
         ConflictPolicy conflictPolicy) {
 
-    public static final String SCHEMA = "city_decoration_compiled_program.v0.2";
+    public static final String SCHEMA = "city_decoration_compiled_program.v0.3";
+    public static final String LEGACY_SCHEMA = "city_decoration_compiled_program.v0.2";
     public static final Comparator<CompiledDecorationProgram> EXECUTION_ORDER = Comparator
             .comparingInt(CompiledDecorationProgram::priority).reversed()
             .thenComparing(CompiledDecorationProgram::programId);
 
     public CompiledDecorationProgram {
-        if (!SCHEMA.equals(schemaVersion)) {
+        if (!SCHEMA.equals(schemaVersion) && !LEGACY_SCHEMA.equals(schemaVersion)) {
             throw new IllegalArgumentException("CITY_DECORATION_PROGRAM_SCHEMA_UNSUPPORTED: " + schemaVersion);
         }
         if (programId == null || programId.isBlank()) {
@@ -40,6 +41,11 @@ public record CompiledDecorationProgram(
         Objects.requireNonNull(contentPalette, "contentPalette");
         Objects.requireNonNull(terrainPolicy, "terrainPolicy");
         Objects.requireNonNull(conflictPolicy, "conflictPolicy");
+        if (terrainPolicy.foundationMode() == FoundationMode.FILL_ONLY
+                && !(pattern instanceof CrossSectionRepeatPattern)
+                && !(pattern instanceof ParallelRowsPattern)) {
+            throw new IllegalArgumentException("CITY_DECORATION_FOUNDATION_PATTERN_UNSUPPORTED");
+        }
     }
 
     public record TargetMask(String maskId, List<BlockBounds> memberBounds) {
@@ -374,13 +380,59 @@ public record CompiledDecorationProgram(
         }
     }
 
+    public enum FoundationMode {
+        NONE("none"), FILL_ONLY("fill_only");
+
+        private final String serializedName;
+
+        FoundationMode(String serializedName) {
+            this.serializedName = serializedName;
+        }
+
+        public static FoundationMode parse(String value) {
+            for (FoundationMode mode : values()) {
+                if (mode.serializedName.equals(value)) {
+                    return mode;
+                }
+            }
+            throw new IllegalArgumentException("CITY_DECORATION_FOUNDATION_MODE_UNSUPPORTED: " + value);
+        }
+
+        public String serializedName() {
+            return serializedName;
+        }
+    }
+
     public record TerrainPolicy(int maxSlopeDelta, boolean allowWater,
-                                InvalidTerrainAction invalidTerrainAction) {
+                                InvalidTerrainAction invalidTerrainAction,
+                                int maxContinuousDropBlocks,
+                                int continuousDropWindowBlocks,
+                                FoundationMode foundationMode,
+                                int maxFoundationDepthBlocks,
+                                int foundationShoulderBlocks) {
         public TerrainPolicy {
             if (maxSlopeDelta < 0) {
                 throw new IllegalArgumentException("CITY_DECORATION_MAX_SLOPE_INVALID");
             }
             Objects.requireNonNull(invalidTerrainAction, "invalidTerrainAction");
+            Objects.requireNonNull(foundationMode, "foundationMode");
+            if (maxContinuousDropBlocks < 0 || continuousDropWindowBlocks <= 0
+                    || maxFoundationDepthBlocks < 0 || foundationShoulderBlocks < 0) {
+                throw new IllegalArgumentException("CITY_DECORATION_CONTINUOUS_TERRAIN_POLICY_INVALID");
+            }
+            if (foundationMode == FoundationMode.NONE
+                    && (maxFoundationDepthBlocks != 0 || foundationShoulderBlocks != 0)) {
+                throw new IllegalArgumentException("CITY_DECORATION_FOUNDATION_FIELDS_WITHOUT_MODE");
+            }
+            if (foundationMode == FoundationMode.FILL_ONLY && maxFoundationDepthBlocks <= 0) {
+                throw new IllegalArgumentException("CITY_DECORATION_FOUNDATION_DEPTH_REQUIRED");
+            }
+        }
+
+        public TerrainPolicy(int maxSlopeDelta, boolean allowWater,
+                             InvalidTerrainAction invalidTerrainAction) {
+            this(maxSlopeDelta, allowWater, invalidTerrainAction, Integer.MAX_VALUE, 1,
+                    FoundationMode.NONE, 0, 0);
         }
     }
 

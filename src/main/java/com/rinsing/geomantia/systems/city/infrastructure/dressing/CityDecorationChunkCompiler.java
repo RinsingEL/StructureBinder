@@ -25,7 +25,8 @@ import java.util.Set;
 
 /** Pure chunk-local compiler. It resolves fragments but never mutates a Minecraft level. */
 public final class CityDecorationChunkCompiler {
-    public static final String RESULT_SCHEMA = "city_decoration_chunk_compilation.v0.2";
+    public static final String RESULT_SCHEMA = "city_decoration_chunk_compilation.v0.3";
+    public static final int FOUNDATION_SURFACE_TOLERANCE_BLOCKS = 1;
 
     private final CityDecorationProgramPlanner planner;
     private final CompiledDecorationProgramCodec codec;
@@ -44,6 +45,15 @@ public final class CityDecorationChunkCompiler {
                                      int chunkX,
                                      int chunkZ,
                                      TerrainView terrain) {
+        return compile(plan, catalog, chunkX, chunkZ, terrain, null);
+    }
+
+    public CompilationResult compile(CompiledDecorationProgramPlan plan,
+                                     CityDecorationContentCatalog catalog,
+                                     int chunkX,
+                                     int chunkZ,
+                                     TerrainView terrain,
+                                     CityDecorationTerrainRunCompiler.FrozenPlan frozenTerrainPlan) {
         Objects.requireNonNull(plan, "plan");
         Objects.requireNonNull(catalog, "catalog");
         Objects.requireNonNull(terrain, "terrain");
@@ -51,6 +61,12 @@ public final class CityDecorationChunkCompiler {
             throw new IllegalArgumentException("CITY_DECORATION_CATALOG_HASH_MISMATCH: plan="
                     + plan.catalogHash() + ", catalog=" + catalog.catalogHash());
         }
+        if (frozenTerrainPlan != null && (!plan.cityId().equals(frozenTerrainPlan.cityId())
+                || !plan.catalogHash().equals(frozenTerrainPlan.catalogHash()))) {
+            throw new IllegalArgumentException("CITY_DECORATION_FROZEN_TERRAIN_PLAN_MISMATCH");
+        }
+        Map<String, CityDecorationTerrainRunCompiler.SlotOutcome> frozenOutcomes = frozenTerrainPlan == null
+                ? Map.of() : frozenTerrainPlan.outcomesBySlotId();
 
         Map<String, CompiledDecorationProgram> programs = new LinkedHashMap<>();
         Map<String, String> programHashes = new HashMap<>();
@@ -69,9 +85,11 @@ public final class CityDecorationChunkCompiler {
             if (program == null) {
                 throw new IllegalArgumentException("CITY_DECORATION_SLOT_PROGRAM_UNKNOWN: " + slot.programId());
             }
+            CityDecorationTerrainRunCompiler.SlotOutcome frozenOutcome = frozenOutcomes.get(slot.slotId());
             Candidate candidate = resolveCandidate(program, programHashes.get(program.programId()), slot, catalog,
-                    plan.hardObstacles(), terrain);
-            candidates.add(applyTerrainDropFallback(candidate, catalog, plan.hardObstacles(), terrain));
+                    plan.hardObstacles(), terrain, frozenOutcome);
+            candidates.add(frozenOutcome == null
+                    ? applyTerrainDropFallback(candidate, catalog, plan.hardObstacles(), terrain) : candidate);
         }
         candidates.sort(candidateOrder());
 
@@ -101,12 +119,48 @@ public final class CityDecorationChunkCompiler {
                                        DecorationSlot slot,
                                        CityDecorationContentCatalog catalog,
                                        List<CompiledDecorationProgramPlan.HardObstacle> hardObstacles,
-                                       TerrainView terrain) {
+                                       TerrainView terrain,
+                                       CityDecorationTerrainRunCompiler.SlotOutcome frozenOutcome) {
         CompiledDecorationProgram.PaletteSlot paletteSlot = program.contentPalette().requireSlot(slot.paletteSlotId());
         CompiledDecorationProgram.ContentEntry selected = selectContent(program, slot, paletteSlot);
-        CityDecorationContentCatalog.Content content = catalog.requireContent(selected.contentRef());
-        return resolveCandidate(program, programHash, paletteSlot, slot, content, hardObstacles, terrain,
-                "CITY_DECORATION_FRAGMENT_READY");
+        String contentRef = frozenOutcome == null ? selected.contentRef() : frozenOutcome.appliedContentRef();
+        if (frozenOutcome != null && !selected.contentRef().equals(frozenOutcome.contentRef())) {
+            throw new IllegalArgumentException("CITY_DECORATION_FROZEN_CONTENT_SELECTION_MISMATCH: " + slot.slotId());
+        }
+        CityDecorationContentCatalog.Content content = catalog.requireContent(contentRef);
+        Candidate candidate = resolveCandidate(program, programHash, paletteSlot, slot, content, hardObstacles,
+                terrain, frozenOutcome != null
+                        && frozenOutcome.decision() == CityDecorationTerrainRunCompiler.Decision.END_CAP
+                        ? "CITY_DECORATION_RUN_END_CAP_READY" : "CITY_DECORATION_FRAGMENT_READY");
+        return applyFrozenOutcome(candidate, frozenOutcome);
+    }
+
+    private static Candidate applyFrozenOutcome(
+            Candidate candidate, CityDecorationTerrainRunCompiler.SlotOutcome frozenOutcome) {
+        if (frozenOutcome == null) {
+            return candidate;
+        }
+        Candidate withOutcome = candidate.withFrozenOutcome(frozenOutcome);
+        if (frozenOutcome.decision() == CityDecorationTerrainRunCompiler.Decision.TERMINATE
+                || frozenOutcome.decision() == CityDecorationTerrainRunCompiler.Decision.DEFER) {
+            return withOutcome.skipped(frozenOutcome.reasonCode());
+        }
+        if (withOutcome.status() != Status.READY) {
+            return withOutcome;
+        }
+        if (withOutcome.program().terrainPolicy().foundationMode()
+                == CompiledDecorationProgram.FoundationMode.FILL_ONLY) {
+            if (Math.abs(withOutcome.datumY() - frozenOutcome.targetY())
+                    > FOUNDATION_SURFACE_TOLERANCE_BLOCKS) {
+                return withOutcome.skipped("CITY_DECORATION_FOUNDATION_NOT_MATERIALIZED");
+            }
+            return withOutcome;
+        }
+        if (Math.abs(withOutcome.datumY() - frozenOutcome.surfaceY())
+                > withOutcome.program().terrainPolicy().maxSlopeDelta()) {
+            return withOutcome.skipped("CITY_DECORATION_RUNTIME_TERRAIN_DRIFT");
+        }
+        return withOutcome;
     }
 
     private Candidate resolveCandidate(CompiledDecorationProgram program,
@@ -128,21 +182,21 @@ public final class CityDecorationChunkCompiler {
         if (!content.allowedRotations().contains(rotation)) {
             return new Candidate(program, programHash, paletteSlot, slot, content, rotation, footprint,
                     conflictBounds, fragmentId, Status.SKIPPED,
-                    "CITY_DECORATION_ROTATION_UNSUPPORTED_FOR_SLOT", null);
+                    "CITY_DECORATION_ROTATION_UNSUPPORTED_FOR_SLOT", null, null);
         }
 
         BlockBounds anchorChunk = chunkBounds(ownerChunkX(slot), ownerChunkZ(slot));
         if (!contains(anchorChunk, footprint)) {
             return new Candidate(program, programHash, paletteSlot, slot, content, rotation, footprint,
                     conflictBounds, fragmentId, Status.SKIPPED,
-                    "CITY_DECORATION_CROSS_CHUNK_PREFAB_UNSUPPORTED", null);
+                    "CITY_DECORATION_CROSS_CHUNK_PREFAB_UNSUPPORTED", null, null);
         }
 
         for (CompiledDecorationProgramPlan.HardObstacle obstacle : hardObstacles) {
             if (footprint.overlaps(obstacle.blockBounds())) {
                 return new Candidate(program, programHash, paletteSlot, slot, content, rotation, footprint,
                         conflictBounds, fragmentId, Status.SKIPPED,
-                        "CITY_DECORATION_HARD_OBSTACLE_CONFLICT", null);
+                        "CITY_DECORATION_HARD_OBSTACLE_CONFLICT", null, null);
             }
         }
 
@@ -184,7 +238,7 @@ public final class CityDecorationChunkCompiler {
         }
         int datumY = heights.get(heights.size() / 2);
         return new Candidate(program, programHash, paletteSlot, slot, content, rotation, footprint,
-                conflictBounds, fragmentId, Status.READY, readyReasonCode, datumY);
+                conflictBounds, fragmentId, Status.READY, readyReasonCode, datumY, null);
     }
 
     private Candidate applyTerrainDropFallback(Candidate candidate,
@@ -236,12 +290,12 @@ public final class CityDecorationChunkCompiler {
                                              String fragmentId,
                                              String reasonCode) {
         return new Candidate(program, programHash, paletteSlot, slot, content, rotation, footprint,
-                conflictBounds, fragmentId, Status.SKIPPED, reasonCode, null);
+                conflictBounds, fragmentId, Status.SKIPPED, reasonCode, null, null);
     }
 
-    private static CompiledDecorationProgram.ContentEntry selectContent(CompiledDecorationProgram program,
-                                                                         DecorationSlot slot,
-                                                                         CompiledDecorationProgram.PaletteSlot paletteSlot) {
+    static CompiledDecorationProgram.ContentEntry selectContent(CompiledDecorationProgram program,
+                                                                 DecorationSlot slot,
+                                                                 CompiledDecorationProgram.PaletteSlot paletteSlot) {
         double totalWeight = paletteSlot.entries().stream()
                 .mapToDouble(CompiledDecorationProgram.ContentEntry::weight)
                 .sum();
@@ -425,6 +479,7 @@ public final class CityDecorationChunkCompiler {
         private final Integer datumY;
         private final Status status;
         private final String reasonCode;
+        private final CityDecorationTerrainRunCompiler.SlotOutcome frozenOutcome;
 
         private Fragment(String fragmentId,
                          String programId,
@@ -439,7 +494,8 @@ public final class CityDecorationChunkCompiler {
                          BlockBounds suppressionBounds,
                          Integer datumY,
                          Status status,
-                         String reasonCode) {
+                         String reasonCode,
+                         CityDecorationTerrainRunCompiler.SlotOutcome frozenOutcome) {
             this.fragmentId = fragmentId;
             this.programId = programId;
             this.programHash = programHash;
@@ -454,6 +510,7 @@ public final class CityDecorationChunkCompiler {
             this.datumY = datumY;
             this.status = status;
             this.reasonCode = reasonCode;
+            this.frozenOutcome = frozenOutcome;
         }
 
         public String fragmentId() {
@@ -500,6 +557,18 @@ public final class CityDecorationChunkCompiler {
             return content.replacePolicy();
         }
 
+        public int groundPlaneLocalY() {
+            return content.groundPlaneLocalY();
+        }
+
+        public int embedDepthBlocks() {
+            return content.embedDepthBlocks();
+        }
+
+        public String clearanceMode() {
+            return content.clearanceMode();
+        }
+
         public CompoundTag prefabNbt() {
             return content.template();
         }
@@ -527,6 +596,43 @@ public final class CityDecorationChunkCompiler {
         public String reasonCode() {
             return reasonCode;
         }
+
+        public String runId() {
+            return frozenOutcome == null ? null : frozenOutcome.runId();
+        }
+
+        public Integer runOrdinal() {
+            return frozenOutcome == null ? null : frozenOutcome.runOrdinal();
+        }
+
+        public String terrainClass() {
+            return frozenOutcome == null ? null : frozenOutcome.terrainClass().name();
+        }
+
+        public String runDecision() {
+            return frozenOutcome == null ? null : frozenOutcome.decision().name();
+        }
+
+        public Integer frozenSurfaceY() {
+            return frozenOutcome == null ? null : frozenOutcome.surfaceY();
+        }
+
+        public Integer foundationTargetY() {
+            return frozenOutcome == null ? null : frozenOutcome.targetY();
+        }
+
+        public boolean foundationPlanned() {
+            return frozenOutcome != null && frozenOutcome.targetY() > frozenOutcome.surfaceY();
+        }
+
+        public boolean foundationMaterialized() {
+            return foundationPlanned() && status == Status.READY && datumY != null
+                    && Math.abs(datumY - frozenOutcome.targetY()) <= FOUNDATION_SURFACE_TOLERANCE_BLOCKS;
+        }
+
+        public boolean foundationApplied() {
+            return foundationMaterialized();
+        }
     }
 
     private record Candidate(CompiledDecorationProgram program,
@@ -540,16 +646,22 @@ public final class CityDecorationChunkCompiler {
                              String fragmentId,
                              Status status,
                              String reasonCode,
-                             Integer datumY) {
+                             Integer datumY,
+                             CityDecorationTerrainRunCompiler.SlotOutcome frozenOutcome) {
         Candidate skipped(String reasonCode) {
             return new Candidate(program, programHash, paletteSlot, slot, content, rotation, footprint,
-                    conflictBounds, fragmentId, Status.SKIPPED, reasonCode, null);
+                    conflictBounds, fragmentId, Status.SKIPPED, reasonCode, null, frozenOutcome);
+        }
+
+        Candidate withFrozenOutcome(CityDecorationTerrainRunCompiler.SlotOutcome outcome) {
+            return new Candidate(program, programHash, paletteSlot, slot, content, rotation, footprint,
+                    conflictBounds, fragmentId, status, reasonCode, datumY, outcome);
         }
 
         Fragment toFragment() {
             return new Fragment(fragmentId, program.programId(), programHash, slot.slotId(), slot.paletteSlotId(),
                     program.priority(), slot.worldAnchor(), content, rotation, footprint, conflictBounds,
-                    datumY, status, reasonCode);
+                    datumY, status, reasonCode, frozenOutcome);
         }
     }
 }

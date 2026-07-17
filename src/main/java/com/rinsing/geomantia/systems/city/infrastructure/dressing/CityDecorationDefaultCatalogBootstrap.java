@@ -26,8 +26,8 @@ public final class CityDecorationDefaultCatalogBootstrap {
     private static final String STYLE_PROFILE = "styles/medieval_coastal.json";
     private static final String MANIFEST = "bootstrap_manifest.json";
     private static final String MANAGED_SOURCE = "geomantia:default_config/city_decoration";
-    private static final String MANIFEST_SCHEMA = "city_decoration_default_bootstrap.v0.2";
-    private static final String DEFAULT_CATALOG_REVISION = "terrain_drop_fallback.v0.1";
+    private static final String MANIFEST_SCHEMA = "city_decoration_default_bootstrap.v0.3";
+    private static final String DEFAULT_CATALOG_REVISION = "content_pose.v0.3";
     private static final String WATER_CHANNEL_ID = "geomantia:decoration/water_channel_tile";
     private static final String TERRAIN_DROP_FALLBACK = "terrainDropFallbackContentRef";
     private static final String UPGRADE_BACKUP = "upgrades/content_index.before-terrain-drop-fallback.json";
@@ -87,32 +87,26 @@ public final class CityDecorationDefaultCatalogBootstrap {
 
         Path indexPath = root.resolve(CONTENT_INDEX);
         JsonObject index = readObject(indexPath, "CITY_DECORATION_DEFAULT_CATALOG_UPGRADE_INDEX_REQUIRED");
-        JsonObject waterChannel = content(index, WATER_CHANNEL_ID,
-                "CITY_DECORATION_DEFAULT_CATALOG_UPGRADE_WATER_CHANNEL_REQUIRED");
-        JsonObject expectedWaterChannel = content(packagedIndex(), WATER_CHANNEL_ID,
-                "CITY_DECORATION_DEFAULT_CATALOG_PACKAGED_WATER_CHANNEL_REQUIRED");
-        String expectedFallback = string(expectedWaterChannel, TERRAIN_DROP_FALLBACK);
-
-        boolean indexChanged = false;
-        if (!waterChannel.has(TERRAIN_DROP_FALLBACK)) {
-            JsonObject legacyWaterChannel = waterChannel.deepCopy();
-            JsonObject expectedLegacyWaterChannel = expectedWaterChannel.deepCopy();
-            expectedLegacyWaterChannel.remove(TERRAIN_DROP_FALLBACK);
-            if (!legacyWaterChannel.equals(expectedLegacyWaterChannel)) {
+        JsonObject expected = packagedIndex();
+        boolean indexChanged = !index.equals(expected);
+        if (indexChanged) {
+            JsonObject v3BeforeFallback = expected.deepCopy();
+            content(v3BeforeFallback, WATER_CHANNEL_ID,
+                    "CITY_DECORATION_DEFAULT_CATALOG_PACKAGED_WATER_CHANNEL_REQUIRED")
+                    .remove(TERRAIN_DROP_FALLBACK);
+            JsonObject v2WithFallback = legacyV2(expected, false);
+            JsonObject v2BeforeFallback = legacyV2(expected, true);
+            if (!index.equals(v3BeforeFallback) && !index.equals(v2WithFallback)
+                    && !index.equals(v2BeforeFallback)) {
                 throw new IllegalArgumentException("CITY_DECORATION_DEFAULT_CATALOG_UPGRADE_UNSAFE: "
-                        + "water_channel_tile differs from the legacy packaged default.");
+                        + "content_index differs from a supported packaged default revision.");
             }
             Path backup = root.resolve(UPGRADE_BACKUP);
             if (!Files.exists(backup)) {
                 Files.createDirectories(backup.getParent());
                 Files.copy(indexPath, backup);
             }
-            waterChannel.addProperty(TERRAIN_DROP_FALLBACK, expectedFallback);
-            writeObject(indexPath, index);
-            indexChanged = true;
-        } else if (!expectedFallback.equals(string(waterChannel, TERRAIN_DROP_FALLBACK))) {
-            throw new IllegalArgumentException("CITY_DECORATION_DEFAULT_CATALOG_UPGRADE_UNSAFE: "
-                    + "water_channel_tile already declares a different terrain drop fallback.");
+            writeObject(indexPath, expected);
         }
 
         boolean manifestChanged = !MANIFEST_SCHEMA.equals(string(manifest, "schemaVersion"))
@@ -166,6 +160,21 @@ public final class CityDecorationDefaultCatalogBootstrap {
             }
             return JsonParser.parseString(new String(input.readAllBytes(), StandardCharsets.UTF_8)).getAsJsonObject();
         }
+    }
+
+    private static JsonObject legacyV2(JsonObject packaged, boolean removeTerrainDropFallback) {
+        JsonObject legacy = packaged.deepCopy();
+        legacy.addProperty("schemaVersion", CityDecorationContentCatalog.LEGACY_SCHEMA);
+        for (JsonElement element : legacy.getAsJsonArray("contents")) {
+            JsonObject content = element.getAsJsonObject();
+            content.remove("groundPlaneLocalY");
+            content.remove("embedDepthBlocks");
+            content.remove("clearanceMode");
+            if (removeTerrainDropFallback && WATER_CHANNEL_ID.equals(string(content, "contentId"))) {
+                content.remove(TERRAIN_DROP_FALLBACK);
+            }
+        }
+        return legacy;
     }
 
     private static JsonObject content(JsonObject index, String contentId, String failureCode) {

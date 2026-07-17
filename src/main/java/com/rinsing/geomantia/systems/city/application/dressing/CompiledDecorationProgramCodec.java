@@ -25,7 +25,8 @@ public final class CompiledDecorationProgramCodec {
                 "hardObstacles", "programs"),
                 "compiled program plan");
         String schema = requiredString(source, "schemaVersion");
-        if (!CompiledDecorationProgramPlan.SCHEMA.equals(schema)) {
+        if (!CompiledDecorationProgramPlan.SCHEMA.equals(schema)
+                && !CompiledDecorationProgramPlan.LEGACY_SCHEMA.equals(schema)) {
             throw new IllegalArgumentException("CITY_DECORATION_PROGRAM_PLAN_SCHEMA_UNSUPPORTED: " + schema);
         }
         JsonArray programsJson = requiredArray(source, "programs");
@@ -57,7 +58,8 @@ public final class CompiledDecorationProgramCodec {
                 "coordinateFrame", "shape", "pattern", "contentPalette", "terrainPolicy", "conflictPolicy"),
                 "program");
         String schema = requiredString(source, "schemaVersion");
-        if (!CompiledDecorationProgram.SCHEMA.equals(schema)) {
+        boolean legacySchema = CompiledDecorationProgram.LEGACY_SCHEMA.equals(schema);
+        if (!CompiledDecorationProgram.SCHEMA.equals(schema) && !legacySchema) {
             throw new IllegalArgumentException("CITY_DECORATION_PROGRAM_SCHEMA_UNSUPPORTED: " + schema);
         }
         CompiledDecorationProgram program = new CompiledDecorationProgram(schema, requiredString(source, "programId"),
@@ -67,7 +69,7 @@ public final class CompiledDecorationProgramCodec {
                 parseShape(requiredObject(source, "shape")),
                 parsePattern(requiredObject(source, "pattern")),
                 parseContentPalette(requiredObject(source, "contentPalette")),
-                parseTerrainPolicy(requiredObject(source, "terrainPolicy")),
+                parseTerrainPolicy(requiredObject(source, "terrainPolicy"), legacySchema),
                 parseConflictPolicy(requiredObject(source, "conflictPolicy")));
         for (String paletteSlotId : referencedPaletteSlots(program.pattern())) {
             program.contentPalette().requireSlot(paletteSlotId);
@@ -112,6 +114,13 @@ public final class CompiledDecorationProgramCodec {
         terrain.addProperty("maxSlopeDelta", program.terrainPolicy().maxSlopeDelta());
         terrain.addProperty("allowWater", program.terrainPolicy().allowWater());
         terrain.addProperty("invalidTerrainAction", program.terrainPolicy().invalidTerrainAction().serializedName());
+        if (!CompiledDecorationProgram.LEGACY_SCHEMA.equals(program.schemaVersion())) {
+            terrain.addProperty("maxContinuousDropBlocks", program.terrainPolicy().maxContinuousDropBlocks());
+            terrain.addProperty("continuousDropWindowBlocks", program.terrainPolicy().continuousDropWindowBlocks());
+            terrain.addProperty("foundationMode", program.terrainPolicy().foundationMode().serializedName());
+            terrain.addProperty("maxFoundationDepthBlocks", program.terrainPolicy().maxFoundationDepthBlocks());
+            terrain.addProperty("foundationShoulderBlocks", program.terrainPolicy().foundationShoulderBlocks());
+        }
         obj.add("terrainPolicy", terrain);
         JsonObject conflict = new JsonObject();
         conflict.addProperty("onConflict", program.conflictPolicy().onConflict().serializedName());
@@ -258,10 +267,27 @@ public final class CompiledDecorationProgramCodec {
     }
 
     CompiledDecorationProgram.TerrainPolicy parseTerrainPolicy(JsonObject obj) {
-        requireOnly(obj, Set.of("maxSlopeDelta", "allowWater", "invalidTerrainAction"), "terrainPolicy");
+        return parseTerrainPolicy(obj, false);
+    }
+
+    CompiledDecorationProgram.TerrainPolicy parseTerrainPolicy(JsonObject obj, boolean legacySchema) {
+        if (legacySchema) {
+            requireOnly(obj, Set.of("maxSlopeDelta", "allowWater", "invalidTerrainAction"), "terrainPolicy");
+            return new CompiledDecorationProgram.TerrainPolicy(requiredInt(obj, "maxSlopeDelta"),
+                    requiredBoolean(obj, "allowWater"),
+                    CompiledDecorationProgram.InvalidTerrainAction.parse(requiredString(obj, "invalidTerrainAction")));
+        }
+        requireOnly(obj, Set.of("maxSlopeDelta", "allowWater", "invalidTerrainAction",
+                "maxContinuousDropBlocks", "continuousDropWindowBlocks", "foundationMode",
+                "maxFoundationDepthBlocks", "foundationShoulderBlocks"), "terrainPolicy");
         return new CompiledDecorationProgram.TerrainPolicy(requiredInt(obj, "maxSlopeDelta"),
                 requiredBoolean(obj, "allowWater"),
-                CompiledDecorationProgram.InvalidTerrainAction.parse(requiredString(obj, "invalidTerrainAction")));
+                CompiledDecorationProgram.InvalidTerrainAction.parse(requiredString(obj, "invalidTerrainAction")),
+                requiredInt(obj, "maxContinuousDropBlocks"),
+                requiredInt(obj, "continuousDropWindowBlocks"),
+                CompiledDecorationProgram.FoundationMode.parse(requiredString(obj, "foundationMode")),
+                requiredInt(obj, "maxFoundationDepthBlocks"),
+                requiredInt(obj, "foundationShoulderBlocks"));
     }
 
     CompiledDecorationProgram.ConflictPolicy parseConflictPolicy(JsonObject obj) {

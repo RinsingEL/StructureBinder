@@ -54,7 +54,21 @@ class CityLandUseChunkCompilerTest {
         assertThrows(IllegalArgumentException.class, () -> compiler.compile(changed, 0, 0));
     }
 
+    @Test
+    void cultivateAreaLeavesInteriorSurfaceUntouchedButKeepsBoundary() {
+        CityLandUseChunkCompiler.ChunkFragment fragment = compiler.compile(
+                plan("city_farm", SurfacePolicy.CULTIVATE), 0, 0);
+
+        assertEquals(0, fragment.surfaceOperations().size());
+        assertEquals(2, fragment.boundaryOperations().size());
+        assertEquals("minecraft:oak_fence", fragment.boundaryOperations().get(0).blockId());
+    }
+
     static LandUseAreaPlan plan(String cityId) {
+        return plan(cityId, SurfacePolicy.PAVE);
+    }
+
+    static LandUseAreaPlan plan(String cityId, SurfacePolicy surfacePolicy) {
         LandUseAreaPlan.Area area = new LandUseAreaPlan.Area("area_plaza", "plaza_default", "plaza",
                 List.of("group_a"), List.of("anchor_a"), List.of(new BlockPoint(0, 0)),
                 List.of(new LandUseAreaPlan.ScanlineSpan(0, 0, 17),
@@ -65,7 +79,7 @@ class CityLandUseChunkCompilerTest {
                         new BlockPoint(3, 0), new BlockPoint(4, 0), new BlockPoint(16, 0)), false)),
                 List.of(new LandUseAreaPlan.GateSlot("gate_a", new BlockPoint(3, 0),
                         CardinalDirection.NORTH, "anchor_a")),
-                12.0, SurfacePolicy.PAVE, VegetationPolicy.CLEAR, BoundaryPolicy.FENCE, "plaza_fill");
+                12.0, surfacePolicy, VegetationPolicy.CLEAR, BoundaryPolicy.FENCE, "plaza_fill");
         LandUseAreaPlan unhashed = new LandUseAreaPlan(LandUseAreaPlan.CURRENT_SCHEMA_VERSION,
                 "land_use_rules.v0.1", cityId, "", new BlockBounds(0, 0, 31, 15), List.of(area),
                 List.of(), List.of(new LandUseAreaPlan.CorridorExclusion("road", new BlockBounds(2, 0, 2, 0),

@@ -16,6 +16,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
+import net.minecraft.world.level.levelgen.structure.templatesystem.BlockIgnoreProcessor;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -39,11 +40,13 @@ public final class CityDecorationNbtPlacer {
         if (fragment.status() != CityDecorationChunkCompiler.Status.READY || fragment.datumY() == null) {
             return PreflightResult.failed("CITY_DECORATION_FRAGMENT_NOT_READY", 0, 0, BlockPos.ZERO, Rotation.NONE);
         }
-        int baseY = "replace_surface".equals(fragment.placementMode())
-                ? fragment.datumY() : fragment.datumY() + 1;
+        int surfaceOffset = "above_surface".equals(fragment.placementMode()) ? 1 : 0;
+        int baseY = fragment.datumY() + surfaceOffset
+                - fragment.groundPlaneLocalY() - fragment.embedDepthBlocks();
         Rotation rotation = rotation(fragment.rotationDegrees());
         BlockPos origin = new BlockPos(fragment.worldAnchor().x(), baseY, fragment.worldAnchor().z());
-        List<PlacementTarget> targets = targets(fragment.prefabNbt(), origin, rotation);
+        boolean clearTemplateAir = "clear_template_air".equals(fragment.clearanceMode());
+        List<PlacementTarget> targets = targets(fragment.prefabNbt(), origin, rotation, clearTemplateAir);
         for (PlacementTarget target : targets) {
             if (!world.ensureCanWrite(target.worldPos())) {
                 return PreflightResult.failed("CITY_DECORATION_TARGET_NOT_WRITABLE", baseY, targets.size(),
@@ -56,7 +59,9 @@ public final class CityDecorationNbtPlacer {
             }
             boolean allowed = switch (fragment.replacePolicy()) {
                 case "replaceable_only" -> existing.replaceable();
-                case "surface_replaceable" -> target.localY() == 0
+                case "surface_replaceable" -> target.templateAir()
+                        ? existing.replaceable() || existing.surfaceReplaceable()
+                        : target.localY() <= fragment.groundPlaneLocalY()
                         ? existing.surfaceReplaceable() : existing.replaceable();
                 default -> false;
             };
@@ -75,21 +80,30 @@ public final class CityDecorationNbtPlacer {
             return PlacementResult.failed(preflight.reasonCode(), preflight.baseY(), preflight.targetCount());
         }
         boolean placed = world.placeTemplate(fragment.prefabNbt(), preflight.origin(), preflight.rotation(),
-                stableSeed(fragment.fragmentId()));
+                stableSeed(fragment.fragmentId()), "preserve".equals(fragment.clearanceMode()));
         return placed
                 ? PlacementResult.applied(preflight.baseY(), preflight.targetCount())
                 : PlacementResult.failed("CITY_DECORATION_TEMPLATE_PLACE_FAILED", preflight.baseY(),
                 preflight.targetCount());
     }
 
-    static List<PlacementTarget> targets(CompoundTag templateNbt, BlockPos origin, Rotation rotation) {
+    static List<PlacementTarget> targets(CompoundTag templateNbt, BlockPos origin, Rotation rotation,
+                                         boolean includeTemplateAir) {
         ListTag blocks = templateNbt.getList("blocks", 10);
+        ListTag palette = templateNbt.getList("palette", 10);
         List<PlacementTarget> targets = new ArrayList<>(blocks.size());
         for (int index = 0; index < blocks.size(); index++) {
-            ListTag pos = blocks.getCompound(index).getList("pos", 3);
+            CompoundTag block = blocks.getCompound(index);
+            int stateIndex = block.getInt("state");
+            boolean templateAir = stateIndex >= 0 && stateIndex < palette.size()
+                    && "minecraft:air".equals(palette.getCompound(stateIndex).getString("Name"));
+            if (templateAir && !includeTemplateAir) {
+                continue;
+            }
+            ListTag pos = block.getList("pos", 3);
             BlockPos local = new BlockPos(pos.getInt(0), pos.getInt(1), pos.getInt(2));
             BlockPos transformed = StructureTemplate.transform(local, Mirror.NONE, rotation, BlockPos.ZERO);
-            targets.add(new PlacementTarget(local.getY(), transformed.offset(origin)));
+            targets.add(new PlacementTarget(local.getY(), transformed.offset(origin), templateAir));
         }
         return List.copyOf(targets);
     }
@@ -122,7 +136,8 @@ public final class CityDecorationNbtPlacer {
 
         ExistingTarget inspect(BlockPos pos);
 
-        boolean placeTemplate(CompoundTag templateNbt, BlockPos origin, Rotation rotation, long seed);
+        boolean placeTemplate(CompoundTag templateNbt, BlockPos origin, Rotation rotation, long seed,
+                              boolean ignoreTemplateAir);
     }
 
     public record ExistingTarget(boolean replaceable, boolean surfaceReplaceable) {
@@ -154,7 +169,7 @@ public final class CityDecorationNbtPlacer {
         }
     }
 
-    record PlacementTarget(int localY, BlockPos worldPos) {
+    record PlacementTarget(int localY, BlockPos worldPos, boolean templateAir) {
     }
 
     public static final class WorldGenPlacementWorld implements PlacementWorld {
@@ -184,7 +199,8 @@ public final class CityDecorationNbtPlacer {
         }
 
         @Override
-        public boolean placeTemplate(CompoundTag templateNbt, BlockPos origin, Rotation rotation, long seed) {
+        public boolean placeTemplate(CompoundTag templateNbt, BlockPos origin, Rotation rotation, long seed,
+                                     boolean ignoreTemplateAir) {
             HolderGetter<Block> blocks = level.registryAccess().lookupOrThrow(Registries.BLOCK);
             StructureTemplate template = new StructureTemplate();
             template.load(blocks, templateNbt.copy());
@@ -194,6 +210,9 @@ public final class CityDecorationNbtPlacer {
                     .setRotationPivot(BlockPos.ZERO)
                     .setIgnoreEntities(true)
                     .setKeepLiquids(false);
+            if (ignoreTemplateAir) {
+                settings.addProcessor(BlockIgnoreProcessor.AIR);
+            }
             return template.placeInWorld(level, origin, origin, settings, RandomSource.create(seed), 2);
         }
     }

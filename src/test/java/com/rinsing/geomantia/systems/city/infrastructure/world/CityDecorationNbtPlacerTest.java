@@ -70,6 +70,45 @@ class CityDecorationNbtPlacerTest {
         assertEquals(0, rejected.placeCalls);
     }
 
+    @Test
+    void embedSurfaceUsesGroundPlaneAndDepthForUnifiedOrigin(@TempDir Path root) throws Exception {
+        CityDecorationContentCatalog catalog = catalog(root, "embed_surface", "surface_replaceable", List.of(0),
+                1, 2, "preserve", false);
+        CityDecorationChunkCompiler.Fragment fragment = fragment(catalog, program(catalog, false), 70);
+        FakePlacementWorld world = new FakePlacementWorld(new CityDecorationNbtPlacer.ExistingTarget(true, true));
+
+        CityDecorationNbtPlacer.PlacementResult result = new CityDecorationNbtPlacer().place(fragment, world);
+
+        assertTrue(result.applied());
+        assertEquals(67, result.baseY());
+        assertEquals(new BlockPos(8, 67, 8), world.origin);
+    }
+
+    @Test
+    void templateAirCanClearReplaceableTrenchMouthButPreserveModeIgnoresIt(@TempDir Path root) throws Exception {
+        CityDecorationContentCatalog clearingCatalog = catalog(root.resolve("clearing"), "embed_surface",
+                "surface_replaceable", List.of(0), 0, 1, "clear_template_air", true);
+        CityDecorationChunkCompiler.Fragment clearing = fragment(clearingCatalog, program(clearingCatalog, false), 70);
+        FakePlacementWorld clearingWorld = new FakePlacementWorld(
+                new CityDecorationNbtPlacer.ExistingTarget(true, true));
+        clearingWorld.targets.put(new BlockPos(8, 70, 8),
+                new CityDecorationNbtPlacer.ExistingTarget(false, true));
+        assertTrue(new CityDecorationNbtPlacer().place(clearing, clearingWorld).applied());
+        assertFalse(clearingWorld.ignoreTemplateAir);
+
+        CityDecorationContentCatalog preservingCatalog = catalog(root.resolve("preserving"), "embed_surface",
+                "surface_replaceable", List.of(0), 0, 1, "preserve", true);
+        CityDecorationChunkCompiler.Fragment preserving = fragment(preservingCatalog,
+                program(preservingCatalog, false), 70);
+        FakePlacementWorld preservingWorld = new FakePlacementWorld(
+                new CityDecorationNbtPlacer.ExistingTarget(true, true));
+        preservingWorld.targets.put(new BlockPos(8, 70, 8),
+                new CityDecorationNbtPlacer.ExistingTarget(false, false));
+        assertTrue(new CityDecorationNbtPlacer().place(preserving, preservingWorld).applied());
+        assertTrue(preservingWorld.ignoreTemplateAir);
+        assertEquals(2, preservingWorld.inspected.size());
+    }
+
     private static CityDecorationChunkCompiler.Fragment fragment(CityDecorationContentCatalog catalog,
                                                                  CompiledDecorationProgram program,
                                                                  int surfaceY) {
@@ -105,6 +144,17 @@ class CityDecorationNbtPlacerTest {
                                                         String placementMode,
                                                         String replacePolicy,
                                                         List<Integer> rotations) throws Exception {
+        return catalog(root, placementMode, replacePolicy, rotations, 0, 0, "preserve", false);
+    }
+
+    private static CityDecorationContentCatalog catalog(Path root,
+                                                        String placementMode,
+                                                        String replacePolicy,
+                                                        List<Integer> rotations,
+                                                        int groundPlaneLocalY,
+                                                        int embedDepthBlocks,
+                                                        String clearanceMode,
+                                                        boolean includeAir) throws Exception {
         Files.createDirectories(root.resolve("templates"));
         CompoundTag template = new CompoundTag();
         template.put("size", ints(2, 2, 1));
@@ -112,6 +162,11 @@ class CityDecorationNbtPlacerTest {
         state.putString("Name", "minecraft:stone");
         ListTag palette = new ListTag();
         palette.add(state);
+        if (includeAir) {
+            CompoundTag air = new CompoundTag();
+            air.putString("Name", "minecraft:air");
+            palette.add(air);
+        }
         template.put("palette", palette);
         ListTag blocks = new ListTag();
         blocks.add(block(0, 0, 0));
@@ -120,6 +175,11 @@ class CityDecorationNbtPlacerTest {
         blockEntityNbt.putString("CustomName", "preserved");
         blockEntity.put("nbt", blockEntityNbt);
         blocks.add(blockEntity);
+        if (includeAir) {
+            CompoundTag airBlock = block(0, 1, 0);
+            airBlock.putInt("state", 1);
+            blocks.add(airBlock);
+        }
         template.put("blocks", blocks);
         template.put("entities", new ListTag());
         NbtIo.writeCompressed(template, root.resolve("templates/test.nbt").toFile());
@@ -132,6 +192,9 @@ class CityDecorationNbtPlacerTest {
         content.addProperty("nbtFile", "templates/test.nbt");
         content.addProperty("placementMode", placementMode);
         content.addProperty("replacePolicy", replacePolicy);
+        content.addProperty("groundPlaneLocalY", groundPlaneLocalY);
+        content.addProperty("embedDepthBlocks", embedDepthBlocks);
+        content.addProperty("clearanceMode", clearanceMode);
         content.addProperty("comfortMarginBlocks", 0);
         JsonArray allowedRotations = new JsonArray();
         rotations.forEach(allowedRotations::add);
@@ -183,12 +246,16 @@ class CityDecorationNbtPlacerTest {
         }
 
         @Override
-        public boolean placeTemplate(CompoundTag templateNbt, BlockPos origin, Rotation rotation, long seed) {
+        public boolean placeTemplate(CompoundTag templateNbt, BlockPos origin, Rotation rotation, long seed,
+                                     boolean ignoreTemplateAir) {
             this.placedTemplate = templateNbt.copy();
             this.origin = origin;
             this.rotation = rotation;
+            this.ignoreTemplateAir = ignoreTemplateAir;
             placeCalls++;
             return true;
         }
+
+        private boolean ignoreTemplateAir;
     }
 }
