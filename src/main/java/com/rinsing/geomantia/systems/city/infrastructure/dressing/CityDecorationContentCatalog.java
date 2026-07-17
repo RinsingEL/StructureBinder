@@ -10,8 +10,7 @@ import java.util.Map;
 import java.util.Objects;
 
 public final class CityDecorationContentCatalog {
-    public static final String SCHEMA = "city_decoration_content_index.v0.3";
-    public static final String LEGACY_SCHEMA = "city_decoration_content_index.v0.2";
+    public static final String SCHEMA = "city_decoration_content_index.v0.4";
 
     private final Path catalogRoot;
     private final String schemaVersion;
@@ -32,10 +31,6 @@ public final class CityDecorationContentCatalog {
 
     public String schemaVersion() {
         return schemaVersion;
-    }
-
-    public boolean legacySchema() {
-        return LEGACY_SCHEMA.equals(schemaVersion);
     }
 
     public String catalogHash() {
@@ -78,6 +73,7 @@ public final class CityDecorationContentCatalog {
         private final Envelope comfortEnvelope;
         private final String contentHash;
         private final CompoundTag template;
+        private final CompoundTag plantBlockState;
 
         Content(String contentId,
                 String contentKind,
@@ -98,7 +94,8 @@ public final class CityDecorationContentCatalog {
                 String terrainDropFallbackContentRef,
                 Size size,
                 String contentHash,
-                CompoundTag template) {
+                CompoundTag template,
+                CompoundTag plantBlockState) {
             this.contentId = contentId;
             this.contentKind = contentKind;
             this.nbtFile = nbtFile;
@@ -124,7 +121,8 @@ public final class CityDecorationContentCatalog {
                     size.heightBlocks() - 1,
                     size.depthBlocks() - 1 + comfortMarginBlocks);
             this.contentHash = contentHash;
-            this.template = template.copy();
+            this.template = template == null ? null : template.copy();
+            this.plantBlockState = plantBlockState == null ? null : plantBlockState.copy();
         }
 
         public String contentId() {
@@ -212,7 +210,15 @@ public final class CityDecorationContentCatalog {
         }
 
         public CompoundTag template() {
-            return template.copy();
+            return template == null ? null : template.copy();
+        }
+
+        public boolean plant() {
+            return "plant".equals(contentKind);
+        }
+
+        public CompoundTag plantBlockState() {
+            return plantBlockState == null ? null : plantBlockState.copy();
         }
     }
 

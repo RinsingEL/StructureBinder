@@ -9,11 +9,10 @@ public record CompiledDecorationProgramPlan(String schemaVersion, String cityId,
                                             String styleProfileId, String styleProfileHash,
                                             List<HardObstacle> hardObstacles,
                                             List<CompiledDecorationProgram> programs) {
-    public static final String SCHEMA = "city_decoration_compiled_program_plan.v0.3";
-    public static final String LEGACY_SCHEMA = "city_decoration_compiled_program_plan.v0.2";
+    public static final String SCHEMA = "city_decoration_compiled_program_plan.v0.4";
 
     public CompiledDecorationProgramPlan {
-        if (!SCHEMA.equals(schemaVersion) && !LEGACY_SCHEMA.equals(schemaVersion)) {
+        if (!SCHEMA.equals(schemaVersion)) {
             throw new IllegalArgumentException("CITY_DECORATION_PROGRAM_PLAN_SCHEMA_UNSUPPORTED: " + schemaVersion);
         }
         if (cityId == null || cityId.isBlank()) {
@@ -41,13 +40,13 @@ public record CompiledDecorationProgramPlan(String schemaVersion, String cityId,
 
     public CompiledDecorationProgramPlan(String schemaVersion, String cityId, String catalogHash,
                                          List<CompiledDecorationProgram> programs) {
-        this(schemaVersion, cityId, catalogHash, "direct_catalog", "legacy_internal", List.of(), programs);
+        this(schemaVersion, cityId, catalogHash, "direct_catalog", "direct_catalog", List.of(), programs);
     }
 
     public CompiledDecorationProgramPlan(String schemaVersion, String cityId, String catalogHash,
                                          List<HardObstacle> hardObstacles,
                                          List<CompiledDecorationProgram> programs) {
-        this(schemaVersion, cityId, catalogHash, "direct_catalog", "legacy_internal", hardObstacles, programs);
+        this(schemaVersion, cityId, catalogHash, "direct_catalog", "direct_catalog", hardObstacles, programs);
     }
 
     public List<CompiledDecorationProgram> programsInExecutionOrder() {

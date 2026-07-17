@@ -9,6 +9,18 @@
       ]
     },
     {
+      "semanticRef": "farmland_tile",
+      "variants": [
+        {"contentRef": "geomantia:decoration/farmland_tile", "weight": 1.0}
+      ]
+    },
+    {
+      "semanticRef": "wheat_seed",
+      "variants": [
+        {"contentRef": "geomantia:decoration/wheat_seed", "weight": 1.0}
+      ]
+    },
+    {
       "semanticRef": "water_channel_tile",
       "variants": [
         {"contentRef": "geomantia:decoration/water_channel_tile", "weight": 1.0}

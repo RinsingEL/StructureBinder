@@ -48,34 +48,44 @@ public final class CityDecorationStyleProfileResolver {
         programTrace.addProperty("programId", program.programId());
         JsonArray slotTraces = new JsonArray();
         for (CompiledDecorationProgram.PaletteSlot slot : program.contentPalette().slots()) {
-            List<CompiledDecorationProgram.ContentEntry> concreteEntries = new ArrayList<>();
+            List<CompiledDecorationProgram.ContentLayer> concreteLayers = new ArrayList<>();
             JsonObject slotTrace = new JsonObject();
             slotTrace.addProperty("paletteSlotId", slot.slotId());
-            JsonArray entries = new JsonArray();
-            for (CompiledDecorationProgram.ContentEntry semanticEntry : slot.entries()) {
-                CityDecorationStyleProfileCatalog.Mapping mapping =
-                        styleProfile.requireMapping(semanticEntry.contentRef());
-                double variantWeightTotal = mapping.variants().stream()
-                        .mapToDouble(CityDecorationStyleProfileCatalog.Variant::weight).sum();
-                JsonObject semanticTrace = new JsonObject();
-                semanticTrace.addProperty("semanticRef", semanticEntry.contentRef());
-                semanticTrace.addProperty("semanticWeight", semanticEntry.weight());
-                JsonArray variants = new JsonArray();
-                for (CityDecorationStyleProfileCatalog.Variant variant : mapping.variants()) {
-                    double combinedWeight = semanticEntry.weight() * variant.weight() / variantWeightTotal;
-                    concreteEntries.add(new CompiledDecorationProgram.ContentEntry(variant.contentRef(), combinedWeight));
-                    JsonObject variantTrace = new JsonObject();
-                    variantTrace.addProperty("contentRef", variant.contentRef());
-                    variantTrace.addProperty("resolvedWeight", combinedWeight);
-                    variants.add(variantTrace);
+            JsonArray layerTraces = new JsonArray();
+            for (CompiledDecorationProgram.ContentLayer layer : slot.layers()) {
+                List<CompiledDecorationProgram.ContentEntry> concreteEntries = new ArrayList<>();
+                JsonObject layerTrace = new JsonObject();
+                layerTrace.addProperty("layerId", layer.layerId());
+                JsonArray entries = new JsonArray();
+                for (CompiledDecorationProgram.ContentEntry semanticEntry : layer.entries()) {
+                    CityDecorationStyleProfileCatalog.Mapping mapping =
+                            styleProfile.requireMapping(semanticEntry.contentRef());
+                    double variantWeightTotal = mapping.variants().stream()
+                            .mapToDouble(CityDecorationStyleProfileCatalog.Variant::weight).sum();
+                    JsonObject semanticTrace = new JsonObject();
+                    semanticTrace.addProperty("semanticRef", semanticEntry.contentRef());
+                    semanticTrace.addProperty("semanticWeight", semanticEntry.weight());
+                    JsonArray variants = new JsonArray();
+                    for (CityDecorationStyleProfileCatalog.Variant variant : mapping.variants()) {
+                        double combinedWeight = semanticEntry.weight() * variant.weight() / variantWeightTotal;
+                        concreteEntries.add(new CompiledDecorationProgram.ContentEntry(
+                                variant.contentRef(), combinedWeight));
+                        JsonObject variantTrace = new JsonObject();
+                        variantTrace.addProperty("contentRef", variant.contentRef());
+                        variantTrace.addProperty("resolvedWeight", combinedWeight);
+                        variants.add(variantTrace);
+                    }
+                    semanticTrace.add("variants", variants);
+                    entries.add(semanticTrace);
                 }
-                semanticTrace.add("variants", variants);
-                entries.add(semanticTrace);
+                layerTrace.add("entries", entries);
+                layerTraces.add(layerTrace);
+                concreteLayers.add(new CompiledDecorationProgram.ContentLayer(layer.layerId(), layer.phase(),
+                        concreteEntries, layer.required(), layer.dependsOnLayerId()));
             }
-            slotTrace.add("entries", entries);
+            slotTrace.add("layers", layerTraces);
             slotTraces.add(slotTrace);
-            slots.add(new CompiledDecorationProgram.PaletteSlot(slot.slotId(), slot.phase(), concreteEntries,
-                    slot.required()));
+            slots.add(new CompiledDecorationProgram.PaletteSlot(slot.slotId(), concreteLayers));
         }
         programTrace.add("paletteSlots", slotTraces);
         return new ResolvedPalette(new CompiledDecorationProgram.ContentPalette(slots), programTrace);

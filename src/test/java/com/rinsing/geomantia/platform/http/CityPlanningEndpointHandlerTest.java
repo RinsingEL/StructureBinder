@@ -912,7 +912,7 @@ class CityPlanningEndpointHandlerTest {
     }
 
     @Test
-    void handlePlanCityDressingWritesV02ArtifactsAndAvoidsHardObstacles() throws Exception {
+    void handlePlanCityDressingWritesV04ArtifactsAndAvoidsHardObstacles() throws Exception {
         Path debugRoot = Files.createTempDirectory("city-dressing-http-test");
         Path catalogRoot = createDecorationCatalog();
         String runId = "run_city_dressing";
@@ -948,10 +948,12 @@ class CityPlanningEndpointHandlerTest {
         assertEquals("market_stall", dressing.getAsJsonObject("decorationProgramPlan")
                 .getAsJsonArray("programs").get(0).getAsJsonObject()
                 .getAsJsonObject("contentPalette").getAsJsonArray("slots").get(0).getAsJsonObject()
+                .getAsJsonArray("layers").get(0).getAsJsonObject()
                 .getAsJsonArray("entries").get(0).getAsJsonObject().get("contentRef").getAsString());
         assertEquals("geomantia:test_bench", dressing.getAsJsonObject("compiledDecorationProgramPlan")
                 .getAsJsonArray("programs").get(0).getAsJsonObject()
                 .getAsJsonObject("contentPalette").getAsJsonArray("slots").get(0).getAsJsonObject()
+                .getAsJsonArray("layers").get(0).getAsJsonObject()
                 .getAsJsonArray("entries").get(0).getAsJsonObject().get("contentRef").getAsString());
         assertEquals("city_decoration_style_resolution.v0.1", dressing.getAsJsonObject("styleResolution")
                 .get("schemaVersion").getAsString());
@@ -1096,11 +1098,11 @@ class CityPlanningEndpointHandlerTest {
     void decorationCatalogQueryAndPlanningFailuresAreExplicit() throws Exception {
         Path catalogRoot = createDecorationCatalog();
         JsonObject query = CityPlanningEndpointHandler.handleQueryDecorationCatalog(catalogRoot);
-        assertEquals("city_decoration_catalog_query.v0.3", query.get("schemaVersion").getAsString());
-        assertEquals(CityDecorationContentCatalog.LEGACY_SCHEMA,
+        assertEquals("city_decoration_catalog_query.v0.4", query.get("schemaVersion").getAsString());
+        assertEquals(CityDecorationContentCatalog.SCHEMA,
                 query.get("contentIndexSchemaVersion").getAsString());
-        assertTrue(query.get("contentPoseUpgradeRequired").getAsBoolean());
-        assertEquals("explicit_managed_default_only", query.get("upgradeMode").getAsString());
+        assertFalse(query.has("contentPoseUpgradeRequired"));
+        assertFalse(query.has("upgradeMode"));
         assertEquals(1, query.getAsJsonArray("contents").size());
         JsonObject summary = query.getAsJsonArray("contents").get(0).getAsJsonObject();
         assertEquals("geomantia:test_bench", summary.get("contentRef").getAsString());
@@ -1146,30 +1148,14 @@ class CityPlanningEndpointHandlerTest {
     }
 
     @Test
-    void managedDefaultDecorationCatalogUpgradeRequiresConfirmationAndForcesReplan() throws Exception {
-        Path catalogRoot = Files.createTempDirectory("city-decoration-default-upgrade").resolve("catalog");
-        CityDecorationDefaultCatalogBootstrap.ensureInstalled(catalogRoot);
-        Path indexPath = catalogRoot.resolve("content_index.json");
-        JsonObject index = JsonParser.parseString(Files.readString(indexPath)).getAsJsonObject();
-        index.getAsJsonArray("contents").forEach(entry -> {
-            JsonObject content = entry.getAsJsonObject();
-            if ("geomantia:decoration/water_channel_tile".equals(content.get("contentId").getAsString())) {
-                content.remove("terrainDropFallbackContentRef");
-            }
-        });
-        Files.writeString(indexPath, CityJson.GSON.toJson(index));
+    void decorationCatalogQueryDoesNotExposeLegacyUpgradeMetadata() throws Exception {
+        Path catalogRoot = createDecorationCatalog();
+        JsonObject response = CityPlanningEndpointHandler.handleQueryDecorationCatalog(catalogRoot);
 
-        IllegalArgumentException unconfirmed = assertThrows(IllegalArgumentException.class,
-                () -> CityPlanningEndpointHandler.handleUpgradeDefaultDecorationCatalog(
-                        Files.createTempDirectory("city-decoration-default-upgrade-server"), catalogRoot, false));
-        assertTrue(unconfirmed.getMessage().contains("CITY_DECORATION_DEFAULT_CATALOG_UPGRADE_CONFIRMATION_REQUIRED"));
-
-        JsonObject response = CityPlanningEndpointHandler.handleUpgradeDefaultDecorationCatalog(
-                Files.createTempDirectory("city-decoration-default-upgrade-server"), catalogRoot, true);
-        assertTrue(response.get("catalogChanged").getAsBoolean());
-        assertTrue(response.get("requiresReplan").getAsBoolean());
-        assertTrue(response.get("contentIndexChanged").getAsBoolean());
-        assertTrue(Files.isRegularFile(Path.of(response.get("backupPath").getAsString())));
+        assertEquals("city_decoration_catalog_query.v0.4", response.get("schemaVersion").getAsString());
+        assertFalse(response.has("upgradeMode"));
+        assertFalse(response.has("contentPoseUpgradeRequired"));
+        assertFalse(response.has("backupPath"));
     }
 
     @Test
@@ -2690,12 +2676,15 @@ class CityPlanningEndpointHandlerTest {
         writeDecorationTemplate(templates.resolve("bench.nbt"));
         Files.writeString(root.resolve("content_index.json"), """
                 {
-                  "schemaVersion": "city_decoration_content_index.v0.2",
+                  "schemaVersion": "city_decoration_content_index.v0.4",
                   "contents": [
                     {
                       "contentId": "geomantia:test_bench",
                       "contentKind": "prefab",
                       "nbtFile": "templates/bench.nbt",
+                      "groundPlaneLocalY": 0,
+                      "embedDepthBlocks": 0,
+                      "clearanceMode": "preserve",
                       "allowedRotations": [0, 90, 180, 270],
                       "tags": ["test", "seating"]
                     }
@@ -2755,7 +2744,7 @@ class CityPlanningEndpointHandlerTest {
                                                     String contentRef) {
         return JsonParser.parseString("""
                 {
-                  "schemaVersion": "city_decoration_program_plan.v0.2",
+                  "schemaVersion": "city_decoration_program_plan.v0.4",
                   "cityId": "city_test",
                   "catalogHash": "%s",
                   "styleProfileId": "forest_village",
@@ -2774,20 +2763,28 @@ class CityPlanningEndpointHandlerTest {
                       "shape": {"type": "rectangle", "params": {"minU": -35, "minV": -35, "maxU": -25, "maxV": -25}},
                       "pattern": {"type": "uniform_fill", "params": {"paletteSlotId": "surface"}},
                       "contentPalette": {
-                        "slots": [
-                          {
-                            "slotId": "surface",
-                            "phase": "surface",
-                            "entries": [{"contentRef": "%s", "weight": 1.0}],
-                            "required": true
-                          }
-                        ]
-                      },
-                      "terrainPolicy": {
-                        "maxSlopeDelta": 2,
-                        "allowWater": false,
-                        "invalidTerrainAction": "clip"
-                      },
+                          "slots": [
+                            {
+                              "slotId": "surface",
+                              "layers": [{
+                                "layerId": "primary",
+                                "phase": "surface",
+                                "entries": [{"contentRef": "%s", "weight": 1.0}],
+                                "required": true
+                              }]
+                            }
+                          ]
+                        },
+                        "terrainPolicy": {
+                          "maxSlopeDelta": 2,
+                          "allowWater": false,
+                          "invalidTerrainAction": "clip",
+                          "maxContinuousDropBlocks": 2147483647,
+                          "continuousDropWindowBlocks": 1,
+                          "foundationMode": "none",
+                          "maxFoundationDepthBlocks": 0,
+                          "foundationShoulderBlocks": 0
+                        },
                       "conflictPolicy": {"onConflict": "skip", "clearanceBlocks": 1},
                       "priority": 10,
                       "seed": 42

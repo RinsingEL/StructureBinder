@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-/** Strict codec for AI-submitted v0.2 intent. Resolved masks and world coordinates are forbidden. */
+/** Strict codec for AI-submitted v0.4 intent. Resolved masks and world coordinates are forbidden. */
 public final class DecorationProgramIntentCodec {
     private final CompiledDecorationProgramCodec primitiveCodec = new CompiledDecorationProgramCodec();
 
@@ -16,8 +16,7 @@ public final class DecorationProgramIntentCodec {
         requireOnly(source, Set.of("schemaVersion", "cityId", "catalogHash", "styleProfileId", "styleProfileHash",
                 "programs"), "program plan");
         String schema = requiredString(source, "schemaVersion");
-        boolean legacySchema = DecorationProgramIntentPlan.LEGACY_SCHEMA.equals(schema);
-        if (!DecorationProgramIntentPlan.SCHEMA.equals(schema) && !legacySchema) {
+        if (!DecorationProgramIntentPlan.SCHEMA.equals(schema)) {
             throw new IllegalArgumentException("CITY_DECORATION_PROGRAM_PLAN_SCHEMA_UNSUPPORTED: " + schema);
         }
         List<DecorationProgramIntent> programs = new ArrayList<>();
@@ -25,7 +24,7 @@ public final class DecorationProgramIntentCodec {
             if (!element.isJsonObject()) {
                 throw new IllegalArgumentException("CITY_DECORATION_PROGRAM_INVALID: programs[] entries must be objects");
             }
-            programs.add(parseIntent(element.getAsJsonObject(), legacySchema));
+            programs.add(parseIntent(element.getAsJsonObject()));
         }
         return new DecorationProgramIntentPlan(schema, requiredString(source, "cityId"),
                 requiredString(source, "catalogHash"), requiredString(source, "styleProfileId"),
@@ -33,10 +32,6 @@ public final class DecorationProgramIntentCodec {
     }
 
     public DecorationProgramIntent parseIntent(JsonObject source) {
-        return parseIntent(source, false);
-    }
-
-    private DecorationProgramIntent parseIntent(JsonObject source, boolean legacySchema) {
         requireOnly(source, Set.of("programId", "targetArea", "coordinateFrame", "shape", "pattern",
                 "contentPalette", "terrainPolicy", "conflictPolicy", "priority", "seed"), "program");
         DecorationProgramIntent.TargetArea targetArea = parseTargetArea(requiredObject(source, "targetArea"));
@@ -50,7 +45,7 @@ public final class DecorationProgramIntentCodec {
             palette.requireSlot(paletteSlotId);
         }
         return new DecorationProgramIntent(requiredString(source, "programId"), targetArea, frame, shape, pattern,
-                palette, primitiveCodec.parseTerrainPolicy(requiredObject(source, "terrainPolicy"), legacySchema),
+                palette, primitiveCodec.parseTerrainPolicy(requiredObject(source, "terrainPolicy")),
                 primitiveCodec.parseConflictPolicy(requiredObject(source, "conflictPolicy")),
                 requiredInt(source, "priority"), requiredLong(source, "seed"));
     }

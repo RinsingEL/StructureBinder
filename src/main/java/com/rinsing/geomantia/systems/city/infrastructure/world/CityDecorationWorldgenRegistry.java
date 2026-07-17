@@ -47,12 +47,11 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.WeakHashMap;
+import java.util.function.Function;
 
 public final class CityDecorationWorldgenRegistry {
-    public static final String ACTIVE_SCHEMA = "city_active_decoration_program_plans.v0.3";
-    public static final String LEGACY_ACTIVE_SCHEMA = "city_active_decoration_program_plans.v0.2";
-    public static final String LEDGER_SCHEMA = "city_decoration_worldgen_ledger.v0.3";
-    public static final String LEGACY_LEDGER_SCHEMA = "city_decoration_worldgen_ledger.v0.2";
+    public static final String ACTIVE_SCHEMA = "city_active_decoration_program_plans.v0.4";
+    public static final String LEDGER_SCHEMA = "city_decoration_worldgen_ledger.v0.4";
 
     private static final Logger LOGGER = LogUtils.getLogger();
     private static final String ACTIVE_DIR = "geomantia_city_masks";
@@ -77,12 +76,12 @@ public final class CityDecorationWorldgenRegistry {
     private static final Map<Object, Set<FeatureOwnerKey>> FEATURE_OWNER_APPLICATIONS = new WeakHashMap<>();
     private static final ThreadLocal<FeatureInvocationState> FEATURE_INVOCATION = new ThreadLocal<>();
     private static JsonObject ledger = emptyLedger();
+    private static Function<Path, CityDecorationContentCatalog> catalogReader = CATALOG_LOADER::load;
     private static boolean ledgerPersistencePending;
     private static long nextLedgerPersistenceRetryNanos;
     private static LedgerPersistenceWriter ledgerPersistenceWriter = CityDecorationWorldgenRegistry::atomicWrite;
     private static Path activeServerRoot;
     private static Path activeCatalogRoot;
-    private static int lastLoadLegacyReactivationRequiredPlanCount;
 
     private CityDecorationWorldgenRegistry() {
     }
@@ -106,7 +105,7 @@ public final class CityDecorationWorldgenRegistry {
         Path server = normalized(serverRoot, "CITY_DECORATION_SERVER_ROOT_REQUIRED");
         Path catalogPath = normalized(catalogRoot, "CITY_DECORATION_CATALOG_ROOT_REQUIRED");
         ensureLoaded(server, catalogPath);
-        CityDecorationContentCatalog catalog = CATALOG_LOADER.load(catalogPath);
+        CityDecorationContentCatalog catalog = catalogReader.apply(catalogPath);
         if (!plan.catalogHash().equals(catalog.catalogHash())) {
             throw new IllegalArgumentException("CITY_DECORATION_CATALOG_HASH_MISMATCH: plan="
                     + plan.catalogHash() + ", catalog=" + catalog.catalogHash());
@@ -156,7 +155,7 @@ public final class CityDecorationWorldgenRegistry {
         dimensionId(dimensionId);
         Path server = normalized(serverRoot, "CITY_DECORATION_SERVER_ROOT_REQUIRED");
         Path catalogPath = normalized(catalogRoot, "CITY_DECORATION_CATALOG_ROOT_REQUIRED");
-        CityDecorationContentCatalog catalog = CATALOG_LOADER.load(catalogPath);
+        CityDecorationContentCatalog catalog = catalogReader.apply(catalogPath);
         if (!plan.catalogHash().equals(catalog.catalogHash())) {
             throw new IllegalArgumentException("CITY_DECORATION_CATALOG_HASH_MISMATCH: plan="
                     + plan.catalogHash() + ", catalog=" + catalog.catalogHash());
@@ -281,21 +280,15 @@ public final class CityDecorationWorldgenRegistry {
         ledger = loaded.ledger();
         ledgerPersistencePending = false;
         nextLedgerPersistenceRetryNanos = 0L;
-        lastLoadLegacyReactivationRequiredPlanCount = loaded.reactivationRequiredPlanCount();
         if (loaded.staleCatalogPlanCount() > 0) {
             persistActive();
             LOGGER.warn("Discarded {} stale City decoration active plan(s) after catalog change; replan before activation.",
                     loaded.staleCatalogPlanCount());
         }
-        if (loaded.reactivationRequiredPlanCount() > 0) {
-            persistActive();
-            LOGGER.warn("Discarded {} legacy City decoration continuous plan(s); rerun city_execute_d5 to freeze terrain.",
-                    loaded.reactivationRequiredPlanCount());
-        }
         if (!loaded.ledgerExists()) {
             persistLedger();
         }
-        LOGGER.info("Loaded City decoration v0.3 registry: activePlans={}, appliedFragments={}",
+        LOGGER.info("Loaded City decoration v0.4 registry: activePlans={}, appliedFragments={}",
                 ACTIVE.size(), appliedEntries().size());
     }
 
@@ -305,13 +298,11 @@ public final class CityDecorationWorldgenRegistry {
                                          boolean discardStaleCatalogPlans) {
         Map<ActiveKey, ActivePlan> loadedActive = new LinkedHashMap<>();
         int staleCatalogPlanCount = 0;
-        int reactivationRequiredPlanCount = 0;
 
         Path activePath = activePath(server);
         if (Files.isRegularFile(activePath)) {
             JsonObject persisted = readObject(activePath, "CITY_DECORATION_ACTIVE_PLAN_READ_FAILED");
-            String activeSchema = requireOneOfSchemas(persisted, "CITY_DECORATION_ACTIVE_PLAN_SCHEMA_UNSUPPORTED",
-                    ACTIVE_SCHEMA, LEGACY_ACTIVE_SCHEMA);
+            requireOneOfSchemas(persisted, "CITY_DECORATION_ACTIVE_PLAN_SCHEMA_UNSUPPORTED", ACTIVE_SCHEMA);
             JsonArray plans = requiredArray(persisted, "plans");
             List<JsonObject> retainedPlans = new ArrayList<>();
             for (JsonElement element : plans) {
@@ -331,7 +322,7 @@ public final class CityDecorationWorldgenRegistry {
                 throw new IllegalArgumentException("CITY_DECORATION_CATALOG_ROOT_REQUIRED");
             }
             CityDecorationContentCatalog catalog = retainedPlans.isEmpty()
-                    ? null : CATALOG_LOADER.load(catalogPath);
+                    ? null : catalogReader.apply(catalogPath);
             CityDecorationStyleProfileCatalog styles = retainedPlans.isEmpty()
                     ? null : STYLE_LOADER.load(catalogPath, catalog);
             for (JsonObject entry : retainedPlans) {
@@ -354,15 +345,8 @@ public final class CityDecorationWorldgenRegistry {
                     continue;
                 }
                 validateStyleProfile(plan, styles);
-                if (LEGACY_ACTIVE_SCHEMA.equals(activeSchema) && requiresFrozenTerrain(plan)) {
-                    reactivationRequiredPlanCount++;
-                    LOGGER.warn("Discarding legacy continuous City decoration plan {}/{}; D5 reactivation is required.",
-                            dimension, cityId);
-                    continue;
-                }
-                CityDecorationTerrainRunCompiler.FrozenPlan frozenTerrainPlan = ACTIVE_SCHEMA.equals(activeSchema)
-                        ? FROZEN_TERRAIN_CODEC.parse(requiredObject(entry, "frozenTerrainPlan"))
-                        : emptyFrozenPlan(plan);
+                CityDecorationTerrainRunCompiler.FrozenPlan frozenTerrainPlan =
+                        FROZEN_TERRAIN_CODEC.parse(requiredObject(entry, "frozenTerrainPlan"));
                 validateFrozenPlan(plan, frozenTerrainPlan);
                 ActiveKey key = new ActiveKey(dimension, cityId);
                 if (loadedActive.putIfAbsent(key, new ActivePlan(key, plan, catalog, frozenTerrainPlan)) != null) {
@@ -375,14 +359,8 @@ public final class CityDecorationWorldgenRegistry {
         boolean ledgerExists = Files.isRegularFile(ledgerPath);
         JsonObject loadedLedger = ledgerExists
                 ? readObject(ledgerPath, "CITY_DECORATION_LEDGER_READ_FAILED") : emptyLedger();
-        String ledgerSchema = requireOneOfSchemas(loadedLedger, "CITY_DECORATION_LEDGER_SCHEMA_UNSUPPORTED",
-                LEDGER_SCHEMA, LEGACY_LEDGER_SCHEMA);
-        if (LEGACY_LEDGER_SCHEMA.equals(ledgerSchema)) {
-            loadedLedger.addProperty("schemaVersion", LEDGER_SCHEMA);
-            loadedLedger.add("fragmentOutcomes", new JsonArray());
-        }
-        return new LoadedState(Map.copyOf(loadedActive), loadedLedger, ledgerExists, staleCatalogPlanCount,
-                reactivationRequiredPlanCount);
+        requireOneOfSchemas(loadedLedger, "CITY_DECORATION_LEDGER_SCHEMA_UNSUPPORTED", LEDGER_SCHEMA);
+        return new LoadedState(Map.copyOf(loadedActive), loadedLedger, ledgerExists, staleCatalogPlanCount);
     }
 
     private static void validateStyleProfile(CompiledDecorationProgramPlan plan,
@@ -554,31 +532,9 @@ public final class CityDecorationWorldgenRegistry {
             return new ProgramApplyCounts(ready, 0, alreadyApplied, 0, skipped);
         }
 
-        List<PreparedFragment> prepared = new ArrayList<>();
-        for (OwnedFragment owned : pending) {
-            CityDecorationNbtPlacer.PreflightResult preflight = PLACER.preflight(owned.fragment(), placementWorld);
-            if (!preflight.ready()) {
-                CityDecorationChunkCompiler.Fragment fragment = owned.fragment();
-                String ledgerKey = ledgerKey(active.key(), fragment, active.plan().catalogHash(),
-                        owned.owner().chunkX(), owned.owner().chunkZ());
-                recordOutcome(ledgerKey, active.key(), fragment, active.plan().catalogHash(),
-                        owned.owner().chunkX(), owned.owner().chunkZ(),
-                        defersProgram(preflight.reasonCode()) ? "deferred" : "skipped",
-                        preflight.reasonCode());
-                if (defersProgram(preflight.reasonCode())) {
-                    skipped++;
-                    continue;
-                }
-                skipped++;
-                continue;
-            }
-            prepared.add(new PreparedFragment(owned, preflight));
-        }
-
         int applied = 0;
         int failed = 0;
-        for (PreparedFragment preparedFragment : prepared) {
-            OwnedFragment owned = preparedFragment.owned();
+        for (OwnedFragment owned : pending) {
             CityDecorationChunkCompiler.Fragment fragment = owned.fragment();
             String ledgerKey = ledgerKey(active.key(), fragment, active.plan().catalogHash(),
                     owned.owner().chunkX(), owned.owner().chunkZ());
@@ -587,22 +543,84 @@ public final class CityDecorationWorldgenRegistry {
                 continue;
             }
             try {
-                CityDecorationNbtPlacer.PlacementResult result = PLACER.placePrepared(fragment,
-                        preparedFragment.preflight(), placementWorld);
-                if (result.applied()) {
+                LayeredPlacement layered = placeLayers(fragment, placementWorld,
+                        successfulLayerIds(ledgerKey));
+                if (layered.applied()) {
                     recordApplied(ledgerKey, active.key(), fragment, active.plan().catalogHash(),
-                            owned.owner().chunkX(), owned.owner().chunkZ(), result);
+                            owned.owner().chunkX(), owned.owner().chunkZ(), layered.result(), layered.layers());
                     applied++;
                 } else {
                     recordOutcome(ledgerKey, active.key(), fragment, active.plan().catalogHash(),
-                            owned.owner().chunkX(), owned.owner().chunkZ(), "failed", result.reasonCode());
-                    failed++;
+                            owned.owner().chunkX(), owned.owner().chunkZ(), layered.status(),
+                            layered.reasonCode(), layered.layers());
+                    if ("failed".equals(layered.status())) {
+                        failed++;
+                    } else {
+                        skipped++;
+                    }
                 }
             } finally {
                 end(ledgerKey);
             }
         }
         return new ProgramApplyCounts(ready, applied, alreadyApplied, failed, skipped);
+    }
+
+    private static LayeredPlacement placeLayers(CityDecorationChunkCompiler.Fragment fragment,
+                                                CityDecorationNbtPlacer.PlacementWorld placementWorld,
+                                                Set<String> previouslySuccessful) {
+        Set<String> successful = new HashSet<>(previouslySuccessful);
+        List<LayerOutcome> outcomes = new ArrayList<>();
+        int baseY = fragment.datumY() == null ? 0 : fragment.datumY();
+        int targetCount = 0;
+        for (CityDecorationChunkCompiler.FragmentLayer layer : fragment.layers()) {
+            if (successful.contains(layer.layerId())) {
+                outcomes.add(new LayerOutcome(layer.layerId(), layer.contentRef(), layer.contentHash(),
+                        layer.required(), "already_satisfied", "CITY_DECORATION_LAYER_ALREADY_SATISFIED"));
+                continue;
+            }
+            if (layer.dependsOnLayerId() != null && !successful.contains(layer.dependsOnLayerId())) {
+                LayerOutcome outcome = new LayerOutcome(layer.layerId(), layer.contentRef(), layer.contentHash(),
+                        layer.required(), "skipped", "CITY_DECORATION_LAYER_DEPENDENCY_UNSATISFIED");
+                outcomes.add(outcome);
+                if (layer.required()) {
+                    return LayeredPlacement.incomplete("skipped", outcome.reasonCode(), outcomes);
+                }
+                continue;
+            }
+            CityDecorationNbtPlacer.PreflightResult preflight = PLACER.preflight(fragment, layer, placementWorld);
+            if (!preflight.ready()) {
+                String status = defersProgram(preflight.reasonCode()) ? "deferred" : "skipped";
+                LayerOutcome outcome = new LayerOutcome(layer.layerId(), layer.contentRef(), layer.contentHash(),
+                        layer.required(), status, preflight.reasonCode());
+                outcomes.add(outcome);
+                if (layer.required()) {
+                    return LayeredPlacement.incomplete(status, preflight.reasonCode(), outcomes);
+                }
+                continue;
+            }
+            CityDecorationNbtPlacer.PlacementResult result = PLACER.placePrepared(
+                    fragment, layer, preflight, placementWorld);
+            if (!result.applied()) {
+                LayerOutcome outcome = new LayerOutcome(layer.layerId(), layer.contentRef(), layer.contentHash(),
+                        layer.required(), "failed", result.reasonCode());
+                outcomes.add(outcome);
+                if (layer.required()) {
+                    return LayeredPlacement.incomplete("failed", result.reasonCode(), outcomes);
+                }
+                continue;
+            }
+            if (outcomes.isEmpty()) {
+                baseY = result.baseY();
+            }
+            targetCount += result.targetCount();
+            successful.add(layer.layerId());
+            outcomes.add(new LayerOutcome(layer.layerId(), layer.contentRef(), layer.contentHash(),
+                    layer.required(), "applied", result.reasonCode()));
+        }
+        CityDecorationNbtPlacer.PlacementResult aggregate = new CityDecorationNbtPlacer.PlacementResult(
+                true, "CITY_DECORATION_LAYERED_FRAGMENT_APPLIED", baseY, targetCount);
+        return new LayeredPlacement(true, "applied", aggregate.reasonCode(), aggregate, List.copyOf(outcomes));
     }
 
     private static boolean defersProgram(String reasonCode) {
@@ -638,7 +656,7 @@ public final class CityDecorationWorldgenRegistry {
 
     public static synchronized JsonObject activeSummary() {
         JsonObject summary = new JsonObject();
-        summary.addProperty("schemaVersion", "city_active_decoration_summary.v0.3");
+        summary.addProperty("schemaVersion", "city_active_decoration_summary.v0.4");
         summary.addProperty("activePlanCount", ACTIVE.size());
         summary.addProperty("appliedFragmentCount", appliedEntries().size());
         summary.addProperty("fragmentOutcomeCount", outcomeEntries().size());
@@ -646,12 +664,7 @@ public final class CityDecorationWorldgenRegistry {
                 .mapToInt(active -> active.frozenTerrainPlan().runs().size()).sum());
         summary.addProperty("foundationSegmentCount", ACTIVE.values().stream()
                 .mapToInt(active -> active.frozenTerrainPlan().foundationSegments().size()).sum());
-        summary.addProperty("lastLoadLegacyReactivationRequiredPlanCount",
-                lastLoadLegacyReactivationRequiredPlanCount);
         JsonArray reasonCodes = new JsonArray();
-        if (lastLoadLegacyReactivationRequiredPlanCount > 0) {
-            reasonCodes.add("CITY_DECORATION_LEGACY_CONTINUOUS_REACTIVATION_REQUIRED");
-        }
         summary.add("reasonCodes", reasonCodes);
         JsonArray keys = new JsonArray();
         ACTIVE.keySet().stream().sorted().forEach(key -> {
@@ -712,9 +725,14 @@ public final class CityDecorationWorldgenRegistry {
         ledgerPersistencePending = false;
         nextLedgerPersistenceRetryNanos = 0L;
         ledgerPersistenceWriter = CityDecorationWorldgenRegistry::atomicWrite;
+        catalogReader = CATALOG_LOADER::load;
         activeServerRoot = null;
         activeCatalogRoot = null;
-        lastLoadLegacyReactivationRequiredPlanCount = 0;
+    }
+
+    static synchronized void setCatalogReaderForTests(
+            Function<Path, CityDecorationContentCatalog> reader) {
+        catalogReader = Objects.requireNonNull(reader, "reader");
     }
 
     static boolean enterFeatureOwnerForTests(Object generationScope,
@@ -825,7 +843,8 @@ public final class CityDecorationWorldgenRegistry {
                                                    String catalogHash,
                                                    int chunkX,
                                                    int chunkZ,
-                                                   CityDecorationNbtPlacer.PlacementResult result) {
+                                                   CityDecorationNbtPlacer.PlacementResult result,
+                                                   List<LayerOutcome> layers) {
         if (ledgerContains(ledgerKey)) {
             return;
         }
@@ -849,6 +868,9 @@ public final class CityDecorationWorldgenRegistry {
         entry.addProperty("datumY", fragment.datumY());
         entry.addProperty("baseY", result.baseY());
         entry.addProperty("targetCount", result.targetCount());
+        if (fragment.layers().size() > 1) {
+            entry.add("layers", layerOutcomesJson(layers));
+        }
         if (fragment.runId() != null) {
             entry.addProperty("runId", fragment.runId());
             entry.addProperty("runOrdinal", fragment.runOrdinal());
@@ -862,7 +884,7 @@ public final class CityDecorationWorldgenRegistry {
         entry.addProperty("appliedAt", Instant.now().toString());
         appliedEntries().add(entry);
         recordOutcome(ledgerKey, key, fragment, catalogHash, chunkX, chunkZ,
-                "applied", result.reasonCode());
+                "applied", result.reasonCode(), layers);
         // World blocks are already placed at this point.  Keep the in-memory entry for
         // same-session idempotency; applyForChunk persists all successful fragments once.
         ledgerPersistencePending = true;
@@ -908,6 +930,18 @@ public final class CityDecorationWorldgenRegistry {
                                                    int chunkZ,
                                                    String status,
                                                    String reasonCode) {
+        recordOutcome(outcomeKey, key, fragment, catalogHash, chunkX, chunkZ, status, reasonCode, List.of());
+    }
+
+    private static synchronized void recordOutcome(String outcomeKey,
+                                                   ActiveKey key,
+                                                   CityDecorationChunkCompiler.Fragment fragment,
+                                                   String catalogHash,
+                                                   int chunkX,
+                                                   int chunkZ,
+                                                   String status,
+                                                   String reasonCode,
+                                                   List<LayerOutcome> layers) {
         JsonObject entry = new JsonObject();
         entry.addProperty("outcomeKey", outcomeKey);
         entry.addProperty("dimensionId", key.dimensionId());
@@ -926,6 +960,9 @@ public final class CityDecorationWorldgenRegistry {
         entry.addProperty("clearanceMode", fragment.clearanceMode());
         entry.addProperty("status", status);
         entry.addProperty("reasonCode", reasonCode);
+        if (fragment.layers().size() > 1 || !layers.isEmpty()) {
+            entry.add("layers", layerOutcomesJson(layers));
+        }
         if (fragment.runId() != null) {
             entry.addProperty("runId", fragment.runId());
             entry.addProperty("runOrdinal", fragment.runOrdinal());
@@ -950,6 +987,47 @@ public final class CityDecorationWorldgenRegistry {
         }
         outcomes.add(entry);
         ledgerPersistencePending = true;
+    }
+
+    private static JsonArray layerOutcomesJson(List<LayerOutcome> layers) {
+        JsonArray result = new JsonArray();
+        layers.forEach(layer -> {
+            JsonObject value = new JsonObject();
+            value.addProperty("layerId", layer.layerId());
+            value.addProperty("contentRef", layer.contentRef());
+            value.addProperty("contentHash", layer.contentHash());
+            value.addProperty("required", layer.required());
+            value.addProperty("status", layer.status());
+            value.addProperty("reasonCode", layer.reasonCode());
+            result.add(value);
+        });
+        return result;
+    }
+
+    private static synchronized Set<String> successfulLayerIds(String outcomeKey) {
+        for (JsonElement element : outcomeEntries()) {
+            if (!element.isJsonObject()) {
+                continue;
+            }
+            JsonObject outcome = element.getAsJsonObject();
+            if (!outcomeKey.equals(stringValue(outcome, "outcomeKey", ""))
+                    || !outcome.has("layers") || !outcome.get("layers").isJsonArray()) {
+                continue;
+            }
+            Set<String> result = new HashSet<>();
+            for (JsonElement layerElement : outcome.getAsJsonArray("layers")) {
+                if (!layerElement.isJsonObject()) {
+                    continue;
+                }
+                JsonObject layer = layerElement.getAsJsonObject();
+                String status = stringValue(layer, "status", "");
+                if ("applied".equals(status) || "already_satisfied".equals(status)) {
+                    result.add(stringValue(layer, "layerId", ""));
+                }
+            }
+            return Set.copyOf(result);
+        }
+        return Set.of();
     }
 
     private static synchronized void persistActive() {
@@ -984,8 +1062,7 @@ public final class CityDecorationWorldgenRegistry {
             return 0;
         }
         JsonObject persisted = readObject(path, "CITY_DECORATION_ACTIVE_PLAN_READ_FAILED");
-        requireOneOfSchemas(persisted, "CITY_DECORATION_ACTIVE_PLAN_SCHEMA_UNSUPPORTED",
-                ACTIVE_SCHEMA, LEGACY_ACTIVE_SCHEMA);
+        requireOneOfSchemas(persisted, "CITY_DECORATION_ACTIVE_PLAN_SCHEMA_UNSUPPORTED", ACTIVE_SCHEMA);
         return requiredArray(persisted, "plans").size();
     }
 
@@ -1167,8 +1244,7 @@ public final class CityDecorationWorldgenRegistry {
     private record LoadedState(Map<ActiveKey, ActivePlan> activePlans,
                                JsonObject ledger,
                                boolean ledgerExists,
-                               int staleCatalogPlanCount,
-                               int reactivationRequiredPlanCount) {
+                               int staleCatalogPlanCount) {
     }
 
     private record SuppressionRecord(ActiveKey key, String fragmentId,
@@ -1192,7 +1268,20 @@ public final class CityDecorationWorldgenRegistry {
     private record OwnedFragment(ChunkRef owner, CityDecorationChunkCompiler.Fragment fragment) {
     }
 
-    private record PreparedFragment(OwnedFragment owned, CityDecorationNbtPlacer.PreflightResult preflight) {
+    private record LayerOutcome(String layerId, String contentRef, String contentHash,
+                                boolean required, String status, String reasonCode) {
+    }
+
+    private record LayeredPlacement(boolean applied,
+                                    String status,
+                                    String reasonCode,
+                                    CityDecorationNbtPlacer.PlacementResult result,
+                                    List<LayerOutcome> layers) {
+        private static LayeredPlacement incomplete(String status, String reasonCode, List<LayerOutcome> layers) {
+            return new LayeredPlacement(false, status, reasonCode,
+                    new CityDecorationNbtPlacer.PlacementResult(false, reasonCode, 0, 0),
+                    List.copyOf(layers));
+        }
     }
 
     private record ProgramProjection(CompiledDecorationProgram program,

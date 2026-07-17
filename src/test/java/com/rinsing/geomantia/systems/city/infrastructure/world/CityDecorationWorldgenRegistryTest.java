@@ -12,6 +12,7 @@ import com.rinsing.geomantia.systems.city.domain.model.BlockPoint;
 import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationChunkCompiler;
 import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationContentCatalog;
 import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationContentCatalogLoader;
+import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationPlantCatalogTestFixture;
 import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationStyleProfileCatalog;
 import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationStyleProfileCatalogLoader;
 import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationTerrainRunCompiler;
@@ -49,6 +50,44 @@ class CityDecorationWorldgenRegistryTest {
     @AfterEach
     void resetRegistry() {
         CityDecorationWorldgenRegistry.resetForTests();
+    }
+
+    @Test
+    void layeredFragmentCommitsOuterLedgerOnlyAfterRequiredPlantSucceeds(@TempDir Path temp) throws Exception {
+        Path catalogRoot = temp.resolve("catalog");
+        Path serverRoot = temp.resolve("server");
+        CityDecorationContentCatalog catalog = CityDecorationPlantCatalogTestFixture.create(catalogRoot);
+        CityDecorationWorldgenRegistry.setCatalogReaderForTests(ignored -> catalog);
+        CityDecorationWorldgenRegistry.activate("minecraft:overworld",
+                layeredPlan(catalog), serverRoot, catalogRoot);
+        FakePlacementWorld world = new FakePlacementWorld(true);
+        world.failPlant = true;
+
+        CityDecorationWorldgenRegistry.ApplySummary partial = CityDecorationWorldgenRegistry.applyForChunk(
+                "minecraft:overworld", 0, 0, FlatTerrain.INSTANCE, world);
+
+        assertEquals(0, partial.appliedFragmentCount());
+        assertEquals(1, partial.failedFragmentCount());
+        assertEquals(0, appliedCount());
+        assertEquals(List.of("base", "plant"), world.placementOrder);
+        JsonObject partialOutcome = CityDecorationWorldgenRegistry.ledgerSnapshot()
+                .getAsJsonArray("fragmentOutcomes").get(0).getAsJsonObject();
+        assertEquals("failed", partialOutcome.get("status").getAsString());
+        assertEquals(List.of("applied", "failed"), partialOutcome.getAsJsonArray("layers").asList().stream()
+                .map(layer -> layer.getAsJsonObject().get("status").getAsString()).toList());
+
+        world.failPlant = false;
+        CityDecorationWorldgenRegistry.ApplySummary completed = CityDecorationWorldgenRegistry.applyForChunk(
+                "minecraft:overworld", 0, 0, FlatTerrain.INSTANCE, world);
+
+        assertEquals(1, completed.appliedFragmentCount());
+        assertEquals(1, appliedCount());
+        assertEquals(1, world.placeCalls, "successful base layer must not be placed again on retry");
+        assertEquals(2, world.plantPlaceCalls);
+        JsonObject applied = CityDecorationWorldgenRegistry.ledgerSnapshot()
+                .getAsJsonArray("appliedFragments").get(0).getAsJsonObject();
+        assertEquals(List.of("already_satisfied", "applied"), applied.getAsJsonArray("layers").asList().stream()
+                .map(layer -> layer.getAsJsonObject().get("status").getAsString()).toList());
     }
 
     @Test
@@ -503,7 +542,7 @@ class CityDecorationWorldgenRegistryTest {
         Path serverRoot = temp.resolve("server");
         CityDecorationContentCatalog catalog = catalog(catalogRoot, "minecraft:stone");
         CompiledDecorationProgramPlan base = plan(catalog, "city_a", "channel", 41L, 4, 4);
-        CompiledDecorationProgramPlan continuousPlan = continuousPlan(base, false);
+        CompiledDecorationProgramPlan continuousPlan = continuousPlan(base);
 
         assertTrue(assertThrows(IllegalArgumentException.class, () ->
                 CityDecorationWorldgenRegistry.activate("minecraft:overworld", continuousPlan,
@@ -517,38 +556,19 @@ class CityDecorationWorldgenRegistryTest {
     }
 
     @Test
-    void loadingLegacyContinuousActivePlanDisablesItAndReportsReactivationReason(@TempDir Path temp)
+    void loadingLegacyActivePlanSchemaIsRejected(@TempDir Path temp)
             throws Exception {
-        Path catalogRoot = temp.resolve("catalog");
         Path serverRoot = temp.resolve("server");
-        CityDecorationContentCatalog catalog = catalog(catalogRoot, "minecraft:stone");
-        CompiledDecorationProgramPlan legacy = continuousPlan(
-                plan(catalog, "city_a", "channel", 42L, 4, 4), true);
-        JsonObject entry = new JsonObject();
-        entry.addProperty("dimensionId", "minecraft:overworld");
-        entry.addProperty("cityId", legacy.cityId());
-        entry.addProperty("catalogHash", legacy.catalogHash());
-        entry.add("compiledPlan", new CompiledDecorationProgramCodec().toJson(legacy));
-        JsonArray plans = new JsonArray();
-        plans.add(entry);
         JsonObject active = new JsonObject();
-        active.addProperty("schemaVersion", CityDecorationWorldgenRegistry.LEGACY_ACTIVE_SCHEMA);
-        active.add("plans", plans);
+        active.addProperty("schemaVersion", "city_active_decoration_program_plans.v0.3");
+        active.add("plans", new JsonArray());
         Path activePath = CityDecorationWorldgenRegistry.activePlansPath(serverRoot);
         Files.createDirectories(activePath.getParent());
         Files.writeString(activePath, CityJson.GSON.toJson(active));
 
-        CityDecorationWorldgenRegistry.load(serverRoot, catalogRoot);
-
-        JsonObject summary = CityDecorationWorldgenRegistry.activeSummary();
-        assertEquals(0, summary.get("activePlanCount").getAsInt());
-        assertEquals(1, summary.get("lastLoadLegacyReactivationRequiredPlanCount").getAsInt());
-        assertEquals("CITY_DECORATION_LEGACY_CONTINUOUS_REACTIVATION_REQUIRED",
-                summary.getAsJsonArray("reasonCodes").get(0).getAsString());
-        JsonObject rewritten = JsonParser.parseString(Files.readString(activePath)).getAsJsonObject();
-        assertEquals(CityDecorationWorldgenRegistry.ACTIVE_SCHEMA,
-                rewritten.get("schemaVersion").getAsString());
-        assertEquals(0, rewritten.getAsJsonArray("plans").size());
+        IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
+                () -> CityDecorationWorldgenRegistry.load(serverRoot, temp.resolve("catalog")));
+        assertTrue(error.getMessage().contains("CITY_DECORATION_ACTIVE_PLAN_SCHEMA_UNSUPPORTED"));
     }
 
     private static int appliedCount() {
@@ -595,6 +615,37 @@ class CityDecorationWorldgenRegistryTest {
                 List.of(), List.of(program));
     }
 
+    private static CompiledDecorationProgramPlan layeredPlan(CityDecorationContentCatalog catalog) {
+        CompiledDecorationProgram program = new CompiledDecorationProgram(
+                CompiledDecorationProgram.SCHEMA, "layered_field", 1, 78L,
+                new CompiledDecorationProgram.TargetMask("layered_mask",
+                        List.of(new BlockBounds(4, 4, 4, 4))),
+                new CompiledDecorationProgram.CoordinateFrame(BlockPoint.ORIGIN,
+                        new CompiledDecorationProgram.Vector2(1, 0),
+                        new CompiledDecorationProgram.Vector2(0, 1)),
+                new CompiledDecorationProgram.TargetMaskShape(),
+                new CompiledDecorationProgram.GridRepeatPattern("item", 1, 1, 0, 0),
+                new CompiledDecorationProgram.ContentPalette(List.of(
+                        new CompiledDecorationProgram.PaletteSlot("item", List.of(
+                                new CompiledDecorationProgram.ContentLayer("base",
+                                        CompiledDecorationProgram.Phase.SURFACE,
+                                        List.of(new CompiledDecorationProgram.ContentEntry(
+                                                "city:prefab/farmland", 1.0)), true, null),
+                                new CompiledDecorationProgram.ContentLayer("plant",
+                                        CompiledDecorationProgram.Phase.MINOR,
+                                        List.of(new CompiledDecorationProgram.ContentEntry(
+                                                "city:plant/wheat", 1.0)), true, "base"))))),
+                new CompiledDecorationProgram.TerrainPolicy(1, false,
+                        CompiledDecorationProgram.InvalidTerrainAction.SKIP),
+                new CompiledDecorationProgram.ConflictPolicy(
+                        CompiledDecorationProgram.ConflictAction.SKIP, 0));
+        CityDecorationStyleProfileCatalog.StyleProfile profile = new CityDecorationStyleProfileCatalogLoader()
+                .load(catalog.catalogRoot(), catalog).requireProfile("test_style");
+        return new CompiledDecorationProgramPlan(CompiledDecorationProgramPlan.SCHEMA,
+                "layered_city", catalog.catalogHash(), profile.styleProfileId(), profile.styleProfileHash(),
+                List.of(), List.of(program));
+    }
+
     private static CompiledDecorationProgramPlan twoChunkPlan(CityDecorationContentCatalog catalog,
                                                                String cityId,
                                                                String programId,
@@ -622,18 +673,15 @@ class CityDecorationWorldgenRegistryTest {
                 List.of(), List.of(program));
     }
 
-    private static CompiledDecorationProgramPlan continuousPlan(CompiledDecorationProgramPlan base,
-                                                                  boolean legacySchema) {
+    private static CompiledDecorationProgramPlan continuousPlan(CompiledDecorationProgramPlan base) {
         CompiledDecorationProgram source = base.programs().get(0);
-        String programSchema = legacySchema ? CompiledDecorationProgram.LEGACY_SCHEMA : source.schemaVersion();
-        String planSchema = legacySchema ? CompiledDecorationProgramPlan.LEGACY_SCHEMA : base.schemaVersion();
-        CompiledDecorationProgram continuous = new CompiledDecorationProgram(programSchema,
+        CompiledDecorationProgram continuous = new CompiledDecorationProgram(source.schemaVersion(),
                 source.programId(), source.priority(), source.seed(), source.targetMask(), source.coordinateFrame(),
                 source.shape(), new CompiledDecorationProgram.CrossSectionRepeatPattern(
                 CompiledDecorationProgram.Axis.V, 0,
                 List.of(new CompiledDecorationProgram.CrossSectionBand("item", 1))),
                 source.contentPalette(), source.terrainPolicy(), source.conflictPolicy());
-        return new CompiledDecorationProgramPlan(planSchema, base.cityId(), base.catalogHash(),
+        return new CompiledDecorationProgramPlan(base.schemaVersion(), base.cityId(), base.catalogHash(),
                 base.styleProfileId(), base.styleProfileHash(), base.hardObstacles(), List.of(continuous));
     }
 
@@ -728,6 +776,9 @@ class CityDecorationWorldgenRegistryTest {
         private int placeCalls;
         private int deniedAtOrAfterX = Integer.MAX_VALUE;
         private final List<BlockPos> placementOrigins = new java.util.ArrayList<>();
+        private final List<String> placementOrder = new java.util.ArrayList<>();
+        private boolean failPlant;
+        private int plantPlaceCalls;
 
         private FakePlacementWorld(boolean succeed) {
             this.succeed = succeed;
@@ -753,7 +804,21 @@ class CityDecorationWorldgenRegistryTest {
                                      boolean ignoreTemplateAir) {
             placeCalls++;
             placementOrigins.add(origin);
+            placementOrder.add("base");
             return succeed;
+        }
+
+        @Override
+        public CityDecorationNbtPlacer.PlantTarget inspectPlant(CompoundTag blockStateNbt, BlockPos pos,
+                                                                Rotation rotation) {
+            return new CityDecorationNbtPlacer.PlantTarget(true, false, placeCalls > 0);
+        }
+
+        @Override
+        public boolean placePlant(CompoundTag blockStateNbt, BlockPos pos, Rotation rotation) {
+            plantPlaceCalls++;
+            placementOrder.add("plant");
+            return !failPlant;
         }
     }
 }

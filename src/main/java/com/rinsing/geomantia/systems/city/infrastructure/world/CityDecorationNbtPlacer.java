@@ -1,15 +1,20 @@
 package com.rinsing.geomantia.systems.city.infrastructure.world;
 
+import com.rinsing.geomantia.systems.city.application.dressing.CompiledDecorationProgram;
 import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationChunkCompiler;
+import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationContentCatalog;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.HolderGetter;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtUtils;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.CropBlock;
 import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.state.BlockState;
@@ -35,18 +40,44 @@ public final class CityDecorationNbtPlacer {
     }
 
     public PreflightResult preflight(CityDecorationChunkCompiler.Fragment fragment, PlacementWorld world) {
+        return preflight(fragment, fragment.layers().get(0), world);
+    }
+
+    public PreflightResult preflight(CityDecorationChunkCompiler.Fragment fragment,
+                                     CityDecorationChunkCompiler.FragmentLayer layer,
+                                     PlacementWorld world) {
         Objects.requireNonNull(fragment, "fragment");
+        Objects.requireNonNull(layer, "layer");
         Objects.requireNonNull(world, "world");
         if (fragment.status() != CityDecorationChunkCompiler.Status.READY || fragment.datumY() == null) {
             return PreflightResult.failed("CITY_DECORATION_FRAGMENT_NOT_READY", 0, 0, BlockPos.ZERO, Rotation.NONE);
         }
-        int surfaceOffset = "above_surface".equals(fragment.placementMode()) ? 1 : 0;
+        CityDecorationContentCatalog.Content content = layer.content();
+        int surfaceOffset = "above_surface".equals(content.placementMode()) ? 1 : 0;
         int baseY = fragment.datumY() + surfaceOffset
-                - fragment.groundPlaneLocalY() - fragment.embedDepthBlocks();
+                - content.groundPlaneLocalY() - content.embedDepthBlocks();
         Rotation rotation = rotation(fragment.rotationDegrees());
         BlockPos origin = new BlockPos(fragment.worldAnchor().x(), baseY, fragment.worldAnchor().z());
-        boolean clearTemplateAir = "clear_template_air".equals(fragment.clearanceMode());
-        List<PlacementTarget> targets = targets(fragment.prefabNbt(), origin, rotation, clearTemplateAir);
+        if (content.plant()) {
+            if (!world.ensureCanWrite(origin)) {
+                return PreflightResult.failed("CITY_DECORATION_TARGET_NOT_WRITABLE", baseY, 1,
+                        origin, rotation);
+            }
+            PlantTarget plant = world.inspectPlant(content.plantBlockState(), origin, rotation);
+            if (plant == null) {
+                return PreflightResult.failed("CITY_DECORATION_TARGET_STATE_UNAVAILABLE", baseY, 1,
+                        origin, rotation);
+            }
+            if (!plant.alreadySatisfied() && (!plant.replaceable() || !plant.supportSatisfied())) {
+                return PreflightResult.failed(plant.supportSatisfied()
+                                ? "CITY_DECORATION_REPLACE_POLICY_REJECTED"
+                                : "CITY_DECORATION_PLANT_SUPPORT_MISSING",
+                        baseY, 1, origin, rotation);
+            }
+            return PreflightResult.ready(baseY, 1, origin, rotation);
+        }
+        boolean clearTemplateAir = "clear_template_air".equals(content.clearanceMode());
+        List<PlacementTarget> targets = targets(content.template(), origin, rotation, clearTemplateAir);
         for (PlacementTarget target : targets) {
             if (!world.ensureCanWrite(target.worldPos())) {
                 return PreflightResult.failed("CITY_DECORATION_TARGET_NOT_WRITABLE", baseY, targets.size(),
@@ -57,11 +88,11 @@ public final class CityDecorationNbtPlacer {
                 return PreflightResult.failed("CITY_DECORATION_TARGET_STATE_UNAVAILABLE", baseY, targets.size(),
                         origin, rotation);
             }
-            boolean allowed = switch (fragment.replacePolicy()) {
+            boolean allowed = switch (content.replacePolicy()) {
                 case "replaceable_only" -> existing.replaceable();
                 case "surface_replaceable" -> target.templateAir()
                         ? existing.replaceable() || existing.surfaceReplaceable()
-                        : target.localY() <= fragment.groundPlaneLocalY()
+                        : target.localY() <= content.groundPlaneLocalY()
                         ? existing.surfaceReplaceable() : existing.replaceable();
                 default -> false;
             };
@@ -76,11 +107,22 @@ public final class CityDecorationNbtPlacer {
     PlacementResult placePrepared(CityDecorationChunkCompiler.Fragment fragment,
                                   PreflightResult preflight,
                                   PlacementWorld world) {
+        return placePrepared(fragment, fragment.layers().get(0), preflight, world);
+    }
+
+    PlacementResult placePrepared(CityDecorationChunkCompiler.Fragment fragment,
+                                  CityDecorationChunkCompiler.FragmentLayer layer,
+                                  PreflightResult preflight,
+                                  PlacementWorld world) {
         if (!preflight.ready()) {
             return PlacementResult.failed(preflight.reasonCode(), preflight.baseY(), preflight.targetCount());
         }
-        boolean placed = world.placeTemplate(fragment.prefabNbt(), preflight.origin(), preflight.rotation(),
-                stableSeed(fragment.fragmentId()), "preserve".equals(fragment.clearanceMode()));
+        CityDecorationContentCatalog.Content content = layer.content();
+        boolean placed = content.plant()
+                ? world.placePlant(content.plantBlockState(), preflight.origin(), preflight.rotation())
+                : world.placeTemplate(content.template(), preflight.origin(), preflight.rotation(),
+                stableSeed(templateSeedKey(fragment, layer)),
+                "preserve".equals(content.clearanceMode()));
         return placed
                 ? PlacementResult.applied(preflight.baseY(), preflight.targetCount())
                 : PlacementResult.failed("CITY_DECORATION_TEMPLATE_PLACE_FAILED", preflight.baseY(),
@@ -131,6 +173,11 @@ public final class CityDecorationNbtPlacer {
         }
     }
 
+    private static String templateSeedKey(CityDecorationChunkCompiler.Fragment fragment,
+                                          CityDecorationChunkCompiler.FragmentLayer layer) {
+        return fragment.fragmentId() + "/" + layer.layerId();
+    }
+
     public interface PlacementWorld {
         boolean ensureCanWrite(BlockPos pos);
 
@@ -138,9 +185,20 @@ public final class CityDecorationNbtPlacer {
 
         boolean placeTemplate(CompoundTag templateNbt, BlockPos origin, Rotation rotation, long seed,
                               boolean ignoreTemplateAir);
+
+        default PlantTarget inspectPlant(CompoundTag blockStateNbt, BlockPos pos, Rotation rotation) {
+            return null;
+        }
+
+        default boolean placePlant(CompoundTag blockStateNbt, BlockPos pos, Rotation rotation) {
+            return false;
+        }
     }
 
     public record ExistingTarget(boolean replaceable, boolean surfaceReplaceable) {
+    }
+
+    public record PlantTarget(boolean replaceable, boolean alreadySatisfied, boolean supportSatisfied) {
     }
 
     public record PlacementResult(boolean applied, String reasonCode, int baseY, int targetCount) {
@@ -214,6 +272,38 @@ public final class CityDecorationNbtPlacer {
                 settings.addProcessor(BlockIgnoreProcessor.AIR);
             }
             return template.placeInWorld(level, origin, origin, settings, RandomSource.create(seed), 2);
+        }
+
+        @Override
+        public PlantTarget inspectPlant(CompoundTag blockStateNbt, BlockPos pos, Rotation rotation) {
+            BlockState target = plantState(blockStateNbt, rotation);
+            if (!(target.getBlock() instanceof CropBlock crop)) {
+                throw new IllegalArgumentException("CITY_DECORATION_PLANT_BLOCK_STATE_NOT_CROP");
+            }
+            BlockState existing = level.getBlockState(pos);
+            BlockPos below = pos.below();
+            BlockState support = level.getBlockState(below);
+            boolean supportSatisfied = support.canSustainPlant(level, below, Direction.UP, crop);
+            return new PlantTarget(existing.isAir() || existing.canBeReplaced(), existing.equals(target),
+                    supportSatisfied);
+        }
+
+        @Override
+        public boolean placePlant(CompoundTag blockStateNbt, BlockPos pos, Rotation rotation) {
+            BlockState target = plantState(blockStateNbt, rotation);
+            if (level.getBlockState(pos).equals(target)) {
+                return true;
+            }
+            return level.setBlock(pos, target, Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
+        }
+
+        private BlockState plantState(CompoundTag blockStateNbt, Rotation rotation) {
+            HolderGetter<Block> blocks = level.registryAccess().lookupOrThrow(Registries.BLOCK);
+            BlockState state = NbtUtils.readBlockState(blocks, blockStateNbt);
+            if (!(state.getBlock() instanceof CropBlock)) {
+                throw new IllegalArgumentException("CITY_DECORATION_PLANT_BLOCK_STATE_NOT_CROP");
+            }
+            return state.mirror(Mirror.NONE).rotate(rotation);
         }
     }
 }

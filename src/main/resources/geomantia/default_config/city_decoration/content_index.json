@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "city_decoration_content_index.v0.3",
+  "schemaVersion": "city_decoration_content_index.v0.4",
   "contents": [
     {
       "contentId": "geomantia:decoration/crop_tile",
@@ -13,6 +13,30 @@
       "clearanceMode": "preserve",
       "comfortMarginBlocks": 0,
       "tags": ["agriculture", "crop"]
+    },
+    {
+      "contentId": "geomantia:decoration/farmland_tile",
+      "contentKind": "prefab",
+      "nbtFile": "templates/farmland_tile.nbt",
+      "allowedRotations": [0, 90, 180, 270],
+      "placementMode": "replace_surface",
+      "replacePolicy": "surface_replaceable",
+      "groundPlaneLocalY": 0,
+      "embedDepthBlocks": 0,
+      "clearanceMode": "preserve",
+      "comfortMarginBlocks": 0,
+      "tags": ["agriculture", "farmland_base"]
+    },
+    {
+      "contentId": "geomantia:decoration/wheat_seed",
+      "contentKind": "plant",
+      "blockState": {
+        "Name": "minecraft:wheat",
+        "Properties": {"age": "0"}
+      },
+      "allowedRotations": [0, 90, 180, 270],
+      "comfortMarginBlocks": 0,
+      "tags": ["agriculture", "crop", "wheat"]
     },
     {
       "contentId": "geomantia:decoration/water_channel_tile",

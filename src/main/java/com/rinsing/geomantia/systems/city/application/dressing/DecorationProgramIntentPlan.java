@@ -5,11 +5,10 @@ import java.util.List;
 public record DecorationProgramIntentPlan(String schemaVersion, String cityId, String catalogHash,
                                           String styleProfileId, String styleProfileHash,
                                           List<DecorationProgramIntent> programs) {
-    public static final String SCHEMA = "city_decoration_program_plan.v0.3";
-    public static final String LEGACY_SCHEMA = "city_decoration_program_plan.v0.2";
+    public static final String SCHEMA = "city_decoration_program_plan.v0.4";
 
     public DecorationProgramIntentPlan {
-        if (!SCHEMA.equals(schemaVersion) && !LEGACY_SCHEMA.equals(schemaVersion)) {
+        if (!SCHEMA.equals(schemaVersion)) {
             throw new IllegalArgumentException("CITY_DECORATION_PROGRAM_PLAN_SCHEMA_UNSUPPORTED: " + schemaVersion);
         }
         if (cityId == null || cityId.isBlank()) {
@@ -35,6 +34,6 @@ public record DecorationProgramIntentPlan(String schemaVersion, String cityId, S
 
     public DecorationProgramIntentPlan(String schemaVersion, String cityId, String catalogHash,
                                        List<DecorationProgramIntent> programs) {
-        this(schemaVersion, cityId, catalogHash, "direct_catalog", "legacy_internal", programs);
+        this(schemaVersion, cityId, catalogHash, "direct_catalog", "direct_catalog", programs);
     }
 }

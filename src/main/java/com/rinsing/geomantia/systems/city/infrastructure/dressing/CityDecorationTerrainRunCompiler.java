@@ -21,7 +21,7 @@ import java.util.Set;
 
 /** Compiles complete continuous-pattern runs before activation; it never groups by owner chunk. */
 public final class CityDecorationTerrainRunCompiler {
-    public static final String SCHEMA = "city_decoration_frozen_terrain_runs.v0.1";
+    public static final String SCHEMA = "city_decoration_frozen_terrain_runs.v0.2";
 
     private final CityDecorationProgramPlanner planner = new CityDecorationProgramPlanner();
 
@@ -93,8 +93,11 @@ public final class CityDecorationTerrainRunCompiler {
             TerrainSample sample = Objects.requireNonNull(terrain.sample(slot.worldAnchor().x(), slot.worldAnchor().z()),
                     "CITY_DECORATION_TERRAIN_SAMPLE_MISSING");
             CompiledDecorationProgram.PaletteSlot paletteSlot = program.contentPalette().requireSlot(slot.paletteSlotId());
-            String contentRef = CityDecorationChunkCompiler.selectContent(program, slot, paletteSlot).contentRef();
-            outcomes.add(new MutableOutcome(slot, ordinal, sample, contentRef));
+            List<LayerSelection> layers = paletteSlot.layers().stream().map(layer -> new LayerSelection(
+                    layer.layerId(), CityDecorationChunkCompiler.selectContent(program, slot, paletteSlot, layer)
+                    .contentRef(), CityDecorationChunkCompiler.selectContent(program, slot, paletteSlot, layer)
+                    .contentRef(), layer.required())).toList();
+            outcomes.add(new MutableOutcome(slot, ordinal, sample, layers));
         }
 
         int terminationOrdinal = -1;
@@ -159,6 +162,9 @@ public final class CityDecorationTerrainRunCompiler {
                 if (fallback != null) {
                     lastSafe.decision = Decision.END_CAP;
                     lastSafe.appliedContentRef = fallback;
+                    LayerSelection primary = lastSafe.layers.get(0);
+                    lastSafe.layers.set(0, new LayerSelection(primary.layerId(), primary.contentRef(),
+                            fallback, primary.required()));
                     lastSafe.reasonCode = terminationReason;
                 }
             }
@@ -378,7 +384,8 @@ public final class CityDecorationTerrainRunCompiler {
 
     public record SlotOutcome(String runId, String slotId, BlockPoint worldAnchor, int runOrdinal,
                               int surfaceY, int targetY, boolean water, TerrainClass terrainClass,
-                              Decision decision, String contentRef, String appliedContentRef, String reasonCode) {
+                              Decision decision, String contentRef, String appliedContentRef, String reasonCode,
+                              List<LayerSelection> layers) {
         public SlotOutcome {
             if (runId == null || runId.isBlank() || slotId == null || slotId.isBlank()
                     || worldAnchor == null || runOrdinal < 0 || terrainClass == null || decision == null
@@ -386,6 +393,28 @@ public final class CityDecorationTerrainRunCompiler {
                     || appliedContentRef == null || appliedContentRef.isBlank()
                     || reasonCode == null || reasonCode.isBlank()) {
                 throw new IllegalArgumentException("CITY_DECORATION_FROZEN_SLOT_INVALID");
+            }
+            layers = List.copyOf(layers);
+            if (layers.isEmpty() || !contentRef.equals(layers.get(0).contentRef())
+                    || !appliedContentRef.equals(layers.get(0).appliedContentRef())) {
+                throw new IllegalArgumentException("CITY_DECORATION_FROZEN_SLOT_LAYERS_INVALID");
+            }
+        }
+
+        public SlotOutcome(String runId, String slotId, BlockPoint worldAnchor, int runOrdinal,
+                           int surfaceY, int targetY, boolean water, TerrainClass terrainClass,
+                           Decision decision, String contentRef, String appliedContentRef, String reasonCode) {
+            this(runId, slotId, worldAnchor, runOrdinal, surfaceY, targetY, water, terrainClass,
+                    decision, contentRef, appliedContentRef, reasonCode,
+                    List.of(new LayerSelection("primary", contentRef, appliedContentRef, true)));
+        }
+    }
+
+    public record LayerSelection(String layerId, String contentRef, String appliedContentRef, boolean required) {
+        public LayerSelection {
+            if (layerId == null || layerId.isBlank() || contentRef == null || contentRef.isBlank()
+                    || appliedContentRef == null || appliedContentRef.isBlank()) {
+                throw new IllegalArgumentException("CITY_DECORATION_FROZEN_LAYER_SELECTION_INVALID");
             }
         }
     }
@@ -417,6 +446,7 @@ public final class CityDecorationTerrainRunCompiler {
         private final DecorationSlot slot;
         private final int ordinal;
         private final TerrainSample sample;
+        private final List<LayerSelection> layers;
         private final String contentRef;
         private Decision decision = Decision.PLACE;
         private String appliedContentRef;
@@ -424,12 +454,14 @@ public final class CityDecorationTerrainRunCompiler {
         private int targetY;
         private String runId;
 
-        private MutableOutcome(DecorationSlot slot, int ordinal, TerrainSample sample, String contentRef) {
+        private MutableOutcome(DecorationSlot slot, int ordinal, TerrainSample sample,
+                               List<LayerSelection> layers) {
             this.slot = slot;
             this.ordinal = ordinal;
             this.sample = sample;
-            this.contentRef = contentRef;
-            this.appliedContentRef = contentRef;
+            this.layers = new ArrayList<>(layers);
+            this.contentRef = layers.get(0).contentRef();
+            this.appliedContentRef = layers.get(0).appliedContentRef();
             this.targetY = sample.surfaceY();
         }
 
@@ -437,7 +469,7 @@ public final class CityDecorationTerrainRunCompiler {
             TerrainClass terrainClass = !sample.available() ? TerrainClass.UNAVAILABLE
                     : sample.water() ? TerrainClass.WATER : TerrainClass.SAFE;
             return new SlotOutcome(runId, slot.slotId(), slot.worldAnchor(), ordinal, sample.surfaceY(), targetY,
-                    sample.water(), terrainClass, decision, contentRef, appliedContentRef, reasonCode);
+                    sample.water(), terrainClass, decision, contentRef, appliedContentRef, reasonCode, layers);
         }
     }
 }

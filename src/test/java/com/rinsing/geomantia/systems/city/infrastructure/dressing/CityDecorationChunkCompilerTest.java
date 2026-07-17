@@ -2,6 +2,7 @@ package com.rinsing.geomantia.systems.city.infrastructure.dressing;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.rinsing.geomantia.systems.city.application.dressing.CityDecorationProgramPlanner;
 import com.rinsing.geomantia.systems.city.application.dressing.CompiledDecorationProgram;
 import com.rinsing.geomantia.systems.city.application.dressing.CompiledDecorationProgramPlan;
@@ -29,6 +30,34 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityDecorationChunkCompilerTest {
+    @Test
+    void layeredSlotCompilesOneOwnedFragmentWithOrderedBaseAndPlant(@TempDir Path root) throws Exception {
+        CityDecorationContentCatalog catalog = layeredCatalog(root);
+        CompiledDecorationProgram source = pointProgram("layered_field", 1, 40L, 8, 8,
+                entries("city:prefab/farmland"), 2);
+        CompiledDecorationProgram program = new CompiledDecorationProgram(source.schemaVersion(), source.programId(),
+                source.priority(), source.seed(), source.targetMask(), source.coordinateFrame(), source.shape(),
+                source.pattern(), new CompiledDecorationProgram.ContentPalette(List.of(
+                new CompiledDecorationProgram.PaletteSlot("item", List.of(
+                        new CompiledDecorationProgram.ContentLayer("base", CompiledDecorationProgram.Phase.SURFACE,
+                                entries("city:prefab/farmland"), true, null),
+                        new CompiledDecorationProgram.ContentLayer("plant", CompiledDecorationProgram.Phase.MINOR,
+                                entries("city:plant/wheat"), true, "base"))))),
+                source.terrainPolicy(), source.conflictPolicy());
+
+        CityDecorationChunkCompiler.Fragment fragment = only(new CityDecorationChunkCompiler()
+                .compile(plan(catalog, program), catalog, 0, 0, FlatTerrain.INSTANCE));
+
+        assertEquals(CityDecorationChunkCompiler.Status.READY, fragment.status());
+        assertEquals("city:prefab/farmland", fragment.contentRef());
+        assertEquals(64, fragment.datumY());
+        assertEquals(List.of("base", "plant"), fragment.layers().stream()
+                .map(CityDecorationChunkCompiler.FragmentLayer::layerId).toList());
+        assertEquals(List.of("city:prefab/farmland", "city:plant/wheat"), fragment.layers().stream()
+                .map(CityDecorationChunkCompiler.FragmentLayer::contentRef).toList());
+        assertEquals("base", fragment.layers().get(1).dependsOnLayerId());
+    }
+
     @Test
     void chunkFragmentsEqualWholeProjectedCandidates(@TempDir Path root) throws Exception {
         CityDecorationContentCatalog catalog = catalog(root,
@@ -399,6 +428,29 @@ class CityDecorationChunkCompilerTest {
         Files.createDirectories(root);
         Files.writeString(root.resolve("content_index.json"), CityJson.GSON.toJson(index));
         return new CityDecorationContentCatalogLoader().load(root);
+    }
+
+    private static CityDecorationContentCatalog layeredCatalog(Path root) throws Exception {
+        catalog(root, spec("city:prefab/farmland", 1, 1, 1, List.of(0, 90, 180, 270), 0, 0));
+        JsonObject index = JsonParser.parseString(Files.readString(root.resolve("content_index.json")))
+                .getAsJsonObject();
+        JsonObject plant = new JsonObject();
+        plant.addProperty("contentId", "city:plant/wheat");
+        plant.addProperty("contentKind", "plant");
+        JsonObject state = new JsonObject();
+        state.addProperty("Name", "minecraft:wheat");
+        JsonObject properties = new JsonObject();
+        properties.addProperty("age", "0");
+        state.add("Properties", properties);
+        plant.add("blockState", state);
+        JsonArray rotations = new JsonArray();
+        List.of(0, 90, 180, 270).forEach(rotations::add);
+        plant.add("allowedRotations", rotations);
+        index.getAsJsonArray("contents").add(plant);
+        Files.writeString(root.resolve("content_index.json"), CityJson.GSON.toJson(index));
+        return new CityDecorationContentCatalogLoader(blockState -> {
+            assertEquals("minecraft:wheat", blockState.getString("Name"));
+        }).load(root);
     }
 
     private static ContentSpec spec(String id, int width, int height, int depth,

@@ -1,8 +1,5 @@
 package com.rinsing.geomantia.systems.city.infrastructure.dressing;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.IntTag;
 import net.minecraft.nbt.ListTag;
@@ -26,11 +23,8 @@ public final class CityDecorationDefaultCatalogBootstrap {
     private static final String STYLE_PROFILE = "styles/medieval_coastal.json";
     private static final String MANIFEST = "bootstrap_manifest.json";
     private static final String MANAGED_SOURCE = "geomantia:default_config/city_decoration";
-    private static final String MANIFEST_SCHEMA = "city_decoration_default_bootstrap.v0.3";
-    private static final String DEFAULT_CATALOG_REVISION = "content_pose.v0.3";
-    private static final String WATER_CHANNEL_ID = "geomantia:decoration/water_channel_tile";
-    private static final String TERRAIN_DROP_FALLBACK = "terrainDropFallbackContentRef";
-    private static final String UPGRADE_BACKUP = "upgrades/content_index.before-terrain-drop-fallback.json";
+    private static final String MANIFEST_SCHEMA = "city_decoration_default_bootstrap.v0.4";
+    private static final String DEFAULT_CATALOG_REVISION = "layered_agriculture.v0.4";
 
     private CityDecorationDefaultCatalogBootstrap() {
     }
@@ -57,6 +51,7 @@ public final class CityDecorationDefaultCatalogBootstrap {
         copyResource(CONTENT_INDEX, staging.resolve(CONTENT_INDEX));
         copyResource(STYLE_PROFILE, staging.resolve(STYLE_PROFILE));
         writeTemplate(staging.resolve("templates/crop_tile.nbt"), "minecraft:farmland", "minecraft:wheat");
+        writeTemplate(staging.resolve("templates/farmland_tile.nbt"), "minecraft:farmland");
         writeTemplate(staging.resolve("templates/water_channel_tile.nbt"), "minecraft:water");
         writeTemplate(staging.resolve("templates/field_border.nbt"), "minecraft:oak_fence");
         writeTemplate(staging.resolve("templates/gravel_path_tile.nbt"), "minecraft:gravel");
@@ -72,61 +67,6 @@ public final class CityDecorationDefaultCatalogBootstrap {
         return moveIntoPlace(staging, root);
     }
 
-    /**
-     * Explicitly upgrades an old, managed default catalog without treating arbitrary user config as managed data.
-     * A legacy water-channel entry is changed only when it otherwise exactly matches the packaged default.
-     */
-    public static synchronized UpgradeResult upgradeManagedDefault(Path catalogRoot) throws IOException {
-        Path root = existingRoot(catalogRoot);
-        Path manifestPath = root.resolve(MANIFEST);
-        JsonObject manifest = readObject(manifestPath, "CITY_DECORATION_DEFAULT_CATALOG_UPGRADE_MANIFEST_REQUIRED");
-        if (!MANAGED_SOURCE.equals(string(manifest, "source"))) {
-            throw new IllegalArgumentException("CITY_DECORATION_DEFAULT_CATALOG_UPGRADE_UNSAFE: "
-                    + "catalog is not a managed Geomantia default.");
-        }
-
-        Path indexPath = root.resolve(CONTENT_INDEX);
-        JsonObject index = readObject(indexPath, "CITY_DECORATION_DEFAULT_CATALOG_UPGRADE_INDEX_REQUIRED");
-        JsonObject expected = packagedIndex();
-        boolean indexChanged = !index.equals(expected);
-        if (indexChanged) {
-            JsonObject v3BeforeFallback = expected.deepCopy();
-            content(v3BeforeFallback, WATER_CHANNEL_ID,
-                    "CITY_DECORATION_DEFAULT_CATALOG_PACKAGED_WATER_CHANNEL_REQUIRED")
-                    .remove(TERRAIN_DROP_FALLBACK);
-            JsonObject v2WithFallback = legacyV2(expected, false);
-            JsonObject v2BeforeFallback = legacyV2(expected, true);
-            if (!index.equals(v3BeforeFallback) && !index.equals(v2WithFallback)
-                    && !index.equals(v2BeforeFallback)) {
-                throw new IllegalArgumentException("CITY_DECORATION_DEFAULT_CATALOG_UPGRADE_UNSAFE: "
-                        + "content_index differs from a supported packaged default revision.");
-            }
-            Path backup = root.resolve(UPGRADE_BACKUP);
-            if (!Files.exists(backup)) {
-                Files.createDirectories(backup.getParent());
-                Files.copy(indexPath, backup);
-            }
-            writeObject(indexPath, expected);
-        }
-
-        boolean manifestChanged = !MANIFEST_SCHEMA.equals(string(manifest, "schemaVersion"))
-                || !DEFAULT_CATALOG_REVISION.equals(string(manifest, "defaultCatalogRevision"));
-        if (manifestChanged) {
-            manifest.addProperty("schemaVersion", MANIFEST_SCHEMA);
-            manifest.addProperty("defaultCatalogRevision", DEFAULT_CATALOG_REVISION);
-            manifest.addProperty("upgradedAt", Instant.now().toString());
-            writeObject(manifestPath, manifest);
-        }
-        return new UpgradeResult(root, indexChanged, manifestChanged,
-                indexChanged ? root.resolve(UPGRADE_BACKUP) : null);
-    }
-
-    public record UpgradeResult(Path catalogRoot,
-                                boolean contentIndexChanged,
-                                boolean manifestChanged,
-                                Path backupPath) {
-    }
-
     private static Path moveIntoPlace(Path staging, Path root) throws IOException {
         try {
             return Files.move(staging, root, StandardCopyOption.ATOMIC_MOVE);
@@ -139,94 +79,6 @@ public final class CityDecorationDefaultCatalogBootstrap {
         } catch (FileAlreadyExistsException raced) {
             return root;
         }
-    }
-
-    private static Path existingRoot(Path catalogRoot) throws IOException {
-        if (catalogRoot == null) {
-            throw new IOException("City decoration catalog root is required.");
-        }
-        Path root = catalogRoot.toAbsolutePath().normalize();
-        if (!Files.isDirectory(root)) {
-            throw new IOException("CITY_DECORATION_DEFAULT_CATALOG_UPGRADE_ROOT_INVALID: " + root);
-        }
-        return root;
-    }
-
-    private static JsonObject packagedIndex() throws IOException {
-        try (InputStream input = CityDecorationDefaultCatalogBootstrap.class
-                .getResourceAsStream(RESOURCE_ROOT + CONTENT_INDEX)) {
-            if (input == null) {
-                throw new IOException("Missing packaged default catalog resource: " + CONTENT_INDEX);
-            }
-            return JsonParser.parseString(new String(input.readAllBytes(), StandardCharsets.UTF_8)).getAsJsonObject();
-        }
-    }
-
-    private static JsonObject legacyV2(JsonObject packaged, boolean removeTerrainDropFallback) {
-        JsonObject legacy = packaged.deepCopy();
-        legacy.addProperty("schemaVersion", CityDecorationContentCatalog.LEGACY_SCHEMA);
-        for (JsonElement element : legacy.getAsJsonArray("contents")) {
-            JsonObject content = element.getAsJsonObject();
-            content.remove("groundPlaneLocalY");
-            content.remove("embedDepthBlocks");
-            content.remove("clearanceMode");
-            if (removeTerrainDropFallback && WATER_CHANNEL_ID.equals(string(content, "contentId"))) {
-                content.remove(TERRAIN_DROP_FALLBACK);
-            }
-        }
-        return legacy;
-    }
-
-    private static JsonObject content(JsonObject index, String contentId, String failureCode) {
-        JsonElement entries = index.get("contents");
-        if (entries == null || !entries.isJsonArray()) {
-            throw new IllegalArgumentException(failureCode + ": contents array is required.");
-        }
-        for (JsonElement entry : entries.getAsJsonArray()) {
-            if (entry.isJsonObject() && contentId.equals(string(entry.getAsJsonObject(), "contentId"))) {
-                return entry.getAsJsonObject();
-            }
-        }
-        throw new IllegalArgumentException(failureCode + ": " + contentId);
-    }
-
-    private static JsonObject readObject(Path path, String failureCode) throws IOException {
-        if (!Files.isRegularFile(path)) {
-            throw new IOException(failureCode + ": " + path);
-        }
-        try {
-            JsonElement parsed = JsonParser.parseString(Files.readString(path));
-            if (!parsed.isJsonObject()) {
-                throw new IllegalArgumentException(failureCode + ": object required.");
-            }
-            return parsed.getAsJsonObject();
-        } catch (IllegalArgumentException ex) {
-            throw new IllegalArgumentException(failureCode + ": " + path, ex);
-        }
-    }
-
-    private static void writeObject(Path target, JsonObject object) throws IOException {
-        Path parent = target.getParent();
-        if (parent == null) {
-            throw new IOException("City decoration config file has no parent: " + target);
-        }
-        Files.createDirectories(parent);
-        Path temporary = Files.createTempFile(parent, "." + target.getFileName() + ".", ".tmp");
-        try {
-            Files.writeString(temporary, object.toString() + System.lineSeparator(), StandardCharsets.UTF_8);
-            try {
-                Files.move(temporary, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
-            } catch (AtomicMoveNotSupportedException ignored) {
-                Files.move(temporary, target, StandardCopyOption.REPLACE_EXISTING);
-            }
-        } finally {
-            Files.deleteIfExists(temporary);
-        }
-    }
-
-    private static String string(JsonObject object, String key) {
-        JsonElement value = object.get(key);
-        return value != null && value.isJsonPrimitive() ? value.getAsString() : "";
     }
 
     private static void copyResource(String relativePath, Path target) throws IOException {

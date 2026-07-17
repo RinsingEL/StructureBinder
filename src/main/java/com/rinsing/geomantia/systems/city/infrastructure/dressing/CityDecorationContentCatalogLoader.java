@@ -16,10 +16,13 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.LongArrayTag;
 import net.minecraft.nbt.LongTag;
 import net.minecraft.nbt.NbtIo;
+import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.ShortTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.level.block.CropBlock;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -45,19 +48,34 @@ public final class CityDecorationContentCatalogLoader {
     private static final String INDEX_FILE = "content_index.json";
     private static final String TEMPLATES_DIR = "templates";
     private static final Set<String> TOP_LEVEL_FIELDS = Set.of("schemaVersion", "contents");
-    private static final Set<String> LEGACY_CONTENT_FIELDS = Set.of(
-            "contentId", "contentKind", "nbtFile", "allowedRotations", "supportMode", "placementMode", "replacePolicy",
-            "maxFootprintHeightSpreadBlocks", "comfortMarginBlocks", "allowedSurfaceTags",
-            "blockedSurfaceTags", "tags", "terrainDropFallbackContentRef");
     private static final Set<String> CONTENT_FIELDS = Set.of(
             "contentId", "contentKind", "nbtFile", "allowedRotations", "supportMode", "placementMode", "replacePolicy",
             "groundPlaneLocalY", "embedDepthBlocks", "clearanceMode",
             "maxFootprintHeightSpreadBlocks", "comfortMarginBlocks", "allowedSurfaceTags",
             "blockedSurfaceTags", "tags", "terrainDropFallbackContentRef");
+    private static final Set<String> PLANT_CONTENT_FIELDS = Set.of(
+            "contentId", "contentKind", "blockState", "allowedRotations",
+            "maxFootprintHeightSpreadBlocks", "comfortMarginBlocks", "allowedSurfaceTags",
+            "blockedSurfaceTags", "tags");
     private static final Set<String> FORBIDDEN_DERIVED_FIELDS = Set.of(
             "size", "widthBlocks", "heightBlocks", "depthBlocks", "bodyEnvelope", "comfortEnvelope");
     private static final List<Integer> DEFAULT_ROTATIONS = List.of(0);
     private static final List<String> DEFAULT_BLOCKED_SURFACE_TAGS = List.of("water", "lava");
+    private final PlantStateValidator plantStateValidator;
+
+    public CityDecorationContentCatalogLoader() {
+        this(state -> {
+            if (!(NbtUtils.readBlockState(BuiltInRegistries.BLOCK.asLookup(), state).getBlock()
+                    instanceof CropBlock)) {
+                throw fail("CITY_DECORATION_PLANT_BLOCK_STATE_NOT_CROP",
+                        "contentKind=plant blockState must resolve to CropBlock.");
+            }
+        });
+    }
+
+    CityDecorationContentCatalogLoader(PlantStateValidator plantStateValidator) {
+        this.plantStateValidator = java.util.Objects.requireNonNull(plantStateValidator, "plantStateValidator");
+    }
 
     public CityDecorationContentCatalog load(Path catalogRoot) {
         if (catalogRoot == null) {
@@ -67,8 +85,7 @@ public final class CityDecorationContentCatalogLoader {
         JsonObject index = readIndex(root.resolve(INDEX_FILE));
         rejectUnknownFields(index, TOP_LEVEL_FIELDS, "content index");
         String schemaVersion = requiredString(index, "schemaVersion");
-        boolean legacySchema = CityDecorationContentCatalog.LEGACY_SCHEMA.equals(schemaVersion);
-        if (!CityDecorationContentCatalog.SCHEMA.equals(schemaVersion) && !legacySchema) {
+        if (!CityDecorationContentCatalog.SCHEMA.equals(schemaVersion)) {
             throw fail("CITY_DECORATION_CONTENT_INDEX_SCHEMA_UNSUPPORTED",
                     "Expected " + CityDecorationContentCatalog.SCHEMA + " but found " + schemaVersion + ".");
         }
@@ -86,7 +103,7 @@ public final class CityDecorationContentCatalogLoader {
                         "contents[" + indexPosition + "] must be an object.");
             }
             ParsedContent parsed = parseContent(element.getAsJsonObject(), root, templatesRoot, indexPosition,
-                    schemaVersion, legacySchema);
+                    schemaVersion);
             if (contents.containsKey(parsed.contentId())) {
                 throw fail("CITY_DECORATION_CONTENT_ID_DUPLICATE",
                         "Duplicate contentId: " + parsed.contentId());
@@ -98,19 +115,22 @@ public final class CityDecorationContentCatalogLoader {
     }
 
     private ParsedContent parseContent(JsonObject entry, Path root, Path templatesRoot, int indexPosition,
-                                       String schemaVersion, boolean legacySchema) {
+                                       String schemaVersion) {
         rejectDerivedFields(entry, indexPosition);
-        rejectUnknownFields(entry, legacySchema ? LEGACY_CONTENT_FIELDS : CONTENT_FIELDS,
-                "contents[" + indexPosition + "]");
         String contentId = requiredString(entry, "contentId");
         ResourceLocation parsedId = ResourceLocation.tryParse(contentId);
         if (parsedId == null || !parsedId.toString().equals(contentId)) {
             throw fail("CITY_DECORATION_CONTENT_ID_INVALID", "Invalid contentId: " + contentId);
         }
         String contentKind = requiredString(entry, "contentKind");
+        if ("plant".equals(contentKind)) {
+            rejectUnknownFields(entry, PLANT_CONTENT_FIELDS, "contents[" + indexPosition + "]");
+            return parsePlantContent(entry, contentId, schemaVersion);
+        }
+        rejectUnknownFields(entry, CONTENT_FIELDS, "contents[" + indexPosition + "]");
         if (!"prefab".equals(contentKind)) {
             throw fail("CITY_DECORATION_CONTENT_KIND_UNSUPPORTED",
-                    "Only contentKind=prefab is supported in v0.2: " + contentId);
+                    "contentKind must be prefab or plant: " + contentId);
         }
 
         String nbtFile = requiredString(entry, "nbtFile");
@@ -119,11 +139,11 @@ public final class CityDecorationContentCatalogLoader {
         String supportMode = optionalString(entry, "supportMode", "full_footprint");
         if (!"full_footprint".equals(supportMode)) {
             throw fail("CITY_DECORATION_SUPPORT_MODE_UNSUPPORTED",
-                    "Only supportMode=full_footprint is supported in v0.2: " + contentId);
+                    "Only supportMode=full_footprint is supported in v0.4: " + contentId);
         }
         String placementMode = optionalString(entry, "placementMode", "above_surface");
         if (!"above_surface".equals(placementMode) && !"replace_surface".equals(placementMode)
-                && (legacySchema || !"embed_surface".equals(placementMode))) {
+                && !"embed_surface".equals(placementMode)) {
             throw fail("CITY_DECORATION_PLACEMENT_MODE_UNSUPPORTED",
                     "placementMode must be above_surface, replace_surface or embed_surface: " + contentId);
         }
@@ -145,9 +165,9 @@ public final class CityDecorationContentCatalogLoader {
 
         CompoundTag template = readTemplate(nbtPath, contentId);
         CityDecorationContentCatalog.Size size = validateTemplate(template, contentId);
-        int groundPlaneLocalY = legacySchema ? 0 : requiredNonNegativeInt(entry, "groundPlaneLocalY", contentId);
-        int embedDepthBlocks = legacySchema ? 0 : requiredNonNegativeInt(entry, "embedDepthBlocks", contentId);
-        String clearanceMode = legacySchema ? "preserve" : requiredString(entry, "clearanceMode");
+        int groundPlaneLocalY = requiredNonNegativeInt(entry, "groundPlaneLocalY", contentId);
+        int embedDepthBlocks = requiredNonNegativeInt(entry, "embedDepthBlocks", contentId);
+        String clearanceMode = requiredString(entry, "clearanceMode");
         if (groundPlaneLocalY >= size.heightBlocks()) {
             throw fail("CITY_DECORATION_GROUND_PLANE_INVALID",
                     "groundPlaneLocalY must be inside the template height: " + contentId);
@@ -164,11 +184,57 @@ public final class CityDecorationContentCatalogLoader {
         String contentHash = contentHash(schemaVersion, contentId, contentKind, normalizedNbtFile, allowedRotations,
                 supportMode, placementMode, replacePolicy, groundPlaneLocalY, embedDepthBlocks, clearanceMode,
                 maxHeightSpread, comfortMargin, allowedSurfaceTags, blockedSurfaceTags, tags,
-                terrainDropFallbackContentRef, template);
+                terrainDropFallbackContentRef, template, null);
         return new ParsedContent(contentId, contentKind, normalizedNbtFile, nbtPath, allowedRotations,
                 supportMode, placementMode, replacePolicy, groundPlaneLocalY, embedDepthBlocks, clearanceMode,
                 maxHeightSpread, comfortMargin, allowedSurfaceTags, blockedSurfaceTags, tags,
-                terrainDropFallbackContentRef, size, contentHash, template);
+                terrainDropFallbackContentRef, size, contentHash, template, null);
+    }
+
+    private ParsedContent parsePlantContent(JsonObject entry, String contentId, String schemaVersion) {
+        CompoundTag blockState = parseBlockState(requiredObject(entry, "blockState"), contentId);
+        plantStateValidator.validate(blockState.copy());
+        List<Integer> allowedRotations = rotations(entry, contentId);
+        int maxHeightSpread = optionalNonNegativeInt(entry, "maxFootprintHeightSpreadBlocks", 0, contentId);
+        int comfortMargin = optionalNonNegativeInt(entry, "comfortMarginBlocks", 0, contentId);
+        List<String> allowedSurfaceTags = strings(entry, "allowedSurfaceTags", List.of(), contentId);
+        List<String> blockedSurfaceTags = strings(entry, "blockedSurfaceTags",
+                DEFAULT_BLOCKED_SURFACE_TAGS, contentId);
+        List<String> tags = strings(entry, "tags", List.of(), contentId);
+        CityDecorationContentCatalog.Size size = new CityDecorationContentCatalog.Size(1, 1, 1);
+        String contentHash = contentHash(schemaVersion, contentId, "plant", "", allowedRotations,
+                "crop_support", "above_surface", "replaceable_only", 0, 0, "preserve",
+                maxHeightSpread, comfortMargin, allowedSurfaceTags, blockedSurfaceTags, tags,
+                null, null, blockState);
+        return new ParsedContent(contentId, "plant", "", null, allowedRotations,
+                "crop_support", "above_surface", "replaceable_only", 0, 0, "preserve",
+                maxHeightSpread, comfortMargin, allowedSurfaceTags, blockedSurfaceTags, tags,
+                null, size, contentHash, null, blockState);
+    }
+
+    private static CompoundTag parseBlockState(JsonObject source, String contentId) {
+        rejectUnknownFields(source, Set.of("Name", "Properties"), "plant blockState");
+        String name = requiredString(source, "Name");
+        ResourceLocation id = ResourceLocation.tryParse(name);
+        if (id == null || !id.toString().equals(name)) {
+            throw fail("CITY_DECORATION_PLANT_BLOCK_STATE_INVALID", "Invalid plant block id: " + contentId);
+        }
+        CompoundTag state = new CompoundTag();
+        state.putString("Name", name);
+        if (source.has("Properties")) {
+            JsonObject properties = requiredObject(source, "Properties");
+            CompoundTag normalized = new CompoundTag();
+            properties.keySet().stream().sorted().forEach(key -> {
+                JsonElement value = properties.get(key);
+                if (!value.isJsonPrimitive() || !value.getAsJsonPrimitive().isString()) {
+                    throw fail("CITY_DECORATION_PLANT_BLOCK_STATE_INVALID",
+                            "Plant block properties must be strings: " + contentId);
+                }
+                normalized.putString(key, value.getAsString());
+            });
+            state.put("Properties", normalized);
+        }
+        return state;
     }
 
     private static void validateTerrainDropFallbacks(Map<String, CityDecorationContentCatalog.Content> contents) {
@@ -442,7 +508,8 @@ public final class CityDecorationContentCatalogLoader {
                                       List<String> blockedSurfaceTags,
                                       List<String> tags,
                                       String terrainDropFallbackContentRef,
-                                      CompoundTag template) {
+                                      CompoundTag template,
+                                      CompoundTag plantBlockState) {
         return hash(out -> {
             writeString(out, schemaVersion);
             writeString(out, contentId);
@@ -452,18 +519,20 @@ public final class CityDecorationContentCatalogLoader {
             writeString(out, supportMode);
             writeString(out, placementMode);
             writeString(out, replacePolicy);
-            if (CityDecorationContentCatalog.SCHEMA.equals(schemaVersion)) {
-                out.writeInt(groundPlaneLocalY);
-                out.writeInt(embedDepthBlocks);
-                writeString(out, clearanceMode);
-            }
+            out.writeInt(groundPlaneLocalY);
+            out.writeInt(embedDepthBlocks);
+            writeString(out, clearanceMode);
             out.writeInt(maxHeightSpread);
             out.writeInt(comfortMargin);
             writeStrings(out, allowedSurfaceTags);
             writeStrings(out, blockedSurfaceTags);
             writeStrings(out, tags);
             writeNullableString(out, terrainDropFallbackContentRef);
-            writeTag(out, template);
+            if (template != null) {
+                writeTag(out, template);
+            } else {
+                writeTag(out, java.util.Objects.requireNonNull(plantBlockState));
+            }
         });
     }
 
@@ -643,6 +712,13 @@ public final class CityDecorationContentCatalogLoader {
         return object.getAsJsonArray(key);
     }
 
+    private static JsonObject requiredObject(JsonObject object, String key) {
+        if (!object.has(key) || !object.get(key).isJsonObject()) {
+            throw fail("CITY_DECORATION_CONTENT_FIELD_MISSING", "Required object field is missing: " + key);
+        }
+        return object.getAsJsonObject(key);
+    }
+
     private static CatalogException fail(String reasonCode, String message) {
         return new CatalogException(reasonCode, message);
     }
@@ -675,13 +751,19 @@ public final class CityDecorationContentCatalogLoader {
                                  String terrainDropFallbackContentRef,
                                  CityDecorationContentCatalog.Size size,
                                  String contentHash,
-                                 CompoundTag template) {
+                                 CompoundTag template,
+                                 CompoundTag plantBlockState) {
         CityDecorationContentCatalog.Content asContent() {
             return new CityDecorationContentCatalog.Content(contentId, contentKind, nbtFile, nbtPath,
                     allowedRotations, supportMode, placementMode, replacePolicy, groundPlaneLocalY,
                     embedDepthBlocks, clearanceMode, maxFootprintHeightSpreadBlocks, comfortMarginBlocks,
                     allowedSurfaceTags, blockedSurfaceTags, tags, terrainDropFallbackContentRef, size,
-                    contentHash, template);
+                    contentHash, template, plantBlockState);
         }
+    }
+
+    @FunctionalInterface
+    interface PlantStateValidator {
+        void validate(CompoundTag blockState);
     }
 }

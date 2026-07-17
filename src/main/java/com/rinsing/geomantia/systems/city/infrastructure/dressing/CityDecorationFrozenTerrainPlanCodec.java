@@ -19,7 +19,9 @@ public final class CityDecorationFrozenTerrainPlanCodec {
             "terminationOrdinal", "terminationReasonCode", "slots", "foundationSegments");
     private static final Set<String> SLOT_FIELDS = Set.of(
             "runId", "slotId", "worldAnchor", "runOrdinal", "surfaceY", "targetY", "water",
-            "terrainClass", "decision", "contentRef", "appliedContentRef", "reasonCode");
+            "terrainClass", "decision", "contentRef", "appliedContentRef", "reasonCode", "layers");
+    private static final Set<String> LAYER_FIELDS = Set.of(
+            "layerId", "contentRef", "appliedContentRef", "required");
     private static final Set<String> ANCHOR_FIELDS = Set.of("x", "z");
     private static final Set<String> SEGMENT_FIELDS = Set.of(
             "runId", "x0", "z0", "y0", "x1", "z1", "y1", "halfWidth",
@@ -52,14 +54,24 @@ public final class CityDecorationFrozenTerrainPlanCodec {
                 requireOnly(slot, SLOT_FIELDS, "slot");
                 JsonObject anchor = object(slot.get("worldAnchor"), "worldAnchor");
                 requireOnly(anchor, ANCHOR_FIELDS, "worldAnchor");
+                List<CityDecorationTerrainRunCompiler.LayerSelection> layers = new ArrayList<>();
+                for (JsonElement layerElement : array(slot, "layers")) {
+                    JsonObject layer = object(layerElement, "layer");
+                    requireOnly(layer, LAYER_FIELDS, "layer");
+                    layers.add(new CityDecorationTerrainRunCompiler.LayerSelection(
+                            string(layer, "layerId"), string(layer, "contentRef"),
+                            string(layer, "appliedContentRef"), bool(layer, "required")));
+                }
+                String contentRef = string(slot, "contentRef");
+                String appliedContentRef = string(slot, "appliedContentRef");
                 slots.add(new CityDecorationTerrainRunCompiler.SlotOutcome(
                         string(slot, "runId"), string(slot, "slotId"),
                         new BlockPoint(integer(anchor, "x"), integer(anchor, "z")),
                         integer(slot, "runOrdinal"), integer(slot, "surfaceY"), integer(slot, "targetY"),
                         bool(slot, "water"), CityDecorationTerrainRunCompiler.TerrainClass.valueOf(
                         string(slot, "terrainClass")), CityDecorationTerrainRunCompiler.Decision.valueOf(
-                        string(slot, "decision")), string(slot, "contentRef"),
-                        string(slot, "appliedContentRef"), string(slot, "reasonCode")));
+                        string(slot, "decision")), contentRef,
+                        appliedContentRef, string(slot, "reasonCode"), layers));
             }
             List<CityDecorationTerrainRunCompiler.FoundationSegment> runSegments = new ArrayList<>();
             for (JsonElement segment : array(run, "foundationSegments")) {
@@ -120,6 +132,16 @@ public final class CityDecorationFrozenTerrainPlanCodec {
         json.addProperty("contentRef", slot.contentRef());
         json.addProperty("appliedContentRef", slot.appliedContentRef());
         json.addProperty("reasonCode", slot.reasonCode());
+        JsonArray layers = new JsonArray();
+        slot.layers().forEach(layer -> {
+            JsonObject layerJson = new JsonObject();
+            layerJson.addProperty("layerId", layer.layerId());
+            layerJson.addProperty("contentRef", layer.contentRef());
+            layerJson.addProperty("appliedContentRef", layer.appliedContentRef());
+            layerJson.addProperty("required", layer.required());
+            layers.add(layerJson);
+        });
+        json.add("layers", layers);
         return json;
     }
 
@@ -148,7 +170,8 @@ public final class CityDecorationFrozenTerrainPlanCodec {
     }
 
     private static void requireSchema(JsonObject root) {
-        if (!CityDecorationTerrainRunCompiler.SCHEMA.equals(string(root, "schemaVersion"))) {
+        String schema = string(root, "schemaVersion");
+        if (!CityDecorationTerrainRunCompiler.SCHEMA.equals(schema)) {
             throw new IllegalArgumentException("CITY_DECORATION_FROZEN_TERRAIN_SCHEMA_UNSUPPORTED");
         }
     }

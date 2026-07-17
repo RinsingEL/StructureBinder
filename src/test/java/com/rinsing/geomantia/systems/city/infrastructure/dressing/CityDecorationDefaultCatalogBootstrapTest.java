@@ -1,7 +1,5 @@
 package com.rinsing.geomantia.systems.city.infrastructure.dressing;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import org.junit.jupiter.api.Test;
@@ -13,7 +11,6 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityDecorationDefaultCatalogBootstrapTest {
@@ -22,18 +19,32 @@ class CityDecorationDefaultCatalogBootstrapTest {
         Path root = temp.resolve("config/geomantia/city_decoration");
 
         Path installed = CityDecorationDefaultCatalogBootstrap.ensureInstalled(root);
-        CityDecorationContentCatalog catalog = new CityDecorationContentCatalogLoader().load(installed);
+        CityDecorationContentCatalog catalog = testLoader().load(installed);
         CityDecorationStyleProfileCatalog styles = new CityDecorationStyleProfileCatalogLoader().load(installed, catalog);
         CityDecorationStyleProfileCatalog.StyleProfile profile = styles.requireProfile("medieval_coastal");
 
         assertEquals(root.toAbsolutePath().normalize(), installed);
         assertTrue(Files.isRegularFile(root.resolve("content_index.json")));
         assertTrue(Files.isRegularFile(root.resolve("bootstrap_manifest.json")));
-        for (String semanticRef : List.of("crop_tile", "water_channel_tile", "field_border", "gravel_path_tile")) {
+        for (String semanticRef : List.of("crop_tile", "farmland_tile", "water_channel_tile",
+                "field_border", "gravel_path_tile")) {
             String contentRef = profile.requireMapping(semanticRef).variants().get(0).contentRef();
             assertTrue(catalog.contents().containsKey(contentRef), semanticRef);
             assertTrue(Files.isRegularFile(catalog.requireContent(contentRef).nbtPath()), semanticRef);
         }
+        CityDecorationContentCatalog.Content wheat = catalog.requireContent(
+                profile.requireMapping("wheat_seed").variants().get(0).contentRef());
+        assertTrue(wheat.plant());
+        assertEquals("minecraft:wheat", wheat.plantBlockState().getString("Name"));
+        assertEquals("0", wheat.plantBlockState().getCompound("Properties").getString("age"));
+        assertEquals("crop_support", wheat.supportMode());
+        assertEquals(1, wheat.size().widthBlocks());
+
+        CityDecorationContentCatalog.Content farmland = catalog.requireContent(
+                "geomantia:decoration/farmland_tile");
+        assertEquals(1, farmland.template().getList("blocks", 10).size());
+        assertEquals("minecraft:farmland",
+                farmland.template().getList("palette", 10).getCompound(0).getString("Name"));
         CityDecorationContentCatalog.Content crop = catalog.requireContent("geomantia:decoration/crop_tile");
         assertEquals("replace_surface", crop.placementMode());
         assertEquals("surface_replaceable", crop.replacePolicy());
@@ -66,84 +77,9 @@ class CityDecorationDefaultCatalogBootstrapTest {
         assertFalse(Files.exists(root.resolve("content_index.json")));
     }
 
-    @Test
-    void explicitlyUpgradesOnlyTheUnmodifiedLegacyDefaultWaterChannel(@TempDir Path temp) throws Exception {
-        Path root = CityDecorationDefaultCatalogBootstrap.ensureInstalled(
-                temp.resolve("config/geomantia/city_decoration"));
-        Path indexPath = root.resolve("content_index.json");
-        JsonObject index = JsonParser.parseString(Files.readString(indexPath)).getAsJsonObject();
-        index.getAsJsonArray("contents").forEach(entry -> {
-            JsonObject content = entry.getAsJsonObject();
-            if ("geomantia:decoration/water_channel_tile".equals(content.get("contentId").getAsString())) {
-                content.remove("terrainDropFallbackContentRef");
-            }
+    private static CityDecorationContentCatalogLoader testLoader() {
+        return new CityDecorationContentCatalogLoader(blockState -> {
+            // Registry resolution belongs to the Forge runtime test; this suite verifies packaged catalog shape.
         });
-        Files.writeString(indexPath, index.toString());
-        Files.writeString(root.resolve("bootstrap_manifest.json"), """
-                {"schemaVersion":"city_decoration_default_bootstrap.v0.1",
-                 "source":"geomantia:default_config/city_decoration"}
-                """);
-        String beforeHash = new CityDecorationContentCatalogLoader().load(root).catalogHash();
-
-        CityDecorationDefaultCatalogBootstrap.UpgradeResult result =
-                CityDecorationDefaultCatalogBootstrap.upgradeManagedDefault(root);
-        CityDecorationContentCatalog upgraded = new CityDecorationContentCatalogLoader().load(root);
-
-        assertTrue(result.contentIndexChanged());
-        assertTrue(result.manifestChanged());
-        assertTrue(Files.isRegularFile(result.backupPath()));
-        assertEquals("geomantia:decoration/crop_tile",
-                upgraded.requireContent("geomantia:decoration/water_channel_tile").terrainDropFallbackContentRef());
-        assertFalse(beforeHash.equals(upgraded.catalogHash()));
-    }
-
-    @Test
-    void explicitlyUpgradesUnmodifiedManagedV2CatalogToStrictV3PoseFields(@TempDir Path temp) throws Exception {
-        Path root = CityDecorationDefaultCatalogBootstrap.ensureInstalled(
-                temp.resolve("config/geomantia/city_decoration"));
-        Path indexPath = root.resolve("content_index.json");
-        JsonObject index = JsonParser.parseString(Files.readString(indexPath)).getAsJsonObject();
-        index.addProperty("schemaVersion", CityDecorationContentCatalog.LEGACY_SCHEMA);
-        index.getAsJsonArray("contents").forEach(entry -> {
-            JsonObject content = entry.getAsJsonObject();
-            content.remove("groundPlaneLocalY");
-            content.remove("embedDepthBlocks");
-            content.remove("clearanceMode");
-        });
-        Files.writeString(indexPath, index.toString());
-
-        CityDecorationDefaultCatalogBootstrap.UpgradeResult result =
-                CityDecorationDefaultCatalogBootstrap.upgradeManagedDefault(root);
-        JsonObject upgradedIndex = JsonParser.parseString(Files.readString(indexPath)).getAsJsonObject();
-        CityDecorationContentCatalog upgraded = new CityDecorationContentCatalogLoader().load(root);
-
-        assertTrue(result.contentIndexChanged());
-        assertEquals(CityDecorationContentCatalog.SCHEMA,
-                upgradedIndex.get("schemaVersion").getAsString());
-        assertEquals(0, upgraded.requireContent("geomantia:decoration/crop_tile").groundPlaneLocalY());
-        assertEquals("preserve", upgraded.requireContent("geomantia:decoration/crop_tile").clearanceMode());
-        assertTrue(Files.isRegularFile(result.backupPath()));
-    }
-
-    @Test
-    void refusesToUpgradeCustomizedLegacyWaterChannel(@TempDir Path temp) throws Exception {
-        Path root = CityDecorationDefaultCatalogBootstrap.ensureInstalled(
-                temp.resolve("config/geomantia/city_decoration"));
-        Path indexPath = root.resolve("content_index.json");
-        JsonObject index = JsonParser.parseString(Files.readString(indexPath)).getAsJsonObject();
-        index.getAsJsonArray("contents").forEach(entry -> {
-            JsonObject content = entry.getAsJsonObject();
-            if ("geomantia:decoration/water_channel_tile".equals(content.get("contentId").getAsString())) {
-                content.remove("terrainDropFallbackContentRef");
-                content.addProperty("nbtFile", "templates/custom_channel.nbt");
-            }
-        });
-        Files.writeString(indexPath, index.toString());
-
-        IllegalArgumentException failure = assertThrows(IllegalArgumentException.class,
-                () -> CityDecorationDefaultCatalogBootstrap.upgradeManagedDefault(root));
-
-        assertTrue(failure.getMessage().contains("CITY_DECORATION_DEFAULT_CATALOG_UPGRADE_UNSAFE"));
-        assertFalse(Files.exists(root.resolve("upgrades/content_index.before-terrain-drop-fallback.json")));
     }
 }

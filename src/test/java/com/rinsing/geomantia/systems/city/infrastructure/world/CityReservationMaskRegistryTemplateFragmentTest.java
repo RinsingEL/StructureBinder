@@ -108,6 +108,31 @@ class CityReservationMaskRegistryTemplateFragmentTest {
     }
 
     @Test
+    void terrainStartFreezesOneDatumAndPreauthorizesEveryOwnerBeforePiecePlacement() throws Exception {
+        BlockBounds footprint = new BlockBounds(8, 8, 39, 39);
+        CityReservationMaskRegistry.PlannedStructure planned = activate(footprint);
+        List<ChunkPos> owners = owners(footprint);
+
+        CityReservationMaskRegistry.TemplateDatumPreparation preparation =
+                CityReservationMaskRegistry.prepareTemplateTerrainStart(planned, 96);
+
+        assertTrue(preparation.ready());
+        assertEquals(96, preparation.templateDatumY().orElseThrow());
+        assertEquals(96, CityReservationMaskRegistry.resolvedTemplateDatum(planned).orElseThrow());
+        assertTrue(owners.stream().allMatch(owner ->
+                CityReservationMaskRegistry.hasTemplatePendingProof(planned, owner)));
+
+        for (int index = 0; index < owners.size(); index++) {
+            CityReservationMaskRegistry.TemplateFragmentRecordResult result =
+                    record(planned, owners.get(index), 96);
+            assertTrue(result.recorded());
+            assertEquals(index == owners.size() - 1, result.templateCompleted());
+        }
+        assertEquals(1, CityReservationMaskRegistry.worldgenLedgerSnapshot()
+                .getAsJsonArray("placedStructures").size());
+    }
+
+    @Test
     void reloadKeepsPendingDatumAndFragmentTransactionIdempotent() throws Exception {
         BlockBounds footprint = new BlockBounds(8, 8, 23, 23);
         CityReservationMaskRegistry.PlannedStructure planned = activate(footprint);

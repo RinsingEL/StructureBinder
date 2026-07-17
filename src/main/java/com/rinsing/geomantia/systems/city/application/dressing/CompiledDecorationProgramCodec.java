@@ -25,8 +25,7 @@ public final class CompiledDecorationProgramCodec {
                 "hardObstacles", "programs"),
                 "compiled program plan");
         String schema = requiredString(source, "schemaVersion");
-        if (!CompiledDecorationProgramPlan.SCHEMA.equals(schema)
-                && !CompiledDecorationProgramPlan.LEGACY_SCHEMA.equals(schema)) {
+        if (!CompiledDecorationProgramPlan.SCHEMA.equals(schema)) {
             throw new IllegalArgumentException("CITY_DECORATION_PROGRAM_PLAN_SCHEMA_UNSUPPORTED: " + schema);
         }
         JsonArray programsJson = requiredArray(source, "programs");
@@ -58,8 +57,7 @@ public final class CompiledDecorationProgramCodec {
                 "coordinateFrame", "shape", "pattern", "contentPalette", "terrainPolicy", "conflictPolicy"),
                 "program");
         String schema = requiredString(source, "schemaVersion");
-        boolean legacySchema = CompiledDecorationProgram.LEGACY_SCHEMA.equals(schema);
-        if (!CompiledDecorationProgram.SCHEMA.equals(schema) && !legacySchema) {
+        if (!CompiledDecorationProgram.SCHEMA.equals(schema)) {
             throw new IllegalArgumentException("CITY_DECORATION_PROGRAM_SCHEMA_UNSUPPORTED: " + schema);
         }
         CompiledDecorationProgram program = new CompiledDecorationProgram(schema, requiredString(source, "programId"),
@@ -69,7 +67,7 @@ public final class CompiledDecorationProgramCodec {
                 parseShape(requiredObject(source, "shape")),
                 parsePattern(requiredObject(source, "pattern")),
                 parseContentPalette(requiredObject(source, "contentPalette")),
-                parseTerrainPolicy(requiredObject(source, "terrainPolicy"), legacySchema),
+                parseTerrainPolicy(requiredObject(source, "terrainPolicy")),
                 parseConflictPolicy(requiredObject(source, "conflictPolicy")));
         for (String paletteSlotId : referencedPaletteSlots(program.pattern())) {
             program.contentPalette().requireSlot(paletteSlotId);
@@ -114,13 +112,11 @@ public final class CompiledDecorationProgramCodec {
         terrain.addProperty("maxSlopeDelta", program.terrainPolicy().maxSlopeDelta());
         terrain.addProperty("allowWater", program.terrainPolicy().allowWater());
         terrain.addProperty("invalidTerrainAction", program.terrainPolicy().invalidTerrainAction().serializedName());
-        if (!CompiledDecorationProgram.LEGACY_SCHEMA.equals(program.schemaVersion())) {
-            terrain.addProperty("maxContinuousDropBlocks", program.terrainPolicy().maxContinuousDropBlocks());
-            terrain.addProperty("continuousDropWindowBlocks", program.terrainPolicy().continuousDropWindowBlocks());
-            terrain.addProperty("foundationMode", program.terrainPolicy().foundationMode().serializedName());
-            terrain.addProperty("maxFoundationDepthBlocks", program.terrainPolicy().maxFoundationDepthBlocks());
-            terrain.addProperty("foundationShoulderBlocks", program.terrainPolicy().foundationShoulderBlocks());
-        }
+        terrain.addProperty("maxContinuousDropBlocks", program.terrainPolicy().maxContinuousDropBlocks());
+        terrain.addProperty("continuousDropWindowBlocks", program.terrainPolicy().continuousDropWindowBlocks());
+        terrain.addProperty("foundationMode", program.terrainPolicy().foundationMode().serializedName());
+        terrain.addProperty("maxFoundationDepthBlocks", program.terrainPolicy().maxFoundationDepthBlocks());
+        terrain.addProperty("foundationShoulderBlocks", program.terrainPolicy().foundationShoulderBlocks());
         obj.add("terrainPolicy", terrain);
         JsonObject conflict = new JsonObject();
         conflict.addProperty("onConflict", program.conflictPolicy().onConflict().serializedName());
@@ -249,34 +245,39 @@ public final class CompiledDecorationProgramCodec {
                 throw new IllegalArgumentException("CITY_DECORATION_PALETTE_SLOT_INVALID");
             }
             JsonObject slot = element.getAsJsonObject();
-            requireOnly(slot, Set.of("slotId", "phase", "entries", "required"), "palette slot");
-            List<ContentEntry> entries = new ArrayList<>();
-            for (JsonElement entryElement : requiredArray(slot, "entries")) {
-                if (!entryElement.isJsonObject()) {
-                    throw new IllegalArgumentException("CITY_DECORATION_CONTENT_ENTRY_INVALID");
+            requireOnly(slot, Set.of("slotId", "layers"), "palette slot");
+            List<CompiledDecorationProgram.ContentLayer> layers = new ArrayList<>();
+            for (JsonElement layerElement : requiredArray(slot, "layers")) {
+                if (!layerElement.isJsonObject()) {
+                    throw new IllegalArgumentException("CITY_DECORATION_PALETTE_LAYER_INVALID");
                 }
-                JsonObject entry = entryElement.getAsJsonObject();
-                requireOnly(entry, Set.of("contentRef", "weight"), "content entry");
-                entries.add(new ContentEntry(requiredString(entry, "contentRef"), requiredDouble(entry, "weight")));
+                JsonObject layer = layerElement.getAsJsonObject();
+                requireOnly(layer, Set.of("layerId", "phase", "entries", "required", "dependsOnLayerId"),
+                        "palette layer");
+                layers.add(new CompiledDecorationProgram.ContentLayer(requiredString(layer, "layerId"),
+                        CompiledDecorationProgram.Phase.parse(requiredString(layer, "phase")),
+                        parseContentEntries(layer), requiredBoolean(layer, "required"),
+                        optionalString(layer, "dependsOnLayerId")));
             }
-            slots.add(new PaletteSlot(requiredString(slot, "slotId"),
-                    CompiledDecorationProgram.Phase.parse(requiredString(slot, "phase")), entries,
-                    requiredBoolean(slot, "required")));
+            slots.add(new PaletteSlot(requiredString(slot, "slotId"), layers));
         }
         return new CompiledDecorationProgram.ContentPalette(slots);
     }
 
-    CompiledDecorationProgram.TerrainPolicy parseTerrainPolicy(JsonObject obj) {
-        return parseTerrainPolicy(obj, false);
+    private List<ContentEntry> parseContentEntries(JsonObject owner) {
+        List<ContentEntry> entries = new ArrayList<>();
+        for (JsonElement entryElement : requiredArray(owner, "entries")) {
+            if (!entryElement.isJsonObject()) {
+                throw new IllegalArgumentException("CITY_DECORATION_CONTENT_ENTRY_INVALID");
+            }
+            JsonObject entry = entryElement.getAsJsonObject();
+            requireOnly(entry, Set.of("contentRef", "weight"), "content entry");
+            entries.add(new ContentEntry(requiredString(entry, "contentRef"), requiredDouble(entry, "weight")));
+        }
+        return entries;
     }
 
-    CompiledDecorationProgram.TerrainPolicy parseTerrainPolicy(JsonObject obj, boolean legacySchema) {
-        if (legacySchema) {
-            requireOnly(obj, Set.of("maxSlopeDelta", "allowWater", "invalidTerrainAction"), "terrainPolicy");
-            return new CompiledDecorationProgram.TerrainPolicy(requiredInt(obj, "maxSlopeDelta"),
-                    requiredBoolean(obj, "allowWater"),
-                    CompiledDecorationProgram.InvalidTerrainAction.parse(requiredString(obj, "invalidTerrainAction")));
-        }
+    CompiledDecorationProgram.TerrainPolicy parseTerrainPolicy(JsonObject obj) {
         requireOnly(obj, Set.of("maxSlopeDelta", "allowWater", "invalidTerrainAction",
                 "maxContinuousDropBlocks", "continuousDropWindowBlocks", "foundationMode",
                 "maxFoundationDepthBlocks", "foundationShoulderBlocks"), "terrainPolicy");
@@ -411,20 +412,41 @@ public final class CompiledDecorationProgramCodec {
         palette.slots().forEach(slot -> {
             JsonObject slotJson = new JsonObject();
             slotJson.addProperty("slotId", slot.slotId());
-            slotJson.addProperty("phase", slot.phase().serializedName());
-            slotJson.addProperty("required", slot.required());
-            JsonArray entries = new JsonArray();
-            slot.entries().forEach(entry -> {
-                JsonObject entryJson = new JsonObject();
-                entryJson.addProperty("contentRef", entry.contentRef());
-                entryJson.addProperty("weight", entry.weight());
-                entries.add(entryJson);
+            JsonArray layers = new JsonArray();
+            slot.layers().forEach(layer -> {
+                JsonObject layerJson = new JsonObject();
+                layerJson.addProperty("layerId", layer.layerId());
+                layerJson.addProperty("phase", layer.phase().serializedName());
+                layerJson.addProperty("required", layer.required());
+                if (layer.dependsOnLayerId() != null) {
+                    layerJson.addProperty("dependsOnLayerId", layer.dependsOnLayerId());
+                }
+                layerJson.add("entries", contentEntriesJson(layer.entries()));
+                layers.add(layerJson);
             });
-            slotJson.add("entries", entries);
+            slotJson.add("layers", layers);
             slots.add(slotJson);
         });
         obj.add("slots", slots);
         return obj;
+    }
+
+    private JsonArray contentEntriesJson(List<ContentEntry> entries) {
+        JsonArray result = new JsonArray();
+        entries.forEach(entry -> {
+            JsonObject entryJson = new JsonObject();
+            entryJson.addProperty("contentRef", entry.contentRef());
+            entryJson.addProperty("weight", entry.weight());
+            result.add(entryJson);
+        });
+        return result;
+    }
+
+    private String optionalString(JsonObject obj, String key) {
+        if (!obj.has(key) || obj.get(key).isJsonNull()) {
+            return null;
+        }
+        return requiredString(obj, key);
     }
 
     private BlockBounds parseBounds(JsonObject obj) {

@@ -3,6 +3,7 @@ package com.rinsing.geomantia;
 import com.mojang.logging.LogUtils;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityDecorationWorldgenRegistry;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityReservationMaskRegistry;
+import com.rinsing.geomantia.systems.city.infrastructure.world.CityTemplateTerrainStructureRegistries;
 import com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityLandUseWorldgenRegistry;
 import com.rinsing.geomantia.systems.city.infrastructure.landuse.LandUseDefaultConfigBootstrap;
 import net.minecraftforge.api.distmarker.Dist;
@@ -24,6 +25,7 @@ public final class GeomantiaMod {
 
     public GeomantiaMod(FMLJavaModLoadingContext context) {
         IEventBus modEventBus = context.getModEventBus();
+        CityTemplateTerrainStructureRegistries.register(modEventBus);
         modEventBus.addListener(this::onCommonSetup);
         MinecraftForge.EVENT_BUS.register(this);
         registerTemporaryClientDevHooks();

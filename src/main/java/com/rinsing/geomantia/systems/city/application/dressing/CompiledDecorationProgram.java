@@ -21,14 +21,13 @@ public record CompiledDecorationProgram(
         TerrainPolicy terrainPolicy,
         ConflictPolicy conflictPolicy) {
 
-    public static final String SCHEMA = "city_decoration_compiled_program.v0.3";
-    public static final String LEGACY_SCHEMA = "city_decoration_compiled_program.v0.2";
+    public static final String SCHEMA = "city_decoration_compiled_program.v0.4";
     public static final Comparator<CompiledDecorationProgram> EXECUTION_ORDER = Comparator
             .comparingInt(CompiledDecorationProgram::priority).reversed()
             .thenComparing(CompiledDecorationProgram::programId);
 
     public CompiledDecorationProgram {
-        if (!SCHEMA.equals(schemaVersion) && !LEGACY_SCHEMA.equals(schemaVersion)) {
+        if (!SCHEMA.equals(schemaVersion)) {
             throw new IllegalArgumentException("CITY_DECORATION_PROGRAM_SCHEMA_UNSUPPORTED: " + schemaVersion);
         }
         if (programId == null || programId.isBlank()) {
@@ -336,15 +335,70 @@ public record CompiledDecorationProgram(
         }
     }
 
-    public record PaletteSlot(String slotId, Phase phase, List<ContentEntry> entries, boolean required) {
+    public record PaletteSlot(String slotId, List<ContentLayer> layers) {
         public PaletteSlot {
             if (slotId == null || slotId.isBlank()) {
                 throw new IllegalArgumentException("CITY_DECORATION_PALETTE_SLOT_ID_REQUIRED");
             }
+            layers = List.copyOf(layers);
+            if (layers.isEmpty()) {
+                throw new IllegalArgumentException("CITY_DECORATION_PALETTE_LAYERS_REQUIRED: " + slotId);
+            }
+            if (layers.stream().map(ContentLayer::layerId).distinct().count() != layers.size()) {
+                throw new IllegalArgumentException("CITY_DECORATION_PALETTE_LAYER_DUPLICATE: " + slotId);
+            }
+            for (int index = 0; index < layers.size(); index++) {
+                ContentLayer layer = layers.get(index);
+                if (layer.dependsOnLayerId() != null) {
+                    int dependencyIndex = -1;
+                    for (int cursor = 0; cursor < index; cursor++) {
+                        if (layer.dependsOnLayerId().equals(layers.get(cursor).layerId())) {
+                            dependencyIndex = cursor;
+                            break;
+                        }
+                    }
+                    if (dependencyIndex < 0) {
+                        throw new IllegalArgumentException("CITY_DECORATION_PALETTE_LAYER_DEPENDENCY_INVALID: "
+                                + slotId + "/" + layer.layerId());
+                    }
+                }
+            }
+        }
+
+        public PaletteSlot(String slotId, Phase phase, List<ContentEntry> entries, boolean required) {
+            this(slotId, List.of(new ContentLayer("primary", phase, entries, required, null)));
+        }
+
+        public ContentLayer primaryLayer() {
+            return layers.get(0);
+        }
+
+        public Phase phase() {
+            return primaryLayer().phase();
+        }
+
+        public List<ContentEntry> entries() {
+            return primaryLayer().entries();
+        }
+
+        public boolean required() {
+            return primaryLayer().required();
+        }
+    }
+
+    public record ContentLayer(String layerId, Phase phase, List<ContentEntry> entries,
+                               boolean required, String dependsOnLayerId) {
+        public ContentLayer {
+            if (layerId == null || !layerId.matches("[a-z][a-z0-9_]*")) {
+                throw new IllegalArgumentException("CITY_DECORATION_PALETTE_LAYER_ID_INVALID");
+            }
             Objects.requireNonNull(phase, "phase");
             entries = List.copyOf(entries);
             if (entries.isEmpty()) {
-                throw new IllegalArgumentException("CITY_DECORATION_PALETTE_ENTRIES_REQUIRED: " + slotId);
+                throw new IllegalArgumentException("CITY_DECORATION_PALETTE_LAYER_ENTRIES_REQUIRED: " + layerId);
+            }
+            if (dependsOnLayerId != null && !dependsOnLayerId.matches("[a-z][a-z0-9_]*")) {
+                throw new IllegalArgumentException("CITY_DECORATION_PALETTE_LAYER_DEPENDENCY_INVALID: " + layerId);
             }
         }
     }

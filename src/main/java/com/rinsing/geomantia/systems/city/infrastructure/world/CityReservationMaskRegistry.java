@@ -321,12 +321,77 @@ public final class CityReservationMaskRegistry {
         return TemplateDatumPreparation.ready(resolved.getAsInt());
     }
 
+    /**
+     * Freezes one generator-derived datum before a City StructureStart is injected. Every touched
+     * chunk is durably authorized up front because the piece will be placed by vanilla structure
+     * processing rather than a later FEATURES callback.
+     */
+    public static synchronized TemplateDatumPreparation prepareTemplateTerrainStart(
+            PlannedStructure planned, int templateDatumY) {
+        if (planned == null || !planned.isTemplatePlacement()) {
+            return TemplateDatumPreparation.invalid("TEMPLATE_TERRAIN_START_INVALID",
+                    "Only a fixed template placement may create a terrain StructureStart.");
+        }
+        if (activeServerRoot == null) {
+            return TemplateDatumPreparation.persistenceFailed();
+        }
+        OptionalInt resolved = resolvedTemplateDatumInternal(planned);
+        if (resolved.isPresent() && resolved.getAsInt() != templateDatumY) {
+            return TemplateDatumPreparation.conflict("TEMPLATE_DATUM_CONFLICT",
+                    "Template datum was already frozen at " + resolved.getAsInt()
+                            + " but StructureStart proposed " + templateDatumY + ".");
+        }
+
+        JsonObject before = worldgenLedger.deepCopy();
+        if (resolved.isEmpty()) {
+            JsonObject datumState = templateIdentity(planned);
+            datumState.addProperty("templateDatumPolicy", "generator_base_height_motion_blocking_no_leaves");
+            datumState.addProperty("templateDatumY", templateDatumY);
+            datumState.addProperty("resolvedByChunkX", planned.anchorChunkX());
+            datumState.addProperty("resolvedByChunkZ", planned.anchorChunkZ());
+            datumState.addProperty("resolvedAt", Instant.now().toString());
+            ledgerTemplateDatums().add(datumState);
+            resolved = OptionalInt.of(templateDatumY);
+        }
+        for (ChunkPos owner : templateOwnerChunks(planned)) {
+            if (templatePendingRecorded(planned, owner)) {
+                continue;
+            }
+            JsonObject pending = templateIdentity(planned);
+            pending.addProperty("generatingChunkX", owner.x);
+            pending.addProperty("generatingChunkZ", owner.z);
+            pending.addProperty("firstWorldgenFeaturesObserved", false);
+            pending.addProperty("reasonCode", "TEMPLATE_TERRAIN_START_PENDING");
+            pending.addProperty("message", "Owner was authorized before StructureStart piece placement.");
+            pending.addProperty("observedAt", Instant.now().toString());
+            ledgerTemplatePendingFragments().add(pending);
+        }
+        if (!persistWorldgenLedger()) {
+            worldgenLedger = before;
+            return TemplateDatumPreparation.persistenceFailed();
+        }
+        return TemplateDatumPreparation.ready(resolved.getAsInt());
+    }
+
     public static synchronized OptionalInt resolvedTemplateDatum(PlannedStructure planned) {
         return resolvedTemplateDatumInternal(planned);
     }
 
     public static synchronized boolean hasTemplatePendingProof(PlannedStructure planned, ChunkPos ownerChunk) {
         return templatePendingRecorded(planned, ownerChunk);
+    }
+
+    public static synchronized Optional<PlannedStructure> findTemplatePlacement(
+            String anchorId, String templateRef, String templateHash) {
+        for (PlannedStructure planned : activePlannedStructures.plannedStructures) {
+            if (planned.isTemplatePlacement()
+                    && planned.anchorId().equals(anchorId)
+                    && templateRef(planned).equals(templateRef)
+                    && templateHash(planned).equals(templateHash)) {
+                return Optional.of(planned);
+            }
+        }
+        return Optional.empty();
     }
 
     /** Returns only owners that are authorized for delayed first-generation retry. */

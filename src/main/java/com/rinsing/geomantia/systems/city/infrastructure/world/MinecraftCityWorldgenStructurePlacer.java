@@ -25,6 +25,7 @@ import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.StructurePiece;
 import net.minecraft.world.level.levelgen.structure.StructureStart;
+import net.minecraft.world.level.levelgen.structure.pieces.PiecesContainer;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplateManager;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.Mirror;
@@ -51,7 +52,7 @@ public final class MinecraftCityWorldgenStructurePlacer {
             return;
         }
         for (CityReservationMaskRegistry.PlannedStructure item : planned) {
-            if (!item.isTemplatePlacement()) {
+            if (!item.isTemplatePlacement() || CityTemplateTerrainStartPolicy.usesStructureStart(item)) {
                 continue;
             }
             placeTemplateOwner(level, chunk.getPos(), item, false);
@@ -68,6 +69,9 @@ public final class MinecraftCityWorldgenStructurePlacer {
         }
         for (CityReservationMaskRegistry.PlannedStructure item
                 : CityReservationMaskRegistry.pendingTemplateStructuresForChunk(chunk.getPos())) {
+            if (CityTemplateTerrainStartPolicy.usesStructureStart(item)) {
+                continue;
+            }
             placeTemplateOwner(level, chunk.getPos(), item, true);
         }
     }
@@ -191,13 +195,17 @@ public final class MinecraftCityWorldgenStructurePlacer {
 
     private static void tryInject(ChunkGenerator generator,
                                   RegistryAccess registryAccess,
-                                  RandomState randomState,
-                                  long levelSeed,
-                                  ChunkAccess chunk,
-                                  StructureTemplateManager templateManager,
+                                   RandomState randomState,
+                                   long levelSeed,
+                                   ChunkAccess chunk,
+                                   StructureTemplateManager templateManager,
                                   ChunkPos chunkPos,
                                   CityReservationMaskRegistry.PlannedStructure item) {
         if (item.isTemplatePlacement()) {
+            if (CityTemplateTerrainStartPolicy.usesStructureStart(item)) {
+                tryInjectTemplateTerrainStart(generator, registryAccess, randomState, chunk, templateManager,
+                        chunkPos, item);
+            }
             return;
         }
         ResourceLocation id = ResourceLocation.tryParse(item.structureId());
@@ -270,6 +278,99 @@ public final class MinecraftCityWorldgenStructurePlacer {
                 structure.terrainAdaptation().getSerializedName(),
                 "WORLDGEN_PLACEMENT_RECORDED",
                 "Planned StructureStart injected during ChunkGenerator.createStructures.");
+    }
+
+    private static void tryInjectTemplateTerrainStart(ChunkGenerator generator,
+                                                      RegistryAccess registryAccess,
+                                                      RandomState randomState,
+                                                      ChunkAccess chunk,
+                                                      StructureTemplateManager templateManager,
+                                                      ChunkPos chunkPos,
+                                                      CityReservationMaskRegistry.PlannedStructure item) {
+        if (chunkPos.x != item.anchorChunkX() || chunkPos.z != item.anchorChunkZ()) {
+            return;
+        }
+        Optional<Holder.Reference<Structure>> holder = registryAccess.registryOrThrow(Registries.STRUCTURE)
+                .getHolder(ResourceKey.create(Registries.STRUCTURE,
+                        CityTemplateTerrainStructureRegistries.CITY_TEMPLATE_TERRAIN_STRUCTURE_ID));
+        if (holder.isEmpty()) {
+            CityReservationMaskRegistry.recordWorldgenFailure(item, chunkPos,
+                    "CITY_TEMPLATE_TERRAIN_STRUCTURE_UNAVAILABLE",
+                    "The registered City template terrain structure is absent from the world registry.");
+            return;
+        }
+        Structure structure = holder.get().value();
+        StructureStart existing = chunk.getStartForStructure(structure);
+        if (existing != null && existing.isValid()) {
+            return;
+        }
+
+        try {
+            JsonObject plan = item.templatePlan();
+            ResourceLocation templateRef = ResourceLocation.tryParse(text(plan, "templateRef",
+                    nestedText(plan, "structureTemplate", "templateRef")));
+            if (templateRef == null) {
+                CityReservationMaskRegistry.recordWorldgenFailure(item, chunkPos,
+                        "TEMPLATE_REF_INVALID", "Terrain StructureStart requires a valid templateRef.");
+                return;
+            }
+            MinecraftCityTemplateReader.ReadResult read = new MinecraftCityTemplateReader(templateManager)
+                    .read(templateRef);
+            if (!read.success()) {
+                CityReservationMaskRegistry.recordWorldgenFailure(item, chunkPos,
+                        read.failureCode().name(), read.failureDetail());
+                return;
+            }
+            String templateHash = text(plan, "templateHash", nestedText(plan, "structureTemplate", "templateHash"));
+            if (!templateHash.equals(read.contentHash())) {
+                CityReservationMaskRegistry.recordWorldgenFailure(item, chunkPos,
+                        "TEMPLATE_HASH_MISMATCH", "D6 template hash differs from the current template NBT.");
+                return;
+            }
+            CityTemplatePlacementGeometry.Size size = new CityTemplatePlacementGeometry.Size(
+                    read.size().getX(), read.size().getY(), read.size().getZ());
+            CityTemplatePlacementGeometry.Rotation rotation = CityTemplatePlacementGeometry.Rotation.valueOf(
+                    text(plan, "rotation", "NONE"));
+            CityTemplatePlacementGeometry.Mirror mirror = CityTemplatePlacementGeometry.Mirror.valueOf(
+                    text(plan, "mirror", "NONE"));
+            BlockPoint anchor = point(plan, "anchorBlock", item.anchorBlock());
+            CityTemplatePlacementGeometry geometry = CityTemplatePlacementGeometry.of(size, rotation, mirror,
+                    List.of());
+            BlockBounds footprint = geometry.worldBounds(anchor);
+            if (!item.lockedActualFootprint().equals(footprint)) {
+                CityReservationMaskRegistry.recordWorldgenFailure(item, chunkPos,
+                        "TEMPLATE_LOCKED_FOOTPRINT_MISMATCH",
+                        "D6 locked footprint differs from the fixed template StructureStart piece.");
+                return;
+            }
+            int datumY = generator.getBaseHeight(anchor.x(), anchor.z(),
+                    Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, chunk.getHeightAccessorForGeneration(), randomState);
+            if (datumY <= chunk.getMinBuildHeight()) {
+                CityReservationMaskRegistry.recordWorldgenFailure(item, chunkPos,
+                        "TEMPLATE_DATUM_SURFACE_UNAVAILABLE",
+                        "Generator base height did not provide a usable terrain datum.");
+                return;
+            }
+            CityReservationMaskRegistry.TemplateDatumPreparation preparation =
+                    CityReservationMaskRegistry.prepareTemplateTerrainStart(item, datumY);
+            if (!preparation.ready()) {
+                CityReservationMaskRegistry.recordWorldgenFailure(item, chunkPos,
+                        preparation.reasonCode(), preparation.message());
+                return;
+            }
+            CityTemplateTerrainStructurePiece piece = new CityTemplateTerrainStructurePiece(templateRef,
+                    templateHash, item.anchorId(), anchor, preparation.templateDatumY().orElseThrow(), rotation,
+                    mirror, size);
+            StructureStart start = new StructureStart(structure, chunkPos, 0,
+                    new PiecesContainer(List.of(piece)));
+            chunk.setStartForStructure(structure, start);
+            chunk.setUnsaved(true);
+            LOGGER.info("Injected City template terrain StructureStart {} {} at {},{} with datum {}",
+                    item.anchorId(), templateRef, chunkPos.x, chunkPos.z, datumY);
+        } catch (RuntimeException ex) {
+            CityReservationMaskRegistry.recordWorldgenFailure(item, chunkPos,
+                    "TEMPLATE_TERRAIN_START_INJECTION_FAILED", ex.getMessage());
+        }
     }
 
     private static boolean contains(BlockBounds container, BlockBounds child) {

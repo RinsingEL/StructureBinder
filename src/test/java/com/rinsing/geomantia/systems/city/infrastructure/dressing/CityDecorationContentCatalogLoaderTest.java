@@ -9,6 +9,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -17,6 +18,58 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityDecorationContentCatalogLoaderTest {
+    @Test
+    void v4LoadsResolvedCropPlantStateWithoutNbtTemplate(@TempDir Path root) throws Exception {
+        writeIndex(root, """
+                {
+                  "schemaVersion": "city_decoration_content_index.v0.4",
+                  "contents": [{
+                    "contentId": "city:plant/wheat",
+                    "contentKind": "plant",
+                    "blockState": {
+                      "Name": "minecraft:wheat",
+                      "Properties": {"age": "0"}
+                    },
+                    "allowedRotations": [0, 90, 180, 270]
+                  }]
+                }
+                """);
+        AtomicReference<CompoundTag> validated = new AtomicReference<>();
+
+        CityDecorationContentCatalog catalog = new CityDecorationContentCatalogLoader(validated::set).load(root);
+        CityDecorationContentCatalog.Content plant = catalog.requireContent("city:plant/wheat");
+
+        assertTrue(plant.plant());
+        assertEquals("minecraft:wheat", validated.get().getString("Name"));
+        assertEquals("0", plant.plantBlockState().getCompound("Properties").getString("age"));
+        assertEquals(new CityDecorationContentCatalog.Size(1, 1, 1), plant.size());
+        assertEquals("crop_support", plant.supportMode());
+        assertEquals("above_surface", plant.placementMode());
+        assertEquals("replaceable_only", plant.replacePolicy());
+        assertTrue(plant.contentHash().matches("sha256:[0-9a-f]{64}"));
+    }
+
+    @Test
+    void rejectsLegacyCatalogSchema(@TempDir Path root) throws Exception {
+        writeIndex(root, """
+                {
+                  "schemaVersion": "city_decoration_content_index.v0.3",
+                  "contents": [{
+                    "contentId": "city:plant/wheat",
+                    "contentKind": "plant",
+                    "blockState": {"Name": "minecraft:wheat"}
+                  }]
+                }
+                """);
+
+        CityDecorationContentCatalog.CatalogException error = assertThrows(
+                CityDecorationContentCatalog.CatalogException.class,
+                () -> new CityDecorationContentCatalogLoader(state -> {
+                }).load(root));
+
+        assertEquals("CITY_DECORATION_CONTENT_INDEX_SCHEMA_UNSUPPORTED", error.reasonCode());
+    }
+
     @Test
     void loadsValidIndexAndDerivesDimensionsAndDefaultsFromNbt(@TempDir Path root) throws Exception {
         writeTemplate(root.resolve("templates/stall.nbt"), 3, 2, 4, "minecraft:oak_planks", false);
@@ -94,7 +147,7 @@ class CityDecorationContentCatalogLoaderTest {
     void rejectsDuplicateAndUnknownContentIds(@TempDir Path root) throws Exception {
         writeTemplate(root.resolve("templates/one.nbt"), 1, 1, 1, "minecraft:stone", false);
         String entry = contentEntry("city:prefab/one", "templates/one.nbt", "");
-        writeIndex(root, "{\n  \"schemaVersion\": \"city_decoration_content_index.v0.2\",\n"
+        writeIndex(root, "{\n  \"schemaVersion\": \"city_decoration_content_index.v0.4\",\n"
                 + "  \"contents\": [" + entry + "," + entry + "]\n}");
 
         CityDecorationContentCatalog.CatalogException duplicate = assertThrows(
@@ -134,9 +187,9 @@ class CityDecorationContentCatalogLoaderTest {
     }
 
     @Test
-    void v3RequiresAndHashesExplicitPlacementPose(@TempDir Path root) throws Exception {
+    void v4HashesExplicitPlacementPose(@TempDir Path root) throws Exception {
         writeTemplate(root.resolve("templates/channel.nbt"), 1, 3, 1, "minecraft:water", false);
-        writeIndex(root, v3Content("city:prefab/channel", "templates/channel.nbt", """
+        writeIndex(root, content("city:prefab/channel", "templates/channel.nbt", """
                 ,
                       "placementMode": "embed_surface",
                       "replacePolicy": "surface_replaceable",
@@ -148,13 +201,12 @@ class CityDecorationContentCatalogLoaderTest {
         CityDecorationContentCatalog catalog = new CityDecorationContentCatalogLoader().load(root);
         CityDecorationContentCatalog.Content content = catalog.requireContent("city:prefab/channel");
         assertEquals(CityDecorationContentCatalog.SCHEMA, catalog.schemaVersion());
-        assertFalse(catalog.legacySchema());
         assertEquals(1, content.groundPlaneLocalY());
         assertEquals(2, content.embedDepthBlocks());
         assertEquals("clear_template_air", content.clearanceMode());
 
         String firstHash = content.contentHash();
-        writeIndex(root, v3Content("city:prefab/channel", "templates/channel.nbt", """
+        writeIndex(root, content("city:prefab/channel", "templates/channel.nbt", """
                 ,
                       "placementMode": "embed_surface",
                       "replacePolicy": "surface_replaceable",
@@ -167,11 +219,11 @@ class CityDecorationContentCatalogLoaderTest {
     }
 
     @Test
-    void v3RejectsMissingOrInvalidPoseFields(@TempDir Path root) throws Exception {
+    void v4RejectsInvalidPoseFields(@TempDir Path root) throws Exception {
         writeTemplate(root.resolve("templates/channel.nbt"), 1, 2, 1, "minecraft:water", false);
         writeIndex(root, """
                 {
-                  "schemaVersion": "city_decoration_content_index.v0.3",
+                  "schemaVersion": "city_decoration_content_index.v0.4",
                   "contents": [{
                     "contentId": "city:prefab/channel",
                     "contentKind": "prefab",
@@ -179,11 +231,7 @@ class CityDecorationContentCatalogLoaderTest {
                   }]
                 }
                 """);
-        assertEquals("CITY_DECORATION_CONTENT_FIELD_MISSING", assertThrows(
-                CityDecorationContentCatalog.CatalogException.class,
-                () -> new CityDecorationContentCatalogLoader().load(root)).reasonCode());
-
-        writeIndex(root, v3Content("city:prefab/channel", "templates/channel.nbt", """
+        writeIndex(root, content("city:prefab/channel", "templates/channel.nbt", """
                 ,
                       "placementMode": "embed_surface",
                       "replacePolicy": "surface_replaceable",
@@ -197,19 +245,19 @@ class CityDecorationContentCatalogLoaderTest {
     }
 
     @Test
-    void v2CatalogRemainsReadOnlyCompatibleWithLegacyPoseDefaults(@TempDir Path root) throws Exception {
+    void v2CatalogIsRejected(@TempDir Path root) throws Exception {
         writeTemplate(root.resolve("templates/legacy.nbt"), 1, 1, 1, "minecraft:stone", false);
-        writeIndex(root, content("city:prefab/legacy", "templates/legacy.nbt", ""));
+        writeIndex(root, """
+                {
+                  "schemaVersion": "city_decoration_content_index.v0.2",
+                  "contents": []
+                }
+                """);
 
-        CityDecorationContentCatalog catalog = new CityDecorationContentCatalogLoader().load(root);
-        CityDecorationContentCatalog.Content content = catalog.requireContent("city:prefab/legacy");
-        assertEquals(CityDecorationContentCatalog.LEGACY_SCHEMA, catalog.schemaVersion());
-        assertTrue(catalog.legacySchema());
-        assertEquals(0, content.groundPlaneLocalY());
-        assertEquals(0, content.embedDepthBlocks());
-        assertEquals("preserve", content.clearanceMode());
-        assertTrue(Files.readString(root.resolve("content_index.json"))
-                .contains("city_decoration_content_index.v0.2"));
+        CityDecorationContentCatalog.CatalogException error = assertThrows(
+                CityDecorationContentCatalog.CatalogException.class,
+                () -> new CityDecorationContentCatalogLoader().load(root));
+        assertEquals("CITY_DECORATION_CONTENT_INDEX_SCHEMA_UNSUPPORTED", error.reasonCode());
     }
 
     @Test
@@ -265,12 +313,15 @@ class CityDecorationContentCatalogLoaderTest {
         writeTemplate(root.resolve("templates/channel.nbt"), 1, 1, 1, "minecraft:water", false);
         writeIndex(root, """
                 {
-                  "schemaVersion": "city_decoration_content_index.v0.2",
+                  "schemaVersion": "city_decoration_content_index.v0.4",
                   "contents": [
                     {
                       "contentId": "city:prefab/crop",
                       "contentKind": "prefab",
                       "nbtFile": "templates/crop.nbt",
+                      "groundPlaneLocalY": 0,
+                      "embedDepthBlocks": 0,
+                      "clearanceMode": "preserve",
                       "placementMode": "replace_surface",
                       "replacePolicy": "surface_replaceable"
                     },
@@ -278,6 +329,9 @@ class CityDecorationContentCatalogLoaderTest {
                       "contentId": "city:prefab/channel",
                       "contentKind": "prefab",
                       "nbtFile": "templates/channel.nbt",
+                      "groundPlaneLocalY": 0,
+                      "embedDepthBlocks": 0,
+                      "clearanceMode": "preserve",
                       "placementMode": "replace_surface",
                       "replacePolicy": "surface_replaceable",
                       "terrainDropFallbackContentRef": "city:prefab/crop"
@@ -292,12 +346,15 @@ class CityDecorationContentCatalogLoaderTest {
 
         writeIndex(root, """
                 {
-                  "schemaVersion": "city_decoration_content_index.v0.2",
+                  "schemaVersion": "city_decoration_content_index.v0.4",
                   "contents": [
                     {
                       "contentId": "city:prefab/channel",
                       "contentKind": "prefab",
                       "nbtFile": "templates/channel.nbt",
+                      "groundPlaneLocalY": 0,
+                      "embedDepthBlocks": 0,
+                      "clearanceMode": "preserve",
                       "terrainDropFallbackContentRef": "city:prefab/missing"
                     }
                   ]
@@ -310,17 +367,23 @@ class CityDecorationContentCatalogLoaderTest {
 
         writeIndex(root, """
                 {
-                  "schemaVersion": "city_decoration_content_index.v0.2",
+                  "schemaVersion": "city_decoration_content_index.v0.4",
                   "contents": [
                     {
                       "contentId": "city:prefab/crop",
                       "contentKind": "prefab",
                       "nbtFile": "templates/crop.nbt"
+                      ,"groundPlaneLocalY": 0,
+                      "embedDepthBlocks": 0,
+                      "clearanceMode": "preserve"
                     },
                     {
                       "contentId": "city:prefab/channel",
                       "contentKind": "prefab",
                       "nbtFile": "templates/channel.nbt",
+                      "groundPlaneLocalY": 0,
+                      "embedDepthBlocks": 0,
+                      "clearanceMode": "preserve",
                       "placementMode": "replace_surface",
                       "replacePolicy": "surface_replaceable",
                       "terrainDropFallbackContentRef": "city:prefab/crop"
@@ -335,23 +398,24 @@ class CityDecorationContentCatalogLoaderTest {
     }
 
     private static String content(String contentId, String nbtFile, String extraFields) {
-        return "{\n  \"schemaVersion\": \"city_decoration_content_index.v0.2\",\n"
-                + "  \"contents\": [" + contentEntry(contentId, nbtFile, extraFields) + "]\n}";
-    }
-
-    private static String v3Content(String contentId, String nbtFile, String extraFields) {
-        return "{\n  \"schemaVersion\": \"city_decoration_content_index.v0.3\",\n"
+        return "{\n  \"schemaVersion\": \"city_decoration_content_index.v0.4\",\n"
                 + "  \"contents\": [" + contentEntry(contentId, nbtFile, extraFields) + "]\n}";
     }
 
     private static String contentEntry(String contentId, String nbtFile, String extraFields) {
+        String requiredPose = extraFields.contains("\"groundPlaneLocalY\"") ? "" : """
+                ,
+                  "groundPlaneLocalY": 0,
+                  "embedDepthBlocks": 0,
+                  "clearanceMode": "preserve"
+                """;
         return """
                 {
                   "contentId": "%s",
                   "contentKind": "prefab",
-                  "nbtFile": "%s"%s
+                  "nbtFile": "%s"%s%s
                 }
-                """.formatted(contentId, nbtFile, extraFields);
+                """.formatted(contentId, nbtFile, requiredPose, extraFields);
     }
 
     private static void writeIndex(Path root, String json) throws Exception {

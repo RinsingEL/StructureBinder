@@ -106,12 +106,49 @@ public final class CityDecorationChunkCompiler {
                 }
             }
             if (ownerChunkX(candidate.slot()) == chunkX && ownerChunkZ(candidate.slot()) == chunkZ) {
-                ownedFragments.add(resolved.toFragment());
+                ownedFragments.add(withLayers(resolved.toFragment(), resolved, catalog,
+                        frozenOutcomes.get(candidate.slot().slotId())));
             }
         }
         ownedFragments.sort(Fragment.STABLE_ORDER);
         return new CompilationResult(RESULT_SCHEMA, plan.cityId(), plan.catalogHash(), chunkX, chunkZ,
                 haloBlocks, List.copyOf(ownedFragments));
+    }
+
+    private Fragment withLayers(Fragment fragment,
+                                Candidate candidate,
+                                CityDecorationContentCatalog catalog,
+                                CityDecorationTerrainRunCompiler.SlotOutcome frozenOutcome) {
+        List<FragmentLayer> layers = new ArrayList<>();
+        Map<String, CityDecorationTerrainRunCompiler.LayerSelection> frozenLayers = new HashMap<>();
+        if (frozenOutcome != null) {
+            frozenOutcome.layers().forEach(layer -> frozenLayers.put(layer.layerId(), layer));
+        }
+        for (int index = 0; index < candidate.paletteSlot().layers().size(); index++) {
+            CompiledDecorationProgram.ContentLayer layer = candidate.paletteSlot().layers().get(index);
+            CompiledDecorationProgram.ContentEntry selected = selectContent(candidate.program(), candidate.slot(),
+                    candidate.paletteSlot(), layer);
+            CityDecorationTerrainRunCompiler.LayerSelection frozen = frozenLayers.get(layer.layerId());
+            if (frozenOutcome != null && (frozen == null || !selected.contentRef().equals(frozen.contentRef()))) {
+                throw new IllegalArgumentException("CITY_DECORATION_FROZEN_LAYER_SELECTION_MISMATCH: "
+                        + candidate.slot().slotId() + "/" + layer.layerId());
+            }
+            String contentRef = frozen == null ? selected.contentRef() : frozen.appliedContentRef();
+            CityDecorationContentCatalog.Content content = index == 0
+                    ? candidate.content() : catalog.requireContent(contentRef);
+            if (index > 0 && (!content.plant() || content.size().widthBlocks() != 1
+                    || content.size().heightBlocks() != 1 || content.size().depthBlocks() != 1)) {
+                throw new IllegalArgumentException("CITY_DECORATION_LAYER_CONTENT_KIND_UNSUPPORTED: "
+                        + candidate.slot().slotId() + "/" + layer.layerId());
+            }
+            if (index > 0 && !content.allowedRotations().contains(candidate.rotation())) {
+                throw new IllegalArgumentException("CITY_DECORATION_LAYER_ROTATION_UNSUPPORTED: "
+                        + candidate.slot().slotId() + "/" + layer.layerId());
+            }
+            layers.add(new FragmentLayer(layer.layerId(), layer.phase(), layer.required(),
+                    layer.dependsOnLayerId(), content));
+        }
+        return fragment.withLayers(layers);
     }
 
     private Candidate resolveCandidate(CompiledDecorationProgram program,
@@ -296,7 +333,14 @@ public final class CityDecorationChunkCompiler {
     static CompiledDecorationProgram.ContentEntry selectContent(CompiledDecorationProgram program,
                                                                  DecorationSlot slot,
                                                                  CompiledDecorationProgram.PaletteSlot paletteSlot) {
-        double totalWeight = paletteSlot.entries().stream()
+        return selectContent(program, slot, paletteSlot, paletteSlot.primaryLayer());
+    }
+
+    static CompiledDecorationProgram.ContentEntry selectContent(CompiledDecorationProgram program,
+                                                                 DecorationSlot slot,
+                                                                 CompiledDecorationProgram.PaletteSlot paletteSlot,
+                                                                 CompiledDecorationProgram.ContentLayer layer) {
+        double totalWeight = layer.entries().stream()
                 .mapToDouble(CompiledDecorationProgram.ContentEntry::weight)
                 .sum();
         if (!Double.isFinite(totalWeight) || totalWeight <= 0.0D) {
@@ -304,11 +348,12 @@ public final class CityDecorationChunkCompiler {
         }
         long hash = DecorationDeterminism.worldHash(program.seed(), program.programId(),
                 slot.worldAnchor().x(), slot.worldAnchor().z(), stableLong(slot.slotId()),
-                stableLong(paletteSlot.slotId()), 0L);
+                stableLong(paletteSlot.slotId()), "primary".equals(layer.layerId())
+                        ? 0L : stableLong(layer.layerId()));
         double unit = (double) (hash >>> 11) * 0x1.0p-53;
         double cursor = unit * totalWeight;
-        CompiledDecorationProgram.ContentEntry selected = paletteSlot.entries().get(paletteSlot.entries().size() - 1);
-        for (CompiledDecorationProgram.ContentEntry entry : paletteSlot.entries()) {
+        CompiledDecorationProgram.ContentEntry selected = layer.entries().get(layer.entries().size() - 1);
+        for (CompiledDecorationProgram.ContentEntry entry : layer.entries()) {
             cursor -= entry.weight();
             if (cursor < 0.0D) {
                 selected = entry;
@@ -466,6 +511,7 @@ public final class CityDecorationChunkCompiler {
                 .thenComparing(Fragment::slotId);
 
         private final String fragmentId;
+        private final String programSchemaVersion;
         private final String programId;
         private final String programHash;
         private final String slotId;
@@ -480,8 +526,10 @@ public final class CityDecorationChunkCompiler {
         private final Status status;
         private final String reasonCode;
         private final CityDecorationTerrainRunCompiler.SlotOutcome frozenOutcome;
+        private final List<FragmentLayer> layers;
 
         private Fragment(String fragmentId,
+                         String programSchemaVersion,
                          String programId,
                          String programHash,
                          String slotId,
@@ -496,7 +544,32 @@ public final class CityDecorationChunkCompiler {
                          Status status,
                          String reasonCode,
                          CityDecorationTerrainRunCompiler.SlotOutcome frozenOutcome) {
+            this(fragmentId, programSchemaVersion, programId, programHash, slotId, paletteSlotId,
+                    priority, worldAnchor, content,
+                    rotationDegrees, footprint, suppressionBounds, datumY, status, reasonCode, frozenOutcome,
+                    List.of(new FragmentLayer("primary", CompiledDecorationProgram.Phase.MAJOR,
+                            true, null, content)));
+        }
+
+        private Fragment(String fragmentId,
+                         String programSchemaVersion,
+                         String programId,
+                         String programHash,
+                         String slotId,
+                         String paletteSlotId,
+                         int priority,
+                         BlockPoint worldAnchor,
+                         CityDecorationContentCatalog.Content content,
+                         int rotationDegrees,
+                         BlockBounds footprint,
+                         BlockBounds suppressionBounds,
+                         Integer datumY,
+                         Status status,
+                         String reasonCode,
+                         CityDecorationTerrainRunCompiler.SlotOutcome frozenOutcome,
+                         List<FragmentLayer> layers) {
             this.fragmentId = fragmentId;
+            this.programSchemaVersion = programSchemaVersion;
             this.programId = programId;
             this.programHash = programHash;
             this.slotId = slotId;
@@ -511,10 +584,21 @@ public final class CityDecorationChunkCompiler {
             this.status = status;
             this.reasonCode = reasonCode;
             this.frozenOutcome = frozenOutcome;
+            this.layers = List.copyOf(layers);
+        }
+
+        private Fragment withLayers(List<FragmentLayer> layers) {
+            return new Fragment(fragmentId, programSchemaVersion, programId, programHash, slotId, paletteSlotId,
+                    priority, worldAnchor, content, rotationDegrees, footprint, suppressionBounds, datumY,
+                    status, reasonCode, frozenOutcome, layers);
         }
 
         public String fragmentId() {
             return fragmentId;
+        }
+
+        public String programSchemaVersion() {
+            return programSchemaVersion;
         }
 
         public String programId() {
@@ -571,6 +655,10 @@ public final class CityDecorationChunkCompiler {
 
         public CompoundTag prefabNbt() {
             return content.template();
+        }
+
+        public List<FragmentLayer> layers() {
+            return layers;
         }
 
         public int rotationDegrees() {
@@ -635,6 +723,26 @@ public final class CityDecorationChunkCompiler {
         }
     }
 
+    public record FragmentLayer(String layerId,
+                                CompiledDecorationProgram.Phase phase,
+                                boolean required,
+                                String dependsOnLayerId,
+                                CityDecorationContentCatalog.Content content) {
+        public FragmentLayer {
+            if (layerId == null || layerId.isBlank() || phase == null || content == null) {
+                throw new IllegalArgumentException("CITY_DECORATION_FRAGMENT_LAYER_INVALID");
+            }
+        }
+
+        public String contentRef() {
+            return content.contentId();
+        }
+
+        public String contentHash() {
+            return content.contentHash();
+        }
+    }
+
     private record Candidate(CompiledDecorationProgram program,
                              String programHash,
                              CompiledDecorationProgram.PaletteSlot paletteSlot,
@@ -659,9 +767,9 @@ public final class CityDecorationChunkCompiler {
         }
 
         Fragment toFragment() {
-            return new Fragment(fragmentId, program.programId(), programHash, slot.slotId(), slot.paletteSlotId(),
-                    program.priority(), slot.worldAnchor(), content, rotation, footprint, conflictBounds,
-                    datumY, status, reasonCode, frozenOutcome);
+            return new Fragment(fragmentId, program.schemaVersion(), program.programId(), programHash,
+                    slot.slotId(), slot.paletteSlotId(), program.priority(), slot.worldAnchor(), content,
+                    rotation, footprint, conflictBounds, datumY, status, reasonCode, frozenOutcome);
         }
     }
 }

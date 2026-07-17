@@ -9,6 +9,7 @@ import com.rinsing.geomantia.systems.city.domain.model.BlockPoint;
 import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationChunkCompiler;
 import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationContentCatalog;
 import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationContentCatalogLoader;
+import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationPlantCatalogTestFixture;
 import com.rinsing.geomantia.systems.city.infrastructure.json.CityJson;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -21,6 +22,8 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -32,6 +35,46 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityDecorationNbtPlacerTest {
+    @Test
+    void v4PrimaryPrefabNamesTheLayerInDeterministicTemplateSeed(@TempDir Path root) throws Exception {
+        CityDecorationContentCatalog catalog = catalog(root, "replace_surface", "surface_replaceable", List.of(0));
+        CityDecorationChunkCompiler.Fragment fragment = fragment(catalog, program(catalog, false), 70);
+        FakePlacementWorld world = new FakePlacementWorld(
+                new CityDecorationNbtPlacer.ExistingTarget(true, true));
+
+        assertTrue(new CityDecorationNbtPlacer().place(fragment, world).applied());
+
+        assertEquals(stableSeed(fragment.fragmentId() + "/primary"), world.templateSeed);
+    }
+
+    @Test
+    void plantLayerRequiresCropSupportAndPlacesResolvedStateAboveDatum(@TempDir Path root) throws Exception {
+        CityDecorationContentCatalog catalog = CityDecorationPlantCatalogTestFixture.create(root);
+        CityDecorationChunkCompiler.Fragment fragment = fragment(catalog, layeredProgram(), 70);
+        CityDecorationChunkCompiler.FragmentLayer plant = fragment.layers().get(1);
+        FakePlacementWorld supported = new FakePlacementWorld(
+                new CityDecorationNbtPlacer.ExistingTarget(true, true));
+        supported.plantTarget = new CityDecorationNbtPlacer.PlantTarget(true, false, true);
+        CityDecorationNbtPlacer placer = new CityDecorationNbtPlacer();
+
+        CityDecorationNbtPlacer.PreflightResult preflight = placer.preflight(fragment, plant, supported);
+        CityDecorationNbtPlacer.PlacementResult placed = placer.placePrepared(fragment, plant, preflight, supported);
+
+        assertTrue(placed.applied());
+        assertEquals(71, placed.baseY());
+        assertEquals(new BlockPos(8, 71, 8), supported.plantOrigin);
+        assertEquals("minecraft:wheat", supported.plantState.getString("Name"));
+        assertEquals(1, supported.plantPlaceCalls);
+
+        FakePlacementWorld unsupported = new FakePlacementWorld(
+                new CityDecorationNbtPlacer.ExistingTarget(true, true));
+        unsupported.plantTarget = new CityDecorationNbtPlacer.PlantTarget(true, false, false);
+        CityDecorationNbtPlacer.PreflightResult rejected = placer.preflight(fragment, plant, unsupported);
+        assertFalse(rejected.ready());
+        assertEquals("CITY_DECORATION_PLANT_SUPPORT_MISSING", rejected.reasonCode());
+        assertEquals(0, unsupported.plantPlaceCalls);
+    }
+
     @Test
     void aboveSurfaceUsesGroundDatumPlusOneAndRotatesEveryTarget(@TempDir Path root) throws Exception {
         CityDecorationContentCatalog catalog = catalog(root, "above_surface", "replaceable_only", List.of(90));
@@ -140,6 +183,29 @@ class CityDecorationNbtPlacerTest {
                 new CompiledDecorationProgram.ConflictPolicy(CompiledDecorationProgram.ConflictAction.SKIP, 0));
     }
 
+    private static CompiledDecorationProgram layeredProgram() {
+        return new CompiledDecorationProgram(CompiledDecorationProgram.SCHEMA, "layered_place", 1, 124L,
+                new CompiledDecorationProgram.TargetMask("point", List.of(new BlockBounds(8, 8, 8, 8))),
+                new CompiledDecorationProgram.CoordinateFrame(BlockPoint.ORIGIN,
+                        new CompiledDecorationProgram.Vector2(1, 0),
+                        new CompiledDecorationProgram.Vector2(0, 1)),
+                new CompiledDecorationProgram.TargetMaskShape(),
+                new CompiledDecorationProgram.GridRepeatPattern("item", 1, 1, 0, 0),
+                new CompiledDecorationProgram.ContentPalette(List.of(
+                        new CompiledDecorationProgram.PaletteSlot("item", List.of(
+                                new CompiledDecorationProgram.ContentLayer("base",
+                                        CompiledDecorationProgram.Phase.SURFACE,
+                                        List.of(new CompiledDecorationProgram.ContentEntry(
+                                                "city:prefab/farmland", 1.0)), true, null),
+                                new CompiledDecorationProgram.ContentLayer("plant",
+                                        CompiledDecorationProgram.Phase.MINOR,
+                                        List.of(new CompiledDecorationProgram.ContentEntry(
+                                                "city:plant/wheat", 1.0)), true, "base"))))),
+                new CompiledDecorationProgram.TerrainPolicy(1, false,
+                        CompiledDecorationProgram.InvalidTerrainAction.SKIP),
+                new CompiledDecorationProgram.ConflictPolicy(CompiledDecorationProgram.ConflictAction.SKIP, 0));
+    }
+
     private static CityDecorationContentCatalog catalog(Path root,
                                                         String placementMode,
                                                         String replacePolicy,
@@ -221,6 +287,15 @@ class CityDecorationNbtPlacerTest {
         return list;
     }
 
+    private static long stableSeed(String value) throws Exception {
+        byte[] hash = MessageDigest.getInstance("SHA-256").digest(value.getBytes(StandardCharsets.UTF_8));
+        long seed = 0L;
+        for (int index = 0; index < Long.BYTES; index++) {
+            seed = (seed << 8) | (hash[index] & 0xffL);
+        }
+        return seed;
+    }
+
     private static final class FakePlacementWorld implements CityDecorationNbtPlacer.PlacementWorld {
         private final CityDecorationNbtPlacer.ExistingTarget defaultTarget;
         private final Map<BlockPos, CityDecorationNbtPlacer.ExistingTarget> targets = new HashMap<>();
@@ -229,6 +304,11 @@ class CityDecorationNbtPlacerTest {
         private Rotation rotation;
         private CompoundTag placedTemplate;
         private int placeCalls;
+        private long templateSeed;
+        private CityDecorationNbtPlacer.PlantTarget plantTarget;
+        private CompoundTag plantState;
+        private BlockPos plantOrigin;
+        private int plantPlaceCalls;
 
         private FakePlacementWorld(CityDecorationNbtPlacer.ExistingTarget defaultTarget) {
             this.defaultTarget = defaultTarget;
@@ -251,8 +331,23 @@ class CityDecorationNbtPlacerTest {
             this.placedTemplate = templateNbt.copy();
             this.origin = origin;
             this.rotation = rotation;
+            this.templateSeed = seed;
             this.ignoreTemplateAir = ignoreTemplateAir;
             placeCalls++;
+            return true;
+        }
+
+        @Override
+        public CityDecorationNbtPlacer.PlantTarget inspectPlant(CompoundTag blockStateNbt, BlockPos pos,
+                                                                Rotation rotation) {
+            return plantTarget;
+        }
+
+        @Override
+        public boolean placePlant(CompoundTag blockStateNbt, BlockPos pos, Rotation rotation) {
+            plantState = blockStateNbt.copy();
+            plantOrigin = pos;
+            plantPlaceCalls++;
             return true;
         }
 

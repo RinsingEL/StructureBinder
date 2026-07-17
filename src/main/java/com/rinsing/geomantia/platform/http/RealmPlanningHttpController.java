@@ -460,17 +460,6 @@ final class RealmPlanningHttpController {
         handle(exchange, "GET", CityPlanningEndpointHandler::handleQueryDecorationCatalog);
     }
 
-    void handleCityUpgradeDefaultDecorationCatalog(HttpExchange exchange) {
-        handle(exchange, "POST", () -> callOnServerThread(() -> {
-            JsonObject request = GisHttpUtil.readJsonObject(exchange);
-            return CityPlanningEndpointHandler.handleUpgradeDefaultDecorationCatalog(
-                    server.getWorldPath(LevelResource.ROOT),
-                    net.minecraftforge.fml.loading.FMLPaths.CONFIGDIR.get()
-                            .resolve("geomantia").resolve("city_decoration"),
-                    booleanValue(request, "confirmConfigMutation", false));
-        }));
-    }
-
     void handleCityProbeDecorationTerrain(HttpExchange exchange) {
         handle(exchange, "POST", () -> callOnServerThread(() -> {
             JsonObject request = GisHttpUtil.readJsonObject(exchange);

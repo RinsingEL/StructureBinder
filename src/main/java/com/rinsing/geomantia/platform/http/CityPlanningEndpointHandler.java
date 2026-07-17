@@ -1499,38 +1499,6 @@ final class CityPlanningEndpointHandler {
         return decorationCatalogSummary(catalog, styles);
     }
 
-    static JsonObject handleUpgradeDefaultDecorationCatalog(Path serverRoot,
-                                                            Path catalogRoot,
-                                                            boolean confirmConfigMutation) throws IOException {
-        if (!confirmConfigMutation) {
-            throw new IllegalArgumentException("CITY_DECORATION_DEFAULT_CATALOG_UPGRADE_CONFIRMATION_REQUIRED");
-        }
-        Path installedCatalogRoot = CityDecorationDefaultCatalogBootstrap.ensureInstalled(catalogRoot);
-        CityDecorationContentCatalogLoader loader = new CityDecorationContentCatalogLoader();
-        CityDecorationContentCatalog before = loader.load(installedCatalogRoot);
-        CityDecorationDefaultCatalogBootstrap.UpgradeResult upgrade =
-                CityDecorationDefaultCatalogBootstrap.upgradeManagedDefault(installedCatalogRoot);
-        CityDecorationContentCatalog after = loader.load(installedCatalogRoot);
-
-        JsonObject response = decorationCatalogSummary(after,
-                new CityDecorationStyleProfileCatalogLoader().load(installedCatalogRoot, after));
-        boolean catalogChanged = !before.catalogHash().equals(after.catalogHash());
-        response.addProperty("configMutationConfirmed", true);
-        response.addProperty("previousCatalogHash", before.catalogHash());
-        response.addProperty("catalogChanged", catalogChanged);
-        response.addProperty("requiresReplan", catalogChanged);
-        response.addProperty("contentIndexChanged", upgrade.contentIndexChanged());
-        response.addProperty("manifestChanged", upgrade.manifestChanged());
-        if (upgrade.backupPath() != null) {
-            response.addProperty("backupPath", upgrade.backupPath().toString());
-        }
-        if (upgrade.contentIndexChanged()) {
-            response.add("deactivatedActivePlans", CityDecorationWorldgenRegistry
-                    .deactivateAllForCatalogUpgrade(serverRoot));
-        }
-        return response;
-    }
-
     static JsonObject handleProbeDecorationTerrain(Path debugRoot, String runId, String citySeedId,
                                                    ServerLevel level) throws IOException {
         if (level == null) {
@@ -2850,13 +2818,8 @@ final class CityPlanningEndpointHandler {
     private static JsonObject decorationCatalogSummary(CityDecorationContentCatalog catalog,
                                                        CityDecorationStyleProfileCatalog styleProfiles) {
         JsonObject response = new JsonObject();
-        response.addProperty("schemaVersion", "city_decoration_catalog_query.v0.3");
+        response.addProperty("schemaVersion", "city_decoration_catalog_query.v0.4");
         response.addProperty("contentIndexSchemaVersion", catalog.schemaVersion());
-        boolean contentPoseUpgradeRequired = CityDecorationContentCatalog.LEGACY_SCHEMA
-                .equals(catalog.schemaVersion());
-        response.addProperty("contentPoseUpgradeRequired", contentPoseUpgradeRequired);
-        response.addProperty("upgradeMode", contentPoseUpgradeRequired
-                ? "explicit_managed_default_only" : "none");
         response.addProperty("catalogHash", catalog.catalogHash());
         JsonArray contents = new JsonArray();
         for (CityDecorationContentCatalog.Content content : catalog.contents().values()) {
@@ -2904,9 +2867,8 @@ final class CityPlanningEndpointHandler {
                                                       CityDecorationContentCatalog catalog) {
         for (DecorationProgramIntent program : plan.programs()) {
             for (CompiledDecorationProgram.PaletteSlot slot : program.contentPalette().slots()) {
-                for (CompiledDecorationProgram.ContentEntry entry : slot.entries()) {
-                    catalog.requireContent(entry.contentRef());
-                }
+                slot.layers().forEach(layer -> layer.entries().forEach(entry ->
+                        catalog.requireContent(entry.contentRef())));
             }
         }
     }
@@ -2915,9 +2877,8 @@ final class CityPlanningEndpointHandler {
                                                               CityDecorationContentCatalog catalog) {
         for (CompiledDecorationProgram program : plan.programs()) {
             for (CompiledDecorationProgram.PaletteSlot slot : program.contentPalette().slots()) {
-                for (CompiledDecorationProgram.ContentEntry entry : slot.entries()) {
-                    catalog.requireContent(entry.contentRef());
-                }
+                slot.layers().forEach(layer -> layer.entries().forEach(entry ->
+                        catalog.requireContent(entry.contentRef())));
             }
         }
     }
