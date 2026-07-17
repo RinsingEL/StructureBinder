@@ -128,7 +128,7 @@ public final class MinecraftCityWorldgenStructurePlacer {
             MinecraftCityTemplateWorldgenPlacer placer = new MinecraftCityTemplateWorldgenPlacer(manager);
             MinecraftCityTemplateWorldgenPlacer.PlacementRequest request =
                     new MinecraftCityTemplateWorldgenPlacer.PlacementRequest(templateRef, templateHash,
-                            anchor, rotation, mirror, datum, ownerChunk);
+                            anchor, rotation, mirror, datum, ownerChunk, item.lockedActualFootprint());
             MinecraftCityTemplateWorldgenPlacer.PlacementResult result = placer.place(request,
                     new MinecraftCityTemplateWorldgenPlacer.WorldGenLevelWriter(level, ownerChunk));
             if (!result.success() && !result.waiting()) {

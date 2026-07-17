@@ -410,6 +410,9 @@ public final class CityReservationMaskRegistry {
         if (planned == null || actualFootprint == null || generatingChunk == null) {
             return TemplateFragmentRecordResult.rejectedResult("TEMPLATE_FRAGMENT_INVALID");
         }
+        if (!planned.lockedActualFootprint().equals(actualFootprint)) {
+            return TemplateFragmentRecordResult.rejectedResult("TEMPLATE_LOCKED_FOOTPRINT_MISMATCH");
+        }
         if (ledgerContains(planned)) {
             return TemplateFragmentRecordResult.completedResult();
         }

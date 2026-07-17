@@ -101,6 +101,142 @@ class MinecraftCityTemplateWorldgenPlacerTest {
         assertEquals("structure_template_nbt", writer.fragments.get(0).materializationSource());
     }
 
+    @Test
+    void runtimeAdapterMatchesCityGeometryForEverySourceCoordinateAndTransform() {
+        CityTemplatePlacementGeometry.Size size = new CityTemplatePlacementGeometry.Size(5, 7, 9);
+        BlockPoint anchor = new BlockPoint(21, -11);
+        for (CityTemplatePlacementGeometry.Rotation rotation
+                : CityTemplatePlacementGeometry.Rotation.values()) {
+            for (CityTemplatePlacementGeometry.Mirror mirror
+                    : CityTemplatePlacementGeometry.Mirror.values()) {
+                String context = rotation + " / " + mirror;
+                MinecraftCityTemplateWorldgenPlacer.RuntimeTransform runtime =
+                        MinecraftCityTemplateWorldgenPlacer.deriveRuntimeTransform(
+                                size, anchor, 64, rotation, mirror);
+                CityTemplatePlacementGeometry geometry = CityTemplatePlacementGeometry.of(
+                        size, rotation, mirror, List.of());
+
+                assertTrue(runtime.validateAgainst(geometry).valid(), context);
+                assertEquals(geometry.worldBounds(anchor), runtime.transformedFootprint(), context);
+                assertEquals(net.minecraft.core.BlockPos.ZERO, runtime.rotationPivot(), context);
+                for (int x = 0; x < size.width(); x++) {
+                    for (int z = 0; z < size.depth(); z++) {
+                        BlockPoint local = new BlockPoint(x, z);
+                        BlockPoint expected = geometry.worldPosition(anchor, local);
+                        net.minecraft.core.BlockPos actual = runtime.worldPosition(local);
+                        assertEquals(expected.x(), actual.getX(), context + " local=" + local);
+                        assertEquals(expected.z(), actual.getZ(), context + " local=" + local);
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
+    void clockwiseAndCounterclockwiseUseNormalizedPlacementOriginInsteadOfPivotOffset() {
+        CityTemplatePlacementGeometry.Size size = new CityTemplatePlacementGeometry.Size(19, 8, 13);
+        BlockPoint anchor = new BlockPoint(660210, 659551);
+
+        MinecraftCityTemplateWorldgenPlacer.RuntimeTransform clockwise =
+                MinecraftCityTemplateWorldgenPlacer.deriveRuntimeTransform(size, anchor, 107,
+                        CityTemplatePlacementGeometry.Rotation.CLOCKWISE_90, NO_MIRROR);
+        MinecraftCityTemplateWorldgenPlacer.RuntimeTransform counterclockwise =
+                MinecraftCityTemplateWorldgenPlacer.deriveRuntimeTransform(size, anchor, 107,
+                        CityTemplatePlacementGeometry.Rotation.COUNTERCLOCKWISE_90, NO_MIRROR);
+
+        assertEquals(new net.minecraft.core.BlockPos(660222, 107, 659551), clockwise.placementOrigin());
+        assertEquals(new net.minecraft.core.BlockPos(660210, 107, 659569),
+                counterclockwise.placementOrigin());
+        assertEquals(net.minecraft.core.BlockPos.ZERO, clockwise.rotationPivot());
+        assertEquals(net.minecraft.core.BlockPos.ZERO, counterclockwise.rotationPivot());
+        assertEquals(new BlockBounds(660210, 659551, 660222, 659569),
+                clockwise.transformedFootprint());
+        assertEquals(clockwise.transformedFootprint(), counterclockwise.transformedFootprint());
+    }
+
+    @Test
+    void lockedFootprintDriftFailsBeforeWriterAccess() {
+        FakeSource source = new FakeSource();
+        source.put("city:butcher", new Vec3i(19, 8, 13), "sha256:butcher");
+        ChunkPos owner = new ChunkPos(0, 0);
+        FakeWriter writer = new FakeWriter(owner);
+
+        MinecraftCityTemplateWorldgenPlacer.PlacementResult result = placer(source).place(
+                new MinecraftCityTemplateWorldgenPlacer.PlacementRequest(
+                        "city:butcher", "sha256:butcher", new BlockPoint(0, 0),
+                        CityTemplatePlacementGeometry.Rotation.CLOCKWISE_90, NO_MIRROR, 64, owner,
+                        new BlockBounds(0, -12, 12, 6)), writer);
+
+        assertFalse(result.success());
+        assertEquals("TEMPLATE_LOCKED_FOOTPRINT_MISMATCH", result.reasonCode());
+        assertEquals(0, writer.writes);
+    }
+
+    @Test
+    void rotatedNonSquareTemplateAcrossOwnersCoversEveryCoordinateOnlyInItsOwner() {
+        FakeSource source = new FakeSource();
+        source.put("city:butcher", new Vec3i(19, 8, 13), "sha256:butcher");
+        MinecraftCityTemplateWorldgenPlacer placer = placer(source);
+        BlockPoint anchor = new BlockPoint(8, 8);
+        BlockBounds footprint = new BlockBounds(8, 8, 20, 26);
+        List<ChunkPos> owners = List.of(new ChunkPos(0, 0), new ChunkPos(0, 1),
+                new ChunkPos(1, 0), new ChunkPos(1, 1));
+        Map<ChunkPos, MinecraftCityTemplateWorldgenPlacer.TemplateFragment> fragments = new HashMap<>();
+
+        for (ChunkPos owner : owners) {
+            FakeWriter writer = new FakeWriter(owner);
+            MinecraftCityTemplateWorldgenPlacer.PlacementResult result = placer.place(
+                    new MinecraftCityTemplateWorldgenPlacer.PlacementRequest(
+                            "city:butcher", "sha256:butcher", anchor,
+                            CityTemplatePlacementGeometry.Rotation.CLOCKWISE_90, NO_MIRROR,
+                            64, owner, footprint), writer);
+            assertTrue(result.waiting());
+            assertTrue(result.worldMutationApplied());
+            assertEquals(1, writer.writes);
+            MinecraftCityTemplateWorldgenPlacer.TemplateFragment fragment = writer.fragments.get(0);
+            fragments.put(owner, fragment);
+            assertEquals(intersection(footprint, owner), fragment.ownerFragment());
+        }
+
+        Set<BlockPoint> covered = new HashSet<>();
+        MinecraftCityTemplateWorldgenPlacer.RuntimeTransform runtime = fragments.get(owners.get(0))
+                .runtimeTransform();
+        for (int x = 0; x < 19; x++) {
+            for (int z = 0; z < 13; z++) {
+                net.minecraft.core.BlockPos world = runtime.worldPosition(new BlockPoint(x, z));
+                ChunkPos owner = new ChunkPos(Math.floorDiv(world.getX(), 16), Math.floorDiv(world.getZ(), 16));
+                assertTrue(fragments.containsKey(owner));
+                assertTrue(fragments.get(owner).ownerFragment().contains(world.getX(), world.getZ()));
+                covered.add(new BlockPoint(world.getX(), world.getZ()));
+            }
+        }
+        assertEquals(19 * 13, covered.size());
+    }
+
+    @Test
+    void mismatchedRuntimeAndPlanningTransformIsExplicitlyRejected() {
+        CityTemplatePlacementGeometry.Size size = new CityTemplatePlacementGeometry.Size(19, 8, 13);
+        BlockPoint anchor = new BlockPoint(0, 0);
+        MinecraftCityTemplateWorldgenPlacer.RuntimeTransform runtime =
+                MinecraftCityTemplateWorldgenPlacer.deriveRuntimeTransform(size, anchor, 64,
+                        CityTemplatePlacementGeometry.Rotation.CLOCKWISE_90, NO_MIRROR);
+        CityTemplatePlacementGeometry wrongGeometry = CityTemplatePlacementGeometry.of(size,
+                CityTemplatePlacementGeometry.Rotation.COUNTERCLOCKWISE_90, NO_MIRROR, List.of());
+
+        MinecraftCityTemplateWorldgenPlacer.RuntimeTransformValidation validation =
+                runtime.validateAgainst(wrongGeometry);
+
+        assertFalse(validation.valid());
+        assertEquals("TEMPLATE_RUNTIME_TRANSFORM_MISMATCH", validation.reasonCode());
+    }
+
+    private static BlockBounds intersection(BlockBounds footprint, ChunkPos owner) {
+        return new BlockBounds(Math.max(footprint.minX(), owner.getMinBlockX()),
+                Math.max(footprint.minZ(), owner.getMinBlockZ()),
+                Math.min(footprint.maxX(), owner.getMaxBlockX()),
+                Math.min(footprint.maxZ(), owner.getMaxBlockZ()));
+    }
+
     private static MinecraftCityTemplateWorldgenPlacer placer(FakeSource source) {
         return new MinecraftCityTemplateWorldgenPlacer(source);
     }

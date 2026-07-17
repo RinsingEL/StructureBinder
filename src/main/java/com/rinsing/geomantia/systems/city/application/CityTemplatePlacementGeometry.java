@@ -47,9 +47,9 @@ public final class CityTemplatePlacementGeometry {
             int transformedX = x;
             int transformedZ = z;
             if (mirror == Mirror.LEFT_RIGHT) {
-                transformedX = -transformedX;
-            } else if (mirror == Mirror.FRONT_BACK) {
                 transformedZ = -transformedZ;
+            } else if (mirror == Mirror.FRONT_BACK) {
+                transformedX = -transformedX;
             }
             for (int i = 0; i < rotation.quarterTurnsClockwise(); i++) {
                 int nextX = -transformedZ;
@@ -180,10 +180,10 @@ public final class CityTemplatePlacementGeometry {
         int x = localPosition.x();
         int z = localPosition.z();
         if (mirror == Mirror.LEFT_RIGHT) {
-            // LEFT_RIGHT reflects local X; FRONT_BACK reflects local Z.
-            x = sourceSize.width() - 1 - x;
-        } else if (mirror == Mirror.FRONT_BACK) {
+            // Minecraft LEFT_RIGHT reflects Z; FRONT_BACK reflects X.
             z = sourceSize.depth() - 1 - z;
+        } else if (mirror == Mirror.FRONT_BACK) {
+            x = sourceSize.width() - 1 - x;
         }
         return switch (rotation) {
             case NONE -> new BlockPoint(x, z);

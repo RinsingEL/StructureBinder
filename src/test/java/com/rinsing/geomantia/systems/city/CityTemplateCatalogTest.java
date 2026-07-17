@@ -77,7 +77,7 @@ class CityTemplateCatalogTest {
     }
 
     @Test
-    void mirrorAndRotationTransformEntrancePositionAndDirection() {
+    void minecraftMirrorAndRotationTransformEntrancePositionAndDirection() {
         CityTemplateCatalog.Template template = loader.load(catalogJson("""
                 {"x": 1, "z": 2, "direction": "NORTH"}
                 """ )).requireTemplate("city:house", "oak");
@@ -87,9 +87,9 @@ class CityTemplateCatalogTest {
                 CityTemplatePlacementGeometry.Mirror.LEFT_RIGHT);
         CityTemplatePlacementGeometry.TransformedRoadEntrance entrance = geometry.roadEntrances().get(0);
 
-        assertEquals(new BlockPoint(0, 2), entrance.relativePosition());
-        assertEquals(CityTemplatePlacementGeometry.Direction.EAST, entrance.direction());
-        assertEquals(new BlockPoint(10, 22), entrance.worldPosition(new BlockPoint(10, 20)));
+        assertEquals(new BlockPoint(2, 1), entrance.relativePosition());
+        assertEquals(CityTemplatePlacementGeometry.Direction.WEST, entrance.direction());
+        assertEquals(new BlockPoint(12, 21), entrance.worldPosition(new BlockPoint(10, 20)));
         assertEquals(new BlockBounds(10, 20, 12, 23), geometry.worldBounds(new BlockPoint(10, 20)));
     }
 

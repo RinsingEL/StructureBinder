@@ -20,7 +20,7 @@ import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemp
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.HexFormat;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -98,10 +98,25 @@ public final class MinecraftCityTemplateWorldgenPlacer {
                             + snapshot.contentHash(), null, null);
         }
 
+        CityTemplatePlacementGeometry.Size sourceSize = new CityTemplatePlacementGeometry.Size(
+                size.getX(), size.getY(), size.getZ());
         CityTemplatePlacementGeometry geometry = CityTemplatePlacementGeometry.of(
-                new CityTemplatePlacementGeometry.Size(size.getX(), size.getY(), size.getZ()),
+                sourceSize,
                 request.rotation(), request.mirror(), List.of());
         BlockBounds footprint = geometry.worldBounds(request.anchor());
+        if (request.lockedFootprint() != null && !request.lockedFootprint().equals(footprint)) {
+            return PlacementResult.failed(request.placementKey(), "TEMPLATE_LOCKED_FOOTPRINT_MISMATCH",
+                    "D6 locked footprint " + request.lockedFootprint()
+                            + " differs from template identity footprint " + footprint + ".",
+                    footprint, null);
+        }
+        RuntimeTransform runtimeTransform = deriveRuntimeTransform(
+                sourceSize, request.anchor(), request.datum(), request.rotation(), request.mirror());
+        RuntimeTransformValidation transformValidation = runtimeTransform.validateAgainst(geometry);
+        if (!transformValidation.valid()) {
+            return PlacementResult.failed(request.placementKey(), transformValidation.reasonCode(),
+                    transformValidation.message(), footprint, null);
+        }
         BlockBounds ownerBounds = chunkBounds(writer.ownerChunk());
         BlockBounds fragmentBounds = intersection(footprint, ownerBounds);
         if (fragmentBounds == null) {
@@ -116,7 +131,7 @@ public final class MinecraftCityTemplateWorldgenPlacer {
         TemplateFragment fragment = new TemplateFragment(request.placementKey(), request.templateRef(),
                 request.templateHash(), snapshot.template(), request.anchor(), request.datum(),
                 request.rotation(), request.mirror(), request.ownerChunk(), geometry, footprint,
-                fragmentBounds, MATERIALIZATION_SOURCE);
+                fragmentBounds, runtimeTransform, MATERIALIZATION_SOURCE);
         WriteReport report = writer.write(fragment);
         if (report == null) {
             return PlacementResult.failed(request.placementKey(), "TEMPLATE_CHUNK_WRITE_FAILED",
@@ -127,7 +142,7 @@ public final class MinecraftCityTemplateWorldgenPlacer {
             return PlacementResult.alreadyPlaced(request.placementKey(), footprint, fragmentBounds);
         }
         if (report.status() != WriteStatus.WRITTEN) {
-            return PlacementResult.failed(request.placementKey(), "TEMPLATE_CHUNK_WRITE_FAILED",
+            return PlacementResult.failed(request.placementKey(), report.reasonCode(),
                     report.detail(), footprint, fragmentBounds);
         }
         placedKeys.add(request.placementKey());
@@ -163,6 +178,56 @@ public final class MinecraftCityTemplateWorldgenPlacer {
                 || Math.floorDiv(bounds.minZ(), 16) != Math.floorDiv(bounds.maxZ(), 16);
     }
 
+    public static RuntimeTransform deriveRuntimeTransform(CityTemplatePlacementGeometry.Size sourceSize,
+                                                          BlockPoint anchor,
+                                                          int datum,
+                                                          CityTemplatePlacementGeometry.Rotation rotation,
+                                                          CityTemplatePlacementGeometry.Mirror mirror) {
+        Objects.requireNonNull(sourceSize, "sourceSize");
+        Objects.requireNonNull(anchor, "anchor");
+        Mirror minecraftMirror = minecraftMirror(Objects.requireNonNull(mirror, "mirror"));
+        Rotation minecraftRotation = minecraftRotation(Objects.requireNonNull(rotation, "rotation"));
+        BlockPos anchorOrigin = new BlockPos(anchor.x(), datum, anchor.z());
+        BlockPos placementOrigin = StructureTemplate.getZeroPositionWithTransform(
+                anchorOrigin, minecraftMirror, minecraftRotation, sourceSize.width(), sourceSize.depth());
+        BlockPos pivot = BlockPos.ZERO;
+
+        int minX = Integer.MAX_VALUE;
+        int minZ = Integer.MAX_VALUE;
+        int maxX = Integer.MIN_VALUE;
+        int maxZ = Integer.MIN_VALUE;
+        for (int x : new int[]{0, sourceSize.width() - 1}) {
+            for (int z : new int[]{0, sourceSize.depth() - 1}) {
+                BlockPos transformed = StructureTemplate.transform(
+                        new BlockPos(x, 0, z), minecraftMirror, minecraftRotation, pivot)
+                        .offset(placementOrigin);
+                minX = Math.min(minX, transformed.getX());
+                minZ = Math.min(minZ, transformed.getZ());
+                maxX = Math.max(maxX, transformed.getX());
+                maxZ = Math.max(maxZ, transformed.getZ());
+            }
+        }
+        return new RuntimeTransform(sourceSize, anchor, datum, rotation, mirror, minecraftMirror,
+                minecraftRotation, placementOrigin, pivot, new BlockBounds(minX, minZ, maxX, maxZ));
+    }
+
+    private static Mirror minecraftMirror(CityTemplatePlacementGeometry.Mirror mirror) {
+        return switch (mirror) {
+            case NONE -> Mirror.NONE;
+            case LEFT_RIGHT -> Mirror.LEFT_RIGHT;
+            case FRONT_BACK -> Mirror.FRONT_BACK;
+        };
+    }
+
+    private static Rotation minecraftRotation(CityTemplatePlacementGeometry.Rotation rotation) {
+        return switch (rotation) {
+            case NONE -> Rotation.NONE;
+            case CLOCKWISE_90 -> Rotation.CLOCKWISE_90;
+            case CLOCKWISE_180 -> Rotation.CLOCKWISE_180;
+            case COUNTERCLOCKWISE_90 -> Rotation.COUNTERCLOCKWISE_90;
+        };
+    }
+
     @FunctionalInterface
     public interface TemplateSource extends MinecraftCityTemplateReader.TemplateSource {
     }
@@ -180,7 +245,14 @@ public final class MinecraftCityTemplateWorldgenPlacer {
     public record PlacementRequest(String templateRef, String templateHash, BlockPoint anchor,
                                    CityTemplatePlacementGeometry.Rotation rotation,
                                    CityTemplatePlacementGeometry.Mirror mirror, int datum,
-                                   ChunkPos ownerChunk) {
+                                   ChunkPos ownerChunk, BlockBounds lockedFootprint) {
+        public PlacementRequest(String templateRef, String templateHash, BlockPoint anchor,
+                                CityTemplatePlacementGeometry.Rotation rotation,
+                                CityTemplatePlacementGeometry.Mirror mirror, int datum,
+                                ChunkPos ownerChunk) {
+            this(templateRef, templateHash, anchor, rotation, mirror, datum, ownerChunk, null);
+        }
+
         public PlacementRequest {
             templateRef = requireText(templateRef, "templateRef");
             templateHash = requireText(templateHash, "templateHash");
@@ -209,7 +281,8 @@ public final class MinecraftCityTemplateWorldgenPlacer {
                                    CityTemplatePlacementGeometry.Rotation rotation,
                                    CityTemplatePlacementGeometry.Mirror mirror, ChunkPos ownerChunk,
                                    CityTemplatePlacementGeometry geometry, BlockBounds templateFootprint,
-                                   BlockBounds ownerFragment, String materializationSource) {
+                                   BlockBounds ownerFragment, RuntimeTransform runtimeTransform,
+                                   String materializationSource) {
         public TemplateFragment {
             template = template == null ? Optional.empty() : template;
             Objects.requireNonNull(placementKey, "placementKey");
@@ -222,6 +295,7 @@ public final class MinecraftCityTemplateWorldgenPlacer {
             Objects.requireNonNull(geometry, "geometry");
             Objects.requireNonNull(templateFootprint, "templateFootprint");
             Objects.requireNonNull(ownerFragment, "ownerFragment");
+            Objects.requireNonNull(runtimeTransform, "runtimeTransform");
             Objects.requireNonNull(materializationSource, "materializationSource");
         }
 
@@ -240,22 +314,100 @@ public final class MinecraftCityTemplateWorldgenPlacer {
         FAILED
     }
 
-    public record WriteReport(WriteStatus status, String detail) {
+    public record WriteReport(WriteStatus status, String reasonCode, String detail) {
         public WriteReport {
             Objects.requireNonNull(status, "status");
+            reasonCode = reasonCode == null || reasonCode.isBlank()
+                    ? "TEMPLATE_CHUNK_WRITE_FAILED" : reasonCode;
             detail = detail == null ? "" : detail;
         }
 
         public static WriteReport written() {
-            return new WriteReport(WriteStatus.WRITTEN, "");
+            return new WriteReport(WriteStatus.WRITTEN, "TEMPLATE_FRAGMENT_WRITTEN", "");
         }
 
         public static WriteReport alreadyPlaced() {
-            return new WriteReport(WriteStatus.ALREADY_PLACED, "");
+            return new WriteReport(WriteStatus.ALREADY_PLACED, "TEMPLATE_ALREADY_PLACED", "");
         }
 
         public static WriteReport failed(String detail) {
-            return new WriteReport(WriteStatus.FAILED, detail);
+            return failed("TEMPLATE_CHUNK_WRITE_FAILED", detail);
+        }
+
+        public static WriteReport failed(String reasonCode, String detail) {
+            return new WriteReport(WriteStatus.FAILED, reasonCode, detail);
+        }
+    }
+
+    public record RuntimeTransform(CityTemplatePlacementGeometry.Size sourceSize,
+                                   BlockPoint anchor,
+                                   int datum,
+                                   CityTemplatePlacementGeometry.Rotation rotation,
+                                   CityTemplatePlacementGeometry.Mirror mirror,
+                                   Mirror minecraftMirror,
+                                   Rotation minecraftRotation,
+                                   BlockPos placementOrigin,
+                                   BlockPos rotationPivot,
+                                   BlockBounds transformedFootprint) {
+        public RuntimeTransform {
+            Objects.requireNonNull(sourceSize, "sourceSize");
+            Objects.requireNonNull(anchor, "anchor");
+            Objects.requireNonNull(rotation, "rotation");
+            Objects.requireNonNull(mirror, "mirror");
+            Objects.requireNonNull(minecraftMirror, "minecraftMirror");
+            Objects.requireNonNull(minecraftRotation, "minecraftRotation");
+            Objects.requireNonNull(placementOrigin, "placementOrigin");
+            Objects.requireNonNull(rotationPivot, "rotationPivot");
+            Objects.requireNonNull(transformedFootprint, "transformedFootprint");
+        }
+
+        public BlockPos worldPosition(BlockPoint localPosition) {
+            Objects.requireNonNull(localPosition, "localPosition");
+            if (localPosition.x() < 0 || localPosition.x() >= sourceSize.width()
+                    || localPosition.z() < 0 || localPosition.z() >= sourceSize.depth()) {
+                throw new IllegalArgumentException("Local point is outside the source template dimensions.");
+            }
+            return StructureTemplate.transform(new BlockPos(localPosition.x(), 0, localPosition.z()),
+                    minecraftMirror, minecraftRotation, rotationPivot).offset(placementOrigin);
+        }
+
+        public RuntimeTransformValidation validateAgainst(CityTemplatePlacementGeometry geometry) {
+            Objects.requireNonNull(geometry, "geometry");
+            BlockBounds plannedFootprint = geometry.worldBounds(anchor);
+            if (!plannedFootprint.equals(transformedFootprint)) {
+                return RuntimeTransformValidation.invalid("TEMPLATE_RUNTIME_TRANSFORM_MISMATCH",
+                        "Minecraft runtime footprint " + transformedFootprint
+                                + " differs from City planned footprint " + plannedFootprint + ".");
+            }
+            Set<Long> occupied = new HashSet<>(sourceSize.width() * sourceSize.depth());
+            for (int x = 0; x < sourceSize.width(); x++) {
+                for (int z = 0; z < sourceSize.depth(); z++) {
+                    BlockPoint local = new BlockPoint(x, z);
+                    BlockPoint planned = geometry.worldPosition(anchor, local);
+                    BlockPos runtime = worldPosition(local);
+                    if (planned.x() != runtime.getX() || planned.z() != runtime.getZ()) {
+                        return RuntimeTransformValidation.invalid("TEMPLATE_RUNTIME_TRANSFORM_MISMATCH",
+                                "Local point " + local + " maps to City " + planned
+                                        + " but Minecraft runtime " + runtime.getX() + "," + runtime.getZ() + ".");
+                    }
+                    occupied.add(ChunkPos.asLong(runtime.getX(), runtime.getZ()));
+                }
+            }
+            if (occupied.size() != sourceSize.width() * sourceSize.depth()) {
+                return RuntimeTransformValidation.invalid("TEMPLATE_RUNTIME_TRANSFORM_MISMATCH",
+                        "Minecraft runtime transform maps multiple source coordinates to one world coordinate.");
+            }
+            return RuntimeTransformValidation.success();
+        }
+    }
+
+    public record RuntimeTransformValidation(boolean valid, String reasonCode, String message) {
+        private static RuntimeTransformValidation success() {
+            return new RuntimeTransformValidation(true, "TEMPLATE_RUNTIME_TRANSFORM_VALID", "");
+        }
+
+        private static RuntimeTransformValidation invalid(String reasonCode, String message) {
+            return new RuntimeTransformValidation(false, reasonCode, message);
         }
     }
 
@@ -330,43 +482,35 @@ public final class MinecraftCityTemplateWorldgenPlacer {
                 return WriteReport.failed("Runtime template value is unavailable.");
             }
 
-            Mirror mirror = minecraftMirror(fragment.mirror());
-            Rotation rotation = minecraftRotation(fragment.rotation());
-            BlockPos pivot = template.getZeroPositionWithTransform(BlockPos.ZERO, mirror, rotation);
+            RuntimeTransform runtimeTransform = fragment.runtimeTransform();
+            RuntimeTransformValidation validation = runtimeTransform.validateAgainst(fragment.geometry());
+            BlockBounds runtimeOwnerFragment = intersection(
+                    runtimeTransform.transformedFootprint(), chunkBounds(fragment.ownerChunk()));
+            if (!validation.valid() || !fragment.templateFootprint().equals(runtimeTransform.transformedFootprint())
+                    || !fragment.ownerFragment().equals(runtimeOwnerFragment)) {
+                placedKeys.remove(fragment.placementKey());
+                return WriteReport.failed("TEMPLATE_RUNTIME_TRANSFORM_MISMATCH",
+                        validation.valid() ? "Runtime owner fragment differs from planned owner fragment."
+                                : validation.message());
+            }
             BoundingBox ownerBox = new BoundingBox(fragment.ownerFragment().minX(), fragment.datum(),
                     fragment.ownerFragment().minZ(), fragment.ownerFragment().maxX(),
                     fragment.datum() + fragment.height() - 1, fragment.ownerFragment().maxZ());
             StructurePlaceSettings settings = new StructurePlaceSettings()
-                    .setMirror(mirror)
-                    .setRotation(rotation)
-                    .setRotationPivot(pivot)
+                    .setMirror(runtimeTransform.minecraftMirror())
+                    .setRotation(runtimeTransform.minecraftRotation())
+                    .setRotationPivot(runtimeTransform.rotationPivot())
                     .setBoundingBox(ownerBox)
                     .setIgnoreEntities(true)
                     .setKeepLiquids(false);
-            boolean written = template.placeInWorld(level, fragment.origin(), fragment.origin(), settings,
+            boolean written = template.placeInWorld(level, runtimeTransform.placementOrigin(),
+                    runtimeTransform.placementOrigin(), settings,
                     RandomSource.create(stableSeed(fragment.placementKey())), 2);
             if (!written) {
                 placedKeys.remove(fragment.placementKey());
                 return WriteReport.failed("StructureTemplate.placeInWorld returned false.");
             }
             return WriteReport.written();
-        }
-
-        private static Mirror minecraftMirror(CityTemplatePlacementGeometry.Mirror mirror) {
-            return switch (mirror) {
-                case NONE -> Mirror.NONE;
-                case LEFT_RIGHT -> Mirror.LEFT_RIGHT;
-                case FRONT_BACK -> Mirror.FRONT_BACK;
-            };
-        }
-
-        private static Rotation minecraftRotation(CityTemplatePlacementGeometry.Rotation rotation) {
-            return switch (rotation) {
-                case NONE -> Rotation.NONE;
-                case CLOCKWISE_90 -> Rotation.CLOCKWISE_90;
-                case CLOCKWISE_180 -> Rotation.CLOCKWISE_180;
-                case COUNTERCLOCKWISE_90 -> Rotation.COUNTERCLOCKWISE_90;
-            };
         }
 
         private static long stableSeed(String key) {

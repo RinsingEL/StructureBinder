@@ -2,6 +2,7 @@ package com.rinsing.geomantia.systems.city.infrastructure.world;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.rinsing.geomantia.systems.city.application.CityTemplatePlacementGeometry;
 import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
 import net.minecraft.world.level.ChunkPos;
 import org.junit.jupiter.api.Test;
@@ -159,8 +160,59 @@ class CityReservationMaskRegistryTemplateFragmentTest {
         CityReservationMaskRegistry.load(tempDir);
     }
 
+    @Test
+    void rotatedNonSquareTemplateCompletesOnlyAfterAllFourOwners() throws Exception {
+        BlockBounds footprint = new BlockBounds(8, 8, 20, 26);
+        CityReservationMaskRegistry.PlannedStructure planned = activate(
+                footprint, CityTemplatePlacementGeometry.Rotation.CLOCKWISE_90);
+        List<ChunkPos> owners = owners(footprint);
+        ChunkPos anchorOwner = new ChunkPos(0, 0);
+
+        assertTrue(CityReservationMaskRegistry.prepareTemplateOwner(
+                planned, anchorOwner, OptionalInt.of(82), -64).ready());
+        for (int index = 0; index < owners.size(); index++) {
+            ChunkPos owner = owners.get(index);
+            if (!owner.equals(anchorOwner)) {
+                assertTrue(CityReservationMaskRegistry.prepareTemplateOwner(
+                        planned, owner, OptionalInt.empty(), -64).ready());
+            }
+            CityReservationMaskRegistry.TemplateFragmentRecordResult result = record(planned, owner, 82);
+            assertEquals(index == owners.size() - 1, result.templateCompleted());
+            assertEquals(index == owners.size() - 1 ? 1 : 0,
+                    CityReservationMaskRegistry.worldgenLedgerSnapshot()
+                            .getAsJsonArray("placedStructures").size());
+        }
+    }
+
+    @Test
+    void transformedFootprintDriftCannotRecordFragmentOrCompletedLedger() throws Exception {
+        BlockBounds footprint = new BlockBounds(8, 8, 20, 26);
+        CityReservationMaskRegistry.PlannedStructure planned = activate(
+                footprint, CityTemplatePlacementGeometry.Rotation.CLOCKWISE_90);
+        ChunkPos anchorOwner = new ChunkPos(0, 0);
+        assertTrue(CityReservationMaskRegistry.prepareTemplateOwner(
+                planned, anchorOwner, OptionalInt.of(82), -64).ready());
+
+        CityReservationMaskRegistry.TemplateFragmentRecordResult result =
+                CityReservationMaskRegistry.recordTemplateWorldgenFragment(
+                        planned, new BlockBounds(8, -4, 20, 14), "template:drift", new JsonArray(),
+                        anchorOwner, 82, "", "TEMPLATE_CHUNK_WRITE_WAITING", "drift");
+
+        assertFalse(result.recorded());
+        assertEquals("TEMPLATE_LOCKED_FOOTPRINT_MISMATCH", result.reasonCode());
+        assertEquals(0, CityReservationMaskRegistry.worldgenLedgerSnapshot()
+                .getAsJsonArray("templateFragments").size());
+        assertEquals(0, CityReservationMaskRegistry.worldgenLedgerSnapshot()
+                .getAsJsonArray("placedStructures").size());
+    }
+
     private CityReservationMaskRegistry.PlannedStructure activate(BlockBounds footprint) throws Exception {
-        CityReservationMaskRegistry.activate(maskPlan(), null, materializationPlan(footprint),
+        return activate(footprint, CityTemplatePlacementGeometry.Rotation.NONE);
+    }
+
+    private CityReservationMaskRegistry.PlannedStructure activate(
+            BlockBounds footprint, CityTemplatePlacementGeometry.Rotation rotation) throws Exception {
+        CityReservationMaskRegistry.activate(maskPlan(), null, materializationPlan(footprint, rotation),
                 "run_fragment_test", "seed_fragment_test", tempDir);
         return CityReservationMaskRegistry.plannedStructuresForChunk(new ChunkPos(0, 0)).get(0);
     }
@@ -190,7 +242,8 @@ class CityReservationMaskRegistryTemplateFragmentTest {
         return mask;
     }
 
-    private static JsonObject materializationPlan(BlockBounds footprint) {
+    private static JsonObject materializationPlan(
+            BlockBounds footprint, CityTemplatePlacementGeometry.Rotation rotation) {
         JsonObject plan = new JsonObject();
         plan.addProperty("cityId", "city_fragment_test");
         JsonArray structures = new JsonArray();
@@ -206,6 +259,8 @@ class CityReservationMaskRegistryTemplateFragmentTest {
         structure.addProperty("templateHash", "sha256:template");
         structure.addProperty("materializationSource", "structure_template_nbt");
         structure.addProperty("templateDatumPolicy", "worldgen_surface_motion_blocking_no_leaves");
+        structure.addProperty("rotation", rotation.name());
+        structure.addProperty("mirror", CityTemplatePlacementGeometry.Mirror.NONE.name());
         structures.add(structure);
         plan.add("plannedWorldgenStructures", structures);
         return plan;
