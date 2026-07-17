@@ -16,14 +16,17 @@ import net.minecraft.world.level.levelgen.structure.Structure;
 import org.slf4j.Logger;
 
 import java.io.IOException;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.Set;
 
 public final class CityReservationMaskRegistry {
@@ -150,8 +153,8 @@ public final class CityReservationMaskRegistry {
             return;
         }
         for (PlannedStructure planned : registry.plannedStructures) {
-            if (planned.anchorChunkX() == chunkPos.x && planned.anchorChunkZ() == chunkPos.z) {
-                LOGGER.info("City worldgen structure hook reached planned anchor chunk {},{} for {} ({})",
+            if (planned.coversChunk(chunkPos)) {
+                LOGGER.info("City worldgen structure hook reached planned owner chunk {},{} for {} ({})",
                         chunkPos.x, chunkPos.z, planned.anchorId(), planned.structureId());
                 return;
             }
@@ -192,15 +195,20 @@ public final class CityReservationMaskRegistry {
         return mask.overlapsNoVanillaStructure(chunkBounds);
     }
 
-    public static List<PlannedStructure> plannedStructuresForChunk(ChunkPos chunkPos) {
+    public static synchronized List<PlannedStructure> plannedStructuresForChunk(ChunkPos chunkPos) {
         ActivePlannedStructures registry = activePlannedStructures;
         if (chunkPos == null || registry.plannedStructures.isEmpty()) {
             return List.of();
         }
         List<PlannedStructure> result = new ArrayList<>();
         for (PlannedStructure planned : registry.plannedStructures) {
-            if (planned.anchorChunkX() == chunkPos.x && planned.anchorChunkZ() == chunkPos.z
-                    && !ledgerContains(planned)) {
+            boolean pendingTemplateFragment = planned.isTemplatePlacement()
+                    && planned.coversChunk(chunkPos)
+                    && !templateFragmentRecorded(planned, chunkPos);
+            boolean pendingConfiguredStructure = !planned.isTemplatePlacement()
+                    && planned.anchorChunkX() == chunkPos.x
+                    && planned.anchorChunkZ() == chunkPos.z;
+            if (!ledgerContains(planned) && (pendingTemplateFragment || pendingConfiguredStructure)) {
                 result.add(planned);
             }
         }
@@ -233,6 +241,110 @@ public final class CityReservationMaskRegistry {
             }
         }
         return false;
+    }
+
+    /**
+     * Durably registers an owner as observed during its first FEATURES pass and, for the anchor
+     * owner only, freezes the template-level surface datum. Callers must not write blocks unless
+     * this method returns READY.
+     */
+    public static synchronized TemplateDatumPreparation prepareTemplateOwner(
+            PlannedStructure planned,
+            ChunkPos ownerChunk,
+            OptionalInt anchorDatumCandidate,
+            int minBuildHeight) {
+        if (planned == null || ownerChunk == null || !planned.isTemplatePlacement()
+                || !planned.coversChunk(ownerChunk)) {
+            return TemplateDatumPreparation.invalid("TEMPLATE_OWNER_INVALID",
+                    "Template owner is not covered by the locked footprint.");
+        }
+        if (activeServerRoot == null) {
+            return TemplateDatumPreparation.persistenceFailed();
+        }
+        OptionalInt candidate = anchorDatumCandidate == null ? OptionalInt.empty() : anchorDatumCandidate;
+        if (candidate.isPresent()
+                && (ownerChunk.x != planned.anchorChunkX() || ownerChunk.z != planned.anchorChunkZ())) {
+            return TemplateDatumPreparation.conflict("TEMPLATE_DATUM_OWNER_MISMATCH",
+                    "Only the anchor owner may resolve templateDatumY.");
+        }
+
+        JsonObject before = worldgenLedger.deepCopy();
+        if (!templatePendingRecorded(planned, ownerChunk)) {
+            JsonObject pending = templateIdentity(planned);
+            pending.addProperty("generatingChunkX", ownerChunk.x);
+            pending.addProperty("generatingChunkZ", ownerChunk.z);
+            pending.addProperty("firstWorldgenFeaturesObserved", true);
+            pending.addProperty("reasonCode", "TEMPLATE_DATUM_WAITING");
+            pending.addProperty("message", "Owner was observed during first worldgen FEATURES before completion.");
+            pending.addProperty("observedAt", Instant.now().toString());
+            ledgerTemplatePendingFragments().add(pending);
+        }
+
+        OptionalInt resolved = resolvedTemplateDatumInternal(planned);
+        if (candidate.isPresent()) {
+            int datum = candidate.getAsInt();
+            if (datum <= minBuildHeight) {
+                if (!persistWorldgenLedger()) {
+                    worldgenLedger = before;
+                    return TemplateDatumPreparation.persistenceFailed();
+                }
+                return TemplateDatumPreparation.waiting("TEMPLATE_DATUM_SURFACE_UNAVAILABLE",
+                        "Anchor owner heightmap did not provide a usable surface datum.");
+            }
+            if (resolved.isPresent() && resolved.getAsInt() != datum) {
+                worldgenLedger = before;
+                return TemplateDatumPreparation.conflict("TEMPLATE_DATUM_CONFLICT",
+                        "Template datum was already frozen at " + resolved.getAsInt()
+                                + " but a later callback proposed " + datum + ".");
+            }
+            if (resolved.isEmpty()) {
+                JsonObject datumState = templateIdentity(planned);
+                datumState.addProperty("templateDatumPolicy", stringValue(
+                        planned.templatePlan(), "templateDatumPolicy", ""));
+                datumState.addProperty("templateDatumY", datum);
+                datumState.addProperty("resolvedByChunkX", ownerChunk.x);
+                datumState.addProperty("resolvedByChunkZ", ownerChunk.z);
+                datumState.addProperty("resolvedAt", Instant.now().toString());
+                ledgerTemplateDatums().add(datumState);
+                resolved = OptionalInt.of(datum);
+            }
+        }
+
+        if (!persistWorldgenLedger()) {
+            worldgenLedger = before;
+            return TemplateDatumPreparation.persistenceFailed();
+        }
+        if (resolved.isEmpty()) {
+            return TemplateDatumPreparation.waiting("TEMPLATE_DATUM_WAITING",
+                    "Waiting for the anchor owner first-worldgen FEATURES heightmap.");
+        }
+        return TemplateDatumPreparation.ready(resolved.getAsInt());
+    }
+
+    public static synchronized OptionalInt resolvedTemplateDatum(PlannedStructure planned) {
+        return resolvedTemplateDatumInternal(planned);
+    }
+
+    public static synchronized boolean hasTemplatePendingProof(PlannedStructure planned, ChunkPos ownerChunk) {
+        return templatePendingRecorded(planned, ownerChunk);
+    }
+
+    /** Returns only owners that are authorized for delayed first-generation retry. */
+    public static synchronized List<PlannedStructure> pendingTemplateStructuresForChunk(ChunkPos ownerChunk) {
+        if (ownerChunk == null) {
+            return List.of();
+        }
+        List<PlannedStructure> result = new ArrayList<>();
+        for (PlannedStructure planned : activePlannedStructures.plannedStructures) {
+            if (planned.isTemplatePlacement()
+                    && planned.coversChunk(ownerChunk)
+                    && templatePendingRecorded(planned, ownerChunk)
+                    && !templateFragmentRecorded(planned, ownerChunk)
+                    && !ledgerContains(planned)) {
+                result.add(planned);
+            }
+        }
+        return List.copyOf(result);
     }
 
     public static synchronized void recordWorldgenPlacement(PlannedStructure planned,
@@ -277,31 +389,93 @@ public final class CityReservationMaskRegistry {
                                                                     String terrainAdaptation,
                                                                     String reasonCode,
                                                                     String message) {
-        JsonArray placed = ledgerPlacedStructures();
-        for (JsonElement elem : placed) {
-            if (elem.isJsonObject() && ledgerIdentityMatches(planned, elem.getAsJsonObject())) {
-                return;
-            }
+        recordTemplateWorldgenFragment(planned, actualFootprint, startSignature, pieceBoxes, generatingChunk,
+                templateDatumY, terrainAdaptation, reasonCode, message);
+    }
+
+    /**
+     * Records one owner-chunk write for a template. A template only enters the public placed ledger
+     * after every chunk touched by its locked footprint has reported a successful write.
+     */
+    public static synchronized TemplateFragmentRecordResult recordTemplateWorldgenFragment(
+            PlannedStructure planned,
+            BlockBounds actualFootprint,
+            String startSignature,
+            JsonArray pieceBoxes,
+            ChunkPos generatingChunk,
+            int templateDatumY,
+            String terrainAdaptation,
+            String reasonCode,
+            String message) {
+        if (planned == null || actualFootprint == null || generatingChunk == null) {
+            return TemplateFragmentRecordResult.rejectedResult("TEMPLATE_FRAGMENT_INVALID");
         }
-        JsonObject obj = planned.asLedgerJson(actualFootprint, startSignature, pieceBoxes);
-        obj.addProperty("templateDatumY", templateDatumY);
-        obj.addProperty("reasonCode", reasonCode == null || reasonCode.isBlank()
-                ? "WORLDGEN_PLACEMENT_RECORDED" : reasonCode);
-        obj.addProperty("message", message == null ? "" : message);
-        obj.addProperty("generatedAt", Instant.now().toString());
-        obj.addProperty("generatingChunkX", generatingChunk.x);
-        obj.addProperty("generatingChunkZ", generatingChunk.z);
-        obj.addProperty("featureStagePending", true);
-        obj.addProperty("terrainAdaptation", terrainAdaptation == null || terrainAdaptation.isBlank()
-                ? "unknown" : terrainAdaptation);
-        obj.addProperty("terrainAdaptationHookAvailable", false);
-        obj.addProperty("beardifierSeen", false);
-        obj.addProperty("terrainAdaptationReasonCode", "CITY_TERRAIN_ADAPTATION_HOOK_UNAVAILABLE");
-        placed.add(obj);
-        persistWorldgenLedger();
-        LOGGER.info("Recorded City template worldgen placement {} {} at datum {} chunk {},{} footprint {}",
-                planned.anchorId(), planned.structureId(), templateDatumY, generatingChunk.x, generatingChunk.z,
-                actualFootprint);
+        if (ledgerContains(planned)) {
+            return TemplateFragmentRecordResult.completedResult();
+        }
+        if (!templatePendingRecorded(planned, generatingChunk)) {
+            return TemplateFragmentRecordResult.rejectedResult("TEMPLATE_PENDING_PROOF_MISSING");
+        }
+        OptionalInt frozenDatum = resolvedTemplateDatumInternal(planned);
+        if (frozenDatum.isEmpty()) {
+            return TemplateFragmentRecordResult.rejectedResult("TEMPLATE_DATUM_NOT_RESOLVED");
+        }
+        if (frozenDatum.getAsInt() != templateDatumY) {
+            return TemplateFragmentRecordResult.rejectedResult("TEMPLATE_DATUM_CONFLICT");
+        }
+        JsonObject before = worldgenLedger.deepCopy();
+        JsonArray fragments = ledgerTemplateFragments();
+        if (!templateFragmentRecorded(planned, generatingChunk)) {
+            JsonObject fragment = new JsonObject();
+            fragment.addProperty("runId", planned.runId());
+            fragment.addProperty("citySeedId", planned.citySeedId());
+            fragment.addProperty("cityId", planned.cityId());
+            fragment.addProperty("anchorId", planned.anchorId());
+            fragment.addProperty("structureId", planned.structureId());
+            fragment.addProperty("templateRef", templateRef(planned));
+            fragment.addProperty("templateHash", templateHash(planned));
+            fragment.addProperty("startSignature", startSignature == null ? "" : startSignature);
+            fragment.add("templateFootprint", boundsJson(actualFootprint));
+            fragment.add("ownerFragment", boundsJson(intersection(actualFootprint, chunkBounds(generatingChunk))));
+            fragment.addProperty("templateDatumY", templateDatumY);
+            fragment.addProperty("reasonCode", reasonCode == null || reasonCode.isBlank()
+                    ? "TEMPLATE_FRAGMENT_RECORDED" : reasonCode);
+            fragment.addProperty("message", message == null ? "" : message);
+            fragment.addProperty("generatedAt", Instant.now().toString());
+            fragment.addProperty("generatingChunkX", generatingChunk.x);
+            fragment.addProperty("generatingChunkZ", generatingChunk.z);
+            fragments.add(fragment);
+        }
+
+        List<ChunkPos> requiredOwners = templateOwnerChunks(planned);
+        if (allTemplateFragmentsRecorded(planned, requiredOwners)) {
+            JsonArray placed = ledgerPlacedStructures();
+            JsonObject obj = planned.asLedgerJson(actualFootprint, startSignature, pieceBoxes);
+            obj.addProperty("templateDatumY", frozenDatum.getAsInt());
+            obj.addProperty("reasonCode", "TEMPLATE_MATERIALIZATION_RECORDED");
+            obj.addProperty("message", "All " + requiredOwners.size()
+                    + " template owner fragments were written during world generation.");
+            obj.addProperty("generatedAt", Instant.now().toString());
+            obj.addProperty("generatingChunkX", generatingChunk.x);
+            obj.addProperty("generatingChunkZ", generatingChunk.z);
+            obj.addProperty("templateFragmentCount", requiredOwners.size());
+            obj.addProperty("featureStagePending", true);
+            obj.addProperty("terrainAdaptation", terrainAdaptation == null || terrainAdaptation.isBlank()
+                    ? "unknown" : terrainAdaptation);
+            obj.addProperty("terrainAdaptationHookAvailable", false);
+            obj.addProperty("beardifierSeen", false);
+            obj.addProperty("terrainAdaptationReasonCode", "CITY_TERRAIN_ADAPTATION_HOOK_UNAVAILABLE");
+            placed.add(obj);
+            LOGGER.info("Recorded completed City template worldgen placement {} {} after {} owner chunks at datum {}",
+                    planned.anchorId(), planned.structureId(), requiredOwners.size(), frozenDatum.getAsInt());
+        }
+        if (!persistWorldgenLedger()) {
+            worldgenLedger = before;
+            return TemplateFragmentRecordResult.rejectedResult("TEMPLATE_LEDGER_PERSISTENCE_FAILED");
+        }
+        return allTemplateFragmentsRecorded(planned, requiredOwners)
+                ? TemplateFragmentRecordResult.completedResult()
+                : TemplateFragmentRecordResult.fragmentRecorded();
     }
 
     public static synchronized void recordWorldgenFailure(PlannedStructure planned,
@@ -329,6 +503,9 @@ public final class CityReservationMaskRegistry {
         obj.addProperty("activePlannedStructureCount", activePlannedStructures.plannedStructures.size());
         obj.addProperty("worldgenPlacementMode", true);
         obj.addProperty("worldgenLedgerCount", ledgerPlacedStructures().size());
+        obj.addProperty("worldgenTemplateFragmentCount", ledgerTemplateFragments().size());
+        obj.addProperty("worldgenTemplatePendingCount", ledgerTemplatePendingFragments().size());
+        obj.addProperty("worldgenTemplateDatumCount", ledgerTemplateDatums().size());
         obj.addProperty("featureHookCalls", featureHookCalls);
         obj.addProperty("structureHookCalls", structureHookCalls);
         return obj;
@@ -338,7 +515,7 @@ public final class CityReservationMaskRegistry {
         return activePlannedStructures.asJson();
     }
 
-    public static JsonObject worldgenLedgerSnapshot() {
+    public static synchronized JsonObject worldgenLedgerSnapshot() {
         return worldgenLedger.deepCopy();
     }
 
@@ -346,7 +523,7 @@ public final class CityReservationMaskRegistry {
         return ledgerForCity("", "", cityId);
     }
 
-    public static JsonObject ledgerForCity(String runId, String citySeedId, String cityId) {
+    public static synchronized JsonObject ledgerForCity(String runId, String citySeedId, String cityId) {
         JsonObject ledger = new JsonObject();
         ledger.addProperty("schemaVersion", "city_placed_structure_ledger.v0.1");
         if (runId != null && !runId.isBlank()) {
@@ -468,6 +645,132 @@ public final class CityReservationMaskRegistry {
         return ledger.getAsJsonArray("placedStructures");
     }
 
+    private static JsonArray ledgerTemplateFragments() {
+        return ensureArray(worldgenLedger, "templateFragments");
+    }
+
+    private static JsonArray ledgerTemplatePendingFragments() {
+        return ensureArray(worldgenLedger, "templatePendingFragments");
+    }
+
+    private static JsonArray ledgerTemplateDatums() {
+        return ensureArray(worldgenLedger, "templateDatums");
+    }
+
+    private static boolean templatePendingRecorded(PlannedStructure planned, ChunkPos ownerChunk) {
+        if (planned == null || ownerChunk == null) {
+            return false;
+        }
+        for (JsonElement elem : ledgerTemplatePendingFragments()) {
+            if (elem.isJsonObject() && templateOwnerIdentityMatches(
+                    planned, ownerChunk, elem.getAsJsonObject())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static OptionalInt resolvedTemplateDatumInternal(PlannedStructure planned) {
+        if (planned == null) {
+            return OptionalInt.empty();
+        }
+        Integer resolved = null;
+        for (JsonElement elem : ledgerTemplateDatums()) {
+            if (!elem.isJsonObject()) {
+                continue;
+            }
+            JsonObject datum = elem.getAsJsonObject();
+            if (!ledgerIdentityMatches(planned, datum)
+                    || !templateHash(planned).equals(stringValue(datum, "templateHash", ""))) {
+                continue;
+            }
+            int value = intValue(datum, "templateDatumY", Integer.MIN_VALUE);
+            if (resolved != null && resolved != value) {
+                LOGGER.error("Conflicting persisted template datums for {} {}: {} and {}",
+                        planned.anchorId(), planned.structureId(), resolved, value);
+                return OptionalInt.empty();
+            }
+            resolved = value;
+        }
+        return resolved == null ? OptionalInt.empty() : OptionalInt.of(resolved);
+    }
+
+    private static boolean templateFragmentRecorded(PlannedStructure planned, ChunkPos ownerChunk) {
+        if (planned == null || ownerChunk == null) {
+            return false;
+        }
+        for (JsonElement elem : ledgerTemplateFragments()) {
+            if (elem.isJsonObject() && templateFragmentIdentityMatches(
+                    planned, ownerChunk, elem.getAsJsonObject())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean allTemplateFragmentsRecorded(PlannedStructure planned, List<ChunkPos> owners) {
+        return owners.stream().allMatch(owner -> templateFragmentRecorded(planned, owner));
+    }
+
+    private static boolean templateFragmentIdentityMatches(PlannedStructure planned,
+                                                           ChunkPos ownerChunk,
+                                                           JsonObject fragment) {
+        OptionalInt frozenDatum = resolvedTemplateDatumInternal(planned);
+        return frozenDatum.isPresent()
+                && templateOwnerIdentityMatches(planned, ownerChunk, fragment)
+                && frozenDatum.getAsInt() == intValue(fragment, "templateDatumY", Integer.MIN_VALUE);
+    }
+
+    private static boolean templateOwnerIdentityMatches(PlannedStructure planned,
+                                                        ChunkPos ownerChunk,
+                                                        JsonObject state) {
+        return ledgerIdentityMatches(planned, state)
+                && ownerChunk.x == intValue(state, "generatingChunkX", Integer.MIN_VALUE)
+                && ownerChunk.z == intValue(state, "generatingChunkZ", Integer.MIN_VALUE)
+                && templateHash(planned).equals(stringValue(state, "templateHash", ""));
+    }
+
+    private static JsonObject templateIdentity(PlannedStructure planned) {
+        JsonObject identity = new JsonObject();
+        identity.addProperty("runId", planned.runId());
+        identity.addProperty("citySeedId", planned.citySeedId());
+        identity.addProperty("cityId", planned.cityId());
+        identity.addProperty("anchorId", planned.anchorId());
+        identity.addProperty("structureId", planned.structureId());
+        identity.addProperty("templateRef", templateRef(planned));
+        identity.addProperty("templateHash", templateHash(planned));
+        return identity;
+    }
+
+    private static List<ChunkPos> templateOwnerChunks(PlannedStructure planned) {
+        BlockBounds footprint = planned.lockedActualFootprint();
+        List<ChunkPos> owners = new ArrayList<>();
+        for (int x = Math.floorDiv(footprint.minX(), 16); x <= Math.floorDiv(footprint.maxX(), 16); x++) {
+            for (int z = Math.floorDiv(footprint.minZ(), 16); z <= Math.floorDiv(footprint.maxZ(), 16); z++) {
+                owners.add(new ChunkPos(x, z));
+            }
+        }
+        return owners;
+    }
+
+    private static String templateHash(PlannedStructure planned) {
+        return stringValue(planned.templatePlan(), "templateHash", "");
+    }
+
+    private static String templateRef(PlannedStructure planned) {
+        return stringValue(planned.templatePlan(), "templateRef", "");
+    }
+
+    private static BlockBounds chunkBounds(ChunkPos chunk) {
+        return new BlockBounds(chunk.getMinBlockX(), chunk.getMinBlockZ(),
+                chunk.getMaxBlockX(), chunk.getMaxBlockZ());
+    }
+
+    private static BlockBounds intersection(BlockBounds first, BlockBounds second) {
+        return new BlockBounds(Math.max(first.minX(), second.minX()), Math.max(first.minZ(), second.minZ()),
+                Math.min(first.maxX(), second.maxX()), Math.min(first.maxZ(), second.maxZ()));
+    }
+
     private static JsonArray ensureArray(JsonObject obj, String key) {
         if (!obj.has(key) || !obj.get(key).isJsonArray()) {
             obj.add(key, new JsonArray());
@@ -475,17 +778,35 @@ public final class CityReservationMaskRegistry {
         return obj.getAsJsonArray(key);
     }
 
-    private static void persistWorldgenLedger() {
+    private static boolean persistWorldgenLedger() {
         Path root = activeServerRoot;
         if (root == null) {
-            return;
+            return true;
         }
+        Path temp = null;
         try {
             Path dir = activeDir(root);
             Files.createDirectories(dir);
-            Files.writeString(dir.resolve(WORLDGEN_LEDGER_FILE), CityJson.GSON.toJson(worldgenLedger));
-        } catch (IOException ignored) {
-            // Worldgen must not crash because trace persistence failed; hard failures are recorded at hook setup time.
+            Path target = dir.resolve(WORLDGEN_LEDGER_FILE);
+            temp = Files.createTempFile(dir, WORLDGEN_LEDGER_FILE + ".", ".tmp");
+            Files.writeString(temp, CityJson.GSON.toJson(worldgenLedger));
+            try {
+                Files.move(temp, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+            } catch (AtomicMoveNotSupportedException ignored) {
+                Files.move(temp, target, StandardCopyOption.REPLACE_EXISTING);
+            }
+            return true;
+        } catch (IOException ex) {
+            LOGGER.error("Failed to persist City worldgen ledger; template writes remain pending.", ex);
+            return false;
+        } finally {
+            if (temp != null) {
+                try {
+                    Files.deleteIfExists(temp);
+                } catch (IOException ignored) {
+                    // A unique temporary file can be cleaned up on the next server start.
+                }
+            }
         }
     }
 
@@ -497,6 +818,9 @@ public final class CityReservationMaskRegistry {
         JsonObject obj = new JsonObject();
         obj.addProperty("schemaVersion", WORLDGEN_LEDGER_SCHEMA);
         obj.add("placedStructures", new JsonArray());
+        obj.add("templateFragments", new JsonArray());
+        obj.add("templatePendingFragments", new JsonArray());
+        obj.add("templateDatums", new JsonArray());
         obj.add("failures", new JsonArray());
         obj.add("featureSuppressions", new JsonArray());
         return obj;
@@ -512,6 +836,71 @@ public final class CityReservationMaskRegistry {
                 || value.contains("vine")
                 || value.contains("patch")
                 || value.contains("forest");
+    }
+
+    public record TemplateDatumPreparation(TemplateDatumPreparationStatus status,
+                                           OptionalInt templateDatumY,
+                                           String reasonCode,
+                                           String message) {
+        public TemplateDatumPreparation {
+            templateDatumY = templateDatumY == null ? OptionalInt.empty() : templateDatumY;
+            reasonCode = reasonCode == null ? "" : reasonCode;
+            message = message == null ? "" : message;
+        }
+
+        public boolean ready() {
+            return status == TemplateDatumPreparationStatus.READY && templateDatumY.isPresent();
+        }
+
+        private static TemplateDatumPreparation ready(int datum) {
+            return new TemplateDatumPreparation(TemplateDatumPreparationStatus.READY, OptionalInt.of(datum),
+                    "TEMPLATE_DATUM_READY", "Template datum is durably frozen.");
+        }
+
+        private static TemplateDatumPreparation waiting(String reasonCode, String message) {
+            return new TemplateDatumPreparation(TemplateDatumPreparationStatus.WAITING, OptionalInt.empty(),
+                    reasonCode, message);
+        }
+
+        private static TemplateDatumPreparation conflict(String reasonCode, String message) {
+            return new TemplateDatumPreparation(TemplateDatumPreparationStatus.CONFLICT, OptionalInt.empty(),
+                    reasonCode, message);
+        }
+
+        private static TemplateDatumPreparation invalid(String reasonCode, String message) {
+            return new TemplateDatumPreparation(TemplateDatumPreparationStatus.INVALID, OptionalInt.empty(),
+                    reasonCode, message);
+        }
+
+        private static TemplateDatumPreparation persistenceFailed() {
+            return new TemplateDatumPreparation(TemplateDatumPreparationStatus.PERSISTENCE_FAILED,
+                    OptionalInt.empty(), "TEMPLATE_LEDGER_PERSISTENCE_FAILED",
+                    "Template pending/datum state could not be persisted; no world write is allowed.");
+        }
+    }
+
+    public enum TemplateDatumPreparationStatus {
+        READY,
+        WAITING,
+        CONFLICT,
+        INVALID,
+        PERSISTENCE_FAILED
+    }
+
+    public record TemplateFragmentRecordResult(boolean recorded,
+                                               boolean templateCompleted,
+                                               String reasonCode) {
+        private static TemplateFragmentRecordResult fragmentRecorded() {
+            return new TemplateFragmentRecordResult(true, false, "TEMPLATE_FRAGMENT_RECORDED");
+        }
+
+        private static TemplateFragmentRecordResult completedResult() {
+            return new TemplateFragmentRecordResult(true, true, "TEMPLATE_MATERIALIZATION_RECORDED");
+        }
+
+        private static TemplateFragmentRecordResult rejectedResult(String reasonCode) {
+            return new TemplateFragmentRecordResult(false, false, reasonCode);
+        }
     }
 
     private record ActiveMask(String cityId, List<BlockBounds> noVegetation, List<BlockBounds> noVanillaStructure,
@@ -709,6 +1098,10 @@ public final class CityReservationMaskRegistry {
                     || sourcePlan.has("structureTemplate")
                     || "structure_template_nbt".equals(stringValue(sourcePlan,
                     "materializationSource", "")));
+        }
+
+        public boolean coversChunk(ChunkPos chunkPos) {
+            return chunkPos != null && lockedActualFootprint.overlaps(chunkBounds(chunkPos));
         }
 
         public JsonObject templatePlan() {

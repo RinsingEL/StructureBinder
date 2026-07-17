@@ -2,6 +2,7 @@ package com.rinsing.geomantia.systems.city.infrastructure.world;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.mojang.logging.LogUtils;
 import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
 import com.rinsing.geomantia.systems.city.domain.model.BlockPoint;
 import com.rinsing.geomantia.systems.city.application.CityStructureMaterializationPlanner;
@@ -11,11 +12,13 @@ import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.chunk.ChunkGeneratorStructureState;
+import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.levelgen.RandomState;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
@@ -29,8 +32,12 @@ import net.minecraft.world.level.block.Rotation;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalInt;
+import org.slf4j.Logger;
 
 public final class MinecraftCityWorldgenStructurePlacer {
+    private static final Logger LOGGER = LogUtils.getLogger();
+
     private MinecraftCityWorldgenStructurePlacer() {
     }
 
@@ -43,54 +50,107 @@ public final class MinecraftCityWorldgenStructurePlacer {
         if (planned.isEmpty()) {
             return;
         }
-        StructureTemplateManager manager = level.getLevel().getStructureManager();
-        MinecraftCityTemplateWorldgenPlacer placer = new MinecraftCityTemplateWorldgenPlacer(manager);
         for (CityReservationMaskRegistry.PlannedStructure item : planned) {
             if (!item.isTemplatePlacement()) {
                 continue;
             }
-            JsonObject plan = item.templatePlan();
-            try {
-                String templateRef = text(plan, "templateRef", nestedText(plan, "structureTemplate", "templateRef"));
-                String templateHash = text(plan, "templateHash", nestedText(plan, "structureTemplate", "templateHash"));
-                BlockPoint anchor = point(plan, "anchorBlock", item.anchorBlock());
-                CityTemplatePlacementGeometry.Rotation rotation = CityTemplatePlacementGeometry.Rotation.valueOf(
-                        text(plan, "rotation", "NONE"));
-                CityTemplatePlacementGeometry.Mirror mirror = CityTemplatePlacementGeometry.Mirror.valueOf(
-                        text(plan, "mirror", "NONE"));
-                String datumPolicy = text(plan, "templateDatumPolicy", "");
-                if (!CityStructureMaterializationPlanner.TEMPLATE_DATUM_POLICY_WORLDGEN_SURFACE.equals(datumPolicy)) {
-                    CityReservationMaskRegistry.recordWorldgenFailure(item, chunk.getPos(),
-                            "TEMPLATE_DATUM_POLICY_INVALID",
-                            "Template placement requires templateDatumPolicy="
-                                    + CityStructureMaterializationPlanner.TEMPLATE_DATUM_POLICY_WORLDGEN_SURFACE + ".");
-                    continue;
-                }
-                int datum = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, anchor.x(), anchor.z());
-                if (datum <= level.getMinBuildHeight()) {
-                    CityReservationMaskRegistry.recordWorldgenFailure(item, chunk.getPos(),
-                            "TEMPLATE_DATUM_SURFACE_UNAVAILABLE",
-                            "Worldgen heightmap did not provide a usable template surface datum.");
-                    continue;
-                }
-                MinecraftCityTemplateWorldgenPlacer.PlacementRequest request =
-                        new MinecraftCityTemplateWorldgenPlacer.PlacementRequest(templateRef, templateHash,
-                                anchor, rotation, mirror, datum, chunk.getPos());
-                MinecraftCityTemplateWorldgenPlacer.PlacementResult result = placer.place(request,
-                        new MinecraftCityTemplateWorldgenPlacer.WorldGenLevelWriter(level, chunk.getPos()));
-                if (!result.success() && !result.waiting()) {
-                    CityReservationMaskRegistry.recordWorldgenFailure(item, chunk.getPos(),
-                            result.reasonCode(), result.message());
-                } else if (result.success() && result.worldMutationApplied()
-                        && result.templateFootprint() != null) {
-                    CityReservationMaskRegistry.recordTemplateWorldgenPlacement(item, result.templateFootprint(),
-                            templateSignature(item, templateHash, rotation, mirror), new JsonArray(), chunk.getPos(),
-                            datum, "", result.reasonCode(), result.message());
-                }
-            } catch (RuntimeException ex) {
-                CityReservationMaskRegistry.recordWorldgenFailure(item, chunk.getPos(),
-                        "TEMPLATE_PLACEMENT_FAILED", ex.getMessage());
+            placeTemplateOwner(level, chunk.getPos(), item, false);
+        }
+    }
+
+    /**
+     * Controlled delayed path for an owner that was durably observed during first FEATURES.
+     * The registry proof is mandatory, so this method cannot turn into general old-chunk late paste.
+     */
+    public static void retryPendingTemplateStructures(ServerLevel level, LevelChunk chunk) {
+        if (level == null || chunk == null) {
+            return;
+        }
+        for (CityReservationMaskRegistry.PlannedStructure item
+                : CityReservationMaskRegistry.pendingTemplateStructuresForChunk(chunk.getPos())) {
+            placeTemplateOwner(level, chunk.getPos(), item, true);
+        }
+    }
+
+    private static void placeTemplateOwner(WorldGenLevel level,
+                                           ChunkPos ownerChunk,
+                                           CityReservationMaskRegistry.PlannedStructure item,
+                                           boolean delayedFirstGenerationRetry) {
+        JsonObject plan = item.templatePlan();
+        try {
+            String templateRef = text(plan, "templateRef", nestedText(plan, "structureTemplate", "templateRef"));
+            String templateHash = text(plan, "templateHash", nestedText(plan, "structureTemplate", "templateHash"));
+            BlockPoint anchor = point(plan, "anchorBlock", item.anchorBlock());
+            CityTemplatePlacementGeometry.Rotation rotation = CityTemplatePlacementGeometry.Rotation.valueOf(
+                    text(plan, "rotation", "NONE"));
+            CityTemplatePlacementGeometry.Mirror mirror = CityTemplatePlacementGeometry.Mirror.valueOf(
+                    text(plan, "mirror", "NONE"));
+            String datumPolicy = text(plan, "templateDatumPolicy", "");
+            if (!CityStructureMaterializationPlanner.TEMPLATE_DATUM_POLICY_WORLDGEN_SURFACE.equals(datumPolicy)) {
+                CityReservationMaskRegistry.recordWorldgenFailure(item, ownerChunk,
+                        "TEMPLATE_DATUM_POLICY_INVALID",
+                        "Template placement requires templateDatumPolicy="
+                                + CityStructureMaterializationPlanner.TEMPLATE_DATUM_POLICY_WORLDGEN_SURFACE + ".");
+                return;
             }
+
+            OptionalInt resolved = CityReservationMaskRegistry.resolvedTemplateDatum(item);
+            if (delayedFirstGenerationRetry) {
+                if (!CityReservationMaskRegistry.hasTemplatePendingProof(item, ownerChunk)
+                        || resolved.isEmpty()) {
+                    return;
+                }
+            } else {
+                OptionalInt candidate = OptionalInt.empty();
+                if (resolved.isEmpty()
+                        && ownerChunk.x == item.anchorChunkX() && ownerChunk.z == item.anchorChunkZ()) {
+                    candidate = OptionalInt.of(level.getHeight(
+                            Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, anchor.x(), anchor.z()));
+                }
+                CityReservationMaskRegistry.TemplateDatumPreparation preparation =
+                        CityReservationMaskRegistry.prepareTemplateOwner(
+                                item, ownerChunk, candidate, level.getMinBuildHeight());
+                if (!preparation.ready()) {
+                    if (preparation.status()
+                            != CityReservationMaskRegistry.TemplateDatumPreparationStatus.WAITING
+                            && preparation.status()
+                            != CityReservationMaskRegistry.TemplateDatumPreparationStatus.PERSISTENCE_FAILED) {
+                        CityReservationMaskRegistry.recordWorldgenFailure(item, ownerChunk,
+                                preparation.reasonCode(), preparation.message());
+                    }
+                    return;
+                }
+                resolved = preparation.templateDatumY();
+            }
+
+            int datum = resolved.orElseThrow();
+            StructureTemplateManager manager = level.getLevel().getStructureManager();
+            MinecraftCityTemplateWorldgenPlacer placer = new MinecraftCityTemplateWorldgenPlacer(manager);
+            MinecraftCityTemplateWorldgenPlacer.PlacementRequest request =
+                    new MinecraftCityTemplateWorldgenPlacer.PlacementRequest(templateRef, templateHash,
+                            anchor, rotation, mirror, datum, ownerChunk);
+            MinecraftCityTemplateWorldgenPlacer.PlacementResult result = placer.place(request,
+                    new MinecraftCityTemplateWorldgenPlacer.WorldGenLevelWriter(level, ownerChunk));
+            if (!result.success() && !result.waiting()) {
+                CityReservationMaskRegistry.recordWorldgenFailure(item, ownerChunk,
+                        result.reasonCode(), result.message());
+            } else if (result.worldMutationApplied() && result.templateFootprint() != null) {
+                CityReservationMaskRegistry.TemplateFragmentRecordResult recordResult =
+                        CityReservationMaskRegistry.recordTemplateWorldgenFragment(
+                                item, result.templateFootprint(),
+                                templateSignature(item, templateHash, rotation, mirror), new JsonArray(), ownerChunk,
+                                datum, "", result.reasonCode(), delayedFirstGenerationRetry
+                                        ? "Delayed first-generation owner fragment written after durable FEATURES wait."
+                                        : result.message());
+                if (!recordResult.recorded()) {
+                    LOGGER.warn("City template fragment remains pending for {} {} chunk {},{}: {}",
+                            item.anchorId(), item.structureId(), ownerChunk.x, ownerChunk.z,
+                            recordResult.reasonCode());
+                }
+            }
+        } catch (RuntimeException ex) {
+            CityReservationMaskRegistry.recordWorldgenFailure(item, ownerChunk,
+                    "TEMPLATE_PLACEMENT_FAILED", ex.getMessage());
         }
     }
 
