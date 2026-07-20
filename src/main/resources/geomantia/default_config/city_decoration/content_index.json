@@ -218,6 +218,19 @@
       "clearanceMode": "preserve",
       "comfortMarginBlocks": 0,
       "tags": ["civic", "governance", "plaza", "marker"]
+    },
+    {
+      "contentId": "geomantia:decoration/fountain_01",
+      "contentKind": "prefab",
+      "nbtFile": "templates/fountain_01.nbt",
+      "allowedRotations": [0, 90, 180, 270],
+      "placementMode": "above_surface",
+      "replacePolicy": "replaceable_only",
+      "groundPlaneLocalY": 0,
+      "embedDepthBlocks": 0,
+      "clearanceMode": "preserve",
+      "comfortMarginBlocks": 1,
+      "tags": ["civic", "public_facility", "plaza", "fountain", "water_feature"]
     }
   ]
 }

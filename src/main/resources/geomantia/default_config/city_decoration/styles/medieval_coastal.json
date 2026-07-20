@@ -132,6 +132,12 @@
       ]
     },
     {
+      "semanticRef": "fountain",
+      "variants": [
+        {"contentRef": "geomantia:decoration/fountain_01", "weight": 1.0}
+      ]
+    },
+    {
       "semanticRef": "civic_public_facility",
       "variants": [
         {"contentRef": "geomantia:decoration/street_bench_01", "weight": 2.0},

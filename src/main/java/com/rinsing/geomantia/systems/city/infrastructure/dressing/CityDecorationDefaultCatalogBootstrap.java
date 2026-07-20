@@ -27,7 +27,7 @@ public final class CityDecorationDefaultCatalogBootstrap {
     private static final String MANIFEST = "bootstrap_manifest.json";
     private static final String MANAGED_SOURCE = "geomantia:default_config/city_decoration";
     private static final String MANIFEST_SCHEMA = "city_decoration_default_bootstrap.v0.4";
-    private static final String DEFAULT_CATALOG_REVISION = "functional_settlement.v0.4";
+    private static final String DEFAULT_CATALOG_REVISION = "functional_settlement_fountain.v0.4";
 
     private CityDecorationDefaultCatalogBootstrap() {
     }
@@ -69,6 +69,7 @@ public final class CityDecorationDefaultCatalogBootstrap {
         writeTemplate(staging.resolve("templates/lantern_post_01.nbt"), lanternPost());
         writeTemplate(staging.resolve("templates/notice_board_01.nbt"), noticeBoard());
         writeTemplate(staging.resolve("templates/banner_post_01.nbt"), bannerPost());
+        writeTemplate(staging.resolve("templates/fountain_01.nbt"), fountain());
         Files.writeString(staging.resolve(MANIFEST), """
                 {
                   "schemaVersion": "%s",
@@ -220,6 +221,22 @@ public final class CityDecorationDefaultCatalogBootstrap {
         return new TemplateBuilder(2, 4, 1)
                 .fill(0, 0, 0, 0, 3, 0, "minecraft:oak_fence")
                 .fill(1, 2, 0, 1, 3, 0, "minecraft:blue_wool")
+                .build();
+    }
+
+    private static TemplateSpec fountain() {
+        return new TemplateBuilder(5, 5, 5)
+                .fill(0, 0, 0, 4, 0, 4, "minecraft:stone_bricks")
+                .fill(0, 1, 0, 4, 1, 0, "minecraft:polished_andesite")
+                .fill(0, 1, 4, 4, 1, 4, "minecraft:polished_andesite")
+                .fill(0, 1, 1, 0, 1, 3, "minecraft:polished_andesite")
+                .fill(4, 1, 1, 4, 1, 3, "minecraft:polished_andesite")
+                .fill(1, 1, 1, 3, 1, 1, "minecraft:water")
+                .block(1, 1, 2, "minecraft:water")
+                .block(3, 1, 2, "minecraft:water")
+                .fill(1, 1, 3, 3, 1, 3, "minecraft:water")
+                .fill(2, 1, 2, 2, 3, 2, "minecraft:chiseled_stone_bricks")
+                .block(2, 4, 2, "minecraft:water")
                 .build();
     }
 

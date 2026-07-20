@@ -27,6 +27,7 @@ class LandUseRuleCatalogLoaderTest {
 
         assertEquals("military", catalog.resolveSemantic(List.of("function.barracks")).orElseThrow().ruleRef());
         assertEquals("military", catalog.byRef("military").orElseThrow().landUseType());
+        assertEquals(24, catalog.byRef("military").orElseThrow().nearbyMergeMaxBridgeBlocks());
     }
 
     @Test

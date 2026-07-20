@@ -3,8 +3,13 @@ package com.rinsing.geomantia.systems.city.application.landuse;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.rinsing.geomantia.systems.city.domain.landuse.BoundaryPolicy;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseAreaPlan;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseTerrainField;
+import com.rinsing.geomantia.systems.city.domain.landuse.SurfacePolicy;
+import com.rinsing.geomantia.systems.city.domain.landuse.VegetationPolicy;
+import com.rinsing.geomantia.systems.city.domain.landuse.rules.LandUseRule;
+import com.rinsing.geomantia.systems.city.domain.landuse.rules.LandUseRuleCatalog;
 import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
 import org.junit.jupiter.api.Test;
 
@@ -72,6 +77,66 @@ class LandUsePlanningServiceTest {
 
         assertEquals(1, plan.areas().size());
         assertEquals(List.of("block_a", "block_b"), plan.areas().get(0).sourceGroupIds());
+    }
+
+    @Test
+    void nearbySameRuleGroupsBridgeThroughNaturalUnclaimedLand() {
+        JsonObject d6 = plan("shop_a", "shop_block_a", 8, 10, 10, 12, "commercial",
+                "shop_b", "shop_block_b", 35, 37, 10, 12, "commercial");
+
+        LandUsePlanningService.Result result = new LandUsePlanningService().plan(d6, null, null, null,
+                terrain(), bridgeCatalog(20));
+
+        LandUseAreaPlan.Area commercial = result.plan().areas().stream()
+                .filter(area -> area.landUseType().equals("commercial")).findFirst().orElseThrow();
+        assertEquals(List.of("shop_block_a", "shop_block_b"), commercial.sourceGroupIds(), result.trace().toString());
+        assertEquals(1, result.trace().getAsJsonArray("nearbySameTypeBridges").size());
+    }
+
+    @Test
+    void nearbySameRuleBridgeStaysDisabledWhenRuleLimitIsZero() {
+        JsonObject d6 = plan("shop_a", "shop_block_a", 8, 10, 10, 12, "commercial",
+                "shop_b", "shop_block_b", 35, 37, 10, 12, "commercial");
+
+        LandUsePlanningService.Result result = new LandUsePlanningService().plan(d6, null, null, null,
+                terrain(), bridgeCatalog(0));
+
+        assertEquals(2, result.plan().areas().stream()
+                .filter(area -> area.landUseType().equals("commercial")).count());
+        assertTrue(result.trace().getAsJsonArray("nearbySameTypeBridges").isEmpty());
+    }
+
+    @Test
+    void nearbySameRuleBridgeRoutesAroundDifferentLandUseWithoutReclaimingIt() {
+        JsonObject d6 = plan("shop_a", "shop_block_a", 5, 7, 18, 20, "commercial",
+                "hall", "civic_block", 25, 33, 13, 27, "civic",
+                "shop_b", "shop_block_b", 54, 56, 18, 20, "commercial");
+
+        LandUsePlanningService.Result result = new LandUsePlanningService().plan(d6, null, null, null,
+                terrain(64), bridgeCatalog(64));
+
+        LandUseAreaPlan.Area commercial = result.plan().areas().stream()
+                .filter(area -> area.landUseType().equals("commercial")).findFirst().orElseThrow();
+        assertEquals(List.of("shop_block_a", "shop_block_b"), commercial.sourceGroupIds(), result.trace().toString());
+        assertTrue(result.plan().areas().stream().anyMatch(area ->
+                area.landUseType().equals("civic") && area.sourceGroupIds().contains("civic_block")));
+        assertFalse(contains(commercial, 29, 20));
+        assertEquals(1, result.trace().getAsJsonArray("nearbySameTypeBridges").size());
+    }
+
+    @Test
+    void nearbySameRuleBridgesUseAcyclicStableComponentMerges() {
+        JsonObject d6 = plan("shop_a", "shop_block_a", 4, 6, 10, 12, "commercial",
+                "shop_b", "shop_block_b", 30, 32, 10, 12, "commercial",
+                "shop_c", "shop_block_c", 56, 58, 10, 12, "commercial");
+
+        LandUsePlanningService.Result result = new LandUsePlanningService().plan(d6, null, null, null,
+                terrain(64), bridgeCatalog(20));
+
+        LandUseAreaPlan.Area commercial = result.plan().areas().stream()
+                .filter(area -> area.landUseType().equals("commercial")).findFirst().orElseThrow();
+        assertEquals(List.of("shop_block_a", "shop_block_b", "shop_block_c"), commercial.sourceGroupIds(), result.trace().toString());
+        assertEquals(2, result.trace().getAsJsonArray("nearbySameTypeBridges").size());
     }
 
     @Test
@@ -180,6 +245,32 @@ class LandUsePlanningServiceTest {
         return d6;
     }
 
+    private static JsonObject plan(Object... values) {
+        JsonObject d6 = new JsonObject();
+        d6.addProperty("cityId", "city_test");
+        d6.addProperty("locked", true);
+        JsonArray structures = new JsonArray();
+        for (int index = 0; index < values.length; index += 7) {
+            structures.add(structure((String) values[index], (String) values[index + 1],
+                    (int) values[index + 2], (int) values[index + 3], (int) values[index + 4],
+                    (int) values[index + 5], (String) values[index + 6]));
+        }
+        d6.add("plannedWorldgenStructures", structures);
+        return d6;
+    }
+
+    private static LandUseRuleCatalog bridgeCatalog(int commercialBridgeBlocks) {
+        return new LandUseRuleCatalog(List.of(
+                rule("commercial", commercialBridgeBlocks),
+                rule("civic", 0)));
+    }
+
+    private static LandUseRule rule(String ruleRef, int nearbyMergeMaxBridgeBlocks) {
+        return new LandUseRule(ruleRef, ruleRef, List.of(ruleRef), 6.0, 0, 1, 64,
+                100, 1.0, 0, 0, 10, 0, 1.0, true, nearbyMergeMaxBridgeBlocks,
+                SurfacePolicy.PRESERVE, VegetationPolicy.PRESERVE, BoundaryPolicy.OPEN, ruleRef);
+    }
+
     private static JsonObject templatePlan(String entranceId, String direction, int x, int z) {
         JsonObject templatePlan = new JsonObject();
         JsonObject transformed = new JsonObject();
@@ -225,16 +316,20 @@ class LandUsePlanningServiceTest {
     }
 
     private static LandUseTerrainField terrain() {
+        return terrain(40);
+    }
+
+    private static LandUseTerrainField terrain(int blocks) {
         List<LandUseTerrainField.Cell> cells = new ArrayList<>();
-        for (int z = 0; z < 10; z++) {
-            for (int x = 0; x < 10; x++) {
+        for (int z = 0; z < blocks / 4; z++) {
+            for (int x = 0; x < blocks / 4; x++) {
                 cells.add(new LandUseTerrainField.Cell(x, z, x * 4, z * 4, 4,
                         70, 0.5, 0.5, 0.25, false, 0, 40,
                         "minecraft:plains", "plain", "p", true));
             }
         }
         return new LandUseTerrainField(LandUseTerrainField.CURRENT_SCHEMA_VERSION, "city_test",
-                new BlockBounds(0, 0, 39, 39), 4, cells);
+                new BlockBounds(0, 0, blocks - 1, blocks - 1), 4, cells);
     }
 
     private static void assertNoOverlappingClaims(LandUseAreaPlan plan) {
@@ -251,5 +346,9 @@ class LandUsePlanningServiceTest {
     private static boolean contains(LandUseAreaPlan plan, int x, int z) {
         return plan.areas().stream().flatMap(area -> area.memberSpans().stream())
                 .anyMatch(span -> span.z() == z && x >= span.minX() && x <= span.maxX());
+    }
+
+    private static boolean contains(LandUseAreaPlan.Area area, int x, int z) {
+        return area.memberSpans().stream().anyMatch(span -> span.z() == z && x >= span.minX() && x <= span.maxX());
     }
 }

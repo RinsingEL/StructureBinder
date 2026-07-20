@@ -2407,7 +2407,7 @@ class CityPlanningEndpointHandlerTest {
         JsonObject unhashed = JsonParser.parseString("""
                 {
                   "schemaVersion": "city_land_use_area_plan.v0.1",
-                  "ruleVersion": "city_land_use_rules.v0.1",
+                  "ruleVersion": "city_land_use_rules.v0.2",
                   "cityId": "city_test",
                   "planningBounds": {"minX": -64, "minZ": -64, "maxX": 64, "maxZ": 64},
                   "areas": [],

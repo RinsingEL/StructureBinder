@@ -15,7 +15,9 @@ import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
 
 public final class LandUseRuleCatalog {
-    public static final String RULE_VERSION = "city_land_use_rules.v0.1";
+    public static final String RULE_VERSION = "city_land_use_rules.v0.2";
+    public static final String LEGACY_RULE_VERSION = "city_land_use_rules.v0.1";
+    public static final int LEGACY_NEARBY_MERGE_MAX_BRIDGE_BLOCKS = 24;
 
     private final Map<String, LandUseRule> rules;
 
@@ -70,6 +72,7 @@ public final class LandUseRuleCatalog {
                     .append('|').append(rule.slopeCost()).append('|').append(rule.reliefCost())
                     .append('|').append(rule.waterCost()).append('|').append(rule.forestAffinity())
                     .append('|').append(rule.competitionWeight()).append('|').append(rule.mergeSameType())
+                    .append('|').append(rule.nearbyMergeMaxBridgeBlocks())
                     .append('|').append(rule.surfacePolicy()).append('|').append(rule.vegetationPolicy())
                     .append('|').append(rule.boundaryPolicy()).append('|').append(rule.decorationPolicy());
         }
@@ -85,44 +88,44 @@ public final class LandUseRuleCatalog {
         return new LandUseRuleCatalog(List.of(
                 rule("agriculture", List.of("agriculture", "farm", "farmland", "farmstead", "barn", "crop", "农", "田"),
                         6.0, 192, 192, 4096, 520, 1.0, 0.7, 0.8, 5.0, 0,
-                        SurfacePolicy.CULTIVATE, VegetationPolicy.CLEAR, BoundaryPolicy.FENCE),
+                        32, SurfacePolicy.CULTIVATE, VegetationPolicy.CLEAR, BoundaryPolicy.FENCE),
                 rule("plaza", List.of("plaza", "square", "market_center", "fountain", "courtyard", "广场", "喷泉", "庭院"),
                         2.2, 96, 96, 2048, 360, 1.0, 1.2, 1.3, 8.0, 0,
-                        SurfacePolicy.PAVE, VegetationPolicy.CLEAR, BoundaryPolicy.OPEN),
+                        16, SurfacePolicy.PAVE, VegetationPolicy.CLEAR, BoundaryPolicy.OPEN),
                 rule("residential", List.of("residential", "residence", "house", "housing", "home", "住宅", "民居"),
                         1.8, 48, 64, 2048, 330, 1.0, 1.1, 1.0, 7.0, 0,
-                        SurfacePolicy.PRESERVE, VegetationPolicy.SELECTIVE_CLEAR, BoundaryPolicy.HEDGE),
+                        20, SurfacePolicy.PRESERVE, VegetationPolicy.SELECTIVE_CLEAR, BoundaryPolicy.HEDGE),
                 rule("commercial", List.of("commercial", "market", "shop", "stall", "storage", "warehouse", "商业", "商铺", "市场"),
                         1.8, 72, 72, 2048, 340, 1.0, 1.0, 1.1, 7.0, 0,
-                        SurfacePolicy.PAVE, VegetationPolicy.CLEAR, BoundaryPolicy.OPEN),
+                        24, SurfacePolicy.PAVE, VegetationPolicy.CLEAR, BoundaryPolicy.OPEN),
                 rule("industry", List.of("industry", "industrial", "production", "workshop", "smith", "forge",
                                 "mine", "mining", "quarry", "ore", "coal", "矿业", "矿井", "采矿", "工坊",
                                 "冶炼", "function.矿业"),
                         3.0, 128, 128, 3072, 420, 1.0, 0.8, 0.8, 7.0, 0,
-                        SurfacePolicy.PAVE, VegetationPolicy.CLEAR, BoundaryPolicy.OPEN),
+                        24, SurfacePolicy.PAVE, VegetationPolicy.CLEAR, BoundaryPolicy.OPEN),
                 rule("forestry", List.of("forestry", "forest", "lumber", "woodland", "林场", "森林"),
                         5.0, 256, 256, 4096, 540, 1.0, 0.8, 0.7, 6.0, -1.1,
-                        SurfacePolicy.PRESERVE, VegetationPolicy.PRESERVE, BoundaryPolicy.FENCE),
+                        32, SurfacePolicy.PRESERVE, VegetationPolicy.PRESERVE, BoundaryPolicy.FENCE),
                 rule("pond", List.of("pond", "fish", "fishery", "fish_pond", "鱼塘", "池塘"),
                         3.0, 128, 128, 3072, 440, 1.0, 1.4, 1.0, -0.7, 0,
-                        SurfacePolicy.WATER_ADAPTIVE, VegetationPolicy.SELECTIVE_CLEAR, BoundaryPolicy.SHORELINE),
+                        0, SurfacePolicy.WATER_ADAPTIVE, VegetationPolicy.SELECTIVE_CLEAR, BoundaryPolicy.SHORELINE),
                 rule("civic", List.of("civic", "landmark", "public_core", "church", "temple", "hall", "school",
                                 "watchtower", "fort", "governance", "administrative", "公共", "教堂", "市政"),
                         1.5, 80, 80, 1536, 300, 1.0, 1.2, 1.2, 8.0, 0,
-                        SurfacePolicy.PAVE, VegetationPolicy.CLEAR, BoundaryPolicy.LOW_WALL),
+                        16, SurfacePolicy.PAVE, VegetationPolicy.CLEAR, BoundaryPolicy.LOW_WALL),
                 rule("general_settlement", List.of("general_settlement", "settlement", "generic", "village", "filler",
                                 "聚落", "通用"),
                         1.5, 48, 48, 1536, 300, 1.0, 1.2, 1.1, 7.0, 0,
-                        SurfacePolicy.PRESERVE, VegetationPolicy.SELECTIVE_CLEAR, BoundaryPolicy.OPEN)
+                        20, SurfacePolicy.PRESERVE, VegetationPolicy.SELECTIVE_CLEAR, BoundaryPolicy.OPEN)
         ));
     }
 
     private static LandUseRule rule(String ref, List<String> terms, double multiplier, int extra, int min, int max,
                                     double budget, double base, double slope, double relief, double water,
-                                    double forestAffinity, SurfacePolicy surface, VegetationPolicy vegetation,
+                                    double forestAffinity, int nearbyMergeMaxBridgeBlocks, SurfacePolicy surface, VegetationPolicy vegetation,
                                     BoundaryPolicy boundary) {
         return new LandUseRule(ref, ref, terms, multiplier, extra, min, max, budget, base, slope, relief, water,
-                forestAffinity, 1.0, true, surface, vegetation, boundary, ref);
+                forestAffinity, 1.0, true, nearbyMergeMaxBridgeBlocks, surface, vegetation, boundary, ref);
     }
 
     private record SemanticMatch(LandUseRule rule, String token, String input) {

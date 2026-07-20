@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.rinsing.geomantia.systems.city.algorithm.landuse.LandUseExpansionResult;
 import com.rinsing.geomantia.systems.city.algorithm.landuse.LandUseGeometryCompiler;
+import com.rinsing.geomantia.systems.city.algorithm.landuse.NearbySameTypeBridgePlanner;
 import com.rinsing.geomantia.systems.city.algorithm.landuse.StableLandUseExpander;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseAreaPlan;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseSeedGroup;
@@ -45,6 +46,9 @@ public final class LandUsePlanningService {
         LandUseExpansionResult expansion = new StableLandUseExpander().expand(cityId,
                 terrainField.planningBounds(), terrainField, sources.seedGroups(), corridors,
                 sources.seedSalt());
+        NearbySameTypeBridgePlanner.Result bridgeResult = new NearbySameTypeBridgePlanner().bridge(
+                terrainField.planningBounds(), terrainField, sources.seedGroups(), corridors, expansion);
+        expansion = bridgeResult.expansion();
         LandUseGeometryCompiler.CompiledGeometry geometry = new LandUseGeometryCompiler().compile(
                 terrainField.planningBounds(), sources.seedGroups(), expansion);
         List<String> warnings = new ArrayList<>(sources.warnings());
@@ -58,10 +62,12 @@ public final class LandUsePlanningService {
                 LandUseRuleCatalog.RULE_VERSION, cityId, "", terrainField.planningBounds(), geometry.areas(),
                 geometry.unclaimedSpans(), corridors, warnings);
         LandUseAreaPlan plan = new LandUseAreaPlanCodec().withComputedHash(rawPlan);
-        return new Result(plan, trace(sources, expansion), quality(plan, sources, expansion));
+        return new Result(plan, trace(sources, expansion, bridgeResult.bridges()), quality(plan, sources, expansion));
     }
 
-    private static JsonObject trace(LandUseSourceResolver.Resolution sources, LandUseExpansionResult expansion) {
+    private static JsonObject trace(LandUseSourceResolver.Resolution sources,
+                                    LandUseExpansionResult expansion,
+                                    List<NearbySameTypeBridgePlanner.Bridge> bridges) {
         JsonObject trace = new JsonObject();
         trace.addProperty("schemaVersion", "city_land_use_planning_trace.v0.1");
         JsonArray groups = new JsonArray();
@@ -76,6 +82,17 @@ public final class LandUsePlanningService {
             groups.add(value);
         }
         trace.add("seedGroups", groups);
+        JsonArray bridgeValues = new JsonArray();
+        for (NearbySameTypeBridgePlanner.Bridge bridge : bridges) {
+            JsonObject value = new JsonObject();
+            value.addProperty("ruleRef", bridge.ruleRef());
+            JsonArray sourceGroupIds = new JsonArray();
+            bridge.sourceGroupIds().forEach(sourceGroupIds::add);
+            value.add("sourceGroupIds", sourceGroupIds);
+            value.addProperty("bridgeBlockCount", bridge.bridgeBlockCount());
+            bridgeValues.add(value);
+        }
+        trace.add("nearbySameTypeBridges", bridgeValues);
         trace.addProperty("contestedClaimCount", expansion.contestedClaimCount());
         trace.addProperty("blockedCandidateCount", expansion.blockedCandidateCount());
         return trace;

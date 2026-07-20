@@ -65,7 +65,7 @@ class CityDecorationDefaultCatalogBootstrapTest {
 
         for (String semanticRef : List.of("scarecrow", "haystack", "farm_tool_rack",
                 "market_stall_small", "crate_cluster", "barrel_cluster", "shop_sign",
-                "street_bench", "lantern_post", "notice_board", "banner_post")) {
+                "street_bench", "lantern_post", "notice_board", "banner_post", "fountain")) {
             String contentRef = profile.requireMapping(semanticRef).variants().get(0).contentRef();
             CityDecorationContentCatalog.Content content = catalog.requireContent(contentRef);
             assertFalse(content.plant(), semanticRef);
@@ -73,6 +73,12 @@ class CityDecorationDefaultCatalogBootstrapTest {
             assertTrue(content.template().getList("blocks", 10).size() > 0, semanticRef);
             assertEquals(0, content.template().getList("entities", 10).size(), semanticRef);
         }
+        CityDecorationContentCatalog.Content fountain = catalog.requireContent(
+                "geomantia:decoration/fountain_01");
+        assertEquals(new CityDecorationContentCatalog.Size(5, 5, 5), fountain.size());
+        assertEquals(53, fountain.template().getList("blocks", 10).size());
+        assertEquals(1, fountain.comfortMarginBlocks());
+        assertTrue(fountain.tags().containsAll(List.of("civic", "plaza", "fountain", "water_feature")));
         assertMappedTags(profile, catalog, "agriculture_field_detail", "agriculture");
         assertMappedTags(profile, catalog, "commercial_market", "commercial", "market");
         assertMappedTags(profile, catalog, "commercial_goods", "commercial", "goods");
@@ -81,7 +87,7 @@ class CityDecorationDefaultCatalogBootstrapTest {
         assertMappedTags(profile, catalog, "civic_notice", "civic", "notice");
         assertMappedTags(profile, catalog, "civic_plaza", "civic", "plaza");
         assertTrue(Files.readString(root.resolve("bootstrap_manifest.json"))
-                .contains("functional_settlement.v0.4"));
+                .contains("functional_settlement_fountain.v0.4"));
     }
 
     @Test
