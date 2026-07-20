@@ -19,6 +19,30 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityDecorationContentCatalogLoaderTest {
     @Test
+    void loadsBundledFunctionalSettlementPrefabsWithCategoryTags(@TempDir Path temp) throws Exception {
+        Path root = CityDecorationDefaultCatalogBootstrap.ensureInstalled(temp.resolve("city_decoration"));
+
+        CityDecorationContentCatalog catalog = new CityDecorationContentCatalogLoader(state -> {
+        }).load(root);
+
+        CityDecorationContentCatalog.Content market =
+                catalog.requireContent("geomantia:decoration/market_stall_small_01");
+        assertEquals(new CityDecorationContentCatalog.Size(3, 3, 3), market.size());
+        assertTrue(market.tags().containsAll(java.util.List.of("commercial", "market", "plaza")));
+        CityDecorationContentCatalog.Content goods =
+                catalog.requireContent("geomantia:decoration/crate_cluster_01");
+        assertEquals(new CityDecorationContentCatalog.Size(2, 2, 2), goods.size());
+        assertTrue(goods.tags().containsAll(java.util.List.of("commercial", "goods", "storage")));
+        CityDecorationContentCatalog.Content notice =
+                catalog.requireContent("geomantia:decoration/notice_board_01");
+        assertEquals(new CityDecorationContentCatalog.Size(3, 3, 1), notice.size());
+        assertTrue(notice.tags().containsAll(java.util.List.of("civic", "notice", "governance", "plaza")));
+        assertEquals(0, market.template().getList("entities", 10).size());
+        assertEquals(0, goods.template().getList("entities", 10).size());
+        assertEquals(0, notice.template().getList("entities", 10).size());
+    }
+
+    @Test
     void v4LoadsResolvedCropPlantStateWithoutNbtTemplate(@TempDir Path root) throws Exception {
         writeIndex(root, """
                 {

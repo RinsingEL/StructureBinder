@@ -27,6 +27,7 @@ class CityStructureTemplateMaterializationPlannerTest {
                 item.get("templateDatumPolicy").getAsString());
         assertEquals(CityStructureMaterializationPlanner.TEMPLATE_DATUM_POLICY_WORLDGEN_SURFACE,
                 item.getAsJsonObject("structureTemplate").get("templateDatumPolicy").getAsString());
+        assertEquals("direct_template", item.get("terrainPosePolicy").getAsString());
         assertEquals(8, item.getAsJsonObject("templateSize").get("width").getAsInt());
         assertEquals(bounds(10, 10, 17, 15), item.getAsJsonObject("actualFootprint"));
         assertEquals(item.getAsJsonObject("actualFootprint"), item.getAsJsonObject("lockedActualFootprint"));
@@ -36,6 +37,46 @@ class CityStructureTemplateMaterializationPlannerTest {
         assertEquals("row_north", item.getAsJsonObject("placementProvenance")
                 .get("subZoneId").getAsString());
         assertTrue(result.get("locked").getAsBoolean());
+    }
+
+    @Test
+    void structureStartTerrainPolicyIsFrozenWithItsGeneratorDatumPolicy() {
+        JsonObject anchorMap = anchorMap();
+        anchorMap.getAsJsonArray("anchors").get(0).getAsJsonObject().addProperty(
+                "terrainPosePolicy", "structure_start_beard_thin");
+
+        JsonObject item = new CityStructureMaterializationPlanner()
+                .planWorldgen(anchorMap, CityStructureMaterializationPlanner.ChunkStatusInspector.plannedOnly(),
+                        emptyLedger())
+                .structureMaterializationPlan()
+                .getAsJsonArray("plannedWorldgenStructures").get(0).getAsJsonObject();
+
+        assertEquals("structure_start_beard_thin", item.get("terrainPosePolicy").getAsString());
+        assertEquals(CityStructureMaterializationPlanner.TEMPLATE_DATUM_POLICY_GENERATOR_BASE_HEIGHT,
+                item.get("templateDatumPolicy").getAsString());
+        assertEquals("structure_start_beard_thin", item.getAsJsonObject("structureTemplate")
+                .get("terrainPosePolicy").getAsString());
+    }
+
+    @Test
+    void geomantiaTemplateIsCanonicalizedToStructureStartDuringD6Planning() {
+        JsonObject anchorMap = anchorMap();
+        JsonObject anchor = anchorMap.getAsJsonArray("anchors").get(0).getAsJsonObject();
+        anchor.addProperty("templateId", "geomantia:city/house");
+        anchor.addProperty("templateRef", "geomantia:city/house");
+        anchor.addProperty("terrainPosePolicy", "flat_or_small_step");
+
+        JsonObject item = new CityStructureMaterializationPlanner()
+                .planWorldgen(anchorMap, CityStructureMaterializationPlanner.ChunkStatusInspector.plannedOnly(),
+                        emptyLedger())
+                .structureMaterializationPlan()
+                .getAsJsonArray("plannedWorldgenStructures").get(0).getAsJsonObject();
+
+        assertEquals("structure_start_beard_thin", item.get("terrainPosePolicy").getAsString());
+        assertEquals(CityStructureMaterializationPlanner.TEMPLATE_DATUM_POLICY_GENERATOR_BASE_HEIGHT,
+                item.get("templateDatumPolicy").getAsString());
+        assertEquals("structure_start_beard_thin", item.getAsJsonObject("structureTemplate")
+                .get("terrainPosePolicy").getAsString());
     }
 
     @Test

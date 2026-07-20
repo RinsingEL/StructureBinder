@@ -52,6 +52,27 @@ class LandUseAreaDecorationProgramContextResolverTest {
     }
 
     @Test
+    void mergesDisconnectedComponentsWithSameAreaIdBeforeSubtractingObstacles() {
+        JsonObject plan = json("""
+                {
+                  "schemaVersion":"city_land_use_area_plan.v0.1",
+                  "areas":[
+                    {"areaId":"housing","memberSpans":[{"z":0,"minX":0,"maxX":0}]},
+                    {"areaId":"housing","memberSpans":[{"z":10,"minX":10,"maxX":12}]}
+                  ]
+                }
+                """);
+        CompiledDecorationProgramPlan.HardObstacle obstacle =
+                new CompiledDecorationProgramPlan.HardObstacle("house", "structure", new BlockBounds(0, 0, 0, 0));
+        LandUseAreaDecorationProgramContextResolver resolver =
+                new LandUseAreaDecorationProgramContextResolver(plan, List.of(obstacle));
+
+        ResolvedDecorationProgramContext resolved = resolver.resolve(intent("housing", 0));
+
+        assertEquals(List.of(new BlockBounds(10, 10, 12, 10)), resolved.targetMask().memberBounds());
+    }
+
+    @Test
     void compositeResolverKeepsSourceBoundariesExplicit() {
         JsonObject plan = json("""
                 {"schemaVersion":"city_land_use_area_plan.v0.1","areas":[{

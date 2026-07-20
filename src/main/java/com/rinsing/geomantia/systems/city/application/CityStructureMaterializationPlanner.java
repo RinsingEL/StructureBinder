@@ -18,7 +18,9 @@ public final class CityStructureMaterializationPlanner {
     public static final String INFERRED_SCHEMA = "city_inferred_function_area_map.v0.1";
     public static final String TEMPLATE_MATERIALIZATION_SOURCE = "structure_template_nbt";
     public static final String TEMPLATE_DATUM_POLICY_WORLDGEN_SURFACE =
-            "worldgen_surface_motion_blocking_no_leaves";
+            CityTemplateTerrainPosePolicy.DATUM_POLICY_WORLDGEN_SURFACE;
+    public static final String TEMPLATE_DATUM_POLICY_GENERATOR_BASE_HEIGHT =
+            CityTemplateTerrainPosePolicy.DATUM_POLICY_GENERATOR_BASE_HEIGHT;
     public static final int DEFAULT_COLLISION_CLEARANCE_BLOCKS = 4;
 
     public Result planWorldgen(JsonObject structureAnchorMap, ChunkStatusInspector inspector, JsonObject previousLedger) {
@@ -1104,8 +1106,10 @@ public final class CityStructureMaterializationPlanner {
             target.addProperty("variantId", facts.variantId());
             target.addProperty("rotation", facts.rotation());
             target.addProperty("mirror", facts.mirror());
+            target.addProperty("terrainPosePolicy", facts.terrainPosePolicy());
             target.addProperty("materializationSource", TEMPLATE_MATERIALIZATION_SOURCE);
-            target.addProperty("templateDatumPolicy", TEMPLATE_DATUM_POLICY_WORLDGEN_SURFACE);
+            target.addProperty("templateDatumPolicy",
+                    CityTemplateTerrainPosePolicy.templateDatumPolicy(facts.terrainPosePolicy()));
             if (facts.templateSize() != null) {
                 target.add("templateSize", sizeJson(facts.templateSize()));
             }
@@ -1119,8 +1123,10 @@ public final class CityStructureMaterializationPlanner {
             template.addProperty("variantId", facts.variantId());
             template.addProperty("rotation", facts.rotation());
             template.addProperty("mirror", facts.mirror());
+            template.addProperty("terrainPosePolicy", facts.terrainPosePolicy());
             template.addProperty("materializationSource", TEMPLATE_MATERIALIZATION_SOURCE);
-            template.addProperty("templateDatumPolicy", TEMPLATE_DATUM_POLICY_WORLDGEN_SURFACE);
+            template.addProperty("templateDatumPolicy",
+                    CityTemplateTerrainPosePolicy.templateDatumPolicy(facts.terrainPosePolicy()));
             if (facts.templateSize() != null) {
                 template.add("templateSize", sizeJson(facts.templateSize()));
             }
@@ -1164,6 +1170,7 @@ public final class CityStructureMaterializationPlanner {
 
     private record TemplateFacts(boolean semantic, String templateId, String templateRef, String templateHash,
                                  String variantId, String rotation, String mirror,
+                                 String terrainPosePolicy,
                                  CityTemplatePlacementGeometry.Size templateSize,
                                  BlockBounds actualFootprint, BlockBounds suppliedFootprint,
                                  BlockBounds lockedActualFootprint, String materializationSource) {
@@ -1189,6 +1196,8 @@ public final class CityStructureMaterializationPlanner {
             String variantId = readString(nested, source, "variantId", "");
             String rotation = readString(nested, source, "rotation", "");
             String mirror = readString(nested, source, "mirror", "");
+            String terrainPosePolicy = CityTemplateTerrainPosePolicy.freezeForTemplate(
+                    templateId, templateRef, readString(nested, source, "terrainPosePolicy", ""));
             CityTemplatePlacementGeometry.Size templateSize = readSize(nested, source);
             BlockBounds suppliedFootprint = readBounds(nested, source, "actualFootprint");
             if (suppliedFootprint == null) {
@@ -1205,7 +1214,7 @@ public final class CityStructureMaterializationPlanner {
                 actualFootprint = suppliedFootprint;
             }
             return new TemplateFacts(semantic, templateId, templateRef, templateHash, variantId,
-                    rotation, mirror, templateSize, actualFootprint, suppliedFootprint, lockedFootprint,
+                    rotation, mirror, terrainPosePolicy, templateSize, actualFootprint, suppliedFootprint, lockedFootprint,
                     readString(nested, source, "materializationSource", ""));
         }
 

@@ -3,6 +3,7 @@ package com.rinsing.geomantia.systems.city;
 import com.rinsing.geomantia.systems.city.application.CityTemplateCatalog;
 import com.rinsing.geomantia.systems.city.application.CityTemplateCatalogLoader;
 import com.rinsing.geomantia.systems.city.application.CityTemplatePlacementGeometry;
+import com.rinsing.geomantia.systems.city.application.CityTemplateTerrainPosePolicy;
 import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
 import com.rinsing.geomantia.systems.city.domain.model.BlockPoint;
 import org.junit.jupiter.api.Test;
@@ -31,6 +32,7 @@ class CityTemplateCatalogTest {
         assertEquals(3, template.depth());
         assertEquals(2, template.clearanceBlocks());
         assertEquals(1, template.roadEntrances().size());
+        assertEquals("flat_or_step", template.terrainPosePolicy());
     }
 
     @Test
@@ -60,6 +62,8 @@ class CityTemplateCatalogTest {
         assertEquals("a", template.variant());
         assertEquals(10, template.width());
         assertEquals(12, template.depth());
+        assertEquals(CityTemplateTerrainPosePolicy.STRUCTURE_START_BEARD_THIN,
+                template.terrainPosePolicy());
     }
 
     @Test

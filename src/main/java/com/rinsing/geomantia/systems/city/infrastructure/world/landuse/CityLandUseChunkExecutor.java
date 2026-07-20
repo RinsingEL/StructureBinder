@@ -5,13 +5,16 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /** Applies one owner-chunk LandUse fragment as a small rollback-capable transaction. */
@@ -30,24 +33,50 @@ public final class CityLandUseChunkExecutor {
         List<PreparedMutation> prepared = new ArrayList<>();
         int naturalSurfaceSkipped = 0;
         int occupiedBoundarySkipped = 0;
+        Map<ColumnKey, ColumnSample> terrain = new HashMap<>();
+        CityLandUseMicroGrader.TerrainView terrainView = (x, z) ->
+                terrain.computeIfAbsent(new ColumnKey(x, z), ignored -> requiredColumn(world, x, z));
+        Map<ColumnKey, CityLandUseMicroGrader.FillDecision> fillByColumn = new HashMap<>();
+        for (CityLandUseMicroGrader.FillDecision decision
+                : CityLandUseMicroGrader.plan(fragment, terrainView)) {
+            fillByColumn.put(new ColumnKey(decision.x(), decision.z()), decision);
+        }
+        Map<ColumnKey, Integer> plannedSurfaceY = new HashMap<>();
         for (CityLandUseChunkCompiler.SurfaceOperation operation : fragment.surfaceOperations()) {
-            ColumnSample column = requiredColumn(world, operation.x(), operation.z());
+            ColumnKey key = new ColumnKey(operation.x(), operation.z());
+            ColumnSample column = terrainView.sample(operation.x(), operation.z());
             if (!column.naturalSurface()) {
                 naturalSurfaceSkipped++;
                 continue;
             }
+            CityLandUseMicroGrader.FillDecision fill = fillByColumn.get(key);
+            int targetSurfaceY = fill == null ? column.surfaceY() : fill.targetY();
+            if (fill != null) {
+                for (int y = column.surfaceY() + 1; y < targetSurfaceY; y++) {
+                    PreparedMutation mutation = prepare(world, operation.areaId(), OperationPhase.MICRO_FILL,
+                            operation.x(), y, operation.z(), fragment.microFillBlockId(), true);
+                    if (mutation.failureReason() != null) {
+                        return ExecutionResult.failed(fragment, mutation.failureReason(), prepared.size(),
+                                naturalSurfaceSkipped, occupiedBoundarySkipped, 0, true);
+                    }
+                    prepared.add(mutation);
+                }
+            }
             PreparedMutation mutation = prepare(world, operation.areaId(), OperationPhase.SURFACE,
-                    operation.x(), column.surfaceY(), operation.z(), operation.blockId(), false);
+                    operation.x(), targetSurfaceY, operation.z(), operation.blockId(), fill != null);
             if (mutation.failureReason() != null) {
                 return ExecutionResult.failed(fragment, mutation.failureReason(), prepared.size(),
                         naturalSurfaceSkipped, occupiedBoundarySkipped, 0, true);
             }
             prepared.add(mutation);
+            plannedSurfaceY.put(key, targetSurfaceY);
         }
         for (CityLandUseChunkCompiler.BoundaryOperation operation : fragment.boundaryOperations()) {
-            ColumnSample column = requiredColumn(world, operation.x(), operation.z());
+            ColumnKey key = new ColumnKey(operation.x(), operation.z());
+            ColumnSample column = terrainView.sample(operation.x(), operation.z());
+            int surfaceY = plannedSurfaceY.getOrDefault(key, column.surfaceY());
             PreparedMutation mutation = prepare(world, operation.areaId(), OperationPhase.BOUNDARY,
-                    operation.x(), column.surfaceY() + 1, operation.z(), operation.blockId(), true);
+                    operation.x(), surfaceY + 1, operation.z(), operation.blockId(), true);
             if (mutation.failureReason() != null) {
                 if ("CITY_LAND_USE_BOUNDARY_TARGET_OCCUPIED".equals(mutation.failureReason())) {
                     occupiedBoundarySkipped++;
@@ -104,7 +133,9 @@ public final class CityLandUseChunkExecutor {
         }
         if (requireReplaceable && !target.replaceable()) {
             return PreparedMutation.failed(areaId, phase, x, y, z, blockId,
-                    "CITY_LAND_USE_BOUNDARY_TARGET_OCCUPIED");
+                    phase == OperationPhase.BOUNDARY
+                            ? "CITY_LAND_USE_BOUNDARY_TARGET_OCCUPIED"
+                            : "CITY_LAND_USE_MICRO_FILL_TARGET_OCCUPIED");
         }
         return PreparedMutation.ready(areaId, phase, x, y, z, blockId, target.snapshot());
     }
@@ -125,6 +156,7 @@ public final class CityLandUseChunkExecutor {
     }
 
     public enum OperationPhase {
+        MICRO_FILL,
         SURFACE,
         BOUNDARY
     }
@@ -219,6 +251,9 @@ public final class CityLandUseChunkExecutor {
         }
     }
 
+    private record ColumnKey(int x, int z) {
+    }
+
     public static final class WorldGenExecutionWorld implements ExecutionWorld {
         private final WorldGenLevel level;
 
@@ -258,8 +293,9 @@ public final class CityLandUseChunkExecutor {
                 return false;
             }
             BlockPos pos = new BlockPos(worldX, y, worldZ);
-            BlockState expected = BuiltInRegistries.BLOCK.get(key).defaultBlockState();
-            level.setBlock(pos, expected, 2);
+            BlockState expected = Block.updateFromNeighbourShapes(
+                    BuiltInRegistries.BLOCK.get(key).defaultBlockState(), level, pos);
+            level.setBlock(pos, expected, Block.UPDATE_ALL);
             return level.getBlockState(pos).equals(expected);
         }
 
@@ -269,7 +305,7 @@ public final class CityLandUseChunkExecutor {
                 return false;
             }
             BlockPos pos = new BlockPos(worldX, y, worldZ);
-            level.setBlock(pos, expected, 2);
+            level.setBlock(pos, expected, Block.UPDATE_ALL);
             return level.getBlockState(pos).equals(expected);
         }
 

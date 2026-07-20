@@ -3,6 +3,7 @@ package com.rinsing.geomantia.systems.city.infrastructure.world.landuse;
 import com.google.gson.JsonObject;
 import com.rinsing.geomantia.systems.city.application.landuse.LandUseAreaPlanCodec;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseAreaPlan;
+import com.rinsing.geomantia.systems.city.domain.landuse.SurfacePolicy;
 import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
 import com.rinsing.geomantia.systems.city.domain.model.BlockPoint;
 
@@ -23,8 +24,9 @@ import java.util.Set;
 
 /** Pure block-to-owner compiler. It never samples terrain and never writes a level. */
 public final class CityLandUseChunkCompiler {
-    public static final String RESULT_SCHEMA = "city_land_use_chunk_fragment.v0.1";
+    public static final String RESULT_SCHEMA = "city_land_use_chunk_fragment.v0.2";
     public static final String PLAN_SCHEMA = "city_land_use_area_plan.v0.1";
+    public static final String MICRO_FILL_SUBGRADE_KEY = "MICRO_FILL_SUBGRADE";
 
     private final MaterialPalette palette;
     private final LandUseAreaPlanCodec codec = new LandUseAreaPlanCodec();
@@ -54,13 +56,19 @@ public final class CityLandUseChunkCompiler {
         int minChunkZ = chunkZ * 16;
         int maxChunkX = minChunkX + 15;
         int maxChunkZ = minChunkZ + 15;
+        int halo = CityLandUseMicroGrader.MASK_HALO_BLOCKS;
         Set<BlockCell> corridorExclusions = new HashSet<>();
+        Set<BlockCell> gradingCorridorExclusions = new HashSet<>();
         for (LandUseAreaPlan.CorridorExclusion exclusion : plan.corridorExclusions()) {
             addBoundsClipped(corridorExclusions, exclusion.blockBounds(),
                     minChunkX, minChunkZ, maxChunkX, maxChunkZ);
+            addBoundsClipped(gradingCorridorExclusions, exclusion.blockBounds(),
+                    minChunkX - halo, minChunkZ - halo, maxChunkX + halo, maxChunkZ + halo);
         }
         Map<BlockCell, SurfaceOperation> surfaces = new HashMap<>();
         Map<BlockCell, BoundaryOperation> boundaries = new HashMap<>();
+        Map<BlockCell, GradingMaskCell> gradingMask = new HashMap<>();
+        String microFillBlock = palette.surfaceMaterial(MICRO_FILL_SUBGRADE_KEY);
         int relevantCellCount = 0;
         int footprintExcluded = 0;
         int corridorExcluded = 0;
@@ -81,8 +89,30 @@ public final class CityLandUseChunkCompiler {
             Set<BlockCell> footprints = new HashSet<>();
             area.structureFootprintExclusions().forEach(bounds -> addBoundsClipped(footprints, bounds,
                     minChunkX, minChunkZ, maxChunkX, maxChunkZ));
+            Set<BlockCell> gradingFootprints = new HashSet<>();
+            area.structureFootprintExclusions().forEach(bounds -> addBoundsClipped(gradingFootprints, bounds,
+                    minChunkX - halo, minChunkZ - halo, maxChunkX + halo, maxChunkZ + halo));
             Set<BlockCell> gates = new HashSet<>();
             area.gateSlots().forEach(gate -> gates.add(cell(gate.block())));
+
+            if (area.surfacePolicy() == SurfacePolicy.PAVE && microFillBlock != null) {
+                for (LandUseAreaPlan.ScanlineSpan span : area.memberSpans()) {
+                    int z = span.z();
+                    if (z < minChunkZ - halo || z > maxChunkZ + halo
+                            || span.maxX() < minChunkX - halo || span.minX() > maxChunkX + halo) {
+                        continue;
+                    }
+                    for (int x = Math.max(span.minX(), minChunkX - halo);
+                         x <= Math.min(span.maxX(), maxChunkX + halo); x++) {
+                        BlockCell cell = new BlockCell(x, z);
+                        if (!gradingFootprints.contains(cell)
+                                && !gradingCorridorExclusions.contains(cell)
+                                && !gates.contains(cell)) {
+                            gradingMask.putIfAbsent(cell, new GradingMaskCell(areaId, x, z));
+                        }
+                    }
+                }
+            }
 
             for (LandUseAreaPlan.ScanlineSpan span : area.memberSpans()) {
                 int z = span.z();
@@ -135,8 +165,11 @@ public final class CityLandUseChunkCompiler {
         surfaceOperations.sort(SurfaceOperation.STABLE_ORDER);
         List<BoundaryOperation> boundaryOperations = new ArrayList<>(boundaries.values());
         boundaryOperations.sort(BoundaryOperation.STABLE_ORDER);
+        List<GradingMaskCell> gradingMaskCells = new ArrayList<>(gradingMask.values());
+        gradingMaskCells.sort(GradingMaskCell.STABLE_ORDER);
         return new ChunkFragment(RESULT_SCHEMA, plan.cityId(), plan.planHash(), palette.paletteHash(), chunkX, chunkZ,
                 relevantCellCount, footprintExcluded, corridorExcluded, gateExcluded,
+                microFillBlock, List.copyOf(gradingMaskCells),
                 List.copyOf(surfaceOperations), List.copyOf(boundaryOperations));
     }
 
@@ -188,6 +221,7 @@ public final class CityLandUseChunkCompiler {
         public static MaterialPalette defaults() {
             Map<String, String> surfaces = new LinkedHashMap<>();
             surfaces.put("PAVE", "minecraft:stone_bricks");
+            surfaces.put(MICRO_FILL_SUBGRADE_KEY, "minecraft:dirt");
             Map<String, String> boundaries = new LinkedHashMap<>();
             boundaries.put("FENCE", "minecraft:oak_fence");
             boundaries.put("HEDGE", "minecraft:oak_leaves");
@@ -283,6 +317,8 @@ public final class CityLandUseChunkCompiler {
                                 int footprintExcludedCount,
                                 int corridorExcludedCount,
                                 int gateExcludedCount,
+                                String microFillBlockId,
+                                List<GradingMaskCell> gradingMaskCells,
                                 List<SurfaceOperation> surfaceOperations,
                                 List<BoundaryOperation> boundaryOperations) {
         public ChunkFragment {
@@ -292,12 +328,26 @@ public final class CityLandUseChunkCompiler {
             Objects.requireNonNull(cityId, "cityId");
             Objects.requireNonNull(planHash, "planHash");
             Objects.requireNonNull(paletteHash, "paletteHash");
+            microFillBlockId = microFillBlockId == null || microFillBlockId.isBlank()
+                    ? null : microFillBlockId;
+            gradingMaskCells = List.copyOf(gradingMaskCells);
             surfaceOperations = List.copyOf(surfaceOperations);
             boundaryOperations = List.copyOf(boundaryOperations);
         }
 
         public boolean hasRelevantCells() {
             return relevantCellCount > 0;
+        }
+    }
+
+    public record GradingMaskCell(String areaId, int x, int z) {
+        public static final Comparator<GradingMaskCell> STABLE_ORDER =
+                Comparator.comparingInt(GradingMaskCell::z)
+                        .thenComparingInt(GradingMaskCell::x)
+                        .thenComparing(GradingMaskCell::areaId);
+
+        public GradingMaskCell {
+            Objects.requireNonNull(areaId, "areaId");
         }
     }
 

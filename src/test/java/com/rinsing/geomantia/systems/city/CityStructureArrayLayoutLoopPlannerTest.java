@@ -73,12 +73,14 @@ class CityStructureArrayLayoutLoopPlannerTest {
             assertEquals("template:test:market/stall", anchor.get("structureId").getAsString());
             assertEquals("test:market_stall", anchor.get("templateId").getAsString());
             assertEquals("CLOCKWISE_90", anchor.get("rotation").getAsString());
+            assertEquals("grounded", anchor.get("terrainPosePolicy").getAsString());
             BlockBounds footprint = bounds(anchor.getAsJsonObject("actualFootprint"));
             assertEquals(5, footprint.widthBlocks());
             assertEquals(9, footprint.heightBlocks());
             assertEquals(9, anchor.getAsJsonObject("templateSize").get("width").getAsInt());
             assertFalse(anchor.has("templateFootprint"));
             JsonObject placement = anchor.getAsJsonObject("templatePlacementPlan");
+            assertEquals("grounded", placement.get("terrainPosePolicy").getAsString());
             assertEquals(9, placement.getAsJsonObject("templateSize").get("width").getAsInt());
             assertEquals(1, placement.getAsJsonObject("transformed").getAsJsonArray("roadEntrances").size());
         }
@@ -123,6 +125,109 @@ class CityStructureArrayLayoutLoopPlannerTest {
                 () -> planner.execute(fixture.baseDir(), fixture.review(), fixture.terraSenseSource(),
                         created.loopState(), item, CityStructureEnvelopeFacts.empty()));
         assertTrue(error.getMessage().contains("D4_ARRAY_LAYOUT_TEMPLATE_GEOMETRY_INPUT_FORBIDDEN"));
+    }
+
+    @Test
+    void templateArrayAutoOrientationFacesCardinalAndExplicitRotationWins() throws Exception {
+        Fixture fixture = fixture();
+        CityStructureArrayLayoutLoopPlanner planner = new CityStructureArrayLayoutLoopPlanner();
+
+        CityStructureArrayLayoutLoopPlanner.CreateResult autoCreated = planner.create(
+                fixture.baseDir(), fixture.review(), fixture.terraSenseSource(), planWithTemplateCatalog(),
+                CityStructureEnvelopeFacts.empty(), new JsonObject(), new JsonObject());
+        JsonObject autoItem = templateLayoutItem("cardinal_auto", 1);
+        autoItem.add("orientationPolicy", JsonParser.parseString("""
+                {"mode":"auto_frontage","targetRef":"cardinal:east","frontageEntranceId":"front"}
+                """).getAsJsonObject());
+        CityStructureArrayLayoutLoopPlanner.ExecuteResult autoExecuted = planner.execute(
+                fixture.baseDir(), fixture.review(), fixture.terraSenseSource(), autoCreated.loopState(), autoItem,
+                CityStructureEnvelopeFacts.empty());
+
+        assertTrue(autoExecuted.asJson().get("ok").getAsBoolean());
+        JsonObject autoAnchor = autoExecuted.loopState().getAsJsonArray("arrayAnchors").get(0).getAsJsonObject();
+        assertEquals("CLOCKWISE_90", autoAnchor.get("rotation").getAsString());
+        JsonObject decision = autoAnchor.getAsJsonObject("orientationDecision");
+        assertEquals("EAST", decision.get("frontageDirection").getAsString());
+        assertEquals("cardinal:east", decision.get("targetRef").getAsString());
+        JsonObject autoTrace = autoExecuted.executionTrace().getAsJsonArray("items").get(0).getAsJsonObject();
+        assertEquals(1, autoTrace.get("autoOrientedItemCount").getAsInt());
+
+        CityStructureArrayLayoutLoopPlanner.CreateResult explicitCreated = planner.create(
+                fixture.baseDir(), fixture.review(), fixture.terraSenseSource(), planWithTemplateCatalog(),
+                CityStructureEnvelopeFacts.empty(), new JsonObject(), new JsonObject());
+        JsonObject explicitItem = templateLayoutItem("cardinal_explicit", 1);
+        explicitItem.getAsJsonArray("fillPool").get(0).getAsJsonObject().addProperty("rotation", "NONE");
+        explicitItem.add("orientationPolicy", autoItem.getAsJsonObject("orientationPolicy").deepCopy());
+        CityStructureArrayLayoutLoopPlanner.ExecuteResult explicitExecuted = planner.execute(
+                fixture.baseDir(), fixture.review(), fixture.terraSenseSource(), explicitCreated.loopState(), explicitItem,
+                CityStructureEnvelopeFacts.empty());
+
+        JsonObject explicitAnchor = explicitExecuted.loopState().getAsJsonArray("arrayAnchors")
+                .get(0).getAsJsonObject();
+        assertEquals("NONE", explicitAnchor.get("rotation").getAsString());
+        assertFalse(explicitAnchor.has("orientationDecision"));
+        assertEquals(0, explicitExecuted.executionTrace().getAsJsonArray("items").get(0).getAsJsonObject()
+                .get("autoOrientedItemCount").getAsInt());
+    }
+
+    @Test
+    void templateArrayAutoOrientationFacesArrayCenterWithoutChangingCompactPlacement() throws Exception {
+        Fixture fixture = fixture();
+        CityStructureArrayLayoutLoopPlanner planner = new CityStructureArrayLayoutLoopPlanner();
+        CityStructureArrayLayoutLoopPlanner.CreateResult created = planner.create(
+                fixture.baseDir(), fixture.review(), fixture.terraSenseSource(), planWithTemplateCatalog(),
+                CityStructureEnvelopeFacts.empty(), new JsonObject(), new JsonObject());
+        JsonObject item = templateLayoutItem("center_facing", 4);
+        item.add("compoundCluster", JsonParser.parseString("""
+                {"shape":"grid","rows":2,"columns":2,"spacingBlocks":24}
+                """).getAsJsonObject());
+        item.add("orientationPolicy", JsonParser.parseString("""
+                {"mode":"auto_frontage","targetRef":"array_center","frontageEntranceId":"front"}
+                """).getAsJsonObject());
+
+        CityStructureArrayLayoutLoopPlanner.ExecuteResult executed = planner.execute(
+                fixture.baseDir(), fixture.review(), fixture.terraSenseSource(), created.loopState(), item,
+                CityStructureEnvelopeFacts.empty());
+
+        assertTrue(executed.asJson().get("ok").getAsBoolean());
+        assertEquals(4, executed.loopState().getAsJsonArray("arrayAnchors").size());
+        assertEquals(4, executed.executionTrace().getAsJsonArray("items").get(0).getAsJsonObject()
+                .get("autoOrientedItemCount").getAsInt());
+        for (JsonElement anchorElement : executed.loopState().getAsJsonArray("arrayAnchors")) {
+            JsonObject decision = anchorElement.getAsJsonObject().getAsJsonObject("orientationDecision");
+            assertEquals("array_center", decision.get("targetRef").getAsString());
+            assertTrue(decision.get("alignmentScore").getAsDouble() >= 0.0);
+        }
+        assertNoOccupiedOverlap(executed.loopState().getAsJsonArray("occupiedEnvelopes"));
+    }
+
+    @Test
+    void templateArrayAutoOrientationCanFaceNearestD3WaterPatch() throws Exception {
+        Fixture fixture = fixture();
+        CityLandformReviewPackage review = reviewWithWaterFrontier(fixture.review());
+        CityStructureArrayLayoutLoopPlanner planner = new CityStructureArrayLayoutLoopPlanner();
+        CityStructureArrayLayoutLoopPlanner.CreateResult created = planner.create(
+                fixture.baseDir(), review, fixture.terraSenseSource(), planWithTemplateCatalog(),
+                CityStructureEnvelopeFacts.empty(), new JsonObject(), new JsonObject());
+        JsonObject item = templateLayoutItem("water_facing", 1);
+        JsonArray patchRefs = new JsonArray();
+        patchRefs.add("ground_beyond_water");
+        item.add("candidatePatchRefs", patchRefs);
+        item.addProperty("startSector", "east");
+        item.add("orientationPolicy", JsonParser.parseString("""
+                {"mode":"auto_frontage","targetRef":"nearest_water","frontageEntranceId":"front"}
+                """).getAsJsonObject());
+
+        CityStructureArrayLayoutLoopPlanner.ExecuteResult executed = planner.execute(
+                fixture.baseDir(), review, fixture.terraSenseSource(), created.loopState(), item,
+                CityStructureEnvelopeFacts.empty());
+
+        assertTrue(executed.asJson().get("ok").getAsBoolean());
+        JsonObject decision = executed.loopState().getAsJsonArray("arrayAnchors").get(0).getAsJsonObject()
+                .getAsJsonObject("orientationDecision");
+        assertEquals("nearest_water", decision.get("targetRef").getAsString());
+        assertEquals("WEST", decision.get("frontageDirection").getAsString());
+        assertTrue(decision.has("targetPoint"));
     }
 
     @Test
@@ -1125,7 +1230,7 @@ class CityStructureArrayLayoutLoopPlannerTest {
                       "contentHash":"market-stall-v1",
                       "variantId":"oak",
                       "rawSize":{"width":9,"height":5,"depth":5},
-                      "allowedRotations":["NONE","CLOCKWISE_90"],
+                      "allowedRotations":["NONE","CLOCKWISE_90","CLOCKWISE_180","COUNTERCLOCKWISE_90"],
                       "allowedMirrors":["NONE"],
                       "roadEntrances":[{"entranceId":"front","x":4,"z":0,"direction":"NORTH"}],
                       "terrainPosePolicy":"grounded",
@@ -1135,6 +1240,27 @@ class CityStructureArrayLayoutLoopPlannerTest {
                   ]
                 }
                 """).getAsJsonObject();
+    }
+
+    private static JsonObject planWithTemplateCatalog() {
+        JsonObject plan = arrayLayoutPlan();
+        plan.add("templateCatalog", templateCatalog());
+        return plan;
+    }
+
+    private static JsonObject templateLayoutItem(String arrayId, int count) {
+        return JsonParser.parseString("""
+                {
+                  "arrayId":"%s",
+                  "plannerType":"compound_cluster",
+                  "role":"commercial",
+                  "candidatePatchRefs":["plain_big"],
+                  "startSector":"center",
+                  "fillPool":[{"templateId":"test:market_stall","variantId":"oak"}],
+                  "countPolicy":{"minCount":%d,"targetCount":%d,"maxCount":%d},
+                  "variantSelectionMode":"round_robin"
+                }
+                """.formatted(arrayId, count, count, count)).getAsJsonObject();
     }
 
     private static JsonObject arrayLayoutPlan() {

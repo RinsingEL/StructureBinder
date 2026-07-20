@@ -7,6 +7,7 @@ import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
 import com.rinsing.geomantia.systems.city.domain.model.BlockPoint;
 import com.rinsing.geomantia.systems.city.application.CityStructureMaterializationPlanner;
 import com.rinsing.geomantia.systems.city.application.CityTemplatePlacementGeometry;
+import com.rinsing.geomantia.systems.city.application.CityTemplateTerrainPosePolicy;
 import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.Registries;
@@ -307,6 +308,20 @@ public final class MinecraftCityWorldgenStructurePlacer {
 
         try {
             JsonObject plan = item.templatePlan();
+            String terrainPosePolicy = text(plan, "terrainPosePolicy",
+                    nestedText(plan, "structureTemplate", "terrainPosePolicy"));
+            String datumPolicy = text(plan, "templateDatumPolicy", "");
+            if (!CityTemplateTerrainPosePolicy.usesStructureStart(terrainPosePolicy)
+                    || !CityStructureMaterializationPlanner.TEMPLATE_DATUM_POLICY_GENERATOR_BASE_HEIGHT
+                    .equals(datumPolicy)) {
+                CityReservationMaskRegistry.recordWorldgenFailure(item, chunkPos,
+                        "TEMPLATE_TERRAIN_START_POLICY_INVALID",
+                        "Terrain StructureStart requires terrainPosePolicy="
+                                + CityTemplateTerrainPosePolicy.STRUCTURE_START_BEARD_THIN
+                                + " and templateDatumPolicy="
+                                + CityStructureMaterializationPlanner.TEMPLATE_DATUM_POLICY_GENERATOR_BASE_HEIGHT + ".");
+                return;
+            }
             ResourceLocation templateRef = ResourceLocation.tryParse(text(plan, "templateRef",
                     nestedText(plan, "structureTemplate", "templateRef")));
             if (templateRef == null) {

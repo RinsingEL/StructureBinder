@@ -7,18 +7,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityTemplateTerrainStartPolicyTest {
     @Test
-    void onlyTheThreeTerrainExperimentTemplatesUseStructureStarts() {
+    void executionUsesOnlyTheFrozenPolicyValue() {
         assertTrue(CityTemplateTerrainStartPolicy.usesStructureStart(
-                "geomantia:city/stubbs/agriculture/windmill_01"));
-        assertTrue(CityTemplateTerrainStartPolicy.usesStructureStart(
-                "geomantia:city/stubbs/agriculture/barn_windmill_01"));
-        assertTrue(CityTemplateTerrainStartPolicy.usesStructureStart(
-                "geomantia:city/stubbs/commercial/small_butcher_shop_01"));
+                "structure_start_beard_thin"));
 
         assertFalse(CityTemplateTerrainStartPolicy.usesStructureStart(
-                "geomantia:city/stubbs/agriculture/farmhouse_01"));
+                "flat_or_small_step"));
         assertFalse(CityTemplateTerrainStartPolicy.usesStructureStart(
-                "minecraft:village/plains/houses/plains_small_house_1"));
+                "geomantia:city/stubbs/agriculture/windmill_01"));
         assertFalse(CityTemplateTerrainStartPolicy.usesStructureStart((String) null));
     }
 }

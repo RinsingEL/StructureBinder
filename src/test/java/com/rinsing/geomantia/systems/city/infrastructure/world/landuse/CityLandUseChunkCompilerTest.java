@@ -12,9 +12,11 @@ import com.rinsing.geomantia.systems.city.domain.model.BlockPoint;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityLandUseChunkCompilerTest {
     private final LandUseAreaPlanCodec codec = new LandUseAreaPlanCodec();
@@ -37,6 +39,8 @@ class CityLandUseChunkCompilerTest {
         assertEquals(2, west.gateExcludedCount());
         assertEquals("minecraft:stone_bricks", west.surfaceOperations().get(0).blockId());
         assertEquals("minecraft:oak_fence", west.boundaryOperations().get(0).blockId());
+        assertEquals("minecraft:dirt", west.microFillBlockId());
+        assertTrue(west.gradingMaskCells().stream().anyMatch(cell -> cell.x() == 16 && cell.z() == 0));
 
         assertEquals(2, east.surfaceOperations().size());
         assertEquals(1, east.boundaryOperations().size());
@@ -60,8 +64,22 @@ class CityLandUseChunkCompilerTest {
                 plan("city_farm", SurfacePolicy.CULTIVATE), 0, 0);
 
         assertEquals(0, fragment.surfaceOperations().size());
+        assertEquals(0, fragment.gradingMaskCells().size());
         assertEquals(2, fragment.boundaryOperations().size());
         assertEquals("minecraft:oak_fence", fragment.boundaryOperations().get(0).blockId());
+    }
+
+    @Test
+    void legacyPaletteWithoutReservedSubgradeKeepsMicroFillDisabled() {
+        CityLandUseChunkCompiler.MaterialPalette legacy = new CityLandUseChunkCompiler.MaterialPalette(
+                Map.of("PAVE", "minecraft:stone_bricks"),
+                Map.of("FENCE", "minecraft:oak_fence"));
+
+        CityLandUseChunkCompiler.ChunkFragment fragment =
+                new CityLandUseChunkCompiler(legacy).compile(plan("city_legacy"), 0, 0);
+
+        assertEquals(null, fragment.microFillBlockId());
+        assertTrue(fragment.gradingMaskCells().isEmpty());
     }
 
     static LandUseAreaPlan plan(String cityId) {

@@ -283,6 +283,7 @@ class CityReservationMaskRegistryTemplateFragmentTest {
         structure.addProperty("templateRef", "geomantia:city/test/windmill");
         structure.addProperty("templateHash", "sha256:template");
         structure.addProperty("materializationSource", "structure_template_nbt");
+        structure.addProperty("terrainPosePolicy", "direct_template");
         structure.addProperty("templateDatumPolicy", "worldgen_surface_motion_blocking_no_leaves");
         structure.addProperty("rotation", rotation.name());
         structure.addProperty("mirror", CityTemplatePlacementGeometry.Mirror.NONE.name());

@@ -14,7 +14,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /** Installs the versioned starter catalog into Forge config exactly once; runtime always reads that config copy. */
 public final class CityDecorationDefaultCatalogBootstrap {
@@ -24,7 +27,7 @@ public final class CityDecorationDefaultCatalogBootstrap {
     private static final String MANIFEST = "bootstrap_manifest.json";
     private static final String MANAGED_SOURCE = "geomantia:default_config/city_decoration";
     private static final String MANIFEST_SCHEMA = "city_decoration_default_bootstrap.v0.4";
-    private static final String DEFAULT_CATALOG_REVISION = "layered_agriculture.v0.4";
+    private static final String DEFAULT_CATALOG_REVISION = "functional_settlement.v0.4";
 
     private CityDecorationDefaultCatalogBootstrap() {
     }
@@ -55,6 +58,17 @@ public final class CityDecorationDefaultCatalogBootstrap {
         writeTemplate(staging.resolve("templates/water_channel_tile.nbt"), "minecraft:water");
         writeTemplate(staging.resolve("templates/field_border.nbt"), "minecraft:oak_fence");
         writeTemplate(staging.resolve("templates/gravel_path_tile.nbt"), "minecraft:gravel");
+        writeTemplate(staging.resolve("templates/scarecrow_02.nbt"), scarecrow());
+        writeTemplate(staging.resolve("templates/haystack_01.nbt"), haystack());
+        writeTemplate(staging.resolve("templates/farm_tool_rack_01.nbt"), farmToolRack());
+        writeTemplate(staging.resolve("templates/market_stall_small_01.nbt"), marketStall());
+        writeTemplate(staging.resolve("templates/crate_cluster_01.nbt"), crateCluster());
+        writeTemplate(staging.resolve("templates/barrel_cluster_01.nbt"), barrelCluster());
+        writeTemplate(staging.resolve("templates/shop_sign_01.nbt"), shopSign());
+        writeTemplate(staging.resolve("templates/street_bench_01.nbt"), streetBench());
+        writeTemplate(staging.resolve("templates/lantern_post_01.nbt"), lanternPost());
+        writeTemplate(staging.resolve("templates/notice_board_01.nbt"), noticeBoard());
+        writeTemplate(staging.resolve("templates/banner_post_01.nbt"), bannerPost());
         Files.writeString(staging.resolve(MANIFEST), """
                 {
                   "schemaVersion": "%s",
@@ -92,25 +106,121 @@ public final class CityDecorationDefaultCatalogBootstrap {
     }
 
     private static void writeTemplate(Path target, String... blockIds) throws IOException {
-        CompoundTag root = new CompoundTag();
-        root.put("size", ints(1, blockIds.length, 1));
-        ListTag palette = new ListTag();
-        for (String blockId : blockIds) {
-            CompoundTag state = new CompoundTag();
-            state.putString("Name", blockId);
-            palette.add(state);
-        }
-        root.put("palette", palette);
-        ListTag blocks = new ListTag();
+        TemplateBuilder builder = new TemplateBuilder(1, blockIds.length, 1);
         for (int y = 0; y < blockIds.length; y++) {
+            builder.block(0, y, 0, blockIds[y]);
+        }
+        writeTemplate(target, builder.build());
+    }
+
+    private static void writeTemplate(Path target, TemplateSpec template) throws IOException {
+        CompoundTag root = new CompoundTag();
+        root.put("size", ints(template.width(), template.height(), template.depth()));
+        ListTag palette = new ListTag();
+        Map<String, Integer> paletteIndexes = new LinkedHashMap<>();
+        ListTag blocks = new ListTag();
+        for (TemplateBlock templateBlock : template.blocks()) {
+            int stateIndex = paletteIndexes.computeIfAbsent(templateBlock.blockId(), blockId -> {
+                CompoundTag state = new CompoundTag();
+                state.putString("Name", blockId);
+                palette.add(state);
+                return palette.size() - 1;
+            });
             CompoundTag block = new CompoundTag();
-            block.put("pos", ints(0, y, 0));
-            block.putInt("state", y);
+            block.put("pos", ints(templateBlock.x(), templateBlock.y(), templateBlock.z()));
+            block.putInt("state", stateIndex);
             blocks.add(block);
         }
+        root.put("palette", palette);
         root.put("blocks", blocks);
         root.put("entities", new ListTag());
         NbtIo.writeCompressed(root, target.toFile());
+    }
+
+    private static TemplateSpec scarecrow() {
+        return new TemplateBuilder(3, 3, 1)
+                .block(1, 0, 0, "minecraft:oak_fence")
+                .block(1, 1, 0, "minecraft:oak_fence")
+                .block(0, 1, 0, "minecraft:oak_fence")
+                .block(2, 1, 0, "minecraft:oak_fence")
+                .block(1, 2, 0, "minecraft:carved_pumpkin")
+                .build();
+    }
+
+    private static TemplateSpec haystack() {
+        return new TemplateBuilder(3, 2, 2)
+                .fill(0, 0, 0, 2, 0, 1, "minecraft:hay_block")
+                .fill(1, 1, 0, 1, 1, 1, "minecraft:hay_block")
+                .build();
+    }
+
+    private static TemplateSpec farmToolRack() {
+        return new TemplateBuilder(3, 2, 1)
+                .block(0, 0, 0, "minecraft:oak_fence")
+                .block(2, 0, 0, "minecraft:oak_fence")
+                .block(1, 0, 0, "minecraft:iron_bars")
+                .fill(0, 1, 0, 2, 1, 0, "minecraft:stripped_oak_log")
+                .build();
+    }
+
+    private static TemplateSpec marketStall() {
+        return new TemplateBuilder(3, 3, 3)
+                .fill(0, 0, 0, 0, 1, 0, "minecraft:oak_fence")
+                .fill(2, 0, 0, 2, 1, 0, "minecraft:oak_fence")
+                .fill(0, 0, 2, 0, 1, 2, "minecraft:oak_fence")
+                .fill(2, 0, 2, 2, 1, 2, "minecraft:oak_fence")
+                .block(1, 0, 0, "minecraft:oak_planks")
+                .fill(0, 2, 0, 2, 2, 2, "minecraft:red_wool")
+                .build();
+    }
+
+    private static TemplateSpec crateCluster() {
+        return new TemplateBuilder(2, 2, 2)
+                .fill(0, 0, 0, 1, 0, 1, "minecraft:oak_planks")
+                .block(0, 1, 0, "minecraft:stripped_oak_log")
+                .build();
+    }
+
+    private static TemplateSpec barrelCluster() {
+        return new TemplateBuilder(2, 2, 2)
+                .fill(0, 0, 0, 1, 0, 1, "minecraft:barrel")
+                .block(1, 1, 1, "minecraft:barrel")
+                .build();
+    }
+
+    private static TemplateSpec shopSign() {
+        return new TemplateBuilder(1, 3, 1)
+                .fill(0, 0, 0, 0, 1, 0, "minecraft:oak_fence")
+                .block(0, 2, 0, "minecraft:oak_planks")
+                .build();
+    }
+
+    private static TemplateSpec streetBench() {
+        return new TemplateBuilder(3, 1, 1)
+                .fill(0, 0, 0, 2, 0, 0, "minecraft:oak_stairs")
+                .build();
+    }
+
+    private static TemplateSpec lanternPost() {
+        return new TemplateBuilder(1, 4, 1)
+                .fill(0, 0, 0, 0, 2, 0, "minecraft:oak_fence")
+                .block(0, 3, 0, "minecraft:lantern")
+                .build();
+    }
+
+    private static TemplateSpec noticeBoard() {
+        return new TemplateBuilder(3, 3, 1)
+                .fill(0, 0, 0, 0, 1, 0, "minecraft:oak_fence")
+                .fill(2, 0, 0, 2, 1, 0, "minecraft:oak_fence")
+                .fill(0, 2, 0, 2, 2, 0, "minecraft:oak_planks")
+                .build();
+    }
+
+    private static TemplateSpec bannerPost() {
+        return new TemplateBuilder(2, 4, 1)
+                .fill(0, 0, 0, 0, 3, 0, "minecraft:oak_fence")
+                .fill(1, 2, 0, 1, 3, 0, "minecraft:blue_wool")
+                .build();
     }
 
     private static ListTag ints(int first, int second, int third) {
@@ -119,5 +229,49 @@ public final class CityDecorationDefaultCatalogBootstrap {
             values.add(IntTag.valueOf(value));
         }
         return values;
+    }
+
+    private record TemplateSpec(int width, int height, int depth, List<TemplateBlock> blocks) {
+        private TemplateSpec {
+            blocks = List.copyOf(blocks);
+        }
+    }
+
+    private record TemplateBlock(int x, int y, int z, String blockId) {
+    }
+
+    private static final class TemplateBuilder {
+        private final int width;
+        private final int height;
+        private final int depth;
+        private final List<TemplateBlock> blocks = new ArrayList<>();
+
+        private TemplateBuilder(int width, int height, int depth) {
+            this.width = width;
+            this.height = height;
+            this.depth = depth;
+        }
+
+        private TemplateBuilder block(int x, int y, int z, String blockId) {
+            blocks.add(new TemplateBlock(x, y, z, blockId));
+            return this;
+        }
+
+        private TemplateBuilder fill(int minX, int minY, int minZ,
+                                     int maxX, int maxY, int maxZ,
+                                     String blockId) {
+            for (int y = minY; y <= maxY; y++) {
+                for (int z = minZ; z <= maxZ; z++) {
+                    for (int x = minX; x <= maxX; x++) {
+                        block(x, y, z, blockId);
+                    }
+                }
+            }
+            return this;
+        }
+
+        private TemplateSpec build() {
+            return new TemplateSpec(width, height, depth, blocks);
+        }
     }
 }

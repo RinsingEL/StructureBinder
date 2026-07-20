@@ -73,6 +73,12 @@ class CityPlanningEndpointHandlerTest {
                 """).getAsJsonObject();
 
         assertDoesNotThrow(() -> CityPlanningEndpointHandler.validateLockedMaterializationPlan(plan));
+        JsonObject templateItem = plan.getAsJsonArray("plannedWorldgenStructures").get(0).getAsJsonObject();
+        templateItem.addProperty("templateDatumPolicy", "generator_base_height_motion_blocking_no_leaves");
+        assertDoesNotThrow(() -> CityPlanningEndpointHandler.validateLockedMaterializationPlan(plan));
+        templateItem.addProperty("templateDatumPolicy", "unsupported_datum_policy");
+        assertThrows(IllegalArgumentException.class,
+                () -> CityPlanningEndpointHandler.validateLockedMaterializationPlan(plan));
         plan.getAsJsonArray("plannedWorldgenStructures").get(0).getAsJsonObject().remove("templateDatumPolicy");
         assertThrows(IllegalArgumentException.class,
                 () -> CityPlanningEndpointHandler.validateLockedMaterializationPlan(plan));

@@ -66,6 +66,7 @@ import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecoration
 import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationStyleProfileResolver;
 import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationTerrainRunCompiler;
 import com.rinsing.geomantia.systems.city.infrastructure.landuse.LandUseDefaultConfigBootstrap;
+import com.rinsing.geomantia.systems.city.infrastructure.landuse.LandUseRuleCatalogLoader;
 import com.rinsing.geomantia.systems.city.infrastructure.landuse.LandUseSettingsLoader;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityDecorationWorldgenRegistry;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityReservationMaskRegistry;
@@ -1119,8 +1120,9 @@ final class CityPlanningEndpointHandler {
                     + cityId + " but found " + terrainField.cityId());
         }
 
-        LandUseSettings settings = loadLandUseSettings();
-        LandUseRuleCatalog rules = LandUseRuleCatalog.defaults();
+        LandUseConfiguration landUseConfiguration = loadLandUseConfiguration();
+        LandUseSettings settings = landUseConfiguration.settings();
+        LandUseRuleCatalog rules = landUseConfiguration.rules();
         JsonObject functionalArrayZones = loadOptionalLandUseFunctionalArrayZones(runDir, citySeedId);
         Path completePath = outputDirectory.resolve("city_land_use_planning_complete.json");
         Files.deleteIfExists(completePath);
@@ -1259,7 +1261,7 @@ final class CityPlanningEndpointHandler {
             }
             validateLandUseCompletion(JsonParser.parseString(Files.readString(landUseCompletePath))
                     .getAsJsonObject(), landUsePlan, expectedCityId,
-                    LandUseRuleCatalog.defaults().profileHash(),
+                    loadLandUseConfiguration().rules().profileHash(),
                     CityStructureEnvelopeProfiler.sha256(CityJson.GSON.toJson(materializationPlan)));
         }
         Path decorationDirectory = decorationDir(runDir, citySeedId);
@@ -1723,7 +1725,7 @@ final class CityPlanningEndpointHandler {
                         + reviewPackage.cityId() + " but found " + typedLandUsePlan.cityId());
             }
             validateLandUseCompletion(JsonParser.parseString(Files.readString(landUseCompletePath)).getAsJsonObject(),
-                    typedLandUsePlan, reviewPackage.cityId(), LandUseRuleCatalog.defaults().profileHash(),
+                    typedLandUsePlan, reviewPackage.cityId(), loadLandUseConfiguration().rules().profileHash(),
                     CityStructureEnvelopeProfiler.sha256(CityJson.GSON.toJson(materializationPlan)));
             appendLandUseDecorationObstacles(hardObstacles, typedLandUsePlan);
             landUseResolver = new LandUseAreaDecorationProgramContextResolver(
@@ -2760,9 +2762,21 @@ final class CityPlanningEndpointHandler {
     }
 
     private static LandUseSettings loadLandUseSettings() {
+        return loadLandUseConfiguration().settings();
+    }
+
+    private static LandUseConfiguration loadLandUseConfiguration() {
+        if (FMLPaths.CONFIGDIR.get() == null) {
+            return new LandUseConfiguration(
+                    new LandUseSettings(LandUseSettings.SCHEMA, false, LandUseSettings.DEFAULT_PROFILE_ID),
+                    LandUseRuleCatalog.defaults());
+        }
         Path root = defaultLandUseConfigRoot();
         try {
-            return new LandUseSettingsLoader().load(LandUseDefaultConfigBootstrap.ensureInstalled(root));
+            Path installedRoot = LandUseDefaultConfigBootstrap.ensureInstalled(root);
+            LandUseSettings settings = new LandUseSettingsLoader().load(installedRoot);
+            LandUseRuleCatalog rules = new LandUseRuleCatalogLoader().load(installedRoot, settings);
+            return new LandUseConfiguration(settings, rules);
         } catch (IOException ex) {
             throw new IllegalArgumentException("LAND_USE_DEFAULT_CONFIG_BOOTSTRAP_FAILED: " + root, ex);
         }
@@ -2781,6 +2795,9 @@ final class CityPlanningEndpointHandler {
             throw new IllegalArgumentException("LAND_USE_CONFIG_ROOT_UNAVAILABLE: Forge config directory is not initialized.");
         }
         return configDir.resolve("geomantia").resolve("city_land_use");
+    }
+
+    private record LandUseConfiguration(LandUseSettings settings, LandUseRuleCatalog rules) {
     }
 
     private static Path defaultDecorationCatalogRoot() {
@@ -3741,12 +3758,17 @@ final class CityPlanningEndpointHandler {
                 throw new IllegalArgumentException("D6 planned structure is not fully locked: "
                         + stringValue(item, "anchorId"));
             }
-            if (templatePlacement && !CityStructureMaterializationPlanner.TEMPLATE_DATUM_POLICY_WORLDGEN_SURFACE.equals(
-                    stringValue(item, "templateDatumPolicy"))) {
+            String templateDatumPolicy = stringValue(item, "templateDatumPolicy");
+            if (templatePlacement && !isSupportedTemplateDatumPolicy(templateDatumPolicy)) {
                 throw new IllegalArgumentException("D6 template placement is missing a supported datum policy: "
                         + stringValue(item, "anchorId"));
             }
         }
+    }
+
+    private static boolean isSupportedTemplateDatumPolicy(String policy) {
+        return CityStructureMaterializationPlanner.TEMPLATE_DATUM_POLICY_WORLDGEN_SURFACE.equals(policy)
+                || CityStructureMaterializationPlanner.TEMPLATE_DATUM_POLICY_GENERATOR_BASE_HEIGHT.equals(policy);
     }
 
     private static void validateD5V5FootprintsWithinReservation(Path wallReservationPath,

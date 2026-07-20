@@ -37,8 +37,25 @@ class LandUsePlanningServiceTest {
         assertTrue(first.plan().areas().stream().allMatch(area -> !area.boundaryLoops().isEmpty()));
         assertEquals(1, first.plan().corridorExclusions().size());
         assertTrue(first.plan().areas().stream().flatMap(area -> area.gateSlots().stream())
-                .anyMatch(gate -> gate.gateId().equals("front")));
+                .anyMatch(gate -> gate.gateId().equals("house::front")));
         assertNoOverlappingClaims(first.plan());
+    }
+
+    @Test
+    void repeatedTemplateEntranceIdsAreScopedToTheirAnchor() {
+        JsonObject d6 = d6Plan();
+        JsonObject secondHouse = structure("house_two", "housing", 32, 35, 12, 16, "residential");
+        secondHouse.add("templatePlacementPlan", templatePlan("front", "NORTH", 33, 12));
+        d6.getAsJsonArray("plannedWorldgenStructures").add(secondHouse);
+
+        LandUseAreaPlan plan = new LandUsePlanningService().plan(d6, null, terrain()).plan();
+
+        assertTrue(plan.corridorExclusions().stream().anyMatch(value ->
+                value.exclusionId().equals("house::front_corridor")));
+        assertTrue(plan.corridorExclusions().stream().anyMatch(value ->
+                value.exclusionId().equals("house_two::front_corridor")));
+        assertTrue(plan.areas().stream().flatMap(area -> area.gateSlots().stream())
+                .anyMatch(gate -> gate.gateId().equals("house_two::front")));
     }
 
     @Test
@@ -156,24 +173,28 @@ class LandUsePlanningServiceTest {
         d6.addProperty("locked", true);
         JsonArray structures = new JsonArray();
         JsonObject house = structure("house", "housing", 8, 12, 12, 16, "residential");
-        JsonObject templatePlan = new JsonObject();
-        JsonObject transformed = new JsonObject();
-        JsonArray entrances = new JsonArray();
-        JsonObject entrance = new JsonObject();
-        entrance.addProperty("entranceId", "front");
-        entrance.addProperty("direction", "NORTH");
-        JsonObject worldPosition = new JsonObject();
-        worldPosition.addProperty("x", 10);
-        worldPosition.addProperty("z", 12);
-        entrance.add("worldPosition", worldPosition);
-        entrances.add(entrance);
-        transformed.add("roadEntrances", entrances);
-        templatePlan.add("transformed", transformed);
-        house.add("templatePlacementPlan", templatePlan);
+        house.add("templatePlacementPlan", templatePlan("front", "NORTH", 10, 12));
         structures.add(house);
         structures.add(structure("shop", "market", 26, 30, 12, 16, "commercial"));
         d6.add("plannedWorldgenStructures", structures);
         return d6;
+    }
+
+    private static JsonObject templatePlan(String entranceId, String direction, int x, int z) {
+        JsonObject templatePlan = new JsonObject();
+        JsonObject transformed = new JsonObject();
+        JsonArray entrances = new JsonArray();
+        JsonObject entrance = new JsonObject();
+        entrance.addProperty("entranceId", entranceId);
+        entrance.addProperty("direction", direction);
+        JsonObject worldPosition = new JsonObject();
+        worldPosition.addProperty("x", x);
+        worldPosition.addProperty("z", z);
+        entrance.add("worldPosition", worldPosition);
+        entrances.add(entrance);
+        transformed.add("roadEntrances", entrances);
+        templatePlan.add("transformed", transformed);
+        return templatePlan;
     }
 
     private static JsonObject structure(String anchorId, String groupId,

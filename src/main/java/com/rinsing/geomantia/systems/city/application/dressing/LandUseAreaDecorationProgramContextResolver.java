@@ -37,8 +37,7 @@ public final class LandUseAreaDecorationProgramContextResolver
             throw new IllegalArgumentException("CITY_DECORATION_TARGET_SOURCE_UNSUPPORTED: "
                     + target.sourceType());
         }
-        JsonObject area = findArea(target.ref());
-        List<BlockBounds> rows = memberRows(area);
+        List<BlockBounds> rows = memberRows(findAreas(target.ref()));
         if (target.insetBlocks() > 0 || !hardObstacles.isEmpty()) {
             rows = erodeSubtract(rows, bounds(rows), target.insetBlocks());
         }
@@ -50,29 +49,35 @@ public final class LandUseAreaDecorationProgramContextResolver
         return new ResolvedDecorationProgramContext(mask, resolveFrame(intent.coordinateFrame(), mask));
     }
 
-    private JsonObject findArea(String areaId) {
+    private List<JsonObject> findAreas(String areaId) {
+        List<JsonObject> matches = new ArrayList<>();
         for (JsonElement elem : array(areaPlan, "areas")) {
             if (elem.isJsonObject() && areaId.equals(stringValue(elem.getAsJsonObject(), "areaId"))) {
-                return elem.getAsJsonObject();
+                matches.add(elem.getAsJsonObject());
             }
         }
-        throw new IllegalArgumentException("CITY_DECORATION_TARGET_LAND_USE_AREA_UNKNOWN: " + areaId);
+        if (matches.isEmpty()) {
+            throw new IllegalArgumentException("CITY_DECORATION_TARGET_LAND_USE_AREA_UNKNOWN: " + areaId);
+        }
+        return List.copyOf(matches);
     }
 
-    private List<BlockBounds> memberRows(JsonObject area) {
+    private List<BlockBounds> memberRows(List<JsonObject> areas) {
         List<BlockBounds> rows = new ArrayList<>();
-        for (JsonElement elem : array(area, "memberSpans")) {
-            if (!elem.isJsonObject()) {
-                throw new IllegalArgumentException("CITY_DECORATION_LAND_USE_SPAN_INVALID");
+        for (JsonObject area : areas) {
+            for (JsonElement elem : array(area, "memberSpans")) {
+                if (!elem.isJsonObject()) {
+                    throw new IllegalArgumentException("CITY_DECORATION_LAND_USE_SPAN_INVALID");
+                }
+                JsonObject span = elem.getAsJsonObject();
+                int z = requiredInt(span, "z");
+                int minX = requiredInt(span, "minX");
+                int maxX = requiredInt(span, "maxX");
+                if (maxX < minX) {
+                    throw new IllegalArgumentException("CITY_DECORATION_LAND_USE_SPAN_INVALID");
+                }
+                rows.add(new BlockBounds(minX, z, maxX, z));
             }
-            JsonObject span = elem.getAsJsonObject();
-            int z = requiredInt(span, "z");
-            int minX = requiredInt(span, "minX");
-            int maxX = requiredInt(span, "maxX");
-            if (maxX < minX) {
-                throw new IllegalArgumentException("CITY_DECORATION_LAND_USE_SPAN_INVALID");
-            }
-            rows.add(new BlockBounds(minX, z, maxX, z));
         }
         return List.copyOf(rows);
     }

@@ -118,7 +118,8 @@ public final class CityTemplateCatalog {
             allowedRotations = List.copyOf(Objects.requireNonNull(allowedRotations, "allowedRotations"));
             allowedMirrors = List.copyOf(Objects.requireNonNull(allowedMirrors, "allowedMirrors"));
             roadEntrances = List.copyOf(Objects.requireNonNull(roadEntrances, "roadEntrances"));
-            terrainPosePolicy = required(terrainPosePolicy, "terrainPosePolicy");
+            terrainPosePolicy = CityTemplateTerrainPosePolicy.freezeForTemplate(
+                    templateId, nbtFile, required(terrainPosePolicy, "terrainPosePolicy"));
             supportPolicy = required(supportPolicy, "supportPolicy");
             if (allowedRotations.isEmpty() || allowedMirrors.isEmpty()) {
                 throw new CatalogException("CITY_TEMPLATE_CATALOG_TRANSFORM_LIST_EMPTY",

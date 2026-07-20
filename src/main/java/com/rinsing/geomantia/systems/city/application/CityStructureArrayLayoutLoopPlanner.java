@@ -50,6 +50,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
             "center", "north", "south", "east", "west", "northeast", "northwest", "southeast", "southwest");
     private static final List<String> EXPANSION_DIRECTIONS = List.of(
             "north", "south", "east", "west", "northeast", "northwest", "southeast", "southwest");
+    private final CityTemplateOrientationSolver orientationSolver = new CityTemplateOrientationSolver();
 
     public CreateResult create(Path baseDirectory,
                                CityLandformReviewPackage reviewPackage,
@@ -671,6 +672,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
                 ? continuousMemberCellCandidatePoints(sourcePatches, reviewPackage.grid(), effectiveBounds,
                 start, guidePoints)
                 : memberCellCandidatePoints(sourcePatches, reviewPackage.grid(), effectiveBounds, start, guidePoints);
+        OrientationPolicy orientationPolicy = orientationPolicy(item);
         if (rawPoints.isEmpty()) {
             hardBlocks.add("D4_ARRAY_LAYOUT_NO_CAPACITY: " + arrayId
                     + " has no member-cell candidate points in selected patches.");
@@ -714,30 +716,50 @@ public final class CityStructureArrayLayoutLoopPlanner {
                     rejected.add(rejection(desired, point, "POINT_OUTSIDE_PATCH"));
                     continue;
                 }
-                TemplatePlacement templatePlacement = desired.isTemplate()
-                        ? templatePlacement(desired.template(), point, options) : null;
-                CityStructureCandidateEnvelope.Estimate estimate = templatePlacement == null
-                        ? CityStructureCandidateEnvelope.estimate(point, profile, facts, options)
-                        : templatePlacement.estimate();
-                if (estimate.requiredFactsMissing()) {
-                    hardBlocks.add("D4_ARRAY_LAYOUT_STRUCTURE_ENVELOPE_FACTS_REQUIRED: " + desired.structureId());
+                List<TemplateRotationOption> rotationOptions = desired.isTemplate()
+                        ? templateRotationOptions(desired.template(), orientationPolicy, point, start, reviewPackage)
+                        : List.of(new TemplateRotationOption(null, null));
+                String rejectionReason = "";
+                boolean requiredFactsMissing = false;
+                for (TemplateRotationOption rotationOption : rotationOptions) {
+                    TemplatePlacement templatePlacement = desired.isTemplate()
+                            ? templatePlacement(rotationOption.selection(), point, options) : null;
+                    CityStructureCandidateEnvelope.Estimate estimate = templatePlacement == null
+                            ? CityStructureCandidateEnvelope.estimate(point, profile, facts, options)
+                            : templatePlacement.estimate();
+                    if (estimate.requiredFactsMissing()) {
+                        hardBlocks.add("D4_ARRAY_LAYOUT_STRUCTURE_ENVELOPE_FACTS_REQUIRED: " + desired.structureId());
+                        requiredFactsMissing = true;
+                        break;
+                    }
+                    if (!estimate.hardBlockReason().isBlank()) {
+                        rejectionReason = estimate.hardBlockReason();
+                        continue;
+                    }
+                    if (!gridContains(reviewPackage.grid(), estimate.collisionEnvelope())) {
+                        rejectionReason = "COLLISION_ENVELOPE_OUTSIDE_CITY_GRID";
+                        continue;
+                    }
+                    BlockBounds occupancyEnvelope = estimate.collisionEnvelope();
+                    if (overlapsAny(localOccupied, occupancyEnvelope) || overlapsAny(groupCollision, occupancyEnvelope)) {
+                        rejectionReason = "D4_ARRAY_LAYOUT_OCCUPIED_CONFLICT";
+                        continue;
+                    }
+                    DesiredItem selectedDesired = desired.isTemplate()
+                            ? desired.withTemplate(rotationOption.selection()) : desired;
+                    accepted = new Accepted(selectedDesired, point,
+                            templatePlacement == null ? point : templatePlacement.anchorBlock(), patch, estimate,
+                            rotationOption.orientationDecision());
                     break;
                 }
-                if (!estimate.hardBlockReason().isBlank()) {
-                    rejected.add(rejection(desired, point, estimate.hardBlockReason()));
+                if (requiredFactsMissing) {
+                    break;
+                }
+                if (accepted == null) {
+                    rejected.add(rejection(desired, point, rejectionReason.isBlank()
+                            ? "D4_ARRAY_LAYOUT_NO_LEGAL_ROTATION" : rejectionReason));
                     continue;
                 }
-                if (!gridContains(reviewPackage.grid(), estimate.collisionEnvelope())) {
-                    rejected.add(rejection(desired, point, "COLLISION_ENVELOPE_OUTSIDE_CITY_GRID"));
-                    continue;
-                }
-                BlockBounds occupancyEnvelope = estimate.collisionEnvelope();
-                if (overlapsAny(localOccupied, occupancyEnvelope) || overlapsAny(groupCollision, occupancyEnvelope)) {
-                    rejected.add(rejection(desired, point, "D4_ARRAY_LAYOUT_OCCUPIED_CONFLICT"));
-                    continue;
-                }
-                accepted = new Accepted(desired, point, templatePlacement == null ? point : templatePlacement.anchorBlock(),
-                        patch, estimate);
                 break;
             }
             if (accepted == null) {
@@ -776,6 +798,9 @@ public final class CityStructureArrayLayoutLoopPlanner {
         trace.addProperty("requestedItemCount", desiredItems.size());
         trace.addProperty("minCount", minCount);
         trace.addProperty("targetShortfallCount", targetShortfallCount);
+        JsonArray orientationDecisions = orientationDecisions(placedItems);
+        trace.addProperty("autoOrientedItemCount", orientationDecisions.size());
+        trace.add("orientationDecisions", orientationDecisions);
         trace.add("hardBlocks", hardBlocks.deepCopy());
         trace.add("warnings", warnings.deepCopy());
         trace.add("rejectedPoints", rejected);
@@ -1051,6 +1076,9 @@ public final class CityStructureArrayLayoutLoopPlanner {
         obj.addProperty("envelopeMode", accepted.estimate().envelopeMode());
         obj.addProperty("selectedEnvelopeGroupKey", accepted.estimate().selectedEnvelopeGroupKey());
         obj.addProperty("roadAccessIntent", "array_zone_gateway_deferred_to_roadweaver");
+        if (accepted.orientationDecision() != null) {
+            obj.add("orientationDecision", accepted.orientationDecision().asJson());
+        }
         if (accepted.desired().isTemplate()) {
             addTemplatePlacementFields(obj, accepted.desired().template(), accepted.anchorBlock(), accepted.estimate());
         }
@@ -1079,6 +1107,9 @@ public final class CityStructureArrayLayoutLoopPlanner {
         anchor.addProperty("smallClearanceBlocks", CityStructureCandidateEnvelope.DEFAULT_SMALL_CLEARANCE_BLOCKS);
         anchor.addProperty("selectionReason", "Selected from D4 array layout loop " + arrayId
                 + " planner " + plannerType);
+        if (accepted.orientationDecision() != null) {
+            anchor.add("orientationDecision", accepted.orientationDecision().asJson());
+        }
         if (accepted.desired().isTemplate()) {
             addTemplatePlacementFields(anchor, accepted.desired().template(), accepted.anchorBlock(), accepted.estimate());
         }
@@ -1101,6 +1132,121 @@ public final class CityStructureArrayLayoutLoopPlanner {
         return new TemplatePlacement(anchor, estimate);
     }
 
+    private OrientationPolicy orientationPolicy(JsonObject item) {
+        if (item == null || !item.has("orientationPolicy")) {
+            return OrientationPolicy.disabled();
+        }
+        if (!item.get("orientationPolicy").isJsonObject()) {
+            throw new IllegalArgumentException("D4_ARRAY_LAYOUT_ORIENTATION_POLICY_INVALID: "
+                    + "orientationPolicy must be an object.");
+        }
+        JsonObject policy = item.getAsJsonObject("orientationPolicy");
+        String mode = stringValue(policy, "mode", "auto_frontage").toLowerCase(Locale.ROOT);
+        if (!"auto_frontage".equals(mode)) {
+            throw new IllegalArgumentException("D4_ARRAY_LAYOUT_ORIENTATION_MODE_UNSUPPORTED: " + mode);
+        }
+        String targetRef = stringValue(policy, "targetRef").toLowerCase(Locale.ROOT);
+        if (targetRef.isBlank()) {
+            throw new IllegalArgumentException("D4_ARRAY_LAYOUT_ORIENTATION_TARGET_REQUIRED: "
+                    + "orientationPolicy.targetRef is required.");
+        }
+        String direction = stringValue(policy, "direction").toLowerCase(Locale.ROOT);
+        String entranceId = stringValue(policy, "frontageEntranceId");
+        return new OrientationPolicy(true, targetRef, direction, entranceId);
+    }
+
+    private List<TemplateRotationOption> templateRotationOptions(TemplateSelection selection,
+                                                                 OrientationPolicy policy,
+                                                                 BlockPoint candidateCenter,
+                                                                 BlockPoint arrayCenter,
+                                                                 CityLandformReviewPackage reviewPackage) {
+        if (!policy.autoFrontage() || selection.rotationExplicit()) {
+            return List.of(new TemplateRotationOption(selection, null));
+        }
+        CityTemplateOrientationSolver.FacingTarget target = orientationTarget(
+                policy, candidateCenter, arrayCenter, reviewPackage);
+        List<TemplateRotationOption> options = new ArrayList<>();
+        for (CityTemplateOrientationSolver.RotationScore score : orientationSolver.rank(
+                selection.template(), selection.mirror(), policy.frontageEntranceId(), candidateCenter, target)) {
+            TemplateSelection rotated = selection.withRotation(score.rotation());
+            OrientationDecision decision = new OrientationDecision(
+                    "auto_frontage", target.targetRef(), score.entranceId(), score.rotation(),
+                    score.frontageDirection(), score.alignmentScore(), target.point(), target.direction());
+            options.add(new TemplateRotationOption(rotated, decision));
+        }
+        return List.copyOf(options);
+    }
+
+    private CityTemplateOrientationSolver.FacingTarget orientationTarget(OrientationPolicy policy,
+                                                                          BlockPoint candidateCenter,
+                                                                          BlockPoint arrayCenter,
+                                                                          CityLandformReviewPackage reviewPackage) {
+        if ("array_center".equals(policy.targetRef())) {
+            return CityTemplateOrientationSolver.FacingTarget.point(policy.targetRef(), arrayCenter);
+        }
+        if ("nearest_water".equals(policy.targetRef())) {
+            return CityTemplateOrientationSolver.FacingTarget.point(
+                    policy.targetRef(), nearestWaterPoint(reviewPackage, candidateCenter));
+        }
+        String cardinal = policy.targetRef().startsWith("cardinal:")
+                ? policy.targetRef().substring("cardinal:".length())
+                : "cardinal".equals(policy.targetRef()) ? policy.direction() : "";
+        if (!cardinal.isBlank()) {
+            return CityTemplateOrientationSolver.FacingTarget.cardinal(
+                    policy.targetRef(), cardinalDirection(cardinal));
+        }
+        throw new IllegalArgumentException("D4_ARRAY_LAYOUT_ORIENTATION_TARGET_UNSUPPORTED: "
+                + policy.targetRef());
+    }
+
+    private CityTemplatePlacementGeometry.Direction cardinalDirection(String value) {
+        return switch (value.toLowerCase(Locale.ROOT)) {
+            case "north" -> CityTemplatePlacementGeometry.Direction.NORTH;
+            case "east" -> CityTemplatePlacementGeometry.Direction.EAST;
+            case "south" -> CityTemplatePlacementGeometry.Direction.SOUTH;
+            case "west" -> CityTemplatePlacementGeometry.Direction.WEST;
+            default -> throw new IllegalArgumentException("D4_ARRAY_LAYOUT_ORIENTATION_CARDINAL_INVALID: " + value);
+        };
+    }
+
+    private BlockPoint nearestWaterPoint(CityLandformReviewPackage reviewPackage, BlockPoint reference) {
+        BlockPoint nearest = null;
+        long nearestDistance = Long.MAX_VALUE;
+        int step = Math.max(1, reviewPackage.grid().cellStepBlocks());
+        for (LandformPatchSummary patch : reviewPackage.landformPatches()) {
+            if (patch.landformType() != LandformType.WATER) {
+                continue;
+            }
+            List<BlockPoint> waterPoints = patch.memberCells().isEmpty()
+                    ? List.of(patch.centerBlock())
+                    : patch.memberCells().stream()
+                    .map(cell -> new BlockPoint(cell.blockMinX() + step / 2, cell.blockMinZ() + step / 2))
+                    .toList();
+            for (BlockPoint waterPoint : waterPoints) {
+                long distance = distanceSquared(reference, waterPoint);
+                if (distance < nearestDistance) {
+                    nearest = waterPoint;
+                    nearestDistance = distance;
+                }
+            }
+        }
+        if (nearest == null) {
+            throw new IllegalArgumentException("D4_ARRAY_LAYOUT_ORIENTATION_TARGET_UNAVAILABLE: "
+                    + "nearest_water requires a D3 water patch.");
+        }
+        return nearest;
+    }
+
+    private JsonArray orientationDecisions(JsonArray placedItems) {
+        JsonArray decisions = new JsonArray();
+        for (JsonElement element : placedItems) {
+            if (element.isJsonObject() && element.getAsJsonObject().has("orientationDecision")) {
+                decisions.add(element.getAsJsonObject().getAsJsonObject("orientationDecision").deepCopy());
+            }
+        }
+        return decisions;
+    }
+
     private JsonObject templateRoadPoint(TemplateSelection template, BlockPoint anchor) {
         CityTemplatePlacementGeometry geometry = template.template().geometry(template.rotation(), template.mirror());
         if (geometry.roadEntrances().isEmpty()) {
@@ -1118,6 +1264,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
         target.addProperty("variantId", template.variantId());
         target.addProperty("rotation", selection.rotation().name());
         target.addProperty("mirror", selection.mirror().name());
+        target.addProperty("terrainPosePolicy", template.terrainPosePolicy());
         target.addProperty("materializationSource", CityStructureMaterializationPlanner.TEMPLATE_MATERIALIZATION_SOURCE);
         CityTemplatePlacementGeometry geometry = template.geometry(selection.rotation(), selection.mirror());
         // NBT source dimensions are the only local geometry. The world footprint is derived from them.
@@ -1136,6 +1283,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
         plan.addProperty("variantId", template.variantId());
         plan.addProperty("rotation", selection.rotation().name());
         plan.addProperty("mirror", selection.mirror().name());
+        plan.addProperty("terrainPosePolicy", template.terrainPosePolicy());
         plan.add("anchorBlock", anchor.asJson());
         plan.add("templateSize", sizeJson(geometry.sourceSize()));
         JsonObject transformed = new JsonObject();
@@ -2420,7 +2568,8 @@ public final class CityStructureArrayLayoutLoopPlanner {
             JsonObject item = elem.getAsJsonObject();
             JsonObject point = object(item, "anchorBlock");
             signature.append(stringValue(item, "structureId")).append('@')
-                    .append(intValue(point, "x", 0)).append(',').append(intValue(point, "z", 0)).append(';');
+                    .append(intValue(point, "x", 0)).append(',').append(intValue(point, "z", 0)).append('#')
+                    .append(stringValue(item, "rotation", "NONE")).append(';');
         }
         return signature.toString();
     }
@@ -3193,13 +3342,18 @@ public final class CityStructureArrayLayoutLoopPlanner {
         boolean isTemplate() {
             return template != null;
         }
+
+        DesiredItem withTemplate(TemplateSelection selectedTemplate) {
+            return new DesiredItem(itemId, structureId, kind, failurePolicy, selectedTemplate);
+        }
     }
 
     private record Accepted(DesiredItem desired,
                             BlockPoint point,
-                            BlockPoint anchorBlock,
-                            LandformPatchSummary patch,
-                            CityStructureCandidateEnvelope.Estimate estimate) {
+                             BlockPoint anchorBlock,
+                             LandformPatchSummary patch,
+                             CityStructureCandidateEnvelope.Estimate estimate,
+                             OrientationDecision orientationDecision) {
     }
 
     private record TemplatePlacement(BlockPoint anchorBlock, CityStructureCandidateEnvelope.Estimate estimate) {
@@ -3207,7 +3361,50 @@ public final class CityStructureArrayLayoutLoopPlanner {
 
     private record TemplateSelection(CityTemplateCatalog.Template template,
                                      CityTemplatePlacementGeometry.Rotation rotation,
-                                     CityTemplatePlacementGeometry.Mirror mirror) {
+                                     CityTemplatePlacementGeometry.Mirror mirror,
+                                     boolean rotationExplicit) {
+        TemplateSelection withRotation(CityTemplatePlacementGeometry.Rotation selectedRotation) {
+            return new TemplateSelection(template, selectedRotation, mirror, false);
+        }
+    }
+
+    private record TemplateRotationOption(TemplateSelection selection,
+                                          OrientationDecision orientationDecision) {
+    }
+
+    private record OrientationPolicy(boolean autoFrontage,
+                                     String targetRef,
+                                     String direction,
+                                     String frontageEntranceId) {
+        static OrientationPolicy disabled() {
+            return new OrientationPolicy(false, "", "", "");
+        }
+    }
+
+    private record OrientationDecision(String mode,
+                                       String targetRef,
+                                       String frontageEntranceId,
+                                       CityTemplatePlacementGeometry.Rotation selectedRotation,
+                                       CityTemplatePlacementGeometry.Direction frontageDirection,
+                                       double alignmentScore,
+                                       BlockPoint targetPoint,
+                                       CityTemplatePlacementGeometry.Direction targetDirection) {
+        JsonObject asJson() {
+            JsonObject obj = new JsonObject();
+            obj.addProperty("mode", mode);
+            obj.addProperty("targetRef", targetRef);
+            obj.addProperty("frontageEntranceId", frontageEntranceId);
+            obj.addProperty("selectedRotation", selectedRotation.name());
+            obj.addProperty("frontageDirection", frontageDirection.name());
+            obj.addProperty("alignmentScore", alignmentScore);
+            if (targetPoint != null) {
+                obj.add("targetPoint", targetPoint.asJson());
+            }
+            if (targetDirection != null) {
+                obj.addProperty("targetDirection", targetDirection.name());
+            }
+            return obj;
+        }
     }
 
     private record TemplateCatalogContext(CityTemplateCatalog catalog, JsonObject source) {
@@ -3247,7 +3444,10 @@ public final class CityStructureArrayLayoutLoopPlanner {
             CityTemplatePlacementGeometry.Mirror mirror = enumValue(source, "mirror",
                     template.allowedMirrors().get(0), CityTemplatePlacementGeometry.Mirror.class);
             template.geometry(rotation, mirror);
-            return new TemplateSelection(template, rotation, mirror);
+            boolean rotationExplicit = source.has("rotation")
+                    && !source.get("rotation").isJsonNull()
+                    && !source.get("rotation").getAsString().isBlank();
+            return new TemplateSelection(template, rotation, mirror, rotationExplicit);
         }
 
         private static <T extends Enum<T>> T enumValue(JsonObject source, String key, T fallback, Class<T> type) {

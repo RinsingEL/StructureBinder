@@ -56,9 +56,24 @@ class CityLandUseChunkExecutorTest {
         assertEquals(0, world.sampleCount);
     }
 
+    @Test
+    void fillsSmallPaveDepressionBeforeRaisedSurfaceAndBoundary() {
+        FakeWorld world = new FakeWorld();
+        world.columns.put("8,8", new CityLandUseChunkExecutor.ColumnSample(
+                62, "minecraft:dirt", true));
+
+        CityLandUseChunkExecutor.ExecutionResult result = executor.execute(microFillFragment(), world,
+                CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES);
+
+        assertEquals(CityLandUseChunkExecutor.Status.APPLIED, result.status());
+        assertEquals(List.of("8,63,8=minecraft:dirt", "8,64,8=minecraft:stone_bricks",
+                "8,65,8=minecraft:oak_fence"), world.writes);
+    }
+
     private static CityLandUseChunkCompiler.ChunkFragment fragment() {
         return new CityLandUseChunkCompiler.ChunkFragment(CityLandUseChunkCompiler.RESULT_SCHEMA,
                 "city", "hash", "palette", 0, 0, 4, 0, 0, 0,
+                null, List.of(),
                 List.of(new CityLandUseChunkCompiler.SurfaceOperation("area", "plaza", 0, 0,
                                 "minecraft:stone_bricks"),
                         new CityLandUseChunkCompiler.SurfaceOperation("area", "plaza", 1, 0,
@@ -69,9 +84,26 @@ class CityLandUseChunkExecutorTest {
                                 "minecraft:oak_fence")));
     }
 
+    private static CityLandUseChunkCompiler.ChunkFragment microFillFragment() {
+        List<CityLandUseChunkCompiler.GradingMaskCell> mask = new ArrayList<>();
+        for (int z = 0; z <= 15; z++) {
+            for (int x = 0; x <= 15; x++) {
+                mask.add(new CityLandUseChunkCompiler.GradingMaskCell("area", x, z));
+            }
+        }
+        return new CityLandUseChunkCompiler.ChunkFragment(CityLandUseChunkCompiler.RESULT_SCHEMA,
+                "city", "hash", "palette", 0, 0, 1, 0, 0, 0,
+                "minecraft:dirt", mask,
+                List.of(new CityLandUseChunkCompiler.SurfaceOperation("area", "plaza", 8, 8,
+                        "minecraft:stone_bricks")),
+                List.of(new CityLandUseChunkCompiler.BoundaryOperation("area", "plaza", 8, 8,
+                        "minecraft:oak_fence")));
+    }
+
     private static final class FakeWorld implements CityLandUseChunkExecutor.ExecutionWorld {
         private final Map<String, Boolean> natural = new HashMap<>();
         private final Map<String, Boolean> replaceable = new HashMap<>();
+        private final Map<String, CityLandUseChunkExecutor.ColumnSample> columns = new HashMap<>();
         private final List<String> writes = new ArrayList<>();
         private final List<String> restores = new ArrayList<>();
         private int failWriteIndex = -1;
@@ -80,8 +112,9 @@ class CityLandUseChunkExecutorTest {
         @Override
         public CityLandUseChunkExecutor.ColumnSample sampleColumn(int worldX, int worldZ) {
             sampleCount++;
-            return new CityLandUseChunkExecutor.ColumnSample(64, "minecraft:grass_block",
-                    natural.getOrDefault(worldX + "," + worldZ, true));
+            return columns.getOrDefault(worldX + "," + worldZ,
+                    new CityLandUseChunkExecutor.ColumnSample(64, "minecraft:grass_block",
+                            natural.getOrDefault(worldX + "," + worldZ, true)));
         }
 
         @Override

@@ -234,8 +234,9 @@ public final class LandUseSourceResolver {
             CardinalDirection direction = CardinalDirection.from(stringValue(entrance, "direction", ""), null);
             if (direction == null) continue;
             BlockPoint block = point(point);
-            gates.add(new LandUseAreaPlan.GateSlot(stringValue(entrance, "entranceId",
-                    anchorId + "_entrance_" + (++ordinal)), block, direction, anchorId));
+            String entranceId = stringValue(entrance, "entranceId", "entrance_" + (++ordinal));
+            // Template entrance IDs identify a local door and may repeat across placement instances.
+            gates.add(new LandUseAreaPlan.GateSlot(anchorId + "::" + entranceId, block, direction, anchorId));
         }
         return gates;
     }
