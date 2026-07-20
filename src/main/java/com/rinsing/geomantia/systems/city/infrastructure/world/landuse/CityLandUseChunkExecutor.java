@@ -1,24 +1,29 @@
 package com.rinsing.geomantia.systems.city.infrastructure.world.landuse;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.CrossCollisionBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
 /** Applies one owner-chunk LandUse fragment as a small rollback-capable transaction. */
 public final class CityLandUseChunkExecutor {
+    private static final List<Direction> HORIZONTAL_DIRECTIONS = List.of(
+            Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST);
 
     public ExecutionResult execute(CityLandUseChunkCompiler.ChunkFragment fragment,
                                    ExecutionWorld world,
@@ -254,7 +259,85 @@ public final class CityLandUseChunkExecutor {
     private record ColumnKey(int x, int z) {
     }
 
-    public static final class WorldGenExecutionWorld implements ExecutionWorld {
+    // WorldGenRegion ignores neighbor-update flags, so connecting blocks need explicit reconciliation.
+    static <S> boolean writeBlockState(BlockStateWriteAccess<S> world, BlockPos pos, S requested) {
+        Objects.requireNonNull(world, "world");
+        Objects.requireNonNull(pos, "pos");
+        Objects.requireNonNull(requested, "requested");
+
+        Map<BlockPos, S> snapshots = new LinkedHashMap<>();
+        snapshots.put(pos, world.getBlockState(pos));
+        for (Direction direction : HORIZONTAL_DIRECTIONS) {
+            BlockPos neighborPos = pos.relative(direction);
+            snapshots.put(neighborPos, world.getBlockState(neighborPos));
+        }
+
+        S resolved = world.updateFromNeighbourShapes(requested, pos);
+        if (!world.setBlock(pos, resolved, Block.UPDATE_ALL)) {
+            return false;
+        }
+        if (!reconcileHorizontalConnections(world, pos)) {
+            restoreSnapshots(world, snapshots);
+            return false;
+        }
+
+        S current = world.getBlockState(pos);
+        S reconciled = world.updateFromNeighbourShapes(current, pos);
+        if (!current.equals(reconciled)
+                && !world.setBlock(pos, reconciled, Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE)) {
+            restoreSnapshots(world, snapshots);
+            return false;
+        }
+        if (!world.getBlockState(pos).equals(reconciled)) {
+            restoreSnapshots(world, snapshots);
+            return false;
+        }
+        return true;
+    }
+
+    private static <S> boolean reconcileHorizontalConnections(BlockStateWriteAccess<S> world, BlockPos pos) {
+        for (Direction direction : HORIZONTAL_DIRECTIONS) {
+            BlockPos neighborPos = pos.relative(direction);
+            S neighbor = world.getBlockState(neighborPos);
+            if (!world.isHorizontalConnectionBlock(neighbor)) {
+                continue;
+            }
+            S reconciled = world.updateFromNeighbourShapes(neighbor, neighborPos);
+            if (neighbor.equals(reconciled)) {
+                continue;
+            }
+            if (!world.ensureCanWrite(neighborPos)
+                    || !world.setBlock(neighborPos, reconciled,
+                    Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static <S> void restoreSnapshots(BlockStateWriteAccess<S> world, Map<BlockPos, S> snapshots) {
+        List<Map.Entry<BlockPos, S>> reverse = new ArrayList<>(snapshots.entrySet());
+        Collections.reverse(reverse);
+        for (Map.Entry<BlockPos, S> entry : reverse) {
+            world.setBlock(entry.getKey(), entry.getValue(),
+                    Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
+        }
+    }
+
+    interface BlockStateWriteAccess<S> {
+        S getBlockState(BlockPos pos);
+
+        S updateFromNeighbourShapes(S state, BlockPos pos);
+
+        boolean isHorizontalConnectionBlock(S state);
+
+        boolean ensureCanWrite(BlockPos pos);
+
+        boolean setBlock(BlockPos pos, S state, int flags);
+    }
+
+    public static final class WorldGenExecutionWorld
+            implements ExecutionWorld, BlockStateWriteAccess<BlockState> {
         private final WorldGenLevel level;
 
         public WorldGenExecutionWorld(WorldGenLevel level) {
@@ -264,7 +347,7 @@ public final class CityLandUseChunkExecutor {
         @Override
         public ColumnSample sampleColumn(int worldX, int worldZ) {
             int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, worldX, worldZ) - 1;
-            BlockState state = level.getBlockState(new BlockPos(worldX, y, worldZ));
+            BlockState state = getBlockState(new BlockPos(worldX, y, worldZ));
             ResourceLocation key = BuiltInRegistries.BLOCK.getKey(state.getBlock());
             return new ColumnSample(y, key.toString(), isNaturalSurface(state));
         }
@@ -277,12 +360,12 @@ public final class CityLandUseChunkExecutor {
 
         @Override
         public boolean ensureCanWrite(int worldX, int y, int worldZ) {
-            return level.ensureCanWrite(new BlockPos(worldX, y, worldZ));
+            return ensureCanWrite(new BlockPos(worldX, y, worldZ));
         }
 
         @Override
         public TargetState inspect(int worldX, int y, int worldZ) {
-            BlockState state = level.getBlockState(new BlockPos(worldX, y, worldZ));
+            BlockState state = getBlockState(new BlockPos(worldX, y, worldZ));
             return new TargetState(state, state.isAir() || state.canBeReplaced());
         }
 
@@ -293,10 +376,7 @@ public final class CityLandUseChunkExecutor {
                 return false;
             }
             BlockPos pos = new BlockPos(worldX, y, worldZ);
-            BlockState expected = Block.updateFromNeighbourShapes(
-                    BuiltInRegistries.BLOCK.get(key).defaultBlockState(), level, pos);
-            level.setBlock(pos, expected, Block.UPDATE_ALL);
-            return level.getBlockState(pos).equals(expected);
+            return writeBlockState(this, pos, BuiltInRegistries.BLOCK.get(key).defaultBlockState());
         }
 
         @Override
@@ -304,9 +384,32 @@ public final class CityLandUseChunkExecutor {
             if (!(snapshot instanceof BlockState expected)) {
                 return false;
             }
-            BlockPos pos = new BlockPos(worldX, y, worldZ);
-            level.setBlock(pos, expected, Block.UPDATE_ALL);
-            return level.getBlockState(pos).equals(expected);
+            return writeBlockState(this, new BlockPos(worldX, y, worldZ), expected);
+        }
+
+        @Override
+        public BlockState getBlockState(BlockPos pos) {
+            return level.getBlockState(pos);
+        }
+
+        @Override
+        public BlockState updateFromNeighbourShapes(BlockState state, BlockPos pos) {
+            return Block.updateFromNeighbourShapes(state, level, pos);
+        }
+
+        @Override
+        public boolean isHorizontalConnectionBlock(BlockState state) {
+            return state.getBlock() instanceof CrossCollisionBlock;
+        }
+
+        @Override
+        public boolean ensureCanWrite(BlockPos pos) {
+            return level.ensureCanWrite(pos);
+        }
+
+        @Override
+        public boolean setBlock(BlockPos pos, BlockState state, int flags) {
+            return level.setBlock(pos, state, flags);
         }
 
         static boolean isNaturalSurface(BlockState state) {
