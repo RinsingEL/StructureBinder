@@ -1,37 +1,32 @@
 package com.rinsing.geomantia.systems.city.application.landuse;
 
-import com.rinsing.geomantia.systems.city.application.terrain.CityContinuousTerrainRunPlanner;
+import com.rinsing.geomantia.systems.city.algorithm.landuse.ContourBandSurfaceClassifier;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseAreaPlan;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseSeedGroup;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseSurfaceSettings;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseTerrainField;
 import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
 import com.rinsing.geomantia.systems.city.domain.model.BlockPoint;
-import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationContentCatalog;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
-/** Compiles final LandUse masks into deterministic bulk surface-print recipes. */
+/** Compiles final LandUse masks into deterministic, chunk-independent surface-print recipes. */
 public final class CityLandUseSurfacePrintPlanner {
     public static final int CULTIVATE_REPEAT_PERIOD_BLOCKS = 13;
     public static final int CULTIVATE_FIELD_BEFORE_BLOCKS = 5;
     public static final int CULTIVATE_CHANNEL_WIDTH_BLOCKS = 3;
     public static final int CULTIVATE_FIELD_AFTER_BLOCKS = 5;
 
-    private static final CityLandUseSurfaceRunCompiler.TerrainPolicy DEFAULT_TERRAIN_POLICY =
-            new CityLandUseSurfaceRunCompiler.TerrainPolicy(1, false, 2, 8,
-                    CityContinuousTerrainRunPlanner.FoundationMode.FILL_ONLY, 2, 1);
-
     public CityLandUseSurfacePrintPlan plan(LandUseAreaPlan landUsePlan,
                                             List<LandUseSeedGroup> seedGroups,
-                                            LandUseTerrainField terrainField,
-                                            CityDecorationContentCatalog catalog) {
+                                            LandUseTerrainField terrainField) {
         Objects.requireNonNull(landUsePlan, "landUsePlan");
         Objects.requireNonNull(seedGroups, "seedGroups");
         Objects.requireNonNull(terrainField, "terrainField");
@@ -52,168 +47,111 @@ public final class CityLandUseSurfacePrintPlanner {
             LandUseSurfaceSettings settings = settingsFor(area, groups);
             if (!settings.surfacePrintEnabled()) continue;
             AreaBounds bounds = bounds(area.memberSpans());
-            CityLandUseSurfaceRunCompiler.WorldAxis axis = bounds.width() >= bounds.depth()
-                    ? CityLandUseSurfaceRunCompiler.WorldAxis.X
-                    : CityLandUseSurfaceRunCompiler.WorldAxis.Z;
-            BlockPoint origin = new BlockPoint(bounds.minX(), bounds.minZ());
-            BlockPoint directionCenter = settings.directionMode() == LandUseSurfaceSettings.DirectionMode.RADIAL
-                    ? settings.directionCenter() == null ? centroid(area.memberSpans()) : settings.directionCenter()
+            BlockPoint algorithmAnchor = settings.surfaceAlgorithm()
+                    == LandUseSurfaceSettings.SurfaceAlgorithm.CONTOUR_BANDS
+                    ? settings.algorithmAnchor() == null ? centroid(area.memberSpans()) : settings.algorithmAnchor()
                     : null;
             String printAreaId = area.areaId() + "/surface/" + bounds.minX() + '_' + bounds.minZ()
                     + '_' + stableAreaOrdinal;
             List<LandUseAreaPlan.ScanlineSpan> exclusions = exclusions(landUsePlan, area);
-            CityLandUseSurfacePrintPlan.Recipe recipe = recipe(printAreaId, area, settings, exclusions,
-                    axis, origin, directionCenter, terrainField, catalog);
+            CityLandUseSurfacePrintPlan.Recipe recipe = switch (settings.surfaceAlgorithm()) {
+                case UNIFORM -> new CityLandUseSurfacePrintPlan.UniformRecipe(settings.surfaceBlockId());
+                case CONTOUR_BANDS -> contourBands(area, settings, exclusions,
+                        Objects.requireNonNull(algorithmAnchor, "algorithmAnchor"), terrainField);
+            };
             prints.add(new CityLandUseSurfacePrintPlan.AreaPrint(printAreaId, area.areaId(),
-                    area.sourceGroupIds(), settings, area.memberSpans(), exclusions, origin, axis,
-                    settings.directionMode(), directionCenter, recipe));
+                    area.sourceGroupIds(), settings, area.memberSpans(), exclusions,
+                    settings.surfaceAlgorithm(), algorithmAnchor, recipe));
         }
         prints.sort(Comparator.comparing(CityLandUseSurfacePrintPlan.AreaPrint::printAreaId));
-        String catalogHash = prints.stream().anyMatch(value ->
-                value.recipe() instanceof CityLandUseSurfacePrintPlan.CultivateLinedRecipe)
-                ? requireCatalog(catalog).catalogHash() : catalog == null ? "" : catalog.catalogHash();
         CityLandUseSurfacePrintPlan raw = new CityLandUseSurfacePrintPlan(
                 CityLandUseSurfacePrintPlan.CURRENT_SCHEMA_VERSION, landUsePlan.cityId(),
-                landUsePlan.planHash(), catalogHash, "", prints);
+                landUsePlan.planHash(), "", prints);
         return new CityLandUseSurfacePrintPlanCodec().withComputedHash(raw);
     }
 
-    private static CityLandUseSurfacePrintPlan.Recipe recipe(
-            String printAreaId,
+    private static CityLandUseSurfacePrintPlan.ContourBandsRecipe contourBands(
             LandUseAreaPlan.Area area,
             LandUseSurfaceSettings settings,
             List<LandUseAreaPlan.ScanlineSpan> exclusions,
-            CityLandUseSurfaceRunCompiler.WorldAxis axis,
-            BlockPoint origin,
-            BlockPoint directionCenter,
-            LandUseTerrainField terrainField,
-            CityDecorationContentCatalog catalog) {
-        return switch (settings.compatibilityCategory()) {
-            case "PAVE" -> new CityLandUseSurfacePrintPlan.UniformRecipe(settings.surfaceBlockId());
-            case "CULTIVATE" -> cultivate(printAreaId, area, settings, exclusions, axis, origin,
-                    directionCenter, terrainField, requireCatalog(catalog));
-            default -> throw new IllegalArgumentException(
-                    "CITY_LAND_USE_SURFACE_PRINT_COMPATIBILITY_UNSUPPORTED:"
-                            + settings.compatibilityCategory());
-        };
+            BlockPoint anchor,
+            LandUseTerrainField terrainField) {
+        ContourBandSurfaceClassifier.Result result = new ContourBandSurfaceClassifier().classify(
+                new ContourBandSurfaceClassifier.Request(area.memberSpans(), exclusions, terrainField, anchor,
+                        CULTIVATE_FIELD_BEFORE_BLOCKS, CULTIVATE_CHANNEL_WIDTH_BLOCKS,
+                        CULTIVATE_FIELD_AFTER_BLOCKS));
+        List<CityLandUseSurfacePrintPlan.BandSpan> frozenBands = freezeBandsWithEndCaps(result.spans());
+        return new CityLandUseSurfacePrintPlan.ContourBandsRecipe(settings.surfaceBlockId(),
+                settings.cropBlockId(), settings.channelBankBlockId(), settings.channelWaterBlockId(),
+                settings.channelBankOverlayBlockId(), result.repeatPeriodBlocks(),
+                CULTIVATE_FIELD_BEFORE_BLOCKS, CULTIVATE_CHANNEL_WIDTH_BLOCKS,
+                CULTIVATE_FIELD_AFTER_BLOCKS,
+                CityLandUseSurfacePrintPlan.ClassificationMode.valueOf(result.mode().name()),
+                result.anchor(), frozenBands);
     }
 
-    private static CityLandUseSurfacePrintPlan.CultivateLinedRecipe cultivate(
-            String printAreaId,
-            LandUseAreaPlan.Area area,
-            LandUseSurfaceSettings settings,
-            List<LandUseAreaPlan.ScanlineSpan> exclusions,
-            CityLandUseSurfaceRunCompiler.WorldAxis axis,
-            BlockPoint origin,
-            BlockPoint directionCenter,
-            LandUseTerrainField terrainField,
-            CityDecorationContentCatalog catalog) {
-        CityLandUseSurfaceRunCompiler.PrefabSpec straight = prefab(catalog,
-                CityLandUseSurfaceRunCompiler.STRAIGHT_CONTENT_REF);
-        CityLandUseSurfaceRunCompiler.PrefabSpec endCap = prefab(catalog,
-                CityLandUseSurfaceRunCompiler.END_CAP_CONTENT_REF);
-        CityDecorationContentCatalog.Content straightContent = catalog.requireContent(straight.contentRef());
-        if (!CityLandUseSurfaceRunCompiler.END_CAP_CONTENT_REF.equals(
-                straightContent.terrainDropFallbackContentRef())) {
-            throw new IllegalArgumentException("CITY_LAND_USE_SURFACE_PRINT_ENDCAP_FALLBACK_MISMATCH");
-        }
-        List<Integer> requiredRotations = settings.directionMode() == LandUseSurfaceSettings.DirectionMode.RADIAL
-                ? List.of(0, 90, 180, 270)
-                : List.of(axis == CityLandUseSurfaceRunCompiler.WorldAxis.Z ? 0 : 270);
-        CityDecorationContentCatalog.Content endCapContent = catalog.requireContent(endCap.contentRef());
-        for (int requiredRotation : requiredRotations) {
-            if (!straightContent.allowedRotations().contains(requiredRotation)
-                    || !endCapContent.allowedRotations().contains(requiredRotation)) {
-                throw new IllegalArgumentException("CITY_LAND_USE_SURFACE_PRINT_PREFAB_ROTATION_UNSUPPORTED:"
-                        + requiredRotation);
-            }
-        }
-        CityLandUseSurfaceRunCompiler compiler = new CityLandUseSurfaceRunCompiler();
-        CityContinuousTerrainRunPlanner.TerrainView terrain = terrainView(terrainField);
-        List<CityLandUseSurfaceRunCompiler.Run> compiledRuns = settings.directionMode()
-                == LandUseSurfaceSettings.DirectionMode.RADIAL
-                ? radialRuns(compiler, printAreaId, area.memberSpans(), exclusions,
-                Objects.requireNonNull(directionCenter, "directionCenter"), origin, straight, endCap, terrain)
-                : compiler.compile(new CityLandUseSurfaceRunCompiler.Request(
-                printAreaId, area.memberSpans(), exclusions, axis, origin,
-                CULTIVATE_REPEAT_PERIOD_BLOCKS, CULTIVATE_FIELD_BEFORE_BLOCKS,
-                straight, endCap, DEFAULT_TERRAIN_POLICY), terrain).runs();
-        List<CityLandUseSurfacePrintPlan.SurfaceRun> runs = compiledRuns.stream()
-                .map(CityLandUseSurfacePrintPlanner::freeze).toList();
-        List<CityContinuousTerrainRunPlanner.FoundationSegment> foundationSegments = compiledRuns.stream()
-                .flatMap(run -> run.foundationSegments().stream()).toList();
-        return new CityLandUseSurfacePrintPlan.CultivateLinedRecipe(settings.surfaceBlockId(),
-                settings.cropBlockId(), CULTIVATE_REPEAT_PERIOD_BLOCKS, CULTIVATE_FIELD_BEFORE_BLOCKS,
-                CULTIVATE_CHANNEL_WIDTH_BLOCKS, CULTIVATE_FIELD_AFTER_BLOCKS,
-                CULTIVATE_FIELD_BEFORE_BLOCKS, straight, endCap, DEFAULT_TERRAIN_POLICY, runs,
-                foundationSegments);
-    }
-
-    private static List<CityLandUseSurfaceRunCompiler.Run> radialRuns(
-            CityLandUseSurfaceRunCompiler compiler,
-            String printAreaId,
-            List<LandUseAreaPlan.ScanlineSpan> members,
-            List<LandUseAreaPlan.ScanlineSpan> exclusions,
-            BlockPoint center,
-            BlockPoint fallbackOrigin,
-            CityLandUseSurfaceRunCompiler.PrefabSpec straight,
-            CityLandUseSurfaceRunCompiler.PrefabSpec endCap,
-            CityContinuousTerrainRunPlanner.TerrainView terrain) {
-        List<CityLandUseSurfaceRunCompiler.Run> result = new ArrayList<>();
-        for (RadialSector sector : RadialSector.values()) {
-            List<LandUseAreaPlan.ScanlineSpan> sectorMembers = sectorSpans(members, center, sector);
-            if (sectorMembers.isEmpty()) continue;
-            BlockPoint patternOrigin = radialPatternOrigin(center, fallbackOrigin, sector.axis());
-            CityLandUseSurfaceRunCompiler.Plan compiled = compiler.compile(
-                    new CityLandUseSurfaceRunCompiler.Request(
-                            printAreaId + "/radial/" + sector.id(), sectorMembers, exclusions,
-                            sector.axis(), patternOrigin, CULTIVATE_REPEAT_PERIOD_BLOCKS,
-                            CULTIVATE_FIELD_BEFORE_BLOCKS, sector.directionSign(), straight, endCap,
-                            DEFAULT_TERRAIN_POLICY), terrain);
-            result.addAll(compiled.runs());
-        }
-        result.sort(Comparator.comparing(CityLandUseSurfaceRunCompiler.Run::runId));
-        return List.copyOf(result);
-    }
-
-    private static BlockPoint radialPatternOrigin(BlockPoint center,
-                                                   BlockPoint fallbackOrigin,
-                                                   CityLandUseSurfaceRunCompiler.WorldAxis axis) {
-        int phaseShift = CULTIVATE_FIELD_BEFORE_BLOCKS + CULTIVATE_CHANNEL_WIDTH_BLOCKS / 2;
-        return axis == CityLandUseSurfaceRunCompiler.WorldAxis.X
-                ? new BlockPoint(fallbackOrigin.x(), Math.subtractExact(center.z(), phaseShift))
-                : new BlockPoint(Math.subtractExact(center.x(), phaseShift), fallbackOrigin.z());
-    }
-
-    private static List<LandUseAreaPlan.ScanlineSpan> sectorSpans(
-            List<LandUseAreaPlan.ScanlineSpan> members,
-            BlockPoint center,
-            RadialSector sector) {
-        Map<Integer, List<Integer>> xsByZ = new LinkedHashMap<>();
-        for (LandUseAreaPlan.ScanlineSpan span : members) {
+    static List<CityLandUseSurfacePrintPlan.BandSpan> freezeBandsWithEndCaps(
+            List<ContourBandSurfaceClassifier.BandSpan> source) {
+        Map<Cell, CityLandUseSurfacePrintPlan.BandRole> roles = new HashMap<>();
+        Set<Cell> water = new HashSet<>();
+        for (ContourBandSurfaceClassifier.BandSpan span : source) {
+            CityLandUseSurfacePrintPlan.BandRole role = CityLandUseSurfacePrintPlan.BandRole.valueOf(
+                    span.role().name());
             for (int x = span.minX(); x <= span.maxX(); x++) {
-                if (sector.contains(x, span.z(), center)) {
-                    xsByZ.computeIfAbsent(span.z(), ignored -> new ArrayList<>()).add(x);
-                }
+                Cell cell = new Cell(x, span.z());
+                roles.put(cell, role);
+                if (role == CityLandUseSurfacePrintPlan.BandRole.CHANNEL_WATER) water.add(cell);
             }
         }
-        List<LandUseAreaPlan.ScanlineSpan> result = new ArrayList<>();
-        xsByZ.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach(entry -> {
-            List<Integer> xs = entry.getValue().stream().distinct().sorted().toList();
-            if (xs.isEmpty()) return;
-            int start = xs.get(0);
-            int previous = start;
-            for (int index = 1; index < xs.size(); index++) {
-                int x = xs.get(index);
-                if (x != previous + 1) {
-                    result.add(new LandUseAreaPlan.ScanlineSpan(entry.getKey(), start, previous));
-                    start = x;
-                }
-                previous = x;
+        markEndCaps(roles, water);
+        List<Cell> cells = roles.keySet().stream().sorted(Cell.STABLE_ORDER).toList();
+        List<CityLandUseSurfacePrintPlan.BandSpan> result = new ArrayList<>();
+        int index = 0;
+        while (index < cells.size()) {
+            Cell start = cells.get(index);
+            CityLandUseSurfacePrintPlan.BandRole role = roles.get(start);
+            int maxX = start.x();
+            index++;
+            while (index < cells.size()) {
+                Cell next = cells.get(index);
+                if (next.z() != start.z() || next.x() != maxX + 1 || roles.get(next) != role) break;
+                maxX = next.x();
+                index++;
             }
-            result.add(new LandUseAreaPlan.ScanlineSpan(entry.getKey(), start, previous));
-        });
+            result.add(new CityLandUseSurfacePrintPlan.BandSpan(start.z(), start.x(), maxX, role));
+        }
         return List.copyOf(result);
+    }
+
+    private static void markEndCaps(
+            Map<Cell, CityLandUseSurfacePrintPlan.BandRole> roles,
+            Set<Cell> water) {
+        Set<Cell> remaining = new HashSet<>(water);
+        while (!remaining.isEmpty()) {
+            Cell first = remaining.stream().min(Cell.STABLE_ORDER).orElseThrow();
+            List<Cell> component = new ArrayList<>();
+            java.util.ArrayDeque<Cell> queue = new java.util.ArrayDeque<>();
+            remaining.remove(first);
+            queue.add(first);
+            while (!queue.isEmpty()) {
+                Cell cell = queue.removeFirst();
+                component.add(cell);
+                for (Cell neighbor : fourNeighbors(cell)) {
+                    if (remaining.remove(neighbor)) queue.addLast(neighbor);
+                }
+            }
+            List<Cell> endpoints = component.stream()
+                    .filter(cell -> fourNeighbors(cell).stream().filter(water::contains).count() <= 1)
+                    .sorted(Cell.STABLE_ORDER).toList();
+            for (Cell endpoint : endpoints) {
+                roles.put(endpoint, CityLandUseSurfacePrintPlan.BandRole.CHANNEL_END_CAP);
+            }
+        }
+    }
+
+    private static List<Cell> fourNeighbors(Cell cell) {
+        return List.of(new Cell(cell.x() - 1, cell.z()), new Cell(cell.x() + 1, cell.z()),
+                new Cell(cell.x(), cell.z() - 1), new Cell(cell.x(), cell.z() + 1));
     }
 
     private static BlockPoint centroid(List<LandUseAreaPlan.ScanlineSpan> spans) {
@@ -221,11 +159,10 @@ public final class CityLandUseSurfacePrintPlanner {
         long sumZ = 0;
         long count = 0;
         for (LandUseAreaPlan.ScanlineSpan span : spans) {
-            for (int x = span.minX(); x <= span.maxX(); x++) {
-                sumX += x;
-                sumZ += span.z();
-                count++;
-            }
+            long width = (long) span.maxX() - span.minX() + 1;
+            sumX += ((long) span.minX() + span.maxX()) * width / 2;
+            sumZ += (long) span.z() * width;
+            count += width;
         }
         if (count == 0) {
             throw new IllegalArgumentException("CITY_LAND_USE_SURFACE_PRINT_MEMBER_SPANS_REQUIRED");
@@ -236,43 +173,7 @@ public final class CityLandUseSurfacePrintPlanner {
     private static int roundedMean(long sum, long count) {
         long floor = Math.floorDiv(sum, count);
         long remainder = Math.floorMod(sum, count);
-        long rounded = remainder >= (count + 1) / 2 ? floor + 1 : floor;
-        return Math.toIntExact(rounded);
-    }
-
-    private static CityLandUseSurfacePrintPlan.SurfaceRun freeze(CityLandUseSurfaceRunCompiler.Run run) {
-        List<CityLandUseSurfacePrintPlan.SurfacePlacement> placements = run.placements().stream()
-                .map(CityLandUseSurfacePrintPlanner::freeze).toList();
-        return new CityLandUseSurfacePrintPlan.SurfaceRun(run.runId(), run.continuationAxis(),
-                run.crossCoordinate(), placements, run.terminationOrdinal(), run.terminationReasonCode(),
-                run.foundationSegments());
-    }
-
-    private static CityLandUseSurfacePrintPlan.SurfacePlacement freeze(
-            CityLandUseSurfaceRunCompiler.Placement value) {
-        return new CityLandUseSurfacePrintPlan.SurfacePlacement(value.placementId(), value.runId(),
-                value.runOrdinal(), value.terrainSamplePoint(), value.placementAnchor(),
-                value.rotationDegrees(), value.footprint(), value.surfaceY(), value.targetY(), value.water(),
-                value.terrainClass(), value.decision(), value.contentRef(), value.contentHash(),
-                value.appliedContentRef(), value.appliedContentHash(), value.reasonCode());
-    }
-
-    private static CityLandUseSurfaceRunCompiler.PrefabSpec prefab(
-            CityDecorationContentCatalog catalog, String contentRef) {
-        CityDecorationContentCatalog.Content content = catalog.requireContent(contentRef);
-        if (content.plant() || !"replace_surface".equals(content.placementMode())) {
-            throw new IllegalArgumentException("CITY_LAND_USE_SURFACE_PRINT_PREFAB_METADATA_INVALID:"
-                    + contentRef);
-        }
-        return new CityLandUseSurfaceRunCompiler.PrefabSpec(content.contentId(), content.contentHash(),
-                content.size().widthBlocks(), content.size().heightBlocks(), content.size().depthBlocks());
-    }
-
-    private static CityContinuousTerrainRunPlanner.TerrainView terrainView(LandUseTerrainField terrainField) {
-        return (worldX, worldZ) -> terrainField.cellAt(worldX, worldZ)
-                .map(cell -> new CityContinuousTerrainRunPlanner.TerrainSample(
-                        (int) Math.round(cell.elevation()), cell.water(), cell.sampled()))
-                .orElseGet(() -> new CityContinuousTerrainRunPlanner.TerrainSample(0, false, false));
+        return Math.toIntExact(remainder >= (count + 1) / 2 ? floor + 1 : floor);
     }
 
     private static LandUseSurfaceSettings settingsFor(LandUseAreaPlan.Area area,
@@ -319,75 +220,18 @@ public final class CityLandUseSurfacePrintPlanner {
         if (spans.isEmpty()) {
             throw new IllegalArgumentException("CITY_LAND_USE_SURFACE_PRINT_MEMBER_SPANS_REQUIRED");
         }
-        int minX = Integer.MAX_VALUE;
-        int minZ = Integer.MAX_VALUE;
-        int maxX = Integer.MIN_VALUE;
-        int maxZ = Integer.MIN_VALUE;
-        for (LandUseAreaPlan.ScanlineSpan span : spans) {
-            minX = Math.min(minX, span.minX());
-            maxX = Math.max(maxX, span.maxX());
-            minZ = Math.min(minZ, span.z());
-            maxZ = Math.max(maxZ, span.z());
-        }
-        return new AreaBounds(minX, minZ, maxX, maxZ);
-    }
-
-    private static CityDecorationContentCatalog requireCatalog(CityDecorationContentCatalog catalog) {
-        if (catalog == null) {
-            throw new IllegalArgumentException("CITY_LAND_USE_SURFACE_PRINT_CATALOG_REQUIRED");
-        }
-        return catalog;
+        return new AreaBounds(
+                spans.stream().mapToInt(LandUseAreaPlan.ScanlineSpan::minX).min().orElseThrow(),
+                spans.stream().mapToInt(LandUseAreaPlan.ScanlineSpan::z).min().orElseThrow(),
+                spans.stream().mapToInt(LandUseAreaPlan.ScanlineSpan::maxX).max().orElseThrow(),
+                spans.stream().mapToInt(LandUseAreaPlan.ScanlineSpan::z).max().orElseThrow());
     }
 
     private record AreaBounds(int minX, int minZ, int maxX, int maxZ) {
-        int width() {
-            return maxX - minX + 1;
-        }
-
-        int depth() {
-            return maxZ - minZ + 1;
-        }
     }
 
-    private enum RadialSector {
-        EAST("east", CityLandUseSurfaceRunCompiler.WorldAxis.X, 1),
-        WEST("west", CityLandUseSurfaceRunCompiler.WorldAxis.X, -1),
-        SOUTH("south", CityLandUseSurfaceRunCompiler.WorldAxis.Z, 1),
-        NORTH("north", CityLandUseSurfaceRunCompiler.WorldAxis.Z, -1);
-
-        private final String id;
-        private final CityLandUseSurfaceRunCompiler.WorldAxis axis;
-        private final int directionSign;
-
-        RadialSector(String id, CityLandUseSurfaceRunCompiler.WorldAxis axis, int directionSign) {
-            this.id = id;
-            this.axis = axis;
-            this.directionSign = directionSign;
-        }
-
-        private String id() {
-            return id;
-        }
-
-        private CityLandUseSurfaceRunCompiler.WorldAxis axis() {
-            return axis;
-        }
-
-        private int directionSign() {
-            return directionSign;
-        }
-
-        private boolean contains(int x, int z, BlockPoint center) {
-            long dx = (long) x - center.x();
-            long dz = (long) z - center.z();
-            long absX = Math.abs(dx);
-            long absZ = Math.abs(dz);
-            return switch (this) {
-                case EAST -> dx >= 0 && absX >= absZ;
-                case WEST -> dx < 0 && absX >= absZ;
-                case SOUTH -> dz >= 0 && absZ > absX;
-                case NORTH -> dz < 0 && absZ > absX;
-            };
-        }
+    private record Cell(int x, int z) {
+        private static final Comparator<Cell> STABLE_ORDER = Comparator.comparingInt(Cell::z)
+                .thenComparingInt(Cell::x);
     }
 }

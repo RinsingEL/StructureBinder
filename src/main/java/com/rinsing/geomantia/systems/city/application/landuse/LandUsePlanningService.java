@@ -10,7 +10,6 @@ import com.rinsing.geomantia.systems.city.domain.landuse.LandUseAreaPlan;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseSeedGroup;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseTerrainField;
 import com.rinsing.geomantia.systems.city.domain.landuse.rules.LandUseRuleCatalog;
-import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationContentCatalog;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,17 +37,6 @@ public final class LandUsePlanningService {
                        JsonObject d5ReservationMaskPlan,
                        LandUseTerrainField terrainField,
                        LandUseRuleCatalog ruleCatalog) {
-        return plan(structureMaterializationPlan, landUseIntentPlan, functionalArrayZones,
-                d5ReservationMaskPlan, terrainField, ruleCatalog, null);
-    }
-
-    public Result plan(JsonObject structureMaterializationPlan,
-                       JsonObject landUseIntentPlan,
-                       JsonObject functionalArrayZones,
-                       JsonObject d5ReservationMaskPlan,
-                       LandUseTerrainField terrainField,
-                       LandUseRuleCatalog ruleCatalog,
-                       CityDecorationContentCatalog decorationCatalog) {
         LandUseSourceResolver.Resolution sources = new LandUseSourceResolver().resolve(
                 structureMaterializationPlan, landUseIntentPlan, functionalArrayZones, ruleCatalog);
         LandUseCorridorExclusionResolver corridorResolver = new LandUseCorridorExclusionResolver();
@@ -84,7 +72,7 @@ public final class LandUsePlanningService {
                 geometry.unclaimedSpans(), corridors, warnings);
         LandUseAreaPlan plan = new LandUseAreaPlanCodec().withComputedHash(rawPlan);
         CityLandUseSurfacePrintPlan surfacePrintPlan = new CityLandUseSurfacePrintPlanner().plan(
-                plan, sources.seedGroups(), terrainField, decorationCatalog);
+                plan, sources.seedGroups(), terrainField);
         return new Result(plan, trace(sources, probe, expansion, connectionOutcomes),
                 quality(plan, sources, expansion, connectionOutcomes), surfacePrintPlan);
     }
@@ -106,13 +94,13 @@ public final class LandUsePlanningService {
             value.addProperty("cropBlockId", group.surfaceSettings().cropBlockId());
             value.addProperty("surfaceCompatibilityCategory",
                     group.surfaceSettings().compatibilityCategory());
-            value.addProperty("directionMode",
-                    group.surfaceSettings().directionMode().name().toLowerCase());
-            if (group.surfaceSettings().directionCenter() != null) {
+            value.addProperty("surfaceAlgorithm",
+                    group.surfaceSettings().surfaceAlgorithm().name().toLowerCase());
+            if (group.surfaceSettings().algorithmAnchor() != null) {
                 JsonObject center = new JsonObject();
-                center.addProperty("x", group.surfaceSettings().directionCenter().x());
-                center.addProperty("z", group.surfaceSettings().directionCenter().z());
-                value.add("directionCenter", center);
+                center.addProperty("x", group.surfaceSettings().algorithmAnchor().x());
+                center.addProperty("z", group.surfaceSettings().algorithmAnchor().z());
+                value.add("algorithmAnchor", center);
             }
             value.addProperty("surfaceCompatibilityKey",
                     LandUseAutoConnectionPlanner.surfaceCompatibilityKey(group));

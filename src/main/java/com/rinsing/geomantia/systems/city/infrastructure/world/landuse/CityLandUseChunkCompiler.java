@@ -4,7 +4,6 @@ import com.google.gson.JsonObject;
 import com.rinsing.geomantia.systems.city.application.landuse.CityLandUseSurfacePrintPlan;
 import com.rinsing.geomantia.systems.city.application.landuse.CityLandUseSurfacePrintPlanCodec;
 import com.rinsing.geomantia.systems.city.application.landuse.LandUseAreaPlanCodec;
-import com.rinsing.geomantia.systems.city.application.terrain.CityContinuousTerrainRunPlanner;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseAreaPlan;
 import com.rinsing.geomantia.systems.city.domain.landuse.SurfacePolicy;
 import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
@@ -28,11 +27,9 @@ import java.util.Set;
 /** Pure block-to-owner compiler. It never samples terrain and never writes a level. */
 public final class CityLandUseChunkCompiler {
     public static final String RESULT_SCHEMA = "city_land_use_chunk_fragment.v0.2";
-    public static final String PLAN_SCHEMA = "city_land_use_area_plan.v0.1";
     public static final String MICRO_FILL_SUBGRADE_KEY = "MICRO_FILL_SUBGRADE";
 
     private final MaterialPalette palette;
-    private final CityLandUseSurfacePrinter surfacePrinter = new CityLandUseSurfacePrinter();
     private final LandUseAreaPlanCodec codec = new LandUseAreaPlanCodec();
     private final CityLandUseSurfacePrintPlanCodec surfacePrintCodec =
             new CityLandUseSurfacePrintPlanCodec();
@@ -43,19 +40,6 @@ public final class CityLandUseChunkCompiler {
 
     public CityLandUseChunkCompiler(MaterialPalette palette) {
         this.palette = Objects.requireNonNull(palette, "palette");
-    }
-
-    /**
-     * JSON is deliberately accepted at this infrastructure boundary. The application codec remains
-     * authoritative and the registry validates its plan hash before this method is reached.
-     */
-    public ChunkFragment compile(JsonObject plan, int chunkX, int chunkZ) {
-        return compile(codec.fromJson(Objects.requireNonNull(plan, "plan")), chunkX, chunkZ);
-    }
-
-    public ChunkFragment compile(LandUseAreaPlan plan, int chunkX, int chunkZ) {
-        validateLandUsePlan(plan);
-        return compileInternal(plan, null, null, chunkX, chunkZ);
     }
 
     public ChunkFragment compile(LandUseAreaPlan plan,
@@ -87,40 +71,7 @@ public final class CityLandUseChunkCompiler {
         }
         Map<OwnerChunk, Map<AreaKey, CityLandUseSurfacePrintPlan.AreaPrint>> frozen = new HashMap<>();
         byOwner.forEach((owner, areas) -> frozen.put(owner, Map.copyOf(areas)));
-        Map<OwnerChunk, Map<AreaKey, Set<BlockCell>>> footprintCellsByOwner = new HashMap<>();
-        int placementScanCount = 0;
-        for (Map.Entry<AreaKey, CityLandUseSurfacePrintPlan.AreaPrint> entry : printAreas.entrySet()) {
-            if (!(entry.getValue().recipe()
-                    instanceof CityLandUseSurfacePrintPlan.CultivateLinedRecipe cultivate)) {
-                continue;
-            }
-            for (CityLandUseSurfacePrintPlan.SurfaceRun run : cultivate.runs()) {
-                for (CityLandUseSurfacePrintPlan.SurfacePlacement placement : run.placements()) {
-                    placementScanCount++;
-                    if (placement.decision() != CityContinuousTerrainRunPlanner.Decision.PLACE
-                            && placement.decision() != CityContinuousTerrainRunPlanner.Decision.END_CAP) {
-                        continue;
-                    }
-                    BlockBounds footprint = placement.footprint();
-                    for (int z = footprint.minZ(); z <= footprint.maxZ(); z++) {
-                        for (int x = footprint.minX(); x <= footprint.maxX(); x++) {
-                            OwnerChunk owner = new OwnerChunk(Math.floorDiv(x, 16), Math.floorDiv(z, 16));
-                            footprintCellsByOwner.computeIfAbsent(owner, ignored -> new HashMap<>())
-                                    .computeIfAbsent(entry.getKey(), ignored -> new HashSet<>())
-                                    .add(new BlockCell(x, z));
-                        }
-                    }
-                }
-            }
-        }
-        Map<OwnerChunk, Map<AreaKey, Set<BlockCell>>> frozenFootprints = new HashMap<>();
-        footprintCellsByOwner.forEach((owner, byArea) -> {
-            Map<AreaKey, Set<BlockCell>> areaCells = new HashMap<>();
-            byArea.forEach((area, cells) -> areaCells.put(area, Set.copyOf(cells)));
-            frozenFootprints.put(owner, Map.copyOf(areaCells));
-        });
-        return new PreparedSurfacePlan(plan, surfacePrintPlan, Map.copyOf(frozen),
-                Map.copyOf(frozenFootprints), placementScanCount);
+        return new PreparedSurfacePlan(plan, surfacePrintPlan, Map.copyOf(frozen));
     }
 
     public ChunkFragment compilePrepared(PreparedSurfacePlan prepared, int chunkX, int chunkZ) {
@@ -128,18 +79,15 @@ public final class CityLandUseChunkCompiler {
         OwnerChunk owner = new OwnerChunk(chunkX, chunkZ);
         return compileInternal(prepared.areaPlan(),
                 prepared.printAreasByOwner().getOrDefault(owner, Map.of()),
-                prepared.placedPrefabFootprintsByOwner().getOrDefault(owner, Map.of()),
                 chunkX, chunkZ);
     }
 
     private ChunkFragment compileInternal(
             LandUseAreaPlan plan,
             Map<AreaKey, CityLandUseSurfacePrintPlan.AreaPrint> printAreas,
-            Map<AreaKey, Set<BlockCell>> placedPrefabFootprintsByArea,
             int chunkX,
             int chunkZ) {
         Objects.requireNonNull(plan, "plan");
-        boolean useSurfacePrintPlan = printAreas != null;
         int minChunkX = chunkX * 16;
         int minChunkZ = chunkZ * 16;
         int maxChunkX = minChunkX + 15;
@@ -168,16 +116,10 @@ public final class CityLandUseChunkCompiler {
         for (LandUseAreaPlan.Area area : stableAreas) {
             String areaId = area.areaId();
             String landUseType = area.landUseType();
-            String surfacePolicy = area.surfacePolicy().name();
             String boundaryPolicy = area.boundaryPolicy().name();
-            CityLandUseSurfacePrinter.Recipe surfaceRecipe = useSurfacePrintPlan
-                    ? null : surfaceRecipe(surfacePolicy);
-            CityLandUseSurfacePrintPlan.AreaPrint printArea = useSurfacePrintPlan
-                    ? printAreas.get(AreaKey.from(area)) : null;
+            CityLandUseSurfacePrintPlan.AreaPrint printArea = printAreas.get(AreaKey.from(area));
             Set<BlockCell> frozenSurfaceExclusions = printArea == null ? Set.of()
                     : cellsClipped(printArea.exclusionSpans(), minChunkX, minChunkZ, maxChunkX, maxChunkZ);
-            Set<BlockCell> placedPrefabFootprints = printArea == null ? Set.of()
-                    : placedPrefabFootprintsByArea.getOrDefault(AreaKey.from(area), Set.of());
             String boundaryBlock = palette.boundaryMaterial(boundaryPolicy);
             Set<BlockCell> footprints = new HashSet<>();
             area.structureFootprintExclusions().forEach(bounds -> addBoundsClipped(footprints, bounds,
@@ -188,10 +130,8 @@ public final class CityLandUseChunkCompiler {
             Set<BlockCell> gates = new HashSet<>();
             area.gateSlots().forEach(gate -> gates.add(cell(gate.block())));
 
-            boolean microGradePave = useSurfacePrintPlan
-                    ? printArea != null && SurfacePolicy.PAVE.name().equals(
-                    printArea.surfaceSettings().compatibilityCategory())
-                    : area.surfacePolicy() == SurfacePolicy.PAVE;
+            boolean microGradePave = printArea != null && SurfacePolicy.PAVE.name().equals(
+                    printArea.surfaceSettings().compatibilityCategory());
             if (microGradePave && microFillBlock != null) {
                 for (LandUseAreaPlan.ScanlineSpan span : area.memberSpans()) {
                     int z = span.z();
@@ -230,17 +170,7 @@ public final class CityLandUseChunkCompiler {
                     } else if (frozenSurfaceExclusions.contains(cell)) {
                         corridorExcluded++;
                     } else if (printArea != null) {
-                        addPlannedSurfaceOperations(surfaces, printArea, area, cell,
-                                placedPrefabFootprints.contains(cell));
-                    } else if (surfaceRecipe != null) {
-                        for (CityLandUseSurfacePrinter.PrintOperation operation
-                                : surfacePrinter.operationsAt(surfaceRecipe, x, z)) {
-                            SurfaceCell surfaceCell = new SurfaceCell(x, z, operation.surfaceOffset());
-                            surfaces.putIfAbsent(surfaceCell,
-                                    new SurfaceOperation(areaId, landUseType, x, z, operation.blockId(),
-                                            operation.surfaceOffset(), operation.requireReplaceableTarget(),
-                                            operation.layerOrder()));
-                        }
+                        addPlannedSurfaceOperations(surfaces, printArea, area, cell);
                     }
                 }
             }
@@ -261,7 +191,7 @@ public final class CityLandUseChunkCompiler {
                         corridorExcluded++;
                     } else if (gates.contains(cell)) {
                         gateExcluded++;
-                    } else {
+                    } else if (!isContourChannel(printArea, cell)) {
                         boundaries.putIfAbsent(cell,
                                 new BoundaryOperation(areaId, landUseType, cell.x(), cell.z(), boundaryBlock));
                     }
@@ -281,25 +211,58 @@ public final class CityLandUseChunkCompiler {
                 List.copyOf(surfaceOperations), List.copyOf(boundaryOperations));
     }
 
+    private static boolean isContourChannel(CityLandUseSurfacePrintPlan.AreaPrint printArea,
+                                            BlockCell cell) {
+        if (printArea == null
+                || !(printArea.recipe() instanceof CityLandUseSurfacePrintPlan.ContourBandsRecipe contour)) {
+            return false;
+        }
+        CityLandUseSurfacePrintPlan.BandRole role = contour.roleAtOrNull(cell.x(), cell.z());
+        return role != null && role != CityLandUseSurfacePrintPlan.BandRole.FIELD;
+    }
+
     private static void addPlannedSurfaceOperations(
             Map<SurfaceCell, SurfaceOperation> surfaces,
             CityLandUseSurfacePrintPlan.AreaPrint printArea,
             LandUseAreaPlan.Area area,
-            BlockCell cell,
-            boolean occupiedByPlacedPrefab) {
+            BlockCell cell) {
         if (printArea.recipe() instanceof CityLandUseSurfacePrintPlan.UniformRecipe uniform) {
             addSurfaceOperation(surfaces, new SurfaceOperation(area.areaId(), area.landUseType(),
                     cell.x(), cell.z(), uniform.surfaceBlockId(), 0, false, SurfaceStage.BASE, 0));
             return;
         }
-        CityLandUseSurfacePrintPlan.CultivateLinedRecipe cultivate =
-                (CityLandUseSurfacePrintPlan.CultivateLinedRecipe) printArea.recipe();
-        addSurfaceOperation(surfaces, new SurfaceOperation(area.areaId(), area.landUseType(),
-                cell.x(), cell.z(), cultivate.surfaceBlockId(), 0, false, SurfaceStage.BASE, 0));
-        if (!occupiedByPlacedPrefab) {
-            addSurfaceOperation(surfaces, new SurfaceOperation(area.areaId(), area.landUseType(),
-                    cell.x(), cell.z(), cultivate.cropBlockId(), 1, true, SurfaceStage.CROP, 1));
+        if (printArea.recipe() instanceof CityLandUseSurfacePrintPlan.ContourBandsRecipe contour) {
+            CityLandUseSurfacePrintPlan.BandRole role = contour.roleAt(cell.x(), cell.z());
+            switch (role) {
+                case FIELD -> {
+                    addSurfaceOperation(surfaces, new SurfaceOperation(area.areaId(), area.landUseType(),
+                            cell.x(), cell.z(), contour.surfaceBlockId(), 0, false, SurfaceStage.BASE, 0));
+                    addSurfaceOperation(surfaces, new SurfaceOperation(area.areaId(), area.landUseType(),
+                            cell.x(), cell.z(), contour.cropBlockId(), 1, true, SurfaceStage.CROP, 1));
+                }
+                case CHANNEL_BEFORE_BANK, CHANNEL_AFTER_BANK -> {
+                    addSurfaceOperation(surfaces, new SurfaceOperation(area.areaId(), area.landUseType(),
+                            cell.x(), cell.z(), contour.channelBankBlockId(), 0, false,
+                            SurfaceStage.BASE, 0));
+                    addSurfaceOperation(surfaces, new SurfaceOperation(area.areaId(), area.landUseType(),
+                            cell.x(), cell.z(), contour.channelBankOverlayBlockId(), 1, true,
+                            SurfaceStage.CHANNEL_OVERLAY, 1));
+                }
+                case CHANNEL_WATER -> addSurfaceOperation(surfaces,
+                        new SurfaceOperation(area.areaId(), area.landUseType(), cell.x(), cell.z(),
+                                contour.channelWaterBlockId(), 0, false, SurfaceStage.BASE, 0));
+                case CHANNEL_END_CAP -> {
+                    addSurfaceOperation(surfaces, new SurfaceOperation(area.areaId(), area.landUseType(),
+                            cell.x(), cell.z(), contour.channelBankBlockId(), 0, false,
+                            SurfaceStage.BASE, 0));
+                    addSurfaceOperation(surfaces, new SurfaceOperation(area.areaId(), area.landUseType(),
+                            cell.x(), cell.z(), contour.channelBankOverlayBlockId(), 1, true,
+                            SurfaceStage.CHANNEL_OVERLAY, 1));
+                }
+            }
+            return;
         }
+        throw new IllegalArgumentException("CITY_LAND_USE_SURFACE_PRINT_RECIPE_UNSUPPORTED");
     }
 
     private static void addSurfaceOperation(Map<SurfaceCell, SurfaceOperation> surfaces,
@@ -361,11 +324,6 @@ public final class CityLandUseChunkCompiler {
             }
         }
         return Map.copyOf(result);
-    }
-
-    private CityLandUseSurfacePrinter.Recipe surfaceRecipe(String policyName) {
-        String blockId = palette.surfaceMaterial(policyName);
-        return blockId == null ? null : CityLandUseSurfacePrinter.uniform(policyName, blockId);
     }
 
     private static void addBoundsClipped(Set<BlockCell> cells,
@@ -532,7 +490,8 @@ public final class CityLandUseChunkCompiler {
         }
 
         public boolean hasRelevantCells() {
-            return relevantCellCount > 0;
+            return !surfaceOperations.isEmpty()
+                    || !boundaryOperations.isEmpty();
         }
     }
 
@@ -592,7 +551,7 @@ public final class CityLandUseChunkCompiler {
             if (surfaceOffset < 0 || layerOrder < 0
                     || (surfaceOffset > 0 && !requireReplaceableTarget)
                     || stage == SurfaceStage.BASE && surfaceOffset != 0
-                    || stage == SurfaceStage.CROP && surfaceOffset <= 0) {
+                    || stage != SurfaceStage.BASE && surfaceOffset <= 0) {
                 throw new IllegalArgumentException("CITY_LAND_USE_SURFACE_OPERATION_INVALID");
             }
         }
@@ -600,6 +559,7 @@ public final class CityLandUseChunkCompiler {
 
     public enum SurfaceStage {
         BASE,
+        CHANNEL_OVERLAY,
         CROP
     }
 
@@ -650,20 +610,14 @@ public final class CityLandUseChunkCompiler {
         private final LandUseAreaPlan areaPlan;
         private final CityLandUseSurfacePrintPlan surfacePrintPlan;
         private final Map<OwnerChunk, Map<AreaKey, CityLandUseSurfacePrintPlan.AreaPrint>> printAreasByOwner;
-        private final Map<OwnerChunk, Map<AreaKey, Set<BlockCell>>> placedPrefabFootprintsByOwner;
-        private final int placementScanCount;
 
         private PreparedSurfacePlan(
                 LandUseAreaPlan areaPlan,
                 CityLandUseSurfacePrintPlan surfacePrintPlan,
-                Map<OwnerChunk, Map<AreaKey, CityLandUseSurfacePrintPlan.AreaPrint>> printAreasByOwner,
-                Map<OwnerChunk, Map<AreaKey, Set<BlockCell>>> placedPrefabFootprintsByOwner,
-                int placementScanCount) {
+                Map<OwnerChunk, Map<AreaKey, CityLandUseSurfacePrintPlan.AreaPrint>> printAreasByOwner) {
             this.areaPlan = Objects.requireNonNull(areaPlan, "areaPlan");
             this.surfacePrintPlan = Objects.requireNonNull(surfacePrintPlan, "surfacePrintPlan");
             this.printAreasByOwner = Map.copyOf(printAreasByOwner);
-            this.placedPrefabFootprintsByOwner = Map.copyOf(placedPrefabFootprintsByOwner);
-            this.placementScanCount = placementScanCount;
         }
 
         public String areaPlanHash() {
@@ -678,10 +632,6 @@ public final class CityLandUseChunkCompiler {
             return printAreasByOwner.size();
         }
 
-        public int placementScanCount() {
-            return placementScanCount;
-        }
-
         private LandUseAreaPlan areaPlan() {
             return areaPlan;
         }
@@ -690,8 +640,5 @@ public final class CityLandUseChunkCompiler {
             return printAreasByOwner;
         }
 
-        private Map<OwnerChunk, Map<AreaKey, Set<BlockCell>>> placedPrefabFootprintsByOwner() {
-            return placedPrefabFootprintsByOwner;
-        }
     }
 }

@@ -59,6 +59,10 @@ public final class LandUseSourceResolver {
                 LandUseIntentPlan.TargetType.ANCHOR);
         Map<String, LandUseIntentPlan.SurfaceOverride> surfaceOverrides = new HashMap<>();
         intent.surfaceOverrides().forEach(value -> surfaceOverrides.put(value.targetGroupId(), value));
+        Map<LandUseSurfaceSettings.SurfaceAlgorithm, LandUseIntentPlan.SurfaceAlgorithmDefault>
+                surfaceAlgorithmDefaults = new HashMap<>();
+        intent.surfaceAlgorithmDefaults().forEach(value ->
+                surfaceAlgorithmDefaults.put(value.surfaceAlgorithm(), value));
         validateSurfaceTargets(intent, grouped);
 
         List<String> warnings = new ArrayList<>();
@@ -101,11 +105,31 @@ public final class LandUseSourceResolver {
             }
             LandUseSurfaceSettings surfaceSettings = LandUseSurfaceSettings.defaults(rule.surfacePolicy());
             LandUseIntentPlan.SurfaceOverride surfaceOverride = surfaceOverrides.get(groupId);
-            if (surfaceOverride != null) {
-                surfaceSettings = surfaceSettings.withOverrides(surfaceOverride.surfacePrintEnabled(),
-                        surfaceOverride.autoConnect(), surfaceOverride.surfaceBlockId(), surfaceOverride.cropBlockId(),
-                        surfaceOverride.directionMode(), surfaceOverride.directionCenter());
+            LandUseSurfaceSettings.SurfaceAlgorithm selectedAlgorithm = surfaceOverride == null
+                    || surfaceOverride.surfaceAlgorithm() == null
+                    ? surfaceSettings.surfaceAlgorithm() : surfaceOverride.surfaceAlgorithm();
+            if (surfaceOverride != null && surfaceOverride.algorithmAnchor() != null
+                    && selectedAlgorithm != LandUseSurfaceSettings.SurfaceAlgorithm.CONTOUR_BANDS) {
+                throw new IllegalArgumentException(
+                        "LAND_USE_SURFACE_ALGORITHM_ANCHOR_REQUIRES_CONTOUR_BANDS: " + groupId);
             }
+            LandUseIntentPlan.SurfaceAlgorithmDefault algorithmDefault =
+                    surfaceAlgorithmDefaults.get(selectedAlgorithm);
+            LandUseSurfaceSettings.SurfaceMaterials defaultMaterials = algorithmDefault == null ? null
+                    : new LandUseSurfaceSettings.SurfaceMaterials(algorithmDefault.surfaceBlockId(),
+                    algorithmDefault.cropBlockId(), algorithmDefault.channelBankBlockId(),
+                    algorithmDefault.channelWaterBlockId(), algorithmDefault.channelBankOverlayBlockId());
+            surfaceSettings = surfaceSettings.withOverrides(
+                    surfaceOverride == null ? null : surfaceOverride.surfacePrintEnabled(),
+                    surfaceOverride == null ? null : surfaceOverride.autoConnect(),
+                    selectedAlgorithm,
+                    surfaceOverride == null ? null : surfaceOverride.surfaceBlockId(),
+                    surfaceOverride == null ? null : surfaceOverride.cropBlockId(),
+                    surfaceOverride == null ? null : surfaceOverride.channelBankBlockId(),
+                    surfaceOverride == null ? null : surfaceOverride.channelWaterBlockId(),
+                    surfaceOverride == null ? null : surfaceOverride.channelBankOverlayBlockId(),
+                    surfaceOverride == null ? null : surfaceOverride.algorithmAnchor(),
+                    defaultMaterials);
             List<LandUseAreaPlan.GateSlot> gates = new ArrayList<>();
             for (AnchorData member : members) gates.addAll(member.gates());
             gates.addAll(zoneGates.getOrDefault(groupId, List.of()));

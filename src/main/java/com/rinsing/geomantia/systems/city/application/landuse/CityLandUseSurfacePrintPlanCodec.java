@@ -4,9 +4,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
-import com.rinsing.geomantia.systems.city.application.terrain.CityContinuousTerrainRunPlanner;
+import com.rinsing.geomantia.systems.city.domain.landuse.LandUseAreaPlan;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseSurfaceSettings;
-import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
 import com.rinsing.geomantia.systems.city.domain.model.BlockPoint;
 
 import java.nio.charset.StandardCharsets;
@@ -17,39 +16,25 @@ import java.util.HexFormat;
 import java.util.List;
 import java.util.Set;
 
-/** Strict JSON codec and canonical hash owner for {@link CityLandUseSurfacePrintPlan}. */
+/** Strict current-only JSON codec and canonical hash owner for SurfacePrintPlan v0.2. */
 public final class CityLandUseSurfacePrintPlanCodec {
     private static final Set<String> ROOT_FIELDS = Set.of(
-            "schemaVersion", "cityId", "sourceLandUsePlanHash", "catalogHash", "planHash", "areas");
+            "schemaVersion", "cityId", "sourceLandUsePlanHash", "planHash", "areas");
     private static final Set<String> AREA_FIELDS = Set.of(
-            "printAreaId", "landUseAreaId", "sourceGroupIds", "surfaceSettings", "origin",
-            "memberSpans", "exclusionSpans", "continuationAxis", "directionMode", "directionCenter", "recipe");
+            "printAreaId", "landUseAreaId", "sourceGroupIds", "surfaceSettings",
+            "memberSpans", "exclusionSpans", "surfaceAlgorithm", "algorithmAnchor", "recipe");
     private static final Set<String> SETTINGS_FIELDS = Set.of(
             "surfacePrintEnabled", "autoConnect", "surfaceBlockId", "cropBlockId", "compatibilityCategory",
-            "directionMode", "directionCenter");
+            "surfaceAlgorithm", "algorithmAnchor", "channelBankBlockId", "channelWaterBlockId",
+            "channelBankOverlayBlockId");
     private static final Set<String> UNIFORM_FIELDS = Set.of("recipeType", "surfaceBlockId");
-    private static final Set<String> CULTIVATE_FIELDS = Set.of(
-            "recipeType", "surfaceBlockId", "cropBlockId", "repeatPeriodBlocks", "fieldBeforeBlocks",
-            "channelWidthBlocks", "fieldAfterBlocks", "channelOffsetBlocks", "straightPrefab", "endCapPrefab",
-            "terrainPolicy", "runs", "foundationSegments");
-    private static final Set<String> PREFAB_FIELDS = Set.of(
-            "contentRef", "contentHash", "widthBlocks", "heightBlocks", "depthBlocks");
-    private static final Set<String> TERRAIN_POLICY_FIELDS = Set.of(
-            "maxSlopeDelta", "allowWater", "maxContinuousDropBlocks", "continuousDropWindowBlocks",
-            "foundationMode", "maxFoundationDepthBlocks", "foundationShoulderBlocks");
-    private static final Set<String> RUN_FIELDS = Set.of(
-            "runId", "continuationAxis", "crossCoordinate", "placements", "terminationOrdinal",
-            "terminationReasonCode", "foundationSegments");
-    private static final Set<String> PLACEMENT_FIELDS = Set.of(
-            "placementId", "runId", "runOrdinal", "terrainSamplePoint", "placementAnchor", "rotationDegrees",
-            "footprint", "surfaceY", "targetY", "water", "terrainClass", "decision", "contentRef",
-            "contentHash", "appliedContentRef", "appliedContentHash", "reasonCode");
+    private static final Set<String> CONTOUR_FIELDS = Set.of(
+            "recipeType", "surfaceBlockId", "cropBlockId", "channelBankBlockId", "channelWaterBlockId",
+            "channelBankOverlayBlockId", "repeatPeriodBlocks", "fieldBeforeBlocks", "channelWidthBlocks",
+            "fieldAfterBlocks", "classificationMode", "anchor", "bandSpans");
+    private static final Set<String> BAND_SPAN_FIELDS = Set.of("z", "minX", "maxX", "role");
     private static final Set<String> POINT_FIELDS = Set.of("x", "z");
-    private static final Set<String> BOUNDS_FIELDS = Set.of("minX", "minZ", "maxX", "maxZ");
     private static final Set<String> SPAN_FIELDS = Set.of("z", "minX", "maxX");
-    private static final Set<String> FOUNDATION_FIELDS = Set.of(
-            "runId", "x0", "z0", "y0", "x1", "z1", "y1", "halfWidth", "maxDepthBlocks",
-            "shoulderBlocks");
 
     public CityLandUseSurfacePrintPlan withComputedHash(CityLandUseSurfacePrintPlan plan) {
         return plan.withPlanHash(computePlanHash(plan));
@@ -71,7 +56,6 @@ public final class CityLandUseSurfacePrintPlanCodec {
         root.addProperty("schemaVersion", plan.schemaVersion());
         root.addProperty("cityId", plan.cityId());
         root.addProperty("sourceLandUsePlanHash", plan.sourceLandUsePlanHash());
-        root.addProperty("catalogHash", plan.catalogHash());
         if (!plan.planHash().isBlank()) root.addProperty("planHash", plan.planHash());
         JsonArray areas = new JsonArray();
         plan.areas().forEach(area -> areas.add(areaJson(area)));
@@ -81,12 +65,15 @@ public final class CityLandUseSurfacePrintPlanCodec {
 
     public CityLandUseSurfacePrintPlan fromJson(JsonObject root) {
         requireObject(root, "root");
+        String schemaVersion = text(root, "schemaVersion", false);
+        if (!CityLandUseSurfacePrintPlan.CURRENT_SCHEMA_VERSION.equals(schemaVersion)) {
+            throw fail("CITY_LAND_USE_SURFACE_PRINT_SCHEMA_UNSUPPORTED", schemaVersion);
+        }
         rejectUnknown(root, ROOT_FIELDS, "root");
         List<CityLandUseSurfacePrintPlan.AreaPrint> areas = new ArrayList<>();
         for (JsonElement element : array(root, "areas")) areas.add(area(object(element, "areas[]")));
         CityLandUseSurfacePrintPlan plan = new CityLandUseSurfacePrintPlan(
-                text(root, "schemaVersion", false), text(root, "cityId", false),
-                text(root, "sourceLandUsePlanHash", false), text(root, "catalogHash", true),
+                schemaVersion, text(root, "cityId", false), text(root, "sourceLandUsePlanHash", false),
                 optionalText(root, "planHash"), areas);
         if (!plan.planHash().isBlank() && !plan.planHash().equals(computePlanHash(plan))) {
             throw fail("CITY_LAND_USE_SURFACE_PRINT_PLAN_HASH_MISMATCH", "planHash does not match payload");
@@ -102,10 +89,8 @@ public final class CityLandUseSurfacePrintPlanCodec {
         value.add("surfaceSettings", settingsJson(area.surfaceSettings()));
         value.add("memberSpans", spansJson(area.memberSpans()));
         value.add("exclusionSpans", spansJson(area.exclusionSpans()));
-        value.add("origin", pointJson(area.origin()));
-        value.addProperty("continuationAxis", area.continuationAxis().name().toLowerCase());
-        value.addProperty("directionMode", area.directionMode().name().toLowerCase());
-        value.add("directionCenter", nullablePointJson(area.directionCenter()));
+        value.addProperty("surfaceAlgorithm", area.surfaceAlgorithm().name().toLowerCase());
+        value.add("algorithmAnchor", nullablePointJson(area.algorithmAnchor()));
         value.add("recipe", recipeJson(area.recipe()));
         return value;
     }
@@ -116,10 +101,9 @@ public final class CityLandUseSurfacePrintPlanCodec {
                 text(value, "printAreaId", false), text(value, "landUseAreaId", false),
                 strings(array(value, "sourceGroupIds")), settings(object(value, "surfaceSettings")),
                 spans(array(value, "memberSpans")), spans(array(value, "exclusionSpans")),
-                point(object(value, "origin")), enumValue(CityLandUseSurfaceRunCompiler.WorldAxis.class,
-                text(value, "continuationAxis", false)),
-                enumValue(LandUseSurfaceSettings.DirectionMode.class, text(value, "directionMode", false)),
-                nullablePoint(value, "directionCenter"), recipe(object(value, "recipe")));
+                enumValue(LandUseSurfaceSettings.SurfaceAlgorithm.class,
+                        text(value, "surfaceAlgorithm", false)),
+                nullablePoint(value, "algorithmAnchor"), recipe(object(value, "recipe")));
     }
 
     private static JsonObject settingsJson(LandUseSurfaceSettings settings) {
@@ -129,8 +113,11 @@ public final class CityLandUseSurfacePrintPlanCodec {
         value.addProperty("surfaceBlockId", settings.surfaceBlockId());
         value.addProperty("cropBlockId", settings.cropBlockId());
         value.addProperty("compatibilityCategory", settings.compatibilityCategory());
-        value.addProperty("directionMode", settings.directionMode().name().toLowerCase());
-        value.add("directionCenter", nullablePointJson(settings.directionCenter()));
+        value.addProperty("surfaceAlgorithm", settings.surfaceAlgorithm().name().toLowerCase());
+        value.add("algorithmAnchor", nullablePointJson(settings.algorithmAnchor()));
+        value.addProperty("channelBankBlockId", settings.channelBankBlockId());
+        value.addProperty("channelWaterBlockId", settings.channelWaterBlockId());
+        value.addProperty("channelBankOverlayBlockId", settings.channelBankOverlayBlockId());
         return value;
     }
 
@@ -139,8 +126,10 @@ public final class CityLandUseSurfacePrintPlanCodec {
         return new LandUseSurfaceSettings(bool(value, "surfacePrintEnabled"), bool(value, "autoConnect"),
                 text(value, "surfaceBlockId", true), text(value, "cropBlockId", true),
                 text(value, "compatibilityCategory", true),
-                enumValue(LandUseSurfaceSettings.DirectionMode.class, text(value, "directionMode", false)),
-                nullablePoint(value, "directionCenter"));
+                enumValue(LandUseSurfaceSettings.SurfaceAlgorithm.class,
+                        text(value, "surfaceAlgorithm", false)),
+                nullablePoint(value, "algorithmAnchor"), text(value, "channelBankBlockId", true),
+                text(value, "channelWaterBlockId", true), text(value, "channelBankOverlayBlockId", true));
     }
 
     private static JsonObject recipeJson(CityLandUseSurfacePrintPlan.Recipe recipe) {
@@ -150,23 +139,23 @@ public final class CityLandUseSurfacePrintPlanCodec {
             value.addProperty("surfaceBlockId", uniform.surfaceBlockId());
             return value;
         }
-        CityLandUseSurfacePrintPlan.CultivateLinedRecipe cultivate =
-                (CityLandUseSurfacePrintPlan.CultivateLinedRecipe) recipe;
-        value.addProperty("recipeType", "cultivate_lined");
-        value.addProperty("surfaceBlockId", cultivate.surfaceBlockId());
-        value.addProperty("cropBlockId", cultivate.cropBlockId());
-        value.addProperty("repeatPeriodBlocks", cultivate.repeatPeriodBlocks());
-        value.addProperty("fieldBeforeBlocks", cultivate.fieldBeforeBlocks());
-        value.addProperty("channelWidthBlocks", cultivate.channelWidthBlocks());
-        value.addProperty("fieldAfterBlocks", cultivate.fieldAfterBlocks());
-        value.addProperty("channelOffsetBlocks", cultivate.channelOffsetBlocks());
-        value.add("straightPrefab", prefabJson(cultivate.straightPrefab()));
-        value.add("endCapPrefab", prefabJson(cultivate.endCapPrefab()));
-        value.add("terrainPolicy", terrainPolicyJson(cultivate.terrainPolicy()));
-        JsonArray runs = new JsonArray();
-        cultivate.runs().forEach(run -> runs.add(runJson(run)));
-        value.add("runs", runs);
-        value.add("foundationSegments", foundationSegmentsJson(cultivate.foundationSegments()));
+        CityLandUseSurfacePrintPlan.ContourBandsRecipe contour =
+                (CityLandUseSurfacePrintPlan.ContourBandsRecipe) recipe;
+        value.addProperty("recipeType", "contour_bands");
+        value.addProperty("surfaceBlockId", contour.surfaceBlockId());
+        value.addProperty("cropBlockId", contour.cropBlockId());
+        value.addProperty("channelBankBlockId", contour.channelBankBlockId());
+        value.addProperty("channelWaterBlockId", contour.channelWaterBlockId());
+        value.addProperty("channelBankOverlayBlockId", contour.channelBankOverlayBlockId());
+        value.addProperty("repeatPeriodBlocks", contour.repeatPeriodBlocks());
+        value.addProperty("fieldBeforeBlocks", contour.fieldBeforeBlocks());
+        value.addProperty("channelWidthBlocks", contour.channelWidthBlocks());
+        value.addProperty("fieldAfterBlocks", contour.fieldAfterBlocks());
+        value.addProperty("classificationMode", contour.classificationMode().name().toLowerCase());
+        value.add("anchor", pointJson(contour.anchor()));
+        JsonArray bandSpans = new JsonArray();
+        contour.bandSpans().forEach(span -> bandSpans.add(bandSpanJson(span)));
+        value.add("bandSpans", bandSpans);
         return value;
     }
 
@@ -176,127 +165,62 @@ public final class CityLandUseSurfacePrintPlanCodec {
             rejectUnknown(value, UNIFORM_FIELDS, "recipe");
             return new CityLandUseSurfacePrintPlan.UniformRecipe(text(value, "surfaceBlockId", false));
         }
-        if (!"cultivate_lined".equals(type)) {
+        if (!"contour_bands".equals(type)) {
             throw fail("CITY_LAND_USE_SURFACE_PRINT_RECIPE_TYPE_INVALID", type);
         }
-        rejectUnknown(value, CULTIVATE_FIELDS, "recipe");
-        List<CityLandUseSurfacePrintPlan.SurfaceRun> runs = new ArrayList<>();
-        for (JsonElement element : array(value, "runs")) runs.add(run(object(element, "runs[]")));
-        List<CityContinuousTerrainRunPlanner.FoundationSegment> foundationSegments =
-                foundationSegments(array(value, "foundationSegments"));
-        return new CityLandUseSurfacePrintPlan.CultivateLinedRecipe(
-                text(value, "surfaceBlockId", false), text(value, "cropBlockId", false),
-                integer(value, "repeatPeriodBlocks"), integer(value, "fieldBeforeBlocks"),
-                integer(value, "channelWidthBlocks"), integer(value, "fieldAfterBlocks"),
-                integer(value, "channelOffsetBlocks"), prefab(object(value, "straightPrefab")),
-                prefab(object(value, "endCapPrefab")), terrainPolicy(object(value, "terrainPolicy")), runs,
-                foundationSegments);
-    }
-
-    private static JsonObject prefabJson(CityLandUseSurfaceRunCompiler.PrefabSpec prefab) {
-        JsonObject value = new JsonObject();
-        value.addProperty("contentRef", prefab.contentRef());
-        value.addProperty("contentHash", prefab.contentHash());
-        value.addProperty("widthBlocks", prefab.widthBlocks());
-        value.addProperty("heightBlocks", prefab.heightBlocks());
-        value.addProperty("depthBlocks", prefab.depthBlocks());
-        return value;
-    }
-
-    private static CityLandUseSurfaceRunCompiler.PrefabSpec prefab(JsonObject value) {
-        rejectUnknown(value, PREFAB_FIELDS, "prefab");
-        return new CityLandUseSurfaceRunCompiler.PrefabSpec(text(value, "contentRef", false),
-                text(value, "contentHash", false), integer(value, "widthBlocks"),
-                integer(value, "heightBlocks"), integer(value, "depthBlocks"));
-    }
-
-    private static JsonObject terrainPolicyJson(CityLandUseSurfaceRunCompiler.TerrainPolicy policy) {
-        JsonObject value = new JsonObject();
-        value.addProperty("maxSlopeDelta", policy.maxSlopeDelta());
-        value.addProperty("allowWater", policy.allowWater());
-        value.addProperty("maxContinuousDropBlocks", policy.maxContinuousDropBlocks());
-        value.addProperty("continuousDropWindowBlocks", policy.continuousDropWindowBlocks());
-        value.addProperty("foundationMode", policy.foundationMode().name().toLowerCase());
-        value.addProperty("maxFoundationDepthBlocks", policy.maxFoundationDepthBlocks());
-        value.addProperty("foundationShoulderBlocks", policy.foundationShoulderBlocks());
-        return value;
-    }
-
-    private static CityLandUseSurfaceRunCompiler.TerrainPolicy terrainPolicy(JsonObject value) {
-        rejectUnknown(value, TERRAIN_POLICY_FIELDS, "terrainPolicy");
-        return new CityLandUseSurfaceRunCompiler.TerrainPolicy(integer(value, "maxSlopeDelta"),
-                bool(value, "allowWater"), integer(value, "maxContinuousDropBlocks"),
-                integer(value, "continuousDropWindowBlocks"),
-                enumValue(CityContinuousTerrainRunPlanner.FoundationMode.class,
-                        text(value, "foundationMode", false)),
-                integer(value, "maxFoundationDepthBlocks"), integer(value, "foundationShoulderBlocks"));
-    }
-
-    private static JsonObject runJson(CityLandUseSurfacePrintPlan.SurfaceRun run) {
-        JsonObject value = new JsonObject();
-        value.addProperty("runId", run.runId());
-        value.addProperty("continuationAxis", run.continuationAxis().name().toLowerCase());
-        value.addProperty("crossCoordinate", run.crossCoordinate());
-        JsonArray placements = new JsonArray();
-        run.placements().forEach(placement -> placements.add(placementJson(placement)));
-        value.add("placements", placements);
-        if (run.terminationOrdinal() == null) value.add("terminationOrdinal", JsonNull.INSTANCE);
-        else value.addProperty("terminationOrdinal", run.terminationOrdinal());
-        value.addProperty("terminationReasonCode", run.terminationReasonCode());
-        value.add("foundationSegments", foundationSegmentsJson(run.foundationSegments()));
-        return value;
-    }
-
-    private static CityLandUseSurfacePrintPlan.SurfaceRun run(JsonObject value) {
-        rejectUnknown(value, RUN_FIELDS, "run");
-        List<CityLandUseSurfacePrintPlan.SurfacePlacement> placements = new ArrayList<>();
-        for (JsonElement element : array(value, "placements")) {
-            placements.add(placement(object(element, "placements[]")));
+        rejectUnknown(value, CONTOUR_FIELDS, "recipe");
+        List<CityLandUseSurfacePrintPlan.BandSpan> bandSpans = new ArrayList<>();
+        for (JsonElement element : array(value, "bandSpans")) {
+            bandSpans.add(bandSpan(object(element, "bandSpans[]")));
         }
-        return new CityLandUseSurfacePrintPlan.SurfaceRun(text(value, "runId", false),
-                enumValue(CityLandUseSurfaceRunCompiler.WorldAxis.class,
-                        text(value, "continuationAxis", false)), integer(value, "crossCoordinate"),
-                placements, nullableInteger(value, "terminationOrdinal"),
-                text(value, "terminationReasonCode", true),
-                foundationSegments(array(value, "foundationSegments")));
+        return new CityLandUseSurfacePrintPlan.ContourBandsRecipe(
+                text(value, "surfaceBlockId", false), text(value, "cropBlockId", false),
+                text(value, "channelBankBlockId", false), text(value, "channelWaterBlockId", false),
+                text(value, "channelBankOverlayBlockId", false), integer(value, "repeatPeriodBlocks"),
+                integer(value, "fieldBeforeBlocks"), integer(value, "channelWidthBlocks"),
+                integer(value, "fieldAfterBlocks"),
+                enumValue(CityLandUseSurfacePrintPlan.ClassificationMode.class,
+                        text(value, "classificationMode", false)),
+                point(object(value, "anchor")), bandSpans);
     }
 
-    private static JsonObject placementJson(CityLandUseSurfacePrintPlan.SurfacePlacement placement) {
+    private static JsonObject bandSpanJson(CityLandUseSurfacePrintPlan.BandSpan span) {
         JsonObject value = new JsonObject();
-        value.addProperty("placementId", placement.placementId());
-        value.addProperty("runId", placement.runId());
-        value.addProperty("runOrdinal", placement.runOrdinal());
-        value.add("terrainSamplePoint", pointJson(placement.terrainSamplePoint()));
-        value.add("placementAnchor", pointJson(placement.placementAnchor()));
-        value.addProperty("rotationDegrees", placement.rotationDegrees());
-        value.add("footprint", boundsJson(placement.footprint()));
-        value.addProperty("surfaceY", placement.surfaceY());
-        value.addProperty("targetY", placement.targetY());
-        value.addProperty("water", placement.water());
-        value.addProperty("terrainClass", placement.terrainClass().name().toLowerCase());
-        value.addProperty("decision", placement.decision().name().toLowerCase());
-        value.addProperty("contentRef", placement.contentRef());
-        value.addProperty("contentHash", placement.contentHash());
-        value.addProperty("appliedContentRef", placement.appliedContentRef());
-        value.addProperty("appliedContentHash", placement.appliedContentHash());
-        value.addProperty("reasonCode", placement.reasonCode());
+        value.addProperty("z", span.z());
+        value.addProperty("minX", span.minX());
+        value.addProperty("maxX", span.maxX());
+        value.addProperty("role", span.role().name().toLowerCase());
         return value;
     }
 
-    private static CityLandUseSurfacePrintPlan.SurfacePlacement placement(JsonObject value) {
-        rejectUnknown(value, PLACEMENT_FIELDS, "placement");
-        return new CityLandUseSurfacePrintPlan.SurfacePlacement(
-                text(value, "placementId", false), text(value, "runId", false),
-                integer(value, "runOrdinal"), point(object(value, "terrainSamplePoint")),
-                point(object(value, "placementAnchor")), integer(value, "rotationDegrees"),
-                bounds(object(value, "footprint")), integer(value, "surfaceY"),
-                integer(value, "targetY"), bool(value, "water"),
-                enumValue(CityContinuousTerrainRunPlanner.TerrainClass.class,
-                        text(value, "terrainClass", false)),
-                enumValue(CityContinuousTerrainRunPlanner.Decision.class, text(value, "decision", false)),
-                text(value, "contentRef", false), text(value, "contentHash", false),
-                text(value, "appliedContentRef", false), text(value, "appliedContentHash", false),
-                text(value, "reasonCode", false));
+    private static CityLandUseSurfacePrintPlan.BandSpan bandSpan(JsonObject value) {
+        rejectUnknown(value, BAND_SPAN_FIELDS, "bandSpan");
+        return new CityLandUseSurfacePrintPlan.BandSpan(integer(value, "z"), integer(value, "minX"),
+                integer(value, "maxX"), enumValue(CityLandUseSurfacePrintPlan.BandRole.class,
+                text(value, "role", false)));
+    }
+
+    private static JsonArray spansJson(List<LandUseAreaPlan.ScanlineSpan> spans) {
+        JsonArray result = new JsonArray();
+        for (LandUseAreaPlan.ScanlineSpan span : spans) {
+            JsonObject value = new JsonObject();
+            value.addProperty("z", span.z());
+            value.addProperty("minX", span.minX());
+            value.addProperty("maxX", span.maxX());
+            result.add(value);
+        }
+        return result;
+    }
+
+    private static List<LandUseAreaPlan.ScanlineSpan> spans(JsonArray values) {
+        List<LandUseAreaPlan.ScanlineSpan> result = new ArrayList<>();
+        for (JsonElement element : values) {
+            JsonObject value = object(element, "spans[]");
+            rejectUnknown(value, SPAN_FIELDS, "span");
+            result.add(new LandUseAreaPlan.ScanlineSpan(
+                    integer(value, "z"), integer(value, "minX"), integer(value, "maxX")));
+        }
+        return result;
     }
 
     private static JsonObject pointJson(BlockPoint point) {
@@ -310,63 +234,6 @@ public final class CityLandUseSurfacePrintPlanCodec {
         return point == null ? JsonNull.INSTANCE : pointJson(point);
     }
 
-    private static JsonArray foundationSegmentsJson(
-            List<CityContinuousTerrainRunPlanner.FoundationSegment> segments) {
-        JsonArray result = new JsonArray();
-        for (CityContinuousTerrainRunPlanner.FoundationSegment segment : segments) {
-            JsonObject value = new JsonObject();
-            value.addProperty("runId", segment.runId());
-            value.addProperty("x0", segment.x0());
-            value.addProperty("z0", segment.z0());
-            value.addProperty("y0", segment.y0());
-            value.addProperty("x1", segment.x1());
-            value.addProperty("z1", segment.z1());
-            value.addProperty("y1", segment.y1());
-            value.addProperty("halfWidth", segment.halfWidth());
-            value.addProperty("maxDepthBlocks", segment.maxDepthBlocks());
-            value.addProperty("shoulderBlocks", segment.shoulderBlocks());
-            result.add(value);
-        }
-        return result;
-    }
-
-    private static List<CityContinuousTerrainRunPlanner.FoundationSegment> foundationSegments(JsonArray values) {
-        List<CityContinuousTerrainRunPlanner.FoundationSegment> result = new ArrayList<>();
-        for (JsonElement element : values) {
-            JsonObject value = object(element, "foundationSegments[]");
-            rejectUnknown(value, FOUNDATION_FIELDS, "foundationSegment");
-            result.add(new CityContinuousTerrainRunPlanner.FoundationSegment(
-                    text(value, "runId", false), integer(value, "x0"), integer(value, "z0"),
-                    integer(value, "y0"), integer(value, "x1"), integer(value, "z1"),
-                    integer(value, "y1"), integer(value, "halfWidth"),
-                    integer(value, "maxDepthBlocks"), integer(value, "shoulderBlocks")));
-        }
-        return result;
-    }
-
-    private static JsonArray spansJson(List<com.rinsing.geomantia.systems.city.domain.landuse.LandUseAreaPlan.ScanlineSpan> spans) {
-        JsonArray result = new JsonArray();
-        for (com.rinsing.geomantia.systems.city.domain.landuse.LandUseAreaPlan.ScanlineSpan span : spans) {
-            JsonObject value = new JsonObject();
-            value.addProperty("z", span.z());
-            value.addProperty("minX", span.minX());
-            value.addProperty("maxX", span.maxX());
-            result.add(value);
-        }
-        return result;
-    }
-
-    private static List<com.rinsing.geomantia.systems.city.domain.landuse.LandUseAreaPlan.ScanlineSpan> spans(JsonArray values) {
-        List<com.rinsing.geomantia.systems.city.domain.landuse.LandUseAreaPlan.ScanlineSpan> result = new ArrayList<>();
-        for (JsonElement element : values) {
-            JsonObject value = object(element, "spans[]");
-            rejectUnknown(value, SPAN_FIELDS, "span");
-            result.add(new com.rinsing.geomantia.systems.city.domain.landuse.LandUseAreaPlan.ScanlineSpan(
-                    integer(value, "z"), integer(value, "minX"), integer(value, "maxX")));
-        }
-        return result;
-    }
-
     private static BlockPoint point(JsonObject value) {
         rejectUnknown(value, POINT_FIELDS, "point");
         return new BlockPoint(integer(value, "x"), integer(value, "z"));
@@ -375,21 +242,6 @@ public final class CityLandUseSurfacePrintPlanCodec {
     private static BlockPoint nullablePoint(JsonObject owner, String key) {
         if (!owner.has(key)) throw fail("CITY_LAND_USE_SURFACE_PRINT_FIELD_REQUIRED", key);
         return owner.get(key).isJsonNull() ? null : point(object(owner, key));
-    }
-
-    private static JsonObject boundsJson(BlockBounds bounds) {
-        JsonObject value = new JsonObject();
-        value.addProperty("minX", bounds.minX());
-        value.addProperty("minZ", bounds.minZ());
-        value.addProperty("maxX", bounds.maxX());
-        value.addProperty("maxZ", bounds.maxZ());
-        return value;
-    }
-
-    private static BlockBounds bounds(JsonObject value) {
-        rejectUnknown(value, BOUNDS_FIELDS, "bounds");
-        return new BlockBounds(integer(value, "minX"), integer(value, "minZ"),
-                integer(value, "maxX"), integer(value, "maxZ"));
     }
 
     private static JsonArray stringsJson(List<String> values) {
@@ -461,11 +313,6 @@ public final class CityLandUseSurfacePrintPlanCodec {
         } catch (ArithmeticException ex) {
             throw fail("CITY_LAND_USE_SURFACE_PRINT_FIELD_INVALID", key);
         }
-    }
-
-    private static Integer nullableInteger(JsonObject owner, String key) {
-        if (!owner.has(key)) throw fail("CITY_LAND_USE_SURFACE_PRINT_FIELD_REQUIRED", key);
-        return owner.get(key).isJsonNull() ? null : integer(owner, key);
     }
 
     private static boolean bool(JsonObject owner, String key) {

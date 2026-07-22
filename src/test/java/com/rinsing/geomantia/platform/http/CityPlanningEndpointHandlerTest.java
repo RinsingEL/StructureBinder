@@ -12,7 +12,6 @@ import com.rinsing.geomantia.systems.city.application.CityWallReservationPlanner
 import com.rinsing.geomantia.systems.city.application.dressing.CityDecorationTerrainProbe;
 import com.rinsing.geomantia.systems.city.application.dressing.CompiledDecorationProgram;
 import com.rinsing.geomantia.systems.city.application.dressing.CompiledDecorationProgramPlan;
-import com.rinsing.geomantia.systems.city.application.landuse.CityLandUseSurfaceRunCompiler;
 import com.rinsing.geomantia.systems.city.application.landuse.LandUseAreaPlanCodec;
 import com.rinsing.geomantia.systems.city.application.landuse.CityLandUseSurfacePrintPlan;
 import com.rinsing.geomantia.systems.city.application.landuse.CityLandUseSurfacePrintPlanCodec;
@@ -44,6 +43,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.IntTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtIo;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.ChunkPos;
 import org.junit.jupiter.api.Test;
 
@@ -53,6 +53,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.function.Predicate;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -62,6 +63,25 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityPlanningEndpointHandlerTest {
+
+    @Test
+    void decorationLandUseArtifactsRequireCurrentSurfacePrintPlan() throws Exception {
+        Path directory = Files.createTempDirectory("city-decoration-land-use-artifacts");
+        Path areaPlan = directory.resolve("city_land_use_area_plan.json");
+        Path surfacePlan = directory.resolve("city_land_use_surface_print_plan.json");
+        Path completion = directory.resolve("city_land_use_planning_complete.json");
+        Files.writeString(areaPlan, "{}");
+        Files.writeString(completion, "{}");
+
+        IllegalArgumentException failure = assertThrows(IllegalArgumentException.class,
+                () -> CityPlanningEndpointHandler.requireDecorationLandUseArtifacts(
+                        areaPlan, surfacePlan, completion));
+        assertTrue(failure.getMessage().contains("CITY_DECORATION_LAND_USE_PLAN_REQUIRED"));
+
+        Files.writeString(surfacePlan, "{}");
+        assertDoesNotThrow(() -> CityPlanningEndpointHandler.requireDecorationLandUseArtifacts(
+                areaPlan, surfacePlan, completion));
+    }
 
     @Test
     void handlePlanLandUsePublishesAndFreezesSurfacePrintPlan() throws Exception {
@@ -76,8 +96,7 @@ class CityPlanningEndpointHandlerTest {
                 CityJson.GSON.toJson(new LandUseTerrainFieldCodec().toJson(endpointTerrain())));
 
         JsonObject response = CityPlanningEndpointHandler.handlePlanLandUse(
-                debugRoot, runId, citySeedId, null,
-                TestDecorationCatalogs.loadManagedDefault(debugRoot.resolve("managed_city_decoration")));
+                debugRoot, runId, citySeedId, null);
 
         Path surfacePath = landUseDirectory.resolve("city_land_use_surface_print_plan.json");
         assertTrue(Files.isRegularFile(surfacePath));
@@ -90,7 +109,69 @@ class CityPlanningEndpointHandlerTest {
         JsonObject completion = JsonParser.parseString(Files.readString(
                 landUseDirectory.resolve("city_land_use_planning_complete.json"))).getAsJsonObject();
         assertEquals(surfacePlan.planHash(), completion.get("surfacePrintPlanHash").getAsString());
-        assertEquals(surfacePlan.catalogHash(), completion.get("surfacePrintCatalogHash").getAsString());
+        assertFalse(completion.has("surfacePrintCatalogHash"));
+    }
+
+    @Test
+    void handleExecuteD5RejectsUnknownSurfaceBlockBeforeLandUseRegistryMutation() throws Exception {
+        Path debugRoot = Files.createTempDirectory("city-land-use-unknown-block-test");
+        Path serverRoot = Files.createTempDirectory("city-land-use-unknown-block-server");
+        String runId = "run_land_use_unknown_block";
+        String citySeedId = "city_test";
+        prepareD5Artifacts(debugRoot, runId, citySeedId);
+        CityPlanningEndpointHandler.handlePlanD6(debugRoot, runId, citySeedId, null, null);
+        Path landUseDirectory = debugRoot.resolve(runId).resolve("city_land_use_" + citySeedId);
+        Files.createDirectories(landUseDirectory);
+        Files.writeString(landUseDirectory.resolve("land_use_terrain_field.json"),
+                CityJson.GSON.toJson(new LandUseTerrainFieldCodec().toJson(endpointTerrain())));
+        CityPlanningEndpointHandler.handlePlanLandUse(debugRoot, runId, citySeedId, null);
+
+        Path surfacePath = landUseDirectory.resolve("city_land_use_surface_print_plan.json");
+        CityLandUseSurfacePrintPlanCodec codec = new CityLandUseSurfacePrintPlanCodec();
+        JsonObject surfaceJson = JsonParser.parseString(Files.readString(surfacePath)).getAsJsonObject();
+        JsonObject area = surfaceJson.getAsJsonArray("areas").get(0).getAsJsonObject();
+        area.getAsJsonObject("surfaceSettings")
+                .addProperty("surfaceBlockId", "minecraft:not_a_registered_block");
+        area.getAsJsonObject("recipe")
+                .addProperty("surfaceBlockId", "minecraft:not_a_registered_block");
+        surfaceJson.remove("planHash");
+        CityLandUseSurfacePrintPlan surfacePlan = codec.withComputedHash(codec.fromJson(surfaceJson));
+        // Preserve the strict codec's explicit JSON nulls.
+        Files.writeString(surfacePath, codec.toJson(surfacePlan).toString());
+        Path completionPath = landUseDirectory.resolve("city_land_use_planning_complete.json");
+        JsonObject completion = JsonParser.parseString(Files.readString(completionPath)).getAsJsonObject();
+        completion.addProperty("surfacePrintPlanHash", surfacePlan.planHash());
+        Files.writeString(completionPath, CityJson.GSON.toJson(completion));
+
+        setLandUseSurfaceBlockPredicate(key ->
+                !"minecraft:not_a_registered_block".equals(key.toString()));
+        IllegalArgumentException failure;
+        try {
+            failure = assertThrows(IllegalArgumentException.class,
+                    () -> CityPlanningEndpointHandler.handleExecuteD5(
+                            debugRoot, serverRoot, runId, citySeedId, true, null,
+                            "auto", null, true));
+        } finally {
+            resetLandUseRegistryTestState();
+        }
+
+        assertTrue(failure.getMessage().contains("CITY_LAND_USE_SURFACE_BLOCK_UNKNOWN"),
+                failure::getMessage);
+        assertFalse(Files.exists(CityLandUseWorldgenRegistry.activePlansPath(serverRoot)));
+    }
+
+    private static void setLandUseSurfaceBlockPredicate(Predicate<ResourceLocation> predicate)
+            throws ReflectiveOperationException {
+        java.lang.reflect.Method setter = CityLandUseWorldgenRegistry.class.getDeclaredMethod(
+                "setSurfaceBlockExistsForTests", Predicate.class);
+        setter.setAccessible(true);
+        setter.invoke(null, predicate);
+    }
+
+    private static void resetLandUseRegistryTestState() throws ReflectiveOperationException {
+        java.lang.reflect.Method reset = CityLandUseWorldgenRegistry.class.getDeclaredMethod("resetForTests");
+        reset.setAccessible(true);
+        reset.invoke(null);
     }
 
     @Test
@@ -106,8 +187,7 @@ class CityPlanningEndpointHandlerTest {
         Files.createDirectories(landUseDirectory);
         Files.writeString(landUseDirectory.resolve("land_use_terrain_field.json"),
                 CityJson.GSON.toJson(new LandUseTerrainFieldCodec().toJson(endpointTerrain())));
-        CityPlanningEndpointHandler.handlePlanLandUse(debugRoot, runId, citySeedId, null,
-                TestDecorationCatalogs.loadManagedDefault(catalogRoot));
+        CityPlanningEndpointHandler.handlePlanLandUse(debugRoot, runId, citySeedId, null);
         Files.delete(landUseDirectory.resolve("city_land_use_surface_print_plan.json"));
 
         IllegalArgumentException failure = assertThrows(IllegalArgumentException.class,
@@ -144,11 +224,10 @@ class CityPlanningEndpointHandlerTest {
     void surfaceOwnedLandUseRejectsBulkDecorationButAllowsSparseDetails() {
         CityLandUseSurfacePrintPlan surfacePlan = new CityLandUseSurfacePrintPlan(
                 CityLandUseSurfacePrintPlan.CURRENT_SCHEMA_VERSION, "city_test", "area_hash",
-                "catalog_hash", "surface_hash", List.of(new CityLandUseSurfacePrintPlan.AreaPrint(
+                "surface_hash", List.of(new CityLandUseSurfacePrintPlan.AreaPrint(
                 "farm/surface", "farm", List.of("farm_group"),
                 LandUseSurfaceSettings.defaults(SurfacePolicy.PAVE),
                 List.of(new LandUseAreaPlan.ScanlineSpan(0, 0, 8)), List.of(),
-                new BlockPoint(0, 0), CityLandUseSurfaceRunCompiler.WorldAxis.X,
                 new CityLandUseSurfacePrintPlan.UniformRecipe("minecraft:stone_bricks"))));
         CompiledDecorationProgram bulk = decorationProgramForLandUse(
                 new CompiledDecorationProgram.UniformFillPattern("detail"));
@@ -1667,6 +1746,7 @@ class CityPlanningEndpointHandlerTest {
         CityPlanningEndpointHandler.handlePlanD6(debugRoot, runId, citySeedId, null, null);
 
         Path completionPath = writeEmptyLandUseArtifacts(debugRoot, runId, citySeedId);
+        writeEmptyLandUseSurfaceArtifact(debugRoot, runId, citySeedId, completionPath);
         JsonObject valid = JsonParser.parseString(Files.readString(completionPath)).getAsJsonObject();
         List<MarkerMutation> invalidMarkers = List.of(
                 new MarkerMutation("schemaVersion", "city_land_use_planning_complete.v0.0",
@@ -1675,6 +1755,8 @@ class CityPlanningEndpointHandlerTest {
                         "CITY_LAND_USE_PLAN_INCOMPLETE", "completion cityId does not match plan"),
                 new MarkerMutation("planHash", "stale_plan_hash",
                         "CITY_LAND_USE_PLAN_INCOMPLETE", "completion planHash does not match plan"),
+                new MarkerMutation("surfacePrintCatalogHash", "legacy_catalog_hash",
+                        "CITY_LAND_USE_PLAN_INCOMPLETE", "completion field is unsupported"),
                 new MarkerMutation("ruleProfileHash", "",
                         "CITY_LAND_USE_RULE_PROFILE_HASH_MISMATCH", ""),
                 new MarkerMutation("sourceD6Hash", "",
@@ -1698,6 +1780,23 @@ class CityPlanningEndpointHandlerTest {
             assertFalse(Files.exists(CityLandUseWorldgenRegistry.activePlansPath(serverRoot)),
                     "invalid completion must fail before LandUse registry mutation: " + mutation.field());
         }
+
+        Path surfacePath = completionPath.getParent().resolve("city_land_use_surface_print_plan.json");
+        JsonObject blankHashSurface = JsonParser.parseString(Files.readString(surfacePath)).getAsJsonObject();
+        blankHashSurface.remove("planHash");
+        Files.writeString(surfacePath, CityJson.GSON.toJson(blankHashSurface));
+        JsonObject blankHashCompletion = valid.deepCopy();
+        blankHashCompletion.addProperty("surfacePrintPlanHash", "");
+        Files.writeString(completionPath, CityJson.GSON.toJson(blankHashCompletion));
+
+        IllegalArgumentException blankHashFailure = assertThrows(IllegalArgumentException.class,
+                () -> CityPlanningEndpointHandler.handleExecuteD5(
+                        debugRoot, serverRoot, runId, citySeedId, true, null,
+                        "auto", null, true));
+
+        assertTrue(blankHashFailure.getMessage().contains(
+                "CITY_LAND_USE_SURFACE_PRINT_COMPLETION_MISMATCH"));
+        assertFalse(Files.exists(CityLandUseWorldgenRegistry.activePlansPath(serverRoot)));
     }
 
     @Test
@@ -1709,6 +1808,7 @@ class CityPlanningEndpointHandlerTest {
         prepareD5Artifacts(debugRoot, runId, citySeedId);
         CityPlanningEndpointHandler.handlePlanD6(debugRoot, runId, citySeedId, null, null);
         Path completionPath = writeEmptyLandUseArtifacts(debugRoot, runId, citySeedId);
+        writeEmptyLandUseSurfaceArtifact(debugRoot, runId, citySeedId, completionPath);
 
         JsonObject activation = CityPlanningEndpointHandler.handleExecuteD5(
                 debugRoot, serverRoot, runId, citySeedId, true, null,
@@ -1731,21 +1831,19 @@ class CityPlanningEndpointHandlerTest {
     }
 
     @Test
-    void handleExecuteD5ActivatesSurfacePrintPlanWithFrozenCatalogIdentity() throws Exception {
+    void handleExecuteD5ActivatesPureSurfacePrintPlanWithoutCatalog() throws Exception {
         Path debugRoot = Files.createTempDirectory("city-land-use-surface-activation-test");
         Path serverRoot = Files.createTempDirectory("city-land-use-surface-activation-server");
-        Path catalogRoot = createDecorationCatalog();
-        CityDecorationContentCatalog catalog = new CityDecorationContentCatalogLoader().load(catalogRoot);
         String runId = "run_land_use_surface_activation";
         String citySeedId = "city_test";
         prepareD5Artifacts(debugRoot, runId, citySeedId);
         CityPlanningEndpointHandler.handlePlanD6(debugRoot, runId, citySeedId, null, null);
         Path completionPath = writeEmptyLandUseArtifacts(debugRoot, runId, citySeedId);
-        writeEmptyLandUseSurfaceArtifact(debugRoot, runId, citySeedId, catalog, completionPath);
+        writeEmptyLandUseSurfaceArtifact(debugRoot, runId, citySeedId, completionPath);
 
         JsonObject activation = CityPlanningEndpointHandler.handleExecuteD5(
                 debugRoot, serverRoot, runId, citySeedId, true, null,
-                "auto", catalogRoot, true);
+                "auto", null, true);
 
         assertTrue(activation.get("landUseSurfacePrintMode").getAsBoolean());
         assertEquals(1, activation.getAsJsonObject("activeLandUseSummary")
@@ -2715,7 +2813,6 @@ class CityPlanningEndpointHandlerTest {
     private static void writeEmptyLandUseSurfaceArtifact(Path debugRoot,
                                                          String runId,
                                                          String citySeedId,
-                                                         CityDecorationContentCatalog catalog,
                                                          Path completionPath) throws Exception {
         Path directory = debugRoot.resolve(runId).resolve("city_land_use_" + citySeedId);
         LandUseAreaPlanCodec areaCodec = new LandUseAreaPlanCodec();
@@ -2724,13 +2821,12 @@ class CityPlanningEndpointHandlerTest {
         CityLandUseSurfacePrintPlanCodec surfaceCodec = new CityLandUseSurfacePrintPlanCodec();
         CityLandUseSurfacePrintPlan unhashed = new CityLandUseSurfacePrintPlan(
                 CityLandUseSurfacePrintPlan.CURRENT_SCHEMA_VERSION,
-                citySeedId, areaPlan.planHash(), catalog.catalogHash(), "", List.of());
+                citySeedId, areaPlan.planHash(), "", List.of());
         CityLandUseSurfacePrintPlan surfacePlan = unhashed.withPlanHash(surfaceCodec.computePlanHash(unhashed));
         Files.writeString(directory.resolve("city_land_use_surface_print_plan.json"),
                 CityJson.GSON.toJson(surfaceCodec.toJson(surfacePlan)));
         JsonObject completion = JsonParser.parseString(Files.readString(completionPath)).getAsJsonObject();
         completion.addProperty("surfacePrintPlanHash", surfacePlan.planHash());
-        completion.addProperty("surfacePrintCatalogHash", surfacePlan.catalogHash());
         Files.writeString(completionPath, CityJson.GSON.toJson(completion));
     }
 
