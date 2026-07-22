@@ -1008,6 +1008,26 @@ export const realmTools: ToolDefinition[] = [
     },
   },
   {
+    name: "city_query_worldgen_observations",
+    description: "按维度和 chunk 查询 City worldgen 写入后的 Minecraft 实际 BlockState。返回 post_features、post_retry_tick、chunk_save 回调观测及期望/实际不一致位置；只读，不加载或生成 chunk。",
+    inputSchema: {
+      type: "object",
+      properties: {
+        dimensionId: { type: "string", description: "维度 ID，例如 minecraft:overworld。" },
+        chunkX: { type: "integer", description: "目标 chunk X。" },
+        chunkZ: { type: "integer", description: "目标 chunk Z。" },
+        phase: {
+          type: "string",
+          enum: ["post_features", "post_retry_tick", "chunk_save"],
+          description: "可选观测阶段过滤。",
+        },
+        limit: { type: "integer", minimum: 1, maximum: 100, description: "返回最近记录数，默认 10。" },
+        includeBlocks: { type: "boolean", description: "是否返回逐方块实际状态，默认 true。" },
+      },
+      required: ["dimensionId", "chunkX", "chunkZ"],
+    },
+  },
+  {
     name: "city_plan_city_walls",
     description: "City 城墙规划：默认 v2 读取 D5 wall reservation、D7 placed ledger 和世界实际 RoadWeaver 路面裁门；wallVersion=v5 只读取 D5 final wallLine，不改线，只用 surface cache 做高度/水体落墙判断；wallVersion=v4 使用 actualFootprint 硬约束 + D5 cityDomain cell 轻量贴形墙图（wallNodes/wallUnits/nodeConnectorUnits + datum + terrainContourEvents）；wallVersion=v3 使用结构种子城市外环 hull + 道路聚类裁门；wallVersion=v1_debug 可生成旧矩形调试墙。",
     inputSchema: {

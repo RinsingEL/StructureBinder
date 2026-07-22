@@ -3,6 +3,7 @@ package com.rinsing.geomantia.mixin;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityReservationMaskRegistry;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityDecorationWorldgenRegistry;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityDecorationNbtPlacer;
+import com.rinsing.geomantia.systems.city.infrastructure.world.CityWorldgenBlockObservationRegistry;
 import com.rinsing.geomantia.systems.city.infrastructure.world.MinecraftCityWorldgenStructurePlacer;
 import com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityLandUseChunkExecutor;
 import com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityLandUseWorldgenRegistry;
@@ -70,16 +71,30 @@ public abstract class ChunkGeneratorStructureMaskMixin {
                                                        ChunkAccess chunk,
                                                        StructureManager structureManager,
                                                        CallbackInfo ci) {
-        MinecraftCityWorldgenStructurePlacer.injectPlannedTemplateStructures(level, chunk);
-        CityLandUseWorldgenRegistry.applyForChunk(
-                level.getLevel().dimension().location().toString(),
-                chunk.getPos().x,
-                chunk.getPos().z,
-                CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES,
-                new CityLandUseChunkExecutor.WorldGenExecutionWorld(level),
-                new CityDecorationNbtPlacer.WorldGenPlacementWorld(level),
-                level.getMinBuildHeight(),
-                level.getMaxBuildHeight() - 1);
-        CityDecorationWorldgenRegistry.applyForChunk(level, chunk);
+        CityWorldgenBlockObservationRegistry.begin(level, chunk);
+        try {
+            MinecraftCityWorldgenStructurePlacer.injectPlannedTemplateStructures(level, chunk);
+            CityLandUseWorldgenRegistry.applyForChunk(
+                    level.getLevel().dimension().location().toString(),
+                    chunk.getPos().x,
+                    chunk.getPos().z,
+                    CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES,
+                    new CityLandUseChunkExecutor.WorldGenExecutionWorld(level),
+                    new CityDecorationNbtPlacer.WorldGenPlacementWorld(level, "land_use"),
+                    level.getMinBuildHeight(),
+                    level.getMaxBuildHeight() - 1);
+            CityDecorationWorldgenRegistry.applyForChunk(level, chunk);
+        } catch (RuntimeException | Error ex) {
+            CityWorldgenBlockObservationRegistry.abort();
+            throw ex;
+        }
+    }
+
+    @Inject(method = "applyBiomeDecoration", at = @At("TAIL"))
+    private void geomantia$observeCityBlocksAfterFeatures(WorldGenLevel level,
+                                                           ChunkAccess chunk,
+                                                           StructureManager structureManager,
+                                                           CallbackInfo ci) {
+        CityWorldgenBlockObservationRegistry.finishAfterFeatures(level, chunk);
     }
 }

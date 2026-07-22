@@ -157,7 +157,8 @@ public final class CityTemplateTerrainStructurePiece extends StructurePiece {
                     .setBoundingBox(placementBox)
                     .setIgnoreEntities(true)
                     .setKeepLiquids(false);
-            boolean written = read.template().orElseThrow().placeInWorld(level, transform.placementOrigin(),
+            StructureTemplate template = read.template().orElseThrow();
+            boolean written = template.placeInWorld(level, transform.placementOrigin(),
                     transform.placementOrigin(), settings, random, 2);
             if (!written) {
                 CityReservationMaskRegistry.recordWorldgenFailure(item, chunkPos,
@@ -165,6 +166,10 @@ public final class CityTemplateTerrainStructurePiece extends StructurePiece {
                         "StructureTemplate.placeInWorld returned false.");
                 return;
             }
+            CityWorldgenBlockObservationRegistry.watchStructureTemplate(template, templateHash,
+                    transform.placementOrigin(), transform.minecraftMirror(), transform.minecraftRotation(),
+                    transform.rotationPivot(), placementBox, level::getBlockState,
+                    "city_structure_template");
             CityReservationMaskRegistry.TemplateFragmentRecordResult result =
                     CityReservationMaskRegistry.recordTemplateWorldgenFragment(item, footprint,
                             signature(), pieceBox(), chunkPos, datumY, "beard_thin",

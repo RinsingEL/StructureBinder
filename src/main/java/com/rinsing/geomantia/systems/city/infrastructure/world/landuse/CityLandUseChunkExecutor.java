@@ -1,5 +1,6 @@
 package com.rinsing.geomantia.systems.city.infrastructure.world.landuse;
 
+import com.rinsing.geomantia.systems.city.infrastructure.world.CityWorldgenBlockObservationRegistry;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityNbtPrefabBatchPlacer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -239,15 +240,29 @@ public final class CityLandUseChunkExecutor {
 
     private static boolean apply(ExecutionWorld world,
                                  List<PreparedMutation> prepared,
-        List<PreparedMutation> applied) {
+                                 List<PreparedMutation> applied) {
         for (PreparedMutation mutation : prepared) {
-            // A failed writer may already have mutated the target before reporting failure.
-            applied.add(mutation);
+            Object writeSnapshot;
             try {
-                if (!world.setBlock(mutation.x(), mutation.y(), mutation.z(), mutation.blockId())) return false;
+                writeSnapshot = Objects.requireNonNull(world.beginWrite(
+                        mutation.x(), mutation.y(), mutation.z(), mutation.snapshot()));
             } catch (RuntimeException ex) {
                 return false;
             }
+            // A failed writer may already have mutated the target before reporting failure.
+            applied.add(mutation.withSnapshot(writeSnapshot));
+            boolean written;
+            try {
+                written = world.setBlock(mutation.x(), mutation.y(), mutation.z(), mutation.blockId());
+            } catch (RuntimeException ex) {
+                written = false;
+            }
+            try {
+                world.endWrite(writeSnapshot);
+            } catch (RuntimeException ex) {
+                written = false;
+            }
+            if (!written) return false;
         }
         return true;
     }
@@ -345,7 +360,14 @@ public final class CityLandUseChunkExecutor {
 
         TargetState inspect(int worldX, int y, int worldZ);
 
+        default Object beginWrite(int worldX, int y, int worldZ, Object snapshot) {
+            return snapshot;
+        }
+
         boolean setBlock(int worldX, int y, int worldZ, String blockId);
+
+        default void endWrite(Object snapshot) {
+        }
 
         boolean restoreBlock(int worldX, int y, int worldZ, Object snapshot);
     }
@@ -460,6 +482,10 @@ public final class CityLandUseChunkExecutor {
         private static PreparedMutation failed(String areaId, OperationPhase phase,
                                                int x, int y, int z, String blockId, String reason) {
             return new PreparedMutation(areaId, phase, x, y, z, blockId, null, reason);
+        }
+
+        private PreparedMutation withSnapshot(Object writeSnapshot) {
+            return new PreparedMutation(areaId, phase, x, y, z, blockId, writeSnapshot, failureReason);
         }
     }
 
@@ -587,6 +613,7 @@ public final class CityLandUseChunkExecutor {
     public static final class WorldGenExecutionWorld
             implements ExecutionWorld, BlockStateWriteAccess<BlockState> {
         private final WorldGenLevel level;
+        private CityWorldgenBlockObservationRegistry.BlockObservationRollbackToken activeRollbackToken;
 
         public WorldGenExecutionWorld(WorldGenLevel level) {
             this.level = Objects.requireNonNull(level, "level");
@@ -613,8 +640,21 @@ public final class CityLandUseChunkExecutor {
 
         @Override
         public TargetState inspect(int worldX, int y, int worldZ) {
-            BlockState state = getBlockState(new BlockPos(worldX, y, worldZ));
-            return new TargetState(state, state.isAir() || state.canBeReplaced());
+            BlockPos pos = new BlockPos(worldX, y, worldZ);
+            BlockState state = getBlockState(pos);
+            return new TargetState(new WorldSnapshot(state, null), state.isAir() || state.canBeReplaced());
+        }
+
+        @Override
+        public Object beginWrite(int worldX, int y, int worldZ, Object snapshot) {
+            if (!(snapshot instanceof WorldSnapshot worldSnapshot)) {
+                return snapshot;
+            }
+            if (activeRollbackToken != null) {
+                throw new IllegalStateException("CITY_LAND_USE_OBSERVATION_MUTATION_ALREADY_ACTIVE");
+            }
+            activeRollbackToken = CityWorldgenBlockObservationRegistry.newRollbackToken();
+            return new WorldSnapshot(worldSnapshot.blockState(), activeRollbackToken);
         }
 
         @Override
@@ -623,7 +663,47 @@ public final class CityLandUseChunkExecutor {
             if (key == null || !BuiltInRegistries.BLOCK.containsKey(key)) {
                 return false;
             }
-            return writeBlockState(this, new BlockPos(worldX, y, worldZ), expected);
+            BlockPos pos = new BlockPos(worldX, y, worldZ);
+            boolean written = writeBlockState(this, pos, BuiltInRegistries.BLOCK.get(key).defaultBlockState());
+            if (written) {
+                watchObservedNeighborhood(pos);
+            }
+            return written;
+        }
+
+        @Override
+        public void endWrite(Object snapshot) {
+            activeRollbackToken = null;
+        }
+
+        @Override
+        public boolean restoreBlock(int worldX, int y, int worldZ, Object snapshot) {
+            if (!(snapshot instanceof WorldSnapshot expected)) {
+                return false;
+            }
+            BlockPos pos = new BlockPos(worldX, y, worldZ);
+            boolean restored = writeBlockState(this, pos, expected.blockState());
+            if (restored) {
+                CityWorldgenBlockObservationRegistry.rollbackToken(expected.rollbackToken());
+            }
+            return restored;
+        }
+
+        private void watchObservedNeighborhood(BlockPos center) {
+            watchObservedBlock(center, "land_use_direct");
+            for (Direction direction : HORIZONTAL_DIRECTIONS) {
+                watchObservedBlock(center.relative(direction), "land_use_neighbor_reconcile");
+            }
+        }
+
+        private void watchObservedBlock(BlockPos pos, String source) {
+            BlockState state = getBlockState(pos);
+            CityWorldgenBlockObservationRegistry.watchBlockState(pos, state, source, activeRollbackToken);
+        }
+
+        private record WorldSnapshot(
+                BlockState blockState,
+                CityWorldgenBlockObservationRegistry.BlockObservationRollbackToken rollbackToken) {
         }
 
         @Override

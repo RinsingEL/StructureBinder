@@ -219,6 +219,11 @@ export const realmHandlers: Record<string, ToolHandler> = {
     return textResult(JSON.stringify(res.data, null, 2));
   },
 
+  async city_query_worldgen_observations(args) {
+    const res = await postJson(`${MC_API_URL}/realm/city/query_worldgen_observations`, payload(args), TIMEOUTS.quick);
+    return textResult(JSON.stringify(res.data, null, 2));
+  },
+
   async city_plan_city_walls(args) {
     const res = await postJson(`${MC_API_URL}/realm/city/plan_city_walls`, payload(args), TIMEOUTS.quick);
     return textResult(JSON.stringify(res.data, null, 2));

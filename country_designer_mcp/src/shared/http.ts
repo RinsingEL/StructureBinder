@@ -24,3 +24,12 @@ export function formatAxiosError(error: unknown) {
     || anyError?.message
     || "Unknown error";
 }
+
+export function isTimeoutError(error: unknown) {
+  const anyError = error as any;
+  return anyError?.code === "ECONNABORTED"
+    || anyError?.code === "ETIMEDOUT"
+    || anyError?.response?.status === 408
+    || anyError?.response?.status === 504
+    || /(?:timed?\s*out|timeout)/i.test(anyError?.message || "");
+}

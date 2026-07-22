@@ -24,7 +24,9 @@ import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlac
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 import net.minecraft.world.level.levelgen.structure.templatesystem.BlockIgnoreProcessor;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 public final class CityDecorationNbtPlacer {
@@ -237,9 +239,17 @@ public final class CityDecorationNbtPlacer {
 
     public static final class WorldGenPlacementWorld implements PlacementWorld {
         private final WorldGenLevel level;
+        private final String observationSource;
+        private final Map<BlockPos, CityWorldgenBlockObservationRegistry.BlockObservationRollbackToken>
+                rollbackTokens = new HashMap<>();
 
         public WorldGenPlacementWorld(WorldGenLevel level) {
+            this(level, "city_decoration");
+        }
+
+        public WorldGenPlacementWorld(WorldGenLevel level, String observationSource) {
             this.level = Objects.requireNonNull(level, "level");
+            this.observationSource = Objects.requireNonNull(observationSource, "observationSource");
         }
 
         @Override
@@ -273,7 +283,15 @@ public final class CityDecorationNbtPlacer {
         public Object snapshot(BlockPos pos) {
             BlockEntity blockEntity = level.getBlockEntity(pos);
             CompoundTag blockEntityNbt = blockEntity == null ? null : blockEntity.saveWithFullMetadata();
-            return new WorldSnapshot(level.getBlockState(pos), blockEntityNbt);
+            CityWorldgenBlockObservationRegistry.BlockObservationRollbackToken rollbackToken =
+                    CityWorldgenBlockObservationRegistry.newRollbackToken();
+            BlockPos immutablePos = pos.immutable();
+            if (rollbackToken == null) {
+                rollbackTokens.remove(immutablePos);
+            } else {
+                rollbackTokens.put(immutablePos, rollbackToken);
+            }
+            return new WorldSnapshot(level.getBlockState(pos), blockEntityNbt, rollbackToken);
         }
 
         @Override
@@ -288,6 +306,8 @@ public final class CityDecorationNbtPlacer {
                 blockEntity.load(snapshot.blockEntityNbt().copy());
                 blockEntity.setChanged();
             }
+            CityWorldgenBlockObservationRegistry.rollbackToken(snapshot.rollbackToken());
+            rollbackTokens.remove(pos);
             return true;
         }
 
@@ -307,7 +327,13 @@ public final class CityDecorationNbtPlacer {
             if (ignoreTemplateAir) {
                 settings.addProcessor(BlockIgnoreProcessor.AIR);
             }
-            return template.placeInWorld(level, origin, origin, settings, RandomSource.create(seed), 2);
+            boolean written = template.placeInWorld(level, origin, origin, settings, RandomSource.create(seed), 2);
+            if (written) {
+                CityWorldgenBlockObservationRegistry.watchTemplate(templateNbt, origin, Mirror.NONE, rotation,
+                        BlockPos.ZERO, ignoreTemplateAir, ownerBounds, level::getBlockState,
+                        observationSource + "_prefab", rollbackTokens::get);
+            }
+            return written;
         }
 
         @Override
@@ -328,9 +354,16 @@ public final class CityDecorationNbtPlacer {
         public boolean placePlant(CompoundTag blockStateNbt, BlockPos pos, Rotation rotation) {
             BlockState target = plantState(blockStateNbt, rotation);
             if (level.getBlockState(pos).equals(target)) {
+                CityWorldgenBlockObservationRegistry.watchBlockState(pos, target,
+                        observationSource + "_plant");
                 return true;
             }
-            return level.setBlock(pos, target, Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
+            boolean written = level.setBlock(pos, target, Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
+            if (written) {
+                CityWorldgenBlockObservationRegistry.watchBlockState(pos, target,
+                        observationSource + "_plant");
+            }
+            return written;
         }
 
         private BlockState plantState(CompoundTag blockStateNbt, Rotation rotation) {
@@ -342,7 +375,10 @@ public final class CityDecorationNbtPlacer {
             return state.mirror(Mirror.NONE).rotate(rotation);
         }
 
-        private record WorldSnapshot(BlockState blockState, CompoundTag blockEntityNbt) {
+        private record WorldSnapshot(
+                BlockState blockState,
+                CompoundTag blockEntityNbt,
+                CityWorldgenBlockObservationRegistry.BlockObservationRollbackToken rollbackToken) {
         }
     }
 }

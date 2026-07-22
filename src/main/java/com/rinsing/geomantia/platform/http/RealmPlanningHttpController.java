@@ -10,6 +10,7 @@ import com.rinsing.geomantia.systems.gis.application.refresh.SampleMode;
 import com.rinsing.geomantia.systems.gis.application.sample.AtlasSampler;
 import com.rinsing.geomantia.systems.city.application.CityWallPlanner;
 import com.rinsing.geomantia.systems.city.application.CityWallReservationPlanner;
+import com.rinsing.geomantia.systems.city.infrastructure.world.CityWorldgenBlockObservationRegistry;
 import com.rinsing.geomantia.platform.RealmPlanningServices;
 import com.rinsing.geomantia.systems.realm_planning.RealmPlanningService;
 import com.rinsing.geomantia.systems.realm_planning.WorldSurveyResult;
@@ -794,6 +795,20 @@ final class RealmPlanningHttpController {
         }));
     }
 
+    void handleCityQueryWorldgenObservations(HttpExchange exchange) {
+        handle(exchange, "POST", () -> {
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            return CityWorldgenBlockObservationRegistry.query(
+                    server.getWorldPath(LevelResource.ROOT),
+                    requiredString(request, "dimensionId"),
+                    requiredInt(request, "chunkX"),
+                    requiredInt(request, "chunkZ"),
+                    stringValue(request, "phase", ""),
+                    intValue(request, "limit", 10),
+                    booleanValue(request, "includeBlocks", true));
+        });
+    }
+
     void handleCityPlanCityWalls(HttpExchange exchange) {
         handle(exchange, "POST", () -> callOnServerThread(() -> {
             JsonObject request = GisHttpUtil.readJsonObject(exchange);
@@ -1169,6 +1184,13 @@ final class RealmPlanningHttpController {
         } catch (Exception ex) {
             throw new IllegalArgumentException(key + " must be an integer.");
         }
+    }
+
+    private static int requiredInt(JsonObject object, String key) {
+        if (!hasValue(object, key)) {
+            throw new IllegalArgumentException(key + " is required.");
+        }
+        return intValue(object, key, 0);
     }
 
     private static long longValue(JsonObject object, String key, long defaultValue) {

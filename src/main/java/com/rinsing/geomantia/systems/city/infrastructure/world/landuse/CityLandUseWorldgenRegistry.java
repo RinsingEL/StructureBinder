@@ -221,7 +221,7 @@ public final class CityLandUseWorldgenRegistry {
             applyForChunk(dimension, owner.x, owner.z,
                     CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES,
                     new CityLandUseChunkExecutor.WorldGenExecutionWorld(level),
-                    new CityDecorationNbtPlacer.WorldGenPlacementWorld(level),
+                    new CityDecorationNbtPlacer.WorldGenPlacementWorld(level, "land_use"),
                     level.getMinBuildHeight(), level.getMaxBuildHeight() - 1);
         } catch (RuntimeException | Error failure) {
             releaseFeatureOwner(level, ownerKey);

@@ -53,7 +53,14 @@ public final class CityTemplateWorldgenRetryCoordinator {
                 continue;
             }
             if (age == 1 || age % RETRY_INTERVAL_TICKS == 0) {
-                MinecraftCityWorldgenStructurePlacer.retryPendingTemplateStructures(key.level(), chunk);
+                CityWorldgenBlockObservationRegistry.begin(key.level(), chunk);
+                try {
+                    MinecraftCityWorldgenStructurePlacer.retryPendingTemplateStructures(key.level(), chunk);
+                    CityWorldgenBlockObservationRegistry.finishAfterRetry(key.level(), chunk);
+                } catch (RuntimeException | Error ex) {
+                    CityWorldgenBlockObservationRegistry.abort();
+                    throw ex;
+                }
             }
             if (CityReservationMaskRegistry.pendingTemplateStructuresForChunk(chunk.getPos()).isEmpty()) {
                 RETRIES.remove(key);

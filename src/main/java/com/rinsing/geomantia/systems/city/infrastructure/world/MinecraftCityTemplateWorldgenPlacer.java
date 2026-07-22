@@ -510,6 +510,10 @@ public final class MinecraftCityTemplateWorldgenPlacer {
                 placedKeys.remove(fragment.placementKey());
                 return WriteReport.failed("StructureTemplate.placeInWorld returned false.");
             }
+            CityWorldgenBlockObservationRegistry.watchStructureTemplate(template, fragment.templateHash(),
+                    runtimeTransform.placementOrigin(), runtimeTransform.minecraftMirror(),
+                    runtimeTransform.minecraftRotation(), runtimeTransform.rotationPivot(), ownerBox,
+                    level::getBlockState, "city_structure_template");
             return WriteReport.written();
         }
 
