@@ -368,6 +368,42 @@ class CityDecorationContentCatalogLoaderTest {
         assertEquals("city:prefab/crop",
                 catalog.requireContent("city:prefab/channel").terrainDropFallbackContentRef());
 
+        writeTemplate(root.resolve("templates/lined_straight.nbt"), 3, 2, 1,
+                "minecraft:water", false);
+        writeTemplate(root.resolve("templates/lined_endcap.nbt"), 3, 2, 2,
+                "minecraft:oak_slab", false);
+        writeIndex(root, """
+                {
+                  "schemaVersion": "city_decoration_content_index.v0.4",
+                  "contents": [
+                    {
+                      "contentId": "city:prefab/lined_straight",
+                      "contentKind": "prefab",
+                      "nbtFile": "templates/lined_straight.nbt",
+                      "groundPlaneLocalY": 0,
+                      "embedDepthBlocks": 0,
+                      "clearanceMode": "preserve",
+                      "placementMode": "replace_surface",
+                      "replacePolicy": "surface_replaceable",
+                      "terrainDropFallbackContentRef": "city:prefab/lined_endcap"
+                    },
+                    {
+                      "contentId": "city:prefab/lined_endcap",
+                      "contentKind": "prefab",
+                      "nbtFile": "templates/lined_endcap.nbt",
+                      "groundPlaneLocalY": 0,
+                      "embedDepthBlocks": 0,
+                      "clearanceMode": "preserve",
+                      "placementMode": "replace_surface",
+                      "replacePolicy": "surface_replaceable"
+                    }
+                  ]
+                }
+                """);
+        CityDecorationContentCatalog lined = new CityDecorationContentCatalogLoader().load(root);
+        assertEquals("city:prefab/lined_endcap",
+                lined.requireContent("city:prefab/lined_straight").terrainDropFallbackContentRef());
+
         writeIndex(root, """
                 {
                   "schemaVersion": "city_decoration_content_index.v0.4",

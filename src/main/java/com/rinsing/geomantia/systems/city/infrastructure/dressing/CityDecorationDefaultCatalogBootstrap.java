@@ -15,6 +15,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,7 +28,8 @@ public final class CityDecorationDefaultCatalogBootstrap {
     private static final String MANIFEST = "bootstrap_manifest.json";
     private static final String MANAGED_SOURCE = "geomantia:default_config/city_decoration";
     private static final String MANIFEST_SCHEMA = "city_decoration_default_bootstrap.v0.4";
-    private static final String DEFAULT_CATALOG_REVISION = "functional_settlement_fountain.v0.4";
+    private static final String DEFAULT_CATALOG_REVISION = "functional_settlement_lined_channels.v0.5";
+    private static final int MINECRAFT_1_20_1_DATA_VERSION = 3465;
 
     private CityDecorationDefaultCatalogBootstrap() {
     }
@@ -56,6 +58,10 @@ public final class CityDecorationDefaultCatalogBootstrap {
         writeTemplate(staging.resolve("templates/crop_tile.nbt"), "minecraft:farmland", "minecraft:wheat");
         writeTemplate(staging.resolve("templates/farmland_tile.nbt"), "minecraft:farmland");
         writeTemplate(staging.resolve("templates/water_channel_tile.nbt"), "minecraft:water");
+        writeTemplate(staging.resolve("templates/water_channel_lined_straight_01.nbt"),
+                waterChannelLinedStraight());
+        writeTemplate(staging.resolve("templates/water_channel_lined_endcap_01.nbt"),
+                waterChannelLinedEndcap());
         writeTemplate(staging.resolve("templates/field_border.nbt"), "minecraft:oak_fence");
         writeTemplate(staging.resolve("templates/gravel_path_tile.nbt"), "minecraft:gravel");
         writeTemplate(staging.resolve("templates/scarecrow_02.nbt"), scarecrow());
@@ -116,14 +122,22 @@ public final class CityDecorationDefaultCatalogBootstrap {
 
     private static void writeTemplate(Path target, TemplateSpec template) throws IOException {
         CompoundTag root = new CompoundTag();
+        if (template.dataVersion() >= 0) {
+            root.putInt("DataVersion", template.dataVersion());
+        }
         root.put("size", ints(template.width(), template.height(), template.depth()));
         ListTag palette = new ListTag();
-        Map<String, Integer> paletteIndexes = new LinkedHashMap<>();
+        Map<TemplateState, Integer> paletteIndexes = new LinkedHashMap<>();
         ListTag blocks = new ListTag();
         for (TemplateBlock templateBlock : template.blocks()) {
-            int stateIndex = paletteIndexes.computeIfAbsent(templateBlock.blockId(), blockId -> {
+            int stateIndex = paletteIndexes.computeIfAbsent(templateBlock.state(), templateState -> {
                 CompoundTag state = new CompoundTag();
-                state.putString("Name", blockId);
+                state.putString("Name", templateState.blockId());
+                if (!templateState.properties().isEmpty()) {
+                    CompoundTag properties = new CompoundTag();
+                    templateState.properties().forEach(properties::putString);
+                    state.put("Properties", properties);
+                }
                 palette.add(state);
                 return palette.size() - 1;
             });
@@ -136,6 +150,50 @@ public final class CityDecorationDefaultCatalogBootstrap {
         root.put("blocks", blocks);
         root.put("entities", new ListTag());
         NbtIo.writeCompressed(root, target.toFile());
+    }
+
+    private static TemplateSpec waterChannelLinedStraight() {
+        return new TemplateBuilder(3, 2, 1)
+                .dataVersion(MINECRAFT_1_20_1_DATA_VERSION)
+                .block(0, 0, 0, "minecraft:dirt")
+                .block(2, 0, 0, "minecraft:dirt")
+                .block(1, 0, 0, state("minecraft:water", "level", "0"))
+                .block(0, 1, 0, state("minecraft:oak_slab",
+                        "waterlogged", "false", "type", "bottom"))
+                .block(1, 1, 0, "minecraft:air")
+                .block(2, 1, 0, state("minecraft:oak_slab",
+                        "waterlogged", "false", "type", "bottom"))
+                .build();
+    }
+
+    private static TemplateSpec waterChannelLinedEndcap() {
+        return new TemplateBuilder(3, 2, 2)
+                .dataVersion(MINECRAFT_1_20_1_DATA_VERSION)
+                .block(0, 0, 0, "minecraft:dirt")
+                .block(1, 0, 0, state("minecraft:water", "level", "0"))
+                .block(2, 0, 0, "minecraft:dirt")
+                .block(0, 0, 1, "minecraft:dirt")
+                .block(1, 0, 1, "minecraft:dirt")
+                .block(2, 0, 1, "minecraft:dirt")
+                .block(0, 1, 0, state("minecraft:oak_slab",
+                        "type", "bottom", "waterlogged", "false"))
+                .block(2, 1, 0, state("minecraft:oak_slab",
+                        "type", "bottom", "waterlogged", "false"))
+                .block(0, 1, 1, "minecraft:dirt")
+                .block(1, 1, 1, "minecraft:dirt")
+                .block(2, 1, 1, "minecraft:dirt")
+                .build();
+    }
+
+    private static TemplateState state(String blockId, String... propertyPairs) {
+        if (propertyPairs.length % 2 != 0) {
+            throw new IllegalArgumentException("Block-state properties must be key/value pairs.");
+        }
+        Map<String, String> properties = new LinkedHashMap<>();
+        for (int index = 0; index < propertyPairs.length; index += 2) {
+            properties.put(propertyPairs[index], propertyPairs[index + 1]);
+        }
+        return new TemplateState(blockId, properties);
     }
 
     private static TemplateSpec scarecrow() {
@@ -248,13 +306,19 @@ public final class CityDecorationDefaultCatalogBootstrap {
         return values;
     }
 
-    private record TemplateSpec(int width, int height, int depth, List<TemplateBlock> blocks) {
+    private record TemplateSpec(int width, int height, int depth, int dataVersion, List<TemplateBlock> blocks) {
         private TemplateSpec {
             blocks = List.copyOf(blocks);
         }
     }
 
-    private record TemplateBlock(int x, int y, int z, String blockId) {
+    private record TemplateBlock(int x, int y, int z, TemplateState state) {
+    }
+
+    private record TemplateState(String blockId, Map<String, String> properties) {
+        private TemplateState {
+            properties = Collections.unmodifiableMap(new LinkedHashMap<>(properties));
+        }
     }
 
     private static final class TemplateBuilder {
@@ -262,6 +326,7 @@ public final class CityDecorationDefaultCatalogBootstrap {
         private final int height;
         private final int depth;
         private final List<TemplateBlock> blocks = new ArrayList<>();
+        private int dataVersion = -1;
 
         private TemplateBuilder(int width, int height, int depth) {
             this.width = width;
@@ -270,7 +335,16 @@ public final class CityDecorationDefaultCatalogBootstrap {
         }
 
         private TemplateBuilder block(int x, int y, int z, String blockId) {
-            blocks.add(new TemplateBlock(x, y, z, blockId));
+            return block(x, y, z, state(blockId));
+        }
+
+        private TemplateBuilder block(int x, int y, int z, TemplateState state) {
+            blocks.add(new TemplateBlock(x, y, z, state));
+            return this;
+        }
+
+        private TemplateBuilder dataVersion(int dataVersion) {
+            this.dataVersion = dataVersion;
             return this;
         }
 
@@ -288,7 +362,7 @@ public final class CityDecorationDefaultCatalogBootstrap {
         }
 
         private TemplateSpec build() {
-            return new TemplateSpec(width, height, depth, blocks);
+            return new TemplateSpec(width, height, depth, dataVersion, blocks);
         }
     }
 }

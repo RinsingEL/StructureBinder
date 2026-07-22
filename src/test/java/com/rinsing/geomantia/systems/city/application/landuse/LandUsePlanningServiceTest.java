@@ -11,8 +11,12 @@ import com.rinsing.geomantia.systems.city.domain.landuse.VegetationPolicy;
 import com.rinsing.geomantia.systems.city.domain.landuse.rules.LandUseRule;
 import com.rinsing.geomantia.systems.city.domain.landuse.rules.LandUseRuleCatalog;
 import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
+import com.rinsing.geomantia.systems.city.domain.model.BlockPoint;
+import com.rinsing.geomantia.systems.city.infrastructure.dressing.TestDecorationCatalogs;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,6 +40,11 @@ class LandUsePlanningServiceTest {
         assertEquals(firstJson, secondJson);
         assertFalse(first.plan().planHash().isBlank());
         assertEquals(first.plan().planHash(), new LandUseAreaPlanCodec().fromJson(firstJson).planHash());
+        assertEquals(first.surfacePrintPlan(), second.surfacePrintPlan());
+        assertFalse(first.surfacePrintPlan().planHash().isBlank());
+        assertEquals(first.plan().planHash(), first.surfacePrintPlan().sourceLandUsePlanHash());
+        assertTrue(first.surfacePrintPlan().areas().stream().anyMatch(area ->
+                area.recipe() instanceof CityLandUseSurfacePrintPlan.UniformRecipe));
         assertTrue(first.plan().areas().stream().anyMatch(area -> area.landUseType().equals("residential")));
         assertTrue(first.plan().areas().stream().anyMatch(area -> area.landUseType().equals("commercial")));
         assertTrue(first.plan().areas().stream().allMatch(area -> !area.memberSpans().isEmpty()));
@@ -77,66 +86,37 @@ class LandUsePlanningServiceTest {
 
         assertEquals(1, plan.areas().size());
         assertEquals(List.of("block_a", "block_b"), plan.areas().get(0).sourceGroupIds());
+        assertEquals(2, plan.areas().get(0).structureFootprintExclusions().size());
     }
 
     @Test
-    void nearbySameRuleGroupsBridgeThroughNaturalUnclaimedLand() {
+    void automaticSurfaceConnectionsKeepEveryNearbyPair() {
+        JsonObject d6 = plan("shop_a", "pave_a", 4, 6, 10, 12, "commercial",
+                "shop_b", "pave_b", 28, 30, 10, 12, "commercial",
+                "shop_c", "pave_c", 52, 54, 10, 12, "commercial");
+
+        LandUsePlanningService.Result result = new LandUsePlanningService().plan(
+                d6, null, null, null, terrain(64), smallCommercialCatalog());
+
+        assertEquals("city_land_use_planning_trace.v0.3", result.trace().get("schemaVersion").getAsString());
+        assertEquals(3, result.trace().getAsJsonArray("automaticSurfaceConnections").size());
+        assertTrue(result.trace().getAsJsonArray("automaticSurfaceConnections").asList().stream()
+                .allMatch(value -> "PAVE".equals(value.getAsJsonObject()
+                        .get("surfaceCompatibilityKey").getAsString())));
+    }
+
+    @Test
+    void blockedAutomaticConnectionWarnsWithoutForcingABridge() {
         JsonObject d6 = plan("shop_a", "shop_block_a", 8, 10, 10, 12, "commercial",
                 "shop_b", "shop_block_b", 35, 37, 10, 12, "commercial");
 
         LandUsePlanningService.Result result = new LandUsePlanningService().plan(d6, null, null, null,
-                terrain(), bridgeCatalog(20));
+                terrainWithBlockedColumn(4), smallCommercialCatalog());
 
-        LandUseAreaPlan.Area commercial = result.plan().areas().stream()
-                .filter(area -> area.landUseType().equals("commercial")).findFirst().orElseThrow();
-        assertEquals(List.of("shop_block_a", "shop_block_b"), commercial.sourceGroupIds(), result.trace().toString());
-        assertEquals(1, result.trace().getAsJsonArray("nearbySameTypeBridges").size());
-    }
-
-    @Test
-    void nearbySameRuleBridgeStaysDisabledWhenRuleLimitIsZero() {
-        JsonObject d6 = plan("shop_a", "shop_block_a", 8, 10, 10, 12, "commercial",
-                "shop_b", "shop_block_b", 35, 37, 10, 12, "commercial");
-
-        LandUsePlanningService.Result result = new LandUsePlanningService().plan(d6, null, null, null,
-                terrain(), bridgeCatalog(0));
-
-        assertEquals(2, result.plan().areas().stream()
-                .filter(area -> area.landUseType().equals("commercial")).count());
-        assertTrue(result.trace().getAsJsonArray("nearbySameTypeBridges").isEmpty());
-    }
-
-    @Test
-    void nearbySameRuleBridgeRoutesAroundDifferentLandUseWithoutReclaimingIt() {
-        JsonObject d6 = plan("shop_a", "shop_block_a", 5, 7, 18, 20, "commercial",
-                "hall", "civic_block", 25, 33, 13, 27, "civic",
-                "shop_b", "shop_block_b", 54, 56, 18, 20, "commercial");
-
-        LandUsePlanningService.Result result = new LandUsePlanningService().plan(d6, null, null, null,
-                terrain(64), bridgeCatalog(64));
-
-        LandUseAreaPlan.Area commercial = result.plan().areas().stream()
-                .filter(area -> area.landUseType().equals("commercial")).findFirst().orElseThrow();
-        assertEquals(List.of("shop_block_a", "shop_block_b"), commercial.sourceGroupIds(), result.trace().toString());
-        assertTrue(result.plan().areas().stream().anyMatch(area ->
-                area.landUseType().equals("civic") && area.sourceGroupIds().contains("civic_block")));
-        assertFalse(contains(commercial, 29, 20));
-        assertEquals(1, result.trace().getAsJsonArray("nearbySameTypeBridges").size());
-    }
-
-    @Test
-    void nearbySameRuleBridgesUseAcyclicStableComponentMerges() {
-        JsonObject d6 = plan("shop_a", "shop_block_a", 4, 6, 10, 12, "commercial",
-                "shop_b", "shop_block_b", 30, 32, 10, 12, "commercial",
-                "shop_c", "shop_block_c", 56, 58, 10, 12, "commercial");
-
-        LandUsePlanningService.Result result = new LandUsePlanningService().plan(d6, null, null, null,
-                terrain(64), bridgeCatalog(20));
-
-        LandUseAreaPlan.Area commercial = result.plan().areas().stream()
-                .filter(area -> area.landUseType().equals("commercial")).findFirst().orElseThrow();
-        assertEquals(List.of("shop_block_a", "shop_block_b", "shop_block_c"), commercial.sourceGroupIds(), result.trace().toString());
-        assertEquals(2, result.trace().getAsJsonArray("nearbySameTypeBridges").size());
+        assertEquals("not_reached", result.trace().getAsJsonArray("automaticSurfaceConnections")
+                .get(0).getAsJsonObject().get("status").getAsString());
+        assertTrue(result.plan().warnings().contains(
+                "LAND_USE_AUTO_CONNECTION_NOT_REACHED:shop_block_a:shop_block_b"));
     }
 
     @Test
@@ -168,12 +148,12 @@ class LandUsePlanningServiceTest {
     @Test
     void unknownRuleRefsFailBeforeExcludeOrGroupingCanBypassValidation() {
         JsonObject groupIntent = JsonParser.parseString("""
-                {"schemaVersion":"city_land_use_intent_plan.v0.1","cityId":"city_test",
+                {"schemaVersion":"city_land_use_intent_plan.v0.2","cityId":"city_test",
                  "groupOverrides":[{"groupId":"override","memberAnchorIds":["house"],"ruleRef":"missing"}],
                  "subjectOverrides":[{"targetType":"group","targetId":"override","mode":"exclude"}]}
                 """).getAsJsonObject();
         JsonObject subjectIntent = JsonParser.parseString("""
-                {"schemaVersion":"city_land_use_intent_plan.v0.1","cityId":"city_test",
+                {"schemaVersion":"city_land_use_intent_plan.v0.2","cityId":"city_test",
                  "subjectOverrides":[{"targetType":"anchor","targetId":"house","mode":"set_rule","ruleRef":"missing"}]}
                 """).getAsJsonObject();
 
@@ -202,6 +182,107 @@ class LandUsePlanningServiceTest {
         assertTrue(result.quality().get("belowMinimumGroupCount").getAsInt() > 0);
         assertTrue(result.quality().getAsJsonArray("groupResults").asList().stream()
                 .anyMatch(value -> "below_minimum".equals(value.getAsJsonObject().get("status").getAsString())));
+    }
+
+    @Test
+    void resolvesSurfaceDefaultsIntoTrace(@TempDir Path temp) throws Exception {
+        JsonObject d6 = d6Plan();
+        d6.getAsJsonArray("plannedWorldgenStructures").add(
+                structure("farm", "fields", 14, 18, 24, 28, "agriculture"));
+        LandUsePlanningService.Result result = new LandUsePlanningService().plan(
+                d6, null, null, null, terrain(), LandUseRuleCatalog.defaults(),
+                TestDecorationCatalogs.loadManagedDefault(temp.resolve("city_decoration")));
+
+        JsonObject residential = traceGroup(result, "housing");
+        assertFalse(residential.get("surfacePrintEnabled").getAsBoolean());
+        assertFalse(residential.get("autoConnect").getAsBoolean());
+        assertEquals("", residential.get("surfaceBlockId").getAsString());
+        assertEquals("", residential.get("surfaceCompatibilityCategory").getAsString());
+        JsonObject commercial = traceGroup(result, "market");
+        assertTrue(commercial.get("surfacePrintEnabled").getAsBoolean());
+        assertTrue(commercial.get("autoConnect").getAsBoolean());
+        assertEquals("minecraft:stone_bricks", commercial.get("surfaceBlockId").getAsString());
+        assertEquals("", commercial.get("cropBlockId").getAsString());
+        assertEquals("PAVE", commercial.get("surfaceCompatibilityCategory").getAsString());
+        JsonObject agriculture = traceGroup(result, "fields");
+        assertTrue(agriculture.get("surfacePrintEnabled").getAsBoolean());
+        assertTrue(agriculture.get("autoConnect").getAsBoolean());
+        assertEquals("minecraft:farmland", agriculture.get("surfaceBlockId").getAsString());
+        assertEquals("minecraft:wheat", agriculture.get("cropBlockId").getAsString());
+        assertEquals("CULTIVATE", agriculture.get("surfaceCompatibilityCategory").getAsString());
+    }
+
+    @Test
+    void surfaceOverrideDisablesConnectionAndFreezesResolvedBlocksInTrace() {
+        JsonObject d6 = plan("shop_a", "shop_block_a", 8, 10, 10, 12, "commercial",
+                "shop_b", "shop_block_b", 25, 27, 10, 12, "commercial");
+        JsonObject intent = JsonParser.parseString("""
+                {"schemaVersion":"city_land_use_intent_plan.v0.2","cityId":"city_test",
+                 "surfaceOverrides":[{
+                   "targetGroupId":"shop_block_a",
+                   "surfacePrintEnabled":true,
+                   "autoConnect":false,
+                   "surfaceBlockId":"minecraft:polished_andesite",
+                   "directionMode":"radial",
+                   "directionCenter":{"x":11,"z":11}
+                 }]}
+                """).getAsJsonObject();
+
+        LandUsePlanningService.Result result = new LandUsePlanningService().plan(
+                d6, intent, null, null, terrain(), smallCommercialCatalog());
+
+        assertTrue(result.trace().getAsJsonArray("automaticSurfaceConnections").isEmpty());
+        JsonObject overridden = traceGroup(result, "shop_block_a");
+        assertFalse(overridden.get("autoConnect").getAsBoolean());
+        assertEquals("minecraft:polished_andesite", overridden.get("surfaceBlockId").getAsString());
+        assertEquals("radial", overridden.get("directionMode").getAsString());
+        assertEquals(11, overridden.getAsJsonObject("directionCenter").get("x").getAsInt());
+        CityLandUseSurfacePrintPlan.AreaPrint frozen = result.surfacePrintPlan().areas().stream()
+                .filter(area -> area.sourceGroupIds().contains("shop_block_a"))
+                .findFirst().orElseThrow();
+        assertEquals(com.rinsing.geomantia.systems.city.domain.landuse.LandUseSurfaceSettings.DirectionMode.RADIAL,
+                frozen.directionMode());
+        assertEquals(new BlockPoint(11, 11), frozen.directionCenter());
+    }
+
+    @Test
+    void enablingPrintOnPreserveRulePromotesItToPaveCompatibility() {
+        JsonObject d6 = plan("house_a", "housing_a", 8, 10, 10, 12, "residential",
+                "house_b", "housing_b", 25, 27, 10, 12, "residential");
+        JsonObject intent = JsonParser.parseString("""
+                {"schemaVersion":"city_land_use_intent_plan.v0.2","cityId":"city_test",
+                 "surfaceOverrides":[
+                   {"targetGroupId":"housing_a","surfacePrintEnabled":true,"autoConnect":true,
+                    "surfaceBlockId":"minecraft:cobblestone"},
+                   {"targetGroupId":"housing_b","surfacePrintEnabled":true,"autoConnect":true,
+                    "surfaceBlockId":"minecraft:stone_bricks"}
+                 ]}
+                """).getAsJsonObject();
+
+        LandUsePlanningService.Result result = new LandUsePlanningService().plan(d6, intent, terrain());
+
+        assertEquals(1, result.trace().getAsJsonArray("automaticSurfaceConnections").size());
+        assertEquals("PAVE", traceGroup(result, "housing_a")
+                .get("surfaceCompatibilityCategory").getAsString());
+        assertEquals("PAVE", traceGroup(result, "housing_b")
+                .get("surfaceCompatibilityCategory").getAsString());
+    }
+
+    @Test
+    void rejectsUnknownSurfaceOverrideTargetAndEnabledSurfaceWithoutBlock() {
+        JsonObject unknown = JsonParser.parseString("""
+                {"schemaVersion":"city_land_use_intent_plan.v0.2","cityId":"city_test",
+                 "surfaceOverrides":[{"targetGroupId":"missing","autoConnect":false}]}
+                """).getAsJsonObject();
+        JsonObject missingBlock = JsonParser.parseString("""
+                {"schemaVersion":"city_land_use_intent_plan.v0.2","cityId":"city_test",
+                 "surfaceOverrides":[{"targetGroupId":"housing","surfacePrintEnabled":true}]}
+                """).getAsJsonObject();
+
+        assertThrows(IllegalArgumentException.class, () ->
+                new LandUsePlanningService().plan(d6Plan(), unknown, terrain()));
+        assertThrows(IllegalArgumentException.class, () ->
+                new LandUsePlanningService().plan(d6Plan(), missingBlock, terrain()));
     }
 
     @Test
@@ -259,16 +340,14 @@ class LandUsePlanningServiceTest {
         return d6;
     }
 
-    private static LandUseRuleCatalog bridgeCatalog(int commercialBridgeBlocks) {
-        return new LandUseRuleCatalog(List.of(
-                rule("commercial", commercialBridgeBlocks),
-                rule("civic", 0)));
+    private static LandUseRuleCatalog smallCommercialCatalog() {
+        return new LandUseRuleCatalog(List.of(rule("commercial")));
     }
 
-    private static LandUseRule rule(String ruleRef, int nearbyMergeMaxBridgeBlocks) {
+    private static LandUseRule rule(String ruleRef) {
         return new LandUseRule(ruleRef, ruleRef, List.of(ruleRef), 6.0, 0, 1, 64,
-                100, 1.0, 0, 0, 10, 0, 1.0, true, nearbyMergeMaxBridgeBlocks,
-                SurfacePolicy.PRESERVE, VegetationPolicy.PRESERVE, BoundaryPolicy.OPEN, ruleRef);
+                100, 1.0, 0, 0, 10, 0, 1.0, true,
+                SurfacePolicy.PAVE, VegetationPolicy.PRESERVE, BoundaryPolicy.OPEN, ruleRef);
     }
 
     private static JsonObject templatePlan(String entranceId, String direction, int x, int z) {
@@ -332,6 +411,17 @@ class LandUsePlanningServiceTest {
                 new BlockBounds(0, 0, blocks - 1, blocks - 1), 4, cells);
     }
 
+    private static LandUseTerrainField terrainWithBlockedColumn(int blockedCellX) {
+        LandUseTerrainField open = terrain();
+        List<LandUseTerrainField.Cell> cells = open.cells().stream().map(cell ->
+                new LandUseTerrainField.Cell(cell.cellX(), cell.cellZ(), cell.blockMinX(), cell.blockMinZ(),
+                        cell.cellStepBlocks(), cell.elevation(), cell.cellX() == blockedCellX ? 50 : cell.slope(),
+                        cell.localRelief(), cell.roughness(), cell.water(), cell.waterDepth(), cell.waterDistance(),
+                        cell.biomeId(), cell.landformType(), cell.landformPatchId(), cell.sampled())).toList();
+        return new LandUseTerrainField(open.schemaVersion(), open.cityId(), open.planningBounds(),
+                open.cellStepBlocks(), cells);
+    }
+
     private static void assertNoOverlappingClaims(LandUseAreaPlan plan) {
         java.util.Set<String> claimed = new java.util.HashSet<>();
         for (LandUseAreaPlan.Area area : plan.areas()) {
@@ -348,7 +438,11 @@ class LandUsePlanningServiceTest {
                 .anyMatch(span -> span.z() == z && x >= span.minX() && x <= span.maxX());
     }
 
-    private static boolean contains(LandUseAreaPlan.Area area, int x, int z) {
-        return area.memberSpans().stream().anyMatch(span -> span.z() == z && x >= span.minX() && x <= span.maxX());
+    private static JsonObject traceGroup(LandUsePlanningService.Result result, String groupId) {
+        return result.trace().getAsJsonArray("seedGroups").asList().stream()
+                .map(value -> value.getAsJsonObject())
+                .filter(value -> groupId.equals(value.get("groupId").getAsString()))
+                .findFirst().orElseThrow();
     }
+
 }

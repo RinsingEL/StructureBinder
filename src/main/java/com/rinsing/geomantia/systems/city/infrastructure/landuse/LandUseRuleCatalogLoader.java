@@ -23,16 +23,11 @@ import java.util.Set;
 /** Strict loader for the user-owned LandUse rule profile selected by settings.json. */
 public final class LandUseRuleCatalogLoader {
     private static final Set<String> ROOT_FIELDS = Set.of("schemaVersion", "profileId", "rules");
-    private static final Set<String> LEGACY_RULE_FIELDS = Set.of(
+    private static final Set<String> RULE_FIELDS = Set.of(
             "ruleRef", "landUseType", "semanticTerms", "footprintMultiplier", "extraAreaBlocks",
             "minAreaBlocks", "maxAreaBlocks", "actionBudget", "baseStepCost", "slopeCost", "reliefCost",
             "waterCost", "forestAffinity", "competitionWeight", "mergeSameType", "surfacePolicy",
             "vegetationPolicy", "boundaryPolicy", "decorationPolicy");
-    private static final Set<String> RULE_FIELDS = Set.of(
-            "ruleRef", "landUseType", "semanticTerms", "footprintMultiplier", "extraAreaBlocks",
-            "minAreaBlocks", "maxAreaBlocks", "actionBudget", "baseStepCost", "slopeCost", "reliefCost",
-            "waterCost", "forestAffinity", "competitionWeight", "mergeSameType", "nearbyMergeMaxBridgeBlocks",
-            "surfacePolicy", "vegetationPolicy", "boundaryPolicy", "decorationPolicy");
 
     public LandUseRuleCatalog load(Path cityLandUseConfigRoot, LandUseSettings settings) {
         if (cityLandUseConfigRoot == null) {
@@ -64,8 +59,7 @@ public final class LandUseRuleCatalogLoader {
     private static LandUseRuleCatalog parse(JsonObject root, String selectedProfileId) {
         requireExactFields(root, ROOT_FIELDS, "LAND_USE_RULE_PROFILE");
         String schemaVersion = requiredString(root, "schemaVersion", "LAND_USE_RULE_PROFILE");
-        boolean legacy = LandUseRuleCatalog.LEGACY_RULE_VERSION.equals(schemaVersion);
-        if (!legacy && !LandUseRuleCatalog.RULE_VERSION.equals(schemaVersion)) {
+        if (!LandUseRuleCatalog.RULE_VERSION.equals(schemaVersion)) {
             throw new IllegalArgumentException("LAND_USE_RULE_PROFILE_SCHEMA_UNSUPPORTED: " + schemaVersion);
         }
         String profileId = requiredString(root, "profileId", "LAND_USE_RULE_PROFILE");
@@ -82,20 +76,15 @@ public final class LandUseRuleCatalogLoader {
             if (!element.isJsonObject()) {
                 throw new IllegalArgumentException("LAND_USE_RULE_PROFILE_RULE_OBJECT_REQUIRED");
             }
-            rules.add(parseRule(element.getAsJsonObject(), legacy));
+            rules.add(parseRule(element.getAsJsonObject()));
         }
         return new LandUseRuleCatalog(rules);
     }
 
-    private static LandUseRule parseRule(JsonObject json, boolean legacy) {
-        requireExactFields(json, legacy ? LEGACY_RULE_FIELDS : RULE_FIELDS, "LAND_USE_RULE");
-        String ruleRef = requiredString(json, "ruleRef", "LAND_USE_RULE");
-        boolean mergeSameType = requiredBoolean(json, "mergeSameType", "LAND_USE_RULE");
-        int nearbyMergeMaxBridgeBlocks = legacy
-                ? legacyNearbyMergeMaxBridgeBlocks(ruleRef, mergeSameType)
-                : requiredInt(json, "nearbyMergeMaxBridgeBlocks", "LAND_USE_RULE");
+    private static LandUseRule parseRule(JsonObject json) {
+        requireExactFields(json, RULE_FIELDS, "LAND_USE_RULE");
         return new LandUseRule(
-                ruleRef,
+                requiredString(json, "ruleRef", "LAND_USE_RULE"),
                 requiredString(json, "landUseType", "LAND_USE_RULE"),
                 requiredStringArray(json, "semanticTerms", "LAND_USE_RULE"),
                 requiredDouble(json, "footprintMultiplier", "LAND_USE_RULE"),
@@ -109,23 +98,11 @@ public final class LandUseRuleCatalogLoader {
                 requiredDouble(json, "waterCost", "LAND_USE_RULE"),
                 requiredDouble(json, "forestAffinity", "LAND_USE_RULE"),
                 requiredDouble(json, "competitionWeight", "LAND_USE_RULE"),
-                mergeSameType,
-                nearbyMergeMaxBridgeBlocks,
+                requiredBoolean(json, "mergeSameType", "LAND_USE_RULE"),
                 requiredPolicy(json, "surfacePolicy", SurfacePolicy.class),
                 requiredPolicy(json, "vegetationPolicy", VegetationPolicy.class),
                 requiredPolicy(json, "boundaryPolicy", BoundaryPolicy.class),
                 requiredString(json, "decorationPolicy", "LAND_USE_RULE"));
-    }
-
-    private static int legacyNearbyMergeMaxBridgeBlocks(String ruleRef, boolean mergeSameType) {
-        if (!mergeSameType) return 0;
-        return switch (ruleRef) {
-            case "agriculture", "forestry" -> 32;
-            case "plaza", "civic" -> 16;
-            case "residential", "general_settlement" -> 20;
-            case "pond" -> 0;
-            default -> LandUseRuleCatalog.LEGACY_NEARBY_MERGE_MAX_BRIDGE_BLOCKS;
-        };
     }
 
     private static void requireExactFields(JsonObject object, Set<String> expected, String scope) {

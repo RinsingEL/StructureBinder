@@ -456,6 +456,33 @@ final class RealmPlanningHttpController {
         });
     }
 
+    void handleCityPlanDecorationAnchorCandidates(HttpExchange exchange) {
+        handle(exchange, "POST", () -> {
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            String runId = requiredString(request, "runId");
+            String citySeedId = requiredString(request, "citySeedId");
+            rejectLegacyCityFields(request, "patchGroupPlan", "zoneChoices", "functionType", "functionTag",
+                    "function_candidates");
+            if (!request.has("decorationProgramPlan") || !request.get("decorationProgramPlan").isJsonObject()) {
+                throw new IllegalArgumentException("CITY_DECORATION_PROGRAM_PLAN_REQUIRED: "
+                        + "decorationProgramPlan object is required.");
+            }
+            String programId = requiredString(request, "programId");
+            int candidateCount = decorationAnchorCandidateCount(request);
+            return CityPlanningEndpointHandler.handlePlanDecorationAnchorCandidates(debugRoot(), runId, citySeedId,
+                    request.getAsJsonObject("decorationProgramPlan"), programId, candidateCount);
+        });
+    }
+
+    static int decorationAnchorCandidateCount(JsonObject request) {
+        int candidateCount = intValue(request, "candidateCount", 5);
+        if (candidateCount < 1 || candidateCount > 8) {
+            throw new IllegalArgumentException("CITY_DECORATION_CANDIDATE_COUNT_INVALID: "
+                    + "candidateCount must be between 1 and 8.");
+        }
+        return candidateCount;
+    }
+
     void handleCityQueryDecorationCatalog(HttpExchange exchange) {
         handle(exchange, "GET", CityPlanningEndpointHandler::handleQueryDecorationCatalog);
     }

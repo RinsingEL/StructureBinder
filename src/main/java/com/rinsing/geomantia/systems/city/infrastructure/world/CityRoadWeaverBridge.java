@@ -12,8 +12,11 @@ import net.minecraftforge.fml.ModList;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.TreeMap;
 
 public final class CityRoadWeaverBridge {
     public static final String PROVIDER_AUTO = "auto";
@@ -51,6 +54,7 @@ public final class CityRoadWeaverBridge {
                 continue;
             }
             String anchorId = stringValue(item, "anchorId", "anchor_" + index++);
+            String placementGroupId = stringValue(item, "placementGroupId", anchorId);
             JsonObject placement = placementPlan(item);
             if (placement == null) {
                 addError(errors, anchorId, REASON_TEMPLATE_ROAD_ENTRANCE_MISSING,
@@ -94,6 +98,7 @@ public final class CityRoadWeaverBridge {
                 endpoints.add(new RoadEndpoint(
                         anchorId + "::" + entranceId,
                         anchorId,
+                        placementGroupId,
                         entranceId,
                         stringValue(item, "structureId", "unknown"),
                         templateId,
@@ -111,9 +116,9 @@ public final class CityRoadWeaverBridge {
     public static JsonObject createConnectionPlan(JsonObject materializationPlan) {
         EndpointExtraction extraction = extractRoadEndpoints(materializationPlan);
         JsonObject plan = new JsonObject();
-        plan.addProperty("schemaVersion", "city_roadweaver_connection_plan.v0.1");
+        plan.addProperty("schemaVersion", "city_roadweaver_connection_plan.v0.2");
         plan.addProperty("cityId", stringValue(materializationPlan, "cityId", ""));
-        plan.addProperty("connectionStrategy", "priority_chain");
+        plan.addProperty("connectionStrategy", "group_spatial_mst");
         plan.addProperty("generateImmediately", false);
         plan.addProperty("transactional", true);
         plan.addProperty("validationStatus", extraction.valid() ? "valid" : "failed");
@@ -127,27 +132,111 @@ public final class CityRoadWeaverBridge {
         plan.add("endpoints", endpointArray);
 
         JsonArray connections = new JsonArray();
+        int intraGroupConnectionCount = 0;
+        int interGroupConnectionCount = 0;
         if (extraction.valid()) {
-            for (int i = 1; i < extraction.endpoints().size(); i++) {
-                RoadEndpoint from = extraction.endpoints().get(i - 1);
-                RoadEndpoint to = extraction.endpoints().get(i);
-                JsonObject connection = new JsonObject();
-                connection.addProperty("connectionId", "roadweaver_" + from.endpointId() + "_to_"
-                        + to.endpointId());
-                connection.addProperty("fromAnchorId", from.anchorId());
-                connection.addProperty("toAnchorId", to.anchorId());
-                connection.addProperty("fromEndpointId", from.endpointId());
-                connection.addProperty("toEndpointId", to.endpointId());
-                connection.add("from", from.roadPoint().asJson());
-                connection.add("to", to.roadPoint().asJson());
-                connections.add(connection);
+            for (RoadConnection connection : groupSpatialMst(extraction.endpoints())) {
+                connections.add(connection.asJson());
+                if (connection.scope() == ConnectionScope.INTRA_GROUP) {
+                    intraGroupConnectionCount++;
+                } else {
+                    interGroupConnectionCount++;
+                }
             }
         }
         plan.add("connections", connections);
         plan.addProperty("endpointCount", endpointArray.size());
         plan.addProperty("connectionCount", connections.size());
+        plan.addProperty("placementGroupCount", extraction.endpoints().stream()
+                .map(RoadEndpoint::placementGroupId).distinct().count());
+        plan.addProperty("intraGroupConnectionCount", intraGroupConnectionCount);
+        plan.addProperty("interGroupConnectionCount", interGroupConnectionCount);
         return plan;
     }
+
+    private static List<RoadConnection> groupSpatialMst(List<RoadEndpoint> endpoints) {
+        Map<String, List<RoadEndpoint>> groups = new TreeMap<>();
+        for (RoadEndpoint endpoint : endpoints) {
+            groups.computeIfAbsent(endpoint.placementGroupId(), ignored -> new ArrayList<>()).add(endpoint);
+        }
+        groups.values().forEach(values -> values.sort(Comparator.comparing(RoadEndpoint::endpointId)));
+
+        List<RoadConnection> result = new ArrayList<>();
+        for (Map.Entry<String, List<RoadEndpoint>> entry : groups.entrySet()) {
+            result.addAll(endpointMst(entry.getValue(), ConnectionScope.INTRA_GROUP));
+        }
+
+        List<String> groupIds = List.copyOf(groups.keySet());
+        List<RoadConnection> groupCandidates = new ArrayList<>();
+        for (int i = 0; i < groupIds.size(); i++) {
+            for (int j = i + 1; j < groupIds.size(); j++) {
+                groupCandidates.add(closestConnection(groups.get(groupIds.get(i)), groups.get(groupIds.get(j)),
+                        ConnectionScope.INTER_GROUP));
+            }
+        }
+        result.addAll(kruskal(groupIds, groupCandidates, connection -> connection.from().placementGroupId(),
+                connection -> connection.to().placementGroupId()));
+        return List.copyOf(result);
+    }
+
+    private static List<RoadConnection> endpointMst(List<RoadEndpoint> endpoints, ConnectionScope scope) {
+        if (endpoints.size() < 2) {
+            return List.of();
+        }
+        List<RoadConnection> candidates = new ArrayList<>();
+        for (int i = 0; i < endpoints.size(); i++) {
+            for (int j = i + 1; j < endpoints.size(); j++) {
+                candidates.add(connection(endpoints.get(i), endpoints.get(j), scope));
+            }
+        }
+        return kruskal(endpoints.stream().map(RoadEndpoint::endpointId).toList(), candidates,
+                connection -> connection.from().endpointId(), connection -> connection.to().endpointId());
+    }
+
+    private static RoadConnection closestConnection(List<RoadEndpoint> fromGroup,
+                                                    List<RoadEndpoint> toGroup,
+                                                    ConnectionScope scope) {
+        RoadConnection best = null;
+        for (RoadEndpoint from : fromGroup) {
+            for (RoadEndpoint to : toGroup) {
+                RoadConnection candidate = connection(from, to, scope);
+                if (best == null || ROAD_CONNECTION_ORDER.compare(candidate, best) < 0) {
+                    best = candidate;
+                }
+            }
+        }
+        return Objects.requireNonNull(best, "placement groups must contain at least one endpoint");
+    }
+
+    private static <T> List<RoadConnection> kruskal(List<T> nodes,
+                                                     List<RoadConnection> candidates,
+                                                     java.util.function.Function<RoadConnection, T> fromNode,
+                                                     java.util.function.Function<RoadConnection, T> toNode) {
+        UnionFind<T> unionFind = new UnionFind<>(nodes);
+        List<RoadConnection> selected = new ArrayList<>();
+        for (RoadConnection candidate : candidates.stream().sorted(ROAD_CONNECTION_ORDER).toList()) {
+            if (unionFind.union(fromNode.apply(candidate), toNode.apply(candidate))) {
+                selected.add(candidate);
+                if (selected.size() == Math.max(0, nodes.size() - 1)) {
+                    break;
+                }
+            }
+        }
+        return List.copyOf(selected);
+    }
+
+    private static RoadConnection connection(RoadEndpoint first, RoadEndpoint second, ConnectionScope scope) {
+        RoadEndpoint from = first.endpointId().compareTo(second.endpointId()) <= 0 ? first : second;
+        RoadEndpoint to = from == first ? second : first;
+        long distance = Math.abs((long) from.roadPoint().x() - to.roadPoint().x())
+                + Math.abs((long) from.roadPoint().z() - to.roadPoint().z());
+        return new RoadConnection(from, to, scope, distance);
+    }
+
+    private static final Comparator<RoadConnection> ROAD_CONNECTION_ORDER = Comparator
+            .comparingLong(RoadConnection::distanceBlocks)
+            .thenComparing(connection -> connection.from().endpointId())
+            .thenComparing(connection -> connection.to().endpointId());
 
     public static JsonObject register(ServerLevel level, JsonObject connectionPlan, String requestedProvider) {
         String provider = normalizeProvider(requestedProvider);
@@ -505,12 +594,14 @@ public final class CityRoadWeaverBridge {
         }
     }
 
-    public record RoadEndpoint(String endpointId, String anchorId, String entranceId, String structureId,
+    public record RoadEndpoint(String endpointId, String anchorId, String placementGroupId,
+                               String entranceId, String structureId,
                                String templateId, String templateHash, int priority, BlockBounds footprint,
                                BlockPoint roadPoint, String direction) {
         public RoadEndpoint {
             endpointId = requireText(endpointId, "endpointId");
             anchorId = requireText(anchorId, "anchorId");
+            placementGroupId = requireText(placementGroupId, "placementGroupId");
             entranceId = requireText(entranceId, "entranceId");
             structureId = requireText(structureId, "structureId");
             templateId = requireText(templateId, "templateId");
@@ -523,6 +614,7 @@ public final class CityRoadWeaverBridge {
             JsonObject obj = new JsonObject();
             obj.addProperty("endpointId", endpointId);
             obj.addProperty("anchorId", anchorId);
+            obj.addProperty("placementGroupId", placementGroupId);
             obj.addProperty("entranceId", entranceId);
             obj.addProperty("structureId", structureId);
             obj.addProperty("templateId", templateId);
@@ -535,6 +627,80 @@ public final class CityRoadWeaverBridge {
                 obj.add("lockedActualFootprint", boundsJson(footprint));
             }
             return obj;
+        }
+    }
+
+    private enum ConnectionScope {
+        INTRA_GROUP("intra_group"),
+        INTER_GROUP("inter_group");
+
+        private final String wireName;
+
+        ConnectionScope(String wireName) {
+            this.wireName = wireName;
+        }
+    }
+
+    private record RoadConnection(RoadEndpoint from, RoadEndpoint to,
+                                  ConnectionScope scope, long distanceBlocks) {
+        private RoadConnection {
+            Objects.requireNonNull(from, "from");
+            Objects.requireNonNull(to, "to");
+            Objects.requireNonNull(scope, "scope");
+            if (distanceBlocks < 0) {
+                throw new IllegalArgumentException("distanceBlocks must not be negative");
+            }
+        }
+
+        private JsonObject asJson() {
+            JsonObject connection = new JsonObject();
+            connection.addProperty("connectionId", "roadweaver_" + from.endpointId() + "_to_"
+                    + to.endpointId());
+            connection.addProperty("connectionScope", scope.wireName);
+            connection.addProperty("fromAnchorId", from.anchorId());
+            connection.addProperty("toAnchorId", to.anchorId());
+            connection.addProperty("fromPlacementGroupId", from.placementGroupId());
+            connection.addProperty("toPlacementGroupId", to.placementGroupId());
+            connection.addProperty("fromEndpointId", from.endpointId());
+            connection.addProperty("toEndpointId", to.endpointId());
+            connection.addProperty("distanceBlocks", distanceBlocks);
+            connection.add("from", from.roadPoint().asJson());
+            connection.add("to", to.roadPoint().asJson());
+            return connection;
+        }
+    }
+
+    private static final class UnionFind<T> {
+        private final Map<T, T> parents = new HashMap<>();
+
+        private UnionFind(List<T> nodes) {
+            nodes.forEach(node -> parents.put(node, node));
+        }
+
+        private T find(T node) {
+            T parent = parents.get(node);
+            if (parent == null) {
+                throw new IllegalArgumentException("Unknown union-find node: " + node);
+            }
+            if (!parent.equals(node)) {
+                parent = find(parent);
+                parents.put(node, parent);
+            }
+            return parent;
+        }
+
+        private boolean union(T first, T second) {
+            T firstRoot = find(first);
+            T secondRoot = find(second);
+            if (firstRoot.equals(secondRoot)) {
+                return false;
+            }
+            if (firstRoot.toString().compareTo(secondRoot.toString()) <= 0) {
+                parents.put(secondRoot, firstRoot);
+            } else {
+                parents.put(firstRoot, secondRoot);
+            }
+            return true;
         }
     }
 

@@ -28,8 +28,10 @@ public final class LandUseGeometryCompiler {
         for (Map.Entry<BlockPoint, LandUseExpansionResult.Claim> entry : expansion.claims().entrySet()) {
             LandUseSeedGroup group = groups.get(entry.getValue().groupId());
             if (group == null) continue;
+            String settingsSignature = group.surfaceSettings().exactSignature();
             String mergeKey = group.rule().mergeSameType()
-                    ? group.rule().ruleRef() : group.rule().ruleRef() + ':' + group.groupId();
+                    ? group.rule().ruleRef() + ":surface:" + settingsSignature
+                    : group.rule().ruleRef() + ":surface:" + settingsSignature + ":group:" + group.groupId();
             byMergeKey.computeIfAbsent(mergeKey, ignored -> new HashSet<>()).add(entry.getKey());
         }
         List<LandUseAreaPlan.Area> areas = new ArrayList<>();
@@ -51,18 +53,34 @@ public final class LandUseGeometryCompiler {
                         .distinct().sorted().toList();
                 List<BlockPoint> seeds = sortedGroupIds.stream().flatMap(id -> groups.get(id).seedPoints().stream())
                         .distinct().sorted(pointOrder()).toList();
+                List<com.rinsing.geomantia.systems.city.domain.model.BlockBounds> structureFootprints =
+                        sortedGroupIds.stream().flatMap(id -> groups.get(id).structureFootprints().stream())
+                                .distinct().sorted(Comparator.comparingInt(
+                                                com.rinsing.geomantia.systems.city.domain.model.BlockBounds::minZ)
+                                        .thenComparingInt(
+                                                com.rinsing.geomantia.systems.city.domain.model.BlockBounds::minX)
+                                        .thenComparingInt(
+                                                com.rinsing.geomantia.systems.city.domain.model.BlockBounds::maxZ)
+                                        .thenComparingInt(
+                                                com.rinsing.geomantia.systems.city.domain.model.BlockBounds::maxX))
+                                .toList();
                 List<LandUseAreaPlan.GateSlot> gates = sortedGroupIds.stream()
                         .flatMap(id -> groups.get(id).gateSlots().stream())
                         .map(gate -> projectGate(gate, component)).distinct().toList();
                 String areaId = safeId(primary.rule().landUseType() + '_' + String.join("_", sortedGroupIds));
                 areas.add(new LandUseAreaPlan.Area(areaId, primary.rule().ruleRef(), primary.rule().landUseType(),
-                        sortedGroupIds, anchorIds, seeds, scanlines(component), primary.structureFootprints(),
+                        sortedGroupIds, anchorIds, seeds, scanlines(component), structureFootprints,
                         boundaryLoops(component), gates, claimCost, primary.rule().surfacePolicy(),
                         primary.rule().vegetationPolicy(), primary.rule().boundaryPolicy(),
                         primary.rule().decorationPolicy()));
             }
         }
-        areas.sort(Comparator.comparing(LandUseAreaPlan.Area::areaId));
+        areas.sort(Comparator.comparing(LandUseAreaPlan.Area::areaId)
+                .thenComparing(area -> String.join("\u0000", area.sourceGroupIds()))
+                .thenComparingInt(area -> area.memberSpans().isEmpty()
+                        ? Integer.MAX_VALUE : area.memberSpans().get(0).z())
+                .thenComparingInt(area -> area.memberSpans().isEmpty()
+                        ? Integer.MAX_VALUE : area.memberSpans().get(0).minX()));
         return new CompiledGeometry(List.copyOf(areas), unclaimedScanlines(planningBounds, claimed));
     }
 

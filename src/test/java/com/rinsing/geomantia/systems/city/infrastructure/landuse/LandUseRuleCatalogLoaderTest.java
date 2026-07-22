@@ -27,7 +27,6 @@ class LandUseRuleCatalogLoaderTest {
 
         assertEquals("military", catalog.resolveSemantic(List.of("function.barracks")).orElseThrow().ruleRef());
         assertEquals("military", catalog.byRef("military").orElseThrow().landUseType());
-        assertEquals(24, catalog.byRef("military").orElseThrow().nearbyMergeMaxBridgeBlocks());
     }
 
     @Test
@@ -56,17 +55,32 @@ class LandUseRuleCatalogLoaderTest {
     }
 
     @Test
-    void rejectsUnknownRuleFields() throws Exception {
+    void rejectsRemovedBridgeRuleField() throws Exception {
         Path root = tempDir.resolve("city_land_use");
         Path profiles = Files.createDirectories(root.resolve("profiles"));
         Files.writeString(profiles.resolve("stubbs.json"), profile("stubbs", "military", "barracks")
-                .replace("\"decorationPolicy\":\"military\"", "\"decorationPolicy\":\"military\",\"extra\":true"));
+                .replace("\"decorationPolicy\":\"military\"",
+                        "\"decorationPolicy\":\"military\",\"nearbyMergeMaxBridgeBlocks\":24"));
 
         IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
                 () -> new LandUseRuleCatalogLoader().load(root,
                         new LandUseSettings(LandUseSettings.SCHEMA, false, "stubbs")));
 
-        assertEquals("LAND_USE_RULE_UNKNOWN_FIELD: extra", error.getMessage());
+        assertEquals("LAND_USE_RULE_UNKNOWN_FIELD: nearbyMergeMaxBridgeBlocks", error.getMessage());
+    }
+
+    @Test
+    void rejectsRemovedBridgeRuleSchemaWithoutMigration() throws Exception {
+        Path root = tempDir.resolve("city_land_use");
+        Path profiles = Files.createDirectories(root.resolve("profiles"));
+        Files.writeString(profiles.resolve("stubbs.json"), profile("stubbs", "military", "barracks")
+                .replace("city_land_use_rules.v0.1", "city_land_use_rules.v0.2"));
+
+        IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
+                () -> new LandUseRuleCatalogLoader().load(root,
+                        new LandUseSettings(LandUseSettings.SCHEMA, false, "stubbs")));
+
+        assertEquals("LAND_USE_RULE_PROFILE_SCHEMA_UNSUPPORTED: city_land_use_rules.v0.2", error.getMessage());
     }
 
     private static String profile(String profileId, String ruleRef, String term) {

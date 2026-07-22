@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.rinsing.geomantia.systems.city.application.dressing.CompiledDecorationProgram;
 import com.rinsing.geomantia.systems.city.application.dressing.CompiledDecorationProgramPlan;
+import com.rinsing.geomantia.systems.city.application.terrain.CityContinuousTerrainRunPlanner;
 import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
 import com.rinsing.geomantia.systems.city.domain.model.BlockPoint;
 import com.rinsing.geomantia.systems.city.infrastructure.json.CityJson;
@@ -26,6 +27,50 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityDecorationTerrainRunCompilerTest {
+    @Test
+    void decorationAdapterPreservesCommonPlannerRunIdentityAndDecisions(@TempDir Path root) throws Exception {
+        CityDecorationContentCatalog catalog = catalog(root);
+        CompiledDecorationProgramPlan plan = plan(catalog, 0, 5, policy(2, false, 8, 8));
+        CityDecorationTerrainRunCompiler.TerrainView terrain = (x, z) -> sample(70, x == 3);
+        CityDecorationTerrainRunCompiler.Run adapted = new CityDecorationTerrainRunCompiler()
+                .compile(plan, catalog, terrain).runs().get(0);
+
+        List<CityContinuousTerrainRunPlanner.Point> points = adapted.slots().stream()
+                .map(slot -> new CityContinuousTerrainRunPlanner.Point("channel", slot.slotId(),
+                        new CityContinuousTerrainRunPlanner.GridPoint(slot.worldAnchor().x(), 0),
+                        slot.worldAnchor(), slot.contentRef()))
+                .toList();
+        CityContinuousTerrainRunPlanner.Run common = new CityContinuousTerrainRunPlanner().compile(
+                new CityContinuousTerrainRunPlanner.Request("channel",
+                        CityContinuousTerrainRunPlanner.Axis.U,
+                        new CityContinuousTerrainRunPlanner.RunPolicy(2, false, 8, 8,
+                                CityContinuousTerrainRunPlanner.FoundationMode.NONE, 0, 0),
+                        new CityContinuousTerrainRunPlanner.ReasonCodes(
+                                "CITY_DECORATION_RUN_SLOT_SAFE",
+                                "CITY_DECORATION_RUN_TERRAIN_UNAVAILABLE",
+                                "CITY_DECORATION_RUN_WATER_TERMINATED",
+                                "CITY_DECORATION_RUN_LOCAL_CLIFF_TERMINATED",
+                                "CITY_DECORATION_RUN_CONTINUOUS_DROP_TERMINATED",
+                                "CITY_DECORATION_RUN_FOUNDATION_DEPTH_TERMINATED",
+                                "CITY_DECORATION_TERRAIN_SAMPLE_MISSING"), points),
+                (x, z) -> {
+                    CityDecorationTerrainRunCompiler.TerrainSample sample = terrain.sample(x, z);
+                    return new CityContinuousTerrainRunPlanner.TerrainSample(
+                            sample.surfaceY(), sample.water(), sample.available());
+                }, contentRef -> catalog.requireContent(contentRef).terrainDropFallbackContentRef())
+                .runs().get(0);
+
+        assertEquals(adapted.runId(), common.runId());
+        assertEquals(adapted.terminationOrdinal(), common.terminationOrdinal());
+        assertEquals(adapted.terminationReasonCode(), common.terminationReasonCode());
+        assertEquals(adapted.slots().stream().map(slot -> slot.decision().name()).toList(),
+                common.points().stream().map(point -> point.decision().name()).toList());
+        assertEquals(adapted.slots().stream()
+                        .map(CityDecorationTerrainRunCompiler.SlotOutcome::appliedContentRef).toList(),
+                common.points().stream()
+                        .map(CityContinuousTerrainRunPlanner.PointOutcome::appliedContentRef).toList());
+    }
+
     @Test
     void waterTerminatesAtLastSafeSlotAndUsesConfiguredEndCap(@TempDir Path root) throws Exception {
         CityDecorationContentCatalog catalog = catalog(root);

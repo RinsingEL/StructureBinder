@@ -22,7 +22,6 @@ public record LandUseRule(
         double forestAffinity,
         double competitionWeight,
         boolean mergeSameType,
-        int nearbyMergeMaxBridgeBlocks,
         SurfacePolicy surfacePolicy,
         VegetationPolicy vegetationPolicy,
         BoundaryPolicy boundaryPolicy,
@@ -36,9 +35,6 @@ public record LandUseRule(
             throw new IllegalArgumentException("Invalid LandUse area rule");
         }
         if (actionBudget <= 0 || baseStepCost <= 0) throw new IllegalArgumentException("Invalid LandUse cost rule");
-        if (nearbyMergeMaxBridgeBlocks < 0 || (!mergeSameType && nearbyMergeMaxBridgeBlocks > 0)) {
-            throw new IllegalArgumentException("Invalid LandUse nearby merge rule");
-        }
         decorationPolicy = decorationPolicy == null ? "" : decorationPolicy;
     }
 

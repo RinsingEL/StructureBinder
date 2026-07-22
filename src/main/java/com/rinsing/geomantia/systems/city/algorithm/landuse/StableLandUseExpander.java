@@ -25,8 +25,20 @@ public final class StableLandUseExpander {
                                          List<LandUseSeedGroup> groups,
                                          List<LandUseAreaPlan.CorridorExclusion> corridors,
                                          String seedSalt) {
+        return expand(cityId, planningBounds, terrain, groups, corridors, seedSalt,
+                LandUseAutoConnectionPlanner.Plan.empty());
+    }
+
+    public LandUseExpansionResult expand(String cityId,
+                                         BlockBounds planningBounds,
+                                         LandUseTerrainField terrain,
+                                         List<LandUseSeedGroup> groups,
+                                         List<LandUseAreaPlan.CorridorExclusion> corridors,
+                                         String seedSalt,
+                                         LandUseAutoConnectionPlanner.Plan guidance) {
         if (cityId == null || cityId.isBlank()) throw new IllegalArgumentException("cityId is required");
         if (!cityId.equals(terrain.cityId())) throw new IllegalArgumentException("LAND_USE_TERRAIN_CITY_ID_MISMATCH");
+        guidance = guidance == null ? LandUseAutoConnectionPlanner.Plan.empty() : guidance;
         Map<String, LandUseSeedGroup> byId = new HashMap<>();
         for (LandUseSeedGroup group : groups) {
             if (byId.put(group.groupId(), group) != null) {
@@ -91,7 +103,7 @@ public final class StableLandUseExpander {
                     continue;
                 }
                 double stepCost = stepCost(group.rule(), cell, cityId, group.groupId(), seedSalt, nextX, nextZ,
-                        node.seedX(), node.seedZ());
+                        node.seedX(), node.seedZ(), node.x(), node.z(), guidance.targetsFor(group.groupId()));
                 double total = node.cumulativeCost() + stepCost;
                 if (total > group.actionBudget()) continue;
                 GroupPoint key = new GroupPoint(group.groupId(), nextX, nextZ);
@@ -132,8 +144,11 @@ public final class StableLandUseExpander {
                                    int x,
                                    int z,
                                    int seedX,
-                                   int seedZ) {
-        double value = rule.baseStepCost();
+                                   int seedZ,
+                                   int currentX,
+                                   int currentZ,
+                                   List<LandUseAutoConnectionPlanner.Target> targets) {
+        double value = rule.baseStepCost() * directionalBaseMultiplier(currentX, currentZ, x, z, targets);
         value += rule.slopeCost() * Math.max(0, cell.slope()) / 10.0;
         value += rule.reliefCost() * Math.max(Math.max(0, cell.localRelief()), Math.max(0, cell.roughness())) / 10.0;
         if (cell.water()) value += rule.waterCost();
@@ -144,6 +159,25 @@ public final class StableLandUseExpander {
         value += (Math.abs(x - seedX) + Math.abs(z - seedZ)) * 0.002;
         value += deterministicJitter(cityId + ':' + groupId + ':' + rule.ruleRef() + ':' + seedSalt, x, z);
         return Math.max(0.1, value);
+    }
+
+    private static double directionalBaseMultiplier(int currentX,
+                                                    int currentZ,
+                                                    int nextX,
+                                                    int nextZ,
+                                                    List<LandUseAutoConnectionPlanner.Target> targets) {
+        if (targets.isEmpty()) return 1.0;
+        boolean lateral = false;
+        int stepX = nextX - currentX;
+        int stepZ = nextZ - currentZ;
+        for (LandUseAutoConnectionPlanner.Target target : targets) {
+            long targetX = (long) target.point().x() - currentX;
+            long targetZ = (long) target.point().z() - currentZ;
+            long alignment = stepX * targetX + stepZ * targetZ;
+            if (alignment > 0) return 0.45;
+            if (alignment == 0) lateral = true;
+        }
+        return lateral ? 1.15 : 1.85;
     }
 
     private static double priority(double cumulativeCost, int claimed, LandUseSeedGroup group) {

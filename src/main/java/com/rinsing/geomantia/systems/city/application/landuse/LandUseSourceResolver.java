@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 import com.rinsing.geomantia.systems.city.domain.landuse.CardinalDirection;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseAreaPlan;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseSeedGroup;
+import com.rinsing.geomantia.systems.city.domain.landuse.LandUseSurfaceSettings;
 import com.rinsing.geomantia.systems.city.domain.landuse.rules.LandUseRule;
 import com.rinsing.geomantia.systems.city.domain.landuse.rules.LandUseRuleCatalog;
 import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
@@ -56,6 +57,9 @@ public final class LandUseSourceResolver {
                 LandUseIntentPlan.TargetType.GROUP);
         Map<String, LandUseIntentPlan.SubjectOverride> anchorSubjects = subjectMap(intent,
                 LandUseIntentPlan.TargetType.ANCHOR);
+        Map<String, LandUseIntentPlan.SurfaceOverride> surfaceOverrides = new HashMap<>();
+        intent.surfaceOverrides().forEach(value -> surfaceOverrides.put(value.targetGroupId(), value));
+        validateSurfaceTargets(intent, grouped);
 
         List<String> warnings = new ArrayList<>();
         List<BlockBounds> allFootprints = anchors.values().stream().map(AnchorData::footprint).toList();
@@ -95,6 +99,13 @@ public final class LandUseSourceResolver {
                 warnings.add("LAND_USE_SEMANTIC_UNKNOWN_SKIPPED:" + groupId);
                 continue;
             }
+            LandUseSurfaceSettings surfaceSettings = LandUseSurfaceSettings.defaults(rule.surfacePolicy());
+            LandUseIntentPlan.SurfaceOverride surfaceOverride = surfaceOverrides.get(groupId);
+            if (surfaceOverride != null) {
+                surfaceSettings = surfaceSettings.withOverrides(surfaceOverride.surfacePrintEnabled(),
+                        surfaceOverride.autoConnect(), surfaceOverride.surfaceBlockId(), surfaceOverride.cropBlockId(),
+                        surfaceOverride.directionMode(), surfaceOverride.directionCenter());
+            }
             List<LandUseAreaPlan.GateSlot> gates = new ArrayList<>();
             for (AnchorData member : members) gates.addAll(member.gates());
             gates.addAll(zoneGates.getOrDefault(groupId, List.of()));
@@ -109,8 +120,9 @@ public final class LandUseSourceResolver {
             int min = Math.min(preferred, Math.max(rule.minAreaBlocks(), (int) Math.round(preferred * 0.6)));
             int max = Math.max(preferred, Math.min(rule.maxAreaBlocks(), (int) Math.round(preferred * 1.6)));
             List<BlockPoint> seeds = perimeterSeeds(footprints);
-            groups.add(new LandUseSeedGroup(groupId, rule, members.stream().map(AnchorData::anchorId).toList(),
-                    allFootprints, seeds, gates, min, preferred, max, rule.actionBudget(), rule.competitionWeight()));
+            groups.add(new LandUseSeedGroup(groupId, rule, surfaceSettings,
+                    members.stream().map(AnchorData::anchorId).toList(), allFootprints, seeds, gates,
+                    min, preferred, max, rule.actionBudget(), rule.competitionWeight()));
         }
         validateSubjectTargets(intent, grouped, anchors);
         return new Resolution(List.copyOf(groups), List.copyOf(corridors), List.copyOf(warnings), intent.seedSalt());
@@ -196,6 +208,16 @@ public final class LandUseSourceResolver {
             boolean exists = value.targetType() == LandUseIntentPlan.TargetType.GROUP
                     ? groups.containsKey(value.targetId()) : anchors.containsKey(value.targetId());
             if (!exists) throw new IllegalArgumentException("LAND_USE_SUBJECT_OVERRIDE_TARGET_UNKNOWN: " + value.targetId());
+        }
+    }
+
+    private static void validateSurfaceTargets(LandUseIntentPlan intent,
+                                               Map<String, List<AnchorData>> groups) {
+        for (LandUseIntentPlan.SurfaceOverride value : intent.surfaceOverrides()) {
+            if (!groups.containsKey(value.targetGroupId())) {
+                throw new IllegalArgumentException(
+                        "LAND_USE_SURFACE_OVERRIDE_TARGET_UNKNOWN: " + value.targetGroupId());
+            }
         }
     }
 

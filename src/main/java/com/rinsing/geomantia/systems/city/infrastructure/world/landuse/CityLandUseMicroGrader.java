@@ -36,6 +36,9 @@ final class CityLandUseMicroGrader {
 
         List<FillDecision> decisions = new ArrayList<>();
         for (CityLandUseChunkCompiler.SurfaceOperation operation : fragment.surfaceOperations()) {
+            if (operation.surfaceOffset() != 0) {
+                continue;
+            }
             Cell center = new Cell(operation.x(), operation.z());
             if (!operation.areaId().equals(areaByCell.get(center))) {
                 continue;

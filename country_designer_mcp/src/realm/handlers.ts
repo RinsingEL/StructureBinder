@@ -193,6 +193,12 @@ export const realmHandlers: Record<string, ToolHandler> = {
     return textResult(JSON.stringify(res.data, null, 2));
   },
 
+  async city_plan_decoration_anchor_candidates(args) {
+    assertDecorationIntentRequest(args);
+    const res = await postJson(`${MC_API_URL}/realm/city/plan_decoration_anchor_candidates`, payload(args), TIMEOUTS.refresh);
+    return textResult(JSON.stringify(res.data, null, 2));
+  },
+
   async city_plan_land_use(args) {
     const res = await postJson(`${MC_API_URL}/realm/city/plan_land_use`, payload(args), TIMEOUTS.refresh);
     return textResult(JSON.stringify(res.data, null, 2));
@@ -283,8 +289,9 @@ function assertDecorationIntentRequest(args: Record<string, unknown>) {
   }
   for (let index = 0; index < programs.length; index++) {
     const program = programs[index];
-    if (!isObject(program) || !isObject(program.targetArea) || program.targetArea.sourceType !== "patch") {
-      throw new Error(`CITY_DECORATION_TARGET_SOURCE_TYPE_UNSUPPORTED: programs[${index}] only accepts sourceType=patch.`);
+    if (!isObject(program) || !isObject(program.targetArea)
+      || !["patch", "land_use_area"].includes(String(program.targetArea.sourceType))) {
+      throw new Error(`CITY_DECORATION_TARGET_SOURCE_TYPE_UNSUPPORTED: programs[${index}] accepts sourceType=patch|land_use_area.`);
     }
   }
 }

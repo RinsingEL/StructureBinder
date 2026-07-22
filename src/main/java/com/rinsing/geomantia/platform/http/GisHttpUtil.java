@@ -1,12 +1,12 @@
 package com.rinsing.geomantia.platform.http;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
-import com.rinsing.geomantia.systems.gis.preview.AtlasJson;
 import com.sun.net.httpserver.HttpExchange;
 import net.minecraftforge.fml.loading.FMLPaths;
 
@@ -21,6 +21,11 @@ final class GisHttpUtil {
     private static final Object LOG_LOCK = new Object();
     private static final String LOG_FILE = "geomantia_mcp_log.jsonl";
     private static final Gson LOG_GSON = new Gson();
+    private static final Gson HTTP_GSON = new GsonBuilder()
+            .disableHtmlEscaping()
+            .serializeNulls()
+            .setPrettyPrinting()
+            .create();
 
     private GisHttpUtil() {
     }
@@ -50,7 +55,7 @@ final class GisHttpUtil {
     }
 
     static void sendJson(HttpExchange exchange, int code, JsonElement response) throws IOException {
-        String text = AtlasJson.GSON.toJson(response == null ? JsonNull.INSTANCE : response);
+        String text = jsonText(response);
         byte[] bytes = text.getBytes(StandardCharsets.UTF_8);
         exchange.getResponseHeaders().set("Content-Type", "application/json; charset=utf-8");
         exchange.sendResponseHeaders(code, bytes.length);
@@ -59,6 +64,10 @@ final class GisHttpUtil {
         } finally {
             logExchange(exchange, code, text);
         }
+    }
+
+    static String jsonText(JsonElement response) {
+        return HTTP_GSON.toJson(response == null ? JsonNull.INSTANCE : response);
     }
 
     static void sendError(HttpExchange exchange, int code, String message) throws IOException {

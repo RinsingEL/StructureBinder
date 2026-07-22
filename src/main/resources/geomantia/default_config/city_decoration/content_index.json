@@ -53,6 +53,33 @@
       "tags": ["agriculture", "water_channel"]
     },
     {
+      "contentId": "geomantia:decoration/water_channel_lined_endcap_01",
+      "contentKind": "prefab",
+      "nbtFile": "templates/water_channel_lined_endcap_01.nbt",
+      "allowedRotations": [0, 90, 180, 270],
+      "placementMode": "replace_surface",
+      "replacePolicy": "surface_replaceable",
+      "groundPlaneLocalY": 0,
+      "embedDepthBlocks": 0,
+      "clearanceMode": "preserve",
+      "comfortMarginBlocks": 0,
+      "tags": ["agriculture", "water_channel", "waterfront"]
+    },
+    {
+      "contentId": "geomantia:decoration/water_channel_lined_straight_01",
+      "contentKind": "prefab",
+      "nbtFile": "templates/water_channel_lined_straight_01.nbt",
+      "allowedRotations": [0, 90, 180, 270],
+      "placementMode": "replace_surface",
+      "replacePolicy": "surface_replaceable",
+      "groundPlaneLocalY": 0,
+      "embedDepthBlocks": 0,
+      "clearanceMode": "preserve",
+      "comfortMarginBlocks": 0,
+      "terrainDropFallbackContentRef": "geomantia:decoration/water_channel_lined_endcap_01",
+      "tags": ["agriculture", "water_channel", "waterfront"]
+    },
+    {
       "contentId": "geomantia:decoration/field_border",
       "contentKind": "prefab",
       "nbtFile": "templates/field_border.nbt",

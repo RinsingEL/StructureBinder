@@ -4,16 +4,14 @@ import com.rinsing.geomantia.systems.city.application.dressing.CityDecorationPro
 import com.rinsing.geomantia.systems.city.application.dressing.CompiledDecorationProgram;
 import com.rinsing.geomantia.systems.city.application.dressing.CompiledDecorationProgramPlan;
 import com.rinsing.geomantia.systems.city.application.dressing.DecorationSlot;
+import com.rinsing.geomantia.systems.city.application.terrain.CityContinuousTerrainRunPlanner;
+import com.rinsing.geomantia.systems.city.application.terrain.CityTerrainFoundationDensityComputer;
 import com.rinsing.geomantia.systems.city.domain.model.BlockPoint;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -24,6 +22,7 @@ public final class CityDecorationTerrainRunCompiler {
     public static final String SCHEMA = "city_decoration_frozen_terrain_runs.v0.2";
 
     private final CityDecorationProgramPlanner planner = new CityDecorationProgramPlanner();
+    private final CityContinuousTerrainRunPlanner runPlanner = new CityContinuousTerrainRunPlanner();
 
     public FrozenPlan compile(CompiledDecorationProgramPlan plan,
                               CityDecorationContentCatalog catalog,
@@ -36,15 +35,15 @@ public final class CityDecorationTerrainRunCompiler {
         }
         List<Run> runs = new ArrayList<>();
         for (CompiledDecorationProgram program : plan.programsInExecutionOrder()) {
-            Continuation continuation = continuation(program);
-            if (continuation == null) {
+            CityContinuousTerrainRunPlanner.Axis axis = continuationAxis(program);
+            if (axis == null) {
                 if (program.terrainPolicy().foundationMode() == CompiledDecorationProgram.FoundationMode.FILL_ONLY) {
                     throw new IllegalArgumentException("CITY_DECORATION_FOUNDATION_PATTERN_UNSUPPORTED");
                 }
                 continue;
             }
             List<DecorationSlot> slots = planner.project(program, program.targetMask().bounds());
-            runs.addAll(compileRuns(program, catalog, terrain, continuation, slots));
+            runs.addAll(compileRuns(program, catalog, terrain, axis, slots));
         }
         runs.sort(Comparator.comparing(Run::runId));
         List<FoundationSegment> segments = runs.stream().flatMap(run -> run.foundationSegments().stream()).toList();
@@ -54,248 +53,110 @@ public final class CityDecorationTerrainRunCompiler {
     private List<Run> compileRuns(CompiledDecorationProgram program,
                                   CityDecorationContentCatalog catalog,
                                   TerrainView terrain,
-                                  Continuation continuation,
+                                  CityContinuousTerrainRunPlanner.Axis axis,
                                   List<DecorationSlot> slots) {
-        Map<LineKey, List<DecorationSlot>> lines = new LinkedHashMap<>();
+        List<CityContinuousTerrainRunPlanner.Point> points = new ArrayList<>();
+        Map<String, List<LayerSelection>> layersBySlot = new HashMap<>();
         for (DecorationSlot slot : slots) {
-            int cross = continuation.cross(slot.localAnchor());
-            lines.computeIfAbsent(new LineKey(slot.paletteSlotId(), cross), ignored -> new ArrayList<>()).add(slot);
+            CompiledDecorationProgram.PaletteSlot paletteSlot =
+                    program.contentPalette().requireSlot(slot.paletteSlotId());
+            List<LayerSelection> layers = paletteSlot.layers().stream().map(layer -> {
+                String contentRef = CityDecorationChunkCompiler.selectContent(program, slot, paletteSlot, layer)
+                        .contentRef();
+                return new LayerSelection(layer.layerId(), contentRef, contentRef, layer.required());
+            }).toList();
+            layersBySlot.put(slot.slotId(), layers);
+            points.add(new CityContinuousTerrainRunPlanner.Point(slot.paletteSlotId(), slot.slotId(),
+                    new CityContinuousTerrainRunPlanner.GridPoint(
+                            slot.localAnchor().u(), slot.localAnchor().v()),
+                    slot.worldAnchor(), layers.get(0).contentRef()));
         }
+
+        CityContinuousTerrainRunPlanner.Plan common = runPlanner.compile(
+                new CityContinuousTerrainRunPlanner.Request(program.programId(), axis,
+                        runPolicy(program.terrainPolicy()), decorationReasonCodes(), points),
+                (x, z) -> {
+                    TerrainSample sample = terrain.sample(x, z);
+                    return sample == null ? null : new CityContinuousTerrainRunPlanner.TerrainSample(
+                            sample.surfaceY(), sample.water(), sample.available());
+                }, contentRef -> catalog.requireContent(contentRef).terrainDropFallbackContentRef());
+
         List<Run> result = new ArrayList<>();
-        for (Map.Entry<LineKey, List<DecorationSlot>> entry : lines.entrySet()) {
-            List<DecorationSlot> line = entry.getValue();
-            line.sort(Comparator.comparingInt(slot -> continuation.along(slot.localAnchor())));
-            int start = 0;
-            for (int index = 1; index <= line.size(); index++) {
-                boolean split = index == line.size()
-                        || continuation.along(line.get(index).localAnchor())
-                        != continuation.along(line.get(index - 1).localAnchor()) + 1;
-                if (split) {
-                    result.add(compileRun(program, catalog, terrain, continuation, entry.getKey(),
-                            line.subList(start, index)));
-                    start = index;
-                }
-            }
-        }
-        return result;
-    }
-
-    private Run compileRun(CompiledDecorationProgram program,
-                           CityDecorationContentCatalog catalog,
-                           TerrainView terrain,
-                           Continuation continuation,
-                           LineKey line,
-                           List<DecorationSlot> slots) {
-        String runId = runId(program, continuation, line, slots);
-        List<MutableOutcome> outcomes = new ArrayList<>();
-        for (int ordinal = 0; ordinal < slots.size(); ordinal++) {
-            DecorationSlot slot = slots.get(ordinal);
-            TerrainSample sample = Objects.requireNonNull(terrain.sample(slot.worldAnchor().x(), slot.worldAnchor().z()),
-                    "CITY_DECORATION_TERRAIN_SAMPLE_MISSING");
-            CompiledDecorationProgram.PaletteSlot paletteSlot = program.contentPalette().requireSlot(slot.paletteSlotId());
-            List<LayerSelection> layers = paletteSlot.layers().stream().map(layer -> new LayerSelection(
-                    layer.layerId(), CityDecorationChunkCompiler.selectContent(program, slot, paletteSlot, layer)
-                    .contentRef(), CityDecorationChunkCompiler.selectContent(program, slot, paletteSlot, layer)
-                    .contentRef(), layer.required())).toList();
-            outcomes.add(new MutableOutcome(slot, ordinal, sample, layers));
-        }
-
-        int terminationOrdinal = -1;
-        String terminationReason = "";
-        for (int index = 0; index < outcomes.size(); index++) {
-            MutableOutcome current = outcomes.get(index);
-            if (!current.sample.available()) {
-                terminationOrdinal = index;
-                terminationReason = "CITY_DECORATION_RUN_TERRAIN_UNAVAILABLE";
-                break;
-            }
-            if (current.sample.water() && !program.terrainPolicy().allowWater()) {
-                terminationOrdinal = index;
-                terminationReason = "CITY_DECORATION_RUN_WATER_TERMINATED";
-                break;
-            }
-            if (index > 0 && Math.abs(current.sample.surfaceY() - outcomes.get(index - 1).sample.surfaceY())
-                    > program.terrainPolicy().maxSlopeDelta()) {
-                terminationOrdinal = index;
-                terminationReason = "CITY_DECORATION_RUN_LOCAL_CLIFF_TERMINATED";
-                break;
-            }
-            int windowStart = Math.max(0, index - program.terrainPolicy().continuousDropWindowBlocks() + 1);
-            int high = current.sample.surfaceY();
-            for (int cursor = windowStart; cursor < index; cursor++) {
-                high = Math.max(high, outcomes.get(cursor).sample.surfaceY());
-            }
-            if (high - current.sample.surfaceY() > program.terrainPolicy().maxContinuousDropBlocks()) {
-                terminationOrdinal = index;
-                terminationReason = "CITY_DECORATION_RUN_CONTINUOUS_DROP_TERMINATED";
-                break;
-            }
-            if (program.terrainPolicy().foundationMode() == CompiledDecorationProgram.FoundationMode.FILL_ONLY
-                    && !current.sample.water()) {
-                List<Integer> local = new ArrayList<>();
-                for (int cursor = Math.max(0, index - 1); cursor <= Math.min(outcomes.size() - 1, index + 1); cursor++) {
-                    MutableOutcome neighbour = outcomes.get(cursor);
-                    if (neighbour.sample.available() && !neighbour.sample.water()) {
-                        local.add(neighbour.sample.surfaceY());
-                    }
-                }
-                local.sort(Integer::compareTo);
-                int smoothed = local.get(local.size() / 2);
-                if (smoothed - current.sample.surfaceY()
-                        > program.terrainPolicy().maxFoundationDepthBlocks()) {
-                    terminationOrdinal = index;
-                    terminationReason = "CITY_DECORATION_RUN_FOUNDATION_DEPTH_TERMINATED";
-                    break;
-                }
-            }
-        }
-
-        if (terminationOrdinal >= 0) {
-            for (int index = terminationOrdinal; index < outcomes.size(); index++) {
-                MutableOutcome value = outcomes.get(index);
-                value.decision = terminationReason.endsWith("UNAVAILABLE") ? Decision.DEFER : Decision.TERMINATE;
-                value.reasonCode = terminationReason;
-            }
-            if (terminationOrdinal > 0) {
-                MutableOutcome lastSafe = outcomes.get(terminationOrdinal - 1);
-                String fallback = catalog.requireContent(lastSafe.contentRef).terrainDropFallbackContentRef();
-                if (fallback != null) {
-                    lastSafe.decision = Decision.END_CAP;
-                    lastSafe.appliedContentRef = fallback;
-                    LayerSelection primary = lastSafe.layers.get(0);
-                    lastSafe.layers.set(0, new LayerSelection(primary.layerId(), primary.contentRef(),
-                            fallback, primary.required()));
-                    lastSafe.reasonCode = terminationReason;
-                }
-            }
-        }
-
-        applyFoundationTargets(program, outcomes);
-        outcomes.forEach(outcome -> outcome.runId = runId);
-        List<SlotOutcome> frozenSlots = outcomes.stream().map(MutableOutcome::freeze).toList();
-        List<FoundationSegment> segments = foundationSegments(program, runId, outcomes, terrain);
-        return new Run(runId, program.programId(), line.paletteSlotId(), continuation.axis(), line.crossCoordinate(),
-                frozenSlots, terminationOrdinal < 0 ? null : terminationOrdinal, terminationReason, segments);
-    }
-
-    private static void applyFoundationTargets(CompiledDecorationProgram program, List<MutableOutcome> outcomes) {
-        for (int index = 0; index < outcomes.size(); index++) {
-            MutableOutcome value = outcomes.get(index);
-            value.targetY = value.sample.surfaceY();
-            if (program.terrainPolicy().foundationMode() != CompiledDecorationProgram.FoundationMode.FILL_ONLY
-                    || value.sample.water() || value.decision == Decision.TERMINATE || value.decision == Decision.DEFER) {
-                continue;
-            }
-            List<Integer> local = new ArrayList<>();
-            for (int cursor = Math.max(0, index - 1); cursor <= Math.min(outcomes.size() - 1, index + 1); cursor++) {
-                MutableOutcome neighbour = outcomes.get(cursor);
-                if (!neighbour.sample.water() && neighbour.sample.available()
-                        && neighbour.decision != Decision.TERMINATE && neighbour.decision != Decision.DEFER) {
-                    local.add(neighbour.sample.surfaceY());
-                }
-            }
-            local.sort(Integer::compareTo);
-            int smoothed = local.get(local.size() / 2);
-            int fillDepth = Math.max(0, smoothed - value.sample.surfaceY());
-            if (fillDepth <= program.terrainPolicy().maxFoundationDepthBlocks()) {
-                value.targetY = Math.max(value.sample.surfaceY(), smoothed);
-            }
-        }
-    }
-
-    private static List<FoundationSegment> foundationSegments(CompiledDecorationProgram program,
-                                                               String runId,
-                                                               List<MutableOutcome> outcomes,
-                                                               TerrainView terrain) {
-        if (program.terrainPolicy().foundationMode() != CompiledDecorationProgram.FoundationMode.FILL_ONLY) {
-            return List.of();
-        }
-        List<MutableOutcome> eligible = outcomes.stream().filter(value -> !value.sample.water()
-                && value.decision != Decision.TERMINATE && value.decision != Decision.DEFER).toList();
-        if (eligible.isEmpty()) {
-            return List.of();
-        }
-        List<FoundationSegment> result = new ArrayList<>();
-        if (eligible.size() == 1) {
-            return List.of();
-        }
-        for (int index = 0; index + 1 < eligible.size(); index++) {
-            MutableOutcome first = eligible.get(index);
-            MutableOutcome second = eligible.get(index + 1);
-            if (second.ordinal == first.ordinal + 1) {
-                result.add(segment(program, runId, first, second, terrain));
-            }
+        for (CityContinuousTerrainRunPlanner.Run run : common.runs()) {
+            List<SlotOutcome> outcomes = run.points().stream()
+                    .map(point -> slotOutcome(point, layersBySlot.get(point.pointId())))
+                    .toList();
+            List<FoundationSegment> segments = run.foundationSegments().stream()
+                    .map(CityDecorationTerrainRunCompiler::foundationSegment).toList();
+            result.add(new Run(run.runId(), run.sourceId(), run.trackId(),
+                    decorationAxis(run.axis()), run.crossCoordinate(), outcomes,
+                    run.terminationOrdinal(), run.terminationReasonCode(), segments));
         }
         return List.copyOf(result);
     }
 
-    private static FoundationSegment segment(CompiledDecorationProgram program, String runId,
-                                             MutableOutcome first, MutableOutcome second,
-                                             TerrainView terrain) {
-        int shoulderBlocks = safeShoulderBlocks(program.terrainPolicy().foundationShoulderBlocks(),
-                first.slot.worldAnchor(), second.slot.worldAnchor(), terrain);
-        return new FoundationSegment(runId, first.slot.worldAnchor().x(), first.slot.worldAnchor().z(), first.targetY,
-                second.slot.worldAnchor().x(), second.slot.worldAnchor().z(), second.targetY, 0,
-                program.terrainPolicy().maxFoundationDepthBlocks(),
-                shoulderBlocks);
+    private static SlotOutcome slotOutcome(CityContinuousTerrainRunPlanner.PointOutcome point,
+                                           List<LayerSelection> sourceLayers) {
+        if (sourceLayers == null || sourceLayers.isEmpty()) {
+            throw new IllegalArgumentException("CITY_DECORATION_FROZEN_SLOT_LAYERS_INVALID");
+        }
+        List<LayerSelection> layers = new ArrayList<>(sourceLayers);
+        LayerSelection primary = layers.get(0);
+        if (!primary.contentRef().equals(point.contentRef())) {
+            throw new IllegalArgumentException("CITY_DECORATION_FROZEN_SLOT_LAYERS_INVALID");
+        }
+        layers.set(0, new LayerSelection(primary.layerId(), primary.contentRef(),
+                point.appliedContentRef(), primary.required()));
+        return new SlotOutcome(point.runId(), point.pointId(), point.worldAnchor(), point.runOrdinal(),
+                point.surfaceY(), point.targetY(), point.water(), TerrainClass.valueOf(point.terrainClass().name()),
+                Decision.valueOf(point.decision().name()), point.contentRef(), point.appliedContentRef(),
+                point.reasonCode(), layers);
     }
 
-    private static int safeShoulderBlocks(int configuredShoulder, BlockPoint first, BlockPoint second,
-                                          TerrainView terrain) {
-        if (configuredShoulder <= 0) {
-            return 0;
-        }
-        double dx = second.x() - first.x();
-        double dz = second.z() - first.z();
-        double lengthSquared = dx * dx + dz * dz;
-        for (int z = Math.min(first.z(), second.z()) - configuredShoulder;
-             z <= Math.max(first.z(), second.z()) + configuredShoulder; z++) {
-            for (int x = Math.min(first.x(), second.x()) - configuredShoulder;
-                 x <= Math.max(first.x(), second.x()) + configuredShoulder; x++) {
-                double rawT = ((x - first.x()) * dx + (z - first.z()) * dz) / lengthSquared;
-                if (rawT < 0.0D || rawT > 1.0D) {
-                    continue;
-                }
-                double projectedX = first.x() + rawT * dx;
-                double projectedZ = first.z() + rawT * dz;
-                double lateralDistance = Math.sqrt((x - projectedX) * (x - projectedX)
-                        + (z - projectedZ) * (z - projectedZ));
-                if (lateralDistance > configuredShoulder) {
-                    continue;
-                }
-                TerrainSample sample = Objects.requireNonNull(terrain.sample(x, z),
-                        "CITY_DECORATION_TERRAIN_SAMPLE_MISSING");
-                if (!sample.available() || sample.water()) {
-                    return 0;
-                }
-            }
-        }
-        return configuredShoulder;
+    private static FoundationSegment foundationSegment(
+            CityContinuousTerrainRunPlanner.FoundationSegment segment) {
+        return new FoundationSegment(segment.runId(), segment.x0(), segment.z0(), segment.y0(),
+                segment.x1(), segment.z1(), segment.y1(), segment.halfWidth(),
+                segment.maxDepthBlocks(), segment.shoulderBlocks());
     }
 
-    private static Continuation continuation(CompiledDecorationProgram program) {
+    private static CityContinuousTerrainRunPlanner.Axis continuationAxis(CompiledDecorationProgram program) {
         if (program.pattern() instanceof CompiledDecorationProgram.CrossSectionRepeatPattern value) {
-            CompiledDecorationProgram.Axis axis = value.axis() == CompiledDecorationProgram.Axis.U
+            CompiledDecorationProgram.Axis continuation = value.axis() == CompiledDecorationProgram.Axis.U
                     ? CompiledDecorationProgram.Axis.V : CompiledDecorationProgram.Axis.U;
-            return new Continuation(axis);
+            return commonAxis(continuation);
         }
         if (program.pattern() instanceof CompiledDecorationProgram.ParallelRowsPattern value) {
-            return new Continuation(value.axis());
+            return commonAxis(value.axis());
         }
         return null;
     }
 
-    private static String runId(CompiledDecorationProgram program, Continuation continuation, LineKey line,
-                                List<DecorationSlot> slots) {
-        String identity = program.programId() + "|" + line.paletteSlotId() + "|" + continuation.axis()
-                + "|" + line.crossCoordinate() + "|" + continuation.along(slots.get(0).localAnchor())
-                + "|" + continuation.along(slots.get(slots.size() - 1).localAnchor());
-        try {
-            byte[] digest = MessageDigest.getInstance("SHA-256").digest(identity.getBytes(StandardCharsets.UTF_8));
-            return "run:" + java.util.HexFormat.of().formatHex(digest, 0, 12);
-        } catch (NoSuchAlgorithmException ex) {
-            throw new IllegalStateException("SHA-256 is required by the Java runtime", ex);
-        }
+    private static CityContinuousTerrainRunPlanner.Axis commonAxis(CompiledDecorationProgram.Axis axis) {
+        return CityContinuousTerrainRunPlanner.Axis.valueOf(axis.name());
+    }
+
+    private static CompiledDecorationProgram.Axis decorationAxis(CityContinuousTerrainRunPlanner.Axis axis) {
+        return CompiledDecorationProgram.Axis.valueOf(axis.name());
+    }
+
+    private static CityContinuousTerrainRunPlanner.RunPolicy runPolicy(
+            CompiledDecorationProgram.TerrainPolicy policy) {
+        return new CityContinuousTerrainRunPlanner.RunPolicy(policy.maxSlopeDelta(), policy.allowWater(),
+                policy.maxContinuousDropBlocks(), policy.continuousDropWindowBlocks(),
+                CityContinuousTerrainRunPlanner.FoundationMode.valueOf(policy.foundationMode().name()),
+                policy.maxFoundationDepthBlocks(), policy.foundationShoulderBlocks());
+    }
+
+    private static CityContinuousTerrainRunPlanner.ReasonCodes decorationReasonCodes() {
+        return new CityContinuousTerrainRunPlanner.ReasonCodes(
+                "CITY_DECORATION_RUN_SLOT_SAFE",
+                "CITY_DECORATION_RUN_TERRAIN_UNAVAILABLE",
+                "CITY_DECORATION_RUN_WATER_TERMINATED",
+                "CITY_DECORATION_RUN_LOCAL_CLIFF_TERMINATED",
+                "CITY_DECORATION_RUN_CONTINUOUS_DROP_TERMINATED",
+                "CITY_DECORATION_RUN_FOUNDATION_DEPTH_TERMINATED",
+                "CITY_DECORATION_TERRAIN_SAMPLE_MISSING");
     }
 
     public interface TerrainView {
@@ -420,7 +281,8 @@ public final class CityDecorationTerrainRunCompiler {
     }
 
     public record FoundationSegment(String runId, int x0, int z0, int y0, int x1, int z1, int y1,
-                                    int halfWidth, int maxDepthBlocks, int shoulderBlocks) {
+                                    int halfWidth, int maxDepthBlocks, int shoulderBlocks)
+            implements CityTerrainFoundationDensityComputer.FoundationSegmentView {
         public FoundationSegment {
             if (runId == null || runId.isBlank() || x0 == x1 && z0 == z1
                     || halfWidth < 0 || maxDepthBlocks <= 0 || shoulderBlocks < 0) {
@@ -429,47 +291,4 @@ public final class CityDecorationTerrainRunCompiler {
         }
     }
 
-    private record Continuation(CompiledDecorationProgram.Axis axis) {
-        int along(CompiledDecorationProgram.LocalPoint point) {
-            return axis == CompiledDecorationProgram.Axis.U ? point.u() : point.v();
-        }
-
-        int cross(CompiledDecorationProgram.LocalPoint point) {
-            return axis == CompiledDecorationProgram.Axis.U ? point.v() : point.u();
-        }
-    }
-
-    private record LineKey(String paletteSlotId, int crossCoordinate) {
-    }
-
-    private static final class MutableOutcome {
-        private final DecorationSlot slot;
-        private final int ordinal;
-        private final TerrainSample sample;
-        private final List<LayerSelection> layers;
-        private final String contentRef;
-        private Decision decision = Decision.PLACE;
-        private String appliedContentRef;
-        private String reasonCode = "CITY_DECORATION_RUN_SLOT_SAFE";
-        private int targetY;
-        private String runId;
-
-        private MutableOutcome(DecorationSlot slot, int ordinal, TerrainSample sample,
-                               List<LayerSelection> layers) {
-            this.slot = slot;
-            this.ordinal = ordinal;
-            this.sample = sample;
-            this.layers = new ArrayList<>(layers);
-            this.contentRef = layers.get(0).contentRef();
-            this.appliedContentRef = layers.get(0).appliedContentRef();
-            this.targetY = sample.surfaceY();
-        }
-
-        private SlotOutcome freeze() {
-            TerrainClass terrainClass = !sample.available() ? TerrainClass.UNAVAILABLE
-                    : sample.water() ? TerrainClass.WATER : TerrainClass.SAFE;
-            return new SlotOutcome(runId, slot.slotId(), slot.worldAnchor(), ordinal, sample.surfaceY(), targetY,
-                    sample.water(), terrainClass, decision, contentRef, appliedContentRef, reasonCode, layers);
-        }
-    }
 }

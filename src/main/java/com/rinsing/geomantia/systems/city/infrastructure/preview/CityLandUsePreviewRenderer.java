@@ -17,8 +17,10 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 
 public final class CityLandUsePreviewRenderer {
     public static final int WIDTH = 1100;
@@ -80,6 +82,8 @@ public final class CityLandUsePreviewRenderer {
         metadata.addProperty("fileName", output.getFileName().toString());
         metadata.addProperty("path", output.toString());
         metadata.addProperty("areaCount", plan.areas().size());
+        metadata.addProperty("logicalAreaCount", plan.areas().stream()
+                .map(LandUseAreaPlan.Area::areaId).distinct().count());
         metadata.addProperty("unclaimedSpanCount", plan.unclaimedSpans().size());
         metadata.addProperty("corridorExclusionCount", plan.corridorExclusions().size());
         return metadata;
@@ -197,7 +201,11 @@ public final class CityLandUsePreviewRenderer {
         g.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 15));
         g.drawString("LandUse areas", x, y);
         y += 26;
+        Map<String, Long> componentCounts = plan.areas().stream().collect(java.util.stream.Collectors.groupingBy(
+                LandUseAreaPlan.Area::areaId, LinkedHashMap::new, java.util.stream.Collectors.counting()));
+        Set<String> renderedAreaIds = new HashSet<>();
         for (LandUseAreaPlan.Area area : plan.areas()) {
+            if (!renderedAreaIds.add(area.areaId())) continue;
             Color color = colors.get(area.areaId());
             g.setColor(color);
             g.fillRect(x, y - 11, 13, 13);
@@ -206,7 +214,10 @@ public final class CityLandUsePreviewRenderer {
             g.drawString(trim(area.areaId(), 29), x + 20, y);
             y += 16;
             g.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 10));
-            g.drawString(trim(area.landUseType() + " / " + area.surfacePolicy().name().toLowerCase(), 34),
+            String componentLabel = componentCounts.get(area.areaId()) > 1
+                    ? " / components=" + componentCounts.get(area.areaId()) : "";
+            g.drawString(trim(area.landUseType() + " / " + area.surfacePolicy().name().toLowerCase()
+                            + componentLabel, 34),
                     x + 20, y);
             y += 22;
             if (y > HEIGHT - 110) break;

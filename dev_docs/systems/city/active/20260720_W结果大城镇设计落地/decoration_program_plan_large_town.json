@@ -1,0 +1,129 @@
+{
+  "schemaVersion": "city_decoration_program_plan.v0.4",
+  "cityId": "city_w_large_town_c_20260720",
+  "catalogHash": "sha256:8635a0d5d327fbe80fcbe85c94fb5107d21fcae503d97e9a51f4ff1517bcb79d",
+  "styleProfileId": "medieval_coastal",
+  "styleProfileHash": "sha256:ff8530a7636b070b64b2b4ca007a645cd0155a2c25fcb616b960212b3c2f5044",
+  "programs": [
+    {
+      "programId": "farm_crop_surface",
+      "targetArea": {"sourceType": "land_use_area", "ref": "agriculture_main_farmland", "insetBlocks": 4},
+      "coordinateFrame": {"originMode": "target_centroid", "orientationMode": "area_long_axis", "quarterTurns": 0, "offsetUBlocks": 0, "offsetVBlocks": 0},
+      "shape": {"type": "target_mask", "params": {}},
+      "pattern": {"type": "uniform_fill", "params": {"paletteSlotId": "crop"}},
+      "contentPalette": {"slots": [{"slotId": "crop", "layers": [{"layerId": "primary", "phase": "surface", "entries": [{"contentRef": "crop_tile", "weight": 1.0}], "required": true}]}]},
+      "terrainPolicy": {"maxSlopeDelta": 1, "allowWater": false, "invalidTerrainAction": "clip", "maxContinuousDropBlocks": 2147483647, "continuousDropWindowBlocks": 1, "foundationMode": "none", "maxFoundationDepthBlocks": 0, "foundationShoulderBlocks": 0},
+      "conflictPolicy": {"onConflict": "skip", "clearanceBlocks": 0},
+      "priority": 40,
+      "seed": 2026072001
+    },
+    {
+      "programId": "farm_lined_channels",
+      "targetArea": {"sourceType": "land_use_area", "ref": "agriculture_main_farmland", "insetBlocks": 6},
+      "coordinateFrame": {"originMode": "target_centroid", "orientationMode": "area_long_axis", "quarterTurns": 0, "offsetUBlocks": 0, "offsetVBlocks": 0},
+      "shape": {"type": "target_mask", "params": {}},
+      "pattern": {"type": "parallel_rows", "params": {"axis": "u", "paletteSlotId": "lined_channel", "rowWidthBlocks": 1, "spacingBlocks": 12, "offsetBlocks": 0}},
+      "contentPalette": {"slots": [{"slotId": "lined_channel", "layers": [{"layerId": "primary", "phase": "skeleton", "entries": [{"contentRef": "water_channel_lined_straight", "weight": 1.0}], "required": true}]}]},
+      "terrainPolicy": {"maxSlopeDelta": 1, "allowWater": false, "invalidTerrainAction": "clip", "maxContinuousDropBlocks": 2, "continuousDropWindowBlocks": 8, "foundationMode": "fill_only", "maxFoundationDepthBlocks": 2, "foundationShoulderBlocks": 1},
+      "conflictPolicy": {"onConflict": "skip", "clearanceBlocks": 0},
+      "priority": 120,
+      "seed": 2026072002
+    },
+    {
+      "programId": "farm_scarecrows",
+      "targetArea": {"sourceType": "land_use_area", "ref": "agriculture_main_farmland", "insetBlocks": 8},
+      "coordinateFrame": {"originMode": "target_centroid", "orientationMode": "area_long_axis", "quarterTurns": 0, "offsetUBlocks": 0, "offsetVBlocks": 0},
+      "shape": {"type": "target_mask", "params": {}},
+      "pattern": {"type": "deterministic_scatter", "params": {"paletteSlotId": "scarecrow", "cellSizeBlocks": 24, "densityPermille": 250}},
+      "contentPalette": {"slots": [{"slotId": "scarecrow", "layers": [{"layerId": "primary", "phase": "major", "entries": [{"contentRef": "scarecrow", "weight": 1.0}], "required": true}]}]},
+      "terrainPolicy": {"maxSlopeDelta": 2, "allowWater": false, "invalidTerrainAction": "skip", "maxContinuousDropBlocks": 2147483647, "continuousDropWindowBlocks": 1, "foundationMode": "none", "maxFoundationDepthBlocks": 0, "foundationShoulderBlocks": 0},
+      "conflictPolicy": {"onConflict": "skip", "clearanceBlocks": 2},
+      "priority": 80,
+      "seed": 2026072003
+    },
+    {
+      "programId": "farm_life_accents",
+      "targetArea": {"sourceType": "land_use_area", "ref": "agriculture_main_farmland", "insetBlocks": 7},
+      "coordinateFrame": {"originMode": "target_centroid", "orientationMode": "area_long_axis", "quarterTurns": 0, "offsetUBlocks": 0, "offsetVBlocks": 0},
+      "shape": {"type": "target_mask", "params": {}},
+      "pattern": {"type": "deterministic_scatter", "params": {"paletteSlotId": "farm_accent", "cellSizeBlocks": 18, "densityPermille": 700}},
+      "contentPalette": {"slots": [{"slotId": "farm_accent", "layers": [{"layerId": "primary", "phase": "minor", "entries": [{"contentRef": "haystack", "weight": 4.0}, {"contentRef": "farm_tool_rack", "weight": 3.0}, {"contentRef": "beehive_stand", "weight": 2.0}, {"contentRef": "animal_trough", "weight": 1.0}], "required": true}]}]},
+      "terrainPolicy": {"maxSlopeDelta": 2, "allowWater": false, "invalidTerrainAction": "skip", "maxContinuousDropBlocks": 2147483647, "continuousDropWindowBlocks": 1, "foundationMode": "none", "maxFoundationDepthBlocks": 0, "foundationShoulderBlocks": 0},
+      "conflictPolicy": {"onConflict": "skip", "clearanceBlocks": 2},
+      "priority": 70,
+      "seed": 2026072004
+    },
+    {
+      "programId": "plaza_fountain_center",
+      "targetArea": {"sourceType": "land_use_area", "ref": "plaza_central_plaza", "insetBlocks": 2},
+      "coordinateFrame": {"originMode": "target_centroid", "orientationMode": "world_x", "quarterTurns": 0, "offsetUBlocks": -2, "offsetVBlocks": 8},
+      "shape": {"type": "rectangle", "params": {"minU": 0, "minV": 0, "maxU": 0, "maxV": 0}},
+      "pattern": {"type": "grid_repeat", "params": {"paletteSlotId": "fountain", "spacingUBlocks": 1, "spacingVBlocks": 1, "offsetUBlocks": 0, "offsetVBlocks": 0}},
+      "contentPalette": {"slots": [{"slotId": "fountain", "layers": [{"layerId": "primary", "phase": "skeleton", "entries": [{"contentRef": "fountain", "weight": 1.0}], "required": true}]}]},
+      "terrainPolicy": {"maxSlopeDelta": 1, "allowWater": false, "invalidTerrainAction": "skip", "maxContinuousDropBlocks": 2, "continuousDropWindowBlocks": 5, "foundationMode": "none", "maxFoundationDepthBlocks": 0, "foundationShoulderBlocks": 0},
+      "conflictPolicy": {"onConflict": "skip", "clearanceBlocks": 2},
+      "priority": 200,
+      "seed": 2026072005
+    },
+    {
+      "programId": "plaza_bench_ring",
+      "targetArea": {"sourceType": "land_use_area", "ref": "plaza_central_plaza", "insetBlocks": 2},
+      "coordinateFrame": {"originMode": "target_centroid", "orientationMode": "world_x", "quarterTurns": 0, "offsetUBlocks": 0, "offsetVBlocks": 0},
+      "shape": {"type": "ring", "params": {"centerU": 0, "centerV": 0, "innerRadiusU": 7, "innerRadiusV": 7, "outerRadiusU": 12, "outerRadiusV": 12}},
+      "pattern": {"type": "deterministic_scatter", "params": {"paletteSlotId": "bench", "cellSizeBlocks": 2, "densityPermille": 1000}},
+      "contentPalette": {"slots": [{"slotId": "bench", "layers": [{"layerId": "primary", "phase": "major", "entries": [{"contentRef": "street_bench", "weight": 1.0}], "required": true}]}]},
+      "terrainPolicy": {"maxSlopeDelta": 1, "allowWater": false, "invalidTerrainAction": "skip", "maxContinuousDropBlocks": 2147483647, "continuousDropWindowBlocks": 1, "foundationMode": "none", "maxFoundationDepthBlocks": 0, "foundationShoulderBlocks": 0},
+      "conflictPolicy": {"onConflict": "skip", "clearanceBlocks": 1},
+      "priority": 150,
+      "seed": 2026072006
+    },
+    {
+      "programId": "plaza_lantern_ring",
+      "targetArea": {"sourceType": "land_use_area", "ref": "plaza_central_plaza", "insetBlocks": 2},
+      "coordinateFrame": {"originMode": "target_centroid", "orientationMode": "world_x", "quarterTurns": 0, "offsetUBlocks": 0, "offsetVBlocks": 0},
+      "shape": {"type": "target_mask", "params": {}},
+      "pattern": {"type": "edge_repeat", "params": {"paletteSlotId": "lantern", "spacingBlocks": 18, "offsetBlocks": 2}},
+      "contentPalette": {"slots": [{"slotId": "lantern", "layers": [{"layerId": "primary", "phase": "major", "entries": [{"contentRef": "lantern_post", "weight": 1.0}], "required": true}]}]},
+      "terrainPolicy": {"maxSlopeDelta": 1, "allowWater": false, "invalidTerrainAction": "skip", "maxContinuousDropBlocks": 2147483647, "continuousDropWindowBlocks": 1, "foundationMode": "none", "maxFoundationDepthBlocks": 0, "foundationShoulderBlocks": 0},
+      "conflictPolicy": {"onConflict": "skip", "clearanceBlocks": 1},
+      "priority": 140,
+      "seed": 2026072007
+    },
+    {
+      "programId": "civic_accents",
+      "targetArea": {"sourceType": "land_use_area", "ref": "civic_civic_court", "insetBlocks": 0},
+      "coordinateFrame": {"originMode": "target_centroid", "orientationMode": "area_long_axis", "quarterTurns": 0, "offsetUBlocks": 0, "offsetVBlocks": 0},
+      "shape": {"type": "target_mask", "params": {}},
+      "pattern": {"type": "deterministic_scatter", "params": {"paletteSlotId": "civic_accent", "cellSizeBlocks": 10, "densityPermille": 800}},
+      "contentPalette": {"slots": [{"slotId": "civic_accent", "layers": [{"layerId": "primary", "phase": "minor", "entries": [{"contentRef": "notice_board", "weight": 2.0}, {"contentRef": "banner_post", "weight": 3.0}, {"contentRef": "street_bench", "weight": 2.0}], "required": true}]}]},
+      "terrainPolicy": {"maxSlopeDelta": 2, "allowWater": false, "invalidTerrainAction": "skip", "maxContinuousDropBlocks": 2147483647, "continuousDropWindowBlocks": 1, "foundationMode": "none", "maxFoundationDepthBlocks": 0, "foundationShoulderBlocks": 0},
+      "conflictPolicy": {"onConflict": "skip", "clearanceBlocks": 1},
+      "priority": 100,
+      "seed": 2026072008
+    },
+    {
+      "programId": "commercial_street_life",
+      "targetArea": {"sourceType": "land_use_area", "ref": "commercial_central_commercial", "insetBlocks": 3},
+      "coordinateFrame": {"originMode": "target_centroid", "orientationMode": "area_long_axis", "quarterTurns": 0, "offsetUBlocks": 0, "offsetVBlocks": 0},
+      "shape": {"type": "target_mask", "params": {}},
+      "pattern": {"type": "edge_repeat", "params": {"paletteSlotId": "commercial_accent", "spacingBlocks": 8, "offsetBlocks": 1}},
+      "contentPalette": {"slots": [{"slotId": "commercial_accent", "layers": [{"layerId": "primary", "phase": "minor", "entries": [{"contentRef": "market_stall_small", "weight": 2.0}, {"contentRef": "crate_cluster", "weight": 3.0}, {"contentRef": "barrel_cluster", "weight": 3.0}, {"contentRef": "shop_sign", "weight": 2.0}], "required": true}]}]},
+      "terrainPolicy": {"maxSlopeDelta": 2, "allowWater": false, "invalidTerrainAction": "skip", "maxContinuousDropBlocks": 2147483647, "continuousDropWindowBlocks": 1, "foundationMode": "none", "maxFoundationDepthBlocks": 0, "foundationShoulderBlocks": 0},
+      "conflictPolicy": {"onConflict": "skip", "clearanceBlocks": 1},
+      "priority": 90,
+      "seed": 2026072009
+    },
+    {
+      "programId": "residential_street_life",
+      "targetArea": {"sourceType": "land_use_area", "ref": "residential_east_residential", "insetBlocks": 0},
+      "coordinateFrame": {"originMode": "target_centroid", "orientationMode": "area_long_axis", "quarterTurns": 0, "offsetUBlocks": 0, "offsetVBlocks": 0},
+      "shape": {"type": "target_mask", "params": {}},
+      "pattern": {"type": "deterministic_scatter", "params": {"paletteSlotId": "residential_accent", "cellSizeBlocks": 14, "densityPermille": 300}},
+      "contentPalette": {"slots": [{"slotId": "residential_accent", "layers": [{"layerId": "primary", "phase": "minor", "entries": [{"contentRef": "firewood_pile", "weight": 3.0}, {"contentRef": "clothesline", "weight": 2.0}, {"contentRef": "flower_box", "weight": 3.0}, {"contentRef": "raised_garden_bed", "weight": 2.0}], "required": true}]}]},
+      "terrainPolicy": {"maxSlopeDelta": 2, "allowWater": false, "invalidTerrainAction": "skip", "maxContinuousDropBlocks": 2147483647, "continuousDropWindowBlocks": 1, "foundationMode": "none", "maxFoundationDepthBlocks": 0, "foundationShoulderBlocks": 0},
+      "conflictPolicy": {"onConflict": "skip", "clearanceBlocks": 1},
+      "priority": 80,
+      "seed": 2026072010
+    }
+  ]
+}

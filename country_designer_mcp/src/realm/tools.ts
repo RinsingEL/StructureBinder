@@ -84,23 +84,31 @@ const decorationContentPaletteSchema = strictObject({
     minItems: 1,
     items: strictObject({
       slotId: nonEmptyString("Pattern 引用的稳定 slot ID。"),
-      phase: { type: "string", enum: ["skeleton", "surface", "major", "minor"] },
-      entries: {
+      layers: {
         type: "array",
         minItems: 1,
-        description: "填写当前 style profile 暴露的语义槽位，例如 market_stall、field_border；不填写具体 NBT/content ID。",
         items: strictObject({
-          contentRef: nonEmptyString("来自 city_query_decoration_catalog 的 semanticRefs。"),
-          weight: { type: "number", exclusiveMinimum: 0 },
-        }, ["contentRef", "weight"]),
+          layerId: nonEmptyString("同一 palette slot 内稳定且唯一的 layer ID。"),
+          phase: { type: "string", enum: ["skeleton", "surface", "major", "minor"] },
+          entries: {
+            type: "array",
+            minItems: 1,
+            description: "填写当前 style profile 暴露的语义槽位；不填写具体 NBT/content ID。",
+            items: strictObject({
+              contentRef: nonEmptyString("来自 city_query_decoration_catalog 的 semanticRefs。"),
+              weight: { type: "number", exclusiveMinimum: 0 },
+            }, ["contentRef", "weight"]),
+          },
+          required: { type: "boolean" },
+          dependsOnLayerId: nonEmptyString("可选；只允许依赖同一 slot 内更早声明的 layer。"),
+        }, ["layerId", "phase", "entries", "required"]),
       },
-      required: { type: "boolean" },
-    }, ["slotId", "phase", "entries", "required"]),
+    }, ["slotId", "layers"]),
   },
 }, ["slots"]);
 
 const decorationProgramPlanSchema = strictObject({
-  schemaVersion: { type: "string", enum: ["city_decoration_program_plan.v0.2"] },
+  schemaVersion: { type: "string", enum: ["city_decoration_program_plan.v0.4"] },
   cityId: nonEmptyString("必须与 citySeedId 对应的 City 一致。"),
   catalogHash: nonEmptyString("city_query_decoration_catalog 返回的当前 catalogHash。"),
   styleProfileId: nonEmptyString("city_query_decoration_catalog 返回的 styleProfileId。"),
@@ -113,15 +121,18 @@ const decorationProgramPlanSchema = strictObject({
       targetArea: strictObject({
         sourceType: {
           type: "string",
-          enum: ["patch"],
-          description: "首期只允许 patch；不得提交 targetBounds/memberBounds。",
+          enum: ["patch", "land_use_area"],
+          description: "引用 D3 patch 或已完成规划的 LandUse area；不得提交 targetBounds/memberBounds。",
         },
-        ref: nonEmptyString("D3 landform patch ref。"),
+        ref: nonEmptyString("D3 landform patch ref 或 LandUse areaId。"),
         insetBlocks: { type: "integer", minimum: 0 },
       }, ["sourceType", "ref", "insetBlocks"]),
       coordinateFrame: strictObject({
         originMode: { type: "string", enum: ["target_centroid"] },
-        orientationMode: { type: "string", enum: ["patch_long_axis"] },
+        orientationMode: {
+          type: "string",
+          enum: ["world_x", "world_z", "patch_long_axis", "area_long_axis", "target_long_axis"],
+        },
         quarterTurns: { type: "integer", minimum: 0, maximum: 3 },
         offsetUBlocks: integer("局部 U 偏移。"),
         offsetVBlocks: integer("局部 V 偏移。"),
@@ -133,7 +144,13 @@ const decorationProgramPlanSchema = strictObject({
         maxSlopeDelta: { type: "integer", minimum: 0 },
         allowWater: { type: "boolean" },
         invalidTerrainAction: { type: "string", enum: ["skip", "clip"] },
-      }, ["maxSlopeDelta", "allowWater", "invalidTerrainAction"]),
+        maxContinuousDropBlocks: { type: "integer", minimum: 0 },
+        continuousDropWindowBlocks: { type: "integer", minimum: 1 },
+        foundationMode: { type: "string", enum: ["none", "fill_only"] },
+        maxFoundationDepthBlocks: { type: "integer", minimum: 0 },
+        foundationShoulderBlocks: { type: "integer", minimum: 0 },
+      }, ["maxSlopeDelta", "allowWater", "invalidTerrainAction", "maxContinuousDropBlocks",
+        "continuousDropWindowBlocks", "foundationMode", "maxFoundationDepthBlocks", "foundationShoulderBlocks"]),
       conflictPolicy: strictObject({
         onConflict: { type: "string", enum: ["skip", "replace_lower_priority"] },
         clearanceBlocks: { type: "integer", minimum: 0 },
@@ -907,12 +924,28 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "city_plan_city_dressing",
-    description: "City DecorationProgram v0.2 规划：选择 style profile 并提交语义 contentRef；程序在规划期解析为具体 prefab，再从 D3 patch 解析 mask 与局部坐标系。禁止 v0.1 dressingBrushPlan、targetBounds/memberBounds、世界 origin/x/z、内联 NBT 和 block operation。",
+    description: "City DecorationProgram v0.4 规划：选择 style profile 并提交分层语义 contentRef；程序在规划期解析为具体 prefab，再从 D3 patch 或 LandUse area 解析 mask 与局部坐标系。禁止 v0.1 dressingBrushPlan、targetBounds/memberBounds、世界 origin/x/z、内联 NBT 和 block operation。",
     inputSchema: strictObject({
       runId: nonEmptyString("已有 W/T run ID。"),
       citySeedId: nonEmptyString("目标城市种子的 citySeedId。"),
       decorationProgramPlan: decorationProgramPlanSchema,
     }, ["runId", "citySeedId", "decorationProgramPlan"]),
+  },
+  {
+    name: "city_plan_decoration_anchor_candidates",
+    description: "为喷泉、雕像、水井等单点关键装饰生成完整 footprint + 舒适边距约束下的候选锚点和预览。只读规划，不写正式 Decoration 编译产物、不加载区块；每个候选返回可直接回填原 v0.4 program.coordinateFrame 的 patch。",
+    inputSchema: strictObject({
+      runId: nonEmptyString("已有 W/T run ID。"),
+      citySeedId: nonEmptyString("目标城市种子的 citySeedId。"),
+      decorationProgramPlan: decorationProgramPlanSchema,
+      programId: nonEmptyString("待选关键装饰的 programId；program 必须表达单点 prefab。"),
+      candidateCount: {
+        type: "integer",
+        minimum: 1,
+        maximum: 8,
+        description: "最多返回候选数量，默认 5。",
+      },
+    }, ["runId", "citySeedId", "decorationProgramPlan", "programId"]),
   },
   {
     name: "city_plan_land_use",

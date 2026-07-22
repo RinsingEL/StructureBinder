@@ -40,6 +40,9 @@ def devUseRoadWeaver = providers.gradleProperty('geomantiaDevUseRoadWeaver')
 def devUseTectonic = providers.gradleProperty('geomantiaDevUseTectonic')
         .orElse('false')
         .get()
+def devUseVisualPreview = providers.gradleProperty('geomantiaDevUseVisualPreview')
+        .orElse('false')
+        .get()
 def devRoadWeaverVersion = '2.3.0-1.20.1'
 def devRoadWeaverModrinthVersionId = '7dhS67wp'
 def devRoadWeaverJarName = "roadweaver-forge-${devRoadWeaverVersion}.jar"
@@ -189,6 +192,12 @@ dependencies {
     }
     if (devUseTectonic.toBoolean()) {
         runtimeOnly fg.deobf("maven.modrinth:${devTectonicModrinthProjectId}:${devTectonicModrinthVersionId}")
+    }
+    if (devUseVisualPreview.toBoolean()) {
+        // ForgeGradle must remap client mods before a userdev run can load them.
+        runtimeOnly fg.deobf('maven.modrinth:embeddium:UTbfe5d1')
+        runtimeOnly fg.deobf('maven.modrinth:oculus:iQ1SwGc3')
+        runtimeOnly fg.deobf('maven.modrinth:distanthorizons:FWGxbEM3')
     }
     testImplementation platform('org.junit:junit-bom:5.10.2')
     testImplementation 'org.junit.jupiter:junit-jupiter'

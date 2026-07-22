@@ -1,0 +1,196 @@
+{
+  "schemaVersion": "city_land_use_intent_plan.v0.2",
+  "cityId": "city_w_large_town_c_20260720",
+  "seedSalt": "large-town-20260720-reviewed-v1",
+  "groupOverrides": [
+    {
+      "groupId": "farm_mill_cluster",
+      "memberAnchorIds": [
+        "farm_mill_cluster_windmill",
+        "farm_mill_cluster_windmill_barn"
+      ],
+      "ruleRef": "agriculture"
+    },
+    {
+      "groupId": "farm_storage_cluster",
+      "memberAnchorIds": [
+        "farm_storage_cluster_barn",
+        "farm_storage_cluster_farm_storage",
+        "farm_storage_cluster_stable"
+      ],
+      "ruleRef": "agriculture"
+    },
+    {
+      "groupId": "farmstead_cluster",
+      "memberAnchorIds": [
+        "farmstead_cluster_farm_home_01",
+        "farmstead_cluster_farm_home_02",
+        "farmstead_cluster_farm_home_03"
+      ],
+      "ruleRef": "agriculture"
+    },
+    {
+      "groupId": "civic_court",
+      "memberAnchorIds": [
+        "civic_court_guard_hall",
+        "civic_court_town_hall"
+      ],
+      "ruleRef": "civic"
+    },
+    {
+      "groupId": "central_plaza_ring",
+      "memberAnchorIds": [
+        "central_plaza_ring_bake_shop",
+        "central_plaza_ring_butcher_shop",
+        "central_plaza_ring_flower_shop",
+        "central_plaza_ring_town_shop"
+      ],
+      "ruleRef": "plaza"
+    },
+    {
+      "groupId": "market_retail_street",
+      "memberAnchorIds": [
+        "market_retail_street_bakery",
+        "market_retail_street_general_store",
+        "market_retail_street_small_house_01",
+        "market_retail_street_small_house_02",
+        "market_retail_street_small_house_03",
+        "market_retail_street_small_house_04"
+      ],
+      "ruleRef": "commercial"
+    },
+    {
+      "groupId": "tavern_service_street",
+      "memberAnchorIds": [
+        "tavern_service_street_motel",
+        "tavern_service_street_small_house_01",
+        "tavern_service_street_small_house_02",
+        "tavern_service_street_small_house_03",
+        "tavern_service_street_small_house_04",
+        "tavern_service_street_tavern"
+      ],
+      "ruleRef": "commercial"
+    },
+    {
+      "groupId": "workshop_commercial_street",
+      "memberAnchorIds": [
+        "workshop_commercial_street_laundry",
+        "workshop_commercial_street_merchant_house",
+        "workshop_commercial_street_small_house_01",
+        "workshop_commercial_street_small_house_02",
+        "workshop_commercial_street_small_house_03",
+        "workshop_commercial_street_town_workshop"
+      ],
+      "ruleRef": "commercial"
+    },
+    {
+      "groupId": "culture_service_node",
+      "memberAnchorIds": [
+        "culture_service_node_city_home_01",
+        "culture_service_node_city_home_02",
+        "culture_service_node_library",
+        "culture_service_node_theater"
+      ],
+      "ruleRef": "commercial"
+    },
+    {
+      "groupId": "east_residential_street",
+      "memberAnchorIds": [
+        "east_residential_street_house_01",
+        "east_residential_street_house_02",
+        "east_residential_street_house_03",
+        "east_residential_street_house_04",
+        "east_residential_street_house_05",
+        "east_residential_street_house_06",
+        "east_residential_street_house_07",
+        "east_residential_street_house_08"
+      ],
+      "ruleRef": "residential"
+    },
+    {
+      "groupId": "east_residential_courtyard",
+      "memberAnchorIds": [
+        "east_residential_courtyard_city_home_01",
+        "east_residential_courtyard_city_home_02",
+        "east_residential_courtyard_civilian_house_01",
+        "east_residential_courtyard_civilian_house_02",
+        "east_residential_courtyard_dormitory"
+      ],
+      "ruleRef": "residential"
+    }
+  ],
+  "subjectOverrides": [
+    {
+      "targetType": "group",
+      "targetId": "north_shore_guard_tower",
+      "mode": "exclude"
+    },
+    {
+      "targetType": "group",
+      "targetId": "west_farm_guard_tower",
+      "mode": "exclude"
+    },
+    {
+      "targetType": "group",
+      "targetId": "south_entry_guard_tower",
+      "mode": "exclude"
+    }
+  ],
+  "continuityOverrides": [
+    {
+      "targetGroupId": "farm_mill_cluster",
+      "continuityMode": "continuous_surface",
+      "continuityGroupId": "main_farmland"
+    },
+    {
+      "targetGroupId": "farm_storage_cluster",
+      "continuityMode": "continuous_surface",
+      "continuityGroupId": "main_farmland"
+    },
+    {
+      "targetGroupId": "farmstead_cluster",
+      "continuityMode": "continuous_surface",
+      "continuityGroupId": "main_farmland"
+    },
+    {
+      "targetGroupId": "civic_court",
+      "continuityMode": "logical_district",
+      "continuityGroupId": "civic_court"
+    },
+    {
+      "targetGroupId": "central_plaza_ring",
+      "continuityMode": "logical_district",
+      "continuityGroupId": "central_plaza"
+    },
+    {
+      "targetGroupId": "market_retail_street",
+      "continuityMode": "logical_district",
+      "continuityGroupId": "central_commercial"
+    },
+    {
+      "targetGroupId": "tavern_service_street",
+      "continuityMode": "logical_district",
+      "continuityGroupId": "central_commercial"
+    },
+    {
+      "targetGroupId": "workshop_commercial_street",
+      "continuityMode": "logical_district",
+      "continuityGroupId": "central_commercial"
+    },
+    {
+      "targetGroupId": "culture_service_node",
+      "continuityMode": "logical_district",
+      "continuityGroupId": "central_commercial"
+    },
+    {
+      "targetGroupId": "east_residential_street",
+      "continuityMode": "logical_district",
+      "continuityGroupId": "east_residential"
+    },
+    {
+      "targetGroupId": "east_residential_courtyard",
+      "continuityMode": "logical_district",
+      "continuityGroupId": "east_residential"
+    }
+  ]
+}

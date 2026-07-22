@@ -1,9 +1,9 @@
 package com.rinsing.geomantia.mixin;
 
-import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationTerrainRunCompiler;
+import com.rinsing.geomantia.systems.city.application.terrain.CityTerrainFoundationDensityComputer;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityDecorationBeardifierAccess;
-import com.rinsing.geomantia.systems.city.infrastructure.world.CityDecorationFoundationDensityComputer;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityDecorationWorldgenRegistry;
+import com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityLandUseWorldgenRegistry;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.WorldGenRegion;
 import net.minecraft.world.level.ChunkPos;
@@ -17,12 +17,14 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Mixin(Beardifier.class)
 public abstract class CityDecorationBeardifierMixin implements CityDecorationBeardifierAccess {
     @Unique
-    private List<CityDecorationTerrainRunCompiler.FoundationSegment> geomantia$foundationSegments = List.of();
+    private List<CityTerrainFoundationDensityComputer.FoundationSegmentView> geomantia$foundationSegments =
+            List.of();
 
     @Inject(method = "forStructuresInChunk", at = @At("RETURN"))
     private static void geomantia$captureCityDecorationFoundations(StructureManager structureManager,
@@ -34,16 +36,17 @@ public abstract class CityDecorationBeardifierMixin implements CityDecorationBea
         if (level == null) {
             return;
         }
-        List<CityDecorationTerrainRunCompiler.FoundationSegment> snapshot =
-                CityDecorationWorldgenRegistry.foundationSegmentsForChunk(
-                        level.dimension().location().toString(), chunkPos);
+        String dimensionId = level.dimension().location().toString();
+        List<CityTerrainFoundationDensityComputer.FoundationSegmentView> snapshot = new ArrayList<>();
+        snapshot.addAll(CityDecorationWorldgenRegistry.foundationSegmentsForChunk(dimensionId, chunkPos));
+        snapshot.addAll(CityLandUseWorldgenRegistry.foundationSegmentsForChunk(dimensionId, chunkPos));
         ((CityDecorationBeardifierAccess) cir.getReturnValue()).geomantia$setFoundationSegments(snapshot);
     }
 
     @Inject(method = "compute", at = @At("RETURN"), cancellable = true)
     private void geomantia$addCityDecorationFoundationDensity(DensityFunction.FunctionContext context,
                                                                CallbackInfoReturnable<Double> cir) {
-        double contribution = CityDecorationFoundationDensityComputer.compute(
+        double contribution = CityTerrainFoundationDensityComputer.computeViews(
                 context.blockX(), context.blockY(), context.blockZ(), geomantia$foundationSegments);
         if (contribution > 0.0D) {
             cir.setReturnValue(cir.getReturnValue() + contribution);
@@ -52,7 +55,7 @@ public abstract class CityDecorationBeardifierMixin implements CityDecorationBea
 
     @Override
     public void geomantia$setFoundationSegments(
-            List<CityDecorationTerrainRunCompiler.FoundationSegment> foundationSegments) {
-        geomantia$foundationSegments = List.copyOf(foundationSegments);
+            List<? extends CityTerrainFoundationDensityComputer.FoundationSegmentView> foundationSegments) {
+        geomantia$foundationSegments = new ArrayList<>(foundationSegments);
     }
 }

@@ -23,6 +23,7 @@ import net.minecraft.nbt.IntTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.ChunkPos;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -800,8 +801,18 @@ class CityDecorationWorldgenRegistryTest {
         }
 
         @Override
+        public Object snapshot(BlockPos pos) {
+            return inspect(pos);
+        }
+
+        @Override
+        public boolean restore(BlockPos pos, Object snapshot) {
+            return true;
+        }
+
+        @Override
         public boolean placeTemplate(CompoundTag templateNbt, BlockPos origin, Rotation rotation, long seed,
-                                     boolean ignoreTemplateAir) {
+                                     boolean ignoreTemplateAir, BoundingBox ownerBounds) {
             placeCalls++;
             placementOrigins.add(origin);
             placementOrder.add("base");

@@ -248,11 +248,14 @@ public final class CityDecorationContentCatalogLoader {
                 throw fail("CITY_DECORATION_TERRAIN_FALLBACK_UNKNOWN",
                         "terrainDropFallbackContentRef is not present in the catalog: " + fallbackRef);
             }
-            if (content.size().widthBlocks() != 1 || content.size().depthBlocks() != 1
-                    || fallback.size().widthBlocks() != 1 || fallback.size().depthBlocks() != 1) {
-                throw fail("CITY_DECORATION_TERRAIN_FALLBACK_TILE_REQUIRED",
-                        "terrainDropFallbackContentRef requires one-by-one source and fallback tiles: "
-                                + content.contentId());
+            boolean sameWidthLinearRun = content.size().widthBlocks() == fallback.size().widthBlocks()
+                    && fallback.size().depthBlocks() >= content.size().depthBlocks();
+            boolean sameDepthLinearRun = content.size().depthBlocks() == fallback.size().depthBlocks()
+                    && fallback.size().widthBlocks() >= content.size().widthBlocks();
+            if (!sameWidthLinearRun && !sameDepthLinearRun) {
+                throw fail("CITY_DECORATION_TERRAIN_FALLBACK_CROSS_SECTION_MISMATCH",
+                        "terrainDropFallbackContentRef must preserve one horizontal cross-section and may only "
+                                + "extend along the run axis: " + content.contentId());
             }
             if (!content.placementMode().equals(fallback.placementMode())
                     || !content.replacePolicy().equals(fallback.replacePolicy())) {

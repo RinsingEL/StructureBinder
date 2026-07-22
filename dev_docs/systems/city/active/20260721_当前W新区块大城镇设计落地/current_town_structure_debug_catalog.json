@@ -1,0 +1,1769 @@
+{
+  "schemaVersion": "city_structure_debug_catalog.v0.1",
+  "catalogMode": "debug",
+  "structures": [
+    {
+      "structureId": "geomantia:city/stubbs/agriculture/windmill_01",
+      "profileType": "single",
+      "sampleType": "structure_template_nbt",
+      "placementKind": "city_template_nbt",
+      "footprintMode": "fixed_footprint",
+      "semanticTerms": [
+        "function.agriculture",
+        "style.stubbs_medieval",
+        "placement.grounded",
+        "quality.runtime_verified"
+      ],
+      "functionTerms": [
+        "function.agriculture"
+      ],
+      "styleTerms": [
+        "style.stubbs_medieval"
+      ],
+      "placementTerms": [
+        "placement.grounded"
+      ],
+      "usageTerms": [
+        "usage.single_structure"
+      ],
+      "templateRoleTerms": [
+        "template_role.city_building"
+      ],
+      "qualityTerms": [
+        "quality.runtime_verified"
+      ],
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "clearanceBlocks": 6,
+      "fixedFootprint": {
+        "widthBlocks": 27,
+        "depthBlocks": 21,
+        "heightBlocks": 47
+      }
+    },
+    {
+      "structureId": "geomantia:city/stubbs/agriculture/barn_windmill_01",
+      "profileType": "single",
+      "sampleType": "structure_template_nbt",
+      "placementKind": "city_template_nbt",
+      "footprintMode": "fixed_footprint",
+      "semanticTerms": [
+        "function.agriculture",
+        "style.stubbs_medieval",
+        "placement.grounded",
+        "quality.runtime_verified"
+      ],
+      "functionTerms": [
+        "function.agriculture"
+      ],
+      "styleTerms": [
+        "style.stubbs_medieval"
+      ],
+      "placementTerms": [
+        "placement.grounded"
+      ],
+      "usageTerms": [
+        "usage.single_structure"
+      ],
+      "templateRoleTerms": [
+        "template_role.city_building"
+      ],
+      "qualityTerms": [
+        "quality.runtime_verified"
+      ],
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "clearanceBlocks": 6,
+      "fixedFootprint": {
+        "widthBlocks": 25,
+        "depthBlocks": 31,
+        "heightBlocks": 47
+      }
+    },
+    {
+      "structureId": "geomantia:city/stubbs/agriculture/barn_01",
+      "profileType": "single",
+      "sampleType": "structure_template_nbt",
+      "placementKind": "city_template_nbt",
+      "footprintMode": "fixed_footprint",
+      "semanticTerms": [
+        "function.agriculture",
+        "style.stubbs_medieval",
+        "placement.grounded",
+        "quality.runtime_verified"
+      ],
+      "functionTerms": [
+        "function.agriculture"
+      ],
+      "styleTerms": [
+        "style.stubbs_medieval"
+      ],
+      "placementTerms": [
+        "placement.grounded"
+      ],
+      "usageTerms": [
+        "usage.single_structure"
+      ],
+      "templateRoleTerms": [
+        "template_role.city_building"
+      ],
+      "qualityTerms": [
+        "quality.runtime_verified"
+      ],
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "clearanceBlocks": 5,
+      "fixedFootprint": {
+        "widthBlocks": 15,
+        "depthBlocks": 21,
+        "heightBlocks": 10
+      }
+    },
+    {
+      "structureId": "geomantia:city/stubbs/agriculture/farm_storage_house_01",
+      "profileType": "single",
+      "sampleType": "structure_template_nbt",
+      "placementKind": "city_template_nbt",
+      "footprintMode": "fixed_footprint",
+      "semanticTerms": [
+        "function.agriculture",
+        "style.stubbs_medieval",
+        "placement.grounded",
+        "quality.runtime_verified"
+      ],
+      "functionTerms": [
+        "function.agriculture"
+      ],
+      "styleTerms": [
+        "style.stubbs_medieval"
+      ],
+      "placementTerms": [
+        "placement.grounded"
+      ],
+      "usageTerms": [
+        "usage.single_structure"
+      ],
+      "templateRoleTerms": [
+        "template_role.city_building"
+      ],
+      "qualityTerms": [
+        "quality.runtime_verified"
+      ],
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "clearanceBlocks": 5,
+      "fixedFootprint": {
+        "widthBlocks": 19,
+        "depthBlocks": 29,
+        "heightBlocks": 17
+      }
+    },
+    {
+      "structureId": "geomantia:city/stubbs/agriculture/horse_stall_02",
+      "profileType": "single",
+      "sampleType": "structure_template_nbt",
+      "placementKind": "city_template_nbt",
+      "footprintMode": "fixed_footprint",
+      "semanticTerms": [
+        "function.agriculture",
+        "style.stubbs_medieval",
+        "placement.grounded",
+        "quality.runtime_verified"
+      ],
+      "functionTerms": [
+        "function.agriculture"
+      ],
+      "styleTerms": [
+        "style.stubbs_medieval"
+      ],
+      "placementTerms": [
+        "placement.grounded"
+      ],
+      "usageTerms": [
+        "usage.single_structure"
+      ],
+      "templateRoleTerms": [
+        "template_role.city_building"
+      ],
+      "qualityTerms": [
+        "quality.runtime_verified"
+      ],
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "clearanceBlocks": 5,
+      "fixedFootprint": {
+        "widthBlocks": 21,
+        "depthBlocks": 32,
+        "heightBlocks": 16
+      }
+    },
+    {
+      "structureId": "geomantia:city/stubbs/agriculture/farm_home_01",
+      "profileType": "single",
+      "sampleType": "structure_template_nbt",
+      "placementKind": "city_template_nbt",
+      "footprintMode": "fixed_footprint",
+      "semanticTerms": [
+        "function.agriculture",
+        "style.stubbs_medieval",
+        "placement.grounded",
+        "quality.runtime_verified"
+      ],
+      "functionTerms": [
+        "function.agriculture"
+      ],
+      "styleTerms": [
+        "style.stubbs_medieval"
+      ],
+      "placementTerms": [
+        "placement.grounded"
+      ],
+      "usageTerms": [
+        "usage.single_structure"
+      ],
+      "templateRoleTerms": [
+        "template_role.city_building"
+      ],
+      "qualityTerms": [
+        "quality.runtime_verified"
+      ],
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "clearanceBlocks": 5,
+      "fixedFootprint": {
+        "widthBlocks": 20,
+        "depthBlocks": 18,
+        "heightBlocks": 11
+      }
+    },
+    {
+      "structureId": "geomantia:city/stubbs/civic/town_hall_01",
+      "profileType": "single",
+      "sampleType": "structure_template_nbt",
+      "placementKind": "city_template_nbt",
+      "footprintMode": "fixed_footprint",
+      "semanticTerms": [
+        "function.civic",
+        "style.stubbs_medieval",
+        "placement.grounded",
+        "quality.runtime_verified"
+      ],
+      "functionTerms": [
+        "function.civic"
+      ],
+      "styleTerms": [
+        "style.stubbs_medieval"
+      ],
+      "placementTerms": [
+        "placement.grounded"
+      ],
+      "usageTerms": [
+        "usage.single_structure"
+      ],
+      "templateRoleTerms": [
+        "template_role.city_building"
+      ],
+      "qualityTerms": [
+        "quality.runtime_verified"
+      ],
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "clearanceBlocks": 6,
+      "fixedFootprint": {
+        "widthBlocks": 48,
+        "depthBlocks": 31,
+        "heightBlocks": 25
+      }
+    },
+    {
+      "structureId": "geomantia:city/stubbs/civic/guard_outpost_01",
+      "profileType": "single",
+      "sampleType": "structure_template_nbt",
+      "placementKind": "city_template_nbt",
+      "footprintMode": "fixed_footprint",
+      "semanticTerms": [
+        "function.civic",
+        "style.stubbs_medieval",
+        "placement.grounded",
+        "quality.runtime_verified"
+      ],
+      "functionTerms": [
+        "function.civic"
+      ],
+      "styleTerms": [
+        "style.stubbs_medieval"
+      ],
+      "placementTerms": [
+        "placement.grounded"
+      ],
+      "usageTerms": [
+        "usage.single_structure"
+      ],
+      "templateRoleTerms": [
+        "template_role.city_building"
+      ],
+      "qualityTerms": [
+        "quality.runtime_verified"
+      ],
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "clearanceBlocks": 6,
+      "fixedFootprint": {
+        "widthBlocks": 26,
+        "depthBlocks": 31,
+        "heightBlocks": 48
+      }
+    },
+    {
+      "structureId": "geomantia:city/stubbs/civic/town_hall_02",
+      "profileType": "single",
+      "sampleType": "structure_template_nbt",
+      "placementKind": "city_template_nbt",
+      "footprintMode": "fixed_footprint",
+      "semanticTerms": [
+        "function.civic",
+        "style.stubbs_medieval",
+        "placement.grounded",
+        "quality.runtime_verified"
+      ],
+      "functionTerms": [
+        "function.civic"
+      ],
+      "styleTerms": [
+        "style.stubbs_medieval"
+      ],
+      "placementTerms": [
+        "placement.grounded"
+      ],
+      "usageTerms": [
+        "usage.single_structure"
+      ],
+      "templateRoleTerms": [
+        "template_role.city_building"
+      ],
+      "qualityTerms": [
+        "quality.runtime_verified"
+      ],
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "clearanceBlocks": 6,
+      "fixedFootprint": {
+        "widthBlocks": 41,
+        "depthBlocks": 19,
+        "heightBlocks": 23
+      }
+    },
+    {
+      "structureId": "geomantia:city/stubbs/civic/guardian_tower_01",
+      "profileType": "single",
+      "sampleType": "structure_template_nbt",
+      "placementKind": "city_template_nbt",
+      "footprintMode": "fixed_footprint",
+      "semanticTerms": [
+        "function.defense",
+        "style.stubbs_medieval",
+        "placement.grounded",
+        "quality.runtime_verified"
+      ],
+      "functionTerms": [
+        "function.defense"
+      ],
+      "styleTerms": [
+        "style.stubbs_medieval"
+      ],
+      "placementTerms": [
+        "placement.grounded"
+      ],
+      "usageTerms": [
+        "usage.single_structure"
+      ],
+      "templateRoleTerms": [
+        "template_role.city_building"
+      ],
+      "qualityTerms": [
+        "quality.runtime_verified"
+      ],
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "clearanceBlocks": 6,
+      "fixedFootprint": {
+        "widthBlocks": 21,
+        "depthBlocks": 17,
+        "heightBlocks": 37
+      }
+    },
+    {
+      "structureId": "geomantia:city/stubbs/civic/guardian_tower_02",
+      "profileType": "single",
+      "sampleType": "structure_template_nbt",
+      "placementKind": "city_template_nbt",
+      "footprintMode": "fixed_footprint",
+      "semanticTerms": [
+        "function.defense",
+        "style.stubbs_medieval",
+        "placement.grounded",
+        "quality.runtime_verified"
+      ],
+      "functionTerms": [
+        "function.defense"
+      ],
+      "styleTerms": [
+        "style.stubbs_medieval"
+      ],
+      "placementTerms": [
+        "placement.grounded"
+      ],
+      "usageTerms": [
+        "usage.single_structure"
+      ],
+      "templateRoleTerms": [
+        "template_role.city_building"
+      ],
+      "qualityTerms": [
+        "quality.runtime_verified"
+      ],
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "clearanceBlocks": 6,
+      "fixedFootprint": {
+        "widthBlocks": 21,
+        "depthBlocks": 17,
+        "heightBlocks": 37
+      }
+    },
+    {
+      "structureId": "geomantia:city/stubbs/civic/guard_tower_03",
+      "profileType": "single",
+      "sampleType": "structure_template_nbt",
+      "placementKind": "city_template_nbt",
+      "footprintMode": "fixed_footprint",
+      "semanticTerms": [
+        "function.defense",
+        "style.stubbs_medieval",
+        "placement.grounded",
+        "quality.runtime_verified"
+      ],
+      "functionTerms": [
+        "function.defense"
+      ],
+      "styleTerms": [
+        "style.stubbs_medieval"
+      ],
+      "placementTerms": [
+        "placement.grounded"
+      ],
+      "usageTerms": [
+        "usage.single_structure"
+      ],
+      "templateRoleTerms": [
+        "template_role.city_building"
+      ],
+      "qualityTerms": [
+        "quality.runtime_verified"
+      ],
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "clearanceBlocks": 6,
+      "fixedFootprint": {
+        "widthBlocks": 19,
+        "depthBlocks": 19,
+        "heightBlocks": 43
+      }
+    },
+    {
+      "structureId": "geomantia:city/stubbs/civic/guard_gate_01",
+      "profileType": "single",
+      "sampleType": "structure_template_nbt",
+      "placementKind": "city_template_nbt",
+      "footprintMode": "fixed_footprint",
+      "semanticTerms": [
+        "function.defense",
+        "style.stubbs_medieval",
+        "placement.grounded",
+        "quality.runtime_verified"
+      ],
+      "functionTerms": [
+        "function.defense"
+      ],
+      "styleTerms": [
+        "style.stubbs_medieval"
+      ],
+      "placementTerms": [
+        "placement.grounded"
+      ],
+      "usageTerms": [
+        "usage.single_structure"
+      ],
+      "templateRoleTerms": [
+        "template_role.city_building"
+      ],
+      "qualityTerms": [
+        "quality.runtime_verified"
+      ],
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "clearanceBlocks": 6,
+      "fixedFootprint": {
+        "widthBlocks": 39,
+        "depthBlocks": 22,
+        "heightBlocks": 40
+      }
+    },
+    {
+      "structureId": "geomantia:city/stubbs/commercial/tavern_01",
+      "profileType": "single",
+      "sampleType": "structure_template_nbt",
+      "placementKind": "city_template_nbt",
+      "footprintMode": "fixed_footprint",
+      "semanticTerms": [
+        "function.commercial",
+        "style.stubbs_medieval",
+        "placement.grounded",
+        "quality.runtime_verified"
+      ],
+      "functionTerms": [
+        "function.commercial"
+      ],
+      "styleTerms": [
+        "style.stubbs_medieval"
+      ],
+      "placementTerms": [
+        "placement.grounded"
+      ],
+      "usageTerms": [
+        "usage.single_structure"
+      ],
+      "templateRoleTerms": [
+        "template_role.city_building"
+      ],
+      "qualityTerms": [
+        "quality.runtime_verified"
+      ],
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "clearanceBlocks": 5,
+      "fixedFootprint": {
+        "widthBlocks": 23,
+        "depthBlocks": 33,
+        "heightBlocks": 16
+      }
+    },
+    {
+      "structureId": "geomantia:city/stubbs/commercial/motel_01",
+      "profileType": "single",
+      "sampleType": "structure_template_nbt",
+      "placementKind": "city_template_nbt",
+      "footprintMode": "fixed_footprint",
+      "semanticTerms": [
+        "function.commercial",
+        "style.stubbs_medieval",
+        "placement.grounded",
+        "quality.runtime_verified"
+      ],
+      "functionTerms": [
+        "function.commercial"
+      ],
+      "styleTerms": [
+        "style.stubbs_medieval"
+      ],
+      "placementTerms": [
+        "placement.grounded"
+      ],
+      "usageTerms": [
+        "usage.single_structure"
+      ],
+      "templateRoleTerms": [
+        "template_role.city_building"
+      ],
+      "qualityTerms": [
+        "quality.runtime_verified"
+      ],
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "clearanceBlocks": 5,
+      "fixedFootprint": {
+        "widthBlocks": 30,
+        "depthBlocks": 16,
+        "heightBlocks": 12
+      }
+    },
+    {
+      "structureId": "geomantia:city/stubbs/commercial/general_store_01",
+      "profileType": "single",
+      "sampleType": "structure_template_nbt",
+      "placementKind": "city_template_nbt",
+      "footprintMode": "fixed_footprint",
+      "semanticTerms": [
+        "function.commercial",
+        "style.stubbs_medieval",
+        "placement.grounded",
+        "quality.runtime_verified"
+      ],
+      "functionTerms": [
+        "function.commercial"
+      ],
+      "styleTerms": [
+        "style.stubbs_medieval"
+      ],
+      "placementTerms": [
+        "placement.grounded"
+      ],
+      "usageTerms": [
+        "usage.single_structure"
+      ],
+      "templateRoleTerms": [
+        "template_role.city_building"
+      ],
+      "qualityTerms": [
+        "quality.runtime_verified"
+      ],
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "clearanceBlocks": 5,
+      "fixedFootprint": {
+        "widthBlocks": 16,
+        "depthBlocks": 23,
+        "heightBlocks": 15
+      }
+    },
+    {
+      "structureId": "geomantia:city/stubbs/commercial/town_shop_01",
+      "profileType": "single",
+      "sampleType": "structure_template_nbt",
+      "placementKind": "city_template_nbt",
+      "footprintMode": "fixed_footprint",
+      "semanticTerms": [
+        "function.commercial",
+        "style.stubbs_medieval",
+        "placement.grounded",
+        "quality.runtime_verified"
+      ],
+      "functionTerms": [
+        "function.commercial"
+      ],
+      "styleTerms": [
+        "style.stubbs_medieval"
+      ],
+      "placementTerms": [
+        "placement.grounded"
+      ],
+      "usageTerms": [
+        "usage.single_structure"
+      ],
+      "templateRoleTerms": [
+        "template_role.city_building"
+      ],
+      "qualityTerms": [
+        "quality.runtime_verified"
+      ],
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "clearanceBlocks": 5,
+      "fixedFootprint": {
+        "widthBlocks": 15,
+        "depthBlocks": 13,
+        "heightBlocks": 11
+      }
+    },
+    {
+      "structureId": "geomantia:city/stubbs/commercial/bakery_01",
+      "profileType": "single",
+      "sampleType": "structure_template_nbt",
+      "placementKind": "city_template_nbt",
+      "footprintMode": "fixed_footprint",
+      "semanticTerms": [
+        "function.commercial",
+        "style.stubbs_medieval",
+        "placement.grounded",
+        "quality.runtime_verified"
+      ],
+      "functionTerms": [
+        "function.commercial"
+      ],
+      "styleTerms": [
+        "style.stubbs_medieval"
+      ],
+      "placementTerms": [
+        "placement.grounded"
+      ],
+      "usageTerms": [
+        "usage.single_structure"
+      ],
+      "templateRoleTerms": [
+        "template_role.city_building"
+      ],
+      "qualityTerms": [
+        "quality.runtime_verified"
+      ],
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "clearanceBlocks": 5,
+      "fixedFootprint": {
+        "widthBlocks": 25,
+        "depthBlocks": 18,
+        "heightBlocks": 18
+      }
+    },
+    {
+      "structureId": "geomantia:city/stubbs/commercial/bake_shop_01",
+      "profileType": "single",
+      "sampleType": "structure_template_nbt",
+      "placementKind": "city_template_nbt",
+      "footprintMode": "fixed_footprint",
+      "semanticTerms": [
+        "function.commercial",
+        "style.stubbs_medieval",
+        "placement.grounded",
+        "quality.runtime_verified"
+      ],
+      "functionTerms": [
+        "function.commercial"
+      ],
+      "styleTerms": [
+        "style.stubbs_medieval"
+      ],
+      "placementTerms": [
+        "placement.grounded"
+      ],
+      "usageTerms": [
+        "usage.single_structure"
+      ],
+      "templateRoleTerms": [
+        "template_role.city_building"
+      ],
+      "qualityTerms": [
+        "quality.runtime_verified"
+      ],
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "clearanceBlocks": 5,
+      "fixedFootprint": {
+        "widthBlocks": 25,
+        "depthBlocks": 16,
+        "heightBlocks": 14
+      }
+    },
+    {
+      "structureId": "geomantia:city/stubbs/commercial/flower_shop_01",
+      "profileType": "single",
+      "sampleType": "structure_template_nbt",
+      "placementKind": "city_template_nbt",
+      "footprintMode": "fixed_footprint",
+      "semanticTerms": [
+        "function.commercial",
+        "style.stubbs_medieval",
+        "placement.grounded",
+        "quality.runtime_verified"
+      ],
+      "functionTerms": [
+        "function.commercial"
+      ],
+      "styleTerms": [
+        "style.stubbs_medieval"
+      ],
+      "placementTerms": [
+        "placement.grounded"
+      ],
+      "usageTerms": [
+        "usage.single_structure"
+      ],
+      "templateRoleTerms": [
+        "template_role.city_building"
+      ],
+      "qualityTerms": [
+        "quality.runtime_verified"
+      ],
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "clearanceBlocks": 5,
+      "fixedFootprint": {
+        "widthBlocks": 19,
+        "depthBlocks": 19,
+        "heightBlocks": 15
+      }
+    },
+    {
+      "structureId": "geomantia:city/stubbs/commercial/small_butcher_shop_01",
+      "profileType": "single",
+      "sampleType": "structure_template_nbt",
+      "placementKind": "city_template_nbt",
+      "footprintMode": "fixed_footprint",
+      "semanticTerms": [
+        "function.commercial",
+        "style.stubbs_medieval",
+        "placement.grounded",
+        "quality.runtime_verified"
+      ],
+      "functionTerms": [
+        "function.commercial"
+      ],
+      "styleTerms": [
+        "style.stubbs_medieval"
+      ],
+      "placementTerms": [
+        "placement.grounded"
+      ],
+      "usageTerms": [
+        "usage.single_structure"
+      ],
+      "templateRoleTerms": [
+        "template_role.city_building"
+      ],
+      "qualityTerms": [
+        "quality.runtime_verified"
+      ],
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "clearanceBlocks": 5,
+      "fixedFootprint": {
+        "widthBlocks": 19,
+        "depthBlocks": 13,
+        "heightBlocks": 8
+      }
+    },
+    {
+      "structureId": "geomantia:city/stubbs/commercial/town_workshop_01",
+      "profileType": "single",
+      "sampleType": "structure_template_nbt",
+      "placementKind": "city_template_nbt",
+      "footprintMode": "fixed_footprint",
+      "semanticTerms": [
+        "function.commercial",
+        "style.stubbs_medieval",
+        "placement.grounded",
+        "quality.runtime_verified"
+      ],
+      "functionTerms": [
+        "function.commercial"
+      ],
+      "styleTerms": [
+        "style.stubbs_medieval"
+      ],
+      "placementTerms": [
+        "placement.grounded"
+      ],
+      "usageTerms": [
+        "usage.single_structure"
+      ],
+      "templateRoleTerms": [
+        "template_role.city_building"
+      ],
+      "qualityTerms": [
+        "quality.runtime_verified"
+      ],
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "clearanceBlocks": 5,
+      "fixedFootprint": {
+        "widthBlocks": 14,
+        "depthBlocks": 11,
+        "heightBlocks": 12
+      }
+    },
+    {
+      "structureId": "geomantia:city/stubbs/commercial/merchant_house_01",
+      "profileType": "single",
+      "sampleType": "structure_template_nbt",
+      "placementKind": "city_template_nbt",
+      "footprintMode": "fixed_footprint",
+      "semanticTerms": [
+        "function.commercial",
+        "style.stubbs_medieval",
+        "placement.grounded",
+        "quality.runtime_verified"
+      ],
+      "functionTerms": [
+        "function.commercial"
+      ],
+      "styleTerms": [
+        "style.stubbs_medieval"
+      ],
+      "placementTerms": [
+        "placement.grounded"
+      ],
+      "usageTerms": [
+        "usage.single_structure"
+      ],
+      "templateRoleTerms": [
+        "template_role.city_building"
+      ],
+      "qualityTerms": [
+        "quality.runtime_verified"
+      ],
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "clearanceBlocks": 6,
+      "fixedFootprint": {
+        "widthBlocks": 35,
+        "depthBlocks": 29,
+        "heightBlocks": 25
+      }
+    },
+    {
+      "structureId": "geomantia:city/stubbs/commercial/library_01",
+      "profileType": "single",
+      "sampleType": "structure_template_nbt",
+      "placementKind": "city_template_nbt",
+      "footprintMode": "fixed_footprint",
+      "semanticTerms": [
+        "function.commercial",
+        "style.stubbs_medieval",
+        "placement.grounded",
+        "quality.runtime_verified"
+      ],
+      "functionTerms": [
+        "function.commercial"
+      ],
+      "styleTerms": [
+        "style.stubbs_medieval"
+      ],
+      "placementTerms": [
+        "placement.grounded"
+      ],
+      "usageTerms": [
+        "usage.single_structure"
+      ],
+      "templateRoleTerms": [
+        "template_role.city_building"
+      ],
+      "qualityTerms": [
+        "quality.runtime_verified"
+      ],
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "clearanceBlocks": 6,
+      "fixedFootprint": {
+        "widthBlocks": 37,
+        "depthBlocks": 25,
+        "heightBlocks": 19
+      }
+    },
+    {
+      "structureId": "geomantia:city/stubbs/commercial/theater_01",
+      "profileType": "single",
+      "sampleType": "structure_template_nbt",
+      "placementKind": "city_template_nbt",
+      "footprintMode": "fixed_footprint",
+      "semanticTerms": [
+        "function.commercial",
+        "style.stubbs_medieval",
+        "placement.grounded",
+        "quality.runtime_verified"
+      ],
+      "functionTerms": [
+        "function.commercial"
+      ],
+      "styleTerms": [
+        "style.stubbs_medieval"
+      ],
+      "placementTerms": [
+        "placement.grounded"
+      ],
+      "usageTerms": [
+        "usage.single_structure"
+      ],
+      "templateRoleTerms": [
+        "template_role.city_building"
+      ],
+      "qualityTerms": [
+        "quality.runtime_verified"
+      ],
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "clearanceBlocks": 6,
+      "fixedFootprint": {
+        "widthBlocks": 37,
+        "depthBlocks": 48,
+        "heightBlocks": 16
+      }
+    },
+    {
+      "structureId": "geomantia:city/stubbs/commercial/laundry_facility_01",
+      "profileType": "single",
+      "sampleType": "structure_template_nbt",
+      "placementKind": "city_template_nbt",
+      "footprintMode": "fixed_footprint",
+      "semanticTerms": [
+        "function.commercial",
+        "style.stubbs_medieval",
+        "placement.grounded",
+        "quality.runtime_verified"
+      ],
+      "functionTerms": [
+        "function.commercial"
+      ],
+      "styleTerms": [
+        "style.stubbs_medieval"
+      ],
+      "placementTerms": [
+        "placement.grounded"
+      ],
+      "usageTerms": [
+        "usage.single_structure"
+      ],
+      "templateRoleTerms": [
+        "template_role.city_building"
+      ],
+      "qualityTerms": [
+        "quality.runtime_verified"
+      ],
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "clearanceBlocks": 5,
+      "fixedFootprint": {
+        "widthBlocks": 25,
+        "depthBlocks": 28,
+        "heightBlocks": 13
+      }
+    },
+    {
+      "structureId": "geomantia:city/stubbs/residential/city_home_01",
+      "profileType": "single",
+      "sampleType": "structure_template_nbt",
+      "placementKind": "city_template_nbt",
+      "footprintMode": "fixed_footprint",
+      "semanticTerms": [
+        "function.residential",
+        "style.stubbs_medieval",
+        "placement.grounded",
+        "quality.runtime_verified"
+      ],
+      "functionTerms": [
+        "function.residential"
+      ],
+      "styleTerms": [
+        "style.stubbs_medieval"
+      ],
+      "placementTerms": [
+        "placement.grounded"
+      ],
+      "usageTerms": [
+        "usage.single_structure"
+      ],
+      "templateRoleTerms": [
+        "template_role.city_building"
+      ],
+      "qualityTerms": [
+        "quality.runtime_verified"
+      ],
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "clearanceBlocks": 5,
+      "fixedFootprint": {
+        "widthBlocks": 11,
+        "depthBlocks": 20,
+        "heightBlocks": 20
+      }
+    },
+    {
+      "structureId": "geomantia:city/stubbs/residential/city_home_02",
+      "profileType": "single",
+      "sampleType": "structure_template_nbt",
+      "placementKind": "city_template_nbt",
+      "footprintMode": "fixed_footprint",
+      "semanticTerms": [
+        "function.residential",
+        "style.stubbs_medieval",
+        "placement.grounded",
+        "quality.runtime_verified"
+      ],
+      "functionTerms": [
+        "function.residential"
+      ],
+      "styleTerms": [
+        "style.stubbs_medieval"
+      ],
+      "placementTerms": [
+        "placement.grounded"
+      ],
+      "usageTerms": [
+        "usage.single_structure"
+      ],
+      "templateRoleTerms": [
+        "template_role.city_building"
+      ],
+      "qualityTerms": [
+        "quality.runtime_verified"
+      ],
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "clearanceBlocks": 5,
+      "fixedFootprint": {
+        "widthBlocks": 15,
+        "depthBlocks": 28,
+        "heightBlocks": 23
+      }
+    },
+    {
+      "structureId": "geomantia:city/stubbs/residential/civilian_house_01",
+      "profileType": "single",
+      "sampleType": "structure_template_nbt",
+      "placementKind": "city_template_nbt",
+      "footprintMode": "fixed_footprint",
+      "semanticTerms": [
+        "function.residential",
+        "style.stubbs_medieval",
+        "placement.grounded",
+        "quality.runtime_verified"
+      ],
+      "functionTerms": [
+        "function.residential"
+      ],
+      "styleTerms": [
+        "style.stubbs_medieval"
+      ],
+      "placementTerms": [
+        "placement.grounded"
+      ],
+      "usageTerms": [
+        "usage.single_structure"
+      ],
+      "templateRoleTerms": [
+        "template_role.city_building"
+      ],
+      "qualityTerms": [
+        "quality.runtime_verified"
+      ],
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "clearanceBlocks": 5,
+      "fixedFootprint": {
+        "widthBlocks": 27,
+        "depthBlocks": 23,
+        "heightBlocks": 14
+      }
+    },
+    {
+      "structureId": "geomantia:city/stubbs/residential/civilian_house_02",
+      "profileType": "single",
+      "sampleType": "structure_template_nbt",
+      "placementKind": "city_template_nbt",
+      "footprintMode": "fixed_footprint",
+      "semanticTerms": [
+        "function.residential",
+        "style.stubbs_medieval",
+        "placement.grounded",
+        "quality.runtime_verified"
+      ],
+      "functionTerms": [
+        "function.residential"
+      ],
+      "styleTerms": [
+        "style.stubbs_medieval"
+      ],
+      "placementTerms": [
+        "placement.grounded"
+      ],
+      "usageTerms": [
+        "usage.single_structure"
+      ],
+      "templateRoleTerms": [
+        "template_role.city_building"
+      ],
+      "qualityTerms": [
+        "quality.runtime_verified"
+      ],
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "clearanceBlocks": 5,
+      "fixedFootprint": {
+        "widthBlocks": 23,
+        "depthBlocks": 19,
+        "heightBlocks": 14
+      }
+    },
+    {
+      "structureId": "geomantia:city/stubbs/residential/civilian_house_03",
+      "profileType": "single",
+      "sampleType": "structure_template_nbt",
+      "placementKind": "city_template_nbt",
+      "footprintMode": "fixed_footprint",
+      "semanticTerms": [
+        "function.residential",
+        "style.stubbs_medieval",
+        "placement.grounded",
+        "quality.runtime_verified"
+      ],
+      "functionTerms": [
+        "function.residential"
+      ],
+      "styleTerms": [
+        "style.stubbs_medieval"
+      ],
+      "placementTerms": [
+        "placement.grounded"
+      ],
+      "usageTerms": [
+        "usage.single_structure"
+      ],
+      "templateRoleTerms": [
+        "template_role.city_building"
+      ],
+      "qualityTerms": [
+        "quality.runtime_verified"
+      ],
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "clearanceBlocks": 5,
+      "fixedFootprint": {
+        "widthBlocks": 17,
+        "depthBlocks": 21,
+        "heightBlocks": 14
+      }
+    },
+    {
+      "structureId": "geomantia:city/stubbs/residential/dorm_for_the_poor_01",
+      "profileType": "single",
+      "sampleType": "structure_template_nbt",
+      "placementKind": "city_template_nbt",
+      "footprintMode": "fixed_footprint",
+      "semanticTerms": [
+        "function.residential",
+        "style.stubbs_medieval",
+        "placement.grounded",
+        "quality.runtime_verified"
+      ],
+      "functionTerms": [
+        "function.residential"
+      ],
+      "styleTerms": [
+        "style.stubbs_medieval"
+      ],
+      "placementTerms": [
+        "placement.grounded"
+      ],
+      "usageTerms": [
+        "usage.single_structure"
+      ],
+      "templateRoleTerms": [
+        "template_role.city_building"
+      ],
+      "qualityTerms": [
+        "quality.runtime_verified"
+      ],
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "clearanceBlocks": 5,
+      "fixedFootprint": {
+        "widthBlocks": 34,
+        "depthBlocks": 25,
+        "heightBlocks": 23
+      }
+    },
+    {
+      "structureId": "geomantia:city/stubbs/residential/household_01",
+      "profileType": "single",
+      "sampleType": "structure_template_nbt",
+      "placementKind": "city_template_nbt",
+      "footprintMode": "fixed_footprint",
+      "semanticTerms": [
+        "function.residential",
+        "style.stubbs_medieval",
+        "placement.grounded",
+        "quality.runtime_verified"
+      ],
+      "functionTerms": [
+        "function.residential"
+      ],
+      "styleTerms": [
+        "style.stubbs_medieval"
+      ],
+      "placementTerms": [
+        "placement.grounded"
+      ],
+      "usageTerms": [
+        "usage.single_structure"
+      ],
+      "templateRoleTerms": [
+        "template_role.city_building"
+      ],
+      "qualityTerms": [
+        "quality.runtime_verified"
+      ],
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "clearanceBlocks": 5,
+      "fixedFootprint": {
+        "widthBlocks": 15,
+        "depthBlocks": 15,
+        "heightBlocks": 17
+      }
+    },
+    {
+      "structureId": "geomantia:city/stubbs/residential/household_02",
+      "profileType": "single",
+      "sampleType": "structure_template_nbt",
+      "placementKind": "city_template_nbt",
+      "footprintMode": "fixed_footprint",
+      "semanticTerms": [
+        "function.residential",
+        "style.stubbs_medieval",
+        "placement.grounded",
+        "quality.runtime_verified"
+      ],
+      "functionTerms": [
+        "function.residential"
+      ],
+      "styleTerms": [
+        "style.stubbs_medieval"
+      ],
+      "placementTerms": [
+        "placement.grounded"
+      ],
+      "usageTerms": [
+        "usage.single_structure"
+      ],
+      "templateRoleTerms": [
+        "template_role.city_building"
+      ],
+      "qualityTerms": [
+        "quality.runtime_verified"
+      ],
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "clearanceBlocks": 5,
+      "fixedFootprint": {
+        "widthBlocks": 15,
+        "depthBlocks": 15,
+        "heightBlocks": 14
+      }
+    },
+    {
+      "structureId": "geomantia:city/stubbs/residential/household_03",
+      "profileType": "single",
+      "sampleType": "structure_template_nbt",
+      "placementKind": "city_template_nbt",
+      "footprintMode": "fixed_footprint",
+      "semanticTerms": [
+        "function.residential",
+        "style.stubbs_medieval",
+        "placement.grounded",
+        "quality.runtime_verified"
+      ],
+      "functionTerms": [
+        "function.residential"
+      ],
+      "styleTerms": [
+        "style.stubbs_medieval"
+      ],
+      "placementTerms": [
+        "placement.grounded"
+      ],
+      "usageTerms": [
+        "usage.single_structure"
+      ],
+      "templateRoleTerms": [
+        "template_role.city_building"
+      ],
+      "qualityTerms": [
+        "quality.runtime_verified"
+      ],
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "clearanceBlocks": 5,
+      "fixedFootprint": {
+        "widthBlocks": 17,
+        "depthBlocks": 17,
+        "heightBlocks": 14
+      }
+    },
+    {
+      "structureId": "geomantia:city/stubbs/residential/household_04",
+      "profileType": "single",
+      "sampleType": "structure_template_nbt",
+      "placementKind": "city_template_nbt",
+      "footprintMode": "fixed_footprint",
+      "semanticTerms": [
+        "function.residential",
+        "style.stubbs_medieval",
+        "placement.grounded",
+        "quality.runtime_verified"
+      ],
+      "functionTerms": [
+        "function.residential"
+      ],
+      "styleTerms": [
+        "style.stubbs_medieval"
+      ],
+      "placementTerms": [
+        "placement.grounded"
+      ],
+      "usageTerms": [
+        "usage.single_structure"
+      ],
+      "templateRoleTerms": [
+        "template_role.city_building"
+      ],
+      "qualityTerms": [
+        "quality.runtime_verified"
+      ],
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "clearanceBlocks": 5,
+      "fixedFootprint": {
+        "widthBlocks": 23,
+        "depthBlocks": 13,
+        "heightBlocks": 16
+      }
+    },
+    {
+      "structureId": "geomantia:city/stubbs/residential/household_05",
+      "profileType": "single",
+      "sampleType": "structure_template_nbt",
+      "placementKind": "city_template_nbt",
+      "footprintMode": "fixed_footprint",
+      "semanticTerms": [
+        "function.residential",
+        "style.stubbs_medieval",
+        "placement.grounded",
+        "quality.runtime_verified"
+      ],
+      "functionTerms": [
+        "function.residential"
+      ],
+      "styleTerms": [
+        "style.stubbs_medieval"
+      ],
+      "placementTerms": [
+        "placement.grounded"
+      ],
+      "usageTerms": [
+        "usage.single_structure"
+      ],
+      "templateRoleTerms": [
+        "template_role.city_building"
+      ],
+      "qualityTerms": [
+        "quality.runtime_verified"
+      ],
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "clearanceBlocks": 5,
+      "fixedFootprint": {
+        "widthBlocks": 17,
+        "depthBlocks": 21,
+        "heightBlocks": 17
+      }
+    },
+    {
+      "structureId": "geomantia:city/stubbs/residential/household_06",
+      "profileType": "single",
+      "sampleType": "structure_template_nbt",
+      "placementKind": "city_template_nbt",
+      "footprintMode": "fixed_footprint",
+      "semanticTerms": [
+        "function.residential",
+        "style.stubbs_medieval",
+        "placement.grounded",
+        "quality.runtime_verified"
+      ],
+      "functionTerms": [
+        "function.residential"
+      ],
+      "styleTerms": [
+        "style.stubbs_medieval"
+      ],
+      "placementTerms": [
+        "placement.grounded"
+      ],
+      "usageTerms": [
+        "usage.single_structure"
+      ],
+      "templateRoleTerms": [
+        "template_role.city_building"
+      ],
+      "qualityTerms": [
+        "quality.runtime_verified"
+      ],
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "clearanceBlocks": 5,
+      "fixedFootprint": {
+        "widthBlocks": 17,
+        "depthBlocks": 27,
+        "heightBlocks": 15
+      }
+    },
+    {
+      "structureId": "geomantia:city/stubbs/residential/household_07",
+      "profileType": "single",
+      "sampleType": "structure_template_nbt",
+      "placementKind": "city_template_nbt",
+      "footprintMode": "fixed_footprint",
+      "semanticTerms": [
+        "function.residential",
+        "style.stubbs_medieval",
+        "placement.grounded",
+        "quality.runtime_verified"
+      ],
+      "functionTerms": [
+        "function.residential"
+      ],
+      "styleTerms": [
+        "style.stubbs_medieval"
+      ],
+      "placementTerms": [
+        "placement.grounded"
+      ],
+      "usageTerms": [
+        "usage.single_structure"
+      ],
+      "templateRoleTerms": [
+        "template_role.city_building"
+      ],
+      "qualityTerms": [
+        "quality.runtime_verified"
+      ],
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "clearanceBlocks": 5,
+      "fixedFootprint": {
+        "widthBlocks": 19,
+        "depthBlocks": 15,
+        "heightBlocks": 13
+      }
+    },
+    {
+      "structureId": "geomantia:city/stubbs/residential/village_house_small_01",
+      "profileType": "single",
+      "sampleType": "structure_template_nbt",
+      "placementKind": "city_template_nbt",
+      "footprintMode": "fixed_footprint",
+      "semanticTerms": [
+        "function.residential",
+        "style.stubbs_medieval",
+        "placement.grounded",
+        "quality.runtime_verified"
+      ],
+      "functionTerms": [
+        "function.residential"
+      ],
+      "styleTerms": [
+        "style.stubbs_medieval"
+      ],
+      "placementTerms": [
+        "placement.grounded"
+      ],
+      "usageTerms": [
+        "usage.single_structure"
+      ],
+      "templateRoleTerms": [
+        "template_role.city_building"
+      ],
+      "qualityTerms": [
+        "quality.runtime_verified"
+      ],
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "clearanceBlocks": 4,
+      "fixedFootprint": {
+        "widthBlocks": 11,
+        "depthBlocks": 9,
+        "heightBlocks": 9
+      }
+    },
+    {
+      "structureId": "geomantia:city/stubbs/residential/village_house_small_02",
+      "profileType": "single",
+      "sampleType": "structure_template_nbt",
+      "placementKind": "city_template_nbt",
+      "footprintMode": "fixed_footprint",
+      "semanticTerms": [
+        "function.residential",
+        "style.stubbs_medieval",
+        "placement.grounded",
+        "quality.runtime_verified"
+      ],
+      "functionTerms": [
+        "function.residential"
+      ],
+      "styleTerms": [
+        "style.stubbs_medieval"
+      ],
+      "placementTerms": [
+        "placement.grounded"
+      ],
+      "usageTerms": [
+        "usage.single_structure"
+      ],
+      "templateRoleTerms": [
+        "template_role.city_building"
+      ],
+      "qualityTerms": [
+        "quality.runtime_verified"
+      ],
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "clearanceBlocks": 4,
+      "fixedFootprint": {
+        "widthBlocks": 11,
+        "depthBlocks": 9,
+        "heightBlocks": 9
+      }
+    }
+  ]
+}

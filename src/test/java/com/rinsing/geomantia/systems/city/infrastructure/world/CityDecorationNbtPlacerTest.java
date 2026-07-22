@@ -17,6 +17,7 @@ import net.minecraft.nbt.IntTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -326,8 +327,18 @@ class CityDecorationNbtPlacerTest {
         }
 
         @Override
+        public Object snapshot(BlockPos pos) {
+            return targets.getOrDefault(pos, defaultTarget);
+        }
+
+        @Override
+        public boolean restore(BlockPos pos, Object snapshot) {
+            return true;
+        }
+
+        @Override
         public boolean placeTemplate(CompoundTag templateNbt, BlockPos origin, Rotation rotation, long seed,
-                                     boolean ignoreTemplateAir) {
+                                     boolean ignoreTemplateAir, BoundingBox ownerBounds) {
             this.placedTemplate = templateNbt.copy();
             this.origin = origin;
             this.rotation = rotation;

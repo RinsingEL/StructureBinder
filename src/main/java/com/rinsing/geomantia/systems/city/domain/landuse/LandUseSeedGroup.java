@@ -10,6 +10,7 @@ import java.util.Objects;
 public record LandUseSeedGroup(
         String groupId,
         LandUseRule rule,
+        LandUseSurfaceSettings surfaceSettings,
         List<String> anchorIds,
         List<BlockBounds> structureFootprints,
         List<BlockPoint> seedPoints,
@@ -23,6 +24,7 @@ public record LandUseSeedGroup(
     public LandUseSeedGroup {
         if (groupId == null || groupId.isBlank()) throw new IllegalArgumentException("groupId is required");
         Objects.requireNonNull(rule, "rule");
+        Objects.requireNonNull(surfaceSettings, "surfaceSettings");
         anchorIds = List.copyOf(anchorIds == null ? List.of() : anchorIds);
         structureFootprints = List.copyOf(structureFootprints == null ? List.of() : structureFootprints);
         seedPoints = List.copyOf(seedPoints == null ? List.of() : seedPoints);

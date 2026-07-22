@@ -50,6 +50,7 @@ class CityLandUsePreviewRendererTest {
         Path output = tempDir.resolve("land_use_preview.png");
         assertTrue(Files.isRegularFile(output));
         assertEquals("city_land_use_preview.v0.1", metadata.get("schemaVersion").getAsString());
+        assertEquals(1, metadata.get("logicalAreaCount").getAsInt());
         BufferedImage image = ImageIO.read(output.toFile());
         assertNotNull(image);
         assertEquals(CityLandUsePreviewRenderer.WIDTH, image.getWidth());

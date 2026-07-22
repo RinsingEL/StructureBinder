@@ -8,7 +8,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.HolderGetter;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.WorldGenLevel;
@@ -18,19 +17,19 @@ import net.minecraft.world.level.block.CropBlock;
 import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.tags.BlockTags;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 import net.minecraft.world.level.levelgen.structure.templatesystem.BlockIgnoreProcessor;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
 public final class CityDecorationNbtPlacer {
+    private static final CityNbtPrefabBatchPlacer PREFAB_PLACER = new CityNbtPrefabBatchPlacer();
+
     public PlacementResult place(CityDecorationChunkCompiler.Fragment fragment, PlacementWorld world) {
         PreflightResult preflight = preflight(fragment, world);
         if (!preflight.ready()) {
@@ -77,8 +76,9 @@ public final class CityDecorationNbtPlacer {
             return PreflightResult.ready(baseY, 1, origin, rotation);
         }
         boolean clearTemplateAir = "clear_template_air".equals(content.clearanceMode());
-        List<PlacementTarget> targets = targets(content.template(), origin, rotation, clearTemplateAir);
-        for (PlacementTarget target : targets) {
+        List<CityNbtPrefabBatchPlacer.PlacementTarget> targets = CityNbtPrefabBatchPlacer.targets(
+                content.template(), origin, rotation, clearTemplateAir);
+        for (CityNbtPrefabBatchPlacer.PlacementTarget target : targets) {
             if (!world.ensureCanWrite(target.worldPos())) {
                 return PreflightResult.failed("CITY_DECORATION_TARGET_NOT_WRITABLE", baseY, targets.size(),
                         origin, rotation);
@@ -88,14 +88,8 @@ public final class CityDecorationNbtPlacer {
                 return PreflightResult.failed("CITY_DECORATION_TARGET_STATE_UNAVAILABLE", baseY, targets.size(),
                         origin, rotation);
             }
-            boolean allowed = switch (content.replacePolicy()) {
-                case "replaceable_only" -> existing.replaceable();
-                case "surface_replaceable" -> target.templateAir()
-                        ? existing.replaceable() || existing.surfaceReplaceable()
-                        : target.localY() <= content.groundPlaneLocalY()
-                        ? existing.surfaceReplaceable() : existing.replaceable();
-                default -> false;
-            };
+            boolean allowed = allowsReplacement(target, content.replacePolicy(),
+                    content.groundPlaneLocalY(), existing);
             if (!allowed) {
                 return PreflightResult.failed("CITY_DECORATION_REPLACE_POLICY_REJECTED", baseY, targets.size(),
                         origin, rotation);
@@ -120,57 +114,75 @@ public final class CityDecorationNbtPlacer {
         CityDecorationContentCatalog.Content content = layer.content();
         boolean placed = content.plant()
                 ? world.placePlant(content.plantBlockState(), preflight.origin(), preflight.rotation())
-                : world.placeTemplate(content.template(), preflight.origin(), preflight.rotation(),
-                stableSeed(templateSeedKey(fragment, layer)),
-                "preserve".equals(content.clearanceMode()));
+                : placePrefab(fragment, layer, preflight, world);
         return placed
                 ? PlacementResult.applied(preflight.baseY(), preflight.targetCount())
                 : PlacementResult.failed("CITY_DECORATION_TEMPLATE_PLACE_FAILED", preflight.baseY(),
                 preflight.targetCount());
     }
 
-    static List<PlacementTarget> targets(CompoundTag templateNbt, BlockPos origin, Rotation rotation,
-                                         boolean includeTemplateAir) {
-        ListTag blocks = templateNbt.getList("blocks", 10);
-        ListTag palette = templateNbt.getList("palette", 10);
-        List<PlacementTarget> targets = new ArrayList<>(blocks.size());
-        for (int index = 0; index < blocks.size(); index++) {
-            CompoundTag block = blocks.getCompound(index);
-            int stateIndex = block.getInt("state");
-            boolean templateAir = stateIndex >= 0 && stateIndex < palette.size()
-                    && "minecraft:air".equals(palette.getCompound(stateIndex).getString("Name"));
-            if (templateAir && !includeTemplateAir) {
-                continue;
+    private static boolean placePrefab(CityDecorationChunkCompiler.Fragment fragment,
+                                       CityDecorationChunkCompiler.FragmentLayer layer,
+                                       PreflightResult preflight,
+                                       PlacementWorld world) {
+        CityDecorationContentCatalog.Content content = layer.content();
+        boolean ignoreTemplateAir = "preserve".equals(content.clearanceMode());
+        List<CityNbtPrefabBatchPlacer.PlacementTarget> targets = CityNbtPrefabBatchPlacer.targets(
+                content.template(), preflight.origin(), preflight.rotation(), !ignoreTemplateAir);
+        BoundingBox bounds = bounds(targets, preflight.origin());
+        CityNbtPrefabBatchPlacer.PrefabPlacement placement = new CityNbtPrefabBatchPlacer.PrefabPlacement(
+                templateSeedKey(fragment, layer), content.contentId(), content.contentHash(), content.template(),
+                preflight.origin(), fragment.rotationDegrees(), ignoreTemplateAir,
+                content.replacePolicy(), content.groundPlaneLocalY());
+        CityNbtPrefabBatchPlacer.BatchResult result = PREFAB_PLACER.place(
+                new CityNbtPrefabBatchPlacer.BatchRequest(fragment.fragmentId(), bounds, List.of(placement)), world);
+        return result.applied();
+    }
+
+    private static BoundingBox bounds(List<CityNbtPrefabBatchPlacer.PlacementTarget> targets, BlockPos fallback) {
+        int minX = fallback.getX();
+        int minY = fallback.getY();
+        int minZ = fallback.getZ();
+        int maxX = fallback.getX();
+        int maxY = fallback.getY();
+        int maxZ = fallback.getZ();
+        boolean first = true;
+        for (CityNbtPrefabBatchPlacer.PlacementTarget target : targets) {
+            BlockPos pos = target.worldPos();
+            if (first) {
+                minX = maxX = pos.getX();
+                minY = maxY = pos.getY();
+                minZ = maxZ = pos.getZ();
+                first = false;
+            } else {
+                minX = Math.min(minX, pos.getX());
+                minY = Math.min(minY, pos.getY());
+                minZ = Math.min(minZ, pos.getZ());
+                maxX = Math.max(maxX, pos.getX());
+                maxY = Math.max(maxY, pos.getY());
+                maxZ = Math.max(maxZ, pos.getZ());
             }
-            ListTag pos = block.getList("pos", 3);
-            BlockPos local = new BlockPos(pos.getInt(0), pos.getInt(1), pos.getInt(2));
-            BlockPos transformed = StructureTemplate.transform(local, Mirror.NONE, rotation, BlockPos.ZERO);
-            targets.add(new PlacementTarget(local.getY(), transformed.offset(origin), templateAir));
         }
-        return List.copyOf(targets);
+        return new BoundingBox(minX, minY, minZ, maxX, maxY, maxZ);
     }
 
     static Rotation rotation(int degrees) {
-        return switch (Math.floorMod(degrees, 360)) {
-            case 0 -> Rotation.NONE;
-            case 90 -> Rotation.CLOCKWISE_90;
-            case 180 -> Rotation.CLOCKWISE_180;
-            case 270 -> Rotation.COUNTERCLOCKWISE_90;
-            default -> throw new IllegalArgumentException("CITY_DECORATION_ROTATION_UNSUPPORTED: " + degrees);
-        };
+        return CityNbtPrefabBatchPlacer.rotation(degrees);
     }
 
-    private static long stableSeed(String value) {
-        try {
-            byte[] hash = MessageDigest.getInstance("SHA-256").digest(value.getBytes(StandardCharsets.UTF_8));
-            long seed = 0L;
-            for (int index = 0; index < Long.BYTES; index++) {
-                seed = (seed << 8) | (hash[index] & 0xffL);
-            }
-            return seed;
-        } catch (NoSuchAlgorithmException ex) {
-            throw new IllegalStateException("SHA-256 is required by the Java runtime", ex);
-        }
+    private static boolean allowsReplacement(CityNbtPrefabBatchPlacer.PlacementTarget target,
+                                             String replacePolicy,
+                                             int groundPlaneLocalY,
+                                             ExistingTarget existing) {
+        return switch (replacePolicy) {
+            case CityNbtPrefabBatchPlacer.LEGACY_REPLACE_ANY -> true;
+            case "replaceable_only" -> existing.replaceable();
+            case "surface_replaceable" -> target.templateAir()
+                    ? existing.replaceable() || existing.surfaceReplaceable()
+                    : target.localY() <= groundPlaneLocalY
+                    ? existing.surfaceReplaceable() : existing.replaceable();
+            default -> false;
+        };
     }
 
     private static String templateSeedKey(CityDecorationChunkCompiler.Fragment fragment,
@@ -178,13 +190,9 @@ public final class CityDecorationNbtPlacer {
         return fragment.fragmentId() + "/" + layer.layerId();
     }
 
-    public interface PlacementWorld {
-        boolean ensureCanWrite(BlockPos pos);
+    public interface PlacementWorld extends CityNbtPrefabBatchPlacer.PlacementWorld {
 
         ExistingTarget inspect(BlockPos pos);
-
-        boolean placeTemplate(CompoundTag templateNbt, BlockPos origin, Rotation rotation, long seed,
-                              boolean ignoreTemplateAir);
 
         default PlantTarget inspectPlant(CompoundTag blockStateNbt, BlockPos pos, Rotation rotation) {
             return null;
@@ -227,9 +235,6 @@ public final class CityDecorationNbtPlacer {
         }
     }
 
-    record PlacementTarget(int localY, BlockPos worldPos, boolean templateAir) {
-    }
-
     public static final class WorldGenPlacementWorld implements PlacementWorld {
         private final WorldGenLevel level;
 
@@ -240,6 +245,14 @@ public final class CityDecorationNbtPlacer {
         @Override
         public boolean ensureCanWrite(BlockPos pos) {
             return level.ensureCanWrite(pos);
+        }
+
+        @Override
+        public boolean canReplace(CityNbtPrefabBatchPlacer.PlacementTarget target,
+                                  String replacePolicy,
+                                  int groundPlaneLocalY) {
+            return allowsReplacement(target, replacePolicy, groundPlaneLocalY,
+                    inspect(target.worldPos()));
         }
 
         @Override
@@ -257,8 +270,30 @@ public final class CityDecorationNbtPlacer {
         }
 
         @Override
+        public Object snapshot(BlockPos pos) {
+            BlockEntity blockEntity = level.getBlockEntity(pos);
+            CompoundTag blockEntityNbt = blockEntity == null ? null : blockEntity.saveWithFullMetadata();
+            return new WorldSnapshot(level.getBlockState(pos), blockEntityNbt);
+        }
+
+        @Override
+        public boolean restore(BlockPos pos, Object value) {
+            if (!(value instanceof WorldSnapshot snapshot)) return false;
+            boolean restored = level.setBlock(pos, snapshot.blockState(),
+                    Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
+            if (!restored && !level.getBlockState(pos).equals(snapshot.blockState())) return false;
+            if (snapshot.blockEntityNbt() != null) {
+                BlockEntity blockEntity = level.getBlockEntity(pos);
+                if (blockEntity == null) return false;
+                blockEntity.load(snapshot.blockEntityNbt().copy());
+                blockEntity.setChanged();
+            }
+            return true;
+        }
+
+        @Override
         public boolean placeTemplate(CompoundTag templateNbt, BlockPos origin, Rotation rotation, long seed,
-                                     boolean ignoreTemplateAir) {
+                                     boolean ignoreTemplateAir, BoundingBox ownerBounds) {
             HolderGetter<Block> blocks = level.registryAccess().lookupOrThrow(Registries.BLOCK);
             StructureTemplate template = new StructureTemplate();
             template.load(blocks, templateNbt.copy());
@@ -266,6 +301,7 @@ public final class CityDecorationNbtPlacer {
                     .setRotation(rotation)
                     .setMirror(Mirror.NONE)
                     .setRotationPivot(BlockPos.ZERO)
+                    .setBoundingBox(ownerBounds)
                     .setIgnoreEntities(true)
                     .setKeepLiquids(false);
             if (ignoreTemplateAir) {
@@ -304,6 +340,9 @@ public final class CityDecorationNbtPlacer {
                 throw new IllegalArgumentException("CITY_DECORATION_PLANT_BLOCK_STATE_NOT_CROP");
             }
             return state.mirror(Mirror.NONE).rotate(rotation);
+        }
+
+        private record WorldSnapshot(BlockState blockState, CompoundTag blockEntityNbt) {
         }
     }
 }
