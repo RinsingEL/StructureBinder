@@ -148,12 +148,12 @@ class LandUsePlanningServiceTest {
     @Test
     void unknownRuleRefsFailBeforeExcludeOrGroupingCanBypassValidation() {
         JsonObject groupIntent = JsonParser.parseString("""
-                {"schemaVersion":"city_land_use_intent_plan.v0.2","cityId":"city_test",
+                {"schemaVersion":"city_land_use_intent_plan.v0.3","cityId":"city_test",
                  "groupOverrides":[{"groupId":"override","memberAnchorIds":["house"],"ruleRef":"missing"}],
                  "subjectOverrides":[{"targetType":"group","targetId":"override","mode":"exclude"}]}
                 """).getAsJsonObject();
         JsonObject subjectIntent = JsonParser.parseString("""
-                {"schemaVersion":"city_land_use_intent_plan.v0.2","cityId":"city_test",
+                {"schemaVersion":"city_land_use_intent_plan.v0.3","cityId":"city_test",
                  "subjectOverrides":[{"targetType":"anchor","targetId":"house","mode":"set_rule","ruleRef":"missing"}]}
                 """).getAsJsonObject();
 
@@ -190,8 +190,7 @@ class LandUsePlanningServiceTest {
         d6.getAsJsonArray("plannedWorldgenStructures").add(
                 structure("farm", "fields", 14, 18, 24, 28, "agriculture"));
         LandUsePlanningService.Result result = new LandUsePlanningService().plan(
-                d6, null, null, null, terrain(), LandUseRuleCatalog.defaults(),
-                TestDecorationCatalogs.loadManagedDefault(temp.resolve("city_decoration")));
+                d6, null, null, null, terrain(), LandUseRuleCatalog.defaults());
 
         JsonObject residential = traceGroup(result, "housing");
         assertFalse(residential.get("surfacePrintEnabled").getAsBoolean());
@@ -213,18 +212,21 @@ class LandUsePlanningServiceTest {
     }
 
     @Test
-    void surfaceOverrideDisablesConnectionAndFreezesResolvedBlocksInTrace() {
+    void runtimeAlgorithmDefaultThenGroupOverrideFreezeResolvedUniformBlocksInTrace() {
         JsonObject d6 = plan("shop_a", "shop_block_a", 8, 10, 10, 12, "commercial",
                 "shop_b", "shop_block_b", 25, 27, 10, 12, "commercial");
         JsonObject intent = JsonParser.parseString("""
-                {"schemaVersion":"city_land_use_intent_plan.v0.2","cityId":"city_test",
+                {"schemaVersion":"city_land_use_intent_plan.v0.3","cityId":"city_test",
+                 "surfaceAlgorithmDefaults":[{
+                   "surfaceAlgorithm":"uniform",
+                   "surfaceBlockId":"minecraft:sandstone"
+                 }],
                  "surfaceOverrides":[{
                    "targetGroupId":"shop_block_a",
                    "surfacePrintEnabled":true,
                    "autoConnect":false,
-                   "surfaceBlockId":"minecraft:polished_andesite",
-                   "directionMode":"radial",
-                   "directionCenter":{"x":11,"z":11}
+                   "surfaceAlgorithm":"uniform",
+                   "surfaceBlockId":"minecraft:polished_andesite"
                  }]}
                 """).getAsJsonObject();
 
@@ -235,14 +237,51 @@ class LandUsePlanningServiceTest {
         JsonObject overridden = traceGroup(result, "shop_block_a");
         assertFalse(overridden.get("autoConnect").getAsBoolean());
         assertEquals("minecraft:polished_andesite", overridden.get("surfaceBlockId").getAsString());
-        assertEquals("radial", overridden.get("directionMode").getAsString());
-        assertEquals(11, overridden.getAsJsonObject("directionCenter").get("x").getAsInt());
+        assertEquals("uniform", overridden.get("surfaceAlgorithm").getAsString());
+        assertEquals("minecraft:sandstone", traceGroup(result, "shop_block_b")
+                .get("surfaceBlockId").getAsString());
         CityLandUseSurfacePrintPlan.AreaPrint frozen = result.surfacePrintPlan().areas().stream()
                 .filter(area -> area.sourceGroupIds().contains("shop_block_a"))
                 .findFirst().orElseThrow();
-        assertEquals(com.rinsing.geomantia.systems.city.domain.landuse.LandUseSurfaceSettings.DirectionMode.RADIAL,
-                frozen.directionMode());
-        assertEquals(new BlockPoint(11, 11), frozen.directionCenter());
+        assertEquals(com.rinsing.geomantia.systems.city.domain.landuse.LandUseSurfaceSettings.SurfaceAlgorithm.UNIFORM,
+                frozen.surfaceAlgorithm());
+        assertEquals("minecraft:polished_andesite", frozen.recipe().surfaceBlockId());
+    }
+
+    @Test
+    void anchorOnlyOverrideInheritsContourAlgorithmAndRejectsUniformAlgorithm() {
+        JsonObject agriculturalD6 = plan(
+                "farm", "fields", 14, 18, 24, 28, "agriculture");
+        JsonObject anchorOnly = JsonParser.parseString("""
+                {"schemaVersion":"city_land_use_intent_plan.v0.3","cityId":"city_test",
+                 "surfaceOverrides":[{
+                   "targetGroupId":"fields",
+                   "algorithmAnchor":{"x":16,"z":26}
+                 }]}
+                """).getAsJsonObject();
+
+        LandUsePlanningService.Result result = new LandUsePlanningService().plan(
+                agriculturalD6, anchorOnly, terrain());
+
+        JsonObject trace = traceGroup(result, "fields");
+        assertEquals("contour_bands", trace.get("surfaceAlgorithm").getAsString());
+        assertEquals(16, trace.getAsJsonObject("algorithmAnchor").get("x").getAsInt());
+        assertEquals(new com.rinsing.geomantia.systems.city.domain.model.BlockPoint(16, 26),
+                result.surfacePrintPlan().areas().get(0).algorithmAnchor());
+
+        JsonObject commercialD6 = plan(
+                "shop", "market", 14, 18, 24, 28, "commercial");
+        JsonObject invalidUniformAnchor = JsonParser.parseString("""
+                {"schemaVersion":"city_land_use_intent_plan.v0.3","cityId":"city_test",
+                 "surfaceOverrides":[{
+                   "targetGroupId":"market",
+                   "algorithmAnchor":{"x":48,"z":-12}
+                 }]}
+                """).getAsJsonObject();
+        IllegalArgumentException failure = assertThrows(IllegalArgumentException.class,
+                () -> new LandUsePlanningService().plan(commercialD6, invalidUniformAnchor, terrain()));
+        assertTrue(failure.getMessage().contains(
+                "LAND_USE_SURFACE_ALGORITHM_ANCHOR_REQUIRES_CONTOUR_BANDS"));
     }
 
     @Test
@@ -250,7 +289,7 @@ class LandUsePlanningServiceTest {
         JsonObject d6 = plan("house_a", "housing_a", 8, 10, 10, 12, "residential",
                 "house_b", "housing_b", 25, 27, 10, 12, "residential");
         JsonObject intent = JsonParser.parseString("""
-                {"schemaVersion":"city_land_use_intent_plan.v0.2","cityId":"city_test",
+                {"schemaVersion":"city_land_use_intent_plan.v0.3","cityId":"city_test",
                  "surfaceOverrides":[
                    {"targetGroupId":"housing_a","surfacePrintEnabled":true,"autoConnect":true,
                     "surfaceBlockId":"minecraft:cobblestone"},
@@ -271,11 +310,11 @@ class LandUsePlanningServiceTest {
     @Test
     void rejectsUnknownSurfaceOverrideTargetAndEnabledSurfaceWithoutBlock() {
         JsonObject unknown = JsonParser.parseString("""
-                {"schemaVersion":"city_land_use_intent_plan.v0.2","cityId":"city_test",
+                {"schemaVersion":"city_land_use_intent_plan.v0.3","cityId":"city_test",
                  "surfaceOverrides":[{"targetGroupId":"missing","autoConnect":false}]}
                 """).getAsJsonObject();
         JsonObject missingBlock = JsonParser.parseString("""
-                {"schemaVersion":"city_land_use_intent_plan.v0.2","cityId":"city_test",
+                {"schemaVersion":"city_land_use_intent_plan.v0.3","cityId":"city_test",
                  "surfaceOverrides":[{"targetGroupId":"housing","surfacePrintEnabled":true}]}
                 """).getAsJsonObject();
 

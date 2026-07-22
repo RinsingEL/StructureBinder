@@ -1082,16 +1082,6 @@ final class CityPlanningEndpointHandler {
                                         String runId,
                                         String citySeedId,
                                         JsonObject optionalIntent) throws IOException {
-        CityDecorationContentCatalog catalog = new CityDecorationContentCatalogLoader()
-                .load(defaultDecorationCatalogRoot());
-        return handlePlanLandUse(debugRoot, runId, citySeedId, optionalIntent, catalog);
-    }
-
-    static JsonObject handlePlanLandUse(Path debugRoot,
-                                        String runId,
-                                        String citySeedId,
-                                        JsonObject optionalIntent,
-                                        CityDecorationContentCatalog decorationCatalog) throws IOException {
         long started = System.nanoTime();
         Path runDir = debugRoot.resolve(runId);
         loadCitySeed(runDir, runId, citySeedId);
@@ -1143,8 +1133,7 @@ final class CityPlanningEndpointHandler {
         Files.deleteIfExists(completePath);
         Files.deleteIfExists(surfacePrintPath);
         LandUsePlanningService.Result result = new LandUsePlanningService().plan(
-                d6Plan, optionalIntent, functionalArrayZones, d5MaskPlan, terrainField, rules,
-                decorationCatalog);
+                d6Plan, optionalIntent, functionalArrayZones, d5MaskPlan, terrainField, rules);
         LandUseAreaPlanCodec planCodec = new LandUseAreaPlanCodec();
         JsonObject planJson = planCodec.toJson(result.plan());
         JsonObject surfacePrintJson = new CityLandUseSurfacePrintPlanCodec()
@@ -1167,7 +1156,6 @@ final class CityPlanningEndpointHandler {
         completion.addProperty("cityId", cityId);
         completion.addProperty("planHash", result.plan().planHash());
         completion.addProperty("surfacePrintPlanHash", result.surfacePrintPlan().planHash());
-        completion.addProperty("surfacePrintCatalogHash", result.surfacePrintPlan().catalogHash());
         completion.addProperty("ruleProfileHash", rules.profileHash());
         completion.addProperty("sourceD6Hash", CityStructureEnvelopeProfiler.sha256(
                 CityJson.GSON.toJson(d6Plan)));
@@ -1283,6 +1271,10 @@ final class CityPlanningEndpointHandler {
         if (landUseWorldgenMode && !landUsePlanExists) {
             throw new IllegalArgumentException("CITY_LAND_USE_PLAN_MISSING: run city_plan_land_use first.");
         }
+        if (landUseWorldgenMode && !landUseSurfacePrintPlanExists) {
+            throw new IllegalArgumentException("CITY_LAND_USE_SURFACE_PRINT_PLAN_MISSING: "
+                    + "run city_plan_land_use first.");
+        }
         LandUseAreaPlan landUsePlan = null;
         CityLandUseSurfacePrintPlan landUseSurfacePrintPlan = null;
         if (landUseWorldgenMode) {
@@ -1293,10 +1285,8 @@ final class CityPlanningEndpointHandler {
                 throw new IllegalArgumentException("CITY_LAND_USE_CITY_ID_MISMATCH: expected "
                         + expectedCityId + " but found " + landUsePlan.cityId());
             }
-            if (landUseSurfacePrintPlanExists) {
-                landUseSurfacePrintPlan = new CityLandUseSurfacePrintPlanCodec().fromJson(
-                        JsonParser.parseString(Files.readString(landUseSurfacePrintPlanPath)).getAsJsonObject());
-            }
+            landUseSurfacePrintPlan = new CityLandUseSurfacePrintPlanCodec().fromJson(
+                    JsonParser.parseString(Files.readString(landUseSurfacePrintPlanPath)).getAsJsonObject());
             validateLandUseCompletion(JsonParser.parseString(Files.readString(landUseCompletePath))
                     .getAsJsonObject(), landUsePlan, landUseSurfacePrintPlan, expectedCityId,
                     loadLandUseConfiguration().rules().profileHash(),
@@ -1318,23 +1308,18 @@ final class CityPlanningEndpointHandler {
         }
         boolean decorationWorldgenMode = compiledDecorationExists;
         Path decorationCatalogRoot = requestedDecorationCatalogRoot;
-        if ((decorationWorldgenMode || landUseSurfacePrintPlan != null) && decorationCatalogRoot == null) {
+        if (decorationWorldgenMode && decorationCatalogRoot == null) {
             decorationCatalogRoot = defaultDecorationCatalogRoot();
         } else if (decorationCatalogRoot == null) {
             decorationCatalogRoot = optionalDefaultDecorationCatalogRoot();
         }
-        CityDecorationContentCatalog activationCatalog = landUseSurfacePrintPlan == null
-                ? null : new CityDecorationContentCatalogLoader().load(decorationCatalogRoot);
         RunMetadata metadata = loadRunMetadata(runDir, null, "");
         CityLandUseChunkStatusPreflight.PreflightResult landUseChunkPreflight = null;
         if (landUsePlan != null) {
-            if (landUseSurfacePrintPlan == null) {
-                CityLandUseWorldgenRegistry.preflightActivate(metadata.dimensionId(), landUsePlan, serverRoot);
-            } else {
-                CityLandUseWorldgenRegistry.preflightActivate(metadata.dimensionId(), landUsePlan,
-                        landUseSurfacePrintPlan, activationCatalog, serverRoot);
-            }
+            CityLandUseWorldgenRegistry.preflightActivate(metadata.dimensionId(), landUsePlan,
+                    landUseSurfacePrintPlan, serverRoot);
             landUseChunkPreflight = CityLandUseWorldgenRegistry.preflightChunkStatus(landUsePlan,
+                    landUseSurfacePrintPlan,
                     new CityLandUseChunkStatusPreflight.MinecraftChunkStatusProbe(level));
             if (!landUseChunkPreflight.eligible()) {
                 throw new IllegalArgumentException(landUseChunkPreflight.reasonCode()
@@ -1359,9 +1344,8 @@ final class CityPlanningEndpointHandler {
                         + expectedCityId + " but found " + compiledDecorationPlan.cityId());
             }
             validateDecorationCompletion(completion, compiledDecorationPlan, expectedCityId);
-            CityDecorationContentCatalog catalog = activationCatalog == null
-                    ? new CityDecorationContentCatalogLoader().load(decorationCatalogRoot)
-                    : activationCatalog;
+            CityDecorationContentCatalog catalog =
+                    new CityDecorationContentCatalogLoader().load(decorationCatalogRoot);
             if (!catalog.catalogHash().equals(compiledDecorationPlan.catalogHash())) {
                 throw new IllegalArgumentException("CITY_DECORATION_CATALOG_HASH_MISMATCH: expected "
                         + catalog.catalogHash() + " but found " + compiledDecorationPlan.catalogHash());
@@ -1423,12 +1407,9 @@ final class CityPlanningEndpointHandler {
         if (landUsePlan == null) {
             activeLandUseSummary = CityLandUseWorldgenRegistry.deactivate(
                     metadata.dimensionId(), decorationCityId, serverRoot);
-        } else if (landUseSurfacePrintPlan == null) {
-            activeLandUseSummary = CityLandUseWorldgenRegistry.activate(
-                    metadata.dimensionId(), landUsePlan, serverRoot);
         } else {
             activeLandUseSummary = CityLandUseWorldgenRegistry.activate(metadata.dimensionId(), landUsePlan,
-                    landUseSurfacePrintPlan, activationCatalog, serverRoot);
+                    landUseSurfacePrintPlan, serverRoot);
         }
         Files.createDirectories(d5Dir);
         Path reportPath = d5Dir.resolve("world_mutation_report.json");
@@ -1791,19 +1772,15 @@ final class CityPlanningEndpointHandler {
         boolean requiresLandUse = resolvedIntent.programs().stream()
                 .anyMatch(program -> "land_use_area".equals(program.targetArea().sourceType()));
         if (requiresLandUse) {
-            if (!Files.isRegularFile(landUsePath) || !Files.isRegularFile(landUseCompletePath)) {
-                throw new IllegalArgumentException("CITY_DECORATION_LAND_USE_PLAN_REQUIRED: run city_plan_land_use first.");
-            }
+            requireDecorationLandUseArtifacts(landUsePath, landUseSurfacePrintPath, landUseCompletePath);
             LandUseAreaPlan typedLandUsePlan = new LandUseAreaPlanCodec().fromJson(
                     JsonParser.parseString(Files.readString(landUsePath)).getAsJsonObject());
             if (!reviewPackage.cityId().equals(typedLandUsePlan.cityId())) {
                 throw new IllegalArgumentException("CITY_DECORATION_LAND_USE_CITY_ID_MISMATCH: expected "
                         + reviewPackage.cityId() + " but found " + typedLandUsePlan.cityId());
             }
-            landUseSurfacePrintPlanForDecoration = Files.isRegularFile(landUseSurfacePrintPath)
-                    ? new CityLandUseSurfacePrintPlanCodec().fromJson(JsonParser.parseString(
-                    Files.readString(landUseSurfacePrintPath)).getAsJsonObject())
-                    : null;
+            landUseSurfacePrintPlanForDecoration = new CityLandUseSurfacePrintPlanCodec().fromJson(
+                    JsonParser.parseString(Files.readString(landUseSurfacePrintPath)).getAsJsonObject());
             validateLandUseCompletion(JsonParser.parseString(Files.readString(landUseCompletePath)).getAsJsonObject(),
                     typedLandUsePlan, landUseSurfacePrintPlanForDecoration, reviewPackage.cityId(),
                     loadLandUseConfiguration().rules().profileHash(),
@@ -1960,19 +1937,15 @@ final class CityPlanningEndpointHandler {
         boolean requiresLandUse = resolvedIntent.programs().stream()
                 .anyMatch(program -> "land_use_area".equals(program.targetArea().sourceType()));
         if (requiresLandUse) {
-            if (!Files.isRegularFile(landUsePath) || !Files.isRegularFile(landUseCompletePath)) {
-                throw new IllegalArgumentException("CITY_DECORATION_LAND_USE_PLAN_REQUIRED: run city_plan_land_use first.");
-            }
+            requireDecorationLandUseArtifacts(landUsePath, landUseSurfacePrintPath, landUseCompletePath);
             LandUseAreaPlan typedLandUsePlan = new LandUseAreaPlanCodec().fromJson(
                     JsonParser.parseString(Files.readString(landUsePath)).getAsJsonObject());
             if (!reviewPackage.cityId().equals(typedLandUsePlan.cityId())) {
                 throw new IllegalArgumentException("CITY_DECORATION_LAND_USE_CITY_ID_MISMATCH: expected "
                         + reviewPackage.cityId() + " but found " + typedLandUsePlan.cityId());
             }
-            landUseSurfacePrintPlanForDecoration = Files.isRegularFile(landUseSurfacePrintPath)
-                    ? new CityLandUseSurfacePrintPlanCodec().fromJson(JsonParser.parseString(
-                    Files.readString(landUseSurfacePrintPath)).getAsJsonObject())
-                    : null;
+            landUseSurfacePrintPlanForDecoration = new CityLandUseSurfacePrintPlanCodec().fromJson(
+                    JsonParser.parseString(Files.readString(landUseSurfacePrintPath)).getAsJsonObject());
             validateLandUseCompletion(JsonParser.parseString(Files.readString(landUseCompletePath)).getAsJsonObject(),
                     typedLandUsePlan, landUseSurfacePrintPlanForDecoration, reviewPackage.cityId(),
                     loadLandUseConfiguration().rules().profileHash(),
@@ -3192,6 +3165,14 @@ final class CityPlanningEndpointHandler {
                                                   String expectedCityId,
                                                   String expectedRuleProfileHash,
                                                   String expectedSourceD6Hash) {
+        Set<String> allowedFields = Set.of("schemaVersion", "cityId", "planHash",
+                "surfacePrintPlanHash", "ruleProfileHash", "sourceD6Hash", "completedAt");
+        for (String key : completion.keySet()) {
+            if (!allowedFields.contains(key)) {
+                throw new IllegalArgumentException(
+                        "CITY_LAND_USE_PLAN_INCOMPLETE: completion field is unsupported: " + key);
+            }
+        }
         if (!"city_land_use_planning_complete.v0.1".equals(
                 stringValue(completion, "schemaVersion", ""))) {
             throw new IllegalArgumentException("CITY_LAND_USE_PLAN_INCOMPLETE: completion schema is invalid.");
@@ -3204,15 +3185,8 @@ final class CityPlanningEndpointHandler {
                 || !plan.planHash().equals(stringValue(completion, "planHash", ""))) {
             throw new IllegalArgumentException("CITY_LAND_USE_PLAN_INCOMPLETE: completion planHash does not match plan.");
         }
-        String completionSurfaceHash = stringValue(completion, "surfacePrintPlanHash", "");
-        String completionCatalogHash = stringValue(completion, "surfacePrintCatalogHash", "");
-        if (surfacePrintPlan == null) {
-            if (!completionSurfaceHash.isBlank() || !completionCatalogHash.isBlank()) {
-                throw new IllegalArgumentException("CITY_LAND_USE_SURFACE_PRINT_PLAN_MISSING: completion marker "
-                        + "declares a surface print plan but its artifact is missing.");
-            }
-        } else if (!surfacePrintPlan.planHash().equals(completionSurfaceHash)
-                || !surfacePrintPlan.catalogHash().equals(completionCatalogHash)) {
+        if (surfacePrintPlan.planHash().isBlank()
+                || !surfacePrintPlan.planHash().equals(stringValue(completion, "surfacePrintPlanHash", ""))) {
             throw new IllegalArgumentException("CITY_LAND_USE_SURFACE_PRINT_COMPLETION_MISMATCH: completion marker "
                     + "does not match the surface print plan.");
         }
@@ -3227,6 +3201,16 @@ final class CityPlanningEndpointHandler {
         }
         if (stringValue(completion, "completedAt", "").isBlank()) {
             throw new IllegalArgumentException("CITY_LAND_USE_PLAN_INCOMPLETE: completion completedAt is required.");
+        }
+    }
+
+    static void requireDecorationLandUseArtifacts(Path areaPlanPath,
+                                                  Path surfacePrintPlanPath,
+                                                  Path completionPath) {
+        if (!Files.isRegularFile(areaPlanPath) || !Files.isRegularFile(surfacePrintPlanPath)
+                || !Files.isRegularFile(completionPath)) {
+            throw new IllegalArgumentException(
+                    "CITY_DECORATION_LAND_USE_PLAN_REQUIRED: run city_plan_land_use first.");
         }
     }
 

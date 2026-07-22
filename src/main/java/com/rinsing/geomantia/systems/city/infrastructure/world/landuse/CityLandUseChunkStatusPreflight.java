@@ -1,5 +1,6 @@
 package com.rinsing.geomantia.systems.city.infrastructure.world.landuse;
 
+import com.rinsing.geomantia.systems.city.application.landuse.CityLandUseSurfacePrintPlan;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseAreaPlan;
 import com.rinsing.geomantia.systems.city.domain.model.BlockPoint;
 import net.minecraft.nbt.CompoundTag;
@@ -16,13 +17,18 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-/** Proves that every LandUse owner is still before FEATURES without loading or generating it. */
+/** Proves that every LandUse owner with compiled writes is still before FEATURES. */
 public final class CityLandUseChunkStatusPreflight {
 
-    public PreflightResult inspect(LandUseAreaPlan plan, ChunkStatusProbe probe) {
+    public PreflightResult inspect(LandUseAreaPlan plan,
+                                   CityLandUseSurfacePrintPlan surfacePrintPlan,
+                                   ChunkStatusProbe probe) {
         Objects.requireNonNull(plan, "plan");
+        Objects.requireNonNull(surfacePrintPlan, "surfacePrintPlan");
         Objects.requireNonNull(probe, "probe");
-        List<OwnerChunk> owners = ownerChunks(plan);
+        CityLandUseChunkCompiler compiler = new CityLandUseChunkCompiler();
+        CityLandUseChunkCompiler.PreparedSurfacePlan prepared = compiler.prepare(plan, surfacePrintPlan);
+        List<OwnerChunk> owners = ownerChunks(plan, compiler, prepared);
         List<ChunkEvidence> evidence = new ArrayList<>(owners.size());
         int blocked = 0;
         int unknown = 0;
@@ -49,7 +55,18 @@ public final class CityLandUseChunkStatusPreflight {
                 List.copyOf(evidence));
     }
 
-    public static List<OwnerChunk> ownerChunks(LandUseAreaPlan plan) {
+    public static List<OwnerChunk> ownerChunks(LandUseAreaPlan plan,
+                                                CityLandUseSurfacePrintPlan surfacePrintPlan) {
+        Objects.requireNonNull(plan, "plan");
+        Objects.requireNonNull(surfacePrintPlan, "surfacePrintPlan");
+        CityLandUseChunkCompiler compiler = new CityLandUseChunkCompiler();
+        return ownerChunks(plan, compiler, compiler.prepare(plan, surfacePrintPlan));
+    }
+
+    private static List<OwnerChunk> ownerChunks(
+            LandUseAreaPlan plan,
+            CityLandUseChunkCompiler compiler,
+            CityLandUseChunkCompiler.PreparedSurfacePlan prepared) {
         Set<OwnerChunk> owners = new LinkedHashSet<>();
         for (LandUseAreaPlan.Area area : plan.areas()) {
             for (LandUseAreaPlan.ScanlineSpan span : area.memberSpans()) {
@@ -66,7 +83,11 @@ public final class CityLandUseChunkStatusPreflight {
                 }
             }
         }
-        return owners.stream().sorted(OwnerChunk.STABLE_ORDER).toList();
+        return owners.stream()
+                .filter(owner -> compiler.compilePrepared(prepared, owner.chunkX(), owner.chunkZ())
+                        .hasRelevantCells())
+                .sorted(OwnerChunk.STABLE_ORDER)
+                .toList();
     }
 
     public interface ChunkStatusProbe {

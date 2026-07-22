@@ -3,7 +3,6 @@ package com.rinsing.geomantia.mixin;
 import com.rinsing.geomantia.systems.city.application.terrain.CityTerrainFoundationDensityComputer;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityDecorationBeardifierAccess;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityDecorationWorldgenRegistry;
-import com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityLandUseWorldgenRegistry;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.WorldGenRegion;
 import net.minecraft.world.level.ChunkPos;
@@ -39,7 +38,6 @@ public abstract class CityDecorationBeardifierMixin implements CityDecorationBea
         String dimensionId = level.dimension().location().toString();
         List<CityTerrainFoundationDensityComputer.FoundationSegmentView> snapshot = new ArrayList<>();
         snapshot.addAll(CityDecorationWorldgenRegistry.foundationSegmentsForChunk(dimensionId, chunkPos));
-        snapshot.addAll(CityLandUseWorldgenRegistry.foundationSegmentsForChunk(dimensionId, chunkPos));
         ((CityDecorationBeardifierAccess) cir.getReturnValue()).geomantia$setFoundationSegments(snapshot);
     }
 

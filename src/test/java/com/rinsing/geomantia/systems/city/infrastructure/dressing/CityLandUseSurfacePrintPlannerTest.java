@@ -2,7 +2,6 @@ package com.rinsing.geomantia.systems.city.infrastructure.dressing;
 
 import com.rinsing.geomantia.systems.city.application.landuse.CityLandUseSurfacePrintPlan;
 import com.rinsing.geomantia.systems.city.application.landuse.CityLandUseSurfacePrintPlanner;
-import com.rinsing.geomantia.systems.city.application.landuse.CityLandUseSurfaceRunCompiler;
 import com.rinsing.geomantia.systems.city.domain.landuse.BoundaryPolicy;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseAreaPlan;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseSeedGroup;
@@ -14,13 +13,9 @@ import com.rinsing.geomantia.systems.city.domain.landuse.rules.LandUseRule;
 import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
 import com.rinsing.geomantia.systems.city.domain.model.BlockPoint;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
-import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -29,49 +24,33 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityLandUseSurfacePrintPlannerTest {
     @Test
-    void freezesUniformAndGlobalFiveThreeFiveCultivateRecipes(@TempDir Path temp) throws Exception {
-        CityDecorationContentCatalog catalog = new CityDecorationContentCatalogLoader(state -> {
-        }).load(CityDecorationDefaultCatalogBootstrap.ensureInstalled(temp.resolve("city_decoration")));
+    void freezesUniformAndContourRecipesWithoutCatalogDependency() {
         LandUseAreaPlan areaPlan = areaPlan();
         List<LandUseSeedGroup> groups = List.of(
                 group("farm_group", SurfacePolicy.CULTIVATE, new BlockBounds(12, 5, 14, 7)),
                 group("market_group", SurfacePolicy.PAVE, new BlockBounds(42, 2, 43, 3)));
 
         CityLandUseSurfacePrintPlan first = new CityLandUseSurfacePrintPlanner().plan(
-                areaPlan, groups, terrain(), catalog);
+                areaPlan, groups, terrain(new BlockBounds(0, 0, 63, 31), false));
         CityLandUseSurfacePrintPlan second = new CityLandUseSurfacePrintPlanner().plan(
-                areaPlan, groups, terrain(), catalog);
+                areaPlan, groups, terrain(new BlockBounds(0, 0, 63, 31), false));
 
         assertEquals(first, second);
         assertFalse(first.planHash().isBlank());
-        assertEquals(areaPlan.planHash(), first.sourceLandUsePlanHash());
-        assertEquals(catalog.catalogHash(), first.catalogHash());
-        assertEquals(2, first.areas().size());
-
         CityLandUseSurfacePrintPlan.AreaPrint farm = first.areas().stream()
                 .filter(value -> value.landUseAreaId().equals("farm")).findFirst().orElseThrow();
-        assertEquals(new BlockPoint(0, 0), farm.origin());
-        assertEquals(CityLandUseSurfaceRunCompiler.WorldAxis.X, farm.continuationAxis());
-        assertTrue(farm.exclusionSpans().stream().anyMatch(span ->
-                span.z() == 6 && span.minX() == 12 && span.maxX() == 14));
-        CityLandUseSurfacePrintPlan.CultivateLinedRecipe cultivate = assertInstanceOf(
-                CityLandUseSurfacePrintPlan.CultivateLinedRecipe.class, farm.recipe());
-        assertEquals(13, cultivate.repeatPeriodBlocks());
-        assertEquals(5, cultivate.fieldBeforeBlocks());
-        assertEquals(3, cultivate.channelWidthBlocks());
-        assertEquals(5, cultivate.fieldAfterBlocks());
-        assertEquals("minecraft:farmland", cultivate.surfaceBlockId());
-        assertEquals("minecraft:wheat", cultivate.cropBlockId());
-        assertEquals(catalog.requireContent(CityLandUseSurfaceRunCompiler.STRAIGHT_CONTENT_REF).contentHash(),
-                cultivate.straightPrefab().contentHash());
-        assertEquals(catalog.requireContent(CityLandUseSurfaceRunCompiler.END_CAP_CONTENT_REF).contentHash(),
-                cultivate.endCapPrefab().contentHash());
-        assertTrue(cultivate.runs().size() >= 2, "structure exclusion should split the global channel run");
-        assertTrue(cultivate.runs().stream().flatMap(run -> run.placements().stream())
-                .allMatch(placement -> placement.rotationDegrees() == 270));
-        assertFalse(cultivate.foundationSegments().isEmpty());
-        assertTrue(cultivate.foundationSegments().stream().allMatch(segment ->
-                segment.maxDepthBlocks() == 2 && segment.shoulderBlocks() == 1));
+        CityLandUseSurfacePrintPlan.ContourBandsRecipe contour = assertInstanceOf(
+                CityLandUseSurfacePrintPlan.ContourBandsRecipe.class, farm.recipe());
+        assertEquals(13, contour.repeatPeriodBlocks());
+        assertEquals(5, contour.fieldBeforeBlocks());
+        assertEquals(3, contour.channelWidthBlocks());
+        assertEquals(5, contour.fieldAfterBlocks());
+        assertEquals(CityLandUseSurfacePrintPlan.ClassificationMode.RADIAL_FALLBACK,
+                contour.classificationMode());
+        assertTrue(contour.bandSpans().stream().anyMatch(span ->
+                span.role() == CityLandUseSurfacePrintPlan.BandRole.FIELD));
+        assertTrue(contour.bandSpans().stream().noneMatch(span ->
+                span.z() == 6 && span.minX() <= 14 && span.maxX() >= 12));
 
         CityLandUseSurfacePrintPlan.AreaPrint market = first.areas().stream()
                 .filter(value -> value.landUseAreaId().equals("market")).findFirst().orElseThrow();
@@ -81,52 +60,31 @@ class CityLandUseSurfacePrintPlannerTest {
     }
 
     @Test
-    void radialCultivateFreezesFourOutwardSectorsAcrossChunksWithoutFillingOutsideMask(
-            @TempDir Path temp) throws Exception {
-        CityDecorationContentCatalog catalog = new CityDecorationContentCatalogLoader(state -> {
-        }).load(CityDecorationDefaultCatalogBootstrap.ensureInstalled(temp.resolve("city_decoration")));
-        List<LandUseAreaPlan.ScanlineSpan> memberSpans = diamondSpans(32, 32, 32);
-        LandUseAreaPlan.Area farm = area("radial_farm", "farm_group", SurfacePolicy.CULTIVATE,
-                memberSpans, new BlockBounds(31, 31, 33, 33));
+    void hillContourFreezesGlobalBandRolesAndDoesNotRestartAtChunkBoundary() {
+        List<LandUseAreaPlan.ScanlineSpan> members = diamondSpans(32, 32, 30);
+        LandUseAreaPlan.Area farm = area("hill_farm", "farm_group", SurfacePolicy.CULTIVATE,
+                members, new BlockBounds(31, 31, 33, 33));
         LandUseAreaPlan areaPlan = new LandUseAreaPlan(LandUseAreaPlan.CURRENT_SCHEMA_VERSION,
-                "city_land_use_rules.v0.1", "city_test", "radial-land-use-hash",
+                "city_land_use_rules.v0.1", "city_test", "hill-land-use-hash",
                 new BlockBounds(0, 0, 64, 64), List.of(farm), List.of(), List.of(), List.of());
-        LandUseSurfaceSettings radial = LandUseSurfaceSettings.defaults(SurfacePolicy.CULTIVATE)
-                .withOverrides(null, null, null, null,
-                        LandUseSurfaceSettings.DirectionMode.RADIAL, null);
-        LandUseSeedGroup group = group("farm_group", SurfacePolicy.CULTIVATE,
-                new BlockBounds(31, 31, 33, 33), radial);
 
-        CityLandUseSurfacePrintPlan first = new CityLandUseSurfacePrintPlanner().plan(
-                areaPlan, List.of(group), terrain(new BlockBounds(0, 0, 64, 64)), catalog);
-        CityLandUseSurfacePrintPlan second = new CityLandUseSurfacePrintPlanner().plan(
-                areaPlan, List.of(group), terrain(new BlockBounds(0, 0, 64, 64)), catalog);
+        CityLandUseSurfacePrintPlan plan = new CityLandUseSurfacePrintPlanner().plan(areaPlan,
+                List.of(group("farm_group", SurfacePolicy.CULTIVATE,
+                        new BlockBounds(31, 31, 33, 33))),
+                terrain(new BlockBounds(0, 0, 64, 64), true));
 
-        assertEquals(first, second);
-        CityLandUseSurfacePrintPlan.AreaPrint print = first.areas().get(0);
-        assertEquals(LandUseSurfaceSettings.DirectionMode.RADIAL, print.directionMode());
-        assertEquals(new BlockPoint(32, 32), print.directionCenter());
-        CityLandUseSurfacePrintPlan.CultivateLinedRecipe recipe = assertInstanceOf(
-                CityLandUseSurfacePrintPlan.CultivateLinedRecipe.class, print.recipe());
-        Set<Integer> rotations = new HashSet<>();
-        recipe.runs().stream().flatMap(run -> run.placements().stream())
-                .forEach(placement -> rotations.add(placement.rotationDegrees()));
-        assertEquals(Set.of(0, 90, 180, 270), rotations);
-        assertTrue(recipe.runs().stream().anyMatch(run -> {
-            Set<Integer> ownerChunks = new HashSet<>();
-            run.placements().forEach(placement -> ownerChunks.add(
-                    Math.floorDiv(placement.terrainSamplePoint().x(), 16)));
-            return run.continuationAxis() == CityLandUseSurfaceRunCompiler.WorldAxis.X
-                    && ownerChunks.size() >= 2;
-        }), "one globally compiled radial run should remain continuous across owner chunks");
-        Set<BlockPoint> members = cells(memberSpans);
-        recipe.runs().stream().flatMap(run -> run.placements().stream()).forEach(placement -> {
-            for (int z = placement.footprint().minZ(); z <= placement.footprint().maxZ(); z++) {
-                for (int x = placement.footprint().minX(); x <= placement.footprint().maxX(); x++) {
-                    assertTrue(members.contains(new BlockPoint(x, z)), "radial must not fill the area bbox");
-                }
-            }
-        });
+        CityLandUseSurfacePrintPlan.AreaPrint print = plan.areas().get(0);
+        assertEquals(LandUseSurfaceSettings.SurfaceAlgorithm.CONTOUR_BANDS, print.surfaceAlgorithm());
+        assertEquals(new BlockPoint(32, 32), print.algorithmAnchor());
+        CityLandUseSurfacePrintPlan.ContourBandsRecipe recipe = assertInstanceOf(
+                CityLandUseSurfacePrintPlan.ContourBandsRecipe.class, print.recipe());
+        assertEquals(CityLandUseSurfacePrintPlan.ClassificationMode.CONTOUR_NORMAL,
+                recipe.classificationMode());
+        assertTrue(recipe.bandSpans().stream().anyMatch(span -> span.minX() <= 15 && span.maxX() >= 15));
+        assertTrue(recipe.bandSpans().stream().anyMatch(span -> span.minX() <= 16 && span.maxX() >= 16));
+        assertEquals(members.stream().mapToInt(span -> span.maxX() - span.minX() + 1).sum()
+                        - 9,
+                recipe.bandSpans().stream().mapToInt(span -> span.maxX() - span.minX() + 1).sum());
     }
 
     private static LandUseAreaPlan areaPlan() {
@@ -150,17 +108,10 @@ class CityLandUseSurfacePrintPlannerTest {
     }
 
     private static LandUseSeedGroup group(String id, SurfacePolicy policy, BlockBounds footprint) {
-        return group(id, policy, footprint, LandUseSurfaceSettings.defaults(policy));
-    }
-
-    private static LandUseSeedGroup group(String id,
-                                          SurfacePolicy policy,
-                                          BlockBounds footprint,
-                                          LandUseSurfaceSettings settings) {
         LandUseRule rule = new LandUseRule(id, id, List.of(id), 1, 0, 1, 200,
                 200, 1, 0, 0, 10, 0, 1, true, policy,
                 VegetationPolicy.PRESERVE, BoundaryPolicy.OPEN, id);
-        return new LandUseSeedGroup(id, rule, settings, List.of(id),
+        return new LandUseSeedGroup(id, rule, LandUseSurfaceSettings.defaults(policy), List.of(id),
                 List.of(footprint), List.of(new BlockPoint(footprint.minX(), footprint.minZ())),
                 List.of(), 1, 100, 200, 200, 1);
     }
@@ -180,32 +131,21 @@ class CityLandUseSurfacePrintPlannerTest {
         return List.copyOf(spans);
     }
 
-    private static LandUseTerrainField terrain() {
-        return terrain(new BlockBounds(0, 0, 63, 31));
-    }
-
-    private static LandUseTerrainField terrain(BlockBounds bounds) {
+    private static LandUseTerrainField terrain(BlockBounds bounds, boolean hill) {
         List<LandUseTerrainField.Cell> cells = new ArrayList<>();
         int maxCellX = Math.floorDiv(bounds.maxX(), 4);
         int maxCellZ = Math.floorDiv(bounds.maxZ(), 4);
         for (int z = 0; z <= maxCellZ; z++) {
             for (int x = 0; x <= maxCellX; x++) {
+                double dx = x * 4 + 1.5 - 32;
+                double dz = z * 4 + 1.5 - 32;
+                double elevation = hill ? 96 - Math.hypot(dx, dz) * 0.75 : 70;
                 cells.add(new LandUseTerrainField.Cell(x, z, x * 4, z * 4, 4,
-                        70, 0, 0, 0, false, 0, 40,
+                        elevation, 0, 0, 0, false, 0, 40,
                         "minecraft:plains", "plain", "p", true));
             }
         }
         return new LandUseTerrainField(LandUseTerrainField.CURRENT_SCHEMA_VERSION,
                 "city_test", bounds, 4, cells);
-    }
-
-    private static Set<BlockPoint> cells(List<LandUseAreaPlan.ScanlineSpan> spans) {
-        Set<BlockPoint> result = new HashSet<>();
-        for (LandUseAreaPlan.ScanlineSpan span : spans) {
-            for (int x = span.minX(); x <= span.maxX(); x++) {
-                result.add(new BlockPoint(x, span.z()));
-            }
-        }
-        return result;
     }
 }

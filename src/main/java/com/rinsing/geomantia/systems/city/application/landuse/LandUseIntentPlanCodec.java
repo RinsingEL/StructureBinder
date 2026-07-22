@@ -14,12 +14,17 @@ import java.util.Set;
 
 public final class LandUseIntentPlanCodec {
     private static final Set<String> TOP_FIELDS = Set.of(
-            "schemaVersion", "cityId", "seedSalt", "groupOverrides", "subjectOverrides", "surfaceOverrides");
+            "schemaVersion", "cityId", "seedSalt", "groupOverrides", "subjectOverrides",
+            "surfaceAlgorithmDefaults", "surfaceOverrides");
     private static final Set<String> GROUP_FIELDS = Set.of("groupId", "memberAnchorIds", "ruleRef");
     private static final Set<String> SUBJECT_FIELDS = Set.of("targetType", "targetId", "mode", "ruleRef");
+    private static final Set<String> SURFACE_ALGORITHM_DEFAULT_FIELDS = Set.of(
+            "surfaceAlgorithm", "surfaceBlockId", "cropBlockId", "channelBankBlockId",
+            "channelWaterBlockId", "channelBankOverlayBlockId");
     private static final Set<String> SURFACE_FIELDS = Set.of(
-            "targetGroupId", "surfacePrintEnabled", "autoConnect", "surfaceBlockId", "cropBlockId",
-            "directionMode", "directionCenter");
+            "targetGroupId", "surfacePrintEnabled", "autoConnect", "surfaceAlgorithm", "surfaceBlockId",
+            "cropBlockId", "channelBankBlockId", "channelWaterBlockId", "channelBankOverlayBlockId",
+            "algorithmAnchor");
     private static final Set<String> POINT_FIELDS = Set.of("x", "z");
 
     public LandUseIntentPlan parse(JsonObject source, String defaultCityId) {
@@ -33,8 +38,10 @@ public final class LandUseIntentPlanCodec {
         String seedSalt = optionalString(obj, "seedSalt", "");
         List<LandUseIntentPlan.GroupOverride> groups = parseGroups(optionalArray(obj, "groupOverrides"));
         List<LandUseIntentPlan.SubjectOverride> subjects = parseSubjects(optionalArray(obj, "subjectOverrides"));
+        List<LandUseIntentPlan.SurfaceAlgorithmDefault> defaults = parseSurfaceAlgorithmDefaults(
+                optionalArray(obj, "surfaceAlgorithmDefaults"));
         List<LandUseIntentPlan.SurfaceOverride> surfaces = parseSurfaces(optionalArray(obj, "surfaceOverrides"));
-        return new LandUseIntentPlan(cityId, seedSalt, groups, subjects, surfaces);
+        return new LandUseIntentPlan(cityId, seedSalt, groups, subjects, defaults, surfaces);
     }
 
     private List<LandUseIntentPlan.GroupOverride> parseGroups(JsonArray array) {
@@ -89,6 +96,7 @@ public final class LandUseIntentPlanCodec {
         Set<String> targets = new HashSet<>();
         for (int i = 0; i < array.size(); i++) {
             JsonObject value = objectAt(array, i, "surfaceOverrides");
+            rejectRemovedDirectionFields(value, "surfaceOverrides[" + i + "]");
             rejectUnknown(value, SURFACE_FIELDS, "surfaceOverrides[" + i + "]");
             String targetGroupId = requiredString(value, "targetGroupId");
             if (!targets.add(targetGroupId)) {
@@ -96,15 +104,39 @@ public final class LandUseIntentPlanCodec {
             }
             String surfaceBlockId = optionalBlockId(value, "surfaceBlockId");
             String cropBlockId = optionalBlockId(value, "cropBlockId");
-            LandUseSurfaceSettings.DirectionMode directionMode = value.has("directionMode")
-                    ? enumValue(LandUseSurfaceSettings.DirectionMode.class,
-                    requiredString(value, "directionMode")) : null;
-            BlockPoint directionCenter = optionalPoint(value, "directionCenter");
+            LandUseSurfaceSettings.SurfaceAlgorithm algorithm = value.has("surfaceAlgorithm")
+                    ? enumValue(LandUseSurfaceSettings.SurfaceAlgorithm.class,
+                    requiredString(value, "surfaceAlgorithm")) : null;
             overrides.add(new LandUseIntentPlan.SurfaceOverride(targetGroupId,
                     optionalBoolean(value, "surfacePrintEnabled"), optionalBoolean(value, "autoConnect"),
-                    surfaceBlockId, cropBlockId, directionMode, directionCenter));
+                    algorithm, surfaceBlockId, cropBlockId,
+                    optionalBlockId(value, "channelBankBlockId"),
+                    optionalBlockId(value, "channelWaterBlockId"),
+                    optionalBlockId(value, "channelBankOverlayBlockId"),
+                    optionalPoint(value, "algorithmAnchor")));
         }
         return overrides;
+    }
+
+    private List<LandUseIntentPlan.SurfaceAlgorithmDefault> parseSurfaceAlgorithmDefaults(JsonArray array) {
+        List<LandUseIntentPlan.SurfaceAlgorithmDefault> defaults = new ArrayList<>();
+        Set<LandUseSurfaceSettings.SurfaceAlgorithm> algorithms = new HashSet<>();
+        for (int i = 0; i < array.size(); i++) {
+            JsonObject value = objectAt(array, i, "surfaceAlgorithmDefaults");
+            rejectUnknown(value, SURFACE_ALGORITHM_DEFAULT_FIELDS, "surfaceAlgorithmDefaults[" + i + "]");
+            LandUseSurfaceSettings.SurfaceAlgorithm algorithm = enumValue(
+                    LandUseSurfaceSettings.SurfaceAlgorithm.class, requiredString(value, "surfaceAlgorithm"));
+            if (!algorithms.add(algorithm)) {
+                throw new IllegalArgumentException("LAND_USE_SURFACE_ALGORITHM_DEFAULT_DUPLICATE:"
+                        + algorithm.name().toLowerCase(Locale.ROOT));
+            }
+            defaults.add(new LandUseIntentPlan.SurfaceAlgorithmDefault(algorithm,
+                    requiredBlockId(value, "surfaceBlockId"), optionalBlockId(value, "cropBlockId"),
+                    optionalBlockId(value, "channelBankBlockId"),
+                    optionalBlockId(value, "channelWaterBlockId"),
+                    optionalBlockId(value, "channelBankOverlayBlockId")));
+        }
+        return defaults;
     }
 
     private static JsonObject defaultPlan(String cityId) {
@@ -114,8 +146,15 @@ public final class LandUseIntentPlanCodec {
         obj.addProperty("cityId", cityId);
         obj.add("groupOverrides", new JsonArray());
         obj.add("subjectOverrides", new JsonArray());
+        obj.add("surfaceAlgorithmDefaults", new JsonArray());
         obj.add("surfaceOverrides", new JsonArray());
         return obj;
+    }
+
+    private static void rejectRemovedDirectionFields(JsonObject value, String owner) {
+        if (value.has("directionMode") || value.has("directionCenter")) {
+            throw new IllegalArgumentException("LAND_USE_SURFACE_RADIAL_DIRECTION_REMOVED: " + owner);
+        }
     }
 
     private static void rejectUnknown(JsonObject obj, Set<String> allowed, String owner) {
@@ -185,8 +224,16 @@ public final class LandUseIntentPlanCodec {
         return value;
     }
 
+    private static String requiredBlockId(JsonObject obj, String key) {
+        String value = requiredString(obj, key);
+        if (!LandUseSurfaceSettings.isValidBlockId(value)) {
+            throw new IllegalArgumentException("LAND_USE_SURFACE_BLOCK_ID_INVALID:" + key + ':' + value);
+        }
+        return value;
+    }
+
     private static BlockPoint optionalPoint(JsonObject obj, String key) {
-        if (!obj.has(key)) return null;
+        if (!obj.has(key) || obj.get(key).isJsonNull()) return null;
         if (!obj.get(key).isJsonObject()) {
             throw new IllegalArgumentException(key + " object is required");
         }

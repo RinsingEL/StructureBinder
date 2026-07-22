@@ -1,6 +1,10 @@
 package com.rinsing.geomantia.systems.city.infrastructure.world.landuse;
 
+import com.rinsing.geomantia.systems.city.domain.landuse.LandUseAreaPlan;
+import com.rinsing.geomantia.systems.city.domain.landuse.SurfacePolicy;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -11,8 +15,9 @@ class CityLandUseChunkStatusPreflightTest {
 
     @Test
     void enumeratesAllOwnersAndAcceptsOnlyProvenPreFeaturesOrAbsentChunks() {
+        var areaPlan = CityLandUseChunkCompilerTest.plan("city_a");
         CityLandUseChunkStatusPreflight.PreflightResult result = preflight.inspect(
-                CityLandUseChunkCompilerTest.plan("city_a"), (x, z) -> x == 0
+                areaPlan, CityLandUseChunkCompilerTest.uniformPlan(areaPlan), (x, z) -> x == 0
                         ? CityLandUseChunkStatusPreflight.ChunkEvidence.beforeFeatures(x, z,
                         CityLandUseChunkStatusPreflight.EvidenceSource.LOADED, "minecraft:carvers")
                         : CityLandUseChunkStatusPreflight.ChunkEvidence.notPresent(x, z));
@@ -27,8 +32,9 @@ class CityLandUseChunkStatusPreflightTest {
 
     @Test
     void rejectsWholeActivationWhenAnyOwnerHasReachedFeatures() {
+        var areaPlan = CityLandUseChunkCompilerTest.plan("city_a");
         CityLandUseChunkStatusPreflight.PreflightResult result = preflight.inspect(
-                CityLandUseChunkCompilerTest.plan("city_a"), (x, z) -> x == 1
+                areaPlan, CityLandUseChunkCompilerTest.uniformPlan(areaPlan), (x, z) -> x == 1
                         ? CityLandUseChunkStatusPreflight.ChunkEvidence.featuresOrLater(x, z,
                         CityLandUseChunkStatusPreflight.EvidenceSource.DISK, "minecraft:full")
                         : CityLandUseChunkStatusPreflight.ChunkEvidence.notPresent(x, z));
@@ -40,8 +46,9 @@ class CityLandUseChunkStatusPreflightTest {
 
     @Test
     void treatsMissingDiskEvidenceAsUnknownInsteadOfNotGenerated() {
+        var areaPlan = CityLandUseChunkCompilerTest.plan("city_a");
         CityLandUseChunkStatusPreflight.PreflightResult result = preflight.inspect(
-                CityLandUseChunkCompilerTest.plan("city_a"), (x, z) ->
+                areaPlan, CityLandUseChunkCompilerTest.uniformPlan(areaPlan), (x, z) ->
                         CityLandUseChunkStatusPreflight.ChunkEvidence.unknown(x, z,
                                 CityLandUseChunkStatusPreflight.EvidenceSource.DISK,
                                 "CITY_LAND_USE_DISK_CHUNK_STATUS_READ_FAILED"));
@@ -49,5 +56,25 @@ class CityLandUseChunkStatusPreflightTest {
         assertFalse(result.eligible());
         assertEquals("CITY_LAND_USE_CHUNK_STATUS_UNKNOWN", result.reasonCode());
         assertEquals(2, result.unknownCount());
+    }
+
+    @Test
+    void ignoresPreserveOpenAreasWithoutCompiledWrites() {
+        var areaPlan = CityLandUseChunkCompilerTest.areaPlan("city_noop",
+                SurfacePolicy.PRESERVE,
+                List.of(new LandUseAreaPlan.ScanlineSpan(0, 0, 31)));
+        var surfacePlan = CityLandUseChunkCompilerTest.hashed(areaPlan, List.of());
+        int[] probeCalls = {0};
+
+        CityLandUseChunkStatusPreflight.PreflightResult result = preflight.inspect(
+                areaPlan, surfacePlan, (x, z) -> {
+                    probeCalls[0]++;
+                    return CityLandUseChunkStatusPreflight.ChunkEvidence.featuresOrLater(x, z,
+                            CityLandUseChunkStatusPreflight.EvidenceSource.DISK, "minecraft:full");
+                });
+
+        assertTrue(result.eligible());
+        assertEquals(0, result.ownerChunkCount());
+        assertEquals(0, probeCalls[0]);
     }
 }
