@@ -52,7 +52,8 @@ import java.util.function.Function;
 public final class CityLandUseWorldgenRegistry {
     public static final String ACTIVE_SCHEMA = "city_active_land_use_area_plans.v0.2";
     public static final String LEGACY_ACTIVE_SCHEMA = "city_active_land_use_area_plans.v0.1";
-    public static final String LEDGER_SCHEMA = "city_land_use_worldgen_ledger.v0.2";
+    public static final String LEDGER_SCHEMA = "city_land_use_worldgen_ledger.v0.3";
+    public static final String V2_LEDGER_SCHEMA = "city_land_use_worldgen_ledger.v0.2";
     public static final String LEGACY_LEDGER_SCHEMA = "city_land_use_worldgen_ledger.v0.1";
 
     private static final Logger LOGGER = LogUtils.getLogger();
@@ -74,6 +75,10 @@ public final class CityLandUseWorldgenRegistry {
     private static final Map<PlacementDatumKey, Integer> PLACEMENT_DATUM_INDEX = new HashMap<>();
     private static final Map<PlacementDatumKey, CompletableFuture<Integer>> PLACEMENT_DATUM_IN_FLIGHT =
             new HashMap<>();
+    private static final Map<PlacementDecisionKey, FrozenPlacementDecision> PLACEMENT_DECISION_INDEX =
+            new HashMap<>();
+    private static final Map<PlacementDecisionKey, CompletableFuture<FrozenPlacementDecision>>
+            PLACEMENT_DECISION_IN_FLIGHT = new HashMap<>();
     private static final Object LEDGER_DATUM_IO_LOCK = new Object();
     private static final Set<OwnerKey> IN_FLIGHT = new HashSet<>();
     private static final Map<Object, Set<FeatureOwnerKey>> FEATURE_OWNER_APPLICATIONS = new WeakHashMap<>();
@@ -184,13 +189,15 @@ public final class CityLandUseWorldgenRegistry {
         ACTIVE.clear();
         ACTIVE.putAll(state.activePlans());
         IN_FLIGHT.clear();
+        PLACEMENT_DECISION_IN_FLIGHT.clear();
         FEATURE_OWNER_APPLICATIONS.clear();
         FEATURE_INVOCATION_DEPTH.remove();
         ledger = state.ledger();
         rebuildPlacementDatumIndex();
+        rebuildPlacementDecisionIndex();
         activeServerRoot = server;
         ledgerPersistencePending = false;
-        if (!state.ledgerExists()) {
+        if (!state.ledgerExists() || state.ledgerRequiresRewrite()) {
             persistLedger();
         }
         LOGGER.info("Loaded City LandUse registry: activePlans={}, appliedOwners={}",
@@ -323,6 +330,15 @@ public final class CityLandUseWorldgenRegistry {
                     CityNbtPrefabBatchPlacer.BatchRequest prefabBatch = PREFAB_OWNER_COMPILER.compilePrepared(
                             active.preparedPrefabPlan(), chunkX, chunkZ, worldMinY, worldMaxY,
                             request -> requiredPlacementDatum(placementDatums, request));
+                    try {
+                        Map<String, CityNbtPrefabBatchPlacer.PlacementDecision> decisions =
+                                resolvePlacementDecisions(active.surfacePrintPlan().planHash(), prefabBatch,
+                                        prefabWorld);
+                        prefabBatch = prefabBatch.withPlacementDecisions(decisions);
+                    } catch (PlacementDecisionFailure failure) {
+                        failed++;
+                        continue;
+                    }
                     result = EXECUTOR.execute(fragment, prefabBatch, trackedWorld, prefabWorld, eligibility);
                 } else {
                     result = EXECUTOR.execute(fragment, trackedWorld, eligibility);
@@ -506,6 +522,21 @@ public final class CityLandUseWorldgenRegistry {
         entry.addProperty("appliedBoundaryOperationCount", phaseCounts.appliedBoundary());
         entry.addProperty("preparedPrefabPlacementCount", result.preparedPrefabPlacementCount());
         entry.addProperty("appliedPrefabPlacementCount", result.appliedPrefabPlacementCount());
+        entry.addProperty("appliedPrefabFallbackOperationCount",
+                result.appliedPrefabFallbackOperationCount());
+        entry.addProperty("prefabBoundarySuppressedCount",
+                result.prefabBoundarySuppressedCount());
+        JsonArray prefabOutcomes = new JsonArray();
+        for (CityNbtPrefabBatchPlacer.PlacementOutcome outcome : result.prefabPlacementOutcomes()) {
+            JsonObject outcomeJson = new JsonObject();
+            outcomeJson.addProperty("placementKey", outcome.placementKey());
+            boolean applied = outcome.status() == CityNbtPrefabBatchPlacer.PlacementStatus.READY;
+            outcomeJson.addProperty("status", applied ? "applied" : "skipped_content");
+            outcomeJson.addProperty("reasonCode", applied
+                    ? "CITY_NBT_PREFAB_PLACEMENT_APPLIED" : outcome.reasonCode());
+            prefabOutcomes.add(outcomeJson);
+        }
+        entry.add("prefabPlacementOutcomes", prefabOutcomes);
         entry.addProperty("naturalSurfaceSkippedCount", result.naturalSurfaceSkippedCount());
         entry.addProperty("occupiedBoundarySkippedCount", result.occupiedBoundarySkippedCount());
         entry.addProperty("appliedAt", Instant.now().toString());
@@ -520,9 +551,10 @@ public final class CityLandUseWorldgenRegistry {
         int preparedCrop = (int) fragment.surfaceOperations().stream()
                 .filter(operation -> operation.stage() == CityLandUseChunkCompiler.SurfaceStage.CROP)
                 .filter(operation -> world.naturalSurface(operation.x(), operation.z()))
-                .count();
+                .count() + result.appliedPrefabFallbackOperationCount();
         int preparedBoundary = fragment.boundaryOperations().size()
-                - result.occupiedBoundarySkippedCount();
+                - result.occupiedBoundarySkippedCount()
+                - result.prefabBoundarySuppressedCount();
         int preparedBase = result.preparedOperationCount() - preparedCrop - preparedBoundary;
         if (preparedBase < 0 || result.preparedOperationCount() != result.appliedOperationCount()) {
             throw new IllegalStateException("CITY_LAND_USE_LEDGER_PHASE_COUNTS_INVALID");
@@ -658,6 +690,136 @@ public final class CityLandUseWorldgenRegistry {
         }
     }
 
+    private static Map<String, CityNbtPrefabBatchPlacer.PlacementDecision> resolvePlacementDecisions(
+            String surfacePrintPlanHash,
+            CityNbtPrefabBatchPlacer.BatchRequest batch,
+            CityNbtPrefabBatchPlacer.PlacementWorld world) {
+        Map<String, CityNbtPrefabBatchPlacer.PlacementDecision> resolved = new LinkedHashMap<>();
+        for (CityNbtPrefabBatchPlacer.PrefabPlacement placement : batch.placements()) {
+            FrozenPlacementDecision decision = resolvePlacementDecision(
+                    surfacePrintPlanHash, placement, world);
+            resolved.put(placement.placementKey(), decision.status());
+        }
+        return Map.copyOf(resolved);
+    }
+
+    private static FrozenPlacementDecision resolvePlacementDecision(
+            String surfacePrintPlanHash,
+            CityNbtPrefabBatchPlacer.PrefabPlacement placement,
+            CityNbtPrefabBatchPlacer.PlacementWorld world) {
+        PlacementDecisionKey key = new PlacementDecisionKey(
+                surfacePrintPlanHash, placement.placementKey());
+        CompletableFuture<FrozenPlacementDecision> future;
+        boolean owner = false;
+        synchronized (CityLandUseWorldgenRegistry.class) {
+            FrozenPlacementDecision existing = PLACEMENT_DECISION_INDEX.get(key);
+            if (existing != null) {
+                validatePlacementDecisionIdentity(existing, placement);
+                return existing;
+            }
+            future = PLACEMENT_DECISION_IN_FLIGHT.get(key);
+            if (future == null) {
+                future = new CompletableFuture<>();
+                PLACEMENT_DECISION_IN_FLIGHT.put(key, future);
+                owner = true;
+            }
+        }
+        if (owner) {
+            try {
+                CityNbtPrefabBatchPlacer.PlacementPreflight preflight =
+                        new CityNbtPrefabBatchPlacer().preflight(placement, world);
+                if (preflight.status() == CityNbtPrefabBatchPlacer.PreflightStatus.HARD_FAILURE) {
+                    throw new PlacementDecisionFailure(preflight.reasonCode());
+                }
+                CityNbtPrefabBatchPlacer.PlacementDecision status =
+                        preflight.status() == CityNbtPrefabBatchPlacer.PreflightStatus.MATERIALIZE
+                                ? CityNbtPrefabBatchPlacer.PlacementDecision.MATERIALIZE
+                                : CityNbtPrefabBatchPlacer.PlacementDecision.FALLBACK;
+                FrozenPlacementDecision frozen = new FrozenPlacementDecision(
+                        key, placement.contentHash(), placement.anchor().getY(), status,
+                        preflight.reasonCode(), Instant.now().toString());
+                persistPlacementDecision(frozen);
+                future.complete(frozen);
+            } catch (RuntimeException failure) {
+                PlacementDecisionFailure resolvedFailure = failure instanceof PlacementDecisionFailure decision
+                        ? decision : new PlacementDecisionFailure(
+                        "CITY_LAND_USE_PLACEMENT_DECISION_PERSIST_FAILED", failure);
+                future.completeExceptionally(resolvedFailure);
+            } finally {
+                synchronized (CityLandUseWorldgenRegistry.class) {
+                    PLACEMENT_DECISION_IN_FLIGHT.remove(key, future);
+                }
+            }
+        }
+        try {
+            FrozenPlacementDecision decision = future.join();
+            validatePlacementDecisionIdentity(decision, placement);
+            return decision;
+        } catch (CompletionException failure) {
+            Throwable cause = failure.getCause();
+            if (cause instanceof PlacementDecisionFailure decisionFailure) throw decisionFailure;
+            throw new PlacementDecisionFailure("CITY_LAND_USE_PLACEMENT_DECISION_RESOLVE_FAILED", cause);
+        }
+    }
+
+    private static void persistPlacementDecision(FrozenPlacementDecision decision) {
+        synchronized (LEDGER_DATUM_IO_LOCK) {
+            JsonObject snapshot;
+            Path path;
+            synchronized (CityLandUseWorldgenRegistry.class) {
+                FrozenPlacementDecision existing = PLACEMENT_DECISION_INDEX.get(decision.key());
+                if (existing != null) {
+                    if (!existing.equals(decision)) {
+                        throw new PlacementDecisionFailure(
+                                "CITY_LAND_USE_PLACEMENT_DECISION_CONFLICT");
+                    }
+                    return;
+                }
+                JsonObject entry = new JsonObject();
+                entry.addProperty("surfacePrintPlanHash", decision.key().surfacePrintPlanHash());
+                entry.addProperty("placementKey", decision.key().placementKey());
+                entry.addProperty("contentHash", decision.contentHash());
+                entry.addProperty("resolvedTargetY", decision.resolvedTargetY());
+                entry.addProperty("status", decision.status().name());
+                entry.addProperty("reasonCode", decision.reasonCode());
+                entry.addProperty("decidedAt", decision.decidedAt());
+                placementDecisions().add(entry);
+                PLACEMENT_DECISION_INDEX.put(decision.key(), decision);
+                snapshot = ledger.deepCopy();
+                path = worldgenLedgerPath(activeServerRoot);
+            }
+            try {
+                ledgerPersistenceWriter.write(path, snapshot, "CITY_LAND_USE_LEDGER_WRITE_FAILED");
+            } catch (RuntimeException failure) {
+                synchronized (CityLandUseWorldgenRegistry.class) {
+                    JsonArray decisions = placementDecisions();
+                    for (int index = decisions.size() - 1; index >= 0; index--) {
+                        JsonObject entry = decisions.get(index).getAsJsonObject();
+                        if (decision.key().surfacePrintPlanHash().equals(
+                                requiredString(entry, "surfacePrintPlanHash"))
+                                && decision.key().placementKey().equals(
+                                requiredString(entry, "placementKey"))) {
+                            decisions.remove(index);
+                            break;
+                        }
+                    }
+                    PLACEMENT_DECISION_INDEX.remove(decision.key(), decision);
+                }
+                throw failure;
+            }
+        }
+    }
+
+    private static void validatePlacementDecisionIdentity(
+            FrozenPlacementDecision decision,
+            CityNbtPrefabBatchPlacer.PrefabPlacement placement) {
+        if (!decision.contentHash().equals(placement.contentHash())
+                || decision.resolvedTargetY() != placement.anchor().getY()) {
+            throw new PlacementDecisionFailure(
+                    "CITY_LAND_USE_PLACEMENT_DECISION_IDENTITY_MISMATCH");
+        }
+    }
+
     private static int requiredPlacementDatum(
             Map<String, Integer> resolved,
             CityLandUseSurfacePrefabOwnerCompiler.PlacementDatumRequest request) {
@@ -681,6 +843,95 @@ public final class CityLandUseWorldgenRegistry {
             if (previous != null && previous != targetY) {
                 throw new IllegalArgumentException("CITY_LAND_USE_PLACEMENT_DATUM_CONFLICT:"
                         + key.surfacePrintPlanHash() + ':' + key.placementId());
+            }
+        }
+    }
+
+    private static void rebuildPlacementDecisionIndex() {
+        PLACEMENT_DECISION_INDEX.clear();
+        for (JsonElement element : placementDecisions()) {
+            JsonObject entry = element.getAsJsonObject();
+            PlacementDecisionKey key = new PlacementDecisionKey(
+                    requiredString(entry, "surfacePrintPlanHash"),
+                    requiredString(entry, "placementKey"));
+            CityNbtPrefabBatchPlacer.PlacementDecision status;
+            try {
+                status = CityNbtPrefabBatchPlacer.PlacementDecision.valueOf(
+                        requiredString(entry, "status"));
+            } catch (IllegalArgumentException failure) {
+                throw new IllegalArgumentException(
+                        "CITY_LAND_USE_PLACEMENT_DECISION_STATUS_INVALID", failure);
+            }
+            FrozenPlacementDecision decision = new FrozenPlacementDecision(
+                    key, requiredString(entry, "contentHash"), requiredInt(entry, "resolvedTargetY"),
+                    status, requiredString(entry, "reasonCode"), requiredString(entry, "decidedAt"));
+            FrozenPlacementDecision previous = PLACEMENT_DECISION_INDEX.putIfAbsent(key, decision);
+            if (previous != null && !previous.equals(decision)) {
+                throw new IllegalArgumentException("CITY_LAND_USE_PLACEMENT_DECISION_CONFLICT:"
+                        + key.surfacePrintPlanHash() + ':' + key.placementKey());
+            }
+        }
+    }
+
+    private static void migrateV2AppliedPlacementDecisions(
+            Map<ActiveKey, ActivePlan> active,
+            JsonObject persistedLedger) {
+        Map<PlacementDecisionKey, Integer> datums = new HashMap<>();
+        for (JsonElement element : requiredArray(persistedLedger, "placementDatums")) {
+            JsonObject datum = element.getAsJsonObject();
+            PlacementDecisionKey key = new PlacementDecisionKey(
+                    requiredString(datum, "surfacePrintPlanHash"),
+                    requiredString(datum, "placementId"));
+            int resolvedTargetY = requiredInt(datum, "resolvedTargetY");
+            Integer previous = datums.putIfAbsent(key, resolvedTargetY);
+            if (previous != null && previous != resolvedTargetY) {
+                throw new IllegalArgumentException(
+                        "CITY_LAND_USE_V2_PLACEMENT_DATUM_CONFLICT:" + key.placementKey());
+            }
+        }
+        Set<PlacementDecisionKey> migrated = new HashSet<>();
+        JsonArray decisions = requiredArray(persistedLedger, "placementDecisions");
+        for (JsonElement element : decisions) {
+            JsonObject decision = element.getAsJsonObject();
+            migrated.add(new PlacementDecisionKey(
+                    requiredString(decision, "surfacePrintPlanHash"),
+                    requiredString(decision, "placementKey")));
+        }
+        for (JsonElement element : requiredArray(persistedLedger, "appliedOwners")) {
+            JsonObject owner = element.getAsJsonObject();
+            String surfaceHash = optionalString(owner, "surfacePrintPlanHash", "");
+            if (surfaceHash.isBlank()) continue;
+            ActivePlan activePlan = active.get(new ActiveKey(
+                    dimensionId(requiredString(owner, "dimensionId")),
+                    requiredString(owner, "cityId")));
+            if (activePlan == null || activePlan.preparedPrefabPlan() == null
+                    || !activePlan.plan().planHash().equals(requiredString(owner, "planHash"))
+                    || !activePlan.surfacePrintPlan().planHash().equals(surfaceHash)) {
+                continue;
+            }
+            int chunkX = requiredInt(owner, "chunkX");
+            int chunkZ = requiredInt(owner, "chunkZ");
+            for (CityLandUseSurfacePrefabOwnerCompiler.PlacementIdentity placement
+                    : activePlan.preparedPrefabPlan().indexedPlacements(chunkX, chunkZ)) {
+                PlacementDecisionKey key = new PlacementDecisionKey(surfaceHash, placement.placementKey());
+                if (!migrated.add(key)) continue;
+                Integer targetY = datums.get(key);
+                if (targetY == null) {
+                    throw new IllegalArgumentException(
+                            "CITY_LAND_USE_V2_APPLIED_PLACEMENT_DATUM_MISSING:"
+                                    + placement.placementKey());
+                }
+                JsonObject decision = new JsonObject();
+                decision.addProperty("surfacePrintPlanHash", surfaceHash);
+                decision.addProperty("placementKey", placement.placementKey());
+                decision.addProperty("contentHash", placement.contentHash());
+                decision.addProperty("resolvedTargetY", targetY);
+                decision.addProperty("status",
+                        CityNbtPrefabBatchPlacer.PlacementDecision.MATERIALIZE.name());
+                decision.addProperty("reasonCode",
+                        "CITY_LAND_USE_PLACEMENT_MATERIALIZE_INFERRED_FROM_V2_APPLIED_OWNER");
+                decision.addProperty("decidedAt", optionalString(owner, "appliedAt", Instant.EPOCH.toString()));
+                decisions.add(decision);
             }
         }
     }
@@ -753,8 +1004,15 @@ public final class CityLandUseWorldgenRegistry {
         JsonObject persistedLedger = ledgerExists
                 ? readObject(ledgerPath, "CITY_LAND_USE_LEDGER_READ_FAILED") : emptyLedger();
         String ledgerSchema = requiredString(persistedLedger, "schemaVersion");
-        if (!LEDGER_SCHEMA.equals(ledgerSchema) && !LEGACY_LEDGER_SCHEMA.equals(ledgerSchema)) {
+        if (!LEDGER_SCHEMA.equals(ledgerSchema)
+                && !V2_LEDGER_SCHEMA.equals(ledgerSchema)
+                && !LEGACY_LEDGER_SCHEMA.equals(ledgerSchema)) {
             throw new IllegalArgumentException("CITY_LAND_USE_LEDGER_SCHEMA_UNSUPPORTED: " + ledgerSchema);
+        }
+        boolean ledgerRequiresRewrite = !LEDGER_SCHEMA.equals(ledgerSchema);
+        if (ledgerRequiresRewrite) {
+            persistedLedger = persistedLedger.deepCopy();
+            persistedLedger.addProperty("schemaVersion", LEDGER_SCHEMA);
         }
         for (JsonElement element : requiredArray(persistedLedger, "appliedOwners")) {
             JsonObject entry = requiredObject(element, "CITY_LAND_USE_LEDGER_ENTRY_INVALID");
@@ -765,10 +1023,6 @@ public final class CityLandUseWorldgenRegistry {
             requiredInt(entry, "chunkX");
             requiredInt(entry, "chunkZ");
         }
-        if (LEGACY_LEDGER_SCHEMA.equals(ledgerSchema)) {
-            persistedLedger = persistedLedger.deepCopy();
-            persistedLedger.addProperty("schemaVersion", LEDGER_SCHEMA);
-        }
         if (!persistedLedger.has("placementDatums")) {
             persistedLedger.add("placementDatums", new JsonArray());
         }
@@ -778,7 +1032,24 @@ public final class CityLandUseWorldgenRegistry {
             requiredString(datum, "placementId");
             requiredInt(datum, "resolvedTargetY");
         }
-        return new LoadedState(Map.copyOf(active), persistedLedger, ledgerExists);
+        if (!persistedLedger.has("placementDecisions")) {
+            persistedLedger.add("placementDecisions", new JsonArray());
+        }
+        if (V2_LEDGER_SCHEMA.equals(ledgerSchema)) {
+            migrateV2AppliedPlacementDecisions(active, persistedLedger);
+        }
+        for (JsonElement element : requiredArray(persistedLedger, "placementDecisions")) {
+            JsonObject decision = requiredObject(
+                    element, "CITY_LAND_USE_PLACEMENT_DECISION_ENTRY_INVALID");
+            requiredString(decision, "surfacePrintPlanHash");
+            requiredString(decision, "placementKey");
+            requiredString(decision, "contentHash");
+            requiredInt(decision, "resolvedTargetY");
+            requiredString(decision, "status");
+            requiredString(decision, "reasonCode");
+            requiredString(decision, "decidedAt");
+        }
+        return new LoadedState(Map.copyOf(active), persistedLedger, ledgerExists, ledgerRequiresRewrite);
     }
 
     private static synchronized void persistActive() {
@@ -842,11 +1113,19 @@ public final class CityLandUseWorldgenRegistry {
         return ledger.getAsJsonArray("placementDatums");
     }
 
+    private static synchronized JsonArray placementDecisions() {
+        if (!ledger.has("placementDecisions") || !ledger.get("placementDecisions").isJsonArray()) {
+            ledger.add("placementDecisions", new JsonArray());
+        }
+        return ledger.getAsJsonArray("placementDecisions");
+    }
+
     private static JsonObject emptyLedger() {
         JsonObject root = new JsonObject();
         root.addProperty("schemaVersion", LEDGER_SCHEMA);
         root.add("appliedOwners", new JsonArray());
         root.add("placementDatums", new JsonArray());
+        root.add("placementDecisions", new JsonArray());
         return root;
     }
 
@@ -1028,6 +1307,8 @@ public final class CityLandUseWorldgenRegistry {
         ACTIVE.clear();
         PLACEMENT_DATUM_INDEX.clear();
         PLACEMENT_DATUM_IN_FLIGHT.clear();
+        PLACEMENT_DECISION_INDEX.clear();
+        PLACEMENT_DECISION_IN_FLIGHT.clear();
         IN_FLIGHT.clear();
         FEATURE_OWNER_APPLICATIONS.clear();
         FEATURE_INVOCATION_DEPTH.remove();
@@ -1147,6 +1428,28 @@ public final class CityLandUseWorldgenRegistry {
     private record PlacementDatumKey(String surfacePrintPlanHash, String placementId) {
     }
 
+    private record PlacementDecisionKey(String surfacePrintPlanHash, String placementKey) {
+    }
+
+    private record FrozenPlacementDecision(
+            PlacementDecisionKey key,
+            String contentHash,
+            int resolvedTargetY,
+            CityNbtPrefabBatchPlacer.PlacementDecision status,
+            String reasonCode,
+            String decidedAt) {
+    }
+
+    private static final class PlacementDecisionFailure extends RuntimeException {
+        private PlacementDecisionFailure(String reasonCode) {
+            super(reasonCode);
+        }
+
+        private PlacementDecisionFailure(String reasonCode, Throwable cause) {
+            super(reasonCode, cause);
+        }
+    }
+
     private record ResolvedPlacementDatum(
             CityLandUseSurfacePrefabOwnerCompiler.PlacementDatumRequest request,
             int liveSurfaceY,
@@ -1205,6 +1508,9 @@ public final class CityLandUseWorldgenRegistry {
     private record FeatureOwnerKey(String dimensionId, int chunkX, int chunkZ) {
     }
 
-    private record LoadedState(Map<ActiveKey, ActivePlan> activePlans, JsonObject ledger, boolean ledgerExists) {
+    private record LoadedState(Map<ActiveKey, ActivePlan> activePlans,
+                               JsonObject ledger,
+                               boolean ledgerExists,
+                               boolean ledgerRequiresRewrite) {
     }
 }

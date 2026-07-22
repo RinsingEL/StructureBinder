@@ -285,6 +285,163 @@ class CityLandUseWorldgenRegistryTest {
                 owner.get("appliedBoundaryOperationCount").getAsInt());
         assertEquals(1, owner.get("preparedPrefabPlacementCount").getAsInt());
         assertEquals(1, owner.get("appliedPrefabPlacementCount").getAsInt());
+        assertEquals("MATERIALIZE", ledger.getAsJsonArray("placementDecisions").get(0)
+                .getAsJsonObject().get("status").getAsString());
+    }
+
+    @Test
+    void freezesCrossOwnerFallbackBeforeFirstWriteAndReusesItAfterRestart(
+            @TempDir Path temp) throws Exception {
+        SurfaceActivation activation = surfaceActivation(temp);
+        CityLandUseWorldgenRegistry.activate("minecraft:overworld", activation.areaPlan(),
+                activation.surfacePlan(), activation.catalog(), activation.server());
+        FakeWorld westBlocks = new FakeWorld();
+        FakePrefabWorld rejectingWorld = new FakePrefabWorld();
+        rejectingWorld.rejectReplacePolicy = true;
+
+        CityLandUseWorldgenRegistry.ApplySummary west = CityLandUseWorldgenRegistry.applyForChunk(
+                "minecraft:overworld", 0, 0,
+                CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES,
+                westBlocks, rejectingWorld, -64, 319);
+
+        assertEquals(1, west.appliedOwnerCount());
+        assertEquals(0, rejectingWorld.placeCalls);
+        assertTrue(westBlocks.writes.stream().anyMatch(value -> value.contains("minecraft:wheat")));
+        JsonObject firstLedger = CityLandUseWorldgenRegistry.ledgerSnapshot();
+        assertEquals(1, firstLedger.getAsJsonArray("placementDecisions").size());
+        JsonObject decision = firstLedger.getAsJsonArray("placementDecisions").get(0).getAsJsonObject();
+        assertEquals("FALLBACK", decision.get("status").getAsString());
+        assertEquals("CITY_NBT_PREFAB_REPLACE_POLICY_REJECTED",
+                decision.get("reasonCode").getAsString());
+        assertTrue(decision.has("contentHash"));
+        assertTrue(decision.has("resolvedTargetY"));
+
+        CityLandUseWorldgenRegistry.resetForTests();
+        CityLandUseWorldgenRegistry.setCatalogReaderForTests(ignored -> activation.catalog());
+        CityLandUseWorldgenRegistry.load(activation.server());
+        FakeWorld eastBlocks = new FakeWorld();
+        FakePrefabWorld nowReplaceable = new FakePrefabWorld();
+
+        CityLandUseWorldgenRegistry.ApplySummary east = CityLandUseWorldgenRegistry.applyForChunk(
+                "minecraft:overworld", 1, 0,
+                CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES,
+                eastBlocks, nowReplaceable, -64, 319);
+
+        assertEquals(1, east.appliedOwnerCount());
+        assertEquals(0, nowReplaceable.placeCalls,
+                "the second owner must consume the frozen fallback instead of re-deciding");
+        assertTrue(eastBlocks.writes.stream().anyMatch(value -> value.contains("minecraft:wheat")));
+        assertTrue(eastBlocks.writes.contains("16,65,0=minecraft:oak_fence"),
+                "fallback must restore a boundary previously covered by the prefab footprint");
+        JsonObject reloaded = CityLandUseWorldgenRegistry.ledgerSnapshot();
+        assertEquals(1, reloaded.getAsJsonArray("placementDecisions").size());
+        assertEquals(2, reloaded.getAsJsonArray("appliedOwners").size());
+        assertTrue(reloaded.getAsJsonArray("appliedOwners").asList().stream()
+                .allMatch(value -> "skipped_content".equals(value.getAsJsonObject()
+                        .getAsJsonArray("prefabPlacementOutcomes").get(0)
+                        .getAsJsonObject().get("status").getAsString())));
+    }
+
+    @Test
+    void blocksFirstOwnerWriteWhenPlacementDecisionCannotBePersisted(
+            @TempDir Path temp) throws Exception {
+        SurfaceActivation activation = surfaceActivation(temp);
+        CityLandUseWorldgenRegistry.activate("minecraft:overworld", activation.areaPlan(),
+                activation.surfacePlan(), activation.catalog(), activation.server());
+        JsonObject ledger = CityLandUseWorldgenRegistry.ledgerSnapshot();
+        ledger.getAsJsonArray("placementDatums").add(datum(activation.surfacePlan().planHash(),
+                "area_plaza/surface/0_0/farm/surface/place", 66));
+        Files.writeString(CityLandUseWorldgenRegistry.worldgenLedgerPath(activation.server()),
+                ledger.toString());
+        CityLandUseWorldgenRegistry.resetForTests();
+        CityLandUseWorldgenRegistry.setCatalogReaderForTests(ignored -> activation.catalog());
+        CityLandUseWorldgenRegistry.load(activation.server());
+        CityLandUseWorldgenRegistry.setLedgerPersistenceWriterForTests((path, value, reason) -> {
+            throw new IllegalStateException("disk unavailable");
+        });
+        FakeWorld blocks = new FakeWorld();
+        FakePrefabWorld prefabs = new FakePrefabWorld();
+
+        CityLandUseWorldgenRegistry.ApplySummary summary = CityLandUseWorldgenRegistry.applyForChunk(
+                "minecraft:overworld", 0, 0,
+                CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES,
+                blocks, prefabs, -64, 319);
+
+        assertEquals(1, summary.failedOwnerCount());
+        assertTrue(blocks.writes.isEmpty());
+        assertEquals(0, prefabs.placeCalls);
+        assertTrue(CityLandUseWorldgenRegistry.ledgerSnapshot()
+                .getAsJsonArray("placementDecisions").isEmpty());
+    }
+
+    @Test
+    void frozenMaterializeTreatsLaterOwnerStateDriftAsHardFailure(
+            @TempDir Path temp) throws Exception {
+        SurfaceActivation activation = surfaceActivation(temp);
+        CityLandUseWorldgenRegistry.activate("minecraft:overworld", activation.areaPlan(),
+                activation.surfacePlan(), activation.catalog(), activation.server());
+        CityLandUseWorldgenRegistry.applyForChunk("minecraft:overworld", 0, 0,
+                CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES,
+                new FakeWorld(), new FakePrefabWorld(), -64, 319);
+        FakeWorld eastBlocks = new FakeWorld();
+        FakePrefabWorld changed = new FakePrefabWorld();
+        changed.rejectReplacePolicy = true;
+
+        CityLandUseWorldgenRegistry.ApplySummary east = CityLandUseWorldgenRegistry.applyForChunk(
+                "minecraft:overworld", 1, 0,
+                CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES,
+                eastBlocks, changed, -64, 319);
+
+        assertEquals(1, east.failedOwnerCount());
+        assertTrue(eastBlocks.writes.isEmpty());
+        assertEquals("MATERIALIZE", CityLandUseWorldgenRegistry.ledgerSnapshot()
+                .getAsJsonArray("placementDecisions").get(0).getAsJsonObject()
+                .get("status").getAsString());
+    }
+
+    @Test
+    void migratesV2PartiallyAppliedPlacementToMaterializeBeforeRemainingOwnerRuns(
+            @TempDir Path temp) throws Exception {
+        SurfaceActivation activation = surfaceActivation(temp);
+        CityLandUseWorldgenRegistry.activate("minecraft:overworld", activation.areaPlan(),
+                activation.surfacePlan(), activation.catalog(), activation.server());
+        CityLandUseWorldgenRegistry.applyForChunk("minecraft:overworld", 0, 0,
+                CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES,
+                new FakeWorld(), new FakePrefabWorld(), -64, 319);
+        JsonObject legacyV2 = CityLandUseWorldgenRegistry.ledgerSnapshot();
+        legacyV2.addProperty("schemaVersion", CityLandUseWorldgenRegistry.V2_LEDGER_SCHEMA);
+        legacyV2.remove("placementDecisions");
+        Files.writeString(CityLandUseWorldgenRegistry.worldgenLedgerPath(activation.server()),
+                legacyV2.toString());
+
+        CityLandUseWorldgenRegistry.resetForTests();
+        CityLandUseWorldgenRegistry.setCatalogReaderForTests(ignored -> activation.catalog());
+        CityLandUseWorldgenRegistry.load(activation.server());
+
+        JsonObject migrated = CityLandUseWorldgenRegistry.ledgerSnapshot();
+        assertEquals(CityLandUseWorldgenRegistry.LEDGER_SCHEMA,
+                migrated.get("schemaVersion").getAsString());
+        assertEquals(1, migrated.getAsJsonArray("placementDecisions").size());
+        JsonObject decision = migrated.getAsJsonArray("placementDecisions").get(0).getAsJsonObject();
+        assertEquals("MATERIALIZE", decision.get("status").getAsString());
+        assertEquals("CITY_LAND_USE_PLACEMENT_MATERIALIZE_INFERRED_FROM_V2_APPLIED_OWNER",
+                decision.get("reasonCode").getAsString());
+        JsonObject persisted = JsonParser.parseString(Files.readString(
+                CityLandUseWorldgenRegistry.worldgenLedgerPath(activation.server()))).getAsJsonObject();
+        assertEquals(CityLandUseWorldgenRegistry.LEDGER_SCHEMA,
+                persisted.get("schemaVersion").getAsString());
+
+        FakeWorld eastBlocks = new FakeWorld();
+        FakePrefabWorld changed = new FakePrefabWorld();
+        changed.rejectReplacePolicy = true;
+        CityLandUseWorldgenRegistry.ApplySummary east = CityLandUseWorldgenRegistry.applyForChunk(
+                "minecraft:overworld", 1, 0,
+                CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES,
+                eastBlocks, changed, -64, 319);
+
+        assertEquals(1, east.failedOwnerCount());
+        assertTrue(eastBlocks.writes.isEmpty(),
+                "legacy half-materialized placement must not be reclassified to fallback");
     }
 
     @Test
@@ -626,11 +783,19 @@ class CityLandUseWorldgenRegistryTest {
         private int placeCalls;
         private int restoreCalls;
         private boolean failPlacement;
+        private boolean rejectReplacePolicy;
         private final List<BlockPos> anchors = new ArrayList<>();
 
         @Override
         public boolean ensureCanWrite(BlockPos pos) {
             return true;
+        }
+
+        @Override
+        public boolean canReplace(CityNbtPrefabBatchPlacer.PlacementTarget target,
+                                  String replacePolicy,
+                                  int groundPlaneLocalY) {
+            return !rejectReplacePolicy;
         }
 
         @Override

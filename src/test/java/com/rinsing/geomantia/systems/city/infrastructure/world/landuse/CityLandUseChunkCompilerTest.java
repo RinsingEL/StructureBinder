@@ -152,7 +152,7 @@ class CityLandUseChunkCompilerTest {
         assertNoOperation(west, 14, 0, "example:rich_farmland");
         assertNoOperation(east, 18, 1, "example:rich_farmland");
         assertNoOperation(west, 15, 3, "example:rich_farmland");
-        assertFalse(west.boundaryOperations().stream()
+        assertTrue(west.boundaryOperations().stream()
                 .anyMatch(operation -> operation.x() == 15 && operation.z() == 1));
         assertTrue(west.boundaryOperations().stream()
                 .anyMatch(operation -> operation.x() == 14 && operation.z() == 1));

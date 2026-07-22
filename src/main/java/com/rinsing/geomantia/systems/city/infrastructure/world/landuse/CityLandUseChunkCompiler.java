@@ -261,7 +261,7 @@ public final class CityLandUseChunkCompiler {
                         corridorExcluded++;
                     } else if (gates.contains(cell)) {
                         gateExcluded++;
-                    } else if (!placedPrefabFootprints.contains(cell)) {
+                    } else {
                         boundaries.putIfAbsent(cell,
                                 new BoundaryOperation(areaId, landUseType, cell.x(), cell.z(), boundaryBlock));
                     }

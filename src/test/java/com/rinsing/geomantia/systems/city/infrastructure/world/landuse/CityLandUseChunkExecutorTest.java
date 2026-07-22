@@ -220,6 +220,65 @@ class CityLandUseChunkExecutorTest {
     }
 
     @Test
+    void frozenPrefabFallbackRestoresEligibleCropWithoutBlockingOtherLandUse() {
+        List<String> events = new ArrayList<>();
+        FakeWorld blockWorld = new FakeWorld(events);
+        FakePrefabWorld prefabWorld = new FakePrefabWorld(events);
+
+        CityLandUseChunkExecutor.ExecutionResult result = executor.execute(
+                fallbackFragment(), fallbackBatch(CityNbtPrefabBatchPlacer.PlacementDecision.FALLBACK),
+                blockWorld, prefabWorld,
+                CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES);
+
+        assertEquals(CityLandUseChunkExecutor.Status.APPLIED, result.status());
+        assertEquals(1, result.preparedPrefabPlacementCount());
+        assertEquals(0, result.appliedPrefabPlacementCount());
+        assertEquals(1, result.appliedPrefabFallbackOperationCount());
+        assertEquals(CityNbtPrefabBatchPlacer.PlacementStatus.SKIPPED_CONTENT,
+                result.prefabPlacementOutcomes().get(0).status());
+        assertTrue(blockWorld.writes.contains("0,64,0=minecraft:stone_bricks"));
+        assertTrue(blockWorld.writes.contains("5,64,5=minecraft:farmland"));
+        assertTrue(blockWorld.writes.contains("5,65,5=minecraft:wheat"));
+        assertTrue(blockWorld.writes.contains("5,65,5=minecraft:oak_fence"));
+        assertTrue(blockWorld.writes.stream().noneMatch(value -> value.startsWith("6,")),
+                "cells outside the compiler-provided fallback mask must stay untouched");
+        assertEquals(0, prefabWorld.placeCalls);
+    }
+
+    @Test
+    void frozenMaterializeStateDriftRemainsOwnerHardFailure() {
+        FakeWorld blockWorld = new FakeWorld();
+        FakePrefabWorld prefabWorld = new FakePrefabWorld(new ArrayList<>());
+        prefabWorld.rejectReplacePolicy = true;
+
+        CityLandUseChunkExecutor.ExecutionResult result = executor.execute(
+                fallbackFragment(), fallbackBatch(CityNbtPrefabBatchPlacer.PlacementDecision.MATERIALIZE),
+                blockWorld, prefabWorld,
+                CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES);
+
+        assertEquals(CityLandUseChunkExecutor.Status.FAILED, result.status());
+        assertEquals("CITY_NBT_PREFAB_REPLACE_POLICY_REJECTED", result.reasonCode());
+        assertTrue(blockWorld.writes.isEmpty());
+    }
+
+    @Test
+    void overlappingMaterializedPlacementKeepsFallbackCropSuppressed() {
+        FakeWorld blockWorld = new FakeWorld();
+        FakePrefabWorld prefabWorld = new FakePrefabWorld(new ArrayList<>());
+
+        CityLandUseChunkExecutor.ExecutionResult result = executor.execute(
+                fallbackFragment(), overlappingDecisionBatch(), blockWorld, prefabWorld,
+                CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES);
+
+        assertEquals(CityLandUseChunkExecutor.Status.APPLIED, result.status());
+        assertEquals(0, result.appliedPrefabFallbackOperationCount());
+        assertEquals(1, result.prefabBoundarySuppressedCount());
+        assertTrue(blockWorld.writes.stream().noneMatch(value -> value.contains("minecraft:wheat")));
+        assertTrue(blockWorld.writes.stream().noneMatch(value -> value.contains("minecraft:oak_fence")));
+        assertEquals(1, prefabWorld.placeCalls);
+    }
+
+    @Test
     void cropFailureRollsBackSuccessfulPrefabBeforeBase() {
         List<String> events = new ArrayList<>();
         FakeWorld blockWorld = new FakeWorld(events);
@@ -328,6 +387,20 @@ class CityLandUseChunkExecutorTest {
                         "minecraft:oak_fence")));
     }
 
+    private static CityLandUseChunkCompiler.ChunkFragment fallbackFragment() {
+        return new CityLandUseChunkCompiler.ChunkFragment(CityLandUseChunkCompiler.RESULT_SCHEMA,
+                "city", "hash", "palette", 0, 0, 2, 0, 0, 0,
+                null, List.of(),
+                List.of(new CityLandUseChunkCompiler.SurfaceOperation("pave", "plaza", 0, 0,
+                                "minecraft:stone_bricks", 0, false,
+                                CityLandUseChunkCompiler.SurfaceStage.BASE, 0),
+                        new CityLandUseChunkCompiler.SurfaceOperation("farm", "agriculture", 5, 5,
+                                "minecraft:farmland", 0, false,
+                                CityLandUseChunkCompiler.SurfaceStage.BASE, 0)),
+                List.of(new CityLandUseChunkCompiler.BoundaryOperation(
+                        "farm", "agriculture", 5, 5, "minecraft:oak_fence")));
+    }
+
     private static CityNbtPrefabBatchPlacer.BatchRequest prefabBatch() {
         CityNbtPrefabBatchPlacer.PrefabPlacement placement =
                 new CityNbtPrefabBatchPlacer.PrefabPlacement(
@@ -335,6 +408,52 @@ class CityLandUseChunkExecutorTest {
                         new BlockPos(5, 64, 5), 0, false);
         return new CityNbtPrefabBatchPlacer.BatchRequest(
                 "channel-batch", new BoundingBox(0, 0, 0, 15, 255, 15), List.of(placement));
+    }
+
+    private static CityNbtPrefabBatchPlacer.BatchRequest fallbackBatch(
+            CityNbtPrefabBatchPlacer.PlacementDecision decision) {
+        String placementKey = "farm/channel";
+        CityNbtPrefabBatchPlacer.SurfaceFallback fallback =
+                new CityNbtPrefabBatchPlacer.SurfaceFallback(
+                        placementKey, "farm", "minecraft:wheat", 1, true,
+                        List.of(new CityNbtPrefabBatchPlacer.SurfaceFallbackCell(5, 5),
+                                new CityNbtPrefabBatchPlacer.SurfaceFallbackCell(6, 5)));
+        CityNbtPrefabBatchPlacer.PrefabPlacement placement =
+                new CityNbtPrefabBatchPlacer.PrefabPlacement(
+                        placementKey, "geomantia:channel", "sha256:channel", oneBlockTemplate(),
+                        new BlockPos(5, 64, 5), 0, false,
+                        "surface_replaceable", 0, fallback);
+        return new CityNbtPrefabBatchPlacer.BatchRequest(
+                "channel-batch", new BoundingBox(0, 0, 0, 15, 255, 15), List.of(placement),
+                CityNbtPrefabBatchPlacer.ContentRejectionPolicy.FAIL_BATCH,
+                Map.of(placementKey, decision));
+    }
+
+    private static CityNbtPrefabBatchPlacer.BatchRequest overlappingDecisionBatch() {
+        CityNbtPrefabBatchPlacer.SurfaceFallback fallback =
+                new CityNbtPrefabBatchPlacer.SurfaceFallback(
+                        "fallback", "farm", "minecraft:wheat", 1, true,
+                        List.of(new CityNbtPrefabBatchPlacer.SurfaceFallbackCell(5, 5)));
+        CityNbtPrefabBatchPlacer.SurfaceFallback materialized =
+                new CityNbtPrefabBatchPlacer.SurfaceFallback(
+                        "materialized", "farm", "minecraft:wheat", 1, true,
+                        List.of(new CityNbtPrefabBatchPlacer.SurfaceFallbackCell(5, 5)));
+        CityNbtPrefabBatchPlacer.PrefabPlacement skippedPlacement =
+                new CityNbtPrefabBatchPlacer.PrefabPlacement(
+                        "fallback", "geomantia:channel", "sha256:fallback", oneBlockTemplate(),
+                        new BlockPos(5, 64, 5), 0, false,
+                        "surface_replaceable", 0, fallback);
+        CityNbtPrefabBatchPlacer.PrefabPlacement readyPlacement =
+                new CityNbtPrefabBatchPlacer.PrefabPlacement(
+                        "materialized", "geomantia:channel", "sha256:materialized", oneBlockTemplate(),
+                        new BlockPos(5, 64, 5), 0, false,
+                        "surface_replaceable", 0, materialized);
+        return new CityNbtPrefabBatchPlacer.BatchRequest(
+                "overlap", new BoundingBox(0, 0, 0, 15, 255, 15),
+                List.of(skippedPlacement, readyPlacement),
+                CityNbtPrefabBatchPlacer.ContentRejectionPolicy.FAIL_BATCH,
+                Map.of("fallback", CityNbtPrefabBatchPlacer.PlacementDecision.FALLBACK,
+                        "materialized", CityNbtPrefabBatchPlacer.PlacementDecision.MATERIALIZE));
     }
 
     private static CompoundTag oneBlockTemplate() {
@@ -454,6 +573,8 @@ class CityLandUseChunkExecutorTest {
     private static final class FakePrefabWorld implements CityNbtPrefabBatchPlacer.PlacementWorld {
         private final List<String> events;
         private boolean failPlacement;
+        private boolean rejectReplacePolicy;
+        private int placeCalls;
 
         private FakePrefabWorld(List<String> events) {
             this.events = events;
@@ -463,6 +584,13 @@ class CityLandUseChunkExecutorTest {
         public boolean ensureCanWrite(BlockPos pos) {
             events.add("prefab-check:" + position(pos));
             return true;
+        }
+
+        @Override
+        public boolean canReplace(CityNbtPrefabBatchPlacer.PlacementTarget target,
+                                  String replacePolicy,
+                                  int groundPlaneLocalY) {
+            return !rejectReplacePolicy;
         }
 
         @Override
@@ -485,6 +613,7 @@ class CityLandUseChunkExecutorTest {
                                      boolean ignoreTemplateAir,
                                      BoundingBox ownerBounds) {
             events.add((failPlacement ? "prefab-write-failed:" : "prefab-write:") + "channel");
+            placeCalls++;
             return !failPlacement;
         }
 

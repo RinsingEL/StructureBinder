@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -53,6 +54,13 @@ class CityLandUseSurfacePrefabOwnerCompilerTest {
         assertTrue(leftPlacement.ignoreTemplateAir());
         assertEquals("surface_replaceable", leftPlacement.replacePolicy());
         assertEquals(0, leftPlacement.groundPlaneLocalY());
+        assertEquals(CityNbtPrefabBatchPlacer.ContentRejectionPolicy.FAIL_BATCH,
+                left.contentRejectionPolicy());
+        assertEquals(List.of(
+                        new CityNbtPrefabBatchPlacer.SurfaceFallbackCell(15, 8),
+                        new CityNbtPrefabBatchPlacer.SurfaceFallbackCell(16, 8),
+                        new CityNbtPrefabBatchPlacer.SurfaceFallbackCell(17, 8)),
+                leftPlacement.surfaceFallback().cells());
         assertEquals(0, left.ownerBounds().minX());
         assertEquals(15, left.ownerBounds().maxX());
         assertEquals(16, right.ownerBounds().minX());
@@ -79,6 +87,22 @@ class CityLandUseSurfacePrefabOwnerCompilerTest {
         assertEquals(0, prepared.indexedPlacementCount(20, 20));
         assertEquals(0, resolverCalls.get(), "unrelated owner must not touch placement/template state");
         assertTrue(distant.placements().isEmpty());
+    }
+
+    @Test
+    void keepsOutOfWorldPlacementAsExplicitFallback(@TempDir Path temp) throws Exception {
+        CityDecorationContentCatalog catalog = catalog(temp);
+        CityLandUseSurfacePrintPlan.SurfacePlacement placement = placement(
+                catalog, "out_of_world", 0, new BlockPoint(4, 4), 0,
+                CityContinuousTerrainRunPlanner.Decision.PLACE, null);
+
+        CityNbtPrefabBatchPlacer.BatchRequest batch = compiler.compile(
+                plan(catalog, List.of(placement), null, null), catalog, 0, 0, 0, 63);
+
+        assertEquals(1, batch.placements().size());
+        assertEquals("CITY_NBT_PREFAB_TARGET_Y_OUT_OF_WORLD",
+                batch.placements().get(0).forcedFallbackReason());
+        assertFalse(batch.placements().get(0).surfaceFallback().cells().isEmpty());
     }
 
     @Test
@@ -195,7 +219,7 @@ class CityLandUseSurfacePrefabOwnerCompilerTest {
         CityLandUseSurfacePrintPlan.AreaPrint area = new CityLandUseSurfacePrintPlan.AreaPrint(
                 "farm/surface/0_0", "farm", List.of("farm_group"),
                 LandUseSurfaceSettings.defaults(SurfacePolicy.CULTIVATE),
-                List.of(new LandUseAreaPlan.ScanlineSpan(0, 0, 63)), List.of(),
+                memberSpans(), List.of(),
                 BlockPoint.ORIGIN, CityLandUseSurfaceRunCompiler.WorldAxis.Z, recipe);
         return new CityLandUseSurfacePrintPlan(CityLandUseSurfacePrintPlan.CURRENT_SCHEMA_VERSION,
                 "city_test", "sha256:land-use", catalogHashOverride == null
@@ -232,5 +256,13 @@ class CityLandUseSurfacePrefabOwnerCompilerTest {
             CityDecorationContentCatalog.Content content) {
         return new CityLandUseSurfaceRunCompiler.PrefabSpec(content.contentId(), content.contentHash(),
                 content.size().widthBlocks(), content.size().heightBlocks(), content.size().depthBlocks());
+    }
+
+    private static List<LandUseAreaPlan.ScanlineSpan> memberSpans() {
+        List<LandUseAreaPlan.ScanlineSpan> spans = new ArrayList<>();
+        for (int z = 0; z <= 15; z++) {
+            spans.add(new LandUseAreaPlan.ScanlineSpan(z, 0, 63));
+        }
+        return List.copyOf(spans);
     }
 }

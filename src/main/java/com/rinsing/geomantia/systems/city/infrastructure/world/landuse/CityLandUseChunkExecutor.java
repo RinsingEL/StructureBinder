@@ -105,8 +105,26 @@ public final class CityLandUseChunkExecutor {
                     ? basePrepared : cropPrepared).add(mutation);
             plannedSurfaceY.put(key, targetSurfaceY);
         }
+
+        CityNbtPrefabBatchPlacer.PreparedBatch preparedPrefab = PREFAB_PLACER.prepare(prefabBatch, prefabWorld);
+        if (!preparedPrefab.ready()) {
+            return ExecutionResult.failed(fragment, preparedPrefab.reasonCode(),
+                    preparedCount(basePrepared, cropPrepared, boundaryPrepared),
+                    preparedPrefab.placementCount(), naturalSurfaceSkipped, occupiedBoundarySkipped,
+                    0, 0, true);
+        }
+        Set<ColumnKey> materializedPrefabFootprint = new HashSet<>();
+        for (CityNbtPrefabBatchPlacer.SurfaceFallback fallback : preparedPrefab.readySurfaceFallbacks()) {
+            fallback.footprintCells().forEach(
+                    cell -> materializedPrefabFootprint.add(new ColumnKey(cell.x(), cell.z())));
+        }
+        int prefabBoundarySuppressed = 0;
         for (CityLandUseChunkCompiler.BoundaryOperation operation : fragment.boundaryOperations()) {
             ColumnKey key = new ColumnKey(operation.x(), operation.z());
+            if (materializedPrefabFootprint.contains(key)) {
+                prefabBoundarySuppressed++;
+                continue;
+            }
             ColumnSample column = terrainView.sample(operation.x(), operation.z());
             int surfaceY = plannedSurfaceY.getOrDefault(key, column.surfaceY());
             PreparedMutation mutation = prepare(blockWorld, operation.areaId(), OperationPhase.BOUNDARY,
@@ -123,13 +141,17 @@ public final class CityLandUseChunkExecutor {
             boundaryPrepared.add(mutation);
         }
 
-        int preparedBlockCount = preparedCount(basePrepared, cropPrepared, boundaryPrepared);
-        CityNbtPrefabBatchPlacer.PreparedBatch preparedPrefab = PREFAB_PLACER.prepare(prefabBatch, prefabWorld);
-        if (!preparedPrefab.ready()) {
-            return ExecutionResult.failed(fragment, preparedPrefab.reasonCode(), preparedBlockCount,
+        FallbackPreparation fallbackPreparation = prepareSkippedPrefabFallbacks(
+                fragment, blockWorld, preparedPrefab,
+                plannedSurfaceY, skippedNaturalColumns, cropPrepared);
+        if (!fallbackPreparation.ready()) {
+            return ExecutionResult.failed(fragment, fallbackPreparation.failureReason(),
+                    preparedCount(basePrepared, cropPrepared, boundaryPrepared),
                     preparedPrefab.placementCount(), naturalSurfaceSkipped, occupiedBoundarySkipped,
                     0, 0, true);
         }
+        int fallbackCropPrepared = fallbackPreparation.preparedCount();
+        int preparedBlockCount = preparedCount(basePrepared, cropPrepared, boundaryPrepared);
 
         List<PreparedMutation> baseApplied = new ArrayList<>();
         if (!apply(blockWorld, basePrepared, baseApplied)) {
@@ -172,7 +194,47 @@ public final class CityLandUseChunkExecutor {
                     prefabResult.placementCount(), rolledBack);
         }
         return ExecutionResult.applied(fragment, preparedBlockCount, preparedPrefab.placementCount(),
-                prefabResult.placementCount(), naturalSurfaceSkipped, occupiedBoundarySkipped);
+                prefabResult.placementCount(), fallbackCropPrepared, prefabBoundarySuppressed,
+                preparedPrefab.outcomes(),
+                naturalSurfaceSkipped, occupiedBoundarySkipped);
+    }
+
+    private static FallbackPreparation prepareSkippedPrefabFallbacks(
+            CityLandUseChunkCompiler.ChunkFragment fragment,
+            ExecutionWorld world,
+            CityNbtPrefabBatchPlacer.PreparedBatch preparedPrefab,
+            Map<ColumnKey, Integer> plannedSurfaceY,
+            Set<ColumnKey> skippedNaturalColumns,
+            List<PreparedMutation> cropPrepared) {
+        Set<ColumnKey> alreadyPrepared = new HashSet<>();
+        cropPrepared.forEach(mutation -> alreadyPrepared.add(new ColumnKey(mutation.x(), mutation.z())));
+        Set<ColumnKey> materialized = new HashSet<>();
+        for (CityNbtPrefabBatchPlacer.SurfaceFallback fallback : preparedPrefab.readySurfaceFallbacks()) {
+            fallback.cells().forEach(cell -> materialized.add(new ColumnKey(cell.x(), cell.z())));
+        }
+        int fallbackPrepared = 0;
+        for (CityNbtPrefabBatchPlacer.SurfaceFallback fallback : preparedPrefab.skippedSurfaceFallbacks()) {
+            for (CityNbtPrefabBatchPlacer.SurfaceFallbackCell cell : fallback.cells()) {
+                ColumnKey key = new ColumnKey(cell.x(), cell.z());
+                Integer surfaceY = plannedSurfaceY.get(key);
+                if (surfaceY == null || materialized.contains(key)
+                        || skippedNaturalColumns.contains(key) || !alreadyPrepared.add(key)) {
+                    continue;
+                }
+                PreparedMutation mutation = prepare(world, fallback.areaId(), OperationPhase.SURFACE_OVERLAY,
+                        cell.x(), surfaceY + fallback.surfaceOffset(), cell.z(), fallback.blockId(),
+                        fallback.requireReplaceableTarget());
+                if (mutation.failureReason() != null) {
+                    if ("CITY_LAND_USE_SURFACE_PRINT_TARGET_OCCUPIED".equals(mutation.failureReason())) {
+                        continue;
+                    }
+                    return FallbackPreparation.failed(mutation.failureReason());
+                }
+                cropPrepared.add(mutation);
+                fallbackPrepared++;
+            }
+        }
+        return FallbackPreparation.ready(fallbackPrepared);
     }
 
     private static boolean apply(ExecutionWorld world,
@@ -310,9 +372,17 @@ public final class CityLandUseChunkExecutor {
                                   int appliedOperationCount,
                                   int preparedPrefabPlacementCount,
                                   int appliedPrefabPlacementCount,
+                                  int appliedPrefabFallbackOperationCount,
+                                  int prefabBoundarySuppressedCount,
+                                  List<CityNbtPrefabBatchPlacer.PlacementOutcome> prefabPlacementOutcomes,
                                   int naturalSurfaceSkippedCount,
                                   int occupiedBoundarySkippedCount,
                                   boolean rollbackComplete) {
+        public ExecutionResult {
+            prefabPlacementOutcomes = List.copyOf(Objects.requireNonNull(
+                    prefabPlacementOutcomes, "prefabPlacementOutcomes"));
+        }
+
         public ExecutionResult(Status status,
                                String reasonCode,
                                String cityId,
@@ -326,18 +396,23 @@ public final class CityLandUseChunkExecutor {
                                boolean rollbackComplete) {
             this(status, reasonCode, cityId, planHash, chunkX, chunkZ,
                     preparedOperationCount, appliedOperationCount, 0, 0,
-                    naturalSurfaceSkippedCount, occupiedBoundarySkippedCount, rollbackComplete);
+                    0, 0, List.of(), naturalSurfaceSkippedCount, occupiedBoundarySkippedCount,
+                    rollbackComplete);
         }
 
         private static ExecutionResult applied(CityLandUseChunkCompiler.ChunkFragment fragment,
                                                int applied,
                                                int preparedPrefab,
                                                int appliedPrefab,
+                                               int fallbackOperations,
+                                               int boundarySuppressed,
+                                               List<CityNbtPrefabBatchPlacer.PlacementOutcome> prefabOutcomes,
                                                int naturalSkipped,
                                                int boundarySkipped) {
             return new ExecutionResult(Status.APPLIED, "CITY_LAND_USE_OWNER_APPLIED",
                     fragment.cityId(), fragment.planHash(), fragment.chunkX(), fragment.chunkZ(),
                     applied, applied, preparedPrefab, appliedPrefab,
+                    fallbackOperations, boundarySuppressed, prefabOutcomes,
                     naturalSkipped, boundarySkipped, true);
         }
 
@@ -352,13 +427,14 @@ public final class CityLandUseChunkExecutor {
                                               boolean rollbackComplete) {
             return new ExecutionResult(Status.FAILED, reason, fragment.cityId(), fragment.planHash(),
                     fragment.chunkX(), fragment.chunkZ(), prepared, applied,
-                    preparedPrefab, appliedPrefab, naturalSkipped, boundarySkipped, rollbackComplete);
+                    preparedPrefab, appliedPrefab, 0, 0, List.of(), naturalSkipped, boundarySkipped,
+                    rollbackComplete);
         }
 
         private static ExecutionResult ineligible(CityLandUseChunkCompiler.ChunkFragment fragment,
                                                   String reason) {
             return new ExecutionResult(Status.INELIGIBLE, reason, fragment.cityId(), fragment.planHash(),
-                    fragment.chunkX(), fragment.chunkZ(), 0, 0, 0, 0, 0, 0, true);
+                    fragment.chunkX(), fragment.chunkZ(), 0, 0, 0, 0, 0, 0, List.of(), 0, 0, true);
         }
     }
 
@@ -384,6 +460,20 @@ public final class CityLandUseChunkExecutor {
         private static PreparedMutation failed(String areaId, OperationPhase phase,
                                                int x, int y, int z, String blockId, String reason) {
             return new PreparedMutation(areaId, phase, x, y, z, blockId, null, reason);
+        }
+    }
+
+    private record FallbackPreparation(int preparedCount, String failureReason) {
+        private static FallbackPreparation ready(int preparedCount) {
+            return new FallbackPreparation(preparedCount, null);
+        }
+
+        private static FallbackPreparation failed(String reasonCode) {
+            return new FallbackPreparation(0, reasonCode);
+        }
+
+        private boolean ready() {
+            return failureReason == null;
         }
     }
 
@@ -531,15 +621,6 @@ public final class CityLandUseChunkExecutor {
         public boolean setBlock(int worldX, int y, int worldZ, String blockId) {
             ResourceLocation key = ResourceLocation.tryParse(blockId);
             if (key == null || !BuiltInRegistries.BLOCK.containsKey(key)) {
-                return false;
-            }
-            BlockPos pos = new BlockPos(worldX, y, worldZ);
-            return writeBlockState(this, pos, BuiltInRegistries.BLOCK.get(key).defaultBlockState());
-        }
-
-        @Override
-        public boolean restoreBlock(int worldX, int y, int worldZ, Object snapshot) {
-            if (!(snapshot instanceof BlockState expected)) {
                 return false;
             }
             return writeBlockState(this, new BlockPos(worldX, y, worldZ), expected);

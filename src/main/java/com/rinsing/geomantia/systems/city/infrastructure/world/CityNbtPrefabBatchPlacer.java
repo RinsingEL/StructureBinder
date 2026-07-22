@@ -28,37 +28,88 @@ public final class CityNbtPrefabBatchPlacer {
         return place(prepare(request, world), world);
     }
 
+    /** Resolves one placement against its complete footprint without writing any blocks. */
+    public PlacementPreflight preflight(PrefabPlacement placement, PlacementWorld world) {
+        Objects.requireNonNull(placement, "placement");
+        Objects.requireNonNull(world, "world");
+        if (placement.forcedFallbackReason() != null) {
+            return PlacementPreflight.fallback(placement.forcedFallbackReason());
+        }
+        Rotation rotation = rotation(placement.rotationDegrees());
+        Set<BlockPos> inspected = new HashSet<>();
+        for (PlacementTarget target : targets(placement.templateNbt(), placement.anchor(), rotation,
+                !placement.ignoreTemplateAir())) {
+            BlockPos pos = target.worldPos();
+            if (!inspected.add(pos)) continue;
+            try {
+                if (!world.ensureCanWrite(pos)) {
+                    return PlacementPreflight.hardFailure("CITY_NBT_PREFAB_TARGET_NOT_WRITABLE");
+                }
+                if (!world.canReplace(target, placement.replacePolicy(), placement.groundPlaneLocalY())) {
+                    return PlacementPreflight.fallback("CITY_NBT_PREFAB_REPLACE_POLICY_REJECTED");
+                }
+            } catch (RuntimeException ex) {
+                return PlacementPreflight.hardFailure("CITY_NBT_PREFAB_TARGET_STATE_UNAVAILABLE");
+            }
+        }
+        return PlacementPreflight.materialize();
+    }
+
     /** Freezes owner targets and their original snapshots without writing any blocks. */
     public PreparedBatch prepare(BatchRequest request, PlacementWorld world) {
         Objects.requireNonNull(request, "request");
         Objects.requireNonNull(world, "world");
-        List<PreparedPlacement> prepared = request.placements().stream()
+        List<PreparedPlacement> candidates = request.placements().stream()
                 .map(placement -> prepare(placement, request.ownerBounds()))
                 .toList();
 
+        List<PreparedPlacement> prepared = new ArrayList<>();
+        List<PlacementOutcome> outcomes = new ArrayList<>();
         Map<BlockPos, Object> snapshots = new LinkedHashMap<>();
-        for (PreparedPlacement placement : prepared) {
+        for (PreparedPlacement placement : candidates) {
+            PlacementDecision frozenDecision = request.placementDecisions()
+                    .get(placement.placement().placementKey());
+            if (frozenDecision == PlacementDecision.FALLBACK) {
+                outcomes.add(PlacementOutcome.skipped(placement.placement().placementKey(),
+                        fallbackReason(placement.placement())));
+                continue;
+            }
+            Map<BlockPos, Object> placementSnapshots = new LinkedHashMap<>();
+            boolean contentRejected = false;
             for (PlacementTarget target : placement.ownerTargets()) {
                 BlockPos pos = target.worldPos();
                 if (!world.ensureCanWrite(pos)) {
                     return PreparedBatch.failed(request, prepared, snapshots,
-                            "CITY_NBT_PREFAB_TARGET_NOT_WRITABLE");
+                            outcomes, "CITY_NBT_PREFAB_TARGET_NOT_WRITABLE");
                 }
                 if (!world.canReplace(target, placement.placement().replacePolicy(),
                         placement.placement().groundPlaneLocalY())) {
+                    if (frozenDecision == null
+                            && request.contentRejectionPolicy() == ContentRejectionPolicy.SKIP_PLACEMENT) {
+                        contentRejected = true;
+                        break;
+                    }
                     return PreparedBatch.failed(request, prepared, snapshots,
-                            "CITY_NBT_PREFAB_REPLACE_POLICY_REJECTED");
+                            outcomes, "CITY_NBT_PREFAB_REPLACE_POLICY_REJECTED");
                 }
-                if (snapshots.containsKey(pos)) continue;
+                if (snapshots.containsKey(pos) || placementSnapshots.containsKey(pos)) continue;
                 Object snapshot = world.snapshot(pos);
                 if (snapshot == null) {
                     return PreparedBatch.failed(request, prepared, snapshots,
-                            "CITY_NBT_PREFAB_TARGET_SNAPSHOT_UNAVAILABLE");
+                            outcomes, "CITY_NBT_PREFAB_TARGET_SNAPSHOT_UNAVAILABLE");
                 }
-                snapshots.put(pos.immutable(), snapshot);
+                placementSnapshots.put(pos.immutable(), snapshot);
             }
+            if (contentRejected) {
+                outcomes.add(PlacementOutcome.skipped(placement.placement().placementKey(),
+                        "CITY_NBT_PREFAB_REPLACE_POLICY_REJECTED"));
+                continue;
+            }
+            snapshots.putAll(placementSnapshots);
+            prepared.add(placement);
+            outcomes.add(PlacementOutcome.ready(placement.placement().placementKey()));
         }
-        return PreparedBatch.ready(request, prepared, snapshots);
+        return PreparedBatch.ready(request, prepared, snapshots, outcomes);
     }
 
     /** Applies a batch whose owner targets were already checked and snapshotted. */
@@ -113,6 +164,11 @@ public final class CityNbtPrefabBatchPlacer {
                 .filter(target -> contains(ownerBounds, target.worldPos()))
                 .toList();
         return new PreparedPlacement(placement, rotation, ownerTargets);
+    }
+
+    private static String fallbackReason(PrefabPlacement placement) {
+        return placement.forcedFallbackReason() == null
+                ? "CITY_NBT_PREFAB_REPLACE_POLICY_REJECTED" : placement.forcedFallbackReason();
     }
 
     static List<PlacementTarget> targets(CompoundTag templateNbt, BlockPos anchor, Rotation rotation,
@@ -201,29 +257,35 @@ public final class CityNbtPrefabBatchPlacer {
         private final BatchRequest request;
         private final List<PreparedPlacement> placements;
         private final Map<BlockPos, Object> snapshots;
+        private final List<PlacementOutcome> outcomes;
         private final String reasonCode;
 
         private PreparedBatch(BatchRequest request,
                               List<PreparedPlacement> placements,
                               Map<BlockPos, Object> snapshots,
+                              List<PlacementOutcome> outcomes,
                               String reasonCode) {
             this.request = request;
             this.placements = List.copyOf(placements);
             this.snapshots = Collections.unmodifiableMap(new LinkedHashMap<>(snapshots));
+            this.outcomes = List.copyOf(outcomes);
             this.reasonCode = reasonCode;
         }
 
         private static PreparedBatch ready(BatchRequest request,
-                                           List<PreparedPlacement> placements,
-                                           Map<BlockPos, Object> snapshots) {
-            return new PreparedBatch(request, placements, snapshots, "CITY_NBT_PREFAB_TARGETS_READY");
+                                            List<PreparedPlacement> placements,
+                                            Map<BlockPos, Object> snapshots,
+                                            List<PlacementOutcome> outcomes) {
+            return new PreparedBatch(request, placements, snapshots, outcomes,
+                    "CITY_NBT_PREFAB_TARGETS_READY");
         }
 
         private static PreparedBatch failed(BatchRequest request,
-                                            List<PreparedPlacement> placements,
-                                            Map<BlockPos, Object> snapshots,
-                                            String reasonCode) {
-            return new PreparedBatch(request, placements, snapshots, reasonCode);
+                                             List<PreparedPlacement> placements,
+                                             Map<BlockPos, Object> snapshots,
+                                             List<PlacementOutcome> outcomes,
+                                             String reasonCode) {
+            return new PreparedBatch(request, placements, snapshots, outcomes, reasonCode);
         }
 
         public boolean ready() {
@@ -243,6 +305,10 @@ public final class CityNbtPrefabBatchPlacer {
         }
 
         public int placementCount() {
+            return request.placements().size();
+        }
+
+        public int readyPlacementCount() {
             return placements.size();
         }
 
@@ -253,9 +319,47 @@ public final class CityNbtPrefabBatchPlacer {
         public List<BlockPos> ownerTargetPositions() {
             return List.copyOf(snapshots.keySet());
         }
+
+        public List<PlacementOutcome> outcomes() {
+            return outcomes;
+        }
+
+        public List<SurfaceFallback> skippedSurfaceFallbacks() {
+            return surfaceFallbacks(PlacementStatus.SKIPPED_CONTENT);
+        }
+
+        public List<SurfaceFallback> readySurfaceFallbacks() {
+            return surfaceFallbacks(PlacementStatus.READY);
+        }
+
+        private List<SurfaceFallback> surfaceFallbacks(PlacementStatus status) {
+            Set<String> matching = new HashSet<>();
+            outcomes.stream().filter(outcome -> outcome.status() == status)
+                    .map(PlacementOutcome::placementKey).forEach(matching::add);
+            return request.placements().stream()
+                    .filter(placement -> matching.contains(placement.placementKey()))
+                    .map(PrefabPlacement::surfaceFallback)
+                    .filter(Objects::nonNull)
+                    .toList();
+        }
     }
 
-    public record BatchRequest(String requestId, BoundingBox ownerBounds, List<PrefabPlacement> placements) {
+    public record BatchRequest(String requestId,
+                               BoundingBox ownerBounds,
+                               List<PrefabPlacement> placements,
+                               ContentRejectionPolicy contentRejectionPolicy,
+                               Map<String, PlacementDecision> placementDecisions) {
+        public BatchRequest(String requestId, BoundingBox ownerBounds, List<PrefabPlacement> placements) {
+            this(requestId, ownerBounds, placements, ContentRejectionPolicy.FAIL_BATCH, Map.of());
+        }
+
+        public BatchRequest(String requestId,
+                            BoundingBox ownerBounds,
+                            List<PrefabPlacement> placements,
+                            ContentRejectionPolicy contentRejectionPolicy) {
+            this(requestId, ownerBounds, placements, contentRejectionPolicy, Map.of());
+        }
+
         public BatchRequest {
             if (requestId == null || requestId.isBlank()) {
                 throw new IllegalArgumentException("CITY_NBT_PREFAB_REQUEST_ID_REQUIRED");
@@ -264,12 +368,24 @@ public final class CityNbtPrefabBatchPlacer {
             ownerBounds = new BoundingBox(ownerBounds.minX(), ownerBounds.minY(), ownerBounds.minZ(),
                     ownerBounds.maxX(), ownerBounds.maxY(), ownerBounds.maxZ());
             placements = List.copyOf(Objects.requireNonNull(placements, "placements"));
+            Objects.requireNonNull(contentRejectionPolicy, "contentRejectionPolicy");
+            placementDecisions = Map.copyOf(Objects.requireNonNull(
+                    placementDecisions, "placementDecisions"));
+            Set<String> placementKeys = new HashSet<>();
+            placements.forEach(placement -> placementKeys.add(placement.placementKey()));
+            if (!placementKeys.containsAll(placementDecisions.keySet())) {
+                throw new IllegalArgumentException("CITY_NBT_PREFAB_DECISION_PLACEMENT_UNKNOWN");
+            }
         }
 
         @Override
         public BoundingBox ownerBounds() {
             return new BoundingBox(ownerBounds.minX(), ownerBounds.minY(), ownerBounds.minZ(),
                     ownerBounds.maxX(), ownerBounds.maxY(), ownerBounds.maxZ());
+        }
+
+        public BatchRequest withPlacementDecisions(Map<String, PlacementDecision> decisions) {
+            return new BatchRequest(requestId, ownerBounds, placements, contentRejectionPolicy, decisions);
         }
     }
 
@@ -281,7 +397,36 @@ public final class CityNbtPrefabBatchPlacer {
                                   int rotationDegrees,
                                   boolean ignoreTemplateAir,
                                   String replacePolicy,
-                                  int groundPlaneLocalY) {
+                                  int groundPlaneLocalY,
+                                  SurfaceFallback surfaceFallback,
+                                  String forcedFallbackReason) {
+        public PrefabPlacement(String placementKey,
+                               String contentRef,
+                               String contentHash,
+                               CompoundTag templateNbt,
+                               BlockPos anchor,
+                               int rotationDegrees,
+                               boolean ignoreTemplateAir,
+                               String replacePolicy,
+                               int groundPlaneLocalY,
+                               SurfaceFallback surfaceFallback) {
+            this(placementKey, contentRef, contentHash, templateNbt, anchor, rotationDegrees,
+                    ignoreTemplateAir, replacePolicy, groundPlaneLocalY, surfaceFallback, null);
+        }
+
+        public PrefabPlacement(String placementKey,
+                               String contentRef,
+                               String contentHash,
+                               CompoundTag templateNbt,
+                               BlockPos anchor,
+                               int rotationDegrees,
+                               boolean ignoreTemplateAir,
+                               String replacePolicy,
+                               int groundPlaneLocalY) {
+            this(placementKey, contentRef, contentHash, templateNbt, anchor, rotationDegrees,
+                    ignoreTemplateAir, replacePolicy, groundPlaneLocalY, null, null);
+        }
+
         public PrefabPlacement(String placementKey,
                                String contentRef,
                                String contentHash,
@@ -290,7 +435,7 @@ public final class CityNbtPrefabBatchPlacer {
                                int rotationDegrees,
                                boolean ignoreTemplateAir) {
             this(placementKey, contentRef, contentHash, templateNbt, anchor, rotationDegrees,
-                    ignoreTemplateAir, LEGACY_REPLACE_ANY, 0);
+                    ignoreTemplateAir, LEGACY_REPLACE_ANY, 0, null, null);
         }
 
         public PrefabPlacement {
@@ -312,6 +457,9 @@ public final class CityNbtPrefabBatchPlacer {
             templateNbt = Objects.requireNonNull(templateNbt, "templateNbt").copy();
             anchor = Objects.requireNonNull(anchor, "anchor").immutable();
             rotation(rotationDegrees);
+            if (forcedFallbackReason != null && forcedFallbackReason.isBlank()) {
+                throw new IllegalArgumentException("CITY_NBT_PREFAB_FORCED_FALLBACK_REASON_INVALID");
+            }
         }
 
         @Override
@@ -343,6 +491,101 @@ public final class CityNbtPrefabBatchPlacer {
         public PlacementTarget {
             worldPos = Objects.requireNonNull(worldPos, "worldPos").immutable();
         }
+    }
+
+    public enum ContentRejectionPolicy {
+        FAIL_BATCH,
+        SKIP_PLACEMENT
+    }
+
+    public enum PlacementStatus {
+        READY,
+        SKIPPED_CONTENT
+    }
+
+    public enum PlacementDecision {
+        MATERIALIZE,
+        FALLBACK
+    }
+
+    public enum PreflightStatus {
+        MATERIALIZE,
+        FALLBACK,
+        HARD_FAILURE
+    }
+
+    public record PlacementPreflight(PreflightStatus status, String reasonCode) {
+        public PlacementPreflight {
+            Objects.requireNonNull(status, "status");
+            if (reasonCode == null || reasonCode.isBlank()) {
+                throw new IllegalArgumentException("CITY_NBT_PREFAB_PREFLIGHT_REASON_REQUIRED");
+            }
+        }
+
+        private static PlacementPreflight materialize() {
+            return new PlacementPreflight(PreflightStatus.MATERIALIZE,
+                    "CITY_NBT_PREFAB_FULL_FOOTPRINT_READY");
+        }
+
+        private static PlacementPreflight fallback(String reasonCode) {
+            return new PlacementPreflight(PreflightStatus.FALLBACK, reasonCode);
+        }
+
+        private static PlacementPreflight hardFailure(String reasonCode) {
+            return new PlacementPreflight(PreflightStatus.HARD_FAILURE, reasonCode);
+        }
+    }
+
+    public record PlacementOutcome(String placementKey, PlacementStatus status, String reasonCode) {
+        public PlacementOutcome {
+            if (placementKey == null || placementKey.isBlank()) {
+                throw new IllegalArgumentException("CITY_NBT_PREFAB_PLACEMENT_KEY_REQUIRED");
+            }
+            Objects.requireNonNull(status, "status");
+            if (reasonCode == null || reasonCode.isBlank()) {
+                throw new IllegalArgumentException("CITY_NBT_PREFAB_OUTCOME_REASON_REQUIRED");
+            }
+        }
+
+        private static PlacementOutcome ready(String placementKey) {
+            return new PlacementOutcome(placementKey, PlacementStatus.READY,
+                    "CITY_NBT_PREFAB_PLACEMENT_READY");
+        }
+
+        private static PlacementOutcome skipped(String placementKey, String reasonCode) {
+            return new PlacementOutcome(placementKey, PlacementStatus.SKIPPED_CONTENT, reasonCode);
+        }
+    }
+
+    public record SurfaceFallback(String placementKey,
+                                  String areaId,
+                                  String blockId,
+                                  int surfaceOffset,
+                                  boolean requireReplaceableTarget,
+                                  List<SurfaceFallbackCell> cells,
+                                  List<SurfaceFallbackCell> footprintCells) {
+        public SurfaceFallback(String placementKey,
+                               String areaId,
+                               String blockId,
+                               int surfaceOffset,
+                               boolean requireReplaceableTarget,
+                               List<SurfaceFallbackCell> cells) {
+            this(placementKey, areaId, blockId, surfaceOffset, requireReplaceableTarget,
+                    cells, cells);
+        }
+
+        public SurfaceFallback {
+            if (placementKey == null || placementKey.isBlank()
+                    || areaId == null || areaId.isBlank()
+                    || blockId == null || blockId.isBlank()) {
+                throw new IllegalArgumentException("CITY_NBT_PREFAB_SURFACE_FALLBACK_INVALID");
+            }
+            cells = List.copyOf(Objects.requireNonNull(cells, "cells"));
+            footprintCells = List.copyOf(Objects.requireNonNull(footprintCells, "footprintCells"));
+        }
+    }
+
+    public record SurfaceFallbackCell(int x, int z) {
     }
 
     private record PreparedPlacement(PrefabPlacement placement, Rotation rotation,

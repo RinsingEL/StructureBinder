@@ -45,8 +45,8 @@ class CityNbtPrefabBatchPlacerTest {
     @Test
     void clipsTheSamePrefabIntoSeparateOwnersAtX15And16() {
         CompoundTag template = template(List.of(new BlockPos(0, 0, 0), new BlockPos(1, 0, 0)));
-        CityNbtPrefabBatchPlacer.PrefabPlacement placement = placement(
-                "cross-owner", template, new BlockPos(15, 64, 8), 0);
+        CityNbtPrefabBatchPlacer.PrefabPlacement placement = policyPlacement(
+                "cross-owner", template, new BlockPos(15, 64, 8));
 
         FakeWorld left = new FakeWorld();
         CityNbtPrefabBatchPlacer.BatchResult leftResult = new CityNbtPrefabBatchPlacer().place(
@@ -144,6 +144,49 @@ class CityNbtPrefabBatchPlacerTest {
         assertEquals("CITY_NBT_PREFAB_REPLACE_POLICY_REJECTED", result.reasonCode());
         assertTrue(world.writes.isEmpty());
         assertEquals(List.of(anchor), world.snapshots);
+    }
+
+    @Test
+    void frozenFallbackSkipsOnlyThatPlacementAndKeepsOtherPlacementReady() {
+        CompoundTag template = template(List.of(BlockPos.ZERO));
+        CityNbtPrefabBatchPlacer.PrefabPlacement fallback = placement(
+                "fallback", template, new BlockPos(4, 64, 4), 0);
+        CityNbtPrefabBatchPlacer.PrefabPlacement materialize = placement(
+                "materialize", template, new BlockPos(5, 64, 4), 0);
+        CityNbtPrefabBatchPlacer.BatchRequest request = new CityNbtPrefabBatchPlacer.BatchRequest(
+                "decided", owner(0, 15), List.of(fallback, materialize),
+                CityNbtPrefabBatchPlacer.ContentRejectionPolicy.FAIL_BATCH,
+                Map.of("fallback", CityNbtPrefabBatchPlacer.PlacementDecision.FALLBACK,
+                        "materialize", CityNbtPrefabBatchPlacer.PlacementDecision.MATERIALIZE));
+        FakeWorld world = new FakeWorld();
+        CityNbtPrefabBatchPlacer placer = new CityNbtPrefabBatchPlacer();
+
+        CityNbtPrefabBatchPlacer.PreparedBatch prepared = placer.prepare(request, world);
+        CityNbtPrefabBatchPlacer.BatchResult result = placer.place(prepared, world);
+
+        assertTrue(prepared.ready());
+        assertEquals(2, prepared.placementCount());
+        assertEquals(1, prepared.readyPlacementCount());
+        assertEquals(CityNbtPrefabBatchPlacer.PlacementStatus.SKIPPED_CONTENT,
+                prepared.outcomes().get(0).status());
+        assertTrue(result.applied());
+        assertEquals(1, result.placementCount());
+        assertEquals(List.of(new BlockPos(5, 64, 4)), world.writes);
+    }
+
+    @Test
+    void completeFootprintPreflightDoesNotCaptureOwnerSnapshots() {
+        CompoundTag template = template(List.of(BlockPos.ZERO, new BlockPos(1, 0, 0)));
+        CityNbtPrefabBatchPlacer.PrefabPlacement placement = policyPlacement(
+                "cross-owner", template, new BlockPos(15, 64, 8));
+        FakeWorld world = new FakeWorld();
+        world.nonSurfaceReplaceable.add(new BlockPos(16, 64, 8));
+
+        CityNbtPrefabBatchPlacer.PlacementPreflight preflight =
+                new CityNbtPrefabBatchPlacer().preflight(placement, world);
+
+        assertEquals(CityNbtPrefabBatchPlacer.PreflightStatus.FALLBACK, preflight.status());
+        assertTrue(world.snapshots.isEmpty());
     }
 
     private static CityNbtPrefabBatchPlacer.BatchRequest request(

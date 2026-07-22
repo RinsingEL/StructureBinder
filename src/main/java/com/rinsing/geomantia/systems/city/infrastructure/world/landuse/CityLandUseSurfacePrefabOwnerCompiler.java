@@ -3,6 +3,7 @@ package com.rinsing.geomantia.systems.city.infrastructure.world.landuse;
 import com.rinsing.geomantia.systems.city.application.landuse.CityLandUseSurfacePrintPlan;
 import com.rinsing.geomantia.systems.city.application.landuse.CityLandUseSurfaceRunCompiler;
 import com.rinsing.geomantia.systems.city.application.terrain.CityContinuousTerrainRunPlanner;
+import com.rinsing.geomantia.systems.city.domain.landuse.LandUseAreaPlan;
 import com.rinsing.geomantia.systems.city.infrastructure.dressing.CityDecorationContentCatalog;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityNbtPrefabBatchPlacer;
 import net.minecraft.core.BlockPos;
@@ -57,7 +58,8 @@ public final class CityLandUseSurfacePrefabOwnerCompiler {
                     if (applied == null) continue;
                     validatePlacement(placement, recipe.straightPrefab(), applied);
                     IndexedPlacement indexed = new IndexedPlacement(
-                            area.printAreaId() + '/' + placement.placementId(), placement, applied);
+                            area.printAreaId() + '/' + placement.placementId(), area.landUseAreaId(),
+                            recipe.cropBlockId(), fallbackCells(area, placement), placement, applied);
                     int minChunkX = Math.floorDiv(placement.footprint().minX(), 16);
                     int maxChunkX = Math.floorDiv(placement.footprint().maxX(), 16);
                     int minChunkZ = Math.floorDiv(placement.footprint().minZ(), 16);
@@ -94,27 +96,30 @@ public final class CityLandUseSurfacePrefabOwnerCompiler {
                 new OwnerChunk(ownerChunkX, ownerChunkZ), List.of())) {
             PlacementDatumRequest datumRequest = indexed.datumRequest(prepared.plan().planHash());
             int targetY = targetYResolver.resolve(datumRequest);
-            if (targetY > worldMaxY
-                    || (long) targetY + indexed.content().size().heightBlocks() - 1L < worldMinY) {
-                continue;
-            }
+            boolean targetOutOfWorld = targetY > worldMaxY
+                    || (long) targetY + indexed.content().size().heightBlocks() - 1L < worldMinY;
             CityLandUseSurfacePrintPlan.SurfacePlacement placement = indexed.placement();
             BlockPos anchor = new BlockPos(placement.placementAnchor().x(), targetY,
                     placement.placementAnchor().z());
             CityDecorationContentCatalog.Content content = indexed.content();
             CompoundTag template = content.template();
             boolean ignoreTemplateAir = "preserve".equals(content.clearanceMode());
-            if (intersectsOwner(template, anchor, placement.rotationDegrees(), ownerBounds,
+            if (targetOutOfWorld || intersectsOwner(template, anchor, placement.rotationDegrees(), ownerBounds,
                     !ignoreTemplateAir)) {
                 placements.add(new CityNbtPrefabBatchPlacer.PrefabPlacement(
                         indexed.placementKey(), placement.appliedContentRef(),
                         placement.appliedContentHash(), template, anchor,
                         placement.rotationDegrees(), ignoreTemplateAir,
-                        content.replacePolicy(), content.groundPlaneLocalY()));
+                        content.replacePolicy(), content.groundPlaneLocalY(),
+                        new CityNbtPrefabBatchPlacer.SurfaceFallback(
+                                indexed.placementKey(), indexed.areaId(), indexed.cropBlockId(), 1, true,
+                                indexed.fallbackCells(), footprintCells(placement)),
+                        targetOutOfWorld ? "CITY_NBT_PREFAB_TARGET_Y_OUT_OF_WORLD" : null));
             }
         }
         return new CityNbtPrefabBatchPlacer.BatchRequest(
-                requestId(prepared.plan(), ownerChunkX, ownerChunkZ), ownerBounds, placements);
+                requestId(prepared.plan(), ownerChunkX, ownerChunkZ), ownerBounds, placements,
+                CityNbtPrefabBatchPlacer.ContentRejectionPolicy.FAIL_BATCH);
     }
 
     public List<PlacementDatumRequest> datumRequestsForOwner(PreparedPlan prepared,
@@ -212,6 +217,38 @@ public final class CityLandUseSurfacePrefabOwnerCompiler {
         return false;
     }
 
+    private static List<CityNbtPrefabBatchPlacer.SurfaceFallbackCell> fallbackCells(
+            CityLandUseSurfacePrintPlan.AreaPrint area,
+            CityLandUseSurfacePrintPlan.SurfacePlacement placement) {
+        List<CityNbtPrefabBatchPlacer.SurfaceFallbackCell> cells = new ArrayList<>();
+        for (int z = placement.footprint().minZ(); z <= placement.footprint().maxZ(); z++) {
+            for (int x = placement.footprint().minX(); x <= placement.footprint().maxX(); x++) {
+                if (contains(area.memberSpans(), x, z) && !contains(area.exclusionSpans(), x, z)) {
+                    cells.add(new CityNbtPrefabBatchPlacer.SurfaceFallbackCell(x, z));
+                }
+            }
+        }
+        return List.copyOf(cells);
+    }
+
+    private static List<CityNbtPrefabBatchPlacer.SurfaceFallbackCell> footprintCells(
+            CityLandUseSurfacePrintPlan.SurfacePlacement placement) {
+        List<CityNbtPrefabBatchPlacer.SurfaceFallbackCell> cells = new ArrayList<>();
+        for (int z = placement.footprint().minZ(); z <= placement.footprint().maxZ(); z++) {
+            for (int x = placement.footprint().minX(); x <= placement.footprint().maxX(); x++) {
+                cells.add(new CityNbtPrefabBatchPlacer.SurfaceFallbackCell(x, z));
+            }
+        }
+        return List.copyOf(cells);
+    }
+
+    private static boolean contains(List<LandUseAreaPlan.ScanlineSpan> spans, int x, int z) {
+        for (LandUseAreaPlan.ScanlineSpan span : spans) {
+            if (span.z() == z && x >= span.minX() && x <= span.maxX()) return true;
+        }
+        return false;
+    }
+
     private static Rotation rotation(int degrees) {
         return switch (degrees) {
             case 0 -> Rotation.NONE;
@@ -284,6 +321,13 @@ public final class CityLandUseSurfacePrefabOwnerCompiler {
             return byOwner.getOrDefault(new OwnerChunk(ownerChunkX, ownerChunkZ), List.of()).size();
         }
 
+        public List<PlacementIdentity> indexedPlacements(int ownerChunkX, int ownerChunkZ) {
+            return byOwner.getOrDefault(new OwnerChunk(ownerChunkX, ownerChunkZ), List.of()).stream()
+                    .map(indexed -> new PlacementIdentity(
+                            indexed.placementKey(), indexed.content().contentHash()))
+                    .toList();
+        }
+
         private CityLandUseSurfacePrintPlan plan() {
             return plan;
         }
@@ -294,6 +338,9 @@ public final class CityLandUseSurfacePrefabOwnerCompiler {
     }
 
     private record IndexedPlacement(String placementKey,
+                                    String areaId,
+                                    String cropBlockId,
+                                    List<CityNbtPrefabBatchPlacer.SurfaceFallbackCell> fallbackCells,
                                     CityLandUseSurfacePrintPlan.SurfacePlacement placement,
                                     CityDecorationContentCatalog.Content content) {
         private PlacementDatumRequest datumRequest(String surfacePrintPlanHash) {
@@ -303,5 +350,8 @@ public final class CityLandUseSurfacePrefabOwnerCompiler {
     }
 
     private record OwnerChunk(int chunkX, int chunkZ) {
+    }
+
+    public record PlacementIdentity(String placementKey, String contentHash) {
     }
 }
