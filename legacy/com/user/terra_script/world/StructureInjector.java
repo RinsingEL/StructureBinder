@@ -1,0 +1,422 @@
+package com.user.terra_script.world;
+
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.user.terra_script.config.StructurePlan;
+import com.user.terra_script.world.city.execution.TerrainClearStats;
+import com.user.terra_script.world.city.stage.StructurePlacementContract;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Vec3i;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.Mirror;
+import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplateManager;
+import net.minecraftforge.event.level.ChunkEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+
+@SuppressWarnings("removal")
+@Mod.EventBusSubscriber(modid = "terra_script")
+public class StructureInjector {
+    public static final class PlacementBounds {
+        public final int minX;
+        public final int minY;
+        public final int minZ;
+        public final int maxXExclusive;
+        public final int maxYExclusive;
+        public final int maxZExclusive;
+
+        private PlacementBounds(int minX, int minY, int minZ, int maxXExclusive, int maxYExclusive, int maxZExclusive) {
+            this.minX = minX;
+            this.minY = minY;
+            this.minZ = minZ;
+            this.maxXExclusive = maxXExclusive;
+            this.maxYExclusive = maxYExclusive;
+            this.maxZExclusive = maxZExclusive;
+        }
+
+        public static PlacementBounds of(int minX, int minY, int minZ, int maxXExclusive, int maxYExclusive, int maxZExclusive) {
+            return new PlacementBounds(minX, minY, minZ, maxXExclusive, maxYExclusive, maxZExclusive);
+        }
+
+        public boolean intersects(PlacementBounds other) {
+            if (other == null) return false;
+            boolean separated = this.maxXExclusive <= other.minX
+                    || this.minX >= other.maxXExclusive
+                    || this.maxYExclusive <= other.minY
+                    || this.minY >= other.maxYExclusive
+                    || this.maxZExclusive <= other.minZ
+                    || this.minZ >= other.maxZExclusive;
+            return !separated;
+        }
+    }
+
+    public static final class TemplateSnapshot {
+        public final String structureId;
+        public final BlockPos origin;
+        public final Rotation rotation;
+        public final List<BlockEntry> entries;
+
+        private TemplateSnapshot(String structureId, BlockPos origin, Rotation rotation, List<BlockEntry> entries) {
+            this.structureId = structureId;
+            this.origin = origin;
+            this.rotation = rotation;
+            this.entries = entries;
+        }
+    }
+
+    public static final class PlacementOutcome {
+        public final boolean placed;
+        public final PlacementBounds bounds;
+        public final TerrainClearStats postCleanup;
+
+        private PlacementOutcome(boolean placed, PlacementBounds bounds, TerrainClearStats postCleanup) {
+            this.placed = placed;
+            this.bounds = bounds;
+            this.postCleanup = postCleanup != null ? postCleanup : new TerrainClearStats("post_cleanup");
+        }
+
+        public static PlacementOutcome of(boolean placed, PlacementBounds bounds, TerrainClearStats postCleanup) {
+            return new PlacementOutcome(placed, bounds, postCleanup);
+        }
+
+        public static PlacementOutcome of(boolean placed, PlacementBounds bounds, int clearedJigsawBlocks, List<BlockPos> clearedJigsawSamples) {
+            TerrainClearStats postCleanup = new TerrainClearStats("post_cleanup");
+            List<BlockPos> samples = clearedJigsawSamples != null ? clearedJigsawSamples : Collections.emptyList();
+            for (BlockPos sample : samples) {
+                if (sample == null) continue;
+                postCleanup.record(sample, "minecraft:air", "jigsaw_air_fallback");
+            }
+            int remaining = Math.max(0, clearedJigsawBlocks - samples.size());
+            for (int i = 0; i < remaining; i++) {
+                postCleanup.record(null, "minecraft:air", "jigsaw_air_fallback");
+            }
+            return new PlacementOutcome(placed, bounds, postCleanup);
+        }
+
+        public static PlacementOutcome failed(PlacementBounds bounds) {
+            return new PlacementOutcome(false, bounds, new TerrainClearStats("post_cleanup"));
+        }
+    }
+
+    public static final class BlockEntry {
+        public final BlockPos pos;
+        public final BlockState state;
+
+        private BlockEntry(BlockPos pos, BlockState state) {
+            this.pos = pos;
+            this.state = state;
+        }
+    }
+
+    @SubscribeEvent
+    public static void onChunkLoad(ChunkEvent.Load event) {
+        if (event.getLevel().isClientSide()) return;
+        if (!(event.getLevel() instanceof ServerLevel level)) return;
+
+        // 安全检查：如果服务器正在关闭，不要生成，防止死锁
+        if (!level.getServer().isRunning()) return;
+
+        ChunkPos pos = event.getChunk().getPos();
+        String structId = StructurePlan.get().getStructureAt(pos.x, pos.z);
+
+        if (structId != null) {
+            // 提交给主线程执行
+            level.getServer().execute(() -> {
+                if (level.getServer().isRunning()) {
+                    spawnStructure(level, pos, structId);
+                    StructurePlan.get().removeStructure(pos.x, pos.z);
+                }
+            });
+        }
+    }
+
+    public static void spawnStructure(ServerLevel level, ChunkPos chunkPos, String structureId) {
+        spawnStructure(level, chunkPos, structureId, null);
+    }
+
+    public static void spawnStructure(ServerLevel level, ChunkPos chunkPos, String structureId, Rotation forcedRotation) {
+        StructureTemplateManager manager = level.getStructureManager();
+        ResourceLocation loc = new ResourceLocation(structureId);
+        Optional<StructureTemplate> templateOp = manager.get(loc);
+
+        if (templateOp.isEmpty()) {
+            System.err.println("[TerraScript] Structure not found: " + structureId);
+            return;
+        }
+
+        StructureTemplate template = templateOp.get();
+        Vec3i size = template.getSize();
+
+        // 1. 确定放置中心点 (区块中心)
+        int centerX = chunkPos.getMinBlockX() + 8;
+        int centerZ = chunkPos.getMinBlockZ() + 8;
+
+        // 2. 获取地面高度
+        // OCEAN_FLOOR_WG: 获取固体方块高度 (忽略树木、水)
+        // WORLD_SURFACE: 获取最高点 (包含树叶)
+        int surfaceY = level.getHeight(Heightmap.Types.OCEAN_FLOOR_WG, centerX, centerZ);
+
+        // 3. 设置随机旋转 (让村庄更自然)
+        Rotation rotation = forcedRotation != null ? forcedRotation : Rotation.values()[level.random.nextInt(Rotation.values().length)];
+
+        // 4. 计算偏移量以实现“中心对齐”
+        // 旋转后的尺寸变化
+        int rotatedWidth = (rotation == Rotation.CLOCKWISE_90 || rotation == Rotation.COUNTERCLOCKWISE_90) ? size.getZ() : size.getX();
+        int rotatedDepth = (rotation == Rotation.CLOCKWISE_90 || rotation == Rotation.COUNTERCLOCKWISE_90) ? size.getX() : size.getZ();
+
+        // 起始点 = 中心点 - (旋转后尺寸 / 2)
+        int originX = centerX - (rotatedWidth / 2);
+        int originZ = centerZ - (rotatedDepth / 2);
+
+        // 5. Y 轴落点遵循 C3.5 placement.origin_offset.y 合同。
+        int originY = StructurePlacementContract.resolveSurfaceAlignedOriginY(structureId, surfaceY);
+
+        BlockPos placePos = new BlockPos(originX, originY, originZ);
+        Bounds bounds = boundsFor(template, placePos, rotation);
+
+        // 6. 配置放置参数
+        StructurePlaceSettings settings = new StructurePlaceSettings()
+                .setRotation(rotation)
+                .setMirror(Mirror.NONE)
+                .setIgnoreEntities(false); // 是否忽略结构里自带的实体(如村民)
+
+        System.out.println("[TerraScript] Placing DIRECTLY: " + structureId + " at " + placePos + " (" + rotation + ")"
+                + " bounds=(" + bounds.minX + "," + bounds.minY + "," + bounds.minZ + ")->("
+                + (bounds.maxXExclusive - 1) + "," + (bounds.maxYExclusive - 1) + "," + (bounds.maxZExclusive - 1) + ")");
+
+        try {
+            // 7. 强行放置 (这是最关键的一步)
+            // 参数2: 坐标, 参数3: 坐标(用于完整性检查), 参数4: 设置, 参数5: 随机源, 参数6: 更新标志(2=通知客户端)
+            template.placeInWorld(level, placePos, placePos, settings, level.random, 2);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static boolean spawnStructureAtBlock(ServerLevel level, String structureId, BlockPos origin, Rotation rotation, boolean clearJigsawBlocks) {
+        return placeStructureDetailed(level, structureId, origin, rotation, clearJigsawBlocks).placed;
+    }
+
+    public static PlacementOutcome placeStructureDetailed(ServerLevel level, String structureId, BlockPos origin, Rotation rotation, boolean clearJigsawBlocks) {
+        if (level == null || structureId == null || structureId.isBlank() || origin == null) return PlacementOutcome.failed(null);
+        StructureTemplateManager manager = level.getStructureManager();
+        ResourceLocation loc = new ResourceLocation(structureId);
+        Optional<StructureTemplate> templateOp = manager.get(loc);
+        if (templateOp.isEmpty()) {
+            System.err.println("[TerraScript] Structure not found: " + structureId + " origin=" + origin + " rotation=" + rotation);
+            return PlacementOutcome.failed(null);
+        }
+        StructureTemplate template = templateOp.get();
+        Vec3i size = template.getSize();
+        Bounds bounds = boundsFor(template, origin, rotation != null ? rotation : Rotation.NONE);
+        PlacementBounds placementBounds = new PlacementBounds(
+                bounds.minX,
+                bounds.minY,
+                bounds.minZ,
+                bounds.maxXExclusive,
+                bounds.maxYExclusive,
+                bounds.maxZExclusive
+        );
+        StructurePlaceSettings settings = new StructurePlaceSettings()
+                .setRotation(rotation != null ? rotation : Rotation.NONE)
+                .setMirror(Mirror.NONE)
+                .setIgnoreEntities(false);
+        try {
+            System.out.println("[TerraScript] spawnStructureAtBlock template=" + structureId
+                    + " origin=" + origin
+                    + " rotation=" + (rotation != null ? rotation : Rotation.NONE)
+                    + " size=(" + size.getX() + "," + size.getY() + "," + size.getZ() + ")"
+                    + " bounds=(" + bounds.minX + "," + bounds.minY + "," + bounds.minZ + ")->("
+                    + (bounds.maxXExclusive - 1) + "," + (bounds.maxYExclusive - 1) + "," + (bounds.maxZExclusive - 1) + ")"
+                    + " clear_jigsaw=" + clearJigsawBlocks);
+            boolean placed = template.placeInWorld(level, origin, origin, settings, level.random, 2);
+            TerrainClearStats postCleanup = placed && clearJigsawBlocks
+                    ? finalizePlacedJigsaws(level, placementBounds)
+                    : new TerrainClearStats("post_cleanup");
+            System.out.println("[TerraScript] spawnStructureAtBlock result template=" + structureId
+                    + " origin=" + origin
+                    + " bounds=(" + bounds.minX + "," + bounds.minY + "," + bounds.minZ + ")->("
+                    + (bounds.maxXExclusive - 1) + "," + (bounds.maxYExclusive - 1) + "," + (bounds.maxZExclusive - 1) + ")"
+                    + " placed=" + placed);
+            return new PlacementOutcome(placed, placementBounds, postCleanup);
+        } catch (Exception e) {
+            System.err.println("[TerraScript] spawnStructureAtBlock exception template=" + structureId
+                    + " origin=" + origin
+                    + " rotation=" + (rotation != null ? rotation : Rotation.NONE));
+            e.printStackTrace();
+            return PlacementOutcome.failed(placementBounds);
+        }
+    }
+
+    public static TemplateSnapshot captureTemplateSnapshot(ServerLevel level, String structureId, BlockPos origin, Rotation rotation) {
+        StructureTemplate template = loadTemplate(level, structureId);
+        if (level == null || template == null || origin == null) return null;
+        Bounds bounds = boundsFor(template, origin, rotation != null ? rotation : Rotation.NONE);
+        List<BlockEntry> entries = new ArrayList<>(Math.max(1, bounds.width * bounds.depth * bounds.height));
+        for (int x = bounds.minX; x < bounds.maxXExclusive; x++) {
+            for (int y = bounds.minY; y < bounds.maxYExclusive; y++) {
+                for (int z = bounds.minZ; z < bounds.maxZExclusive; z++) {
+                    BlockPos pos = new BlockPos(x, y, z);
+                    entries.add(new BlockEntry(pos, level.getBlockState(pos)));
+                }
+            }
+        }
+        return new TemplateSnapshot(structureId, origin, rotation != null ? rotation : Rotation.NONE, entries);
+    }
+
+    public static boolean restoreTemplateSnapshot(ServerLevel level, TemplateSnapshot snapshot) {
+        if (level == null || snapshot == null || snapshot.entries == null) return false;
+        for (BlockEntry entry : snapshot.entries) {
+            if (entry == null || entry.pos == null || entry.state == null) continue;
+            level.setBlock(entry.pos, entry.state, Block.UPDATE_ALL);
+        }
+        return true;
+    }
+
+    public static Vec3i templateSize(ServerLevel level, String structureId) {
+        StructureTemplate template = loadTemplate(level, structureId);
+        return template != null ? template.getSize() : null;
+    }
+
+    public static PlacementBounds placementBounds(ServerLevel level, String structureId, BlockPos origin, Rotation rotation) {
+        StructureTemplate template = loadTemplate(level, structureId);
+        if (template == null || origin == null) return null;
+        Bounds bounds = boundsFor(template, origin, rotation != null ? rotation : Rotation.NONE);
+        return new PlacementBounds(
+                bounds.minX,
+                bounds.minY,
+                bounds.minZ,
+                bounds.maxXExclusive,
+                bounds.maxYExclusive,
+                bounds.maxZExclusive
+        );
+    }
+
+    public static TerrainClearStats finalizePlacedJigsaws(ServerLevel level, PlacementBounds bounds) {
+        TerrainClearStats stats = new TerrainClearStats("post_cleanup");
+        if (level == null || bounds == null) return stats;
+        for (int x = bounds.minX; x < bounds.maxXExclusive; x++) {
+            for (int y = bounds.minY; y < bounds.maxYExclusive; y++) {
+                for (int z = bounds.minZ; z < bounds.maxZExclusive; z++) {
+                    BlockPos pos = new BlockPos(x, y, z);
+                    if (!level.getBlockState(pos).is(Blocks.JIGSAW)) continue;
+                    BlockState replacement = resolveFinalState(level, pos);
+                    boolean parsedFinalState = replacement != null;
+                    BlockState targetState = parsedFinalState ? replacement : Blocks.AIR.defaultBlockState();
+                    if (!level.setBlock(pos, targetState, Block.UPDATE_ALL)) continue;
+                    ResourceLocation key = BuiltInRegistries.BLOCK.getKey(targetState.getBlock());
+                    stats.record(
+                            pos,
+                            key != null ? key.toString() : "minecraft:unknown",
+                            parsedFinalState ? "jigsaw_final_state" : "jigsaw_air_fallback"
+                    );
+                }
+            }
+        }
+        return stats;
+    }
+
+    private static BlockState resolveFinalState(ServerLevel level, BlockPos pos) {
+        if (level == null || pos == null) return null;
+        BlockEntity blockEntity = level.getBlockEntity(pos);
+        if (blockEntity == null) return null;
+        String finalState = readFinalState(blockEntity);
+        if (finalState == null || finalState.isBlank()) return null;
+        try {
+            return net.minecraft.commands.arguments.blocks.BlockStateParser
+                    .parseForBlock(BuiltInRegistries.BLOCK.asLookup(), finalState, true)
+                    .blockState();
+        } catch (CommandSyntaxException e) {
+            System.err.println("[TerraScript] Failed to parse jigsaw final_state at " + pos + ": " + finalState);
+            return null;
+        }
+    }
+
+    private static String readFinalState(BlockEntity blockEntity) {
+        if (blockEntity == null) return null;
+        try {
+            CompoundTag tag = blockEntity.saveWithoutMetadata();
+            return tag != null ? tag.getString("final_state") : null;
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private static StructureTemplate loadTemplate(ServerLevel level, String structureId) {
+        if (level == null || structureId == null || structureId.isBlank()) return null;
+        StructureTemplateManager manager = level.getStructureManager();
+        return manager.get(new ResourceLocation(structureId)).orElse(null);
+    }
+
+    private static Bounds boundsFor(StructureTemplate template, BlockPos origin, Rotation rotation) {
+        if (template == null || origin == null) {
+            return new Bounds(0, 0, 0, 1, 1, 1, 1, 1, 1);
+        }
+        Rotation actualRotation = rotation != null ? rotation : Rotation.NONE;
+        StructurePlaceSettings settings = new StructurePlaceSettings()
+                .setRotation(actualRotation)
+                .setMirror(Mirror.NONE);
+        BoundingBox worldBounds = template.getBoundingBox(settings, origin);
+        if (worldBounds != null) {
+            int width = Math.max(1, worldBounds.maxX() - worldBounds.minX() + 1);
+            int height = Math.max(1, worldBounds.maxY() - worldBounds.minY() + 1);
+            int depth = Math.max(1, worldBounds.maxZ() - worldBounds.minZ() + 1);
+            return new Bounds(
+                    worldBounds.minX(),
+                    worldBounds.minY(),
+                    worldBounds.minZ(),
+                    worldBounds.maxX() + 1,
+                    worldBounds.maxY() + 1,
+                    worldBounds.maxZ() + 1,
+                    width,
+                    height,
+                    depth
+            );
+        }
+        Vec3i size = template.getSize();
+        int width = (actualRotation == Rotation.CLOCKWISE_90 || actualRotation == Rotation.COUNTERCLOCKWISE_90) ? size.getZ() : size.getX();
+        int depth = (actualRotation == Rotation.CLOCKWISE_90 || actualRotation == Rotation.COUNTERCLOCKWISE_90) ? size.getX() : size.getZ();
+        int height = Math.max(1, size.getY());
+        return new Bounds(
+                origin.getX(),
+                origin.getY(),
+                origin.getZ(),
+                origin.getX() + Math.max(1, width),
+                origin.getY() + height,
+                origin.getZ() + Math.max(1, depth),
+                Math.max(1, width),
+                height,
+                Math.max(1, depth)
+        );
+    }
+
+    private record Bounds(
+            int minX,
+            int minY,
+            int minZ,
+            int maxXExclusive,
+            int maxYExclusive,
+            int maxZExclusive,
+            int width,
+            int height,
+            int depth
+    ) {}
+}

@@ -4,13 +4,103 @@
   "city_id": "city_default",
   "total_rules": 15,
   "rule_hit_counts": {
-    "commercial_shop": 10,
-    "farm": 57
+    "church": 1,
+    "civic_center": 1,
+    "commercial_shop": 12,
+    "farm": 4,
+    "meeting_point": 4,
+    "religious": 2,
+    "village_house_medium": 41,
+    "village_house_small": 21
   },
   "unmatched_structures": [
-    "trek:overworld/very_rare/coves/coves_base"
+    "trek:mobs/passive/horse",
+    "trek:village/taiga/decor/taiga_decor_1",
+    "trek:village/taiga/decor/taiga_decor_2",
+    "trek:village/taiga/decor/taiga_decor_3",
+    "trek:village/taiga/decor/taiga_decor_4",
+    "trek:village/taiga/decor/taiga_decor_5",
+    "trek:village/taiga/streets/corner_01",
+    "trek:village/taiga/streets/corner_02",
+    "trek:village/taiga/streets/crossroad_01",
+    "trek:village/taiga/streets/crossroad_02",
+    "trek:village/taiga/streets/square_01",
+    "trek:village/taiga/streets/straight_01",
+    "trek:village/taiga/streets/straight_02",
+    "trek:village/taiga/streets/straight_03",
+    "trek:village/taiga/streets/straight_04",
+    "minecraft:village/common/animals/cat_black",
+    "minecraft:village/common/animals/cat_british",
+    "minecraft:village/common/animals/cat_calico",
+    "minecraft:village/common/animals/cat_jellie",
+    "minecraft:village/common/animals/cat_persian",
+    "minecraft:village/common/animals/cat_ragdoll",
+    "minecraft:village/common/animals/cat_red",
+    "minecraft:village/common/animals/cat_siamese",
+    "minecraft:village/common/animals/cat_tabby",
+    "minecraft:village/common/animals/cat_white",
+    "minecraft:village/common/animals/cows_1",
+    "minecraft:village/common/animals/horses_1",
+    "minecraft:village/common/animals/horses_2",
+    "minecraft:village/common/animals/horses_3",
+    "minecraft:village/common/animals/horses_4",
+    "minecraft:village/common/animals/horses_5",
+    "minecraft:village/common/animals/pigs_1",
+    "minecraft:village/common/animals/sheep_1",
+    "minecraft:village/common/animals/sheep_2",
+    "minecraft:village/common/iron_golem",
+    "minecraft:village/plains/plains_lamp_1",
+    "minecraft:village/plains/streets/corner_01",
+    "minecraft:village/plains/streets/corner_02",
+    "minecraft:village/plains/streets/corner_03",
+    "minecraft:village/plains/streets/crossroad_01",
+    "minecraft:village/plains/streets/crossroad_02",
+    "minecraft:village/plains/streets/crossroad_03",
+    "minecraft:village/plains/streets/crossroad_04",
+    "minecraft:village/plains/streets/crossroad_05",
+    "minecraft:village/plains/streets/crossroad_06",
+    "minecraft:village/plains/streets/straight_01",
+    "minecraft:village/plains/streets/straight_02",
+    "minecraft:village/plains/streets/straight_03",
+    "minecraft:village/plains/streets/straight_04",
+    "minecraft:village/plains/streets/straight_05",
+    "minecraft:village/plains/streets/straight_06",
+    "minecraft:village/plains/streets/turn_01",
+    "minecraft:village/plains/villagers/baby",
+    "minecraft:village/plains/villagers/nitwit",
+    "minecraft:village/plains/villagers/unemployed",
+    "minecraft:village/plains/zombie/streets/corner_01",
+    "minecraft:village/plains/zombie/streets/corner_02",
+    "minecraft:village/plains/zombie/streets/corner_03",
+    "minecraft:village/plains/zombie/streets/crossroad_01",
+    "minecraft:village/plains/zombie/streets/crossroad_02",
+    "minecraft:village/plains/zombie/streets/crossroad_03",
+    "minecraft:village/plains/zombie/streets/crossroad_04",
+    "minecraft:village/plains/zombie/streets/crossroad_05",
+    "minecraft:village/plains/zombie/streets/crossroad_06",
+    "minecraft:village/plains/zombie/streets/straight_01",
+    "minecraft:village/plains/zombie/streets/straight_02",
+    "minecraft:village/plains/zombie/streets/straight_03",
+    "minecraft:village/plains/zombie/streets/straight_04",
+    "minecraft:village/plains/zombie/streets/straight_05",
+    "minecraft:village/plains/zombie/streets/straight_06",
+    "minecraft:village/plains/zombie/streets/turn_01",
+    "minecraft:village/plains/zombie/villagers/nitwit",
+    "minecraft:village/plains/zombie/villagers/unemployed",
+    "minecraft:village/taiga/villagers/baby",
+    "minecraft:village/taiga/villagers/nitwit",
+    "minecraft:village/taiga/villagers/unemployed"
   ],
   "multiple_match_structures": [
+    "trek:village/taiga/houses/taiga_church_1",
+    "trek:village/taiga/houses/taiga_farm_1",
+    "trek:village/taiga/houses/taiga_farm_2",
+    "trek:village/taiga/houses/taiga_farm_3",
+    "trek:village/taiga/houses/taiga_small_house_1",
+    "trek:village/taiga/houses/taiga_small_house_2",
+    "trek:village/taiga/houses/taiga_small_house_3",
+    "trek:village/taiga/houses/taiga_small_house_4",
+    "trek:village/taiga/town_centers/taiga_market_1",
     "trek:village/vanilla_files/village/desert/houses/desert_butcher_shop_1",
     "trek:village/vanilla_files/village/plains/houses/plains_butcher_shop_1",
     "trek:village/vanilla_files/village/plains/houses/plains_butcher_shop_2",
@@ -19,469 +109,317 @@
     "trek:village/vanilla_files/village/savanna/houses/savanna_butchers_shop_2",
     "trek:village/vanilla_files/village/snowy/houses/snowy_butchers_shop_1",
     "trek:village/vanilla_files/village/snowy/houses/snowy_butchers_shop_2",
-    "trek:village/vanilla_files/village/taiga/houses/taiga_butcher_shop_1"
+    "trek:village/vanilla_files/village/taiga/houses/taiga_butcher_shop_1",
+    "minecraft:village/plains/houses/plains_butcher_shop_1",
+    "minecraft:village/plains/houses/plains_butcher_shop_2",
+    "minecraft:village/plains/houses/plains_large_farm_1",
+    "minecraft:village/plains/houses/plains_meeting_point_4",
+    "minecraft:village/plains/houses/plains_meeting_point_5",
+    "minecraft:village/plains/houses/plains_small_farm_1",
+    "minecraft:village/plains/houses/plains_small_house_1",
+    "minecraft:village/plains/houses/plains_small_house_2",
+    "minecraft:village/plains/houses/plains_small_house_3",
+    "minecraft:village/plains/houses/plains_small_house_4",
+    "minecraft:village/plains/houses/plains_small_house_5",
+    "minecraft:village/plains/houses/plains_small_house_6",
+    "minecraft:village/plains/houses/plains_small_house_7",
+    "minecraft:village/plains/houses/plains_small_house_8",
+    "minecraft:village/plains/houses/plains_temple_3",
+    "minecraft:village/plains/houses/plains_temple_4",
+    "minecraft:village/plains/zombie/houses/plains_butcher_shop_2",
+    "minecraft:village/plains/zombie/houses/plains_meeting_point_4",
+    "minecraft:village/plains/zombie/houses/plains_meeting_point_5",
+    "minecraft:village/plains/zombie/houses/plains_small_house_1",
+    "minecraft:village/plains/zombie/houses/plains_small_house_2",
+    "minecraft:village/plains/zombie/houses/plains_small_house_3",
+    "minecraft:village/plains/zombie/houses/plains_small_house_4",
+    "minecraft:village/plains/zombie/houses/plains_small_house_5",
+    "minecraft:village/plains/zombie/houses/plains_small_house_6",
+    "minecraft:village/plains/zombie/houses/plains_small_house_7",
+    "minecraft:village/plains/zombie/houses/plains_small_house_8"
   ],
   "structure_matches": [
     {
-      "structure_id": "trek:overworld/very_rare/coves/coves_base",
+      "structure_id": "trek:mobs/passive/horse",
       "matched_rules": [],
       "selected_rule": "",
       "manual_override": false
     },
     {
-      "structure_id": "trek:overworld/very_rare/farm_island/farm_island_1",
+      "structure_id": "trek:village/taiga/decor/taiga_decor_1",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:village/taiga/decor/taiga_decor_2",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:village/taiga/decor/taiga_decor_3",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:village/taiga/decor/taiga_decor_4",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:village/taiga/decor/taiga_decor_5",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:village/taiga/houses/taiga_armorer_1",
       "matched_rules": [
-        "farm"
+        "village_house_medium"
+      ],
+      "selected_rule": "village_house_medium",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:village/taiga/houses/taiga_big_house_1",
+      "matched_rules": [
+        "village_house_medium"
+      ],
+      "selected_rule": "village_house_medium",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:village/taiga/houses/taiga_butcher_1",
+      "matched_rules": [
+        "village_house_medium"
+      ],
+      "selected_rule": "village_house_medium",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:village/taiga/houses/taiga_cartographer_1",
+      "matched_rules": [
+        "village_house_medium"
+      ],
+      "selected_rule": "village_house_medium",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:village/taiga/houses/taiga_church_1",
+      "matched_rules": [
+        "church",
+        "village_house_medium"
+      ],
+      "selected_rule": "church",
+      "manual_override": false
+    },
+    {
+      "structure_id": "trek:village/taiga/houses/taiga_farm_1",
+      "matched_rules": [
+        "farm",
+        "village_house_medium"
       ],
       "selected_rule": "farm",
       "manual_override": false
     },
     {
-      "structure_id": "trek:overworld/very_rare/farm_island/farm_island_2",
+      "structure_id": "trek:village/taiga/houses/taiga_farm_2",
       "matched_rules": [
-        "farm"
+        "farm",
+        "village_house_medium"
       ],
       "selected_rule": "farm",
       "manual_override": false
     },
     {
-      "structure_id": "trek:overworld/very_rare/farm_island/farm_island_3",
+      "structure_id": "trek:village/taiga/houses/taiga_farm_3",
       "matched_rules": [
-        "farm"
+        "farm",
+        "village_house_medium"
       ],
       "selected_rule": "farm",
       "manual_override": false
     },
     {
-      "structure_id": "trek:overworld/very_rare/floating_farm_large/1",
+      "structure_id": "trek:village/taiga/houses/taiga_fletcher_1",
       "matched_rules": [
-        "farm"
+        "village_house_medium"
       ],
-      "selected_rule": "farm",
+      "selected_rule": "village_house_medium",
       "manual_override": false
     },
     {
-      "structure_id": "trek:overworld/very_rare/floating_farm_large/1_1",
+      "structure_id": "trek:village/taiga/houses/taiga_library_1",
       "matched_rules": [
-        "farm"
+        "village_house_medium"
       ],
-      "selected_rule": "farm",
+      "selected_rule": "village_house_medium",
       "manual_override": false
     },
     {
-      "structure_id": "trek:overworld/very_rare/floating_farm_large/2",
+      "structure_id": "trek:village/taiga/houses/taiga_mason_1",
       "matched_rules": [
-        "farm"
+        "village_house_medium"
       ],
-      "selected_rule": "farm",
+      "selected_rule": "village_house_medium",
       "manual_override": false
     },
     {
-      "structure_id": "trek:overworld/very_rare/floating_farm_large/2_1",
+      "structure_id": "trek:village/taiga/houses/taiga_medium_house_1",
       "matched_rules": [
-        "farm"
+        "village_house_medium"
       ],
-      "selected_rule": "farm",
+      "selected_rule": "village_house_medium",
       "manual_override": false
     },
     {
-      "structure_id": "trek:overworld/very_rare/floating_farm_large/2_2",
+      "structure_id": "trek:village/taiga/houses/taiga_medium_house_2",
       "matched_rules": [
-        "farm"
+        "village_house_medium"
       ],
-      "selected_rule": "farm",
+      "selected_rule": "village_house_medium",
       "manual_override": false
     },
     {
-      "structure_id": "trek:overworld/very_rare/floating_farm_large/3",
+      "structure_id": "trek:village/taiga/houses/taiga_shepherd_1",
       "matched_rules": [
-        "farm"
+        "village_house_medium"
       ],
-      "selected_rule": "farm",
+      "selected_rule": "village_house_medium",
       "manual_override": false
     },
     {
-      "structure_id": "trek:overworld/very_rare/floating_farm_large/3_1",
+      "structure_id": "trek:village/taiga/houses/taiga_small_house_1",
       "matched_rules": [
-        "farm"
+        "village_house_small",
+        "village_house_medium"
       ],
-      "selected_rule": "farm",
+      "selected_rule": "village_house_small",
       "manual_override": false
     },
     {
-      "structure_id": "trek:overworld/very_rare/floating_farm_large/4",
+      "structure_id": "trek:village/taiga/houses/taiga_small_house_2",
       "matched_rules": [
-        "farm"
+        "village_house_small",
+        "village_house_medium"
       ],
-      "selected_rule": "farm",
+      "selected_rule": "village_house_small",
       "manual_override": false
     },
     {
-      "structure_id": "trek:overworld/very_rare/floating_farm_large/4_1",
+      "structure_id": "trek:village/taiga/houses/taiga_small_house_3",
       "matched_rules": [
-        "farm"
+        "village_house_small",
+        "village_house_medium"
       ],
-      "selected_rule": "farm",
+      "selected_rule": "village_house_small",
       "manual_override": false
     },
     {
-      "structure_id": "trek:overworld/very_rare/floating_farm_large/4_2",
+      "structure_id": "trek:village/taiga/houses/taiga_small_house_4",
       "matched_rules": [
-        "farm"
+        "village_house_small",
+        "village_house_medium"
       ],
-      "selected_rule": "farm",
+      "selected_rule": "village_house_small",
       "manual_override": false
     },
     {
-      "structure_id": "trek:overworld/very_rare/floating_farm_large/5",
+      "structure_id": "trek:village/taiga/houses/taiga_stable_1",
       "matched_rules": [
-        "farm"
+        "village_house_medium"
       ],
-      "selected_rule": "farm",
+      "selected_rule": "village_house_medium",
       "manual_override": false
     },
     {
-      "structure_id": "trek:overworld/very_rare/floating_farm_large/5_1",
+      "structure_id": "trek:village/taiga/houses/taiga_tannery_1",
       "matched_rules": [
-        "farm"
+        "village_house_medium"
       ],
-      "selected_rule": "farm",
+      "selected_rule": "village_house_medium",
       "manual_override": false
     },
     {
-      "structure_id": "trek:overworld/very_rare/floating_farm_large/6",
+      "structure_id": "trek:village/taiga/houses/taiga_toolsmith_1",
       "matched_rules": [
-        "farm"
+        "village_house_medium"
       ],
-      "selected_rule": "farm",
+      "selected_rule": "village_house_medium",
       "manual_override": false
     },
     {
-      "structure_id": "trek:overworld/very_rare/floating_farm_large/6_1",
+      "structure_id": "trek:village/taiga/houses/taiga_weaponsmith_1",
       "matched_rules": [
-        "farm"
+        "village_house_medium"
       ],
-      "selected_rule": "farm",
+      "selected_rule": "village_house_medium",
       "manual_override": false
     },
     {
-      "structure_id": "trek:overworld/very_rare/floating_farm_large/6_2",
-      "matched_rules": [
-        "farm"
-      ],
-      "selected_rule": "farm",
+      "structure_id": "trek:village/taiga/streets/corner_01",
+      "matched_rules": [],
+      "selected_rule": "",
       "manual_override": false
     },
     {
-      "structure_id": "trek:overworld/very_rare/floating_farm_large/7",
-      "matched_rules": [
-        "farm"
-      ],
-      "selected_rule": "farm",
+      "structure_id": "trek:village/taiga/streets/corner_02",
+      "matched_rules": [],
+      "selected_rule": "",
       "manual_override": false
     },
     {
-      "structure_id": "trek:overworld/very_rare/floating_farm_large/7_1",
-      "matched_rules": [
-        "farm"
-      ],
-      "selected_rule": "farm",
+      "structure_id": "trek:village/taiga/streets/crossroad_01",
+      "matched_rules": [],
+      "selected_rule": "",
       "manual_override": false
     },
     {
-      "structure_id": "trek:overworld/very_rare/floating_farm_large/8",
-      "matched_rules": [
-        "farm"
-      ],
-      "selected_rule": "farm",
+      "structure_id": "trek:village/taiga/streets/crossroad_02",
+      "matched_rules": [],
+      "selected_rule": "",
       "manual_override": false
     },
     {
-      "structure_id": "trek:overworld/very_rare/floating_farm_large/8_1",
-      "matched_rules": [
-        "farm"
-      ],
-      "selected_rule": "farm",
+      "structure_id": "trek:village/taiga/streets/square_01",
+      "matched_rules": [],
+      "selected_rule": "",
       "manual_override": false
     },
     {
-      "structure_id": "trek:overworld/very_rare/floating_farm_large/8_2",
-      "matched_rules": [
-        "farm"
-      ],
-      "selected_rule": "farm",
+      "structure_id": "trek:village/taiga/streets/straight_01",
+      "matched_rules": [],
+      "selected_rule": "",
       "manual_override": false
     },
     {
-      "structure_id": "trek:overworld/very_rare/floating_farm_large/centre",
-      "matched_rules": [
-        "farm"
-      ],
-      "selected_rule": "farm",
+      "structure_id": "trek:village/taiga/streets/straight_02",
+      "matched_rules": [],
+      "selected_rule": "",
       "manual_override": false
     },
     {
-      "structure_id": "trek:overworld/very_rare/floating_farm_large/centre_down",
-      "matched_rules": [
-        "farm"
-      ],
-      "selected_rule": "farm",
+      "structure_id": "trek:village/taiga/streets/straight_03",
+      "matched_rules": [],
+      "selected_rule": "",
       "manual_override": false
     },
     {
-      "structure_id": "trek:overworld/very_rare/floating_farm_large/centre_up",
-      "matched_rules": [
-        "farm"
-      ],
-      "selected_rule": "farm",
+      "structure_id": "trek:village/taiga/streets/straight_04",
+      "matched_rules": [],
+      "selected_rule": "",
       "manual_override": false
     },
     {
-      "structure_id": "trek:overworld/very_rare/floating_farm_large/centre_up_up",
+      "structure_id": "trek:village/taiga/town_centers/taiga_market_1",
       "matched_rules": [
-        "farm"
+        "civic_center",
+        "market"
       ],
-      "selected_rule": "farm",
-      "manual_override": false
-    },
-    {
-      "structure_id": "trek:overworld/very_rare/floating_farm_large/down_1",
-      "matched_rules": [
-        "farm"
-      ],
-      "selected_rule": "farm",
-      "manual_override": false
-    },
-    {
-      "structure_id": "trek:overworld/very_rare/floating_farm_large/down_3",
-      "matched_rules": [
-        "farm"
-      ],
-      "selected_rule": "farm",
-      "manual_override": false
-    },
-    {
-      "structure_id": "trek:overworld/very_rare/floating_farm_large/down_4",
-      "matched_rules": [
-        "farm"
-      ],
-      "selected_rule": "farm",
-      "manual_override": false
-    },
-    {
-      "structure_id": "trek:overworld/very_rare/floating_farm_large/down_5",
-      "matched_rules": [
-        "farm"
-      ],
-      "selected_rule": "farm",
-      "manual_override": false
-    },
-    {
-      "structure_id": "trek:overworld/very_rare/floating_farm_large/down_6",
-      "matched_rules": [
-        "farm"
-      ],
-      "selected_rule": "farm",
-      "manual_override": false
-    },
-    {
-      "structure_id": "trek:overworld/very_rare/floating_farm_large/down_7",
-      "matched_rules": [
-        "farm"
-      ],
-      "selected_rule": "farm",
-      "manual_override": false
-    },
-    {
-      "structure_id": "trek:overworld/very_rare/floating_farm_large/down_7_1",
-      "matched_rules": [
-        "farm"
-      ],
-      "selected_rule": "farm",
-      "manual_override": false
-    },
-    {
-      "structure_id": "trek:overworld/very_rare/floating_farm_large/down_8",
-      "matched_rules": [
-        "farm"
-      ],
-      "selected_rule": "farm",
-      "manual_override": false
-    },
-    {
-      "structure_id": "trek:overworld/very_rare/floating_farm_large/up_1",
-      "matched_rules": [
-        "farm"
-      ],
-      "selected_rule": "farm",
-      "manual_override": false
-    },
-    {
-      "structure_id": "trek:overworld/very_rare/floating_farm_large/up_1_1",
-      "matched_rules": [
-        "farm"
-      ],
-      "selected_rule": "farm",
-      "manual_override": false
-    },
-    {
-      "structure_id": "trek:overworld/very_rare/floating_farm_large/up_2",
-      "matched_rules": [
-        "farm"
-      ],
-      "selected_rule": "farm",
-      "manual_override": false
-    },
-    {
-      "structure_id": "trek:overworld/very_rare/floating_farm_large/up_2_1",
-      "matched_rules": [
-        "farm"
-      ],
-      "selected_rule": "farm",
-      "manual_override": false
-    },
-    {
-      "structure_id": "trek:overworld/very_rare/floating_farm_large/up_2_2",
-      "matched_rules": [
-        "farm"
-      ],
-      "selected_rule": "farm",
-      "manual_override": false
-    },
-    {
-      "structure_id": "trek:overworld/very_rare/floating_farm_large/up_3",
-      "matched_rules": [
-        "farm"
-      ],
-      "selected_rule": "farm",
-      "manual_override": false
-    },
-    {
-      "structure_id": "trek:overworld/very_rare/floating_farm_large/up_3_1",
-      "matched_rules": [
-        "farm"
-      ],
-      "selected_rule": "farm",
-      "manual_override": false
-    },
-    {
-      "structure_id": "trek:overworld/very_rare/floating_farm_large/up_4",
-      "matched_rules": [
-        "farm"
-      ],
-      "selected_rule": "farm",
-      "manual_override": false
-    },
-    {
-      "structure_id": "trek:overworld/very_rare/floating_farm_large/up_4_1",
-      "matched_rules": [
-        "farm"
-      ],
-      "selected_rule": "farm",
-      "manual_override": false
-    },
-    {
-      "structure_id": "trek:overworld/very_rare/floating_farm_large/up_4_2",
-      "matched_rules": [
-        "farm"
-      ],
-      "selected_rule": "farm",
-      "manual_override": false
-    },
-    {
-      "structure_id": "trek:overworld/very_rare/floating_farm_large/up_5",
-      "matched_rules": [
-        "farm"
-      ],
-      "selected_rule": "farm",
-      "manual_override": false
-    },
-    {
-      "structure_id": "trek:overworld/very_rare/floating_farm_large/up_5_1",
-      "matched_rules": [
-        "farm"
-      ],
-      "selected_rule": "farm",
-      "manual_override": false
-    },
-    {
-      "structure_id": "trek:overworld/very_rare/floating_farm_large/up_6",
-      "matched_rules": [
-        "farm"
-      ],
-      "selected_rule": "farm",
-      "manual_override": false
-    },
-    {
-      "structure_id": "trek:overworld/very_rare/floating_farm_large/up_6_1",
-      "matched_rules": [
-        "farm"
-      ],
-      "selected_rule": "farm",
-      "manual_override": false
-    },
-    {
-      "structure_id": "trek:overworld/very_rare/floating_farm_large/up_6_2",
-      "matched_rules": [
-        "farm"
-      ],
-      "selected_rule": "farm",
-      "manual_override": false
-    },
-    {
-      "structure_id": "trek:overworld/very_rare/floating_farm_large/up_7",
-      "matched_rules": [
-        "farm"
-      ],
-      "selected_rule": "farm",
-      "manual_override": false
-    },
-    {
-      "structure_id": "trek:overworld/very_rare/floating_farm_large/up_7_1",
-      "matched_rules": [
-        "farm"
-      ],
-      "selected_rule": "farm",
-      "manual_override": false
-    },
-    {
-      "structure_id": "trek:overworld/very_rare/floating_farm_large/up_8",
-      "matched_rules": [
-        "farm"
-      ],
-      "selected_rule": "farm",
-      "manual_override": false
-    },
-    {
-      "structure_id": "trek:overworld/very_rare/floating_farm_large/up_8_1",
-      "matched_rules": [
-        "farm"
-      ],
-      "selected_rule": "farm",
-      "manual_override": false
-    },
-    {
-      "structure_id": "trek:overworld/very_rare/floating_farm_large/up_8_2",
-      "matched_rules": [
-        "farm"
-      ],
-      "selected_rule": "farm",
-      "manual_override": false
-    },
-    {
-      "structure_id": "trek:overworld/very_rare/floating_farm_large/up_up_7",
-      "matched_rules": [
-        "farm"
-      ],
-      "selected_rule": "farm",
-      "manual_override": false
-    },
-    {
-      "structure_id": "trek:overworld/very_rare/floating_farm_large/up_up_8",
-      "matched_rules": [
-        "farm"
-      ],
-      "selected_rule": "farm",
+      "selected_rule": "civic_center",
       "manual_override": false
     },
     {
@@ -566,11 +504,829 @@
       "manual_override": false
     },
     {
-      "structure_id": "villager_fish_shop:smallfishinshop",
+      "structure_id": "minecraft:village/common/animals/cat_black",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/common/animals/cat_british",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/common/animals/cat_calico",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/common/animals/cat_jellie",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/common/animals/cat_persian",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/common/animals/cat_ragdoll",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/common/animals/cat_red",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/common/animals/cat_siamese",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/common/animals/cat_tabby",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/common/animals/cat_white",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/common/animals/cows_1",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/common/animals/horses_1",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/common/animals/horses_2",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/common/animals/horses_3",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/common/animals/horses_4",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/common/animals/horses_5",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/common/animals/pigs_1",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/common/animals/sheep_1",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/common/animals/sheep_2",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/common/iron_golem",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/houses/plains_accessory_1",
       "matched_rules": [
-        "commercial_shop"
+        "village_house_medium"
+      ],
+      "selected_rule": "village_house_medium",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/houses/plains_animal_pen_1",
+      "matched_rules": [
+        "village_house_medium"
+      ],
+      "selected_rule": "village_house_medium",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/houses/plains_animal_pen_2",
+      "matched_rules": [
+        "village_house_medium"
+      ],
+      "selected_rule": "village_house_medium",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/houses/plains_animal_pen_3",
+      "matched_rules": [
+        "village_house_medium"
+      ],
+      "selected_rule": "village_house_medium",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/houses/plains_armorer_house_1",
+      "matched_rules": [
+        "village_house_medium"
+      ],
+      "selected_rule": "village_house_medium",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/houses/plains_big_house_1",
+      "matched_rules": [
+        "village_house_medium"
+      ],
+      "selected_rule": "village_house_medium",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/houses/plains_butcher_shop_1",
+      "matched_rules": [
+        "commercial_shop",
+        "village_house_medium"
       ],
       "selected_rule": "commercial_shop",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/houses/plains_butcher_shop_2",
+      "matched_rules": [
+        "commercial_shop",
+        "village_house_medium"
+      ],
+      "selected_rule": "commercial_shop",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/houses/plains_cartographer_1",
+      "matched_rules": [
+        "village_house_medium"
+      ],
+      "selected_rule": "village_house_medium",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/houses/plains_fisher_cottage_1",
+      "matched_rules": [
+        "village_house_medium"
+      ],
+      "selected_rule": "village_house_medium",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/houses/plains_fletcher_house_1",
+      "matched_rules": [
+        "village_house_medium"
+      ],
+      "selected_rule": "village_house_medium",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/houses/plains_large_farm_1",
+      "matched_rules": [
+        "farm",
+        "village_house_medium"
+      ],
+      "selected_rule": "farm",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/houses/plains_library_1",
+      "matched_rules": [
+        "village_house_medium"
+      ],
+      "selected_rule": "village_house_medium",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/houses/plains_library_2",
+      "matched_rules": [
+        "village_house_medium"
+      ],
+      "selected_rule": "village_house_medium",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/houses/plains_masons_house_1",
+      "matched_rules": [
+        "village_house_medium"
+      ],
+      "selected_rule": "village_house_medium",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/houses/plains_medium_house_1",
+      "matched_rules": [
+        "village_house_medium"
+      ],
+      "selected_rule": "village_house_medium",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/houses/plains_medium_house_2",
+      "matched_rules": [
+        "village_house_medium"
+      ],
+      "selected_rule": "village_house_medium",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/houses/plains_meeting_point_4",
+      "matched_rules": [
+        "meeting_point",
+        "village_house_medium"
+      ],
+      "selected_rule": "meeting_point",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/houses/plains_meeting_point_5",
+      "matched_rules": [
+        "meeting_point",
+        "village_house_medium"
+      ],
+      "selected_rule": "meeting_point",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/houses/plains_shepherds_house_1",
+      "matched_rules": [
+        "village_house_medium"
+      ],
+      "selected_rule": "village_house_medium",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/houses/plains_small_farm_1",
+      "matched_rules": [
+        "village_house_small",
+        "farm",
+        "village_house_medium"
+      ],
+      "selected_rule": "village_house_small",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/houses/plains_small_house_1",
+      "matched_rules": [
+        "village_house_small",
+        "village_house_medium"
+      ],
+      "selected_rule": "village_house_small",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/houses/plains_small_house_2",
+      "matched_rules": [
+        "village_house_small",
+        "village_house_medium"
+      ],
+      "selected_rule": "village_house_small",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/houses/plains_small_house_3",
+      "matched_rules": [
+        "village_house_small",
+        "village_house_medium"
+      ],
+      "selected_rule": "village_house_small",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/houses/plains_small_house_4",
+      "matched_rules": [
+        "village_house_small",
+        "village_house_medium"
+      ],
+      "selected_rule": "village_house_small",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/houses/plains_small_house_5",
+      "matched_rules": [
+        "village_house_small",
+        "village_house_medium"
+      ],
+      "selected_rule": "village_house_small",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/houses/plains_small_house_6",
+      "matched_rules": [
+        "village_house_small",
+        "village_house_medium"
+      ],
+      "selected_rule": "village_house_small",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/houses/plains_small_house_7",
+      "matched_rules": [
+        "village_house_small",
+        "village_house_medium"
+      ],
+      "selected_rule": "village_house_small",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/houses/plains_small_house_8",
+      "matched_rules": [
+        "village_house_small",
+        "village_house_medium"
+      ],
+      "selected_rule": "village_house_small",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/houses/plains_stable_1",
+      "matched_rules": [
+        "village_house_medium"
+      ],
+      "selected_rule": "village_house_medium",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/houses/plains_stable_2",
+      "matched_rules": [
+        "village_house_medium"
+      ],
+      "selected_rule": "village_house_medium",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/houses/plains_tannery_1",
+      "matched_rules": [
+        "village_house_medium"
+      ],
+      "selected_rule": "village_house_medium",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/houses/plains_temple_3",
+      "matched_rules": [
+        "religious",
+        "village_house_medium"
+      ],
+      "selected_rule": "religious",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/houses/plains_temple_4",
+      "matched_rules": [
+        "religious",
+        "village_house_medium"
+      ],
+      "selected_rule": "religious",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/houses/plains_tool_smith_1",
+      "matched_rules": [
+        "village_house_medium"
+      ],
+      "selected_rule": "village_house_medium",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/houses/plains_weaponsmith_1",
+      "matched_rules": [
+        "village_house_medium"
+      ],
+      "selected_rule": "village_house_medium",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/plains_lamp_1",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/streets/corner_01",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/streets/corner_02",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/streets/corner_03",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/streets/crossroad_01",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/streets/crossroad_02",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/streets/crossroad_03",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/streets/crossroad_04",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/streets/crossroad_05",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/streets/crossroad_06",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/streets/straight_01",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/streets/straight_02",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/streets/straight_03",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/streets/straight_04",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/streets/straight_05",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/streets/straight_06",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/streets/turn_01",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/villagers/baby",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/villagers/nitwit",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/villagers/unemployed",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/zombie/houses/plains_animal_pen_3",
+      "matched_rules": [
+        "village_house_medium"
+      ],
+      "selected_rule": "village_house_medium",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/zombie/houses/plains_big_house_1",
+      "matched_rules": [
+        "village_house_medium"
+      ],
+      "selected_rule": "village_house_medium",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/zombie/houses/plains_butcher_shop_2",
+      "matched_rules": [
+        "commercial_shop",
+        "village_house_medium"
+      ],
+      "selected_rule": "commercial_shop",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/zombie/houses/plains_fletcher_house_1",
+      "matched_rules": [
+        "village_house_medium"
+      ],
+      "selected_rule": "village_house_medium",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/zombie/houses/plains_medium_house_1",
+      "matched_rules": [
+        "village_house_medium"
+      ],
+      "selected_rule": "village_house_medium",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/zombie/houses/plains_medium_house_2",
+      "matched_rules": [
+        "village_house_medium"
+      ],
+      "selected_rule": "village_house_medium",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/zombie/houses/plains_meeting_point_4",
+      "matched_rules": [
+        "meeting_point",
+        "village_house_medium"
+      ],
+      "selected_rule": "meeting_point",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/zombie/houses/plains_meeting_point_5",
+      "matched_rules": [
+        "meeting_point",
+        "village_house_medium"
+      ],
+      "selected_rule": "meeting_point",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/zombie/houses/plains_shepherds_house_1",
+      "matched_rules": [
+        "village_house_medium"
+      ],
+      "selected_rule": "village_house_medium",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/zombie/houses/plains_small_house_1",
+      "matched_rules": [
+        "village_house_small",
+        "village_house_medium"
+      ],
+      "selected_rule": "village_house_small",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/zombie/houses/plains_small_house_2",
+      "matched_rules": [
+        "village_house_small",
+        "village_house_medium"
+      ],
+      "selected_rule": "village_house_small",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/zombie/houses/plains_small_house_3",
+      "matched_rules": [
+        "village_house_small",
+        "village_house_medium"
+      ],
+      "selected_rule": "village_house_small",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/zombie/houses/plains_small_house_4",
+      "matched_rules": [
+        "village_house_small",
+        "village_house_medium"
+      ],
+      "selected_rule": "village_house_small",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/zombie/houses/plains_small_house_5",
+      "matched_rules": [
+        "village_house_small",
+        "village_house_medium"
+      ],
+      "selected_rule": "village_house_small",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/zombie/houses/plains_small_house_6",
+      "matched_rules": [
+        "village_house_small",
+        "village_house_medium"
+      ],
+      "selected_rule": "village_house_small",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/zombie/houses/plains_small_house_7",
+      "matched_rules": [
+        "village_house_small",
+        "village_house_medium"
+      ],
+      "selected_rule": "village_house_small",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/zombie/houses/plains_small_house_8",
+      "matched_rules": [
+        "village_house_small",
+        "village_house_medium"
+      ],
+      "selected_rule": "village_house_small",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/zombie/houses/plains_stable_1",
+      "matched_rules": [
+        "village_house_medium"
+      ],
+      "selected_rule": "village_house_medium",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/zombie/streets/corner_01",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/zombie/streets/corner_02",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/zombie/streets/corner_03",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/zombie/streets/crossroad_01",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/zombie/streets/crossroad_02",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/zombie/streets/crossroad_03",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/zombie/streets/crossroad_04",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/zombie/streets/crossroad_05",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/zombie/streets/crossroad_06",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/zombie/streets/straight_01",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/zombie/streets/straight_02",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/zombie/streets/straight_03",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/zombie/streets/straight_04",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/zombie/streets/straight_05",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/zombie/streets/straight_06",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/zombie/streets/turn_01",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/zombie/villagers/nitwit",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/plains/zombie/villagers/unemployed",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/taiga/villagers/baby",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/taiga/villagers/nitwit",
+      "matched_rules": [],
+      "selected_rule": "",
+      "manual_override": false
+    },
+    {
+      "structure_id": "minecraft:village/taiga/villagers/unemployed",
+      "matched_rules": [],
+      "selected_rule": "",
       "manual_override": false
     }
   ]

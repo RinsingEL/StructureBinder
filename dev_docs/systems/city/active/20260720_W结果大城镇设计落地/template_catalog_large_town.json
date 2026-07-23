@@ -1,0 +1,1405 @@
+{
+  "schemaVersion": "city_template_catalog.v0.1",
+  "templates": [
+    {
+      "buildingSemantic": "agriculture_windmill",
+      "style": "stubbs_medieval",
+      "templateId": "geomantia:city/stubbs/agriculture/windmill_01",
+      "templateRef": "geomantia:city/stubbs/agriculture/windmill_01",
+      "contentHash": "sha256:36f382d5f619d75a060793cf1a44a4c9a7f44de84a99c12a94e3c9294aa0b735",
+      "variant": "stubbs_v1",
+      "rawSize": {
+        "width": 27,
+        "height": 47,
+        "depth": 21
+      },
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "allowedMirrors": [
+        "NONE"
+      ],
+      "roadEntrances": [
+        {
+          "entranceId": "agriculture_windmill_01_front",
+          "position": {
+            "x": 14,
+            "z": 4
+          },
+          "direction": "SOUTH"
+        }
+      ],
+      "terrainPosePolicy": "flat_or_small_step",
+      "supportPolicy": "full_footprint_support",
+      "clearanceBlocks": 6
+    },
+    {
+      "buildingSemantic": "agriculture_windmill_barn",
+      "style": "stubbs_medieval",
+      "templateId": "geomantia:city/stubbs/agriculture/barn_windmill_01",
+      "templateRef": "geomantia:city/stubbs/agriculture/barn_windmill_01",
+      "contentHash": "sha256:a3051a9e39db9dc741cd9528096c215c510a229be971e6721cd2ed461b307abe",
+      "variant": "stubbs_v1",
+      "rawSize": {
+        "width": 25,
+        "height": 47,
+        "depth": 31
+      },
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "allowedMirrors": [
+        "NONE"
+      ],
+      "roadEntrances": [
+        {
+          "entranceId": "agriculture_barn_windmill_01_front",
+          "position": {
+            "x": 5,
+            "z": 15
+          },
+          "direction": "WEST"
+        }
+      ],
+      "terrainPosePolicy": "flat_or_small_step",
+      "supportPolicy": "full_footprint_support",
+      "clearanceBlocks": 6
+    },
+    {
+      "buildingSemantic": "agriculture_barn",
+      "style": "stubbs_medieval",
+      "templateId": "geomantia:city/stubbs/agriculture/barn_01",
+      "templateRef": "geomantia:city/stubbs/agriculture/barn_01",
+      "contentHash": "sha256:190e933f93aeaaf31b530ffbbda0dec48412e6d71197bb1e2adbf7914efaf6fc",
+      "variant": "stubbs_v1",
+      "rawSize": {
+        "width": 15,
+        "height": 10,
+        "depth": 21
+      },
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "allowedMirrors": [
+        "NONE"
+      ],
+      "roadEntrances": [
+        {
+          "entranceId": "barn_south_gate",
+          "position": {
+            "x": 10,
+            "z": 18
+          },
+          "direction": "SOUTH"
+        }
+      ],
+      "terrainPosePolicy": "flat_or_small_step",
+      "supportPolicy": "full_footprint_support",
+      "clearanceBlocks": 5
+    },
+    {
+      "buildingSemantic": "agriculture_storage",
+      "style": "stubbs_medieval",
+      "templateId": "geomantia:city/stubbs/agriculture/farm_storage_house_01",
+      "templateRef": "geomantia:city/stubbs/agriculture/farm_storage_house_01",
+      "contentHash": "sha256:1e5b847cb33fde9300658b0e9992a7aa2e7d9367f29be278a7b9f737f1cfc449",
+      "variant": "stubbs_v1",
+      "rawSize": {
+        "width": 19,
+        "height": 17,
+        "depth": 29
+      },
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "allowedMirrors": [
+        "NONE"
+      ],
+      "roadEntrances": [
+        {
+          "entranceId": "warehouse_south_loading_door",
+          "position": {
+            "x": 9,
+            "z": 23
+          },
+          "direction": "SOUTH"
+        }
+      ],
+      "terrainPosePolicy": "flat_or_small_step",
+      "supportPolicy": "full_footprint_support",
+      "clearanceBlocks": 5
+    },
+    {
+      "buildingSemantic": "agriculture_stable",
+      "style": "stubbs_medieval",
+      "templateId": "geomantia:city/stubbs/agriculture/horse_stall_02",
+      "templateRef": "geomantia:city/stubbs/agriculture/horse_stall_02",
+      "contentHash": "sha256:220e48388a0c7f7c56c3b740e4d9298d82357590425e4686ff9a5c700bba8a18",
+      "variant": "stubbs_v1",
+      "rawSize": {
+        "width": 21,
+        "height": 16,
+        "depth": 32
+      },
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "allowedMirrors": [
+        "NONE"
+      ],
+      "roadEntrances": [
+        {
+          "entranceId": "agriculture_horse_stall_02_front",
+          "position": {
+            "x": 8,
+            "z": 22
+          },
+          "direction": "SOUTH"
+        }
+      ],
+      "terrainPosePolicy": "flat_or_small_step",
+      "supportPolicy": "full_footprint_support",
+      "clearanceBlocks": 5
+    },
+    {
+      "buildingSemantic": "agriculture_farm_home",
+      "style": "stubbs_medieval",
+      "templateId": "geomantia:city/stubbs/agriculture/farm_home_01",
+      "templateRef": "geomantia:city/stubbs/agriculture/farm_home_01",
+      "contentHash": "sha256:193552748b34a93d78ec99be6a16aa50afd7613ef1d61927aa021d3638890d8c",
+      "variant": "stubbs_v1",
+      "rawSize": {
+        "width": 20,
+        "height": 11,
+        "depth": 18
+      },
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "allowedMirrors": [
+        "NONE"
+      ],
+      "roadEntrances": [
+        {
+          "entranceId": "farm_home_north_front",
+          "position": {
+            "x": 5,
+            "z": 7
+          },
+          "direction": "NORTH"
+        }
+      ],
+      "terrainPosePolicy": "flat_or_small_step",
+      "supportPolicy": "full_footprint_support",
+      "clearanceBlocks": 5
+    },
+    {
+      "buildingSemantic": "civic_town_hall",
+      "style": "stubbs_medieval",
+      "templateId": "geomantia:city/stubbs/civic/town_hall_01",
+      "templateRef": "geomantia:city/stubbs/civic/town_hall_01",
+      "contentHash": "sha256:459edda2d660958eaf5edf74379fc08b90cc32c1bfa8d29428e6ea646eab2801",
+      "variant": "stubbs_v1",
+      "rawSize": {
+        "width": 48,
+        "height": 25,
+        "depth": 31
+      },
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "allowedMirrors": [
+        "NONE"
+      ],
+      "roadEntrances": [
+        {
+          "entranceId": "town_hall_south_front",
+          "position": {
+            "x": 11,
+            "z": 5
+          },
+          "direction": "SOUTH"
+        }
+      ],
+      "terrainPosePolicy": "flat_or_small_step",
+      "supportPolicy": "full_footprint_support",
+      "clearanceBlocks": 6
+    },
+    {
+      "buildingSemantic": "civic_guard_hall",
+      "style": "stubbs_medieval",
+      "templateId": "geomantia:city/stubbs/civic/guard_outpost_01",
+      "templateRef": "geomantia:city/stubbs/civic/guard_outpost_01",
+      "contentHash": "sha256:8abf3ae46e66bdf34e6c09fb89c063cf31fb9df184138e675d637642c94b817c",
+      "variant": "stubbs_v1",
+      "rawSize": {
+        "width": 26,
+        "height": 48,
+        "depth": 31
+      },
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "allowedMirrors": [
+        "NONE"
+      ],
+      "roadEntrances": [
+        {
+          "entranceId": "civic_guard_outpost_01_front",
+          "position": {
+            "x": 19,
+            "z": 9
+          },
+          "direction": "EAST"
+        }
+      ],
+      "terrainPosePolicy": "flat_or_small_step",
+      "supportPolicy": "full_footprint_support",
+      "clearanceBlocks": 6
+    },
+    {
+      "buildingSemantic": "defense_guard_tower",
+      "style": "stubbs_medieval",
+      "templateId": "geomantia:city/stubbs/civic/guardian_tower_01",
+      "templateRef": "geomantia:city/stubbs/civic/guardian_tower_01",
+      "contentHash": "sha256:57abd4e050003c6242ae3a9caa971cb4add5bf42a0e174e60f9ad2a6159fb6f9",
+      "variant": "stubbs_v1",
+      "rawSize": {
+        "width": 21,
+        "height": 37,
+        "depth": 17
+      },
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "allowedMirrors": [
+        "NONE"
+      ],
+      "roadEntrances": [
+        {
+          "entranceId": "civic_guardian_tower_01_front",
+          "position": {
+            "x": 3,
+            "z": 6
+          },
+          "direction": "WEST"
+        }
+      ],
+      "terrainPosePolicy": "flat_or_small_step",
+      "supportPolicy": "full_footprint_support",
+      "clearanceBlocks": 6
+    },
+    {
+      "buildingSemantic": "defense_guard_tower",
+      "style": "stubbs_medieval",
+      "templateId": "geomantia:city/stubbs/civic/guardian_tower_02",
+      "templateRef": "geomantia:city/stubbs/civic/guardian_tower_02",
+      "contentHash": "sha256:1374349811f02c53c03f98cf7ccf51ba890a013bf63c6745d17478aea058fe40",
+      "variant": "stubbs_v1",
+      "rawSize": {
+        "width": 21,
+        "height": 37,
+        "depth": 17
+      },
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "allowedMirrors": [
+        "NONE"
+      ],
+      "roadEntrances": [
+        {
+          "entranceId": "civic_guardian_tower_02_front",
+          "position": {
+            "x": 3,
+            "z": 6
+          },
+          "direction": "WEST"
+        }
+      ],
+      "terrainPosePolicy": "flat_or_small_step",
+      "supportPolicy": "full_footprint_support",
+      "clearanceBlocks": 6
+    },
+    {
+      "buildingSemantic": "defense_guard_tower",
+      "style": "stubbs_medieval",
+      "templateId": "geomantia:city/stubbs/civic/guard_tower_03",
+      "templateRef": "geomantia:city/stubbs/civic/guard_tower_03",
+      "contentHash": "sha256:b877e0b8be5cd4e03c62fadfde2358b061a84586bdc5d3e123af02ed888bd9b6",
+      "variant": "stubbs_v1",
+      "rawSize": {
+        "width": 19,
+        "height": 43,
+        "depth": 19
+      },
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "allowedMirrors": [
+        "NONE"
+      ],
+      "roadEntrances": [
+        {
+          "entranceId": "civic_guard_tower_03_front",
+          "position": {
+            "x": 9,
+            "z": 11
+          },
+          "direction": "NORTH"
+        }
+      ],
+      "terrainPosePolicy": "flat_or_small_step",
+      "supportPolicy": "full_footprint_support",
+      "clearanceBlocks": 6
+    },
+    {
+      "buildingSemantic": "defense_guard_gate",
+      "style": "stubbs_medieval",
+      "templateId": "geomantia:city/stubbs/civic/guard_gate_01",
+      "templateRef": "geomantia:city/stubbs/civic/guard_gate_01",
+      "contentHash": "sha256:8526acb9427bc91c3540430aecfc719a2c0c7e60f3a0bc44ed9f88944c96006b",
+      "variant": "stubbs_v1",
+      "rawSize": {
+        "width": 39,
+        "height": 40,
+        "depth": 22
+      },
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "allowedMirrors": [
+        "NONE"
+      ],
+      "roadEntrances": [
+        {
+          "entranceId": "civic_guard_gate_01_front",
+          "position": {
+            "x": 29,
+            "z": 2
+          },
+          "direction": "NORTH"
+        }
+      ],
+      "terrainPosePolicy": "flat_or_small_step",
+      "supportPolicy": "full_footprint_support",
+      "clearanceBlocks": 6
+    },
+    {
+      "buildingSemantic": "commercial_tavern",
+      "style": "stubbs_medieval",
+      "templateId": "geomantia:city/stubbs/commercial/tavern_01",
+      "templateRef": "geomantia:city/stubbs/commercial/tavern_01",
+      "contentHash": "sha256:b0422e0bb5794e70a57c84a8fd4438c1766c6de01866d93a6432b213edb28bcd",
+      "variant": "stubbs_v1",
+      "rawSize": {
+        "width": 23,
+        "height": 16,
+        "depth": 33
+      },
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "allowedMirrors": [
+        "NONE"
+      ],
+      "roadEntrances": [
+        {
+          "entranceId": "tavern_front_door",
+          "position": {
+            "x": 12,
+            "z": 18
+          },
+          "direction": "EAST"
+        }
+      ],
+      "terrainPosePolicy": "flat_or_small_step",
+      "supportPolicy": "full_footprint_support",
+      "clearanceBlocks": 5
+    },
+    {
+      "buildingSemantic": "commercial_lodging",
+      "style": "stubbs_medieval",
+      "templateId": "geomantia:city/stubbs/commercial/motel_01",
+      "templateRef": "geomantia:city/stubbs/commercial/motel_01",
+      "contentHash": "sha256:7fdc80266c7362cc79d7c62a18681516bc8eac2a108bf268dde90c00adaf43f4",
+      "variant": "stubbs_v1",
+      "rawSize": {
+        "width": 30,
+        "height": 12,
+        "depth": 16
+      },
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "allowedMirrors": [
+        "NONE"
+      ],
+      "roadEntrances": [
+        {
+          "entranceId": "commercial_motel_01_front",
+          "position": {
+            "x": 26,
+            "z": 8
+          },
+          "direction": "EAST"
+        }
+      ],
+      "terrainPosePolicy": "flat_or_small_step",
+      "supportPolicy": "full_footprint_support",
+      "clearanceBlocks": 5
+    },
+    {
+      "buildingSemantic": "commercial_general_store",
+      "style": "stubbs_medieval",
+      "templateId": "geomantia:city/stubbs/commercial/general_store_01",
+      "templateRef": "geomantia:city/stubbs/commercial/general_store_01",
+      "contentHash": "sha256:c300452d64d7c6ad1a57b01aba1dd1c7c5c23a38c6772b1257d2537682bc5a59",
+      "variant": "stubbs_v1",
+      "rawSize": {
+        "width": 16,
+        "height": 15,
+        "depth": 23
+      },
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "allowedMirrors": [
+        "NONE"
+      ],
+      "roadEntrances": [
+        {
+          "entranceId": "general_store_front_door",
+          "position": {
+            "x": 7,
+            "z": 12
+          },
+          "direction": "WEST"
+        }
+      ],
+      "terrainPosePolicy": "flat_or_small_step",
+      "supportPolicy": "full_footprint_support",
+      "clearanceBlocks": 5
+    },
+    {
+      "buildingSemantic": "commercial_town_shop",
+      "style": "stubbs_medieval",
+      "templateId": "geomantia:city/stubbs/commercial/town_shop_01",
+      "templateRef": "geomantia:city/stubbs/commercial/town_shop_01",
+      "contentHash": "sha256:8efaa45150ac1f51027d1df6191d6b6e9023df9b40dbc95487c4f543107ce259",
+      "variant": "stubbs_v1",
+      "rawSize": {
+        "width": 15,
+        "height": 11,
+        "depth": 13
+      },
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "allowedMirrors": [
+        "NONE"
+      ],
+      "roadEntrances": [
+        {
+          "entranceId": "commercial_town_shop_01_front",
+          "position": {
+            "x": 11,
+            "z": 10
+          },
+          "direction": "NORTH"
+        }
+      ],
+      "terrainPosePolicy": "flat_or_small_step",
+      "supportPolicy": "full_footprint_support",
+      "clearanceBlocks": 5
+    },
+    {
+      "buildingSemantic": "commercial_bakery",
+      "style": "stubbs_medieval",
+      "templateId": "geomantia:city/stubbs/commercial/bakery_01",
+      "templateRef": "geomantia:city/stubbs/commercial/bakery_01",
+      "contentHash": "sha256:b90f4e60d606a1881fb6938ac0584c146abfc7624497114b635731ec11650797",
+      "variant": "stubbs_v1",
+      "rawSize": {
+        "width": 25,
+        "height": 18,
+        "depth": 18
+      },
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "allowedMirrors": [
+        "NONE"
+      ],
+      "roadEntrances": [
+        {
+          "entranceId": "commercial_bakery_01_front",
+          "position": {
+            "x": 10,
+            "z": 11
+          },
+          "direction": "NORTH"
+        }
+      ],
+      "terrainPosePolicy": "flat_or_small_step",
+      "supportPolicy": "full_footprint_support",
+      "clearanceBlocks": 5
+    },
+    {
+      "buildingSemantic": "commercial_bake_shop",
+      "style": "stubbs_medieval",
+      "templateId": "geomantia:city/stubbs/commercial/bake_shop_01",
+      "templateRef": "geomantia:city/stubbs/commercial/bake_shop_01",
+      "contentHash": "sha256:763f2bf9a38cf5c0858246c4b8f76773cde6ff06b131e33920fc76dea8adb0b7",
+      "variant": "stubbs_v1",
+      "rawSize": {
+        "width": 25,
+        "height": 14,
+        "depth": 16
+      },
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "allowedMirrors": [
+        "NONE"
+      ],
+      "roadEntrances": [
+        {
+          "entranceId": "commercial_bake_shop_01_front",
+          "position": {
+            "x": 16,
+            "z": 5
+          },
+          "direction": "SOUTH"
+        }
+      ],
+      "terrainPosePolicy": "flat_or_small_step",
+      "supportPolicy": "full_footprint_support",
+      "clearanceBlocks": 5
+    },
+    {
+      "buildingSemantic": "commercial_flower_shop",
+      "style": "stubbs_medieval",
+      "templateId": "geomantia:city/stubbs/commercial/flower_shop_01",
+      "templateRef": "geomantia:city/stubbs/commercial/flower_shop_01",
+      "contentHash": "sha256:7ef986cd3bbe57ad6b671c0544ba174ed1ae5f78fe5b176645f990e8b07e4b55",
+      "variant": "stubbs_v1",
+      "rawSize": {
+        "width": 19,
+        "height": 15,
+        "depth": 19
+      },
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "allowedMirrors": [
+        "NONE"
+      ],
+      "roadEntrances": [
+        {
+          "entranceId": "commercial_flower_shop_01_front",
+          "position": {
+            "x": 13,
+            "z": 10
+          },
+          "direction": "NORTH"
+        }
+      ],
+      "terrainPosePolicy": "flat_or_small_step",
+      "supportPolicy": "full_footprint_support",
+      "clearanceBlocks": 5
+    },
+    {
+      "buildingSemantic": "commercial_butcher",
+      "style": "stubbs_medieval",
+      "templateId": "geomantia:city/stubbs/commercial/small_butcher_shop_01",
+      "templateRef": "geomantia:city/stubbs/commercial/small_butcher_shop_01",
+      "contentHash": "sha256:efce8ee9e6bde8469a329a47ea620c21c0a4c19446b39969dc842e5bf254bfe8",
+      "variant": "stubbs_v1",
+      "rawSize": {
+        "width": 19,
+        "height": 8,
+        "depth": 13
+      },
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "allowedMirrors": [
+        "NONE"
+      ],
+      "roadEntrances": [
+        {
+          "entranceId": "commercial_small_butcher_shop_01_front",
+          "position": {
+            "x": 14,
+            "z": 7
+          },
+          "direction": "EAST"
+        }
+      ],
+      "terrainPosePolicy": "flat_or_small_step",
+      "supportPolicy": "full_footprint_support",
+      "clearanceBlocks": 5
+    },
+    {
+      "buildingSemantic": "commercial_workshop",
+      "style": "stubbs_medieval",
+      "templateId": "geomantia:city/stubbs/commercial/town_workshop_01",
+      "templateRef": "geomantia:city/stubbs/commercial/town_workshop_01",
+      "contentHash": "sha256:8dfae268e58e20e1820792eb2391c94325454487ad7b7549902379f1982d8925",
+      "variant": "stubbs_v1",
+      "rawSize": {
+        "width": 14,
+        "height": 12,
+        "depth": 11
+      },
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "allowedMirrors": [
+        "NONE"
+      ],
+      "roadEntrances": [
+        {
+          "entranceId": "workshop_front_door",
+          "position": {
+            "x": 10,
+            "z": 4
+          },
+          "direction": "SOUTH"
+        }
+      ],
+      "terrainPosePolicy": "flat_or_small_step",
+      "supportPolicy": "full_footprint_support",
+      "clearanceBlocks": 5
+    },
+    {
+      "buildingSemantic": "commercial_merchant_house",
+      "style": "stubbs_medieval",
+      "templateId": "geomantia:city/stubbs/commercial/merchant_house_01",
+      "templateRef": "geomantia:city/stubbs/commercial/merchant_house_01",
+      "contentHash": "sha256:f5d1c9ebbd886bc7914b60eba2271d0a4152eefb6fec8d68e825b90066c8cdbe",
+      "variant": "stubbs_v1",
+      "rawSize": {
+        "width": 35,
+        "height": 25,
+        "depth": 29
+      },
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "allowedMirrors": [
+        "NONE"
+      ],
+      "roadEntrances": [
+        {
+          "entranceId": "commercial_merchant_house_01_front",
+          "position": {
+            "x": 11,
+            "z": 17
+          },
+          "direction": "EAST"
+        }
+      ],
+      "terrainPosePolicy": "flat_or_small_step",
+      "supportPolicy": "full_footprint_support",
+      "clearanceBlocks": 6
+    },
+    {
+      "buildingSemantic": "commercial_library",
+      "style": "stubbs_medieval",
+      "templateId": "geomantia:city/stubbs/commercial/library_01",
+      "templateRef": "geomantia:city/stubbs/commercial/library_01",
+      "contentHash": "sha256:967bead12cc7fe0b1f6c2b25e2b084039ea1849c8e1bf5def135a4dac985c37a",
+      "variant": "stubbs_v1",
+      "rawSize": {
+        "width": 37,
+        "height": 19,
+        "depth": 25
+      },
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "allowedMirrors": [
+        "NONE"
+      ],
+      "roadEntrances": [
+        {
+          "entranceId": "commercial_library_01_front",
+          "position": {
+            "x": 19,
+            "z": 6
+          },
+          "direction": "SOUTH"
+        }
+      ],
+      "terrainPosePolicy": "flat_or_small_step",
+      "supportPolicy": "full_footprint_support",
+      "clearanceBlocks": 6
+    },
+    {
+      "buildingSemantic": "commercial_theater",
+      "style": "stubbs_medieval",
+      "templateId": "geomantia:city/stubbs/commercial/theater_01",
+      "templateRef": "geomantia:city/stubbs/commercial/theater_01",
+      "contentHash": "sha256:6509f33702b277ad425d0a3f5bc41e130a135b434fd7f8c67c1a17bd6c3fae47",
+      "variant": "stubbs_v1",
+      "rawSize": {
+        "width": 37,
+        "height": 16,
+        "depth": 48
+      },
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "allowedMirrors": [
+        "NONE"
+      ],
+      "roadEntrances": [
+        {
+          "entranceId": "commercial_theater_01_front",
+          "position": {
+            "x": 27,
+            "z": 32
+          },
+          "direction": "SOUTH"
+        }
+      ],
+      "terrainPosePolicy": "flat_or_small_step",
+      "supportPolicy": "full_footprint_support",
+      "clearanceBlocks": 6
+    },
+    {
+      "buildingSemantic": "commercial_laundry",
+      "style": "stubbs_medieval",
+      "templateId": "geomantia:city/stubbs/commercial/laundry_facility_01",
+      "templateRef": "geomantia:city/stubbs/commercial/laundry_facility_01",
+      "contentHash": "sha256:fb03f1c023f2aeaf58769cd2d545e8c13c170b2dbce4a17642572e1bd9914d70",
+      "variant": "stubbs_v1",
+      "rawSize": {
+        "width": 25,
+        "height": 13,
+        "depth": 28
+      },
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "allowedMirrors": [
+        "NONE"
+      ],
+      "roadEntrances": [
+        {
+          "entranceId": "commercial_laundry_facility_01_front",
+          "position": {
+            "x": 19,
+            "z": 17
+          },
+          "direction": "SOUTH"
+        }
+      ],
+      "terrainPosePolicy": "flat_or_small_step",
+      "supportPolicy": "full_footprint_support",
+      "clearanceBlocks": 5
+    },
+    {
+      "buildingSemantic": "residential_house",
+      "style": "stubbs_medieval",
+      "templateId": "geomantia:city/stubbs/residential/city_home_01",
+      "templateRef": "geomantia:city/stubbs/residential/city_home_01",
+      "contentHash": "sha256:7f4fcede2d3c93b532e04f505fe05b0f634852bf017069b45ca801ab07a42e41",
+      "variant": "stubbs_v1",
+      "rawSize": {
+        "width": 11,
+        "height": 20,
+        "depth": 20
+      },
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "allowedMirrors": [
+        "NONE"
+      ],
+      "roadEntrances": [
+        {
+          "entranceId": "residential_city_home_01_front",
+          "position": {
+            "x": 3,
+            "z": 15
+          },
+          "direction": "SOUTH"
+        }
+      ],
+      "terrainPosePolicy": "flat_or_small_step",
+      "supportPolicy": "full_footprint_support",
+      "clearanceBlocks": 5
+    },
+    {
+      "buildingSemantic": "residential_house",
+      "style": "stubbs_medieval",
+      "templateId": "geomantia:city/stubbs/residential/city_home_02",
+      "templateRef": "geomantia:city/stubbs/residential/city_home_02",
+      "contentHash": "sha256:a76083fa82a84a8c66d30f88ccfc3e3e081786dd71042bd66c47fd8e2cebe4fc",
+      "variant": "stubbs_v1",
+      "rawSize": {
+        "width": 15,
+        "height": 23,
+        "depth": 28
+      },
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "allowedMirrors": [
+        "NONE"
+      ],
+      "roadEntrances": [
+        {
+          "entranceId": "residential_city_home_02_front",
+          "position": {
+            "x": 11,
+            "z": 20
+          },
+          "direction": "SOUTH"
+        }
+      ],
+      "terrainPosePolicy": "flat_or_small_step",
+      "supportPolicy": "full_footprint_support",
+      "clearanceBlocks": 5
+    },
+    {
+      "buildingSemantic": "residential_house",
+      "style": "stubbs_medieval",
+      "templateId": "geomantia:city/stubbs/residential/civilian_house_01",
+      "templateRef": "geomantia:city/stubbs/residential/civilian_house_01",
+      "contentHash": "sha256:175a84b96ee1be15360247d9f1f2ae4bf81c0ee410a7d94ae05cac9de7105563",
+      "variant": "stubbs_v1",
+      "rawSize": {
+        "width": 27,
+        "height": 14,
+        "depth": 23
+      },
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "allowedMirrors": [
+        "NONE"
+      ],
+      "roadEntrances": [
+        {
+          "entranceId": "residential_civilian_house_01_front",
+          "position": {
+            "x": 9,
+            "z": 8
+          },
+          "direction": "EAST"
+        }
+      ],
+      "terrainPosePolicy": "flat_or_small_step",
+      "supportPolicy": "full_footprint_support",
+      "clearanceBlocks": 5
+    },
+    {
+      "buildingSemantic": "residential_house",
+      "style": "stubbs_medieval",
+      "templateId": "geomantia:city/stubbs/residential/civilian_house_02",
+      "templateRef": "geomantia:city/stubbs/residential/civilian_house_02",
+      "contentHash": "sha256:481ff7f1ca444e1b5311b1c5031819906f438d0eed6f2a1a794d55bf89bfbb58",
+      "variant": "stubbs_v1",
+      "rawSize": {
+        "width": 23,
+        "height": 14,
+        "depth": 19
+      },
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "allowedMirrors": [
+        "NONE"
+      ],
+      "roadEntrances": [
+        {
+          "entranceId": "residential_civilian_house_02_front",
+          "position": {
+            "x": 14,
+            "z": 13
+          },
+          "direction": "NORTH"
+        }
+      ],
+      "terrainPosePolicy": "flat_or_small_step",
+      "supportPolicy": "full_footprint_support",
+      "clearanceBlocks": 5
+    },
+    {
+      "buildingSemantic": "residential_house",
+      "style": "stubbs_medieval",
+      "templateId": "geomantia:city/stubbs/residential/civilian_house_03",
+      "templateRef": "geomantia:city/stubbs/residential/civilian_house_03",
+      "contentHash": "sha256:82009766ef60d342ed09e4098a9646e79c16d3cb48fd763fc8f000daf12d0b18",
+      "variant": "stubbs_v1",
+      "rawSize": {
+        "width": 17,
+        "height": 14,
+        "depth": 21
+      },
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "allowedMirrors": [
+        "NONE"
+      ],
+      "roadEntrances": [
+        {
+          "entranceId": "civilian_house_03_front_door",
+          "position": {
+            "x": 10,
+            "z": 5
+          },
+          "direction": "EAST"
+        }
+      ],
+      "terrainPosePolicy": "flat_or_small_step",
+      "supportPolicy": "full_footprint_support",
+      "clearanceBlocks": 5
+    },
+    {
+      "buildingSemantic": "residential_dormitory",
+      "style": "stubbs_medieval",
+      "templateId": "geomantia:city/stubbs/residential/dorm_for_the_poor_01",
+      "templateRef": "geomantia:city/stubbs/residential/dorm_for_the_poor_01",
+      "contentHash": "sha256:63b2f902c92768124e3a98c83faf5e8c9bd934ad462638fb0d96d0af86b56f2b",
+      "variant": "stubbs_v1",
+      "rawSize": {
+        "width": 34,
+        "height": 23,
+        "depth": 25
+      },
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "allowedMirrors": [
+        "NONE"
+      ],
+      "roadEntrances": [
+        {
+          "entranceId": "residential_dorm_for_the_poor_01_front",
+          "position": {
+            "x": 27,
+            "z": 16
+          },
+          "direction": "SOUTH"
+        }
+      ],
+      "terrainPosePolicy": "flat_or_small_step",
+      "supportPolicy": "full_footprint_support",
+      "clearanceBlocks": 5
+    },
+    {
+      "buildingSemantic": "residential_house",
+      "style": "stubbs_medieval",
+      "templateId": "geomantia:city/stubbs/residential/household_01",
+      "templateRef": "geomantia:city/stubbs/residential/household_01",
+      "contentHash": "sha256:e4f33abd66652a3afd65368b692e4e0d861f8ed88be313ba4d36547ccb3c3e71",
+      "variant": "stubbs_v1",
+      "rawSize": {
+        "width": 15,
+        "height": 17,
+        "depth": 15
+      },
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "allowedMirrors": [
+        "NONE"
+      ],
+      "roadEntrances": [
+        {
+          "entranceId": "household_01_front_door",
+          "position": {
+            "x": 7,
+            "z": 4
+          },
+          "direction": "SOUTH"
+        }
+      ],
+      "terrainPosePolicy": "flat_or_small_step",
+      "supportPolicy": "full_footprint_support",
+      "clearanceBlocks": 5
+    },
+    {
+      "buildingSemantic": "residential_house",
+      "style": "stubbs_medieval",
+      "templateId": "geomantia:city/stubbs/residential/household_02",
+      "templateRef": "geomantia:city/stubbs/residential/household_02",
+      "contentHash": "sha256:7727587338928ae85c5969f8bc7ed01cd0d506585c6e13b76c897ce25faecb3b",
+      "variant": "stubbs_v1",
+      "rawSize": {
+        "width": 15,
+        "height": 14,
+        "depth": 15
+      },
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "allowedMirrors": [
+        "NONE"
+      ],
+      "roadEntrances": [
+        {
+          "entranceId": "household_02_front_door",
+          "position": {
+            "x": 4,
+            "z": 5
+          },
+          "direction": "EAST"
+        }
+      ],
+      "terrainPosePolicy": "flat_or_small_step",
+      "supportPolicy": "full_footprint_support",
+      "clearanceBlocks": 5
+    },
+    {
+      "buildingSemantic": "residential_house",
+      "style": "stubbs_medieval",
+      "templateId": "geomantia:city/stubbs/residential/household_03",
+      "templateRef": "geomantia:city/stubbs/residential/household_03",
+      "contentHash": "sha256:b2ff11b3421250494ec2ae4a71e65f3135bb07943fc4234f824be440b11f40a5",
+      "variant": "stubbs_v1",
+      "rawSize": {
+        "width": 17,
+        "height": 14,
+        "depth": 17
+      },
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "allowedMirrors": [
+        "NONE"
+      ],
+      "roadEntrances": [
+        {
+          "entranceId": "residential_household_03_front",
+          "position": {
+            "x": 8,
+            "z": 13
+          },
+          "direction": "NORTH"
+        }
+      ],
+      "terrainPosePolicy": "flat_or_small_step",
+      "supportPolicy": "full_footprint_support",
+      "clearanceBlocks": 5
+    },
+    {
+      "buildingSemantic": "residential_house",
+      "style": "stubbs_medieval",
+      "templateId": "geomantia:city/stubbs/residential/household_04",
+      "templateRef": "geomantia:city/stubbs/residential/household_04",
+      "contentHash": "sha256:7a0fdf152ec9d2f571fb445cc264c8f6a307c0576949981a900b15732d6cd480",
+      "variant": "stubbs_v1",
+      "rawSize": {
+        "width": 23,
+        "height": 16,
+        "depth": 13
+      },
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "allowedMirrors": [
+        "NONE"
+      ],
+      "roadEntrances": [
+        {
+          "entranceId": "residential_household_04_front",
+          "position": {
+            "x": 13,
+            "z": 8
+          },
+          "direction": "NORTH"
+        }
+      ],
+      "terrainPosePolicy": "flat_or_small_step",
+      "supportPolicy": "full_footprint_support",
+      "clearanceBlocks": 5
+    },
+    {
+      "buildingSemantic": "residential_house",
+      "style": "stubbs_medieval",
+      "templateId": "geomantia:city/stubbs/residential/household_05",
+      "templateRef": "geomantia:city/stubbs/residential/household_05",
+      "contentHash": "sha256:2512458c329ffa7be2ac797f71aac4f07eca943347e99563067e677f9c451159",
+      "variant": "stubbs_v1",
+      "rawSize": {
+        "width": 17,
+        "height": 17,
+        "depth": 21
+      },
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "allowedMirrors": [
+        "NONE"
+      ],
+      "roadEntrances": [
+        {
+          "entranceId": "residential_household_05_front",
+          "position": {
+            "x": 8,
+            "z": 4
+          },
+          "direction": "SOUTH"
+        }
+      ],
+      "terrainPosePolicy": "flat_or_small_step",
+      "supportPolicy": "full_footprint_support",
+      "clearanceBlocks": 5
+    },
+    {
+      "buildingSemantic": "residential_house",
+      "style": "stubbs_medieval",
+      "templateId": "geomantia:city/stubbs/residential/household_06",
+      "templateRef": "geomantia:city/stubbs/residential/household_06",
+      "contentHash": "sha256:b8f90c08b6cc032c5b85d27c288e30b61c8193b8049db0ff8b5a590b22d8f027",
+      "variant": "stubbs_v1",
+      "rawSize": {
+        "width": 17,
+        "height": 15,
+        "depth": 27
+      },
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "allowedMirrors": [
+        "NONE"
+      ],
+      "roadEntrances": [
+        {
+          "entranceId": "residential_household_06_front",
+          "position": {
+            "x": 12,
+            "z": 17
+          },
+          "direction": "WEST"
+        }
+      ],
+      "terrainPosePolicy": "flat_or_small_step",
+      "supportPolicy": "full_footprint_support",
+      "clearanceBlocks": 5
+    },
+    {
+      "buildingSemantic": "residential_house",
+      "style": "stubbs_medieval",
+      "templateId": "geomantia:city/stubbs/residential/household_07",
+      "templateRef": "geomantia:city/stubbs/residential/household_07",
+      "contentHash": "sha256:39e3f2941d335ff920f24c1424489f3af5cd5c9e54f158ee6678badab1ec0754",
+      "variant": "stubbs_v1",
+      "rawSize": {
+        "width": 19,
+        "height": 13,
+        "depth": 15
+      },
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "allowedMirrors": [
+        "NONE"
+      ],
+      "roadEntrances": [
+        {
+          "entranceId": "residential_household_07_front",
+          "position": {
+            "x": 10,
+            "z": 6
+          },
+          "direction": "SOUTH"
+        }
+      ],
+      "terrainPosePolicy": "flat_or_small_step",
+      "supportPolicy": "full_footprint_support",
+      "clearanceBlocks": 5
+    },
+    {
+      "buildingSemantic": "residential_small_house",
+      "style": "stubbs_medieval",
+      "templateId": "geomantia:city/stubbs/residential/village_house_small_01",
+      "templateRef": "geomantia:city/stubbs/residential/village_house_small_01",
+      "contentHash": "sha256:9a1dec3d4ece94699f4a6bea7230b0f42ce38399ec47bef98e126602955a3b6b",
+      "variant": "stubbs_v1",
+      "rawSize": {
+        "width": 11,
+        "height": 9,
+        "depth": 9
+      },
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "allowedMirrors": [
+        "NONE"
+      ],
+      "roadEntrances": [
+        {
+          "entranceId": "residential_village_house_small_01_front",
+          "position": {
+            "x": 3,
+            "z": 2
+          },
+          "direction": "NORTH"
+        }
+      ],
+      "terrainPosePolicy": "flat_or_small_step",
+      "supportPolicy": "full_footprint_support",
+      "clearanceBlocks": 4
+    },
+    {
+      "buildingSemantic": "residential_small_house",
+      "style": "stubbs_medieval",
+      "templateId": "geomantia:city/stubbs/residential/village_house_small_02",
+      "templateRef": "geomantia:city/stubbs/residential/village_house_small_02",
+      "contentHash": "sha256:30b14663953fb431108ee463298d2dba806121759ac7bc01ec387c2eb1708805",
+      "variant": "stubbs_v1",
+      "rawSize": {
+        "width": 11,
+        "height": 9,
+        "depth": 9
+      },
+      "allowedRotations": [
+        "NONE",
+        "CLOCKWISE_90",
+        "CLOCKWISE_180",
+        "COUNTERCLOCKWISE_90"
+      ],
+      "allowedMirrors": [
+        "NONE"
+      ],
+      "roadEntrances": [
+        {
+          "entranceId": "residential_village_house_small_02_front",
+          "position": {
+            "x": 3,
+            "z": 2
+          },
+          "direction": "NORTH"
+        }
+      ],
+      "terrainPosePolicy": "flat_or_small_step",
+      "supportPolicy": "full_footprint_support",
+      "clearanceBlocks": 4
+    }
+  ]
+}

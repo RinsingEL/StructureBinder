@@ -1,0 +1,16 @@
+Geomantia is licensed under the GNU General Public License version 3 or later.
+
+SPDX-License-Identifier: GPL-3.0-or-later
+
+Copyright (C) 2026 Rinsing
+
+You may redistribute and modify this project under the terms of the GNU
+General Public License as published by the Free Software Foundation, either
+version 3 of the License, or (at your option) any later version.
+
+The full license text is available from the Free Software Foundation:
+https://www.gnu.org/licenses/gpl-3.0.html
+
+Files copied from Minecraft Forge MDK or other third-party projects remain
+under their original licenses and notices. See LICENSE.txt and the relevant
+source files or package metadata for those third-party terms.

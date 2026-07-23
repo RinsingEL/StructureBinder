@@ -1,0 +1,143 @@
+package com.rinsing.geomantia.platform.http;
+
+import com.mojang.logging.LogUtils;
+import com.rinsing.geomantia.GeomantiaMod;
+import com.sun.net.httpserver.HttpServer;
+import net.minecraft.server.MinecraftServer;
+import net.minecraftforge.event.server.ServerStartedEvent;
+import net.minecraftforge.event.server.ServerStoppingEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
+import org.slf4j.Logger;
+
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+@Mod.EventBusSubscriber(modid = GeomantiaMod.MOD_ID)
+public final class GeomantiaHttpServer {
+    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final int DEFAULT_PORT = 5000;
+    private static HttpServer httpServer;
+    private static ExecutorService httpExecutor;
+
+    private GeomantiaHttpServer() {
+    }
+
+    @SubscribeEvent
+    public static void onServerStarted(ServerStartedEvent event) {
+        start(event.getServer());
+    }
+
+    @SubscribeEvent
+    public static void onServerStopping(ServerStoppingEvent event) {
+        stop();
+    }
+
+    private static synchronized void start(MinecraftServer minecraftServer) {
+        if (httpServer != null) {
+            return;
+        }
+        int port = Integer.getInteger("geomantia.apiPort", DEFAULT_PORT);
+        HttpServer createdServer = null;
+        ExecutorService createdExecutor = null;
+        try {
+            createdServer = HttpServer.create(new InetSocketAddress("127.0.0.1", port), 0);
+            GisHttpController controller = new GisHttpController(minecraftServer);
+            RealmPlanningHttpController realmController = new RealmPlanningHttpController(minecraftServer);
+            createdServer.createContext("/gis/status", controller::handleStatus);
+            createdServer.createContext("/gis/refresh", controller::handleRefresh);
+            createdServer.createContext("/gis/test_run", controller::handleTestRun);
+            createdServer.createContext("/realm/status", realmController::handleStatus);
+            createdServer.createContext("/realm/w/refresh", realmController::handleWRefresh);
+            createdServer.createContext("/realm/t1/prepare", realmController::handleT1Prepare);
+            createdServer.createContext("/realm/t2/select_coordinate", realmController::handleT2SelectCoordinate);
+            createdServer.createContext("/realm/t3/expand", realmController::handleT3Expand);
+            createdServer.createContext("/realm/t4/build_registry", realmController::handleT4BuildRegistry);
+            createdServer.createContext("/realm/acceptance/run", realmController::handleAcceptance);
+            createdServer.createContext("/realm/tag_audit", realmController::handleTagAudit);
+            createdServer.createContext("/realm/debug/command", realmController::handleDebugCommand);
+            createdServer.createContext("/realm/city/plan_d2", realmController::handleCityPlanD2);
+            createdServer.createContext("/realm/city/plan_d3", realmController::handleCityPlanD3);
+            createdServer.createContext("/realm/city/profile_structure_envelopes", realmController::handleCityProfileStructureEnvelopes);
+            createdServer.createContext("/realm/city/plan_d4_candidates", realmController::handleCityPlanD4Candidates);
+            createdServer.createContext("/realm/city/plan_d4_array_candidates", realmController::handleCityPlanD4ArrayCandidates);
+            createdServer.createContext("/realm/city/create_d4_design_loop_state", realmController::handleCityCreateD4DesignLoopState);
+            createdServer.createContext("/realm/city/read_d4_design_loop_state", realmController::handleCityReadD4DesignLoopState);
+            createdServer.createContext("/realm/city/append_d4_design_loop_round", realmController::handleCityAppendD4DesignLoopRound);
+            createdServer.createContext("/realm/city/write_d4_design_loop_state", realmController::handleCityWriteD4DesignLoopState);
+            createdServer.createContext("/realm/city/create_d4_array_layout_loop", realmController::handleCityCreateD4ArrayLayoutLoop);
+            createdServer.createContext("/realm/city/execute_d4_array_layout_item", realmController::handleCityExecuteD4ArrayLayoutItem);
+            createdServer.createContext("/realm/city/query_d4_array_expansion_space", realmController::handleCityQueryD4ArrayExpansionSpace);
+            createdServer.createContext("/realm/city/plan_d4_array_expansion_candidates", realmController::handleCityPlanD4ArrayExpansionCandidates);
+            createdServer.createContext("/realm/city/select_d4_array_expansion_candidate", realmController::handleCitySelectD4ArrayExpansionCandidate);
+            createdServer.createContext("/realm/city/finalize_d4_array_layout_loop", realmController::handleCityFinalizeD4ArrayLayoutLoop);
+            createdServer.createContext("/realm/city/query_decoration_catalog", realmController::handleCityQueryDecorationCatalog);
+            createdServer.createContext("/realm/city/probe_decoration_terrain", realmController::handleCityProbeDecorationTerrain);
+            createdServer.createContext("/realm/city/query_structure_catalog", realmController::handleCityQueryStructureCatalog);
+            createdServer.createContext("/realm/city/query_template_metadata", realmController::handleCityQueryTemplateMetadata);
+            createdServer.createContext("/realm/city/plan_decoration_anchor_candidates",
+                    realmController::handleCityPlanDecorationAnchorCandidates);
+            createdServer.createContext("/realm/city/plan_city_dressing", realmController::handleCityPlanDressing);
+            createdServer.createContext("/realm/city/plan_d4_structure_cluster_groups", realmController::handleCityPlanD4StructureClusterGroups);
+            createdServer.createContext("/realm/city/select_d4_candidates", realmController::handleCitySelectD4Candidates);
+            createdServer.createContext("/realm/city/select_d4_structure_cluster_group", realmController::handleCitySelectD4StructureClusterGroup);
+            createdServer.createContext("/realm/city/create_d4_candidate_session", realmController::handleCityCreateD4CandidateSession);
+            createdServer.createContext("/realm/city/plan_d4_next_candidates", realmController::handleCityPlanD4NextCandidates);
+            createdServer.createContext("/realm/city/select_d4_candidate", realmController::handleCitySelectD4Candidate);
+            createdServer.createContext("/realm/city/finalize_d4_candidate_session", realmController::handleCityFinalizeD4CandidateSession);
+            createdServer.createContext("/realm/city/plan_d4", realmController::handleCityPlanD4);
+            createdServer.createContext("/realm/city/plan_d5", realmController::handleCityPlanD5);
+            createdServer.createContext("/realm/city/execute_d5", realmController::handleCityExecuteD5);
+            createdServer.createContext("/realm/city/plan_d6", realmController::handleCityPlanD6);
+            createdServer.createContext("/realm/city/plan_land_use", realmController::handleCityPlanLandUse);
+            createdServer.createContext("/realm/city/execute_d7", realmController::handleCityExecuteD7);
+            createdServer.createContext("/realm/city/query_worldgen_observations",
+                    realmController::handleCityQueryWorldgenObservations);
+            createdServer.createContext("/realm/city/plan_city_walls", realmController::handleCityPlanCityWalls);
+            createdServer.createContext("/realm/city/execute_city_walls", realmController::handleCityExecuteCityWalls);
+            createdServer.createContext("/realm/city/run_workflow", realmController::handleCityRunWorkflow);
+            createdExecutor = Executors.newFixedThreadPool(3, runnable -> {
+                Thread thread = new Thread(runnable);
+                thread.setDaemon(true);
+                thread.setName("Geomantia-API");
+                return thread;
+            });
+            createdServer.setExecutor(createdExecutor);
+            createdServer.start();
+            httpServer = createdServer;
+            httpExecutor = createdExecutor;
+            LOGGER.info("Geomantia GIS API server started on 127.0.0.1:{}.", port);
+        } catch (IOException | RuntimeException ex) {
+            LOGGER.error("Failed to start Geomantia GIS API server.", ex);
+            if (createdServer != null) {
+                createdServer.stop(0);
+            }
+            shutdownExecutor(createdExecutor);
+            httpServer = null;
+            httpExecutor = null;
+        }
+    }
+
+    private static synchronized void stop() {
+        HttpServer server = httpServer;
+        ExecutorService executor = httpExecutor;
+        httpServer = null;
+        httpExecutor = null;
+        if (server == null && executor == null) {
+            return;
+        }
+        if (server != null) {
+            server.stop(0);
+        }
+        shutdownExecutor(executor);
+        LOGGER.info("Geomantia GIS API server stopped.");
+    }
+
+    private static void shutdownExecutor(ExecutorService executor) {
+        if (executor != null) {
+            executor.shutdownNow();
+        }
+    }
+}

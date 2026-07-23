@@ -22,6 +22,7 @@ build
 eclipse
 run
 logs
+libs/local/roadweaver/
 
 # Files from Forge MDK
 forge*changelog.txt
@@ -34,3 +35,9 @@ country_designer_mcp/*
 !country_designer_mcp/tsconfig.json
 !country_designer_mcp/src/
 !country_designer_mcp/src/**
+!country_designer_mcp/test/
+!country_designer_mcp/test/**
+
+# local acceptance artifacts
+run-data/
+run_logs/

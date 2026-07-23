@@ -1,0 +1,189 @@
+{
+  "step": "C3.5",
+  "ok": true,
+  "city_id": "city_default",
+  "catalog_version": 2,
+  "generated_at_epoch_ms": 1775749261990,
+  "function_enum_table": [
+    "civic_center",
+    "commercial",
+    "market",
+    "residential_low",
+    "residential_mid",
+    "residential_high",
+    "warehouse",
+    "port",
+    "watchtower",
+    "fortification",
+    "farm",
+    "fishing",
+    "religious",
+    "workshop",
+    "landmark"
+  ],
+  "structures": [
+    {
+      "structure_id": "minecraft:village/plains/houses/plains_tool_smith_1",
+      "size": {
+        "length": 9,
+        "width": 12,
+        "height": 6
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.08,
+        "commercial": 0.12,
+        "residential": 0.82,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "workshop",
+          "score": 0.88
+        }
+      ],
+      "namespace": "minecraft",
+      "path": "village/plains/houses/plains_tool_smith_1",
+      "size_tier": "M",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "road_edge",
+      "growth_axis": "x",
+      "vertical_role": "ground",
+      "vertical_clearance": 6,
+      "preset_pool": "workshop_small",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "workshop_small",
+        "evidence": "village/plains/houses/plains_tool_smith_1"
+      },
+      "function_definition": {
+        "primary_function": "workshop",
+        "secondary_functions": [],
+        "semantic_role": "service",
+        "source": "mcp_path_heuristic"
+      },
+      "placement": {
+        "origin_mode": "TEMPLATE_CORNER",
+        "origin_offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "footprint": {
+          "min_x": 0,
+          "min_z": 0,
+          "max_x": 11,
+          "max_z": 8
+        },
+        "clearance": {
+          "min_y": 0,
+          "max_y": 6
+        },
+        "terrain_probe_points": [
+          {
+            "x": 0,
+            "z": 0
+          },
+          {
+            "x": 11,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "z": 8
+          },
+          {
+            "x": 11,
+            "z": 8
+          },
+          {
+            "x": 5,
+            "z": 4
+          }
+        ],
+        "entry_points": [
+          {
+            "x": 5,
+            "y": 0,
+            "z": 8,
+            "facing": "south",
+            "kind": "main_entry"
+          }
+        ]
+      },
+      "constraints": {
+        "allowed_rotations": [
+          0,
+          90,
+          180,
+          270
+        ],
+        "max_slope": 0.18,
+        "max_height_delta": 4,
+        "avoid_water": true,
+        "avoid_lava": true,
+        "min_edge_buffer": 1,
+        "requires_solid_base": true
+      },
+      "connectors": [
+        {
+          "id": "jigsaw_west_0_0_8",
+          "local_pos": {
+            "x": 0,
+            "y": 0,
+            "z": 8
+          },
+          "orientation_raw": "west_up",
+          "front": "west",
+          "top": "up",
+          "facing": "west",
+          "name": "minecraft:building_entrance",
+          "target": "minecraft:building_entrance",
+          "pool": "minecraft:empty",
+          "joint": "aligned",
+          "final_state": "minecraft:structure_void",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "workshop_small"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
+      "weight_profile": {
+        "default": 1.0,
+        "workshop": 1.25,
+        "industrial": 1.05
+      },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    }
+  ]
+}

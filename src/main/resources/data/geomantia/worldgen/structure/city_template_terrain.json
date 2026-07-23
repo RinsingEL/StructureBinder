@@ -1,0 +1,7 @@
+{
+  "type": "geomantia:city_template_terrain",
+  "biomes": "#minecraft:is_overworld",
+  "spawn_overrides": {},
+  "step": "surface_structures",
+  "terrain_adaptation": "beard_thin"
+}

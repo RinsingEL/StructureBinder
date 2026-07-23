@@ -1,0 +1,249 @@
+{
+  "registryId": "registry_geomantia_stubbs_mining_town_20260718_01",
+  "surveyId": "survey_geomantia_stubbs_mining_town_20260718_01",
+  "territoryMapId": "territory_geomantia_stubbs_mining_town_20260718_01",
+  "citySeeds": [
+    {
+      "citySeedId": "city_realm_salt_kingdom_0_capital",
+      "realmId": "realm_salt_kingdom_0",
+      "role": "capital",
+      "theoreticalScale": "capital",
+      "anchorGrid": {
+        "x": 20368,
+        "z": 20323
+      },
+      "anchorBlock": {
+        "x": 651776,
+        "z": 650336
+      },
+      "candidateRangeCells": 8,
+      "planningRadiusCells": 4,
+      "subregionId": "capital_core",
+      "candidateId": "capital_realm_salt_kingdom_0",
+      "graphDistanceToNearestCity": -1.0,
+      "requiredConditions": [
+        "land",
+        "inside_realm"
+      ],
+      "coreFunctions": [
+        "administration",
+        "market",
+        "defense"
+      ],
+      "trigger": "always",
+      "source": {
+        "reason": "capital_city_seed"
+      }
+    },
+    {
+      "citySeedId": "city_realm_salt_kingdom_0_port",
+      "realmId": "realm_salt_kingdom_0",
+      "role": "port",
+      "theoreticalScale": "town",
+      "anchorGrid": {
+        "x": 20304,
+        "z": 20242
+      },
+      "anchorBlock": {
+        "x": 649728,
+        "z": 647744
+      },
+      "candidateRangeCells": 6,
+      "planningRadiusCells": 2,
+      "subregionId": "realm_salt_kingdom_0_north_west",
+      "candidateId": "port_realm_salt_kingdom_0_20304_20242",
+      "graphDistanceToNearestCity": 103.23274674249446,
+      "requiredConditions": [
+        "land",
+        "near_water",
+        "inside_realm"
+      ],
+      "coreFunctions": [
+        "harbor",
+        "market",
+        "storage"
+      ],
+      "trigger": "player_nearby",
+      "source": {
+        "reason": "coastal territory"
+      }
+    },
+    {
+      "citySeedId": "city_realm_salt_kingdom_0_mining",
+      "realmId": "realm_salt_kingdom_0",
+      "role": "mining_town",
+      "theoreticalScale": "town",
+      "anchorGrid": {
+        "x": 20380,
+        "z": 20261
+      },
+      "anchorBlock": {
+        "x": 652160,
+        "z": 648352
+      },
+      "candidateRangeCells": 5,
+      "planningRadiusCells": 2,
+      "subregionId": "realm_salt_kingdom_0_north_east",
+      "candidateId": "mining_realm_salt_kingdom_0_20380_20261",
+      "graphDistanceToNearestCity": 95.0,
+      "requiredConditions": [
+        "land",
+        "inside_realm",
+        "near_mountain"
+      ],
+      "coreFunctions": [
+        "industry",
+        "storage",
+        "worker_housing"
+      ],
+      "trigger": "realm_development",
+      "source": {
+        "reason": "mountain landform"
+      }
+    },
+    {
+      "citySeedId": "city_fresh_river_full_20260719",
+      "realmId": "realm_unassigned_acceptance",
+      "role": "river_town",
+      "theoreticalScale": "town",
+      "anchorGrid": {
+        "x": 20312,
+        "z": 20376
+      },
+      "anchorBlock": {
+        "x": 649984,
+        "z": 652064
+      },
+      "candidateRangeCells": 16,
+      "planningRadiusCells": 16,
+      "subregionId": "fresh_river_acceptance",
+      "candidateId": "fresh_river_full_20260719",
+      "graphDistanceToNearestCity": -1.0,
+      "requiredConditions": [
+        "land",
+        "near_water",
+        "fresh_chunks"
+      ],
+      "coreFunctions": [
+        "administration",
+        "market_and_services",
+        "agriculture",
+        "residential"
+      ],
+      "trigger": "design_acceptance",
+      "source": {
+        "reason": "selected_from_sealed_w_flat_forest_plains_river_patch_with_absent_region"
+      }
+    },
+    {
+      "citySeedId": "city_w_large_town_20260720",
+      "realmId": "realm_salt_kingdom_0",
+      "role": "large_town",
+      "theoreticalScale": "town",
+      "anchorGrid": {
+        "x": 20317,
+        "z": 20276
+      },
+      "anchorBlock": {
+        "x": 650144,
+        "z": 648832
+      },
+      "candidateRangeCells": 16,
+      "planningRadiusCells": 12,
+      "subregionId": "large_town_design_20260720",
+      "candidateId": "w_large_town_20317_20276_20260720",
+      "graphDistanceToNearestCity": -1.0,
+      "requiredConditions": [
+        "land",
+        "near_water",
+        "inside_realm",
+        "fresh_chunks"
+      ],
+      "coreFunctions": [
+        "administration",
+        "plaza",
+        "market_and_services",
+        "agriculture",
+        "residential",
+        "defense"
+      ],
+      "trigger": "design_acceptance",
+      "source": {
+        "reason": "selected_from_sealed_w_for_large_connected_town_design_20260720"
+      }
+    },
+    {
+      "citySeedId": "city_w_large_town_b_20260720",
+      "realmId": "realm_salt_kingdom_0",
+      "role": "large_town",
+      "theoreticalScale": "town",
+      "anchorGrid": {
+        "x": 20370,
+        "z": 20370
+      },
+      "anchorBlock": {
+        "x": 651840,
+        "z": 651840
+      },
+      "candidateRangeCells": 16,
+      "planningRadiusCells": 12,
+      "subregionId": "large_town_design_b_20260720",
+      "candidateId": "w_large_town_20370_20370_20260720",
+      "graphDistanceToNearestCity": 47.04,
+      "requiredConditions": [
+        "land",
+        "near_water",
+        "inside_realm",
+        "fresh_chunks"
+      ],
+      "coreFunctions": [
+        "administration",
+        "plaza",
+        "market_and_services",
+        "agriculture",
+        "residential",
+        "defense"
+      ],
+      "trigger": "design_acceptance",
+      "source": {
+        "reason": "second_candidate_selected_by_relief_slope_water_ring_and_exact_fresh_chunk_ranking"
+      }
+    },
+    {
+      "citySeedId": "city_w_large_town_c_20260720",
+      "realmId": "realm_unassigned_acceptance",
+      "role": "large_town",
+      "theoreticalScale": "town",
+      "anchorGrid": {
+        "x": 20370,
+        "z": 20378
+      },
+      "anchorBlock": {
+        "x": 651840,
+        "z": 652096
+      },
+      "candidateRangeCells": 16,
+      "planningRadiusCells": 12,
+      "subregionId": "large_town_design_c_20260720",
+      "candidateId": "w_large_town_20370_20378_20260720",
+      "graphDistanceToNearestCity": 48.66,
+      "requiredConditions": [
+        "land",
+        "near_water",
+        "fresh_chunks"
+      ],
+      "coreFunctions": [
+        "administration",
+        "plaza",
+        "market_and_services",
+        "agriculture",
+        "residential",
+        "defense"
+      ],
+      "trigger": "design_acceptance",
+      "source": {
+        "reason": "third_candidate_shifted_south_from_d3_confirmed_flat_land_continuation"
+      }
+    }
+  ]
+}

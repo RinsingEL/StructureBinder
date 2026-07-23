@@ -1,0 +1,345 @@
+package com.rinsing.geomantia.systems.city.application.landuse;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonNull;
+import com.google.gson.JsonObject;
+import com.rinsing.geomantia.systems.city.domain.landuse.LandUseAreaPlan;
+import com.rinsing.geomantia.systems.city.domain.landuse.LandUseSurfaceSettings;
+import com.rinsing.geomantia.systems.city.domain.model.BlockPoint;
+
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.HexFormat;
+import java.util.List;
+import java.util.Set;
+
+/** Strict current-only JSON codec and canonical hash owner for SurfacePrintPlan v0.2. */
+public final class CityLandUseSurfacePrintPlanCodec {
+    private static final Set<String> ROOT_FIELDS = Set.of(
+            "schemaVersion", "cityId", "sourceLandUsePlanHash", "planHash", "areas");
+    private static final Set<String> AREA_FIELDS = Set.of(
+            "printAreaId", "landUseAreaId", "sourceGroupIds", "surfaceSettings",
+            "memberSpans", "exclusionSpans", "surfaceAlgorithm", "algorithmAnchor", "recipe");
+    private static final Set<String> SETTINGS_FIELDS = Set.of(
+            "surfacePrintEnabled", "autoConnect", "surfaceBlockId", "cropBlockId", "compatibilityCategory",
+            "surfaceAlgorithm", "algorithmAnchor", "channelBankBlockId", "channelWaterBlockId",
+            "channelBankOverlayBlockId");
+    private static final Set<String> UNIFORM_FIELDS = Set.of("recipeType", "surfaceBlockId");
+    private static final Set<String> CONTOUR_FIELDS = Set.of(
+            "recipeType", "surfaceBlockId", "cropBlockId", "channelBankBlockId", "channelWaterBlockId",
+            "channelBankOverlayBlockId", "repeatPeriodBlocks", "fieldBeforeBlocks", "channelWidthBlocks",
+            "fieldAfterBlocks", "classificationMode", "anchor", "bandSpans");
+    private static final Set<String> BAND_SPAN_FIELDS = Set.of("z", "minX", "maxX", "role");
+    private static final Set<String> POINT_FIELDS = Set.of("x", "z");
+    private static final Set<String> SPAN_FIELDS = Set.of("z", "minX", "maxX");
+
+    public CityLandUseSurfacePrintPlan withComputedHash(CityLandUseSurfacePrintPlan plan) {
+        return plan.withPlanHash(computePlanHash(plan));
+    }
+
+    public String computePlanHash(CityLandUseSurfacePrintPlan plan) {
+        JsonObject json = toJson(plan.withPlanHash(""));
+        json.remove("planHash");
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            return HexFormat.of().formatHex(digest.digest(json.toString().getBytes(StandardCharsets.UTF_8)));
+        } catch (NoSuchAlgorithmException ex) {
+            throw new IllegalStateException("SHA-256 is unavailable", ex);
+        }
+    }
+
+    public JsonObject toJson(CityLandUseSurfacePrintPlan plan) {
+        JsonObject root = new JsonObject();
+        root.addProperty("schemaVersion", plan.schemaVersion());
+        root.addProperty("cityId", plan.cityId());
+        root.addProperty("sourceLandUsePlanHash", plan.sourceLandUsePlanHash());
+        if (!plan.planHash().isBlank()) root.addProperty("planHash", plan.planHash());
+        JsonArray areas = new JsonArray();
+        plan.areas().forEach(area -> areas.add(areaJson(area)));
+        root.add("areas", areas);
+        return root;
+    }
+
+    public CityLandUseSurfacePrintPlan fromJson(JsonObject root) {
+        requireObject(root, "root");
+        String schemaVersion = text(root, "schemaVersion", false);
+        if (!CityLandUseSurfacePrintPlan.CURRENT_SCHEMA_VERSION.equals(schemaVersion)) {
+            throw fail("CITY_LAND_USE_SURFACE_PRINT_SCHEMA_UNSUPPORTED", schemaVersion);
+        }
+        rejectUnknown(root, ROOT_FIELDS, "root");
+        List<CityLandUseSurfacePrintPlan.AreaPrint> areas = new ArrayList<>();
+        for (JsonElement element : array(root, "areas")) areas.add(area(object(element, "areas[]")));
+        CityLandUseSurfacePrintPlan plan = new CityLandUseSurfacePrintPlan(
+                schemaVersion, text(root, "cityId", false), text(root, "sourceLandUsePlanHash", false),
+                optionalText(root, "planHash"), areas);
+        if (!plan.planHash().isBlank() && !plan.planHash().equals(computePlanHash(plan))) {
+            throw fail("CITY_LAND_USE_SURFACE_PRINT_PLAN_HASH_MISMATCH", "planHash does not match payload");
+        }
+        return plan;
+    }
+
+    private static JsonObject areaJson(CityLandUseSurfacePrintPlan.AreaPrint area) {
+        JsonObject value = new JsonObject();
+        value.addProperty("printAreaId", area.printAreaId());
+        value.addProperty("landUseAreaId", area.landUseAreaId());
+        value.add("sourceGroupIds", stringsJson(area.sourceGroupIds()));
+        value.add("surfaceSettings", settingsJson(area.surfaceSettings()));
+        value.add("memberSpans", spansJson(area.memberSpans()));
+        value.add("exclusionSpans", spansJson(area.exclusionSpans()));
+        value.addProperty("surfaceAlgorithm", area.surfaceAlgorithm().name().toLowerCase());
+        value.add("algorithmAnchor", nullablePointJson(area.algorithmAnchor()));
+        value.add("recipe", recipeJson(area.recipe()));
+        return value;
+    }
+
+    private static CityLandUseSurfacePrintPlan.AreaPrint area(JsonObject value) {
+        rejectUnknown(value, AREA_FIELDS, "area");
+        return new CityLandUseSurfacePrintPlan.AreaPrint(
+                text(value, "printAreaId", false), text(value, "landUseAreaId", false),
+                strings(array(value, "sourceGroupIds")), settings(object(value, "surfaceSettings")),
+                spans(array(value, "memberSpans")), spans(array(value, "exclusionSpans")),
+                enumValue(LandUseSurfaceSettings.SurfaceAlgorithm.class,
+                        text(value, "surfaceAlgorithm", false)),
+                nullablePoint(value, "algorithmAnchor"), recipe(object(value, "recipe")));
+    }
+
+    private static JsonObject settingsJson(LandUseSurfaceSettings settings) {
+        JsonObject value = new JsonObject();
+        value.addProperty("surfacePrintEnabled", settings.surfacePrintEnabled());
+        value.addProperty("autoConnect", settings.autoConnect());
+        value.addProperty("surfaceBlockId", settings.surfaceBlockId());
+        value.addProperty("cropBlockId", settings.cropBlockId());
+        value.addProperty("compatibilityCategory", settings.compatibilityCategory());
+        value.addProperty("surfaceAlgorithm", settings.surfaceAlgorithm().name().toLowerCase());
+        value.add("algorithmAnchor", nullablePointJson(settings.algorithmAnchor()));
+        value.addProperty("channelBankBlockId", settings.channelBankBlockId());
+        value.addProperty("channelWaterBlockId", settings.channelWaterBlockId());
+        value.addProperty("channelBankOverlayBlockId", settings.channelBankOverlayBlockId());
+        return value;
+    }
+
+    private static LandUseSurfaceSettings settings(JsonObject value) {
+        rejectUnknown(value, SETTINGS_FIELDS, "surfaceSettings");
+        return new LandUseSurfaceSettings(bool(value, "surfacePrintEnabled"), bool(value, "autoConnect"),
+                text(value, "surfaceBlockId", true), text(value, "cropBlockId", true),
+                text(value, "compatibilityCategory", true),
+                enumValue(LandUseSurfaceSettings.SurfaceAlgorithm.class,
+                        text(value, "surfaceAlgorithm", false)),
+                nullablePoint(value, "algorithmAnchor"), text(value, "channelBankBlockId", true),
+                text(value, "channelWaterBlockId", true), text(value, "channelBankOverlayBlockId", true));
+    }
+
+    private static JsonObject recipeJson(CityLandUseSurfacePrintPlan.Recipe recipe) {
+        JsonObject value = new JsonObject();
+        if (recipe instanceof CityLandUseSurfacePrintPlan.UniformRecipe uniform) {
+            value.addProperty("recipeType", "uniform");
+            value.addProperty("surfaceBlockId", uniform.surfaceBlockId());
+            return value;
+        }
+        CityLandUseSurfacePrintPlan.ContourBandsRecipe contour =
+                (CityLandUseSurfacePrintPlan.ContourBandsRecipe) recipe;
+        value.addProperty("recipeType", "contour_bands");
+        value.addProperty("surfaceBlockId", contour.surfaceBlockId());
+        value.addProperty("cropBlockId", contour.cropBlockId());
+        value.addProperty("channelBankBlockId", contour.channelBankBlockId());
+        value.addProperty("channelWaterBlockId", contour.channelWaterBlockId());
+        value.addProperty("channelBankOverlayBlockId", contour.channelBankOverlayBlockId());
+        value.addProperty("repeatPeriodBlocks", contour.repeatPeriodBlocks());
+        value.addProperty("fieldBeforeBlocks", contour.fieldBeforeBlocks());
+        value.addProperty("channelWidthBlocks", contour.channelWidthBlocks());
+        value.addProperty("fieldAfterBlocks", contour.fieldAfterBlocks());
+        value.addProperty("classificationMode", contour.classificationMode().name().toLowerCase());
+        value.add("anchor", pointJson(contour.anchor()));
+        JsonArray bandSpans = new JsonArray();
+        contour.bandSpans().forEach(span -> bandSpans.add(bandSpanJson(span)));
+        value.add("bandSpans", bandSpans);
+        return value;
+    }
+
+    private static CityLandUseSurfacePrintPlan.Recipe recipe(JsonObject value) {
+        String type = text(value, "recipeType", false);
+        if ("uniform".equals(type)) {
+            rejectUnknown(value, UNIFORM_FIELDS, "recipe");
+            return new CityLandUseSurfacePrintPlan.UniformRecipe(text(value, "surfaceBlockId", false));
+        }
+        if (!"contour_bands".equals(type)) {
+            throw fail("CITY_LAND_USE_SURFACE_PRINT_RECIPE_TYPE_INVALID", type);
+        }
+        rejectUnknown(value, CONTOUR_FIELDS, "recipe");
+        List<CityLandUseSurfacePrintPlan.BandSpan> bandSpans = new ArrayList<>();
+        for (JsonElement element : array(value, "bandSpans")) {
+            bandSpans.add(bandSpan(object(element, "bandSpans[]")));
+        }
+        return new CityLandUseSurfacePrintPlan.ContourBandsRecipe(
+                text(value, "surfaceBlockId", false), text(value, "cropBlockId", false),
+                text(value, "channelBankBlockId", false), text(value, "channelWaterBlockId", false),
+                text(value, "channelBankOverlayBlockId", false), integer(value, "repeatPeriodBlocks"),
+                integer(value, "fieldBeforeBlocks"), integer(value, "channelWidthBlocks"),
+                integer(value, "fieldAfterBlocks"),
+                enumValue(CityLandUseSurfacePrintPlan.ClassificationMode.class,
+                        text(value, "classificationMode", false)),
+                point(object(value, "anchor")), bandSpans);
+    }
+
+    private static JsonObject bandSpanJson(CityLandUseSurfacePrintPlan.BandSpan span) {
+        JsonObject value = new JsonObject();
+        value.addProperty("z", span.z());
+        value.addProperty("minX", span.minX());
+        value.addProperty("maxX", span.maxX());
+        value.addProperty("role", span.role().name().toLowerCase());
+        return value;
+    }
+
+    private static CityLandUseSurfacePrintPlan.BandSpan bandSpan(JsonObject value) {
+        rejectUnknown(value, BAND_SPAN_FIELDS, "bandSpan");
+        return new CityLandUseSurfacePrintPlan.BandSpan(integer(value, "z"), integer(value, "minX"),
+                integer(value, "maxX"), enumValue(CityLandUseSurfacePrintPlan.BandRole.class,
+                text(value, "role", false)));
+    }
+
+    private static JsonArray spansJson(List<LandUseAreaPlan.ScanlineSpan> spans) {
+        JsonArray result = new JsonArray();
+        for (LandUseAreaPlan.ScanlineSpan span : spans) {
+            JsonObject value = new JsonObject();
+            value.addProperty("z", span.z());
+            value.addProperty("minX", span.minX());
+            value.addProperty("maxX", span.maxX());
+            result.add(value);
+        }
+        return result;
+    }
+
+    private static List<LandUseAreaPlan.ScanlineSpan> spans(JsonArray values) {
+        List<LandUseAreaPlan.ScanlineSpan> result = new ArrayList<>();
+        for (JsonElement element : values) {
+            JsonObject value = object(element, "spans[]");
+            rejectUnknown(value, SPAN_FIELDS, "span");
+            result.add(new LandUseAreaPlan.ScanlineSpan(
+                    integer(value, "z"), integer(value, "minX"), integer(value, "maxX")));
+        }
+        return result;
+    }
+
+    private static JsonObject pointJson(BlockPoint point) {
+        JsonObject value = new JsonObject();
+        value.addProperty("x", point.x());
+        value.addProperty("z", point.z());
+        return value;
+    }
+
+    private static JsonElement nullablePointJson(BlockPoint point) {
+        return point == null ? JsonNull.INSTANCE : pointJson(point);
+    }
+
+    private static BlockPoint point(JsonObject value) {
+        rejectUnknown(value, POINT_FIELDS, "point");
+        return new BlockPoint(integer(value, "x"), integer(value, "z"));
+    }
+
+    private static BlockPoint nullablePoint(JsonObject owner, String key) {
+        if (!owner.has(key)) throw fail("CITY_LAND_USE_SURFACE_PRINT_FIELD_REQUIRED", key);
+        return owner.get(key).isJsonNull() ? null : point(object(owner, key));
+    }
+
+    private static JsonArray stringsJson(List<String> values) {
+        JsonArray result = new JsonArray();
+        values.forEach(result::add);
+        return result;
+    }
+
+    private static List<String> strings(JsonArray values) {
+        List<String> result = new ArrayList<>();
+        for (JsonElement value : values) {
+            if (!value.isJsonPrimitive() || !value.getAsJsonPrimitive().isString()
+                    || value.getAsString().isBlank()) {
+                throw fail("CITY_LAND_USE_SURFACE_PRINT_FIELD_INVALID", "Expected non-blank string array");
+            }
+            result.add(value.getAsString());
+        }
+        return result;
+    }
+
+    private static void requireObject(JsonObject value, String owner) {
+        if (value == null) throw fail("CITY_LAND_USE_SURFACE_PRINT_JSON_REQUIRED", owner);
+    }
+
+    private static JsonObject object(JsonObject owner, String key) {
+        if (!owner.has(key) || !owner.get(key).isJsonObject()) {
+            throw fail("CITY_LAND_USE_SURFACE_PRINT_FIELD_REQUIRED", key);
+        }
+        return owner.getAsJsonObject(key);
+    }
+
+    private static JsonObject object(JsonElement value, String owner) {
+        if (value == null || !value.isJsonObject()) {
+            throw fail("CITY_LAND_USE_SURFACE_PRINT_FIELD_INVALID", owner);
+        }
+        return value.getAsJsonObject();
+    }
+
+    private static JsonArray array(JsonObject owner, String key) {
+        if (!owner.has(key) || !owner.get(key).isJsonArray()) {
+            throw fail("CITY_LAND_USE_SURFACE_PRINT_FIELD_REQUIRED", key);
+        }
+        return owner.getAsJsonArray(key);
+    }
+
+    private static String text(JsonObject owner, String key, boolean allowEmpty) {
+        if (!owner.has(key) || !owner.get(key).isJsonPrimitive()
+                || !owner.getAsJsonPrimitive(key).isString()) {
+            throw fail("CITY_LAND_USE_SURFACE_PRINT_FIELD_REQUIRED", key);
+        }
+        String value = owner.get(key).getAsString();
+        if (!allowEmpty && value.isBlank()) {
+            throw fail("CITY_LAND_USE_SURFACE_PRINT_FIELD_INVALID", key);
+        }
+        return value;
+    }
+
+    private static String optionalText(JsonObject owner, String key) {
+        return owner.has(key) ? text(owner, key, true) : "";
+    }
+
+    private static int integer(JsonObject owner, String key) {
+        if (!owner.has(key) || !owner.get(key).isJsonPrimitive()
+                || !owner.getAsJsonPrimitive(key).isNumber()) {
+            throw fail("CITY_LAND_USE_SURFACE_PRINT_FIELD_REQUIRED", key);
+        }
+        try {
+            return owner.get(key).getAsBigDecimal().intValueExact();
+        } catch (ArithmeticException ex) {
+            throw fail("CITY_LAND_USE_SURFACE_PRINT_FIELD_INVALID", key);
+        }
+    }
+
+    private static boolean bool(JsonObject owner, String key) {
+        if (!owner.has(key) || !owner.get(key).isJsonPrimitive()
+                || !owner.getAsJsonPrimitive(key).isBoolean()) {
+            throw fail("CITY_LAND_USE_SURFACE_PRINT_FIELD_REQUIRED", key);
+        }
+        return owner.get(key).getAsBoolean();
+    }
+
+    private static <E extends Enum<E>> E enumValue(Class<E> type, String value) {
+        try {
+            return Enum.valueOf(type, value.toUpperCase(java.util.Locale.ROOT));
+        } catch (RuntimeException ex) {
+            throw fail("CITY_LAND_USE_SURFACE_PRINT_ENUM_INVALID", type.getSimpleName() + ':' + value);
+        }
+    }
+
+    private static void rejectUnknown(JsonObject value, Set<String> allowed, String owner) {
+        for (String key : value.keySet()) {
+            if (!allowed.contains(key)) {
+                throw fail("CITY_LAND_USE_SURFACE_PRINT_FIELD_UNKNOWN", owner + '.' + key);
+            }
+        }
+    }
+
+    private static IllegalArgumentException fail(String reason, String detail) {
+        return new IllegalArgumentException(reason + ": " + detail);
+    }
+}

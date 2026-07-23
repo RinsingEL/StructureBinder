@@ -1,0 +1,174 @@
+{
+  "schemaVersion": "city_decoration_style_profile.v0.1",
+  "styleProfileId": "medieval_coastal",
+  "mappings": [
+    {
+      "semanticRef": "crop_tile",
+      "variants": [
+        {"contentRef": "geomantia:decoration/crop_tile", "weight": 1.0}
+      ]
+    },
+    {
+      "semanticRef": "farmland_tile",
+      "variants": [
+        {"contentRef": "geomantia:decoration/farmland_tile", "weight": 1.0}
+      ]
+    },
+    {
+      "semanticRef": "wheat_seed",
+      "variants": [
+        {"contentRef": "geomantia:decoration/wheat_seed", "weight": 1.0}
+      ]
+    },
+    {
+      "semanticRef": "water_channel_tile",
+      "variants": [
+        {"contentRef": "geomantia:decoration/water_channel_tile", "weight": 1.0}
+      ]
+    },
+    {
+      "semanticRef": "water_channel_lined_endcap",
+      "variants": [
+        {"contentRef": "geomantia:decoration/water_channel_lined_endcap_01", "weight": 1.0}
+      ]
+    },
+    {
+      "semanticRef": "water_channel_lined_straight",
+      "variants": [
+        {"contentRef": "geomantia:decoration/water_channel_lined_straight_01", "weight": 1.0}
+      ]
+    },
+    {
+      "semanticRef": "field_border",
+      "variants": [
+        {"contentRef": "geomantia:decoration/field_border", "weight": 1.0}
+      ]
+    },
+    {
+      "semanticRef": "gravel_path_tile",
+      "variants": [
+        {"contentRef": "geomantia:decoration/gravel_path_tile", "weight": 1.0}
+      ]
+    },
+    {
+      "semanticRef": "scarecrow",
+      "variants": [
+        {"contentRef": "geomantia:decoration/scarecrow_02", "weight": 1.0}
+      ]
+    },
+    {
+      "semanticRef": "haystack",
+      "variants": [
+        {"contentRef": "geomantia:decoration/haystack_01", "weight": 1.0}
+      ]
+    },
+    {
+      "semanticRef": "farm_tool_rack",
+      "variants": [
+        {"contentRef": "geomantia:decoration/farm_tool_rack_01", "weight": 1.0}
+      ]
+    },
+    {
+      "semanticRef": "agriculture_field_detail",
+      "variants": [
+        {"contentRef": "geomantia:decoration/scarecrow_02", "weight": 1.0},
+        {"contentRef": "geomantia:decoration/haystack_01", "weight": 2.0},
+        {"contentRef": "geomantia:decoration/farm_tool_rack_01", "weight": 1.0}
+      ]
+    },
+    {
+      "semanticRef": "market_stall_small",
+      "variants": [
+        {"contentRef": "geomantia:decoration/market_stall_small_01", "weight": 1.0}
+      ]
+    },
+    {
+      "semanticRef": "crate_cluster",
+      "variants": [
+        {"contentRef": "geomantia:decoration/crate_cluster_01", "weight": 1.0}
+      ]
+    },
+    {
+      "semanticRef": "barrel_cluster",
+      "variants": [
+        {"contentRef": "geomantia:decoration/barrel_cluster_01", "weight": 1.0}
+      ]
+    },
+    {
+      "semanticRef": "shop_sign",
+      "variants": [
+        {"contentRef": "geomantia:decoration/shop_sign_01", "weight": 1.0}
+      ]
+    },
+    {
+      "semanticRef": "commercial_market",
+      "variants": [
+        {"contentRef": "geomantia:decoration/market_stall_small_01", "weight": 1.0}
+      ]
+    },
+    {
+      "semanticRef": "commercial_goods",
+      "variants": [
+        {"contentRef": "geomantia:decoration/crate_cluster_01", "weight": 2.0},
+        {"contentRef": "geomantia:decoration/barrel_cluster_01", "weight": 1.0}
+      ]
+    },
+    {
+      "semanticRef": "commercial_service",
+      "variants": [
+        {"contentRef": "geomantia:decoration/shop_sign_01", "weight": 1.0}
+      ]
+    },
+    {
+      "semanticRef": "street_bench",
+      "variants": [
+        {"contentRef": "geomantia:decoration/street_bench_01", "weight": 1.0}
+      ]
+    },
+    {
+      "semanticRef": "lantern_post",
+      "variants": [
+        {"contentRef": "geomantia:decoration/lantern_post_01", "weight": 1.0}
+      ]
+    },
+    {
+      "semanticRef": "notice_board",
+      "variants": [
+        {"contentRef": "geomantia:decoration/notice_board_01", "weight": 1.0}
+      ]
+    },
+    {
+      "semanticRef": "banner_post",
+      "variants": [
+        {"contentRef": "geomantia:decoration/banner_post_01", "weight": 1.0}
+      ]
+    },
+    {
+      "semanticRef": "fountain",
+      "variants": [
+        {"contentRef": "geomantia:decoration/fountain_01", "weight": 1.0}
+      ]
+    },
+    {
+      "semanticRef": "civic_public_facility",
+      "variants": [
+        {"contentRef": "geomantia:decoration/street_bench_01", "weight": 2.0},
+        {"contentRef": "geomantia:decoration/lantern_post_01", "weight": 1.0}
+      ]
+    },
+    {
+      "semanticRef": "civic_notice",
+      "variants": [
+        {"contentRef": "geomantia:decoration/notice_board_01", "weight": 1.0}
+      ]
+    },
+    {
+      "semanticRef": "civic_plaza",
+      "variants": [
+        {"contentRef": "geomantia:decoration/banner_post_01", "weight": 1.0},
+        {"contentRef": "geomantia:decoration/lantern_post_01", "weight": 1.0},
+        {"contentRef": "geomantia:decoration/street_bench_01", "weight": 2.0}
+      ]
+    }
+  ]
+}

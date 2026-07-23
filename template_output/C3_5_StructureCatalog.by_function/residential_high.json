@@ -3,7 +3,7 @@
   "ok": true,
   "city_id": "city_default",
   "catalog_version": 2,
-  "generated_at_epoch_ms": 1774447195997,
+  "generated_at_epoch_ms": 1775749261990,
   "function_enum_table": [
     "civic_center",
     "commercial",
@@ -28,27 +28,6 @@
         "length": 23,
         "width": 22,
         "height": 12
-      },
-      "orientation": {
-        "jigsaw_facing": [],
-        "entry_facing": "unknown",
-        "rotations": [
-          0,
-          90,
-          180,
-          270
-        ]
-      },
-      "piece_role": "SINGLE",
-      "style_score": {
-        "classical": 0.0,
-        "military": 0.0,
-        "commercial": 0.1,
-        "residential": 0.85,
-        "religious": 0.0,
-        "industrial": 0.0,
-        "maritime": 0.0,
-        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -78,75 +57,6 @@
         "semantic_role": "residential",
         "source": "mcp_path_heuristic"
       },
-      "placement": {
-        "origin_mode": "TEMPLATE_CORNER",
-        "origin_offset": {
-          "x": 0,
-          "y": 0,
-          "z": 0
-        },
-        "footprint": {
-          "min_x": 0,
-          "min_z": 0,
-          "max_x": 21,
-          "max_z": 22
-        },
-        "clearance": {
-          "min_y": 0,
-          "max_y": 12
-        },
-        "terrain_probe_points": [
-          {
-            "x": 0,
-            "z": 0
-          },
-          {
-            "x": 21,
-            "z": 0
-          },
-          {
-            "x": 0,
-            "z": 22
-          },
-          {
-            "x": 21,
-            "z": 22
-          },
-          {
-            "x": 10,
-            "z": 11
-          }
-        ],
-        "entry_points": [
-          {
-            "x": 10,
-            "y": 0,
-            "z": 22,
-            "facing": "south",
-            "kind": "main_entry"
-          }
-        ]
-      },
-      "constraints": {
-        "allowed_rotations": [
-          0,
-          90,
-          180,
-          270
-        ],
-        "max_slope": 0.18,
-        "max_height_delta": 3,
-        "avoid_water": true,
-        "avoid_lava": true,
-        "min_edge_buffer": 1,
-        "requires_solid_base": true
-      },
-      "connectors": [],
-      "weight_profile": {
-        "default": 1.0,
-        "residential_high": 1.25,
-        "residential": 1.05
-      },
       "tag_source": {
         "scanner": false,
         "preset_rule": "mcp_path_heuristic",
@@ -161,29 +71,6 @@
         "width": 24,
         "height": 38
       },
-      "orientation": {
-        "jigsaw_facing": [
-          "east"
-        ],
-        "entry_facing": "unknown",
-        "rotations": [
-          0,
-          90,
-          180,
-          270
-        ]
-      },
-      "piece_role": "SINGLE",
-      "style_score": {
-        "classical": 0.0,
-        "military": 0.0,
-        "commercial": 0.1,
-        "residential": 0.85,
-        "religious": 0.0,
-        "industrial": 0.0,
-        "maritime": 0.0,
-        "civic": 0.0
-      },
       "function_candidates": [
         {
           "function": "residential_high",
@@ -193,12 +80,8 @@
       "namespace": "trek",
       "path": "overworld/medium/haunted_house",
       "size_tier": "L",
-      "connector_types": [
-        "road"
-      ],
-      "connector_dirs": [
-        "east"
-      ],
+      "connector_types": [],
+      "connector_dirs": [],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "x",
@@ -216,96 +99,6 @@
         "semantic_role": "residential",
         "source": "mcp_path_heuristic"
       },
-      "placement": {
-        "origin_mode": "TEMPLATE_CORNER",
-        "origin_offset": {
-          "x": 0,
-          "y": 0,
-          "z": 0
-        },
-        "footprint": {
-          "min_x": 0,
-          "min_z": 0,
-          "max_x": 23,
-          "max_z": 18
-        },
-        "clearance": {
-          "min_y": 0,
-          "max_y": 38
-        },
-        "terrain_probe_points": [
-          {
-            "x": 0,
-            "z": 0
-          },
-          {
-            "x": 23,
-            "z": 0
-          },
-          {
-            "x": 0,
-            "z": 18
-          },
-          {
-            "x": 23,
-            "z": 18
-          },
-          {
-            "x": 11,
-            "z": 9
-          }
-        ],
-        "entry_points": [
-          {
-            "x": 11,
-            "y": 0,
-            "z": 18,
-            "facing": "south",
-            "kind": "main_entry"
-          }
-        ]
-      },
-      "constraints": {
-        "allowed_rotations": [
-          0,
-          90,
-          180,
-          270
-        ],
-        "max_slope": 0.18,
-        "max_height_delta": 3,
-        "avoid_water": true,
-        "avoid_lava": true,
-        "min_edge_buffer": 1,
-        "requires_solid_base": true
-      },
-      "connectors": [
-        {
-          "id": "jigsaw_east_9_4_5",
-          "local_pos": {
-            "x": 9,
-            "y": 4,
-            "z": 5
-          },
-          "facing": "east",
-          "type": "road",
-          "socket": "village_street_small",
-          "connect_to_pools": [
-            "village_house_small",
-            "village_house_medium",
-            "village_market_small",
-            "village_commercial_small",
-            "village_civic_core"
-          ],
-          "required": false,
-          "max_connections": 1
-        }
-      ],
-      "weight_profile": {
-        "default": 1.0,
-        "residential_high": 1.25,
-        "residential": 1.05
-      },
       "tag_source": {
         "scanner": false,
         "preset_rule": "mcp_path_heuristic",
@@ -320,31 +113,6 @@
         "width": 15,
         "height": 9
       },
-      "orientation": {
-        "jigsaw_facing": [
-          "east",
-          "north",
-          "south"
-        ],
-        "entry_facing": "unknown",
-        "rotations": [
-          0,
-          90,
-          180,
-          270
-        ]
-      },
-      "piece_role": "SINGLE",
-      "style_score": {
-        "classical": 0.0,
-        "military": 0.0,
-        "commercial": 0.1,
-        "residential": 0.85,
-        "religious": 0.0,
-        "industrial": 0.0,
-        "maritime": 0.0,
-        "civic": 0.0
-      },
       "function_candidates": [
         {
           "function": "residential_high",
@@ -354,14 +122,8 @@
       "namespace": "trek",
       "path": "overworld/medium/sorcerers_house",
       "size_tier": "M",
-      "connector_types": [
-        "road"
-      ],
-      "connector_dirs": [
-        "north",
-        "east",
-        "south"
-      ],
+      "connector_types": [],
+      "connector_dirs": [],
       "allowed_neighbors": [],
       "landing_hint": "road_edge",
       "growth_axis": "auto",
@@ -379,136 +141,6 @@
         "semantic_role": "residential",
         "source": "mcp_path_heuristic"
       },
-      "placement": {
-        "origin_mode": "TEMPLATE_CORNER",
-        "origin_offset": {
-          "x": 0,
-          "y": 0,
-          "z": 0
-        },
-        "footprint": {
-          "min_x": 0,
-          "min_z": 0,
-          "max_x": 14,
-          "max_z": 14
-        },
-        "clearance": {
-          "min_y": 0,
-          "max_y": 9
-        },
-        "terrain_probe_points": [
-          {
-            "x": 0,
-            "z": 0
-          },
-          {
-            "x": 14,
-            "z": 0
-          },
-          {
-            "x": 0,
-            "z": 14
-          },
-          {
-            "x": 14,
-            "z": 14
-          },
-          {
-            "x": 7,
-            "z": 7
-          }
-        ],
-        "entry_points": [
-          {
-            "x": 7,
-            "y": 0,
-            "z": 14,
-            "facing": "south",
-            "kind": "main_entry"
-          }
-        ]
-      },
-      "constraints": {
-        "allowed_rotations": [
-          0,
-          90,
-          180,
-          270
-        ],
-        "max_slope": 0.18,
-        "max_height_delta": 4,
-        "avoid_water": true,
-        "avoid_lava": true,
-        "min_edge_buffer": 1,
-        "requires_solid_base": true
-      },
-      "connectors": [
-        {
-          "id": "jigsaw_north_10_0_8",
-          "local_pos": {
-            "x": 10,
-            "y": 0,
-            "z": 8
-          },
-          "facing": "north",
-          "type": "road",
-          "socket": "village_street_small",
-          "connect_to_pools": [
-            "village_house_small",
-            "village_house_medium",
-            "village_market_small",
-            "village_commercial_small",
-            "village_civic_core"
-          ],
-          "required": false,
-          "max_connections": 1
-        },
-        {
-          "id": "jigsaw_east_4_3_10",
-          "local_pos": {
-            "x": 4,
-            "y": 3,
-            "z": 10
-          },
-          "facing": "east",
-          "type": "road",
-          "socket": "village_street_small",
-          "connect_to_pools": [
-            "village_house_small",
-            "village_house_medium",
-            "village_market_small",
-            "village_commercial_small",
-            "village_civic_core"
-          ],
-          "required": false,
-          "max_connections": 1
-        },
-        {
-          "id": "jigsaw_south_10_3_5",
-          "local_pos": {
-            "x": 10,
-            "y": 3,
-            "z": 5
-          },
-          "facing": "south",
-          "type": "road",
-          "socket": "village_street_small",
-          "connect_to_pools": [
-            "village_house_small",
-            "village_house_medium",
-            "village_market_small",
-            "village_commercial_small",
-            "village_civic_core"
-          ],
-          "required": false,
-          "max_connections": 1
-        }
-      ],
-      "weight_profile": {
-        "default": 1.0,
-        "residential_high": 1.25,
-        "residential": 1.05
-      },
       "tag_source": {
         "scanner": false,
         "preset_rule": "mcp_path_heuristic",
@@ -522,27 +154,6 @@
         "length": 16,
         "width": 13,
         "height": 24
-      },
-      "orientation": {
-        "jigsaw_facing": [],
-        "entry_facing": "unknown",
-        "rotations": [
-          0,
-          90,
-          180,
-          270
-        ]
-      },
-      "piece_role": "SINGLE",
-      "style_score": {
-        "classical": 0.0,
-        "military": 0.0,
-        "commercial": 0.1,
-        "residential": 0.85,
-        "religious": 0.0,
-        "industrial": 0.0,
-        "maritime": 0.0,
-        "civic": 0.0
       },
       "function_candidates": [
         {
@@ -572,6 +183,75 @@
         "semantic_role": "residential",
         "source": "mcp_path_heuristic"
       },
+      "tag_source": {
+        "scanner": false,
+        "preset_rule": "mcp_path_heuristic",
+        "manual_override": false
+      },
+      "notes": "Tagged by TerraSense MCP heuristic labeler using structure path/name only."
+    },
+    {
+      "structure_id": "trek:village/plains/houses/plains_medium_house_1",
+      "size": {
+        "length": 15,
+        "width": 13,
+        "height": 10
+      },
+      "orientation": {
+        "jigsaw_facing": [
+          "west"
+        ],
+        "entry_facing": "unknown",
+        "rotations": [
+          0,
+          90,
+          180,
+          270
+        ]
+      },
+      "piece_role": "SINGLE",
+      "style_score": {
+        "classical": 0.0,
+        "military": 0.08,
+        "commercial": 0.12,
+        "residential": 0.82,
+        "religious": 0.0,
+        "industrial": 0.0,
+        "maritime": 0.0,
+        "civic": 0.0
+      },
+      "function_candidates": [
+        {
+          "function": "residential_high",
+          "score": 0.9
+        }
+      ],
+      "namespace": "trek",
+      "path": "village/plains/houses/plains_medium_house_1",
+      "size_tier": "M",
+      "connector_types": [
+        "road"
+      ],
+      "connector_dirs": [
+        "west"
+      ],
+      "allowed_neighbors": [],
+      "landing_hint": "road_edge",
+      "growth_axis": "z",
+      "vertical_role": "ground",
+      "vertical_clearance": 10,
+      "preset_pool": "village_house_medium",
+      "preset_pool_source": {
+        "source_type": "mcp_path_heuristic",
+        "pool_id": "village_house_medium",
+        "evidence": "village/plains/houses/plains_medium_house_1"
+      },
+      "function_definition": {
+        "primary_function": "residential_high",
+        "secondary_functions": [],
+        "semantic_role": "residential",
+        "source": "mcp_path_heuristic"
+      },
       "placement": {
         "origin_mode": "TEMPLATE_CORNER",
         "origin_offset": {
@@ -583,11 +263,11 @@
           "min_x": 0,
           "min_z": 0,
           "max_x": 12,
-          "max_z": 15
+          "max_z": 14
         },
         "clearance": {
           "min_y": 0,
-          "max_y": 24
+          "max_y": 10
         },
         "terrain_probe_points": [
           {
@@ -600,11 +280,11 @@
           },
           {
             "x": 0,
-            "z": 15
+            "z": 14
           },
           {
             "x": 12,
-            "z": 15
+            "z": 14
           },
           {
             "x": 6,
@@ -615,7 +295,7 @@
           {
             "x": 6,
             "y": 0,
-            "z": 15,
+            "z": 14,
             "facing": "south",
             "kind": "main_entry"
           }
@@ -635,7 +315,36 @@
         "min_edge_buffer": 1,
         "requires_solid_base": true
       },
-      "connectors": [],
+      "connectors": [
+        {
+          "id": "jigsaw_west_0_1_3",
+          "local_pos": {
+            "x": 0,
+            "y": 1,
+            "z": 3
+          },
+          "orientation_raw": "west_up",
+          "front": "west",
+          "top": "up",
+          "facing": "west",
+          "name": "minecraft:building_entrance",
+          "target": "minecraft:building_entrance",
+          "pool": "minecraft:empty",
+          "joint": "aligned",
+          "final_state": "minecraft:oak_stairs[facing\u003deast,half\u003dbottom,shape\u003dstraight,waterlogged\u003dfalse]",
+          "type": "road",
+          "socket": "village_street_small",
+          "connect_to_pools": [
+            "village_house_small",
+            "village_house_medium",
+            "village_market_small",
+            "village_commercial_small",
+            "village_civic_core"
+          ],
+          "required": false,
+          "max_connections": 1
+        }
+      ],
       "weight_profile": {
         "default": 1.0,
         "residential_high": 1.25,

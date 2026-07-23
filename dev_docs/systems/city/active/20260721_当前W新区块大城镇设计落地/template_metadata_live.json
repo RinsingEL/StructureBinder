@@ -1,0 +1,541 @@
+{
+  "schemaVersion": "city_template_metadata_snapshot.v0.1",
+  "capturedAt": "2026-07-21T23:05:58,739+08:00",
+  "runId": "geomantia_stubbs_mining_town_20260718_01",
+  "citySeedId": "city_w_island_large_town_20260721",
+  "templates": [
+    {
+      "templateRef": "geomantia:city/stubbs/agriculture/windmill_01",
+      "readable": true,
+      "failureCode": "NONE",
+      "failureDetail": "",
+      "rawSize": {
+        "width": 27,
+        "height": 47,
+        "depth": 21
+      },
+      "templateHash": "sha256:36f382d5f619d75a060793cf1a44a4c9a7f44de84a99c12a94e3c9294aa0b735",
+      "sourceId": "minecraft:structure_template_manager:geomantia:city/stubbs/agriculture/windmill_01"
+    },
+    {
+      "templateRef": "geomantia:city/stubbs/agriculture/barn_windmill_01",
+      "readable": true,
+      "failureCode": "NONE",
+      "failureDetail": "",
+      "rawSize": {
+        "width": 25,
+        "height": 47,
+        "depth": 31
+      },
+      "templateHash": "sha256:a3051a9e39db9dc741cd9528096c215c510a229be971e6721cd2ed461b307abe",
+      "sourceId": "minecraft:structure_template_manager:geomantia:city/stubbs/agriculture/barn_windmill_01"
+    },
+    {
+      "templateRef": "geomantia:city/stubbs/agriculture/barn_01",
+      "readable": true,
+      "failureCode": "NONE",
+      "failureDetail": "",
+      "rawSize": {
+        "width": 15,
+        "height": 10,
+        "depth": 21
+      },
+      "templateHash": "sha256:190e933f93aeaaf31b530ffbbda0dec48412e6d71197bb1e2adbf7914efaf6fc",
+      "sourceId": "minecraft:structure_template_manager:geomantia:city/stubbs/agriculture/barn_01"
+    },
+    {
+      "templateRef": "geomantia:city/stubbs/agriculture/farm_storage_house_01",
+      "readable": true,
+      "failureCode": "NONE",
+      "failureDetail": "",
+      "rawSize": {
+        "width": 19,
+        "height": 17,
+        "depth": 29
+      },
+      "templateHash": "sha256:1e5b847cb33fde9300658b0e9992a7aa2e7d9367f29be278a7b9f737f1cfc449",
+      "sourceId": "minecraft:structure_template_manager:geomantia:city/stubbs/agriculture/farm_storage_house_01"
+    },
+    {
+      "templateRef": "geomantia:city/stubbs/agriculture/horse_stall_02",
+      "readable": true,
+      "failureCode": "NONE",
+      "failureDetail": "",
+      "rawSize": {
+        "width": 21,
+        "height": 16,
+        "depth": 32
+      },
+      "templateHash": "sha256:220e48388a0c7f7c56c3b740e4d9298d82357590425e4686ff9a5c700bba8a18",
+      "sourceId": "minecraft:structure_template_manager:geomantia:city/stubbs/agriculture/horse_stall_02"
+    },
+    {
+      "templateRef": "geomantia:city/stubbs/agriculture/farm_home_01",
+      "readable": true,
+      "failureCode": "NONE",
+      "failureDetail": "",
+      "rawSize": {
+        "width": 20,
+        "height": 11,
+        "depth": 18
+      },
+      "templateHash": "sha256:193552748b34a93d78ec99be6a16aa50afd7613ef1d61927aa021d3638890d8c",
+      "sourceId": "minecraft:structure_template_manager:geomantia:city/stubbs/agriculture/farm_home_01"
+    },
+    {
+      "templateRef": "geomantia:city/stubbs/civic/town_hall_01",
+      "readable": true,
+      "failureCode": "NONE",
+      "failureDetail": "",
+      "rawSize": {
+        "width": 48,
+        "height": 25,
+        "depth": 31
+      },
+      "templateHash": "sha256:459edda2d660958eaf5edf74379fc08b90cc32c1bfa8d29428e6ea646eab2801",
+      "sourceId": "minecraft:structure_template_manager:geomantia:city/stubbs/civic/town_hall_01"
+    },
+    {
+      "templateRef": "geomantia:city/stubbs/civic/guard_outpost_01",
+      "readable": true,
+      "failureCode": "NONE",
+      "failureDetail": "",
+      "rawSize": {
+        "width": 26,
+        "height": 48,
+        "depth": 31
+      },
+      "templateHash": "sha256:8abf3ae46e66bdf34e6c09fb89c063cf31fb9df184138e675d637642c94b817c",
+      "sourceId": "minecraft:structure_template_manager:geomantia:city/stubbs/civic/guard_outpost_01"
+    },
+    {
+      "templateRef": "geomantia:city/stubbs/civic/town_hall_02",
+      "readable": true,
+      "failureCode": "NONE",
+      "failureDetail": "",
+      "rawSize": {
+        "width": 41,
+        "height": 23,
+        "depth": 19
+      },
+      "templateHash": "sha256:e88e97460dd81eb94fdc2006cbfd0e809fc3d34d253abd8a72d8257c029e2210",
+      "sourceId": "minecraft:structure_template_manager:geomantia:city/stubbs/civic/town_hall_02"
+    },
+    {
+      "templateRef": "geomantia:city/stubbs/civic/guardian_tower_01",
+      "readable": true,
+      "failureCode": "NONE",
+      "failureDetail": "",
+      "rawSize": {
+        "width": 21,
+        "height": 37,
+        "depth": 17
+      },
+      "templateHash": "sha256:57abd4e050003c6242ae3a9caa971cb4add5bf42a0e174e60f9ad2a6159fb6f9",
+      "sourceId": "minecraft:structure_template_manager:geomantia:city/stubbs/civic/guardian_tower_01"
+    },
+    {
+      "templateRef": "geomantia:city/stubbs/civic/guardian_tower_02",
+      "readable": true,
+      "failureCode": "NONE",
+      "failureDetail": "",
+      "rawSize": {
+        "width": 21,
+        "height": 37,
+        "depth": 17
+      },
+      "templateHash": "sha256:1374349811f02c53c03f98cf7ccf51ba890a013bf63c6745d17478aea058fe40",
+      "sourceId": "minecraft:structure_template_manager:geomantia:city/stubbs/civic/guardian_tower_02"
+    },
+    {
+      "templateRef": "geomantia:city/stubbs/civic/guard_tower_03",
+      "readable": true,
+      "failureCode": "NONE",
+      "failureDetail": "",
+      "rawSize": {
+        "width": 19,
+        "height": 43,
+        "depth": 19
+      },
+      "templateHash": "sha256:b877e0b8be5cd4e03c62fadfde2358b061a84586bdc5d3e123af02ed888bd9b6",
+      "sourceId": "minecraft:structure_template_manager:geomantia:city/stubbs/civic/guard_tower_03"
+    },
+    {
+      "templateRef": "geomantia:city/stubbs/civic/guard_gate_01",
+      "readable": true,
+      "failureCode": "NONE",
+      "failureDetail": "",
+      "rawSize": {
+        "width": 39,
+        "height": 40,
+        "depth": 22
+      },
+      "templateHash": "sha256:8526acb9427bc91c3540430aecfc719a2c0c7e60f3a0bc44ed9f88944c96006b",
+      "sourceId": "minecraft:structure_template_manager:geomantia:city/stubbs/civic/guard_gate_01"
+    },
+    {
+      "templateRef": "geomantia:city/stubbs/commercial/tavern_01",
+      "readable": true,
+      "failureCode": "NONE",
+      "failureDetail": "",
+      "rawSize": {
+        "width": 23,
+        "height": 16,
+        "depth": 33
+      },
+      "templateHash": "sha256:b0422e0bb5794e70a57c84a8fd4438c1766c6de01866d93a6432b213edb28bcd",
+      "sourceId": "minecraft:structure_template_manager:geomantia:city/stubbs/commercial/tavern_01"
+    },
+    {
+      "templateRef": "geomantia:city/stubbs/commercial/motel_01",
+      "readable": true,
+      "failureCode": "NONE",
+      "failureDetail": "",
+      "rawSize": {
+        "width": 30,
+        "height": 12,
+        "depth": 16
+      },
+      "templateHash": "sha256:7fdc80266c7362cc79d7c62a18681516bc8eac2a108bf268dde90c00adaf43f4",
+      "sourceId": "minecraft:structure_template_manager:geomantia:city/stubbs/commercial/motel_01"
+    },
+    {
+      "templateRef": "geomantia:city/stubbs/commercial/general_store_01",
+      "readable": true,
+      "failureCode": "NONE",
+      "failureDetail": "",
+      "rawSize": {
+        "width": 16,
+        "height": 15,
+        "depth": 23
+      },
+      "templateHash": "sha256:c300452d64d7c6ad1a57b01aba1dd1c7c5c23a38c6772b1257d2537682bc5a59",
+      "sourceId": "minecraft:structure_template_manager:geomantia:city/stubbs/commercial/general_store_01"
+    },
+    {
+      "templateRef": "geomantia:city/stubbs/commercial/town_shop_01",
+      "readable": true,
+      "failureCode": "NONE",
+      "failureDetail": "",
+      "rawSize": {
+        "width": 15,
+        "height": 11,
+        "depth": 13
+      },
+      "templateHash": "sha256:8efaa45150ac1f51027d1df6191d6b6e9023df9b40dbc95487c4f543107ce259",
+      "sourceId": "minecraft:structure_template_manager:geomantia:city/stubbs/commercial/town_shop_01"
+    },
+    {
+      "templateRef": "geomantia:city/stubbs/commercial/bakery_01",
+      "readable": true,
+      "failureCode": "NONE",
+      "failureDetail": "",
+      "rawSize": {
+        "width": 25,
+        "height": 18,
+        "depth": 18
+      },
+      "templateHash": "sha256:b90f4e60d606a1881fb6938ac0584c146abfc7624497114b635731ec11650797",
+      "sourceId": "minecraft:structure_template_manager:geomantia:city/stubbs/commercial/bakery_01"
+    },
+    {
+      "templateRef": "geomantia:city/stubbs/commercial/bake_shop_01",
+      "readable": true,
+      "failureCode": "NONE",
+      "failureDetail": "",
+      "rawSize": {
+        "width": 25,
+        "height": 14,
+        "depth": 16
+      },
+      "templateHash": "sha256:763f2bf9a38cf5c0858246c4b8f76773cde6ff06b131e33920fc76dea8adb0b7",
+      "sourceId": "minecraft:structure_template_manager:geomantia:city/stubbs/commercial/bake_shop_01"
+    },
+    {
+      "templateRef": "geomantia:city/stubbs/commercial/flower_shop_01",
+      "readable": true,
+      "failureCode": "NONE",
+      "failureDetail": "",
+      "rawSize": {
+        "width": 19,
+        "height": 15,
+        "depth": 19
+      },
+      "templateHash": "sha256:7ef986cd3bbe57ad6b671c0544ba174ed1ae5f78fe5b176645f990e8b07e4b55",
+      "sourceId": "minecraft:structure_template_manager:geomantia:city/stubbs/commercial/flower_shop_01"
+    },
+    {
+      "templateRef": "geomantia:city/stubbs/commercial/small_butcher_shop_01",
+      "readable": true,
+      "failureCode": "NONE",
+      "failureDetail": "",
+      "rawSize": {
+        "width": 19,
+        "height": 8,
+        "depth": 13
+      },
+      "templateHash": "sha256:efce8ee9e6bde8469a329a47ea620c21c0a4c19446b39969dc842e5bf254bfe8",
+      "sourceId": "minecraft:structure_template_manager:geomantia:city/stubbs/commercial/small_butcher_shop_01"
+    },
+    {
+      "templateRef": "geomantia:city/stubbs/commercial/town_workshop_01",
+      "readable": true,
+      "failureCode": "NONE",
+      "failureDetail": "",
+      "rawSize": {
+        "width": 14,
+        "height": 12,
+        "depth": 11
+      },
+      "templateHash": "sha256:8dfae268e58e20e1820792eb2391c94325454487ad7b7549902379f1982d8925",
+      "sourceId": "minecraft:structure_template_manager:geomantia:city/stubbs/commercial/town_workshop_01"
+    },
+    {
+      "templateRef": "geomantia:city/stubbs/commercial/merchant_house_01",
+      "readable": true,
+      "failureCode": "NONE",
+      "failureDetail": "",
+      "rawSize": {
+        "width": 35,
+        "height": 25,
+        "depth": 29
+      },
+      "templateHash": "sha256:f5d1c9ebbd886bc7914b60eba2271d0a4152eefb6fec8d68e825b90066c8cdbe",
+      "sourceId": "minecraft:structure_template_manager:geomantia:city/stubbs/commercial/merchant_house_01"
+    },
+    {
+      "templateRef": "geomantia:city/stubbs/commercial/library_01",
+      "readable": true,
+      "failureCode": "NONE",
+      "failureDetail": "",
+      "rawSize": {
+        "width": 37,
+        "height": 19,
+        "depth": 25
+      },
+      "templateHash": "sha256:967bead12cc7fe0b1f6c2b25e2b084039ea1849c8e1bf5def135a4dac985c37a",
+      "sourceId": "minecraft:structure_template_manager:geomantia:city/stubbs/commercial/library_01"
+    },
+    {
+      "templateRef": "geomantia:city/stubbs/commercial/theater_01",
+      "readable": true,
+      "failureCode": "NONE",
+      "failureDetail": "",
+      "rawSize": {
+        "width": 37,
+        "height": 16,
+        "depth": 48
+      },
+      "templateHash": "sha256:6509f33702b277ad425d0a3f5bc41e130a135b434fd7f8c67c1a17bd6c3fae47",
+      "sourceId": "minecraft:structure_template_manager:geomantia:city/stubbs/commercial/theater_01"
+    },
+    {
+      "templateRef": "geomantia:city/stubbs/commercial/laundry_facility_01",
+      "readable": true,
+      "failureCode": "NONE",
+      "failureDetail": "",
+      "rawSize": {
+        "width": 25,
+        "height": 13,
+        "depth": 28
+      },
+      "templateHash": "sha256:fb03f1c023f2aeaf58769cd2d545e8c13c170b2dbce4a17642572e1bd9914d70",
+      "sourceId": "minecraft:structure_template_manager:geomantia:city/stubbs/commercial/laundry_facility_01"
+    },
+    {
+      "templateRef": "geomantia:city/stubbs/residential/city_home_01",
+      "readable": true,
+      "failureCode": "NONE",
+      "failureDetail": "",
+      "rawSize": {
+        "width": 11,
+        "height": 20,
+        "depth": 20
+      },
+      "templateHash": "sha256:7f4fcede2d3c93b532e04f505fe05b0f634852bf017069b45ca801ab07a42e41",
+      "sourceId": "minecraft:structure_template_manager:geomantia:city/stubbs/residential/city_home_01"
+    },
+    {
+      "templateRef": "geomantia:city/stubbs/residential/city_home_02",
+      "readable": true,
+      "failureCode": "NONE",
+      "failureDetail": "",
+      "rawSize": {
+        "width": 15,
+        "height": 23,
+        "depth": 28
+      },
+      "templateHash": "sha256:a76083fa82a84a8c66d30f88ccfc3e3e081786dd71042bd66c47fd8e2cebe4fc",
+      "sourceId": "minecraft:structure_template_manager:geomantia:city/stubbs/residential/city_home_02"
+    },
+    {
+      "templateRef": "geomantia:city/stubbs/residential/civilian_house_01",
+      "readable": true,
+      "failureCode": "NONE",
+      "failureDetail": "",
+      "rawSize": {
+        "width": 27,
+        "height": 14,
+        "depth": 23
+      },
+      "templateHash": "sha256:175a84b96ee1be15360247d9f1f2ae4bf81c0ee410a7d94ae05cac9de7105563",
+      "sourceId": "minecraft:structure_template_manager:geomantia:city/stubbs/residential/civilian_house_01"
+    },
+    {
+      "templateRef": "geomantia:city/stubbs/residential/civilian_house_02",
+      "readable": true,
+      "failureCode": "NONE",
+      "failureDetail": "",
+      "rawSize": {
+        "width": 23,
+        "height": 14,
+        "depth": 19
+      },
+      "templateHash": "sha256:481ff7f1ca444e1b5311b1c5031819906f438d0eed6f2a1a794d55bf89bfbb58",
+      "sourceId": "minecraft:structure_template_manager:geomantia:city/stubbs/residential/civilian_house_02"
+    },
+    {
+      "templateRef": "geomantia:city/stubbs/residential/civilian_house_03",
+      "readable": true,
+      "failureCode": "NONE",
+      "failureDetail": "",
+      "rawSize": {
+        "width": 17,
+        "height": 14,
+        "depth": 21
+      },
+      "templateHash": "sha256:82009766ef60d342ed09e4098a9646e79c16d3cb48fd763fc8f000daf12d0b18",
+      "sourceId": "minecraft:structure_template_manager:geomantia:city/stubbs/residential/civilian_house_03"
+    },
+    {
+      "templateRef": "geomantia:city/stubbs/residential/dorm_for_the_poor_01",
+      "readable": true,
+      "failureCode": "NONE",
+      "failureDetail": "",
+      "rawSize": {
+        "width": 34,
+        "height": 23,
+        "depth": 25
+      },
+      "templateHash": "sha256:63b2f902c92768124e3a98c83faf5e8c9bd934ad462638fb0d96d0af86b56f2b",
+      "sourceId": "minecraft:structure_template_manager:geomantia:city/stubbs/residential/dorm_for_the_poor_01"
+    },
+    {
+      "templateRef": "geomantia:city/stubbs/residential/household_01",
+      "readable": true,
+      "failureCode": "NONE",
+      "failureDetail": "",
+      "rawSize": {
+        "width": 15,
+        "height": 17,
+        "depth": 15
+      },
+      "templateHash": "sha256:e4f33abd66652a3afd65368b692e4e0d861f8ed88be313ba4d36547ccb3c3e71",
+      "sourceId": "minecraft:structure_template_manager:geomantia:city/stubbs/residential/household_01"
+    },
+    {
+      "templateRef": "geomantia:city/stubbs/residential/household_02",
+      "readable": true,
+      "failureCode": "NONE",
+      "failureDetail": "",
+      "rawSize": {
+        "width": 15,
+        "height": 14,
+        "depth": 15
+      },
+      "templateHash": "sha256:7727587338928ae85c5969f8bc7ed01cd0d506585c6e13b76c897ce25faecb3b",
+      "sourceId": "minecraft:structure_template_manager:geomantia:city/stubbs/residential/household_02"
+    },
+    {
+      "templateRef": "geomantia:city/stubbs/residential/household_03",
+      "readable": true,
+      "failureCode": "NONE",
+      "failureDetail": "",
+      "rawSize": {
+        "width": 17,
+        "height": 14,
+        "depth": 17
+      },
+      "templateHash": "sha256:b2ff11b3421250494ec2ae4a71e65f3135bb07943fc4234f824be440b11f40a5",
+      "sourceId": "minecraft:structure_template_manager:geomantia:city/stubbs/residential/household_03"
+    },
+    {
+      "templateRef": "geomantia:city/stubbs/residential/household_04",
+      "readable": true,
+      "failureCode": "NONE",
+      "failureDetail": "",
+      "rawSize": {
+        "width": 23,
+        "height": 16,
+        "depth": 13
+      },
+      "templateHash": "sha256:7a0fdf152ec9d2f571fb445cc264c8f6a307c0576949981a900b15732d6cd480",
+      "sourceId": "minecraft:structure_template_manager:geomantia:city/stubbs/residential/household_04"
+    },
+    {
+      "templateRef": "geomantia:city/stubbs/residential/household_05",
+      "readable": true,
+      "failureCode": "NONE",
+      "failureDetail": "",
+      "rawSize": {
+        "width": 17,
+        "height": 17,
+        "depth": 21
+      },
+      "templateHash": "sha256:2512458c329ffa7be2ac797f71aac4f07eca943347e99563067e677f9c451159",
+      "sourceId": "minecraft:structure_template_manager:geomantia:city/stubbs/residential/household_05"
+    },
+    {
+      "templateRef": "geomantia:city/stubbs/residential/household_06",
+      "readable": true,
+      "failureCode": "NONE",
+      "failureDetail": "",
+      "rawSize": {
+        "width": 17,
+        "height": 15,
+        "depth": 27
+      },
+      "templateHash": "sha256:b8f90c08b6cc032c5b85d27c288e30b61c8193b8049db0ff8b5a590b22d8f027",
+      "sourceId": "minecraft:structure_template_manager:geomantia:city/stubbs/residential/household_06"
+    },
+    {
+      "templateRef": "geomantia:city/stubbs/residential/household_07",
+      "readable": true,
+      "failureCode": "NONE",
+      "failureDetail": "",
+      "rawSize": {
+        "width": 19,
+        "height": 13,
+        "depth": 15
+      },
+      "templateHash": "sha256:39e3f2941d335ff920f24c1424489f3af5cd5c9e54f158ee6678badab1ec0754",
+      "sourceId": "minecraft:structure_template_manager:geomantia:city/stubbs/residential/household_07"
+    },
+    {
+      "templateRef": "geomantia:city/stubbs/residential/village_house_small_01",
+      "readable": true,
+      "failureCode": "NONE",
+      "failureDetail": "",
+      "rawSize": {
+        "width": 11,
+        "height": 9,
+        "depth": 9
+      },
+      "templateHash": "sha256:9a1dec3d4ece94699f4a6bea7230b0f42ce38399ec47bef98e126602955a3b6b",
+      "sourceId": "minecraft:structure_template_manager:geomantia:city/stubbs/residential/village_house_small_01"
+    },
+    {
+      "templateRef": "geomantia:city/stubbs/residential/village_house_small_02",
+      "readable": true,
+      "failureCode": "NONE",
+      "failureDetail": "",
+      "rawSize": {
+        "width": 11,
+        "height": 9,
+        "depth": 9
+      },
+      "templateHash": "sha256:30b14663953fb431108ee463298d2dba806121759ac7bc01ec387c2eb1708805",
+      "sourceId": "minecraft:structure_template_manager:geomantia:city/stubbs/residential/village_house_small_02"
+    }
+  ]
+}

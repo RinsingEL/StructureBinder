@@ -5,12 +5,14 @@ export type ToolResult = {
   isError?: boolean;
 };
 
-export type ToolHandler = (args: any) => Promise<ToolResult>;
+export type ToolHandler = (args: Record<string, unknown>) => Promise<ToolResult>;
 
 export type ToolDefinition = {
   name: string;
   description: string;
-  inputSchema: Record<string, any>;
+  inputSchema: Record<string, unknown>;
 };
 
-export { textResult } from "./result/text-result.js";
+export function textResult(text: string): ToolResult {
+  return { content: [{ type: "text", text }] };
+}
