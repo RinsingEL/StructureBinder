@@ -77,8 +77,11 @@ public final class CityLandUseChunkExecutor {
                     basePrepared.add(mutation);
                 }
             }
-            OperationPhase phase = operation.stage() == CityLandUseChunkCompiler.SurfaceStage.BASE
-                    ? OperationPhase.SURFACE : OperationPhase.SURFACE_OVERLAY;
+            OperationPhase phase = switch (operation.stage()) {
+                case BASE -> OperationPhase.SURFACE;
+                case CHANNEL_OVERLAY -> OperationPhase.SURFACE_OVERLAY;
+                case CROP -> OperationPhase.CROP;
+            };
             PreparedMutation mutation = prepare(world, operation.areaId(), phase,
                     operation.x(), targetSurfaceY + operation.surfaceOffset(), operation.z(), operation.blockId(),
                     operation.requireReplaceableTarget() || fill != null && operation.surfaceOffset() == 0);
@@ -130,11 +133,13 @@ public final class CityLandUseChunkExecutor {
         }
 
         List<PreparedMutation> boundaryApplied = new ArrayList<>();
-        if (!apply(world, boundaryPrepared, boundaryApplied)) {
+        BoundaryApplyResult boundaryResult = applyBoundary(world, boundaryPrepared, boundaryApplied);
+        if (!boundaryResult.success()) {
             boolean rolledBack = rollback(world, boundaryApplied);
             rolledBack &= rollback(world, cropApplied);
             rolledBack &= rollback(world, baseApplied);
-            return ExecutionResult.failed(fragment, "CITY_LAND_USE_BLOCK_WRITE_FAILED",
+            rolledBack &= boundaryResult.rollbackComplete();
+            return ExecutionResult.failed(fragment, boundaryResult.reasonCode(),
                     preparedBlockCount,
                     baseApplied.size() + cropApplied.size() + boundaryApplied.size(),
                     naturalSurfaceSkipped, occupiedBoundarySkipped, rolledBack);
@@ -170,6 +175,44 @@ public final class CityLandUseChunkExecutor {
             if (!written) return false;
         }
         return true;
+    }
+
+    private static BoundaryApplyResult applyBoundary(ExecutionWorld world,
+                                                     List<PreparedMutation> prepared,
+                                                     List<PreparedMutation> applied) {
+        for (PreparedMutation mutation : prepared) {
+            Object writeSnapshot;
+            try {
+                writeSnapshot = Objects.requireNonNull(world.beginWrite(
+                        mutation.x(), mutation.y(), mutation.z(), mutation.snapshot()));
+            } catch (RuntimeException ex) {
+                return BoundaryApplyResult.writeFailed();
+            }
+            applied.add(mutation.withSnapshot(writeSnapshot));
+            boolean written;
+            try {
+                written = world.setBoundaryBlockRaw(
+                        mutation.x(), mutation.y(), mutation.z(), mutation.blockId());
+            } catch (RuntimeException ex) {
+                written = false;
+            }
+            try {
+                world.endWrite(writeSnapshot);
+            } catch (RuntimeException ex) {
+                written = false;
+            }
+            if (!written) return BoundaryApplyResult.writeFailed();
+        }
+        try {
+            BoundaryFinalizeResult result = world.finalizeBoundaryConnections(prepared.stream()
+                    .map(mutation -> new BlockPosition(mutation.x(), mutation.y(), mutation.z()))
+                    .toList());
+            return result.success()
+                    ? BoundaryApplyResult.applied()
+                    : BoundaryApplyResult.finalizeFailed(result.rollbackComplete());
+        } catch (RuntimeException ex) {
+            return BoundaryApplyResult.finalizeFailed(false);
+        }
     }
 
     private static int preparedCount(List<PreparedMutation> base,
@@ -241,6 +284,7 @@ public final class CityLandUseChunkExecutor {
         MICRO_FILL,
         SURFACE,
         SURFACE_OVERLAY,
+        CROP,
         BOUNDARY
     }
 
@@ -259,6 +303,14 @@ public final class CityLandUseChunkExecutor {
 
         boolean setBlock(int worldX, int y, int worldZ, String blockId);
 
+        default boolean setBoundaryBlockRaw(int worldX, int y, int worldZ, String blockId) {
+            return setBlock(worldX, y, worldZ, blockId);
+        }
+
+        default BoundaryFinalizeResult finalizeBoundaryConnections(List<BlockPosition> positions) {
+            return BoundaryFinalizeResult.succeeded();
+        }
+
         default void endWrite(Object snapshot) {
         }
 
@@ -274,6 +326,22 @@ public final class CityLandUseChunkExecutor {
     public record TargetState(Object snapshot, boolean replaceable) {
         public TargetState {
             Objects.requireNonNull(snapshot, "snapshot");
+        }
+    }
+
+    public record BlockPosition(int x, int y, int z) {
+        private BlockPos toBlockPos() {
+            return new BlockPos(x, y, z);
+        }
+    }
+
+    public record BoundaryFinalizeResult(boolean success, boolean rollbackComplete) {
+        private static BoundaryFinalizeResult succeeded() {
+            return new BoundaryFinalizeResult(true, true);
+        }
+
+        private static BoundaryFinalizeResult failed(boolean rollbackComplete) {
+            return new BoundaryFinalizeResult(false, rollbackComplete);
         }
     }
 
@@ -350,69 +418,92 @@ public final class CityLandUseChunkExecutor {
     private record ColumnKey(int x, int z) {
     }
 
-    // WorldGenRegion ignores neighbor-update flags, so connecting blocks need explicit reconciliation.
-    static <S> boolean writeBlockState(BlockStateWriteAccess<S> world, BlockPos pos, S requested) {
+    private record BoundaryApplyResult(boolean success, String reasonCode, boolean rollbackComplete) {
+        private static BoundaryApplyResult applied() {
+            return new BoundaryApplyResult(true, "CITY_LAND_USE_OWNER_APPLIED", true);
+        }
+
+        private static BoundaryApplyResult writeFailed() {
+            return new BoundaryApplyResult(false, "CITY_LAND_USE_BLOCK_WRITE_FAILED", true);
+        }
+
+        private static BoundaryApplyResult finalizeFailed(boolean rollbackComplete) {
+            return new BoundaryApplyResult(false, "CITY_LAND_USE_BOUNDARY_FINALIZE_FAILED", rollbackComplete);
+        }
+    }
+
+    static <S> boolean writeExactBlockState(BlockStateWriteAccess<S> world,
+                                            BlockPos pos,
+                                            S requested,
+                                            int flags) {
         Objects.requireNonNull(world, "world");
         Objects.requireNonNull(pos, "pos");
         Objects.requireNonNull(requested, "requested");
+        return world.setBlock(pos, requested, flags)
+                && requested.equals(world.getBlockState(pos));
+    }
 
+    // WorldGenRegion ignores neighbor-update flags, so all boundary identities must exist before shape finalization.
+    static <S> BoundaryFinalizeResult finalizeHorizontalConnections(BlockStateWriteAccess<S> world,
+                                                                     List<BlockPos> boundaryPositions) {
+        Objects.requireNonNull(world, "world");
+        Objects.requireNonNull(boundaryPositions, "boundaryPositions");
+        Set<BlockPos> candidates = new HashSet<>();
+        for (BlockPos position : boundaryPositions) {
+            candidates.add(position.immutable());
+            for (Direction direction : HORIZONTAL_DIRECTIONS) {
+                candidates.add(position.relative(direction).immutable());
+            }
+        }
+        List<BlockPos> stableCandidates = candidates.stream()
+                .sorted((left, right) -> {
+                    int z = Integer.compare(left.getZ(), right.getZ());
+                    if (z != 0) return z;
+                    int x = Integer.compare(left.getX(), right.getX());
+                    if (x != 0) return x;
+                    return Integer.compare(left.getY(), right.getY());
+                })
+                .toList();
         Map<BlockPos, S> snapshots = new LinkedHashMap<>();
-        snapshots.put(pos, world.getBlockState(pos));
-        for (Direction direction : HORIZONTAL_DIRECTIONS) {
-            BlockPos neighborPos = pos.relative(direction);
-            snapshots.put(neighborPos, world.getBlockState(neighborPos));
-        }
+        stableCandidates.forEach(pos -> snapshots.put(pos, world.getBlockState(pos)));
 
-        S resolved = world.updateFromNeighbourShapes(requested, pos);
-        if (!world.setBlock(pos, resolved, Block.UPDATE_ALL)) {
-            return false;
-        }
-        if (!reconcileHorizontalConnections(world, pos)) {
-            restoreSnapshots(world, snapshots);
-            return false;
-        }
-
-        S current = world.getBlockState(pos);
-        S reconciled = world.updateFromNeighbourShapes(current, pos);
-        if (!current.equals(reconciled)
-                && !world.setBlock(pos, reconciled, Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE)) {
-            restoreSnapshots(world, snapshots);
-            return false;
-        }
-        if (!world.getBlockState(pos).equals(reconciled)) {
-            restoreSnapshots(world, snapshots);
-            return false;
-        }
-        return true;
-    }
-
-    private static <S> boolean reconcileHorizontalConnections(BlockStateWriteAccess<S> world, BlockPos pos) {
-        for (Direction direction : HORIZONTAL_DIRECTIONS) {
-            BlockPos neighborPos = pos.relative(direction);
-            S neighbor = world.getBlockState(neighborPos);
-            if (!world.isHorizontalConnectionBlock(neighbor)) {
-                continue;
+        Map<BlockPos, S> desired = new LinkedHashMap<>();
+        for (BlockPos pos : stableCandidates) {
+            S current = world.getBlockState(pos);
+            if (!world.isHorizontalConnectionBlock(current)) continue;
+            S reconciled = world.updateFromNeighbourShapes(current, pos);
+            desired.put(pos, reconciled);
+            if (!current.equals(reconciled) && !world.ensureCanWrite(pos)) {
+                return BoundaryFinalizeResult.failed(true);
             }
-            S reconciled = world.updateFromNeighbourShapes(neighbor, neighborPos);
-            if (neighbor.equals(reconciled)) {
-                continue;
-            }
-            if (!world.ensureCanWrite(neighborPos)
-                    || !world.setBlock(neighborPos, reconciled,
+        }
+        for (Map.Entry<BlockPos, S> entry : desired.entrySet()) {
+            if (!snapshots.get(entry.getKey()).equals(entry.getValue())
+                    && !writeExactBlockState(world, entry.getKey(), entry.getValue(),
                     Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE)) {
-                return false;
+                return BoundaryFinalizeResult.failed(restoreSnapshots(world, snapshots));
             }
         }
-        return true;
+        for (BlockPos pos : stableCandidates) {
+            S current = world.getBlockState(pos);
+            if (world.isHorizontalConnectionBlock(current)
+                    && !current.equals(world.updateFromNeighbourShapes(current, pos))) {
+                return BoundaryFinalizeResult.failed(restoreSnapshots(world, snapshots));
+            }
+        }
+        return BoundaryFinalizeResult.succeeded();
     }
 
-    private static <S> void restoreSnapshots(BlockStateWriteAccess<S> world, Map<BlockPos, S> snapshots) {
+    private static <S> boolean restoreSnapshots(BlockStateWriteAccess<S> world, Map<BlockPos, S> snapshots) {
+        boolean complete = true;
         List<Map.Entry<BlockPos, S>> reverse = new ArrayList<>(snapshots.entrySet());
         Collections.reverse(reverse);
         for (Map.Entry<BlockPos, S> entry : reverse) {
-            world.setBlock(entry.getKey(), entry.getValue(),
-                    Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
+            complete &= world.setBlock(entry.getKey(), entry.getValue(),
+                    Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE)
+                    && entry.getValue().equals(world.getBlockState(entry.getKey()));
         }
+        return complete;
     }
 
     interface BlockStateWriteAccess<S> {
@@ -481,11 +572,59 @@ public final class CityLandUseChunkExecutor {
                 return false;
             }
             BlockPos pos = new BlockPos(worldX, y, worldZ);
-            boolean written = writeBlockState(this, pos, BuiltInRegistries.BLOCK.get(key).defaultBlockState());
+            BlockState requested = BuiltInRegistries.BLOCK.get(key).defaultBlockState();
+            boolean written = requested.getBlock() instanceof CrossCollisionBlock
+                    ? writeConnectionCompatibleBlockState(pos, requested)
+                    : writeExactBlockState(this, pos, requested, Block.UPDATE_ALL);
             if (written) {
                 watchObservedNeighborhood(pos);
             }
             return written;
+        }
+
+        private boolean writeConnectionCompatibleBlockState(BlockPos pos, BlockState requested) {
+            if (!setBlock(pos, requested, Block.UPDATE_ALL)) return false;
+            BlockState actual = getBlockState(pos);
+            return actual.is(requested.getBlock())
+                    && actual.equals(updateFromNeighbourShapes(actual, pos));
+        }
+
+        @Override
+        public boolean setBoundaryBlockRaw(int worldX, int y, int worldZ, String blockId) {
+            ResourceLocation key = ResourceLocation.tryParse(blockId);
+            if (key == null || !BuiltInRegistries.BLOCK.containsKey(key)) {
+                return false;
+            }
+            BlockPos pos = new BlockPos(worldX, y, worldZ);
+            boolean written = writeExactBlockState(this, pos,
+                    BuiltInRegistries.BLOCK.get(key).defaultBlockState(),
+                    Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
+            if (written) watchObservedNeighborhood(pos);
+            return written;
+        }
+
+        @Override
+        public BoundaryFinalizeResult finalizeBoundaryConnections(List<BlockPosition> positions) {
+            List<BlockPos> blockPositions = positions.stream().map(BlockPosition::toBlockPos).toList();
+            if (activeRollbackToken != null) {
+                throw new IllegalStateException("CITY_LAND_USE_OBSERVATION_MUTATION_ALREADY_ACTIVE");
+            }
+            CityWorldgenBlockObservationRegistry.BlockObservationRollbackToken finalizeRollbackToken =
+                    CityWorldgenBlockObservationRegistry.newRollbackToken();
+            activeRollbackToken = finalizeRollbackToken;
+            try {
+                BoundaryFinalizeResult finalized = finalizeHorizontalConnections(this, blockPositions);
+                blockPositions.forEach(this::watchObservedNeighborhood);
+                if (!finalized.success()) {
+                    CityWorldgenBlockObservationRegistry.rollbackToken(finalizeRollbackToken);
+                }
+                return finalized;
+            } catch (RuntimeException | Error failure) {
+                CityWorldgenBlockObservationRegistry.rollbackToken(finalizeRollbackToken);
+                throw failure;
+            } finally {
+                activeRollbackToken = null;
+            }
         }
 
         @Override
@@ -499,7 +638,8 @@ public final class CityLandUseChunkExecutor {
                 return false;
             }
             BlockPos pos = new BlockPos(worldX, y, worldZ);
-            boolean restored = writeBlockState(this, pos, expected.blockState());
+            boolean restored = writeExactBlockState(this, pos, expected.blockState(),
+                    Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
             if (restored) {
                 CityWorldgenBlockObservationRegistry.rollbackToken(expected.rollbackToken());
             }

@@ -1,20 +1,45 @@
 package com.rinsing.geomantia.systems.city.testsupport;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.mojang.logging.LogUtils;
+import com.rinsing.geomantia.systems.city.application.landuse.CityLandUseSurfacePrintPlan;
+import com.rinsing.geomantia.systems.city.application.landuse.CityLandUseSurfacePrintPlanCodec;
+import com.rinsing.geomantia.systems.city.application.landuse.LandUseAreaPlanCodec;
+import com.rinsing.geomantia.systems.city.domain.landuse.BoundaryPolicy;
+import com.rinsing.geomantia.systems.city.domain.landuse.LandUseAreaPlan;
+import com.rinsing.geomantia.systems.city.domain.landuse.LandUseSurfaceSettings;
+import com.rinsing.geomantia.systems.city.domain.landuse.SurfacePolicy;
+import com.rinsing.geomantia.systems.city.domain.landuse.VegetationPolicy;
+import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
+import com.rinsing.geomantia.systems.city.domain.model.BlockPoint;
 import com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityLandUseChunkCompiler;
 import com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityLandUseChunkExecutor;
+import com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityLandUseWorldgenRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.CrossCollisionBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.ChunkStatus;
+import net.minecraft.world.level.storage.LevelResource;
 import net.minecraftforge.gametest.GameTestHolder;
+import org.slf4j.Logger;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @GameTestHolder("geomantia")
 public final class CityLandUseGameTests {
+    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final int TEST_CHUNK_OFFSET = 65_536;
+    private static final int TEST_CHUNK_RANGE = 1_000_000;
+
     private CityLandUseGameTests() {
     }
 
@@ -25,8 +50,11 @@ public final class CityLandUseGameTests {
         CityLandUseChunkExecutor.WorldGenExecutionWorld world =
                 new CityLandUseChunkExecutor.WorldGenExecutionWorld(helper.getLevel());
 
-        if (!world.setBlock(west.getX(), west.getY(), west.getZ(), "minecraft:oak_fence")
-                || !world.setBlock(east.getX(), east.getY(), east.getZ(), "minecraft:oak_fence")) {
+        if (!world.setBoundaryBlockRaw(west.getX(), west.getY(), west.getZ(), "minecraft:oak_fence")
+                || !world.setBoundaryBlockRaw(east.getX(), east.getY(), east.getZ(), "minecraft:oak_fence")
+                || !world.finalizeBoundaryConnections(List.of(
+                new CityLandUseChunkExecutor.BlockPosition(west.getX(), west.getY(), west.getZ()),
+                new CityLandUseChunkExecutor.BlockPosition(east.getX(), east.getY(), east.getZ()))).success()) {
             helper.fail("LandUse fence placement returned false");
             return;
         }
@@ -38,6 +66,113 @@ public final class CityLandUseGameTests {
             return;
         }
         helper.succeed();
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void landUseWorldgenCrossChunkCropAndFence(GameTestHelper helper) {
+        UUID nonce = UUID.randomUUID();
+        WorldgenSmokeTarget target = worldgenSmokeTarget(nonce);
+        String cityId = "gametest_land_use_worldgen_" + nonce.toString().replace("-", "");
+        int minX = target.minX();
+        int maxX = target.maxX();
+        int cropZ = target.cropZ();
+        int fenceZ = target.fenceZ();
+        ServerLevel level = helper.getLevel();
+        Path serverRoot = level.getServer().getWorldPath(LevelResource.ROOT);
+        LOGGER.info("LandUse cross-chunk GameTest nonce={} cityId={} x={}..{} cropZ={} fenceZ={} seamX={}",
+                nonce, cityId, minX, maxX, cropZ, fenceZ, target.seamX());
+        String failure = null;
+        boolean activated = false;
+        try {
+            LandUseAreaPlan areaPlan = worldgenSmokeAreaPlan(cityId, minX, maxX, cropZ, fenceZ);
+            CityLandUseSurfacePrintPlan surfacePlan = worldgenSmokeSurfacePlan(
+                    areaPlan, minX, maxX, cropZ);
+            CityLandUseWorldgenRegistry.activate(
+                    level.dimension().location().toString(), areaPlan, surfacePlan, serverRoot);
+            activated = true;
+            CityLandUseWorldgenGameTestFixture.enable(minX, maxX, cropZ);
+
+            int minChunkX = Math.floorDiv(minX, 16);
+            int maxChunkX = Math.floorDiv(maxX, 16);
+            int chunkZ = Math.floorDiv(cropZ, 16);
+            if (maxX - minX + 1 != 20
+                    || minChunkX + 1 != maxChunkX
+                    || target.seamX() != maxChunkX * 16
+                    || minX >= target.seamX()
+                    || maxX < target.seamX()) {
+                throw new IllegalStateException("Dynamic test line is not exactly 20 blocks across one seam: "
+                        + target);
+            }
+            for (int chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
+                level.getChunk(chunkX, chunkZ, ChunkStatus.FULL, true);
+            }
+
+            for (int x = minX; x <= maxX; x++) {
+                int farmlandY = findBlockY(level, x, cropZ, Blocks.FARMLAND);
+                if (farmlandY == Integer.MIN_VALUE
+                        || !level.getBlockState(new BlockPos(x, farmlandY + 1, cropZ)).is(Blocks.WHEAT)) {
+                    throw new IllegalStateException("Missing farmland/wheat at x=" + x
+                            + ", farmlandY=" + farmlandY);
+                }
+            }
+            List<BlockPos> fenceLine = new ArrayList<>();
+            for (int x = minX; x <= maxX; x++) {
+                int fenceY = findBlockY(level, x, fenceZ, Blocks.OAK_FENCE);
+                if (fenceY == Integer.MIN_VALUE) {
+                    throw new IllegalStateException("Missing oak fence at x=" + x);
+                }
+                fenceLine.add(new BlockPos(x, fenceY, fenceZ));
+            }
+            for (int index = 0; index < fenceLine.size() - 1; index++) {
+                BlockPos west = fenceLine.get(index);
+                BlockPos east = fenceLine.get(index + 1);
+                if (west.getY() != east.getY()
+                        || !level.getBlockState(west).getValue(CrossCollisionBlock.EAST)
+                        || !level.getBlockState(east).getValue(CrossCollisionBlock.WEST)) {
+                    throw new IllegalStateException("Fence connection mismatch between " + west + " and " + east);
+                }
+            }
+            BlockPos seamWest = fenceLine.get(target.seamX() - 1 - minX);
+            BlockPos seamEast = fenceLine.get(target.seamX() - minX);
+            if (!level.getBlockState(seamWest).getValue(CrossCollisionBlock.EAST)
+                    || !level.getBlockState(seamEast).getValue(CrossCollisionBlock.WEST)) {
+                throw new IllegalStateException("Cross-chunk fence seam is not bidirectional");
+            }
+            assertLedgerCounts(cityId, 20, 20);
+        } catch (RuntimeException | Error ex) {
+            failure = ex.getClass().getSimpleName() + ": " + ex.getMessage();
+        } finally {
+            CityLandUseWorldgenGameTestFixture.disable();
+            if (activated) {
+                try {
+                    CityLandUseWorldgenRegistry.deactivate(
+                            level.dimension().location().toString(), cityId, serverRoot);
+                } catch (RuntimeException ex) {
+                    failure = failure == null
+                            ? "LandUse test cleanup failed: " + ex.getMessage()
+                            : failure + "; cleanup failed: " + ex.getMessage();
+                }
+            }
+        }
+        if (failure != null) {
+            helper.fail(failure);
+            return;
+        }
+        helper.succeed();
+    }
+
+    static WorldgenSmokeTarget worldgenSmokeTarget(UUID nonce) {
+        int seamChunkX = TEST_CHUNK_OFFSET
+                + Math.floorMod(nonce.getMostSignificantBits(), TEST_CHUNK_RANGE);
+        int chunkZ = TEST_CHUNK_OFFSET
+                + Math.floorMod(nonce.getLeastSignificantBits(), TEST_CHUNK_RANGE);
+        int seamX = seamChunkX * 16;
+        int minX = seamX - 8;
+        int cropZ = chunkZ * 16 + 6;
+        return new WorldgenSmokeTarget(minX, minX + 19, cropZ, cropZ + 2, seamX);
+    }
+
+    record WorldgenSmokeTarget(int minX, int maxX, int cropZ, int fenceZ, int seamX) {
     }
 
     @GameTest(template = "micro_fill")
@@ -115,5 +250,82 @@ public final class CityLandUseGameTests {
             return;
         }
         helper.succeed();
+    }
+
+    private static LandUseAreaPlan worldgenSmokeAreaPlan(String cityId,
+                                                          int minX,
+                                                          int maxX,
+                                                          int cropZ,
+                                                          int fenceZ) {
+        LandUseAreaPlan.ScanlineSpan cropSpan = new LandUseAreaPlan.ScanlineSpan(cropZ, minX, maxX);
+        LandUseAreaPlan.ScanlineSpan fenceSpan = new LandUseAreaPlan.ScanlineSpan(fenceZ, minX, maxX);
+        LandUseAreaPlan.Area cropArea = new LandUseAreaPlan.Area(
+                "crop_line", "gametest", "agriculture", List.of("crop_group"), List.of("crop_anchor"),
+                List.of(new BlockPoint(minX, cropZ)), List.of(cropSpan), List.of(), List.of(), List.of(),
+                20, SurfacePolicy.CULTIVATE, VegetationPolicy.CLEAR, BoundaryPolicy.OPEN, "");
+        List<BlockPoint> fencePoints = new ArrayList<>();
+        for (int x = minX; x <= maxX; x++) fencePoints.add(new BlockPoint(x, fenceZ));
+        LandUseAreaPlan.Area fenceArea = new LandUseAreaPlan.Area(
+                "fence_line", "gametest", "agriculture", List.of("fence_group"), List.of("fence_anchor"),
+                List.of(new BlockPoint(minX, fenceZ)), List.of(fenceSpan), List.of(),
+                List.of(new LandUseAreaPlan.BoundaryLoop(fencePoints, false)), List.of(),
+                20, SurfacePolicy.PRESERVE, VegetationPolicy.PRESERVE, BoundaryPolicy.FENCE, "");
+        return new LandUseAreaPlanCodec().withComputedHash(new LandUseAreaPlan(
+                LandUseAreaPlan.CURRENT_SCHEMA_VERSION, "land_use_rules.v0.1", cityId, "",
+                new BlockBounds(minX, cropZ, maxX, fenceZ),
+                List.of(cropArea, fenceArea), List.of(), List.of(), List.of()));
+    }
+
+    private static CityLandUseSurfacePrintPlan worldgenSmokeSurfacePlan(LandUseAreaPlan areaPlan,
+                                                                         int minX,
+                                                                         int maxX,
+                                                                         int cropZ) {
+        LandUseAreaPlan.Area cropArea = areaPlan.areas().stream()
+                .filter(area -> "crop_line".equals(area.areaId()))
+                .findFirst().orElseThrow();
+        BlockPoint anchor = new BlockPoint(minX, cropZ);
+        LandUseSurfaceSettings settings = new LandUseSurfaceSettings(
+                true, true, "minecraft:farmland", "minecraft:wheat", SurfacePolicy.CULTIVATE.name(),
+                LandUseSurfaceSettings.SurfaceAlgorithm.CONTOUR_BANDS, anchor,
+                "minecraft:dirt", "minecraft:water", "minecraft:oak_slab");
+        CityLandUseSurfacePrintPlan.ContourBandsRecipe recipe =
+                new CityLandUseSurfacePrintPlan.ContourBandsRecipe(
+                        settings.surfaceBlockId(), settings.cropBlockId(), settings.channelBankBlockId(),
+                        settings.channelWaterBlockId(), settings.channelBankOverlayBlockId(),
+                        3, 1, 1, 1, CityLandUseSurfacePrintPlan.ClassificationMode.CONTOUR_NORMAL,
+                        anchor, List.of(new CityLandUseSurfacePrintPlan.BandSpan(
+                        cropZ, minX, maxX, CityLandUseSurfacePrintPlan.BandRole.FIELD)));
+        CityLandUseSurfacePrintPlan.AreaPrint print = new CityLandUseSurfacePrintPlan.AreaPrint(
+                "crop_line/surface", cropArea.areaId(), cropArea.sourceGroupIds(), settings,
+                cropArea.memberSpans(), List.of(), LandUseSurfaceSettings.SurfaceAlgorithm.CONTOUR_BANDS,
+                anchor, recipe);
+        return new CityLandUseSurfacePrintPlanCodec().withComputedHash(new CityLandUseSurfacePrintPlan(
+                CityLandUseSurfacePrintPlan.CURRENT_SCHEMA_VERSION, areaPlan.cityId(),
+                areaPlan.planHash(), "", List.of(print)));
+    }
+
+    private static int findBlockY(ServerLevel level, int x, int z, net.minecraft.world.level.block.Block block) {
+        for (int y = level.getMaxBuildHeight() - 1; y >= level.getMinBuildHeight(); y--) {
+            if (level.getBlockState(new BlockPos(x, y, z)).is(block)) return y;
+        }
+        return Integer.MIN_VALUE;
+    }
+
+    private static void assertLedgerCounts(String cityId, int expectedCrop, int expectedBoundary) {
+        int crop = 0;
+        int boundary = 0;
+        int owners = 0;
+        for (JsonElement element : CityLandUseWorldgenRegistry.ledgerSnapshot()
+                .getAsJsonArray("appliedOwners")) {
+            JsonObject owner = element.getAsJsonObject();
+            if (!cityId.equals(owner.get("cityId").getAsString())) continue;
+            owners++;
+            crop += owner.get("appliedCropOperationCount").getAsInt();
+            boundary += owner.get("appliedBoundaryOperationCount").getAsInt();
+        }
+        if (owners != 2 || crop != expectedCrop || boundary != expectedBoundary) {
+            throw new IllegalStateException("Ledger mismatch: owners=" + owners
+                    + ", crop=" + crop + ", boundary=" + boundary);
+        }
     }
 }

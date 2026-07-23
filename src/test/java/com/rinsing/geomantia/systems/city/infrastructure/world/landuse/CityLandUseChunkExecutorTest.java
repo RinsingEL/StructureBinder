@@ -90,46 +90,77 @@ class CityLandUseChunkExecutorTest {
     }
 
     @Test
-    void reconcilesFenceConnectionsWhenWorldgenIgnoresUpdateFlags() {
+    void writesNonConnectionStateExactlyWithoutNeighbourShapePreResolution() {
+        WorldgenLikeBlockStateWorld world = new WorldgenLikeBlockStateWorld();
+        BlockPos crop = new BlockPos(15, 65, 0);
+
+        assertTrue(CityLandUseChunkExecutor.writeExactBlockState(
+                world, crop, TestBlockState.WHEAT, 0));
+
+        assertEquals(TestBlockState.WHEAT, world.getBlockState(crop));
+        assertEquals(0, world.neighbourShapeUpdateCount);
+    }
+
+    @Test
+    void rejectsWriteReportedSuccessfulWhenActualStateDiffersFromRequest() {
+        WorldgenLikeBlockStateWorld world = new WorldgenLikeBlockStateWorld();
+        BlockPos crop = new BlockPos(15, 65, 0);
+        world.replaceNextWriteWithAir = true;
+
+        assertFalse(CityLandUseChunkExecutor.writeExactBlockState(
+                world, crop, TestBlockState.WHEAT, 0));
+
+        assertEquals(TestBlockState.AIR, world.getBlockState(crop));
+    }
+
+    @Test
+    void finalizesWholeFenceBatchAfterAllRawPlacements() {
+        WorldgenLikeBlockStateWorld world = new WorldgenLikeBlockStateWorld();
+        List<BlockPos> line = new ArrayList<>();
+        for (int x = 8; x < 28; x++) {
+            BlockPos pos = new BlockPos(x, 65, 0);
+            line.add(pos);
+            assertTrue(CityLandUseChunkExecutor.writeExactBlockState(world, pos, TestBlockState.FENCE, 0));
+        }
+
+        assertTrue(CityLandUseChunkExecutor.finalizeHorizontalConnections(world, line).success());
+
+        for (int index = 0; index < line.size() - 1; index++) {
+            assertTrue(world.getBlockState(line.get(index)).east());
+            assertTrue(world.getBlockState(line.get(index + 1)).west());
+        }
+    }
+
+    @Test
+    void laterOwnerFinalizationReconcilesEarlierOwnerAcrossChunkSeam() {
         WorldgenLikeBlockStateWorld world = new WorldgenLikeBlockStateWorld();
         BlockPos west = new BlockPos(15, 65, 0);
         BlockPos east = west.east();
-
-        assertTrue(CityLandUseChunkExecutor.writeBlockState(world, west, TestBlockState.FENCE));
+        assertTrue(CityLandUseChunkExecutor.writeExactBlockState(world, west, TestBlockState.FENCE, 0));
+        assertTrue(CityLandUseChunkExecutor.finalizeHorizontalConnections(world, List.of(west)).success());
         assertFalse(world.getBlockState(west).east());
 
-        assertTrue(CityLandUseChunkExecutor.writeBlockState(world, east, TestBlockState.FENCE));
+        assertTrue(CityLandUseChunkExecutor.writeExactBlockState(world, east, TestBlockState.FENCE, 0));
+        assertTrue(CityLandUseChunkExecutor.finalizeHorizontalConnections(world, List.of(east)).success());
 
         assertTrue(world.getBlockState(west).east());
         assertTrue(world.getBlockState(east).west());
     }
 
     @Test
-    void restoresPrimaryAndNeighborStatesWhenConnectionRefreshFails() {
+    void restoresConnectionStatesWhenBatchFinalizationFails() {
         WorldgenLikeBlockStateWorld world = new WorldgenLikeBlockStateWorld();
         BlockPos west = new BlockPos(15, 65, 0);
         BlockPos east = west.east();
-        assertTrue(CityLandUseChunkExecutor.writeBlockState(world, west, TestBlockState.FENCE));
-        world.failNextWriteAt = west;
-
-        assertFalse(CityLandUseChunkExecutor.writeBlockState(world, east, TestBlockState.FENCE));
-
-        assertEquals(TestBlockState.AIR, world.getBlockState(east));
-        assertFalse(world.getBlockState(west).east());
-    }
-
-    @Test
-    void restoresPrimaryStateWhenConnectionNeighborIsOutsideWriteRadius() {
-        WorldgenLikeBlockStateWorld world = new WorldgenLikeBlockStateWorld();
-        BlockPos west = new BlockPos(15, 65, 0);
-        BlockPos east = west.east();
-        assertTrue(CityLandUseChunkExecutor.writeBlockState(world, west, TestBlockState.FENCE));
+        assertTrue(CityLandUseChunkExecutor.writeExactBlockState(world, west, TestBlockState.FENCE, 0));
+        assertTrue(CityLandUseChunkExecutor.writeExactBlockState(world, east, TestBlockState.FENCE, 0));
         world.unwritable = west;
 
-        assertFalse(CityLandUseChunkExecutor.writeBlockState(world, east, TestBlockState.FENCE));
+        assertFalse(CityLandUseChunkExecutor.finalizeHorizontalConnections(world, List.of(west, east)).success());
 
-        assertEquals(TestBlockState.AIR, world.getBlockState(east));
+        assertEquals(TestBlockState.FENCE, world.getBlockState(east));
         assertFalse(world.getBlockState(west).east());
+        assertFalse(world.getBlockState(east).west());
     }
 
     private static CityLandUseChunkCompiler.ChunkFragment stagedFragment() {
@@ -197,6 +228,8 @@ class CityLandUseChunkExecutorTest {
         private final Map<BlockPos, TestBlockState> states = new HashMap<>();
         private BlockPos failNextWriteAt;
         private BlockPos unwritable;
+        private boolean replaceNextWriteWithAir;
+        private int neighbourShapeUpdateCount;
 
         @Override
         public TestBlockState getBlockState(BlockPos pos) {
@@ -205,10 +238,14 @@ class CityLandUseChunkExecutorTest {
 
         @Override
         public TestBlockState updateFromNeighbourShapes(TestBlockState state, BlockPos pos) {
+            neighbourShapeUpdateCount++;
+            if (state.equals(TestBlockState.WHEAT)) {
+                return TestBlockState.AIR;
+            }
             if (!state.fence()) {
                 return state;
             }
-            return new TestBlockState(true,
+            return new TestBlockState("fence",
                     getBlockState(pos.north()).fence(), getBlockState(pos.east()).fence(),
                     getBlockState(pos.south()).fence(), getBlockState(pos.west()).fence());
         }
@@ -229,13 +266,27 @@ class CityLandUseChunkExecutorTest {
                 failNextWriteAt = null;
                 return false;
             }
+            if (replaceNextWriteWithAir) {
+                replaceNextWriteWithAir = false;
+                states.put(pos.immutable(), TestBlockState.AIR);
+                return true;
+            }
             states.put(pos.immutable(), state);
             return true;
         }
     }
 
-    private record TestBlockState(boolean fence, boolean north, boolean east, boolean south, boolean west) {
-        private static final TestBlockState AIR = new TestBlockState(false, false, false, false, false);
-        private static final TestBlockState FENCE = new TestBlockState(true, false, false, false, false);
+    private record TestBlockState(String blockId,
+                                  boolean north,
+                                  boolean east,
+                                  boolean south,
+                                  boolean west) {
+        private static final TestBlockState AIR = new TestBlockState("air", false, false, false, false);
+        private static final TestBlockState WHEAT = new TestBlockState("wheat", false, false, false, false);
+        private static final TestBlockState FENCE = new TestBlockState("fence", false, false, false, false);
+
+        private boolean fence() {
+            return "fence".equals(blockId);
+        }
     }
 }

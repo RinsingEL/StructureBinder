@@ -216,6 +216,32 @@ class CityWorldgenBlockObservationRegistryTest {
     }
 
     @Test
+    void failedBoundaryFinalizeLeavesNoFinalizeObservationEvidence() {
+        var capture = new CityWorldgenBlockObservationRegistry.Capture(
+                tempDirectory, "minecraft:overworld", new ChunkPos(0, 0));
+        BlockPos rawBoundary = new BlockPos(15, 65, 0);
+        BlockPos reconciledNeighbor = rawBoundary.east();
+        var fence = new CityWorldgenBlockObservationRegistry.ObservedState(
+                "minecraft:oak_fence", Map.of("east", "true", "west", "true"), false);
+        capture.watch(rawBoundary, "minecraft:oak_fence", fence, "land_use_direct");
+
+        var finalizeRollbackToken = capture.newRollbackToken();
+        capture.watch(rawBoundary, "minecraft:oak_fence", fence,
+                "land_use_neighbor_reconcile", finalizeRollbackToken);
+        capture.watch(reconciledNeighbor, "minecraft:oak_fence", fence,
+                "land_use_neighbor_reconcile", finalizeRollbackToken);
+        capture.rollback(finalizeRollbackToken);
+
+        var snapshots = capture.snapshotsByObservedChunk();
+        assertEquals(1, snapshots.size());
+        assertEquals(Map.of(rawBoundary,
+                        new CityWorldgenBlockObservationRegistry.ExpectedWrite(
+                                "minecraft:oak_fence", fence, "land_use_direct")),
+                snapshots.get(0).expectedBlocks());
+        assertEquals(2, snapshots.get(0).rolledBackWriteCount());
+    }
+
+    @Test
     void rollbackTokenFromAnotherCaptureCannotDeleteCurrentWrites() {
         BlockPos pos = new BlockPos(1, 64, 1);
         var stone = new CityWorldgenBlockObservationRegistry.ObservedState(
