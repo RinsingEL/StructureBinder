@@ -747,8 +747,14 @@ public final class CityStructureArrayLayoutLoopPlanner {
                     }
                     DesiredItem selectedDesired = desired.isTemplate()
                             ? desired.withTemplate(rotationOption.selection()) : desired;
-                    accepted = new Accepted(selectedDesired, point,
-                            templatePlacement == null ? point : templatePlacement.anchorBlock(), patch, estimate,
+                    BlockPoint anchorBlock = templatePlacement == null ? point : templatePlacement.anchorBlock();
+                    LandformPatchSummary anchorPatch = templatePlacement == null ? patch
+                            : pointPatch(reviewPackage.landformPatches(), reviewPackage.grid(), anchorBlock);
+                    if (anchorPatch == null) {
+                        rejectionReason = "ANCHOR_BLOCK_OUTSIDE_D3_PATCH";
+                        continue;
+                    }
+                    accepted = new Accepted(selectedDesired, point, anchorBlock, anchorPatch, estimate,
                             rotationOption.orientationDecision());
                     break;
                 }

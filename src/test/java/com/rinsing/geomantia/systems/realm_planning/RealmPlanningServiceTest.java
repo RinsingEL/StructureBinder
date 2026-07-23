@@ -209,6 +209,14 @@ class RealmPlanningServiceTest {
         JsonObject worldSurveyManifest = readJson(second.manifestPath());
         JsonObject manifestConfig = worldSurveyManifest.getAsJsonObject("config");
         JsonObject manifestStats = worldSurveyManifest.getAsJsonObject("stats");
+        JsonObject liveProgress = readJson(tempDir.resolve("realm_debug")
+                .resolve("realm_world_survey_test")
+                .resolve("world_survey_progress.json"));
+        assertEquals("completed", liveProgress.get("status").getAsString());
+        assertEquals("complete", liveProgress.get("phase").getAsString());
+        assertEquals(16, liveProgress.getAsJsonObject("tiles").get("processed").getAsInt());
+        assertEquals(256, liveProgress.getAsJsonObject("microSampling").get("completedCells").getAsLong());
+        assertEquals(4096, liveProgress.getAsJsonObject("microSampling").get("completedSamples").getAsLong());
         assertEquals(16, manifestConfig.get("microSampleBudgetPerCell").getAsInt());
         assertFalse(manifestConfig.get("adaptiveSampling").getAsBoolean());
         assertEquals(4096, manifestStats.get("microSampleBudget").getAsLong());

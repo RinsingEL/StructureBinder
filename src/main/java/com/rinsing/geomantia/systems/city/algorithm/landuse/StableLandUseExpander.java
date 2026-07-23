@@ -40,9 +40,15 @@ public final class StableLandUseExpander {
         if (!cityId.equals(terrain.cityId())) throw new IllegalArgumentException("LAND_USE_TERRAIN_CITY_ID_MISMATCH");
         guidance = guidance == null ? LandUseAutoConnectionPlanner.Plan.empty() : guidance;
         Map<String, LandUseSeedGroup> byId = new HashMap<>();
+        Map<String, GrowthContext> growthRegions = new HashMap<>();
         for (LandUseSeedGroup group : groups) {
             if (byId.put(group.groupId(), group) != null) {
                 throw new IllegalArgumentException("Duplicate LandUse groupId: " + group.groupId());
+            }
+            for (LandUseSeedGroup.GrowthRegion region : group.growthRegions()) {
+                if (growthRegions.put(region.regionId(), new GrowthContext(group, region)) != null) {
+                    throw new IllegalArgumentException("Duplicate LandUse growth regionId: " + region.regionId());
+                }
             }
         }
         Set<BlockPoint> obstacles = obstacles(groups, corridors);
@@ -51,24 +57,30 @@ public final class StableLandUseExpander {
                 .comparingDouble(Node::priorityCost)
                 .thenComparingDouble(Node::cumulativeCost)
                 .thenComparing(Node::groupId)
+                .thenComparing(Node::regionId)
                 .thenComparingInt(Node::z)
                 .thenComparingInt(Node::x));
-        Map<GroupPoint, Double> best = new HashMap<>();
-        Map<String, Integer> counts = new HashMap<>();
+        Map<RegionPoint, Double> best = new HashMap<>();
+        Set<RegionPoint> expanded = new HashSet<>();
+        Map<String, Integer> groupCounts = new HashMap<>();
+        Map<String, Integer> regionCounts = new HashMap<>();
         Map<BlockPoint, LandUseExpansionResult.Claim> claims = new HashMap<>();
         int blocked = 0;
         int contested = 0;
 
-        for (LandUseSeedGroup group : groups.stream().sorted(Comparator.comparing(LandUseSeedGroup::groupId)).toList()) {
-            for (BlockPoint seed : group.seedPoints()) {
+        for (GrowthContext context : growthRegions.values().stream()
+                .sorted(Comparator.comparing(value -> value.region().regionId())).toList()) {
+            LandUseSeedGroup group = context.group();
+            LandUseSeedGroup.GrowthRegion region = context.region();
+            for (BlockPoint seed : region.seedPoints()) {
                 if (!planningBounds.contains(seed.x(), seed.z()) || obstacles.contains(seed)
                         || !passable(terrainIndex.cellAt(seed.x(), seed.z()))) {
                     blocked++;
                     continue;
                 }
-                Node node = new Node(group.groupId(), seed.x(), seed.z(), 0,
-                        priority(0, 0, group), seed.x(), seed.z());
-                GroupPoint key = new GroupPoint(group.groupId(), seed.x(), seed.z());
+                Node node = new Node(group.groupId(), region.regionId(), seed.x(), seed.z(), 0,
+                        priority(0, 0, region, group), seed.x(), seed.z());
+                RegionPoint key = new RegionPoint(region.regionId(), seed.x(), seed.z());
                 if (best.putIfAbsent(key, 0.0) == null) queue.add(node);
             }
         }
@@ -76,18 +88,25 @@ public final class StableLandUseExpander {
         while (!queue.isEmpty()) {
             Node node = queue.remove();
             LandUseSeedGroup group = byId.get(node.groupId());
-            if (group == null || counts.getOrDefault(group.groupId(), 0) >= group.maxAreaBlocks()) continue;
-            GroupPoint candidateKey = new GroupPoint(group.groupId(), node.x(), node.z());
+            GrowthContext context = growthRegions.get(node.regionId());
+            if (group == null || context == null
+                    || regionCounts.getOrDefault(node.regionId(), 0) >= context.region().maxAreaBlocks()) continue;
+            RegionPoint candidateKey = new RegionPoint(node.regionId(), node.x(), node.z());
             if (node.cumulativeCost() > best.getOrDefault(candidateKey, Double.POSITIVE_INFINITY) + 1.0e-9) continue;
+            if (!expanded.add(candidateKey)) continue;
             BlockPoint point = new BlockPoint(node.x(), node.z());
             LandUseExpansionResult.Claim existing = claims.get(point);
             if (existing != null) {
-                if (!existing.groupId().equals(group.groupId())) contested++;
-                continue;
+                if (!existing.groupId().equals(group.groupId())) {
+                    contested++;
+                    continue;
+                }
+            } else {
+                claims.put(point, new LandUseExpansionResult.Claim(group.groupId(), node.cumulativeCost()));
+                groupCounts.merge(group.groupId(), 1, Integer::sum);
+                int claimed = regionCounts.merge(node.regionId(), 1, Integer::sum);
+                if (claimed >= context.region().maxAreaBlocks()) continue;
             }
-            claims.put(point, new LandUseExpansionResult.Claim(group.groupId(), node.cumulativeCost()));
-            int claimed = counts.merge(group.groupId(), 1, Integer::sum);
-            if (claimed >= group.maxAreaBlocks()) continue;
 
             for (int[] direction : DIRECTIONS) {
                 int nextX = node.x() + direction[0];
@@ -106,14 +125,15 @@ public final class StableLandUseExpander {
                         node.seedX(), node.seedZ(), node.x(), node.z(), guidance.targetsFor(group.groupId()));
                 double total = node.cumulativeCost() + stepCost;
                 if (total > group.actionBudget()) continue;
-                GroupPoint key = new GroupPoint(group.groupId(), nextX, nextZ);
+                RegionPoint key = new RegionPoint(node.regionId(), nextX, nextZ);
                 if (total + 1.0e-9 >= best.getOrDefault(key, Double.POSITIVE_INFINITY)) continue;
                 best.put(key, total);
-                queue.add(new Node(group.groupId(), nextX, nextZ, total,
-                        priority(total, claimed, group), node.seedX(), node.seedZ()));
+                int regionClaimed = regionCounts.getOrDefault(node.regionId(), 0);
+                queue.add(new Node(group.groupId(), node.regionId(), nextX, nextZ, total,
+                        priority(total, regionClaimed, context.region(), group), node.seedX(), node.seedZ()));
             }
         }
-        return new LandUseExpansionResult(claims, counts, contested, blocked);
+        return new LandUseExpansionResult(claims, groupCounts, regionCounts, contested, blocked);
     }
 
     private static Set<BlockPoint> obstacles(List<LandUseSeedGroup> groups,
@@ -180,8 +200,11 @@ public final class StableLandUseExpander {
         return lateral ? 1.15 : 1.85;
     }
 
-    private static double priority(double cumulativeCost, int claimed, LandUseSeedGroup group) {
-        double completion = claimed / (double) Math.max(1, group.preferredAreaBlocks());
+    private static double priority(double cumulativeCost,
+                                   int claimed,
+                                   LandUseSeedGroup.GrowthRegion region,
+                                   LandUseSeedGroup group) {
+        double completion = claimed / (double) Math.max(1, region.preferredAreaBlocks());
         return cumulativeCost * (1.0 + Math.min(1.0, completion) * 0.35)
                 / Math.max(0.1, group.competitionWeight());
     }
@@ -196,11 +219,15 @@ public final class StableLandUseExpander {
         return ((value >>> 11) & 0xffffL) / 65535.0 * 0.15;
     }
 
-    private record Node(String groupId, int x, int z, double cumulativeCost, double priorityCost,
+    private record Node(String groupId, String regionId, int x, int z,
+                        double cumulativeCost, double priorityCost,
                         int seedX, int seedZ) {
     }
 
-    private record GroupPoint(String groupId, int x, int z) {
+    private record GrowthContext(LandUseSeedGroup group, LandUseSeedGroup.GrowthRegion region) {
+    }
+
+    private record RegionPoint(String regionId, int x, int z) {
     }
 
     private static final class TerrainIndex {

@@ -138,15 +138,17 @@ public final class LandUseSourceResolver {
                     .values().stream().toList();
             if (gates.isEmpty()) warnings.add("LAND_USE_ROAD_ENTRANCE_MISSING:" + groupId);
             for (LandUseAreaPlan.GateSlot gate : gates) corridors.add(corridor(gate));
-            List<BlockBounds> footprints = members.stream().map(AnchorData::footprint).toList();
-            int footprintArea = footprints.stream().mapToInt(bounds -> bounds.widthBlocks() * bounds.heightBlocks()).sum();
-            int preferred = rule.preferredArea(footprintArea);
-            int min = Math.min(preferred, Math.max(rule.minAreaBlocks(), (int) Math.round(preferred * 0.6)));
-            int max = Math.max(preferred, Math.min(rule.maxAreaBlocks(), (int) Math.round(preferred * 1.6)));
-            List<BlockPoint> seeds = perimeterSeeds(footprints);
+            List<LandUseSeedGroup.GrowthRegion> growthRegions = members.stream()
+                    .map(member -> growthRegion(groupId, member, rule)).toList();
+            int min = growthRegions.stream().mapToInt(LandUseSeedGroup.GrowthRegion::minAreaBlocks).sum();
+            int preferred = growthRegions.stream().mapToInt(
+                    LandUseSeedGroup.GrowthRegion::preferredAreaBlocks).sum();
+            int max = growthRegions.stream().mapToInt(LandUseSeedGroup.GrowthRegion::maxAreaBlocks).sum();
+            List<BlockPoint> seeds = growthRegions.stream().flatMap(region -> region.seedPoints().stream())
+                    .distinct().sorted(Comparator.comparingInt(BlockPoint::z).thenComparingInt(BlockPoint::x)).toList();
             groups.add(new LandUseSeedGroup(groupId, rule, surfaceSettings,
                     members.stream().map(AnchorData::anchorId).toList(), allFootprints, seeds, gates,
-                    min, preferred, max, rule.actionBudget(), rule.competitionWeight()));
+                    min, preferred, max, rule.actionBudget(), rule.competitionWeight(), growthRegions));
         }
         validateSubjectTargets(intent, grouped, anchors);
         return new Resolution(List.copyOf(groups), List.copyOf(corridors), List.copyOf(warnings), intent.seedSalt());
@@ -265,6 +267,17 @@ public final class LandUseSourceResolver {
             }
         }
         return points.stream().sorted(Comparator.comparingInt(BlockPoint::z).thenComparingInt(BlockPoint::x)).toList();
+    }
+
+    private static LandUseSeedGroup.GrowthRegion growthRegion(String groupId,
+                                                               AnchorData member,
+                                                               LandUseRule rule) {
+        int footprintArea = member.footprint().widthBlocks() * member.footprint().heightBlocks();
+        int preferred = rule.preferredArea(footprintArea);
+        int min = Math.min(preferred, Math.max(rule.minAreaBlocks(), (int) Math.round(preferred * 0.6)));
+        int max = Math.max(preferred, Math.min(rule.maxAreaBlocks(), (int) Math.round(preferred * 1.6)));
+        return new LandUseSeedGroup.GrowthRegion(groupId + "::" + member.anchorId(),
+                List.of(member.anchorId()), perimeterSeeds(List.of(member.footprint())), min, preferred, max);
     }
 
     private static List<LandUseAreaPlan.GateSlot> templateGates(JsonObject item, String anchorId) {

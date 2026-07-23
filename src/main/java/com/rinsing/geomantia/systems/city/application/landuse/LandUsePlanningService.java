@@ -66,6 +66,12 @@ public final class LandUsePlanningService {
             if (claimed < group.minAreaBlocks()) {
                 warnings.add("LAND_USE_AREA_BELOW_MIN:" + group.groupId());
             }
+            for (LandUseSeedGroup.GrowthRegion region : group.growthRegions()) {
+                int regionClaimed = expansion.claimedBlocksByGrowthRegion().getOrDefault(region.regionId(), 0);
+                if (regionClaimed < region.minAreaBlocks()) {
+                    warnings.add("LAND_USE_GROWTH_REGION_BELOW_MIN:" + group.groupId() + ':' + region.regionId());
+                }
+            }
         }
         LandUseAreaPlan rawPlan = new LandUseAreaPlan(LandUseAreaPlan.CURRENT_SCHEMA_VERSION,
                 LandUseRuleCatalog.RULE_VERSION, cityId, "", terrainField.planningBounds(), geometry.areas(),
@@ -108,6 +114,22 @@ public final class LandUsePlanningService {
             value.addProperty("preferredAreaBlocks", group.preferredAreaBlocks());
             value.addProperty("maxAreaBlocks", group.maxAreaBlocks());
             value.addProperty("claimedAreaBlocks", expansion.claimedBlocksByGroup().getOrDefault(group.groupId(), 0));
+            value.addProperty("growthRegionCount", group.growthRegions().size());
+            JsonArray growthRegions = new JsonArray();
+            for (LandUseSeedGroup.GrowthRegion region : group.growthRegions()) {
+                JsonObject regionValue = new JsonObject();
+                regionValue.addProperty("regionId", region.regionId());
+                JsonArray anchorIds = new JsonArray();
+                region.anchorIds().forEach(anchorIds::add);
+                regionValue.add("anchorIds", anchorIds);
+                regionValue.addProperty("minAreaBlocks", region.minAreaBlocks());
+                regionValue.addProperty("preferredAreaBlocks", region.preferredAreaBlocks());
+                regionValue.addProperty("maxAreaBlocks", region.maxAreaBlocks());
+                regionValue.addProperty("claimedAreaBlocks",
+                        expansion.claimedBlocksByGrowthRegion().getOrDefault(region.regionId(), 0));
+                growthRegions.add(regionValue);
+            }
+            value.add("growthRegions", growthRegions);
             groups.add(value);
         }
         trace.add("seedGroups", groups);
@@ -150,6 +172,7 @@ public final class LandUsePlanningService {
         quality.addProperty("unreachedAutomaticSurfaceConnectionCount", connectionOutcomes.stream()
                 .filter(value -> value.status().equals("not_reached")).count());
         int belowMinimum = 0;
+        int belowMinimumRegions = 0;
         JsonArray groupResults = new JsonArray();
         for (LandUseSeedGroup group : sources.seedGroups()) {
             int claimed = expansion.claimedBlocksByGroup().getOrDefault(group.groupId(), 0);
@@ -162,9 +185,25 @@ public final class LandUsePlanningService {
             groupResult.addProperty("preferredAreaBlocks", group.preferredAreaBlocks());
             groupResult.addProperty("maxAreaBlocks", group.maxAreaBlocks());
             groupResult.addProperty("status", below ? "below_minimum" : "accepted");
+            JsonArray regionResults = new JsonArray();
+            for (LandUseSeedGroup.GrowthRegion region : group.growthRegions()) {
+                int regionClaimed = expansion.claimedBlocksByGrowthRegion().getOrDefault(region.regionId(), 0);
+                boolean regionBelow = regionClaimed < region.minAreaBlocks();
+                if (regionBelow) belowMinimumRegions++;
+                JsonObject regionResult = new JsonObject();
+                regionResult.addProperty("regionId", region.regionId());
+                regionResult.addProperty("claimedAreaBlocks", regionClaimed);
+                regionResult.addProperty("minAreaBlocks", region.minAreaBlocks());
+                regionResult.addProperty("preferredAreaBlocks", region.preferredAreaBlocks());
+                regionResult.addProperty("maxAreaBlocks", region.maxAreaBlocks());
+                regionResult.addProperty("status", regionBelow ? "below_minimum" : "accepted");
+                regionResults.add(regionResult);
+            }
+            groupResult.add("growthRegionResults", regionResults);
             groupResults.add(groupResult);
         }
         quality.addProperty("belowMinimumGroupCount", belowMinimum);
+        quality.addProperty("belowMinimumGrowthRegionCount", belowMinimumRegions);
         quality.add("groupResults", groupResults);
         JsonArray warnings = new JsonArray();
         plan.warnings().forEach(warnings::add);

@@ -14,23 +14,6 @@ base {
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
-def devAutoLoadWorldName = providers.gradleProperty('geomantiaDevAutoLoadWorld')
-        .orElse('')
-        .get()
-def devAutoLoadWorldBase64Override = providers.gradleProperty('geomantiaDevAutoLoadWorldBase64')
-        .orElse('')
-        .get()
-def devAutoLoadWorldBase64 = !devAutoLoadWorldBase64Override.isBlank()
-        ? devAutoLoadWorldBase64Override
-        : devAutoLoadWorldName.isBlank()
-        ? ''
-        : java.util.Base64.getEncoder().encodeToString(devAutoLoadWorldName.getBytes('UTF-8'))
-def devGisSmoke = providers.gradleProperty('geomantiaDevGisSmoke')
-        .orElse('false')
-        .get()
-def devRealmSmoke = providers.gradleProperty('geomantiaDevRealmSmoke')
-        .orElse('false')
-        .get()
 def devUseStructurePacks = providers.gradleProperty('geomantiaDevUseStructurePacks')
         .orElse('false')
         .get()
@@ -105,20 +88,6 @@ minecraft {
 
         client {
             property 'forge.enabledGameTestNamespaces', mod_id
-            // TEMP dev-only convenience: auto-load a local save for smoke tests.
-            // Remove this once the client validation harness no longer needs manual world entry.
-            // Configure with gradle.properties or override explicitly:
-            // ./gradlew.bat runClient -PgeomantiaDevAutoLoadWorld=<saveName>
-            // For non-ASCII save names, prefer -PgeomantiaDevAutoLoadWorldBase64=<utf8Base64>.
-            if (!devAutoLoadWorldBase64.isBlank()) {
-                property 'geomantia.devAutoLoadWorldBase64', devAutoLoadWorldBase64
-            }
-            if (devGisSmoke.toBoolean()) {
-                property 'geomantia.devGisSmoke', 'true'
-            }
-            if (devRealmSmoke.toBoolean()) {
-                property 'geomantia.devRealmSmoke', 'true'
-            }
             if (devUseRoadWeaver.toBoolean()) {
                 property 'mixin.env.remapRefMap', 'true'
                 property 'mixin.env.refMapRemappingFile', "${project.layout.buildDirectory.get().asFile}/createSrgToMcp/output.srg"

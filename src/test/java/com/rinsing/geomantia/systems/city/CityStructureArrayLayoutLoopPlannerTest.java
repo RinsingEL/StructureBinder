@@ -97,6 +97,45 @@ class CityStructureArrayLayoutLoopPlannerTest {
     }
 
     @Test
+    void templateArrayAssignsSourcePatchFromNormalizedAnchorBlock() throws Exception {
+        Fixture fixture = fixture();
+        LandformPatchSummary template = fixture.review().landformPatches().get(0);
+        CityLandformReviewPackage review = new CityLandformReviewPackage(
+                fixture.review().schemaVersion(), fixture.review().cityId(), fixture.review().grid(),
+                fixture.review().targetScale(), fixture.review().reviewMapImage(), fixture.review().legend(), List.of(
+                LandformPatchSummary.fromGisPatch(
+                        patch("owner_west", LandformType.PLAIN, -320, -320, 104, 320),
+                        "owner_west", "owner_west", template.areaClass(), List.of()),
+                LandformPatchSummary.fromGisPatch(
+                        patch("placement_east", LandformType.PLAIN, 105, -16, 112, 16),
+                        "placement_east", "placement_east", template.areaClass(), List.of())),
+                fixture.review().planningContext(), fixture.review().aiPromptContext(), fixture.review().debugRefs());
+        JsonObject plan = arrayLayoutPlan();
+        JsonObject catalog = templateCatalog();
+        JsonObject catalogTemplate = catalog.getAsJsonArray("templates").get(0).getAsJsonObject();
+        catalogTemplate.getAsJsonObject("rawSize").addProperty("width", 25);
+        catalogTemplate.getAsJsonArray("roadEntrances").get(0).getAsJsonObject().addProperty("x", 12);
+        plan.add("templateCatalog", catalog);
+        CityStructureArrayLayoutLoopPlanner planner = new CityStructureArrayLayoutLoopPlanner();
+        CityStructureArrayLayoutLoopPlanner.CreateResult created = planner.create(
+                fixture.baseDir(), review, fixture.terraSenseSource(), plan,
+                CityStructureEnvelopeFacts.empty(), new JsonObject(), new JsonObject());
+        JsonObject item = templateLayoutItem("cross_patch_template", 1);
+        item.add("candidatePatchRefs", JsonParser.parseString("[\"placement_east\"]").getAsJsonArray());
+        item.addProperty("startSector", "west");
+
+        CityStructureArrayLayoutLoopPlanner.ExecuteResult executed = planner.execute(
+                fixture.baseDir(), review, fixture.terraSenseSource(), created.loopState(), item,
+                CityStructureEnvelopeFacts.empty());
+
+        assertTrue(executed.asJson().get("ok").getAsBoolean());
+        JsonObject anchor = executed.loopState().getAsJsonArray("arrayAnchors").get(0).getAsJsonObject();
+        int anchorX = anchor.getAsJsonObject("anchorBlock").get("x").getAsInt();
+        assertTrue(anchorX < 105, "anchorBlock.x=" + anchorX);
+        assertEquals("owner_west", anchor.getAsJsonArray("sourcePatchIds").get(0).getAsString());
+    }
+
+    @Test
     void templateArrayRejectsCallerSuppliedFootprintGeometry() throws Exception {
         Fixture fixture = fixture();
         JsonObject plan = arrayLayoutPlan();

@@ -106,6 +106,21 @@ class LandUsePlanningServiceTest {
     }
 
     @Test
+    void groupedBuildingsContributeIndependentGrowthRegionBudgets() {
+        JsonObject d6 = plan("shop_a", "market", 4, 6, 10, 12, "commercial",
+                "shop_b", "market", 44, 46, 10, 12, "commercial");
+
+        LandUsePlanningService.Result result = new LandUsePlanningService().plan(
+                d6, null, null, null, terrain(64), smallCommercialCatalog());
+
+        JsonObject market = traceGroup(result, "market");
+        assertEquals(2, market.get("growthRegionCount").getAsInt());
+        assertEquals(128, market.get("maxAreaBlocks").getAsInt());
+        assertTrue(market.getAsJsonArray("growthRegions").asList().stream()
+                .allMatch(value -> value.getAsJsonObject().get("maxAreaBlocks").getAsInt() == 64));
+    }
+
+    @Test
     void blockedAutomaticConnectionWarnsWithoutForcingABridge() {
         JsonObject d6 = plan("shop_a", "shop_block_a", 8, 10, 10, 12, "commercial",
                 "shop_b", "shop_block_b", 35, 37, 10, 12, "commercial");

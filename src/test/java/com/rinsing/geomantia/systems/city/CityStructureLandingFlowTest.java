@@ -356,6 +356,59 @@ final class CityStructureLandingFlowTest {
     }
 
     @Test
+    void d4CandidatePlannerPreservesTemplateMaterializationMetadata() throws Exception {
+        Fixture fixture = fixture();
+        JsonObject plan = designSlotPlan(fixture.review());
+        JsonObject slot = plan.getAsJsonArray("slots").get(0).getAsJsonObject();
+        slot.addProperty("templateId", "minecraft:desert_pyramid");
+        slot.addProperty("templateRef", "minecraft:desert_pyramid");
+        slot.addProperty("templateHash", "sha256:test-template");
+        slot.addProperty("variantId", "stubbs_v1");
+        slot.addProperty("materializationSource", "structure_template_nbt");
+        slot.add("templateSize", JsonParser.parseString("{\"width\":21,\"height\":15,\"depth\":21}"));
+        slot.add("roadEntrances", JsonParser.parseString(
+                "[{\"entranceId\":\"front\",\"position\":{\"x\":10,\"z\":2},\"direction\":\"SOUTH\"}]"));
+
+        CityStructureAnchorCandidatePlanner planner = new CityStructureAnchorCandidatePlanner();
+        CityStructureAnchorCandidatePlanner.Result result = planner.plan(
+                fixture.baseDir(), fixture.review(), fixture.terraSenseSource(), plan,
+                CityStructureEnvelopeFacts.empty());
+        JsonObject candidate = result.anchorCandidateSet().getAsJsonArray("slotCandidates")
+                .get(0).getAsJsonObject().getAsJsonArray("candidates").get(0).getAsJsonObject();
+
+        assertEquals("minecraft:desert_pyramid", candidate.get("templateId").getAsString());
+        assertEquals("sha256:test-template", candidate.get("templateHash").getAsString());
+        assertEquals("stubbs_v1", candidate.get("variantId").getAsString());
+        assertEquals("structure_template_nbt", candidate.get("materializationSource").getAsString());
+        assertEquals(21, candidate.getAsJsonObject("templateSize").get("width").getAsInt());
+        assertEquals(1, candidate.getAsJsonObject("templatePlacementPlan")
+                .getAsJsonObject("transformed").getAsJsonArray("roadEntrances").size());
+
+        JsonObject selectionPlan = JsonParser.parseString("""
+                {
+                  "schemaVersion": "city_d4_anchor_selection_plan.v0.1",
+                  "cityId": "city_test",
+                  "selectedCandidates": [
+                    {
+                      "slotId": "admin_core",
+                      "candidateId": "%s",
+                      "anchorId": "admin_core_01",
+                      "selectionReason": "test"
+                    }
+                  ]
+                }
+                """.formatted(candidate.get("candidateId").getAsString())).getAsJsonObject();
+        JsonObject anchor = planner.select(result.anchorCandidateSet(), selectionPlan)
+                .getAsJsonArray("anchors").get(0).getAsJsonObject();
+
+        assertEquals("sha256:test-template", anchor.get("templateHash").getAsString());
+        assertEquals("structure_template_nbt", anchor.get("materializationSource").getAsString());
+        assertEquals(21, anchor.getAsJsonObject("templateSize").get("width").getAsInt());
+        assertEquals(1, anchor.getAsJsonObject("templatePlacementPlan")
+                .getAsJsonObject("transformed").getAsJsonArray("roadEntrances").size());
+    }
+
+    @Test
     void d4CandidatePlannerRejectsLegacyPayload() throws Exception {
         Fixture fixture = fixture();
         JsonObject plan = designSlotPlan(fixture.review());

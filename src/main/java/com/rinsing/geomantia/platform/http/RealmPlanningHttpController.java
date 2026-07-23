@@ -12,6 +12,7 @@ import com.rinsing.geomantia.systems.city.application.CityWallPlanner;
 import com.rinsing.geomantia.systems.city.application.CityWallReservationPlanner;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityWorldgenBlockObservationRegistry;
 import com.rinsing.geomantia.platform.RealmPlanningServices;
+import com.rinsing.geomantia.platform.WorldSurveyChatProgress;
 import com.rinsing.geomantia.systems.realm_planning.RealmPlanningService;
 import com.rinsing.geomantia.systems.realm_planning.WorldSurveyResult;
 import com.rinsing.geomantia.systems.realm_planning.WorldSurveyRunner;
@@ -1073,7 +1074,8 @@ final class RealmPlanningHttpController {
                 WorldSurveyRunner.ResumePolicy.fromContractName(stringValue(request, "resumePolicy", "use_cache"))
         );
         AtlasSampler sampler = new MinecraftPriorAtlasSampler(level);
-        WorldSurveyResult result = new WorldSurveyRunner(debugRoot(), GisClassifierConfig.defaults()).run(config, sampler);
+        WorldSurveyResult result = new WorldSurveyRunner(debugRoot(), GisClassifierConfig.defaults()).run(config,
+                sampler, WorldSurveyChatProgress.forPlayer(player));
         return new WorldSurveyExecution(result, sampler);
     }
 

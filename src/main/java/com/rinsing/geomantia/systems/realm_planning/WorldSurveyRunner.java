@@ -18,6 +18,8 @@ import com.rinsing.geomantia.systems.gis.domain.landform.LandformPatch;
 import com.rinsing.geomantia.systems.gis.domain.region.AtlasRegion;
 import com.rinsing.geomantia.systems.gis.domain.region.AtlasRegionStore;
 import com.rinsing.geomantia.systems.gis.preview.AtlasJson;
+import com.mojang.logging.LogUtils;
+import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -35,6 +37,11 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 public final class WorldSurveyRunner {
     public static final int DEFAULT_CELL_STEP_BLOCKS = 128;
@@ -42,6 +49,7 @@ public final class WorldSurveyRunner {
     public static final int DEFAULT_LOCAL_SLOPE_RADIUS_BLOCKS = 8;
     private static final String SCHEMA_VERSION = RealmPlanningService.SCHEMA_VERSION;
     private static final int TILE_REFRESH_RADIUS_CHUNKS = 24;
+    private static final Logger LOGGER = LogUtils.getLogger();
 
     private final Path debugRoot;
     private final GisClassifierConfig classifierConfig;
@@ -52,6 +60,11 @@ public final class WorldSurveyRunner {
     }
 
     public WorldSurveyResult run(Config config, AtlasSampler sampler) throws IOException {
+        return run(config, sampler, ProgressListener.NONE);
+    }
+
+    public WorldSurveyResult run(Config config, AtlasSampler sampler, ProgressListener progressListener)
+            throws IOException {
         long startedAt = System.nanoTime();
         Config normalized = config.normalized();
         Path runDirectory = debugRoot.resolve(normalized.runId);
@@ -64,6 +77,10 @@ public final class WorldSurveyRunner {
         GisRefreshService service = new GisRefreshService(sampleConfig, classifierConfig, store, sampler);
         SurveyBounds bounds = SurveyBounds.from(normalized, sampleConfig.regionSizeBlocks());
         List<TilePlan> tiles = planTiles(normalized.dimensionId, normalized.sampleMode, bounds, sampleConfig.regionSizeBlocks());
+        ProgressTracker progress = new ProgressTracker(runDirectory, normalized, tiles.size(),
+                (long) bounds.gridWidth * bounds.gridHeight,
+                microSampleBudgetPerCell(normalized.cellStepBlocks, normalized.microSampleStrideBlocks),
+                progressListener == null ? ProgressListener.NONE : progressListener);
         List<TileManifest> manifests = new ArrayList<>();
         List<AtlasRegion> regions = new ArrayList<>();
         List<LandformPatch> patches = new ArrayList<>();
@@ -71,92 +88,109 @@ public final class WorldSurveyRunner {
         int cached = 0;
         int failed = 0;
         String configHash = normalized.configHash(bounds);
-
-        for (TilePlan tile : tiles) {
-            Path snapshotPath = tileDirectory.resolve(tile.cacheFileName());
-            TileManifest tileManifest;
-            long tileStartedAt = System.nanoTime();
-            if (normalized.resumePolicy.useCache() && Files.exists(snapshotPath)) {
-                try {
-                    if (!cacheMatches(snapshotPath, configHash)) {
-                        throw new IOException("Tile cache config hash mismatch.");
+        try {
+            progress.start();
+            for (TilePlan tile : tiles) {
+                Path snapshotPath = tileDirectory.resolve(tile.cacheFileName());
+                TileManifest tileManifest;
+                long tileStartedAt = System.nanoTime();
+                progress.beginTile(tile);
+                if (normalized.resumePolicy.useCache() && Files.exists(snapshotPath)) {
+                    try {
+                        if (!cacheMatches(snapshotPath, configHash)) {
+                            throw new IOException("Tile cache config hash mismatch.");
+                        }
+                        AtlasRegion cachedRegion = snapshotIo.read(snapshotPath, sampleConfig);
+                        regions.add(cachedRegion);
+                        patches.addAll(cachedRegion.patches());
+                        cached++;
+                        tileManifest = TileManifest.cached(tile, snapshotPath, configHash);
+                    } catch (Exception ex) {
+                        if (!normalized.resumePolicy.rescanCorruptCache()) {
+                            failed++;
+                            tileManifest = TileManifest.failed(tile, snapshotPath, ex.getMessage(), configHash);
+                            manifests.add(tileManifest);
+                            progress.finishTile(tile, "failed", ex.getMessage());
+                            continue;
+                        }
+                        tileManifest = scanTile(service, snapshotIo, tile, snapshotPath, sampleConfig, configHash);
+                        regions.add(tileManifest.region);
+                        patches.addAll(tileManifest.region.patches());
+                        scanned++;
                     }
-                    AtlasRegion cachedRegion = snapshotIo.read(snapshotPath, sampleConfig);
-                    regions.add(cachedRegion);
-                    patches.addAll(cachedRegion.patches());
-                    cached++;
-                    tileManifest = TileManifest.cached(tile, snapshotPath, configHash);
-                } catch (Exception ex) {
-                    if (!normalized.resumePolicy.rescanCorruptCache()) {
-                        failed++;
-                        manifests.add(TileManifest.failed(tile, snapshotPath, ex.getMessage(), configHash));
-                        continue;
-                    }
+                } else {
                     tileManifest = scanTile(service, snapshotIo, tile, snapshotPath, sampleConfig, configHash);
                     regions.add(tileManifest.region);
                     patches.addAll(tileManifest.region.patches());
                     scanned++;
                 }
-            } else {
-                tileManifest = scanTile(service, snapshotIo, tile, snapshotPath, sampleConfig, configHash);
-                regions.add(tileManifest.region);
-                patches.addAll(tileManifest.region.patches());
-                scanned++;
+                long tileDurationMs = Math.max(0L, (System.nanoTime() - tileStartedAt) / 1_000_000L);
+                manifests.add(tileManifest.withDuration(tileDurationMs).withoutRegion());
+                progress.finishTile(tile, tileManifest.status, tileDurationMs + "ms");
             }
-            long tileDurationMs = Math.max(0L, (System.nanoTime() - tileStartedAt) / 1_000_000L);
-            manifests.add(tileManifest.withDuration(tileDurationMs).withoutRegion());
-        }
 
-        regions.sort(Comparator.comparingInt(AtlasRegion::regionZ).thenComparingInt(AtlasRegion::regionX));
-        patches.sort(Comparator.comparing(LandformPatch::patchId));
-        Path featureGridPath = runDirectory.resolve("world_feature_grid.json");
-        MicroSamplingResult micro = loadOrBuildFeatureGrid(normalized, sampler, regions, featureGridPath, configHash);
-        long durationMs = Math.max(0L, (System.nanoTime() - startedAt) / 1_000_000L);
-        boolean sealed = failed == 0 && regions.size() == tiles.size();
-        long bytes = directorySize(runDirectory);
-        Path manifestPath = runDirectory.resolve("world_survey_manifest.json");
-        WorldSurveyResult result = new WorldSurveyResult(
-                normalized.runId,
-                "survey_" + normalized.runId,
-                normalized.dimensionId,
-                normalized.worldSeed,
-                normalized.worldBorderSizeBlocks,
-                normalized.centerBlockX,
-                normalized.centerBlockZ,
-                normalized.planningRadiusBlocks,
-                bounds.minBlockX,
-                bounds.minBlockZ,
-                bounds.maxBlockX,
-                bounds.maxBlockZ,
-                normalized.cellStepBlocks,
-                normalized.microSampleStrideBlocks,
-                normalized.localSlopeRadiusBlocks,
-                micro.implemented,
-                micro.sampleCount,
-                configHash,
-                bounds.minGridX * normalized.cellStepBlocks,
-                bounds.minGridZ * normalized.cellStepBlocks,
-                bounds.gridWidth,
-                bounds.gridHeight,
-                normalized.sampleMode,
-                regions,
-                patches,
-                micro.features,
-                runDirectory,
-                manifestPath,
-                durationMs,
-                tiles.size(),
-                scanned,
-                cached,
-                failed,
-                bytes,
-                sealed
-        );
-        writeManifest(result, manifests, normalized, bounds, manifestPath);
-        if (!sealed) {
-            throw new IOException("World survey did not seal: failedTileCount=" + failed);
+            regions.sort(Comparator.comparingInt(AtlasRegion::regionZ).thenComparingInt(AtlasRegion::regionX));
+            patches.sort(Comparator.comparing(LandformPatch::patchId));
+            Path featureGridPath = runDirectory.resolve("world_feature_grid.json");
+            progress.beginMicroSampling();
+            MicroSamplingResult micro = loadOrBuildFeatureGrid(normalized, sampler, regions, featureGridPath, configHash,
+                    progress);
+            long durationMs = Math.max(0L, (System.nanoTime() - startedAt) / 1_000_000L);
+            boolean sealed = failed == 0 && regions.size() == tiles.size();
+            long bytes = directorySize(runDirectory);
+            Path manifestPath = runDirectory.resolve("world_survey_manifest.json");
+            WorldSurveyResult result = new WorldSurveyResult(
+                    normalized.runId,
+                    "survey_" + normalized.runId,
+                    normalized.dimensionId,
+                    normalized.worldSeed,
+                    normalized.worldBorderSizeBlocks,
+                    normalized.centerBlockX,
+                    normalized.centerBlockZ,
+                    normalized.planningRadiusBlocks,
+                    bounds.minBlockX,
+                    bounds.minBlockZ,
+                    bounds.maxBlockX,
+                    bounds.maxBlockZ,
+                    normalized.cellStepBlocks,
+                    normalized.microSampleStrideBlocks,
+                    normalized.localSlopeRadiusBlocks,
+                    micro.implemented,
+                    micro.sampleCount,
+                    configHash,
+                    bounds.minGridX * normalized.cellStepBlocks,
+                    bounds.minGridZ * normalized.cellStepBlocks,
+                    bounds.gridWidth,
+                    bounds.gridHeight,
+                    normalized.sampleMode,
+                    regions,
+                    patches,
+                    micro.features,
+                    runDirectory,
+                    manifestPath,
+                    durationMs,
+                    tiles.size(),
+                    scanned,
+                    cached,
+                    failed,
+                    bytes,
+                    sealed
+            );
+            writeManifest(result, manifests, normalized, bounds, manifestPath);
+            if (!sealed) {
+                throw new IOException("World survey did not seal: failedTileCount=" + failed);
+            }
+            progress.complete(durationMs);
+            return result;
+        } catch (IOException ex) {
+            progress.fail(ex.getMessage());
+            throw ex;
+        } catch (RuntimeException ex) {
+            progress.fail(ex.getMessage());
+            throw ex;
+        } finally {
+            progress.close();
         }
-        return result;
     }
 
     public WorldSurveyResult loadSealedResult(String runId) throws IOException {
@@ -279,7 +313,8 @@ public final class WorldSurveyRunner {
         return TileManifest.scanned(tile, snapshotPath, result.region(), configHash);
     }
 
-    private static MicroSamplingResult buildFeatureGrid(Config config, AtlasSampler sampler, List<AtlasRegion> regions) {
+    private static MicroSamplingResult buildFeatureGrid(Config config, AtlasSampler sampler, List<AtlasRegion> regions,
+            ProgressTracker progress) {
         if (config.microSampleStrideBlocks <= 0 || config.microSampleStrideBlocks >= config.cellStepBlocks) {
             return new MicroSamplingResult(Map.of(), false, 0L);
         }
@@ -289,9 +324,12 @@ public final class WorldSurveyRunner {
                 .map(coarseCell -> {
                     List<MicroSample> samples = sampleCoarseCell(config, sampler, coarseCell);
                     if (samples.isEmpty()) {
+                        progress.microCellCompleted(0L);
                         return null;
                     }
-                    return aggregateFeature(coarseCell.globalCellX(), coarseCell.globalCellZ(), samples);
+                    WorldFeatureCell feature = aggregateFeature(coarseCell.globalCellX(), coarseCell.globalCellZ(), samples);
+                    progress.microCellCompleted(feature.microSampleCount());
+                    return feature;
                 })
                 .filter(feature -> feature != null)
                 .sorted(Comparator.comparingInt(WorldFeatureCell::gridZ).thenComparingInt(WorldFeatureCell::gridX))
@@ -306,18 +344,19 @@ public final class WorldSurveyRunner {
     }
 
     private static MicroSamplingResult loadOrBuildFeatureGrid(Config config, AtlasSampler sampler, List<AtlasRegion> regions,
-            Path featureGridPath, String configHash) throws IOException {
+            Path featureGridPath, String configHash, ProgressTracker progress) throws IOException {
         if (Files.exists(featureGridPath)) {
             try {
                 MicroSamplingResult cached = readFeatureGrid(featureGridPath, configHash);
                 if (cached != null) {
+                    progress.microCacheHit(cached.features.size(), cached.sampleCount);
                     return cached;
                 }
             } catch (Exception ignored) {
                 // Corrupt feature cache falls back to recompute; tile cache validity is handled separately.
             }
         }
-        MicroSamplingResult result = buildFeatureGrid(config, sampler, regions);
+        MicroSamplingResult result = buildFeatureGrid(config, sampler, regions, progress);
         writeFeatureGrid(featureGridPath, config, result, configHash);
         return result;
     }
@@ -685,6 +724,29 @@ public final class WorldSurveyRunner {
         }
     }
 
+    public record ProgressUpdate(
+            String runId,
+            String status,
+            String phase,
+            String detail,
+            long elapsedMs,
+            double phaseProgressPercent,
+            long estimatedRemainingMs,
+            int processedTiles,
+            int totalTiles,
+            long completedMicroCells,
+            long totalMicroCells
+    ) {
+    }
+
+    @FunctionalInterface
+    public interface ProgressListener {
+        ProgressListener NONE = update -> {
+        };
+
+        void onProgress(ProgressUpdate update);
+    }
+
     public enum ResumePolicy {
         USE_CACHE("use_cache"),
         RESCAN("rescan"),
@@ -758,6 +820,217 @@ public final class WorldSurveyRunner {
         }
         int samplesPerAxis = Math.max(1, cellStepBlocks / microSampleStrideBlocks);
         return samplesPerAxis * samplesPerAxis;
+    }
+
+    private static final class ProgressTracker {
+        private final Path runDirectory;
+        private final Config config;
+        private final int totalTiles;
+        private final long totalMicroCells;
+        private final long totalMicroSamples;
+        private final ProgressListener progressListener;
+        private final long startedAtNanos = System.nanoTime();
+        private final long startedAtEpochMs = System.currentTimeMillis();
+        private final AtomicInteger processedTiles = new AtomicInteger();
+        private final AtomicInteger scannedTiles = new AtomicInteger();
+        private final AtomicInteger cachedTiles = new AtomicInteger();
+        private final AtomicInteger failedTiles = new AtomicInteger();
+        private final AtomicLong completedMicroCells = new AtomicLong();
+        private final AtomicLong completedMicroSamples = new AtomicLong();
+        private final ScheduledExecutorService heartbeat = Executors.newSingleThreadScheduledExecutor(r -> {
+            Thread thread = new Thread(r, "geomantia-world-survey-progress");
+            thread.setDaemon(true);
+            return thread;
+        });
+        private String status = "queued";
+        private String phase = "queued";
+        private String detail = "";
+        private TilePlan currentTile;
+        private long phaseStartedAtNanos = startedAtNanos;
+        private boolean closed;
+
+        private ProgressTracker(Path runDirectory, Config config, int totalTiles, long totalMicroCells,
+                int microSampleBudgetPerCell, ProgressListener progressListener) {
+            this.runDirectory = runDirectory;
+            this.config = config;
+            this.totalTiles = totalTiles;
+            this.totalMicroCells = totalMicroCells;
+            this.totalMicroSamples = totalMicroCells * Math.max(0, microSampleBudgetPerCell);
+            this.progressListener = progressListener;
+        }
+
+        synchronized void start() {
+            status = "running";
+            phase = "tile_scan";
+            phaseStartedAtNanos = System.nanoTime();
+            publish();
+            heartbeat.scheduleAtFixedRate(this::publish, 1L, 1L, TimeUnit.SECONDS);
+        }
+
+        synchronized void beginTile(TilePlan tile) {
+            currentTile = tile;
+            phase = "tile_scan";
+            detail = "";
+        }
+
+        synchronized void finishTile(TilePlan tile, String tileStatus, String tileDetail) {
+            currentTile = tile;
+            detail = tileDetail == null ? "" : tileDetail;
+            processedTiles.incrementAndGet();
+            if ("scanned".equals(tileStatus)) {
+                scannedTiles.incrementAndGet();
+            } else if ("cached".equals(tileStatus)) {
+                cachedTiles.incrementAndGet();
+            } else if ("failed".equals(tileStatus)) {
+                failedTiles.incrementAndGet();
+            }
+            publish();
+        }
+
+        synchronized void beginMicroSampling() {
+            phase = "micro_sampling";
+            phaseStartedAtNanos = System.nanoTime();
+            currentTile = null;
+            detail = "";
+            publish();
+        }
+
+        void microCellCompleted(long sampleCount) {
+            completedMicroCells.incrementAndGet();
+            completedMicroSamples.addAndGet(Math.max(0L, sampleCount));
+        }
+
+        synchronized void microCacheHit(int featureCount, long sampleCount) {
+            completedMicroCells.set(totalMicroCells);
+            completedMicroSamples.set(Math.max(0L, sampleCount));
+            detail = "feature_grid_cache_hit cells=" + featureCount;
+            publish();
+        }
+
+        synchronized void complete(long durationMs) {
+            status = "completed";
+            phase = "complete";
+            detail = "durationMs=" + durationMs;
+            publish();
+        }
+
+        synchronized void fail(String error) {
+            status = "failed";
+            detail = error == null ? "" : error;
+            publish();
+        }
+
+        synchronized void close() {
+            if (closed) {
+                return;
+            }
+            closed = true;
+            heartbeat.shutdownNow();
+            publish();
+        }
+
+        private synchronized void publish() {
+            if (closed && "running".equals(status)) {
+                return;
+            }
+            long elapsedMs = Math.max(0L, (System.nanoTime() - startedAtNanos) / 1_000_000L);
+            long phaseElapsedMs = Math.max(1L, (System.nanoTime() - phaseStartedAtNanos) / 1_000_000L);
+            int processed = processedTiles.get();
+            long microCells = completedMicroCells.get();
+            double tileSpeed = perSecond(processed, elapsedMs);
+            double microCellSpeed = perSecond(microCells, phaseElapsedMs);
+            double microSampleSpeed = perSecond(completedMicroSamples.get(), phaseElapsedMs);
+            long etaMs = estimateRemainingMs(processed, microCells, elapsedMs, phaseElapsedMs);
+            double phasePercent = phasePercent(processed, microCells);
+            JsonObject json = new JsonObject();
+            json.addProperty("schemaVersion", "realm_world_survey_progress.v1");
+            json.addProperty("runId", config.runId);
+            json.addProperty("status", status);
+            json.addProperty("phase", phase);
+            json.addProperty("detail", detail);
+            json.addProperty("startedAt", Instant.ofEpochMilli(startedAtEpochMs).toString());
+            json.addProperty("updatedAt", Instant.now().toString());
+            json.addProperty("elapsedMs", elapsedMs);
+            json.addProperty("phaseElapsedMs", phaseElapsedMs);
+            json.addProperty("phaseProgressPercent", phasePercent);
+            json.addProperty("estimatedRemainingMs", etaMs);
+            json.addProperty("tileSpeedPerSecond", tileSpeed);
+            json.addProperty("microCellsPerSecond", microCellSpeed);
+            json.addProperty("microSamplesPerSecond", microSampleSpeed);
+            JsonObject tiles = new JsonObject();
+            tiles.addProperty("processed", processed);
+            tiles.addProperty("total", totalTiles);
+            tiles.addProperty("scanned", scannedTiles.get());
+            tiles.addProperty("cached", cachedTiles.get());
+            tiles.addProperty("failed", failedTiles.get());
+            json.add("tiles", tiles);
+            JsonObject micro = new JsonObject();
+            micro.addProperty("completedCells", microCells);
+            micro.addProperty("totalCells", totalMicroCells);
+            micro.addProperty("completedSamples", completedMicroSamples.get());
+            micro.addProperty("totalSamples", totalMicroSamples);
+            json.add("microSampling", micro);
+            if (currentTile != null) {
+                JsonObject tile = new JsonObject();
+                tile.addProperty("regionX", currentTile.regionX);
+                tile.addProperty("regionZ", currentTile.regionZ);
+                tile.addProperty("sampleMode", currentTile.sampleMode.contractName());
+                json.add("currentTile", tile);
+            }
+            try {
+                Files.writeString(runDirectory.resolve("world_survey_progress.json"), AtlasJson.GSON.toJson(json));
+            } catch (IOException ex) {
+                LOGGER.warn("Could not write W survey progress for runId={}: {}", config.runId, ex.getMessage());
+            }
+            LOGGER.info("W survey progress runId={} status={} phase={} tiles={}/{} microCells={}/{} tileSpeed={}/s microSpeed={}/s etaMs={}",
+                    config.runId, status, phase, processed, totalTiles, microCells, totalMicroCells,
+                    formatRate(tileSpeed), formatRate(microCellSpeed), etaMs);
+            try {
+                progressListener.onProgress(new ProgressUpdate(config.runId, status, phase, detail, elapsedMs,
+                        phasePercent, etaMs, processed, totalTiles, microCells, totalMicroCells));
+            } catch (RuntimeException ex) {
+                LOGGER.warn("W survey progress listener failed for runId={}: {}", config.runId, ex.getMessage());
+            }
+        }
+
+        private double phasePercent(int processed, long microCells) {
+            if ("micro_sampling".equals(phase)) {
+                return percent(microCells, totalMicroCells);
+            }
+            if ("complete".equals(phase)) {
+                return 100.0;
+            }
+            return percent(processed, totalTiles);
+        }
+
+        private long estimateRemainingMs(int processed, long microCells, long elapsedMs, long phaseElapsedMs) {
+            if ("complete".equals(phase) || "failed".equals(status)) {
+                return 0L;
+            }
+            if ("micro_sampling".equals(phase)) {
+                if (microCells <= 0L || totalMicroCells <= microCells) {
+                    return microCells >= totalMicroCells ? 0L : -1L;
+                }
+                return Math.max(0L, Math.round((totalMicroCells - microCells)
+                        * (phaseElapsedMs / (double) microCells)));
+            }
+            if (processed <= 0 || processed >= totalTiles) {
+                return processed >= totalTiles ? -1L : -1L;
+            }
+            return Math.max(0L, Math.round((totalTiles - processed) * (elapsedMs / (double) processed)));
+        }
+
+        private static double perSecond(long completed, long elapsedMs) {
+            return elapsedMs <= 0L ? 0.0 : completed * 1000.0 / elapsedMs;
+        }
+
+        private static double percent(long completed, long total) {
+            return total <= 0L ? 100.0 : Math.min(100.0, completed * 100.0 / total);
+        }
+
+        private static String formatRate(double value) {
+            return String.format(Locale.ROOT, "%.2f", value);
+        }
     }
 
     private record TilePlan(String dimensionId, int regionX, int regionZ, SampleMode sampleMode) {

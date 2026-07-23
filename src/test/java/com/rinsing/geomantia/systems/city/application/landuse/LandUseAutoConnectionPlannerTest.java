@@ -129,6 +129,26 @@ class LandUseAutoConnectionPlannerTest {
         assertEquals(ordinary.claims().size(), directed.claims().size());
     }
 
+    @Test
+    void growthRegionsKeepIndependentAreaCapsWithinOneFunctionalGroup() {
+        LandUseSeedGroup defaults = group("district", SurfacePolicy.PAVE);
+        LandUseSeedGroup group = new LandUseSeedGroup(defaults.groupId(), defaults.rule(),
+                defaults.surfaceSettings(), defaults.anchorIds(), defaults.structureFootprints(),
+                List.of(new BlockPoint(4, 4), new BlockPoint(44, 4)), defaults.gateSlots(),
+                2, 5, 5, defaults.actionBudget(), defaults.competitionWeight(), List.of(
+                new LandUseSeedGroup.GrowthRegion("district::small", List.of("small"),
+                        List.of(new BlockPoint(4, 4)), 1, 1, 1),
+                new LandUseSeedGroup.GrowthRegion("district::large", List.of("large"),
+                        List.of(new BlockPoint(44, 4)), 1, 4, 4)));
+
+        LandUseExpansionResult result = new StableLandUseExpander().expand("city_test",
+                flatTerrain().planningBounds(), flatTerrain(), List.of(group), List.of(), "test");
+
+        assertEquals(5, result.claimedBlocksByGroup().get("district"));
+        assertEquals(1, result.claimedBlocksByGrowthRegion().get("district::small"));
+        assertEquals(4, result.claimedBlocksByGrowthRegion().get("district::large"));
+    }
+
     private static LandUseExpansionResult expansion(Map<BlockPoint, String> claims) {
         Map<BlockPoint, LandUseExpansionResult.Claim> values = new LinkedHashMap<>();
         Map<String, Integer> counts = new LinkedHashMap<>();

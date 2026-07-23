@@ -146,6 +146,7 @@ public final class CityStructureAnchorCandidatePlanner {
             anchor.add("sourcePatchIds", candidate.getAsJsonArray("sourcePatchRefs").deepCopy());
             anchor.add("anchorBlock", candidate.getAsJsonObject("anchorBlock").deepCopy());
             anchor.addProperty("rotation", stringValue(candidate, "rotation", "NONE"));
+            copyTemplateMetadata(candidate, anchor);
             anchor.add("intentTerms", candidate.has("intentTerms") && candidate.get("intentTerms").isJsonArray()
                     ? candidate.getAsJsonArray("intentTerms").deepCopy()
                     : defaultIntentTerms(slotId, stringValue(candidate, "displayRole", "")));
@@ -508,7 +509,7 @@ public final class CityStructureAnchorCandidatePlanner {
                 Score score = score(slot, sourcePatch, point, estimate.collisionEnvelope(),
                         plannedSlotCenters, plannedAnchorCenters);
                 drafts.add(new CandidateDraft(slotIndex, slotId, displayRole, structureId, point, sourcePatch,
-                        kind, estimate, score));
+                        kind, estimate, score, templateMetadata(slot)));
             }
         }
 
@@ -535,6 +536,8 @@ public final class CityStructureAnchorCandidatePlanner {
         obj.addProperty("structureId", draft.structureId());
         obj.add("anchorBlock", draft.anchorBlock().asJson());
         obj.addProperty("rotation", "NONE");
+        copyTemplateMetadata(draft.templateMetadata(), obj);
+        addTemplatePlacementPlan(draft.templateMetadata(), draft.anchorBlock(), obj);
         JsonArray refs = new JsonArray();
         refs.add(draft.patch().landformPatchId());
         if (!draft.patch().mapLabel().isBlank()) {
@@ -945,6 +948,7 @@ public final class CityStructureAnchorCandidatePlanner {
         anchor.add("sourcePatchIds", selected.getAsJsonArray("sourcePatchRefs").deepCopy());
         anchor.add("anchorBlock", selected.getAsJsonObject("anchorBlock").deepCopy());
         anchor.addProperty("rotation", stringValue(selected, "rotation", "NONE"));
+        copyTemplateMetadata(selected, anchor);
         anchor.add("intentTerms", selected.has("intentTerms") && selected.get("intentTerms").isJsonArray()
                 ? selected.getAsJsonArray("intentTerms").deepCopy()
                 : defaultIntentTerms(requiredString(selected, "slotId"), stringValue(selected, "displayRole", "")));
@@ -959,6 +963,78 @@ public final class CityStructureAnchorCandidatePlanner {
         anchor.addProperty("selectionReason", stringValue(selected, "selectionReason", ""));
         CityStructureAnchorPlanner.applyPlacementProvenance(anchor, anchor);
         return anchor;
+    }
+
+    private static JsonObject templateMetadata(JsonObject slot) {
+        JsonObject metadata = new JsonObject();
+        copyTemplateMetadata(slot, metadata);
+        return metadata;
+    }
+
+    private static void addTemplatePlacementPlan(JsonObject source, BlockPoint anchor, JsonObject target) {
+        if (source == null || anchor == null || target == null || target.has("templatePlacementPlan")) {
+            return;
+        }
+        if (!source.has("templateSize") || !source.get("templateSize").isJsonObject()
+                || !source.has("roadEntrances") || !source.get("roadEntrances").isJsonArray()) {
+            return;
+        }
+        JsonObject placement = new JsonObject();
+        for (String key : List.of("templateId", "templateRef", "templateHash", "variantId",
+                "rotation", "mirror", "terrainPosePolicy")) {
+            if (source.has(key)) {
+                placement.add(key, source.get(key).deepCopy());
+            }
+        }
+        placement.add("anchorBlock", anchor.asJson());
+        placement.add("templateSize", source.get("templateSize").deepCopy());
+        JsonObject transformed = new JsonObject();
+        transformed.add("size", source.get("templateSize").deepCopy());
+        JsonArray transformedEntrances = new JsonArray();
+        for (JsonElement element : source.getAsJsonArray("roadEntrances")) {
+            if (!element.isJsonObject()) {
+                continue;
+            }
+            JsonObject entrance = element.getAsJsonObject();
+            JsonObject relative = entrance.has("position") && entrance.get("position").isJsonObject()
+                    ? entrance.getAsJsonObject("position")
+                    : entrance.has("relativePosition") && entrance.get("relativePosition").isJsonObject()
+                            ? entrance.getAsJsonObject("relativePosition") : null;
+            String direction = stringValue(entrance, "direction", "");
+            if (relative == null || direction.isBlank()) {
+                continue;
+            }
+            JsonObject transformedEntrance = new JsonObject();
+            transformedEntrance.addProperty("entranceId",
+                    stringValue(entrance, "entranceId", "entrance_" + transformedEntrances.size()));
+            transformedEntrance.addProperty("direction", direction);
+            transformedEntrance.add("relativePosition", relative.deepCopy());
+            JsonObject world = new JsonObject();
+            world.addProperty("x", anchor.x() + intValue(relative, "x", 0));
+            world.addProperty("z", anchor.z() + intValue(relative, "z", 0));
+            transformedEntrance.add("worldPosition", world);
+            transformedEntrances.add(transformedEntrance);
+        }
+        if (transformedEntrances.isEmpty()) {
+            return;
+        }
+        transformed.add("roadEntrances", transformedEntrances);
+        placement.add("transformed", transformed);
+        target.add("templatePlacementPlan", placement);
+    }
+
+    private static void copyTemplateMetadata(JsonObject source, JsonObject target) {
+        if (source == null || target == null) {
+            return;
+        }
+        for (String key : List.of("templateId", "templateRef", "templateHash", "variantId",
+                "rotation", "mirror", "terrainPosePolicy", "templateSize", "rawSize",
+                "materializationSource", "roadEntrances", "allowedRotations", "allowedMirrors",
+                "supportPolicy", "clearanceBlocks", "templatePlacementPlan", "structureTemplate")) {
+            if (source.has(key)) {
+                target.add(key, source.get(key).deepCopy());
+            }
+        }
     }
 
     private static long agentThinkTimeMs(JsonObject session, String slotId) {
@@ -1261,7 +1337,8 @@ public final class CityStructureAnchorCandidatePlanner {
 
     private record CandidateDraft(int slotIndex, String slotId, String displayRole, String structureId,
                                   BlockPoint anchorBlock, LandformPatchSummary patch, String kind,
-                                  CityStructureCandidateEnvelope.Estimate estimate, Score score) {
+                                  CityStructureCandidateEnvelope.Estimate estimate, Score score,
+                                  JsonObject templateMetadata) {
     }
 
     private record Score(double total, double terrainFit, double relationFit, double collisionSafety,

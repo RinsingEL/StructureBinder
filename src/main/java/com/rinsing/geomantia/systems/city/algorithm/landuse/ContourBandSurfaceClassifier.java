@@ -118,16 +118,122 @@ public final class ContourBandSurfaceClassifier {
         for (int index = 0; index < roles.length; index++) {
             originalWater[index] = roles[index] == BandRole.CHANNEL_WATER;
         }
-        boolean[] visited = new boolean[roles.length];
-        for (int start = 0; start < originalWater.length; start++) {
-            if (!originalWater[start] || visited[start]) continue;
-            List<Integer> component = waterComponent(start, originalWater, visited, grid);
-            repairWaterComponent(roles, originalWater, component, grid);
+        boolean[] permanentlyDemoted = new boolean[roles.length];
+        for (DiagonalLink link : originalDiagonalLinks(originalWater, grid)) {
+            if (originalWater[link.firstConnector()] || originalWater[link.secondConnector()]) continue;
+            List<Integer> connectors = orderedConnectors(roles, link, grid, permanentlyDemoted);
+            if (!connectors.isEmpty()) {
+                roles[connectors.get(0)] = BandRole.CHANNEL_WATER;
+                continue;
+            }
+            int demotion = waterDegree4(roles, link.source(), grid) < waterDegree4(roles, link.target(), grid)
+                    ? link.source() : link.target();
+            roles[demotion] = BandRole.CHANNEL_BEFORE_BANK;
+            permanentlyDemoted[demotion] = true;
+        }
+
+        int remainingRepairs = Math.max(1, roles.length * 2);
+        while (remainingRepairs-- > 0) {
+            int[] fourConnectedComponents = waterComponentLabels(roles, grid);
+            DiagonalLink link = firstDisconnectedDiagonalLink(roles, grid, fourConnectedComponents);
+            if (link == null) break;
+            List<Integer> connectors = orderedConnectors(roles, link, grid, permanentlyDemoted);
+            if (!connectors.isEmpty()) {
+                roles[connectors.get(0)] = BandRole.CHANNEL_WATER;
+                continue;
+            }
+            int demotion = waterDegree4(roles, link.source(), grid) < waterDegree4(roles, link.target(), grid)
+                    ? link.source() : link.target();
+            roles[demotion] = BandRole.CHANNEL_BEFORE_BANK;
+            permanentlyDemoted[demotion] = true;
         }
         if (waterComponentCount(roles, grid, NEIGHBORS_8)
                 != waterComponentCount(roles, grid, NEIGHBORS_4)) {
             throw new IllegalArgumentException("CONTOUR_BAND_WATER_NOT_FOUR_CONNECTED");
         }
+    }
+
+    private static List<Integer> orderedConnectors(BandRole[] roles,
+                                                   DiagonalLink link,
+                                                   MaskGrid grid,
+                                                   boolean[] permanentlyDemoted) {
+        return List.of(link.firstConnector(), link.secondConnector()).stream()
+                .filter(index -> grid.allowed[index] && !permanentlyDemoted[index])
+                .sorted(Comparator.comparingInt((Integer index) -> connectorRank(roles, index, grid))
+                        .thenComparingInt(Integer::intValue))
+                .toList();
+    }
+
+    private static List<DiagonalLink> originalDiagonalLinks(boolean[] originalWater, MaskGrid grid) {
+        int[][] forwardDiagonals = {{-1, 1}, {1, 1}};
+        List<DiagonalLink> result = new ArrayList<>();
+        for (int source = 0; source < originalWater.length; source++) {
+            if (!originalWater[source]) continue;
+            int x = source % grid.width;
+            int z = source / grid.width;
+            for (int[] diagonal : forwardDiagonals) {
+                int targetX = x + diagonal[0];
+                int targetZ = z + diagonal[1];
+                if (targetX < 0 || targetX >= grid.width || targetZ < 0 || targetZ >= grid.height) continue;
+                int target = targetZ * grid.width + targetX;
+                if (!originalWater[target]) continue;
+                int horizontal = z * grid.width + targetX;
+                int vertical = targetZ * grid.width + x;
+                result.add(new DiagonalLink(source, target, horizontal, vertical));
+            }
+        }
+        return result;
+    }
+
+    private static int[] waterComponentLabels(BandRole[] roles, MaskGrid grid) {
+        int[] labels = new int[roles.length];
+        Arrays.fill(labels, -1);
+        int component = 0;
+        for (int start = 0; start < roles.length; start++) {
+            if (roles[start] != BandRole.CHANNEL_WATER || labels[start] >= 0) continue;
+            ArrayDeque<Integer> queue = new ArrayDeque<>();
+            queue.add(start);
+            labels[start] = component;
+            while (!queue.isEmpty()) {
+                int current = queue.removeFirst();
+                int x = current % grid.width;
+                int z = current / grid.width;
+                for (int[] direction : NEIGHBORS_4) {
+                    int nextX = x + direction[0];
+                    int nextZ = z + direction[1];
+                    if (nextX < 0 || nextX >= grid.width || nextZ < 0 || nextZ >= grid.height) continue;
+                    int next = nextZ * grid.width + nextX;
+                    if (roles[next] == BandRole.CHANNEL_WATER && labels[next] < 0) {
+                        labels[next] = component;
+                        queue.addLast(next);
+                    }
+                }
+            }
+            component++;
+        }
+        return labels;
+    }
+
+    private static DiagonalLink firstDisconnectedDiagonalLink(BandRole[] roles,
+                                                               MaskGrid grid,
+                                                               int[] components) {
+        int[][] forwardDiagonals = {{-1, 1}, {1, 1}};
+        for (int source = 0; source < roles.length; source++) {
+            if (roles[source] != BandRole.CHANNEL_WATER) continue;
+            int x = source % grid.width;
+            int z = source / grid.width;
+            for (int[] diagonal : forwardDiagonals) {
+                int targetX = x + diagonal[0];
+                int targetZ = z + diagonal[1];
+                if (targetX < 0 || targetX >= grid.width || targetZ < 0 || targetZ >= grid.height) continue;
+                int target = targetZ * grid.width + targetX;
+                if (roles[target] != BandRole.CHANNEL_WATER || components[source] == components[target]) continue;
+                int horizontal = z * grid.width + targetX;
+                int vertical = targetZ * grid.width + x;
+                return new DiagonalLink(source, target, horizontal, vertical);
+            }
+        }
+        return null;
     }
 
     private static int waterComponentCount(BandRole[] roles, MaskGrid grid, int[][] directions) {
@@ -158,124 +264,64 @@ public final class ContourBandSurfaceClassifier {
         return componentCount;
     }
 
-    private static List<Integer> waterComponent(int start,
-                                                boolean[] originalWater,
-                                                boolean[] visited,
-                                                MaskGrid grid) {
-        List<Integer> component = new ArrayList<>();
-        ArrayDeque<Integer> queue = new ArrayDeque<>();
-        queue.add(start);
-        visited[start] = true;
-        while (!queue.isEmpty()) {
-            int current = queue.removeFirst();
-            component.add(current);
-            int x = current % grid.width;
-            int z = current / grid.width;
-            for (int[] direction : NEIGHBORS_8) {
-                int nextX = x + direction[0];
-                int nextZ = z + direction[1];
-                if (nextX < 0 || nextX >= grid.width || nextZ < 0 || nextZ >= grid.height) continue;
-                int next = nextZ * grid.width + nextX;
-                if (originalWater[next] && !visited[next]) {
-                    visited[next] = true;
-                    queue.addLast(next);
-                }
-            }
-        }
-        component.sort(Integer::compareTo);
-        return component;
-    }
-
-    private static void repairWaterComponent(BandRole[] roles,
-                                             boolean[] originalWater,
-                                             List<Integer> component,
-                                             MaskGrid grid) {
-        List<DiagonalLink> diagonalLinks = diagonalLinks(component, originalWater, grid).stream()
-                .filter(link -> !originalWater[link.firstConnector] && !originalWater[link.secondConnector])
-                .toList();
-        List<List<Integer>> candidates = diagonalLinks.stream().map(link ->
-                        List.of(link.firstConnector, link.secondConnector).stream()
-                                .filter(index -> grid.allowed[index])
-                                .sorted(Comparator.comparingInt(
-                                                (Integer index) -> connectorRank(roles, originalWater, index, grid))
-                                        .thenComparingInt(Integer::intValue))
-                                .toList())
-                .toList();
-        int[] assignments = new int[diagonalLinks.size()];
-        Arrays.fill(assignments, -1);
-        Map<Integer, Integer> connectorOwners = new HashMap<>();
-        java.util.Set<Integer> demotions = new java.util.TreeSet<>();
-        for (int linkIndex = 0; linkIndex < diagonalLinks.size(); linkIndex++) {
-            if (!assignUniqueConnector(linkIndex, candidates, assignments, connectorOwners,
-                    new java.util.HashSet<>())) {
-                DiagonalLink link = diagonalLinks.get(linkIndex);
-                demotions.add(Math.max(link.source, link.target));
-            }
-        }
-        Arrays.stream(assignments).filter(index -> index >= 0).forEach(index ->
-                roles[index] = BandRole.CHANNEL_WATER);
-        demotions.forEach(index -> roles[index] = BandRole.CHANNEL_BEFORE_BANK);
-    }
-
-    private static boolean assignUniqueConnector(int linkIndex,
-                                                 List<List<Integer>> candidates,
-                                                 int[] assignments,
-                                                 Map<Integer, Integer> connectorOwners,
-                                                 java.util.Set<Integer> visitedConnectors) {
-        for (int connector : candidates.get(linkIndex)) {
-            if (!visitedConnectors.add(connector)) continue;
-            Integer previousOwner = connectorOwners.get(connector);
-            if (previousOwner == null || assignUniqueConnector(previousOwner, candidates, assignments,
-                    connectorOwners, visitedConnectors)) {
-                assignments[linkIndex] = connector;
-                connectorOwners.put(connector, linkIndex);
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static List<DiagonalLink> diagonalLinks(List<Integer> component,
-                                                    boolean[] originalWater,
-                                                    MaskGrid grid) {
-        int[][] forwardDiagonals = {{-1, 1}, {1, 1}};
-        List<DiagonalLink> result = new ArrayList<>();
-        for (int source : component) {
-            int x = source % grid.width;
-            int z = source / grid.width;
-            for (int[] diagonal : forwardDiagonals) {
-                int targetX = x + diagonal[0];
-                int targetZ = z + diagonal[1];
-                if (targetX < 0 || targetX >= grid.width || targetZ < 0 || targetZ >= grid.height) continue;
-                int target = targetZ * grid.width + targetX;
-                if (!originalWater[target]) continue;
-                int horizontal = z * grid.width + targetX;
-                int vertical = targetZ * grid.width + x;
-                result.add(new DiagonalLink(source, target, horizontal, vertical));
-            }
-        }
-        result.sort(Comparator.comparingInt(DiagonalLink::source).thenComparingInt(DiagonalLink::target));
-        return result;
-    }
-
     private static int connectorRank(BandRole[] roles,
-                                     boolean[] originalWater,
                                      int connector,
                                      MaskGrid grid) {
         int localX = connector % grid.width;
         int localZ = connector / grid.width;
-        int originalNeighbors = 0;
+        int waterNeighbors = 0;
         for (int[] direction : NEIGHBORS_4) {
             int nextX = localX + direction[0];
             int nextZ = localZ + direction[1];
             if (nextX >= 0 && nextX < grid.width && nextZ >= 0 && nextZ < grid.height
-                    && originalWater[nextZ * grid.width + nextX]) {
-                originalNeighbors++;
+                    && roles[nextZ * grid.width + nextX] == BandRole.CHANNEL_WATER) {
+                waterNeighbors++;
             }
         }
-        int neighborPenalty = Math.abs(originalNeighbors - 2) * 4;
+        int neighborPenalty = Math.abs(waterNeighbors - 2) * 4;
+        int solidSquarePenalty = createsSolidWaterSquare(roles, connector, grid) ? 32 : 0;
         int surfacePenalty = roles[connector] != null && roles[connector].isChannel() ? 0 : 1;
-        return neighborPenalty + surfacePenalty;
+        return solidSquarePenalty + neighborPenalty + surfacePenalty;
+    }
+
+    private static int waterDegree4(BandRole[] roles, int index, MaskGrid grid) {
+        int x = index % grid.width;
+        int z = index / grid.width;
+        int degree = 0;
+        for (int[] direction : NEIGHBORS_4) {
+            int nextX = x + direction[0];
+            int nextZ = z + direction[1];
+            if (nextX >= 0 && nextX < grid.width && nextZ >= 0 && nextZ < grid.height
+                    && roles[nextZ * grid.width + nextX] == BandRole.CHANNEL_WATER) {
+                degree++;
+            }
+        }
+        return degree;
+    }
+
+    private static boolean createsSolidWaterSquare(BandRole[] roles, int connector, MaskGrid grid) {
+        int x = connector % grid.width;
+        int z = connector / grid.width;
+        for (int offsetZ = -1; offsetZ <= 0; offsetZ++) {
+            for (int offsetX = -1; offsetX <= 0; offsetX++) {
+                boolean solid = true;
+                for (int dz = 0; dz <= 1; dz++) {
+                    for (int dx = 0; dx <= 1; dx++) {
+                        int candidateX = x + offsetX + dx;
+                        int candidateZ = z + offsetZ + dz;
+                        if (candidateX < 0 || candidateX >= grid.width
+                                || candidateZ < 0 || candidateZ >= grid.height) {
+                            solid = false;
+                            continue;
+                        }
+                        int candidate = candidateZ * grid.width + candidateX;
+                        if (candidate != connector && roles[candidate] != BandRole.CHANNEL_WATER) solid = false;
+                    }
+                }
+                if (solid) return true;
+            }
+        }
+        return false;
     }
 
     private static double signedDistance(double distance,

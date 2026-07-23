@@ -22,6 +22,7 @@ import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -148,8 +149,9 @@ public final class GisPlatformEvents {
                     SampleMode.PRIOR,
                     WorldSurveyRunner.ResumePolicy.USE_CACHE
             );
+            ServerPlayer player = source.getEntity() instanceof ServerPlayer serverPlayer ? serverPlayer : null;
             var survey = new WorldSurveyRunner(realmRoot, GisClassifierConfig.defaults()).run(config,
-                    new MinecraftPriorAtlasSampler(level));
+                    new MinecraftPriorAtlasSampler(level), WorldSurveyChatProgress.forPlayer(player));
             var response = RealmPlanningServices.forServer(source.getServer()).runAcceptance(survey, 3, null, true);
             boolean passed = response.get("passed").getAsBoolean();
             String runId = response.get("runId").getAsString();
