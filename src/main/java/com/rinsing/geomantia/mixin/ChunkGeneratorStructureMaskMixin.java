@@ -6,6 +6,7 @@ import com.rinsing.geomantia.systems.city.infrastructure.world.CityWorldgenBlock
 import com.rinsing.geomantia.systems.city.infrastructure.world.MinecraftCityWorldgenStructurePlacer;
 import com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityLandUseChunkExecutor;
 import com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityLandUseWorldgenRegistry;
+import com.rinsing.geomantia.systems.city.testsupport.CityLandUseWorldgenGameTestFixture;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.SectionPos;
 import net.minecraft.world.level.ChunkPos;
@@ -72,6 +73,7 @@ public abstract class ChunkGeneratorStructureMaskMixin {
                                                        CallbackInfo ci) {
         CityWorldgenBlockObservationRegistry.begin(level, chunk);
         try {
+            CityLandUseWorldgenGameTestFixture.prepare(level, chunk.getPos());
             MinecraftCityWorldgenStructurePlacer.injectPlannedTemplateStructures(level, chunk);
             CityLandUseWorldgenRegistry.applyForChunk(
                     level.getLevel().dimension().location().toString(),

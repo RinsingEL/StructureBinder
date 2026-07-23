@@ -832,8 +832,29 @@ public final class CityLandUseWorldgenRegistry {
         }
 
         @Override
+        public Object beginWrite(int worldX, int y, int worldZ, Object snapshot) {
+            return delegate.beginWrite(worldX, y, worldZ, snapshot);
+        }
+
+        @Override
         public boolean setBlock(int worldX, int y, int worldZ, String blockId) {
             return delegate.setBlock(worldX, y, worldZ, blockId);
+        }
+
+        @Override
+        public boolean setBoundaryBlockRaw(int worldX, int y, int worldZ, String blockId) {
+            return delegate.setBoundaryBlockRaw(worldX, y, worldZ, blockId);
+        }
+
+        @Override
+        public CityLandUseChunkExecutor.BoundaryFinalizeResult finalizeBoundaryConnections(
+                List<CityLandUseChunkExecutor.BlockPosition> positions) {
+            return delegate.finalizeBoundaryConnections(positions);
+        }
+
+        @Override
+        public void endWrite(Object snapshot) {
+            delegate.endWrite(snapshot);
         }
 
         @Override
