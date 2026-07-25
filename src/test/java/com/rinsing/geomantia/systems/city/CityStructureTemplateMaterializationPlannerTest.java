@@ -3,10 +3,12 @@ package com.rinsing.geomantia.systems.city;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.rinsing.geomantia.systems.city.application.CityStructureMaterializationPlanner;
+import com.rinsing.geomantia.systems.city.application.CityTemplatePlacementGeometry;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityStructureTemplateMaterializationPlannerTest {
@@ -14,21 +16,21 @@ class CityStructureTemplateMaterializationPlannerTest {
     void templatePlanDerivesAndLocksNbtFootprintWithoutStructureStartFields() {
         JsonObject result = new CityStructureMaterializationPlanner()
                 .planWorldgen(anchorMap(), CityStructureMaterializationPlanner.ChunkStatusInspector.plannedOnly(),
-                        emptyLedger())
+                        emptyLedger(), metadata())
                 .structureMaterializationPlan();
 
         assertEquals("structure_template_nbt", result.get("materializationSource").getAsString());
-        assertEquals("structure_template_nbt_no_registry", result.get("preflightMode").getAsString());
+        assertEquals("current_world_template_nbt", result.get("preflightMode").getAsString());
         JsonObject item = result.getAsJsonArray("plannedWorldgenStructures").get(0).getAsJsonObject();
         assertEquals("city:house", item.get("templateId").getAsString());
         assertEquals("sha256:house", item.get("templateHash").getAsString());
         assertEquals("structure_template_nbt", item.get("materializationSource").getAsString());
-        assertEquals(CityStructureMaterializationPlanner.TEMPLATE_DATUM_POLICY_WORLDGEN_SURFACE,
+        assertEquals(CityStructureMaterializationPlanner.TEMPLATE_DATUM_POLICY_GENERATOR_BASE_HEIGHT,
                 item.get("templateDatumPolicy").getAsString());
-        assertEquals(CityStructureMaterializationPlanner.TEMPLATE_DATUM_POLICY_WORLDGEN_SURFACE,
+        assertEquals(CityStructureMaterializationPlanner.TEMPLATE_DATUM_POLICY_GENERATOR_BASE_HEIGHT,
                 item.getAsJsonObject("structureTemplate").get("templateDatumPolicy").getAsString());
-        assertEquals("direct_template", item.get("terrainPosePolicy").getAsString());
-        assertEquals(8, item.getAsJsonObject("templateSize").get("width").getAsInt());
+        assertEquals("structure_start_beard_thin", item.get("terrainPosePolicy").getAsString());
+        assertEquals(8, item.getAsJsonObject("rawSize").get("width").getAsInt());
         assertEquals(bounds(10, 10, 17, 15), item.getAsJsonObject("actualFootprint"));
         assertEquals(item.getAsJsonObject("actualFootprint"), item.getAsJsonObject("lockedActualFootprint"));
         assertFalse(item.has("templateFootprint"));
@@ -47,7 +49,7 @@ class CityStructureTemplateMaterializationPlannerTest {
 
         JsonObject item = new CityStructureMaterializationPlanner()
                 .planWorldgen(anchorMap, CityStructureMaterializationPlanner.ChunkStatusInspector.plannedOnly(),
-                        emptyLedger())
+                        emptyLedger(), metadata())
                 .structureMaterializationPlan()
                 .getAsJsonArray("plannedWorldgenStructures").get(0).getAsJsonObject();
 
@@ -68,7 +70,7 @@ class CityStructureTemplateMaterializationPlannerTest {
 
         JsonObject item = new CityStructureMaterializationPlanner()
                 .planWorldgen(anchorMap, CityStructureMaterializationPlanner.ChunkStatusInspector.plannedOnly(),
-                        emptyLedger())
+                        emptyLedger(), metadata())
                 .structureMaterializationPlan()
                 .getAsJsonArray("plannedWorldgenStructures").get(0).getAsJsonObject();
 
@@ -83,7 +85,7 @@ class CityStructureTemplateMaterializationPlannerTest {
     void templateLedgerDriftIsRejected() {
         JsonObject plan = new CityStructureMaterializationPlanner()
                 .planWorldgen(anchorMap(), CityStructureMaterializationPlanner.ChunkStatusInspector.plannedOnly(),
-                        emptyLedger())
+                        emptyLedger(), metadata())
                 .structureMaterializationPlan();
         JsonObject ledger = emptyLedger();
         JsonObject placed = templateFields();
@@ -96,6 +98,88 @@ class CityStructureTemplateMaterializationPlannerTest {
                         false)
                 .structureMaterializationTrace();
         assertTrue(result.toString().contains("STRUCTURE_TEMPLATE_HASH_DRIFT"));
+    }
+
+    @Test
+    void d6RejectsSuppliedOwnerChunkDrift() {
+        JsonObject map = anchorMap();
+        map.getAsJsonArray("anchors").get(0).getAsJsonObject().add("ownerChunks",
+                JsonParser.parseString("[{\"x\":99,\"z\":99}]").getAsJsonArray());
+
+        CityStructureMaterializationPlanner.Result result = new CityStructureMaterializationPlanner()
+                .planWorldgen(map, CityStructureMaterializationPlanner.ChunkStatusInspector.plannedOnly(),
+                        emptyLedger(), metadata());
+
+        assertFalse(result.structureMaterializationPlan().get("locked").getAsBoolean());
+        assertTrue(result.structureMaterializationTrace().toString()
+                .contains("STRUCTURE_TEMPLATE_OWNER_CHUNKS_DRIFT"));
+    }
+
+    @Test
+    void d7AcceptsOnlyCompleteLockedRuntimeGeometry() {
+        JsonObject plan = new CityStructureMaterializationPlanner()
+                .planWorldgen(anchorMap(), CityStructureMaterializationPlanner.ChunkStatusInspector.plannedOnly(),
+                        emptyLedger(), metadata())
+                .structureMaterializationPlan();
+        JsonObject runtime = plan.getAsJsonArray("plannedWorldgenStructures").get(0).getAsJsonObject().deepCopy();
+        JsonObject ledger = emptyLedger();
+        ledger.getAsJsonArray("placedStructures").add(runtime);
+
+        CityStructureMaterializationPlanner.Result accepted = new CityStructureMaterializationPlanner()
+                .executeWorldgen(plan, ledger, CityStructureMaterializationPlanner.ChunkStatusInspector.plannedOnly(),
+                        true);
+        assertEquals(1, accepted.placedStructureLedger().getAsJsonArray("placedStructures").size());
+
+        runtime.add("collisionEnvelope", bounds(0, 0, 1, 1));
+        CityStructureMaterializationPlanner.Result rejected = new CityStructureMaterializationPlanner()
+                .executeWorldgen(plan, ledger, CityStructureMaterializationPlanner.ChunkStatusInspector.plannedOnly(),
+                        true);
+        assertTrue(rejected.structureMaterializationTrace().toString()
+                .contains("STRUCTURE_TEMPLATE_COLLISION_DRIFT"));
+    }
+
+    @Test
+    void d6PreservesFiveBlockClearanceAndTenBlockBodyGap() {
+        JsonObject map = anchorMap();
+        JsonObject first = map.getAsJsonArray("anchors").get(0).getAsJsonObject();
+        first.addProperty("clearanceBlocks", 5);
+        first.add("collisionEnvelope", bounds(5, 5, 22, 20));
+        first.add("reservedEnvelope", bounds(5, 5, 22, 20));
+        first.add("maskEnvelope", bounds(-3, -3, 30, 28));
+
+        JsonObject second = first.deepCopy();
+        second.addProperty("anchorId", "house_2");
+        second.getAsJsonObject("commandAnchorBlock").addProperty("x", 28);
+        second.add("plannedFootprint", bounds(28, 10, 35, 15));
+        second.add("collisionEnvelope", bounds(23, 5, 40, 20));
+        second.add("reservedEnvelope", bounds(23, 5, 40, 20));
+        second.add("maskEnvelope", bounds(15, -3, 48, 28));
+        map.getAsJsonArray("anchors").add(second);
+
+        JsonObject plan = new CityStructureMaterializationPlanner()
+                .planWorldgen(map, CityStructureMaterializationPlanner.ChunkStatusInspector.plannedOnly(),
+                        emptyLedger(), metadata())
+                .structureMaterializationPlan();
+
+        JsonObject firstPlan = plan.getAsJsonArray("plannedWorldgenStructures").get(0).getAsJsonObject();
+        JsonObject secondPlan = plan.getAsJsonArray("plannedWorldgenStructures").get(1).getAsJsonObject();
+        assertEquals(bounds(5, 5, 22, 20), firstPlan.getAsJsonObject("collisionEnvelope"));
+        assertEquals(bounds(23, 5, 40, 20), secondPlan.getAsJsonObject("collisionEnvelope"));
+        assertEquals(10, secondPlan.getAsJsonObject("actualFootprint").get("minX").getAsInt()
+                - firstPlan.getAsJsonObject("actualFootprint").get("maxX").getAsInt() - 1);
+    }
+
+    @Test
+    void configuredIdentityIsRejectedBeforePlanOutput() {
+        JsonObject map = anchorMap();
+        map.getAsJsonArray("anchors").get(0).getAsJsonObject()
+                .addProperty("structureId", "trek:legacy_configured");
+
+        IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
+                () -> new CityStructureMaterializationPlanner().planWorldgen(map,
+                        CityStructureMaterializationPlanner.ChunkStatusInspector.plannedOnly(), emptyLedger(),
+                        metadata()));
+        assertEquals("CITY_CONFIGURED_STRUCTURE_FLOW_REMOVED", error.getMessage());
     }
 
     private static JsonObject anchorMap() {
@@ -112,7 +196,6 @@ class CityStructureTemplateMaterializationPlannerTest {
                       "parentArrayId": "residential_block",
                       "subZoneId": "row_north"
                     },
-                    "structureId": "legacy:ignored",
                     "commandAnchorBlock": {"x": 10, "z": 10},
                     "plannedFootprint": {"minX": 10, "minZ": 10, "maxX": 17, "maxZ": 15},
                     "reservedEnvelope": {"minX": 10, "minZ": 10, "maxX": 17, "maxZ": 15},
@@ -123,7 +206,7 @@ class CityStructureTemplateMaterializationPlannerTest {
                     "variantId": "oak",
                     "rotation": "NONE",
                     "mirror": "NONE",
-                    "templateSize": {"width": 8, "height": 5, "depth": 6},
+                    "rawSize": {"width": 8, "height": 5, "depth": 6},
                     "materializationSource": "structure_template_nbt"
                   }]
                 }
@@ -149,6 +232,11 @@ class CityStructureTemplateMaterializationPlannerTest {
         item.add("lockedActualFootprint", bounds(10, 10, 17, 15));
         item.addProperty("materializationSource", "structure_template_nbt");
         return item;
+    }
+
+    private static CityStructureMaterializationPlanner.TemplateMetadataInspector metadata() {
+        return templateRef -> CityStructureMaterializationPlanner.TemplateMetadata.readable(
+                "sha256:house", new CityTemplatePlacementGeometry.Size(8, 5, 6));
     }
 
     private static JsonObject bounds(int minX, int minZ, int maxX, int maxZ) {

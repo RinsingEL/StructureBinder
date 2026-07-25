@@ -844,7 +844,7 @@ public final class CityWallPlanner {
             }
             JsonObject violation = new JsonObject();
             violation.addProperty("anchorId", stringValue(structure, "anchorId", ""));
-            violation.addProperty("structureId", stringValue(structure, "structureId", ""));
+            violation.addProperty("templateId", stringValue(structure, "templateId", ""));
             violation.addProperty("reasonCode", "D5_V5_LOCKED_FOOTPRINT_OUTSIDE_RESERVATION");
             violation.add("footprint", boundsJson(footprint));
             violation.add("coverageBounds", boundsJson(coverage));

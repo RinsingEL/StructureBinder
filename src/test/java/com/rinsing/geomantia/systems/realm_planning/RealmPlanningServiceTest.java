@@ -1,6 +1,7 @@
 package com.rinsing.geomantia.systems.realm_planning;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.rinsing.geomantia.systems.gis.GisClassifierConfig;
@@ -19,6 +20,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.FileTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -144,6 +146,102 @@ class RealmPlanningServiceTest {
     }
 
     @Test
+    void synchronizeT4RegistryRebuildsDerivedArtifactsAndInvalidatesAcceptance() throws Exception {
+        RefreshResult result = refreshSynthetic("mixed", 64);
+        Path debugRoot = tempDir.resolve("realm_debug");
+        RealmPlanningService service = new RealmPlanningService(debugRoot);
+        service.runAcceptance(result, "realm_t4_sync_test", 3, null, true);
+
+        Path runDir = debugRoot.resolve("realm_t4_sync_test");
+        JsonObject registry = readJson(runDir.resolve("city_seed_registry.json"));
+        JsonArray seeds = registry.getAsJsonArray("citySeeds");
+        int removedIndex = -1;
+        for (int i = seeds.size() - 1; i >= 0; i--) {
+            if (!"capital".equals(seeds.get(i).getAsJsonObject().get("role").getAsString())) {
+                removedIndex = i;
+                break;
+            }
+        }
+        assertTrue(removedIndex >= 0, registry.toString());
+        seeds.remove(removedIndex);
+        JsonObject source = seeds.get(0).getAsJsonObject().getAsJsonObject("source");
+        source.addProperty("patchSelectionRef", "patch_selection_test");
+        source.addProperty("patchCandidateId", "PLAINS-01");
+        JsonObject retainedExternalSeed = seeds.get(0).getAsJsonObject().deepCopy();
+        retainedExternalSeed.addProperty("citySeedId", "city_retained_external_realm");
+        retainedExternalSeed.addProperty("realmId", "realm_from_another_planning_run");
+        retainedExternalSeed.addProperty("role", "large_town");
+        retainedExternalSeed.getAsJsonObject("anchorGrid").addProperty("x", 10_000);
+        retainedExternalSeed.getAsJsonObject("anchorGrid").addProperty("z", 10_000);
+        seeds.add(retainedExternalSeed);
+
+        JsonObject response = service.synchronizeT4RegistryArtifacts("realm_t4_sync_test", registry);
+        int expectedCount = seeds.size();
+
+        assertEquals("rerun_acceptance", response.getAsJsonArray("nextActions").get(0).getAsString());
+        JsonObject persistedRegistry = readJson(runDir.resolve("city_seed_registry.json"));
+        assertEquals("patch_selection_test", persistedRegistry.getAsJsonArray("citySeeds").get(0)
+                .getAsJsonObject().getAsJsonObject("source").get("patchSelectionRef").getAsString());
+        assertEquals(expectedCount, readJson(runDir.resolve("t4_report.json")).get("citySeedCount").getAsInt());
+        JsonObject score = readJson(runDir.resolve("score_manifest.json"));
+        assertEquals(expectedCount, score.getAsJsonObject("subScores").getAsJsonObject("T4")
+                .get("citySeedCount").getAsInt());
+        assertEquals(0, score.getAsJsonObject("subScores").getAsJsonObject("T4")
+                .get("offTerritoryAnchorCount").getAsInt());
+        assertTrue(score.getAsJsonArray("hardBlocks").isEmpty(), score.toString());
+        assertTrue(score.get("passed").getAsBoolean(), score.toString());
+        assertTrue(Files.isRegularFile(runDir.resolve("city_seed_preview.png")));
+        assertTrue(Files.isRegularFile(runDir.resolve("realm_city_candidate_packages.json")));
+
+        JsonObject acceptance = readJson(runDir.resolve("acceptance_report.json"));
+        assertFalse(acceptance.get("passed").getAsBoolean());
+        assertTrue(acceptance.get("stale").getAsBoolean());
+        assertEquals("stale", acceptance.get("status").getAsString());
+        assertEquals("t4_registry_replaced_by_patch_planning", acceptance.get("staleReason").getAsString());
+        assertEquals(expectedCount, acceptance.get("currentCitySeedCount").getAsInt());
+    }
+
+    @Test
+    void t1RoutesSemanticSiteSelectionThroughPatchExplorer() throws Exception {
+        RefreshResult result = refreshSynthetic("mixed", 64);
+        Path debugRoot = tempDir.resolve("realm_debug");
+        RealmPlanningService service = new RealmPlanningService(debugRoot);
+        service.runW(result, "realm_t1_patch_explorer_route_test", null);
+
+        JsonObject response = service.prepareT1("realm_t1_patch_explorer_route_test", null, 2, "", true);
+
+        assertEquals("patch_explorer_primary", response.get("selectionMode").getAsString());
+        assertEquals("continent_scope_reference", response.get("candidateMapRole").getAsString());
+        assertEquals(List.of("patch_explorer_open"),
+                response.getAsJsonArray("nextActions").asList().stream().map(element -> element.getAsString()).toList());
+        assertEquals(List.of("realm_t2_select_coordinate"),
+                response.getAsJsonArray("compatibilityActions").asList().stream()
+                        .map(element -> element.getAsString()).toList());
+
+        JsonArray packages = readJsonArray(debugRoot.resolve("realm_t1_patch_explorer_route_test")
+                .resolve("candidate_map_packages.json"));
+        PatchExplorerService patchExplorer = new PatchExplorerService(debugRoot);
+        for (JsonElement element : packages) {
+            JsonObject candidatePackage = element.getAsJsonObject();
+            assertEquals("continent_scope_reference", candidatePackage.get("mapRole").getAsString());
+            assertEquals("target_continent_assignable_land", candidatePackage.get("scopeBasis").getAsString());
+            assertFalse(candidatePackage.get("profileDifferentiated").getAsBoolean());
+            assertEquals("patch_explorer_primary", candidatePackage.get("selectionMode").getAsString());
+            JsonObject rules = candidatePackage.getAsJsonObject("selectionRules");
+            assertTrue(rules.get("primaryFlow").getAsString().startsWith("patch_explorer_open"));
+            assertEquals("compatibility_only", rules.get("directGridSubmission").getAsString());
+
+            JsonObject openRequest = new JsonObject();
+            openRequest.addProperty("runId", "realm_t1_patch_explorer_route_test");
+            openRequest.addProperty("scopeType", "realm_t2");
+            openRequest.addProperty("realmId", candidatePackage.get("realmId").getAsString());
+            JsonObject opened = patchExplorer.open(openRequest);
+            assertTrue(opened.get("ok").getAsBoolean());
+            assertFalse(opened.getAsJsonArray("typeCatalog").isEmpty());
+        }
+    }
+
+    @Test
     void runStateIsScopedToServiceInstance() throws Exception {
         RefreshResult result = refreshSynthetic("plain", 64);
         Path debugRoot = tempDir.resolve("realm_debug");
@@ -156,6 +254,73 @@ class RealmPlanningServiceTest {
         assertTrue(second.status().getAsJsonArray("knownRuns").isEmpty());
         assertThrows(IllegalArgumentException.class,
                 () -> second.prepareT1("realm_instance_scope_test", null, 1, "", true));
+    }
+
+    @Test
+    void persistedWtCheckpointsResumeAcrossServiceInstancesWithoutRewritingUpstreamArtifacts() throws Exception {
+        String runId = "realm_persisted_checkpoint_resume_test";
+        Path debugRoot = tempDir.resolve("realm_debug");
+        GisTestCase testCase = GisTestCase.byId("mixed");
+        WorldSurveyResult survey = new WorldSurveyRunner(debugRoot, GisClassifierConfig.defaults()).run(
+                new WorldSurveyRunner.Config(
+                        runId,
+                        testCase.dimensionId(),
+                        "synthetic",
+                        0.0,
+                        256,
+                        256,
+                        128,
+                        64,
+                        32,
+                        4,
+                        testCase.sampleMode(),
+                        WorldSurveyRunner.ResumePolicy.USE_CACHE),
+                new SyntheticAtlasSampler(testCase.profile()));
+        Path runDir = debugRoot.resolve(runId);
+
+        RealmPlanningService wService = new RealmPlanningService(debugRoot);
+        wService.runW(survey, null);
+        Path wManifest = runDir.resolve("w_manifest.json");
+        String wManifestBefore = Files.readString(wManifest);
+        FileTime wManifestTimeBefore = Files.getLastModifiedTime(wManifest);
+
+        RealmPlanningService t1Service = new RealmPlanningService(debugRoot);
+        assertTrue(t1Service.status().getAsJsonArray("knownRuns").isEmpty());
+        JsonObject t1 = t1Service.prepareT1(runId, null, 1, "", true);
+        assertEquals("completed", t1.get("status").getAsString());
+        assertEquals(1, t1Service.status().getAsJsonArray("knownRuns").size());
+        assertEquals(wManifestBefore, Files.readString(wManifest));
+        assertEquals(wManifestTimeBefore, Files.getLastModifiedTime(wManifest));
+
+        String realmId = t1.getAsJsonArray("realmProfiles").get(0).getAsJsonObject().get("realmId").getAsString();
+        RealmPlanningService.GridPoint point = t1Service.suggestedPoint(runId, realmId);
+        JsonObject t2 = t1Service.selectT2(runId, realmId, point.x(), point.z(), null,
+                "persisted checkpoint resume test", "debug", true);
+        assertEquals("completed", t2.get("status").getAsString());
+        Path profiles = runDir.resolve("realm_profiles.json");
+        Path seeds = runDir.resolve("realm_seeds.json");
+        String profilesBefore = Files.readString(profiles);
+        FileTime profilesTimeBefore = Files.getLastModifiedTime(profiles);
+        String seedsBefore = Files.readString(seeds);
+        FileTime seedsTimeBefore = Files.getLastModifiedTime(seeds);
+
+        RealmPlanningService t3Service = new RealmPlanningService(debugRoot);
+        JsonObject t3 = t3Service.expandT3(runId, "", false, "smoke", "quota_frontier");
+        assertEquals("completed", t3.get("status").getAsString());
+        assertEquals(profilesBefore, Files.readString(profiles));
+        assertEquals(profilesTimeBefore, Files.getLastModifiedTime(profiles));
+        assertEquals(seedsBefore, Files.readString(seeds));
+        assertEquals(seedsTimeBefore, Files.getLastModifiedTime(seeds));
+        Path territory = runDir.resolve("realm_territory_map.json");
+        String territoryBefore = Files.readString(territory);
+        FileTime territoryTimeBefore = Files.getLastModifiedTime(territory);
+
+        RealmPlanningService t4Service = new RealmPlanningService(debugRoot);
+        JsonObject t4 = t4Service.buildT4(runId);
+        assertEquals("completed", t4.get("status").getAsString());
+        assertFalse(t4.getAsJsonObject("citySeedRegistry").getAsJsonArray("citySeeds").isEmpty());
+        assertEquals(territoryBefore, Files.readString(territory));
+        assertEquals(territoryTimeBefore, Files.getLastModifiedTime(territory));
     }
 
     @Test

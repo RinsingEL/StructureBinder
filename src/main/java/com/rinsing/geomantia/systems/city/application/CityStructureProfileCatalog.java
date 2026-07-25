@@ -58,8 +58,9 @@ public final class CityStructureProfileCatalog {
 
         Map<String, StructureProfile> byId = new LinkedHashMap<>();
         for (StructureProfile profile : profiles) {
-            if (byId.putIfAbsent(profile.structureId(), profile) != null) {
-                warnings.add("Duplicate structure profile ignored after first occurrence: " + profile.structureId());
+            if (byId.putIfAbsent(profile.semanticProfileId(), profile) != null) {
+                warnings.add("Duplicate semantic profile ignored after first occurrence: "
+                        + profile.semanticProfileId());
             }
         }
         JsonObject normalizedSource = source.deepCopy();
@@ -113,27 +114,28 @@ public final class CityStructureProfileCatalog {
                                                                         List<String> needsReview) {
         JsonObject curation = objectValue(obj, "curation");
         rejectLegacySemanticFields(obj, curation, sourceRef);
-        String structureId = firstString(obj, "structureId", "structure_id", "id");
-        if (!RESOURCE_ID.matcher(structureId).matches()) {
-            needsReview.add(sourceRef + ": invalid or missing structureId");
+        String semanticProfileId = firstString(obj, "semanticProfileId", "semantic_profile_id",
+                "structureId", "structure_id", "id");
+        if (!RESOURCE_ID.matcher(semanticProfileId).matches()) {
+            needsReview.add(sourceRef + ": invalid or missing semanticProfileId");
             return java.util.Optional.empty();
         }
         if (!"debug".equals(catalogMode)) {
             String reviewState = firstString(obj, "reviewState", "review_state");
             if (!"approved".equalsIgnoreCase(reviewState)) {
-                needsReview.add(structureId + ": review_state is not approved");
+                needsReview.add(semanticProfileId + ": review_state is not approved");
                 return java.util.Optional.empty();
             }
         }
 
         List<String> functionTerms = firstStrings(obj, curation, "functionTerms", "function_terms", "function");
         if (functionTerms.isEmpty()) {
-            needsReview.add(structureId + ": missing TerraSense function terms");
+            needsReview.add(semanticProfileId + ": missing TerraSense function terms");
             return java.util.Optional.empty();
         }
         List<String> qualityTerms = firstStrings(obj, curation, "qualityTerms", "quality_terms", "quality");
         if (qualityTerms.stream().anyMatch(term -> term.equals("reject") || term.equals("quality.reject"))) {
-            needsReview.add(structureId + ": rejected by quality terms");
+            needsReview.add(semanticProfileId + ": rejected by quality terms");
             return java.util.Optional.empty();
         }
 
@@ -148,44 +150,9 @@ public final class CityStructureProfileCatalog {
                     templateRoleTerms, qualityTerms);
         }
 
-        String footprintMode = firstString(obj, "footprintMode", "footprint_mode");
-        Footprint fixedFootprint = footprint(obj, "fixedFootprint", "fixed_footprint", "footprint");
-        AreaRange areaRange = areaRange(obj);
-        if (footprintMode.isBlank()) {
-            footprintMode = fixedFootprint.valid() ? "fixed_footprint" : "variable_area";
-        }
-        if ("fixed_footprint".equals(footprintMode) && !fixedFootprint.valid()) {
-            needsReview.add(structureId + ": fixed_footprint without reliable fixedFootprint");
-            return java.util.Optional.empty();
-        }
-        if ("variable_area".equals(footprintMode) && !areaRange.startFootprint().valid()) {
-            needsReview.add(structureId + ": variable_area without reliable startFootprint");
-            return java.util.Optional.empty();
-        }
-
-        String profileType = firstString(obj, "profileType", "profile_type");
-        if (profileType.isBlank()) {
-            profileType = "variable_area".equals(footprintMode) ? "jigsaw_system" : "single";
-        }
-        int clearance = intValue(obj, "clearanceBlocks", intValue(obj, "clearance_blocks", 0));
-        int maxDistance = firstInt(obj, 0, "maxDistanceFromCenter", "max_distance_from_center",
-                "jigsawMaxExpansionRadius", "jigsaw_max_expansion_radius");
-        List<String> rotations = strings(firstArray(obj, "allowedRotations", "allowed_rotations"));
-        if (rotations.isEmpty()) {
-            rotations = List.of("NONE");
-        }
-        String placementKind = firstString(obj, "placementKind", "placement_kind");
-        String sampleType = firstString(obj, "sampleType", "sample_type");
-        String placementCommand = firstString(obj, "placementCommand", "placement_command");
-
         return java.util.Optional.of(new StructureProfile(
-                structureId,
+                semanticProfileId,
                 firstString(obj, "sourceProfileRef", "source_profile_ref", "profileRef"),
-                profileType,
-                sampleType,
-                placementKind,
-                placementCommand,
-                footprintMode,
                 semanticTerms,
                 functionTerms,
                 styleTerms,
@@ -193,11 +160,6 @@ public final class CityStructureProfileCatalog {
                 usageTerms,
                 templateRoleTerms,
                 qualityTerms,
-                fixedFootprint,
-                areaRange,
-                rotations,
-                clearance,
-                maxDistance,
                 catalogMode));
     }
 
@@ -208,43 +170,6 @@ public final class CityStructureProfileCatalog {
                         + "; export TerraSense semanticTerms/functionTerms instead.");
             }
         }
-    }
-
-    private static AreaRange areaRange(JsonObject obj) {
-        JsonObject source = objectValue(obj, "expectedAreaRange");
-        if (source.size() == 0) {
-            source = objectValue(obj, "expected_area_range");
-        }
-        Footprint start = footprint(source, "startFootprint", "start_footprint", "footprint");
-        if (!start.valid()) {
-            start = footprint(obj, "startFootprint", "start_footprint");
-        }
-        int min = intValue(source, "minAreaBlocks", intValue(source, "min_area_blocks", 0));
-        int max = intValue(source, "maxAreaBlocks", intValue(source, "max_area_blocks", 0));
-        if (min <= 0 && start.valid()) {
-            min = start.widthBlocks() * start.depthBlocks();
-        }
-        if (max <= 0) {
-            max = min;
-        }
-        return new AreaRange(min, max, start);
-    }
-
-    private static Footprint footprint(JsonObject obj, String... keys) {
-        JsonObject source = new JsonObject();
-        for (String key : keys) {
-            source = objectValue(obj, key);
-            if (source.size() > 0) {
-                break;
-            }
-        }
-        if (source.size() == 0 && (obj.has("widthBlocks") || obj.has("width") || obj.has("x"))) {
-            source = obj;
-        }
-        return new Footprint(
-                firstInt(source, 0, "widthBlocks", "width", "x"),
-                firstInt(source, 0, "depthBlocks", "depth", "z"),
-                firstInt(source, 0, "heightBlocks", "height", "y"));
     }
 
     private static Path resolve(Path baseDirectory, String raw) {
@@ -271,15 +196,6 @@ public final class CityStructureProfileCatalog {
             }
         }
         return "";
-    }
-
-    private static int firstInt(JsonObject obj, int defaultValue, String... keys) {
-        for (String key : keys) {
-            if (obj != null && obj.has(key) && !obj.get(key).isJsonNull()) {
-                return obj.get(key).getAsInt();
-            }
-        }
-        return defaultValue;
     }
 
     private static List<String> firstStrings(JsonObject obj, JsonObject nested, String... keys) {
@@ -327,10 +243,6 @@ public final class CityStructureProfileCatalog {
         return obj != null && obj.has(key) && !obj.get(key).isJsonNull() ? obj.get(key).getAsString() : defaultValue;
     }
 
-    private static int intValue(JsonObject obj, String key, int defaultValue) {
-        return obj != null && obj.has(key) && !obj.get(key).isJsonNull() ? obj.get(key).getAsInt() : defaultValue;
-    }
-
     private static JsonObject objectValue(JsonObject obj, String key) {
         return obj != null && obj.has(key) && obj.get(key).isJsonObject() ? obj.getAsJsonObject(key) : new JsonObject();
     }
@@ -348,15 +260,6 @@ public final class CityStructureProfileCatalog {
         return array;
     }
 
-    private static JsonObject boundsJson(BlockBounds bounds) {
-        JsonObject obj = new JsonObject();
-        obj.addProperty("minX", bounds.minX());
-        obj.addProperty("minZ", bounds.minZ());
-        obj.addProperty("maxX", bounds.maxX());
-        obj.addProperty("maxZ", bounds.maxZ());
-        return obj;
-    }
-
     public record ImportedCatalog(String catalogMode, JsonObject source, List<StructureProfile> profiles,
                                   List<String> warnings, List<String> needsReview) {
         public ImportedCatalog {
@@ -368,19 +271,19 @@ public final class CityStructureProfileCatalog {
         public Map<String, StructureProfile> byId() {
             Map<String, StructureProfile> result = new LinkedHashMap<>();
             for (StructureProfile profile : profiles) {
-                result.put(profile.structureId(), profile);
+                result.put(profile.semanticProfileId(), profile);
             }
             return result;
         }
 
         public JsonObject asJson() {
             JsonObject obj = new JsonObject();
-            obj.addProperty("schemaVersion", "city_structure_profile_catalog.v0.2");
+            obj.addProperty("schemaVersion", "city_semantic_profile_catalog.v0.1");
             obj.addProperty("catalogMode", catalogMode);
             obj.add("source", source.deepCopy());
             JsonArray array = new JsonArray();
-            profiles.forEach(profile -> array.add(profile.asJson()));
-            obj.add("structures", array);
+            profiles.forEach(profile -> array.add(profile.asSemanticJson()));
+            obj.add("semanticProfiles", array);
             JsonObject quality = new JsonObject();
             quality.addProperty("passed", needsReview.isEmpty());
             quality.addProperty("score", needsReview.isEmpty() ? 100 : 70);
@@ -391,13 +294,11 @@ public final class CityStructureProfileCatalog {
         }
     }
 
-    public record StructureProfile(String structureId, String sourceProfileRef, String profileType,
-                                   String sampleType, String placementKind, String placementCommand,
-                                   String footprintMode, List<String> semanticTerms, List<String> functionTerms,
+    public record StructureProfile(String semanticProfileId, String sourceProfileRef,
+                                   List<String> semanticTerms, List<String> functionTerms,
                                    List<String> styleTerms, List<String> placementTerms, List<String> usageTerms,
                                    List<String> templateRoleTerms, List<String> qualityTerms,
-                                   Footprint fixedFootprint, AreaRange expectedAreaRange, List<String> allowedRotations,
-                                   int clearanceBlocks, int maxDistanceFromCenterBlocks, String catalogMode) {
+                                   String catalogMode) {
         public StructureProfile {
             semanticTerms = List.copyOf(semanticTerms);
             functionTerms = List.copyOf(functionTerms);
@@ -406,36 +307,12 @@ public final class CityStructureProfileCatalog {
             usageTerms = List.copyOf(usageTerms);
             templateRoleTerms = List.copyOf(templateRoleTerms);
             qualityTerms = List.copyOf(qualityTerms);
-            allowedRotations = List.copyOf(allowedRotations);
         }
 
-        public boolean jigsawLike() {
-            return "variable_area".equals(footprintMode) || "jigsaw_system".equals(profileType);
-        }
-
-        public Footprint planningFootprint() {
-            return fixedFootprint.valid() ? fixedFootprint : expectedAreaRange.startFootprint();
-        }
-
-        public int jigsawExpansionRadius(int defaultRadius) {
-            if (maxDistanceFromCenterBlocks > 0) {
-                return maxDistanceFromCenterBlocks;
-            }
-            if (expectedAreaRange.maxAreaBlocks() > 0) {
-                return Math.max(16, (int) Math.ceil(Math.sqrt(expectedAreaRange.maxAreaBlocks())));
-            }
-            return defaultRadius;
-        }
-
-        public JsonObject asJson() {
+        public JsonObject asSemanticJson() {
             JsonObject obj = new JsonObject();
-            obj.addProperty("structureId", structureId);
+            obj.addProperty("semanticProfileId", semanticProfileId);
             obj.addProperty("sourceProfileRef", sourceProfileRef);
-            obj.addProperty("profileType", profileType);
-            obj.addProperty("sampleType", sampleType);
-            obj.addProperty("placementKind", placementKind);
-            obj.addProperty("placementCommand", placementCommand);
-            obj.addProperty("footprintMode", footprintMode);
             obj.add("semanticTerms", stringArray(semanticTerms));
             obj.add("functionTerms", stringArray(functionTerms));
             obj.add("styleTerms", stringArray(styleTerms));
@@ -443,11 +320,6 @@ public final class CityStructureProfileCatalog {
             obj.add("usageTerms", stringArray(usageTerms));
             obj.add("templateRoleTerms", stringArray(templateRoleTerms));
             obj.add("qualityTerms", stringArray(qualityTerms));
-            obj.add("fixedFootprint", fixedFootprint.asJson());
-            obj.add("expectedAreaRange", expectedAreaRange.asJson());
-            obj.add("allowedRotations", stringArray(allowedRotations));
-            obj.addProperty("clearanceBlocks", clearanceBlocks);
-            obj.addProperty("maxDistanceFromCenterBlocks", maxDistanceFromCenterBlocks);
             obj.addProperty("catalogMode", catalogMode);
             return obj;
         }
@@ -480,13 +352,4 @@ public final class CityStructureProfileCatalog {
         }
     }
 
-    public record AreaRange(int minAreaBlocks, int maxAreaBlocks, Footprint startFootprint) {
-        public JsonObject asJson() {
-            JsonObject obj = new JsonObject();
-            obj.addProperty("minAreaBlocks", minAreaBlocks);
-            obj.addProperty("maxAreaBlocks", maxAreaBlocks);
-            obj.add("startFootprint", startFootprint.asJson());
-            return obj;
-        }
-    }
 }

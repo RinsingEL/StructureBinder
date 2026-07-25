@@ -176,7 +176,7 @@ public final class LandUseSourceResolver {
             for (String key : List.of("semanticTerms", "functionTerms", "intentTerms", "usageTerms")) {
                 terms.addAll(strings(array(item, key)));
             }
-            for (String key : List.of("displayRole", "structureId", "arrayId")) {
+            for (String key : List.of("displayRole", "templateId", "arrayId")) {
                 String value = stringValue(item, key, "");
                 if (!value.isBlank()) terms.add(value);
             }

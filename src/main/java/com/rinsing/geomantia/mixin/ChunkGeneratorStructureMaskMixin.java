@@ -40,13 +40,6 @@ public abstract class ChunkGeneratorStructureMaskMixin {
         if (CityReservationMaskRegistry.suppressVanillaStructure(entry.structure().value(), chunkPos)) {
             cir.setReturnValue(false);
         }
-        MinecraftCityWorldgenStructurePlacer.injectPlannedStructures(
-                (ChunkGenerator) (Object) this,
-                registryAccess,
-                randomState,
-                seed,
-                chunk,
-                templateManager);
     }
 
     @Inject(method = "createStructures", at = @At("TAIL"))
@@ -57,11 +50,10 @@ public abstract class ChunkGeneratorStructureMaskMixin {
                                                       StructureTemplateManager templateManager,
                                                       CallbackInfo ci) {
         CityReservationMaskRegistry.recordStructureHookCall(chunk.getPos());
-        MinecraftCityWorldgenStructurePlacer.injectPlannedStructures(
+        MinecraftCityWorldgenStructurePlacer.injectPlannedTemplateTerrainStarts(
                 (ChunkGenerator) (Object) this,
                 registryAccess,
                 structureState,
-                structureManager,
                 chunk,
                 templateManager);
     }
@@ -74,7 +66,6 @@ public abstract class ChunkGeneratorStructureMaskMixin {
         CityWorldgenBlockObservationRegistry.begin(level, chunk);
         try {
             CityLandUseWorldgenGameTestFixture.prepare(level, chunk.getPos());
-            MinecraftCityWorldgenStructurePlacer.injectPlannedTemplateStructures(level, chunk);
             CityLandUseWorldgenRegistry.applyForChunk(
                     level.getLevel().dimension().location().toString(),
                     chunk.getPos().x,

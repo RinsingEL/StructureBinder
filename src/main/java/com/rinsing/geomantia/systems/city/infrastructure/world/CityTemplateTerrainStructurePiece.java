@@ -1,6 +1,5 @@
 package com.rinsing.geomantia.systems.city.infrastructure.world;
 
-import com.google.gson.JsonArray;
 import com.rinsing.geomantia.systems.city.application.CityTemplatePlacementGeometry;
 import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
 import com.rinsing.geomantia.systems.city.domain.model.BlockPoint;
@@ -135,12 +134,12 @@ public final class CityTemplateTerrainStructurePiece extends StructurePiece {
                 return;
             }
 
-            MinecraftCityTemplateWorldgenPlacer.RuntimeTransform transform =
-                    MinecraftCityTemplateWorldgenPlacer.deriveRuntimeTransform(
+            CityTemplateRuntimeTransform.Transform transform =
+                    CityTemplateRuntimeTransform.derive(
                             sourceSize, anchor, datumY, cityRotation, cityMirror);
             CityTemplatePlacementGeometry geometry = CityTemplatePlacementGeometry.of(
                     sourceSize, cityRotation, cityMirror, java.util.List.of());
-            MinecraftCityTemplateWorldgenPlacer.RuntimeTransformValidation validation =
+            CityTemplateRuntimeTransform.Validation validation =
                     transform.validateAgainst(geometry);
             if (!validation.valid() || !transform.transformedFootprint().equals(footprint)) {
                 CityReservationMaskRegistry.recordWorldgenFailure(item, chunkPos,
@@ -172,7 +171,7 @@ public final class CityTemplateTerrainStructurePiece extends StructurePiece {
                     "city_structure_template");
             CityReservationMaskRegistry.TemplateFragmentRecordResult result =
                     CityReservationMaskRegistry.recordTemplateWorldgenFragment(item, footprint,
-                            signature(), pieceBox(), chunkPos, datumY, "beard_thin",
+                            chunkPos, datumY, "beard_thin",
                             "TEMPLATE_TERRAIN_START_PIECE_PLACED",
                             "Fixed template piece placed through StructureStart before biome features.");
             if (!result.recorded()) {
@@ -187,25 +186,6 @@ public final class CityTemplateTerrainStructurePiece extends StructurePiece {
 
     public BlockBounds footprint() {
         return new BlockBounds(boundingBox.minX(), boundingBox.minZ(), boundingBox.maxX(), boundingBox.maxZ());
-    }
-
-    private JsonArray pieceBox() {
-        JsonArray boxes = new JsonArray();
-        com.google.gson.JsonObject box = new com.google.gson.JsonObject();
-        box.addProperty("pieceIndex", 0);
-        box.addProperty("type", "geomantia:city_template_terrain_piece");
-        box.addProperty("minX", boundingBox.minX());
-        box.addProperty("minY", boundingBox.minY());
-        box.addProperty("minZ", boundingBox.minZ());
-        box.addProperty("maxX", boundingBox.maxX());
-        box.addProperty("maxY", boundingBox.maxY());
-        box.addProperty("maxZ", boundingBox.maxZ());
-        boxes.add(box);
-        return boxes;
-    }
-
-    private String signature() {
-        return "template_start:" + anchorId + "#" + templateHash + "#" + cityRotation + "#" + cityMirror;
     }
 
     private static BoundingBox boundingBox(BlockPoint anchor,

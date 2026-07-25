@@ -1,8 +1,5 @@
 package com.rinsing.geomantia.systems.city.application;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -54,40 +51,6 @@ public final class CityTemplateCatalog {
                         .thenComparing(Template::templateId)
                         .thenComparing(Template::contentHash))
                 .toList();
-    }
-
-    public Template selectVariant(String buildingSemantic, String style, long seed) {
-        List<Template> candidates = variants(buildingSemantic, style);
-        if (candidates.isEmpty()) {
-            throw new CatalogException("CITY_TEMPLATE_CATALOG_VARIANT_NOT_FOUND",
-                    "No template variant for semantic/style: " + buildingSemantic + " / " + style);
-        }
-        long value = deterministicValue(seed, buildingSemantic, style);
-        int index = (int) Long.remainderUnsigned(value, candidates.size());
-        return candidates.get(index);
-    }
-
-    public Template chooseVariant(String buildingSemantic, String style, long seed) {
-        return selectVariant(buildingSemantic, style, seed);
-    }
-
-    private static long deterministicValue(long seed, String buildingSemantic, String style) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            digest.update(Long.toString(seed).getBytes(StandardCharsets.UTF_8));
-            digest.update((byte) 0);
-            digest.update(buildingSemantic.getBytes(StandardCharsets.UTF_8));
-            digest.update((byte) 0);
-            digest.update(style.getBytes(StandardCharsets.UTF_8));
-            byte[] bytes = digest.digest();
-            long value = 0L;
-            for (int i = 0; i < Long.BYTES; i++) {
-                value = (value << 8) | (bytes[i] & 0xffL);
-            }
-            return value;
-        } catch (NoSuchAlgorithmException ex) {
-            throw new IllegalStateException("SHA-256 is required for template selection.", ex);
-        }
     }
 
     private static String key(String templateId, String variantId) {

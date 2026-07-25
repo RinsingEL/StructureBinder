@@ -32,6 +32,36 @@ export const realmHandlers: Record<string, ToolHandler> = {
     return textResult(JSON.stringify(res.data, null, 2));
   },
 
+  async realm_t4_patch_planning_create(args) {
+    const res = await postJson(`${MC_API_URL}/realm/t4/patch_planning/create`, payload(args), TIMEOUTS.quick);
+    return textResult(JSON.stringify(res.data, null, 2));
+  },
+
+  async realm_t4_patch_planning_add_city(args) {
+    const res = await postJson(`${MC_API_URL}/realm/t4/patch_planning/add_city`, payload(args), TIMEOUTS.quick);
+    return textResult(JSON.stringify(res.data, null, 2));
+  },
+
+  async realm_t4_patch_planning_finalize(args) {
+    const res = await postJson(`${MC_API_URL}/realm/t4/patch_planning/finalize`, payload(args), TIMEOUTS.quick);
+    return textResult(JSON.stringify(res.data, null, 2));
+  },
+
+  async patch_explorer_open(args) {
+    const res = await postJson(`${MC_API_URL}/realm/patch_explorer/open`, payload(args), TIMEOUTS.quick);
+    return textResult(JSON.stringify(res.data, null, 2));
+  },
+
+  async patch_explorer_show_candidates(args) {
+    const res = await postJson(`${MC_API_URL}/realm/patch_explorer/show_candidates`, payload(args), TIMEOUTS.quick);
+    return textResult(JSON.stringify(res.data, null, 2));
+  },
+
+  async patch_explorer_select_candidate(args) {
+    const res = await postJson(`${MC_API_URL}/realm/patch_explorer/select_candidate`, payload(args), TIMEOUTS.quick);
+    return textResult(JSON.stringify(res.data, null, 2));
+  },
+
   async realm_run_acceptance(args) {
     const res = await postJson(`${MC_API_URL}/realm/acceptance/run`, payload(args), TIMEOUTS.test);
     return textResult(JSON.stringify(res.data, null, 2));
@@ -54,11 +84,6 @@ export const realmHandlers: Record<string, ToolHandler> = {
 
   async city_plan_d3(args) {
     const res = await postJson(`${MC_API_URL}/realm/city/plan_d3`, payload(args), TIMEOUTS.refresh);
-    return textResult(JSON.stringify(res.data, null, 2));
-  },
-
-  async city_profile_structure_envelopes(args) {
-    const res = await postJson(`${MC_API_URL}/realm/city/profile_structure_envelopes`, payload(args), TIMEOUTS.test);
     return textResult(JSON.stringify(res.data, null, 2));
   },
 

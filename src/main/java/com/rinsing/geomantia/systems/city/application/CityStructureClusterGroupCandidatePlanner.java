@@ -27,7 +27,6 @@ public final class CityStructureClusterGroupCandidatePlanner {
                        CityLandformReviewPackage reviewPackage,
                        JsonObject terraSenseProfileSource,
                        JsonObject designSlotPlan,
-                       CityStructureEnvelopeFacts envelopeFacts,
                        Options options) throws IOException {
         long started = System.nanoTime();
         if (reviewPackage == null) {
@@ -57,7 +56,7 @@ public final class CityStructureClusterGroupCandidatePlanner {
                         continue;
                     }
                     CityStructureAnchorCandidatePlanner.NextCandidateResult next = slotPlanner.planNext(
-                            baseDirectory, reviewPackage, partial.session(), envelopeFacts);
+                            baseDirectory, reviewPackage, partial.session());
                     JsonObject slotCandidateSet = next.slotCandidateSet();
                     String slotId = stringValue(slotCandidateSet, "currentSlotId", "");
                     JsonArray candidates = currentSlotCandidates(slotCandidateSet);
@@ -185,11 +184,11 @@ public final class CityStructureClusterGroupCandidatePlanner {
         copyString(selected, item, "anchorId");
         copyString(selected, item, "candidateId");
         copyString(selected, item, "displayRole");
-        copyString(selected, item, "structureId");
-        copyString(selected, item, "rotation");
+        for (String key : List.of("templateId", "templateRef", "templateHash", "variantId",
+                "rotation", "mirror", "terrainPosePolicy", "materializationSource")) {
+            copyString(selected, item, key);
+        }
         copyString(selected, item, "geometryStatus");
-        copyString(selected, item, "envelopeMode");
-        copyString(selected, item, "selectedEnvelopeGroupKey");
         copyString(selected, item, "roadAccessIntent");
         if (selected.has("smallClearanceBlocks")) {
             item.add("smallClearanceBlocks", selected.get("smallClearanceBlocks").deepCopy());
@@ -199,7 +198,8 @@ public final class CityStructureClusterGroupCandidatePlanner {
         copyArray(selected, item, "intentTerms");
         copyObject(selected, item, "estimatedCollisionEnvelope");
         copyObject(selected, item, "estimatedMaskEnvelope");
-        copyObject(selected, item, "diagnosticMaxObservedEnvelope");
+        copyObject(selected, item, "templateSize");
+        copyObject(selected, item, "templatePlacementPlan");
         copyObject(selected, item, "scoreBreakdown");
         copyArray(selected, item, "risks");
         return item;

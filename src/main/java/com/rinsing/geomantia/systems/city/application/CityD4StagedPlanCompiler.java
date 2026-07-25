@@ -84,9 +84,10 @@ public final class CityD4StagedPlanCompiler {
         if (!plan.has("candidatePatchRefs")) {
             plan.add("candidatePatchRefs", requiredArrayCopy(slot, "candidatePatchRefs"));
         }
-        if (!plan.has("structureIds")) {
-            plan.add("structureIds", slotStructureIds(slot));
+        if (!plan.has("templateIds")) {
+            plan.add("templateIds", slotTemplateIds(slot));
         }
+        copyIfPresent(slot, plan, "variantId");
         if (!plan.has("arrayCount")) {
             int arrayCount = intValue(slot, "arrayCount", 0);
             if (arrayCount <= 0) {
@@ -95,10 +96,15 @@ public final class CityD4StagedPlanCompiler {
             }
             plan.addProperty("arrayCount", arrayCount);
         }
-        if (!plan.has("variantSelectionMode")) {
-            plan.addProperty("variantSelectionMode", stringValue(slot, "variantSelectionMode", "seeded_random"));
+        String selectionMode = stringValue(slot, "variantSelectionMode", "round_robin");
+        if (!"round_robin".equals(selectionMode)
+                || slot.has("structureWeights") || slot.has("templateWeights")
+                || slot.has("weights") || slot.has("variantSeed")) {
+            throw new IllegalArgumentException("D4_RANDOM_TEMPLATE_SELECTION_REMOVED: array_fill templates "
+                    + "must use deterministic round_robin order.");
         }
-        for (String key : List.of("patterns", "structureWeights", "variantSeed", "priority",
+        plan.addProperty("variantSelectionMode", "round_robin");
+        for (String key : List.of("patterns", "priority",
                 "clearanceBlocks", "smallClearanceBlocks", "vegetationMarginBlocks", "roadAccessMarginBlocks")) {
             copyIfPresent(slot, plan, key);
         }
@@ -187,25 +193,34 @@ public final class CityD4StagedPlanCompiler {
                         + " from " + source + ".");
             }
             JsonObject normalized = anchor.deepCopy();
+            for (String field : List.of("templateHash", "rawSize", "templateSize", "templatePlacementPlan",
+                    "actualFootprint", "plannedFootprint", "collisionEnvelope", "reservedEnvelope",
+                    "maskEnvelope", "materializationSource", "terrainPosePolicy", "supportPolicy",
+                    "clearanceBlocks", "maskMarginBlocks", "smallClearanceBlocks")) {
+                normalized.remove(field);
+            }
             CityStructureAnchorPlanner.applyPlacementProvenance(normalized, normalized);
             anchors.add(normalized);
         }
     }
 
-    private static JsonArray slotStructureIds(JsonObject slot) {
+    private static JsonArray slotTemplateIds(JsonObject slot) {
         JsonArray ids = new JsonArray();
-        if (slot.has("structureIds") && slot.get("structureIds").isJsonArray()) {
-            for (JsonElement elem : slot.getAsJsonArray("structureIds")) {
+        if (slot.has("structureId") || slot.has("structureIds")) {
+            throw new IllegalArgumentException("CITY_CONFIGURED_STRUCTURE_FLOW_REMOVED: structureId(s)");
+        }
+        if (slot.has("templateIds") && slot.get("templateIds").isJsonArray()) {
+            for (JsonElement elem : slot.getAsJsonArray("templateIds")) {
                 if (!elem.isJsonNull()) {
                     ids.add(elem.getAsString());
                 }
             }
-        } else if (slot.has("structureId") && !slot.get("structureId").isJsonNull()) {
-            ids.add(slot.get("structureId").getAsString());
+        } else if (slot.has("templateId") && !slot.get("templateId").isJsonNull()) {
+            ids.add(slot.get("templateId").getAsString());
         }
         if (ids.isEmpty()) {
-            throw new IllegalArgumentException("D4_ARRAY_STRUCTURE_IDS_REQUIRED: array_fill slot "
-                    + requiredString(slot, "slotId") + " must set structureId or structureIds[].");
+            throw new IllegalArgumentException("D4_ARRAY_TEMPLATE_IDS_REQUIRED: array_fill slot "
+                    + requiredString(slot, "slotId") + " must set templateId or templateIds[].");
         }
         return ids;
     }

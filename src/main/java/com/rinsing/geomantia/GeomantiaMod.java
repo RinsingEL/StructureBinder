@@ -6,12 +6,14 @@ import com.rinsing.geomantia.systems.city.infrastructure.world.CityReservationMa
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityTemplateTerrainStructureRegistries;
 import com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityLandUseWorldgenRegistry;
 import com.rinsing.geomantia.systems.city.infrastructure.landuse.LandUseDefaultConfigBootstrap;
+import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.server.ServerAboutToStartEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.fml.loading.FMLEnvironment;
 import net.minecraftforge.fml.loading.FMLPaths;
 import net.minecraft.world.level.storage.LevelResource;
 import org.slf4j.Logger;
@@ -26,6 +28,7 @@ public final class GeomantiaMod {
         CityTemplateTerrainStructureRegistries.register(modEventBus);
         modEventBus.addListener(this::onCommonSetup);
         MinecraftForge.EVENT_BUS.register(this);
+        registerClientDevHooks();
     }
 
     private void onCommonSetup(final FMLCommonSetupEvent event) {
@@ -47,6 +50,18 @@ public final class GeomantiaMod {
         java.nio.file.Path catalogRoot = FMLPaths.CONFIGDIR.get()
                 .resolve("geomantia").resolve("city_decoration");
         CityDecorationWorldgenRegistry.load(serverRoot, catalogRoot);
+    }
+
+    private void registerClientDevHooks() {
+        if (FMLEnvironment.dist != Dist.CLIENT || FMLEnvironment.production) {
+            return;
+        }
+        try {
+            Class<?> autoLoadClient = Class.forName("com.rinsing.geomantia.client.DevAutoLoadClient");
+            autoLoadClient.getMethod("register").invoke(null);
+        } catch (ReflectiveOperationException ex) {
+            LOGGER.error("Failed to register client development hooks.", ex);
+        }
     }
 
 }

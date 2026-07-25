@@ -3,6 +3,7 @@ package com.rinsing.geomantia.systems.realm_planning;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.rinsing.geomantia.systems.gis.GisClassifierConfig;
 import com.rinsing.geomantia.systems.gis.application.sample.AtlasSampler;
 import com.rinsing.geomantia.systems.gis.application.sample.SampledCell;
@@ -170,10 +171,13 @@ public final class RealmPlanningService {
 
         JsonObject response = baseResponse("T1", run.runId);
         response.addProperty("status", "completed");
+        response.addProperty("selectionMode", "patch_explorer_primary");
+        response.addProperty("candidateMapRole", "continent_scope_reference");
         response.add("artifacts", run.artifactsJson());
         response.add("realmProfiles", profilesJson(run.profiles));
         response.add("candidatePackages", candidatePackagesJson(run.candidatePackages.values()));
-        response.add("nextActions", arrayOf("realm_t2_select_coordinate"));
+        response.add("nextActions", arrayOf("patch_explorer_open"));
+        response.add("compatibilityActions", arrayOf("realm_t2_select_coordinate"));
         return response;
     }
 
@@ -270,6 +274,39 @@ public final class RealmPlanningService {
         response.add("artifacts", run.artifactsJson());
         response.add("citySeedRegistry", run.registry.asJson());
         response.add("nextActions", arrayOf("review_acceptance_report"));
+        return response;
+    }
+
+    /** Rebuilds every T4-derived artifact after an external planner replaces the registry. */
+    public JsonObject synchronizeT4RegistryArtifacts(String runId, JsonObject registryJson) throws IOException {
+        RealmRun run = requireRun(runId);
+        if (run.territory == null) {
+            throw new IllegalArgumentException("T3 must be completed before synchronizing T4.");
+        }
+        String territoryMapId = stringValue(registryJson, "territoryMapId", "");
+        if (!run.territory.territoryMapId.equals(territoryMapId)) {
+            throw new IllegalArgumentException("T4 registry territoryMapId does not match the current T3 checkpoint.");
+        }
+
+        Path registryPath = run.runDirectory.resolve("city_seed_registry.json");
+        JsonArray seedArray = registryJson.has("citySeeds") && registryJson.get("citySeeds").isJsonArray()
+                ? registryJson.getAsJsonArray("citySeeds") : new JsonArray();
+        List<CitySeed> seeds = new ArrayList<>();
+        for (JsonElement element : seedArray) {
+            seeds.add(citySeedFromJson(requireCheckpointObject(element, registryPath)));
+        }
+        run.registry = new CitySeedRegistry(stringValue(registryJson, "registryId", "registry_" + run.runId),
+                run.runId, territoryMapId, seeds);
+
+        // Keep Patch Explorer provenance in the canonical registry while rebuilding derived data from its model.
+        exportRegistry(run, registryJson.deepCopy());
+        invalidateAcceptanceReport(run);
+
+        JsonObject response = baseResponse("T4", run.runId);
+        response.addProperty("status", "completed");
+        response.add("artifacts", run.artifactsJson());
+        response.add("citySeedRegistry", registryJson.deepCopy());
+        response.add("nextActions", arrayOf("rerun_acceptance"));
         return response;
     }
 
@@ -378,7 +415,7 @@ public final class RealmPlanningService {
         return response;
     }
 
-    public GridPoint suggestedPoint(String runId, String realmId) {
+    public GridPoint suggestedPoint(String runId, String realmId) throws IOException {
         RealmRun run = requireRun(runId);
         CandidatePackage pack = run.candidatePackages.get(realmId);
         if (pack == null) {
@@ -1869,7 +1906,11 @@ public final class RealmPlanningService {
     }
 
     private void exportRegistry(RealmRun run) throws IOException {
-        writeJson(run.runDirectory.resolve("city_seed_registry.json"), run.registry.asJson());
+        exportRegistry(run, run.registry.asJson());
+    }
+
+    private void exportRegistry(RealmRun run, JsonObject registryJson) throws IOException {
+        writeJson(run.runDirectory.resolve("city_seed_registry.json"), registryJson);
         writeJson(run.runDirectory.resolve("t4_report.json"), t4ReportJson(run));
         exportRealmCityCandidateMaps(run);
         writeJson(run.runDirectory.resolve("realm_city_candidate_packages.json"), cityCandidatePackagesJson(run));
@@ -1879,6 +1920,29 @@ public final class RealmPlanningService {
         run.artifacts.put("t4Report", "t4_report.json");
         run.artifacts.put("realmCityCandidatePackages", "realm_city_candidate_packages.json");
         exportScoreManifest(run);
+    }
+
+    private void invalidateAcceptanceReport(RealmRun run) throws IOException {
+        Path path = run.runDirectory.resolve("acceptance_report.json");
+        if (!Files.isRegularFile(path)) {
+            return;
+        }
+        JsonObject report;
+        try {
+            report = readJsonObject(path, "acceptance_report");
+        } catch (IllegalArgumentException exception) {
+            report = new JsonObject();
+            report.addProperty("runId", run.runId);
+        }
+        report.addProperty("passed", false);
+        report.addProperty("status", "stale");
+        report.addProperty("stale", true);
+        report.addProperty("staleReason", "t4_registry_replaced_by_patch_planning");
+        report.addProperty("staleAt", Instant.now().toString());
+        report.addProperty("currentRegistryId", run.registry.registryId);
+        report.addProperty("currentCitySeedCount", run.registry.citySeeds.size());
+        writeJson(path, report);
+        run.artifacts.put("acceptanceReport", "acceptance_report.json");
     }
 
     private void exportCandidateMap(RealmRun run, CandidatePackage pack) throws IOException {
@@ -2321,10 +2385,13 @@ public final class RealmPlanningService {
             json.addProperty("score", 0.0);
             return json;
         }
-        int duplicateAnchors = run.registry.duplicateAnchorCount();
+        int duplicateAnchors = duplicateAnchorCount(run);
         int spacingViolations = citySpacingViolationCount(run);
         int offTerritoryAnchors = offTerritoryAnchorCount(run);
-        long capitals = run.registry.citySeeds.stream().filter(seed -> "capital".equals(seed.role)).count();
+        long capitals = run.registry.citySeeds.stream()
+                .filter(seed -> currentRunRealm(run, seed.realmId))
+                .filter(seed -> "capital".equals(seed.role))
+                .count();
         if (duplicateAnchors > 0) {
             hardBlocks.add("T4 city anchor hard block: duplicate non-satellite anchors=" + duplicateAnchors);
         }
@@ -2406,7 +2473,7 @@ public final class RealmPlanningService {
         long uniqueIds = run.registry.citySeeds.stream().map(seed -> seed.citySeedId).distinct().count();
         json.addProperty("uniqueCitySeedIds", uniqueIds);
         json.addProperty("allCitySeedIdsUnique", uniqueIds == run.registry.citySeeds.size());
-        json.addProperty("duplicateAnchorCount", run.registry.duplicateAnchorCount());
+        json.addProperty("duplicateAnchorCount", duplicateAnchorCount(run));
         json.addProperty("spacingViolationCount", citySpacingViolationCount(run));
         int offTerritoryAnchors = offTerritoryAnchorCount(run);
         json.addProperty("offTerritoryAnchorCount", offTerritoryAnchors);
@@ -2421,6 +2488,9 @@ public final class RealmPlanningService {
         Map<String, String> owners = run.territory.ownershipByKey();
         int violations = 0;
         for (CitySeed seed : run.registry.citySeeds) {
+            if (!currentRunRealm(run, seed.realmId)) {
+                continue;
+            }
             String owner = owners.get(key(seed.anchorGrid.x, seed.anchorGrid.z));
             if (!seed.realmId.equals(owner)) {
                 violations++;
@@ -2436,7 +2506,7 @@ public final class RealmPlanningService {
         int violations = 0;
         for (int i = 0; i < run.registry.citySeeds.size(); i++) {
             CitySeed left = run.registry.citySeeds.get(i);
-            if (!left.satelliteOf.isBlank()) {
+            if (!currentRunRealm(run, left.realmId) || !left.satelliteOf.isBlank()) {
                 continue;
             }
             for (int j = i + 1; j < run.registry.citySeeds.size(); j++) {
@@ -2456,6 +2526,30 @@ public final class RealmPlanningService {
             }
         }
         return violations;
+    }
+
+    private int duplicateAnchorCount(RealmRun run) {
+        if (run.registry == null) {
+            return 0;
+        }
+        Map<String, Integer> anchors = new HashMap<>();
+        int duplicates = 0;
+        for (CitySeed seed : run.registry.citySeeds) {
+            if (!currentRunRealm(run, seed.realmId) || !seed.satelliteOf.isBlank()) {
+                continue;
+            }
+            String anchor = seed.realmId + ":" + seed.anchorGrid.x + "," + seed.anchorGrid.z;
+            int count = anchors.getOrDefault(anchor, 0) + 1;
+            anchors.put(anchor, count);
+            if (count == 2) {
+                duplicates++;
+            }
+        }
+        return duplicates;
+    }
+
+    private boolean currentRunRealm(RealmRun run, String realmId) {
+        return run.profiles.stream().anyMatch(profile -> profile.realmId.equals(realmId));
     }
 
     private JsonArray cityCandidatePackagesJson(RealmRun run) {
@@ -3512,32 +3606,450 @@ public final class RealmPlanningService {
         }
     }
 
-    private RealmRun requireRun(String runId) {
+    private RealmRun requireRun(String runId) throws IOException {
         if (runId == null || runId.isBlank()) {
             throw new IllegalArgumentException("runId is required.");
         }
-        RealmRun run = runs.get(runId.trim());
-        if (run == null) {
-            throw new IllegalArgumentException("Unknown realm runId: " + runId);
+        String normalizedRunId = runId.trim();
+        RealmRun run = runs.get(normalizedRunId);
+        if (run != null) {
+            return run;
         }
+
+        run = restorePersistedRun(normalizedRunId);
+        runs.put(run.runId, run);
         return run;
     }
 
     private RealmRun ensureRunForTagAudit(String runId) throws IOException {
-        if (runId == null || runId.isBlank()) {
-            throw new IllegalArgumentException("runId is required.");
-        }
-        RealmRun run = runs.get(runId.trim());
-        if (run != null) {
-            return run;
-        }
+        return requireRun(runId);
+    }
+
+    private RealmRun restorePersistedRun(String runId) throws IOException {
         WorldSurveyResult surveyResult = new WorldSurveyRunner(debugRoot, GisClassifierConfig.defaults())
                 .loadSealedResult(runId);
-        run = new RealmRun(surveyResult.runId(), surveyResult.runDirectory(), surveyResult);
+        RealmRun run = new RealmRun(surveyResult.runId(), surveyResult.runDirectory(), surveyResult);
         buildWorld(run);
-        exportWorld(run);
-        runs.put(run.runId, run);
+        restoreT1Checkpoint(run);
+        restoreT2Checkpoint(run);
+        restoreT3Checkpoint(run);
+        restoreT4Checkpoint(run);
+        registerExistingArtifacts(run);
         return run;
+    }
+
+    private void restoreT1Checkpoint(RealmRun run) throws IOException {
+        Path profilesPath = run.runDirectory.resolve("realm_profiles.json");
+        Path packagesPath = run.runDirectory.resolve("candidate_map_packages.json");
+        Path manifestPath = run.runDirectory.resolve("t1_manifest.json");
+        if (!Files.isRegularFile(profilesPath) || !Files.isRegularFile(packagesPath)
+                || !Files.isRegularFile(manifestPath)) {
+            return;
+        }
+
+        JsonArray profiles = readJsonArray(profilesPath, "realm_profiles");
+        int index = 0;
+        for (JsonElement element : profiles) {
+            if (!element.isJsonObject()) {
+                throw invalidCheckpoint(profilesPath, "realm_profiles must contain objects");
+            }
+            RealmProfile profile = RealmProfile.fromJson(element.getAsJsonObject(), "", index++);
+            run.profiles.add(profile);
+        }
+        if (run.profiles.isEmpty()) {
+            throw invalidCheckpoint(profilesPath, "at least one realm profile is required");
+        }
+        validateProfiles(run, run.profiles.get(0).targetContinentId);
+        for (RealmProfile profile : run.profiles) {
+            run.candidatePackages.put(profile.realmId, buildCandidatePackage(run, profile));
+        }
+
+        JsonArray persistedPackages = readJsonArray(packagesPath, "candidate_map_packages");
+        Set<String> persistedRealmIds = new HashSet<>();
+        for (JsonElement element : persistedPackages) {
+            JsonObject object = requireCheckpointObject(element, packagesPath);
+            String realmId = stringValue(object, "realmId", "");
+            CandidatePackage expected = run.candidatePackages.get(realmId);
+            if (expected == null || !persistedRealmIds.add(realmId)
+                    || !expected.packageId.equals(stringValue(object, "packageId", ""))
+                    || !expected.surveyId.equals(stringValue(object, "surveyId", ""))) {
+                throw invalidCheckpoint(packagesPath,
+                        "candidate package identity does not match the restored realm profiles and sealed W survey");
+            }
+        }
+        if (!persistedRealmIds.equals(run.candidatePackages.keySet())) {
+            throw invalidCheckpoint(packagesPath, "candidate packages do not cover every restored realm");
+        }
+
+        JsonObject manifest = readJsonObject(manifestPath, "t1_manifest");
+        if (!run.runId.equals(stringValue(manifest, "runId", ""))
+                || intValue(manifest, "realmCount", -1) != run.profiles.size()
+                || !new HashSet<>(stringList(manifest, "realmIds")).equals(run.candidatePackages.keySet())) {
+            throw invalidCheckpoint(manifestPath, "runId, realmCount, or realmIds do not match restored profiles");
+        }
+    }
+
+    private void restoreT2Checkpoint(RealmRun run) throws IOException {
+        if (run.profiles.isEmpty()) {
+            return;
+        }
+        Path selectionsPath = run.runDirectory.resolve("realm_coordinate_selections.json");
+        Path seedsPath = run.runDirectory.resolve("realm_seeds.json");
+        Path capitalsPath = run.runDirectory.resolve("capital_city_seeds.json");
+        Path reportPath = run.runDirectory.resolve("t2_report.json");
+        if (!Files.isRegularFile(selectionsPath) || !Files.isRegularFile(seedsPath)
+                || !Files.isRegularFile(capitalsPath) || !Files.isRegularFile(reportPath)) {
+            return;
+        }
+
+        for (JsonElement element : readJsonArray(selectionsPath, "realm_coordinate_selections")) {
+            JsonObject object = requireCheckpointObject(element, selectionsPath);
+            RealmSelection selection = realmSelectionFromJson(object);
+            CandidatePackage pack = run.candidatePackages.get(selection.realmId);
+            if (pack == null || !pack.packageId.equals(selection.packageId)) {
+                throw invalidCheckpoint(selectionsPath, "selection references an unknown realm or candidate package");
+            }
+            run.selections.put(selection.realmId, selection);
+        }
+        for (JsonElement element : readJsonArray(seedsPath, "realm_seeds")) {
+            JsonObject object = requireCheckpointObject(element, seedsPath);
+            RealmSeed seed = realmSeedFromJson(object);
+            RealmSelection selection = run.selections.get(seed.realmId);
+            if (selection == null || "rejected".equals(selection.validationStatus)
+                    || !seed.selectionId.equals(selection.selectionId)
+                    || !seed.seedGrid.equals(selection.finalGrid)) {
+                throw invalidCheckpoint(seedsPath, "realm seed does not match an accepted coordinate selection");
+            }
+            validateRestoredGrid(run, seed.realmId, seed.seedGrid, seed.continentId, seed.patchId, seedsPath);
+            run.seeds.put(seed.realmId, seed);
+        }
+        for (JsonElement element : readJsonArray(capitalsPath, "capital_city_seeds")) {
+            JsonObject object = requireCheckpointObject(element, capitalsPath);
+            CapitalCitySeed capital = capitalCitySeedFromJson(object);
+            RealmSeed seed = run.seeds.get(capital.realmId);
+            if (seed == null || !capital.anchorGrid.equals(seed.seedGrid)) {
+                throw invalidCheckpoint(capitalsPath, "capital city seed does not match its realm seed");
+            }
+            validateRestoredGrid(run, capital.realmId, capital.anchorGrid, "", "", capitalsPath);
+            run.capitals.put(capital.realmId, capital);
+        }
+        if (!run.seeds.keySet().equals(run.capitals.keySet())) {
+            throw invalidCheckpoint(reportPath, "realm seeds and capital city seeds do not cover the same realms");
+        }
+        JsonObject report = readJsonObject(reportPath, "t2_report");
+        if (!run.runId.equals(stringValue(report, "runId", ""))
+                || intValue(report, "completedSelections", -1) != run.seeds.size()
+                || intValue(report, "totalRealms", -1) != run.profiles.size()) {
+            throw invalidCheckpoint(reportPath, "T2 report does not match the restored selections and realm profiles");
+        }
+    }
+
+    private void restoreT3Checkpoint(RealmRun run) throws IOException {
+        if (run.profiles.isEmpty() || run.seeds.size() != run.profiles.size()) {
+            return;
+        }
+        Path territoryPath = run.runDirectory.resolve("realm_territory_map.json");
+        Path reportPath = run.runDirectory.resolve("t3_report.json");
+        if (!Files.isRegularFile(territoryPath) || !Files.isRegularFile(reportPath)) {
+            return;
+        }
+
+        JsonObject territory = readJsonObject(territoryPath, "realm_territory_map");
+        JsonObject report = readJsonObject(reportPath, "t3_report");
+        String expectedSurveyId = run.surveyResult.surveyId();
+        if (!expectedSurveyId.equals(stringValue(territory, "surveyId", ""))) {
+            throw invalidCheckpoint(territoryPath, "surveyId does not match the sealed W survey");
+        }
+
+        List<TerritoryCell> cells = new ArrayList<>();
+        JsonArray cellArray = territory.has("territoryCells") && territory.get("territoryCells").isJsonArray()
+                ? territory.getAsJsonArray("territoryCells") : new JsonArray();
+        for (JsonElement element : cellArray) {
+            JsonObject object = requireCheckpointObject(element, territoryPath);
+            TerritoryCell cell = new TerritoryCell(intValue(object, "gridX", 0), intValue(object, "gridZ", 0),
+                    stringValue(object, "realmId", ""), stringValue(object, "status", "wild"),
+                    doubleValue(object, "claimStrength", 0.0), doubleValue(object, "claimCost", 0.0));
+            if (!run.worldCellsByKey.containsKey(key(cell.gridX, cell.gridZ))) {
+                throw invalidCheckpoint(territoryPath, "territory cell is outside the sealed W grid");
+            }
+            cells.add(cell);
+        }
+
+        Map<String, RealmStats> stats = new LinkedHashMap<>();
+        JsonArray statsArray = territory.has("realmStats") && territory.get("realmStats").isJsonArray()
+                ? territory.getAsJsonArray("realmStats") : new JsonArray();
+        for (JsonElement element : statsArray) {
+            RealmStats stat = realmStatsFromJson(requireCheckpointObject(element, territoryPath));
+            stats.put(stat.realmId, stat);
+        }
+
+        Map<String, NormalizedScale> scales = new LinkedHashMap<>();
+        if (territory.has("normalizedScales") && territory.get("normalizedScales").isJsonObject()) {
+            JsonObject scaleObject = territory.getAsJsonObject("normalizedScales");
+            for (String realmId : scaleObject.keySet()) {
+                JsonObject value = scaleObject.getAsJsonObject(realmId);
+                scales.put(realmId, new NormalizedScale(ScalePlan.fromJson(value,
+                        stringValue(territory, "normalizationGroup", "")),
+                        doubleValue(value, "normalizedTargetAreaRatio", 0.0)));
+            }
+        }
+
+        List<TerritoryRepair> repairs = new ArrayList<>();
+        if (territory.has("repairs") && territory.get("repairs").isJsonArray()) {
+            for (JsonElement element : territory.getAsJsonArray("repairs")) {
+                JsonObject object = requireCheckpointObject(element, territoryPath);
+                repairs.add(new TerritoryRepair(stringValue(object, "type", ""),
+                        stringValue(object, "realmId", ""), stringValue(object, "description", ""),
+                        intValue(object, "affectedCells", 0)));
+            }
+        }
+
+        Map<String, ExpansionBudget> budgets = expansionBudgetsFromJson(report);
+        Map<String, TerrainCostProfile> costProfiles = terrainCostProfilesFromJson(report);
+        run.expansionModel = stringValue(territory, "expansionModel", "action_budget");
+        run.expansionBudgets = budgets;
+        run.terrainCostProfiles = costProfiles;
+        run.territory = new RealmTerritoryMap(stringValue(territory, "territoryMapId", "territory_" + run.runId),
+                run.runId, stringValue(territory, "normalizationGroup", ""), cells, stats, scales,
+                stringList(territory, "warnings"), repairs, run.expansionModel, budgets, costProfiles);
+    }
+
+    private void restoreT4Checkpoint(RealmRun run) throws IOException {
+        if (run.territory == null) {
+            return;
+        }
+        Path registryPath = run.runDirectory.resolve("city_seed_registry.json");
+        Path reportPath = run.runDirectory.resolve("t4_report.json");
+        if (!Files.isRegularFile(registryPath) || !Files.isRegularFile(reportPath)) {
+            return;
+        }
+        JsonObject registry = readJsonObject(registryPath, "city_seed_registry");
+        if (!run.territory.territoryMapId.equals(stringValue(registry, "territoryMapId", ""))) {
+            throw invalidCheckpoint(registryPath, "territoryMapId does not match the restored T3 checkpoint");
+        }
+        List<CitySeed> seeds = new ArrayList<>();
+        JsonArray seedArray = registry.has("citySeeds") && registry.get("citySeeds").isJsonArray()
+                ? registry.getAsJsonArray("citySeeds") : new JsonArray();
+        for (JsonElement element : seedArray) {
+            seeds.add(citySeedFromJson(requireCheckpointObject(element, registryPath)));
+        }
+        run.registry = new CitySeedRegistry(stringValue(registry, "registryId", "registry_" + run.runId),
+                run.runId, run.territory.territoryMapId, seeds);
+        Path scorePath = run.runDirectory.resolve("score_manifest.json");
+        if (Files.isRegularFile(scorePath)) {
+            run.scoreManifest = readJsonObject(scorePath, "score_manifest");
+        }
+    }
+
+    private static RealmSelection realmSelectionFromJson(JsonObject object) {
+        JsonObject validation = object.has("validation") && object.get("validation").isJsonObject()
+                ? object.getAsJsonObject("validation") : new JsonObject();
+        return new RealmSelection(stringValue(object, "selectionId", ""), stringValue(object, "realmId", ""),
+                stringValue(object, "packageId", ""), stringValue(object, "selectedBy", "ai"),
+                gridPointFromJson(object.get("primaryGrid")), gridPointFromJson(object.get("finalGrid")),
+                gridPointFromJson(object.get("primaryBlock")), stringValue(object, "reason", ""),
+                stringValue(validation, "status", "rejected"),
+                booleanValue(validation, "snapApplied", false), stringList(validation, "warnings"),
+                stringList(validation, "errors"), stringValue(validation, "continentId", ""),
+                stringValue(validation, "patchId", ""));
+    }
+
+    private static RealmSeed realmSeedFromJson(JsonObject object) {
+        return new RealmSeed(stringValue(object, "realmId", ""), stringValue(object, "selectionId", ""),
+                gridPointFromJson(object.get("seedGrid")), gridPointFromJson(object.get("seedBlock")),
+                stringValue(object, "continentId", ""), stringValue(object, "patchId", ""),
+                ScalePlan.fromJson(object.getAsJsonObject("scalePlan"), stringValue(object, "continentId", "")),
+                ExpansionStyle.fromJson(object.getAsJsonObject("expansionStyle")));
+    }
+
+    private static CapitalCitySeed capitalCitySeedFromJson(JsonObject object) {
+        return new CapitalCitySeed(stringValue(object, "citySeedId", ""), stringValue(object, "realmId", ""),
+                stringValue(object, "cityRole", "capital"), gridPointFromJson(object.get("anchorGrid")),
+                gridPointFromJson(object.get("anchorBlock")), stringValue(object, "theoreticalScale", "capital"),
+                stringValue(object, "growthAnchor", ""), booleanValue(object, "mustExist", true));
+    }
+
+    private static RealmStats realmStatsFromJson(JsonObject object) {
+        return new RealmStats(stringValue(object, "realmId", ""), intValue(object, "areaCells", 0),
+                intValue(object, "targetAreaCells", 0), intValue(object, "areaDeltaCells", 0),
+                doubleValue(object, "targetAreaRatio", 0.0), doubleValue(object, "actualAreaRatio", 0.0),
+                doubleValue(object, "scaleMinAreaRatio", 0.0), doubleValue(object, "scaleMaxAreaRatio", 1.0),
+                doubleValue(object, "coastalRatio", 0.0), stringList(object, "primaryLandforms"),
+                new LinkedHashSet<>(stringList(object, "neighbors")), intValue(object, "componentCount", 0),
+                intValue(object, "largestComponentCells", 0), doubleValue(object, "largestComponentRatio", 0.0),
+                doubleValue(object, "detachedAreaRatio", 0.0), doubleValue(object, "holeAreaRatio", 0.0),
+                doubleValue(object, "naturalBoundaryFit", 0.0), doubleValue(object, "budgetUsedRatio", 0.0),
+                doubleValue(object, "averageClaimCost", 0.0), doubleValue(object, "maxClaimCost", 0.0),
+                doubleMap(object, "terrainCostBreakdown"), integerMap(object, "stopReasonSummary"));
+    }
+
+    private static Map<String, ExpansionBudget> expansionBudgetsFromJson(JsonObject report) {
+        Map<String, ExpansionBudget> budgets = new LinkedHashMap<>();
+        if (!report.has("expansionBudgets") || !report.get("expansionBudgets").isJsonObject()) {
+            return budgets;
+        }
+        JsonObject values = report.getAsJsonObject("expansionBudgets");
+        for (String realmId : values.keySet()) {
+            JsonObject value = values.getAsJsonObject(realmId);
+            budgets.put(realmId, new ExpansionBudget(doubleValue(value, "baseActionBudget", 0.0),
+                    doubleValue(value, "budgetMultiplier", 0.0), doubleValue(value, "effectiveActionBudget", 0.0),
+                    doubleValue(value, "softStopThreshold", 0.0), doubleValue(value, "hardStopThreshold", 0.0),
+                    doubleValue(value, "maxClaimCost", 0.0), doubleValue(value, "wildlandTolerance", 0.0)));
+        }
+        return budgets;
+    }
+
+    private static Map<String, TerrainCostProfile> terrainCostProfilesFromJson(JsonObject report) {
+        Map<String, TerrainCostProfile> profiles = new LinkedHashMap<>();
+        if (!report.has("terrainCostProfiles") || !report.get("terrainCostProfiles").isJsonObject()) {
+            return profiles;
+        }
+        JsonObject values = report.getAsJsonObject("terrainCostProfiles");
+        for (String realmId : values.keySet()) {
+            JsonObject value = values.getAsJsonObject(realmId);
+            profiles.put(realmId, new TerrainCostProfile(doubleMapAllowBlocked(value, "baseCosts"),
+                    doubleMap(value, "tagCosts")));
+        }
+        return profiles;
+    }
+
+    private static CitySeed citySeedFromJson(JsonObject object) {
+        JsonObject source = object.has("source") && object.get("source").isJsonObject()
+                ? object.getAsJsonObject("source") : new JsonObject();
+        return new CitySeed(stringValue(object, "citySeedId", ""), stringValue(object, "realmId", ""),
+                stringValue(object, "role", ""), stringValue(object, "theoreticalScale", ""),
+                gridPointFromJson(object.get("anchorGrid")), gridPointFromJson(object.get("anchorBlock")),
+                intValue(object, "candidateRangeCells", 0), intValue(object, "planningRadiusCells", 0),
+                stringValue(object, "subregionId", ""), stringValue(object, "candidateId", ""),
+                doubleValue(object, "graphDistanceToNearestCity", -1.0), stringValue(object, "satelliteOf", ""),
+                stringList(object, "requiredConditions"), stringList(object, "coreFunctions"),
+                stringValue(object, "trigger", ""), stringValue(source, "reason", ""));
+    }
+
+    private static void validateRestoredGrid(RealmRun run, String realmId, GridPoint grid, String continentId,
+                                             String patchId, Path sourcePath) {
+        if (run.profiles.stream().noneMatch(profile -> profile.realmId.equals(realmId))) {
+            throw invalidCheckpoint(sourcePath, "checkpoint references an unknown realmId: " + realmId);
+        }
+        WorldCell cell = run.worldCellsByKey.get(key(grid.x, grid.z));
+        if (cell == null || (!continentId.isBlank() && !continentId.equals(cell.continentId))
+                || (!patchId.isBlank() && !patchId.equals(cell.patchId))) {
+            throw invalidCheckpoint(sourcePath, "checkpoint grid does not match the sealed W cell");
+        }
+    }
+
+    private static JsonObject requireCheckpointObject(JsonElement element, Path sourcePath) {
+        if (element == null || !element.isJsonObject()) {
+            throw invalidCheckpoint(sourcePath, "array must contain objects");
+        }
+        return element.getAsJsonObject();
+    }
+
+    private static JsonObject readJsonObject(Path path, String label) throws IOException {
+        JsonElement root = readJson(path, label);
+        if (!root.isJsonObject()) {
+            throw invalidCheckpoint(path, label + " root must be an object");
+        }
+        return root.getAsJsonObject();
+    }
+
+    private static JsonArray readJsonArray(Path path, String label) throws IOException {
+        JsonElement root = readJson(path, label);
+        if (!root.isJsonArray()) {
+            throw invalidCheckpoint(path, label + " root must be an array");
+        }
+        return root.getAsJsonArray();
+    }
+
+    private static JsonElement readJson(Path path, String label) throws IOException {
+        try {
+            return JsonParser.parseString(Files.readString(path));
+        } catch (RuntimeException exception) {
+            throw invalidCheckpoint(path, label + " is not valid JSON", exception);
+        }
+    }
+
+    private static IllegalArgumentException invalidCheckpoint(Path path, String message) {
+        return invalidCheckpoint(path, message, null);
+    }
+
+    private static IllegalArgumentException invalidCheckpoint(Path path, String message, Throwable cause) {
+        return new IllegalArgumentException("REALM_CHECKPOINT_INVALID: " + path + ": " + message, cause);
+    }
+
+    private static Map<String, Double> doubleMap(JsonObject object, String key) {
+        return doubleMap(object, key, false);
+    }
+
+    private static Map<String, Double> doubleMapAllowBlocked(JsonObject object, String key) {
+        return doubleMap(object, key, true);
+    }
+
+    private static Map<String, Double> doubleMap(JsonObject object, String key, boolean allowBlocked) {
+        Map<String, Double> values = new LinkedHashMap<>();
+        if (!object.has(key) || !object.get(key).isJsonObject()) {
+            return values;
+        }
+        for (Map.Entry<String, JsonElement> entry : object.getAsJsonObject(key).entrySet()) {
+            if (allowBlocked && entry.getValue().isJsonPrimitive()
+                    && "blocked".equals(entry.getValue().getAsString())) {
+                values.put(entry.getKey(), Double.POSITIVE_INFINITY);
+            } else {
+                values.put(entry.getKey(), entry.getValue().getAsDouble());
+            }
+        }
+        return values;
+    }
+
+    private static Map<String, Integer> integerMap(JsonObject object, String key) {
+        Map<String, Integer> values = new LinkedHashMap<>();
+        if (!object.has(key) || !object.get(key).isJsonObject()) {
+            return values;
+        }
+        for (Map.Entry<String, JsonElement> entry : object.getAsJsonObject(key).entrySet()) {
+            values.put(entry.getKey(), entry.getValue().getAsInt());
+        }
+        return values;
+    }
+
+    private static boolean booleanValue(JsonObject object, String key, boolean defaultValue) {
+        if (!object.has(key) || object.get(key).isJsonNull()) {
+            return defaultValue;
+        }
+        return object.get(key).getAsBoolean();
+    }
+
+    private static void registerExistingArtifacts(RealmRun run) {
+        registerArtifact(run, "worldSurveyContext", "world_survey_context.json");
+        registerArtifact(run, "worldPatchMap", "world_patch_map.json");
+        registerArtifact(run, "worldPatchPreview", "world_patch_preview.png");
+        registerArtifact(run, "gridOverlayPreview", "grid_overlay_preview.png");
+        registerArtifact(run, "wManifest", "w_manifest.json");
+        registerArtifact(run, "worldFeatureGrid", "world_feature_grid.json");
+        registerArtifact(run, "worldSurveyManifest", "world_survey_manifest.json");
+        registerArtifact(run, "realmProfiles", "realm_profiles.json");
+        registerArtifact(run, "candidateMapPackages", "candidate_map_packages.json");
+        registerArtifact(run, "t1Manifest", "t1_manifest.json");
+        registerArtifact(run, "realmCoordinateSelections", "realm_coordinate_selections.json");
+        registerArtifact(run, "realmSeeds", "realm_seeds.json");
+        registerArtifact(run, "capitalCitySeeds", "capital_city_seeds.json");
+        registerArtifact(run, "t2Report", "t2_report.json");
+        registerArtifact(run, "realmTerritoryMap", "realm_territory_map.json");
+        registerArtifact(run, "territoryPreview", "territory_preview.png");
+        registerArtifact(run, "t3Report", "t3_report.json");
+        registerArtifact(run, "territoryRepairLog", "territory_repair_log.json");
+        registerArtifact(run, "citySeedRegistry", "city_seed_registry.json");
+        registerArtifact(run, "citySeedPreview", "city_seed_preview.png");
+        registerArtifact(run, "t4Report", "t4_report.json");
+        registerArtifact(run, "realmCityCandidatePackages", "realm_city_candidate_packages.json");
+        registerArtifact(run, "scoreManifest", "score_manifest.json");
+        registerArtifact(run, "acceptanceReport", "acceptance_report.json");
+    }
+
+    private static void registerArtifact(RealmRun run, String key, String relativePath) {
+        if (Files.exists(run.runDirectory.resolve(relativePath))) {
+            run.artifacts.put(key, relativePath);
+        }
     }
 
     private String latestRunId() {
@@ -4689,6 +5201,10 @@ public final class RealmPlanningService {
             json.addProperty("realmId", realmId);
             json.addProperty("surveyId", surveyId);
             json.addProperty("candidateMapImage", candidateMapImage);
+            json.addProperty("mapRole", "continent_scope_reference");
+            json.addProperty("scopeBasis", "target_continent_assignable_land");
+            json.addProperty("profileDifferentiated", false);
+            json.addProperty("selectionMode", "patch_explorer_primary");
             JsonObject legend = new JsonObject();
             legend.add("originBlock", originBlock.asJson());
             legend.addProperty("cellStepBlocks", cellStepBlocks);
@@ -4707,6 +5223,9 @@ public final class RealmPlanningService {
             json.add("occupiedSeeds", occupied);
             json.add("suggestedPoint", suggestedPoint.asGridJson());
             JsonObject rules = new JsonObject();
+            rules.addProperty("primaryFlow",
+                    "patch_explorer_open -> patch_explorer_show_candidates -> patch_explorer_select_candidate -> realm_t2_select_coordinate");
+            rules.addProperty("directGridSubmission", "compatibility_only");
             rules.addProperty("returnFormat", "{ primary: { gridX, gridZ }, alternates: [], reason: string }");
             json.add("selectionRules", rules);
             return json;

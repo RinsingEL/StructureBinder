@@ -32,8 +32,8 @@ import java.util.Set;
 public final class CityReservationMaskRegistry {
     private static final Logger LOGGER = LogUtils.getLogger();
 
-    public static final String PLANNED_REGISTRY_SCHEMA = "city_active_planned_structure_registry.v0.1";
-    public static final String WORLDGEN_LEDGER_SCHEMA = "city_worldgen_structure_ledger.v0.1";
+    public static final String PLANNED_REGISTRY_SCHEMA = "city_active_template_placement_registry.v0.1";
+    public static final String WORLDGEN_LEDGER_SCHEMA = "city_template_placement_ledger.v0.1";
 
     private static final String ACTIVE_DIR = "geomantia_city_masks";
     private static final String ACTIVE_MASK_FILE = "active_reservation_mask_plan.json";
@@ -155,7 +155,7 @@ public final class CityReservationMaskRegistry {
         for (PlannedStructure planned : registry.plannedStructures) {
             if (planned.coversChunk(chunkPos)) {
                 LOGGER.info("City worldgen structure hook reached planned owner chunk {},{} for {} ({})",
-                        chunkPos.x, chunkPos.z, planned.anchorId(), planned.structureId());
+                        chunkPos.x, chunkPos.z, planned.anchorId(), planned.templateId());
                 return;
             }
         }
@@ -202,13 +202,9 @@ public final class CityReservationMaskRegistry {
         }
         List<PlannedStructure> result = new ArrayList<>();
         for (PlannedStructure planned : registry.plannedStructures) {
-            boolean pendingTemplateFragment = planned.isTemplatePlacement()
-                    && planned.coversChunk(chunkPos)
+            boolean pendingTemplateFragment = planned.coversChunk(chunkPos)
                     && !templateFragmentRecorded(planned, chunkPos);
-            boolean pendingConfiguredStructure = !planned.isTemplatePlacement()
-                    && planned.anchorChunkX() == chunkPos.x
-                    && planned.anchorChunkZ() == chunkPos.z;
-            if (!ledgerContains(planned) && (pendingTemplateFragment || pendingConfiguredStructure)) {
+            if (!ledgerContains(planned) && pendingTemplateFragment) {
                 result.add(planned);
             }
         }
@@ -412,52 +408,6 @@ public final class CityReservationMaskRegistry {
         return List.copyOf(result);
     }
 
-    public static synchronized void recordWorldgenPlacement(PlannedStructure planned,
-                                                            BlockBounds actualFootprint,
-                                                            String startSignature,
-                                                            JsonArray pieceBoxes,
-                                                            ChunkPos generatingChunk,
-                                                            String terrainAdaptation,
-                                                            String reasonCode,
-                                                            String message) {
-        JsonArray placed = ledgerPlacedStructures();
-        for (JsonElement elem : placed) {
-            if (elem.isJsonObject() && ledgerIdentityMatches(planned, elem.getAsJsonObject())) {
-                return;
-            }
-        }
-        JsonObject obj = planned.asLedgerJson(actualFootprint, startSignature, pieceBoxes);
-        obj.addProperty("reasonCode", reasonCode == null || reasonCode.isBlank()
-                ? "WORLDGEN_PLACEMENT_RECORDED" : reasonCode);
-        obj.addProperty("message", message == null ? "" : message);
-        obj.addProperty("generatedAt", Instant.now().toString());
-        obj.addProperty("generatingChunkX", generatingChunk.x);
-        obj.addProperty("generatingChunkZ", generatingChunk.z);
-        obj.addProperty("featureStagePending", true);
-        obj.addProperty("terrainAdaptation", terrainAdaptation == null || terrainAdaptation.isBlank()
-                ? "unknown" : terrainAdaptation);
-        obj.addProperty("terrainAdaptationHookAvailable", false);
-        obj.addProperty("beardifierSeen", false);
-        obj.addProperty("terrainAdaptationReasonCode", "CITY_TERRAIN_ADAPTATION_HOOK_UNAVAILABLE");
-        placed.add(obj);
-        persistWorldgenLedger();
-        LOGGER.info("Recorded City worldgen placement {} {} at chunk {},{} footprint {}",
-                planned.anchorId(), planned.structureId(), generatingChunk.x, generatingChunk.z, actualFootprint);
-    }
-
-    public static synchronized void recordTemplateWorldgenPlacement(PlannedStructure planned,
-                                                                    BlockBounds actualFootprint,
-                                                                    String startSignature,
-                                                                    JsonArray pieceBoxes,
-                                                                    ChunkPos generatingChunk,
-                                                                    int templateDatumY,
-                                                                    String terrainAdaptation,
-                                                                    String reasonCode,
-                                                                    String message) {
-        recordTemplateWorldgenFragment(planned, actualFootprint, startSignature, pieceBoxes, generatingChunk,
-                templateDatumY, terrainAdaptation, reasonCode, message);
-    }
-
     /**
      * Records one owner-chunk write for a template. A template only enters the public placed ledger
      * after every chunk touched by its locked footprint has reported a successful write.
@@ -465,8 +415,6 @@ public final class CityReservationMaskRegistry {
     public static synchronized TemplateFragmentRecordResult recordTemplateWorldgenFragment(
             PlannedStructure planned,
             BlockBounds actualFootprint,
-            String startSignature,
-            JsonArray pieceBoxes,
             ChunkPos generatingChunk,
             int templateDatumY,
             String terrainAdaptation,
@@ -499,11 +447,10 @@ public final class CityReservationMaskRegistry {
             fragment.addProperty("citySeedId", planned.citySeedId());
             fragment.addProperty("cityId", planned.cityId());
             fragment.addProperty("anchorId", planned.anchorId());
-            fragment.addProperty("structureId", planned.structureId());
+            fragment.addProperty("templateId", templateId(planned));
             fragment.addProperty("templateRef", templateRef(planned));
             fragment.addProperty("templateHash", templateHash(planned));
-            fragment.addProperty("startSignature", startSignature == null ? "" : startSignature);
-            fragment.add("templateFootprint", boundsJson(actualFootprint));
+            fragment.add("actualFootprint", boundsJson(actualFootprint));
             fragment.add("ownerFragment", boundsJson(intersection(actualFootprint, chunkBounds(generatingChunk))));
             fragment.addProperty("templateDatumY", templateDatumY);
             fragment.addProperty("reasonCode", reasonCode == null || reasonCode.isBlank()
@@ -518,7 +465,7 @@ public final class CityReservationMaskRegistry {
         List<ChunkPos> requiredOwners = templateOwnerChunks(planned);
         if (allTemplateFragmentsRecorded(planned, requiredOwners)) {
             JsonArray placed = ledgerPlacedStructures();
-            JsonObject obj = planned.asLedgerJson(actualFootprint, startSignature, pieceBoxes);
+            JsonObject obj = planned.asLedgerJson(actualFootprint);
             obj.addProperty("templateDatumY", frozenDatum.getAsInt());
             obj.addProperty("reasonCode", "TEMPLATE_MATERIALIZATION_RECORDED");
             obj.addProperty("message", "All " + requiredOwners.size()
@@ -535,7 +482,7 @@ public final class CityReservationMaskRegistry {
             obj.addProperty("terrainAdaptationReasonCode", "CITY_TERRAIN_ADAPTATION_HOOK_UNAVAILABLE");
             placed.add(obj);
             LOGGER.info("Recorded completed City template worldgen placement {} {} after {} owner chunks at datum {}",
-                    planned.anchorId(), planned.structureId(), requiredOwners.size(), frozenDatum.getAsInt());
+                    planned.anchorId(), planned.templateId(), requiredOwners.size(), frozenDatum.getAsInt());
         }
         if (!persistWorldgenLedger()) {
             worldgenLedger = before;
@@ -553,7 +500,7 @@ public final class CityReservationMaskRegistry {
         JsonArray failures = ensureArray(worldgenLedger, "failures");
         JsonObject obj = new JsonObject();
         obj.addProperty("anchorId", planned.anchorId());
-        obj.addProperty("structureId", planned.structureId());
+        obj.addProperty("templateRef", templateRef(planned));
         obj.addProperty("reasonCode", reasonCode == null ? "WORLDGEN_PLACEMENT_FAILED" : reasonCode);
         obj.addProperty("message", message == null ? "" : message);
         obj.addProperty("generatedAt", Instant.now().toString());
@@ -562,7 +509,7 @@ public final class CityReservationMaskRegistry {
         failures.add(obj);
         persistWorldgenLedger();
         LOGGER.warn("City worldgen placement failed for {} {} at chunk {},{}: {} {}",
-                planned.anchorId(), planned.structureId(), generatingChunk.x, generatingChunk.z,
+                planned.anchorId(), planned.templateId(), generatingChunk.x, generatingChunk.z,
                 reasonCode, message);
     }
 
@@ -593,7 +540,7 @@ public final class CityReservationMaskRegistry {
 
     public static synchronized JsonObject ledgerForCity(String runId, String citySeedId, String cityId) {
         JsonObject ledger = new JsonObject();
-        ledger.addProperty("schemaVersion", "city_placed_structure_ledger.v0.1");
+        ledger.addProperty("schemaVersion", WORLDGEN_LEDGER_SCHEMA);
         if (runId != null && !runId.isBlank()) {
             ledger.addProperty("runId", runId);
         }
@@ -755,7 +702,7 @@ public final class CityReservationMaskRegistry {
             int value = intValue(datum, "templateDatumY", Integer.MIN_VALUE);
             if (resolved != null && resolved != value) {
                 LOGGER.error("Conflicting persisted template datums for {} {}: {} and {}",
-                        planned.anchorId(), planned.structureId(), resolved, value);
+                        planned.anchorId(), planned.templateId(), resolved, value);
                 return OptionalInt.empty();
             }
             resolved = value;
@@ -804,7 +751,7 @@ public final class CityReservationMaskRegistry {
         identity.addProperty("citySeedId", planned.citySeedId());
         identity.addProperty("cityId", planned.cityId());
         identity.addProperty("anchorId", planned.anchorId());
-        identity.addProperty("structureId", planned.structureId());
+        identity.addProperty("templateId", templateId(planned));
         identity.addProperty("templateRef", templateRef(planned));
         identity.addProperty("templateHash", templateHash(planned));
         identity.addProperty("terrainPosePolicy", stringValue(planned.templatePlan(), "terrainPosePolicy", ""));
@@ -824,6 +771,10 @@ public final class CityReservationMaskRegistry {
 
     private static String templateHash(PlannedStructure planned) {
         return stringValue(planned.templatePlan(), "templateHash", "");
+    }
+
+    private static String templateId(PlannedStructure planned) {
+        return stringValue(planned.templatePlan(), "templateId", templateRef(planned));
     }
 
     private static String templateRef(PlannedStructure planned) {
@@ -1024,8 +975,10 @@ public final class CityReservationMaskRegistry {
             if (anchors != null) {
                 for (JsonElement elem : anchors) {
                     if (elem.isJsonObject()) {
-                        structures.add(PlannedStructure.fromAnchor(
-                                elem.getAsJsonObject(), runId, citySeedId, cityId));
+                        PlannedStructure planned = PlannedStructure.fromAnchor(
+                                elem.getAsJsonObject(), runId, citySeedId, cityId);
+                        requireTemplatePlacement(planned);
+                        structures.add(planned);
                     }
                 }
             }
@@ -1043,7 +996,9 @@ public final class CityReservationMaskRegistry {
                         JsonObject item = elem.getAsJsonObject();
                         String status = stringValue(item, "status", "");
                         if ("planned_worldgen".equals(status)) {
-                            structures.add(PlannedStructure.fromAnchor(item, runId, citySeedId, cityId));
+                            PlannedStructure placement = PlannedStructure.fromAnchor(item, runId, citySeedId, cityId);
+                            requireTemplatePlacement(placement);
+                            structures.add(placement);
                         }
                     }
                 }
@@ -1053,17 +1008,23 @@ public final class CityReservationMaskRegistry {
         }
 
         static ActivePlannedStructures fromRegistry(JsonObject registry) {
+            String schema = stringValue(registry, "schemaVersion", "");
+            if (!PLANNED_REGISTRY_SCHEMA.equals(schema)) {
+                throw new IllegalArgumentException("CITY_CONFIGURED_STRUCTURE_FLOW_REMOVED");
+            }
             List<PlannedStructure> structures = new ArrayList<>();
             JsonArray planned = registry == null ? null : registry.getAsJsonArray("plannedStructures");
             if (planned != null) {
                 for (JsonElement elem : planned) {
                     if (elem.isJsonObject()) {
-                        structures.add(PlannedStructure.fromRegistry(elem.getAsJsonObject()));
+                        PlannedStructure placement = PlannedStructure.fromRegistry(elem.getAsJsonObject());
+                        requireTemplatePlacement(placement);
+                        structures.add(placement);
                     }
                 }
             }
             return new ActivePlannedStructures(
-                    stringValue(registry, "schemaVersion", PLANNED_REGISTRY_SCHEMA),
+                    PLANNED_REGISTRY_SCHEMA,
                     stringValue(registry, "runId", ""),
                     stringValue(registry, "citySeedId", ""),
                     stringValue(registry, "cityId", ""),
@@ -1082,16 +1043,20 @@ public final class CityReservationMaskRegistry {
             obj.add("plannedStructures", array);
             return obj;
         }
+
+        private static void requireTemplatePlacement(PlannedStructure planned) {
+            if (!planned.isTemplatePlacement()) {
+                throw new IllegalArgumentException("CITY_CONFIGURED_STRUCTURE_FLOW_REMOVED");
+            }
+        }
     }
 
     public record PlannedStructure(String runId, String citySeedId, String cityId, String anchorId,
-                                   String structureId, int anchorChunkX, int anchorChunkZ,
+                                   String templateId, int anchorChunkX, int anchorChunkZ,
                                    BlockPoint anchorBlock, String rotation, BlockBounds plannedFootprint,
                                    BlockBounds reservedEnvelope, BlockBounds lockedActualFootprint,
                                    BlockBounds collisionEnvelope,
                                    BlockBounds maskEnvelope,
-                                   String envelopeMode, String selectedEnvelopeGroupKey,
-                                   String expectedStartSignature,
                                    JsonArray sourcePatchIds, JsonArray semanticTerms, JsonArray functionTerms,
                                    JsonArray styleTerms, JsonArray placementTerms, JsonArray usageTerms,
                                    JsonArray qualityTerms, JsonObject sourcePlan) {
@@ -1103,7 +1068,7 @@ public final class CityReservationMaskRegistry {
                     nullToEmpty(citySeedId),
                     nullToEmpty(cityId),
                     requiredString(anchor, "anchorId"),
-                    requiredString(anchor, "structureId"),
+                    templateIdentity(anchor),
                     Math.floorDiv(anchorBlock.x(), 16),
                     Math.floorDiv(anchorBlock.z(), 16),
                     anchorBlock,
@@ -1114,9 +1079,6 @@ public final class CityReservationMaskRegistry {
                             bounds(requiredObject(anchor, "plannedFootprint")))),
                     optionalBounds(anchor, "collisionEnvelope", reserved),
                     optionalBounds(anchor, "maskEnvelope", reserved),
-                    stringValue(anchor, "envelopeMode", ""),
-                    stringValue(anchor, "selectedEnvelopeGroupKey", ""),
-                    stringValue(anchor, "expectedStartSignature", ""),
                     sourcePatchIdsFromPatches(anchor.getAsJsonArray("sourcePatches")),
                     copyArray(anchor.getAsJsonArray("semanticTerms")),
                     copyArray(anchor.getAsJsonArray("functionTerms")),
@@ -1136,7 +1098,7 @@ public final class CityReservationMaskRegistry {
                     stringValue(obj, "citySeedId", ""),
                     stringValue(obj, "cityId", ""),
                     requiredString(obj, "anchorId"),
-                    requiredString(obj, "structureId"),
+                    templateIdentity(obj),
                     intValue(anchorChunk, "x", 0),
                     intValue(anchorChunk, "z", 0),
                     blockPoint(anchorBlock),
@@ -1147,9 +1109,6 @@ public final class CityReservationMaskRegistry {
                             bounds(requiredObject(obj, "plannedFootprint")))),
                     optionalBounds(obj, "collisionEnvelope", reserved),
                     optionalBounds(obj, "maskEnvelope", reserved),
-                    stringValue(obj, "envelopeMode", ""),
-                    stringValue(obj, "selectedEnvelopeGroupKey", ""),
-                    stringValue(obj, "expectedStartSignature", ""),
                     copyArray(obj.getAsJsonArray("sourcePatchIds")),
                     copyArray(obj.getAsJsonArray("semanticTerms")),
                     copyArray(obj.getAsJsonArray("functionTerms")),
@@ -1183,7 +1142,9 @@ public final class CityReservationMaskRegistry {
             obj.addProperty("citySeedId", citySeedId);
             obj.addProperty("cityId", cityId);
             obj.addProperty("anchorId", anchorId);
-            obj.addProperty("structureId", structureId);
+            obj.addProperty("templateId", templateId);
+            obj.addProperty("templateRef", templateRef(this));
+            obj.addProperty("templateHash", templateHash(this));
             JsonObject chunk = new JsonObject();
             chunk.addProperty("x", anchorChunkX);
             chunk.addProperty("z", anchorChunkZ);
@@ -1194,12 +1155,17 @@ public final class CityReservationMaskRegistry {
             obj.add("reservedEnvelope", boundsJson(reservedEnvelope));
             obj.add("lockedActualFootprint", boundsJson(lockedActualFootprint));
             obj.add("collisionEnvelope", boundsJson(collisionEnvelope));
-            obj.addProperty("locked", !expectedStartSignature.isBlank());
+            obj.addProperty("locked", true);
             obj.add("lockedCollisionEnvelope", boundsJson(collisionEnvelope));
             obj.add("maskEnvelope", boundsJson(maskEnvelope));
-            obj.addProperty("envelopeMode", envelopeMode);
-            obj.addProperty("selectedEnvelopeGroupKey", selectedEnvelopeGroupKey);
-            obj.addProperty("expectedStartSignature", expectedStartSignature);
+            JsonArray ownerChunks = new JsonArray();
+            for (ChunkPos owner : templateOwnerChunks(this)) {
+                JsonObject ownerJson = new JsonObject();
+                ownerJson.addProperty("x", owner.x);
+                ownerJson.addProperty("z", owner.z);
+                ownerChunks.add(ownerJson);
+            }
+            obj.add("ownerChunks", ownerChunks);
             obj.add("sourcePatchIds", sourcePatchIds.deepCopy());
             obj.add("semanticTerms", semanticTerms.deepCopy());
             obj.add("functionTerms", functionTerms.deepCopy());
@@ -1210,7 +1176,7 @@ public final class CityReservationMaskRegistry {
             if (isTemplatePlacement()) {
                 for (String key : List.of("templateId", "templateRef", "templateHash", "variantId", "mirror",
                         "terrainPosePolicy",
-                        "materializationSource", "templateDatumPolicy", "templateSize", "lockedActualFootprint",
+                        "materializationSource", "templateDatumPolicy", "rawSize", "lockedActualFootprint",
                         "transformed", "transformedRoadEntrances", "structureTemplate")) {
                     if (sourcePlan.has(key)) {
                         obj.add(key, sourcePlan.get(key).deepCopy());
@@ -1220,16 +1186,21 @@ public final class CityReservationMaskRegistry {
             return obj;
         }
 
-        JsonObject asLedgerJson(BlockBounds actualFootprint, String startSignature, JsonArray pieceBoxes) {
+        JsonObject asLedgerJson(BlockBounds actualFootprint) {
             JsonObject obj = asJson();
             obj.add("actualFootprint", boundsJson(actualFootprint));
             obj.add("lockedActualFootprint", boundsJson(actualFootprint));
-            obj.addProperty("startSignature", startSignature == null ? "" : startSignature);
-            obj.add("pieceBoxes", pieceBoxes == null ? new JsonArray() : pieceBoxes.deepCopy());
             obj.addProperty("worldMutationApplied", true);
             obj.addProperty("worldgenPlacement", true);
-            obj.addProperty("lateMaterialization", false);
             return obj;
+        }
+
+        private static String templateIdentity(JsonObject source) {
+            String value = stringValue(source, "templateId", stringValue(source, "templateRef", ""));
+            if (value.isBlank()) {
+                throw new IllegalArgumentException("CITY_CONFIGURED_STRUCTURE_FLOW_REMOVED");
+            }
+            return value;
         }
     }
 

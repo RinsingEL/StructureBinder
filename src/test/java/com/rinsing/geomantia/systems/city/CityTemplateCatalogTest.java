@@ -8,9 +8,10 @@ import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
 import com.rinsing.geomantia.systems.city.domain.model.BlockPoint;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityTemplateCatalogTest {
     private final CityTemplateCatalogLoader loader = new CityTemplateCatalogLoader();
@@ -32,7 +33,8 @@ class CityTemplateCatalogTest {
         assertEquals(3, template.depth());
         assertEquals(2, template.clearanceBlocks());
         assertEquals(1, template.roadEntrances().size());
-        assertEquals("flat_or_step", template.terrainPosePolicy());
+        assertEquals(CityTemplateTerrainPosePolicy.STRUCTURE_START_BEARD_THIN,
+                template.terrainPosePolicy());
     }
 
     @Test
@@ -123,7 +125,7 @@ class CityTemplateCatalogTest {
     }
 
     @Test
-    void variantSelectionIsStableForSeedAndIndependentOfInputOrder() {
+    void variantsAreStableAndRequireExplicitVariantSelection() {
         String first = """
                 {"buildingSemantic":"residential","style":"medieval","templateId":"city:house","nbtFile":"templates/house_a.nbt","contentHash":"sha256:a","variantId":"a","width":2,"height":3,"depth":2,"allowedRotations":["NONE"],"allowedMirrors":["NONE"],"roadEntrances":[],"terrainPosePolicy":"flat","supportPolicy":"foundation","clearanceBlocks":0},
                 {"buildingSemantic":"residential","style":"medieval","templateId":"city:house","nbtFile":"templates/house_b.nbt","contentHash":"sha256:b","variantId":"b","width":2,"height":3,"depth":2,"allowedRotations":["NONE"],"allowedMirrors":["NONE"],"roadEntrances":[],"terrainPosePolicy":"flat","supportPolicy":"foundation","clearanceBlocks":0}
@@ -135,10 +137,10 @@ class CityTemplateCatalogTest {
         CityTemplateCatalog firstCatalog = loader.load(catalogWithTemplates(first));
         CityTemplateCatalog secondCatalog = loader.load(catalogWithTemplates(second));
 
-        String firstSelection = firstCatalog.selectVariant("residential", "medieval", 123456789L).variantId();
-        assertEquals(firstSelection, firstCatalog.selectVariant("residential", "medieval", 123456789L).variantId());
-        assertEquals(firstSelection, secondCatalog.selectVariant("residential", "medieval", 123456789L).variantId());
-        assertTrue(firstSelection.equals("a") || firstSelection.equals("b"));
+        assertEquals(List.of("a", "b"), firstCatalog.variants("residential", "medieval").stream()
+                .map(CityTemplateCatalog.Template::variantId).toList());
+        assertEquals(List.of("a", "b"), secondCatalog.variants("residential", "medieval").stream()
+                .map(CityTemplateCatalog.Template::variantId).toList());
     }
 
     private static String catalogJson(String entrances) {
