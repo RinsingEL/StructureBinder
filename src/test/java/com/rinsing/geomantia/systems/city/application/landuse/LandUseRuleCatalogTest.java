@@ -28,5 +28,7 @@ class LandUseRuleCatalogTest {
                 .orElseThrow().ruleRef());
         assertEquals("general_settlement", catalog.resolveSemantic(List.of("usage.filler"))
                 .orElseThrow().ruleRef());
+        assertEquals("military", catalog.resolveSemantic(List.of("function.guard_tower"))
+                .orElseThrow().ruleRef());
     }
 }

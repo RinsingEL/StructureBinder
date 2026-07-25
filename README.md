@@ -72,6 +72,16 @@ StructureBinder 当前围绕 `terra_script` Mod 与配套 MCP 工具展开，核
 ./gradlew test
 ```
 
+`runClient` 默认会自动进入 `run/saves/新的世界 (4)`。需要临时切换存档时，可传入存档名的 UTF-8 Base64：
+
+```powershell
+$name = '目标存档名'
+$encoded = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($name))
+.\gradlew.bat runClient "-PgeomantiaDevAutoLoadWorldBase64=$encoded"
+```
+
+将 `geomantiaDevAutoLoadWorld` 和 `geomantiaDevAutoLoadWorldBase64` 都留空即可停用自动进档。存档所需 Mod 仍需由本地开发运行环境单独提供；快速进档不会改变标准依赖集合。
+
 MCP 工具层位于 `country_designer_mcp`：
 
 ```bash

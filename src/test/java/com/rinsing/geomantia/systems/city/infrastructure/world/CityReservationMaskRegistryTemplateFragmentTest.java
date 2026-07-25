@@ -220,8 +220,8 @@ class CityReservationMaskRegistryTemplateFragmentTest {
 
         CityReservationMaskRegistry.TemplateFragmentRecordResult result =
                 CityReservationMaskRegistry.recordTemplateWorldgenFragment(
-                        planned, new BlockBounds(8, -4, 20, 14), "template:drift", new JsonArray(),
-                        anchorOwner, 82, "", "TEMPLATE_CHUNK_WRITE_WAITING", "drift");
+                        planned, new BlockBounds(8, -4, 20, 14), anchorOwner, 82,
+                        "", "TEMPLATE_CHUNK_WRITE_WAITING", "drift");
 
         assertFalse(result.recorded());
         assertEquals("TEMPLATE_LOCKED_FOOTPRINT_MISMATCH", result.reasonCode());
@@ -245,8 +245,8 @@ class CityReservationMaskRegistryTemplateFragmentTest {
     private static CityReservationMaskRegistry.TemplateFragmentRecordResult record(
             CityReservationMaskRegistry.PlannedStructure planned, ChunkPos owner, int datum) {
         return CityReservationMaskRegistry.recordTemplateWorldgenFragment(
-                planned, planned.lockedActualFootprint(), "template:stable", new JsonArray(), owner,
-                datum, "", "TEMPLATE_CHUNK_WRITE_WAITING", "fragment");
+                planned, planned.lockedActualFootprint(), owner, datum,
+                "", "TEMPLATE_CHUNK_WRITE_WAITING", "fragment");
     }
 
     private static List<ChunkPos> owners(BlockBounds footprint) {
@@ -275,7 +275,7 @@ class CityReservationMaskRegistryTemplateFragmentTest {
         JsonObject structure = new JsonObject();
         structure.addProperty("status", "planned_worldgen");
         structure.addProperty("anchorId", "anchor_windmill");
-        structure.addProperty("structureId", "geomantia:city/test/windmill");
+        structure.addProperty("templateId", "geomantia:city/test/windmill");
         structure.add("anchorBlock", point(8, 8));
         structure.add("plannedFootprint", bounds(footprint));
         structure.add("reservedEnvelope", bounds(footprint));
@@ -283,8 +283,8 @@ class CityReservationMaskRegistryTemplateFragmentTest {
         structure.addProperty("templateRef", "geomantia:city/test/windmill");
         structure.addProperty("templateHash", "sha256:template");
         structure.addProperty("materializationSource", "structure_template_nbt");
-        structure.addProperty("terrainPosePolicy", "direct_template");
-        structure.addProperty("templateDatumPolicy", "worldgen_surface_motion_blocking_no_leaves");
+        structure.addProperty("terrainPosePolicy", "structure_start_beard_thin");
+        structure.addProperty("templateDatumPolicy", "generator_base_height_motion_blocking_no_leaves");
         structure.addProperty("rotation", rotation.name());
         structure.addProperty("mirror", CityTemplatePlacementGeometry.Mirror.NONE.name());
         structures.add(structure);

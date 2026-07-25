@@ -100,7 +100,6 @@ public final class CityRoadWeaverBridge {
                         anchorId,
                         placementGroupId,
                         entranceId,
-                        stringValue(item, "structureId", "unknown"),
                         templateId,
                         templateHash,
                         intValue(item, "priority", index),
@@ -595,7 +594,7 @@ public final class CityRoadWeaverBridge {
     }
 
     public record RoadEndpoint(String endpointId, String anchorId, String placementGroupId,
-                               String entranceId, String structureId,
+                               String entranceId,
                                String templateId, String templateHash, int priority, BlockBounds footprint,
                                BlockPoint roadPoint, String direction) {
         public RoadEndpoint {
@@ -603,7 +602,6 @@ public final class CityRoadWeaverBridge {
             anchorId = requireText(anchorId, "anchorId");
             placementGroupId = requireText(placementGroupId, "placementGroupId");
             entranceId = requireText(entranceId, "entranceId");
-            structureId = requireText(structureId, "structureId");
             templateId = requireText(templateId, "templateId");
             templateHash = requireText(templateHash, "templateHash");
             Objects.requireNonNull(roadPoint, "roadPoint");
@@ -616,7 +614,6 @@ public final class CityRoadWeaverBridge {
             obj.addProperty("anchorId", anchorId);
             obj.addProperty("placementGroupId", placementGroupId);
             obj.addProperty("entranceId", entranceId);
-            obj.addProperty("structureId", structureId);
             obj.addProperty("templateId", templateId);
             obj.addProperty("templateHash", templateHash);
             obj.addProperty("priority", priority);

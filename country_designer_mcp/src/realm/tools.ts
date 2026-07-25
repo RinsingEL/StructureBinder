@@ -238,7 +238,7 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "realm_t1_prepare",
-    description: "基于 W 产物生成 RealmProfile 和带网格坐标候选图包。",
+    description: "基于 W 产物生成 RealmProfile 和大陆合法范围参考图；该图不是按文明差异生成的正式选址图，多个国度可以相同。T1 完成后必须先调用 patch_explorer_open(scopeType=realm_t2, realmId=...)，再 show/select 候选；直接提交 grid 坐标仅为兼容入口。客户端重启后可按 runId 从 sealed W 懒恢复，不重跑 W。",
     inputSchema: {
       type: "object",
       properties: {
@@ -253,7 +253,7 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "realm_t2_select_coordinate",
-    description: "提交候选图上的 grid 坐标，校验并生成 RealmSeed 与 CapitalCitySeed。",
+    description: "提交 realm_t2 Patch Explorer 的 patchSelectionRef，校验并生成 RealmSeed 与 CapitalCitySeed。正常 AI 主链必须先完成 patch_explorer_open/show/select；手填 gridX/gridZ 仅保留给旧调用方或人工调试。服务重启后自动恢复完整 T1 checkpoint。",
     inputSchema: {
       type: "object",
       properties: {
@@ -261,17 +261,18 @@ export const realmTools: ToolDefinition[] = [
         realmId: { type: "string" },
         gridX: { type: "number" },
         gridZ: { type: "number" },
+        patchSelectionRef: { type: "string", description: "来自 realm_t2 Patch Explorer；提交后无需手填 gridX/gridZ。" },
         alternates: { type: "array" },
         reason: { type: "string" },
         selectedBy: { type: "string", enum: ["ai", "human", "debug"] },
         allowSnap: { type: "boolean" },
       },
-      required: ["runId", "realmId", "gridX", "gridZ"],
+      required: ["runId", "realmId"],
     },
   },
   {
     name: "realm_t3_expand",
-    description: "运行 T3 多国度粗 cell 扩张，输出 RealmTerritoryMap 和国境预览图。",
+    description: "运行 T3 多国度粗 cell 扩张，输出 RealmTerritoryMap 和国境预览图；服务重启后自动恢复完整 T1/T2 checkpoint。",
     inputSchema: {
       type: "object",
       properties: {
@@ -286,7 +287,7 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "realm_t4_build_registry",
-    description: "生成 T4 CitySeedRegistry 和城市种子预览图。",
+    description: "生成 T4 CitySeedRegistry 和城市种子预览图；服务重启后自动恢复完整 T1/T2/T3 checkpoint。",
     inputSchema: {
       type: "object",
       properties: {
@@ -294,6 +295,108 @@ export const realmTools: ToolDefinition[] = [
         cityPlanningMode: { type: "string", enum: ["auto", "strict"], description: "T4 城市规划模式；v1.2 默认 strict。" },
       },
       required: ["runId"],
+    },
+  },
+  {
+    name: "realm_t4_patch_planning_create",
+    description: "为单个国度创建 AI 驱动的 T4 城市规划会话。只继承首都，不继承旧自动 T4 的港口、矿镇或边境堡。",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        runId: { type: "string" },
+        realmId: { type: "string" },
+        planningSessionId: { type: "string" },
+      },
+      required: ["runId", "realmId"],
+    },
+  },
+  {
+    name: "realm_t4_patch_planning_add_city",
+    description: "把 AI 已选的 realm_t4 patchSelectionRef 转为城市种子；校验领土、承载面积、重复与城市间距后加入会话。",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        runId: { type: "string" },
+        planningSessionId: { type: "string" },
+        patchSelectionRef: { type: "string" },
+        citySeedId: { type: "string" },
+        role: { type: "string" },
+        theoreticalScale: { type: "string", enum: ["capital", "large_city", "city", "town", "village", "outpost"] },
+        candidateRangeCells: { type: "integer", minimum: 1 },
+        minimumAreaBlocks: { type: "integer", minimum: 0 },
+        subregionId: { type: "string" },
+        satelliteOf: { type: "string" },
+        requiredConditions: { type: "array", items: { type: "string" } },
+        coreFunctions: { type: "array", items: { type: "string" } },
+        trigger: { type: "string" },
+        selectionReason: { type: "string" },
+      },
+      required: ["runId", "planningSessionId", "patchSelectionRef", "citySeedId", "role"],
+    },
+  },
+  {
+    name: "realm_t4_patch_planning_finalize",
+    description: "完成单国 T4 patch 规划，并按 realm 合并写回全局 CitySeedRegistry。",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        runId: { type: "string" },
+        planningSessionId: { type: "string" },
+      },
+      required: ["runId", "planningSessionId"],
+    },
+  },
+  {
+    name: "patch_explorer_open",
+    description: "打开共享 Patch Explorer session。realm_t2/realm_t4 以 W biomeHist 主导群系生成连续群系 Patch，并返回地形组成事实；city_d4 仍读取 D3 地形 Patch 并扣除 hard occupied。",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        runId: { type: "string" },
+        scopeType: { type: "string", enum: ["realm_t2", "realm_t4", "city_d4"] },
+        scopeId: { type: "string", description: "realm_t2 为 realmId/continentId，realm_t4 为 realmId，city_d4 为 citySeedId。" },
+        realmId: { type: "string" },
+        continentId: { type: "string" },
+        citySeedId: { type: "string" },
+        sessionId: { type: "string" },
+      },
+      required: ["runId", "scopeType"],
+    },
+  },
+  {
+    name: "patch_explorer_show_candidates",
+    description: "按 AI 主动选择的兴趣类型返回每类稳定面积分页、候选图和仅限当前页候选的稀疏几何关系。T 尺度兴趣类型为完整 biome ID，D4 为 landform 类型；默认每类 3 个。",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        runId: { type: "string" },
+        sessionId: { type: "string" },
+        interestTypes: { type: "array", minItems: 1, items: { type: "string" } },
+        page: { type: "integer", minimum: 0 },
+        pageToken: { type: "string" },
+        pageSize: { type: "integer", minimum: 1, maximum: 12, default: 3 },
+      },
+      required: ["runId", "sessionId", "interestTypes"],
+    },
+  },
+  {
+    name: "patch_explorer_select_candidate",
+    description: "选中当前页已展示候选，生成确认预览和稳定 patchSelectionRef；选择理由字段为 selectionReason。source 变化或候选未展示时拒绝。",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        runId: { type: "string" },
+        sessionId: { type: "string" },
+        candidateId: { type: "string" },
+        selectionReason: { type: "string" },
+      },
+      required: ["runId", "sessionId", "candidateId"],
     },
   },
   {
@@ -383,7 +486,7 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "city_plan_d3",
-    description: "City D3: 构建 CityLandformReviewPackage（城市地貌审查包），包含真实渲染 review PNG、GIS patch 标签、成员 cell 薄索引和 AI 上下文。需提供 runId 和 citySeedId，会触发局部 GIS 刷新。",
+    description: "City D3: 构建 CityLandformReviewPackage（城市地貌审查包），包含真实渲染 review PNG、GIS patch 标签、成员 cell 薄索引和 AI 上下文。需提供 runId 和 citySeedId，会触发局部 GIS 刷新；刷新前严格校验 run worldSeed/dimension 与当前 Minecraft 世界一致，不一致返回 CITY_RUN_WORLD_IDENTITY_MISMATCH 且不写 D3 产物。",
     inputSchema: {
       type: "object",
       properties: {
@@ -398,34 +501,8 @@ export const realmTools: ToolDefinition[] = [
     },
   },
   {
-    name: "city_profile_structure_envelopes",
-    description: "City 结构大小区间回归：cache-backed dry-run profiling，对指定 configured structure 做非写世界 bbox 采样，输出 validSamples、bboxGroups、generationConfigHash、P95/P99/maxObserved 与预览。需在 D4 前运行。",
-    inputSchema: {
-      type: "object",
-      properties: {
-        runId: { type: "string", description: "已有 W/T run ID。" },
-        citySeedId: { type: "string", description: "目标城市种子的 citySeedId。" },
-        terrasenseProfileSource: {
-          type: "object",
-          description: "schemaVersion=terrasense_structure_profile_source.v0.1；sourceType=structure_profile_jsonl 或 debug_catalog。",
-        },
-        structureIds: {
-          type: "array",
-          description: "要采样的 configured structure id 列表；为空时采样 catalog 全部结构。",
-          items: { type: "string" },
-        },
-        sampleCount: { type: "number", description: "每个结构采样次数，默认 256。" },
-        cacheMode: { type: "string", enum: ["use_cache", "rescan"], description: "profiling cache 模式；默认 use_cache，rescan 强制重算。" },
-        forceRefresh: { type: "boolean", description: "true 时忽略本地 profile cache 并重新 dry-run 采样。" },
-        dimensionId: { type: "string", description: "维度 ID，省略时从 run manifest 恢复。" },
-        playerName: { type: "string", description: "玩家名，用于定位维度。" },
-      },
-      required: ["runId", "citySeedId", "terrasenseProfileSource"],
-    },
-  },
-  {
     name: "city_plan_d4",
-    description: "City D4: 提交 AI/Codex 基于 D3 patch 真值生成的 StructureAnchorPlan，校验 TerraSense 白名单、anchor、envelope facts 与防撞；固定/近固定结构可走 bboxGroups+smallClearance，非固定结构走 P95 collision，mask 由 collision+maskMargin 派生。旧 PatchGroupPlan/function zone payload 会被拒绝。",
+    description: "City D4: 只接受固定 NBT templateId/templateRef + variant。服务端从显式 catalog 冻结 hash、rawSize、transform、exact footprint、collision 和 mask；TerraSense 仅提供语义标签。configured structure 与外部 bbox 会被拒绝。",
     inputSchema: {
       type: "object",
       properties: {
@@ -435,21 +512,21 @@ export const realmTools: ToolDefinition[] = [
           type: "object",
           description: "schemaVersion=terrasense_structure_profile_source.v0.1；sourceType=structure_profile_jsonl 或 debug_catalog。",
         },
+        templateCatalogSource: {
+          type: "object",
+          description: "必填；catalogPath/templateCatalogPath/path 或内联 catalog，schemaVersion=city_template_catalog.v0.1。",
+        },
         structureAnchorPlan: {
           type: "object",
-          description: "schemaVersion=city_structure_anchor_plan.v0.2；anchors[] 除 anchorId、structureId、sourcePatchIds、anchorBlock{x,z}、rotation、intentTerms、priority、roadAccessIntent 外，必须保留 placementGroupId 与 placementProvenance{slotId,arrayId,parentArrayId,subZoneId}；可选 envelopeGroupKey、smallClearanceBlocks。",
-        },
-        structureEnvelopeFactsSource: {
-          type: "object",
-          description: "可选；factsPath 指向 structure_envelope_facts.json。未传时读取当前 run/city 默认产物。",
+          description: "anchors[] 传 anchorId、templateId（可同时传一致的 templateRef）、variant、sourcePatchIds、anchorBlock{x,z}、可选 rotation/mirror 和 placement provenance；不得传 structureId(s)、hash、rawSize 或 bbox。",
         },
       },
-      required: ["runId", "citySeedId", "terrasenseProfileSource", "structureAnchorPlan"],
+      required: ["runId", "citySeedId", "terrasenseProfileSource", "templateCatalogSource", "structureAnchorPlan"],
     },
   },
   {
     name: "city_plan_d4_candidates",
-    description: "City D4 候选闭环：提交设计 slot 和 patch/距离意图，按 D3 patch、TerraSense profile、envelope facts 生成少量安全 anchor 候选点和预览；不直接进入 D5。",
+    description: "City D4 固定模板候选：按 D3 patch 和 TerraSense 语义标签评分，所有 footprint、入口和 clearance 只从显式 template catalog 冻结。",
     inputSchema: {
       type: "object",
       properties: {
@@ -461,19 +538,19 @@ export const realmTools: ToolDefinition[] = [
         },
         designSlotPlan: {
           type: "object",
-          description: "schemaVersion=city_d4_design_slot_plan.v0.1；placementOrder 与 slots[]，slot 含 slotId、displayRole、candidatePatchRefs、structureId 或 structureIds、relationHints。",
+          description: "schemaVersion=city_d4_design_slot_plan.v0.1；placementOrder 与 slots[]。slot 只传 templateId/templateIds 与显式 variantId，可传 candidatePatchRefs 或 patchSelectionRef；candidateLegalRegion 是服务端保留字段。几何只从显式 templateCatalogSource 冻结。",
         },
-        structureEnvelopeFactsSource: {
+        templateCatalogSource: {
           type: "object",
-          description: "可选；factsPath 指向 structure_envelope_facts.json。未传时读取当前 run/city 默认产物。",
+          description: "必填；catalogPath/templateCatalogPath/path 或内联 catalog。",
         },
       },
-      required: ["runId", "citySeedId", "terrasenseProfileSource", "designSlotPlan"],
+      required: ["runId", "citySeedId", "terrasenseProfileSource", "templateCatalogSource", "designSlotPlan"],
     },
   },
   {
     name: "city_plan_d4_array_candidates",
-    description: "City D4 阵列候选：提交 arrayCandidatePlan，按 D3 patch、TerraSense profile、envelope facts 生成 3-5 组已防碰撞的批量结构候选；不沿道路、不改世界。候选组内含 expandedStructureAnchorPlan，可直接交给 city_plan_d4。",
+    description: "City D4 固定模板阵列候选：按 D3 patch 和 TerraSense 语义标签生成批量候选，几何只来自显式 template catalog。",
     inputSchema: {
       type: "object",
       properties: {
@@ -485,11 +562,11 @@ export const realmTools: ToolDefinition[] = [
         },
         arrayCandidatePlan: {
           type: "object",
-          description: "schemaVersion=city_d4_array_candidate_plan.v0.1；必填 cityId、arrayId、candidatePatchRefs[]、structureIds[]、arrayCount；可选 displayRole、patterns[]=loose_cluster/patch_axis_band/scattered/compound_cluster/grid/courtyard/l_shape/u_shape/organic_compact、compoundCluster={shape,rows,columns,spacingBlocks}。",
+          description: "schemaVersion=city_d4_array_candidate_plan.v0.1；必填 cityId、arrayId、templateIds[]、arrayCount，并为模板指定 variantId；几何只从 templateCatalogSource 读取。",
         },
-        structureEnvelopeFactsSource: {
+        templateCatalogSource: {
           type: "object",
-          description: "可选；factsPath 指向 structure_envelope_facts.json。未传时读取当前 run/city 默认产物。",
+          description: "必填；catalogPath/templateCatalogPath/path 或内联 catalog。",
         },
         occupiedStructureAnchorMapSource: {
           type: "object",
@@ -500,7 +577,7 @@ export const realmTools: ToolDefinition[] = [
           description: "可选；额外 occupied envelope，可直接写 {minX,minZ,maxX,maxZ} 或 {blockBounds:{...}}。",
         },
       },
-      required: ["runId", "citySeedId", "terrasenseProfileSource", "arrayCandidatePlan"],
+      required: ["runId", "citySeedId", "terrasenseProfileSource", "templateCatalogSource", "arrayCandidatePlan"],
     },
   },
   {
@@ -513,11 +590,11 @@ export const realmTools: ToolDefinition[] = [
         citySeedId: { type: "string" },
         terrasenseProfileSource: { type: "object", description: "TerraSense structure profile 来源。" },
         arrayLayoutPlan: { type: "object", description: "v0.4 计划；layoutPlans 必须为空，后续每轮通过候选工具提交一个阵列主题。" },
-        structureEnvelopeFactsSource: { type: "object" },
+        templateCatalogSource: { type: "object", description: "必填；固定 NBT template catalog 来源。" },
         baseStructureAnchorPlanSource: { type: "object", description: "可选 base anchor plan。" },
         occupiedStructureAnchorMapSource: { type: "object", description: "已 Plan 的 anchor map；其 collisionEnvelope 初始化 focus 可用 occupied。" },
       },
-      required: ["runId", "citySeedId", "terrasenseProfileSource", "arrayLayoutPlan"],
+      required: ["runId", "citySeedId", "terrasenseProfileSource", "templateCatalogSource", "arrayLayoutPlan"],
     },
   },
   {
@@ -550,12 +627,12 @@ export const realmTools: ToolDefinition[] = [
         stateId: { type: "string" },
         arrayExpansionRequest: {
           type: "object",
-          description: "常规连续外扩传 focusRef、direction、可选 expansionPolicy 和 nextArrayLayoutPlanItem；不传 targetPatchRef 即按父 bbox 前沿搜索，显式 targetPatchRef 仅保留兼容约束。全局新功能区传 newFunctionalArea=true + selectedGlobalPatchRef。二者都可传 candidateCount=3..5、minCandidateCount；nextArrayLayoutPlanItem 支持 compound_cluster、guide_line_dual_side、plaza_ring 或 composite_array（composite 保留 childLayoutPlans）。",
+          description: "常规连续外扩传 focusRef、direction、可选 expansionPolicy 和 nextArrayLayoutPlanItem；不传 targetPatchRef 即按父 bbox 前沿搜索，显式 targetPatchRef 仅保留兼容约束。全局新功能区可传 Patch Explorer 的 patchSelectionRef，由服务端派生 selectedGlobalPatchRef 并把连续组件硬边界传播到 nested item；不得手写 candidateLegalRegion。未使用 Patch Explorer 时仍传 newFunctionalArea=true + selectedGlobalPatchRef。二者都可传 candidateCount=3..5、minCandidateCount；nextArrayLayoutPlanItem 支持 compound_cluster、guide_line_dual_side、plaza_ring 或 composite_array（composite 保留 childLayoutPlans）。",
         },
         arrayLayoutLoopStateSource: { type: "object" },
-        structureEnvelopeFactsSource: { type: "object" },
+        templateCatalogSource: { type: "object", description: "必填；固定 NBT template catalog 来源。" },
       },
-      required: ["runId", "citySeedId", "terrasenseProfileSource", "arrayExpansionRequest"],
+      required: ["runId", "citySeedId", "terrasenseProfileSource", "templateCatalogSource", "arrayExpansionRequest"],
     },
   },
   {
@@ -572,7 +649,7 @@ export const realmTools: ToolDefinition[] = [
         selectionReason: { type: "string" },
         arrayExpansionCandidateSetSource: { type: "object" },
         arrayLayoutLoopStateSource: { type: "object" },
-        structureEnvelopeFactsSource: { type: "object" },
+        templateCatalogSource: { type: "object", description: "必填；固定 NBT template catalog 来源。" },
       },
       required: ["runId", "citySeedId"],
     },
@@ -588,9 +665,9 @@ export const realmTools: ToolDefinition[] = [
         terrasenseProfileSource: { type: "object" },
         stateId: { type: "string" },
         arrayLayoutLoopStateSource: { type: "object" },
-        structureEnvelopeFactsSource: { type: "object" },
+        templateCatalogSource: { type: "object", description: "必填；固定 NBT template catalog 来源。" },
       },
-      required: ["runId", "citySeedId", "terrasenseProfileSource"],
+      required: ["runId", "citySeedId", "terrasenseProfileSource", "templateCatalogSource"],
     },
   },
   {
@@ -682,17 +759,17 @@ export const realmTools: ToolDefinition[] = [
         },
         designSlotPlan: {
           type: "object",
-          description: "schemaVersion=city_d4_design_slot_plan.v0.1；placementOrder 与 slots[]，slot 含 slotId、displayRole、candidatePatchRefs、structureId 或 structureIds、relationHints。",
+          description: "schemaVersion=city_d4_design_slot_plan.v0.1；slot 只传 templateId/templateIds 与 variantId，几何只从显式 catalog 冻结。",
         },
-        structureEnvelopeFactsSource: {
+        templateCatalogSource: {
           type: "object",
-          description: "可选；factsPath 指向 structure_envelope_facts.json。未传时读取当前 run/city 默认产物。",
+          description: "必填；catalogPath/templateCatalogPath/path 或内联 catalog。",
         },
         groupCount: { type: "number", description: "可选；返回完整候选组数量，默认 5。" },
         candidatesPerSlot: { type: "number", description: "可选；每个 slot 用于 beam 扩展的候选数，默认 5。" },
         beamWidth: { type: "number", description: "可选；beam search 保留的 partial group 数，默认 groupCount*candidatesPerSlot。" },
       },
-      required: ["runId", "citySeedId", "terrasenseProfileSource", "designSlotPlan"],
+      required: ["runId", "citySeedId", "terrasenseProfileSource", "templateCatalogSource", "designSlotPlan"],
     },
   },
   {
@@ -715,12 +792,12 @@ export const realmTools: ToolDefinition[] = [
           type: "object",
           description: "可选；candidateSetPath 指向 anchor_candidate_set.json。未传时读取当前 run/city 默认候选产物。",
         },
-        structureEnvelopeFactsSource: {
+        templateCatalogSource: {
           type: "object",
-          description: "可选；factsPath 指向 structure_envelope_facts.json。未传时读取当前 run/city 默认产物。",
+          description: "必填；catalogPath/templateCatalogPath/path 或内联 catalog。",
         },
       },
-      required: ["runId", "citySeedId", "terrasenseProfileSource", "anchorSelectionPlan"],
+      required: ["runId", "citySeedId", "terrasenseProfileSource", "templateCatalogSource", "anchorSelectionPlan"],
     },
   },
   {
@@ -743,17 +820,17 @@ export const realmTools: ToolDefinition[] = [
           type: "object",
           description: "可选；candidateSetPath 或 structureClusterGroupCandidateSetPath 指向 structure_cluster_group_candidate_set.json。未传时读取当前 run/city 默认产物。",
         },
-        structureEnvelopeFactsSource: {
+        templateCatalogSource: {
           type: "object",
-          description: "可选；factsPath 指向 structure_envelope_facts.json。未传时读取当前 run/city 默认产物。",
+          description: "必填；catalogPath/templateCatalogPath/path 或内联 catalog。",
         },
       },
-      required: ["runId", "citySeedId", "terrasenseProfileSource", "groupCandidateId"],
+      required: ["runId", "citySeedId", "terrasenseProfileSource", "templateCatalogSource", "groupCandidateId"],
     },
   },
   {
     name: "city_create_d4_candidate_session",
-    description: "City D4 v2 顺序候选 session：提交 DesignSlotPlan，创建逐 slot 生成/选择/冻结的 D4 candidate session，并开始记录 D4 设计耗时。",
+    description: "City D4 固定模板顺序候选 session：slot 使用 templateId + variantId；服务端从显式 catalog 冻结 hash、rawSize、入口和 clearance。",
     inputSchema: {
       type: "object",
       properties: {
@@ -766,14 +843,14 @@ export const realmTools: ToolDefinition[] = [
         },
         designSlotPlan: {
           type: "object",
-          description: "schemaVersion=city_d4_design_slot_plan.v0.1；placementOrder 与 slots[]，slot 含 slotId、displayRole、candidatePatchRefs、structureId 或 structureIds、relationHints。",
+          description: "schemaVersion=city_d4_design_slot_plan.v0.1；slot 只传 templateId/templateIds 与 variantId，几何只从显式 catalog 冻结。",
         },
-        structureEnvelopeFactsSource: {
+        templateCatalogSource: {
           type: "object",
-          description: "可选；factsPath 指向 structure_envelope_facts.json。未传时读取当前 run/city 默认产物。",
+          description: "必填；catalogPath/templateCatalogPath/path 或内联 catalog。",
         },
       },
-      required: ["runId", "citySeedId", "terrasenseProfileSource", "designSlotPlan"],
+      required: ["runId", "citySeedId", "terrasenseProfileSource", "templateCatalogSource", "designSlotPlan"],
     },
   },
   {
@@ -785,9 +862,9 @@ export const realmTools: ToolDefinition[] = [
         runId: { type: "string", description: "已有 W/T run ID。" },
         citySeedId: { type: "string", description: "目标城市种子的 citySeedId。" },
         sessionId: { type: "string", description: "兼容字段；当前实现按 run/city 读取默认 session artifact。" },
-        structureEnvelopeFactsSource: {
+        templateCatalogSource: {
           type: "object",
-          description: "可选；factsPath 指向 structure_envelope_facts.json。未传时读取当前 run/city 默认产物。",
+          description: "必填；catalogPath/templateCatalogPath/path 或内联 catalog。",
         },
       },
       required: ["runId", "citySeedId"],
@@ -827,12 +904,12 @@ export const realmTools: ToolDefinition[] = [
           type: "object",
           description: "schemaVersion=terrasense_structure_profile_source.v0.1；sourceType=structure_profile_jsonl 或 debug_catalog。",
         },
-        structureEnvelopeFactsSource: {
+        templateCatalogSource: {
           type: "object",
-          description: "可选；factsPath 指向 structure_envelope_facts.json。未传时读取当前 run/city 默认产物。",
+          description: "必填；catalogPath/templateCatalogPath/path 或内联 catalog。",
         },
       },
-      required: ["runId", "citySeedId", "terrasenseProfileSource"],
+      required: ["runId", "citySeedId", "terrasenseProfileSource", "templateCatalogSource"],
     },
   },
   {
@@ -958,7 +1035,7 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "city_execute_d5",
-    description: "City D5 Execute: 必须先有完整 D6 locked materialization plan；用 D6 locked collision/actualFootprint/signature 激活 reservation mask registry 与 worldgen-time planned structure registry；正式路径不主动执行 WorldEdit 道路/清理，避免提前生成目标 chunk。必须显式传 confirmWorldMutation=true；mask/worldgen hook 不可用会 hard fail。",
+    description: "City D5 Execute: 必须先有完整 D6 固定模板计划；用 exact NBT footprint、collision、mask 和 ownerChunks 激活 reservation mask registry 与 City 单-piece worldgen registry。必须显式传 confirmWorldMutation=true。",
     inputSchema: {
       type: "object",
       properties: {
@@ -978,7 +1055,7 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "city_plan_d6",
-    description: "City D6: 读取最终 D4/D5 结构 anchor 与 reservation mask，做 non-mutating configured-structure probe，锁定 actualFootprint、pieceBoxes、lockedActualFootprint、lockedBBoxGroupKey、expectedStartSignature 与 lockedCollisionEnvelope，并用 locked bbox 做最终防撞；不要求 chunk loaded，不修改世界。",
+    description: "City D6: 从当前世界重新读取固定 NBT，校验 runtime hash、rawSize、transform、exact footprint、collision、mask 和 ownerChunks。不会读取 StructureStart bbox，不要求目标 chunk loaded，不修改世界。",
     inputSchema: {
       type: "object",
       properties: {
@@ -992,15 +1069,14 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "city_execute_d7",
-    description: "City Execute D7: 保留入口名但正式语义为 worldgen ledger 检查。executeStructurePlacement=true 不再 late paste；未生成 chunk 返回 WAITING_FOR_WORLDGEN，已生成未记录返回 STRUCTURE_CHUNK_ALREADY_GENERATED；所有 ledger 完整后基于真实 actualFootprint 生成道路/边界后处理。debugLateMaterialize=true 才允许旧诊断 paste。",
+    description: "City Execute D7: 只检查固定模板 worldgen ledger。不会 late paste；未生成模板返回等待，ledger 完整后基于 exact NBT footprint 生成道路/边界后处理。",
     inputSchema: {
       type: "object",
       properties: {
         runId: { type: "string", description: "已有 W/T run ID。" },
         citySeedId: { type: "string", description: "目标城市种子的 citySeedId。" },
         executeStructurePlacement: { type: "boolean", description: "true 时检查 worldgen ledger/状态；正式路径不 late paste。" },
-        debugLateMaterialize: { type: "boolean", description: "开发诊断开关；true 时才允许旧 StructureStart.placeInChunk 路径，trace 会标记 lateMaterialization=true。" },
-        worldSeed: { type: "number", description: "可选；未传时使用当前世界 seed 参与 seeded random。" },
+        worldSeed: { type: "number", description: "可选；仅供仍需稳定 seed 的道路/后处理逻辑使用，不参与模板 identity 或几何选择。" },
         dimensionId: { type: "string", description: "维度 ID，省略时从 run manifest 恢复。" },
         playerName: { type: "string", description: "玩家名，用于定位维度。" },
       },
@@ -1106,7 +1182,7 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "city_run_workflow",
-    description: "City 快速验收 workflow：串联 D3 -> envelope profiling -> final D4 -> plan_d5 轻量预案 -> D6 lock -> execute_d5 locked 激活 -> D7 ledger 检查，并可选规划/执行城墙；默认 D4 key_then_array：关键结构逐个定锚，再按 array_fill 阵列填充。",
+    description: "City 快速验收 workflow：串联 D3 -> 固定模板 D4 -> D5 reservation -> D6 runtime NBT lock -> execute_d5 registry 激活 -> D7 ledger 检查，并可选规划/执行城墙。",
     inputSchema: {
       type: "object",
       properties: {
@@ -1114,20 +1190,15 @@ export const realmTools: ToolDefinition[] = [
         citySeedId: { type: "string", description: "目标城市种子的 citySeedId。" },
         terrasenseProfileSource: {
           type: "object",
-          description: "结构 profile 来源；首次跑 profiling / D4 finalize 时需要。",
+          description: "只提供模板语义标签，不提供几何或 configured identity。",
         },
         designSlotPlan: {
           type: "object",
-          description: "D4 设计 slot plan；默认 key_then_array 模式下 slot 可设置 placementStrategy=key_structure|single_ai_selected|array_fill。array_fill 需要 arrayCount，可选 variantSelectionMode=seeded_random|weighted_random|round_robin。",
+          description: "D4 设计 slot plan；默认 key_then_array 模式下 slot 可设置 placementStrategy=key_structure|single_ai_selected|array_fill。array_fill 需要 arrayCount；模板分配固定为 round_robin，seeded/weighted random 已删除。",
         },
-        structureIds: {
-          type: "array",
-          description: "需要 profiling 的顶层 configured structure id 列表。",
-          items: { type: "string" },
-        },
-        structureEnvelopeFactsSource: {
+        templateCatalogSource: {
           type: "object",
-          description: "可选；factsPath 指向已有 structure_envelope_facts.json。",
+          description: "必填；固定 NBT template catalog 来源。",
         },
         d4CandidateMode: {
           type: "string",
@@ -1138,7 +1209,6 @@ export const realmTools: ToolDefinition[] = [
         candidatesPerSlot: { type: "number", description: "结构群整组候选每个 slot 的扩展候选数，默认 5。" },
         beamWidth: { type: "number", description: "结构群整组候选 beam width，默认 groupCount*candidatesPerSlot。" },
         sessionId: { type: "string", description: "可选 D4 sessionId。" },
-        sampleCount: { type: "number", description: "每结构 envelope profiling 样本数，默认 256。" },
         cellStepBlocks: { type: "number", description: "D3 cell step，未传则使用默认。" },
         patchScanPaddingBlocks: { type: "number", description: "D3 patch 上下文额外扫描 padding，默认 128；workflow 首跑 D3 时用于覆盖结构和城墙 breathing room。" },
         enableLandUseLayer: { type: "boolean", description: "单次请求覆写；省略时读取 city_land_use settings（bundled 默认 false）。启用后在 D6 locked footprint 之后、Decoration 和 execute_d5 之前运行 city_plan_land_use。" },
@@ -1185,7 +1255,7 @@ export const realmTools: ToolDefinition[] = [
         dimensionId: { type: "string", description: "维度 ID，省略时从 run manifest 恢复。" },
         playerName: { type: "string", description: "玩家名，用于定位维度。" },
       },
-      required: ["runId", "citySeedId"],
+      required: ["runId", "citySeedId", "terrasenseProfileSource", "templateCatalogSource"],
     },
   },
   {

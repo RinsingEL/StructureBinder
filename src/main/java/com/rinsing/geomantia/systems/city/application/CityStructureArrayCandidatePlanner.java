@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.SplittableRandom;
 
 public final class CityStructureArrayCandidatePlanner {
     public static final String PLAN_SCHEMA = "city_d4_array_candidate_plan.v0.1";
@@ -39,7 +38,6 @@ public final class CityStructureArrayCandidatePlanner {
                        CityLandformReviewPackage reviewPackage,
                        JsonObject terraSenseProfileSource,
                        JsonObject arrayCandidatePlan,
-                       CityStructureEnvelopeFacts envelopeFacts,
                        JsonObject occupiedStructureAnchorMap,
                        JsonArray occupiedEnvelopes) throws IOException {
         long started = System.nanoTime();
@@ -63,11 +61,11 @@ public final class CityStructureArrayCandidatePlanner {
 
         CityStructureProfileCatalog.ImportedCatalog catalog =
                 CityStructureProfileCatalog.importCatalog(baseDirectory, terraSenseProfileSource);
-        Map<String, CityStructureProfileCatalog.StructureProfile> profiles = catalog.byId();
-        CityStructureEnvelopeFacts facts = envelopeFacts == null ? CityStructureEnvelopeFacts.empty() : envelopeFacts;
+        CityTemplateCatalog templateCatalog = new CityTemplateCatalogLoader().load(
+                requiredObject(arrayCandidatePlan, "templateCatalog"));
         Map<String, LandformPatchSummary> patches = patchesByRef(reviewPackage);
         List<LandformPatchSummary> sourcePatches = sourcePatches(arrayCandidatePlan, patches);
-        List<String> structureIds = structureIds(arrayCandidatePlan);
+        List<String> templateIds = templateIds(arrayCandidatePlan);
         List<String> patterns = patterns(arrayCandidatePlan);
         List<String> hardBlocks = new ArrayList<>();
         List<String> warnings = new ArrayList<>(catalog.warnings());
@@ -79,12 +77,14 @@ public final class CityStructureArrayCandidatePlanner {
         if (sourcePatches.isEmpty()) {
             hardBlocks.add(arrayId + ": candidatePatchRefs must reference D3 landform patches or map labels.");
         }
-        if (structureIds.isEmpty()) {
-            hardBlocks.add(arrayId + ": structureIds must not be empty.");
+        if (templateIds.isEmpty()) {
+            hardBlocks.add(arrayId + ": templateIds must not be empty.");
         }
-        for (String structureId : structureIds) {
-            if (!profiles.containsKey(structureId)) {
-                hardBlocks.add(arrayId + ": structureId is not in approved TerraSense catalog: " + structureId);
+        for (String templateId : templateIds) {
+            try {
+                resolveTemplate(arrayCandidatePlan, templateId, templateCatalog);
+            } catch (IllegalArgumentException ex) {
+                hardBlocks.add(arrayId + ": " + ex.getMessage());
             }
         }
 
@@ -96,7 +96,7 @@ public final class CityStructureArrayCandidatePlanner {
                         break;
                     }
                     GroupBuildResult built = buildGroup(candidateIndex + 1, pattern, pivot, arrayCandidatePlan,
-                            reviewPackage.grid(), sourcePatches, profiles, facts, occupied);
+                            reviewPackage.grid(), sourcePatches, templateCatalog, occupied);
                     generationReports.add(built.report());
                     if (built.candidate() != null) {
                         candidateIndex++;
@@ -127,7 +127,7 @@ public final class CityStructureArrayCandidatePlanner {
         candidateSet.add("grid", reviewPackage.grid().asJson());
         candidateSet.add("sourceArrayCandidatePlan", arrayCandidatePlan.deepCopy());
         candidateSet.add("sourceTerraSenseProfileSource", terraSenseProfileSource.deepCopy());
-        candidateSet.add("structureProfileCatalog", catalog.asJson());
+        candidateSet.add("semanticProfileSource", terraSenseProfileSource.deepCopy());
         candidateSet.add("occupiedEnvelopes", occupiedEnvelopeJson(occupied));
         candidateSet.add("arrayCandidates", groupCandidates);
         candidateSet.add("generationReports", generationReports);
@@ -143,16 +143,16 @@ public final class CityStructureArrayCandidatePlanner {
                                         JsonObject plan,
                                         PlanningGrid grid,
                                         List<LandformPatchSummary> sourcePatches,
-                                        Map<String, CityStructureProfileCatalog.StructureProfile> profiles,
-                                        CityStructureEnvelopeFacts facts,
+                                        CityTemplateCatalog templateCatalog,
                                         List<BlockBounds> occupied) {
         String arrayId = requiredString(plan, "arrayId");
         String displayRole = stringValue(plan, "displayRole", arrayId);
         int arrayCount = intValue(plan, "arrayCount", 0);
-        List<String> structureIds = structureIds(plan);
-        int spacing = configuredSpacing(plan, structureIds, profiles, facts);
-        List<BlockPoint> rawPoints = rawPoints(pattern, pivot, sourcePatches, grid, plan,
-                structureIds, profiles, facts, arrayCount);
+        List<String> templateIds = templateIds(plan);
+        int spacing = configuredSpacing(plan, templateIds, templateCatalog);
+        List<BlockPoint> rawPoints = CityStructureCandidateEnvelope.constrainCandidatePoints(plan,
+                rawPoints(pattern, pivot, sourcePatches, grid, plan,
+                        templateIds, templateCatalog, arrayCount));
         List<BlockBounds> groupCollision = new ArrayList<>();
         JsonArray items = new JsonArray();
         JsonArray anchors = new JsonArray();
@@ -162,11 +162,8 @@ public final class CityStructureArrayCandidatePlanner {
         int pointCursor = 0;
 
         for (int itemIndex = 0; itemIndex < arrayCount; itemIndex++) {
-            String structureId = structureIdForItem(plan, pattern, candidateIndex, itemIndex + 1, structureIds);
-            CityStructureProfileCatalog.StructureProfile profile = profiles.get(structureId);
-            JsonObject itemOptions = plan.deepCopy();
-            itemOptions.addProperty("rotation", "NONE");
-            itemOptions.addProperty("compactArraySubmission", true);
+            String templateId = templateIdForItem(itemIndex + 1, templateIds);
+            CityTemplateCatalog.Template template = resolveTemplate(plan, templateId, templateCatalog);
             JsonObject accepted = null;
             BlockPoint acceptedPoint = null;
             CityStructureCandidateEnvelope.Estimate acceptedEstimate = null;
@@ -179,36 +176,31 @@ public final class CityStructureArrayCandidatePlanner {
                         .findFirst()
                         .orElse(null);
                 if (pointPatch == null || !grid.containsBlock(point.x(), point.z())) {
-                    rejected.add(rejection(itemIndex + 1, structureId, point, "POINT_OUTSIDE_PATCH"));
+                    rejected.add(rejection(itemIndex + 1, templateId, point, "POINT_OUTSIDE_PATCH"));
                     continue;
                 }
-                CityStructureCandidateEnvelope.Estimate estimate =
-                        CityStructureCandidateEnvelope.estimate(point, profile, facts, itemOptions);
-                if (estimate.requiredFactsMissing()) {
-                    return GroupBuildResult.failed(pattern, pivot,
-                            "D4_ARRAY_STRUCTURE_ENVELOPE_FACTS_REQUIRED", rejected);
-                }
+                CityStructureCandidateEnvelope.Estimate estimate = estimateTemplate(plan, point, template);
                 if (!estimate.hardBlockReason().isBlank()) {
-                    rejected.add(rejection(itemIndex + 1, structureId, point, estimate.hardBlockReason()));
+                    rejected.add(rejection(itemIndex + 1, templateId, point, estimate.hardBlockReason()));
                     continue;
                 }
                 if (!gridContains(grid, estimate.collisionEnvelope())) {
-                    rejected.add(rejection(itemIndex + 1, structureId, point, "COLLISION_ENVELOPE_OUTSIDE_CITY_GRID"));
+                    rejected.add(rejection(itemIndex + 1, templateId, point, "COLLISION_ENVELOPE_OUTSIDE_CITY_GRID"));
                     continue;
                 }
                 if (overlapsAny(occupied, estimate.collisionEnvelope())) {
-                    rejected.add(rejection(itemIndex + 1, structureId, point, "OCCUPIED_ENVELOPE_OVERLAP"));
+                    rejected.add(rejection(itemIndex + 1, templateId, point, "OCCUPIED_ENVELOPE_OVERLAP"));
                     continue;
                 }
                 if (overlapsAny(groupCollision, estimate.collisionEnvelope())) {
-                    rejected.add(rejection(itemIndex + 1, structureId, point, "GROUP_COLLISION_OVERLAP"));
+                    rejected.add(rejection(itemIndex + 1, templateId, point, "GROUP_COLLISION_OVERLAP"));
                     continue;
                 }
                 acceptedPoint = point;
                 acceptedEstimate = estimate;
                 acceptedPatch = pointPatch;
-                accepted = itemJson(plan, pattern, spacing, candidateIndex, itemIndex + 1, structureId,
-                        point, pointPatch, estimate);
+                accepted = itemJson(plan, pattern, spacing, candidateIndex, itemIndex + 1,
+                        point, pointPatch, estimate, template);
                 break;
             }
 
@@ -223,8 +215,8 @@ public final class CityStructureArrayCandidatePlanner {
                     : CityStructureCandidateEnvelope.union(groupCollisionUnion, acceptedEstimate.collisionEnvelope());
             groupMaskUnion = groupMaskUnion == null ? acceptedEstimate.maskEnvelope()
                     : CityStructureCandidateEnvelope.union(groupMaskUnion, acceptedEstimate.maskEnvelope());
-            anchors.add(anchorJson(plan, pattern, itemIndex + 1, structureId, acceptedPoint,
-                    acceptedPatch, acceptedEstimate));
+            anchors.add(anchorJson(plan, pattern, itemIndex + 1, acceptedPoint,
+                    acceptedPatch, acceptedEstimate, template));
         }
 
         JsonObject candidate = new JsonObject();
@@ -268,32 +260,27 @@ public final class CityStructureArrayCandidatePlanner {
                                        int spacing,
                                        int candidateIndex,
                                        int itemIndex,
-                                       String structureId,
                                        BlockPoint point,
                                        LandformPatchSummary patch,
-                                       CityStructureCandidateEnvelope.Estimate estimate) {
+                                       CityStructureCandidateEnvelope.Estimate estimate,
+                                       CityTemplateCatalog.Template template) {
         JsonObject obj = new JsonObject();
         String arrayId = requiredString(plan, "arrayId");
         obj.addProperty("itemId", arrayId + "_" + String.format(Locale.ROOT, "%02d", itemIndex));
         obj.addProperty("itemIndex", itemIndex);
-        obj.addProperty("structureId", structureId);
+        addTemplateMetadata(obj, plan, template, point);
         obj.addProperty("arrayPattern", pattern);
         obj.addProperty("arrayShape", compoundShape(plan, pattern));
         obj.addProperty("spacingBlocks", spacing);
         obj.add("anchorBlock", point.asJson());
         obj.add("roadPoint", point.asJson());
-        obj.addProperty("rotation", "NONE");
         obj.addProperty("variantSelectionMode", variantSelectionMode(plan));
         obj.add("sourcePatchRefs", patchRefs(patch));
         obj.add("plannedFootprint", CityStructureCandidateEnvelope.boundsJson(estimate.plannedFootprint()));
         obj.add("estimatedCollisionEnvelope",
                 CityStructureCandidateEnvelope.boundsJson(estimate.collisionEnvelope()));
         obj.add("estimatedMaskEnvelope", CityStructureCandidateEnvelope.boundsJson(estimate.maskEnvelope()));
-        obj.add("diagnosticMaxObservedEnvelope",
-                CityStructureCandidateEnvelope.boundsJson(estimate.diagnosticMaxObservedEnvelope()));
         obj.addProperty("geometryStatus", "available");
-        obj.addProperty("envelopeMode", estimate.envelopeMode());
-        obj.addProperty("selectedEnvelopeGroupKey", estimate.selectedEnvelopeGroupKey());
         obj.addProperty("arrayCandidateOrdinal", candidateIndex);
         obj.addProperty("smallClearanceBlocks", CityStructureCandidateEnvelope.DEFAULT_SMALL_CLEARANCE_BLOCKS);
         obj.addProperty("roadAccessIntent", "array_connect_deferred_to_d7");
@@ -303,26 +290,27 @@ public final class CityStructureArrayCandidatePlanner {
     private static JsonObject anchorJson(JsonObject plan,
                                          String pattern,
                                          int itemIndex,
-                                         String structureId,
                                          BlockPoint point,
                                          LandformPatchSummary patch,
-                                         CityStructureCandidateEnvelope.Estimate estimate) {
+                                         CityStructureCandidateEnvelope.Estimate estimate,
+                                         CityTemplateCatalog.Template template) {
         String arrayId = requiredString(plan, "arrayId");
         JsonObject anchor = new JsonObject();
         anchor.addProperty("anchorId", arrayId + "_" + String.format(Locale.ROOT, "%02d", itemIndex));
         anchor.addProperty("arrayId", arrayId);
         anchor.addProperty("arrayPattern", pattern);
-        anchor.addProperty("structureId", structureId);
+        CityTemplatePlacementGeometry geometry = geometry(plan, template);
+        anchor.addProperty("templateId", template.templateId());
+        anchor.addProperty("templateRef", template.templateRef());
+        anchor.addProperty("variantId", template.variantId());
+        anchor.addProperty("rotation", geometry.rotation().name());
+        anchor.addProperty("mirror", geometry.mirror().name());
         anchor.add("sourcePatchIds", patchRefs(patch));
         anchor.add("anchorBlock", point.asJson());
-        anchor.addProperty("rotation", "NONE");
         anchor.addProperty("variantSelectionMode", variantSelectionMode(plan));
         anchor.add("intentTerms", intentTerms(arrayId, stringValue(plan, "displayRole", arrayId), pattern));
         anchor.addProperty("priority", intValue(plan, "priority", 100) + itemIndex);
         anchor.addProperty("roadAccessIntent", "array_connect_deferred_to_d7");
-        if (!estimate.selectedEnvelopeGroupKey().isBlank()) {
-            anchor.addProperty("envelopeGroupKey", estimate.selectedEnvelopeGroupKey());
-        }
         anchor.addProperty("smallClearanceBlocks", CityStructureCandidateEnvelope.DEFAULT_SMALL_CLEARANCE_BLOCKS);
         anchor.addProperty("selectionReason", "Selected from D4 array candidate " + arrayId + " pattern " + pattern);
         CityStructureAnchorPlanner.applyPlacementProvenance(anchor, anchor);
@@ -334,11 +322,10 @@ public final class CityStructureArrayCandidatePlanner {
                                               List<LandformPatchSummary> patches,
                                               PlanningGrid grid,
                                               JsonObject plan,
-                                              List<String> structureIds,
-                                              Map<String, CityStructureProfileCatalog.StructureProfile> profiles,
-                                              CityStructureEnvelopeFacts facts,
+                                              List<String> templateIds,
+                                              CityTemplateCatalog templateCatalog,
                                               int arrayCount) {
-        int spacing = configuredSpacing(plan, structureIds, profiles, facts);
+        int spacing = configuredSpacing(plan, templateIds, templateCatalog);
         LinkedHashSet<BlockPoint> points = new LinkedHashSet<>();
         switch (pattern) {
             case "patch_axis_band" -> axisBand(points, pivot, patches, spacing, arrayCount);
@@ -472,27 +459,24 @@ public final class CityStructureArrayCandidatePlanner {
         }
     }
 
-    private static int spacing(List<String> structureIds,
-                               Map<String, CityStructureProfileCatalog.StructureProfile> profiles,
-                               CityStructureEnvelopeFacts facts,
+    private static int spacing(List<String> templateIds,
+                               CityTemplateCatalog templateCatalog,
                                JsonObject options) {
         int max = 16;
-        for (String structureId : structureIds) {
-            CityStructureProfileCatalog.StructureProfile profile = profiles.get(structureId);
-            if (profile == null) {
-                continue;
-            }
-            max = Math.max(max, CityStructureCandidateEnvelope.automaticSpacing(profile, facts, options));
+        for (String templateId : templateIds) {
+            CityTemplateCatalog.Template template = resolveTemplate(options, templateId, templateCatalog);
+            CityTemplatePlacementGeometry geometry = geometry(options, template);
+            max = Math.max(max, Math.max(geometry.transformedSize().width(), geometry.transformedSize().depth())
+                    + template.clearanceBlocks() * 2 + 1);
         }
         return max;
     }
 
     private static int configuredSpacing(JsonObject plan,
-                                         List<String> structureIds,
-                                         Map<String, CityStructureProfileCatalog.StructureProfile> profiles,
-                                         CityStructureEnvelopeFacts facts) {
+                                         List<String> templateIds,
+                                         CityTemplateCatalog templateCatalog) {
         int configured = compoundInt(plan, "spacingBlocks", 0);
-        return configured > 0 ? configured : spacing(structureIds, profiles, facts, plan);
+        return configured > 0 ? configured : spacing(templateIds, templateCatalog, plan);
     }
 
     private static ShapeGrid shapeGrid(JsonObject plan, int requestedCount) {
@@ -633,59 +617,21 @@ public final class CityStructureArrayCandidatePlanner {
         return dx * dx + dz * dz;
     }
 
-    private static String structureIdForItem(JsonObject plan,
-                                             String pattern,
-                                             int candidateIndex,
-                                             int itemIndex,
-                                             List<String> structureIds) {
-        if (structureIds.isEmpty()) {
+    private static String templateIdForItem(int itemIndex, List<String> templateIds) {
+        if (templateIds.isEmpty()) {
             return "";
         }
-        String mode = variantSelectionMode(plan);
-        if (!"seeded_random".equals(mode) && !"weighted_random".equals(mode) && !"random".equals(mode)) {
-            return structureIds.get((itemIndex - 1) % structureIds.size());
-        }
-        double totalWeight = 0.0;
-        List<Double> weights = new ArrayList<>();
-        JsonObject configuredWeights = optionalObject(plan, "structureWeights");
-        for (String structureId : structureIds) {
-            double weight = doubleValue(configuredWeights, structureId, 1.0);
-            weight = weight > 0.0 ? weight : 0.0;
-            weights.add(weight);
-            totalWeight += weight;
-        }
-        if (totalWeight <= 0.0) {
-            return structureIds.get((itemIndex - 1) % structureIds.size());
-        }
-        String arrayId = requiredString(plan, "arrayId");
-        long seed = stableSeed(stringValue(plan, "variantSeed", "")
-                + ":" + arrayId + ":" + pattern + ":" + candidateIndex + ":" + itemIndex);
-        double pick = new SplittableRandom(seed).nextDouble(totalWeight);
-        double cursor = 0.0;
-        for (int i = 0; i < structureIds.size(); i++) {
-            cursor += weights.get(i);
-            if (pick < cursor) {
-                return structureIds.get(i);
-            }
-        }
-        return structureIds.get(structureIds.size() - 1);
+        return templateIds.get((itemIndex - 1) % templateIds.size());
     }
 
     private static String variantSelectionMode(JsonObject plan) {
-        String mode = stringValue(plan, "variantSelectionMode",
-                stringValue(plan, "selectionMode", "round_robin"));
-        if ("weighted_random".equals(mode) || "seeded_random".equals(mode) || "random".equals(mode)) {
-            return mode;
+        String mode = stringValue(plan, "variantSelectionMode", "round_robin");
+        if (!"round_robin".equals(mode) || plan.has("structureWeights") || plan.has("templateWeights")
+                || plan.has("weights") || plan.has("variantSeed")) {
+            throw new IllegalArgumentException("D4_RANDOM_TEMPLATE_SELECTION_REMOVED: array templates "
+                    + "must use deterministic round_robin order.");
         }
         return "round_robin";
-    }
-
-    private static long stableSeed(String value) {
-        long hash = 1125899906842597L;
-        for (int i = 0; i < value.length(); i++) {
-            hash = 31 * hash + value.charAt(i);
-        }
-        return hash;
     }
 
     private static JsonObject score(String pattern,
@@ -753,10 +699,10 @@ public final class CityStructureArrayCandidatePlanner {
         return obj;
     }
 
-    private static JsonObject rejection(int itemIndex, String structureId, BlockPoint point, String reasonCode) {
+    private static JsonObject rejection(int itemIndex, String templateId, BlockPoint point, String reasonCode) {
         JsonObject obj = new JsonObject();
         obj.addProperty("itemIndex", itemIndex);
-        obj.addProperty("structureId", structureId);
+        obj.addProperty("templateId", templateId);
         obj.add("anchorBlock", point.asJson());
         obj.addProperty("reasonCode", reasonCode);
         return obj;
@@ -823,10 +769,10 @@ public final class CityStructureArrayCandidatePlanner {
 
     private static boolean patchContains(LandformPatchSummary patch, PlanningGrid grid, BlockPoint point) {
         if (!patch.memberCells().isEmpty()) {
-            int cellX = grid.blockToCellX(point.x());
-            int cellZ = grid.blockToCellZ(point.z());
+            int step = grid.cellStepBlocks();
             for (PatchMemberCell cell : patch.memberCells()) {
-                if (cell.cellX() == cellX && cell.cellZ() == cellZ) {
+                if (point.x() >= cell.blockMinX() && point.x() < cell.blockMinX() + step
+                        && point.z() >= cell.blockMinZ() && point.z() < cell.blockMinZ() + step) {
                     return true;
                 }
             }
@@ -849,14 +795,94 @@ public final class CityStructureArrayCandidatePlanner {
         return false;
     }
 
-    private static List<String> structureIds(JsonObject plan) {
+    private static List<String> templateIds(JsonObject plan) {
         LinkedHashSet<String> ids = new LinkedHashSet<>();
-        for (String id : strings(requiredArray(plan, "structureIds"))) {
+        for (String id : strings(requiredArray(plan, "templateIds"))) {
             if (!id.isBlank()) {
                 ids.add(id);
             }
         }
         return new ArrayList<>(ids);
+    }
+
+    private static CityTemplateCatalog.Template resolveTemplate(JsonObject plan, String templateId,
+                                                                CityTemplateCatalog catalog) {
+        String variant = stringValue(plan, "variantId", stringValue(plan, "variant", ""));
+        if (variant.isBlank()) {
+            throw new IllegalArgumentException("D4_TEMPLATE_VARIANT_REQUIRED: " + templateId);
+        }
+        return catalog.requireTemplate(templateId, variant);
+    }
+
+    private static CityTemplatePlacementGeometry geometry(JsonObject plan,
+                                                          CityTemplateCatalog.Template template) {
+        CityTemplatePlacementGeometry.Rotation rotation = enumValue(plan, "rotation",
+                template.allowedRotations().get(0), CityTemplatePlacementGeometry.Rotation.class);
+        CityTemplatePlacementGeometry.Mirror mirror = enumValue(plan, "mirror",
+                template.allowedMirrors().get(0), CityTemplatePlacementGeometry.Mirror.class);
+        return template.geometry(rotation, mirror);
+    }
+
+    private static CityStructureCandidateEnvelope.Estimate estimateTemplate(
+            JsonObject plan, BlockPoint anchor, CityTemplateCatalog.Template template) {
+        CityTemplatePlacementGeometry geometry = geometry(plan, template);
+        BlockBounds footprint = geometry.worldBounds(anchor);
+        BlockBounds collision = CityStructureMaterializationPlanner.expand(footprint, template.clearanceBlocks());
+        int maskMargin = Math.max(0, intValue(plan, "maskMarginBlocks",
+                CityStructureAnchorPlanner.DEFAULT_MASK_MARGIN_BLOCKS));
+        BlockBounds mask = CityStructureMaterializationPlanner.expand(collision, maskMargin);
+        return new CityStructureCandidateEnvelope.Estimate(footprint, collision, mask, "");
+    }
+
+    private static void addTemplateMetadata(JsonObject target, JsonObject plan,
+                                            CityTemplateCatalog.Template template, BlockPoint anchor) {
+        CityTemplatePlacementGeometry geometry = geometry(plan, template);
+        target.addProperty("templateId", template.templateId());
+        target.addProperty("templateRef", template.templateRef());
+        target.addProperty("templateHash", template.contentHash());
+        target.addProperty("variantId", template.variantId());
+        target.addProperty("rotation", geometry.rotation().name());
+        target.addProperty("mirror", geometry.mirror().name());
+        target.addProperty("terrainPosePolicy", template.terrainPosePolicy());
+        target.addProperty("supportPolicy", template.supportPolicy());
+        target.addProperty("clearanceBlocks", template.clearanceBlocks());
+        target.addProperty("materializationSource",
+                CityStructureMaterializationPlanner.TEMPLATE_MATERIALIZATION_SOURCE);
+        target.add("rawSize", sizeJson(template.rawSize()));
+        JsonObject placement = new JsonObject();
+        for (String key : List.of("templateId", "templateRef", "templateHash", "variantId",
+                "rotation", "mirror", "terrainPosePolicy")) {
+            placement.add(key, target.get(key).deepCopy());
+        }
+        placement.add("anchorBlock", anchor.asJson());
+        placement.add("templateSize", sizeJson(template.rawSize()));
+        JsonObject transformed = new JsonObject();
+        transformed.add("size", sizeJson(geometry.transformedSize()));
+        JsonArray entrances = new JsonArray();
+        for (CityTemplatePlacementGeometry.TransformedRoadEntrance entrance : geometry.roadEntrances()) {
+            JsonObject entry = new JsonObject();
+            entry.addProperty("entranceId", entrance.entranceId());
+            entry.addProperty("direction", entrance.direction().name());
+            entry.add("relativePosition", entrance.relativePosition().asJson());
+            entry.add("worldPosition", entrance.worldPosition(anchor).asJson());
+            entrances.add(entry);
+        }
+        transformed.add("roadEntrances", entrances);
+        placement.add("transformed", transformed);
+        target.add("templatePlacementPlan", placement);
+    }
+
+    private static JsonObject sizeJson(CityTemplatePlacementGeometry.Size size) {
+        JsonObject result = new JsonObject();
+        result.addProperty("width", size.width());
+        result.addProperty("height", size.height());
+        result.addProperty("depth", size.depth());
+        return result;
+    }
+
+    private static <T extends Enum<T>> T enumValue(JsonObject source, String key, T fallback, Class<T> type) {
+        String value = stringValue(source, key, "");
+        return value.isBlank() ? fallback : Enum.valueOf(type, value.toUpperCase(Locale.ROOT));
     }
 
     private static List<String> patterns(JsonObject plan) {
@@ -927,6 +953,13 @@ public final class CityStructureArrayCandidatePlanner {
     private static JsonObject optionalObject(JsonObject obj, String key) {
         return obj != null && obj.has(key) && obj.get(key).isJsonObject()
                 ? obj.getAsJsonObject(key) : new JsonObject();
+    }
+
+    private static JsonObject requiredObject(JsonObject obj, String key) {
+        if (obj == null || !obj.has(key) || !obj.get(key).isJsonObject()) {
+            throw new IllegalArgumentException(key + " object is required.");
+        }
+        return obj.getAsJsonObject(key);
     }
 
     private static String requiredString(JsonObject obj, String key) {

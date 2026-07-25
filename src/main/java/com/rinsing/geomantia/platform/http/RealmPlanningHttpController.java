@@ -14,6 +14,8 @@ import com.rinsing.geomantia.systems.city.infrastructure.world.CityWorldgenBlock
 import com.rinsing.geomantia.platform.RealmPlanningServices;
 import com.rinsing.geomantia.platform.WorldSurveyChatProgress;
 import com.rinsing.geomantia.systems.realm_planning.RealmPlanningService;
+import com.rinsing.geomantia.systems.realm_planning.PatchExplorerService;
+import com.rinsing.geomantia.systems.realm_planning.RealmT4PatchPlanningService;
 import com.rinsing.geomantia.systems.realm_planning.WorldSurveyResult;
 import com.rinsing.geomantia.systems.realm_planning.WorldSurveyRunner;
 import com.sun.net.httpserver.HttpExchange;
@@ -81,13 +83,36 @@ final class RealmPlanningHttpController {
     void handleT2SelectCoordinate(HttpExchange exchange) {
         handle(exchange, "POST", () -> {
             JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            String runId = requiredString(request, "runId");
+            String realmId = requiredString(request, "realmId");
+            int gridX;
+            int gridZ;
+            String selectionRef = stringValue(request, "patchSelectionRef", "");
+            if (!selectionRef.isBlank()) {
+                JsonObject selection = new PatchExplorerService(debugRoot())
+                        .resolveT2Selection(runId, realmId, selectionRef);
+                JsonObject anchor = selection.getAsJsonObject("suggestedAnchor");
+                gridX = anchor.get("gridX").getAsInt();
+                gridZ = anchor.get("gridZ").getAsInt();
+            } else {
+                if (!hasValue(request, "gridX") || !hasValue(request, "gridZ")) {
+                    throw new IllegalArgumentException("gridX/gridZ or patchSelectionRef is required.");
+                }
+                gridX = intValue(request, "gridX", 0);
+                gridZ = intValue(request, "gridZ", 0);
+            }
+            String reason = stringValue(request, "reason", "");
+            if (!selectionRef.isBlank()) {
+                reason = reason + (reason.isBlank() ? "" : "; ") + "patchSelectionRef=" + selectionRef;
+            }
+            String finalReason = reason;
             return callOnServerThread(() -> realmPlanningService.selectT2(
-                    requiredString(request, "runId"),
-                    requiredString(request, "realmId"),
-                    intValue(request, "gridX", 0),
-                    intValue(request, "gridZ", 0),
+                    runId,
+                    realmId,
+                    gridX,
+                    gridZ,
                     arrayValue(request, "alternates"),
-                    stringValue(request, "reason", ""),
+                    finalReason,
                     stringValue(request, "selectedBy", "ai"),
                     booleanValue(request, "allowSnap", true)));
         });
@@ -110,6 +135,39 @@ final class RealmPlanningHttpController {
             JsonObject request = GisHttpUtil.readJsonObject(exchange);
             return callOnServerThread(() -> realmPlanningService.buildT4(requiredString(request, "runId")));
         });
+    }
+
+    void handleT4PatchPlanningCreate(HttpExchange exchange) {
+        handle(exchange, "POST", () -> new RealmT4PatchPlanningService(debugRoot())
+                .create(GisHttpUtil.readJsonObject(exchange)));
+    }
+
+    void handleT4PatchPlanningAddCity(HttpExchange exchange) {
+        handle(exchange, "POST", () -> new RealmT4PatchPlanningService(debugRoot())
+                .add(GisHttpUtil.readJsonObject(exchange)));
+    }
+
+    void handleT4PatchPlanningFinalize(HttpExchange exchange) {
+        handle(exchange, "POST", () -> {
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            return callOnServerThread(() -> new RealmT4PatchPlanningService(debugRoot(),
+                    realmPlanningService::synchronizeT4RegistryArtifacts).finalizePlanning(request));
+        });
+    }
+
+    void handlePatchExplorerOpen(HttpExchange exchange) {
+        handle(exchange, "POST", () -> new PatchExplorerService(debugRoot())
+                .open(GisHttpUtil.readJsonObject(exchange)));
+    }
+
+    void handlePatchExplorerShowCandidates(HttpExchange exchange) {
+        handle(exchange, "POST", () -> new PatchExplorerService(debugRoot())
+                .showCandidates(GisHttpUtil.readJsonObject(exchange)));
+    }
+
+    void handlePatchExplorerSelectCandidate(HttpExchange exchange) {
+        handle(exchange, "POST", () -> new PatchExplorerService(debugRoot())
+                .selectCandidate(GisHttpUtil.readJsonObject(exchange)));
     }
 
     void handleAcceptance(HttpExchange exchange) {
@@ -186,11 +244,13 @@ final class RealmPlanningHttpController {
             if (!request.has("structureAnchorPlan") || !request.get("structureAnchorPlan").isJsonObject()) {
                 throw new IllegalArgumentException("structureAnchorPlan object is required.");
             }
+            if (!request.has("templateCatalogSource") || !request.get("templateCatalogSource").isJsonObject()) {
+                throw new IllegalArgumentException("templateCatalogSource object is required.");
+            }
             return CityPlanningEndpointHandler.handlePlanD4(debugRoot(), runId, citySeedId,
                     request.getAsJsonObject("terrasenseProfileSource"),
-                    request.getAsJsonObject("structureAnchorPlan"),
-                    request.has("structureEnvelopeFactsSource") && request.get("structureEnvelopeFactsSource").isJsonObject()
-                            ? request.getAsJsonObject("structureEnvelopeFactsSource") : null);
+                    request.getAsJsonObject("templateCatalogSource"),
+                    request.getAsJsonObject("structureAnchorPlan"));
         });
     }
 
@@ -207,11 +267,13 @@ final class RealmPlanningHttpController {
             if (!request.has("designSlotPlan") || !request.get("designSlotPlan").isJsonObject()) {
                 throw new IllegalArgumentException("designSlotPlan object is required.");
             }
+            JsonObject designSlotPlan = new PatchExplorerService(debugRoot()).resolveD4DesignSlotPlan(
+                    runId, citySeedId, request.getAsJsonObject("designSlotPlan"));
             return CityPlanningEndpointHandler.handlePlanD4Candidates(debugRoot(), runId, citySeedId,
                     request.getAsJsonObject("terrasenseProfileSource"),
-                    request.getAsJsonObject("designSlotPlan"),
-                    request.has("structureEnvelopeFactsSource") && request.get("structureEnvelopeFactsSource").isJsonObject()
-                            ? request.getAsJsonObject("structureEnvelopeFactsSource") : null);
+                    designSlotPlan,
+                    request.has("templateCatalogSource") && request.get("templateCatalogSource").isJsonObject()
+                            ? request.getAsJsonObject("templateCatalogSource") : null);
         });
     }
 
@@ -228,11 +290,13 @@ final class RealmPlanningHttpController {
             if (!request.has("arrayCandidatePlan") || !request.get("arrayCandidatePlan").isJsonObject()) {
                 throw new IllegalArgumentException("arrayCandidatePlan object is required.");
             }
+            JsonObject arrayCandidatePlan = new PatchExplorerService(debugRoot()).resolveD4ArrayPlan(
+                    runId, citySeedId, request.getAsJsonObject("arrayCandidatePlan"));
             return CityPlanningEndpointHandler.handlePlanD4ArrayCandidates(debugRoot(), runId, citySeedId,
                     request.getAsJsonObject("terrasenseProfileSource"),
-                    request.getAsJsonObject("arrayCandidatePlan"),
-                    request.has("structureEnvelopeFactsSource") && request.get("structureEnvelopeFactsSource").isJsonObject()
-                            ? request.getAsJsonObject("structureEnvelopeFactsSource") : null,
+                    arrayCandidatePlan,
+                    request.has("templateCatalogSource") && request.get("templateCatalogSource").isJsonObject()
+                            ? request.getAsJsonObject("templateCatalogSource") : null,
                     request.has("occupiedStructureAnchorMapSource")
                             && request.get("occupiedStructureAnchorMapSource").isJsonObject()
                             ? request.getAsJsonObject("occupiedStructureAnchorMapSource") : null,
@@ -254,11 +318,13 @@ final class RealmPlanningHttpController {
             if (!request.has("arrayLayoutPlan") || !request.get("arrayLayoutPlan").isJsonObject()) {
                 throw new IllegalArgumentException("arrayLayoutPlan object is required.");
             }
+            JsonObject arrayLayoutPlan = new PatchExplorerService(debugRoot()).resolveD4ArrayLayoutPlan(
+                    runId, citySeedId, request.getAsJsonObject("arrayLayoutPlan"));
             return CityPlanningEndpointHandler.handleCreateD4ArrayLayoutLoop(debugRoot(), runId, citySeedId,
                     request.getAsJsonObject("terrasenseProfileSource"),
-                    request.getAsJsonObject("arrayLayoutPlan"),
-                    request.has("structureEnvelopeFactsSource") && request.get("structureEnvelopeFactsSource").isJsonObject()
-                            ? request.getAsJsonObject("structureEnvelopeFactsSource") : null,
+                    arrayLayoutPlan,
+                    request.has("templateCatalogSource") && request.get("templateCatalogSource").isJsonObject()
+                            ? request.getAsJsonObject("templateCatalogSource") : null,
                     request.has("baseStructureAnchorPlanSource")
                             && request.get("baseStructureAnchorPlanSource").isJsonObject()
                             ? request.getAsJsonObject("baseStructureAnchorPlanSource") : null,
@@ -351,8 +417,8 @@ final class RealmPlanningHttpController {
                     request.has("arrayLayoutLoopStateSource")
                             && request.get("arrayLayoutLoopStateSource").isJsonObject()
                             ? request.getAsJsonObject("arrayLayoutLoopStateSource") : null,
-                    request.has("structureEnvelopeFactsSource") && request.get("structureEnvelopeFactsSource").isJsonObject()
-                            ? request.getAsJsonObject("structureEnvelopeFactsSource") : null);
+                    request.has("templateCatalogSource") && request.get("templateCatalogSource").isJsonObject()
+                            ? request.getAsJsonObject("templateCatalogSource") : null);
         });
     }
 
@@ -366,8 +432,10 @@ final class RealmPlanningHttpController {
             if (!request.has("arrayExpansionRequest") || !request.get("arrayExpansionRequest").isJsonObject()) {
                 throw new IllegalArgumentException("arrayExpansionRequest object is required.");
             }
+            JsonObject expansionRequest = new PatchExplorerService(debugRoot()).resolveD4ExpansionRequest(
+                    runId, citySeedId, request.getAsJsonObject("arrayExpansionRequest"));
             return CityPlanningEndpointHandler.handleQueryD4ArrayExpansionSpace(debugRoot(), runId, citySeedId,
-                    stringValue(request, "stateId", ""), request.getAsJsonObject("arrayExpansionRequest"),
+                    stringValue(request, "stateId", ""), expansionRequest,
                     request.has("arrayLayoutLoopStateSource") && request.get("arrayLayoutLoopStateSource").isJsonObject()
                             ? request.getAsJsonObject("arrayLayoutLoopStateSource") : null);
         });
@@ -386,13 +454,15 @@ final class RealmPlanningHttpController {
             if (!request.has("arrayExpansionRequest") || !request.get("arrayExpansionRequest").isJsonObject()) {
                 throw new IllegalArgumentException("arrayExpansionRequest object is required.");
             }
+            JsonObject expansionRequest = new PatchExplorerService(debugRoot()).resolveD4ExpansionRequest(
+                    runId, citySeedId, request.getAsJsonObject("arrayExpansionRequest"));
             return CityPlanningEndpointHandler.handlePlanD4ArrayExpansionCandidates(debugRoot(), runId, citySeedId,
                     request.getAsJsonObject("terrasenseProfileSource"), stringValue(request, "stateId", ""),
-                    request.getAsJsonObject("arrayExpansionRequest"),
+                    expansionRequest,
                     request.has("arrayLayoutLoopStateSource") && request.get("arrayLayoutLoopStateSource").isJsonObject()
                             ? request.getAsJsonObject("arrayLayoutLoopStateSource") : null,
-                    request.has("structureEnvelopeFactsSource") && request.get("structureEnvelopeFactsSource").isJsonObject()
-                            ? request.getAsJsonObject("structureEnvelopeFactsSource") : null);
+                    request.has("templateCatalogSource") && request.get("templateCatalogSource").isJsonObject()
+                            ? request.getAsJsonObject("templateCatalogSource") : null);
         });
     }
 
@@ -411,8 +481,8 @@ final class RealmPlanningHttpController {
                             ? request.getAsJsonObject("arrayExpansionCandidateSetSource") : null,
                     request.has("arrayLayoutLoopStateSource") && request.get("arrayLayoutLoopStateSource").isJsonObject()
                             ? request.getAsJsonObject("arrayLayoutLoopStateSource") : null,
-                    request.has("structureEnvelopeFactsSource") && request.get("structureEnvelopeFactsSource").isJsonObject()
-                            ? request.getAsJsonObject("structureEnvelopeFactsSource") : null);
+                    request.has("templateCatalogSource") && request.get("templateCatalogSource").isJsonObject()
+                            ? request.getAsJsonObject("templateCatalogSource") : null);
         });
     }
 
@@ -432,8 +502,8 @@ final class RealmPlanningHttpController {
                     request.has("arrayLayoutLoopStateSource")
                             && request.get("arrayLayoutLoopStateSource").isJsonObject()
                             ? request.getAsJsonObject("arrayLayoutLoopStateSource") : null,
-                    request.has("structureEnvelopeFactsSource") && request.get("structureEnvelopeFactsSource").isJsonObject()
-                            ? request.getAsJsonObject("structureEnvelopeFactsSource") : null);
+                    request.has("templateCatalogSource") && request.get("templateCatalogSource").isJsonObject()
+                            ? request.getAsJsonObject("templateCatalogSource") : null);
         });
     }
 
@@ -542,11 +612,13 @@ final class RealmPlanningHttpController {
             if (!request.has("designSlotPlan") || !request.get("designSlotPlan").isJsonObject()) {
                 throw new IllegalArgumentException("designSlotPlan object is required.");
             }
+            JsonObject designSlotPlan = new PatchExplorerService(debugRoot()).resolveD4DesignSlotPlan(
+                    runId, citySeedId, request.getAsJsonObject("designSlotPlan"));
             return CityPlanningEndpointHandler.handlePlanD4StructureClusterGroups(debugRoot(), runId, citySeedId,
                     request.getAsJsonObject("terrasenseProfileSource"),
-                    request.getAsJsonObject("designSlotPlan"),
-                    request.has("structureEnvelopeFactsSource") && request.get("structureEnvelopeFactsSource").isJsonObject()
-                            ? request.getAsJsonObject("structureEnvelopeFactsSource") : null,
+                    designSlotPlan,
+                    request.has("templateCatalogSource") && request.get("templateCatalogSource").isJsonObject()
+                            ? request.getAsJsonObject("templateCatalogSource") : null,
                     hasValue(request, "groupCount") ? intValue(request, "groupCount", 5) : null,
                     hasValue(request, "candidatesPerSlot") ? intValue(request, "candidatesPerSlot", 5) : null,
                     hasValue(request, "beamWidth") ? intValue(request, "beamWidth", 25) : null);
@@ -569,8 +641,8 @@ final class RealmPlanningHttpController {
             return CityPlanningEndpointHandler.handleSelectD4Candidates(debugRoot(), runId, citySeedId,
                     request.getAsJsonObject("terrasenseProfileSource"),
                     request.getAsJsonObject("anchorSelectionPlan"),
-                    request.has("structureEnvelopeFactsSource") && request.get("structureEnvelopeFactsSource").isJsonObject()
-                            ? request.getAsJsonObject("structureEnvelopeFactsSource") : null,
+                    request.has("templateCatalogSource") && request.get("templateCatalogSource").isJsonObject()
+                            ? request.getAsJsonObject("templateCatalogSource") : null,
                     request.has("anchorCandidateSetSource") && request.get("anchorCandidateSetSource").isJsonObject()
                             ? request.getAsJsonObject("anchorCandidateSetSource") : null);
         });
@@ -589,8 +661,8 @@ final class RealmPlanningHttpController {
             return CityPlanningEndpointHandler.handleSelectD4StructureClusterGroup(debugRoot(), runId, citySeedId,
                     request.getAsJsonObject("terrasenseProfileSource"),
                     requiredString(request, "groupCandidateId"),
-                    request.has("structureEnvelopeFactsSource") && request.get("structureEnvelopeFactsSource").isJsonObject()
-                            ? request.getAsJsonObject("structureEnvelopeFactsSource") : null,
+                    request.has("templateCatalogSource") && request.get("templateCatalogSource").isJsonObject()
+                            ? request.getAsJsonObject("templateCatalogSource") : null,
                     request.has("structureClusterGroupCandidateSetSource")
                             && request.get("structureClusterGroupCandidateSetSource").isJsonObject()
                             ? request.getAsJsonObject("structureClusterGroupCandidateSetSource") : null);
@@ -610,11 +682,13 @@ final class RealmPlanningHttpController {
             if (!request.has("designSlotPlan") || !request.get("designSlotPlan").isJsonObject()) {
                 throw new IllegalArgumentException("designSlotPlan object is required.");
             }
+            JsonObject designSlotPlan = new PatchExplorerService(debugRoot()).resolveD4DesignSlotPlan(
+                    runId, citySeedId, request.getAsJsonObject("designSlotPlan"));
             return CityPlanningEndpointHandler.handleCreateD4CandidateSession(debugRoot(), runId, citySeedId,
                     request.getAsJsonObject("terrasenseProfileSource"),
-                    request.getAsJsonObject("designSlotPlan"),
-                    request.has("structureEnvelopeFactsSource") && request.get("structureEnvelopeFactsSource").isJsonObject()
-                            ? request.getAsJsonObject("structureEnvelopeFactsSource") : null,
+                    designSlotPlan,
+                    request.has("templateCatalogSource") && request.get("templateCatalogSource").isJsonObject()
+                            ? request.getAsJsonObject("templateCatalogSource") : null,
                     stringValue(request, "sessionId", ""));
         });
     }
@@ -625,8 +699,8 @@ final class RealmPlanningHttpController {
             String runId = requiredString(request, "runId");
             String citySeedId = requiredString(request, "citySeedId");
             return CityPlanningEndpointHandler.handlePlanD4NextCandidates(debugRoot(), runId, citySeedId,
-                    request.has("structureEnvelopeFactsSource") && request.get("structureEnvelopeFactsSource").isJsonObject()
-                            ? request.getAsJsonObject("structureEnvelopeFactsSource") : null);
+                    request.has("templateCatalogSource") && request.get("templateCatalogSource").isJsonObject()
+                            ? request.getAsJsonObject("templateCatalogSource") : null);
         });
     }
 
@@ -655,36 +729,10 @@ final class RealmPlanningHttpController {
             }
             return CityPlanningEndpointHandler.handleFinalizeD4CandidateSession(debugRoot(), runId, citySeedId,
                     request.getAsJsonObject("terrasenseProfileSource"),
-                    request.has("structureEnvelopeFactsSource") && request.get("structureEnvelopeFactsSource").isJsonObject()
-                            ? request.getAsJsonObject("structureEnvelopeFactsSource") : null,
+                    request.has("templateCatalogSource") && request.get("templateCatalogSource").isJsonObject()
+                            ? request.getAsJsonObject("templateCatalogSource") : null,
                     stringValue(request, "sessionId", ""));
         });
-    }
-
-    void handleCityProfileStructureEnvelopes(HttpExchange exchange) {
-        handle(exchange, "POST", () -> callOnServerThread(() -> {
-            JsonObject request = GisHttpUtil.readJsonObject(exchange);
-            String runId = requiredString(request, "runId");
-            String citySeedId = requiredString(request, "citySeedId");
-            if (!request.has("terrasenseProfileSource") || !request.get("terrasenseProfileSource").isJsonObject()) {
-                throw new IllegalArgumentException("terrasenseProfileSource object is required.");
-            }
-            ServerPlayer player = resolvePlayer(stringValue(request, "playerName", ""));
-            String dimensionId = stringValue(request, "dimensionId", "");
-            if (dimensionId.isBlank()) {
-                dimensionId = restoredRunDimensionId(runId);
-            }
-            ServerLevel level = resolveLevel(dimensionId, player);
-            return CityPlanningEndpointHandler.handleProfileStructureEnvelopes(debugRoot(), runId, citySeedId,
-                    request.getAsJsonObject("terrasenseProfileSource"),
-                    request.has("structureIds") && request.get("structureIds").isJsonArray()
-                            ? request.getAsJsonArray("structureIds") : new JsonArray(),
-                    intValue(request, "sampleCount", 256),
-                    booleanValue(request, "forceRefresh", false)
-                            || "rescan".equals(stringValue(request, "cacheMode", "")),
-                    new CityPlanningEndpointHandler.MinecraftServerHolder(server),
-                    level);
-        }));
     }
 
     void handleCityPlanD5(HttpExchange exchange) {
@@ -769,6 +817,9 @@ final class RealmPlanningHttpController {
     void handleCityExecuteD7(HttpExchange exchange) {
         handle(exchange, "POST", () -> callOnServerThread(() -> {
             JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            if (request.has("debugLateMaterialize")) {
+                throw new IllegalArgumentException("CITY_CONFIGURED_STRUCTURE_FLOW_REMOVED");
+            }
             String runId = requiredString(request, "runId");
             String citySeedId = requiredString(request, "citySeedId");
             boolean executeStructurePlacement = booleanValue(request, "executeStructurePlacement", false);
@@ -779,19 +830,12 @@ final class RealmPlanningHttpController {
             }
             ServerLevel level = resolveLevel(dimensionId, player);
             long worldSeed = longValue(request, "worldSeed", level.getSeed());
-            boolean debugLateMaterialize = booleanValue(request, "debugLateMaterialize", false);
             JsonObject response = CityPlanningEndpointHandler.handleExecuteD7(debugRoot(), runId, citySeedId,
                     worldSeed,
                     executeStructurePlacement,
-                    debugLateMaterialize,
                     new CityPlanningEndpointHandler.MinecraftServerHolder(server),
                     level);
-            if (executeStructurePlacement && debugLateMaterialize) {
-                server.saveAllChunks(true, true, true);
-                response.addProperty("worldSaveRequested", true);
-            } else {
-                response.addProperty("worldSaveRequested", false);
-            }
+            response.addProperty("worldSaveRequested", false);
             return response;
         }));
     }

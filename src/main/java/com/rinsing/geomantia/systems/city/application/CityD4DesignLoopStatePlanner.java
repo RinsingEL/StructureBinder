@@ -172,7 +172,7 @@ public final class CityD4DesignLoopStatePlanner {
         occupied.addProperty("sourceKind", sourceKind);
         occupied.addProperty("sourceRoundIndex", roundIndex);
         copyString(source, occupied, "anchorId");
-        copyString(source, occupied, "structureId");
+        copyString(source, occupied, "templateId");
         copyString(source, occupied, "arrayId");
         copyString(source, occupied, "functionZoneId");
         occupied.addProperty("envelopeSource", selected.key());
@@ -410,7 +410,7 @@ public final class CityD4DesignLoopStatePlanner {
         if (!anchorId.isBlank()) {
             return anchorId;
         }
-        String id = stringValue(source, "placedStructureId", stringValue(source, "structureId"));
+        String id = stringValue(source, "templateId", stringValue(source, "placedStructureId"));
         return id.isBlank() ? "unknown" : id;
     }
 

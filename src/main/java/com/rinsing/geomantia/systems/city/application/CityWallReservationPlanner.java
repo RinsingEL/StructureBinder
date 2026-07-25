@@ -1033,7 +1033,7 @@ public final class CityWallReservationPlanner {
             JsonObject anchor = elem.getAsJsonObject();
             JsonObject item = new JsonObject();
             item.addProperty("anchorId", stringValue(anchor, "anchorId", ""));
-            item.addProperty("structureId", stringValue(anchor, "structureId", ""));
+            item.addProperty("templateId", stringValue(anchor, "templateId", ""));
             if (anchor.has("reservedEnvelope") && anchor.get("reservedEnvelope").isJsonObject()) {
                 item.add("blockBounds", anchor.getAsJsonObject("reservedEnvelope").deepCopy());
             } else if (anchor.has("plannedFootprint") && anchor.get("plannedFootprint").isJsonObject()) {

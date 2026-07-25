@@ -6,7 +6,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.rinsing.geomantia.systems.city.application.CityLandformReviewBuilder;
 import com.rinsing.geomantia.systems.city.application.CitySiteContextBuilder;
-import com.rinsing.geomantia.systems.city.application.CityStructureEnvelopeProfiler;
+import com.rinsing.geomantia.systems.city.application.CityStructureMaterializationPlanner;
+import com.rinsing.geomantia.systems.city.application.CityTemplatePlacementGeometry;
 import com.rinsing.geomantia.systems.city.application.CityWallPlanner;
 import com.rinsing.geomantia.systems.city.application.CityWallReservationPlanner;
 import com.rinsing.geomantia.systems.city.application.dressing.CityDecorationTerrainProbe;
@@ -51,8 +52,12 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.EnumSet;
+import java.util.HexFormat;
 import java.util.List;
+import java.util.OptionalInt;
 import java.util.function.Predicate;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -63,6 +68,47 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityPlanningEndpointHandlerTest {
+
+    @Test
+    void runWorldIdentityAcceptsMatchingSeedAndDimension() throws Exception {
+        Path runDir = Files.createTempDirectory("city-run-world-identity-match");
+        Files.writeString(runDir.resolve("world_survey_context.json"), """
+                {"dimensionId":"minecraft:overworld","worldSeed":"1269623911921362524"}
+                """);
+
+        assertDoesNotThrow(() -> CityPlanningEndpointHandler.requireMatchingRunWorldIdentity(
+                runDir, "minecraft:overworld", 1269623911921362524L));
+    }
+
+    @Test
+    void runWorldIdentityRejectsDifferentSeedBeforeD3Artifacts() throws Exception {
+        Path runDir = Files.createTempDirectory("city-run-world-identity-seed-mismatch");
+        Files.writeString(runDir.resolve("world_survey_context.json"), """
+                {"dimensionId":"minecraft:overworld","worldSeed":"-281932406572342714"}
+                """);
+        Path d3Directory = runDir.resolve("city_d3_city_test");
+
+        IllegalArgumentException failure = assertThrows(IllegalArgumentException.class,
+                () -> CityPlanningEndpointHandler.requireMatchingRunWorldIdentity(
+                        runDir, "minecraft:overworld", 1269623911921362524L));
+
+        assertTrue(failure.getMessage().contains("CITY_RUN_WORLD_IDENTITY_MISMATCH"), failure::getMessage);
+        assertFalse(Files.exists(d3Directory));
+    }
+
+    @Test
+    void runWorldIdentityRejectsDifferentDimension() throws Exception {
+        Path runDir = Files.createTempDirectory("city-run-world-identity-dimension-mismatch");
+        Files.writeString(runDir.resolve("world_survey_context.json"), """
+                {"dimensionId":"minecraft:overworld","worldSeed":"42"}
+                """);
+
+        IllegalArgumentException failure = assertThrows(IllegalArgumentException.class,
+                () -> CityPlanningEndpointHandler.requireMatchingRunWorldIdentity(
+                        runDir, "minecraft:the_nether", 42L));
+
+        assertTrue(failure.getMessage().contains("CITY_RUN_WORLD_IDENTITY_MISMATCH"), failure::getMessage);
+    }
 
     @Test
     void decorationLandUseArtifactsRequireCurrentSurfacePrintPlan() throws Exception {
@@ -89,7 +135,6 @@ class CityPlanningEndpointHandlerTest {
         String runId = "run_land_use_surface_plan";
         String citySeedId = "city_test";
         prepareD5Artifacts(debugRoot, runId, citySeedId);
-        CityPlanningEndpointHandler.handlePlanD6(debugRoot, runId, citySeedId, null, null);
         Path landUseDirectory = debugRoot.resolve(runId).resolve("city_land_use_" + citySeedId);
         Files.createDirectories(landUseDirectory);
         Files.writeString(landUseDirectory.resolve("land_use_terrain_field.json"),
@@ -119,7 +164,6 @@ class CityPlanningEndpointHandlerTest {
         String runId = "run_land_use_unknown_block";
         String citySeedId = "city_test";
         prepareD5Artifacts(debugRoot, runId, citySeedId);
-        CityPlanningEndpointHandler.handlePlanD6(debugRoot, runId, citySeedId, null, null);
         Path landUseDirectory = debugRoot.resolve(runId).resolve("city_land_use_" + citySeedId);
         Files.createDirectories(landUseDirectory);
         Files.writeString(landUseDirectory.resolve("land_use_terrain_field.json"),
@@ -182,7 +226,6 @@ class CityPlanningEndpointHandlerTest {
         String runId = "run_land_use_missing_surface";
         String citySeedId = "city_test";
         prepareD5Artifacts(debugRoot, runId, citySeedId);
-        CityPlanningEndpointHandler.handlePlanD6(debugRoot, runId, citySeedId, null, null);
         Path landUseDirectory = debugRoot.resolve(runId).resolve("city_land_use_" + citySeedId);
         Files.createDirectories(landUseDirectory);
         Files.writeString(landUseDirectory.resolve("land_use_terrain_field.json"),
@@ -206,7 +249,6 @@ class CityPlanningEndpointHandlerTest {
         String runId = "run_land_use_orphan_surface";
         String citySeedId = "city_test";
         prepareD5Artifacts(debugRoot, runId, citySeedId);
-        CityPlanningEndpointHandler.handlePlanD6(debugRoot, runId, citySeedId, null, null);
         Path landUseDirectory = debugRoot.resolve(runId).resolve("city_land_use_" + citySeedId);
         Files.createDirectories(landUseDirectory);
         Files.writeString(landUseDirectory.resolve("city_land_use_surface_print_plan.json"), "{}");
@@ -243,31 +285,42 @@ class CityPlanningEndpointHandlerTest {
     }
 
     @Test
-    void lockedTemplatePlanDoesNotRequireStructureStartSignature() {
+    void lockedTemplatePlanUsesBeardThinWithoutStructureStartSignature() {
         JsonObject plan = JsonParser.parseString("""
                 {
+                  "schemaVersion": "city_template_placement_plan.v0.1",
+                  "cityId": "city_test",
                   "locked": true,
                   "plannedWorldgenStructures": [{
                     "status": "planned_worldgen",
                     "anchorId": "template_house",
+                    "templateId": "geomantia:test_house",
                     "materializationSource": "structure_template_nbt",
                     "templateRef": "geomantia:d6d7_fixture/house",
-                    "templateDatumPolicy": "worldgen_surface_motion_blocking_no_leaves",
+                    "templateHash": "sha256:test-house",
+                    "variantId": "fixed_v1",
+                    "rotation": "NONE",
+                    "mirror": "NONE",
+                    "rawSize": {"width":11,"height":1,"depth":11},
+                    "anchorBlock": {"x":0,"z":0},
+                    "terrainPosePolicy": "structure_start_beard_thin",
+                    "templateDatumPolicy": "generator_base_height_motion_blocking_no_leaves",
                     "locked": true,
                     "actualFootprint": {"minX":0,"minZ":0,"maxX":10,"maxZ":10},
                     "lockedActualFootprint": {"minX":0,"minZ":0,"maxX":10,"maxZ":10},
                     "lockedCollisionEnvelope": {"minX":0,"minZ":0,"maxX":10,"maxZ":10},
-                    "lockedBBoxGroupKey": "",
-                    "expectedStartSignature": "",
-                    "pieceBoxes": []
+                    "collisionEnvelope": {"minX":0,"minZ":0,"maxX":10,"maxZ":10},
+                    "maskEnvelope": {"minX":0,"minZ":0,"maxX":10,"maxZ":10},
+                    "ownerChunks": [{"x":0,"z":0}]
                   }]
                 }
                 """).getAsJsonObject();
 
         assertDoesNotThrow(() -> CityPlanningEndpointHandler.validateLockedMaterializationPlan(plan));
         JsonObject templateItem = plan.getAsJsonArray("plannedWorldgenStructures").get(0).getAsJsonObject();
-        templateItem.addProperty("templateDatumPolicy", "generator_base_height_motion_blocking_no_leaves");
-        assertDoesNotThrow(() -> CityPlanningEndpointHandler.validateLockedMaterializationPlan(plan));
+        templateItem.addProperty("templateDatumPolicy", "worldgen_surface_motion_blocking_no_leaves");
+        assertThrows(IllegalArgumentException.class,
+                () -> CityPlanningEndpointHandler.validateLockedMaterializationPlan(plan));
         templateItem.addProperty("templateDatumPolicy", "unsupported_datum_policy");
         assertThrows(IllegalArgumentException.class,
                 () -> CityPlanningEndpointHandler.validateLockedMaterializationPlan(plan));
@@ -275,7 +328,7 @@ class CityPlanningEndpointHandlerTest {
         assertThrows(IllegalArgumentException.class,
                 () -> CityPlanningEndpointHandler.validateLockedMaterializationPlan(plan));
         plan.getAsJsonArray("plannedWorldgenStructures").get(0).getAsJsonObject()
-                .addProperty("templateDatumPolicy", "worldgen_surface_motion_blocking_no_leaves");
+                .addProperty("templateDatumPolicy", "generator_base_height_motion_blocking_no_leaves");
         plan.getAsJsonArray("plannedWorldgenStructures").get(0).getAsJsonObject().remove("templateRef");
         plan.getAsJsonArray("plannedWorldgenStructures").get(0).getAsJsonObject().remove("materializationSource");
         assertThrows(IllegalArgumentException.class,
@@ -346,11 +399,13 @@ class CityPlanningEndpointHandlerTest {
 
         Path catalogPath = runDir.resolve("debug_structure_profile_catalog.json");
         Files.writeString(catalogPath, debugStructureCatalog());
+        Path templateCatalogPath = runDir.resolve("template_catalog.json");
+        Files.writeString(templateCatalogPath, fixedTemplateCatalog());
 
         JsonObject response = CityPlanningEndpointHandler.handlePlanD4(
                 debugRoot, runId, citySeedId,
                 terraSenseSource(catalogPath),
-                structureAnchorPlan(review, 1));
+                templateCatalogSource(templateCatalogPath), structureAnchorPlan(review, 1));
 
         assertTrue(response.get("ok").getAsBoolean());
         JsonObject artifacts = response.getAsJsonObject("artifacts");
@@ -398,11 +453,13 @@ class CityPlanningEndpointHandlerTest {
 
         Path catalogPath = runDir.resolve("debug_structure_profile_catalog.json");
         Files.writeString(catalogPath, debugStructureCatalog());
+        Path templateCatalogPath = runDir.resolve("template_catalog.json");
+        Files.writeString(templateCatalogPath, fixedTemplateCatalog());
         JsonObject candidates = CityPlanningEndpointHandler.handlePlanD4Candidates(
                 debugRoot, runId, citySeedId, terraSenseSource(catalogPath),
-                designSlotPlan(review), null);
+                designSlotPlan(review), templateCatalogSource(templateCatalogPath));
 
-        assertTrue(candidates.get("ok").getAsBoolean());
+        assertTrue(candidates.get("ok").getAsBoolean(), candidates.toString());
         assertEquals("all_slots_tentative_order_debug",
                 candidates.getAsJsonObject("anchorCandidateSet").get("planningMode").getAsString());
         JsonObject artifacts = candidates.getAsJsonObject("artifacts");
@@ -428,7 +485,7 @@ class CityPlanningEndpointHandlerTest {
 
         JsonObject selected = CityPlanningEndpointHandler.handleSelectD4Candidates(
                 debugRoot, runId, citySeedId, terraSenseSource(catalogPath),
-                selectionPlan, null, null);
+                selectionPlan, templateCatalogSource(templateCatalogPath), null);
 
         assertTrue(selected.get("ok").getAsBoolean());
         JsonObject selectedArtifacts = selected.getAsJsonObject("artifacts");
@@ -476,9 +533,11 @@ class CityPlanningEndpointHandlerTest {
 
         Path catalogPath = runDir.resolve("debug_structure_profile_catalog.json");
         Files.writeString(catalogPath, debugStructureCatalog());
+        Path templateCatalogPath = runDir.resolve("template_catalog.json");
+        Files.writeString(templateCatalogPath, fixedTemplateCatalog());
         JsonObject arrayCandidates = CityPlanningEndpointHandler.handlePlanD4ArrayCandidates(
                 debugRoot, runId, citySeedId, terraSenseSource(catalogPath),
-                arrayCandidatePlan(review), null, null, new JsonArray());
+                arrayCandidatePlan(review), templateCatalogSource(templateCatalogPath), null, new JsonArray());
 
         assertTrue(arrayCandidates.get("ok").getAsBoolean());
         JsonObject artifacts = arrayCandidates.getAsJsonObject("artifacts");
@@ -491,7 +550,7 @@ class CityPlanningEndpointHandlerTest {
 
         JsonObject d4 = CityPlanningEndpointHandler.handlePlanD4(
                 debugRoot, runId, citySeedId, terraSenseSource(catalogPath),
-                expandedPlan, null);
+                templateCatalogSource(templateCatalogPath), expandedPlan);
 
         assertTrue(d4.get("ok").getAsBoolean());
         assertEquals(4, d4.getAsJsonObject("structureAnchorMap")
@@ -534,10 +593,12 @@ class CityPlanningEndpointHandlerTest {
                 CityJson.GSON.toJson(review.asJson()));
         Path catalogPath = runDir.resolve("debug_structure_profile_catalog.json");
         Files.writeString(catalogPath, debugStructureCatalog());
+        Path templateCatalogPath = runDir.resolve("template_catalog.json");
+        Files.writeString(templateCatalogPath, fixedTemplateCatalog());
 
         JsonObject created = CityPlanningEndpointHandler.handleCreateD4ArrayLayoutLoop(
                 debugRoot, runId, citySeedId, terraSenseSource(catalogPath),
-                arrayLayoutPlan(review), null, null, null);
+                arrayLayoutPlan(review), templateCatalogSource(templateCatalogPath), null, null);
         assertTrue(created.get("ok").getAsBoolean());
         JsonObject createArtifacts = created.getAsJsonObject("artifacts");
         assertTrue(Files.exists(debugRoot.resolve(createArtifacts.get("arrayLayoutLoopState").getAsString())));
@@ -547,7 +608,7 @@ class CityPlanningEndpointHandlerTest {
                 debugRoot, runId, citySeedId, terraSenseSource(catalogPath),
                 created.getAsJsonObject("arrayLayoutLoopState").get("stateId").getAsString(),
                 arrayLayoutItem(review, "compound_cluster", "residential_cluster", 3),
-                null, null);
+                null, templateCatalogSource(templateCatalogPath));
         assertTrue(executed.get("ok").getAsBoolean());
         assertEquals("loop_state_0001", executed.getAsJsonObject("arrayLayoutLoopState")
                 .get("stateId").getAsString());
@@ -559,13 +620,13 @@ class CityPlanningEndpointHandlerTest {
                         debugRoot, runId, citySeedId, terraSenseSource(catalogPath),
                         "loop_state_0000",
                         arrayLayoutItem(review, "plaza_ring", "stale_cluster", 2),
-                        null, null));
+                        null, templateCatalogSource(templateCatalogPath)));
         assertTrue(stale.getMessage().contains("D4_ARRAY_LAYOUT_LOOP_STATE_STALE"));
 
         JsonObject finalized = CityPlanningEndpointHandler.handleFinalizeD4ArrayLayoutLoop(
                 debugRoot, runId, citySeedId, terraSenseSource(catalogPath),
                 executed.getAsJsonObject("arrayLayoutLoopState").get("stateId").getAsString(),
-                null, null);
+                null, templateCatalogSource(templateCatalogPath));
         assertTrue(finalized.get("ok").getAsBoolean());
         assertEquals(3, finalized.getAsJsonObject("structureAnchorMap")
                 .getAsJsonArray("anchors").size());
@@ -597,6 +658,8 @@ class CityPlanningEndpointHandlerTest {
         Files.writeString(d3Dir.resolve("city_landform_review_package.json"), CityJson.GSON.toJson(review.asJson()));
         Path catalogPath = runDir.resolve("debug_structure_profile_catalog.json");
         Files.writeString(catalogPath, debugStructureCatalog());
+        Path templateCatalogPath = runDir.resolve("template_catalog.json");
+        Files.writeString(templateCatalogPath, fixedTemplateCatalog());
         Path occupiedMapPath = runDir.resolve("manor_occupied_anchor_map.json");
         Files.writeString(occupiedMapPath, """
                 {"anchors":[{"anchorId":"manor_core","collisionEnvelope":{"minX":-48,"minZ":-48,"maxX":48,"maxZ":48}}]}
@@ -606,7 +669,7 @@ class CityPlanningEndpointHandlerTest {
 
         JsonObject created = CityPlanningEndpointHandler.handleCreateD4ArrayLayoutLoop(
                 debugRoot, runId, citySeedId, terraSenseSource(catalogPath), arrayLayoutPlanV04(),
-                null, null, occupiedSource);
+                templateCatalogSource(templateCatalogPath), null, occupiedSource);
         String stateId = created.getAsJsonObject("arrayLayoutLoopState").get("stateId").getAsString();
         JsonObject request = arrayExpansionRequest(review);
 
@@ -625,7 +688,7 @@ class CityPlanningEndpointHandlerTest {
                     "arrayId": "global_residential_theme",
                     "plannerType": "compound_cluster",
                     "role": "residential",
-                    "fillPool": [{"structureId": "minecraft:desert_pyramid", "weight": 1}],
+                    "fillPool": [{"templateId": "geomantia:test_house", "variantId": "test_v1"}],
                     "countPolicy": {"minCount": 2, "targetCount": 2, "maxCount": 2},
                     "variantSelectionMode": "round_robin"
                   }
@@ -642,18 +705,20 @@ class CityPlanningEndpointHandlerTest {
         IllegalArgumentException globalSelectionRequired = assertThrows(IllegalArgumentException.class,
                 () -> CityPlanningEndpointHandler.handlePlanD4ArrayExpansionCandidates(
                         debugRoot, runId, citySeedId, terraSenseSource(catalogPath), stateId,
-                        globalRequest, null, null));
+                        globalRequest, null, templateCatalogSource(templateCatalogPath)));
         assertTrue(globalSelectionRequired.getMessage().contains("D4_ARRAY_LAYOUT_GLOBAL_PATCH_SELECTION_REQUIRED"));
         globalRequest.addProperty("selectedGlobalPatchRef", globalPatchRef);
         JsonObject globalPlanned = CityPlanningEndpointHandler.handlePlanD4ArrayExpansionCandidates(
-                debugRoot, runId, citySeedId, terraSenseSource(catalogPath), stateId, globalRequest, null, null);
+                debugRoot, runId, citySeedId, terraSenseSource(catalogPath), stateId, globalRequest, null,
+                templateCatalogSource(templateCatalogPath));
         assertTrue(globalPlanned.get("ok").getAsBoolean());
         assertEquals(globalPatchRef, globalPlanned.getAsJsonObject("arrayExpansionCandidateSet")
                 .getAsJsonArray("arrayCandidates").get(0).getAsJsonObject()
                 .get("selectedGlobalPatchRef").getAsString());
 
         JsonObject planned = CityPlanningEndpointHandler.handlePlanD4ArrayExpansionCandidates(
-                debugRoot, runId, citySeedId, terraSenseSource(catalogPath), stateId, request, null, null);
+                debugRoot, runId, citySeedId, terraSenseSource(catalogPath), stateId, request, null,
+                templateCatalogSource(templateCatalogPath));
         assertTrue(planned.get("ok").getAsBoolean());
         assertEquals(3, planned.getAsJsonObject("arrayExpansionCandidateSet")
                 .getAsJsonArray("arrayCandidates").size());
@@ -666,7 +731,8 @@ class CityPlanningEndpointHandlerTest {
         String candidateId = planned.getAsJsonObject("arrayExpansionCandidateSet").getAsJsonArray("arrayCandidates")
                 .get(0).getAsJsonObject().get("candidateId").getAsString();
         JsonObject selected = CityPlanningEndpointHandler.handleSelectD4ArrayExpansionCandidate(
-                debugRoot, runId, citySeedId, stateId, candidateId, false, "AI 选择东侧阵列", null, null, null);
+                debugRoot, runId, citySeedId, stateId, candidateId, false, "AI 选择东侧阵列", null, null,
+                templateCatalogSource(templateCatalogPath));
         assertTrue(selected.get("ok").getAsBoolean());
         assertEquals(1, selected.getAsJsonObject("arrayLayoutLoopState").get("iteration").getAsInt());
         assertEquals("ai_or_human_selected", selected.getAsJsonObject("executionTrace").getAsJsonArray("items")
@@ -722,7 +788,7 @@ class CityPlanningEndpointHandlerTest {
                   "anchors": [
                     {
                       "anchorId": "admin_core",
-                      "structureId": "minecraft:desert_pyramid",
+                      "structureId": "geomantia:test_house",
                       "collisionEnvelope": {"minX": -8, "minZ": -8, "maxX": 8, "maxZ": 8},
                       "safetyEnvelope": {"minX": -80, "minZ": -80, "maxX": 80, "maxZ": 80}
                     }
@@ -812,7 +878,7 @@ class CityPlanningEndpointHandlerTest {
 
         IllegalArgumentException executeD7 = assertThrows(IllegalArgumentException.class,
                 () -> CityPlanningEndpointHandler.handleExecuteD7(
-                        debugRoot, runId, citySeedId, 12345L, false, false, null, null));
+                        debugRoot, runId, citySeedId, 12345L, false, null, null));
         assertTrue(executeD7.getMessage().contains("D6 artifacts not found"));
     }
 
@@ -853,9 +919,11 @@ class CityPlanningEndpointHandlerTest {
 
         Path catalogPath = runDir.resolve("debug_structure_profile_catalog.json");
         Files.writeString(catalogPath, debugStructureCatalog());
+        Path templateCatalogPath = runDir.resolve("template_catalog.json");
+        Files.writeString(templateCatalogPath, fixedTemplateCatalog());
         JsonObject planned = CityPlanningEndpointHandler.handlePlanD4StructureClusterGroups(
                 debugRoot, runId, citySeedId, terraSenseSource(catalogPath),
-                designSlotPlan(review), null, null, null, null);
+                designSlotPlan(review), templateCatalogSource(templateCatalogPath), null, null, null);
 
         assertTrue(planned.get("ok").getAsBoolean());
         JsonObject artifacts = planned.getAsJsonObject("artifacts");
@@ -867,7 +935,8 @@ class CityPlanningEndpointHandlerTest {
 
         JsonObject selected = CityPlanningEndpointHandler.handleSelectD4StructureClusterGroup(
                 debugRoot, runId, citySeedId, terraSenseSource(catalogPath),
-                firstGroup.get("groupCandidateId").getAsString(), null, null);
+                firstGroup.get("groupCandidateId").getAsString(),
+                templateCatalogSource(templateCatalogPath), null);
 
         assertTrue(selected.get("ok").getAsBoolean());
         assertTrue(selected.getAsJsonObject("artifacts").has("sourceStructureClusterGroupCandidateSet"));
@@ -914,16 +983,18 @@ class CityPlanningEndpointHandlerTest {
 
         Path catalogPath = runDir.resolve("debug_structure_profile_catalog.json");
         Files.writeString(catalogPath, debugStructureCatalog());
+        Path templateCatalogPath = runDir.resolve("template_catalog.json");
+        Files.writeString(templateCatalogPath, fixedTemplateCatalog());
         JsonObject created = CityPlanningEndpointHandler.handleCreateD4CandidateSession(
                 debugRoot, runId, citySeedId, terraSenseSource(catalogPath),
-                designSlotPlan(review), null, "session_test");
+                designSlotPlan(review), templateCatalogSource(templateCatalogPath), "session_test");
         assertTrue(created.get("ok").getAsBoolean());
         assertEquals("admin_core", created.get("currentSlotId").getAsString());
         assertTrue(Files.exists(debugRoot.resolve(created.getAsJsonObject("artifacts")
                 .get("d4CandidateSession").getAsString())));
 
         JsonObject next = CityPlanningEndpointHandler.handlePlanD4NextCandidates(
-                debugRoot, runId, citySeedId, null);
+                debugRoot, runId, citySeedId, templateCatalogSource(templateCatalogPath));
         assertTrue(next.get("ok").getAsBoolean());
         assertFalse(next.getAsJsonObject("artifacts").has("structureClusterCandidateOverview"));
         JsonObject firstCandidate = next.getAsJsonObject("slotCandidateSet")
@@ -939,7 +1010,7 @@ class CityPlanningEndpointHandlerTest {
         assertEquals("residential_01", selected.get("nextSlotId").getAsString());
 
         JsonObject nextSecond = CityPlanningEndpointHandler.handlePlanD4NextCandidates(
-                debugRoot, runId, citySeedId, null);
+                debugRoot, runId, citySeedId, templateCatalogSource(templateCatalogPath));
         JsonObject secondCandidate = nextSecond.getAsJsonObject("slotCandidateSet")
                 .getAsJsonArray("slotCandidates").get(0).getAsJsonObject()
                 .getAsJsonArray("candidates").get(0).getAsJsonObject();
@@ -949,7 +1020,8 @@ class CityPlanningEndpointHandlerTest {
                 "test second pick", false);
 
         JsonObject finalized = CityPlanningEndpointHandler.handleFinalizeD4CandidateSession(
-                debugRoot, runId, citySeedId, terraSenseSource(catalogPath), null, "session_test");
+                debugRoot, runId, citySeedId, terraSenseSource(catalogPath),
+                templateCatalogSource(templateCatalogPath), "session_test");
         assertTrue(finalized.get("ok").getAsBoolean());
         assertEquals("finalized", finalized.get("status").getAsString());
         JsonObject artifacts = finalized.getAsJsonObject("artifacts");
@@ -1000,8 +1072,11 @@ class CityPlanningEndpointHandlerTest {
 
         Path catalogPath = runDir.resolve("debug_structure_profile_catalog.json");
         Files.writeString(catalogPath, debugStructureCatalog());
+        Path templateCatalogPath = runDir.resolve("template_catalog.json");
+        Files.writeString(templateCatalogPath, fixedTemplateCatalog());
         CityPlanningEndpointHandler.handlePlanD4(debugRoot, runId, citySeedId,
-                terraSenseSource(catalogPath), structureAnchorPlan(review, 2));
+                terraSenseSource(catalogPath), templateCatalogSource(templateCatalogPath),
+                structureAnchorPlan(review, 2));
 
         JsonObject response = CityPlanningEndpointHandler.handlePlanD5(debugRoot, runId, citySeedId);
 
@@ -1029,24 +1104,21 @@ class CityPlanningEndpointHandlerTest {
         String citySeedId = "city_test";
         prepareD5Artifacts(debugRoot, runId, citySeedId);
 
-        JsonObject d6 = CityPlanningEndpointHandler.handlePlanD6(
-                debugRoot,
-                runId,
-                citySeedId,
-                null,
-                null);
+        Path d6Dir = debugRoot.resolve(runId).resolve("city_d6_" + citySeedId);
+        JsonObject d6Plan = JsonParser.parseString(Files.readString(
+                d6Dir.resolve("structure_materialization_plan.json"))).getAsJsonObject();
+        JsonObject d6Trace = JsonParser.parseString(Files.readString(
+                d6Dir.resolve("structure_materialization_trace.json"))).getAsJsonObject();
+        Path d6Preview = new com.rinsing.geomantia.systems.city.infrastructure.preview.CityStructureLandingPreviewRenderer()
+                .renderD6(d6Plan, d6Trace, d6Dir);
 
-        assertTrue(d6.get("ok").getAsBoolean());
-        assertEquals("worldgen_time_planned_registry",
-                d6.getAsJsonObject("structureMaterializationPlan").get("dryRunMode").getAsString());
-        assertFalse(d6.getAsJsonObject("structureMaterializationPlan")
-                .getAsJsonArray("plannedWorldgenStructures")
-                .isEmpty());
-        JsonObject d6Artifacts = d6.getAsJsonObject("artifacts");
-        assertTrue(Files.exists(debugRoot.resolve(d6Artifacts.get("structureMaterializationPlan").getAsString())));
-        assertTrue(Files.exists(debugRoot.resolve(d6Artifacts.get("placedStructureLedger").getAsString())));
-        assertTrue(Files.exists(debugRoot.resolve(d6Artifacts.get("structureMaterializationTrace").getAsString())));
-        assertTrue(Files.exists(debugRoot.resolve(d6Artifacts.get("structureMaterializationPreview").getAsString())));
+        assertTrue(d6Plan.get("locked").getAsBoolean());
+        assertEquals("current_world_template_nbt", d6Plan.get("preflightMode").getAsString());
+        assertFalse(d6Plan.getAsJsonArray("plannedWorldgenStructures").isEmpty());
+        assertTrue(Files.exists(d6Dir.resolve("structure_materialization_plan.json")));
+        assertTrue(Files.exists(d6Dir.resolve("placed_structure_ledger.json")));
+        assertTrue(Files.exists(d6Dir.resolve("structure_materialization_trace.json")));
+        assertTrue(Files.exists(d6Preview));
 
         CityPlanningEndpointHandler.handleExecuteD5(
                 debugRoot, Files.createTempDirectory("city-d6d7-server-root"),
@@ -1057,7 +1129,6 @@ class CityPlanningEndpointHandlerTest {
                 runId,
                 citySeedId,
                 12345L,
-                false,
                 false,
                 null,
                 null);
@@ -1076,7 +1147,7 @@ class CityPlanningEndpointHandlerTest {
                 .size());
         assertTrue(d7.getAsJsonObject("structureMaterializationTrace")
                 .getAsJsonObject("waitingSummary")
-                .has("WAITING_FOR_WORLDGEN"));
+                .has("WORLDGEN_OBSERVATION_DISABLED"));
     }
 
     @Test
@@ -1103,7 +1174,7 @@ class CityPlanningEndpointHandlerTest {
 
         IllegalArgumentException d7Error = assertThrows(IllegalArgumentException.class,
                 () -> CityPlanningEndpointHandler.handleExecuteD7(
-                        debugRoot, runId, citySeedId, 12345L, false, false, null, null));
+                        debugRoot, runId, citySeedId, 12345L, false, null, null));
 
         assertTrue(d7Error.getMessage().contains("LEGACY_CITY_FUNCTION_ZONE_FLOW_REMOVED"));
         assertTrue(d7Error.getMessage().contains("D6 legacy artifact buildable_area_map.json"));
@@ -1117,7 +1188,6 @@ class CityPlanningEndpointHandlerTest {
         String citySeedId = "city_test";
         prepareD5Artifacts(debugRoot, runId, citySeedId);
         addPatchMemberCells(debugRoot, runId, citySeedId, "plain");
-        CityPlanningEndpointHandler.handlePlanD6(debugRoot, runId, citySeedId, null, null);
         ensureTwoPlannedRoadEndpoints(debugRoot, runId, citySeedId);
         JsonObject catalog = CityPlanningEndpointHandler.handleQueryDecorationCatalog(catalogRoot);
         String styleProfileHash = catalog.getAsJsonArray("styleProfiles").get(0).getAsJsonObject()
@@ -1273,7 +1343,6 @@ class CityPlanningEndpointHandlerTest {
         String citySeedId = "city_test";
         prepareD5Artifacts(debugRoot, runId, citySeedId);
         addPatchMemberCells(debugRoot, runId, citySeedId, "plain");
-        CityPlanningEndpointHandler.handlePlanD6(debugRoot, runId, citySeedId, null, null);
         JsonObject catalog = CityPlanningEndpointHandler.handleQueryDecorationCatalog(catalogRoot);
         String styleProfileHash = catalog.getAsJsonArray("styleProfiles").get(0).getAsJsonObject()
                 .get("styleProfileHash").getAsString();
@@ -1368,7 +1437,6 @@ class CityPlanningEndpointHandlerTest {
         String citySeedId = "city_test";
         prepareD5Artifacts(debugRoot, runId, citySeedId);
         addPatchMemberCells(debugRoot, runId, citySeedId, "plain");
-        CityPlanningEndpointHandler.handlePlanD6(debugRoot, runId, citySeedId, null, null);
         JsonObject catalog = CityPlanningEndpointHandler.handleQueryDecorationCatalog(catalogRoot);
         String styleProfileHash = catalog.getAsJsonArray("styleProfiles").get(0).getAsJsonObject()
                 .get("styleProfileHash").getAsString();
@@ -1395,7 +1463,6 @@ class CityPlanningEndpointHandlerTest {
         String citySeedId = "city_test";
         prepareD5Artifacts(debugRoot, runId, citySeedId);
         addPatchMemberCells(debugRoot, runId, citySeedId, "plain");
-        CityPlanningEndpointHandler.handlePlanD6(debugRoot, runId, citySeedId, null, null);
         JsonObject catalog = CityPlanningEndpointHandler.handleQueryDecorationCatalog(catalogRoot);
         String styleProfileHash = catalog.getAsJsonArray("styleProfiles").get(0).getAsJsonObject()
                 .get("styleProfileHash").getAsString();
@@ -1447,7 +1514,6 @@ class CityPlanningEndpointHandlerTest {
         String citySeedId = "city_test";
         prepareD5Artifacts(debugRoot, runId, citySeedId);
         addPatchMemberCells(debugRoot, runId, citySeedId, "plain");
-        CityPlanningEndpointHandler.handlePlanD6(debugRoot, runId, citySeedId, null, null);
         String hash = query.get("catalogHash").getAsString();
         String styleProfileHash = styleProfile.get("styleProfileHash").getAsString();
 
@@ -1495,28 +1561,18 @@ class CityPlanningEndpointHandlerTest {
                     {
                       "structureId": "test:windmill",
                       "sourceProfileRef": "terrasense://windmill",
-                      "profileType": "single",
-                      "footprintMode": "fixed_footprint",
                       "functionTerms": ["function.agriculture"],
                       "styleTerms": ["style.medieval"],
                       "usageTerms": ["usage.production"],
-                      "qualityTerms": ["quality.usable"],
-                      "fixedFootprint": {"widthBlocks": 11, "depthBlocks": 9, "heightBlocks": 17},
-                      "allowedRotations": ["NONE", "CLOCKWISE_90"],
-                      "clearanceBlocks": 2
+                      "qualityTerms": ["quality.usable"]
                     },
                     {
                       "structureId": "test:fishing_boat",
                       "sourceProfileRef": "terrasense://fishing_boat",
-                      "profileType": "single",
-                      "footprintMode": "fixed_footprint",
                       "functionTerms": ["function.harbor"],
                       "styleTerms": ["style.medieval"],
                       "usageTerms": ["usage.commercial"],
-                      "qualityTerms": ["quality.usable"],
-                      "fixedFootprint": {"widthBlocks": 7, "depthBlocks": 19, "heightBlocks": 8},
-                      "allowedRotations": ["NONE"],
-                      "clearanceBlocks": 1
+                      "qualityTerms": ["quality.usable"]
                     }
                   ]
                 }
@@ -1549,11 +1605,12 @@ class CityPlanningEndpointHandlerTest {
         assertTrue(response.getAsJsonObject("vocabulary").get("available").getAsBoolean());
         assertEquals(1, response.get("matchedCount").getAsInt());
         JsonObject windmill = response.getAsJsonArray("candidates").get(0).getAsJsonObject();
-        assertEquals("test:windmill", windmill.get("structureId").getAsString());
+        assertEquals("city_structure_catalog_query.v0.2", response.get("schemaVersion").getAsString());
+        assertEquals("test:windmill", windmill.get("semanticProfileId").getAsString());
         assertEquals("style.medieval", windmill.getAsJsonArray("matchedCanonicalTerms").get(0).getAsString());
         assertEquals("function.agriculture", windmill.getAsJsonArray("matchedCanonicalTerms").get(1).getAsString());
-        assertEquals(11, windmill.getAsJsonObject("hardFacts").getAsJsonObject("fixedFootprint")
-                .get("widthBlocks").getAsInt());
+        assertFalse(windmill.has("structureId"));
+        assertFalse(windmill.has("hardFacts"));
         assertEquals("debug", windmill.getAsJsonObject("profileSource").get("catalogMode").getAsString());
 
         JsonObject canonicalQuery = JsonParser.parseString("""
@@ -1562,7 +1619,7 @@ class CityPlanningEndpointHandlerTest {
         JsonObject canonicalResponse = CityPlanningEndpointHandler.handleQueryStructureCatalog(
                 baseDirectory, source, canonicalQuery);
         assertEquals("test:fishing_boat", canonicalResponse.getAsJsonArray("candidates").get(0)
-                .getAsJsonObject().get("structureId").getAsString());
+                .getAsJsonObject().get("semanticProfileId").getAsString());
 
         JsonObject chineseLabelQuery = JsonParser.parseString("""
                 {"allOfTerms": ["农业"]}
@@ -1570,7 +1627,7 @@ class CityPlanningEndpointHandlerTest {
         JsonObject chineseLabelResponse = CityPlanningEndpointHandler.handleQueryStructureCatalog(
                 baseDirectory, source, chineseLabelQuery);
         assertEquals("test:windmill", chineseLabelResponse.getAsJsonArray("candidates").get(0)
-                .getAsJsonObject().get("structureId").getAsString());
+                .getAsJsonObject().get("semanticProfileId").getAsString());
 
         IllegalArgumentException unresolved = assertThrows(IllegalArgumentException.class,
                 () -> CityPlanningEndpointHandler.handleQueryStructureCatalog(baseDirectory, source,
@@ -1586,24 +1643,22 @@ class CityPlanningEndpointHandlerTest {
         String citySeedId = "city_test";
         prepareD5Artifacts(debugRoot, runId, citySeedId);
 
-        JsonObject d6 = CityPlanningEndpointHandler.handlePlanD6(
-                debugRoot, runId, citySeedId, null, null);
+        JsonObject d6 = new JsonObject();
+        d6.add("structureMaterializationPlan", JsonParser.parseString(Files.readString(debugRoot
+                .resolve(runId).resolve("city_d6_" + citySeedId)
+                .resolve("structure_materialization_plan.json"))).getAsJsonObject());
         CityPlanningEndpointHandler.handleExecuteD5(debugRoot, serverRoot, runId, citySeedId, true, null,
                 "worldedit_debug");
         recordPlannedWorldgenPlacementsFromRegistry();
 
         JsonObject d7 = CityPlanningEndpointHandler.handleExecuteD7(
                 debugRoot, runId, citySeedId, 12345L,
-                true, false, null, null);
+                true, null, null);
 
         JsonObject roadReport = d7.getAsJsonObject("deferredRoadPostprocessReport");
         assertEquals("worldgen_ledger_actual_footprint",
                 roadReport.get("roadPostprocessSource").getAsString());
-        assertEquals(3, roadReport.get("roadAvoidanceMarginBlocks").getAsInt());
         assertEquals("actual_footprint_union", roadReport.get("boundarySource").getAsString());
-        JsonArray operations = roadReport.getAsJsonObject("generatedBuildOperationPlan")
-                .getAsJsonArray("operations");
-        assertFalse(operations.isEmpty());
         assertEquals(d6.getAsJsonObject("structureMaterializationPlan")
                         .getAsJsonArray("plannedWorldgenStructures").size(),
                 d7.getAsJsonObject("placedStructureLedger").getAsJsonArray("placedStructures").size());
@@ -1617,7 +1672,6 @@ class CityPlanningEndpointHandlerTest {
         String citySeedId = "city_test";
         prepareD5Artifacts(debugRoot, runId, citySeedId);
 
-        CityPlanningEndpointHandler.handlePlanD6(debugRoot, runId, citySeedId, null, null);
         JsonObject d5 = CityPlanningEndpointHandler.handleExecuteD5(debugRoot, serverRoot, runId, citySeedId,
                 true, null, "auto");
         JsonObject providerState = d5.getAsJsonObject("roadProviderState");
@@ -1633,7 +1687,7 @@ class CityPlanningEndpointHandlerTest {
 
         JsonObject d7 = CityPlanningEndpointHandler.handleExecuteD7(
                 debugRoot, runId, citySeedId, 12345L,
-                true, false, null, null);
+                true, null, null);
 
         JsonObject roadReport = d7.getAsJsonObject("deferredRoadPostprocessReport");
         assertEquals("skipped", roadReport.get("status").getAsString());
@@ -1727,6 +1781,8 @@ class CityPlanningEndpointHandlerTest {
         String runId = "run_d5_requires_d6";
         String citySeedId = "city_test";
         prepareD5Artifacts(debugRoot, runId, citySeedId);
+        Files.delete(debugRoot.resolve(runId).resolve("city_d6_" + citySeedId)
+                .resolve("structure_materialization_plan.json"));
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
                 () -> CityPlanningEndpointHandler.handleExecuteD5(
@@ -1743,7 +1799,6 @@ class CityPlanningEndpointHandlerTest {
         String runId = "run_land_use_completion";
         String citySeedId = "city_test";
         prepareD5Artifacts(debugRoot, runId, citySeedId);
-        CityPlanningEndpointHandler.handlePlanD6(debugRoot, runId, citySeedId, null, null);
 
         Path completionPath = writeEmptyLandUseArtifacts(debugRoot, runId, citySeedId);
         writeEmptyLandUseSurfaceArtifact(debugRoot, runId, citySeedId, completionPath);
@@ -1806,7 +1861,6 @@ class CityPlanningEndpointHandlerTest {
         String runId = "run_land_use_explicit_disable";
         String citySeedId = "city_test";
         prepareD5Artifacts(debugRoot, runId, citySeedId);
-        CityPlanningEndpointHandler.handlePlanD6(debugRoot, runId, citySeedId, null, null);
         Path completionPath = writeEmptyLandUseArtifacts(debugRoot, runId, citySeedId);
         writeEmptyLandUseSurfaceArtifact(debugRoot, runId, citySeedId, completionPath);
 
@@ -1837,7 +1891,6 @@ class CityPlanningEndpointHandlerTest {
         String runId = "run_land_use_surface_activation";
         String citySeedId = "city_test";
         prepareD5Artifacts(debugRoot, runId, citySeedId);
-        CityPlanningEndpointHandler.handlePlanD6(debugRoot, runId, citySeedId, null, null);
         Path completionPath = writeEmptyLandUseArtifacts(debugRoot, runId, citySeedId);
         writeEmptyLandUseSurfaceArtifact(debugRoot, runId, citySeedId, completionPath);
 
@@ -1852,7 +1905,7 @@ class CityPlanningEndpointHandlerTest {
     }
 
     @Test
-    void handlePlanD6_allowsPreflightBeforeActiveWorldgenRegistry() throws Exception {
+    void handlePlanD6RequiresCurrentWorldTemplateMetadata() throws Exception {
         Path debugRoot = Files.createTempDirectory("city-d6-registry-missing");
         String runId = "run_d6_missing_registry";
         String citySeedId = "city_test";
@@ -1865,13 +1918,12 @@ class CityPlanningEndpointHandlerTest {
                 null,
                 null);
 
-        assertTrue(d6.get("ok").getAsBoolean());
-        assertEquals("worldgen_time_planned_registry",
-                d6.getAsJsonObject("structureMaterializationPlan").get("dryRunMode").getAsString());
-        JsonObject planned = d6.getAsJsonObject("structureMaterializationPlan")
-                .getAsJsonArray("plannedWorldgenStructures").get(0).getAsJsonObject();
-        assertEquals("planned_worldgen", planned.get("status").getAsString());
-        assertEquals("WAITING_FOR_WORLDGEN", planned.get("reasonCode").getAsString());
+        assertFalse(d6.get("ok").getAsBoolean());
+        assertFalse(d6.getAsJsonObject("structureMaterializationPlan").get("locked").getAsBoolean());
+        assertTrue(d6.getAsJsonObject("structureMaterializationPlan")
+                .getAsJsonArray("plannedWorldgenStructures").isEmpty());
+        assertTrue(d6.getAsJsonObject("structureMaterializationTrace")
+                .getAsJsonArray("failures").toString().contains("TEMPLATE_RUNTIME_LEVEL_REQUIRED"));
     }
 
     @Test
@@ -1919,7 +1971,7 @@ class CityPlanningEndpointHandlerTest {
     }
 
     @Test
-    void handleExecuteD5_activatesRegistryWithoutLoadedWorld() throws Exception {
+    void handleExecuteD5RejectsConfiguredD6RegistryPayload() throws Exception {
         Path debugRoot = Files.createTempDirectory("city-d5-execute-no-level");
         Path serverRoot = Files.createTempDirectory("city-d5-server-root");
         String runId = "run_d5_execute";
@@ -1947,7 +1999,7 @@ class CityPlanningEndpointHandlerTest {
                   "anchors": [
                     {
                       "anchorId": "anchor_test",
-                      "structureId": "minecraft:village_plains",
+                      "structureId": "geomantia:test_village",
                       "anchorBlock": {"x": 0, "z": 0},
                       "commandAnchorBlock": {"x": 0, "z": 0},
                       "rotation": "NONE",
@@ -2017,29 +2069,11 @@ class CityPlanningEndpointHandlerTest {
                 }
                 """);
 
-        JsonObject response = CityPlanningEndpointHandler.handleExecuteD5(
-                debugRoot, serverRoot, runId, citySeedId, true, null, "auto");
-        assertTrue(response.get("ok").getAsBoolean());
-        assertTrue(response.get("worldgenPlacementMode").getAsBoolean());
-        assertEquals(1, response.get("activePlannedStructureCount").getAsInt());
-        assertFalse(response.getAsJsonObject("worldMutationReport").get("executed").getAsBoolean());
-
-        JsonObject activeMask = JsonParser.parseString(Files.readString(serverRoot
-                .resolve("geomantia_city_masks")
-                .resolve("active_reservation_mask_plan.json"))).getAsJsonObject();
-        JsonObject activeNoVegetation = activeMask.getAsJsonArray("noVegetationMask")
-                .get(0).getAsJsonObject().getAsJsonObject("blockBounds");
-        assertEquals(-12, activeNoVegetation.get("minX").getAsInt());
-        assertEquals(12, activeNoVegetation.get("maxX").getAsInt());
-        assertFalse(activeMask.toString().contains("safetyEnvelope"));
-
-        JsonObject activeRegistry = JsonParser.parseString(Files.readString(
-                CityReservationMaskRegistry.plannedRegistryPath(serverRoot))).getAsJsonObject();
-        JsonObject planned = activeRegistry.getAsJsonArray("plannedStructures").get(0).getAsJsonObject();
-        assertEquals("sig_anchor_test", planned.get("expectedStartSignature").getAsString());
-        assertEquals(4, planned.getAsJsonObject("lockedActualFootprint").get("maxX").getAsInt());
-        assertEquals(8, planned.getAsJsonObject("lockedCollisionEnvelope").get("maxX").getAsInt());
-        assertFalse(planned.has("safetyEnvelope"));
+        IllegalArgumentException failure = assertThrows(IllegalArgumentException.class,
+                () -> CityPlanningEndpointHandler.handleExecuteD5(
+                        debugRoot, serverRoot, runId, citySeedId, true, null, "auto"));
+        assertTrue(failure.getMessage().contains("CITY_CONFIGURED_STRUCTURE_FLOW_REMOVED"));
+        assertFalse(Files.exists(CityReservationMaskRegistry.plannedRegistryPath(serverRoot)));
     }
 
     @Test
@@ -2048,7 +2082,6 @@ class CityPlanningEndpointHandlerTest {
         String runId = "run_d5_roadweaver_missing";
         String citySeedId = "city_test";
         prepareD5Artifacts(debugRoot, runId, citySeedId);
-        CityPlanningEndpointHandler.handlePlanD6(debugRoot, runId, citySeedId, null, null);
 
         Path serverRoot = Files.createTempDirectory("city-d5-roadweaver-server-root");
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
@@ -2341,9 +2374,13 @@ class CityPlanningEndpointHandlerTest {
                 {"minX": -4, "minZ": -4, "maxX": 4, "maxZ": 4}
                 """).getAsJsonObject());
         Files.writeString(reservationPath, CityJson.GSON.toJson(reservation));
+        JsonObject d6Plan = JsonParser.parseString(Files.readString(debugRoot.resolve(runId)
+                .resolve("city_d6_" + citySeedId).resolve("structure_materialization_plan.json")))
+                .getAsJsonObject();
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> CityPlanningEndpointHandler.handlePlanD6(debugRoot, runId, citySeedId, null, null));
+                () -> CityPlanningEndpointHandler.validateD5V5FootprintsWithinReservation(
+                        reservationPath, d6Plan, "plannedWorldgenStructures", "D6"));
 
         assertTrue(ex.getMessage().contains("D5_V5_LOCKED_FOOTPRINT_OUTSIDE_RESERVATION"));
     }
@@ -2377,12 +2414,6 @@ class CityPlanningEndpointHandlerTest {
         String citySeedId = "city_test";
         Path runDir = debugRoot.resolve(runId);
         prepareD5Artifacts(debugRoot, runId, citySeedId);
-        Files.createDirectories(runDir.resolve("city_structure_envelopes_" + citySeedId));
-        Files.writeString(runDir.resolve("city_structure_envelopes_" + citySeedId)
-                .resolve("structure_envelope_facts.json"), "{}");
-        Files.createDirectories(runDir.resolve("city_d6_" + citySeedId));
-        Files.writeString(runDir.resolve("city_d6_" + citySeedId)
-                .resolve("structure_materialization_plan.json"), "{}");
 
         JsonObject request = JsonParser.parseString("""
                 {
@@ -2391,6 +2422,7 @@ class CityPlanningEndpointHandlerTest {
                   "skipExisting": true
                 }
                 """).getAsJsonObject();
+        request.add("templateCatalogSource", templateCatalogSource(runDir.resolve("template_catalog.json")));
 
         JsonObject response = CityPlanningEndpointHandler.handleRunWorkflow(
                 debugRoot,
@@ -2417,19 +2449,12 @@ class CityPlanningEndpointHandlerTest {
     }
 
     @Test
-    void handleRunWorkflowRescanForcesProfileRefreshWhenFactsExist() throws Exception {
+    void handleRunWorkflowRescanDoesNotRestoreEnvelopeProfiler() throws Exception {
         Path debugRoot = Files.createTempDirectory("city-workflow-profile-rescan-test");
         String runId = "run_workflow_profile_rescan";
         String citySeedId = "city_test";
         Path runDir = debugRoot.resolve(runId);
         prepareD5Artifacts(debugRoot, runId, citySeedId);
-        Path factsPath = runDir.resolve("city_structure_envelopes_" + citySeedId)
-                .resolve("structure_envelope_facts.json");
-        Files.createDirectories(factsPath.getParent());
-        Files.writeString(factsPath, "{}");
-        Files.createDirectories(runDir.resolve("city_d6_" + citySeedId));
-        Files.writeString(runDir.resolve("city_d6_" + citySeedId)
-                .resolve("structure_materialization_plan.json"), "{}");
         Path catalogPath = runDir.resolve("debug_structure_profile_catalog.json");
 
         JsonObject request = new JsonObject();
@@ -2439,9 +2464,7 @@ class CityPlanningEndpointHandlerTest {
         request.addProperty("cacheMode", "rescan");
         request.addProperty("sampleCount", 1);
         request.add("terrasenseProfileSource", terraSenseSource(catalogPath));
-        request.add("structureIds", JsonParser.parseString("""
-                ["minecraft:desert_pyramid"]
-                """).getAsJsonArray());
+        request.add("templateCatalogSource", templateCatalogSource(runDir.resolve("template_catalog.json")));
 
         JsonObject response = CityPlanningEndpointHandler.handleRunWorkflow(
                 debugRoot,
@@ -2453,18 +2476,9 @@ class CityPlanningEndpointHandlerTest {
                 null);
 
         assertTrue(response.get("ok").getAsBoolean());
-        JsonObject profileStep = response.getAsJsonObject("workflowReport")
-                .getAsJsonArray("steps").asList().stream()
-                .map(JsonElement::getAsJsonObject)
-                .filter(step -> "city_profile_structure_envelopes".equals(step.get("name").getAsString()))
-                .findFirst()
-                .orElseThrow();
-        assertEquals("success", profileStep.get("status").getAsString());
-        assertFalse(profileStep.has("reasonCode")
-                && "WORKFLOW_EXISTING_ARTIFACT".equals(profileStep.get("reasonCode").getAsString()));
-        JsonObject facts = JsonParser.parseString(Files.readString(factsPath)).getAsJsonObject();
-        assertEquals("city_structure_envelope_facts.v0.1", facts.get("schemaVersion").getAsString());
-        assertTrue(facts.getAsJsonObject("profileCache").get("forceRefresh").getAsBoolean());
+        assertFalse(response.getAsJsonObject("workflowReport").getAsJsonArray("steps").toString()
+                .contains("city_profile_structure_envelopes"));
+        assertFalse(Files.exists(runDir.resolve("city_structure_envelopes_" + citySeedId)));
     }
 
     @Test
@@ -2503,20 +2517,20 @@ class CityPlanningEndpointHandlerTest {
         Files.createDirectories(d3Dir);
         Files.writeString(d3Dir.resolve("city_landform_review_package.json"),
                 CityJson.GSON.toJson(review.asJson()));
-        Files.createDirectories(runDir.resolve("city_structure_envelopes_" + citySeedId));
-        Files.writeString(runDir.resolve("city_structure_envelopes_" + citySeedId)
-                .resolve("structure_envelope_facts.json"), "{}");
         Files.createDirectories(runDir.resolve("city_d6_" + citySeedId));
         Files.writeString(runDir.resolve("city_d6_" + citySeedId)
                 .resolve("structure_materialization_plan.json"), "{}");
         Path catalogPath = runDir.resolve("debug_structure_profile_catalog.json");
         Files.writeString(catalogPath, debugStructureCatalog());
+        Path templateCatalogPath = runDir.resolve("template_catalog.json");
+        Files.writeString(templateCatalogPath, fixedTemplateCatalog());
 
         JsonObject request = new JsonObject();
         request.addProperty("runId", runId);
         request.addProperty("citySeedId", citySeedId);
         request.addProperty("skipExisting", true);
         request.add("terrasenseProfileSource", terraSenseSource(catalogPath));
+        request.add("templateCatalogSource", templateCatalogSource(templateCatalogPath));
         request.add("designSlotPlan", stagedDesignSlotPlan(review));
 
         JsonObject response = CityPlanningEndpointHandler.handleRunWorkflow(
@@ -2581,14 +2595,13 @@ class CityPlanningEndpointHandlerTest {
         Files.createDirectories(d3Dir);
         Files.writeString(d3Dir.resolve("city_landform_review_package.json"),
                 CityJson.GSON.toJson(review.asJson()));
-        Files.createDirectories(runDir.resolve("city_structure_envelopes_" + citySeedId));
-        Files.writeString(runDir.resolve("city_structure_envelopes_" + citySeedId)
-                .resolve("structure_envelope_facts.json"), "{}");
         Files.createDirectories(runDir.resolve("city_d6_" + citySeedId));
         Files.writeString(runDir.resolve("city_d6_" + citySeedId)
                 .resolve("structure_materialization_plan.json"), "{}");
         Path catalogPath = runDir.resolve("debug_structure_profile_catalog.json");
         Files.writeString(catalogPath, debugStructureCatalog());
+        Path templateCatalogPath = runDir.resolve("template_catalog.json");
+        Files.writeString(templateCatalogPath, fixedTemplateCatalog());
 
         JsonObject request = new JsonObject();
         request.addProperty("runId", runId);
@@ -2596,6 +2609,7 @@ class CityPlanningEndpointHandlerTest {
         request.addProperty("skipExisting", true);
         request.addProperty("d4CandidateMode", "array_layout_loop_v0_2");
         request.add("terrasenseProfileSource", terraSenseSource(catalogPath));
+        request.add("templateCatalogSource", templateCatalogSource(templateCatalogPath));
         request.add("designSlotPlan", stagedDesignSlotPlan(review));
         request.add("arrayLayoutPlan", arrayLayoutPlanWithItem(review));
 
@@ -2659,11 +2673,10 @@ class CityPlanningEndpointHandlerTest {
         Files.createDirectories(d3Dir);
         Files.writeString(d3Dir.resolve("city_landform_review_package.json"),
                 CityJson.GSON.toJson(review.asJson()));
-        Files.createDirectories(runDir.resolve("city_structure_envelopes_" + citySeedId));
-        Files.writeString(runDir.resolve("city_structure_envelopes_" + citySeedId)
-                .resolve("structure_envelope_facts.json"), "{}");
         Path catalogPath = runDir.resolve("debug_structure_profile_catalog.json");
         Files.writeString(catalogPath, debugStructureCatalog());
+        Path templateCatalogPath = runDir.resolve("template_catalog.json");
+        Files.writeString(templateCatalogPath, fixedTemplateCatalog());
 
         JsonObject plan = stagedDesignSlotPlan(review);
         plan.add("placementOrder", JsonParser.parseString("""
@@ -2674,6 +2687,7 @@ class CityPlanningEndpointHandlerTest {
         request.addProperty("citySeedId", citySeedId);
         request.addProperty("skipExisting", true);
         request.add("terrasenseProfileSource", terraSenseSource(catalogPath));
+        request.add("templateCatalogSource", templateCatalogSource(templateCatalogPath));
         request.add("designSlotPlan", plan);
 
         JsonObject response = CityPlanningEndpointHandler.handleRunWorkflow(
@@ -2756,9 +2770,53 @@ class CityPlanningEndpointHandlerTest {
 
         Path catalogPath = runDir.resolve("debug_structure_profile_catalog.json");
         Files.writeString(catalogPath, debugStructureCatalog());
+        Path templateCatalogPath = runDir.resolve("template_catalog.json");
+        Files.writeString(templateCatalogPath, fixedTemplateCatalog());
         CityPlanningEndpointHandler.handlePlanD4(debugRoot, runId, citySeedId,
-                terraSenseSource(catalogPath), structureAnchorPlan(review, 2));
+                terraSenseSource(catalogPath), templateCatalogSource(templateCatalogPath),
+                structureAnchorPlan(review, 2));
         CityPlanningEndpointHandler.handlePlanD5(debugRoot, runId, citySeedId);
+        writeLockedD6Artifacts(debugRoot, runId, citySeedId);
+    }
+
+    private static void writeLockedD6Artifacts(Path debugRoot, String runId, String citySeedId) throws Exception {
+        Path runDir = debugRoot.resolve(runId);
+        JsonObject anchorMap = JsonParser.parseString(Files.readString(runDir
+                .resolve("city_d4_" + citySeedId).resolve("structure_anchor_map.json"))).getAsJsonObject();
+        CityStructureMaterializationPlanner.TemplateMetadataInspector metadataInspector = templateRef -> {
+            for (JsonElement element : anchorMap.getAsJsonArray("anchors")) {
+                JsonObject anchor = element.getAsJsonObject();
+                if (!templateRef.equals(anchor.get("templateRef").getAsString())) {
+                    continue;
+                }
+                JsonObject size = anchor.getAsJsonObject("rawSize");
+                return CityStructureMaterializationPlanner.TemplateMetadata.readable(
+                        anchor.get("templateHash").getAsString(),
+                        new CityTemplatePlacementGeometry.Size(
+                                size.get("width").getAsInt(),
+                                size.get("height").getAsInt(),
+                                size.get("depth").getAsInt()));
+            }
+            return CityStructureMaterializationPlanner.TemplateMetadata.unreadable(
+                    "TEMPLATE_NOT_FOUND", templateRef);
+        };
+        CityStructureMaterializationPlanner.Result result = new CityStructureMaterializationPlanner()
+                .planWorldgen(anchorMap, CityStructureMaterializationPlanner.ChunkStatusInspector.plannedOnly(),
+                        null, metadataInspector);
+        if (!result.structureMaterializationPlan().get("locked").getAsBoolean()) {
+            throw new IllegalStateException("Test D6 fixture failed to lock: " + result.qualityReport());
+        }
+        Path d6Dir = runDir.resolve("city_d6_" + citySeedId);
+        Files.createDirectories(d6Dir);
+        Files.writeString(d6Dir.resolve("structure_materialization_plan.json"),
+                CityJson.GSON.toJson(result.structureMaterializationPlan()));
+        Files.writeString(d6Dir.resolve("placed_structure_ledger.json"),
+                CityJson.GSON.toJson(result.placedStructureLedger()));
+        Files.writeString(d6Dir.resolve("structure_materialization_trace.json"),
+                CityJson.GSON.toJson(result.structureMaterializationTrace()));
+        Files.writeString(d6Dir.resolve("inferred_function_area_map.json"),
+                CityJson.GSON.toJson(result.inferredFunctionAreaMap()));
+        Files.writeString(d6Dir.resolve("quality_report.json"), CityJson.GSON.toJson(result.qualityReport()));
     }
 
     private static LandUseTerrainField endpointTerrain() {
@@ -2803,7 +2861,7 @@ class CityPlanningEndpointHandlerTest {
                 .resolve("structure_materialization_plan.json");
         JsonObject d6 = JsonParser.parseString(Files.readString(d6Path)).getAsJsonObject();
         completion.addProperty("sourceD6Hash",
-                CityStructureEnvelopeProfiler.sha256(CityJson.GSON.toJson(d6)));
+                sha256(CityJson.GSON.toJson(d6)));
         completion.addProperty("completedAt", "2026-07-15T00:00:00Z");
         Path completionPath = directory.resolve("city_land_use_planning_complete.json");
         Files.writeString(completionPath, CityJson.GSON.toJson(completion));
@@ -2869,6 +2927,17 @@ class CityPlanningEndpointHandlerTest {
         return source;
     }
 
+    private static String sha256(String value) throws Exception {
+        return "sha256:" + HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256")
+                .digest(value.getBytes(StandardCharsets.UTF_8)));
+    }
+
+    private static JsonObject templateCatalogSource(Path catalogPath) {
+        JsonObject source = new JsonObject();
+        source.addProperty("catalogPath", catalogPath.toString());
+        return source;
+    }
+
     private static JsonObject structureAnchorPlan(CityLandformReviewPackage review, int anchorCount) {
         List<LandformPatchSummary> patches = review.landformPatches();
         LandformPatchSummary first = patches.get(0);
@@ -2876,7 +2945,8 @@ class CityPlanningEndpointHandlerTest {
         String secondAnchor = anchorCount > 1 ? """
                     {
                       "anchorId": "anchor_village",
-                      "structureId": "minecraft:village_plains",
+                      "templateId": "geomantia:test_village",
+                      "variant": "test_v1",
                       "sourcePatchIds": ["%s"],
                       "anchorBlock": {"x": %d, "z": %d},
                       "rotation": "NONE",
@@ -2894,7 +2964,8 @@ class CityPlanningEndpointHandlerTest {
                   "anchors": [
                     {
                       "anchorId": "anchor_pyramid",
-                      "structureId": "minecraft:desert_pyramid",
+                      "templateId": "geomantia:test_house",
+                      "variant": "test_v1",
                       "sourcePatchIds": ["%s"],
                       "anchorBlock": {"x": %d, "z": %d},
                       "rotation": "NONE",
@@ -2925,14 +2996,16 @@ class CityPlanningEndpointHandlerTest {
                       "slotId": "admin_core",
                       "displayRole": "行政核心",
                       "candidatePatchRefs": ["%s"],
-                      "structureIds": ["minecraft:desert_pyramid"],
+                      "templateIds": ["geomantia:test_house"],
+                      "variantId": "test_v1",
                       "relationHints": []
                     },
                     {
                       "slotId": "residential_01",
                       "displayRole": "住宅",
                       "candidatePatchRefs": ["%s"],
-                      "structureIds": ["minecraft:desert_pyramid"],
+                      "templateIds": ["geomantia:test_house"],
+                      "variantId": "test_v1",
                       "relationHints": [
                         {"targetSlotId": "admin_core", "distanceBand": "near"}
                       ]
@@ -2955,7 +3028,8 @@ class CityPlanningEndpointHandlerTest {
                       "placementStrategy": "key_structure",
                       "displayRole": "行政核心",
                       "candidatePatchRefs": ["%s"],
-                      "structureIds": ["minecraft:desert_pyramid"],
+                      "templateIds": ["geomantia:test_house"],
+                      "variantId": "test_v1",
                       "relationHints": []
                     },
                     {
@@ -2963,9 +3037,10 @@ class CityPlanningEndpointHandlerTest {
                       "placementStrategy": "array_fill",
                       "displayRole": "住宅阵列",
                       "candidatePatchRefs": ["%s"],
-                      "structureIds": ["minecraft:desert_pyramid"],
+                      "templateIds": ["geomantia:test_house"],
+                      "variantId": "test_v1",
                       "arrayCount": 4,
-                      "variantSelectionMode": "seeded_random",
+                      "variantSelectionMode": "round_robin",
                       "patterns": ["loose_cluster", "patch_axis_band", "scattered"]
                     }
                   ]
@@ -2982,7 +3057,8 @@ class CityPlanningEndpointHandlerTest {
                   "arrayId": "residential_cluster",
                   "displayRole": "住宅阵列",
                   "candidatePatchRefs": ["%s"],
-                  "structureIds": ["minecraft:desert_pyramid"],
+                  "templateIds": ["geomantia:test_house"],
+                  "variantId": "test_v1",
                   "arrayCount": 4,
                   "patterns": ["loose_cluster", "patch_axis_band", "scattered"]
                 }
@@ -3027,7 +3103,7 @@ class CityPlanningEndpointHandlerTest {
                     "arrayId": "east_residential_theme",
                     "plannerType": "compound_cluster",
                     "role": "residential",
-                    "fillPool": [{"structureId": "minecraft:desert_pyramid", "weight": 1}],
+                    "fillPool": [{"templateId": "geomantia:test_house", "variantId": "test_v1"}],
                     "countPolicy": {"minCount": 2, "targetCount": 2, "maxCount": 2},
                     "variantSelectionMode": "round_robin"
                   }
@@ -3054,7 +3130,7 @@ class CityPlanningEndpointHandlerTest {
                   "candidatePatchRefs": ["%s"],
                   "startSector": "southeast",
                   "fillPool": [
-                    {"structureId": "minecraft:desert_pyramid", "weight": 1}
+                    {"templateId": "geomantia:test_house", "variantId": "test_v1"}
                   ],
                   "countPolicy": {"minCount": %d, "targetCount": %d, "maxCount": %d},
                   "variantSelectionMode": "round_robin"
@@ -3382,16 +3458,30 @@ class CityPlanningEndpointHandlerTest {
             ChunkPos chunk = new ChunkPos(chunkJson.get("x").getAsInt(), chunkJson.get("z").getAsInt());
             CityReservationMaskRegistry.PlannedStructure planned = CityReservationMaskRegistry
                     .plannedStructuresForChunk(chunk)
-                    .get(0);
+                    .stream()
+                    .filter(candidate -> candidate.anchorId().equals(plannedJson.get("anchorId").getAsString()))
+                    .findFirst()
+                    .orElseThrow();
             JsonObject actualJson = plannedJson.getAsJsonObject("lockedActualFootprint");
             BlockBounds actual = new BlockBounds(
                     actualJson.get("minX").getAsInt(),
                     actualJson.get("minZ").getAsInt(),
                     actualJson.get("maxX").getAsInt(),
                     actualJson.get("maxZ").getAsInt());
-            CityReservationMaskRegistry.recordWorldgenPlacement(planned, actual,
-                    planned.expectedStartSignature(), new JsonArray(), chunk,
-                    "none", "WORLDGEN_PLACEMENT_RECORDED", "test placement");
+            assertEquals(CityReservationMaskRegistry.TemplateDatumPreparationStatus.READY,
+                    CityReservationMaskRegistry.prepareTemplateTerrainStart(planned, 80).status());
+            for (int ownerX = Math.floorDiv(actual.minX(), 16);
+                 ownerX <= Math.floorDiv(actual.maxX(), 16); ownerX++) {
+                for (int ownerZ = Math.floorDiv(actual.minZ(), 16);
+                     ownerZ <= Math.floorDiv(actual.maxZ(), 16); ownerZ++) {
+                    ChunkPos owner = new ChunkPos(ownerX, ownerZ);
+                    CityReservationMaskRegistry.TemplateFragmentRecordResult recorded =
+                            CityReservationMaskRegistry.recordTemplateWorldgenFragment(
+                            planned, actual, owner, 80, "beard_thin",
+                            "TEMPLATE_TERRAIN_START_PIECE_PLACED", "test placement");
+                    assertTrue(recorded.recorded(), recorded.reasonCode());
+                }
+            }
         }
     }
 
@@ -3452,6 +3542,46 @@ class CityPlanningEndpointHandlerTest {
                     "needsReview": [],
                     "metrics": {}
                   }
+                }
+                """;
+    }
+
+    private static String fixedTemplateCatalog() {
+        return """
+                {
+                  "schemaVersion": "city_template_catalog.v0.1",
+                  "templates": [
+                    {
+                      "buildingSemantic": "house",
+                      "style": "debug",
+                      "templateId": "geomantia:test_house",
+                      "templateRef": "geomantia:city/test_house",
+                      "contentHash": "sha256:test-house",
+                      "variant": "test_v1",
+                      "rawSize": {"width": 12, "height": 10, "depth": 12},
+                      "allowedRotations": ["NONE", "CLOCKWISE_90"],
+                      "allowedMirrors": ["NONE"],
+                      "roadEntrances": [{"entranceId":"front","x":6,"z":11,"direction":"SOUTH"}],
+                      "terrainPosePolicy": "structure_start_beard_thin",
+                      "supportPolicy": "none",
+                      "clearanceBlocks": 2
+                    },
+                    {
+                      "buildingSemantic": "village",
+                      "style": "debug",
+                      "templateId": "geomantia:test_village",
+                      "templateRef": "geomantia:city/test_village",
+                      "contentHash": "sha256:test-village",
+                      "variant": "test_v1",
+                      "rawSize": {"width": 10, "height": 8, "depth": 10},
+                      "allowedRotations": ["NONE", "CLOCKWISE_90"],
+                      "allowedMirrors": ["NONE"],
+                      "roadEntrances": [{"entranceId":"front","x":5,"z":9,"direction":"SOUTH"}],
+                      "terrainPosePolicy": "structure_start_beard_thin",
+                      "supportPolicy": "none",
+                      "clearanceBlocks": 0
+                    }
+                  ]
                 }
                 """;
     }

@@ -24,7 +24,7 @@ import java.util.Set;
  * {@code terrasenseProfileSource}; City does not maintain a second tag dictionary.</p>
  */
 public final class CityStructureCatalogQueryService {
-    public static final String SCHEMA_VERSION = "city_structure_catalog_query.v0.1";
+    public static final String SCHEMA_VERSION = "city_structure_catalog_query.v0.2";
     private static final int DEFAULT_LIMIT = 20;
     private static final int MAX_LIMIT = 100;
 
@@ -41,7 +41,7 @@ public final class CityStructureCatalogQueryService {
 
         List<CityStructureProfileCatalog.StructureProfile> matches = catalog.profiles().stream()
                 .filter(profile -> matches(profile, allOfTerms, anyOfTerms, excludeTerms))
-                .sorted(Comparator.comparing(CityStructureProfileCatalog.StructureProfile::structureId))
+                .sorted(Comparator.comparing(CityStructureProfileCatalog.StructureProfile::semanticProfileId))
                 .toList();
 
         JsonObject response = new JsonObject();
@@ -97,7 +97,7 @@ public final class CityStructureCatalogQueryService {
         });
 
         JsonObject candidate = new JsonObject();
-        candidate.addProperty("structureId", profile.structureId());
+        candidate.addProperty("semanticProfileId", profile.semanticProfileId());
         candidate.add("matchedCanonicalTerms", stringArray(List.copyOf(matched)));
         JsonObject profileTerms = new JsonObject();
         profileTerms.add("semanticTerms", stringArray(profile.semanticTerms()));
@@ -108,16 +108,6 @@ public final class CityStructureCatalogQueryService {
         profileTerms.add("templateRoleTerms", stringArray(profile.templateRoleTerms()));
         profileTerms.add("qualityTerms", stringArray(profile.qualityTerms()));
         candidate.add("terms", profileTerms);
-
-        JsonObject hardFacts = new JsonObject();
-        hardFacts.addProperty("profileType", profile.profileType());
-        hardFacts.addProperty("footprintMode", profile.footprintMode());
-        hardFacts.add("fixedFootprint", profile.fixedFootprint().asJson());
-        hardFacts.add("expectedAreaRange", profile.expectedAreaRange().asJson());
-        hardFacts.add("allowedRotations", stringArray(profile.allowedRotations()));
-        hardFacts.addProperty("clearanceBlocks", profile.clearanceBlocks());
-        hardFacts.addProperty("maxDistanceFromCenterBlocks", profile.maxDistanceFromCenterBlocks());
-        candidate.add("hardFacts", hardFacts);
 
         JsonObject profileSource = new JsonObject();
         profileSource.addProperty("sourceProfileRef", profile.sourceProfileRef());

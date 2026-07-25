@@ -11,11 +11,62 @@ import java.awt.image.BufferedImage;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 final class CityStructureLandingPreviewRendererTest {
+    @Test
+    void d4CandidateMainPreviewsIgnoreEnvelopeLayers(@TempDir Path tempDir) throws Exception {
+        JsonObject anchorSet = JsonParser.parseString("""
+                {
+                  "grid":{"blockBounds":{"minX":0,"minZ":0,"maxX":256,"maxZ":256}},
+                  "slotCandidates":[{"slotId":"hall","displayRole":"Hall","candidates":[{
+                    "candidateId":"hall_01","anchorBlock":{"x":96,"z":112},
+                    "estimatedCollisionEnvelope":{"minX":32,"minZ":32,"maxX":180,"maxZ":180},
+                    "estimatedMaskEnvelope":{"minX":16,"minZ":16,"maxX":196,"maxZ":196},
+                    "scoreBreakdown":{"total":0.9}
+                  }]}]
+                }
+                """).getAsJsonObject();
+        JsonObject anchorWithoutEnvelopes = anchorSet.deepCopy();
+        JsonObject anchorCandidate = anchorWithoutEnvelopes.getAsJsonArray("slotCandidates").get(0)
+                .getAsJsonObject().getAsJsonArray("candidates").get(0).getAsJsonObject();
+        anchorCandidate.remove("estimatedCollisionEnvelope");
+        anchorCandidate.remove("estimatedMaskEnvelope");
+        BufferedImage anchorWith = ImageIO.read(new CityStructureLandingPreviewRenderer()
+                .renderD4Candidates(anchorSet, tempDir.resolve("anchor_with")).toFile());
+        BufferedImage anchorWithout = ImageIO.read(new CityStructureLandingPreviewRenderer()
+                .renderD4Candidates(anchorWithoutEnvelopes, tempDir.resolve("anchor_without")).toFile());
+        assertSamePixels(anchorWith, anchorWithout);
+
+        JsonObject arraySet = JsonParser.parseString("""
+                {
+                  "grid":{"blockBounds":{"minX":0,"minZ":0,"maxX":256,"maxZ":256}},
+                  "arrayCandidates":[{
+                    "arrayCandidateId":"group_01","arrayPattern":"grid",
+                    "groupCollisionEnvelope":{"minX":32,"minZ":32,"maxX":180,"maxZ":180},
+                    "groupMaskEnvelope":{"minX":16,"minZ":16,"maxX":196,"maxZ":196},
+                    "scoreBreakdown":{"total":0.8},"items":[{
+                      "anchorBlock":{"x":96,"z":112},
+                      "estimatedCollisionEnvelope":{"minX":64,"minZ":80,"maxX":128,"maxZ":144}
+                    }]
+                  }]
+                }
+                """).getAsJsonObject();
+        JsonObject arrayWithoutEnvelopes = arraySet.deepCopy();
+        JsonObject group = arrayWithoutEnvelopes.getAsJsonArray("arrayCandidates").get(0).getAsJsonObject();
+        group.remove("groupCollisionEnvelope");
+        group.remove("groupMaskEnvelope");
+        group.getAsJsonArray("items").get(0).getAsJsonObject().remove("estimatedCollisionEnvelope");
+        BufferedImage arrayWith = ImageIO.read(new CityStructureLandingPreviewRenderer()
+                .renderD4ArrayCandidates(arraySet, null, tempDir.resolve("array_with")).toFile());
+        BufferedImage arrayWithout = ImageIO.read(new CityStructureLandingPreviewRenderer()
+                .renderD4ArrayCandidates(arrayWithoutEnvelopes, null, tempDir.resolve("array_without")).toFile());
+        assertSamePixels(arrayWith, arrayWithout);
+    }
+
     @Test
     void d4StructureClusterGroupPreviewWritesGroupColorOverview(@TempDir Path tempDir) throws Exception {
         JsonObject candidateSet = JsonParser.parseString("""
@@ -158,24 +209,19 @@ final class CityStructureLandingPreviewRendererTest {
     }
 
     @Test
-    void d4AnchorPreviewUsesD2BodyInsteadOfLegacyStaticPlannedFootprint(@TempDir Path tempDir) throws Exception {
+    void d4AnchorPreviewUsesExactNbtBodyInsteadOfCollisionOrMask(@TempDir Path tempDir) throws Exception {
         JsonObject anchorMap = JsonParser.parseString("""
                 {
                   "grid": {"blockBounds": {"minX": 0, "minZ": 0, "maxX": 256, "maxZ": 256}},
                   "anchors": [
                     {
                       "anchorId": "long_legacy_anchor_name_that_must_not_be_the_map_label",
-                      "structureId": "test:medium/variable_house",
+                      "templateId": "geomantia:test_house",
+                      "templateRef": "geomantia:city/test_house",
                       "anchorBlock": {"x": 48, "z": 80},
-                      "plannedFootprint": {"minX": 44, "minZ": 76, "maxX": 52, "maxZ": 84},
+                      "actualFootprint": {"minX": 44, "minZ": 76, "maxX": 52, "maxZ": 84},
                       "collisionEnvelope": {"minX": 24, "minZ": 48, "maxX": 72, "maxZ": 112},
-                      "maskEnvelope": {"minX": 16, "minZ": 40, "maxX": 80, "maxZ": 120},
-                      "envelopeMode": "d2_stable_max_envelope",
-                      "structureEnvelopeFact": {
-                        "collisionEnvelopeSource": "stableMaxEnvelope",
-                        "stableMaxEnvelope": {"minX": -16, "minZ": -24, "maxX": 16, "maxZ": 24},
-                        "localEnvelopeP95": {"minX": -8, "minZ": -8, "maxX": 8, "maxZ": 8}
-                      }
+                      "maskEnvelope": {"minX": 16, "minZ": 40, "maxX": 80, "maxZ": 120}
                     }
                   ]
                 }
@@ -184,7 +230,7 @@ final class CityStructureLandingPreviewRendererTest {
         BlockBounds body = CityStructureLandingPreviewRenderer.d2BodyBounds(
                 anchorMap.getAsJsonArray("anchors").get(0).getAsJsonObject());
 
-        assertEquals(new BlockBounds(32, 56, 64, 104), body);
+        assertEquals(new BlockBounds(44, 76, 52, 84), body);
         Path overview = new CityStructureLandingPreviewRenderer().renderD4(anchorMap, null, tempDir);
         assertTrue(Files.exists(overview));
         assertTrue(Files.exists(tempDir.resolve("structure_anchor_cluster_preview.png")));
@@ -233,6 +279,14 @@ final class CityStructureLandingPreviewRendererTest {
         assertNotNull(detail);
         assertEquals(1280, detail.getWidth());
         assertEquals(900, detail.getHeight());
+    }
+
+    private static void assertSamePixels(BufferedImage expected, BufferedImage actual) {
+        assertEquals(expected.getWidth(), actual.getWidth());
+        assertEquals(expected.getHeight(), actual.getHeight());
+        assertArrayEquals(expected.getRGB(0, 0, expected.getWidth(), expected.getHeight(), null, 0,
+                        expected.getWidth()),
+                actual.getRGB(0, 0, actual.getWidth(), actual.getHeight(), null, 0, actual.getWidth()));
     }
 
 }

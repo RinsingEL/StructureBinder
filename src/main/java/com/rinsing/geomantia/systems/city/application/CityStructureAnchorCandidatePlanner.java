@@ -36,8 +36,7 @@ public final class CityStructureAnchorCandidatePlanner {
     public Result plan(Path baseDirectory,
                        CityLandformReviewPackage reviewPackage,
                        JsonObject terraSenseProfileSource,
-                       JsonObject designSlotPlan,
-                       CityStructureEnvelopeFacts envelopeFacts) throws IOException {
+                       JsonObject designSlotPlan) throws IOException {
         long started = System.nanoTime();
         if (reviewPackage == null) {
             throw new IllegalArgumentException("CityLandformReviewPackage is required for D4 candidates.");
@@ -53,8 +52,7 @@ public final class CityStructureAnchorCandidatePlanner {
 
         CityStructureProfileCatalog.ImportedCatalog catalog =
                 CityStructureProfileCatalog.importCatalog(baseDirectory, terraSenseProfileSource);
-        Map<String, CityStructureProfileCatalog.StructureProfile> profiles = catalog.byId();
-        CityStructureEnvelopeFacts facts = envelopeFacts == null ? CityStructureEnvelopeFacts.empty() : envelopeFacts;
+        TemplateCatalogContext templateCatalog = templateCatalog(designSlotPlan, null);
         Map<String, LandformPatchSummary> patches = patchesByRef(reviewPackage);
         Map<String, JsonObject> slots = slotsById(designSlotPlan);
         List<String> order = placementOrder(designSlotPlan, slots.keySet());
@@ -76,7 +74,7 @@ public final class CityStructureAnchorCandidatePlanner {
                 continue;
             }
             SlotPlanResult slotResult = candidatesForSlot(slotIndex, slot, reviewPackage.grid(), patches,
-                    profiles, facts, occupied, plannedSlotCenters, plannedAnchorCenters);
+                    templateCatalog, occupied, plannedSlotCenters, plannedAnchorCenters);
             hardBlocks.addAll(slotResult.hardBlocks());
             warnings.addAll(slotResult.warnings());
             slotCandidates.add(slotResult.asJson());
@@ -142,19 +140,15 @@ public final class CityStructureAnchorCandidatePlanner {
             anchor.addProperty("slotId", slotId);
             anchor.addProperty("candidateId", candidateId);
             anchor.addProperty("displayRole", stringValue(candidate, "displayRole", slotId));
-            anchor.addProperty("structureId", requiredString(candidate, "structureId"));
+            anchor.addProperty("templateId", requiredString(candidate, "templateId"));
             anchor.add("sourcePatchIds", candidate.getAsJsonArray("sourcePatchRefs").deepCopy());
             anchor.add("anchorBlock", candidate.getAsJsonObject("anchorBlock").deepCopy());
-            anchor.addProperty("rotation", stringValue(candidate, "rotation", "NONE"));
-            copyTemplateMetadata(candidate, anchor);
+            copyTemplateSelection(candidate, anchor);
             anchor.add("intentTerms", candidate.has("intentTerms") && candidate.get("intentTerms").isJsonArray()
                     ? candidate.getAsJsonArray("intentTerms").deepCopy()
                     : defaultIntentTerms(slotId, stringValue(candidate, "displayRole", "")));
             anchor.addProperty("priority", intValue(candidate, "priority", index));
             anchor.addProperty("roadAccessIntent", stringValue(candidate, "roadAccessIntent", "connect_to_city_entry"));
-            if (!stringValue(candidate, "selectedEnvelopeGroupKey", "").isBlank()) {
-                anchor.addProperty("envelopeGroupKey", stringValue(candidate, "selectedEnvelopeGroupKey", ""));
-            }
             anchor.addProperty("smallClearanceBlocks",
                     intValue(candidate, "smallClearanceBlocks",
                             CityStructureCandidateEnvelope.DEFAULT_SMALL_CLEARANCE_BLOCKS));
@@ -194,12 +188,22 @@ public final class CityStructureAnchorCandidatePlanner {
         }
         CityStructureProfileCatalog.ImportedCatalog catalog =
                 CityStructureProfileCatalog.importCatalog(baseDirectory, terraSenseProfileSource);
+        TemplateCatalogContext templateCatalog = templateCatalog(designSlotPlan, null);
         Map<String, JsonObject> slots = slotsById(designSlotPlan);
         List<String> order = placementOrder(designSlotPlan, slots.keySet());
         List<String> hardBlocks = new ArrayList<>();
         for (String slotId : order) {
             if (!slots.containsKey(slotId)) {
                 hardBlocks.add(slotId + ": placementOrder references missing slot.");
+                continue;
+            }
+            JsonObject slot = slots.get(slotId);
+            for (String templateId : templateIds(slot)) {
+                try {
+                    templateCatalog.resolve(templateId, slot);
+                } catch (IllegalArgumentException ex) {
+                    hardBlocks.add(slotId + ": " + ex.getMessage());
+                }
             }
         }
         JsonObject session = new JsonObject();
@@ -211,6 +215,7 @@ public final class CityStructureAnchorCandidatePlanner {
         session.add("sourceDesignSlotPlan", designSlotPlan.deepCopy());
         session.add("sourceTerraSenseProfileSource", terraSenseProfileSource.deepCopy());
         session.add("structureProfileCatalog", catalog.asJson());
+        session.add("templateCatalog", templateCatalog.source().deepCopy());
         session.add("placementOrder", stringArray(order));
         session.addProperty("currentSlotIndex", order.isEmpty() ? -1 : 0);
         session.addProperty("currentSlotId", order.isEmpty() ? "" : order.get(0));
@@ -239,8 +244,7 @@ public final class CityStructureAnchorCandidatePlanner {
 
     public NextCandidateResult planNext(Path baseDirectory,
                                         CityLandformReviewPackage reviewPackage,
-                                        JsonObject session,
-                                        CityStructureEnvelopeFacts envelopeFacts) throws IOException {
+                                        JsonObject session) throws IOException {
         long started = System.nanoTime();
         ensureSession(session);
         if (reviewPackage == null) {
@@ -254,8 +258,7 @@ public final class CityStructureAnchorCandidatePlanner {
         JsonObject profileSource = requiredObject(session, "sourceTerraSenseProfileSource");
         CityStructureProfileCatalog.ImportedCatalog catalog =
                 CityStructureProfileCatalog.importCatalog(baseDirectory, profileSource);
-        Map<String, CityStructureProfileCatalog.StructureProfile> profiles = catalog.byId();
-        CityStructureEnvelopeFacts facts = envelopeFacts == null ? CityStructureEnvelopeFacts.empty() : envelopeFacts;
+        TemplateCatalogContext templateCatalog = templateCatalog(designSlotPlan, session);
         Map<String, LandformPatchSummary> patches = patchesByRef(reviewPackage);
         Map<String, JsonObject> slots = slotsById(designSlotPlan);
         List<String> order = placementOrder(designSlotPlan, slots.keySet());
@@ -273,7 +276,7 @@ public final class CityStructureAnchorCandidatePlanner {
         Map<String, BlockPoint> plannedAnchorCenters = plannedAnchorCenters(session);
         List<BlockBounds> occupied = occupiedBounds(session);
         SlotPlanResult slotResult = candidatesForSlot(currentIndex + 1, slot, reviewPackage.grid(), patches,
-                profiles, facts, occupied, plannedSlotCenters, plannedAnchorCenters);
+                templateCatalog, occupied, plannedSlotCenters, plannedAnchorCenters);
         JsonArray slotCandidates = new JsonArray();
         slotCandidates.add(slotResult.asJson());
         List<String> warnings = new ArrayList<>(catalog.warnings());
@@ -434,7 +437,7 @@ public final class CityStructureAnchorCandidatePlanner {
         trace.addProperty("planningMode", "sequential_slot_session");
         trace.addProperty("sessionId", requiredString(session, "sessionId"));
         trace.addProperty("selectedAnchorCount", anchors.size());
-        trace.add("sourceSession", session.deepCopy());
+        trace.add("placementOrder", optionalArray(session, "placementOrder").deepCopy());
         plan.add("candidateSelectionTrace", trace);
         return new FinalizeResult(session.deepCopy(), plan, designTimeReport(session));
     }
@@ -443,20 +446,20 @@ public final class CityStructureAnchorCandidatePlanner {
                                              JsonObject slot,
                                              PlanningGrid grid,
                                              Map<String, LandformPatchSummary> patches,
-                                             Map<String, CityStructureProfileCatalog.StructureProfile> profiles,
-                                             CityStructureEnvelopeFacts facts,
+                                             TemplateCatalogContext templateCatalog,
                                              List<BlockBounds> occupied,
                                              Map<String, BlockPoint> plannedSlotCenters,
                                              Map<String, BlockPoint> plannedAnchorCenters) {
         String slotId = requiredString(slot, "slotId");
         String displayRole = stringValue(slot, "displayRole", slotId);
-        List<String> structureIds = structureIds(slot);
+        List<String> templateIds = templateIds(slot);
         List<LandformPatchSummary> sourcePatches = sourcePatches(slot, patches);
         List<String> hardBlocks = new ArrayList<>();
         List<String> warnings = new ArrayList<>();
+        int legalRegionRejected = 0;
         JsonArray candidates = new JsonArray();
-        if (structureIds.isEmpty()) {
-            hardBlocks.add(slotId + ": structureIds must not be empty.");
+        if (templateIds.isEmpty()) {
+            hardBlocks.add(slotId + ": templateIds must not be empty.");
         }
         if (sourcePatches.isEmpty()) {
             hardBlocks.add(slotId + ": candidatePatchRefs must reference D3 landform patches or map labels.");
@@ -466,13 +469,16 @@ public final class CityStructureAnchorCandidatePlanner {
         }
 
         List<CandidateDraft> drafts = new ArrayList<>();
-        for (String structureId : structureIds) {
-            CityStructureProfileCatalog.StructureProfile profile = profiles.get(structureId);
-            if (profile == null) {
-                hardBlocks.add(slotId + ": structureId is not in approved TerraSense catalog: " + structureId);
+        for (String templateId : templateIds) {
+            ResolvedTemplate resolved;
+            try {
+                resolved = templateCatalog.resolve(templateId, slot);
+            } catch (IllegalArgumentException ex) {
+                hardBlocks.add(slotId + ": " + ex.getMessage());
                 continue;
             }
-            List<BlockPoint> representativePoints = representativePoints(grid, sourcePatches, plannedSlotCenters);
+            List<BlockPoint> representativePoints = CityStructureCandidateEnvelope.constrainCandidatePoints(slot,
+                    representativePoints(grid, sourcePatches, plannedSlotCenters));
             int pointIndex = 0;
             for (BlockPoint point : representativePoints) {
                 pointIndex++;
@@ -486,15 +492,14 @@ public final class CityStructureAnchorCandidatePlanner {
                 if (sourcePatch == null) {
                     continue;
                 }
-                CityStructureCandidateEnvelope.Estimate estimate =
-                        CityStructureCandidateEnvelope.estimate(point, profile, facts, slot);
-                if (estimate.requiredFactsMissing()) {
-                    hardBlocks.add(slotId + ": structure envelope facts are required for Trek structure "
-                            + structureId + " but are missing or hash-mismatched.");
-                    break;
-                }
+                CityStructureCandidateEnvelope.Estimate estimate = estimateTemplate(point, resolved, slot);
                 if (!estimate.hardBlockReason().isBlank()) {
-                    hardBlocks.add(slotId + ": " + estimate.hardBlockReason());
+                    if (estimate.hardBlockReason()
+                            .startsWith("D4_PATCH_SELECTION_COLLISION_OUTSIDE_COMPONENT")) {
+                        legalRegionRejected++;
+                    } else {
+                        hardBlocks.add(slotId + ": " + estimate.hardBlockReason());
+                    }
                     continue;
                 }
                 if (!gridContains(grid, estimate.collisionEnvelope())) {
@@ -508,9 +513,13 @@ public final class CityStructureAnchorCandidatePlanner {
                 String kind = candidateKind(pointIndex, sourcePatch, plannedSlotCenters);
                 Score score = score(slot, sourcePatch, point, estimate.collisionEnvelope(),
                         plannedSlotCenters, plannedAnchorCenters);
-                drafts.add(new CandidateDraft(slotIndex, slotId, displayRole, structureId, point, sourcePatch,
-                        kind, estimate, score, templateMetadata(slot)));
+                drafts.add(new CandidateDraft(slotIndex, slotId, displayRole, point,
+                        sourcePatch, kind, estimate, score, resolved.templateMetadata()));
             }
+        }
+        if (legalRegionRejected > 0) {
+            warnings.add(slotId + ": filtered " + legalRegionRejected
+                    + " candidate points whose collision envelope leaves the selected patch component.");
         }
 
         Set<String> usedKinds = new LinkedHashSet<>();
@@ -533,11 +542,11 @@ public final class CityStructureAnchorCandidatePlanner {
         obj.addProperty("candidateKind", draft.kind());
         obj.addProperty("slotId", draft.slotId());
         obj.addProperty("displayRole", draft.displayRole());
-        obj.addProperty("structureId", draft.structureId());
         obj.add("anchorBlock", draft.anchorBlock().asJson());
         obj.addProperty("rotation", "NONE");
         copyTemplateMetadata(draft.templateMetadata(), obj);
         addTemplatePlacementPlan(draft.templateMetadata(), draft.anchorBlock(), obj);
+        obj.add("plannedFootprint", boundsJson(draft.estimate().plannedFootprint()));
         JsonArray refs = new JsonArray();
         refs.add(draft.patch().landformPatchId());
         if (!draft.patch().mapLabel().isBlank()) {
@@ -546,10 +555,7 @@ public final class CityStructureAnchorCandidatePlanner {
         obj.add("sourcePatchRefs", refs);
         obj.add("estimatedCollisionEnvelope", boundsJson(draft.estimate().collisionEnvelope()));
         obj.add("estimatedMaskEnvelope", boundsJson(draft.estimate().maskEnvelope()));
-        obj.add("diagnosticMaxObservedEnvelope", boundsJson(draft.estimate().diagnosticMaxObservedEnvelope()));
         obj.addProperty("geometryStatus", "available");
-        obj.addProperty("envelopeMode", draft.estimate().envelopeMode());
-        obj.addProperty("selectedEnvelopeGroupKey", draft.estimate().selectedEnvelopeGroupKey());
         obj.addProperty("smallClearanceBlocks", CityStructureCandidateEnvelope.DEFAULT_SMALL_CLEARANCE_BLOCKS);
         obj.addProperty("priority", draft.slotIndex());
         obj.addProperty("roadAccessIntent", "connect_to_city_entry");
@@ -791,13 +797,14 @@ public final class CityStructureAnchorCandidatePlanner {
 
     private static boolean patchContains(LandformPatchSummary patch, PlanningGrid grid, BlockPoint point) {
         if (!patch.memberCells().isEmpty()) {
-            int cellX = grid.blockToCellX(point.x());
-            int cellZ = grid.blockToCellZ(point.z());
+            int step = grid.cellStepBlocks();
             for (PatchMemberCell cell : patch.memberCells()) {
-                if (cell.cellX() == cellX && cell.cellZ() == cellZ) {
+                if (point.x() >= cell.blockMinX() && point.x() < cell.blockMinX() + step
+                        && point.z() >= cell.blockMinZ() && point.z() < cell.blockMinZ() + step) {
                     return true;
                 }
             }
+            return false;
         }
         return patch.blockBounds().contains(point.x(), point.z());
     }
@@ -944,19 +951,15 @@ public final class CityStructureAnchorCandidatePlanner {
         anchor.addProperty("slotId", requiredString(selected, "slotId"));
         anchor.addProperty("candidateId", requiredString(selected, "candidateId"));
         anchor.addProperty("displayRole", stringValue(selected, "displayRole", requiredString(selected, "slotId")));
-        anchor.addProperty("structureId", requiredString(selected, "structureId"));
+        anchor.addProperty("templateId", requiredString(selected, "templateId"));
         anchor.add("sourcePatchIds", selected.getAsJsonArray("sourcePatchRefs").deepCopy());
         anchor.add("anchorBlock", selected.getAsJsonObject("anchorBlock").deepCopy());
-        anchor.addProperty("rotation", stringValue(selected, "rotation", "NONE"));
-        copyTemplateMetadata(selected, anchor);
+        copyTemplateSelection(selected, anchor);
         anchor.add("intentTerms", selected.has("intentTerms") && selected.get("intentTerms").isJsonArray()
                 ? selected.getAsJsonArray("intentTerms").deepCopy()
                 : defaultIntentTerms(requiredString(selected, "slotId"), stringValue(selected, "displayRole", "")));
         anchor.addProperty("priority", intValue(selected, "priority", index));
         anchor.addProperty("roadAccessIntent", stringValue(selected, "roadAccessIntent", "connect_to_city_entry"));
-        if (!stringValue(selected, "selectedEnvelopeGroupKey", "").isBlank()) {
-            anchor.addProperty("envelopeGroupKey", stringValue(selected, "selectedEnvelopeGroupKey", ""));
-        }
         anchor.addProperty("smallClearanceBlocks",
                 intValue(selected, "smallClearanceBlocks",
                         CityStructureCandidateEnvelope.DEFAULT_SMALL_CLEARANCE_BLOCKS));
@@ -971,11 +974,75 @@ public final class CityStructureAnchorCandidatePlanner {
         return metadata;
     }
 
+    private static TemplateCatalogContext templateCatalog(JsonObject designSlotPlan, JsonObject session) {
+        JsonObject source = objectValue(session, "templateCatalog");
+        if (source.size() == 0) {
+            source = objectValue(designSlotPlan, "templateCatalog");
+        }
+        if (source.size() == 0) {
+            throw new IllegalArgumentException("D4_TEMPLATE_CATALOG_REQUIRED: templateCatalogSource must be explicit.");
+        }
+        return new TemplateCatalogContext(new CityTemplateCatalogLoader().load(source), source);
+    }
+
+    private static JsonObject objectValue(JsonObject source, String key) {
+        return source != null && source.has(key) && source.get(key).isJsonObject()
+                ? source.getAsJsonObject(key) : new JsonObject();
+    }
+
+    private static JsonObject templateMetadata(CityTemplateCatalog.Template template,
+                                               CityTemplatePlacementGeometry.Rotation rotation,
+                                               CityTemplatePlacementGeometry.Mirror mirror) {
+        JsonObject metadata = new JsonObject();
+        metadata.addProperty("templateId", template.templateId());
+        metadata.addProperty("templateRef", template.templateRef());
+        metadata.addProperty("templateHash", template.contentHash());
+        metadata.addProperty("variantId", template.variantId());
+        metadata.addProperty("rotation", rotation.name());
+        metadata.addProperty("mirror", mirror.name());
+        metadata.addProperty("terrainPosePolicy", template.terrainPosePolicy());
+        metadata.addProperty("materializationSource",
+                CityStructureMaterializationPlanner.TEMPLATE_MATERIALIZATION_SOURCE);
+        metadata.add("rawSize", sizeJson(template.rawSize()));
+        metadata.add("roadEntrances", roadEntrancesJson(template.roadEntrances()));
+        metadata.add("allowedRotations", enumArray(template.allowedRotations()));
+        metadata.add("allowedMirrors", enumArray(template.allowedMirrors()));
+        metadata.addProperty("supportPolicy", template.supportPolicy());
+        metadata.addProperty("clearanceBlocks", template.clearanceBlocks());
+        return metadata;
+    }
+
+    private static JsonObject sizeJson(CityTemplatePlacementGeometry.Size size) {
+        JsonObject json = new JsonObject();
+        json.addProperty("width", size.width());
+        json.addProperty("height", size.height());
+        json.addProperty("depth", size.depth());
+        return json;
+    }
+
+    private static JsonArray roadEntrancesJson(List<CityTemplatePlacementGeometry.RoadEntrance> entrances) {
+        JsonArray array = new JsonArray();
+        for (CityTemplatePlacementGeometry.RoadEntrance entrance : entrances) {
+            JsonObject json = new JsonObject();
+            json.addProperty("entranceId", entrance.entranceId());
+            json.add("position", entrance.localPosition().asJson());
+            json.addProperty("direction", entrance.direction().name());
+            array.add(json);
+        }
+        return array;
+    }
+
+    private static JsonArray enumArray(List<? extends Enum<?>> values) {
+        JsonArray array = new JsonArray();
+        values.forEach(value -> array.add(value.name()));
+        return array;
+    }
+
     private static void addTemplatePlacementPlan(JsonObject source, BlockPoint anchor, JsonObject target) {
         if (source == null || anchor == null || target == null || target.has("templatePlacementPlan")) {
             return;
         }
-        if (!source.has("templateSize") || !source.get("templateSize").isJsonObject()
+        if (!source.has("rawSize") || !source.get("rawSize").isJsonObject()
                 || !source.has("roadEntrances") || !source.get("roadEntrances").isJsonArray()) {
             return;
         }
@@ -987,40 +1054,49 @@ public final class CityStructureAnchorCandidatePlanner {
             }
         }
         placement.add("anchorBlock", anchor.asJson());
-        placement.add("templateSize", source.get("templateSize").deepCopy());
-        JsonObject transformed = new JsonObject();
-        transformed.add("size", source.get("templateSize").deepCopy());
-        JsonArray transformedEntrances = new JsonArray();
+        placement.add("templateSize", source.get("rawSize").deepCopy());
+        JsonObject size = source.getAsJsonObject("rawSize");
+        CityTemplatePlacementGeometry.Size rawSize = new CityTemplatePlacementGeometry.Size(
+                intValue(size, "width", 0), intValue(size, "height", 0), intValue(size, "depth", 0));
+        List<CityTemplatePlacementGeometry.RoadEntrance> rawEntrances = new ArrayList<>();
         for (JsonElement element : source.getAsJsonArray("roadEntrances")) {
-            if (!element.isJsonObject()) {
-                continue;
-            }
-            JsonObject entrance = element.getAsJsonObject();
-            JsonObject relative = entrance.has("position") && entrance.get("position").isJsonObject()
-                    ? entrance.getAsJsonObject("position")
-                    : entrance.has("relativePosition") && entrance.get("relativePosition").isJsonObject()
-                            ? entrance.getAsJsonObject("relativePosition") : null;
-            String direction = stringValue(entrance, "direction", "");
-            if (relative == null || direction.isBlank()) {
-                continue;
-            }
-            JsonObject transformedEntrance = new JsonObject();
-            transformedEntrance.addProperty("entranceId",
-                    stringValue(entrance, "entranceId", "entrance_" + transformedEntrances.size()));
-            transformedEntrance.addProperty("direction", direction);
-            transformedEntrance.add("relativePosition", relative.deepCopy());
-            JsonObject world = new JsonObject();
-            world.addProperty("x", anchor.x() + intValue(relative, "x", 0));
-            world.addProperty("z", anchor.z() + intValue(relative, "z", 0));
-            transformedEntrance.add("worldPosition", world);
-            transformedEntrances.add(transformedEntrance);
+            if (!element.isJsonObject()) continue;
+            JsonObject value = element.getAsJsonObject();
+            JsonObject position = objectValue(value, "position");
+            if (position.size() == 0) continue;
+            rawEntrances.add(new CityTemplatePlacementGeometry.RoadEntrance(
+                    stringValue(value, "entranceId", "entrance_" + rawEntrances.size()),
+                    new BlockPoint(intValue(position, "x", 0), intValue(position, "z", 0)),
+                    CityTemplatePlacementGeometry.Direction.valueOf(requiredString(value, "direction"))));
         }
-        if (transformedEntrances.isEmpty()) {
-            return;
+        CityTemplatePlacementGeometry geometry = CityTemplatePlacementGeometry.of(rawSize,
+                CityTemplatePlacementGeometry.Rotation.valueOf(stringValue(source, "rotation", "NONE")),
+                CityTemplatePlacementGeometry.Mirror.valueOf(stringValue(source, "mirror", "NONE")), rawEntrances);
+        JsonObject transformed = new JsonObject();
+        transformed.add("size", sizeJson(geometry.transformedSize()));
+        JsonArray transformedEntrances = new JsonArray();
+        for (CityTemplatePlacementGeometry.TransformedRoadEntrance entrance : geometry.roadEntrances()) {
+            JsonObject transformedEntrance = new JsonObject();
+            transformedEntrance.addProperty("entranceId", entrance.entranceId());
+            transformedEntrance.addProperty("direction", entrance.direction().name());
+            transformedEntrance.add("relativePosition", entrance.relativePosition().asJson());
+            transformedEntrance.add("worldPosition", entrance.worldPosition(anchor).asJson());
+            transformedEntrances.add(transformedEntrance);
         }
         transformed.add("roadEntrances", transformedEntrances);
         placement.add("transformed", transformed);
         target.add("templatePlacementPlan", placement);
+    }
+
+    private static CityStructureCandidateEnvelope.Estimate estimateTemplate(
+            BlockPoint anchor, ResolvedTemplate resolved, JsonObject options) {
+        BlockBounds footprint = resolved.geometry().worldBounds(anchor);
+        BlockBounds collision = CityStructureMaterializationPlanner.expand(footprint, resolved.clearanceBlocks());
+        int maskMargin = Math.max(0, intValue(options, "maskMarginBlocks",
+                CityStructureAnchorPlanner.DEFAULT_MASK_MARGIN_BLOCKS));
+        BlockBounds mask = CityStructureMaterializationPlanner.expand(collision, maskMargin);
+        return CityStructureCandidateEnvelope.constrain(
+                new CityStructureCandidateEnvelope.Estimate(footprint, collision, mask, ""), options);
     }
 
     private static void copyTemplateMetadata(JsonObject source, JsonObject target) {
@@ -1028,7 +1104,7 @@ public final class CityStructureAnchorCandidatePlanner {
             return;
         }
         for (String key : List.of("templateId", "templateRef", "templateHash", "variantId",
-                "rotation", "mirror", "terrainPosePolicy", "templateSize", "rawSize",
+                "rotation", "mirror", "terrainPosePolicy", "rawSize",
                 "materializationSource", "roadEntrances", "allowedRotations", "allowedMirrors",
                 "supportPolicy", "clearanceBlocks", "templatePlacementPlan", "structureTemplate")) {
             if (source.has(key)) {
@@ -1142,13 +1218,13 @@ public final class CityStructureAnchorCandidatePlanner {
         return values;
     }
 
-    private static List<String> structureIds(JsonObject slot) {
+    private static List<String> templateIds(JsonObject slot) {
         LinkedHashSet<String> ids = new LinkedHashSet<>();
-        String single = stringValue(slot, "structureId", "");
+        String single = stringValue(slot, "templateId", "");
         if (!single.isBlank()) {
             ids.add(single);
         }
-        JsonArray array = optionalArray(slot, "structureIds");
+        JsonArray array = optionalArray(slot, "templateIds");
         for (String id : strings(array)) {
             if (!id.isBlank()) {
                 ids.add(id);
@@ -1184,6 +1260,7 @@ public final class CityStructureAnchorCandidatePlanner {
         if (obj == null) {
             return;
         }
+        rejectConfiguredIdentity(obj);
         for (String field : List.of("patchGroupPlan", "groups", "zoneChoices", "functionType",
                 "functionTag", "functionTags", "function_candidates", "targetVisibleAreaRatio")) {
             if (obj.has(field)) {
@@ -1335,7 +1412,90 @@ public final class CityStructureAnchorCandidatePlanner {
         }
     }
 
-    private record CandidateDraft(int slotIndex, String slotId, String displayRole, String structureId,
+    private static void rejectConfiguredIdentity(JsonElement element) {
+        if (element == null || element.isJsonNull()) {
+            return;
+        }
+        if (element.isJsonArray()) {
+            for (JsonElement child : element.getAsJsonArray()) {
+                rejectConfiguredIdentity(child);
+            }
+            return;
+        }
+        if (!element.isJsonObject()) {
+            return;
+        }
+        JsonObject object = element.getAsJsonObject();
+        if (object.has("structureId") || object.has("structureIds")) {
+            throw new IllegalArgumentException("CITY_CONFIGURED_STRUCTURE_FLOW_REMOVED: structureId(s)");
+        }
+        for (Map.Entry<String, JsonElement> entry : object.entrySet()) {
+            rejectConfiguredIdentity(entry.getValue());
+        }
+    }
+
+    private static void copyTemplateSelection(JsonObject source, JsonObject target) {
+        for (String key : List.of("templateId", "templateRef", "variantId", "rotation", "mirror")) {
+            if (source.has(key)) {
+                target.add(key, source.get(key).deepCopy());
+            }
+        }
+    }
+
+    private record TemplateCatalogContext(CityTemplateCatalog catalog, JsonObject source) {
+        TemplateCatalogContext {
+            source = source == null ? new JsonObject() : source.deepCopy();
+        }
+
+        static TemplateCatalogContext empty() {
+            return new TemplateCatalogContext(null, new JsonObject());
+        }
+
+        ResolvedTemplate resolve(String templateId, JsonObject slot) {
+            if (catalog == null) {
+                throw new IllegalArgumentException("D4_TEMPLATE_CATALOG_REQUIRED");
+            }
+            List<CityTemplateCatalog.Template> variants = catalog.templates().stream()
+                    .filter(template -> template.templateId().equals(templateId))
+                    .toList();
+            if (variants.isEmpty()) {
+                throw new IllegalArgumentException("D4_TEMPLATE_CATALOG_TEMPLATE_UNKNOWN: " + templateId);
+            }
+            String variantId = stringValue(slot, "variantId", stringValue(slot, "variant", ""));
+            if (variantId.isBlank() && variants.size() > 1) {
+                throw new IllegalArgumentException("D4_TEMPLATE_VARIANT_REQUIRED: template " + templateId
+                        + " has multiple variants; slot.variantId is required.");
+            }
+            CityTemplateCatalog.Template template = variantId.isBlank()
+                    ? variants.get(0) : catalog.requireTemplate(templateId, variantId);
+            CityTemplatePlacementGeometry.Rotation rotation = enumValue(slot, "rotation",
+                    template.allowedRotations().get(0), CityTemplatePlacementGeometry.Rotation.class);
+            CityTemplatePlacementGeometry.Mirror mirror = enumValue(slot, "mirror",
+                    template.allowedMirrors().get(0), CityTemplatePlacementGeometry.Mirror.class);
+            CityTemplatePlacementGeometry geometry = template.geometry(rotation, mirror);
+            JsonObject metadata = templateMetadata(template, rotation, mirror);
+            return new ResolvedTemplate(template.templateId(), metadata, geometry, template.clearanceBlocks());
+        }
+
+        private static <T extends Enum<T>> T enumValue(JsonObject source, String key, T fallback, Class<T> type) {
+            String value = stringValue(source, key, "");
+            if (value.isBlank()) {
+                return fallback;
+            }
+            try {
+                return Enum.valueOf(type, value.toUpperCase(Locale.ROOT));
+            } catch (IllegalArgumentException ex) {
+                throw new IllegalArgumentException("D4_TEMPLATE_TRANSFORM_INVALID: invalid " + key + "=" + value,
+                        ex);
+            }
+        }
+    }
+
+    private record ResolvedTemplate(String templateId, JsonObject templateMetadata,
+                                    CityTemplatePlacementGeometry geometry, int clearanceBlocks) {
+    }
+
+    private record CandidateDraft(int slotIndex, String slotId, String displayRole,
                                   BlockPoint anchorBlock, LandformPatchSummary patch, String kind,
                                   CityStructureCandidateEnvelope.Estimate estimate, Score score,
                                   JsonObject templateMetadata) {

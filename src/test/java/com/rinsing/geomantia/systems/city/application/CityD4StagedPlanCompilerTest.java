@@ -98,7 +98,8 @@ class CityD4StagedPlanCompilerTest {
                   "arrayId":"housing_array",
                   "displayRole":"housing",
                   "candidatePatchRefs":["patch_a"],
-                  "structureId":"geomantia:house",
+                  "templateId":"geomantia:house",
+                  "variantId":"fixed_v1",
                   "arrayCount":4,
                   "patterns":["grid"],
                   "priority":7
@@ -112,11 +113,33 @@ class CityD4StagedPlanCompilerTest {
         assertEquals("city_test", plan.get("cityId").getAsString());
         assertEquals("housing_array", plan.get("arrayId").getAsString());
         assertEquals("housing", plan.get("displayRole").getAsString());
-        assertEquals("geomantia:house", plan.getAsJsonArray("structureIds").get(0).getAsString());
+        assertEquals("geomantia:house", plan.getAsJsonArray("templateIds").get(0).getAsString());
+        assertEquals("fixed_v1", plan.get("variantId").getAsString());
         assertEquals(4, plan.get("arrayCount").getAsInt());
-        assertEquals("seeded_random", plan.get("variantSelectionMode").getAsString());
+        assertEquals("round_robin", plan.get("variantSelectionMode").getAsString());
         assertEquals("grid", plan.getAsJsonArray("patterns").get(0).getAsString());
         assertEquals(7, plan.get("priority").getAsInt());
+    }
+
+    @Test
+    void rejectsRemovedRandomTemplateSelection() {
+        JsonObject source = json("{\"cityId\":\"city_test\"}");
+        JsonObject slot = json("""
+                {
+                  "slotId":"homes",
+                  "arrayId":"housing_array",
+                  "candidatePatchRefs":["patch_a"],
+                  "templateId":"geomantia:house",
+                  "variantId":"fixed_v1",
+                  "arrayCount":4,
+                  "variantSelectionMode":"seeded_random"
+                }
+                """);
+
+        IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
+                () -> compiler.arrayCandidatePlanFromSlot(source, slot));
+
+        assertTrue(error.getMessage().startsWith("D4_RANDOM_TEMPLATE_SELECTION_REMOVED:"));
     }
 
     @Test

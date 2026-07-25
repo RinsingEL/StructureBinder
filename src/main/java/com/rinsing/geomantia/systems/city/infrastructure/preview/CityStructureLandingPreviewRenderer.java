@@ -126,17 +126,13 @@ public final class CityStructureLandingPreviewRenderer {
                     JsonObject candidate = candElem.getAsJsonObject();
                     i++;
                     String code = "C" + i;
-                    drawRect(g, t, bounds(candidate, "estimatedMaskEnvelope"), new Color(202, 108, 62, 24),
-                            new Color(178, 84, 46, 105), 1.0f);
-                    drawRect(g, t, bounds(candidate, "estimatedCollisionEnvelope"), new Color(204, 79, 63, 34),
-                            new Color(158, 59, 49, 145), 1.4f);
                     BlockPoint anchor = point(candidate, "anchorBlock");
                     drawPoint(g, t, anchor, color(i, 235));
                     drawBadge(g, t, anchor, code, color(i, 235));
                 }
             }
             title(g, "City D4 anchor candidate preview",
-                    "patch backdrop + blue=frozen selected C*=current candidates red=collision orange=mask candidates="
+                    "patch backdrop + blue=frozen selected C*=current candidates; bbox hidden; candidates="
                             + candidateCount(candidateSet));
             candidateSummary(g, candidateSet);
         } finally {
@@ -205,16 +201,10 @@ public final class CityStructureLandingPreviewRenderer {
             for (JsonElement groupElem : array(candidateSet, "arrayCandidates")) {
                 JsonObject group = groupElem.getAsJsonObject();
                 groupIndex++;
-                drawRect(g, t, bounds(group, "groupMaskEnvelope"), new Color(202, 108, 62, 20),
-                        new Color(178, 84, 46, 95), 1.0f);
-                drawRect(g, t, bounds(group, "groupCollisionEnvelope"), new Color(204, 79, 63, 24),
-                        new Color(158, 59, 49, 125), 1.4f);
                 int itemIndex = 0;
                 for (JsonElement itemElem : array(group, "items")) {
                     JsonObject item = itemElem.getAsJsonObject();
                     itemIndex++;
-                    drawRect(g, t, bounds(item, "estimatedCollisionEnvelope"), color(groupIndex, 20),
-                            color(groupIndex, 115), 0.9f);
                     BlockPoint anchor = point(item, "anchorBlock");
                     drawPoint(g, t, anchor, color(groupIndex + itemIndex, 235));
                     drawBadge(g, t, anchor, "G" + groupIndex + "." + itemIndex,
@@ -222,7 +212,7 @@ public final class CityStructureLandingPreviewRenderer {
                 }
             }
             title(g, "City D4 array candidate preview",
-                    "patch backdrop + G=item group candidates groups="
+                    "patch backdrop + G=item group candidates; bbox hidden; groups="
                             + array(candidateSet, "arrayCandidates").size());
             arrayCandidateSummary(g, candidateSet);
         } finally {
@@ -434,39 +424,9 @@ public final class CityStructureLandingPreviewRenderer {
         ImageIO.write(image, "png", path.toFile());
     }
 
-    /**
-     * D4 anchor maps historically retained the TerraSense static footprint in plannedFootprint.
-     * Preview the D2 body when the anchor carries its frozen envelope fact; keep the static field only
-     * as a compatibility fallback for old artifacts without D2 facts.
-     */
     static BlockBounds d2BodyBounds(JsonObject item) {
-        if (hasBounds(item, "d2BodyEnvelope")) {
-            return bounds(item, "d2BodyEnvelope");
-        }
-        JsonObject fact = object(item, "structureEnvelopeFact");
-        if (fact.size() > 0 && item.has("anchorBlock") && item.get("anchorBlock").isJsonObject()) {
-            String envelopeMode = string(item, "envelopeMode");
-            String source = string(fact, "collisionEnvelopeSource");
-            JsonObject localEnvelope = new JsonObject();
-            if ("fixed_bbox_group".equals(envelopeMode) || "dominantBBoxGroup".equals(source)) {
-                JsonObject selectedGroup = object(item, "selectedEnvelopeGroup");
-                if (hasBounds(selectedGroup, "localEnvelope")) {
-                    localEnvelope = object(selectedGroup, "localEnvelope");
-                } else {
-                    JsonObject dominantGroup = object(fact, "dominantBBoxGroup");
-                    if (hasBounds(dominantGroup, "localEnvelope")) {
-                        localEnvelope = object(dominantGroup, "localEnvelope");
-                    }
-                }
-            } else if ("d2_stable_max_envelope".equals(envelopeMode)
-                    || "stableMaxEnvelope".equals(source)) {
-                localEnvelope = object(fact, "stableMaxEnvelope");
-            } else {
-                localEnvelope = object(fact, "localEnvelopeP95");
-            }
-            if (isBounds(localEnvelope)) {
-                return fromLocal(point(item, "anchorBlock"), bounds(localEnvelope));
-            }
+        if (hasBounds(item, "actualFootprint")) {
+            return bounds(item, "actualFootprint");
         }
         if (hasBounds(item, "plannedFootprint")) {
             return bounds(item, "plannedFootprint");
@@ -567,8 +527,8 @@ public final class CityStructureLandingPreviewRenderer {
             JsonObject anchor = elem.getAsJsonObject();
             PreviewGeometry geometry = d4AnchorGeometry(anchor);
             g.setColor(new Color(32, 34, 34));
-            g.drawString("A" + index + " " + shortStructureName(string(anchor, "structureId"))
-                    + " D2 " + dimensions(geometry.body()), x, y);
+            g.drawString("A" + index + " " + shortStructureName(firstString(anchor, "templateId", "templateRef"))
+                    + " NBT " + dimensions(geometry.body()), x, y);
             y += 15;
             g.drawString("   C " + dimensions(geometry.collision()) + " M " + dimensions(geometry.mask()), x, y);
             y += 18;
@@ -589,12 +549,12 @@ public final class CityStructureLandingPreviewRenderer {
                 summary.append(" | ");
             }
             summary.append("A").append(preview.index()).append(" ")
-                    .append(shortStructureName(string(preview.anchor(), "structureId")))
+                    .append(shortStructureName(firstString(preview.anchor(), "templateId", "templateRef")))
                     .append(" ").append(dimensions(preview.geometry().body()));
         }
         g.setColor(new Color(32, 34, 34));
         g.drawString(trim(summary.toString(), 82), x, y);
-        g.drawString("D2 body dimensions; collision and mask remain visible around each body.", x, y + 17);
+        g.drawString("NBT body dimensions; collision and mask remain visible around each body.", x, y + 17);
     }
 
     private static void drawExpansionDetailLegend(Graphics2D g, JsonObject candidate, JsonObject space) {
@@ -617,7 +577,7 @@ public final class CityStructureLandingPreviewRenderer {
                 summary.append(" | ");
             }
             summary.append("E1.").append(index).append(" ")
-                    .append(shortStructureName(string(item, "structureId"))).append(" ")
+                    .append(shortStructureName(firstString(item, "templateId", "templateRef"))).append(" ")
                     .append(dimensions(d4CandidateGeometry(item).body()));
         }
         g.setColor(new Color(32, 34, 34));
@@ -626,53 +586,11 @@ public final class CityStructureLandingPreviewRenderer {
                 && array(candidate, "items").get(0).isJsonObject()) {
             BlockBounds parent = bounds(space, "focusBodyEnvelope");
             BlockBounds firstBody = d4CandidateGeometry(array(candidate, "items").get(0).getAsJsonObject()).body();
-            g.drawString("F -> E1.1 D2 body edge gap=" + formatDistance(edgeDistanceBlocks(parent, firstBody))
+            g.drawString("F -> E1.1 NBT body edge gap=" + formatDistance(edgeDistanceBlocks(parent, firstBody))
                     + " blocks", x, y + 17);
         } else {
-            g.drawString("Focus D2 body unavailable in this legacy artifact; red box is its collision boundary.", x, y + 17);
+            g.drawString("Focus NBT body unavailable; red box is its collision boundary.", x, y + 17);
         }
-    }
-
-    public Path renderEnvelopeFacts(JsonObject facts, Path outputDirectory) throws IOException {
-        Files.createDirectories(outputDirectory);
-        Path path = outputDirectory.resolve("structure_envelope_profile_preview.png");
-        BufferedImage image = baseImage();
-        Graphics2D g = image.createGraphics();
-        try {
-            setup(g);
-            BlockBounds bounds = envelopeFactsBounds(facts);
-            Transform t = transform(bounds);
-            drawGrid(g, t, bounds);
-            int i = 0;
-            for (JsonElement elem : array(facts, "structures")) {
-                JsonObject structure = elem.getAsJsonObject();
-                i++;
-                int offsetX = ((i - 1) % 4) * 180;
-                int offsetZ = ((i - 1) / 4) * 160;
-                BlockPoint origin = new BlockPoint(bounds.minX() + 60 + offsetX, bounds.minZ() + 70 + offsetZ);
-                drawLocal(g, t, origin, bounds(structure, "maxObservedEnvelope"),
-                        new Color(98, 96, 89, 32), new Color(89, 82, 70, 125), 1.0f);
-                drawLocal(g, t, origin, bounds(structure, "localEnvelopeP99"),
-                        new Color(202, 108, 62, 48), new Color(178, 84, 46, 165), 1.5f);
-                drawLocal(g, t, origin, bounds(structure, "localEnvelopeP95"),
-                        new Color(65, 145, 108, 85), new Color(39, 111, 78, 210), 2.0f);
-                JsonArray groups = array(structure, "bboxGroups");
-                if (!groups.isEmpty()) {
-                    JsonObject dominant = groups.get(0).getAsJsonObject();
-                    drawLocal(g, t, origin, bounds(dominant, "localEnvelope"),
-                            new Color(72, 126, 193, 44), new Color(50, 88, 156, 190), 2.4f);
-                }
-                drawLabel(g, t, origin, trim(string(structure, "structureId"), 24));
-            }
-            title(g, "City structure envelope facts preview",
-                    "blue=dominant bbox group green=P95 orange=P99 gray=maxObserved structures="
-                            + array(facts, "structures").size());
-            sideSummary(g, facts, "structures");
-        } finally {
-            g.dispose();
-        }
-        ImageIO.write(image, "png", path.toFile());
-        return path;
     }
 
     public Path renderD5(JsonObject reservationMaskPlan, Path outputDirectory) throws IOException {
@@ -733,13 +651,12 @@ public final class CityStructureLandingPreviewRenderer {
                 String footprintKey = object(structure, "actualFootprint").size() > 0
                         ? "actualFootprint" : "plannedFootprint";
                 drawRect(g, t, bounds(structure, footprintKey), color(i, 105), color(i, 225), 2.5f);
-                drawPieces(g, t, structure);
                 drawLabel(g, t, bounds(structure, footprintKey).center(), string(structure, "anchorId"));
             }
             title(g, "City D6 worldgen plan preview",
                     "planned worldgen structures=" + structures.size()
                             + " failures=" + object(trace, "failureSummary").size()
-                            + " blue/green=actual red=collision orange=mask");
+                            + " body=exact NBT footprint red=collision orange=mask");
             traceSummary(g, trace);
         } finally {
             g.dispose();
@@ -774,11 +691,11 @@ public final class CityStructureLandingPreviewRenderer {
                 drawRect(g, t, bounds(placed, "collisionEnvelope"), new Color(207, 81, 70, 34),
                         new Color(150, 62, 52, 115), 1.0f);
                 drawRect(g, t, bounds(placed, "actualFootprint"), color(i, 118), color(i, 235), 2.5f);
-                drawPieces(g, t, placed);
                 drawLabel(g, t, bounds(placed, "actualFootprint").center(), string(placed, "anchorId"));
             }
             title(g, "City D7 placed structure preview",
-                    "patch backdrop + placed=" + array(ledger, "placedStructures").size()
+                    "patch backdrop + body=exact NBT footprint red=collision orange=mask placed="
+                            + array(ledger, "placedStructures").size()
                             + " waiting=" + object(trace, "waitingSummary").size()
                             + " failures=" + object(trace, "failureSummary").size());
             traceSummary(g, trace);
@@ -787,27 +704,6 @@ public final class CityStructureLandingPreviewRenderer {
         }
         ImageIO.write(image, "png", path.toFile());
         return path;
-    }
-
-    private static void drawPieces(Graphics2D g, Transform t, JsonObject structure) {
-        int pieceIndex = 0;
-        for (JsonElement elem : array(structure, "pieceBoxes")) {
-            JsonObject piece = elem.getAsJsonObject();
-            JsonObject box = object(piece, "box");
-            if (box == null) {
-                continue;
-            }
-            BlockBounds bounds = bounds(box);
-            g.setColor(new Color(244, 186, 69, 76));
-            fillBounds(g, t, bounds);
-            g.setColor(new Color(159, 100, 20, 210));
-            g.setStroke(new BasicStroke(1.0f));
-            drawBounds(g, t, bounds);
-            if (pieceIndex < 12) {
-                drawLabel(g, t, bounds.center(), "P" + pieceIndex);
-            }
-            pieceIndex++;
-        }
     }
 
     private static void drawPatchBackdrop(Graphics2D g, Transform t, BlockBounds gridBounds,
@@ -1529,8 +1425,8 @@ public final class CityStructureLandingPreviewRenderer {
             }
             JsonObject item = elem.getAsJsonObject();
             String id = firstNonBlank(string(item, "anchorId"), string(item, "sourceRef"), "item_" + index);
-            String structure = string(item, "structureId");
-            String text = structure.isBlank() ? id : id + " " + structure;
+            String template = string(item, "templateId");
+            String text = template.isBlank() ? id : id + " " + template;
             g.drawString(trim(text, 56), x, y);
             y += 17;
             index++;
@@ -1597,15 +1493,6 @@ public final class CityStructureLandingPreviewRenderer {
         g.setColor(stroke);
         g.setStroke(new BasicStroke(strokeWidth));
         drawBounds(g, t, bounds);
-    }
-
-    private static void drawLocal(Graphics2D g, Transform t, BlockPoint origin, BlockBounds local,
-                                  Color fill, Color stroke, float strokeWidth) {
-        drawRect(g, t, new BlockBounds(
-                origin.x() + local.minX(),
-                origin.z() + local.minZ(),
-                origin.x() + local.maxX(),
-                origin.z() + local.maxZ()), fill, stroke, strokeWidth);
     }
 
     private static void drawLabel(Graphics2D g, Transform t, BlockPoint point, String label) {
@@ -1707,13 +1594,6 @@ public final class CityStructureLandingPreviewRenderer {
                 && value.has("maxX") && value.has("maxZ");
     }
 
-    private static BlockBounds fromLocal(BlockPoint anchor, BlockBounds local) {
-        int originX = Math.floorDiv(anchor.x(), 16) * 16;
-        int originZ = Math.floorDiv(anchor.z(), 16) * 16;
-        return new BlockBounds(originX + local.minX(), originZ + local.minZ(),
-                originX + local.maxX(), originZ + local.maxZ());
-    }
-
     private static BlockBounds expand(BlockBounds bounds, int amount) {
         int normalized = Math.max(0, amount);
         return new BlockBounds(bounds.minX() - normalized, bounds.minZ() - normalized,
@@ -1806,14 +1686,6 @@ public final class CityStructureLandingPreviewRenderer {
         return new BlockBounds(minX, minZ, minX + cellsX * step, minZ + cellsZ * step);
     }
 
-    private static BlockBounds envelopeFactsBounds(JsonObject facts) {
-        int count = array(facts, "structures").size();
-        int width = Math.max(360, Math.min(4, Math.max(1, count)) * 180 + 160);
-        int rows = Math.max(1, (int) Math.ceil(count / 4.0));
-        int height = Math.max(260, rows * 160 + 160);
-        return new BlockBounds(0, 0, width, height);
-    }
-
     private static JsonArray array(JsonObject obj, String key) {
         return obj != null && obj.has(key) && obj.get(key).isJsonArray() ? obj.getAsJsonArray(key) : new JsonArray();
     }
@@ -1860,6 +1732,16 @@ public final class CityStructureLandingPreviewRenderer {
 
     private static String string(JsonObject obj, String key) {
         return obj != null && obj.has(key) && !obj.get(key).isJsonNull() ? obj.get(key).getAsString() : "";
+    }
+
+    private static String firstString(JsonObject obj, String... keys) {
+        for (String key : keys) {
+            String value = string(obj, key);
+            if (!value.isBlank()) {
+                return value;
+            }
+        }
+        return "";
     }
 
     private static int intValue(JsonObject obj, String key, int defaultValue) {

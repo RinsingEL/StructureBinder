@@ -27,21 +27,11 @@ public final class CityStructureAnchorPlanner {
     public static final int DEFAULT_MASK_MARGIN_BLOCKS = 8;
     public static final int DEFAULT_ROAD_ACCESS_MARGIN_BLOCKS = 6;
     public static final int DEFAULT_VEGETATION_MARGIN_BLOCKS = 8;
-    public static final int DEFAULT_JIGSAW_RADIUS_BLOCKS = 96;
 
     public Result plan(Path baseDirectory,
                        CityLandformReviewPackage reviewPackage,
                        JsonObject terraSenseProfileSource,
                        JsonObject structureAnchorPlan) throws IOException {
-        return plan(baseDirectory, reviewPackage, terraSenseProfileSource, structureAnchorPlan,
-                CityStructureEnvelopeFacts.empty());
-    }
-
-    public Result plan(Path baseDirectory,
-                       CityLandformReviewPackage reviewPackage,
-                       JsonObject terraSenseProfileSource,
-                       JsonObject structureAnchorPlan,
-                       CityStructureEnvelopeFacts envelopeFacts) throws IOException {
         long started = System.nanoTime();
         if (reviewPackage == null) {
             throw new IllegalArgumentException("CityLandformReviewPackage is required for D4.");
@@ -50,6 +40,11 @@ public final class CityStructureAnchorPlanner {
         if (structureAnchorPlan == null || !structureAnchorPlan.has("anchors")) {
             throw new IllegalArgumentException("structureAnchorPlan.anchors array is required.");
         }
+        for (JsonElement element : requiredArray(structureAnchorPlan, "anchors")) {
+            if (!element.isJsonObject() || !isTemplatePlacement(element.getAsJsonObject())) {
+                throw new IllegalArgumentException("CITY_CONFIGURED_STRUCTURE_FLOW_REMOVED");
+            }
+        }
         String cityId = stringValue(structureAnchorPlan, "cityId", reviewPackage.cityId());
         if (!reviewPackage.cityId().equals(cityId)) {
             throw new IllegalArgumentException("StructureAnchorPlan cityId mismatch.");
@@ -57,8 +52,6 @@ public final class CityStructureAnchorPlanner {
 
         CityStructureProfileCatalog.ImportedCatalog catalog =
                 CityStructureProfileCatalog.importCatalog(baseDirectory, terraSenseProfileSource);
-        Map<String, CityStructureProfileCatalog.StructureProfile> profiles = catalog.byId();
-        CityStructureEnvelopeFacts facts = envelopeFacts == null ? CityStructureEnvelopeFacts.empty() : envelopeFacts;
         Map<String, LandformPatchSummary> patches = patchesByRef(reviewPackage);
         List<String> hardBlocks = new ArrayList<>();
         List<String> warnings = new ArrayList<>(catalog.warnings());
@@ -71,17 +64,6 @@ public final class CityStructureAnchorPlanner {
             index++;
             JsonObject anchor = elem.getAsJsonObject();
             String anchorId = requiredString(anchor, "anchorId");
-            boolean templatePlacement = isTemplatePlacement(anchor);
-            String structureId = stringValue(anchor, "structureId", "");
-            CityStructureProfileCatalog.StructureProfile profile = null;
-            if (!templatePlacement) {
-                structureId = requiredString(anchor, "structureId");
-                profile = profiles.get(structureId);
-                if (profile == null) {
-                    hardBlocks.add(anchorId + ": structureId is not in approved TerraSense catalog: " + structureId);
-                    continue;
-                }
-            }
             JsonObject anchorBlockJson = requiredObject(anchor, "anchorBlock");
             BlockPoint anchorBlock = new BlockPoint(intValue(anchorBlockJson, "x", 0),
                     intValue(anchorBlockJson, "z", 0));
@@ -98,55 +80,17 @@ public final class CityStructureAnchorPlanner {
                 hardBlocks.add(anchorId + ": anchorBlock is outside sourcePatchIds.");
                 continue;
             }
-            if (templatePlacement) {
-                TemplateAnchorDecision template = templateAnchorDecision(anchor, anchorBlock);
-                if (!template.hardBlockReason().isBlank()) {
-                    hardBlocks.add(anchorId + ": " + template.hardBlockReason());
-                    continue;
-                }
-                if (reservedEnvelopeOverlaps(reserved, template.collisionEnvelope())) {
-                    hardBlocks.add(anchorId + ": reservedEnvelope overlaps an earlier planned structure.");
-                    continue;
-                }
-                reserved.add(template.collisionEnvelope());
-                anchors.add(templateAnchorJson(anchor, sourcePatches, anchorBlock, template));
+            TemplateAnchorDecision template = templateAnchorDecision(anchor, anchorBlock);
+            if (!template.hardBlockReason().isBlank()) {
+                hardBlocks.add(anchorId + ": " + template.hardBlockReason());
                 continue;
             }
-            String rotation = stringValue(anchor, "rotation", "NONE").toUpperCase(Locale.ROOT);
-            int clearance = Math.max(DEFAULT_CLEARANCE_BLOCKS,
-                    intValue(anchor, "clearanceBlocks", profile.clearanceBlocks()));
-            int smallClearance = Math.max(0,
-                    intValue(anchor, "smallClearanceBlocks", DEFAULT_SMALL_CLEARANCE_BLOCKS));
-            int roadMargin = intValue(anchor, "roadAccessMarginBlocks", DEFAULT_ROAD_ACCESS_MARGIN_BLOCKS);
-            int vegetationMargin = intValue(anchor, "vegetationMarginBlocks", DEFAULT_VEGETATION_MARGIN_BLOCKS);
-            int maskMargin = intValue(anchor, "maskMarginBlocks",
-                    intValue(anchor, "d5MaskMarginBlocks", DEFAULT_MASK_MARGIN_BLOCKS));
-            String envelopeGroupKey = stringValue(anchor, "envelopeGroupKey", "");
-            CityStructureProfileCatalog.Footprint footprint = profile.planningFootprint();
-            if (!footprint.valid()) {
-                hardBlocks.add(anchorId + ": structure profile has no usable footprint.");
-                continue;
-            }
-            BlockBounds plannedFootprint = footprint.centeredAt(anchorBlock.x(), anchorBlock.z(), rotation);
-            EnvelopeDecision envelope = envelopeDecision(anchorBlock, plannedFootprint, profile, facts,
-                    clearance, smallClearance, roadMargin, vegetationMargin, maskMargin, envelopeGroupKey);
-            if (envelope.requiredFactsMissing()) {
-                hardBlocks.add(anchorId + ": structure envelope facts are required for Trek structure "
-                        + structureId + " but are missing or hash-mismatched.");
-                continue;
-            }
-            if (!envelope.hardBlockReason().isBlank()) {
-                hardBlocks.add(anchorId + ": " + envelope.hardBlockReason());
-                continue;
-            }
-            BlockBounds reservedEnvelope = envelope.collisionEnvelope();
-            if (reservedEnvelopeOverlaps(reserved, reservedEnvelope)) {
+            if (reservedEnvelopeOverlaps(reserved, template.collisionEnvelope())) {
                 hardBlocks.add(anchorId + ": reservedEnvelope overlaps an earlier planned structure.");
                 continue;
             }
-            reserved.add(reservedEnvelope);
-            anchors.add(anchorJson(anchor, profile, sourcePatches, anchorBlock, rotation, plannedFootprint,
-                    envelope, clearance, smallClearance, roadMargin, vegetationMargin, maskMargin));
+            reserved.add(template.collisionEnvelope());
+            anchors.add(templateAnchorJson(anchor, sourcePatches, anchorBlock, template));
         }
 
         JsonObject anchorMap = new JsonObject();
@@ -154,7 +98,7 @@ public final class CityStructureAnchorPlanner {
         anchorMap.addProperty("cityId", reviewPackage.cityId());
         anchorMap.add("grid", reviewPackage.grid().asJson());
         anchorMap.add("sourceTerraSenseProfileSource", terraSenseProfileSource.deepCopy());
-        anchorMap.add("structureProfileCatalog", catalog.asJson());
+        anchorMap.add("semanticProfileSource", terraSenseProfileSource.deepCopy());
         anchorMap.add("anchors", anchors);
         JsonObject quality = quality(hardBlocks, warnings, needsReview, anchors.size());
         anchorMap.add("quality", quality);
@@ -167,70 +111,6 @@ public final class CityStructureAnchorPlanner {
         return new Result(normalizedPlan, anchorMap, quality);
     }
 
-    private JsonObject anchorJson(JsonObject source,
-                                  CityStructureProfileCatalog.StructureProfile profile,
-                                  List<LandformPatchSummary> patches,
-                                  BlockPoint anchorBlock,
-                                  String rotation,
-                                  BlockBounds plannedFootprint,
-                                  EnvelopeDecision envelope,
-                                  int clearance,
-                                  int smallClearance,
-                                  int roadMargin,
-                                  int vegetationMargin,
-                                  int maskMargin) {
-        JsonObject obj = new JsonObject();
-        obj.addProperty("anchorId", requiredString(source, "anchorId"));
-        obj.addProperty("structureId", profile.structureId());
-        obj.addProperty("footprintMode", profile.footprintMode());
-        obj.addProperty("profileType", profile.profileType());
-        obj.add("anchorBlock", anchorBlock.asJson());
-        obj.add("commandAnchorBlock", anchorBlock.asJson());
-        obj.addProperty("rotation", rotation);
-        obj.addProperty("priority", intValue(source, "priority", 0));
-        obj.addProperty("roadAccessIntent", stringValue(source, "roadAccessIntent", "connect_to_city_entry"));
-        obj.add("intentTerms", stringArray(strings(optionalArray(source, "intentTerms"))));
-        obj.add("semanticTerms", stringArray(profile.semanticTerms()));
-        obj.add("functionTerms", stringArray(profile.functionTerms()));
-        obj.add("styleTerms", stringArray(profile.styleTerms()));
-        obj.add("placementTerms", stringArray(profile.placementTerms()));
-        obj.add("usageTerms", stringArray(profile.usageTerms()));
-        obj.add("qualityTerms", stringArray(profile.qualityTerms()));
-        JsonArray patchRefs = new JsonArray();
-        for (LandformPatchSummary patch : patches) {
-            JsonObject ref = new JsonObject();
-            ref.addProperty("landformPatchId", patch.landformPatchId());
-            ref.addProperty("mapLabel", patch.mapLabel());
-            ref.addProperty("landformType", patch.landformType().contractName());
-            ref.add("blockBounds", boundsJson(patch.blockBounds()));
-            patchRefs.add(ref);
-        }
-        obj.add("sourcePatches", patchRefs);
-        obj.add("plannedFootprint", boundsJson(plannedFootprint));
-        obj.add("reservedEnvelope", boundsJson(envelope.collisionEnvelope()));
-        obj.add("collisionEnvelope", boundsJson(envelope.collisionEnvelope()));
-        obj.add("maskEnvelope", boundsJson(envelope.maskEnvelope()));
-        obj.addProperty("clearanceBlocks", envelope.usesSmallClearance() ? smallClearance : clearance);
-        obj.addProperty("defaultClearanceBlocks", clearance);
-        obj.addProperty("smallClearanceBlocks", smallClearance);
-        obj.addProperty("roadAccessMarginBlocks", roadMargin);
-        obj.addProperty("vegetationMarginBlocks", vegetationMargin);
-        obj.addProperty("maskMarginBlocks", maskMargin);
-        obj.addProperty("reservedEnvelopeRadiusBlocks", envelope.envelopeRadiusBlocks());
-        obj.addProperty("reservedEnvelopePolicy", envelope.policy());
-        obj.addProperty("envelopeMode", envelope.envelopeMode());
-        obj.addProperty("selectedEnvelopeGroupKey", envelope.selectedEnvelopeGroupKey());
-        if (envelope.selectedGroup() != null) {
-            obj.add("selectedEnvelopeGroup", envelope.selectedGroup().asJson());
-        }
-        if (envelope.fact() != null) {
-            obj.add("structureEnvelopeFact", envelope.fact().asSummaryJson());
-            obj.add("availableEnvelopeGroupKeys", bboxGroupKeys(envelope.fact()));
-        }
-        applyPlacementProvenance(source, obj);
-        return obj;
-    }
-
     private static JsonObject templateAnchorJson(JsonObject source,
                                                   List<LandformPatchSummary> patches,
                                                   BlockPoint anchorBlock,
@@ -240,7 +120,6 @@ public final class CityStructureAnchorPlanner {
         obj.remove("lockedActualFootprint");
         String templateRef = template.templateRef();
         obj.addProperty("anchorId", requiredString(source, "anchorId"));
-        obj.addProperty("structureId", "template:" + templateRef);
         obj.addProperty("templateId", stringValue(source, "templateId", templateRef));
         obj.addProperty("templateRef", templateRef);
         obj.addProperty("templateHash", template.templateHash());
@@ -252,7 +131,7 @@ public final class CityStructureAnchorPlanner {
         obj.add("commandAnchorBlock", anchorBlock.asJson());
         obj.add("sourcePatches", patchRefs(patches));
         if (template.templateSize() != null) {
-            obj.add("templateSize", sizeJson(template.templateSize()));
+            obj.add("rawSize", sizeJson(template.templateSize()));
         }
         obj.add("plannedFootprint", boundsJson(template.actualFootprint()));
         obj.add("actualFootprint", boundsJson(template.actualFootprint()));
@@ -261,9 +140,7 @@ public final class CityStructureAnchorPlanner {
         obj.add("maskEnvelope", boundsJson(template.maskEnvelope()));
         obj.addProperty("clearanceBlocks", template.clearanceBlocks());
         obj.addProperty("maskMarginBlocks", template.maskMarginBlocks());
-        obj.addProperty("reservedEnvelopePolicy", "structureTemplateFootprint+clearance");
-        obj.addProperty("envelopeMode", "structure_template_nbt");
-        obj.addProperty("selectedEnvelopeGroupKey", "");
+        obj.addProperty("reservedEnvelopePolicy", "exactFootprint+clearance");
         applyPlacementProvenance(source, obj);
         return obj;
     }
@@ -362,7 +239,7 @@ public final class CityStructureAnchorPlanner {
 
     private static boolean isTemplatePlacement(JsonObject source) {
         return source != null && (source.has("templateRef") || source.has("templateHash")
-                || source.has("templateSize") || source.has("templateFootprint") || source.has("structureTemplate")
+                || source.has("rawSize") || source.has("templateFootprint") || source.has("structureTemplate")
                 || CityStructureMaterializationPlanner.TEMPLATE_MATERIALIZATION_SOURCE.equals(
                 stringValue(source, "materializationSource", "")));
     }
@@ -432,95 +309,6 @@ public final class CityStructureAnchorPlanner {
                                           int clearanceBlocks, int maskMarginBlocks, String hardBlockReason) {
     }
 
-    private static EnvelopeDecision envelopeDecision(BlockPoint anchorBlock,
-                                                     BlockBounds plannedFootprint,
-                                                     CityStructureProfileCatalog.StructureProfile profile,
-                                                     CityStructureEnvelopeFacts facts,
-                                                     int clearance,
-                                                     int smallClearance,
-                                                     int roadMargin,
-                                                     int vegetationMargin,
-                                                     int maskMargin,
-                                                     String requestedEnvelopeGroupKey) {
-        java.util.Optional<CityStructureEnvelopeFacts.Fact> fact = facts.validFactFor(profile);
-        if (fact.isPresent()) {
-            CityStructureEnvelopeFacts.Fact value = fact.get();
-            if (value.usesDominantBBoxGroup()) {
-                java.util.Optional<CityStructureEnvelopeFacts.BBoxGroup> selected = requestedEnvelopeGroupKey.isBlank()
-                        ? value.dominantGroup()
-                        : value.groupByKey(requestedEnvelopeGroupKey);
-                if (selected.isEmpty()) {
-                    String reason = requestedEnvelopeGroupKey.isBlank()
-                            ? "structure envelope facts have no bboxGroups for fixed bbox mode."
-                            : "requested envelopeGroupKey is not in structure envelope facts: "
-                            + requestedEnvelopeGroupKey;
-                    return new EnvelopeDecision(plannedFootprint, plannedFootprint, plannedFootprint, 0,
-                            "structureEnvelopeFacts:fixedBBoxGroupMissing", "fixed_bbox_group",
-                            requestedEnvelopeGroupKey, null, value, false, reason, true);
-                }
-                CityStructureEnvelopeFacts.BBoxGroup group = selected.get();
-                BlockBounds collision = fromLocal(anchorBlock, expand(group.localEnvelope(), smallClearance));
-                BlockBounds mask = expand(collision, maskMargin);
-                BlockBounds diagnosticMaxObserved = fromLocal(anchorBlock, expand(value.maxObservedEnvelope(),
-                        Math.max(smallClearance, roadMargin)));
-                return new EnvelopeDecision(collision, mask, diagnosticMaxObserved, 0,
-                        "structureEnvelopeFacts:fixedBBoxGroup+smallClearance", "fixed_bbox_group",
-                        group.groupKey(), group, value, false, "", true);
-            }
-            if (!requestedEnvelopeGroupKey.isBlank()) {
-                return new EnvelopeDecision(plannedFootprint, plannedFootprint, plannedFootprint, 0,
-                        "structureEnvelopeFacts:requestedGroupNotRecommended", "d2_recommended_envelope",
-                        requestedEnvelopeGroupKey, null, value, false,
-                        "requested envelopeGroupKey is only valid when D2 recommends dominantBBoxGroup.", false);
-            }
-            BlockBounds recommended = value.recommendedEnvelope();
-            if (value.usesStableMaxEnvelope()) {
-                BlockBounds collision = fromLocal(anchorBlock, expand(recommended, clearance));
-                BlockBounds mask = expand(collision, maskMargin);
-                BlockBounds diagnosticMaxObserved = fromLocal(anchorBlock, expand(value.maxObservedEnvelope(),
-                        Math.max(clearance, roadMargin)));
-                return new EnvelopeDecision(collision, mask, diagnosticMaxObserved, 0,
-                        "structureEnvelopeFacts:stableMaxEnvelope+clearance/collision+maskMargin",
-                        "d2_stable_max_envelope", "", null, value, false, "", false);
-            }
-            BlockBounds collision = fromLocal(anchorBlock, expand(value.p95Envelope(), clearance));
-            BlockBounds mask = expand(collision, maskMargin);
-            BlockBounds diagnosticMaxObserved = fromLocal(anchorBlock, expand(value.maxObservedEnvelope(),
-                    Math.max(clearance, roadMargin)));
-            return new EnvelopeDecision(collision, mask, diagnosticMaxObserved, 0,
-                    "structureEnvelopeFacts:fixedDepthP95+clearance/collision+maskMargin",
-                    "fixed_depth_statistics", "", null, value, false, "", false);
-        }
-        if (profile.structureId().startsWith("trek:")) {
-            return new EnvelopeDecision(plannedFootprint, plannedFootprint, plannedFootprint,
-                    0, "structureEnvelopeFactsRequired", "missing_structure_envelope_facts",
-                    "", null, null, true, "", false);
-        }
-        int envelopeRadius = profile.jigsawLike()
-                ? profile.jigsawExpansionRadius(DEFAULT_JIGSAW_RADIUS_BLOCKS) + clearance
-                : clearance;
-        BlockBounds collision = expand(plannedFootprint, envelopeRadius);
-        BlockBounds mask = expand(collision, maskMargin);
-        BlockBounds diagnosticMaxObserved = profile.jigsawLike()
-                ? expand(plannedFootprint, envelopeRadius + roadMargin)
-                : collision;
-        return new EnvelopeDecision(collision, mask, diagnosticMaxObserved, envelopeRadius, profile.jigsawLike()
-                ? "startFootprint+jigsawMaxExpansionRadius+clearance"
-                : "fixedFootprint+clearance", profile.jigsawLike()
-                ? "fallback_jigsaw_radius" : "fallback_fixed_footprint",
-                "", null, null, false, "", false);
-    }
-
-    private static BlockBounds fromLocal(BlockPoint anchorBlock, BlockBounds local) {
-        int originX = Math.floorDiv(anchorBlock.x(), 16) * 16;
-        int originZ = Math.floorDiv(anchorBlock.z(), 16) * 16;
-        return new BlockBounds(
-                originX + local.minX(),
-                originZ + local.minZ(),
-                originX + local.maxX(),
-                originZ + local.maxZ());
-    }
-
     private static void rejectLegacyPayload(JsonObject plan) {
         if (plan == null) {
             throw new IllegalArgumentException("structureAnchorPlan object is required.");
@@ -531,6 +319,22 @@ public final class CityStructureAnchorPlanner {
                 throw CityStructureProfileCatalog.legacyFlow("city_plan_d4 now requires structureAnchorPlan, not "
                         + field + ".");
             }
+        }
+        rejectConfiguredIdentity(plan);
+    }
+
+    private static void rejectConfiguredIdentity(JsonElement element) {
+        if (element == null || element.isJsonNull() || element.isJsonPrimitive()) return;
+        if (element.isJsonArray()) {
+            for (JsonElement child : element.getAsJsonArray()) rejectConfiguredIdentity(child);
+            return;
+        }
+        JsonObject object = element.getAsJsonObject();
+        if (object.has("structureId") || object.has("structureIds")) {
+            throw new IllegalArgumentException("CITY_CONFIGURED_STRUCTURE_FLOW_REMOVED: structureId(s)");
+        }
+        for (Map.Entry<String, JsonElement> entry : object.entrySet()) {
+            rejectConfiguredIdentity(entry.getValue());
         }
     }
 
@@ -559,13 +363,14 @@ public final class CityStructureAnchorPlanner {
 
     private static boolean patchContains(LandformPatchSummary patch, PlanningGrid grid, BlockPoint point) {
         if (!patch.memberCells().isEmpty()) {
-            int cellX = grid.blockToCellX(point.x());
-            int cellZ = grid.blockToCellZ(point.z());
+            int step = grid.cellStepBlocks();
             for (PatchMemberCell cell : patch.memberCells()) {
-                if (cell.cellX() == cellX && cell.cellZ() == cellZ) {
+                if (point.x() >= cell.blockMinX() && point.x() < cell.blockMinX() + step
+                        && point.z() >= cell.blockMinZ() && point.z() < cell.blockMinZ() + step) {
                     return true;
                 }
             }
+            return false;
         }
         return patch.blockBounds().contains(point.x(), point.z());
     }
@@ -583,15 +388,6 @@ public final class CityStructureAnchorPlanner {
         int a = Math.max(0, amount);
         return new BlockBounds(bounds.minX() - a, bounds.minZ() - a,
                 bounds.maxX() + a, bounds.maxZ() + a);
-    }
-
-    private record EnvelopeDecision(BlockBounds collisionEnvelope, BlockBounds maskEnvelope,
-                                    BlockBounds diagnosticMaxObservedEnvelope, int envelopeRadiusBlocks,
-                                    String policy, String envelopeMode, String selectedEnvelopeGroupKey,
-                                    CityStructureEnvelopeFacts.BBoxGroup selectedGroup,
-                                    CityStructureEnvelopeFacts.Fact fact,
-                                    boolean requiredFactsMissing, String hardBlockReason,
-                                    boolean usesSmallClearance) {
     }
 
     private static JsonObject quality(List<String> hardBlocks, List<String> warnings,
@@ -626,12 +422,6 @@ public final class CityStructureAnchorPlanner {
     private static JsonArray stringArray(List<String> values) {
         JsonArray array = new JsonArray();
         values.forEach(array::add);
-        return array;
-    }
-
-    private static JsonArray bboxGroupKeys(CityStructureEnvelopeFacts.Fact fact) {
-        JsonArray array = new JsonArray();
-        fact.bboxGroups().forEach(group -> array.add(group.groupKey()));
         return array;
     }
 

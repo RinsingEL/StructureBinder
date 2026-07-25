@@ -14,6 +14,17 @@ base {
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
+def devAutoLoadWorldName = providers.gradleProperty('geomantiaDevAutoLoadWorld')
+        .orElse('')
+        .get()
+def devAutoLoadWorldBase64Override = providers.gradleProperty('geomantiaDevAutoLoadWorldBase64')
+        .orElse('')
+        .get()
+def devAutoLoadWorldBase64 = !devAutoLoadWorldBase64Override.isBlank()
+        ? devAutoLoadWorldBase64Override
+        : devAutoLoadWorldName.isBlank()
+        ? ''
+        : java.util.Base64.getEncoder().encodeToString(devAutoLoadWorldName.getBytes('UTF-8'))
 def devUseStructurePacks = providers.gradleProperty('geomantiaDevUseStructurePacks')
         .orElse('false')
         .get()
@@ -88,6 +99,9 @@ minecraft {
 
         client {
             property 'forge.enabledGameTestNamespaces', mod_id
+            if (!devAutoLoadWorldBase64.isBlank()) {
+                property 'geomantia.devAutoLoadWorldBase64', devAutoLoadWorldBase64
+            }
             if (devUseRoadWeaver.toBoolean()) {
                 property 'mixin.env.remapRefMap', 'true'
                 property 'mixin.env.refMapRemappingFile', "${project.layout.buildDirectory.get().asFile}/createSrgToMcp/output.srg"
