@@ -253,7 +253,7 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "realm_t2_select_coordinate",
-    description: "提交 realm_t2 Patch Explorer 的 patchSelectionRef，校验并生成 RealmSeed 与 CapitalCitySeed。正常 AI 主链必须先完成 patch_explorer_open/show/select；手填 gridX/gridZ 仅保留给旧调用方或人工调试。服务重启后自动恢复完整 T1 checkpoint。",
+    description: "提交 realm_t2 Patch Explorer 的 patchSelectionRef，校验并生成国度扩张用 RealmSeed 与无坐标 CapitalCityIntent。此处不决定首都最终位置；正常 AI 主链必须先完成 patch_explorer_open/show/select。",
     inputSchema: {
       type: "object",
       properties: {
@@ -287,7 +287,7 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "realm_t4_build_registry",
-    description: "生成 T4 CitySeedRegistry 和城市种子预览图；服务重启后自动恢复完整 T1/T2/T3 checkpoint。",
+    description: "兼容的固定验收入口：以 rule_fixture 模式在国度核心生成 T4 CitySeedRegistry。正式 AI 规划必须使用 realm_t4_patch_planning_create/select_capital/add_city/finalize。",
     inputSchema: {
       type: "object",
       properties: {
@@ -299,7 +299,7 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "realm_t4_patch_planning_create",
-    description: "为单个国度创建 AI 驱动的 T4 城市规划会话。只继承首都，不继承旧自动 T4 的港口、矿镇或边境堡。",
+    description: "为单个国度创建 AI 驱动的 T4 城市规划会话。会话只载入无坐标首都意图，citySeeds 初始为空；下一步必须先用 Patch Explorer 选首都。",
     inputSchema: {
       type: "object",
       additionalProperties: false,
@@ -312,8 +312,28 @@ export const realmTools: ToolDefinition[] = [
     },
   },
   {
+    name: "realm_t4_patch_planning_select_capital",
+    description: "消费 AI 已选的 realm_t4 patchSelectionRef，按 CapitalCityIntent 固定身份和规模建立该国唯一首都。服务端校验 owned territory、连续承载面积和重复选择。",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        runId: { type: "string" },
+        planningSessionId: { type: "string" },
+        patchSelectionRef: { type: "string" },
+        candidateRangeCells: { type: "integer", minimum: 1 },
+        minimumAreaBlocks: { type: "integer", minimum: 0 },
+        subregionId: { type: "string" },
+        requiredConditions: { type: "array", items: { type: "string" } },
+        coreFunctions: { type: "array", items: { type: "string" } },
+        selectionReason: { type: "string" },
+      },
+      required: ["runId", "planningSessionId", "patchSelectionRef"],
+    },
+  },
+  {
     name: "realm_t4_patch_planning_add_city",
-    description: "把 AI 已选的 realm_t4 patchSelectionRef 转为城市种子；校验领土、承载面积、重复与城市间距后加入会话。",
+    description: "在首都已选定后，把 AI 已选的 realm_t4 patchSelectionRef 转为非首都城市种子。role=capital 必须使用专用 select_capital 工具。",
     inputSchema: {
       type: "object",
       additionalProperties: false,
@@ -323,7 +343,7 @@ export const realmTools: ToolDefinition[] = [
         patchSelectionRef: { type: "string" },
         citySeedId: { type: "string" },
         role: { type: "string" },
-        theoreticalScale: { type: "string", enum: ["capital", "large_city", "city", "town", "village", "outpost"] },
+        theoreticalScale: { type: "string", enum: ["large_city", "city", "town", "village", "outpost"] },
         candidateRangeCells: { type: "integer", minimum: 1 },
         minimumAreaBlocks: { type: "integer", minimum: 0 },
         subregionId: { type: "string" },
@@ -486,7 +506,7 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "city_plan_d3",
-    description: "City D3: 构建 CityLandformReviewPackage（城市地貌审查包），包含真实渲染 review PNG、GIS patch 标签、成员 cell 薄索引和 AI 上下文。需提供 runId 和 citySeedId，会触发局部 GIS 刷新；刷新前严格校验 run worldSeed/dimension 与当前 Minecraft 世界一致，不一致返回 CITY_RUN_WORLD_IDENTITY_MISMATCH 且不写 D3 产物。",
+    description: "City D3: 构建局部真实地貌审查包。对 T4 AI 候选选出的首都，返回 siteReviewStatus=awaiting_review，必须调用 city_review_d3_site 后才能进入 D4。",
     inputSchema: {
       type: "object",
       properties: {
@@ -498,6 +518,22 @@ export const realmTools: ToolDefinition[] = [
         playerName: { type: "string", description: "玩家名，用于定位维度。" },
       },
       required: ["runId", "citySeedId"],
+    },
+  },
+  {
+    name: "city_review_d3_site",
+    description: "显式审查 T4 AI 选出首都的 D3 局部真实地形。接受当前点位后才可进入 D4；选择 reselect_required 时必须回到 T4 重选，不默认改变城市原型。",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        runId: { type: "string" },
+        citySeedId: { type: "string" },
+        decision: { type: "string", enum: ["accept_selected_site", "reselect_required"] },
+        decisionReason: { type: "string", minLength: 1 },
+        reviewedBy: { type: "string", enum: ["ai", "human", "debug"] },
+      },
+      required: ["runId", "citySeedId", "decision", "decisionReason"],
     },
   },
   {

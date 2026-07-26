@@ -416,6 +416,75 @@ class CityPlanningEndpointHandlerTest {
     }
 
     @Test
+    void aiSelectedCapitalRequiresCurrentAcceptedD3SiteReviewBeforeD4() throws Exception {
+        Path debugRoot = Files.createTempDirectory("city-d3-site-review-test");
+        String runId = "run_capital_review";
+        String citySeedId = "city_capital";
+        Path runDir = debugRoot.resolve(runId);
+        Files.createDirectories(runDir);
+        Files.writeString(runDir.resolve("city_seed_registry.json"), """
+                {
+                  "citySeeds": [
+                    {
+                      "citySeedId": "city_capital",
+                      "realmId": "realm_test",
+                      "role": "capital",
+                      "theoreticalScale": "capital",
+                      "anchorBlock": {"x": 0, "z": 0},
+                      "planningRadiusCells": 64,
+                      "candidateId": "MINECRAFT_PLAINS-01",
+                      "source": {
+                        "patchSelectionRef": "patch_selection_capital",
+                        "siteSelectionMode": "ai_candidate_selection"
+                      }
+                    }
+                  ]
+                }
+                """);
+
+        CityPlanningConfig config = CityPlanningConfig.defaults();
+        CitySiteContext context = new CitySiteContextBuilder(config).build(
+                citySeedId, "realm_test", "overworld", citySeedId, "MINECRAFT_PLAINS-01",
+                0, 0, "capital", "capital", 64, 4, null);
+        CityLandformReviewPackage review = new CityLandformReviewBuilder(config).build(context,
+                List.of(patch("plain", LandformType.PLAIN, -50, -50, 50, 50)));
+        Path d3Dir = runDir.resolve("city_d3_" + citySeedId);
+        Files.createDirectories(d3Dir);
+        Path packagePath = d3Dir.resolve("city_landform_review_package.json");
+        Files.writeString(packagePath, CityJson.GSON.toJson(review.asJson()));
+
+        IllegalArgumentException missing = assertThrows(IllegalArgumentException.class,
+                () -> CityPlanningEndpointHandler.handlePlanD4(
+                        debugRoot, runId, citySeedId, null, null, new JsonObject()));
+        assertTrue(missing.getMessage().contains("CITY_D3_SITE_REVIEW_REQUIRED"), missing::getMessage);
+
+        JsonObject reselect = CityPlanningEndpointHandler.handleReviewD3Site(
+                debugRoot, runId, citySeedId, "reselect_required",
+                "Local D3 terrain cannot carry the intended capital.", "ai");
+        assertEquals("reselection_required", reselect.get("siteReviewStatus").getAsString());
+        IllegalArgumentException rejected = assertThrows(IllegalArgumentException.class,
+                () -> CityPlanningEndpointHandler.handlePlanD4(
+                        debugRoot, runId, citySeedId, null, null, new JsonObject()));
+        assertTrue(rejected.getMessage().contains("CITY_D3_SITE_RESELECTION_REQUIRED"), rejected::getMessage);
+
+        JsonObject accepted = CityPlanningEndpointHandler.handleReviewD3Site(
+                debugRoot, runId, citySeedId, "accept_selected_site",
+                "Local D3 terrain supports the intended capital.", "ai");
+        assertEquals("accepted", accepted.get("siteReviewStatus").getAsString());
+        IllegalArgumentException afterGate = assertThrows(IllegalArgumentException.class,
+                () -> CityPlanningEndpointHandler.handlePlanD4(
+                        debugRoot, runId, citySeedId, null, null, new JsonObject()));
+        assertTrue(afterGate.getMessage().contains("templateCatalogSource object is required"),
+                afterGate::getMessage);
+
+        Files.writeString(packagePath, Files.readString(packagePath) + " ");
+        IllegalArgumentException stale = assertThrows(IllegalArgumentException.class,
+                () -> CityPlanningEndpointHandler.handlePlanD4(
+                        debugRoot, runId, citySeedId, null, null, new JsonObject()));
+        assertTrue(stale.getMessage().contains("CITY_D3_SITE_REVIEW_STALE"), stale::getMessage);
+    }
+
+    @Test
     void handlePlanD4CandidatesAndSelect_writeCandidateAndStandardD4Artifacts() throws Exception {
         Path debugRoot = Files.createTempDirectory("city-d4-candidates-test");
         String runId = "run_d4_candidates";

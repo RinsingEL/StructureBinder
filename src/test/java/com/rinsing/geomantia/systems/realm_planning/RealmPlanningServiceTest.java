@@ -51,7 +51,11 @@ class RealmPlanningServiceTest {
         assertTrue(Files.exists(runDir.resolve("candidate_map_packages.json")));
         assertTrue(Files.exists(runDir.resolve("realm_coordinate_selections.json")));
         assertTrue(Files.exists(runDir.resolve("realm_seeds.json")));
-        assertTrue(Files.exists(runDir.resolve("capital_city_seeds.json")));
+        assertTrue(Files.exists(runDir.resolve("capital_city_intents.json")));
+        JsonObject capitalIntent = readJsonArray(runDir.resolve("capital_city_intents.json"))
+                .get(0).getAsJsonObject();
+        assertFalse(capitalIntent.has("anchorGrid"));
+        assertFalse(capitalIntent.has("anchorBlock"));
         assertTrue(Files.exists(runDir.resolve("realm_territory_map.json")));
         assertTrue(Files.exists(runDir.resolve("territory_preview.png")));
         assertTrue(Files.exists(runDir.resolve("city_seed_registry.json")));
@@ -86,7 +90,10 @@ class RealmPlanningServiceTest {
         assertFalse(citySeeds.isEmpty());
         Set<String> citySeedIds = new HashSet<>();
         for (int i = 0; i < citySeeds.size(); i++) {
-            citySeedIds.add(citySeeds.get(i).getAsJsonObject().get("citySeedId").getAsString());
+            JsonObject citySeed = citySeeds.get(i).getAsJsonObject();
+            citySeedIds.add(citySeed.get("citySeedId").getAsString());
+            assertEquals("rule_fixture", citySeed.getAsJsonObject("source")
+                    .get("selectionMode").getAsString());
         }
         assertEquals(citySeeds.size(), citySeedIds.size());
         JsonObject t4Report = readJson(runDir.resolve("t4_report.json"));
