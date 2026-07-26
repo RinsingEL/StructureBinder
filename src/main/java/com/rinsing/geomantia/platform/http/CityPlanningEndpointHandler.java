@@ -208,6 +208,7 @@ final class CityPlanningEndpointHandler {
         JsonObject packageJson = reviewPkg.asJson();
         addD3PatchScanMetadata(packageJson, patchScanPaddingBlocks, patchContextBounds, refreshResults);
         Files.writeString(packagePath, CityJson.GSON.toJson(packageJson));
+        Files.deleteIfExists(d3SiteDecisionPath(runDir, citySeedId));
 
         LandUseTerrainField landUseTerrainField = new LandUseTerrainFieldCompiler().compile(reviewPkg, regions);
         Path landUseDirectory = runDir.resolve("city_land_use_" + safeFileName(citySeedId));
@@ -225,6 +226,8 @@ final class CityPlanningEndpointHandler {
         response.addProperty("refreshedRegionCount", refreshResults.size());
         response.addProperty("patchScanPaddingBlocks", patchScanPaddingBlocks);
         response.addProperty("landUseTerrainCellCount", landUseTerrainField.cells().size());
+        boolean siteReviewRequired = requiresD3SiteReview(seed);
+        response.addProperty("siteReviewStatus", siteReviewRequired ? "awaiting_review" : "not_required");
         response.add("citySiteContext", ctx.asJson());
         response.add("landformReviewPackage", packageJson);
         JsonObject artifacts = new JsonObject();
@@ -232,6 +235,61 @@ final class CityPlanningEndpointHandler {
         artifacts.addProperty("cityLandformReviewPackage", debugRef(debugRoot, packagePath));
         artifacts.addProperty("landUseTerrainField", debugRef(debugRoot, landUseTerrainFieldPath));
         response.add("artifacts", artifacts);
+        if (siteReviewRequired) {
+            JsonArray nextActions = new JsonArray();
+            nextActions.add("city_review_d3_site");
+            response.add("nextActions", nextActions);
+        }
+        return response;
+    }
+
+    static JsonObject handleReviewD3Site(Path debugRoot, String runId, String citySeedId,
+                                         String decision, String decisionReason,
+                                         String reviewedBy) throws IOException {
+        Path runDir = debugRoot.resolve(runId);
+        JsonObject seed = loadCitySeed(runDir, runId, citySeedId);
+        if (!requiresD3SiteReview(seed)) {
+            throw new IllegalArgumentException("CITY_D3_SITE_REVIEW_NOT_REQUIRED");
+        }
+        if (!"accept_selected_site".equals(decision) && !"reselect_required".equals(decision)) {
+            throw new IllegalArgumentException("CITY_D3_SITE_REVIEW_DECISION_INVALID");
+        }
+        if (decisionReason == null || decisionReason.isBlank()) {
+            throw new IllegalArgumentException("CITY_D3_SITE_REVIEW_REASON_REQUIRED");
+        }
+        Path packagePath = d3PackagePath(runDir, citySeedId);
+        if (!Files.isRegularFile(packagePath)) {
+            throw new IllegalArgumentException("CITY_D3_SITE_REVIEW_PACKAGE_MISSING: run city_plan_d3 first: "
+                    + debugRef(debugRoot, packagePath));
+        }
+        String packageJson = Files.readString(packagePath);
+        JsonObject source = seed.getAsJsonObject("source");
+        JsonObject review = new JsonObject();
+        review.addProperty("schemaVersion", "city_d3_site_review_decision.v0.1");
+        review.addProperty("runId", runId);
+        review.addProperty("citySeedId", citySeedId);
+        review.addProperty("decision", decision);
+        review.addProperty("decisionReason", decisionReason);
+        review.addProperty("reviewedBy", reviewedBy == null || reviewedBy.isBlank() ? "ai" : reviewedBy);
+        review.addProperty("reviewedAt", Instant.now().toString());
+        review.addProperty("d3PackageIdentity", sha256(packageJson));
+        review.addProperty("citySeedIdentity", sha256(CityJson.GSON.toJson(seed)));
+        review.addProperty("patchSelectionRef", stringValue(source, "patchSelectionRef"));
+        Path decisionPath = d3SiteDecisionPath(runDir, citySeedId);
+        Files.writeString(decisionPath, CityJson.GSON.toJson(review));
+
+        JsonObject response = new JsonObject();
+        response.addProperty("ok", true);
+        response.addProperty("siteReviewStatus", "accept_selected_site".equals(decision)
+                ? "accepted" : "reselection_required");
+        response.add("siteReviewDecision", review);
+        JsonObject artifacts = new JsonObject();
+        artifacts.addProperty("citySiteReviewDecision", debugRef(debugRoot, decisionPath));
+        response.add("artifacts", artifacts);
+        JsonArray nextActions = new JsonArray();
+        nextActions.add("accept_selected_site".equals(decision)
+                ? "city_plan_d4" : "realm_t4_patch_planning_create");
+        response.add("nextActions", nextActions);
         return response;
     }
 
@@ -298,16 +356,10 @@ final class CityPlanningEndpointHandler {
                                     JsonObject templateCatalogSource,
                                     JsonObject structureAnchorPlan) throws IOException {
         Path runDir = debugRoot.resolve(runId);
-        loadCitySeed(runDir, runId, citySeedId);
+        loadCitySeedForD4(runDir, runId, citySeedId);
         Path d3Dir = runDir.resolve("city_d3_" + safeFileName(citySeedId));
         Path d3PackagePath = d3Dir.resolve("city_landform_review_package.json");
-        if (!Files.exists(d3PackagePath)) {
-            throw new IllegalArgumentException("D3 package not found. Run city_plan_d3 first: "
-                    + debugRef(debugRoot, d3PackagePath));
-        }
-
-        CityLandformReviewPackage reviewPackage = CityLandformReviewPackage.fromJson(
-                JsonParser.parseString(Files.readString(d3PackagePath)).getAsJsonObject());
+        CityLandformReviewPackage reviewPackage = loadD3Package(debugRoot, runDir, citySeedId);
         if (templateCatalogSource == null) {
             throw new IllegalArgumentException("templateCatalogSource object is required.");
         }
@@ -349,15 +401,10 @@ final class CityPlanningEndpointHandler {
                                              JsonObject designSlotPlan,
                                              JsonObject templateCatalogSource) throws IOException {
         Path runDir = debugRoot.resolve(runId);
-        loadCitySeed(runDir, runId, citySeedId);
+        loadCitySeedForD4(runDir, runId, citySeedId);
         Path d3Dir = runDir.resolve("city_d3_" + safeFileName(citySeedId));
         Path d3PackagePath = d3Dir.resolve("city_landform_review_package.json");
-        if (!Files.exists(d3PackagePath)) {
-            throw new IllegalArgumentException("D3 package not found. Run city_plan_d3 first: "
-                    + debugRef(debugRoot, d3PackagePath));
-        }
-        CityLandformReviewPackage reviewPackage = CityLandformReviewPackage.fromJson(
-                JsonParser.parseString(Files.readString(d3PackagePath)).getAsJsonObject());
+        CityLandformReviewPackage reviewPackage = loadD3Package(debugRoot, runDir, citySeedId);
         JsonObject fixedTemplatePlan = attachTemplateCatalog(debugRoot, runDir, designSlotPlan,
                 templateCatalogSource);
         CityStructureAnchorCandidatePlanner.Result result = new CityStructureAnchorCandidatePlanner()
@@ -394,15 +441,10 @@ final class CityPlanningEndpointHandler {
                                                   JsonObject occupiedStructureAnchorMapSource,
                                                   JsonArray occupiedEnvelopes) throws IOException {
         Path runDir = debugRoot.resolve(runId);
-        loadCitySeed(runDir, runId, citySeedId);
+        loadCitySeedForD4(runDir, runId, citySeedId);
         Path d3Dir = runDir.resolve("city_d3_" + safeFileName(citySeedId));
         Path d3PackagePath = d3Dir.resolve("city_landform_review_package.json");
-        if (!Files.exists(d3PackagePath)) {
-            throw new IllegalArgumentException("D3 package not found. Run city_plan_d3 first: "
-                    + debugRef(debugRoot, d3PackagePath));
-        }
-        CityLandformReviewPackage reviewPackage = CityLandformReviewPackage.fromJson(
-                JsonParser.parseString(Files.readString(d3PackagePath)).getAsJsonObject());
+        CityLandformReviewPackage reviewPackage = loadD3Package(debugRoot, runDir, citySeedId);
         JsonObject fixedTemplatePlan = attachTemplateCatalog(debugRoot, runDir, arrayCandidatePlan,
                 templateCatalogSource);
         Path occupiedAnchorMapPath = occupiedStructureAnchorMapPath(runDir, occupiedStructureAnchorMapSource);
@@ -454,7 +496,7 @@ final class CityPlanningEndpointHandler {
                                                     JsonObject baseStructureAnchorPlanSource,
                                                     JsonObject occupiedStructureAnchorMapSource) throws IOException {
         Path runDir = debugRoot.resolve(runId);
-        loadCitySeed(runDir, runId, citySeedId);
+        loadCitySeedForD4(runDir, runId, citySeedId);
         CityLandformReviewPackage reviewPackage = loadD3Package(debugRoot, runDir, citySeedId);
         JsonObject fixedTemplatePlan = attachTemplateCatalog(debugRoot, runDir, arrayLayoutPlan,
                 templateCatalogSource);
@@ -475,7 +517,7 @@ final class CityPlanningEndpointHandler {
                                                     JsonObject designLoopOptions,
                                                     JsonObject baseStructureAnchorMapSource) throws IOException {
         Path runDir = debugRoot.resolve(runId);
-        loadCitySeed(runDir, runId, citySeedId);
+        loadCitySeedForD4(runDir, runId, citySeedId);
         CityLandformReviewPackage reviewPackage = loadD3Package(debugRoot, runDir, citySeedId);
         JsonObject baseAnchorMap = loadOptionalDesignLoopAnchorMap(runDir, baseStructureAnchorMapSource);
         CityD4DesignLoopStatePlanner.CreateResult result = new CityD4DesignLoopStatePlanner()
@@ -488,7 +530,7 @@ final class CityPlanningEndpointHandler {
     static JsonObject handleReadD4DesignLoopState(Path debugRoot, String runId, String citySeedId,
                                                   JsonObject designLoopStateSource) throws IOException {
         Path runDir = debugRoot.resolve(runId);
-        loadCitySeed(runDir, runId, citySeedId);
+        loadCitySeedForD4(runDir, runId, citySeedId);
         JsonObject state = loadD4DesignLoopState(debugRoot, runDir, citySeedId, designLoopStateSource);
         CityD4DesignLoopStatePlanner.ReadResult result = new CityD4DesignLoopStatePlanner().read(state);
         JsonObject response = result.asJson();
@@ -501,7 +543,7 @@ final class CityPlanningEndpointHandler {
                                                     JsonObject designLoopRound,
                                                     JsonObject designLoopStateSource) throws IOException {
         Path runDir = debugRoot.resolve(runId);
-        loadCitySeed(runDir, runId, citySeedId);
+        loadCitySeedForD4(runDir, runId, citySeedId);
         JsonObject currentState = loadD4DesignLoopState(debugRoot, runDir, citySeedId, designLoopStateSource);
         String currentStateId = stringValue(currentState, "stateId");
         if (stateId != null && !stateId.isBlank() && !stateId.equals(currentStateId)) {
@@ -519,7 +561,7 @@ final class CityPlanningEndpointHandler {
                                                    String stateId,
                                                    JsonObject designLoopState) throws IOException {
         Path runDir = debugRoot.resolve(runId);
-        loadCitySeed(runDir, runId, citySeedId);
+        loadCitySeedForD4(runDir, runId, citySeedId);
         Path currentPath = d4DesignLoopStatePath(runDir, citySeedId, null);
         if (stateId != null && !stateId.isBlank() && Files.exists(currentPath)) {
             JsonObject current = JsonParser.parseString(Files.readString(currentPath)).getAsJsonObject();
@@ -543,7 +585,7 @@ final class CityPlanningEndpointHandler {
                                                      JsonObject arrayLayoutLoopStateSource,
                                                      JsonObject templateCatalogSource) throws IOException {
         Path runDir = debugRoot.resolve(runId);
-        loadCitySeed(runDir, runId, citySeedId);
+        loadCitySeedForD4(runDir, runId, citySeedId);
         CityLandformReviewPackage reviewPackage = loadD3Package(debugRoot, runDir, citySeedId);
         JsonObject currentState = loadArrayLayoutLoopState(debugRoot, runDir, citySeedId, arrayLayoutLoopStateSource);
         String currentStateId = stringValue(currentState, "stateId");
@@ -566,7 +608,7 @@ final class CityPlanningEndpointHandler {
                                                        JsonObject expansionRequest,
                                                        JsonObject arrayLayoutLoopStateSource) throws IOException {
         Path runDir = debugRoot.resolve(runId);
-        loadCitySeed(runDir, runId, citySeedId);
+        loadCitySeedForD4(runDir, runId, citySeedId);
         CityLandformReviewPackage reviewPackage = loadD3Package(debugRoot, runDir, citySeedId);
         JsonObject currentState = loadArrayLayoutLoopState(debugRoot, runDir, citySeedId, arrayLayoutLoopStateSource);
         requireCurrentArrayLayoutState(stateId, currentState);
@@ -585,7 +627,7 @@ final class CityPlanningEndpointHandler {
                                                             JsonObject arrayLayoutLoopStateSource,
                                                             JsonObject templateCatalogSource) throws IOException {
         Path runDir = debugRoot.resolve(runId);
-        loadCitySeed(runDir, runId, citySeedId);
+        loadCitySeedForD4(runDir, runId, citySeedId);
         CityLandformReviewPackage reviewPackage = loadD3Package(debugRoot, runDir, citySeedId);
         JsonObject currentState = loadArrayLayoutLoopState(debugRoot, runDir, citySeedId, arrayLayoutLoopStateSource);
         requireCurrentArrayLayoutState(stateId, currentState);
@@ -608,7 +650,7 @@ final class CityPlanningEndpointHandler {
                                                              JsonObject arrayLayoutLoopStateSource,
                                                              JsonObject templateCatalogSource) throws IOException {
         Path runDir = debugRoot.resolve(runId);
-        loadCitySeed(runDir, runId, citySeedId);
+        loadCitySeedForD4(runDir, runId, citySeedId);
         CityLandformReviewPackage reviewPackage = loadD3Package(debugRoot, runDir, citySeedId);
         JsonObject currentState = loadArrayLayoutLoopState(debugRoot, runDir, citySeedId, arrayLayoutLoopStateSource);
         requireCurrentArrayLayoutState(stateId, currentState);
@@ -632,7 +674,7 @@ final class CityPlanningEndpointHandler {
                                                       JsonObject arrayLayoutLoopStateSource,
                                                       JsonObject templateCatalogSource) throws IOException {
         Path runDir = debugRoot.resolve(runId);
-        loadCitySeed(runDir, runId, citySeedId);
+        loadCitySeedForD4(runDir, runId, citySeedId);
         JsonObject currentState = loadArrayLayoutLoopState(debugRoot, runDir, citySeedId, arrayLayoutLoopStateSource);
         String currentStateId = stringValue(currentState, "stateId");
         if (stateId != null && !stateId.isBlank() && !stateId.equals(currentStateId)) {
@@ -667,15 +709,10 @@ final class CityPlanningEndpointHandler {
                                                          Integer requestedCandidatesPerSlot,
                                                          Integer requestedBeamWidth) throws IOException {
         Path runDir = debugRoot.resolve(runId);
-        loadCitySeed(runDir, runId, citySeedId);
+        loadCitySeedForD4(runDir, runId, citySeedId);
         Path d3Dir = runDir.resolve("city_d3_" + safeFileName(citySeedId));
         Path d3PackagePath = d3Dir.resolve("city_landform_review_package.json");
-        if (!Files.exists(d3PackagePath)) {
-            throw new IllegalArgumentException("D3 package not found. Run city_plan_d3 first: "
-                    + debugRef(debugRoot, d3PackagePath));
-        }
-        CityLandformReviewPackage reviewPackage = CityLandformReviewPackage.fromJson(
-                JsonParser.parseString(Files.readString(d3PackagePath)).getAsJsonObject());
+        CityLandformReviewPackage reviewPackage = loadD3Package(debugRoot, runDir, citySeedId);
         JsonObject fixedTemplatePlan = attachTemplateCatalog(debugRoot, runDir, designSlotPlan,
                 templateCatalogSource);
         CityStructureClusterGroupCandidatePlanner.Options options =
@@ -718,7 +755,7 @@ final class CityPlanningEndpointHandler {
                                                           JsonObject structureClusterGroupCandidateSetSource)
             throws IOException {
         Path runDir = debugRoot.resolve(runId);
-        loadCitySeed(runDir, runId, citySeedId);
+        loadCitySeedForD4(runDir, runId, citySeedId);
         Path candidateSetPath = structureClusterGroupCandidateSetPath(runDir, citySeedId,
                 structureClusterGroupCandidateSetSource);
         if (!Files.exists(candidateSetPath)) {
@@ -745,7 +782,7 @@ final class CityPlanningEndpointHandler {
                                                JsonObject templateCatalogSource,
                                                JsonObject anchorCandidateSetSource) throws IOException {
         Path runDir = debugRoot.resolve(runId);
-        loadCitySeed(runDir, runId, citySeedId);
+        loadCitySeedForD4(runDir, runId, citySeedId);
         Path candidateSetPath = anchorCandidateSetPath(runDir, citySeedId, anchorCandidateSetSource);
         if (!Files.exists(candidateSetPath)) {
             throw new IllegalArgumentException("D4 anchor_candidate_set.json not found. Run city_plan_d4_candidates first: "
@@ -770,7 +807,7 @@ final class CityPlanningEndpointHandler {
                                                      JsonObject templateCatalogSource,
                                                      String sessionId) throws IOException {
         Path runDir = debugRoot.resolve(runId);
-        loadCitySeed(runDir, runId, citySeedId);
+        loadCitySeedForD4(runDir, runId, citySeedId);
         CityLandformReviewPackage reviewPackage = loadD3Package(debugRoot, runDir, citySeedId);
         JsonObject fixedTemplatePlan = attachTemplateCatalog(debugRoot, runDir, designSlotPlan,
                 templateCatalogSource);
@@ -800,7 +837,7 @@ final class CityPlanningEndpointHandler {
     static JsonObject handlePlanD4NextCandidates(Path debugRoot, String runId, String citySeedId,
                                                  JsonObject templateCatalogSource) throws IOException {
         Path runDir = debugRoot.resolve(runId);
-        loadCitySeed(runDir, runId, citySeedId);
+        loadCitySeedForD4(runDir, runId, citySeedId);
         CityLandformReviewPackage reviewPackage = loadD3Package(debugRoot, runDir, citySeedId);
         Path outputDirectory = d4SessionDir(runDir, citySeedId);
         Path sessionPath = outputDirectory.resolve("d4_candidate_session.json");
@@ -840,7 +877,7 @@ final class CityPlanningEndpointHandler {
                                               String selectionReason,
                                               boolean quickPreflight) throws IOException {
         Path runDir = debugRoot.resolve(runId);
-        loadCitySeed(runDir, runId, citySeedId);
+        loadCitySeedForD4(runDir, runId, citySeedId);
         Path outputDirectory = d4SessionDir(runDir, citySeedId);
         Path sessionPath = outputDirectory.resolve("d4_candidate_session.json");
         Path candidatePath = outputDirectory.resolve("slot_candidate_set.json");
@@ -879,7 +916,7 @@ final class CityPlanningEndpointHandler {
                                                        JsonObject templateCatalogSource,
                                                        String sessionId) throws IOException {
         Path runDir = debugRoot.resolve(runId);
-        loadCitySeed(runDir, runId, citySeedId);
+        loadCitySeedForD4(runDir, runId, citySeedId);
         Path outputDirectory = d4SessionDir(runDir, citySeedId);
         Path sessionPath = outputDirectory.resolve("d4_candidate_session.json");
         if (!Files.exists(sessionPath)) {
@@ -2381,6 +2418,32 @@ final class CityPlanningEndpointHandler {
                         ? intValue(request, "patchScanPaddingBlocks", DEFAULT_D3_PATCH_SCAN_PADDING_BLOCKS) : null,
                 level))) {
             return ctx.workflow().finish(workflowStarted, "failed");
+        }
+
+        JsonObject workflowSeed = loadCitySeed(runDir, runId, citySeedId);
+        if (requiresD3SiteReview(workflowSeed)) {
+            Path decisionPath = d3SiteDecisionPath(runDir, citySeedId);
+            if (!Files.isRegularFile(decisionPath)) {
+                report.addProperty("siteReviewStatus", "awaiting_review");
+                report.addProperty("nextAction", "city_review_d3_site");
+                return ctx.workflow().finish(workflowStarted, "awaiting_site_review");
+            }
+            JsonObject siteReview = JsonParser.parseString(Files.readString(decisionPath)).getAsJsonObject();
+            if ("reselect_required".equals(stringValue(siteReview, "decision"))) {
+                report.addProperty("siteReviewStatus", "reselection_required");
+                report.addProperty("nextAction", "realm_t4_patch_planning_create");
+                return ctx.workflow().finish(workflowStarted, "reselection_required");
+            }
+            try {
+                requireD3SiteDecision(runDir, workflowSeed, citySeedId);
+            } catch (IllegalArgumentException ex) {
+                if (ex.getMessage() != null && ex.getMessage().startsWith("CITY_D3_SITE_REVIEW_STALE")) {
+                    report.addProperty("siteReviewStatus", "stale");
+                    report.addProperty("nextAction", "city_review_d3_site");
+                    return ctx.workflow().finish(workflowStarted, "awaiting_site_review");
+                }
+                throw ex;
+            }
         }
 
         if (!workflowRunD4(ctx)) {
@@ -3986,6 +4049,16 @@ final class CityPlanningEndpointHandler {
         }
     }
 
+    private static JsonObject loadCitySeedForD4(Path runDir, String runId, String citySeedId) throws IOException {
+        JsonObject seed = loadCitySeed(runDir, runId, citySeedId);
+        Path packagePath = d3PackagePath(runDir, citySeedId);
+        if (!Files.isRegularFile(packagePath)) {
+            throw new IllegalArgumentException("D3 package not found. Run city_plan_d3 first: " + packagePath);
+        }
+        requireD3SiteDecision(runDir, seed, citySeedId);
+        return seed;
+    }
+
     private static JsonObject loadCitySeed(Path runDir, String runId, String citySeedId) throws IOException {
         Path registryPath = runDir.resolve("city_seed_registry.json");
         if (!Files.exists(registryPath)) {
@@ -4694,6 +4767,47 @@ final class CityPlanningEndpointHandler {
                 .resolve("city_landform_review_package.json");
     }
 
+    private static Path d3SiteDecisionPath(Path runDir, String citySeedId) {
+        return runDir.resolve("city_d3_" + safeFileName(citySeedId))
+                .resolve("city_site_review_decision.json");
+    }
+
+    private static boolean requiresD3SiteReview(JsonObject seed) {
+        if (!"capital".equals(stringValue(seed, "role"))) {
+            return false;
+        }
+        JsonObject source = seed.has("source") && seed.get("source").isJsonObject()
+                ? seed.getAsJsonObject("source") : null;
+        return source != null
+                && "ai_candidate_selection".equals(stringValue(source, "siteSelectionMode"));
+    }
+
+    private static void requireD3SiteDecision(Path runDir, JsonObject seed, String citySeedId)
+            throws IOException {
+        if (!requiresD3SiteReview(seed)) {
+            return;
+        }
+        Path packagePath = d3PackagePath(runDir, citySeedId);
+        Path decisionPath = d3SiteDecisionPath(runDir, citySeedId);
+        if (!Files.isRegularFile(decisionPath)) {
+            throw new IllegalArgumentException("CITY_D3_SITE_REVIEW_REQUIRED: review the D3 site before D4");
+        }
+        JsonObject review = JsonParser.parseString(Files.readString(decisionPath)).getAsJsonObject();
+        String packageIdentity = sha256(Files.readString(packagePath));
+        String seedIdentity = sha256(CityJson.GSON.toJson(seed));
+        if (!packageIdentity.equals(stringValue(review, "d3PackageIdentity"))
+                || !seedIdentity.equals(stringValue(review, "citySeedIdentity"))) {
+            throw new IllegalArgumentException("CITY_D3_SITE_REVIEW_STALE");
+        }
+        String decision = stringValue(review, "decision");
+        if ("reselect_required".equals(decision)) {
+            throw new IllegalArgumentException("CITY_D3_SITE_RESELECTION_REQUIRED: return to realm_t4 selection");
+        }
+        if (!"accept_selected_site".equals(decision)) {
+            throw new IllegalArgumentException("CITY_D3_SITE_REVIEW_DECISION_INVALID");
+        }
+    }
+
     private static CityLandformReviewPackage loadD3Package(Path debugRoot, Path runDir, String citySeedId)
             throws IOException {
         Path d3PackagePath = d3PackagePath(runDir, citySeedId);
@@ -4701,6 +4815,8 @@ final class CityPlanningEndpointHandler {
             throw new IllegalArgumentException("D3 package not found. Run city_plan_d3 first: "
                     + debugRef(debugRoot, d3PackagePath));
         }
+        String runId = runDir.getFileName().toString();
+        loadCitySeedForD4(runDir, runId, citySeedId);
         return CityLandformReviewPackage.fromJson(
                 JsonParser.parseString(Files.readString(d3PackagePath)).getAsJsonObject());
     }

@@ -37,6 +37,11 @@ export const realmHandlers: Record<string, ToolHandler> = {
     return textResult(JSON.stringify(res.data, null, 2));
   },
 
+  async realm_t4_patch_planning_select_capital(args) {
+    const res = await postJson(`${MC_API_URL}/realm/t4/patch_planning/select_capital`, payload(args), TIMEOUTS.quick);
+    return textResult(JSON.stringify(res.data, null, 2));
+  },
+
   async realm_t4_patch_planning_add_city(args) {
     const res = await postJson(`${MC_API_URL}/realm/t4/patch_planning/add_city`, payload(args), TIMEOUTS.quick);
     return textResult(JSON.stringify(res.data, null, 2));
@@ -84,6 +89,11 @@ export const realmHandlers: Record<string, ToolHandler> = {
 
   async city_plan_d3(args) {
     const res = await postJson(`${MC_API_URL}/realm/city/plan_d3`, payload(args), TIMEOUTS.refresh);
+    return textResult(JSON.stringify(res.data, null, 2));
+  },
+
+  async city_review_d3_site(args) {
+    const res = await postJson(`${MC_API_URL}/realm/city/review_d3_site`, payload(args), TIMEOUTS.quick);
     return textResult(JSON.stringify(res.data, null, 2));
   },
 

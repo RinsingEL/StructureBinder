@@ -19,28 +19,49 @@ class RealmT4PatchPlanningServiceTest {
     Path tempDir;
 
     @Test
-    void retainsCapitalConsumesSelectionAndReplacesAutoRealmSeedsOnFinalize() throws Exception {
+    void migratesLegacyCapitalCoordinatesToIntentWithoutInheritingTheSite() throws Exception {
+        Path root = tempDir.resolve("legacy_realm_debug");
+        Path run = root.resolve("run_t4");
+        Files.createDirectories(run);
+        writeArtifacts(run);
+        Files.delete(run.resolve("capital_city_intents.json"));
+        JsonObject legacy = new JsonObject();
+        legacy.addProperty("citySeedId", "city_realm_a_capital");
+        legacy.addProperty("realmId", "realm_a");
+        legacy.addProperty("cityRole", "capital");
+        legacy.addProperty("theoreticalScale", "capital");
+        legacy.add("anchorGrid", point(20, 0));
+        legacy.add("anchorBlock", point(320, 0));
+        JsonArray legacySeeds = new JsonArray();
+        legacySeeds.add(legacy);
+        Files.writeString(run.resolve("capital_city_seeds.json"), legacySeeds.toString());
+
+        RealmT4PatchPlanningService service = new RealmT4PatchPlanningService(root, (runId, registry) -> null);
+        JsonObject request = new JsonObject();
+        request.addProperty("runId", "run_t4");
+        request.addProperty("realmId", "realm_a");
+        request.addProperty("planningSessionId", "legacy_plan");
+        JsonObject session = service.create(request).getAsJsonObject("planningSession");
+
+        assertTrue(session.getAsJsonArray("citySeeds").isEmpty());
+        JsonObject intent = session.getAsJsonObject("capitalIntent");
+        assertEquals("legacy_coordinates_discarded", intent.get("migrationMode").getAsString());
+        assertFalse(intent.has("anchorGrid"));
+        assertFalse(intent.has("anchorBlock"));
+    }
+
+    @Test
+    void requiresAiSelectedCapitalBeforeCitiesAndReplacesAutoRealmSeedsOnFinalize() throws Exception {
         Path root = tempDir.resolve("realm_debug");
         Path run = root.resolve("run_t4");
         Files.createDirectories(run);
         writeArtifacts(run);
 
         PatchExplorerService explorer = new PatchExplorerService(root);
-        JsonObject openRequest = new JsonObject();
-        openRequest.addProperty("runId", "run_t4");
-        openRequest.addProperty("scopeType", "realm_t4");
-        openRequest.addProperty("realmId", "realm_a");
-        JsonObject open = explorer.open(openRequest);
-        JsonObject showRequest = new JsonObject();
-        showRequest.addProperty("runId", "run_t4");
-        showRequest.addProperty("sessionId", open.get("sessionId").getAsString());
-        showRequest.add("interestTypes", strings("minecraft:plains"));
-        explorer.showCandidates(showRequest);
-        JsonObject selectRequest = new JsonObject();
-        selectRequest.addProperty("runId", "run_t4");
-        selectRequest.addProperty("sessionId", open.get("sessionId").getAsString());
-        selectRequest.addProperty("candidateId", "MINECRAFT_PLAINS-01");
-        String selectionRef = explorer.selectCandidate(selectRequest).get("patchSelectionRef").getAsString();
+        String capitalSelectionRef = select(explorer, "explore_capital", "minecraft:plains",
+                "MINECRAFT_PLAINS-01");
+        String townSelectionRef = select(explorer, "explore_town", "minecraft:forest",
+                "MINECRAFT_FOREST-01");
 
         boolean[] synchronizedArtifacts = {false};
         RealmT4PatchPlanningService service = new RealmT4PatchPlanningService(root, (runId, registry) -> {
@@ -60,27 +81,52 @@ class RealmT4PatchPlanningServiceTest {
         createRequest.addProperty("planningSessionId", "plan_a");
         JsonObject created = service.create(createRequest);
         JsonArray initialSeeds = created.getAsJsonObject("planningSession").getAsJsonArray("citySeeds");
-        assertEquals(1, initialSeeds.size());
-        assertEquals("capital", initialSeeds.get(0).getAsJsonObject().get("role").getAsString());
-
-        JsonObject tooLarge = addRequest(selectionRef, "city_too_large", "large_city");
-        assertThrows(IllegalArgumentException.class, () -> service.add(tooLarge));
-
-        JsonObject add = addRequest(selectionRef, "city_ai_plain", "town");
-        add.add("coreFunctions", strings("market", "farming"));
-        JsonObject added = service.add(add);
-        assertEquals(selectionRef, added.getAsJsonObject("addedCitySeed").getAsJsonObject("source")
-                .get("patchSelectionRef").getAsString());
-        assertThrows(IllegalArgumentException.class, () -> service.add(add));
+        assertEquals(0, initialSeeds.size());
+        assertEquals("awaiting_selection", created.getAsJsonObject("planningSession")
+                .get("capitalSelectionStatus").getAsString());
 
         JsonObject finalizeRequest = new JsonObject();
         finalizeRequest.addProperty("runId", "run_t4");
         finalizeRequest.addProperty("planningSessionId", "plan_a");
+        assertThrows(IllegalArgumentException.class, () -> service.finalizePlanning(finalizeRequest));
+
+        JsonObject addBeforeCapital = addRequest(townSelectionRef, "city_too_early", "town");
+        assertThrows(IllegalArgumentException.class, () -> service.add(addBeforeCapital));
+
+        JsonObject capitalRequest = new JsonObject();
+        capitalRequest.addProperty("runId", "run_t4");
+        capitalRequest.addProperty("planningSessionId", "plan_a");
+        capitalRequest.addProperty("patchSelectionRef", capitalSelectionRef);
+        capitalRequest.addProperty("selectionReason", "AI chose the largest continuous plain");
+        JsonObject selectedCapital = service.selectCapital(capitalRequest);
+        JsonObject capital = selectedCapital.getAsJsonObject("selectedCapital");
+        assertEquals("capital", capital.get("role").getAsString());
+        assertEquals(capitalSelectionRef, capital.getAsJsonObject("source")
+                .get("patchSelectionRef").getAsString());
+        assertEquals("ai_candidate_selection", capital.getAsJsonObject("source")
+                .get("siteSelectionMode").getAsString());
+        assertThrows(IllegalArgumentException.class, () -> service.selectCapital(capitalRequest));
+
+        JsonObject capitalThroughAdd = addRequest(townSelectionRef, "city_second_capital", "capital");
+        capitalThroughAdd.addProperty("role", "capital");
+        assertThrows(IllegalArgumentException.class, () -> service.add(capitalThroughAdd));
+
+        JsonObject tooLarge = addRequest(townSelectionRef, "city_too_large", "large_city");
+        tooLarge.addProperty("minimumAreaBlocks", 999_999);
+        assertThrows(IllegalArgumentException.class, () -> service.add(tooLarge));
+
+        JsonObject add = addRequest(townSelectionRef, "city_ai_forest", "town");
+        add.add("coreFunctions", strings("market", "farming"));
+        JsonObject added = service.add(add);
+        assertEquals(townSelectionRef, added.getAsJsonObject("addedCitySeed").getAsJsonObject("source")
+                .get("patchSelectionRef").getAsString());
+        assertThrows(IllegalArgumentException.class, () -> service.add(add));
+
         JsonObject finalized = service.finalizePlanning(finalizeRequest);
         JsonArray finalSeeds = finalized.getAsJsonObject("citySeedRegistry").getAsJsonArray("citySeeds");
         assertEquals(2, finalSeeds.size());
         assertTrue(hasSeed(finalSeeds, "city_realm_a_capital"));
-        assertTrue(hasSeed(finalSeeds, "city_ai_plain"));
+        assertTrue(hasSeed(finalSeeds, "city_ai_forest"));
         assertFalse(hasSeed(finalSeeds, "city_realm_a_auto_port"));
         assertTrue(synchronizedArtifacts[0]);
         assertEquals("t4_report.json", finalized.getAsJsonObject("artifacts").get("t4Report").getAsString());
@@ -89,9 +135,29 @@ class RealmT4PatchPlanningServiceTest {
         JsonObject persisted = JsonParser.parseString(Files.readString(run.resolve("city_seed_registry.json")))
                 .getAsJsonObject();
         assertEquals(2, persisted.getAsJsonArray("citySeeds").size());
-        JsonObject persistedAiSeed = findSeed(persisted.getAsJsonArray("citySeeds"), "city_ai_plain");
-        assertEquals(selectionRef, persistedAiSeed.getAsJsonObject("source")
+        JsonObject persistedAiSeed = findSeed(persisted.getAsJsonArray("citySeeds"), "city_ai_forest");
+        assertEquals(townSelectionRef, persistedAiSeed.getAsJsonObject("source")
                 .get("patchSelectionRef").getAsString());
+    }
+
+    private static String select(PatchExplorerService explorer, String sessionId, String biome,
+                                 String candidateId) throws Exception {
+        JsonObject openRequest = new JsonObject();
+        openRequest.addProperty("runId", "run_t4");
+        openRequest.addProperty("scopeType", "realm_t4");
+        openRequest.addProperty("realmId", "realm_a");
+        openRequest.addProperty("sessionId", sessionId);
+        JsonObject open = explorer.open(openRequest);
+        JsonObject showRequest = new JsonObject();
+        showRequest.addProperty("runId", "run_t4");
+        showRequest.addProperty("sessionId", open.get("sessionId").getAsString());
+        showRequest.add("interestTypes", strings(biome));
+        explorer.showCandidates(showRequest);
+        JsonObject selectRequest = new JsonObject();
+        selectRequest.addProperty("runId", "run_t4");
+        selectRequest.addProperty("sessionId", open.get("sessionId").getAsString());
+        selectRequest.addProperty("candidateId", candidateId);
+        return explorer.selectCandidate(selectRequest).get("patchSelectionRef").getAsString();
     }
 
     private static JsonObject addRequest(String selectionRef, String citySeedId, String scale) {
@@ -113,7 +179,7 @@ class RealmT4PatchPlanningServiceTest {
 
         JsonObject patchMap = new JsonObject();
         JsonArray cells = new JsonArray();
-        for (int x = 0; x < 4; x++) {
+        for (int x = 0; x < 24; x++) {
             JsonObject cell = new JsonObject();
             cell.addProperty("gridX", x);
             cell.addProperty("gridZ", 0);
@@ -125,8 +191,8 @@ class RealmT4PatchPlanningServiceTest {
             cell.addProperty("baseLandform", "lowland");
             cell.addProperty("landformConfidence", 0.9);
             JsonObject biomeHist = new JsonObject();
-            biomeHist.addProperty("minecraft:plains", 15);
-            biomeHist.addProperty("minecraft:forest", 1);
+            biomeHist.addProperty(x < 12 ? "minecraft:plains" : "minecraft:forest", 15);
+            biomeHist.addProperty(x < 12 ? "minecraft:forest" : "minecraft:plains", 1);
             cell.add("biomeHist", biomeHist);
             cells.add(cell);
         }
@@ -147,6 +213,20 @@ class RealmT4PatchPlanningServiceTest {
         }
         territory.add("territoryCells", territoryCells);
         Files.writeString(run.resolve("realm_territory_map.json"), territory.toString());
+
+        JsonObject intent = new JsonObject();
+        intent.addProperty("citySeedId", "city_realm_a_capital");
+        intent.addProperty("realmId", "realm_a");
+        intent.addProperty("cityRole", "capital");
+        intent.addProperty("theoreticalScale", "capital");
+        intent.addProperty("mustExist", true);
+        intent.add("requiredConditions", strings("land", "inside_realm"));
+        intent.add("coreFunctions", strings("administration", "market", "defense"));
+        intent.addProperty("realmCoreSelectionId", "selection_realm_a");
+        intent.addProperty("sourceMode", "t2_realm_core_intent");
+        JsonArray intents = new JsonArray();
+        intents.add(intent);
+        Files.writeString(run.resolve("capital_city_intents.json"), intents.toString());
 
         JsonObject capital = registrySeed("city_realm_a_capital", "capital", 20, 0, 4);
         JsonObject autoPort = registrySeed("city_realm_a_auto_port", "port", 10, 0, 2);

@@ -214,9 +214,9 @@ public final class RealmPlanningService {
         }
 
         RealmSeed seed = RealmSeed.from(profile, selection, attempt.cell);
-        CapitalCitySeed capital = CapitalCitySeed.from(profile, selection, attempt.cell);
+        CapitalCityIntent capitalIntent = CapitalCityIntent.from(profile, selection);
         run.seeds.put(profile.realmId, seed);
-        run.capitals.put(profile.realmId, capital);
+        run.capitalIntents.put(profile.realmId, capitalIntent);
         exportT2(run);
 
         JsonObject response = baseResponse("T2", run.runId);
@@ -224,7 +224,7 @@ public final class RealmPlanningService {
         response.add("artifacts", run.artifactsJson());
         response.add("selection", selection.asJson());
         response.add("realmSeed", seed.asJson());
-        response.add("capitalCitySeed", capital.asJson());
+        response.add("capitalCityIntent", capitalIntent.asJson());
         response.add("nextActions", arrayOf(run.seeds.size() == run.profiles.size()
                 ? "realm_t3_expand" : "realm_t2_select_coordinate"));
         return response;
@@ -257,7 +257,8 @@ public final class RealmPlanningService {
         response.addProperty("status", "completed");
         response.add("artifacts", run.artifactsJson());
         response.add("territoryMap", run.territory.asJson());
-        response.add("nextActions", arrayOf("realm_t4_build_registry"));
+        response.add("nextActions", arrayOf("realm_t4_patch_planning_create"));
+        response.add("compatibilityActions", arrayOf("realm_t4_build_registry"));
         return response;
     }
 
@@ -271,6 +272,8 @@ public final class RealmPlanningService {
 
         JsonObject response = baseResponse("T4", run.runId);
         response.addProperty("status", "completed");
+        response.addProperty("selectionMode", "rule_fixture");
+        response.addProperty("formalAiPath", false);
         response.add("artifacts", run.artifactsJson());
         response.add("citySeedRegistry", run.registry.asJson());
         response.add("nextActions", arrayOf("review_acceptance_report"));
@@ -1585,12 +1588,13 @@ public final class RealmPlanningService {
     private CitySeedRegistry buildRegistry(RealmRun run) {
         List<CitySeed> seeds = new ArrayList<>();
         for (RealmProfile profile : run.profiles) {
-            CapitalCitySeed capital = run.capitals.get(profile.realmId);
+            CapitalCityIntent capitalIntent = run.capitalIntents.get(profile.realmId);
+            RealmSeed realmSeed = run.seeds.get(profile.realmId);
             RealmStats stats = run.territory.stats.get(profile.realmId);
-            if (capital != null && stats != null) {
-                seeds.add(CitySeed.capital(capital).withCandidateMetadata(
+            if (capitalIntent != null && realmSeed != null && stats != null) {
+                seeds.add(CitySeed.fixtureCapital(capitalIntent, realmSeed).withCandidateMetadata(
                         "capital_core", "capital_" + profile.realmId, nearestCityDistance(run, profile.realmId,
-                                capital.anchorGrid, seeds), ""));
+                                realmSeed.seedGrid, seeds), ""));
             }
             if (stats == null) {
                 continue;
@@ -1602,7 +1606,7 @@ public final class RealmPlanningService {
             if (portCell != null && stats.coastalRatio > 0.05) {
                 addCitySeed(run, seeds, CitySeed.from("city_" + profile.realmId + "_port", profile.realmId, "port",
                         "town", portCell, 6, List.of("land", "near_water", "inside_realm"),
-                        List.of("harbor", "market", "storage"), "player_nearby", "coastal territory")
+                        List.of("harbor", "market", "storage"), "player_nearby", "rule_fixture:coastal territory")
                         .withCandidateMetadata(subregionIdFor(run, profile.realmId, portCell),
                                 "port_" + profile.realmId + "_" + portCell.gridX + "_" + portCell.gridZ,
                                 nearestCityDistance(run, profile.realmId, new GridPoint(portCell.gridX, portCell.gridZ), seeds),
@@ -1615,7 +1619,7 @@ public final class RealmPlanningService {
             if (miningCell != null) {
                 addCitySeed(run, seeds, CitySeed.from("city_" + profile.realmId + "_mining", profile.realmId, "mining_town",
                         "town", miningCell, 5, List.of("land", "inside_realm", "near_mountain"),
-                        List.of("industry", "storage", "worker_housing"), "realm_development", "mountain landform")
+                        List.of("industry", "storage", "worker_housing"), "realm_development", "rule_fixture:mountain landform")
                         .withCandidateMetadata(subregionIdFor(run, profile.realmId, miningCell),
                                 "mining_" + profile.realmId + "_" + miningCell.gridX + "_" + miningCell.gridZ,
                                 nearestCityDistance(run, profile.realmId, new GridPoint(miningCell.gridX, miningCell.gridZ), seeds),
@@ -1629,7 +1633,7 @@ public final class RealmPlanningService {
             if (borderCell != null && !stats.neighbors.isEmpty()) {
                 addCitySeed(run, seeds, CitySeed.from("city_" + profile.realmId + "_border_fort", profile.realmId, "border_fort",
                         "town", borderCell, 4, List.of("land", "inside_realm", "near_border"),
-                        List.of("defense", "barracks", "market"), "story_stage", "realm border")
+                        List.of("defense", "barracks", "market"), "story_stage", "rule_fixture:realm border")
                         .withCandidateMetadata(subregionIdFor(run, profile.realmId, borderCell),
                                 "border_" + profile.realmId + "_" + borderCell.gridX + "_" + borderCell.gridZ,
                                 nearestCityDistance(run, profile.realmId, new GridPoint(borderCell.gridX, borderCell.gridZ), seeds),
@@ -1758,12 +1762,12 @@ public final class RealmPlanningService {
     }
 
     private String subregionIdFor(RealmRun run, String realmId, WorldCell cell) {
-        CapitalCitySeed capital = run.capitals.get(realmId);
-        if (capital == null) {
+        RealmSeed realmSeed = run.seeds.get(realmId);
+        if (realmSeed == null) {
             return realmId + "_region";
         }
-        int dx = cell.gridX - capital.anchorGrid.x;
-        int dz = cell.gridZ - capital.anchorGrid.z;
+        int dx = cell.gridX - realmSeed.seedGrid.x;
+        int dz = cell.gridZ - realmSeed.seedGrid.z;
         if (Math.abs(dx) <= 2 && Math.abs(dz) <= 2) {
             return realmId + "_capital_core";
         }
@@ -1882,7 +1886,7 @@ public final class RealmPlanningService {
     private void exportT2(RealmRun run) throws IOException {
         writeJson(run.runDirectory.resolve("realm_coordinate_selections.json"), selectionsJson(run.selections.values()));
         writeJson(run.runDirectory.resolve("realm_seeds.json"), seedsJson(run.seeds.values()));
-        writeJson(run.runDirectory.resolve("capital_city_seeds.json"), capitalsJson(run.capitals.values()));
+        writeJson(run.runDirectory.resolve("capital_city_intents.json"), capitalIntentsJson(run.capitalIntents.values()));
         JsonObject report = new JsonObject();
         report.addProperty("runId", run.runId);
         report.addProperty("completedSelections", run.seeds.size());
@@ -1890,7 +1894,7 @@ public final class RealmPlanningService {
         writeJson(run.runDirectory.resolve("t2_report.json"), report);
         run.artifacts.put("realmCoordinateSelections", "realm_coordinate_selections.json");
         run.artifacts.put("realmSeeds", "realm_seeds.json");
-        run.artifacts.put("capitalCitySeeds", "capital_city_seeds.json");
+        run.artifacts.put("capitalCityIntents", "capital_city_intents.json");
         run.artifacts.put("t2Report", "t2_report.json");
     }
 
@@ -2813,10 +2817,10 @@ public final class RealmPlanningService {
         return array;
     }
 
-    private static JsonArray capitalsJson(Iterable<CapitalCitySeed> capitals) {
+    private static JsonArray capitalIntentsJson(Iterable<CapitalCityIntent> capitalIntents) {
         JsonArray array = new JsonArray();
-        for (CapitalCitySeed capital : capitals) {
-            array.add(capital.asJson());
+        for (CapitalCityIntent capitalIntent : capitalIntents) {
+            array.add(capitalIntent.asJson());
         }
         return array;
     }
@@ -3695,10 +3699,12 @@ public final class RealmPlanningService {
         }
         Path selectionsPath = run.runDirectory.resolve("realm_coordinate_selections.json");
         Path seedsPath = run.runDirectory.resolve("realm_seeds.json");
-        Path capitalsPath = run.runDirectory.resolve("capital_city_seeds.json");
+        Path capitalIntentsPath = run.runDirectory.resolve("capital_city_intents.json");
+        Path legacyCapitalsPath = run.runDirectory.resolve("capital_city_seeds.json");
         Path reportPath = run.runDirectory.resolve("t2_report.json");
         if (!Files.isRegularFile(selectionsPath) || !Files.isRegularFile(seedsPath)
-                || !Files.isRegularFile(capitalsPath) || !Files.isRegularFile(reportPath)) {
+                || (!Files.isRegularFile(capitalIntentsPath) && !Files.isRegularFile(legacyCapitalsPath))
+                || !Files.isRegularFile(reportPath)) {
             return;
         }
 
@@ -3723,18 +3729,20 @@ public final class RealmPlanningService {
             validateRestoredGrid(run, seed.realmId, seed.seedGrid, seed.continentId, seed.patchId, seedsPath);
             run.seeds.put(seed.realmId, seed);
         }
-        for (JsonElement element : readJsonArray(capitalsPath, "capital_city_seeds")) {
-            JsonObject object = requireCheckpointObject(element, capitalsPath);
-            CapitalCitySeed capital = capitalCitySeedFromJson(object);
-            RealmSeed seed = run.seeds.get(capital.realmId);
-            if (seed == null || !capital.anchorGrid.equals(seed.seedGrid)) {
-                throw invalidCheckpoint(capitalsPath, "capital city seed does not match its realm seed");
+        Path capitalSourcePath = Files.isRegularFile(capitalIntentsPath) ? capitalIntentsPath : legacyCapitalsPath;
+        String capitalSourceName = Files.isRegularFile(capitalIntentsPath)
+                ? "capital_city_intents" : "capital_city_seeds";
+        for (JsonElement element : readJsonArray(capitalSourcePath, capitalSourceName)) {
+            JsonObject object = requireCheckpointObject(element, capitalSourcePath);
+            CapitalCityIntent capitalIntent = Files.isRegularFile(capitalIntentsPath)
+                    ? capitalCityIntentFromJson(object) : capitalCityIntentFromLegacySeed(object);
+            if (!run.seeds.containsKey(capitalIntent.realmId)) {
+                throw invalidCheckpoint(capitalSourcePath, "capital intent references an unknown realm seed");
             }
-            validateRestoredGrid(run, capital.realmId, capital.anchorGrid, "", "", capitalsPath);
-            run.capitals.put(capital.realmId, capital);
+            run.capitalIntents.put(capitalIntent.realmId, capitalIntent);
         }
-        if (!run.seeds.keySet().equals(run.capitals.keySet())) {
-            throw invalidCheckpoint(reportPath, "realm seeds and capital city seeds do not cover the same realms");
+        if (!run.seeds.keySet().equals(run.capitalIntents.keySet())) {
+            throw invalidCheckpoint(reportPath, "realm seeds and capital city intents do not cover the same realms");
         }
         JsonObject report = readJsonObject(reportPath, "t2_report");
         if (!run.runId.equals(stringValue(report, "runId", ""))
@@ -3862,11 +3870,19 @@ public final class RealmPlanningService {
                 ExpansionStyle.fromJson(object.getAsJsonObject("expansionStyle")));
     }
 
-    private static CapitalCitySeed capitalCitySeedFromJson(JsonObject object) {
-        return new CapitalCitySeed(stringValue(object, "citySeedId", ""), stringValue(object, "realmId", ""),
-                stringValue(object, "cityRole", "capital"), gridPointFromJson(object.get("anchorGrid")),
-                gridPointFromJson(object.get("anchorBlock")), stringValue(object, "theoreticalScale", "capital"),
-                stringValue(object, "growthAnchor", ""), booleanValue(object, "mustExist", true));
+    private static CapitalCityIntent capitalCityIntentFromJson(JsonObject object) {
+        return new CapitalCityIntent(stringValue(object, "citySeedId", ""), stringValue(object, "realmId", ""),
+                stringValue(object, "cityRole", "capital"), stringValue(object, "theoreticalScale", "capital"),
+                booleanValue(object, "mustExist", true), stringList(object, "requiredConditions"),
+                stringList(object, "coreFunctions"), stringValue(object, "realmCoreSelectionId", ""),
+                stringValue(object, "sourceMode", "t2_realm_core_intent"));
+    }
+
+    private static CapitalCityIntent capitalCityIntentFromLegacySeed(JsonObject object) {
+        return new CapitalCityIntent(stringValue(object, "citySeedId", ""), stringValue(object, "realmId", ""),
+                "capital", stringValue(object, "theoreticalScale", "capital"),
+                booleanValue(object, "mustExist", true), List.of("land", "inside_realm"),
+                List.of("administration", "market", "defense"), "", "legacy_realm_core_migration");
     }
 
     private static RealmStats realmStatsFromJson(JsonObject object) {
@@ -4032,7 +4048,8 @@ public final class RealmPlanningService {
         registerArtifact(run, "t1Manifest", "t1_manifest.json");
         registerArtifact(run, "realmCoordinateSelections", "realm_coordinate_selections.json");
         registerArtifact(run, "realmSeeds", "realm_seeds.json");
-        registerArtifact(run, "capitalCitySeeds", "capital_city_seeds.json");
+        registerArtifact(run, "capitalCityIntents", "capital_city_intents.json");
+        registerArtifact(run, "legacyCapitalCitySeeds", "capital_city_seeds.json");
         registerArtifact(run, "t2Report", "t2_report.json");
         registerArtifact(run, "realmTerritoryMap", "realm_territory_map.json");
         registerArtifact(run, "territoryPreview", "territory_preview.png");
@@ -4441,7 +4458,7 @@ public final class RealmPlanningService {
         final Map<String, CandidatePackage> candidatePackages = new LinkedHashMap<>();
         final Map<String, RealmSelection> selections = new LinkedHashMap<>();
         final Map<String, RealmSeed> seeds = new LinkedHashMap<>();
-        final Map<String, CapitalCitySeed> capitals = new LinkedHashMap<>();
+        final Map<String, CapitalCityIntent> capitalIntents = new LinkedHashMap<>();
         final Map<String, String> artifacts = new LinkedHashMap<>();
         Map<String, PatchSummary> patchSummaries = new LinkedHashMap<>();
         Map<String, ContinentSummary> continentSummaries = new LinkedHashMap<>();
@@ -5307,17 +5324,19 @@ public final class RealmPlanningService {
         }
     }
 
-    private record CapitalCitySeed(String citySeedId, String realmId, String cityRole, GridPoint anchorGrid,
-            GridPoint anchorBlock, String theoreticalScale, String growthAnchor, boolean mustExist) {
-        static CapitalCitySeed from(RealmProfile profile, RealmSelection selection, WorldCell cell) {
+    private record CapitalCityIntent(String citySeedId, String realmId, String cityRole,
+            String theoreticalScale, boolean mustExist, List<String> requiredConditions,
+            List<String> coreFunctions, String realmCoreSelectionId, String sourceMode) {
+        static CapitalCityIntent from(RealmProfile profile, RealmSelection selection) {
             String scale = switch (profile.scalePlan.priority) {
                 case "empire", "major" -> "capital";
                 case "minor" -> "town";
                 default -> "large_city";
             };
-            return new CapitalCitySeed("city_" + profile.realmId + "_capital", profile.realmId, "capital",
-                    new GridPoint(cell.gridX, cell.gridZ), new GridPoint(cell.blockX, cell.blockZ),
-                    scale, cell.landform, true);
+            return new CapitalCityIntent("city_" + profile.realmId + "_capital", profile.realmId, "capital",
+                    scale, true, List.of("land", "inside_realm"),
+                    List.of("administration", "market", "defense"), selection.selectionId,
+                    "t2_realm_core_intent");
         }
 
         JsonObject asJson() {
@@ -5325,11 +5344,12 @@ public final class RealmPlanningService {
             json.addProperty("citySeedId", citySeedId);
             json.addProperty("realmId", realmId);
             json.addProperty("cityRole", cityRole);
-            json.add("anchorGrid", anchorGrid.asJson());
-            json.add("anchorBlock", anchorBlock.asJson());
             json.addProperty("theoreticalScale", theoreticalScale);
-            json.addProperty("growthAnchor", growthAnchor);
             json.addProperty("mustExist", mustExist);
+            json.add("requiredConditions", stringArray(requiredConditions));
+            json.add("coreFunctions", stringArray(coreFunctions));
+            json.addProperty("realmCoreSelectionId", realmCoreSelectionId);
+            json.addProperty("sourceMode", sourceMode);
             return json;
         }
     }
@@ -5984,13 +6004,13 @@ public final class RealmPlanningService {
             GridPoint anchorGrid, GridPoint anchorBlock, int candidateRangeCells, int planningRadiusCells,
             String subregionId, String candidateId, double graphDistanceToNearestCity, String satelliteOf,
             List<String> requiredConditions, List<String> coreFunctions, String trigger, String source) {
-        static CitySeed capital(CapitalCitySeed capital) {
-            return new CitySeed(capital.citySeedId, capital.realmId, "capital", capital.theoreticalScale,
-                    capital.anchorGrid, capital.anchorBlock, 8,
-                    RealmPlanningService.planningRadiusCells("capital", capital.theoreticalScale),
-                    capital.realmId + "_capital_core", "capital_" + capital.realmId, -1.0, "",
-                    List.of("land", "inside_realm"), List.of("administration", "market", "defense"),
-                    "always", "capital_city_seed");
+        static CitySeed fixtureCapital(CapitalCityIntent intent, RealmSeed realmSeed) {
+            return new CitySeed(intent.citySeedId, intent.realmId, "capital", intent.theoreticalScale,
+                    realmSeed.seedGrid, realmSeed.seedBlock, 8,
+                    RealmPlanningService.planningRadiusCells("capital", intent.theoreticalScale),
+                    intent.realmId + "_capital_core", "capital_" + intent.realmId, -1.0, "",
+                    intent.requiredConditions, intent.coreFunctions,
+                    "always", "rule_fixture_realm_core");
         }
 
         static CitySeed from(String id, String realmId, String role, String scale, WorldCell cell,
@@ -6031,6 +6051,10 @@ public final class RealmPlanningService {
             json.addProperty("trigger", trigger);
             JsonObject sourceJson = new JsonObject();
             sourceJson.addProperty("reason", source);
+            if (source.startsWith("rule_fixture")) {
+                sourceJson.addProperty("selectionMode", "rule_fixture");
+                sourceJson.addProperty("formalAiPath", false);
+            }
             json.add("source", sourceJson);
             return json;
         }

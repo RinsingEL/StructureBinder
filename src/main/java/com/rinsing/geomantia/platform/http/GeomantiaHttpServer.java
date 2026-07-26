@@ -56,6 +56,7 @@ public final class GeomantiaHttpServer {
             createdServer.createContext("/realm/t3/expand", realmController::handleT3Expand);
             createdServer.createContext("/realm/t4/build_registry", realmController::handleT4BuildRegistry);
             createdServer.createContext("/realm/t4/patch_planning/create", realmController::handleT4PatchPlanningCreate);
+            createdServer.createContext("/realm/t4/patch_planning/select_capital", realmController::handleT4PatchPlanningSelectCapital);
             createdServer.createContext("/realm/t4/patch_planning/add_city", realmController::handleT4PatchPlanningAddCity);
             createdServer.createContext("/realm/t4/patch_planning/finalize", realmController::handleT4PatchPlanningFinalize);
             createdServer.createContext("/realm/patch_explorer/open", realmController::handlePatchExplorerOpen);
@@ -66,6 +67,7 @@ public final class GeomantiaHttpServer {
             createdServer.createContext("/realm/debug/command", realmController::handleDebugCommand);
             createdServer.createContext("/realm/city/plan_d2", realmController::handleCityPlanD2);
             createdServer.createContext("/realm/city/plan_d3", realmController::handleCityPlanD3);
+            createdServer.createContext("/realm/city/review_d3_site", realmController::handleCityReviewD3Site);
             createdServer.createContext("/realm/city/plan_d4_candidates", realmController::handleCityPlanD4Candidates);
             createdServer.createContext("/realm/city/plan_d4_array_candidates", realmController::handleCityPlanD4ArrayCandidates);
             createdServer.createContext("/realm/city/create_d4_design_loop_state", realmController::handleCityCreateD4DesignLoopState);

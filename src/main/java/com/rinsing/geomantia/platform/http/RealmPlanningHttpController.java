@@ -142,6 +142,11 @@ final class RealmPlanningHttpController {
                 .create(GisHttpUtil.readJsonObject(exchange)));
     }
 
+    void handleT4PatchPlanningSelectCapital(HttpExchange exchange) {
+        handle(exchange, "POST", () -> new RealmT4PatchPlanningService(debugRoot())
+                .selectCapital(GisHttpUtil.readJsonObject(exchange)));
+    }
+
     void handleT4PatchPlanningAddCity(HttpExchange exchange) {
         handle(exchange, "POST", () -> new RealmT4PatchPlanningService(debugRoot())
                 .add(GisHttpUtil.readJsonObject(exchange)));
@@ -229,6 +234,18 @@ final class RealmPlanningHttpController {
                             : null,
                     level);
         }));
+    }
+
+    void handleCityReviewD3Site(HttpExchange exchange) {
+        handle(exchange, "POST", () -> {
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            return CityPlanningEndpointHandler.handleReviewD3Site(debugRoot(),
+                    requiredString(request, "runId"),
+                    requiredString(request, "citySeedId"),
+                    requiredString(request, "decision"),
+                    stringValue(request, "decisionReason", ""),
+                    stringValue(request, "reviewedBy", "ai"));
+        });
     }
 
     void handleCityPlanD4(HttpExchange exchange) {
