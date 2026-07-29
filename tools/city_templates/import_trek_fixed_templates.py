@@ -23,11 +23,23 @@ from PIL import Image, ImageDraw
 
 MANIFEST_SCHEMA = "geomantia_trek_fixed_import_manifest.v1"
 CATALOG_SCHEMA = "city_template_catalog.v0.1"
+PROFILE_SOURCE_SCHEMA = "terrasense_structure_profile_source.v0.1"
+VOCABULARY_SCHEMA = "terrasense_structure_vocabulary_snapshot.v0.1"
 DEFAULT_MANIFEST = Path(__file__).with_name("trek_fixed_manifest.json")
 DEFAULT_QUERY_URL = "http://127.0.0.1:5000/realm/city/query_template_metadata"
 ALLOWED_MARKER_PREFIX = "trek:mobs/"
 ROTATIONS = ["NONE", "CLOCKWISE_90", "CLOCKWISE_180", "COUNTERCLOCKWISE_90"]
+ENTRANCE_DIRECTIONS = {"NORTH", "SOUTH", "EAST", "WEST"}
+ENTRANCE_EVIDENCE_KINDS = {"door", "gate", "opening", "water_access"}
 BLOCK_STATE_PATTERN = re.compile(r"^([a-z0-9_.-]+:[a-z0-9_./-]+)(?:\[([^]]+)\])?$")
+TERM_FIELDS = (
+    ("functionTerms", "function"),
+    ("styleTerms", "style"),
+    ("placementTerms", "placement"),
+    ("usageTerms", "usage"),
+    ("templateRoleTerms", "template_role"),
+    ("qualityTerms", "quality"),
+)
 
 
 class ImportFailure(RuntimeError):
@@ -40,6 +52,7 @@ class ImportFailure(RuntimeError):
 @dataclass(frozen=True)
 class ImportedTemplate:
     manifest_entry: dict[str, Any]
+    entrance_review_version: str
     source_configured_id: str
     source_pool: str
     source_nbt: str
@@ -73,10 +86,120 @@ def load_manifest(path: Path) -> dict[str, Any]:
     templates = value.get("templates")
     if not isinstance(templates, list) or not templates:
         raise ImportFailure("TREK_TEMPLATE_MANIFEST_EMPTY", "templates must be a non-empty array")
+    entrance_review_version = value.get("entranceReviewVersion")
+    if not isinstance(entrance_review_version, str) or not entrance_review_version:
+        raise ImportFailure("TREK_TEMPLATE_ENTRANCE_REVIEW_INVALID",
+                            "entranceReviewVersion must be a non-empty string")
     configured_ids = [entry.get("sourceConfiguredId") for entry in templates]
     if len(configured_ids) != len(set(configured_ids)):
         raise ImportFailure("TREK_TEMPLATE_MANIFEST_DUPLICATE", "sourceConfiguredId must be unique")
+    profile_export = value.get("profileExport")
+    if not isinstance(profile_export, dict):
+        raise ImportFailure("TREK_TEMPLATE_SEMANTIC_PROFILE_INVALID", "profileExport must be an object")
+    defaults = profile_export.get("defaults")
+    vocabulary = profile_export.get("vocabularyTerms")
+    if not isinstance(defaults, dict) or not isinstance(vocabulary, list) or not vocabulary:
+        raise ImportFailure("TREK_TEMPLATE_SEMANTIC_PROFILE_INVALID",
+                            "profileExport defaults and vocabularyTerms are required")
+    for field in ("profileSetId", "terrasenseRunId", "exportedAt", "sourceWorkspace"):
+        if not isinstance(profile_export.get(field), str) or not profile_export[field]:
+            raise ImportFailure("TREK_TEMPLATE_SEMANTIC_PROFILE_INVALID", f"profileExport.{field}")
+
+    used_terms: set[str] = set()
+    for entry in templates:
+        if entry.get("entranceConfirmed"):
+            entrance = entry.get("entrance")
+            evidence = entry.get("entranceEvidence")
+            if not isinstance(entrance, dict) or not isinstance(evidence, dict):
+                raise ImportFailure("TREK_TEMPLATE_ENTRANCE_REVIEW_INVALID",
+                                    f"{entry.get('sourceConfiguredId')}: entrance and evidence are required")
+            if (not isinstance(entrance.get("entranceId"), str) or not entrance["entranceId"]
+                    or entrance.get("direction") not in ENTRANCE_DIRECTIONS
+                    or any(not isinstance(entrance.get(axis), int) for axis in ("x", "z"))):
+                raise ImportFailure("TREK_TEMPLATE_ENTRANCE_REVIEW_INVALID",
+                                    f"{entry.get('sourceConfiguredId')}: invalid entrance")
+            if (evidence.get("kind") not in ENTRANCE_EVIDENCE_KINDS
+                    or any(not isinstance(evidence.get(axis), int) for axis in ("x", "y", "z"))
+                    or not isinstance(evidence.get("block"), str) or not evidence["block"]):
+                raise ImportFailure("TREK_TEMPLATE_ENTRANCE_REVIEW_INVALID",
+                                    f"{entry.get('sourceConfiguredId')}: invalid entranceEvidence")
+        for field, prefix in TERM_FIELDS:
+            source = entry if field in ("functionTerms", "styleTerms", "placementTerms") else defaults
+            terms = source.get(field)
+            if not isinstance(terms, list) or not terms or any(not isinstance(term, str) for term in terms):
+                raise ImportFailure("TREK_TEMPLATE_SEMANTIC_PROFILE_INVALID",
+                                    f"{entry.get('sourceConfiguredId')}: {field}")
+            if len(terms) != len(set(terms)) or any(not term.startswith(f"{prefix}.") for term in terms):
+                raise ImportFailure("TREK_TEMPLATE_SEMANTIC_PROFILE_INVALID",
+                                    f"{entry.get('sourceConfiguredId')}: {field} has invalid terms")
+            used_terms.update(terms)
+
+    vocabulary_ids = [term.get("term_id") for term in vocabulary if isinstance(term, dict)]
+    if (len(vocabulary_ids) != len(vocabulary)
+            or any(not isinstance(term_id, str) or not term_id for term_id in vocabulary_ids)
+            or len(vocabulary_ids) != len(set(vocabulary_ids))):
+        raise ImportFailure("TREK_TEMPLATE_SEMANTIC_PROFILE_INVALID",
+                            "vocabularyTerms must have unique term_id values")
+    for term in vocabulary:
+        term_id = term["term_id"]
+        if (term.get("status") != "approved" or not isinstance(term.get("vocab_type"), str)
+                or not term_id.startswith(f"{term['vocab_type']}.")):
+            raise ImportFailure("TREK_TEMPLATE_SEMANTIC_PROFILE_INVALID", f"invalid vocabulary term {term_id}")
+    if used_terms != set(vocabulary_ids):
+        missing = sorted(used_terms - set(vocabulary_ids))
+        unused = sorted(set(vocabulary_ids) - used_terms)
+        raise ImportFailure("TREK_TEMPLATE_SEMANTIC_VOCABULARY_INCOMPLETE",
+                            f"missing={missing}, unused={unused}")
     return value
+
+
+def profile_term_groups(manifest: dict[str, Any], entry: dict[str, Any]) -> dict[str, list[str]]:
+    defaults = manifest["profileExport"]["defaults"]
+    return {
+        field: list(entry[field] if field in ("functionTerms", "styleTerms", "placementTerms")
+                    else defaults[field])
+        for field, _ in TERM_FIELDS
+    }
+
+
+def validate_confirmed_entrance(nbt: nbtlib.File, entry: dict[str, Any],
+                                raw_size: dict[str, int]) -> None:
+    if not entry.get("entranceConfirmed"):
+        return
+    entrance = entry["entrance"]
+    evidence = entry["entranceEvidence"]
+    source_id = entry["sourceConfiguredId"]
+    if not (0 <= entrance["x"] < raw_size["width"] and 0 <= entrance["z"] < raw_size["depth"]):
+        raise ImportFailure("TREK_TEMPLATE_ENTRANCE_REVIEW_INVALID",
+                            f"{source_id}: entrance is outside rawSize")
+    if not (0 <= evidence["x"] < raw_size["width"]
+            and 0 <= evidence["y"] < raw_size["height"]
+            and 0 <= evidence["z"] < raw_size["depth"]):
+        raise ImportFailure("TREK_TEMPLATE_ENTRANCE_REVIEW_INVALID",
+                            f"{source_id}: evidence is outside rawSize")
+    distance = abs(entrance["x"] - evidence["x"]) + abs(entrance["z"] - evidence["z"])
+    if distance > 2:
+        raise ImportFailure("TREK_TEMPLATE_ENTRANCE_REVIEW_INVALID",
+                            f"{source_id}: evidence is {distance} blocks from entrance")
+
+    expected_name = evidence["block"]
+    actual_name = "minecraft:air"
+    position = (evidence["x"], evidence["y"], evidence["z"])
+    palette = nbt["palette"]
+    for block in nbt["blocks"]:
+        if tuple(int(value) for value in block["pos"]) == position:
+            actual_name = str(palette[int(block["state"])] ["Name"])
+            break
+    if actual_name != expected_name:
+        raise ImportFailure("TREK_TEMPLATE_ENTRANCE_EVIDENCE_MISMATCH",
+                            f"{source_id}: {position} expected={expected_name}, actual={actual_name}")
+    kind = evidence["kind"]
+    if kind == "door" and ("_door" not in actual_name or "trapdoor" in actual_name):
+        raise ImportFailure("TREK_TEMPLATE_ENTRANCE_REVIEW_INVALID",
+                            f"{source_id}: door evidence is {actual_name}")
+    if kind == "gate" and "fence_gate" not in actual_name:
+        raise ImportFailure("TREK_TEMPLATE_ENTRANCE_REVIEW_INVALID",
+                            f"{source_id}: gate evidence is {actual_name}")
 
 
 def zip_json(archive: zipfile.ZipFile, name: str) -> dict[str, Any]:
@@ -245,11 +368,13 @@ def inspect_entry(archive: zipfile.ZipFile, manifest: dict[str, Any], entry: dic
     )
     raw_size_values = [int(value) for value in nbt["size"]]
     raw_size = dict(zip(("width", "height", "depth"), raw_size_values))
+    validate_confirmed_entrance(nbt, entry, raw_size)
     source_path = configured_id.split(":", 1)[1]
     target_path = f"{manifest['targetPrefix'].strip('/')}/{source_path}"
     target_ref = f"{manifest['targetNamespace']}:{target_path}"
     return ImportedTemplate(
         manifest_entry=entry,
+        entrance_review_version=manifest["entranceReviewVersion"],
         source_configured_id=configured_id,
         source_pool=start_pool,
         source_nbt=source_nbt,
@@ -434,6 +559,75 @@ def build_catalog(imported: list[ImportedTemplate], runtime: dict[str, dict[str,
     return {"schemaVersion": CATALOG_SCHEMA, "templates": entries}
 
 
+def build_structure_profiles(manifest: dict[str, Any],
+                             imported: list[ImportedTemplate]) -> list[dict[str, Any]]:
+    profiles: list[dict[str, Any]] = []
+    for item in imported:
+        groups = profile_term_groups(manifest, item.manifest_entry)
+        semantic_terms = [term for field, _ in TERM_FIELDS for term in groups[field]]
+        namespace, path = item.target_ref.split(":", 1)
+        profiles.append({
+            "structureId": item.target_ref,
+            "sourceProfileRef": f"{namespace}://{path}",
+            "profileType": "single",
+            "sampleType": "structure_template_nbt",
+            "placementKind": "city_template_nbt",
+            "footprintMode": "fixed_footprint",
+            "semanticTerms": semantic_terms,
+            **groups,
+            "allowedRotations": ROTATIONS,
+            "clearanceBlocks": item.manifest_entry["clearanceBlocks"],
+            "fixedFootprint": {
+                "widthBlocks": item.raw_size["width"],
+                "depthBlocks": item.raw_size["depth"],
+                "heightBlocks": item.raw_size["height"],
+            },
+            "reviewState": "approved",
+        })
+    return profiles
+
+
+def write_profile_package(profile_dir: Path, manifest: dict[str, Any],
+                          imported: list[ImportedTemplate]) -> dict[str, Path]:
+    profile_dir = profile_dir.resolve()
+    profile_dir.mkdir(parents=True, exist_ok=True)
+    profiles = build_structure_profiles(manifest, imported)
+    profile_path = profile_dir / "StructureProfile.jsonl"
+    vocabulary_path = profile_dir / "StructureVocabulary.snapshot.json"
+    source_path = profile_dir / "TerraSenseStructureProfileSource.official.json"
+    profile_path.write_text(
+        "".join(json.dumps(profile, ensure_ascii=False, separators=(",", ":")) + "\n"
+                for profile in profiles),
+        encoding="utf-8",
+    )
+    profile_export = manifest["profileExport"]
+    vocabulary = {
+        "schemaVersion": VOCABULARY_SCHEMA,
+        "snapshotId": profile_export["profileSetId"],
+        "exportedAt": profile_export["exportedAt"],
+        "sourceWorkspace": profile_export["sourceWorkspace"],
+        "terms": profile_export["vocabularyTerms"],
+        "quality": {
+            "approvedTerms": len(profile_export["vocabularyTerms"]),
+            "sourceTerms": len(profile_export["vocabularyTerms"]),
+        },
+    }
+    vocabulary_path.write_text(json.dumps(vocabulary, ensure_ascii=False, indent=2) + "\n",
+                               encoding="utf-8")
+    source = {
+        "schemaVersion": PROFILE_SOURCE_SCHEMA,
+        "sourceType": "structure_profile_jsonl",
+        "catalogMode": "official",
+        "profilePath": str(profile_path),
+        "vocabularySnapshotPath": str(vocabulary_path),
+        "terrasenseRunId": profile_export["terrasenseRunId"],
+        "allowDebugUnapproved": False,
+        "quality": {"exportedProfiles": len(profiles), "skipped": 0, "warnings": 0},
+    }
+    source_path.write_text(json.dumps(source, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return {"profiles": profile_path, "vocabulary": vocabulary_path, "source": source_path}
+
+
 def write_outputs(save_dir: Path, imported: list[ImportedTemplate], overwrite: bool) -> tuple[Path, list[dict[str, Any]]]:
     structure_root = save_dir / "generated" / "geomantia" / "structures"
     preview_root = save_dir / "generated" / "geomantia" / "city_template_previews"
@@ -458,6 +652,10 @@ def write_outputs(save_dir: Path, imported: list[ImportedTemplate], overwrite: b
             "runtimeHash": "",
             "runtimeRawSize": None,
             "targetRef": item.target_ref,
+            "entranceReviewVersion": item.entrance_review_version,
+            "entranceConfirmed": item.manifest_entry["entranceConfirmed"],
+            "entrance": item.manifest_entry["entrance"],
+            "entranceEvidence": item.manifest_entry["entranceEvidence"],
             "outputFile": str(output),
             "previews": previews,
         })
@@ -466,8 +664,10 @@ def write_outputs(save_dir: Path, imported: list[ImportedTemplate], overwrite: b
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--save-dir", required=True, type=Path,
+    parser.add_argument("--save-dir", type=Path,
                         help="Explicit Minecraft save directory; latest-save guessing is forbidden.")
+    parser.add_argument("--profile-dir", type=Path,
+                        help="Export fixed-template TerraSense profiles without requiring a world write.")
     parser.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST)
     parser.add_argument("--jar", type=Path)
     parser.add_argument("--dry-run", action="store_true")
@@ -487,8 +687,12 @@ def main(argv: list[str] | None = None) -> int:
         manifest = load_manifest(manifest_path)
         repo_root = Path(__file__).resolve().parents[2]
         jar_path = (args.jar or repo_root / manifest["sourceJar"]).resolve()
-        save_dir = args.save_dir.resolve()
-        if not save_dir.is_dir():
+        if args.save_dir is None and args.profile_dir is None:
+            raise ImportFailure("TREK_TEMPLATE_OUTPUT_TARGET_REQUIRED",
+                                "pass --save-dir and/or --profile-dir")
+        save_dir = args.save_dir.resolve() if args.save_dir is not None else None
+        profile_dir = args.profile_dir.resolve() if args.profile_dir is not None else None
+        if save_dir is not None and not save_dir.is_dir():
             raise ImportFailure("TREK_TEMPLATE_SAVE_DIR_MISSING", str(save_dir))
         jar_hash, imported = inspect_all(jar_path, manifest)
         if args.dry_run:
@@ -497,8 +701,18 @@ def main(argv: list[str] | None = None) -> int:
                 "sourceJar": str(jar_path),
                 "sourceJarSha256": jar_hash,
                 "templateCount": len(imported),
-                "targetSave": str(save_dir),
+                "targetSave": str(save_dir) if save_dir else None,
+                "profileDir": str(profile_dir) if profile_dir else None,
                 "targets": [item.target_ref for item in imported],
+            }, ensure_ascii=False, indent=2))
+            return 0
+        profile_package = (write_profile_package(profile_dir, manifest, imported)
+                           if profile_dir is not None else None)
+        if save_dir is None:
+            print(json.dumps({
+                "status": "profiles_exported",
+                "templateCount": len(imported),
+                "profilePackage": {key: str(path) for key, path in profile_package.items()},
             }, ensure_ascii=False, indent=2))
             return 0
         output_root, report_entries = write_outputs(save_dir, imported, args.overwrite)
@@ -533,6 +747,8 @@ def main(argv: list[str] | None = None) -> int:
             "report": str(report_path),
             "catalog": str(catalog_path) if catalog_path else None,
             "runtimeMetadataConfirmed": bool(runtime),
+            "profilePackage": ({key: str(path) for key, path in profile_package.items()}
+                               if profile_package else None),
         }, ensure_ascii=False, indent=2))
         return 0
     except ImportFailure as ex:
