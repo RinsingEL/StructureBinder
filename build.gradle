@@ -31,7 +31,7 @@ def devUseStructurePacks = providers.gradleProperty('geomantiaDevUseStructurePac
 def devUseRoadWeaver = providers.gradleProperty('geomantiaDevUseRoadWeaver')
         .orElse('false')
         .get()
-def devUseTectonic = providers.gradleProperty('geomantiaDevUseTectonic')
+def devUseJJThunder = providers.gradleProperty('geomantiaDevUseJJThunder')
         .orElse('false')
         .get()
 def devUseVisualPreview = providers.gradleProperty('geomantiaDevUseVisualPreview')
@@ -42,8 +42,8 @@ def devRoadWeaverModrinthVersionId = '7dhS67wp'
 def devRoadWeaverJarName = "roadweaver-forge-${devRoadWeaverVersion}.jar"
 def devRoadWeaverJarFile = layout.projectDirectory.file("libs/local/roadweaver/${devRoadWeaverVersion}/${devRoadWeaverJarName}")
 def devRoadWeaverJarUrl = "https://cdn.modrinth.com/data/6jk8Pote/versions/${devRoadWeaverModrinthVersionId}/${devRoadWeaverJarName}"
-def devTectonicModrinthProjectId = 'lWDHr9jE'
-def devTectonicModrinthVersionId = 'ubqOXeYf'
+def devJJThunderCurseForgeProjectId = '1002819'
+def devJJThunderCurseForgeFileId = '5393334'
 
 tasks.register('downloadDevRoadWeaverForge') {
     outputs.file(devRoadWeaverJarFile)
@@ -85,6 +85,10 @@ minecraft {
     runs {
         configureEach {
             workingDirectory project.file('run')
+
+            if (devUseJJThunder.toBoolean()) {
+                jvmArgs '-Xmx8G'
+            }
 
             property 'forge.logging.markers', 'REGISTRIES'
             property 'forge.logging.console.level', 'debug'
@@ -173,8 +177,8 @@ dependencies {
         runtimeOnly fg.deobf("dev.architectury:architectury-forge:9.2.14")
         runtimeOnly fg.deobf("me.shedaniel.cloth:cloth-config-forge:11.1.136")
     }
-    if (devUseTectonic.toBoolean()) {
-        runtimeOnly fg.deobf("maven.modrinth:${devTectonicModrinthProjectId}:${devTectonicModrinthVersionId}")
+    if (devUseJJThunder.toBoolean()) {
+        runtimeOnly fg.deobf("curse.maven:jjthunder-to-the-max-${devJJThunderCurseForgeProjectId}:${devJJThunderCurseForgeFileId}")
     }
     if (devUseVisualPreview.toBoolean()) {
         // ForgeGradle must remap client mods before a userdev run can load them.
