@@ -14,6 +14,7 @@ import com.rinsing.geomantia.systems.gis.application.refresh.SampleMode;
 import com.rinsing.geomantia.systems.gis.domain.region.AtlasRegion;
 import com.rinsing.geomantia.systems.gis.domain.region.AtlasRegionStore;
 import com.rinsing.geomantia.systems.gis.adapter.minecraft.MinecraftPriorAtlasSampler;
+import com.rinsing.geomantia.systems.gis.adapter.minecraft.MinecraftChunkGenerationBenchmarkService;
 import com.rinsing.geomantia.systems.gis.testsupport.GisTestCase;
 import com.rinsing.geomantia.systems.gis.testsupport.GisTestRunner;
 import com.sun.net.httpserver.HttpExchange;
@@ -52,6 +53,21 @@ final class GisHttpController {
             JsonObject request = GisHttpUtil.readJsonObject(exchange);
             String caseId = stringValue(request, "caseId", "mixed");
             return callOnServerThread(() -> runTestCase(caseId));
+        });
+    }
+
+    void handleChunkGenerationBenchmarkStart(HttpExchange exchange) {
+        handle(exchange, "POST", () -> {
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            return callOnServerThread(() -> startChunkGenerationBenchmark(request));
+        });
+    }
+
+    void handleChunkGenerationBenchmarkStatus(HttpExchange exchange) {
+        handle(exchange, "POST", () -> {
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            return callOnServerThread(() -> MinecraftChunkGenerationBenchmarkService.forServer(server)
+                    .status(stringValue(request, "jobId", "")));
         });
     }
 
@@ -118,6 +134,27 @@ final class GisHttpController {
         response.addProperty("ok", report.passed());
         response.addProperty("runDirectory", debugRoot().resolve(report.runId()).toAbsolutePath().toString());
         return response;
+    }
+
+    private JsonObject startChunkGenerationBenchmark(JsonObject request) throws Exception {
+        if (!booleanValue(request, "confirmGenerateChunks", false)) {
+            throw new IllegalArgumentException("confirmGenerateChunks=true is required because this benchmark "
+                    + "generates and may save real chunks.");
+        }
+        int radiusChunks = intValue(request, "radiusChunks", 32);
+        if (radiusChunks < 1 || radiusChunks > 32) {
+            throw new IllegalArgumentException("radiusChunks must be between 1 and 32.");
+        }
+        int timeoutSeconds = intValue(request, "timeoutSeconds", 900);
+        if (timeoutSeconds < 30 || timeoutSeconds > 1800) {
+            throw new IllegalArgumentException("timeoutSeconds must be between 30 and 1800.");
+        }
+        ServerPlayer player = resolvePlayer(stringValue(request, "playerName", ""));
+        ServerLevel level = resolveLevel(stringValue(request, "dimensionId", ""), player);
+        BlockPos center = resolveCenter(request, player);
+        boolean requireFresh = booleanValue(request, "requireFresh", true);
+        return MinecraftChunkGenerationBenchmarkService.forServer(server).start(
+                level, center.getX(), center.getZ(), radiusChunks, timeoutSeconds, requireFresh, debugRoot());
     }
 
     private JsonObject refreshResponse(RefreshResult result) {
@@ -267,6 +304,17 @@ final class GisHttpController {
             return object.get(key).getAsString();
         } catch (Exception ex) {
             throw new IllegalArgumentException(key + " must be a string.");
+        }
+    }
+
+    private static boolean booleanValue(JsonObject object, String key, boolean defaultValue) {
+        if (!hasValue(object, key)) {
+            return defaultValue;
+        }
+        try {
+            return object.get(key).getAsBoolean();
+        } catch (Exception ex) {
+            throw new IllegalArgumentException(key + " must be a boolean.");
         }
     }
 

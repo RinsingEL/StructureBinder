@@ -26,6 +26,27 @@ export const gisHandlers: Record<string, ToolHandler> = {
     const res = await postJson(`${MC_API_URL}/gis/test_run`, payload, TIMEOUTS.test);
     return textResult(JSON.stringify(res.data, null, 2));
   },
+
+  async gis_chunk_generation_benchmark_start(args) {
+    const payload: Record<string, unknown> = {};
+    assignBoolean(payload, args, "confirmGenerateChunks");
+    assignNumber(payload, args, "radiusChunks");
+    assignNumber(payload, args, "timeoutSeconds");
+    assignBoolean(payload, args, "requireFresh");
+    assignNumber(payload, args, "centerBlockX");
+    assignNumber(payload, args, "centerBlockZ");
+    assignString(payload, args, "dimensionId");
+    assignString(payload, args, "playerName");
+    const res = await postJson(`${MC_API_URL}/gis/chunk_generation_benchmark/start`, payload, TIMEOUTS.quick);
+    return textResult(JSON.stringify(res.data, null, 2));
+  },
+
+  async gis_chunk_generation_benchmark_status(args) {
+    const payload: Record<string, unknown> = {};
+    assignString(payload, args, "jobId");
+    const res = await postJson(`${MC_API_URL}/gis/chunk_generation_benchmark/status`, payload, TIMEOUTS.quick);
+    return textResult(JSON.stringify(res.data, null, 2));
+  },
 };
 
 function assignNumber(payload: Record<string, unknown>, args: Record<string, unknown>, key: string) {
@@ -47,4 +68,14 @@ function assignString(payload: Record<string, unknown>, args: Record<string, unk
   if (value) {
     payload[key] = value;
   }
+}
+
+function assignBoolean(payload: Record<string, unknown>, args: Record<string, unknown>, key: string) {
+  if (args[key] === undefined || args[key] === null || args[key] === "") {
+    return;
+  }
+  if (typeof args[key] !== "boolean") {
+    throw new Error(`${key} must be a boolean.`);
+  }
+  payload[key] = args[key];
 }

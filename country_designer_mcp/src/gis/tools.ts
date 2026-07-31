@@ -43,4 +43,35 @@ export const gisTools: ToolDefinition[] = [
       },
     },
   },
+  {
+    name: "gis_chunk_generation_benchmark_start",
+    description: "由服务端主动生成一片新 Chunk，启动同面积地形生成性能基准。会真实生成并可能保存区块。",
+    inputSchema: {
+      type: "object",
+      properties: {
+        confirmGenerateChunks: {
+          type: "boolean",
+          description: "必须显式传 true，确认本次操作会生成并可能保存真实 Chunk。",
+        },
+        radiusChunks: { type: "number", description: "方形目标半径，默认 32，范围 1-32。" },
+        timeoutSeconds: { type: "number", description: "超时秒数，默认 900，范围 30-1800。" },
+        requireFresh: { type: "boolean", description: "默认 true；目标范围已有加载 Chunk 时拒绝启动。" },
+        centerBlockX: { type: "number", description: "目标中心方块 X；省略时使用指定/首个在线玩家位置。" },
+        centerBlockZ: { type: "number", description: "目标中心方块 Z；需与 centerBlockX 同时提供。" },
+        dimensionId: { type: "string", description: "可选维度 ID，例如 minecraft:overworld。" },
+        playerName: { type: "string", description: "可选玩家名；用于选择玩家位置和维度。" },
+      },
+      required: ["confirmGenerateChunks"],
+    },
+  },
+  {
+    name: "gis_chunk_generation_benchmark_status",
+    description: "查询当前或最近一次服务端 Chunk 生成基准的进度、分位时间和报告路径。",
+    inputSchema: {
+      type: "object",
+      properties: {
+        jobId: { type: "string", description: "可选任务 ID；省略时返回当前或最近一次任务。" },
+      },
+    },
+  },
 ];

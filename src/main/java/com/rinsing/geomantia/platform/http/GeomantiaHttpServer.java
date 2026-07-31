@@ -49,6 +49,10 @@ public final class GeomantiaHttpServer {
             createdServer.createContext("/gis/status", controller::handleStatus);
             createdServer.createContext("/gis/refresh", controller::handleRefresh);
             createdServer.createContext("/gis/test_run", controller::handleTestRun);
+            createdServer.createContext("/gis/chunk_generation_benchmark/start",
+                    controller::handleChunkGenerationBenchmarkStart);
+            createdServer.createContext("/gis/chunk_generation_benchmark/status",
+                    controller::handleChunkGenerationBenchmarkStatus);
             createdServer.createContext("/realm/status", realmController::handleStatus);
             createdServer.createContext("/realm/w/refresh", realmController::handleWRefresh);
             createdServer.createContext("/realm/t1/prepare", realmController::handleT1Prepare);
