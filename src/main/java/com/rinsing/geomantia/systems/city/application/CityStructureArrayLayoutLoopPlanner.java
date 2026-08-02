@@ -357,7 +357,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
         }
         FrontierReference reference = frontierReference(submittedItem, plannerType, desired);
         int spacing = reference.spacingBlocks();
-        TerrainPlacementPolicy terrainPolicy = terrainPlacementPolicy();
+        TerrainPlacementPolicy terrainPolicy = terrainPlacementPolicy(request);
         JsonArray candidates = new JsonArray();
         JsonArray frontierTrace = new JsonArray();
         Set<String> signatures = new LinkedHashSet<>();
@@ -374,7 +374,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
             BlockPoint origin = clampToGrid(new BlockPoint(firstAnchor.x() - firstGuideOffset.x(),
                     firstAnchor.z() - firstGuideOffset.z()), reviewPackage.grid());
             BlockBounds frontierBounds = continuousFrontierBounds(context.focusBodyBounds(), context.direction(),
-                    origin, spacing, Math.max(2, desired.size()), reviewPackage.grid());
+                    origin, firstAnchor, spacing, Math.max(2, desired.size()), reviewPackage.grid());
             TerrainPatchSelection terrain = terrainPatchesForFrontier(reviewPackage, frontierBounds, terrainPolicy);
             List<LandformPatchSummary> sourcePatches = terrain.acceptedPatches();
             JsonObject ringTrace = new JsonObject();
@@ -1291,7 +1291,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
                 String direction = stringValue(item, "outwardDirection", "");
                 if (booleanValue(item, "continuousFrontier", false)
                         && EXPANSION_DIRECTIONS.contains(direction)) {
-                    continuousDualSideBounds(points, bounds, start, spacing, requested, direction);
+                    continuousDualSideBounds(points, bounds, start, spacing, requested, direction, item);
                 } else {
                     dualSideBounds(points, bounds, start, spacing, requested);
                 }
@@ -1513,13 +1513,20 @@ public final class CityStructureArrayLayoutLoopPlanner {
      * cross offset move the whole array away from its parent.
      */
     private void continuousDualSideBounds(LinkedHashSet<BlockPoint> points, BlockBounds bounds, BlockPoint start,
-                                          int spacing, int requested, String direction) {
+                                          int spacing, int requested, String direction, JsonObject item) {
         int outwardX = direction.contains("east") ? 1 : direction.contains("west") ? -1 : 0;
         int outwardZ = direction.contains("south") ? 1 : direction.contains("north") ? -1 : 0;
         int lateralX = -outwardZ;
         int lateralZ = outwardX;
         int stride = Math.max(8, spacing);
-        int rowSeparation = Math.max(8, spacing);
+        String widthClass = stringValue(item, "widthClass", "MEDIUM").toUpperCase(Locale.ROOT);
+        int rowSeparation = switch (widthClass) {
+            case "NARROW" -> Math.max(8, spacing);
+            case "WIDE" -> Math.max(8, (int) Math.ceil(spacing * 1.6));
+            default -> Math.max(8, (int) Math.ceil(spacing * 1.25));
+        };
+        String sideMode = stringValue(item, "sideMode", "BOTH").toUpperCase(Locale.ROOT);
+        boolean stagger = booleanValue(item, "stagger", true);
         points.add(new BlockPoint(clamp(start.x(), bounds.minX(), bounds.maxX()),
                 clamp(start.z(), bounds.minZ(), bounds.maxZ())));
         int pointCount = Math.max(requested * 6, 12);
@@ -1529,7 +1536,14 @@ public final class CityStructureArrayLayoutLoopPlanner {
             if (longitudinalPair % 2 != 0) {
                 longitudinalDistance = -longitudinalDistance;
             }
+            if ("LEFT".equals(sideMode) && longitudinalDistance < 0
+                    || "RIGHT".equals(sideMode) && longitudinalDistance > 0) {
+                continue;
+            }
             boolean outerRow = index % 2 == 1;
+            if (outerRow && stagger) {
+                longitudinalDistance += Math.max(4, stride / 2);
+            }
             int x = start.x() + lateralX * longitudinalDistance
                     + (outerRow ? outwardX * rowSeparation : 0);
             int z = start.z() + lateralZ * longitudinalDistance
@@ -2085,6 +2099,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
     private BlockBounds continuousFrontierBounds(BlockBounds parentBody,
                                                   String direction,
                                                   BlockPoint origin,
+                                                  BlockPoint firstAnchor,
                                                   int spacing,
                                                   int requested,
                                                   PlanningGrid grid) {
@@ -2094,16 +2109,16 @@ public final class CityStructureArrayLayoutLoopPlanner {
         int minZ = origin.z() - reach;
         int maxZ = origin.z() + reach;
         if (direction.contains("east")) {
-            minX = Math.max(minX, parentBody.maxX() + 1);
+            minX = Math.max(minX, firstAnchor.x());
         }
         if (direction.contains("west")) {
-            maxX = Math.min(maxX, parentBody.minX() - 1);
+            maxX = Math.min(maxX, firstAnchor.x());
         }
         if (direction.contains("south")) {
-            minZ = Math.max(minZ, parentBody.maxZ() + 1);
+            minZ = Math.max(minZ, firstAnchor.z());
         }
         if (direction.contains("north")) {
-            maxZ = Math.min(maxZ, parentBody.minZ() - 1);
+            maxZ = Math.min(maxZ, firstAnchor.z());
         }
         return clampBounds(new BlockBounds(minX, minZ, maxX, maxZ), gridBounds(grid));
     }
@@ -2165,8 +2180,11 @@ public final class CityStructureArrayLayoutLoopPlanner {
         return xGap != Integer.MAX_VALUE ? xGap : zGap;
     }
 
-    private TerrainPlacementPolicy terrainPlacementPolicy() {
-        return new TerrainPlacementPolicy(false);
+    private TerrainPlacementPolicy terrainPlacementPolicy(JsonObject request) {
+        // The Blueprint bridge keeps its existing terrainPolicy semantics until structure-level
+        // placement tags exist; the explicit Agent Loop retains its historical grounded filter.
+        return new TerrainPlacementPolicy(booleanValue(request,
+                "preserveBlueprintTerrainPolicy", false));
     }
 
     private TerrainPatchSelection terrainPatchesForFrontier(CityLandformReviewPackage reviewPackage,

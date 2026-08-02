@@ -70,6 +70,26 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class CityPlanningEndpointHandlerTest {
 
     @Test
+    void blueprintEndpointHandlersPrepareAndAcceptOneCompleteSubmission() throws Exception {
+        Path debugRoot = Files.createTempDirectory("city-blueprint-endpoint-test");
+        String runId = "run_blueprint_endpoint";
+        String citySeedId = "city_test";
+        prepareD5Artifacts(debugRoot, runId, citySeedId);
+        Path runDir = debugRoot.resolve(runId);
+
+        JsonObject prepared = CityPlanningEndpointHandler.handlePrepareD4BlueprintContext(debugRoot, runId,
+                citySeedId, terraSenseSource(runDir.resolve("debug_structure_profile_catalog.json")),
+                templateCatalogSource(runDir.resolve("template_catalog.json")), blueprintReferenceCatalog());
+        assertEquals(0, prepared.get("aiCityDesignCallCount").getAsInt());
+
+        JsonObject submitted = CityPlanningEndpointHandler.handleSubmitD4Blueprint(debugRoot, runId, citySeedId,
+                prepared.get("contextId").getAsString(), blueprintForContext(
+                        prepared.getAsJsonObject("cityBlueprintContext")));
+        assertTrue(submitted.get("ok").getAsBoolean());
+        assertTrue(Files.isRegularFile(runDir.resolve("city_blueprint_city_test/city_blueprint.json")));
+    }
+
+    @Test
     void runWorldIdentityAcceptsMatchingSeedAndDimension() throws Exception {
         Path runDir = Files.createTempDirectory("city-run-world-identity-match");
         Files.writeString(runDir.resolve("world_survey_context.json"), """
@@ -2488,6 +2508,7 @@ class CityPlanningEndpointHandlerTest {
                 {
                   "runId": "run_workflow",
                   "citySeedId": "city_test",
+                  "d4CandidateMode": "key_then_array",
                   "skipExisting": true
                 }
                 """).getAsJsonObject();
@@ -2518,6 +2539,79 @@ class CityPlanningEndpointHandlerTest {
     }
 
     @Test
+    void handleRunWorkflowDefaultsToBlueprintAndReturnsAwaitingContext() throws Exception {
+        Path debugRoot = Files.createTempDirectory("city-workflow-blueprint-awaiting-test");
+        String runId = "run_workflow_blueprint_awaiting";
+        String citySeedId = "city_test";
+        prepareD5Artifacts(debugRoot, runId, citySeedId);
+        JsonObject request = new JsonObject();
+        request.addProperty("runId", runId);
+        request.addProperty("citySeedId", citySeedId);
+        request.addProperty("skipExisting", true);
+
+        JsonObject response = CityPlanningEndpointHandler.handleRunWorkflow(
+                debugRoot, Files.createTempDirectory("city-workflow-blueprint-awaiting-server-root"),
+                runId, citySeedId, request, null, null);
+
+        assertTrue(response.get("ok").getAsBoolean());
+        assertEquals("awaiting_city_blueprint", response.get("status").getAsString());
+        JsonObject report = response.getAsJsonObject("workflowReport");
+        assertEquals("blueprint", report.get("d4CandidateMode").getAsString());
+        assertEquals("city_prepare_d4_blueprint_context", report.get("nextAction").getAsString());
+        assertTrue(report.getAsJsonArray("steps").toString().contains("CITY_BLUEPRINT_CONTEXT_NOT_FOUND"));
+    }
+
+    @Test
+    void handleRunWorkflowReturnsSubmitActionWhenContextExistsWithoutBlueprint() throws Exception {
+        Path debugRoot = Files.createTempDirectory("city-workflow-blueprint-submit-test");
+        String runId = "run_workflow_blueprint_submit";
+        String citySeedId = "city_test";
+        prepareD5Artifacts(debugRoot, runId, citySeedId);
+        Path blueprintDir = debugRoot.resolve(runId).resolve("city_blueprint_" + citySeedId);
+        Files.createDirectories(blueprintDir);
+        Files.writeString(blueprintDir.resolve("city_blueprint_context.json"), "{}");
+        JsonObject request = new JsonObject();
+        request.addProperty("runId", runId);
+        request.addProperty("citySeedId", citySeedId);
+        request.addProperty("skipExisting", true);
+
+        JsonObject response = CityPlanningEndpointHandler.handleRunWorkflow(
+                debugRoot, Files.createTempDirectory("city-workflow-blueprint-submit-server-root"),
+                runId, citySeedId, request, null, null);
+
+        assertTrue(response.get("ok").getAsBoolean());
+        assertEquals("awaiting_city_blueprint", response.get("status").getAsString());
+        assertEquals("city_submit_d4_blueprint", response.getAsJsonObject("workflowReport")
+                .get("nextAction").getAsString());
+    }
+
+    @Test
+    void workflowArtifactIdentityRequiresExactCurrentAnchorMap() throws Exception {
+        Path directory = Files.createTempDirectory("city-workflow-artifact-identity-test");
+        Path anchorMapPath = directory.resolve("structure_anchor_map.json");
+        Path artifactPath = directory.resolve("reservation_mask_plan.json");
+        JsonObject anchorMap = JsonParser.parseString("""
+                {"schemaVersion":"structure_anchor_map.v0.1","cityId":"city_test","anchors":[]}
+                """).getAsJsonObject();
+        JsonObject artifact = new JsonObject();
+        artifact.add("sourceStructureAnchorMap", anchorMap.deepCopy());
+        Files.writeString(anchorMapPath, anchorMap.toString());
+        Files.writeString(artifactPath, artifact.toString());
+
+        assertTrue(CityPlanningEndpointHandler.workflowArtifactMatchesAnchorMap(
+                artifactPath, anchorMapPath));
+
+        anchorMap.addProperty("cityId", "city_changed");
+        Files.writeString(anchorMapPath, anchorMap.toString());
+        assertFalse(CityPlanningEndpointHandler.workflowArtifactMatchesAnchorMap(
+                artifactPath, anchorMapPath));
+
+        Files.writeString(artifactPath, "not-json");
+        assertFalse(CityPlanningEndpointHandler.workflowArtifactMatchesAnchorMap(
+                artifactPath, anchorMapPath));
+    }
+
+    @Test
     void handleRunWorkflowRescanDoesNotRestoreEnvelopeProfiler() throws Exception {
         Path debugRoot = Files.createTempDirectory("city-workflow-profile-rescan-test");
         String runId = "run_workflow_profile_rescan";
@@ -2531,6 +2625,7 @@ class CityPlanningEndpointHandlerTest {
         request.addProperty("citySeedId", citySeedId);
         request.addProperty("skipExisting", true);
         request.addProperty("cacheMode", "rescan");
+        request.addProperty("d4CandidateMode", "key_then_array");
         request.addProperty("sampleCount", 1);
         request.add("terrasenseProfileSource", terraSenseSource(catalogPath));
         request.add("templateCatalogSource", templateCatalogSource(runDir.resolve("template_catalog.json")));
@@ -2598,6 +2693,7 @@ class CityPlanningEndpointHandlerTest {
         request.addProperty("runId", runId);
         request.addProperty("citySeedId", citySeedId);
         request.addProperty("skipExisting", true);
+        request.addProperty("d4CandidateMode", "key_then_array");
         request.add("terrasenseProfileSource", terraSenseSource(catalogPath));
         request.add("templateCatalogSource", templateCatalogSource(templateCatalogPath));
         request.add("designSlotPlan", stagedDesignSlotPlan(review));
@@ -2755,6 +2851,7 @@ class CityPlanningEndpointHandlerTest {
         request.addProperty("runId", runId);
         request.addProperty("citySeedId", citySeedId);
         request.addProperty("skipExisting", true);
+        request.addProperty("d4CandidateMode", "key_then_array");
         request.add("terrasenseProfileSource", terraSenseSource(catalogPath));
         request.add("templateCatalogSource", templateCatalogSource(templateCatalogPath));
         request.add("designSlotPlan", plan);
@@ -3653,6 +3750,46 @@ class CityPlanningEndpointHandlerTest {
                   ]
                 }
                 """;
+    }
+
+    private static JsonObject blueprintReferenceCatalog() {
+        return JsonParser.parseString("""
+                {
+                  "schemaVersion":"city_blueprint_reference_catalog.v0.2",
+                  "structureRefs":[{"structureRef":"minecraft:desert_pyramid","templateCandidates":[{"templateId":"geomantia:test_house","variantId":"test_v1"}]}],
+                  "fillPools":[{"poolRef":"pool:test","structureRefs":["minecraft:desert_pyramid"]}],
+                  "algorithmProfiles":[{"algorithmProfileRef":"algorithm:compact","algorithm":"COMPACT"}],
+                  "compositionProfiles":[{"compositionProfileRef":"composition:round_robin","mode":"ROUND_ROBIN"}],
+                  "styleProfiles":[{"profileRef":"style:test"}],
+                  "roadProfiles":[{"profileRef":"road:test","hierarchy":"SIMPLE","density":"BALANCED"}],
+                  "surfaceDetailProfiles":[{"profileRef":"surface:test","intensity":"MEDIUM"}]
+                }
+                """).getAsJsonObject();
+    }
+
+    private static JsonObject blueprintForContext(JsonObject context) {
+        String patchRef = context.getAsJsonObject("d3ReviewPackage").getAsJsonArray("landformPatches")
+                .get(0).getAsJsonObject().get("landformPatchId").getAsString();
+        JsonObject blueprint = JsonParser.parseString("""
+                {
+                  "schemaVersion":"city_blueprint.v0.4","cityId":"city_test","generationSeed":42,
+                  "designIntent":{"cityIdentity":"test city","theme":"test","functionalRoles":["landmark"]},
+                  "styleProfile":{"profileRef":"style:test"},
+                  "groups":[{
+                    "groupId":"core","groupKind":"STRUCTURE","preferredPatchRefs":["PATCH_REF"],
+                    "preferredPatchZone":"CENTER",
+                    "role":"landmark","priority":"CORE","extentClass":"SMALL","densityClass":"BALANCED",
+                    "algorithmProfileRef":"algorithm:compact","terrainPolicy":"BALANCED",
+                    "requiredStructureRefs":["minecraft:desert_pyramid"],"fillPoolRef":"pool:test",
+                    "compositionProfileRef":"composition:round_robin","attachedFeatures":[]
+                  }],
+                  "relations":[],"roadProfile":{"profileRef":"road:test"},
+                  "surfaceDetailProfile":{"profileRef":"surface:test"}
+                }
+                """.replace("PATCH_REF", patchRef)).getAsJsonObject();
+        blueprint.add("sourceD3Ref", context.getAsJsonObject("sourceD3Ref").deepCopy());
+        blueprint.add("catalogSnapshotRef", context.getAsJsonObject("catalogSnapshotRef").deepCopy());
+        return blueprint;
     }
 
 }

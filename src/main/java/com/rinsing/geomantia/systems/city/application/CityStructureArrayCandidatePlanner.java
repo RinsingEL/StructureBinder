@@ -327,6 +327,8 @@ public final class CityStructureArrayCandidatePlanner {
                                               int arrayCount) {
         int spacing = configuredSpacing(plan, templateIds, templateCatalog);
         LinkedHashSet<BlockPoint> points = new LinkedHashSet<>();
+        List<BlockPoint> candidateOrigins = candidateOrigins(plan);
+        points.addAll(candidateOrigins);
         switch (pattern) {
             case "patch_axis_band" -> axisBand(points, pivot, patches, spacing, arrayCount);
             case "scattered" -> scattered(points, patches, grid, spacing, arrayCount);
@@ -334,8 +336,30 @@ public final class CityStructureArrayCandidatePlanner {
                     compoundCluster(points, plan, pattern, pivot, patches, spacing, arrayCount);
             default -> looseCluster(points, pivot, patches, spacing, arrayCount);
         }
-        return memberCellCandidatePoints(patches, grid, unionBounds(patches), pivot.centerBlock(),
-                new ArrayList<>(points));
+        BlockPoint orderingOrigin = candidateOrigins.isEmpty() ? pivot.centerBlock() : candidateOrigins.get(0);
+        return memberCellCandidatePoints(patches, grid, unionBounds(patches), orderingOrigin,
+                candidateOrigins, new ArrayList<>(points));
+    }
+
+    private static List<BlockPoint> candidateOrigins(JsonObject plan) {
+        List<BlockPoint> values = new ArrayList<>();
+        if (plan == null) return values;
+        if (plan.has("candidateOrigins") && plan.get("candidateOrigins").isJsonArray()) {
+            for (JsonElement element : plan.getAsJsonArray("candidateOrigins")) {
+                if (!element.isJsonObject()) continue;
+                JsonObject origin = element.getAsJsonObject();
+                if (origin.has("x") && origin.has("z")) {
+                    values.add(new BlockPoint(origin.get("x").getAsInt(), origin.get("z").getAsInt()));
+                }
+            }
+        }
+        if (values.isEmpty() && plan.has("candidateOrigin") && plan.get("candidateOrigin").isJsonObject()) {
+            JsonObject origin = plan.getAsJsonObject("candidateOrigin");
+            if (origin.has("x") && origin.has("z")) {
+                values.add(new BlockPoint(origin.get("x").getAsInt(), origin.get("z").getAsInt()));
+            }
+        }
+        return values;
     }
 
     private static void compoundCluster(LinkedHashSet<BlockPoint> points,
@@ -522,13 +546,21 @@ public final class CityStructureArrayCandidatePlanner {
                                                               PlanningGrid grid,
                                                               BlockBounds bounds,
                                                               BlockPoint start,
+                                                              List<BlockPoint> exactGuidePoints,
                                                               List<BlockPoint> guidePoints) {
         List<BlockPoint> memberPoints = memberCellCenters(patches, grid, bounds);
         if (memberPoints.isEmpty()) {
             return List.of();
         }
         LinkedHashSet<BlockPoint> ordered = new LinkedHashSet<>();
+        for (BlockPoint guide : exactGuidePoints) {
+            if (bounds.contains(guide.x(), guide.z())
+                    && patches.stream().anyMatch(patch -> patchContains(patch, grid, guide))) {
+                ordered.add(guide);
+            }
+        }
         for (BlockPoint guide : guidePoints) {
+            if (ordered.contains(guide)) continue;
             BlockPoint nearest = nearestUnused(memberPoints, ordered, guide);
             if (nearest != null) {
                 ordered.add(nearest);

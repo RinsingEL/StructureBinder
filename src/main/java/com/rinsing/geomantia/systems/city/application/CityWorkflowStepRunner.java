@@ -77,7 +77,8 @@ public final class CityWorkflowStepRunner {
         report.addProperty("status", status);
         report.addProperty("ok", "completed".equals(status)
                 || "waiting_for_worldgen".equals(status)
-                || "waiting_for_confirmation".equals(status));
+                || "waiting_for_confirmation".equals(status)
+                || "awaiting_city_blueprint".equals(status));
         report.addProperty("endedAt", Instant.now().toString());
         report.addProperty("durationMs", (System.nanoTime() - workflowStarted) / 1_000_000L);
         writeReport();
