@@ -6,6 +6,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.rinsing.geomantia.systems.city.application.CityD4DesignLoopStatePlanner;
 import com.rinsing.geomantia.systems.city.application.CityD4StagedPlanCompiler;
+import com.rinsing.geomantia.systems.city.application.CityBlueprintService;
+import com.rinsing.geomantia.systems.city.application.CityBlueprintCompilerService;
 import com.rinsing.geomantia.systems.city.application.CityLandformReviewBuilder;
 import com.rinsing.geomantia.systems.city.application.CityReservationMaskPlanner;
 import com.rinsing.geomantia.systems.city.application.CitySiteContextBuilder;
@@ -129,6 +131,79 @@ final class CityPlanningEndpointHandler {
             new CityWorkflowCandidateSelector();
 
     private CityPlanningEndpointHandler() {
+    }
+
+    static JsonObject handlePrepareD4BlueprintContext(Path debugRoot, String runId, String citySeedId,
+                                                       JsonObject terraSenseProfileSource,
+                                                       JsonObject templateCatalogSource,
+                                                       JsonObject blueprintReferenceCatalog) throws IOException {
+        return new CityBlueprintService().prepare(debugRoot, runId, citySeedId, terraSenseProfileSource,
+                templateCatalogSource, blueprintReferenceCatalog);
+    }
+
+    static JsonObject handleSubmitD4Blueprint(Path debugRoot, String runId, String citySeedId,
+                                               String contextId, JsonObject cityBlueprint) throws IOException {
+        return new CityBlueprintService().submit(debugRoot, runId, citySeedId, contextId, cityBlueprint);
+    }
+
+    static JsonObject handleCompileD4Blueprint(Path debugRoot, String runId, String citySeedId) throws IOException {
+        CityBlueprintCompilerService compiler = new CityBlueprintCompilerService();
+        CityBlueprintCompilerService.CompilationResult compiled = compiler.compile(debugRoot, runId, citySeedId);
+        JsonObject compileResponse = compiler.persist(debugRoot, runId, citySeedId, compiled);
+        if (!compiled.ok()) {
+            return compileResponse;
+        }
+        JsonObject finalized = handleFinalizeCompiledD4(debugRoot, runId, citySeedId,
+                compiled.terraSenseProfileSource(), compiled.structureAnchorPlan());
+        JsonObject artifacts = finalized.has("artifacts") && finalized.get("artifacts").isJsonObject()
+                ? finalized.getAsJsonObject("artifacts") : new JsonObject();
+        compileResponse.getAsJsonObject("artifacts").entrySet().forEach(entry ->
+                artifacts.add(entry.getKey(), entry.getValue().deepCopy()));
+        finalized.add("artifacts", artifacts);
+        finalized.addProperty("compileStatus", booleanValue(finalized, "ok", false)
+                ? "compiled" : "anchor_finalization_failed");
+        finalized.add("cityGenerationCompileTrace", compiled.compileTrace().deepCopy());
+        finalized.add("groupExtentMap", compiled.groupExtentMap().deepCopy());
+        return finalized;
+    }
+
+    private static JsonObject handleFinalizeCompiledD4(Path debugRoot, String runId, String citySeedId,
+                                                        JsonObject terraSenseProfileSource,
+                                                        JsonObject resolvedAnchorPlan) throws IOException {
+        Path runDir = debugRoot.resolve(runId);
+        loadCitySeedForD4(runDir, runId, citySeedId);
+        Path d3PackagePath = d3PackagePath(runDir, citySeedId);
+        CityLandformReviewPackage reviewPackage = loadD3Package(debugRoot, runDir, citySeedId);
+        CityStructureAnchorPlanner.Result result = new CityStructureAnchorPlanner()
+                .plan(runDir, reviewPackage, terraSenseProfileSource, resolvedAnchorPlan);
+        if (!booleanValue(result.qualityReport(), "passed", false)) {
+            JsonObject failure = result.asJson();
+            failure.addProperty("reasonCode", "CITY_BLUEPRINT_COMPILED_ANCHOR_FINALIZATION_FAILED");
+            return failure;
+        }
+        Path outputDirectory = runDir.resolve("city_d4_" + safeFileName(citySeedId));
+        Files.createDirectories(outputDirectory);
+        Path anchorPlanPath = outputDirectory.resolve("structure_anchor_plan.json");
+        Path anchorMapPath = outputDirectory.resolve("structure_anchor_map.json");
+        Path semanticSourcePath = outputDirectory.resolve("semantic_profile_source.json");
+        Path qualityPath = outputDirectory.resolve("quality_report.json");
+        Files.writeString(anchorPlanPath, CityJson.GSON.toJson(result.structureAnchorPlan()));
+        Files.writeString(anchorMapPath, CityJson.GSON.toJson(result.structureAnchorMap()));
+        Files.writeString(semanticSourcePath, CityJson.GSON.toJson(
+                result.structureAnchorMap().getAsJsonObject("semanticProfileSource")));
+        Files.writeString(qualityPath, CityJson.GSON.toJson(result.qualityReport()));
+        Path previewPath = new CityStructureLandingPreviewRenderer()
+                .renderD4(result.structureAnchorMap(), reviewPackage, outputDirectory);
+        JsonObject response = result.asJson();
+        JsonObject artifacts = new JsonObject();
+        artifacts.addProperty("structureAnchorPlan", debugRef(debugRoot, anchorPlanPath));
+        artifacts.addProperty("structureAnchorMap", debugRef(debugRoot, anchorMapPath));
+        artifacts.addProperty("semanticProfileSource", debugRef(debugRoot, semanticSourcePath));
+        artifacts.addProperty("structureAnchorPreview", debugRef(debugRoot, previewPath));
+        artifacts.addProperty("qualityReport", debugRef(debugRoot, qualityPath));
+        artifacts.addProperty("sourceD3Package", debugRef(debugRoot, d3PackagePath));
+        response.add("artifacts", artifacts);
+        return response;
     }
 
     static JsonObject handlePlanD2(Path debugRoot, String runId, String citySeedId,
@@ -2386,7 +2461,7 @@ final class CityPlanningEndpointHandler {
         report.addProperty("skipExisting", booleanValue(request, "skipExisting", true));
         report.addProperty("planWalls", booleanValue(request, "planWalls", false));
         report.addProperty("executeWalls", booleanValue(request, "executeWalls", false));
-        report.addProperty("d4CandidateMode", stringValue(request, "d4CandidateMode", "key_then_array"));
+        report.addProperty("d4CandidateMode", stringValue(request, "d4CandidateMode", "blueprint"));
         JsonArray steps = new JsonArray();
         report.add("steps", steps);
         JsonObject artifacts = new JsonObject();
@@ -2452,8 +2527,16 @@ final class CityPlanningEndpointHandler {
                     requestedStatus.isBlank() ? "failed" : requestedStatus);
         }
 
-        if (!ctx.workflow().runStep("city_plan_d5", runDir.resolve("city_d5_" + safeFileName(citySeedId))
-                .resolve("reservation_mask_plan.json"), () -> handlePlanD5(debugRoot, runId, citySeedId,
+        Path workflowAnchorMap = runDir.resolve("city_d4_" + safeFileName(citySeedId))
+                .resolve("structure_anchor_map.json");
+        boolean blueprintWorkflow = "blueprint".equals(
+                stringValue(request, "d4CandidateMode", "blueprint"));
+        Path workflowD5Plan = runDir.resolve("city_d5_" + safeFileName(citySeedId))
+                .resolve("reservation_mask_plan.json");
+        if (!ctx.workflow().runStep("city_plan_d5",
+                !blueprintWorkflow || workflowArtifactMatchesAnchorMap(workflowD5Plan, workflowAnchorMap)
+                        ? workflowD5Plan : null,
+                () -> handlePlanD5(debugRoot, runId, citySeedId,
                 stringValue(request, "wallVersion", "v3"),
                 intValue(request, "wallMarginBlocks", 24),
                 intValue(request, "segmentLengthBlocks", 15),
@@ -2470,8 +2553,12 @@ final class CityPlanningEndpointHandler {
             return ctx.workflow().finish(workflowStarted, "failed");
         }
 
-        if (!ctx.workflow().runStep("city_plan_d6", runDir.resolve("city_d6_" + safeFileName(citySeedId))
-                .resolve("structure_materialization_plan.json"), () -> handlePlanD6(debugRoot, runId, citySeedId,
+        Path workflowD6Plan = runDir.resolve("city_d6_" + safeFileName(citySeedId))
+                .resolve("structure_materialization_plan.json");
+        if (!ctx.workflow().runStep("city_plan_d6",
+                !blueprintWorkflow || workflowArtifactMatchesAnchorMap(workflowD6Plan, workflowAnchorMap)
+                        ? workflowD6Plan : null,
+                () -> handlePlanD6(debugRoot, runId, citySeedId,
                 serverHolder, level))) {
             return ctx.workflow().finish(workflowStarted, "failed");
         }
@@ -2574,8 +2661,11 @@ final class CityPlanningEndpointHandler {
     }
 
     private static boolean workflowRunD4(WorkflowContext ctx) throws IOException {
-        requireObject(ctx.request(), "templateCatalogSource", "city_run_workflow D4");
-        String mode = stringValue(ctx.request(), "d4CandidateMode", "key_then_array");
+        String mode = stringValue(ctx.request(), "d4CandidateMode", "blueprint");
+        if ("blueprint".equals(mode)) {
+            return workflowRunD4Blueprint(ctx);
+        }
+        requireObject(ctx.request(), "templateCatalogSource", "city_run_workflow legacy/debug D4");
         if ("key_then_array".equals(mode) || "staged_key_then_array".equals(mode)) {
             return workflowRunD4KeyThenArray(ctx);
         }
@@ -2589,6 +2679,45 @@ final class CityPlanningEndpointHandler {
             return workflowRunD4Session(ctx);
         }
         throw new IllegalArgumentException("D4_WORKFLOW_MODE_UNSUPPORTED: " + mode);
+    }
+
+    static boolean workflowArtifactMatchesAnchorMap(Path artifactPath, Path anchorMapPath) {
+        if (!Files.isRegularFile(artifactPath) || !Files.isRegularFile(anchorMapPath)) return false;
+        try {
+            JsonObject artifact = JsonParser.parseString(Files.readString(artifactPath)).getAsJsonObject();
+            JsonObject current = JsonParser.parseString(Files.readString(anchorMapPath)).getAsJsonObject();
+            return artifact.has("sourceStructureAnchorMap")
+                    && artifact.get("sourceStructureAnchorMap").isJsonObject()
+                    && artifact.getAsJsonObject("sourceStructureAnchorMap").equals(current);
+        } catch (RuntimeException | IOException ignored) {
+            return false;
+        }
+    }
+
+    private static boolean workflowRunD4Blueprint(WorkflowContext ctx) throws IOException {
+        Path blueprintDir = ctx.runDir().resolve("city_blueprint_" + safeFileName(ctx.citySeedId()));
+        Path contextPath = blueprintDir.resolve("city_blueprint_context.json");
+        Path blueprintPath = blueprintDir.resolve("city_blueprint.json");
+        if (!Files.isRegularFile(contextPath)) {
+            ctx.report().addProperty("requestedWorkflowStatus", "awaiting_city_blueprint");
+            ctx.report().addProperty("blueprintStatus", "context_required");
+            ctx.report().addProperty("nextAction", "city_prepare_d4_blueprint_context");
+            ctx.workflow().addStop("city_compile_d4_blueprint", "awaiting_city_blueprint",
+                    "CITY_BLUEPRINT_CONTEXT_NOT_FOUND",
+                    "Prepare the frozen CityBlueprint context before continuing D4.");
+            return false;
+        }
+        if (!Files.isRegularFile(blueprintPath)) {
+            ctx.report().addProperty("requestedWorkflowStatus", "awaiting_city_blueprint");
+            ctx.report().addProperty("blueprintStatus", "submission_required");
+            ctx.report().addProperty("nextAction", "city_submit_d4_blueprint");
+            ctx.workflow().addStop("city_compile_d4_blueprint", "awaiting_city_blueprint",
+                    "CITY_BLUEPRINT_NOT_FOUND",
+                    "Submit the single complete CityBlueprint before continuing D4.");
+            return false;
+        }
+        return ctx.workflow().runStep("city_compile_d4_blueprint", null,
+                () -> handleCompileD4Blueprint(ctx.debugRoot(), ctx.runId(), ctx.citySeedId()));
     }
 
     private static boolean workflowRunD4KeyThenArray(WorkflowContext ctx) throws IOException {

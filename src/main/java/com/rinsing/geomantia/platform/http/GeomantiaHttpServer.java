@@ -72,6 +72,12 @@ public final class GeomantiaHttpServer {
             createdServer.createContext("/realm/city/plan_d2", realmController::handleCityPlanD2);
             createdServer.createContext("/realm/city/plan_d3", realmController::handleCityPlanD3);
             createdServer.createContext("/realm/city/review_d3_site", realmController::handleCityReviewD3Site);
+            createdServer.createContext("/realm/city/prepare_d4_blueprint_context",
+                    realmController::handleCityPrepareD4BlueprintContext);
+            createdServer.createContext("/realm/city/submit_d4_blueprint",
+                    realmController::handleCitySubmitD4Blueprint);
+            createdServer.createContext("/realm/city/compile_d4_blueprint",
+                    realmController::handleCityCompileD4Blueprint);
             createdServer.createContext("/realm/city/plan_d4_candidates", realmController::handleCityPlanD4Candidates);
             createdServer.createContext("/realm/city/plan_d4_array_candidates", realmController::handleCityPlanD4ArrayCandidates);
             createdServer.createContext("/realm/city/create_d4_design_loop_state", realmController::handleCityCreateD4DesignLoopState);

@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "city_blueprint.v0.4",
+  "cityId": "city:test",
+  "sourceD3Ref": {
+    "path": "run/city_d3_city_test/city_landform_review_package.json",
+    "schemaVersion": "city_landform_review.v0.1",
+    "contentHash": "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+  },
+  "catalogSnapshotRef": {
+    "path": "run/city_blueprint_city_test/city_blueprint_catalog_snapshot.json",
+    "schemaVersion": "city_blueprint_catalog_snapshot.v0.2",
+    "contentHash": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
+  },
+  "generationSeed": 42,
+  "designIntent": {
+    "cityIdentity": "river market town",
+    "theme": "working waterfront",
+    "functionalRoles": ["administration", "commerce", "residence"]
+  },
+  "styleProfile": { "profileRef": "style:river_stone" },
+  "groups": [
+    {
+      "groupId": "civic_core",
+      "groupKind": "STRUCTURE",
+      "preferredPatchRefs": ["patch:plain:1"],
+      "preferredPatchZone": "CENTER",
+      "role": "administration",
+      "priority": "CORE",
+      "extentClass": "MEDIUM",
+      "densityClass": "BALANCED",
+      "algorithmProfileRef": "algorithm:compact",
+      "terrainPolicy": "BALANCED",
+      "requiredStructureRefs": ["geomantia:town_hall"],
+      "fillPoolRef": "pool:civic",
+      "compositionProfileRef": "composition:round_robin",
+      "attachedFeatures": []
+    }
+  ],
+  "relations": [],
+  "roadProfile": { "profileRef": "road:town" },
+  "surfaceDetailProfile": { "profileRef": "surface:working" }
+}

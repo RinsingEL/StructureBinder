@@ -97,6 +97,21 @@ export const realmHandlers: Record<string, ToolHandler> = {
     return textResult(JSON.stringify(res.data, null, 2));
   },
 
+  async city_prepare_d4_blueprint_context(args) {
+    const res = await postJson(`${MC_API_URL}/realm/city/prepare_d4_blueprint_context`, payload(args), TIMEOUTS.quick);
+    return textResult(JSON.stringify(res.data, null, 2));
+  },
+
+  async city_submit_d4_blueprint(args) {
+    const res = await postJson(`${MC_API_URL}/realm/city/submit_d4_blueprint`, payload(args), TIMEOUTS.quick);
+    return { ...textResult(JSON.stringify(res.data, null, 2)), isError: res.data?.ok === false };
+  },
+
+  async city_compile_d4_blueprint(args) {
+    const res = await postJson(`${MC_API_URL}/realm/city/compile_d4_blueprint`, payload(args), TIMEOUTS.refresh);
+    return { ...textResult(JSON.stringify(res.data, null, 2)), isError: res.data?.ok === false };
+  },
+
   async city_plan_d4(args) {
     const res = await postJson(`${MC_API_URL}/realm/city/plan_d4`, payload(args), TIMEOUTS.quick);
     return textResult(JSON.stringify(res.data, null, 2));

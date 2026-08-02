@@ -201,6 +201,76 @@ const landUseIntentPlanSchema = strictObject({
   },
 }, ["schemaVersion", "cityId"]);
 
+const artifactRefSchema = strictObject({
+  path: nonEmptyString("prepare-context 冻结的相对 artifact 路径。"),
+  schemaVersion: nonEmptyString("prepare-context 冻结的 artifact schema。"),
+  contentHash: { type: "string", pattern: "^sha256:[0-9a-f]{64}$" },
+}, ["path", "schemaVersion", "contentHash"]);
+
+const cityBlueprintSchema = strictObject({
+  schemaVersion: { type: "string", enum: ["city_blueprint.v0.4"] },
+  cityId: nonEmptyString("必须与冻结上下文一致。"),
+  sourceD3Ref: artifactRefSchema,
+  catalogSnapshotRef: artifactRefSchema,
+  generationSeed: { type: "integer", minimum: -9007199254740991, maximum: 9007199254740991,
+    description: "后续程序化编译使用的 JavaScript-safe 稳定整数种子。" },
+  designIntent: strictObject({
+    cityIdentity: nonEmptyString("城市身份。"),
+    theme: nonEmptyString("统一主题。"),
+    functionalRoles: { type: "array", minItems: 1, uniqueItems: true, items: nonEmptyString("功能角色。") },
+  }, ["cityIdentity", "theme", "functionalRoles"]),
+  styleProfile: strictObject({ profileRef: nonEmptyString("冻结 style profile 引用。") }, ["profileRef"]),
+  groups: {
+    type: "array", minItems: 1, items: strictObject({
+      groupId: nonEmptyString("蓝图内唯一 ID。"),
+      groupKind: { type: "string", enum: ["STRUCTURE"] },
+      preferredPatchRefs: { type: "array", minItems: 1, uniqueItems: true,
+        items: nonEmptyString("偏好的 D3 landformPatchId；多个 Group 可共享，不允许世界坐标。") },
+      preferredPatchZone: { type: "string", enum: ["CENTER", "NORTH", "EAST", "SOUTH", "WEST"],
+        description: "核心在 preferredPatchRefs 精确成员格并集内的起步方位；北=-Z、南=+Z、西=-X、东=+X。" },
+      role: nonEmptyString("Group 功能角色。"),
+      priority: { type: "string", enum: ["CORE", "STANDARD", "PERIPHERAL"] },
+      extentClass: { type: "string", enum: ["SMALL", "MEDIUM", "LARGE"],
+        description: "功能区空间范围档位，不表示建筑数量。" },
+      densityClass: { type: "string", enum: ["SPARSE", "BALANCED", "DENSE"],
+        description: "功能区疏密档位；建筑数量由范围、疏密和模板占地推导。" },
+      algorithmProfileRef: nonEmptyString("冻结算法 profile 引用。"),
+      terrainPolicy: { type: "string", enum: ["CONFORM", "BALANCED", "ASSERTIVE"] },
+      requiredStructureRefs: { type: "array", minItems: 1, uniqueItems: true, items: nonEmptyString("结构白名单引用。") },
+      fillPoolRef: nonEmptyString("冻结 fill pool 引用。"),
+      connectionPlan: strictObject({
+        structurePoolRef: nonEmptyString("连接阵列使用的 fill pool；缺省时继承 fillPoolRef。"),
+        algorithmProfileRef: nonEmptyString("连接阵列算法 profile；缺省时继承 Group algorithmProfileRef。"),
+        densityClass: { type: "string", enum: ["SPARSE", "BALANCED", "DENSE"],
+          description: "连接阵列疏密；缺省时继承 Group densityClass。" },
+        parameters: strictObject({
+          clusterShape: { type: "string", enum: ["ORGANIC_COMPACT", "GRID", "COURTYARD", "L_SHAPE", "U_SHAPE"] },
+          sideMode: { type: "string", enum: ["LEFT", "RIGHT", "BOTH"] },
+          stagger: { type: "boolean" },
+          widthClass: { type: "string", enum: ["NARROW", "MEDIUM", "WIDE"] },
+        }, []),
+      }, []),
+      compositionProfileRef: nonEmptyString("冻结 composition profile 引用，只控制结构组成顺序，不限制数量。"),
+      attachedFeatures: { type: "array", maxItems: 0, description: "案子 04 前必须为空。" },
+    }, ["groupId", "groupKind", "preferredPatchRefs", "preferredPatchZone", "role", "priority", "extentClass", "densityClass",
+      "algorithmProfileRef", "terrainPolicy", "requiredStructureRefs", "fillPoolRef",
+      "compositionProfileRef", "attachedFeatures"]),
+  },
+  relations: {
+    type: "array", items: strictObject({
+      fromGroupId: nonEmptyString("关系起点。"),
+      toGroupId: nonEmptyString("关系终点。"),
+      relationKind: { type: "string", enum: ["HIERARCHY", "ADJACENCY", "CONNECTION", "BUFFER", "DISTANCE", "DIRECTION"] },
+      strength: { type: "string", enum: ["HARD", "SOFT"] },
+      distancePreference: { type: "string", enum: ["NONE", "NEAR", "FAR"] },
+      directionPreference: { type: "string", enum: ["NONE", "NORTH", "EAST", "SOUTH", "WEST"] },
+    }, ["fromGroupId", "toGroupId", "relationKind", "strength", "distancePreference", "directionPreference"]),
+  },
+  roadProfile: strictObject({ profileRef: nonEmptyString("冻结 road profile 引用。") }, ["profileRef"]),
+  surfaceDetailProfile: strictObject({ profileRef: nonEmptyString("冻结 surface profile 引用。") }, ["profileRef"]),
+}, ["schemaVersion", "cityId", "sourceD3Ref", "catalogSnapshotRef", "generationSeed", "designIntent",
+  "styleProfile", "groups", "relations", "roadProfile", "surfaceDetailProfile"]);
+
 export const realmTools: ToolDefinition[] = [
   {
     name: "realm_status",
@@ -537,8 +607,52 @@ export const realmTools: ToolDefinition[] = [
     },
   },
   {
+    name: "city_prepare_d4_blueprint_context",
+    description: "程序准备并冻结 D4 单次城市决策的完整只读上下文。该工具不调用模型，也不计入 AI 城市设计调用次数。",
+    inputSchema: {
+      type: "object", additionalProperties: false,
+      properties: {
+        runId: nonEmptyString("已有 W/T run ID。"),
+        citySeedId: nonEmptyString("目标城市。"),
+        terrasenseProfileSource: { type: "object", description: "现有 TerraSense 结构画像源。" },
+        templateCatalogSource: { type: "object", description: "现有固定 NBT template catalog 源。" },
+        blueprintReferenceCatalog: {
+          type: "object",
+          description: "schemaVersion=city_blueprint_reference_catalog.v0.2；冻结 structure/fill/algorithm/composition/style/road/surface 引用。",
+        },
+      },
+      required: ["runId", "citySeedId", "terrasenseProfileSource", "templateCatalogSource", "blueprintReferenceCatalog"],
+    },
+  },
+  {
+    name: "city_submit_d4_blueprint",
+    description: "D4 正式 AI 边界：对同一 contextId 只接受一次完整 CityBlueprint 提交；不会进入候选、slot 或阵列 AI 循环。",
+    inputSchema: {
+      type: "object", additionalProperties: false,
+      properties: {
+        runId: nonEmptyString("上下文所属 run。"),
+        citySeedId: nonEmptyString("上下文所属城市。"),
+        contextId: nonEmptyString("prepare-context 返回的冻结 contextId。"),
+        cityBlueprint: cityBlueprintSchema,
+      },
+      required: ["runId", "citySeedId", "contextId", "cityBlueprint"],
+    },
+  },
+  {
+    name: "city_compile_d4_blueprint",
+    description: "程序化编译已接受的 CityBlueprint：全部 Group 先在偏好 patch 播种必要结构，再按显式关系图和确定性补边以双方持续阵列完成连接，最后按范围与疏密 fill；D4 不设固定组间距离上限。输出标准 D4 anchor、compile trace 与 Group extent，不调用 AI、不接受 candidateId。",
+    inputSchema: {
+      type: "object", additionalProperties: false,
+      properties: {
+        runId: nonEmptyString("Blueprint 所属 run。"),
+        citySeedId: nonEmptyString("Blueprint 所属城市。"),
+      },
+      required: ["runId", "citySeedId"],
+    },
+  },
+  {
     name: "city_plan_d4",
-    description: "City D4: 只接受固定 NBT templateId/templateRef + variant。服务端从显式 catalog 冻结 hash、rawSize、transform、exact footprint、collision 和 mask；TerraSense 仅提供语义标签。configured structure 与外部 bbox 会被拒绝。",
+    description: "Legacy/debug D4 手写锚点入口；案子 02 接通前保留给现有 D5/D6，不属于新的单次 CityBlueprint 正式决策边界。",
     inputSchema: {
       type: "object",
       properties: {
@@ -1218,7 +1332,7 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "city_run_workflow",
-    description: "City 快速验收 workflow：串联 D3 -> 固定模板 D4 -> D5 reservation -> D6 runtime NBT lock -> execute_d5 registry 激活 -> D7 ledger 检查，并可选规划/执行城墙。",
+    description: "City 正式 workflow：D3/site review 后默认等待或编译已接受的 CityBlueprint，再把标准 D4 anchor 产物直接交给 D5/D6；旧候选/session 模式仅能显式指定为 legacy/debug。",
     inputSchema: {
       type: "object",
       properties: {
@@ -1226,20 +1340,20 @@ export const realmTools: ToolDefinition[] = [
         citySeedId: { type: "string", description: "目标城市种子的 citySeedId。" },
         terrasenseProfileSource: {
           type: "object",
-          description: "只提供模板语义标签，不提供几何或 configured identity。",
+          description: "仅 legacy/debug D4 模式需要；正式 Blueprint 模式读取冻结 catalog snapshot。",
         },
         designSlotPlan: {
           type: "object",
-          description: "D4 设计 slot plan；默认 key_then_array 模式下 slot 可设置 placementStrategy=key_structure|single_ai_selected|array_fill。array_fill 需要 arrayCount；模板分配固定为 round_robin，seeded/weighted random 已删除。",
+          description: "仅 legacy/debug D4 模式使用的旧 slot plan。",
         },
         templateCatalogSource: {
           type: "object",
-          description: "必填；固定 NBT template catalog 来源。",
+          description: "仅 legacy/debug D4 模式需要；正式 Blueprint 模式读取冻结 catalog snapshot。",
         },
         d4CandidateMode: {
           type: "string",
-          enum: ["key_then_array", "array_layout_loop_v0_2", "array_layout_loop_v0_3", "sequential_session", "structure_cluster_groups"],
-          description: "D4 workflow 模式；默认 key_then_array，强制先处理 key_structure/single_ai_selected slot，再处理 array_fill slot；array_layout_loop_v0_2/v0_3 为显式多轮阵列布局 replay；sequential_session 和 structure_cluster_groups 仅作显式调试/兼容路径。",
+          enum: ["blueprint", "key_then_array", "array_layout_loop_v0_2", "array_layout_loop_v0_3", "sequential_session", "structure_cluster_groups"],
+          description: "默认 blueprint：无蓝图时返回 awaiting_city_blueprint，有效蓝图由程序编译。其余值都是显式 legacy/debug 模式。",
         },
         groupCount: { type: "number", description: "结构群整组候选数量，默认 5。" },
         candidatesPerSlot: { type: "number", description: "结构群整组候选每个 slot 的扩展候选数，默认 5。" },

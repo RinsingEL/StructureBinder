@@ -248,6 +248,34 @@ final class RealmPlanningHttpController {
         });
     }
 
+    void handleCityPrepareD4BlueprintContext(HttpExchange exchange) {
+        handle(exchange, "POST", () -> {
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            return CityPlanningEndpointHandler.handlePrepareD4BlueprintContext(debugRoot(),
+                    requiredString(request, "runId"), requiredString(request, "citySeedId"),
+                    requiredObject(request, "terrasenseProfileSource"),
+                    requiredObject(request, "templateCatalogSource"),
+                    requiredObject(request, "blueprintReferenceCatalog"));
+        });
+    }
+
+    void handleCitySubmitD4Blueprint(HttpExchange exchange) {
+        handle(exchange, "POST", () -> {
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            return CityPlanningEndpointHandler.handleSubmitD4Blueprint(debugRoot(),
+                    requiredString(request, "runId"), requiredString(request, "citySeedId"),
+                    requiredString(request, "contextId"), requiredObject(request, "cityBlueprint"));
+        });
+    }
+
+    void handleCityCompileD4Blueprint(HttpExchange exchange) {
+        handle(exchange, "POST", () -> {
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            return CityPlanningEndpointHandler.handleCompileD4Blueprint(debugRoot(),
+                    requiredString(request, "runId"), requiredString(request, "citySeedId"));
+        });
+    }
+
     void handleCityPlanD4(HttpExchange exchange) {
         handle(exchange, "POST", () -> {
             JsonObject request = GisHttpUtil.readJsonObject(exchange);
@@ -1236,6 +1264,13 @@ final class RealmPlanningHttpController {
             throw new IllegalArgumentException(key + " is required.");
         }
         return value;
+    }
+
+    private static JsonObject requiredObject(JsonObject object, String key) {
+        if (object == null || !object.has(key) || !object.get(key).isJsonObject()) {
+            throw new IllegalArgumentException(key + " object is required.");
+        }
+        return object.getAsJsonObject(key);
     }
 
     private static int intValue(JsonObject object, String key, int defaultValue) {

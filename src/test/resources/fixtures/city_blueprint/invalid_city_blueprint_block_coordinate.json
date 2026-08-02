@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "city_blueprint.v0.4",
+  "cityId": "city:test",
+  "sourceD3Ref": {
+    "path": "d3.json",
+    "schemaVersion": "city_landform_review.v0.1",
+    "contentHash": "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+  },
+  "catalogSnapshotRef": {
+    "path": "catalog.json",
+    "schemaVersion": "city_blueprint_catalog_snapshot.v0.2",
+    "contentHash": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
+  },
+  "generationSeed": 42,
+  "designIntent": {
+    "cityIdentity": "invalid",
+    "theme": "invalid",
+    "functionalRoles": ["test"]
+  },
+  "styleProfile": { "profileRef": "style:test" },
+  "groups": [
+    {
+      "groupId": "bad",
+      "groupKind": "STRUCTURE",
+      "preferredPatchRefs": ["patch:test"],
+      "preferredPatchZone": "CENTER",
+      "role": "test",
+      "priority": "CORE",
+      "extentClass": "SMALL",
+      "densityClass": "BALANCED",
+      "algorithmProfileRef": "algorithm:test",
+      "terrainPolicy": "CONFORM",
+      "requiredStructureRefs": ["geomantia:test"],
+      "fillPoolRef": "pool:test",
+      "compositionProfileRef": "composition:test",
+      "attachedFeatures": [],
+      "blockX": 100
+    }
+  ],
+  "relations": [],
+  "roadProfile": { "profileRef": "road:test" },
+  "surfaceDetailProfile": { "profileRef": "surface:test" }
+}
