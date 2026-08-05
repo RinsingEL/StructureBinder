@@ -47,38 +47,24 @@ class TrekFixedImporterTest(unittest.TestCase):
     def test_profiles_use_stubbs_fixed_template_contract(self):
         self.assertEqual(20, len(self.profiles))
         for profile in self.profiles:
-            self.assertEqual("single", profile["profileType"])
-            self.assertEqual("structure_template_nbt", profile["sampleType"])
-            self.assertEqual("city_template_nbt", profile["placementKind"])
-            self.assertEqual("fixed_footprint", profile["footprintMode"])
-            self.assertEqual(["usage.single_structure"], profile["usageTerms"])
-            self.assertEqual(["template_role.city_building"], profile["templateRoleTerms"])
-            self.assertEqual(["quality.approved_baseline"], profile["qualityTerms"])
-            expected_terms = [
-                *profile["functionTerms"],
-                *profile["styleTerms"],
-                *profile["placementTerms"],
-                *profile["usageTerms"],
-                *profile["templateRoleTerms"],
-                *profile["qualityTerms"],
-            ]
-            self.assertEqual(expected_terms, profile["semanticTerms"])
-            self.assertEqual(len(expected_terms), len(set(expected_terms)))
+            self.assertEqual("approved", profile["reviewState"])
+            self.assertEqual([], profile["planningRoleTerms"])
+            self.assertEqual(["SURFACE"], profile["terrainModes"])
+            self.assertNotIn("terrainTerms", profile)
+            self.assertEqual({"structureId", "sourceProfileRef", "reviewState", "functionTerms",
+                              "planningRoleTerms", "terrainModes", "styleTerms"}, set(profile))
 
     def test_trade_ships_are_waterfront_profiles(self):
         for suffix in ("/dark_oak_trade", "/small_red_trade"):
             profile = next(value for value in self.profiles if value["structureId"].endswith(suffix))
             self.assertEqual(["function.港口", "function.商业"], profile["functionTerms"])
-            self.assertEqual(["placement.waterfront"], profile["placementTerms"])
-            self.assertNotIn("placement.grounded", profile["semanticTerms"])
+            self.assertEqual(["SURFACE"], profile["terrainModes"])
 
     def test_maison_is_residential_not_old_mill_assembly_profile(self):
         maison = next(profile for profile in self.profiles if profile["structureId"].endswith("/maison"))
         self.assertEqual(["function.residential"], maison["functionTerms"])
-        self.assertNotIn("function.磨坊", maison["semanticTerms"])
-        self.assertNotIn("function.农业", maison["semanticTerms"])
-        self.assertNotIn("usage.structure_assembly", maison["semanticTerms"])
-        self.assertNotIn("template_role.system_root", maison["semanticTerms"])
+        self.assertNotIn("function.磨坊", maison["functionTerms"])
+        self.assertNotIn("function.农业", maison["functionTerms"])
 
     def test_manifest_rejects_semantic_term_missing_from_vocabulary(self):
         manifest = copy.deepcopy(self.manifest)
@@ -143,7 +129,9 @@ class TrekFixedImporterTest(unittest.TestCase):
             vocabulary = json.loads(outputs["vocabulary"].read_text(encoding="utf-8"))
             source = json.loads(outputs["source"].read_text(encoding="utf-8"))
         self.assertEqual(20, len(profiles))
-        used_terms = {term for profile in profiles for term in profile["semanticTerms"]}
+        used_terms = {term for profile in profiles
+                      for field in ("functionTerms", "planningRoleTerms", "styleTerms")
+                      for term in profile[field]}
         vocabulary_terms = {term["term_id"] for term in vocabulary["terms"]}
         self.assertEqual(used_terms, vocabulary_terms)
         self.assertEqual(20, source["quality"]["exportedProfiles"])

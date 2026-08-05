@@ -592,11 +592,10 @@ final class CityStructureLandingFlowTest {
         JsonObject profile = JsonParser.parseString("""
                 {
                   "structureId": "minecraft:desert_pyramid",
-                  "profileType": "single",
-                  "footprintMode": "fixed_footprint",
-                  "functionTerms": ["function.landmark"],
-                  "qualityTerms": ["quality.usable"],
-                  "fixedFootprint": {"widthBlocks": 20, "depthBlocks": 12, "heightBlocks": 10}
+                   "profileType": "single",
+                   "footprintMode": "fixed_footprint",
+                   "functionTerms": ["function.landmark"],
+                   "fixedFootprint": {"widthBlocks": 20, "depthBlocks": 12, "heightBlocks": 10}
                 }
                 """).getAsJsonObject();
         Files.writeString(profilePath, profile + "\n");
@@ -1757,7 +1756,7 @@ final class CityStructureLandingFlowTest {
     private static String debugStructureCatalog() {
         return """
                 {
-                  "schemaVersion": "city_structure_profile_catalog.v0.1",
+                  "schemaVersion": "city_semantic_profile_catalog.v0.2",
                   "catalogMode": "debug",
                   "source": {"basis": "synthetic unit-test fixture"},
                   "structures": [
@@ -1769,12 +1768,10 @@ final class CityStructureLandingFlowTest {
                       "placementKind": "minecraft_place_structure",
                       "placementCommand": "place structure minecraft:desert_pyramid <x> <y> <z>",
                       "footprintMode": "fixed_footprint",
-                      "semanticTerms": ["function.landmark", "style.debug", "placement.inside_zone", "usage.public_core", "quality.debug_usable"],
+                      "reviewState": "approved",
                       "functionTerms": ["function.landmark"],
-                      "styleTerms": ["style.debug"],
-                      "placementTerms": ["placement.inside_zone"],
-                      "usageTerms": ["usage.public_core"],
-                      "qualityTerms": ["quality.debug_usable"],
+                      "planningRoleTerms": ["planning_role.key"],
+                      "terrainModes": ["SURFACE"],
                       "fixedFootprint": {"widthBlocks": 20, "depthBlocks": 12, "heightBlocks": 10},
                       "allowedRotations": ["NONE", "CLOCKWISE_90"],
                       "clearanceBlocks": 2
@@ -1787,12 +1784,10 @@ final class CityStructureLandingFlowTest {
                       "placementKind": "minecraft_place_structure",
                       "placementCommand": "place structure minecraft:jungle_pyramid <x> <y> <z>",
                       "footprintMode": "fixed_footprint",
-                      "semanticTerms": ["function.house", "style.debug", "placement.inside_zone", "usage.residential", "quality.debug_usable"],
+                      "reviewState": "approved",
                       "functionTerms": ["function.house"],
-                      "styleTerms": ["style.debug"],
-                      "placementTerms": ["placement.inside_zone"],
-                      "usageTerms": ["usage.residential"],
-                      "qualityTerms": ["quality.debug_usable"],
+                      "planningRoleTerms": ["planning_role.fill"],
+                      "terrainModes": ["SURFACE"],
                       "fixedFootprint": {"widthBlocks": 16, "depthBlocks": 16, "heightBlocks": 10},
                       "allowedRotations": ["NONE", "CLOCKWISE_90"],
                       "clearanceBlocks": 2
@@ -1805,12 +1800,10 @@ final class CityStructureLandingFlowTest {
                       "placementKind": "minecraft_place_structure",
                       "placementCommand": "place structure minecraft:village_plains <x> <y> <z>",
                       "footprintMode": "variable_area",
-                      "semanticTerms": ["function.village", "style.debug", "placement.inside_zone", "usage.filler", "quality.debug_usable"],
+                      "reviewState": "approved",
                       "functionTerms": ["function.village"],
-                      "styleTerms": ["style.debug"],
-                      "placementTerms": ["placement.inside_zone"],
-                      "usageTerms": ["usage.filler"],
-                      "qualityTerms": ["quality.debug_usable"],
+                      "planningRoleTerms": ["planning_role.fill"],
+                      "terrainModes": ["SURFACE"],
                       "expectedAreaRange": {
                         "minAreaBlocks": 128,
                         "maxAreaBlocks": 4096,
@@ -1836,7 +1829,7 @@ final class CityStructureLandingFlowTest {
     private static String trekDebugCatalog() {
         return """
                 {
-                  "schemaVersion": "city_structure_profile_catalog.v0.1",
+                  "schemaVersion": "city_semantic_profile_catalog.v0.2",
                   "catalogMode": "debug",
                   "source": {"basis": "synthetic trek unit-test fixture"},
                   "structures": [
@@ -1848,12 +1841,10 @@ final class CityStructureLandingFlowTest {
                       "placementKind": "minecraft_place_structure",
                       "placementCommand": "place structure trek:overworld/medium/farm <x> <y> <z>",
                       "footprintMode": "variable_area",
-                      "semanticTerms": ["function.farm", "quality.debug_usable"],
+                      "reviewState": "approved",
                       "functionTerms": ["function.farm"],
-                      "styleTerms": ["style.trek"],
-                      "placementTerms": ["placement.plains"],
-                      "usageTerms": ["usage.test"],
-                      "qualityTerms": ["quality.debug_usable"],
+                      "planningRoleTerms": ["planning_role.fill"],
+                      "terrainModes": ["SURFACE"],
                       "expectedAreaRange": {
                         "minAreaBlocks": 128,
                         "maxAreaBlocks": 4096,

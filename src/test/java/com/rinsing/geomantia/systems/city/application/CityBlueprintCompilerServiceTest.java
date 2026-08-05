@@ -4,7 +4,10 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.rinsing.geomantia.systems.city.domain.model.BlockPoint;
 import com.rinsing.geomantia.systems.city.domain.model.CityLandformReviewPackage;
+import com.rinsing.geomantia.systems.city.domain.model.CityScale;
+import com.rinsing.geomantia.systems.city.domain.blueprint.CityBlueprint;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -24,6 +27,43 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class CityBlueprintCompilerServiceTest {
     @TempDir
     Path temporary;
+
+    @Test
+    void cityScaleAndGroupExtentDeriveMinimumInternalPopulation() {
+        assertEquals(2, CityBlueprintCompilerService.minimumGroupStructureCount(
+                CityScale.HAMLET, CityBlueprint.ExtentClass.SMALL));
+        assertEquals(6, CityBlueprintCompilerService.minimumGroupStructureCount(
+                CityScale.TOWN, CityBlueprint.ExtentClass.MEDIUM));
+        assertEquals(12, CityBlueprintCompilerService.minimumGroupStructureCount(
+                CityScale.CITY, CityBlueprint.ExtentClass.LARGE));
+    }
+
+    @Test
+    void continuousFrontierAlignmentStaysInsideNarrowBodyGapWindow() {
+        int minimumAnchor = 1249;
+        int maximumAnchor = 1258;
+
+        int anchor = CityStructureArrayLayoutLoopPlanner.alignedFrontierAnchor(
+                minimumAnchor, maximumAnchor);
+
+        assertTrue(anchor >= minimumAnchor && anchor <= maximumAnchor,
+                "16-block alignment is a preference and must not violate the body-gap hard limit");
+        assertEquals(1253, anchor);
+    }
+
+    @Test
+    void continuousFrontierCorrectsActualFootprintDriftAlongCardinalAndDiagonalDirections() {
+        assertEquals(-3, CityStructureArrayLayoutLoopPlanner.frontierGapCorrection(18, 6, 15));
+        assertEquals(2, CityStructureArrayLayoutLoopPlanner.frontierGapCorrection(16, 18, 35));
+        assertEquals(0, CityStructureArrayLayoutLoopPlanner.frontierGapCorrection(24, 18, 35));
+
+        assertEquals(new BlockPoint(997, 2000),
+                CityStructureArrayLayoutLoopPlanner.shiftFrontierOriginForGap(
+                        new BlockPoint(1000, 2000), "east", -3));
+        assertEquals(new BlockPoint(1003, 2003),
+                CityStructureArrayLayoutLoopPlanner.shiftFrontierOriginForGap(
+                        new BlockPoint(1000, 2000), "north_west", -3));
+    }
 
     @Test
     void compilesRequiredBeforeFillAndIsDeterministic() throws Exception {
@@ -80,12 +120,16 @@ class CityBlueprintCompilerServiceTest {
     @Test
     void templateFootprintDeterminesEmergentStructureCount() throws Exception {
         Fixture small = acceptedFixture("run_small_footprint", "city:small_footprint", 9, 9, "SMALL");
-        Fixture large = acceptedFixture("run_large_footprint", "city:large_footprint", 40, 40, "SMALL");
+        Fixture large = acceptedFixture("run_large_footprint", "city:large_footprint", 24, 24, "SMALL");
         CityBlueprintCompilerService compiler = new CityBlueprintCompilerService();
-        int smallCount = compiler.compile(temporary, small.runId(), small.cityId())
-                .structureAnchorPlan().getAsJsonArray("anchors").size();
-        int largeCount = compiler.compile(temporary, large.runId(), large.cityId())
-                .structureAnchorPlan().getAsJsonArray("anchors").size();
+        CityBlueprintCompilerService.CompilationResult smallResult = compiler.compile(
+                temporary, small.runId(), small.cityId());
+        CityBlueprintCompilerService.CompilationResult largeResult = compiler.compile(
+                temporary, large.runId(), large.cityId());
+        assertTrue(smallResult.ok(), smallResult.compileTrace().toString());
+        assertTrue(largeResult.ok(), largeResult.compileTrace().toString());
+        int smallCount = smallResult.structureAnchorPlan().getAsJsonArray("anchors").size();
+        int largeCount = largeResult.structureAnchorPlan().getAsJsonArray("anchors").size();
 
         assertTrue(smallCount > largeCount, "smaller footprints should yield more buildings in one extent");
     }
@@ -254,9 +298,9 @@ class CityBlueprintCompilerServiceTest {
 
         assertTrue(first.ok(), first.compileTrace().toString());
         assertEquals(first.structureAnchorPlan(), second.structureAnchorPlan());
-        assertEquals("city_generation_compile_trace.v0.6",
+        assertEquals("city_generation_compile_trace.v0.9",
                 first.compileTrace().get("schemaVersion").getAsString());
-        assertEquals("group_extent_map.v0.6",
+        assertEquals("group_extent_map.v0.7",
                 first.groupExtentMap().get("schemaVersion").getAsString());
         assertTrue(first.groupExtentMap().get("structureGraphConnected").getAsBoolean());
         assertFalse(first.groupExtentMap().get("landUseConnected").getAsBoolean());
@@ -279,20 +323,39 @@ class CityBlueprintCompilerServiceTest {
         assertTrue(edges.asList().stream().allMatch(edge -> edge.getAsJsonObject()
                 .get("finalGapBlocks").getAsDouble()
                 <= edge.getAsJsonObject().get("handoffGapBlocks").getAsInt()));
-        assertTrue(edges.get(0).getAsJsonObject().get("finalGapBlocks").getAsDouble() > 16.0,
-                "HARD relation revalidation must use the SPARSE connection handoff, not DENSE group layout");
+        assertTrue(edges.get(0).getAsJsonObject().get("handoffGapBlocks").getAsInt() > 16,
+                "HARD relation revalidation must retain the SPARSE connection handoff");
+
+        JsonArray selectionEvents = first.compileTrace().getAsJsonArray("selections");
+        int firstConnectivity = -1;
+        int lastFill = -1;
+        for (int index = 0; index < selectionEvents.size(); index++) {
+            String phase = selectionEvents.get(index).getAsJsonObject().get("phase").getAsString();
+            if ("fill".equals(phase)) lastFill = index;
+            if (firstConnectivity < 0 && "connectivity_growth".equals(phase)) firstConnectivity = index;
+        }
+        assertTrue(lastFill >= 0 && firstConnectivity > lastFill,
+                "every Group must finish its internal array before connectivity growth starts");
+        for (JsonElement element : first.compileTrace().getAsJsonArray("groupResults")) {
+            JsonObject group = element.getAsJsonObject();
+            assertTrue(group.get("minimumStructureCountReached").getAsBoolean(), group.toString());
+            assertTrue(group.get("internalStructureCount").getAsInt()
+                    >= group.get("derivedMinimumStructureCount").getAsInt(), group.toString());
+        }
 
         Map<String, Integer> nextSlots = new java.util.HashMap<>();
         Set<String> connectionPlanners = new java.util.HashSet<>();
         Map<String, Set<Integer>> batchXs = new java.util.HashMap<>();
         Map<String, Set<Integer>> batchZs = new java.util.HashMap<>();
         List<JsonObject> envelopes = new java.util.ArrayList<>();
+        boolean terminalBatchFound = false;
         for (JsonElement element : first.structureAnchorPlan().getAsJsonArray("anchors")) {
             JsonObject anchor = element.getAsJsonObject();
             String groupId = anchor.get("placementGroupId").getAsString();
             JsonObject layout = anchor.getAsJsonObject("blueprintLayout");
             if ("connectivity_growth".equals(anchor.get("blueprintPlacementPhase").getAsString())) {
-                assertTrue(layout.get("arrayBatchSize").getAsInt() >= 2);
+                assertTrue(layout.get("arrayBatchSize").getAsInt() >= 1);
+                terminalBatchFound |= layout.get("arrayBatchSize").getAsInt() == 1;
                 assertEquals("near", layout.get("frontierRing").getAsString());
                 connectionPlanners.add(layout.get("plannerType").getAsString());
                 nextSlots.put(groupId, nextSlots.getOrDefault(groupId, 0) + 1);
@@ -313,11 +376,12 @@ class CityBlueprintCompilerServiceTest {
             for (JsonObject existing : envelopes) assertFalse(overlaps(collision, existing));
             envelopes.add(collision);
         }
+        assertTrue(terminalBatchFound, "continuous growth should shrink its final batch to reach handoff distance");
         for (JsonElement selection : first.compileTrace().getAsJsonArray("selections")) {
             JsonObject event = selection.getAsJsonObject();
             if (!"committed".equals(event.get("status").getAsString())) continue;
             if (!event.has("collisionEnvelope")) {
-                assertTrue(event.get("connectionStructureCount").getAsInt() >= 2);
+                assertTrue(event.get("connectionStructureCount").getAsInt() >= 1);
                 assertEquals(event.get("connectionStructureCount").getAsInt(),
                         event.getAsJsonArray("committedAnchorIds").size());
                 continue;
@@ -423,6 +487,115 @@ class CityBlueprintCompilerServiceTest {
         assertTrue(error.getMessage().startsWith("CITY_BLUEPRINT_HIERARCHY_CYCLE"));
     }
 
+    @Test
+    void terrainGateRejectsRequiredStructureAcrossAllIntersectingCells() throws Exception {
+        Fixture fixture = acceptedFixture("run_required_terrain_gate", "city:required_terrain_gate", 9, 9,
+                "SMALL", ignored -> { }, CityBlueprintCompilerServiceTest::makeTerrainFieldWater,
+                blueprint -> blueprint.getAsJsonArray("groups").get(0).getAsJsonObject().add(
+                        "requiredStructureRefs", JsonParser.parseString("[\"geomantia:terrain_house\"]")));
+
+        CityBlueprintCompilerService.CompilationResult result = new CityBlueprintCompilerService()
+                .compile(temporary, fixture.runId(), fixture.cityId());
+        assertFalse(result.ok());
+        assertEquals("CITY_BLUEPRINT_REQUIRED_STRUCTURE_NO_LEGAL_PLACEMENT", result.reasonCode());
+        JsonObject selection = result.compileTrace().getAsJsonArray("selections").get(0).getAsJsonObject();
+        assertEquals("required", selection.get("phase").getAsString());
+        assertTrue(selection.toString().contains("CITY_STRUCTURE_SURFACE_CELL_WATER"));
+        assertTrue(selection.toString().contains("all_intersecting_terrain_field_cells"));
+    }
+
+    @Test
+    void terrainGateRejectsFillAndFailsAnUnformedGroupBeforeConnectivity() throws Exception {
+        Fixture fixture = acceptedFixture("run_fill_terrain_gate", "city:fill_terrain_gate", 9, 9,
+                "SMALL", ignored -> { }, ignored -> { },
+                blueprint -> blueprint.getAsJsonArray("groups").get(0).getAsJsonObject()
+                        .addProperty("fillPoolRef", "pool:unsupported"));
+
+        CityBlueprintCompilerService.CompilationResult result = new CityBlueprintCompilerService()
+                .compile(temporary, fixture.runId(), fixture.cityId());
+        assertFalse(result.ok(), result.compileTrace().toString());
+        assertEquals("CITY_BLUEPRINT_GROUP_MINIMUM_UNREACHABLE", result.reasonCode());
+        JsonObject fill = result.compileTrace().getAsJsonArray("selections").asList().stream()
+                .map(JsonElement::getAsJsonObject)
+                .filter(event -> "fill".equals(event.get("phase").getAsString()))
+                .findFirst().orElseThrow();
+        assertEquals("no_legal_candidate", fill.get("status").getAsString());
+        assertTrue(fill.toString().contains("CITY_STRUCTURE_TERRAIN_MODE_UNSUPPORTED"));
+    }
+
+    @Test
+    void terrainGateRejectsConnectivityBatchItems() throws Exception {
+        Fixture fixture = acceptedFixture("run_connectivity_terrain_gate", "city:connectivity_terrain_gate", 9, 9,
+                "SMALL", d3 -> configureSeparatedPlanningPatches(d3, true),
+                ignored -> { }, blueprint -> {
+                    JsonObject first = blueprint.getAsJsonArray("groups").get(0).getAsJsonObject();
+                    first.add("connectionPlan", JsonParser.parseString("""
+                            {"structurePoolRef":"pool:unsupported"}
+                            """).getAsJsonObject());
+                    JsonObject second = first.deepCopy();
+                    second.addProperty("groupId", "second");
+                    second.add("preferredPatchRefs", JsonParser.parseString("[\"patch:plain:2\"]"));
+                    blueprint.getAsJsonArray("groups").add(second);
+                    blueprint.getAsJsonArray("relations").add(relation("civic", "second", "CONNECTION"));
+                });
+
+        CityBlueprintCompilerService.CompilationResult result = new CityBlueprintCompilerService()
+                .compile(temporary, fixture.runId(), fixture.cityId());
+        assertFalse(result.ok());
+        assertEquals("CITY_BLUEPRINT_CONNECTIVITY_NO_LEGAL_PATH", result.reasonCode());
+        JsonObject connectivity = result.compileTrace().getAsJsonArray("selections").asList().stream()
+                .map(JsonElement::getAsJsonObject)
+                .filter(event -> "connectivity_growth".equals(event.get("phase").getAsString()))
+                .filter(event -> event.has("terrainGateRejections"))
+                .findFirst().orElseThrow();
+        assertFalse(connectivity.getAsJsonArray("terrainGateRejections").isEmpty());
+        assertTrue(connectivity.toString().contains("CITY_STRUCTURE_TERRAIN_MODE_UNSUPPORTED"));
+    }
+
+    @Test
+    void groupTerrainPolicySlopeThresholdIsPreferenceNotPatchHardFilter() throws Exception {
+        Fixture fixture = acceptedFixture("run_slope_preference", "city:slope_preference", 9, 9,
+                "SMALL", review -> review.getAsJsonArray("landformPatches").forEach(element ->
+                        element.getAsJsonObject().getAsJsonObject("metricsSummary")
+                                .addProperty("meanSlope", 99.0)), blueprint ->
+                        blueprint.getAsJsonArray("groups").get(0).getAsJsonObject()
+                                .addProperty("terrainPolicy", "CONFORM"));
+
+        CityBlueprintCompilerService.CompilationResult result = new CityBlueprintCompilerService()
+                .compile(temporary, fixture.runId(), fixture.cityId());
+
+        assertTrue(result.ok(), result.compileTrace().toString());
+        JsonObject required = result.compileTrace().getAsJsonArray("selections").get(0).getAsJsonObject();
+        JsonObject terrain = required.getAsJsonObject("terrainGateEvaluation");
+        assertEquals("ranking_preference_only", terrain.get("groupTerrainPolicyRole").getAsString());
+        assertFalse(terrain.getAsJsonArray("sourcePatchPreferences").get(0).getAsJsonObject()
+                .get("preferredByGroupTerrainPolicy").getAsBoolean());
+    }
+
+    @Test
+    void surfaceConnectivityDefersCliffPatchLegalityToPerCellTerrainGate() throws Exception {
+        Fixture fixture = acceptedFixture("run_cliff_connectivity", "city:cliff_connectivity", 9, 9,
+                "SMALL", review -> {
+                    configureSeparatedPlanningPatches(review, true);
+                    review.getAsJsonArray("landformPatches").forEach(element ->
+                            element.getAsJsonObject().addProperty("landformType", "cliff"));
+                }, ignored -> { }, blueprint -> {
+                    JsonObject second = blueprint.getAsJsonArray("groups").get(0).getAsJsonObject().deepCopy();
+                    second.addProperty("groupId", "second");
+                    second.add("preferredPatchRefs", JsonParser.parseString("[\"patch:plain:2\"]"));
+                    blueprint.getAsJsonArray("groups").add(second);
+                    blueprint.getAsJsonArray("relations").add(relation("civic", "second", "CONNECTION"));
+                });
+
+        CityBlueprintCompilerService.CompilationResult result = new CityBlueprintCompilerService()
+                .compile(temporary, fixture.runId(), fixture.cityId());
+
+        assertTrue(result.ok(), result.compileTrace().toString());
+        assertTrue(result.compileTrace().getAsJsonObject("connectivityPlan")
+                .getAsJsonArray("edges").get(0).getAsJsonObject()
+                .get("connectionStructureCount").getAsInt() > 0);
+    }
+
     private Fixture acceptedFixture(String runId, String cityId, int width, int depth, String extentClass)
             throws Exception {
         return acceptedFixture(runId, cityId, width, depth, extentClass, ignored -> { });
@@ -436,6 +609,14 @@ class CityBlueprintCompilerServiceTest {
 
     private Fixture acceptedFixture(String runId, String cityId, int width, int depth, String extentClass,
                                      Consumer<JsonObject> customizeD3,
+                                     Consumer<JsonObject> customizeBlueprint) throws Exception {
+        return acceptedFixture(runId, cityId, width, depth, extentClass, customizeD3,
+                ignored -> { }, customizeBlueprint);
+    }
+
+    private Fixture acceptedFixture(String runId, String cityId, int width, int depth, String extentClass,
+                                     Consumer<JsonObject> customizeD3,
+                                     Consumer<JsonObject> customizeTerrainField,
                                      Consumer<JsonObject> customizeBlueprint) throws Exception {
         Path runDir = temporary.resolve(runId);
         Files.createDirectories(runDir.resolve("city_d3_" + safe(cityId)));
@@ -453,18 +634,38 @@ class CityBlueprintCompilerServiceTest {
         customizeD3.accept(review);
         Files.writeString(runDir.resolve("city_d3_" + safe(cityId) + "/city_landform_review_package.json"),
                 review.toString());
+        Path terrainDirectory = runDir.resolve("city_land_use_" + safe(cityId));
+        Files.createDirectories(terrainDirectory);
+        JsonObject terrainField = terrainField(review);
+        customizeTerrainField.accept(terrainField);
+        Files.writeString(terrainDirectory.resolve("land_use_terrain_field.json"), terrainField.toString());
         Files.writeString(runDir.resolve("structure_debug_catalog.json"), """
                 {"catalogMode":"debug","structures":[
                   {
                     "semanticProfileId":"geomantia:town_hall",
-                    "functionTerms":["administration"],"styleTerms":["stone"]
+                    "reviewState":"approved","functionTerms":["administration"],
+                    "planningRoleTerms":["planning_role.key"],"terrainModes":["SURFACE"],
+                    "styleTerms":["style.test"]
                   },{
                     "semanticProfileId":"geomantia:oversized_hall",
-                    "functionTerms":["administration"],"styleTerms":["stone"]
+                    "reviewState":"approved","functionTerms":["administration"],
+                    "planningRoleTerms":["planning_role.key"],"terrainModes":["SURFACE"],
+                    "styleTerms":["style.test"]
+                  },{
+                    "semanticProfileId":"geomantia:terrain_house",
+                    "reviewState":"approved","functionTerms":["residential"],
+                    "planningRoleTerms":["planning_role.fill"],"terrainModes":["SURFACE"],
+                    "styleTerms":["style.test"]
+                  },{
+                    "semanticProfileId":"geomantia:floating_house",
+                    "reviewState":"approved","functionTerms":["residential"],
+                    "planningRoleTerms":["planning_role.fill"],"terrainModes":["FLOATING"],
+                    "styleTerms":["style.test"]
                   }
                 ]}
                 """);
         JsonObject terraSource = new JsonObject();
+        terraSource.addProperty("schemaVersion", "terrasense_structure_profile_source.v0.1");
         terraSource.addProperty("sourceType", "debug_catalog");
         terraSource.addProperty("catalogMode", "debug");
         terraSource.addProperty("debugCatalogPath", "structure_debug_catalog.json");
@@ -538,6 +739,62 @@ class CityBlueprintCompilerServiceTest {
         secondPatch.getAsJsonObject("blockBounds").addProperty("minX", -272);
         root.getAsJsonArray("landformPatches").add(secondPatch);
         return root;
+    }
+
+    private static JsonObject terrainField(JsonObject review) {
+        JsonObject grid = review.getAsJsonObject("grid");
+        int originX = grid.get("originBlockX").getAsInt();
+        int originZ = grid.get("originBlockZ").getAsInt();
+        int step = grid.get("cellStepBlocks").getAsInt();
+        int cellsX = grid.get("cellsX").getAsInt();
+        int cellsZ = grid.get("cellsZ").getAsInt();
+        JsonObject field = new JsonObject();
+        field.addProperty("schemaVersion", "city_land_use_terrain_field.v0.1");
+        field.addProperty("cityId", review.get("cityId").getAsString());
+        JsonObject bounds = new JsonObject();
+        bounds.addProperty("minX", originX);
+        bounds.addProperty("minZ", originZ);
+        bounds.addProperty("maxX", originX + cellsX * step - 1);
+        bounds.addProperty("maxZ", originZ + cellsZ * step - 1);
+        field.add("planningBounds", bounds);
+        field.addProperty("cellStepBlocks", step);
+        JsonArray cells = new JsonArray();
+        for (int z = 0; z < cellsZ; z++) {
+            for (int x = 0; x < cellsX; x++) {
+                int blockMinX = originX + x * step;
+                int blockMinZ = originZ + z * step;
+                JsonObject cell = new JsonObject();
+                cell.addProperty("cellX", Math.floorDiv(blockMinX, step));
+                cell.addProperty("cellZ", Math.floorDiv(blockMinZ, step));
+                cell.addProperty("blockMinX", blockMinX);
+                cell.addProperty("blockMinZ", blockMinZ);
+                cell.addProperty("cellStepBlocks", step);
+                cell.addProperty("elevation", 64);
+                cell.addProperty("slope", 0.2);
+                cell.addProperty("localRelief", 1.0);
+                cell.addProperty("roughness", 0.1);
+                cell.addProperty("water", false);
+                cell.addProperty("waterDepth", 0);
+                cell.addProperty("waterDistance", 100);
+                cell.addProperty("biomeId", "minecraft:plains");
+                cell.addProperty("landformType", "plain");
+                cell.addProperty("landformPatchId", "");
+                cell.addProperty("sampled", true);
+                cells.add(cell);
+            }
+        }
+        field.add("cells", cells);
+        return field;
+    }
+
+    private static void makeTerrainFieldWater(JsonObject field) {
+        for (JsonElement element : field.getAsJsonArray("cells")) {
+            JsonObject cell = element.getAsJsonObject();
+            cell.addProperty("water", true);
+            cell.addProperty("waterDepth", 4);
+            cell.addProperty("waterDistance", 0);
+            cell.addProperty("landformType", "water");
+        }
     }
 
     private static JsonObject hierarchy(String from, String to) {
@@ -649,6 +906,22 @@ class CityBlueprintCompilerServiceTest {
                     "allowedRotations":["NONE"],"allowedMirrors":["NONE"],"roadEntrances":[],
                     "terrainPosePolicy":"structure_start_beard_thin","supportPolicy":"none",
                     "clearanceBlocks":1
+                  },{
+                    "buildingSemantic":"residential","style":"stone",
+                    "templateId":"geomantia:terrain_house","templateRef":"geomantia:terrain_house",
+                    "contentHash":"sha256:terrain-fixture","variant":"default",
+                    "rawSize":{"width":9,"height":8,"depth":9},
+                    "allowedRotations":["NONE"],"allowedMirrors":["NONE"],"roadEntrances":[],
+                    "terrainPosePolicy":"structure_start_beard_thin","supportPolicy":"none",
+                    "clearanceBlocks":1
+                  },{
+                    "buildingSemantic":"residential","style":"stone",
+                    "templateId":"geomantia:floating_house","templateRef":"geomantia:floating_house",
+                    "contentHash":"sha256:floating-fixture","variant":"default",
+                    "rawSize":{"width":9,"height":8,"depth":9},
+                    "allowedRotations":["NONE"],"allowedMirrors":["NONE"],"roadEntrances":[],
+                    "terrainPosePolicy":"structure_start_beard_thin","supportPolicy":"none",
+                    "clearanceBlocks":1
                   }]
                 }
                 """.formatted(width, depth)).getAsJsonObject();
@@ -660,11 +933,15 @@ class CityBlueprintCompilerServiceTest {
                   "schemaVersion":"city_blueprint_reference_catalog.v0.2",
                   "structureRefs":[
                     {"structureRef":"geomantia:town_hall","templateCandidates":[{"templateId":"geomantia:town_hall","variantId":"default"}]},
-                    {"structureRef":"geomantia:oversized_hall","templateCandidates":[{"templateId":"geomantia:oversized_hall","variantId":"default"}]}
+                    {"structureRef":"geomantia:oversized_hall","templateCandidates":[{"templateId":"geomantia:oversized_hall","variantId":"default"}]},
+                    {"structureRef":"geomantia:terrain_house","templateCandidates":[{"templateId":"geomantia:terrain_house","variantId":"default"}]},
+                    {"structureRef":"geomantia:floating_house","templateCandidates":[{"templateId":"geomantia:floating_house","variantId":"default"}]}
                   ],
                   "fillPools":[
                     {"poolRef":"pool:civic","structureRefs":["geomantia:town_hall"]},
-                    {"poolRef":"pool:mixed","structureRefs":["geomantia:town_hall","geomantia:oversized_hall"]}
+                    {"poolRef":"pool:mixed","structureRefs":["geomantia:town_hall","geomantia:oversized_hall"]},
+                    {"poolRef":"pool:terrain","structureRefs":["geomantia:terrain_house"]},
+                    {"poolRef":"pool:unsupported","structureRefs":["geomantia:floating_house"]}
                   ],
                   "algorithmProfiles":[
                     {"algorithmProfileRef":"algorithm:compact","algorithm":"COMPACT"},

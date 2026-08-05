@@ -5,11 +5,8 @@ from __future__ import annotations
 
 import argparse
 import copy
-import gzip
 import hashlib
-import io
 import json
-import re
 import sys
 import urllib.request
 import zipfile
@@ -19,6 +16,25 @@ from typing import Any, Iterable
 
 import nbtlib
 from PIL import Image, ImageDraw
+
+try:
+    from .jigsaw_template_sanitizer import (
+        SanitizeFailure as JigsawSanitizeFailure,
+        decode_nbt,
+        encode_nbt,
+        palette_index,
+        replace_jigsaws_with_final_state,
+        state_compound,
+    )
+except ImportError:
+    from jigsaw_template_sanitizer import (
+        SanitizeFailure as JigsawSanitizeFailure,
+        decode_nbt,
+        encode_nbt,
+        palette_index,
+        replace_jigsaws_with_final_state,
+        state_compound,
+    )
 
 
 MANIFEST_SCHEMA = "geomantia_trek_fixed_import_manifest.v1"
@@ -31,7 +47,6 @@ ALLOWED_MARKER_PREFIX = "trek:mobs/"
 ROTATIONS = ["NONE", "CLOCKWISE_90", "CLOCKWISE_180", "COUNTERCLOCKWISE_90"]
 ENTRANCE_DIRECTIONS = {"NORTH", "SOUTH", "EAST", "WEST"}
 ENTRANCE_EVIDENCE_KINDS = {"door", "gate", "opening", "water_access"}
-BLOCK_STATE_PATTERN = re.compile(r"^([a-z0-9_.-]+:[a-z0-9_./-]+)(?:\[([^]]+)\])?$")
 TERM_FIELDS = (
     ("functionTerms", "function"),
     ("styleTerms", "style"),
@@ -216,72 +231,19 @@ def resource_path(resource_id: str, category: str, suffix: str) -> str:
     return f"data/{namespace}/{category}/{path}{suffix}"
 
 
-def decode_nbt(value: bytes) -> nbtlib.File:
-    raw = gzip.decompress(value) if value.startswith(b"\x1f\x8b") else value
-    return nbtlib.File.parse(io.BytesIO(raw))
-
-
-def encode_nbt(value: nbtlib.File) -> bytes:
-    output = io.BytesIO()
-    value.write(output, byteorder="big")
-    return gzip.compress(output.getvalue(), compresslevel=9, mtime=0)
-
-
-def state_compound(name: str, properties: dict[str, str] | None = None) -> nbtlib.Compound:
-    state = nbtlib.Compound({"Name": nbtlib.String(name)})
-    if properties:
-        state["Properties"] = nbtlib.Compound({key: nbtlib.String(val) for key, val in properties.items()})
-    return state
-
-
-def state_key(state: nbtlib.Compound) -> tuple[str, tuple[tuple[str, str], ...]]:
-    properties = state.get("Properties", {})
-    return str(state["Name"]), tuple(sorted((str(key), str(value)) for key, value in properties.items()))
-
-
-def parse_final_state(value: str) -> nbtlib.Compound:
-    match = BLOCK_STATE_PATTERN.fullmatch(value.strip())
-    if not match:
-        raise ImportFailure("TREK_TEMPLATE_FINAL_STATE_INVALID", value)
-    properties: dict[str, str] = {}
-    if match.group(2):
-        for item in match.group(2).split(","):
-            if "=" not in item:
-                raise ImportFailure("TREK_TEMPLATE_FINAL_STATE_INVALID", value)
-            key, property_value = item.split("=", 1)
-            properties[key.strip()] = property_value.strip()
-    return state_compound(match.group(1), properties)
-
-
-def palette_index(palette: nbtlib.List, state: nbtlib.Compound) -> int:
-    key = state_key(state)
-    for index, existing in enumerate(palette):
-        if state_key(existing) == key:
-            return index
-    palette.append(state)
-    return len(palette) - 1
-
-
 def strip_marker_jigsaws(nbt: nbtlib.File) -> int:
-    palette = nbt["palette"]
-    marker_count = 0
-    for block in nbt["blocks"]:
-        state = palette[int(block["state"])]
-        if str(state["Name"]) != "minecraft:jigsaw":
-            continue
-        block_entity = block.get("nbt")
-        pool = str(block_entity.get("pool", "")) if block_entity is not None else ""
-        if not pool.startswith(ALLOWED_MARKER_PREFIX):
-            raise ImportFailure("TREK_TEMPLATE_STRUCTURAL_JIGSAW_REJECTED", pool or "missing pool")
-        final_state = str(block_entity.get("final_state", ""))
-        block["state"] = nbtlib.Int(palette_index(palette, parse_final_state(final_state)))
-        block.pop("nbt", None)
-        marker_count += 1
-    remaining = sum(1 for block in nbt["blocks"]
-                    if str(palette[int(block["state"])] ["Name"]) == "minecraft:jigsaw")
-    if remaining:
-        raise ImportFailure("TREK_TEMPLATE_JIGSAW_REMAINS", str(remaining))
-    return marker_count
+    try:
+        connectors = replace_jigsaws_with_final_state(
+            nbt, allowed=lambda value: value["pool"].startswith(ALLOWED_MARKER_PREFIX))
+        return len(connectors)
+    except JigsawSanitizeFailure as ex:
+        if ex.code == "JIGSAW_CONNECTOR_NOT_APPROVED":
+            raise ImportFailure("TREK_TEMPLATE_STRUCTURAL_JIGSAW_REJECTED", ex.detail) from ex
+        if ex.code == "JIGSAW_FINAL_STATE_INVALID":
+            raise ImportFailure("TREK_TEMPLATE_FINAL_STATE_INVALID", ex.detail) from ex
+        if ex.code == "JIGSAW_REMAINS_AFTER_SANITIZE":
+            raise ImportFailure("TREK_TEMPLATE_JIGSAW_REMAINS", ex.detail) from ex
+        raise ImportFailure("TREK_TEMPLATE_JIGSAW_INVALID", ex.detail) from ex
 
 
 def clear_entities(nbt: nbtlib.File) -> int:
@@ -564,25 +526,15 @@ def build_structure_profiles(manifest: dict[str, Any],
     profiles: list[dict[str, Any]] = []
     for item in imported:
         groups = profile_term_groups(manifest, item.manifest_entry)
-        semantic_terms = [term for field, _ in TERM_FIELDS for term in groups[field]]
         namespace, path = item.target_ref.split(":", 1)
         profiles.append({
             "structureId": item.target_ref,
             "sourceProfileRef": f"{namespace}://{path}",
-            "profileType": "single",
-            "sampleType": "structure_template_nbt",
-            "placementKind": "city_template_nbt",
-            "footprintMode": "fixed_footprint",
-            "semanticTerms": semantic_terms,
-            **groups,
-            "allowedRotations": ROTATIONS,
-            "clearanceBlocks": item.manifest_entry["clearanceBlocks"],
-            "fixedFootprint": {
-                "widthBlocks": item.raw_size["width"],
-                "depthBlocks": item.raw_size["depth"],
-                "heightBlocks": item.raw_size["height"],
-            },
             "reviewState": "approved",
+            "functionTerms": groups["functionTerms"],
+            "planningRoleTerms": [],
+            "terrainModes": ["SURFACE"],
+            "styleTerms": groups["styleTerms"],
         })
     return profiles
 
@@ -601,14 +553,19 @@ def write_profile_package(profile_dir: Path, manifest: dict[str, Any],
         encoding="utf-8",
     )
     profile_export = manifest["profileExport"]
+    used_term_ids = {term for profile in profiles
+                     for field in ("functionTerms", "planningRoleTerms", "styleTerms")
+                     for term in profile[field]}
+    vocabulary_terms = [term for term in profile_export["vocabularyTerms"]
+                        if term["term_id"] in used_term_ids]
     vocabulary = {
         "schemaVersion": VOCABULARY_SCHEMA,
         "snapshotId": profile_export["profileSetId"],
         "exportedAt": profile_export["exportedAt"],
         "sourceWorkspace": profile_export["sourceWorkspace"],
-        "terms": profile_export["vocabularyTerms"],
+        "terms": vocabulary_terms,
         "quality": {
-            "approvedTerms": len(profile_export["vocabularyTerms"]),
+            "approvedTerms": len(vocabulary_terms),
             "sourceTerms": len(profile_export["vocabularyTerms"]),
         },
     }

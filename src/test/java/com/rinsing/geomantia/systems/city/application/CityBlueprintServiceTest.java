@@ -28,6 +28,25 @@ class CityBlueprintServiceTest {
                 fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog());
 
         assertEquals(0, prepared.get("aiCityDesignCallCount").getAsInt());
+        JsonObject context = prepared.getAsJsonObject("cityBlueprintContext");
+        assertEquals("city_blueprint_catalog_snapshot.v0.5",
+                context.getAsJsonObject("catalogSnapshotRef").get("schemaVersion").getAsString());
+        assertEquals("city_blueprint_catalog_snapshot.v0.5",
+                context.getAsJsonObject("catalogSnapshot").get("schemaVersion").getAsString());
+        JsonObject semanticProfile = context.getAsJsonObject("catalogSnapshot")
+                .getAsJsonObject("structureCatalog")
+                .getAsJsonArray("semanticProfiles").get(0).getAsJsonObject();
+        assertEquals("city_semantic_profile_catalog.v0.4",
+                context.getAsJsonObject("catalogSnapshot").getAsJsonObject("structureCatalog")
+                        .get("schemaVersion").getAsString());
+        assertEquals("approved", semanticProfile.get("reviewState").getAsString());
+        assertTrue(semanticProfile.has("functionTerms"));
+        assertTrue(semanticProfile.has("planningRoleTerms"));
+        assertTrue(semanticProfile.has("terrainModes"));
+        assertEquals("SURFACE", semanticProfile.getAsJsonArray("terrainModes").get(0).getAsString());
+        assertTrue(semanticProfile.has("styleTerms"));
+        assertFalse(semanticProfile.has("semanticTerms"));
+        assertFalse(semanticProfile.has("qualityTerms"));
         JsonObject blueprint = blueprint(prepared.getAsJsonObject("cityBlueprintContext"));
         JsonObject submitted = service.submit(temporary, fixture.runId(), fixture.cityId(),
                 prepared.get("contextId").getAsString(), blueprint);
@@ -198,6 +217,9 @@ class CityBlueprintServiceTest {
         JsonObject d3 = new JsonObject();
         d3.addProperty("schemaVersion", "city_landform_review.v0.1");
         d3.addProperty("cityId", cityId);
+        d3.add("grid", JsonParser.parseString("""
+                {"originBlockX":0,"originBlockZ":0,"cellStepBlocks":16,"cellsX":1,"cellsZ":1}
+                """).getAsJsonObject());
         JsonArray patches = new JsonArray();
         JsonObject patch = new JsonObject();
         patch.addProperty("landformPatchId", "patch:plain:1");
@@ -208,16 +230,33 @@ class CityBlueprintServiceTest {
         d3.add("landformPatches", patches);
         Path d3Path = runDir.resolve("city_d3_" + safe(cityId) + "/city_landform_review_package.json");
         Files.writeString(d3Path, d3.toString());
+        Path terrainDirectory = runDir.resolve("city_land_use_" + safe(cityId));
+        Files.createDirectories(terrainDirectory);
+        Files.writeString(terrainDirectory.resolve("land_use_terrain_field.json"), """
+                {
+                  "schemaVersion":"city_land_use_terrain_field.v0.1","cityId":"%s",
+                  "planningBounds":{"minX":0,"minZ":0,"maxX":15,"maxZ":15},"cellStepBlocks":16,
+                  "cells":[{"cellX":0,"cellZ":0,"blockMinX":0,"blockMinZ":0,"cellStepBlocks":16,
+                    "elevation":64,"slope":0.2,"localRelief":1,"roughness":0.1,"water":false,
+                    "waterDepth":0,"waterDistance":100,"biomeId":"minecraft:plains","landformType":"plain",
+                    "landformPatchId":"patch:plain:1","sampled":true}]
+                }
+                """.formatted(cityId));
         Path structureCatalog = runDir.resolve("structure_debug_catalog.json");
         Files.writeString(structureCatalog, """
                 {"catalogMode":"debug","structures":[{
                   "semanticProfileId":"geomantia:town_hall",
+                  "reviewState":"approved",
                   "functionTerms":["administration"],
-                  "styleTerms":["stone"]
+                  "planningRoleTerms":["planning_role.key"],
+                  "terrainModes":["surface"],
+                  "styleTerms":["style.wood_stone"]
                 }]}
                 """);
         JsonObject terraSource = new JsonObject();
         terraSource.addProperty("sourceType", "debug_catalog");
+        terraSource.addProperty("schemaVersion", "terrasense_structure_profile_source.v0.1");
+        terraSource.addProperty("catalogMode", "debug");
         terraSource.addProperty("debugCatalogPath", "structure_debug_catalog.json");
         JsonObject templateSource = new JsonObject();
         templateSource.add("catalog", JsonParser.parseString("""

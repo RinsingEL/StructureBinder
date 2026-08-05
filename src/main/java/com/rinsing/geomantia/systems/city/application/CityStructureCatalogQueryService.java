@@ -24,7 +24,7 @@ import java.util.Set;
  * {@code terrasenseProfileSource}; City does not maintain a second tag dictionary.</p>
  */
 public final class CityStructureCatalogQueryService {
-    public static final String SCHEMA_VERSION = "city_structure_catalog_query.v0.2";
+    public static final String SCHEMA_VERSION = "city_structure_catalog_query.v0.5";
     private static final int DEFAULT_LIMIT = 20;
     private static final int MAX_LIMIT = 100;
 
@@ -100,31 +100,27 @@ public final class CityStructureCatalogQueryService {
         candidate.addProperty("semanticProfileId", profile.semanticProfileId());
         candidate.add("matchedCanonicalTerms", stringArray(List.copyOf(matched)));
         JsonObject profileTerms = new JsonObject();
-        profileTerms.add("semanticTerms", stringArray(profile.semanticTerms()));
         profileTerms.add("functionTerms", stringArray(profile.functionTerms()));
+        profileTerms.add("planningRoleTerms", stringArray(profile.planningRoleTerms()));
+        JsonArray terrainModes = new JsonArray();
+        profile.terrainModes().forEach(mode -> terrainModes.add(mode.name()));
+        profileTerms.add("terrainModes", terrainModes);
         profileTerms.add("styleTerms", stringArray(profile.styleTerms()));
-        profileTerms.add("placementTerms", stringArray(profile.placementTerms()));
-        profileTerms.add("usageTerms", stringArray(profile.usageTerms()));
-        profileTerms.add("templateRoleTerms", stringArray(profile.templateRoleTerms()));
-        profileTerms.add("qualityTerms", stringArray(profile.qualityTerms()));
         candidate.add("terms", profileTerms);
 
         JsonObject profileSource = new JsonObject();
         profileSource.addProperty("sourceProfileRef", profile.sourceProfileRef());
+        profileSource.addProperty("reviewState", profile.reviewState());
         profileSource.addProperty("catalogMode", profile.catalogMode());
         candidate.add("profileSource", profileSource);
-        candidate.add("qualityTerms", stringArray(profile.qualityTerms()));
         return candidate;
     }
 
     private static Set<String> allTerms(CityStructureProfileCatalog.StructureProfile profile) {
-        Set<String> terms = new LinkedHashSet<>(profile.semanticTerms());
+        Set<String> terms = new LinkedHashSet<>();
         terms.addAll(profile.functionTerms());
+        terms.addAll(profile.planningRoleTerms());
         terms.addAll(profile.styleTerms());
-        terms.addAll(profile.placementTerms());
-        terms.addAll(profile.usageTerms());
-        terms.addAll(profile.templateRoleTerms());
-        terms.addAll(profile.qualityTerms());
         return terms;
     }
 

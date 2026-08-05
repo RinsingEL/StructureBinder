@@ -7,6 +7,9 @@ import com.google.gson.JsonParser;
 import com.rinsing.geomantia.systems.city.domain.blueprint.CityBlueprint;
 import com.rinsing.geomantia.systems.city.domain.blueprint.CityBlueprintContractException;
 import com.rinsing.geomantia.systems.city.domain.blueprint.CityBlueprintReasonCode;
+import com.rinsing.geomantia.systems.city.application.landuse.LandUseTerrainFieldCodec;
+import com.rinsing.geomantia.systems.city.domain.landuse.LandUseTerrainField;
+import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
 import com.rinsing.geomantia.systems.city.infrastructure.json.CityJson;
 
 import java.io.IOException;
@@ -26,8 +29,8 @@ import java.util.Set;
 
 /** Prepares a read-only D4 decision context and accepts exactly one AI Blueprint submission per context. */
 public final class CityBlueprintService {
-    public static final String CONTEXT_SCHEMA = "city_blueprint_context.v0.2";
-    public static final String SNAPSHOT_SCHEMA = "city_blueprint_catalog_snapshot.v0.2";
+    public static final String CONTEXT_SCHEMA = "city_blueprint_context.v0.4";
+    public static final String SNAPSHOT_SCHEMA = "city_blueprint_catalog_snapshot.v0.5";
     public static final String REPORT_SCHEMA = "city_blueprint_validation_report.v0.2";
     public static final String TRACE_SCHEMA = "city_blueprint_submission_trace.v0.2";
 
@@ -35,8 +38,8 @@ public final class CityBlueprintService {
     private final CityBlueprintValidator validator = new CityBlueprintValidator();
 
     public JsonObject prepare(Path debugRoot, String runId, String cityId,
-                              JsonObject terraSenseProfileSource, JsonObject templateCatalogSource,
-                              JsonObject blueprintReferenceCatalog) throws IOException {
+                               JsonObject terraSenseProfileSource, JsonObject templateCatalogSource,
+                               JsonObject blueprintReferenceCatalog) throws IOException {
         Path runDir = requireRunDirectory(debugRoot, runId);
         JsonObject seed = loadCitySeed(runDir, cityId);
         Path d3Path = d3Path(runDir, cityId);
@@ -65,14 +68,24 @@ public final class CityBlueprintService {
                 blueprintReferenceCatalog, templateCatalog);
         requireStructureRefsInCatalog(references, structureCatalog);
 
+        Path terrainFieldPath = runDir.resolve("city_land_use_" + safe(cityId))
+                .resolve("land_use_terrain_field.json");
+        String terrainFieldRaw = requireFile(terrainFieldPath, "CITY_BLUEPRINT_TERRAIN_FIELD_NOT_FOUND");
+        LandUseTerrainField terrainField = new LandUseTerrainFieldCodec().fromJson(
+                parseObject(terrainFieldRaw, "CITY_BLUEPRINT_TERRAIN_FIELD_INVALID"));
+        validateTerrainField(cityId, d3, terrainField);
+
         Path outputDir = outputDirectory(runDir, cityId);
         Files.createDirectories(outputDir);
+        CityBlueprint.ArtifactRef terrainFieldRef = artifactRef(debugRoot, terrainFieldPath,
+                terrainField.schemaVersion(), terrainFieldRaw);
         Path snapshotPath = outputDir.resolve("city_blueprint_catalog_snapshot.json");
         JsonObject snapshot = new JsonObject();
         snapshot.addProperty("schemaVersion", SNAPSHOT_SCHEMA);
         snapshot.add("structureCatalog", structureCatalog.asJson());
         snapshot.add("templateCatalog", templateCatalogJson.deepCopy());
         snapshot.add("referenceCatalog", references.json().deepCopy());
+        snapshot.add("terrainFieldRef", artifactRefJson(terrainFieldRef));
         writeAtomic(snapshotPath, snapshot);
 
         CityBlueprint.ArtifactRef d3Ref = artifactRef(debugRoot, d3Path, string(d3, "schemaVersion"), d3Raw);
@@ -128,7 +141,11 @@ public final class CityBlueprintService {
         if (!CONTEXT_SCHEMA.equals(string(context, "schemaVersion"))
                 || !contextId.equals(string(context, "contextId"))
                 || !contextId.equals(contextIdentity(context))
-                || !cityId.equals(string(context, "cityId"))) {
+                || !cityId.equals(string(context, "cityId"))
+                || !context.has("catalogSnapshotRef")
+                || !context.get("catalogSnapshotRef").isJsonObject()
+                || !SNAPSHOT_SCHEMA.equals(string(context.getAsJsonObject("catalogSnapshotRef"),
+                "schemaVersion"))) {
             return failure(debugRoot, cityId, contextId, reportPath, tracePath,
                     CityBlueprintReasonCode.CITY_BLUEPRINT_CONTEXT_STALE, "$context",
                     "The submitted contextId is not the current prepared context.", false);
@@ -171,6 +188,23 @@ public final class CityBlueprintService {
                     "A frozen D3 or catalog snapshot artifact changed after context preparation.", true);
         }
         JsonObject snapshot = readObject(snapshotPath, CityBlueprintReasonCode.CITY_BLUEPRINT_CONTEXT_STALE);
+        if (!SNAPSHOT_SCHEMA.equals(string(snapshot, "schemaVersion"))) {
+            return failure(debugRoot, cityId, contextId, reportPath, tracePath,
+                    CityBlueprintReasonCode.CITY_BLUEPRINT_CONTEXT_STALE, "$.catalogSnapshot.schemaVersion",
+                    "Unsupported frozen catalog snapshot schema.", true);
+        }
+        if (!snapshotArtifactsCurrent(debugRoot, snapshot)) {
+            return failure(debugRoot, cityId, contextId, reportPath, tracePath,
+                    CityBlueprintReasonCode.CITY_BLUEPRINT_CONTEXT_STALE, "$.catalogSnapshot",
+                    "The frozen D3 terrain field artifact changed after context preparation.", true);
+        }
+        JsonObject structureCatalog = snapshot.getAsJsonObject("structureCatalog");
+        if (structureCatalog == null || !CityStructureProfileCatalog.SCHEMA_VERSION.equals(
+                string(structureCatalog, "schemaVersion"))) {
+            return failure(debugRoot, cityId, contextId, reportPath, tracePath,
+                    CityBlueprintReasonCode.CITY_BLUEPRINT_CONTEXT_STALE, "$.catalogSnapshot.structureCatalog",
+                    "Unsupported frozen structure semantic catalog schema.", true);
+        }
         CityTemplateCatalog templates = new CityTemplateCatalogLoader().load(snapshot.getAsJsonObject("templateCatalog"));
         CityBlueprintReferenceCatalog references = CityBlueprintReferenceCatalog.parse(
                 snapshot.getAsJsonObject("referenceCatalog"), templates);
@@ -316,6 +350,39 @@ public final class CityBlueprintService {
                         "$.structureRefs", "structureRef is not present in the frozen TerraSense catalog: " + ref);
             }
         }
+    }
+
+    private static void validateTerrainField(String cityId, JsonObject d3, LandUseTerrainField field) {
+        if (!cityId.equals(field.cityId())) {
+            throw new IllegalArgumentException("CITY_BLUEPRINT_TERRAIN_FIELD_CITY_MISMATCH: expected "
+                    + cityId + " but found " + field.cityId());
+        }
+        JsonObject grid = d3.has("grid") && d3.get("grid").isJsonObject()
+                ? d3.getAsJsonObject("grid") : new JsonObject();
+        int step = integer(grid, "cellStepBlocks", 0);
+        int minX = integer(grid, "originBlockX", 0);
+        int minZ = integer(grid, "originBlockZ", 0);
+        int cellsX = integer(grid, "cellsX", 0);
+        int cellsZ = integer(grid, "cellsZ", 0);
+        BlockBounds expected = new BlockBounds(minX, minZ,
+                minX + cellsX * step - 1, minZ + cellsZ * step - 1);
+        if (step <= 0 || cellsX <= 0 || cellsZ <= 0 || field.cellStepBlocks() != step
+                || !expected.equals(field.planningBounds())) {
+            throw new IllegalArgumentException("CITY_BLUEPRINT_TERRAIN_FIELD_GRID_MISMATCH");
+        }
+        if (field.cells().isEmpty()) {
+            throw new IllegalArgumentException("CITY_BLUEPRINT_TERRAIN_FIELD_EMPTY");
+        }
+    }
+
+    private static boolean snapshotArtifactsCurrent(Path debugRoot, JsonObject snapshot) throws IOException {
+        if (snapshot == null || !snapshot.has("terrainFieldRef")
+                || !snapshot.get("terrainFieldRef").isJsonObject()) {
+            return false;
+        }
+        CityBlueprint.ArtifactRef field = artifactRefFromJson(snapshot.getAsJsonObject("terrainFieldRef"));
+        return LandUseTerrainField.CURRENT_SCHEMA_VERSION.equals(field.schemaVersion())
+                && hashStillCurrent(debugRoot, field);
     }
 
     private static Set<String> patchRefs(JsonObject d3) {

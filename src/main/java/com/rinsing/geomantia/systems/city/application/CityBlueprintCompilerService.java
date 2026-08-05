@@ -5,9 +5,12 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.rinsing.geomantia.systems.city.domain.blueprint.CityBlueprint;
+import com.rinsing.geomantia.systems.city.application.landuse.LandUseTerrainFieldCodec;
+import com.rinsing.geomantia.systems.city.domain.landuse.LandUseTerrainField;
 import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
 import com.rinsing.geomantia.systems.city.domain.model.BlockPoint;
 import com.rinsing.geomantia.systems.city.domain.model.CityLandformReviewPackage;
+import com.rinsing.geomantia.systems.city.domain.model.CityScale;
 import com.rinsing.geomantia.systems.city.domain.model.LandformPatchSummary;
 import com.rinsing.geomantia.systems.city.domain.model.PatchMemberCell;
 import com.rinsing.geomantia.systems.city.infrastructure.json.CityJson;
@@ -31,8 +34,8 @@ import java.util.Set;
 
 /** Compiles an accepted, coordinate-free Blueprint into the existing fixed-template D4 anchor contract. */
 public final class CityBlueprintCompilerService {
-    public static final String TRACE_SCHEMA = "city_generation_compile_trace.v0.6";
-    public static final String EXTENT_SCHEMA = "group_extent_map.v0.6";
+    public static final String TRACE_SCHEMA = "city_generation_compile_trace.v0.9";
+    public static final String EXTENT_SCHEMA = "group_extent_map.v0.7";
     private static final int INTERNAL_MAX_ANCHORS_PER_GROUP = 256;
 
     private final CityBlueprintCodec codec = new CityBlueprintCodec();
@@ -71,19 +74,39 @@ public final class CityBlueprintCompilerService {
             throw fail("CITY_BLUEPRINT_STALE", "city_blueprint.json no longer matches its accepted submission trace.");
         }
         requireArtifactCurrent(debugRoot, requiredObject(context, "sourceD3Ref"), "CITY_BLUEPRINT_D3_STALE");
-        requireArtifactCurrent(debugRoot, requiredObject(context, "catalogSnapshotRef"),
+        JsonObject catalogSnapshotRef = requiredObject(context, "catalogSnapshotRef");
+        if (!CityBlueprintService.SNAPSHOT_SCHEMA.equals(string(catalogSnapshotRef, "schemaVersion"))) {
+            throw fail("CITY_BLUEPRINT_CATALOG_STALE", "Unsupported catalog snapshot reference schema.");
+        }
+        requireArtifactCurrent(debugRoot, catalogSnapshotRef,
                 "CITY_BLUEPRINT_CATALOG_STALE");
-        if (!snapshotPath.equals(resolveArtifact(debugRoot, requiredObject(context, "catalogSnapshotRef")))) {
+        if (!snapshotPath.equals(resolveArtifact(debugRoot, catalogSnapshotRef))) {
             throw fail("CITY_BLUEPRINT_CATALOG_STALE", "Context catalog snapshot path is not the active city snapshot.");
         }
 
         JsonObject snapshot = readObject(snapshotPath, "CITY_BLUEPRINT_CATALOG_STALE");
+        if (!CityBlueprintService.SNAPSHOT_SCHEMA.equals(string(snapshot, "schemaVersion"))) {
+            throw fail("CITY_BLUEPRINT_CATALOG_STALE", "Unsupported catalog snapshot schema.");
+        }
+        JsonObject semanticCatalogJson = requiredObject(snapshot, "structureCatalog");
+        if (!CityStructureProfileCatalog.SCHEMA_VERSION.equals(string(semanticCatalogJson, "schemaVersion"))) {
+            throw fail("CITY_BLUEPRINT_CATALOG_STALE", "Unsupported structure semantic catalog schema.");
+        }
+        JsonObject terrainFieldRef = requiredObject(snapshot, "terrainFieldRef");
+        if (!LandUseTerrainField.CURRENT_SCHEMA_VERSION.equals(string(terrainFieldRef, "schemaVersion"))) {
+            throw fail("CITY_BLUEPRINT_TERRAIN_FIELD_STALE", "Unsupported D3 terrain field schema.");
+        }
+        requireArtifactCurrent(debugRoot, terrainFieldRef, "CITY_BLUEPRINT_TERRAIN_FIELD_STALE");
+        LandUseTerrainField terrainField = new LandUseTerrainFieldCodec().fromJson(readObject(
+                resolveArtifact(debugRoot, terrainFieldRef), "CITY_BLUEPRINT_TERRAIN_FIELD_STALE"));
         JsonObject templateCatalogJson = requiredObject(snapshot, "templateCatalog");
         CityTemplateCatalog templates = new CityTemplateCatalogLoader().load(templateCatalogJson);
         CityBlueprintReferenceCatalog references = CityBlueprintReferenceCatalog.parse(
                 requiredObject(snapshot, "referenceCatalog"), templates);
         JsonObject d3Json = readObject(d3Path, "CITY_BLUEPRINT_D3_STALE");
         CityLandformReviewPackage review = CityLandformReviewPackage.fromJson(d3Json);
+        validateTerrainField(review, terrainField);
+        CityStructureTerrainGate terrainGate = new CityStructureTerrainGate(terrainField, semanticCatalogJson);
         CityBlueprint blueprint = codec.read(JsonParser.parseString(blueprintRaw).getAsJsonObject());
         CityBlueprint.ArtifactRef expectedD3 = artifactRef(requiredObject(context, "sourceD3Ref"));
         CityBlueprint.ArtifactRef expectedCatalog = artifactRef(requiredObject(context, "catalogSnapshotRef"));
@@ -127,14 +150,12 @@ public final class CityBlueprintCompilerService {
             BlockBounds planningBounds = new BlockBounds(review.grid().blockMinX(), review.grid().blockMinZ(),
                     review.grid().blockMaxX() - 1, review.grid().blockMaxZ() - 1);
             String algorithm = catalog.algorithm(group.algorithmProfileRef());
-            List<LandformPatchSummary> connectionPatches = planningPatches.stream()
-                    .filter(patch -> terrainAllowed(group.terrainPolicy(),
-                            patch.metricsSummary().meanSlope()))
-                    .toList();
+            List<LandformPatchSummary> connectionPatches = List.copyOf(planningPatches);
             states.put(group.groupId(), new GroupState(group, preferredPatches, connectionPatches,
                     review.grid().cellStepBlocks(), planningBounds, algorithm,
                     groupLayoutPlanner.parameters(algorithm, group.densityClass()),
-                    resolveConnectionConfiguration(group, catalog)));
+                    resolveConnectionConfiguration(group, catalog),
+                    minimumGroupStructureCount(review.targetScale().scale(), group.extentClass())));
         }
 
         ConnectivityPlan connectivityPlan = ConnectivityPlan.empty();
@@ -147,7 +168,7 @@ public final class CityBlueprintCompilerService {
                 ordinal++;
                 Placement placement = chooseOne(runDir, review, structureSource, templateCatalogJson,
                         templates, blueprint, state, structureRef, PlacementPhase.REQUIRED, ordinal,
-                        occupied, catalog, states, selections, null);
+                        occupied, catalog, states, selections, null, terrainGate);
                 if (placement == null) {
                     JsonObject failureTrace = trace(blueprint, context, selections, states,
                             connectivityPlan, "failed",
@@ -160,31 +181,14 @@ public final class CityBlueprintCompilerService {
             }
         }
 
-        states.values().forEach(GroupState::freezeCoreExtent);
-        connectivityPlan = buildConnectivityPlan(blueprint, states);
-        String connectivityFailure = growConnectivity(runDir, review, structureSource,
-                templateCatalogJson, templates, blueprint, states, occupied, anchors, selections,
-                catalog, connectivityPlan);
-        if (!connectivityFailure.isBlank()) {
-            JsonObject failureTrace = trace(blueprint, context, selections, states,
-                    connectivityPlan, "failed", "CITY_BLUEPRINT_CONNECTIVITY_NO_LEGAL_PATH");
-            return CompilationResult.failed(failureTrace,
-                    "CITY_BLUEPRINT_CONNECTIVITY_NO_LEGAL_PATH", connectivityFailure);
-        }
-
-        String hardRelationFailure = hardRelationFailure(blueprint.relations(), states);
-        if (!hardRelationFailure.isBlank()) {
-            JsonObject failureTrace = trace(blueprint, context, selections, states,
-                    connectivityPlan, "failed", "CITY_BLUEPRINT_HARD_RELATION_UNSATISFIED");
-            return CompilationResult.failed(failureTrace, "CITY_BLUEPRINT_HARD_RELATION_UNSATISFIED",
-                    hardRelationFailure);
-        }
-
+        // Form each group with its own array before connection growth. Connection structures are
+        // city stitching and must not substitute for the group's required/fill population.
         for (CityBlueprint.Group group : groups) {
             GroupState state = states.get(group.groupId());
             List<String> pool = catalog.pool(group.fillPoolRef());
             int cursor = 0;
-            while (state.spatialDemandBlocks() < state.targetAreaBlocks()) {
+            while (state.internalStructureCount() < state.minimumStructureCount()
+                    || state.internalSpatialDemandBlocks() < state.targetAreaBlocks()) {
                 if (state.anchorCount() >= INTERNAL_MAX_ANCHORS_PER_GROUP) {
                     JsonObject failureTrace = trace(blueprint, context, selections, states,
                             connectivityPlan, "failed",
@@ -200,7 +204,7 @@ public final class CityBlueprintCompilerService {
                 }
                 Placement placement = chooseOne(runDir, review, structureSource, templateCatalogJson,
                         templates, blueprint, state, structureRef, PlacementPhase.FILL,
-                        state.anchorCount() + 1, occupied, catalog, states, selections, null);
+                        state.anchorCount() + 1, occupied, catalog, states, selections, null, terrainGate);
                 if (placement == null) {
                     state.blockRef(structureRef);
                     if (state.blockedRefs().containsAll(pool)) {
@@ -212,9 +216,39 @@ public final class CityBlueprintCompilerService {
                 commit(placement, anchors, occupied, state);
             }
             if (state.stopReason().isBlank()) {
-                state.stop(state.spatialDemandBlocks() >= state.targetAreaBlocks()
+                state.stop(state.internalStructureCount() >= state.minimumStructureCount()
+                        && state.internalSpatialDemandBlocks() >= state.targetAreaBlocks()
                         ? "SPATIAL_BUDGET_REACHED" : "CONNECTED_SPACE_EXHAUSTED");
             }
+            if (state.internalStructureCount() < state.minimumStructureCount()) {
+                JsonObject failureTrace = trace(blueprint, context, selections, states,
+                        connectivityPlan, "failed", "CITY_BLUEPRINT_GROUP_MINIMUM_UNREACHABLE");
+                return CompilationResult.failed(failureTrace,
+                        "CITY_BLUEPRINT_GROUP_MINIMUM_UNREACHABLE",
+                        group.groupId() + " formed " + state.internalStructureCount()
+                                + " internal structures but requires at least "
+                                + state.minimumStructureCount() + ".");
+            }
+        }
+
+        states.values().forEach(GroupState::freezeCoreExtent);
+        connectivityPlan = buildConnectivityPlan(blueprint, states);
+        String connectivityFailure = growConnectivity(runDir, review, structureSource,
+                templateCatalogJson, templates, blueprint, states, occupied, anchors, selections,
+                catalog, connectivityPlan, terrainGate);
+        if (!connectivityFailure.isBlank()) {
+            JsonObject failureTrace = trace(blueprint, context, selections, states,
+                    connectivityPlan, "failed", "CITY_BLUEPRINT_CONNECTIVITY_NO_LEGAL_PATH");
+            return CompilationResult.failed(failureTrace,
+                    "CITY_BLUEPRINT_CONNECTIVITY_NO_LEGAL_PATH", connectivityFailure);
+        }
+
+        String hardRelationFailure = hardRelationFailure(blueprint.relations(), states);
+        if (!hardRelationFailure.isBlank()) {
+            JsonObject failureTrace = trace(blueprint, context, selections, states,
+                    connectivityPlan, "failed", "CITY_BLUEPRINT_HARD_RELATION_UNSATISFIED");
+            return CompilationResult.failed(failureTrace, "CITY_BLUEPRINT_HARD_RELATION_UNSATISFIED",
+                    hardRelationFailure);
         }
 
         refreshConnections(connectivityPlan, states);
@@ -270,10 +304,11 @@ public final class CityBlueprintCompilerService {
                                 PlacementPhase phase,
                                 int ordinal,
                                 JsonArray occupied,
-                                CatalogIndex catalog,
-                                Map<String, GroupState> states,
-                                JsonArray selections,
-                                GroupState connectivityTarget) throws IOException {
+                                 CatalogIndex catalog,
+                                 Map<String, GroupState> states,
+                                 JsonArray selections,
+                                 GroupState connectivityTarget,
+                                 CityStructureTerrainGate terrainGate) throws IOException {
         boolean required = phase == PlacementPhase.REQUIRED;
         List<CandidateChoice> choices = new ArrayList<>();
         JsonArray attempts = new JsonArray();
@@ -291,8 +326,11 @@ public final class CityBlueprintCompilerService {
             attempts.add(attempt);
             for (JsonElement element : array(candidateSet, "arrayCandidates")) {
                 JsonObject candidate = element.getAsJsonObject();
-                if (!candidateTerrainAllowed(candidate, state)) {
-                    increment(compilerFilterReasons, "TERRAIN_POLICY_UNSATISFIED");
+                TerrainCandidateEvaluation terrain = candidateTerrainEvaluation(candidate, state,
+                        structureRef, terrainGate);
+                if (!terrain.passed()) {
+                    increment(compilerFilterReasons, terrain.reasonCode());
+                    if (attempts.size() < 16) attempt.add("terrainGateRejection", terrain.trace());
                     continue;
                 }
                 ConnectivityFit connectivity = connectivityFit(candidate, state, states,
@@ -317,7 +355,7 @@ public final class CityBlueprintCompilerService {
                         template.templateId(), template.variantId(), string(candidate, "arrayCandidateId"));
                 choices.add(new CandidateChoice(candidate.deepCopy(), template,
                         requiredObject(plan, "blueprintLayout").deepCopy(), base, relationFit,
-                        connectivity, targetFit, total, tie));
+                        connectivity, terrain, targetFit, total, tie));
             }
         }
         choices.sort(Comparator.comparingDouble(CandidateChoice::total).reversed()
@@ -359,6 +397,7 @@ public final class CityBlueprintCompilerService {
         event.addProperty("stableTieKey", Long.toUnsignedString(chosen.tieKey()));
         event.add("scoreBreakdown", requiredObject(chosen.candidate(), "scoreBreakdown").deepCopy());
         event.add("collisionEnvelope", requiredObject(chosen.candidate(), "groupCollisionEnvelope").deepCopy());
+        event.add("terrainGateEvaluation", chosen.terrain().trace().deepCopy());
         selections.add(event);
         JsonArray selectedAnchors = array(requiredObject(chosen.candidate(), "expandedStructureAnchorPlan"),
                 "anchors");
@@ -383,6 +422,7 @@ public final class CityBlueprintCompilerService {
         anchor.addProperty("blueprintStructureRef", structureRef);
         anchor.addProperty("blueprintRequired", required);
         anchor.addProperty("blueprintPlacementPhase", phase.traceName);
+        anchor.addProperty("resolvedTerrainMode", chosen.terrain().resolvedTerrainMode());
         anchor.addProperty("selectionReason", "Programmatic CityBlueprint compiler selection");
         JsonObject layoutTrace = chosen.blueprintLayout().deepCopy();
         if (anchor.has("anchorBlock") && anchor.get("anchorBlock").isJsonObject()) {
@@ -522,9 +562,10 @@ public final class CityBlueprintCompilerService {
                                     Map<String, GroupState> states,
                                     JsonArray occupied,
                                     JsonArray anchors,
-                                    JsonArray selections,
-                                    CatalogIndex catalog,
-                                    ConnectivityPlan plan) throws IOException {
+                                     JsonArray selections,
+                                     CatalogIndex catalog,
+                                     ConnectivityPlan plan,
+                                     CityStructureTerrainGate terrainGate) throws IOException {
         for (ConnectivityLink link : plan.links) {
             GroupState first = states.get(link.fromGroupId);
             GroupState second = states.get(link.toGroupId);
@@ -539,13 +580,13 @@ public final class CityBlueprintCompilerService {
                 GroupState source = firstTurn ? first : second;
                 GroupState target = firstTurn ? second : first;
                 firstTurn = !firstTurn;
-                ConnectionBatch batch = chooseConnectivityBatch(runDir, review, structureSource,
+                ConnectionBatch batch = chooseConnectivityBatchWithFallback(runDir, review, structureSource,
                         templateCatalog, templates, blueprint, source, target, occupied, catalog,
-                        states, selections);
+                        states, selections, terrainGate);
                 if (batch == null) {
-                    batch = chooseConnectivityBatch(runDir, review, structureSource,
+                    batch = chooseConnectivityBatchWithFallback(runDir, review, structureSource,
                             templateCatalog, templates, blueprint, target, source, occupied, catalog,
-                            states, selections);
+                            states, selections, terrainGate);
                 }
                 if (batch == null) {
                     link.finalGapBlocks = nearestGap(first, second);
@@ -597,26 +638,32 @@ public final class CityBlueprintCompilerService {
                                                      CityBlueprint blueprint,
                                                      GroupState source,
                                                      GroupState target,
-                                                     JsonArray occupied,
-                                                     CatalogIndex catalog,
-                                                     Map<String, GroupState> states,
-                                                     JsonArray selections) throws IOException {
+                                                      JsonArray occupied,
+                                                      CatalogIndex catalog,
+                                                      Map<String, GroupState> states,
+                                                      JsonArray selections,
+                                                      CityStructureTerrainGate terrainGate,
+                                                      int requestedBatchSize) throws IOException {
         int available = INTERNAL_MAX_ANCHORS_PER_GROUP - source.anchorCount();
-        if (available < 2) return null;
+        if (available < 1) return null;
         ConnectionConfiguration configuration = source.connectionConfiguration();
         List<String> pool = catalog.pool(configuration.structurePoolRef());
         if (pool.isEmpty()) return null;
         CommittedArray focus = source.nearestArray(target);
         if (focus == null) return null;
-        int requested = Math.min(available, connectionBatchSize(configuration));
+        int requested = Math.min(available, Math.max(1, requestedBatchSize));
+        double remainingGap = nearestGap(source, target);
+        int terminalWindow = configuration.layoutParameters().landUseHandoffGapBlocks()
+                + configuration.layoutParameters().maximumEdgeGapBlocks();
+        boolean terminalBatch = remainingGap <= terminalWindow && requested == 1;
         List<ConnectionItem> connectionItems = connectionItems(blueprint, source, pool, catalog, requested);
-        if (connectionItems.size() < 2) return null;
+        if (connectionItems.isEmpty()) return null;
         String direction = connectionDirection(focus.bodyBounds(), target.bodyEnvelopes());
         String arrayId = source.group().groupId() + "_connectivity_array_"
                 + String.format("%03d", source.connectionBatchCount() + 1);
         JsonObject loopState = automaticLoopState(blueprint, templateCatalog, occupied);
         JsonObject request = automaticConnectionRequest(source, configuration, focus, direction,
-                arrayId, connectionItems);
+                arrayId, connectionItems, terminalBatch);
         JsonObject event = new JsonObject();
         event.addProperty("sequence", selections.size() + 1);
         event.addProperty("phase", PlacementPhase.CONNECTIVITY.traceName);
@@ -630,20 +677,24 @@ public final class CityBlueprintCompilerService {
         event.addProperty("direction", direction);
         event.add("resolvedConnectionPlan", configuration.asJson());
         event.add("semanticParameters", connectionParametersJson(configuration.parameters()));
-        event.addProperty("actualBodyGapMin", configuration.layoutParameters().targetEdgeGapBlocks());
+        event.addProperty("actualBodyGapMin", terminalBatch
+                ? 0 : configuration.layoutParameters().targetEdgeGapBlocks());
         event.addProperty("actualBodyGapMax", configuration.layoutParameters().maximumEdgeGapBlocks());
+        event.addProperty("requestedBatchSize", requested);
+        event.addProperty("terminalBatch", terminalBatch);
         try {
             CityStructureArrayLayoutLoopPlanner.ExpansionCandidateSetResult result =
                     continuousArrayPlanner.planExpansionCandidates(runDir, review, structureSource,
                             loopState, request);
             JsonArray candidates = array(result.candidateSet(), "arrayCandidates");
             List<AutomaticCandidate> legal = new ArrayList<>();
+            JsonArray terrainGateRejections = new JsonArray();
             double currentTargetGap = nearestGap(source, target);
             for (JsonElement element : candidates) {
                 if (!element.isJsonObject()) continue;
                 JsonObject candidate = element.getAsJsonObject();
                 AutomaticCandidate accepted = automaticCandidate(candidate, source, target,
-                        connectionItems, currentTargetGap);
+                        connectionItems, currentTargetGap, terrainGate, terrainGateRejections);
                 if (accepted != null) legal.add(accepted);
             }
             legal.sort(Comparator.comparingDouble(AutomaticCandidate::targetGapBlocks)
@@ -651,6 +702,7 @@ public final class CityBlueprintCompilerService {
                     .thenComparing(candidate -> string(candidate.candidate(), "candidateId")));
             event.addProperty("candidateCount", candidates.size());
             event.addProperty("legalCandidateCount", legal.size());
+            event.add("terrainGateRejections", terrainGateRejections);
             event.add("frontierSearchTrace", array(result.candidateSet(), "frontierSearchTrace").deepCopy());
             if (legal.isEmpty()) {
                 event.addProperty("status", "no_legal_candidate");
@@ -678,6 +730,49 @@ public final class CityBlueprintCompilerService {
             selections.add(event);
             return null;
         }
+    }
+
+    private ConnectionBatch chooseConnectivityBatchWithFallback(Path runDir,
+                                                                 CityLandformReviewPackage review,
+                                                                 JsonObject structureSource,
+                                                                 JsonObject templateCatalog,
+                                                                 CityTemplateCatalog templates,
+                                                                 CityBlueprint blueprint,
+                                                                 GroupState source,
+                                                                 GroupState target,
+                                                                 JsonArray occupied,
+                                                                 CatalogIndex catalog,
+                                                                 Map<String, GroupState> states,
+                                                                 JsonArray selections,
+                                                                 CityStructureTerrainGate terrainGate) throws IOException {
+        for (int batchSize : connectionBatchSizes(source, target)) {
+            ConnectionBatch batch = chooseConnectivityBatch(runDir, review, structureSource,
+                    templateCatalog, templates, blueprint, source, target, occupied, catalog,
+                    states, selections, terrainGate, batchSize);
+            if (batch != null) {
+                return batch;
+            }
+        }
+        return null;
+    }
+
+    private List<Integer> connectionBatchSizes(GroupState source, GroupState target) {
+        int available = INTERNAL_MAX_ANCHORS_PER_GROUP - source.anchorCount();
+        if (available < 1) {
+            return List.of();
+        }
+        ConnectionConfiguration configuration = source.connectionConfiguration();
+        int maximum = Math.min(available, connectionBatchSize(configuration));
+        int terminalWindow = configuration.layoutParameters().landUseHandoffGapBlocks()
+                + configuration.layoutParameters().maximumEdgeGapBlocks();
+        if (nearestGap(source, target) <= terminalWindow) {
+            return List.of(1);
+        }
+        List<Integer> sizes = new ArrayList<>();
+        for (int size = maximum; size >= 1; size--) {
+            sizes.add(size);
+        }
+        return List.copyOf(sizes);
     }
 
     private static int connectionBatchSize(ConnectionConfiguration configuration) {
@@ -709,18 +804,18 @@ public final class CityBlueprintCompilerService {
                                                   CommittedArray focus,
                                                   String direction,
                                                   String arrayId,
-                                                  List<ConnectionItem> items) {
+                                                  List<ConnectionItem> items,
+                                                  boolean terminalBatch) {
         JsonObject request = new JsonObject();
         request.addProperty("candidateCount", 5);
-        request.addProperty("minCandidateCount", 2);
-        request.addProperty("preserveBlueprintTerrainPolicy", true);
+        request.addProperty("structureTerrainGateOwnsLegality", true);
         JsonObject focusRef = new JsonObject();
         focusRef.addProperty("arrayId", focus.arrayId());
         request.add("focusRef", focusRef);
         request.addProperty("direction", direction);
         JsonObject policy = new JsonObject();
-        policy.addProperty("actualBodyGapMin",
-                configuration.layoutParameters().targetEdgeGapBlocks());
+        policy.addProperty("actualBodyGapMin", terminalBatch
+                ? 0 : configuration.layoutParameters().targetEdgeGapBlocks());
         policy.addProperty("actualBodyGapMax",
                 configuration.layoutParameters().maximumEdgeGapBlocks());
         policy.addProperty("frontierExpansionStepBlocks", 4);
@@ -790,7 +885,9 @@ public final class CityBlueprintCompilerService {
 
     private AutomaticCandidate automaticCandidate(JsonObject candidate, GroupState source,
                                                    GroupState target, List<ConnectionItem> connectionItems,
-                                                   double currentTargetGap) {
+                                                   double currentTargetGap,
+                                                   CityStructureTerrainGate terrainGate,
+                                                   JsonArray terrainGateRejections) {
         JsonArray anchors = array(candidate, "anchors");
         JsonArray items = array(candidate, "items");
         if (anchors.size() != connectionItems.size() || items.size() != connectionItems.size()) return null;
@@ -800,11 +897,17 @@ public final class CityBlueprintCompilerService {
             if (!anchors.get(index).isJsonObject() || !items.get(index).isJsonObject()) return null;
             JsonObject anchor = anchors.get(index).getAsJsonObject().deepCopy();
             JsonObject item = items.get(index).getAsJsonObject();
-            if (!anchorTerrainAllowed(anchor, source)) return null;
             JsonObject collisionJson = requiredObject(item, "estimatedCollisionEnvelope").deepCopy();
             BlockBounds collision = bounds(collisionJson);
-            candidateUnion = union(candidateUnion, collision);
             ConnectionItem connection = connectionItems.get(index);
+            TerrainCandidateEvaluation terrain = anchorTerrainEvaluation(anchor, collision, source,
+                    connection.structureRef(), terrainGate);
+            if (!terrain.passed()) {
+                if (terrainGateRejections.size() < 16) terrainGateRejections.add(terrain.trace());
+                return null;
+            }
+            anchor.addProperty("resolvedTerrainMode", terrain.resolvedTerrainMode());
+            candidateUnion = union(candidateUnion, collision);
             anchor.addProperty("anchorId", source.group().groupId() + "_connectivity_"
                     + String.format("%03d", source.anchorCount() + index + 1));
             anchor.addProperty("placementGroupId", source.group().groupId());
@@ -835,17 +938,6 @@ public final class CityBlueprintCompilerService {
         if (nearestTarget == null || nearestTarget.gapBlocks() >= currentTargetGap) return null;
         return new AutomaticCandidate(candidate.deepCopy(), List.copyOf(placements),
                 nearestTarget.gapBlocks(), doubleValue(candidate, "score", 0.0));
-    }
-
-    private static boolean anchorTerrainAllowed(JsonObject anchor, GroupState state) {
-        JsonArray sourcePatchIds = array(anchor, "sourcePatchIds");
-        if (sourcePatchIds.isEmpty()) return false;
-        for (JsonElement patchId : sourcePatchIds) {
-            LandformPatchSummary patch = state.patchByRef().get(patchId.getAsString());
-            if (patch != null && terrainAllowed(state.group().terrainPolicy(),
-                    patch.metricsSummary().meanSlope())) return true;
-        }
-        return false;
     }
 
     private static String connectionDirection(BlockBounds focusBody, List<BlockBounds> targetBodies) {
@@ -1249,20 +1341,42 @@ public final class CityBlueprintCompilerService {
         if (!key.isBlank()) counts.addProperty(key, intValue(counts, key, 0) + 1);
     }
 
-    private static boolean candidateTerrainAllowed(JsonObject candidate, GroupState state) {
+    private static TerrainCandidateEvaluation candidateTerrainEvaluation(JsonObject candidate, GroupState state,
+                                                                          String structureRef,
+                                                                          CityStructureTerrainGate terrainGate) {
         JsonArray anchors = array(requiredObject(candidate, "expandedStructureAnchorPlan"), "anchors");
-        if (anchors.isEmpty() || !anchors.get(0).isJsonObject()) return false;
-        JsonArray sourcePatchIds = array(anchors.get(0).getAsJsonObject(), "sourcePatchIds");
-        if (sourcePatchIds.isEmpty()) {
-            return state.patches().stream().anyMatch(patch -> terrainAllowed(
-                    state.group().terrainPolicy(), patch.metricsSummary().meanSlope()));
+        if (anchors.isEmpty() || !anchors.get(0).isJsonObject()) {
+            return TerrainCandidateEvaluation.rejected("CITY_STRUCTURE_TERRAIN_ANCHOR_MISSING",
+                    structureRef, new JsonObject());
         }
+        BlockBounds footprint = bounds(requiredObject(candidate, "groupCollisionEnvelope"));
+        return anchorTerrainEvaluation(anchors.get(0).getAsJsonObject(), footprint, state,
+                structureRef, terrainGate);
+    }
+
+    private static TerrainCandidateEvaluation anchorTerrainEvaluation(JsonObject anchor, BlockBounds footprint,
+                                                                       GroupState state, String structureRef,
+                                                                       CityStructureTerrainGate terrainGate) {
+        JsonArray sourcePatchIds = array(anchor, "sourcePatchIds");
+        JsonArray patchPreferences = new JsonArray();
         for (JsonElement element : sourcePatchIds) {
             LandformPatchSummary patch = state.patchByRef().get(element.getAsString());
-            if (patch != null && terrainAllowed(state.group().terrainPolicy(),
-                    patch.metricsSummary().meanSlope())) return true;
+            if (patch == null) continue;
+            JsonObject preference = new JsonObject();
+            preference.addProperty("patchRef", patch.landformPatchId());
+            preference.addProperty("meanSlope", patch.metricsSummary().meanSlope());
+            preference.addProperty("preferredByGroupTerrainPolicy",
+                    terrainAllowed(state.group().terrainPolicy(), patch.metricsSummary().meanSlope()));
+            patchPreferences.add(preference);
         }
-        return false;
+        CityStructureTerrainGate.Evaluation evaluation = terrainGate.evaluate(structureRef, footprint);
+        JsonObject trace = evaluation.trace().deepCopy();
+        trace.addProperty("groupTerrainPolicy", state.group().terrainPolicy().name());
+        trace.addProperty("groupTerrainPolicyRole", "ranking_preference_only");
+        trace.add("sourcePatchPreferences", patchPreferences);
+        return evaluation.passed()
+                ? new TerrainCandidateEvaluation(true, "", evaluation.resolvedTerrainMode(), trace)
+                : TerrainCandidateEvaluation.rejected(evaluation.reasonCode(), structureRef, trace);
     }
 
     private static ConnectivityFit connectivityFit(JsonObject candidate, GroupState state,
@@ -1494,6 +1608,9 @@ public final class CityBlueprintCompilerService {
         trace.addProperty("manualCandidateSelectionCount", 0);
         trace.add("sourceD3Ref", requiredObject(context, "sourceD3Ref").deepCopy());
         trace.add("catalogSnapshotRef", requiredObject(context, "catalogSnapshotRef").deepCopy());
+        JsonObject frozenSnapshot = requiredObject(context, "catalogSnapshot");
+        trace.add("terrainFieldRef", requiredObject(frozenSnapshot, "terrainFieldRef").deepCopy());
+        trace.addProperty("terrainGateEvaluationScope", "all_intersecting_terrain_field_cells");
         trace.add("selections", selections.deepCopy());
         trace.add("connectivityPlan", connectivityPlan.asJson());
         JsonArray groupResults = new JsonArray();
@@ -1573,6 +1690,32 @@ public final class CityBlueprintCompilerService {
         };
     }
 
+    static int minimumGroupStructureCount(CityScale cityScale,
+                                          CityBlueprint.ExtentClass extentClass) {
+        return switch (cityScale) {
+            case HAMLET -> switch (extentClass) {
+                case SMALL -> 2;
+                case MEDIUM -> 3;
+                case LARGE -> 4;
+            };
+            case VILLAGE -> switch (extentClass) {
+                case SMALL -> 3;
+                case MEDIUM -> 4;
+                case LARGE -> 6;
+            };
+            case TOWN -> switch (extentClass) {
+                case SMALL -> 3;
+                case MEDIUM -> 6;
+                case LARGE -> 9;
+            };
+            case CITY -> switch (extentClass) {
+                case SMALL -> 4;
+                case MEDIUM -> 8;
+                case LARGE -> 12;
+            };
+        };
+    }
+
     private static int priorityRank(CityBlueprint.GroupPriority priority) {
         return switch (priority) {
             case CORE -> 0;
@@ -1588,6 +1731,17 @@ public final class CityBlueprintCompilerService {
             case ASSERTIVE -> 18.0;
         };
         return meanSlope <= maximum;
+    }
+
+    private static void validateTerrainField(CityLandformReviewPackage review, LandUseTerrainField field) {
+        BlockBounds expected = new BlockBounds(review.grid().blockMinX(), review.grid().blockMinZ(),
+                review.grid().blockMaxX() - 1, review.grid().blockMaxZ() - 1);
+        if (!review.cityId().equals(field.cityId())
+                || review.grid().cellStepBlocks() != field.cellStepBlocks()
+                || !expected.equals(field.planningBounds()) || field.cells().isEmpty()) {
+            throw fail("CITY_BLUEPRINT_TERRAIN_FIELD_STALE",
+                    "Frozen D3 terrain field identity does not match the D3 review grid.");
+        }
     }
 
     private static String pattern(String algorithm) {
@@ -1752,9 +1906,21 @@ public final class CityBlueprintCompilerService {
                              boolean required, PlacementPhase phase, ConnectivityFit connectivity) {
     }
 
+    private record TerrainCandidateEvaluation(boolean passed, String reasonCode,
+                                              String resolvedTerrainMode, JsonObject trace) {
+        static TerrainCandidateEvaluation rejected(String reasonCode, String structureRef, JsonObject trace) {
+            JsonObject value = trace.deepCopy();
+            if (!value.has("structureRef")) value.addProperty("structureRef", structureRef);
+            if (!value.has("status")) value.addProperty("status", "rejected");
+            if (!value.has("reasonCode")) value.addProperty("reasonCode", reasonCode);
+            return new TerrainCandidateEvaluation(false, reasonCode, "", value);
+        }
+    }
+
     private record CandidateChoice(JsonObject candidate, TemplateCandidate template,
                                    JsonObject blueprintLayout, double baseScore,
-                                   double relationFit, ConnectivityFit connectivity, double targetFit,
+                                   double relationFit, ConnectivityFit connectivity,
+                                   TerrainCandidateEvaluation terrain, double targetFit,
                                    double total, long tieKey) {
     }
 
@@ -2011,6 +2177,7 @@ public final class CityBlueprintCompilerService {
         private final String layoutAlgorithm;
         private final CityBlueprintGroupLayoutPlanner.Parameters layoutParameters;
         private final ConnectionConfiguration connectionConfiguration;
+        private final int minimumStructureCount;
         private final Set<String> blockedRefs = new LinkedHashSet<>();
         private final Set<String> claimedPatchRefs = new LinkedHashSet<>();
         private final Map<String, Integer> structureCounts = new LinkedHashMap<>();
@@ -2036,7 +2203,8 @@ public final class CityBlueprintCompilerService {
                            List<LandformPatchSummary> connectionPatches,
                            int patchStepBlocks, BlockBounds planningBounds, String layoutAlgorithm,
                            CityBlueprintGroupLayoutPlanner.Parameters layoutParameters,
-                           ConnectionConfiguration connectionConfiguration) {
+                           ConnectionConfiguration connectionConfiguration,
+                           int minimumStructureCount) {
             this.group = group;
             this.patches = List.copyOf(patches);
             this.connectionPatches = List.copyOf(connectionPatches);
@@ -2049,6 +2217,7 @@ public final class CityBlueprintCompilerService {
             this.layoutAlgorithm = layoutAlgorithm;
             this.layoutParameters = layoutParameters;
             this.connectionConfiguration = connectionConfiguration;
+            this.minimumStructureCount = minimumStructureCount;
         }
 
         CityBlueprint.Group group() { return group; }
@@ -2063,8 +2232,11 @@ public final class CityBlueprintCompilerService {
         CityBlueprintGroupLayoutPlanner.Frame layoutFrame() { return layoutFrame; }
         int anchorCount() { return anchorCount; }
         int requiredCount() { return requiredCount; }
+        int minimumStructureCount() { return minimumStructureCount; }
+        int internalStructureCount() { return anchorCount - connectionStructureCount; }
         int targetAreaBlocks() { return extentTargetArea(group.extentClass()); }
         int spatialDemandBlocks() { return spatialDemandBlocks; }
+        int internalSpatialDemandBlocks() { return spatialDemandBlocks - connectionSpatialDemandBlocks; }
         String stopReason() { return stopReason; }
         Set<String> blockedRefs() { return blockedRefs; }
         List<BlockBounds> envelopes() { return List.copyOf(envelopes); }
@@ -2161,8 +2333,13 @@ public final class CityBlueprintCompilerService {
             value.addProperty("extentExpandedForConnectivity", extentExpandedForConnectivity);
             value.addProperty("actualStructureCount", anchorCount);
             value.addProperty("requiredStructureCount", requiredCount);
+            value.addProperty("derivedMinimumStructureCount", minimumStructureCount);
+            value.addProperty("internalStructureCount", internalStructureCount());
+            value.addProperty("minimumStructureCountReached",
+                    internalStructureCount() >= minimumStructureCount);
             value.addProperty("builtCollisionAreaBlocks", builtCollisionAreaBlocks);
             value.addProperty("actualSpatialDemandBlocks", spatialDemandBlocks);
+            value.addProperty("internalSpatialDemandBlocks", internalSpatialDemandBlocks());
             value.addProperty("estimatedCoverageRatio", spatialDemandBlocks == 0 ? 0.0
                     : builtCollisionAreaBlocks / (double) spatialDemandBlocks);
             value.addProperty("stopReason", stopReason);
