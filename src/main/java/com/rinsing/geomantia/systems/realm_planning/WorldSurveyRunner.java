@@ -18,6 +18,7 @@ import com.rinsing.geomantia.systems.gis.domain.landform.LandformPatch;
 import com.rinsing.geomantia.systems.gis.domain.region.AtlasRegion;
 import com.rinsing.geomantia.systems.gis.domain.region.AtlasRegionStore;
 import com.rinsing.geomantia.systems.gis.preview.AtlasJson;
+import com.rinsing.geomantia.systems.realm_planning.application.terrain.TerrainSamplingProvenance;
 import com.mojang.logging.LogUtils;
 import org.slf4j.Logger;
 
@@ -163,6 +164,7 @@ public final class WorldSurveyRunner {
                     bounds.gridWidth,
                     bounds.gridHeight,
                     normalized.sampleMode,
+                    normalized.terrainProvider,
                     regions,
                     patches,
                     micro.features,
@@ -258,6 +260,9 @@ public final class WorldSurveyRunner {
         }
 
         SampleMode sampleMode = SampleMode.fromContractName(stringValue(configJson, "sampleMode", SampleMode.PRIOR.contractName()));
+        TerrainSamplingProvenance terrainProvider = TerrainSamplingProvenance.fromJson(
+                configJson.has("terrainProvider") && configJson.get("terrainProvider").isJsonObject()
+                        ? configJson.getAsJsonObject("terrainProvider") : null);
         return new WorldSurveyResult(
                 stringValue(manifest, "runId", normalizedRunId),
                 stringValue(manifest, "surveyId", "survey_" + normalizedRunId),
@@ -282,6 +287,7 @@ public final class WorldSurveyRunner {
                 intValue(gridJson, "width", 0),
                 intValue(gridJson, "height", 0),
                 sampleMode,
+                terrainProvider,
                 regions,
                 patches,
                 micro.features,
@@ -307,7 +313,9 @@ public final class WorldSurveyRunner {
                 sampleConfig.dependencyMarginCells(), sampleConfig.cellStepBlocks(), tile.sampleMode,
                 RefreshPriority.DEBUG, sampleConfig.budgetCellsPerBatch());
         AtlasRegion region = new AtlasRegion(tile.dimensionId, tile.regionX, tile.regionZ, sampleConfig);
-        RefreshResult result = service.run(job, region, snapshotPath.getParent().resolve("debug_" + tile.regionX + "_" + tile.regionZ));
+        RefreshResult result = service.run(job, region,
+                snapshotPath.getParent().resolve("debug_" + tile.regionX + "_" + tile.regionZ),
+                GisRefreshService.ArtifactMode.NONE);
         snapshotIo.write(result.region(), snapshotPath);
         writeCacheMeta(snapshotPath, configHash);
         return TileManifest.scanned(tile, snapshotPath, result.region(), configHash);
@@ -577,6 +585,7 @@ public final class WorldSurveyRunner {
         stats.addProperty("configHash", result.configHash());
         stats.addProperty("averageTileDurationMs", averageTileDurationMs(tiles));
         stats.addProperty("maxTileDurationMs", maxTileDurationMs(tiles));
+        stats.add("terrainProvider", config.terrainProvider.asJson());
         json.add("stats", stats);
         JsonArray tileArray = new JsonArray();
         for (TileManifest tile : tiles) {
@@ -656,8 +665,18 @@ public final class WorldSurveyRunner {
             int microSampleStrideBlocks,
             int localSlopeRadiusBlocks,
             SampleMode sampleMode,
-            ResumePolicy resumePolicy
+            ResumePolicy resumePolicy,
+            TerrainSamplingProvenance terrainProvider
     ) {
+        public Config(String runId, String dimensionId, String worldSeed, double worldBorderSizeBlocks,
+                int centerBlockX, int centerBlockZ, int planningRadiusBlocks, int cellStepBlocks,
+                int microSampleStrideBlocks, int localSlopeRadiusBlocks, SampleMode sampleMode,
+                ResumePolicy resumePolicy) {
+            this(runId, dimensionId, worldSeed, worldBorderSizeBlocks, centerBlockX, centerBlockZ,
+                    planningRadiusBlocks, cellStepBlocks, microSampleStrideBlocks, localSlopeRadiusBlocks,
+                    sampleMode, resumePolicy, TerrainSamplingProvenance.currentAtlasSampler());
+        }
+
         Config normalized() {
             String id = runId == null || runId.isBlank()
                     ? "realm_w_" + Long.toUnsignedString(System.currentTimeMillis(), 36)
@@ -671,8 +690,11 @@ public final class WorldSurveyRunner {
             int slopeRadius = localSlopeRadiusBlocks > 0 ? localSlopeRadiusBlocks : DEFAULT_LOCAL_SLOPE_RADIUS_BLOCKS;
             SampleMode mode = sampleMode == null ? SampleMode.PRIOR : sampleMode;
             ResumePolicy resume = resumePolicy == null ? ResumePolicy.USE_CACHE : resumePolicy;
+            TerrainSamplingProvenance provider = terrainProvider == null
+                    ? TerrainSamplingProvenance.currentAtlasSampler() : terrainProvider;
             return new Config(safeId(id), dimension, worldSeed == null || worldSeed.isBlank() ? "unknown" : worldSeed,
-                    worldBorderSizeBlocks, centerBlockX, centerBlockZ, radius, step, microStride, slopeRadius, mode, resume);
+                    worldBorderSizeBlocks, centerBlockX, centerBlockZ, radius, step, microStride, slopeRadius, mode,
+                    resume, provider);
         }
 
         JsonObject asJson() {
@@ -692,6 +714,8 @@ public final class WorldSurveyRunner {
             json.addProperty("adaptiveSampling", false);
             json.addProperty("sampleMode", sampleMode.contractName());
             json.addProperty("resumePolicy", resumePolicy.contractName());
+            json.addProperty("preferGeneratorNativeTerrain", terrainProvider.generatorNativeRequested());
+            json.add("terrainProvider", terrainProvider.asJson());
             return json;
         }
 
@@ -706,6 +730,7 @@ public final class WorldSurveyRunner {
                     Integer.toString(microSampleStrideBlocks),
                     Integer.toString(localSlopeRadiusBlocks),
                     sampleMode.contractName(),
+                    terrainProvider.cacheIdentity(),
                     Integer.toString(bounds.minBlockX),
                     Integer.toString(bounds.minBlockZ),
                     Integer.toString(bounds.maxBlockX),

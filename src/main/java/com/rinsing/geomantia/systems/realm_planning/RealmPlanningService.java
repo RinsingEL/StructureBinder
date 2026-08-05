@@ -1385,20 +1385,63 @@ public final class RealmPlanningService {
     private void rebalanceAreaQuotas(RealmRun run, List<RealmProfile> profiles, Map<String, WorldCell> landByKey,
             Map<String, String> ownership, Map<String, Integer> quotas, List<TerritoryRepair> repairs) {
         Map<String, RealmProfile> profilesById = new LinkedHashMap<>();
+        Map<String, Integer> profileOrder = new LinkedHashMap<>();
+        int profileIndex = 0;
         for (RealmProfile profile : profiles) {
             profilesById.put(profile.realmId, profile);
+            profileOrder.put(profile.realmId, profileIndex++);
         }
+        Map<String, Integer> cellOrder = new LinkedHashMap<>();
+        int cellIndex = 0;
+        for (String cellKey : landByKey.keySet()) {
+            cellOrder.put(cellKey, cellIndex++);
+        }
+        Comparator<RebalanceCandidate> candidateOrder = Comparator
+                .comparingDouble(RebalanceCandidate::score)
+                .thenComparingInt(candidate -> profileOrder.getOrDefault(candidate.receiverRealmId, Integer.MAX_VALUE))
+                .thenComparingInt(candidate -> cellOrder.getOrDefault(candidate.cellKey, Integer.MAX_VALUE));
+        Map<String, Integer> counts = territoryCounts(profiles, ownership);
         int changed = 0;
-        int maxIterations = Math.max(1, landByKey.size() * 4);
-        for (int i = 0; i < maxIterations; i++) {
-            Map<String, Integer> counts = territoryCounts(profiles, ownership);
-            RebalanceCandidate candidate = bestRebalanceCandidate(run, profiles, profilesById, landByKey, ownership,
-                    counts, quotas);
-            if (candidate == null) {
+        int maxMoves = Math.max(1, landByKey.size() * 4);
+        int maxPasses = Math.max(2, Math.min(16, profiles.size() + 2));
+        for (int pass = 0; pass < maxPasses && changed < maxMoves; pass++) {
+            PriorityQueue<RebalanceCandidate> candidates = new PriorityQueue<>(candidateOrder);
+            for (WorldCell cell : landByKey.values()) {
+                enqueueRebalanceCandidates(run, profilesById, cell, ownership, counts, quotas, candidates);
+            }
+            int changedThisPass = 0;
+            while (!candidates.isEmpty() && changed < maxMoves) {
+                RebalanceCandidate queued = candidates.poll();
+                RebalanceCandidate current = rebalanceCandidate(run, profilesById, landByKey, ownership, counts,
+                        quotas, queued.cellKey, queued.receiverRealmId);
+                if (current == null) {
+                    continue;
+                }
+                if (Double.compare(current.score, queued.score) != 0
+                        || !current.donorRealmId.equals(queued.donorRealmId)) {
+                    candidates.add(current);
+                    continue;
+                }
+                WorldCell cell = landByKey.get(current.cellKey);
+                if (cell == null || !canReleaseCellWithoutDisconnecting(current.donorRealmId, cell, ownership)) {
+                    continue;
+                }
+                ownership.put(current.cellKey, current.receiverRealmId);
+                counts.put(current.donorRealmId, counts.getOrDefault(current.donorRealmId, 0) - 1);
+                counts.put(current.receiverRealmId, counts.getOrDefault(current.receiverRealmId, 0) + 1);
+                changed++;
+                changedThisPass++;
+                enqueueRebalanceCandidates(run, profilesById, cell, ownership, counts, quotas, candidates);
+                for (int[] offset : DIRECTIONS) {
+                    WorldCell neighbor = landByKey.get(key(cell.gridX + offset[0], cell.gridZ + offset[1]));
+                    if (neighbor != null) {
+                        enqueueRebalanceCandidates(run, profilesById, neighbor, ownership, counts, quotas, candidates);
+                    }
+                }
+            }
+            if (changedThisPass == 0) {
                 break;
             }
-            ownership.put(candidate.cellKey, candidate.receiverRealmId);
-            changed++;
         }
         if (changed > 0) {
             repairs.add(new TerritoryRepair("quota_rebalanced", "all",
@@ -1419,48 +1462,68 @@ public final class RealmPlanningService {
         return counts;
     }
 
-    private RebalanceCandidate bestRebalanceCandidate(RealmRun run, List<RealmProfile> profiles,
-            Map<String, RealmProfile> profilesById,
-            Map<String, WorldCell> landByKey, Map<String, String> ownership, Map<String, Integer> counts,
-            Map<String, Integer> quotas) {
-        RebalanceCandidate best = null;
-        for (RealmProfile receiverProfile : profiles) {
-            String receiver = receiverProfile.realmId;
-            int receiverQuota = Math.max(1, quotas.getOrDefault(receiver, 1));
-            int receiverCount = counts.getOrDefault(receiver, 0);
-            if (receiverCount >= Math.ceil(receiverQuota * 1.2)) {
-                continue;
-            }
-            RealmSeed receiverSeed = run.seeds.get(receiver);
-            if (receiverSeed == null) {
-                continue;
-            }
-            double receiverDeficit = (receiverQuota - receiverCount) / (double) receiverQuota;
-            for (WorldCell cell : landByKey.values()) {
-                String cellKey = key(cell.gridX, cell.gridZ);
-                String donor = ownership.get(cellKey);
-                if (donor == null || donor.equals(receiver)) {
-                    continue;
-                }
-                int donorQuota = Math.max(1, quotas.getOrDefault(donor, 1));
-                if (counts.getOrDefault(donor, 0) <= donorQuota || isSeedCell(run, donor, cell)) {
-                    continue;
-                }
-                if (!hasOwnedNeighbor(cell, receiver, ownership)) {
-                    continue;
-                }
-                if (!canReleaseCellWithoutDisconnecting(donor, cell, ownership)) {
-                    continue;
-                }
-                double donorExcess = (counts.getOrDefault(donor, 0) - donorQuota) / (double) donorQuota;
-                double score = expansionCost(receiverProfile, receiverSeed, cell) - donorExcess * 4.0
-                        - receiverDeficit * 8.0;
-                if (best == null || score < best.score) {
-                    best = new RebalanceCandidate(cellKey, receiver, donor, score);
-                }
+    private void enqueueRebalanceCandidates(RealmRun run, Map<String, RealmProfile> profilesById, WorldCell cell,
+            Map<String, String> ownership, Map<String, Integer> counts, Map<String, Integer> quotas,
+            PriorityQueue<RebalanceCandidate> candidates) {
+        String cellKey = key(cell.gridX, cell.gridZ);
+        String donor = ownership.get(cellKey);
+        if (donor == null) {
+            return;
+        }
+        Set<String> adjacentOwners = new LinkedHashSet<>();
+        for (int[] offset : DIRECTIONS) {
+            String owner = ownership.get(key(cell.gridX + offset[0], cell.gridZ + offset[1]));
+            if (owner != null && !donor.equals(owner)) {
+                adjacentOwners.add(owner);
             }
         }
-        return best;
+        for (String receiver : adjacentOwners) {
+            RebalanceCandidate candidate = rebalanceCandidate(run, profilesById, null, ownership, counts, quotas,
+                    cellKey, receiver);
+            if (candidate != null) {
+                candidates.add(candidate);
+            }
+        }
+    }
+
+    private RebalanceCandidate rebalanceCandidate(RealmRun run, Map<String, RealmProfile> profilesById,
+            Map<String, WorldCell> landByKey, Map<String, String> ownership, Map<String, Integer> counts,
+            Map<String, Integer> quotas, String cellKey, String receiver) {
+        String donor = ownership.get(cellKey);
+        if (donor == null || donor.equals(receiver)) {
+            return null;
+        }
+        RealmProfile receiverProfile = profilesById.get(receiver);
+        RealmSeed receiverSeed = run.seeds.get(receiver);
+        if (receiverProfile == null || receiverSeed == null) {
+            return null;
+        }
+        int receiverQuota = Math.max(1, quotas.getOrDefault(receiver, 1));
+        int receiverCount = counts.getOrDefault(receiver, 0);
+        // A quota repair must strictly reduce total area error; otherwise border cells can oscillate forever.
+        if (receiverCount >= receiverQuota) {
+            return null;
+        }
+        int donorQuota = Math.max(1, quotas.getOrDefault(donor, 1));
+        if (counts.getOrDefault(donor, 0) <= donorQuota) {
+            return null;
+        }
+        WorldCell cell = landByKey == null ? null : landByKey.get(cellKey);
+        if (cell == null) {
+            cell = worldCellFromKey(run, cellKey);
+        }
+        if (cell == null || isSeedCell(run, donor, cell) || !hasOwnedNeighbor(cell, receiver, ownership)) {
+            return null;
+        }
+        double receiverDeficit = (receiverQuota - receiverCount) / (double) receiverQuota;
+        double donorExcess = (counts.getOrDefault(donor, 0) - donorQuota) / (double) donorQuota;
+        double score = expansionCost(receiverProfile, receiverSeed, cell) - donorExcess * 4.0
+                - receiverDeficit * 8.0;
+        return new RebalanceCandidate(cellKey, receiver, donor, score);
+    }
+
+    private WorldCell worldCellFromKey(RealmRun run, String cellKey) {
+        return run.worldCellsByKey.get(cellKey);
     }
 
     private boolean canReleaseCellWithoutDisconnecting(String donor, WorldCell cell, Map<String, String> ownership) {
@@ -2692,6 +2755,7 @@ public final class RealmPlanningService {
         source.addProperty("sampleMode", run.surveyResult.sampleMode().contractName());
         source.addProperty("sourceType", run.surveyResult.tileCount() == 1 ? "single_region_refresh" : "world_survey_tiles");
         source.addProperty("microSamplingImplemented", run.surveyResult.microSamplingImplemented());
+        source.add("terrainProvider", run.surveyResult.terrainProvider().asJson());
         if (Files.exists(run.surveyResult.manifestPath())) {
             source.addProperty("worldSurveyManifest", run.surveyResult.manifestPath().toAbsolutePath().toString());
         }
@@ -2767,6 +2831,7 @@ public final class RealmPlanningService {
         stats.addProperty("microSampleCount", result.microSampleCount());
         stats.addProperty("adaptiveSampling", false);
         stats.addProperty("configHash", result.configHash());
+        stats.add("terrainProvider", result.terrainProvider().asJson());
         return stats;
     }
 
