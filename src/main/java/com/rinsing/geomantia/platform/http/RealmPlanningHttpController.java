@@ -18,6 +18,11 @@ import com.rinsing.geomantia.systems.realm_planning.PatchExplorerService;
 import com.rinsing.geomantia.systems.realm_planning.RealmT4PatchPlanningService;
 import com.rinsing.geomantia.systems.realm_planning.WorldSurveyResult;
 import com.rinsing.geomantia.systems.realm_planning.WorldSurveyRunner;
+import com.rinsing.geomantia.systems.realm_planning.adapter.minecraft.MinecraftTerrainPreviewProviderFactory;
+import com.rinsing.geomantia.systems.realm_planning.application.terrain.RealmT4CoarseTerrainPreviewService;
+import com.rinsing.geomantia.systems.realm_planning.application.terrain.TerrainPreviewAtlasSampler;
+import com.rinsing.geomantia.systems.realm_planning.application.terrain.TerrainPreviewProviderSelection;
+import com.rinsing.geomantia.systems.realm_planning.application.terrain.TerrainSamplingProvenance;
 import com.sun.net.httpserver.HttpExchange;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
@@ -53,6 +58,7 @@ final class RealmPlanningHttpController {
             return callOnServerThread(() -> {
                 WorldSurveyExecution execution = runWorldSurvey(request);
                 JsonObject response = realmPlanningService.runW(execution.result(), request.get("worldTheme"));
+                response.add("terrainProvider", execution.terrainProvider().asJson());
                 if (booleanValue(request, "runTagAudit", false)) {
                     JsonObject audit = realmPlanningService.runTagAudit(execution.result().runId(), execution.sampler(),
                             intValue(request, "tagAuditSampleCount", 120),
@@ -161,8 +167,51 @@ final class RealmPlanningHttpController {
     }
 
     void handlePatchExplorerOpen(HttpExchange exchange) {
-        handle(exchange, "POST", () -> new PatchExplorerService(debugRoot())
-                .open(GisHttpUtil.readJsonObject(exchange)));
+        handle(exchange, "POST", () -> {
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            RealmT4CoarseTerrainPreviewService.Result terrainPreview = ensureRealmT4TerrainPreview(request);
+            JsonObject response = new PatchExplorerService(debugRoot()).open(request);
+            if (terrainPreview != null) {
+                response.addProperty("terrainPreviewCacheHit", terrainPreview.cacheHit());
+                response.add("terrainPreviewProvider",
+                        terrainPreview.evidence().getAsJsonObject("provider").deepCopy());
+                JsonObject artifacts = response.getAsJsonObject("artifacts");
+                artifacts.addProperty("coarseTerrainEvidence",
+                        relativeArtifact(debugRoot(), terrainPreview.evidencePath()));
+                artifacts.addProperty("heightWaterPreview",
+                        relativeArtifact(debugRoot(), terrainPreview.previewPath()));
+            }
+            return response;
+        });
+    }
+
+    private RealmT4CoarseTerrainPreviewService.Result ensureRealmT4TerrainPreview(JsonObject request)
+            throws Exception {
+        if (!"realm_t4".equalsIgnoreCase(stringValue(request, "scopeType", ""))) {
+            return null;
+        }
+        String runId = requiredString(request, "runId");
+        String realmId = stringValue(request, "scopeId", stringValue(request, "realmId", ""));
+        if (realmId.isBlank()) {
+            throw new IllegalArgumentException("scopeId or realmId is required for realm_t4.");
+        }
+        TerrainPreviewRuntime runtime = callOnServerThread(() -> {
+            ServerPlayer player = resolvePlayer(stringValue(request, "playerName", ""));
+            String dimensionId = stringValue(request, "dimensionId", "");
+            if (dimensionId.isBlank()) {
+                dimensionId = restoredRunDimensionId(runId);
+            }
+            ServerLevel level = resolveLevel(dimensionId, player);
+            String normalizedDimension = level.dimension().location().toString();
+            String fallbackFingerprint = String.join("|", "minecraft_prior_v1", normalizedDimension,
+                    Long.toString(level.getSeed()), level.getChunkSource().getGenerator().getClass().getName());
+            TerrainPreviewProviderSelection selection = MinecraftTerrainPreviewProviderFactory
+                    .createSelector(level, new MinecraftPriorAtlasSampler(level), fallbackFingerprint)
+                    .select(booleanValue(request, "preferGeneratorNativeTerrain", true));
+            return new TerrainPreviewRuntime(normalizedDimension, selection);
+        });
+        return new RealmT4CoarseTerrainPreviewService(debugRoot()).ensure(
+                runId, realmId, runtime.dimensionId(), runtime.selection());
     }
 
     void handlePatchExplorerShowCandidates(HttpExchange exchange) {
@@ -185,6 +234,7 @@ final class RealmPlanningHttpController {
                         booleanValue(request, "autoSelectCoordinates", true),
                         stringValue(request, "qualityMode", "strict"),
                         stringValue(request, "expansionModel", ""));
+                response.add("terrainProvider", execution.terrainProvider().asJson());
                 if (booleanValue(request, "runTagAudit", false)) {
                     JsonObject audit = realmPlanningService.runTagAudit(execution.result().runId(), execution.sampler(),
                             intValue(request, "tagAuditSampleCount", 120),
@@ -1148,6 +1198,18 @@ final class RealmPlanningHttpController {
         ServerLevel level = resolveLevel(stringValue(request, "dimensionId", ""), player);
         BlockPos center = resolveCenter(request, player);
         String runId = stringValue(request, "runId", "");
+        MinecraftPriorAtlasSampler minecraftSampler = new MinecraftPriorAtlasSampler(level);
+        String fallbackFingerprint = String.join("|", "minecraft_prior_v1",
+                level.dimension().location().toString(), Long.toString(level.getSeed()),
+                level.getChunkSource().getGenerator().getClass().getName());
+        boolean preferGeneratorNative = booleanValue(request, "preferGeneratorNativeTerrain", true);
+        var selector = MinecraftTerrainPreviewProviderFactory.createSelector(level, minecraftSampler,
+                fallbackFingerprint);
+        TerrainPreviewProviderSelection providerSelection = sampleMode == SampleMode.PRIOR
+                ? selector.select(preferGeneratorNative)
+                : selector.selectFallback("sample_mode_requires_minecraft_sampler");
+        TerrainSamplingProvenance terrainProvider = TerrainSamplingProvenance.fromSelection(
+                preferGeneratorNative, providerSelection);
         WorldSurveyRunner.Config config = new WorldSurveyRunner.Config(
                 runId,
                 level.dimension().location().toString(),
@@ -1160,12 +1222,14 @@ final class RealmPlanningHttpController {
                 microSampleStrideBlocks,
                 localSlopeRadiusBlocks,
                 sampleMode,
-                WorldSurveyRunner.ResumePolicy.fromContractName(stringValue(request, "resumePolicy", "use_cache"))
+                WorldSurveyRunner.ResumePolicy.fromContractName(stringValue(request, "resumePolicy", "use_cache")),
+                terrainProvider
         );
-        AtlasSampler sampler = new MinecraftPriorAtlasSampler(level);
+        AtlasSampler sampler = providerSelection.fastPath()
+                ? new TerrainPreviewAtlasSampler(providerSelection) : minecraftSampler;
         WorldSurveyResult result = new WorldSurveyRunner(debugRoot(), GisClassifierConfig.defaults()).run(config,
                 sampler, WorldSurveyChatProgress.forPlayer(player));
-        return new WorldSurveyExecution(result, sampler);
+        return new WorldSurveyExecution(result, minecraftSampler, terrainProvider);
     }
 
     private ServerPlayer resolvePlayer(String playerName) {
@@ -1233,7 +1297,16 @@ final class RealmPlanningHttpController {
     }
 
     private Path debugRoot() {
-        return server.getServerDirectory().toPath().resolve("realm_debug");
+        return server.getServerDirectory().toPath().resolve("realm_debug").toAbsolutePath().normalize();
+    }
+
+    static String relativeArtifact(Path debugRoot, Path artifact) {
+        Path normalizedRoot = debugRoot.toAbsolutePath().normalize();
+        Path normalizedArtifact = artifact.toAbsolutePath().normalize();
+        if (!normalizedArtifact.startsWith(normalizedRoot)) {
+            throw new IllegalArgumentException("Artifact resolves outside debugRoot: " + normalizedArtifact);
+        }
+        return normalizedRoot.relativize(normalizedArtifact).toString().replace('\\', '/');
     }
 
     private String restoredRunDimensionId(String runId) throws IOException {
@@ -1371,6 +1444,10 @@ final class RealmPlanningHttpController {
         JsonObject execute() throws Exception;
     }
 
-    private record WorldSurveyExecution(WorldSurveyResult result, AtlasSampler sampler) {
+    private record WorldSurveyExecution(WorldSurveyResult result, AtlasSampler sampler,
+            TerrainSamplingProvenance terrainProvider) {
+    }
+
+    private record TerrainPreviewRuntime(String dimensionId, TerrainPreviewProviderSelection selection) {
     }
 }

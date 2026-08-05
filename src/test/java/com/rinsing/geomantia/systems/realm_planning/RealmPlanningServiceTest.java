@@ -15,12 +15,14 @@ import com.rinsing.geomantia.systems.gis.domain.cell.SurfaceType;
 import com.rinsing.geomantia.systems.gis.testsupport.GisTestCase;
 import com.rinsing.geomantia.systems.gis.testsupport.SyntheticAtlasSampler;
 import com.rinsing.geomantia.systems.gis.testsupport.SyntheticTerrainProfile;
+import com.rinsing.geomantia.systems.realm_planning.application.terrain.TerrainSamplingProvenance;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
+import java.time.Duration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -28,6 +30,7 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTimeout;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class RealmPlanningServiceTest {
@@ -600,6 +603,38 @@ class RealmPlanningServiceTest {
     }
 
     @Test
+    void worldSurveyRunnerSeparatesCachesByTerrainProvider() throws Exception {
+        GisTestCase testCase = GisTestCase.byId("mixed");
+        WorldSurveyRunner runner = new WorldSurveyRunner(tempDir.resolve("realm_debug"), GisClassifierConfig.defaults());
+        WorldSurveyRunner.Config minecraftConfig = new WorldSurveyRunner.Config(
+                "realm_provider_cache_test", testCase.dimensionId(), "synthetic", 0.0,
+                0, 0, 512, 128, 32, 8, testCase.sampleMode(), WorldSurveyRunner.ResumePolicy.USE_CACHE,
+                new TerrainSamplingProvenance(false, "current_atlas_sampler", "gis_atlas_sampler", false,
+                        "generator_native_disabled", "minecraft:synthetic:v1", "atlas_sampler"));
+        WorldSurveyRunner.Config rtfConfig = new WorldSurveyRunner.Config(
+                "realm_provider_cache_test", testCase.dimensionId(), "synthetic", 0.0,
+                0, 0, 512, 128, 32, 8, testCase.sampleMode(), WorldSurveyRunner.ResumePolicy.USE_CACHE,
+                new TerrainSamplingProvenance(true, "rtf_heightmap_preview_v0_0_5", "generator_native", true,
+                        "", "rtf:synthetic:v1", "estimated_heightmap"));
+
+        WorldSurveyResult minecraft = runner.run(minecraftConfig, new SyntheticAtlasSampler(testCase.profile()));
+        WorldSurveyResult rtf = runner.run(rtfConfig, new SyntheticAtlasSampler(testCase.profile()));
+
+        assertFalse(minecraft.configHash().equals(rtf.configHash()));
+        assertEquals(minecraft.tileCount(), rtf.scannedTileCount());
+        assertEquals(0, rtf.cachedTileCount());
+        JsonObject manifest = readJson(rtf.manifestPath());
+        JsonObject provider = manifest.getAsJsonObject("config").getAsJsonObject("terrainProvider");
+        assertEquals("rtf_heightmap_preview_v0_0_5", provider.get("providerId").getAsString());
+        assertTrue(provider.get("generatorNativeRequested").getAsBoolean());
+        assertTrue(provider.get("fastPath").getAsBoolean());
+        assertEquals(provider, manifest.getAsJsonObject("stats").getAsJsonObject("terrainProvider"));
+        try (var tileEntries = Files.list(rtf.runDirectory().resolve("tiles"))) {
+            assertFalse(tileEntries.anyMatch(path -> path.getFileName().toString().startsWith("debug_")));
+        }
+    }
+
+    @Test
     void tagAuditCoversConfirmedCliffTruePositives() throws Exception {
         SyntheticTerrainProfile cliffStrip = new SyntheticTerrainProfile() {
             @Override
@@ -700,6 +735,51 @@ class RealmPlanningServiceTest {
         JsonObject repeatedReport = readJson(tempDir.resolve("realm_debug").resolve("realm_model_test").resolve("t3_report.json"));
         assertEquals(territory.toString(), repeatedAction.getAsJsonObject("territoryMap").toString());
         assertEquals(report.toString(), repeatedReport.toString());
+    }
+
+    @Test
+    void quotaFrontierScalesToTwelveRealmsAndRemainsDeterministic() throws Exception {
+        GisTestCase testCase = GisTestCase.byId("mixed");
+        GisSampleConfig sampleConfig = GisSampleConfig.defaults().withCellStepBlocks(8);
+        AtlasRegionStore store = new AtlasRegionStore(sampleConfig);
+        GisRefreshService gisService = new GisRefreshService(sampleConfig, GisClassifierConfig.defaults(), store,
+                new SyntheticAtlasSampler(testCase.profile()));
+        RefreshResult result = gisService.refresh(testCase.dimensionId(), 0, 0, 16, testCase.sampleMode(),
+                RefreshPriority.DEBUG, tempDir.resolve("gis_debug"));
+        RealmPlanningService service = new RealmPlanningService(tempDir.resolve("realm_debug"));
+        service.runW(result, "realm_twelve_scale_test", null);
+        JsonObject t1 = service.prepareT1("realm_twelve_scale_test", null, 12, "", true);
+        for (JsonElement profile : t1.getAsJsonArray("realmProfiles")) {
+            String realmId = profile.getAsJsonObject().get("realmId").getAsString();
+            RealmPlanningService.GridPoint point = service.suggestedPoint("realm_twelve_scale_test", realmId);
+            JsonObject selection = service.selectT2("realm_twelve_scale_test", realmId, point.x(), point.z(), null,
+                    "twelve realm scale test", "debug", true);
+            assertEquals("completed", selection.get("status").getAsString(), selection.toString());
+        }
+
+        JsonObject first = assertTimeout(Duration.ofSeconds(10),
+                () -> service.expandT3("realm_twelve_scale_test", "", false, "smoke", "quota_frontier"));
+        JsonObject firstTerritory = first.getAsJsonObject("territoryMap");
+        assertEquals(12, firstTerritory.getAsJsonArray("realmStats").size());
+        assertFalse(firstTerritory.getAsJsonArray("territoryCells").isEmpty());
+        for (JsonElement stat : firstTerritory.getAsJsonArray("realmStats")) {
+            JsonObject realm = stat.getAsJsonObject();
+            assertTrue(realm.get("areaCells").getAsInt() > 0, realm.toString());
+            assertEquals(1, realm.get("componentCount").getAsInt(), realm.toString());
+        }
+        int quotaMoves = 0;
+        for (JsonElement repair : firstTerritory.getAsJsonArray("repairs")) {
+            JsonObject entry = repair.getAsJsonObject();
+            if ("quota_rebalanced".equals(entry.get("type").getAsString())) {
+                quotaMoves += entry.get("affectedCells").getAsInt();
+            }
+        }
+        assertTrue(quotaMoves <= firstTerritory.getAsJsonArray("territoryCells").size(),
+                "Quota repair must converge monotonically instead of hitting the move cap: " + quotaMoves);
+
+        JsonObject repeated = assertTimeout(Duration.ofSeconds(10),
+                () -> service.expandT3("realm_twelve_scale_test", "", false, "smoke", "quota_frontier"));
+        assertEquals(firstTerritory, repeated.getAsJsonObject("territoryMap"));
     }
 
     private RefreshResult refreshSynthetic(String caseId, int cellStepBlocks) throws Exception {

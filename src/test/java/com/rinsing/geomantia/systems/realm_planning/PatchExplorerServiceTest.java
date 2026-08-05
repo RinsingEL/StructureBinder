@@ -3,6 +3,7 @@ package com.rinsing.geomantia.systems.realm_planning;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.rinsing.geomantia.systems.realm_planning.application.terrain.RealmT4CoarseTerrainPreviewService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -210,6 +211,77 @@ class PatchExplorerServiceTest {
         IllegalArgumentException staleOccupied = assertThrows(IllegalArgumentException.class,
                 () -> service.resolveSelection("run_a", d4SelectionRef));
         assertTrue(staleOccupied.getMessage().contains("STALE_SOURCE"), staleOccupied.getMessage());
+    }
+
+    @Test
+    void realmT4UsesFrozenCoarseTerrainEvidenceForFactsPreviewAndAnchorWithoutChangingOtherScopes()
+            throws Exception {
+        Path root = tempDir.resolve("terrain_realm_debug");
+        Path run = root.resolve("run_terrain");
+        Files.createDirectories(run);
+        writeRealmArtifacts(run);
+        writeCityArtifacts(run);
+        Path evidencePath = writeCoarseTerrainEvidence(run);
+        PatchExplorerService service = new PatchExplorerService(root);
+
+        JsonObject t4Open = service.open(request("run_terrain", "realm_t4", "realm_a"));
+        assertEquals("realm_biome_primary_city_landform_v0_2",
+                read(root.resolve(t4Open.getAsJsonObject("artifacts").get("explorationSession").getAsString()))
+                        .get("candidateModel").getAsString());
+        assertEquals("run_terrain/realm_t4_terrain_preview/realm_a_coarse_height_water_preview.png",
+                t4Open.getAsJsonObject("artifacts").get("heightWaterPreview").getAsString());
+        JsonObject catalogEvidence = t4Open.getAsJsonArray("typeCatalog").get(0).getAsJsonObject()
+                .getAsJsonObject("coarseTerrainEvidence");
+        assertEquals("rtf_native", catalogEvidence.getAsJsonObject("provider").get("providerId").getAsString());
+        assertEquals("rtf:flat", catalogEvidence.getAsJsonObject("terrainIdHistogram").entrySet().stream()
+                .max(java.util.Comparator.comparingInt(entry -> entry.getValue().getAsInt()))
+                .orElseThrow().getKey());
+        assertTrue(catalogEvidence.get("advisoryOnly").getAsBoolean());
+        assertEquals("city_d3_site_review", catalogEvidence.get("requiredNextGate").getAsString());
+
+        JsonObject shown = show(service, t4Open, "minecraft:plains");
+        JsonObject candidate = shown.getAsJsonArray("typePages").get(0).getAsJsonObject()
+                .getAsJsonArray("candidates").get(0).getAsJsonObject();
+        assertEquals(5, candidate.getAsJsonObject("coarseTerrainEvidence").get("sampleCount").getAsInt());
+        assertEquals(1.0, candidate.getAsJsonObject("coarseTerrainEvidence").get("coverage").getAsDouble());
+        assertEquals(2, candidate.getAsJsonObject("suggestedAnchor").get("gridX").getAsInt(),
+                "realm_t4 should prefer the dry low-relief cell over the old first boundary cell");
+        JsonObject select = new JsonObject();
+        select.addProperty("runId", "run_terrain");
+        select.addProperty("sessionId", t4Open.get("sessionId").getAsString());
+        select.addProperty("candidateId", "MINECRAFT_PLAINS-01");
+        JsonObject selected = service.selectCandidate(select);
+        assertEquals(2, selected.getAsJsonObject("selection").getAsJsonObject("suggestedAnchor")
+                .get("gridX").getAsInt());
+        assertEquals("rtf:climate_temperate", selected.getAsJsonObject("selection")
+                .getAsJsonObject("coarseTerrainEvidence").getAsJsonObject("sourceBiomeIdHistogram")
+                .entrySet().iterator().next().getKey());
+        assertEquals(t4Open.getAsJsonObject("artifacts").get("heightWaterPreview").getAsString(),
+                selected.getAsJsonObject("artifacts").get("heightWaterPreview").getAsString());
+
+        JsonObject session = read(root.resolve(t4Open.getAsJsonObject("artifacts")
+                .get("explorationSession").getAsString()));
+        JsonObject snapshot = read(root.resolve(session.get("scopeSnapshot").getAsString()));
+        assertTrue(snapshot.has("coarseTerrainSource"));
+        assertTrue(snapshot.getAsJsonArray("candidates").get(0).getAsJsonObject()
+                .getAsJsonArray("cells").get(0).getAsJsonObject().has("coarseTerrain"));
+
+        JsonObject t2Open = service.open(request("run_terrain", "realm_t2", "realm_a"));
+        JsonObject t2Candidate = show(service, t2Open, "minecraft:plains").getAsJsonArray("typePages")
+                .get(0).getAsJsonObject().getAsJsonArray("candidates").get(0).getAsJsonObject();
+        assertFalse(t2Candidate.has("coarseTerrainEvidence"));
+        assertEquals(0, t2Candidate.getAsJsonObject("suggestedAnchor").get("gridX").getAsInt());
+        JsonObject d4Open = service.open(request("run_terrain", "city_d4", "city_a"));
+        JsonObject d4Candidate = show(service, d4Open, "plain").getAsJsonArray("typePages")
+                .get(0).getAsJsonObject().getAsJsonArray("candidates").get(0).getAsJsonObject();
+        assertFalse(d4Candidate.has("coarseTerrainEvidence"));
+
+        JsonObject modified = read(evidencePath);
+        modified.addProperty("changedAfterOpen", true);
+        Files.writeString(evidencePath, modified.toString());
+        IllegalArgumentException stale = assertThrows(IllegalArgumentException.class,
+                () -> service.resolveSelection("run_terrain", selected.get("patchSelectionRef").getAsString()));
+        assertTrue(stale.getMessage().contains("STALE_SOURCE"), stale.getMessage());
     }
 
     @Test
@@ -439,6 +511,62 @@ class PatchExplorerServiceTest {
         anchorMap.add("grid", anchorGrid);
         anchorMap.add("anchors", new JsonArray());
         Files.writeString(anchorDir.resolve("structure_anchor_map.json"), anchorMap.toString());
+    }
+
+    private static Path writeCoarseTerrainEvidence(Path run) throws Exception {
+        Path directory = run.resolve("realm_t4_terrain_preview");
+        Files.createDirectories(directory);
+        Path preview = directory.resolve("realm_a_coarse_height_water_preview.png");
+        Files.write(preview, new byte[]{1, 2, 3});
+        JsonObject evidence = new JsonObject();
+        evidence.addProperty("schemaVersion", RealmT4CoarseTerrainPreviewService.SCHEMA_VERSION);
+        evidence.addProperty("runId", "run_terrain");
+        evidence.addProperty("realmId", "realm_a");
+        evidence.addProperty("advisoryOnly", true);
+        evidence.addProperty("requiredNextGate", "city_d3_site_review");
+        JsonObject grid = new JsonObject();
+        grid.addProperty("cellStepBlocks", 16);
+        evidence.add("grid", grid);
+        JsonObject provider = new JsonObject();
+        provider.addProperty("providerId", "rtf_native");
+        provider.addProperty("sourceKind", "generator_native");
+        provider.addProperty("fastPath", true);
+        provider.addProperty("fallbackReason", "");
+        provider.addProperty("sourceFingerprint", "rtf:seed:settings");
+        provider.addProperty("samplingSemantics", "rtf_preview_cell");
+        evidence.add("provider", provider);
+        JsonArray cells = new JsonArray();
+        for (int x = 0; x <= 5; x++) {
+            JsonObject cell = new JsonObject();
+            cell.addProperty("gridX", x);
+            cell.addProperty("gridZ", 0);
+            cell.addProperty("blockX", x * 16 + 8);
+            cell.addProperty("blockZ", 8);
+            cell.addProperty("elevation", 70 + x);
+            cell.addProperty("water", x == 4);
+            cell.addProperty("biomeId", "minecraft:plains");
+            cell.addProperty("terrainId", x == 0 ? "rtf:mountain" : "rtf:flat");
+            cell.addProperty("sourceBiomeId", "rtf:climate_temperate");
+            cell.addProperty("neighborCount", x == 0 || x == 5 ? 1 : 2);
+            cell.addProperty("neighborElevationDeltaMean", x == 0 ? 20 : 1);
+            cell.addProperty("neighborElevationDeltaMax", x == 0 ? 20 : 1);
+            cell.addProperty("slopeProxy", x == 0 ? 1.25 : 0.0625);
+            cell.addProperty("localRelief", switch (x) {
+                case 0 -> 20;
+                case 1 -> 5;
+                case 2 -> 0.5;
+                default -> 1.0;
+            });
+            cells.add(cell);
+        }
+        evidence.add("cells", cells);
+        JsonObject artifacts = new JsonObject();
+        artifacts.addProperty("heightWaterPreview",
+                "realm_t4_terrain_preview/realm_a_coarse_height_water_preview.png");
+        evidence.add("artifacts", artifacts);
+        Path path = directory.resolve("realm_a_coarse_terrain_evidence.json");
+        Files.writeString(path, evidence.toString());
+        return path;
     }
 
     private static JsonArray strings(String... values) {

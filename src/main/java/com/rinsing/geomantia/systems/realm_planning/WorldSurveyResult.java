@@ -4,6 +4,7 @@ import com.rinsing.geomantia.systems.gis.application.refresh.RefreshResult;
 import com.rinsing.geomantia.systems.gis.application.refresh.SampleMode;
 import com.rinsing.geomantia.systems.gis.domain.landform.LandformPatch;
 import com.rinsing.geomantia.systems.gis.domain.region.AtlasRegion;
+import com.rinsing.geomantia.systems.realm_planning.application.terrain.TerrainSamplingProvenance;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -34,6 +35,7 @@ public record WorldSurveyResult(
         int gridSizeWidth,
         int gridSizeHeight,
         SampleMode sampleMode,
+        TerrainSamplingProvenance terrainProvider,
         List<AtlasRegion> regions,
         List<LandformPatch> patches,
         Map<String, WorldFeatureCell> featureCells,
@@ -51,6 +53,7 @@ public record WorldSurveyResult(
         regions = List.copyOf(regions);
         patches = List.copyOf(patches);
         featureCells = Map.copyOf(featureCells);
+        terrainProvider = terrainProvider == null ? TerrainSamplingProvenance.currentAtlasSampler() : terrainProvider;
     }
 
     public static WorldSurveyResult fromRefreshResult(String runId, Path runDirectory, RefreshResult result) {
@@ -81,6 +84,7 @@ public record WorldSurveyResult(
                 region.cellsPerSide(),
                 region.cellsPerSide(),
                 result.job().sampleMode(),
+                TerrainSamplingProvenance.currentAtlasSampler(),
                 regions,
                 patches,
                 Map.of(),

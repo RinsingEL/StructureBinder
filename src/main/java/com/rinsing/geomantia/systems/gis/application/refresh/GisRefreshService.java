@@ -26,6 +26,11 @@ import java.util.Objects;
 import java.util.UUID;
 
 public final class GisRefreshService {
+    public enum ArtifactMode {
+        FULL,
+        NONE
+    }
+
     private final GisSampleConfig sampleConfig;
     private final GisClassifierConfig classifierConfig;
     private final AtlasRegionStore regionStore;
@@ -63,15 +68,21 @@ public final class GisRefreshService {
     }
 
     public RefreshResult run(RefreshJob job, AtlasRegion region, Path runDirectory) throws IOException {
+        return run(job, region, runDirectory, ArtifactMode.FULL);
+    }
+
+    public RefreshResult run(RefreshJob job, AtlasRegion region, Path runDirectory, ArtifactMode artifactMode)
+            throws IOException {
         Objects.requireNonNull(job, "job");
         Objects.requireNonNull(region, "region");
         Objects.requireNonNull(runDirectory, "runDirectory");
+        Objects.requireNonNull(artifactMode, "artifactMode");
         try {
             List<RadiusRefreshPlanner.PlannedCell> plannedCells = planner.plan(region, job);
             job.setTotalCells(plannedCells.size());
             job.addDirtyRegion(region.regionId());
             job.setStatus(RefreshStatus.SAMPLING);
-            progressExporter.export(job, region, runDirectory);
+            exportProgress(job, region, runDirectory, artifactMode);
             int completed = 0;
             for (RadiusRefreshPlanner.PlannedCell planned : plannedCells) {
                 AtlasCell cell = planned.cell();
@@ -85,30 +96,39 @@ public final class GisRefreshService {
                 job.setCompletedCells(completed);
                 job.setCurrentRing(planned.ring());
                 if (completed % job.budgetCellsPerBatch() == 0 || completed == plannedCells.size()) {
-                    progressExporter.export(job, region, runDirectory);
+                    exportProgress(job, region, runDirectory, artifactMode);
                 }
             }
             region.setStatus(RegionStatus.SAMPLED);
             job.setStatus(RefreshStatus.METRICS);
             metricsComputer.compute(region);
-            progressExporter.export(job, region, runDirectory);
+            exportProgress(job, region, runDirectory, artifactMode);
             job.setStatus(RefreshStatus.CLASSIFYING);
             classifier.classify(region);
-            progressExporter.export(job, region, runDirectory);
+            exportProgress(job, region, runDirectory, artifactMode);
             job.setStatus(RefreshStatus.PATCHING);
             List<LandformPatch> patches = patchMerger.merge(region);
-            progressExporter.export(job, region, runDirectory);
+            exportProgress(job, region, runDirectory, artifactMode);
             job.complete();
-            progressExporter.export(job, region, runDirectory);
-            previewExporter.export(job, region, runDirectory.resolve("preview"));
+            exportProgress(job, region, runDirectory, artifactMode);
+            if (artifactMode == ArtifactMode.FULL) {
+                previewExporter.export(job, region, runDirectory.resolve("preview"));
+            }
             return new RefreshResult(job, region, patches, countCellStates(region), countLandforms(region), runDirectory);
         } catch (Exception ex) {
             job.fail(ex.getMessage());
-            progressExporter.export(job, region, runDirectory);
+            exportProgress(job, region, runDirectory, artifactMode);
             if (ex instanceof IOException ioException) {
                 throw ioException;
             }
             throw new IOException("GIS refresh failed.", ex);
+        }
+    }
+
+    private void exportProgress(RefreshJob job, AtlasRegion region, Path runDirectory, ArtifactMode artifactMode)
+            throws IOException {
+        if (artifactMode == ArtifactMode.FULL) {
+            progressExporter.export(job, region, runDirectory);
         }
     }
 
