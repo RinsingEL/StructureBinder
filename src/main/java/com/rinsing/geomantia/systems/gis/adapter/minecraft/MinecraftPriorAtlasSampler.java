@@ -57,8 +57,7 @@ public final class MinecraftPriorAtlasSampler implements AtlasSampler {
                 level,
                 level.getChunkSource().randomState()
         );
-        ColumnSample terrain = sampleColumn(column, level.getMinBuildHeight(), level.getMaxBuildHeight(),
-                level.getSeaLevel());
+        ColumnSample terrain = sampleColumn(column, level.getMinBuildHeight(), level.getMaxBuildHeight());
         return new SampledCell(SampleSource.PRIOR, terrain.surfaceHeight(), terrain.surfaceType(),
                 biomeIdAt(x, z, terrain.surfaceHeight()), terrain.water(), terrain.waterDepth());
     }
@@ -100,13 +99,13 @@ public final class MinecraftPriorAtlasSampler implements AtlasSampler {
         return biomeId == null ? "unknown" : biomeId.toString();
     }
 
-    static ColumnSample sampleColumn(NoiseColumn column, int minBuildHeight, int maxBuildHeight, int seaLevel) {
+    static ColumnSample sampleColumn(NoiseColumn column, int minBuildHeight, int maxBuildHeight) {
         Objects.requireNonNull(column, "column");
-        return sampleColumn(column::getBlock, BLOCK_STATE_ADAPTER, minBuildHeight, maxBuildHeight, seaLevel);
+        return sampleColumn(column::getBlock, BLOCK_STATE_ADAPTER, minBuildHeight, maxBuildHeight);
     }
 
     static <T> ColumnSample sampleColumn(IntFunction<T> column, ColumnStateAdapter<T> adapter,
-            int minBuildHeight, int maxBuildHeight, int seaLevel) {
+            int minBuildHeight, int maxBuildHeight) {
         Objects.requireNonNull(column, "column");
         Objects.requireNonNull(adapter, "adapter");
         if (maxBuildHeight <= minBuildHeight) {
@@ -132,8 +131,8 @@ public final class MinecraftPriorAtlasSampler implements AtlasSampler {
             }
         }
 
-        boolean water = isWaterColumn(column, adapter, surfaceHeight, seaLevel);
-        double waterDepth = water ? Math.max(0, seaLevel - oceanFloorHeight) : 0.0;
+        boolean water = isWaterColumn(column, adapter, surfaceHeight);
+        double waterDepth = water ? Math.max(0, surfaceHeight - oceanFloorHeight) : 0.0;
         SurfaceType sampledSurfaceType = water
                 ? SurfaceType.WATER
                 : adapter.surfaceType(column.apply(surfaceHeight - 1));
@@ -141,15 +140,8 @@ public final class MinecraftPriorAtlasSampler implements AtlasSampler {
     }
 
     private static <T> boolean isWaterColumn(IntFunction<T> column, ColumnStateAdapter<T> adapter,
-            int height, int seaLevel) {
-        if (height <= seaLevel) {
-            for (int y = Math.max(0, height - 3); y <= seaLevel + 1; y++) {
-                if (adapter.water(column.apply(y))) {
-                    return true;
-                }
-            }
-        }
-        return false;
+            int surfaceHeight) {
+        return adapter.water(column.apply(surfaceHeight - 1));
     }
 
     private static SurfaceType surfaceType(BlockState state) {

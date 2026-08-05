@@ -777,7 +777,7 @@ export const realmTools: ToolDefinition[] = [
         stateId: { type: "string" },
         arrayExpansionRequest: {
           type: "object",
-          description: "常规连续外扩传 focusRef、direction、可选 expansionPolicy 和 nextArrayLayoutPlanItem；不传 targetPatchRef 即按父 bbox 前沿搜索，显式 targetPatchRef 仅保留兼容约束。全局新功能区可传 Patch Explorer 的 patchSelectionRef，由服务端派生 selectedGlobalPatchRef 并把连续组件硬边界传播到 nested item；不得手写 candidateLegalRegion。未使用 Patch Explorer 时仍传 newFunctionalArea=true + selectedGlobalPatchRef。二者都可传 candidateCount=3..5、minCandidateCount；nextArrayLayoutPlanItem 支持 compound_cluster、guide_line_dual_side、plaza_ring 或 composite_array（composite 保留 childLayoutPlans）。",
+          description: "常规连续外扩传 focusRef、direction、可选 expansionPolicy 和 nextArrayLayoutPlanItem；不传 targetPatchRef 即按父 bbox 前沿搜索，显式 targetPatchRef 仅保留兼容约束。全局新功能区可传 Patch Explorer 的 patchSelectionRef，由服务端派生 selectedGlobalPatchRef 并把连续组件硬边界传播到 nested item；不得手写 candidateLegalRegion。未使用 Patch Explorer 时仍传 newFunctionalArea=true + selectedGlobalPatchRef。二者都可传 candidateCount=1..5；minCandidateCount 已删除。nextArrayLayoutPlanItem 支持 compound_cluster、guide_line_dual_side、plaza_ring 或 composite_array（composite 保留 childLayoutPlans）。",
         },
         arrayLayoutLoopStateSource: { type: "object" },
         templateCatalogSource: { type: "object", description: "必填；固定 NBT template catalog 来源。" },

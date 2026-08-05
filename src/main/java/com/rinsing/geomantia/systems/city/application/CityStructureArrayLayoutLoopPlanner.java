@@ -210,6 +210,10 @@ public final class CityStructureArrayLayoutLoopPlanner {
                                                                 JsonObject request) throws IOException {
         long started = System.nanoTime();
         requireV04State(currentState);
+        if (request.has("minCandidateCount")) {
+            throw new IllegalArgumentException("D4_ARRAY_LAYOUT_MIN_CANDIDATE_COUNT_REMOVED: "
+                    + "candidate menus were removed; one complete legal candidate is sufficient.");
+        }
         JsonObject submittedItem = object(request, "nextArrayLayoutPlanItem");
         if (submittedItem.size() == 0) {
             submittedItem = object(request, "arrayLayoutPlanItem");
@@ -240,8 +244,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
         CityStructureProfileCatalog.ImportedCatalog catalog =
                 CityStructureProfileCatalog.importCatalog(baseDirectory, terraSenseProfileSource);
         TemplateCatalogContext templateCatalog = templateCatalog(currentState);
-        int candidateCount = clamp(intValue(request, "candidateCount", 5), 3, 5);
-        int minCandidateCount = clamp(intValue(request, "minCandidateCount", 3), 2, candidateCount);
+        int candidateCount = clamp(intValue(request, "candidateCount", 5), 1, 5);
         JsonArray candidates = new JsonArray();
         Set<String> signatures = new LinkedHashSet<>();
         List<String> sectors = expansionCandidateSectors(context.direction());
@@ -309,9 +312,9 @@ public final class CityStructureArrayLayoutLoopPlanner {
             candidate.add("executionTrace", build.trace().deepCopy());
             candidates.add(candidate);
         }
-        if (candidates.size() < minCandidateCount) {
+        if (candidates.isEmpty()) {
             throw new IllegalArgumentException("D4_ARRAY_LAYOUT_CANDIDATES_UNSATISFIED: generated "
-                    + candidates.size() + " complete candidates, requires at least " + minCandidateCount + ".");
+                    + "0 complete candidates.");
         }
         JsonObject set = new JsonObject();
         set.addProperty("schemaVersion", EXPANSION_CANDIDATE_SCHEMA_V04);
@@ -343,8 +346,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
         CityStructureProfileCatalog.ImportedCatalog catalog =
                 CityStructureProfileCatalog.importCatalog(baseDirectory, terraSenseProfileSource);
         TemplateCatalogContext templateCatalog = templateCatalog(currentState);
-        int candidateCount = clamp(intValue(request, "candidateCount", 5), 3, 5);
-        int minCandidateCount = clamp(intValue(request, "minCandidateCount", 3), 2, candidateCount);
+        int candidateCount = clamp(intValue(request, "candidateCount", 5), 1, 5);
         String plannerType = stringValue(submittedItem, "plannerType", "compound_cluster");
         if (!PLANNER_TYPES.contains(plannerType)) {
             throw new IllegalArgumentException("D4_ARRAY_LAYOUT_PLANNER_TYPE_UNSUPPORTED: " + plannerType);
@@ -397,6 +399,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
             int produced = 0;
             int rejectedForGap = 0;
             int rejectedForBuild = 0;
+            int correctedForGap = 0;
             JsonArray observedBodyGaps = new JsonArray();
             int attemptLimit = Math.max(candidateCount * 8, 24);
             for (int attempt = 0; attempt < attemptLimit && candidates.size() < candidateCount; attempt++) {
@@ -424,6 +427,32 @@ public final class CityStructureArrayLayoutLoopPlanner {
                 }
                 FrontierGapValidation gap = validateFrontierBodyGap(context.focusBodyBounds(), context.direction(),
                         build.items(), gapMin, gapMax);
+                int initialBodyGap = gap.actualBodyGapBlocks();
+                int gapCorrection = frontierGapCorrection(initialBodyGap, gapMin, gapMax);
+                BlockPoint acceptedOrigin = variantOrigin;
+                BlockBounds acceptedBounds = frontierBounds;
+                if (!gap.accepted() && initialBodyGap >= 0 && gapCorrection != 0) {
+                    BlockPoint correctedOrigin = shiftFrontierOriginForGap(
+                            variantOrigin, context.direction(), gapCorrection);
+                    BlockBounds correctedBounds = clampBounds(union(frontierBounds,
+                            new BlockBounds(correctedOrigin.x(), correctedOrigin.z(),
+                                    correctedOrigin.x(), correctedOrigin.z())), gridBounds(reviewPackage.grid()));
+                    item.add("expansionOrigin", correctedOrigin.asJson());
+                    item.add("expansionAvailableBounds", CityStructureCandidateEnvelope.boundsJson(correctedBounds));
+                    item.addProperty("frontierGapCorrectionBlocks", gapCorrection);
+                    BuildResult correctedBuild = "composite_array".equals(plannerType)
+                            ? buildCompositeArrayItem(item, sourcePatches, reviewPackage, templateCatalog, occupied,
+                            correctedBounds)
+                            : buildArrayItem(item, plannerType, sourcePatches, reviewPackage,
+                            occupied, desired, correctedBounds);
+                    if (correctedBuild.hardBlocks().isEmpty()) {
+                        build = correctedBuild;
+                        gap = validateFrontierBodyGap(context.focusBodyBounds(), context.direction(),
+                                build.items(), gapMin, gapMax);
+                        acceptedOrigin = correctedOrigin;
+                        acceptedBounds = correctedBounds;
+                    }
+                }
                 if (!gap.accepted()) {
                     rejectedForGap++;
                     if (observedBodyGaps.size() < 8) {
@@ -456,10 +485,12 @@ public final class CityStructureArrayLayoutLoopPlanner {
                 candidate.addProperty("frontierRingIndex", ring);
                 candidate.addProperty("actualBodyGapBlocks", gap.actualBodyGapBlocks());
                 candidate.addProperty("bodyGapBlocks", gap.actualBodyGapBlocks());
+                candidate.addProperty("initialBodyGapBlocks", initialBodyGap);
+                candidate.addProperty("frontierGapCorrectionBlocks", gapCorrection);
                 candidate.add("terrainPatchRefs", patchRefs(sourcePatches));
                 candidate.add("memberTerrainPatchRefs", terrainPatchRefs(build.items()));
-                candidate.add("expansionEntryPoint", variantOrigin.asJson());
-                candidate.add("expansionAvailableBounds", CityStructureCandidateEnvelope.boundsJson(frontierBounds));
+                candidate.add("expansionEntryPoint", acceptedOrigin.asJson());
+                candidate.add("expansionAvailableBounds", CityStructureCandidateEnvelope.boundsJson(acceptedBounds));
                 candidate.add("candidateArrayLayoutPlanItem", item.deepCopy());
                 candidate.add("items", build.items().deepCopy());
                 candidate.add("anchors", build.anchors().deepCopy());
@@ -471,10 +502,14 @@ public final class CityStructureArrayLayoutLoopPlanner {
                 candidate.add("frontierTrace", candidateTrace);
                 candidates.add(candidate);
                 produced++;
+                if (gapCorrection != 0) {
+                    correctedForGap++;
+                }
             }
             ringTrace.addProperty("candidateCount", produced);
             ringTrace.addProperty("rejectedForBodyGap", rejectedForGap);
             ringTrace.addProperty("rejectedForBuild", rejectedForBuild);
+            ringTrace.addProperty("correctedForBodyGap", correctedForGap);
             ringTrace.add("observedBodyGaps", observedBodyGaps);
             if (produced == 0) {
                 ringTrace.addProperty("result", "skipped");
@@ -486,7 +521,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
             }
             frontierTrace.add(ringTrace);
         }
-        if (candidates.size() < minCandidateCount) {
+        if (candidates.isEmpty()) {
             throw new IllegalArgumentException("D4_ARRAY_LAYOUT_CONTINUOUS_FRONTIER_UNSATISFIED: generated "
                     + candidates.size() + " complete candidates; frontier trace=" + frontierTrace + ".");
         }
@@ -2069,18 +2104,15 @@ public final class CityStructureArrayLayoutLoopPlanner {
         return clampToGrid(new BlockPoint(x, z), grid);
     }
 
-    private int alignedFrontierAnchor(int minimum, int maximum) {
+    static int alignedFrontierAnchor(int minimum, int maximum) {
         int aligned = ceilToMultiple(minimum, 16);
         if (aligned <= maximum) {
             return aligned;
         }
-        int midpoint = (minimum + maximum) / 2;
-        int lower = Math.floorDiv(midpoint, 16) * 16;
-        int upper = lower + 16;
-        return Math.abs(lower - midpoint) <= Math.abs(upper - midpoint) ? lower : upper;
+        return minimum + (maximum - minimum) / 2;
     }
 
-    private int ceilToMultiple(int value, int multiple) {
+    private static int ceilToMultiple(int value, int multiple) {
         return -Math.floorDiv(-value, multiple) * multiple;
     }
 
@@ -2146,6 +2178,32 @@ public final class CityStructureArrayLayoutLoopPlanner {
         return new BlockPoint(clamp(x, bounds.minX(), bounds.maxX()), clamp(z, bounds.minZ(), bounds.maxZ()));
     }
 
+    static int frontierGapCorrection(int actualGap, int gapMin, int gapMax) {
+        if (actualGap < gapMin) {
+            return gapMin - actualGap;
+        }
+        if (actualGap > gapMax) {
+            return gapMax - actualGap;
+        }
+        return 0;
+    }
+
+    static BlockPoint shiftFrontierOriginForGap(BlockPoint origin, String direction, int correction) {
+        int x = origin.x();
+        int z = origin.z();
+        if (direction.contains("east")) {
+            x += correction;
+        } else if (direction.contains("west")) {
+            x -= correction;
+        }
+        if (direction.contains("south")) {
+            z += correction;
+        } else if (direction.contains("north")) {
+            z -= correction;
+        }
+        return new BlockPoint(x, z);
+    }
+
     private FrontierGapValidation validateFrontierBodyGap(BlockBounds parentBody,
                                                            String direction,
                                                            JsonArray items,
@@ -2181,10 +2239,10 @@ public final class CityStructureArrayLayoutLoopPlanner {
     }
 
     private TerrainPlacementPolicy terrainPlacementPolicy(JsonObject request) {
-        // The Blueprint bridge keeps its existing terrainPolicy semantics until structure-level
-        // placement tags exist; the explicit Agent Loop retains its historical grounded filter.
-        return new TerrainPlacementPolicy(booleanValue(request,
-                "preserveBlueprintTerrainPolicy", false));
+        // Blueprint candidates are checked later against the frozen per-cell structure terrain gate.
+        // The explicit Agent Loop keeps its historical patch-level grounded filter.
+        return new TerrainPlacementPolicy(booleanValue(request, "structureTerrainGateOwnsLegality",
+                booleanValue(request, "preserveBlueprintTerrainPolicy", false)));
     }
 
     private TerrainPatchSelection terrainPatchesForFrontier(CityLandformReviewPackage reviewPackage,
@@ -2215,10 +2273,13 @@ public final class CityStructureArrayLayoutLoopPlanner {
     }
 
     private String terrainPatchRejection(LandformPatchSummary patch, TerrainPlacementPolicy policy) {
+        if (policy.structureTerrainGateOwnsLegality()) {
+            return "";
+        }
         if (explicitlyUnusableTerrain(patch)) {
             return "D4_ARRAY_LAYOUT_FRONTIER_STEEP_OR_UNAVAILABLE_PATCH";
         }
-        if (!policy.waterAllowed() && waterPatch(patch)) {
+        if (waterPatch(patch)) {
             return "D4_ARRAY_LAYOUT_FRONTIER_WATER_REJECTED_FOR_GROUNDED_STRUCTURE";
         }
         return "";
@@ -3343,7 +3404,7 @@ public final class CityStructureArrayLayoutLoopPlanner {
     private record FrontierGapValidation(boolean accepted, int actualBodyGapBlocks) {
     }
 
-    private record TerrainPlacementPolicy(boolean waterAllowed) {
+    private record TerrainPlacementPolicy(boolean structureTerrainGateOwnsLegality) {
     }
 
     private record TerrainPatchSelection(List<LandformPatchSummary> acceptedPatches,

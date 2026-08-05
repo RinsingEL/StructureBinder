@@ -51,7 +51,7 @@ class MinecraftPriorAtlasSamplerTest {
                 layer(7, 7, DIRT),
                 layer(8, 8, GRASS));
 
-        var sample = sampleColumn(column, -4, 12, 5);
+        var sample = sampleColumn(column, -4, 12);
 
         assertEquals(9, sample.surfaceHeight());
         assertEquals(SurfaceType.GRASS, sample.surfaceType());
@@ -65,7 +65,7 @@ class MinecraftPriorAtlasSamplerTest {
                 layer(0, 2, STONE),
                 layer(3, 4, WATER));
 
-        var sample = sampleColumn(column, 0, 10, 5);
+        var sample = sampleColumn(column, 0, 10);
 
         assertEquals(5, sample.surfaceHeight());
         assertEquals(SurfaceType.WATER, sample.surfaceType());
@@ -79,7 +79,7 @@ class MinecraftPriorAtlasSamplerTest {
                 layer(0, 1, SAND),
                 layer(2, 6, WATER));
 
-        var sample = sampleColumn(column, 0, 12, 7);
+        var sample = sampleColumn(column, 0, 12);
 
         assertEquals(7, sample.surfaceHeight());
         assertTrue(sample.water());
@@ -87,24 +87,38 @@ class MinecraftPriorAtlasSamplerTest {
     }
 
     @Test
-    void fluidAtSeaLevelKeepsExistingStrictWaterBoundary() {
+    void waterSurfaceAboveSeaLevelIsStillWater() {
         IntFunction<TestState> column = column(0, 10,
                 layer(0, 2, STONE),
                 layer(3, 5, WATER));
 
-        var sample = sampleColumn(column, 0, 10, 5);
+        var sample = sampleColumn(column, 0, 10);
 
         assertEquals(6, sample.surfaceHeight());
-        assertFalse(sample.water());
-        assertEquals(SurfaceType.UNKNOWN, sample.surfaceType());
-        assertEquals(0.0, sample.waterDepth());
+        assertTrue(sample.water());
+        assertEquals(SurfaceType.WATER, sample.surfaceType());
+        assertEquals(3.0, sample.waterDepth());
+    }
+
+    @Test
+    void highAltitudeLakeUsesActualSurfaceAndFloorInsteadOfSeaLevel() {
+        IntFunction<TestState> column = column(80, 120,
+                layer(80, 99, STONE),
+                layer(100, 104, WATER));
+
+        var sample = sampleColumn(column, 80, 120);
+
+        assertEquals(105, sample.surfaceHeight());
+        assertTrue(sample.water());
+        assertEquals(SurfaceType.WATER, sample.surfaceType());
+        assertEquals(5.0, sample.waterDepth());
     }
 
     @Test
     void allAirColumnFallsBackToMinimumBuildHeight() {
         IntFunction<TestState> column = column(-8, 8);
 
-        var sample = sampleColumn(column, -8, 8, 3);
+        var sample = sampleColumn(column, -8, 8);
 
         assertEquals(-8, sample.surfaceHeight());
         assertEquals(SurfaceType.UNKNOWN, sample.surfaceType());
@@ -116,7 +130,7 @@ class MinecraftPriorAtlasSamplerTest {
     void topmostBlockCanReturnExclusiveMaximumBuildHeight() {
         IntFunction<TestState> column = column(-2, 4, layer(3, 3, SNOW));
 
-        var sample = sampleColumn(column, -2, 4, 0);
+        var sample = sampleColumn(column, -2, 4);
 
         assertEquals(4, sample.surfaceHeight());
         assertEquals(SurfaceType.SNOW, sample.surfaceType());
@@ -128,13 +142,13 @@ class MinecraftPriorAtlasSamplerTest {
         IntFunction<TestState> column = column(0, 1);
 
         assertThrows(IllegalArgumentException.class,
-                () -> sampleColumn(column, 0, 0, 0));
+                () -> sampleColumn(column, 0, 0));
     }
 
     private static MinecraftPriorAtlasSampler.ColumnSample sampleColumn(IntFunction<TestState> column,
-            int minBuildHeight, int maxBuildHeight, int seaLevel) {
+            int minBuildHeight, int maxBuildHeight) {
         return MinecraftPriorAtlasSampler.sampleColumn(
-                column, STATE_ADAPTER, minBuildHeight, maxBuildHeight, seaLevel);
+                column, STATE_ADAPTER, minBuildHeight, maxBuildHeight);
     }
 
     private static IntFunction<TestState> column(int minY, int maxY, Layer... layers) {

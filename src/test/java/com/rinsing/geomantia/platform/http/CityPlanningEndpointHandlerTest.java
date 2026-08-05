@@ -76,6 +76,7 @@ class CityPlanningEndpointHandlerTest {
         String citySeedId = "city_test";
         prepareD5Artifacts(debugRoot, runId, citySeedId);
         Path runDir = debugRoot.resolve(runId);
+        writeBlueprintTerrainField(runDir, citySeedId);
 
         JsonObject prepared = CityPlanningEndpointHandler.handlePrepareD4BlueprintContext(debugRoot, runId,
                 citySeedId, terraSenseSource(runDir.resolve("debug_structure_profile_catalog.json")),
@@ -762,6 +763,14 @@ class CityPlanningEndpointHandlerTest {
         String stateId = created.getAsJsonObject("arrayLayoutLoopState").get("stateId").getAsString();
         JsonObject request = arrayExpansionRequest(review);
 
+        JsonObject removedCandidateMenuRequest = request.deepCopy();
+        removedCandidateMenuRequest.addProperty("minCandidateCount", 2);
+        IllegalArgumentException removedCandidateMenu = assertThrows(IllegalArgumentException.class,
+                () -> CityPlanningEndpointHandler.handlePlanD4ArrayExpansionCandidates(
+                        debugRoot, runId, citySeedId, terraSenseSource(catalogPath), stateId,
+                        removedCandidateMenuRequest, null, templateCatalogSource(templateCatalogPath)));
+        assertTrue(removedCandidateMenu.getMessage().contains("D4_ARRAY_LAYOUT_MIN_CANDIDATE_COUNT_REMOVED"));
+
         JsonObject space = CityPlanningEndpointHandler.handleQueryD4ArrayExpansionSpace(
                 debugRoot, runId, citySeedId, stateId, request, null);
         assertTrue(space.get("ok").getAsBoolean());
@@ -772,7 +781,6 @@ class CityPlanningEndpointHandlerTest {
                 {
                   "newFunctionalArea": true,
                   "candidateCount": 3,
-                  "minCandidateCount": 3,
                   "nextArrayLayoutPlanItem": {
                     "arrayId": "global_residential_theme",
                     "plannerType": "compound_cluster",
@@ -811,6 +819,15 @@ class CityPlanningEndpointHandlerTest {
         assertTrue(planned.get("ok").getAsBoolean());
         assertEquals(3, planned.getAsJsonObject("arrayExpansionCandidateSet")
                 .getAsJsonArray("arrayCandidates").size());
+
+        JsonObject singleCandidateRequest = request.deepCopy();
+        singleCandidateRequest.addProperty("candidateCount", 1);
+        JsonObject singleCandidatePlanned = CityPlanningEndpointHandler.handlePlanD4ArrayExpansionCandidates(
+                debugRoot, runId, citySeedId, terraSenseSource(catalogPath), stateId, singleCandidateRequest, null,
+                templateCatalogSource(templateCatalogPath));
+        assertEquals(1, singleCandidatePlanned.getAsJsonObject("arrayExpansionCandidateSet")
+                .getAsJsonArray("arrayCandidates").size());
+
         assertEquals(stateId, planned.getAsJsonObject("arrayExpansionCandidateSet")
                 .get("sourceStateId").getAsString());
         JsonObject candidateArtifacts = planned.getAsJsonObject("artifacts");
@@ -1650,18 +1667,18 @@ class CityPlanningEndpointHandlerTest {
                     {
                       "structureId": "test:windmill",
                       "sourceProfileRef": "terrasense://windmill",
+                      "reviewState": "approved",
                       "functionTerms": ["function.agriculture"],
-                      "styleTerms": ["style.medieval"],
-                      "usageTerms": ["usage.production"],
-                      "qualityTerms": ["quality.usable"]
+                      "planningRoleTerms": ["planning_role.fill"],
+                      "terrainModes": ["SURFACE"]
                     },
                     {
                       "structureId": "test:fishing_boat",
                       "sourceProfileRef": "terrasense://fishing_boat",
+                      "reviewState": "approved",
                       "functionTerms": ["function.harbor"],
-                      "styleTerms": ["style.medieval"],
-                      "usageTerms": ["usage.commercial"],
-                      "qualityTerms": ["quality.usable"]
+                      "planningRoleTerms": ["planning_role.key"],
+                      "terrainModes": ["SURFACE"]
                     }
                   ]
                 }
@@ -1671,18 +1688,23 @@ class CityPlanningEndpointHandlerTest {
                   "terms": [
                     {"term_id": "function.agriculture", "label": "农业", "aliases": ["farm"], "status": "approved"},
                     {"term_id": "function.harbor", "label": "港口", "aliases": ["harbor"], "status": "approved"},
-                    {"term_id": "style.medieval", "label": "中世纪", "aliases": ["medieval"], "status": "approved"}
+                    {"term_id": "planning_role.fill", "label": "填充", "aliases": ["fill"], "status": "approved"},
+                    {"term_id": "planning_role.key", "label": "关键", "aliases": ["key"], "status": "approved"},
+                    {"term_id": "terrain.land_only", "label": "仅陆地", "aliases": ["land"], "status": "approved"},
+                    {"term_id": "terrain.water_only", "label": "仅水上", "aliases": ["water"], "status": "approved"}
                   ]
                 }
                 """);
         JsonObject source = new JsonObject();
+        source.addProperty("schemaVersion", "terrasense_structure_profile_source.v0.1");
         source.addProperty("sourceType", "debug_catalog");
+        source.addProperty("catalogMode", "debug");
         source.addProperty("debugCatalogPath", catalogPath.toString());
         source.addProperty("vocabularySnapshotPath", vocabularyPath.toString());
 
         JsonObject query = JsonParser.parseString("""
                 {
-                  "allOfTerms": ["中世纪"],
+                  "allOfTerms": ["填充"],
                   "anyOfTerms": ["farm", "港口"],
                   "excludeTerms": ["港口"],
                   "limit": 10
@@ -1694,10 +1716,18 @@ class CityPlanningEndpointHandlerTest {
         assertTrue(response.getAsJsonObject("vocabulary").get("available").getAsBoolean());
         assertEquals(1, response.get("matchedCount").getAsInt());
         JsonObject windmill = response.getAsJsonArray("candidates").get(0).getAsJsonObject();
-        assertEquals("city_structure_catalog_query.v0.2", response.get("schemaVersion").getAsString());
+        assertEquals("city_structure_catalog_query.v0.5", response.get("schemaVersion").getAsString());
         assertEquals("test:windmill", windmill.get("semanticProfileId").getAsString());
-        assertEquals("style.medieval", windmill.getAsJsonArray("matchedCanonicalTerms").get(0).getAsString());
+        assertEquals("planning_role.fill", windmill.getAsJsonArray("matchedCanonicalTerms").get(0).getAsString());
         assertEquals("function.agriculture", windmill.getAsJsonArray("matchedCanonicalTerms").get(1).getAsString());
+        JsonObject terms = windmill.getAsJsonObject("terms");
+        assertEquals(4, terms.size());
+        assertTrue(terms.has("functionTerms"));
+        assertTrue(terms.has("planningRoleTerms"));
+        assertTrue(terms.has("terrainModes"));
+        assertTrue(terms.has("styleTerms"));
+        assertFalse(terms.has("semanticTerms"));
+        assertFalse(windmill.has("qualityTerms"));
         assertFalse(windmill.has("structureId"));
         assertFalse(windmill.has("hardFacts"));
         assertEquals("debug", windmill.getAsJsonObject("profileSource").get("catalogMode").getAsString());
@@ -3093,6 +3123,34 @@ class CityPlanningEndpointHandlerTest {
         return source;
     }
 
+    private static void writeBlueprintTerrainField(Path runDir, String citySeedId) throws Exception {
+        JsonObject review = JsonParser.parseString(Files.readString(runDir.resolve("city_d3_" + citySeedId)
+                .resolve("city_landform_review_package.json"))).getAsJsonObject();
+        JsonObject grid = review.getAsJsonObject("grid");
+        int step = grid.get("cellStepBlocks").getAsInt();
+        int originX = grid.get("originBlockX").getAsInt();
+        int originZ = grid.get("originBlockZ").getAsInt();
+        int cellsX = grid.get("cellsX").getAsInt();
+        int cellsZ = grid.get("cellsZ").getAsInt();
+        List<LandUseTerrainField.Cell> cells = new java.util.ArrayList<>();
+        for (int z = 0; z < cellsZ; z++) {
+            for (int x = 0; x < cellsX; x++) {
+                int blockX = originX + x * step;
+                int blockZ = originZ + z * step;
+                cells.add(new LandUseTerrainField.Cell(Math.floorDiv(blockX, step), Math.floorDiv(blockZ, step),
+                        blockX, blockZ, step, 70, 0, 0, 0, false, 0, 40,
+                        "minecraft:plains", "plain", "plain", true));
+            }
+        }
+        LandUseTerrainField field = new LandUseTerrainField(LandUseTerrainField.CURRENT_SCHEMA_VERSION,
+                citySeedId, new BlockBounds(originX, originZ,
+                originX + cellsX * step - 1, originZ + cellsZ * step - 1), step, cells);
+        Path directory = runDir.resolve("city_land_use_" + citySeedId);
+        Files.createDirectories(directory);
+        Files.writeString(directory.resolve("land_use_terrain_field.json"),
+                CityJson.GSON.toJson(new LandUseTerrainFieldCodec().toJson(field)));
+    }
+
     private static String sha256(String value) throws Exception {
         return "sha256:" + HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256")
                 .digest(value.getBytes(StandardCharsets.UTF_8)));
@@ -3264,7 +3322,6 @@ class CityPlanningEndpointHandlerTest {
                   "direction": "east",
                   "targetPatchRef": "%s",
                   "candidateCount": 3,
-                  "minCandidateCount": 3,
                   "nextArrayLayoutPlanItem": {
                     "arrayId": "east_residential_theme",
                     "plannerType": "compound_cluster",
@@ -3654,7 +3711,7 @@ class CityPlanningEndpointHandlerTest {
     private static String debugStructureCatalog() {
         return """
                 {
-                  "schemaVersion": "city_structure_profile_catalog.v0.1",
+                  "schemaVersion": "city_semantic_profile_catalog.v0.2",
                   "catalogMode": "debug",
                   "source": {"basis": "synthetic unit-test fixture"},
                   "structures": [
@@ -3666,12 +3723,10 @@ class CityPlanningEndpointHandlerTest {
                       "placementKind": "minecraft_place_structure",
                       "placementCommand": "place structure minecraft:desert_pyramid <x> <y> <z>",
                       "footprintMode": "fixed_footprint",
-                      "semanticTerms": ["function.landmark", "style.debug", "placement.inside_zone", "usage.public_core", "quality.debug_usable"],
+                      "reviewState": "approved",
                       "functionTerms": ["function.landmark"],
-                      "styleTerms": ["style.debug"],
-                      "placementTerms": ["placement.inside_zone"],
-                      "usageTerms": ["usage.public_core"],
-                      "qualityTerms": ["quality.debug_usable"],
+                      "planningRoleTerms": ["planning_role.key"],
+                      "terrainModes": ["SURFACE"],
                       "fixedFootprint": {"widthBlocks": 12, "depthBlocks": 12, "heightBlocks": 10},
                       "visibleAreaCost": 256,
                       "allowedRotations": ["NONE", "CLOCKWISE_90"],
@@ -3685,12 +3740,10 @@ class CityPlanningEndpointHandlerTest {
                       "placementKind": "minecraft_place_structure",
                       "placementCommand": "place structure minecraft:village_plains <x> <y> <z>",
                       "footprintMode": "variable_area",
-                      "semanticTerms": ["function.村庄", "style.debug", "placement.inside_zone", "usage.filler", "quality.debug_usable"],
+                      "reviewState": "approved",
                       "functionTerms": ["function.村庄"],
-                      "styleTerms": ["style.debug"],
-                      "placementTerms": ["placement.inside_zone"],
-                      "usageTerms": ["usage.filler"],
-                      "qualityTerms": ["quality.debug_usable"],
+                      "planningRoleTerms": ["planning_role.fill"],
+                      "terrainModes": ["SURFACE"],
                       "expectedAreaRange": {
                         "minAreaBlocks": 128,
                         "maxAreaBlocks": 25600,

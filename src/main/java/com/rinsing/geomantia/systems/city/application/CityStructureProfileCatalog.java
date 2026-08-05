@@ -20,8 +20,17 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 public final class CityStructureProfileCatalog {
+    public static final String SCHEMA_VERSION = "city_semantic_profile_catalog.v0.4";
+    public static final String SOURCE_SCHEMA_V01 = "terrasense_structure_profile_source.v0.1";
+    public static final String SOURCE_SCHEMA_V02 = "terrasense_structure_profile_source.v0.2";
     private static final Pattern RESOURCE_ID = Pattern.compile("[a-z0-9_.-]+:[a-z0-9_./-]+");
     private static final Set<String> LEGACY_SEMANTIC_FIELDS = Set.of(
+            "semanticTerms", "semantic_terms",
+            "placementTerms", "placement_terms", "placement",
+            "usageTerms", "usage_terms", "usage",
+            "templateRoleTerms", "template_role_terms", "template_role",
+            "qualityTerms", "quality_terms", "quality",
+            "terrainTerms", "terrain_terms", "terrain",
             "functionTags", "function_tags", "function_candidates", "functionAffinity", "function_affinity",
             "styleTags", "style_tags", "styleAffinity", "style_affinity",
             "placementTags", "placement_tags", "placementAffinity", "placement_affinity",
@@ -35,9 +44,9 @@ public final class CityStructureProfileCatalog {
         if (source == null) {
             throw new IllegalArgumentException("terrasenseProfileSource object is required.");
         }
-        String sourceType = stringValue(source, "sourceType", "debug_catalog");
-        String catalogMode = stringValue(source, "catalogMode",
-                sourceType.equals("debug_catalog") ? "debug" : "official");
+        SourceDescriptor descriptor = validateSourceDescriptor(source);
+        String sourceType = descriptor.sourceType();
+        String catalogMode = descriptor.catalogMode();
         if ("compat".equals(catalogMode) || "c3_5_compat_catalog".equals(sourceType)) {
             throw legacyFlow("compat TerraSense catalog is removed; use StructureProfile.jsonl/debug catalog.");
         }
@@ -48,6 +57,12 @@ public final class CityStructureProfileCatalog {
         };
         if (!Files.exists(inputPath)) {
             throw new IllegalArgumentException("TerraSense profile source not found: " + inputPath);
+        }
+        if (descriptor.vocabularySnapshotRequired()) {
+            Path vocabularyPath = resolve(baseDirectory, requiredString(source, "vocabularySnapshotPath"));
+            if (!Files.isRegularFile(vocabularyPath)) {
+                throw new IllegalArgumentException("TerraSense vocabulary snapshot not found: " + vocabularyPath);
+            }
         }
 
         List<String> warnings = new ArrayList<>();
@@ -120,8 +135,11 @@ public final class CityStructureProfileCatalog {
             needsReview.add(sourceRef + ": invalid or missing semanticProfileId");
             return java.util.Optional.empty();
         }
+        String reviewState = firstString(obj, "reviewState", "review_state");
+        if ("debug".equals(catalogMode) && reviewState.isBlank()) {
+            reviewState = "unreviewed";
+        }
         if (!"debug".equals(catalogMode)) {
-            String reviewState = firstString(obj, "reviewState", "review_state");
             if (!"approved".equalsIgnoreCase(reviewState)) {
                 needsReview.add(semanticProfileId + ": review_state is not approved");
                 return java.util.Optional.empty();
@@ -133,33 +151,23 @@ public final class CityStructureProfileCatalog {
             needsReview.add(semanticProfileId + ": missing TerraSense function terms");
             return java.util.Optional.empty();
         }
-        List<String> qualityTerms = firstStrings(obj, curation, "qualityTerms", "quality_terms", "quality");
-        if (qualityTerms.stream().anyMatch(term -> term.equals("reject") || term.equals("quality.reject"))) {
-            needsReview.add(semanticProfileId + ": rejected by quality terms");
-            return java.util.Optional.empty();
+        List<String> planningRoleTerms = firstStrings(obj, curation,
+                "planningRoleTerms", "planning_role_terms", "planning_role");
+        List<CityStructureTerrainMode> terrainModes = terrainModes(obj, curation, sourceRef);
+        if (!"debug".equals(catalogMode) && terrainModes.isEmpty()) {
+            throw new IllegalArgumentException("CITY_STRUCTURE_TERRAIN_MODE_REQUIRED: "
+                    + semanticProfileId + " must declare at least one terrainModes value.");
         }
-
         List<String> styleTerms = firstStrings(obj, curation, "styleTerms", "style_terms", "style");
-        List<String> placementTerms = firstStrings(obj, curation, "placementTerms", "placement_terms", "placement");
-        List<String> usageTerms = firstStrings(obj, curation, "usageTerms", "usage_terms", "usage");
-        List<String> templateRoleTerms = firstStrings(obj, curation, "templateRoleTerms", "template_role_terms",
-                "template_role");
-        List<String> semanticTerms = firstStrings(obj, curation, "semanticTerms", "semantic_terms");
-        if (semanticTerms.isEmpty()) {
-            semanticTerms = semanticTerms(functionTerms, styleTerms, placementTerms, usageTerms,
-                    templateRoleTerms, qualityTerms);
-        }
 
         return java.util.Optional.of(new StructureProfile(
                 semanticProfileId,
                 firstString(obj, "sourceProfileRef", "source_profile_ref", "profileRef"),
-                semanticTerms,
+                reviewState,
                 functionTerms,
+                planningRoleTerms,
+                terrainModes,
                 styleTerms,
-                placementTerms,
-                usageTerms,
-                templateRoleTerms,
-                qualityTerms,
                 catalogMode));
     }
 
@@ -167,9 +175,45 @@ public final class CityStructureProfileCatalog {
         for (String field : LEGACY_SEMANTIC_FIELDS) {
             if ((obj != null && obj.has(field)) || (nested != null && nested.has(field))) {
                 throw legacyFlow(sourceRef + " uses legacy semantic field " + field
-                        + "; export TerraSense semanticTerms/functionTerms instead.");
+                        + "; export TerraSense functionTerms/planningRoleTerms/styleTerms and City terrainModes instead.");
             }
         }
+    }
+
+    private static SourceDescriptor validateSourceDescriptor(JsonObject source) {
+        String schema = requiredString(source, "schemaVersion");
+        String sourceType = requiredString(source, "sourceType");
+        String catalogMode = requiredString(source, "catalogMode");
+        if (SOURCE_SCHEMA_V01.equals(schema)) {
+            if (!Set.of("official", "debug").contains(catalogMode)) {
+                throw new IllegalArgumentException("Unsupported catalogMode for " + schema + ": " + catalogMode);
+            }
+            if (!("structure_profile_jsonl".equals(sourceType) || "debug_catalog".equals(sourceType))) {
+                throw new IllegalArgumentException("Unsupported TerraSense sourceType: " + sourceType);
+            }
+            if ("debug_catalog".equals(sourceType) != "debug".equals(catalogMode)) {
+                throw new IllegalArgumentException("debug_catalog requires catalogMode=debug.");
+            }
+            return new SourceDescriptor(sourceType, catalogMode, false);
+        }
+        if (SOURCE_SCHEMA_V02.equals(schema)) {
+            if (!"binder".equals(catalogMode)) {
+                throw new IllegalArgumentException("Unsupported catalogMode for " + schema + ": " + catalogMode);
+            }
+            if (!"structure_profile_jsonl".equals(sourceType)) {
+                throw new IllegalArgumentException("Unsupported TerraSense sourceType: " + sourceType);
+            }
+            if (!"single_template".equals(requiredString(source, "sampleType"))) {
+                throw new IllegalArgumentException("binder source requires sampleType=single_template.");
+            }
+            if (booleanValue(source, "allowDebugUnapproved", true)) {
+                throw new IllegalArgumentException("binder source requires allowDebugUnapproved=false.");
+            }
+            requiredString(source, "terrasenseRunId");
+            requiredString(source, "vocabularySnapshotPath");
+            return new SourceDescriptor(sourceType, catalogMode, true);
+        }
+        throw new IllegalArgumentException("Unsupported TerraSense profile source schemaVersion: " + schema);
     }
 
     private static Path resolve(Path baseDirectory, String raw) {
@@ -178,14 +222,6 @@ public final class CityStructureProfileCatalog {
             return path.normalize();
         }
         return (baseDirectory == null ? Path.of(".") : baseDirectory).resolve(path).normalize();
-    }
-
-    private static List<String> semanticTerms(List<String>... groups) {
-        LinkedHashSet<String> terms = new LinkedHashSet<>();
-        for (List<String> group : groups) {
-            terms.addAll(group);
-        }
-        return List.copyOf(terms);
     }
 
     private static String firstString(JsonObject obj, String... keys) {
@@ -243,6 +279,32 @@ public final class CityStructureProfileCatalog {
         return obj != null && obj.has(key) && !obj.get(key).isJsonNull() ? obj.get(key).getAsString() : defaultValue;
     }
 
+    private static List<CityStructureTerrainMode> terrainModes(JsonObject obj, JsonObject nested,
+                                                                String sourceRef) {
+        JsonArray values = firstArray(obj, "terrainModes", "terrain_modes");
+        if (values.isEmpty()) values = firstArray(nested, "terrainModes", "terrain_modes");
+        List<CityStructureTerrainMode> modes = new ArrayList<>();
+        Set<CityStructureTerrainMode> unique = new LinkedHashSet<>();
+        for (JsonElement element : values) {
+            if (!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isString()) {
+                throw new IllegalArgumentException("CITY_STRUCTURE_TERRAIN_MODE_INVALID: "
+                        + sourceRef + ": terrainModes entries must be strings.");
+            }
+            CityStructureTerrainMode mode = CityStructureTerrainMode.parse(element.getAsString(), sourceRef);
+            if (!unique.add(mode)) {
+                throw new IllegalArgumentException("CITY_STRUCTURE_TERRAIN_MODE_DUPLICATE: "
+                        + sourceRef + ": duplicate terrainMode " + mode.name());
+            }
+            modes.add(mode);
+        }
+        return List.copyOf(modes);
+    }
+
+    private static boolean booleanValue(JsonObject obj, String key, boolean defaultValue) {
+        return obj != null && obj.has(key) && !obj.get(key).isJsonNull()
+                ? obj.get(key).getAsBoolean() : defaultValue;
+    }
+
     private static JsonObject objectValue(JsonObject obj, String key) {
         return obj != null && obj.has(key) && obj.get(key).isJsonObject() ? obj.getAsJsonObject(key) : new JsonObject();
     }
@@ -278,7 +340,7 @@ public final class CityStructureProfileCatalog {
 
         public JsonObject asJson() {
             JsonObject obj = new JsonObject();
-            obj.addProperty("schemaVersion", "city_semantic_profile_catalog.v0.1");
+            obj.addProperty("schemaVersion", SCHEMA_VERSION);
             obj.addProperty("catalogMode", catalogMode);
             obj.add("source", source.deepCopy());
             JsonArray array = new JsonArray();
@@ -294,35 +356,35 @@ public final class CityStructureProfileCatalog {
         }
     }
 
-    public record StructureProfile(String semanticProfileId, String sourceProfileRef,
-                                   List<String> semanticTerms, List<String> functionTerms,
-                                   List<String> styleTerms, List<String> placementTerms, List<String> usageTerms,
-                                   List<String> templateRoleTerms, List<String> qualityTerms,
+    public record StructureProfile(String semanticProfileId, String sourceProfileRef, String reviewState,
+                                   List<String> functionTerms, List<String> planningRoleTerms,
+                                   List<CityStructureTerrainMode> terrainModes, List<String> styleTerms,
                                    String catalogMode) {
         public StructureProfile {
-            semanticTerms = List.copyOf(semanticTerms);
             functionTerms = List.copyOf(functionTerms);
+            planningRoleTerms = List.copyOf(planningRoleTerms);
+            terrainModes = List.copyOf(terrainModes);
             styleTerms = List.copyOf(styleTerms);
-            placementTerms = List.copyOf(placementTerms);
-            usageTerms = List.copyOf(usageTerms);
-            templateRoleTerms = List.copyOf(templateRoleTerms);
-            qualityTerms = List.copyOf(qualityTerms);
         }
 
         public JsonObject asSemanticJson() {
             JsonObject obj = new JsonObject();
             obj.addProperty("semanticProfileId", semanticProfileId);
             obj.addProperty("sourceProfileRef", sourceProfileRef);
-            obj.add("semanticTerms", stringArray(semanticTerms));
+            obj.addProperty("reviewState", reviewState);
             obj.add("functionTerms", stringArray(functionTerms));
+            obj.add("planningRoleTerms", stringArray(planningRoleTerms));
+            JsonArray modes = new JsonArray();
+            terrainModes.forEach(mode -> modes.add(mode.name()));
+            obj.add("terrainModes", modes);
             obj.add("styleTerms", stringArray(styleTerms));
-            obj.add("placementTerms", stringArray(placementTerms));
-            obj.add("usageTerms", stringArray(usageTerms));
-            obj.add("templateRoleTerms", stringArray(templateRoleTerms));
-            obj.add("qualityTerms", stringArray(qualityTerms));
             obj.addProperty("catalogMode", catalogMode);
             return obj;
         }
+    }
+
+    private record SourceDescriptor(String sourceType, String catalogMode,
+                                    boolean vocabularySnapshotRequired) {
     }
 
     public record Footprint(int widthBlocks, int depthBlocks, int heightBlocks) {
