@@ -115,6 +115,9 @@ class CityBlueprintCompilerServiceTest {
         assertTrue(finalized.qualityReport().get("passed").getAsBoolean(),
                 finalized.qualityReport().toString());
         assertEquals(anchorCount, finalized.structureAnchorMap().getAsJsonArray("anchors").size());
+        assertEquals("programmatic_blueprint_compiler", finalized.structureAnchorMap()
+                .getAsJsonObject("cityBlueprintCompileProvenance")
+                .get("selectionMode").getAsString());
     }
 
     @Test
@@ -971,7 +974,7 @@ class CityBlueprintCompilerServiceTest {
     private static JsonObject blueprint(JsonObject context, String extentClass) {
         JsonObject root = JsonParser.parseString("""
                 {
-                  "schemaVersion":"city_blueprint.v0.5","cityId":"placeholder","generationSeed":1,
+                  "schemaVersion":"city_blueprint.v0.6","cityId":"placeholder","generationSeed":1,
                   "sourceD3Ref":{},"catalogSnapshotRef":{},
                   "designIntent":{"cityIdentity":"town","theme":"stone","functionalRoles":["administration"]},
                   "styleProfile":{"profileRef":"style:stone"},
@@ -985,10 +988,8 @@ class CityBlueprintCompilerServiceTest {
                   }],
                   "relations":[],"roadProfile":{"profileRef":"road:town"},
                   "surfaceDetailProfile":{"profileRef":"surface:working"},
-                  "outdoorPlan":{"mode":"GENERATE","envelopeProfile":"BALANCED","structureGrounds":[],
-                    "landscapes":[],"residualPolicy":{"smallEnclosed":"ABSORB_NEIGHBOR",
-                    "narrowGap":"PATH_OR_VERGE","mediumEnclosed":"COMMON_GREEN",
-                    "largeEnclosed":"COMMON_GREEN","exteriorConnected":"NATURAL_RESERVE"}}
+                  "outdoorPlan":{"mode":"GENERATE","envelopeProfile":"BALANCED","spatialGrounds":[],
+                    "landscapes":[]}
                 }
                 """).getAsJsonObject();
         root.addProperty("cityId", context.get("cityId").getAsString());
@@ -1007,14 +1008,13 @@ class CityBlueprintCompilerServiceTest {
             ground.addProperty("sourceGroupId", group.get("groupId").getAsString());
             ground.addProperty("landUseRuleRef", "civic");
             ground.addProperty("surfaceRecipeRef", "surface_recipe:civic");
-            ground.addProperty("extentClass", group.get("extentClass").getAsString());
-            ground.addProperty("growthBias", "BALANCED");
-            ground.add("referenceGroupIds", new JsonArray());
-            ground.addProperty("autoConnect", true);
+            ground.addProperty("sharedSpaceType", "GENERAL_URBAN");
+            ground.addProperty("hierarchyLevel", group.get("priority").getAsString().equals("CORE")
+                    ? "PRIMARY" : "SECONDARY");
             ground.addProperty("membership", "URBAN");
             grounds.add(ground);
         }
-        blueprint.getAsJsonObject("outdoorPlan").add("structureGrounds", grounds);
+        blueprint.getAsJsonObject("outdoorPlan").add("spatialGrounds", grounds);
     }
 
     private static String safe(String value) {

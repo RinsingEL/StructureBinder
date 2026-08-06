@@ -209,13 +209,13 @@ class CityBlueprintServiceTest {
     }
 
     @Test
-    void generateRequiresExactlyOneStructureGroundPerStructureGroup() throws Exception {
+    void generateRequiresExactlyOneSpatialGroundPerStructureGroup() throws Exception {
         Fixture fixture = fixture("run_missing_ground", "city:missing_ground");
         CityBlueprintService service = new CityBlueprintService();
         JsonObject prepared = service.prepare(temporary, fixture.runId(), fixture.cityId(),
                 fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog());
         JsonObject blueprint = blueprint(prepared.getAsJsonObject("cityBlueprintContext"));
-        blueprint.getAsJsonObject("outdoorPlan").add("structureGrounds", new JsonArray());
+        blueprint.getAsJsonObject("outdoorPlan").add("spatialGrounds", new JsonArray());
 
         JsonObject result = service.submit(temporary, fixture.runId(), fixture.cityId(),
                 prepared.get("contextId").getAsString(), blueprint);
@@ -281,34 +281,18 @@ class CityBlueprintServiceTest {
     }
 
     @Test
-    void residualPolicyAcceptsExactlyTheFrozenDispositionMatrix() throws Exception {
-        Map<String, Set<String>> allowed = Map.of(
-                "smallEnclosed", Set.of("ABSORB_NEIGHBOR", "NATURAL_RESERVE"),
-                "narrowGap", Set.of("ABSORB_NEIGHBOR", "PATH_OR_VERGE", "NATURAL_RESERVE"),
-                "mediumEnclosed", Set.of("ABSORB_NEIGHBOR", "COMMON_GREEN", "SERVICE_GROUND", "NATURAL_RESERVE"),
-                "largeEnclosed", Set.of("COMMON_GREEN", "NATURAL_RESERVE"),
-                "exteriorConnected", Set.of("NATURAL_RESERVE"));
-        String[] dispositions = {"ABSORB_NEIGHBOR", "PATH_OR_VERGE", "COMMON_GREEN",
-                "SERVICE_GROUND", "NATURAL_RESERVE"};
-        int caseIndex = 0;
-        for (Map.Entry<String, Set<String>> field : allowed.entrySet()) {
-            for (String disposition : dispositions) {
-                String suffix = Integer.toString(caseIndex++);
-                Fixture fixture = fixture("run_residual_matrix_" + suffix, "city:residual_matrix_" + suffix);
-                CityBlueprintService service = new CityBlueprintService();
-                JsonObject prepared = service.prepare(temporary, fixture.runId(), fixture.cityId(),
-                        fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog());
-                JsonObject blueprint = blueprint(prepared.getAsJsonObject("cityBlueprintContext"));
-                blueprint.getAsJsonObject("outdoorPlan").getAsJsonObject("residualPolicy")
-                        .addProperty(field.getKey(), disposition);
+    void oldResidualPolicyIsRejectedInsteadOfSilentlyMigrated() throws Exception {
+        Fixture fixture = fixture("run_old_residual", "city:old_residual");
+        CityBlueprintService service = new CityBlueprintService();
+        JsonObject prepared = service.prepare(temporary, fixture.runId(), fixture.cityId(),
+                fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog());
+        JsonObject blueprint = blueprint(prepared.getAsJsonObject("cityBlueprintContext"));
+        blueprint.getAsJsonObject("outdoorPlan").add("residualPolicy", new JsonObject());
 
-                JsonObject result = service.submit(temporary, fixture.runId(), fixture.cityId(),
-                        prepared.get("contextId").getAsString(), blueprint);
+        JsonObject result = service.submit(temporary, fixture.runId(), fixture.cityId(),
+                prepared.get("contextId").getAsString(), blueprint);
 
-                assertEquals(field.getValue().contains(disposition), result.get("ok").getAsBoolean(),
-                        field.getKey() + '=' + disposition + " produced " + result);
-            }
-        }
+        assertFalse(result.get("ok").getAsBoolean());
     }
 
     @Test
@@ -439,7 +423,7 @@ class CityBlueprintServiceTest {
 
     private static JsonObject blueprint(JsonObject context) {
         JsonObject blueprint = new JsonObject();
-        blueprint.addProperty("schemaVersion", "city_blueprint.v0.5");
+        blueprint.addProperty("schemaVersion", "city_blueprint.v0.6");
         blueprint.addProperty("cityId", context.get("cityId").getAsString());
         blueprint.add("sourceD3Ref", context.getAsJsonObject("sourceD3Ref").deepCopy());
         blueprint.add("catalogSnapshotRef", context.getAsJsonObject("catalogSnapshotRef").deepCopy());
@@ -467,13 +451,10 @@ class CityBlueprintServiceTest {
         blueprint.add("outdoorPlan", JsonParser.parseString("""
                 {
                   "mode":"GENERATE","envelopeProfile":"BALANCED",
-                  "structureGrounds":[{"sourceGroupId":"civic","landUseRuleRef":"civic",
-                    "surfaceRecipeRef":"surface_recipe:civic","extentClass":"MEDIUM","growthBias":"BALANCED",
-                    "referenceGroupIds":[],"autoConnect":true,"membership":"URBAN"}],
-                  "landscapes":[],
-                  "residualPolicy":{"smallEnclosed":"ABSORB_NEIGHBOR","narrowGap":"PATH_OR_VERGE",
-                    "mediumEnclosed":"COMMON_GREEN","largeEnclosed":"COMMON_GREEN",
-                    "exteriorConnected":"NATURAL_RESERVE"}
+                  "spatialGrounds":[{"sourceGroupId":"civic","landUseRuleRef":"civic",
+                    "surfaceRecipeRef":"surface_recipe:civic","sharedSpaceType":"CIVIC_SQUARE",
+                    "hierarchyLevel":"PRIMARY","membership":"URBAN"}],
+                  "landscapes":[]
                 }
                 """).getAsJsonObject());
         return blueprint;
@@ -484,10 +465,10 @@ class CityBlueprintServiceTest {
     }
 
     private static void addStructureGround(JsonObject blueprint, String groupId) {
-        JsonObject ground = blueprint.getAsJsonObject("outdoorPlan").getAsJsonArray("structureGrounds")
+        JsonObject ground = blueprint.getAsJsonObject("outdoorPlan").getAsJsonArray("spatialGrounds")
                 .get(0).getAsJsonObject().deepCopy();
         ground.addProperty("sourceGroupId", groupId);
-        blueprint.getAsJsonObject("outdoorPlan").getAsJsonArray("structureGrounds").add(ground);
+        blueprint.getAsJsonObject("outdoorPlan").getAsJsonArray("spatialGrounds").add(ground);
     }
 
     private record Fixture(String runId, String cityId, Path runDir, Path d3Path,

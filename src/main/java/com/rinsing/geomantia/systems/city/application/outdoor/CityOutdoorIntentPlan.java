@@ -28,7 +28,7 @@ public record CityOutdoorIntentPlan(
         EnvelopeIntent envelope,
         ResidualIntent residual) {
 
-    public static final String SCHEMA_VERSION = "city_outdoor_intent_plan.v0.1";
+    public static final String SCHEMA_VERSION = "city_outdoor_intent_plan.v0.2";
 
     public CityOutdoorIntentPlan {
         if (!SCHEMA_VERSION.equals(schemaVersion)) {
@@ -197,15 +197,15 @@ public record CityOutdoorIntentPlan(
         }
     }
 
-    public record ResidualIntent(CityBlueprint.ResidualDisposition smallEnclosed,
-                                 CityBlueprint.ResidualDisposition narrowGap,
-                                 CityBlueprint.ResidualDisposition mediumEnclosed,
-                                 CityBlueprint.ResidualDisposition largeEnclosed,
-                                 CityBlueprint.ResidualDisposition exteriorConnected) {
+    public record ResidualIntent(CityUrbanSpacePlan.ResidualDisposition smallEnclosed,
+                                 CityUrbanSpacePlan.ResidualDisposition narrowGap,
+                                 CityUrbanSpacePlan.ResidualDisposition mediumEnclosed,
+                                 CityUrbanSpacePlan.ResidualDisposition largeEnclosed,
+                                 CityUrbanSpacePlan.ResidualDisposition exteriorConnected) {
     }
 
     public enum SourceKind {
-        STRUCTURE_GROUND,
+        SPATIAL_GROUND,
         LANDSCAPE
     }
 }

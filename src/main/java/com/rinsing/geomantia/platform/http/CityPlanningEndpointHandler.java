@@ -133,7 +133,7 @@ import java.util.TreeSet;
 final class CityPlanningEndpointHandler {
     static final int DEFAULT_D3_PATCH_SCAN_PADDING_BLOCKS = 128;
     private static final String BLUEPRINT_OUTDOOR_COMPLETION_SCHEMA =
-            "city_land_use_planning_complete.v0.2";
+            "city_land_use_planning_complete.v0.3";
     private static final CityD4StagedPlanCompiler D4_STAGED_PLAN_COMPILER =
             new CityD4StagedPlanCompiler();
     private static final CityWorkflowCandidateSelector WORKFLOW_CANDIDATE_SELECTOR =
@@ -3575,7 +3575,8 @@ final class CityPlanningEndpointHandler {
         }
         JsonObject intent = JsonParser.parseString(Files.readString(intentPath)).getAsJsonObject();
         JsonObject urban = JsonParser.parseString(Files.readString(urbanPath)).getAsJsonObject();
-        validateEmbeddedPlanHash(intent, "city_outdoor_intent_plan.v0.1", "CITY_BLUEPRINT_OUTDOOR_INTENT_STALE");
+        validateEmbeddedPlanHash(intent, CityOutdoorIntentPlan.SCHEMA_VERSION,
+                "CITY_BLUEPRINT_OUTDOOR_INTENT_STALE");
         validateEmbeddedPlanHash(urban, CityUrbanSpacePlan.SCHEMA_VERSION, "CITY_BLUEPRINT_URBAN_SPACE_STALE");
         requireCompletionIdentity(intent, "cityId", expectedCityId);
         requireCompletionIdentity(intent, "mode", CityBlueprint.OutdoorMode.GENERATE.name());

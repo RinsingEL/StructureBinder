@@ -89,28 +89,21 @@ public final class CityUrbanResidualResolver {
             List<String> adjacentGroups = adjacency.keySet().stream().sorted().toList();
             String absorbedGroupId = "";
             String residualId = "residual_" + (++ordinal) + '_' + first.x() + '_' + first.z();
-            if (disposition == CityUrbanSpacePlan.ResidualDisposition.ABSORB_NEIGHBOR && adjacency.isEmpty()) {
-                disposition = CityUrbanSpacePlan.ResidualDisposition.NATURAL_RESERVE;
-            }
-            if (disposition == CityUrbanSpacePlan.ResidualDisposition.ABSORB_NEIGHBOR && !adjacency.isEmpty()) {
+            if (disposition == CityUrbanSpacePlan.ResidualDisposition.ABSORB_NEIGHBOR) {
                 absorbedGroupId = adjacency.entrySet().stream().sorted(Map.Entry.<String, Integer>comparingByValue()
                                 .reversed().thenComparing(Map.Entry::getKey))
-                        .map(Map.Entry::getKey)
-                        .filter(groupId -> groupMaxAreas.getOrDefault(groupId, 0)
-                                - resolvedGroupCounts.getOrDefault(groupId, 0) >= component.size())
-                        .findFirst().orElse("");
+                        .map(Map.Entry::getKey).findFirst()
+                        .orElseGet(() -> nearestUrbanGroup(component, resolvedClaims, config.urbanGroupIds()));
                 if (absorbedGroupId.isBlank()) {
-                    disposition = CityUrbanSpacePlan.ResidualDisposition.NATURAL_RESERVE;
-                    warnings.add("CITY_URBAN_RESIDUAL_ABSORB_CAPACITY_EXHAUSTED:" + residualId);
-                } else {
-                    double baseCost = minimumAdjacentCost(component, resolvedClaims, absorbedGroupId);
-                    for (BlockPoint point : component) {
-                        resolvedClaims.put(point,
-                                new LandUseExpansionResult.Claim(absorbedGroupId, baseCost + 1.0));
-                    }
-                    resolvedGroupCounts.merge(absorbedGroupId, component.size(), Integer::sum);
-                    absorbed += component.size();
+                    throw new IllegalStateException("CITY_URBAN_RESIDUAL_HAS_NO_SPATIAL_OWNER:" + residualId);
                 }
+                double baseCost = minimumAdjacentCost(component, resolvedClaims, absorbedGroupId);
+                for (BlockPoint point : component) {
+                    resolvedClaims.put(point,
+                            new LandUseExpansionResult.Claim(absorbedGroupId, baseCost + 1.0));
+                }
+                resolvedGroupCounts.merge(absorbedGroupId, component.size(), Integer::sum);
+                absorbed += component.size();
             }
             if (disposition != CityUrbanSpacePlan.ResidualDisposition.ABSORB_NEIGHBOR) {
                 explicit += component.size();
@@ -277,6 +270,18 @@ public final class CityUrbanResidualResolver {
         return Double.isFinite(result) ? result : 0.0;
     }
 
+    private static String nearestUrbanGroup(Set<BlockPoint> component,
+                                            Map<BlockPoint, LandUseExpansionResult.Claim> claims,
+                                            Set<String> urbanGroupIds) {
+        BlockPoint origin = component.stream().min(POINT_ORDER).orElseThrow();
+        return claims.entrySet().stream()
+                .filter(entry -> urbanGroupIds.contains(entry.getValue().groupId()))
+                .min(Comparator.comparingInt((Map.Entry<BlockPoint, LandUseExpansionResult.Claim> entry) ->
+                                Math.abs(entry.getKey().x() - origin.x()) + Math.abs(entry.getKey().z() - origin.z()))
+                        .thenComparing(entry -> entry.getValue().groupId()))
+                .map(entry -> entry.getValue().groupId()).orElse("");
+    }
+
     private static boolean terrainBlocked(LandUseTerrainField.Cell cell) {
         return cell == null || !cell.sampled() || cell.water() || cell.slope() >= 45.0 || cell.localRelief() >= 48.0;
     }
@@ -396,6 +401,14 @@ public final class CityUrbanResidualResolver {
                     CityUrbanSpacePlan.ResidualDisposition.NATURAL_RESERVE);
         }
 
+        public static ResidualPolicy absorb() {
+            return new ResidualPolicy(CityUrbanSpacePlan.ResidualDisposition.ABSORB_NEIGHBOR,
+                    CityUrbanSpacePlan.ResidualDisposition.ABSORB_NEIGHBOR,
+                    CityUrbanSpacePlan.ResidualDisposition.ABSORB_NEIGHBOR,
+                    CityUrbanSpacePlan.ResidualDisposition.ABSORB_NEIGHBOR,
+                    CityUrbanSpacePlan.ResidualDisposition.ABSORB_NEIGHBOR);
+        }
+
         private CityUrbanSpacePlan.ResidualDisposition forClass(CityUrbanSpacePlan.ResidualClass value) {
             return switch (value) {
                 case SMALL_ENCLOSED -> smallEnclosed;
@@ -403,7 +416,7 @@ public final class CityUrbanResidualResolver {
                 case MEDIUM_ENCLOSED -> mediumEnclosed;
                 case LARGE_ENCLOSED -> largeEnclosed;
                 case EXTERIOR_CONNECTED -> exteriorConnected;
-                case NATURAL_FEATURE -> CityUrbanSpacePlan.ResidualDisposition.NATURAL_RESERVE;
+                case NATURAL_FEATURE -> smallEnclosed;
             };
         }
     }
