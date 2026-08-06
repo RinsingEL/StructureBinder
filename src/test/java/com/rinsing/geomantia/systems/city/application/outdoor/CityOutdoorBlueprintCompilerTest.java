@@ -26,25 +26,24 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityOutdoorBlueprintCompilerTest {
     @Test
-    void structureGroundUsesOneGroupBudgetAndDerivesAwaySeedsFromD6() {
-        CityBlueprint.StructureGround ground = new CityBlueprint.StructureGround("farm_group", "agriculture",
-                "surface:farmland", CityBlueprint.ExtentClass.MEDIUM,
-                CityBlueprint.GrowthBias.AWAY_FROM_REFERENCE, List.of("core_group"), true,
-                CityBlueprint.OutdoorMembership.URBAN);
+    void spatialGroundBuildsOneConnectedGroupSpaceFromD6AndBlueprintRelations() {
+        CityBlueprint.SpatialGround ground = new CityBlueprint.SpatialGround("farm_group", "agriculture",
+                "surface:farmland", CityBlueprint.SharedSpaceType.FARMSTEAD,
+                CityBlueprint.SpatialHierarchy.SECONDARY, CityBlueprint.OutdoorMembership.URBAN);
         CityBlueprint blueprint = blueprint(new CityBlueprint.OutdoorPlan(CityBlueprint.OutdoorMode.GENERATE,
-                CityBlueprint.EnvelopeProfile.BALANCED, List.of(ground), List.of(), residualPolicy()));
+                CityBlueprint.EnvelopeProfile.BALANCED, List.of(ground), List.of()));
 
         CityOutdoorBlueprintCompiler.Result result = new CityOutdoorBlueprintCompiler().compile(blueprint,
                 d6Plan(), terrain(), catalog());
 
         LandUseSeedGroup group = result.resolution().seedGroups().get(0);
         LandUseRule agriculture = catalog().landUseRuleCatalog().byRef("agriculture").orElseThrow();
-        int expectedPreferred = agriculture.preferredArea(32);
-        assertEquals(expectedPreferred, group.preferredAreaBlocks());
-        assertNotEquals(agriculture.preferredArea(16) * 2, group.preferredAreaBlocks());
+        assertTrue(group.preferredAreaBlocks() >= agriculture.preferredArea(32));
         assertEquals(1, group.growthRegions().size());
-        assertEquals(LandUseSeedGroup.GrowthBiasMode.AWAY_FROM_REFERENCE, group.growthBias().mode());
-        assertTrue(group.seedPoints().stream().allMatch(point -> point.x() == 44));
+        assertEquals(LandUseSeedGroup.GrowthBiasMode.NEUTRAL, group.growthBias().mode());
+        assertTrue(group.seedPoints().stream().anyMatch(point -> point.z() >= 40 && point.z() <= 51));
+        assertEquals(com.rinsing.geomantia.systems.city.domain.landuse.BoundaryPolicy.OPEN,
+                group.rule().boundaryPolicy());
         assertEquals(Set.of("farm_group"), result.residualConfig().urbanGroupIds());
         assertEquals(16, result.residualConfig().closeRadiusBlocks());
         assertFalse(result.intentPlan().planHash().isBlank());
@@ -63,7 +62,7 @@ class CityOutdoorBlueprintCompilerTest {
                 CityBlueprint.LandscapeGrowthRelation.AWAY_FROM_REFERENCE, List.of("core_group"),
                 CityBlueprint.TerrainPolicy.CONFORM, true);
         CityBlueprint blueprint = blueprint(new CityBlueprint.OutdoorPlan(CityBlueprint.OutdoorMode.GENERATE,
-                CityBlueprint.EnvelopeProfile.COMPACT, List.of(), List.of(landscape), residualPolicy()));
+                CityBlueprint.EnvelopeProfile.COMPACT, List.of(), List.of(landscape)));
 
         CityOutdoorBlueprintCompiler.Result result = new CityOutdoorBlueprintCompiler().compile(blueprint,
                 d6Plan(), terrain(), catalog());
@@ -105,11 +104,11 @@ class CityOutdoorBlueprintCompilerTest {
 
         LandUseSeedGroup towardGroup = new CityOutdoorBlueprintCompiler().compile(
                 blueprint(new CityBlueprint.OutdoorPlan(CityBlueprint.OutdoorMode.GENERATE,
-                        CityBlueprint.EnvelopeProfile.COMPACT, List.of(), List.of(toward), residualPolicy())),
+                        CityBlueprint.EnvelopeProfile.COMPACT, List.of(), List.of(toward))),
                 d6Plan(), terrainWithHorizontalWater(), catalog()).resolution().seedGroups().get(0);
         LandUseSeedGroup alongGroup = new CityOutdoorBlueprintCompiler().compile(
                 blueprint(new CityBlueprint.OutdoorPlan(CityBlueprint.OutdoorMode.GENERATE,
-                        CityBlueprint.EnvelopeProfile.COMPACT, List.of(), List.of(along), residualPolicy())),
+                        CityBlueprint.EnvelopeProfile.COMPACT, List.of(), List.of(along))),
                 d6Plan(), terrainWithHorizontalWater(), catalog()).resolution().seedGroups().get(0);
 
         assertEquals(LandUseSeedGroup.GrowthBiasMode.TOWARD_REFERENCE, towardGroup.growthBias().mode());
@@ -128,7 +127,7 @@ class CityOutdoorBlueprintCompilerTest {
                 CityBlueprint.LandscapeGrowthRelation.AROUND_SOURCE, List.of(),
                 CityBlueprint.TerrainPolicy.CONFORM, true);
         CityBlueprint blueprint = blueprint(new CityBlueprint.OutdoorPlan(CityBlueprint.OutdoorMode.GENERATE,
-                CityBlueprint.EnvelopeProfile.COMPACT, List.of(), List.of(landscape), residualPolicy()));
+                CityBlueprint.EnvelopeProfile.COMPACT, List.of(), List.of(landscape)));
 
         CityOutdoorBlueprintCompiler.Result first = new CityOutdoorBlueprintCompiler().compile(blueprint,
                 d6Plan(), terrain(), catalog());
@@ -149,7 +148,7 @@ class CityOutdoorBlueprintCompilerTest {
                 CityBlueprint.LandscapeGrowthRelation.AROUND_SOURCE, List.of(),
                 CityBlueprint.TerrainPolicy.ASSERTIVE, true);
         CityBlueprint blueprint = blueprint(new CityBlueprint.OutdoorPlan(CityBlueprint.OutdoorMode.GENERATE,
-                CityBlueprint.EnvelopeProfile.COMPACT, List.of(), List.of(landscape), residualPolicy()));
+                CityBlueprint.EnvelopeProfile.COMPACT, List.of(), List.of(landscape)));
 
         LandUseSeedGroup group = new CityOutdoorBlueprintCompiler().compile(blueprint, d6Plan(), terrain(),
                 catalog()).resolution().seedGroups().get(0);
@@ -167,7 +166,7 @@ class CityOutdoorBlueprintCompilerTest {
     @Test
     void preserveModeProducesNoSourcesAndDisablesResidualResolver() {
         CityBlueprint blueprint = blueprint(new CityBlueprint.OutdoorPlan(CityBlueprint.OutdoorMode.PRESERVE,
-                CityBlueprint.EnvelopeProfile.LOOSE, List.of(), List.of(), residualPolicy()));
+                CityBlueprint.EnvelopeProfile.LOOSE, List.of(), List.of()));
 
         CityOutdoorBlueprintCompiler.Result result = new CityOutdoorBlueprintCompiler().compile(blueprint,
                 d6Plan(), terrain(), catalog());
@@ -175,14 +174,14 @@ class CityOutdoorBlueprintCompilerTest {
         assertTrue(result.resolution().seedGroups().isEmpty());
         assertFalse(result.residualConfig().enabled());
         assertEquals(0, result.intentPlan().envelope().closeRadiusBlocks());
-        assertEquals("city_outdoor_intent_plan.v0.1",
+        assertEquals("city_outdoor_intent_plan.v0.2",
                 result.intentPlan().toJson().get("schemaVersion").getAsString());
     }
 
     @Test
     void intentHashBindsEveryCompilationInputEvenInPreserveMode() {
         CityBlueprint original = blueprint(new CityBlueprint.OutdoorPlan(CityBlueprint.OutdoorMode.PRESERVE,
-                CityBlueprint.EnvelopeProfile.LOOSE, List.of(), List.of(), residualPolicy()));
+                CityBlueprint.EnvelopeProfile.LOOSE, List.of(), List.of()));
         CityOutdoorBlueprintCompiler compiler = new CityOutdoorBlueprintCompiler();
         CityOutdoorIntentPlan base = compiler.compile(original, d6Plan(), terrain(), catalog()).intentPlan();
 
@@ -212,7 +211,7 @@ class CityOutdoorBlueprintCompilerTest {
                 CityBlueprint.LandscapeGrowthRelation.AROUND_SOURCE, List.of(),
                 CityBlueprint.TerrainPolicy.CONFORM, true);
         CityBlueprint blueprint = blueprint(new CityBlueprint.OutdoorPlan(CityBlueprint.OutdoorMode.GENERATE,
-                CityBlueprint.EnvelopeProfile.COMPACT, List.of(), List.of(landscape), residualPolicy()));
+                CityBlueprint.EnvelopeProfile.COMPACT, List.of(), List.of(landscape)));
 
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
                 () -> new CityOutdoorBlueprintCompiler().compile(blueprint, d6Plan(), tinyTerrain(), catalog()));
@@ -222,12 +221,12 @@ class CityOutdoorBlueprintCompilerTest {
 
     @Test
     void planningServicePublishesResolvedUrbanCoverageInTraceAndQuality() {
-        CityBlueprint.StructureGround ground = new CityBlueprint.StructureGround("farm_group", "agriculture",
-                "surface:farmland", CityBlueprint.ExtentClass.MEDIUM, CityBlueprint.GrowthBias.BALANCED,
-                List.of(), false, CityBlueprint.OutdoorMembership.URBAN);
+        CityBlueprint.SpatialGround ground = new CityBlueprint.SpatialGround("farm_group", "agriculture",
+                "surface:farmland", CityBlueprint.SharedSpaceType.FARMSTEAD,
+                CityBlueprint.SpatialHierarchy.SECONDARY, CityBlueprint.OutdoorMembership.URBAN);
         CityOutdoorBlueprintCompiler.Result compiled = new CityOutdoorBlueprintCompiler().compile(
                 blueprint(new CityBlueprint.OutdoorPlan(CityBlueprint.OutdoorMode.GENERATE,
-                        CityBlueprint.EnvelopeProfile.COMPACT, List.of(ground), List.of(), residualPolicy())),
+                        CityBlueprint.EnvelopeProfile.COMPACT, List.of(ground), List.of())),
                 d6Plan(), terrain(), catalog());
 
         LandUsePlanningService.Result result = new LandUsePlanningService().plan("city", compiled.resolution(),
@@ -241,6 +240,7 @@ class CityOutdoorBlueprintCompilerTest {
                 result.quality().get("urbanAbsorbedResidualBlocks").getAsInt());
         assertEquals(coverage.explicitResidualBlocks(),
                 result.quality().get("urbanExplicitResidualBlocks").getAsInt());
+        assertEquals(0, coverage.explicitResidualBlocks());
         assertEquals(0, result.quality().get("urbanUnknownResidualBlocks").getAsInt());
         assertEquals(result.urbanSpacePlan().planHash(),
                 result.trace().get("urbanSpacePlanHash").getAsString());
@@ -251,17 +251,24 @@ class CityOutdoorBlueprintCompilerTest {
                 new CityBlueprint.ArtifactRef("d3.json", "d3", "sha256:" + "1".repeat(64)),
                 new CityBlueprint.ArtifactRef("catalog.json", "catalog", "sha256:" + "2".repeat(64)),
                 42, new CityBlueprint.DesignIntent("town", "green", List.of("agriculture")),
-                new CityBlueprint.ProfileRef("style:test"), List.of(), List.of(),
+                new CityBlueprint.ProfileRef("style:test"), groups(), List.of(
+                        new CityBlueprint.Relation("core_group", "farm_group",
+                                CityBlueprint.RelationKind.CONNECTION, CityBlueprint.RelationStrength.HARD,
+                                CityBlueprint.DistancePreference.NEAR, CityBlueprint.DirectionPreference.NONE)),
                 new CityBlueprint.ProfileRef("road:test"), new CityBlueprint.ProfileRef("surface:test"),
                 outdoorPlan);
     }
 
-    private static CityBlueprint.ResidualPolicy residualPolicy() {
-        return new CityBlueprint.ResidualPolicy(CityBlueprint.ResidualDisposition.ABSORB_NEIGHBOR,
-                CityBlueprint.ResidualDisposition.ABSORB_NEIGHBOR,
-                CityBlueprint.ResidualDisposition.COMMON_GREEN,
-                CityBlueprint.ResidualDisposition.SERVICE_GROUND,
-                CityBlueprint.ResidualDisposition.NATURAL_RESERVE);
+    private static List<CityBlueprint.Group> groups() {
+        return List.of(group("core_group", CityBlueprint.GroupPriority.CORE),
+                group("farm_group", CityBlueprint.GroupPriority.STANDARD));
+    }
+
+    private static CityBlueprint.Group group(String id, CityBlueprint.GroupPriority priority) {
+        return new CityBlueprint.Group(id, CityBlueprint.GroupKind.STRUCTURE, List.of(),
+                CityBlueprint.PreferredPatchZone.CENTER, id, priority, CityBlueprint.ExtentClass.MEDIUM,
+                CityBlueprint.DensityClass.BALANCED, "algorithm:test", CityBlueprint.TerrainPolicy.BALANCED,
+                List.of(), "pool:test", null, "composition:test", List.of());
     }
 
     private static CityBlueprintReferenceCatalog catalog() {

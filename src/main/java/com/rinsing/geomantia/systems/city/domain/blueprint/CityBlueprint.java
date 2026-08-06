@@ -17,7 +17,7 @@ public record CityBlueprint(
         ProfileRef surfaceDetailProfile,
         OutdoorPlan outdoorPlan) {
 
-    public static final String SCHEMA_VERSION = "city_blueprint.v0.5";
+    public static final String SCHEMA_VERSION = "city_blueprint.v0.6";
 
     public CityBlueprint {
         groups = List.copyOf(groups);
@@ -97,27 +97,22 @@ public record CityBlueprint(
     public record OutdoorPlan(
             OutdoorMode mode,
             EnvelopeProfile envelopeProfile,
-            List<StructureGround> structureGrounds,
-            List<Landscape> landscapes,
-            ResidualPolicy residualPolicy) {
+            List<SpatialGround> spatialGrounds,
+            List<Landscape> landscapes) {
         public OutdoorPlan {
-            structureGrounds = List.copyOf(structureGrounds);
+            spatialGrounds = List.copyOf(spatialGrounds);
             landscapes = List.copyOf(landscapes);
         }
     }
 
-    public record StructureGround(
+    /** One shared outdoor-space system owned by a whole structure group, never by one building. */
+    public record SpatialGround(
             String sourceGroupId,
             String landUseRuleRef,
             String surfaceRecipeRef,
-            ExtentClass extentClass,
-            GrowthBias growthBias,
-            List<String> referenceGroupIds,
-            boolean autoConnect,
+            SharedSpaceType sharedSpaceType,
+            SpatialHierarchy hierarchyLevel,
             OutdoorMembership membership) {
-        public StructureGround {
-            referenceGroupIds = List.copyOf(referenceGroupIds);
-        }
     }
 
     public record Landscape(
@@ -137,14 +132,6 @@ public record CityBlueprint(
             preferredPatchRefs = List.copyOf(preferredPatchRefs);
             referenceGroupIds = List.copyOf(referenceGroupIds);
         }
-    }
-
-    public record ResidualPolicy(
-            ResidualDisposition smallEnclosed,
-            ResidualDisposition narrowGap,
-            ResidualDisposition mediumEnclosed,
-            ResidualDisposition largeEnclosed,
-            ResidualDisposition exteriorConnected) {
     }
 
     public enum GroupKind { STRUCTURE, LANDSCAPE }
@@ -177,6 +164,10 @@ public record CityBlueprint(
 
     public enum EnvelopeProfile { COMPACT, BALANCED, LOOSE }
 
+    public enum SharedSpaceType { CIVIC_SQUARE, MARKET_STREET, RESIDENTIAL_COURT, FARMSTEAD, GENERAL_URBAN }
+
+    public enum SpatialHierarchy { PRIMARY, SECONDARY, LOCAL }
+
     public enum GrowthBias { BALANCED, AWAY_FROM_REFERENCE, TOWARD_REFERENCE }
 
     public enum OutdoorMembership { URBAN, LANDSCAPE }
@@ -187,7 +178,4 @@ public record CityBlueprint(
 
     public enum LandscapeGrowthRelation { AROUND_SOURCE, AWAY_FROM_REFERENCE, TOWARD_WATER, ALONG_WATER }
 
-    public enum ResidualDisposition {
-        ABSORB_NEIGHBOR, PATH_OR_VERGE, COMMON_GREEN, SERVICE_GROUND, NATURAL_RESERVE
-    }
 }

@@ -27,7 +27,7 @@ class CityBlueprintCodecTest {
                 blueprint.groups().get(0).preferredPatchZone());
         assertNull(blueprint.groups().get(0).connectionPlan());
         assertEquals(CityBlueprint.OutdoorMode.GENERATE, blueprint.outdoorPlan().mode());
-        assertEquals("civic_core", blueprint.outdoorPlan().structureGrounds().get(0).sourceGroupId());
+        assertEquals("civic_core", blueprint.outdoorPlan().spatialGrounds().get(0).sourceGroupId());
         assertEquals(json, codec.write(blueprint));
     }
 
@@ -48,7 +48,7 @@ class CityBlueprintCodecTest {
     @Test
     void rejectsPreviousBlueprintSchema() throws IOException {
         JsonObject json = fixture("valid_city_blueprint_v0_1.json");
-        json.addProperty("schemaVersion", "city_blueprint.v0.4");
+        json.addProperty("schemaVersion", "city_blueprint.v0.5");
         CityBlueprintContractException exception = assertThrows(CityBlueprintContractException.class,
                 () -> codec.read(json));
         assertEquals(CityBlueprintReasonCode.CITY_BLUEPRINT_SCHEMA_UNSUPPORTED, exception.reasonCode());

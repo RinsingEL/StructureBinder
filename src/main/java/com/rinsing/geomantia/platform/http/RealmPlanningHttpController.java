@@ -11,6 +11,7 @@ import com.rinsing.geomantia.systems.gis.application.refresh.SampleMode;
 import com.rinsing.geomantia.systems.gis.application.sample.AtlasSampler;
 import com.rinsing.geomantia.systems.city.application.CityWallPlanner;
 import com.rinsing.geomantia.systems.city.application.CityWallReservationPlanner;
+import com.rinsing.geomantia.systems.city.domain.blueprint.CityBlueprint;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityWorldgenBlockObservationRegistry;
 import com.rinsing.geomantia.platform.RealmPlanningServices;
 import com.rinsing.geomantia.platform.WorldSurveyChatProgress;
@@ -903,21 +904,15 @@ final class RealmPlanningHttpController {
         String runId = requiredString(request, "runId");
         String citySeedId = requiredString(request, "citySeedId");
         boolean acceptedBlueprint = hasAcceptedBlueprintD6(debugRoot, runId, citySeedId);
-        if (acceptedBlueprint && request.has("landUseIntentPlan")) {
+        if (request.has("landUseIntentPlan")) {
             throw new IllegalArgumentException("CITY_BLUEPRINT_WORKFLOW_LAND_USE_OVERRIDE_FORBIDDEN: "
-                    + "accepted Blueprint controls outdoor planning.");
+                    + "CityBlueprint v0.6 is the only outdoor design authority.");
         }
         if (acceptedBlueprint) {
             return CityPlanningEndpointHandler.handlePlanBlueprintOutdoor(debugRoot, runId, citySeedId);
         }
-        JsonObject intent = null;
-        if (request.has("landUseIntentPlan") && !request.get("landUseIntentPlan").isJsonNull()) {
-            if (!request.get("landUseIntentPlan").isJsonObject()) {
-                throw new IllegalArgumentException("LAND_USE_INTENT_OBJECT_REQUIRED");
-            }
-            intent = request.getAsJsonObject("landUseIntentPlan");
-        }
-        return CityPlanningEndpointHandler.handlePlanLandUse(debugRoot, runId, citySeedId, intent);
+        throw new IllegalArgumentException("CITY_BLUEPRINT_WORKFLOW_REQUIRED: prepare, submit and compile "
+                + "CityBlueprint v0.6 before planning city outdoor space.");
     }
 
     private static boolean hasAcceptedBlueprintD6(Path debugRoot,
@@ -949,14 +944,14 @@ final class RealmPlanningHttpController {
             JsonObject validation = JsonParser.parseString(Files.readString(validationPath)).getAsJsonObject();
             JsonObject submission = JsonParser.parseString(Files.readString(submissionPath)).getAsJsonObject();
             JsonObject d6 = JsonParser.parseString(Files.readString(d6Path)).getAsJsonObject();
-            boolean accepted = "city_blueprint.v0.5".equals(stringValue(blueprint, "schemaVersion", ""))
+            boolean accepted = CityBlueprint.SCHEMA_VERSION.equals(stringValue(blueprint, "schemaVersion", ""))
                     && citySeedId.equals(stringValue(blueprint, "cityId", ""))
                     && booleanValue(validation, "valid", false)
                     && "accepted".equals(stringValue(submission, "status", ""))
                     && intValue(submission, "aiCityDesignSubmissionCount", 0) == 1;
             if (!accepted) {
                 throw new IllegalArgumentException("CITY_BLUEPRINT_LAND_USE_ROUTE_NOT_ACCEPTED: "
-                        + "Blueprint authority exists but is not an accepted v0.5 submission.");
+                        + "Blueprint authority exists but is not an accepted v0.6 submission.");
             }
             if (!citySeedId.equals(stringValue(d6, "cityId", ""))
                     || !booleanValue(d6, "locked", false)) {

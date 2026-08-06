@@ -99,6 +99,11 @@ public final class CityStructureAnchorPlanner {
         anchorMap.add("grid", reviewPackage.grid().asJson());
         anchorMap.add("sourceTerraSenseProfileSource", terraSenseProfileSource.deepCopy());
         anchorMap.add("semanticProfileSource", terraSenseProfileSource.deepCopy());
+        if (structureAnchorPlan.has("cityBlueprintCompileProvenance")
+                && structureAnchorPlan.get("cityBlueprintCompileProvenance").isJsonObject()) {
+            anchorMap.add("cityBlueprintCompileProvenance",
+                    structureAnchorPlan.getAsJsonObject("cityBlueprintCompileProvenance").deepCopy());
+        }
         anchorMap.add("anchors", anchors);
         JsonObject quality = quality(hardBlocks, warnings, needsReview, anchors.size());
         anchorMap.add("quality", quality);

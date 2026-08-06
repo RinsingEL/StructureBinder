@@ -113,33 +113,23 @@ public final class CityBlueprintValidator {
                                             Set<String> groupIds, Set<String> patchRefs,
                                             CityBlueprintReferenceCatalog catalog) {
         if (plan.mode() == CityBlueprint.OutdoorMode.PRESERVE) {
-            if (!plan.structureGrounds().isEmpty() || !plan.landscapes().isEmpty()) {
+            if (!plan.spatialGrounds().isEmpty() || !plan.landscapes().isEmpty()) {
                 add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_MODE_INVALID,
-                        "$.outdoorPlan", "PRESERVE requires empty structureGrounds and landscapes.");
-            }
-            CityBlueprint.ResidualPolicy policy = plan.residualPolicy();
-            if (policy.smallEnclosed() != CityBlueprint.ResidualDisposition.NATURAL_RESERVE
-                    || policy.narrowGap() != CityBlueprint.ResidualDisposition.NATURAL_RESERVE
-                    || policy.mediumEnclosed() != CityBlueprint.ResidualDisposition.NATURAL_RESERVE
-                    || policy.largeEnclosed() != CityBlueprint.ResidualDisposition.NATURAL_RESERVE
-                    || policy.exteriorConnected() != CityBlueprint.ResidualDisposition.NATURAL_RESERVE) {
-                add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_RESIDUAL_POLICY_INVALID,
-                        "$.outdoorPlan.residualPolicy",
-                        "PRESERVE requires NATURAL_RESERVE for every residual class.");
+                        "$.outdoorPlan", "PRESERVE requires empty spatialGrounds and landscapes.");
             }
             return;
         }
 
         Set<String> coveredGroups = new HashSet<>();
-        for (int index = 0; index < plan.structureGrounds().size(); index++) {
-            CityBlueprint.StructureGround ground = plan.structureGrounds().get(index);
-            String path = "$.outdoorPlan.structureGrounds[" + index + "]";
+        for (int index = 0; index < plan.spatialGrounds().size(); index++) {
+            CityBlueprint.SpatialGround ground = plan.spatialGrounds().get(index);
+            String path = "$.outdoorPlan.spatialGrounds[" + index + "]";
             if (!groupIds.contains(ground.sourceGroupId())) {
                 add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_GROUP_REF_UNKNOWN,
                         path + ".sourceGroupId", "Unknown structure Group: " + ground.sourceGroupId());
             } else if (!coveredGroups.add(ground.sourceGroupId())) {
                 add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_GROUND_COVERAGE_INVALID,
-                        path + ".sourceGroupId", "A STRUCTURE Group must have exactly one StructureGround.");
+                        path + ".sourceGroupId", "A STRUCTURE Group must have exactly one SpatialGround.");
             }
             if (catalog.landUseRuleCatalog().byRef(ground.landUseRuleRef()).isEmpty()) {
                 add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_LAND_USE_RULE_UNKNOWN,
@@ -150,24 +140,16 @@ public final class CityBlueprintValidator {
             if (surfaceRecipe == null) {
                 add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_SURFACE_RECIPE_UNKNOWN,
                         path + ".surfaceRecipeRef", "Unknown surface recipe: " + ground.surfaceRecipeRef());
-            } else if (ground.autoConnect() && !surfaceRecipe.surfacePrintEnabled()) {
+            } else if (!surfaceRecipe.surfacePrintEnabled()) {
                 add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_SURFACE_RECIPE_INCOMPATIBLE,
-                        path + ".autoConnect",
-                        "autoConnect=true requires a surface recipe with surfacePrintEnabled=true.");
-            }
-            validateReferenceGroups(issues, ground.referenceGroupIds(), groupIds, ground.sourceGroupId(),
-                    path + ".referenceGroupIds");
-            boolean requiresReferences = ground.growthBias() != CityBlueprint.GrowthBias.BALANCED;
-            if (requiresReferences != !ground.referenceGroupIds().isEmpty()) {
-                add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_REFERENCE_INVALID,
-                        path + ".referenceGroupIds",
-                        "BALANCED forbids references; directional growthBias requires at least one reference Group.");
+                        path + ".surfaceRecipeRef",
+                        "SpatialGround requires a surface recipe with surfacePrintEnabled=true.");
             }
         }
         if (!coveredGroups.equals(groupIds)) {
             add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_GROUND_COVERAGE_INVALID,
-                    "$.outdoorPlan.structureGrounds",
-                    "GENERATE requires exactly one StructureGround for every STRUCTURE Group.");
+                    "$.outdoorPlan.spatialGrounds",
+                    "GENERATE requires exactly one SpatialGround for every STRUCTURE Group.");
         }
 
         Set<String> landscapeIds = new HashSet<>();
@@ -206,7 +188,6 @@ public final class CityBlueprintValidator {
                         "AWAY_FROM_REFERENCE requires references; other landscape growth relations forbid them.");
             }
         }
-        validateResidualPolicy(issues, plan.residualPolicy());
     }
 
     private static void validateGroupList(List<Issue> issues, List<String> refs, Set<String> groupIds,
@@ -228,36 +209,6 @@ public final class CityBlueprintValidator {
                 add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_REFERENCE_INVALID,
                         path + "[" + index + "]", "Reference Groups must be unique, existing, and not self-referential.");
             }
-        }
-    }
-
-    private static void validateResidualPolicy(List<Issue> issues, CityBlueprint.ResidualPolicy policy) {
-        requireResidual(issues, "smallEnclosed", policy.smallEnclosed(), Set.of(
-                CityBlueprint.ResidualDisposition.ABSORB_NEIGHBOR,
-                CityBlueprint.ResidualDisposition.NATURAL_RESERVE));
-        requireResidual(issues, "narrowGap", policy.narrowGap(), Set.of(
-                CityBlueprint.ResidualDisposition.ABSORB_NEIGHBOR,
-                CityBlueprint.ResidualDisposition.PATH_OR_VERGE,
-                CityBlueprint.ResidualDisposition.NATURAL_RESERVE));
-        requireResidual(issues, "mediumEnclosed", policy.mediumEnclosed(), Set.of(
-                CityBlueprint.ResidualDisposition.ABSORB_NEIGHBOR,
-                CityBlueprint.ResidualDisposition.COMMON_GREEN,
-                CityBlueprint.ResidualDisposition.SERVICE_GROUND,
-                CityBlueprint.ResidualDisposition.NATURAL_RESERVE));
-        requireResidual(issues, "largeEnclosed", policy.largeEnclosed(), Set.of(
-                CityBlueprint.ResidualDisposition.COMMON_GREEN,
-                CityBlueprint.ResidualDisposition.NATURAL_RESERVE));
-        requireResidual(issues, "exteriorConnected", policy.exteriorConnected(), Set.of(
-                CityBlueprint.ResidualDisposition.NATURAL_RESERVE));
-    }
-
-    private static void requireResidual(List<Issue> issues, String field,
-                                        CityBlueprint.ResidualDisposition actual,
-                                        Set<CityBlueprint.ResidualDisposition> allowed) {
-        if (!allowed.contains(actual)) {
-            add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_RESIDUAL_POLICY_INVALID,
-                    "$.outdoorPlan.residualPolicy." + field,
-                    field + " does not allow " + actual + "; expected one of " + allowed + '.');
         }
     }
 

@@ -111,7 +111,7 @@ class CityPlanningEndpointHandlerTest {
         }
         JsonObject completion = JsonParser.parseString(Files.readString(
                 directory.resolve("city_land_use_planning_complete.json"))).getAsJsonObject();
-        assertEquals("city_land_use_planning_complete.v0.2",
+        assertEquals("city_land_use_planning_complete.v0.3",
                 completion.get("schemaVersion").getAsString());
         for (String identity : List.of("sourceBlueprintHash", "sourceCatalogSnapshotHash",
                 "sourceReferenceCatalogHash", "sourceTerrainFieldHash", "sourceD6Hash",
@@ -131,7 +131,7 @@ class CityPlanningEndpointHandlerTest {
     }
 
     @Test
-    void planLandUseHttpRouteEnforcesAcceptedBlueprintAndKeepsUnownedLegacyIntent() throws Exception {
+    void planLandUseHttpRouteRequiresAcceptedBlueprintAndRejectsLegacyIntent() throws Exception {
         Path debugRoot = Files.createTempDirectory("city-blueprint-outdoor-http-route-test");
         String runId = "run_blueprint_outdoor_http_route";
         String citySeedId = "city_test";
@@ -146,7 +146,7 @@ class CityPlanningEndpointHandlerTest {
         assertEquals("city_blueprint", blueprintResponse.get("planningSource").getAsString());
         Path completionPath = debugRoot.resolve(runId).resolve("city_land_use_" + citySeedId)
                 .resolve("city_land_use_planning_complete.json");
-        assertEquals("city_land_use_planning_complete.v0.2",
+        assertEquals("city_land_use_planning_complete.v0.3",
                 JsonParser.parseString(Files.readString(completionPath)).getAsJsonObject()
                         .get("schemaVersion").getAsString());
 
@@ -154,7 +154,7 @@ class CityPlanningEndpointHandlerTest {
         IllegalArgumentException overrideFailure = assertThrows(IllegalArgumentException.class,
                 () -> RealmPlanningHttpController.handleCityPlanLandUseRequest(debugRoot, request));
         assertTrue(overrideFailure.getMessage().contains("CITY_BLUEPRINT_WORKFLOW_LAND_USE_OVERRIDE_FORBIDDEN"));
-        assertEquals("city_land_use_planning_complete.v0.2",
+        assertEquals("city_land_use_planning_complete.v0.3",
                 JsonParser.parseString(Files.readString(completionPath)).getAsJsonObject()
                         .get("schemaVersion").getAsString());
 
@@ -171,14 +171,10 @@ class CityPlanningEndpointHandlerTest {
         legacyRequest.add("landUseIntentPlan", JsonParser.parseString("""
                 {"schemaVersion":"city_land_use_intent_plan.v0.3","cityId":"city_test"}
                 """).getAsJsonObject());
-        JsonObject legacyResponse = RealmPlanningHttpController.handleCityPlanLandUseRequest(
-                legacyRoot, legacyRequest);
-
-        assertTrue(legacyResponse.get("explicitPlanning").getAsBoolean());
-        assertEquals("city_land_use_planning_complete.v0.1",
-                JsonParser.parseString(Files.readString(legacyLandUse
-                        .resolve("city_land_use_planning_complete.json"))).getAsJsonObject()
-                        .get("schemaVersion").getAsString());
+        IllegalArgumentException legacyFailure = assertThrows(IllegalArgumentException.class,
+                () -> RealmPlanningHttpController.handleCityPlanLandUseRequest(legacyRoot, legacyRequest));
+        assertTrue(legacyFailure.getMessage().contains("CITY_BLUEPRINT_WORKFLOW_LAND_USE_OVERRIDE_FORBIDDEN"));
+        assertFalse(Files.exists(legacyLandUse.resolve("city_land_use_planning_complete.json")));
     }
 
     @Test
@@ -3155,13 +3151,8 @@ class CityPlanningEndpointHandlerTest {
         JsonObject outdoorPlan = blueprint.getAsJsonObject("outdoorPlan");
         outdoorPlan.addProperty("mode", outdoorMode);
         if ("PRESERVE".equals(outdoorMode)) {
-            outdoorPlan.add("structureGrounds", new JsonArray());
+            outdoorPlan.add("spatialGrounds", new JsonArray());
             outdoorPlan.add("landscapes", new JsonArray());
-            JsonObject residual = outdoorPlan.getAsJsonObject("residualPolicy");
-            for (String field : List.of("smallEnclosed", "narrowGap", "mediumEnclosed",
-                    "largeEnclosed", "exteriorConnected")) {
-                residual.addProperty(field, "NATURAL_RESERVE");
-            }
         }
         JsonObject submitted = CityPlanningEndpointHandler.handleSubmitD4Blueprint(debugRoot, runId, citySeedId,
                 prepared.get("contextId").getAsString(), blueprint);
@@ -4037,7 +4028,7 @@ class CityPlanningEndpointHandlerTest {
                 .get(0).getAsJsonObject().get("landformPatchId").getAsString();
         JsonObject blueprint = JsonParser.parseString("""
                 {
-                  "schemaVersion":"city_blueprint.v0.5","cityId":"city_test","generationSeed":42,
+                  "schemaVersion":"city_blueprint.v0.6","cityId":"city_test","generationSeed":42,
                   "designIntent":{"cityIdentity":"test city","theme":"test","functionalRoles":["landmark"]},
                   "styleProfile":{"profileRef":"style:test"},
                   "groups":[{
@@ -4051,12 +4042,9 @@ class CityPlanningEndpointHandlerTest {
                   "relations":[],"roadProfile":{"profileRef":"road:test"},
                   "surfaceDetailProfile":{"profileRef":"surface:test"},
                   "outdoorPlan":{"mode":"GENERATE","envelopeProfile":"BALANCED",
-                    "structureGrounds":[{"sourceGroupId":"core","landUseRuleRef":"civic",
-                    "surfaceRecipeRef":"surface_recipe:civic","extentClass":"SMALL","growthBias":"BALANCED",
-                    "referenceGroupIds":[],"autoConnect":true,"membership":"URBAN"}],"landscapes":[],
-                    "residualPolicy":{"smallEnclosed":"ABSORB_NEIGHBOR","narrowGap":"PATH_OR_VERGE",
-                    "mediumEnclosed":"COMMON_GREEN","largeEnclosed":"COMMON_GREEN",
-                    "exteriorConnected":"NATURAL_RESERVE"}}
+                    "spatialGrounds":[{"sourceGroupId":"core","landUseRuleRef":"civic",
+                    "surfaceRecipeRef":"surface_recipe:civic","sharedSpaceType":"CIVIC_SQUARE",
+                    "hierarchyLevel":"PRIMARY","membership":"URBAN"}],"landscapes":[]}
                 }
                 """.replace("PATCH_REF", patchRef)).getAsJsonObject();
         blueprint.add("sourceD3Ref", context.getAsJsonObject("sourceD3Ref").deepCopy());

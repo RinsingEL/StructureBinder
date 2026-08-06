@@ -99,7 +99,9 @@ public final class StableLandUseExpander {
             if (existing != null) {
                 if (!existing.groupId().equals(group.groupId())) {
                     contested++;
-                    continue;
+                    // Attached grounds and landscapes may intentionally share perimeter seeds.
+                    // Let a losing seed launch its frontier, but never cross an occupied claim later.
+                    if (node.cumulativeCost() > 1.0e-9) continue;
                 }
             } else {
                 claims.put(point, new LandUseExpansionResult.Claim(group.groupId(), node.cumulativeCost()));

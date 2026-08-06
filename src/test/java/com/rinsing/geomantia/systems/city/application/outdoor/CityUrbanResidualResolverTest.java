@@ -74,7 +74,7 @@ class CityUrbanResidualResolverTest {
     }
 
     @Test
-    void absorptionFallsBackWhenEveryAdjacentUrbanGroupIsAtMaximum() {
+    void cityFabricAbsorbsResidualEvenWhenOldGrowthBudgetIsAtMaximum() {
         Map<BlockPoint, String> claims = rectangleClaims(10, 10, 16, 16, "urban");
         BlockPoint hole = new BlockPoint(13, 13);
         claims.remove(hole);
@@ -83,13 +83,12 @@ class CityUrbanResidualResolverTest {
         CityUrbanResidualResolver.Result result = new CityUrbanResidualResolver().resolve("city", bounds(),
                 terrain(), List.of(full), List.of(), expansion(claims), config(Set.of("urban"), 8));
 
-        assertFalse(result.expansion().claims().containsKey(hole));
+        assertTrue(result.expansion().claims().containsKey(hole));
         assertTrue(result.urbanSpacePlan().residualRegions().stream().anyMatch(region ->
-                region.disposition() == CityUrbanSpacePlan.ResidualDisposition.NATURAL_RESERVE
-                        && region.absorbedGroupId().isBlank()));
-        assertTrue(result.warnings().stream().anyMatch(value ->
-                value.startsWith("CITY_URBAN_RESIDUAL_ABSORB_CAPACITY_EXHAUSTED:")));
-        assertEquals(claims.size(), result.expansion().claimedBlocksByGroup().get("urban"));
+                region.disposition() == CityUrbanSpacePlan.ResidualDisposition.ABSORB_NEIGHBOR
+                        && region.absorbedGroupId().equals("urban")));
+        assertTrue(result.warnings().isEmpty());
+        assertEquals(claims.size() + 1, result.expansion().claimedBlocksByGroup().get("urban"));
     }
 
     @Test
