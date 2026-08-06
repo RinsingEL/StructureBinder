@@ -91,6 +91,171 @@ class CityPlanningEndpointHandlerTest {
     }
 
     @Test
+    void blueprintOutdoorPlannerPublishesCompleteIdentityBoundArtifacts() throws Exception {
+        Path debugRoot = Files.createTempDirectory("city-blueprint-outdoor-endpoint-test");
+        String runId = "run_blueprint_outdoor";
+        String citySeedId = "city_test";
+        prepareAcceptedBlueprintD6(debugRoot, runId, citySeedId, "GENERATE");
+
+        JsonObject response = CityPlanningEndpointHandler.handlePlanBlueprintOutdoor(
+                debugRoot, runId, citySeedId);
+
+        assertTrue(response.get("ok").getAsBoolean());
+        assertEquals("city_blueprint", response.get("planningSource").getAsString());
+        Path directory = debugRoot.resolve(runId).resolve("city_land_use_" + citySeedId);
+        for (String file : List.of("city_outdoor_intent_plan.json", "city_urban_space_plan.json",
+                "city_land_use_area_plan.json", "city_land_use_surface_print_plan.json",
+                "land_use_plan_trace.json", "quality_report.json", "land_use_preview.png",
+                "city_land_use_planning_complete.json")) {
+            assertTrue(Files.isRegularFile(directory.resolve(file)), file);
+        }
+        JsonObject completion = JsonParser.parseString(Files.readString(
+                directory.resolve("city_land_use_planning_complete.json"))).getAsJsonObject();
+        assertEquals("city_land_use_planning_complete.v0.2",
+                completion.get("schemaVersion").getAsString());
+        for (String identity : List.of("sourceBlueprintHash", "sourceCatalogSnapshotHash",
+                "sourceReferenceCatalogHash", "sourceTerrainFieldHash", "sourceD6Hash",
+                "outdoorIntentPlanHash", "urbanSpacePlanHash", "planHash",
+                "surfacePrintPlanHash", "ruleProfileHash")) {
+            assertFalse(completion.get(identity).getAsString().isBlank(), identity);
+        }
+        assertTrue(CityPlanningEndpointHandler.workflowBlueprintOutdoorArtifactsCurrent(
+                debugRoot, debugRoot.resolve(runId), citySeedId));
+
+        completion.addProperty("sourceTerrainFieldHash", "sha256:stale");
+        Files.writeString(directory.resolve("city_land_use_planning_complete.json"),
+                CityJson.GSON.toJson(completion));
+        assertFalse(CityPlanningEndpointHandler.workflowBlueprintOutdoorArtifactsCurrent(
+                debugRoot, debugRoot.resolve(runId), citySeedId),
+                "identity drift must force the Blueprint outdoor step to rerun");
+    }
+
+    @Test
+    void planLandUseHttpRouteEnforcesAcceptedBlueprintAndKeepsUnownedLegacyIntent() throws Exception {
+        Path debugRoot = Files.createTempDirectory("city-blueprint-outdoor-http-route-test");
+        String runId = "run_blueprint_outdoor_http_route";
+        String citySeedId = "city_test";
+        prepareAcceptedBlueprintD6(debugRoot, runId, citySeedId, "GENERATE");
+        JsonObject request = new JsonObject();
+        request.addProperty("runId", runId);
+        request.addProperty("citySeedId", citySeedId);
+
+        JsonObject blueprintResponse = RealmPlanningHttpController.handleCityPlanLandUseRequest(
+                debugRoot, request);
+
+        assertEquals("city_blueprint", blueprintResponse.get("planningSource").getAsString());
+        Path completionPath = debugRoot.resolve(runId).resolve("city_land_use_" + citySeedId)
+                .resolve("city_land_use_planning_complete.json");
+        assertEquals("city_land_use_planning_complete.v0.2",
+                JsonParser.parseString(Files.readString(completionPath)).getAsJsonObject()
+                        .get("schemaVersion").getAsString());
+
+        request.add("landUseIntentPlan", new JsonObject());
+        IllegalArgumentException overrideFailure = assertThrows(IllegalArgumentException.class,
+                () -> RealmPlanningHttpController.handleCityPlanLandUseRequest(debugRoot, request));
+        assertTrue(overrideFailure.getMessage().contains("CITY_BLUEPRINT_WORKFLOW_LAND_USE_OVERRIDE_FORBIDDEN"));
+        assertEquals("city_land_use_planning_complete.v0.2",
+                JsonParser.parseString(Files.readString(completionPath)).getAsJsonObject()
+                        .get("schemaVersion").getAsString());
+
+        Path legacyRoot = Files.createTempDirectory("city-legacy-outdoor-http-route-test");
+        String legacyRunId = "run_legacy_outdoor_http_route";
+        prepareD5Artifacts(legacyRoot, legacyRunId, citySeedId);
+        Path legacyLandUse = legacyRoot.resolve(legacyRunId).resolve("city_land_use_" + citySeedId);
+        Files.createDirectories(legacyLandUse);
+        Files.writeString(legacyLandUse.resolve("land_use_terrain_field.json"),
+                CityJson.GSON.toJson(new LandUseTerrainFieldCodec().toJson(endpointTerrain())));
+        JsonObject legacyRequest = new JsonObject();
+        legacyRequest.addProperty("runId", legacyRunId);
+        legacyRequest.addProperty("citySeedId", citySeedId);
+        legacyRequest.add("landUseIntentPlan", JsonParser.parseString("""
+                {"schemaVersion":"city_land_use_intent_plan.v0.3","cityId":"city_test"}
+                """).getAsJsonObject());
+        JsonObject legacyResponse = RealmPlanningHttpController.handleCityPlanLandUseRequest(
+                legacyRoot, legacyRequest);
+
+        assertTrue(legacyResponse.get("explicitPlanning").getAsBoolean());
+        assertEquals("city_land_use_planning_complete.v0.1",
+                JsonParser.parseString(Files.readString(legacyLandUse
+                        .resolve("city_land_use_planning_complete.json"))).getAsJsonObject()
+                        .get("schemaVersion").getAsString());
+    }
+
+    @Test
+    void planLandUseHttpRouteRejectsPartialBlueprintAuthorityAndMissingD6() throws Exception {
+        String citySeedId = "city_test";
+        Path partialRoot = Files.createTempDirectory("city-partial-blueprint-http-route-test");
+        String partialRunId = "run_partial_blueprint_http_route";
+        Path partialBlueprint = partialRoot.resolve(partialRunId)
+                .resolve("city_blueprint_" + citySeedId);
+        Files.createDirectories(partialBlueprint);
+        Files.writeString(partialBlueprint.resolve("city_blueprint.json"), "{}");
+        JsonObject partialRequest = new JsonObject();
+        partialRequest.addProperty("runId", partialRunId);
+        partialRequest.addProperty("citySeedId", citySeedId);
+
+        IllegalArgumentException partialFailure = assertThrows(IllegalArgumentException.class,
+                () -> RealmPlanningHttpController.handleCityPlanLandUseRequest(partialRoot, partialRequest));
+        assertTrue(partialFailure.getMessage().contains("CITY_BLUEPRINT_LAND_USE_ROUTE_INCOMPLETE"));
+        assertFalse(Files.exists(partialRoot.resolve(partialRunId)
+                .resolve("city_land_use_" + citySeedId)
+                .resolve("city_land_use_planning_complete.json")));
+
+        Path missingD6Root = Files.createTempDirectory("city-blueprint-missing-d6-http-route-test");
+        String missingD6RunId = "run_blueprint_missing_d6_http_route";
+        prepareAcceptedBlueprintD6(missingD6Root, missingD6RunId, citySeedId, "GENERATE");
+        Files.delete(missingD6Root.resolve(missingD6RunId).resolve("city_d6_" + citySeedId)
+                .resolve("structure_materialization_plan.json"));
+        JsonObject missingD6Request = new JsonObject();
+        missingD6Request.addProperty("runId", missingD6RunId);
+        missingD6Request.addProperty("citySeedId", citySeedId);
+
+        IllegalArgumentException missingD6Failure = assertThrows(IllegalArgumentException.class,
+                () -> RealmPlanningHttpController.handleCityPlanLandUseRequest(
+                        missingD6Root, missingD6Request));
+        assertTrue(missingD6Failure.getMessage().contains("CITY_BLUEPRINT_LAND_USE_D6_MISSING"));
+        assertFalse(Files.exists(missingD6Root.resolve(missingD6RunId)
+                .resolve("city_land_use_" + citySeedId)
+                .resolve("city_land_use_planning_complete.json")));
+    }
+
+    @Test
+    void blueprintOutdoorPreservePublishesIntentWithoutPlanning() throws Exception {
+        Path debugRoot = Files.createTempDirectory("city-blueprint-outdoor-preserve-test");
+        String runId = "run_blueprint_outdoor_preserve";
+        String citySeedId = "city_test";
+        prepareAcceptedBlueprintD6(debugRoot, runId, citySeedId, "PRESERVE");
+
+        JsonObject response = CityPlanningEndpointHandler.handlePlanBlueprintOutdoor(
+                debugRoot, runId, citySeedId);
+
+        Path directory = debugRoot.resolve(runId).resolve("city_land_use_" + citySeedId);
+        assertTrue(response.get("ok").getAsBoolean());
+        assertEquals("PRESERVE", response.get("outdoorMode").getAsString());
+        assertFalse(response.get("planned").getAsBoolean());
+        assertTrue(Files.isRegularFile(directory.resolve("city_outdoor_intent_plan.json")));
+        assertFalse(Files.exists(directory.resolve("city_land_use_area_plan.json")));
+        assertFalse(Files.exists(directory.resolve("city_land_use_planning_complete.json")));
+    }
+
+    @Test
+    void blueprintWorkflowRejectsLegacyLandUseOverridesBeforePlanning() throws Exception {
+        Path debugRoot = Files.createTempDirectory("city-blueprint-outdoor-override-test");
+        String runId = "run_blueprint_outdoor_override";
+        String citySeedId = "city_test";
+        prepareD5Artifacts(debugRoot, runId, citySeedId);
+        JsonObject request = new JsonObject();
+        request.addProperty("enableLandUseLayer", true);
+
+        IllegalArgumentException failure = assertThrows(IllegalArgumentException.class,
+                () -> CityPlanningEndpointHandler.handleRunWorkflow(debugRoot,
+                        Files.createTempDirectory("city-blueprint-outdoor-override-server"),
+                        runId, citySeedId, request, null, null));
+
+        assertTrue(failure.getMessage().contains("CITY_BLUEPRINT_WORKFLOW_LAND_USE_OVERRIDE_FORBIDDEN"));
+    }
+
+    @Test
     void runWorldIdentityAcceptsMatchingSeedAndDimension() throws Exception {
         Path runDir = Files.createTempDirectory("city-run-world-identity-match");
         Files.writeString(runDir.resolve("world_survey_context.json"), """
@@ -2975,6 +3140,43 @@ class CityPlanningEndpointHandlerTest {
         writeLockedD6Artifacts(debugRoot, runId, citySeedId);
     }
 
+    private static void prepareAcceptedBlueprintD6(Path debugRoot,
+                                                    String runId,
+                                                    String citySeedId,
+                                                    String outdoorMode) throws Exception {
+        prepareD5Artifacts(debugRoot, runId, citySeedId);
+        Path runDir = debugRoot.resolve(runId);
+        addPatchMemberCells(debugRoot, runId, citySeedId, "plain");
+        writeBlueprintTerrainField(runDir, citySeedId);
+        JsonObject prepared = CityPlanningEndpointHandler.handlePrepareD4BlueprintContext(debugRoot, runId,
+                citySeedId, terraSenseSource(runDir.resolve("debug_structure_profile_catalog.json")),
+                templateCatalogSource(runDir.resolve("template_catalog.json")), blueprintReferenceCatalog());
+        JsonObject blueprint = blueprintForContext(prepared.getAsJsonObject("cityBlueprintContext"));
+        JsonObject outdoorPlan = blueprint.getAsJsonObject("outdoorPlan");
+        outdoorPlan.addProperty("mode", outdoorMode);
+        if ("PRESERVE".equals(outdoorMode)) {
+            outdoorPlan.add("structureGrounds", new JsonArray());
+            outdoorPlan.add("landscapes", new JsonArray());
+            JsonObject residual = outdoorPlan.getAsJsonObject("residualPolicy");
+            for (String field : List.of("smallEnclosed", "narrowGap", "mediumEnclosed",
+                    "largeEnclosed", "exteriorConnected")) {
+                residual.addProperty(field, "NATURAL_RESERVE");
+            }
+        }
+        JsonObject submitted = CityPlanningEndpointHandler.handleSubmitD4Blueprint(debugRoot, runId, citySeedId,
+                prepared.get("contextId").getAsString(), blueprint);
+        if (!submitted.get("ok").getAsBoolean()) {
+            throw new IllegalStateException("Blueprint fixture was rejected: " + submitted);
+        }
+        JsonObject compiled = CityPlanningEndpointHandler.handleCompileD4Blueprint(
+                debugRoot, runId, citySeedId);
+        if (!compiled.get("ok").getAsBoolean()) {
+            throw new IllegalStateException("Blueprint fixture failed to compile: " + compiled);
+        }
+        CityPlanningEndpointHandler.handlePlanD5(debugRoot, runId, citySeedId);
+        writeLockedD6Artifacts(debugRoot, runId, citySeedId);
+    }
+
     private static void writeLockedD6Artifacts(Path debugRoot, String runId, String citySeedId) throws Exception {
         Path runDir = debugRoot.resolve(runId);
         JsonObject anchorMap = JsonParser.parseString(Files.readString(runDir
@@ -3577,8 +3779,6 @@ class CityPlanningEndpointHandlerTest {
         JsonObject d3 = JsonParser.parseString(Files.readString(path)).getAsJsonObject();
         JsonObject grid = d3.getAsJsonObject("grid");
         int step = grid.get("cellStepBlocks").getAsInt();
-        int originX = grid.get("originBlockX").getAsInt();
-        int originZ = grid.get("originBlockZ").getAsInt();
         for (JsonElement element : d3.getAsJsonArray("landformPatches")) {
             JsonObject patch = element.getAsJsonObject();
             if (!patchRef.equals(patch.get("landformPatchId").getAsString())) {
@@ -3591,8 +3791,8 @@ class CityPlanningEndpointHandlerTest {
                 for (int x = patchBounds.get("minX").getAsInt();
                      x + step - 1 <= patchBounds.get("maxX").getAsInt(); x += step) {
                     JsonObject cell = new JsonObject();
-                    cell.addProperty("cellX", Math.floorDiv(x - originX, step));
-                    cell.addProperty("cellZ", Math.floorDiv(z - originZ, step));
+                    cell.addProperty("cellX", Math.floorDiv(x, step));
+                    cell.addProperty("cellZ", Math.floorDiv(z, step));
                     cell.addProperty("blockMinX", x);
                     cell.addProperty("blockMinZ", z);
                     cells.add(cell);
@@ -3808,14 +4008,26 @@ class CityPlanningEndpointHandlerTest {
     private static JsonObject blueprintReferenceCatalog() {
         return JsonParser.parseString("""
                 {
-                  "schemaVersion":"city_blueprint_reference_catalog.v0.2",
+                  "schemaVersion":"city_blueprint_reference_catalog.v0.3",
                   "structureRefs":[{"structureRef":"minecraft:desert_pyramid","templateCandidates":[{"templateId":"geomantia:test_house","variantId":"test_v1"}]}],
                   "fillPools":[{"poolRef":"pool:test","structureRefs":["minecraft:desert_pyramid"]}],
                   "algorithmProfiles":[{"algorithmProfileRef":"algorithm:compact","algorithm":"COMPACT"}],
                   "compositionProfiles":[{"compositionProfileRef":"composition:round_robin","mode":"ROUND_ROBIN"}],
                   "styleProfiles":[{"profileRef":"style:test"}],
                   "roadProfiles":[{"profileRef":"road:test","hierarchy":"SIMPLE","density":"BALANCED"}],
-                  "surfaceDetailProfiles":[{"profileRef":"surface:test","intensity":"MEDIUM"}]
+                  "surfaceDetailProfiles":[{"profileRef":"surface:test","intensity":"MEDIUM"}],
+                  "landUseRuleProfile":{"schemaVersion":"city_land_use_rules.v0.1","profileId":"blueprint_test","rules":[{
+                    "ruleRef":"civic","landUseType":"civic","semanticTerms":["landmark"],
+                    "footprintMultiplier":1.5,"extraAreaBlocks":80,"minAreaBlocks":80,"maxAreaBlocks":1536,
+                    "actionBudget":300,"baseStepCost":1.0,"slopeCost":1.2,"reliefCost":1.2,"waterCost":8.0,
+                    "forestAffinity":0.0,"competitionWeight":1.0,"mergeSameType":true,
+                    "surfacePolicy":"PAVE","vegetationPolicy":"CLEAR","boundaryPolicy":"OPEN","decorationPolicy":"none"
+                  }]},
+                  "surfaceRecipes":[{"surfaceRecipeRef":"surface_recipe:civic","surfacePrintEnabled":true,
+                    "autoConnectDefault":true,"surfaceAlgorithm":"UNIFORM","surfaceBlockId":"minecraft:stone_bricks"}],
+                  "landscapeProfiles":[{"landscapeProfileRef":"landscape:common_green","landscapeType":"COMMON_GREEN",
+                    "landUseRuleRef":"civic","surfaceRecipeRef":"surface_recipe:civic","baseAreaSmall":256,
+                    "baseAreaMedium":512,"baseAreaLarge":1024,"membership":"URBAN"}]
                 }
                 """).getAsJsonObject();
     }
@@ -3825,7 +4037,7 @@ class CityPlanningEndpointHandlerTest {
                 .get(0).getAsJsonObject().get("landformPatchId").getAsString();
         JsonObject blueprint = JsonParser.parseString("""
                 {
-                  "schemaVersion":"city_blueprint.v0.4","cityId":"city_test","generationSeed":42,
+                  "schemaVersion":"city_blueprint.v0.5","cityId":"city_test","generationSeed":42,
                   "designIntent":{"cityIdentity":"test city","theme":"test","functionalRoles":["landmark"]},
                   "styleProfile":{"profileRef":"style:test"},
                   "groups":[{
@@ -3837,7 +4049,14 @@ class CityPlanningEndpointHandlerTest {
                     "compositionProfileRef":"composition:round_robin","attachedFeatures":[]
                   }],
                   "relations":[],"roadProfile":{"profileRef":"road:test"},
-                  "surfaceDetailProfile":{"profileRef":"surface:test"}
+                  "surfaceDetailProfile":{"profileRef":"surface:test"},
+                  "outdoorPlan":{"mode":"GENERATE","envelopeProfile":"BALANCED",
+                    "structureGrounds":[{"sourceGroupId":"core","landUseRuleRef":"civic",
+                    "surfaceRecipeRef":"surface_recipe:civic","extentClass":"SMALL","growthBias":"BALANCED",
+                    "referenceGroupIds":[],"autoConnect":true,"membership":"URBAN"}],"landscapes":[],
+                    "residualPolicy":{"smallEnclosed":"ABSORB_NEIGHBOR","narrowGap":"PATH_OR_VERGE",
+                    "mediumEnclosed":"COMMON_GREEN","largeEnclosed":"COMMON_GREEN",
+                    "exteriorConnected":"NATURAL_RESERVE"}}
                 }
                 """.replace("PATCH_REF", patchRef)).getAsJsonObject();
         blueprint.add("sourceD3Ref", context.getAsJsonObject("sourceD3Ref").deepCopy());

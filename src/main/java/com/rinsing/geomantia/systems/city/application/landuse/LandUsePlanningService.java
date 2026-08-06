@@ -6,6 +6,8 @@ import com.rinsing.geomantia.systems.city.algorithm.landuse.LandUseAutoConnectio
 import com.rinsing.geomantia.systems.city.algorithm.landuse.LandUseExpansionResult;
 import com.rinsing.geomantia.systems.city.algorithm.landuse.LandUseGeometryCompiler;
 import com.rinsing.geomantia.systems.city.algorithm.landuse.StableLandUseExpander;
+import com.rinsing.geomantia.systems.city.application.outdoor.CityUrbanResidualResolver;
+import com.rinsing.geomantia.systems.city.application.outdoor.CityUrbanSpacePlan;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseAreaPlan;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseSeedGroup;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseTerrainField;
@@ -39,10 +41,25 @@ public final class LandUsePlanningService {
                        LandUseRuleCatalog ruleCatalog) {
         LandUseSourceResolver.Resolution sources = new LandUseSourceResolver().resolve(
                 structureMaterializationPlan, landUseIntentPlan, functionalArrayZones, ruleCatalog);
+        String cityId = structureMaterializationPlan.get("cityId").getAsString();
+        return plan(cityId, sources, d5ReservationMaskPlan, terrainField,
+                CityUrbanResidualResolver.Config.disabled());
+    }
+
+    public Result plan(String cityId,
+                       LandUseSourceResolver.Resolution sources,
+                       JsonObject d5ReservationMaskPlan,
+                       LandUseTerrainField terrainField,
+                       CityUrbanResidualResolver.Config residualConfig) {
+        if (cityId == null || cityId.isBlank()) throw new IllegalArgumentException("cityId is required");
+        if (sources == null) throw new IllegalArgumentException("LandUse sources are required");
+        if (terrainField == null) throw new IllegalArgumentException("LandUse terrain field is required");
+        if (!cityId.equals(terrainField.cityId())) {
+            throw new IllegalArgumentException("LAND_USE_TERRAIN_CITY_ID_MISMATCH");
+        }
         LandUseCorridorExclusionResolver corridorResolver = new LandUseCorridorExclusionResolver();
         List<LandUseAreaPlan.CorridorExclusion> corridors = corridorResolver.stableMerge(
                 sources.corridorExclusions(), corridorResolver.fromD5ReservationMask(d5ReservationMaskPlan));
-        String cityId = structureMaterializationPlan.get("cityId").getAsString();
         StableLandUseExpander expander = new StableLandUseExpander();
         LandUseExpansionResult probe = expander.expand(cityId,
                 terrainField.planningBounds(), terrainField, sources.seedGroups(), corridors,
@@ -54,15 +71,20 @@ public final class LandUsePlanningService {
                 sources.seedSalt(), connectionPlan);
         List<LandUseAutoConnectionPlanner.ConnectionOutcome> connectionOutcomes = connectionPlanner.evaluate(
                 connectionPlan, sources.seedGroups(), expansion);
+        CityUrbanResidualResolver.Result residualResult = new CityUrbanResidualResolver().resolve(cityId,
+                terrainField.planningBounds(), terrainField, sources.seedGroups(), corridors, expansion,
+                residualConfig);
+        LandUseExpansionResult resolvedExpansion = residualResult.expansion();
         LandUseGeometryCompiler.CompiledGeometry geometry = new LandUseGeometryCompiler().compile(
-                terrainField.planningBounds(), sources.seedGroups(), expansion);
+                terrainField.planningBounds(), sources.seedGroups(), resolvedExpansion);
         List<String> warnings = new ArrayList<>(sources.warnings());
+        warnings.addAll(residualResult.warnings());
         connectionOutcomes.stream().filter(value -> value.status().equals("not_reached"))
                 .map(LandUseAutoConnectionPlanner.ConnectionOutcome::connection)
                 .forEach(connection -> warnings.add("LAND_USE_AUTO_CONNECTION_NOT_REACHED:"
                         + connection.groupA() + ':' + connection.groupB()));
         for (LandUseSeedGroup group : sources.seedGroups()) {
-            int claimed = expansion.claimedBlocksByGroup().getOrDefault(group.groupId(), 0);
+            int claimed = resolvedExpansion.claimedBlocksByGroup().getOrDefault(group.groupId(), 0);
             if (claimed < group.minAreaBlocks()) {
                 warnings.add("LAND_USE_AREA_BELOW_MIN:" + group.groupId());
             }
@@ -79,14 +101,18 @@ public final class LandUsePlanningService {
         LandUseAreaPlan plan = new LandUseAreaPlanCodec().withComputedHash(rawPlan);
         CityLandUseSurfacePrintPlan surfacePrintPlan = new CityLandUseSurfacePrintPlanner().plan(
                 plan, sources.seedGroups(), terrainField);
-        return new Result(plan, trace(sources, probe, expansion, connectionOutcomes),
-                quality(plan, sources, expansion, connectionOutcomes), surfacePrintPlan);
+        return new Result(plan, trace(sources, probe, resolvedExpansion, connectionOutcomes,
+                residualResult.urbanSpacePlan()),
+                quality(plan, sources, resolvedExpansion, connectionOutcomes, residualResult.urbanSpacePlan()),
+                surfacePrintPlan,
+                residualResult.urbanSpacePlan());
     }
 
     private static JsonObject trace(LandUseSourceResolver.Resolution sources,
                                     LandUseExpansionResult probe,
                                     LandUseExpansionResult expansion,
-                                    List<LandUseAutoConnectionPlanner.ConnectionOutcome> connectionOutcomes) {
+                                    List<LandUseAutoConnectionPlanner.ConnectionOutcome> connectionOutcomes,
+                                    CityUrbanSpacePlan urbanSpacePlan) {
         JsonObject trace = new JsonObject();
         trace.addProperty("schemaVersion", "city_land_use_planning_trace.v0.3");
         JsonArray groups = new JsonArray();
@@ -154,13 +180,15 @@ public final class LandUsePlanningService {
         trace.addProperty("guidedExpansionApplied", !connectionOutcomes.isEmpty());
         trace.addProperty("contestedClaimCount", expansion.contestedClaimCount());
         trace.addProperty("blockedCandidateCount", expansion.blockedCandidateCount());
+        addUrbanSpaceSummary(trace, urbanSpacePlan);
         return trace;
     }
 
     private static JsonObject quality(LandUseAreaPlan plan,
                                       LandUseSourceResolver.Resolution sources,
                                       LandUseExpansionResult expansion,
-                                      List<LandUseAutoConnectionPlanner.ConnectionOutcome> connectionOutcomes) {
+                                      List<LandUseAutoConnectionPlanner.ConnectionOutcome> connectionOutcomes,
+                                      CityUrbanSpacePlan urbanSpacePlan) {
         JsonObject quality = new JsonObject();
         quality.addProperty("schemaVersion", "city_land_use_quality.v0.1");
         quality.addProperty("status", plan.warnings().isEmpty() ? "pass" : "warning");
@@ -208,7 +236,20 @@ public final class LandUsePlanningService {
         JsonArray warnings = new JsonArray();
         plan.warnings().forEach(warnings::add);
         quality.add("warnings", warnings);
+        addUrbanSpaceSummary(quality, urbanSpacePlan);
         return quality;
+    }
+
+    private static void addUrbanSpaceSummary(JsonObject target, CityUrbanSpacePlan plan) {
+        CityUrbanSpacePlan.CoverageSummary coverage = plan.coverageSummary();
+        target.addProperty("urbanSpaceStatus", plan.enabled() ? "resolved" : "disabled");
+        target.addProperty("urbanSpaceEnabled", plan.enabled());
+        target.addProperty("urbanEnvelopeBlocks", coverage.envelopeBlocks());
+        target.addProperty("urbanAbsorbedResidualBlocks", coverage.absorbedResidualBlocks());
+        target.addProperty("urbanExplicitResidualBlocks", coverage.explicitResidualBlocks());
+        target.addProperty("urbanUnknownResidualBlocks", coverage.unknownResidualBlocks());
+        target.addProperty("urbanResidualRegionCount", plan.residualRegions().size());
+        target.addProperty("urbanSpacePlanHash", plan.planHash());
     }
 
     private static JsonObject point(com.rinsing.geomantia.systems.city.domain.model.BlockPoint point) {
@@ -221,6 +262,7 @@ public final class LandUsePlanningService {
     public record Result(LandUseAreaPlan plan,
                          JsonObject trace,
                          JsonObject quality,
-                         CityLandUseSurfacePrintPlan surfacePrintPlan) {
+                         CityLandUseSurfacePrintPlan surfacePrintPlan,
+                         CityUrbanSpacePlan urbanSpacePlan) {
     }
 }

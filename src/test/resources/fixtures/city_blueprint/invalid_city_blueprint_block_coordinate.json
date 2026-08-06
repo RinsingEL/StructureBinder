@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "city_blueprint.v0.4",
+  "schemaVersion": "city_blueprint.v0.5",
   "cityId": "city:test",
   "sourceD3Ref": {
     "path": "d3.json",

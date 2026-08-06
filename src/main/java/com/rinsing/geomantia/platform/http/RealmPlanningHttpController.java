@@ -3,6 +3,7 @@ package com.rinsing.geomantia.platform.http;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.rinsing.geomantia.systems.gis.GisClassifierConfig;
 import com.rinsing.geomantia.systems.gis.GisSampleConfig;
 import com.rinsing.geomantia.systems.gis.adapter.minecraft.MinecraftPriorAtlasSampler;
@@ -894,19 +895,84 @@ final class RealmPlanningHttpController {
     }
 
     void handleCityPlanLandUse(HttpExchange exchange) {
-        handle(exchange, "POST", () -> {
-            JsonObject request = GisHttpUtil.readJsonObject(exchange);
-            String runId = requiredString(request, "runId");
-            String citySeedId = requiredString(request, "citySeedId");
-            JsonObject intent = null;
-            if (request.has("landUseIntentPlan") && !request.get("landUseIntentPlan").isJsonNull()) {
-                if (!request.get("landUseIntentPlan").isJsonObject()) {
-                    throw new IllegalArgumentException("LAND_USE_INTENT_OBJECT_REQUIRED");
-                }
-                intent = request.getAsJsonObject("landUseIntentPlan");
+        handle(exchange, "POST", () -> handleCityPlanLandUseRequest(
+                debugRoot(), GisHttpUtil.readJsonObject(exchange)));
+    }
+
+    static JsonObject handleCityPlanLandUseRequest(Path debugRoot, JsonObject request) throws IOException {
+        String runId = requiredString(request, "runId");
+        String citySeedId = requiredString(request, "citySeedId");
+        boolean acceptedBlueprint = hasAcceptedBlueprintD6(debugRoot, runId, citySeedId);
+        if (acceptedBlueprint && request.has("landUseIntentPlan")) {
+            throw new IllegalArgumentException("CITY_BLUEPRINT_WORKFLOW_LAND_USE_OVERRIDE_FORBIDDEN: "
+                    + "accepted Blueprint controls outdoor planning.");
+        }
+        if (acceptedBlueprint) {
+            return CityPlanningEndpointHandler.handlePlanBlueprintOutdoor(debugRoot, runId, citySeedId);
+        }
+        JsonObject intent = null;
+        if (request.has("landUseIntentPlan") && !request.get("landUseIntentPlan").isJsonNull()) {
+            if (!request.get("landUseIntentPlan").isJsonObject()) {
+                throw new IllegalArgumentException("LAND_USE_INTENT_OBJECT_REQUIRED");
             }
-            return CityPlanningEndpointHandler.handlePlanLandUse(debugRoot(), runId, citySeedId, intent);
-        });
+            intent = request.getAsJsonObject("landUseIntentPlan");
+        }
+        return CityPlanningEndpointHandler.handlePlanLandUse(debugRoot, runId, citySeedId, intent);
+    }
+
+    private static boolean hasAcceptedBlueprintD6(Path debugRoot,
+                                                   String runId,
+                                                   String citySeedId) throws IOException {
+        Path runDir = debugRoot.resolve(runId);
+        String safeCitySeedId = citySeedId.replaceAll("[^A-Za-z0-9._-]", "_");
+        Path blueprintDir = runDir.resolve("city_blueprint_" + safeCitySeedId);
+        Path blueprintPath = blueprintDir.resolve("city_blueprint.json");
+        Path validationPath = blueprintDir.resolve("city_blueprint_validation_report.json");
+        Path submissionPath = blueprintDir.resolve("city_blueprint_submission_trace.json");
+        Path d6Path = runDir.resolve("city_d6_" + safeCitySeedId)
+                .resolve("structure_materialization_plan.json");
+        boolean blueprintExists = Files.isRegularFile(blueprintPath);
+        boolean validationExists = Files.isRegularFile(validationPath);
+        boolean submissionExists = Files.isRegularFile(submissionPath);
+        if (!blueprintExists && !validationExists && !submissionExists) {
+            return false;
+        }
+        if (!blueprintExists || !validationExists || !submissionExists) {
+            throw new IllegalArgumentException("CITY_BLUEPRINT_LAND_USE_ROUTE_INCOMPLETE: Blueprint, validation "
+                    + "and submission artifacts must exist together.");
+        }
+        if (!Files.isRegularFile(d6Path)) {
+            throw new IllegalArgumentException("CITY_BLUEPRINT_LAND_USE_D6_MISSING: run city_plan_d6 first.");
+        }
+        try {
+            JsonObject blueprint = JsonParser.parseString(Files.readString(blueprintPath)).getAsJsonObject();
+            JsonObject validation = JsonParser.parseString(Files.readString(validationPath)).getAsJsonObject();
+            JsonObject submission = JsonParser.parseString(Files.readString(submissionPath)).getAsJsonObject();
+            JsonObject d6 = JsonParser.parseString(Files.readString(d6Path)).getAsJsonObject();
+            boolean accepted = "city_blueprint.v0.5".equals(stringValue(blueprint, "schemaVersion", ""))
+                    && citySeedId.equals(stringValue(blueprint, "cityId", ""))
+                    && booleanValue(validation, "valid", false)
+                    && "accepted".equals(stringValue(submission, "status", ""))
+                    && intValue(submission, "aiCityDesignSubmissionCount", 0) == 1;
+            if (!accepted) {
+                throw new IllegalArgumentException("CITY_BLUEPRINT_LAND_USE_ROUTE_NOT_ACCEPTED: "
+                        + "Blueprint authority exists but is not an accepted v0.5 submission.");
+            }
+            if (!citySeedId.equals(stringValue(d6, "cityId", ""))
+                    || !booleanValue(d6, "locked", false)) {
+                throw new IllegalArgumentException("CITY_BLUEPRINT_LAND_USE_D6_NOT_LOCKED: "
+                        + "accepted Blueprint requires its locked D6 plan.");
+            }
+            return true;
+        } catch (RuntimeException exception) {
+            if (exception instanceof IllegalArgumentException
+                    && exception.getMessage() != null
+                    && exception.getMessage().startsWith("CITY_BLUEPRINT_LAND_USE_")) {
+                throw exception;
+            }
+            throw new IllegalArgumentException("CITY_BLUEPRINT_LAND_USE_ROUTE_INVALID: "
+                    + "cannot parse Blueprint/D6 routing artifacts.", exception);
+        }
     }
 
     void handleCityExecuteD7(HttpExchange exchange) {

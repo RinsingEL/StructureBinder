@@ -52,6 +52,12 @@ class LandUsePlanningServiceTest {
         assertEquals(1, first.plan().corridorExclusions().size());
         assertTrue(first.plan().areas().stream().flatMap(area -> area.gateSlots().stream())
                 .anyMatch(gate -> gate.gateId().equals("house::front")));
+        assertEquals("disabled", first.trace().get("urbanSpaceStatus").getAsString());
+        assertFalse(first.trace().get("urbanSpaceEnabled").getAsBoolean());
+        assertEquals(0, first.trace().get("urbanEnvelopeBlocks").getAsInt());
+        assertEquals("disabled", first.quality().get("urbanSpaceStatus").getAsString());
+        assertEquals(first.urbanSpacePlan().planHash(),
+                first.quality().get("urbanSpacePlanHash").getAsString());
         assertNoOverlappingClaims(first.plan());
     }
 
