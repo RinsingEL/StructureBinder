@@ -14,9 +14,10 @@ public record CityBlueprint(
         List<Group> groups,
         List<Relation> relations,
         ProfileRef roadProfile,
-        ProfileRef surfaceDetailProfile) {
+        ProfileRef surfaceDetailProfile,
+        OutdoorPlan outdoorPlan) {
 
-    public static final String SCHEMA_VERSION = "city_blueprint.v0.4";
+    public static final String SCHEMA_VERSION = "city_blueprint.v0.5";
 
     public CityBlueprint {
         groups = List.copyOf(groups);
@@ -93,6 +94,59 @@ public record CityBlueprint(
             DirectionPreference directionPreference) {
     }
 
+    public record OutdoorPlan(
+            OutdoorMode mode,
+            EnvelopeProfile envelopeProfile,
+            List<StructureGround> structureGrounds,
+            List<Landscape> landscapes,
+            ResidualPolicy residualPolicy) {
+        public OutdoorPlan {
+            structureGrounds = List.copyOf(structureGrounds);
+            landscapes = List.copyOf(landscapes);
+        }
+    }
+
+    public record StructureGround(
+            String sourceGroupId,
+            String landUseRuleRef,
+            String surfaceRecipeRef,
+            ExtentClass extentClass,
+            GrowthBias growthBias,
+            List<String> referenceGroupIds,
+            boolean autoConnect,
+            OutdoorMembership membership) {
+        public StructureGround {
+            referenceGroupIds = List.copyOf(referenceGroupIds);
+        }
+    }
+
+    public record Landscape(
+            String landscapeId,
+            String landscapeProfileRef,
+            List<String> attachedGroupIds,
+            List<String> preferredPatchRefs,
+            ExtentClass extentClass,
+            OutdoorIntensity intensity,
+            LandscapeContinuity continuity,
+            LandscapeGrowthRelation growthRelation,
+            List<String> referenceGroupIds,
+            TerrainPolicy terrainPolicy,
+            boolean required) {
+        public Landscape {
+            attachedGroupIds = List.copyOf(attachedGroupIds);
+            preferredPatchRefs = List.copyOf(preferredPatchRefs);
+            referenceGroupIds = List.copyOf(referenceGroupIds);
+        }
+    }
+
+    public record ResidualPolicy(
+            ResidualDisposition smallEnclosed,
+            ResidualDisposition narrowGap,
+            ResidualDisposition mediumEnclosed,
+            ResidualDisposition largeEnclosed,
+            ResidualDisposition exteriorConnected) {
+    }
+
     public enum GroupKind { STRUCTURE, LANDSCAPE }
 
     public enum GroupPriority { CORE, STANDARD, PERIPHERAL }
@@ -118,4 +172,22 @@ public record CityBlueprint(
     public enum DistancePreference { NONE, NEAR, FAR }
 
     public enum DirectionPreference { NONE, NORTH, EAST, SOUTH, WEST }
+
+    public enum OutdoorMode { GENERATE, PRESERVE }
+
+    public enum EnvelopeProfile { COMPACT, BALANCED, LOOSE }
+
+    public enum GrowthBias { BALANCED, AWAY_FROM_REFERENCE, TOWARD_REFERENCE }
+
+    public enum OutdoorMembership { URBAN, LANDSCAPE }
+
+    public enum OutdoorIntensity { LOW, MEDIUM, HIGH }
+
+    public enum LandscapeContinuity { CONTINUOUS, MULTI_PARCEL, PATCHY }
+
+    public enum LandscapeGrowthRelation { AROUND_SOURCE, AWAY_FROM_REFERENCE, TOWARD_WATER, ALONG_WATER }
+
+    public enum ResidualDisposition {
+        ABSORB_NEIGHBOR, PATH_OR_VERGE, COMMON_GREEN, SERVICE_GROUND, NATURAL_RESERVE
+    }
 }

@@ -1,6 +1,7 @@
 package com.rinsing.geomantia.systems.city.infrastructure.preview;
 
 import com.google.gson.JsonObject;
+import com.rinsing.geomantia.systems.city.application.outdoor.CityUrbanSpacePlan;
 import com.rinsing.geomantia.systems.city.domain.landuse.BoundaryPolicy;
 import com.rinsing.geomantia.systems.city.domain.landuse.CardinalDirection;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseAreaPlan;
@@ -56,6 +57,68 @@ class CityLandUsePreviewRendererTest {
         assertEquals(CityLandUsePreviewRenderer.WIDTH, image.getWidth());
         assertEquals(CityLandUsePreviewRenderer.HEIGHT, image.getHeight());
         assertTrue(nonCanvasPixels(image) > 100_000);
+        assertTrue(!metadata.has("envelopeBlocks"), "legacy metadata must remain v0.1-shaped");
+    }
+
+    @Test
+    void rendersUrbanEnvelopeResidualClassesAndUnknownWarning(@TempDir Path tempDir) throws Exception {
+        BlockBounds bounds = new BlockBounds(0, 0, 31, 31);
+        LandUseTerrainField terrain = terrain(bounds);
+        LandUseAreaPlan plan = plan(bounds);
+        List<LandUseAreaPlan.ScanlineSpan> envelope = new ArrayList<>();
+        for (int z = 4; z <= 27; z++) envelope.add(new LandUseAreaPlan.ScanlineSpan(z, 4, 27));
+        List<CityUrbanSpacePlan.ResidualRegion> residuals = new ArrayList<>();
+        CityUrbanSpacePlan.ResidualDisposition[] dispositions =
+                CityUrbanSpacePlan.ResidualDisposition.values();
+        for (int index = 0; index < dispositions.length; index++) {
+            residuals.add(new CityUrbanSpacePlan.ResidualRegion("residual_" + index,
+                    CityUrbanSpacePlan.ResidualClass.SMALL_ENCLOSED, dispositions[index],
+                    List.of(new LandUseAreaPlan.ScanlineSpan(14 + index * 2, 22, 24)),
+                    List.of("farm_group"),
+                    dispositions[index] == CityUrbanSpacePlan.ResidualDisposition.ABSORB_NEIGHBOR
+                            ? "farm_group" : "",
+                    3, false, false));
+        }
+        CityUrbanSpacePlan urban = new CityUrbanSpacePlan(CityUrbanSpacePlan.SCHEMA_VERSION,
+                "city_preview", "sha256:test", true, 6, bounds, envelope, residuals,
+                new CityUrbanSpacePlan.CoverageSummary(576, 120, 9, 4, 3, 12, 4));
+
+        JsonObject metadata = new CityLandUsePreviewRenderer().render(terrain, plan, urban, tempDir);
+
+        assertEquals("city_land_use_preview.v0.2", metadata.get("schemaVersion").getAsString());
+        assertEquals("sha256:test", metadata.get("urbanSpacePlanHash").getAsString());
+        assertEquals(576, metadata.get("envelopeBlocks").getAsInt());
+        assertEquals(3, metadata.get("absorbedResidualBlocks").getAsInt());
+        assertEquals(12, metadata.get("explicitResidualBlocks").getAsInt());
+        assertEquals(4, metadata.get("unknownResidualBlocks").getAsInt());
+        assertTrue(metadata.get("unknownResidualWarning").getAsBoolean());
+        assertEquals("UNKNOWN_RESIDUAL_PRESENT", metadata.get("coverageStatus").getAsString());
+        JsonObject dispositionCounts = metadata.getAsJsonObject("residualDispositionBlocks");
+        for (CityUrbanSpacePlan.ResidualDisposition disposition : dispositions) {
+            assertEquals(3, dispositionCounts.get(disposition.name()).getAsInt());
+        }
+        BufferedImage image = ImageIO.read(tempDir.resolve("land_use_preview.png").toFile());
+        assertNotNull(image);
+        assertTrue(nonCanvasPixels(image) > 100_000);
+    }
+
+    private static LandUseAreaPlan plan(BlockBounds bounds) {
+        LandUseAreaPlan.Area area = new LandUseAreaPlan.Area("farmstead", "agriculture", "agriculture",
+                List.of("farm_group"), List.of("farmhouse"), List.of(new BlockPoint(8, 8)),
+                List.of(new LandUseAreaPlan.ScanlineSpan(8, 4, 20),
+                        new LandUseAreaPlan.ScanlineSpan(9, 4, 20),
+                        new LandUseAreaPlan.ScanlineSpan(10, 4, 20)),
+                List.of(new BlockBounds(8, 8, 10, 10)),
+                List.of(new LandUseAreaPlan.BoundaryLoop(List.of(new BlockPoint(4, 8),
+                        new BlockPoint(21, 8), new BlockPoint(21, 11), new BlockPoint(4, 11)), false)),
+                List.of(new LandUseAreaPlan.GateSlot("farm_gate", new BlockPoint(12, 8),
+                        CardinalDirection.NORTH, "farmhouse")), 42,
+                SurfacePolicy.CULTIVATE, VegetationPolicy.CLEAR, BoundaryPolicy.FENCE, "agriculture");
+        return new LandUseAreaPlan(LandUseAreaPlan.CURRENT_SCHEMA_VERSION,
+                "city_land_use_rules.v0.1", "city_preview", "hash", bounds, List.of(area),
+                List.of(new LandUseAreaPlan.ScanlineSpan(0, 0, 31)),
+                List.of(new LandUseAreaPlan.CorridorExclusion("farm_corridor",
+                        new BlockBounds(12, 5, 12, 8), "farm_gate")), List.of());
     }
 
     private static LandUseTerrainField terrain(BlockBounds bounds) {

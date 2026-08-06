@@ -676,6 +676,7 @@ class CityBlueprintCompilerServiceTest {
                 templateSource, referenceCatalog());
         JsonObject blueprint = blueprint(prepared.getAsJsonObject("cityBlueprintContext"), extentClass);
         customizeBlueprint.accept(blueprint);
+        syncOutdoorGrounds(blueprint);
         JsonObject submitted = service.submit(temporary, runId, cityId,
                 prepared.get("contextId").getAsString(), blueprint);
         assertTrue(submitted.get("ok").getAsBoolean());
@@ -930,7 +931,7 @@ class CityBlueprintCompilerServiceTest {
     private static JsonObject referenceCatalog() {
         return JsonParser.parseString("""
                 {
-                  "schemaVersion":"city_blueprint_reference_catalog.v0.2",
+                  "schemaVersion":"city_blueprint_reference_catalog.v0.3",
                   "structureRefs":[
                     {"structureRef":"geomantia:town_hall","templateCandidates":[{"templateId":"geomantia:town_hall","variantId":"default"}]},
                     {"structureRef":"geomantia:oversized_hall","templateCandidates":[{"templateId":"geomantia:oversized_hall","variantId":"default"}]},
@@ -950,7 +951,19 @@ class CityBlueprintCompilerServiceTest {
                   "compositionProfiles":[{"compositionProfileRef":"composition:round_robin","mode":"ROUND_ROBIN"}],
                   "styleProfiles":[{"profileRef":"style:stone"}],
                   "roadProfiles":[{"profileRef":"road:town","hierarchy":"SIMPLE","density":"BALANCED"}],
-                  "surfaceDetailProfiles":[{"profileRef":"surface:working","intensity":"MEDIUM"}]
+                  "surfaceDetailProfiles":[{"profileRef":"surface:working","intensity":"MEDIUM"}],
+                  "landUseRuleProfile":{"schemaVersion":"city_land_use_rules.v0.1","profileId":"blueprint_test","rules":[{
+                    "ruleRef":"civic","landUseType":"civic","semanticTerms":["administration"],
+                    "footprintMultiplier":1.5,"extraAreaBlocks":80,"minAreaBlocks":80,"maxAreaBlocks":1536,
+                    "actionBudget":300,"baseStepCost":1.0,"slopeCost":1.2,"reliefCost":1.2,"waterCost":8.0,
+                    "forestAffinity":0.0,"competitionWeight":1.0,"mergeSameType":true,
+                    "surfacePolicy":"PAVE","vegetationPolicy":"CLEAR","boundaryPolicy":"OPEN","decorationPolicy":"none"
+                  }]},
+                  "surfaceRecipes":[{"surfaceRecipeRef":"surface_recipe:civic","surfacePrintEnabled":true,
+                    "autoConnectDefault":true,"surfaceAlgorithm":"UNIFORM","surfaceBlockId":"minecraft:stone_bricks"}],
+                  "landscapeProfiles":[{"landscapeProfileRef":"landscape:common_green","landscapeType":"COMMON_GREEN",
+                    "landUseRuleRef":"civic","surfaceRecipeRef":"surface_recipe:civic","baseAreaSmall":256,
+                    "baseAreaMedium":512,"baseAreaLarge":1024,"membership":"URBAN"}]
                 }
                 """).getAsJsonObject();
     }
@@ -958,7 +971,7 @@ class CityBlueprintCompilerServiceTest {
     private static JsonObject blueprint(JsonObject context, String extentClass) {
         JsonObject root = JsonParser.parseString("""
                 {
-                  "schemaVersion":"city_blueprint.v0.4","cityId":"placeholder","generationSeed":1,
+                  "schemaVersion":"city_blueprint.v0.5","cityId":"placeholder","generationSeed":1,
                   "sourceD3Ref":{},"catalogSnapshotRef":{},
                   "designIntent":{"cityIdentity":"town","theme":"stone","functionalRoles":["administration"]},
                   "styleProfile":{"profileRef":"style:stone"},
@@ -971,7 +984,11 @@ class CityBlueprintCompilerServiceTest {
                     "compositionProfileRef":"composition:round_robin","attachedFeatures":[]
                   }],
                   "relations":[],"roadProfile":{"profileRef":"road:town"},
-                  "surfaceDetailProfile":{"profileRef":"surface:working"}
+                  "surfaceDetailProfile":{"profileRef":"surface:working"},
+                  "outdoorPlan":{"mode":"GENERATE","envelopeProfile":"BALANCED","structureGrounds":[],
+                    "landscapes":[],"residualPolicy":{"smallEnclosed":"ABSORB_NEIGHBOR",
+                    "narrowGap":"PATH_OR_VERGE","mediumEnclosed":"COMMON_GREEN",
+                    "largeEnclosed":"COMMON_GREEN","exteriorConnected":"NATURAL_RESERVE"}}
                 }
                 """).getAsJsonObject();
         root.addProperty("cityId", context.get("cityId").getAsString());
@@ -980,6 +997,24 @@ class CityBlueprintCompilerServiceTest {
         root.addProperty("generationSeed", context.get("generationSeedSuggestion").getAsLong());
         root.getAsJsonArray("groups").get(0).getAsJsonObject().addProperty("extentClass", extentClass);
         return root;
+    }
+
+    private static void syncOutdoorGrounds(JsonObject blueprint) {
+        JsonArray grounds = new JsonArray();
+        for (JsonElement element : blueprint.getAsJsonArray("groups")) {
+            JsonObject group = element.getAsJsonObject();
+            JsonObject ground = new JsonObject();
+            ground.addProperty("sourceGroupId", group.get("groupId").getAsString());
+            ground.addProperty("landUseRuleRef", "civic");
+            ground.addProperty("surfaceRecipeRef", "surface_recipe:civic");
+            ground.addProperty("extentClass", group.get("extentClass").getAsString());
+            ground.addProperty("growthBias", "BALANCED");
+            ground.add("referenceGroupIds", new JsonArray());
+            ground.addProperty("autoConnect", true);
+            ground.addProperty("membership", "URBAN");
+            grounds.add(ground);
+        }
+        blueprint.getAsJsonObject("outdoorPlan").add("structureGrounds", grounds);
     }
 
     private static String safe(String value) {

@@ -15,7 +15,7 @@ public final class CityBlueprintCodec {
     public static final long MAX_SAFE_GENERATION_SEED = 9_007_199_254_740_991L;
     private static final Set<String> ROOT_FIELDS = Set.of("schemaVersion", "cityId", "sourceD3Ref",
             "catalogSnapshotRef", "generationSeed", "designIntent", "styleProfile", "groups", "relations",
-            "roadProfile", "surfaceDetailProfile");
+            "roadProfile", "surfaceDetailProfile", "outdoorPlan");
     private static final Set<String> FORBIDDEN_FIELDS = Set.of("x", "y", "z", "blockX", "blockY", "blockZ",
             "worldX", "worldY", "worldZ", "anchor", "anchorBlock", "rotation", "mirror", "candidateId",
             "algorithm", "algorithmName", "templateId", "templateRef", "nbtFile");
@@ -41,7 +41,8 @@ public final class CityBlueprintCodec {
                 relations(requiredArray(root, "relations", "$.relations")),
                 profileRef(requiredObject(root, "roadProfile", "$.roadProfile"), "$.roadProfile"),
                 profileRef(requiredObject(root, "surfaceDetailProfile", "$.surfaceDetailProfile"),
-                        "$.surfaceDetailProfile"));
+                        "$.surfaceDetailProfile"),
+                outdoorPlan(requiredObject(root, "outdoorPlan", "$.outdoorPlan")));
     }
 
     public JsonObject write(CityBlueprint blueprint) {
@@ -94,7 +95,83 @@ public final class CityBlueprintCodec {
         root.add("relations", relations);
         root.add("roadProfile", profileRefJson(blueprint.roadProfile()));
         root.add("surfaceDetailProfile", profileRefJson(blueprint.surfaceDetailProfile()));
+        root.add("outdoorPlan", outdoorPlanJson(blueprint.outdoorPlan()));
         return root;
+    }
+
+    private static CityBlueprint.OutdoorPlan outdoorPlan(JsonObject object) {
+        String path = "$.outdoorPlan";
+        exactFields(object, Set.of("mode", "envelopeProfile", "structureGrounds", "landscapes",
+                "residualPolicy"), path);
+        return new CityBlueprint.OutdoorPlan(
+                enumValue(object, "mode", CityBlueprint.OutdoorMode.class, path),
+                enumValue(object, "envelopeProfile", CityBlueprint.EnvelopeProfile.class, path),
+                structureGrounds(requiredArray(object, "structureGrounds", path + ".structureGrounds")),
+                landscapes(requiredArray(object, "landscapes", path + ".landscapes")),
+                residualPolicy(requiredObject(object, "residualPolicy", path + ".residualPolicy"),
+                        path + ".residualPolicy"));
+    }
+
+    private static List<CityBlueprint.StructureGround> structureGrounds(JsonArray array) {
+        List<CityBlueprint.StructureGround> result = new ArrayList<>();
+        Set<String> fields = Set.of("sourceGroupId", "landUseRuleRef", "surfaceRecipeRef", "extentClass",
+                "growthBias", "referenceGroupIds", "autoConnect", "membership");
+        for (int index = 0; index < array.size(); index++) {
+            String path = "$.outdoorPlan.structureGrounds[" + index + "]";
+            JsonObject item = objectElement(array.get(index), path);
+            exactFields(item, fields, path);
+            result.add(new CityBlueprint.StructureGround(
+                    requiredString(item, "sourceGroupId", path + ".sourceGroupId"),
+                    requiredString(item, "landUseRuleRef", path + ".landUseRuleRef"),
+                    requiredString(item, "surfaceRecipeRef", path + ".surfaceRecipeRef"),
+                    enumValue(item, "extentClass", CityBlueprint.ExtentClass.class, path),
+                    enumValue(item, "growthBias", CityBlueprint.GrowthBias.class, path),
+                    stringList(requiredArray(item, "referenceGroupIds", path + ".referenceGroupIds"),
+                            path + ".referenceGroupIds"),
+                    requiredBoolean(item, "autoConnect", path + ".autoConnect"),
+                    enumValue(item, "membership", CityBlueprint.OutdoorMembership.class, path)));
+        }
+        return List.copyOf(result);
+    }
+
+    private static List<CityBlueprint.Landscape> landscapes(JsonArray array) {
+        List<CityBlueprint.Landscape> result = new ArrayList<>();
+        Set<String> fields = Set.of("landscapeId", "landscapeProfileRef", "attachedGroupIds",
+                "preferredPatchRefs", "extentClass", "intensity", "continuity", "growthRelation",
+                "referenceGroupIds", "terrainPolicy", "required");
+        for (int index = 0; index < array.size(); index++) {
+            String path = "$.outdoorPlan.landscapes[" + index + "]";
+            JsonObject item = objectElement(array.get(index), path);
+            exactFields(item, fields, path);
+            result.add(new CityBlueprint.Landscape(
+                    requiredString(item, "landscapeId", path + ".landscapeId"),
+                    requiredString(item, "landscapeProfileRef", path + ".landscapeProfileRef"),
+                    stringList(requiredArray(item, "attachedGroupIds", path + ".attachedGroupIds"),
+                            path + ".attachedGroupIds"),
+                    stringList(requiredArray(item, "preferredPatchRefs", path + ".preferredPatchRefs"),
+                            path + ".preferredPatchRefs"),
+                    enumValue(item, "extentClass", CityBlueprint.ExtentClass.class, path),
+                    enumValue(item, "intensity", CityBlueprint.OutdoorIntensity.class, path),
+                    enumValue(item, "continuity", CityBlueprint.LandscapeContinuity.class, path),
+                    enumValue(item, "growthRelation", CityBlueprint.LandscapeGrowthRelation.class, path),
+                    stringList(requiredArray(item, "referenceGroupIds", path + ".referenceGroupIds"),
+                            path + ".referenceGroupIds"),
+                    enumValue(item, "terrainPolicy", CityBlueprint.TerrainPolicy.class, path),
+                    requiredBoolean(item, "required", path + ".required")));
+        }
+        return List.copyOf(result);
+    }
+
+    private static CityBlueprint.ResidualPolicy residualPolicy(JsonObject object, String path) {
+        Set<String> fields = Set.of("smallEnclosed", "narrowGap", "mediumEnclosed", "largeEnclosed",
+                "exteriorConnected");
+        exactFields(object, fields, path);
+        return new CityBlueprint.ResidualPolicy(
+                enumValue(object, "smallEnclosed", CityBlueprint.ResidualDisposition.class, path),
+                enumValue(object, "narrowGap", CityBlueprint.ResidualDisposition.class, path),
+                enumValue(object, "mediumEnclosed", CityBlueprint.ResidualDisposition.class, path),
+                enumValue(object, "largeEnclosed", CityBlueprint.ResidualDisposition.class, path),
+                enumValue(object, "exteriorConnected", CityBlueprint.ResidualDisposition.class, path));
     }
 
     private static CityBlueprint.ArtifactRef artifactRef(JsonObject object, String path) {
@@ -268,6 +345,14 @@ public final class CityBlueprintCodec {
         return object.get(key).getAsBoolean();
     }
 
+    private static boolean requiredBoolean(JsonObject object, String key, String path) {
+        Boolean value = optionalBoolean(object, key, path);
+        if (value == null) {
+            fail(CityBlueprintReasonCode.CITY_BLUEPRINT_FIELD_MISSING, path, "A boolean is required.");
+        }
+        return value;
+    }
+
     private static JsonObject requiredObject(JsonObject object, String key, String path) {
         if (!object.has(key) || !object.get(key).isJsonObject()) {
             fail(CityBlueprintReasonCode.CITY_BLUEPRINT_FIELD_MISSING, path, key + " object is required.");
@@ -374,6 +459,52 @@ public final class CityBlueprintCodec {
             }
             object.add("parameters", parameters);
         }
+        return object;
+    }
+
+    private static JsonObject outdoorPlanJson(CityBlueprint.OutdoorPlan plan) {
+        JsonObject object = new JsonObject();
+        object.addProperty("mode", plan.mode().name());
+        object.addProperty("envelopeProfile", plan.envelopeProfile().name());
+        JsonArray grounds = new JsonArray();
+        for (CityBlueprint.StructureGround ground : plan.structureGrounds()) {
+            JsonObject item = new JsonObject();
+            item.addProperty("sourceGroupId", ground.sourceGroupId());
+            item.addProperty("landUseRuleRef", ground.landUseRuleRef());
+            item.addProperty("surfaceRecipeRef", ground.surfaceRecipeRef());
+            item.addProperty("extentClass", ground.extentClass().name());
+            item.addProperty("growthBias", ground.growthBias().name());
+            item.add("referenceGroupIds", strings(ground.referenceGroupIds()));
+            item.addProperty("autoConnect", ground.autoConnect());
+            item.addProperty("membership", ground.membership().name());
+            grounds.add(item);
+        }
+        object.add("structureGrounds", grounds);
+        JsonArray landscapes = new JsonArray();
+        for (CityBlueprint.Landscape landscape : plan.landscapes()) {
+            JsonObject item = new JsonObject();
+            item.addProperty("landscapeId", landscape.landscapeId());
+            item.addProperty("landscapeProfileRef", landscape.landscapeProfileRef());
+            item.add("attachedGroupIds", strings(landscape.attachedGroupIds()));
+            item.add("preferredPatchRefs", strings(landscape.preferredPatchRefs()));
+            item.addProperty("extentClass", landscape.extentClass().name());
+            item.addProperty("intensity", landscape.intensity().name());
+            item.addProperty("continuity", landscape.continuity().name());
+            item.addProperty("growthRelation", landscape.growthRelation().name());
+            item.add("referenceGroupIds", strings(landscape.referenceGroupIds()));
+            item.addProperty("terrainPolicy", landscape.terrainPolicy().name());
+            item.addProperty("required", landscape.required());
+            landscapes.add(item);
+        }
+        object.add("landscapes", landscapes);
+        CityBlueprint.ResidualPolicy policy = plan.residualPolicy();
+        JsonObject residual = new JsonObject();
+        residual.addProperty("smallEnclosed", policy.smallEnclosed().name());
+        residual.addProperty("narrowGap", policy.narrowGap().name());
+        residual.addProperty("mediumEnclosed", policy.mediumEnclosed().name());
+        residual.addProperty("largeEnclosed", policy.largeEnclosed().name());
+        residual.addProperty("exteriorConnected", policy.exteriorConnected().name());
+        object.add("residualPolicy", residual);
         return object;
     }
 

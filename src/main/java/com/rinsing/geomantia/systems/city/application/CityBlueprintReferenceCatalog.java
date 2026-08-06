@@ -3,8 +3,12 @@ package com.rinsing.geomantia.systems.city.application;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.rinsing.geomantia.systems.city.domain.blueprint.CityBlueprint;
 import com.rinsing.geomantia.systems.city.domain.blueprint.CityBlueprintContractException;
 import com.rinsing.geomantia.systems.city.domain.blueprint.CityBlueprintReasonCode;
+import com.rinsing.geomantia.systems.city.domain.landuse.LandUseSurfaceSettings;
+import com.rinsing.geomantia.systems.city.domain.landuse.rules.LandUseRuleCatalog;
+import com.rinsing.geomantia.systems.city.infrastructure.landuse.LandUseRuleCatalogLoader;
 
 import java.util.LinkedHashSet;
 import java.util.LinkedHashMap;
@@ -21,12 +25,15 @@ public record CityBlueprintReferenceCatalog(
         Set<String> compositionProfileRefs,
         Set<String> styleProfileRefs,
         Set<String> roadProfileRefs,
-        Set<String> surfaceDetailProfileRefs) {
+        Set<String> surfaceDetailProfileRefs,
+        LandUseRuleCatalog landUseRuleCatalog,
+        Map<String, SurfaceRecipe> surfaceRecipes,
+        Map<String, LandscapeProfile> landscapeProfiles) {
 
-    public static final String SCHEMA_VERSION = "city_blueprint_reference_catalog.v0.2";
+    public static final String SCHEMA_VERSION = "city_blueprint_reference_catalog.v0.3";
     private static final Set<String> ROOT_FIELDS = Set.of("schemaVersion", "structureRefs", "fillPools",
             "algorithmProfiles", "compositionProfiles", "styleProfiles", "roadProfiles",
-            "surfaceDetailProfiles");
+            "surfaceDetailProfiles", "landUseRuleProfile", "surfaceRecipes", "landscapeProfiles");
 
     public static CityBlueprintReferenceCatalog parse(JsonObject root, CityTemplateCatalog templateCatalog) {
         if (root == null) fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID,
@@ -69,14 +76,111 @@ public record CityBlueprintReferenceCatalog(
         Set<String> surfaces = profileRefs(array(root, "surfaceDetailProfiles"), "profileRef",
                 Set.of("profileRef", "intensity"), "$.surfaceDetailProfiles",
                 item -> enumString(item, "intensity", Set.of("LOW", "MEDIUM", "HIGH")));
+        JsonObject ruleProfile = object(root.get("landUseRuleProfile"), "$.landUseRuleProfile");
+        String ruleProfileId = string(ruleProfile, "profileId", "$.landUseRuleProfile.profileId");
+        LandUseRuleCatalog landUseRules;
+        try {
+            landUseRules = LandUseRuleCatalogLoader.parse(ruleProfile, ruleProfileId);
+        } catch (IllegalArgumentException exception) {
+            fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID,
+                    "$.landUseRuleProfile", exception.getMessage());
+            return null;
+        }
+        Map<String, SurfaceRecipe> surfaceRecipes = surfaceRecipes(array(root, "surfaceRecipes"));
+        Map<String, LandscapeProfile> landscapeProfiles = landscapeProfiles(
+                array(root, "landscapeProfiles"), landUseRules, surfaceRecipes);
         if (structures.isEmpty() || pools.isEmpty() || algorithms.isEmpty() || compositions.isEmpty()
-                || styles.isEmpty() || roads.isEmpty() || surfaces.isEmpty()) {
+                || styles.isEmpty() || roads.isEmpty() || surfaces.isEmpty() || surfaceRecipes.isEmpty()
+                || landscapeProfiles.isEmpty()) {
             fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID, "$",
                     "Every reference catalog namespace must contain at least one entry.");
         }
         return new CityBlueprintReferenceCatalog(root.deepCopy(), structures, pools, algorithms,
                 Map.copyOf(algorithmsByRef), compositions,
-                styles, roads, surfaces);
+                styles, roads, surfaces, landUseRules, Map.copyOf(surfaceRecipes),
+                Map.copyOf(landscapeProfiles));
+    }
+
+    private static Map<String, SurfaceRecipe> surfaceRecipes(JsonArray array) {
+        Map<String, SurfaceRecipe> result = new LinkedHashMap<>();
+        Set<String> common = Set.of("surfaceRecipeRef", "surfacePrintEnabled", "autoConnectDefault",
+                "surfaceAlgorithm");
+        Set<String> materials = Set.of("surfaceBlockId", "cropBlockId", "channelBankBlockId",
+                "channelWaterBlockId", "channelBankOverlayBlockId");
+        for (int index = 0; index < array.size(); index++) {
+            String path = "$.surfaceRecipes[" + index + "]";
+            JsonObject item = object(array.get(index), path);
+            String ref = string(item, "surfaceRecipeRef", path + ".surfaceRecipeRef");
+            boolean enabled = bool(item, "surfacePrintEnabled", path + ".surfacePrintEnabled");
+            boolean autoConnect = bool(item, "autoConnectDefault", path + ".autoConnectDefault");
+            SurfaceAlgorithm algorithm = enumValue(item, "surfaceAlgorithm", SurfaceAlgorithm.class, path);
+            if (!enabled && autoConnect) {
+                fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID,
+                        path + ".autoConnectDefault",
+                        "A disabled surface recipe cannot enable automatic surface connection.");
+            }
+            Set<String> expected = new LinkedHashSet<>(common);
+            if (enabled) {
+                expected.add("surfaceBlockId");
+                if (algorithm == SurfaceAlgorithm.CONTOUR_BANDS) expected.addAll(materials);
+            }
+            exactFields(item, expected, path, CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID);
+            String surface = enabled ? blockId(item, "surfaceBlockId", path) : null;
+            String crop = enabled && algorithm == SurfaceAlgorithm.CONTOUR_BANDS
+                    ? blockId(item, "cropBlockId", path) : null;
+            String bank = enabled && algorithm == SurfaceAlgorithm.CONTOUR_BANDS
+                    ? blockId(item, "channelBankBlockId", path) : null;
+            String water = enabled && algorithm == SurfaceAlgorithm.CONTOUR_BANDS
+                    ? blockId(item, "channelWaterBlockId", path) : null;
+            String overlay = enabled && algorithm == SurfaceAlgorithm.CONTOUR_BANDS
+                    ? blockId(item, "channelBankOverlayBlockId", path) : null;
+            if (result.put(ref, new SurfaceRecipe(ref, enabled, autoConnect, algorithm,
+                    surface, crop, bank, water, overlay)) != null) {
+                fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_DUPLICATE_REF,
+                        path, "Duplicate reference: " + ref);
+            }
+        }
+        return result;
+    }
+
+    private static Map<String, LandscapeProfile> landscapeProfiles(JsonArray array,
+                                                                    LandUseRuleCatalog rules,
+                                                                    Map<String, SurfaceRecipe> recipes) {
+        Map<String, LandscapeProfile> result = new LinkedHashMap<>();
+        Set<String> fields = Set.of("landscapeProfileRef", "landscapeType", "landUseRuleRef",
+                "surfaceRecipeRef", "baseAreaSmall", "baseAreaMedium", "baseAreaLarge", "membership");
+        for (int index = 0; index < array.size(); index++) {
+            String path = "$.landscapeProfiles[" + index + "]";
+            JsonObject item = object(array.get(index), path);
+            exactFields(item, fields, path, CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID);
+            String ref = string(item, "landscapeProfileRef", path + ".landscapeProfileRef");
+            String ruleRef = string(item, "landUseRuleRef", path + ".landUseRuleRef");
+            String recipeRef = string(item, "surfaceRecipeRef", path + ".surfaceRecipeRef");
+            if (rules.byRef(ruleRef).isEmpty()) {
+                fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID,
+                        path + ".landUseRuleRef", "Unknown LandUse ruleRef: " + ruleRef);
+            }
+            if (!recipes.containsKey(recipeRef)) {
+                fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID,
+                        path + ".surfaceRecipeRef", "Unknown surfaceRecipeRef: " + recipeRef);
+            }
+            int small = positiveInt(item, "baseAreaSmall", path);
+            int medium = positiveInt(item, "baseAreaMedium", path);
+            int large = positiveInt(item, "baseAreaLarge", path);
+            if (small > medium || medium > large) {
+                fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID, path,
+                        "Landscape base areas must be monotonic: small <= medium <= large.");
+            }
+            LandscapeProfile profile = new LandscapeProfile(ref,
+                    enumValue(item, "landscapeType", LandscapeType.class, path), ruleRef, recipeRef,
+                    small, medium, large,
+                    enumValue(item, "membership", CityBlueprint.OutdoorMembership.class, path));
+            if (result.put(ref, profile) != null) {
+                fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_DUPLICATE_REF,
+                        path, "Duplicate reference: " + ref);
+            }
+        }
+        return result;
     }
 
     private static Set<String> structureRefs(JsonArray array, CityTemplateCatalog templates) {
@@ -189,9 +293,86 @@ public record CityBlueprintReferenceCatalog(
         return element.getAsString().trim();
     }
 
+    private static boolean bool(JsonObject object, String key, String path) {
+        if (!object.has(key) || !object.get(key).isJsonPrimitive()
+                || !object.getAsJsonPrimitive(key).isBoolean()) {
+            fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID,
+                    path, "A boolean is required.");
+        }
+        return object.get(key).getAsBoolean();
+    }
+
+    private static int positiveInt(JsonObject object, String key, String path) {
+        if (!object.has(key) || !object.get(key).isJsonPrimitive()
+                || !object.getAsJsonPrimitive(key).isNumber()) {
+            fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID,
+                    path + "." + key, "A positive integer is required.");
+        }
+        double raw = object.get(key).getAsDouble();
+        if (raw != Math.rint(raw) || raw <= 0 || raw > Integer.MAX_VALUE) {
+            fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID,
+                    path + "." + key, "A positive integer is required.");
+        }
+        return (int) raw;
+    }
+
+    private static String blockId(JsonObject object, String key, String path) {
+        String value = string(object, key, path + "." + key);
+        if (!LandUseSurfaceSettings.isValidBlockId(value)) {
+            fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID,
+                    path + "." + key, "Invalid block ID: " + value);
+        }
+        return value;
+    }
+
+    private static <E extends Enum<E>> E enumValue(JsonObject object, String key, Class<E> type, String path) {
+        String value = string(object, key, path + "." + key);
+        try {
+            return Enum.valueOf(type, value);
+        } catch (IllegalArgumentException exception) {
+            fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID,
+                    path + "." + key, "Unsupported value: " + value);
+            return null;
+        }
+    }
+
     private static void fail(CityBlueprintReasonCode code, String path, String message) {
         throw new CityBlueprintContractException(code, path, message);
     }
+
+    public record SurfaceRecipe(
+            String surfaceRecipeRef,
+            boolean surfacePrintEnabled,
+            boolean autoConnectDefault,
+            SurfaceAlgorithm surfaceAlgorithm,
+            String surfaceBlockId,
+            String cropBlockId,
+            String channelBankBlockId,
+            String channelWaterBlockId,
+            String channelBankOverlayBlockId) {
+    }
+
+    public enum SurfaceAlgorithm { UNIFORM, CONTOUR_BANDS }
+
+    public record LandscapeProfile(
+            String landscapeProfileRef,
+            LandscapeType landscapeType,
+            String landUseRuleRef,
+            String surfaceRecipeRef,
+            int baseAreaSmall,
+            int baseAreaMedium,
+            int baseAreaLarge,
+            CityBlueprint.OutdoorMembership membership) {
+        public int baseArea(CityBlueprint.ExtentClass extentClass) {
+            return switch (extentClass) {
+                case SMALL -> baseAreaSmall;
+                case MEDIUM -> baseAreaMedium;
+                case LARGE -> baseAreaLarge;
+            };
+        }
+    }
+
+    public enum LandscapeType { FARMLAND, COMMON_GREEN, WOODLAND, MEADOW, POND }
 
     @FunctionalInterface
     private interface EntryValidator {

@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "city_blueprint.v0.4",
+  "schemaVersion": "city_blueprint.v0.5",
   "cityId": "city:test",
   "sourceD3Ref": {
     "path": "run/city_d3_city_test/city_landform_review_package.json",
@@ -38,5 +38,29 @@
   ],
   "relations": [],
   "roadProfile": { "profileRef": "road:town" },
-  "surfaceDetailProfile": { "profileRef": "surface:working" }
+  "surfaceDetailProfile": { "profileRef": "surface:working" },
+  "outdoorPlan": {
+    "mode": "GENERATE",
+    "envelopeProfile": "BALANCED",
+    "structureGrounds": [
+      {
+        "sourceGroupId": "civic_core",
+        "landUseRuleRef": "civic",
+        "surfaceRecipeRef": "surface_recipe:civic",
+        "extentClass": "MEDIUM",
+        "growthBias": "BALANCED",
+        "referenceGroupIds": [],
+        "autoConnect": true,
+        "membership": "URBAN"
+      }
+    ],
+    "landscapes": [],
+    "residualPolicy": {
+      "smallEnclosed": "ABSORB_NEIGHBOR",
+      "narrowGap": "PATH_OR_VERGE",
+      "mediumEnclosed": "COMMON_GREEN",
+      "largeEnclosed": "COMMON_GREEN",
+      "exteriorConnected": "NATURAL_RESERVE"
+    }
+  }
 }

@@ -121,7 +121,9 @@ public final class StableLandUseExpander {
                     blocked++;
                     continue;
                 }
-                double stepCost = stepCost(group.rule(), cell, cityId, group.groupId(), seedSalt, nextX, nextZ,
+                double stepCost = stepCost(group.rule(), group.growthBias(), group.terrainBias(),
+                        group.preferredPatchRefs(), cell,
+                        cityId, group.groupId(), seedSalt, nextX, nextZ,
                         node.seedX(), node.seedZ(), node.x(), node.z(), guidance.targetsFor(group.groupId()));
                 double total = node.cumulativeCost() + stepCost;
                 if (total > group.actionBudget()) continue;
@@ -157,6 +159,9 @@ public final class StableLandUseExpander {
     }
 
     private static double stepCost(LandUseRule rule,
+                                   LandUseSeedGroup.GrowthBias growthBias,
+                                   LandUseSeedGroup.TerrainBias terrainBias,
+                                   List<String> preferredPatchRefs,
                                    LandUseTerrainField.Cell cell,
                                    String cityId,
                                    String groupId,
@@ -168,17 +173,48 @@ public final class StableLandUseExpander {
                                    int currentX,
                                    int currentZ,
                                    List<LandUseAutoConnectionPlanner.Target> targets) {
-        double value = rule.baseStepCost() * directionalBaseMultiplier(currentX, currentZ, x, z, targets);
-        value += rule.slopeCost() * Math.max(0, cell.slope()) / 10.0;
-        value += rule.reliefCost() * Math.max(Math.max(0, cell.localRelief()), Math.max(0, cell.roughness())) / 10.0;
+        double value = rule.baseStepCost()
+                * directionalBaseMultiplier(currentX, currentZ, x, z, targets)
+                * growthBiasMultiplier(growthBias, currentX, currentZ, x, z);
+        value += rule.slopeCost() * terrainBias.slopeMultiplier() * Math.max(0, cell.slope()) / 10.0;
+        value += rule.reliefCost() * terrainBias.reliefMultiplier()
+                * Math.max(Math.max(0, cell.localRelief()), Math.max(0, cell.roughness())) / 10.0;
         if (cell.water()) value += rule.waterCost();
         String biome = cell.biomeId().toLowerCase(java.util.Locale.ROOT);
         if (biome.contains("forest") || biome.contains("taiga") || biome.contains("jungle")) {
             value += rule.forestAffinity();
         }
+        if (!preferredPatchRefs.isEmpty()) {
+            value *= preferredPatchRefs.contains(cell.landformPatchId()) ? 0.8 : 1.15;
+        }
         value += (Math.abs(x - seedX) + Math.abs(z - seedZ)) * 0.002;
         value += deterministicJitter(cityId + ':' + groupId + ':' + rule.ruleRef() + ':' + seedSalt, x, z);
         return Math.max(0.1, value);
+    }
+
+    private static double growthBiasMultiplier(LandUseSeedGroup.GrowthBias bias,
+                                               int currentX,
+                                               int currentZ,
+                                               int nextX,
+                                               int nextZ) {
+        if (bias == null || bias.mode() == LandUseSeedGroup.GrowthBiasMode.NEUTRAL) return 1.0;
+        if (bias.mode() == LandUseSeedGroup.GrowthBiasMode.ALONG_WATER) {
+            int stepX = nextX - currentX;
+            int stepZ = nextZ - currentZ;
+            return Math.abs(stepX * bias.axisX() + stepZ * bias.axisZ()) > 0 ? 0.65 : 1.8;
+        }
+        BlockPoint reference = bias.referencePoint();
+        long currentDistance = Math.abs((long) currentX - reference.x())
+                + Math.abs((long) currentZ - reference.z());
+        long nextDistance = Math.abs((long) nextX - reference.x())
+                + Math.abs((long) nextZ - reference.z());
+        boolean aligned = bias.mode() == LandUseSeedGroup.GrowthBiasMode.AWAY_FROM_REFERENCE
+                ? nextDistance > currentDistance : nextDistance < currentDistance;
+        boolean opposed = bias.mode() == LandUseSeedGroup.GrowthBiasMode.AWAY_FROM_REFERENCE
+                ? nextDistance < currentDistance : nextDistance > currentDistance;
+        if (aligned) return 0.65;
+        if (opposed) return 1.8;
+        return 1.0;
     }
 
     private static double directionalBaseMultiplier(int currentX,

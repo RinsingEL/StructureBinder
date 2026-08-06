@@ -105,7 +105,160 @@ public final class CityBlueprintValidator {
         requireRef(issues, catalog.surfaceDetailProfileRefs(), blueprint.surfaceDetailProfile().profileRef(),
                 CityBlueprintReasonCode.CITY_BLUEPRINT_SURFACE_DETAIL_PROFILE_UNKNOWN,
                 "$.surfaceDetailProfile.profileRef");
+        validateOutdoorPlan(issues, blueprint.outdoorPlan(), groupIds, context.patchRefs(), catalog);
         return new ValidationResult(issues.isEmpty(), List.copyOf(issues));
+    }
+
+    private static void validateOutdoorPlan(List<Issue> issues, CityBlueprint.OutdoorPlan plan,
+                                            Set<String> groupIds, Set<String> patchRefs,
+                                            CityBlueprintReferenceCatalog catalog) {
+        if (plan.mode() == CityBlueprint.OutdoorMode.PRESERVE) {
+            if (!plan.structureGrounds().isEmpty() || !plan.landscapes().isEmpty()) {
+                add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_MODE_INVALID,
+                        "$.outdoorPlan", "PRESERVE requires empty structureGrounds and landscapes.");
+            }
+            CityBlueprint.ResidualPolicy policy = plan.residualPolicy();
+            if (policy.smallEnclosed() != CityBlueprint.ResidualDisposition.NATURAL_RESERVE
+                    || policy.narrowGap() != CityBlueprint.ResidualDisposition.NATURAL_RESERVE
+                    || policy.mediumEnclosed() != CityBlueprint.ResidualDisposition.NATURAL_RESERVE
+                    || policy.largeEnclosed() != CityBlueprint.ResidualDisposition.NATURAL_RESERVE
+                    || policy.exteriorConnected() != CityBlueprint.ResidualDisposition.NATURAL_RESERVE) {
+                add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_RESIDUAL_POLICY_INVALID,
+                        "$.outdoorPlan.residualPolicy",
+                        "PRESERVE requires NATURAL_RESERVE for every residual class.");
+            }
+            return;
+        }
+
+        Set<String> coveredGroups = new HashSet<>();
+        for (int index = 0; index < plan.structureGrounds().size(); index++) {
+            CityBlueprint.StructureGround ground = plan.structureGrounds().get(index);
+            String path = "$.outdoorPlan.structureGrounds[" + index + "]";
+            if (!groupIds.contains(ground.sourceGroupId())) {
+                add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_GROUP_REF_UNKNOWN,
+                        path + ".sourceGroupId", "Unknown structure Group: " + ground.sourceGroupId());
+            } else if (!coveredGroups.add(ground.sourceGroupId())) {
+                add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_GROUND_COVERAGE_INVALID,
+                        path + ".sourceGroupId", "A STRUCTURE Group must have exactly one StructureGround.");
+            }
+            if (catalog.landUseRuleCatalog().byRef(ground.landUseRuleRef()).isEmpty()) {
+                add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_LAND_USE_RULE_UNKNOWN,
+                        path + ".landUseRuleRef", "Unknown LandUse rule: " + ground.landUseRuleRef());
+            }
+            CityBlueprintReferenceCatalog.SurfaceRecipe surfaceRecipe =
+                    catalog.surfaceRecipes().get(ground.surfaceRecipeRef());
+            if (surfaceRecipe == null) {
+                add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_SURFACE_RECIPE_UNKNOWN,
+                        path + ".surfaceRecipeRef", "Unknown surface recipe: " + ground.surfaceRecipeRef());
+            } else if (ground.autoConnect() && !surfaceRecipe.surfacePrintEnabled()) {
+                add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_SURFACE_RECIPE_INCOMPATIBLE,
+                        path + ".autoConnect",
+                        "autoConnect=true requires a surface recipe with surfacePrintEnabled=true.");
+            }
+            validateReferenceGroups(issues, ground.referenceGroupIds(), groupIds, ground.sourceGroupId(),
+                    path + ".referenceGroupIds");
+            boolean requiresReferences = ground.growthBias() != CityBlueprint.GrowthBias.BALANCED;
+            if (requiresReferences != !ground.referenceGroupIds().isEmpty()) {
+                add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_REFERENCE_INVALID,
+                        path + ".referenceGroupIds",
+                        "BALANCED forbids references; directional growthBias requires at least one reference Group.");
+            }
+        }
+        if (!coveredGroups.equals(groupIds)) {
+            add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_GROUND_COVERAGE_INVALID,
+                    "$.outdoorPlan.structureGrounds",
+                    "GENERATE requires exactly one StructureGround for every STRUCTURE Group.");
+        }
+
+        Set<String> landscapeIds = new HashSet<>();
+        for (int index = 0; index < plan.landscapes().size(); index++) {
+            CityBlueprint.Landscape landscape = plan.landscapes().get(index);
+            String path = "$.outdoorPlan.landscapes[" + index + "]";
+            if (!landscapeIds.add(landscape.landscapeId())) {
+                add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_LANDSCAPE_ID_DUPLICATE,
+                        path + ".landscapeId", "landscapeId must be unique: " + landscape.landscapeId());
+            }
+            if (!catalog.landscapeProfiles().containsKey(landscape.landscapeProfileRef())) {
+                add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_LANDSCAPE_PROFILE_UNKNOWN,
+                        path + ".landscapeProfileRef",
+                        "Unknown landscape profile: " + landscape.landscapeProfileRef());
+            }
+            if (landscape.attachedGroupIds().isEmpty() && landscape.preferredPatchRefs().isEmpty()) {
+                add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_LANDSCAPE_SOURCE_REQUIRED,
+                        path, "A landscape needs at least one attached Group or preferred D3 patch.");
+            }
+            validateGroupList(issues, landscape.attachedGroupIds(), groupIds,
+                    path + ".attachedGroupIds");
+            validateReferenceGroups(issues, landscape.referenceGroupIds(), groupIds, null,
+                    path + ".referenceGroupIds");
+            for (int patchIndex = 0; patchIndex < landscape.preferredPatchRefs().size(); patchIndex++) {
+                String ref = landscape.preferredPatchRefs().get(patchIndex);
+                if (!patchRefs.contains(ref)) {
+                    add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_PATCH_REF_UNKNOWN,
+                            path + ".preferredPatchRefs[" + patchIndex + "]", "Unknown D3 patch: " + ref);
+                }
+            }
+            boolean requiresReferences = landscape.growthRelation()
+                    == CityBlueprint.LandscapeGrowthRelation.AWAY_FROM_REFERENCE;
+            if (requiresReferences != !landscape.referenceGroupIds().isEmpty()) {
+                add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_REFERENCE_INVALID,
+                        path + ".referenceGroupIds",
+                        "AWAY_FROM_REFERENCE requires references; other landscape growth relations forbid them.");
+            }
+        }
+        validateResidualPolicy(issues, plan.residualPolicy());
+    }
+
+    private static void validateGroupList(List<Issue> issues, List<String> refs, Set<String> groupIds,
+                                          String path) {
+        for (int index = 0; index < refs.size(); index++) {
+            if (!groupIds.contains(refs.get(index))) {
+                add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_GROUP_REF_UNKNOWN,
+                        path + "[" + index + "]", "Unknown structure Group: " + refs.get(index));
+            }
+        }
+    }
+
+    private static void validateReferenceGroups(List<Issue> issues, List<String> refs, Set<String> groupIds,
+                                                String self, String path) {
+        Set<String> unique = new HashSet<>();
+        for (int index = 0; index < refs.size(); index++) {
+            String ref = refs.get(index);
+            if (!unique.add(ref) || !groupIds.contains(ref) || ref.equals(self)) {
+                add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_REFERENCE_INVALID,
+                        path + "[" + index + "]", "Reference Groups must be unique, existing, and not self-referential.");
+            }
+        }
+    }
+
+    private static void validateResidualPolicy(List<Issue> issues, CityBlueprint.ResidualPolicy policy) {
+        requireResidual(issues, "smallEnclosed", policy.smallEnclosed(), Set.of(
+                CityBlueprint.ResidualDisposition.ABSORB_NEIGHBOR,
+                CityBlueprint.ResidualDisposition.NATURAL_RESERVE));
+        requireResidual(issues, "narrowGap", policy.narrowGap(), Set.of(
+                CityBlueprint.ResidualDisposition.ABSORB_NEIGHBOR,
+                CityBlueprint.ResidualDisposition.PATH_OR_VERGE,
+                CityBlueprint.ResidualDisposition.NATURAL_RESERVE));
+        requireResidual(issues, "mediumEnclosed", policy.mediumEnclosed(), Set.of(
+                CityBlueprint.ResidualDisposition.ABSORB_NEIGHBOR,
+                CityBlueprint.ResidualDisposition.COMMON_GREEN,
+                CityBlueprint.ResidualDisposition.SERVICE_GROUND,
+                CityBlueprint.ResidualDisposition.NATURAL_RESERVE));
+        requireResidual(issues, "largeEnclosed", policy.largeEnclosed(), Set.of(
+                CityBlueprint.ResidualDisposition.COMMON_GREEN,
+                CityBlueprint.ResidualDisposition.NATURAL_RESERVE));
+        requireResidual(issues, "exteriorConnected", policy.exteriorConnected(), Set.of(
+                CityBlueprint.ResidualDisposition.NATURAL_RESERVE));
+    }
+
+    private static void requireResidual(List<Issue> issues, String field,
+                                        CityBlueprint.ResidualDisposition actual,
+                                        Set<CityBlueprint.ResidualDisposition> allowed) {
+        if (!allowed.contains(actual)) {
+            add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_RESIDUAL_POLICY_INVALID,
+                    "$.outdoorPlan.residualPolicy." + field,
+                    field + " does not allow " + actual + "; expected one of " + allowed + '.');
+        }
     }
 
     private static void validateConnectionPlan(List<Issue> issues, CityBlueprint.Group group,

@@ -163,7 +163,7 @@ const decorationProgramPlanSchema = strictObject({
 }, ["schemaVersion", "cityId", "catalogHash", "styleProfileId", "styleProfileHash", "programs"]);
 
 const landUseIntentPlanSchema = strictObject({
-  schemaVersion: { type: "string", enum: ["city_land_use_intent_plan.v0.1"] },
+  schemaVersion: { type: "string", enum: ["city_land_use_intent_plan.v0.3"] },
   cityId: nonEmptyString("必须与 citySeedId 对应的 City 一致。"),
   seedSalt: nonEmptyString("可选确定性扰动盐；相同输入与 seedSalt 必须得到相同结果。"),
   groupOverrides: {
@@ -199,7 +199,192 @@ const landUseIntentPlanSchema = strictObject({
       ],
     },
   },
+  surfaceAlgorithmDefaults: {
+    type: "array",
+    description: "按刷地算法提供本次城市的材料默认值；同一算法最多一项。",
+    items: strictObject({
+      surfaceAlgorithm: { type: "string", enum: ["uniform", "contour_bands"] },
+      surfaceBlockId: nonEmptyString("合法 Minecraft block ID。"),
+      cropBlockId: nonEmptyString("可选作物 block ID。"),
+      channelBankBlockId: nonEmptyString("可选沟渠岸体 block ID。"),
+      channelWaterBlockId: nonEmptyString("可选沟渠水体 block ID。"),
+      channelBankOverlayBlockId: nonEmptyString("可选沟渠岸边覆盖 block ID。"),
+    }, ["surfaceAlgorithm", "surfaceBlockId"]),
+  },
+  surfaceOverrides: {
+    type: "array",
+    description: "对已解析 group 覆写刷地开关、连接、算法、材料或程序派生的 contour anchor。",
+    items: strictObject({
+      targetGroupId: nonEmptyString("已解析的 LandUse group ID。"),
+      surfacePrintEnabled: { type: "boolean" },
+      autoConnect: { type: "boolean" },
+      surfaceAlgorithm: { type: "string", enum: ["uniform", "contour_bands"] },
+      surfaceBlockId: nonEmptyString("可选地表 block ID。"),
+      cropBlockId: nonEmptyString("可选作物 block ID。"),
+      channelBankBlockId: nonEmptyString("可选沟渠岸体 block ID。"),
+      channelWaterBlockId: nonEmptyString("可选沟渠水体 block ID。"),
+      channelBankOverlayBlockId: nonEmptyString("可选沟渠岸边覆盖 block ID。"),
+      algorithmAnchor: strictObject({
+        x: integer("程序派生的世界 block X；只用于 contour_bands 相位。"),
+        z: integer("程序派生的世界 block Z；只用于 contour_bands 相位。"),
+      }, ["x", "z"]),
+    }, ["targetGroupId"]),
+  },
 }, ["schemaVersion", "cityId"]);
+
+const minecraftBlockIdSchema = {
+  type: "string",
+  pattern: "^[a-z0-9_.-]+:[a-z0-9/._-]+$",
+  description: "合法 Minecraft block ID。",
+};
+
+const landUseRuleSchema = strictObject({
+  ruleRef: nonEmptyString("冻结 LandUse rule 引用。"),
+  landUseType: nonEmptyString("稳定土地使用类型。"),
+  semanticTerms: {
+    type: "array", uniqueItems: true,
+    items: nonEmptyString("用于结构语义匹配的 term。"),
+  },
+  footprintMultiplier: { type: "number", minimum: 0 },
+  extraAreaBlocks: { type: "integer", minimum: 0 },
+  minAreaBlocks: { type: "integer", minimum: 0 },
+  maxAreaBlocks: { type: "integer", minimum: 0 },
+  actionBudget: { type: "number", exclusiveMinimum: 0 },
+  baseStepCost: { type: "number", exclusiveMinimum: 0 },
+  slopeCost: { type: "number" },
+  reliefCost: { type: "number" },
+  waterCost: { type: "number" },
+  forestAffinity: { type: "number" },
+  competitionWeight: { type: "number" },
+  mergeSameType: { type: "boolean" },
+  surfacePolicy: { type: "string", enum: ["PRESERVE", "PAVE", "CULTIVATE", "WATER_ADAPTIVE"] },
+  vegetationPolicy: { type: "string", enum: ["PRESERVE", "SELECTIVE_CLEAR", "CLEAR"] },
+  boundaryPolicy: { type: "string", enum: ["OPEN", "FENCE", "HEDGE", "LOW_WALL", "SHORELINE"] },
+  decorationPolicy: nonEmptyString("冻结的装饰策略引用；户外编译不把它解释为第二份设计权威。"),
+}, [
+  "ruleRef", "landUseType", "semanticTerms", "footprintMultiplier", "extraAreaBlocks",
+  "minAreaBlocks", "maxAreaBlocks", "actionBudget", "baseStepCost", "slopeCost", "reliefCost",
+  "waterCost", "forestAffinity", "competitionWeight", "mergeSameType", "surfacePolicy",
+  "vegetationPolicy", "boundaryPolicy", "decorationPolicy",
+]);
+
+const surfaceRecipeCommonProperties = {
+  surfaceRecipeRef: nonEmptyString("冻结 surface recipe 引用。"),
+  surfacePrintEnabled: { type: "boolean" },
+  autoConnectDefault: { type: "boolean" },
+  surfaceAlgorithm: { type: "string", enum: ["UNIFORM", "CONTOUR_BANDS"] },
+};
+
+const surfaceRecipeSchema: Record<string, unknown> = {
+  oneOf: [
+    strictObject({
+      ...surfaceRecipeCommonProperties,
+      surfacePrintEnabled: { type: "boolean", enum: [false] },
+      autoConnectDefault: { type: "boolean", enum: [false] },
+    }, ["surfaceRecipeRef", "surfacePrintEnabled", "autoConnectDefault", "surfaceAlgorithm"]),
+    strictObject({
+      ...surfaceRecipeCommonProperties,
+      surfacePrintEnabled: { type: "boolean", enum: [true] },
+      surfaceAlgorithm: { type: "string", enum: ["UNIFORM"] },
+      surfaceBlockId: minecraftBlockIdSchema,
+    }, ["surfaceRecipeRef", "surfacePrintEnabled", "autoConnectDefault", "surfaceAlgorithm",
+      "surfaceBlockId"]),
+    strictObject({
+      ...surfaceRecipeCommonProperties,
+      surfacePrintEnabled: { type: "boolean", enum: [true] },
+      surfaceAlgorithm: { type: "string", enum: ["CONTOUR_BANDS"] },
+      surfaceBlockId: minecraftBlockIdSchema,
+      cropBlockId: minecraftBlockIdSchema,
+      channelBankBlockId: minecraftBlockIdSchema,
+      channelWaterBlockId: minecraftBlockIdSchema,
+      channelBankOverlayBlockId: minecraftBlockIdSchema,
+    }, ["surfaceRecipeRef", "surfacePrintEnabled", "autoConnectDefault", "surfaceAlgorithm",
+      "surfaceBlockId", "cropBlockId", "channelBankBlockId", "channelWaterBlockId",
+      "channelBankOverlayBlockId"]),
+  ],
+};
+
+const blueprintReferenceCatalogSchema = strictObject({
+  schemaVersion: { type: "string", enum: ["city_blueprint_reference_catalog.v0.3"] },
+  structureRefs: {
+    type: "array", minItems: 1,
+    items: strictObject({
+      structureRef: nonEmptyString("Blueprint 使用的结构白名单引用。"),
+      templateCandidates: {
+        type: "array", minItems: 1,
+        items: strictObject({
+          templateId: nonEmptyString("template catalog 中存在的模板 ID。"),
+          variantId: nonEmptyString("该模板中存在的 variant ID。"),
+        }, ["templateId", "variantId"]),
+      },
+    }, ["structureRef", "templateCandidates"]),
+  },
+  fillPools: {
+    type: "array", minItems: 1,
+    items: strictObject({
+      poolRef: nonEmptyString("稳定 fill pool 引用。"),
+      structureRefs: {
+        type: "array", uniqueItems: true,
+        items: nonEmptyString("同目录 structureRef。"),
+      },
+    }, ["poolRef", "structureRefs"]),
+  },
+  algorithmProfiles: {
+    type: "array", minItems: 1,
+    items: strictObject({
+      algorithmProfileRef: nonEmptyString("稳定算法 profile 引用。"),
+      algorithm: { type: "string", enum: ["COMPACT", "GRID", "LINEAR", "COURTYARD", "ORGANIC_COMPACT"] },
+    }, ["algorithmProfileRef", "algorithm"]),
+  },
+  compositionProfiles: {
+    type: "array", minItems: 1,
+    items: strictObject({
+      compositionProfileRef: nonEmptyString("稳定 composition profile 引用。"),
+      mode: { type: "string", enum: ["ROUND_ROBIN"] },
+    }, ["compositionProfileRef", "mode"]),
+  },
+  styleProfiles: {
+    type: "array", minItems: 1,
+    items: strictObject({ profileRef: nonEmptyString("稳定 style profile 引用。") }, ["profileRef"]),
+  },
+  roadProfiles: {
+    type: "array", minItems: 1,
+    items: strictObject({
+      profileRef: nonEmptyString("稳定 road profile 引用。"),
+      hierarchy: { type: "string", enum: ["SIMPLE", "HIERARCHICAL"] },
+      density: { type: "string", enum: ["SPARSE", "BALANCED", "DENSE"] },
+    }, ["profileRef", "hierarchy", "density"]),
+  },
+  surfaceDetailProfiles: {
+    type: "array", minItems: 1,
+    items: strictObject({
+      profileRef: nonEmptyString("稳定 surface detail profile 引用。"),
+      intensity: { type: "string", enum: ["LOW", "MEDIUM", "HIGH"] },
+    }, ["profileRef", "intensity"]),
+  },
+  landUseRuleProfile: strictObject({
+    schemaVersion: { type: "string", enum: ["city_land_use_rules.v0.1"] },
+    profileId: nonEmptyString("冻结 LandUse rule profile ID。"),
+    rules: { type: "array", minItems: 1, items: landUseRuleSchema },
+  }, ["schemaVersion", "profileId", "rules"]),
+  surfaceRecipes: { type: "array", minItems: 1, items: surfaceRecipeSchema },
+  landscapeProfiles: {
+    type: "array", minItems: 1,
+    items: strictObject({
+      landscapeProfileRef: nonEmptyString("稳定 landscape profile 引用。"),
+      landscapeType: { type: "string", enum: ["FARMLAND", "COMMON_GREEN", "WOODLAND", "MEADOW", "POND"] },
+      landUseRuleRef: nonEmptyString("同目录 LandUse ruleRef。"),
+      surfaceRecipeRef: nonEmptyString("同目录 surfaceRecipeRef。"),
+      baseAreaSmall: positiveInteger("SMALL 景观基准面积。"),
+      baseAreaMedium: positiveInteger("MEDIUM 景观基准面积；服务端要求不小于 SMALL。"),
+      baseAreaLarge: positiveInteger("LARGE 景观基准面积；服务端要求不小于 MEDIUM。"),
+      membership: { type: "string", enum: ["URBAN", "LANDSCAPE"] },
+    }, ["landscapeProfileRef", "landscapeType", "landUseRuleRef", "surfaceRecipeRef",
+      "baseAreaSmall", "baseAreaMedium", "baseAreaLarge", "membership"]),
+  },
+}, ["schemaVersion", "structureRefs", "fillPools", "algorithmProfiles", "compositionProfiles",
+  "styleProfiles", "roadProfiles", "surfaceDetailProfiles", "landUseRuleProfile", "surfaceRecipes",
+  "landscapeProfiles"]);
 
 const artifactRefSchema = strictObject({
   path: nonEmptyString("prepare-context 冻结的相对 artifact 路径。"),
@@ -208,7 +393,7 @@ const artifactRefSchema = strictObject({
 }, ["path", "schemaVersion", "contentHash"]);
 
 const cityBlueprintSchema = strictObject({
-  schemaVersion: { type: "string", enum: ["city_blueprint.v0.4"] },
+  schemaVersion: { type: "string", enum: ["city_blueprint.v0.5"] },
   cityId: nonEmptyString("必须与冻结上下文一致。"),
   sourceD3Ref: artifactRefSchema,
   catalogSnapshotRef: artifactRefSchema,
@@ -268,8 +453,68 @@ const cityBlueprintSchema = strictObject({
   },
   roadProfile: strictObject({ profileRef: nonEmptyString("冻结 road profile 引用。") }, ["profileRef"]),
   surfaceDetailProfile: strictObject({ profileRef: nonEmptyString("冻结 surface profile 引用。") }, ["profileRef"]),
+  outdoorPlan: strictObject({
+    mode: { type: "string", enum: ["GENERATE", "PRESERVE"] },
+    envelopeProfile: { type: "string", enum: ["COMPACT", "BALANCED", "LOOSE"] },
+    structureGrounds: {
+      type: "array",
+      items: strictObject({
+        sourceGroupId: nonEmptyString("同一 Blueprint 中的 STRUCTURE groupId。"),
+        landUseRuleRef: nonEmptyString("冻结的 LandUse rule 引用。"),
+        surfaceRecipeRef: nonEmptyString("冻结的地表 recipe 引用；不直接提交 block ID。"),
+        extentClass: { type: "string", enum: ["SMALL", "MEDIUM", "LARGE"] },
+        growthBias: { type: "string", enum: ["BALANCED", "AWAY_FROM_REFERENCE", "TOWARD_REFERENCE"] },
+        referenceGroupIds: {
+          type: "array", uniqueItems: true,
+          items: nonEmptyString("growthBias 引用的同蓝图 groupId。"),
+        },
+        autoConnect: { type: "boolean" },
+        membership: { type: "string", enum: ["URBAN", "LANDSCAPE"] },
+      }, ["sourceGroupId", "landUseRuleRef", "surfaceRecipeRef", "extentClass", "growthBias",
+        "referenceGroupIds", "autoConnect", "membership"]),
+    },
+    landscapes: {
+      type: "array",
+      items: strictObject({
+        landscapeId: nonEmptyString("Blueprint 内唯一景观 ID。"),
+        landscapeProfileRef: nonEmptyString("冻结的景观算法、地表和内容 profile 引用。"),
+        attachedGroupIds: {
+          type: "array", uniqueItems: true,
+          items: nonEmptyString("景观依附的同蓝图 STRUCTURE groupId。"),
+        },
+        preferredPatchRefs: {
+          type: "array", uniqueItems: true,
+          items: nonEmptyString("独立景观偏好的 D3 patch ref；不得提交世界坐标。"),
+        },
+        extentClass: { type: "string", enum: ["SMALL", "MEDIUM", "LARGE"] },
+        intensity: { type: "string", enum: ["LOW", "MEDIUM", "HIGH"] },
+        continuity: { type: "string", enum: ["CONTINUOUS", "MULTI_PARCEL", "PATCHY"] },
+        growthRelation: {
+          type: "string",
+          enum: ["AROUND_SOURCE", "AWAY_FROM_REFERENCE", "TOWARD_WATER", "ALONG_WATER"],
+        },
+        referenceGroupIds: {
+          type: "array", uniqueItems: true,
+          items: nonEmptyString("growthRelation 引用的同蓝图 groupId。"),
+        },
+        terrainPolicy: { type: "string", enum: ["CONFORM", "BALANCED", "ASSERTIVE"] },
+        required: { type: "boolean" },
+      }, ["landscapeId", "landscapeProfileRef", "attachedGroupIds", "preferredPatchRefs", "extentClass",
+        "intensity", "continuity", "growthRelation", "referenceGroupIds", "terrainPolicy", "required"]),
+    },
+    residualPolicy: strictObject({
+      smallEnclosed: { type: "string", enum: ["ABSORB_NEIGHBOR", "NATURAL_RESERVE"] },
+      narrowGap: { type: "string", enum: ["ABSORB_NEIGHBOR", "PATH_OR_VERGE", "NATURAL_RESERVE"] },
+      mediumEnclosed: {
+        type: "string",
+        enum: ["ABSORB_NEIGHBOR", "COMMON_GREEN", "SERVICE_GROUND", "NATURAL_RESERVE"],
+      },
+      largeEnclosed: { type: "string", enum: ["COMMON_GREEN", "NATURAL_RESERVE"] },
+      exteriorConnected: { type: "string", enum: ["NATURAL_RESERVE"] },
+    }, ["smallEnclosed", "narrowGap", "mediumEnclosed", "largeEnclosed", "exteriorConnected"]),
+  }, ["mode", "envelopeProfile", "structureGrounds", "landscapes", "residualPolicy"]),
 }, ["schemaVersion", "cityId", "sourceD3Ref", "catalogSnapshotRef", "generationSeed", "designIntent",
-  "styleProfile", "groups", "relations", "roadProfile", "surfaceDetailProfile"]);
+  "styleProfile", "groups", "relations", "roadProfile", "surfaceDetailProfile", "outdoorPlan"]);
 
 export const realmTools: ToolDefinition[] = [
   {
@@ -620,8 +865,8 @@ export const realmTools: ToolDefinition[] = [
         terrasenseProfileSource: { type: "object", description: "现有 TerraSense 结构画像源。" },
         templateCatalogSource: { type: "object", description: "现有固定 NBT template catalog 源。" },
         blueprintReferenceCatalog: {
-          type: "object",
-          description: "schemaVersion=city_blueprint_reference_catalog.v0.2；冻结 structure/fill/algorithm/composition/style/road/surface 引用。",
+          ...blueprintReferenceCatalogSchema,
+          description: "严格 city_blueprint_reference_catalog.v0.3；冻结 structure/fill/algorithm/composition/style/road/surface 与户外 rule/recipe/landscape profile 引用。",
         },
       },
       required: ["runId", "citySeedId", "terrasenseProfileSource", "templateCatalogSource", "blueprintReferenceCatalog"],
@@ -629,7 +874,7 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "city_submit_d4_blueprint",
-    description: "D4 正式 AI 边界：对同一 contextId 只接受一次完整 CityBlueprint 提交；不会进入候选、slot 或阵列 AI 循环。",
+    description: "正式 AI 边界：对同一 contextId 只接受一次包含结构与户外意图的完整 CityBlueprint 提交；不会进入候选、slot、阵列或户外 AI 循环。",
     inputSchema: {
       type: "object", additionalProperties: false,
       properties: {
@@ -1335,7 +1580,7 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "city_run_workflow",
-    description: "City 正式 workflow：D3/site review 后默认等待或编译已接受的 CityBlueprint，再把标准 D4 anchor 产物直接交给 D5/D6；旧候选/session 模式仅能显式指定为 legacy/debug。",
+    description: "City 正式 workflow：D3/site review 后默认等待或编译已接受的 CityBlueprint，把标准 D4 anchor 交给 D5/D6，并在 D6 locked footprint 后从同一 Blueprint 自动编译户外空间；旧候选/session 与请求级 LandUse intent 仅供显式 legacy/debug。",
     inputSchema: {
       type: "object",
       properties: {
@@ -1364,8 +1609,11 @@ export const realmTools: ToolDefinition[] = [
         sessionId: { type: "string", description: "可选 D4 sessionId。" },
         cellStepBlocks: { type: "number", description: "D3 cell step，未传则使用默认。" },
         patchScanPaddingBlocks: { type: "number", description: "D3 patch 上下文额外扫描 padding，默认 128；workflow 首跑 D3 时用于覆盖结构和城墙 breathing room。" },
-        enableLandUseLayer: { type: "boolean", description: "单次请求覆写；省略时读取 city_land_use settings（bundled 默认 false）。启用后在 D6 locked footprint 之后、Decoration 和 execute_d5 之前运行 city_plan_land_use。" },
-        landUseIntentPlan: landUseIntentPlanSchema,
+        enableLandUseLayer: { type: "boolean", description: "仅 legacy/debug D4 模式使用；正式 blueprint 模式由 CityBlueprint.outdoorPlan 决定户外生成，不接受请求级开关替换。" },
+        landUseIntentPlan: {
+          ...landUseIntentPlanSchema,
+          description: "仅 legacy/debug D4 模式使用的临时 LandUse v0.3 intent；正式 blueprint 模式从已接受 CityBlueprint 自动派生。",
+        },
         skipExisting: { type: "boolean", description: "默认 true；已有 artifact 时跳过对应步骤，用于等待 worldgen 后快速续跑。" },
         confirmWorldMutation: { type: "boolean", description: "true 才执行 D5 激活 mask/registry；未传时 workflow 会停在 waiting_for_confirmation。" },
         roadProvider: {

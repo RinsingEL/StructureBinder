@@ -3,18 +3,23 @@ package com.rinsing.geomantia.systems.city.application;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.rinsing.geomantia.systems.city.domain.blueprint.CityBlueprintContractException;
+import com.rinsing.geomantia.systems.city.domain.blueprint.CityBlueprintReasonCode;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class CityBlueprintServiceTest {
     @TempDir
@@ -29,9 +34,9 @@ class CityBlueprintServiceTest {
 
         assertEquals(0, prepared.get("aiCityDesignCallCount").getAsInt());
         JsonObject context = prepared.getAsJsonObject("cityBlueprintContext");
-        assertEquals("city_blueprint_catalog_snapshot.v0.5",
+        assertEquals("city_blueprint_catalog_snapshot.v0.6",
                 context.getAsJsonObject("catalogSnapshotRef").get("schemaVersion").getAsString());
-        assertEquals("city_blueprint_catalog_snapshot.v0.5",
+        assertEquals("city_blueprint_catalog_snapshot.v0.6",
                 context.getAsJsonObject("catalogSnapshot").get("schemaVersion").getAsString());
         JsonObject semanticProfile = context.getAsJsonObject("catalogSnapshot")
                 .getAsJsonObject("structureCatalog")
@@ -151,6 +156,7 @@ class CityBlueprintServiceTest {
         secondGroup.add("preferredPatchRefs", JsonParser.parseString("[\"patch:plain:2\"]"));
         secondGroup.addProperty("priority", "STANDARD");
         blueprint.getAsJsonArray("groups").add(secondGroup);
+        addStructureGround(blueprint, "market");
         blueprint.getAsJsonArray("relations").add(JsonParser.parseString("""
                 {
                   "fromGroupId":"civic","toGroupId":"market","relationKind":"DISTANCE",
@@ -174,6 +180,7 @@ class CityBlueprintServiceTest {
         second.addProperty("groupId", "market");
         second.addProperty("priority", "STANDARD");
         blueprint.getAsJsonArray("groups").add(second);
+        addStructureGround(blueprint, "market");
 
         JsonObject submitted = service.submit(temporary, fixture.runId(), fixture.cityId(),
                 prepared.get("contextId").getAsString(), blueprint);
@@ -198,6 +205,130 @@ class CityBlueprintServiceTest {
         assertFalse(submitted.get("ok").getAsBoolean());
         assertEquals("CITY_BLUEPRINT_CONNECTION_PARAMETERS_INVALID",
                 submitted.getAsJsonObject("validationReport").getAsJsonArray("issues")
+                        .get(0).getAsJsonObject().get("reasonCode").getAsString());
+    }
+
+    @Test
+    void generateRequiresExactlyOneStructureGroundPerStructureGroup() throws Exception {
+        Fixture fixture = fixture("run_missing_ground", "city:missing_ground");
+        CityBlueprintService service = new CityBlueprintService();
+        JsonObject prepared = service.prepare(temporary, fixture.runId(), fixture.cityId(),
+                fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog());
+        JsonObject blueprint = blueprint(prepared.getAsJsonObject("cityBlueprintContext"));
+        blueprint.getAsJsonObject("outdoorPlan").add("structureGrounds", new JsonArray());
+
+        JsonObject result = service.submit(temporary, fixture.runId(), fixture.cityId(),
+                prepared.get("contextId").getAsString(), blueprint);
+
+        assertFalse(result.get("ok").getAsBoolean());
+        assertEquals("CITY_BLUEPRINT_OUTDOOR_GROUND_COVERAGE_INVALID",
+                result.getAsJsonObject("validationReport").getAsJsonArray("issues")
+                        .get(0).getAsJsonObject().get("reasonCode").getAsString());
+    }
+
+    @Test
+    void preserveRejectsGeneratedOutdoorContent() throws Exception {
+        Fixture fixture = fixture("run_preserve_content", "city:preserve_content");
+        CityBlueprintService service = new CityBlueprintService();
+        JsonObject prepared = service.prepare(temporary, fixture.runId(), fixture.cityId(),
+                fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog());
+        JsonObject blueprint = blueprint(prepared.getAsJsonObject("cityBlueprintContext"));
+        blueprint.getAsJsonObject("outdoorPlan").addProperty("mode", "PRESERVE");
+
+        JsonObject result = service.submit(temporary, fixture.runId(), fixture.cityId(),
+                prepared.get("contextId").getAsString(), blueprint);
+
+        assertFalse(result.get("ok").getAsBoolean());
+        assertEquals("CITY_BLUEPRINT_OUTDOOR_MODE_INVALID",
+                result.getAsJsonObject("validationReport").getAsJsonArray("issues")
+                        .get(0).getAsJsonObject().get("reasonCode").getAsString());
+    }
+
+    @Test
+    void acceptsLandscapeUsingFrozenProfileAndAttachedGroup() throws Exception {
+        Fixture fixture = fixture("run_landscape_intent", "city:landscape_intent");
+        CityBlueprintService service = new CityBlueprintService();
+        JsonObject prepared = service.prepare(temporary, fixture.runId(), fixture.cityId(),
+                fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog());
+        JsonObject blueprint = blueprint(prepared.getAsJsonObject("cityBlueprintContext"));
+        blueprint.getAsJsonObject("outdoorPlan").getAsJsonArray("landscapes").add(
+                JsonParser.parseString("""
+                        {"landscapeId":"central_green","landscapeProfileRef":"landscape:common_green",
+                         "attachedGroupIds":["civic"],"preferredPatchRefs":[],"extentClass":"SMALL",
+                         "intensity":"MEDIUM","continuity":"CONTINUOUS","growthRelation":"AROUND_SOURCE",
+                         "referenceGroupIds":[],"terrainPolicy":"CONFORM","required":true}
+                        """).getAsJsonObject());
+
+        JsonObject result = service.submit(temporary, fixture.runId(), fixture.cityId(),
+                prepared.get("contextId").getAsString(), blueprint);
+
+        assertTrue(result.get("ok").getAsBoolean(), result.toString());
+    }
+
+    @Test
+    void contourSurfaceRecipeRequiresCompleteFrozenMaterials() throws Exception {
+        Fixture fixture = fixture("run_bad_surface_recipe", "city:bad_surface_recipe");
+        JsonObject catalog = fixture.referenceCatalog().deepCopy();
+        catalog.getAsJsonArray("surfaceRecipes").get(0).getAsJsonObject()
+                .addProperty("surfaceAlgorithm", "CONTOUR_BANDS");
+
+        CityBlueprintContractException failure = assertThrows(CityBlueprintContractException.class,
+                () -> new CityBlueprintService().prepare(temporary, fixture.runId(), fixture.cityId(),
+                        fixture.terraSenseSource(), fixture.templateSource(), catalog));
+
+        assertEquals(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID,
+                failure.reasonCode());
+    }
+
+    @Test
+    void residualPolicyAcceptsExactlyTheFrozenDispositionMatrix() throws Exception {
+        Map<String, Set<String>> allowed = Map.of(
+                "smallEnclosed", Set.of("ABSORB_NEIGHBOR", "NATURAL_RESERVE"),
+                "narrowGap", Set.of("ABSORB_NEIGHBOR", "PATH_OR_VERGE", "NATURAL_RESERVE"),
+                "mediumEnclosed", Set.of("ABSORB_NEIGHBOR", "COMMON_GREEN", "SERVICE_GROUND", "NATURAL_RESERVE"),
+                "largeEnclosed", Set.of("COMMON_GREEN", "NATURAL_RESERVE"),
+                "exteriorConnected", Set.of("NATURAL_RESERVE"));
+        String[] dispositions = {"ABSORB_NEIGHBOR", "PATH_OR_VERGE", "COMMON_GREEN",
+                "SERVICE_GROUND", "NATURAL_RESERVE"};
+        int caseIndex = 0;
+        for (Map.Entry<String, Set<String>> field : allowed.entrySet()) {
+            for (String disposition : dispositions) {
+                String suffix = Integer.toString(caseIndex++);
+                Fixture fixture = fixture("run_residual_matrix_" + suffix, "city:residual_matrix_" + suffix);
+                CityBlueprintService service = new CityBlueprintService();
+                JsonObject prepared = service.prepare(temporary, fixture.runId(), fixture.cityId(),
+                        fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog());
+                JsonObject blueprint = blueprint(prepared.getAsJsonObject("cityBlueprintContext"));
+                blueprint.getAsJsonObject("outdoorPlan").getAsJsonObject("residualPolicy")
+                        .addProperty(field.getKey(), disposition);
+
+                JsonObject result = service.submit(temporary, fixture.runId(), fixture.cityId(),
+                        prepared.get("contextId").getAsString(), blueprint);
+
+                assertEquals(field.getValue().contains(disposition), result.get("ok").getAsBoolean(),
+                        field.getKey() + '=' + disposition + " produced " + result);
+            }
+        }
+    }
+
+    @Test
+    void autoConnectRejectsSurfaceRecipeWithPrintingDisabled() throws Exception {
+        Fixture fixture = fixture("run_disabled_surface_connect", "city:disabled_surface_connect");
+        JsonObject catalog = fixture.referenceCatalog().deepCopy();
+        JsonObject recipe = catalog.getAsJsonArray("surfaceRecipes").get(0).getAsJsonObject();
+        recipe.addProperty("surfacePrintEnabled", false);
+        recipe.addProperty("autoConnectDefault", false);
+        recipe.remove("surfaceBlockId");
+        CityBlueprintService service = new CityBlueprintService();
+        JsonObject prepared = service.prepare(temporary, fixture.runId(), fixture.cityId(),
+                fixture.terraSenseSource(), fixture.templateSource(), catalog);
+
+        JsonObject result = service.submit(temporary, fixture.runId(), fixture.cityId(),
+                prepared.get("contextId").getAsString(), blueprint(prepared.getAsJsonObject("cityBlueprintContext")));
+
+        assertFalse(result.get("ok").getAsBoolean());
+        assertEquals("CITY_BLUEPRINT_OUTDOOR_SURFACE_RECIPE_INCOMPATIBLE",
+                result.getAsJsonObject("validationReport").getAsJsonArray("issues")
                         .get(0).getAsJsonObject().get("reasonCode").getAsString());
     }
 
@@ -279,7 +410,7 @@ class CityBlueprintServiceTest {
     private static JsonObject referenceCatalog() {
         return JsonParser.parseString("""
                 {
-                  "schemaVersion":"city_blueprint_reference_catalog.v0.2",
+                  "schemaVersion":"city_blueprint_reference_catalog.v0.3",
                   "structureRefs":[{"structureRef":"geomantia:town_hall","templateCandidates":[{"templateId":"geomantia:town_hall","variantId":"default"}]}],
                   "fillPools":[{"poolRef":"pool:civic","structureRefs":["geomantia:town_hall"]}],
                   "algorithmProfiles":[
@@ -289,14 +420,26 @@ class CityBlueprintServiceTest {
                   "compositionProfiles":[{"compositionProfileRef":"composition:round_robin","mode":"ROUND_ROBIN"}],
                   "styleProfiles":[{"profileRef":"style:river_stone"}],
                   "roadProfiles":[{"profileRef":"road:town","hierarchy":"HIERARCHICAL","density":"BALANCED"}],
-                  "surfaceDetailProfiles":[{"profileRef":"surface:working","intensity":"MEDIUM"}]
+                  "surfaceDetailProfiles":[{"profileRef":"surface:working","intensity":"MEDIUM"}],
+                  "landUseRuleProfile":{"schemaVersion":"city_land_use_rules.v0.1","profileId":"blueprint_test","rules":[{
+                    "ruleRef":"civic","landUseType":"civic","semanticTerms":["administration"],
+                    "footprintMultiplier":1.5,"extraAreaBlocks":80,"minAreaBlocks":80,"maxAreaBlocks":1536,
+                    "actionBudget":300,"baseStepCost":1.0,"slopeCost":1.2,"reliefCost":1.2,"waterCost":8.0,
+                    "forestAffinity":0.0,"competitionWeight":1.0,"mergeSameType":true,
+                    "surfacePolicy":"PAVE","vegetationPolicy":"CLEAR","boundaryPolicy":"OPEN","decorationPolicy":"none"
+                  }]},
+                  "surfaceRecipes":[{"surfaceRecipeRef":"surface_recipe:civic","surfacePrintEnabled":true,
+                    "autoConnectDefault":true,"surfaceAlgorithm":"UNIFORM","surfaceBlockId":"minecraft:stone_bricks"}],
+                  "landscapeProfiles":[{"landscapeProfileRef":"landscape:common_green","landscapeType":"COMMON_GREEN",
+                    "landUseRuleRef":"civic","surfaceRecipeRef":"surface_recipe:civic","baseAreaSmall":256,
+                    "baseAreaMedium":512,"baseAreaLarge":1024,"membership":"URBAN"}]
                 }
                 """).getAsJsonObject();
     }
 
     private static JsonObject blueprint(JsonObject context) {
         JsonObject blueprint = new JsonObject();
-        blueprint.addProperty("schemaVersion", "city_blueprint.v0.4");
+        blueprint.addProperty("schemaVersion", "city_blueprint.v0.5");
         blueprint.addProperty("cityId", context.get("cityId").getAsString());
         blueprint.add("sourceD3Ref", context.getAsJsonObject("sourceD3Ref").deepCopy());
         blueprint.add("catalogSnapshotRef", context.getAsJsonObject("catalogSnapshotRef").deepCopy());
@@ -321,11 +464,30 @@ class CityBlueprintServiceTest {
         blueprint.add("relations", new JsonArray());
         blueprint.add("roadProfile", JsonParser.parseString("{\"profileRef\":\"road:town\"}").getAsJsonObject());
         blueprint.add("surfaceDetailProfile", JsonParser.parseString("{\"profileRef\":\"surface:working\"}").getAsJsonObject());
+        blueprint.add("outdoorPlan", JsonParser.parseString("""
+                {
+                  "mode":"GENERATE","envelopeProfile":"BALANCED",
+                  "structureGrounds":[{"sourceGroupId":"civic","landUseRuleRef":"civic",
+                    "surfaceRecipeRef":"surface_recipe:civic","extentClass":"MEDIUM","growthBias":"BALANCED",
+                    "referenceGroupIds":[],"autoConnect":true,"membership":"URBAN"}],
+                  "landscapes":[],
+                  "residualPolicy":{"smallEnclosed":"ABSORB_NEIGHBOR","narrowGap":"PATH_OR_VERGE",
+                    "mediumEnclosed":"COMMON_GREEN","largeEnclosed":"COMMON_GREEN",
+                    "exteriorConnected":"NATURAL_RESERVE"}
+                }
+                """).getAsJsonObject());
         return blueprint;
     }
 
     private static String safe(String value) {
         return value.replaceAll("[^A-Za-z0-9._-]", "_");
+    }
+
+    private static void addStructureGround(JsonObject blueprint, String groupId) {
+        JsonObject ground = blueprint.getAsJsonObject("outdoorPlan").getAsJsonArray("structureGrounds")
+                .get(0).getAsJsonObject().deepCopy();
+        ground.addProperty("sourceGroupId", groupId);
+        blueprint.getAsJsonObject("outdoorPlan").getAsJsonArray("structureGrounds").add(ground);
     }
 
     private record Fixture(String runId, String cityId, Path runDir, Path d3Path,

@@ -56,7 +56,7 @@ public final class LandUseRuleCatalogLoader {
         }
     }
 
-    private static LandUseRuleCatalog parse(JsonObject root, String selectedProfileId) {
+    public static LandUseRuleCatalog parse(JsonObject root, String selectedProfileId) {
         requireExactFields(root, ROOT_FIELDS, "LAND_USE_RULE_PROFILE");
         String schemaVersion = requiredString(root, "schemaVersion", "LAND_USE_RULE_PROFILE");
         if (!LandUseRuleCatalog.RULE_VERSION.equals(schemaVersion)) {
