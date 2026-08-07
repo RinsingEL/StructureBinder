@@ -29,8 +29,8 @@ import java.util.Set;
 
 /** Prepares a read-only D4 decision context and accepts exactly one AI Blueprint submission per context. */
 public final class CityBlueprintService {
-    public static final String CONTEXT_SCHEMA = "city_blueprint_context.v0.6";
-    public static final String SNAPSHOT_SCHEMA = "city_blueprint_catalog_snapshot.v0.7";
+    public static final String CONTEXT_SCHEMA = "city_blueprint_context.v0.8";
+    public static final String SNAPSHOT_SCHEMA = "city_blueprint_catalog_snapshot.v0.9";
     public static final String REPORT_SCHEMA = "city_blueprint_validation_report.v0.4";
     public static final String TRACE_SCHEMA = "city_blueprint_submission_trace.v0.4";
 

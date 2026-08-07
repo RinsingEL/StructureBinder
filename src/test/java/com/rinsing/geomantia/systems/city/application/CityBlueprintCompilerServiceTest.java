@@ -934,7 +934,7 @@ class CityBlueprintCompilerServiceTest {
     private static JsonObject referenceCatalog() {
         return JsonParser.parseString("""
                 {
-                  "schemaVersion":"city_blueprint_reference_catalog.v0.4",
+                  "schemaVersion":"city_blueprint_reference_catalog.v0.6",
                   "structureRefs":[
                     {"structureRef":"geomantia:town_hall","templateCandidates":[{"templateId":"geomantia:town_hall","variantId":"default"}]},
                     {"structureRef":"geomantia:oversized_hall","templateCandidates":[{"templateId":"geomantia:oversized_hall","variantId":"default"}]},
@@ -972,7 +972,17 @@ class CityBlueprintCompilerServiceTest {
                     "baseAreaMedium":512,"baseAreaLarge":1024,"membership":"URBAN",
                     "parcelStyle":{"coreParcelCountMin":1,"coreParcelCountMax":2,"fillParcelCountMin":0,
                     "fillParcelCountMax":3,"parcelAreaMinBlocks":64,"parcelAreaMaxBlocks":256,
-                    "branchFromExistingChance":0.65,"gapMinBlocks":2,"gapMaxBlocks":8}}]
+                    "branchFromExistingChance":0.65,"gapMinBlocks":2,"gapMaxBlocks":8}}],
+                  "landscapeFillProfiles":[{"fillProfileRef":"fill:relay_common_green","displayName":"接力城市绿地",
+                    "visualIntent":"绿植区和自然地面区从父区域局部边界接力","algorithm":"SINGLE_SOURCE_REGION_RELAY",
+                    "relayOrigin":"PARENT_REGION_LOCAL_BOUNDARY",
+                    "compatibleLandscapeTypes":["COMMON_GREEN"],"primaryRoleRef":"GREEN",
+                    "roles":[{"roleRef":"GREEN","materialRole":"PRIMARY_CONTENT","allowedGrowthForms":["PATCH"],"defaultGrowthForm":"PATCH","minShare":0.7,"maxShare":0.95,"defaultShare":0.85},
+                      {"roleRef":"GROUND","materialRole":"GROUND","allowedGrowthForms":["PATCH","CORRIDOR"],"defaultGrowthForm":"PATCH","minShare":0.05,"maxShare":0.3,"defaultShare":0.15}],
+                    "allowedContentRefs":["plant:grass"],
+                    "examples":[{"exampleId":"simple_green","description":"绿植为主的连续城市绿地",
+                      "roleShares":[{"roleRef":"GREEN","growthForm":"PATCH","targetShare":0.425},{"roleRef":"GROUND","growthForm":"PATCH","targetShare":0.15},{"roleRef":"GREEN","growthForm":"PATCH","targetShare":0.425}],
+                      "contentWeights":[{"contentRef":"plant:grass","weight":1}]}]}]
                 }
                 """).getAsJsonObject();
     }
@@ -980,7 +990,7 @@ class CityBlueprintCompilerServiceTest {
     private static JsonObject blueprint(JsonObject context, String extentClass) {
         JsonObject root = JsonParser.parseString("""
                 {
-                  "schemaVersion":"city_blueprint.v0.7","cityId":"placeholder","generationSeed":1,
+                  "schemaVersion":"city_blueprint.v0.9","cityId":"placeholder","generationSeed":1,
                   "sourceD3Ref":{},"catalogSnapshotRef":{},
                   "designIntent":{"cityIdentity":"town","theme":"stone","functionalRoles":["administration"]},
                   "styleProfile":{"profileRef":"style:stone"},

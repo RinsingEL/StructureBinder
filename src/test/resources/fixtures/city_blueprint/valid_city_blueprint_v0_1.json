@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "city_blueprint.v0.7",
+  "schemaVersion": "city_blueprint.v0.9",
   "cityId": "city:test",
   "sourceD3Ref": {
     "path": "run/city_d3_city_test/city_landform_review_package.json",
@@ -8,7 +8,7 @@
   },
   "catalogSnapshotRef": {
     "path": "run/city_blueprint_city_test/city_blueprint_catalog_snapshot.json",
-    "schemaVersion": "city_blueprint_catalog_snapshot.v0.7",
+    "schemaVersion": "city_blueprint_catalog_snapshot.v0.9",
     "contentHash": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
   },
   "generationSeed": 42,
@@ -51,6 +51,40 @@
         "membership": "URBAN"
       }
     ],
-    "landscapes": []
+    "landscapes": [
+      {
+        "landscapeId": "outer_fields",
+        "landscapeProfileRef": "landscape:farmland_fenced",
+        "attachedGroupIds": ["civic_core"],
+        "preferredPatchRefs": [],
+        "extentClass": "MEDIUM",
+        "intensity": "HIGH",
+        "continuity": "MULTI_PARCEL",
+        "growthRelation": "AROUND_SOURCE",
+        "referenceGroupIds": [],
+        "terrainPolicy": "CONFORM",
+        "required": true,
+        "fillSelection": {
+          "variants": [
+            {
+              "fillProfileRef": "fill:relay_irrigated_farmland",
+              "selectionWeight": 70,
+              "roleShares": [
+                {"roleRef": "CULTIVATED", "growthForm": "PATCH", "targetShare": 0.41},
+                {"roleRef": "BANK", "growthForm": "CORRIDOR", "targetShare": 0.06},
+                {"roleRef": "WATER", "growthForm": "CORRIDOR", "targetShare": 0.06},
+                {"roleRef": "BANK", "growthForm": "CORRIDOR", "targetShare": 0.06},
+                {"roleRef": "CULTIVATED", "growthForm": "PATCH", "targetShare": 0.41}
+              ],
+              "contentWeights": [
+                {"contentRef": "crop:wheat", "weight": 60},
+                {"contentRef": "crop:carrot", "weight": 25},
+                {"contentRef": "crop:potato", "weight": 15}
+              ]
+            }
+          ]
+        }
+      }
+    ]
   }
 }

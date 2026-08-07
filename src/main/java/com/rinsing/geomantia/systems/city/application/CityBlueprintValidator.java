@@ -7,6 +7,7 @@ import com.rinsing.geomantia.systems.city.domain.blueprint.CityBlueprintReasonCo
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
@@ -151,7 +152,9 @@ public final class CityBlueprintValidator {
                 add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_LANDSCAPE_ID_DUPLICATE,
                         path + ".landscapeId", "landscapeId must be unique: " + landscape.landscapeId());
             }
-            if (!catalog.landscapeProfiles().containsKey(landscape.landscapeProfileRef())) {
+            CityBlueprintReferenceCatalog.LandscapeProfile landscapeProfile =
+                    catalog.landscapeProfiles().get(landscape.landscapeProfileRef());
+            if (landscapeProfile == null) {
                 add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_LANDSCAPE_PROFILE_UNKNOWN,
                         path + ".landscapeProfileRef",
                         "Unknown landscape profile: " + landscape.landscapeProfileRef());
@@ -177,6 +180,100 @@ public final class CityBlueprintValidator {
                 add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_REFERENCE_INVALID,
                         path + ".referenceGroupIds",
                         "AWAY_FROM_REFERENCE requires references; other landscape growth relations forbid them.");
+            }
+            validateFillSelection(issues, landscape, landscapeProfile, catalog, path + ".fillSelection");
+        }
+    }
+
+    private static void validateFillSelection(List<Issue> issues, CityBlueprint.Landscape landscape,
+                                              CityBlueprintReferenceCatalog.LandscapeProfile landscapeProfile,
+                                              CityBlueprintReferenceCatalog catalog, String path) {
+        CityBlueprint.FillSelection selection = landscape.fillSelection();
+        if (selection == null || selection.variants().isEmpty()) {
+            add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_REFERENCE_INVALID, path,
+                    "A landscape requires at least one fill variant.");
+            return;
+        }
+        for (int index = 0; index < selection.variants().size(); index++) {
+            CityBlueprint.FillVariant variant = selection.variants().get(index);
+            String variantPath = path + ".variants[" + index + "]";
+            CityBlueprintReferenceCatalog.LandscapeFillProfile profile =
+                    catalog.landscapeFillProfiles().get(variant.fillProfileRef());
+            if (profile == null) {
+                add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_REFERENCE_INVALID,
+                        variantPath + ".fillProfileRef", "Unknown landscape fill profile: "
+                                + variant.fillProfileRef());
+                continue;
+            }
+            if (landscapeProfile != null
+                    && !profile.compatibleLandscapeTypes().contains(landscapeProfile.landscapeType())) {
+                add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_REFERENCE_INVALID,
+                        variantPath + ".fillProfileRef", "Fill profile is incompatible with landscape type "
+                                + landscapeProfile.landscapeType() + ".");
+            }
+            if (!Double.isFinite(variant.selectionWeight()) || variant.selectionWeight() <= 0.0) {
+                add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_REFERENCE_INVALID,
+                        variantPath + ".selectionWeight", "selectionWeight must be positive and finite.");
+            }
+            Set<String> roleRefs = new HashSet<>();
+            java.util.Map<String, Double> aggregateShares = new HashMap<>();
+            double shareSum = 0.0;
+            for (int roleIndex = 0; roleIndex < variant.roleShares().size(); roleIndex++) {
+                CityBlueprint.RoleShare share = variant.roleShares().get(roleIndex);
+                String sharePath = variantPath + ".roleShares[" + roleIndex + "]";
+                CityBlueprintReferenceCatalog.FillRole role = profile.roles().get(share.roleRef());
+                roleRefs.add(share.roleRef());
+                if (role == null) {
+                    add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_REFERENCE_INVALID,
+                            sharePath + ".roleRef", "roleRef is not declared by the selected fill profile.");
+                } else if (!role.allowedGrowthForms().contains(share.growthForm())) {
+                    add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_REFERENCE_INVALID,
+                            sharePath + ".growthForm",
+                            "growthForm must be allowed by the selected fill role and only biases frontier growth.");
+                } else if (!Double.isFinite(share.targetShare()) || share.targetShare() <= 0.0
+                        || share.targetShare() >= 1.0) {
+                    add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_REFERENCE_INVALID,
+                            sharePath + ".targetShare", "Each region-stage targetShare must be in (0,1).");
+                }
+                shareSum += share.targetShare();
+                aggregateShares.merge(share.roleRef(), share.targetShare(), Double::sum);
+            }
+            if (variant.roleShares().isEmpty() || !roleRefs.contains(profile.primaryRoleRef())) {
+                add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_REFERENCE_INVALID,
+                        variantPath + ".roleShares", "roleShares must be non-empty and contain primaryRoleRef.");
+            }
+            if (!roleRefs.equals(profile.roles().keySet())) {
+                add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_REFERENCE_INVALID,
+                        variantPath + ".roleShares",
+                        "Ordered region stages must contain every role declared by the selected fill profile.");
+            }
+            if (!Double.isFinite(shareSum) || Math.abs(shareSum - 1.0) > 1.0e-6) {
+                add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_REFERENCE_INVALID,
+                        variantPath + ".roleShares", "targetShare values must sum to 1.0.");
+            }
+            for (CityBlueprintReferenceCatalog.FillRole role : profile.roles().values()) {
+                double aggregate = aggregateShares.getOrDefault(role.roleRef(), 0.0);
+                if (!Double.isFinite(aggregate) || aggregate < role.minShare() || aggregate > role.maxShare()) {
+                    add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_REFERENCE_INVALID,
+                            variantPath + ".roleShares",
+                            "All stages for role " + role.roleRef()
+                                    + " must aggregate within its configured share range.");
+                }
+            }
+            Set<String> contentRefs = new HashSet<>();
+            for (int contentIndex = 0; contentIndex < variant.contentWeights().size(); contentIndex++) {
+                CityBlueprint.ContentWeight weight = variant.contentWeights().get(contentIndex);
+                String weightPath = variantPath + ".contentWeights[" + contentIndex + "]";
+                if (!contentRefs.add(weight.contentRef())
+                        || !profile.allowedContentRefs().contains(weight.contentRef())) {
+                    add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_REFERENCE_INVALID,
+                            weightPath + ".contentRef",
+                            "contentRef must be unique and present in the fill profile whitelist.");
+                }
+                if (!Double.isFinite(weight.weight()) || weight.weight() <= 0.0) {
+                    add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_REFERENCE_INVALID,
+                            weightPath + ".weight", "content weight must be positive and finite.");
+                }
             }
         }
     }

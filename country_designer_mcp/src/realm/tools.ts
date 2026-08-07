@@ -310,7 +310,7 @@ const surfaceRecipeSchema: Record<string, unknown> = {
 };
 
 const blueprintReferenceCatalogSchema = strictObject({
-  schemaVersion: { type: "string", enum: ["city_blueprint_reference_catalog.v0.4"] },
+  schemaVersion: { type: "string", enum: ["city_blueprint_reference_catalog.v0.6"] },
   structureRefs: {
     type: "array", minItems: 1,
     items: strictObject({
@@ -412,9 +412,70 @@ const blueprintReferenceCatalogSchema = strictObject({
     }, ["landscapeProfileRef", "landscapeType", "landUseRuleRef", "surfaceRecipeRef",
       "baseAreaSmall", "baseAreaMedium", "baseAreaLarge", "membership", "parcelStyle"]),
   },
+  landscapeFillProfiles: {
+    type: "array", minItems: 1,
+    items: strictObject({
+      fillProfileRef: nonEmptyString("Blueprint 可引用的稳定景观填充方案。"),
+      displayName: nonEmptyString("面向 AI 的方案名称。"),
+      visualIntent: nonEmptyString("方案预期视觉效果。"),
+      algorithm: { type: "string", enum: ["SINGLE_SOURCE_REGION_RELAY"],
+        description: "唯一合法几何算法；禁止固定图形、全局距离环和 geometry fallback。" },
+      relayOrigin: { type: "string", enum: ["PARENT_REGION_LOCAL_BOUNDARY"],
+        description: "首区之后，每个区域只能从父区域的局部边界继续生长。" },
+      compatibleLandscapeTypes: {
+        type: "array", minItems: 1, uniqueItems: true,
+        items: { type: "string", enum: ["FARMLAND", "COMMON_GREEN", "WOODLAND", "MEADOW", "POND"] },
+      },
+      primaryRoleRef: nonEmptyString("主题角色；服务端要求 materialRole=PRIMARY_CONTENT。"),
+      roles: {
+        type: "array", minItems: 1,
+        items: strictObject({
+          roleRef: nonEmptyString("AI 在 roleShares 中使用的语义角色。"),
+          materialRole: { type: "string", enum: ["PRIMARY_CONTENT", "BANK", "WATER", "GROUND"] },
+          allowedGrowthForms: { type: "array", minItems: 1, uniqueItems: true,
+            items: { type: "string", enum: ["PATCH", "CORRIDOR"] },
+            description: "仅控制单源 frontier 的团块/廊道偏置，不定义固定图形。" },
+          defaultGrowthForm: { type: "string", enum: ["PATCH", "CORRIDOR"] },
+          minShare: { type: "number", minimum: 0, maximum: 1 },
+          maxShare: { type: "number", exclusiveMinimum: 0, maximum: 1 },
+          defaultShare: { type: "number", minimum: 0, maximum: 1 },
+        }, ["roleRef", "materialRole", "allowedGrowthForms", "defaultGrowthForm",
+          "minShare", "maxShare", "defaultShare"]),
+      },
+      allowedContentRefs: {
+        type: "array", uniqueItems: true,
+        items: nonEmptyString("AI contentWeights 可用的语义内容白名单；不是 block ID。"),
+      },
+      examples: {
+        type: "array", minItems: 1,
+        items: strictObject({
+          exampleId: nonEmptyString("Profile 内唯一示例 ID。"),
+          description: nonEmptyString("面向 AI 的组合效果说明。"),
+          roleShares: {
+            type: "array", minItems: 1,
+            description: "有序区域接力 stage；roleRef 可重复，每项占比是该 stage 的占比，总和必须为 1。",
+            items: strictObject({
+              roleRef: nonEmptyString("本 Profile 声明的 roleRef。"),
+              growthForm: { type: "string", enum: ["PATCH", "CORRIDOR"],
+                description: "从 role 的 allowedGrowthForms 中选择，只影响 frontier 偏置。" },
+              targetShare: { type: "number", exclusiveMinimum: 0, exclusiveMaximum: 1 },
+            }, ["roleRef", "growthForm", "targetShare"]),
+          },
+          contentWeights: {
+            type: "array",
+            items: strictObject({
+              contentRef: nonEmptyString("本 Profile allowedContentRefs 中的语义内容。"),
+              weight: { type: "number", exclusiveMinimum: 0 },
+            }, ["contentRef", "weight"]),
+          },
+        }, ["exampleId", "description", "roleShares", "contentWeights"]),
+      },
+    }, ["fillProfileRef", "displayName", "visualIntent", "algorithm", "relayOrigin",
+      "compatibleLandscapeTypes", "primaryRoleRef", "roles", "allowedContentRefs", "examples"]),
+  },
 }, ["schemaVersion", "structureRefs", "fillPools", "algorithmProfiles", "compositionProfiles",
   "styleProfiles", "roadProfiles", "surfaceDetailProfiles", "landUseRuleProfile", "foundationProfiles", "surfaceRecipes",
-  "landscapeProfiles"]);
+  "landscapeProfiles", "landscapeFillProfiles"]);
 
 const artifactRefSchema = strictObject({
   path: nonEmptyString("prepare-context 冻结的相对 artifact 路径。"),
@@ -423,7 +484,7 @@ const artifactRefSchema = strictObject({
 }, ["path", "schemaVersion", "contentHash"]);
 
 const cityBlueprintSchema = strictObject({
-  schemaVersion: { type: "string", enum: ["city_blueprint.v0.7"] },
+  schemaVersion: { type: "string", enum: ["city_blueprint.v0.9"] },
   cityId: nonEmptyString("必须与冻结上下文一致。"),
   sourceD3Ref: artifactRefSchema,
   catalogSnapshotRef: artifactRefSchema,
@@ -523,8 +584,35 @@ const cityBlueprintSchema = strictObject({
         },
         terrainPolicy: { type: "string", enum: ["CONFORM", "BALANCED", "ASSERTIVE"] },
         required: { type: "boolean" },
+        fillSelection: strictObject({
+          variants: {
+            type: "array", minItems: 1,
+            items: strictObject({
+              fillProfileRef: nonEmptyString("冻结 landscapeFillProfiles 中的方案引用。"),
+              selectionWeight: { type: "number", exclusiveMinimum: 0 },
+              roleShares: {
+                type: "array", minItems: 1,
+                description: "AI 提交的有序区域接力 stage；roleRef 可重复，顺序即接力顺序，各 stage targetShare 总和为 1。",
+                items: strictObject({
+                  roleRef: nonEmptyString("所选方案声明的角色。"),
+                  growthForm: { type: "string", enum: ["PATCH", "CORRIDOR"],
+                    description: "AI 选择的区域生长类型，仅作为 frontier 偏置。" },
+                  targetShare: { type: "number", exclusiveMinimum: 0, exclusiveMaximum: 1 },
+                }, ["roleRef", "growthForm", "targetShare"]),
+              },
+              contentWeights: {
+                type: "array",
+                items: strictObject({
+                  contentRef: nonEmptyString("所选方案白名单内的语义内容；不是 block ID。"),
+                  weight: { type: "number", exclusiveMinimum: 0 },
+                }, ["contentRef", "weight"]),
+              },
+            }, ["fillProfileRef", "selectionWeight", "roleShares", "contentWeights"]),
+          },
+        }, ["variants"]),
       }, ["landscapeId", "landscapeProfileRef", "attachedGroupIds", "preferredPatchRefs", "extentClass",
-        "intensity", "continuity", "growthRelation", "referenceGroupIds", "terrainPolicy", "required"]),
+        "intensity", "continuity", "growthRelation", "referenceGroupIds", "terrainPolicy", "required",
+        "fillSelection"]),
     },
   }, ["mode", "envelopeProfile", "foundationProfileRef", "spatialGrounds", "landscapes"]),
 }, ["schemaVersion", "cityId", "sourceD3Ref", "catalogSnapshotRef", "generationSeed", "designIntent",
@@ -880,7 +968,7 @@ export const realmTools: ToolDefinition[] = [
         templateCatalogSource: { type: "object", description: "现有固定 NBT template catalog 源。" },
         blueprintReferenceCatalog: {
           ...blueprintReferenceCatalogSchema,
-          description: "严格 city_blueprint_reference_catalog.v0.4；冻结 structure/fill/algorithm/composition/style/road/surface 与户外 foundation/rule/recipe/landscape profile 引用。",
+          description: "严格 city_blueprint_reference_catalog.v0.6 户外目录；景观填充唯一使用单源区域接力，后一区域从父区域局部边界继续；禁止固定图形、全局距离环和 geometry fallback。",
         },
       },
       required: ["runId", "citySeedId", "terrasenseProfileSource", "templateCatalogSource", "blueprintReferenceCatalog"],

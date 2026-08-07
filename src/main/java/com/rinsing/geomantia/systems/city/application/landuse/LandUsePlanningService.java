@@ -11,6 +11,7 @@ import com.rinsing.geomantia.systems.city.application.outdoor.CityUrbanResidualR
 import com.rinsing.geomantia.systems.city.application.outdoor.CityUrbanSpacePlan;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseAreaPlan;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseSeedGroup;
+import com.rinsing.geomantia.systems.city.domain.landuse.LandscapeFillProgram;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseTerrainField;
 import com.rinsing.geomantia.systems.city.domain.landuse.rules.LandUseRuleCatalog;
 import com.rinsing.geomantia.systems.city.domain.model.BlockPoint;
@@ -170,7 +171,7 @@ public final class LandUsePlanningService {
                                     CityUrbanSpacePlan urbanSpacePlan,
                                     int resolvedFoundationCloseRadius) {
         JsonObject trace = new JsonObject();
-        trace.addProperty("schemaVersion", "city_land_use_planning_trace.v0.4");
+        trace.addProperty("schemaVersion", "city_land_use_planning_trace.v0.5");
         trace.addProperty("foundationResolvedCloseRadiusBlocks", resolvedFoundationCloseRadius);
         JsonArray groups = new JsonArray();
         for (LandUseSeedGroup group : sources.seedGroups()) {
@@ -193,6 +194,30 @@ public final class LandUsePlanningService {
             }
             value.addProperty("surfaceCompatibilityKey",
                     LandUseAutoConnectionPlanner.surfaceCompatibilityKey(group));
+            if (group.landscapeFillProgram() != null) {
+                LandscapeFillProgram fill = group.landscapeFillProgram();
+                value.addProperty("fillProfileRef", fill.fillProfileRef());
+                value.addProperty("fillStableSeed", fill.stableSeed());
+                value.addProperty("fillPrimaryRoleRef", fill.primaryRoleRef());
+                JsonArray stages = new JsonArray();
+                for (LandscapeFillProgram.RoleDefinition role : fill.roles()) {
+                    JsonObject roleValue = new JsonObject();
+                    roleValue.addProperty("roleRef", role.roleRef());
+                    roleValue.addProperty("materialRole", role.materialRole().name());
+                    roleValue.addProperty("growthForm", role.growthForm().name());
+                    roleValue.addProperty("targetShare", role.targetShare());
+                    stages.add(roleValue);
+                }
+                value.add("fillRelayStages", stages);
+                JsonArray contentWeights = new JsonArray();
+                for (LandscapeFillProgram.ContentWeight content : fill.contentWeights()) {
+                    JsonObject contentValue = new JsonObject();
+                    contentValue.addProperty("contentRef", content.contentRef());
+                    contentValue.addProperty("weight", content.weight());
+                    contentWeights.add(contentValue);
+                }
+                value.add("fillContentWeights", contentWeights);
+            }
             value.addProperty("minAreaBlocks", group.minAreaBlocks());
             value.addProperty("preferredAreaBlocks", group.preferredAreaBlocks());
             value.addProperty("maxAreaBlocks", group.maxAreaBlocks());

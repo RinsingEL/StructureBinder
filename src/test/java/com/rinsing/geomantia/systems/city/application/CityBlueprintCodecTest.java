@@ -29,6 +29,12 @@ class CityBlueprintCodecTest {
         assertEquals(CityBlueprint.OutdoorMode.GENERATE, blueprint.outdoorPlan().mode());
         assertEquals("foundation:urban", blueprint.outdoorPlan().foundationProfileRef());
         assertEquals("civic_core", blueprint.outdoorPlan().spatialGrounds().get(0).sourceGroupId());
+        assertEquals("fill:relay_irrigated_farmland", blueprint.outdoorPlan().landscapes().get(0)
+                .fillSelection().variants().get(0).fillProfileRef());
+        assertEquals(5, blueprint.outdoorPlan().landscapes().get(0)
+                .fillSelection().variants().get(0).roleShares().size());
+        assertEquals("BANK", blueprint.outdoorPlan().landscapes().get(0)
+                .fillSelection().variants().get(0).roleShares().get(3).roleRef());
         assertEquals(json, codec.write(blueprint));
     }
 
@@ -49,7 +55,7 @@ class CityBlueprintCodecTest {
     @Test
     void rejectsPreviousBlueprintSchema() throws IOException {
         JsonObject json = fixture("valid_city_blueprint_v0_1.json");
-        json.addProperty("schemaVersion", "city_blueprint.v0.6");
+        json.addProperty("schemaVersion", "city_blueprint.v0.8");
         CityBlueprintContractException exception = assertThrows(CityBlueprintContractException.class,
                 () -> codec.read(json));
         assertEquals(CityBlueprintReasonCode.CITY_BLUEPRINT_SCHEMA_UNSUPPORTED, exception.reasonCode());
@@ -62,6 +68,21 @@ class CityBlueprintCodecTest {
         assertEquals(CityBlueprintReasonCode.CITY_BLUEPRINT_FORBIDDEN_PLACEMENT_FIELD,
                 exception.reasonCode());
         assertEquals("$.groups[0].blockX", exception.fieldPath());
+    }
+
+    @Test
+    void rejectsUnknownFieldsInsideFillVariant() throws IOException {
+        JsonObject json = fixture("valid_city_blueprint_v0_1.json");
+        json.getAsJsonObject("outdoorPlan").getAsJsonArray("landscapes").get(0).getAsJsonObject()
+                .getAsJsonObject("fillSelection").getAsJsonArray("variants").get(0).getAsJsonObject()
+                .addProperty("blockPalette", "forbidden");
+
+        CityBlueprintContractException exception = assertThrows(CityBlueprintContractException.class,
+                () -> codec.read(json));
+
+        assertEquals(CityBlueprintReasonCode.CITY_BLUEPRINT_FIELD_UNKNOWN, exception.reasonCode());
+        assertEquals("$.outdoorPlan.landscapes[0].fillSelection.variants[0].blockPalette",
+                exception.fieldPath());
     }
 
     private static JsonObject fixture(String name) throws IOException {

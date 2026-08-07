@@ -1194,7 +1194,7 @@ final class CityPlanningEndpointHandler {
         Files.writeString(tracePath, CityJson.GSON.toJson(result.trace()));
         Files.writeString(qualityPath, CityJson.GSON.toJson(result.quality()));
         JsonObject preview = new CityLandUsePreviewRenderer().render(
-                terrainField, result.plan(), outputDirectory);
+                terrainField, result.plan(), result.surfacePrintPlan(), outputDirectory);
         Path previewPath = outputDirectory.resolve(stringValue(preview, "fileName", "land_use_preview.png"));
 
         JsonObject completion = new JsonObject();
@@ -1295,7 +1295,8 @@ final class CityPlanningEndpointHandler {
         Files.writeString(tracePath, CityJson.GSON.toJson(result.trace()));
         Files.writeString(qualityPath, CityJson.GSON.toJson(result.quality()));
         JsonObject preview = new CityLandUsePreviewRenderer().render(
-                inputs.terrainField(), result.plan(), result.urbanSpacePlan(), outputDirectory);
+                inputs.terrainField(), result.plan(), result.urbanSpacePlan(),
+                result.surfacePrintPlan(), outputDirectory);
         Path previewPath = outputDirectory.resolve(stringValue(preview, "fileName", "land_use_preview.png"));
 
         JsonObject completion = blueprintOutdoorCompletion(inputs, compiled.intentPlan(),

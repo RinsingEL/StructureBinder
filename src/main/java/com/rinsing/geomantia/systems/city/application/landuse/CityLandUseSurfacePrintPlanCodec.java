@@ -5,6 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseAreaPlan;
+import com.rinsing.geomantia.systems.city.domain.landuse.LandscapeFillProgram;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseSurfaceSettings;
 import com.rinsing.geomantia.systems.city.domain.model.BlockPoint;
 
@@ -16,7 +17,7 @@ import java.util.HexFormat;
 import java.util.List;
 import java.util.Set;
 
-/** Strict current-only JSON codec and canonical hash owner for SurfacePrintPlan v0.3. */
+/** Strict current-only JSON codec and canonical hash owner for SurfacePrintPlan v0.5. */
 public final class CityLandUseSurfacePrintPlanCodec {
     private static final Set<String> ROOT_FIELDS = Set.of(
             "schemaVersion", "cityId", "sourceLandUsePlanHash", "planHash", "areas");
@@ -34,6 +35,19 @@ public final class CityLandUseSurfacePrintPlanCodec {
             "channelBankOverlayBlockId", "repeatPeriodBlocks", "fieldBeforeBlocks", "channelWidthBlocks",
             "fieldAfterBlocks", "classificationMode", "anchor", "bandSpans", "boundaryBlockId");
     private static final Set<String> BAND_SPAN_FIELDS = Set.of("z", "minX", "maxX", "role");
+    private static final Set<String> RELAY_FIELDS = Set.of(
+            "recipeType", "surfaceBlockId", "cropBlockId", "channelBankBlockId", "channelWaterBlockId",
+            "channelBankOverlayBlockId", "boundaryBlockId", "fillProfileRef", "primaryRoleRef",
+            "stableSeed", "effectiveSource", "roleDefinitions", "contentWeights", "regionSpans",
+            "regionTraces");
+    private static final Set<String> RELAY_ROLE_FIELDS = Set.of(
+            "roleRef", "materialRole", "growthForm", "targetShare");
+    private static final Set<String> RELAY_CONTENT_FIELDS = Set.of("contentRef", "weight");
+    private static final Set<String> REGION_SPAN_FIELDS = Set.of(
+            "z", "minX", "maxX", "regionId", "roleRef");
+    private static final Set<String> REGION_TRACE_FIELDS = Set.of(
+            "regionId", "parentRegionId", "roleRef", "growthForm", "start", "sourceFrontier",
+            "targetAreaBlocks", "actualAreaBlocks");
     private static final Set<String> POINT_FIELDS = Set.of("x", "z");
     private static final Set<String> SPAN_FIELDS = Set.of("z", "minX", "maxX");
 
@@ -147,6 +161,63 @@ public final class CityLandUseSurfacePrintPlanCodec {
             value.addProperty("boundaryBlockId", uniform.boundaryBlockId());
             return value;
         }
+        if (recipe instanceof CityLandUseSurfacePrintPlan.RelayRegionGrowthRecipe relay) {
+            value.addProperty("recipeType", "relay_region_growth");
+            value.addProperty("surfaceBlockId", relay.surfaceBlockId());
+            value.addProperty("cropBlockId", relay.cropBlockId());
+            value.addProperty("channelBankBlockId", relay.channelBankBlockId());
+            value.addProperty("channelWaterBlockId", relay.channelWaterBlockId());
+            value.addProperty("channelBankOverlayBlockId", relay.channelBankOverlayBlockId());
+            value.addProperty("boundaryBlockId", relay.boundaryBlockId());
+            value.addProperty("fillProfileRef", relay.fillProfileRef());
+            value.addProperty("primaryRoleRef", relay.primaryRoleRef());
+            value.addProperty("stableSeed", relay.stableSeed());
+            value.add("effectiveSource", pointJson(relay.effectiveSource()));
+            JsonArray definitions = new JsonArray();
+            for (CityLandUseSurfacePrintPlan.RelayRoleDefinition definition : relay.roleDefinitions()) {
+                JsonObject item = new JsonObject();
+                item.addProperty("roleRef", definition.roleRef());
+                item.addProperty("materialRole", definition.materialRole().name().toLowerCase());
+                item.addProperty("growthForm", definition.growthForm().name().toLowerCase());
+                item.addProperty("targetShare", definition.targetShare());
+                definitions.add(item);
+            }
+            value.add("roleDefinitions", definitions);
+            JsonArray content = new JsonArray();
+            for (CityLandUseSurfacePrintPlan.RelayContentWeight weight : relay.contentWeights()) {
+                JsonObject item = new JsonObject();
+                item.addProperty("contentRef", weight.contentRef());
+                item.addProperty("weight", weight.weight());
+                content.add(item);
+            }
+            value.add("contentWeights", content);
+            JsonArray spans = new JsonArray();
+            for (CityLandUseSurfacePrintPlan.RegionSpan span : relay.regionSpans()) {
+                JsonObject item = new JsonObject();
+                item.addProperty("z", span.z());
+                item.addProperty("minX", span.minX());
+                item.addProperty("maxX", span.maxX());
+                item.addProperty("regionId", span.regionId());
+                item.addProperty("roleRef", span.roleRef());
+                spans.add(item);
+            }
+            value.add("regionSpans", spans);
+            JsonArray traces = new JsonArray();
+            for (CityLandUseSurfacePrintPlan.RegionTrace trace : relay.regionTraces()) {
+                JsonObject item = new JsonObject();
+                item.addProperty("regionId", trace.regionId());
+                item.addProperty("parentRegionId", trace.parentRegionId());
+                item.addProperty("roleRef", trace.roleRef());
+                item.addProperty("growthForm", trace.growthForm().name().toLowerCase());
+                item.add("start", pointJson(trace.start()));
+                item.add("sourceFrontier", nullablePointJson(trace.sourceFrontier()));
+                item.addProperty("targetAreaBlocks", trace.targetAreaBlocks());
+                item.addProperty("actualAreaBlocks", trace.actualAreaBlocks());
+                traces.add(item);
+            }
+            value.add("regionTraces", traces);
+            return value;
+        }
         CityLandUseSurfacePrintPlan.ContourBandsRecipe contour =
                 (CityLandUseSurfacePrintPlan.ContourBandsRecipe) recipe;
         value.addProperty("recipeType", "contour_bands");
@@ -174,6 +245,53 @@ public final class CityLandUseSurfacePrintPlanCodec {
             rejectUnknown(value, UNIFORM_FIELDS, "recipe");
             return new CityLandUseSurfacePrintPlan.UniformRecipe(text(value, "surfaceBlockId", false),
                     text(value, "boundaryBlockId", true));
+        }
+        if ("relay_region_growth".equals(type)) {
+            rejectUnknown(value, RELAY_FIELDS, "recipe");
+            List<CityLandUseSurfacePrintPlan.RelayRoleDefinition> definitions = new ArrayList<>();
+            for (JsonElement element : array(value, "roleDefinitions")) {
+                JsonObject item = object(element, "roleDefinitions[]");
+                rejectUnknown(item, RELAY_ROLE_FIELDS, "roleDefinition");
+                definitions.add(new CityLandUseSurfacePrintPlan.RelayRoleDefinition(
+                        text(item, "roleRef", false),
+                        enumValue(LandscapeFillProgram.MaterialRole.class,
+                                text(item, "materialRole", false)),
+                        enumValue(LandscapeFillProgram.GrowthForm.class,
+                                text(item, "growthForm", false)),
+                        number(item, "targetShare")));
+            }
+            List<CityLandUseSurfacePrintPlan.RelayContentWeight> content = new ArrayList<>();
+            for (JsonElement element : array(value, "contentWeights")) {
+                JsonObject item = object(element, "contentWeights[]");
+                rejectUnknown(item, RELAY_CONTENT_FIELDS, "contentWeight");
+                content.add(new CityLandUseSurfacePrintPlan.RelayContentWeight(
+                        text(item, "contentRef", false), number(item, "weight")));
+            }
+            List<CityLandUseSurfacePrintPlan.RegionSpan> spans = new ArrayList<>();
+            for (JsonElement element : array(value, "regionSpans")) {
+                JsonObject item = object(element, "regionSpans[]");
+                rejectUnknown(item, REGION_SPAN_FIELDS, "regionSpan");
+                spans.add(new CityLandUseSurfacePrintPlan.RegionSpan(integer(item, "z"),
+                        integer(item, "minX"), integer(item, "maxX"), text(item, "regionId", false),
+                        text(item, "roleRef", false)));
+            }
+            List<CityLandUseSurfacePrintPlan.RegionTrace> traces = new ArrayList<>();
+            for (JsonElement element : array(value, "regionTraces")) {
+                JsonObject item = object(element, "regionTraces[]");
+                rejectUnknown(item, REGION_TRACE_FIELDS, "regionTrace");
+                traces.add(new CityLandUseSurfacePrintPlan.RegionTrace(text(item, "regionId", false),
+                        text(item, "parentRegionId", true), text(item, "roleRef", false),
+                        enumValue(LandscapeFillProgram.GrowthForm.class, text(item, "growthForm", false)),
+                        point(object(item, "start")), nullablePoint(item, "sourceFrontier"),
+                        integer(item, "targetAreaBlocks"), integer(item, "actualAreaBlocks")));
+            }
+            return new CityLandUseSurfacePrintPlan.RelayRegionGrowthRecipe(
+                    text(value, "surfaceBlockId", false), text(value, "cropBlockId", true),
+                    text(value, "channelBankBlockId", true), text(value, "channelWaterBlockId", true),
+                    text(value, "channelBankOverlayBlockId", true), text(value, "boundaryBlockId", true),
+                    text(value, "fillProfileRef", false), text(value, "primaryRoleRef", false),
+                    longInteger(value, "stableSeed"), point(object(value, "effectiveSource")),
+                    definitions, content, spans, traces);
         }
         if (!"contour_bands".equals(type)) {
             throw fail("CITY_LAND_USE_SURFACE_PRINT_RECIPE_TYPE_INVALID", type);
@@ -324,6 +442,30 @@ public final class CityLandUseSurfacePrintPlanCodec {
         } catch (ArithmeticException ex) {
             throw fail("CITY_LAND_USE_SURFACE_PRINT_FIELD_INVALID", key);
         }
+    }
+
+    private static long longInteger(JsonObject owner, String key) {
+        if (!owner.has(key) || !owner.get(key).isJsonPrimitive()
+                || !owner.getAsJsonPrimitive(key).isNumber()) {
+            throw fail("CITY_LAND_USE_SURFACE_PRINT_FIELD_REQUIRED", key);
+        }
+        try {
+            return owner.get(key).getAsBigDecimal().longValueExact();
+        } catch (ArithmeticException ex) {
+            throw fail("CITY_LAND_USE_SURFACE_PRINT_FIELD_INVALID", key);
+        }
+    }
+
+    private static double number(JsonObject owner, String key) {
+        if (!owner.has(key) || !owner.get(key).isJsonPrimitive()
+                || !owner.getAsJsonPrimitive(key).isNumber()) {
+            throw fail("CITY_LAND_USE_SURFACE_PRINT_FIELD_REQUIRED", key);
+        }
+        double value = owner.get(key).getAsDouble();
+        if (!Double.isFinite(value)) {
+            throw fail("CITY_LAND_USE_SURFACE_PRINT_FIELD_INVALID", key);
+        }
+        return value;
     }
 
     private static boolean bool(JsonObject owner, String key) {

@@ -6,6 +6,7 @@ import com.rinsing.geomantia.systems.city.application.landuse.LandUseAreaPlanCod
 import com.rinsing.geomantia.systems.city.domain.landuse.BoundaryPolicy;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseAreaPlan;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseSurfaceSettings;
+import com.rinsing.geomantia.systems.city.domain.landuse.LandscapeFillProgram;
 import com.rinsing.geomantia.systems.city.domain.landuse.SurfacePolicy;
 import com.rinsing.geomantia.systems.city.domain.landuse.VegetationPolicy;
 import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
@@ -194,6 +195,63 @@ class CityLandUseChunkCompilerTest {
         assertEquals(1, fragment.boundaryOperations().size());
         assertEquals(0, fragment.boundaryOperations().get(0).x());
         assertEquals(0, fragment.boundaryOperations().get(0).z());
+    }
+
+    @Test
+    void relayRegionsConsumeFrozenRegionSpansAcrossChunkBoundary() {
+        List<LandUseAreaPlan.ScanlineSpan> members = List.of(new LandUseAreaPlan.ScanlineSpan(0, 14, 17));
+        LandUseAreaPlan areaPlan = areaPlan("city_layers", SurfacePolicy.CULTIVATE, members);
+        BlockPoint source = new BlockPoint(14, 0);
+        LandUseSurfaceSettings settings = LandUseSurfaceSettings.defaults(SurfacePolicy.CULTIVATE)
+                .forRelayRegionGrowth();
+        CityLandUseSurfacePrintPlan.RelayRegionGrowthRecipe recipe =
+                new CityLandUseSurfacePrintPlan.RelayRegionGrowthRecipe(
+                        settings.surfaceBlockId(), settings.cropBlockId(), settings.channelBankBlockId(),
+                        settings.channelWaterBlockId(), settings.channelBankOverlayBlockId(), "",
+                        "fill:irrigated", "role:field", 81L, source,
+                        List.of(new CityLandUseSurfacePrintPlan.RelayRoleDefinition("role:field",
+                                        LandscapeFillProgram.MaterialRole.PRIMARY_CONTENT,
+                                        LandscapeFillProgram.GrowthForm.PATCH, 0.25),
+                                new CityLandUseSurfacePrintPlan.RelayRoleDefinition("role:bank",
+                                        LandscapeFillProgram.MaterialRole.BANK,
+                                        LandscapeFillProgram.GrowthForm.CORRIDOR, 0.25),
+                                new CityLandUseSurfacePrintPlan.RelayRoleDefinition("role:water",
+                                        LandscapeFillProgram.MaterialRole.WATER,
+                                        LandscapeFillProgram.GrowthForm.CORRIDOR, 0.25),
+                                new CityLandUseSurfacePrintPlan.RelayRoleDefinition("role:field",
+                                        LandscapeFillProgram.MaterialRole.PRIMARY_CONTENT,
+                                        LandscapeFillProgram.GrowthForm.PATCH, 0.25)),
+                        List.of(new CityLandUseSurfacePrintPlan.RelayContentWeight("content:wheat", 1)),
+                        List.of(new CityLandUseSurfacePrintPlan.RegionSpan(0, 14, 14, "r1", "role:field"),
+                                new CityLandUseSurfacePrintPlan.RegionSpan(0, 15, 15, "r2", "role:bank"),
+                                new CityLandUseSurfacePrintPlan.RegionSpan(0, 16, 16, "r3", "role:water"),
+                                new CityLandUseSurfacePrintPlan.RegionSpan(0, 17, 17, "r4", "role:field")),
+                        List.of(new CityLandUseSurfacePrintPlan.RegionTrace("r1", "", "role:field",
+                                        LandscapeFillProgram.GrowthForm.PATCH, source, null, 1, 1),
+                                new CityLandUseSurfacePrintPlan.RegionTrace("r2", "r1", "role:bank",
+                                        LandscapeFillProgram.GrowthForm.CORRIDOR, new BlockPoint(15, 0),
+                                        source, 1, 1),
+                                new CityLandUseSurfacePrintPlan.RegionTrace("r3", "r2", "role:water",
+                                        LandscapeFillProgram.GrowthForm.CORRIDOR, new BlockPoint(16, 0),
+                                        new BlockPoint(15, 0), 1, 1),
+                                new CityLandUseSurfacePrintPlan.RegionTrace("r4", "r3", "role:field",
+                                        LandscapeFillProgram.GrowthForm.PATCH, new BlockPoint(17, 0),
+                                        new BlockPoint(16, 0), 1, 1)));
+        CityLandUseSurfacePrintPlan.AreaPrint print = new CityLandUseSurfacePrintPlan.AreaPrint(
+                "area/surface", "area", List.of("group"), settings, members, List.of(),
+                LandUseSurfaceSettings.SurfaceAlgorithm.RELAY_REGION_GROWTH, source, recipe);
+        CityLandUseSurfacePrintPlan surfacePlan = hashed(areaPlan, List.of(print));
+
+        CityLandUseChunkCompiler.ChunkFragment west = compiler.compile(areaPlan, surfacePlan, 0, 0);
+        CityLandUseChunkCompiler.ChunkFragment east = compiler.compile(areaPlan, surfacePlan, 1, 0);
+
+        assertOperation(west, 14, 0, "minecraft:farmland", CityLandUseChunkCompiler.SurfaceStage.BASE);
+        assertOperation(west, 14, 0, "minecraft:wheat", CityLandUseChunkCompiler.SurfaceStage.CROP);
+        assertOperation(west, 15, 0, "minecraft:oak_slab",
+                CityLandUseChunkCompiler.SurfaceStage.CHANNEL_OVERLAY);
+        assertOperation(east, 16, 0, "minecraft:water", CityLandUseChunkCompiler.SurfaceStage.BASE);
+        assertOperation(east, 17, 0, "minecraft:wheat", CityLandUseChunkCompiler.SurfaceStage.CROP);
+        assertNoOperation(east, 16, 0, "minecraft:wheat");
     }
 
     @Test

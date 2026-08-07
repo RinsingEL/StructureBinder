@@ -6,6 +6,7 @@ import com.rinsing.geomantia.systems.city.domain.landuse.BoundaryPolicy;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseAreaPlan;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseSeedGroup;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseSurfaceSettings;
+import com.rinsing.geomantia.systems.city.domain.landuse.LandscapeFillProgram;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseTerrainField;
 import com.rinsing.geomantia.systems.city.domain.landuse.SurfacePolicy;
 import com.rinsing.geomantia.systems.city.domain.landuse.VegetationPolicy;
@@ -20,6 +21,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityLandUseSurfacePrintPlannerTest {
@@ -111,6 +113,62 @@ class CityLandUseSurfacePrintPlannerTest {
         assertEquals("minecraft:spruce_fence", recipe.boundaryBlockId());
     }
 
+    @Test
+    void freezesRelayRegionsFromOrderedSemanticStages() {
+        LandUseAreaPlan areaPlan = areaPlan();
+        LandUseSurfaceSettings settings = LandUseSurfaceSettings.defaults(SurfacePolicy.CULTIVATE)
+                .forRelayRegionGrowth();
+        LandscapeFillProgram fill = new LandscapeFillProgram("fill:irrigated_fields", "role:cultivated",
+                List.of(
+                        new LandscapeFillProgram.RoleDefinition("role:cultivated",
+                                LandscapeFillProgram.MaterialRole.PRIMARY_CONTENT,
+                                LandscapeFillProgram.GrowthForm.PATCH, 0.325),
+                        new LandscapeFillProgram.RoleDefinition("role:bank",
+                                LandscapeFillProgram.MaterialRole.BANK,
+                                LandscapeFillProgram.GrowthForm.CORRIDOR, 0.10),
+                        new LandscapeFillProgram.RoleDefinition("role:water",
+                                LandscapeFillProgram.MaterialRole.WATER,
+                                LandscapeFillProgram.GrowthForm.CORRIDOR, 0.15),
+                        new LandscapeFillProgram.RoleDefinition("role:bank",
+                                LandscapeFillProgram.MaterialRole.BANK,
+                                LandscapeFillProgram.GrowthForm.CORRIDOR, 0.10),
+                        new LandscapeFillProgram.RoleDefinition("role:cultivated",
+                                LandscapeFillProgram.MaterialRole.PRIMARY_CONTENT,
+                                LandscapeFillProgram.GrowthForm.PATCH, 0.325)),
+                List.of(new LandscapeFillProgram.ContentWeight("content:wheat", 3),
+                        new LandscapeFillProgram.ContentWeight("content:carrot", 1)), 9123L);
+        LandUseSeedGroup farm = landscapeGroup("farm_group", new BlockBounds(12, 5, 14, 7), settings, fill);
+
+        CityLandUseSurfacePrintPlan first = new CityLandUseSurfacePrintPlanner().plan(areaPlan,
+                List.of(farm, group("market_group", SurfacePolicy.PAVE, new BlockBounds(42, 2, 43, 3))),
+                terrain(new BlockBounds(0, 0, 63, 31), false));
+        CityLandUseSurfacePrintPlan second = new CityLandUseSurfacePrintPlanner().plan(areaPlan,
+                List.of(farm, group("market_group", SurfacePolicy.PAVE, new BlockBounds(42, 2, 43, 3))),
+                terrain(new BlockBounds(0, 0, 63, 31), false));
+
+        assertEquals(first, second);
+        CityLandUseSurfacePrintPlan.AreaPrint print = first.areas().stream()
+                .filter(area -> area.landUseAreaId().equals("farm")).findFirst().orElseThrow();
+        assertEquals(LandUseSurfaceSettings.SurfaceAlgorithm.RELAY_REGION_GROWTH,
+                print.surfaceAlgorithm());
+        CityLandUseSurfacePrintPlan.RelayRegionGrowthRecipe recipe = assertInstanceOf(
+                CityLandUseSurfacePrintPlan.RelayRegionGrowthRecipe.class, print.recipe());
+        assertEquals("fill:irrigated_fields", recipe.fillProfileRef());
+        assertEquals(List.of("role:cultivated", "role:bank", "role:water", "role:bank"),
+                recipe.regionTraces().stream().limit(4).map(CityLandUseSurfacePrintPlan.RegionTrace::roleRef)
+                        .toList());
+        assertEquals("role:cultivated", recipe.regionTraces().get(4).roleRef());
+        assertEquals(recipe.regionTraces().get(0).regionId(), recipe.regionTraces().get(1).parentRegionId());
+        assertNotNull(recipe.regionTraces().get(1).sourceFrontier());
+        int expectedCoverage = areaPlan.areas().stream().filter(area -> area.areaId().equals("farm"))
+                .findFirst().orElseThrow().memberSpans().stream()
+                .mapToInt(span -> span.maxX() - span.minX() + 1).sum() - 9;
+        assertEquals(expectedCoverage, recipe.regionSpans().stream()
+                .mapToInt(span -> span.maxX() - span.minX() + 1).sum());
+        assertTrue(recipe.roleDefinitions().stream().anyMatch(role -> role.targetShare() == 0.325));
+        assertEquals(2, recipe.contentWeights().size());
+    }
+
     private static LandUseAreaPlan areaPlan() {
         LandUseAreaPlan.Area farm = area("farm", "farm_group", SurfacePolicy.CULTIVATE,
                 spans(0, 8, 0, 30), new BlockBounds(12, 5, 14, 7));
@@ -145,6 +203,20 @@ class CityLandUseSurfacePrintPlannerTest {
         return new LandUseSeedGroup(id, rule, settings, List.of(id),
                 List.of(footprint), List.of(new BlockPoint(footprint.minX(), footprint.minZ())),
                 List.of(), 1, 100, 200, 200, 1);
+    }
+
+    private static LandUseSeedGroup landscapeGroup(String id,
+                                                   BlockBounds footprint,
+                                                   LandUseSurfaceSettings settings,
+                                                   LandscapeFillProgram fill) {
+        LandUseRule rule = new LandUseRule(id, id, List.of(id), 1, 0, 1, 200,
+                200, 1, 0, 0, 10, 0, 1, false, SurfacePolicy.CULTIVATE,
+                VegetationPolicy.PRESERVE, BoundaryPolicy.OPEN, id);
+        return new LandUseSeedGroup(id, rule, settings, List.of(id), List.of(footprint),
+                List.of(new BlockPoint(footprint.minX() - 1, footprint.minZ())), List.of(),
+                1, 100, 200, 200, 1, List.of(), LandUseSeedGroup.GrowthBias.neutral(),
+                LandUseSeedGroup.TerrainBias.BALANCED, List.of(),
+                LandUseSeedGroup.LayerRole.LANDSCAPE, null, fill);
     }
 
     private static List<LandUseAreaPlan.ScanlineSpan> spans(int minZ, int maxZ, int minX, int maxX) {
