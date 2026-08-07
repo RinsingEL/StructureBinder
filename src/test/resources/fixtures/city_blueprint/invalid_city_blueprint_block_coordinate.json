@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "city_blueprint.v0.6",
+  "schemaVersion": "city_blueprint.v0.7",
   "cityId": "city:test",
   "sourceD3Ref": {
     "path": "d3.json",
@@ -8,7 +8,7 @@
   },
   "catalogSnapshotRef": {
     "path": "catalog.json",
-    "schemaVersion": "city_blueprint_catalog_snapshot.v0.2",
+    "schemaVersion": "city_blueprint_catalog_snapshot.v0.7",
     "contentHash": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
   },
   "generationSeed": 42,

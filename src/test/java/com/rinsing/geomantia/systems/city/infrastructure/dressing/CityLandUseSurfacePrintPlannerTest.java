@@ -87,6 +87,30 @@ class CityLandUseSurfacePrintPlannerTest {
                 recipe.bandSpans().stream().mapToInt(span -> span.maxX() - span.minX() + 1).sum());
     }
 
+    @Test
+    void contourRecipeConsumesConfiguredWidthsAndBoundaryMaterial() {
+        LandUseAreaPlan areaPlan = areaPlan();
+        LandUseSurfaceSettings settings = LandUseSurfaceSettings.defaults(SurfacePolicy.CULTIVATE)
+                .withOverrides(true, true, LandUseSurfaceSettings.SurfaceAlgorithm.CONTOUR_BANDS,
+                        null, null, null, null, null, "minecraft:spruce_fence",
+                        7, 2, 6, null, null);
+        CityLandUseSurfacePrintPlan plan = new CityLandUseSurfacePrintPlanner().plan(areaPlan,
+                List.of(group("farm_group", SurfacePolicy.CULTIVATE,
+                                new BlockBounds(12, 5, 14, 7), settings),
+                        group("market_group", SurfacePolicy.PAVE, new BlockBounds(42, 2, 43, 3))),
+                terrain(new BlockBounds(0, 0, 63, 31), false));
+
+        CityLandUseSurfacePrintPlan.ContourBandsRecipe recipe = assertInstanceOf(
+                CityLandUseSurfacePrintPlan.ContourBandsRecipe.class,
+                plan.areas().stream().filter(value -> value.landUseAreaId().equals("farm"))
+                        .findFirst().orElseThrow().recipe());
+        assertEquals(15, recipe.repeatPeriodBlocks());
+        assertEquals(7, recipe.fieldBeforeBlocks());
+        assertEquals(2, recipe.channelWidthBlocks());
+        assertEquals(6, recipe.fieldAfterBlocks());
+        assertEquals("minecraft:spruce_fence", recipe.boundaryBlockId());
+    }
+
     private static LandUseAreaPlan areaPlan() {
         LandUseAreaPlan.Area farm = area("farm", "farm_group", SurfacePolicy.CULTIVATE,
                 spans(0, 8, 0, 30), new BlockBounds(12, 5, 14, 7));
@@ -108,10 +132,17 @@ class CityLandUseSurfacePrintPlannerTest {
     }
 
     private static LandUseSeedGroup group(String id, SurfacePolicy policy, BlockBounds footprint) {
+        return group(id, policy, footprint, LandUseSurfaceSettings.defaults(policy));
+    }
+
+    private static LandUseSeedGroup group(String id,
+                                          SurfacePolicy policy,
+                                          BlockBounds footprint,
+                                          LandUseSurfaceSettings settings) {
         LandUseRule rule = new LandUseRule(id, id, List.of(id), 1, 0, 1, 200,
                 200, 1, 0, 0, 10, 0, 1, true, policy,
                 VegetationPolicy.PRESERVE, BoundaryPolicy.OPEN, id);
-        return new LandUseSeedGroup(id, rule, LandUseSurfaceSettings.defaults(policy), List.of(id),
+        return new LandUseSeedGroup(id, rule, settings, List.of(id),
                 List.of(footprint), List.of(new BlockPoint(footprint.minX(), footprint.minZ())),
                 List.of(), 1, 100, 200, 200, 1);
     }

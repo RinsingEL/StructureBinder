@@ -5,258 +5,188 @@ import com.google.gson.JsonObject;
 import com.rinsing.geomantia.systems.city.application.CityBlueprintReferenceCatalog;
 import com.rinsing.geomantia.systems.city.application.landuse.LandUsePlanningService;
 import com.rinsing.geomantia.systems.city.domain.blueprint.CityBlueprint;
+import com.rinsing.geomantia.systems.city.domain.landuse.LandUseAreaPlan;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseSeedGroup;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseTerrainField;
-import com.rinsing.geomantia.systems.city.domain.landuse.rules.LandUseRule;
 import com.rinsing.geomantia.systems.city.domain.landuse.rules.LandUseRuleCatalog;
 import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
 import com.rinsing.geomantia.systems.city.domain.model.BlockPoint;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityOutdoorBlueprintCompilerTest {
     @Test
-    void spatialGroundBuildsOneConnectedGroupSpaceFromD6AndBlueprintRelations() {
-        CityBlueprint.SpatialGround ground = new CityBlueprint.SpatialGround("farm_group", "agriculture",
-                "surface:farmland", CityBlueprint.SharedSpaceType.FARMSTEAD,
-                CityBlueprint.SpatialHierarchy.SECONDARY, CityBlueprint.OutdoorMembership.URBAN);
-        CityBlueprint blueprint = blueprint(new CityBlueprint.OutdoorPlan(CityBlueprint.OutdoorMode.GENERATE,
-                CityBlueprint.EnvelopeProfile.BALANCED, List.of(ground), List.of()));
+    void compilesOneFoundationAndPhaseDrivenIndependentParcels() {
+        CityOutdoorBlueprintCompiler.Result result = compile(d6Plan());
 
-        CityOutdoorBlueprintCompiler.Result result = new CityOutdoorBlueprintCompiler().compile(blueprint,
-                d6Plan(), terrain(), catalog());
-
-        LandUseSeedGroup group = result.resolution().seedGroups().get(0);
-        LandUseRule agriculture = catalog().landUseRuleCatalog().byRef("agriculture").orElseThrow();
-        assertTrue(group.preferredAreaBlocks() >= agriculture.preferredArea(32));
-        assertEquals(1, group.growthRegions().size());
-        assertEquals(LandUseSeedGroup.GrowthBiasMode.NEUTRAL, group.growthBias().mode());
-        assertTrue(group.seedPoints().stream().anyMatch(point -> point.z() >= 40 && point.z() <= 51));
-        assertEquals(com.rinsing.geomantia.systems.city.domain.landuse.BoundaryPolicy.OPEN,
-                group.rule().boundaryPolicy());
-        assertEquals(Set.of("farm_group"), result.residualConfig().urbanGroupIds());
-        assertEquals(16, result.residualConfig().closeRadiusBlocks());
-        assertFalse(result.intentPlan().planHash().isBlank());
-        assertEquals(result.intentPlan().planHash(), result.intentPlan().withComputedHash().planHash());
-        assertTrue(result.intentPlan().sourceBlueprintHash().matches("sha256:[0-9a-f]{64}"));
-        assertTrue(result.intentPlan().sourceD6Hash().matches("sha256:[0-9a-f]{64}"));
-        assertTrue(result.intentPlan().sourceTerrainFieldHash().matches("sha256:[0-9a-f]{64}"));
-        assertTrue(result.intentPlan().sourceOutdoorCatalogHash().matches("sha256:[0-9a-f]{64}"));
-    }
-
-    @Test
-    void attachedFarmlandLandscapeUsesOneSharedProfileBudget() {
-        CityBlueprint.Landscape landscape = new CityBlueprint.Landscape("outer_fields", "landscape:farmland",
-                List.of("farm_group"), List.of("farm_patch"), CityBlueprint.ExtentClass.SMALL,
-                CityBlueprint.OutdoorIntensity.LOW, CityBlueprint.LandscapeContinuity.MULTI_PARCEL,
-                CityBlueprint.LandscapeGrowthRelation.AWAY_FROM_REFERENCE, List.of("core_group"),
-                CityBlueprint.TerrainPolicy.CONFORM, true);
-        CityBlueprint blueprint = blueprint(new CityBlueprint.OutdoorPlan(CityBlueprint.OutdoorMode.GENERATE,
-                CityBlueprint.EnvelopeProfile.COMPACT, List.of(), List.of(landscape)));
-
-        CityOutdoorBlueprintCompiler.Result result = new CityOutdoorBlueprintCompiler().compile(blueprint,
-                d6Plan(), terrain(), catalog());
-
-        LandUseSeedGroup group = result.resolution().seedGroups().get(0);
-        assertEquals("outer_fields", group.groupId());
-        assertEquals(750, group.preferredAreaBlocks());
-        assertEquals(525, group.minAreaBlocks());
-        assertEquals(900, group.maxAreaBlocks());
-        assertEquals(2, group.growthRegions().size());
-        assertEquals(group.minAreaBlocks(), group.growthRegions().stream()
-                .mapToInt(LandUseSeedGroup.GrowthRegion::minAreaBlocks).sum());
-        assertEquals(group.preferredAreaBlocks(), group.growthRegions().stream()
-                .mapToInt(LandUseSeedGroup.GrowthRegion::preferredAreaBlocks).sum());
-        assertEquals(group.maxAreaBlocks(), group.growthRegions().stream()
-                .mapToInt(LandUseSeedGroup.GrowthRegion::maxAreaBlocks).sum());
-        assertTrue(group.growthRegions().stream().allMatch(region -> region.anchorIds().size() == 2));
-        assertEquals(LandUseSeedGroup.TerrainBias.CONFORM, group.terrainBias());
-        assertEquals(List.of("farm_patch"), group.preferredPatchRefs());
-        CityOutdoorIntentPlan.SourceIntent intent = result.intentPlan().sources().get(0);
-        assertEquals(CityBlueprint.LandscapeContinuity.MULTI_PARCEL, intent.continuity());
-        assertEquals(CityBlueprint.TerrainPolicy.CONFORM, intent.terrainPolicy());
-        assertEquals(List.of("farm_patch"), intent.preferredPatchRefs());
+        List<LandUseSeedGroup> foundations = result.resolution().seedGroups().stream()
+                .filter(group -> group.layerRole() == LandUseSeedGroup.LayerRole.FOUNDATION).toList();
+        List<LandUseSeedGroup> parcels = result.resolution().seedGroups().stream()
+                .filter(group -> group.layerRole() == LandUseSeedGroup.LayerRole.LANDSCAPE).toList();
+        assertEquals(1, foundations.size());
+        assertEquals("city::foundation", foundations.get(0).groupId());
+        assertEquals(4, foundations.get(0).anchorIds().size());
+        assertEquals(7, parcels.size());
+        assertEquals(5, parcels.stream().filter(group -> group.groupId().contains("farm_a")).count());
+        assertEquals(2, parcels.stream().filter(group -> group.groupId().contains("farm_b")).count());
+        assertTrue(parcels.stream().filter(group -> group.groupId().contains("farm_a"))
+                .allMatch(group -> group.anchorIds().equals(List.of("farm_a"))));
+        assertTrue(parcels.stream().filter(group -> group.groupId().contains("farm_b"))
+                .allMatch(group -> group.anchorIds().equals(List.of("farm_b"))));
+        assertTrue(parcels.stream().noneMatch(group -> group.groupId().contains("farm_c")));
+        assertTrue(parcels.stream().allMatch(group -> group.seedPoints().size() == 1));
+        assertTrue(parcels.stream().allMatch(group -> group.growthRegions().size() == 1));
+        assertTrue(parcels.stream().noneMatch(group -> group.rule().mergeSameType()));
+        assertTrue(result.resolution().corridorExclusions().isEmpty());
         assertFalse(result.residualConfig().enabled());
+        assertEquals("city_outdoor_intent_plan.v0.3", result.intentPlan().schemaVersion());
+        CityOutdoorIntentPlan.SourceIntent foundationIntent = result.intentPlan().sources().stream()
+                .filter(source -> source.sourceKind() == CityOutdoorIntentPlan.SourceKind.FOUNDATION)
+                .findFirst().orElseThrow();
+        assertNull(foundationIntent.extentClass());
+        assertEquals("foundation:test", foundationIntent.profileRef());
+
+        JsonObject withoutFirstOwnerParcels = d6Plan();
+        withoutFirstOwnerParcels.getAsJsonArray("plannedWorldgenStructures").get(1).getAsJsonObject()
+                .addProperty("blueprintPlacementPhase", "connectivity_growth");
+        LandUseSeedGroup isolatedFarmBFirst = compile(withoutFirstOwnerParcels).resolution().seedGroups().stream()
+                .filter(group -> group.groupId().equals("outer_fields::farm_b::parcel_01"))
+                .findFirst().orElseThrow();
+        LandUseSeedGroup fullFarmBFirst = parcels.stream()
+                .filter(group -> group.groupId().equals("outer_fields::farm_b::parcel_01"))
+                .findFirst().orElseThrow();
+        assertEquals(isolatedFarmBFirst.seedPoints(), fullFarmBFirst.seedPoints());
     }
 
     @Test
-    void alongWaterUsesShorelineTangentInsteadOfTowardWaterBias() {
-        CityBlueprint.Landscape toward = new CityBlueprint.Landscape("water_fields", "landscape:farmland",
-                List.of("farm_group"), List.of("farm_patch"), CityBlueprint.ExtentClass.SMALL,
-                CityBlueprint.OutdoorIntensity.LOW, CityBlueprint.LandscapeContinuity.MULTI_PARCEL,
-                CityBlueprint.LandscapeGrowthRelation.TOWARD_WATER, List.of(),
-                CityBlueprint.TerrainPolicy.BALANCED, true);
-        CityBlueprint.Landscape along = new CityBlueprint.Landscape("water_fields", "landscape:farmland",
-                List.of("farm_group"), List.of("farm_patch"), CityBlueprint.ExtentClass.SMALL,
-                CityBlueprint.OutdoorIntensity.LOW, CityBlueprint.LandscapeContinuity.MULTI_PARCEL,
-                CityBlueprint.LandscapeGrowthRelation.ALONG_WATER, List.of(),
-                CityBlueprint.TerrainPolicy.BALANCED, true);
+    void stableInputsFreezeParcelIdsSeedsAndResolvedFoundationRadius() {
+        CityOutdoorBlueprintCompiler compiler = new CityOutdoorBlueprintCompiler();
+        CityOutdoorBlueprintCompiler.Result first = compiler.compile(blueprint(), d6Plan(), terrain(), catalog());
+        CityOutdoorBlueprintCompiler.Result second = compiler.compile(blueprint(), d6Plan(), terrain(), catalog());
 
-        LandUseSeedGroup towardGroup = new CityOutdoorBlueprintCompiler().compile(
-                blueprint(new CityBlueprint.OutdoorPlan(CityBlueprint.OutdoorMode.GENERATE,
-                        CityBlueprint.EnvelopeProfile.COMPACT, List.of(), List.of(toward))),
-                d6Plan(), terrainWithHorizontalWater(), catalog()).resolution().seedGroups().get(0);
-        LandUseSeedGroup alongGroup = new CityOutdoorBlueprintCompiler().compile(
-                blueprint(new CityBlueprint.OutdoorPlan(CityBlueprint.OutdoorMode.GENERATE,
-                        CityBlueprint.EnvelopeProfile.COMPACT, List.of(), List.of(along))),
-                d6Plan(), terrainWithHorizontalWater(), catalog()).resolution().seedGroups().get(0);
-
-        assertEquals(LandUseSeedGroup.GrowthBiasMode.TOWARD_REFERENCE, towardGroup.growthBias().mode());
-        assertEquals(LandUseSeedGroup.GrowthBiasMode.ALONG_WATER, alongGroup.growthBias().mode());
-        assertEquals(1, alongGroup.growthBias().axisX());
-        assertEquals(0, alongGroup.growthBias().axisZ());
-        assertNotEquals(towardGroup.seedPoints(), alongGroup.seedPoints());
-        assertTrue(alongGroup.seedPoints().stream().allMatch(point -> point.z() == 62 || point.z() == 70));
-    }
-
-    @Test
-    void detachedLandscapeDerivesStableSeedFromPreferredPatchCells() {
-        CityBlueprint.Landscape landscape = new CityBlueprint.Landscape("detached_fields", "landscape:farmland",
-                List.of(), List.of("farm_patch"), CityBlueprint.ExtentClass.SMALL,
-                CityBlueprint.OutdoorIntensity.MEDIUM, CityBlueprint.LandscapeContinuity.CONTINUOUS,
-                CityBlueprint.LandscapeGrowthRelation.AROUND_SOURCE, List.of(),
-                CityBlueprint.TerrainPolicy.CONFORM, true);
-        CityBlueprint blueprint = blueprint(new CityBlueprint.OutdoorPlan(CityBlueprint.OutdoorMode.GENERATE,
-                CityBlueprint.EnvelopeProfile.COMPACT, List.of(), List.of(landscape)));
-
-        CityOutdoorBlueprintCompiler.Result first = new CityOutdoorBlueprintCompiler().compile(blueprint,
-                d6Plan(), terrain(), catalog());
-        CityOutdoorBlueprintCompiler.Result second = new CityOutdoorBlueprintCompiler().compile(blueprint,
-                d6Plan(), terrain(), catalog());
-
-        assertEquals(1, first.resolution().seedGroups().get(0).seedPoints().size());
         assertEquals(first.intentPlan(), second.intentPlan());
-        assertEquals(first.resolution().seedGroups().get(0).seedPoints(),
-                second.resolution().seedGroups().get(0).seedPoints());
+        assertEquals(first.resolution().seedGroups(), second.resolution().seedGroups());
+        assertEquals(first.intentPlan().envelope().closeRadiusBlocks(),
+                second.intentPlan().envelope().closeRadiusBlocks());
+        assertTrue(first.intentPlan().envelope().closeRadiusBlocks() >= 8);
+        assertFalse(first.intentPlan().planHash().isBlank());
     }
 
     @Test
-    void patchyLandscapeSplitsOneTotalBudgetAcrossStableParcels() {
-        CityBlueprint.Landscape landscape = new CityBlueprint.Landscape("orchard_patches", "landscape:farmland",
-                List.of(), List.of("farm_patch"), CityBlueprint.ExtentClass.SMALL,
-                CityBlueprint.OutdoorIntensity.MEDIUM, CityBlueprint.LandscapeContinuity.PATCHY,
-                CityBlueprint.LandscapeGrowthRelation.AROUND_SOURCE, List.of(),
-                CityBlueprint.TerrainPolicy.ASSERTIVE, true);
-        CityBlueprint blueprint = blueprint(new CityBlueprint.OutdoorPlan(CityBlueprint.OutdoorMode.GENERATE,
-                CityBlueprint.EnvelopeProfile.COMPACT, List.of(), List.of(landscape)));
+    void missingD6BlueprintPlacementPhaseFailsFormally() {
+        JsonObject d6 = d6Plan();
+        d6.getAsJsonArray("plannedWorldgenStructures").get(0).getAsJsonObject()
+                .remove("blueprintPlacementPhase");
 
-        LandUseSeedGroup group = new CityOutdoorBlueprintCompiler().compile(blueprint, d6Plan(), terrain(),
-                catalog()).resolution().seedGroups().get(0);
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> new CityOutdoorBlueprintCompiler().compile(blueprint(), d6, terrain(), catalog()));
 
-        assertEquals(4, group.growthRegions().size());
-        assertEquals(group.minAreaBlocks(), group.growthRegions().stream()
-                .mapToInt(LandUseSeedGroup.GrowthRegion::minAreaBlocks).sum());
-        assertEquals(group.preferredAreaBlocks(), group.growthRegions().stream()
-                .mapToInt(LandUseSeedGroup.GrowthRegion::preferredAreaBlocks).sum());
-        assertEquals(group.maxAreaBlocks(), group.growthRegions().stream()
-                .mapToInt(LandUseSeedGroup.GrowthRegion::maxAreaBlocks).sum());
-        assertEquals(LandUseSeedGroup.TerrainBias.ASSERTIVE, group.terrainBias());
+        assertTrue(exception.getMessage().startsWith("CITY_OUTDOOR_D6_BLUEPRINT_PHASE_MISSING:core"));
     }
 
     @Test
-    void preserveModeProducesNoSourcesAndDisablesResidualResolver() {
-        CityBlueprint blueprint = blueprint(new CityBlueprint.OutdoorPlan(CityBlueprint.OutdoorMode.PRESERVE,
-                CityBlueprint.EnvelopeProfile.LOOSE, List.of(), List.of()));
+    void layeredPlanningUsesNoCorridorsAndKeepsOneAreaPerParcelOwner() {
+        CityOutdoorBlueprintCompiler.Result compiled = compile(d6Plan());
+        LandUsePlanningService.Result planned = new LandUsePlanningService().plan("city", compiled.resolution(),
+                d5Corridor(), terrain(), compiled.residualConfig());
 
-        CityOutdoorBlueprintCompiler.Result result = new CityOutdoorBlueprintCompiler().compile(blueprint,
+        assertTrue(planned.plan().corridorExclusions().isEmpty());
+        assertEquals("city_land_use_planning_trace.v0.4",
+                planned.trace().get("schemaVersion").getAsString());
+        assertTrue(planned.trace().get("foundationResolvedCloseRadiusBlocks").getAsInt() >= 8);
+        List<LandUseAreaPlan.Area> foundationAreas = planned.plan().areas().stream()
+                .filter(area -> area.sourceGroupIds().contains("city::foundation")).toList();
+        List<LandUseAreaPlan.Area> parcelAreas = planned.plan().areas().stream()
+                .filter(area -> area.sourceGroupIds().stream().anyMatch(id -> id.startsWith("outer_fields::")))
+                .toList();
+        assertEquals(1, foundationAreas.size());
+        assertEquals(7, parcelAreas.size());
+        assertTrue(parcelAreas.stream().allMatch(area -> area.sourceGroupIds().size() == 1));
+        assertEquals(7, parcelAreas.stream().flatMap(area -> area.sourceGroupIds().stream()).distinct().count());
+        Set<BlockPoint> claimedOnce = new java.util.HashSet<>();
+        for (LandUseAreaPlan.Area area : planned.plan().areas()) {
+            for (LandUseAreaPlan.ScanlineSpan span : area.memberSpans()) {
+                for (int x = span.minX(); x <= span.maxX(); x++) {
+                    assertTrue(claimedOnce.add(new BlockPoint(x, span.z())),
+                            "LandUse claims must have one final owner");
+                }
+            }
+        }
+        assertFalse(planned.urbanSpacePlan().enabled());
+        assertTrue(planned.plan().warnings().stream().noneMatch(warning -> warning.contains("foundation")));
+    }
+
+    @Test
+    void overlayReportsOnlyVisibleFoundationClaims() {
+        CityOutdoorBlueprintCompiler.Result compiled = compile(d6Plan());
+        LandUsePlanningService.Result planned = new LandUsePlanningService().plan("city", compiled.resolution(),
+                null, terrain(), compiled.residualConfig());
+        int visibleFoundation = planned.plan().areas().stream()
+                .filter(area -> area.sourceGroupIds().contains("city::foundation"))
+                .flatMap(area -> area.memberSpans().stream())
+                .mapToInt(span -> span.maxX() - span.minX() + 1).sum();
+        JsonObject foundationTrace = planned.trace().getAsJsonArray("seedGroups").asList().stream()
+                .map(value -> value.getAsJsonObject())
+                .filter(value -> value.get("groupId").getAsString().equals("city::foundation"))
+                .findFirst().orElseThrow();
+
+        assertEquals(visibleFoundation, foundationTrace.get("claimedAreaBlocks").getAsInt());
+        assertEquals(visibleFoundation, foundationTrace.get("foundationVisibleAreaBlocks").getAsInt());
+        assertEquals(foundationTrace.get("preferredAreaBlocks").getAsInt(),
+                foundationTrace.get("foundationBaseAreaBlocks").getAsInt());
+        assertTrue(visibleFoundation < foundationTrace.get("foundationBaseAreaBlocks").getAsInt());
+    }
+
+    @Test
+    void preserveModeStillProducesNoLandUseSources() {
+        CityBlueprint source = blueprint();
+        CityBlueprint preserve = new CityBlueprint(source.schemaVersion(), source.cityId(), source.sourceD3Ref(),
+                source.catalogSnapshotRef(), source.generationSeed(), source.designIntent(), source.styleProfile(),
+                source.groups(), source.relations(), source.roadProfile(), source.surfaceDetailProfile(),
+                new CityBlueprint.OutdoorPlan(CityBlueprint.OutdoorMode.PRESERVE,
+                        CityBlueprint.EnvelopeProfile.BALANCED, "foundation:test", List.of(), List.of()));
+
+        CityOutdoorBlueprintCompiler.Result result = new CityOutdoorBlueprintCompiler().compile(preserve,
                 d6Plan(), terrain(), catalog());
 
         assertTrue(result.resolution().seedGroups().isEmpty());
-        assertFalse(result.residualConfig().enabled());
-        assertEquals(0, result.intentPlan().envelope().closeRadiusBlocks());
-        assertEquals("city_outdoor_intent_plan.v0.2",
-                result.intentPlan().toJson().get("schemaVersion").getAsString());
+        assertEquals("city_outdoor_intent_plan.v0.3", result.intentPlan().schemaVersion());
     }
 
-    @Test
-    void intentHashBindsEveryCompilationInputEvenInPreserveMode() {
-        CityBlueprint original = blueprint(new CityBlueprint.OutdoorPlan(CityBlueprint.OutdoorMode.PRESERVE,
-                CityBlueprint.EnvelopeProfile.LOOSE, List.of(), List.of()));
-        CityOutdoorBlueprintCompiler compiler = new CityOutdoorBlueprintCompiler();
-        CityOutdoorIntentPlan base = compiler.compile(original, d6Plan(), terrain(), catalog()).intentPlan();
-
-        CityBlueprint changedBlueprint = new CityBlueprint(original.schemaVersion(), original.cityId(),
-                original.sourceD3Ref(), original.catalogSnapshotRef(), 43, original.designIntent(),
-                original.styleProfile(), original.groups(), original.relations(), original.roadProfile(),
-                original.surfaceDetailProfile(), original.outdoorPlan());
-        JsonObject changedD6 = d6Plan();
-        changedD6.addProperty("sourceRevision", 2);
-        LandUseTerrainField changedTerrain = terrainWithFirstCellSlope(1.0);
-        CityBlueprintReferenceCatalog changedCatalog = catalogWithJson("revision", 2);
-
-        Set<String> hashes = new HashSet<>();
-        hashes.add(base.planHash());
-        hashes.add(compiler.compile(changedBlueprint, d6Plan(), terrain(), catalog()).intentPlan().planHash());
-        hashes.add(compiler.compile(original, changedD6, terrain(), catalog()).intentPlan().planHash());
-        hashes.add(compiler.compile(original, d6Plan(), changedTerrain, catalog()).intentPlan().planHash());
-        hashes.add(compiler.compile(original, d6Plan(), terrain(), changedCatalog).intentPlan().planHash());
-        assertEquals(5, hashes.size());
+    private static CityOutdoorBlueprintCompiler.Result compile(JsonObject d6) {
+        return new CityOutdoorBlueprintCompiler().compile(blueprint(), d6, terrain(), catalog());
     }
 
-    @Test
-    void requiredLandscapeFailsWhenReachableTerrainIsClearlyBelowMinimum() {
-        CityBlueprint.Landscape landscape = new CityBlueprint.Landscape("detached_fields", "landscape:farmland",
-                List.of(), List.of("farm_patch"), CityBlueprint.ExtentClass.SMALL,
-                CityBlueprint.OutdoorIntensity.LOW, CityBlueprint.LandscapeContinuity.CONTINUOUS,
+    private static CityBlueprint blueprint() {
+        CityBlueprint.Landscape landscape = new CityBlueprint.Landscape("outer_fields", "landscape:farmland",
+                List.of("farm_group"), List.of("farm_patch"), CityBlueprint.ExtentClass.SMALL,
+                CityBlueprint.OutdoorIntensity.MEDIUM, CityBlueprint.LandscapeContinuity.MULTI_PARCEL,
                 CityBlueprint.LandscapeGrowthRelation.AROUND_SOURCE, List.of(),
                 CityBlueprint.TerrainPolicy.CONFORM, true);
-        CityBlueprint blueprint = blueprint(new CityBlueprint.OutdoorPlan(CityBlueprint.OutdoorMode.GENERATE,
-                CityBlueprint.EnvelopeProfile.COMPACT, List.of(), List.of(landscape)));
-
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> new CityOutdoorBlueprintCompiler().compile(blueprint, d6Plan(), tinyTerrain(), catalog()));
-
-        assertTrue(exception.getMessage().startsWith("CITY_OUTDOOR_REQUIRED_LANDSCAPE_BELOW_MIN:"));
-    }
-
-    @Test
-    void planningServicePublishesResolvedUrbanCoverageInTraceAndQuality() {
-        CityBlueprint.SpatialGround ground = new CityBlueprint.SpatialGround("farm_group", "agriculture",
-                "surface:farmland", CityBlueprint.SharedSpaceType.FARMSTEAD,
-                CityBlueprint.SpatialHierarchy.SECONDARY, CityBlueprint.OutdoorMembership.URBAN);
-        CityOutdoorBlueprintCompiler.Result compiled = new CityOutdoorBlueprintCompiler().compile(
-                blueprint(new CityBlueprint.OutdoorPlan(CityBlueprint.OutdoorMode.GENERATE,
-                        CityBlueprint.EnvelopeProfile.COMPACT, List.of(ground), List.of())),
-                d6Plan(), terrain(), catalog());
-
-        LandUsePlanningService.Result result = new LandUsePlanningService().plan("city", compiled.resolution(),
-                null, terrain(), compiled.residualConfig());
-        CityUrbanSpacePlan.CoverageSummary coverage = result.urbanSpacePlan().coverageSummary();
-
-        assertTrue(result.trace().get("urbanSpaceEnabled").getAsBoolean());
-        assertEquals("resolved", result.quality().get("urbanSpaceStatus").getAsString());
-        assertEquals(coverage.envelopeBlocks(), result.trace().get("urbanEnvelopeBlocks").getAsInt());
-        assertEquals(coverage.absorbedResidualBlocks(),
-                result.quality().get("urbanAbsorbedResidualBlocks").getAsInt());
-        assertEquals(coverage.explicitResidualBlocks(),
-                result.quality().get("urbanExplicitResidualBlocks").getAsInt());
-        assertEquals(0, coverage.explicitResidualBlocks());
-        assertEquals(0, result.quality().get("urbanUnknownResidualBlocks").getAsInt());
-        assertEquals(result.urbanSpacePlan().planHash(),
-                result.trace().get("urbanSpacePlanHash").getAsString());
-    }
-
-    private static CityBlueprint blueprint(CityBlueprint.OutdoorPlan outdoorPlan) {
+        CityBlueprint.OutdoorPlan outdoor = new CityBlueprint.OutdoorPlan(CityBlueprint.OutdoorMode.GENERATE,
+                CityBlueprint.EnvelopeProfile.BALANCED, "foundation:test",
+                List.of(new CityBlueprint.SpatialGround("core_group", CityBlueprint.SharedSpaceType.CIVIC_SQUARE,
+                                CityBlueprint.SpatialHierarchy.PRIMARY, CityBlueprint.OutdoorMembership.URBAN),
+                        new CityBlueprint.SpatialGround("farm_group", CityBlueprint.SharedSpaceType.FARMSTEAD,
+                                CityBlueprint.SpatialHierarchy.SECONDARY, CityBlueprint.OutdoorMembership.URBAN)),
+                List.of(landscape));
         return new CityBlueprint(CityBlueprint.SCHEMA_VERSION, "city",
                 new CityBlueprint.ArtifactRef("d3.json", "d3", "sha256:" + "1".repeat(64)),
                 new CityBlueprint.ArtifactRef("catalog.json", "catalog", "sha256:" + "2".repeat(64)),
                 42, new CityBlueprint.DesignIntent("town", "green", List.of("agriculture")),
-                new CityBlueprint.ProfileRef("style:test"), groups(), List.of(
-                        new CityBlueprint.Relation("core_group", "farm_group",
-                                CityBlueprint.RelationKind.CONNECTION, CityBlueprint.RelationStrength.HARD,
-                                CityBlueprint.DistancePreference.NEAR, CityBlueprint.DirectionPreference.NONE)),
-                new CityBlueprint.ProfileRef("road:test"), new CityBlueprint.ProfileRef("surface:test"),
-                outdoorPlan);
+                new CityBlueprint.ProfileRef("style:test"), groups(), List.of(),
+                new CityBlueprint.ProfileRef("road:test"), new CityBlueprint.ProfileRef("surface:test"), outdoor);
     }
 
     private static List<CityBlueprint.Group> groups() {
@@ -273,19 +203,29 @@ class CityOutdoorBlueprintCompilerTest {
 
     private static CityBlueprintReferenceCatalog catalog() {
         LandUseRuleCatalog rules = LandUseRuleCatalog.defaults();
-        CityBlueprintReferenceCatalog.SurfaceRecipe farmland = new CityBlueprintReferenceCatalog.SurfaceRecipe(
-                "surface:farmland", true, true,
-                CityBlueprintReferenceCatalog.SurfaceAlgorithm.CONTOUR_BANDS,
-                "minecraft:farmland", "minecraft:wheat", "minecraft:dirt", "minecraft:water",
-                "minecraft:oak_slab");
+        CityBlueprintReferenceCatalog.SurfaceRecipe foundationRecipe =
+                new CityBlueprintReferenceCatalog.SurfaceRecipe("surface:foundation", true, false,
+                        CityBlueprintReferenceCatalog.SurfaceAlgorithm.UNIFORM, "minecraft:stone_bricks",
+                        null, null, null, null, null, 0, 0, 0);
+        CityBlueprintReferenceCatalog.SurfaceRecipe farmlandRecipe =
+                new CityBlueprintReferenceCatalog.SurfaceRecipe("surface:farmland", true, false,
+                        CityBlueprintReferenceCatalog.SurfaceAlgorithm.CONTOUR_BANDS, "minecraft:farmland",
+                        "minecraft:wheat", "minecraft:dirt", "minecraft:water", "minecraft:oak_slab",
+                        "minecraft:oak_fence", 5, 3, 5);
+        CityBlueprintReferenceCatalog.FoundationProfile foundation =
+                new CityBlueprintReferenceCatalog.FoundationProfile("foundation:test", "plaza",
+                        "surface:foundation", 3, 8, 32);
         CityBlueprintReferenceCatalog.LandscapeProfile landscape =
                 new CityBlueprintReferenceCatalog.LandscapeProfile("landscape:farmland",
                         CityBlueprintReferenceCatalog.LandscapeType.FARMLAND, "agriculture",
-                        "surface:farmland", 1000, 2000, 4000,
-                        CityBlueprint.OutdoorMembership.LANDSCAPE);
+                        "surface:farmland", 1000, 2000, 4000, CityBlueprint.OutdoorMembership.LANDSCAPE,
+                        new CityBlueprintReferenceCatalog.ParcelStyle(5, 5, 2, 2,
+                                192, 240, 1.0, 4, 12));
         return new CityBlueprintReferenceCatalog(new JsonObject(), Set.of(), Set.of(), Set.of(), Map.of(),
                 Set.of(), Set.of(), Set.of(), Set.of(), rules,
-                Map.of(farmland.surfaceRecipeRef(), farmland),
+                Map.of(foundationRecipe.surfaceRecipeRef(), foundationRecipe,
+                        farmlandRecipe.surfaceRecipeRef(), farmlandRecipe),
+                Map.of(foundation.foundationProfileRef(), foundation),
                 Map.of(landscape.landscapeProfileRef(), landscape));
     }
 
@@ -294,18 +234,20 @@ class CityOutdoorBlueprintCompilerTest {
         root.addProperty("cityId", "city");
         root.addProperty("locked", true);
         JsonArray structures = new JsonArray();
-        structures.add(structure("core", "core_group", 8, 40, 11, 43));
-        structures.add(structure("farm_a", "farm_group", 40, 40, 43, 43));
-        structures.add(structure("farm_b", "farm_group", 40, 48, 43, 51));
+        structures.add(structure("core", "core_group", "required", 20, 40, 25, 45));
+        structures.add(structure("farm_a", "farm_group", "required", 40, 40, 45, 45));
+        structures.add(structure("farm_b", "farm_group", "fill", 40, 52, 45, 57));
+        structures.add(structure("farm_c", "farm_group", "connectivity_growth", 52, 52, 57, 57));
         root.add("plannedWorldgenStructures", structures);
         return root;
     }
 
-    private static JsonObject structure(String anchorId, String groupId,
+    private static JsonObject structure(String anchorId, String groupId, String phase,
                                         int minX, int minZ, int maxX, int maxZ) {
         JsonObject item = new JsonObject();
         item.addProperty("anchorId", anchorId);
         item.addProperty("placementGroupId", groupId);
+        item.addProperty("blueprintPlacementPhase", phase);
         JsonObject footprint = new JsonObject();
         footprint.addProperty("minX", minX);
         footprint.addProperty("minZ", minZ);
@@ -316,7 +258,7 @@ class CityOutdoorBlueprintCompilerTest {
     }
 
     private static LandUseTerrainField terrain() {
-        List<LandUseTerrainField.Cell> cells = new java.util.ArrayList<>();
+        List<LandUseTerrainField.Cell> cells = new ArrayList<>();
         for (int z = 0; z < 32; z++) {
             for (int x = 0; x < 32; x++) {
                 cells.add(new LandUseTerrainField.Cell(x, z, x * 4, z * 4, 4,
@@ -328,47 +270,17 @@ class CityOutdoorBlueprintCompilerTest {
                 new BlockBounds(0, 0, 127, 127), 4, cells);
     }
 
-    private static LandUseTerrainField tinyTerrain() {
-        LandUseTerrainField.Cell cell = new LandUseTerrainField.Cell(0, 0, 0, 0, 4,
-                70, 0, 0, 0, false, 0, 32,
-                "minecraft:plains", "plain", "farm_patch", true);
-        return new LandUseTerrainField(LandUseTerrainField.CURRENT_SCHEMA_VERSION, "city",
-                new BlockBounds(0, 0, 3, 3), 4, List.of(cell));
-    }
-
-    private static LandUseTerrainField terrainWithHorizontalWater() {
-        List<LandUseTerrainField.Cell> cells = new java.util.ArrayList<>();
-        for (int z = 0; z < 32; z++) {
-            for (int x = 0; x < 32; x++) {
-                boolean water = z == 16;
-                cells.add(new LandUseTerrainField.Cell(x, z, x * 4, z * 4, 4,
-                        water ? 62 : 70, 0, 0, 0, water, water ? 8 : 0, 0,
-                        "minecraft:plains", water ? "river" : "plain", "farm_patch", true));
-            }
-        }
-        return new LandUseTerrainField(LandUseTerrainField.CURRENT_SCHEMA_VERSION, "city",
-                new BlockBounds(0, 0, 127, 127), 4, cells);
-    }
-
-    private static LandUseTerrainField terrainWithFirstCellSlope(double slope) {
-        LandUseTerrainField source = terrain();
-        List<LandUseTerrainField.Cell> cells = new java.util.ArrayList<>(source.cells());
-        LandUseTerrainField.Cell first = cells.get(0);
-        cells.set(0, new LandUseTerrainField.Cell(first.cellX(), first.cellZ(), first.blockMinX(),
-                first.blockMinZ(), first.cellStepBlocks(), first.elevation(), slope, first.localRelief(),
-                first.roughness(), first.water(), first.waterDepth(), first.waterDistance(), first.biomeId(),
-                first.landformType(), first.landformPatchId(), first.sampled()));
-        return new LandUseTerrainField(source.schemaVersion(), source.cityId(), source.planningBounds(),
-                source.cellStepBlocks(), cells);
-    }
-
-    private static CityBlueprintReferenceCatalog catalogWithJson(String key, int value) {
-        CityBlueprintReferenceCatalog source = catalog();
-        JsonObject json = new JsonObject();
-        json.addProperty(key, value);
-        return new CityBlueprintReferenceCatalog(json, source.structureRefs(), source.fillPoolRefs(),
-                source.algorithmProfileRefs(), source.algorithmsByProfileRef(), source.compositionProfileRefs(),
-                source.styleProfileRefs(), source.roadProfileRefs(), source.surfaceDetailProfileRefs(),
-                source.landUseRuleCatalog(), source.surfaceRecipes(), source.landscapeProfiles());
+    private static JsonObject d5Corridor() {
+        JsonObject root = new JsonObject();
+        JsonArray exclusions = new JsonArray();
+        JsonObject exclusion = new JsonObject();
+        exclusion.addProperty("reservationId", "road_should_be_ignored");
+        exclusion.addProperty("minX", 0);
+        exclusion.addProperty("minZ", 0);
+        exclusion.addProperty("maxX", 127);
+        exclusion.addProperty("maxZ", 127);
+        exclusions.add(exclusion);
+        root.add("reservations", exclusions);
+        return root;
     }
 }

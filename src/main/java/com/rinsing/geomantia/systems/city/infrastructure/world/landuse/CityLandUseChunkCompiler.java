@@ -120,7 +120,9 @@ public final class CityLandUseChunkCompiler {
             CityLandUseSurfacePrintPlan.AreaPrint printArea = printAreas.get(AreaKey.from(area));
             Set<BlockCell> frozenSurfaceExclusions = printArea == null ? Set.of()
                     : cellsClipped(printArea.exclusionSpans(), minChunkX, minChunkZ, maxChunkX, maxChunkZ);
-            String boundaryBlock = palette.boundaryMaterial(boundaryPolicy);
+            String frozenBoundaryBlock = printArea == null ? "" : printArea.recipe().boundaryBlockId();
+            String boundaryBlock = frozenBoundaryBlock.isBlank()
+                    ? palette.boundaryMaterial(boundaryPolicy) : frozenBoundaryBlock;
             Set<BlockCell> footprints = new HashSet<>();
             area.structureFootprintExclusions().forEach(bounds -> addBoundsClipped(footprints, bounds,
                     minChunkX, minChunkZ, maxChunkX, maxChunkZ));

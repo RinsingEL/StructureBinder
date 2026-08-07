@@ -17,7 +17,7 @@ public record CityLandUseSurfacePrintPlan(
         String planHash,
         List<AreaPrint> areas) {
 
-    public static final String CURRENT_SCHEMA_VERSION = "city_land_use_surface_print_plan.v0.2";
+    public static final String CURRENT_SCHEMA_VERSION = "city_land_use_surface_print_plan.v0.3";
 
     public CityLandUseSurfacePrintPlan {
         if (!CURRENT_SCHEMA_VERSION.equals(schemaVersion)) {
@@ -95,7 +95,15 @@ public record CityLandUseSurfacePrintPlan(
                     throw new IllegalArgumentException(
                             "CITY_LAND_USE_SURFACE_PRINT_CONTOUR_MATERIALS_MISMATCH");
                 }
+                if (surfaceSettings.fieldBeforeBlocks() != contour.fieldBeforeBlocks()
+                        || surfaceSettings.channelWidthBlocks() != contour.channelWidthBlocks()
+                        || surfaceSettings.fieldAfterBlocks() != contour.fieldAfterBlocks()) {
+                    throw new IllegalArgumentException("CITY_LAND_USE_SURFACE_PRINT_CONTOUR_WIDTHS_MISMATCH");
+                }
                 validateContourCoverage(memberSpans, exclusionSpans, contour.bandSpans());
+            }
+            if (!surfaceSettings.boundaryBlockId().equals(recipe.boundaryBlockId())) {
+                throw new IllegalArgumentException("CITY_LAND_USE_SURFACE_PRINT_BOUNDARY_MATERIAL_MISMATCH");
             }
         }
 
@@ -113,11 +121,18 @@ public record CityLandUseSurfacePrintPlan(
 
     public sealed interface Recipe permits UniformRecipe, ContourBandsRecipe {
         String surfaceBlockId();
+        String boundaryBlockId();
     }
 
-    public record UniformRecipe(String surfaceBlockId) implements Recipe {
+    public record UniformRecipe(String surfaceBlockId, String boundaryBlockId) implements Recipe {
         public UniformRecipe {
             requireBlock(surfaceBlockId, "CITY_LAND_USE_SURFACE_PRINT_BLOCK_INVALID");
+            boundaryBlockId = normalizeOptionalBlock(boundaryBlockId,
+                    "CITY_LAND_USE_SURFACE_PRINT_BOUNDARY_BLOCK_INVALID");
+        }
+
+        public UniformRecipe(String surfaceBlockId) {
+            this(surfaceBlockId, "");
         }
     }
 
@@ -127,6 +142,7 @@ public record CityLandUseSurfacePrintPlan(
             String channelBankBlockId,
             String channelWaterBlockId,
             String channelBankOverlayBlockId,
+            String boundaryBlockId,
             int repeatPeriodBlocks,
             int fieldBeforeBlocks,
             int channelWidthBlocks,
@@ -141,6 +157,8 @@ public record CityLandUseSurfacePrintPlan(
             requireBlock(channelWaterBlockId, "CITY_LAND_USE_SURFACE_PRINT_CHANNEL_WATER_BLOCK_INVALID");
             requireBlock(channelBankOverlayBlockId,
                     "CITY_LAND_USE_SURFACE_PRINT_CHANNEL_BANK_OVERLAY_BLOCK_INVALID");
+            boundaryBlockId = normalizeOptionalBlock(boundaryBlockId,
+                    "CITY_LAND_USE_SURFACE_PRINT_BOUNDARY_BLOCK_INVALID");
             if (fieldBeforeBlocks <= 0 || channelWidthBlocks <= 0 || fieldAfterBlocks <= 0
                     || repeatPeriodBlocks != fieldBeforeBlocks + channelWidthBlocks + fieldAfterBlocks) {
                 throw new IllegalArgumentException("CITY_LAND_USE_SURFACE_PRINT_CONTOUR_WIDTHS_INVALID");
@@ -160,6 +178,23 @@ public record CityLandUseSurfacePrintPlan(
                 previousZ = span.z();
                 previousMaxX = span.maxX();
             }
+        }
+
+        public ContourBandsRecipe(String surfaceBlockId,
+                                  String cropBlockId,
+                                  String channelBankBlockId,
+                                  String channelWaterBlockId,
+                                  String channelBankOverlayBlockId,
+                                  int repeatPeriodBlocks,
+                                  int fieldBeforeBlocks,
+                                  int channelWidthBlocks,
+                                  int fieldAfterBlocks,
+                                  ClassificationMode classificationMode,
+                                  BlockPoint anchor,
+                                  List<BandSpan> bandSpans) {
+            this(surfaceBlockId, cropBlockId, channelBankBlockId, channelWaterBlockId,
+                    channelBankOverlayBlockId, "", repeatPeriodBlocks, fieldBeforeBlocks,
+                    channelWidthBlocks, fieldAfterBlocks, classificationMode, anchor, bandSpans);
         }
 
         public BandRole roleAt(int x, int z) {
@@ -213,6 +248,14 @@ public record CityLandUseSurfacePrintPlan(
         if (!LandUseSurfaceSettings.isValidBlockId(value)) {
             throw new IllegalArgumentException(reason + ':' + value);
         }
+    }
+
+    private static String normalizeOptionalBlock(String value, String reason) {
+        String normalized = value == null ? "" : value;
+        if (!normalized.isEmpty() && !LandUseSurfaceSettings.isValidBlockId(normalized)) {
+            throw new IllegalArgumentException(reason + ':' + normalized);
+        }
+        return normalized;
     }
 
     private static void requireText(String value, String reason) {

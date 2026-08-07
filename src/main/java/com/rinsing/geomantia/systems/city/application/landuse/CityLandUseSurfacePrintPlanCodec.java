@@ -16,7 +16,7 @@ import java.util.HexFormat;
 import java.util.List;
 import java.util.Set;
 
-/** Strict current-only JSON codec and canonical hash owner for SurfacePrintPlan v0.2. */
+/** Strict current-only JSON codec and canonical hash owner for SurfacePrintPlan v0.3. */
 public final class CityLandUseSurfacePrintPlanCodec {
     private static final Set<String> ROOT_FIELDS = Set.of(
             "schemaVersion", "cityId", "sourceLandUsePlanHash", "planHash", "areas");
@@ -26,12 +26,13 @@ public final class CityLandUseSurfacePrintPlanCodec {
     private static final Set<String> SETTINGS_FIELDS = Set.of(
             "surfacePrintEnabled", "autoConnect", "surfaceBlockId", "cropBlockId", "compatibilityCategory",
             "surfaceAlgorithm", "algorithmAnchor", "channelBankBlockId", "channelWaterBlockId",
-            "channelBankOverlayBlockId");
-    private static final Set<String> UNIFORM_FIELDS = Set.of("recipeType", "surfaceBlockId");
+            "channelBankOverlayBlockId", "boundaryBlockId", "fieldBeforeBlocks", "channelWidthBlocks",
+            "fieldAfterBlocks");
+    private static final Set<String> UNIFORM_FIELDS = Set.of("recipeType", "surfaceBlockId", "boundaryBlockId");
     private static final Set<String> CONTOUR_FIELDS = Set.of(
             "recipeType", "surfaceBlockId", "cropBlockId", "channelBankBlockId", "channelWaterBlockId",
             "channelBankOverlayBlockId", "repeatPeriodBlocks", "fieldBeforeBlocks", "channelWidthBlocks",
-            "fieldAfterBlocks", "classificationMode", "anchor", "bandSpans");
+            "fieldAfterBlocks", "classificationMode", "anchor", "bandSpans", "boundaryBlockId");
     private static final Set<String> BAND_SPAN_FIELDS = Set.of("z", "minX", "maxX", "role");
     private static final Set<String> POINT_FIELDS = Set.of("x", "z");
     private static final Set<String> SPAN_FIELDS = Set.of("z", "minX", "maxX");
@@ -118,6 +119,10 @@ public final class CityLandUseSurfacePrintPlanCodec {
         value.addProperty("channelBankBlockId", settings.channelBankBlockId());
         value.addProperty("channelWaterBlockId", settings.channelWaterBlockId());
         value.addProperty("channelBankOverlayBlockId", settings.channelBankOverlayBlockId());
+        value.addProperty("boundaryBlockId", settings.boundaryBlockId());
+        value.addProperty("fieldBeforeBlocks", settings.fieldBeforeBlocks());
+        value.addProperty("channelWidthBlocks", settings.channelWidthBlocks());
+        value.addProperty("fieldAfterBlocks", settings.fieldAfterBlocks());
         return value;
     }
 
@@ -129,7 +134,9 @@ public final class CityLandUseSurfacePrintPlanCodec {
                 enumValue(LandUseSurfaceSettings.SurfaceAlgorithm.class,
                         text(value, "surfaceAlgorithm", false)),
                 nullablePoint(value, "algorithmAnchor"), text(value, "channelBankBlockId", true),
-                text(value, "channelWaterBlockId", true), text(value, "channelBankOverlayBlockId", true));
+                text(value, "channelWaterBlockId", true), text(value, "channelBankOverlayBlockId", true),
+                text(value, "boundaryBlockId", true), integer(value, "fieldBeforeBlocks"),
+                integer(value, "channelWidthBlocks"), integer(value, "fieldAfterBlocks"));
     }
 
     private static JsonObject recipeJson(CityLandUseSurfacePrintPlan.Recipe recipe) {
@@ -137,6 +144,7 @@ public final class CityLandUseSurfacePrintPlanCodec {
         if (recipe instanceof CityLandUseSurfacePrintPlan.UniformRecipe uniform) {
             value.addProperty("recipeType", "uniform");
             value.addProperty("surfaceBlockId", uniform.surfaceBlockId());
+            value.addProperty("boundaryBlockId", uniform.boundaryBlockId());
             return value;
         }
         CityLandUseSurfacePrintPlan.ContourBandsRecipe contour =
@@ -147,6 +155,7 @@ public final class CityLandUseSurfacePrintPlanCodec {
         value.addProperty("channelBankBlockId", contour.channelBankBlockId());
         value.addProperty("channelWaterBlockId", contour.channelWaterBlockId());
         value.addProperty("channelBankOverlayBlockId", contour.channelBankOverlayBlockId());
+        value.addProperty("boundaryBlockId", contour.boundaryBlockId());
         value.addProperty("repeatPeriodBlocks", contour.repeatPeriodBlocks());
         value.addProperty("fieldBeforeBlocks", contour.fieldBeforeBlocks());
         value.addProperty("channelWidthBlocks", contour.channelWidthBlocks());
@@ -163,7 +172,8 @@ public final class CityLandUseSurfacePrintPlanCodec {
         String type = text(value, "recipeType", false);
         if ("uniform".equals(type)) {
             rejectUnknown(value, UNIFORM_FIELDS, "recipe");
-            return new CityLandUseSurfacePrintPlan.UniformRecipe(text(value, "surfaceBlockId", false));
+            return new CityLandUseSurfacePrintPlan.UniformRecipe(text(value, "surfaceBlockId", false),
+                    text(value, "boundaryBlockId", true));
         }
         if (!"contour_bands".equals(type)) {
             throw fail("CITY_LAND_USE_SURFACE_PRINT_RECIPE_TYPE_INVALID", type);
@@ -176,7 +186,8 @@ public final class CityLandUseSurfacePrintPlanCodec {
         return new CityLandUseSurfacePrintPlan.ContourBandsRecipe(
                 text(value, "surfaceBlockId", false), text(value, "cropBlockId", false),
                 text(value, "channelBankBlockId", false), text(value, "channelWaterBlockId", false),
-                text(value, "channelBankOverlayBlockId", false), integer(value, "repeatPeriodBlocks"),
+                text(value, "channelBankOverlayBlockId", false), text(value, "boundaryBlockId", true),
+                integer(value, "repeatPeriodBlocks"),
                 integer(value, "fieldBeforeBlocks"), integer(value, "channelWidthBlocks"),
                 integer(value, "fieldAfterBlocks"),
                 enumValue(CityLandUseSurfacePrintPlan.ClassificationMode.class,

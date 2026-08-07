@@ -1,6 +1,7 @@
 package com.rinsing.geomantia.systems.city.application;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.rinsing.geomantia.systems.city.domain.blueprint.CityBlueprintContractException;
@@ -34,9 +35,10 @@ class CityBlueprintServiceTest {
 
         assertEquals(0, prepared.get("aiCityDesignCallCount").getAsInt());
         JsonObject context = prepared.getAsJsonObject("cityBlueprintContext");
-        assertEquals("city_blueprint_catalog_snapshot.v0.6",
+        assertEquals("city_blueprint_context.v0.6", context.get("schemaVersion").getAsString());
+        assertEquals("city_blueprint_catalog_snapshot.v0.7",
                 context.getAsJsonObject("catalogSnapshotRef").get("schemaVersion").getAsString());
-        assertEquals("city_blueprint_catalog_snapshot.v0.6",
+        assertEquals("city_blueprint_catalog_snapshot.v0.7",
                 context.getAsJsonObject("catalogSnapshot").get("schemaVersion").getAsString());
         JsonObject semanticProfile = context.getAsJsonObject("catalogSnapshot")
                 .getAsJsonObject("structureCatalog")
@@ -57,6 +59,10 @@ class CityBlueprintServiceTest {
                 prepared.get("contextId").getAsString(), blueprint);
         assertTrue(submitted.get("ok").getAsBoolean());
         assertEquals(1, submitted.get("aiCityDesignSubmissionCount").getAsInt());
+        assertEquals("city_blueprint_validation_report.v0.4",
+                submitted.getAsJsonObject("validationReport").get("schemaVersion").getAsString());
+        assertEquals("city_blueprint_submission_trace.v0.4",
+                submitted.getAsJsonObject("submissionTrace").get("schemaVersion").getAsString());
 
         Path blueprintPath = fixture.runDir().resolve("city_blueprint_city_test/city_blueprint.json");
         Path reportPath = fixture.runDir().resolve(
@@ -138,6 +144,48 @@ class CityBlueprintServiceTest {
 
         JsonObject result = service.submit(temporary, fixture.runId(), fixture.cityId(),
                 prepared.get("contextId").getAsString(), blueprint(prepared.getAsJsonObject("cityBlueprintContext")));
+        assertFalse(result.get("ok").getAsBoolean());
+        assertEquals("CITY_BLUEPRINT_CONTEXT_STALE",
+                result.getAsJsonObject("validationReport").getAsJsonArray("issues")
+                        .get(0).getAsJsonObject().get("reasonCode").getAsString());
+    }
+
+    @Test
+    void previousContextSchemaIsRejectedAsStale() throws Exception {
+        Fixture fixture = fixture("run_old_context", "city:old_context");
+        CityBlueprintService service = new CityBlueprintService();
+        JsonObject prepared = service.prepare(temporary, fixture.runId(), fixture.cityId(),
+                fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog());
+        Path contextPath = fixture.runDir().resolve("city_blueprint_" + safe(fixture.cityId()))
+                .resolve("city_blueprint_context.json");
+        JsonObject context = JsonParser.parseString(Files.readString(contextPath)).getAsJsonObject();
+        context.addProperty("schemaVersion", "city_blueprint_context.v0.5");
+        Files.writeString(contextPath, context.toString());
+
+        JsonObject result = service.submit(temporary, fixture.runId(), fixture.cityId(),
+                prepared.get("contextId").getAsString(), blueprint(prepared.getAsJsonObject("cityBlueprintContext")));
+
+        assertFalse(result.get("ok").getAsBoolean());
+        assertEquals("CITY_BLUEPRINT_CONTEXT_STALE",
+                result.getAsJsonObject("validationReport").getAsJsonArray("issues")
+                        .get(0).getAsJsonObject().get("reasonCode").getAsString());
+    }
+
+    @Test
+    void previousSnapshotSchemaIsRejectedAsStale() throws Exception {
+        Fixture fixture = fixture("run_old_snapshot", "city:old_snapshot");
+        CityBlueprintService service = new CityBlueprintService();
+        JsonObject prepared = service.prepare(temporary, fixture.runId(), fixture.cityId(),
+                fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog());
+        Path snapshotPath = fixture.runDir().resolve("city_blueprint_" + safe(fixture.cityId()))
+                .resolve("city_blueprint_catalog_snapshot.json");
+        JsonObject snapshot = JsonParser.parseString(Files.readString(snapshotPath)).getAsJsonObject();
+        snapshot.addProperty("schemaVersion", "city_blueprint_catalog_snapshot.v0.6");
+        Files.writeString(snapshotPath, snapshot.toString());
+
+        JsonObject result = service.submit(temporary, fixture.runId(), fixture.cityId(),
+                prepared.get("contextId").getAsString(), blueprint(prepared.getAsJsonObject("cityBlueprintContext")));
+
         assertFalse(result.get("ok").getAsBoolean());
         assertEquals("CITY_BLUEPRINT_CONTEXT_STALE",
                 result.getAsJsonObject("validationReport").getAsJsonArray("issues")
@@ -253,7 +301,7 @@ class CityBlueprintServiceTest {
         JsonObject blueprint = blueprint(prepared.getAsJsonObject("cityBlueprintContext"));
         blueprint.getAsJsonObject("outdoorPlan").getAsJsonArray("landscapes").add(
                 JsonParser.parseString("""
-                        {"landscapeId":"central_green","landscapeProfileRef":"landscape:common_green",
+                        {"landscapeId":"central_green","landscapeProfileRef":"landscape:greenbelt",
                          "attachedGroupIds":["civic"],"preferredPatchRefs":[],"extentClass":"SMALL",
                          "intensity":"MEDIUM","continuity":"CONTINUOUS","growthRelation":"AROUND_SOURCE",
                          "referenceGroupIds":[],"terrainPolicy":"CONFORM","required":true}
@@ -263,6 +311,41 @@ class CityBlueprintServiceTest {
                 prepared.get("contextId").getAsString(), blueprint);
 
         assertTrue(result.get("ok").getAsBoolean(), result.toString());
+    }
+
+    @Test
+    void freezesFourStrictLandscapeProfilesWithDistinctSurfaceSemantics() throws Exception {
+        Fixture fixture = fixture("run_landscape_catalog", "city:landscape_catalog");
+
+        new CityBlueprintService().prepare(temporary, fixture.runId(), fixture.cityId(),
+                fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog());
+
+        JsonObject snapshot = JsonParser.parseString(Files.readString(fixture.runDir()
+                .resolve("city_blueprint_" + safe(fixture.cityId()))
+                .resolve("city_blueprint_catalog_snapshot.json"))).getAsJsonObject();
+        JsonObject catalog = snapshot.getAsJsonObject("referenceCatalog");
+        assertEquals(4, catalog.getAsJsonArray("landscapeProfiles").size());
+        JsonObject farmlandProfile = catalog.getAsJsonArray("landscapeProfiles").get(0).getAsJsonObject();
+        assertEquals("landscape:farmland_fenced", farmlandProfile.get("landscapeProfileRef").getAsString());
+        assertEquals(5, farmlandProfile.getAsJsonObject("parcelStyle").get("coreParcelCountMin").getAsInt());
+        assertEquals(10, farmlandProfile.getAsJsonObject("parcelStyle").get("coreParcelCountMax").getAsInt());
+        assertEquals(1, farmlandProfile.getAsJsonObject("parcelStyle").get("fillParcelCountMin").getAsInt());
+        assertEquals(3, farmlandProfile.getAsJsonObject("parcelStyle").get("fillParcelCountMax").getAsInt());
+        assertTrue(catalog.getAsJsonArray("landscapeProfiles").asList().stream()
+                .map(JsonElement::getAsJsonObject)
+                .anyMatch(profile -> "landscape:forestry".equals(
+                        profile.get("landscapeProfileRef").getAsString())
+                        && "forestry".equals(profile.get("landUseRuleRef").getAsString())));
+        assertTrue(catalog.getAsJsonArray("surfaceRecipes").asList().stream()
+                .map(JsonElement::getAsJsonObject)
+                .anyMatch(recipe -> "surface_recipe:forestry".equals(
+                        recipe.get("surfaceRecipeRef").getAsString())
+                        && "minecraft:spruce_fence".equals(recipe.get("boundaryBlockId").getAsString())));
+        assertTrue(catalog.getAsJsonArray("surfaceRecipes").asList().stream()
+                .map(JsonElement::getAsJsonObject)
+                .anyMatch(recipe -> "surface_recipe:flower_field".equals(
+                        recipe.get("surfaceRecipeRef").getAsString())
+                        && "minecraft:poppy".equals(recipe.get("cropBlockId").getAsString())));
     }
 
     @Test
@@ -281,6 +364,32 @@ class CityBlueprintServiceTest {
     }
 
     @Test
+    void acceptsConfiguredContourWidthsAndOptionalBoundaryBlock() throws Exception {
+        Fixture fixture = fixture("run_contour_surface_recipe", "city:contour_surface_recipe");
+        JsonObject catalog = fixture.referenceCatalog().deepCopy();
+        JsonObject recipe = catalog.getAsJsonArray("surfaceRecipes").get(0).getAsJsonObject();
+        recipe.addProperty("surfaceAlgorithm", "CONTOUR_BANDS");
+        recipe.addProperty("cropBlockId", "minecraft:wheat");
+        recipe.addProperty("channelBankBlockId", "minecraft:dirt");
+        recipe.addProperty("channelWaterBlockId", "minecraft:water");
+        recipe.addProperty("channelBankOverlayBlockId", "minecraft:oak_slab");
+        recipe.addProperty("boundaryBlockId", "minecraft:cobblestone");
+        recipe.addProperty("fieldBeforeBlocks", 7);
+        recipe.addProperty("channelWidthBlocks", 2);
+        recipe.addProperty("fieldAfterBlocks", 4);
+
+        new CityBlueprintService().prepare(temporary, fixture.runId(), fixture.cityId(),
+                fixture.terraSenseSource(), fixture.templateSource(), catalog);
+        JsonObject snapshot = JsonParser.parseString(Files.readString(fixture.runDir()
+                .resolve("city_blueprint_" + safe(fixture.cityId()))
+                .resolve("city_blueprint_catalog_snapshot.json"))).getAsJsonObject();
+        JsonObject frozenRecipe = snapshot.getAsJsonObject("referenceCatalog")
+                .getAsJsonArray("surfaceRecipes").get(0).getAsJsonObject();
+        assertEquals(7, frozenRecipe.get("fieldBeforeBlocks").getAsInt());
+        assertEquals("minecraft:cobblestone", frozenRecipe.get("boundaryBlockId").getAsString());
+    }
+
+    @Test
     void oldResidualPolicyIsRejectedInsteadOfSilentlyMigrated() throws Exception {
         Fixture fixture = fixture("run_old_residual", "city:old_residual");
         CityBlueprintService service = new CityBlueprintService();
@@ -296,24 +405,84 @@ class CityBlueprintServiceTest {
     }
 
     @Test
-    void autoConnectRejectsSurfaceRecipeWithPrintingDisabled() throws Exception {
-        Fixture fixture = fixture("run_disabled_surface_connect", "city:disabled_surface_connect");
-        JsonObject catalog = fixture.referenceCatalog().deepCopy();
-        JsonObject recipe = catalog.getAsJsonArray("surfaceRecipes").get(0).getAsJsonObject();
-        recipe.addProperty("surfacePrintEnabled", false);
-        recipe.addProperty("autoConnectDefault", false);
-        recipe.remove("surfaceBlockId");
+    void spatialGroundRejectsRemovedMaterialAuthorityFields() throws Exception {
+        Fixture fixture = fixture("run_spatial_ground_material", "city:spatial_ground_material");
         CityBlueprintService service = new CityBlueprintService();
         JsonObject prepared = service.prepare(temporary, fixture.runId(), fixture.cityId(),
-                fixture.terraSenseSource(), fixture.templateSource(), catalog);
+                fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog());
+        JsonObject blueprint = blueprint(prepared.getAsJsonObject("cityBlueprintContext"));
+        blueprint.getAsJsonObject("outdoorPlan").getAsJsonArray("spatialGrounds")
+                .get(0).getAsJsonObject().addProperty("surfaceRecipeRef", "surface_recipe:civic");
 
         JsonObject result = service.submit(temporary, fixture.runId(), fixture.cityId(),
-                prepared.get("contextId").getAsString(), blueprint(prepared.getAsJsonObject("cityBlueprintContext")));
+                prepared.get("contextId").getAsString(), blueprint);
 
         assertFalse(result.get("ok").getAsBoolean());
-        assertEquals("CITY_BLUEPRINT_OUTDOOR_SURFACE_RECIPE_INCOMPATIBLE",
+        assertEquals("CITY_BLUEPRINT_FIELD_UNKNOWN",
                 result.getAsJsonObject("validationReport").getAsJsonArray("issues")
                         .get(0).getAsJsonObject().get("reasonCode").getAsString());
+    }
+
+    @Test
+    void rejectsUnknownFoundationProfile() throws Exception {
+        Fixture fixture = fixture("run_unknown_foundation", "city:unknown_foundation");
+        CityBlueprintService service = new CityBlueprintService();
+        JsonObject prepared = service.prepare(temporary, fixture.runId(), fixture.cityId(),
+                fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog());
+        JsonObject blueprint = blueprint(prepared.getAsJsonObject("cityBlueprintContext"));
+        blueprint.getAsJsonObject("outdoorPlan").addProperty("foundationProfileRef", "foundation:missing");
+
+        JsonObject result = service.submit(temporary, fixture.runId(), fixture.cityId(),
+                prepared.get("contextId").getAsString(), blueprint);
+
+        assertFalse(result.get("ok").getAsBoolean());
+        assertEquals("CITY_BLUEPRINT_OUTDOOR_FOUNDATION_PROFILE_UNKNOWN",
+                result.getAsJsonObject("validationReport").getAsJsonArray("issues")
+                        .get(0).getAsJsonObject().get("reasonCode").getAsString());
+    }
+
+    @Test
+    void rejectsNonMonotonicFoundationDistances() throws Exception {
+        Fixture fixture = fixture("run_bad_foundation_ranges", "city:bad_foundation_ranges");
+        JsonObject catalog = fixture.referenceCatalog().deepCopy();
+        catalog.getAsJsonArray("foundationProfiles").get(0).getAsJsonObject()
+                .addProperty("closeRadiusBlocks", 1);
+
+        CityBlueprintContractException failure = assertThrows(CityBlueprintContractException.class,
+                () -> new CityBlueprintService().prepare(temporary, fixture.runId(), fixture.cityId(),
+                        fixture.terraSenseSource(), fixture.templateSource(), catalog));
+
+        assertEquals(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID,
+                failure.reasonCode());
+    }
+
+    @Test
+    void rejectsInvalidLandscapeParcelStyleRanges() throws Exception {
+        Fixture fixture = fixture("run_bad_parcel_style", "city:bad_parcel_style");
+        JsonObject catalog = fixture.referenceCatalog().deepCopy();
+        catalog.getAsJsonArray("landscapeProfiles").get(0).getAsJsonObject()
+                .getAsJsonObject("parcelStyle").addProperty("branchFromExistingChance", 1.1);
+
+        CityBlueprintContractException failure = assertThrows(CityBlueprintContractException.class,
+                () -> new CityBlueprintService().prepare(temporary, fixture.runId(), fixture.cityId(),
+                        fixture.terraSenseSource(), fixture.templateSource(), catalog));
+
+        assertEquals(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID,
+                failure.reasonCode());
+    }
+
+    @Test
+    void rejectsPreviousReferenceCatalogSchema() throws Exception {
+        Fixture fixture = fixture("run_old_reference_catalog", "city:old_reference_catalog");
+        JsonObject catalog = fixture.referenceCatalog().deepCopy();
+        catalog.addProperty("schemaVersion", "city_blueprint_reference_catalog.v0.3");
+
+        CityBlueprintContractException failure = assertThrows(CityBlueprintContractException.class,
+                () -> new CityBlueprintService().prepare(temporary, fixture.runId(), fixture.cityId(),
+                        fixture.terraSenseSource(), fixture.templateSource(), catalog));
+
+        assertEquals(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_SCHEMA_UNSUPPORTED,
+                failure.reasonCode());
     }
 
     private Fixture fixture(String runId, String cityId) throws Exception {
@@ -394,7 +563,7 @@ class CityBlueprintServiceTest {
     private static JsonObject referenceCatalog() {
         return JsonParser.parseString("""
                 {
-                  "schemaVersion":"city_blueprint_reference_catalog.v0.3",
+                  "schemaVersion":"city_blueprint_reference_catalog.v0.4",
                   "structureRefs":[{"structureRef":"geomantia:town_hall","templateCandidates":[{"templateId":"geomantia:town_hall","variantId":"default"}]}],
                   "fillPools":[{"poolRef":"pool:civic","structureRefs":["geomantia:town_hall"]}],
                   "algorithmProfiles":[
@@ -411,19 +580,87 @@ class CityBlueprintServiceTest {
                     "actionBudget":300,"baseStepCost":1.0,"slopeCost":1.2,"reliefCost":1.2,"waterCost":8.0,
                     "forestAffinity":0.0,"competitionWeight":1.0,"mergeSameType":true,
                     "surfacePolicy":"PAVE","vegetationPolicy":"CLEAR","boundaryPolicy":"OPEN","decorationPolicy":"none"
+                  },{
+                    "ruleRef":"agriculture","landUseType":"agriculture","semanticTerms":["farm"],
+                    "footprintMultiplier":1.0,"extraAreaBlocks":256,"minAreaBlocks":128,"maxAreaBlocks":4096,
+                    "actionBudget":600,"baseStepCost":1.0,"slopeCost":1.4,"reliefCost":1.2,"waterCost":4.0,
+                    "forestAffinity":0.2,"competitionWeight":1.0,"mergeSameType":true,
+                    "surfacePolicy":"CULTIVATE","vegetationPolicy":"CLEAR","boundaryPolicy":"FENCE","decorationPolicy":"none"
+                  },{
+                    "ruleRef":"meadow","landUseType":"meadow","semanticTerms":["flower"],
+                    "footprintMultiplier":0.8,"extraAreaBlocks":192,"minAreaBlocks":96,"maxAreaBlocks":3072,
+                    "actionBudget":480,"baseStepCost":1.0,"slopeCost":1.0,"reliefCost":1.0,"waterCost":6.0,
+                    "forestAffinity":0.1,"competitionWeight":0.9,"mergeSameType":true,
+                    "surfacePolicy":"CULTIVATE","vegetationPolicy":"SELECTIVE_CLEAR","boundaryPolicy":"OPEN","decorationPolicy":"none"
+                  },{
+                    "ruleRef":"greenbelt","landUseType":"greenbelt","semanticTerms":["park"],
+                    "footprintMultiplier":0.6,"extraAreaBlocks":128,"minAreaBlocks":64,"maxAreaBlocks":2048,
+                    "actionBudget":420,"baseStepCost":1.0,"slopeCost":1.0,"reliefCost":1.0,"waterCost":5.0,
+                    "forestAffinity":0.0,"competitionWeight":0.8,"mergeSameType":true,
+                    "surfacePolicy":"PAVE","vegetationPolicy":"PRESERVE","boundaryPolicy":"HEDGE","decorationPolicy":"none"
+                  },{
+                    "ruleRef":"forestry","landUseType":"forestry","semanticTerms":["woodland"],
+                    "footprintMultiplier":1.0,"extraAreaBlocks":320,"minAreaBlocks":160,"maxAreaBlocks":4096,
+                    "actionBudget":640,"baseStepCost":1.0,"slopeCost":0.8,"reliefCost":0.8,"waterCost":7.0,
+                    "forestAffinity":-0.4,"competitionWeight":0.85,"mergeSameType":true,
+                    "surfacePolicy":"PRESERVE","vegetationPolicy":"PRESERVE","boundaryPolicy":"FENCE","decorationPolicy":"none"
                   }]},
-                  "surfaceRecipes":[{"surfaceRecipeRef":"surface_recipe:civic","surfacePrintEnabled":true,
-                    "autoConnectDefault":true,"surfaceAlgorithm":"UNIFORM","surfaceBlockId":"minecraft:stone_bricks"}],
-                  "landscapeProfiles":[{"landscapeProfileRef":"landscape:common_green","landscapeType":"COMMON_GREEN",
-                    "landUseRuleRef":"civic","surfaceRecipeRef":"surface_recipe:civic","baseAreaSmall":256,
-                    "baseAreaMedium":512,"baseAreaLarge":1024,"membership":"URBAN"}]
+                  "surfaceRecipes":[
+                    {"surfaceRecipeRef":"surface_recipe:civic","surfacePrintEnabled":true,
+                    "autoConnectDefault":true,"surfaceAlgorithm":"UNIFORM","surfaceBlockId":"minecraft:stone_bricks"},
+                    {"surfaceRecipeRef":"surface_recipe:farmland_fenced","surfacePrintEnabled":true,
+                    "autoConnectDefault":true,"surfaceAlgorithm":"CONTOUR_BANDS","surfaceBlockId":"minecraft:farmland",
+                    "cropBlockId":"minecraft:wheat","channelBankBlockId":"minecraft:dirt",
+                    "channelWaterBlockId":"minecraft:water","channelBankOverlayBlockId":"minecraft:oak_slab",
+                    "boundaryBlockId":"minecraft:oak_fence","fieldBeforeBlocks":5,"channelWidthBlocks":3,"fieldAfterBlocks":5},
+                    {"surfaceRecipeRef":"surface_recipe:flower_field","surfacePrintEnabled":true,
+                    "autoConnectDefault":true,"surfaceAlgorithm":"CONTOUR_BANDS","surfaceBlockId":"minecraft:grass_block",
+                    "cropBlockId":"minecraft:poppy","channelBankBlockId":"minecraft:dirt",
+                    "channelWaterBlockId":"minecraft:water","channelBankOverlayBlockId":"minecraft:moss_carpet",
+                    "fieldBeforeBlocks":7,"channelWidthBlocks":1,"fieldAfterBlocks":7},
+                    {"surfaceRecipeRef":"surface_recipe:greenbelt","surfacePrintEnabled":true,
+                    "autoConnectDefault":true,"surfaceAlgorithm":"UNIFORM","surfaceBlockId":"minecraft:grass_block",
+                    "boundaryBlockId":"minecraft:oak_leaves"},
+                    {"surfaceRecipeRef":"surface_recipe:forestry","surfacePrintEnabled":true,
+                    "autoConnectDefault":false,"surfaceAlgorithm":"UNIFORM","surfaceBlockId":"minecraft:podzol",
+                    "boundaryBlockId":"minecraft:spruce_fence"}
+                  ],
+                  "foundationProfiles":[{"foundationProfileRef":"foundation:urban","landUseRuleRef":"civic",
+                    "surfaceRecipeRef":"surface_recipe:civic","structureMarginBlocks":2,
+                    "closeRadiusBlocks":16,"maxJoinDistanceBlocks":48}],
+                  "landscapeProfiles":[
+                    {"landscapeProfileRef":"landscape:farmland_fenced","landscapeType":"FARMLAND",
+                    "landUseRuleRef":"agriculture","surfaceRecipeRef":"surface_recipe:farmland_fenced","baseAreaSmall":512,
+                    "baseAreaMedium":1024,"baseAreaLarge":2048,"membership":"LANDSCAPE",
+                    "parcelStyle":{"coreParcelCountMin":5,"coreParcelCountMax":10,"fillParcelCountMin":1,
+                    "fillParcelCountMax":3,"parcelAreaMinBlocks":64,"parcelAreaMaxBlocks":256,
+                    "branchFromExistingChance":0.65,"gapMinBlocks":2,"gapMaxBlocks":8}},
+                    {"landscapeProfileRef":"landscape:flower_field","landscapeType":"MEADOW",
+                    "landUseRuleRef":"meadow","surfaceRecipeRef":"surface_recipe:flower_field","baseAreaSmall":256,
+                    "baseAreaMedium":512,"baseAreaLarge":1024,"membership":"LANDSCAPE",
+                    "parcelStyle":{"coreParcelCountMin":1,"coreParcelCountMax":2,"fillParcelCountMin":1,
+                    "fillParcelCountMax":4,"parcelAreaMinBlocks":48,"parcelAreaMaxBlocks":192,
+                    "branchFromExistingChance":0.75,"gapMinBlocks":1,"gapMaxBlocks":5}},
+                    {"landscapeProfileRef":"landscape:greenbelt","landscapeType":"COMMON_GREEN",
+                    "landUseRuleRef":"greenbelt","surfaceRecipeRef":"surface_recipe:greenbelt","baseAreaSmall":128,
+                    "baseAreaMedium":384,"baseAreaLarge":768,"membership":"URBAN",
+                    "parcelStyle":{"coreParcelCountMin":1,"coreParcelCountMax":1,"fillParcelCountMin":1,
+                    "fillParcelCountMax":3,"parcelAreaMinBlocks":32,"parcelAreaMaxBlocks":128,
+                    "branchFromExistingChance":0.8,"gapMinBlocks":0,"gapMaxBlocks":3}},
+                    {"landscapeProfileRef":"landscape:forestry","landscapeType":"WOODLAND",
+                    "landUseRuleRef":"forestry","surfaceRecipeRef":"surface_recipe:forestry","baseAreaSmall":512,
+                    "baseAreaMedium":1536,"baseAreaLarge":4096,"membership":"LANDSCAPE",
+                    "parcelStyle":{"coreParcelCountMin":1,"coreParcelCountMax":3,"fillParcelCountMin":1,
+                    "fillParcelCountMax":5,"parcelAreaMinBlocks":96,"parcelAreaMaxBlocks":384,
+                    "branchFromExistingChance":0.7,"gapMinBlocks":3,"gapMaxBlocks":10}}
+                  ]
                 }
                 """).getAsJsonObject();
     }
 
     private static JsonObject blueprint(JsonObject context) {
         JsonObject blueprint = new JsonObject();
-        blueprint.addProperty("schemaVersion", "city_blueprint.v0.6");
+        blueprint.addProperty("schemaVersion", "city_blueprint.v0.7");
         blueprint.addProperty("cityId", context.get("cityId").getAsString());
         blueprint.add("sourceD3Ref", context.getAsJsonObject("sourceD3Ref").deepCopy());
         blueprint.add("catalogSnapshotRef", context.getAsJsonObject("catalogSnapshotRef").deepCopy());
@@ -451,8 +688,8 @@ class CityBlueprintServiceTest {
         blueprint.add("outdoorPlan", JsonParser.parseString("""
                 {
                   "mode":"GENERATE","envelopeProfile":"BALANCED",
-                  "spatialGrounds":[{"sourceGroupId":"civic","landUseRuleRef":"civic",
-                    "surfaceRecipeRef":"surface_recipe:civic","sharedSpaceType":"CIVIC_SQUARE",
+                  "foundationProfileRef":"foundation:urban",
+                  "spatialGrounds":[{"sourceGroupId":"civic","sharedSpaceType":"CIVIC_SQUARE",
                     "hierarchyLevel":"PRIMARY","membership":"URBAN"}],
                   "landscapes":[]
                 }

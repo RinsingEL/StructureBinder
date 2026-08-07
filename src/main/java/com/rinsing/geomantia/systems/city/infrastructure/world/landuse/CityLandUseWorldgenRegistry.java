@@ -588,6 +588,8 @@ public final class CityLandUseWorldgenRegistry {
                     area.surfaceSettings().channelWaterBlockId());
             validateSurfaceBlockId(area.printAreaId(), "channelBankOverlayBlockId",
                     area.surfaceSettings().channelBankOverlayBlockId());
+            validateSurfaceBlockId(area.printAreaId(), "boundaryBlockId",
+                    area.surfaceSettings().boundaryBlockId());
         }
     }
 

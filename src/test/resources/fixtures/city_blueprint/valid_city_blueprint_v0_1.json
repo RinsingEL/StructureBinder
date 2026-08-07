@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "city_blueprint.v0.6",
+  "schemaVersion": "city_blueprint.v0.7",
   "cityId": "city:test",
   "sourceD3Ref": {
     "path": "run/city_d3_city_test/city_landform_review_package.json",
@@ -8,7 +8,7 @@
   },
   "catalogSnapshotRef": {
     "path": "run/city_blueprint_city_test/city_blueprint_catalog_snapshot.json",
-    "schemaVersion": "city_blueprint_catalog_snapshot.v0.2",
+    "schemaVersion": "city_blueprint_catalog_snapshot.v0.7",
     "contentHash": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
   },
   "generationSeed": 42,
@@ -42,11 +42,10 @@
   "outdoorPlan": {
     "mode": "GENERATE",
     "envelopeProfile": "BALANCED",
+    "foundationProfileRef": "foundation:urban",
     "spatialGrounds": [
       {
         "sourceGroupId": "civic_core",
-        "landUseRuleRef": "civic",
-        "surfaceRecipeRef": "surface_recipe:civic",
         "sharedSpaceType": "CIVIC_SQUARE",
         "hierarchyLevel": "PRIMARY",
         "membership": "URBAN"

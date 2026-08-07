@@ -25,7 +25,30 @@ public record LandUseSeedGroup(
         List<GrowthRegion> growthRegions,
         GrowthBias growthBias,
         TerrainBias terrainBias,
-        List<String> preferredPatchRefs) {
+        List<String> preferredPatchRefs,
+        LayerRole layerRole,
+        FoundationSettings foundationSettings) {
+
+    public LandUseSeedGroup(String groupId,
+                            LandUseRule rule,
+                            LandUseSurfaceSettings surfaceSettings,
+                            List<String> anchorIds,
+                            List<BlockBounds> structureFootprints,
+                            List<BlockPoint> seedPoints,
+                            List<LandUseAreaPlan.GateSlot> gateSlots,
+                            int minAreaBlocks,
+                            int preferredAreaBlocks,
+                            int maxAreaBlocks,
+                            double actionBudget,
+                            double competitionWeight,
+                            List<GrowthRegion> growthRegions,
+                            GrowthBias growthBias,
+                            TerrainBias terrainBias,
+                            List<String> preferredPatchRefs) {
+        this(groupId, rule, surfaceSettings, anchorIds, structureFootprints, seedPoints, gateSlots,
+                minAreaBlocks, preferredAreaBlocks, maxAreaBlocks, actionBudget, competitionWeight,
+                growthRegions, growthBias, terrainBias, preferredPatchRefs, LayerRole.STANDARD, null);
+    }
 
     public LandUseSeedGroup(String groupId,
                             LandUseRule rule,
@@ -117,6 +140,15 @@ public record LandUseSeedGroup(
         growthBias = growthBias == null ? GrowthBias.neutral() : growthBias;
         terrainBias = terrainBias == null ? TerrainBias.BALANCED : terrainBias;
         preferredPatchRefs = List.copyOf(preferredPatchRefs == null ? List.of() : preferredPatchRefs);
+        layerRole = layerRole == null ? LayerRole.STANDARD : layerRole;
+        if (layerRole == LayerRole.FOUNDATION) {
+            Objects.requireNonNull(foundationSettings, "foundationSettings");
+            if (structureFootprints.isEmpty()) {
+                throw new IllegalArgumentException("Foundation LandUse requires structure footprints");
+            }
+        } else if (foundationSettings != null) {
+            throw new IllegalArgumentException("Only foundation LandUse accepts foundation settings");
+        }
         if (growthRegions.isEmpty()) {
             growthRegions = List.of(new GrowthRegion(groupId, anchorIds, seedPoints,
                     minAreaBlocks, preferredAreaBlocks, maxAreaBlocks));
@@ -187,6 +219,24 @@ public record LandUseSeedGroup(
 
         public double reliefMultiplier() {
             return reliefMultiplier;
+        }
+    }
+
+    public enum LayerRole {
+        STANDARD,
+        FOUNDATION,
+        LANDSCAPE
+    }
+
+    public record FoundationSettings(int structureMarginBlocks,
+                                     int closeRadiusBlocks,
+                                     int maxJoinDistanceBlocks) {
+        public FoundationSettings {
+            if (structureMarginBlocks < 0 || closeRadiusBlocks < structureMarginBlocks
+                    || maxJoinDistanceBlocks < closeRadiusBlocks) {
+                throw new IllegalArgumentException(
+                        "Foundation settings must satisfy 0 <= margin <= close <= maxJoin");
+            }
         }
     }
 

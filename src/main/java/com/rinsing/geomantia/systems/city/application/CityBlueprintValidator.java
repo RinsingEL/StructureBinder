@@ -112,6 +112,11 @@ public final class CityBlueprintValidator {
     private static void validateOutdoorPlan(List<Issue> issues, CityBlueprint.OutdoorPlan plan,
                                             Set<String> groupIds, Set<String> patchRefs,
                                             CityBlueprintReferenceCatalog catalog) {
+        if (!catalog.foundationProfiles().containsKey(plan.foundationProfileRef())) {
+            add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_FOUNDATION_PROFILE_UNKNOWN,
+                    "$.outdoorPlan.foundationProfileRef",
+                    "Unknown foundation profile: " + plan.foundationProfileRef());
+        }
         if (plan.mode() == CityBlueprint.OutdoorMode.PRESERVE) {
             if (!plan.spatialGrounds().isEmpty() || !plan.landscapes().isEmpty()) {
                 add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_MODE_INVALID,
@@ -130,20 +135,6 @@ public final class CityBlueprintValidator {
             } else if (!coveredGroups.add(ground.sourceGroupId())) {
                 add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_GROUND_COVERAGE_INVALID,
                         path + ".sourceGroupId", "A STRUCTURE Group must have exactly one SpatialGround.");
-            }
-            if (catalog.landUseRuleCatalog().byRef(ground.landUseRuleRef()).isEmpty()) {
-                add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_LAND_USE_RULE_UNKNOWN,
-                        path + ".landUseRuleRef", "Unknown LandUse rule: " + ground.landUseRuleRef());
-            }
-            CityBlueprintReferenceCatalog.SurfaceRecipe surfaceRecipe =
-                    catalog.surfaceRecipes().get(ground.surfaceRecipeRef());
-            if (surfaceRecipe == null) {
-                add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_SURFACE_RECIPE_UNKNOWN,
-                        path + ".surfaceRecipeRef", "Unknown surface recipe: " + ground.surfaceRecipeRef());
-            } else if (!surfaceRecipe.surfacePrintEnabled()) {
-                add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_SURFACE_RECIPE_INCOMPATIBLE,
-                        path + ".surfaceRecipeRef",
-                        "SpatialGround requires a surface recipe with surfacePrintEnabled=true.");
             }
         }
         if (!coveredGroups.equals(groupIds)) {
