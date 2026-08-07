@@ -17,7 +17,7 @@ public record CityBlueprint(
         ProfileRef surfaceDetailProfile,
         OutdoorPlan outdoorPlan) {
 
-    public static final String SCHEMA_VERSION = "city_blueprint.v0.6";
+    public static final String SCHEMA_VERSION = "city_blueprint.v0.7";
 
     public CityBlueprint {
         groups = List.copyOf(groups);
@@ -97,6 +97,7 @@ public record CityBlueprint(
     public record OutdoorPlan(
             OutdoorMode mode,
             EnvelopeProfile envelopeProfile,
+            String foundationProfileRef,
             List<SpatialGround> spatialGrounds,
             List<Landscape> landscapes) {
         public OutdoorPlan {
@@ -108,8 +109,6 @@ public record CityBlueprint(
     /** One shared outdoor-space system owned by a whole structure group, never by one building. */
     public record SpatialGround(
             String sourceGroupId,
-            String landUseRuleRef,
-            String surfaceRecipeRef,
             SharedSpaceType sharedSpaceType,
             SpatialHierarchy hierarchyLevel,
             OutdoorMembership membership) {

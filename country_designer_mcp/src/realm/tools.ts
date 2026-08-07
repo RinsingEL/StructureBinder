@@ -287,6 +287,7 @@ const surfaceRecipeSchema: Record<string, unknown> = {
       surfacePrintEnabled: { type: "boolean", enum: [true] },
       surfaceAlgorithm: { type: "string", enum: ["UNIFORM"] },
       surfaceBlockId: minecraftBlockIdSchema,
+      boundaryBlockId: minecraftBlockIdSchema,
     }, ["surfaceRecipeRef", "surfacePrintEnabled", "autoConnectDefault", "surfaceAlgorithm",
       "surfaceBlockId"]),
     strictObject({
@@ -298,14 +299,18 @@ const surfaceRecipeSchema: Record<string, unknown> = {
       channelBankBlockId: minecraftBlockIdSchema,
       channelWaterBlockId: minecraftBlockIdSchema,
       channelBankOverlayBlockId: minecraftBlockIdSchema,
+      boundaryBlockId: minecraftBlockIdSchema,
+      fieldBeforeBlocks: positiveInteger("等高线沟渠前的田地区段宽度。"),
+      channelWidthBlocks: positiveInteger("等高线沟渠区段宽度。"),
+      fieldAfterBlocks: positiveInteger("等高线沟渠后的田地区段宽度。"),
     }, ["surfaceRecipeRef", "surfacePrintEnabled", "autoConnectDefault", "surfaceAlgorithm",
       "surfaceBlockId", "cropBlockId", "channelBankBlockId", "channelWaterBlockId",
-      "channelBankOverlayBlockId"]),
+      "channelBankOverlayBlockId", "fieldBeforeBlocks", "channelWidthBlocks", "fieldAfterBlocks"]),
   ],
 };
 
 const blueprintReferenceCatalogSchema = strictObject({
-  schemaVersion: { type: "string", enum: ["city_blueprint_reference_catalog.v0.3"] },
+  schemaVersion: { type: "string", enum: ["city_blueprint_reference_catalog.v0.4"] },
   structureRefs: {
     type: "array", minItems: 1,
     items: strictObject({
@@ -367,6 +372,18 @@ const blueprintReferenceCatalogSchema = strictObject({
     profileId: nonEmptyString("冻结 LandUse rule profile ID。"),
     rules: { type: "array", minItems: 1, items: landUseRuleSchema },
   }, ["schemaVersion", "profileId", "rules"]),
+  foundationProfiles: {
+    type: "array", minItems: 1,
+    items: strictObject({
+      foundationProfileRef: nonEmptyString("稳定的城市统一基座 profile 引用。"),
+      landUseRuleRef: nonEmptyString("同目录 LandUse ruleRef。"),
+      surfaceRecipeRef: nonEmptyString("同目录 surfaceRecipeRef。"),
+      structureMarginBlocks: { type: "integer", minimum: 0 },
+      closeRadiusBlocks: { type: "integer", minimum: 0 },
+      maxJoinDistanceBlocks: { type: "integer", minimum: 0 },
+    }, ["foundationProfileRef", "landUseRuleRef", "surfaceRecipeRef", "structureMarginBlocks",
+      "closeRadiusBlocks", "maxJoinDistanceBlocks"]),
+  },
   surfaceRecipes: { type: "array", minItems: 1, items: surfaceRecipeSchema },
   landscapeProfiles: {
     type: "array", minItems: 1,
@@ -379,11 +396,24 @@ const blueprintReferenceCatalogSchema = strictObject({
       baseAreaMedium: positiveInteger("MEDIUM 景观基准面积；服务端要求不小于 SMALL。"),
       baseAreaLarge: positiveInteger("LARGE 景观基准面积；服务端要求不小于 MEDIUM。"),
       membership: { type: "string", enum: ["URBAN", "LANDSCAPE"] },
+      parcelStyle: strictObject({
+        coreParcelCountMin: positiveInteger("核心地块最小数量。"),
+        coreParcelCountMax: positiveInteger("核心地块最大数量。"),
+        fillParcelCountMin: { type: "integer", minimum: 0 },
+        fillParcelCountMax: { type: "integer", minimum: 0 },
+        parcelAreaMinBlocks: positiveInteger("单个地块最小面积。"),
+        parcelAreaMaxBlocks: positiveInteger("单个地块最大面积。"),
+        branchFromExistingChance: { type: "number", minimum: 0, maximum: 1 },
+        gapMinBlocks: { type: "integer", minimum: 0 },
+        gapMaxBlocks: { type: "integer", minimum: 0 },
+      }, ["coreParcelCountMin", "coreParcelCountMax", "fillParcelCountMin", "fillParcelCountMax",
+        "parcelAreaMinBlocks", "parcelAreaMaxBlocks", "branchFromExistingChance", "gapMinBlocks",
+        "gapMaxBlocks"]),
     }, ["landscapeProfileRef", "landscapeType", "landUseRuleRef", "surfaceRecipeRef",
-      "baseAreaSmall", "baseAreaMedium", "baseAreaLarge", "membership"]),
+      "baseAreaSmall", "baseAreaMedium", "baseAreaLarge", "membership", "parcelStyle"]),
   },
 }, ["schemaVersion", "structureRefs", "fillPools", "algorithmProfiles", "compositionProfiles",
-  "styleProfiles", "roadProfiles", "surfaceDetailProfiles", "landUseRuleProfile", "surfaceRecipes",
+  "styleProfiles", "roadProfiles", "surfaceDetailProfiles", "landUseRuleProfile", "foundationProfiles", "surfaceRecipes",
   "landscapeProfiles"]);
 
 const artifactRefSchema = strictObject({
@@ -393,7 +423,7 @@ const artifactRefSchema = strictObject({
 }, ["path", "schemaVersion", "contentHash"]);
 
 const cityBlueprintSchema = strictObject({
-  schemaVersion: { type: "string", enum: ["city_blueprint.v0.5"] },
+  schemaVersion: { type: "string", enum: ["city_blueprint.v0.7"] },
   cityId: nonEmptyString("必须与冻结上下文一致。"),
   sourceD3Ref: artifactRefSchema,
   catalogSnapshotRef: artifactRefSchema,
@@ -456,22 +486,16 @@ const cityBlueprintSchema = strictObject({
   outdoorPlan: strictObject({
     mode: { type: "string", enum: ["GENERATE", "PRESERVE"] },
     envelopeProfile: { type: "string", enum: ["COMPACT", "BALANCED", "LOOSE"] },
-    structureGrounds: {
+    foundationProfileRef: nonEmptyString("统一城市基座使用的冻结 foundation profile 引用。"),
+    spatialGrounds: {
       type: "array",
       items: strictObject({
         sourceGroupId: nonEmptyString("同一 Blueprint 中的 STRUCTURE groupId。"),
-        landUseRuleRef: nonEmptyString("冻结的 LandUse rule 引用。"),
-        surfaceRecipeRef: nonEmptyString("冻结的地表 recipe 引用；不直接提交 block ID。"),
-        extentClass: { type: "string", enum: ["SMALL", "MEDIUM", "LARGE"] },
-        growthBias: { type: "string", enum: ["BALANCED", "AWAY_FROM_REFERENCE", "TOWARD_REFERENCE"] },
-        referenceGroupIds: {
-          type: "array", uniqueItems: true,
-          items: nonEmptyString("growthBias 引用的同蓝图 groupId。"),
-        },
-        autoConnect: { type: "boolean" },
+        sharedSpaceType: { type: "string", enum: ["CIVIC_SQUARE", "MARKET_STREET",
+          "RESIDENTIAL_COURT", "FARMSTEAD", "GENERAL_URBAN"] },
+        hierarchyLevel: { type: "string", enum: ["PRIMARY", "SECONDARY", "LOCAL"] },
         membership: { type: "string", enum: ["URBAN", "LANDSCAPE"] },
-      }, ["sourceGroupId", "landUseRuleRef", "surfaceRecipeRef", "extentClass", "growthBias",
-        "referenceGroupIds", "autoConnect", "membership"]),
+      }, ["sourceGroupId", "sharedSpaceType", "hierarchyLevel", "membership"]),
     },
     landscapes: {
       type: "array",
@@ -502,17 +526,7 @@ const cityBlueprintSchema = strictObject({
       }, ["landscapeId", "landscapeProfileRef", "attachedGroupIds", "preferredPatchRefs", "extentClass",
         "intensity", "continuity", "growthRelation", "referenceGroupIds", "terrainPolicy", "required"]),
     },
-    residualPolicy: strictObject({
-      smallEnclosed: { type: "string", enum: ["ABSORB_NEIGHBOR", "NATURAL_RESERVE"] },
-      narrowGap: { type: "string", enum: ["ABSORB_NEIGHBOR", "PATH_OR_VERGE", "NATURAL_RESERVE"] },
-      mediumEnclosed: {
-        type: "string",
-        enum: ["ABSORB_NEIGHBOR", "COMMON_GREEN", "SERVICE_GROUND", "NATURAL_RESERVE"],
-      },
-      largeEnclosed: { type: "string", enum: ["COMMON_GREEN", "NATURAL_RESERVE"] },
-      exteriorConnected: { type: "string", enum: ["NATURAL_RESERVE"] },
-    }, ["smallEnclosed", "narrowGap", "mediumEnclosed", "largeEnclosed", "exteriorConnected"]),
-  }, ["mode", "envelopeProfile", "structureGrounds", "landscapes", "residualPolicy"]),
+  }, ["mode", "envelopeProfile", "foundationProfileRef", "spatialGrounds", "landscapes"]),
 }, ["schemaVersion", "cityId", "sourceD3Ref", "catalogSnapshotRef", "generationSeed", "designIntent",
   "styleProfile", "groups", "relations", "roadProfile", "surfaceDetailProfile", "outdoorPlan"]);
 
@@ -866,7 +880,7 @@ export const realmTools: ToolDefinition[] = [
         templateCatalogSource: { type: "object", description: "现有固定 NBT template catalog 源。" },
         blueprintReferenceCatalog: {
           ...blueprintReferenceCatalogSchema,
-          description: "严格 city_blueprint_reference_catalog.v0.3；冻结 structure/fill/algorithm/composition/style/road/surface 与户外 rule/recipe/landscape profile 引用。",
+          description: "严格 city_blueprint_reference_catalog.v0.4；冻结 structure/fill/algorithm/composition/style/road/surface 与户外 foundation/rule/recipe/landscape profile 引用。",
         },
       },
       required: ["runId", "citySeedId", "terrasenseProfileSource", "templateCatalogSource", "blueprintReferenceCatalog"],

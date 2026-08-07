@@ -934,7 +934,7 @@ class CityBlueprintCompilerServiceTest {
     private static JsonObject referenceCatalog() {
         return JsonParser.parseString("""
                 {
-                  "schemaVersion":"city_blueprint_reference_catalog.v0.3",
+                  "schemaVersion":"city_blueprint_reference_catalog.v0.4",
                   "structureRefs":[
                     {"structureRef":"geomantia:town_hall","templateCandidates":[{"templateId":"geomantia:town_hall","variantId":"default"}]},
                     {"structureRef":"geomantia:oversized_hall","templateCandidates":[{"templateId":"geomantia:oversized_hall","variantId":"default"}]},
@@ -964,9 +964,15 @@ class CityBlueprintCompilerServiceTest {
                   }]},
                   "surfaceRecipes":[{"surfaceRecipeRef":"surface_recipe:civic","surfacePrintEnabled":true,
                     "autoConnectDefault":true,"surfaceAlgorithm":"UNIFORM","surfaceBlockId":"minecraft:stone_bricks"}],
+                  "foundationProfiles":[{"foundationProfileRef":"foundation:urban","landUseRuleRef":"civic",
+                    "surfaceRecipeRef":"surface_recipe:civic","structureMarginBlocks":2,
+                    "closeRadiusBlocks":16,"maxJoinDistanceBlocks":48}],
                   "landscapeProfiles":[{"landscapeProfileRef":"landscape:common_green","landscapeType":"COMMON_GREEN",
                     "landUseRuleRef":"civic","surfaceRecipeRef":"surface_recipe:civic","baseAreaSmall":256,
-                    "baseAreaMedium":512,"baseAreaLarge":1024,"membership":"URBAN"}]
+                    "baseAreaMedium":512,"baseAreaLarge":1024,"membership":"URBAN",
+                    "parcelStyle":{"coreParcelCountMin":1,"coreParcelCountMax":2,"fillParcelCountMin":0,
+                    "fillParcelCountMax":3,"parcelAreaMinBlocks":64,"parcelAreaMaxBlocks":256,
+                    "branchFromExistingChance":0.65,"gapMinBlocks":2,"gapMaxBlocks":8}}]
                 }
                 """).getAsJsonObject();
     }
@@ -974,7 +980,7 @@ class CityBlueprintCompilerServiceTest {
     private static JsonObject blueprint(JsonObject context, String extentClass) {
         JsonObject root = JsonParser.parseString("""
                 {
-                  "schemaVersion":"city_blueprint.v0.6","cityId":"placeholder","generationSeed":1,
+                  "schemaVersion":"city_blueprint.v0.7","cityId":"placeholder","generationSeed":1,
                   "sourceD3Ref":{},"catalogSnapshotRef":{},
                   "designIntent":{"cityIdentity":"town","theme":"stone","functionalRoles":["administration"]},
                   "styleProfile":{"profileRef":"style:stone"},
@@ -988,7 +994,8 @@ class CityBlueprintCompilerServiceTest {
                   }],
                   "relations":[],"roadProfile":{"profileRef":"road:town"},
                   "surfaceDetailProfile":{"profileRef":"surface:working"},
-                  "outdoorPlan":{"mode":"GENERATE","envelopeProfile":"BALANCED","spatialGrounds":[],
+                  "outdoorPlan":{"mode":"GENERATE","envelopeProfile":"BALANCED",
+                    "foundationProfileRef":"foundation:urban","spatialGrounds":[],
                     "landscapes":[]}
                 }
                 """).getAsJsonObject();
@@ -1006,8 +1013,6 @@ class CityBlueprintCompilerServiceTest {
             JsonObject group = element.getAsJsonObject();
             JsonObject ground = new JsonObject();
             ground.addProperty("sourceGroupId", group.get("groupId").getAsString());
-            ground.addProperty("landUseRuleRef", "civic");
-            ground.addProperty("surfaceRecipeRef", "surface_recipe:civic");
             ground.addProperty("sharedSpaceType", "GENERAL_URBAN");
             ground.addProperty("hierarchyLevel", group.get("priority").getAsString().equals("CORE")
                     ? "PRIMARY" : "SECONDARY");

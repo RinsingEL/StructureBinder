@@ -196,6 +196,37 @@ class CityLandUseChunkCompilerTest {
         assertEquals(0, fragment.boundaryOperations().get(0).z());
     }
 
+    @Test
+    void boundaryUsesFrozenRecipeBlockBeforeLegacyPalette() {
+        List<LandUseAreaPlan.ScanlineSpan> members = List.of(new LandUseAreaPlan.ScanlineSpan(0, 0, 3));
+        LandUseAreaPlan.Area area = new LandUseAreaPlan.Area(
+                "area", "area", "greenbelt", List.of("group"), List.of("anchor"),
+                List.of(new BlockPoint(0, 0)), members, List.of(),
+                List.of(new LandUseAreaPlan.BoundaryLoop(List.of(
+                        new BlockPoint(0, 0), new BlockPoint(1, 0),
+                        new BlockPoint(2, 0), new BlockPoint(3, 0)), false)),
+                List.of(), 10, SurfacePolicy.PAVE, VegetationPolicy.CLEAR,
+                BoundaryPolicy.FENCE, "greenbelt");
+        LandUseAreaPlan areaPlan = new LandUseAreaPlanCodec().withComputedHash(new LandUseAreaPlan(
+                LandUseAreaPlan.CURRENT_SCHEMA_VERSION, "land_use_rules.v0.1", "city_frozen_boundary", "",
+                new BlockBounds(0, 0, 3, 0), List.of(area), List.of(), List.of(), List.of()));
+        LandUseSurfaceSettings settings = LandUseSurfaceSettings.defaults(SurfacePolicy.PAVE)
+                .withOverrides(true, true, LandUseSurfaceSettings.SurfaceAlgorithm.UNIFORM,
+                        "minecraft:grass_block", null, null, null, null,
+                        "minecraft:spruce_fence", null, null, null, null, null);
+        CityLandUseSurfacePrintPlan surfacePlan = hashed(areaPlan, List.of(
+                new CityLandUseSurfacePrintPlan.AreaPrint(
+                        "area/surface", area.areaId(), area.sourceGroupIds(), settings,
+                        members, List.of(), new CityLandUseSurfacePrintPlan.UniformRecipe(
+                        settings.surfaceBlockId(), settings.boundaryBlockId()))));
+
+        CityLandUseChunkCompiler.ChunkFragment fragment = compiler.compile(areaPlan, surfacePlan, 0, 0);
+
+        assertEquals(4, fragment.boundaryOperations().size());
+        assertTrue(fragment.boundaryOperations().stream()
+                .allMatch(operation -> operation.blockId().equals("minecraft:spruce_fence")));
+    }
+
     static LandUseAreaPlan areaPlan(String cityId,
                                     SurfacePolicy policy,
                                     List<LandUseAreaPlan.ScanlineSpan> members) {

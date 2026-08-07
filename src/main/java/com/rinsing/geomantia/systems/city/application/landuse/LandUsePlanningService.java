@@ -3,6 +3,7 @@ package com.rinsing.geomantia.systems.city.application.landuse;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.rinsing.geomantia.systems.city.algorithm.landuse.LandUseAutoConnectionPlanner;
+import com.rinsing.geomantia.systems.city.algorithm.landuse.CityFoundationPlanner;
 import com.rinsing.geomantia.systems.city.algorithm.landuse.LandUseExpansionResult;
 import com.rinsing.geomantia.systems.city.algorithm.landuse.LandUseGeometryCompiler;
 import com.rinsing.geomantia.systems.city.algorithm.landuse.StableLandUseExpander;
@@ -12,9 +13,12 @@ import com.rinsing.geomantia.systems.city.domain.landuse.LandUseAreaPlan;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseSeedGroup;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseTerrainField;
 import com.rinsing.geomantia.systems.city.domain.landuse.rules.LandUseRuleCatalog;
+import com.rinsing.geomantia.systems.city.domain.model.BlockPoint;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public final class LandUsePlanningService {
     public Result plan(JsonObject structureMaterializationPlan,
@@ -57,23 +61,54 @@ public final class LandUsePlanningService {
         if (!cityId.equals(terrainField.cityId())) {
             throw new IllegalArgumentException("LAND_USE_TERRAIN_CITY_ID_MISMATCH");
         }
-        LandUseCorridorExclusionResolver corridorResolver = new LandUseCorridorExclusionResolver();
-        List<LandUseAreaPlan.CorridorExclusion> corridors = corridorResolver.stableMerge(
-                sources.corridorExclusions(), corridorResolver.fromD5ReservationMask(d5ReservationMaskPlan));
         StableLandUseExpander expander = new StableLandUseExpander();
-        LandUseExpansionResult probe = expander.expand(cityId,
-                terrainField.planningBounds(), terrainField, sources.seedGroups(), corridors,
-                sources.seedSalt());
-        LandUseAutoConnectionPlanner connectionPlanner = new LandUseAutoConnectionPlanner();
-        LandUseAutoConnectionPlanner.Plan connectionPlan = connectionPlanner.plan(sources.seedGroups(), probe);
-        LandUseExpansionResult expansion = connectionPlan.connections().isEmpty() ? probe : expander.expand(cityId,
-                terrainField.planningBounds(), terrainField, sources.seedGroups(), corridors,
-                sources.seedSalt(), connectionPlan);
-        List<LandUseAutoConnectionPlanner.ConnectionOutcome> connectionOutcomes = connectionPlanner.evaluate(
-                connectionPlan, sources.seedGroups(), expansion);
-        CityUrbanResidualResolver.Result residualResult = new CityUrbanResidualResolver().resolve(cityId,
-                terrainField.planningBounds(), terrainField, sources.seedGroups(), corridors, expansion,
-                residualConfig);
+        List<LandUseSeedGroup> foundations = sources.seedGroups().stream()
+                .filter(group -> group.layerRole() == LandUseSeedGroup.LayerRole.FOUNDATION).toList();
+        boolean layered = !foundations.isEmpty();
+        List<LandUseAreaPlan.CorridorExclusion> corridors;
+        LandUseExpansionResult probe;
+        LandUseExpansionResult expansion;
+        List<LandUseAutoConnectionPlanner.ConnectionOutcome> connectionOutcomes;
+        CityUrbanResidualResolver.Result residualResult;
+        int resolvedFoundationCloseRadius = 0;
+        if (layered) {
+            if (foundations.size() != 1) {
+                throw new IllegalArgumentException("CITY_FOUNDATION_GROUP_COUNT_INVALID:" + foundations.size());
+            }
+            if (sources.seedGroups().stream().anyMatch(group -> group.layerRole()
+                    == LandUseSeedGroup.LayerRole.STANDARD)) {
+                throw new IllegalArgumentException("CITY_LAYERED_LAND_USE_ROLE_INVALID:STANDARD");
+            }
+            corridors = List.of();
+            LandUseSeedGroup foundation = foundations.get(0);
+            CityFoundationPlanner.Plan foundationPlan = new CityFoundationPlanner().plan(
+                    terrainField.planningBounds(), terrainField, foundation.structureFootprints(),
+                    foundation.foundationSettings());
+            List<LandUseSeedGroup> landscapes = sources.seedGroups().stream()
+                    .filter(group -> group.layerRole() == LandUseSeedGroup.LayerRole.LANDSCAPE).toList();
+            LandUseExpansionResult landscapeExpansion = expander.expand(cityId, terrainField.planningBounds(),
+                    terrainField, landscapes, List.of(), sources.seedSalt());
+            expansion = overlay(foundation, foundationPlan, landscapeExpansion);
+            probe = expansion;
+            connectionOutcomes = List.of();
+            residualResult = new CityUrbanResidualResolver.Result(expansion,
+                    CityUrbanSpacePlan.disabled(cityId), List.of());
+            resolvedFoundationCloseRadius = foundationPlan.resolvedCloseRadiusBlocks();
+        } else {
+            LandUseCorridorExclusionResolver corridorResolver = new LandUseCorridorExclusionResolver();
+            corridors = corridorResolver.stableMerge(sources.corridorExclusions(),
+                    corridorResolver.fromD5ReservationMask(d5ReservationMaskPlan));
+            probe = expander.expand(cityId, terrainField.planningBounds(), terrainField, sources.seedGroups(),
+                    corridors, sources.seedSalt());
+            LandUseAutoConnectionPlanner connectionPlanner = new LandUseAutoConnectionPlanner();
+            LandUseAutoConnectionPlanner.Plan connectionPlan = connectionPlanner.plan(sources.seedGroups(), probe);
+            expansion = connectionPlan.connections().isEmpty() ? probe : expander.expand(cityId,
+                    terrainField.planningBounds(), terrainField, sources.seedGroups(), corridors,
+                    sources.seedSalt(), connectionPlan);
+            connectionOutcomes = connectionPlanner.evaluate(connectionPlan, sources.seedGroups(), expansion);
+            residualResult = new CityUrbanResidualResolver().resolve(cityId, terrainField.planningBounds(),
+                    terrainField, sources.seedGroups(), corridors, expansion, residualConfig);
+        }
         LandUseExpansionResult resolvedExpansion = residualResult.expansion();
         LandUseGeometryCompiler.CompiledGeometry geometry = new LandUseGeometryCompiler().compile(
                 terrainField.planningBounds(), sources.seedGroups(), resolvedExpansion);
@@ -85,12 +120,13 @@ public final class LandUsePlanningService {
                         + connection.groupA() + ':' + connection.groupB()));
         for (LandUseSeedGroup group : sources.seedGroups()) {
             int claimed = resolvedExpansion.claimedBlocksByGroup().getOrDefault(group.groupId(), 0);
-            if (claimed < group.minAreaBlocks()) {
+            boolean foundation = group.layerRole() == LandUseSeedGroup.LayerRole.FOUNDATION;
+            if (!foundation && claimed < group.minAreaBlocks()) {
                 warnings.add("LAND_USE_AREA_BELOW_MIN:" + group.groupId());
             }
             for (LandUseSeedGroup.GrowthRegion region : group.growthRegions()) {
                 int regionClaimed = expansion.claimedBlocksByGrowthRegion().getOrDefault(region.regionId(), 0);
-                if (regionClaimed < region.minAreaBlocks()) {
+                if (!foundation && regionClaimed < region.minAreaBlocks()) {
                     warnings.add("LAND_USE_GROWTH_REGION_BELOW_MIN:" + group.groupId() + ':' + region.regionId());
                 }
             }
@@ -102,19 +138,40 @@ public final class LandUsePlanningService {
         CityLandUseSurfacePrintPlan surfacePrintPlan = new CityLandUseSurfacePrintPlanner().plan(
                 plan, sources.seedGroups(), terrainField);
         return new Result(plan, trace(sources, probe, resolvedExpansion, connectionOutcomes,
-                residualResult.urbanSpacePlan()),
+                residualResult.urbanSpacePlan(), resolvedFoundationCloseRadius),
                 quality(plan, sources, resolvedExpansion, connectionOutcomes, residualResult.urbanSpacePlan()),
                 surfacePrintPlan,
                 residualResult.urbanSpacePlan());
+    }
+
+    private static LandUseExpansionResult overlay(LandUseSeedGroup foundation,
+                                                  CityFoundationPlanner.Plan foundationPlan,
+                                                  LandUseExpansionResult landscapeExpansion) {
+        Map<BlockPoint, LandUseExpansionResult.Claim> claims = new LinkedHashMap<>();
+        foundationPlan.claims().stream().sorted(java.util.Comparator.comparingInt(BlockPoint::z)
+                        .thenComparingInt(BlockPoint::x))
+                .forEach(point -> claims.put(point, new LandUseExpansionResult.Claim(foundation.groupId(), 0.0)));
+        claims.putAll(landscapeExpansion.claims());
+        Map<String, Integer> groupCounts = new LinkedHashMap<>(landscapeExpansion.claimedBlocksByGroup());
+        int visibleFoundationBlocks = (int) claims.values().stream()
+                .filter(claim -> claim.groupId().equals(foundation.groupId())).count();
+        groupCounts.put(foundation.groupId(), visibleFoundationBlocks);
+        Map<String, Integer> regionCounts = new LinkedHashMap<>(
+                landscapeExpansion.claimedBlocksByGrowthRegion());
+        foundation.growthRegions().forEach(region -> regionCounts.put(region.regionId(), visibleFoundationBlocks));
+        return new LandUseExpansionResult(claims, groupCounts, regionCounts,
+                landscapeExpansion.contestedClaimCount(), landscapeExpansion.blockedCandidateCount());
     }
 
     private static JsonObject trace(LandUseSourceResolver.Resolution sources,
                                     LandUseExpansionResult probe,
                                     LandUseExpansionResult expansion,
                                     List<LandUseAutoConnectionPlanner.ConnectionOutcome> connectionOutcomes,
-                                    CityUrbanSpacePlan urbanSpacePlan) {
+                                    CityUrbanSpacePlan urbanSpacePlan,
+                                    int resolvedFoundationCloseRadius) {
         JsonObject trace = new JsonObject();
-        trace.addProperty("schemaVersion", "city_land_use_planning_trace.v0.3");
+        trace.addProperty("schemaVersion", "city_land_use_planning_trace.v0.4");
+        trace.addProperty("foundationResolvedCloseRadiusBlocks", resolvedFoundationCloseRadius);
         JsonArray groups = new JsonArray();
         for (LandUseSeedGroup group : sources.seedGroups()) {
             JsonObject value = new JsonObject();
@@ -139,7 +196,12 @@ public final class LandUsePlanningService {
             value.addProperty("minAreaBlocks", group.minAreaBlocks());
             value.addProperty("preferredAreaBlocks", group.preferredAreaBlocks());
             value.addProperty("maxAreaBlocks", group.maxAreaBlocks());
-            value.addProperty("claimedAreaBlocks", expansion.claimedBlocksByGroup().getOrDefault(group.groupId(), 0));
+            int claimedAreaBlocks = expansion.claimedBlocksByGroup().getOrDefault(group.groupId(), 0);
+            value.addProperty("claimedAreaBlocks", claimedAreaBlocks);
+            if (group.layerRole() == LandUseSeedGroup.LayerRole.FOUNDATION) {
+                value.addProperty("foundationBaseAreaBlocks", group.preferredAreaBlocks());
+                value.addProperty("foundationVisibleAreaBlocks", claimedAreaBlocks);
+            }
             value.addProperty("growthRegionCount", group.growthRegions().size());
             JsonArray growthRegions = new JsonArray();
             for (LandUseSeedGroup.GrowthRegion region : group.growthRegions()) {
@@ -204,7 +266,8 @@ public final class LandUsePlanningService {
         JsonArray groupResults = new JsonArray();
         for (LandUseSeedGroup group : sources.seedGroups()) {
             int claimed = expansion.claimedBlocksByGroup().getOrDefault(group.groupId(), 0);
-            boolean below = claimed < group.minAreaBlocks();
+            boolean foundation = group.layerRole() == LandUseSeedGroup.LayerRole.FOUNDATION;
+            boolean below = !foundation && claimed < group.minAreaBlocks();
             if (below) belowMinimum++;
             JsonObject groupResult = new JsonObject();
             groupResult.addProperty("groupId", group.groupId());
@@ -212,11 +275,12 @@ public final class LandUsePlanningService {
             groupResult.addProperty("minAreaBlocks", group.minAreaBlocks());
             groupResult.addProperty("preferredAreaBlocks", group.preferredAreaBlocks());
             groupResult.addProperty("maxAreaBlocks", group.maxAreaBlocks());
-            groupResult.addProperty("status", below ? "below_minimum" : "accepted");
+            groupResult.addProperty("status", foundation ? "covered_by_landscape_overlay"
+                    : below ? "below_minimum" : "accepted");
             JsonArray regionResults = new JsonArray();
             for (LandUseSeedGroup.GrowthRegion region : group.growthRegions()) {
                 int regionClaimed = expansion.claimedBlocksByGrowthRegion().getOrDefault(region.regionId(), 0);
-                boolean regionBelow = regionClaimed < region.minAreaBlocks();
+                boolean regionBelow = !foundation && regionClaimed < region.minAreaBlocks();
                 if (regionBelow) belowMinimumRegions++;
                 JsonObject regionResult = new JsonObject();
                 regionResult.addProperty("regionId", region.regionId());
@@ -224,7 +288,8 @@ public final class LandUsePlanningService {
                 regionResult.addProperty("minAreaBlocks", region.minAreaBlocks());
                 regionResult.addProperty("preferredAreaBlocks", region.preferredAreaBlocks());
                 regionResult.addProperty("maxAreaBlocks", region.maxAreaBlocks());
-                regionResult.addProperty("status", regionBelow ? "below_minimum" : "accepted");
+                regionResult.addProperty("status", foundation ? "covered_by_landscape_overlay"
+                        : regionBelow ? "below_minimum" : "accepted");
                 regionResults.add(regionResult);
             }
             groupResult.add("growthRegionResults", regionResults);

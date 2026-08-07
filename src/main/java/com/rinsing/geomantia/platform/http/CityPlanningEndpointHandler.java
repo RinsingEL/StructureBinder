@@ -133,7 +133,7 @@ import java.util.TreeSet;
 final class CityPlanningEndpointHandler {
     static final int DEFAULT_D3_PATCH_SCAN_PADDING_BLOCKS = 128;
     private static final String BLUEPRINT_OUTDOOR_COMPLETION_SCHEMA =
-            "city_land_use_planning_complete.v0.3";
+            "city_land_use_planning_complete.v0.4";
     private static final CityD4StagedPlanCompiler D4_STAGED_PLAN_COMPILER =
             new CityD4StagedPlanCompiler();
     private static final CityWorkflowCandidateSelector WORKFLOW_CANDIDATE_SELECTOR =
@@ -3514,6 +3514,7 @@ final class CityPlanningEndpointHandler {
         completion.addProperty("outdoorIntentPlanHash", intentPlan.planHash());
         completion.addProperty("urbanSpacePlanHash", urbanSpacePlan.planHash());
         completion.addProperty("planHash", plan.planHash());
+        completion.addProperty("surfacePrintPlanSchemaVersion", surfacePrintPlan.schemaVersion());
         completion.addProperty("surfacePrintPlanHash", surfacePrintPlan.planHash());
         completion.addProperty("ruleProfileHash", inputs.referenceCatalog().landUseRuleCatalog().profileHash());
         completion.addProperty("completedAt", Instant.now().toString());
@@ -3587,9 +3588,6 @@ final class CityPlanningEndpointHandler {
         requireCompletionIdentity(intent, "ruleProfileHash",
                 blueprintInputs.referenceCatalog().landUseRuleCatalog().profileHash());
         requireCompletionIdentity(urban, "cityId", expectedCityId);
-        if (!booleanValue(urban, "enabled", false)) {
-            throw new IllegalArgumentException("CITY_BLUEPRINT_URBAN_SPACE_STALE");
-        }
         if (!expectedCityId.equals(surfacePrintPlan.cityId())
                 || !plan.planHash().equals(surfacePrintPlan.sourceLandUsePlanHash())) {
             throw new IllegalArgumentException("CITY_LAND_USE_SURFACE_PRINT_SOURCE_MISMATCH");
@@ -3598,7 +3596,8 @@ final class CityPlanningEndpointHandler {
         Set<String> allowedFields = Set.of("schemaVersion", "cityId", "planningSource",
                 "sourceBlueprintHash", "sourceCatalogSnapshotHash", "sourceReferenceCatalogHash",
                 "sourceTerrainFieldHash", "sourceD6Hash", "outdoorIntentPlanHash", "urbanSpacePlanHash",
-                "planHash", "surfacePrintPlanHash", "ruleProfileHash", "completedAt");
+                "planHash", "surfacePrintPlanSchemaVersion", "surfacePrintPlanHash", "ruleProfileHash",
+                "completedAt");
         if (!allowedFields.equals(completion.keySet())
                 || !BLUEPRINT_OUTDOOR_COMPLETION_SCHEMA.equals(stringValue(completion, "schemaVersion", ""))
                 || !"city_blueprint".equals(stringValue(completion, "planningSource", ""))) {
@@ -3613,6 +3612,8 @@ final class CityPlanningEndpointHandler {
         requireCompletionIdentity(completion, "outdoorIntentPlanHash", stringValue(intent, "planHash", ""));
         requireCompletionIdentity(completion, "urbanSpacePlanHash", stringValue(urban, "planHash", ""));
         requireCompletionIdentity(completion, "planHash", plan.planHash());
+        requireCompletionIdentity(completion, "surfacePrintPlanSchemaVersion",
+                CityLandUseSurfacePrintPlan.CURRENT_SCHEMA_VERSION);
         requireCompletionIdentity(completion, "surfacePrintPlanHash", surfacePrintPlan.planHash());
         requireCompletionIdentity(completion, "ruleProfileHash",
                 blueprintInputs.referenceCatalog().landUseRuleCatalog().profileHash());

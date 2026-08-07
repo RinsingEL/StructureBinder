@@ -15,7 +15,11 @@ public record LandUseSurfaceSettings(
         BlockPoint algorithmAnchor,
         String channelBankBlockId,
         String channelWaterBlockId,
-        String channelBankOverlayBlockId) {
+        String channelBankOverlayBlockId,
+        String boundaryBlockId,
+        int fieldBeforeBlocks,
+        int channelWidthBlocks,
+        int fieldAfterBlocks) {
     private static final Pattern BLOCK_ID = Pattern.compile("[a-z0-9_.-]+:[a-z0-9/._-]+");
 
     public LandUseSurfaceSettings {
@@ -24,6 +28,7 @@ public record LandUseSurfaceSettings(
         channelBankBlockId = normalizeBlockId(channelBankBlockId, "channelBankBlockId");
         channelWaterBlockId = normalizeBlockId(channelWaterBlockId, "channelWaterBlockId");
         channelBankOverlayBlockId = normalizeBlockId(channelBankOverlayBlockId, "channelBankOverlayBlockId");
+        boundaryBlockId = normalizeBlockId(boundaryBlockId, "boundaryBlockId");
         compatibilityCategory = compatibilityCategory == null ? "" : compatibilityCategory;
         surfaceAlgorithm = surfaceAlgorithm == null ? SurfaceAlgorithm.UNIFORM : surfaceAlgorithm;
         if (algorithmAnchor != null && surfaceAlgorithm != SurfaceAlgorithm.CONTOUR_BANDS) {
@@ -43,6 +48,32 @@ public record LandUseSurfaceSettings(
                 || channelBankOverlayBlockId.isBlank())) {
             throw new IllegalArgumentException("LAND_USE_CONTOUR_BAND_MATERIALS_REQUIRED_WHEN_ENABLED");
         }
+        if (surfacePrintEnabled && surfaceAlgorithm == SurfaceAlgorithm.CONTOUR_BANDS
+                && (fieldBeforeBlocks <= 0 || channelWidthBlocks <= 0 || fieldAfterBlocks <= 0)) {
+            throw new IllegalArgumentException("LAND_USE_CONTOUR_BAND_WIDTHS_REQUIRED");
+        }
+        if (surfaceAlgorithm != SurfaceAlgorithm.CONTOUR_BANDS
+                && (fieldBeforeBlocks != 0 || channelWidthBlocks != 0 || fieldAfterBlocks != 0)) {
+            throw new IllegalArgumentException("LAND_USE_CONTOUR_BAND_WIDTHS_REQUIRE_CONTOUR_BANDS");
+        }
+    }
+
+    public LandUseSurfaceSettings(boolean surfacePrintEnabled,
+                                  boolean autoConnect,
+                                  String surfaceBlockId,
+                                  String cropBlockId,
+                                  String compatibilityCategory,
+                                  SurfaceAlgorithm surfaceAlgorithm,
+                                  BlockPoint algorithmAnchor,
+                                  String channelBankBlockId,
+                                  String channelWaterBlockId,
+                                  String channelBankOverlayBlockId) {
+        this(surfacePrintEnabled, autoConnect, surfaceBlockId, cropBlockId, compatibilityCategory,
+                surfaceAlgorithm, algorithmAnchor, channelBankBlockId, channelWaterBlockId,
+                channelBankOverlayBlockId, "",
+                surfaceAlgorithm == SurfaceAlgorithm.CONTOUR_BANDS ? 5 : 0,
+                surfaceAlgorithm == SurfaceAlgorithm.CONTOUR_BANDS ? 3 : 0,
+                surfaceAlgorithm == SurfaceAlgorithm.CONTOUR_BANDS ? 5 : 0);
     }
 
     public LandUseSurfaceSettings(boolean surfacePrintEnabled,
@@ -63,13 +94,13 @@ public record LandUseSurfaceSettings(
         Objects.requireNonNull(policy, "policy");
         return switch (policy) {
             case PAVE -> new LandUseSurfaceSettings(true, true, "minecraft:stone_bricks", "", "PAVE",
-                    SurfaceAlgorithm.UNIFORM, null, "", "", "");
+                    SurfaceAlgorithm.UNIFORM, null, "", "", "", "", 0, 0, 0);
             case CULTIVATE -> new LandUseSurfaceSettings(
                     true, true, "minecraft:farmland", "minecraft:wheat", "CULTIVATE",
                     SurfaceAlgorithm.CONTOUR_BANDS, null, "minecraft:dirt", "minecraft:water",
-                    "minecraft:oak_slab");
+                    "minecraft:oak_slab", "", 5, 3, 5);
             case PRESERVE, WATER_ADAPTIVE -> new LandUseSurfaceSettings(false, false, "", "", "",
-                    SurfaceAlgorithm.UNIFORM, null, "", "", "");
+                    SurfaceAlgorithm.UNIFORM, null, "", "", "", "", 0, 0, 0);
         };
     }
 
@@ -92,6 +123,26 @@ public record LandUseSurfaceSettings(
             String channelBankOverlayBlock,
             BlockPoint requestedAlgorithmAnchor,
             SurfaceMaterials algorithmDefault) {
+        return withOverrides(enabled, connect, requestedAlgorithm, surfaceBlock, cropBlock,
+                channelBankBlock, channelWaterBlock, channelBankOverlayBlock, null,
+                null, null, null, requestedAlgorithmAnchor, algorithmDefault);
+    }
+
+    public LandUseSurfaceSettings withOverrides(
+            Boolean enabled,
+            Boolean connect,
+            SurfaceAlgorithm requestedAlgorithm,
+            String surfaceBlock,
+            String cropBlock,
+            String channelBankBlock,
+            String channelWaterBlock,
+            String channelBankOverlayBlock,
+            String boundaryBlock,
+            Integer requestedFieldBeforeBlocks,
+            Integer requestedChannelWidthBlocks,
+            Integer requestedFieldAfterBlocks,
+            BlockPoint requestedAlgorithmAnchor,
+            SurfaceMaterials algorithmDefault) {
         SurfaceAlgorithm resolvedAlgorithm = requestedAlgorithm == null ? surfaceAlgorithm : requestedAlgorithm;
         LandUseSurfaceSettings algorithmFallback = resolvedAlgorithm == SurfaceAlgorithm.CONTOUR_BANDS
                 ? defaults(SurfacePolicy.CULTIVATE) : defaults(SurfacePolicy.PAVE);
@@ -102,6 +153,13 @@ public record LandUseSurfaceSettings(
         String fallbackWater = algorithmChanged ? algorithmFallback.channelWaterBlockId : channelWaterBlockId;
         String fallbackOverlay = algorithmChanged
                 ? algorithmFallback.channelBankOverlayBlockId : channelBankOverlayBlockId;
+        String fallbackBoundary = algorithmChanged ? algorithmFallback.boundaryBlockId : boundaryBlockId;
+        int fallbackFieldBefore = algorithmChanged
+                ? algorithmFallback.fieldBeforeBlocks : fieldBeforeBlocks;
+        int fallbackChannelWidth = algorithmChanged
+                ? algorithmFallback.channelWidthBlocks : channelWidthBlocks;
+        int fallbackFieldAfter = algorithmChanged
+                ? algorithmFallback.fieldAfterBlocks : fieldAfterBlocks;
         if (algorithmDefault != null) {
             fallbackSurface = algorithmDefault.surfaceBlockId();
             if (!algorithmDefault.cropBlockId().isBlank()) fallbackCrop = algorithmDefault.cropBlockId();
@@ -132,7 +190,14 @@ public record LandUseSurfaceSettings(
                 resolvedAnchor,
                 channelBankBlock == null ? fallbackBank : channelBankBlock,
                 channelWaterBlock == null ? fallbackWater : channelWaterBlock,
-                channelBankOverlayBlock == null ? fallbackOverlay : channelBankOverlayBlock);
+                channelBankOverlayBlock == null ? fallbackOverlay : channelBankOverlayBlock,
+                boundaryBlock == null ? fallbackBoundary : boundaryBlock,
+                resolvedAlgorithm == SurfaceAlgorithm.CONTOUR_BANDS
+                        ? requestedFieldBeforeBlocks == null ? fallbackFieldBefore : requestedFieldBeforeBlocks : 0,
+                resolvedAlgorithm == SurfaceAlgorithm.CONTOUR_BANDS
+                        ? requestedChannelWidthBlocks == null ? fallbackChannelWidth : requestedChannelWidthBlocks : 0,
+                resolvedAlgorithm == SurfaceAlgorithm.CONTOUR_BANDS
+                        ? requestedFieldAfterBlocks == null ? fallbackFieldAfter : requestedFieldAfterBlocks : 0);
     }
 
     public String compatibilityKey() {
@@ -151,7 +216,11 @@ public record LandUseSurfaceSettings(
                 + (algorithmAnchor == null ? "" : algorithmAnchor.x() + "," + algorithmAnchor.z()) + '|'
                 + channelBankBlockId + '|'
                 + channelWaterBlockId + '|'
-                + channelBankOverlayBlockId;
+                + channelBankOverlayBlockId + '|'
+                + boundaryBlockId + '|'
+                + fieldBeforeBlocks + '|'
+                + channelWidthBlocks + '|'
+                + fieldAfterBlocks;
     }
 
     public static boolean isValidBlockId(String value) {

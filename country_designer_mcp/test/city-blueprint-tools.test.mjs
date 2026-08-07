@@ -24,7 +24,7 @@ test("publishes the program-only context tool and one-shot structure plus outdoo
   assert.deepEqual(groupProperties.extentClass.enum, ["SMALL", "MEDIUM", "LARGE"]);
   assert.deepEqual(groupProperties.densityClass.enum, ["SPARSE", "BALANCED", "DENSE"]);
   assert.deepEqual(submit.inputSchema.properties.cityBlueprint.properties.schemaVersion.enum,
-    ["city_blueprint.v0.5"]);
+    ["city_blueprint.v0.7"]);
   assert.equal(groupProperties.connectionPlan.additionalProperties, false);
   assert.deepEqual(groupProperties.connectionPlan.properties.parameters.properties.sideMode.enum,
     ["LEFT", "RIGHT", "BOTH"]);
@@ -38,18 +38,18 @@ test("publishes the program-only context tool and one-shot structure plus outdoo
   const outdoor = blueprint.properties.outdoorPlan;
   assert.equal(outdoor.additionalProperties, false);
   assert.deepEqual(outdoor.required,
-    ["mode", "envelopeProfile", "structureGrounds", "landscapes", "residualPolicy"]);
+    ["mode", "envelopeProfile", "foundationProfileRef", "spatialGrounds", "landscapes"]);
   assert.deepEqual(outdoor.properties.mode.enum, ["GENERATE", "PRESERVE"]);
   assert.deepEqual(outdoor.properties.envelopeProfile.enum, ["COMPACT", "BALANCED", "LOOSE"]);
 
-  const ground = outdoor.properties.structureGrounds.items;
+  assert.ok(outdoor.properties.foundationProfileRef);
+  const ground = outdoor.properties.spatialGrounds.items;
   assert.equal(ground.additionalProperties, false);
-  assert.deepEqual(ground.required, [
-    "sourceGroupId", "landUseRuleRef", "surfaceRecipeRef", "extentClass", "growthBias",
-    "referenceGroupIds", "autoConnect", "membership",
-  ]);
-  assert.deepEqual(ground.properties.growthBias.enum,
-    ["BALANCED", "AWAY_FROM_REFERENCE", "TOWARD_REFERENCE"]);
+  assert.deepEqual(ground.required,
+    ["sourceGroupId", "sharedSpaceType", "hierarchyLevel", "membership"]);
+  assert.deepEqual(ground.properties.sharedSpaceType.enum,
+    ["CIVIC_SQUARE", "MARKET_STREET", "RESIDENTIAL_COURT", "FARMSTEAD", "GENERAL_URBAN"]);
+  assert.deepEqual(ground.properties.hierarchyLevel.enum, ["PRIMARY", "SECONDARY", "LOCAL"]);
   assert.deepEqual(ground.properties.membership.enum, ["URBAN", "LANDSCAPE"]);
 
   const landscape = outdoor.properties.landscapes.items;
@@ -64,17 +64,8 @@ test("publishes the program-only context tool and one-shot structure plus outdoo
     ["AROUND_SOURCE", "AWAY_FROM_REFERENCE", "TOWARD_WATER", "ALONG_WATER"]);
   assert.deepEqual(landscape.properties.terrainPolicy.enum, ["CONFORM", "BALANCED", "ASSERTIVE"]);
 
-  const residual = outdoor.properties.residualPolicy;
-  assert.equal(residual.additionalProperties, false);
-  assert.deepEqual(residual.required,
-    ["smallEnclosed", "narrowGap", "mediumEnclosed", "largeEnclosed", "exteriorConnected"]);
-  assert.deepEqual(residual.properties.smallEnclosed.enum, ["ABSORB_NEIGHBOR", "NATURAL_RESERVE"]);
-  assert.deepEqual(residual.properties.narrowGap.enum,
-    ["ABSORB_NEIGHBOR", "PATH_OR_VERGE", "NATURAL_RESERVE"]);
-  assert.deepEqual(residual.properties.mediumEnclosed.enum,
-    ["ABSORB_NEIGHBOR", "COMMON_GREEN", "SERVICE_GROUND", "NATURAL_RESERVE"]);
-  assert.deepEqual(residual.properties.largeEnclosed.enum, ["COMMON_GREEN", "NATURAL_RESERVE"]);
-  assert.deepEqual(residual.properties.exteriorConnected.enum, ["NATURAL_RESERVE"]);
+  assert.equal(outdoor.properties.structureGrounds, undefined);
+  assert.equal(outdoor.properties.residualPolicy, undefined);
 });
 
 test("labels the old direct anchor endpoint as legacy debug", () => {
@@ -125,22 +116,22 @@ test("publishes the current strict LandUse v0.3 intent wire shape", () => {
   assert.deepEqual(override.properties.algorithmAnchor.required, ["x", "z"]);
 });
 
-test("requires the v0.3 Blueprint reference catalog for outdoor profiles", () => {
+test("requires the v0.4 Blueprint reference catalog for foundation and outdoor profiles", () => {
   const prepare = realmTools.find((tool) => tool.name === "city_prepare_d4_blueprint_context");
   const catalog = prepare.inputSchema.properties.blueprintReferenceCatalog;
-  assert.match(catalog.description, /city_blueprint_reference_catalog\.v0\.3/);
+  assert.match(catalog.description, /city_blueprint_reference_catalog\.v0\.4/);
   assert.match(catalog.description, /户外/);
   assert.equal(catalog.additionalProperties, false);
   assert.deepEqual(catalog.required, [
     "schemaVersion", "structureRefs", "fillPools", "algorithmProfiles", "compositionProfiles",
-    "styleProfiles", "roadProfiles", "surfaceDetailProfiles", "landUseRuleProfile", "surfaceRecipes",
+    "styleProfiles", "roadProfiles", "surfaceDetailProfiles", "landUseRuleProfile", "foundationProfiles", "surfaceRecipes",
     "landscapeProfiles",
   ]);
   assert.deepEqual(catalog.properties.schemaVersion.enum,
-    ["city_blueprint_reference_catalog.v0.3"]);
+    ["city_blueprint_reference_catalog.v0.4"]);
 
   for (const namespace of ["structureRefs", "fillPools", "algorithmProfiles", "compositionProfiles",
-    "styleProfiles", "roadProfiles", "surfaceDetailProfiles", "surfaceRecipes", "landscapeProfiles"]) {
+    "styleProfiles", "roadProfiles", "surfaceDetailProfiles", "foundationProfiles", "surfaceRecipes", "landscapeProfiles"]) {
     assert.equal(catalog.properties[namespace].minItems, 1, namespace);
   }
   assert.equal(catalog.properties.structureRefs.items.additionalProperties, false);
@@ -151,6 +142,12 @@ test("requires the v0.3 Blueprint reference catalog for outdoor profiles", () =>
     ["COMPACT", "GRID", "LINEAR", "COURTYARD", "ORGANIC_COMPACT"]);
   assert.deepEqual(catalog.properties.roadProfiles.items.properties.hierarchy.enum,
     ["SIMPLE", "HIERARCHICAL"]);
+
+  const foundation = catalog.properties.foundationProfiles.items;
+  assert.equal(foundation.additionalProperties, false);
+  assert.deepEqual(foundation.required, ["foundationProfileRef", "landUseRuleRef", "surfaceRecipeRef",
+    "structureMarginBlocks", "closeRadiusBlocks", "maxJoinDistanceBlocks"]);
+  assert.equal(foundation.properties.structureMarginBlocks.minimum, 0);
 
   const ruleProfile = catalog.properties.landUseRuleProfile;
   assert.equal(ruleProfile.additionalProperties, false);
@@ -182,14 +179,21 @@ test("requires the v0.3 Blueprint reference catalog for outdoor profiles", () =>
   assert.deepEqual(uniform.properties.surfaceAlgorithm.enum, ["UNIFORM"]);
   assert.deepEqual(uniform.required, ["surfaceRecipeRef", "surfacePrintEnabled", "autoConnectDefault",
     "surfaceAlgorithm", "surfaceBlockId"]);
+  assert.equal(uniform.properties.boundaryBlockId.pattern,
+    "^[a-z0-9_.-]+:[a-z0-9/._-]+$");
   assert.deepEqual(contour.properties.surfaceAlgorithm.enum, ["CONTOUR_BANDS"]);
   assert.deepEqual(contour.required, ["surfaceRecipeRef", "surfacePrintEnabled", "autoConnectDefault",
     "surfaceAlgorithm", "surfaceBlockId", "cropBlockId", "channelBankBlockId", "channelWaterBlockId",
-    "channelBankOverlayBlockId"]);
+    "channelBankOverlayBlockId", "fieldBeforeBlocks", "channelWidthBlocks", "fieldAfterBlocks"]);
   for (const material of ["surfaceBlockId", "cropBlockId", "channelBankBlockId", "channelWaterBlockId",
     "channelBankOverlayBlockId"]) {
     assert.equal(contour.properties[material].pattern,
       "^[a-z0-9_.-]+:[a-z0-9/._-]+$", material);
+  }
+  assert.equal(contour.properties.boundaryBlockId.pattern,
+    "^[a-z0-9_.-]+:[a-z0-9/._-]+$");
+  for (const width of ["fieldBeforeBlocks", "channelWidthBlocks", "fieldAfterBlocks"]) {
+    assert.equal(contour.properties[width].minimum, 1, width);
   }
 
   const landscape = catalog.properties.landscapeProfiles.items;
@@ -200,4 +204,13 @@ test("requires the v0.3 Blueprint reference catalog for outdoor profiles", () =>
   assert.equal(landscape.properties.baseAreaMedium.minimum, 1);
   assert.equal(landscape.properties.baseAreaLarge.minimum, 1);
   assert.deepEqual(landscape.properties.membership.enum, ["URBAN", "LANDSCAPE"]);
+  const parcel = landscape.properties.parcelStyle;
+  assert.equal(parcel.additionalProperties, false);
+  assert.deepEqual(parcel.required, ["coreParcelCountMin", "coreParcelCountMax", "fillParcelCountMin",
+    "fillParcelCountMax", "parcelAreaMinBlocks", "parcelAreaMaxBlocks", "branchFromExistingChance",
+    "gapMinBlocks", "gapMaxBlocks"]);
+  assert.equal(parcel.properties.coreParcelCountMin.minimum, 1);
+  assert.equal(parcel.properties.fillParcelCountMin.minimum, 0);
+  assert.equal(parcel.properties.branchFromExistingChance.minimum, 0);
+  assert.equal(parcel.properties.branchFromExistingChance.maximum, 1);
 });

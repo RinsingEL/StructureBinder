@@ -37,7 +37,12 @@ public final class LandUseGeometryCompiler {
         List<LandUseAreaPlan.Area> areas = new ArrayList<>();
         Set<BlockPoint> claimed = new HashSet<>();
         for (Map.Entry<String, Set<BlockPoint>> entry : byMergeKey.entrySet()) {
-            for (Set<BlockPoint> component : components(entry.getValue())) {
+            LandUseExpansionResult.Claim firstClaim = expansion.claims().get(entry.getValue().stream()
+                    .min(pointOrder()).orElseThrow());
+            LandUseSeedGroup mergeOwner = groups.get(firstClaim.groupId());
+            List<Set<BlockPoint>> areaParts = mergeOwner.layerRole() == LandUseSeedGroup.LayerRole.FOUNDATION
+                    ? List.of(entry.getValue()) : components(entry.getValue());
+            for (Set<BlockPoint> component : areaParts) {
                 claimed.addAll(component);
                 Set<String> sourceGroupIds = new LinkedHashSet<>();
                 double claimCost = 0;

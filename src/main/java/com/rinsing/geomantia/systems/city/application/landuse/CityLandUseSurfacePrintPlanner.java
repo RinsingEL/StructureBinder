@@ -19,7 +19,7 @@ import java.util.Set;
 
 /** Compiles final LandUse masks into deterministic, chunk-independent surface-print recipes. */
 public final class CityLandUseSurfacePrintPlanner {
-    public static final int CULTIVATE_REPEAT_PERIOD_BLOCKS = 13;
+    /** Legacy/debug defaults used when no formal catalog recipe supplies contour widths. */
     public static final int CULTIVATE_FIELD_BEFORE_BLOCKS = 5;
     public static final int CULTIVATE_CHANNEL_WIDTH_BLOCKS = 3;
     public static final int CULTIVATE_FIELD_AFTER_BLOCKS = 5;
@@ -55,7 +55,8 @@ public final class CityLandUseSurfacePrintPlanner {
                     + '_' + stableAreaOrdinal;
             List<LandUseAreaPlan.ScanlineSpan> exclusions = exclusions(landUsePlan, area);
             CityLandUseSurfacePrintPlan.Recipe recipe = switch (settings.surfaceAlgorithm()) {
-                case UNIFORM -> new CityLandUseSurfacePrintPlan.UniformRecipe(settings.surfaceBlockId());
+                case UNIFORM -> new CityLandUseSurfacePrintPlan.UniformRecipe(
+                        settings.surfaceBlockId(), settings.boundaryBlockId());
                 case CONTOUR_BANDS -> contourBands(area, settings, exclusions,
                         Objects.requireNonNull(algorithmAnchor, "algorithmAnchor"), terrainField);
             };
@@ -78,14 +79,13 @@ public final class CityLandUseSurfacePrintPlanner {
             LandUseTerrainField terrainField) {
         ContourBandSurfaceClassifier.Result result = new ContourBandSurfaceClassifier().classify(
                 new ContourBandSurfaceClassifier.Request(area.memberSpans(), exclusions, terrainField, anchor,
-                        CULTIVATE_FIELD_BEFORE_BLOCKS, CULTIVATE_CHANNEL_WIDTH_BLOCKS,
-                        CULTIVATE_FIELD_AFTER_BLOCKS));
+                        settings.fieldBeforeBlocks(), settings.channelWidthBlocks(),
+                        settings.fieldAfterBlocks()));
         List<CityLandUseSurfacePrintPlan.BandSpan> frozenBands = freezeBandsWithEndCaps(result.spans());
         return new CityLandUseSurfacePrintPlan.ContourBandsRecipe(settings.surfaceBlockId(),
                 settings.cropBlockId(), settings.channelBankBlockId(), settings.channelWaterBlockId(),
-                settings.channelBankOverlayBlockId(), result.repeatPeriodBlocks(),
-                CULTIVATE_FIELD_BEFORE_BLOCKS, CULTIVATE_CHANNEL_WIDTH_BLOCKS,
-                CULTIVATE_FIELD_AFTER_BLOCKS,
+                settings.channelBankOverlayBlockId(), settings.boundaryBlockId(), result.repeatPeriodBlocks(),
+                settings.fieldBeforeBlocks(), settings.channelWidthBlocks(), settings.fieldAfterBlocks(),
                 CityLandUseSurfacePrintPlan.ClassificationMode.valueOf(result.mode().name()),
                 result.anchor(), frozenBands);
     }
