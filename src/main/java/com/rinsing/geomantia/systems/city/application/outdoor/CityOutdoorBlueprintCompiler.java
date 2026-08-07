@@ -11,6 +11,7 @@ import com.rinsing.geomantia.systems.city.application.landuse.LandUseTerrainFiel
 import com.rinsing.geomantia.systems.city.algorithm.landuse.CityFoundationPlanner;
 import com.rinsing.geomantia.systems.city.domain.blueprint.CityBlueprint;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseSeedGroup;
+import com.rinsing.geomantia.systems.city.domain.landuse.LandscapeFillProgram;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseSurfaceSettings;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseTerrainField;
 import com.rinsing.geomantia.systems.city.domain.landuse.BoundaryPolicy;
@@ -121,14 +122,18 @@ public final class CityOutdoorBlueprintCompiler {
             for (ParcelSpec parcel : parcels) {
                 List<String> anchorIds = parcel.anchor() == null ? List.of() : List.of(parcel.anchor().anchorId());
                 List<BlockPoint> seeds = List.of(parcel.seed());
+                LandscapeFillProgram fillProgram = landscapeFillProgram(blueprint, landscape, profile,
+                        parcel, catalog);
+                LandUseSurfaceSettings fillSurfaceSettings = surfaceSettings(parcelRule, recipe, false)
+                        .forRelayRegionGrowth();
                 LandUseSeedGroup.GrowthRegion region = new LandUseSeedGroup.GrowthRegion(parcel.parcelId(),
                         anchorIds, seeds, parcel.budget().min(), parcel.budget().preferred(), parcel.budget().max());
                 groups.add(new LandUseSeedGroup(parcel.parcelId(), parcelRule,
-                        surfaceSettings(parcelRule, recipe, false), anchorIds, allFootprints, seeds, List.of(),
+                        fillSurfaceSettings, anchorIds, allFootprints, seeds, List.of(),
                         parcel.budget().min(), parcel.budget().preferred(), parcel.budget().max(),
                         parcelRule.actionBudget(), parcelRule.competitionWeight(), List.of(region), parcel.bias(),
                         LandUseSeedGroup.TerrainBias.valueOf(landscape.terrainPolicy().name()),
-                        landscape.preferredPatchRefs(), LandUseSeedGroup.LayerRole.LANDSCAPE, null));
+                        landscape.preferredPatchRefs(), LandUseSeedGroup.LayerRole.LANDSCAPE, null, fillProgram));
                 sourceIntents.add(sourceIntent(parcel.parcelId(), CityOutdoorIntentPlan.SourceKind.LANDSCAPE,
                         landscape.landscapeProfileRef(), parcelRule.ruleRef(), recipe.surfaceRecipeRef(),
                         profile.membership(), landscape.extentClass(), landscape.intensity(), landscape.continuity(),
@@ -146,6 +151,65 @@ public final class CityOutdoorBlueprintCompiler {
         return new Result(new LandUseSourceResolver.Resolution(groups, List.of(), List.of(),
                 Long.toUnsignedString(blueprint.generationSeed())), CityUrbanResidualResolver.Config.disabled(),
                 intent);
+    }
+
+    private static LandscapeFillProgram landscapeFillProgram(
+            CityBlueprint blueprint,
+            CityBlueprint.Landscape landscape,
+            CityBlueprintReferenceCatalog.LandscapeProfile landscapeProfile,
+            ParcelSpec parcel,
+            CityBlueprintReferenceCatalog catalog) {
+        CityBlueprint.FillVariant variant = selectFillVariant(landscape.fillSelection().variants(),
+                blueprint.cityId() + '|' + landscape.landscapeId() + '|' + parcel.parcelId() + "|fill");
+        CityBlueprintReferenceCatalog.LandscapeFillProfile fillProfile = catalog.landscapeFillProfiles().get(
+                variant.fillProfileRef());
+        if (fillProfile == null) {
+            throw new IllegalArgumentException("CITY_OUTDOOR_FILL_PROFILE_UNKNOWN:" + variant.fillProfileRef());
+        }
+        if (fillProfile.algorithm() != CityBlueprintReferenceCatalog.FillAlgorithm.SINGLE_SOURCE_REGION_RELAY
+                || !fillProfile.compatibleLandscapeTypes().contains(landscapeProfile.landscapeType())) {
+            throw new IllegalArgumentException("CITY_OUTDOOR_FILL_PROFILE_INCOMPATIBLE:"
+                    + landscape.landscapeId() + ':' + variant.fillProfileRef());
+        }
+        Set<String> selectedRoles = new HashSet<>();
+        for (CityBlueprint.RoleShare share : variant.roleShares()) {
+            selectedRoles.add(share.roleRef());
+        }
+        if (!selectedRoles.equals(fillProfile.roles().keySet())) {
+            throw new IllegalArgumentException("CITY_OUTDOOR_FILL_ROLE_SET_MISMATCH:" + variant.fillProfileRef());
+        }
+        List<LandscapeFillProgram.RoleDefinition> roles = variant.roleShares().stream()
+                .map(share -> {
+                    CityBlueprintReferenceCatalog.FillRole role = fillProfile.roles().get(share.roleRef());
+                    return new LandscapeFillProgram.RoleDefinition(role.roleRef(),
+                            LandscapeFillProgram.MaterialRole.valueOf(role.materialRole().name()),
+                            LandscapeFillProgram.GrowthForm.valueOf(share.growthForm().name()),
+                            share.targetShare());
+                }).toList();
+        List<LandscapeFillProgram.ContentWeight> contentWeights = variant.contentWeights().stream()
+                .sorted(Comparator.comparing(CityBlueprint.ContentWeight::contentRef))
+                .map(content -> new LandscapeFillProgram.ContentWeight(content.contentRef(), content.weight()))
+                .toList();
+        long stableSeed = blueprint.generationSeed()
+                ^ Long.rotateLeft(Integer.toUnsignedLong(stableHash(parcel.parcelId())), 32)
+                ^ Integer.toUnsignedLong(stableHash(variant.fillProfileRef()));
+        return new LandscapeFillProgram(fillProfile.fillProfileRef(), fillProfile.primaryRoleRef(),
+                roles, contentWeights, stableSeed);
+    }
+
+    private static CityBlueprint.FillVariant selectFillVariant(List<CityBlueprint.FillVariant> variants,
+                                                                 String stableKey) {
+        if (variants == null || variants.isEmpty()) {
+            throw new IllegalArgumentException("CITY_OUTDOOR_FILL_VARIANTS_REQUIRED");
+        }
+        double totalWeight = variants.stream().mapToDouble(CityBlueprint.FillVariant::selectionWeight).sum();
+        double ticket = stableUnit(stableKey) * totalWeight;
+        double cumulative = 0.0;
+        for (CityBlueprint.FillVariant variant : variants) {
+            cumulative += variant.selectionWeight();
+            if (ticket < cumulative) return variant;
+        }
+        return variants.get(variants.size() - 1);
     }
 
     private static CityOutdoorIntentPlan preserveIntent(CityBlueprint blueprint,

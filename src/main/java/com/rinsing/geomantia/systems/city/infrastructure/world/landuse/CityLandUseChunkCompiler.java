@@ -5,6 +5,7 @@ import com.rinsing.geomantia.systems.city.application.landuse.CityLandUseSurface
 import com.rinsing.geomantia.systems.city.application.landuse.CityLandUseSurfacePrintPlanCodec;
 import com.rinsing.geomantia.systems.city.application.landuse.LandUseAreaPlanCodec;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseAreaPlan;
+import com.rinsing.geomantia.systems.city.domain.landuse.LandscapeFillProgram;
 import com.rinsing.geomantia.systems.city.domain.landuse.SurfacePolicy;
 import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
 import com.rinsing.geomantia.systems.city.domain.model.BlockPoint;
@@ -215,12 +216,21 @@ public final class CityLandUseChunkCompiler {
 
     private static boolean isContourChannel(CityLandUseSurfacePrintPlan.AreaPrint printArea,
                                             BlockCell cell) {
-        if (printArea == null
-                || !(printArea.recipe() instanceof CityLandUseSurfacePrintPlan.ContourBandsRecipe contour)) {
-            return false;
+        if (printArea == null) return false;
+        if (printArea.recipe() instanceof CityLandUseSurfacePrintPlan.ContourBandsRecipe contour) {
+            CityLandUseSurfacePrintPlan.BandRole role = contour.roleAtOrNull(cell.x(), cell.z());
+            return role != null && role != CityLandUseSurfacePrintPlan.BandRole.FIELD;
         }
-        CityLandUseSurfacePrintPlan.BandRole role = contour.roleAtOrNull(cell.x(), cell.z());
-        return role != null && role != CityLandUseSurfacePrintPlan.BandRole.FIELD;
+        if (printArea.recipe() instanceof CityLandUseSurfacePrintPlan.RelayRegionGrowthRecipe relay) {
+            CityLandUseSurfacePrintPlan.RegionSpan region = relay.regionAtOrNull(cell.x(), cell.z());
+            if (region == null) return false;
+            LandscapeFillProgram.MaterialRole role = relay.roleDefinitions().stream()
+                    .filter(definition -> definition.roleRef().equals(region.roleRef()))
+                    .map(CityLandUseSurfacePrintPlan.RelayRoleDefinition::materialRole).findFirst().orElseThrow();
+            return role == LandscapeFillProgram.MaterialRole.BANK
+                    || role == LandscapeFillProgram.MaterialRole.WATER;
+        }
+        return false;
     }
 
     private static void addPlannedSurfaceOperations(
@@ -261,6 +271,36 @@ public final class CityLandUseChunkCompiler {
                             cell.x(), cell.z(), contour.channelBankOverlayBlockId(), 1, true,
                             SurfaceStage.CHANNEL_OVERLAY, 1));
                 }
+            }
+            return;
+        }
+        if (printArea.recipe() instanceof CityLandUseSurfacePrintPlan.RelayRegionGrowthRecipe relay) {
+            CityLandUseSurfacePrintPlan.RelayRoleDefinition role = relay.roleDefinitionAt(cell.x(), cell.z());
+            switch (role.materialRole()) {
+                case PRIMARY_CONTENT -> {
+                    addSurfaceOperation(surfaces, new SurfaceOperation(area.areaId(), area.landUseType(),
+                            cell.x(), cell.z(), relay.surfaceBlockId(), 0, false, SurfaceStage.BASE, 0));
+                    if (!relay.cropBlockId().isBlank()) {
+                        addSurfaceOperation(surfaces, new SurfaceOperation(area.areaId(), area.landUseType(),
+                                cell.x(), cell.z(), relay.cropBlockId(), 1, true, SurfaceStage.CROP, 1));
+                    }
+                }
+                case BANK -> {
+                    addSurfaceOperation(surfaces, new SurfaceOperation(area.areaId(), area.landUseType(),
+                            cell.x(), cell.z(), relay.channelBankBlockId(), 0, false,
+                            SurfaceStage.BASE, 0));
+                    if (!relay.channelBankOverlayBlockId().isBlank()) {
+                        addSurfaceOperation(surfaces, new SurfaceOperation(area.areaId(), area.landUseType(),
+                                cell.x(), cell.z(), relay.channelBankOverlayBlockId(), 1, true,
+                                SurfaceStage.CHANNEL_OVERLAY, 1));
+                    }
+                }
+                case WATER -> addSurfaceOperation(surfaces,
+                        new SurfaceOperation(area.areaId(), area.landUseType(), cell.x(), cell.z(),
+                                relay.channelWaterBlockId(), 0, false, SurfaceStage.BASE, 0));
+                case GROUND -> addSurfaceOperation(surfaces,
+                        new SurfaceOperation(area.areaId(), area.landUseType(), cell.x(), cell.z(),
+                                relay.channelBankBlockId(), 0, false, SurfaceStage.BASE, 0));
             }
             return;
         }

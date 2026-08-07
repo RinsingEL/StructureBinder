@@ -4039,7 +4039,7 @@ class CityPlanningEndpointHandlerTest {
     private static JsonObject blueprintReferenceCatalog() {
         return JsonParser.parseString("""
                 {
-                  "schemaVersion":"city_blueprint_reference_catalog.v0.4",
+                  "schemaVersion":"city_blueprint_reference_catalog.v0.6",
                   "structureRefs":[{"structureRef":"minecraft:desert_pyramid","templateCandidates":[{"templateId":"geomantia:test_house","variantId":"test_v1"}]}],
                   "fillPools":[{"poolRef":"pool:test","structureRefs":["minecraft:desert_pyramid"]}],
                   "algorithmProfiles":[{"algorithmProfileRef":"algorithm:compact","algorithm":"COMPACT"}],
@@ -4065,7 +4065,17 @@ class CityPlanningEndpointHandlerTest {
                     "parcelStyle":{"coreParcelCountMin":1,"coreParcelCountMax":2,
                     "fillParcelCountMin":0,"fillParcelCountMax":2,"parcelAreaMinBlocks":64,
                     "parcelAreaMaxBlocks":512,"branchFromExistingChance":0.5,
-                    "gapMinBlocks":1,"gapMaxBlocks":4}}]
+                    "gapMinBlocks":1,"gapMaxBlocks":4}}],
+                  "landscapeFillProfiles":[{"fillProfileRef":"fill:relay_common_green","displayName":"接力城市绿地",
+                    "visualIntent":"绿植区和自然地面区从父区域局部边界接力","algorithm":"SINGLE_SOURCE_REGION_RELAY",
+                    "relayOrigin":"PARENT_REGION_LOCAL_BOUNDARY",
+                    "compatibleLandscapeTypes":["COMMON_GREEN"],"primaryRoleRef":"GREEN",
+                    "roles":[{"roleRef":"GREEN","materialRole":"PRIMARY_CONTENT","allowedGrowthForms":["PATCH"],"defaultGrowthForm":"PATCH","minShare":0.7,"maxShare":0.95,"defaultShare":0.85},
+                      {"roleRef":"GROUND","materialRole":"GROUND","allowedGrowthForms":["PATCH","CORRIDOR"],"defaultGrowthForm":"PATCH","minShare":0.05,"maxShare":0.3,"defaultShare":0.15}],
+                    "allowedContentRefs":["plant:grass"],
+                    "examples":[{"exampleId":"simple_green","description":"绿植为主的连续城市绿地",
+                      "roleShares":[{"roleRef":"GREEN","growthForm":"PATCH","targetShare":0.425},{"roleRef":"GROUND","growthForm":"PATCH","targetShare":0.15},{"roleRef":"GREEN","growthForm":"PATCH","targetShare":0.425}],
+                      "contentWeights":[{"contentRef":"plant:grass","weight":1}]}]}]
                 }
                 """).getAsJsonObject();
     }
@@ -4075,7 +4085,7 @@ class CityPlanningEndpointHandlerTest {
                 .get(0).getAsJsonObject().get("landformPatchId").getAsString();
         JsonObject blueprint = JsonParser.parseString("""
                 {
-                  "schemaVersion":"city_blueprint.v0.7","cityId":"city_test","generationSeed":42,
+                  "schemaVersion":"city_blueprint.v0.9","cityId":"city_test","generationSeed":42,
                   "designIntent":{"cityIdentity":"test city","theme":"test","functionalRoles":["landmark"]},
                   "styleProfile":{"profileRef":"style:test"},
                   "groups":[{

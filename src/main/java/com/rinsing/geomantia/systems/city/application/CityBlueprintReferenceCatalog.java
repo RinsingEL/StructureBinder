@@ -10,6 +10,8 @@ import com.rinsing.geomantia.systems.city.domain.landuse.LandUseSurfaceSettings;
 import com.rinsing.geomantia.systems.city.domain.landuse.rules.LandUseRuleCatalog;
 import com.rinsing.geomantia.systems.city.infrastructure.landuse.LandUseRuleCatalogLoader;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.LinkedHashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -29,13 +31,14 @@ public record CityBlueprintReferenceCatalog(
         LandUseRuleCatalog landUseRuleCatalog,
         Map<String, SurfaceRecipe> surfaceRecipes,
         Map<String, FoundationProfile> foundationProfiles,
-        Map<String, LandscapeProfile> landscapeProfiles) {
+        Map<String, LandscapeProfile> landscapeProfiles,
+        Map<String, LandscapeFillProfile> landscapeFillProfiles) {
 
-    public static final String SCHEMA_VERSION = "city_blueprint_reference_catalog.v0.4";
+    public static final String SCHEMA_VERSION = "city_blueprint_reference_catalog.v0.6";
     private static final Set<String> ROOT_FIELDS = Set.of("schemaVersion", "structureRefs", "fillPools",
             "algorithmProfiles", "compositionProfiles", "styleProfiles", "roadProfiles",
             "surfaceDetailProfiles", "landUseRuleProfile", "surfaceRecipes", "foundationProfiles",
-            "landscapeProfiles");
+            "landscapeProfiles", "landscapeFillProfiles");
 
     public static CityBlueprintReferenceCatalog parse(JsonObject root, CityTemplateCatalog templateCatalog) {
         if (root == null) fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID,
@@ -93,17 +96,28 @@ public record CityBlueprintReferenceCatalog(
                 array(root, "foundationProfiles"), landUseRules, surfaceRecipes);
         Map<String, LandscapeProfile> landscapeProfiles = landscapeProfiles(
                 array(root, "landscapeProfiles"), landUseRules, surfaceRecipes);
+        Map<String, LandscapeFillProfile> landscapeFillProfiles = landscapeFillProfiles(
+                array(root, "landscapeFillProfiles"));
         if (structures.isEmpty() || pools.isEmpty() || algorithms.isEmpty() || compositions.isEmpty()
             || styles.isEmpty() || roads.isEmpty() || surfaces.isEmpty() || surfaceRecipes.isEmpty()
-                || foundationProfiles.isEmpty() || landscapeProfiles.isEmpty()) {
+                || foundationProfiles.isEmpty() || landscapeProfiles.isEmpty() || landscapeFillProfiles.isEmpty()) {
             fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID, "$",
                     "Every reference catalog namespace must contain at least one entry.");
+        }
+        for (LandscapeProfile landscapeProfile : landscapeProfiles.values()) {
+            boolean supported = landscapeFillProfiles.values().stream().anyMatch(fillProfile ->
+                    fillProfile.compatibleLandscapeTypes().contains(landscapeProfile.landscapeType()));
+            if (!supported) {
+                fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID,
+                        "$.landscapeProfiles[" + landscapeProfile.landscapeProfileRef() + "].landscapeType",
+                        "Every landscape profile must have at least one compatible landscapeFillProfile.");
+            }
         }
         return new CityBlueprintReferenceCatalog(root.deepCopy(), structures, pools, algorithms,
                 Map.copyOf(algorithmsByRef), compositions,
                 styles, roads, surfaces, landUseRules, Map.copyOf(surfaceRecipes),
                 Map.copyOf(foundationProfiles),
-                Map.copyOf(landscapeProfiles));
+                Map.copyOf(landscapeProfiles), Map.copyOf(landscapeFillProfiles));
     }
 
     private static Map<String, SurfaceRecipe> surfaceRecipes(JsonArray array) {
@@ -241,6 +255,235 @@ public record CityBlueprintReferenceCatalog(
         return result;
     }
 
+    private static Map<String, LandscapeFillProfile> landscapeFillProfiles(JsonArray array) {
+        Map<String, LandscapeFillProfile> result = new LinkedHashMap<>();
+        Set<String> fields = Set.of("fillProfileRef", "displayName", "visualIntent", "algorithm",
+                "relayOrigin", "compatibleLandscapeTypes", "primaryRoleRef", "roles",
+                "allowedContentRefs", "examples");
+        for (int index = 0; index < array.size(); index++) {
+            String path = "$.landscapeFillProfiles[" + index + "]";
+            JsonObject item = object(array.get(index), path);
+            exactFields(item, fields, path, CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID);
+            String ref = string(item, "fillProfileRef", path + ".fillProfileRef");
+            FillAlgorithm algorithm = enumValue(item, "algorithm", FillAlgorithm.class, path);
+            RelayOrigin relayOrigin = enumValue(item, "relayOrigin", RelayOrigin.class, path);
+            Set<LandscapeType> compatibleTypes = landscapeTypes(
+                    array(item, "compatibleLandscapeTypes"), path + ".compatibleLandscapeTypes");
+            Map<String, FillRole> roles = fillRoles(array(item, "roles"), path + ".roles");
+            String primaryRoleRef = string(item, "primaryRoleRef", path + ".primaryRoleRef");
+            if (!roles.containsKey(primaryRoleRef)) {
+                fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID,
+                        path + ".primaryRoleRef", "primaryRoleRef must name a declared role.");
+            }
+            if (roles.get(primaryRoleRef).materialRole() != MaterialRole.PRIMARY_CONTENT) {
+                fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID,
+                        path + ".primaryRoleRef", "primaryRoleRef must use materialRole PRIMARY_CONTENT.");
+            }
+            Set<String> allowedContentRefs = new LinkedHashSet<>(stringList(
+                    array(item, "allowedContentRefs"), path + ".allowedContentRefs", true));
+            List<FillExample> examples = fillExamples(array(item, "examples"), path + ".examples",
+                    roles, primaryRoleRef, allowedContentRefs);
+            LandscapeFillProfile profile = new LandscapeFillProfile(ref,
+                    string(item, "displayName", path + ".displayName"),
+                    string(item, "visualIntent", path + ".visualIntent"), algorithm,
+                    relayOrigin, compatibleTypes, primaryRoleRef, roles,
+                    Set.copyOf(allowedContentRefs), examples);
+            if (result.put(ref, profile) != null) {
+                fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_DUPLICATE_REF,
+                        path, "Duplicate reference: " + ref);
+            }
+        }
+        return result;
+    }
+
+    private static Set<LandscapeType> landscapeTypes(JsonArray array, String path) {
+        if (array.isEmpty()) {
+            fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID, path,
+                    "compatibleLandscapeTypes must not be empty.");
+        }
+        Set<LandscapeType> result = new LinkedHashSet<>();
+        for (int index = 0; index < array.size(); index++) {
+            String value = stringElement(array.get(index), path + "[" + index + "]");
+            LandscapeType type;
+            try {
+                type = LandscapeType.valueOf(value);
+            } catch (IllegalArgumentException exception) {
+                fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID,
+                        path + "[" + index + "]", "Unsupported landscape type: " + value);
+                return Set.of();
+            }
+            if (!result.add(type)) {
+                fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID,
+                        path + "[" + index + "]", "Landscape types must be unique.");
+            }
+        }
+        return Set.copyOf(result);
+    }
+
+    private static Map<String, FillRole> fillRoles(JsonArray array, String path) {
+        if (array.isEmpty()) {
+            fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID, path,
+                    "roles must not be empty.");
+        }
+        Map<String, FillRole> result = new LinkedHashMap<>();
+        double defaultSum = 0.0;
+        for (int index = 0; index < array.size(); index++) {
+            String itemPath = path + "[" + index + "]";
+            JsonObject item = object(array.get(index), itemPath);
+            exactFields(item, Set.of("roleRef", "materialRole", "allowedGrowthForms", "defaultGrowthForm",
+                    "minShare", "maxShare", "defaultShare"), itemPath,
+                    CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID);
+            String roleRef = string(item, "roleRef", itemPath + ".roleRef");
+            MaterialRole materialRole = enumValue(item, "materialRole", MaterialRole.class, itemPath);
+            Set<CityBlueprint.RegionGrowthForm> allowedGrowthForms = growthForms(
+                    array(item, "allowedGrowthForms"), itemPath + ".allowedGrowthForms");
+            CityBlueprint.RegionGrowthForm defaultGrowthForm = enumValue(item, "defaultGrowthForm",
+                    CityBlueprint.RegionGrowthForm.class, itemPath);
+            if (!allowedGrowthForms.contains(defaultGrowthForm)) {
+                fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID,
+                        itemPath + ".defaultGrowthForm", "defaultGrowthForm must be allowed by this role.");
+            }
+            double min = share(item, "minShare", itemPath + ".minShare", true);
+            double max = share(item, "maxShare", itemPath + ".maxShare", false);
+            double defaultShare = share(item, "defaultShare", itemPath + ".defaultShare", true);
+            if (min > max || defaultShare < min || defaultShare > max) {
+                fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID, itemPath,
+                        "Role shares must satisfy 0 <= minShare <= defaultShare <= maxShare <= 1.");
+            }
+            if (result.put(roleRef, new FillRole(roleRef, materialRole, allowedGrowthForms,
+                    defaultGrowthForm, min, max, defaultShare)) != null) {
+                fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_DUPLICATE_REF,
+                        itemPath, "Duplicate roleRef: " + roleRef);
+            }
+            defaultSum += defaultShare;
+        }
+        requireUnitSum(defaultSum, path, "Role defaultShare values");
+        return Map.copyOf(result);
+    }
+
+    private static Set<CityBlueprint.RegionGrowthForm> growthForms(JsonArray array, String path) {
+        if (array.isEmpty()) {
+            fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID, path,
+                    "allowedGrowthForms must not be empty.");
+        }
+        Set<CityBlueprint.RegionGrowthForm> result = new LinkedHashSet<>();
+        for (int index = 0; index < array.size(); index++) {
+            String value = stringElement(array.get(index), path + "[" + index + "]");
+            CityBlueprint.RegionGrowthForm form;
+            try {
+                form = CityBlueprint.RegionGrowthForm.valueOf(value);
+            } catch (IllegalArgumentException exception) {
+                fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID,
+                        path + "[" + index + "]", "Unsupported growth form: " + value);
+                return Set.of();
+            }
+            if (!result.add(form)) {
+                fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID,
+                        path + "[" + index + "]", "Growth forms must be unique.");
+            }
+        }
+        return Set.copyOf(result);
+    }
+
+    private static List<FillExample> fillExamples(JsonArray array, String path, Map<String, FillRole> roles,
+                                                   String primaryRoleRef, Set<String> allowedContentRefs) {
+        if (array.isEmpty()) {
+            fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID, path,
+                    "examples must not be empty.");
+        }
+        List<FillExample> result = new ArrayList<>();
+        Set<String> ids = new LinkedHashSet<>();
+        for (int index = 0; index < array.size(); index++) {
+            String itemPath = path + "[" + index + "]";
+            JsonObject item = object(array.get(index), itemPath);
+            exactFields(item, Set.of("exampleId", "description", "roleShares", "contentWeights"), itemPath,
+                    CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID);
+            String exampleId = string(item, "exampleId", itemPath + ".exampleId");
+            if (!ids.add(exampleId)) {
+                fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_DUPLICATE_REF,
+                        itemPath + ".exampleId", "Duplicate exampleId: " + exampleId);
+            }
+            List<ExampleRoleShare> roleShares = exampleRoleShares(array(item, "roleShares"),
+                    itemPath + ".roleShares", roles, primaryRoleRef);
+            List<ExampleContentWeight> contentWeights = exampleContentWeights(array(item, "contentWeights"),
+                    itemPath + ".contentWeights", allowedContentRefs);
+            result.add(new FillExample(exampleId, string(item, "description", itemPath + ".description"),
+                    roleShares, contentWeights));
+        }
+        return List.copyOf(result);
+    }
+
+    private static List<ExampleRoleShare> exampleRoleShares(JsonArray array, String path,
+                                                             Map<String, FillRole> roles,
+                                                             String primaryRoleRef) {
+        if (array.isEmpty()) {
+            fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID, path,
+                    "Example roleShares must not be empty.");
+        }
+        List<ExampleRoleShare> result = new ArrayList<>();
+        Set<String> refs = new LinkedHashSet<>();
+        Map<String, Double> aggregateShares = new LinkedHashMap<>();
+        double sum = 0.0;
+        for (int index = 0; index < array.size(); index++) {
+            String itemPath = path + "[" + index + "]";
+            JsonObject item = object(array.get(index), itemPath);
+            exactFields(item, Set.of("roleRef", "growthForm", "targetShare"), itemPath,
+                    CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID);
+            String roleRef = string(item, "roleRef", itemPath + ".roleRef");
+            FillRole role = roles.get(roleRef);
+            CityBlueprint.RegionGrowthForm growthForm = enumValue(item, "growthForm",
+                    CityBlueprint.RegionGrowthForm.class, itemPath);
+            double target = share(item, "targetShare", itemPath + ".targetShare", false);
+            if (role == null || target >= 1.0 || !role.allowedGrowthForms().contains(growthForm)) {
+                fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID, itemPath,
+                        "Each ordered example stage must use a declared role, an allowed growthForm, "
+                                + "and a targetShare in (0,1).");
+            }
+            refs.add(roleRef);
+            aggregateShares.merge(roleRef, target, Double::sum);
+            result.add(new ExampleRoleShare(roleRef, growthForm, target));
+            sum += target;
+        }
+        if (!refs.contains(primaryRoleRef)) {
+            fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID, path,
+                    "Example roleShares must contain primaryRoleRef.");
+        }
+        if (!refs.equals(roles.keySet())) {
+            fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID, path,
+                    "Example region stages must contain every declared roleRef.");
+        }
+        requireUnitSum(sum, path, "Example targetShare values");
+        for (FillRole role : roles.values()) {
+            double aggregate = aggregateShares.getOrDefault(role.roleRef(), 0.0);
+            if (!Double.isFinite(aggregate) || aggregate < role.minShare() || aggregate > role.maxShare()) {
+                fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID, path,
+                        "Example stages for role " + role.roleRef()
+                                + " must aggregate within its configured share range.");
+            }
+        }
+        return List.copyOf(result);
+    }
+
+    private static List<ExampleContentWeight> exampleContentWeights(JsonArray array, String path,
+                                                                     Set<String> allowedContentRefs) {
+        List<ExampleContentWeight> result = new ArrayList<>();
+        Set<String> refs = new LinkedHashSet<>();
+        for (int index = 0; index < array.size(); index++) {
+            String itemPath = path + "[" + index + "]";
+            JsonObject item = object(array.get(index), itemPath);
+            exactFields(item, Set.of("contentRef", "weight"), itemPath,
+                    CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID);
+            String contentRef = string(item, "contentRef", itemPath + ".contentRef");
+            double weight = positiveNumber(item, "weight", itemPath + ".weight");
+            if (!allowedContentRefs.contains(contentRef) || !refs.add(contentRef)) {
+                fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID, itemPath,
+                        "Example contentRef must be unique and present in allowedContentRefs.");
+            }
+            result.add(new ExampleContentWeight(contentRef, weight));
+        }
+        return List.copyOf(result);
+    }
+
     private static ParcelStyle parcelStyle(JsonObject item, String path) {
         Set<String> fields = Set.of("coreParcelCountMin", "coreParcelCountMax", "fillParcelCountMin",
                 "fillParcelCountMax", "parcelAreaMinBlocks", "parcelAreaMaxBlocks",
@@ -373,6 +616,24 @@ public record CityBlueprintReferenceCatalog(
         return element.getAsString().trim();
     }
 
+    private static List<String> stringList(JsonArray array, String path, boolean allowEmpty) {
+        if (!allowEmpty && array.isEmpty()) {
+            fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID, path,
+                    "Array must not be empty.");
+        }
+        List<String> result = new ArrayList<>();
+        Set<String> unique = new LinkedHashSet<>();
+        for (int index = 0; index < array.size(); index++) {
+            String value = stringElement(array.get(index), path + "[" + index + "]");
+            if (!unique.add(value)) {
+                fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID,
+                        path + "[" + index + "]", "Values must be unique.");
+            }
+            result.add(value);
+        }
+        return List.copyOf(result);
+    }
+
     private static boolean bool(JsonObject object, String key, String path) {
         if (!object.has(key) || !object.get(key).isJsonPrimitive()
                 || !object.getAsJsonPrimitive(key).isBoolean()) {
@@ -422,6 +683,42 @@ public record CityBlueprintReferenceCatalog(
                     path + "." + key, "A probability from 0 to 1 is required.");
         }
         return raw;
+    }
+
+    private static double share(JsonObject object, String key, String path, boolean allowZero) {
+        if (!object.has(key) || !object.get(key).isJsonPrimitive()
+                || !object.getAsJsonPrimitive(key).isNumber()) {
+            fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID, path,
+                    "A share from 0 to 1 is required.");
+        }
+        double raw = object.get(key).getAsDouble();
+        if (!Double.isFinite(raw) || raw > 1.0 || (allowZero ? raw < 0.0 : raw <= 0.0)) {
+            fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID, path,
+                    allowZero ? "A share from 0 to 1 is required."
+                            : "A share greater than 0 and at most 1 is required.");
+        }
+        return raw;
+    }
+
+    private static double positiveNumber(JsonObject object, String key, String path) {
+        if (!object.has(key) || !object.get(key).isJsonPrimitive()
+                || !object.getAsJsonPrimitive(key).isNumber()) {
+            fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID, path,
+                    "A positive finite number is required.");
+        }
+        double raw = object.get(key).getAsDouble();
+        if (!Double.isFinite(raw) || raw <= 0.0) {
+            fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID, path,
+                    "A positive finite number is required.");
+        }
+        return raw;
+    }
+
+    private static void requireUnitSum(double sum, String path, String label) {
+        if (Math.abs(sum - 1.0) > 1.0e-6) {
+            fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID, path,
+                    label + " must sum to 1.0.");
+        }
     }
 
     private static String blockId(JsonObject object, String key, String path) {
@@ -568,7 +865,65 @@ public record CityBlueprintReferenceCatalog(
         }
     }
 
+    public record LandscapeFillProfile(
+            String fillProfileRef,
+            String displayName,
+            String visualIntent,
+            FillAlgorithm algorithm,
+            RelayOrigin relayOrigin,
+            Set<LandscapeType> compatibleLandscapeTypes,
+            String primaryRoleRef,
+            Map<String, FillRole> roles,
+            Set<String> allowedContentRefs,
+            List<FillExample> examples) {
+        public LandscapeFillProfile {
+            compatibleLandscapeTypes = Set.copyOf(compatibleLandscapeTypes);
+            roles = Map.copyOf(roles);
+            allowedContentRefs = Set.copyOf(allowedContentRefs);
+            examples = List.copyOf(examples);
+        }
+    }
+
+    public record FillRole(
+            String roleRef,
+            MaterialRole materialRole,
+            Set<CityBlueprint.RegionGrowthForm> allowedGrowthForms,
+            CityBlueprint.RegionGrowthForm defaultGrowthForm,
+            double minShare,
+            double maxShare,
+            double defaultShare) {
+        public FillRole {
+            allowedGrowthForms = Set.copyOf(allowedGrowthForms);
+        }
+    }
+
+    public record FillExample(
+            String exampleId,
+            String description,
+            List<ExampleRoleShare> roleShares,
+            List<ExampleContentWeight> contentWeights) {
+        public FillExample {
+            roleShares = List.copyOf(roleShares);
+            contentWeights = List.copyOf(contentWeights);
+        }
+    }
+
+    public record ExampleRoleShare(
+            String roleRef,
+            CityBlueprint.RegionGrowthForm growthForm,
+            double targetShare) {
+    }
+
+    public record ExampleContentWeight(String contentRef, double weight) {
+    }
+
     public enum LandscapeType { FARMLAND, COMMON_GREEN, WOODLAND, MEADOW, POND }
+
+    public enum FillAlgorithm { SINGLE_SOURCE_REGION_RELAY }
+
+    public enum RelayOrigin { PARENT_REGION_LOCAL_BOUNDARY }
+
+    public enum MaterialRole { PRIMARY_CONTENT, BANK, WATER, GROUND }
 
     @FunctionalInterface
     private interface EntryValidator {

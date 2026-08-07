@@ -35,10 +35,10 @@ class CityBlueprintServiceTest {
 
         assertEquals(0, prepared.get("aiCityDesignCallCount").getAsInt());
         JsonObject context = prepared.getAsJsonObject("cityBlueprintContext");
-        assertEquals("city_blueprint_context.v0.6", context.get("schemaVersion").getAsString());
-        assertEquals("city_blueprint_catalog_snapshot.v0.7",
+        assertEquals("city_blueprint_context.v0.8", context.get("schemaVersion").getAsString());
+        assertEquals("city_blueprint_catalog_snapshot.v0.9",
                 context.getAsJsonObject("catalogSnapshotRef").get("schemaVersion").getAsString());
-        assertEquals("city_blueprint_catalog_snapshot.v0.7",
+        assertEquals("city_blueprint_catalog_snapshot.v0.9",
                 context.getAsJsonObject("catalogSnapshot").get("schemaVersion").getAsString());
         JsonObject semanticProfile = context.getAsJsonObject("catalogSnapshot")
                 .getAsJsonObject("structureCatalog")
@@ -159,7 +159,7 @@ class CityBlueprintServiceTest {
         Path contextPath = fixture.runDir().resolve("city_blueprint_" + safe(fixture.cityId()))
                 .resolve("city_blueprint_context.json");
         JsonObject context = JsonParser.parseString(Files.readString(contextPath)).getAsJsonObject();
-        context.addProperty("schemaVersion", "city_blueprint_context.v0.5");
+        context.addProperty("schemaVersion", "city_blueprint_context.v0.7");
         Files.writeString(contextPath, context.toString());
 
         JsonObject result = service.submit(temporary, fixture.runId(), fixture.cityId(),
@@ -180,7 +180,7 @@ class CityBlueprintServiceTest {
         Path snapshotPath = fixture.runDir().resolve("city_blueprint_" + safe(fixture.cityId()))
                 .resolve("city_blueprint_catalog_snapshot.json");
         JsonObject snapshot = JsonParser.parseString(Files.readString(snapshotPath)).getAsJsonObject();
-        snapshot.addProperty("schemaVersion", "city_blueprint_catalog_snapshot.v0.6");
+        snapshot.addProperty("schemaVersion", "city_blueprint_catalog_snapshot.v0.8");
         Files.writeString(snapshotPath, snapshot.toString());
 
         JsonObject result = service.submit(temporary, fixture.runId(), fixture.cityId(),
@@ -304,13 +304,181 @@ class CityBlueprintServiceTest {
                         {"landscapeId":"central_green","landscapeProfileRef":"landscape:greenbelt",
                          "attachedGroupIds":["civic"],"preferredPatchRefs":[],"extentClass":"SMALL",
                          "intensity":"MEDIUM","continuity":"CONTINUOUS","growthRelation":"AROUND_SOURCE",
-                         "referenceGroupIds":[],"terrainPolicy":"CONFORM","required":true}
+                         "referenceGroupIds":[],"terrainPolicy":"CONFORM","required":true,
+                         "fillSelection":{"variants":[{"fillProfileRef":"fill:relay_common_green","selectionWeight":1,
+                           "roleShares":[{"roleRef":"GREEN","growthForm":"PATCH","targetShare":0.425},{"roleRef":"GROUND","growthForm":"PATCH","targetShare":0.15},{"roleRef":"GREEN","growthForm":"PATCH","targetShare":0.425}],
+                           "contentWeights":[{"contentRef":"plant:grass","weight":1}]}]}}
                         """).getAsJsonObject());
 
         JsonObject result = service.submit(temporary, fixture.runId(), fixture.cityId(),
                 prepared.get("contextId").getAsString(), blueprint);
 
         assertTrue(result.get("ok").getAsBoolean(), result.toString());
+    }
+
+    @Test
+    void rejectsFillProfileIncompatibleWithLandscapeType() throws Exception {
+        Fixture fixture = fixture("run_incompatible_fill", "city:incompatible_fill");
+        CityBlueprintService service = new CityBlueprintService();
+        JsonObject prepared = service.prepare(temporary, fixture.runId(), fixture.cityId(),
+                fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog());
+        JsonObject blueprint = blueprint(prepared.getAsJsonObject("cityBlueprintContext"));
+        blueprint.getAsJsonObject("outdoorPlan").getAsJsonArray("landscapes").add(
+                landscapeWithFill("landscape:greenbelt", "fill:relay_irrigated_farmland",
+                        """
+                        [{"roleRef":"CULTIVATED","growthForm":"PATCH","targetShare":0.82},
+                         {"roleRef":"BANK","growthForm":"CORRIDOR","targetShare":0.12},{"roleRef":"WATER","growthForm":"CORRIDOR","targetShare":0.06}]
+                        """, "[]"));
+
+        JsonObject result = service.submit(temporary, fixture.runId(), fixture.cityId(),
+                prepared.get("contextId").getAsString(), blueprint);
+
+        assertFalse(result.get("ok").getAsBoolean());
+        assertTrue(result.getAsJsonObject("validationReport").getAsJsonArray("issues").asList().stream()
+                .map(JsonElement::getAsJsonObject)
+                .anyMatch(issue -> issue.get("fieldPath").getAsString().endsWith("fillProfileRef")
+                        && issue.get("message").getAsString().contains("incompatible")));
+    }
+
+    @Test
+    void rejectsInvalidFillShareSumAndContentOutsideWhitelist() throws Exception {
+        Fixture fixture = fixture("run_invalid_fill_values", "city:invalid_fill_values");
+        CityBlueprintService service = new CityBlueprintService();
+        JsonObject prepared = service.prepare(temporary, fixture.runId(), fixture.cityId(),
+                fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog());
+        JsonObject blueprint = blueprint(prepared.getAsJsonObject("cityBlueprintContext"));
+        blueprint.getAsJsonObject("outdoorPlan").getAsJsonArray("landscapes").add(
+                landscapeWithFill("landscape:greenbelt", "fill:relay_common_green",
+                        """
+                        [{"roleRef":"GREEN","growthForm":"PATCH","targetShare":0.8},{"roleRef":"GROUND","growthForm":"PATCH","targetShare":0.15}]
+                        """, "[{\"contentRef\":\"minecraft:grass_block\",\"weight\":1}]"));
+
+        JsonObject result = service.submit(temporary, fixture.runId(), fixture.cityId(),
+                prepared.get("contextId").getAsString(), blueprint);
+
+        assertFalse(result.get("ok").getAsBoolean());
+        JsonArray issues = result.getAsJsonObject("validationReport").getAsJsonArray("issues");
+        assertTrue(issues.asList().stream().map(JsonElement::getAsJsonObject)
+                .anyMatch(issue -> issue.get("fieldPath").getAsString().endsWith("roleShares")));
+        assertTrue(issues.asList().stream().map(JsonElement::getAsJsonObject)
+                .anyMatch(issue -> issue.get("fieldPath").getAsString().endsWith("contentRef")));
+    }
+
+    @Test
+    void rejectsGrowthFormOutsideRoleFrontierBiasWhitelist() throws Exception {
+        Fixture fixture = fixture("run_invalid_growth_form", "city:invalid_growth_form");
+        CityBlueprintService service = new CityBlueprintService();
+        JsonObject prepared = service.prepare(temporary, fixture.runId(), fixture.cityId(),
+                fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog());
+        JsonObject blueprint = blueprint(prepared.getAsJsonObject("cityBlueprintContext"));
+        blueprint.getAsJsonObject("outdoorPlan").getAsJsonArray("landscapes").add(
+                landscapeWithFill("landscape:greenbelt", "fill:relay_common_green",
+                        """
+                        [{"roleRef":"GREEN","growthForm":"CORRIDOR","targetShare":0.85},
+                         {"roleRef":"GROUND","growthForm":"PATCH","targetShare":0.15}]
+                        """, "[]"));
+
+        JsonObject result = service.submit(temporary, fixture.runId(), fixture.cityId(),
+                prepared.get("contextId").getAsString(), blueprint);
+
+        assertFalse(result.get("ok").getAsBoolean());
+        assertTrue(result.getAsJsonObject("validationReport").getAsJsonArray("issues").asList().stream()
+                .map(JsonElement::getAsJsonObject)
+                .anyMatch(issue -> issue.get("fieldPath").getAsString().endsWith("growthForm")));
+    }
+
+    @Test
+    void rejectsFillVariantThatOmitsADeclaredRoleEvenWhenSharesSumToOne() throws Exception {
+        Fixture fixture = fixture("run_missing_fill_role", "city:missing_fill_role");
+        CityBlueprintService service = new CityBlueprintService();
+        JsonObject prepared = service.prepare(temporary, fixture.runId(), fixture.cityId(),
+                fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog());
+        JsonObject blueprint = blueprint(prepared.getAsJsonObject("cityBlueprintContext"));
+        blueprint.getAsJsonObject("outdoorPlan").getAsJsonArray("landscapes").add(
+                landscapeWithFill("landscape:farmland_fenced", "fill:relay_irrigated_farmland",
+                        """
+                        [{"roleRef":"CULTIVATED","growthForm":"PATCH","targetShare":0.85},
+                         {"roleRef":"BANK","growthForm":"CORRIDOR","targetShare":0.15}]
+                        """, "[]"));
+
+        JsonObject result = service.submit(temporary, fixture.runId(), fixture.cityId(),
+                prepared.get("contextId").getAsString(), blueprint);
+
+        assertFalse(result.get("ok").getAsBoolean());
+        assertTrue(result.getAsJsonObject("validationReport").getAsJsonArray("issues").asList().stream()
+                .map(JsonElement::getAsJsonObject)
+                .anyMatch(issue -> issue.get("fieldPath").getAsString().endsWith("roleShares")
+                        && issue.get("message").getAsString().contains("every role")));
+    }
+
+    @Test
+    void rejectsLegacyLayerSequenceAndGeometryFallbackFields() throws Exception {
+        Fixture fixture = fixture("run_forbidden_fill_geometry", "city:forbidden_fill_geometry");
+        for (String field : List.of("layerSequence", "repeatLayers", "fixedShape", "distanceRings",
+                "geometryFallback")) {
+            JsonObject catalog = fixture.referenceCatalog().deepCopy();
+            catalog.getAsJsonArray("landscapeFillProfiles").get(0).getAsJsonObject()
+                    .addProperty(field, field.equals("repeatLayers"));
+            CityBlueprintContractException failure = assertThrows(CityBlueprintContractException.class,
+                    () -> new CityBlueprintService().prepare(temporary, fixture.runId(), fixture.cityId(),
+                            fixture.terraSenseSource(), fixture.templateSource(), catalog));
+            assertEquals(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID,
+                    failure.reasonCode(), field);
+        }
+        JsonObject oldAlgorithmCatalog = fixture.referenceCatalog().deepCopy();
+        oldAlgorithmCatalog.getAsJsonArray("landscapeFillProfiles").get(0).getAsJsonObject()
+                .addProperty("algorithm", "SINGLE_SOURCE_LAYERS");
+        CityBlueprintContractException oldAlgorithmFailure = assertThrows(CityBlueprintContractException.class,
+                () -> new CityBlueprintService().prepare(temporary, fixture.runId(), fixture.cityId(),
+                        fixture.terraSenseSource(), fixture.templateSource(), oldAlgorithmCatalog));
+        assertEquals(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID,
+                oldAlgorithmFailure.reasonCode());
+    }
+
+    @Test
+    void rejectsCatalogThatExposesLandscapeWithoutCompatibleFillProfile() throws Exception {
+        Fixture fixture = fixture("run_missing_landscape_fill", "city:missing_landscape_fill");
+        JsonObject catalog = fixture.referenceCatalog().deepCopy();
+        JsonArray fillProfiles = catalog.getAsJsonArray("landscapeFillProfiles");
+        fillProfiles.remove(fillProfiles.size() - 1);
+
+        CityBlueprintContractException failure = assertThrows(CityBlueprintContractException.class,
+                () -> new CityBlueprintService().prepare(temporary, fixture.runId(), fixture.cityId(),
+                        fixture.terraSenseSource(), fixture.templateSource(), catalog));
+
+        assertEquals(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID,
+                failure.reasonCode());
+        assertTrue(failure.getMessage().contains("compatible landscapeFillProfile"));
+    }
+
+    @Test
+    void rejectsFillRoleShareAboveOne() throws Exception {
+        Fixture fixture = fixture("run_fill_share_over_one", "city:fill_share_over_one");
+        JsonObject catalog = fixture.referenceCatalog().deepCopy();
+        catalog.getAsJsonArray("landscapeFillProfiles").get(0).getAsJsonObject()
+                .getAsJsonArray("roles").get(0).getAsJsonObject().addProperty("maxShare", 1.1);
+
+        CityBlueprintContractException failure = assertThrows(CityBlueprintContractException.class,
+                () -> new CityBlueprintService().prepare(temporary, fixture.runId(), fixture.cityId(),
+                        fixture.terraSenseSource(), fixture.templateSource(), catalog));
+
+        assertEquals(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID,
+                failure.reasonCode());
+    }
+
+    @Test
+    void rejectsNonFiniteFillRoleShare() throws Exception {
+        Fixture fixture = fixture("run_fill_share_nan", "city:fill_share_nan");
+        JsonObject catalog = fixture.referenceCatalog().deepCopy();
+        catalog.getAsJsonArray("landscapeFillProfiles").get(0).getAsJsonObject()
+                .getAsJsonArray("roles").get(0).getAsJsonObject().addProperty("maxShare", Double.NaN);
+
+        CityBlueprintContractException failure = assertThrows(CityBlueprintContractException.class,
+                () -> new CityBlueprintService().prepare(temporary, fixture.runId(), fixture.cityId(),
+                        fixture.terraSenseSource(), fixture.templateSource(), catalog));
+
+        assertEquals(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID,
+                failure.reasonCode());
     }
 
     @Test
@@ -325,6 +493,12 @@ class CityBlueprintServiceTest {
                 .resolve("city_blueprint_catalog_snapshot.json"))).getAsJsonObject();
         JsonObject catalog = snapshot.getAsJsonObject("referenceCatalog");
         assertEquals(4, catalog.getAsJsonArray("landscapeProfiles").size());
+        assertEquals(5, catalog.getAsJsonArray("landscapeFillProfiles").size());
+        JsonObject irrigated = catalog.getAsJsonArray("landscapeFillProfiles").get(0).getAsJsonObject();
+        assertEquals("SINGLE_SOURCE_REGION_RELAY", irrigated.get("algorithm").getAsString());
+        assertEquals("PARENT_REGION_LOCAL_BOUNDARY", irrigated.get("relayOrigin").getAsString());
+        assertFalse(irrigated.has("layerSequence"));
+        assertFalse(irrigated.has("geometryFallback"));
         JsonObject farmlandProfile = catalog.getAsJsonArray("landscapeProfiles").get(0).getAsJsonObject();
         assertEquals("landscape:farmland_fenced", farmlandProfile.get("landscapeProfileRef").getAsString());
         assertEquals(5, farmlandProfile.getAsJsonObject("parcelStyle").get("coreParcelCountMin").getAsInt());
@@ -341,6 +515,12 @@ class CityBlueprintServiceTest {
                 .anyMatch(recipe -> "surface_recipe:forestry".equals(
                         recipe.get("surfaceRecipeRef").getAsString())
                         && "minecraft:spruce_fence".equals(recipe.get("boundaryBlockId").getAsString())));
+        assertTrue(catalog.getAsJsonArray("landscapeFillProfiles").asList().stream()
+                .map(JsonElement::getAsJsonObject)
+                .anyMatch(profile -> "fill:relay_woodland".equals(
+                        profile.get("fillProfileRef").getAsString())
+                        && "WOODLAND".equals(profile.getAsJsonArray("compatibleLandscapeTypes")
+                        .get(0).getAsString())));
         assertTrue(catalog.getAsJsonArray("surfaceRecipes").asList().stream()
                 .map(JsonElement::getAsJsonObject)
                 .anyMatch(recipe -> "surface_recipe:flower_field".equals(
@@ -475,7 +655,7 @@ class CityBlueprintServiceTest {
     void rejectsPreviousReferenceCatalogSchema() throws Exception {
         Fixture fixture = fixture("run_old_reference_catalog", "city:old_reference_catalog");
         JsonObject catalog = fixture.referenceCatalog().deepCopy();
-        catalog.addProperty("schemaVersion", "city_blueprint_reference_catalog.v0.3");
+        catalog.addProperty("schemaVersion", "city_blueprint_reference_catalog.v0.5");
 
         CityBlueprintContractException failure = assertThrows(CityBlueprintContractException.class,
                 () -> new CityBlueprintService().prepare(temporary, fixture.runId(), fixture.cityId(),
@@ -563,7 +743,7 @@ class CityBlueprintServiceTest {
     private static JsonObject referenceCatalog() {
         return JsonParser.parseString("""
                 {
-                  "schemaVersion":"city_blueprint_reference_catalog.v0.4",
+                  "schemaVersion":"city_blueprint_reference_catalog.v0.6",
                   "structureRefs":[{"structureRef":"geomantia:town_hall","templateCandidates":[{"templateId":"geomantia:town_hall","variantId":"default"}]}],
                   "fillPools":[{"poolRef":"pool:civic","structureRefs":["geomantia:town_hall"]}],
                   "algorithmProfiles":[
@@ -653,6 +833,65 @@ class CityBlueprintServiceTest {
                     "parcelStyle":{"coreParcelCountMin":1,"coreParcelCountMax":3,"fillParcelCountMin":1,
                     "fillParcelCountMax":5,"parcelAreaMinBlocks":96,"parcelAreaMaxBlocks":384,
                     "branchFromExistingChance":0.7,"gapMinBlocks":3,"gapMaxBlocks":10}}
+                  ],
+                  "landscapeFillProfiles":[
+                    {"fillProfileRef":"fill:relay_irrigated_farmland","displayName":"接力灌溉农田",
+                    "visualIntent":"耕作区、田埂和水渠从父区域局部边界逐区接力","algorithm":"SINGLE_SOURCE_REGION_RELAY",
+                    "relayOrigin":"PARENT_REGION_LOCAL_BOUNDARY",
+                    "compatibleLandscapeTypes":["FARMLAND"],"primaryRoleRef":"CULTIVATED",
+                    "roles":[
+                      {"roleRef":"CULTIVATED","materialRole":"PRIMARY_CONTENT","allowedGrowthForms":["PATCH"],"defaultGrowthForm":"PATCH","minShare":0.65,"maxShare":0.92,"defaultShare":0.82},
+                      {"roleRef":"BANK","materialRole":"BANK","allowedGrowthForms":["CORRIDOR"],"defaultGrowthForm":"CORRIDOR","minShare":0.06,"maxShare":0.2,"defaultShare":0.12},
+                      {"roleRef":"WATER","materialRole":"WATER","allowedGrowthForms":["CORRIDOR"],"defaultGrowthForm":"CORRIDOR","minShare":0.02,"maxShare":0.12,"defaultShare":0.06}],
+                    "allowedContentRefs":["crop:wheat","crop:carrot","crop:potato"],
+                    "examples":[{"exampleId":"balanced_irrigation","description":"耕地为主题，窄水渠周期分隔",
+                      "roleShares":[{"roleRef":"CULTIVATED","growthForm":"PATCH","targetShare":0.41},{"roleRef":"BANK","growthForm":"CORRIDOR","targetShare":0.06},{"roleRef":"WATER","growthForm":"CORRIDOR","targetShare":0.06},{"roleRef":"BANK","growthForm":"CORRIDOR","targetShare":0.06},{"roleRef":"CULTIVATED","growthForm":"PATCH","targetShare":0.41}],
+                      "contentWeights":[{"contentRef":"crop:wheat","weight":60},{"contentRef":"crop:carrot","weight":25},{"contentRef":"crop:potato","weight":15}]}]},
+                    {"fillProfileRef":"fill:relay_dry_farmland","displayName":"接力旱地农田",
+                    "visualIntent":"耕地区和土路区从父区域局部边界自然接力","algorithm":"SINGLE_SOURCE_REGION_RELAY",
+                    "relayOrigin":"PARENT_REGION_LOCAL_BOUNDARY",
+                    "compatibleLandscapeTypes":["FARMLAND"],"primaryRoleRef":"CULTIVATED",
+                    "roles":[
+                      {"roleRef":"CULTIVATED","materialRole":"PRIMARY_CONTENT","allowedGrowthForms":["PATCH"],"defaultGrowthForm":"PATCH","minShare":0.75,"maxShare":0.95,"defaultShare":0.88},
+                      {"roleRef":"DIRT_PATH","materialRole":"GROUND","allowedGrowthForms":["CORRIDOR"],"defaultGrowthForm":"CORRIDOR","minShare":0.05,"maxShare":0.25,"defaultShare":0.12}],
+                    "allowedContentRefs":["crop:wheat","crop:potato"],
+                    "examples":[{"exampleId":"wheat_dry_fields","description":"麦田占主导，土路只作间隔",
+                      "roleShares":[{"roleRef":"CULTIVATED","growthForm":"PATCH","targetShare":0.44},{"roleRef":"DIRT_PATH","growthForm":"CORRIDOR","targetShare":0.12},{"roleRef":"CULTIVATED","growthForm":"PATCH","targetShare":0.44}],
+                      "contentWeights":[{"contentRef":"crop:wheat","weight":75},{"contentRef":"crop:potato","weight":25}]}]},
+                    {"fillProfileRef":"fill:relay_flower_meadow","displayName":"接力花田叶带",
+                    "visualIntent":"花丛区和叶带区从父区域局部边界接力生长","algorithm":"SINGLE_SOURCE_REGION_RELAY",
+                    "relayOrigin":"PARENT_REGION_LOCAL_BOUNDARY",
+                    "compatibleLandscapeTypes":["MEADOW"],"primaryRoleRef":"FLOWER",
+                    "roles":[
+                      {"roleRef":"FLOWER","materialRole":"PRIMARY_CONTENT","allowedGrowthForms":["PATCH"],"defaultGrowthForm":"PATCH","minShare":0.7,"maxShare":0.94,"defaultShare":0.84},
+                      {"roleRef":"LEAF_BREAK","materialRole":"BANK","allowedGrowthForms":["CORRIDOR"],"defaultGrowthForm":"CORRIDOR","minShare":0.06,"maxShare":0.3,"defaultShare":0.16}],
+                    "allowedContentRefs":["flower:poppy","flower:dandelion","flower:cornflower"],
+                    "examples":[{"exampleId":"warm_wildflowers","description":"暖色花丛为主并用叶带过渡",
+                      "roleShares":[{"roleRef":"FLOWER","growthForm":"PATCH","targetShare":0.42},{"roleRef":"LEAF_BREAK","growthForm":"CORRIDOR","targetShare":0.16},{"roleRef":"FLOWER","growthForm":"PATCH","targetShare":0.42}],
+                      "contentWeights":[{"contentRef":"flower:poppy","weight":55},{"contentRef":"flower:dandelion","weight":30},{"contentRef":"flower:cornflower","weight":15}]}]},
+                    {"fillProfileRef":"fill:relay_common_green","displayName":"接力城市绿地",
+                    "visualIntent":"绿植区和自然地面区从父区域局部边界接力","algorithm":"SINGLE_SOURCE_REGION_RELAY",
+                    "relayOrigin":"PARENT_REGION_LOCAL_BOUNDARY",
+                    "compatibleLandscapeTypes":["COMMON_GREEN"],"primaryRoleRef":"GREEN",
+                    "roles":[
+                      {"roleRef":"GREEN","materialRole":"PRIMARY_CONTENT","allowedGrowthForms":["PATCH"],"defaultGrowthForm":"PATCH","minShare":0.7,"maxShare":0.95,"defaultShare":0.85},
+                      {"roleRef":"GROUND","materialRole":"GROUND","allowedGrowthForms":["PATCH","CORRIDOR"],"defaultGrowthForm":"PATCH","minShare":0.05,"maxShare":0.3,"defaultShare":0.15}],
+                    "allowedContentRefs":["plant:grass"],
+                    "examples":[{"exampleId":"simple_green","description":"绿植为主的连续城市绿地",
+                      "roleShares":[{"roleRef":"GREEN","growthForm":"PATCH","targetShare":0.425},{"roleRef":"GROUND","growthForm":"PATCH","targetShare":0.15},{"roleRef":"GREEN","growthForm":"PATCH","targetShare":0.425}],
+                      "contentWeights":[{"contentRef":"plant:grass","weight":1}]}]}
+                    ,{"fillProfileRef":"fill:relay_woodland","displayName":"接力林场",
+                    "visualIntent":"树林、灌木和石子路区域从父区域局部边界接力","algorithm":"SINGLE_SOURCE_REGION_RELAY",
+                    "relayOrigin":"PARENT_REGION_LOCAL_BOUNDARY",
+                    "compatibleLandscapeTypes":["WOODLAND"],"primaryRoleRef":"TREE_GROVE",
+                    "roles":[
+                      {"roleRef":"TREE_GROVE","materialRole":"PRIMARY_CONTENT","allowedGrowthForms":["PATCH"],"defaultGrowthForm":"PATCH","minShare":0.58,"maxShare":0.82,"defaultShare":0.7},
+                      {"roleRef":"SHRUB_BREAK","materialRole":"BANK","allowedGrowthForms":["PATCH","CORRIDOR"],"defaultGrowthForm":"PATCH","minShare":0.08,"maxShare":0.28,"defaultShare":0.18},
+                      {"roleRef":"GRAVEL_PATH","materialRole":"GROUND","allowedGrowthForms":["CORRIDOR"],"defaultGrowthForm":"CORRIDOR","minShare":0.05,"maxShare":0.2,"defaultShare":0.12}],
+                    "allowedContentRefs":["tree:oak","tree:birch","tree:spruce"],
+                    "examples":[{"exampleId":"mixed_working_woodland","description":"树木占主导，灌木和石子路只作间隔",
+                      "roleShares":[{"roleRef":"TREE_GROVE","growthForm":"PATCH","targetShare":0.35},{"roleRef":"SHRUB_BREAK","growthForm":"PATCH","targetShare":0.09},{"roleRef":"GRAVEL_PATH","growthForm":"CORRIDOR","targetShare":0.12},{"roleRef":"SHRUB_BREAK","growthForm":"PATCH","targetShare":0.09},{"roleRef":"TREE_GROVE","growthForm":"PATCH","targetShare":0.35}],
+                      "contentWeights":[{"contentRef":"tree:oak","weight":55},{"contentRef":"tree:birch","weight":30},{"contentRef":"tree:spruce","weight":15}]}]}
                   ]
                 }
                 """).getAsJsonObject();
@@ -660,7 +899,7 @@ class CityBlueprintServiceTest {
 
     private static JsonObject blueprint(JsonObject context) {
         JsonObject blueprint = new JsonObject();
-        blueprint.addProperty("schemaVersion", "city_blueprint.v0.7");
+        blueprint.addProperty("schemaVersion", "city_blueprint.v0.9");
         blueprint.addProperty("cityId", context.get("cityId").getAsString());
         blueprint.add("sourceD3Ref", context.getAsJsonObject("sourceD3Ref").deepCopy());
         blueprint.add("catalogSnapshotRef", context.getAsJsonObject("catalogSnapshotRef").deepCopy());
@@ -695,6 +934,18 @@ class CityBlueprintServiceTest {
                 }
                 """).getAsJsonObject());
         return blueprint;
+    }
+
+    private static JsonObject landscapeWithFill(String landscapeProfileRef, String fillProfileRef,
+                                                String roleShares, String contentWeights) {
+        return JsonParser.parseString("""
+                {"landscapeId":"test_green","landscapeProfileRef":"%s",
+                 "attachedGroupIds":["civic"],"preferredPatchRefs":[],"extentClass":"SMALL",
+                 "intensity":"MEDIUM","continuity":"CONTINUOUS","growthRelation":"AROUND_SOURCE",
+                 "referenceGroupIds":[],"terrainPolicy":"CONFORM","required":true,
+                 "fillSelection":{"variants":[{"fillProfileRef":"%s","selectionWeight":1,
+                   "roleShares":%s,"contentWeights":%s}]}}
+                """.formatted(landscapeProfileRef, fillProfileRef, roleShares, contentWeights)).getAsJsonObject();
     }
 
     private static String safe(String value) {

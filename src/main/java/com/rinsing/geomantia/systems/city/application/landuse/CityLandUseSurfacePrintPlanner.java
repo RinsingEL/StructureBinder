@@ -1,8 +1,10 @@
 package com.rinsing.geomantia.systems.city.application.landuse;
 
 import com.rinsing.geomantia.systems.city.algorithm.landuse.ContourBandSurfaceClassifier;
+import com.rinsing.geomantia.systems.city.algorithm.landuse.RelayRegionGrowthClassifier;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseAreaPlan;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseSeedGroup;
+import com.rinsing.geomantia.systems.city.domain.landuse.LandscapeFillProgram;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseSurfaceSettings;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseTerrainField;
 import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
@@ -46,11 +48,13 @@ public final class CityLandUseSurfacePrintPlanner {
             int stableAreaOrdinal = areaOrdinal++;
             LandUseSurfaceSettings settings = settingsFor(area, groups);
             if (!settings.surfacePrintEnabled()) continue;
+            LandscapeFillProgram fillProgram = fillProgramFor(area, groups);
             AreaBounds bounds = bounds(area.memberSpans());
             BlockPoint algorithmAnchor = settings.surfaceAlgorithm()
                     == LandUseSurfaceSettings.SurfaceAlgorithm.CONTOUR_BANDS
                     ? settings.algorithmAnchor() == null ? centroid(area.memberSpans()) : settings.algorithmAnchor()
-                    : null;
+                    : settings.surfaceAlgorithm() == LandUseSurfaceSettings.SurfaceAlgorithm.RELAY_REGION_GROWTH
+                    ? sourceFor(area, groups) : null;
             String printAreaId = area.areaId() + "/surface/" + bounds.minX() + '_' + bounds.minZ()
                     + '_' + stableAreaOrdinal;
             List<LandUseAreaPlan.ScanlineSpan> exclusions = exclusions(landUsePlan, area);
@@ -59,7 +63,13 @@ public final class CityLandUseSurfacePrintPlanner {
                         settings.surfaceBlockId(), settings.boundaryBlockId());
                 case CONTOUR_BANDS -> contourBands(area, settings, exclusions,
                         Objects.requireNonNull(algorithmAnchor, "algorithmAnchor"), terrainField);
+                case RELAY_REGION_GROWTH -> relayRegionGrowth(area, settings, exclusions,
+                        Objects.requireNonNull(algorithmAnchor, "algorithmAnchor"),
+                        Objects.requireNonNull(fillProgram, "fillProgram"));
             };
+            if (recipe instanceof CityLandUseSurfacePrintPlan.RelayRegionGrowthRecipe relay) {
+                algorithmAnchor = relay.effectiveSource();
+            }
             prints.add(new CityLandUseSurfacePrintPlan.AreaPrint(printAreaId, area.areaId(),
                     area.sourceGroupIds(), settings, area.memberSpans(), exclusions,
                     settings.surfaceAlgorithm(), algorithmAnchor, recipe));
@@ -69,6 +79,48 @@ public final class CityLandUseSurfacePrintPlanner {
                 CityLandUseSurfacePrintPlan.CURRENT_SCHEMA_VERSION, landUsePlan.cityId(),
                 landUsePlan.planHash(), "", prints);
         return new CityLandUseSurfacePrintPlanCodec().withComputedHash(raw);
+    }
+
+    private static CityLandUseSurfacePrintPlan.RelayRegionGrowthRecipe relayRegionGrowth(
+            LandUseAreaPlan.Area area,
+            LandUseSurfaceSettings settings,
+            List<LandUseAreaPlan.ScanlineSpan> exclusions,
+            BlockPoint source,
+            LandscapeFillProgram program) {
+        List<RelayRegionGrowthClassifier.GrowthStage> stages = new ArrayList<>();
+        for (int index = 0; index < program.roles().size(); index++) {
+            LandscapeFillProgram.RoleDefinition role = program.roles().get(index);
+            String regionId = String.format(java.util.Locale.ROOT, "region-%03d-%s",
+                    index + 1, role.roleRef().replaceAll("[^A-Za-z0-9_.-]", "_"));
+            String parentRegionId = index == 0 ? "" : stages.get(index - 1).regionId();
+            stages.add(new RelayRegionGrowthClassifier.GrowthStage(regionId, parentRegionId,
+                    role.roleRef(), role.targetShare(),
+                    RelayRegionGrowthClassifier.GrowthForm.valueOf(role.growthForm().name())));
+        }
+        RelayRegionGrowthClassifier.Result result = new RelayRegionGrowthClassifier().classify(
+                new RelayRegionGrowthClassifier.Request(area.memberSpans(), exclusions, source,
+                        program.stableSeed(), stages));
+        List<CityLandUseSurfacePrintPlan.RelayRoleDefinition> definitions = program.roles().stream()
+                .map(role -> new CityLandUseSurfacePrintPlan.RelayRoleDefinition(
+                        role.roleRef(), role.materialRole(), role.growthForm(), role.targetShare())).toList();
+        List<CityLandUseSurfacePrintPlan.RelayContentWeight> content = program.contentWeights().stream()
+                .sorted(Comparator.comparing(LandscapeFillProgram.ContentWeight::contentRef))
+                .map(weight -> new CityLandUseSurfacePrintPlan.RelayContentWeight(
+                        weight.contentRef(), weight.weight())).toList();
+        List<CityLandUseSurfacePrintPlan.RegionSpan> spans = result.regionSpans().stream()
+                .map(span -> new CityLandUseSurfacePrintPlan.RegionSpan(
+                        span.z(), span.minX(), span.maxX(), span.regionId(), span.roleRef())).toList();
+        List<CityLandUseSurfacePrintPlan.RegionTrace> traces = result.regions().stream().map(trace -> {
+            BlockPoint frontier = trace.parentRegionId().isBlank() ? null
+                    : trace.expansionTrace().get(0).from();
+            return new CityLandUseSurfacePrintPlan.RegionTrace(trace.regionId(), trace.parentRegionId(),
+                    trace.roleRef(), LandscapeFillProgram.GrowthForm.valueOf(trace.growthForm().name()),
+                    trace.start(), frontier, trace.targetAreaBlocks(), trace.actualAreaBlocks());
+        }).toList();
+        return new CityLandUseSurfacePrintPlan.RelayRegionGrowthRecipe(settings.surfaceBlockId(),
+                settings.cropBlockId(), settings.channelBankBlockId(), settings.channelWaterBlockId(),
+                settings.channelBankOverlayBlockId(), settings.boundaryBlockId(), program.fillProfileRef(),
+                program.primaryRoleRef(), program.stableSeed(), source, definitions, content, spans, traces);
     }
 
     private static CityLandUseSurfacePrintPlan.ContourBandsRecipe contourBands(
@@ -196,6 +248,33 @@ public final class CityLandUseSurfacePrintPlanner {
                     + area.areaId());
         }
         return settings;
+    }
+
+    private static LandscapeFillProgram fillProgramFor(LandUseAreaPlan.Area area,
+                                                        Map<String, LandUseSeedGroup> groups) {
+        LandscapeFillProgram program = null;
+        for (String sourceGroupId : area.sourceGroupIds()) {
+            LandUseSeedGroup group = groups.get(sourceGroupId);
+            if (group == null) {
+                throw new IllegalArgumentException("CITY_LAND_USE_SURFACE_PRINT_SOURCE_GROUP_UNKNOWN:"
+                        + sourceGroupId);
+            }
+            if (program == null) program = group.landscapeFillProgram();
+            else if (!program.equals(group.landscapeFillProgram())) {
+                throw new IllegalArgumentException("CITY_LAND_USE_SURFACE_PRINT_FILL_PROGRAM_MISMATCH:"
+                        + area.areaId());
+            }
+        }
+        return program;
+    }
+
+    private static BlockPoint sourceFor(LandUseAreaPlan.Area area,
+                                        Map<String, LandUseSeedGroup> groups) {
+        return area.sourceGroupIds().stream().map(groups::get).filter(Objects::nonNull)
+                .flatMap(group -> group.seedPoints().stream()).min(Comparator.comparingInt(BlockPoint::z)
+                        .thenComparingInt(BlockPoint::x)).orElseThrow(() ->
+                        new IllegalArgumentException("CITY_LAND_USE_SURFACE_PRINT_LAYER_SOURCE_REQUIRED:"
+                                + area.areaId()));
     }
 
     private static List<LandUseAreaPlan.ScanlineSpan> exclusions(LandUseAreaPlan plan,

@@ -27,7 +27,31 @@ public record LandUseSeedGroup(
         TerrainBias terrainBias,
         List<String> preferredPatchRefs,
         LayerRole layerRole,
-        FoundationSettings foundationSettings) {
+        FoundationSettings foundationSettings,
+        LandscapeFillProgram landscapeFillProgram) {
+
+    public LandUseSeedGroup(String groupId,
+                            LandUseRule rule,
+                            LandUseSurfaceSettings surfaceSettings,
+                            List<String> anchorIds,
+                            List<BlockBounds> structureFootprints,
+                            List<BlockPoint> seedPoints,
+                            List<LandUseAreaPlan.GateSlot> gateSlots,
+                            int minAreaBlocks,
+                            int preferredAreaBlocks,
+                            int maxAreaBlocks,
+                            double actionBudget,
+                            double competitionWeight,
+                            List<GrowthRegion> growthRegions,
+                            GrowthBias growthBias,
+                            TerrainBias terrainBias,
+                            List<String> preferredPatchRefs,
+                            LayerRole layerRole,
+                            FoundationSettings foundationSettings) {
+        this(groupId, rule, surfaceSettings, anchorIds, structureFootprints, seedPoints, gateSlots,
+                minAreaBlocks, preferredAreaBlocks, maxAreaBlocks, actionBudget, competitionWeight,
+                growthRegions, growthBias, terrainBias, preferredPatchRefs, layerRole, foundationSettings, null);
+    }
 
     public LandUseSeedGroup(String groupId,
                             LandUseRule rule,
@@ -148,6 +172,9 @@ public record LandUseSeedGroup(
             }
         } else if (foundationSettings != null) {
             throw new IllegalArgumentException("Only foundation LandUse accepts foundation settings");
+        }
+        if (landscapeFillProgram != null && layerRole != LayerRole.LANDSCAPE) {
+            throw new IllegalArgumentException("Only landscape LandUse accepts a landscape fill program");
         }
         if (growthRegions.isEmpty()) {
             growthRegions = List.of(new GrowthRegion(groupId, anchorIds, seedPoints,

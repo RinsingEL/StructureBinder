@@ -24,7 +24,7 @@ test("publishes the program-only context tool and one-shot structure plus outdoo
   assert.deepEqual(groupProperties.extentClass.enum, ["SMALL", "MEDIUM", "LARGE"]);
   assert.deepEqual(groupProperties.densityClass.enum, ["SPARSE", "BALANCED", "DENSE"]);
   assert.deepEqual(submit.inputSchema.properties.cityBlueprint.properties.schemaVersion.enum,
-    ["city_blueprint.v0.7"]);
+    ["city_blueprint.v0.9"]);
   assert.equal(groupProperties.connectionPlan.additionalProperties, false);
   assert.deepEqual(groupProperties.connectionPlan.properties.parameters.properties.sideMode.enum,
     ["LEFT", "RIGHT", "BOTH"]);
@@ -57,12 +57,25 @@ test("publishes the program-only context tool and one-shot structure plus outdoo
   assert.deepEqual(landscape.required, [
     "landscapeId", "landscapeProfileRef", "attachedGroupIds", "preferredPatchRefs", "extentClass",
     "intensity", "continuity", "growthRelation", "referenceGroupIds", "terrainPolicy", "required",
+    "fillSelection",
   ]);
   assert.deepEqual(landscape.properties.intensity.enum, ["LOW", "MEDIUM", "HIGH"]);
   assert.deepEqual(landscape.properties.continuity.enum, ["CONTINUOUS", "MULTI_PARCEL", "PATCHY"]);
   assert.deepEqual(landscape.properties.growthRelation.enum,
     ["AROUND_SOURCE", "AWAY_FROM_REFERENCE", "TOWARD_WATER", "ALONG_WATER"]);
   assert.deepEqual(landscape.properties.terrainPolicy.enum, ["CONFORM", "BALANCED", "ASSERTIVE"]);
+  const fillVariant = landscape.properties.fillSelection.properties.variants.items;
+  assert.equal(fillVariant.additionalProperties, false);
+  assert.deepEqual(fillVariant.required,
+    ["fillProfileRef", "selectionWeight", "roleShares", "contentWeights"]);
+  assert.equal(landscape.properties.fillSelection.properties.variants.minItems, 1);
+  assert.equal(fillVariant.properties.roleShares.minItems, 1);
+  assert.equal(fillVariant.properties.roleShares.uniqueItems, undefined);
+  assert.match(fillVariant.properties.roleShares.description, /有序区域接力/);
+  assert.equal(fillVariant.properties.roleShares.items.additionalProperties, false);
+  assert.deepEqual(fillVariant.properties.roleShares.items.properties.growthForm.enum,
+    ["PATCH", "CORRIDOR"]);
+  assert.equal(fillVariant.properties.contentWeights.items.additionalProperties, false);
 
   assert.equal(outdoor.properties.structureGrounds, undefined);
   assert.equal(outdoor.properties.residualPolicy, undefined);
@@ -116,22 +129,23 @@ test("publishes the current strict LandUse v0.3 intent wire shape", () => {
   assert.deepEqual(override.properties.algorithmAnchor.required, ["x", "z"]);
 });
 
-test("requires the v0.4 Blueprint reference catalog for foundation and outdoor profiles", () => {
+test("requires the v0.6 Blueprint reference catalog with boundary-relay fill profiles", () => {
   const prepare = realmTools.find((tool) => tool.name === "city_prepare_d4_blueprint_context");
   const catalog = prepare.inputSchema.properties.blueprintReferenceCatalog;
-  assert.match(catalog.description, /city_blueprint_reference_catalog\.v0\.4/);
+  assert.match(catalog.description, /city_blueprint_reference_catalog\.v0\.6/);
   assert.match(catalog.description, /户外/);
   assert.equal(catalog.additionalProperties, false);
   assert.deepEqual(catalog.required, [
     "schemaVersion", "structureRefs", "fillPools", "algorithmProfiles", "compositionProfiles",
     "styleProfiles", "roadProfiles", "surfaceDetailProfiles", "landUseRuleProfile", "foundationProfiles", "surfaceRecipes",
-    "landscapeProfiles",
+    "landscapeProfiles", "landscapeFillProfiles",
   ]);
   assert.deepEqual(catalog.properties.schemaVersion.enum,
-    ["city_blueprint_reference_catalog.v0.4"]);
+    ["city_blueprint_reference_catalog.v0.6"]);
 
   for (const namespace of ["structureRefs", "fillPools", "algorithmProfiles", "compositionProfiles",
-    "styleProfiles", "roadProfiles", "surfaceDetailProfiles", "foundationProfiles", "surfaceRecipes", "landscapeProfiles"]) {
+    "styleProfiles", "roadProfiles", "surfaceDetailProfiles", "foundationProfiles", "surfaceRecipes",
+    "landscapeProfiles", "landscapeFillProfiles"]) {
     assert.equal(catalog.properties[namespace].minItems, 1, namespace);
   }
   assert.equal(catalog.properties.structureRefs.items.additionalProperties, false);
@@ -148,6 +162,28 @@ test("requires the v0.4 Blueprint reference catalog for foundation and outdoor p
   assert.deepEqual(foundation.required, ["foundationProfileRef", "landUseRuleRef", "surfaceRecipeRef",
     "structureMarginBlocks", "closeRadiusBlocks", "maxJoinDistanceBlocks"]);
   assert.equal(foundation.properties.structureMarginBlocks.minimum, 0);
+
+  const fillProfile = catalog.properties.landscapeFillProfiles.items;
+  assert.equal(fillProfile.additionalProperties, false);
+  assert.deepEqual(fillProfile.required, [
+    "fillProfileRef", "displayName", "visualIntent", "algorithm", "relayOrigin",
+    "compatibleLandscapeTypes", "primaryRoleRef", "roles", "allowedContentRefs", "examples",
+  ]);
+  assert.deepEqual(fillProfile.properties.algorithm.enum, ["SINGLE_SOURCE_REGION_RELAY"]);
+  assert.deepEqual(fillProfile.properties.relayOrigin.enum, ["PARENT_REGION_LOCAL_BOUNDARY"]);
+  assert.equal(fillProfile.properties.compatibleLandscapeTypes.minItems, 1);
+  assert.equal(fillProfile.properties.roles.minItems, 1);
+  assert.deepEqual(fillProfile.properties.roles.items.properties.materialRole.enum,
+    ["PRIMARY_CONTENT", "BANK", "WATER", "GROUND"]);
+  assert.deepEqual(fillProfile.properties.roles.items.properties.allowedGrowthForms.items.enum,
+    ["PATCH", "CORRIDOR"]);
+  assert.deepEqual(fillProfile.properties.examples.items.properties.roleShares.items.properties.growthForm.enum,
+    ["PATCH", "CORRIDOR"]);
+  assert.equal(fillProfile.properties.layerSequence, undefined);
+  assert.equal(fillProfile.properties.repeatLayers, undefined);
+  assert.equal(fillProfile.properties.fixedShape, undefined);
+  assert.equal(fillProfile.properties.geometryFallback, undefined);
+  assert.equal(fillProfile.properties.examples.minItems, 1);
 
   const ruleProfile = catalog.properties.landUseRuleProfile;
   assert.equal(ruleProfile.additionalProperties, false);

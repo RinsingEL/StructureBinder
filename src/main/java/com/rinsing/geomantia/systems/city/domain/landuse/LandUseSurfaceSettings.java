@@ -46,7 +46,7 @@ public record LandUseSurfaceSettings(
         if (surfacePrintEnabled && surfaceAlgorithm == SurfaceAlgorithm.CONTOUR_BANDS
                 && (cropBlockId.isBlank() || channelBankBlockId.isBlank() || channelWaterBlockId.isBlank()
                 || channelBankOverlayBlockId.isBlank())) {
-            throw new IllegalArgumentException("LAND_USE_CONTOUR_BAND_MATERIALS_REQUIRED_WHEN_ENABLED");
+            throw new IllegalArgumentException("LAND_USE_LAYERED_MATERIALS_REQUIRED_WHEN_ENABLED");
         }
         if (surfacePrintEnabled && surfaceAlgorithm == SurfaceAlgorithm.CONTOUR_BANDS
                 && (fieldBeforeBlocks <= 0 || channelWidthBlocks <= 0 || fieldAfterBlocks <= 0)) {
@@ -205,6 +205,15 @@ public record LandUseSurfaceSettings(
         return compatibilityCategory;
     }
 
+    public LandUseSurfaceSettings forRelayRegionGrowth() {
+        if (!surfacePrintEnabled) {
+            throw new IllegalStateException("LAND_USE_RELAY_REGION_GROWTH_REQUIRES_ENABLED_SURFACE_PRINT");
+        }
+        return new LandUseSurfaceSettings(surfacePrintEnabled, autoConnect, surfaceBlockId, cropBlockId,
+                compatibilityCategory, SurfaceAlgorithm.RELAY_REGION_GROWTH, null, channelBankBlockId,
+                channelWaterBlockId, channelBankOverlayBlockId, boundaryBlockId, 0, 0, 0);
+    }
+
     /** Stable exact-match key used when deciding whether claimed geometry may be fused. */
     public String exactSignature() {
         return Boolean.toString(surfacePrintEnabled) + '|'
@@ -237,7 +246,8 @@ public record LandUseSurfaceSettings(
 
     public enum SurfaceAlgorithm {
         UNIFORM,
-        CONTOUR_BANDS
+        CONTOUR_BANDS,
+        RELAY_REGION_GROWTH
     }
 
     public record SurfaceMaterials(String surfaceBlockId,

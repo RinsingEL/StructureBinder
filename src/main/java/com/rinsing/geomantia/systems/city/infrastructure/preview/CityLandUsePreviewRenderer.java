@@ -1,7 +1,10 @@
 package com.rinsing.geomantia.systems.city.infrastructure.preview;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.rinsing.geomantia.systems.city.application.landuse.CityLandUseSurfacePrintPlan;
 import com.rinsing.geomantia.systems.city.application.outdoor.CityUrbanSpacePlan;
+import com.rinsing.geomantia.systems.city.domain.landuse.LandscapeFillProgram;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseAreaPlan;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseTerrainField;
 import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
@@ -50,7 +53,14 @@ public final class CityLandUsePreviewRenderer {
     public JsonObject render(LandUseTerrainField terrain,
                              LandUseAreaPlan plan,
                              Path outputDirectory) throws IOException {
-        return renderInternal(terrain, plan, null, outputDirectory);
+        return renderInternal(terrain, plan, null, null, outputDirectory);
+    }
+
+    public JsonObject render(LandUseTerrainField terrain,
+                             LandUseAreaPlan plan,
+                             CityLandUseSurfacePrintPlan surfacePrintPlan,
+                             Path outputDirectory) throws IOException {
+        return renderInternal(terrain, plan, null, surfacePrintPlan, outputDirectory);
     }
 
     public JsonObject render(LandUseTerrainField terrain,
@@ -60,12 +70,24 @@ public final class CityLandUsePreviewRenderer {
         if (urbanSpacePlan == null) {
             throw new IllegalArgumentException("CITY_LAND_USE_PREVIEW_URBAN_SPACE_PLAN_REQUIRED");
         }
-        return renderInternal(terrain, plan, urbanSpacePlan, outputDirectory);
+        return renderInternal(terrain, plan, urbanSpacePlan, null, outputDirectory);
+    }
+
+    public JsonObject render(LandUseTerrainField terrain,
+                             LandUseAreaPlan plan,
+                             CityUrbanSpacePlan urbanSpacePlan,
+                             CityLandUseSurfacePrintPlan surfacePrintPlan,
+                             Path outputDirectory) throws IOException {
+        if (urbanSpacePlan == null) {
+            throw new IllegalArgumentException("CITY_LAND_USE_PREVIEW_URBAN_SPACE_PLAN_REQUIRED");
+        }
+        return renderInternal(terrain, plan, urbanSpacePlan, surfacePrintPlan, outputDirectory);
     }
 
     private JsonObject renderInternal(LandUseTerrainField terrain,
                                       LandUseAreaPlan plan,
                                       CityUrbanSpacePlan urbanSpacePlan,
+                                      CityLandUseSurfacePrintPlan surfacePrintPlan,
                                       Path outputDirectory) throws IOException {
         if (terrain == null || plan == null) throw new IllegalArgumentException("CITY_LAND_USE_PREVIEW_INPUT_REQUIRED");
         if (outputDirectory == null) throw new IllegalArgumentException("CITY_LAND_USE_PREVIEW_OUTPUT_REQUIRED");
@@ -77,6 +99,10 @@ public final class CityLandUsePreviewRenderer {
         }
         if (urbanSpacePlan != null && !plan.cityId().equals(urbanSpacePlan.cityId())) {
             throw new IllegalArgumentException("CITY_LAND_USE_PREVIEW_URBAN_SPACE_CITY_ID_MISMATCH");
+        }
+        if (surfacePrintPlan != null && (!plan.cityId().equals(surfacePrintPlan.cityId())
+                || !plan.planHash().equals(surfacePrintPlan.sourceLandUsePlanHash()))) {
+            throw new IllegalArgumentException("CITY_LAND_USE_PREVIEW_SURFACE_PLAN_MISMATCH");
         }
         Files.createDirectories(outputDirectory);
         Path output = outputDirectory.resolve("land_use_preview.png");
@@ -92,6 +118,7 @@ public final class CityLandUsePreviewRenderer {
             drawUnclaimed(g, transform, plan);
             Map<String, Color> colors = areaColors(plan);
             drawAreas(g, transform, plan, colors);
+            if (surfacePrintPlan != null) drawSurfaceRoles(g, transform, surfacePrintPlan);
             if (urbanSpacePlan != null && urbanSpacePlan.enabled()) {
                 drawResiduals(g, transform, urbanSpacePlan);
             }
@@ -115,8 +142,9 @@ public final class CityLandUsePreviewRenderer {
             throw new IOException("CITY_LAND_USE_PREVIEW_PNG_WRITER_UNAVAILABLE: " + output);
         }
         JsonObject metadata = new JsonObject();
-        metadata.addProperty("schemaVersion", urbanSpacePlan == null
-                ? "city_land_use_preview.v0.1" : "city_land_use_preview.v0.2");
+        metadata.addProperty("schemaVersion", surfacePrintPlan != null
+                ? "city_land_use_preview.v0.4"
+                : urbanSpacePlan == null ? "city_land_use_preview.v0.1" : "city_land_use_preview.v0.2");
         metadata.addProperty("cityId", plan.cityId());
         metadata.addProperty("planHash", plan.planHash());
         metadata.addProperty("fileName", output.getFileName().toString());
@@ -126,6 +154,69 @@ public final class CityLandUsePreviewRenderer {
                 .map(LandUseAreaPlan.Area::areaId).distinct().count());
         metadata.addProperty("unclaimedSpanCount", plan.unclaimedSpans().size());
         metadata.addProperty("corridorExclusionCount", plan.corridorExclusions().size());
+        if (surfacePrintPlan != null) {
+            metadata.addProperty("surfacePrintPlanSchemaVersion", surfacePrintPlan.schemaVersion());
+            metadata.addProperty("surfacePrintPlanHash", surfacePrintPlan.planHash());
+            metadata.addProperty("relayGrowthAreaCount", surfacePrintPlan.areas().stream()
+                    .filter(area -> area.recipe() instanceof
+                            CityLandUseSurfacePrintPlan.RelayRegionGrowthRecipe).count());
+            JsonArray relayGrowthAreas = new JsonArray();
+            for (CityLandUseSurfacePrintPlan.AreaPrint area : surfacePrintPlan.areas()) {
+                if (!(area.recipe() instanceof CityLandUseSurfacePrintPlan.RelayRegionGrowthRecipe relay)) {
+                    continue;
+                }
+                Map<String, Integer> actualBlocks = new LinkedHashMap<>();
+                relay.regionSpans().forEach(span -> actualBlocks.merge(span.roleRef(),
+                        span.maxX() - span.minX() + 1, Integer::sum));
+                int totalBlocks = actualBlocks.values().stream().mapToInt(Integer::intValue).sum();
+                JsonObject fillArea = new JsonObject();
+                fillArea.addProperty("landUseAreaId", area.landUseAreaId());
+                fillArea.addProperty("fillProfileRef", relay.fillProfileRef());
+                fillArea.addProperty("primaryRoleRef", relay.primaryRoleRef());
+                fillArea.addProperty("actualBlockCount", totalBlocks);
+                JsonArray roles = new JsonArray();
+                Map<String, Double> targetShares = new LinkedHashMap<>();
+                Map<String, LandscapeFillProgram.MaterialRole> materialRoles = new LinkedHashMap<>();
+                Map<String, java.util.LinkedHashSet<LandscapeFillProgram.GrowthForm>> growthForms =
+                        new LinkedHashMap<>();
+                for (CityLandUseSurfacePrintPlan.RelayRoleDefinition role : relay.roleDefinitions()) {
+                    targetShares.merge(role.roleRef(), role.targetShare(), Double::sum);
+                    materialRoles.putIfAbsent(role.roleRef(), role.materialRole());
+                    growthForms.computeIfAbsent(role.roleRef(), ignored -> new java.util.LinkedHashSet<>())
+                            .add(role.growthForm());
+                }
+                for (String roleRef : targetShares.keySet()) {
+                    int blocks = actualBlocks.getOrDefault(roleRef, 0);
+                    JsonObject roleSummary = new JsonObject();
+                    roleSummary.addProperty("roleRef", roleRef);
+                    roleSummary.addProperty("materialRole", materialRoles.get(roleRef).name());
+                    roleSummary.addProperty("growthForm", growthForms.get(roleRef).size() == 1
+                            ? growthForms.get(roleRef).iterator().next().name() : "MIXED");
+                    roleSummary.addProperty("targetShare", targetShares.get(roleRef));
+                    roleSummary.addProperty("actualBlocks", blocks);
+                    roleSummary.addProperty("actualShare", totalBlocks == 0 ? 0 : blocks / (double) totalBlocks);
+                    roles.add(roleSummary);
+                }
+                fillArea.add("roles", roles);
+                JsonArray regions = new JsonArray();
+                for (CityLandUseSurfacePrintPlan.RegionTrace trace : relay.regionTraces()) {
+                    JsonObject region = new JsonObject();
+                    region.addProperty("regionId", trace.regionId());
+                    region.addProperty("parentRegionId", trace.parentRegionId());
+                    region.addProperty("roleRef", trace.roleRef());
+                    region.addProperty("growthForm", trace.growthForm().name());
+                    region.add("start", pointJson(trace.start()));
+                    region.add("sourceFrontier", trace.sourceFrontier() == null
+                            ? com.google.gson.JsonNull.INSTANCE : pointJson(trace.sourceFrontier()));
+                    region.addProperty("targetAreaBlocks", trace.targetAreaBlocks());
+                    region.addProperty("actualAreaBlocks", trace.actualAreaBlocks());
+                    regions.add(region);
+                }
+                fillArea.add("regions", regions);
+                relayGrowthAreas.add(fillArea);
+            }
+            metadata.add("relayGrowthAreas", relayGrowthAreas);
+        }
         if (urbanSpacePlan != null) {
             CityUrbanSpacePlan.CoverageSummary coverage = urbanSpacePlan.coverageSummary();
             metadata.addProperty("urbanSpacePlanSchemaVersion", urbanSpacePlan.schemaVersion());
@@ -201,6 +292,117 @@ public final class CityLandUsePreviewRenderer {
         for (LandUseAreaPlan.ScanlineSpan span : plan.unclaimedSpans()) {
             fillBounds(g, transform, new BlockBounds(span.minX(), span.z(), span.maxX(), span.z()));
         }
+    }
+
+    private static void drawSurfaceRoles(Graphics2D g,
+                                         Transform transform,
+                                         CityLandUseSurfacePrintPlan plan) {
+        for (CityLandUseSurfacePrintPlan.AreaPrint area : plan.areas()) {
+            if (area.recipe() instanceof CityLandUseSurfacePrintPlan.ContourBandsRecipe contour) {
+                for (CityLandUseSurfacePrintPlan.BandSpan span : contour.bandSpans()) {
+                    Color color = switch (span.role()) {
+                        case FIELD -> new Color(171, 154, 70, 218);
+                        case CHANNEL_WATER -> new Color(71, 151, 190, 232);
+                        case CHANNEL_BEFORE_BANK, CHANNEL_AFTER_BANK, CHANNEL_END_CAP ->
+                                new Color(160, 126, 80, 226);
+                    };
+                    g.setColor(color);
+                    fillBounds(g, transform, new BlockBounds(span.minX(), span.z(), span.maxX(), span.z()));
+                }
+            } else if (area.recipe() instanceof CityLandUseSurfacePrintPlan.RelayRegionGrowthRecipe relay) {
+                Map<String, LandscapeFillProgram.MaterialRole> materialRoles = new LinkedHashMap<>();
+                relay.roleDefinitions().forEach(role -> materialRoles.put(role.roleRef(), role.materialRole()));
+                for (CityLandUseSurfacePrintPlan.RegionSpan span : relay.regionSpans()) {
+                    LandscapeFillProgram.MaterialRole materialRole = materialRoles.get(span.roleRef());
+                    g.setColor(regionColor(layerColor(materialRole, span.roleRef()), span.regionId()));
+                    fillBounds(g, transform, new BlockBounds(span.minX(), span.z(), span.maxX(), span.z()));
+                }
+                drawRelayProvenance(g, transform, relay);
+            }
+        }
+    }
+
+    private static Color regionColor(Color base, String regionId) {
+        int delta = Math.floorMod(regionId.hashCode(), 25) - 12;
+        return new Color(Math.max(0, Math.min(255, base.getRed() + delta)),
+                Math.max(0, Math.min(255, base.getGreen() + delta)),
+                Math.max(0, Math.min(255, base.getBlue() + delta)), base.getAlpha());
+    }
+
+    private static void drawRelayProvenance(Graphics2D g,
+                                            Transform transform,
+                                            CityLandUseSurfacePrintPlan.RelayRegionGrowthRecipe relay) {
+        g.setStroke(new BasicStroke(1.1f));
+        for (CityLandUseSurfacePrintPlan.RegionSpan span : relay.regionSpans()) {
+            g.setColor(new Color(35, 38, 36, 130));
+            for (int x = span.minX(); x <= span.maxX(); x++) {
+                drawRegionEdge(g, transform, relay, span.regionId(), x, span.z(), x, span.z() - 1, 0);
+                drawRegionEdge(g, transform, relay, span.regionId(), x, span.z(), x, span.z() + 1, 1);
+                drawRegionEdge(g, transform, relay, span.regionId(), x, span.z(), x - 1, span.z(), 2);
+                drawRegionEdge(g, transform, relay, span.regionId(), x, span.z(), x + 1, span.z(), 3);
+            }
+        }
+        for (CityLandUseSurfacePrintPlan.RegionTrace trace : relay.regionTraces()) {
+            int startX = transform.x(trace.start().x());
+            int startZ = transform.z(trace.start().z());
+            if (trace.sourceFrontier() != null) {
+                g.setColor(new Color(29, 36, 34, 205));
+                g.drawLine(transform.x(trace.sourceFrontier().x()), transform.z(trace.sourceFrontier().z()),
+                        startX, startZ);
+            }
+            g.setColor(new Color(248, 245, 231, 235));
+            int radius = Math.max(2, (int) Math.ceil(transform.scale() * 0.35));
+            g.fillOval(startX - radius, startZ - radius, radius * 2, radius * 2);
+            g.setColor(new Color(30, 34, 32, 230));
+            g.drawOval(startX - radius, startZ - radius, radius * 2, radius * 2);
+        }
+    }
+
+    private static void drawRegionEdge(Graphics2D g,
+                                       Transform transform,
+                                       CityLandUseSurfacePrintPlan.RelayRegionGrowthRecipe relay,
+                                       String regionId,
+                                       int x,
+                                       int z,
+                                       int neighborX,
+                                       int neighborZ,
+                                       int side) {
+        CityLandUseSurfacePrintPlan.RegionSpan neighbor = relay.regionAtOrNull(neighborX, neighborZ);
+        if (neighbor != null && neighbor.regionId().equals(regionId)) return;
+        int left = transform.x(x);
+        int top = transform.z(z);
+        int right = transform.x(x + 1);
+        int bottom = transform.z(z + 1);
+        switch (side) {
+            case 0 -> g.drawLine(left, top, right, top);
+            case 1 -> g.drawLine(left, bottom, right, bottom);
+            case 2 -> g.drawLine(left, top, left, bottom);
+            case 3 -> g.drawLine(right, top, right, bottom);
+            default -> throw new IllegalArgumentException("CITY_LAND_USE_PREVIEW_REGION_EDGE_INVALID");
+        }
+    }
+
+    private static JsonObject pointJson(BlockPoint point) {
+        JsonObject value = new JsonObject();
+        value.addProperty("x", point.x());
+        value.addProperty("z", point.z());
+        return value;
+    }
+
+    private static Color layerColor(LandscapeFillProgram.MaterialRole role, String roleRef) {
+        return switch (role) {
+            case BANK -> new Color(160, 126, 80, 232);
+            case WATER -> new Color(71, 151, 190, 238);
+            case GROUND -> new Color(128, 126, 116, 224);
+            case PRIMARY_CONTENT -> {
+                String normalized = roleRef.toLowerCase(java.util.Locale.ROOT);
+                if (normalized.contains("flower")) yield new Color(206, 91, 132, 226);
+                if (normalized.contains("tree") || normalized.contains("forest")) {
+                    yield new Color(62, 126, 77, 228);
+                }
+                yield new Color(170, 158, 67, 226);
+            }
+        };
     }
 
     private static void drawResiduals(Graphics2D g, Transform transform, CityUrbanSpacePlan plan) {

@@ -1,11 +1,14 @@
 package com.rinsing.geomantia.systems.city.application.landuse;
 
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseAreaPlan;
+import com.rinsing.geomantia.systems.city.domain.landuse.LandscapeFillProgram;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseSurfaceSettings;
 import com.rinsing.geomantia.systems.city.domain.model.BlockPoint;
 
 import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -17,7 +20,7 @@ public record CityLandUseSurfacePrintPlan(
         String planHash,
         List<AreaPrint> areas) {
 
-    public static final String CURRENT_SCHEMA_VERSION = "city_land_use_surface_print_plan.v0.3";
+    public static final String CURRENT_SCHEMA_VERSION = "city_land_use_surface_print_plan.v0.5";
 
     public CityLandUseSurfacePrintPlan {
         if (!CURRENT_SCHEMA_VERSION.equals(schemaVersion)) {
@@ -70,7 +73,9 @@ public record CityLandUseSurfacePrintPlan(
                     && algorithmAnchor != null
                     || surfaceAlgorithm == LandUseSurfaceSettings.SurfaceAlgorithm.CONTOUR_BANDS
                     && (algorithmAnchor == null || surfaceSettings.algorithmAnchor() != null
-                    && !surfaceSettings.algorithmAnchor().equals(algorithmAnchor))) {
+                    && !surfaceSettings.algorithmAnchor().equals(algorithmAnchor))
+                    || surfaceAlgorithm == LandUseSurfaceSettings.SurfaceAlgorithm.RELAY_REGION_GROWTH
+                    && algorithmAnchor == null) {
                 throw new IllegalArgumentException("CITY_LAND_USE_SURFACE_PRINT_ALGORITHM_MISMATCH");
             }
             if (!surfaceSettings.surfacePrintEnabled()
@@ -80,7 +85,9 @@ public record CityLandUseSurfacePrintPlan(
             if (surfaceAlgorithm == LandUseSurfaceSettings.SurfaceAlgorithm.UNIFORM
                     && !(recipe instanceof UniformRecipe)
                     || surfaceAlgorithm == LandUseSurfaceSettings.SurfaceAlgorithm.CONTOUR_BANDS
-                    && !(recipe instanceof ContourBandsRecipe)) {
+                    && !(recipe instanceof ContourBandsRecipe)
+                    || surfaceAlgorithm == LandUseSurfaceSettings.SurfaceAlgorithm.RELAY_REGION_GROWTH
+                    && !(recipe instanceof RelayRegionGrowthRecipe)) {
                 throw new IllegalArgumentException("CITY_LAND_USE_SURFACE_PRINT_RECIPE_ALGORITHM_MISMATCH");
             }
             if (recipe instanceof ContourBandsRecipe contour) {
@@ -102,6 +109,19 @@ public record CityLandUseSurfacePrintPlan(
                 }
                 validateContourCoverage(memberSpans, exclusionSpans, contour.bandSpans());
             }
+            if (recipe instanceof RelayRegionGrowthRecipe relay) {
+                if (!relay.effectiveSource().equals(algorithmAnchor)) {
+                    throw new IllegalArgumentException("CITY_LAND_USE_SURFACE_PRINT_RELAY_SOURCE_MISMATCH");
+                }
+                if (!surfaceSettings.cropBlockId().equals(relay.cropBlockId())
+                        || !surfaceSettings.channelBankBlockId().equals(relay.channelBankBlockId())
+                        || !surfaceSettings.channelWaterBlockId().equals(relay.channelWaterBlockId())
+                        || !surfaceSettings.channelBankOverlayBlockId()
+                        .equals(relay.channelBankOverlayBlockId())) {
+                    throw new IllegalArgumentException("CITY_LAND_USE_SURFACE_PRINT_RELAY_MATERIALS_MISMATCH");
+                }
+                validateRelayCoverage(memberSpans, exclusionSpans, relay.regionSpans());
+            }
             if (!surfaceSettings.boundaryBlockId().equals(recipe.boundaryBlockId())) {
                 throw new IllegalArgumentException("CITY_LAND_USE_SURFACE_PRINT_BOUNDARY_MATERIAL_MISMATCH");
             }
@@ -119,7 +139,7 @@ public record CityLandUseSurfacePrintPlan(
         }
     }
 
-    public sealed interface Recipe permits UniformRecipe, ContourBandsRecipe {
+    public sealed interface Recipe permits UniformRecipe, ContourBandsRecipe, RelayRegionGrowthRecipe {
         String surfaceBlockId();
         String boundaryBlockId();
     }
@@ -250,6 +270,193 @@ public record CityLandUseSurfacePrintPlan(
         }
     }
 
+    public record RelayRegionGrowthRecipe(
+            String surfaceBlockId,
+            String cropBlockId,
+            String channelBankBlockId,
+            String channelWaterBlockId,
+            String channelBankOverlayBlockId,
+            String boundaryBlockId,
+            String fillProfileRef,
+            String primaryRoleRef,
+            long stableSeed,
+            BlockPoint effectiveSource,
+            List<RelayRoleDefinition> roleDefinitions,
+            List<RelayContentWeight> contentWeights,
+            List<RegionSpan> regionSpans,
+            List<RegionTrace> regionTraces) implements Recipe {
+        public RelayRegionGrowthRecipe {
+            requireBlock(surfaceBlockId, "CITY_LAND_USE_SURFACE_PRINT_BLOCK_INVALID");
+            cropBlockId = normalizeOptionalBlock(cropBlockId,
+                    "CITY_LAND_USE_SURFACE_PRINT_CROP_BLOCK_INVALID");
+            channelBankBlockId = normalizeOptionalBlock(channelBankBlockId,
+                    "CITY_LAND_USE_SURFACE_PRINT_CHANNEL_BANK_BLOCK_INVALID");
+            channelWaterBlockId = normalizeOptionalBlock(channelWaterBlockId,
+                    "CITY_LAND_USE_SURFACE_PRINT_CHANNEL_WATER_BLOCK_INVALID");
+            channelBankOverlayBlockId = normalizeOptionalBlock(channelBankOverlayBlockId,
+                    "CITY_LAND_USE_SURFACE_PRINT_CHANNEL_BANK_OVERLAY_BLOCK_INVALID");
+            boundaryBlockId = normalizeOptionalBlock(boundaryBlockId,
+                    "CITY_LAND_USE_SURFACE_PRINT_BOUNDARY_BLOCK_INVALID");
+            requireText(fillProfileRef, "CITY_LAND_USE_SURFACE_PRINT_FILL_PROFILE_REQUIRED");
+            requireText(primaryRoleRef, "CITY_LAND_USE_SURFACE_PRINT_PRIMARY_ROLE_REQUIRED");
+            Objects.requireNonNull(effectiveSource, "effectiveSource");
+            roleDefinitions = List.copyOf(Objects.requireNonNull(roleDefinitions, "roleDefinitions"));
+            contentWeights = List.copyOf(Objects.requireNonNull(contentWeights, "contentWeights"));
+            regionSpans = List.copyOf(Objects.requireNonNull(regionSpans, "regionSpans"));
+            regionTraces = List.copyOf(Objects.requireNonNull(regionTraces, "regionTraces"));
+            if (roleDefinitions.isEmpty() || regionSpans.isEmpty() || regionTraces.isEmpty()) {
+                throw new IllegalArgumentException("CITY_LAND_USE_SURFACE_PRINT_RELAY_DATA_REQUIRED");
+            }
+            Map<String, RelayRoleDefinition> definitions = new HashMap<>();
+            double shareSum = 0.0;
+            for (RelayRoleDefinition definition : roleDefinitions) {
+                RelayRoleDefinition previous = definitions.putIfAbsent(definition.roleRef(), definition);
+                if (previous != null && previous.materialRole() != definition.materialRole()) {
+                    throw new IllegalArgumentException("CITY_LAND_USE_SURFACE_PRINT_RELAY_ROLE_CONFLICT:"
+                            + definition.roleRef());
+                }
+                shareSum += definition.targetShare();
+            }
+            if (Math.abs(shareSum - 1.0) > 1.0e-6) {
+                throw new IllegalArgumentException("CITY_LAND_USE_SURFACE_PRINT_LAYER_SHARES_INVALID");
+            }
+            RelayRoleDefinition primary = definitions.get(primaryRoleRef);
+            if (primary == null || primary.materialRole() != LandscapeFillProgram.MaterialRole.PRIMARY_CONTENT) {
+                throw new IllegalArgumentException("CITY_LAND_USE_SURFACE_PRINT_PRIMARY_ROLE_INVALID");
+            }
+            for (RelayRoleDefinition definition : roleDefinitions) {
+                if ((definition.materialRole() == LandscapeFillProgram.MaterialRole.BANK
+                        || definition.materialRole() == LandscapeFillProgram.MaterialRole.GROUND)
+                        && channelBankBlockId.isBlank()) {
+                    throw new IllegalArgumentException("CITY_LAND_USE_SURFACE_PRINT_LAYER_BANK_BLOCK_REQUIRED");
+                }
+                if (definition.materialRole() == LandscapeFillProgram.MaterialRole.WATER
+                        && channelWaterBlockId.isBlank()) {
+                    throw new IllegalArgumentException("CITY_LAND_USE_SURFACE_PRINT_LAYER_WATER_BLOCK_REQUIRED");
+                }
+            }
+            Set<String> contentRefs = new HashSet<>();
+            for (RelayContentWeight content : contentWeights) {
+                if (!contentRefs.add(content.contentRef())) {
+                    throw new IllegalArgumentException("CITY_LAND_USE_SURFACE_PRINT_LAYER_CONTENT_DUPLICATE:"
+                            + content.contentRef());
+                }
+            }
+            int previousZ = Integer.MIN_VALUE;
+            int previousMaxX = Integer.MIN_VALUE;
+            Map<String, Integer> blocksByRegion = new HashMap<>();
+            Map<String, RegionTrace> traces = new HashMap<>();
+            for (RegionTrace trace : regionTraces) {
+                if (traces.put(trace.regionId(), trace) != null || !definitions.containsKey(trace.roleRef())) {
+                    throw new IllegalArgumentException("CITY_LAND_USE_SURFACE_PRINT_RELAY_TRACE_INVALID:"
+                            + trace.regionId());
+                }
+            }
+            for (RegionSpan span : regionSpans) {
+                if (!definitions.containsKey(span.roleRef())) {
+                    throw new IllegalArgumentException("CITY_LAND_USE_SURFACE_PRINT_RELAY_SPAN_ROLE_UNKNOWN:"
+                            + span.roleRef());
+                }
+                RegionTrace trace = traces.get(span.regionId());
+                if (trace == null || !trace.roleRef().equals(span.roleRef())) {
+                    throw new IllegalArgumentException("CITY_LAND_USE_SURFACE_PRINT_RELAY_SPAN_REGION_UNKNOWN:"
+                            + span.regionId());
+                }
+                if (span.z() < previousZ || span.z() == previousZ && span.minX() <= previousMaxX) {
+                    throw new IllegalArgumentException("CITY_LAND_USE_SURFACE_PRINT_RELAY_SPANS_UNSTABLE");
+                }
+                blocksByRegion.merge(span.regionId(), span.maxX() - span.minX() + 1, Integer::sum);
+                previousZ = span.z();
+                previousMaxX = span.maxX();
+            }
+            for (RegionTrace trace : regionTraces) {
+                if (blocksByRegion.getOrDefault(trace.regionId(), 0) != trace.actualAreaBlocks()) {
+                    throw new IllegalArgumentException("CITY_LAND_USE_SURFACE_PRINT_RELAY_TRACE_AREA_MISMATCH:"
+                            + trace.regionId());
+                }
+            }
+        }
+
+        public RelayRoleDefinition roleDefinitionAt(int x, int z) {
+            String roleRef = regionAtOrNull(x, z) == null ? null : regionAtOrNull(x, z).roleRef();
+            if (roleRef == null) {
+                throw new IllegalArgumentException("CITY_LAND_USE_SURFACE_PRINT_LAYER_ROLE_MISSING:"
+                        + x + ',' + z);
+            }
+            return roleDefinitions.stream().filter(role -> role.roleRef().equals(roleRef)).findFirst()
+                    .orElseThrow();
+        }
+
+        public RegionSpan regionAtOrNull(int x, int z) {
+            int low = 0;
+            int high = regionSpans.size() - 1;
+            while (low <= high) {
+                int middle = (low + high) >>> 1;
+                RegionSpan span = regionSpans.get(middle);
+                if (z < span.z() || z == span.z() && x < span.minX()) high = middle - 1;
+                else if (z > span.z() || x > span.maxX()) low = middle + 1;
+                else return span;
+            }
+            return null;
+        }
+    }
+
+    public record RelayRoleDefinition(String roleRef,
+                                      LandscapeFillProgram.MaterialRole materialRole,
+                                      LandscapeFillProgram.GrowthForm growthForm,
+                                      double targetShare) {
+        public RelayRoleDefinition {
+            requireText(roleRef, "CITY_LAND_USE_SURFACE_PRINT_LAYER_ROLE_REF_REQUIRED");
+            Objects.requireNonNull(materialRole, "materialRole");
+            Objects.requireNonNull(growthForm, "growthForm");
+            if (!Double.isFinite(targetShare) || targetShare <= 0.0 || targetShare > 1.0) {
+                throw new IllegalArgumentException("CITY_LAND_USE_SURFACE_PRINT_LAYER_ROLE_SHARE_INVALID");
+            }
+        }
+    }
+
+    public record RelayContentWeight(String contentRef, double weight) {
+        public RelayContentWeight {
+            requireText(contentRef, "CITY_LAND_USE_SURFACE_PRINT_LAYER_CONTENT_REF_REQUIRED");
+            if (!Double.isFinite(weight) || weight <= 0.0) {
+                throw new IllegalArgumentException("CITY_LAND_USE_SURFACE_PRINT_LAYER_CONTENT_WEIGHT_INVALID");
+            }
+        }
+    }
+
+    public record RegionSpan(int z, int minX, int maxX, String regionId, String roleRef) {
+        public RegionSpan {
+            if (minX > maxX) {
+                throw new IllegalArgumentException("CITY_LAND_USE_SURFACE_PRINT_LAYER_SPAN_INVALID");
+            }
+            requireText(regionId, "CITY_LAND_USE_SURFACE_PRINT_RELAY_REGION_ID_REQUIRED");
+            requireText(roleRef, "CITY_LAND_USE_SURFACE_PRINT_LAYER_ROLE_REF_REQUIRED");
+        }
+    }
+
+    public record RegionTrace(String regionId,
+                              String parentRegionId,
+                              String roleRef,
+                              LandscapeFillProgram.GrowthForm growthForm,
+                              BlockPoint start,
+                              BlockPoint sourceFrontier,
+                              int targetAreaBlocks,
+                              int actualAreaBlocks) {
+        public RegionTrace {
+            requireText(regionId, "CITY_LAND_USE_SURFACE_PRINT_RELAY_REGION_ID_REQUIRED");
+            parentRegionId = parentRegionId == null ? "" : parentRegionId;
+            requireText(roleRef, "CITY_LAND_USE_SURFACE_PRINT_LAYER_ROLE_REF_REQUIRED");
+            Objects.requireNonNull(growthForm, "growthForm");
+            Objects.requireNonNull(start, "start");
+            if (parentRegionId.isBlank() != (sourceFrontier == null)) {
+                throw new IllegalArgumentException("CITY_LAND_USE_SURFACE_PRINT_RELAY_FRONTIER_INVALID");
+            }
+            if (targetAreaBlocks <= 0 || actualAreaBlocks <= 0) {
+                throw new IllegalArgumentException("CITY_LAND_USE_SURFACE_PRINT_RELAY_AREA_INVALID");
+            }
+        }
+    }
+
     private static String normalizeOptionalBlock(String value, String reason) {
         String normalized = value == null ? "" : value;
         if (!normalized.isEmpty() && !LandUseSurfaceSettings.isValidBlockId(normalized)) {
@@ -283,6 +490,35 @@ public record CityLandUseSurfacePrintPlan(
         if (!actual.equals(expected)) {
             throw new IllegalArgumentException("CITY_LAND_USE_SURFACE_PRINT_CONTOUR_COVERAGE_MISMATCH");
         }
+    }
+
+    private static void validateRelayCoverage(List<LandUseAreaPlan.ScanlineSpan> members,
+                                                List<LandUseAreaPlan.ScanlineSpan> exclusions,
+                                                List<RegionSpan> roles) {
+        Set<Long> expected = expectedCells(members, exclusions);
+        Set<Long> actual = new HashSet<>();
+        for (RegionSpan span : roles) {
+            for (int x = span.minX(); x <= span.maxX(); x++) {
+                if (!actual.add(cellKey(x, span.z()))) {
+                    throw new IllegalArgumentException("CITY_LAND_USE_SURFACE_PRINT_LAYER_SPANS_OVERLAP");
+                }
+            }
+        }
+        if (!actual.equals(expected)) {
+            throw new IllegalArgumentException("CITY_LAND_USE_SURFACE_PRINT_LAYER_COVERAGE_MISMATCH");
+        }
+    }
+
+    private static Set<Long> expectedCells(List<LandUseAreaPlan.ScanlineSpan> members,
+                                           List<LandUseAreaPlan.ScanlineSpan> exclusions) {
+        Set<Long> expected = new HashSet<>();
+        for (LandUseAreaPlan.ScanlineSpan span : members) {
+            for (int x = span.minX(); x <= span.maxX(); x++) expected.add(cellKey(x, span.z()));
+        }
+        for (LandUseAreaPlan.ScanlineSpan span : exclusions) {
+            for (int x = span.minX(); x <= span.maxX(); x++) expected.remove(cellKey(x, span.z()));
+        }
+        return expected;
     }
 
     private static long cellKey(int x, int z) {

@@ -17,7 +17,7 @@ public record CityBlueprint(
         ProfileRef surfaceDetailProfile,
         OutdoorPlan outdoorPlan) {
 
-    public static final String SCHEMA_VERSION = "city_blueprint.v0.7";
+    public static final String SCHEMA_VERSION = "city_blueprint.v0.9";
 
     public CityBlueprint {
         groups = List.copyOf(groups);
@@ -125,12 +125,37 @@ public record CityBlueprint(
             LandscapeGrowthRelation growthRelation,
             List<String> referenceGroupIds,
             TerrainPolicy terrainPolicy,
-            boolean required) {
+            boolean required,
+            FillSelection fillSelection) {
         public Landscape {
             attachedGroupIds = List.copyOf(attachedGroupIds);
             preferredPatchRefs = List.copyOf(preferredPatchRefs);
             referenceGroupIds = List.copyOf(referenceGroupIds);
         }
+    }
+
+    /** AI-selected semantic fill variants; geometry and block materials remain catalog-owned. */
+    public record FillSelection(List<FillVariant> variants) {
+        public FillSelection {
+            variants = List.copyOf(variants);
+        }
+    }
+
+    public record FillVariant(
+            String fillProfileRef,
+            double selectionWeight,
+            List<RoleShare> roleShares,
+            List<ContentWeight> contentWeights) {
+        public FillVariant {
+            roleShares = List.copyOf(roleShares);
+            contentWeights = List.copyOf(contentWeights);
+        }
+    }
+
+    public record RoleShare(String roleRef, RegionGrowthForm growthForm, double targetShare) {
+    }
+
+    public record ContentWeight(String contentRef, double weight) {
     }
 
     public enum GroupKind { STRUCTURE, LANDSCAPE }
@@ -176,5 +201,8 @@ public record CityBlueprint(
     public enum LandscapeContinuity { CONTINUOUS, MULTI_PARCEL, PATCHY }
 
     public enum LandscapeGrowthRelation { AROUND_SOURCE, AWAY_FROM_REFERENCE, TOWARD_WATER, ALONG_WATER }
+
+    /** Frontier-expansion bias only; never a fixed geometry or mask. */
+    public enum RegionGrowthForm { PATCH, CORRIDOR }
 
 }

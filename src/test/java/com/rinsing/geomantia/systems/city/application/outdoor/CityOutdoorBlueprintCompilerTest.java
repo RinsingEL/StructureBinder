@@ -48,6 +48,15 @@ class CityOutdoorBlueprintCompilerTest {
         assertTrue(parcels.stream().allMatch(group -> group.seedPoints().size() == 1));
         assertTrue(parcels.stream().allMatch(group -> group.growthRegions().size() == 1));
         assertTrue(parcels.stream().noneMatch(group -> group.rule().mergeSameType()));
+        assertTrue(parcels.stream().allMatch(group -> group.landscapeFillProgram() != null));
+        assertTrue(parcels.stream().allMatch(group -> group.surfaceSettings().surfaceAlgorithm()
+                == com.rinsing.geomantia.systems.city.domain.landuse.LandUseSurfaceSettings.SurfaceAlgorithm
+                .RELAY_REGION_GROWTH));
+        assertTrue(parcels.stream().allMatch(group -> group.landscapeFillProgram().fillProfileRef()
+                .equals("fill:irrigated")));
+        assertTrue(parcels.stream().allMatch(group -> group.landscapeFillProgram().roles().stream()
+                .map(com.rinsing.geomantia.systems.city.domain.landuse.LandscapeFillProgram.RoleDefinition::roleRef)
+                .toList().equals(List.of("CULTIVATED", "BANK", "WATER", "BANK", "CULTIVATED"))));
         assertTrue(result.resolution().corridorExclusions().isEmpty());
         assertFalse(result.residualConfig().enabled());
         assertEquals("city_outdoor_intent_plan.v0.3", result.intentPlan().schemaVersion());
@@ -102,7 +111,7 @@ class CityOutdoorBlueprintCompilerTest {
                 d5Corridor(), terrain(), compiled.residualConfig());
 
         assertTrue(planned.plan().corridorExclusions().isEmpty());
-        assertEquals("city_land_use_planning_trace.v0.4",
+        assertEquals("city_land_use_planning_trace.v0.5",
                 planned.trace().get("schemaVersion").getAsString());
         assertTrue(planned.trace().get("foundationResolvedCloseRadiusBlocks").getAsInt() >= 8);
         List<LandUseAreaPlan.Area> foundationAreas = planned.plan().areas().stream()
@@ -114,6 +123,17 @@ class CityOutdoorBlueprintCompilerTest {
         assertEquals(7, parcelAreas.size());
         assertTrue(parcelAreas.stream().allMatch(area -> area.sourceGroupIds().size() == 1));
         assertEquals(7, parcelAreas.stream().flatMap(area -> area.sourceGroupIds().stream()).distinct().count());
+        assertEquals(7, planned.surfacePrintPlan().areas().stream()
+                .filter(area -> area.recipe() instanceof
+                        com.rinsing.geomantia.systems.city.application.landuse.CityLandUseSurfacePrintPlan
+                                .RelayRegionGrowthRecipe)
+                .count());
+        JsonObject firstParcelTrace = planned.trace().getAsJsonArray("seedGroups").asList().stream()
+                .map(value -> value.getAsJsonObject())
+                .filter(value -> value.get("groupId").getAsString().startsWith("outer_fields::"))
+                .findFirst().orElseThrow();
+        assertEquals("fill:irrigated", firstParcelTrace.get("fillProfileRef").getAsString());
+        assertEquals(5, firstParcelTrace.getAsJsonArray("fillRelayStages").size());
         Set<BlockPoint> claimedOnce = new java.util.HashSet<>();
         for (LandUseAreaPlan.Area area : planned.plan().areas()) {
             for (LandUseAreaPlan.ScanlineSpan span : area.memberSpans()) {
@@ -173,7 +193,20 @@ class CityOutdoorBlueprintCompilerTest {
                 List.of("farm_group"), List.of("farm_patch"), CityBlueprint.ExtentClass.SMALL,
                 CityBlueprint.OutdoorIntensity.MEDIUM, CityBlueprint.LandscapeContinuity.MULTI_PARCEL,
                 CityBlueprint.LandscapeGrowthRelation.AROUND_SOURCE, List.of(),
-                CityBlueprint.TerrainPolicy.CONFORM, true);
+                CityBlueprint.TerrainPolicy.CONFORM, true,
+                new CityBlueprint.FillSelection(List.of(new CityBlueprint.FillVariant(
+                        "fill:irrigated", 1.0,
+                        List.of(new CityBlueprint.RoleShare("CULTIVATED",
+                                        CityBlueprint.RegionGrowthForm.PATCH, 0.41),
+                                new CityBlueprint.RoleShare("BANK",
+                                        CityBlueprint.RegionGrowthForm.CORRIDOR, 0.06),
+                                new CityBlueprint.RoleShare("WATER",
+                                        CityBlueprint.RegionGrowthForm.CORRIDOR, 0.06),
+                                new CityBlueprint.RoleShare("BANK",
+                                        CityBlueprint.RegionGrowthForm.CORRIDOR, 0.06),
+                                new CityBlueprint.RoleShare("CULTIVATED",
+                                        CityBlueprint.RegionGrowthForm.PATCH, 0.41)),
+                        List.of(new CityBlueprint.ContentWeight("crop:wheat", 1.0))))));
         CityBlueprint.OutdoorPlan outdoor = new CityBlueprint.OutdoorPlan(CityBlueprint.OutdoorMode.GENERATE,
                 CityBlueprint.EnvelopeProfile.BALANCED, "foundation:test",
                 List.of(new CityBlueprint.SpatialGround("core_group", CityBlueprint.SharedSpaceType.CIVIC_SQUARE,
@@ -221,12 +254,36 @@ class CityOutdoorBlueprintCompilerTest {
                         "surface:farmland", 1000, 2000, 4000, CityBlueprint.OutdoorMembership.LANDSCAPE,
                         new CityBlueprintReferenceCatalog.ParcelStyle(5, 5, 2, 2,
                                 192, 240, 1.0, 4, 12));
+        CityBlueprintReferenceCatalog.LandscapeFillProfile fillProfile =
+                new CityBlueprintReferenceCatalog.LandscapeFillProfile("fill:irrigated", "Irrigated fields",
+                        "Cultivated fields separated by narrow banks and water",
+                        CityBlueprintReferenceCatalog.FillAlgorithm.SINGLE_SOURCE_REGION_RELAY,
+                        CityBlueprintReferenceCatalog.RelayOrigin.PARENT_REGION_LOCAL_BOUNDARY,
+                        Set.of(CityBlueprintReferenceCatalog.LandscapeType.FARMLAND), "CULTIVATED",
+                        Map.of(
+                                "CULTIVATED", new CityBlueprintReferenceCatalog.FillRole("CULTIVATED",
+                                        CityBlueprintReferenceCatalog.MaterialRole.PRIMARY_CONTENT,
+                                        Set.of(CityBlueprint.RegionGrowthForm.PATCH),
+                                        CityBlueprint.RegionGrowthForm.PATCH,
+                                        0.65, 0.92, 0.82),
+                                "BANK", new CityBlueprintReferenceCatalog.FillRole("BANK",
+                                        CityBlueprintReferenceCatalog.MaterialRole.BANK,
+                                        Set.of(CityBlueprint.RegionGrowthForm.CORRIDOR),
+                                        CityBlueprint.RegionGrowthForm.CORRIDOR,
+                                        0.06, 0.2, 0.12),
+                                "WATER", new CityBlueprintReferenceCatalog.FillRole("WATER",
+                                        CityBlueprintReferenceCatalog.MaterialRole.WATER,
+                                        Set.of(CityBlueprint.RegionGrowthForm.CORRIDOR),
+                                        CityBlueprint.RegionGrowthForm.CORRIDOR,
+                                        0.02, 0.12, 0.06)),
+                        Set.of("crop:wheat"), List.of());
         return new CityBlueprintReferenceCatalog(new JsonObject(), Set.of(), Set.of(), Set.of(), Map.of(),
                 Set.of(), Set.of(), Set.of(), Set.of(), rules,
                 Map.of(foundationRecipe.surfaceRecipeRef(), foundationRecipe,
                         farmlandRecipe.surfaceRecipeRef(), farmlandRecipe),
                 Map.of(foundation.foundationProfileRef(), foundation),
-                Map.of(landscape.landscapeProfileRef(), landscape));
+                Map.of(landscape.landscapeProfileRef(), landscape),
+                Map.of(fillProfile.fillProfileRef(), fillProfile));
     }
 
     private static JsonObject d6Plan() {

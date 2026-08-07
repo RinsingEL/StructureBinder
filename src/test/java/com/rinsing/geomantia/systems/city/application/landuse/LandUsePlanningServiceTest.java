@@ -104,7 +104,7 @@ class LandUsePlanningServiceTest {
         LandUsePlanningService.Result result = new LandUsePlanningService().plan(
                 d6, null, null, null, terrain(64), smallCommercialCatalog());
 
-        assertEquals("city_land_use_planning_trace.v0.4", result.trace().get("schemaVersion").getAsString());
+        assertEquals("city_land_use_planning_trace.v0.5", result.trace().get("schemaVersion").getAsString());
         assertEquals(3, result.trace().getAsJsonArray("automaticSurfaceConnections").size());
         assertTrue(result.trace().getAsJsonArray("automaticSurfaceConnections").asList().stream()
                 .allMatch(value -> "PAVE".equals(value.getAsJsonObject()

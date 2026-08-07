@@ -131,7 +131,7 @@ public final class CityBlueprintCodec {
         List<CityBlueprint.Landscape> result = new ArrayList<>();
         Set<String> fields = Set.of("landscapeId", "landscapeProfileRef", "attachedGroupIds",
                 "preferredPatchRefs", "extentClass", "intensity", "continuity", "growthRelation",
-                "referenceGroupIds", "terrainPolicy", "required");
+                "referenceGroupIds", "terrainPolicy", "required", "fillSelection");
         for (int index = 0; index < array.size(); index++) {
             String path = "$.outdoorPlan.landscapes[" + index + "]";
             JsonObject item = objectElement(array.get(index), path);
@@ -150,7 +150,68 @@ public final class CityBlueprintCodec {
                     stringList(requiredArray(item, "referenceGroupIds", path + ".referenceGroupIds"),
                             path + ".referenceGroupIds"),
                     enumValue(item, "terrainPolicy", CityBlueprint.TerrainPolicy.class, path),
-                    requiredBoolean(item, "required", path + ".required")));
+                    requiredBoolean(item, "required", path + ".required"),
+                    fillSelection(requiredObject(item, "fillSelection", path + ".fillSelection"),
+                            path + ".fillSelection")));
+        }
+        return List.copyOf(result);
+    }
+
+    private static CityBlueprint.FillSelection fillSelection(JsonObject object, String path) {
+        exactFields(object, Set.of("variants"), path);
+        JsonArray variants = requiredArray(object, "variants", path + ".variants");
+        if (variants.isEmpty()) {
+            fail(CityBlueprintReasonCode.CITY_BLUEPRINT_FIELD_MISSING, path + ".variants",
+                    "fillSelection.variants must not be empty.");
+        }
+        List<CityBlueprint.FillVariant> result = new ArrayList<>();
+        Set<String> fields = Set.of("fillProfileRef", "selectionWeight", "roleShares", "contentWeights");
+        for (int index = 0; index < variants.size(); index++) {
+            String itemPath = path + ".variants[" + index + "]";
+            JsonObject item = objectElement(variants.get(index), itemPath);
+            exactFields(item, fields, itemPath);
+            JsonArray roleShares = requiredArray(item, "roleShares", itemPath + ".roleShares");
+            if (roleShares.isEmpty()) {
+                fail(CityBlueprintReasonCode.CITY_BLUEPRINT_FIELD_MISSING, itemPath + ".roleShares",
+                        "roleShares must not be empty.");
+            }
+            result.add(new CityBlueprint.FillVariant(
+                    requiredString(item, "fillProfileRef", itemPath + ".fillProfileRef"),
+                    positiveNumber(item, "selectionWeight", itemPath + ".selectionWeight"),
+                    roleShares(roleShares, itemPath + ".roleShares"),
+                    contentWeights(requiredArray(item, "contentWeights", itemPath + ".contentWeights"),
+                            itemPath + ".contentWeights")));
+        }
+        return new CityBlueprint.FillSelection(result);
+    }
+
+    private static List<CityBlueprint.RoleShare> roleShares(JsonArray array, String path) {
+        List<CityBlueprint.RoleShare> result = new ArrayList<>();
+        for (int index = 0; index < array.size(); index++) {
+            String itemPath = path + "[" + index + "]";
+            JsonObject item = objectElement(array.get(index), itemPath);
+            exactFields(item, Set.of("roleRef", "growthForm", "targetShare"), itemPath);
+            double share = positiveNumber(item, "targetShare", itemPath + ".targetShare");
+            if (share >= 1.0) {
+                fail(CityBlueprintReasonCode.CITY_BLUEPRINT_FIELD_MISSING, itemPath + ".targetShare",
+                        "targetShare must be greater than 0 and less than 1.");
+            }
+            result.add(new CityBlueprint.RoleShare(
+                    requiredString(item, "roleRef", itemPath + ".roleRef"),
+                    enumValue(item, "growthForm", CityBlueprint.RegionGrowthForm.class, itemPath), share));
+        }
+        return List.copyOf(result);
+    }
+
+    private static List<CityBlueprint.ContentWeight> contentWeights(JsonArray array, String path) {
+        List<CityBlueprint.ContentWeight> result = new ArrayList<>();
+        for (int index = 0; index < array.size(); index++) {
+            String itemPath = path + "[" + index + "]";
+            JsonObject item = objectElement(array.get(index), itemPath);
+            exactFields(item, Set.of("contentRef", "weight"), itemPath);
+            result.add(new CityBlueprint.ContentWeight(
+                    requiredString(item, "contentRef", itemPath + ".contentRef"),
+                    positiveNumber(item, "weight", itemPath + ".weight")));
         }
         return List.copyOf(result);
     }
@@ -363,6 +424,20 @@ public final class CityBlueprintCodec {
         return object.get(key).getAsString().trim();
     }
 
+    private static double positiveNumber(JsonObject object, String key, String path) {
+        if (!object.has(key) || !object.get(key).isJsonPrimitive()
+                || !object.getAsJsonPrimitive(key).isNumber()) {
+            fail(CityBlueprintReasonCode.CITY_BLUEPRINT_FIELD_MISSING, path,
+                    "A positive finite number is required.");
+        }
+        double value = object.get(key).getAsDouble();
+        if (!Double.isFinite(value) || value <= 0.0) {
+            fail(CityBlueprintReasonCode.CITY_BLUEPRINT_FIELD_MISSING, path,
+                    "A positive finite number is required.");
+        }
+        return value;
+    }
+
     private static long requiredLong(JsonObject object, String key, String path) {
         try {
             if (!object.has(key) || !object.get(key).isJsonPrimitive()
@@ -472,9 +547,40 @@ public final class CityBlueprintCodec {
             item.add("referenceGroupIds", strings(landscape.referenceGroupIds()));
             item.addProperty("terrainPolicy", landscape.terrainPolicy().name());
             item.addProperty("required", landscape.required());
+            item.add("fillSelection", fillSelectionJson(landscape.fillSelection()));
             landscapes.add(item);
         }
         object.add("landscapes", landscapes);
+        return object;
+    }
+
+    private static JsonObject fillSelectionJson(CityBlueprint.FillSelection selection) {
+        JsonObject object = new JsonObject();
+        JsonArray variants = new JsonArray();
+        for (CityBlueprint.FillVariant variant : selection.variants()) {
+            JsonObject item = new JsonObject();
+            item.addProperty("fillProfileRef", variant.fillProfileRef());
+            item.addProperty("selectionWeight", variant.selectionWeight());
+            JsonArray roleShares = new JsonArray();
+            for (CityBlueprint.RoleShare share : variant.roleShares()) {
+                JsonObject role = new JsonObject();
+                role.addProperty("roleRef", share.roleRef());
+                role.addProperty("growthForm", share.growthForm().name());
+                role.addProperty("targetShare", share.targetShare());
+                roleShares.add(role);
+            }
+            item.add("roleShares", roleShares);
+            JsonArray contentWeights = new JsonArray();
+            for (CityBlueprint.ContentWeight weight : variant.contentWeights()) {
+                JsonObject content = new JsonObject();
+                content.addProperty("contentRef", weight.contentRef());
+                content.addProperty("weight", weight.weight());
+                contentWeights.add(content);
+            }
+            item.add("contentWeights", contentWeights);
+            variants.add(item);
+        }
+        object.add("variants", variants);
         return object;
     }
 
