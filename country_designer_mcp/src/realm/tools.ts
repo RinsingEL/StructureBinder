@@ -287,6 +287,10 @@ const surfaceRecipeSchema: Record<string, unknown> = {
       surfacePrintEnabled: { type: "boolean", enum: [true] },
       surfaceAlgorithm: { type: "string", enum: ["UNIFORM"] },
       surfaceBlockId: minecraftBlockIdSchema,
+      cropBlockId: minecraftBlockIdSchema,
+      channelBankBlockId: minecraftBlockIdSchema,
+      channelWaterBlockId: minecraftBlockIdSchema,
+      channelBankOverlayBlockId: minecraftBlockIdSchema,
       boundaryBlockId: minecraftBlockIdSchema,
     }, ["surfaceRecipeRef", "surfacePrintEnabled", "autoConnectDefault", "surfaceAlgorithm",
       "surfaceBlockId"]),
@@ -310,7 +314,7 @@ const surfaceRecipeSchema: Record<string, unknown> = {
 };
 
 const blueprintReferenceCatalogSchema = strictObject({
-  schemaVersion: { type: "string", enum: ["city_blueprint_reference_catalog.v0.6"] },
+  schemaVersion: { type: "string", enum: ["city_blueprint_reference_catalog.v0.7"] },
   structureRefs: {
     type: "array", minItems: 1,
     items: strictObject({
@@ -397,10 +401,12 @@ const blueprintReferenceCatalogSchema = strictObject({
       baseAreaLarge: positiveInteger("LARGE 景观基准面积；服务端要求不小于 MEDIUM。"),
       membership: { type: "string", enum: ["URBAN", "LANDSCAPE"] },
       parcelStyle: strictObject({
-        coreParcelCountMin: positiveInteger("核心地块最小数量。"),
-        coreParcelCountMax: positiveInteger("核心地块最大数量。"),
-        fillParcelCountMin: { type: "integer", minimum: 0 },
-        fillParcelCountMax: { type: "integer", minimum: 0 },
+        coreParcelCountMin: positiveInteger("该 Landscape 在整个附着 Group 中优先准入的核心地块最小总量。"),
+        coreParcelCountMax: positiveInteger("该 Landscape 在整个附着 Group 中优先准入的核心地块最大总量。"),
+        fillParcelCountMin: { type: "integer", minimum: 0,
+          description: "该 Landscape 在整个附着 Group 中共享的可选填充地块最小总量；不按 fill anchor 倍增。" },
+        fillParcelCountMax: { type: "integer", minimum: 0,
+          description: "该 Landscape 在整个附着 Group 中共享的可选填充地块最大总量；空间不足可显式跳过。" },
         parcelAreaMinBlocks: positiveInteger("单个地块最小面积。"),
         parcelAreaMaxBlocks: positiveInteger("单个地块最大面积。"),
         branchFromExistingChance: { type: "number", minimum: 0, maximum: 1 },
@@ -968,7 +974,7 @@ export const realmTools: ToolDefinition[] = [
         templateCatalogSource: { type: "object", description: "现有固定 NBT template catalog 源。" },
         blueprintReferenceCatalog: {
           ...blueprintReferenceCatalogSchema,
-          description: "严格 city_blueprint_reference_catalog.v0.6 户外目录；景观填充唯一使用单源区域接力，后一区域从父区域局部边界继续；禁止固定图形、全局距离环和 geometry fallback。",
+          description: "严格 city_blueprint_reference_catalog.v0.7 户外目录；景观 Parcel 使用 Group 级核心/可选总量，景观填充唯一使用单源区域接力，后一区域从父区域局部边界继续；禁止固定图形、全局距离环和 geometry fallback。",
         },
       },
       required: ["runId", "citySeedId", "terrasenseProfileSource", "templateCatalogSource", "blueprintReferenceCatalog"],

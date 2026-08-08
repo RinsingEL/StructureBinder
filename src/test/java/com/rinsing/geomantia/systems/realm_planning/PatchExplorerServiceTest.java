@@ -3,6 +3,7 @@ package com.rinsing.geomantia.systems.realm_planning;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.rinsing.geomantia.systems.city.application.CityTestRunLayout;
 import com.rinsing.geomantia.systems.realm_planning.application.terrain.RealmT4CoarseTerrainPreviewService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -186,7 +187,8 @@ class PatchExplorerServiceTest {
         assertTrue(componentMismatch.getMessage().contains("COMPONENT_MISMATCH"), componentMismatch.getMessage());
         Files.writeString(selectionPath, persistedSelection.toString());
 
-        Path candidateSessionPath = run.resolve("city_d4_candidate_session_city_a")
+        Path candidateSessionPath = CityTestRunLayout.open(run, "city_a")
+                .stepDirectory(CityTestRunLayout.D4_CANDIDATE_SESSION)
                 .resolve("d4_candidate_session.json");
         JsonObject candidateSession = read(candidateSessionPath);
         candidateSession.addProperty("updatedAt", "read-only-candidate-generation");
@@ -199,7 +201,8 @@ class PatchExplorerServiceTest {
                 service.resolveSelection("run_a", d4SelectionRef).getAsJsonObject("selectedComponent"),
                 "read-only candidate history must not stale a patch selection or become occupied");
 
-        Path designLoop = run.resolve("city_d4_design_loop_city_a");
+        Path designLoop = CityTestRunLayout.open(run, "city_a")
+                .stepDirectory(CityTestRunLayout.D4_DESIGN_LOOP);
         Files.createDirectories(designLoop);
         Files.writeString(designLoop.resolve("d4_design_loop_occupied_field.json"), "{\"occupiedEnvelopes\":[]}");
         assertEquals(selectedComponent,
@@ -454,7 +457,8 @@ class PatchExplorerServiceTest {
     }
 
     private static void writeCityArtifacts(Path run) throws Exception {
-        Path d3 = run.resolve("city_d3_city_a");
+        CityTestRunLayout layout = CityTestRunLayout.open(run, "city_a");
+        Path d3 = layout.stepDirectory(CityTestRunLayout.D3);
         Files.createDirectories(d3);
         JsonObject review = new JsonObject();
         review.addProperty("schemaVersion", "city_landform_review.v0.1");
@@ -485,7 +489,7 @@ class PatchExplorerServiceTest {
         review.add("landformPatches", patches);
         Files.writeString(d3.resolve("city_landform_review_package.json"), review.toString());
 
-        Path sessionDir = run.resolve("city_d4_candidate_session_city_a");
+        Path sessionDir = layout.stepDirectory(CityTestRunLayout.D4_CANDIDATE_SESSION);
         Files.createDirectories(sessionDir);
         JsonObject session = new JsonObject();
         JsonArray occupied = new JsonArray();

@@ -4039,7 +4039,7 @@ class CityPlanningEndpointHandlerTest {
     private static JsonObject blueprintReferenceCatalog() {
         return JsonParser.parseString("""
                 {
-                  "schemaVersion":"city_blueprint_reference_catalog.v0.6",
+                  "schemaVersion":"city_blueprint_reference_catalog.v0.7",
                   "structureRefs":[{"structureRef":"minecraft:desert_pyramid","templateCandidates":[{"templateId":"geomantia:test_house","variantId":"test_v1"}]}],
                   "fillPools":[{"poolRef":"pool:test","structureRefs":["minecraft:desert_pyramid"]}],
                   "algorithmProfiles":[{"algorithmProfileRef":"algorithm:compact","algorithm":"COMPACT"}],

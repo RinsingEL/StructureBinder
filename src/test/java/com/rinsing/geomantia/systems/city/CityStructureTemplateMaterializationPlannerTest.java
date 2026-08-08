@@ -101,6 +101,23 @@ class CityStructureTemplateMaterializationPlannerTest {
     }
 
     @Test
+    void d7ResponsePropagatesWaitingForWorldgen() {
+        JsonObject plan = new CityStructureMaterializationPlanner()
+                .planWorldgen(anchorMap(), CityStructureMaterializationPlanner.ChunkStatusInspector.plannedOnly(),
+                        emptyLedger(), metadata())
+                .structureMaterializationPlan();
+
+        JsonObject response = new CityStructureMaterializationPlanner()
+                .executeWorldgen(plan, emptyLedger(),
+                        CityStructureMaterializationPlanner.ChunkStatusInspector.plannedOnly(), true)
+                .asJson();
+
+        assertTrue(response.get("ok").getAsBoolean());
+        assertEquals("waiting_for_worldgen", response.get("status").getAsString());
+        assertEquals("WAITING_FOR_WORLDGEN", response.get("reasonCode").getAsString());
+    }
+
+    @Test
     void d6RejectsSuppliedOwnerChunkDrift() {
         JsonObject map = anchorMap();
         map.getAsJsonArray("anchors").get(0).getAsJsonObject().add("ownerChunks",

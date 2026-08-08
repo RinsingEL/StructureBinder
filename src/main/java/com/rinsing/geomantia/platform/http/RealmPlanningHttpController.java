@@ -11,6 +11,7 @@ import com.rinsing.geomantia.systems.gis.application.refresh.SampleMode;
 import com.rinsing.geomantia.systems.gis.application.sample.AtlasSampler;
 import com.rinsing.geomantia.systems.city.application.CityWallPlanner;
 import com.rinsing.geomantia.systems.city.application.CityWallReservationPlanner;
+import com.rinsing.geomantia.systems.city.application.CityTestRunLayout;
 import com.rinsing.geomantia.systems.city.domain.blueprint.CityBlueprint;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityWorldgenBlockObservationRegistry;
 import com.rinsing.geomantia.platform.RealmPlanningServices;
@@ -919,12 +920,12 @@ final class RealmPlanningHttpController {
                                                    String runId,
                                                    String citySeedId) throws IOException {
         Path runDir = debugRoot.resolve(runId);
-        String safeCitySeedId = citySeedId.replaceAll("[^A-Za-z0-9._-]", "_");
-        Path blueprintDir = runDir.resolve("city_blueprint_" + safeCitySeedId);
+        CityTestRunLayout layout = CityTestRunLayout.open(runDir, citySeedId);
+        Path blueprintDir = layout.stepDirectory(CityTestRunLayout.BLUEPRINT);
         Path blueprintPath = blueprintDir.resolve("city_blueprint.json");
         Path validationPath = blueprintDir.resolve("city_blueprint_validation_report.json");
         Path submissionPath = blueprintDir.resolve("city_blueprint_submission_trace.json");
-        Path d6Path = runDir.resolve("city_d6_" + safeCitySeedId)
+        Path d6Path = layout.stepDirectory(CityTestRunLayout.D6)
                 .resolve("structure_materialization_plan.json");
         boolean blueprintExists = Files.isRegularFile(blueprintPath);
         boolean validationExists = Files.isRegularFile(validationPath);

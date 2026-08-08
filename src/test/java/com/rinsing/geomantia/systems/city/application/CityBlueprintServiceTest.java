@@ -655,7 +655,7 @@ class CityBlueprintServiceTest {
     void rejectsPreviousReferenceCatalogSchema() throws Exception {
         Fixture fixture = fixture("run_old_reference_catalog", "city:old_reference_catalog");
         JsonObject catalog = fixture.referenceCatalog().deepCopy();
-        catalog.addProperty("schemaVersion", "city_blueprint_reference_catalog.v0.5");
+        catalog.addProperty("schemaVersion", "city_blueprint_reference_catalog.v0.6");
 
         CityBlueprintContractException failure = assertThrows(CityBlueprintContractException.class,
                 () -> new CityBlueprintService().prepare(temporary, fixture.runId(), fixture.cityId(),
@@ -743,7 +743,7 @@ class CityBlueprintServiceTest {
     private static JsonObject referenceCatalog() {
         return JsonParser.parseString("""
                 {
-                  "schemaVersion":"city_blueprint_reference_catalog.v0.6",
+                  "schemaVersion":"city_blueprint_reference_catalog.v0.7",
                   "structureRefs":[{"structureRef":"geomantia:town_hall","templateCandidates":[{"templateId":"geomantia:town_hall","variantId":"default"}]}],
                   "fillPools":[{"poolRef":"pool:civic","structureRefs":["geomantia:town_hall"]}],
                   "algorithmProfiles":[
@@ -803,6 +803,7 @@ class CityBlueprintServiceTest {
                     "boundaryBlockId":"minecraft:oak_leaves"},
                     {"surfaceRecipeRef":"surface_recipe:forestry","surfacePrintEnabled":true,
                     "autoConnectDefault":false,"surfaceAlgorithm":"UNIFORM","surfaceBlockId":"minecraft:podzol",
+                    "channelBankBlockId":"minecraft:gravel","channelBankOverlayBlockId":"minecraft:oak_leaves",
                     "boundaryBlockId":"minecraft:spruce_fence"}
                   ],
                   "foundationProfiles":[{"foundationProfileRef":"foundation:urban","landUseRuleRef":"civic",

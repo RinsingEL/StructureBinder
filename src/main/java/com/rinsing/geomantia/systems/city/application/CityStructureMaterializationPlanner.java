@@ -595,6 +595,14 @@ public final class CityStructureMaterializationPlanner {
             result.add("structureMaterializationTrace", structureMaterializationTrace);
             result.add("inferredFunctionAreaMap", inferredFunctionAreaMap);
             result.add("qualityReport", qualityReport);
+            JsonObject waitingSummary = structureMaterializationTrace.has("waitingSummary")
+                    && structureMaterializationTrace.get("waitingSummary").isJsonObject()
+                    ? structureMaterializationTrace.getAsJsonObject("waitingSummary") : null;
+            if (waitingSummary != null && waitingSummary.has("WAITING_FOR_WORLDGEN")
+                    && waitingSummary.get("WAITING_FOR_WORLDGEN").getAsInt() > 0) {
+                result.addProperty("status", "waiting_for_worldgen");
+                result.addProperty("reasonCode", "WAITING_FOR_WORLDGEN");
+            }
             if (structureMaterializationPlan.has("plannedWorldgenStructures")) {
                 result.add("plannedWorldgenStructures",
                         structureMaterializationPlan.getAsJsonArray("plannedWorldgenStructures").deepCopy());
