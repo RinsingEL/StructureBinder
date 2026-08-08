@@ -129,10 +129,10 @@ test("publishes the current strict LandUse v0.3 intent wire shape", () => {
   assert.deepEqual(override.properties.algorithmAnchor.required, ["x", "z"]);
 });
 
-test("requires the v0.6 Blueprint reference catalog with boundary-relay fill profiles", () => {
+test("requires the v0.7 Blueprint reference catalog with group-budget boundary-relay fill profiles", () => {
   const prepare = realmTools.find((tool) => tool.name === "city_prepare_d4_blueprint_context");
   const catalog = prepare.inputSchema.properties.blueprintReferenceCatalog;
-  assert.match(catalog.description, /city_blueprint_reference_catalog\.v0\.6/);
+  assert.match(catalog.description, /city_blueprint_reference_catalog\.v0\.7/);
   assert.match(catalog.description, /户外/);
   assert.equal(catalog.additionalProperties, false);
   assert.deepEqual(catalog.required, [
@@ -141,7 +141,7 @@ test("requires the v0.6 Blueprint reference catalog with boundary-relay fill pro
     "landscapeProfiles", "landscapeFillProfiles",
   ]);
   assert.deepEqual(catalog.properties.schemaVersion.enum,
-    ["city_blueprint_reference_catalog.v0.6"]);
+    ["city_blueprint_reference_catalog.v0.7"]);
 
   for (const namespace of ["structureRefs", "fillPools", "algorithmProfiles", "compositionProfiles",
     "styleProfiles", "roadProfiles", "surfaceDetailProfiles", "foundationProfiles", "surfaceRecipes",
@@ -247,6 +247,8 @@ test("requires the v0.6 Blueprint reference catalog with boundary-relay fill pro
     "gapMinBlocks", "gapMaxBlocks"]);
   assert.equal(parcel.properties.coreParcelCountMin.minimum, 1);
   assert.equal(parcel.properties.fillParcelCountMin.minimum, 0);
+  assert.match(parcel.properties.coreParcelCountMin.description, /整个附着 Group/);
+  assert.match(parcel.properties.fillParcelCountMax.description, /空间不足可显式跳过/);
   assert.equal(parcel.properties.branchFromExistingChance.minimum, 0);
   assert.equal(parcel.properties.branchFromExistingChance.maximum, 1);
 });

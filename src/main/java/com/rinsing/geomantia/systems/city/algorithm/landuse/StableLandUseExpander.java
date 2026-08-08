@@ -36,6 +36,17 @@ public final class StableLandUseExpander {
                                          List<LandUseAreaPlan.CorridorExclusion> corridors,
                                          String seedSalt,
                                          LandUseAutoConnectionPlanner.Plan guidance) {
+        return expand(cityId, planningBounds, terrain, groups, corridors, seedSalt, guidance, Set.of());
+    }
+
+    public LandUseExpansionResult expand(String cityId,
+                                         BlockBounds planningBounds,
+                                         LandUseTerrainField terrain,
+                                         List<LandUseSeedGroup> groups,
+                                         List<LandUseAreaPlan.CorridorExclusion> corridors,
+                                         String seedSalt,
+                                         LandUseAutoConnectionPlanner.Plan guidance,
+                                         Set<BlockPoint> reservedPoints) {
         if (cityId == null || cityId.isBlank()) throw new IllegalArgumentException("cityId is required");
         if (!cityId.equals(terrain.cityId())) throw new IllegalArgumentException("LAND_USE_TERRAIN_CITY_ID_MISMATCH");
         guidance = guidance == null ? LandUseAutoConnectionPlanner.Plan.empty() : guidance;
@@ -52,6 +63,7 @@ public final class StableLandUseExpander {
             }
         }
         Set<BlockPoint> obstacles = obstacles(groups, corridors);
+        obstacles.addAll(reservedPoints == null ? Set.of() : reservedPoints);
         TerrainIndex terrainIndex = new TerrainIndex(terrain);
         PriorityQueue<Node> queue = new PriorityQueue<>(Comparator
                 .comparingDouble(Node::priorityCost)

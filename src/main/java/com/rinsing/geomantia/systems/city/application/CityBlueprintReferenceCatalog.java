@@ -34,7 +34,7 @@ public record CityBlueprintReferenceCatalog(
         Map<String, LandscapeProfile> landscapeProfiles,
         Map<String, LandscapeFillProfile> landscapeFillProfiles) {
 
-    public static final String SCHEMA_VERSION = "city_blueprint_reference_catalog.v0.6";
+    public static final String SCHEMA_VERSION = "city_blueprint_reference_catalog.v0.7";
     private static final Set<String> ROOT_FIELDS = Set.of("schemaVersion", "structureRefs", "fillPools",
             "algorithmProfiles", "compositionProfiles", "styleProfiles", "roadProfiles",
             "surfaceDetailProfiles", "landUseRuleProfile", "surfaceRecipes", "foundationProfiles",
@@ -143,6 +143,9 @@ public record CityBlueprintReferenceCatalog(
             if (enabled) {
                 expected.add("surfaceBlockId");
                 if (item.has("boundaryBlockId")) expected.add("boundaryBlockId");
+                for (String material : materials) {
+                    if (item.has(material)) expected.add(material);
+                }
                 if (algorithm == SurfaceAlgorithm.CONTOUR_BANDS) {
                     expected.addAll(materials);
                     expected.addAll(contourWidths);
@@ -150,13 +153,12 @@ public record CityBlueprintReferenceCatalog(
             }
             exactFields(item, expected, path, CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID);
             String surface = enabled ? blockId(item, "surfaceBlockId", path) : null;
-            String crop = enabled && algorithm == SurfaceAlgorithm.CONTOUR_BANDS
-                    ? blockId(item, "cropBlockId", path) : null;
-            String bank = enabled && algorithm == SurfaceAlgorithm.CONTOUR_BANDS
+            String crop = enabled && item.has("cropBlockId") ? blockId(item, "cropBlockId", path) : null;
+            String bank = enabled && item.has("channelBankBlockId")
                     ? blockId(item, "channelBankBlockId", path) : null;
-            String water = enabled && algorithm == SurfaceAlgorithm.CONTOUR_BANDS
+            String water = enabled && item.has("channelWaterBlockId")
                     ? blockId(item, "channelWaterBlockId", path) : null;
-            String overlay = enabled && algorithm == SurfaceAlgorithm.CONTOUR_BANDS
+            String overlay = enabled && item.has("channelBankOverlayBlockId")
                     ? blockId(item, "channelBankOverlayBlockId", path) : null;
             String boundary = enabled && item.has("boundaryBlockId")
                     ? blockId(item, "boundaryBlockId", path) : null;
@@ -775,11 +777,6 @@ public record CityBlueprintReferenceCatalog(
             if (contour && (cropBlockId == null || channelBankBlockId == null || channelWaterBlockId == null
                     || channelBankOverlayBlockId == null)) {
                 throw new IllegalArgumentException("CONTOUR_BANDS requires complete crop and channel materials");
-            }
-            if (surfacePrintEnabled && surfaceAlgorithm == SurfaceAlgorithm.UNIFORM
-                    && (cropBlockId != null || channelBankBlockId != null || channelWaterBlockId != null
-                    || channelBankOverlayBlockId != null)) {
-                throw new IllegalArgumentException("UNIFORM forbids contour-only materials");
             }
             if (contour && (fieldBeforeBlocks <= 0 || channelWidthBlocks <= 0 || fieldAfterBlocks <= 0)) {
                 throw new IllegalArgumentException("CONTOUR_BANDS requires positive configured band widths");

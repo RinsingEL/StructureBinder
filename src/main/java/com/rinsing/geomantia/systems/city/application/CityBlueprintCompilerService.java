@@ -47,7 +47,8 @@ public final class CityBlueprintCompilerService {
 
     public CompilationResult compile(Path debugRoot, String runId, String cityId) throws IOException {
         Path runDir = requireRunDirectory(debugRoot, runId);
-        Path blueprintDir = runDir.resolve("city_blueprint_" + safe(cityId));
+        Path blueprintDir = CityTestRunLayout.open(runDir, cityId)
+                .stepDirectory(CityTestRunLayout.BLUEPRINT);
         JsonObject context = readObject(blueprintDir.resolve("city_blueprint_context.json"),
                 "CITY_BLUEPRINT_CONTEXT_NOT_FOUND");
         JsonObject validation = readObject(blueprintDir.resolve("city_blueprint_validation_report.json"),
@@ -271,7 +272,7 @@ public final class CityBlueprintCompilerService {
     public JsonObject persist(Path debugRoot, String runId, String cityId, CompilationResult result)
             throws IOException {
         Path runDir = requireRunDirectory(debugRoot, runId);
-        Path output = runDir.resolve("city_d4_" + safe(cityId));
+        Path output = CityTestRunLayout.open(runDir, cityId).stepDirectory(CityTestRunLayout.D4);
         Files.createDirectories(output);
         Path tracePath = output.resolve("city_generation_compile_trace.json");
         writeAtomic(tracePath, result.compileTrace());

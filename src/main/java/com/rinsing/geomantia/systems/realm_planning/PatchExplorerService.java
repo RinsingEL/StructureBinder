@@ -7,6 +7,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.rinsing.geomantia.systems.city.application.CityD4CandidateLegalRegion;
+import com.rinsing.geomantia.systems.city.application.CityTestRunLayout;
 import com.rinsing.geomantia.systems.realm_planning.application.terrain.RealmT4CoarseTerrainPreviewService;
 
 import javax.imageio.ImageIO;
@@ -704,7 +705,9 @@ public final class PatchExplorerService {
 
     private Scope loadCityScope(String runId, String cityId, Path runDir) throws IOException {
         String safeCity = safeId(cityId, "citySeedId");
-        Path d3Path = runDir.resolve("city_d3_" + safeCity).resolve("city_landform_review_package.json");
+        CityTestRunLayout layout = CityTestRunLayout.open(runDir, safeCity);
+        Path d3Path = layout.stepDirectory(CityTestRunLayout.D3)
+                .resolve("city_landform_review_package.json");
         requireFile(d3Path, "PATCH_EXPLORER_D3_PACKAGE_MISSING");
         JsonObject review = readObject(d3Path);
         if (!"city_landform_review.v0.1".equals(stringValue(review, "schemaVersion", ""))) {
@@ -772,11 +775,15 @@ public final class PatchExplorerService {
     }
 
     private static List<Path> occupiedArtifactPaths(Path runDir, String cityId) {
+        CityTestRunLayout layout = CityTestRunLayout.open(runDir, cityId);
         return List.of(
-                runDir.resolve("city_d4_candidate_session_" + cityId).resolve("d4_candidate_session.json"),
-                runDir.resolve("city_d4_array_layout_" + cityId).resolve("d4_array_occupied_field.json"),
-                runDir.resolve("city_d4_design_loop_" + cityId).resolve("d4_design_loop_occupied_field.json"),
-                runDir.resolve("city_d4_" + cityId).resolve("structure_anchor_map.json"));
+                layout.stepDirectory(CityTestRunLayout.D4_CANDIDATE_SESSION)
+                        .resolve("d4_candidate_session.json"),
+                layout.stepDirectory(CityTestRunLayout.D4_ARRAY_LAYOUT)
+                        .resolve("d4_array_occupied_field.json"),
+                layout.stepDirectory(CityTestRunLayout.D4_DESIGN_LOOP)
+                        .resolve("d4_design_loop_occupied_field.json"),
+                layout.stepDirectory(CityTestRunLayout.D4).resolve("structure_anchor_map.json"));
     }
 
     private static void collectOccupied(JsonObject artifact, List<Bounds> target) {

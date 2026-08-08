@@ -28,7 +28,8 @@ public record LandUseSeedGroup(
         List<String> preferredPatchRefs,
         LayerRole layerRole,
         FoundationSettings foundationSettings,
-        LandscapeFillProgram landscapeFillProgram) {
+        LandscapeFillProgram landscapeFillProgram,
+        AdmissionPolicy admissionPolicy) {
 
     public LandUseSeedGroup(String groupId,
                             LandUseRule rule,
@@ -50,7 +51,33 @@ public record LandUseSeedGroup(
                             FoundationSettings foundationSettings) {
         this(groupId, rule, surfaceSettings, anchorIds, structureFootprints, seedPoints, gateSlots,
                 minAreaBlocks, preferredAreaBlocks, maxAreaBlocks, actionBudget, competitionWeight,
-                growthRegions, growthBias, terrainBias, preferredPatchRefs, layerRole, foundationSettings, null);
+                growthRegions, growthBias, terrainBias, preferredPatchRefs, layerRole, foundationSettings, null,
+                AdmissionPolicy.REQUIRED);
+    }
+
+    public LandUseSeedGroup(String groupId,
+                            LandUseRule rule,
+                            LandUseSurfaceSettings surfaceSettings,
+                            List<String> anchorIds,
+                            List<BlockBounds> structureFootprints,
+                            List<BlockPoint> seedPoints,
+                            List<LandUseAreaPlan.GateSlot> gateSlots,
+                            int minAreaBlocks,
+                            int preferredAreaBlocks,
+                            int maxAreaBlocks,
+                            double actionBudget,
+                            double competitionWeight,
+                            List<GrowthRegion> growthRegions,
+                            GrowthBias growthBias,
+                            TerrainBias terrainBias,
+                            List<String> preferredPatchRefs,
+                            LayerRole layerRole,
+                            FoundationSettings foundationSettings,
+                            LandscapeFillProgram landscapeFillProgram) {
+        this(groupId, rule, surfaceSettings, anchorIds, structureFootprints, seedPoints, gateSlots,
+                minAreaBlocks, preferredAreaBlocks, maxAreaBlocks, actionBudget, competitionWeight,
+                growthRegions, growthBias, terrainBias, preferredPatchRefs, layerRole, foundationSettings,
+                landscapeFillProgram, AdmissionPolicy.REQUIRED);
     }
 
     public LandUseSeedGroup(String groupId,
@@ -165,6 +192,7 @@ public record LandUseSeedGroup(
         terrainBias = terrainBias == null ? TerrainBias.BALANCED : terrainBias;
         preferredPatchRefs = List.copyOf(preferredPatchRefs == null ? List.of() : preferredPatchRefs);
         layerRole = layerRole == null ? LayerRole.STANDARD : layerRole;
+        admissionPolicy = admissionPolicy == null ? AdmissionPolicy.REQUIRED : admissionPolicy;
         if (layerRole == LayerRole.FOUNDATION) {
             Objects.requireNonNull(foundationSettings, "foundationSettings");
             if (structureFootprints.isEmpty()) {
@@ -175,6 +203,9 @@ public record LandUseSeedGroup(
         }
         if (landscapeFillProgram != null && layerRole != LayerRole.LANDSCAPE) {
             throw new IllegalArgumentException("Only landscape LandUse accepts a landscape fill program");
+        }
+        if (admissionPolicy == AdmissionPolicy.OPTIONAL && layerRole != LayerRole.LANDSCAPE) {
+            throw new IllegalArgumentException("Only landscape LandUse may be optional");
         }
         if (growthRegions.isEmpty()) {
             growthRegions = List.of(new GrowthRegion(groupId, anchorIds, seedPoints,
@@ -253,6 +284,11 @@ public record LandUseSeedGroup(
         STANDARD,
         FOUNDATION,
         LANDSCAPE
+    }
+
+    public enum AdmissionPolicy {
+        REQUIRED,
+        OPTIONAL
     }
 
     public record FoundationSettings(int structureMarginBlocks,

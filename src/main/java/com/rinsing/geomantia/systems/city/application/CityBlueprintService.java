@@ -68,7 +68,8 @@ public final class CityBlueprintService {
                 blueprintReferenceCatalog, templateCatalog);
         requireStructureRefsInCatalog(references, structureCatalog);
 
-        Path terrainFieldPath = runDir.resolve("city_land_use_" + safe(cityId))
+        Path terrainFieldPath = CityTestRunLayout.open(runDir, cityId)
+                .stepDirectory(CityTestRunLayout.LAND_USE)
                 .resolve("land_use_terrain_field.json");
         String terrainFieldRaw = requireFile(terrainFieldPath, "CITY_BLUEPRINT_TERRAIN_FIELD_NOT_FOUND");
         LandUseTerrainField terrainField = new LandUseTerrainFieldCodec().fromJson(
@@ -437,7 +438,8 @@ public final class CityBlueprintService {
         boolean required = "capital".equals(string(seed, "role")) && source != null
                 && "ai_candidate_selection".equals(string(source, "siteSelectionMode"));
         if (!required) return;
-        Path decisionPath = runDir.resolve("city_d3_" + safe(cityId)).resolve("city_site_review_decision.json");
+        Path decisionPath = CityTestRunLayout.open(runDir, cityId).stepDirectory(CityTestRunLayout.D3)
+                .resolve("city_site_review_decision.json");
         if (!Files.isRegularFile(decisionPath)) {
             throw new CityBlueprintContractException(CityBlueprintReasonCode.CITY_BLUEPRINT_D3_SITE_REVIEW_REQUIRED,
                     "$context", "The selected capital site must be accepted before preparing D4.");
@@ -463,11 +465,12 @@ public final class CityBlueprintService {
     }
 
     private static Path d3Path(Path runDir, String cityId) {
-        return runDir.resolve("city_d3_" + safe(cityId)).resolve("city_landform_review_package.json");
+        return CityTestRunLayout.open(runDir, cityId).stepDirectory(CityTestRunLayout.D3)
+                .resolve("city_landform_review_package.json");
     }
 
     private static Path outputDirectory(Path runDir, String cityId) {
-        return runDir.resolve("city_blueprint_" + safe(cityId));
+        return CityTestRunLayout.open(runDir, cityId).stepDirectory(CityTestRunLayout.BLUEPRINT);
     }
 
     private static JsonObject readObject(Path path, CityBlueprintReasonCode reason) throws IOException {
