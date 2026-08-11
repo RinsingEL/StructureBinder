@@ -417,7 +417,30 @@ public final class LandUseSourceResolver {
     public record Resolution(List<LandUseSeedGroup> seedGroups,
                              List<LandUseAreaPlan.CorridorExclusion> corridorExclusions,
                              List<String> warnings,
-                             String seedSalt) {
+                             String seedSalt,
+                             Map<String, Set<BlockPoint>> landscapeCapacityDomains,
+                             Map<String, String> landscapeParentParcelIds) {
+        public Resolution(List<LandUseSeedGroup> seedGroups,
+                          List<LandUseAreaPlan.CorridorExclusion> corridorExclusions,
+                          List<String> warnings,
+                          String seedSalt) {
+            this(seedGroups, corridorExclusions, warnings, seedSalt, Map.of());
+        }
+
+        public Resolution(List<LandUseSeedGroup> seedGroups,
+                          List<LandUseAreaPlan.CorridorExclusion> corridorExclusions,
+                          List<String> warnings,
+                          String seedSalt,
+                          Map<String, Set<BlockPoint>> landscapeCapacityDomains) {
+            this(seedGroups, corridorExclusions, warnings, seedSalt, landscapeCapacityDomains, Map.of());
+        }
+
+        public Resolution {
+            landscapeCapacityDomains = Map.copyOf(landscapeCapacityDomains == null
+                    ? Map.of() : landscapeCapacityDomains);
+            landscapeParentParcelIds = Map.copyOf(landscapeParentParcelIds == null
+                    ? Map.of() : landscapeParentParcelIds);
+        }
     }
 
     private record AnchorData(String anchorId,

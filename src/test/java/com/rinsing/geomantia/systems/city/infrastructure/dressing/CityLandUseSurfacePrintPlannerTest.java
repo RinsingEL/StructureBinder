@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityLandUseSurfacePrintPlannerTest {
@@ -169,6 +170,34 @@ class CityLandUseSurfacePrintPlannerTest {
         assertEquals(2, recipe.contentWeights().size());
     }
 
+    @Test
+    void formalLandscapeRejectsAnAreaSeedOutsideItsFinalMask() {
+        LandUseSurfaceSettings settings = LandUseSurfaceSettings.defaults(SurfacePolicy.CULTIVATE)
+                .forRelayRegionGrowth();
+        LandscapeFillProgram fill = new LandscapeFillProgram("fill:green", "GREEN", List.of(
+                new LandscapeFillProgram.RoleDefinition("GREEN",
+                        LandscapeFillProgram.MaterialRole.PRIMARY_CONTENT,
+                        LandscapeFillProgram.GrowthForm.PATCH, 0.5),
+                new LandscapeFillProgram.RoleDefinition("GROUND",
+                        LandscapeFillProgram.MaterialRole.GROUND,
+                        LandscapeFillProgram.GrowthForm.PATCH, 0.5)), List.of(), 91L);
+        String groupId = "green::instance_01::parcel_02";
+        LandUseSeedGroup landscape = landscapeGroup(groupId, new BlockBounds(20, 20, 22, 22), settings, fill);
+        LandUseAreaPlan.Area area = new LandUseAreaPlan.Area("green", "green", "green", List.of(groupId),
+                List.of(), List.of(new BlockPoint(19, 20)), spans(0, 8, 0, 8), List.of(), List.of(), List.of(),
+                1, SurfacePolicy.CULTIVATE, VegetationPolicy.PRESERVE, BoundaryPolicy.OPEN, "green");
+        LandUseAreaPlan plan = new LandUseAreaPlan(LandUseAreaPlan.CURRENT_SCHEMA_VERSION,
+                "city_land_use_rules.v0.1", "city_test", "land-use-hash", new BlockBounds(0, 0, 31, 31),
+                List.of(area), List.of(), List.of(), List.of());
+
+        IllegalArgumentException failure = assertThrows(IllegalArgumentException.class, () ->
+                new CityLandUseSurfacePrintPlanner().plan(plan, List.of(landscape),
+                        terrain(new BlockBounds(0, 0, 31, 31), false)));
+
+        assertEquals("CITY_LAND_USE_SURFACE_PRINT_LANDSCAPE_SEED_NOT_IN_AREA:green:"
+                + groupId + ":19:20", failure.getMessage());
+    }
+
     private static LandUseAreaPlan areaPlan() {
         LandUseAreaPlan.Area farm = area("farm", "farm_group", SurfacePolicy.CULTIVATE,
                 spans(0, 8, 0, 30), new BlockBounds(12, 5, 14, 7));
@@ -185,7 +214,7 @@ class CityLandUseSurfacePrintPlannerTest {
                                              List<LandUseAreaPlan.ScanlineSpan> spans,
                                              BlockBounds footprint) {
         return new LandUseAreaPlan.Area(areaId, areaId, areaId, List.of(groupId), List.of(groupId),
-                List.of(new BlockPoint(footprint.minX(), footprint.minZ())), spans, List.of(footprint),
+                List.of(new BlockPoint(footprint.minX() - 1, footprint.minZ())), spans, List.of(footprint),
                 List.of(), List.of(), 1, policy, VegetationPolicy.PRESERVE, BoundaryPolicy.OPEN, areaId);
     }
 

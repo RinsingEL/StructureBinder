@@ -17,7 +17,7 @@ public record CityBlueprint(
         ProfileRef surfaceDetailProfile,
         OutdoorPlan outdoorPlan) {
 
-    public static final String SCHEMA_VERSION = "city_blueprint.v0.9";
+    public static final String SCHEMA_VERSION = "city_blueprint.v0.10";
 
     public CityBlueprint {
         groups = List.copyOf(groups);
@@ -117,21 +117,22 @@ public record CityBlueprint(
     public record Landscape(
             String landscapeId,
             String landscapeProfileRef,
-            List<String> attachedGroupIds,
+            LandscapePurpose purpose,
+            LandscapeOriginMode originMode,
+            LandscapeOwner owner,
+            LandscapePlacementDomain placementDomain,
+            int instanceCount,
+            int parcelCount,
             List<String> preferredPatchRefs,
-            ExtentClass extentClass,
-            OutdoorIntensity intensity,
-            LandscapeContinuity continuity,
-            LandscapeGrowthRelation growthRelation,
-            List<String> referenceGroupIds,
             TerrainPolicy terrainPolicy,
             boolean required,
             FillSelection fillSelection) {
         public Landscape {
-            attachedGroupIds = List.copyOf(attachedGroupIds);
             preferredPatchRefs = List.copyOf(preferredPatchRefs);
-            referenceGroupIds = List.copyOf(referenceGroupIds);
         }
+    }
+
+    public record LandscapeOwner(String groupId, String requiredStructureRef) {
     }
 
     /** AI-selected semantic fill variants; geometry and block materials remain catalog-owned. */
@@ -201,6 +202,12 @@ public record CityBlueprint(
     public enum LandscapeContinuity { CONTINUOUS, MULTI_PARCEL, PATCHY }
 
     public enum LandscapeGrowthRelation { AROUND_SOURCE, AWAY_FROM_REFERENCE, TOWARD_WATER, ALONG_WATER }
+
+    public enum LandscapePurpose { FUNCTIONAL, COMPOSITIONAL, AMBIENT }
+
+    public enum LandscapeOriginMode { ATTACHED, FREE_STANDING }
+
+    public enum LandscapePlacementDomain { URBAN_RESIDUAL, FOUNDATION_EDGE, BETWEEN_GROUPS, ALONG_WATER }
 
     /** Frontier-expansion bias only; never a fixed geometry or mask. */
     public enum RegionGrowthForm { PATCH, CORRIDOR }

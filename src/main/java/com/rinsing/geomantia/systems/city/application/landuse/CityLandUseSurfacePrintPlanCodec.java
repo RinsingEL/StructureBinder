@@ -17,10 +17,11 @@ import java.util.HexFormat;
 import java.util.List;
 import java.util.Set;
 
-/** Strict current-only JSON codec and canonical hash owner for SurfacePrintPlan v0.5. */
+/** Strict current-only JSON codec and canonical hash owner for SurfacePrintPlan v0.6. */
 public final class CityLandUseSurfacePrintPlanCodec {
     private static final Set<String> ROOT_FIELDS = Set.of(
-            "schemaVersion", "cityId", "sourceLandUsePlanHash", "planHash", "areas");
+            "schemaVersion", "cityId", "sourceLandUsePlanHash", "planHash", "areas",
+            "sharedBoundarySpans");
     private static final Set<String> AREA_FIELDS = Set.of(
             "printAreaId", "landUseAreaId", "sourceGroupIds", "surfaceSettings",
             "memberSpans", "exclusionSpans", "surfaceAlgorithm", "algorithmAnchor", "recipe");
@@ -75,6 +76,19 @@ public final class CityLandUseSurfacePrintPlanCodec {
         JsonArray areas = new JsonArray();
         plan.areas().forEach(area -> areas.add(areaJson(area)));
         root.add("areas", areas);
+        JsonArray shared = new JsonArray();
+        for (CityLandUseSurfacePrintPlan.SharedBoundaryPrintSpan span : plan.sharedBoundarySpans()) {
+            JsonObject value = new JsonObject();
+            value.addProperty("z", span.z());
+            value.addProperty("minX", span.minX());
+            value.addProperty("maxX", span.maxX());
+            value.addProperty("writerAreaId", span.writerAreaId());
+            value.addProperty("neighborAreaId", span.neighborAreaId());
+            value.addProperty("relation", span.relation().name());
+            value.addProperty("boundaryBlockId", span.boundaryBlockId());
+            shared.add(value);
+        }
+        root.add("sharedBoundarySpans", shared);
         return root;
     }
 
@@ -87,9 +101,17 @@ public final class CityLandUseSurfacePrintPlanCodec {
         rejectUnknown(root, ROOT_FIELDS, "root");
         List<CityLandUseSurfacePrintPlan.AreaPrint> areas = new ArrayList<>();
         for (JsonElement element : array(root, "areas")) areas.add(area(object(element, "areas[]")));
+        List<CityLandUseSurfacePrintPlan.SharedBoundaryPrintSpan> shared = new ArrayList<>();
+        for (JsonElement element : array(root, "sharedBoundarySpans")) {
+            JsonObject value = object(element, "sharedBoundarySpans[]");
+            shared.add(new CityLandUseSurfacePrintPlan.SharedBoundaryPrintSpan(integer(value, "z"),
+                    integer(value, "minX"), integer(value, "maxX"), text(value, "writerAreaId", false),
+                    text(value, "neighborAreaId", false), LandUseAreaPlan.SharedBoundaryRelation.valueOf(
+                    text(value, "relation", false)), optionalText(value, "boundaryBlockId")));
+        }
         CityLandUseSurfacePrintPlan plan = new CityLandUseSurfacePrintPlan(
                 schemaVersion, text(root, "cityId", false), text(root, "sourceLandUsePlanHash", false),
-                optionalText(root, "planHash"), areas);
+                optionalText(root, "planHash"), areas, shared);
         if (!plan.planHash().isBlank() && !plan.planHash().equals(computePlanHash(plan))) {
             throw fail("CITY_LAND_USE_SURFACE_PRINT_PLAN_HASH_MISMATCH", "planHash does not match payload");
         }

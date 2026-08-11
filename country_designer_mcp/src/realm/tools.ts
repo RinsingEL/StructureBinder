@@ -314,7 +314,7 @@ const surfaceRecipeSchema: Record<string, unknown> = {
 };
 
 const blueprintReferenceCatalogSchema = strictObject({
-  schemaVersion: { type: "string", enum: ["city_blueprint_reference_catalog.v0.7"] },
+  schemaVersion: { type: "string", enum: ["city_blueprint_reference_catalog.v0.8"] },
   structureRefs: {
     type: "array", minItems: 1,
     items: strictObject({
@@ -342,7 +342,7 @@ const blueprintReferenceCatalogSchema = strictObject({
     type: "array", minItems: 1,
     items: strictObject({
       algorithmProfileRef: nonEmptyString("稳定算法 profile 引用。"),
-      algorithm: { type: "string", enum: ["COMPACT", "GRID", "LINEAR", "COURTYARD", "ORGANIC_COMPACT"] },
+      algorithm: { type: "string", enum: ["COMPACT", "GRID", "LINEAR", "COURTYARD", "ORGANIC_COMPACT", "CENTER_SYMMETRIC"] },
     }, ["algorithmProfileRef", "algorithm"]),
   },
   compositionProfiles: {
@@ -401,20 +401,13 @@ const blueprintReferenceCatalogSchema = strictObject({
       baseAreaLarge: positiveInteger("LARGE 景观基准面积；服务端要求不小于 MEDIUM。"),
       membership: { type: "string", enum: ["URBAN", "LANDSCAPE"] },
       parcelStyle: strictObject({
-        coreParcelCountMin: positiveInteger("该 Landscape 在整个附着 Group 中优先准入的核心地块最小总量。"),
-        coreParcelCountMax: positiveInteger("该 Landscape 在整个附着 Group 中优先准入的核心地块最大总量。"),
-        fillParcelCountMin: { type: "integer", minimum: 0,
-          description: "该 Landscape 在整个附着 Group 中共享的可选填充地块最小总量；不按 fill anchor 倍增。" },
-        fillParcelCountMax: { type: "integer", minimum: 0,
-          description: "该 Landscape 在整个附着 Group 中共享的可选填充地块最大总量；空间不足可显式跳过。" },
+        parcelCountMin: positiveInteger("AI 可提交的每实例 Parcel 最小精确数量。"),
+        parcelCountMax: positiveInteger("AI 可提交的每实例 Parcel 最大精确数量。"),
         parcelAreaMinBlocks: positiveInteger("单个地块最小面积。"),
         parcelAreaMaxBlocks: positiveInteger("单个地块最大面积。"),
-        branchFromExistingChance: { type: "number", minimum: 0, maximum: 1 },
-        gapMinBlocks: { type: "integer", minimum: 0 },
-        gapMaxBlocks: { type: "integer", minimum: 0 },
-      }, ["coreParcelCountMin", "coreParcelCountMax", "fillParcelCountMin", "fillParcelCountMax",
-        "parcelAreaMinBlocks", "parcelAreaMaxBlocks", "branchFromExistingChance", "gapMinBlocks",
-        "gapMaxBlocks"]),
+        minSharedBoundaryBlocks: positiveInteger("非根 Parcel 与父 Parcel 至少共享的边界格数。"),
+      }, ["parcelCountMin", "parcelCountMax", "parcelAreaMinBlocks", "parcelAreaMaxBlocks",
+        "minSharedBoundaryBlocks"]),
     }, ["landscapeProfileRef", "landscapeType", "landUseRuleRef", "surfaceRecipeRef",
       "baseAreaSmall", "baseAreaMedium", "baseAreaLarge", "membership", "parcelStyle"]),
   },
@@ -490,7 +483,7 @@ const artifactRefSchema = strictObject({
 }, ["path", "schemaVersion", "contentHash"]);
 
 const cityBlueprintSchema = strictObject({
-  schemaVersion: { type: "string", enum: ["city_blueprint.v0.9"] },
+  schemaVersion: { type: "string", enum: ["city_blueprint.v0.10"] },
   cityId: nonEmptyString("必须与冻结上下文一致。"),
   sourceD3Ref: artifactRefSchema,
   catalogSnapshotRef: artifactRefSchema,
@@ -566,27 +559,23 @@ const cityBlueprintSchema = strictObject({
     },
     landscapes: {
       type: "array",
-      items: strictObject({
+      items: {
+        ...strictObject({
         landscapeId: nonEmptyString("Blueprint 内唯一景观 ID。"),
         landscapeProfileRef: nonEmptyString("冻结的景观算法、地表和内容 profile 引用。"),
-        attachedGroupIds: {
-          type: "array", uniqueItems: true,
-          items: nonEmptyString("景观依附的同蓝图 STRUCTURE groupId。"),
-        },
+        purpose: { type: "string", enum: ["FUNCTIONAL", "COMPOSITIONAL", "AMBIENT"] },
+        originMode: { type: "string", enum: ["ATTACHED", "FREE_STANDING"] },
+        owner: strictObject({
+          groupId: nonEmptyString("主体所在 STRUCTURE groupId。"),
+          requiredStructureRef: nonEmptyString("该 Group 内唯一 required structureRef。"),
+        }, ["groupId", "requiredStructureRef"]),
+        placementDomain: { type: "string",
+          enum: ["URBAN_RESIDUAL", "FOUNDATION_EDGE", "BETWEEN_GROUPS", "ALONG_WATER"] },
+        instanceCount: positiveInteger("精确实例数；ATTACHED 必须为 1。"),
+        parcelCount: positiveInteger("每个实例的精确 Parcel 数。"),
         preferredPatchRefs: {
           type: "array", uniqueItems: true,
           items: nonEmptyString("独立景观偏好的 D3 patch ref；不得提交世界坐标。"),
-        },
-        extentClass: { type: "string", enum: ["SMALL", "MEDIUM", "LARGE"] },
-        intensity: { type: "string", enum: ["LOW", "MEDIUM", "HIGH"] },
-        continuity: { type: "string", enum: ["CONTINUOUS", "MULTI_PARCEL", "PATCHY"] },
-        growthRelation: {
-          type: "string",
-          enum: ["AROUND_SOURCE", "AWAY_FROM_REFERENCE", "TOWARD_WATER", "ALONG_WATER"],
-        },
-        referenceGroupIds: {
-          type: "array", uniqueItems: true,
-          items: nonEmptyString("growthRelation 引用的同蓝图 groupId。"),
         },
         terrainPolicy: { type: "string", enum: ["CONFORM", "BALANCED", "ASSERTIVE"] },
         required: { type: "boolean" },
@@ -616,9 +605,27 @@ const cityBlueprintSchema = strictObject({
             }, ["fillProfileRef", "selectionWeight", "roleShares", "contentWeights"]),
           },
         }, ["variants"]),
-      }, ["landscapeId", "landscapeProfileRef", "attachedGroupIds", "preferredPatchRefs", "extentClass",
-        "intensity", "continuity", "growthRelation", "referenceGroupIds", "terrainPolicy", "required",
-        "fillSelection"]),
+        }, ["landscapeId", "landscapeProfileRef", "purpose", "originMode", "instanceCount", "parcelCount",
+          "preferredPatchRefs", "terrainPolicy", "required", "fillSelection"]),
+        oneOf: [
+          {
+            properties: {
+              originMode: { const: "ATTACHED" },
+              instanceCount: { const: 1 },
+            },
+            required: ["owner"],
+            not: { required: ["placementDomain"] },
+          },
+          {
+            properties: {
+              originMode: { const: "FREE_STANDING" },
+              required: { const: false },
+            },
+            required: ["placementDomain"],
+            not: { required: ["owner"] },
+          },
+        ],
+      },
     },
   }, ["mode", "envelopeProfile", "foundationProfileRef", "spatialGrounds", "landscapes"]),
 }, ["schemaVersion", "cityId", "sourceD3Ref", "catalogSnapshotRef", "generationSeed", "designIntent",
@@ -974,7 +981,7 @@ export const realmTools: ToolDefinition[] = [
         templateCatalogSource: { type: "object", description: "现有固定 NBT template catalog 源。" },
         blueprintReferenceCatalog: {
           ...blueprintReferenceCatalogSchema,
-          description: "严格 city_blueprint_reference_catalog.v0.7 户外目录；景观 Parcel 使用 Group 级核心/可选总量，景观填充唯一使用单源区域接力，后一区域从父区域局部边界继续；禁止固定图形、全局距离环和 geometry fallback。",
+          description: "严格 city_blueprint_reference_catalog.v0.8 户外目录；AI 精确声明 Landscape 实例和 Parcel 数，required 主体与建筑联合预留，Parcel 使用父子边界接力；禁止固定图形和 geometry fallback。",
         },
       },
       required: ["runId", "citySeedId", "terrasenseProfileSource", "templateCatalogSource", "blueprintReferenceCatalog"],

@@ -129,32 +129,40 @@ public final class CityBlueprintCodec {
 
     private static List<CityBlueprint.Landscape> landscapes(JsonArray array) {
         List<CityBlueprint.Landscape> result = new ArrayList<>();
-        Set<String> fields = Set.of("landscapeId", "landscapeProfileRef", "attachedGroupIds",
-                "preferredPatchRefs", "extentClass", "intensity", "continuity", "growthRelation",
-                "referenceGroupIds", "terrainPolicy", "required", "fillSelection");
+        Set<String> fields = Set.of("landscapeId", "landscapeProfileRef", "purpose", "originMode",
+                "owner", "placementDomain", "instanceCount", "parcelCount", "preferredPatchRefs",
+                "terrainPolicy", "required", "fillSelection");
         for (int index = 0; index < array.size(); index++) {
             String path = "$.outdoorPlan.landscapes[" + index + "]";
             JsonObject item = objectElement(array.get(index), path);
-            exactFields(item, fields, path);
+            exactFields(item, fields, Set.of("owner", "placementDomain"), path);
+            CityBlueprint.LandscapeOwner owner = item.has("owner")
+                    ? landscapeOwner(requiredObject(item, "owner", path + ".owner"), path + ".owner")
+                    : null;
             result.add(new CityBlueprint.Landscape(
                     requiredString(item, "landscapeId", path + ".landscapeId"),
                     requiredString(item, "landscapeProfileRef", path + ".landscapeProfileRef"),
-                    stringList(requiredArray(item, "attachedGroupIds", path + ".attachedGroupIds"),
-                            path + ".attachedGroupIds"),
+                    enumValue(item, "purpose", CityBlueprint.LandscapePurpose.class, path),
+                    enumValue(item, "originMode", CityBlueprint.LandscapeOriginMode.class, path),
+                    owner,
+                    optionalEnum(item, "placementDomain", CityBlueprint.LandscapePlacementDomain.class, path),
+                    positiveInt(item, "instanceCount", path + ".instanceCount"),
+                    positiveInt(item, "parcelCount", path + ".parcelCount"),
                     stringList(requiredArray(item, "preferredPatchRefs", path + ".preferredPatchRefs"),
                             path + ".preferredPatchRefs"),
-                    enumValue(item, "extentClass", CityBlueprint.ExtentClass.class, path),
-                    enumValue(item, "intensity", CityBlueprint.OutdoorIntensity.class, path),
-                    enumValue(item, "continuity", CityBlueprint.LandscapeContinuity.class, path),
-                    enumValue(item, "growthRelation", CityBlueprint.LandscapeGrowthRelation.class, path),
-                    stringList(requiredArray(item, "referenceGroupIds", path + ".referenceGroupIds"),
-                            path + ".referenceGroupIds"),
                     enumValue(item, "terrainPolicy", CityBlueprint.TerrainPolicy.class, path),
                     requiredBoolean(item, "required", path + ".required"),
                     fillSelection(requiredObject(item, "fillSelection", path + ".fillSelection"),
                             path + ".fillSelection")));
         }
         return List.copyOf(result);
+    }
+
+    private static CityBlueprint.LandscapeOwner landscapeOwner(JsonObject object, String path) {
+        exactFields(object, Set.of("groupId", "requiredStructureRef"), path);
+        return new CityBlueprint.LandscapeOwner(
+                requiredString(object, "groupId", path + ".groupId"),
+                requiredString(object, "requiredStructureRef", path + ".requiredStructureRef"));
     }
 
     private static CityBlueprint.FillSelection fillSelection(JsonObject object, String path) {
@@ -457,6 +465,15 @@ public final class CityBlueprintCodec {
         }
     }
 
+    private static int positiveInt(JsonObject object, String key, String path) {
+        long value = requiredLong(object, key, path);
+        if (value <= 0 || value > Integer.MAX_VALUE) {
+            fail(CityBlueprintReasonCode.CITY_BLUEPRINT_FIELD_MISSING, path,
+                    "A positive 32-bit integer is required.");
+        }
+        return (int) value;
+    }
+
     private static List<String> stringList(JsonArray array, String path) {
         List<String> values = new ArrayList<>();
         for (int index = 0; index < array.size(); index++) {
@@ -538,13 +555,20 @@ public final class CityBlueprintCodec {
             JsonObject item = new JsonObject();
             item.addProperty("landscapeId", landscape.landscapeId());
             item.addProperty("landscapeProfileRef", landscape.landscapeProfileRef());
-            item.add("attachedGroupIds", strings(landscape.attachedGroupIds()));
+            item.addProperty("purpose", landscape.purpose().name());
+            item.addProperty("originMode", landscape.originMode().name());
+            if (landscape.owner() != null) {
+                JsonObject owner = new JsonObject();
+                owner.addProperty("groupId", landscape.owner().groupId());
+                owner.addProperty("requiredStructureRef", landscape.owner().requiredStructureRef());
+                item.add("owner", owner);
+            }
+            if (landscape.placementDomain() != null) {
+                item.addProperty("placementDomain", landscape.placementDomain().name());
+            }
+            item.addProperty("instanceCount", landscape.instanceCount());
+            item.addProperty("parcelCount", landscape.parcelCount());
             item.add("preferredPatchRefs", strings(landscape.preferredPatchRefs()));
-            item.addProperty("extentClass", landscape.extentClass().name());
-            item.addProperty("intensity", landscape.intensity().name());
-            item.addProperty("continuity", landscape.continuity().name());
-            item.addProperty("growthRelation", landscape.growthRelation().name());
-            item.add("referenceGroupIds", strings(landscape.referenceGroupIds()));
             item.addProperty("terrainPolicy", landscape.terrainPolicy().name());
             item.addProperty("required", landscape.required());
             item.add("fillSelection", fillSelectionJson(landscape.fillSelection()));

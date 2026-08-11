@@ -34,7 +34,7 @@ public record CityBlueprintReferenceCatalog(
         Map<String, LandscapeProfile> landscapeProfiles,
         Map<String, LandscapeFillProfile> landscapeFillProfiles) {
 
-    public static final String SCHEMA_VERSION = "city_blueprint_reference_catalog.v0.7";
+    public static final String SCHEMA_VERSION = "city_blueprint_reference_catalog.v0.8";
     private static final Set<String> ROOT_FIELDS = Set.of("schemaVersion", "structureRefs", "fillPools",
             "algorithmProfiles", "compositionProfiles", "styleProfiles", "roadProfiles",
             "surfaceDetailProfiles", "landUseRuleProfile", "surfaceRecipes", "foundationProfiles",
@@ -64,7 +64,7 @@ public record CityBlueprintReferenceCatalog(
         Set<String> algorithms = profileRefs(array(root, "algorithmProfiles"), "algorithmProfileRef",
                 Set.of("algorithmProfileRef", "algorithm"), "$.algorithmProfiles", item -> {
                     enumString(item, "algorithm", Set.of("COMPACT", "GRID", "LINEAR", "COURTYARD",
-                            "ORGANIC_COMPACT"));
+                            "ORGANIC_COMPACT", "CENTER_SYMMETRIC"));
                     algorithmsByRef.put(string(item, "algorithmProfileRef", "$.algorithmProfiles[].algorithmProfileRef"),
                             string(item, "algorithm", "$.algorithmProfiles[].algorithm"));
                 });
@@ -487,25 +487,19 @@ public record CityBlueprintReferenceCatalog(
     }
 
     private static ParcelStyle parcelStyle(JsonObject item, String path) {
-        Set<String> fields = Set.of("coreParcelCountMin", "coreParcelCountMax", "fillParcelCountMin",
-                "fillParcelCountMax", "parcelAreaMinBlocks", "parcelAreaMaxBlocks",
-                "branchFromExistingChance", "gapMinBlocks", "gapMaxBlocks");
+        Set<String> fields = Set.of("parcelCountMin", "parcelCountMax", "parcelAreaMinBlocks",
+                "parcelAreaMaxBlocks", "minSharedBoundaryBlocks");
         exactFields(item, fields, path, CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID);
-        int coreMin = positiveInt(item, "coreParcelCountMin", path);
-        int coreMax = positiveInt(item, "coreParcelCountMax", path);
-        int fillMin = nonNegativeInt(item, "fillParcelCountMin", path);
-        int fillMax = nonNegativeInt(item, "fillParcelCountMax", path);
+        int countMin = positiveInt(item, "parcelCountMin", path);
+        int countMax = positiveInt(item, "parcelCountMax", path);
         int areaMin = positiveInt(item, "parcelAreaMinBlocks", path);
         int areaMax = positiveInt(item, "parcelAreaMaxBlocks", path);
-        double branchChance = probability(item, "branchFromExistingChance", path);
-        int gapMin = nonNegativeInt(item, "gapMinBlocks", path);
-        int gapMax = nonNegativeInt(item, "gapMaxBlocks", path);
-        if (coreMin > coreMax || fillMin > fillMax || areaMin > areaMax || gapMin > gapMax) {
+        int minSharedBoundary = positiveInt(item, "minSharedBoundaryBlocks", path);
+        if (countMin > countMax || areaMin > areaMax || minSharedBoundary > areaMin) {
             fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID, path,
                     "Parcel style min values must not exceed their matching max values.");
         }
-        return new ParcelStyle(coreMin, coreMax, fillMin, fillMax, areaMin, areaMax,
-                branchChance, gapMin, gapMax);
+        return new ParcelStyle(countMin, countMax, areaMin, areaMax, minSharedBoundary);
     }
 
     private static Set<String> structureRefs(JsonArray array, CityTemplateCatalog templates) {
@@ -841,22 +835,15 @@ public record CityBlueprintReferenceCatalog(
     }
 
     public record ParcelStyle(
-            int coreParcelCountMin,
-            int coreParcelCountMax,
-            int fillParcelCountMin,
-            int fillParcelCountMax,
+            int parcelCountMin,
+            int parcelCountMax,
             int parcelAreaMinBlocks,
             int parcelAreaMaxBlocks,
-            double branchFromExistingChance,
-            int gapMinBlocks,
-            int gapMaxBlocks) {
+            int minSharedBoundaryBlocks) {
         public ParcelStyle {
-            if (coreParcelCountMin <= 0 || coreParcelCountMin > coreParcelCountMax
-                    || fillParcelCountMin < 0 || fillParcelCountMin > fillParcelCountMax
+            if (parcelCountMin <= 0 || parcelCountMin > parcelCountMax
                     || parcelAreaMinBlocks <= 0 || parcelAreaMinBlocks > parcelAreaMaxBlocks
-                    || !Double.isFinite(branchFromExistingChance)
-                    || branchFromExistingChance < 0.0 || branchFromExistingChance > 1.0
-                    || gapMinBlocks < 0 || gapMinBlocks > gapMaxBlocks) {
+                    || minSharedBoundaryBlocks <= 0 || minSharedBoundaryBlocks > parcelAreaMinBlocks) {
                 throw new IllegalArgumentException("Invalid parcel style ranges");
             }
         }

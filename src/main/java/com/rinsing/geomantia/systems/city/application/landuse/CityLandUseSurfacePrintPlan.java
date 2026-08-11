@@ -18,9 +18,10 @@ public record CityLandUseSurfacePrintPlan(
         String cityId,
         String sourceLandUsePlanHash,
         String planHash,
-        List<AreaPrint> areas) {
+        List<AreaPrint> areas,
+        List<SharedBoundaryPrintSpan> sharedBoundarySpans) {
 
-    public static final String CURRENT_SCHEMA_VERSION = "city_land_use_surface_print_plan.v0.5";
+    public static final String CURRENT_SCHEMA_VERSION = "city_land_use_surface_print_plan.v0.6";
 
     public CityLandUseSurfacePrintPlan {
         if (!CURRENT_SCHEMA_VERSION.equals(schemaVersion)) {
@@ -30,6 +31,7 @@ public record CityLandUseSurfacePrintPlan(
         requireText(sourceLandUsePlanHash, "CITY_LAND_USE_SURFACE_PRINT_SOURCE_HASH_REQUIRED");
         planHash = planHash == null ? "" : planHash;
         areas = List.copyOf(Objects.requireNonNull(areas, "areas"));
+        sharedBoundarySpans = List.copyOf(sharedBoundarySpans == null ? List.of() : sharedBoundarySpans);
         Set<String> printAreaIds = new HashSet<>();
         for (AreaPrint area : areas) {
             if (!printAreaIds.add(area.printAreaId())) {
@@ -40,7 +42,28 @@ public record CityLandUseSurfacePrintPlan(
     }
 
     public CityLandUseSurfacePrintPlan withPlanHash(String hash) {
-        return new CityLandUseSurfacePrintPlan(schemaVersion, cityId, sourceLandUsePlanHash, hash, areas);
+        return new CityLandUseSurfacePrintPlan(schemaVersion, cityId, sourceLandUsePlanHash, hash, areas,
+                sharedBoundarySpans);
+    }
+
+    public CityLandUseSurfacePrintPlan(String schemaVersion, String cityId, String sourceLandUsePlanHash,
+                                       String planHash, List<AreaPrint> areas) {
+        this(schemaVersion, cityId, sourceLandUsePlanHash, planHash, areas, List.of());
+    }
+
+    public record SharedBoundaryPrintSpan(int z, int minX, int maxX, String writerAreaId,
+                                          String neighborAreaId,
+                                          LandUseAreaPlan.SharedBoundaryRelation relation,
+                                          String boundaryBlockId) {
+        public SharedBoundaryPrintSpan {
+            requireText(writerAreaId, "CITY_LAND_USE_SHARED_BOUNDARY_WRITER_REQUIRED");
+            requireText(neighborAreaId, "CITY_LAND_USE_SHARED_BOUNDARY_NEIGHBOR_REQUIRED");
+            if (minX > maxX || relation == null) {
+                throw new IllegalArgumentException("CITY_LAND_USE_SHARED_BOUNDARY_INVALID");
+            }
+            boundaryBlockId = normalizeOptionalBlock(boundaryBlockId,
+                    "CITY_LAND_USE_SHARED_BOUNDARY_BLOCK_INVALID");
+        }
     }
 
     public record AreaPrint(

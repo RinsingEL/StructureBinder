@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "city_blueprint.v0.9",
+  "schemaVersion": "city_blueprint.v0.10",
   "cityId": "city:test",
   "sourceD3Ref": {
     "path": "run/city_d3_city_test/city_landform_review_package.json",
@@ -8,7 +8,7 @@
   },
   "catalogSnapshotRef": {
     "path": "run/city_blueprint_city_test/city_blueprint_catalog_snapshot.json",
-    "schemaVersion": "city_blueprint_catalog_snapshot.v0.9",
+    "schemaVersion": "city_blueprint_catalog_snapshot.v0.10",
     "contentHash": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
   },
   "generationSeed": 42,
@@ -55,13 +55,12 @@
       {
         "landscapeId": "outer_fields",
         "landscapeProfileRef": "landscape:farmland_fenced",
-        "attachedGroupIds": ["civic_core"],
+        "purpose": "FUNCTIONAL",
+        "originMode": "ATTACHED",
+        "owner": {"groupId": "civic_core", "requiredStructureRef": "geomantia:town_hall"},
+        "instanceCount": 1,
+        "parcelCount": 10,
         "preferredPatchRefs": [],
-        "extentClass": "MEDIUM",
-        "intensity": "HIGH",
-        "continuity": "MULTI_PARCEL",
-        "growthRelation": "AROUND_SOURCE",
-        "referenceGroupIds": [],
         "terrainPolicy": "CONFORM",
         "required": true,
         "fillSelection": {

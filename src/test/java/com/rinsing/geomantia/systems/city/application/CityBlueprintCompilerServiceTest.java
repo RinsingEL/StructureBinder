@@ -36,6 +36,12 @@ class CityBlueprintCompilerServiceTest {
                 CityScale.TOWN, CityBlueprint.ExtentClass.MEDIUM));
         assertEquals(12, CityBlueprintCompilerService.minimumGroupStructureCount(
                 CityScale.CITY, CityBlueprint.ExtentClass.LARGE));
+        assertEquals(5, CityBlueprintCompilerService.minimumGroupStructureCount(
+                CityScale.TOWN, CityBlueprint.ExtentClass.MEDIUM, "CENTER_SYMMETRIC"));
+        assertEquals(3, CityBlueprintCompilerService.minimumGroupStructureCount(
+                CityScale.HAMLET, CityBlueprint.ExtentClass.SMALL, "CENTER_SYMMETRIC"));
+        assertEquals(6, CityBlueprintCompilerService.minimumGroupStructureCount(
+                CityScale.TOWN, CityBlueprint.ExtentClass.MEDIUM, "LINEAR"));
     }
 
     @Test
@@ -115,9 +121,127 @@ class CityBlueprintCompilerServiceTest {
         assertTrue(finalized.qualityReport().get("passed").getAsBoolean(),
                 finalized.qualityReport().toString());
         assertEquals(anchorCount, finalized.structureAnchorMap().getAsJsonArray("anchors").size());
-        assertEquals("programmatic_blueprint_compiler", finalized.structureAnchorMap()
-                .getAsJsonObject("cityBlueprintCompileProvenance")
-                .get("selectionMode").getAsString());
+        JsonObject provenance = finalized.structureAnchorMap()
+                .getAsJsonObject("cityBlueprintCompileProvenance");
+        assertEquals("programmatic_blueprint_compiler", provenance.get("selectionMode").getAsString());
+        assertTrue(provenance.get("contextId").getAsString().startsWith("sha256:"));
+        assertTrue(provenance.get("sourceBlueprintHash").getAsString().startsWith("sha256:"));
+    }
+
+    @Test
+    void centerSymmetricCommitsFillAsVerifiedOppositePairs() throws Exception {
+        Fixture fixture = acceptedFixture("run_center_symmetric", "city:center_symmetric", 9, 9, "SMALL",
+                blueprint -> {
+                    JsonObject center = blueprint.getAsJsonArray("groups").get(0).getAsJsonObject();
+                    center.addProperty("algorithmProfileRef", "algorithm:center_symmetric");
+                    JsonObject neighbor = center.deepCopy();
+                    neighbor.addProperty("groupId", "neighbor");
+                    neighbor.addProperty("preferredPatchZone", "EAST");
+                    neighbor.addProperty("priority", "STANDARD");
+                    neighbor.addProperty("algorithmProfileRef", "algorithm:compact");
+                    blueprint.getAsJsonArray("groups").add(neighbor);
+                });
+
+        CityBlueprintCompilerService.CompilationResult result = new CityBlueprintCompilerService()
+                .compile(temporary, fixture.runId(), fixture.cityId());
+
+        assertTrue(result.ok(), result.compileTrace().toString());
+        JsonArray anchors = result.structureAnchorPlan().getAsJsonArray("anchors");
+        List<JsonObject> centerAnchors = anchors.asList().stream()
+                .map(JsonElement::getAsJsonObject)
+                .filter(anchor -> "civic".equals(anchor.get("placementGroupId").getAsString()))
+                .filter(anchor -> Set.of("required", "fill")
+                        .contains(anchor.get("blueprintPlacementPhase").getAsString()))
+                .toList();
+        assertTrue(centerAnchors.size() >= 3);
+        assertEquals(1, centerAnchors.size() % 2, "one center plus complete symmetric pairs is required");
+        JsonObject centerBounds = collisionBounds(centerAnchors.get(0));
+        int centerTwiceX = centerBounds.get("minX").getAsInt() + centerBounds.get("maxX").getAsInt();
+        int centerTwiceZ = centerBounds.get("minZ").getAsInt() + centerBounds.get("maxZ").getAsInt();
+        for (int index = 1; index < centerAnchors.size(); index += 2) {
+            JsonObject first = centerAnchors.get(index);
+            JsonObject opposite = centerAnchors.get(index + 1);
+            JsonObject firstBounds = collisionBounds(first);
+            JsonObject oppositeBounds = collisionBounds(opposite);
+            assertEquals(centerTwiceX * 2,
+                    firstBounds.get("minX").getAsInt() + firstBounds.get("maxX").getAsInt()
+                            + oppositeBounds.get("minX").getAsInt() + oppositeBounds.get("maxX").getAsInt());
+            assertEquals(centerTwiceZ * 2,
+                    firstBounds.get("minZ").getAsInt() + firstBounds.get("maxZ").getAsInt()
+                            + oppositeBounds.get("minZ").getAsInt() + oppositeBounds.get("maxZ").getAsInt());
+            JsonObject layout = first.getAsJsonObject("blueprintLayout");
+            assertEquals("CENTER_SYMMETRIC", layout.get("algorithm").getAsString());
+            assertTrue(layout.getAsJsonObject("centerSymmetryProof").get("verified").getAsBoolean());
+            assertEquals("FIRST", layout.get("symmetryPairMember").getAsString());
+            assertEquals("OPPOSITE", opposite.getAsJsonObject("blueprintLayout")
+                    .get("symmetryPairMember").getAsString());
+        }
+        long committedPairs = result.compileTrace().getAsJsonArray("selections").asList().stream()
+                .map(JsonElement::getAsJsonObject)
+                .filter(selection -> selection.has("atomicPair") && selection.get("atomicPair").getAsBoolean())
+                .filter(selection -> "committed".equals(selection.get("status").getAsString()))
+                .count();
+        assertEquals((centerAnchors.size() - 1) / 2, committedPairs);
+        List<JsonObject> selections = result.compileTrace().getAsJsonArray("selections").asList().stream()
+                .map(JsonElement::getAsJsonObject).toList();
+        int firstCenterFill = java.util.stream.IntStream.range(0, selections.size())
+                .filter(index -> "civic".equals(selections.get(index).get("groupId").getAsString())
+                        && "fill".equals(selections.get(index).get("phase").getAsString()))
+                .findFirst().orElseThrow();
+        int neighborRequired = java.util.stream.IntStream.range(0, selections.size())
+                .filter(index -> "neighbor".equals(selections.get(index).get("groupId").getAsString())
+                        && "required".equals(selections.get(index).get("phase").getAsString()))
+                .findFirst().orElseThrow();
+        assertTrue(firstCenterFill < neighborRequired,
+                "CENTER_SYMMETRIC minimum pair must reserve space before neighboring required anchors");
+    }
+
+    @Test
+    void requiredLandscapeCapacityIsExactAndExcludesAllLaterStructures() throws Exception {
+        Fixture fixture = acceptedFixture("run_capacity", "city:capacity", 9, 9, "SMALL", blueprint ->
+                blueprint.getAsJsonObject("outdoorPlan").getAsJsonArray("landscapes").add(
+                        JsonParser.parseString("""
+                                {"landscapeId":"civic_green","landscapeProfileRef":"landscape:common_green",
+                                 "purpose":"COMPOSITIONAL","originMode":"ATTACHED",
+                                 "owner":{"groupId":"civic","requiredStructureRef":"geomantia:town_hall"},
+                                 "instanceCount":1,"parcelCount":8,"preferredPatchRefs":["patch:plain:1"],
+                                 "terrainPolicy":"CONFORM","required":true,
+                                 "fillSelection":{"variants":[{"fillProfileRef":"fill:relay_common_green",
+                                   "selectionWeight":1,"roleShares":[
+                                     {"roleRef":"GREEN","growthForm":"PATCH","targetShare":0.425},
+                                     {"roleRef":"GROUND","growthForm":"PATCH","targetShare":0.15},
+                                     {"roleRef":"GREEN","growthForm":"PATCH","targetShare":0.425}],
+                                   "contentWeights":[{"contentRef":"plant:grass","weight":1}]}]}}
+                                """).getAsJsonObject()));
+
+        CityBlueprintCompilerService.CompilationResult result = new CityBlueprintCompilerService()
+                .compile(temporary, fixture.runId(), fixture.cityId());
+
+        assertTrue(result.ok(), result.compileTrace().toString());
+        JsonObject capacity = result.landscapeCapacityReservationPlan();
+        assertEquals("reserved", capacity.get("status").getAsString());
+        assertTrue(capacity.get("sourceD4Hash").getAsString().matches("sha256:[0-9a-f]{64}"));
+        JsonObject instance = capacity.getAsJsonArray("instances").get(0).getAsJsonObject();
+        assertEquals(8, instance.get("parcelCount").getAsInt());
+        assertEquals(8, instance.getAsJsonArray("parcelReservations").size());
+
+        Set<BlockPoint> reserved = new LinkedHashSet<>();
+        for (JsonElement element : instance.getAsJsonArray("reservationSpans")) {
+            JsonObject span = element.getAsJsonObject();
+            for (int x = span.get("minX").getAsInt(); x <= span.get("maxX").getAsInt(); x++) {
+                reserved.add(new BlockPoint(x, span.get("z").getAsInt()));
+            }
+        }
+        for (JsonElement element : result.structureAnchorPlan().getAsJsonArray("anchors")) {
+            JsonObject anchor = element.getAsJsonObject();
+            JsonObject footprint = anchor.has("actualFootprint")
+                    ? anchor.getAsJsonObject("actualFootprint") : anchor.getAsJsonObject("plannedFootprint");
+            for (int z = footprint.get("minZ").getAsInt(); z <= footprint.get("maxZ").getAsInt(); z++) {
+                for (int x = footprint.get("minX").getAsInt(); x <= footprint.get("maxX").getAsInt(); x++) {
+                    assertFalse(reserved.contains(new BlockPoint(x, z)));
+                }
+            }
+        }
     }
 
     @Test
@@ -301,7 +425,7 @@ class CityBlueprintCompilerServiceTest {
 
         assertTrue(first.ok(), first.compileTrace().toString());
         assertEquals(first.structureAnchorPlan(), second.structureAnchorPlan());
-        assertEquals("city_generation_compile_trace.v0.9",
+        assertEquals("city_generation_compile_trace.v0.10",
                 first.compileTrace().get("schemaVersion").getAsString());
         assertEquals("group_extent_map.v0.7",
                 first.groupExtentMap().get("schemaVersion").getAsString());
@@ -934,7 +1058,7 @@ class CityBlueprintCompilerServiceTest {
     private static JsonObject referenceCatalog() {
         return JsonParser.parseString("""
                 {
-                  "schemaVersion":"city_blueprint_reference_catalog.v0.7",
+                  "schemaVersion":"city_blueprint_reference_catalog.v0.8",
                   "structureRefs":[
                     {"structureRef":"geomantia:town_hall","templateCandidates":[{"templateId":"geomantia:town_hall","variantId":"default"}]},
                     {"structureRef":"geomantia:oversized_hall","templateCandidates":[{"templateId":"geomantia:oversized_hall","variantId":"default"}]},
@@ -949,7 +1073,8 @@ class CityBlueprintCompilerServiceTest {
                   ],
                   "algorithmProfiles":[
                     {"algorithmProfileRef":"algorithm:compact","algorithm":"COMPACT"},
-                    {"algorithmProfileRef":"algorithm:street_band","algorithm":"LINEAR"}
+                    {"algorithmProfileRef":"algorithm:street_band","algorithm":"LINEAR"},
+                    {"algorithmProfileRef":"algorithm:center_symmetric","algorithm":"CENTER_SYMMETRIC"}
                   ],
                   "compositionProfiles":[{"compositionProfileRef":"composition:round_robin","mode":"ROUND_ROBIN"}],
                   "styleProfiles":[{"profileRef":"style:stone"}],
@@ -970,9 +1095,8 @@ class CityBlueprintCompilerServiceTest {
                   "landscapeProfiles":[{"landscapeProfileRef":"landscape:common_green","landscapeType":"COMMON_GREEN",
                     "landUseRuleRef":"civic","surfaceRecipeRef":"surface_recipe:civic","baseAreaSmall":256,
                     "baseAreaMedium":512,"baseAreaLarge":1024,"membership":"URBAN",
-                    "parcelStyle":{"coreParcelCountMin":1,"coreParcelCountMax":2,"fillParcelCountMin":0,
-                    "fillParcelCountMax":3,"parcelAreaMinBlocks":64,"parcelAreaMaxBlocks":256,
-                    "branchFromExistingChance":0.65,"gapMinBlocks":2,"gapMaxBlocks":8}}],
+                    "parcelStyle":{"parcelCountMin":1,"parcelCountMax":8,
+                    "parcelAreaMinBlocks":64,"parcelAreaMaxBlocks":256,"minSharedBoundaryBlocks":3}}],
                   "landscapeFillProfiles":[{"fillProfileRef":"fill:relay_common_green","displayName":"接力城市绿地",
                     "visualIntent":"绿植区和自然地面区从父区域局部边界接力","algorithm":"SINGLE_SOURCE_REGION_RELAY",
                     "relayOrigin":"PARENT_REGION_LOCAL_BOUNDARY",
@@ -990,7 +1114,7 @@ class CityBlueprintCompilerServiceTest {
     private static JsonObject blueprint(JsonObject context, String extentClass) {
         JsonObject root = JsonParser.parseString("""
                 {
-                  "schemaVersion":"city_blueprint.v0.9","cityId":"placeholder","generationSeed":1,
+                  "schemaVersion":"city_blueprint.v0.10","cityId":"placeholder","generationSeed":1,
                   "sourceD3Ref":{},"catalogSnapshotRef":{},
                   "designIntent":{"cityIdentity":"town","theme":"stone","functionalRoles":["administration"]},
                   "styleProfile":{"profileRef":"style:stone"},

@@ -75,9 +75,20 @@ public final class CityLandUseSurfacePrintPlanner {
                     settings.surfaceAlgorithm(), algorithmAnchor, recipe));
         }
         prints.sort(Comparator.comparing(CityLandUseSurfacePrintPlan.AreaPrint::printAreaId));
+        Map<String, CityLandUseSurfacePrintPlan.AreaPrint> printsByArea = prints.stream().collect(
+                java.util.stream.Collectors.toMap(CityLandUseSurfacePrintPlan.AreaPrint::landUseAreaId,
+                        value -> value,
+                        (left, right) -> left.printAreaId().compareTo(right.printAreaId()) <= 0 ? left : right));
+        List<CityLandUseSurfacePrintPlan.SharedBoundaryPrintSpan> shared = landUsePlan.sharedBoundarySpans()
+                .stream().map(span -> {
+                    CityLandUseSurfacePrintPlan.AreaPrint writer = printsByArea.get(span.writerAreaId());
+                    String block = writer == null ? "" : writer.recipe().boundaryBlockId();
+                    return new CityLandUseSurfacePrintPlan.SharedBoundaryPrintSpan(span.z(), span.minX(),
+                            span.maxX(), span.writerAreaId(), span.neighborAreaId(), span.relation(), block);
+                }).toList();
         CityLandUseSurfacePrintPlan raw = new CityLandUseSurfacePrintPlan(
                 CityLandUseSurfacePrintPlan.CURRENT_SCHEMA_VERSION, landUsePlan.cityId(),
-                landUsePlan.planHash(), "", prints);
+                landUsePlan.planHash(), "", prints, shared);
         return new CityLandUseSurfacePrintPlanCodec().withComputedHash(raw);
     }
 
@@ -270,11 +281,33 @@ public final class CityLandUseSurfacePrintPlanner {
 
     private static BlockPoint sourceFor(LandUseAreaPlan.Area area,
                                         Map<String, LandUseSeedGroup> groups) {
-        return area.sourceGroupIds().stream().map(groups::get).filter(Objects::nonNull)
-                .flatMap(group -> group.seedPoints().stream()).min(Comparator.comparingInt(BlockPoint::z)
-                        .thenComparingInt(BlockPoint::x)).orElseThrow(() ->
+        List<LandUseSeedGroup> sourceGroups = area.sourceGroupIds().stream().map(groups::get)
+                .filter(Objects::nonNull).toList();
+        boolean landscape = sourceGroups.stream()
+                .anyMatch(group -> group.layerRole() == LandUseSeedGroup.LayerRole.LANDSCAPE);
+        if (landscape && area.seedPoints().size() != 1) {
+            throw new IllegalArgumentException("CITY_LAND_USE_SURFACE_PRINT_LANDSCAPE_SEED_COUNT_INVALID:"
+                    + area.areaId() + ':' + String.join(",", area.sourceGroupIds()) + ':'
+                    + area.seedPoints().size());
+        }
+        BlockPoint configured = area.seedPoints().stream()
+                .min(Comparator.comparingInt(BlockPoint::z).thenComparingInt(BlockPoint::x)).orElseThrow(() ->
                         new IllegalArgumentException("CITY_LAND_USE_SURFACE_PRINT_LAYER_SOURCE_REQUIRED:"
                                 + area.areaId()));
+        boolean member = area.memberSpans().stream().anyMatch(span -> span.z() == configured.z()
+                && configured.x() >= span.minX() && configured.x() <= span.maxX());
+        if (member) return configured;
+        if (landscape) {
+            throw new IllegalArgumentException("CITY_LAND_USE_SURFACE_PRINT_LANDSCAPE_SEED_NOT_IN_AREA:"
+                    + area.areaId() + ':' + String.join(",", area.sourceGroupIds()) + ':'
+                    + configured.x() + ':' + configured.z());
+        }
+        LandUseAreaPlan.ScanlineSpan first = area.memberSpans().stream()
+                .min(Comparator.comparingInt(LandUseAreaPlan.ScanlineSpan::z)
+                        .thenComparingInt(LandUseAreaPlan.ScanlineSpan::minX))
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "CITY_LAND_USE_SURFACE_PRINT_MEMBER_SPANS_REQUIRED:" + area.areaId()));
+        return new BlockPoint(first.minX(), first.z());
     }
 
     private static List<LandUseAreaPlan.ScanlineSpan> exclusions(LandUseAreaPlan plan,

@@ -275,7 +275,7 @@ class CityLandUsePreviewRendererTest {
                                                        BlockBounds footprint) {
         int blockCount = spans.stream().mapToInt(span -> span.maxX() - span.minX() + 1).sum();
         return new LandUseAreaPlan.Area(areaId, areaId, areaId, List.of(groupId), List.of(groupId),
-                List.of(new BlockPoint(footprint.minX(), footprint.minZ())), spans, List.of(footprint),
+                List.of(new BlockPoint(footprint.minX() - 1, footprint.minZ())), spans, List.of(footprint),
                 List.of(), List.of(), blockCount, SurfacePolicy.CULTIVATE, VegetationPolicy.PRESERVE,
                 BoundaryPolicy.OPEN, areaId);
     }

@@ -51,7 +51,12 @@ public final class CityBlueprintValidator {
                 add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_REQUIRED_STRUCTURES_EMPTY,
                         path + ".requiredStructureRefs", "A STRUCTURE group needs at least one required structure.");
             }
+            Set<String> uniqueRequiredRefs = new HashSet<>();
             for (String ref : group.requiredStructureRefs()) {
+                if (!uniqueRequiredRefs.add(ref)) {
+                    add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_REFERENCE_INVALID,
+                            path + ".requiredStructureRefs", "requiredStructureRefs must be unique: " + ref);
+                }
                 if (!catalog.structureRefs().contains(ref)) {
                     add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_STRUCTURE_REF_UNKNOWN,
                             path + ".requiredStructureRefs", "Unknown structureRef: " + ref);
@@ -62,6 +67,12 @@ public final class CityBlueprintValidator {
             requireRef(issues, catalog.algorithmProfileRefs(), group.algorithmProfileRef(),
                     CityBlueprintReasonCode.CITY_BLUEPRINT_ALGORITHM_PROFILE_UNKNOWN,
                     path + ".algorithmProfileRef");
+            if ("CENTER_SYMMETRIC".equals(catalog.algorithmsByProfileRef().get(group.algorithmProfileRef()))
+                    && group.requiredStructureRefs().size() != 1) {
+                add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_CENTER_SYMMETRIC_REQUIRED_COUNT_INVALID,
+                        path + ".requiredStructureRefs",
+                        "CENTER_SYMMETRIC requires exactly one center structure; fill structures grow in atomic pairs.");
+            }
             validateConnectionPlan(issues, group, catalog, path);
             requireRef(issues, catalog.compositionProfileRefs(), group.compositionProfileRef(),
                     CityBlueprintReasonCode.CITY_BLUEPRINT_COMPOSITION_PROFILE_UNKNOWN,
@@ -106,12 +117,17 @@ public final class CityBlueprintValidator {
         requireRef(issues, catalog.surfaceDetailProfileRefs(), blueprint.surfaceDetailProfile().profileRef(),
                 CityBlueprintReasonCode.CITY_BLUEPRINT_SURFACE_DETAIL_PROFILE_UNKNOWN,
                 "$.surfaceDetailProfile.profileRef");
-        validateOutdoorPlan(issues, blueprint.outdoorPlan(), groupIds, context.patchRefs(), catalog);
+        java.util.Map<String, CityBlueprint.Group> groupsById = new HashMap<>();
+        blueprint.groups().forEach(group -> groupsById.put(group.groupId(), group));
+        validateOutdoorPlan(issues, blueprint.outdoorPlan(), groupIds, groupsById,
+                context.patchRefs(), catalog);
         return new ValidationResult(issues.isEmpty(), List.copyOf(issues));
     }
 
     private static void validateOutdoorPlan(List<Issue> issues, CityBlueprint.OutdoorPlan plan,
-                                            Set<String> groupIds, Set<String> patchRefs,
+                                            Set<String> groupIds,
+                                            java.util.Map<String, CityBlueprint.Group> groupsById,
+                                            Set<String> patchRefs,
                                             CityBlueprintReferenceCatalog catalog) {
         if (!catalog.foundationProfiles().containsKey(plan.foundationProfileRef())) {
             add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_FOUNDATION_PROFILE_UNKNOWN,
@@ -159,27 +175,40 @@ public final class CityBlueprintValidator {
                         path + ".landscapeProfileRef",
                         "Unknown landscape profile: " + landscape.landscapeProfileRef());
             }
-            if (landscape.attachedGroupIds().isEmpty() && landscape.preferredPatchRefs().isEmpty()) {
-                add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_LANDSCAPE_SOURCE_REQUIRED,
-                        path, "A landscape needs at least one attached Group or preferred D3 patch.");
+            if (landscape.originMode() == CityBlueprint.LandscapeOriginMode.ATTACHED) {
+                if (landscape.owner() == null || landscape.placementDomain() != null
+                        || landscape.instanceCount() != 1) {
+                    add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_LANDSCAPE_SOURCE_REQUIRED,
+                            path, "ATTACHED requires owner, forbids placementDomain, and fixes instanceCount to 1.");
+                } else {
+                    CityBlueprint.Group ownerGroup = groupsById.get(landscape.owner().groupId());
+                    if (ownerGroup == null || !ownerGroup.requiredStructureRefs()
+                            .contains(landscape.owner().requiredStructureRef())) {
+                        add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_GROUP_REF_UNKNOWN,
+                                path + ".owner", "owner must identify a required structure in its Group.");
+                    }
+                }
+            } else {
+                if (landscape.owner() != null || landscape.placementDomain() == null || landscape.required()) {
+                    add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_LANDSCAPE_SOURCE_REQUIRED,
+                            path, "FREE_STANDING forbids owner, requires placementDomain, and must be optional.");
+                }
             }
-            validateGroupList(issues, landscape.attachedGroupIds(), groupIds,
-                    path + ".attachedGroupIds");
-            validateReferenceGroups(issues, landscape.referenceGroupIds(), groupIds, null,
-                    path + ".referenceGroupIds");
+            if (landscape.instanceCount() <= 0 || landscape.parcelCount() <= 0) {
+                add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_REFERENCE_INVALID, path,
+                        "instanceCount and parcelCount must be positive exact values.");
+            }
+            if (landscapeProfile != null && (landscape.parcelCount() < landscapeProfile.parcelStyle().parcelCountMin()
+                    || landscape.parcelCount() > landscapeProfile.parcelStyle().parcelCountMax())) {
+                add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_REFERENCE_INVALID,
+                        path + ".parcelCount", "parcelCount is outside the selected Profile range.");
+            }
             for (int patchIndex = 0; patchIndex < landscape.preferredPatchRefs().size(); patchIndex++) {
                 String ref = landscape.preferredPatchRefs().get(patchIndex);
                 if (!patchRefs.contains(ref)) {
                     add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_PATCH_REF_UNKNOWN,
                             path + ".preferredPatchRefs[" + patchIndex + "]", "Unknown D3 patch: " + ref);
                 }
-            }
-            boolean requiresReferences = landscape.growthRelation()
-                    == CityBlueprint.LandscapeGrowthRelation.AWAY_FROM_REFERENCE;
-            if (requiresReferences != !landscape.referenceGroupIds().isEmpty()) {
-                add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_REFERENCE_INVALID,
-                        path + ".referenceGroupIds",
-                        "AWAY_FROM_REFERENCE requires references; other landscape growth relations forbid them.");
             }
             validateFillSelection(issues, landscape, landscapeProfile, catalog, path + ".fillSelection");
         }
