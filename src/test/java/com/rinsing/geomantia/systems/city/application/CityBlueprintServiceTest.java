@@ -35,10 +35,10 @@ class CityBlueprintServiceTest {
 
         assertEquals(0, prepared.get("aiCityDesignCallCount").getAsInt());
         JsonObject context = prepared.getAsJsonObject("cityBlueprintContext");
-        assertEquals("city_blueprint_context.v0.8", context.get("schemaVersion").getAsString());
-        assertEquals("city_blueprint_catalog_snapshot.v0.9",
+        assertEquals("city_blueprint_context.v0.9", context.get("schemaVersion").getAsString());
+        assertEquals("city_blueprint_catalog_snapshot.v0.10",
                 context.getAsJsonObject("catalogSnapshotRef").get("schemaVersion").getAsString());
-        assertEquals("city_blueprint_catalog_snapshot.v0.9",
+        assertEquals("city_blueprint_catalog_snapshot.v0.10",
                 context.getAsJsonObject("catalogSnapshot").get("schemaVersion").getAsString());
         JsonObject semanticProfile = context.getAsJsonObject("catalogSnapshot")
                 .getAsJsonObject("structureCatalog")
@@ -132,6 +132,27 @@ class CityBlueprintServiceTest {
                 result.getAsJsonObject("validationReport").getAsJsonArray("issues")
                         .get(0).getAsJsonObject().get("reasonCode").getAsString());
         assertFalse(Files.exists(fixture.runDir().resolve("city_blueprint_city_landscape/city_blueprint.json")));
+    }
+
+    @Test
+    void centerSymmetricRequiresExactlyOneCenterStructure() throws Exception {
+        Fixture fixture = fixture("run_center_symmetric_invalid", "city:center_symmetric_invalid");
+        CityBlueprintService service = new CityBlueprintService();
+        JsonObject prepared = service.prepare(temporary, fixture.runId(), fixture.cityId(),
+                fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog());
+        JsonObject blueprint = blueprint(prepared.getAsJsonObject("cityBlueprintContext"));
+        JsonObject group = blueprint.getAsJsonArray("groups").get(0).getAsJsonObject();
+        group.addProperty("algorithmProfileRef", "algorithm:center_symmetric");
+        group.getAsJsonArray("requiredStructureRefs").add("geomantia:town_hall");
+
+        JsonObject result = service.submit(temporary, fixture.runId(), fixture.cityId(),
+                prepared.get("contextId").getAsString(), blueprint);
+
+        assertFalse(result.get("ok").getAsBoolean());
+        assertTrue(result.getAsJsonObject("validationReport").getAsJsonArray("issues").asList().stream()
+                .map(JsonElement::getAsJsonObject)
+                .anyMatch(issue -> "CITY_BLUEPRINT_CENTER_SYMMETRIC_REQUIRED_COUNT_INVALID"
+                        .equals(issue.get("reasonCode").getAsString())));
     }
 
     @Test
@@ -302,9 +323,10 @@ class CityBlueprintServiceTest {
         blueprint.getAsJsonObject("outdoorPlan").getAsJsonArray("landscapes").add(
                 JsonParser.parseString("""
                         {"landscapeId":"central_green","landscapeProfileRef":"landscape:greenbelt",
-                         "attachedGroupIds":["civic"],"preferredPatchRefs":[],"extentClass":"SMALL",
-                         "intensity":"MEDIUM","continuity":"CONTINUOUS","growthRelation":"AROUND_SOURCE",
-                         "referenceGroupIds":[],"terrainPolicy":"CONFORM","required":true,
+                         "purpose":"FUNCTIONAL","originMode":"ATTACHED",
+                         "owner":{"groupId":"civic","requiredStructureRef":"geomantia:town_hall"},
+                         "instanceCount":1,"parcelCount":1,"preferredPatchRefs":[],
+                         "terrainPolicy":"CONFORM","required":true,
                          "fillSelection":{"variants":[{"fillProfileRef":"fill:relay_common_green","selectionWeight":1,
                            "roleShares":[{"roleRef":"GREEN","growthForm":"PATCH","targetShare":0.425},{"roleRef":"GROUND","growthForm":"PATCH","targetShare":0.15},{"roleRef":"GREEN","growthForm":"PATCH","targetShare":0.425}],
                            "contentWeights":[{"contentRef":"plant:grass","weight":1}]}]}}
@@ -501,10 +523,10 @@ class CityBlueprintServiceTest {
         assertFalse(irrigated.has("geometryFallback"));
         JsonObject farmlandProfile = catalog.getAsJsonArray("landscapeProfiles").get(0).getAsJsonObject();
         assertEquals("landscape:farmland_fenced", farmlandProfile.get("landscapeProfileRef").getAsString());
-        assertEquals(5, farmlandProfile.getAsJsonObject("parcelStyle").get("coreParcelCountMin").getAsInt());
-        assertEquals(10, farmlandProfile.getAsJsonObject("parcelStyle").get("coreParcelCountMax").getAsInt());
-        assertEquals(1, farmlandProfile.getAsJsonObject("parcelStyle").get("fillParcelCountMin").getAsInt());
-        assertEquals(3, farmlandProfile.getAsJsonObject("parcelStyle").get("fillParcelCountMax").getAsInt());
+        assertEquals(1, farmlandProfile.getAsJsonObject("parcelStyle").get("parcelCountMin").getAsInt());
+        assertEquals(12, farmlandProfile.getAsJsonObject("parcelStyle").get("parcelCountMax").getAsInt());
+        assertEquals(4, farmlandProfile.getAsJsonObject("parcelStyle")
+                .get("minSharedBoundaryBlocks").getAsInt());
         assertTrue(catalog.getAsJsonArray("landscapeProfiles").asList().stream()
                 .map(JsonElement::getAsJsonObject)
                 .anyMatch(profile -> "landscape:forestry".equals(
@@ -641,7 +663,7 @@ class CityBlueprintServiceTest {
         Fixture fixture = fixture("run_bad_parcel_style", "city:bad_parcel_style");
         JsonObject catalog = fixture.referenceCatalog().deepCopy();
         catalog.getAsJsonArray("landscapeProfiles").get(0).getAsJsonObject()
-                .getAsJsonObject("parcelStyle").addProperty("branchFromExistingChance", 1.1);
+                .getAsJsonObject("parcelStyle").addProperty("minSharedBoundaryBlocks", 1000);
 
         CityBlueprintContractException failure = assertThrows(CityBlueprintContractException.class,
                 () -> new CityBlueprintService().prepare(temporary, fixture.runId(), fixture.cityId(),
@@ -743,12 +765,13 @@ class CityBlueprintServiceTest {
     private static JsonObject referenceCatalog() {
         return JsonParser.parseString("""
                 {
-                  "schemaVersion":"city_blueprint_reference_catalog.v0.7",
+                  "schemaVersion":"city_blueprint_reference_catalog.v0.8",
                   "structureRefs":[{"structureRef":"geomantia:town_hall","templateCandidates":[{"templateId":"geomantia:town_hall","variantId":"default"}]}],
                   "fillPools":[{"poolRef":"pool:civic","structureRefs":["geomantia:town_hall"]}],
                   "algorithmProfiles":[
                     {"algorithmProfileRef":"algorithm:compact","algorithm":"COMPACT"},
-                    {"algorithmProfileRef":"algorithm:street_band","algorithm":"LINEAR"}
+                    {"algorithmProfileRef":"algorithm:street_band","algorithm":"LINEAR"},
+                    {"algorithmProfileRef":"algorithm:center_symmetric","algorithm":"CENTER_SYMMETRIC"}
                   ],
                   "compositionProfiles":[{"compositionProfileRef":"composition:round_robin","mode":"ROUND_ROBIN"}],
                   "styleProfiles":[{"profileRef":"style:river_stone"}],
@@ -813,27 +836,23 @@ class CityBlueprintServiceTest {
                     {"landscapeProfileRef":"landscape:farmland_fenced","landscapeType":"FARMLAND",
                     "landUseRuleRef":"agriculture","surfaceRecipeRef":"surface_recipe:farmland_fenced","baseAreaSmall":512,
                     "baseAreaMedium":1024,"baseAreaLarge":2048,"membership":"LANDSCAPE",
-                    "parcelStyle":{"coreParcelCountMin":5,"coreParcelCountMax":10,"fillParcelCountMin":1,
-                    "fillParcelCountMax":3,"parcelAreaMinBlocks":64,"parcelAreaMaxBlocks":256,
-                    "branchFromExistingChance":0.65,"gapMinBlocks":2,"gapMaxBlocks":8}},
+                    "parcelStyle":{"parcelCountMin":1,"parcelCountMax":12,
+                    "parcelAreaMinBlocks":64,"parcelAreaMaxBlocks":256,"minSharedBoundaryBlocks":4}},
                     {"landscapeProfileRef":"landscape:flower_field","landscapeType":"MEADOW",
                     "landUseRuleRef":"meadow","surfaceRecipeRef":"surface_recipe:flower_field","baseAreaSmall":256,
                     "baseAreaMedium":512,"baseAreaLarge":1024,"membership":"LANDSCAPE",
-                    "parcelStyle":{"coreParcelCountMin":1,"coreParcelCountMax":2,"fillParcelCountMin":1,
-                    "fillParcelCountMax":4,"parcelAreaMinBlocks":48,"parcelAreaMaxBlocks":192,
-                    "branchFromExistingChance":0.75,"gapMinBlocks":1,"gapMaxBlocks":5}},
+                    "parcelStyle":{"parcelCountMin":1,"parcelCountMax":8,
+                    "parcelAreaMinBlocks":48,"parcelAreaMaxBlocks":192,"minSharedBoundaryBlocks":3}},
                     {"landscapeProfileRef":"landscape:greenbelt","landscapeType":"COMMON_GREEN",
                     "landUseRuleRef":"greenbelt","surfaceRecipeRef":"surface_recipe:greenbelt","baseAreaSmall":128,
                     "baseAreaMedium":384,"baseAreaLarge":768,"membership":"URBAN",
-                    "parcelStyle":{"coreParcelCountMin":1,"coreParcelCountMax":1,"fillParcelCountMin":1,
-                    "fillParcelCountMax":3,"parcelAreaMinBlocks":32,"parcelAreaMaxBlocks":128,
-                    "branchFromExistingChance":0.8,"gapMinBlocks":0,"gapMaxBlocks":3}},
+                    "parcelStyle":{"parcelCountMin":1,"parcelCountMax":6,
+                    "parcelAreaMinBlocks":32,"parcelAreaMaxBlocks":128,"minSharedBoundaryBlocks":2}},
                     {"landscapeProfileRef":"landscape:forestry","landscapeType":"WOODLAND",
                     "landUseRuleRef":"forestry","surfaceRecipeRef":"surface_recipe:forestry","baseAreaSmall":512,
                     "baseAreaMedium":1536,"baseAreaLarge":4096,"membership":"LANDSCAPE",
-                    "parcelStyle":{"coreParcelCountMin":1,"coreParcelCountMax":3,"fillParcelCountMin":1,
-                    "fillParcelCountMax":5,"parcelAreaMinBlocks":96,"parcelAreaMaxBlocks":384,
-                    "branchFromExistingChance":0.7,"gapMinBlocks":3,"gapMaxBlocks":10}}
+                    "parcelStyle":{"parcelCountMin":1,"parcelCountMax":8,
+                    "parcelAreaMinBlocks":96,"parcelAreaMaxBlocks":384,"minSharedBoundaryBlocks":4}}
                   ],
                   "landscapeFillProfiles":[
                     {"fillProfileRef":"fill:relay_irrigated_farmland","displayName":"接力灌溉农田",
@@ -900,7 +919,7 @@ class CityBlueprintServiceTest {
 
     private static JsonObject blueprint(JsonObject context) {
         JsonObject blueprint = new JsonObject();
-        blueprint.addProperty("schemaVersion", "city_blueprint.v0.9");
+        blueprint.addProperty("schemaVersion", "city_blueprint.v0.10");
         blueprint.addProperty("cityId", context.get("cityId").getAsString());
         blueprint.add("sourceD3Ref", context.getAsJsonObject("sourceD3Ref").deepCopy());
         blueprint.add("catalogSnapshotRef", context.getAsJsonObject("catalogSnapshotRef").deepCopy());
@@ -941,9 +960,10 @@ class CityBlueprintServiceTest {
                                                 String roleShares, String contentWeights) {
         return JsonParser.parseString("""
                 {"landscapeId":"test_green","landscapeProfileRef":"%s",
-                 "attachedGroupIds":["civic"],"preferredPatchRefs":[],"extentClass":"SMALL",
-                 "intensity":"MEDIUM","continuity":"CONTINUOUS","growthRelation":"AROUND_SOURCE",
-                 "referenceGroupIds":[],"terrainPolicy":"CONFORM","required":true,
+                 "purpose":"FUNCTIONAL","originMode":"ATTACHED",
+                 "owner":{"groupId":"civic","requiredStructureRef":"geomantia:town_hall"},
+                 "instanceCount":1,"parcelCount":1,"preferredPatchRefs":[],
+                 "terrainPolicy":"CONFORM","required":true,
                  "fillSelection":{"variants":[{"fillProfileRef":"%s","selectionWeight":1,
                    "roleShares":%s,"contentWeights":%s}]}}
                 """.formatted(landscapeProfileRef, fillProfileRef, roleShares, contentWeights)).getAsJsonObject();

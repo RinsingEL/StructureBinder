@@ -56,7 +56,8 @@ public final class LandUseGeometryCompiler {
                 LandUseSeedGroup primary = groups.get(sortedGroupIds.get(0));
                 List<String> anchorIds = sortedGroupIds.stream().flatMap(id -> groups.get(id).anchorIds().stream())
                         .distinct().sorted().toList();
-                List<BlockPoint> seeds = sortedGroupIds.stream().flatMap(id -> groups.get(id).seedPoints().stream())
+                List<BlockPoint> seeds = sortedGroupIds.stream().flatMap(id -> expansion
+                                .effectiveSeedPointsByGroup().getOrDefault(id, groups.get(id).seedPoints()).stream())
                         .distinct().sorted(pointOrder()).toList();
                 List<com.rinsing.geomantia.systems.city.domain.model.BlockBounds> structureFootprints =
                         sortedGroupIds.stream().flatMap(id -> groups.get(id).structureFootprints().stream())

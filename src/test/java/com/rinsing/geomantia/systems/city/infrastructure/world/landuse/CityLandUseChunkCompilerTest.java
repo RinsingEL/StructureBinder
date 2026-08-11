@@ -198,6 +198,89 @@ class CityLandUseChunkCompilerTest {
     }
 
     @Test
+    void sharedLandscapeBoundaryWritesExactlyOnceOnFrozenWriterSide() {
+        LandUseAreaPlan.Area parent = landscapeArea("parent", "fields::instance_01::parcel_01", 0);
+        LandUseAreaPlan.Area child = landscapeArea("child", "fields::instance_01::parcel_02", 1);
+        LandUseAreaPlan.SharedBoundarySpan shared = new LandUseAreaPlan.SharedBoundarySpan(0, 0, 0,
+                parent.areaId(), child.areaId(), LandUseAreaPlan.SharedBoundaryRelation.PARENT_CHILD);
+        LandUseAreaPlan areaPlan = new LandUseAreaPlanCodec().withComputedHash(new LandUseAreaPlan(
+                LandUseAreaPlan.CURRENT_SCHEMA_VERSION, "land_use_rules.v0.1", "city_shared", "",
+                new BlockBounds(0, 0, 15, 15), List.of(parent, child), List.of(shared),
+                List.of(), List.of(), List.of()));
+        LandUseSurfaceSettings settings = new LandUseSurfaceSettings(true, true,
+                "minecraft:farmland", "", "CULTIVATE", LandUseSurfaceSettings.SurfaceAlgorithm.UNIFORM,
+                null, "", "", "", "minecraft:oak_fence", 0, 0, 0);
+        List<CityLandUseSurfacePrintPlan.AreaPrint> prints = List.of(
+                new CityLandUseSurfacePrintPlan.AreaPrint("parent/surface", parent.areaId(),
+                        parent.sourceGroupIds(), settings, parent.memberSpans(), List.of(),
+                        new CityLandUseSurfacePrintPlan.UniformRecipe(settings.surfaceBlockId(),
+                                settings.boundaryBlockId())),
+                new CityLandUseSurfacePrintPlan.AreaPrint("child/surface", child.areaId(),
+                        child.sourceGroupIds(), settings, child.memberSpans(), List.of(),
+                        new CityLandUseSurfacePrintPlan.UniformRecipe(settings.surfaceBlockId(),
+                                settings.boundaryBlockId())));
+        CityLandUseSurfacePrintPlan surfacePlan = new CityLandUseSurfacePrintPlanCodec().withComputedHash(
+                new CityLandUseSurfacePrintPlan(CityLandUseSurfacePrintPlan.CURRENT_SCHEMA_VERSION,
+                        areaPlan.cityId(), areaPlan.planHash(), "", prints,
+                        List.of(new CityLandUseSurfacePrintPlan.SharedBoundaryPrintSpan(0, 0, 0,
+                                parent.areaId(), child.areaId(),
+                                LandUseAreaPlan.SharedBoundaryRelation.PARENT_CHILD,
+                                "minecraft:oak_fence"))));
+
+        CityLandUseChunkCompiler.ChunkFragment fragment = compiler.compile(areaPlan, surfacePlan, 0, 0);
+
+        assertEquals(1, fragment.boundaryOperations().size());
+        assertEquals(parent.areaId(), fragment.boundaryOperations().get(0).areaId());
+        assertEquals(0, fragment.boundaryOperations().get(0).x());
+    }
+
+    @Test
+    void sharedLandscapeBoundaryRemainsSingleWriterAcrossChunkEdge() {
+        LandUseAreaPlan.Area parent = landscapeArea("parent", "fields::instance_01::parcel_01", 15);
+        LandUseAreaPlan.Area child = landscapeArea("child", "fields::instance_01::parcel_02", 16);
+        LandUseAreaPlan.SharedBoundarySpan shared = new LandUseAreaPlan.SharedBoundarySpan(0, 15, 15,
+                parent.areaId(), child.areaId(), LandUseAreaPlan.SharedBoundaryRelation.PARENT_CHILD);
+        LandUseAreaPlan areaPlan = new LandUseAreaPlanCodec().withComputedHash(new LandUseAreaPlan(
+                LandUseAreaPlan.CURRENT_SCHEMA_VERSION, "land_use_rules.v0.1", "city_shared_chunks", "",
+                new BlockBounds(0, 0, 31, 15), List.of(parent, child), List.of(shared),
+                List.of(), List.of(), List.of()));
+        LandUseSurfaceSettings settings = new LandUseSurfaceSettings(true, true,
+                "minecraft:farmland", "", "CULTIVATE", LandUseSurfaceSettings.SurfaceAlgorithm.UNIFORM,
+                null, "", "", "", "minecraft:oak_fence", 0, 0, 0);
+        List<CityLandUseSurfacePrintPlan.AreaPrint> prints = List.of(
+                new CityLandUseSurfacePrintPlan.AreaPrint("parent/surface", parent.areaId(),
+                        parent.sourceGroupIds(), settings, parent.memberSpans(), List.of(),
+                        new CityLandUseSurfacePrintPlan.UniformRecipe(settings.surfaceBlockId(),
+                                settings.boundaryBlockId())),
+                new CityLandUseSurfacePrintPlan.AreaPrint("child/surface", child.areaId(),
+                        child.sourceGroupIds(), settings, child.memberSpans(), List.of(),
+                        new CityLandUseSurfacePrintPlan.UniformRecipe(settings.surfaceBlockId(),
+                                settings.boundaryBlockId())));
+        CityLandUseSurfacePrintPlan surfacePlan = new CityLandUseSurfacePrintPlanCodec().withComputedHash(
+                new CityLandUseSurfacePrintPlan(CityLandUseSurfacePrintPlan.CURRENT_SCHEMA_VERSION,
+                        areaPlan.cityId(), areaPlan.planHash(), "", prints,
+                        List.of(new CityLandUseSurfacePrintPlan.SharedBoundaryPrintSpan(0, 15, 15,
+                                parent.areaId(), child.areaId(),
+                                LandUseAreaPlan.SharedBoundaryRelation.PARENT_CHILD,
+                                "minecraft:oak_fence"))));
+
+        CityLandUseChunkCompiler.ChunkFragment west = compiler.compile(areaPlan, surfacePlan, 0, 0);
+        CityLandUseChunkCompiler.ChunkFragment east = compiler.compile(areaPlan, surfacePlan, 1, 0);
+
+        assertEquals(1, west.boundaryOperations().size() + east.boundaryOperations().size());
+        assertEquals(15, west.boundaryOperations().get(0).x());
+        assertTrue(east.boundaryOperations().isEmpty());
+    }
+
+    private static LandUseAreaPlan.Area landscapeArea(String areaId, String groupId, int x) {
+        BlockPoint point = new BlockPoint(x, 0);
+        return new LandUseAreaPlan.Area(areaId, areaId, "agriculture", List.of(groupId), List.of("anchor"),
+                List.of(point), List.of(new LandUseAreaPlan.ScanlineSpan(0, x, x)), List.of(),
+                List.of(new LandUseAreaPlan.BoundaryLoop(List.of(point), false)), List.of(), 1,
+                SurfacePolicy.CULTIVATE, VegetationPolicy.CLEAR, BoundaryPolicy.FENCE, areaId);
+    }
+
+    @Test
     void relayRegionsConsumeFrozenRegionSpansAcrossChunkBoundary() {
         List<LandUseAreaPlan.ScanlineSpan> members = List.of(new LandUseAreaPlan.ScanlineSpan(0, 14, 17));
         LandUseAreaPlan areaPlan = areaPlan("city_layers", SurfacePolicy.CULTIVATE, members);

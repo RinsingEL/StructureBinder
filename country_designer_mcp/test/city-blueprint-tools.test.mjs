@@ -24,7 +24,7 @@ test("publishes the program-only context tool and one-shot structure plus outdoo
   assert.deepEqual(groupProperties.extentClass.enum, ["SMALL", "MEDIUM", "LARGE"]);
   assert.deepEqual(groupProperties.densityClass.enum, ["SPARSE", "BALANCED", "DENSE"]);
   assert.deepEqual(submit.inputSchema.properties.cityBlueprint.properties.schemaVersion.enum,
-    ["city_blueprint.v0.9"]);
+    ["city_blueprint.v0.10"]);
   assert.equal(groupProperties.connectionPlan.additionalProperties, false);
   assert.deepEqual(groupProperties.connectionPlan.properties.parameters.properties.sideMode.enum,
     ["LEFT", "RIGHT", "BOTH"]);
@@ -55,14 +55,17 @@ test("publishes the program-only context tool and one-shot structure plus outdoo
   const landscape = outdoor.properties.landscapes.items;
   assert.equal(landscape.additionalProperties, false);
   assert.deepEqual(landscape.required, [
-    "landscapeId", "landscapeProfileRef", "attachedGroupIds", "preferredPatchRefs", "extentClass",
-    "intensity", "continuity", "growthRelation", "referenceGroupIds", "terrainPolicy", "required",
-    "fillSelection",
+    "landscapeId", "landscapeProfileRef", "purpose", "originMode", "instanceCount", "parcelCount",
+    "preferredPatchRefs", "terrainPolicy", "required", "fillSelection",
   ]);
-  assert.deepEqual(landscape.properties.intensity.enum, ["LOW", "MEDIUM", "HIGH"]);
-  assert.deepEqual(landscape.properties.continuity.enum, ["CONTINUOUS", "MULTI_PARCEL", "PATCHY"]);
-  assert.deepEqual(landscape.properties.growthRelation.enum,
-    ["AROUND_SOURCE", "AWAY_FROM_REFERENCE", "TOWARD_WATER", "ALONG_WATER"]);
+  assert.deepEqual(landscape.properties.purpose.enum, ["FUNCTIONAL", "COMPOSITIONAL", "AMBIENT"]);
+  assert.deepEqual(landscape.properties.originMode.enum, ["ATTACHED", "FREE_STANDING"]);
+  assert.equal(landscape.properties.instanceCount.minimum, 1);
+  assert.equal(landscape.properties.parcelCount.minimum, 1);
+  assert.equal(landscape.oneOf.length, 2);
+  assert.deepEqual(landscape.oneOf[0].required, ["owner"]);
+  assert.deepEqual(landscape.oneOf[1].required, ["placementDomain"]);
+  assert.equal(landscape.oneOf[1].properties.required.const, false);
   assert.deepEqual(landscape.properties.terrainPolicy.enum, ["CONFORM", "BALANCED", "ASSERTIVE"]);
   const fillVariant = landscape.properties.fillSelection.properties.variants.items;
   assert.equal(fillVariant.additionalProperties, false);
@@ -129,10 +132,10 @@ test("publishes the current strict LandUse v0.3 intent wire shape", () => {
   assert.deepEqual(override.properties.algorithmAnchor.required, ["x", "z"]);
 });
 
-test("requires the v0.7 Blueprint reference catalog with group-budget boundary-relay fill profiles", () => {
+test("requires the v0.8 Blueprint reference catalog with exact Landscape Parcel profiles", () => {
   const prepare = realmTools.find((tool) => tool.name === "city_prepare_d4_blueprint_context");
   const catalog = prepare.inputSchema.properties.blueprintReferenceCatalog;
-  assert.match(catalog.description, /city_blueprint_reference_catalog\.v0\.7/);
+  assert.match(catalog.description, /city_blueprint_reference_catalog\.v0\.8/);
   assert.match(catalog.description, /户外/);
   assert.equal(catalog.additionalProperties, false);
   assert.deepEqual(catalog.required, [
@@ -141,7 +144,7 @@ test("requires the v0.7 Blueprint reference catalog with group-budget boundary-r
     "landscapeProfiles", "landscapeFillProfiles",
   ]);
   assert.deepEqual(catalog.properties.schemaVersion.enum,
-    ["city_blueprint_reference_catalog.v0.7"]);
+    ["city_blueprint_reference_catalog.v0.8"]);
 
   for (const namespace of ["structureRefs", "fillPools", "algorithmProfiles", "compositionProfiles",
     "styleProfiles", "roadProfiles", "surfaceDetailProfiles", "foundationProfiles", "surfaceRecipes",
@@ -153,7 +156,7 @@ test("requires the v0.7 Blueprint reference catalog with group-budget boundary-r
     ["structureRef", "templateCandidates"]);
   assert.equal(catalog.properties.structureRefs.items.properties.templateCandidates.minItems, 1);
   assert.deepEqual(catalog.properties.algorithmProfiles.items.properties.algorithm.enum,
-    ["COMPACT", "GRID", "LINEAR", "COURTYARD", "ORGANIC_COMPACT"]);
+    ["COMPACT", "GRID", "LINEAR", "COURTYARD", "ORGANIC_COMPACT", "CENTER_SYMMETRIC"]);
   assert.deepEqual(catalog.properties.roadProfiles.items.properties.hierarchy.enum,
     ["SIMPLE", "HIERARCHICAL"]);
 
@@ -242,13 +245,8 @@ test("requires the v0.7 Blueprint reference catalog with group-budget boundary-r
   assert.deepEqual(landscape.properties.membership.enum, ["URBAN", "LANDSCAPE"]);
   const parcel = landscape.properties.parcelStyle;
   assert.equal(parcel.additionalProperties, false);
-  assert.deepEqual(parcel.required, ["coreParcelCountMin", "coreParcelCountMax", "fillParcelCountMin",
-    "fillParcelCountMax", "parcelAreaMinBlocks", "parcelAreaMaxBlocks", "branchFromExistingChance",
-    "gapMinBlocks", "gapMaxBlocks"]);
-  assert.equal(parcel.properties.coreParcelCountMin.minimum, 1);
-  assert.equal(parcel.properties.fillParcelCountMin.minimum, 0);
-  assert.match(parcel.properties.coreParcelCountMin.description, /整个附着 Group/);
-  assert.match(parcel.properties.fillParcelCountMax.description, /空间不足可显式跳过/);
-  assert.equal(parcel.properties.branchFromExistingChance.minimum, 0);
-  assert.equal(parcel.properties.branchFromExistingChance.maximum, 1);
+  assert.deepEqual(parcel.required, ["parcelCountMin", "parcelCountMax", "parcelAreaMinBlocks",
+    "parcelAreaMaxBlocks", "minSharedBoundaryBlocks"]);
+  assert.equal(parcel.properties.parcelCountMin.minimum, 1);
+  assert.equal(parcel.properties.minSharedBoundaryBlocks.minimum, 1);
 });

@@ -42,11 +42,16 @@ public final class CityStructureLandingPreviewRenderer {
     private static final Color MASK_STROKE = new Color(178, 84, 46, 135);
 
     public Path renderD4(JsonObject anchorMap, Path outputDirectory) throws IOException {
-        return renderD4(anchorMap, null, outputDirectory);
+        return renderD4(anchorMap, null, null, outputDirectory);
     }
 
     public Path renderD4(JsonObject anchorMap, CityLandformReviewPackage reviewPackage,
                          Path outputDirectory) throws IOException {
+        return renderD4(anchorMap, reviewPackage, null, outputDirectory);
+    }
+
+    public Path renderD4(JsonObject anchorMap, CityLandformReviewPackage reviewPackage,
+                         JsonObject landscapeCapacityPlan, Path outputDirectory) throws IOException {
         Files.createDirectories(outputDirectory);
         Path path = outputDirectory.resolve("structure_anchor_preview.png");
         BufferedImage image = baseImage();
@@ -57,6 +62,7 @@ public final class CityStructureLandingPreviewRenderer {
             Transform t = transform(gridBounds);
             drawPatchBackdrop(g, t, gridBounds, reviewPackage);
             drawGrid(g, t, gridBounds);
+            drawLandscapeCapacities(g, t, landscapeCapacityPlan);
             int i = 0;
             for (JsonElement elem : array(anchorMap, "anchors")) {
                 JsonObject anchor = elem.getAsJsonObject();
@@ -65,14 +71,15 @@ public final class CityStructureLandingPreviewRenderer {
                 drawBadge(g, t, point(anchor, "anchorBlock"), "A" + i, color(i, 235));
             }
             title(g, "City D4 structure anchor preview",
-                    "D2 body=blue collision=red mask=orange; A*=anchor index; anchors="
-                            + array(anchorMap, "anchors").size());
-            d4AnchorSummary(g, anchorMap);
+                    "landscape capacity=colored exact spans; D2 body=blue collision=red mask=orange; anchors="
+                            + array(anchorMap, "anchors").size() + " landscapes="
+                            + landscapeCount(landscapeCapacityPlan));
+            d4AnchorSummary(g, anchorMap, landscapeCapacityPlan);
         } finally {
             g.dispose();
         }
         ImageIO.write(image, "png", path.toFile());
-        renderD4AnchorClusterDetail(anchorMap, reviewPackage, outputDirectory);
+        renderD4AnchorClusterDetail(anchorMap, reviewPackage, landscapeCapacityPlan, outputDirectory);
         return path;
     }
 
@@ -337,6 +344,7 @@ public final class CityStructureLandingPreviewRenderer {
 
     private static void renderD4AnchorClusterDetail(JsonObject anchorMap,
                                                     CityLandformReviewPackage reviewPackage,
+                                                    JsonObject landscapeCapacityPlan,
                                                     Path outputDirectory) throws IOException {
         List<AnchorPreview> cluster = densestAnchorCluster(anchorMap);
         if (cluster.isEmpty()) {
@@ -347,18 +355,23 @@ public final class CityStructureLandingPreviewRenderer {
         Graphics2D g = image.createGraphics();
         try {
             setup(g);
-            BlockBounds viewport = expand(unionMasks(cluster), 24);
+            BlockBounds viewport = unionMasks(cluster);
+            BlockBounds landscapeBounds = landscapePlanBounds(landscapeCapacityPlan);
+            if (landscapeBounds != null) viewport = union(viewport, landscapeBounds);
+            viewport = expand(viewport, 24);
             Transform t = detailTransform(viewport);
             drawPatchBackdrop(g, t, viewport, reviewPackage);
             drawGrid(g, t, viewport);
+            drawLandscapeCapacities(g, t, landscapeCapacityPlan);
             for (AnchorPreview preview : cluster) {
                 drawD4Geometry(g, t, preview.geometry());
                 drawBadge(g, t, point(preview.anchor(), "anchorBlock"), "A" + preview.index(),
                         color(preview.index(), 235));
             }
             title(g, "City D4 local structure cluster",
-                    "D2 body=blue collision=red mask=orange; cluster anchors=" + cluster.size());
-            drawD4DetailLegend(g, cluster);
+                    "L*=exact landscape capacity; D2 body=blue collision=red mask=orange; anchors="
+                            + cluster.size());
+            drawD4DetailLegend(g, cluster, landscapeCapacityPlan);
         } finally {
             g.dispose();
         }
@@ -455,6 +468,68 @@ public final class CityStructureLandingPreviewRenderer {
         drawRect(g, t, geometry.body(), D2_BODY_FILL, D2_BODY_STROKE, 2.5f);
     }
 
+    private static void drawLandscapeCapacities(Graphics2D g, Transform t, JsonObject plan) {
+        if (plan == null) return;
+        int index = 0;
+        for (JsonElement element : array(plan, "instances")) {
+            if (!element.isJsonObject()) continue;
+            index++;
+            JsonObject instance = element.getAsJsonObject();
+            Color color = landscapeColor(instance, index);
+            g.setColor(withAlpha(color, 92));
+            for (JsonElement spanElement : array(instance, "reservationSpans")) {
+                if (!spanElement.isJsonObject()) continue;
+                JsonObject span = spanElement.getAsJsonObject();
+                int z = intValue(span, "z", 0);
+                fillBounds(g, t, new BlockBounds(intValue(span, "minX", 0), z,
+                        intValue(span, "maxX", 0), z));
+            }
+            BlockBounds bounds = landscapeBounds(instance);
+            if (bounds != null) drawBadge(g, t, bounds.center(), "L" + index, color);
+        }
+    }
+
+    private static Color landscapeColor(JsonObject instance, int index) {
+        String profile = string(instance, "profileRef").toLowerCase(java.util.Locale.ROOT);
+        if (profile.contains("farmland")) return new Color(181, 128, 28, 235);
+        if (profile.contains("woodland")) return new Color(31, 116, 70, 235);
+        if (profile.contains("pasture") || profile.contains("green")) return new Color(92, 151, 48, 235);
+        if (profile.contains("flower") || profile.contains("meadow")) return new Color(185, 59, 126, 235);
+        return color(index + 20, 235);
+    }
+
+    private static BlockBounds landscapePlanBounds(JsonObject plan) {
+        if (plan == null) return null;
+        BlockBounds result = null;
+        for (JsonElement element : array(plan, "instances")) {
+            if (!element.isJsonObject()) continue;
+            BlockBounds next = landscapeBounds(element.getAsJsonObject());
+            if (next != null) result = result == null ? next : union(result, next);
+        }
+        return result;
+    }
+
+    private static BlockBounds landscapeBounds(JsonObject instance) {
+        int minX = Integer.MAX_VALUE;
+        int minZ = Integer.MAX_VALUE;
+        int maxX = Integer.MIN_VALUE;
+        int maxZ = Integer.MIN_VALUE;
+        for (JsonElement element : array(instance, "reservationSpans")) {
+            if (!element.isJsonObject()) continue;
+            JsonObject span = element.getAsJsonObject();
+            int z = intValue(span, "z", 0);
+            minX = Math.min(minX, intValue(span, "minX", 0));
+            maxX = Math.max(maxX, intValue(span, "maxX", 0));
+            minZ = Math.min(minZ, z);
+            maxZ = Math.max(maxZ, z);
+        }
+        return minX == Integer.MAX_VALUE ? null : new BlockBounds(minX, minZ, maxX, maxZ);
+    }
+
+    private static int landscapeCount(JsonObject plan) {
+        return plan == null ? 0 : array(plan, "instances").size();
+    }
+
     private static List<AnchorPreview> densestAnchorCluster(JsonObject anchorMap) {
         List<AnchorPreview> anchors = new ArrayList<>();
         int index = 0;
@@ -506,7 +581,7 @@ public final class CityStructureLandingPreviewRenderer {
         return union;
     }
 
-    private static void d4AnchorSummary(Graphics2D g, JsonObject anchorMap) {
+    private static void d4AnchorSummary(Graphics2D g, JsonObject anchorMap, JsonObject landscapeCapacityPlan) {
         int x = 820;
         int y = 90;
         g.setColor(new Color(32, 34, 34));
@@ -518,6 +593,21 @@ public final class CityStructureLandingPreviewRenderer {
         y = legendRow(g, x, y, COLLISION_STROKE, "red = collision clearance");
         y = legendRow(g, x, y, MASK_STROKE, "orange = mask margin");
         y += 8;
+        int landscapeIndex = 0;
+        if (landscapeCapacityPlan != null) {
+            for (JsonElement element : array(landscapeCapacityPlan, "instances")) {
+                if (!element.isJsonObject()) continue;
+                landscapeIndex++;
+                JsonObject instance = element.getAsJsonObject();
+                y = legendRow(g, x, y, landscapeColor(instance, landscapeIndex),
+                        "L" + landscapeIndex + " " + trim(string(instance, "landscapeId"), 25));
+                g.setColor(new Color(32, 34, 34));
+                g.drawString("   parcels=" + intValue(instance, "parcelCount", 0)
+                        + " area=" + intValue(instance, "parcelAreaBlocks", 0), x, y);
+                y += 15;
+            }
+            y += 5;
+        }
         int index = 0;
         for (JsonElement elem : array(anchorMap, "anchors")) {
             if (!elem.isJsonObject() || y > HEIGHT - 44) {
@@ -535,13 +625,14 @@ public final class CityStructureLandingPreviewRenderer {
         }
     }
 
-    private static void drawD4DetailLegend(Graphics2D g, List<AnchorPreview> cluster) {
+    private static void drawD4DetailLegend(Graphics2D g, List<AnchorPreview> cluster,
+                                           JsonObject landscapeCapacityPlan) {
         int x = 24;
         int y = HEIGHT - 58;
         g.setColor(new Color(250, 248, 240, 228));
-        g.fillRoundRect(x - 8, y - 20, 610, 54, 5, 5);
+        g.fillRoundRect(x - 8, y - 20, WIDTH - 48, 54, 5, 5);
         g.setColor(new Color(48, 48, 42, 170));
-        g.drawRoundRect(x - 8, y - 20, 610, 54, 5, 5);
+        g.drawRoundRect(x - 8, y - 20, WIDTH - 48, 54, 5, 5);
         g.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 11));
         StringBuilder summary = new StringBuilder();
         for (AnchorPreview preview : cluster) {
@@ -553,8 +644,19 @@ public final class CityStructureLandingPreviewRenderer {
                     .append(" ").append(dimensions(preview.geometry().body()));
         }
         g.setColor(new Color(32, 34, 34));
-        g.drawString(trim(summary.toString(), 82), x, y);
-        g.drawString("NBT body dimensions; collision and mask remain visible around each body.", x, y + 17);
+        g.drawString(trim(summary.toString(), 150), x, y);
+        StringBuilder landscapes = new StringBuilder("Exact capacity spans: ");
+        int index = 0;
+        if (landscapeCapacityPlan != null) {
+            for (JsonElement element : array(landscapeCapacityPlan, "instances")) {
+                if (!element.isJsonObject()) continue;
+                index++;
+                if (index > 1) landscapes.append(" | ");
+                landscapes.append("L").append(index).append(" ")
+                        .append(string(element.getAsJsonObject(), "landscapeId"));
+            }
+        }
+        g.drawString(trim(landscapes.toString(), 165), x, y + 17);
     }
 
     private static void drawExpansionDetailLegend(Graphics2D g, JsonObject candidate, JsonObject space) {

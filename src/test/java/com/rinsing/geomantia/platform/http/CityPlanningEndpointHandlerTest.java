@@ -2843,6 +2843,49 @@ class CityPlanningEndpointHandlerTest {
     }
 
     @Test
+    void workflowBlueprintD4SkipsOnlyForCurrentAcceptedSourceIdentity() throws Exception {
+        Path directory = Files.createTempDirectory("city-workflow-blueprint-d4-identity-test");
+        Path blueprintDir = directory.resolve("blueprint");
+        Files.createDirectories(blueprintDir);
+        Path anchorMapPath = directory.resolve("structure_anchor_map.json");
+        String contextId = "sha256:context";
+        String blueprint = "{\"schemaVersion\":\"city_blueprint.v0.10\",\"cityId\":\"city_test\"}";
+        String blueprintHash = sha256(blueprint);
+
+        Files.writeString(blueprintDir.resolve("city_blueprint_context.json"), """
+                {"schemaVersion":"city_blueprint_context.v0.9","cityId":"city_test",
+                 "contextId":"sha256:context"}
+                """);
+        Files.writeString(blueprintDir.resolve("city_blueprint_validation_report.json"), """
+                {"valid":true,"contextId":"sha256:context"}
+                """);
+        Files.writeString(blueprintDir.resolve("city_blueprint_submission_trace.json"), """
+                {"status":"accepted","contextId":"sha256:context","aiCityDesignSubmissionCount":1,
+                 "cityBlueprintHash":"%s"}
+                """.formatted(blueprintHash));
+        Files.writeString(blueprintDir.resolve("city_blueprint.json"), blueprint);
+        Files.writeString(anchorMapPath, """
+                {"schemaVersion":"structure_anchor_map.v0.1","cityId":"city_test","anchors":[],
+                 "cityBlueprintCompileProvenance":{"selectionMode":"programmatic_blueprint_compiler",
+                 "contextId":"%s","sourceBlueprintHash":"%s"}}
+                """.formatted(contextId, blueprintHash));
+
+        assertTrue(CityPlanningEndpointHandler.workflowBlueprintAnchorMapCurrent(
+                anchorMapPath, blueprintDir));
+
+        Files.writeString(blueprintDir.resolve("city_blueprint.json"), blueprint + " ");
+        assertFalse(CityPlanningEndpointHandler.workflowBlueprintAnchorMapCurrent(
+                anchorMapPath, blueprintDir));
+
+        Files.writeString(blueprintDir.resolve("city_blueprint.json"), blueprint);
+        JsonObject staleAnchorMap = JsonParser.parseString(Files.readString(anchorMapPath)).getAsJsonObject();
+        staleAnchorMap.getAsJsonObject("cityBlueprintCompileProvenance").remove("contextId");
+        Files.writeString(anchorMapPath, staleAnchorMap.toString());
+        assertFalse(CityPlanningEndpointHandler.workflowBlueprintAnchorMapCurrent(
+                anchorMapPath, blueprintDir));
+    }
+
+    @Test
     void handleRunWorkflowRescanDoesNotRestoreEnvelopeProfiler() throws Exception {
         Path debugRoot = Files.createTempDirectory("city-workflow-profile-rescan-test");
         String runId = "run_workflow_profile_rescan";
@@ -3268,11 +3311,12 @@ class CityPlanningEndpointHandlerTest {
         LandUseAreaPlanCodec codec = new LandUseAreaPlanCodec();
         JsonObject unhashed = JsonParser.parseString("""
                 {
-                  "schemaVersion": "city_land_use_area_plan.v0.1",
+                  "schemaVersion": "city_land_use_area_plan.v0.2",
                   "ruleVersion": "city_land_use_rules.v0.1",
                   "cityId": "city_test",
                   "planningBounds": {"minX": -64, "minZ": -64, "maxX": 64, "maxZ": 64},
                   "areas": [],
+                  "sharedBoundarySpans": [],
                   "unclaimedSpans": [],
                   "corridorExclusions": [],
                   "warnings": []
@@ -4039,7 +4083,7 @@ class CityPlanningEndpointHandlerTest {
     private static JsonObject blueprintReferenceCatalog() {
         return JsonParser.parseString("""
                 {
-                  "schemaVersion":"city_blueprint_reference_catalog.v0.7",
+                  "schemaVersion":"city_blueprint_reference_catalog.v0.8",
                   "structureRefs":[{"structureRef":"minecraft:desert_pyramid","templateCandidates":[{"templateId":"geomantia:test_house","variantId":"test_v1"}]}],
                   "fillPools":[{"poolRef":"pool:test","structureRefs":["minecraft:desert_pyramid"]}],
                   "algorithmProfiles":[{"algorithmProfileRef":"algorithm:compact","algorithm":"COMPACT"}],
@@ -4062,10 +4106,9 @@ class CityPlanningEndpointHandlerTest {
                   "landscapeProfiles":[{"landscapeProfileRef":"landscape:common_green","landscapeType":"COMMON_GREEN",
                     "landUseRuleRef":"civic","surfaceRecipeRef":"surface_recipe:civic","baseAreaSmall":256,
                     "baseAreaMedium":512,"baseAreaLarge":1024,"membership":"URBAN",
-                    "parcelStyle":{"coreParcelCountMin":1,"coreParcelCountMax":2,
-                    "fillParcelCountMin":0,"fillParcelCountMax":2,"parcelAreaMinBlocks":64,
-                    "parcelAreaMaxBlocks":512,"branchFromExistingChance":0.5,
-                    "gapMinBlocks":1,"gapMaxBlocks":4}}],
+                    "parcelStyle":{"parcelCountMin":1,"parcelCountMax":6,
+                    "parcelAreaMinBlocks":64,"parcelAreaMaxBlocks":512,
+                    "minSharedBoundaryBlocks":3}}],
                   "landscapeFillProfiles":[{"fillProfileRef":"fill:relay_common_green","displayName":"接力城市绿地",
                     "visualIntent":"绿植区和自然地面区从父区域局部边界接力","algorithm":"SINGLE_SOURCE_REGION_RELAY",
                     "relayOrigin":"PARENT_REGION_LOCAL_BOUNDARY",
@@ -4085,7 +4128,7 @@ class CityPlanningEndpointHandlerTest {
                 .get(0).getAsJsonObject().get("landformPatchId").getAsString();
         JsonObject blueprint = JsonParser.parseString("""
                 {
-                  "schemaVersion":"city_blueprint.v0.9","cityId":"city_test","generationSeed":42,
+                  "schemaVersion":"city_blueprint.v0.10","cityId":"city_test","generationSeed":42,
                   "designIntent":{"cityIdentity":"test city","theme":"test","functionalRoles":["landmark"]},
                   "styleProfile":{"profileRef":"style:test"},
                   "groups":[{

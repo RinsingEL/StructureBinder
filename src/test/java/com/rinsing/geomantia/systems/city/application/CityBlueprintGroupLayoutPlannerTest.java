@@ -73,4 +73,42 @@ class CityBlueprintGroupLayoutPlannerTest {
 
         assertTrue(!grid.equals(linear) && !grid.equals(courtyard) && !linear.equals(courtyard));
     }
+
+    @Test
+    void centerSymmetricOffersAtomicOppositePairsAroundTheCommittedCore() {
+        BlockPoint center = new BlockPoint(120, -80);
+        var frame = planner.frame(center, new BlockPoint(220, -80), 37L, "administration");
+        var options = planner.symmetricPairOptions(CityBlueprint.DensityClass.DENSE,
+                frame, 0, 60, 18);
+
+        assertEquals(4, options.size());
+        Set<Integer> axes = new LinkedHashSet<>();
+        for (var pair : options) {
+            axes.add(pair.axisVariant());
+            assertEquals(center.x() * 2, pair.first().x() + pair.opposite().x());
+            assertEquals(center.z() * 2, pair.first().z() + pair.opposite().z());
+            assertTrue(pair.traceJson(1).get("atomicPair").getAsBoolean());
+        }
+        assertEquals(Set.of(0, 1, 2, 3), axes);
+    }
+
+    @Test
+    void centerSymmetricUsesTwoOrthogonalPairsPerRingThenRotatesTheOuterRing() {
+        BlockPoint center = new BlockPoint(120, -80);
+        var frame = planner.frame(center, new BlockPoint(220, -80), 37L, "administration");
+        var first = planner.symmetricPairOptions(CityBlueprint.DensityClass.DENSE,
+                frame, 0, 60, 39).get(0);
+        var second = planner.symmetricPairOptions(CityBlueprint.DensityClass.DENSE,
+                frame, 1, 60, 39).get(0);
+        var third = planner.symmetricPairOptions(CityBlueprint.DensityClass.DENSE,
+                frame, 2, 60, 39).get(0);
+
+        assertEquals(0, first.ringIndex());
+        assertEquals(0, second.ringIndex());
+        assertEquals(1, third.ringIndex());
+        assertEquals(0, first.axisVariant());
+        assertEquals(2, second.axisVariant());
+        assertEquals(1, third.axisVariant());
+        assertTrue(third.radiusBlocks() > second.radiusBlocks());
+    }
 }

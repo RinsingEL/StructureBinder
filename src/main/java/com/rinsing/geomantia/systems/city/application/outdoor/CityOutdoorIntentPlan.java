@@ -28,7 +28,7 @@ public record CityOutdoorIntentPlan(
         EnvelopeIntent envelope,
         ResidualIntent residual) {
 
-    public static final String SCHEMA_VERSION = "city_outdoor_intent_plan.v0.3";
+    public static final String SCHEMA_VERSION = "city_outdoor_intent_plan.v0.4";
 
     public CityOutdoorIntentPlan {
         if (!SCHEMA_VERSION.equals(schemaVersion)) {
@@ -113,6 +113,12 @@ public record CityOutdoorIntentPlan(
             source.seedPoints().forEach(seed -> seeds.add(point(seed)));
             value.add("seedPoints", seeds);
             value.addProperty("required", source.required());
+            value.addProperty("landscapeInstanceId", source.landscapeInstanceId());
+            value.addProperty("parcelId", source.parcelId());
+            value.addProperty("parentParcelId", source.parentParcelId());
+            value.addProperty("rootSourceId", source.rootSourceId());
+            if (source.sourceFrontier() == null) value.add("sourceFrontier", null);
+            else value.add("sourceFrontier", point(source.sourceFrontier()));
             sourceValues.add(value);
         }
         root.add("sources", sourceValues);
@@ -181,12 +187,21 @@ public record CityOutdoorIntentPlan(
                                CityBlueprint.GrowthBias growthBias,
                                BlockPoint referencePoint,
                                List<BlockPoint> seedPoints,
-                               boolean required) {
+                               boolean required,
+                               String landscapeInstanceId,
+                               String parcelId,
+                               String parentParcelId,
+                               String rootSourceId,
+                               BlockPoint sourceFrontier) {
         public SourceIntent {
             sourceGroupIds = List.copyOf(sourceGroupIds == null ? List.of() : sourceGroupIds);
             sourceAnchorIds = List.copyOf(sourceAnchorIds == null ? List.of() : sourceAnchorIds);
             preferredPatchRefs = List.copyOf(preferredPatchRefs == null ? List.of() : preferredPatchRefs);
             seedPoints = List.copyOf(seedPoints == null ? List.of() : seedPoints);
+            landscapeInstanceId = landscapeInstanceId == null ? "" : landscapeInstanceId;
+            parcelId = parcelId == null ? "" : parcelId;
+            parentParcelId = parentParcelId == null ? "" : parentParcelId;
+            rootSourceId = rootSourceId == null ? "" : rootSourceId;
         }
     }
 

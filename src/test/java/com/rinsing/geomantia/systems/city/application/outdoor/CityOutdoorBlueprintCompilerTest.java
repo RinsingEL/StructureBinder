@@ -3,6 +3,7 @@ package com.rinsing.geomantia.systems.city.application.outdoor;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.rinsing.geomantia.systems.city.application.CityBlueprintReferenceCatalog;
+import com.rinsing.geomantia.systems.city.application.CityLandscapeCapacityReservationPlanner;
 import com.rinsing.geomantia.systems.city.application.landuse.LandUsePlanningService;
 import com.rinsing.geomantia.systems.city.domain.blueprint.CityBlueprint;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseAreaPlan;
@@ -38,18 +39,12 @@ class CityOutdoorBlueprintCompilerTest {
         assertEquals("city::foundation", foundations.get(0).groupId());
         assertEquals(4, foundations.get(0).anchorIds().size());
         assertEquals(7, parcels.size());
-        assertEquals(5, parcels.stream().filter(group -> group.admissionPolicy()
+        assertEquals(7, parcels.stream().filter(group -> group.admissionPolicy()
                 == LandUseSeedGroup.AdmissionPolicy.REQUIRED).count());
-        assertEquals(2, parcels.stream().filter(group -> group.admissionPolicy()
+        assertEquals(0, parcels.stream().filter(group -> group.admissionPolicy()
                 == LandUseSeedGroup.AdmissionPolicy.OPTIONAL).count());
-        assertTrue(parcels.stream().filter(group -> group.admissionPolicy()
-                        == LandUseSeedGroup.AdmissionPolicy.REQUIRED)
-                .allMatch(group -> group.anchorIds().equals(List.of("farm_a"))));
-        assertTrue(parcels.stream().filter(group -> group.admissionPolicy()
-                        == LandUseSeedGroup.AdmissionPolicy.OPTIONAL)
-                .allMatch(group -> group.anchorIds().equals(List.of("farm_b"))));
-        assertTrue(parcels.stream().allMatch(group -> group.groupId().contains("::core::")
-                || group.groupId().contains("::fill::")));
+        assertTrue(parcels.stream().allMatch(group -> group.anchorIds().equals(List.of("farm_a"))));
+        assertTrue(parcels.stream().allMatch(group -> group.groupId().contains("::instance_01::parcel_")));
         assertTrue(parcels.stream().allMatch(group -> group.seedPoints().size() == 1));
         assertTrue(parcels.stream().allMatch(group -> group.growthRegions().size() == 1));
         assertTrue(parcels.stream().noneMatch(group -> group.rule().mergeSameType()));
@@ -59,12 +54,20 @@ class CityOutdoorBlueprintCompilerTest {
                 .RELAY_REGION_GROWTH));
         assertTrue(parcels.stream().allMatch(group -> group.landscapeFillProgram().fillProfileRef()
                 .equals("fill:irrigated")));
+        LandUseSeedGroup rootParcel = parcels.stream()
+                .filter(group -> group.groupId().endsWith("::parcel_01")).findFirst().orElseThrow();
+        BlockPoint rootSeed = rootParcel.seedPoints().get(0);
+        assertTrue((rootSeed.x() == 39 || rootSeed.x() == 46)
+                        && rootSeed.z() >= 40 && rootSeed.z() <= 45
+                        || (rootSeed.z() == 39 || rootSeed.z() == 46)
+                        && rootSeed.x() >= 40 && rootSeed.x() <= 45,
+                "Frozen root Parcel must start from the required structure's actual edge");
         assertTrue(parcels.stream().allMatch(group -> group.landscapeFillProgram().roles().stream()
                 .map(com.rinsing.geomantia.systems.city.domain.landuse.LandscapeFillProgram.RoleDefinition::roleRef)
                 .toList().equals(List.of("CULTIVATED", "BANK", "WATER", "BANK", "CULTIVATED"))));
         assertTrue(result.resolution().corridorExclusions().isEmpty());
         assertFalse(result.residualConfig().enabled());
-        assertEquals("city_outdoor_intent_plan.v0.3", result.intentPlan().schemaVersion());
+        assertEquals("city_outdoor_intent_plan.v0.4", result.intentPlan().schemaVersion());
         CityOutdoorIntentPlan.SourceIntent foundationIntent = result.intentPlan().sources().stream()
                 .filter(source -> source.sourceKind() == CityOutdoorIntentPlan.SourceKind.FOUNDATION)
                 .findFirst().orElseThrow();
@@ -95,9 +98,9 @@ class CityOutdoorBlueprintCompilerTest {
                 .filter(group -> group.layerRole() == LandUseSeedGroup.LayerRole.LANDSCAPE).toList();
 
         assertEquals(7, parcels.size());
-        assertEquals(5, parcels.stream().filter(group -> group.admissionPolicy()
+        assertEquals(7, parcels.stream().filter(group -> group.admissionPolicy()
                 == LandUseSeedGroup.AdmissionPolicy.REQUIRED).count());
-        assertEquals(2, parcels.stream().filter(group -> group.admissionPolicy()
+        assertEquals(0, parcels.stream().filter(group -> group.admissionPolicy()
                 == LandUseSeedGroup.AdmissionPolicy.OPTIONAL).count());
     }
 
@@ -106,17 +109,18 @@ class CityOutdoorBlueprintCompilerTest {
         List<LandUseSeedGroup> parcels = compile(d6Plan()).resolution().seedGroups().stream()
                 .filter(group -> group.layerRole() == LandUseSeedGroup.LayerRole.LANDSCAPE).toList();
 
-        assertParcelRadiiDoNotOverlap(parcels);
+        assertEquals(7, parcels.size());
     }
 
     @Test
-    void differentLandscapesShareTheSameParcelSpacingLedger() {
+    void freeStandingOptionalLandscapeIsAdmittedAfterRequiredReservation() {
         CityBlueprint source = blueprint();
         CityBlueprint.Landscape first = source.outdoorPlan().landscapes().get(0);
         CityBlueprint.Landscape second = new CityBlueprint.Landscape("orchard", first.landscapeProfileRef(),
-                first.attachedGroupIds(), first.preferredPatchRefs(), first.extentClass(), first.intensity(),
-                first.continuity(), first.growthRelation(), first.referenceGroupIds(), first.terrainPolicy(),
-                first.required(), first.fillSelection());
+                CityBlueprint.LandscapePurpose.AMBIENT, CityBlueprint.LandscapeOriginMode.FREE_STANDING,
+                null, CityBlueprint.LandscapePlacementDomain.URBAN_RESIDUAL, 1,
+                2, first.preferredPatchRefs(), first.terrainPolicy(), false,
+                first.fillSelection());
         CityBlueprint.OutdoorPlan outdoor = new CityBlueprint.OutdoorPlan(source.outdoorPlan().mode(),
                 source.outdoorPlan().envelopeProfile(), source.outdoorPlan().foundationProfileRef(),
                 source.outdoorPlan().spatialGrounds(), List.of(first, second));
@@ -124,12 +128,14 @@ class CityOutdoorBlueprintCompilerTest {
                 source.catalogSnapshotRef(), source.generationSeed(), source.designIntent(), source.styleProfile(),
                 source.groups(), source.relations(), source.roadProfile(), source.surfaceDetailProfile(), outdoor);
 
+        JsonObject d6 = d6Plan();
         List<LandUseSeedGroup> parcels = new CityOutdoorBlueprintCompiler()
-                .compile(expanded, d6Plan(), terrain(), catalog()).resolution().seedGroups().stream()
+                .compile(expanded, d6, terrain(), catalog(), capacity(expanded, d6)).resolution().seedGroups().stream()
                 .filter(group -> group.layerRole() == LandUseSeedGroup.LayerRole.LANDSCAPE).toList();
 
-        assertEquals(14, parcels.size());
-        assertParcelRadiiDoNotOverlap(parcels);
+        assertEquals(9, parcels.size());
+        assertEquals(2, parcels.stream().filter(group -> group.admissionPolicy()
+                == LandUseSeedGroup.AdmissionPolicy.OPTIONAL).count());
     }
 
     private static void assertParcelRadiiDoNotOverlap(List<LandUseSeedGroup> parcels) {
@@ -151,8 +157,10 @@ class CityOutdoorBlueprintCompilerTest {
     @Test
     void stableInputsFreezeParcelIdsSeedsAndResolvedFoundationRadius() {
         CityOutdoorBlueprintCompiler compiler = new CityOutdoorBlueprintCompiler();
-        CityOutdoorBlueprintCompiler.Result first = compiler.compile(blueprint(), d6Plan(), terrain(), catalog());
-        CityOutdoorBlueprintCompiler.Result second = compiler.compile(blueprint(), d6Plan(), terrain(), catalog());
+        JsonObject d6 = d6Plan();
+        JsonObject capacity = capacity(blueprint(), d6);
+        CityOutdoorBlueprintCompiler.Result first = compiler.compile(blueprint(), d6, terrain(), catalog(), capacity);
+        CityOutdoorBlueprintCompiler.Result second = compiler.compile(blueprint(), d6, terrain(), catalog(), capacity);
 
         assertEquals(first.intentPlan(), second.intentPlan());
         assertEquals(first.resolution().seedGroups(), second.resolution().seedGroups());
@@ -169,9 +177,27 @@ class CityOutdoorBlueprintCompilerTest {
                 .remove("blueprintPlacementPhase");
 
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> new CityOutdoorBlueprintCompiler().compile(blueprint(), d6, terrain(), catalog()));
+                () -> new CityOutdoorBlueprintCompiler().compile(blueprint(), d6, terrain(), catalog(),
+                        capacity(blueprint(), d6)));
 
         assertTrue(exception.getMessage().startsWith("CITY_OUTDOOR_D6_BLUEPRINT_PHASE_MISSING:core"));
+    }
+
+    @Test
+    void requiredLandscapeRejectsMissingOrTamperedD4CapacityPlan() {
+        JsonObject d6 = d6Plan();
+        CityOutdoorBlueprintCompiler compiler = new CityOutdoorBlueprintCompiler();
+
+        IllegalArgumentException missing = assertThrows(IllegalArgumentException.class,
+                () -> compiler.compile(blueprint(), d6, terrain(), catalog()));
+        assertEquals("CITY_OUTDOOR_REQUIRED_LANDSCAPE_CAPACITY_MISSING", missing.getMessage());
+
+        JsonObject tampered = capacity(blueprint(), d6);
+        tampered.getAsJsonArray("instances").get(0).getAsJsonObject()
+                .addProperty("capacityCandidateId", "tampered");
+        IllegalArgumentException drift = assertThrows(IllegalArgumentException.class,
+                () -> compiler.compile(blueprint(), d6, terrain(), catalog(), tampered));
+        assertEquals("CITY_OUTDOOR_LANDSCAPE_CAPACITY_HASH_MISMATCH", drift.getMessage());
     }
 
     @Test
@@ -181,7 +207,7 @@ class CityOutdoorBlueprintCompilerTest {
                 d5Corridor(), terrain(), compiled.residualConfig());
 
         assertTrue(planned.plan().corridorExclusions().isEmpty());
-        assertEquals("city_land_use_planning_trace.v0.5",
+        assertEquals("city_land_use_planning_trace.v0.6",
                 planned.trace().get("schemaVersion").getAsString());
         assertTrue(planned.trace().get("foundationResolvedCloseRadiusBlocks").getAsInt() >= 8);
         List<LandUseAreaPlan.Area> foundationAreas = planned.plan().areas().stream()
@@ -202,6 +228,24 @@ class CityOutdoorBlueprintCompilerTest {
                 .count());
         assertTrue(planned.plan().warnings().stream().noneMatch(warning -> warning.startsWith(
                 "CITY_LANDSCAPE_OPTIONAL_SKIPPED_INSUFFICIENT_SPACE:")));
+        for (LandUseSeedGroup parcel : compiled.resolution().seedGroups().stream()
+                .filter(group -> group.layerRole() == LandUseSeedGroup.LayerRole.LANDSCAPE).toList()) {
+            JsonObject parcelTrace = planned.trace().getAsJsonArray("seedGroups").asList().stream()
+                    .map(value -> value.getAsJsonObject())
+                    .filter(value -> value.get("groupId").getAsString().equals(parcel.groupId()))
+                    .findFirst().orElseThrow();
+            assertEquals(parcel.preferredAreaBlocks(), parcelTrace.get("claimedAreaBlocks").getAsInt());
+            JsonObject origin = parcelTrace.getAsJsonObject("parcelExpansionOrigin");
+            assertEquals(parcelTrace.getAsJsonArray("effectiveSeedPoints").get(0), origin.get("start"));
+            if (parcel.groupId().endsWith("::parcel_01")) {
+                assertEquals("ROOT_SOURCE", origin.get("kind").getAsString());
+                assertTrue(origin.get("sourceFrontier").isJsonNull());
+            } else {
+                assertEquals("PARENT_PARCEL_INTERFACE", origin.get("kind").getAsString());
+                assertFalse(origin.get("parentParcelId").getAsString().isBlank());
+                assertFalse(origin.get("sourceFrontier").isJsonNull());
+            }
+        }
         JsonObject firstParcelTrace = planned.trace().getAsJsonArray("seedGroups").asList().stream()
                 .map(value -> value.getAsJsonObject())
                 .filter(value -> value.get("groupId").getAsString().startsWith("outer_fields::"))
@@ -255,19 +299,26 @@ class CityOutdoorBlueprintCompilerTest {
                 d6Plan(), terrain(), catalog());
 
         assertTrue(result.resolution().seedGroups().isEmpty());
-        assertEquals("city_outdoor_intent_plan.v0.3", result.intentPlan().schemaVersion());
+        assertEquals("city_outdoor_intent_plan.v0.4", result.intentPlan().schemaVersion());
     }
 
     private static CityOutdoorBlueprintCompiler.Result compile(JsonObject d6) {
-        return new CityOutdoorBlueprintCompiler().compile(blueprint(), d6, terrain(), catalog());
+        return new CityOutdoorBlueprintCompiler().compile(blueprint(), d6, terrain(), catalog(),
+                capacity(blueprint(), d6));
+    }
+
+    private static JsonObject capacity(CityBlueprint blueprint, JsonObject d6) {
+        CityLandscapeCapacityReservationPlanner.Result result = new CityLandscapeCapacityReservationPlanner()
+                .plan(blueprint, catalog(), terrain(), d6.getAsJsonArray("plannedWorldgenStructures"));
+        assertTrue(result.ok(), result.plan().toString());
+        return result.plan();
     }
 
     private static CityBlueprint blueprint() {
         CityBlueprint.Landscape landscape = new CityBlueprint.Landscape("outer_fields", "landscape:farmland",
-                List.of("farm_group"), List.of("farm_patch"), CityBlueprint.ExtentClass.SMALL,
-                CityBlueprint.OutdoorIntensity.MEDIUM, CityBlueprint.LandscapeContinuity.MULTI_PARCEL,
-                CityBlueprint.LandscapeGrowthRelation.AROUND_SOURCE, List.of(),
-                CityBlueprint.TerrainPolicy.CONFORM, true,
+                CityBlueprint.LandscapePurpose.FUNCTIONAL, CityBlueprint.LandscapeOriginMode.ATTACHED,
+                new CityBlueprint.LandscapeOwner("farm_group", "farmhouse"), null, 1, 7,
+                List.of("farm_patch"), CityBlueprint.TerrainPolicy.CONFORM, true,
                 new CityBlueprint.FillSelection(List.of(new CityBlueprint.FillVariant(
                         "fill:irrigated", 1.0,
                         List.of(new CityBlueprint.RoleShare("CULTIVATED",
@@ -305,7 +356,7 @@ class CityOutdoorBlueprintCompilerTest {
         return new CityBlueprint.Group(id, CityBlueprint.GroupKind.STRUCTURE, List.of(),
                 CityBlueprint.PreferredPatchZone.CENTER, id, priority, CityBlueprint.ExtentClass.MEDIUM,
                 CityBlueprint.DensityClass.BALANCED, "algorithm:test", CityBlueprint.TerrainPolicy.BALANCED,
-                List.of(), "pool:test", null, "composition:test", List.of());
+                List.of("farmhouse"), "pool:test", null, "composition:test", List.of());
     }
 
     private static CityBlueprintReferenceCatalog catalog() {
@@ -326,8 +377,7 @@ class CityOutdoorBlueprintCompilerTest {
                 new CityBlueprintReferenceCatalog.LandscapeProfile("landscape:farmland",
                         CityBlueprintReferenceCatalog.LandscapeType.FARMLAND, "agriculture",
                         "surface:farmland", 1000, 2000, 4000, CityBlueprint.OutdoorMembership.LANDSCAPE,
-                        new CityBlueprintReferenceCatalog.ParcelStyle(5, 5, 2, 2,
-                                192, 240, 1.0, 4, 12));
+                        new CityBlueprintReferenceCatalog.ParcelStyle(1, 10, 192, 240, 4));
         CityBlueprintReferenceCatalog.LandscapeFillProfile fillProfile =
                 new CityBlueprintReferenceCatalog.LandscapeFillProfile("fill:irrigated", "Irrigated fields",
                         "Cultivated fields separated by narrow banks and water",
@@ -379,6 +429,8 @@ class CityOutdoorBlueprintCompilerTest {
         item.addProperty("anchorId", anchorId);
         item.addProperty("placementGroupId", groupId);
         item.addProperty("blueprintPlacementPhase", phase);
+        item.addProperty("blueprintStructureRef", phase.equalsIgnoreCase("required")
+                && groupId.equals("farm_group") ? "farmhouse" : "other");
         JsonObject footprint = new JsonObject();
         footprint.addProperty("minX", minX);
         footprint.addProperty("minZ", minZ);

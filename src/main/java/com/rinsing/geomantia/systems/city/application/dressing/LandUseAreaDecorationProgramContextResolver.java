@@ -11,7 +11,7 @@ import java.util.List;
 /** Resolves DecorationProgram targets from a compiled block-level LandUseAreaPlan. */
 public final class LandUseAreaDecorationProgramContextResolver
         implements ResolvedDecorationProgramContext.Resolver {
-    public static final String PLAN_SCHEMA = "city_land_use_area_plan.v0.1";
+    public static final String PLAN_SCHEMA = "city_land_use_area_plan.v0.2";
 
     private final JsonObject areaPlan;
     private final List<CompiledDecorationProgramPlan.HardObstacle> hardObstacles;

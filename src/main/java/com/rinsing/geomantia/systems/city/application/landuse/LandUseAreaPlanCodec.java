@@ -44,6 +44,18 @@ public final class LandUseAreaPlanCodec {
         JsonArray areas = new JsonArray();
         plan.areas().forEach(area -> areas.add(areaJson(area)));
         obj.add("areas", areas);
+        JsonArray shared = new JsonArray();
+        for (LandUseAreaPlan.SharedBoundarySpan span : plan.sharedBoundarySpans()) {
+            JsonObject value = new JsonObject();
+            value.addProperty("z", span.z());
+            value.addProperty("minX", span.minX());
+            value.addProperty("maxX", span.maxX());
+            value.addProperty("writerAreaId", span.writerAreaId());
+            value.addProperty("neighborAreaId", span.neighborAreaId());
+            value.addProperty("relation", span.relation().name());
+            shared.add(value);
+        }
+        obj.add("sharedBoundarySpans", shared);
         obj.add("unclaimedSpans", spansJson(plan.unclaimedSpans()));
         JsonArray corridors = new JsonArray();
         for (LandUseAreaPlan.CorridorExclusion corridor : plan.corridorExclusions()) {
@@ -68,10 +80,20 @@ public final class LandUseAreaPlanCodec {
             corridors.add(new LandUseAreaPlan.CorridorExclusion(requiredString(value, "exclusionId"),
                     bounds(requiredObject(value, "blockBounds")), stringValue(value, "sourceRef", "")));
         }
+        List<LandUseAreaPlan.SharedBoundarySpan> shared = new ArrayList<>();
+        JsonArray sharedJson = requiredArray(obj, "sharedBoundarySpans");
+        for (JsonElement element : sharedJson) {
+            JsonObject value = element.getAsJsonObject();
+            shared.add(new LandUseAreaPlan.SharedBoundarySpan(requiredInt(value, "z"),
+                    requiredInt(value, "minX"), requiredInt(value, "maxX"),
+                    requiredString(value, "writerAreaId"), requiredString(value, "neighborAreaId"),
+                    LandUseAreaPlan.SharedBoundaryRelation.valueOf(requiredString(value, "relation"))));
+        }
         LandUseAreaPlan plan = new LandUseAreaPlan(requiredString(obj, "schemaVersion"),
                 requiredString(obj, "ruleVersion"), requiredString(obj, "cityId"),
                 stringValue(obj, "planHash", ""), bounds(requiredObject(obj, "planningBounds")), areas,
-                spans(requiredArray(obj, "unclaimedSpans")), corridors, strings(requiredArray(obj, "warnings")));
+                shared, spans(requiredArray(obj, "unclaimedSpans")), corridors,
+                strings(requiredArray(obj, "warnings")));
         if (!plan.planHash().isBlank() && !plan.planHash().equals(computePlanHash(plan))) {
             throw new IllegalArgumentException("LAND_USE_PLAN_HASH_MISMATCH");
         }

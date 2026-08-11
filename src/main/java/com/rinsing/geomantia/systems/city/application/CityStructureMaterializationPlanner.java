@@ -589,12 +589,21 @@ public final class CityStructureMaterializationPlanner {
                          JsonObject qualityReport) {
         public JsonObject asJson() {
             JsonObject result = new JsonObject();
-            result.addProperty("ok", qualityReport.get("passed").getAsBoolean());
+            boolean passed = qualityReport.get("passed").getAsBoolean();
+            result.addProperty("ok", passed);
             result.add("structureMaterializationPlan", structureMaterializationPlan);
             result.add("placedStructureLedger", placedStructureLedger);
             result.add("structureMaterializationTrace", structureMaterializationTrace);
             result.add("inferredFunctionAreaMap", inferredFunctionAreaMap);
             result.add("qualityReport", qualityReport);
+            JsonObject failureSummary = structureMaterializationTrace.has("failureSummary")
+                    && structureMaterializationTrace.get("failureSummary").isJsonObject()
+                    ? structureMaterializationTrace.getAsJsonObject("failureSummary") : null;
+            if (!passed && failureSummary != null && failureSummary.size() == 1) {
+                result.addProperty("reasonCode", failureSummary.keySet().iterator().next());
+            } else if (!passed) {
+                result.addProperty("reasonCode", "D6_PREFLIGHT_FAILED");
+            }
             JsonObject waitingSummary = structureMaterializationTrace.has("waitingSummary")
                     && structureMaterializationTrace.get("waitingSummary").isJsonObject()
                     ? structureMaterializationTrace.getAsJsonObject("waitingSummary") : null;

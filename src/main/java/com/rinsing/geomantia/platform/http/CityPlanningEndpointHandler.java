@@ -180,7 +180,8 @@ final class CityPlanningEndpointHandler {
                     "failed", "inspect_failed_attempt", compileResponse);
         }
         JsonObject finalized = handleFinalizeCompiledD4(debugRoot, runId, citySeedId,
-                compiled.terraSenseProfileSource(), compiled.structureAnchorPlan());
+                compiled.terraSenseProfileSource(), compiled.structureAnchorPlan(),
+                compiled.landscapeCapacityReservationPlan());
         JsonObject artifacts = finalized.has("artifacts") && finalized.get("artifacts").isJsonObject()
                 ? finalized.getAsJsonObject("artifacts") : new JsonObject();
         compileResponse.getAsJsonObject("artifacts").entrySet().forEach(entry ->
@@ -199,7 +200,8 @@ final class CityPlanningEndpointHandler {
 
     private static JsonObject handleFinalizeCompiledD4(Path debugRoot, String runId, String citySeedId,
                                                         JsonObject terraSenseProfileSource,
-                                                        JsonObject resolvedAnchorPlan) throws IOException {
+                                                        JsonObject resolvedAnchorPlan,
+                                                        JsonObject landscapeCapacityPlan) throws IOException {
         Path runDir = debugRoot.resolve(runId);
         loadCitySeedForD4(runDir, runId, citySeedId);
         Path d3PackagePath = d3PackagePath(runDir, citySeedId);
@@ -223,7 +225,7 @@ final class CityPlanningEndpointHandler {
                 result.structureAnchorMap().getAsJsonObject("semanticProfileSource")));
         Files.writeString(qualityPath, CityJson.GSON.toJson(result.qualityReport()));
         Path previewPath = new CityStructureLandingPreviewRenderer()
-                .renderD4(result.structureAnchorMap(), reviewPackage, outputDirectory);
+                .renderD4(result.structureAnchorMap(), reviewPackage, landscapeCapacityPlan, outputDirectory);
         JsonObject response = result.asJson();
         JsonObject artifacts = new JsonObject();
         artifacts.addProperty("structureAnchorPlan", debugRef(debugRoot, anchorPlanPath));
@@ -1298,7 +1300,8 @@ final class CityPlanningEndpointHandler {
         loadCitySeed(runDir, runId, citySeedId);
         BlueprintOutdoorInputs inputs = loadBlueprintOutdoorInputs(debugRoot, runDir, citySeedId);
         CityOutdoorBlueprintCompiler.Result compiled = new CityOutdoorBlueprintCompiler().compile(
-                inputs.blueprint(), inputs.d6Plan(), inputs.terrainField(), inputs.referenceCatalog());
+                inputs.blueprint(), inputs.d6Plan(), inputs.terrainField(), inputs.referenceCatalog(),
+                inputs.landscapeCapacityReservationPlan());
         Path outputDirectory = inputs.landUseDirectory();
         Files.createDirectories(outputDirectory);
         Path intentPath = outputDirectory.resolve("city_outdoor_intent_plan.json");
@@ -2919,10 +2922,49 @@ final class CityPlanningEndpointHandler {
         }
     }
 
+    static boolean workflowBlueprintAnchorMapCurrent(Path anchorMapPath, Path blueprintDir) {
+        Path contextPath = blueprintDir.resolve("city_blueprint_context.json");
+        Path validationPath = blueprintDir.resolve("city_blueprint_validation_report.json");
+        Path submissionPath = blueprintDir.resolve("city_blueprint_submission_trace.json");
+        Path blueprintPath = blueprintDir.resolve("city_blueprint.json");
+        if (!Files.isRegularFile(anchorMapPath)
+                || !Files.isRegularFile(contextPath)
+                || !Files.isRegularFile(validationPath)
+                || !Files.isRegularFile(submissionPath)
+                || !Files.isRegularFile(blueprintPath)) {
+            return false;
+        }
+        try {
+            JsonObject anchorMap = JsonParser.parseString(Files.readString(anchorMapPath)).getAsJsonObject();
+            JsonObject context = JsonParser.parseString(Files.readString(contextPath)).getAsJsonObject();
+            JsonObject validation = JsonParser.parseString(Files.readString(validationPath)).getAsJsonObject();
+            JsonObject submission = JsonParser.parseString(Files.readString(submissionPath)).getAsJsonObject();
+            if (!isBlueprintAnchorMap(anchorMap)) return false;
+            JsonObject provenance = anchorMap.getAsJsonObject("cityBlueprintCompileProvenance");
+            String contextId = stringValue(context, "contextId", "");
+            String blueprintHash = sha256(Files.readString(blueprintPath));
+            return !contextId.isBlank()
+                    && CityBlueprintService.CONTEXT_SCHEMA.equals(stringValue(context, "schemaVersion", ""))
+                    && stringValue(anchorMap, "cityId", "").equals(stringValue(context, "cityId", ""))
+                    && contextId.equals(stringValue(provenance, "contextId", ""))
+                    && blueprintHash.equals(stringValue(provenance, "sourceBlueprintHash", ""))
+                    && booleanValue(validation, "valid", false)
+                    && contextId.equals(stringValue(validation, "contextId", ""))
+                    && "accepted".equals(stringValue(submission, "status", ""))
+                    && intValue(submission, "aiCityDesignSubmissionCount", 0) == 1
+                    && contextId.equals(stringValue(submission, "contextId", ""))
+                    && blueprintHash.equals(stringValue(submission, "cityBlueprintHash", ""));
+        } catch (RuntimeException | IOException ignored) {
+            return false;
+        }
+    }
+
     private static boolean workflowRunD4Blueprint(WorkflowContext ctx) throws IOException {
         Path blueprintDir = cityStageDir(ctx.runDir(), ctx.citySeedId(), CityTestRunLayout.BLUEPRINT);
         Path contextPath = blueprintDir.resolve("city_blueprint_context.json");
         Path blueprintPath = blueprintDir.resolve("city_blueprint.json");
+        Path anchorMapPath = cityStageDir(ctx.runDir(), ctx.citySeedId(), CityTestRunLayout.D4)
+                .resolve("structure_anchor_map.json");
         if (!Files.isRegularFile(contextPath)) {
             ctx.report().addProperty("requestedWorkflowStatus", "awaiting_city_blueprint");
             ctx.report().addProperty("blueprintStatus", "context_required");
@@ -2941,7 +2983,9 @@ final class CityPlanningEndpointHandler {
                     "Submit the single complete CityBlueprint before continuing D4.");
             return false;
         }
-        return ctx.workflow().runStep("city_compile_d4_blueprint", null,
+        Path skipArtifact = workflowBlueprintAnchorMapCurrent(anchorMapPath, blueprintDir)
+                ? anchorMapPath : null;
+        return ctx.workflow().runStep("city_compile_d4_blueprint", skipArtifact,
                 () -> handleCompileD4Blueprint(ctx.debugRoot(), ctx.runId(), ctx.citySeedId()));
     }
 
@@ -3552,18 +3596,23 @@ final class CityPlanningEndpointHandler {
 
         Path d5Path = cityStageDir(runDir, citySeedId, CityTestRunLayout.D5)
                 .resolve("reservation_mask_plan.json");
+        Path landscapeCapacityPath = cityStageDir(runDir, citySeedId, CityTestRunLayout.D4)
+                .resolve("city_landscape_capacity_reservation_plan.json");
         Path d6Path = cityStageDir(runDir, citySeedId, CityTestRunLayout.D6)
                 .resolve("structure_materialization_plan.json");
-        if (!Files.isRegularFile(d5Path) || !Files.isRegularFile(d6Path)) {
+        if (!Files.isRegularFile(d5Path) || !Files.isRegularFile(d6Path)
+                || !Files.isRegularFile(landscapeCapacityPath)) {
             throw new IllegalArgumentException("CITY_BLUEPRINT_OUTDOOR_D5_D6_MISSING");
         }
         JsonObject d5 = JsonParser.parseString(Files.readString(d5Path)).getAsJsonObject();
+        JsonObject landscapeCapacity = JsonParser.parseString(
+                Files.readString(landscapeCapacityPath)).getAsJsonObject();
         JsonObject d6 = JsonParser.parseString(Files.readString(d6Path)).getAsJsonObject();
         validateLockedMaterializationPlan(d6);
         if (!citySeedId.equals(stringValue(d6, "cityId", citySeedId))) {
             throw new IllegalArgumentException("CITY_BLUEPRINT_OUTDOOR_D6_CITY_ID_MISMATCH");
         }
-        return new BlueprintOutdoorInputs(blueprint, references, terrain, d5, d6,
+        return new BlueprintOutdoorInputs(blueprint, references, terrain, d5, d6, landscapeCapacity,
                 canonicalArtifactHash(new CityBlueprintCodec().write(blueprint)), snapshotHash,
                 canonicalArtifactHash(referenceJson),
                 canonicalArtifactHash(new LandUseTerrainFieldCodec().toJson(terrain)),
@@ -4465,6 +4514,7 @@ final class CityPlanningEndpointHandler {
                                           LandUseTerrainField terrainField,
                                           JsonObject d5MaskPlan,
                                           JsonObject d6Plan,
+                                          JsonObject landscapeCapacityReservationPlan,
                                           String blueprintHash,
                                           String catalogSnapshotHash,
                                           String referenceCatalogHash,

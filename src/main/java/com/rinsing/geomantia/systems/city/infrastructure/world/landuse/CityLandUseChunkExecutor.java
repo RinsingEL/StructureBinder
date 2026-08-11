@@ -51,24 +51,58 @@ public final class CityLandUseChunkExecutor {
                 : CityLandUseMicroGrader.plan(fragment, terrainView)) {
             fillByColumn.put(new ColumnKey(decision.x(), decision.z()), decision);
         }
+        Map<ColumnKey, CityLandUseMicroGrader.FoundationDecision> foundationByColumn = new HashMap<>();
+        for (CityLandUseMicroGrader.FoundationDecision decision
+                : CityLandUseMicroGrader.planFoundation(fragment, terrainView)) {
+            foundationByColumn.put(new ColumnKey(decision.x(), decision.z()), decision);
+        }
         Map<ColumnKey, Integer> plannedSurfaceY = new HashMap<>();
         Set<ColumnKey> countedNaturalSkips = new HashSet<>();
         Set<ColumnKey> preparedFillColumns = new HashSet<>();
+        Set<ColumnKey> preparedCutColumns = new HashSet<>();
+        Set<ColumnKey> preservedFoundationColumns = new HashSet<>();
         for (CityLandUseChunkCompiler.SurfaceOperation operation : fragment.surfaceOperations()) {
             ColumnKey key = new ColumnKey(operation.x(), operation.z());
             ColumnSample column = terrainView.sample(operation.x(), operation.z());
-            if (!column.naturalSurface()) {
+            CityLandUseMicroGrader.FoundationDecision foundation = foundationByColumn.get(key);
+            if (foundation != null && foundation.mode() == CityLandUseMicroGrader.FoundationMode.PRESERVE) {
+                preservedFoundationColumns.add(key);
+                if (countedNaturalSkips.add(key)) naturalSurfaceSkipped++;
+                continue;
+            }
+            boolean foundationLiquidFill = foundation != null
+                    && foundation.mode() == CityLandUseMicroGrader.FoundationMode.FILL
+                    && ("minecraft:water".equals(column.surfaceBlockId())
+                    || "minecraft:lava".equals(column.surfaceBlockId()));
+            if (!column.naturalSurface() && !foundationLiquidFill) {
                 if (countedNaturalSkips.add(key)) {
                     naturalSurfaceSkipped++;
                 }
                 continue;
             }
             CityLandUseMicroGrader.FillDecision fill = fillByColumn.get(key);
-            int targetSurfaceY = fill == null ? column.surfaceY() : fill.targetY();
-            if (fill != null && preparedFillColumns.add(key)) {
+            int targetSurfaceY = foundation != null ? foundation.targetY()
+                    : fill == null ? column.surfaceY() : fill.targetY();
+            boolean shouldFill = foundation != null
+                    ? foundation.mode() == CityLandUseMicroGrader.FoundationMode.FILL : fill != null;
+            if (shouldFill && preparedFillColumns.add(key)) {
                 for (int y = column.surfaceY() + 1; y < targetSurfaceY; y++) {
                     PreparedMutation mutation = prepare(world, operation.areaId(), OperationPhase.MICRO_FILL,
                             operation.x(), y, operation.z(), fragment.microFillBlockId(), true);
+                    if (mutation.failureReason() != null) {
+                        return ExecutionResult.failed(fragment, mutation.failureReason(),
+                                preparedCount(basePrepared, cropPrepared, boundaryPrepared), 0,
+                                naturalSurfaceSkipped, occupiedBoundarySkipped, true);
+                    }
+                    basePrepared.add(mutation);
+                }
+            }
+            if (foundation != null
+                    && foundation.mode() == CityLandUseMicroGrader.FoundationMode.CUT
+                    && preparedCutColumns.add(key)) {
+                for (int y = targetSurfaceY + 1; y <= column.surfaceY(); y++) {
+                    PreparedMutation mutation = prepare(world, operation.areaId(), OperationPhase.MICRO_CUT,
+                            operation.x(), y, operation.z(), "minecraft:air", false);
                     if (mutation.failureReason() != null) {
                         return ExecutionResult.failed(fragment, mutation.failureReason(),
                                 preparedCount(basePrepared, cropPrepared, boundaryPrepared), 0,
@@ -84,7 +118,7 @@ public final class CityLandUseChunkExecutor {
             };
             PreparedMutation mutation = prepare(world, operation.areaId(), phase,
                     operation.x(), targetSurfaceY + operation.surfaceOffset(), operation.z(), operation.blockId(),
-                    operation.requireReplaceableTarget() || fill != null && operation.surfaceOffset() == 0);
+                    operation.requireReplaceableTarget() || shouldFill && operation.surfaceOffset() == 0);
             if (mutation.failureReason() != null) {
                 return ExecutionResult.failed(fragment, mutation.failureReason(),
                         preparedCount(basePrepared, cropPrepared, boundaryPrepared), 0,
@@ -97,6 +131,7 @@ public final class CityLandUseChunkExecutor {
 
         for (CityLandUseChunkCompiler.BoundaryOperation operation : fragment.boundaryOperations()) {
             ColumnKey key = new ColumnKey(operation.x(), operation.z());
+            if (preservedFoundationColumns.contains(key)) continue;
             ColumnSample column = terrainView.sample(operation.x(), operation.z());
             int surfaceY = plannedSurfaceY.getOrDefault(key, column.surfaceY());
             PreparedMutation mutation = prepare(world, operation.areaId(), OperationPhase.BOUNDARY,
@@ -282,6 +317,7 @@ public final class CityLandUseChunkExecutor {
 
     public enum OperationPhase {
         MICRO_FILL,
+        MICRO_CUT,
         SURFACE,
         SURFACE_OVERLAY,
         CROP,

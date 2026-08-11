@@ -34,7 +34,7 @@ import java.util.Set;
 
 /** Compiles an accepted, coordinate-free Blueprint into the existing fixed-template D4 anchor contract. */
 public final class CityBlueprintCompilerService {
-    public static final String TRACE_SCHEMA = "city_generation_compile_trace.v0.9";
+    public static final String TRACE_SCHEMA = "city_generation_compile_trace.v0.10";
     public static final String EXTENT_SCHEMA = "group_extent_map.v0.7";
     private static final int INTERNAL_MAX_ANCHORS_PER_GROUP = 256;
 
@@ -44,6 +44,8 @@ public final class CityBlueprintCompilerService {
     private final CityStructureArrayLayoutLoopPlanner continuousArrayPlanner =
             new CityStructureArrayLayoutLoopPlanner();
     private final CityBlueprintGroupLayoutPlanner groupLayoutPlanner = new CityBlueprintGroupLayoutPlanner();
+    private final CityLandscapeCapacityReservationPlanner landscapeCapacityPlanner =
+            new CityLandscapeCapacityReservationPlanner();
 
     public CompilationResult compile(Path debugRoot, String runId, String cityId) throws IOException {
         Path runDir = requireRunDirectory(debugRoot, runId);
@@ -126,9 +128,9 @@ public final class CityBlueprintCompilerService {
         review.landformPatches().forEach(patch -> patches.put(patch.landformPatchId(), patch));
         List<CityBlueprint.Group> groups = orderGroups(blueprint.groups(), blueprint.relations());
 
-        JsonArray anchors = new JsonArray();
-        JsonArray occupied = new JsonArray();
-        JsonArray selections = new JsonArray();
+        JsonArray anchors;
+        JsonArray occupied;
+        JsonArray selections;
         Map<String, GroupState> states = new LinkedHashMap<>();
         List<LandformPatchSummary> planningPatches = review.landformPatches().stream()
                 .filter(patch -> !patch.memberCells().isEmpty())
@@ -156,31 +158,106 @@ public final class CityBlueprintCompilerService {
                     review.grid().cellStepBlocks(), planningBounds, algorithm,
                     groupLayoutPlanner.parameters(algorithm, group.densityClass()),
                     resolveConnectionConfiguration(group, catalog),
-                    minimumGroupStructureCount(review.targetScale().scale(), group.extentClass())));
+                    minimumGroupStructureCount(review.targetScale().scale(), group.extentClass(), algorithm)));
         }
 
-        ConnectivityPlan connectivityPlan = ConnectivityPlan.empty();
-
-        // Required structures are globally completed before any group receives optional fill.
+        Map<String, GroupState> initialStates = Map.copyOf(states);
+        List<RequiredRequest> requiredRequests = new ArrayList<>();
         for (CityBlueprint.Group group : groups) {
-            GroupState state = states.get(group.groupId());
             int ordinal = 0;
             for (String structureRef : group.requiredStructureRefs()) {
-                ordinal++;
-                Placement placement = chooseOne(runDir, review, structureSource, templateCatalogJson,
-                        templates, blueprint, state, structureRef, PlacementPhase.REQUIRED, ordinal,
-                        occupied, catalog, states, selections, null, terrainGate);
-                if (placement == null) {
-                    JsonObject failureTrace = trace(blueprint, context, selections, states,
-                            connectivityPlan, "failed",
-                            "CITY_BLUEPRINT_REQUIRED_STRUCTURE_NO_LEGAL_PLACEMENT");
-                    return CompilationResult.failed(failureTrace,
-                            "CITY_BLUEPRINT_REQUIRED_STRUCTURE_NO_LEGAL_PLACEMENT",
-                            group.groupId() + "/" + structureRef + " has no legal placement.");
-                }
-                commit(placement, anchors, occupied, state);
+                requiredRequests.add(new RequiredRequest(group.groupId(), structureRef, ++ordinal));
             }
         }
+        requiredRequests.sort(Comparator.comparingInt(request ->
+                "CENTER_SYMMETRIC".equals(initialStates.get(request.groupId()).layoutAlgorithm()) ? 0 : 1));
+        int[] ranks = new int[requiredRequests.size()];
+        int[] limits = new int[requiredRequests.size()];
+        CityLandscapeCapacityReservationPlanner.Result landscapeCapacity = null;
+        int jointSearchNodes = 0;
+        int buildingSearchNodes = 0;
+        while (true) {
+            if (++jointSearchNodes > CityLandscapeCapacityReservationPlanner.SEARCH_NODE_LIMIT) {
+                JsonObject failureTrace = trace(blueprint, context, new JsonArray(), initialStates,
+                        ConnectivityPlan.empty(), "failed", "CITY_BLUEPRINT_LANDSCAPE_SEARCH_LIMIT_EXHAUSTED");
+                return CompilationResult.failed(failureTrace,
+                        "CITY_BLUEPRINT_LANDSCAPE_SEARCH_LIMIT_EXHAUSTED",
+                        "Required building/Landscape joint search exhausted its 100000-node limit.");
+            }
+            buildingSearchNodes++;
+            states = freshStates(initialStates);
+            anchors = new JsonArray();
+            occupied = new JsonArray();
+            selections = new JsonArray();
+            boolean placed = true;
+            for (int index = 0; index < requiredRequests.size(); index++) {
+                RequiredRequest request = requiredRequests.get(index);
+                GroupState state = states.get(request.groupId());
+                Placement placement = chooseOne(runDir, review, structureSource, templateCatalogJson,
+                        templates, blueprint, state, request.structureRef(), PlacementPhase.REQUIRED,
+                        request.ordinal(), occupied, catalog, states, selections, null, terrainGate, ranks[index]);
+                JsonObject event = selections.get(selections.size() - 1).getAsJsonObject();
+                limits[index] = intValue(event, "candidateCount", 0);
+                if (placement == null) {
+                    placed = false;
+                    break;
+                }
+                commit(placement, anchors, occupied, state);
+                if ("CENTER_SYMMETRIC".equals(state.layoutAlgorithm())
+                        && state.requiredCount() == state.group().requiredStructureRefs().size()) {
+                    List<String> pool = catalog.pool(state.group().fillPoolRef());
+                    int cursor = 0;
+                    while (state.internalStructureCount() < state.minimumStructureCount()) {
+                        String structureRef = nextFillRef(pool, state.blockedRefs(), cursor++);
+                        if (structureRef == null) {
+                            placed = false;
+                            break;
+                        }
+                        List<Placement> pair = chooseCenterSymmetricPair(runDir, review, structureSource,
+                                templateCatalogJson, templates, blueprint, state, structureRef,
+                                state.anchorCount() + 1, occupied, catalog, states, selections, terrainGate);
+                        if (pair.isEmpty()) {
+                            state.blockRef(structureRef);
+                            continue;
+                        }
+                        for (Placement member : pair) commit(member, anchors, occupied, state);
+                    }
+                    if (!placed) break;
+                }
+            }
+            if (placed) {
+                int remainingNodes = CityLandscapeCapacityReservationPlanner.SEARCH_NODE_LIMIT - jointSearchNodes;
+                landscapeCapacity = landscapeCapacityPlanner.plan(blueprint, references, terrainField, anchors,
+                        remainingNodes);
+                jointSearchNodes += intValue(landscapeCapacity.plan(), "searchNodeCount", 0);
+                if (landscapeCapacity.ok()) break;
+                if ("CITY_BLUEPRINT_LANDSCAPE_SEARCH_LIMIT_EXHAUSTED".equals(
+                        landscapeCapacity.reasonCode())) {
+                    JsonObject failureTrace = trace(blueprint, context, selections, states,
+                            ConnectivityPlan.empty(), "failed", landscapeCapacity.reasonCode());
+                    failureTrace.add("landscapeCapacityReservationPlan",
+                            landscapeCapacity.plan().deepCopy());
+                    return CompilationResult.failed(failureTrace, landscapeCapacity.reasonCode(),
+                            "Required building/Landscape joint search exhausted its 100000-node limit.");
+                }
+            }
+            if (!incrementRanks(ranks, limits)) {
+                String reason = landscapeCapacity == null
+                        ? "CITY_BLUEPRINT_REQUIRED_STRUCTURE_NO_LEGAL_PLACEMENT"
+                        : landscapeCapacity.reasonCode();
+                JsonObject failureTrace = trace(blueprint, context, selections, states,
+                        ConnectivityPlan.empty(), "failed", reason);
+                if (landscapeCapacity != null) failureTrace.add("landscapeCapacityReservationPlan",
+                        landscapeCapacity.plan().deepCopy());
+                return CompilationResult.failed(failureTrace, reason,
+                        "All finite required building/Landscape candidate combinations were exhausted.");
+            }
+        }
+        ConnectivityPlan connectivityPlan = ConnectivityPlan.empty();
+        landscapeCapacity.plan().addProperty("searchNodeCount", jointSearchNodes);
+        landscapeCapacity.plan().addProperty("jointBuildingSearchNodeCount", buildingSearchNodes);
+        CityLandscapeCapacityReservationPlanner.refreshPlanHash(landscapeCapacity.plan());
+        addLandscapeCapacityToOccupied(landscapeCapacity.plan(), occupied);
 
         // Form each group with its own array before connection growth. Connection structures are
         // city stitching and must not substitute for the group's required/fill population.
@@ -188,9 +265,11 @@ public final class CityBlueprintCompilerService {
             GroupState state = states.get(group.groupId());
             List<String> pool = catalog.pool(group.fillPoolRef());
             int cursor = 0;
+            boolean centerSymmetric = "CENTER_SYMMETRIC".equals(state.layoutAlgorithm());
             while (state.internalStructureCount() < state.minimumStructureCount()
                     || state.internalSpatialDemandBlocks() < state.targetAreaBlocks()) {
-                if (state.anchorCount() >= INTERNAL_MAX_ANCHORS_PER_GROUP) {
+                int requestedBatchSize = centerSymmetric ? 2 : 1;
+                if (state.anchorCount() + requestedBatchSize > INTERNAL_MAX_ANCHORS_PER_GROUP) {
                     JsonObject failureTrace = trace(blueprint, context, selections, states,
                             connectivityPlan, "failed",
                             "CITY_BLUEPRINT_INTERNAL_SAFETY_LIMIT_REACHED");
@@ -203,10 +282,18 @@ public final class CityBlueprintCompilerService {
                     state.stop("CONNECTED_SPACE_EXHAUSTED");
                     break;
                 }
-                Placement placement = chooseOne(runDir, review, structureSource, templateCatalogJson,
-                        templates, blueprint, state, structureRef, PlacementPhase.FILL,
-                        state.anchorCount() + 1, occupied, catalog, states, selections, null, terrainGate);
-                if (placement == null) {
+                List<Placement> placements;
+                if (centerSymmetric) {
+                    placements = chooseCenterSymmetricPair(runDir, review, structureSource,
+                            templateCatalogJson, templates, blueprint, state, structureRef,
+                            state.anchorCount() + 1, occupied, catalog, states, selections, terrainGate);
+                } else {
+                    Placement placement = chooseOne(runDir, review, structureSource, templateCatalogJson,
+                            templates, blueprint, state, structureRef, PlacementPhase.FILL,
+                            state.anchorCount() + 1, occupied, catalog, states, selections, null, terrainGate);
+                    placements = placement == null ? List.of() : List.of(placement);
+                }
+                if (placements.isEmpty()) {
                     state.blockRef(structureRef);
                     if (state.blockedRefs().containsAll(pool)) {
                         state.stop("CONNECTED_SPACE_EXHAUSTED");
@@ -214,7 +301,7 @@ public final class CityBlueprintCompilerService {
                     }
                     continue;
                 }
-                commit(placement, anchors, occupied, state);
+                for (Placement placement : placements) commit(placement, anchors, occupied, state);
             }
             if (state.stopReason().isBlank()) {
                 state.stop(state.internalStructureCount() >= state.minimumStructureCount()
@@ -261,12 +348,17 @@ public final class CityBlueprintCompilerService {
         provenance.addProperty("schemaVersion", TRACE_SCHEMA);
         provenance.addProperty("generationSeed", blueprint.generationSeed());
         provenance.addProperty("selectionMode", "programmatic_blueprint_compiler");
+        provenance.addProperty("contextId", contextId);
+        provenance.addProperty("sourceBlueprintHash", sha256(blueprintRaw));
         anchorPlan.add("cityBlueprintCompileProvenance", provenance);
+        landscapeCapacity.plan().addProperty("sourceD4Hash", sha256(CityJson.GSON.toJson(anchorPlan)));
+        CityLandscapeCapacityReservationPlanner.refreshPlanHash(landscapeCapacity.plan());
         JsonObject compileTrace = trace(blueprint, context, selections, states,
                 connectivityPlan, "compiled", "");
+        compileTrace.add("landscapeCapacityReservationPlan", landscapeCapacity.plan().deepCopy());
         JsonObject extentMap = extentMap(blueprint, states, connectivityPlan);
         return CompilationResult.compiled(anchorPlan, compileTrace, extentMap, structureSource,
-                templateCatalogJson);
+                templateCatalogJson, landscapeCapacity.plan());
     }
 
     public JsonObject persist(Path debugRoot, String runId, String cityId, CompilationResult result)
@@ -289,6 +381,11 @@ public final class CityBlueprintCompilerService {
             writeAtomic(extentPath, result.groupExtentMap());
             artifacts.addProperty("groupExtentMap", ref(debugRoot, extentPath));
             response.add("groupExtentMap", result.groupExtentMap().deepCopy());
+            Path landscapePath = output.resolve("city_landscape_capacity_reservation_plan.json");
+            writeAtomic(landscapePath, result.landscapeCapacityReservationPlan());
+            artifacts.addProperty("landscapeCapacityReservationPlan", ref(debugRoot, landscapePath));
+            response.add("landscapeCapacityReservationPlan",
+                    result.landscapeCapacityReservationPlan().deepCopy());
         }
         response.add("artifacts", artifacts);
         return response;
@@ -310,6 +407,28 @@ public final class CityBlueprintCompilerService {
                                  JsonArray selections,
                                  GroupState connectivityTarget,
                                  CityStructureTerrainGate terrainGate) throws IOException {
+        return chooseOne(runDir, review, structureSource, templateCatalog, templates, blueprint, state,
+                structureRef, phase, ordinal, occupied, catalog, states, selections, connectivityTarget,
+                terrainGate, 0);
+    }
+
+    private Placement chooseOne(Path runDir,
+                                CityLandformReviewPackage review,
+                                JsonObject structureSource,
+                                JsonObject templateCatalog,
+                                CityTemplateCatalog templates,
+                                CityBlueprint blueprint,
+                                GroupState state,
+                                String structureRef,
+                                PlacementPhase phase,
+                                int ordinal,
+                                JsonArray occupied,
+                                CatalogIndex catalog,
+                                Map<String, GroupState> states,
+                                JsonArray selections,
+                                GroupState connectivityTarget,
+                                CityStructureTerrainGate terrainGate,
+                                int choiceRank) throws IOException {
         boolean required = phase == PlacementPhase.REQUIRED;
         List<CandidateChoice> choices = new ArrayList<>();
         JsonArray attempts = new JsonArray();
@@ -370,7 +489,7 @@ public final class CityBlueprintCompilerService {
         event.addProperty("candidateCount", choices.size());
         event.add("attempts", attempts);
         event.add("compilerFilterReasonCounts", compilerFilterReasons);
-        if (choices.isEmpty()) {
+        if (choices.isEmpty() || choiceRank < 0 || choiceRank >= choices.size()) {
             event.addProperty("status", "no_legal_candidate");
             event.addProperty("reasonCode", required
                     ? "CITY_BLUEPRINT_REQUIRED_STRUCTURE_NO_LEGAL_PLACEMENT"
@@ -380,7 +499,8 @@ public final class CityBlueprintCompilerService {
             selections.add(event);
             return null;
         }
-        CandidateChoice chosen = choices.get(0);
+        CandidateChoice chosen = choices.get(choiceRank);
+        event.addProperty("candidateRank", choiceRank);
         event.addProperty("status", "committed");
         event.addProperty("candidateId", string(chosen.candidate(), "arrayCandidateId"));
         event.addProperty("templateId", chosen.template().templateId());
@@ -417,6 +537,15 @@ public final class CityBlueprintCompilerService {
                 "clearanceBlocks", "materializationSource", "templatePlacementPlan")) {
             if (frozenItem.has(field)) anchor.add(field, frozenItem.get(field).deepCopy());
         }
+        if (frozenItem.has("plannedFootprint")) {
+            anchor.add("plannedFootprint", frozenItem.get("plannedFootprint").deepCopy());
+        }
+        if (frozenItem.has("estimatedCollisionEnvelope")) {
+            anchor.add("collisionEnvelope", frozenItem.get("estimatedCollisionEnvelope").deepCopy());
+        }
+        if (frozenItem.has("estimatedMaskEnvelope")) {
+            anchor.add("maskEnvelope", frozenItem.get("estimatedMaskEnvelope").deepCopy());
+        }
         anchor.addProperty("anchorId", state.group().groupId() + "_"
                 + phase.anchorLabel + "_" + String.format("%03d", ordinal));
         anchor.addProperty("placementGroupId", state.group().groupId());
@@ -432,6 +561,277 @@ public final class CityBlueprintCompilerService {
         anchor.add("blueprintLayout", layoutTrace);
         return new Placement(anchor, requiredObject(chosen.candidate(), "groupCollisionEnvelope").deepCopy(),
                 structureRef, required, phase, chosen.connectivity());
+    }
+
+    private List<Placement> chooseCenterSymmetricPair(Path runDir,
+                                                       CityLandformReviewPackage review,
+                                                       JsonObject structureSource,
+                                                       JsonObject templateCatalog,
+                                                       CityTemplateCatalog templates,
+                                                       CityBlueprint blueprint,
+                                                       GroupState state,
+                                                       String structureRef,
+                                                       int firstOrdinal,
+                                                       JsonArray occupied,
+                                                       CatalogIndex catalog,
+                                                       Map<String, GroupState> states,
+                                                       JsonArray selections,
+                                                       CityStructureTerrainGate terrainGate) throws IOException {
+        if (state.layoutFrame() == null || state.extent() == null || state.requiredCount() != 1) {
+            throw fail("CITY_BLUEPRINT_CENTER_SYMMETRIC_STATE_INVALID",
+                    "CENTER_SYMMETRIC requires one committed center structure before paired fill.");
+        }
+        int pairIndex = Math.max(0, (state.anchorCount() - 1) / 2);
+        BlockBounds centerBounds = state.centerStructureExtent();
+        int centerSpan = Math.max(width(centerBounds), depth(centerBounds));
+        List<CenterSymmetricChoice> choices = new ArrayList<>();
+        JsonArray attempts = new JsonArray();
+        JsonObject compilerFilterReasons = new JsonObject();
+        List<TemplateCandidate> candidates = new ArrayList<>(catalog.templates(structureRef));
+        candidates.sort(Comparator.comparingLong(candidate -> tieKey(blueprint.generationSeed(),
+                state.group().groupId(), structureRef, candidate.templateId(), candidate.variantId())));
+        for (TemplateCandidate template : candidates) {
+            CityTemplateCatalog.Template physicalTemplate = templates.requireTemplate(
+                    template.templateId(), template.variantId());
+            int memberSpan = Math.max(physicalTemplate.width(), physicalTemplate.depth())
+                    + physicalTemplate.clearanceBlocks() * 2;
+            CityTemplatePlacementGeometry memberGeometry = physicalTemplate.geometry(
+                    physicalTemplate.allowedRotations().get(0), physicalTemplate.allowedMirrors().get(0));
+            BlockBounds memberAtOrigin = CityStructureMaterializationPlanner.expand(
+                    memberGeometry.worldBounds(new BlockPoint(0, 0)), physicalTemplate.clearanceBlocks());
+            int anchorCenterTwiceX = centerBounds.minX() + centerBounds.maxX()
+                    - memberAtOrigin.minX() - memberAtOrigin.maxX();
+            int anchorCenterTwiceZ = centerBounds.minZ() + centerBounds.maxZ()
+                    - memberAtOrigin.minZ() - memberAtOrigin.maxZ();
+            for (CityBlueprintGroupLayoutPlanner.SymmetricPair pair : groupLayoutPlanner.symmetricPairOptions(
+                    state.group().densityClass(), state.layoutFrame(), pairIndex, centerSpan, memberSpan,
+                    anchorCenterTwiceX, anchorCenterTwiceZ)) {
+                JsonObject plan = candidatePlan(blueprint, state, structureRef, PlacementPhase.FILL,
+                        firstOrdinal, template, templateCatalog, templates, states, null);
+                String pairId = state.group().groupId() + "_fill_pair_" + String.format("%03d", pairIndex + 1);
+                plan.addProperty("arrayId", pairId + "_axis_" + pair.axisVariant());
+                plan.addProperty("arrayCount", 2);
+                plan.addProperty("spacingBlocks", pair.radiusBlocks());
+                plan.add("candidateOrigins", pair.originsJson());
+                plan.add("candidateLegalRegion", legalRegion(state, state.patches(), null, false));
+                JsonObject layout = pair.traceJson(firstOrdinal - 1);
+                layout.addProperty("preferredPatchZone", state.group().preferredPatchZone().name());
+                layout.addProperty("symmetryPairId", pairId);
+                layout.add("visualCenter", centerTwiceJson(centerBounds.minX() + centerBounds.maxX(),
+                        centerBounds.minZ() + centerBounds.maxZ()));
+                plan.add("blueprintLayout", layout);
+
+                CityStructureArrayCandidatePlanner.Result result = candidatePlanner.plan(runDir, review,
+                        structureSource, plan, null, occupied.deepCopy());
+                JsonObject attempt = candidateAttemptSummary(template, result);
+                attempt.addProperty("symmetryAxisVariant", pair.axisVariant());
+                attempts.add(attempt);
+                for (JsonElement element : array(result.arrayCandidateSet(), "arrayCandidates")) {
+                    JsonObject candidate = element.getAsJsonObject();
+                    if (!matchesSymmetricPair(candidate, pair)) {
+                        increment(compilerFilterReasons, "CENTER_SYMMETRY_EXACT_ORIGINS_UNSATISFIED");
+                        continue;
+                    }
+                    TerrainCandidateEvaluation terrain = symmetricPairTerrainEvaluation(candidate, state,
+                            structureRef, terrainGate);
+                    if (!terrain.passed()) {
+                        increment(compilerFilterReasons, terrain.reasonCode());
+                        if (attempts.size() < 16) attempt.add("terrainGateRejection", terrain.trace());
+                        continue;
+                    }
+                    ConnectivityFit connectivity = connectivityFit(candidate, state, states, false);
+                    if (!connectivity.allowed()) {
+                        increment(compilerFilterReasons, connectivity.reasonCode());
+                        continue;
+                    }
+                    if (!hardRelationsAllow(candidate, state.group(), blueprint.relations(), states)) {
+                        increment(compilerFilterReasons, "HARD_RELATION_UNSATISFIED");
+                        continue;
+                    }
+                    double relationFit = relationFit(candidate, state.group(), blueprint.relations(), states);
+                    double base = doubleValue(requiredObject(candidate, "scoreBreakdown"), "total", 0.0);
+                    double total = base * 0.70 + relationFit * 0.12 + connectivity.score() * 0.18;
+                    long tie = tieKey(blueprint.generationSeed(), state.group().groupId(), structureRef,
+                            template.templateId(), template.variantId(), Integer.toString(pair.pairIndex()),
+                            Integer.toString(pair.axisVariant()), string(candidate, "arrayCandidateId"));
+                    choices.add(new CenterSymmetricChoice(candidate.deepCopy(), template, layout.deepCopy(),
+                            pair, base, relationFit, connectivity, terrain, total, tie));
+                }
+            }
+        }
+        choices.sort(Comparator.comparingDouble(CenterSymmetricChoice::total).reversed()
+                .thenComparingLong(CenterSymmetricChoice::tieKey)
+                .thenComparing(choice -> string(choice.candidate(), "arrayCandidateId")));
+
+        JsonObject event = new JsonObject();
+        event.addProperty("sequence", selections.size() + 1);
+        event.addProperty("phase", PlacementPhase.FILL.traceName);
+        event.addProperty("groupId", state.group().groupId());
+        event.addProperty("structureRef", structureRef);
+        event.addProperty("candidateCount", choices.size());
+        event.addProperty("requestedBatchSize", 2);
+        event.addProperty("atomicPair", true);
+        event.add("attempts", attempts);
+        event.add("compilerFilterReasonCounts", compilerFilterReasons);
+        if (choices.isEmpty()) {
+            event.addProperty("status", "no_legal_candidate");
+            event.addProperty("reasonCode", "CITY_BLUEPRINT_CENTER_SYMMETRIC_PAIR_UNAVAILABLE");
+            selections.add(event);
+            return List.of();
+        }
+
+        CenterSymmetricChoice chosen = choices.get(0);
+        event.addProperty("status", "committed");
+        event.addProperty("candidateId", string(chosen.candidate(), "arrayCandidateId"));
+        event.addProperty("templateId", chosen.template().templateId());
+        event.addProperty("variantId", chosen.template().variantId());
+        event.addProperty("baseScore", chosen.baseScore());
+        event.addProperty("relationFit", chosen.relationFit());
+        event.addProperty("connectivityFit", chosen.connectivity().score());
+        event.addProperty("connectionGapBlocks", chosen.connectivity().gapBlocks());
+        event.add("blueprintLayout", chosen.blueprintLayout().deepCopy());
+        event.addProperty("totalScore", chosen.total());
+        event.addProperty("stableTieKey", Long.toUnsignedString(chosen.tieKey()));
+        event.add("scoreBreakdown", requiredObject(chosen.candidate(), "scoreBreakdown").deepCopy());
+        event.add("collisionEnvelope", requiredObject(chosen.candidate(), "groupCollisionEnvelope").deepCopy());
+        event.add("terrainGateEvaluation", chosen.terrain().trace().deepCopy());
+        event.add("centerSymmetryProof", centerSymmetryProof(chosen.pair(), centerBounds,
+                chosen.candidate()));
+        selections.add(event);
+
+        JsonArray selectedAnchors = array(requiredObject(chosen.candidate(), "expandedStructureAnchorPlan"),
+                "anchors");
+        JsonArray selectedItems = array(chosen.candidate(), "items");
+        if (selectedAnchors.size() != 2 || selectedItems.size() != 2) {
+            throw fail("CITY_BLUEPRINT_COMPILER_INTERNAL_CARDINALITY",
+                    "CENTER_SYMMETRIC pair must freeze exactly two structures.");
+        }
+        List<Placement> placements = new ArrayList<>();
+        for (int index = 0; index < 2; index++) {
+            JsonObject anchor = selectedAnchors.get(index).getAsJsonObject().deepCopy();
+            JsonObject frozenItem = selectedItems.get(index).getAsJsonObject();
+            for (String field : List.of("templateHash", "rawSize", "terrainPosePolicy", "supportPolicy",
+                    "clearanceBlocks", "materializationSource", "templatePlacementPlan")) {
+                if (frozenItem.has(field)) anchor.add(field, frozenItem.get(field).deepCopy());
+            }
+            if (frozenItem.has("plannedFootprint")) {
+                anchor.add("plannedFootprint", frozenItem.get("plannedFootprint").deepCopy());
+            }
+            JsonObject itemCollision = requiredObject(frozenItem, "estimatedCollisionEnvelope").deepCopy();
+            anchor.add("collisionEnvelope", itemCollision.deepCopy());
+            if (frozenItem.has("estimatedMaskEnvelope")) {
+                anchor.add("maskEnvelope", frozenItem.get("estimatedMaskEnvelope").deepCopy());
+            }
+            anchor.addProperty("anchorId", state.group().groupId() + "_fill_"
+                    + String.format("%03d", firstOrdinal + index));
+            anchor.addProperty("placementGroupId", state.group().groupId());
+            anchor.addProperty("blueprintStructureRef", structureRef);
+            anchor.addProperty("blueprintRequired", false);
+            anchor.addProperty("blueprintPlacementPhase", PlacementPhase.FILL.traceName);
+            anchor.addProperty("resolvedTerrainMode", chosen.terrain().resolvedTerrainMode());
+            anchor.addProperty("selectionReason", "Programmatic CityBlueprint center-symmetric pair selection");
+            JsonObject layoutTrace = chosen.blueprintLayout().deepCopy();
+            layoutTrace.addProperty("slotIndex", firstOrdinal - 1 + index);
+            layoutTrace.addProperty("symmetryPairMember", index == 0 ? "FIRST" : "OPPOSITE");
+            layoutTrace.add("centerSymmetryProof", centerSymmetryProof(chosen.pair(), centerBounds,
+                    chosen.candidate()));
+            if (anchor.has("anchorBlock") && anchor.get("anchorBlock").isJsonObject()) {
+                layoutTrace.add("acceptedAnchor", anchor.getAsJsonObject("anchorBlock").deepCopy());
+            }
+            anchor.add("blueprintLayout", layoutTrace);
+            placements.add(new Placement(anchor, itemCollision, structureRef, false,
+                    PlacementPhase.FILL, chosen.connectivity()));
+        }
+        return List.copyOf(placements);
+    }
+
+    private static boolean matchesSymmetricPair(JsonObject candidate,
+                                                CityBlueprintGroupLayoutPlanner.SymmetricPair pair) {
+        JsonArray anchors = array(requiredObject(candidate, "expandedStructureAnchorPlan"), "anchors");
+        if (anchors.size() != 2) return false;
+        BlockPoint first = point(requiredObject(anchors.get(0).getAsJsonObject(), "anchorBlock"));
+        BlockPoint opposite = point(requiredObject(anchors.get(1).getAsJsonObject(), "anchorBlock"));
+        return first.equals(pair.first()) && opposite.equals(pair.opposite())
+                && first.x() + opposite.x() == pair.anchorCenterTwiceX()
+                && first.z() + opposite.z() == pair.anchorCenterTwiceZ();
+    }
+
+    private static TerrainCandidateEvaluation symmetricPairTerrainEvaluation(JsonObject candidate,
+                                                                              GroupState state,
+                                                                              String structureRef,
+                                                                              CityStructureTerrainGate terrainGate) {
+        JsonArray anchors = array(requiredObject(candidate, "expandedStructureAnchorPlan"), "anchors");
+        JsonArray items = array(candidate, "items");
+        JsonObject trace = new JsonObject();
+        trace.addProperty("schemaVersion", "city_structure_terrain_gate_batch_trace.v0.1");
+        trace.addProperty("evaluationScope", "all_pair_member_footprints");
+        trace.addProperty("structureRef", structureRef);
+        JsonArray members = new JsonArray();
+        String resolvedMode = "";
+        for (int index = 0; index < 2; index++) {
+            TerrainCandidateEvaluation member = anchorTerrainEvaluation(
+                    anchors.get(index).getAsJsonObject(),
+                    bounds(requiredObject(items.get(index).getAsJsonObject(), "estimatedCollisionEnvelope")),
+                    state, structureRef, terrainGate);
+            members.add(member.trace().deepCopy());
+            if (!member.passed()) {
+                trace.addProperty("status", "rejected");
+                trace.addProperty("reasonCode", member.reasonCode());
+                trace.add("memberEvaluations", members);
+                return TerrainCandidateEvaluation.rejected(member.reasonCode(), structureRef, trace);
+            }
+            resolvedMode = member.resolvedTerrainMode();
+        }
+        trace.addProperty("status", "passed");
+        trace.addProperty("memberCount", 2);
+        trace.add("memberEvaluations", members);
+        return new TerrainCandidateEvaluation(true, "", resolvedMode, trace);
+    }
+
+    private static JsonObject centerSymmetryProof(CityBlueprintGroupLayoutPlanner.SymmetricPair pair,
+                                                  BlockBounds centerBounds,
+                                                  JsonObject candidate) {
+        JsonObject proof = new JsonObject();
+        proof.add("anchorCenter", centerTwiceJson(pair.anchorCenterTwiceX(), pair.anchorCenterTwiceZ()));
+        proof.add("first", pair.first().asJson());
+        proof.add("opposite", pair.opposite().asJson());
+        int summedAnchorX = pair.first().x() + pair.opposite().x();
+        int summedAnchorZ = pair.first().z() + pair.opposite().z();
+        proof.addProperty("summedAnchorX", summedAnchorX);
+        proof.addProperty("summedAnchorZ", summedAnchorZ);
+        proof.addProperty("expectedSummedAnchorX", pair.anchorCenterTwiceX());
+        proof.addProperty("expectedSummedAnchorZ", pair.anchorCenterTwiceZ());
+
+        JsonArray items = array(candidate, "items");
+        BlockBounds firstBounds = bounds(requiredObject(items.get(0).getAsJsonObject(),
+                "estimatedCollisionEnvelope"));
+        BlockBounds oppositeBounds = bounds(requiredObject(items.get(1).getAsJsonObject(),
+                "estimatedCollisionEnvelope"));
+        int centerTwiceX = centerBounds.minX() + centerBounds.maxX();
+        int centerTwiceZ = centerBounds.minZ() + centerBounds.maxZ();
+        int summedMemberCenterTwiceX = firstBounds.minX() + firstBounds.maxX()
+                + oppositeBounds.minX() + oppositeBounds.maxX();
+        int summedMemberCenterTwiceZ = firstBounds.minZ() + firstBounds.maxZ()
+                + oppositeBounds.minZ() + oppositeBounds.maxZ();
+        proof.add("visualCenter", centerTwiceJson(centerTwiceX, centerTwiceZ));
+        proof.addProperty("summedMemberCenterTwiceX", summedMemberCenterTwiceX);
+        proof.addProperty("summedMemberCenterTwiceZ", summedMemberCenterTwiceZ);
+        proof.addProperty("expectedMemberCenterTwiceX", centerTwiceX * 2);
+        proof.addProperty("expectedMemberCenterTwiceZ", centerTwiceZ * 2);
+        proof.addProperty("verified", summedAnchorX == pair.anchorCenterTwiceX()
+                && summedAnchorZ == pair.anchorCenterTwiceZ()
+                && summedMemberCenterTwiceX == centerTwiceX * 2
+                && summedMemberCenterTwiceZ == centerTwiceZ * 2);
+        return proof;
+    }
+
+    private static JsonObject centerTwiceJson(int xTimesTwo, int zTimesTwo) {
+        JsonObject value = new JsonObject();
+        value.addProperty("x", xTimesTwo / 2.0);
+        value.addProperty("z", zTimesTwo / 2.0);
+        value.addProperty("xTimesTwo", xTimesTwo);
+        value.addProperty("zTimesTwo", zTimesTwo);
+        return value;
     }
 
     private void commit(Placement placement, JsonArray anchors, JsonArray occupied, GroupState state) {
@@ -457,6 +857,58 @@ public final class CityBlueprintCompilerService {
                 if (state.patchByRef().containsKey(patchRef)) state.claimPatch(patchRef);
             }
         }
+    }
+
+    private static void addLandscapeCapacityToOccupied(JsonObject plan, JsonArray occupied) {
+        for (JsonElement instanceElement : array(plan, "instances")) {
+            JsonObject instance = instanceElement.getAsJsonObject();
+            for (JsonElement parcelElement : array(instance, "parcelReservations")) {
+                JsonObject parcel = parcelElement.getAsJsonObject();
+                JsonArray spans = array(parcel, "reservationSpans");
+                if (spans.isEmpty()) continue;
+                int minX = Integer.MAX_VALUE;
+                int minZ = Integer.MAX_VALUE;
+                int maxX = Integer.MIN_VALUE;
+                int maxZ = Integer.MIN_VALUE;
+                for (JsonElement spanElement : spans) {
+                    JsonObject span = spanElement.getAsJsonObject();
+                    minX = Math.min(minX, intValue(span, "minX", minX));
+                    maxX = Math.max(maxX, intValue(span, "maxX", maxX));
+                    int z = intValue(span, "z", 0);
+                    minZ = Math.min(minZ, z);
+                    maxZ = Math.max(maxZ, z);
+                }
+                JsonObject bounds = new JsonObject();
+                bounds.addProperty("minX", minX);
+                bounds.addProperty("minZ", minZ);
+                bounds.addProperty("maxX", maxX);
+                bounds.addProperty("maxZ", maxZ);
+                JsonObject envelope = new JsonObject();
+                envelope.add("blockBounds", bounds);
+                envelope.add("bodyBounds", bounds.deepCopy());
+                envelope.addProperty("ownerGroupId", "landscape_capacity");
+                envelope.addProperty("anchorId", string(parcel, "parcelId"));
+                envelope.addProperty("arrayId", string(parcel, "parcelId"));
+                occupied.add(envelope);
+            }
+        }
+    }
+
+    private static Map<String, GroupState> freshStates(Map<String, GroupState> source) {
+        Map<String, GroupState> result = new LinkedHashMap<>();
+        source.forEach((groupId, state) -> result.put(groupId, state.fresh()));
+        return result;
+    }
+
+    private static boolean incrementRanks(int[] ranks, int[] limits) {
+        for (int index = ranks.length - 1; index >= 0; index--) {
+            if (ranks[index] + 1 < limits[index]) {
+                ranks[index]++;
+                for (int reset = index + 1; reset < ranks.length; reset++) ranks[reset] = 0;
+                return true;
+            }
+        }
+        return false;
     }
 
     private static List<CityBlueprint.Group> orderGroups(List<CityBlueprint.Group> source,
@@ -856,6 +1308,7 @@ public final class CityBlueprintCompilerService {
                 shape = switch (configuration.algorithm()) {
                     case "GRID" -> CityBlueprint.ClusterShape.GRID;
                     case "COURTYARD" -> CityBlueprint.ClusterShape.COURTYARD;
+                    case "CENTER_SYMMETRIC" -> CityBlueprint.ClusterShape.COURTYARD;
                     default -> CityBlueprint.ClusterShape.ORGANIC_COMPACT;
                 };
             }
@@ -1039,13 +1492,19 @@ public final class CityBlueprintCompilerService {
         plan.add("blueprintLayout", layoutTrace);
         PatchMemberCell guideCell = nearestMemberCellToPoint(candidatePatches, layout.guides().get(0),
                 state.patchStepBlocks(), state.planningBounds());
-        plan.add("candidateLegalRegion", legalRegion(state, candidatePatches, guideCell,
+        PatchMemberCell legalRegionGuide = phase == PlacementPhase.REQUIRED && state.anchorCount() == 0
+                ? null : guideCell;
+        plan.add("candidateLegalRegion", legalRegion(state, candidatePatches, legalRegionGuide,
                 phase == PlacementPhase.CONNECTIVITY));
         return plan;
     }
 
     private static BlockPoint cellCenter(PatchMemberCell cell, int step) {
         return new BlockPoint(cell.blockMinX() + step / 2, cell.blockMinZ() + step / 2);
+    }
+
+    private static BlockPoint point(JsonObject value) {
+        return new BlockPoint(intValue(value, "x", 0), intValue(value, "z", 0));
     }
 
     private static OutwardTarget outwardTarget(GroupState state,
@@ -1717,6 +2176,14 @@ public final class CityBlueprintCompilerService {
         };
     }
 
+    static int minimumGroupStructureCount(CityScale cityScale,
+                                          CityBlueprint.ExtentClass extentClass,
+                                          String algorithm) {
+        int minimum = minimumGroupStructureCount(cityScale, extentClass);
+        if (!"CENTER_SYMMETRIC".equals(algorithm) || (minimum & 1) == 1) return minimum;
+        return Math.max(3, minimum - 1);
+    }
+
     private static int priorityRank(CityBlueprint.GroupPriority priority) {
         return switch (priority) {
             case CORE -> 0;
@@ -1751,6 +2218,7 @@ public final class CityBlueprintCompilerService {
             case "LINEAR" -> "patch_axis_band";
             case "COURTYARD" -> "courtyard";
             case "ORGANIC_COMPACT" -> "organic_compact";
+            case "CENTER_SYMMETRIC" -> "courtyard";
             default -> "loose_cluster";
         };
     }
@@ -1888,19 +2356,24 @@ public final class CityBlueprintCompilerService {
 
     public record CompilationResult(boolean ok, JsonObject structureAnchorPlan, JsonObject compileTrace,
                                     JsonObject groupExtentMap, JsonObject terraSenseProfileSource,
-                                    JsonObject templateCatalog, String reasonCode, String message) {
+                                    JsonObject templateCatalog, JsonObject landscapeCapacityReservationPlan,
+                                    String reasonCode, String message) {
         static CompilationResult compiled(JsonObject plan, JsonObject trace, JsonObject extent,
-                                          JsonObject structureSource, JsonObject templateCatalog) {
+                                          JsonObject structureSource, JsonObject templateCatalog,
+                                          JsonObject landscapeCapacityReservationPlan) {
             return new CompilationResult(true, plan, trace, extent, structureSource.deepCopy(),
-                    templateCatalog.deepCopy(), "", "");
+                    templateCatalog.deepCopy(), landscapeCapacityReservationPlan.deepCopy(), "", "");
         }
 
         static CompilationResult failed(JsonObject trace, String reasonCode, String message) {
-            return new CompilationResult(false, null, trace, null, null, null, reasonCode, message);
+            return new CompilationResult(false, null, trace, null, null, null, null, reasonCode, message);
         }
     }
 
     private record TemplateCandidate(String templateId, String variantId) {
+    }
+
+    private record RequiredRequest(String groupId, String structureRef, int ordinal) {
     }
 
     private record Placement(JsonObject anchor, JsonObject collisionEnvelope, String structureRef,
@@ -1923,6 +2396,15 @@ public final class CityBlueprintCompilerService {
                                    double relationFit, ConnectivityFit connectivity,
                                    TerrainCandidateEvaluation terrain, double targetFit,
                                    double total, long tieKey) {
+    }
+
+    private record CenterSymmetricChoice(JsonObject candidate, TemplateCandidate template,
+                                         JsonObject blueprintLayout,
+                                         CityBlueprintGroupLayoutPlanner.SymmetricPair pair,
+                                         double baseScore, double relationFit,
+                                         ConnectivityFit connectivity,
+                                         TerrainCandidateEvaluation terrain,
+                                         double total, long tieKey) {
     }
 
     private record ConnectionItem(String structureRef, TemplateCandidate template) {
@@ -2241,11 +2723,22 @@ public final class CityBlueprintCompilerService {
         String stopReason() { return stopReason; }
         Set<String> blockedRefs() { return blockedRefs; }
         List<BlockBounds> envelopes() { return List.copyOf(envelopes); }
+        BlockBounds centerStructureExtent() {
+            if (requiredCount != 1 || envelopes.isEmpty()) {
+                throw fail("CITY_BLUEPRINT_CENTER_SYMMETRIC_STATE_INVALID",
+                        "CENTER_SYMMETRIC requires exactly one committed center structure.");
+            }
+            return envelopes.get(0);
+        }
         List<BlockBounds> bodyEnvelopes() {
             return committedArrays.values().stream().map(CommittedArray::bodyBounds).toList();
         }
         int connectionFillCursor() { return connectionFillCursor; }
         int connectionBatchCount() { return connectionBatchCount; }
+        GroupState fresh() {
+            return new GroupState(group, patches, connectionPatches, patchStepBlocks, planningBounds,
+                    layoutAlgorithm, layoutParameters, connectionConfiguration, minimumStructureCount);
+        }
         void advanceConnectionCursor(int count) {
             connectionFillCursor += count;
             connectionBatchCount++;

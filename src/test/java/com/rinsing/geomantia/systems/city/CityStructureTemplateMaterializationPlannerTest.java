@@ -133,6 +133,19 @@ class CityStructureTemplateMaterializationPlannerTest {
     }
 
     @Test
+    void d6ResponsePropagatesSinglePreflightFailureReason() {
+        JsonObject response = new CityStructureMaterializationPlanner()
+                .planWorldgen(anchorMap(), task ->
+                                CityStructureMaterializationPlanner.ChunkStatusResult.alreadyGenerated(
+                                        "Owner chunk is already generated."),
+                        emptyLedger(), metadata())
+                .asJson();
+
+        assertFalse(response.get("ok").getAsBoolean());
+        assertEquals("STRUCTURE_CHUNK_ALREADY_GENERATED", response.get("reasonCode").getAsString());
+    }
+
+    @Test
     void d7AcceptsOnlyCompleteLockedRuntimeGeometry() {
         JsonObject plan = new CityStructureMaterializationPlanner()
                 .planWorldgen(anchorMap(), CityStructureMaterializationPlanner.ChunkStatusInspector.plannedOnly(),

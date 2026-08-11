@@ -160,6 +160,38 @@ class RelayRegionGrowthClassifierTest {
                 "frontier relay regions must not collapse into global distance rings");
     }
 
+    @Test
+    void parentRelaySourceCompletesExactRolesAcrossARealBottleneckParcel() {
+        List<LandUseAreaPlan.ScanlineSpan> members = List.of(
+                new LandUseAreaPlan.ScanlineSpan(0, 0, 5),
+                new LandUseAreaPlan.ScanlineSpan(1, 0, 6),
+                new LandUseAreaPlan.ScanlineSpan(2, 0, 6),
+                new LandUseAreaPlan.ScanlineSpan(3, 0, 6),
+                new LandUseAreaPlan.ScanlineSpan(4, 0, 0),
+                new LandUseAreaPlan.ScanlineSpan(4, 4, 7),
+                new LandUseAreaPlan.ScanlineSpan(5, 4, 14),
+                new LandUseAreaPlan.ScanlineSpan(6, 7, 14),
+                new LandUseAreaPlan.ScanlineSpan(7, 7, 14),
+                new LandUseAreaPlan.ScanlineSpan(8, 7, 14),
+                new LandUseAreaPlan.ScanlineSpan(9, 7, 14),
+                new LandUseAreaPlan.ScanlineSpan(10, 7, 14),
+                new LandUseAreaPlan.ScanlineSpan(11, 7, 14));
+
+        RelayRegionGrowthClassifier.Result result = classify(members, List.of(), new BlockPoint(7, 11),
+                0x4f67a2L, List.of(
+                        stage("green-a", "", "GREEN", 0.425,
+                                RelayRegionGrowthClassifier.GrowthForm.PATCH),
+                        stage("ground", "", "GROUND", 0.15,
+                                RelayRegionGrowthClassifier.GrowthForm.PATCH),
+                        stage("green-b", "", "GREEN", 0.425,
+                                RelayRegionGrowthClassifier.GrowthForm.PATCH)));
+
+        assertEquals(List.of(39, 13, 39), result.regions().stream()
+                .map(RelayRegionGrowthClassifier.RegionTrace::actualAreaBlocks).toList());
+        assertEquals(91, result.coveredBlockCount());
+        assertGrowthProvenance(result);
+    }
+
     private static RelayRegionGrowthClassifier.Result classify(
             List<LandUseAreaPlan.ScanlineSpan> members,
             List<LandUseAreaPlan.ScanlineSpan> exclusions,

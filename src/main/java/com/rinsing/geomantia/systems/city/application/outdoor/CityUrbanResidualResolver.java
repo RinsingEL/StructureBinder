@@ -114,7 +114,9 @@ public final class CityUrbanResidualResolver {
         }
         regions.sort(Comparator.comparing(CityUrbanSpacePlan.ResidualRegion::residualId));
         LandUseExpansionResult resolvedExpansion = new LandUseExpansionResult(resolvedClaims, resolvedGroupCounts,
-                expansion.claimedBlocksByGrowthRegion(), expansion.contestedClaimCount(),
+                expansion.claimedBlocksByGrowthRegion(), expansion.effectiveSeedPointsByGroup(),
+                expansion.expansionOriginsByGroup(),
+                expansion.contestedClaimCount(),
                 expansion.blockedCandidateCount());
         BlockBounds workingBounds = bounds(envelope);
         Set<BlockPoint> landUseOwned = inside(expansion.claims().keySet(), envelope);

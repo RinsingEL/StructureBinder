@@ -41,6 +41,14 @@ public final class CityOutdoorBlueprintCompiler {
                           JsonObject structureMaterializationPlan,
                           LandUseTerrainField terrain,
                           CityBlueprintReferenceCatalog catalog) {
+        return compile(blueprint, structureMaterializationPlan, terrain, catalog, null);
+    }
+
+    public Result compile(CityBlueprint blueprint,
+                          JsonObject structureMaterializationPlan,
+                          LandUseTerrainField terrain,
+                          CityBlueprintReferenceCatalog catalog,
+                          JsonObject landscapeCapacityReservationPlan) {
         if (blueprint == null || blueprint.outdoorPlan() == null) {
             throw new IllegalArgumentException("CITY_OUTDOOR_BLUEPRINT_REQUIRED");
         }
@@ -61,6 +69,9 @@ public final class CityOutdoorBlueprintCompiler {
         }
 
         Map<String, List<AnchorData>> anchorsByGroup = readAnchors(structureMaterializationPlan);
+        CapacityReservation capacityReservation = capacityReservation(blueprint, anchorsByGroup,
+                landscapeCapacityReservationPlan);
+        Map<String, Set<BlockPoint>> capacityDomains = capacityReservation.domains();
         List<String> spatialGroupIds = blueprint.outdoorPlan().spatialGrounds().stream()
                 .map(CityBlueprint.SpatialGround::sourceGroupId).distinct().sorted().toList();
         List<AnchorData> foundationAnchors = requiredGroups(anchorsByGroup, spatialGroupIds,
@@ -104,6 +115,8 @@ public final class CityOutdoorBlueprintCompiler {
                 List.of(), foundationBudget, CityBlueprint.GrowthBias.BALANCED, null, foundationSeeds, true));
 
         List<ParcelSpec> occupiedLandscapeParcels = new ArrayList<>();
+        Map<String, String> resolvedParentParcelIds = new LinkedHashMap<>(
+                capacityReservation.parentParcelIds());
         for (CityBlueprint.Landscape landscape : blueprint.outdoorPlan().landscapes()) {
             CityBlueprintReferenceCatalog.LandscapeProfile profile = catalog.landscapeProfiles().get(
                     landscape.landscapeProfileRef());
@@ -113,15 +126,17 @@ public final class CityOutdoorBlueprintCompiler {
             }
             LandUseRule parcelRule = independentParcelRule(requireRule(catalog, profile.landUseRuleRef()));
             CityBlueprintReferenceCatalog.SurfaceRecipe recipe = requireRecipe(catalog, profile.surfaceRecipeRef());
-            List<AnchorData> attached = requiredGroups(anchorsByGroup, landscape.attachedGroupIds(),
-                    "CITY_OUTDOOR_LANDSCAPE_ATTACHED_GROUP_UNKNOWN", false);
+            List<AnchorData> attached = landscape.originMode() == CityBlueprint.LandscapeOriginMode.ATTACHED
+                    ? List.of(requiredOwnerAnchor(anchorsByGroup, landscape)) : List.of();
             List<ParcelSpec> parcels = landscapeParcels(blueprint, landscape, profile, parcelRule, attached,
-                    anchorsByGroup, terrain, allFootprints, occupiedLandscapeParcels, outdoorWarnings);
+                    anchorsByGroup, terrain, allFootprints, occupiedLandscapeParcels, outdoorWarnings,
+                    capacityDomains, capacityReservation.parentParcelIds());
             if (landscape.required() && parcels.isEmpty()) {
                 throw new IllegalArgumentException("CITY_OUTDOOR_REQUIRED_LANDSCAPE_HAS_NO_PARCEL:"
                         + landscape.landscapeId());
             }
             for (ParcelSpec parcel : parcels) {
+                resolvedParentParcelIds.put(parcel.parcelId(), parcel.parentParcelId());
                 List<String> anchorIds = parcel.anchor() == null ? List.of() : List.of(parcel.anchor().anchorId());
                 List<BlockPoint> seeds = List.of(parcel.seed());
                 LandscapeFillProgram fillProgram = landscapeFillProgram(blueprint, landscape, profile,
@@ -139,11 +154,14 @@ public final class CityOutdoorBlueprintCompiler {
                         parcel.admissionPolicy()));
                 sourceIntents.add(sourceIntent(parcel.parcelId(), CityOutdoorIntentPlan.SourceKind.LANDSCAPE,
                         landscape.landscapeProfileRef(), parcelRule.ruleRef(), recipe.surfaceRecipeRef(),
-                        profile.membership(), landscape.extentClass(), landscape.intensity(), landscape.continuity(),
-                         landscape.growthRelation(), landscape.terrainPolicy(), landscape.attachedGroupIds(),
+                        profile.membership(), null, null, null,
+                         null, landscape.terrainPolicy(), landscape.owner() == null ? List.of()
+                                : List.of(landscape.owner().groupId()),
                          anchorIds, landscape.preferredPatchRefs(), parcel.budget(), parcel.blueprintBias(),
                          parcel.referencePoint(), seeds,
-                         parcel.admissionPolicy() == LandUseSeedGroup.AdmissionPolicy.REQUIRED));
+                         parcel.admissionPolicy() == LandUseSeedGroup.AdmissionPolicy.REQUIRED,
+                         parcel.landscapeInstanceId(), parcel.parcelId(), parcel.parentParcelId(),
+                         parcel.rootSourceId(), parcel.seed()));
             }
             occupiedLandscapeParcels.addAll(parcels);
         }
@@ -154,7 +172,9 @@ public final class CityOutdoorBlueprintCompiler {
         CityOutdoorIntentPlan intent = intent(blueprint, catalog, sourceHashes, sourceIntents, urbanGroupIds,
                 foundationPlan.resolvedCloseRadiusBlocks());
         return new Result(new LandUseSourceResolver.Resolution(groups, List.of(), outdoorWarnings,
-                Long.toUnsignedString(blueprint.generationSeed())), CityUrbanResidualResolver.Config.disabled(),
+                Long.toUnsignedString(blueprint.generationSeed()), capacityDomains,
+                resolvedParentParcelIds),
+                CityUrbanResidualResolver.Config.disabled(),
                 intent);
     }
 
@@ -268,10 +288,27 @@ public final class CityOutdoorBlueprintCompiler {
             BlockPoint reference,
             List<BlockPoint> seeds,
             boolean required) {
+        return sourceIntent(sourceId, sourceKind, profileRef, ruleRef, recipeRef, membership,
+                extentClass, intensity, continuity, growthRelation, terrainPolicy, sourceGroupIds,
+                sourceAnchorIds, preferredPatchRefs, budget, growthBias, reference, seeds, required,
+                "", "", "", "", null);
+    }
+
+    private static CityOutdoorIntentPlan.SourceIntent sourceIntent(
+            String sourceId, CityOutdoorIntentPlan.SourceKind sourceKind, String profileRef,
+            String ruleRef, String recipeRef, CityBlueprint.OutdoorMembership membership,
+            CityBlueprint.ExtentClass extentClass, CityBlueprint.OutdoorIntensity intensity,
+            CityBlueprint.LandscapeContinuity continuity,
+            CityBlueprint.LandscapeGrowthRelation growthRelation, CityBlueprint.TerrainPolicy terrainPolicy,
+            List<String> sourceGroupIds, List<String> sourceAnchorIds, List<String> preferredPatchRefs,
+            AreaBudget budget, CityBlueprint.GrowthBias growthBias, BlockPoint reference,
+            List<BlockPoint> seeds, boolean required, String landscapeInstanceId, String parcelId,
+            String parentParcelId, String rootSourceId, BlockPoint sourceFrontier) {
         return new CityOutdoorIntentPlan.SourceIntent(sourceId, sourceKind, profileRef, ruleRef, recipeRef,
                 membership, extentClass, intensity, continuity, growthRelation, terrainPolicy, sourceGroupIds,
                 sourceAnchorIds, preferredPatchRefs, budget.min(), budget.preferred(), budget.max(), growthBias,
-                reference, seeds, required);
+                reference, seeds, required, landscapeInstanceId, parcelId, parentParcelId, rootSourceId,
+                sourceFrontier);
     }
 
     private static SourceHashes sourceHashes(CityBlueprint blueprint,
@@ -337,7 +374,9 @@ public final class CityOutdoorBlueprintCompiler {
             LandUseTerrainField terrain,
             List<BlockBounds> structureFootprints,
             List<ParcelSpec> occupiedParcels,
-            List<String> warnings) {
+            List<String> warnings,
+            Map<String, Set<BlockPoint>> capacityDomains,
+            Map<String, String> parentParcelIds) {
         CityBlueprintReferenceCatalog.ParcelStyle style = profile.parcelStyle();
         int minArea = Math.max(rule.minAreaBlocks(), style.parcelAreaMinBlocks());
         int maxArea = Math.min(rule.maxAreaBlocks(), style.parcelAreaMaxBlocks());
@@ -347,97 +386,98 @@ public final class CityOutdoorBlueprintCompiler {
         }
         BlockPoint origin = attached.isEmpty() ? center(terrain.planningBounds())
                 : centroid(attached.stream().map(AnchorData::footprint).toList());
-        WaterGuidance water = switch (landscape.growthRelation()) {
-            case TOWARD_WATER, ALONG_WATER -> waterGuidance(terrain, origin, profile.landscapeType(),
-                    landscape.landscapeId());
-            default -> null;
-        };
-        BlockPoint reference = landscapeReference(anchorsByGroup, landscape, water);
-        CityBlueprint.GrowthBias blueprintBias = switch (landscape.growthRelation()) {
-            case AWAY_FROM_REFERENCE -> CityBlueprint.GrowthBias.AWAY_FROM_REFERENCE;
-            case TOWARD_WATER -> CityBlueprint.GrowthBias.TOWARD_REFERENCE;
-            default -> CityBlueprint.GrowthBias.BALANCED;
-        };
-        LandUseSeedGroup.GrowthBias growthBias = landscape.growthRelation()
-                == CityBlueprint.LandscapeGrowthRelation.ALONG_WATER
-                ? new LandUseSeedGroup.GrowthBias(LandUseSeedGroup.GrowthBiasMode.ALONG_WATER,
-                water.referencePoint(), water.axisX(), water.axisZ()) : bias(blueprintBias, reference);
+        WaterGuidance water = landscape.placementDomain() == CityBlueprint.LandscapePlacementDomain.ALONG_WATER
+                ? waterGuidance(terrain, origin, profile.landscapeType(), landscape.landscapeId()) : null;
+        BlockPoint reference = water == null ? null : water.referencePoint();
+        CityBlueprint.GrowthBias blueprintBias = water == null ? CityBlueprint.GrowthBias.BALANCED
+                : CityBlueprint.GrowthBias.TOWARD_REFERENCE;
+        LandUseSeedGroup.GrowthBias growthBias = water == null ? LandUseSeedGroup.GrowthBias.neutral()
+                : new LandUseSeedGroup.GrowthBias(LandUseSeedGroup.GrowthBiasMode.ALONG_WATER,
+                water.referencePoint(), water.axisX(), water.axisZ());
 
         List<ParcelSpec> result = new ArrayList<>();
         Set<BlockPoint> usedSeeds = new HashSet<>();
-        List<AnchorData> coreAnchors = attached.stream()
-                .filter(anchor -> anchor.phase() == BlueprintPlacementPhase.REQUIRED)
-                .sorted(Comparator.comparing(AnchorData::anchorId)).toList();
-        List<AnchorData> fillAnchors = attached.stream()
-                .filter(anchor -> anchor.phase() == BlueprintPlacementPhase.FILL)
-                .sorted(Comparator.comparing(AnchorData::anchorId)).toList();
-        if (landscape.required() && !attached.isEmpty() && coreAnchors.isEmpty()) {
-            throw new IllegalArgumentException("CITY_OUTDOOR_REQUIRED_LANDSCAPE_HAS_NO_CORE_ANCHOR:"
-                    + landscape.landscapeId());
-        }
-
-        List<ParcelRequest> requests = new ArrayList<>();
         String landscapeKey = blueprint.cityId() + '|' + landscape.landscapeId();
-        if (attached.isEmpty()) {
-            requests.add(new ParcelRequest(null, LandUseSeedGroup.AdmissionPolicy.REQUIRED, 0));
-        } else if (!coreAnchors.isEmpty()) {
-            int count = stableBetween(landscapeKey + "|core-count", style.coreParcelCountMin(),
-                    style.coreParcelCountMax());
-            for (int ordinal = 0; ordinal < count; ordinal++) {
-                requests.add(new ParcelRequest(coreAnchors.get(ordinal % coreAnchors.size()),
-                        LandUseSeedGroup.AdmissionPolicy.REQUIRED, ordinal));
-            }
-        }
-        if (!fillAnchors.isEmpty()) {
-            int count = stableBetween(landscapeKey + "|fill-count", style.fillParcelCountMin(),
-                    style.fillParcelCountMax());
-            for (int ordinal = 0; ordinal < count; ordinal++) {
-                requests.add(new ParcelRequest(fillAnchors.get(ordinal % fillAnchors.size()),
-                        LandUseSeedGroup.AdmissionPolicy.OPTIONAL, ordinal));
-            }
-        }
-
-        ParcelSpec prior = null;
-        for (ParcelRequest request : requests) {
-            AnchorData anchor = request.anchor();
-            String tier = request.admissionPolicy() == LandUseSeedGroup.AdmissionPolicy.REQUIRED
-                    ? "core" : "fill";
-            String key = landscapeKey + '|' + tier + '|' + request.ordinal();
-            int preferred = stableBetween(key + "|area", minArea, maxArea);
-            AreaBudget budget = new AreaBudget(minArea, preferred, maxArea);
-            boolean branch = prior != null && stableUnit(key + "|branch") < style.branchFromExistingChance();
-            BlockPoint base = branch ? prior.seed()
-                    : anchor == null ? origin : center(anchor.footprint());
-            int gap = stableBetween(key + "|gap", style.gapMinBlocks(), style.gapMaxBlocks());
-            int[] direction = parcelDirection(landscape.growthRelation(), base, reference, water, key);
-            int parcelRadius = Math.max(1, (int) Math.ceil(Math.sqrt(preferred) / 2.0));
-            int baseRadius = branch ? Math.max(1,
-                    (int) Math.ceil(Math.sqrt(prior.budget().preferred()) / 2.0))
-                    : anchor == null ? 0 : directionalRadius(anchor.footprint(), direction[0], direction[1]);
-            int distance = baseRadius + gap + parcelRadius;
-            BlockPoint target = new BlockPoint(base.x() + direction[0] * distance,
-                    base.z() + direction[1] * distance);
-            BlockPoint seed = nearestParcelSeed(terrain, target, profile.landscapeType(),
-                    landscape.preferredPatchRefs(), structureFootprints, usedSeeds,
-                    combinedParcels(occupiedParcels, result), gap, parcelRadius);
-            if (seed == null) {
-                if (request.admissionPolicy() == LandUseSeedGroup.AdmissionPolicy.REQUIRED) {
-                    throw new IllegalArgumentException("CITY_OUTDOOR_REQUIRED_LANDSCAPE_HAS_NO_SEED:"
-                            + landscape.landscapeId() + ':' + tier + ':' + request.ordinal());
+        for (int instanceOrdinal = 0; instanceOrdinal < landscape.instanceCount(); instanceOrdinal++) {
+            String instanceId = landscape.landscapeId() + "::instance_"
+                    + String.format(java.util.Locale.ROOT, "%02d", instanceOrdinal + 1);
+            List<ParcelSpec> instance = new ArrayList<>();
+            Map<String, ParcelSpec> instanceById = new LinkedHashMap<>();
+            AnchorData anchor = attached.isEmpty() ? null : attached.get(0);
+            for (int ordinal = 0; ordinal < landscape.parcelCount(); ordinal++) {
+                String parcelId = instanceId + "::parcel_"
+                        + String.format(java.util.Locale.ROOT, "%02d", ordinal + 1);
+                boolean frozenCapacity = capacityDomains.containsKey(parcelId);
+                String frozenParentId = parentParcelIds.get(parcelId);
+                ParcelSpec parent = frozenCapacity
+                        ? frozenParentId == null || frozenParentId.isBlank() ? null
+                        : instanceById.get(frozenParentId)
+                        : instance.isEmpty() ? null : instance.get(instance.size() - 1);
+                if (frozenCapacity && frozenParentId != null && !frozenParentId.isBlank() && parent == null) {
+                    throw new IllegalArgumentException("CITY_OUTDOOR_LANDSCAPE_CAPACITY_PARENT_DRIFT:"
+                            + parcelId + ':' + frozenParentId);
                 }
-                warnings.add("CITY_OUTDOOR_OPTIONAL_PARCEL_SKIPPED_NO_SEED:"
-                        + landscape.landscapeId() + ':' + tier + ':' + request.ordinal());
-                continue;
+                String key = landscapeKey + '|' + instanceOrdinal + '|' + ordinal;
+                int preferred = stableBetween(key + "|area", minArea, maxArea);
+                AreaBudget budget = new AreaBudget(minArea, preferred, maxArea);
+                BlockPoint base = parent == null ? (anchor == null ? origin : center(anchor.footprint()))
+                        : parent.seed();
+                int[] direction = parcelDirection(CityBlueprint.LandscapeGrowthRelation.AROUND_SOURCE,
+                        base, reference, water, key);
+                int parcelRadius = Math.max(1, (int) Math.ceil(Math.sqrt(preferred) / 2.0));
+                int baseRadius = parent == null
+                        ? (anchor == null ? 0 : directionalRadius(anchor.footprint(), direction[0], direction[1]))
+                        : Math.max(1, (int) Math.ceil(Math.sqrt(parent.budget().preferred()) / 2.0));
+                int distance = Math.max(1, baseRadius + parcelRadius - style.minSharedBoundaryBlocks());
+                BlockPoint target = new BlockPoint(base.x() + direction[0] * distance,
+                        base.z() + direction[1] * distance);
+                Set<BlockPoint> capacity = capacityDomains.getOrDefault(parcelId, Set.of());
+                BlockPoint seed = capacity.isEmpty() ? nearestParcelSeed(terrain, target, profile.landscapeType(),
+                        landscape.preferredPatchRefs(), structureFootprints, usedSeeds,
+                        combinedParcels(occupiedParcels, result), 0, parcelRadius)
+                        : frozenCapacitySeed(capacity, frozenParentId, anchor);
+                if (seed == null) {
+                    if (landscape.required()) {
+                        throw new IllegalArgumentException("CITY_OUTDOOR_REQUIRED_LANDSCAPE_HAS_NO_SEED:"
+                                + landscape.landscapeId() + ':' + instanceOrdinal + ':' + ordinal);
+                    }
+                    warnings.add("skipped_insufficient_space:" + instanceId);
+                    instance.clear();
+                    break;
+                }
+                usedSeeds.add(seed);
+                String parentId = parent == null ? "" : parent.parcelId();
+                String rootSource = parent == null ? (anchor == null
+                        ? landscape.placementDomain().name() : anchor.anchorId()) : parent.parcelId();
+                ParcelSpec parcel = new ParcelSpec(parcelId, instanceId, parentId, rootSource,
+                        anchor, seed, budget, growthBias, blueprintBias, reference,
+                        landscape.required() ? LandUseSeedGroup.AdmissionPolicy.REQUIRED
+                                : LandUseSeedGroup.AdmissionPolicy.OPTIONAL);
+                instance.add(parcel);
+                instanceById.put(parcelId, parcel);
             }
-            usedSeeds.add(seed);
-            String parcelId = landscape.landscapeId() + "::" + tier + "::parcel_"
-                    + String.format(java.util.Locale.ROOT, "%02d", request.ordinal() + 1);
-            ParcelSpec parcel = new ParcelSpec(parcelId, anchor, seed, budget, growthBias, blueprintBias,
-                    reference, request.admissionPolicy());
-            result.add(parcel);
-            prior = parcel;
+            result.addAll(instance);
         }
         return List.copyOf(result);
+    }
+
+    private static BlockPoint frozenCapacitySeed(Set<BlockPoint> capacity,
+                                                 String parentParcelId,
+                                                 AnchorData anchor) {
+        if (anchor == null || parentParcelId != null && !parentParcelId.isBlank()) {
+            return capacity.stream().min(POINT_ORDER).orElse(null);
+        }
+        BlockBounds footprint = anchor.footprint();
+        return capacity.stream().filter(point -> adjacentTo(point, footprint))
+                .min(POINT_ORDER).orElse(null);
+    }
+
+    private static boolean adjacentTo(BlockPoint point, BlockBounds bounds) {
+        boolean horizontal = (point.x() == bounds.minX() - 1 || point.x() == bounds.maxX() + 1)
+                && point.z() >= bounds.minZ() && point.z() <= bounds.maxZ();
+        boolean vertical = (point.z() == bounds.minZ() - 1 || point.z() == bounds.maxZ() + 1)
+                && point.x() >= bounds.minX() && point.x() <= bounds.maxX();
+        return horizontal || vertical;
     }
 
     private static List<ParcelSpec> combinedParcels(List<ParcelSpec> occupied, List<ParcelSpec> current) {
@@ -547,20 +587,6 @@ public final class CityOutdoorBlueprintCompiler {
                 recipe.fieldBeforeBlocks(), recipe.channelWidthBlocks(), recipe.fieldAfterBlocks(), null, materials);
     }
 
-    private static BlockPoint landscapeReference(Map<String, List<AnchorData>> anchorsByGroup,
-                                                 CityBlueprint.Landscape landscape,
-                                                 WaterGuidance waterGuidance) {
-        if (landscape.growthRelation() == CityBlueprint.LandscapeGrowthRelation.AWAY_FROM_REFERENCE) {
-            return centroid(requiredGroups(anchorsByGroup, landscape.referenceGroupIds(),
-                    "CITY_OUTDOOR_REFERENCE_GROUP_UNKNOWN").stream().map(AnchorData::footprint).toList());
-        }
-        if (landscape.growthRelation() == CityBlueprint.LandscapeGrowthRelation.TOWARD_WATER
-                || landscape.growthRelation() == CityBlueprint.LandscapeGrowthRelation.ALONG_WATER) {
-            return waterGuidance.referencePoint();
-        }
-        return null;
-    }
-
     private static WaterGuidance waterGuidance(LandUseTerrainField terrain,
                                                 BlockPoint origin,
                                                 CityBlueprintReferenceCatalog.LandscapeType type,
@@ -654,8 +680,9 @@ public final class CityOutdoorBlueprintCompiler {
             if (footprint.size() == 0) {
                 throw new IllegalArgumentException("CITY_OUTDOOR_D6_FOOTPRINT_MISSING:" + anchorId);
             }
+            String structureRef = stringValue(item, "blueprintStructureRef", "");
             result.computeIfAbsent(groupId, ignored -> new ArrayList<>()).add(new AnchorData(anchorId, groupId,
-                    bounds(footprint), phase));
+                    structureRef, bounds(footprint), phase));
         }
         result.replaceAll((ignored, values) -> values.stream().sorted(Comparator.comparing(AnchorData::anchorId))
                 .toList());
@@ -678,6 +705,105 @@ public final class CityOutdoorBlueprintCompiler {
                                                    List<String> groupIds,
                                                    String reason) {
         return requiredGroups(anchorsByGroup, groupIds, reason, true);
+    }
+
+    private static AnchorData requiredOwnerAnchor(Map<String, List<AnchorData>> anchorsByGroup,
+                                                  CityBlueprint.Landscape landscape) {
+        CityBlueprint.LandscapeOwner owner = landscape.owner();
+        if (owner == null) throw new IllegalArgumentException("CITY_OUTDOOR_ATTACHED_OWNER_REQUIRED");
+        return anchorsByGroup.getOrDefault(owner.groupId(), List.of()).stream()
+                .filter(anchor -> anchor.phase() == BlueprintPlacementPhase.REQUIRED)
+                .filter(anchor -> owner.requiredStructureRef().equals(anchor.structureRef()))
+                .findFirst().orElseThrow(() -> new IllegalArgumentException(
+                        "CITY_OUTDOOR_REQUIRED_LANDSCAPE_OWNER_DRIFT:" + landscape.landscapeId()));
+    }
+
+    private static CapacityReservation capacityReservation(
+            CityBlueprint blueprint, Map<String, List<AnchorData>> anchorsByGroup, JsonObject plan) {
+        boolean hasRequired = blueprint.outdoorPlan().landscapes().stream()
+                .anyMatch(CityBlueprint.Landscape::required);
+        if (plan == null) {
+            if (hasRequired) {
+                throw new IllegalArgumentException("CITY_OUTDOOR_REQUIRED_LANDSCAPE_CAPACITY_MISSING");
+            }
+            return CapacityReservation.empty();
+        }
+        if (!"city_landscape_capacity_reservation_plan.v0.1".equals(stringValue(plan, "schemaVersion", ""))
+                || !blueprint.cityId().equals(stringValue(plan, "cityId", ""))
+                || !"reserved".equals(stringValue(plan, "status", ""))) {
+            throw new IllegalArgumentException("CITY_OUTDOOR_LANDSCAPE_CAPACITY_STALE");
+        }
+        String sourceBlueprintHash = requiredString(plan, "sourceBlueprintHash");
+        String sourceD4Hash = requiredString(plan, "sourceD4Hash");
+        String planHash = requiredString(plan, "planHash");
+        JsonObject hashInput = plan.deepCopy();
+        hashInput.remove("planHash");
+        if (!sourceBlueprintHash.equals(sourceHash(new CityBlueprintCodec().write(blueprint)))
+                || !sourceD4Hash.matches("sha256:[0-9a-f]{64}")
+                || !planHash.equals(sourceHash(hashInput))) {
+            throw new IllegalArgumentException("CITY_OUTDOOR_LANDSCAPE_CAPACITY_HASH_MISMATCH");
+        }
+        Map<String, CityBlueprint.Landscape> required = new LinkedHashMap<>();
+        blueprint.outdoorPlan().landscapes().stream().filter(CityBlueprint.Landscape::required)
+                .forEach(landscape -> required.put(landscape.landscapeId(), landscape));
+        Map<String, Set<BlockPoint>> result = new LinkedHashMap<>();
+        Map<String, String> parentIds = new LinkedHashMap<>();
+        Set<String> seenInstances = new HashSet<>();
+        for (JsonElement element : requiredArray(plan, "instances")) {
+            JsonObject instance = element.getAsJsonObject();
+            String landscapeId = requiredString(instance, "landscapeId");
+            CityBlueprint.Landscape landscape = required.get(landscapeId);
+            if (landscape == null || landscape.owner() == null) {
+                throw new IllegalArgumentException("CITY_OUTDOOR_LANDSCAPE_CAPACITY_OWNER_DRIFT:" + landscapeId);
+            }
+            String instanceId = requiredString(instance, "landscapeInstanceId");
+            if (!seenInstances.add(instanceId)) {
+                throw new IllegalArgumentException("CITY_OUTDOOR_LANDSCAPE_CAPACITY_INSTANCE_DUPLICATE");
+            }
+            AnchorData owner = requiredOwnerAnchor(anchorsByGroup, landscape);
+            if (!owner.anchorId().equals(requiredString(instance, "ownerAnchorId"))
+                    || !sameBounds(owner.footprint(), object(instance, "ownerFootprint"))) {
+                throw new IllegalArgumentException("CITY_OUTDOOR_REQUIRED_LANDSCAPE_OWNER_DRIFT:" + landscapeId);
+            }
+            JsonArray parcels = requiredArray(instance, "parcelReservations");
+            if (parcels.size() != landscape.parcelCount()) {
+                throw new IllegalArgumentException("CITY_OUTDOOR_REQUIRED_LANDSCAPE_PARCEL_COUNT_DRIFT:"
+                        + landscapeId);
+            }
+            for (JsonElement parcelElement : parcels) {
+                JsonObject parcel = parcelElement.getAsJsonObject();
+                String parcelId = requiredString(parcel, "parcelId");
+                String parentId = stringValue(parcel, "parentParcelId", "");
+                if (parentIds.put(parcelId, parentId) != null) {
+                    throw new IllegalArgumentException("CITY_OUTDOOR_LANDSCAPE_CAPACITY_PARCEL_INVALID:"
+                            + parcelId);
+                }
+                Set<BlockPoint> cells = new LinkedHashSet<>();
+                for (JsonElement spanElement : requiredArray(parcel, "reservationSpans")) {
+                    JsonObject span = spanElement.getAsJsonObject();
+                    int z = requiredInt(span, "z");
+                    int minX = requiredInt(span, "minX");
+                    int maxX = requiredInt(span, "maxX");
+                    for (int x = minX; x <= maxX; x++) cells.add(new BlockPoint(x, z));
+                }
+                if (cells.isEmpty() || result.put(parcelId, Set.copyOf(cells)) != null) {
+                    throw new IllegalArgumentException("CITY_OUTDOOR_LANDSCAPE_CAPACITY_PARCEL_INVALID:"
+                            + parcelId);
+                }
+            }
+        }
+        int expectedInstances = required.values().stream().mapToInt(CityBlueprint.Landscape::instanceCount).sum();
+        if (seenInstances.size() != expectedInstances) {
+            throw new IllegalArgumentException("CITY_OUTDOOR_REQUIRED_LANDSCAPE_INSTANCE_COUNT_DRIFT");
+        }
+        return new CapacityReservation(Map.copyOf(result), Map.copyOf(parentIds));
+    }
+
+    private static boolean sameBounds(BlockBounds expected, JsonObject actual) {
+        return actual != null && expected.minX() == requiredInt(actual, "minX")
+                && expected.minZ() == requiredInt(actual, "minZ")
+                && expected.maxX() == requiredInt(actual, "maxX")
+                && expected.maxZ() == requiredInt(actual, "maxZ");
     }
 
     private static List<AnchorData> requiredGroups(Map<String, List<AnchorData>> anchorsByGroup,
@@ -793,11 +919,15 @@ public final class CityOutdoorBlueprintCompiler {
 
     private record AnchorData(String anchorId,
                               String groupId,
+                              String structureRef,
                               BlockBounds footprint,
                               BlueprintPlacementPhase phase) {
     }
 
     private record ParcelSpec(String parcelId,
+                              String landscapeInstanceId,
+                              String parentParcelId,
+                              String rootSourceId,
                               AnchorData anchor,
                               BlockPoint seed,
                               AreaBudget budget,
@@ -807,9 +937,11 @@ public final class CityOutdoorBlueprintCompiler {
                               LandUseSeedGroup.AdmissionPolicy admissionPolicy) {
     }
 
-    private record ParcelRequest(AnchorData anchor,
-                                 LandUseSeedGroup.AdmissionPolicy admissionPolicy,
-                                 int ordinal) {
+    private record CapacityReservation(Map<String, Set<BlockPoint>> domains,
+                                       Map<String, String> parentParcelIds) {
+        private static CapacityReservation empty() {
+            return new CapacityReservation(Map.of(), Map.of());
+        }
     }
 
     private enum BlueprintPlacementPhase {

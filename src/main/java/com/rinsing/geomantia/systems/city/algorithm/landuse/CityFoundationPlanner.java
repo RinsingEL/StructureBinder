@@ -8,14 +8,12 @@ import com.rinsing.geomantia.systems.city.domain.model.BlockPoint;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
-/** Builds one terrain-safe, broad city foundation from the frozen structure footprints. */
+/** Builds one broad city execution domain from the frozen structure footprints. */
 public final class CityFoundationPlanner {
     private static final int[][] DIRECTIONS = {{0, -1}, {-1, 0}, {1, 0}, {0, 1}};
     private static final Comparator<BlockPoint> POINT_ORDER = Comparator.comparingInt(BlockPoint::z)
@@ -41,17 +39,15 @@ public final class CityFoundationPlanner {
         }
         validateJoinGraph(footprints, settings.maxJoinDistanceBlocks());
 
-        TerrainIndex terrainIndex = new TerrainIndex(terrain);
         Set<BlockPoint> structureMask = rasterize(footprints);
-        Set<BlockPoint> marginMask = dilate(structureMask, settings.structureMarginBlocks(), planningBounds,
-                terrainIndex);
+        Set<BlockPoint> marginMask = dilate(structureMask, settings.structureMarginBlocks(), planningBounds);
         int bridgeHalfWidth = Math.max(1, settings.structureMarginBlocks());
         int minimumRadius = settings.closeRadiusBlocks();
         int maximumRadius = settings.maxJoinDistanceBlocks();
-        Attempt resolved = attempt(marginMask, minimumRadius, planningBounds, terrainIndex,
+        Attempt resolved = attempt(marginMask, minimumRadius, planningBounds,
                 bridgeHalfWidth, footprints.size() > 1);
         if (!resolved.valid() && maximumRadius > minimumRadius) {
-            Attempt maximum = attempt(marginMask, maximumRadius, planningBounds, terrainIndex,
+            Attempt maximum = attempt(marginMask, maximumRadius, planningBounds,
                     bridgeHalfWidth, footprints.size() > 1);
             if (maximum.valid()) {
                 int low = minimumRadius + 1;
@@ -59,7 +55,7 @@ public final class CityFoundationPlanner {
                 resolved = maximum;
                 while (low <= high) {
                     int middle = low + (high - low) / 2;
-                    Attempt candidate = attempt(marginMask, middle, planningBounds, terrainIndex,
+                    Attempt candidate = attempt(marginMask, middle, planningBounds,
                             bridgeHalfWidth, footprints.size() > 1);
                     if (candidate.valid()) {
                         resolved = candidate;
@@ -90,10 +86,9 @@ public final class CityFoundationPlanner {
     private static Attempt attempt(Set<BlockPoint> source,
                                    int radius,
                                    BlockBounds planningBounds,
-                                   TerrainIndex terrain,
                                    int bridgeHalfWidth,
                                    boolean requireDurableBridge) {
-        Set<BlockPoint> expanded = dilate(source, radius, planningBounds, terrain);
+        Set<BlockPoint> expanded = dilate(source, radius, planningBounds);
         boolean expandedConnected = components(expanded).size() == 1;
         Set<BlockPoint> closed = expanded;
         for (int step = 0; step < radius && !closed.isEmpty(); step++) {
@@ -162,16 +157,14 @@ public final class CityFoundationPlanner {
 
     private static Set<BlockPoint> dilate(Set<BlockPoint> source,
                                           int radius,
-                                          BlockBounds planningBounds,
-                                          TerrainIndex terrain) {
+                                          BlockBounds planningBounds) {
         Set<BlockPoint> result = new HashSet<>(source);
         for (int step = 0; step < radius; step++) {
             Set<BlockPoint> next = new HashSet<>(result);
             for (BlockPoint point : result) {
                 for (int[] direction : DIRECTIONS) {
                     BlockPoint neighbor = new BlockPoint(point.x() + direction[0], point.z() + direction[1]);
-                    if (planningBounds.contains(neighbor.x(), neighbor.z())
-                            && passable(terrain.cellAt(neighbor))) next.add(neighbor);
+                    if (planningBounds.contains(neighbor.x(), neighbor.z())) next.add(neighbor);
                 }
             }
             result = next;
@@ -255,10 +248,6 @@ public final class CityFoundationPlanner {
         return result;
     }
 
-    private static boolean passable(LandUseTerrainField.Cell cell) {
-        return cell != null && cell.sampled() && !cell.water() && cell.slope() < 45.0 && cell.localRelief() < 48.0;
-    }
-
     public record Plan(Set<BlockPoint> claims,
                        int structureBlocks,
                        int marginBlocks,
@@ -279,20 +268,4 @@ public final class CityFoundationPlanner {
         }
     }
 
-    private static final class TerrainIndex {
-        private final int step;
-        private final Map<CellKey, LandUseTerrainField.Cell> cells = new HashMap<>();
-
-        private TerrainIndex(LandUseTerrainField field) {
-            step = field.cellStepBlocks();
-            field.cells().forEach(cell -> cells.put(new CellKey(cell.cellX(), cell.cellZ()), cell));
-        }
-
-        private LandUseTerrainField.Cell cellAt(BlockPoint point) {
-            return cells.get(new CellKey(Math.floorDiv(point.x(), step), Math.floorDiv(point.z(), step)));
-        }
-    }
-
-    private record CellKey(int x, int z) {
-    }
 }

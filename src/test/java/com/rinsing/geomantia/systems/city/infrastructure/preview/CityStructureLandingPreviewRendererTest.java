@@ -13,6 +13,7 @@ import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -237,6 +238,45 @@ final class CityStructureLandingPreviewRendererTest {
         BufferedImage image = ImageIO.read(overview.toFile());
         assertNotNull(image);
         assertEquals(1280, image.getWidth());
+    }
+
+    @Test
+    void d4AnchorPreviewRendersExactLandscapeCapacitySpans(@TempDir Path tempDir) throws Exception {
+        JsonObject anchorMap = JsonParser.parseString("""
+                {
+                  "grid": {"blockBounds": {"minX": 0, "minZ": 0, "maxX": 256, "maxZ": 256}},
+                  "anchors": [{
+                    "anchorId": "center", "templateId": "geomantia:test_house",
+                    "anchorBlock": {"x": 32, "z": 32},
+                    "plannedFootprint": {"minX": 28, "minZ": 28, "maxX": 36, "maxZ": 36},
+                    "collisionEnvelope": {"minX": 24, "minZ": 24, "maxX": 40, "maxZ": 40},
+                    "maskEnvelope": {"minX": 20, "minZ": 20, "maxX": 44, "maxZ": 44}
+                  }]
+                }
+                """).getAsJsonObject();
+        JsonObject landscapePlan = JsonParser.parseString("""
+                {
+                  "status": "reserved",
+                  "instances": [{
+                    "landscapeId": "working_farmland", "profileRef": "landscape:farmland",
+                    "parcelCount": 2, "parcelAreaBlocks": 192,
+                    "reservationSpans": [
+                      {"z": 120, "minX": 120, "maxX": 136},
+                      {"z": 121, "minX": 118, "maxX": 138},
+                      {"z": 122, "minX": 120, "maxX": 136}
+                    ]
+                  }]
+                }
+                """).getAsJsonObject();
+
+        Path overview = new CityStructureLandingPreviewRenderer()
+                .renderD4(anchorMap, null, landscapePlan, tempDir);
+
+        BufferedImage image = ImageIO.read(overview.toFile());
+        assertNotNull(image);
+        assertNotEquals(image.getRGB(398, 380), image.getRGB(520, 380),
+                "Exact landscape capacity span must tint the overview independently of structures");
+        assertTrue(Files.exists(tempDir.resolve("structure_anchor_cluster_preview.png")));
     }
 
     @Test

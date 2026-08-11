@@ -13,11 +13,12 @@ public record LandUseAreaPlan(
         String planHash,
         BlockBounds planningBounds,
         List<Area> areas,
+        List<SharedBoundarySpan> sharedBoundarySpans,
         List<ScanlineSpan> unclaimedSpans,
         List<CorridorExclusion> corridorExclusions,
         List<String> warnings) {
 
-    public static final String CURRENT_SCHEMA_VERSION = "city_land_use_area_plan.v0.1";
+    public static final String CURRENT_SCHEMA_VERSION = "city_land_use_area_plan.v0.2";
 
     public LandUseAreaPlan {
         if (!CURRENT_SCHEMA_VERSION.equals(schemaVersion)) {
@@ -28,6 +29,7 @@ public record LandUseAreaPlan(
         planHash = planHash == null ? "" : planHash;
         Objects.requireNonNull(planningBounds, "planningBounds");
         areas = List.copyOf(areas == null ? List.of() : areas);
+        sharedBoundarySpans = List.copyOf(sharedBoundarySpans == null ? List.of() : sharedBoundarySpans);
         unclaimedSpans = List.copyOf(unclaimedSpans == null ? List.of() : unclaimedSpans);
         corridorExclusions = List.copyOf(corridorExclusions == null ? List.of() : corridorExclusions);
         warnings = List.copyOf(warnings == null ? List.of() : warnings);
@@ -35,8 +37,29 @@ public record LandUseAreaPlan(
 
     public LandUseAreaPlan withPlanHash(String hash) {
         return new LandUseAreaPlan(schemaVersion, ruleVersion, cityId, hash, planningBounds, areas,
+                sharedBoundarySpans,
                 unclaimedSpans, corridorExclusions, warnings);
     }
+
+    public LandUseAreaPlan(String schemaVersion, String ruleVersion, String cityId, String planHash,
+                           BlockBounds planningBounds, List<Area> areas, List<ScanlineSpan> unclaimedSpans,
+                           List<CorridorExclusion> corridorExclusions, List<String> warnings) {
+        this(schemaVersion, ruleVersion, cityId, planHash, planningBounds, areas, List.of(),
+                unclaimedSpans, corridorExclusions, warnings);
+    }
+
+    public record SharedBoundarySpan(int z, int minX, int maxX, String writerAreaId,
+                                     String neighborAreaId, SharedBoundaryRelation relation) {
+        public SharedBoundarySpan {
+            if (minX > maxX) throw new IllegalArgumentException("minX must be <= maxX");
+            if (writerAreaId == null || writerAreaId.isBlank() || neighborAreaId == null
+                    || neighborAreaId.isBlank() || writerAreaId.equals(neighborAreaId) || relation == null) {
+                throw new IllegalArgumentException("Shared boundary requires two distinct Areas and a relation");
+            }
+        }
+    }
+
+    public enum SharedBoundaryRelation { PARENT_CHILD, CROSS_LANDSCAPE }
 
     public record Area(
             String areaId,

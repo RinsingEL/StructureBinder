@@ -63,6 +63,13 @@ final class CityBlueprintGroupLayoutPlanner {
                 claimMultiplier = 1.06;
                 outwardBias = 0.58;
             }
+            case "CENTER_SYMMETRIC" -> {
+                targetGap += 4;
+                maximumGap += 4;
+                jitter = 0;
+                claimMultiplier = 1.20;
+                outwardBias = 0.0;
+            }
             default -> {
                 // COMPACT uses the baseline parameters.
             }
@@ -101,9 +108,12 @@ final class CityBlueprintGroupLayoutPlanner {
                     outwardTarget, List.of(seedPoint));
         }
 
-        Frame guidanceFrame = outwardPending && outwardTarget != null
+        boolean centerSymmetric = "CENTER_SYMMETRIC".equals(algorithm);
+        Frame guidanceFrame = !centerSymmetric && outwardPending && outwardTarget != null
                 ? frame.toward(outwardTarget) : frame;
-        BlockPoint desired = outwardPending && outwardTarget != null
+        BlockPoint desired = centerSymmetric
+                ? centerSymmetricPoint(frame, density, slotIndex, footprintSpan)
+                : outwardPending && outwardTarget != null
                 ? outwardPoint(algorithm, seedPoint, outwardTarget, slotIndex, spacing, seed, groupId)
                 : switch (algorithm) {
                     case "GRID" -> gridPoint(frame, slotIndex, spacing, false);
@@ -115,8 +125,48 @@ final class CityBlueprintGroupLayoutPlanner {
                             parameters, false, false);
                 };
         List<BlockPoint> guides = fallbackGuides(desired, guidanceFrame, parameters, spacing, algorithm);
-        return new Proposal(slotIndex, algorithm, parameters, spacing, outwardPending,
+        return new Proposal(slotIndex, algorithm, parameters, spacing, !centerSymmetric && outwardPending,
                 outwardTarget, guides);
+    }
+
+    List<SymmetricPair> symmetricPairOptions(CityBlueprint.DensityClass density,
+                                             Frame frame,
+                                             int pairIndex,
+                                             int centerFootprintSpan,
+                                             int memberFootprintSpan) {
+        return symmetricPairOptions(density, frame, pairIndex, centerFootprintSpan,
+                memberFootprintSpan, frame.center().x() * 2, frame.center().z() * 2);
+    }
+
+    List<SymmetricPair> symmetricPairOptions(CityBlueprint.DensityClass density,
+                                             Frame frame,
+                                             int pairIndex,
+                                             int centerFootprintSpan,
+                                             int memberFootprintSpan,
+                                             int anchorCenterTwiceX,
+                                             int anchorCenterTwiceZ) {
+        Parameters parameters = parameters("CENTER_SYMMETRIC", density);
+        int firstRadius = Math.max(1, (centerFootprintSpan + memberFootprintSpan + 1) / 2
+                + parameters.targetEdgeGapBlocks());
+        int ring = pairIndex / 2;
+        int radius = firstRadius + ring * (memberFootprintSpan + parameters.targetEdgeGapBlocks());
+        int preferredAxis = ((pairIndex % 2) * 2 + (ring % 2)) % 4;
+        double phase = Math.atan2(frame.axisZ(), frame.axisX());
+        List<SymmetricPair> result = new ArrayList<>();
+        for (int rotation = 0; rotation < 4; rotation++) {
+            int axis = (preferredAxis + rotation) % 4;
+            double angle = phase + axis * Math.PI / 4.0;
+            double dx = Math.cos(angle) * radius;
+            double dz = Math.sin(angle) * radius;
+            BlockPoint approximateCenter = new BlockPoint(Math.floorDiv(anchorCenterTwiceX, 2),
+                    Math.floorDiv(anchorCenterTwiceZ, 2));
+            BlockPoint first = point(approximateCenter, dx, dz);
+            BlockPoint opposite = new BlockPoint(anchorCenterTwiceX - first.x(),
+                    anchorCenterTwiceZ - first.z());
+            result.add(new SymmetricPair(pairIndex, ring, axis, radius,
+                    anchorCenterTwiceX, anchorCenterTwiceZ, first, opposite, parameters));
+        }
+        return List.copyOf(result);
     }
 
     private static BlockPoint outwardPoint(String algorithm,
@@ -217,6 +267,16 @@ final class CityBlueprintGroupLayoutPlanner {
         return point(frame.center(), Math.cos(angle) * radius, Math.sin(angle) * radius);
     }
 
+    private BlockPoint centerSymmetricPoint(Frame frame,
+                                            CityBlueprint.DensityClass density,
+                                            int slotIndex,
+                                            int footprintSpan) {
+        int pairIndex = Math.max(0, (slotIndex - 1) / 2);
+        SymmetricPair pair = symmetricPairOptions(density, frame, pairIndex,
+                footprintSpan, footprintSpan).get(0);
+        return (slotIndex & 1) == 1 ? pair.first() : pair.opposite();
+    }
+
     private static List<BlockPoint> fallbackGuides(BlockPoint desired,
                                                     Frame frame,
                                                     Parameters parameters,
@@ -224,6 +284,7 @@ final class CityBlueprintGroupLayoutPlanner {
                                                     String algorithm) {
         Set<BlockPoint> guides = new LinkedHashSet<>();
         guides.add(desired);
+        if ("CENTER_SYMMETRIC".equals(algorithm)) return List.copyOf(guides);
         int offset = "GRID".equals(algorithm)
                 ? spacing : Math.max(2, Math.min(spacing / 3, parameters.jitterBlocks()));
         guides.add(point(desired, -frame.axisZ() * offset, frame.axisX() * offset));
@@ -337,6 +398,43 @@ final class CityBlueprintGroupLayoutPlanner {
                 target.addProperty("z", outwardTarget.z());
                 value.add("outwardTarget", target);
             }
+            return value;
+        }
+    }
+
+    record SymmetricPair(int pairIndex,
+                         int ringIndex,
+                         int axisVariant,
+                         int radiusBlocks,
+                         int anchorCenterTwiceX,
+                         int anchorCenterTwiceZ,
+                         BlockPoint first,
+                         BlockPoint opposite,
+                         Parameters parameters) {
+        JsonArray originsJson() {
+            JsonArray values = new JsonArray();
+            values.add(first.asJson());
+            values.add(opposite.asJson());
+            return values;
+        }
+
+        JsonObject traceJson(int firstSlotIndex) {
+            JsonObject value = new JsonObject();
+            value.addProperty("algorithm", "CENTER_SYMMETRIC");
+            value.addProperty("slotIndex", firstSlotIndex);
+            value.addProperty("spacingBlocks", radiusBlocks);
+            value.addProperty("outwardGuided", false);
+            value.add("densityParameters", parameters.asJson());
+            value.addProperty("symmetryPairIndex", pairIndex);
+            value.addProperty("symmetryRingIndex", ringIndex);
+            value.addProperty("symmetryAxisVariant", axisVariant);
+            value.addProperty("atomicPair", true);
+            JsonObject center = new JsonObject();
+            center.addProperty("x", anchorCenterTwiceX / 2.0);
+            center.addProperty("z", anchorCenterTwiceZ / 2.0);
+            center.addProperty("xTimesTwo", anchorCenterTwiceX);
+            center.addProperty("zTimesTwo", anchorCenterTwiceZ);
+            value.add("symmetryCenter", center);
             return value;
         }
     }

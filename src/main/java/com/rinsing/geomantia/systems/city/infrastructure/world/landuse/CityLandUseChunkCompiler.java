@@ -80,12 +80,14 @@ public final class CityLandUseChunkCompiler {
         OwnerChunk owner = new OwnerChunk(chunkX, chunkZ);
         return compileInternal(prepared.areaPlan(),
                 prepared.printAreasByOwner().getOrDefault(owner, Map.of()),
+                prepared.surfacePrintPlan().sharedBoundarySpans(),
                 chunkX, chunkZ);
     }
 
     private ChunkFragment compileInternal(
             LandUseAreaPlan plan,
             Map<AreaKey, CityLandUseSurfacePrintPlan.AreaPrint> printAreas,
+            List<CityLandUseSurfacePrintPlan.SharedBoundaryPrintSpan> sharedBoundarySpans,
             int chunkX,
             int chunkZ) {
         Objects.requireNonNull(plan, "plan");
@@ -113,6 +115,28 @@ public final class CityLandUseChunkCompiler {
 
         List<LandUseAreaPlan.Area> stableAreas = new ArrayList<>(plan.areas());
         stableAreas.sort(Comparator.comparing(LandUseAreaPlan.Area::areaId));
+        Map<BlockCell, String> areaOwners = new HashMap<>();
+        for (LandUseAreaPlan.Area area : stableAreas) {
+            for (LandUseAreaPlan.ScanlineSpan span : area.memberSpans()) {
+                for (int x = span.minX(); x <= span.maxX(); x++) {
+                    areaOwners.put(new BlockCell(x, span.z()), area.areaId());
+                }
+            }
+        }
+        Set<BlockCell> sharedContactCells = new HashSet<>();
+        int[][] neighbors = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+        for (CityLandUseSurfacePrintPlan.SharedBoundaryPrintSpan span : sharedBoundarySpans) {
+            for (int x = span.minX(); x <= span.maxX(); x++) {
+                BlockCell writerCell = new BlockCell(x, span.z());
+                sharedContactCells.add(writerCell);
+                for (int[] direction : neighbors) {
+                    BlockCell neighbor = new BlockCell(x + direction[0], span.z() + direction[1]);
+                    if (span.neighborAreaId().equals(areaOwners.get(neighbor))) {
+                        sharedContactCells.add(neighbor);
+                    }
+                }
+            }
+        }
 
         for (LandUseAreaPlan.Area area : stableAreas) {
             String areaId = area.areaId();
@@ -135,6 +159,8 @@ public final class CityLandUseChunkCompiler {
 
             boolean microGradePave = printArea != null && SurfacePolicy.PAVE.name().equals(
                     printArea.surfaceSettings().compatibilityCategory());
+            boolean foundationArea = area.sourceGroupIds().stream()
+                    .anyMatch(groupId -> groupId.endsWith("::foundation"));
             if (microGradePave && microFillBlock != null) {
                 for (LandUseAreaPlan.ScanlineSpan span : area.memberSpans()) {
                     int z = span.z();
@@ -148,7 +174,7 @@ public final class CityLandUseChunkCompiler {
                         if (!gradingFootprints.contains(cell)
                                 && !gradingCorridorExclusions.contains(cell)
                                 && !gates.contains(cell)) {
-                            gradingMask.putIfAbsent(cell, new GradingMaskCell(areaId, x, z));
+                            gradingMask.putIfAbsent(cell, new GradingMaskCell(areaId, x, z, foundationArea));
                         }
                     }
                 }
@@ -194,11 +220,24 @@ public final class CityLandUseChunkCompiler {
                         corridorExcluded++;
                     } else if (gates.contains(cell)) {
                         gateExcluded++;
-                    } else if (!isContourChannel(printArea, cell)) {
+                    } else if (!sharedContactCells.contains(cell) && !isContourChannel(printArea, cell)) {
                         boundaries.putIfAbsent(cell,
                                 new BoundaryOperation(areaId, landUseType, cell.x(), cell.z(), boundaryBlock));
                     }
                 }
+            }
+        }
+
+        Map<String, LandUseAreaPlan.Area> areasById = new HashMap<>();
+        stableAreas.forEach(area -> areasById.put(area.areaId(), area));
+        for (CityLandUseSurfacePrintPlan.SharedBoundaryPrintSpan span : sharedBoundarySpans) {
+            if (span.boundaryBlockId().isBlank() || span.z() < minChunkZ || span.z() > maxChunkZ) continue;
+            LandUseAreaPlan.Area writer = areasById.get(span.writerAreaId());
+            if (writer == null) continue;
+            for (int x = Math.max(span.minX(), minChunkX); x <= Math.min(span.maxX(), maxChunkX); x++) {
+                BlockCell cell = new BlockCell(x, span.z());
+                boundaries.put(cell, new BoundaryOperation(writer.areaId(), writer.landUseType(), x,
+                        span.z(), span.boundaryBlockId()));
             }
         }
 
@@ -537,7 +576,7 @@ public final class CityLandUseChunkCompiler {
         }
     }
 
-    public record GradingMaskCell(String areaId, int x, int z) {
+    public record GradingMaskCell(String areaId, int x, int z, boolean foundation) {
         public static final Comparator<GradingMaskCell> STABLE_ORDER =
                 Comparator.comparingInt(GradingMaskCell::z)
                         .thenComparingInt(GradingMaskCell::x)
@@ -545,6 +584,10 @@ public final class CityLandUseChunkCompiler {
 
         public GradingMaskCell {
             Objects.requireNonNull(areaId, "areaId");
+        }
+
+        public GradingMaskCell(String areaId, int x, int z) {
+            this(areaId, x, z, false);
         }
     }
 
@@ -676,6 +719,10 @@ public final class CityLandUseChunkCompiler {
 
         private LandUseAreaPlan areaPlan() {
             return areaPlan;
+        }
+
+        private CityLandUseSurfacePrintPlan surfacePrintPlan() {
+            return surfacePrintPlan;
         }
 
         private Map<OwnerChunk, Map<AreaKey, CityLandUseSurfacePrintPlan.AreaPrint>> printAreasByOwner() {
