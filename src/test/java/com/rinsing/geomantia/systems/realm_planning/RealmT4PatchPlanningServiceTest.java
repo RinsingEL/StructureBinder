@@ -3,11 +3,14 @@ package com.rinsing.geomantia.systems.realm_planning;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.rinsing.geomantia.systems.realm_planning.application.terrain.TerrainScalePatchService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -58,10 +61,8 @@ class RealmT4PatchPlanningServiceTest {
         writeArtifacts(run);
 
         PatchExplorerService explorer = new PatchExplorerService(root);
-        String capitalSelectionRef = select(explorer, "explore_capital", "minecraft:plains",
-                "MINECRAFT_PLAINS-01");
-        String townSelectionRef = select(explorer, "explore_town", "minecraft:forest",
-                "MINECRAFT_FOREST-01");
+        String capitalSelectionRef = select(explorer, "explore_capital", "plain", "PLAIN-01");
+        String townSelectionRef = select(explorer, "explore_town", "upland", "UPLAND-01");
 
         boolean[] synchronizedArtifacts = {false};
         RealmT4PatchPlanningService service = new RealmT4PatchPlanningService(root, (runId, registry) -> {
@@ -140,8 +141,56 @@ class RealmT4PatchPlanningServiceTest {
                 .get("patchSelectionRef").getAsString());
     }
 
-    private static String select(PatchExplorerService explorer, String sessionId, String biome,
-                                 String candidateId) throws Exception {
+    @Test
+    void convertsTScaleAnchorBlockBackToWorldSurveyGridForTerritory() throws Exception {
+        Path root = tempDir.resolve("scaled_anchor_realm_debug");
+        Path run = root.resolve("run_t4");
+        Files.createDirectories(run);
+        writeArtifacts(run);
+        PatchExplorerService explorer = new PatchExplorerService(root);
+        JsonObject openRequest = new JsonObject();
+        openRequest.addProperty("runId", "run_t4");
+        openRequest.addProperty("scopeType", "realm_t4");
+        openRequest.addProperty("realmId", "realm_a");
+        JsonObject opened = explorer.open(openRequest, (runId, scopeType, scopeId, identity, sourceCells) -> {
+            List<TerrainScalePatchService.PatchCell> cells = new ArrayList<>();
+            for (int x = 8; x <= 16; x++) {
+                cells.add(new TerrainScalePatchService.PatchCell(x, 0, x * 8, 0,
+                        "t_plain_1", "plain", 64.0, false, "minecraft:plains", 0.0, 0.0));
+            }
+            return new TerrainScalePatchService.Result(8, List.of(new TerrainScalePatchService.Patch(
+                    "t_plain_1", "plain", 1.0, List.of("plain_patch"), cells)), 1, cells.size());
+        });
+        JsonObject showRequest = new JsonObject();
+        showRequest.addProperty("runId", "run_t4");
+        showRequest.addProperty("sessionId", opened.get("sessionId").getAsString());
+        showRequest.add("interestTypes", strings("plain"));
+        explorer.showCandidates(showRequest);
+        JsonObject selectRequest = new JsonObject();
+        selectRequest.addProperty("runId", "run_t4");
+        selectRequest.addProperty("sessionId", opened.get("sessionId").getAsString());
+        selectRequest.addProperty("candidateId", "PLAIN-01");
+        String selectionRef = explorer.selectCandidate(selectRequest).get("patchSelectionRef").getAsString();
+
+        RealmT4PatchPlanningService service = new RealmT4PatchPlanningService(root, (runId, registry) -> null);
+        JsonObject createRequest = new JsonObject();
+        createRequest.addProperty("runId", "run_t4");
+        createRequest.addProperty("realmId", "realm_a");
+        createRequest.addProperty("planningSessionId", "scaled_anchor_plan");
+        service.create(createRequest);
+        JsonObject capitalRequest = new JsonObject();
+        capitalRequest.addProperty("runId", "run_t4");
+        capitalRequest.addProperty("planningSessionId", "scaled_anchor_plan");
+        capitalRequest.addProperty("patchSelectionRef", selectionRef);
+        JsonObject capital = service.selectCapital(capitalRequest).getAsJsonObject("selectedCapital");
+
+        assertEquals(68, capital.getAsJsonObject("anchorBlock").get("x").getAsInt());
+        assertEquals(4, capital.getAsJsonObject("anchorGrid").get("x").getAsInt(),
+                "T grid x=8 must be converted from block x=68 to W grid x=4");
+    }
+
+    private static String select(PatchExplorerService explorer, String sessionId, String patchType,
+            String candidateId) throws Exception {
         JsonObject openRequest = new JsonObject();
         openRequest.addProperty("runId", "run_t4");
         openRequest.addProperty("scopeType", "realm_t4");
@@ -151,7 +200,7 @@ class RealmT4PatchPlanningServiceTest {
         JsonObject showRequest = new JsonObject();
         showRequest.addProperty("runId", "run_t4");
         showRequest.addProperty("sessionId", open.get("sessionId").getAsString());
-        showRequest.add("interestTypes", strings(biome));
+        showRequest.add("interestTypes", strings(patchType));
         explorer.showCandidates(showRequest);
         JsonObject selectRequest = new JsonObject();
         selectRequest.addProperty("runId", "run_t4");
@@ -186,9 +235,9 @@ class RealmT4PatchPlanningServiceTest {
             cell.addProperty("blockX", x * 16);
             cell.addProperty("blockZ", 0);
             cell.addProperty("continentId", "continent_0");
-            cell.addProperty("patchId", "plain_patch");
-            cell.addProperty("landform", "plain");
-            cell.addProperty("baseLandform", "lowland");
+            cell.addProperty("patchId", x < 12 ? "plain_patch" : "upland_patch");
+            cell.addProperty("landform", x < 12 ? "plain" : "upland");
+            cell.addProperty("baseLandform", x < 12 ? "lowland" : "upland");
             cell.addProperty("landformConfidence", 0.9);
             JsonObject biomeHist = new JsonObject();
             biomeHist.addProperty(x < 12 ? "minecraft:plains" : "minecraft:forest", 15);

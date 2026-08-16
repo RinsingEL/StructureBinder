@@ -104,6 +104,24 @@ class CityLandscapeCapacityReservationPlannerTest {
     }
 
     @Test
+    void forceGrowthStopsAtAbruptElevationBandEvenWhenBothSidesArePassable() {
+        BlockBounds bounds = new BlockBounds(0, 0, 255, 255);
+        LandUseTerrainField terrain = terrain(bounds, (x, z) -> false,
+                (x, z) -> x >= 128 ? 80 : 64);
+
+        var result = new CityLandscapeCapacityReservationPlanner().plan(
+                blueprint(10), catalog(1, 12), terrain, anchors(120, 120));
+
+        assertTrue(result.ok(), result.plan().toString());
+        JsonObject instance = result.plan().getAsJsonArray("instances").get(0).getAsJsonObject();
+        for (var element : instance.getAsJsonArray("parcelReservations")) {
+            Set<BlockPoint> cells = cells(element.getAsJsonObject().getAsJsonArray("reservationSpans"));
+            assertTrue(cells.stream().noneMatch(point -> point.x() >= 128),
+                    "D4 Landscape capacity crossed an abrupt elevation band");
+        }
+    }
+
+    @Test
     void keepsBestLayoutStableForFixedSeedAndVariesEqualScoreDirectionAcrossSeeds() {
         CityLandscapeCapacityReservationPlanner planner = new CityLandscapeCapacityReservationPlanner();
         LandUseTerrainField terrain = terrain(new BlockBounds(0, 0, 255, 255));
@@ -283,11 +301,16 @@ class CityLandscapeCapacityReservationPlannerTest {
     }
 
     private static LandUseTerrainField terrain(BlockBounds bounds, BlockPredicate blocked) {
+        return terrain(bounds, blocked, (x, z) -> 64);
+    }
+
+    private static LandUseTerrainField terrain(BlockBounds bounds, BlockPredicate blocked,
+                                                Elevation elevation) {
         List<LandUseTerrainField.Cell> cells = new ArrayList<>();
         for (int z = bounds.minZ(); z <= bounds.maxZ(); z += 4) {
             for (int x = bounds.minX(); x <= bounds.maxX(); x += 4) {
                 boolean impassable = blocked.test(x, z);
-                cells.add(new LandUseTerrainField.Cell(x / 4, z / 4, x, z, 4, 64,
+                cells.add(new LandUseTerrainField.Cell(x / 4, z / 4, x, z, 4, elevation.at(x, z),
                         impassable ? 60 : 0, impassable ? 60 : 0, impassable ? 60 : 0,
                         false, 0, 0, "minecraft:plains", "plain", "patch", true));
             }
@@ -329,5 +352,10 @@ class CityLandscapeCapacityReservationPlannerTest {
     @FunctionalInterface
     private interface BlockPredicate {
         boolean test(int x, int z);
+    }
+
+    @FunctionalInterface
+    private interface Elevation {
+        double at(int x, int z);
     }
 }

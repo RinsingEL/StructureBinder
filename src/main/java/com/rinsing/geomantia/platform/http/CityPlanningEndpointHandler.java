@@ -101,6 +101,7 @@ import com.rinsing.geomantia.systems.gis.GisSampleConfig;
 import com.rinsing.geomantia.systems.gis.adapter.minecraft.MinecraftPriorAtlasSampler;
 import com.rinsing.geomantia.systems.gis.application.refresh.RefreshPriority;
 import com.rinsing.geomantia.systems.gis.application.refresh.GisRefreshService;
+import com.rinsing.geomantia.systems.gis.application.analysis.MultiRegionLandformAnalyzer;
 import com.rinsing.geomantia.systems.gis.application.refresh.RefreshResult;
 import com.rinsing.geomantia.systems.gis.application.refresh.SampleMode;
 import com.rinsing.geomantia.systems.gis.domain.landform.LandformPatch;
@@ -293,19 +294,13 @@ final class CityPlanningEndpointHandler {
                 .map(RefreshResult::region)
                 .filter(java.util.Objects::nonNull)
                 .toList();
-        List<LandformPatch> patches = refreshResults.stream()
-                .flatMap(result -> {
-                    if (result.patches() != null && !result.patches().isEmpty()) {
-                        return result.patches().stream();
-                    }
-                    return result.region() == null ? java.util.stream.Stream.<LandformPatch>empty()
-                            : result.region().patches().stream();
-                })
-                .toList();
+        List<LandformPatch> patches = regions.isEmpty() ? List.of()
+                : new MultiRegionLandformAnalyzer(sampleConfig, GisClassifierConfig.defaults())
+                        .analyze(regions, d3PatchNamespace(level, localCellStepBlocks, citySeedId));
 
         CityLandformReviewPackage reviewPkg = regions.isEmpty()
                 ? reviewBuilder.build(ctx, patches)
-                : reviewBuilder.buildFromRegions(ctx, regions, patchContextBounds);
+                : reviewBuilder.buildFromRegions(ctx, regions, patches, patchContextBounds);
         Path reviewMapPath = mapRenderer.render(ctx, reviewPkg, patches, outputDirectory);
         String reviewMapRef = debugRef(debugRoot, reviewMapPath);
         reviewPkg = reviewPkg.withReviewMap(reviewMapRef, List.of(
@@ -371,6 +366,11 @@ final class CityPlanningEndpointHandler {
             response.add("nextActions", nextActions);
         }
         return response;
+    }
+
+    private static String d3PatchNamespace(ServerLevel level, int cellStepBlocks, String citySeedId) {
+        return level.dimension().location() + ":step." + cellStepBlocks + ":city."
+                + citySeedId.replaceAll("[^A-Za-z0-9._-]", "_");
     }
 
     static JsonObject handleReviewD3Site(Path debugRoot, String runId, String citySeedId,

@@ -5,6 +5,9 @@ import com.rinsing.geomantia.systems.gis.domain.cell.LandformType;
 import com.rinsing.geomantia.systems.gis.algorithm.landform.LandformClassifier;
 import com.rinsing.geomantia.systems.gis.algorithm.landform.PatchMerger;
 import com.rinsing.geomantia.systems.gis.algorithm.metrics.AtlasMetricsComputer;
+import com.rinsing.geomantia.systems.gis.application.analysis.MultiRegionLandformAnalyzer;
+import com.rinsing.geomantia.systems.gis.domain.cell.SampleSource;
+import com.rinsing.geomantia.systems.gis.domain.cell.SurfaceType;
 import com.rinsing.geomantia.systems.gis.domain.region.AtlasRegion;
 import com.rinsing.geomantia.systems.gis.testsupport.SyntheticAtlasSampler;
 import com.rinsing.geomantia.systems.gis.testsupport.SyntheticTerrainProfile;
@@ -12,6 +15,8 @@ import com.rinsing.geomantia.systems.gis.application.refresh.SampleMode;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 class LandformAlgorithmTest {
     @Test
@@ -62,5 +67,26 @@ class LandformAlgorithmTest {
         assertTrue(region.cells().stream().anyMatch(cell -> cell.landformType() == LandformType.VALLEY));
         assertTrue(region.cells().stream().anyMatch(cell -> cell.tpiLarge() > 8.0));
         assertTrue(region.cells().stream().anyMatch(cell -> cell.tpiLarge() < -8.0));
+    }
+
+    @Test
+    void multiRegionAnalysisKeepsContinuousFlatTerrainInOnePatchAcrossRegionSeam() {
+        GisSampleConfig sampleConfig = GisSampleConfig.defaults().withCellStepBlocks(16);
+        AtlasRegion west = new AtlasRegion("minecraft:overworld", 0, 0, sampleConfig);
+        AtlasRegion east = new AtlasRegion("minecraft:overworld", 1, 0, sampleConfig);
+        for (AtlasRegion region : java.util.List.of(west, east)) {
+            region.cells().forEach(cell -> cell.setSample(SampleSource.PRIOR, 64.0, SurfaceType.GRASS,
+                    "minecraft:plains", false, 0.0));
+        }
+
+        var patches = new MultiRegionLandformAnalyzer(sampleConfig, GisClassifierConfig.defaults())
+                .analyze(java.util.List.of(west, east), "minecraft:overworld:step.16:test");
+
+        assertEquals(1, patches.size());
+        assertEquals(LandformType.PLAIN, patches.get(0).landformType());
+        assertEquals(2 * 32 * 32, patches.get(0).cellCount());
+        assertEquals(west.cell(31, 16).patchId(), east.cell(0, 16).patchId());
+        assertFalse(west.cell(31, 16).hasFlag(CellStateFlag.EDGE_DIRTY));
+        assertFalse(east.cell(0, 16).hasFlag(CellStateFlag.EDGE_DIRTY));
     }
 }

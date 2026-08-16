@@ -6,6 +6,7 @@ import com.rinsing.geomantia.systems.gis.domain.cell.AtlasCell;
 import com.rinsing.geomantia.systems.gis.domain.cell.LandformType;
 import com.rinsing.geomantia.systems.gis.domain.landform.LandformPatch;
 import com.rinsing.geomantia.systems.gis.domain.region.AtlasRegion;
+import com.rinsing.geomantia.systems.gis.preview.LandformPatchPalette;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -66,13 +67,21 @@ public final class CityLandformReviewBuilder {
 
     public CityLandformReviewPackage buildFromRegions(CitySiteContext context, List<AtlasRegion> regions,
                                                       BlockBounds patchContextBounds) {
-        Objects.requireNonNull(context, "context");
         Objects.requireNonNull(regions, "regions");
-        BlockBounds contextBounds = patchContextBounds == null ? context.bounds() : patchContextBounds;
         List<LandformPatch> patches = regions.stream()
                 .filter(Objects::nonNull)
                 .flatMap(region -> region.patches().stream())
                 .toList();
+        return buildFromRegions(context, regions, patches, patchContextBounds);
+    }
+
+    public CityLandformReviewPackage buildFromRegions(CitySiteContext context, List<AtlasRegion> regions,
+                                                      List<LandformPatch> patches,
+                                                      BlockBounds patchContextBounds) {
+        Objects.requireNonNull(context, "context");
+        Objects.requireNonNull(regions, "regions");
+        Objects.requireNonNull(patches, "patches");
+        BlockBounds contextBounds = patchContextBounds == null ? context.bounds() : patchContextBounds;
         CityLandformReviewPackage pkg = build(context, patches, contextBounds);
         Map<String, List<PatchMemberCell>> cellsByPatch = regions.stream()
                 .filter(Objects::nonNull)
@@ -275,31 +284,15 @@ public final class CityLandformReviewBuilder {
     }
 
     public List<CityLandformReviewPackage.LegendEntry> buildLegend(List<LandformPatchSummary> summaries) {
-        Map<String, String> colorMap = buildColorMap();
         return summaries.stream()
                 .map(LandformPatchSummary::landformType)
                 .distinct()
                 .map(lt -> {
                     String displayName = config.landformDisplayNames().getOrDefault(lt, lt.contractName());
-                    String color = colorMap.getOrDefault(lt.contractName(), "#9E9E9E");
+                    String color = LandformPatchPalette.hex(lt.contractName());
                     return new CityLandformReviewPackage.LegendEntry(color, displayName, lt.contractName());
                 })
                 .collect(Collectors.toList());
-    }
-
-    private Map<String, String> buildColorMap() {
-        Map<String, String> map = new LinkedHashMap<>();
-        map.put("plain", "#4CAF50");
-        map.put("shore", "#FFEB3B");
-        map.put("water", "#2196F3");
-        map.put("terrace", "#8BC34A");
-        map.put("slope", "#FF9800");
-        map.put("cliff", "#795548");
-        map.put("ridge", "#9C27B0");
-        map.put("valley", "#00BCD4");
-        map.put("basin", "#607D8B");
-        map.put("unknown", "#9E9E9E");
-        return map;
     }
 
     private int landformOrderIndex(LandformType type) {

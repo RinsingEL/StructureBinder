@@ -40,6 +40,17 @@ public final class CityStructureArrayCandidatePlanner {
                        JsonObject arrayCandidatePlan,
                        JsonObject occupiedStructureAnchorMap,
                        JsonArray occupiedEnvelopes) throws IOException {
+        return plan(baseDirectory, reviewPackage, terraSenseProfileSource, arrayCandidatePlan,
+                occupiedStructureAnchorMap, occupiedEnvelopes, footprint -> "");
+    }
+
+    Result plan(Path baseDirectory,
+                CityLandformReviewPackage reviewPackage,
+                JsonObject terraSenseProfileSource,
+                JsonObject arrayCandidatePlan,
+                JsonObject occupiedStructureAnchorMap,
+                JsonArray occupiedEnvelopes,
+                CandidateFootprintGate footprintGate) throws IOException {
         long started = System.nanoTime();
         if (reviewPackage == null) {
             throw new IllegalArgumentException("CityLandformReviewPackage is required for D4 array candidates.");
@@ -47,6 +58,9 @@ public final class CityStructureArrayCandidatePlanner {
         rejectLegacyPayload(arrayCandidatePlan);
         if (arrayCandidatePlan == null) {
             throw new IllegalArgumentException("arrayCandidatePlan object is required.");
+        }
+        if (footprintGate == null) {
+            throw new IllegalArgumentException("candidate footprint gate is required.");
         }
         String cityId = stringValue(arrayCandidatePlan, "cityId", reviewPackage.cityId());
         if (!reviewPackage.cityId().equals(cityId)) {
@@ -96,7 +110,7 @@ public final class CityStructureArrayCandidatePlanner {
                         break;
                     }
                     GroupBuildResult built = buildGroup(candidateIndex + 1, pattern, pivot, arrayCandidatePlan,
-                            reviewPackage.grid(), sourcePatches, templateCatalog, occupied);
+                            reviewPackage.grid(), sourcePatches, templateCatalog, occupied, footprintGate);
                     generationReports.add(built.report());
                     if (built.candidate() != null) {
                         candidateIndex++;
@@ -144,7 +158,8 @@ public final class CityStructureArrayCandidatePlanner {
                                         PlanningGrid grid,
                                         List<LandformPatchSummary> sourcePatches,
                                         CityTemplateCatalog templateCatalog,
-                                        List<BlockBounds> occupied) {
+                                        List<BlockBounds> occupied,
+                                        CandidateFootprintGate footprintGate) {
         String arrayId = requiredString(plan, "arrayId");
         String displayRole = stringValue(plan, "displayRole", arrayId);
         int arrayCount = intValue(plan, "arrayCount", 0);
@@ -194,6 +209,11 @@ public final class CityStructureArrayCandidatePlanner {
                 }
                 if (overlapsAny(groupCollision, estimate.collisionEnvelope())) {
                     rejected.add(rejection(itemIndex + 1, templateId, point, "GROUP_COLLISION_OVERLAP"));
+                    continue;
+                }
+                String terrainReason = footprintGate.rejectionReason(estimate.collisionEnvelope());
+                if (terrainReason != null && !terrainReason.isBlank()) {
+                    rejected.add(rejection(itemIndex + 1, templateId, point, terrainReason));
                     continue;
                 }
                 acceptedPoint = point;
@@ -1048,6 +1068,11 @@ public final class CityStructureArrayCandidatePlanner {
             obj.add("timingMs", arrayCandidateSet.getAsJsonObject("timingMs").deepCopy());
             return obj;
         }
+    }
+
+    @FunctionalInterface
+    interface CandidateFootprintGate {
+        String rejectionReason(BlockBounds footprint);
     }
 
     private record GroupBuildResult(JsonObject candidate, JsonObject report) {

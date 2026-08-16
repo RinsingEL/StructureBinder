@@ -155,8 +155,11 @@ public final class RealmT4PatchPlanningService {
                     + " continuous blocks but selection has " + continuousArea);
         }
         JsonObject anchorGrid = object(selection, "suggestedAnchor");
-        int gridX = intValue(anchorGrid, "gridX", 0);
-        int gridZ = intValue(anchorGrid, "gridZ", 0);
+        int anchorBlockX = intValue(anchorGrid, "blockX", 0);
+        int anchorBlockZ = intValue(anchorGrid, "blockZ", 0);
+        int worldSurveyStep = worldSurveyCellStep(runId);
+        int gridX = Math.floorDiv(anchorBlockX, worldSurveyStep);
+        int gridZ = Math.floorDiv(anchorBlockZ, worldSurveyStep);
         JsonObject territory = readObject(runDir(runId).resolve("realm_territory_map.json"),
                 "T4_PATCH_TERRITORY_NOT_FOUND");
         if (!isOwned(territory, realmId, gridX, gridZ)) {
@@ -172,8 +175,7 @@ public final class RealmT4PatchPlanningService {
         seed.addProperty("role", role);
         seed.addProperty("theoreticalScale", scale);
         seed.add("anchorGrid", point(gridX, gridZ));
-        seed.add("anchorBlock", point(intValue(anchorGrid, "blockX", gridX * step),
-                intValue(anchorGrid, "blockZ", gridZ * step)));
+        seed.add("anchorBlock", point(anchorBlockX, anchorBlockZ));
         seed.addProperty("candidateRangeCells", intValue(request, "candidateRangeCells", 4));
         seed.addProperty("planningRadiusCells", planningRadius);
         seed.addProperty("subregionId", stringValue(request, "subregionId",
@@ -426,6 +428,16 @@ public final class RealmT4PatchPlanningService {
             throw new IllegalArgumentException("T4_PATCH_PATH_OUTSIDE_DEBUG_ROOT");
         }
         return path;
+    }
+
+    private int worldSurveyCellStep(String runId) throws IOException {
+        JsonObject context = readObject(runDir(runId).resolve("world_survey_context.json"),
+                "T4_PATCH_W_CONTEXT_NOT_FOUND");
+        int step = intValue(context, "cellStepBlocks", 0);
+        if (step <= 0) {
+            throw new IllegalArgumentException("T4_PATCH_W_CELL_STEP_INVALID");
+        }
+        return step;
     }
 
     private Path sessionPath(String runId, String sessionId) {

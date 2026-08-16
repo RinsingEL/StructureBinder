@@ -5,6 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import com.rinsing.geomantia.systems.city.domain.blueprint.CityBlueprint;
+import com.rinsing.geomantia.systems.city.domain.landuse.LandscapeTerrainContinuity;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseTerrainField;
 import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
 import com.rinsing.geomantia.systems.city.domain.model.BlockPoint;
@@ -312,6 +313,7 @@ public final class CityLandscapeCapacityReservationPlanner {
         double sourceCenterZ = centerZ(sourceBounds);
         BlockPoint seed = boundaryCandidates(sourceCells).stream()
                 .filter(point -> eligible(point, terrain, structureCells, occupiedCells, forbiddenAdjacency))
+                .filter(point -> touchesContinuousTerrain(subject, terrain, sourceCells, point))
                 .min(Comparator.comparingDouble((BlockPoint point) -> seedScore(subject, terrain, point,
                                 sourceCenterX, sourceCenterZ, bearing, shapeSeed))
                         .thenComparingInt(BlockPoint::z).thenComparingInt(BlockPoint::x))
@@ -338,7 +340,8 @@ public final class CityLandscapeCapacityReservationPlanner {
             for (int[] direction : DIRECTIONS) {
                 BlockPoint next = new BlockPoint(node.point().x() + direction[0], node.point().z() + direction[1]);
                 if (result.contains(next) || !eligible(next, terrain, structureCells,
-                        occupiedCells, forbiddenAdjacency)) continue;
+                        occupiedCells, forbiddenAdjacency)
+                        || !continuous(subject, terrain, node.point(), next)) continue;
                 double pathCost = node.pathCost() + terrainStepCost(subject, terrain.cellAt(next.x(), next.z()));
                 if (pathCost + 1.0e-9 >= bestPath.getOrDefault(next, Double.POSITIVE_INFINITY)) continue;
                 bestPath.put(next, pathCost);
@@ -437,6 +440,23 @@ public final class CityLandscapeCapacityReservationPlanner {
 
     private static boolean passable(LandUseTerrainField.Cell cell) {
         return cell != null && cell.sampled() && cell.slope() < 45.0 && cell.localRelief() < 48.0;
+    }
+
+    private static boolean touchesContinuousTerrain(Subject subject, TerrainIndex terrain,
+                                                    Set<BlockPoint> sourceCells, BlockPoint target) {
+        for (int[] direction : DIRECTIONS) {
+            BlockPoint source = new BlockPoint(target.x() + direction[0], target.z() + direction[1]);
+            if (sourceCells.contains(source) && continuous(subject, terrain, source, target)) return true;
+        }
+        return false;
+    }
+
+    private static boolean continuous(Subject subject, TerrainIndex terrain, BlockPoint from, BlockPoint to) {
+        return LandscapeTerrainContinuity.allows(
+                subject.landscape().terrainPolicy().name(),
+                terrain.cellAt(from.x(), from.z()),
+                terrain.cellAt(to.x(), to.z())
+        );
     }
 
     private static double terrainStepCost(Subject subject, LandUseTerrainField.Cell cell) {

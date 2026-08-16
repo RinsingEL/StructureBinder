@@ -3,6 +3,7 @@ package com.rinsing.geomantia.systems.city.application;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.rinsing.geomantia.systems.city.domain.blueprint.CityBlueprint;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseTerrainField;
 import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
 
@@ -43,6 +44,10 @@ final class CityStructureTerrainGate {
     }
 
     Evaluation evaluate(String structureRef, BlockBounds footprint) {
+        return evaluate(structureRef, footprint, null);
+    }
+
+    Evaluation evaluate(String structureRef, BlockBounds footprint, CityBlueprint.TerrainPolicy terrainPolicy) {
         List<CityStructureTerrainMode> modes = modesByStructure.get(structureRef);
         if (modes == null) {
             throw new IllegalArgumentException("CITY_STRUCTURE_TERRAIN_PROFILE_UNKNOWN: " + structureRef);
@@ -63,6 +68,11 @@ final class CityStructureTerrainGate {
         int evaluated = 0;
         int rejected = 0;
         String primaryReason = "";
+        double minimumElevation = Double.POSITIVE_INFINITY;
+        double maximumElevation = Double.NEGATIVE_INFINITY;
+        double maximumSlope = 0.0;
+        double maximumLocalRelief = 0.0;
+        TerrainLimits limits = terrainPolicy == null ? null : limits(terrainPolicy);
         JsonArray failures = new JsonArray();
         for (int cellZ = minCellZ; cellZ <= maxCellZ; cellZ++) {
             for (int cellX = minCellX; cellX <= maxCellX; cellX++) {
@@ -70,8 +80,20 @@ final class CityStructureTerrainGate {
                 String reason = cell == null ? "CITY_STRUCTURE_TERRAIN_CELL_COVERAGE_MISSING"
                         : !cell.sampled() ? "CITY_STRUCTURE_TERRAIN_CELL_UNSAMPLED"
                         : cell.water() ? "CITY_STRUCTURE_SURFACE_CELL_WATER"
+                        : limits != null && cell.slope() > limits.maximumSlope()
+                        ? "CITY_STRUCTURE_SURFACE_CELL_SLOPE_EXCEEDED"
+                        : limits != null && cell.localRelief() > limits.maximumLocalRelief()
+                        ? "CITY_STRUCTURE_SURFACE_CELL_RELIEF_EXCEEDED"
                         : "";
-                if (cell != null) evaluated++;
+                if (cell != null) {
+                    evaluated++;
+                    if (cell.sampled()) {
+                        minimumElevation = Math.min(minimumElevation, cell.elevation());
+                        maximumElevation = Math.max(maximumElevation, cell.elevation());
+                        maximumSlope = Math.max(maximumSlope, cell.slope());
+                        maximumLocalRelief = Math.max(maximumLocalRelief, cell.localRelief());
+                    }
+                }
                 if (reason.isBlank()) continue;
                 rejected++;
                 if (primaryReason.isBlank()) primaryReason = reason;
@@ -83,6 +105,9 @@ final class CityStructureTerrainGate {
                     if (cell != null) {
                         failure.addProperty("sampled", cell.sampled());
                         failure.addProperty("water", cell.water());
+                        failure.addProperty("elevation", cell.elevation());
+                        failure.addProperty("slope", cell.slope());
+                        failure.addProperty("localRelief", cell.localRelief());
                     }
                     failures.add(failure);
                 }
@@ -92,6 +117,30 @@ final class CityStructureTerrainGate {
         trace.addProperty("resolvedTerrainMode", CityStructureTerrainMode.SURFACE.name());
         trace.addProperty("intersectingCellCount", intersecting);
         trace.addProperty("evaluatedCellCount", evaluated);
+        if (limits != null) {
+            trace.addProperty("terrainPolicy", terrainPolicy.name());
+            trace.addProperty("maximumAllowedSlope", limits.maximumSlope());
+            trace.addProperty("maximumAllowedLocalRelief", limits.maximumLocalRelief());
+            trace.addProperty("maximumAllowedElevationRange", limits.maximumElevationRange());
+        }
+        if (minimumElevation != Double.POSITIVE_INFINITY) {
+            double elevationRange = maximumElevation - minimumElevation;
+            trace.addProperty("minimumElevation", minimumElevation);
+            trace.addProperty("maximumElevation", maximumElevation);
+            trace.addProperty("elevationRange", elevationRange);
+            trace.addProperty("maximumObservedSlope", maximumSlope);
+            trace.addProperty("maximumObservedLocalRelief", maximumLocalRelief);
+            if (limits != null && rejected == 0 && elevationRange > limits.maximumElevationRange()) {
+                rejected++;
+                primaryReason = "CITY_STRUCTURE_SURFACE_ELEVATION_RANGE_EXCEEDED";
+                JsonObject failure = new JsonObject();
+                failure.addProperty("reasonCode", primaryReason);
+                failure.addProperty("minimumElevation", minimumElevation);
+                failure.addProperty("maximumElevation", maximumElevation);
+                failure.addProperty("elevationRange", elevationRange);
+                failures.add(failure);
+            }
+        }
         trace.addProperty("rejectedCellCount", rejected);
         trace.addProperty("status", rejected == 0 ? "passed" : "rejected");
         if (!primaryReason.isBlank()) trace.addProperty("reasonCode", primaryReason);
@@ -101,6 +150,14 @@ final class CityStructureTerrainGate {
 
     String terrainFieldSchema() {
         return terrainField.schemaVersion();
+    }
+
+    static TerrainLimits limits(CityBlueprint.TerrainPolicy policy) {
+        return switch (policy) {
+            case CONFORM -> new TerrainLimits(6.0, 8.0, 6.0);
+            case BALANCED -> new TerrainLimits(12.0, 12.0, 12.0);
+            case ASSERTIVE -> new TerrainLimits(18.0, 18.0, 18.0);
+        };
     }
 
     private static JsonObject baseTrace(String structureRef, List<CityStructureTerrainMode> modes,
@@ -163,6 +220,9 @@ final class CityStructureTerrainGate {
     }
 
     record Evaluation(boolean passed, String reasonCode, String resolvedTerrainMode, JsonObject trace) {
+    }
+
+    record TerrainLimits(double maximumSlope, double maximumLocalRelief, double maximumElevationRange) {
     }
 
     private record CellKey(int x, int z) {

@@ -53,17 +53,17 @@ export const realmHandlers: Record<string, ToolHandler> = {
   },
 
   async patch_explorer_open(args) {
-    const res = await postJson(`${MC_API_URL}/realm/patch_explorer/open`, payload(args), TIMEOUTS.quick);
+    const res = await postJson(`${MC_API_URL}/realm/patch_explorer/open`, payload(args), TIMEOUTS.refresh);
     return textResult(JSON.stringify(res.data, null, 2));
   },
 
   async patch_explorer_show_candidates(args) {
-    const res = await postJson(`${MC_API_URL}/realm/patch_explorer/show_candidates`, payload(args), TIMEOUTS.quick);
+    const res = await postJson(`${MC_API_URL}/realm/patch_explorer/show_candidates`, payload(args), TIMEOUTS.refresh);
     return textResult(JSON.stringify(res.data, null, 2));
   },
 
   async patch_explorer_select_candidate(args) {
-    const res = await postJson(`${MC_API_URL}/realm/patch_explorer/select_candidate`, payload(args), TIMEOUTS.quick);
+    const res = await postJson(`${MC_API_URL}/realm/patch_explorer/select_candidate`, payload(args), TIMEOUTS.refresh);
     return textResult(JSON.stringify(res.data, null, 2));
   },
 

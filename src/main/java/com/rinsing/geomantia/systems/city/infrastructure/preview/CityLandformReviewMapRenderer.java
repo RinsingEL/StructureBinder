@@ -7,6 +7,7 @@ import com.rinsing.geomantia.systems.city.domain.model.LandformPatchSummary;
 import com.rinsing.geomantia.systems.city.domain.model.PatchMemberCell;
 import com.rinsing.geomantia.systems.gis.domain.cell.LandformType;
 import com.rinsing.geomantia.systems.gis.domain.landform.LandformPatch;
+import com.rinsing.geomantia.systems.gis.preview.LandformPatchPalette;
 
 import javax.imageio.ImageIO;
 import java.awt.BasicStroke;
@@ -210,16 +211,9 @@ public final class CityLandformReviewMapRenderer {
 
     private static Map<LandformType, Color> defaultColors() {
         Map<LandformType, Color> map = new EnumMap<>(LandformType.class);
-        map.put(LandformType.WATER, new Color(54, 132, 196));
-        map.put(LandformType.SHORE, new Color(225, 206, 104));
-        map.put(LandformType.PLAIN, new Color(89, 160, 91));
-        map.put(LandformType.TERRACE, new Color(126, 176, 86));
-        map.put(LandformType.SLOPE, new Color(215, 139, 55));
-        map.put(LandformType.CLIFF, new Color(121, 85, 72));
-        map.put(LandformType.RIDGE, new Color(142, 92, 166));
-        map.put(LandformType.VALLEY, new Color(60, 173, 164));
-        map.put(LandformType.BASIN, new Color(103, 124, 134));
-        map.put(LandformType.UNKNOWN, new Color(158, 158, 158));
+        for (LandformType type : LandformType.values()) {
+            map.put(type, LandformPatchPalette.color(type.contractName()));
+        }
         return map;
     }
 }

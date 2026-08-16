@@ -18,8 +18,7 @@ final class CityLandUseMicroGrader {
     static final int MAX_COMPONENT_SPAN_BLOCKS = 4;
     static final int MASK_HALO_BLOCKS = MAX_COMPONENT_AREA_BLOCKS;
     static final int FOUNDATION_MAX_FILL_DEPTH_BLOCKS = 48;
-    static final int FOUNDATION_MAX_CUT_DEPTH_BLOCKS = 4;
-    static final int FOUNDATION_MOUNTAIN_RELIEF_BLOCKS = 12;
+    static final int FOUNDATION_MAX_CUT_DEPTH_BLOCKS = 12;
 
     private static final int[][] CARDINAL_OFFSETS = {{0, -1}, {1, 0}, {0, 1}, {-1, 0}};
 
@@ -90,21 +89,20 @@ final class CityLandUseMicroGrader {
             CityLandUseChunkExecutor.ColumnSample sample = required(terrain, center);
             if (!sample.naturalSurface() && !liquid(sample)) continue;
 
-            HeightReference reference = foundationReference(center, terrain);
-            int delta = reference.targetY() - sample.surfaceY();
+            int targetY = foundationReference(center, terrain);
+            int delta = targetY - sample.surfaceY();
             FoundationMode mode;
             if (delta > 0 && delta <= FOUNDATION_MAX_FILL_DEPTH_BLOCKS) {
                 mode = FoundationMode.FILL;
-            } else if (delta < 0 && -delta <= FOUNDATION_MAX_CUT_DEPTH_BLOCKS
-                    && reference.relief() < FOUNDATION_MOUNTAIN_RELIEF_BLOCKS) {
+            } else if (delta < 0 && -delta <= FOUNDATION_MAX_CUT_DEPTH_BLOCKS) {
                 mode = FoundationMode.CUT;
-            } else if (Math.abs(delta) > 0 || reference.relief() >= FOUNDATION_MOUNTAIN_RELIEF_BLOCKS) {
+            } else if (delta != 0) {
                 mode = FoundationMode.PRESERVE;
             } else {
                 continue;
             }
             decisions.add(new FoundationDecision(operation.areaId(), operation.x(), operation.z(),
-                    sample.surfaceY(), mode == FoundationMode.PRESERVE ? sample.surfaceY() : reference.targetY(),
+                    sample.surfaceY(), mode == FoundationMode.PRESERVE ? sample.surfaceY() : targetY,
                     mode));
         }
         decisions.sort(Comparator.comparingInt(FoundationDecision::z)
@@ -113,17 +111,13 @@ final class CityLandUseMicroGrader {
         return List.copyOf(decisions);
     }
 
-    private static HeightReference foundationReference(Cell center, TerrainView terrain) {
+    private static int foundationReference(Cell center, TerrainView terrain) {
         List<Integer> ringHeights = new ArrayList<>();
-        int minimum = Integer.MAX_VALUE;
-        int maximum = Integer.MIN_VALUE;
         for (int z = center.z() - REFERENCE_RADIUS_BLOCKS;
              z <= center.z() + REFERENCE_RADIUS_BLOCKS; z++) {
             for (int x = center.x() - REFERENCE_RADIUS_BLOCKS;
                  x <= center.x() + REFERENCE_RADIUS_BLOCKS; x++) {
                 CityLandUseChunkExecutor.ColumnSample sample = required(terrain, new Cell(x, z));
-                minimum = Math.min(minimum, sample.surfaceY());
-                maximum = Math.max(maximum, sample.surfaceY());
                 if (Math.abs(x - center.x()) == REFERENCE_RADIUS_BLOCKS
                         || Math.abs(z - center.z()) == REFERENCE_RADIUS_BLOCKS) {
                     ringHeights.add(sample.surfaceY());
@@ -131,7 +125,7 @@ final class CityLandUseMicroGrader {
             }
         }
         ringHeights.sort(Integer::compareTo);
-        return new HeightReference(ringHeights.get(ringHeights.size() / 2), maximum - minimum);
+        return ringHeights.get(ringHeights.size() / 2);
     }
 
     private static Integer referenceHeight(Cell center, TerrainView terrain) {
@@ -235,9 +229,6 @@ final class CityLandUseMicroGrader {
         FILL,
         CUT,
         PRESERVE
-    }
-
-    private record HeightReference(int targetY, int relief) {
     }
 
     private record Cell(int x, int z) {

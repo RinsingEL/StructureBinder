@@ -8,13 +8,19 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.rinsing.geomantia.systems.city.application.CityD4CandidateLegalRegion;
 import com.rinsing.geomantia.systems.city.application.CityTestRunLayout;
+import com.rinsing.geomantia.systems.city.application.landuse.LandUseTerrainFieldCodec;
+import com.rinsing.geomantia.systems.city.domain.landuse.LandUseTerrainField;
+import com.rinsing.geomantia.systems.gis.preview.LandformPatchPalette;
+import com.rinsing.geomantia.systems.realm_planning.application.terrain.PatchCandidateTerrainPreviewService;
 import com.rinsing.geomantia.systems.realm_planning.application.terrain.RealmT4CoarseTerrainPreviewService;
+import com.rinsing.geomantia.systems.realm_planning.application.terrain.TerrainScalePatchService;
 
 import javax.imageio.ImageIO;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -44,13 +50,19 @@ public final class PatchExplorerService {
     public static final String SESSION_SCHEMA = "patch_explorer_session.v0.1";
     public static final String PAGE_SCHEMA = "patch_explorer_candidate_page.v0.1";
     public static final String SELECTION_SCHEMA = "patch_selection.v0.1";
-    private static final String SNAPSHOT_SCHEMA = "patch_explorer_scope_snapshot.v0.1";
-    private static final String CANDIDATE_MODEL = "realm_biome_primary_city_landform_v0_2";
+    private static final String SNAPSHOT_SCHEMA = "patch_explorer_scope_snapshot.v0.2";
+    private static final String CANDIDATE_MODEL = "landform_patch_candidates_v0_2";
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final Set<String> SCOPES = Set.of("realm_t2", "realm_t4", "city_d4");
     private static final int DEFAULT_PAGE_SIZE = 3;
     private static final int MAX_PAGE_SIZE = 12;
     private static final int[][] CARDINAL = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+    private static final double[] HEIGHT_STOPS = {-64, 50, 70, 90, 120, 160, 220, 320};
+    private static final Color[] HEIGHT_COLORS = {
+            new Color(48, 75, 71), new Color(67, 112, 73), new Color(112, 145, 79),
+            new Color(164, 159, 88), new Color(154, 140, 111), new Color(160, 158, 149),
+            new Color(207, 207, 201), new Color(242, 242, 238)
+    };
     private final Path debugRoot;
 
     public PatchExplorerService(Path debugRoot) {
@@ -58,6 +70,10 @@ public final class PatchExplorerService {
     }
 
     public JsonObject open(JsonObject request) throws IOException {
+        return open(request, null);
+    }
+
+    public JsonObject open(JsonObject request, TerrainPatchRunner terrainPatchRunner) throws IOException {
         String runId = safeId(requiredString(request, "runId"), "runId");
         String scopeType = requiredString(request, "scopeType").toLowerCase(Locale.ROOT);
         if (!SCOPES.contains(scopeType)) {
@@ -69,7 +85,7 @@ public final class PatchExplorerService {
             sessionId = "pex_" + UUID.randomUUID().toString().replace("-", "");
         }
         sessionId = safeId(sessionId, "sessionId");
-        Scope scope = loadScope(runId, scopeType, scopeId);
+        Scope scope = loadScope(runId, scopeType, scopeId, terrainPatchRunner);
         JsonObject session = new JsonObject();
         session.addProperty("schemaVersion", SESSION_SCHEMA);
         session.addProperty("sessionId", sessionId);
@@ -77,8 +93,10 @@ public final class PatchExplorerService {
         session.addProperty("scopeType", scopeType);
         session.addProperty("scopeId", scopeId);
         session.addProperty("candidateModel", CANDIDATE_MODEL);
-        session.addProperty("candidateBasis", candidateBasis(scopeType));
+        session.addProperty("candidateBasis", candidateBasis(scope));
         session.addProperty("sourceIdentity", scope.sourceIdentity());
+        session.addProperty("preferGeneratorNativeTerrain",
+                booleanValue(request, "preferGeneratorNativeTerrain", true));
         session.addProperty("createdAt", Instant.now().toString());
         session.addProperty("updatedAt", Instant.now().toString());
         session.add("displayedCandidates", new JsonArray());
@@ -90,20 +108,45 @@ public final class PatchExplorerService {
         writeScopeSnapshot(snapshotPath, scope);
         session.addProperty("scopeSnapshot", debugRef(snapshotPath));
         session.addProperty("scopeSnapshotIdentity", "sha256:" + sha256(snapshotPath));
+        Path terrainOverviewPath = sessionDir.resolve("terrain_overview.png");
+        Path allPatchesOverviewPath = sessionDir.resolve("all_patches_overview.png");
+        renderOverview(scope, List.of(), OverviewMode.TERRAIN, terrainOverviewPath);
+        renderOverview(scope, List.of(), OverviewMode.ALL_PATCHES, allPatchesOverviewPath);
+        session.add("patchTypePalette", patchTypePalette());
+        JsonObject overviewArtifacts = new JsonObject();
+        overviewArtifacts.addProperty("terrainOverview", debugRef(terrainOverviewPath));
+        overviewArtifacts.addProperty("allPatchesOverview", debugRef(allPatchesOverviewPath));
+        session.add("overviewArtifacts", overviewArtifacts);
         writeJson(sessionDir.resolve("patch_explorer_session.json"), session);
 
         JsonObject response = base("open", runId, sessionId);
         response.addProperty("scopeType", scopeType);
         response.addProperty("scopeId", scopeId);
-        response.addProperty("candidateBasis", candidateBasis(scopeType));
+        response.addProperty("candidateBasis", candidateBasis(scope));
         response.addProperty("sourceIdentity", scope.sourceIdentity());
         response.add("typeCatalog", typeCatalog(scope));
-        response.add("artifacts", artifactRefs(sessionDir, null, null, scope.coarseTerrainSource()));
+        response.add("patchTypePalette", patchTypePalette());
+        JsonObject artifacts = artifactRefs(sessionDir, null, null, scope.coarseTerrainSource());
+        artifacts.addProperty("terrainOverview", debugRef(terrainOverviewPath));
+        artifacts.addProperty("allPatchesOverview", debugRef(allPatchesOverviewPath));
+        response.add("artifacts", artifacts);
         response.add("nextActions", strings(List.of("patch_explorer_show_candidates")));
         return response;
     }
 
+    public SessionTerrainContext sessionTerrainContext(JsonObject request) throws IOException {
+        String runId = safeId(requiredString(request, "runId"), "runId");
+        String sessionId = safeId(requiredString(request, "sessionId"), "sessionId");
+        JsonObject session = loadSession(runId, sessionId);
+        return new SessionTerrainContext(requiredString(session, "scopeType"),
+                booleanValue(session, "preferGeneratorNativeTerrain", true));
+    }
+
     public JsonObject showCandidates(JsonObject request) throws IOException {
+        return showCandidates(request, null);
+    }
+
+    public JsonObject showCandidates(JsonObject request, TerrainPreviewRunner terrainPreviewRunner) throws IOException {
         String runId = safeId(requiredString(request, "runId"), "runId");
         String sessionId = safeId(requiredString(request, "sessionId"), "sessionId");
         JsonObject session = loadSession(runId, sessionId);
@@ -128,6 +171,7 @@ public final class PatchExplorerService {
             displayed.addAll(slice);
             JsonObject typePage = new JsonObject();
             typePage.addProperty("patchType", type);
+            typePage.addProperty("color", LandformPatchPalette.hex(type));
             typePage.addProperty("page", page);
             typePage.addProperty("pageSize", pageSize);
             typePage.addProperty("totalCandidates", all.size());
@@ -143,8 +187,8 @@ public final class PatchExplorerService {
         Path sessionDir = sessionDir(runId, sessionId);
         String pageKey = shortHash(String.join(",", interestTypes) + ":" + page + ":" + pageSize);
         Path pagePath = sessionDir.resolve("candidate_page_" + pageKey + ".json");
-        Path previewPath = sessionDir.resolve("candidate_preview_" + pageKey + ".png");
-        render(scope, displayed, null, previewPath);
+        Path topPatchesOverviewPath = sessionDir.resolve("top_patches_overview_" + pageKey + ".png");
+        renderOverview(scope, displayed, OverviewMode.TOP_PATCHES, topPatchesOverviewPath);
 
         JsonObject pageArtifact = new JsonObject();
         pageArtifact.addProperty("schemaVersion", PAGE_SCHEMA);
@@ -156,9 +200,12 @@ public final class PatchExplorerService {
         pageArtifact.add("interestTypes", strings(interestTypes));
         pageArtifact.addProperty("page", page);
         pageArtifact.addProperty("pageSize", pageSize);
+        pageArtifact.add("patchTypePalette", patchTypePalette());
         pageArtifact.add("typePages", typePages);
         pageArtifact.add("relations", relations);
-        pageArtifact.addProperty("candidatePreview", debugRef(previewPath));
+        JsonObject pageArtifacts = new JsonObject();
+        pageArtifacts.addProperty("topPatchesOverview", debugRef(topPatchesOverviewPath));
+        pageArtifact.add("artifacts", pageArtifacts);
         writeJson(pagePath, pageArtifact);
 
         session.add("interestTypes", strings(interestTypes));
@@ -175,14 +222,23 @@ public final class PatchExplorerService {
         response.addProperty("scopeType", scope.scopeType());
         response.addProperty("scopeId", scope.scopeId());
         response.addProperty("sourceIdentity", scope.sourceIdentity());
+        response.add("patchTypePalette", patchTypePalette());
         response.add("typePages", typePages);
         response.add("relations", relations);
-        response.add("artifacts", artifactRefs(sessionDir, pagePath, previewPath, scope.coarseTerrainSource()));
+        JsonObject artifacts = artifactRefs(sessionDir, pagePath, null, scope.coarseTerrainSource());
+        artifacts.addProperty("terrainOverview", debugRef(sessionDir.resolve("terrain_overview.png")));
+        artifacts.addProperty("allPatchesOverview", debugRef(sessionDir.resolve("all_patches_overview.png")));
+        artifacts.addProperty("topPatchesOverview", debugRef(topPatchesOverviewPath));
+        response.add("artifacts", artifacts);
         response.add("nextActions", strings(List.of("patch_explorer_show_candidates", "patch_explorer_select_candidate")));
         return response;
     }
 
     public JsonObject selectCandidate(JsonObject request) throws IOException {
+        return selectCandidate(request, null);
+    }
+
+    public JsonObject selectCandidate(JsonObject request, TerrainPreviewRunner terrainPreviewRunner) throws IOException {
         String runId = safeId(requiredString(request, "runId"), "runId");
         String sessionId = safeId(requiredString(request, "sessionId"), "sessionId");
         String candidateId = safeId(requiredString(request, "candidateId"), "candidateId");
@@ -196,7 +252,10 @@ public final class PatchExplorerService {
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("PATCH_EXPLORER_CANDIDATE_STALE: " + candidateId));
         Cell anchor = suggestedAnchor(selected.cells(), scope);
-        String selectionRef = "psel_" + sha256(sessionId + "\n" + candidateId + "\n" + scope.sourceIdentity());
+        PatchCandidateTerrainPreviewService.Result terrainPreview = createTerrainPreview(scope, selected,
+                PatchCandidateTerrainPreviewService.Level.CITY_SCALE_CONFIRMATION, terrainPreviewRunner);
+        String terrainPreviewSourceIdentity = terrainPreview == null ? "" : terrainPreview.sourceIdentity();
+        String selectionRef = selectionRef(sessionId, candidateId, scope.sourceIdentity(), terrainPreviewSourceIdentity);
         JsonObject selection = new JsonObject();
         selection.addProperty("schemaVersion", SELECTION_SCHEMA);
         selection.addProperty("patchSelectionRef", selectionRef);
@@ -204,7 +263,7 @@ public final class PatchExplorerService {
         selection.addProperty("runId", runId);
         selection.addProperty("scopeType", scope.scopeType());
         selection.addProperty("scopeId", scope.scopeId());
-        selection.addProperty("candidateBasis", candidateBasis(scope.scopeType()));
+        selection.addProperty("candidateBasis", candidateBasis(scope));
         selection.addProperty("sourceIdentity", scope.sourceIdentity());
         selection.addProperty("scopeSnapshotIdentity", requiredString(session, "scopeSnapshotIdentity"));
         selection.addProperty("candidateId", selected.candidateId());
@@ -224,14 +283,22 @@ public final class PatchExplorerService {
         if (coarseTerrainEvidence != null) {
             selection.add("coarseTerrainEvidence", coarseTerrainEvidence);
         }
+        if (terrainPreview != null) {
+            selection.add("terrainPreview", terrainPreviewJson(terrainPreview));
+        }
         selection.addProperty("selectionReason", stringValue(request, "selectionReason", ""));
         selection.addProperty("selectedAt", Instant.now().toString());
         Path selectionDir = runDir(runId).resolve("patch_explorer_selections");
         Files.createDirectories(selectionDir);
         Path selectionPath = selectionDir.resolve(selectionRef + ".json");
         writeJson(selectionPath, selection);
-        Path confirmationPath = sessionDir(runId, sessionId).resolve("selected_" + candidateId + ".png");
-        render(scope, List.of(selected), selected, confirmationPath);
+        Path confirmationPath;
+        if (terrainPreview != null) {
+            confirmationPath = terrainPreview.terrainPreviewPath();
+        } else {
+            confirmationPath = sessionDir(runId, sessionId).resolve("selected_" + candidateId + ".png");
+            renderOverview(scope, List.of(selected), OverviewMode.TOP_PATCHES, confirmationPath);
+        }
         selection.addProperty("confirmationPreview", debugRef(confirmationPath));
         writeJson(selectionPath, selection);
 
@@ -244,6 +311,10 @@ public final class PatchExplorerService {
         artifacts.addProperty("explorationSession", debugRef(sessionDir(runId, sessionId)
                 .resolve("patch_explorer_session.json")));
         addHeightWaterPreview(artifacts, scope.coarseTerrainSource());
+        if (terrainPreview != null) {
+            artifacts.add("selectedTerrainPreview", terrainPreviewRefs(terrainPreview));
+            artifacts.addProperty("cityScaleTerrainPreview", debugRef(terrainPreview.terrainPreviewPath()));
+        }
         response.add("artifacts", artifacts);
         response.add("nextActions", strings(List.of("return_to_patch_explorer_session", "continue_with_patch_selection")));
         return response;
@@ -272,8 +343,13 @@ public final class PatchExplorerService {
                 .equals(requiredString(selection, "scopeSnapshotIdentity"))) {
             throw new IllegalArgumentException("PATCH_SELECTION_SCOPE_SNAPSHOT_MISMATCH: " + patchSelectionRef);
         }
-        String expectedRef = "psel_" + sha256(requiredString(selection, "sessionId") + "\n"
-                + requiredString(selection, "candidateId") + "\n" + scope.sourceIdentity());
+        String terrainPreviewSourceIdentity = "";
+        if (selection.has("terrainPreview") && selection.get("terrainPreview").isJsonObject()) {
+            JsonObject terrainPreview = selection.getAsJsonObject("terrainPreview");
+            terrainPreviewSourceIdentity = validateFrozenTerrainPreview(terrainPreview);
+        }
+        String expectedRef = selectionRef(requiredString(selection, "sessionId"),
+                requiredString(selection, "candidateId"), scope.sourceIdentity(), terrainPreviewSourceIdentity);
         if (!patchSelectionRef.equals(expectedRef)) {
             throw new IllegalArgumentException("PATCH_SELECTION_REF_CONTENT_MISMATCH: " + patchSelectionRef);
         }
@@ -452,12 +528,20 @@ public final class PatchExplorerService {
         snapshot.addProperty("scopeType", scope.scopeType());
         snapshot.addProperty("scopeId", scope.scopeId());
         snapshot.addProperty("candidateModel", CANDIDATE_MODEL);
-        snapshot.addProperty("candidateBasis", candidateBasis(scope.scopeType()));
+        snapshot.addProperty("candidateBasis", candidateBasis(scope));
         snapshot.addProperty("cellStepBlocks", scope.cellStepBlocks());
         snapshot.addProperty("sourceIdentity", scope.sourceIdentity());
         if (scope.coarseTerrainSource() != null) {
             snapshot.add("coarseTerrainSource", scope.coarseTerrainSource().asJson());
         }
+        if (scope.terrainPatchSource() != null) {
+            snapshot.add("terrainPatchSource", scope.terrainPatchSource().asJson());
+        }
+        JsonArray scopeCells = new JsonArray();
+        for (Cell cell : scope.scopeCells()) {
+            scopeCells.add(cellJson(cell));
+        }
+        snapshot.add("scopeCells", scopeCells);
         JsonArray candidates = new JsonArray();
         for (Candidate candidate : scope.candidates()) {
             JsonObject item = new JsonObject();
@@ -470,20 +554,7 @@ public final class PatchExplorerService {
             item.addProperty("confidence", candidate.confidence());
             JsonArray cells = new JsonArray();
             for (Cell cell : candidate.cells()) {
-                JsonObject cellJson = new JsonObject();
-                cellJson.addProperty("x", cell.x());
-                cellJson.addProperty("z", cell.z());
-                cellJson.addProperty("blockX", cell.blockX());
-                cellJson.addProperty("blockZ", cell.blockZ());
-                cellJson.addProperty("patchRef", cell.patchRef());
-                cellJson.addProperty("candidateType", cell.type());
-                cellJson.addProperty("terrainType", cell.terrainType());
-                cellJson.addProperty("baseLandform", cell.baseLandform());
-                cellJson.addProperty("confidence", cell.confidence());
-                if (cell.coarseTerrain() != null) {
-                    cellJson.add("coarseTerrain", cell.coarseTerrain().asJson());
-                }
-                cells.add(cellJson);
+                cells.add(cellJson(cell));
             }
             item.add("cells", cells);
             candidates.add(item);
@@ -502,6 +573,23 @@ public final class PatchExplorerService {
         writeJson(path, snapshot);
     }
 
+    private static JsonObject cellJson(Cell cell) {
+        JsonObject result = new JsonObject();
+        result.addProperty("x", cell.x());
+        result.addProperty("z", cell.z());
+        result.addProperty("blockX", cell.blockX());
+        result.addProperty("blockZ", cell.blockZ());
+        result.addProperty("patchRef", cell.patchRef());
+        result.addProperty("candidateType", cell.type());
+        result.addProperty("terrainType", cell.terrainType());
+        result.addProperty("baseLandform", cell.baseLandform());
+        result.addProperty("confidence", cell.confidence());
+        if (cell.coarseTerrain() != null) {
+            result.add("coarseTerrain", cell.coarseTerrain().asJson());
+        }
+        return result;
+    }
+
     private Scope readScopeSnapshot(Path path, String expectedIdentity, List<String> sourceArtifacts)
             throws IOException {
         JsonObject snapshot = readObject(path);
@@ -514,6 +602,9 @@ public final class PatchExplorerService {
         CoarseTerrainSource coarseTerrainSource = snapshot.has("coarseTerrainSource")
                 && snapshot.get("coarseTerrainSource").isJsonObject()
                 ? CoarseTerrainSource.fromJson(snapshot.getAsJsonObject("coarseTerrainSource")) : null;
+        TerrainPatchSource terrainPatchSource = snapshot.has("terrainPatchSource")
+                && snapshot.get("terrainPatchSource").isJsonObject()
+                ? TerrainPatchSource.fromJson(snapshot.getAsJsonObject("terrainPatchSource")) : null;
         List<Candidate> candidates = new ArrayList<>();
         for (JsonElement element : array(snapshot, "candidates")) {
             JsonObject item = element.getAsJsonObject();
@@ -544,21 +635,42 @@ public final class PatchExplorerService {
         }
         List<Bounds> occupied = new ArrayList<>();
         for (JsonElement element : array(snapshot, "occupied")) occupied.add(bounds(element.getAsJsonObject()));
+        List<Cell> scopeCells = new ArrayList<>();
+        for (JsonElement element : array(snapshot, "scopeCells")) {
+            scopeCells.add(readCell(element.getAsJsonObject(), step, "unknown"));
+        }
+        if (scopeCells.isEmpty()) {
+            throw new IllegalArgumentException("PATCH_EXPLORER_SCOPE_SNAPSHOT_EMPTY_SCOPE");
+        }
         candidates.sort(CANDIDATE_ORDER);
         return new Scope(requiredString(snapshot, "runId"), requiredString(snapshot, "scopeType"),
-                requiredString(snapshot, "scopeId"), step, List.copyOf(candidates), allCells(candidates),
-                expectedIdentity, sourceArtifacts, List.copyOf(occupied), coarseTerrainSource);
+                requiredString(snapshot, "scopeId"), step, List.copyOf(candidates), List.copyOf(scopeCells),
+                expectedIdentity, sourceArtifacts, List.copyOf(occupied), coarseTerrainSource, terrainPatchSource);
     }
 
-    private Scope loadScope(String runId, String scopeType, String scopeId) throws IOException {
+    private static Cell readCell(JsonObject cell, int step, String fallbackType) {
+        String type = stringValue(cell, "candidateType", fallbackType);
+        return new Cell(intValue(cell, "x", 0), intValue(cell, "z", 0),
+                intValue(cell, "blockX", 0), intValue(cell, "blockZ", 0), step,
+                stringValue(cell, "patchRef", ""), type,
+                stringValue(cell, "terrainType", type),
+                stringValue(cell, "baseLandform", stringValue(cell, "terrainType", type)),
+                doubleValue(cell, "confidence", 0.5),
+                cell.has("coarseTerrain") && cell.get("coarseTerrain").isJsonObject()
+                        ? CoarseTerrain.fromJson(cell.getAsJsonObject("coarseTerrain")) : null);
+    }
+
+    private Scope loadScope(String runId, String scopeType, String scopeId,
+            TerrainPatchRunner terrainPatchRunner) throws IOException {
         Path runDir = runDir(runId);
         if ("city_d4".equals(scopeType)) {
             return loadCityScope(runId, scopeId, runDir);
         }
-        return loadRealmScope(runId, scopeType, scopeId, runDir);
+        return loadRealmScope(runId, scopeType, scopeId, runDir, terrainPatchRunner);
     }
 
-    private Scope loadRealmScope(String runId, String scopeType, String scopeId, Path runDir) throws IOException {
+    private Scope loadRealmScope(String runId, String scopeType, String scopeId, Path runDir,
+            TerrainPatchRunner terrainPatchRunner) throws IOException {
         Path contextPath = runDir.resolve("world_survey_context.json");
         Path patchPath = runDir.resolve("world_patch_map.json");
         requireFile(contextPath, "PATCH_EXPLORER_W_CONTEXT_MISSING");
@@ -575,6 +687,7 @@ public final class PatchExplorerService {
         Set<String> owned = null;
         Set<String> allowedPatches = null;
         TerrainEvidenceBundle terrainEvidence = TerrainEvidenceBundle.empty();
+        TerrainPatchSource terrainPatchSource = null;
         Path territoryPath = runDir.resolve("realm_territory_map.json");
         List<Path> sources = new ArrayList<>(List.of(contextPath, patchPath));
         String continentScope = scopeId;
@@ -615,7 +728,7 @@ public final class PatchExplorerService {
                 sources.add(packagesPath);
             }
         }
-        Map<String, List<Cell>> byBiome = new LinkedHashMap<>();
+        List<Cell> sourceCells = new ArrayList<>();
         for (JsonElement element : array(patchMap, "cells")) {
             JsonObject cell = element.getAsJsonObject();
             int x = intValue(cell, "gridX", 0);
@@ -634,22 +747,54 @@ public final class PatchExplorerService {
                     && !continentScope.equals(stringValue(cell, "continentId", ""))) {
                 continue;
             }
-            String type = dominantBiome(cell);
             String terrainType = normalizeType(stringValue(cell, "landform", "unknown"));
             String baseLandform = normalizeType(stringValue(cell, "baseLandform", terrainType));
-            double confidence = biomeDominance(cell);
+            double confidence = doubleValue(cell, "landformConfidence", 0.5);
             Cell normalized = new Cell(x, z, intValue(cell, "blockX", x * step),
-                    intValue(cell, "blockZ", z * step), step, patchRef, type, terrainType,
+                    intValue(cell, "blockZ", z * step), step, patchRef, terrainType, terrainType,
                     baseLandform, confidence, terrainEvidence.cells().get(key(x, z)));
-            byBiome.computeIfAbsent(type, ignored -> new ArrayList<>()).add(normalized);
+            sourceCells.add(normalized);
         }
-        List<Candidate> candidates = candidatesFromBiomeCells(byBiome);
+        Map<String, List<Cell>> byPatch = new LinkedHashMap<>();
+        if (terrainPatchRunner == null) {
+            for (Cell cell : sourceCells) {
+                byPatch.computeIfAbsent(cell.patchRef(), ignored -> new ArrayList<>()).add(cell);
+            }
+        } else {
+            String coarseSourceIdentity = sourceIdentity(scopeType, scopeId, sources);
+            List<TerrainScalePatchService.SeedCell> seeds = sourceCells.stream()
+                    .map(cell -> new TerrainScalePatchService.SeedCell(cell.x(), cell.z(), cell.blockX(),
+                            cell.blockZ(), cell.step(), cell.patchRef()))
+                    .toList();
+            TerrainScalePatchService.Result refined = Objects.requireNonNull(
+                    terrainPatchRunner.refine(runId, scopeType, scopeId, coarseSourceIdentity, seeds),
+                    "Terrain patch runner returned null.");
+            terrainPatchSource = TerrainPatchSource.from(refined.source());
+            int refinedStep = refined.cellStepBlocks();
+            if (refinedStep <= 0 || refined.patches().isEmpty()) {
+                throw new IllegalArgumentException("PATCH_EXPLORER_T_SCALE_PATCH_EMPTY: " + scopeId);
+            }
+            for (TerrainScalePatchService.Patch patch : refined.patches()) {
+                String type = normalizeType(patch.type());
+                for (TerrainScalePatchService.PatchCell cell : patch.cells()) {
+                    CoarseTerrain coarseTerrain = new CoarseTerrain(cell.elevation(), cell.water(),
+                            cell.biomeId(), type, cell.biomeId(), 0, 0.0, 0.0,
+                            cell.slope(), cell.localRelief());
+                    byPatch.computeIfAbsent(patch.patchRef(), ignored -> new ArrayList<>())
+                            .add(new Cell(cell.gridX(), cell.gridZ(), cell.blockX(), cell.blockZ(), refinedStep,
+                                    patch.patchRef(), type, type, type, patch.confidence(), coarseTerrain));
+                }
+            }
+            step = refinedStep;
+        }
+        List<Candidate> candidates = candidatesFromCells(byPatch, false, List.of());
         if (candidates.isEmpty()) {
             throw new IllegalArgumentException("PATCH_EXPLORER_SCOPE_EMPTY: " + scopeId);
         }
         String identity = sourceIdentity(scopeType, scopeId, sources);
         return new Scope(runId, scopeType, scopeId, step, candidates, allCells(candidates), identity,
-                sources.stream().map(this::debugRef).toList(), List.of(), terrainEvidence.source());
+                sources.stream().map(this::debugRef).toList(), List.of(), terrainEvidence.source(),
+                terrainPatchSource);
     }
 
     private TerrainEvidenceBundle loadTerrainEvidence(String runId, String realmId, Path runDir,
@@ -708,7 +853,10 @@ public final class PatchExplorerService {
         CityTestRunLayout layout = CityTestRunLayout.open(runDir, safeCity);
         Path d3Path = layout.stepDirectory(CityTestRunLayout.D3)
                 .resolve("city_landform_review_package.json");
+        Path terrainPath = layout.stepDirectory(CityTestRunLayout.LAND_USE)
+                .resolve("land_use_terrain_field.json");
         requireFile(d3Path, "PATCH_EXPLORER_D3_PACKAGE_MISSING");
+        requireFile(terrainPath, "PATCH_EXPLORER_D3_TERRAIN_FIELD_MISSING");
         JsonObject review = readObject(d3Path);
         if (!"city_landform_review.v0.1".equals(stringValue(review, "schemaVersion", ""))) {
             throw new IllegalArgumentException("PATCH_EXPLORER_D3_SCHEMA_UNSUPPORTED");
@@ -716,43 +864,48 @@ public final class PatchExplorerService {
         if (!cityId.equals(stringValue(review, "cityId", cityId))) {
             throw new IllegalArgumentException("PATCH_EXPLORER_D3_CITY_MISMATCH");
         }
-        JsonObject grid = object(review, "grid");
-        int step = intValue(grid, "cellStepBlocks", 0);
-        if (step <= 0) {
+        LandUseTerrainField terrain = new LandUseTerrainFieldCodec().fromJson(readObject(terrainPath));
+        if (!cityId.equals(terrain.cityId())) {
+            throw new IllegalArgumentException("PATCH_EXPLORER_D3_TERRAIN_CITY_MISMATCH");
+        }
+        int step = terrain.cellStepBlocks();
+        if (step <= 0 || step != intValue(object(review, "grid"), "cellStepBlocks", 0)) {
             throw new IllegalArgumentException("PATCH_EXPLORER_D3_CELL_STEP_INVALID");
         }
-        JsonObject core = object(grid, "blockBounds");
-        int minX = intValue(core, "minX", Integer.MIN_VALUE);
-        int minZ = intValue(core, "minZ", Integer.MIN_VALUE);
-        int maxX = intValue(core, "maxX", Integer.MAX_VALUE);
-        int maxZ = intValue(core, "maxZ", Integer.MAX_VALUE);
-        List<Path> sources = new ArrayList<>(List.of(d3Path));
+        List<Path> sources = new ArrayList<>(List.of(d3Path, terrainPath));
         List<Bounds> occupied = loadOccupied(runDir, safeCity, sources);
-        Map<String, List<Cell>> byPatch = new LinkedHashMap<>();
+        Map<String, String> typeByPatch = new HashMap<>();
+        Map<String, Double> confidenceByPatch = new HashMap<>();
         for (JsonElement element : array(review, "landformPatches")) {
             JsonObject patch = element.getAsJsonObject();
             String patchRef = requiredString(patch, "landformPatchId");
-            String type = normalizeType(stringValue(patch, "landformType", "unknown"));
-            double confidence = containsString(array(patch, "landformTags"), "low_confidence") ? 0.4 : 0.8;
-            for (JsonElement cellElement : array(patch, "memberCells")) {
-                JsonObject cell = cellElement.getAsJsonObject();
-                int bx = intValue(cell, "blockMinX", 0);
-                int bz = intValue(cell, "blockMinZ", 0);
-                if (bx + step - 1 < minX || bz + step - 1 < minZ || bx >= maxX || bz >= maxZ) {
-                    continue;
-                }
-                byPatch.computeIfAbsent(patchRef, ignored -> new ArrayList<>())
-                        .add(new Cell(Math.floorDiv(bx, step), Math.floorDiv(bz, step), bx, bz, step,
-                                patchRef, type, type, type, confidence, null));
+            typeByPatch.put(patchRef, normalizeType(stringValue(patch, "landformType", "unknown")));
+            confidenceByPatch.put(patchRef,
+                    containsString(array(patch, "landformTags"), "low_confidence") ? 0.4 : 0.8);
+        }
+        Map<String, List<Cell>> byPatch = new LinkedHashMap<>();
+        List<Cell> scopeCells = new ArrayList<>();
+        for (LandUseTerrainField.Cell terrainCell : terrain.cells()) {
+            String patchRef = terrainCell.landformPatchId();
+            String type = typeByPatch.getOrDefault(patchRef, normalizeType(terrainCell.landformType()));
+            double confidence = confidenceByPatch.getOrDefault(patchRef, terrainCell.sampled() ? 0.8 : 0.4);
+            CoarseTerrain coarseTerrain = new CoarseTerrain(terrainCell.elevation(), terrainCell.water(),
+                    terrainCell.biomeId(), type, terrainCell.biomeId(), 0, 0.0, 0.0,
+                    terrainCell.slope(), terrainCell.localRelief());
+            Cell cell = new Cell(terrainCell.cellX(), terrainCell.cellZ(), terrainCell.blockMinX(),
+                    terrainCell.blockMinZ(), step, patchRef, type, type, type, confidence, coarseTerrain);
+            scopeCells.add(cell);
+            if (!patchRef.isBlank()) {
+                byPatch.computeIfAbsent(patchRef, ignored -> new ArrayList<>()).add(cell);
             }
         }
         List<Candidate> candidates = candidatesFromCells(byPatch, true, occupied);
         if (candidates.isEmpty()) {
             throw new IllegalArgumentException("PATCH_EXPLORER_SCOPE_EMPTY: " + cityId);
         }
-        String identity = citySourceIdentity(cityId, d3Path, occupied);
-        return new Scope(runId, "city_d4", cityId, step, candidates, allCells(candidates), identity,
-                sources.stream().map(this::debugRef).toList(), occupied, null);
+        String identity = citySourceIdentity(cityId, d3Path, terrainPath, occupied);
+        return new Scope(runId, "city_d4", cityId, step, candidates, List.copyOf(scopeCells), identity,
+                sources.stream().map(this::debugRef).toList(), occupied, null, null);
     }
 
     private List<Bounds> loadOccupied(Path runDir, String cityId, List<Path> sources) throws IOException {
@@ -876,22 +1029,6 @@ public final class PatchExplorerService {
         return candidatesFromRaw(raw);
     }
 
-    private static List<Candidate> candidatesFromBiomeCells(Map<String, List<Cell>> byBiome) {
-        List<RawCandidate> raw = new ArrayList<>();
-        for (Map.Entry<String, List<Cell>> entry : byBiome.entrySet()) {
-            List<List<Cell>> components = components(entry.getValue());
-            components.sort(Comparator.<List<Cell>>comparingInt(List::size).reversed()
-                    .thenComparingInt(cells -> bounds(cells).minZ())
-                    .thenComparingInt(cells -> bounds(cells).minX()));
-            for (int index = 0; index < components.size(); index++) {
-                List<Cell> component = components.get(index);
-                List<String> sourcePatchRefs = component.stream().map(Cell::patchRef).distinct().sorted().toList();
-                raw.add(new RawCandidate(sourcePatchRefs, index, entry.getKey(), component, component));
-            }
-        }
-        return candidatesFromRaw(raw);
-    }
-
     private static List<Candidate> candidatesFromRaw(List<RawCandidate> raw) {
         Map<String, List<RawCandidate>> byType = new HashMap<>();
         for (RawCandidate candidate : raw) {
@@ -925,7 +1062,8 @@ public final class PatchExplorerService {
             JsonObject item = new JsonObject();
             item.addProperty("patchType", entry.getKey());
             item.addProperty("displayName", displayName(entry.getKey()));
-            item.addProperty("candidateBasis", candidateBasis(scope.scopeType()));
+            item.addProperty("color", LandformPatchPalette.hex(entry.getKey()));
+            item.addProperty("candidateBasis", candidateBasis(scope));
             item.addProperty("patchCount", candidates.size());
             item.addProperty("totalAreaBlocks", candidates.stream().mapToLong(Candidate::areaBlocks).sum());
             item.addProperty("maxAreaBlocks", candidates.stream().mapToLong(Candidate::areaBlocks).max().orElse(0));
@@ -934,7 +1072,7 @@ public final class PatchExplorerService {
                     candidate.cells().size() >= 4));
             item.addProperty("factSource", "city_d4".equals(scope.scopeType())
                     ? "CityLandformReviewPackage.landformPatches"
-                    : "sealed WorldPatchMap.cells[].biomeHist dominant biome");
+                    : "T-scale terrain resample + landform classification + patch merge");
             item.addProperty("meanConfidence", candidates.stream().mapToDouble(Candidate::confidence).average().orElse(0.0));
             List<Cell> catalogCells = candidates.stream().flatMap(candidate -> candidate.cells().stream()).toList();
             item.add("terrainComposition", composition(catalogCells, Cell::terrainType));
@@ -952,6 +1090,15 @@ public final class PatchExplorerService {
         return result;
     }
 
+    private static JsonObject patchTypePalette() {
+        JsonObject palette = new JsonObject();
+        palette.addProperty("schemaVersion", LandformPatchPalette.SCHEMA_VERSION);
+        JsonObject colors = new JsonObject();
+        LandformPatchPalette.colorsByType().forEach(colors::addProperty);
+        palette.add("colors", colors);
+        return palette;
+    }
+
     private static Map<String, List<Candidate>> rankByType(List<Candidate> candidates) {
         Map<String, List<Candidate>> result = new LinkedHashMap<>();
         candidates.stream().map(Candidate::type).distinct().sorted().forEach(type -> result.put(type,
@@ -966,7 +1113,7 @@ public final class PatchExplorerService {
             item.addProperty("candidateId", candidate.candidateId());
             item.addProperty("patchType", candidate.type());
             item.addProperty("displayName", displayName(candidate.type()));
-            item.addProperty("candidateBasis", candidateBasis(scope.scopeType()));
+            item.addProperty("candidateBasis", candidateBasis(scope));
             item.addProperty("areaBlocks", candidate.areaBlocks());
             item.addProperty("largestContinuousAreaBlocks", candidate.largestContinuousAreaBlocks());
             item.addProperty("originalAreaBlocks", candidate.originalAreaBlocks());
@@ -987,6 +1134,107 @@ public final class PatchExplorerService {
             result.add(item);
         }
         return result;
+    }
+
+    private PatchCandidateTerrainPreviewService.Result createTerrainPreview(Scope scope, Candidate candidate,
+            PatchCandidateTerrainPreviewService.Level level, TerrainPreviewRunner runner)
+            throws IOException {
+        if (runner == null) {
+            return null;
+        }
+        Cell anchor = suggestedAnchor(candidate.cells(), scope);
+        List<PatchCandidateTerrainPreviewService.CoarseCell> memberCells = candidate.cells().stream()
+                .map(cell -> new PatchCandidateTerrainPreviewService.CoarseCell(cell.x(), cell.z()))
+                .toList();
+        PatchCandidateTerrainPreviewService.Target target =
+                new PatchCandidateTerrainPreviewService.Target(scope.scopeType(), candidate.candidateId(),
+                        anchor.blockX() + anchor.step() / 2, anchor.blockZ() + anchor.step() / 2,
+                        scope.cellStepBlocks(), memberCells);
+        PatchCandidateTerrainPreviewService.Result result = Objects.requireNonNull(
+                runner.refine(scope.runId(), scope.scopeId(), scope.sourceIdentity(), target, level),
+                "Terrain preview runner returned null.");
+        if (scope.terrainPatchSource() != null) {
+            JsonObject provider = object(result.evidence(), "provider");
+            TerrainPatchSource source = scope.terrainPatchSource();
+            if (!source.providerId().equals(stringValue(provider, "providerId", ""))
+                    || !source.sourceKind().equals(stringValue(provider, "sourceKind", ""))
+                    || !source.sourceFingerprint().equals(stringValue(provider, "sourceFingerprint", ""))
+                    || !source.samplingSemantics().equals(stringValue(provider, "samplingSemantics", ""))) {
+                throw new IllegalArgumentException("PATCH_EXPLORER_T_SCALE_PATCH_PROVIDER_CHANGED_REOPEN_SESSION");
+            }
+        }
+        if (scope.coarseTerrainSource() != null) {
+            JsonObject provider = object(result.evidence(), "provider");
+            CoarseTerrainSource coarse = scope.coarseTerrainSource();
+            if (!coarse.providerId().equals(stringValue(provider, "providerId", ""))
+                    || !coarse.sourceKind().equals(stringValue(provider, "sourceKind", ""))
+                    || !coarse.sourceFingerprint().equals(stringValue(provider, "sourceFingerprint", ""))
+                    || !coarse.samplingSemantics().equals(stringValue(provider, "samplingSemantics", ""))) {
+                throw new IllegalArgumentException("PATCH_EXPLORER_TERRAIN_PREVIEW_PROVIDER_CHANGED_REOPEN_SESSION");
+            }
+        }
+        return result;
+    }
+
+    private JsonObject terrainPreviewJson(PatchCandidateTerrainPreviewService.Result result) {
+        JsonObject evidence = result.evidence();
+        JsonObject terrainPreview = new JsonObject();
+        terrainPreview.addProperty("schemaVersion", PatchCandidateTerrainPreviewService.SCHEMA_VERSION);
+        terrainPreview.addProperty("sourceIdentity", result.sourceIdentity());
+        terrainPreview.addProperty("evidenceIdentity", result.evidenceIdentity());
+        terrainPreview.addProperty("evaluationLevel", requiredString(evidence, "evaluationLevel"));
+        terrainPreview.addProperty("cacheHit", result.cacheHit());
+        terrainPreview.add("provider", object(evidence, "provider").deepCopy());
+        terrainPreview.add("grid", object(evidence, "grid").deepCopy());
+        terrainPreview.add("buildabilityPolicy", object(evidence, "buildabilityPolicy").deepCopy());
+        terrainPreview.add("summary", object(evidence, "summary").deepCopy());
+        terrainPreview.addProperty("advisoryOnly", booleanValue(evidence, "advisoryOnly", true));
+        terrainPreview.addProperty("requiredNextGate", stringValue(evidence, "requiredNextGate",
+                PatchCandidateTerrainPreviewService.REQUIRED_NEXT_GATE));
+        terrainPreview.add("artifacts", terrainPreviewRefs(result));
+        return terrainPreview;
+    }
+
+    private JsonObject terrainPreviewRefs(PatchCandidateTerrainPreviewService.Result result) {
+        JsonObject artifacts = new JsonObject();
+        artifacts.addProperty("evidence", debugRef(result.evidencePath()));
+        artifacts.addProperty("terrainPreview", debugRef(result.terrainPreviewPath()));
+        return artifacts;
+    }
+
+    private String validateFrozenTerrainPreview(JsonObject terrainPreview) throws IOException {
+        if (!PatchCandidateTerrainPreviewService.SCHEMA_VERSION.equals(
+                requiredString(terrainPreview, "schemaVersion"))) {
+            throw new IllegalArgumentException("PATCH_SELECTION_TERRAIN_PREVIEW_SCHEMA_UNSUPPORTED");
+        }
+        JsonObject artifacts = object(terrainPreview, "artifacts");
+        Path evidencePath = debugRoot.resolve(requiredString(artifacts, "evidence"))
+                .toAbsolutePath().normalize();
+        if (!evidencePath.startsWith(debugRoot)) {
+            throw new IllegalArgumentException("PATCH_SELECTION_TERRAIN_PREVIEW_OUTSIDE_DEBUG_ROOT");
+        }
+        requireFile(evidencePath, "PATCH_SELECTION_TERRAIN_PREVIEW_MISSING");
+        String identity = "sha256:" + sha256(evidencePath);
+        if (!identity.equals(requiredString(terrainPreview, "evidenceIdentity"))) {
+            throw new IllegalArgumentException("PATCH_SELECTION_TERRAIN_PREVIEW_TAMPERED");
+        }
+        JsonObject evidence = readObject(evidencePath);
+        if (!PatchCandidateTerrainPreviewService.SCHEMA_VERSION.equals(
+                stringValue(evidence, "schemaVersion", ""))
+                || !requiredString(terrainPreview, "sourceIdentity")
+                .equals(stringValue(evidence, "sourceIdentity", ""))) {
+            throw new IllegalArgumentException("PATCH_SELECTION_TERRAIN_PREVIEW_CONTENT_MISMATCH");
+        }
+        return requiredString(terrainPreview, "sourceIdentity");
+    }
+
+    private static String selectionRef(String sessionId, String candidateId, String scopeIdentity,
+            String terrainPreviewSourceIdentity) {
+        String source = sessionId + "\n" + candidateId + "\n" + scopeIdentity;
+        if (terrainPreviewSourceIdentity != null && !terrainPreviewSourceIdentity.isBlank()) {
+            source += "\n" + terrainPreviewSourceIdentity;
+        }
+        return "psel_" + sha256(source);
     }
 
     private static JsonArray sparseRelations(List<Candidate> candidates, int step) {
@@ -1097,82 +1345,260 @@ public final class PatchExplorerService {
                 (bestLeft.x() + bestRight.x()) / 2, (bestLeft.z() + bestRight.z()) / 2);
     }
 
-    private void render(Scope scope, List<Candidate> candidates, Candidate selected, Path output) throws IOException {
+    private void renderOverview(Scope scope, List<Candidate> candidates, OverviewMode mode, Path output)
+            throws IOException {
         Bounds bounds = bounds(scope.scopeCells());
         int widthCells = Math.max(1, bounds.maxX() - bounds.minX() + 1);
         int heightCells = Math.max(1, bounds.maxZ() - bounds.minZ() + 1);
         int scale = Math.max(2, Math.min(14, 920 / Math.max(widthCells, heightCells)));
-        int legendWidth = 260;
-        BufferedImage image = new BufferedImage(widthCells * scale + legendWidth,
-                Math.max(360, heightCells * scale + 44), BufferedImage.TYPE_INT_ARGB);
+        int mapWidth = widthCells * scale;
+        int mapHeight = heightCells * scale;
+        int legendWidth = 290;
+        BufferedImage image = new BufferedImage(mapWidth + legendWidth,
+                Math.max(390, mapHeight), BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = image.createGraphics();
         try {
             g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g.setColor(new Color(244, 245, 247));
+            g.setColor(new Color(242, 244, 243));
             g.fillRect(0, 0, image.getWidth(), image.getHeight());
-            g.setColor(new Color(218, 221, 225));
+            Map<String, Cell> terrainByCell = new HashMap<>();
             for (Cell cell : scope.scopeCells()) {
+                terrainByCell.put(key(cell.x(), cell.z()), cell);
+            }
+            for (Cell cell : scope.scopeCells()) {
+                g.setColor(terrainColor(cell, terrainByCell));
                 g.fillRect((cell.x() - bounds.minX()) * scale, (cell.z() - bounds.minZ()) * scale, scale, scale);
             }
-            Set<String> candidateIds = new HashSet<>();
-            for (Candidate candidate : candidates) {
-                candidateIds.add(candidate.candidateId());
-                Color color = color(candidate.type());
-                if (selected != null && candidate != selected) {
-                    color = new Color(color.getRed(), color.getGreen(), color.getBlue(), 65);
+
+            Map<String, OverlayCell> overlays = new LinkedHashMap<>();
+            if (mode == OverviewMode.ALL_PATCHES) {
+                for (Cell cell : scope.scopeCells()) {
+                    if (!cell.patchRef().isBlank()) {
+                        overlays.put(key(cell.x(), cell.z()),
+                                new OverlayCell(cell, cell.patchRef(), cell.type()));
+                    }
                 }
-                g.setColor(color);
-                for (Cell cell : candidate.cells()) {
-                    g.fillRect((cell.x() - bounds.minX()) * scale, (cell.z() - bounds.minZ()) * scale, scale, scale);
+            } else if (mode == OverviewMode.TOP_PATCHES) {
+                for (Candidate candidate : candidates) {
+                    for (Cell cell : candidate.cells()) {
+                        overlays.put(key(cell.x(), cell.z()),
+                                new OverlayCell(cell, candidate.candidateId(), candidate.type()));
+                    }
                 }
-                Bounds cb = candidate.bounds();
-                g.setColor(color.darker());
-                g.setStroke(new BasicStroke(2f));
-                g.drawRect((cb.minX() - bounds.minX()) * scale, (cb.minZ() - bounds.minZ()) * scale,
-                        Math.max(scale, (cb.maxX() - cb.minX() + 1) * scale),
-                        Math.max(scale, (cb.maxZ() - cb.minZ() + 1) * scale));
-                double[] center = center(candidate.cells());
-                g.setFont(new Font(Font.SANS_SERIF, Font.BOLD, Math.max(12, Math.min(20, scale + 7))));
-                g.drawString(candidate.candidateId(), (int) ((center[0] - bounds.minX()) * scale),
-                        (int) ((center[1] - bounds.minZ()) * scale));
             }
-            if (selected != null) {
-                Cell anchor = suggestedAnchor(selected.cells(), scope);
-                int x = (anchor.x() - bounds.minX()) * scale + scale / 2;
-                int z = (anchor.z() - bounds.minZ()) * scale + scale / 2;
-                g.setColor(Color.WHITE);
-                g.setStroke(new BasicStroke(4f));
-                g.drawLine(x - 8, z, x + 8, z);
-                g.drawLine(x, z - 8, x, z + 8);
-                g.setColor(Color.BLACK);
-                g.setStroke(new BasicStroke(1.5f));
-                g.drawOval(x - 10, z - 10, 20, 20);
+            int overlayAlpha = mode == OverviewMode.TOP_PATCHES ? 170 : 118;
+            for (OverlayCell overlay : overlays.values()) {
+                Color base = LandformPatchPalette.color(overlay.type());
+                g.setColor(new Color(base.getRed(), base.getGreen(), base.getBlue(), overlayAlpha));
+                Cell cell = overlay.cell();
+                g.fillRect((cell.x() - bounds.minX()) * scale, (cell.z() - bounds.minZ()) * scale,
+                        scale, scale);
             }
-            int x = widthCells * scale + 18;
+            if (!overlays.isEmpty()) {
+                g.setStroke(new BasicStroke(scale >= 6 ? 1.5f : 1.0f));
+                for (OverlayCell overlay : overlays.values()) {
+                    drawOverlayBoundary(g, overlay, overlays, bounds, scale,
+                            mode == OverviewMode.TOP_PATCHES);
+                }
+            }
+            if (mode == OverviewMode.TOP_PATCHES) {
+                drawCandidateLabels(g, candidates, bounds, scale, mapWidth, mapHeight);
+            }
+
+            g.setColor(new Color(33, 38, 40, 185));
+            g.setStroke(new BasicStroke(1.5f));
+            g.drawRect(0, 0, mapWidth - 1, mapHeight - 1);
+            int x = mapWidth + 18;
             int y = 30;
             g.setColor(new Color(24, 28, 34));
             g.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 17));
-            g.drawString(selected == null ? "Patch Explorer" : "Patch selection", x, y);
+            g.drawString(mode.title(), x, y);
             g.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 12));
-            y += 24;
+            y += 22;
             g.drawString(scope.scopeType() + " / " + scope.scopeId(), x, y);
-            for (Candidate candidate : candidates) {
-                y += 25;
-                g.setColor(color(candidate.type()));
-                g.fillRect(x, y - 12, 13, 13);
+            y += 18;
+            g.drawString("cell step: " + scope.cellStepBlocks() + " blocks", x, y);
+            y += 18;
+            g.drawString(widthCells + " x " + heightCells + " cells", x, y);
+            y += 25;
+            Map<String, Long> counts = overviewCounts(scope, candidates, mode);
+            for (Map.Entry<String, String> entry : LandformPatchPalette.colorsByType().entrySet()) {
+                Color color = LandformPatchPalette.color(entry.getKey());
+                g.setColor(color);
+                g.fillRect(x, y - 11, 14, 14);
                 g.setColor(new Color(24, 28, 34));
-                g.drawString(candidate.candidateId() + "  " + candidate.areaBlocks() + " blocks", x + 20, y);
+                String count = counts.containsKey(entry.getKey()) ? "  " + counts.get(entry.getKey()) : "";
+                g.drawString(entry.getKey() + "  " + entry.getValue() + count, x + 21, y + 1);
+                y += 22;
             }
+            y += 10;
+            g.setColor(new Color(75, 79, 82));
+            g.drawString("same bounds / fixed patch colors", x, y);
             if ("city_d4".equals(scope.scopeType())) {
-                y += 28;
-                g.setColor(new Color(90, 90, 90));
-                g.drawString("area excludes hard occupied", x, y);
+                y += 18;
+                g.drawString("Top area excludes hard occupied", x, y);
             }
         } finally {
             g.dispose();
         }
         Files.createDirectories(output.getParent());
         ImageIO.write(image, "png", output.toFile());
+    }
+
+    private static void drawCandidateLabels(Graphics2D g, List<Candidate> candidates, Bounds bounds,
+            int scale, int mapWidth, int mapHeight) {
+        g.setFont(new Font(Font.SANS_SERIF, Font.BOLD, Math.max(10, Math.min(15, scale + 5))));
+        List<Rectangle> occupied = new ArrayList<>();
+        List<Candidate> ordered = candidates.stream()
+                .sorted(Comparator.comparingLong(Candidate::areaBlocks).reversed()
+                        .thenComparing(Candidate::candidateId))
+                .toList();
+        for (Candidate candidate : ordered) {
+            double[] center = center(candidate.cells());
+            int anchorX = (int) Math.round((center[0] - bounds.minX() + 0.5) * scale);
+            int anchorZ = (int) Math.round((center[1] - bounds.minZ() + 0.5) * scale);
+            String label = candidate.candidateId();
+            int textWidth = g.getFontMetrics().stringWidth(label);
+            int textHeight = g.getFontMetrics().getHeight();
+            Rectangle labelBounds = findLabelBounds(anchorX, anchorZ, textWidth + 6, textHeight + 1,
+                    mapWidth, mapHeight, occupied);
+            int labelCenterX = labelBounds.x + labelBounds.width / 2;
+            int labelCenterZ = labelBounds.y + labelBounds.height / 2;
+            if (Math.abs(labelCenterX - anchorX) + Math.abs(labelCenterZ - anchorZ) > textHeight) {
+                g.setColor(new Color(245, 245, 242, 190));
+                g.setStroke(new BasicStroke(1.0f));
+                g.drawLine(anchorX, anchorZ, labelCenterX, labelCenterZ);
+            }
+            g.setColor(new Color(20, 23, 25, 195));
+            g.fillRect(labelBounds.x, labelBounds.y, labelBounds.width, labelBounds.height);
+            g.setColor(Color.WHITE);
+            g.drawString(label, labelBounds.x + 3,
+                    labelBounds.y + (labelBounds.height - textHeight) / 2 + g.getFontMetrics().getAscent());
+            occupied.add(new Rectangle(labelBounds.x - 2, labelBounds.y - 2,
+                    labelBounds.width + 4, labelBounds.height + 4));
+        }
+    }
+
+    private static Rectangle findLabelBounds(int anchorX, int anchorZ, int width, int height,
+            int mapWidth, int mapHeight, List<Rectangle> occupied) {
+        int vertical = height + 5;
+        int horizontal = width / 2 + 8;
+        int[][] offsets = {
+                {0, 0}, {0, -vertical}, {0, vertical},
+                {-horizontal, 0}, {horizontal, 0},
+                {-horizontal, -vertical}, {horizontal, -vertical},
+                {-horizontal, vertical}, {horizontal, vertical},
+                {0, -vertical * 2}, {0, vertical * 2}
+        };
+        Rectangle best = null;
+        long bestOverlap = Long.MAX_VALUE;
+        for (int[] offset : offsets) {
+            int x = clamp(anchorX - width / 2 + offset[0], 2, Math.max(2, mapWidth - width - 2));
+            int y = clamp(anchorZ - height + 3 + offset[1], 2, Math.max(2, mapHeight - height - 2));
+            Rectangle candidate = new Rectangle(x, y, width, height);
+            long overlap = occupied.stream().map(candidate::intersection)
+                    .filter(intersection -> !intersection.isEmpty())
+                    .mapToLong(intersection -> (long) intersection.width * intersection.height).sum();
+            if (overlap == 0) {
+                return candidate;
+            }
+            if (overlap < bestOverlap) {
+                best = candidate;
+                bestOverlap = overlap;
+            }
+        }
+        return best == null ? new Rectangle(2, 2, width, height) : best;
+    }
+
+    private static Color terrainColor(Cell cell, Map<String, Cell> terrainByCell) {
+        CoarseTerrain terrain = cell.coarseTerrain();
+        if (terrain == null) {
+            return new Color(211, 215, 214);
+        }
+        if (terrain.water()) {
+            return new Color(78, 139, 181);
+        }
+        Color base = elevationColor(terrain.elevation());
+        double west = elevation(terrainByCell.get(key(cell.x() - 1, cell.z())), terrain.elevation());
+        double east = elevation(terrainByCell.get(key(cell.x() + 1, cell.z())), terrain.elevation());
+        double north = elevation(terrainByCell.get(key(cell.x(), cell.z() - 1)), terrain.elevation());
+        double south = elevation(terrainByCell.get(key(cell.x(), cell.z() + 1)), terrain.elevation());
+        double shade = Math.max(0.72, Math.min(1.25, 1.0 + ((west - east) + (north - south)) * 0.018));
+        return new Color(scaleChannel(base.getRed(), shade), scaleChannel(base.getGreen(), shade),
+                scaleChannel(base.getBlue(), shade));
+    }
+
+    private static double elevation(Cell cell, double fallback) {
+        return cell == null || cell.coarseTerrain() == null ? fallback : cell.coarseTerrain().elevation();
+    }
+
+    private static Color elevationColor(double elevation) {
+        if (elevation <= HEIGHT_STOPS[0]) {
+            return HEIGHT_COLORS[0];
+        }
+        for (int index = 1; index < HEIGHT_STOPS.length; index++) {
+            if (elevation <= HEIGHT_STOPS[index]) {
+                double ratio = (elevation - HEIGHT_STOPS[index - 1])
+                        / (HEIGHT_STOPS[index] - HEIGHT_STOPS[index - 1]);
+                Color left = HEIGHT_COLORS[index - 1];
+                Color right = HEIGHT_COLORS[index];
+                return new Color(interpolate(left.getRed(), right.getRed(), ratio),
+                        interpolate(left.getGreen(), right.getGreen(), ratio),
+                        interpolate(left.getBlue(), right.getBlue(), ratio));
+            }
+        }
+        return HEIGHT_COLORS[HEIGHT_COLORS.length - 1];
+    }
+
+    private static int interpolate(int left, int right, double ratio) {
+        return (int) Math.round(left + (right - left) * ratio);
+    }
+
+    private static int scaleChannel(int channel, double scale) {
+        return Math.max(0, Math.min(255, (int) Math.round(channel * scale)));
+    }
+
+    private static int clamp(int value, int min, int max) {
+        return Math.max(min, Math.min(max, value));
+    }
+
+    private static void drawOverlayBoundary(Graphics2D g, OverlayCell overlay,
+            Map<String, OverlayCell> overlays, Bounds bounds, int scale, boolean typeColor) {
+        Cell cell = overlay.cell();
+        int x = (cell.x() - bounds.minX()) * scale;
+        int z = (cell.z() - bounds.minZ()) * scale;
+        Color base = LandformPatchPalette.color(overlay.type());
+        g.setColor(typeColor ? base.darker() : new Color(30, 34, 36, 175));
+        for (int direction = 0; direction < CARDINAL.length; direction++) {
+            int[] delta = CARDINAL[direction];
+            OverlayCell neighbor = overlays.get(key(cell.x() + delta[0], cell.z() + delta[1]));
+            if (neighbor != null && overlay.regionId().equals(neighbor.regionId())) {
+                continue;
+            }
+            switch (direction) {
+                case 0 -> g.drawLine(x + scale, z, x + scale, z + scale);
+                case 1 -> g.drawLine(x, z, x, z + scale);
+                case 2 -> g.drawLine(x, z + scale, x + scale, z + scale);
+                default -> g.drawLine(x, z, x + scale, z);
+            }
+        }
+    }
+
+    private static Map<String, Long> overviewCounts(Scope scope, List<Candidate> candidates, OverviewMode mode) {
+        Map<String, Long> result = new LinkedHashMap<>();
+        if (mode == OverviewMode.TOP_PATCHES) {
+            candidates.stream().collect(java.util.stream.Collectors.groupingBy(Candidate::type,
+                    LinkedHashMap::new, java.util.stream.Collectors.counting())).forEach(result::put);
+        } else if (mode == OverviewMode.ALL_PATCHES) {
+            Map<String, Set<String>> refs = new LinkedHashMap<>();
+            for (Cell cell : scope.scopeCells()) {
+                if (!cell.patchRef().isBlank()) {
+                    refs.computeIfAbsent(cell.type(), ignored -> new LinkedHashSet<>()).add(cell.patchRef());
+                }
+            }
+            refs.forEach((type, patches) -> result.put(type, (long) patches.size()));
+        }
+        return result;
     }
 
     private JsonObject loadSession(String runId, String sessionId) throws IOException {
@@ -1213,14 +1639,17 @@ public final class PatchExplorerService {
         return "sha256:" + sha256(source.toString());
     }
 
-    private String citySourceIdentity(String cityId, Path d3Path, List<Bounds> occupied) throws IOException {
+    private String citySourceIdentity(String cityId, Path d3Path, Path terrainPath,
+            List<Bounds> occupied) throws IOException {
         Path normalizedD3 = d3Path.toAbsolutePath().normalize();
-        if (!normalizedD3.startsWith(debugRoot)) {
+        Path normalizedTerrain = terrainPath.toAbsolutePath().normalize();
+        if (!normalizedD3.startsWith(debugRoot) || !normalizedTerrain.startsWith(debugRoot)) {
             throw new IllegalArgumentException("PATCH_EXPLORER_SOURCE_OUTSIDE_DEBUG_ROOT: " + d3Path);
         }
         StringBuilder source = new StringBuilder(CANDIDATE_MODEL).append('\n')
                 .append("city_d4").append('\n').append(cityId).append('\n')
-                .append(debugRef(normalizedD3)).append(':').append(sha256(normalizedD3)).append('\n');
+                .append(debugRef(normalizedD3)).append(':').append(sha256(normalizedD3)).append('\n')
+                .append(debugRef(normalizedTerrain)).append(':').append(sha256(normalizedTerrain)).append('\n');
         occupied.stream().distinct()
                 .sorted(Comparator.comparingInt(Bounds::minX).thenComparingInt(Bounds::minZ)
                         .thenComparingInt(Bounds::maxX).thenComparingInt(Bounds::maxZ))
@@ -1630,38 +2059,11 @@ public final class PatchExplorerService {
         return result;
     }
 
-    private static String dominantBiome(JsonObject cell) {
-        if (!cell.has("biomeHist") || !cell.get("biomeHist").isJsonObject()) {
-            return "unknown";
+    private static String candidateBasis(Scope scope) {
+        if ("city_d4".equals(scope.scopeType())) {
+            return "d3_landform_patch";
         }
-        String best = "unknown";
-        int bestCount = -1;
-        for (Map.Entry<String, JsonElement> entry : cell.getAsJsonObject("biomeHist").entrySet()) {
-            int count = entry.getValue().getAsInt();
-            if (count > bestCount || count == bestCount && entry.getKey().compareTo(best) < 0) {
-                best = entry.getKey();
-                bestCount = count;
-            }
-        }
-        return normalizeType(best);
-    }
-
-    private static double biomeDominance(JsonObject cell) {
-        if (!cell.has("biomeHist") || !cell.get("biomeHist").isJsonObject()) {
-            return 0.0;
-        }
-        int total = 0;
-        int largest = 0;
-        for (JsonElement value : cell.getAsJsonObject("biomeHist").asMap().values()) {
-            int count = value.getAsInt();
-            total += count;
-            largest = Math.max(largest, count);
-        }
-        return total == 0 ? 0.0 : largest / (double) total;
-    }
-
-    private static String candidateBasis(String scopeType) {
-        return "city_d4".equals(scopeType) ? "d3_landform_patch" : "dominant_biome_contiguous_region";
+        return scope.terrainPatchSource() == null ? "sealed_w_landform_patch" : "t_scale_landform_patch";
     }
 
     private static String direction(double dx, double dz) {
@@ -1671,40 +2073,6 @@ public final class PatchExplorerService {
         String ns = dz < -0.5 ? "north" : dz > 0.5 ? "south" : "";
         String ew = dx < -0.5 ? "west" : dx > 0.5 ? "east" : "";
         return ns + ew;
-    }
-
-    private static Color color(String type) {
-        if (type.contains(":")) {
-            return biomeColor(type.substring(type.indexOf(':') + 1));
-        }
-        return switch (type) {
-            case "water" -> new Color(55, 126, 184, 220);
-            case "shore" -> new Color(54, 162, 151, 220);
-            case "plain" -> new Color(113, 168, 76, 220);
-            case "terrace" -> new Color(189, 170, 86, 220);
-            case "slope" -> new Color(210, 140, 65, 220);
-            case "cliff" -> new Color(119, 104, 96, 220);
-            case "ridge" -> new Color(164, 80, 88, 220);
-            case "valley" -> new Color(91, 139, 107, 220);
-            case "basin" -> new Color(141, 108, 164, 220);
-            default -> new Color(112, 119, 128, 220);
-        };
-    }
-
-    private static Color biomeColor(String biome) {
-        if (biome.contains("ocean") || biome.contains("river")) return new Color(55, 126, 184, 220);
-        if (biome.contains("beach") || biome.contains("shore")) return new Color(214, 190, 112, 220);
-        if (biome.contains("badlands")) return new Color(177, 91, 61, 220);
-        if (biome.contains("desert")) return new Color(219, 177, 79, 220);
-        if (biome.contains("swamp")) return new Color(65, 118, 102, 220);
-        if (biome.contains("jungle")) return new Color(47, 119, 67, 220);
-        if (biome.contains("forest") || biome.contains("taiga")) return new Color(54, 109, 72, 220);
-        if (biome.contains("plains") || biome.contains("meadow")) return new Color(112, 166, 76, 220);
-        if (biome.contains("savanna")) return new Color(157, 156, 68, 220);
-        if (biome.contains("peak") || biome.contains("grove")) return new Color(126, 132, 137, 220);
-        if (biome.contains("mushroom")) return new Color(156, 91, 143, 220);
-        Color generated = Color.getHSBColor(Math.floorMod(biome.hashCode(), 360) / 360.0f, 0.48f, 0.72f);
-        return new Color(generated.getRed(), generated.getGreen(), generated.getBlue(), 220);
     }
 
     private static String displayName(String type) {
@@ -1876,19 +2244,54 @@ public final class PatchExplorerService {
         }
     }
 
+    @FunctionalInterface
+    public interface TerrainPreviewRunner {
+        PatchCandidateTerrainPreviewService.Result refine(String runId, String realmId,
+                String scopeSourceIdentity, PatchCandidateTerrainPreviewService.Target target,
+                PatchCandidateTerrainPreviewService.Level level) throws IOException;
+    }
+
+    @FunctionalInterface
+    public interface TerrainPatchRunner {
+        TerrainScalePatchService.Result refine(String runId, String scopeType, String scopeId,
+                String scopeSourceIdentity, List<TerrainScalePatchService.SeedCell> sourceCells) throws IOException;
+    }
+
+    public record SessionTerrainContext(String scopeType, boolean preferGeneratorNativeTerrain) {
+    }
+
     private static final Comparator<Candidate> CANDIDATE_ORDER = Comparator.comparing(Candidate::type)
             .thenComparing(Comparator.comparingLong(Candidate::largestContinuousAreaBlocks).reversed())
             .thenComparing(Comparator.comparingLong(Candidate::areaBlocks).reversed())
             .thenComparing(Candidate::candidateId);
 
+    private enum OverviewMode {
+        TERRAIN("Terrain overview"),
+        ALL_PATCHES("All patches"),
+        TOP_PATCHES("Top patches");
+
+        private final String title;
+
+        OverviewMode(String title) {
+            this.title = title;
+        }
+
+        String title() {
+            return title;
+        }
+    }
+
     private record Scope(String runId, String scopeType, String scopeId, int cellStepBlocks,
                          List<Candidate> candidates, List<Cell> scopeCells, String sourceIdentity,
                          List<String> sourceArtifacts, List<Bounds> occupied,
-                         CoarseTerrainSource coarseTerrainSource) {
+                         CoarseTerrainSource coarseTerrainSource, TerrainPatchSource terrainPatchSource) {
     }
 
     private record Cell(int x, int z, int blockX, int blockZ, int step, String patchRef, String type,
                         String terrainType, String baseLandform, double confidence, CoarseTerrain coarseTerrain) {
+    }
+
+    private record OverlayCell(Cell cell, String regionId, String type) {
     }
 
     private record CoarseTerrain(double elevation, boolean water, String biomeId, String terrainId,
@@ -1945,6 +2348,28 @@ public final class PatchExplorerService {
             result.addProperty("heightWaterPreview", heightWaterPreview);
             result.addProperty("advisoryOnly", advisoryOnly);
             result.addProperty("requiredNextGate", requiredNextGate);
+            return result;
+        }
+    }
+
+    private record TerrainPatchSource(String providerId, String sourceKind, String sourceFingerprint,
+                                      String samplingSemantics) {
+        static TerrainPatchSource from(TerrainScalePatchService.Source source) {
+            return new TerrainPatchSource(source.providerId(), source.sourceKind(), source.sourceFingerprint(),
+                    source.samplingSemantics());
+        }
+
+        static TerrainPatchSource fromJson(JsonObject json) {
+            return new TerrainPatchSource(requiredString(json, "providerId"), requiredString(json, "sourceKind"),
+                    requiredString(json, "sourceFingerprint"), requiredString(json, "samplingSemantics"));
+        }
+
+        JsonObject asJson() {
+            JsonObject result = new JsonObject();
+            result.addProperty("providerId", providerId);
+            result.addProperty("sourceKind", sourceKind);
+            result.addProperty("sourceFingerprint", sourceFingerprint);
+            result.addProperty("samplingSemantics", samplingSemantics);
             return result;
         }
     }

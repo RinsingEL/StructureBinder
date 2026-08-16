@@ -802,7 +802,7 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "patch_explorer_open",
-    description: "打开共享 Patch Explorer session。realm_t2/realm_t4 以 W biomeHist 主导群系生成连续群系 Patch，并返回地形组成事实；city_d4 仍读取 D3 地形 Patch 并扣除 hard occupied。",
+    description: "打开共享 Patch Explorer session。realm_t2/realm_t4 只用 sealed W Patch 提供范围，在 T 的 32 格尺度重新采样、分类并生成 landform Patch；city_d4 使用 D3 自身尺度且跨 GIS region 合并后的 landform Patch，并扣除 hard occupied。返回同一范围的原始地形总览、所有 Patch 总览和 T/D 共用固定色表。群系只作为附加地理事实，不生成候选。",
     inputSchema: {
       type: "object",
       additionalProperties: false,
@@ -814,14 +814,14 @@ export const realmTools: ToolDefinition[] = [
         continentId: { type: "string" },
         citySeedId: { type: "string" },
         sessionId: { type: "string" },
-        preferGeneratorNativeTerrain: { type: "boolean", description: "realm_t4 默认 true；false 时禁用生成器原生粗览并强制走 Minecraft prior。" },
+        preferGeneratorNativeTerrain: { type: "boolean", description: "默认 true；T Patch 重算与候选高程预览优先使用生成器原生地形，false 时强制走 Minecraft prior。" },
       },
       required: ["runId", "scopeType"],
     },
   },
   {
     name: "patch_explorer_show_candidates",
-    description: "按 AI 主动选择的兴趣类型返回每类稳定面积分页、候选图和仅限当前页候选的稀疏几何关系。T 尺度兴趣类型为完整 biome ID，D4 为 landform 类型；默认每类 3 个。",
+    description: "按 AI 主动选择的 landform 类型返回每类稳定面积分页和仅限当前页候选的稀疏几何关系，默认每类 Top 3。三个 scope 都在 open 的原始地形总览同一边界、同一比例上，把本页所有类型的 Top Patch 聚合高亮并标注候选 ID；批量比较不再为每个候选单独生成自适应取景图。",
     inputSchema: {
       type: "object",
       additionalProperties: false,
@@ -838,7 +838,7 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "patch_explorer_select_candidate",
-    description: "选中当前页已展示候选，生成确认预览和稳定 patchSelectionRef；选择理由字段为 selectionReason。source 变化或候选未展示时拒绝。",
+    description: "选中当前页已展示候选，按 16 格、1024 格城市尺度生成同样的高程高亮确认图，并冻结稳定 patchSelectionRef。选择理由字段为 selectionReason，source、预览证据变化或候选未展示时拒绝。",
     inputSchema: {
       type: "object",
       additionalProperties: false,

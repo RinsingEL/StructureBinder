@@ -3,6 +3,7 @@ package com.rinsing.geomantia.mixin;
 import com.rinsing.geomantia.systems.city.application.terrain.CityTerrainFoundationDensityComputer;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityDecorationBeardifierAccess;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityDecorationWorldgenRegistry;
+import com.rinsing.geomantia.systems.city.infrastructure.world.CityStructureFoundationPlatformResolver;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.WorldGenRegion;
 import net.minecraft.world.level.ChunkPos;
@@ -24,6 +25,9 @@ public abstract class CityDecorationBeardifierMixin implements CityDecorationBea
     @Unique
     private List<CityTerrainFoundationDensityComputer.FoundationSegmentView> geomantia$foundationSegments =
             List.of();
+    @Unique
+    private List<CityTerrainFoundationDensityComputer.FoundationPlatformView> geomantia$foundationPlatforms =
+            List.of();
 
     @Inject(method = "forStructuresInChunk", at = @At("RETURN"))
     private static void geomantia$captureCityDecorationFoundations(StructureManager structureManager,
@@ -38,7 +42,9 @@ public abstract class CityDecorationBeardifierMixin implements CityDecorationBea
         String dimensionId = level.dimension().location().toString();
         List<CityTerrainFoundationDensityComputer.FoundationSegmentView> snapshot = new ArrayList<>();
         snapshot.addAll(CityDecorationWorldgenRegistry.foundationSegmentsForChunk(dimensionId, chunkPos));
-        ((CityDecorationBeardifierAccess) cir.getReturnValue()).geomantia$setFoundationSegments(snapshot);
+        CityDecorationBeardifierAccess access = (CityDecorationBeardifierAccess) cir.getReturnValue();
+        access.geomantia$setFoundationSegments(snapshot);
+        access.geomantia$setFoundationPlatforms(CityStructureFoundationPlatformResolver.forChunk(chunkPos));
     }
 
     @Inject(method = "compute", at = @At("RETURN"), cancellable = true)
@@ -46,6 +52,8 @@ public abstract class CityDecorationBeardifierMixin implements CityDecorationBea
                                                                CallbackInfoReturnable<Double> cir) {
         double contribution = CityTerrainFoundationDensityComputer.computeViews(
                 context.blockX(), context.blockY(), context.blockZ(), geomantia$foundationSegments);
+        contribution = Math.max(contribution, CityTerrainFoundationDensityComputer.computePlatformViews(
+                context.blockX(), context.blockY(), context.blockZ(), geomantia$foundationPlatforms));
         if (contribution > 0.0D) {
             cir.setReturnValue(cir.getReturnValue() + contribution);
         }
@@ -55,5 +63,11 @@ public abstract class CityDecorationBeardifierMixin implements CityDecorationBea
     public void geomantia$setFoundationSegments(
             List<? extends CityTerrainFoundationDensityComputer.FoundationSegmentView> foundationSegments) {
         geomantia$foundationSegments = new ArrayList<>(foundationSegments);
+    }
+
+    @Override
+    public void geomantia$setFoundationPlatforms(
+            List<? extends CityTerrainFoundationDensityComputer.FoundationPlatformView> foundationPlatforms) {
+        geomantia$foundationPlatforms = new ArrayList<>(foundationPlatforms);
     }
 }

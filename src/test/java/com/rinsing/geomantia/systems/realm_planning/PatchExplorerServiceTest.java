@@ -4,12 +4,23 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.rinsing.geomantia.systems.city.application.CityTestRunLayout;
+import com.rinsing.geomantia.systems.realm_planning.application.terrain.PatchCandidateTerrainPreviewService;
 import com.rinsing.geomantia.systems.realm_planning.application.terrain.RealmT4CoarseTerrainPreviewService;
+import com.rinsing.geomantia.systems.realm_planning.application.terrain.TerrainPreviewProvider;
+import com.rinsing.geomantia.systems.realm_planning.application.terrain.TerrainPreviewProviderAvailability;
+import com.rinsing.geomantia.systems.realm_planning.application.terrain.TerrainPreviewProviderDescriptor;
+import com.rinsing.geomantia.systems.realm_planning.application.terrain.TerrainPreviewProviderSelection;
+import com.rinsing.geomantia.systems.realm_planning.application.terrain.TerrainPreviewSample;
+import com.rinsing.geomantia.systems.realm_planning.application.terrain.TerrainPreviewSourceKind;
+import com.rinsing.geomantia.systems.realm_planning.application.terrain.TerrainScalePatchService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -30,24 +41,34 @@ class PatchExplorerServiceTest {
         PatchExplorerService service = new PatchExplorerService(root);
 
         JsonObject t2Open = service.open(request("run_a", "realm_t2", "realm_a"));
-        assertEquals("dominant_biome_contiguous_region", t2Open.get("candidateBasis").getAsString());
+        assertEquals("sealed_w_landform_patch", t2Open.get("candidateBasis").getAsString());
         assertEquals("patch_explorer_session.v0.1", read(root.resolve(t2Open.getAsJsonObject("artifacts")
                 .get("explorationSession").getAsString())).get("schemaVersion").getAsString());
         assertTrue(t2Open.getAsJsonArray("typeCatalog").size() >= 2);
-        assertTrue(hasPatchType(t2Open.getAsJsonArray("typeCatalog"), "minecraft:plains"));
-        assertFalse(hasPatchType(t2Open.getAsJsonArray("typeCatalog"), "plain"));
+        assertTrue(hasPatchType(t2Open.getAsJsonArray("typeCatalog"), "plain"));
+        assertFalse(hasPatchType(t2Open.getAsJsonArray("typeCatalog"), "minecraft:plains"));
+        assertEquals("#4CAF50", t2Open.getAsJsonObject("patchTypePalette")
+                .getAsJsonObject("colors").get("plain").getAsString());
+        assertEquals("#4CAF50", t2Open.getAsJsonArray("typeCatalog").get(0).getAsJsonObject()
+                .get("color").getAsString());
+        assertOverviewSet(root, t2Open.getAsJsonObject("artifacts"));
         assertEquals("kingdom_a", service.open(request("run_a", "realm_t2", "kingdom_a"))
                 .get("scopeId").getAsString(), "realm IDs must not depend on a realm_ prefix");
 
         JsonObject showRequest = new JsonObject();
         showRequest.addProperty("runId", "run_a");
         showRequest.addProperty("sessionId", t2Open.get("sessionId").getAsString());
-        showRequest.add("interestTypes", strings("minecraft:plains", "minecraft:beach"));
+        showRequest.add("interestTypes", strings("plain", "shore"));
         JsonObject firstPage = service.showCandidates(showRequest);
         JsonArray typePages = firstPage.getAsJsonArray("typePages");
         assertEquals(2, typePages.size());
         assertEquals(3, typePages.get(0).getAsJsonObject().getAsJsonArray("candidates").size());
         assertTrue(typePages.get(0).getAsJsonObject().get("hasNext").getAsBoolean());
+        assertEquals(1, typePages.get(0).getAsJsonObject().getAsJsonArray("candidates")
+                .get(0).getAsJsonObject().getAsJsonArray("sourcePatchRefs").size(),
+                "one source patch must remain one candidate instead of merging by biome");
+        assertFalse(firstPage.getAsJsonObject("artifacts").has("candidatePreview"));
+        assertTopPatchesOverview(root, firstPage);
         assertTrue(typePages.get(0).getAsJsonObject().getAsJsonArray("candidates").get(0).getAsJsonObject()
                 .getAsJsonObject("terrainComposition").has("plain"));
         assertTrue(firstPage.getAsJsonArray("relations").size() < 21, firstPage.toString());
@@ -55,7 +76,7 @@ class PatchExplorerServiceTest {
         JsonObject invalidTokenUse = new JsonObject();
         invalidTokenUse.addProperty("runId", "run_a");
         invalidTokenUse.addProperty("sessionId", t2Open.get("sessionId").getAsString());
-        invalidTokenUse.add("interestTypes", strings("minecraft:plains"));
+        invalidTokenUse.add("interestTypes", strings("plain"));
         invalidTokenUse.addProperty("pageToken", pageToken);
         assertThrows(IllegalArgumentException.class, () -> service.showCandidates(invalidTokenUse));
         for (var relation : firstPage.getAsJsonArray("relations")) {
@@ -69,7 +90,7 @@ class PatchExplorerServiceTest {
         JsonObject select = new JsonObject();
         select.addProperty("runId", "run_a");
         select.addProperty("sessionId", t2Open.get("sessionId").getAsString());
-        select.addProperty("candidateId", "MINECRAFT_PLAINS-01");
+        select.addProperty("candidateId", "PLAIN-01");
         JsonObject selected = service.selectCandidate(select);
         assertTrue(selected.get("patchSelectionRef").getAsString().startsWith("psel_"));
         assertTrue(selected.getAsJsonObject("selection").getAsJsonObject("terrainComposition").has("plain"));
@@ -81,18 +102,18 @@ class PatchExplorerServiceTest {
                 selected.get("patchSelectionRef").getAsString()).get("scopeId").getAsString());
 
         JsonObject continentOpen = service.open(request("run_a", "realm_t2", "continent_0"));
-        show(service, continentOpen, "minecraft:plains");
+        show(service, continentOpen, "plain");
         JsonObject continentSelect = new JsonObject();
         continentSelect.addProperty("runId", "run_a");
         continentSelect.addProperty("sessionId", continentOpen.get("sessionId").getAsString());
-        continentSelect.addProperty("candidateId", "MINECRAFT_PLAINS-01");
+        continentSelect.addProperty("candidateId", "PLAIN-01");
         String continentSelectionRef = service.selectCandidate(continentSelect)
                 .get("patchSelectionRef").getAsString();
         assertEquals("continent_0", service.resolveT2Selection("run_a", "realm_a", continentSelectionRef)
                 .get("scopeId").getAsString());
 
         JsonObject t4Open = service.open(request("run_a", "realm_t4", "realm_a"));
-        JsonObject t4Show = show(service, t4Open, "minecraft:plains");
+        JsonObject t4Show = show(service, t4Open, "plain");
         assertFalse(t4Show.getAsJsonArray("typePages").get(0).getAsJsonObject()
                 .getAsJsonArray("candidates").isEmpty());
 
@@ -228,7 +249,7 @@ class PatchExplorerServiceTest {
         PatchExplorerService service = new PatchExplorerService(root);
 
         JsonObject t4Open = service.open(request("run_terrain", "realm_t4", "realm_a"));
-        assertEquals("realm_biome_primary_city_landform_v0_2",
+        assertEquals("landform_patch_candidates_v0_2",
                 read(root.resolve(t4Open.getAsJsonObject("artifacts").get("explorationSession").getAsString()))
                         .get("candidateModel").getAsString());
         assertEquals("run_terrain/realm_t4_terrain_preview/realm_a_coarse_height_water_preview.png",
@@ -242,7 +263,7 @@ class PatchExplorerServiceTest {
         assertTrue(catalogEvidence.get("advisoryOnly").getAsBoolean());
         assertEquals("city_d3_site_review", catalogEvidence.get("requiredNextGate").getAsString());
 
-        JsonObject shown = show(service, t4Open, "minecraft:plains");
+        JsonObject shown = show(service, t4Open, "plain");
         JsonObject candidate = shown.getAsJsonArray("typePages").get(0).getAsJsonObject()
                 .getAsJsonArray("candidates").get(0).getAsJsonObject();
         assertEquals(5, candidate.getAsJsonObject("coarseTerrainEvidence").get("sampleCount").getAsInt());
@@ -252,7 +273,7 @@ class PatchExplorerServiceTest {
         JsonObject select = new JsonObject();
         select.addProperty("runId", "run_terrain");
         select.addProperty("sessionId", t4Open.get("sessionId").getAsString());
-        select.addProperty("candidateId", "MINECRAFT_PLAINS-01");
+        select.addProperty("candidateId", "PLAIN-01");
         JsonObject selected = service.selectCandidate(select);
         assertEquals(2, selected.getAsJsonObject("selection").getAsJsonObject("suggestedAnchor")
                 .get("gridX").getAsInt());
@@ -270,7 +291,7 @@ class PatchExplorerServiceTest {
                 .getAsJsonArray("cells").get(0).getAsJsonObject().has("coarseTerrain"));
 
         JsonObject t2Open = service.open(request("run_terrain", "realm_t2", "realm_a"));
-        JsonObject t2Candidate = show(service, t2Open, "minecraft:plains").getAsJsonArray("typePages")
+        JsonObject t2Candidate = show(service, t2Open, "plain").getAsJsonArray("typePages")
                 .get(0).getAsJsonObject().getAsJsonArray("candidates").get(0).getAsJsonObject();
         assertFalse(t2Candidate.has("coarseTerrainEvidence"));
         assertEquals(0, t2Candidate.getAsJsonObject("suggestedAnchor").get("gridX").getAsInt());
@@ -288,6 +309,66 @@ class PatchExplorerServiceTest {
     }
 
     @Test
+    void realmT4RefinesDisplayedCandidatesAndFreezesCityScaleConfirmationIntoSelection() throws Exception {
+        Path root = tempDir.resolve("refined_realm_debug");
+        Path run = root.resolve("run_refined");
+        Files.createDirectories(run);
+        writeRealmArtifacts(run);
+        writeCityArtifacts(run);
+        rewriteRealmCellStep(run, 128);
+        writeCoarseTerrainEvidence(run, "run_refined", 128);
+        PatchExplorerService service = new PatchExplorerService(root);
+        PatchExplorerService.TerrainPreviewRunner runner = terrainPreviewRunner(root);
+        JsonObject openRequest = request("run_refined", "realm_t4", "realm_a");
+        openRequest.addProperty("preferGeneratorNativeTerrain", false);
+        JsonObject opened = service.open(openRequest);
+        assertFalse(service.sessionTerrainContext(sessionRequest(opened)).preferGeneratorNativeTerrain());
+
+        JsonObject showRequest = sessionRequest(opened);
+        showRequest.add("interestTypes", strings("plain"));
+        JsonObject shown = service.showCandidates(showRequest, runner);
+        JsonObject candidate = shown.getAsJsonArray("typePages").get(0).getAsJsonObject()
+                .getAsJsonArray("candidates").get(0).getAsJsonObject();
+        assertFalse(candidate.has("terrainPreview"));
+        assertFalse(shown.getAsJsonObject("artifacts").has("candidateTerrainPreviews"));
+        assertTopPatchesOverview(root, shown);
+
+        JsonObject selectRequest = sessionRequest(opened);
+        selectRequest.addProperty("candidateId", candidate.get("candidateId").getAsString());
+        JsonObject selected = service.selectCandidate(selectRequest, runner);
+        JsonObject confirmation = selected.getAsJsonObject("selection").getAsJsonObject("terrainPreview");
+        assertEquals("city_scale_confirmation", confirmation.get("evaluationLevel").getAsString());
+        assertEquals(16, confirmation.getAsJsonObject("grid").get("sampleStepBlocks").getAsInt());
+        assertTrue(selected.getAsJsonObject("artifacts").has("cityScaleTerrainPreview"));
+        String selectionRef = selected.get("patchSelectionRef").getAsString();
+        assertEquals(selectionRef, service.resolveSelection("run_refined", selectionRef)
+                .get("patchSelectionRef").getAsString());
+
+        JsonObject t2Opened = service.open(request("run_refined", "realm_t2", "realm_a"));
+        JsonObject t2Show = sessionRequest(t2Opened);
+        t2Show.add("interestTypes", strings("plain"));
+        assertTopPatchesOverview(root, service.showCandidates(t2Show, runner));
+
+        JsonObject d4Opened = service.open(request("run_refined", "city_d4", "city_a"));
+        JsonObject d4Show = sessionRequest(d4Opened);
+        d4Show.add("interestTypes", strings("plain"));
+        assertTopPatchesOverview(root, service.showCandidates(d4Show, runner));
+
+        Path refinementEvidence = root.resolve(confirmation.getAsJsonObject("artifacts")
+                .get("evidence").getAsString());
+        String originalEvidence = Files.readString(refinementEvidence);
+        JsonObject tampered = read(refinementEvidence);
+        tampered.addProperty("tampered", true);
+        Files.writeString(refinementEvidence, tampered.toString());
+        IllegalArgumentException rejected = assertThrows(IllegalArgumentException.class,
+                () -> service.resolveSelection("run_refined", selectionRef));
+        assertTrue(rejected.getMessage().contains("TERRAIN_PREVIEW_TAMPERED"), rejected.getMessage());
+        Files.writeString(refinementEvidence, originalEvidence);
+        assertEquals(selectionRef, service.resolveSelection("run_refined", selectionRef)
+                .get("patchSelectionRef").getAsString());
+    }
+
+    @Test
     void rejectsSelectionAfterSourceIdentityChanges() throws Exception {
         Path root = tempDir.resolve("realm_debug");
         Path run = root.resolve("run_stale");
@@ -295,7 +376,7 @@ class PatchExplorerServiceTest {
         writeRealmArtifacts(run);
         PatchExplorerService service = new PatchExplorerService(root);
         JsonObject open = service.open(request("run_stale", "realm_t2", "continent_0"));
-        show(service, open, "minecraft:plains");
+        show(service, open, "plain");
 
         JsonObject context = read(run.resolve("world_survey_context.json"));
         context.addProperty("changedAfterOpen", true);
@@ -303,7 +384,7 @@ class PatchExplorerServiceTest {
         JsonObject select = new JsonObject();
         select.addProperty("runId", "run_stale");
         select.addProperty("sessionId", open.get("sessionId").getAsString());
-        select.addProperty("candidateId", "MINECRAFT_PLAINS-01");
+        select.addProperty("candidateId", "PLAIN-01");
         IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
                 () -> service.selectCandidate(select));
         assertTrue(error.getMessage().contains("STALE_SOURCE"), error.getMessage());
@@ -357,6 +438,40 @@ class PatchExplorerServiceTest {
         }
     }
 
+    @Test
+    void realmOpenUsesTScalePatchCellsInsteadOfWPatchGeometry() throws Exception {
+        Path root = tempDir.resolve("t_scale_realm_debug");
+        Path run = root.resolve("run_t_scale");
+        Files.createDirectories(run);
+        writeRealmArtifacts(run);
+        PatchExplorerService service = new PatchExplorerService(root);
+
+        JsonObject opened = service.open(request("run_t_scale", "realm_t2", "realm_a"),
+                (runId, scopeType, scopeId, sourceIdentity, sourceCells) -> {
+                    assertTrue(sourceCells.stream().anyMatch(cell -> "p1".equals(cell.sourcePatchRef())));
+                    TerrainScalePatchService.PatchCell first = new TerrainScalePatchService.PatchCell(
+                            0, 0, 0, 0, "t_water_1", "water", 62.0, true,
+                            "minecraft:ocean", 0.0, 0.0);
+                    TerrainScalePatchService.PatchCell second = new TerrainScalePatchService.PatchCell(
+                            1, 0, 8, 0, "t_water_1", "water", 62.0, true,
+                            "minecraft:ocean", 0.0, 0.0);
+                    TerrainScalePatchService.Patch patch = new TerrainScalePatchService.Patch(
+                            "t_water_1", "water", 1.0, List.of("p1"), List.of(first, second));
+                    return new TerrainScalePatchService.Result(8, List.of(patch), 1, 2);
+                });
+
+        assertEquals("t_scale_landform_patch", opened.get("candidateBasis").getAsString());
+        assertEquals(1, opened.getAsJsonArray("typeCatalog").size());
+        assertEquals("water", opened.getAsJsonArray("typeCatalog").get(0).getAsJsonObject()
+                .get("patchType").getAsString());
+        JsonObject session = read(root.resolve(opened.getAsJsonObject("artifacts")
+                .get("explorationSession").getAsString()));
+        JsonObject snapshot = read(root.resolve(session.get("scopeSnapshot").getAsString()));
+        assertEquals(8, snapshot.get("cellStepBlocks").getAsInt());
+        assertEquals("t_water_1", snapshot.getAsJsonArray("candidates").get(0).getAsJsonObject()
+                .getAsJsonArray("sourcePatchRefs").get(0).getAsString());
+    }
+
     private static void assertReservedFieldRejected(ThrowingCall call) {
         IllegalArgumentException error = assertThrows(IllegalArgumentException.class, call::run);
         assertTrue(error.getMessage().startsWith("PATCH_SELECTION_D4_RESERVED_FIELD_FORBIDDEN:"),
@@ -377,6 +492,63 @@ class PatchExplorerServiceTest {
         request.addProperty("scopeType", scopeType);
         request.addProperty("scopeId", scopeId);
         return request;
+    }
+
+    private static JsonObject sessionRequest(JsonObject opened) {
+        JsonObject request = new JsonObject();
+        request.addProperty("runId", opened.get("runId").getAsString());
+        request.addProperty("sessionId", opened.get("sessionId").getAsString());
+        return request;
+    }
+
+    private static void assertOverviewSet(Path root, JsonObject artifacts) throws Exception {
+        BufferedImage terrain = ImageIO.read(root.resolve(artifacts.get("terrainOverview").getAsString()).toFile());
+        BufferedImage patches = ImageIO.read(root.resolve(artifacts.get("allPatchesOverview").getAsString()).toFile());
+        assertTrue(terrain.getWidth() > 0 && terrain.getHeight() > 0);
+        assertEquals(terrain.getWidth(), patches.getWidth());
+        assertEquals(terrain.getHeight(), patches.getHeight());
+    }
+
+    private static void assertTopPatchesOverview(Path root, JsonObject shown) throws Exception {
+        JsonObject artifacts = shown.getAsJsonObject("artifacts");
+        assertOverviewSet(root, artifacts);
+        BufferedImage terrain = ImageIO.read(root.resolve(artifacts.get("terrainOverview").getAsString()).toFile());
+        BufferedImage top = ImageIO.read(root.resolve(artifacts.get("topPatchesOverview").getAsString()).toFile());
+        assertEquals(terrain.getWidth(), top.getWidth());
+        assertEquals(terrain.getHeight(), top.getHeight());
+        assertTrue(Files.size(root.resolve(artifacts.get("topPatchesOverview").getAsString())) > 0L);
+    }
+
+    private static PatchExplorerService.TerrainPreviewRunner terrainPreviewRunner(Path root) {
+        TerrainPreviewProviderDescriptor descriptor = new TerrainPreviewProviderDescriptor(
+                "rtf_native", TerrainPreviewSourceKind.GENERATOR_NATIVE, true,
+                "rtf:seed:settings", "rtf_preview_cell");
+        TerrainPreviewProvider provider = new TerrainPreviewProvider() {
+            @Override
+            public TerrainPreviewProviderDescriptor descriptor() {
+                return descriptor;
+            }
+
+            @Override
+            public TerrainPreviewProviderAvailability availability() {
+                return TerrainPreviewProviderAvailability.ready();
+            }
+
+            @Override
+            public TerrainPreviewSample sample(int blockX, int blockZ) {
+                boolean water = blockZ < -256;
+                double elevation = blockX > 256 ? 64.0 + blockX / 4.0 : 64.0;
+                return new TerrainPreviewSample(blockX, blockZ, elevation, water,
+                        water ? "minecraft:river" : "minecraft:plains");
+            }
+        };
+        TerrainPreviewProviderSelection selection = new TerrainPreviewProviderSelection(provider,
+                descriptor.providerId(), descriptor.sourceKind().contractName(), descriptor.fastPath(),
+                "", descriptor.sourceFingerprint(), descriptor.samplingSemantics());
+        PatchCandidateTerrainPreviewService previewService =
+                new PatchCandidateTerrainPreviewService(root);
+        return (runId, realmId, scopeIdentity, target, level) -> previewService.ensure(
+                runId, realmId, "minecraft:overworld", scopeIdentity, target, level, selection);
     }
 
     private static void writeRealmArtifacts(Path run) throws Exception {
@@ -436,6 +608,19 @@ class PatchExplorerServiceTest {
         Files.writeString(run.resolve("realm_territory_map.json"), territory.toString());
     }
 
+    private static void rewriteRealmCellStep(Path run, int step) throws Exception {
+        JsonObject context = read(run.resolve("world_survey_context.json"));
+        context.addProperty("cellStepBlocks", step);
+        Files.writeString(run.resolve("world_survey_context.json"), context.toString());
+        JsonObject patchMap = read(run.resolve("world_patch_map.json"));
+        for (var element : patchMap.getAsJsonArray("cells")) {
+            JsonObject cell = element.getAsJsonObject();
+            cell.addProperty("blockX", cell.get("gridX").getAsInt() * step);
+            cell.addProperty("blockZ", cell.get("gridZ").getAsInt() * step);
+        }
+        Files.writeString(run.resolve("world_patch_map.json"), patchMap.toString());
+    }
+
     private static void addPatch(JsonArray cells, String patch, String type, int startX, int z, int count) {
         for (int i = 0; i < count; i++) {
             JsonObject cell = new JsonObject();
@@ -489,6 +674,37 @@ class PatchExplorerServiceTest {
         review.add("landformPatches", patches);
         Files.writeString(d3.resolve("city_landform_review_package.json"), review.toString());
 
+        Path landUse = layout.stepDirectory(CityTestRunLayout.LAND_USE);
+        Files.createDirectories(landUse);
+        JsonObject terrainField = new JsonObject();
+        terrainField.addProperty("schemaVersion", "city_land_use_terrain_field.v0.1");
+        terrainField.addProperty("cityId", "city_a");
+        terrainField.add("planningBounds", bounds.deepCopy());
+        terrainField.addProperty("cellStepBlocks", 16);
+        JsonArray terrainCells = new JsonArray();
+        for (int x = 0; x < 6; x++) {
+            JsonObject cell = new JsonObject();
+            cell.addProperty("cellX", x);
+            cell.addProperty("cellZ", 0);
+            cell.addProperty("blockMinX", x * 16);
+            cell.addProperty("blockMinZ", 0);
+            cell.addProperty("cellStepBlocks", 16);
+            cell.addProperty("elevation", 64 + x * 2);
+            cell.addProperty("slope", x == 5 ? 3.0 : 0.5);
+            cell.addProperty("localRelief", x == 5 ? 8.0 : 1.0);
+            cell.addProperty("roughness", 0.5);
+            cell.addProperty("water", false);
+            cell.addProperty("waterDepth", 0.0);
+            cell.addProperty("waterDistance", 32.0);
+            cell.addProperty("biomeId", "minecraft:plains");
+            cell.addProperty("landformType", "plain");
+            cell.addProperty("landformPatchId", "d3_plain_1");
+            cell.addProperty("sampled", true);
+            terrainCells.add(cell);
+        }
+        terrainField.add("cells", terrainCells);
+        Files.writeString(landUse.resolve("land_use_terrain_field.json"), terrainField.toString());
+
         Path sessionDir = layout.stepDirectory(CityTestRunLayout.D4_CANDIDATE_SESSION);
         Files.createDirectories(sessionDir);
         JsonObject session = new JsonObject();
@@ -518,18 +734,26 @@ class PatchExplorerServiceTest {
     }
 
     private static Path writeCoarseTerrainEvidence(Path run) throws Exception {
+        return writeCoarseTerrainEvidence(run, "run_terrain", 16);
+    }
+
+    private static Path writeCoarseTerrainEvidence(Path run, String runId) throws Exception {
+        return writeCoarseTerrainEvidence(run, runId, 16);
+    }
+
+    private static Path writeCoarseTerrainEvidence(Path run, String runId, int step) throws Exception {
         Path directory = run.resolve("realm_t4_terrain_preview");
         Files.createDirectories(directory);
         Path preview = directory.resolve("realm_a_coarse_height_water_preview.png");
         Files.write(preview, new byte[]{1, 2, 3});
         JsonObject evidence = new JsonObject();
         evidence.addProperty("schemaVersion", RealmT4CoarseTerrainPreviewService.SCHEMA_VERSION);
-        evidence.addProperty("runId", "run_terrain");
+        evidence.addProperty("runId", runId);
         evidence.addProperty("realmId", "realm_a");
         evidence.addProperty("advisoryOnly", true);
         evidence.addProperty("requiredNextGate", "city_d3_site_review");
         JsonObject grid = new JsonObject();
-        grid.addProperty("cellStepBlocks", 16);
+        grid.addProperty("cellStepBlocks", step);
         evidence.add("grid", grid);
         JsonObject provider = new JsonObject();
         provider.addProperty("providerId", "rtf_native");
@@ -544,8 +768,8 @@ class PatchExplorerServiceTest {
             JsonObject cell = new JsonObject();
             cell.addProperty("gridX", x);
             cell.addProperty("gridZ", 0);
-            cell.addProperty("blockX", x * 16 + 8);
-            cell.addProperty("blockZ", 8);
+            cell.addProperty("blockX", x * step + step / 2);
+            cell.addProperty("blockZ", step / 2);
             cell.addProperty("elevation", 70 + x);
             cell.addProperty("water", x == 4);
             cell.addProperty("biomeId", "minecraft:plains");

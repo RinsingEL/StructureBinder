@@ -27,6 +27,7 @@ import net.minecraft.world.level.block.Rotation;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.function.IntBinaryOperator;
 import org.slf4j.Logger;
 
 public final class MinecraftCityWorldgenStructurePlacer {
@@ -148,8 +149,8 @@ public final class MinecraftCityWorldgenStructurePlacer {
                         "D6 locked footprint differs from the fixed template StructureStart piece.");
                 return;
             }
-            int datumY = generator.getBaseHeight(anchor.x(), anchor.z(),
-                    Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, chunk.getHeightAccessorForGeneration(), randomState);
+            int datumY = medianFoundationDatum(footprint, (x, z) -> generator.getBaseHeight(x, z,
+                    Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, chunk.getHeightAccessorForGeneration(), randomState));
             if (datumY <= chunk.getMinBuildHeight()) {
                 CityReservationMaskRegistry.recordWorldgenFailure(item, chunkPos,
                         "TEMPLATE_DATUM_SURFACE_UNAVAILABLE",
@@ -196,5 +197,25 @@ public final class MinecraftCityWorldgenStructurePlacer {
             return new BlockPoint(value.get("x").getAsInt(), value.get("z").getAsInt());
         }
         return fallback;
+    }
+
+    static int medianFoundationDatum(BlockBounds footprint, IntBinaryOperator heightAt) {
+        List<Integer> heights = new java.util.ArrayList<>();
+        for (int z : sampleAxis(footprint.minZ(), footprint.maxZ())) {
+            for (int x : sampleAxis(footprint.minX(), footprint.maxX())) {
+                heights.add(heightAt.applyAsInt(x, z));
+            }
+        }
+        heights.sort(Integer::compareTo);
+        int middle = heights.size() / 2;
+        return heights.size() % 2 == 1 ? heights.get(middle)
+                : Math.floorDiv(heights.get(middle - 1) + heights.get(middle), 2);
+    }
+
+    private static List<Integer> sampleAxis(int minimum, int maximum) {
+        List<Integer> result = new java.util.ArrayList<>();
+        for (int value = minimum; value <= maximum; value += 4) result.add(value);
+        if (result.get(result.size() - 1) != maximum) result.add(maximum);
+        return result;
     }
 }

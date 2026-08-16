@@ -7,4 +7,7 @@ import java.util.List;
 public interface CityDecorationBeardifierAccess {
     void geomantia$setFoundationSegments(
             List<? extends CityTerrainFoundationDensityComputer.FoundationSegmentView> foundationSegments);
+
+    void geomantia$setFoundationPlatforms(
+            List<? extends CityTerrainFoundationDensityComputer.FoundationPlatformView> foundationPlatforms);
 }

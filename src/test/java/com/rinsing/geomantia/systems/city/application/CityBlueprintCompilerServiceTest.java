@@ -628,7 +628,8 @@ class CityBlueprintCompilerServiceTest {
         JsonObject selection = result.compileTrace().getAsJsonArray("selections").get(0).getAsJsonObject();
         assertEquals("required", selection.get("phase").getAsString());
         assertTrue(selection.toString().contains("CITY_STRUCTURE_SURFACE_CELL_WATER"));
-        assertTrue(selection.toString().contains("all_intersecting_terrain_field_cells"));
+        assertEquals("all_intersecting_terrain_field_cells",
+                result.compileTrace().get("terrainGateEvaluationScope").getAsString());
     }
 
     @Test
@@ -680,7 +681,7 @@ class CityBlueprintCompilerServiceTest {
     }
 
     @Test
-    void groupTerrainPolicySlopeThresholdIsPreferenceNotPatchHardFilter() throws Exception {
+    void patchMeanSlopeDoesNotReplaceFullFootprintTerrainGate() throws Exception {
         Fixture fixture = acceptedFixture("run_slope_preference", "city:slope_preference", 9, 9,
                 "SMALL", review -> review.getAsJsonArray("landformPatches").forEach(element ->
                         element.getAsJsonObject().getAsJsonObject("metricsSummary")
@@ -694,9 +695,35 @@ class CityBlueprintCompilerServiceTest {
         assertTrue(result.ok(), result.compileTrace().toString());
         JsonObject required = result.compileTrace().getAsJsonArray("selections").get(0).getAsJsonObject();
         JsonObject terrain = required.getAsJsonObject("terrainGateEvaluation");
-        assertEquals("ranking_preference_only", terrain.get("groupTerrainPolicyRole").getAsString());
+        assertEquals("hard_footprint_gate", terrain.get("groupTerrainPolicyRole").getAsString());
         assertFalse(terrain.getAsJsonArray("sourcePatchPreferences").get(0).getAsJsonObject()
                 .get("preferredByGroupTerrainPolicy").getAsBoolean());
+    }
+
+    @Test
+    void firstRequiredStructureFallsBackFromUnbuildablePreferredPatchWithinD3Grid() throws Exception {
+        Fixture fixture = acceptedFixture("run_terrain_patch_fallback", "city:terrain_patch_fallback", 9, 9,
+                "SMALL", ignored -> { }, terrain -> terrain.getAsJsonArray("cells").forEach(element -> {
+                    JsonObject cell = element.getAsJsonObject();
+                    if (cell.get("blockMinX").getAsInt() < 256) {
+                        cell.addProperty("water", true);
+                        cell.addProperty("waterDepth", 4);
+                        cell.addProperty("waterDistance", 0);
+                    }
+                }), ignored -> { });
+
+        CityBlueprintCompilerService.CompilationResult result = new CityBlueprintCompilerService()
+                .compile(temporary, fixture.runId(), fixture.cityId());
+
+        assertTrue(result.ok(), result.compileTrace().toString());
+        JsonObject required = result.compileTrace().getAsJsonArray("selections").get(0).getAsJsonObject();
+        assertEquals("d3_terrain_fallback", required.getAsJsonObject("blueprintLayout")
+                .get("patchSelectionScope").getAsString());
+        JsonObject group = result.compileTrace().getAsJsonArray("groupResults").get(0).getAsJsonObject();
+        assertEquals(List.of("patch:plain:1"), group.getAsJsonArray("preferredPatchRefs").asList().stream()
+                .map(JsonElement::getAsString).toList());
+        assertTrue(group.getAsJsonArray("claimedPatchRefs").asList().stream()
+                .map(JsonElement::getAsString).anyMatch("patch:plain:2"::equals));
     }
 
     @Test

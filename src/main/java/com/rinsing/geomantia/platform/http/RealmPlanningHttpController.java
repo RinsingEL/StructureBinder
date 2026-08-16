@@ -22,7 +22,9 @@ import com.rinsing.geomantia.systems.realm_planning.RealmT4PatchPlanningService;
 import com.rinsing.geomantia.systems.realm_planning.WorldSurveyResult;
 import com.rinsing.geomantia.systems.realm_planning.WorldSurveyRunner;
 import com.rinsing.geomantia.systems.realm_planning.adapter.minecraft.MinecraftTerrainPreviewProviderFactory;
+import com.rinsing.geomantia.systems.realm_planning.application.terrain.PatchCandidateTerrainPreviewService;
 import com.rinsing.geomantia.systems.realm_planning.application.terrain.RealmT4CoarseTerrainPreviewService;
+import com.rinsing.geomantia.systems.realm_planning.application.terrain.TerrainScalePatchService;
 import com.rinsing.geomantia.systems.realm_planning.application.terrain.TerrainPreviewAtlasSampler;
 import com.rinsing.geomantia.systems.realm_planning.application.terrain.TerrainPreviewProviderSelection;
 import com.rinsing.geomantia.systems.realm_planning.application.terrain.TerrainSamplingProvenance;
@@ -101,8 +103,9 @@ final class RealmPlanningHttpController {
                 JsonObject selection = new PatchExplorerService(debugRoot())
                         .resolveT2Selection(runId, realmId, selectionRef);
                 JsonObject anchor = selection.getAsJsonObject("suggestedAnchor");
-                gridX = anchor.get("gridX").getAsInt();
-                gridZ = anchor.get("gridZ").getAsInt();
+                int worldSurveyStep = restoredRunCellStepBlocks(runId);
+                gridX = Math.floorDiv(anchor.get("blockX").getAsInt(), worldSurveyStep);
+                gridZ = Math.floorDiv(anchor.get("blockZ").getAsInt(), worldSurveyStep);
             } else {
                 if (!hasValue(request, "gridX") || !hasValue(request, "gridZ")) {
                     throw new IllegalArgumentException("gridX/gridZ or patchSelectionRef is required.");
@@ -172,8 +175,18 @@ final class RealmPlanningHttpController {
     void handlePatchExplorerOpen(HttpExchange exchange) {
         handle(exchange, "POST", () -> {
             JsonObject request = GisHttpUtil.readJsonObject(exchange);
-            RealmT4CoarseTerrainPreviewService.Result terrainPreview = ensureRealmT4TerrainPreview(request);
-            JsonObject response = new PatchExplorerService(debugRoot()).open(request);
+            String scopeType = stringValue(request, "scopeType", "").toLowerCase(java.util.Locale.ROOT);
+            TerrainPreviewRuntime runtime = scopeType.startsWith("realm_t")
+                    ? terrainPreviewRuntime(requiredString(request, "runId"),
+                            booleanValue(request, "preferGeneratorNativeTerrain", true),
+                            stringValue(request, "dimensionId", ""), stringValue(request, "playerName", ""))
+                    : null;
+            RealmT4CoarseTerrainPreviewService.Result terrainPreview = ensureRealmT4TerrainPreview(request, runtime);
+            PatchExplorerService explorer = new PatchExplorerService(debugRoot());
+            JsonObject response = runtime == null ? explorer.open(request)
+                    : explorer.open(request, (runId, refinedScopeType, scopeId, sourceIdentity, sourceCells) ->
+                            new TerrainScalePatchService().analyze(runtime.dimensionId(), scopeId,
+                                    sourceCells, runtime.selection()));
             if (terrainPreview != null) {
                 response.addProperty("terrainPreviewCacheHit", terrainPreview.cacheHit());
                 response.add("terrainPreviewProvider",
@@ -188,7 +201,8 @@ final class RealmPlanningHttpController {
         });
     }
 
-    private RealmT4CoarseTerrainPreviewService.Result ensureRealmT4TerrainPreview(JsonObject request)
+    private RealmT4CoarseTerrainPreviewService.Result ensureRealmT4TerrainPreview(JsonObject request,
+            TerrainPreviewRuntime runtime)
             throws Exception {
         if (!"realm_t4".equalsIgnoreCase(stringValue(request, "scopeType", ""))) {
             return null;
@@ -198,9 +212,48 @@ final class RealmPlanningHttpController {
         if (realmId.isBlank()) {
             throw new IllegalArgumentException("scopeId or realmId is required for realm_t4.");
         }
-        TerrainPreviewRuntime runtime = callOnServerThread(() -> {
-            ServerPlayer player = resolvePlayer(stringValue(request, "playerName", ""));
-            String dimensionId = stringValue(request, "dimensionId", "");
+        if (runtime == null) {
+            throw new IllegalArgumentException("PATCH_EXPLORER_TERRAIN_RUNTIME_REQUIRED");
+        }
+        return new RealmT4CoarseTerrainPreviewService(debugRoot()).ensure(
+                runId, realmId, runtime.dimensionId(), runtime.selection());
+    }
+
+    void handlePatchExplorerShowCandidates(HttpExchange exchange) {
+        handle(exchange, "POST", () -> {
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            PatchExplorerService explorer = new PatchExplorerService(debugRoot());
+            PatchExplorerService.SessionTerrainContext context = explorer.sessionTerrainContext(request);
+            TerrainPreviewRuntime runtime = terrainPreviewRuntime(requiredString(request, "runId"),
+                    context.preferGeneratorNativeTerrain(), "", "");
+            PatchCandidateTerrainPreviewService service =
+                    new PatchCandidateTerrainPreviewService(debugRoot());
+            return explorer.showCandidates(request, (runId, realmId, scopeIdentity, target, level) ->
+                    service.ensure(runId, realmId, runtime.dimensionId(), scopeIdentity,
+                            target, level, runtime.selection()));
+        });
+    }
+
+    void handlePatchExplorerSelectCandidate(HttpExchange exchange) {
+        handle(exchange, "POST", () -> {
+            JsonObject request = GisHttpUtil.readJsonObject(exchange);
+            PatchExplorerService explorer = new PatchExplorerService(debugRoot());
+            PatchExplorerService.SessionTerrainContext context = explorer.sessionTerrainContext(request);
+            TerrainPreviewRuntime runtime = terrainPreviewRuntime(requiredString(request, "runId"),
+                    context.preferGeneratorNativeTerrain(), "", "");
+            PatchCandidateTerrainPreviewService service =
+                    new PatchCandidateTerrainPreviewService(debugRoot());
+            return explorer.selectCandidate(request, (runId, realmId, scopeIdentity, target, level) ->
+                    service.ensure(runId, realmId, runtime.dimensionId(), scopeIdentity,
+                            target, level, runtime.selection()));
+        });
+    }
+
+    private TerrainPreviewRuntime terrainPreviewRuntime(String runId, boolean preferGeneratorNative,
+            String requestedDimensionId, String playerName) throws Exception {
+        return callOnServerThread(() -> {
+            ServerPlayer player = resolvePlayer(playerName);
+            String dimensionId = requestedDimensionId;
             if (dimensionId.isBlank()) {
                 dimensionId = restoredRunDimensionId(runId);
             }
@@ -210,21 +263,9 @@ final class RealmPlanningHttpController {
                     Long.toString(level.getSeed()), level.getChunkSource().getGenerator().getClass().getName());
             TerrainPreviewProviderSelection selection = MinecraftTerrainPreviewProviderFactory
                     .createSelector(level, new MinecraftPriorAtlasSampler(level), fallbackFingerprint)
-                    .select(booleanValue(request, "preferGeneratorNativeTerrain", true));
+                    .select(preferGeneratorNative);
             return new TerrainPreviewRuntime(normalizedDimension, selection);
         });
-        return new RealmT4CoarseTerrainPreviewService(debugRoot()).ensure(
-                runId, realmId, runtime.dimensionId(), runtime.selection());
-    }
-
-    void handlePatchExplorerShowCandidates(HttpExchange exchange) {
-        handle(exchange, "POST", () -> new PatchExplorerService(debugRoot())
-                .showCandidates(GisHttpUtil.readJsonObject(exchange)));
-    }
-
-    void handlePatchExplorerSelectCandidate(HttpExchange exchange) {
-        handle(exchange, "POST", () -> new PatchExplorerService(debugRoot())
-                .selectCandidate(GisHttpUtil.readJsonObject(exchange)));
     }
 
     void handleAcceptance(HttpExchange exchange) {
@@ -1381,6 +1422,19 @@ final class RealmPlanningHttpController {
             return stringValue(manifest.getAsJsonObject("config"), "dimensionId", "");
         }
         return "";
+    }
+
+    private int restoredRunCellStepBlocks(String runId) throws IOException {
+        Path contextPath = debugRoot().resolve(runId).resolve("world_survey_context.json");
+        if (!Files.isRegularFile(contextPath)) {
+            throw new IllegalArgumentException("REALM_WORLD_SURVEY_CONTEXT_MISSING");
+        }
+        JsonObject context = JsonParser.parseString(Files.readString(contextPath)).getAsJsonObject();
+        int step = intValue(context, "cellStepBlocks", 0);
+        if (step <= 0) {
+            throw new IllegalArgumentException("REALM_WORLD_SURVEY_CELL_STEP_INVALID");
+        }
+        return step;
     }
 
     private static SampleMode sampleModeValue(JsonObject object) {

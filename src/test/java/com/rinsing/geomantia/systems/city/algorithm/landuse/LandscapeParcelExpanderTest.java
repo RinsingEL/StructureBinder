@@ -40,6 +40,19 @@ class LandscapeParcelExpanderTest {
     }
 
     @Test
+    void actualExpansionStopsAtAbruptElevationBand() {
+        LandUseTerrainField terrain = terrainWithCliff(48);
+        LandUseSeedGroup group = group("farm::parcel_01", new BlockPoint(40, 48), 64, 400, 500);
+
+        LandUseExpansionResult result = new LandscapeParcelExpander().expand("city_test",
+                terrain.planningBounds(), terrain, List.of(group), "cliff");
+
+        assertEquals(400, result.claimedBlocksByGroup().get(group.groupId()));
+        assertTrue(result.claims().keySet().stream().noneMatch(point -> point.x() >= 48),
+                "D6 Landscape expansion crossed an abrupt elevation band");
+    }
+
+    @Test
     void stableSaltProducesDeterministicButDifferentOrganicSilhouettes() {
         LandUseTerrainField terrain = flatTerrain();
         BlockPoint seed = new BlockPoint(48, 48);
@@ -162,11 +175,15 @@ class LandscapeParcelExpanderTest {
     }
 
     private static LandUseTerrainField flatTerrain() {
+        return terrainWithCliff(Integer.MAX_VALUE);
+    }
+
+    private static LandUseTerrainField terrainWithCliff(int cliffX) {
         List<LandUseTerrainField.Cell> cells = new ArrayList<>();
         for (int z = 0; z < 24; z++) {
             for (int x = 0; x < 24; x++) {
                 cells.add(new LandUseTerrainField.Cell(x, z, x * 4, z * 4, 4,
-                        70, 0, 0, 0, false, 0, 40,
+                        x * 4 >= cliffX ? 86 : 70, 0, 0, 0, false, 0, 40,
                         "minecraft:plains", "plain", "plain", true));
             }
         }

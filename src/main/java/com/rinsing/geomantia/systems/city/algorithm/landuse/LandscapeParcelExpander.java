@@ -2,6 +2,7 @@ package com.rinsing.geomantia.systems.city.algorithm.landuse;
 
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseSeedGroup;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseTerrainField;
+import com.rinsing.geomantia.systems.city.domain.landuse.LandscapeTerrainContinuity;
 import com.rinsing.geomantia.systems.city.domain.landuse.rules.LandUseRule;
 import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
 import com.rinsing.geomantia.systems.city.domain.model.BlockPoint;
@@ -199,7 +200,8 @@ public final class LandscapeParcelExpander {
                 BlockPoint start = new BlockPoint(source.x() + direction[0], source.z() + direction[1]);
                 if (!planningBounds.contains(start.x(), start.z()) || claims.containsKey(start)
                         || obstacles.contains(start) || !state.allowed(start)
-                        || !passable(terrain.cellAt(start.x(), start.z()))) {
+                        || !passable(terrain.cellAt(start.x(), start.z()))
+                        || !continuous(state.group, terrain, source, start)) {
                     continue;
                 }
                 sourceByStart.merge(start, source, (left, right) -> POINT_ORDER.compare(left, right) <= 0
@@ -261,7 +263,7 @@ public final class LandscapeParcelExpander {
                 continue;
             }
             LandUseTerrainField.Cell cell = terrain.cellAt(next.x(), next.z());
-            if (!passable(cell)) {
+            if (!passable(cell) || !continuous(state.group, terrain, point, next)) {
                 if (state.rejected.add(next)) counters.blocked++;
                 continue;
             }
@@ -364,6 +366,15 @@ public final class LandscapeParcelExpander {
 
     private static boolean passable(LandUseTerrainField.Cell cell) {
         return cell != null && cell.sampled() && cell.slope() < 45.0 && cell.localRelief() < 48.0;
+    }
+
+    private static boolean continuous(LandUseSeedGroup group, TerrainIndex terrain,
+                                      BlockPoint from, BlockPoint to) {
+        return LandscapeTerrainContinuity.allows(
+                group.terrainBias().name(),
+                terrain.cellAt(from.x(), from.z()),
+                terrain.cellAt(to.x(), to.z())
+        );
     }
 
     private static double valueNoise(long seed, int x, int z, int scale) {

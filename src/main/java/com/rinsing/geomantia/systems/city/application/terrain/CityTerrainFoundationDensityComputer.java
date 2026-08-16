@@ -24,6 +24,16 @@ public final class CityTerrainFoundationDensityComputer {
         return best;
     }
 
+    public static double computePlatformViews(int x, int y, int z,
+                                              List<? extends FoundationPlatformView> platforms) {
+        if (platforms == null || platforms.isEmpty()) return 0.0D;
+        double best = 0.0D;
+        for (FoundationPlatformView platform : platforms) {
+            best = Math.max(best, computeForPlatform(x, y, z, platform));
+        }
+        return best;
+    }
+
     private static double computeForSegment(int x, int y, int z, FoundationSegmentView segment) {
         double dx = segment.x1() - segment.x0();
         double dz = segment.z1() - segment.z0();
@@ -44,6 +54,21 @@ public final class CityTerrainFoundationDensityComputer {
                 : 1.0D - smootherStep((lateralDistance - segment.halfWidth())
                 / Math.max(1.0D, zeroRadius - segment.halfWidth()));
         double verticalT = clamp((depth - 0.5D) / Math.max(1.0D, segment.maxDepthBlocks()), 0.0D, 1.0D);
+        return lateral * lateral * MAX_FILL_CONTRIBUTION * Math.pow(1.0D - verticalT, 2.2D);
+    }
+
+    private static double computeForPlatform(int x, int y, int z, FoundationPlatformView platform) {
+        int horizontalX = x < platform.minX() ? platform.minX() - x
+                : x > platform.maxX() ? x - platform.maxX() : 0;
+        int horizontalZ = z < platform.minZ() ? platform.minZ() - z
+                : z > platform.maxZ() ? z - platform.maxZ() : 0;
+        double horizontalDistance = Math.hypot(horizontalX, horizontalZ);
+        if (horizontalDistance > platform.shoulderBlocks()) return 0.0D;
+        int depth = platform.targetY() - y;
+        if (depth <= 0 || depth > platform.maxDepthBlocks()) return 0.0D;
+        double lateral = horizontalDistance == 0.0D ? 1.0D
+                : 1.0D - smootherStep(horizontalDistance / Math.max(1.0D, platform.shoulderBlocks()));
+        double verticalT = clamp((depth - 0.5D) / Math.max(1.0D, platform.maxDepthBlocks()), 0.0D, 1.0D);
         return lateral * lateral * MAX_FILL_CONTRIBUTION * Math.pow(1.0D - verticalT, 2.2D);
     }
 
@@ -70,6 +95,22 @@ public final class CityTerrainFoundationDensityComputer {
         int y1();
 
         int halfWidth();
+
+        int maxDepthBlocks();
+
+        int shoulderBlocks();
+    }
+
+    public interface FoundationPlatformView {
+        int minX();
+
+        int minZ();
+
+        int maxX();
+
+        int maxZ();
+
+        int targetY();
 
         int maxDepthBlocks();
 

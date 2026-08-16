@@ -49,8 +49,28 @@ class CityLandUseMicroGraderTest {
         assertTrue(CityLandUseMicroGrader.plan(fragment(mask), terrain).isEmpty());
     }
 
+    @Test
+    void foundationCutsBoundedPeakInsteadOfSkippingTheSurfaceOnHighRelief() {
+        FakeTerrain terrain = new FakeTerrain(64);
+        terrain.height(8, 8, 76);
+
+        List<CityLandUseMicroGrader.FoundationDecision> decisions =
+                CityLandUseMicroGrader.planFoundation(foundationFragment(), terrain);
+
+        assertEquals(List.of(new CityLandUseMicroGrader.FoundationDecision(
+                "area", 8, 8, 76, 64, CityLandUseMicroGrader.FoundationMode.CUT)), decisions);
+    }
+
     private static CityLandUseChunkCompiler.ChunkFragment fragment() {
         return fragment(gradingMask());
+    }
+
+    private static CityLandUseChunkCompiler.ChunkFragment foundationFragment() {
+        List<CityLandUseChunkCompiler.GradingMaskCell> mask = gradingMask().stream()
+                .map(cell -> new CityLandUseChunkCompiler.GradingMaskCell(
+                        cell.areaId(), cell.x(), cell.z(), true))
+                .toList();
+        return fragment(mask);
     }
 
     private static CityLandUseChunkCompiler.ChunkFragment fragment(

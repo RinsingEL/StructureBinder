@@ -7,6 +7,10 @@ import com.rinsing.geomantia.systems.gis.domain.region.AtlasRegion;
 import com.rinsing.geomantia.systems.gis.domain.region.RegionStatus;
 
 import java.util.ArrayDeque;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 
 public final class AtlasMetricsComputer {
@@ -40,6 +44,153 @@ public final class AtlasMetricsComputer {
             }
         }
         region.setStatus(RegionStatus.METRICS_PARTIAL);
+    }
+
+    public void computeAcrossRegions(List<AtlasRegion> regions) {
+        if (regions == null || regions.isEmpty()) {
+            return;
+        }
+        Map<CellKey, AtlasCell> cells = new LinkedHashMap<>();
+        regions.stream().filter(java.util.Objects::nonNull)
+                .sorted(Comparator.comparingInt(AtlasRegion::regionZ).thenComparingInt(AtlasRegion::regionX))
+                .flatMap(region -> region.cells().stream())
+                .filter(cell -> cell.hasFlag(CellStateFlag.SAMPLED))
+                .forEach(cell -> cells.put(new CellKey(cell.globalCellX(), cell.globalCellZ()), cell));
+        Map<CellKey, Double> waterDistance = computeWaterDistance(cells);
+        for (Map.Entry<CellKey, AtlasCell> entry : cells.entrySet()) {
+            CellKey key = entry.getKey();
+            AtlasCell cell = entry.getValue();
+            cell.removeFlag(CellStateFlag.EDGE_DIRTY);
+            boolean smallDirty = !hasNeighborhood(cells, key, config.tpiSmallRadiusCells());
+            boolean largeDirty = !hasNeighborhood(cells, key, config.tpiLargeRadiusCells());
+            cell.setSmallMetrics(
+                    maxElevationDelta(cells, key, config.slopeRadiusCells()),
+                    localRelief(cells, key, config.localReliefRadiusCells()),
+                    roughness(cells, key, config.roughnessRadiusCells()),
+                    tpi(cells, key, config.tpiSmallRadiusCells()));
+            cell.setLargeMetrics(tpi(cells, key, config.tpiLargeRadiusCells()),
+                    waterDistance.getOrDefault(key, Double.POSITIVE_INFINITY));
+            if (smallDirty || largeDirty) {
+                cell.addFlag(CellStateFlag.EDGE_DIRTY);
+            }
+        }
+        regions.stream().filter(java.util.Objects::nonNull)
+                .forEach(region -> region.setStatus(RegionStatus.METRICS_PARTIAL));
+    }
+
+    private static boolean hasNeighborhood(Map<CellKey, AtlasCell> cells, CellKey center, int radius) {
+        for (int x = center.x() - radius; x <= center.x() + radius; x++) {
+            for (int z = center.z() - radius; z <= center.z() + radius; z++) {
+                if (!cells.containsKey(new CellKey(x, z))) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    private static double maxElevationDelta(Map<CellKey, AtlasCell> cells, CellKey center, int radius) {
+        AtlasCell centerCell = cells.get(center);
+        double max = 0.0;
+        for (int x = center.x() - radius; x <= center.x() + radius; x++) {
+            for (int z = center.z() - radius; z <= center.z() + radius; z++) {
+                AtlasCell neighbor = cells.get(new CellKey(x, z));
+                if (neighbor != null && neighbor != centerCell) {
+                    max = Math.max(max, Math.abs(neighbor.elevation() - centerCell.elevation()));
+                }
+            }
+        }
+        return max;
+    }
+
+    private static double localRelief(Map<CellKey, AtlasCell> cells, CellKey center, int radius) {
+        double min = Double.POSITIVE_INFINITY;
+        double max = Double.NEGATIVE_INFINITY;
+        for (int x = center.x() - radius; x <= center.x() + radius; x++) {
+            for (int z = center.z() - radius; z <= center.z() + radius; z++) {
+                AtlasCell neighbor = cells.get(new CellKey(x, z));
+                if (neighbor != null) {
+                    min = Math.min(min, neighbor.elevation());
+                    max = Math.max(max, neighbor.elevation());
+                }
+            }
+        }
+        return Double.isFinite(min) && Double.isFinite(max) ? max - min : 0.0;
+    }
+
+    private static double roughness(Map<CellKey, AtlasCell> cells, CellKey center, int radius) {
+        double sum = 0.0;
+        double sumSq = 0.0;
+        int count = 0;
+        for (int x = center.x() - radius; x <= center.x() + radius; x++) {
+            for (int z = center.z() - radius; z <= center.z() + radius; z++) {
+                AtlasCell neighbor = cells.get(new CellKey(x, z));
+                if (neighbor == null) {
+                    continue;
+                }
+                sum += neighbor.elevation();
+                sumSq += neighbor.elevation() * neighbor.elevation();
+                count++;
+            }
+        }
+        double mean = sum / Math.max(1, count);
+        return Math.sqrt(Math.max(0.0, sumSq / Math.max(1, count) - mean * mean));
+    }
+
+    private static double tpi(Map<CellKey, AtlasCell> cells, CellKey center, int radius) {
+        double sum = 0.0;
+        int count = 0;
+        for (int x = center.x() - radius; x <= center.x() + radius; x++) {
+            for (int z = center.z() - radius; z <= center.z() + radius; z++) {
+                if (x == center.x() && z == center.z()) {
+                    continue;
+                }
+                double dx = x - center.x();
+                double dz = z - center.z();
+                if (Math.sqrt(dx * dx + dz * dz) > radius) {
+                    continue;
+                }
+                AtlasCell neighbor = cells.get(new CellKey(x, z));
+                if (neighbor != null) {
+                    sum += neighbor.elevation();
+                    count++;
+                }
+            }
+        }
+        return count == 0 ? 0.0 : cells.get(center).elevation() - sum / count;
+    }
+
+    private Map<CellKey, Double> computeWaterDistance(Map<CellKey, AtlasCell> cells) {
+        Map<CellKey, Double> distance = new LinkedHashMap<>();
+        Queue<CellKey> queue = new ArrayDeque<>();
+        cells.forEach((key, cell) -> {
+            if (cell.isWater()) {
+                distance.put(key, 0.0);
+                queue.add(key);
+            } else {
+                distance.put(key, Double.POSITIVE_INFINITY);
+            }
+        });
+        while (!queue.isEmpty()) {
+            CellKey current = queue.remove();
+            double next = distance.get(current) + 1.0;
+            if (next > config.maxWaterDistanceCells()) {
+                continue;
+            }
+            for (int[] dir : DIRECTIONS) {
+                CellKey neighbor = new CellKey(current.x() + dir[0], current.z() + dir[1]);
+                if (distance.containsKey(neighbor) && next < distance.get(neighbor)) {
+                    distance.put(neighbor, next);
+                    queue.add(neighbor);
+                }
+            }
+        }
+        return distance;
+    }
+
+    private static final int[][] DIRECTIONS = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+
+    private record CellKey(int x, int z) {
     }
 
     private static boolean hasNeighborhood(AtlasRegion region, int cx, int cz, int radius) {
