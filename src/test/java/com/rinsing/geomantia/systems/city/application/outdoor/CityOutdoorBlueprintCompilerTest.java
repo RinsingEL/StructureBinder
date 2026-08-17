@@ -126,7 +126,8 @@ class CityOutdoorBlueprintCompilerTest {
                 source.outdoorPlan().spatialGrounds(), List.of(first, second));
         CityBlueprint expanded = new CityBlueprint(source.schemaVersion(), source.cityId(), source.sourceD3Ref(),
                 source.catalogSnapshotRef(), source.generationSeed(), source.designIntent(), source.styleProfile(),
-                source.groups(), source.relations(), source.roadProfile(), source.surfaceDetailProfile(), outdoor);
+                source.groups(), source.arrayCompositions(), source.relations(), source.roadProfile(),
+                source.surfaceDetailProfile(), outdoor);
 
         JsonObject d6 = d6Plan();
         List<LandUseSeedGroup> parcels = new CityOutdoorBlueprintCompiler()
@@ -291,7 +292,8 @@ class CityOutdoorBlueprintCompilerTest {
         CityBlueprint source = blueprint();
         CityBlueprint preserve = new CityBlueprint(source.schemaVersion(), source.cityId(), source.sourceD3Ref(),
                 source.catalogSnapshotRef(), source.generationSeed(), source.designIntent(), source.styleProfile(),
-                source.groups(), source.relations(), source.roadProfile(), source.surfaceDetailProfile(),
+                source.groups(), source.arrayCompositions(), source.relations(), source.roadProfile(),
+                source.surfaceDetailProfile(),
                 new CityBlueprint.OutdoorPlan(CityBlueprint.OutdoorMode.PRESERVE,
                         CityBlueprint.EnvelopeProfile.BALANCED, "foundation:test", List.of(), List.of()));
 
@@ -343,7 +345,7 @@ class CityOutdoorBlueprintCompilerTest {
                 new CityBlueprint.ArtifactRef("d3.json", "d3", "sha256:" + "1".repeat(64)),
                 new CityBlueprint.ArtifactRef("catalog.json", "catalog", "sha256:" + "2".repeat(64)),
                 42, new CityBlueprint.DesignIntent("town", "green", List.of("agriculture")),
-                new CityBlueprint.ProfileRef("style:test"), groups(), List.of(),
+                new CityBlueprint.ProfileRef("style:test"), groups(), List.of(), List.of(),
                 new CityBlueprint.ProfileRef("road:test"), new CityBlueprint.ProfileRef("surface:test"), outdoor);
     }
 
@@ -354,7 +356,7 @@ class CityOutdoorBlueprintCompilerTest {
 
     private static CityBlueprint.Group group(String id, CityBlueprint.GroupPriority priority) {
         return new CityBlueprint.Group(id, CityBlueprint.GroupKind.STRUCTURE, List.of(),
-                CityBlueprint.PreferredPatchZone.CENTER, id, priority, CityBlueprint.ExtentClass.MEDIUM,
+                CityBlueprint.PreferredPatchZone.CENTER, null, id, priority, CityBlueprint.ExtentClass.MEDIUM,
                 CityBlueprint.DensityClass.BALANCED, "algorithm:test", CityBlueprint.TerrainPolicy.BALANCED,
                 List.of("farmhouse"), "pool:test", null, "composition:test", List.of());
     }

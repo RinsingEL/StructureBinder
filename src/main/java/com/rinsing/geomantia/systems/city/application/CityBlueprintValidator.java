@@ -47,6 +47,7 @@ public final class CityBlueprintValidator {
                             path + ".preferredPatchRefs[" + patchIndex + "]", "Unknown D3 patch: " + patchRef);
                 }
             }
+            validatePlacementPatchRefs(issues, group.placementRelation(), context.patchRefs(), path);
             if (group.requiredStructureRefs().isEmpty()) {
                 add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_REQUIRED_STRUCTURES_EMPTY,
                         path + ".requiredStructureRefs", "A STRUCTURE group needs at least one required structure.");
@@ -84,6 +85,11 @@ public final class CityBlueprintValidator {
             }
         }
 
+        java.util.Map<String, CityBlueprint.Group> groupsById = new HashMap<>();
+        blueprint.groups().forEach(group -> groupsById.put(group.groupId(), group));
+        validatePlacementGroupRefs(issues, blueprint.groups(), groupIds);
+        validateArrayCompositions(issues, blueprint.arrayCompositions(), groupsById, catalog);
+
         for (int index = 0; index < blueprint.relations().size(); index++) {
             CityBlueprint.Relation relation = blueprint.relations().get(index);
             String path = "$.relations[" + index + "]";
@@ -117,11 +123,123 @@ public final class CityBlueprintValidator {
         requireRef(issues, catalog.surfaceDetailProfileRefs(), blueprint.surfaceDetailProfile().profileRef(),
                 CityBlueprintReasonCode.CITY_BLUEPRINT_SURFACE_DETAIL_PROFILE_UNKNOWN,
                 "$.surfaceDetailProfile.profileRef");
-        java.util.Map<String, CityBlueprint.Group> groupsById = new HashMap<>();
-        blueprint.groups().forEach(group -> groupsById.put(group.groupId(), group));
         validateOutdoorPlan(issues, blueprint.outdoorPlan(), groupIds, groupsById,
                 context.patchRefs(), catalog);
         return new ValidationResult(issues.isEmpty(), List.copyOf(issues));
+    }
+
+    private static void validatePlacementPatchRefs(List<Issue> issues,
+                                                   CityBlueprint.PlacementRelation placement,
+                                                   Set<String> patchRefs,
+                                                   String groupPath) {
+        if (placement == null) return;
+        String path = groupPath + ".placementRelation";
+        boolean patchPlacement = placement.kind() == CityBlueprint.PlacementRelationKind.BETWEEN_PATCHES
+                || placement.kind() == CityBlueprint.PlacementRelationKind.ALONG_PATCH_BOUNDARY;
+        if (patchPlacement) {
+            if (placement.patchRefs().size() != 2 || !placement.groupRefs().isEmpty()
+                    || placement.patchRefs().get(0).equals(placement.patchRefs().get(1))) {
+                add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_PLACEMENT_RELATION_INVALID, path,
+                        placement.kind() + " requires two distinct patchRefs and empty groupRefs.");
+            }
+            for (int index = 0; index < placement.patchRefs().size(); index++) {
+                if (!patchRefs.contains(placement.patchRefs().get(index))) {
+                    add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_PREFERRED_PATCH_UNKNOWN,
+                            path + ".patchRefs[" + index + "]",
+                            "Unknown D3 patch: " + placement.patchRefs().get(index));
+                }
+            }
+        } else if (!placement.patchRefs().isEmpty() || placement.groupRefs().size() != 2
+                || placement.groupRefs().get(0).equals(placement.groupRefs().get(1))) {
+            add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_PLACEMENT_RELATION_INVALID, path,
+                    "BETWEEN_GROUPS requires two distinct groupRefs and empty patchRefs.");
+        }
+    }
+
+    private static void validatePlacementGroupRefs(List<Issue> issues,
+                                                   List<CityBlueprint.Group> groups,
+                                                   Set<String> groupIds) {
+        for (int index = 0; index < groups.size(); index++) {
+            CityBlueprint.Group group = groups.get(index);
+            CityBlueprint.PlacementRelation placement = group.placementRelation();
+            if (placement == null
+                    || placement.kind() != CityBlueprint.PlacementRelationKind.BETWEEN_GROUPS) continue;
+            String path = "$.groups[" + index + "].placementRelation.groupRefs";
+            for (int refIndex = 0; refIndex < placement.groupRefs().size(); refIndex++) {
+                String ref = placement.groupRefs().get(refIndex);
+                if (!groupIds.contains(ref) || group.groupId().equals(ref)) {
+                    add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_PLACEMENT_RELATION_INVALID,
+                            path + "[" + refIndex + "]",
+                            "BETWEEN_GROUPS endpoints must name two other Blueprint groups: " + ref);
+                }
+            }
+        }
+    }
+
+    private static void validateArrayCompositions(List<Issue> issues,
+                                                  List<CityBlueprint.ArrayComposition> compositions,
+                                                  java.util.Map<String, CityBlueprint.Group> groupsById,
+                                                  CityBlueprintReferenceCatalog catalog) {
+        Set<String> compositionIds = new HashSet<>();
+        Set<String> composedGroups = new HashSet<>();
+        for (int index = 0; index < compositions.size(); index++) {
+            CityBlueprint.ArrayComposition composition = compositions.get(index);
+            String path = "$.arrayCompositions[" + index + "]";
+            if (!compositionIds.add(composition.compositionId())) {
+                add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_ARRAY_COMPOSITION_ID_DUPLICATE,
+                        path + ".compositionId", "compositionId must be unique: " + composition.compositionId());
+            }
+            requireRef(issues, catalog.algorithmProfileRefs(), composition.algorithmProfileRef(),
+                    CityBlueprintReasonCode.CITY_BLUEPRINT_ALGORITHM_PROFILE_UNKNOWN,
+                    path + ".algorithmProfileRef");
+            if (composition.memberGroupIds().isEmpty()) {
+                add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_ARRAY_COMPOSITION_INVALID,
+                        path + ".memberGroupIds",
+                        "A parent array composition requires at least one member Group.");
+            }
+            List<String> participants = new ArrayList<>();
+            participants.add(composition.centerGroupId());
+            participants.addAll(composition.memberGroupIds());
+            Set<String> local = new HashSet<>();
+            for (String groupId : participants) {
+                CityBlueprint.Group group = groupsById.get(groupId);
+                if (group == null) {
+                    add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_ARRAY_COMPOSITION_GROUP_UNKNOWN,
+                            path, "Unknown array-composition Group: " + groupId);
+                    continue;
+                }
+                if (!local.add(groupId)) {
+                    add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_ARRAY_COMPOSITION_INVALID,
+                            path, "A Group cannot occupy two slots in one array composition: " + groupId);
+                }
+                if (!composedGroups.add(groupId)) {
+                    add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_ARRAY_COMPOSITION_GROUP_REUSED,
+                            path, "A Group can belong to only one parent array composition: " + groupId);
+                }
+            }
+            CityBlueprint.Group center = groupsById.get(composition.centerGroupId());
+            if (center != null && center.placementRelation() != null
+                    && center.placementRelation().kind() == CityBlueprint.PlacementRelationKind.BETWEEN_GROUPS) {
+                add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_ARRAY_COMPOSITION_INVALID,
+                        path + ".centerGroupId",
+                        "A parent-array center cannot itself use BETWEEN_GROUPS placement.");
+            }
+            for (String memberId : composition.memberGroupIds()) {
+                CityBlueprint.Group member = groupsById.get(memberId);
+                if (member != null && member.placementRelation() != null) {
+                    add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_ARRAY_COMPOSITION_INVALID,
+                            path + ".memberGroupIds",
+                            "Parent-array members get their origin from the parent and cannot declare placementRelation: "
+                                    + memberId);
+                }
+            }
+            String algorithm = catalog.algorithmsByProfileRef().get(composition.algorithmProfileRef());
+            if ("CENTER_SYMMETRIC".equals(algorithm) && (composition.memberGroupIds().size() & 1) != 0) {
+                add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_ARRAY_COMPOSITION_INVALID,
+                        path + ".memberGroupIds",
+                        "CENTER_SYMMETRIC parent arrays require member Group pairs.");
+            }
+        }
     }
 
     private static void validateOutdoorPlan(List<Issue> issues, CityBlueprint.OutdoorPlan plan,

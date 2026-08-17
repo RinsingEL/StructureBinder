@@ -14,8 +14,8 @@ import java.util.Set;
 public final class CityBlueprintCodec {
     public static final long MAX_SAFE_GENERATION_SEED = 9_007_199_254_740_991L;
     private static final Set<String> ROOT_FIELDS = Set.of("schemaVersion", "cityId", "sourceD3Ref",
-            "catalogSnapshotRef", "generationSeed", "designIntent", "styleProfile", "groups", "relations",
-            "roadProfile", "surfaceDetailProfile", "outdoorPlan");
+            "catalogSnapshotRef", "generationSeed", "designIntent", "styleProfile", "groups",
+            "arrayCompositions", "relations", "roadProfile", "surfaceDetailProfile", "outdoorPlan");
     private static final Set<String> FORBIDDEN_FIELDS = Set.of("x", "y", "z", "blockX", "blockY", "blockZ",
             "worldX", "worldY", "worldZ", "anchor", "anchorBlock", "rotation", "mirror", "candidateId",
             "algorithm", "algorithmName", "templateId", "templateRef", "nbtFile");
@@ -38,6 +38,7 @@ public final class CityBlueprintCodec {
                 designIntent(requiredObject(root, "designIntent", "$.designIntent")),
                 profileRef(requiredObject(root, "styleProfile", "$.styleProfile"), "$.styleProfile"),
                 groups(requiredArray(root, "groups", "$.groups")),
+                arrayCompositions(requiredArray(root, "arrayCompositions", "$.arrayCompositions")),
                 relations(requiredArray(root, "relations", "$.relations")),
                 profileRef(requiredObject(root, "roadProfile", "$.roadProfile"), "$.roadProfile"),
                 profileRef(requiredObject(root, "surfaceDetailProfile", "$.surfaceDetailProfile"),
@@ -65,6 +66,9 @@ public final class CityBlueprintCodec {
             item.addProperty("groupKind", group.groupKind().name());
             item.add("preferredPatchRefs", strings(group.preferredPatchRefs()));
             item.addProperty("preferredPatchZone", group.preferredPatchZone().name());
+            if (group.placementRelation() != null) {
+                item.add("placementRelation", placementRelationJson(group.placementRelation()));
+            }
             item.addProperty("role", group.role());
             item.addProperty("priority", group.priority().name());
             item.addProperty("extentClass", group.extentClass().name());
@@ -81,6 +85,16 @@ public final class CityBlueprintCodec {
             groups.add(item);
         }
         root.add("groups", groups);
+        JsonArray compositions = new JsonArray();
+        for (CityBlueprint.ArrayComposition composition : blueprint.arrayCompositions()) {
+            JsonObject item = new JsonObject();
+            item.addProperty("compositionId", composition.compositionId());
+            item.addProperty("algorithmProfileRef", composition.algorithmProfileRef());
+            item.addProperty("centerGroupId", composition.centerGroupId());
+            item.add("memberGroupIds", strings(composition.memberGroupIds()));
+            compositions.add(item);
+        }
+        root.add("arrayCompositions", compositions);
         JsonArray relations = new JsonArray();
         for (CityBlueprint.Relation relation : blueprint.relations()) {
             JsonObject item = new JsonObject();
@@ -255,19 +269,22 @@ public final class CityBlueprintCodec {
     private static List<CityBlueprint.Group> groups(JsonArray array) {
         List<CityBlueprint.Group> result = new ArrayList<>();
         Set<String> fields = Set.of("groupId", "groupKind", "preferredPatchRefs", "preferredPatchZone",
-                "role", "priority",
+                "placementRelation", "role", "priority",
                 "extentClass", "densityClass",
                 "algorithmProfileRef", "terrainPolicy", "requiredStructureRefs", "fillPoolRef",
                 "connectionPlan", "compositionProfileRef", "attachedFeatures");
         for (int index = 0; index < array.size(); index++) {
             String path = "$.groups[" + index + "]";
             JsonObject item = objectElement(array.get(index), path);
-            exactFields(item, fields, Set.of("connectionPlan"), path);
+            exactFields(item, fields, Set.of("placementRelation", "connectionPlan"), path);
             result.add(new CityBlueprint.Group(
                     requiredString(item, "groupId", path + ".groupId"),
                     enumValue(item, "groupKind", CityBlueprint.GroupKind.class, path),
                     nonEmptyStringList(item, "preferredPatchRefs", path + ".preferredPatchRefs"),
                     enumValue(item, "preferredPatchZone", CityBlueprint.PreferredPatchZone.class, path),
+                    item.has("placementRelation")
+                            ? placementRelation(requiredObject(item, "placementRelation",
+                            path + ".placementRelation"), path + ".placementRelation") : null,
                     requiredString(item, "role", path + ".role"),
                     enumValue(item, "priority", CityBlueprint.GroupPriority.class, path),
                     enumValue(item, "extentClass", CityBlueprint.ExtentClass.class, path),
@@ -283,6 +300,39 @@ public final class CityBlueprintCodec {
                     requiredString(item, "compositionProfileRef", path + ".compositionProfileRef"),
                     stringList(requiredArray(item, "attachedFeatures", path + ".attachedFeatures"),
                             path + ".attachedFeatures")));
+        }
+        return List.copyOf(result);
+    }
+
+    private static CityBlueprint.PlacementRelation placementRelation(JsonObject object, String path) {
+        exactFields(object, Set.of("kind", "patchRefs", "groupRefs"), path);
+        return new CityBlueprint.PlacementRelation(
+                enumValue(object, "kind", CityBlueprint.PlacementRelationKind.class, path),
+                stringList(requiredArray(object, "patchRefs", path + ".patchRefs"), path + ".patchRefs"),
+                stringList(requiredArray(object, "groupRefs", path + ".groupRefs"), path + ".groupRefs"));
+    }
+
+    private static JsonObject placementRelationJson(CityBlueprint.PlacementRelation relation) {
+        JsonObject object = new JsonObject();
+        object.addProperty("kind", relation.kind().name());
+        object.add("patchRefs", strings(relation.patchRefs()));
+        object.add("groupRefs", strings(relation.groupRefs()));
+        return object;
+    }
+
+    private static List<CityBlueprint.ArrayComposition> arrayCompositions(JsonArray array) {
+        List<CityBlueprint.ArrayComposition> result = new ArrayList<>();
+        Set<String> fields = Set.of("compositionId", "algorithmProfileRef", "centerGroupId",
+                "memberGroupIds");
+        for (int index = 0; index < array.size(); index++) {
+            String path = "$.arrayCompositions[" + index + "]";
+            JsonObject item = objectElement(array.get(index), path);
+            exactFields(item, fields, path);
+            result.add(new CityBlueprint.ArrayComposition(
+                    requiredString(item, "compositionId", path + ".compositionId"),
+                    requiredString(item, "algorithmProfileRef", path + ".algorithmProfileRef"),
+                    requiredString(item, "centerGroupId", path + ".centerGroupId"),
+                    nonEmptyStringList(item, "memberGroupIds", path + ".memberGroupIds")));
         }
         return List.copyOf(result);
     }

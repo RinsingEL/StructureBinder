@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "city_blueprint.v0.10",
+  "schemaVersion": "city_blueprint.v0.11",
   "cityId": "city:test",
   "sourceD3Ref": {
     "path": "d3.json",
@@ -37,6 +37,7 @@
       "blockX": 100
     }
   ],
+  "arrayCompositions": [],
   "relations": [],
   "roadProfile": { "profileRef": "road:test" },
   "surfaceDetailProfile": { "profileRef": "surface:test" }

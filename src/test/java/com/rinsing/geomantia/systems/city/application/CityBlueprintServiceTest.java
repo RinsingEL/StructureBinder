@@ -35,7 +35,7 @@ class CityBlueprintServiceTest {
 
         assertEquals(0, prepared.get("aiCityDesignCallCount").getAsInt());
         JsonObject context = prepared.getAsJsonObject("cityBlueprintContext");
-        assertEquals("city_blueprint_context.v0.9", context.get("schemaVersion").getAsString());
+        assertEquals("city_blueprint_context.v0.10", context.get("schemaVersion").getAsString());
         assertEquals("city_blueprint_catalog_snapshot.v0.10",
                 context.getAsJsonObject("catalogSnapshotRef").get("schemaVersion").getAsString());
         assertEquals("city_blueprint_catalog_snapshot.v0.10",
@@ -153,6 +153,64 @@ class CityBlueprintServiceTest {
                 .map(JsonElement::getAsJsonObject)
                 .anyMatch(issue -> "CITY_BLUEPRINT_CENTER_SYMMETRIC_REQUIRED_COUNT_INVALID"
                         .equals(issue.get("reasonCode").getAsString())));
+    }
+
+    @Test
+    void placementRelationRequiresTheExactEndpointShape() throws Exception {
+        Fixture fixture = fixture("run_placement_relation_invalid", "city:placement_relation_invalid");
+        CityBlueprintService service = new CityBlueprintService();
+        JsonObject prepared = service.prepare(temporary, fixture.runId(), fixture.cityId(),
+                fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog());
+        JsonObject blueprint = blueprint(prepared.getAsJsonObject("cityBlueprintContext"));
+        blueprint.getAsJsonArray("groups").get(0).getAsJsonObject().add("placementRelation",
+                JsonParser.parseString("""
+                        {"kind":"BETWEEN_PATCHES","patchRefs":["patch:plain:1"],"groupRefs":[]}
+                        """).getAsJsonObject());
+
+        JsonObject result = service.submit(temporary, fixture.runId(), fixture.cityId(),
+                prepared.get("contextId").getAsString(), blueprint);
+
+        assertFalse(result.get("ok").getAsBoolean());
+        assertTrue(result.getAsJsonObject("validationReport").getAsJsonArray("issues").asList().stream()
+                .map(JsonElement::getAsJsonObject)
+                .anyMatch(issue -> "CITY_BLUEPRINT_PLACEMENT_RELATION_INVALID"
+                        .equals(issue.get("reasonCode").getAsString())));
+    }
+
+    @Test
+    void arrayCompositionRejectsUnknownAndMultiplyOwnedGroups() throws Exception {
+        Fixture fixture = fixture("run_array_composition_invalid", "city:array_composition_invalid");
+        CityBlueprintService service = new CityBlueprintService();
+        JsonObject prepared = service.prepare(temporary, fixture.runId(), fixture.cityId(),
+                fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog());
+        JsonObject blueprint = blueprint(prepared.getAsJsonObject("cityBlueprintContext"));
+        JsonObject source = blueprint.getAsJsonArray("groups").get(0).getAsJsonObject();
+        JsonObject market = source.deepCopy();
+        market.addProperty("groupId", "market");
+        JsonObject warehouse = source.deepCopy();
+        warehouse.addProperty("groupId", "warehouse");
+        blueprint.getAsJsonArray("groups").add(market);
+        blueprint.getAsJsonArray("groups").add(warehouse);
+        addStructureGround(blueprint, "market");
+        addStructureGround(blueprint, "warehouse");
+        blueprint.getAsJsonArray("arrayCompositions").add(JsonParser.parseString("""
+                {"compositionId":"first","algorithmProfileRef":"algorithm:compact",
+                 "centerGroupId":"civic","memberGroupIds":["market"]}
+                """).getAsJsonObject());
+        blueprint.getAsJsonArray("arrayCompositions").add(JsonParser.parseString("""
+                {"compositionId":"second","algorithmProfileRef":"algorithm:compact",
+                 "centerGroupId":"warehouse","memberGroupIds":["market","missing"]}
+                """).getAsJsonObject());
+
+        JsonObject result = service.submit(temporary, fixture.runId(), fixture.cityId(),
+                prepared.get("contextId").getAsString(), blueprint);
+
+        assertFalse(result.get("ok").getAsBoolean());
+        Set<String> reasonCodes = result.getAsJsonObject("validationReport").getAsJsonArray("issues")
+                .asList().stream().map(JsonElement::getAsJsonObject)
+                .map(issue -> issue.get("reasonCode").getAsString()).collect(java.util.stream.Collectors.toSet());
+        assertTrue(reasonCodes.contains("CITY_BLUEPRINT_ARRAY_COMPOSITION_GROUP_UNKNOWN"));
+        assertTrue(reasonCodes.contains("CITY_BLUEPRINT_ARRAY_COMPOSITION_GROUP_REUSED"));
     }
 
     @Test
@@ -919,7 +977,7 @@ class CityBlueprintServiceTest {
 
     private static JsonObject blueprint(JsonObject context) {
         JsonObject blueprint = new JsonObject();
-        blueprint.addProperty("schemaVersion", "city_blueprint.v0.10");
+        blueprint.addProperty("schemaVersion", "city_blueprint.v0.11");
         blueprint.addProperty("cityId", context.get("cityId").getAsString());
         blueprint.add("sourceD3Ref", context.getAsJsonObject("sourceD3Ref").deepCopy());
         blueprint.add("catalogSnapshotRef", context.getAsJsonObject("catalogSnapshotRef").deepCopy());
@@ -941,6 +999,7 @@ class CityBlueprintServiceTest {
                 }
                 """).getAsJsonObject());
         blueprint.add("groups", groups);
+        blueprint.add("arrayCompositions", new JsonArray());
         blueprint.add("relations", new JsonArray());
         blueprint.add("roadProfile", JsonParser.parseString("{\"profileRef\":\"road:town\"}").getAsJsonObject());
         blueprint.add("surfaceDetailProfile", JsonParser.parseString("{\"profileRef\":\"surface:working\"}").getAsJsonObject());

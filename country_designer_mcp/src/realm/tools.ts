@@ -483,7 +483,7 @@ const artifactRefSchema = strictObject({
 }, ["path", "schemaVersion", "contentHash"]);
 
 const cityBlueprintSchema = strictObject({
-  schemaVersion: { type: "string", enum: ["city_blueprint.v0.10"] },
+  schemaVersion: { type: "string", enum: ["city_blueprint.v0.11"] },
   cityId: nonEmptyString("必须与冻结上下文一致。"),
   sourceD3Ref: artifactRefSchema,
   catalogSnapshotRef: artifactRefSchema,
@@ -503,6 +503,13 @@ const cityBlueprintSchema = strictObject({
         items: nonEmptyString("偏好的 D3 landformPatchId；多个 Group 可共享，不允许世界坐标。") },
       preferredPatchZone: { type: "string", enum: ["CENTER", "NORTH", "EAST", "SOUTH", "WEST"],
         description: "核心在 preferredPatchRefs 精确成员格并集内的起步方位；北=-Z、南=+Z、西=-X、东=+X。" },
+      placementRelation: strictObject({
+        kind: { type: "string", enum: ["BETWEEN_PATCHES", "ALONG_PATCH_BOUNDARY", "BETWEEN_GROUPS"] },
+        patchRefs: { type: "array", uniqueItems: true,
+          items: nonEmptyString("关系位置引用的 D3 landformPatchId。") },
+        groupRefs: { type: "array", uniqueItems: true,
+          items: nonEmptyString("关系位置引用的同一 Blueprint groupId。") },
+      }, ["kind", "patchRefs", "groupRefs"]),
       role: nonEmptyString("Group 功能角色。"),
       priority: { type: "string", enum: ["CORE", "STANDARD", "PERIPHERAL"] },
       extentClass: { type: "string", enum: ["SMALL", "MEDIUM", "LARGE"],
@@ -530,6 +537,16 @@ const cityBlueprintSchema = strictObject({
     }, ["groupId", "groupKind", "preferredPatchRefs", "preferredPatchZone", "role", "priority", "extentClass", "densityClass",
       "algorithmProfileRef", "terrainPolicy", "requiredStructureRefs", "fillPoolRef",
       "compositionProfileRef", "attachedFeatures"]),
+  },
+  arrayCompositions: {
+    type: "array",
+    items: strictObject({
+      compositionId: nonEmptyString("Blueprint 内唯一的父阵列 ID。"),
+      algorithmProfileRef: nonEmptyString("编排完整子 Group 的冻结算法 profile；不覆盖子 Group 自身算法。"),
+      centerGroupId: nonEmptyString("父阵列中心的完整 Group。"),
+      memberGroupIds: { type: "array", minItems: 1, uniqueItems: true,
+        items: nonEmptyString("由父阵列安排槽位的完整子 Group；CENTER_SYMMETRIC 按相邻两项组成对称对。") },
+    }, ["compositionId", "algorithmProfileRef", "centerGroupId", "memberGroupIds"]),
   },
   relations: {
     type: "array", items: strictObject({
@@ -629,7 +646,7 @@ const cityBlueprintSchema = strictObject({
     },
   }, ["mode", "envelopeProfile", "foundationProfileRef", "spatialGrounds", "landscapes"]),
 }, ["schemaVersion", "cityId", "sourceD3Ref", "catalogSnapshotRef", "generationSeed", "designIntent",
-  "styleProfile", "groups", "relations", "roadProfile", "surfaceDetailProfile", "outdoorPlan"]);
+  "styleProfile", "groups", "arrayCompositions", "relations", "roadProfile", "surfaceDetailProfile", "outdoorPlan"]);
 
 export const realmTools: ToolDefinition[] = [
   {

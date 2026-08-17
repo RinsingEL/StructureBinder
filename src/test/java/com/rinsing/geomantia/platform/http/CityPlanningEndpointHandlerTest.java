@@ -2849,11 +2849,11 @@ class CityPlanningEndpointHandlerTest {
         Files.createDirectories(blueprintDir);
         Path anchorMapPath = directory.resolve("structure_anchor_map.json");
         String contextId = "sha256:context";
-        String blueprint = "{\"schemaVersion\":\"city_blueprint.v0.10\",\"cityId\":\"city_test\"}";
+        String blueprint = "{\"schemaVersion\":\"city_blueprint.v0.11\",\"cityId\":\"city_test\"}";
         String blueprintHash = sha256(blueprint);
 
         Files.writeString(blueprintDir.resolve("city_blueprint_context.json"), """
-                {"schemaVersion":"city_blueprint_context.v0.9","cityId":"city_test",
+                {"schemaVersion":"city_blueprint_context.v0.10","cityId":"city_test",
                  "contextId":"sha256:context"}
                 """);
         Files.writeString(blueprintDir.resolve("city_blueprint_validation_report.json"), """
@@ -4128,7 +4128,7 @@ class CityPlanningEndpointHandlerTest {
                 .get(0).getAsJsonObject().get("landformPatchId").getAsString();
         JsonObject blueprint = JsonParser.parseString("""
                 {
-                  "schemaVersion":"city_blueprint.v0.10","cityId":"city_test","generationSeed":42,
+                  "schemaVersion":"city_blueprint.v0.11","cityId":"city_test","generationSeed":42,
                   "designIntent":{"cityIdentity":"test city","theme":"test","functionalRoles":["landmark"]},
                   "styleProfile":{"profileRef":"style:test"},
                   "groups":[{
@@ -4139,6 +4139,7 @@ class CityPlanningEndpointHandlerTest {
                     "requiredStructureRefs":["minecraft:desert_pyramid"],"fillPoolRef":"pool:test",
                     "compositionProfileRef":"composition:round_robin","attachedFeatures":[]
                   }],
+                  "arrayCompositions":[],
                   "relations":[],"roadProfile":{"profileRef":"road:test"},
                   "surfaceDetailProfile":{"profileRef":"surface:test"},
                   "outdoorPlan":{"mode":"GENERATE","envelopeProfile":"BALANCED",

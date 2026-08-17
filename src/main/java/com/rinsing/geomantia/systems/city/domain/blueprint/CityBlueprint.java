@@ -12,15 +12,17 @@ public record CityBlueprint(
         DesignIntent designIntent,
         ProfileRef styleProfile,
         List<Group> groups,
+        List<ArrayComposition> arrayCompositions,
         List<Relation> relations,
         ProfileRef roadProfile,
         ProfileRef surfaceDetailProfile,
         OutdoorPlan outdoorPlan) {
 
-    public static final String SCHEMA_VERSION = "city_blueprint.v0.10";
+    public static final String SCHEMA_VERSION = "city_blueprint.v0.11";
 
     public CityBlueprint {
         groups = List.copyOf(groups);
+        arrayCompositions = List.copyOf(arrayCompositions);
         relations = List.copyOf(relations);
     }
 
@@ -41,6 +43,7 @@ public record CityBlueprint(
             GroupKind groupKind,
             List<String> preferredPatchRefs,
             PreferredPatchZone preferredPatchZone,
+            PlacementRelation placementRelation,
             String role,
             GroupPriority priority,
             ExtentClass extentClass,
@@ -56,6 +59,28 @@ public record CityBlueprint(
             preferredPatchRefs = List.copyOf(preferredPatchRefs);
             requiredStructureRefs = List.copyOf(requiredStructureRefs);
             attachedFeatures = List.copyOf(attachedFeatures);
+        }
+    }
+
+    /** Places a whole Group array from patch or already-built Group relationships, never coordinates. */
+    public record PlacementRelation(
+            PlacementRelationKind kind,
+            List<String> patchRefs,
+            List<String> groupRefs) {
+        public PlacementRelation {
+            patchRefs = List.copyOf(patchRefs);
+            groupRefs = List.copyOf(groupRefs);
+        }
+    }
+
+    /** A parent array whose members are complete Group arrays with independent structure semantics. */
+    public record ArrayComposition(
+            String compositionId,
+            String algorithmProfileRef,
+            String centerGroupId,
+            List<String> memberGroupIds) {
+        public ArrayComposition {
+            memberGroupIds = List.copyOf(memberGroupIds);
         }
     }
 
@@ -174,6 +199,8 @@ public record CityBlueprint(
     public enum WidthClass { NARROW, MEDIUM, WIDE }
 
     public enum PreferredPatchZone { CENTER, NORTH, EAST, SOUTH, WEST }
+
+    public enum PlacementRelationKind { BETWEEN_PATCHES, ALONG_PATCH_BOUNDARY, BETWEEN_GROUPS }
 
     public enum TerrainPolicy { CONFORM, BALANCED, ASSERTIVE }
 

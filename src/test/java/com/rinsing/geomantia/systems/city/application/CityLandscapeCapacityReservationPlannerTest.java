@@ -168,13 +168,15 @@ class CityLandscapeCapacityReservationPlannerTest {
         CityBlueprint source = blueprint(2);
         CityBlueprint.Group group = source.groups().get(0);
         CityBlueprint.Group smallGroup = new CityBlueprint.Group(group.groupId(), group.groupKind(),
-                group.preferredPatchRefs(), group.preferredPatchZone(), group.role(), group.priority(),
+                group.preferredPatchRefs(), group.preferredPatchZone(), group.placementRelation(),
+                group.role(), group.priority(),
                 CityBlueprint.ExtentClass.SMALL, group.densityClass(), group.algorithmProfileRef(),
                 group.terrainPolicy(), group.requiredStructureRefs(), group.fillPoolRef(),
                 group.connectionPlan(), group.compositionProfileRef(), group.attachedFeatures());
         CityBlueprint blueprint = new CityBlueprint(source.schemaVersion(), source.cityId(),
                 source.sourceD3Ref(), source.catalogSnapshotRef(), source.generationSeed(),
-                source.designIntent(), source.styleProfile(), List.of(smallGroup), source.relations(),
+                source.designIntent(), source.styleProfile(), List.of(smallGroup),
+                source.arrayCompositions(), source.relations(),
                 source.roadProfile(), source.surfaceDetailProfile(), source.outdoorPlan());
         var profile = new CityBlueprintReferenceCatalog.LandscapeProfile("farmland",
                 CityBlueprintReferenceCatalog.LandscapeType.FARMLAND, "agriculture", "surface",
@@ -204,7 +206,7 @@ class CityLandscapeCapacityReservationPlannerTest {
                 String groupId = "group_" + index;
                 String ownerRef = "owner_" + index;
                 groups.add(new CityBlueprint.Group(groupId, CityBlueprint.GroupKind.STRUCTURE,
-                        List.of("patch"), CityBlueprint.PreferredPatchZone.CENTER, "landscape owner",
+                        List.of("patch"), CityBlueprint.PreferredPatchZone.CENTER, null, "landscape owner",
                         CityBlueprint.GroupPriority.CORE, CityBlueprint.ExtentClass.SMALL,
                         CityBlueprint.DensityClass.BALANCED, "algorithm",
                         CityBlueprint.TerrainPolicy.CONFORM, List.of(ownerRef), "pool", null,
@@ -231,7 +233,8 @@ class CityLandscapeCapacityReservationPlannerTest {
             CityBlueprint.OutdoorPlan outdoor = source.outdoorPlan();
             CityBlueprint blueprint = new CityBlueprint(source.schemaVersion(), source.cityId(),
                     source.sourceD3Ref(), source.catalogSnapshotRef(), source.generationSeed(),
-                    source.designIntent(), source.styleProfile(), groups, source.relations(),
+                    source.designIntent(), source.styleProfile(), groups,
+                    source.arrayCompositions(), source.relations(),
                     source.roadProfile(), source.surfaceDetailProfile(), new CityBlueprint.OutdoorPlan(
                     outdoor.mode(), outdoor.envelopeProfile(), outdoor.foundationProfileRef(),
                     outdoor.spatialGrounds(), landscapes));
@@ -250,7 +253,7 @@ class CityLandscapeCapacityReservationPlannerTest {
 
     private static CityBlueprint blueprint(int parcelCount, long generationSeed) {
         CityBlueprint.Group group = new CityBlueprint.Group("farm", CityBlueprint.GroupKind.STRUCTURE,
-                List.of("patch"), CityBlueprint.PreferredPatchZone.CENTER, "agriculture",
+                List.of("patch"), CityBlueprint.PreferredPatchZone.CENTER, null, "agriculture",
                 CityBlueprint.GroupPriority.CORE, CityBlueprint.ExtentClass.LARGE,
                 CityBlueprint.DensityClass.BALANCED, "algorithm", CityBlueprint.TerrainPolicy.CONFORM,
                 List.of("windmill"), "pool", null, "composition", List.of());
@@ -263,7 +266,7 @@ class CityLandscapeCapacityReservationPlannerTest {
                 new CityBlueprint.ArtifactRef("d3", "d3", "sha256:" + "1".repeat(64)),
                 new CityBlueprint.ArtifactRef("catalog", "catalog", "sha256:" + "2".repeat(64)), generationSeed,
                 new CityBlueprint.DesignIntent("town", "farm", List.of("agriculture")),
-                new CityBlueprint.ProfileRef("style"), List.of(group), List.of(),
+                new CityBlueprint.ProfileRef("style"), List.of(group), List.of(), List.of(),
                 new CityBlueprint.ProfileRef("road"), new CityBlueprint.ProfileRef("surface"),
                 new CityBlueprint.OutdoorPlan(CityBlueprint.OutdoorMode.GENERATE,
                         CityBlueprint.EnvelopeProfile.BALANCED, "foundation", List.of(), List.of(landscape)));

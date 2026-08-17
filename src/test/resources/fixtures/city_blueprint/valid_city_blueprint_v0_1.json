@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "city_blueprint.v0.10",
+  "schemaVersion": "city_blueprint.v0.11",
   "cityId": "city:test",
   "sourceD3Ref": {
     "path": "run/city_d3_city_test/city_landform_review_package.json",
@@ -36,6 +36,7 @@
       "attachedFeatures": []
     }
   ],
+  "arrayCompositions": [],
   "relations": [],
   "roadProfile": { "profileRef": "road:town" },
   "surfaceDetailProfile": { "profileRef": "surface:working" },

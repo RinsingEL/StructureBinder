@@ -197,6 +197,142 @@ class CityBlueprintCompilerServiceTest {
     }
 
     @Test
+    void parentCenterSymmetryPlacesWholeGroupsWithoutOverwritingChildPolicies() throws Exception {
+        Fixture fixture = acceptedFixture("run_nested_center_symmetric", "city:nested_center_symmetric",
+                9, 9, "SMALL", blueprint -> {
+                    JsonObject center = blueprint.getAsJsonArray("groups").get(0).getAsJsonObject();
+                    JsonObject market = center.deepCopy();
+                    market.addProperty("groupId", "market_cluster");
+                    market.addProperty("algorithmProfileRef", "algorithm:street_band");
+                    market.addProperty("terrainPolicy", "CONFORM");
+                    JsonObject warehouse = center.deepCopy();
+                    warehouse.addProperty("groupId", "warehouse_cluster");
+                    warehouse.add("preferredPatchRefs", JsonParser.parseString("[\"patch:plain:2\"]"));
+                    warehouse.addProperty("algorithmProfileRef", "algorithm:compact");
+                    warehouse.addProperty("terrainPolicy", "ASSERTIVE");
+                    center.add("placementRelation", JsonParser.parseString("""
+                            {"kind":"ALONG_PATCH_BOUNDARY",
+                             "patchRefs":["patch:plain:1","patch:plain:2"],"groupRefs":[]}
+                            """).getAsJsonObject());
+                    blueprint.getAsJsonArray("groups").add(market);
+                    blueprint.getAsJsonArray("groups").add(warehouse);
+                    blueprint.getAsJsonArray("arrayCompositions").add(JsonParser.parseString("""
+                            {"compositionId":"civic_cluster_ring",
+                             "algorithmProfileRef":"algorithm:center_symmetric",
+                             "centerGroupId":"civic",
+                             "memberGroupIds":["market_cluster","warehouse_cluster"]}
+                            """).getAsJsonObject());
+                });
+
+        CityBlueprintCompilerService.CompilationResult result = new CityBlueprintCompilerService()
+                .compile(temporary, fixture.runId(), fixture.cityId());
+
+        assertTrue(result.ok(), result.compileTrace().toString());
+        JsonArray slots = result.compileTrace().getAsJsonArray("arrayCompositionSlots");
+        assertEquals(3, slots.size());
+        Map<String, JsonObject> slotsByGroup = slots.asList().stream()
+                .map(JsonElement::getAsJsonObject)
+                .collect(java.util.stream.Collectors.toMap(
+                        slot -> slot.get("groupId").getAsString(), slot -> slot));
+        JsonObject centerOrigin = slotsByGroup.get("civic").getAsJsonObject("origin");
+        JsonObject firstOrigin = slotsByGroup.get("market_cluster").getAsJsonObject("origin");
+        JsonObject oppositeOrigin = slotsByGroup.get("warehouse_cluster").getAsJsonObject("origin");
+        assertEquals(centerOrigin.get("x").getAsInt() * 2,
+                firstOrigin.get("x").getAsInt() + oppositeOrigin.get("x").getAsInt());
+        assertEquals(centerOrigin.get("z").getAsInt() * 2,
+                firstOrigin.get("z").getAsInt() + oppositeOrigin.get("z").getAsInt());
+        assertTrue(firstOrigin.get("x").getAsInt() < 256,
+                "market child slot must stay on its preferred first Patch");
+        assertTrue(oppositeOrigin.get("x").getAsInt() >= 256,
+                "warehouse child slot must rotate onto its preferred second Patch");
+        assertEquals(0, slotsByGroup.get("market_cluster").get("pairIndex").getAsInt());
+        assertEquals(0, slotsByGroup.get("warehouse_cluster").get("pairIndex").getAsInt());
+
+        Map<String, JsonObject> groupsById = result.compileTrace().getAsJsonArray("groupResults").asList().stream()
+                .map(JsonElement::getAsJsonObject)
+                .collect(java.util.stream.Collectors.toMap(
+                        group -> group.get("groupId").getAsString(), group -> group));
+        assertEquals("LINEAR", groupsById.get("market_cluster").get("layoutAlgorithm").getAsString());
+        assertEquals("CONFORM", groupsById.get("market_cluster").get("terrainPolicy").getAsString());
+        assertEquals("COMPACT", groupsById.get("warehouse_cluster").get("layoutAlgorithm").getAsString());
+        assertEquals("ASSERTIVE", groupsById.get("warehouse_cluster").get("terrainPolicy").getAsString());
+    }
+
+    @Test
+    void patchRelationModesDriveTheFirstGroupOrigin() throws Exception {
+        for (String relationKind : List.of("BETWEEN_PATCHES", "ALONG_PATCH_BOUNDARY")) {
+            String suffix = relationKind.toLowerCase(java.util.Locale.ROOT);
+            Fixture fixture = acceptedFixture("run_" + suffix, "city:" + suffix,
+                    9, 9, "SMALL", blueprint -> {
+                        JsonObject group = blueprint.getAsJsonArray("groups").get(0).getAsJsonObject();
+                        group.add("placementRelation", JsonParser.parseString("""
+                                {"kind":"%s","patchRefs":["patch:plain:1","patch:plain:2"],
+                                 "groupRefs":[]}
+                                """.formatted(relationKind)).getAsJsonObject());
+                    });
+
+            CityBlueprintCompilerService.CompilationResult result = new CityBlueprintCompilerService()
+                    .compile(temporary, fixture.runId(), fixture.cityId());
+
+            assertTrue(result.ok(), result.compileTrace().toString());
+            JsonObject first = result.compileTrace().getAsJsonArray("selections").asList().stream()
+                    .map(JsonElement::getAsJsonObject)
+                    .filter(selection -> "civic".equals(selection.get("groupId").getAsString()))
+                    .filter(selection -> "required".equals(selection.get("phase").getAsString()))
+                    .findFirst().orElseThrow();
+            JsonObject layout = first.getAsJsonObject("blueprintLayout");
+            assertEquals(relationKind, layout.get("placementRelation").getAsString());
+            assertEquals("placement_relation_" + suffix,
+                    layout.get("patchSelectionScope").getAsString());
+        }
+    }
+
+    @Test
+    void betweenGroupsWaitsForBothEndpointExtents() throws Exception {
+        Fixture fixture = acceptedFixture("run_between_groups", "city:between_groups",
+                9, 9, "SMALL", blueprint -> {
+                    JsonObject first = blueprint.getAsJsonArray("groups").get(0).getAsJsonObject();
+                    first.addProperty("preferredPatchZone", "WEST");
+                    JsonObject second = first.deepCopy();
+                    second.addProperty("groupId", "market");
+                    second.addProperty("preferredPatchZone", "EAST");
+                    JsonObject middle = first.deepCopy();
+                    middle.addProperty("groupId", "plaza");
+                    middle.addProperty("preferredPatchZone", "CENTER");
+                    middle.add("placementRelation", JsonParser.parseString("""
+                            {"kind":"BETWEEN_GROUPS","patchRefs":[],
+                             "groupRefs":["civic","market"]}
+                            """).getAsJsonObject());
+                    blueprint.getAsJsonArray("groups").add(second);
+                    blueprint.getAsJsonArray("groups").add(middle);
+                });
+
+        CityBlueprintCompilerService.CompilationResult result = new CityBlueprintCompilerService()
+                .compile(temporary, fixture.runId(), fixture.cityId());
+
+        assertTrue(result.ok(), result.compileTrace().toString());
+        List<JsonObject> required = result.compileTrace().getAsJsonArray("selections").asList().stream()
+                .map(JsonElement::getAsJsonObject)
+                .filter(selection -> "required".equals(selection.get("phase").getAsString()))
+                .toList();
+        int civicIndex = java.util.stream.IntStream.range(0, required.size())
+                .filter(index -> "civic".equals(required.get(index).get("groupId").getAsString()))
+                .findFirst().orElseThrow();
+        int marketIndex = java.util.stream.IntStream.range(0, required.size())
+                .filter(index -> "market".equals(required.get(index).get("groupId").getAsString()))
+                .findFirst().orElseThrow();
+        int plazaIndex = java.util.stream.IntStream.range(0, required.size())
+                .filter(index -> "plaza".equals(required.get(index).get("groupId").getAsString()))
+                .findFirst().orElseThrow();
+        assertTrue(plazaIndex > civicIndex);
+        assertTrue(plazaIndex > marketIndex);
+        JsonObject layout = required.get(plazaIndex).getAsJsonObject("blueprintLayout");
+        assertEquals("BETWEEN_GROUPS", layout.get("placementRelation").getAsString());
+        assertEquals("placement_relation_between_groups",
+                layout.get("patchSelectionScope").getAsString());
+    }
+
+    @Test
     void requiredLandscapeCapacityIsExactAndExcludesAllLaterStructures() throws Exception {
         Fixture fixture = acceptedFixture("run_capacity", "city:capacity", 9, 9, "SMALL", blueprint ->
                 blueprint.getAsJsonObject("outdoorPlan").getAsJsonArray("landscapes").add(
@@ -425,9 +561,9 @@ class CityBlueprintCompilerServiceTest {
 
         assertTrue(first.ok(), first.compileTrace().toString());
         assertEquals(first.structureAnchorPlan(), second.structureAnchorPlan());
-        assertEquals("city_generation_compile_trace.v0.10",
+        assertEquals("city_generation_compile_trace.v0.11",
                 first.compileTrace().get("schemaVersion").getAsString());
-        assertEquals("group_extent_map.v0.7",
+        assertEquals("group_extent_map.v0.8",
                 first.groupExtentMap().get("schemaVersion").getAsString());
         assertTrue(first.groupExtentMap().get("structureGraphConnected").getAsBoolean());
         assertFalse(first.groupExtentMap().get("landUseConnected").getAsBoolean());
@@ -1141,7 +1277,7 @@ class CityBlueprintCompilerServiceTest {
     private static JsonObject blueprint(JsonObject context, String extentClass) {
         JsonObject root = JsonParser.parseString("""
                 {
-                  "schemaVersion":"city_blueprint.v0.10","cityId":"placeholder","generationSeed":1,
+                  "schemaVersion":"city_blueprint.v0.11","cityId":"placeholder","generationSeed":1,
                   "sourceD3Ref":{},"catalogSnapshotRef":{},
                   "designIntent":{"cityIdentity":"town","theme":"stone","functionalRoles":["administration"]},
                   "styleProfile":{"profileRef":"style:stone"},
@@ -1153,6 +1289,7 @@ class CityBlueprintCompilerServiceTest {
                     "requiredStructureRefs":["geomantia:town_hall"],"fillPoolRef":"pool:civic",
                     "compositionProfileRef":"composition:round_robin","attachedFeatures":[]
                   }],
+                  "arrayCompositions":[],
                   "relations":[],"roadProfile":{"profileRef":"road:town"},
                   "surfaceDetailProfile":{"profileRef":"surface:working"},
                   "outdoorPlan":{"mode":"GENERATE","envelopeProfile":"BALANCED",

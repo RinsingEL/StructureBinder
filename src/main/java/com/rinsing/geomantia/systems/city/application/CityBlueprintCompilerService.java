@@ -34,8 +34,8 @@ import java.util.Set;
 
 /** Compiles an accepted, coordinate-free Blueprint into the existing fixed-template D4 anchor contract. */
 public final class CityBlueprintCompilerService {
-    public static final String TRACE_SCHEMA = "city_generation_compile_trace.v0.10";
-    public static final String EXTENT_SCHEMA = "group_extent_map.v0.7";
+    public static final String TRACE_SCHEMA = "city_generation_compile_trace.v0.11";
+    public static final String EXTENT_SCHEMA = "group_extent_map.v0.8";
     private static final int INTERNAL_MAX_ANCHORS_PER_GROUP = 256;
 
     private final CityBlueprintCodec codec = new CityBlueprintCodec();
@@ -126,7 +126,14 @@ public final class CityBlueprintCompilerService {
         CatalogIndex catalog = CatalogIndex.parse(requiredObject(snapshot, "referenceCatalog"));
         Map<String, LandformPatchSummary> patches = new LinkedHashMap<>();
         review.landformPatches().forEach(patch -> patches.put(patch.landformPatchId(), patch));
-        List<CityBlueprint.Group> groups = orderGroups(blueprint.groups(), blueprint.relations());
+        List<CityBlueprint.Group> groups = orderGroups(blueprint.groups(), blueprint.relations(),
+                blueprint.arrayCompositions(), catalog);
+        Map<String, CityBlueprint.Group> groupsById = new LinkedHashMap<>();
+        groups.forEach(group -> groupsById.put(group.groupId(), group));
+        BlockBounds cityPlanningBounds = new BlockBounds(review.grid().blockMinX(), review.grid().blockMinZ(),
+                review.grid().blockMaxX() - 1, review.grid().blockMaxZ() - 1);
+        Map<String, CompositionSlot> compositionSlots = planArrayCompositions(blueprint,
+                groupsById, patches, review.grid().cellStepBlocks(), cityPlanningBounds, catalog);
 
         JsonArray anchors;
         JsonArray occupied;
@@ -150,12 +157,17 @@ public final class CityBlueprintCompilerService {
                 preferredPatches.add(patch);
             }
             catalog.composition(group.compositionProfileRef());
-            BlockBounds planningBounds = new BlockBounds(review.grid().blockMinX(), review.grid().blockMinZ(),
-                    review.grid().blockMaxX() - 1, review.grid().blockMaxZ() - 1);
             String algorithm = catalog.algorithm(group.algorithmProfileRef());
             List<LandformPatchSummary> connectionPatches = List.copyOf(planningPatches);
+            CompositionSlot compositionSlot = compositionSlots.get(group.groupId());
+            BlockBounds formationBounds = compositionSlot == null
+                    ? cityPlanningBounds : compositionSlot.slotBounds();
+            BlockPoint preferredOrigin = compositionSlot == null
+                    ? patchPlacementOrigin(group, patches, review.grid().cellStepBlocks(), cityPlanningBounds)
+                    : compositionSlot.origin();
             states.put(group.groupId(), new GroupState(group, preferredPatches, connectionPatches,
-                    review.grid().cellStepBlocks(), planningBounds, algorithm,
+                    review.grid().cellStepBlocks(), cityPlanningBounds, formationBounds, preferredOrigin,
+                    compositionSlot, algorithm,
                     groupLayoutPlanner.parameters(algorithm, group.densityClass()),
                     resolveConnectionConfiguration(group, catalog),
                     minimumGroupStructureCount(review.targetScale().scale(), group.extentClass(), algorithm)));
@@ -169,8 +181,6 @@ public final class CityBlueprintCompilerService {
                 requiredRequests.add(new RequiredRequest(group.groupId(), structureRef, ++ordinal));
             }
         }
-        requiredRequests.sort(Comparator.comparingInt(request ->
-                "CENTER_SYMMETRIC".equals(initialStates.get(request.groupId()).layoutAlgorithm()) ? 0 : 1));
         int[] ranks = new int[requiredRequests.size()];
         int[] limits = new int[requiredRequests.size()];
         CityLandscapeCapacityReservationPlanner.Result landscapeCapacity = null;
@@ -437,8 +447,9 @@ public final class CityBlueprintCompilerService {
         candidates.sort(Comparator.comparingLong(candidate -> tieKey(blueprint.generationSeed(),
                 state.group().groupId(), structureRef, candidate.templateId(), candidate.variantId())));
         List<PatchScope> patchScopes = new ArrayList<>();
-        patchScopes.add(new PatchScope("blueprint_preferred", null));
+        patchScopes.add(new PatchScope(state.initialPatchSelectionScope(), null));
         if (required && state.anchorCount() == 0
+                && !state.hasExplicitPlacementRelation()
                 && state.connectionPatches().size() > state.patches().size()) {
             patchScopes.add(new PatchScope("d3_terrain_fallback", state.connectionPatches()));
         }
@@ -927,9 +938,13 @@ public final class CityBlueprintCompilerService {
     }
 
     private static List<CityBlueprint.Group> orderGroups(List<CityBlueprint.Group> source,
-                                                         List<CityBlueprint.Relation> relations) {
+                                                         List<CityBlueprint.Relation> relations,
+                                                         List<CityBlueprint.ArrayComposition> compositions,
+                                                         CatalogIndex catalog) {
         Comparator<CityBlueprint.Group> stable = Comparator
-                .comparingInt((CityBlueprint.Group group) -> priorityRank(group.priority()))
+                .comparingInt((CityBlueprint.Group group) ->
+                        "CENTER_SYMMETRIC".equals(catalog.algorithm(group.algorithmProfileRef())) ? 0 : 1)
+                .thenComparingInt(group -> priorityRank(group.priority()))
                 .thenComparing(CityBlueprint.Group::groupId);
         Map<String, CityBlueprint.Group> byId = new LinkedHashMap<>();
         Map<String, Integer> incoming = new LinkedHashMap<>();
@@ -941,8 +956,19 @@ public final class CityBlueprintCompilerService {
         });
         for (CityBlueprint.Relation relation : relations) {
             if (relation.relationKind() != CityBlueprint.RelationKind.HIERARCHY) continue;
-            if (outgoing.get(relation.fromGroupId()).add(relation.toGroupId())) {
-                incoming.compute(relation.toGroupId(), (ignored, count) -> count == null ? 1 : count + 1);
+            addOrderingEdge(outgoing, incoming, relation.fromGroupId(), relation.toGroupId());
+        }
+        for (CityBlueprint.Group group : source) {
+            CityBlueprint.PlacementRelation placement = group.placementRelation();
+            if (placement == null
+                    || placement.kind() != CityBlueprint.PlacementRelationKind.BETWEEN_GROUPS) continue;
+            for (String dependency : placement.groupRefs()) {
+                addOrderingEdge(outgoing, incoming, dependency, group.groupId());
+            }
+        }
+        for (CityBlueprint.ArrayComposition composition : compositions) {
+            for (String member : composition.memberGroupIds()) {
+                addOrderingEdge(outgoing, incoming, composition.centerGroupId(), member);
             }
         }
         List<CityBlueprint.Group> ordered = new ArrayList<>();
@@ -953,7 +979,7 @@ public final class CityBlueprintCompilerService {
                     .map(byId::get)
                     .min(stable)
                     .orElseThrow(() -> fail("CITY_BLUEPRINT_HIERARCHY_CYCLE",
-                            "HIERARCHY relations must form an acyclic parent-to-child order."));
+                            "HIERARCHY, placement, and parent-array ordering dependencies must be acyclic."));
             ordered.add(next);
             remaining.remove(next.groupId());
             for (String child : outgoing.get(next.groupId())) {
@@ -961,6 +987,245 @@ public final class CityBlueprintCompilerService {
             }
         }
         return List.copyOf(ordered);
+    }
+
+    private static void addOrderingEdge(Map<String, Set<String>> outgoing,
+                                        Map<String, Integer> incoming,
+                                        String from,
+                                        String to) {
+        Set<String> targets = outgoing.get(from);
+        if (targets != null && incoming.containsKey(to) && targets.add(to)) {
+            incoming.computeIfPresent(to, (ignored, count) -> count + 1);
+        }
+    }
+
+    private Map<String, CompositionSlot> planArrayCompositions(
+            CityBlueprint blueprint,
+            Map<String, CityBlueprint.Group> groupsById,
+            Map<String, LandformPatchSummary> patches,
+            int patchStepBlocks,
+            BlockBounds cityPlanningBounds,
+            CatalogIndex catalog) {
+        Map<String, CompositionSlot> result = new LinkedHashMap<>();
+        List<BlockBounds> reserved = new ArrayList<>();
+        for (CityBlueprint.ArrayComposition composition : blueprint.arrayCompositions()) {
+            CityBlueprint.Group centerGroup = groupsById.get(composition.centerGroupId());
+            BlockPoint centerOrigin = patchPlacementOrigin(centerGroup, patches, patchStepBlocks,
+                    cityPlanningBounds);
+            if (centerOrigin == null) {
+                PatchMemberCell centerCell = preferredZoneCell(preferredPatches(centerGroup, patches),
+                        centerGroup.preferredPatchZone(), patchStepBlocks, cityPlanningBounds);
+                centerOrigin = centerCell == null ? null : cellCenter(centerCell, patchStepBlocks);
+            }
+            if (centerOrigin == null) {
+                throw fail("CITY_BLUEPRINT_ARRAY_COMPOSITION_CENTER_UNAVAILABLE",
+                        composition.compositionId() + " has no legal center origin.");
+            }
+
+            int centerSpan = extentMaxSpan(centerGroup.extentClass());
+            BlockBounds centerBounds = slotBounds(centerOrigin, centerSpan);
+            if (!within(centerBounds, cityPlanningBounds) || overlapsAny(centerBounds, reserved)) {
+                throw fail("CITY_BLUEPRINT_ARRAY_COMPOSITION_SLOT_UNAVAILABLE",
+                        composition.compositionId() + " center Group cannot reserve its declared extent.");
+            }
+            CompositionSlot centerSlot = new CompositionSlot(composition.compositionId(),
+                    catalog.algorithm(composition.algorithmProfileRef()), composition.centerGroupId(),
+                    0, -1, centerOrigin, centerBounds);
+            result.put(centerGroup.groupId(), centerSlot);
+            reserved.add(centerBounds);
+
+            CityBlueprintGroupLayoutPlanner.Frame frame = groupLayoutPlanner.frame(centerOrigin, null,
+                    blueprint.generationSeed(), composition.compositionId());
+            String parentAlgorithm = catalog.algorithm(composition.algorithmProfileRef());
+            List<String> members = composition.memberGroupIds();
+            if ("CENTER_SYMMETRIC".equals(parentAlgorithm)) {
+                for (int memberIndex = 0; memberIndex < members.size(); memberIndex += 2) {
+                    CityBlueprint.Group firstGroup = groupsById.get(members.get(memberIndex));
+                    CityBlueprint.Group oppositeGroup = groupsById.get(members.get(memberIndex + 1));
+                    int memberSpan = Math.max(extentMaxSpan(firstGroup.extentClass()),
+                            extentMaxSpan(oppositeGroup.extentClass()));
+                    BlockPoint selectedFirstOrigin = null;
+                    BlockPoint selectedOppositeOrigin = null;
+                    BlockBounds firstBounds = null;
+                    BlockBounds oppositeBounds = null;
+                    for (CityBlueprintGroupLayoutPlanner.SymmetricPair option :
+                            groupLayoutPlanner.symmetricPairOptions(centerGroup.densityClass(), frame,
+                                    memberIndex / 2, centerSpan, memberSpan)) {
+                        BlockBounds firstCandidate = slotBounds(option.first(), memberSpan);
+                        BlockBounds oppositeCandidate = slotBounds(option.opposite(), memberSpan);
+                        if (!within(firstCandidate, cityPlanningBounds)
+                                || !within(oppositeCandidate, cityPlanningBounds)
+                                || firstCandidate.overlaps(oppositeCandidate)
+                                || overlapsAny(firstCandidate, reserved)
+                                || overlapsAny(oppositeCandidate, reserved)) continue;
+                        if (originInsidePreferredPatch(option.first(), firstGroup, patches,
+                                patchStepBlocks, cityPlanningBounds)
+                                && originInsidePreferredPatch(option.opposite(), oppositeGroup, patches,
+                                patchStepBlocks, cityPlanningBounds)) {
+                            selectedFirstOrigin = option.first();
+                            selectedOppositeOrigin = option.opposite();
+                            firstBounds = firstCandidate;
+                            oppositeBounds = oppositeCandidate;
+                            break;
+                        }
+                        if (originInsidePreferredPatch(option.opposite(), firstGroup, patches,
+                                patchStepBlocks, cityPlanningBounds)
+                                && originInsidePreferredPatch(option.first(), oppositeGroup, patches,
+                                patchStepBlocks, cityPlanningBounds)) {
+                            selectedFirstOrigin = option.opposite();
+                            selectedOppositeOrigin = option.first();
+                            firstBounds = oppositeCandidate;
+                            oppositeBounds = firstCandidate;
+                            break;
+                        }
+                    }
+                    if (selectedFirstOrigin == null) {
+                        throw fail("CITY_BLUEPRINT_ARRAY_COMPOSITION_SLOT_UNAVAILABLE",
+                                composition.compositionId() + " cannot reserve symmetric child Group pair "
+                                        + members.get(memberIndex) + "/" + members.get(memberIndex + 1) + ".");
+                    }
+                    int pairIndex = memberIndex / 2;
+                    CompositionSlot firstSlot = new CompositionSlot(composition.compositionId(),
+                            parentAlgorithm, composition.centerGroupId(), memberIndex + 1, pairIndex,
+                            selectedFirstOrigin, firstBounds);
+                    CompositionSlot oppositeSlot = new CompositionSlot(composition.compositionId(),
+                            parentAlgorithm, composition.centerGroupId(), memberIndex + 2, pairIndex,
+                            selectedOppositeOrigin, oppositeBounds);
+                    result.put(firstGroup.groupId(), firstSlot);
+                    result.put(oppositeGroup.groupId(), oppositeSlot);
+                    reserved.add(firstBounds);
+                    reserved.add(oppositeBounds);
+                }
+            } else {
+                for (int memberIndex = 0; memberIndex < members.size(); memberIndex++) {
+                    CityBlueprint.Group member = groupsById.get(members.get(memberIndex));
+                    int span = extentMaxSpan(member.extentClass());
+                    CityBlueprintGroupLayoutPlanner.Proposal proposal = groupLayoutPlanner.propose(
+                            parentAlgorithm, centerGroup.densityClass(), blueprint.generationSeed(),
+                            composition.compositionId(), memberIndex + 1, frame, centerOrigin,
+                            null, false, span);
+                    BlockPoint selectedOrigin = null;
+                    BlockBounds selectedBounds = null;
+                    for (BlockPoint guide : proposal.guides()) {
+                        BlockBounds candidate = slotBounds(guide, span);
+                        if (within(candidate, cityPlanningBounds)
+                                && !overlapsAny(candidate, reserved)
+                                && originInsidePreferredPatch(guide, member, patches,
+                                patchStepBlocks, cityPlanningBounds)) {
+                            selectedOrigin = guide;
+                            selectedBounds = candidate;
+                            break;
+                        }
+                    }
+                    if (selectedOrigin == null) {
+                        throw fail("CITY_BLUEPRINT_ARRAY_COMPOSITION_SLOT_UNAVAILABLE",
+                                composition.compositionId() + " cannot reserve child Group "
+                                        + member.groupId() + ".");
+                    }
+                    CompositionSlot slot = new CompositionSlot(composition.compositionId(), parentAlgorithm,
+                            composition.centerGroupId(), memberIndex + 1, -1,
+                            selectedOrigin, selectedBounds);
+                    result.put(member.groupId(), slot);
+                    reserved.add(selectedBounds);
+                }
+            }
+        }
+        return Map.copyOf(result);
+    }
+
+    private static boolean originInsidePreferredPatch(BlockPoint origin,
+                                                      CityBlueprint.Group group,
+                                                      Map<String, LandformPatchSummary> patches,
+                                                      int patchStepBlocks,
+                                                      BlockBounds cityPlanningBounds) {
+        if (origin.x() < cityPlanningBounds.minX() || origin.x() > cityPlanningBounds.maxX()
+                || origin.z() < cityPlanningBounds.minZ() || origin.z() > cityPlanningBounds.maxZ()) {
+            return false;
+        }
+        for (String patchRef : group.preferredPatchRefs()) {
+            LandformPatchSummary patch = patches.get(patchRef);
+            if (patch == null) continue;
+            for (PatchMemberCell cell : patch.memberCells()) {
+                if (origin.x() >= cell.blockMinX() && origin.x() < cell.blockMinX() + patchStepBlocks
+                        && origin.z() >= cell.blockMinZ() && origin.z() < cell.blockMinZ() + patchStepBlocks) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private static List<LandformPatchSummary> preferredPatches(CityBlueprint.Group group,
+                                                               Map<String, LandformPatchSummary> patches) {
+        List<LandformPatchSummary> result = new ArrayList<>();
+        for (String ref : group.preferredPatchRefs()) {
+            LandformPatchSummary patch = patches.get(ref);
+            if (patch != null) result.add(patch);
+        }
+        return List.copyOf(result);
+    }
+
+    private static BlockPoint patchPlacementOrigin(CityBlueprint.Group group,
+                                                   Map<String, LandformPatchSummary> patches,
+                                                   int patchStepBlocks,
+                                                   BlockBounds planningBounds) {
+        CityBlueprint.PlacementRelation placement = group.placementRelation();
+        if (placement == null
+                || placement.kind() == CityBlueprint.PlacementRelationKind.BETWEEN_GROUPS) return null;
+        LandformPatchSummary first = patches.get(placement.patchRefs().get(0));
+        LandformPatchSummary second = patches.get(placement.patchRefs().get(1));
+        PatchCellPair pair = nearestPatchCellPair(first, second, patchStepBlocks, planningBounds);
+        if (pair == null) return null;
+        return placement.kind() == CityBlueprint.PlacementRelationKind.ALONG_PATCH_BOUNDARY
+                ? pair.firstCenter()
+                : new BlockPoint((pair.firstCenter().x() + pair.secondCenter().x()) / 2,
+                (pair.firstCenter().z() + pair.secondCenter().z()) / 2);
+    }
+
+    private static PatchCellPair nearestPatchCellPair(LandformPatchSummary first,
+                                                      LandformPatchSummary second,
+                                                      int step,
+                                                      BlockBounds planningBounds) {
+        PatchCellPair best = null;
+        long bestDistance = Long.MAX_VALUE;
+        long bestCentrality = Long.MAX_VALUE;
+        long targetTwiceX = (long) first.centerBlock().x() + second.centerBlock().x();
+        long targetTwiceZ = (long) first.centerBlock().z() + second.centerBlock().z();
+        for (PatchMemberCell firstCell : first.memberCells()) {
+            BlockBounds firstBounds = new BlockBounds(firstCell.blockMinX(), firstCell.blockMinZ(),
+                    firstCell.blockMinX() + step - 1, firstCell.blockMinZ() + step - 1);
+            if (!within(firstBounds, planningBounds)) continue;
+            BlockPoint firstCenter = cellCenter(firstCell, step);
+            for (PatchMemberCell secondCell : second.memberCells()) {
+                BlockBounds secondBounds = new BlockBounds(secondCell.blockMinX(), secondCell.blockMinZ(),
+                        secondCell.blockMinX() + step - 1, secondCell.blockMinZ() + step - 1);
+                if (!within(secondBounds, planningBounds)) continue;
+                BlockPoint secondCenter = cellCenter(secondCell, step);
+                long dx = (long) firstCenter.x() - secondCenter.x();
+                long dz = (long) firstCenter.z() - secondCenter.z();
+                long distance = dx * dx + dz * dz;
+                long centerDx = (long) firstCenter.x() + secondCenter.x() - targetTwiceX;
+                long centerDz = (long) firstCenter.z() + secondCenter.z() - targetTwiceZ;
+                long centrality = centerDx * centerDx + centerDz * centerDz;
+                if (distance < bestDistance
+                        || (distance == bestDistance && centrality < bestCentrality)) {
+                    bestDistance = distance;
+                    bestCentrality = centrality;
+                    best = new PatchCellPair(firstCell, secondCell, firstCenter, secondCenter);
+                }
+            }
+        }
+        return best;
+    }
+
+    private static BlockBounds slotBounds(BlockPoint center, int span) {
+        int minX = center.x() - span / 2;
+        int minZ = center.z() - span / 2;
+        return new BlockBounds(minX, minZ, minX + span - 1, minZ + span - 1);
+    }
+
+    private static boolean overlapsAny(BlockBounds candidate, List<BlockBounds> occupied) {
+        return occupied.stream().anyMatch(candidate::overlaps);
     }
 
     private ConnectivityPlan buildConnectivityPlan(CityBlueprint blueprint,
@@ -1484,10 +1749,15 @@ public final class CityBlueprintCompilerService {
         plan.add("patterns", patterns);
         plan.addProperty("priority", priorityRank(state.group().priority()) * 1000 + ordinal);
         plan.add("templateCatalog", templateCatalog.deepCopy());
-        PatchMemberCell seedCell = phase == PlacementPhase.CONNECTIVITY
-                ? null : frontierCell(state, candidatePatches);
+        BlockPoint requestedOrigin = phase == PlacementPhase.CONNECTIVITY || state.anchorCount() > 0
+                ? null : initialPlacementOrigin(state, states);
+        PatchMemberCell seedCell = phase == PlacementPhase.CONNECTIVITY ? null
+                : requestedOrigin == null ? frontierCell(state, candidatePatches)
+                : nearestMemberCellToPoint(candidatePatches, requestedOrigin, state.patchStepBlocks(),
+                state.formationBounds());
         BlockPoint seedPoint = phase == PlacementPhase.CONNECTIVITY
                 ? frontierAnchorCenterToward(state, connectivityTarget)
+                : requestedOrigin != null ? requestedOrigin
                 : seedCell == null ? state.patches().get(0).centerBlock()
                 : cellCenter(seedCell, state.patchStepBlocks());
         OutwardTarget outward = connectivityTarget != null
@@ -1509,6 +1779,12 @@ public final class CityBlueprintCompilerService {
         JsonObject layoutTrace = layout.traceJson();
         layoutTrace.addProperty("preferredPatchZone", state.group().preferredPatchZone().name());
         layoutTrace.addProperty("patchSelectionScope", patchSelectionScope);
+        if (state.group().placementRelation() != null) {
+            layoutTrace.addProperty("placementRelation", state.group().placementRelation().kind().name());
+        }
+        if (state.compositionSlot() != null) {
+            layoutTrace.add("arrayCompositionSlot", state.compositionSlot().asJson());
+        }
         if (state.anchorCount() == 0 && seedCell != null) {
             JsonObject coreSeedCell = new JsonObject();
             coreSeedCell.addProperty("cellX", seedCell.cellX());
@@ -1519,12 +1795,28 @@ public final class CityBlueprintCompilerService {
         }
         plan.add("blueprintLayout", layoutTrace);
         PatchMemberCell guideCell = nearestMemberCellToPoint(candidatePatches, layout.guides().get(0),
-                state.patchStepBlocks(), state.planningBounds());
+                state.patchStepBlocks(), state.legalBounds(phase == PlacementPhase.CONNECTIVITY));
         PatchMemberCell legalRegionGuide = phase == PlacementPhase.REQUIRED && state.anchorCount() == 0
                 ? null : guideCell;
         plan.add("candidateLegalRegion", legalRegion(state, candidatePatches, legalRegionGuide,
                 phase == PlacementPhase.CONNECTIVITY));
         return plan;
+    }
+
+    private static BlockPoint initialPlacementOrigin(GroupState state,
+                                                     Map<String, GroupState> states) {
+        if (state.preferredOrigin() != null) return state.preferredOrigin();
+        CityBlueprint.PlacementRelation placement = state.group().placementRelation();
+        if (placement == null
+                || placement.kind() != CityBlueprint.PlacementRelationKind.BETWEEN_GROUPS) return null;
+        GroupState first = states.get(placement.groupRefs().get(0));
+        GroupState second = states.get(placement.groupRefs().get(1));
+        if (first == null || second == null || first.extent() == null || second.extent() == null) {
+            throw fail("CITY_BLUEPRINT_PLACEMENT_RELATION_UNRESOLVED",
+                    state.group().groupId() + " requires two completed Group extents.");
+        }
+        return new BlockPoint((centerX(first.extent()) + centerX(second.extent())) / 2,
+                (centerZ(first.extent()) + centerZ(second.extent())) / 2);
     }
 
     private static BlockPoint cellCenter(PatchMemberCell cell, int step) {
@@ -1607,10 +1899,10 @@ public final class CityBlueprintCompilerService {
     private static PatchMemberCell frontierCell(GroupState state, List<LandformPatchSummary> patches) {
         if (state.extent() != null) {
             return nearestMemberCell(patches, state.envelopes(), state.patchStepBlocks(),
-                    state.planningBounds());
+                    state.formationBounds());
         }
         return preferredZoneCell(patches, state.group().preferredPatchZone(),
-                state.patchStepBlocks(), state.planningBounds());
+                state.patchStepBlocks(), state.formationBounds());
     }
 
     private static PatchMemberCell preferredZoneCell(List<LandformPatchSummary> patches,
@@ -1689,6 +1981,7 @@ public final class CityBlueprintCompilerService {
         int minZ = Integer.MAX_VALUE;
         int maxX = Integer.MIN_VALUE;
         int maxZ = Integer.MIN_VALUE;
+        BlockBounds legalBounds = state.legalBounds(connectivityExpansion);
         BlockBounds growthWindow = growthWindow(state, frontierCell, step, connectivityExpansion);
         for (int patchIndex = 0; patchIndex < patches.size(); patchIndex++) {
             LandformPatchSummary patch = patches.get(patchIndex);
@@ -1700,7 +1993,7 @@ public final class CityBlueprintCompilerService {
             for (PatchMemberCell cell : patch.memberCells()) {
                 BlockBounds cellBounds = new BlockBounds(cell.blockMinX(), cell.blockMinZ(),
                         cell.blockMinX() + step - 1, cell.blockMinZ() + step - 1);
-                if (!within(cellBounds, state.planningBounds())) continue;
+                if (!within(cellBounds, legalBounds)) continue;
                 if (growthWindow != null && !cellBounds.overlaps(growthWindow)) continue;
                 if (!seenCells.add(cell.cellX() + ":" + cell.cellZ())) continue;
                 JsonObject value = new JsonObject();
@@ -1876,6 +2169,10 @@ public final class CityBlueprintCompilerService {
         CityStructureTerrainGate.Evaluation evaluation = terrainGate.evaluate(
                 structureRef, footprint, state.group().terrainPolicy());
         if (!evaluation.passed()) return evaluation.reasonCode();
+        if (!within(footprint, state.legalBounds(phase == PlacementPhase.CONNECTIVITY))) {
+            return phase == PlacementPhase.CONNECTIVITY
+                    ? "CITY_PLANNING_BOUNDS_EXCEEDED" : "ARRAY_COMPOSITION_SLOT_EXCEEDED";
+        }
         BlockBounds proposed = union(state.extent(), footprint);
         if (phase != PlacementPhase.CONNECTIVITY
                 && (width(proposed) > extentMaxSpan(state.group().extentClass())
@@ -2125,6 +2422,7 @@ public final class CityBlueprintCompilerService {
         trace.addProperty("terrainGateEvaluationScope", "all_intersecting_terrain_field_cells");
         trace.add("selections", selections.deepCopy());
         trace.add("connectivityPlan", connectivityPlan.asJson());
+        trace.add("arrayCompositionSlots", arrayCompositionSlots(states));
         JsonArray groupResults = new JsonArray();
         states.values().forEach(state -> groupResults.add(state.asJson()));
         trace.add("groupResults", groupResults);
@@ -2141,6 +2439,7 @@ public final class CityBlueprintCompilerService {
         map.addProperty("connectionSemantics", "STRUCTURE_FRONTIER_FOR_LAND_USE");
         map.addProperty("cityBoundaryPolicy", "D3_REVIEW_GRID_HARD_BOUNDARY");
         map.addProperty("handoffThresholdPolicy", "STRICT_BILATERAL_MINIMUM");
+        map.add("arrayCompositionSlots", arrayCompositionSlots(states));
         JsonArray groups = new JsonArray();
         states.values().forEach(state -> groups.add(state.extentJson()));
         map.add("groups", groups);
@@ -2154,6 +2453,18 @@ public final class CityBlueprintCompilerService {
         map.addProperty("landUseConnectionStatus", "PENDING_LAND_USE_COMPILE");
         map.add("connections", connections);
         return map;
+    }
+
+    private static JsonArray arrayCompositionSlots(Map<String, GroupState> states) {
+        JsonArray slots = new JsonArray();
+        states.values().stream()
+                .filter(state -> state.compositionSlot() != null)
+                .forEach(state -> {
+                    JsonObject value = state.compositionSlot().asJson();
+                    value.addProperty("groupId", state.group().groupId());
+                    slots.add(value);
+                });
+        return slots;
     }
 
     private static void refreshConnections(ConnectivityPlan plan, Map<String, GroupState> states) {
@@ -2549,6 +2860,29 @@ public final class CityBlueprintCompilerService {
         }
     }
 
+    private record PatchCellPair(PatchMemberCell first, PatchMemberCell second,
+                                 BlockPoint firstCenter, BlockPoint secondCenter) {
+    }
+
+    private record CompositionSlot(String compositionId, String parentAlgorithm,
+                                   String centerGroupId, int slotIndex, int pairIndex,
+                                   BlockPoint origin, BlockBounds slotBounds) {
+        JsonObject asJson() {
+            JsonObject value = new JsonObject();
+            value.addProperty("compositionId", compositionId);
+            value.addProperty("parentAlgorithm", parentAlgorithm);
+            value.addProperty("centerGroupId", centerGroupId);
+            value.addProperty("slotIndex", slotIndex);
+            if (pairIndex >= 0) value.addProperty("pairIndex", pairIndex);
+            JsonObject originJson = new JsonObject();
+            originJson.addProperty("x", origin.x());
+            originJson.addProperty("z", origin.z());
+            value.add("origin", originJson);
+            value.add("slotBounds", CityStructureCandidateEnvelope.boundsJson(slotBounds));
+            return value;
+        }
+    }
+
     private record ConnectivityFit(boolean allowed, double score, double gapBlocks, String reasonCode,
                                    ConnectionEdge edge) {
         static ConnectivityFit rejected(String reasonCode) {
@@ -2712,6 +3046,9 @@ public final class CityBlueprintCompilerService {
         private final Map<String, LandformPatchSummary> patchByRef;
         private final int patchStepBlocks;
         private final BlockBounds planningBounds;
+        private final BlockBounds formationBounds;
+        private final BlockPoint preferredOrigin;
+        private final CompositionSlot compositionSlot;
         private final String layoutAlgorithm;
         private final CityBlueprintGroupLayoutPlanner.Parameters layoutParameters;
         private final ConnectionConfiguration connectionConfiguration;
@@ -2739,7 +3076,9 @@ public final class CityBlueprintCompilerService {
 
         private GroupState(CityBlueprint.Group group, List<LandformPatchSummary> patches,
                            List<LandformPatchSummary> connectionPatches,
-                           int patchStepBlocks, BlockBounds planningBounds, String layoutAlgorithm,
+                           int patchStepBlocks, BlockBounds planningBounds, BlockBounds formationBounds,
+                           BlockPoint preferredOrigin, CompositionSlot compositionSlot,
+                           String layoutAlgorithm,
                            CityBlueprintGroupLayoutPlanner.Parameters layoutParameters,
                            ConnectionConfiguration connectionConfiguration,
                            int minimumStructureCount) {
@@ -2752,6 +3091,9 @@ public final class CityBlueprintCompilerService {
             this.patchByRef = Map.copyOf(byRef);
             this.patchStepBlocks = patchStepBlocks;
             this.planningBounds = planningBounds;
+            this.formationBounds = formationBounds;
+            this.preferredOrigin = preferredOrigin;
+            this.compositionSlot = compositionSlot;
             this.layoutAlgorithm = layoutAlgorithm;
             this.layoutParameters = layoutParameters;
             this.connectionConfiguration = connectionConfiguration;
@@ -2762,6 +3104,19 @@ public final class CityBlueprintCompilerService {
         List<LandformPatchSummary> patches() { return patches; }
         List<LandformPatchSummary> connectionPatches() { return connectionPatches; }
         List<LandformPatchSummary> formationPatches() {
+            CityBlueprint.PlacementRelation placement = group.placementRelation();
+            if (placement != null) {
+                if (placement.kind() == CityBlueprint.PlacementRelationKind.BETWEEN_GROUPS) {
+                    return connectionPatches;
+                }
+                List<String> refs = placement.kind() == CityBlueprint.PlacementRelationKind.ALONG_PATCH_BOUNDARY
+                        ? placement.patchRefs().subList(0, 1) : placement.patchRefs();
+                List<LandformPatchSummary> relationPatches = refs.stream()
+                        .map(patchByRef::get)
+                        .filter(java.util.Objects::nonNull)
+                        .toList();
+                if (!relationPatches.isEmpty()) return relationPatches;
+            }
             if (claimedPatchRefs.isEmpty()) return patches;
             List<LandformPatchSummary> claimed = connectionPatches.stream()
                     .filter(patch -> claimedPatchRefs.contains(patch.landformPatchId()))
@@ -2771,6 +3126,22 @@ public final class CityBlueprintCompilerService {
         Map<String, LandformPatchSummary> patchByRef() { return patchByRef; }
         int patchStepBlocks() { return patchStepBlocks; }
         BlockBounds planningBounds() { return planningBounds; }
+        BlockBounds formationBounds() { return formationBounds; }
+        BlockBounds legalBounds(boolean connectivityExpansion) {
+            return connectivityExpansion ? planningBounds : formationBounds;
+        }
+        BlockPoint preferredOrigin() { return preferredOrigin; }
+        CompositionSlot compositionSlot() { return compositionSlot; }
+        boolean hasExplicitPlacementRelation() {
+            return group.placementRelation() != null;
+        }
+        String initialPatchSelectionScope() {
+            if (compositionSlot != null) return "array_composition_slot";
+            if (group.placementRelation() != null) {
+                return "placement_relation_" + group.placementRelation().kind().name().toLowerCase(java.util.Locale.ROOT);
+            }
+            return "blueprint_preferred";
+        }
         String layoutAlgorithm() { return layoutAlgorithm; }
         CityBlueprintGroupLayoutPlanner.Parameters layoutParameters() { return layoutParameters; }
         ConnectionConfiguration connectionConfiguration() { return connectionConfiguration; }
@@ -2799,7 +3170,8 @@ public final class CityBlueprintCompilerService {
         int connectionBatchCount() { return connectionBatchCount; }
         GroupState fresh() {
             return new GroupState(group, patches, connectionPatches, patchStepBlocks, planningBounds,
-                    layoutAlgorithm, layoutParameters, connectionConfiguration, minimumStructureCount);
+                    formationBounds, preferredOrigin, compositionSlot, layoutAlgorithm, layoutParameters,
+                    connectionConfiguration, minimumStructureCount);
         }
         void advanceConnectionCursor(int count) {
             connectionFillCursor += count;
@@ -2873,7 +3245,13 @@ public final class CityBlueprintCompilerService {
             value.addProperty("groupId", group.groupId());
             value.addProperty("requestedExtentClass", group.extentClass().name());
             value.addProperty("densityClass", group.densityClass().name());
+            value.addProperty("terrainPolicy", group.terrainPolicy().name());
             value.addProperty("preferredPatchZone", group.preferredPatchZone().name());
+            if (group.placementRelation() != null) {
+                value.addProperty("placementRelation", group.placementRelation().kind().name());
+            }
+            if (compositionSlot != null) value.add("arrayCompositionSlot", compositionSlot.asJson());
+            value.add("formationBounds", CityStructureCandidateEnvelope.boundsJson(formationBounds));
             value.addProperty("targetAreaBlocks", targetAreaBlocks());
             value.addProperty("maxExtentSpanBlocks", extentMaxSpan(group.extentClass()));
             value.addProperty("densityParameterization", "ALGORITHM_SPECIFIC");

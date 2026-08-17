@@ -21,10 +21,14 @@ test("publishes the program-only context tool and one-shot structure plus outdoo
   assert.equal(groupProperties.preferredPatchRefs.minItems, 1);
   assert.deepEqual(groupProperties.preferredPatchZone.enum,
     ["CENTER", "NORTH", "EAST", "SOUTH", "WEST"]);
+  assert.deepEqual(groupProperties.placementRelation.properties.kind.enum,
+    ["BETWEEN_PATCHES", "ALONG_PATCH_BOUNDARY", "BETWEEN_GROUPS"]);
+  assert.deepEqual(groupProperties.placementRelation.required,
+    ["kind", "patchRefs", "groupRefs"]);
   assert.deepEqual(groupProperties.extentClass.enum, ["SMALL", "MEDIUM", "LARGE"]);
   assert.deepEqual(groupProperties.densityClass.enum, ["SPARSE", "BALANCED", "DENSE"]);
   assert.deepEqual(submit.inputSchema.properties.cityBlueprint.properties.schemaVersion.enum,
-    ["city_blueprint.v0.10"]);
+    ["city_blueprint.v0.11"]);
   assert.equal(groupProperties.connectionPlan.additionalProperties, false);
   assert.deepEqual(groupProperties.connectionPlan.properties.parameters.properties.sideMode.enum,
     ["LEFT", "RIGHT", "BOTH"]);
@@ -34,6 +38,12 @@ test("publishes the program-only context tool and one-shot structure plus outdoo
     .properties.attachedFeatures.maxItems, 0);
 
   const blueprint = submit.inputSchema.properties.cityBlueprint;
+  assert.ok(blueprint.required.includes("arrayCompositions"));
+  const composition = blueprint.properties.arrayCompositions.items;
+  assert.equal(composition.additionalProperties, false);
+  assert.deepEqual(composition.required,
+    ["compositionId", "algorithmProfileRef", "centerGroupId", "memberGroupIds"]);
+  assert.equal(composition.properties.memberGroupIds.minItems, 1);
   assert.ok(blueprint.required.includes("outdoorPlan"));
   const outdoor = blueprint.properties.outdoorPlan;
   assert.equal(outdoor.additionalProperties, false);
