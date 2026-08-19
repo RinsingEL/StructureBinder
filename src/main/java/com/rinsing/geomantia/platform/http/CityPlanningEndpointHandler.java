@@ -182,7 +182,7 @@ final class CityPlanningEndpointHandler {
         }
         JsonObject finalized = handleFinalizeCompiledD4(debugRoot, runId, citySeedId,
                 compiled.terraSenseProfileSource(), compiled.structureAnchorPlan(),
-                compiled.landscapeCapacityReservationPlan());
+                compiled.landscapeCapacityReservationPlan(), compiled.groupExtentMap());
         JsonObject artifacts = finalized.has("artifacts") && finalized.get("artifacts").isJsonObject()
                 ? finalized.getAsJsonObject("artifacts") : new JsonObject();
         compileResponse.getAsJsonObject("artifacts").entrySet().forEach(entry ->
@@ -200,9 +200,10 @@ final class CityPlanningEndpointHandler {
     }
 
     private static JsonObject handleFinalizeCompiledD4(Path debugRoot, String runId, String citySeedId,
-                                                        JsonObject terraSenseProfileSource,
-                                                        JsonObject resolvedAnchorPlan,
-                                                        JsonObject landscapeCapacityPlan) throws IOException {
+                                                         JsonObject terraSenseProfileSource,
+                                                         JsonObject resolvedAnchorPlan,
+                                                         JsonObject landscapeCapacityPlan,
+                                                         JsonObject groupExtentMap) throws IOException {
         Path runDir = debugRoot.resolve(runId);
         loadCitySeedForD4(runDir, runId, citySeedId);
         Path d3PackagePath = d3PackagePath(runDir, citySeedId);
@@ -226,7 +227,8 @@ final class CityPlanningEndpointHandler {
                 result.structureAnchorMap().getAsJsonObject("semanticProfileSource")));
         Files.writeString(qualityPath, CityJson.GSON.toJson(result.qualityReport()));
         Path previewPath = new CityStructureLandingPreviewRenderer()
-                .renderD4(result.structureAnchorMap(), reviewPackage, landscapeCapacityPlan, outputDirectory);
+                .renderD4(result.structureAnchorMap(), reviewPackage, landscapeCapacityPlan, groupExtentMap,
+                        outputDirectory);
         JsonObject response = result.asJson();
         JsonObject artifacts = new JsonObject();
         artifacts.addProperty("structureAnchorPlan", debugRef(debugRoot, anchorPlanPath));

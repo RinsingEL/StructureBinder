@@ -97,6 +97,17 @@ class CityBlueprintCompilerServiceTest {
                 .getAsJsonObject("collisionExtent");
         assertTrue(extent.get("maxX").getAsInt() - extent.get("minX").getAsInt() + 1 <= 96);
         assertTrue(extent.get("maxZ").getAsInt() - extent.get("minZ").getAsInt() + 1 <= 96);
+        JsonObject district = first.groupExtentMap().getAsJsonArray("groups").get(0).getAsJsonObject()
+                .getAsJsonObject("districtEnvelope");
+        assertTrue(district.get("minX").getAsInt() <= extent.get("minX").getAsInt());
+        assertTrue(district.get("minZ").getAsInt() <= extent.get("minZ").getAsInt());
+        assertTrue(district.get("maxX").getAsInt() >= extent.get("maxX").getAsInt());
+        assertTrue(district.get("maxZ").getAsInt() >= extent.get("maxZ").getAsInt());
+        JsonObject districtCapacity = first.groupExtentMap().getAsJsonArray("groups").get(0).getAsJsonObject()
+                .getAsJsonObject("districtCapacity");
+        assertEquals("RESERVED", districtCapacity.get("status").getAsString());
+        assertTrue(districtCapacity.get("reservedCellCount").getAsInt() > 0);
+        assertTrue(districtCapacity.getAsJsonArray("reservationSpans").size() > 0);
         Set<Integer> anchorXs = new LinkedHashSet<>();
         Set<Integer> anchorZs = new LinkedHashSet<>();
         JsonArray compiledAnchors = first.structureAnchorPlan().getAsJsonArray("anchors");
@@ -210,18 +221,25 @@ class CityBlueprintCompilerServiceTest {
                     warehouse.add("preferredPatchRefs", JsonParser.parseString("[\"patch:plain:2\"]"));
                     warehouse.addProperty("algorithmProfileRef", "algorithm:compact");
                     warehouse.addProperty("terrainPolicy", "ASSERTIVE");
+                    JsonObject connector = center.deepCopy();
+                    connector.addProperty("groupId", "connector");
+                    connector.add("preferredPatchRefs", JsonParser.parseString("[\"patch:plain:2\"]"));
+                    connector.addProperty("priority", "STANDARD");
                     center.add("placementRelation", JsonParser.parseString("""
                             {"kind":"ALONG_PATCH_BOUNDARY",
                              "patchRefs":["patch:plain:1","patch:plain:2"],"groupRefs":[]}
                             """).getAsJsonObject());
                     blueprint.getAsJsonArray("groups").add(market);
                     blueprint.getAsJsonArray("groups").add(warehouse);
+                    blueprint.getAsJsonArray("groups").add(connector);
                     blueprint.getAsJsonArray("arrayCompositions").add(JsonParser.parseString("""
                             {"compositionId":"civic_cluster_ring",
                              "algorithmProfileRef":"algorithm:center_symmetric",
                              "centerGroupId":"civic",
                              "memberGroupIds":["market_cluster","warehouse_cluster"]}
                             """).getAsJsonObject());
+                    blueprint.getAsJsonArray("relations").add(relation(
+                            "civic", "connector", "ADJACENCY"));
                 });
 
         CityBlueprintCompilerService.CompilationResult result = new CityBlueprintCompilerService()
@@ -256,6 +274,10 @@ class CityBlueprintCompilerServiceTest {
         assertEquals("CONFORM", groupsById.get("market_cluster").get("terrainPolicy").getAsString());
         assertEquals("COMPACT", groupsById.get("warehouse_cluster").get("layoutAlgorithm").getAsString());
         assertEquals("ASSERTIVE", groupsById.get("warehouse_cluster").get("terrainPolicy").getAsString());
+        for (JsonElement element : result.groupExtentMap().getAsJsonArray("groups")) {
+            JsonObject group = element.getAsJsonObject();
+            assertEquals(3, group.getAsJsonArray("districtBufferExemptGroupIds").size(), group.toString());
+        }
     }
 
     @Test
@@ -330,6 +352,14 @@ class CityBlueprintCompilerServiceTest {
         assertEquals("BETWEEN_GROUPS", layout.get("placementRelation").getAsString());
         assertEquals("placement_relation_between_groups",
                 layout.get("patchSelectionScope").getAsString());
+        JsonObject plazaExtent = result.groupExtentMap().getAsJsonArray("groups").asList().stream()
+                .map(JsonElement::getAsJsonObject)
+                .filter(group -> "plaza".equals(group.get("groupId").getAsString()))
+                .findFirst().orElseThrow();
+        Set<String> exemptions = new java.util.LinkedHashSet<>();
+        plazaExtent.getAsJsonArray("districtBufferExemptGroupIds").forEach(value ->
+                exemptions.add(value.getAsString()));
+        assertEquals(Set.of("civic", "market"), exemptions);
     }
 
     @Test
@@ -561,10 +591,17 @@ class CityBlueprintCompilerServiceTest {
 
         assertTrue(first.ok(), first.compileTrace().toString());
         assertEquals(first.structureAnchorPlan(), second.structureAnchorPlan());
-        assertEquals("city_generation_compile_trace.v0.11",
+        assertEquals("city_generation_compile_trace.v0.12",
                 first.compileTrace().get("schemaVersion").getAsString());
-        assertEquals("group_extent_map.v0.8",
+        assertEquals("group_extent_map.v0.10",
                 first.groupExtentMap().get("schemaVersion").getAsString());
+        assertEquals("PREALLOCATED_CONNECTED_CAPACITY_WITH_RELATION_AWARE_HARD_BUFFER",
+                first.groupExtentMap().get("districtBoundaryPolicy").getAsString());
+        assertEquals("city_district_capacity_plan.v0.1",
+                first.groupExtentMap().getAsJsonObject("districtCapacityPlan")
+                        .get("schemaVersion").getAsString());
+        assertEquals(CityBlueprintCompilerService.MINIMUM_DISTRICT_SEPARATION_BLOCKS,
+                first.groupExtentMap().get("minimumDistrictSeparationBlocks").getAsInt());
         assertTrue(first.groupExtentMap().get("structureGraphConnected").getAsBoolean());
         assertFalse(first.groupExtentMap().get("landUseConnected").getAsBoolean());
         assertFalse(first.groupExtentMap().has("maxInterGroupGapBlocks"));
@@ -611,6 +648,18 @@ class CityBlueprintCompilerServiceTest {
         Map<String, Set<Integer>> batchXs = new java.util.HashMap<>();
         Map<String, Set<Integer>> batchZs = new java.util.HashMap<>();
         List<JsonObject> envelopes = new java.util.ArrayList<>();
+        Map<String, List<JsonObject>> envelopesByGroup = new java.util.LinkedHashMap<>();
+        Map<String, Set<String>> districtExemptions = new java.util.LinkedHashMap<>();
+        for (JsonElement element : first.groupExtentMap().getAsJsonArray("groups")) {
+            JsonObject group = element.getAsJsonObject();
+            Set<String> exemptions = new java.util.LinkedHashSet<>();
+            group.getAsJsonArray("districtBufferExemptGroupIds").forEach(value ->
+                    exemptions.add(value.getAsString()));
+            districtExemptions.put(group.get("groupId").getAsString(), exemptions);
+        }
+        assertTrue(districtExemptions.get("civic").contains("market"));
+        assertTrue(districtExemptions.get("market").contains("workshop"));
+        assertFalse(districtExemptions.get("civic").contains("workshop"));
         boolean terminalBatchFound = false;
         for (JsonElement element : first.structureAnchorPlan().getAsJsonArray("anchors")) {
             JsonObject anchor = element.getAsJsonObject();
@@ -638,6 +687,16 @@ class CityBlueprintCompilerServiceTest {
             JsonObject collision = collisionBounds(anchor);
             for (JsonObject existing : envelopes) assertFalse(overlaps(collision, existing));
             envelopes.add(collision);
+            for (Map.Entry<String, List<JsonObject>> entry : envelopesByGroup.entrySet()) {
+                if (entry.getKey().equals(groupId)) continue;
+                if (districtExemptions.getOrDefault(groupId, Set.of()).contains(entry.getKey())) continue;
+                for (JsonObject existing : entry.getValue()) {
+                    assertTrue(edgeGap(collision, existing)
+                                    >= CityBlueprintCompilerService.MINIMUM_DISTRICT_SEPARATION_BLOCKS,
+                            groupId + " entered the district buffer around " + entry.getKey());
+                }
+            }
+            envelopesByGroup.computeIfAbsent(groupId, ignored -> new java.util.ArrayList<>()).add(collision);
         }
         assertTrue(terminalBatchFound, "continuous growth should shrink its final batch to reach handoff distance");
         for (JsonElement selection : first.compileTrace().getAsJsonArray("selections")) {
@@ -1156,6 +1215,20 @@ class CityBlueprintCompilerServiceTest {
                 && first.get("maxX").getAsInt() >= second.get("minX").getAsInt()
                 && first.get("minZ").getAsInt() <= second.get("maxZ").getAsInt()
                 && first.get("maxZ").getAsInt() >= second.get("minZ").getAsInt();
+    }
+
+    private static double edgeGap(JsonObject first, JsonObject second) {
+        int dx = axisGap(first.get("minX").getAsInt(), first.get("maxX").getAsInt(),
+                second.get("minX").getAsInt(), second.get("maxX").getAsInt());
+        int dz = axisGap(first.get("minZ").getAsInt(), first.get("maxZ").getAsInt(),
+                second.get("minZ").getAsInt(), second.get("maxZ").getAsInt());
+        return Math.hypot(dx, dz);
+    }
+
+    private static int axisGap(int firstMin, int firstMax, int secondMin, int secondMax) {
+        if (firstMax < secondMin) return Math.max(0, secondMin - firstMax - 1);
+        if (secondMax < firstMin) return Math.max(0, firstMin - secondMax - 1);
+        return 0;
     }
 
     private static JsonObject collisionBounds(JsonObject anchor) {

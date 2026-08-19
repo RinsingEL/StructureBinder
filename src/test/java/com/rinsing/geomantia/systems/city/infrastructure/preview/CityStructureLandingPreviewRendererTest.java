@@ -232,7 +232,17 @@ final class CityStructureLandingPreviewRendererTest {
                 anchorMap.getAsJsonArray("anchors").get(0).getAsJsonObject());
 
         assertEquals(new BlockBounds(44, 76, 52, 84), body);
-        Path overview = new CityStructureLandingPreviewRenderer().renderD4(anchorMap, null, tempDir);
+        JsonObject extentMap = JsonParser.parseString("""
+                {
+                  "schemaVersion":"group_extent_map.v0.10",
+                  "groups":[{
+                    "groupId":"civic",
+                    "districtEnvelope":{"minX":12,"minZ":36,"maxX":84,"maxZ":124}
+                  }]
+                }
+                """).getAsJsonObject();
+        Path overview = new CityStructureLandingPreviewRenderer()
+                .renderD4(anchorMap, null, null, extentMap, tempDir);
         assertTrue(Files.exists(overview));
         assertTrue(Files.exists(tempDir.resolve("structure_anchor_cluster_preview.png")));
         BufferedImage image = ImageIO.read(overview.toFile());
