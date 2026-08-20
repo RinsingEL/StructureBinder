@@ -27,6 +27,23 @@ class CityBlueprintGroupLayoutPlannerTest {
     }
 
     @Test
+    void algorithmsResolveToStableSpatialPlacementModes() {
+        assertEquals(CityBlueprintGroupLayoutPlanner.PlacementMode.CORE_ANCHORED,
+                planner.placementMode("CENTER_SYMMETRIC"));
+        assertEquals(CityBlueprintGroupLayoutPlanner.PlacementMode.CORE_ANCHORED,
+                planner.placementMode("COURTYARD"));
+        assertEquals(CityBlueprintGroupLayoutPlanner.PlacementMode.AXIS_ANCHORED,
+                planner.placementMode("LINEAR"));
+        assertEquals(CityBlueprintGroupLayoutPlanner.PlacementMode.CLUSTER_BOUNDED,
+                planner.placementMode("COMPACT"));
+        assertEquals(CityBlueprintGroupLayoutPlanner.PlacementMode.TERRAIN_FOLLOWING,
+                planner.placementMode("ORGANIC_COMPACT"));
+        assertEquals("AXIS_ANCHORED",
+                planner.parameters("LINEAR", CityBlueprint.DensityClass.BALANCED)
+                        .asJson().get("placementMode").getAsString());
+    }
+
+    @Test
     void compactLayoutKeepsTwoDimensionalMorphologyAcrossIncrementalSlots() {
         BlockPoint center = new BlockPoint(0, 0);
         var frame = planner.frame(center, new BlockPoint(100, 0), 17L, "civic");

@@ -143,8 +143,12 @@ public final class CityBlueprintCompilerService {
             CompositionSlot slot = compositionSlots.get(group.groupId());
             formationBoundsByGroup.put(group.groupId(), slot == null ? cityPlanningBounds : slot.slotBounds());
         }
+        Map<String, String> algorithmsByGroup = new LinkedHashMap<>();
+        for (CityBlueprint.Group group : groups) {
+            algorithmsByGroup.put(group.groupId(), catalog.algorithm(group.algorithmProfileRef()));
+        }
         CityDistrictCapacityPlanner.Result districtCapacity = districtCapacityPlanner.plan(
-                groups, patches, formationBoundsByGroup, districtBufferExemptions, terrainField,
+                groups, patches, formationBoundsByGroup, districtBufferExemptions, algorithmsByGroup, terrainField,
                 review.grid().cellStepBlocks(), cityPlanningBounds, blueprint.generationSeed());
         if (!districtCapacity.ok()) {
             throw fail(districtCapacity.reasonCode(), districtCapacity.message());
@@ -3251,7 +3255,8 @@ public final class CityBlueprintCompilerService {
             this.minimumStructureCount = minimumStructureCount;
             this.districtBufferExemptGroupIds = Set.copyOf(districtBufferExemptGroupIds);
             this.districtReservation = districtReservation == null
-                    ? CityDistrictCapacityPlanner.Reservation.deferred(group, "UNPLANNED")
+                    ? CityDistrictCapacityPlanner.Reservation.deferred(group,
+                    CityBlueprintGroupLayoutPlanner.PlacementMode.fromAlgorithm(layoutAlgorithm), "UNPLANNED")
                     : districtReservation;
         }
 
@@ -3415,6 +3420,7 @@ public final class CityBlueprintCompilerService {
             value.addProperty("maxExtentSpanBlocks", extentMaxSpan(group.extentClass()));
             value.addProperty("densityParameterization", "ALGORITHM_SPECIFIC");
             value.addProperty("layoutAlgorithm", layoutAlgorithm);
+            value.addProperty("placementMode", layoutParameters.placementMode().name());
             value.add("layoutParameters", layoutParameters.asJson());
             value.addProperty("maxIntraGroupGapBlocks", layoutParameters.maximumEdgeGapBlocks());
             JsonArray districtExemptions = new JsonArray();

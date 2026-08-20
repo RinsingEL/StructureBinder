@@ -15,7 +15,29 @@ import java.util.Set;
 final class CityBlueprintGroupLayoutPlanner {
     private static final double GOLDEN_ANGLE = Math.PI * (3.0 - Math.sqrt(5.0));
 
+    /** Derived spatial topology; functional roles remain independent constraints. */
+    enum PlacementMode {
+        CORE_ANCHORED,
+        AXIS_ANCHORED,
+        CLUSTER_BOUNDED,
+        TERRAIN_FOLLOWING;
+
+        static PlacementMode fromAlgorithm(String algorithm) {
+            return switch (algorithm) {
+                case "CENTER_SYMMETRIC", "COURTYARD", "GRID" -> CORE_ANCHORED;
+                case "LINEAR" -> AXIS_ANCHORED;
+                case "ORGANIC_COMPACT" -> TERRAIN_FOLLOWING;
+                default -> CLUSTER_BOUNDED;
+            };
+        }
+    }
+
+    PlacementMode placementMode(String algorithm) {
+        return PlacementMode.fromAlgorithm(algorithm);
+    }
+
     Parameters parameters(String algorithm, CityBlueprint.DensityClass density) {
+        PlacementMode placementMode = placementMode(algorithm);
         int targetGap = switch (density) {
             case DENSE -> 4;
             case BALANCED -> 8;
@@ -75,7 +97,7 @@ final class CityBlueprintGroupLayoutPlanner {
             }
         }
         return new Parameters(targetGap, maximumGap, handoffGap, jitter,
-                claimMultiplier, outwardBias);
+                claimMultiplier, outwardBias, placementMode);
     }
 
     Frame frame(BlockPoint center, BlockPoint target, long seed, String groupId) {
@@ -338,9 +360,11 @@ final class CityBlueprintGroupLayoutPlanner {
                       int landUseHandoffGapBlocks,
                       int jitterBlocks,
                       double claimAreaMultiplier,
-                      double outwardBias) {
+                      double outwardBias,
+                      PlacementMode placementMode) {
         JsonObject asJson() {
             JsonObject value = new JsonObject();
+            value.addProperty("placementMode", placementMode.name());
             value.addProperty("targetEdgeGapBlocks", targetEdgeGapBlocks);
             value.addProperty("maximumEdgeGapBlocks", maximumEdgeGapBlocks);
             value.addProperty("landUseHandoffGapBlocks", landUseHandoffGapBlocks);
@@ -388,6 +412,7 @@ final class CityBlueprintGroupLayoutPlanner {
         JsonObject traceJson() {
             JsonObject value = new JsonObject();
             value.addProperty("algorithm", algorithm);
+            value.addProperty("placementMode", parameters.placementMode().name());
             value.addProperty("slotIndex", slotIndex);
             value.addProperty("spacingBlocks", spacingBlocks);
             value.addProperty("outwardGuided", outwardGuided);
@@ -421,6 +446,7 @@ final class CityBlueprintGroupLayoutPlanner {
         JsonObject traceJson(int firstSlotIndex) {
             JsonObject value = new JsonObject();
             value.addProperty("algorithm", "CENTER_SYMMETRIC");
+            value.addProperty("placementMode", parameters.placementMode().name());
             value.addProperty("slotIndex", firstSlotIndex);
             value.addProperty("spacingBlocks", radiusBlocks);
             value.addProperty("outwardGuided", false);

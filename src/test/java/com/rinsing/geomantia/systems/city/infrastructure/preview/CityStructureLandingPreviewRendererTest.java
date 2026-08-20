@@ -251,6 +251,59 @@ final class CityStructureLandingPreviewRendererTest {
     }
 
     @Test
+    void d4AnchorPreviewDrawsExactExpandedDistrictInsteadOfEnvelopeRectangle(@TempDir Path tempDir)
+            throws Exception {
+        JsonObject anchorMap = JsonParser.parseString("""
+                {
+                  "grid": {"blockBounds": {"minX": 0, "minZ": 0, "maxX": 256, "maxZ": 256}},
+                  "anchors": [{
+                    "anchorId": "remote_anchor", "placementGroupId": "civic",
+                    "templateId": "geomantia:test_house",
+                    "anchorBlock": {"x": 208, "z": 208},
+                    "actualFootprint": {"minX": 204, "minZ": 204, "maxX": 212, "maxZ": 212},
+                    "collisionEnvelope": {"minX": 200, "minZ": 200, "maxX": 216, "maxZ": 216},
+                    "maskEnvelope": {"minX": 196, "minZ": 196, "maxX": 220, "maxZ": 220}
+                  }]
+                }
+                """).getAsJsonObject();
+        JsonObject extentMap = JsonParser.parseString("""
+                {
+                  "schemaVersion":"group_extent_map.v0.10",
+                  "groups":[{
+                    "groupId":"civic",
+                    "districtEnvelope":{"minX":32,"minZ":32,"maxX":127,"maxZ":95},
+                    "districtCapacity":{"reservationSpans":[
+                      {"minX":32,"minZ":32,"maxX":95,"maxZ":63,"cellStepBlocks":32},
+                      {"minX":32,"minZ":64,"maxX":63,"maxZ":95,"cellStepBlocks":32}
+                    ]}
+                  }]
+                }
+                """).getAsJsonObject();
+
+        Path overview = new CityStructureLandingPreviewRenderer()
+                .renderD4(anchorMap, null, null, extentMap, tempDir);
+        BufferedImage image = ImageIO.read(overview.toFile());
+        double overviewScale = 2.625;
+        int overviewZ = 64 + (int) Math.round(80 * overviewScale);
+        int filledX = 64 + (int) Math.round(48 * overviewScale);
+        int notchX = 64 + (int) Math.round(80 * overviewScale);
+        int outsideX = 64 + (int) Math.round(144 * overviewScale);
+
+        assertNotEquals(image.getRGB(filledX, overviewZ), image.getRGB(notchX, overviewZ),
+                "Reserved L-shape cell must be tinted");
+        assertEquals(image.getRGB(outsideX, overviewZ), image.getRGB(notchX, overviewZ),
+                "District envelope must not fill the unreserved L-shape notch");
+
+        BufferedImage detail = ImageIO.read(tempDir.resolve("structure_anchor_cluster_preview.png").toFile());
+        double detailScale = 772.0 / 237.0;
+        int detailZ = 64 + (int) Math.round((48 - 8) * detailScale);
+        int reservedX = 64 + (int) Math.round((48 - 8) * detailScale);
+        int unreservedX = 64 + (int) Math.round((128 - 8) * detailScale);
+        assertNotEquals(detail.getRGB(reservedX, detailZ), detail.getRGB(unreservedX, detailZ),
+                "Local viewport must include expanded district cells outside the structure cluster");
+    }
+
+    @Test
     void d4AnchorPreviewRendersExactLandscapeCapacitySpans(@TempDir Path tempDir) throws Exception {
         JsonObject anchorMap = JsonParser.parseString("""
                 {

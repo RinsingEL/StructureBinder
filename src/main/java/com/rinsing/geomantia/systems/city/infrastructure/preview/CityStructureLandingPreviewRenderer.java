@@ -17,6 +17,8 @@ import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import java.awt.geom.Area;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -80,7 +82,7 @@ public final class CityStructureLandingPreviewRenderer {
                 drawBadge(g, t, point(anchor, "anchorBlock"), "A" + i, color(i, 235));
             }
             title(g, "City D4 structure anchor preview",
-                    "district=colored boundary; landscape capacity=exact spans; body=blue collision=red; anchors="
+                    "district=exact expanded cells; landscape capacity=exact spans; body=blue collision=red; anchors="
                             + array(anchorMap, "anchors").size() + " landscapes="
                             + landscapeCount(landscapeCapacityPlan) + " districts=" + districtCount(groupExtentMap));
             d4AnchorSummary(g, anchorMap, landscapeCapacityPlan);
@@ -366,18 +368,20 @@ public final class CityStructureLandingPreviewRenderer {
         Graphics2D g = image.createGraphics();
         try {
             setup(g);
-            BlockBounds viewport = unionMasks(cluster);
-            BlockBounds landscapeBounds = landscapePlanBounds(landscapeCapacityPlan);
-            if (landscapeBounds != null) viewport = union(viewport, landscapeBounds);
-            viewport = expand(viewport, 24);
-            Transform t = detailTransform(viewport);
-            drawPatchBackdrop(g, t, viewport, reviewPackage);
-            drawGrid(g, t, viewport);
             Set<String> visibleGroups = new LinkedHashSet<>();
             cluster.stream().map(AnchorPreview::anchor)
                     .map(anchor -> string(anchor, "placementGroupId"))
                     .filter(groupId -> !groupId.isBlank())
                     .forEach(visibleGroups::add);
+            BlockBounds viewport = unionMasks(cluster);
+            BlockBounds landscapeBounds = landscapePlanBounds(landscapeCapacityPlan);
+            if (landscapeBounds != null) viewport = union(viewport, landscapeBounds);
+            BlockBounds districtBounds = districtReservationBounds(groupExtentMap, visibleGroups);
+            if (districtBounds != null) viewport = union(viewport, districtBounds);
+            viewport = expand(viewport, 24);
+            Transform t = detailTransform(viewport);
+            drawPatchBackdrop(g, t, viewport, reviewPackage);
+            drawGrid(g, t, viewport);
             drawDistrictEnvelopes(g, t, groupExtentMap, visibleGroups);
             drawLandscapeCapacities(g, t, landscapeCapacityPlan);
             for (AnchorPreview preview : cluster) {
@@ -386,7 +390,7 @@ public final class CityStructureLandingPreviewRenderer {
                         color(preview.index(), 235));
             }
             title(g, "City D4 local structure cluster",
-                    "D*=district boundary; L*=landscape capacity; body=blue collision=red; anchors="
+                    "D*=exact expanded district; L*=landscape capacity; body=blue collision=red; anchors="
                             + cluster.size());
             drawD4DetailLegend(g, cluster, landscapeCapacityPlan);
         } finally {
@@ -494,29 +498,53 @@ public final class CityStructureLandingPreviewRenderer {
             JsonObject group = element.getAsJsonObject();
             String groupId = string(group, "groupId");
             if (!visibleGroupIds.isEmpty() && !visibleGroupIds.contains(groupId)) continue;
-            JsonObject envelope = object(group, "districtEnvelope");
-            if (envelope.size() == 0) continue;
-            index++;
-            BlockBounds bounds = bounds(envelope);
-            Color base = color(index, 235);
             JsonObject capacity = object(group, "districtCapacity");
-            g.setColor(withAlpha(base, 64));
+            Area reservationArea = new Area();
+            BlockPoint labelPoint = null;
             for (JsonElement spanElement : array(capacity, "reservationSpans")) {
                 if (!spanElement.isJsonObject()) continue;
                 JsonObject span = spanElement.getAsJsonObject();
-                drawRect(g, t, new BlockBounds(intValue(span, "minX", 0), intValue(span, "minZ", 0),
-                                intValue(span, "maxX", 0), intValue(span, "maxZ", 0)),
-                        withAlpha(base, 46), withAlpha(base, 105), 0.8f);
+                BlockBounds spanBounds = districtSpanBounds(span);
+                reservationArea.add(new Area(screenRectangle(t, spanBounds)));
+                if (labelPoint == null) {
+                    labelPoint = new BlockPoint(spanBounds.minX(), spanBounds.minZ());
+                }
             }
-            g.setColor(withAlpha(base, 22));
-            fillBounds(g, t, bounds);
+            if (reservationArea.isEmpty() || labelPoint == null) continue;
+
+            index++;
+            Color base = color(index, 235);
+            g.setColor(withAlpha(base, 58));
+            g.fill(reservationArea);
             g.setColor(withAlpha(base, 220));
             g.setStroke(new BasicStroke(2.2f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER,
                     10.0f, new float[]{8.0f, 5.0f}, 0.0f));
-            drawBounds(g, t, bounds);
-            drawBadge(g, t, new BlockPoint(bounds.minX(), bounds.minZ()),
-                    "D" + index + " " + trim(groupId, 18), base);
+            g.draw(reservationArea);
+            drawBadge(g, t, labelPoint, "D" + index + " " + trim(groupId, 18), base);
         }
+    }
+
+    private static BlockBounds districtReservationBounds(JsonObject extentMap, Set<String> visibleGroupIds) {
+        if (extentMap == null) return null;
+        BlockBounds result = null;
+        for (JsonElement element : array(extentMap, "groups")) {
+            if (!element.isJsonObject()) continue;
+            JsonObject group = element.getAsJsonObject();
+            String groupId = string(group, "groupId");
+            if (!visibleGroupIds.isEmpty() && !visibleGroupIds.contains(groupId)) continue;
+            JsonObject capacity = object(group, "districtCapacity");
+            for (JsonElement spanElement : array(capacity, "reservationSpans")) {
+                if (!spanElement.isJsonObject()) continue;
+                BlockBounds spanBounds = districtSpanBounds(spanElement.getAsJsonObject());
+                result = result == null ? spanBounds : union(result, spanBounds);
+            }
+        }
+        return result;
+    }
+
+    private static BlockBounds districtSpanBounds(JsonObject span) {
+        return new BlockBounds(intValue(span, "minX", 0), intValue(span, "minZ", 0),
+                intValue(span, "maxX", 0), intValue(span, "maxZ", 0));
     }
 
     private static int districtCount(JsonObject extentMap) {
@@ -1885,6 +1913,15 @@ public final class CityStructureLandingPreviewRenderer {
         int z2 = t.z(bounds.maxZ());
         g.drawRect(Math.min(x1, x2), Math.min(z1, z2), Math.max(1, Math.abs(x2 - x1)),
                 Math.max(1, Math.abs(z2 - z1)));
+    }
+
+    private static Rectangle2D screenRectangle(Transform t, BlockBounds bounds) {
+        int x1 = t.x(bounds.minX());
+        int z1 = t.z(bounds.minZ());
+        int x2 = t.x(bounds.maxX() + 1);
+        int z2 = t.z(bounds.maxZ() + 1);
+        return new Rectangle2D.Double(Math.min(x1, x2), Math.min(z1, z2),
+                Math.max(1, Math.abs(x2 - x1)), Math.max(1, Math.abs(z2 - z1)));
     }
 
     private static String string(JsonObject obj, String key) {

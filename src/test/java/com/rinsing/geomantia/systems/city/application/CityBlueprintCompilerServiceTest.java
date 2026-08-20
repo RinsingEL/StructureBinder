@@ -106,8 +106,11 @@ class CityBlueprintCompilerServiceTest {
         JsonObject districtCapacity = first.groupExtentMap().getAsJsonArray("groups").get(0).getAsJsonObject()
                 .getAsJsonObject("districtCapacity");
         assertEquals("RESERVED", districtCapacity.get("status").getAsString());
+        assertEquals("CLUSTER_BOUNDED", districtCapacity.get("placementMode").getAsString());
         assertTrue(districtCapacity.get("reservedCellCount").getAsInt() > 0);
         assertTrue(districtCapacity.getAsJsonArray("reservationSpans").size() > 0);
+        JsonObject groupResult = first.compileTrace().getAsJsonArray("groupResults").get(0).getAsJsonObject();
+        assertEquals("CLUSTER_BOUNDED", groupResult.get("placementMode").getAsString());
         Set<Integer> anchorXs = new LinkedHashSet<>();
         Set<Integer> anchorZs = new LinkedHashSet<>();
         JsonArray compiledAnchors = first.structureAnchorPlan().getAsJsonArray("anchors");
