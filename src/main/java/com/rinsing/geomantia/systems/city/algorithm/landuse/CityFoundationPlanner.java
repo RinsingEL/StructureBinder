@@ -37,11 +37,56 @@ public final class CityFoundationPlanner {
                         + footprint.minX() + ':' + footprint.minZ());
             }
         }
-        validateJoinGraph(footprints, settings.maxJoinDistanceBlocks());
-
         Set<BlockPoint> structureMask = rasterize(footprints);
         Set<BlockPoint> marginMask = dilate(structureMask, settings.structureMarginBlocks(), planningBounds);
         int bridgeHalfWidth = Math.max(1, settings.structureMarginBlocks());
+        Set<BlockPoint> claims = new HashSet<>();
+        int resolvedRadius = 0;
+        for (List<BlockBounds> local : footprintGroups(footprints, settings.maxJoinDistanceBlocks())) {
+            try {
+                ResolvedPlatform platform = resolvePlatform(local, planningBounds, settings, bridgeHalfWidth);
+                claims.addAll(platform.claims());
+                resolvedRadius = Math.max(resolvedRadius, platform.radius());
+            } catch (IllegalArgumentException failure) {
+                if (local.size() == 1 || failure.getMessage() == null
+                        || !failure.getMessage().startsWith("CITY_FOUNDATION_THIN_BRIDGE:")) throw failure;
+                List<List<BlockBounds>> localGroups = footprintGroups(local, settings.closeRadiusBlocks());
+                if (localGroups.size() == 1) {
+                    localGroups = local.stream().map(List::of).toList();
+                }
+                for (List<BlockBounds> localGroup : localGroups) {
+                    try {
+                        ResolvedPlatform platform = resolvePlatform(localGroup, planningBounds,
+                                settings, bridgeHalfWidth);
+                        claims.addAll(platform.claims());
+                        resolvedRadius = Math.max(resolvedRadius, platform.radius());
+                    } catch (IllegalArgumentException localFailure) {
+                        if (localGroup.size() == 1 || localFailure.getMessage() == null
+                                || !localFailure.getMessage().startsWith("CITY_FOUNDATION_THIN_BRIDGE:")) {
+                            throw localFailure;
+                        }
+                        for (BlockBounds footprint : localGroup) {
+                            ResolvedPlatform platform = resolvePlatform(List.of(footprint), planningBounds,
+                                    settings, bridgeHalfWidth);
+                            claims.addAll(platform.claims());
+                            resolvedRadius = Math.max(resolvedRadius, platform.radius());
+                        }
+                    }
+                }
+            }
+        }
+        Set<BlockPoint> stableClaims = claims.stream().sorted(POINT_ORDER)
+                .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
+        return new Plan(stableClaims, structureMask.size(), marginMask.size(), bridgeHalfWidth * 2 + 1,
+                resolvedRadius, components(stableClaims).size());
+    }
+
+    private static ResolvedPlatform resolvePlatform(List<BlockBounds> footprints,
+                                                    BlockBounds planningBounds,
+                                                    LandUseSeedGroup.FoundationSettings settings,
+                                                    int bridgeHalfWidth) {
+        Set<BlockPoint> structureMask = rasterize(footprints);
+        Set<BlockPoint> marginMask = dilate(structureMask, settings.structureMarginBlocks(), planningBounds);
         int minimumRadius = settings.closeRadiusBlocks();
         int maximumRadius = settings.maxJoinDistanceBlocks();
         Attempt resolved = attempt(marginMask, minimumRadius, planningBounds,
@@ -77,10 +122,7 @@ public final class CityFoundationPlanner {
             }
             throw disconnected(resolved.components(), maximumRadius);
         }
-        Set<BlockPoint> stableClaims = resolved.claims().stream().sorted(POINT_ORDER)
-                .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
-        return new Plan(stableClaims, structureMask.size(), marginMask.size(), bridgeHalfWidth * 2 + 1,
-                resolved.radius());
+        return new ResolvedPlatform(resolved.claims(), resolved.radius());
     }
 
     private static Attempt attempt(Set<BlockPoint> source,
@@ -110,25 +152,31 @@ public final class CityFoundationPlanner {
                 + ":nearestGap=" + minimumComponentGap(components) + ":maxJoin=" + maximumRadius);
     }
 
-    private static void validateJoinGraph(List<BlockBounds> footprints, int maxJoinDistanceBlocks) {
-        Set<Integer> visited = new HashSet<>();
-        ArrayDeque<Integer> queue = new ArrayDeque<>();
-        visited.add(0);
-        queue.add(0);
-        while (!queue.isEmpty()) {
-            int current = queue.removeFirst();
-            for (int index = 0; index < footprints.size(); index++) {
-                if (!visited.contains(index)
-                        && gap(footprints.get(current), footprints.get(index)) <= maxJoinDistanceBlocks) {
-                    visited.add(index);
+    private static List<List<BlockBounds>> footprintGroups(List<BlockBounds> footprints,
+                                                           int maxJoinDistanceBlocks) {
+        Set<Integer> remaining = new LinkedHashSet<>();
+        for (int index = 0; index < footprints.size(); index++) remaining.add(index);
+        List<List<BlockBounds>> groups = new ArrayList<>();
+        while (!remaining.isEmpty()) {
+            int first = remaining.iterator().next();
+            remaining.remove(first);
+            ArrayDeque<Integer> queue = new ArrayDeque<>();
+            queue.add(first);
+            List<BlockBounds> group = new ArrayList<>();
+            while (!queue.isEmpty()) {
+                int current = queue.removeFirst();
+                group.add(footprints.get(current));
+                List<Integer> neighbors = remaining.stream().filter(index ->
+                        gap(footprints.get(current), footprints.get(index)) <= maxJoinDistanceBlocks).toList();
+                neighbors.forEach(index -> {
+                    remaining.remove(index);
                     queue.addLast(index);
-                }
+                });
             }
+            group.sort(Comparator.comparingInt(BlockBounds::minZ).thenComparingInt(BlockBounds::minX));
+            groups.add(List.copyOf(group));
         }
-        if (visited.size() != footprints.size()) {
-            throw new IllegalArgumentException("CITY_FOUNDATION_JOIN_DISTANCE_EXCEEDED:connected="
-                    + visited.size() + "/" + footprints.size() + ":maxJoin=" + maxJoinDistanceBlocks);
-        }
+        return List.copyOf(groups);
     }
 
     private static int gap(BlockBounds left, BlockBounds right) {
@@ -252,8 +300,16 @@ public final class CityFoundationPlanner {
                        int structureBlocks,
                        int marginBlocks,
                        int minimumBridgeWidthBlocks,
-                       int resolvedCloseRadiusBlocks) {
+                       int resolvedCloseRadiusBlocks,
+                       int componentCount) {
         public Plan {
+            claims = Set.copyOf(claims);
+            if (componentCount <= 0) throw new IllegalArgumentException("CITY_FOUNDATION_COMPONENTS_REQUIRED");
+        }
+    }
+
+    private record ResolvedPlatform(Set<BlockPoint> claims, int radius) {
+        private ResolvedPlatform {
             claims = Set.copyOf(claims);
         }
     }

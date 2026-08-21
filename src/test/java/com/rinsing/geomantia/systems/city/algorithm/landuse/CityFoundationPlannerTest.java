@@ -24,6 +24,7 @@ class CityFoundationPlannerTest {
                 new LandUseSeedGroup.FoundationSettings(3, 10, 24));
 
         assertEquals(1, componentCount(plan.claims()));
+        assertEquals(1, plan.componentCount());
         assertEquals(7, plan.minimumBridgeWidthBlocks());
         assertEquals(24, plan.resolvedCloseRadiusBlocks());
         CityFoundationPlanner.Plan repeated = new CityFoundationPlanner().plan(bounds(), flatTerrain(),
@@ -33,13 +34,13 @@ class CityFoundationPlannerTest {
     }
 
     @Test
-    void rejectsStructuresOutsideTheConfiguredJoinGraph() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> new CityFoundationPlanner().plan(bounds(), flatTerrain(),
-                        List.of(new BlockBounds(2, 2, 5, 5), new BlockBounds(40, 40, 43, 43)),
-                        new LandUseSeedGroup.FoundationSettings(1, 2, 4)));
+    void keepsDistantHardSkeletonsAsSeparateLocalPlatforms() {
+        CityFoundationPlanner.Plan plan = new CityFoundationPlanner().plan(bounds(), flatTerrain(),
+                List.of(new BlockBounds(2, 2, 5, 5), new BlockBounds(40, 40, 43, 43)),
+                new LandUseSeedGroup.FoundationSettings(1, 2, 4));
 
-        assertTrue(exception.getMessage().startsWith("CITY_FOUNDATION_JOIN_DISTANCE_EXCEEDED:"));
+        assertEquals(2, plan.componentCount());
+        assertEquals(2, componentCount(plan.claims()));
     }
 
     @Test
@@ -58,13 +59,13 @@ class CityFoundationPlannerTest {
     }
 
     @Test
-    void rejectsAOneBlockTerrainBridgeBetweenOtherwiseBroadIslands() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> new CityFoundationPlanner().plan(bounds(), corridorTerrain(),
-                        List.of(new BlockBounds(4, 4, 8, 8), new BlockBounds(28, 4, 32, 8)),
-                        new LandUseSeedGroup.FoundationSettings(1, 16, 32)));
+    void thinBridgeFallsBackToSeparateDurablePlatforms() {
+        CityFoundationPlanner.Plan plan = new CityFoundationPlanner().plan(bounds(), corridorTerrain(),
+                List.of(new BlockBounds(4, 4, 8, 8), new BlockBounds(28, 4, 32, 8)),
+                new LandUseSeedGroup.FoundationSettings(1, 16, 32));
 
-        assertTrue(exception.getMessage().startsWith("CITY_FOUNDATION_THIN_BRIDGE:"));
+        assertEquals(2, plan.componentCount());
+        assertEquals(2, componentCount(plan.claims()));
     }
 
     private static int componentCount(Set<BlockPoint> points) {

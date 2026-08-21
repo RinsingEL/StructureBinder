@@ -27,6 +27,7 @@ final class CityDistrictCapacityPlanner {
                 Map<String, BlockBounds> formationBounds,
                 Map<String, Set<String>> bufferExemptions,
                 Map<String, String> algorithmsByGroup,
+                Map<String, SpatialDemand> spatialDemands,
                 LandUseTerrainField terrain,
                 int cellStepBlocks,
                 BlockBounds planningBounds,
@@ -38,7 +39,7 @@ final class CityDistrictCapacityPlanner {
             Reservation reservation = reserve(group, patches, formationBounds.get(group.groupId()),
                     bufferExemptions.getOrDefault(group.groupId(), Set.of()), reservations,
                     globallyReserved, algorithmsByGroup.getOrDefault(group.groupId(), "COMPACT"), terrain,
-                    cellStepBlocks, planningBounds, generationSeed);
+                    spatialDemands.get(group.groupId()), cellStepBlocks, planningBounds, generationSeed);
             reservations.put(group.groupId(), reservation);
             reservation.cells().forEach(cell -> globallyReserved.add(key(cell)));
             groupPlans.add(reservation.asJson(cellStepBlocks));
@@ -60,12 +61,18 @@ final class CityDistrictCapacityPlanner {
                                 Set<CellKey> globallyReserved,
                                 String algorithm,
                                 LandUseTerrainField terrain,
+                                SpatialDemand spatialDemand,
                                 int step,
                                 BlockBounds planningBounds,
                                 long generationSeed) {
         CityBlueprintGroupLayoutPlanner.PlacementMode placementMode =
                 CityBlueprintGroupLayoutPlanner.PlacementMode.fromAlgorithm(algorithm);
+        if (spatialDemand == null) {
+            throw new IllegalArgumentException("CITY_BLUEPRINT_GROUP_SPATIAL_DEMAND_MISSING:" + group.groupId());
+        }
         CityBlueprint.PlacementRelation placement = group.placementRelation();
+        BlockBounds capacitySeedBounds = formationBounds != null && !formationBounds.equals(planningBounds)
+                ? formationBounds : null;
         if (placement != null && placement.kind() == CityBlueprint.PlacementRelationKind.BETWEEN_GROUPS) {
             return Reservation.deferred(group, placementMode, "DEFERRED_BETWEEN_GROUPS");
         }
@@ -79,28 +86,25 @@ final class CityDistrictCapacityPlanner {
             if (patch == null) continue;
             for (PatchMemberCell cell : patch.memberCells()) {
                 BlockBounds cellBounds = cellBounds(cell, step);
-                if (within(cellBounds, planningBounds) && within(cellBounds, formationBounds)
-                        && usable(cell, terrain)) {
+                if (within(cellBounds, planningBounds) && usable(cell, terrain, group.terrainPolicy())) {
                     candidateCells.putIfAbsent(key(cell), cell);
                 }
             }
         }
-        int targetArea = targetArea(group.extentClass());
-        int roadReserve = Math.max(step * step, (int) Math.ceil(targetArea * 0.15));
-        int minimumArea = Math.max(step * step, (int) Math.ceil(targetArea * 0.50)) + roadReserve;
+        int minimumArea = spatialDemand.minimumAreaBlocks();
+        int targetArea = spatialDemand.targetAreaBlocks();
+        int roadReserve = spatialDemand.roadReserveAreaBlocks();
         int targetWithRoad = targetArea + roadReserve;
         int minimumCells = ceilDiv(minimumArea, step * step);
         int targetCells = ceilDiv(targetWithRoad, step * step);
-        int maximumCells = ceilDiv(targetArea + roadReserve + (int) Math.ceil(targetArea * 0.50),
-                step * step);
+        int maximumCells = ceilDiv(spatialDemand.maximumAreaBlocks(), step * step);
         if (candidateCells.size() < minimumCells
                 && (placement == null || placement.kind() != CityBlueprint.PlacementRelationKind.BETWEEN_PATCHES)) {
             for (Map.Entry<String, LandformPatchSummary> entry : patches.entrySet()) {
                 if (capacityPatchRefs.contains(entry.getKey())) continue;
                 for (PatchMemberCell cell : entry.getValue().memberCells()) {
                     BlockBounds cellBounds = cellBounds(cell, step);
-                    if (within(cellBounds, planningBounds) && within(cellBounds, formationBounds)
-                            && usable(cell, terrain)) {
+                    if (within(cellBounds, planningBounds) && usable(cell, terrain, group.terrainPolicy())) {
                         candidateCells.putIfAbsent(key(cell), cell);
                     }
                 }
@@ -116,10 +120,12 @@ final class CityDistrictCapacityPlanner {
         if (candidateCells.isEmpty()) {
             return Reservation.deferred(group, placementMode, "NO_USABLE_TERRAIN");
         }
-        PatchMemberCell seedCell = chooseSeed(group, candidateCells.values(), step, generationSeed);
+        PatchMemberCell seedCell = chooseSeed(group, candidateCells.values(), step, generationSeed,
+                capacitySeedBounds);
         if (seedCell == null) {
-            return Reservation.failed(group, placementMode, capacityPatchRefs, minimumArea, targetArea, roadReserve,
-                    targetWithRoad, "CITY_BLUEPRINT_GROUP_DISTRICT_CAPACITY_UNREACHABLE",
+            return Reservation.failed(group, placementMode, capacityPatchRefs, minimumArea, targetArea,
+                    spatialDemand.maximumAreaBlocks(), roadReserve, targetWithRoad,
+                    "CITY_BLUEPRINT_GROUP_DISTRICT_CAPACITY_UNREACHABLE",
                     group.groupId() + " has no usable member cell for district capacity.");
         }
 
@@ -134,15 +140,16 @@ final class CityDistrictCapacityPlanner {
             }
         }
         if (blockedByExisting.contains(key(seedCell))) {
-            BlockPointLike seedOrigin = choosePoint(group, candidateCells.values(), step);
+            BlockPointLike seedOrigin = choosePoint(group, candidateCells.values(), step, capacitySeedBounds);
             seedCell = candidateCells.values().stream()
                     .filter(cell -> !blockedByExisting.contains(key(cell)))
                     .min(Comparator.comparingLong(cell -> distanceSquared(cell, seedOrigin)))
                     .orElse(null);
         }
         if (seedCell == null) {
-            return Reservation.failed(group, placementMode, capacityPatchRefs, minimumArea, targetArea, roadReserve,
-                    targetWithRoad, "CITY_BLUEPRINT_GROUP_DISTRICT_CAPACITY_UNREACHABLE",
+            return Reservation.failed(group, placementMode, capacityPatchRefs, minimumArea, targetArea,
+                    spatialDemand.maximumAreaBlocks(), roadReserve, targetWithRoad,
+                    "CITY_BLUEPRINT_GROUP_DISTRICT_CAPACITY_UNREACHABLE",
                     group.groupId() + " is blocked by existing district reservations.");
         }
 
@@ -159,8 +166,9 @@ final class CityDistrictCapacityPlanner {
             }
         }
         if (selected.size() < minimumCells) {
-            return Reservation.failed(group, placementMode, capacityPatchRefs, minimumArea, targetArea, roadReserve,
-                    targetWithRoad, "CITY_BLUEPRINT_GROUP_DISTRICT_CAPACITY_UNREACHABLE",
+            return Reservation.failed(group, placementMode, capacityPatchRefs, minimumArea, targetArea,
+                    spatialDemand.maximumAreaBlocks(), roadReserve, targetWithRoad,
+                    "CITY_BLUEPRINT_GROUP_DISTRICT_CAPACITY_UNREACHABLE",
                     group.groupId() + " reached " + selected.size() + " district cells but requires at least "
                             + minimumCells + ".");
         }
@@ -169,8 +177,8 @@ final class CityDistrictCapacityPlanner {
                 .sorted(Comparator.comparingInt(PatchMemberCell::cellZ)
                         .thenComparingInt(PatchMemberCell::cellX))
                 .toList();
-        return Reservation.success(group, placementMode, capacityPatchRefs, minimumArea, targetArea, roadReserve,
-                targetWithRoad, cells, maximumCells);
+        return Reservation.success(group, placementMode, capacityPatchRefs, minimumArea, targetArea,
+                spatialDemand.maximumAreaBlocks(), roadReserve, targetWithRoad, cells, maximumCells);
     }
 
     private static List<PatchMemberCell> neighbors(PatchMemberCell current,
@@ -240,7 +248,8 @@ final class CityDistrictCapacityPlanner {
     private static PatchMemberCell chooseSeed(CityBlueprint.Group group,
                                               Iterable<PatchMemberCell> cells,
                                               int step,
-                                              long seed) {
+                                              long seed,
+                                              BlockBounds formationBounds) {
         List<PatchMemberCell> values = new ArrayList<>();
         cells.forEach(values::add);
         if (values.isEmpty()) return null;
@@ -250,16 +259,16 @@ final class CityDistrictCapacityPlanner {
         int maxX = values.stream().mapToInt(PatchMemberCell::blockMinX).max().orElse(0);
         int minZ = values.stream().mapToInt(PatchMemberCell::blockMinZ).min().orElse(0);
         int maxZ = values.stream().mapToInt(PatchMemberCell::blockMinZ).max().orElse(0);
-        double targetX = switch (group.preferredPatchZone()) {
+        double targetX = formationBounds == null ? switch (group.preferredPatchZone()) {
             case WEST -> minX + (maxX - minX) * 0.25;
             case EAST -> minX + (maxX - minX) * 0.75;
             default -> meanX;
-        };
-        double targetZ = switch (group.preferredPatchZone()) {
+        } : (formationBounds.minX() + formationBounds.maxX()) / 2.0;
+        double targetZ = formationBounds == null ? switch (group.preferredPatchZone()) {
             case NORTH -> minZ + (maxZ - minZ) * 0.25;
             case SOUTH -> minZ + (maxZ - minZ) * 0.75;
             default -> meanZ;
-        };
+        } : (formationBounds.minZ() + formationBounds.maxZ()) / 2.0;
         return values.stream().min(Comparator
                 .comparingLong((PatchMemberCell cell) -> {
                     long dx = cell.blockMinX() + step / 2 - Math.round(targetX);
@@ -272,8 +281,9 @@ final class CityDistrictCapacityPlanner {
     }
 
     private static BlockPointLike choosePoint(CityBlueprint.Group group,
-                                               Iterable<PatchMemberCell> cells, int step) {
-        PatchMemberCell seed = chooseSeed(group, cells, step, 0L);
+                                               Iterable<PatchMemberCell> cells, int step,
+                                               BlockBounds formationBounds) {
+        PatchMemberCell seed = chooseSeed(group, cells, step, 0L, formationBounds);
         return seed == null ? new BlockPointLike(0, 0)
                 : new BlockPointLike(seed.blockMinX(), seed.blockMinZ());
     }
@@ -292,18 +302,22 @@ final class CityDistrictCapacityPlanner {
         return true;
     }
 
-    private static boolean usable(PatchMemberCell cell, LandUseTerrainField terrain) {
-        return terrain.cellAt(cell.blockMinX(), cell.blockMinZ())
-                .map(value -> value.sampled() && !value.water() && value.localRelief() < 48.0)
-                .orElse(false);
-    }
-
-    private static int targetArea(CityBlueprint.ExtentClass extentClass) {
-        return switch (extentClass) {
-            case SMALL -> 4_096;
-            case MEDIUM -> 16_384;
-            case LARGE -> 36_864;
+    private static boolean usable(PatchMemberCell cell, LandUseTerrainField terrain,
+                                  CityBlueprint.TerrainPolicy policy) {
+        double maximumSlope = switch (policy) {
+            case CONFORM -> 6.0;
+            case BALANCED -> 12.0;
+            case ASSERTIVE -> 18.0;
         };
+        double maximumRelief = switch (policy) {
+            case CONFORM -> 8.0;
+            case BALANCED -> 12.0;
+            case ASSERTIVE -> 18.0;
+        };
+        return terrain.cellAt(cell.blockMinX(), cell.blockMinZ())
+                .map(value -> value.sampled() && !value.water()
+                        && value.slope() <= maximumSlope && value.localRelief() <= maximumRelief)
+                .orElse(false);
     }
 
     private static JsonObject basePlan(List<CityBlueprint.Group> groups, int step,
@@ -407,6 +421,47 @@ final class CityDistrictCapacityPlanner {
                   Map<String, Reservation> reservations) {
     }
 
+    record SpatialDemand(int minimumAreaBlocks,
+                         int targetAreaBlocks,
+                         int maximumAreaBlocks,
+                         int roadReserveAreaBlocks,
+                         int formationSpanBlocks,
+                         int formationWidthBlocks,
+                         int formationLengthBlocks,
+                         String primaryAxisDirection,
+                         int plannedStructureCount,
+                         int templateFootprintAreaBlocks,
+                         int internalStreetAreaBlocks) {
+        SpatialDemand {
+            if (minimumAreaBlocks <= 0 || targetAreaBlocks < minimumAreaBlocks
+                    || maximumAreaBlocks < targetAreaBlocks || roadReserveAreaBlocks < 0
+                    || formationSpanBlocks <= 0 || formationWidthBlocks <= 0 || formationLengthBlocks <= 0
+                    || primaryAxisDirection == null || plannedStructureCount <= 0
+                    || templateFootprintAreaBlocks <= 0 || internalStreetAreaBlocks < 0) {
+                throw new IllegalArgumentException("CITY_BLUEPRINT_GROUP_SPATIAL_DEMAND_INVALID");
+            }
+        }
+
+        JsonObject asJson() {
+            JsonObject value = new JsonObject();
+            value.addProperty("source", "TEMPLATE_ARRAY_DEMAND");
+            value.addProperty("minimumAreaBlocks", minimumAreaBlocks);
+            value.addProperty("targetAreaBlocks", targetAreaBlocks);
+            value.addProperty("maximumAreaBlocks", maximumAreaBlocks);
+            value.addProperty("roadReserveAreaBlocks", roadReserveAreaBlocks);
+            value.addProperty("formationSpanBlocks", formationSpanBlocks);
+            value.addProperty("formationWidthBlocks", formationWidthBlocks);
+            value.addProperty("formationLengthBlocks", formationLengthBlocks);
+            if (!primaryAxisDirection.isBlank()) {
+                value.addProperty("primaryAxisDirection", primaryAxisDirection);
+            }
+            value.addProperty("plannedStructureCount", plannedStructureCount);
+            value.addProperty("templateFootprintAreaBlocks", templateFootprintAreaBlocks);
+            value.addProperty("internalStreetAreaBlocks", internalStreetAreaBlocks);
+            return value;
+        }
+    }
+
     record Reservation(String groupId, String placementMode, String status, String reasonCode, String message,
                        List<String> patchRefs, int minimumAreaBlocks, int targetAreaBlocks,
                        int maximumAreaBlocks, int roadReserveAreaBlocks, int targetWithRoadBlocks,
@@ -414,10 +469,10 @@ final class CityDistrictCapacityPlanner {
         static Reservation success(CityBlueprint.Group group,
                                    CityBlueprintGroupLayoutPlanner.PlacementMode placementMode,
                                    List<String> patchRefs,
-                                   int minimumArea, int targetArea, int roadReserve,
+                                   int minimumArea, int targetArea, int maximumArea, int roadReserve,
                                    int targetWithRoad, List<PatchMemberCell> cells, int maximumCells) {
             return new Reservation(group.groupId(), placementMode.name(), "RESERVED", "", "", List.copyOf(patchRefs), minimumArea,
-                    targetArea, targetArea + roadReserve + (int) Math.ceil(targetArea * 0.50), roadReserve,
+                    targetArea, maximumArea, roadReserve,
                     targetWithRoad, maximumCells, List.copyOf(cells));
         }
 
@@ -431,11 +486,10 @@ final class CityDistrictCapacityPlanner {
         static Reservation failed(CityBlueprint.Group group,
                                   CityBlueprintGroupLayoutPlanner.PlacementMode placementMode,
                                   List<String> patchRefs,
-                                  int minimumArea, int targetArea, int roadReserve,
+                                  int minimumArea, int targetArea, int maximumArea, int roadReserve,
                                   int targetWithRoad, String reason, String message) {
             return new Reservation(group.groupId(), placementMode.name(), "INSUFFICIENT_CAPACITY", reason, message,
-                    List.copyOf(patchRefs), minimumArea, targetArea,
-                    targetArea + roadReserve + (int) Math.ceil(targetArea * 0.50), roadReserve,
+                    List.copyOf(patchRefs), minimumArea, targetArea, maximumArea, roadReserve,
                     targetWithRoad, 0, List.of());
         }
 

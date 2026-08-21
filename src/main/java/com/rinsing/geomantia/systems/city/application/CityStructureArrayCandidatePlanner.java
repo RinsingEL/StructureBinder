@@ -165,9 +165,13 @@ public final class CityStructureArrayCandidatePlanner {
         int arrayCount = intValue(plan, "arrayCount", 0);
         List<String> templateIds = templateIds(plan);
         int spacing = configuredSpacing(plan, templateIds, templateCatalog);
-        List<BlockPoint> rawPoints = CityStructureCandidateEnvelope.constrainCandidatePoints(plan,
-                rawPoints(pattern, pivot, sourcePatches, grid, plan,
-                        templateIds, templateCatalog, arrayCount));
+        List<BlockPoint> generatedPoints = rawPoints(pattern, pivot, sourcePatches, grid, plan,
+                templateIds, templateCatalog, arrayCount);
+        List<BlockPoint> rawPoints = booleanValue(plan, "exactCandidateOriginsOnly", false)
+                ? CityD4CandidateLegalRegion.fromOptions(plan)
+                        .map(region -> generatedPoints.stream().filter(region::contains).toList())
+                        .orElse(generatedPoints)
+                : CityStructureCandidateEnvelope.constrainCandidatePoints(plan, generatedPoints);
         List<BlockBounds> groupCollision = new ArrayList<>();
         JsonArray items = new JsonArray();
         JsonArray anchors = new JsonArray();
@@ -348,6 +352,12 @@ public final class CityStructureArrayCandidatePlanner {
         int spacing = configuredSpacing(plan, templateIds, templateCatalog);
         LinkedHashSet<BlockPoint> points = new LinkedHashSet<>();
         List<BlockPoint> candidateOrigins = candidateOrigins(plan);
+        if (booleanValue(plan, "exactCandidateOriginsOnly", false)) {
+            return candidateOrigins.stream()
+                    .filter(point -> grid.containsBlock(point.x(), point.z()))
+                    .filter(point -> patches.stream().anyMatch(patch -> patchContains(patch, grid, point)))
+                    .toList();
+        }
         points.addAll(candidateOrigins);
         switch (pattern) {
             case "patch_axis_band" -> axisBand(points, pivot, patches, spacing, arrayCount);
@@ -1032,6 +1042,11 @@ public final class CityStructureArrayCandidatePlanner {
 
     private static double doubleValue(JsonObject obj, String key, double defaultValue) {
         return obj != null && obj.has(key) && !obj.get(key).isJsonNull() ? obj.get(key).getAsDouble() : defaultValue;
+    }
+
+    private static boolean booleanValue(JsonObject obj, String key, boolean defaultValue) {
+        return obj != null && obj.has(key) && !obj.get(key).isJsonNull()
+                ? obj.get(key).getAsBoolean() : defaultValue;
     }
 
     private static List<String> strings(JsonArray array) {

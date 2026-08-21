@@ -79,6 +79,7 @@ public final class LandUsePlanningService {
         List<LandUseAutoConnectionPlanner.ConnectionOutcome> connectionOutcomes;
         CityUrbanResidualResolver.Result residualResult;
         int resolvedFoundationCloseRadius = 0;
+        int resolvedFoundationComponentCount = 0;
         Set<String> skippedOptionalLandscapes = Set.of();
         if (layered) {
             if (foundations.size() != 1) {
@@ -106,6 +107,7 @@ public final class LandUsePlanningService {
             residualResult = new CityUrbanResidualResolver.Result(expansion,
                     CityUrbanSpacePlan.disabled(cityId), List.of());
             resolvedFoundationCloseRadius = foundationPlan.resolvedCloseRadiusBlocks();
+            resolvedFoundationComponentCount = foundationPlan.componentCount();
         } else {
             LandUseCorridorExclusionResolver corridorResolver = new LandUseCorridorExclusionResolver();
             corridors = corridorResolver.stableMerge(sources.corridorExclusions(),
@@ -155,7 +157,8 @@ public final class LandUsePlanningService {
         CityLandUseSurfacePrintPlan surfacePrintPlan = new CityLandUseSurfacePrintPlanner().plan(
                 plan, sources.seedGroups(), terrainField);
         return new Result(plan, trace(sources, probe, resolvedExpansion, connectionOutcomes,
-                residualResult.urbanSpacePlan(), resolvedFoundationCloseRadius, skippedOptionalLandscapes),
+                residualResult.urbanSpacePlan(), resolvedFoundationCloseRadius,
+                resolvedFoundationComponentCount, skippedOptionalLandscapes),
                 quality(plan, sources, resolvedExpansion, connectionOutcomes, residualResult.urbanSpacePlan(),
                         skippedOptionalLandscapes),
                 surfacePrintPlan,
@@ -343,10 +346,12 @@ public final class LandUsePlanningService {
                                     List<LandUseAutoConnectionPlanner.ConnectionOutcome> connectionOutcomes,
                                     CityUrbanSpacePlan urbanSpacePlan,
                                     int resolvedFoundationCloseRadius,
+                                    int resolvedFoundationComponentCount,
                                     Set<String> skippedOptionalLandscapes) {
         JsonObject trace = new JsonObject();
         trace.addProperty("schemaVersion", "city_land_use_planning_trace.v0.6");
         trace.addProperty("foundationResolvedCloseRadiusBlocks", resolvedFoundationCloseRadius);
+        trace.addProperty("foundationComponentCount", resolvedFoundationComponentCount);
         JsonArray groups = new JsonArray();
         for (LandUseSeedGroup group : sources.seedGroups()) {
             JsonObject value = new JsonObject();

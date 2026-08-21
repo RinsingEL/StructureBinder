@@ -2,6 +2,7 @@ package com.rinsing.geomantia.systems.city.application.outdoor;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.rinsing.geomantia.systems.city.application.CityBlueprintReferenceCatalog;
 import com.rinsing.geomantia.systems.city.application.CityLandscapeCapacityReservationPlanner;
 import com.rinsing.geomantia.systems.city.application.landuse.LandUsePlanningService;
@@ -27,6 +28,27 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityOutdoorBlueprintCompilerTest {
+    @Test
+    void internalStreetBandBecomesFoundationFootprint() {
+        JsonObject d6 = d6Plan();
+        JsonObject anchorMap = new JsonObject();
+        JsonArray bands = new JsonArray();
+        bands.add(JsonParser.parseString("""
+                {"schemaVersion":"city_internal_street_band.v0.1","streetBandId":"farm::street",
+                 "groupId":"farm_group","widthBlocks":5,
+                 "bounds":{"minX":26,"minZ":40,"maxX":38,"maxZ":44},
+                 "platformBounds":{"minX":24,"minZ":36,"maxX":40,"maxZ":48}}
+                """).getAsJsonObject());
+        anchorMap.add("streetBands", bands);
+        d6.add("sourceStructureAnchorMap", anchorMap);
+
+        LandUseSeedGroup foundation = compile(d6).resolution().seedGroups().stream()
+                .filter(group -> group.layerRole() == LandUseSeedGroup.LayerRole.FOUNDATION)
+                .findFirst().orElseThrow();
+
+        assertTrue(foundation.structureFootprints().contains(new BlockBounds(24, 36, 40, 48)));
+    }
+
     @Test
     void compilesOneFoundationAndPhaseDrivenIndependentParcels() {
         CityOutdoorBlueprintCompiler.Result result = compile(d6Plan());
@@ -211,6 +233,7 @@ class CityOutdoorBlueprintCompilerTest {
         assertEquals("city_land_use_planning_trace.v0.6",
                 planned.trace().get("schemaVersion").getAsString());
         assertTrue(planned.trace().get("foundationResolvedCloseRadiusBlocks").getAsInt() >= 8);
+        assertTrue(planned.trace().get("foundationComponentCount").getAsInt() >= 1);
         List<LandUseAreaPlan.Area> foundationAreas = planned.plan().areas().stream()
                 .filter(area -> area.sourceGroupIds().contains("city::foundation")).toList();
         List<LandUseAreaPlan.Area> parcelAreas = planned.plan().areas().stream()
@@ -242,7 +265,7 @@ class CityOutdoorBlueprintCompilerTest {
                 assertEquals("ROOT_SOURCE", origin.get("kind").getAsString());
                 assertTrue(origin.get("sourceFrontier").isJsonNull());
             } else {
-                assertEquals("PARENT_PARCEL_INTERFACE", origin.get("kind").getAsString());
+                assertEquals("PARENT_PARCEL_ROAD_GAP", origin.get("kind").getAsString());
                 assertFalse(origin.get("parentParcelId").getAsString().isBlank());
                 assertFalse(origin.get("sourceFrontier").isJsonNull());
             }

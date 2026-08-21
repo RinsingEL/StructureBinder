@@ -139,7 +139,7 @@ public final class CityD4CandidateLegalRegion {
         return new ArrayList<>(result);
     }
 
-    private boolean contains(BlockPoint point) {
+    public boolean contains(BlockPoint point) {
         return memberCells.contains(new CellKey(Math.floorDiv(point.x(), cellStepBlocks),
                 Math.floorDiv(point.z(), cellStepBlocks)));
     }

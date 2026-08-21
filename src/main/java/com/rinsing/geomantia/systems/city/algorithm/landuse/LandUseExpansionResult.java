@@ -71,21 +71,23 @@ public record LandUseExpansionResult(
                     throw new IllegalArgumentException("LAND_USE_EXPANSION_ROOT_ORIGIN_INVALID");
                 }
             } else {
+                long expected = kind == OriginKind.PARENT_PARCEL_ROAD_GAP ? 2L : 1L;
                 if (parentGroupId.isBlank() || sourceFrontier == null
-                        || !adjacent4(start, sourceFrontier)) {
+                        || manhattan(start, sourceFrontier) != expected) {
                     throw new IllegalArgumentException("LAND_USE_EXPANSION_PARENT_ORIGIN_INVALID");
                 }
             }
         }
 
-        private static boolean adjacent4(BlockPoint first, BlockPoint second) {
+        private static long manhattan(BlockPoint first, BlockPoint second) {
             return Math.abs((long) first.x() - second.x())
-                    + Math.abs((long) first.z() - second.z()) == 1L;
+                    + Math.abs((long) first.z() - second.z());
         }
     }
 
     public enum OriginKind {
         ROOT_SOURCE,
-        PARENT_PARCEL_INTERFACE
+        PARENT_PARCEL_INTERFACE,
+        PARENT_PARCEL_ROAD_GAP
     }
 }

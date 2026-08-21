@@ -117,6 +117,7 @@ public final class LandscapeParcelExpander {
             RelaySeed relaySeed = relaySeed(state, completedByGroup, claims, planningBounds,
                     terrainIndex, obstacles, parentParcelIds == null ? Map.of() : parentParcelIds);
             BlockPoint seed = relaySeed.start();
+            if (relaySeed.roadGap() != null) obstacles.add(relaySeed.roadGap());
             if (!planningBounds.contains(seed.x(), seed.z()) || obstacles.contains(seed)
                     || !state.allowed(seed) || !passable(terrainIndex.cellAt(seed.x(), seed.z()))) {
                 counters.blocked++;
@@ -194,27 +195,52 @@ public final class LandscapeParcelExpander {
             throw new IllegalArgumentException("CITY_LANDSCAPE_PARENT_PARCEL_UNAVAILABLE:"
                     + state.group.groupId() + ':' + parentGroupId);
         }
-        Map<BlockPoint, BlockPoint> sourceByStart = new HashMap<>();
+        boolean roadGap = usesNaturalRoadGap(state.group);
+        Map<BlockPoint, RelayInterface> interfaceByStart = new HashMap<>();
         for (BlockPoint source : parent.cells) {
             for (int[] direction : DIRECTIONS) {
-                BlockPoint start = new BlockPoint(source.x() + direction[0], source.z() + direction[1]);
+                BlockPoint gap = roadGap
+                        ? new BlockPoint(source.x() + direction[0], source.z() + direction[1]) : null;
+                int advance = roadGap ? 2 : 1;
+                BlockPoint start = new BlockPoint(source.x() + direction[0] * advance,
+                        source.z() + direction[1] * advance);
                 if (!planningBounds.contains(start.x(), start.z()) || claims.containsKey(start)
                         || obstacles.contains(start) || !state.allowed(start)
                         || !passable(terrain.cellAt(start.x(), start.z()))
-                        || !continuous(state.group, terrain, source, start)) {
+                        || roadGap && (!planningBounds.contains(gap.x(), gap.z())
+                        || claims.containsKey(gap) || obstacles.contains(gap) || !state.allowed(gap)
+                        || !passable(terrain.cellAt(gap.x(), gap.z()))
+                        || !continuous(state.group, terrain, source, gap)
+                        || !continuous(state.group, terrain, gap, start))
+                        || !roadGap && !continuous(state.group, terrain, source, start)) {
                     continue;
                 }
-                sourceByStart.merge(start, source, (left, right) -> POINT_ORDER.compare(left, right) <= 0
-                        ? left : right);
+                RelayInterface candidate = new RelayInterface(source, gap);
+                interfaceByStart.merge(start, candidate,
+                        (left, right) -> POINT_ORDER.compare(left.source(), right.source()) <= 0
+                                ? left : right);
             }
         }
-        BlockPoint start = sourceByStart.keySet().stream()
+        BlockPoint start = interfaceByStart.keySet().stream()
                 .max(Comparator.comparingInt((BlockPoint point) -> adjacentCount(parent.cells, point))
                         .thenComparingInt(point -> -point.z()).thenComparingInt(point -> -point.x()))
                 .orElseThrow(() -> new IllegalArgumentException("CITY_LANDSCAPE_PARENT_INTERFACE_EXHAUSTED:"
                         + state.group.groupId() + ':' + parentGroupId));
-        return new RelaySeed(start, sourceByStart.get(start), parentGroupId,
-                LandUseExpansionResult.OriginKind.PARENT_PARCEL_INTERFACE);
+        RelayInterface relayInterface = interfaceByStart.get(start);
+        return new RelaySeed(start, relayInterface.source(), parentGroupId,
+                relayInterface.roadGap(),
+                roadGap ? LandUseExpansionResult.OriginKind.PARENT_PARCEL_ROAD_GAP
+                        : LandUseExpansionResult.OriginKind.PARENT_PARCEL_INTERFACE);
+    }
+
+    private static boolean usesNaturalRoadGap(LandUseSeedGroup group) {
+        if (group.landscapeFillProgram() == null) return false;
+        return group.landscapeFillProgram().roles().stream().anyMatch(role ->
+                role.growthForm() == com.rinsing.geomantia.systems.city.domain.landuse.LandscapeFillProgram.GrowthForm.CORRIDOR
+                        && (role.materialRole()
+                        == com.rinsing.geomantia.systems.city.domain.landuse.LandscapeFillProgram.MaterialRole.GROUND
+                        || role.materialRole()
+                        == com.rinsing.geomantia.systems.city.domain.landuse.LandscapeFillProgram.MaterialRole.BANK));
     }
 
     private static int adjacentCount(Set<BlockPoint> cells, BlockPoint point) {
@@ -470,10 +496,14 @@ public final class LandscapeParcelExpander {
     private record RelaySeed(BlockPoint start,
                              BlockPoint sourceFrontier,
                              String parentGroupId,
+                             BlockPoint roadGap,
                              LandUseExpansionResult.OriginKind kind) {
         private static RelaySeed root(BlockPoint start) {
-            return new RelaySeed(start, null, "", LandUseExpansionResult.OriginKind.ROOT_SOURCE);
+            return new RelaySeed(start, null, "", null, LandUseExpansionResult.OriginKind.ROOT_SOURCE);
         }
+    }
+
+    private record RelayInterface(BlockPoint source, BlockPoint roadGap) {
     }
 
     private static final class Counters {

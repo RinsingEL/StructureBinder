@@ -5,6 +5,7 @@ import com.rinsing.geomantia.systems.city.domain.landuse.LandUseAreaPlan;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseSeedGroup;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseSurfaceSettings;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseTerrainField;
+import com.rinsing.geomantia.systems.city.domain.landuse.LandscapeFillProgram;
 import com.rinsing.geomantia.systems.city.domain.landuse.SurfacePolicy;
 import com.rinsing.geomantia.systems.city.domain.landuse.VegetationPolicy;
 import com.rinsing.geomantia.systems.city.domain.landuse.rules.LandUseRule;
@@ -157,6 +158,39 @@ class LandscapeParcelExpanderTest {
                 failure.getMessage());
     }
 
+    @Test
+    void corridorFillProgramLeavesOneTerrainFollowingRoadGapBetweenParcels() {
+        LandUseTerrainField terrain = flatTerrain();
+        String rootId = "fields::instance_01::parcel_01";
+        String childId = "fields::instance_01::parcel_02";
+        LandscapeFillProgram program = new LandscapeFillProgram("fill:natural_fields", "CULTIVATED",
+                List.of(
+                        new LandscapeFillProgram.RoleDefinition("CULTIVATED",
+                                LandscapeFillProgram.MaterialRole.PRIMARY_CONTENT,
+                                LandscapeFillProgram.GrowthForm.PATCH, 0.85),
+                        new LandscapeFillProgram.RoleDefinition("GROUND_PATH",
+                                LandscapeFillProgram.MaterialRole.GROUND,
+                                LandscapeFillProgram.GrowthForm.CORRIDOR, 0.15)),
+                List.of(), 7L);
+        LandUseSeedGroup root = group(rootId, new BlockPoint(10, 10), 2, 2, 2, program);
+        LandUseSeedGroup child = group(childId, new BlockPoint(13, 10), 2, 2, 2, program);
+        Map<String, Set<BlockPoint>> domains = Map.of(
+                rootId, Set.of(new BlockPoint(10, 10), new BlockPoint(11, 10)),
+                childId, Set.of(new BlockPoint(12, 10), new BlockPoint(13, 10),
+                        new BlockPoint(14, 10)));
+
+        LandUseExpansionResult result = new LandscapeParcelExpander().expand("city_test",
+                terrain.planningBounds(), terrain, List.of(root, child), "natural-gap", Set.of(), domains,
+                Map.of(rootId, "", childId, rootId));
+
+        LandUseExpansionResult.ExpansionOrigin origin = result.expansionOriginsByGroup().get(childId);
+        assertEquals(LandUseExpansionResult.OriginKind.PARENT_PARCEL_ROAD_GAP, origin.kind());
+        assertEquals(new BlockPoint(13, 10), origin.start());
+        assertEquals(new BlockPoint(11, 10), origin.sourceFrontier());
+        assertTrue(!result.claims().containsKey(new BlockPoint(12, 10)),
+                "one unclaimed terrain-following cell must remain as the parcel road gap");
+    }
+
     private static LandUseSeedGroup group(String groupId,
                                           BlockPoint seed,
                                           int minimum,
@@ -172,6 +206,21 @@ class LandscapeParcelExpanderTest {
                 600, 1, List.of(region), LandUseSeedGroup.GrowthBias.neutral(),
                 LandUseSeedGroup.TerrainBias.BALANCED, List.of(), LandUseSeedGroup.LayerRole.LANDSCAPE,
                 null, null, LandUseSeedGroup.AdmissionPolicy.REQUIRED);
+    }
+
+    private static LandUseSeedGroup group(String groupId,
+                                          BlockPoint seed,
+                                          int minimum,
+                                          int preferred,
+                                          int maximum,
+                                          LandscapeFillProgram program) {
+        LandUseSeedGroup source = group(groupId, seed, minimum, preferred, maximum);
+        return new LandUseSeedGroup(source.groupId(), source.rule(), source.surfaceSettings(), source.anchorIds(),
+                source.structureFootprints(), source.seedPoints(), source.gateSlots(), source.minAreaBlocks(),
+                source.preferredAreaBlocks(), source.maxAreaBlocks(), source.actionBudget(),
+                source.competitionWeight(), source.growthRegions(), source.growthBias(), source.terrainBias(),
+                source.preferredPatchRefs(), source.layerRole(), source.foundationSettings(), program,
+                source.admissionPolicy());
     }
 
     private static LandUseTerrainField flatTerrain() {

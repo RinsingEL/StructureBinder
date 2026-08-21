@@ -76,7 +76,11 @@ public final class CityOutdoorBlueprintCompiler {
                 .map(CityBlueprint.SpatialGround::sourceGroupId).distinct().sorted().toList();
         List<AnchorData> foundationAnchors = requiredGroups(anchorsByGroup, spatialGroupIds,
                 "CITY_OUTDOOR_STRUCTURE_GROUP_UNKNOWN");
-        List<BlockBounds> allFootprints = foundationAnchors.stream().map(AnchorData::footprint).distinct().toList();
+        List<BlockBounds> allFootprints = new ArrayList<>(foundationAnchors.stream()
+                .map(AnchorData::footprint).distinct().toList());
+        streetBandFootprints(structureMaterializationPlan).stream()
+                .filter(footprint -> !allFootprints.contains(footprint))
+                .forEach(allFootprints::add);
         List<String> allAnchorIds = foundationAnchors.stream().map(AnchorData::anchorId).sorted().toList();
         CityBlueprintReferenceCatalog.FoundationProfile foundationProfile = catalog.foundationProfiles().get(
                 blueprint.outdoorPlan().foundationProfileRef());
@@ -687,6 +691,21 @@ public final class CityOutdoorBlueprintCompiler {
         result.replaceAll((ignored, values) -> values.stream().sorted(Comparator.comparing(AnchorData::anchorId))
                 .toList());
         return result;
+    }
+
+    private static List<BlockBounds> streetBandFootprints(JsonObject materializationPlan) {
+        JsonObject anchorMap = object(materializationPlan, "sourceStructureAnchorMap");
+        JsonArray streetBands = anchorMap.has("streetBands") && anchorMap.get("streetBands").isJsonArray()
+                ? anchorMap.getAsJsonArray("streetBands") : new JsonArray();
+        List<BlockBounds> result = new ArrayList<>();
+        for (JsonElement element : streetBands) {
+            if (!element.isJsonObject()) continue;
+            JsonObject band = element.getAsJsonObject();
+            JsonObject bounds = object(band, "platformBounds");
+            if (bounds.size() == 0) bounds = object(band, "bounds");
+            if (bounds.size() > 0) result.add(bounds(bounds));
+        }
+        return List.copyOf(result);
     }
 
     private static BlueprintPlacementPhase blueprintPlacementPhase(String anchorId, String raw) {

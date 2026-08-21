@@ -92,6 +92,30 @@ class CityBlueprintGroupLayoutPlannerTest {
     }
 
     @Test
+    void linearLayoutKeepsThePrimaryAtTheAxisEndpointAndPairsFollowersAcrossAStreetBand() {
+        BlockPoint center = new BlockPoint(0, 0);
+        var frame = planner.frame(center, new BlockPoint(100, 0), 33L, "market");
+        var primary = planner.propose("LINEAR", CityBlueprint.DensityClass.BALANCED,
+                33L, "market", 0, frame, center, null, false, 18);
+        var left = planner.propose("LINEAR", CityBlueprint.DensityClass.BALANCED,
+                33L, "market", 1, frame, center, null, false, 18);
+        var right = planner.propose("LINEAR", CityBlueprint.DensityClass.BALANCED,
+                33L, "market", 2, frame, center, null, false, 18);
+        var nextLeft = planner.propose("LINEAR", CityBlueprint.DensityClass.BALANCED,
+                33L, "market", 3, frame, center, null, false, 18);
+
+        assertEquals(center, primary.guides().get(0));
+        assertEquals(left.guides().get(0).x(), right.guides().get(0).x());
+        assertTrue(left.guides().get(0).z() < 0 && right.guides().get(0).z() > 0);
+        assertTrue(nextLeft.guides().get(0).x() > left.guides().get(0).x());
+        assertTrue(right.guides().get(0).z() - left.guides().get(0).z()
+                >= 18 + left.parameters().streetBandWidthBlocks());
+        assertTrue(primary.traceJson().get("primaryAxisEndpoint").getAsBoolean());
+        assertTrue(left.traceJson().get("streetBandReserved").getAsBoolean());
+        assertEquals("LEFT", left.traceJson().get("streetBandSide").getAsString());
+    }
+
+    @Test
     void centerSymmetricOffersAtomicOppositePairsAroundTheCommittedCore() {
         BlockPoint center = new BlockPoint(120, -80);
         var frame = planner.frame(center, new BlockPoint(220, -80), 37L, "administration");

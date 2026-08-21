@@ -73,6 +73,7 @@ public final class CityStructureLandingPreviewRenderer {
             drawPatchBackdrop(g, t, gridBounds, reviewPackage);
             drawGrid(g, t, gridBounds);
             drawDistrictEnvelopes(g, t, groupExtentMap, Set.of());
+            drawStreetBands(g, t, groupExtentMap, Set.of());
             drawLandscapeCapacities(g, t, landscapeCapacityPlan);
             int i = 0;
             for (JsonElement elem : array(anchorMap, "anchors")) {
@@ -383,6 +384,7 @@ public final class CityStructureLandingPreviewRenderer {
             drawPatchBackdrop(g, t, viewport, reviewPackage);
             drawGrid(g, t, viewport);
             drawDistrictEnvelopes(g, t, groupExtentMap, visibleGroups);
+            drawStreetBands(g, t, groupExtentMap, visibleGroups);
             drawLandscapeCapacities(g, t, landscapeCapacityPlan);
             for (AnchorPreview preview : cluster) {
                 drawD4Geometry(g, t, preview.geometry());
@@ -521,6 +523,42 @@ public final class CityStructureLandingPreviewRenderer {
                     10.0f, new float[]{8.0f, 5.0f}, 0.0f));
             g.draw(reservationArea);
             drawBadge(g, t, labelPoint, "D" + index + " " + trim(groupId, 18), base);
+        }
+    }
+
+    private static void drawStreetBands(Graphics2D g, Transform t, JsonObject extentMap,
+                                        Set<String> visibleGroupIds) {
+        if (extentMap == null) return;
+        for (JsonElement element : array(extentMap, "groups")) {
+            if (!element.isJsonObject()) continue;
+            JsonObject group = element.getAsJsonObject();
+            String groupId = string(group, "groupId");
+            if (!visibleGroupIds.isEmpty() && !visibleGroupIds.contains(groupId)) continue;
+            JsonObject band = object(group, "streetBandPlan");
+            JsonObject bounds = object(band, "bounds");
+            if (bounds.size() == 0) continue;
+            JsonObject platform = object(band, "platformBounds");
+            if (platform.size() > 0) {
+                BlockBounds platformBounds = new BlockBounds(intValue(platform, "minX", 0),
+                        intValue(platform, "minZ", 0), intValue(platform, "maxX", 0),
+                        intValue(platform, "maxZ", 0));
+                g.setColor(new Color(125, 128, 130, 42));
+                fillBounds(g, t, platformBounds);
+            }
+            BlockBounds street = new BlockBounds(intValue(bounds, "minX", 0), intValue(bounds, "minZ", 0),
+                    intValue(bounds, "maxX", 0), intValue(bounds, "maxZ", 0));
+            g.setColor(new Color(86, 89, 91, 118));
+            fillBounds(g, t, street);
+            g.setColor(new Color(55, 58, 60, 220));
+            g.setStroke(new BasicStroke(2.0f));
+            JsonObject start = object(band, "start");
+            JsonObject end = object(band, "end");
+            if (start.size() > 0 && end.size() > 0) {
+                g.drawLine(t.x(intValue(start, "x", 0)), t.z(intValue(start, "z", 0)),
+                        t.x(intValue(end, "x", 0)), t.z(intValue(end, "z", 0)));
+            }
+            drawBadge(g, t, street.center(), "street " + intValue(band, "widthBlocks", 0),
+                    new Color(55, 58, 60, 235));
         }
     }
 

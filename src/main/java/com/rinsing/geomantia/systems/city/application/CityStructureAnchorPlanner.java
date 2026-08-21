@@ -104,6 +104,9 @@ public final class CityStructureAnchorPlanner {
             anchorMap.add("cityBlueprintCompileProvenance",
                     structureAnchorPlan.getAsJsonObject("cityBlueprintCompileProvenance").deepCopy());
         }
+        if (structureAnchorPlan.has("streetBands") && structureAnchorPlan.get("streetBands").isJsonArray()) {
+            anchorMap.add("streetBands", structureAnchorPlan.getAsJsonArray("streetBands").deepCopy());
+        }
         anchorMap.add("anchors", anchors);
         JsonObject quality = quality(hardBlocks, warnings, needsReview, anchors.size());
         anchorMap.add("quality", quality);
