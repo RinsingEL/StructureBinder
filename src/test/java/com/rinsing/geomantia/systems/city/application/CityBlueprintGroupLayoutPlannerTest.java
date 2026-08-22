@@ -9,6 +9,7 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityBlueprintGroupLayoutPlannerTest {
@@ -41,6 +42,11 @@ class CityBlueprintGroupLayoutPlannerTest {
         assertEquals("AXIS_ANCHORED",
                 planner.parameters("LINEAR", CityBlueprint.DensityClass.BALANCED)
                         .asJson().get("placementMode").getAsString());
+        assertTrue(planner.worldAxisLocked("GRID"));
+        assertTrue(planner.worldAxisLocked("COURTYARD"));
+        assertTrue(planner.exactInternalGuides("COMPACT"));
+        assertFalse(planner.worldAxisLocked("ORGANIC_COMPACT"));
+        assertFalse(planner.exactInternalGuides("ORGANIC_COMPACT"));
     }
 
     @Test
@@ -89,6 +95,76 @@ class CityBlueprintGroupLayoutPlannerTest {
                 31L, "district", 4, frame, center, null, false, 16).guides().get(0);
 
         assertTrue(!grid.equals(linear) && !grid.equals(courtyard) && !linear.equals(courtyard));
+    }
+
+    @Test
+    void gridUsesOneWorldAxisPitchWithoutFallbackGuides() {
+        BlockPoint center = new BlockPoint(100, 200);
+        var frame = planner.worldFrame(center);
+        var first = planner.propose("GRID", CityBlueprint.DensityClass.BALANCED,
+                41L, "grid", 1, frame, center, null, false, 20);
+        var second = planner.propose("GRID", CityBlueprint.DensityClass.BALANCED,
+                41L, "grid", 2, frame, center, null, false, 20);
+
+        assertEquals(1, first.guides().size());
+        assertEquals(first.spacingBlocks(), second.spacingBlocks());
+        assertEquals(new BlockPoint(130, 200), first.guides().get(0));
+        assertEquals(new BlockPoint(130, 230), second.guides().get(0));
+        assertEquals(1, first.traceJson().get("gridRow").getAsInt());
+        assertEquals(0, first.traceJson().get("gridColumn").getAsInt());
+        assertEquals(1, second.traceJson().get("gridRow").getAsInt());
+        assertEquals(1, second.traceJson().get("gridColumn").getAsInt());
+    }
+
+    @Test
+    void courtyardStartsOnFivePerimeterSlotsAndLeavesTheCenterForTheCourt() {
+        BlockPoint center = new BlockPoint(0, 0);
+        var frame = planner.worldFrame(center);
+        Set<BlockPoint> firstFive = new LinkedHashSet<>();
+        for (int slot = 0; slot < 5; slot++) {
+            var proposal = planner.propose("COURTYARD", CityBlueprint.DensityClass.DENSE,
+                    43L, "court", slot, frame, center, null, false, 18);
+            assertEquals(1, proposal.guides().size());
+            assertFalse(proposal.guides().get(0).equals(center));
+            assertEquals(center, proposal.frontageTarget());
+            firstFive.add(proposal.guides().get(0));
+        }
+
+        assertEquals(Set.of(new BlockPoint(0, -26), new BlockPoint(26, 0),
+                new BlockPoint(26, 26), new BlockPoint(-26, 26), new BlockPoint(-26, 0)), firstFive);
+    }
+
+    @Test
+    void compactPlacesBuildingsAlongBothSidesOfOneCurvedLane() {
+        BlockPoint center = new BlockPoint(0, 0);
+        var frame = planner.worldFrame(center);
+        Set<Integer> laneZ = new LinkedHashSet<>();
+        Set<String> sides = new LinkedHashSet<>();
+        for (int slot = 0; slot < 6; slot++) {
+            var proposal = planner.propose("COMPACT", CityBlueprint.DensityClass.DENSE,
+                    47L, "compact", slot, frame, center, null, false, 18);
+            assertEquals(1, proposal.guides().size());
+            assertTrue(proposal.frontageTarget() != null);
+            laneZ.add(proposal.frontageTarget().z());
+            sides.add(proposal.traceJson().get("compactLaneSide").getAsString());
+        }
+        assertTrue(laneZ.size() >= 3, "compact lane must bend");
+        assertEquals(Set.of("NORTH", "SOUTH"), sides);
+        var firstNorth = planner.propose("COMPACT", CityBlueprint.DensityClass.DENSE,
+                47L, "compact", 0, frame, center, null, false, 18);
+        var secondNorth = planner.propose("COMPACT", CityBlueprint.DensityClass.DENSE,
+                47L, "compact", 2, frame, center, null, false, 18);
+        assertEquals(firstNorth.spacingBlocks(),
+                Math.abs(firstNorth.frontageTarget().x() - secondNorth.frontageTarget().x()));
+    }
+
+    @Test
+    void organicCompactUsesOnlyOneToThreeBlockCollisionGaps() {
+        var parameters = planner.parameters("ORGANIC_COMPACT", CityBlueprint.DensityClass.SPARSE);
+        assertEquals(2, parameters.targetEdgeGapBlocks());
+        assertEquals(3, parameters.maximumEdgeGapBlocks());
+        assertTrue(parameters.jitterBlocks() > planner.parameters(
+                "ORGANIC_COMPACT", CityBlueprint.DensityClass.DENSE).jitterBlocks());
     }
 
     @Test

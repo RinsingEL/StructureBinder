@@ -183,7 +183,7 @@ class CityLandscapeCapacityReservationPlannerTest {
                 384, 768, 1536, CityBlueprint.OutdoorMembership.LANDSCAPE,
                 new CityBlueprintReferenceCatalog.ParcelStyle(1, 12, 64, 1024, 4));
         var catalog = new CityBlueprintReferenceCatalog(new JsonObject(), Set.of(), Set.of(), Set.of(),
-                Map.of(), Set.of(), Set.of(), Set.of(), Set.of(), null, Map.of(), Map.of(),
+                Map.of(), Map.of(), Set.of(), Set.of(), Set.of(), Set.of(), null, Map.of(), Map.of(),
                 Map.of("farmland", profile), Map.of());
 
         var result = new CityLandscapeCapacityReservationPlanner().plan(blueprint, catalog,
@@ -278,7 +278,7 @@ class CityLandscapeCapacityReservationPlannerTest {
                 1920, 1920, 1920, CityBlueprint.OutdoorMembership.LANDSCAPE,
                 new CityBlueprintReferenceCatalog.ParcelStyle(min, max, 192, 256, 4));
         return new CityBlueprintReferenceCatalog(new JsonObject(), Set.of(), Set.of(), Set.of(), Map.of(),
-                Set.of(), Set.of(), Set.of(), Set.of(), null, Map.of(), Map.of(),
+                Map.of(), Set.of(), Set.of(), Set.of(), Set.of(), null, Map.of(), Map.of(),
                 Map.of("farmland", profile), Map.of());
     }
 

@@ -109,6 +109,11 @@ public final class CityStructureAnchorPlanner {
         }
         anchorMap.add("anchors", anchors);
         JsonObject quality = quality(hardBlocks, warnings, needsReview, anchors.size());
+        if (structureAnchorPlan.has("arrayVisualQuality")
+                && structureAnchorPlan.get("arrayVisualQuality").isJsonObject()) {
+            quality.getAsJsonObject("metrics").add("arrayVisualGeometry",
+                    structureAnchorPlan.getAsJsonObject("arrayVisualQuality").deepCopy());
+        }
         anchorMap.add("quality", quality);
         anchorMap.add("timingMs", timing(started));
         JsonObject normalizedPlan = structureAnchorPlan.deepCopy();

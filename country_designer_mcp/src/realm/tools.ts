@@ -343,6 +343,8 @@ const blueprintReferenceCatalogSchema = strictObject({
     items: strictObject({
       algorithmProfileRef: nonEmptyString("稳定算法 profile 引用。"),
       algorithm: { type: "string", enum: ["COMPACT", "GRID", "LINEAR", "COURTYARD", "ORGANIC_COMPACT", "CENTER_SYMMETRIC"] },
+      centerAxisStreetEnabled: { type: "boolean",
+        description: "仅 CENTER_SYMMETRIC 可用；是否生成中心主体两侧的礼仪性轴街。" },
     }, ["algorithmProfileRef", "algorithm"]),
   },
   compositionProfiles: {

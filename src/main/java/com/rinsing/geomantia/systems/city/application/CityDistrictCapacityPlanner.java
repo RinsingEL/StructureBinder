@@ -425,6 +425,7 @@ final class CityDistrictCapacityPlanner {
                          int targetAreaBlocks,
                          int maximumAreaBlocks,
                          int roadReserveAreaBlocks,
+                         int maximumTemplateSpanBlocks,
                          int formationSpanBlocks,
                          int formationWidthBlocks,
                          int formationLengthBlocks,
@@ -435,7 +436,8 @@ final class CityDistrictCapacityPlanner {
         SpatialDemand {
             if (minimumAreaBlocks <= 0 || targetAreaBlocks < minimumAreaBlocks
                     || maximumAreaBlocks < targetAreaBlocks || roadReserveAreaBlocks < 0
-                    || formationSpanBlocks <= 0 || formationWidthBlocks <= 0 || formationLengthBlocks <= 0
+                    || maximumTemplateSpanBlocks <= 0 || formationSpanBlocks <= 0
+                    || formationWidthBlocks <= 0 || formationLengthBlocks <= 0
                     || primaryAxisDirection == null || plannedStructureCount <= 0
                     || templateFootprintAreaBlocks <= 0 || internalStreetAreaBlocks < 0) {
                 throw new IllegalArgumentException("CITY_BLUEPRINT_GROUP_SPATIAL_DEMAND_INVALID");
@@ -449,6 +451,7 @@ final class CityDistrictCapacityPlanner {
             value.addProperty("targetAreaBlocks", targetAreaBlocks);
             value.addProperty("maximumAreaBlocks", maximumAreaBlocks);
             value.addProperty("roadReserveAreaBlocks", roadReserveAreaBlocks);
+            value.addProperty("maximumTemplateSpanBlocks", maximumTemplateSpanBlocks);
             value.addProperty("formationSpanBlocks", formationSpanBlocks);
             value.addProperty("formationWidthBlocks", formationWidthBlocks);
             value.addProperty("formationLengthBlocks", formationLengthBlocks);

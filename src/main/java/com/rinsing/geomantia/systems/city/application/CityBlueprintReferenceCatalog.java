@@ -24,6 +24,7 @@ public record CityBlueprintReferenceCatalog(
         Set<String> fillPoolRefs,
         Set<String> algorithmProfileRefs,
         Map<String, String> algorithmsByProfileRef,
+        Map<String, Boolean> centerAxisStreetEnabledByProfileRef,
         Set<String> compositionProfileRefs,
         Set<String> styleProfileRefs,
         Set<String> roadProfileRefs,
@@ -61,13 +62,34 @@ public record CityBlueprintReferenceCatalog(
                     }
                 });
         Map<String, String> algorithmsByRef = new LinkedHashMap<>();
-        Set<String> algorithms = profileRefs(array(root, "algorithmProfiles"), "algorithmProfileRef",
-                Set.of("algorithmProfileRef", "algorithm"), "$.algorithmProfiles", item -> {
-                    enumString(item, "algorithm", Set.of("COMPACT", "GRID", "LINEAR", "COURTYARD",
-                            "ORGANIC_COMPACT", "CENTER_SYMMETRIC"));
-                    algorithmsByRef.put(string(item, "algorithmProfileRef", "$.algorithmProfiles[].algorithmProfileRef"),
-                            string(item, "algorithm", "$.algorithmProfiles[].algorithm"));
-                });
+        Map<String, Boolean> centerAxisStreetsByRef = new LinkedHashMap<>();
+        Set<String> algorithms = new LinkedHashSet<>();
+        JsonArray algorithmProfiles = array(root, "algorithmProfiles");
+        for (int index = 0; index < algorithmProfiles.size(); index++) {
+            String path = "$.algorithmProfiles[" + index + "]";
+            JsonObject item = object(algorithmProfiles.get(index), path);
+            Set<String> fields = item.has("centerAxisStreetEnabled")
+                    ? Set.of("algorithmProfileRef", "algorithm", "centerAxisStreetEnabled")
+                    : Set.of("algorithmProfileRef", "algorithm");
+            exactFields(item, fields, path, CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID);
+            String ref = string(item, "algorithmProfileRef", path + ".algorithmProfileRef");
+            duplicate(algorithms, ref, path);
+            String algorithm = string(item, "algorithm", path + ".algorithm");
+            if (!Set.of("COMPACT", "GRID", "LINEAR", "COURTYARD", "ORGANIC_COMPACT",
+                    "CENTER_SYMMETRIC").contains(algorithm)) {
+                fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID,
+                        path + ".algorithm", "Unsupported value: " + algorithm);
+            }
+            boolean axisStreet = item.has("centerAxisStreetEnabled")
+                    && bool(item, "centerAxisStreetEnabled", path + ".centerAxisStreetEnabled");
+            if (axisStreet && !"CENTER_SYMMETRIC".equals(algorithm)) {
+                fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID,
+                        path + ".centerAxisStreetEnabled",
+                        "centerAxisStreetEnabled is only valid for CENTER_SYMMETRIC.");
+            }
+            algorithmsByRef.put(ref, algorithm);
+            centerAxisStreetsByRef.put(ref, axisStreet);
+        }
         Set<String> compositions = refs(array(root, "compositionProfiles"), "compositionProfileRef",
                 Set.of("compositionProfileRef", "mode"), "$.compositionProfiles",
                 item -> enumString(item, "mode", Set.of("ROUND_ROBIN")));
@@ -114,7 +136,7 @@ public record CityBlueprintReferenceCatalog(
             }
         }
         return new CityBlueprintReferenceCatalog(root.deepCopy(), structures, pools, algorithms,
-                Map.copyOf(algorithmsByRef), compositions,
+                Map.copyOf(algorithmsByRef), Map.copyOf(centerAxisStreetsByRef), compositions,
                 styles, roads, surfaces, landUseRules, Map.copyOf(surfaceRecipes),
                 Map.copyOf(foundationProfiles),
                 Map.copyOf(landscapeProfiles), Map.copyOf(landscapeFillProfiles));

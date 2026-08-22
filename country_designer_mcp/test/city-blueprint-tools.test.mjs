@@ -167,6 +167,10 @@ test("requires the v0.8 Blueprint reference catalog with exact Landscape Parcel 
   assert.equal(catalog.properties.structureRefs.items.properties.templateCandidates.minItems, 1);
   assert.deepEqual(catalog.properties.algorithmProfiles.items.properties.algorithm.enum,
     ["COMPACT", "GRID", "LINEAR", "COURTYARD", "ORGANIC_COMPACT", "CENTER_SYMMETRIC"]);
+  assert.equal(catalog.properties.algorithmProfiles.items.properties.centerAxisStreetEnabled.type,
+    "boolean");
+  assert.equal(catalog.properties.algorithmProfiles.items.required.includes("centerAxisStreetEnabled"),
+    false);
   assert.deepEqual(catalog.properties.roadProfiles.items.properties.hierarchy.enum,
     ["SIMPLE", "HIERARCHICAL"]);
 

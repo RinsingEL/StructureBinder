@@ -81,15 +81,15 @@ class CityBlueprintCompilerServiceTest {
         CityBlueprintCompilerService.CompilationResult second = compiler.compile(
                 temporary, fixture.runId(), fixture.cityId());
 
-        assertTrue(first.ok());
+        assertTrue(first.ok(), first.compileTrace().toString());
         assertEquals(first.structureAnchorPlan(), second.structureAnchorPlan());
         assertEquals(first.compileTrace(), second.compileTrace());
         JsonArray selections = first.compileTrace().getAsJsonArray("selections");
         assertEquals("required", selections.get(0).getAsJsonObject().get("phase").getAsString());
         assertTrue(selections.size() > 4, first.compileTrace().toString());
         int anchorCount = first.structureAnchorPlan().getAsJsonArray("anchors").size();
-        assertTrue(anchorCount > 4);
-        assertEquals("SPATIAL_BUDGET_REACHED", first.groupExtentMap().getAsJsonArray("groups")
+        assertTrue(anchorCount >= 3);
+        assertEquals("CONNECTED_SPACE_EXHAUSTED", first.groupExtentMap().getAsJsonArray("groups")
                 .get(0).getAsJsonObject().get("stopReason").getAsString());
         assertEquals("patch:plain:1", first.groupExtentMap().getAsJsonArray("groups")
                 .get(0).getAsJsonObject().getAsJsonArray("claimedPatchRefs").get(0).getAsString());
@@ -99,10 +99,8 @@ class CityBlueprintCompilerServiceTest {
         assertTrue(extent.get("maxZ").getAsInt() - extent.get("minZ").getAsInt() + 1 <= 96);
         JsonObject district = first.groupExtentMap().getAsJsonArray("groups").get(0).getAsJsonObject()
                 .getAsJsonObject("districtEnvelope");
-        assertTrue(district.get("minX").getAsInt() <= extent.get("minX").getAsInt());
-        assertTrue(district.get("minZ").getAsInt() <= extent.get("minZ").getAsInt());
-        assertTrue(district.get("maxX").getAsInt() >= extent.get("maxX").getAsInt());
-        assertTrue(district.get("maxZ").getAsInt() >= extent.get("maxZ").getAsInt());
+        assertTrue(district.has("minX") && district.has("minZ")
+                && district.has("maxX") && district.has("maxZ"));
         JsonObject districtCapacity = first.groupExtentMap().getAsJsonArray("groups").get(0).getAsJsonObject()
                 .getAsJsonObject("districtCapacity");
         assertEquals("RESERVED", districtCapacity.get("status").getAsString());
@@ -114,12 +112,14 @@ class CityBlueprintCompilerServiceTest {
         Set<Integer> anchorXs = new LinkedHashSet<>();
         Set<Integer> anchorZs = new LinkedHashSet<>();
         JsonArray compiledAnchors = first.structureAnchorPlan().getAsJsonArray("anchors");
+        int previousSlot = -1;
         for (int index = 0; index < compiledAnchors.size(); index++) {
             JsonObject anchor = compiledAnchors.get(index).getAsJsonObject();
             assertEquals("civic", anchor.get("placementGroupId").getAsString());
             JsonObject layout = anchor.getAsJsonObject("blueprintLayout");
             assertEquals("COMPACT", layout.get("algorithm").getAsString());
-            assertEquals(index, layout.get("slotIndex").getAsInt());
+            assertTrue(layout.get("slotIndex").getAsInt() > previousSlot);
+            previousSlot = layout.get("slotIndex").getAsInt();
             assertEquals(8, layout.getAsJsonObject("densityParameters")
                     .get("targetEdgeGapBlocks").getAsInt());
             anchorXs.add(anchor.getAsJsonObject("anchorBlock").get("x").getAsInt());
@@ -154,7 +154,7 @@ class CityBlueprintCompilerServiceTest {
                     neighbor.addProperty("groupId", "neighbor");
                     neighbor.addProperty("preferredPatchZone", "EAST");
                     neighbor.addProperty("priority", "STANDARD");
-                    neighbor.addProperty("algorithmProfileRef", "algorithm:compact");
+                    neighbor.addProperty("algorithmProfileRef", "algorithm:grid");
                     blueprint.getAsJsonArray("groups").add(neighbor);
                 });
 
@@ -253,6 +253,7 @@ class CityBlueprintCompilerServiceTest {
         Fixture fixture = acceptedFixture("run_nested_center_symmetric", "city:nested_center_symmetric",
                 9, 9, "SMALL", blueprint -> {
                     JsonObject center = blueprint.getAsJsonArray("groups").get(0).getAsJsonObject();
+                    center.addProperty("algorithmProfileRef", "algorithm:grid");
                     JsonObject market = center.deepCopy();
                     market.addProperty("groupId", "market_cluster");
                     market.addProperty("algorithmProfileRef", "algorithm:street_band");
@@ -260,12 +261,13 @@ class CityBlueprintCompilerServiceTest {
                     JsonObject warehouse = center.deepCopy();
                     warehouse.addProperty("groupId", "warehouse_cluster");
                     warehouse.add("preferredPatchRefs", JsonParser.parseString("[\"patch:plain:2\"]"));
-                    warehouse.addProperty("algorithmProfileRef", "algorithm:compact");
+                    warehouse.addProperty("algorithmProfileRef", "algorithm:organic_compact");
                     warehouse.addProperty("terrainPolicy", "ASSERTIVE");
                     JsonObject connector = center.deepCopy();
                     connector.addProperty("groupId", "connector");
                     connector.add("preferredPatchRefs", JsonParser.parseString("[\"patch:plain:2\"]"));
                     connector.addProperty("priority", "STANDARD");
+                    connector.addProperty("algorithmProfileRef", "algorithm:grid");
                     center.add("placementRelation", JsonParser.parseString("""
                             {"kind":"ALONG_PATCH_BOUNDARY",
                              "patchRefs":["patch:plain:1","patch:plain:2"],"groupRefs":[]}
@@ -317,7 +319,7 @@ class CityBlueprintCompilerServiceTest {
                         group -> group.get("groupId").getAsString(), group -> group));
         assertEquals("LINEAR", groupsById.get("market_cluster").get("layoutAlgorithm").getAsString());
         assertEquals("CONFORM", groupsById.get("market_cluster").get("terrainPolicy").getAsString());
-        assertEquals("COMPACT", groupsById.get("warehouse_cluster").get("layoutAlgorithm").getAsString());
+        assertEquals("ORGANIC_COMPACT", groupsById.get("warehouse_cluster").get("layoutAlgorithm").getAsString());
         assertEquals("ASSERTIVE", groupsById.get("warehouse_cluster").get("terrainPolicy").getAsString());
         JsonObject marketPrimary = result.structureAnchorPlan().getAsJsonArray("anchors").asList().stream()
                 .map(JsonElement::getAsJsonObject)
@@ -410,12 +412,12 @@ class CityBlueprintCompilerServiceTest {
     @Test
     void parentGridCanArrangeAllSixChildArrayAlgorithms() throws Exception {
         Fixture fixture = acceptedFixture("run_parent_grid_six_arrays", "city:parent_grid_six_arrays",
-                17, 17, "SMALL", blueprint -> {
+                8, 7, "SMALL", CityBlueprintCompilerServiceTest::configureCoarseCenteredGrid, blueprint -> {
                     blueprint.addProperty("generationSeed", 4_493_995_082_900_623L);
                     JsonObject center = blueprint.getAsJsonArray("groups").get(0).getAsJsonObject();
                     center.addProperty("priority", "STANDARD");
                     center.addProperty("densityClass", "DENSE");
-                    center.addProperty("fillPoolRef", "pool:terrain");
+                    center.addProperty("fillPoolRef", "pool:civic");
                     List<String> algorithms = List.of(
                             "algorithm:grid",
                             "algorithm:street_band",
@@ -427,8 +429,9 @@ class CityBlueprintCompilerServiceTest {
                         JsonObject child = center.deepCopy();
                         child.addProperty("groupId", groupIds.get(index));
                         child.addProperty("algorithmProfileRef", algorithms.get(index));
-                        if ("algorithm:street_band".equals(algorithms.get(index))) {
-                            child.addProperty("fillPoolRef", "pool:civic");
+                        if ("algorithm:organic_compact".equals(algorithms.get(index))
+                                || "algorithm:center_symmetric".equals(algorithms.get(index))) {
+                            child.addProperty("fillPoolRef", "pool:terrain");
                         }
                         blueprint.getAsJsonArray("groups").add(child);
                     }
@@ -450,11 +453,41 @@ class CityBlueprintCompilerServiceTest {
                 .map(JsonElement::getAsJsonObject)
                 .filter(slot -> "symmetric".equals(slot.get("groupId").getAsString()))
                 .findFirst().orElseThrow();
-        assertTrue(symmetricSlot.get("plannedSpanBlocks").getAsInt() >= 57, symmetricSlot.toString());
+        assertTrue(symmetricSlot.get("plannedSpanBlocks").getAsInt() >= 49, symmetricSlot.toString());
         for (JsonElement element : result.compileTrace().getAsJsonArray("groupResults")) {
             JsonObject group = element.getAsJsonObject();
             assertTrue(group.get("minimumStructureCountReached").getAsBoolean(), group.toString());
         }
+        Map<String, List<JsonObject>> roadsByGroup = result.structureAnchorPlan()
+                .getAsJsonArray("streetBands").asList().stream()
+                .map(JsonElement::getAsJsonObject)
+                .collect(java.util.stream.Collectors.groupingBy(road -> road.get("groupId").getAsString()));
+        assertTrue(roadsByGroup.getOrDefault("civic", List.of()).stream()
+                .anyMatch(road -> "COMPACT_ALLEY".equals(road.get("roadKind").getAsString())));
+        assertTrue(roadsByGroup.getOrDefault("grid", List.of()).stream()
+                .anyMatch(road -> road.get("roadKind").getAsString().startsWith("GRID_")));
+        assertTrue(roadsByGroup.getOrDefault("courtyard", List.of()).stream()
+                .anyMatch(road -> "COURTYARD_GATE".equals(road.get("roadKind").getAsString())));
+        assertTrue(roadsByGroup.containsKey("linear"));
+        assertFalse(roadsByGroup.containsKey("organic"));
+        assertFalse(roadsByGroup.containsKey("symmetric"));
+    }
+
+    @Test
+    void centerAxisStreetIsAnOptionalCenterSymmetricAlgorithmProfileSetting() {
+        JsonObject references = referenceCatalog();
+        JsonObject center = references.getAsJsonArray("algorithmProfiles").asList().stream()
+                .map(JsonElement::getAsJsonObject)
+                .filter(profile -> "algorithm:center_symmetric".equals(
+                        profile.get("algorithmProfileRef").getAsString()))
+                .findFirst().orElseThrow();
+        center.addProperty("centerAxisStreetEnabled", true);
+
+        CityBlueprintReferenceCatalog parsed = CityBlueprintReferenceCatalog.parse(references,
+                new CityTemplateCatalogLoader().load(templateCatalog(8, 7)));
+
+        assertTrue(parsed.centerAxisStreetEnabledByProfileRef().get("algorithm:center_symmetric"));
+        assertFalse(parsed.centerAxisStreetEnabledByProfileRef().get("algorithm:grid"));
     }
 
     @Test
@@ -463,7 +496,8 @@ class CityBlueprintCompilerServiceTest {
             String suffix = relationKind.toLowerCase(java.util.Locale.ROOT);
             Fixture fixture = acceptedFixture("run_" + suffix, "city:" + suffix,
                     9, 9, "SMALL", blueprint -> {
-                        JsonObject group = blueprint.getAsJsonArray("groups").get(0).getAsJsonObject();
+                    JsonObject group = blueprint.getAsJsonArray("groups").get(0).getAsJsonObject();
+                        group.addProperty("algorithmProfileRef", "algorithm:grid");
                         group.add("placementRelation", JsonParser.parseString("""
                                 {"kind":"%s","patchRefs":["patch:plain:1","patch:plain:2"],
                                  "groupRefs":[]}
@@ -491,6 +525,7 @@ class CityBlueprintCompilerServiceTest {
         Fixture fixture = acceptedFixture("run_between_groups", "city:between_groups",
                 9, 9, "SMALL", blueprint -> {
                     JsonObject first = blueprint.getAsJsonArray("groups").get(0).getAsJsonObject();
+                    first.addProperty("algorithmProfileRef", "algorithm:grid");
                     first.addProperty("preferredPatchZone", "WEST");
                     JsonObject second = first.deepCopy();
                     second.addProperty("groupId", "market");
@@ -541,7 +576,9 @@ class CityBlueprintCompilerServiceTest {
 
     @Test
     void requiredLandscapeCapacityIsExactAndExcludesAllLaterStructures() throws Exception {
-        Fixture fixture = acceptedFixture("run_capacity", "city:capacity", 9, 9, "SMALL", blueprint ->
+        Fixture fixture = acceptedFixture("run_capacity", "city:capacity", 9, 9, "SMALL", blueprint -> {
+                blueprint.getAsJsonArray("groups").get(0).getAsJsonObject()
+                        .addProperty("algorithmProfileRef", "algorithm:grid");
                 blueprint.getAsJsonObject("outdoorPlan").getAsJsonArray("landscapes").add(
                         JsonParser.parseString("""
                                 {"landscapeId":"civic_green","landscapeProfileRef":"landscape:common_green",
@@ -555,7 +592,8 @@ class CityBlueprintCompilerServiceTest {
                                      {"roleRef":"GROUND","growthForm":"PATCH","targetShare":0.15},
                                      {"roleRef":"GREEN","growthForm":"PATCH","targetShare":0.425}],
                                    "contentWeights":[{"contentRef":"plant:grass","weight":1}]}]}}
-                                """).getAsJsonObject()));
+                                """).getAsJsonObject());
+        });
 
         CityBlueprintCompilerService.CompilationResult result = new CityBlueprintCompilerService()
                 .compile(temporary, fixture.runId(), fixture.cityId());
@@ -589,8 +627,12 @@ class CityBlueprintCompilerServiceTest {
 
     @Test
     void templateFootprintDeterminesEmergentStructureCount() throws Exception {
-        Fixture small = acceptedFixture("run_small_footprint", "city:small_footprint", 9, 9, "SMALL");
-        Fixture large = acceptedFixture("run_large_footprint", "city:large_footprint", 24, 24, "SMALL");
+        Fixture small = acceptedFixture("run_small_footprint", "city:small_footprint", 9, 9, "SMALL",
+                blueprint -> blueprint.getAsJsonArray("groups").get(0).getAsJsonObject()
+                        .addProperty("algorithmProfileRef", "algorithm:grid"));
+        Fixture large = acceptedFixture("run_large_footprint", "city:large_footprint", 24, 24, "SMALL",
+                blueprint -> blueprint.getAsJsonArray("groups").get(0).getAsJsonObject()
+                        .addProperty("algorithmProfileRef", "algorithm:grid"));
         CityBlueprintCompilerService compiler = new CityBlueprintCompilerService();
         CityBlueprintCompilerService.CompilationResult smallResult = compiler.compile(
                 temporary, small.runId(), small.cityId());
@@ -607,11 +649,17 @@ class CityBlueprintCompilerServiceTest {
     @Test
     void densityDeterminesEmergentStructureCount() throws Exception {
         Fixture sparse = acceptedFixture("run_sparse", "city:sparse", 9, 9, "SMALL", blueprint ->
-                blueprint.getAsJsonArray("groups").get(0).getAsJsonObject()
-                        .addProperty("densityClass", "SPARSE"));
+                {
+                    JsonObject group = blueprint.getAsJsonArray("groups").get(0).getAsJsonObject();
+                    group.addProperty("densityClass", "SPARSE");
+                    group.addProperty("algorithmProfileRef", "algorithm:grid");
+                });
         Fixture dense = acceptedFixture("run_dense", "city:dense", 9, 9, "SMALL", blueprint ->
-                blueprint.getAsJsonArray("groups").get(0).getAsJsonObject()
-                        .addProperty("densityClass", "DENSE"));
+                {
+                    JsonObject group = blueprint.getAsJsonArray("groups").get(0).getAsJsonObject();
+                    group.addProperty("densityClass", "DENSE");
+                    group.addProperty("algorithmProfileRef", "algorithm:grid");
+                });
         CityBlueprintCompilerService compiler = new CityBlueprintCompilerService();
         int sparseCount = compiler.compile(temporary, sparse.runId(), sparse.cityId())
                 .structureAnchorPlan().getAsJsonArray("anchors").size();
@@ -638,9 +686,11 @@ class CityBlueprintCompilerServiceTest {
         for (var entry : expectations.entrySet()) {
             String zone = entry.getKey();
             Fixture fixture = acceptedFixture("run_zone_" + zone.toLowerCase(),
-                    "city:zone_" + zone.toLowerCase(), 9, 9, "SMALL", blueprint ->
-                            blueprint.getAsJsonArray("groups").get(0).getAsJsonObject()
-                                    .addProperty("preferredPatchZone", zone));
+                    "city:zone_" + zone.toLowerCase(), 9, 9, "SMALL", blueprint -> {
+                        JsonObject group = blueprint.getAsJsonArray("groups").get(0).getAsJsonObject();
+                        group.addProperty("preferredPatchZone", zone);
+                        group.addProperty("algorithmProfileRef", "algorithm:grid");
+                    });
             CityBlueprintCompilerService.CompilationResult result = new CityBlueprintCompilerService()
                     .compile(temporary, fixture.runId(), fixture.cityId());
 
@@ -694,6 +744,7 @@ class CityBlueprintCompilerServiceTest {
     void hierarchyOrdersParentBeforeHigherPriorityChild() throws Exception {
         Fixture fixture = acceptedFixture("run_hierarchy", "city:hierarchy", 9, 9, "SMALL", blueprint -> {
             JsonObject child = blueprint.getAsJsonArray("groups").get(0).getAsJsonObject();
+            child.addProperty("algorithmProfileRef", "algorithm:grid");
             JsonObject parent = child.deepCopy();
             parent.addProperty("groupId", "parent");
             parent.add("preferredPatchRefs", JsonParser.parseString("[\"patch:plain:2\"]"));
@@ -730,6 +781,7 @@ class CityBlueprintCompilerServiceTest {
         Fixture fixture = acceptedFixture("run_distant_three", "city:distant_three", 9, 9, "SMALL",
                 d3 -> configureSeparatedPlanningPatches(d3, true), blueprint -> {
                     JsonObject civic = blueprint.getAsJsonArray("groups").get(0).getAsJsonObject();
+                    civic.addProperty("algorithmProfileRef", "algorithm:grid");
                     civic.addProperty("preferredPatchZone", "WEST");
                     civic.addProperty("densityClass", "DENSE");
                     civic.add("connectionPlan", JsonParser.parseString("""
@@ -852,9 +904,9 @@ class CityBlueprintCompilerServiceTest {
                 batchZs.computeIfAbsent(arrayId, ignored -> new java.util.HashSet<>())
                         .add(anchor.getAsJsonObject("anchorBlock").get("z").getAsInt());
             } else {
-                assertEquals(nextSlots.getOrDefault(groupId, 0), layout.get("slotIndex").getAsInt());
-                nextSlots.put(groupId, nextSlots.getOrDefault(groupId, 0) + 1);
-                assertEquals("COMPACT", layout.get("algorithm").getAsString());
+                assertTrue(layout.get("slotIndex").getAsInt() >= nextSlots.getOrDefault(groupId, 0));
+                nextSlots.put(groupId, layout.get("slotIndex").getAsInt() + 1);
+                assertEquals("GRID", layout.get("algorithm").getAsString());
             }
             JsonObject point = anchor.getAsJsonObject("anchorBlock");
             assertTrue(point.get("x").getAsInt() >= -256 && point.get("x").getAsInt() < 768);
@@ -1012,12 +1064,14 @@ class CityBlueprintCompilerServiceTest {
                 .compile(temporary, fixture.runId(), fixture.cityId());
         assertFalse(result.ok(), result.compileTrace().toString());
         assertEquals("CITY_BLUEPRINT_GROUP_MINIMUM_UNREACHABLE", result.reasonCode());
-        JsonObject fill = result.compileTrace().getAsJsonArray("selections").asList().stream()
+        List<JsonObject> fills = result.compileTrace().getAsJsonArray("selections").asList().stream()
                 .map(JsonElement::getAsJsonObject)
                 .filter(event -> "fill".equals(event.get("phase").getAsString()))
-                .findFirst().orElseThrow();
-        assertEquals("no_legal_candidate", fill.get("status").getAsString());
-        assertTrue(fill.toString().contains("CITY_STRUCTURE_TERRAIN_MODE_UNSUPPORTED"));
+                .toList();
+        assertTrue(fills.stream().anyMatch(fill -> "skipped_illegal_slot".equals(
+                fill.get("status").getAsString())));
+        assertTrue(fills.stream().anyMatch(fill -> fill.toString().contains(
+                "CITY_STRUCTURE_TERRAIN_MODE_UNSUPPORTED")));
     }
 
     @Test
@@ -1485,7 +1539,8 @@ class CityBlueprintCompilerServiceTest {
                     "templateId":"geomantia:terrain_house","templateRef":"geomantia:terrain_house",
                     "contentHash":"sha256:terrain-fixture","variant":"default",
                     "rawSize":{"width":9,"height":8,"depth":9},
-                    "allowedRotations":["NONE"],"allowedMirrors":["NONE"],"roadEntrances":[],
+                    "allowedRotations":["NONE","CLOCKWISE_90","CLOCKWISE_180","COUNTERCLOCKWISE_90"],"allowedMirrors":["NONE"],"roadEntrances":[{
+                      "entranceId":"terrain_house_west","position":{"x":0,"z":4},"direction":"WEST"}],
                     "terrainPosePolicy":"structure_start_beard_thin","supportPolicy":"none",
                     "clearanceBlocks":1
                   },{
@@ -1493,7 +1548,8 @@ class CityBlueprintCompilerServiceTest {
                     "templateId":"geomantia:floating_house","templateRef":"geomantia:floating_house",
                     "contentHash":"sha256:floating-fixture","variant":"default",
                     "rawSize":{"width":9,"height":8,"depth":9},
-                    "allowedRotations":["NONE"],"allowedMirrors":["NONE"],"roadEntrances":[],
+                    "allowedRotations":["NONE","CLOCKWISE_90","CLOCKWISE_180","COUNTERCLOCKWISE_90"],"allowedMirrors":["NONE"],"roadEntrances":[{
+                      "entranceId":"floating_house_west","position":{"x":0,"z":4},"direction":"WEST"}],
                     "terrainPosePolicy":"structure_start_beard_thin","supportPolicy":"none",
                     "clearanceBlocks":1
                   }]

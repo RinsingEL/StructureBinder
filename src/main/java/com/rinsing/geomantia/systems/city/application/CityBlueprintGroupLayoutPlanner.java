@@ -14,6 +14,14 @@ import java.util.Set;
 /** Maintains the spatial grammar used by the incremental Blueprint compiler. */
 final class CityBlueprintGroupLayoutPlanner {
     private static final double GOLDEN_ANGLE = Math.PI * (3.0 - Math.sqrt(5.0));
+    private static final List<GridOffset> COURTYARD_RING = List.of(
+            new GridOffset(-1, 0),
+            new GridOffset(0, 1),
+            new GridOffset(1, 1),
+            new GridOffset(0, -1),
+            new GridOffset(1, -1),
+            new GridOffset(-1, 1),
+            new GridOffset(-1, -1));
 
     /** Derived spatial topology; functional roles remain independent constraints. */
     enum PlacementMode {
@@ -84,9 +92,13 @@ final class CityBlueprintGroupLayoutPlanner {
                 outwardBias = 0.50;
             }
             case "ORGANIC_COMPACT" -> {
-                targetGap += 2;
-                maximumGap += 3;
-                jitter = Math.max(3, targetGap / 2);
+                targetGap = 2;
+                maximumGap = 3;
+                jitter = switch (density) {
+                    case DENSE -> 4;
+                    case BALANCED -> 8;
+                    case SPARSE -> 12;
+                };
                 claimMultiplier = 1.06;
                 outwardBias = 0.58;
             }
@@ -118,6 +130,18 @@ final class CityBlueprintGroupLayoutPlanner {
         return new Frame(center, dx / length, dz / length);
     }
 
+    Frame worldFrame(BlockPoint center) {
+        return new Frame(center, 1.0, 0.0);
+    }
+
+    boolean worldAxisLocked(String algorithm) {
+        return !"ORGANIC_COMPACT".equals(algorithm);
+    }
+
+    boolean exactInternalGuides(String algorithm) {
+        return !"ORGANIC_COMPACT".equals(algorithm);
+    }
+
     Proposal propose(String algorithm,
                      CityBlueprint.DensityClass density,
                      long seed,
@@ -130,13 +154,13 @@ final class CityBlueprintGroupLayoutPlanner {
                      int footprintSpan) {
         Parameters parameters = parameters(algorithm, density);
         int spacing = Math.max(1, footprintSpan + parameters.targetEdgeGapBlocks());
-        if (slotIndex == 0) {
+        if (slotIndex == 0 && !"COURTYARD".equals(algorithm) && !"COMPACT".equals(algorithm)) {
             return new Proposal(slotIndex, algorithm, parameters, spacing, outwardPending,
-                    outwardTarget, List.of(seedPoint));
+                    outwardTarget, List.of(seedPoint), null);
         }
 
         boolean centerSymmetric = "CENTER_SYMMETRIC".equals(algorithm);
-        boolean axisLocked = "LINEAR".equals(algorithm);
+        boolean axisLocked = worldAxisLocked(algorithm);
         Frame guidanceFrame = !centerSymmetric && !axisLocked && outwardPending && outwardTarget != null
                 ? frame.toward(outwardTarget) : frame;
         BlockPoint desired = centerSymmetric
@@ -149,13 +173,21 @@ final class CityBlueprintGroupLayoutPlanner {
                     case "COURTYARD" -> courtyardPoint(frame, slotIndex, spacing, false);
                     case "ORGANIC_COMPACT" -> spiralPoint(frame, slotIndex, spacing, seed, groupId,
                             parameters, false, true);
+                    case "COMPACT" -> compactBuildingPoint(frame, slotIndex, spacing,
+                            footprintSpan, parameters);
                     default -> spiralPoint(frame, slotIndex, spacing, seed, groupId,
                             parameters, false, false);
                 };
         List<BlockPoint> guides = fallbackGuides(desired, guidanceFrame, parameters, spacing, algorithm);
+        BlockPoint frontageTarget = switch (algorithm) {
+            case "GRID" -> gridFrontageTarget(frame, slotIndex, spacing);
+            case "COURTYARD" -> frame.center();
+            case "COMPACT" -> compactLaneTarget(frame, slotIndex, spacing, parameters);
+            default -> null;
+        };
         return new Proposal(slotIndex, algorithm, parameters, spacing,
                 !centerSymmetric && !axisLocked && outwardPending,
-                outwardTarget, guides);
+                outwardTarget, guides, frontageTarget);
     }
 
     List<SymmetricPair> symmetricPairOptions(CityBlueprint.DensityClass density,
@@ -244,14 +276,13 @@ final class CityBlueprintGroupLayoutPlanner {
                                           boolean organic) {
         double phase = stableUnit(seed, groupId, 0, "phase") * Math.PI * 2.0;
         double angleJitter = organic
-                ? (stableUnit(seed, groupId, slotIndex, "angle") - 0.5) * 0.70 : 0.0;
+                ? (stableUnit(seed, groupId, slotIndex, "angle") - 0.5)
+                * (0.70 + parameters.jitterBlocks() / 20.0) : 0.0;
         double angle = phase + slotIndex * GOLDEN_ANGLE + angleJitter;
         double radiusJitter = organic
                 ? (stableUnit(seed, groupId, slotIndex, "radius") - 0.5)
-                        * parameters.jitterBlocks() * 2.0 : 0.0;
+                        * 2.0 : 0.0;
         double radialGrowth = organic ? 0.62 : 0.52;
-        double radius = Math.max(spacing,
-                spacing * radialGrowth * Math.sqrt(slotIndex) + radiusJitter);
         double vx = Math.cos(angle);
         double vz = Math.sin(angle);
         if (outwardPending) {
@@ -262,6 +293,11 @@ final class CityBlueprintGroupLayoutPlanner {
             vx /= length;
             vz /= length;
         }
+        double baseRadius = organic
+                ? spacing / Math.max(0.0001, Math.max(Math.abs(vx), Math.abs(vz)))
+                : spacing;
+        double radius = Math.max(baseRadius,
+                baseRadius * radialGrowth * Math.sqrt(slotIndex) + radiusJitter);
         return point(frame.center(), vx * radius, vz * radius);
     }
 
@@ -272,6 +308,14 @@ final class CityBlueprintGroupLayoutPlanner {
         double dx = frame.axisX() * along * spacing - frame.axisZ() * offset.column() * spacing;
         double dz = frame.axisZ() * along * spacing + frame.axisX() * offset.column() * spacing;
         return point(frame.center(), dx, dz);
+    }
+
+    private static BlockPoint gridFrontageTarget(Frame frame, int slotIndex, int spacing) {
+        GridOffset offset = squareSpiral(slotIndex);
+        BlockPoint anchor = gridPoint(frame, slotIndex, spacing, false);
+        double direction = offset.row() <= 0 ? 1.0 : -1.0;
+        return point(anchor, frame.axisX() * direction * spacing / 2.0,
+                frame.axisZ() * direction * spacing / 2.0);
     }
 
     private static BlockPoint linearPoint(Frame frame, int slotIndex, int spacing,
@@ -287,14 +331,31 @@ final class CityBlueprintGroupLayoutPlanner {
 
     private static BlockPoint courtyardPoint(Frame frame, int slotIndex, int spacing,
                                              boolean outwardPending) {
-        int zeroBased = slotIndex - 1;
-        int ring = zeroBased / 8 + 1;
-        int position = zeroBased % 8;
-        double phase = Math.atan2(frame.axisZ(), frame.axisX());
-        if (!outwardPending) phase += Math.PI / 8.0;
-        double angle = phase + position * Math.PI / 4.0;
-        double radius = spacing * (1.35 + (ring - 1) * 1.15);
-        return point(frame.center(), Math.cos(angle) * radius, Math.sin(angle) * radius);
+        int ring = slotIndex / COURTYARD_RING.size() + 1;
+        GridOffset offset = COURTYARD_RING.get(slotIndex % COURTYARD_RING.size());
+        double along = offset.row() * (double) spacing * ring;
+        double lateral = offset.column() * (double) spacing * ring;
+        return point(frame.center(), frame.axisX() * lateral - frame.axisZ() * along,
+                frame.axisZ() * lateral + frame.axisX() * along);
+    }
+
+    BlockPoint compactLaneTarget(Frame frame, int slotIndex, int spacing, Parameters parameters) {
+        int rank = (slotIndex + 1) / 2;
+        int direction = slotIndex == 0 ? 0 : (slotIndex & 1) == 1 ? 1 : -1;
+        int signedRank = direction * rank;
+        double along = signedRank * (double) spacing;
+        double bend = Math.sin(signedRank * 1.15) * Math.max(2, parameters.streetBandWidthBlocks());
+        return point(frame.center(), frame.axisX() * along - frame.axisZ() * bend,
+                frame.axisZ() * along + frame.axisX() * bend);
+    }
+
+    private BlockPoint compactBuildingPoint(Frame frame, int slotIndex, int spacing,
+                                            int footprintSpan, Parameters parameters) {
+        BlockPoint lane = compactLaneTarget(frame, slotIndex, spacing, parameters);
+        double sideDistance = parameters.streetBandWidthBlocks() / 2.0 + footprintSpan / 2.0
+                + Math.max(1, parameters.targetEdgeGapBlocks() / 2);
+        double side = (slotIndex & 1) == 0 ? sideDistance : -sideDistance;
+        return point(lane, -frame.axisZ() * side, frame.axisX() * side);
     }
 
     private BlockPoint centerSymmetricPoint(Frame frame,
@@ -314,7 +375,7 @@ final class CityBlueprintGroupLayoutPlanner {
                                                     String algorithm) {
         Set<BlockPoint> guides = new LinkedHashSet<>();
         guides.add(desired);
-        if ("CENTER_SYMMETRIC".equals(algorithm) || "LINEAR".equals(algorithm)) {
+        if (exactAlgorithm(algorithm)) {
             return List.copyOf(guides);
         }
         int offset = "GRID".equals(algorithm)
@@ -324,6 +385,12 @@ final class CityBlueprintGroupLayoutPlanner {
         guides.add(point(desired, frame.axisX() * offset, frame.axisZ() * offset));
         guides.add(point(desired, -frame.axisX() * offset, -frame.axisZ() * offset));
         return List.copyOf(guides);
+    }
+
+    private static boolean exactAlgorithm(String algorithm) {
+        return "GRID".equals(algorithm) || "COURTYARD".equals(algorithm)
+                || "LINEAR".equals(algorithm) || "CENTER_SYMMETRIC".equals(algorithm)
+                || "COMPACT".equals(algorithm);
     }
 
     private static GridOffset squareSpiral(int index) {
@@ -411,7 +478,8 @@ final class CityBlueprintGroupLayoutPlanner {
                     int spacingBlocks,
                     boolean outwardGuided,
                     BlockPoint outwardTarget,
-                    List<BlockPoint> guides) {
+                    List<BlockPoint> guides,
+                    BlockPoint frontageTarget) {
         Proposal {
             guides = List.copyOf(guides);
         }
@@ -435,6 +503,30 @@ final class CityBlueprintGroupLayoutPlanner {
             value.addProperty("spacingBlocks", spacingBlocks);
             value.addProperty("outwardGuided", outwardGuided);
             value.add("densityParameters", parameters.asJson());
+            if (!guides.isEmpty()) value.add("theoreticalAnchor", guides.get(0).asJson());
+            if (frontageTarget != null) value.add("frontageTarget", frontageTarget.asJson());
+            if ("GRID".equals(algorithm)) {
+                GridOffset offset = squareSpiral(slotIndex);
+                value.addProperty("gridRow", offset.row());
+                value.addProperty("gridColumn", offset.column());
+                value.addProperty("gridPitchBlocks", spacingBlocks);
+                value.addProperty("worldAxisLocked", true);
+            }
+            if ("COURTYARD".equals(algorithm)) {
+                int ring = slotIndex / COURTYARD_RING.size() + 1;
+                GridOffset offset = COURTYARD_RING.get(slotIndex % COURTYARD_RING.size());
+                value.addProperty("courtyardRing", ring);
+                value.addProperty("courtyardRow", offset.row() * ring);
+                value.addProperty("courtyardColumn", offset.column() * ring);
+                value.add("courtyardCenter", frontageTarget.asJson());
+                value.addProperty("courtyardGateSide", "SOUTH");
+                value.addProperty("worldAxisLocked", true);
+            }
+            if ("COMPACT".equals(algorithm)) {
+                value.addProperty("compactLaneRank", (slotIndex + 1) / 2);
+                value.addProperty("compactLaneSide", (slotIndex & 1) == 0 ? "NORTH" : "SOUTH");
+                value.add("compactLaneTarget", frontageTarget.asJson());
+            }
             if ("LINEAR".equals(algorithm)) {
                 value.addProperty("streetBandReserved", true);
                 value.addProperty("streetBandWidthBlocks", parameters.streetBandWidthBlocks());

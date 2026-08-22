@@ -427,7 +427,7 @@ class CityOutdoorBlueprintCompilerTest {
                                         0.02, 0.12, 0.06)),
                         Set.of("crop:wheat"), List.of());
         return new CityBlueprintReferenceCatalog(new JsonObject(), Set.of(), Set.of(), Set.of(), Map.of(),
-                Set.of(), Set.of(), Set.of(), Set.of(), rules,
+                Map.of(), Set.of(), Set.of(), Set.of(), Set.of(), rules,
                 Map.of(foundationRecipe.surfaceRecipeRef(), foundationRecipe,
                         farmlandRecipe.surfaceRecipeRef(), farmlandRecipe),
                 Map.of(foundation.foundationProfileRef(), foundation),
