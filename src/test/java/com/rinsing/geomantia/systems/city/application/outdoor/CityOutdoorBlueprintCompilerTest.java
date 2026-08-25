@@ -161,11 +161,9 @@ class CityOutdoorBlueprintCompilerTest {
         LandUseSeedGroup rootParcel = parcels.stream()
                 .filter(group -> group.groupId().endsWith("::parcel_01")).findFirst().orElseThrow();
         BlockPoint rootSeed = rootParcel.seedPoints().get(0);
-        assertTrue((rootSeed.x() == 39 || rootSeed.x() == 46)
-                        && rootSeed.z() >= 40 && rootSeed.z() <= 45
-                        || (rootSeed.z() == 39 || rootSeed.z() == 46)
-                        && rootSeed.x() >= 40 && rootSeed.x() <= 45,
-                "Frozen root Parcel must start from the required structure's actual edge");
+        assertTrue(terrain().planningBounds().contains(rootSeed.x(), rootSeed.z()));
+        assertFalse(new BlockBounds(40, 40, 45, 45).contains(rootSeed.x(), rootSeed.z()),
+                "Frozen root Parcel may use the owner as a seed but cannot overlap the structure");
         assertTrue(parcels.stream().allMatch(group -> group.landscapeFillProgram().roles().stream()
                 .map(com.rinsing.geomantia.systems.city.domain.landuse.LandscapeFillProgram.RoleDefinition::roleRef)
                 .toList().equals(List.of("CULTIVATED", "BANK", "WATER", "BANK", "CULTIVATED"))));
@@ -303,6 +301,74 @@ class CityOutdoorBlueprintCompilerTest {
         IllegalArgumentException drift = assertThrows(IllegalArgumentException.class,
                 () -> compiler.compile(blueprint(), d6, terrain(), catalog(), tampered));
         assertEquals("CITY_OUTDOOR_LANDSCAPE_CAPACITY_HASH_MISMATCH", drift.getMessage());
+    }
+
+    @Test
+    void requiredLandscapeNoTerrainFitRemainsWarningThroughOutdoorCompile() {
+        JsonObject d6 = d6Plan();
+        JsonObject capacity = capacity(blueprint(), d6);
+        capacity.add("instances", new JsonArray());
+        JsonObject warning = new JsonObject();
+        warning.addProperty("reasonCode", "REQUIRED_LANDSCAPE_NO_TERRAIN_FIT_WARNING");
+        warning.addProperty("landscapeId", "outer_fields");
+        warning.addProperty("instanceOrdinal", 0);
+        warning.addProperty("message", "No terrain-gated cell was available.");
+        JsonArray warnings = new JsonArray();
+        warnings.add(warning);
+        capacity.add("warnings", warnings);
+        CityLandscapeCapacityReservationPlanner.refreshPlanHash(capacity);
+
+        CityOutdoorBlueprintCompiler.Result result = new CityOutdoorBlueprintCompiler()
+                .compile(blueprint(), d6, terrain(), catalog(), capacity);
+
+        assertTrue(result.resolution().seedGroups().stream().noneMatch(group ->
+                group.layerRole() == LandUseSeedGroup.LayerRole.LANDSCAPE));
+        assertTrue(result.resolution().warnings().contains(
+                "REQUIRED_LANDSCAPE_NO_TERRAIN_FIT_WARNING:outer_fields:0"));
+    }
+
+    @Test
+    void terrainReducedSingleCellLandscapeKeepsPrimaryFillStage() {
+        JsonObject d6 = d6Plan();
+        JsonObject capacity = capacity(blueprint(), d6);
+        JsonObject instance = capacity.getAsJsonArray("instances").get(0).getAsJsonObject();
+        JsonObject parcel = instance.getAsJsonArray("parcelReservations").get(0).getAsJsonObject();
+        JsonObject seed = parcel.getAsJsonObject("seed");
+        JsonObject span = new JsonObject();
+        span.addProperty("z", seed.get("z").getAsInt());
+        span.addProperty("minX", seed.get("x").getAsInt());
+        span.addProperty("maxX", seed.get("x").getAsInt());
+        JsonArray spans = new JsonArray();
+        spans.add(span);
+        parcel.add("reservationSpans", spans.deepCopy());
+        parcel.addProperty("actualAreaBlocks", 1);
+        JsonArray parcels = new JsonArray();
+        parcels.add(parcel);
+        instance.add("parcelReservations", parcels);
+        instance.add("reservationSpans", spans);
+        instance.addProperty("parcelCount", 1);
+        instance.addProperty("actualAreaBlocks", 1);
+        instance.addProperty("capacityStatus", "terrain_reduced");
+        JsonObject warning = new JsonObject();
+        warning.addProperty("reasonCode", "REQUIRED_LANDSCAPE_TERRAIN_REDUCED_WARNING");
+        warning.addProperty("landscapeId", "outer_fields");
+        warning.addProperty("instanceOrdinal", 0);
+        warning.addProperty("message", "Terrain reduced requested capacity.");
+        JsonArray warnings = new JsonArray();
+        warnings.add(warning);
+        capacity.add("warnings", warnings);
+        CityLandscapeCapacityReservationPlanner.refreshPlanHash(capacity);
+
+        CityOutdoorBlueprintCompiler.Result result = new CityOutdoorBlueprintCompiler()
+                .compile(blueprint(), d6, terrain(), catalog(), capacity);
+        LandUseSeedGroup landscape = result.resolution().seedGroups().stream()
+                .filter(group -> group.layerRole() == LandUseSeedGroup.LayerRole.LANDSCAPE)
+                .findFirst().orElseThrow();
+
+        assertEquals(1, landscape.maxAreaBlocks());
+        assertEquals(1, landscape.landscapeFillProgram().roles().size());
+        assertEquals("CULTIVATED", landscape.landscapeFillProgram().roles().get(0).roleRef());
+        assertEquals(1.0, landscape.landscapeFillProgram().roles().get(0).targetShare(), 1.0e-9);
     }
 
     @Test

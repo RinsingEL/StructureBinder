@@ -240,8 +240,12 @@ final class CityDistrictCapacityPlanner {
 
     private static double lateralDistance(PatchMemberCell cell, PatchMemberCell seed,
                                           BlockBounds formationBounds) {
-        boolean xAxis = formationBounds.widthBlocks() >= formationBounds.heightBlocks();
-        int delta = xAxis ? cell.cellZ() - seed.cellZ() : cell.cellX() - seed.cellX();
+        // LINEAR formation bounds are oriented by the primary building entrance.
+        // The street band runs perpendicular to that entrance, so capacity must
+        // prefer cells along the perpendicular axis rather than along the bounds'
+        // longer entrance axis.
+        boolean streetXAxis = formationBounds.widthBlocks() < formationBounds.heightBlocks();
+        int delta = streetXAxis ? cell.cellZ() - seed.cellZ() : cell.cellX() - seed.cellX();
         return Math.abs(delta);
     }
 

@@ -192,6 +192,31 @@ class RelayRegionGrowthClassifierTest {
         assertGrowthProvenance(result);
     }
 
+    @Test
+    void singleWoodlandStageCompletesAcrossOwnerFootprintSplitFromRealLandscapeReservation() {
+        List<LandUseAreaPlan.ScanlineSpan> members = List.of(
+                span(25, 50, 50), span(26, 49, 51), span(27, 48, 52), span(28, 48, 52),
+                span(29, 47, 53), span(30, 46, 54), span(31, 45, 55), span(32, 44, 56),
+                span(33, 43, 57), span(34, 43, 43), span(35, 42, 58), span(36, 41, 59),
+                span(37, 40, 61), span(38, 39, 62), span(39, 38, 62), span(40, 37, 63),
+                span(41, 36, 63), span(42, 35, 63), span(43, 34, 63),
+                span(44, 35, 47), span(44, 54, 63), span(45, 35, 47), span(45, 54, 63),
+                span(46, 36, 47), span(46, 54, 63), span(47, 37, 47), span(47, 54, 62),
+                span(48, 38, 47), span(48, 54, 61), span(49, 39, 47), span(49, 54, 60),
+                span(50, 40, 47), span(50, 54, 59), span(51, 41, 47), span(51, 54, 58),
+                span(52, 42, 47), span(52, 54, 57), span(53, 43, 47), span(53, 54, 57),
+                span(54, 44, 50), span(54, 52, 56), span(55, 45, 49), span(55, 53, 55),
+                span(56, 46, 48), span(56, 54, 54), span(57, 47, 47));
+
+        RelayRegionGrowthClassifier.Result result = classify(members, List.of(), new BlockPoint(50, 25),
+                -5523100745520696575L, List.of(
+                        stage("grove-a", "", "TREE_GROVE", 1.0,
+                                RelayRegionGrowthClassifier.GrowthForm.PATCH)));
+
+        assertEquals(cells(members).size(), result.coveredBlockCount());
+        assertGrowthProvenance(result);
+    }
+
     private static RelayRegionGrowthClassifier.Result classify(
             List<LandUseAreaPlan.ScanlineSpan> members,
             List<LandUseAreaPlan.ScanlineSpan> exclusions,
@@ -271,6 +296,10 @@ class RelayRegionGrowthClassifierTest {
         List<LandUseAreaPlan.ScanlineSpan> spans = new ArrayList<>();
         for (int z = minZ; z <= maxZ; z++) spans.add(new LandUseAreaPlan.ScanlineSpan(z, minX, maxX));
         return List.copyOf(spans);
+    }
+
+    private static LandUseAreaPlan.ScanlineSpan span(int z, int minX, int maxX) {
+        return new LandUseAreaPlan.ScanlineSpan(z, minX, maxX);
     }
 
     private static Set<BlockPoint> cells(List<LandUseAreaPlan.ScanlineSpan> spans) {

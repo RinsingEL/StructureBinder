@@ -117,6 +117,18 @@ class CityBlueprintGroupLayoutPlannerTest {
     }
 
     @Test
+    void linearFallbackGuidesOnlyStaggerAlongTheStreetAxis() {
+        BlockPoint center = new BlockPoint(100, 200);
+        var proposal = planner.propose("LINEAR", CityBlueprint.DensityClass.DENSE,
+                43L, "market", 1, planner.worldFrame(center), center, null, false, 20);
+
+        assertEquals(5, proposal.guides().size());
+        int streetSideZ = proposal.guides().get(0).z();
+        assertTrue(proposal.guides().stream().allMatch(point -> point.z() == streetSideZ));
+        assertEquals(5, proposal.guides().stream().map(BlockPoint::x).distinct().count());
+    }
+
+    @Test
     void courtyardStartsOnFivePerimeterSlotsAndLeavesTheCenterForTheCourt() {
         BlockPoint center = new BlockPoint(0, 0);
         var frame = planner.worldFrame(center);

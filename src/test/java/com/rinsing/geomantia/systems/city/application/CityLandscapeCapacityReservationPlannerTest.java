@@ -44,7 +44,7 @@ class CityLandscapeCapacityReservationPlannerTest {
                 blueprint(10), catalog(1, 12), terrain(new BlockBounds(0, 0, 255, 255)), anchors(120, 120));
 
         assertTrue(result.ok(), result.plan().toString());
-        assertEquals("BEST_FEASIBLE_LAYOUT_THEN_SEEDED_TIE_BREAK",
+        assertEquals("MAXIMIZE_TERRAIN_FIT_THEN_BEST_LAYOUT",
                 result.plan().get("selectionPolicy").getAsString());
         JsonObject score = result.plan().getAsJsonObject("layoutScore");
         assertTrue(score.get("directionCoverage").getAsInt() >= 3, score.toString());
@@ -143,13 +143,49 @@ class CityLandscapeCapacityReservationPlannerTest {
     }
 
     @Test
-    void reportsUnsatisfiedWithoutPartialInstancesWhenExactCountCannotFit() {
+    void terrainReducesRequiredLandscapeWithoutFailingWholeCity() {
         var result = new CityLandscapeCapacityReservationPlanner().plan(
                 blueprint(10), catalog(1, 12), terrain(new BlockBounds(0, 0, 31, 31)), anchors(12, 12));
 
-        assertFalse(result.ok());
-        assertEquals("CITY_BLUEPRINT_REQUIRED_LANDSCAPE_LAYOUT_UNSATISFIED", result.reasonCode());
+        assertTrue(result.ok(), result.plan().toString());
+        assertEquals("reserved", result.plan().get("status").getAsString());
+        JsonObject instance = result.plan().getAsJsonArray("instances").get(0).getAsJsonObject();
+        assertTrue(instance.get("actualAreaBlocks").getAsInt() > 0);
+        assertTrue(instance.get("actualAreaBlocks").getAsInt() < 10 * 192);
+        assertEquals("terrain_reduced", instance.get("capacityStatus").getAsString());
+        assertTrue(result.plan().getAsJsonArray("warnings").size() > 0);
+    }
+
+    @Test
+    void warnsAndContinuesWhenNoTerrainGatedCellExists() {
+        BlockBounds bounds = new BlockBounds(0, 0, 63, 63);
+        var result = new CityLandscapeCapacityReservationPlanner().plan(
+                blueprint(2), catalog(1, 12), waterTerrain(bounds, (x, z) -> true), anchors(24, 24));
+
+        assertTrue(result.ok(), result.plan().toString());
         assertTrue(result.plan().getAsJsonArray("instances").isEmpty());
+        JsonObject warning = result.plan().getAsJsonArray("warnings").get(0).getAsJsonObject();
+        assertEquals("REQUIRED_LANDSCAPE_NO_TERRAIN_FIT_WARNING",
+                warning.get("reasonCode").getAsString());
+    }
+
+    @Test
+    void attachedOwnerSeedsDirectionButDoesNotRequireImmediateAdjacency() {
+        BlockBounds bounds = new BlockBounds(0, 0, 255, 255);
+        LandUseTerrainField terrain = waterTerrain(bounds,
+                (x, z) -> x >= 112 && x <= 135 && z >= 112 && z <= 135);
+
+        var result = new CityLandscapeCapacityReservationPlanner().plan(
+                blueprint(2), catalog(1, 12), terrain, anchors(120, 120));
+
+        assertTrue(result.ok(), result.plan().toString());
+        JsonObject root = result.plan().getAsJsonArray("instances").get(0).getAsJsonObject()
+                .getAsJsonArray("parcelReservations").get(0).getAsJsonObject();
+        JsonObject seed = root.getAsJsonObject("seed");
+        int x = seed.get("x").getAsInt();
+        int z = seed.get("z").getAsInt();
+        assertFalse(x >= 112 && x <= 135 && z >= 112 && z <= 135);
+        assertEquals("owner_seeded_terrain_candidate", root.get("rootSource").getAsString());
     }
 
     @Test
@@ -309,13 +345,22 @@ class CityLandscapeCapacityReservationPlannerTest {
 
     private static LandUseTerrainField terrain(BlockBounds bounds, BlockPredicate blocked,
                                                 Elevation elevation) {
+        return terrain(bounds, blocked, (x, z) -> false, elevation);
+    }
+
+    private static LandUseTerrainField waterTerrain(BlockBounds bounds, BlockPredicate water) {
+        return terrain(bounds, (x, z) -> false, water, (x, z) -> 64);
+    }
+
+    private static LandUseTerrainField terrain(BlockBounds bounds, BlockPredicate blocked,
+                                                BlockPredicate water, Elevation elevation) {
         List<LandUseTerrainField.Cell> cells = new ArrayList<>();
         for (int z = bounds.minZ(); z <= bounds.maxZ(); z += 4) {
             for (int x = bounds.minX(); x <= bounds.maxX(); x += 4) {
                 boolean impassable = blocked.test(x, z);
                 cells.add(new LandUseTerrainField.Cell(x / 4, z / 4, x, z, 4, elevation.at(x, z),
                         impassable ? 60 : 0, impassable ? 60 : 0, impassable ? 60 : 0,
-                        false, 0, 0, "minecraft:plains", "plain", "patch", true));
+                        water.test(x, z), 0, 0, "minecraft:plains", "plain", "patch", true));
             }
         }
         return new LandUseTerrainField(LandUseTerrainField.CURRENT_SCHEMA_VERSION, "city", bounds, 4, cells);

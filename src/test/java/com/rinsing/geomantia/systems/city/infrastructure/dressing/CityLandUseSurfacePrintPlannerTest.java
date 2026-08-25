@@ -177,6 +177,50 @@ class CityLandUseSurfacePrintPlannerTest {
     }
 
     @Test
+    void reducesRelayStagesWhenTerrainLeavesABranchedMaskThatCannotBeSequentiallyPartitioned() {
+        String groupId = "branched_woodland";
+        List<LandUseAreaPlan.ScanlineSpan> members = List.of(
+                new LandUseAreaPlan.ScanlineSpan(0, 2, 2),
+                new LandUseAreaPlan.ScanlineSpan(1, 2, 2),
+                new LandUseAreaPlan.ScanlineSpan(2, 2, 2),
+                new LandUseAreaPlan.ScanlineSpan(3, 2, 2),
+                new LandUseAreaPlan.ScanlineSpan(4, 0, 4));
+        LandUseAreaPlan.Area area = new LandUseAreaPlan.Area("woodland", "woodland", "woodland",
+                List.of(groupId), List.of(groupId), List.of(new BlockPoint(2, 0)), members,
+                List.of(), List.of(), List.of(), 1, SurfacePolicy.CULTIVATE,
+                VegetationPolicy.PRESERVE, BoundaryPolicy.OPEN, "woodland");
+        LandUseAreaPlan plan = new LandUseAreaPlan(LandUseAreaPlan.CURRENT_SCHEMA_VERSION,
+                "city_land_use_rules.v0.1", "city_test", "land-use-hash", new BlockBounds(0, 0, 7, 7),
+                List.of(area), List.of(), List.of(), List.of());
+        LandscapeFillProgram fill = new LandscapeFillProgram("fill:branched_woodland", "TREE_GROVE",
+                List.of(
+                        new LandscapeFillProgram.RoleDefinition("TREE_GROVE",
+                                LandscapeFillProgram.MaterialRole.PRIMARY_CONTENT,
+                                LandscapeFillProgram.GrowthForm.PATCH, 0.4),
+                        new LandscapeFillProgram.RoleDefinition("SHRUB_BREAK",
+                                LandscapeFillProgram.MaterialRole.GROUND,
+                                LandscapeFillProgram.GrowthForm.PATCH, 0.2),
+                        new LandscapeFillProgram.RoleDefinition("GRAVEL_PATH",
+                                LandscapeFillProgram.MaterialRole.GROUND,
+                                LandscapeFillProgram.GrowthForm.CORRIDOR, 0.4)),
+                List.of(), 17L);
+        LandUseSeedGroup landscape = landscapeGroup(groupId, new BlockBounds(3, 0, 3, 0),
+                LandUseSurfaceSettings.defaults(SurfacePolicy.CULTIVATE).forRelayRegionGrowth(), fill);
+
+        CityLandUseSurfacePrintPlan result = new CityLandUseSurfacePrintPlanner().plan(plan,
+                List.of(landscape), terrain(new BlockBounds(0, 0, 7, 7), false));
+        CityLandUseSurfacePrintPlan.RelayRegionGrowthRecipe recipe = assertInstanceOf(
+                CityLandUseSurfacePrintPlan.RelayRegionGrowthRecipe.class,
+                result.areas().get(0).recipe());
+
+        assertEquals(List.of("TREE_GROVE"), recipe.roleDefinitions().stream()
+                .map(CityLandUseSurfacePrintPlan.RelayRoleDefinition::roleRef).toList());
+        assertEquals(1, recipe.regionTraces().size());
+        assertEquals(9, recipe.regionSpans().stream()
+                .mapToInt(span -> span.maxX() - span.minX() + 1).sum());
+    }
+
+    @Test
     void freezesRoadCrossSectionGreenParcelAndOverflowBoundaryCells() throws Exception {
         LandUseAreaPlan areaPlan = areaPlan();
         LandUseTerrainField featureTerrain = terrain(new BlockBounds(0, 0, 63, 31), false);

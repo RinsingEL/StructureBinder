@@ -114,8 +114,13 @@ public final class RelayRegionGrowthClassifier {
                     state, unclaimed, stableSeed, stageIndex, finalStage)) return state;
 
             if (state.cells().size() < targetArea) {
-                SearchFrame frame = new SearchFrame(safeCandidates(
-                        frontierEdges(state, unclaimed, stableSeed, stageIndex), unclaimed, finalStage));
+                List<FrontierEdge> candidates = safeCandidates(
+                        frontierEdges(state, unclaimed, stableSeed, stageIndex), unclaimed, finalStage);
+                if (!finalStage && state.cells().size() + 1 == targetArea) {
+                    candidates = relayCompletingCandidates(state, candidates, unclaimed, claims,
+                            stableSeed, stageIndex);
+                }
+                SearchFrame frame = new SearchFrame(candidates);
                 FrontierEdge selected = frame.next();
                 if (selected != null) {
                     history.addLast(frame);
@@ -146,6 +151,24 @@ public final class RelayRegionGrowthClassifier {
             claim(state, alternative.point(), alternative.from(), ProvenanceKind.REGION_FRONTIER,
                     unclaimed, claims);
         }
+    }
+
+    private static List<FrontierEdge> relayCompletingCandidates(
+            RegionState state,
+            List<FrontierEdge> candidates,
+            Set<Long> unclaimed,
+            Map<Long, CellClaim> claims,
+            long stableSeed,
+            int stageIndex) {
+        List<FrontierEdge> viable = new ArrayList<>();
+        for (FrontierEdge candidate : candidates) {
+            claim(state, candidate.point(), candidate.from(), ProvenanceKind.REGION_FRONTIER,
+                    unclaimed, claims);
+            boolean canRelay = stageCanRelay(state, unclaimed, stableSeed, stageIndex, false);
+            undoLastClaim(state, unclaimed, claims);
+            if (canRelay) viable.add(candidate);
+        }
+        return List.copyOf(viable);
     }
 
     private static List<FrontierEdge> safeCandidates(List<FrontierEdge> candidates,

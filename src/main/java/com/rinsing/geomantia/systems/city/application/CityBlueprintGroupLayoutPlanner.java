@@ -375,6 +375,17 @@ final class CityBlueprintGroupLayoutPlanner {
                                                     String algorithm) {
         Set<BlockPoint> guides = new LinkedHashSet<>();
         guides.add(desired);
+        if ("LINEAR".equals(algorithm)) {
+            int nearOffset = Math.max(2, Math.min(spacing / 4,
+                    parameters.maximumEdgeGapBlocks() / 2));
+            int farOffset = Math.max(nearOffset, Math.min(spacing / 2,
+                    parameters.maximumEdgeGapBlocks()));
+            for (int offset : List.of(nearOffset, -nearOffset, farOffset, -farOffset)) {
+                guides.add(point(desired, frame.axisX() * offset,
+                        frame.axisZ() * offset));
+            }
+            return List.copyOf(guides);
+        }
         if (exactAlgorithm(algorithm)) {
             return List.copyOf(guides);
         }

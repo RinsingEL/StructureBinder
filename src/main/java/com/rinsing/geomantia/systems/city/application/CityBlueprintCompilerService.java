@@ -1236,7 +1236,10 @@ public final class CityBlueprintCompilerService {
             } else if ("CENTER_SYMMETRIC".equals(algorithm)) {
                 TemplateDemand centerTemplate = templateDemand(plannedRefs.get(0), catalog, templates);
                 int centerSpan = Math.max(centerTemplate.widthBlocks(), centerTemplate.depthBlocks());
-                int memberSpan = Math.max(maximumWidth, maximumDepth);
+                int memberSpan = plannedRefs.stream().skip(1)
+                        .map(structureRef -> templateDemand(structureRef, catalog, templates))
+                        .mapToInt(template -> Math.max(template.widthBlocks(), template.depthBlocks()))
+                        .max().orElse(1);
                 int pairCount = Math.max(1, (plannedRefs.size() - 1) / 2);
                 int outerPairIndex = pairCount - 1;
                 int ring = outerPairIndex / 2;
@@ -1260,13 +1263,11 @@ public final class CityBlueprintCompilerService {
             int maximumArea = Math.max(targetArea,
                     Math.min(extentLimitArea, (int) Math.ceil(targetArea * 1.50)));
             int areaSpan = (int) Math.ceil(Math.sqrt(targetArea));
-            int formationSpan = Math.min(maximumExtentSpan, Math.max(
+            int formationSpan = Math.max(
                     Math.max(maximumWidth, maximumDepth),
-                    Math.max(areaSpan + parameters.jitterBlocks(), algorithmicSpan)));
+                    Math.max(areaSpan + parameters.jitterBlocks(), algorithmicSpan));
             if (formationWidth == 0) formationWidth = formationSpan;
             if (formationLength == 0) formationLength = formationSpan;
-            formationWidth = Math.min(maximumExtentSpan, formationWidth);
-            formationLength = Math.min(maximumExtentSpan, formationLength);
             result.put(group.groupId(), new CityDistrictCapacityPlanner.SpatialDemand(
                     minimumArea, targetArea, maximumArea, 0, Math.max(maximumWidth, maximumDepth), formationSpan,
                     formationWidth, formationLength, primaryAxisDirection,
@@ -2761,8 +2762,8 @@ public final class CityBlueprintCompilerService {
         }
         BlockBounds proposed = union(state.extent(), footprint);
         if (phase != PlacementPhase.CONNECTIVITY
-                && (width(proposed) > extentMaxSpan(state.group().extentClass())
-                || depth(proposed) > extentMaxSpan(state.group().extentClass()))) {
+                && (width(proposed) > state.spatialDemand().formationSpanBlocks()
+                || depth(proposed) > state.spatialDemand().formationSpanBlocks())) {
             return "GROUP_EXTENT_LIMIT_EXCEEDED";
         }
         if (state.anchorCount() > 0) {
@@ -2856,7 +2857,7 @@ public final class CityBlueprintCompilerService {
                                                      boolean connectivityExpansion) {
         BlockBounds bounds = bounds(requiredObject(candidate, "groupCollisionEnvelope"));
         BlockBounds proposed = union(state.extent(), bounds);
-        int maxSpan = extentMaxSpan(state.group().extentClass());
+        int maxSpan = state.spatialDemand().formationSpanBlocks();
         if (!connectivityExpansion && (width(proposed) > maxSpan || depth(proposed) > maxSpan)) {
             return ConnectivityFit.rejected("GROUP_EXTENT_LIMIT_EXCEEDED");
         }
@@ -3246,6 +3247,10 @@ public final class CityBlueprintCompilerService {
                                           String algorithm) {
         int minimum = minimumGroupStructureCount(cityScale, extentClass);
         if ("COURTYARD".equals(algorithm)) return Math.max(5, minimum);
+        // The scale/extent table describes two-dimensional groups. LINEAR spends
+        // the same extent on one street axis and frontage clearance, so derive a
+        // smaller floor without weakening the required primary structure.
+        if ("LINEAR".equals(algorithm)) return Math.max(2, minimum - 2);
         if (!"CENTER_SYMMETRIC".equals(algorithm) || (minimum & 1) == 1) return minimum;
         return Math.max(3, minimum - 1);
     }

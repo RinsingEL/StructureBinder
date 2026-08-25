@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.rinsing.geomantia.systems.city.application.CityBlueprintCodec;
 import com.rinsing.geomantia.systems.city.application.CityBlueprintReferenceCatalog;
+import com.rinsing.geomantia.systems.city.application.CityLandscapeCapacityReservationPlanner;
 import com.rinsing.geomantia.systems.city.application.landuse.LandUseSourceResolver;
 import com.rinsing.geomantia.systems.city.application.landuse.LandUseTerrainFieldCodec;
 import com.rinsing.geomantia.systems.city.algorithm.landuse.CityFoundationPlanner;
@@ -77,6 +78,7 @@ public final class CityOutdoorBlueprintCompiler {
         CapacityReservation capacityReservation = capacityReservation(blueprint, anchorsByGroup,
                 landscapeCapacityReservationPlan);
         Map<String, Set<BlockPoint>> capacityDomains = capacityReservation.domains();
+        List<String> outdoorWarnings = new ArrayList<>(capacityReservation.warnings());
         List<String> spatialGroupIds = blueprint.outdoorPlan().spatialGrounds().stream()
                 .map(CityBlueprint.SpatialGround::sourceGroupId).distinct().sorted().toList();
         List<AnchorData> foundationAnchors = requiredGroups(anchorsByGroup, spatialGroupIds,
@@ -109,7 +111,6 @@ public final class CityOutdoorBlueprintCompiler {
         LandUseSeedGroup.GrowthRegion foundationRegion = new LandUseSeedGroup.GrowthRegion(foundationGroupId,
                 allAnchorIds, foundationSeeds, foundationArea, foundationArea, foundationArea);
         List<LandUseSeedGroup> groups = new ArrayList<>();
-        List<String> outdoorWarnings = new ArrayList<>();
         groups.add(new LandUseSeedGroup(foundationGroupId, foundationRule,
                 surfaceSettings(foundationRule, foundationRecipe, false), allAnchorIds, allFootprints,
                 foundationSeeds, List.of(), foundationArea, foundationArea, foundationArea,
@@ -139,11 +140,8 @@ public final class CityOutdoorBlueprintCompiler {
                     ? List.of(requiredOwnerAnchor(anchorsByGroup, landscape)) : List.of();
             List<ParcelSpec> parcels = landscapeParcels(blueprint, landscape, profile, parcelRule, attached,
                     anchorsByGroup, terrain, allFootprints, occupiedLandscapeParcels, outdoorWarnings,
-                    capacityDomains, capacityReservation.parentParcelIds());
-            if (landscape.required() && parcels.isEmpty()) {
-                throw new IllegalArgumentException("CITY_OUTDOOR_REQUIRED_LANDSCAPE_HAS_NO_PARCEL:"
-                        + landscape.landscapeId());
-            }
+                    capacityDomains, capacityReservation.parentParcelIds(), capacityReservation.seeds(),
+                    capacityReservation.planPresent());
             for (ParcelSpec parcel : parcels) {
                 resolvedParentParcelIds.put(parcel.parcelId(), parcel.parentParcelId());
                 List<String> anchorIds = parcel.anchor() == null ? List.of() : List.of(parcel.anchor().anchorId());
@@ -212,7 +210,7 @@ public final class CityOutdoorBlueprintCompiler {
         if (!selectedRoles.equals(fillProfile.roles().keySet())) {
             throw new IllegalArgumentException("CITY_OUTDOOR_FILL_ROLE_SET_MISMATCH:" + variant.fillProfileRef());
         }
-        List<LandscapeFillProgram.RoleDefinition> roles = variant.roleShares().stream()
+        List<LandscapeFillProgram.RoleDefinition> requestedRoles = variant.roleShares().stream()
                 .map(share -> {
                     CityBlueprintReferenceCatalog.FillRole role = fillProfile.roles().get(share.roleRef());
                     return new LandscapeFillProgram.RoleDefinition(role.roleRef(),
@@ -220,6 +218,14 @@ public final class CityOutdoorBlueprintCompiler {
                             LandscapeFillProgram.GrowthForm.valueOf(share.growthForm().name()),
                             share.targetShare());
                 }).toList();
+        int stageLimit = Math.max(1, Math.min(requestedRoles.size(), parcel.budget().max()));
+        List<LandscapeFillProgram.RoleDefinition> admittedRoles = requestedRoles.subList(0, stageLimit);
+        double admittedShare = admittedRoles.stream()
+                .mapToDouble(LandscapeFillProgram.RoleDefinition::targetShare).sum();
+        List<LandscapeFillProgram.RoleDefinition> roles = admittedRoles.stream()
+                .map(role -> new LandscapeFillProgram.RoleDefinition(role.roleRef(), role.materialRole(),
+                        role.growthForm(), role.targetShare() / admittedShare))
+                .toList();
         List<LandscapeFillProgram.ContentWeight> contentWeights = variant.contentWeights().stream()
                 .sorted(Comparator.comparing(CityBlueprint.ContentWeight::contentRef))
                 .map(content -> new LandscapeFillProgram.ContentWeight(content.contentRef(), content.weight()))
@@ -385,7 +391,9 @@ public final class CityOutdoorBlueprintCompiler {
             List<ParcelSpec> occupiedParcels,
             List<String> warnings,
             Map<String, Set<BlockPoint>> capacityDomains,
-            Map<String, String> parentParcelIds) {
+            Map<String, String> parentParcelIds,
+            Map<String, BlockPoint> capacitySeeds,
+            boolean capacityPlanPresent) {
         CityBlueprintReferenceCatalog.ParcelStyle style = profile.parcelStyle();
         int minArea = Math.max(rule.minAreaBlocks(), style.parcelAreaMinBlocks());
         int maxArea = Math.min(rule.maxAreaBlocks(), style.parcelAreaMaxBlocks());
@@ -416,6 +424,9 @@ public final class CityOutdoorBlueprintCompiler {
             for (int ordinal = 0; ordinal < landscape.parcelCount(); ordinal++) {
                 String parcelId = instanceId + "::parcel_"
                         + String.format(java.util.Locale.ROOT, "%02d", ordinal + 1);
+                if (landscape.required() && capacityPlanPresent && !capacityDomains.containsKey(parcelId)) {
+                    break;
+                }
                 boolean frozenCapacity = capacityDomains.containsKey(parcelId);
                 String frozenParentId = parentParcelIds.get(parcelId);
                 ParcelSpec parent = frozenCapacity
@@ -428,7 +439,10 @@ public final class CityOutdoorBlueprintCompiler {
                 }
                 String key = landscapeKey + '|' + instanceOrdinal + '|' + ordinal;
                 int preferred = stableBetween(key + "|area", minArea, maxArea);
-                AreaBudget budget = new AreaBudget(minArea, preferred, maxArea);
+                Set<BlockPoint> capacity = capacityDomains.getOrDefault(parcelId, Set.of());
+                AreaBudget budget = frozenCapacity
+                        ? new AreaBudget(1, Math.min(preferred, capacity.size()), capacity.size())
+                        : new AreaBudget(minArea, preferred, maxArea);
                 BlockPoint base = parent == null ? (anchor == null ? origin : center(anchor.footprint()))
                         : parent.seed();
                 int[] direction = parcelDirection(CityBlueprint.LandscapeGrowthRelation.AROUND_SOURCE,
@@ -440,16 +454,11 @@ public final class CityOutdoorBlueprintCompiler {
                 int distance = Math.max(1, baseRadius + parcelRadius - style.minSharedBoundaryBlocks());
                 BlockPoint target = new BlockPoint(base.x() + direction[0] * distance,
                         base.z() + direction[1] * distance);
-                Set<BlockPoint> capacity = capacityDomains.getOrDefault(parcelId, Set.of());
                 BlockPoint seed = capacity.isEmpty() ? nearestParcelSeed(terrain, target, profile.landscapeType(),
                         landscape.preferredPatchRefs(), structureFootprints, usedSeeds,
                         combinedParcels(occupiedParcels, result), 0, parcelRadius)
-                        : frozenCapacitySeed(capacity, frozenParentId, anchor);
+                        : frozenCapacitySeed(capacity);
                 if (seed == null) {
-                    if (landscape.required()) {
-                        throw new IllegalArgumentException("CITY_OUTDOOR_REQUIRED_LANDSCAPE_HAS_NO_SEED:"
-                                + landscape.landscapeId() + ':' + instanceOrdinal + ':' + ordinal);
-                    }
                     warnings.add("skipped_insufficient_space:" + instanceId);
                     instance.clear();
                     break;
@@ -470,15 +479,8 @@ public final class CityOutdoorBlueprintCompiler {
         return List.copyOf(result);
     }
 
-    private static BlockPoint frozenCapacitySeed(Set<BlockPoint> capacity,
-                                                 String parentParcelId,
-                                                 AnchorData anchor) {
-        if (anchor == null || parentParcelId != null && !parentParcelId.isBlank()) {
-            return capacity.stream().min(POINT_ORDER).orElse(null);
-        }
-        BlockBounds footprint = anchor.footprint();
-        return capacity.stream().filter(point -> adjacentTo(point, footprint))
-                .min(POINT_ORDER).orElse(null);
+    private static BlockPoint frozenCapacitySeed(Set<BlockPoint> capacity) {
+        return capacity.stream().min(POINT_ORDER).orElse(null);
     }
 
     private static boolean adjacentTo(BlockPoint point, BlockBounds bounds) {
@@ -852,7 +854,8 @@ public final class CityOutdoorBlueprintCompiler {
             }
             return CapacityReservation.empty();
         }
-        if (!"city_landscape_capacity_reservation_plan.v0.1".equals(stringValue(plan, "schemaVersion", ""))
+        if (!CityLandscapeCapacityReservationPlanner.SCHEMA_VERSION.equals(
+                stringValue(plan, "schemaVersion", ""))
                 || !blueprint.cityId().equals(stringValue(plan, "cityId", ""))
                 || !"reserved".equals(stringValue(plan, "status", ""))) {
             throw new IllegalArgumentException("CITY_OUTDOOR_LANDSCAPE_CAPACITY_STALE");
@@ -872,6 +875,23 @@ public final class CityOutdoorBlueprintCompiler {
                 .forEach(landscape -> required.put(landscape.landscapeId(), landscape));
         Map<String, Set<BlockPoint>> result = new LinkedHashMap<>();
         Map<String, String> parentIds = new LinkedHashMap<>();
+        Map<String, BlockPoint> seeds = new LinkedHashMap<>();
+        List<String> warnings = new ArrayList<>();
+        Set<String> warnedInstances = new HashSet<>();
+        for (JsonElement warningElement : requiredArray(plan, "warnings")) {
+            JsonObject warning = warningElement.getAsJsonObject();
+            String reasonCode = requiredString(warning, "reasonCode");
+            String landscapeId = requiredString(warning, "landscapeId");
+            int instanceOrdinal = requiredInt(warning, "instanceOrdinal");
+            if (!required.containsKey(landscapeId) || instanceOrdinal < 0
+                    || instanceOrdinal >= required.get(landscapeId).instanceCount()) {
+                throw new IllegalArgumentException("CITY_OUTDOOR_LANDSCAPE_CAPACITY_WARNING_DRIFT");
+            }
+            if ("REQUIRED_LANDSCAPE_NO_TERRAIN_FIT_WARNING".equals(reasonCode)) {
+                warnedInstances.add(landscapeId + '\u0000' + instanceOrdinal);
+            }
+            warnings.add(reasonCode + ':' + landscapeId + ':' + instanceOrdinal);
+        }
         Set<String> seenInstances = new HashSet<>();
         for (JsonElement element : requiredArray(plan, "instances")) {
             JsonObject instance = element.getAsJsonObject();
@@ -884,13 +904,14 @@ public final class CityOutdoorBlueprintCompiler {
             if (!seenInstances.add(instanceId)) {
                 throw new IllegalArgumentException("CITY_OUTDOOR_LANDSCAPE_CAPACITY_INSTANCE_DUPLICATE");
             }
+            int instanceOrdinal = Integer.parseInt(instanceId.substring(instanceId.lastIndexOf('_') + 1)) - 1;
             AnchorData owner = requiredOwnerAnchor(anchorsByGroup, landscape);
             if (!owner.anchorId().equals(requiredString(instance, "ownerAnchorId"))
                     || !sameBounds(owner.footprint(), object(instance, "ownerFootprint"))) {
                 throw new IllegalArgumentException("CITY_OUTDOOR_REQUIRED_LANDSCAPE_OWNER_DRIFT:" + landscapeId);
             }
             JsonArray parcels = requiredArray(instance, "parcelReservations");
-            if (parcels.size() != landscape.parcelCount()) {
+            if (parcels.isEmpty() || parcels.size() > landscape.parcelCount()) {
                 throw new IllegalArgumentException("CITY_OUTDOOR_REQUIRED_LANDSCAPE_PARCEL_COUNT_DRIFT:"
                         + landscapeId);
             }
@@ -914,13 +935,29 @@ public final class CityOutdoorBlueprintCompiler {
                     throw new IllegalArgumentException("CITY_OUTDOOR_LANDSCAPE_CAPACITY_PARCEL_INVALID:"
                             + parcelId);
                 }
+                JsonObject seed = object(parcel, "seed");
+                BlockPoint seedPoint = new BlockPoint(requiredInt(seed, "x"), requiredInt(seed, "z"));
+                if (!cells.contains(seedPoint)) {
+                    throw new IllegalArgumentException("CITY_OUTDOOR_LANDSCAPE_CAPACITY_SEED_DRIFT:"
+                            + parcelId);
+                }
+                seeds.put(parcelId, seedPoint);
+            }
+            warnedInstances.remove(landscapeId + '\u0000' + instanceOrdinal);
+        }
+        for (CityBlueprint.Landscape landscape : required.values()) {
+            for (int ordinal = 0; ordinal < landscape.instanceCount(); ordinal++) {
+                String instanceId = landscape.landscapeId() + "::instance_"
+                        + String.format(java.util.Locale.ROOT, "%02d", ordinal + 1);
+                if (!seenInstances.contains(instanceId)
+                        && !warnedInstances.contains(landscape.landscapeId() + '\u0000' + ordinal)) {
+                    throw new IllegalArgumentException("CITY_OUTDOOR_REQUIRED_LANDSCAPE_INSTANCE_DRIFT:"
+                            + instanceId);
+                }
             }
         }
-        int expectedInstances = required.values().stream().mapToInt(CityBlueprint.Landscape::instanceCount).sum();
-        if (seenInstances.size() != expectedInstances) {
-            throw new IllegalArgumentException("CITY_OUTDOOR_REQUIRED_LANDSCAPE_INSTANCE_COUNT_DRIFT");
-        }
-        return new CapacityReservation(Map.copyOf(result), Map.copyOf(parentIds));
+        return new CapacityReservation(Map.copyOf(result), Map.copyOf(parentIds), Map.copyOf(seeds),
+                List.copyOf(warnings), true);
     }
 
     private static boolean sameBounds(BlockBounds expected, JsonObject actual) {
@@ -1078,9 +1115,12 @@ public final class CityOutdoorBlueprintCompiler {
     }
 
     private record CapacityReservation(Map<String, Set<BlockPoint>> domains,
-                                       Map<String, String> parentParcelIds) {
+                                       Map<String, String> parentParcelIds,
+                                       Map<String, BlockPoint> seeds,
+                                       List<String> warnings,
+                                       boolean planPresent) {
         private static CapacityReservation empty() {
-            return new CapacityReservation(Map.of(), Map.of());
+            return new CapacityReservation(Map.of(), Map.of(), Map.of(), List.of(), false);
         }
     }
 
