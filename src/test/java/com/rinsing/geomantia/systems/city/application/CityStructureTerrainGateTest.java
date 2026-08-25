@@ -58,28 +58,34 @@ class CityStructureTerrainGateTest {
     }
 
     @Test
-    void conformPolicyRejectsSlopeAndReliefAcrossFullFootprint() {
+    void conformPolicyMarksSlopeForFoundationInsteadOfRejectingCity() {
         CityStructureTerrainGate gate = new CityStructureTerrainGate(
                 field(List.of(cell(0, 70, 2, 3), cell(1, 70, 7, 3))), catalog("SURFACE"));
 
         CityStructureTerrainGate.Evaluation evaluation = gate.evaluate(
                 "test:house", new BlockBounds(0, 0, 31, 15), CityBlueprint.TerrainPolicy.CONFORM);
 
-        assertFalse(evaluation.passed());
-        assertEquals("CITY_STRUCTURE_SURFACE_CELL_SLOPE_EXCEEDED", evaluation.reasonCode());
+        assertTrue(evaluation.passed());
+        assertTrue(evaluation.trace().get("terrainAdaptationRequired").getAsBoolean());
+        assertEquals("foundation_or_skip",
+                evaluation.trace().getAsJsonArray("terrainAdaptations").get(0)
+                        .getAsJsonObject().get("action").getAsString());
         assertEquals("CONFORM", evaluation.trace().get("terrainPolicy").getAsString());
     }
 
     @Test
-    void balancedPolicyRejectsLargeElevationRangeAcrossFullFootprint() {
+    void balancedPolicyMarksLargeElevationRangeForFoundationInsteadOfRejectingCity() {
         CityStructureTerrainGate gate = new CityStructureTerrainGate(
                 field(List.of(cell(0, 64, 2, 3), cell(1, 80, 2, 3))), catalog("SURFACE"));
 
         CityStructureTerrainGate.Evaluation evaluation = gate.evaluate(
                 "test:house", new BlockBounds(0, 0, 31, 15), CityBlueprint.TerrainPolicy.BALANCED);
 
-        assertFalse(evaluation.passed());
-        assertEquals("CITY_STRUCTURE_SURFACE_ELEVATION_RANGE_EXCEEDED", evaluation.reasonCode());
+        assertTrue(evaluation.passed());
+        assertTrue(evaluation.trace().get("terrainAdaptationRequired").getAsBoolean());
+        assertEquals("CITY_STRUCTURE_SURFACE_ELEVATION_RANGE_EXCEEDED",
+                evaluation.trace().getAsJsonArray("terrainAdaptations").get(0)
+                        .getAsJsonObject().get("reasonCode").getAsString());
         assertEquals(16.0, evaluation.trace().get("elevationRange").getAsDouble());
     }
 

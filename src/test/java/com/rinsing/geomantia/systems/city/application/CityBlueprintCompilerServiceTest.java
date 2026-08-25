@@ -13,6 +13,8 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.util.HexFormat;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -1462,8 +1464,21 @@ class CityBlueprintCompilerServiceTest {
         syncOutdoorGrounds(blueprint);
         JsonObject submitted = service.submit(temporary, runId, cityId,
                 prepared.get("contextId").getAsString(), blueprint);
-        assertTrue(submitted.get("ok").getAsBoolean());
+        assertTrue(submitted.get("ok").getAsBoolean(), submitted.toString());
+        Path acceptedBlueprintPath = runDir.resolve("city_blueprint_" + safe(cityId) + "/city_blueprint.json");
+        String compilerInput = blueprint.toString();
+        Files.writeString(acceptedBlueprintPath, compilerInput);
+        Path acceptedTracePath = runDir.resolve("city_blueprint_" + safe(cityId)
+                + "/city_blueprint_submission_trace.json");
+        JsonObject acceptedTrace = JsonParser.parseString(Files.readString(acceptedTracePath)).getAsJsonObject();
+        acceptedTrace.addProperty("cityBlueprintHash", sha256(compilerInput));
+        Files.writeString(acceptedTracePath, acceptedTrace.toString());
         return new Fixture(runId, cityId, runDir);
+    }
+
+    private static String sha256(String value) throws Exception {
+        return "sha256:" + HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256")
+                .digest(value.getBytes(java.nio.charset.StandardCharsets.UTF_8)));
     }
 
     private static JsonObject d3(String cityId) {

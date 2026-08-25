@@ -254,7 +254,8 @@ public final class CityBlueprintCompilerService {
                 commit(placement, anchors, occupied, state);
                 if ("CENTER_SYMMETRIC".equals(state.layoutAlgorithm())
                         && state.requiredCount() == state.group().requiredStructureRefs().size()) {
-                    List<String> pool = catalog.pool(state.group().fillPoolRef());
+                    List<String> pool = catalog.pool(state.group().fillPoolRef(), state.group().role(),
+                            state.group().groupId());
                     int cursor = 0;
                     while (state.internalStructureCount() < state.minimumStructureCount()) {
                         String structureRef = nextFillRef(pool, state.blockedRefs(), cursor++);
@@ -312,7 +313,7 @@ public final class CityBlueprintCompilerService {
         // city stitching and must not substitute for the group's required/fill population.
         for (CityBlueprint.Group group : groups) {
             GroupState state = states.get(group.groupId());
-            List<String> pool = catalog.pool(group.fillPoolRef());
+            List<String> pool = catalog.pool(group.fillPoolRef(), group.role(), group.groupId());
             int cursor = 0;
             boolean centerSymmetric = "CENTER_SYMMETRIC".equals(state.layoutAlgorithm());
             while (state.internalStructureCount() < state.minimumStructureCount()
@@ -1162,7 +1163,7 @@ public final class CityBlueprintCompilerService {
                     groupLayoutPlanner.parameters(algorithm, group.densityClass());
             int minimumCount = minimumGroupStructureCount(cityScale, group.extentClass(), algorithm);
             List<String> plannedRefs = new ArrayList<>(orderedRequiredStructureRefs(group, catalog));
-            List<String> fillPool = catalog.pool(group.fillPoolRef());
+            List<String> fillPool = catalog.pool(group.fillPoolRef(), group.role(), group.groupId());
             for (int cursor = 0; plannedRefs.size() < minimumCount; cursor++) {
                 plannedRefs.add(fillPool.get(cursor % fillPool.size()));
             }
@@ -1776,7 +1777,7 @@ public final class CityBlueprintCompilerService {
                 ? "guide_line_dual_side" : "compound_cluster";
         CityBlueprint.ConnectionParameters parameters = plan == null
                 ? CityBlueprint.ConnectionParameters.empty() : plan.parameters();
-        catalog.pool(poolRef);
+        catalog.pool(poolRef, group.role(), group.groupId());
         return new ConnectionConfiguration(poolRef, algorithmProfileRef, algorithm, plannerType, density,
                 parameters, inheritedPool, inheritedAlgorithm, inheritedDensity,
                 groupLayoutPlanner.parameters(algorithm, density));
@@ -1799,7 +1800,8 @@ public final class CityBlueprintCompilerService {
         int available = INTERNAL_MAX_ANCHORS_PER_GROUP - source.anchorCount();
         if (available < 1) return null;
         ConnectionConfiguration configuration = source.connectionConfiguration();
-        List<String> pool = catalog.pool(configuration.structurePoolRef());
+        List<String> pool = catalog.pool(configuration.structurePoolRef(), source.group().role(),
+                source.group().groupId());
         if (pool.isEmpty()) return null;
         CommittedArray focus = source.nearestArray(target);
         if (focus == null) return null;
@@ -3389,6 +3391,38 @@ public final class CityBlueprintCompilerService {
         return raw.replaceAll("[^A-Za-z0-9._-]", "_");
     }
 
+    private static Set<String> fillCategoriesForGroup(String role, String groupId) {
+        String id = groupId == null ? "" : groupId.toLowerCase(java.util.Locale.ROOT);
+        String text = role == null ? "" : role.toLowerCase(java.util.Locale.ROOT);
+        String kind;
+        if (containsAny(id, "admin", "civic", "行政", "市政")) kind = "civic";
+        else if (containsAny(id, "housing", "residen", "居民", "住宅")) kind = "residential";
+        else if (containsAny(id, "agri", "farm", "农业", "农田")) kind = "agriculture";
+        else if (containsAny(id, "market", "commercial", "市场", "商业")) kind = "commercial";
+        else if (containsAny(text, "农业", "农田", "farm", "agric", "field", "林场", "woodland")) {
+            kind = "agriculture";
+        } else if (containsAny(text, "住宅", "居民", "housing", "residen", "village")) {
+            kind = "residential";
+        } else if (containsAny(text, "市场", "market", "commercial", "commerce", "商业", "trade")) {
+            kind = "commercial";
+        } else if (containsAny(text, "行政", "administr", "government", "civic", "市政")) {
+            kind = "civic";
+        } else {
+            return Set.of();
+        }
+        Set<String> result = new LinkedHashSet<>();
+        result.add(kind);
+        if ("civic".equals(kind) && containsAny(text, "住宅", "居民", "housing", "residen", "village")) {
+            result.add("residential");
+        }
+        return Set.copyOf(result);
+    }
+
+    private static boolean containsAny(String text, String... terms) {
+        for (String term : terms) if (text.contains(term)) return true;
+        return false;
+    }
+
     private static JsonObject requiredObject(JsonObject object, String key) {
         if (object == null || !object.has(key) || !object.get(key).isJsonObject()) {
             throw fail("CITY_BLUEPRINT_COMPILER_INPUT_INVALID", key + " object is required.");
@@ -4222,7 +4256,8 @@ public final class CityBlueprintCompilerService {
                                 Map<String, String> algorithms,
                                 Map<String, Boolean> centerAxisStreets,
                                 Set<String> compositions,
-                                Set<String> primaryStructures) {
+                                Set<String> primaryStructures,
+                                Map<String, Set<String>> semanticCategories) {
         static CatalogIndex parse(JsonObject root, JsonObject semanticCatalog) {
             Map<String, List<TemplateCandidate>> structures = new LinkedHashMap<>();
             for (JsonElement element : array(root, "structureRefs")) {
@@ -4256,9 +4291,30 @@ public final class CityBlueprintCompilerService {
                 compositions.add(string(item, "compositionProfileRef"));
             }
             Set<String> primaryStructures = new LinkedHashSet<>();
+            Map<String, Set<String>> semanticCategories = new LinkedHashMap<>();
             for (JsonElement element : array(semanticCatalog, "semanticProfiles")) {
                 JsonObject profile = element.getAsJsonObject();
                 boolean primary = false;
+                Set<String> categories = new LinkedHashSet<>();
+                for (JsonElement term : array(profile, "functionTerms")) {
+                    String value = term.getAsString().toLowerCase(java.util.Locale.ROOT);
+                    if (containsAny(value, "function.行政", "function.administration", "function.civic",
+                            "function.defense", "行政", "administr", "civic", "市政", "防御", "defen")) {
+                        categories.add("civic");
+                    }
+                    if (containsAny(value, "function.商业", "function.commercial", "function.market",
+                            "商业", "commercial", "market", "trade")) {
+                        categories.add("commercial");
+                    }
+                    if (containsAny(value, "function.residential", "residential", "住宅", "居民")) {
+                        categories.add("residential");
+                    }
+                    if (containsAny(value, "function.农业", "function.agriculture", "function.farm",
+                            "农业", "agric", "farm")) {
+                        categories.add("agriculture");
+                    }
+                }
+                semanticCategories.put(string(profile, "semanticProfileId"), Set.copyOf(categories));
                 for (JsonElement term : array(profile, "planningRoleTerms")) {
                     String value = term.getAsString().toLowerCase(java.util.Locale.ROOT);
                     primary |= value.equals("planning_role.anchor") || value.equals("planning_role.key");
@@ -4267,7 +4323,7 @@ public final class CityBlueprintCompilerService {
             }
             return new CatalogIndex(Map.copyOf(structures), Map.copyOf(pools), Map.copyOf(algorithms),
                     Map.copyOf(centerAxisStreets), Set.copyOf(compositions),
-                    Set.copyOf(primaryStructures));
+                    Set.copyOf(primaryStructures), Map.copyOf(semanticCategories));
         }
         List<TemplateCandidate> templates(String ref) {
             List<TemplateCandidate> value = structures.get(ref);
@@ -4278,6 +4334,19 @@ public final class CityBlueprintCompilerService {
             List<String> value = pools.get(ref);
             if (value == null) throw fail("CITY_BLUEPRINT_FILL_POOL_UNKNOWN", ref);
             return value;
+        }
+        List<String> pool(String ref, String role, String groupId) {
+            List<String> value = pool(ref);
+            Set<String> allowedCategories = fillCategoriesForGroup(role, groupId);
+            if (allowedCategories.isEmpty()) return value;
+            List<String> filtered = value.stream()
+                    .filter(structureRef -> {
+                        Set<String> categories = semanticCategories.get(structureRef);
+                        return categories != null && !categories.isEmpty()
+                                && categories.stream().allMatch(allowedCategories::contains);
+                    })
+                    .toList();
+            return filtered.isEmpty() ? value : filtered;
         }
         String algorithm(String ref) {
             String value = algorithms.get(ref);

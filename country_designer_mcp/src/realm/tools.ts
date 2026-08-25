@@ -1023,7 +1023,7 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "city_submit_d4_blueprint",
-    description: "正式 AI 边界：对同一 contextId 只接受一次包含结构与户外意图的完整 CityBlueprint 提交；不会进入候选、slot、阵列或户外 AI 循环。",
+    description: "正式 AI 边界：对同一 contextId 只接受一次包含结构与户外意图的完整 CityBlueprint 提交；AI 必须明确选择核心/填充建筑、阵列关系和景观占比；不会进入逐栋建筑候选、slot、阵列或户外 AI 循环。",
     inputSchema: {
       type: "object", additionalProperties: false,
       properties: {
@@ -1037,7 +1037,7 @@ export const realmTools: ToolDefinition[] = [
   },
   {
     name: "city_compile_d4_blueprint",
-    description: "程序化编译已接受的 CityBlueprint：全部 Group 先在偏好 patch 播种必要结构，再按显式关系图和确定性补边以双方持续阵列完成连接，最后按范围与疏密 fill；D4 不设固定组间距离上限。输出标准 D4 anchor、compile trace 与 Group extent，不调用 AI、不接受 candidateId。",
+    description: "程序化编译已接受的完整 CityBlueprint：保留 AI 指定核心/填充模板与阵列关系，按关系图、阵列和范围完成连接与 fill；普通非水体坑洼/起伏由台基消化，无法承载的单栋由 PCG 跳过，不升级为整城失败。输出标准 D4 anchor、compile trace 与 Group extent，不调用 AI、不接受 candidateId。",
     inputSchema: {
       type: "object", additionalProperties: false,
       properties: {

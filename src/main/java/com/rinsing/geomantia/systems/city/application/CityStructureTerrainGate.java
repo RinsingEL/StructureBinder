@@ -74,16 +74,13 @@ final class CityStructureTerrainGate {
         double maximumLocalRelief = 0.0;
         TerrainLimits limits = terrainPolicy == null ? null : limits(terrainPolicy);
         JsonArray failures = new JsonArray();
+        JsonArray adaptations = new JsonArray();
         for (int cellZ = minCellZ; cellZ <= maxCellZ; cellZ++) {
             for (int cellX = minCellX; cellX <= maxCellX; cellX++) {
                 LandUseTerrainField.Cell cell = cells.get(new CellKey(cellX, cellZ));
                 String reason = cell == null ? "CITY_STRUCTURE_TERRAIN_CELL_COVERAGE_MISSING"
                         : !cell.sampled() ? "CITY_STRUCTURE_TERRAIN_CELL_UNSAMPLED"
                         : cell.water() ? "CITY_STRUCTURE_SURFACE_CELL_WATER"
-                        : limits != null && cell.slope() > limits.maximumSlope()
-                        ? "CITY_STRUCTURE_SURFACE_CELL_SLOPE_EXCEEDED"
-                        : limits != null && cell.localRelief() > limits.maximumLocalRelief()
-                        ? "CITY_STRUCTURE_SURFACE_CELL_RELIEF_EXCEEDED"
                         : "";
                 if (cell != null) {
                     evaluated++;
@@ -92,6 +89,15 @@ final class CityStructureTerrainGate {
                         maximumElevation = Math.max(maximumElevation, cell.elevation());
                         maximumSlope = Math.max(maximumSlope, cell.slope());
                         maximumLocalRelief = Math.max(maximumLocalRelief, cell.localRelief());
+                    }
+                }
+                if (cell != null && cell.sampled() && !cell.water() && limits != null) {
+                    if (cell.slope() > limits.maximumSlope()) {
+                        adaptations.add(adaptation(cell, "CITY_STRUCTURE_SURFACE_CELL_SLOPE_EXCEEDED",
+                                "foundation_or_skip"));
+                    } else if (cell.localRelief() > limits.maximumLocalRelief()) {
+                        adaptations.add(adaptation(cell, "CITY_STRUCTURE_SURFACE_CELL_RELIEF_EXCEEDED",
+                                "foundation_or_skip"));
                     }
                 }
                 if (reason.isBlank()) continue;
@@ -130,22 +136,35 @@ final class CityStructureTerrainGate {
             trace.addProperty("elevationRange", elevationRange);
             trace.addProperty("maximumObservedSlope", maximumSlope);
             trace.addProperty("maximumObservedLocalRelief", maximumLocalRelief);
-            if (limits != null && rejected == 0 && elevationRange > limits.maximumElevationRange()) {
-                rejected++;
-                primaryReason = "CITY_STRUCTURE_SURFACE_ELEVATION_RANGE_EXCEEDED";
-                JsonObject failure = new JsonObject();
-                failure.addProperty("reasonCode", primaryReason);
-                failure.addProperty("minimumElevation", minimumElevation);
-                failure.addProperty("maximumElevation", maximumElevation);
-                failure.addProperty("elevationRange", elevationRange);
-                failures.add(failure);
+            if (limits != null && elevationRange > limits.maximumElevationRange()) {
+                JsonObject adaptation = new JsonObject();
+                adaptation.addProperty("reasonCode", "CITY_STRUCTURE_SURFACE_ELEVATION_RANGE_EXCEEDED");
+                adaptation.addProperty("minimumElevation", minimumElevation);
+                adaptation.addProperty("maximumElevation", maximumElevation);
+                adaptation.addProperty("elevationRange", elevationRange);
+                adaptation.addProperty("action", "foundation_or_skip");
+                adaptations.add(adaptation);
             }
         }
         trace.addProperty("rejectedCellCount", rejected);
         trace.addProperty("status", rejected == 0 ? "passed" : "rejected");
         if (!primaryReason.isBlank()) trace.addProperty("reasonCode", primaryReason);
         trace.add("failureSamples", failures);
+        trace.addProperty("terrainAdaptationRequired", !adaptations.isEmpty());
+        trace.addProperty("terrainAdaptationPolicy", "PCG_FOUNDATION_OR_SKIP_MEMBER");
+        trace.add("terrainAdaptations", adaptations);
         return new Evaluation(rejected == 0, primaryReason, CityStructureTerrainMode.SURFACE.name(), trace);
+    }
+
+    private static JsonObject adaptation(LandUseTerrainField.Cell cell, String reasonCode, String action) {
+        JsonObject value = new JsonObject();
+        value.addProperty("cellX", cell.cellX());
+        value.addProperty("cellZ", cell.cellZ());
+        value.addProperty("reasonCode", reasonCode);
+        value.addProperty("slope", cell.slope());
+        value.addProperty("localRelief", cell.localRelief());
+        value.addProperty("action", action);
+        return value;
     }
 
     String terrainFieldSchema() {

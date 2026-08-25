@@ -135,7 +135,7 @@ class CityBlueprintServiceTest {
     }
 
     @Test
-    void centerSymmetricRequiresExactlyOneCenterStructure() throws Exception {
+    void centerSymmetricIgnoresAiBuildingListAndLetsPcgChooseStructures() throws Exception {
         Fixture fixture = fixture("run_center_symmetric_invalid", "city:center_symmetric_invalid");
         CityBlueprintService service = new CityBlueprintService();
         JsonObject prepared = service.prepare(temporary, fixture.runId(), fixture.cityId(),
@@ -148,11 +148,39 @@ class CityBlueprintServiceTest {
         JsonObject result = service.submit(temporary, fixture.runId(), fixture.cityId(),
                 prepared.get("contextId").getAsString(), blueprint);
 
-        assertFalse(result.get("ok").getAsBoolean());
-        assertTrue(result.getAsJsonObject("validationReport").getAsJsonArray("issues").asList().stream()
-                .map(JsonElement::getAsJsonObject)
-                .anyMatch(issue -> "CITY_BLUEPRINT_CENTER_SYMMETRIC_REQUIRED_COUNT_INVALID"
-                        .equals(issue.get("reasonCode").getAsString())));
+        assertTrue(result.get("ok").getAsBoolean());
+        assertFalse(result.getAsJsonObject("submissionTrace").getAsJsonObject("pcgIntentMaterialization")
+                .get("buildingChoicesProvidedByAi").getAsBoolean());
+        JsonObject accepted = JsonParser.parseString(Files.readString(
+                fixture.runDir().resolve("city_blueprint_city_center_symmetric_invalid/city_blueprint.json")))
+                .getAsJsonObject();
+        assertTrue(accepted.getAsJsonArray("groups").get(0).getAsJsonObject()
+                .getAsJsonArray("requiredStructureRefs").size() >= 1);
+    }
+
+    @Test
+    void intentOnlyGroupLetsServerMaterializeBuildingPoolAndComposition() throws Exception {
+        Fixture fixture = fixture("run_intent_only", "city:intent_only");
+        CityBlueprintService service = new CityBlueprintService();
+        JsonObject prepared = service.prepare(temporary, fixture.runId(), fixture.cityId(),
+                fixture.terraSenseSource(), fixture.templateSource(), fixture.referenceCatalog());
+        JsonObject blueprint = blueprint(prepared.getAsJsonObject("cityBlueprintContext"));
+        JsonObject group = blueprint.getAsJsonArray("groups").get(0).getAsJsonObject();
+        group.remove("requiredStructureRefs");
+        group.remove("fillPoolRef");
+        group.remove("compositionProfileRef");
+
+        JsonObject result = service.submit(temporary, fixture.runId(), fixture.cityId(),
+                prepared.get("contextId").getAsString(), blueprint);
+
+        assertTrue(result.get("ok").getAsBoolean());
+        JsonObject materialized = JsonParser.parseString(Files.readString(
+                fixture.runDir().resolve("city_blueprint_city_intent_only/city_blueprint.json")))
+                .getAsJsonObject().getAsJsonArray("groups").get(0).getAsJsonObject();
+        assertEquals("geomantia:town_hall", materialized.getAsJsonArray("requiredStructureRefs")
+                .get(0).getAsString());
+        assertEquals("pool:civic", materialized.get("fillPoolRef").getAsString());
+        assertEquals("composition:round_robin", materialized.get("compositionProfileRef").getAsString());
     }
 
     @Test
@@ -382,7 +410,6 @@ class CityBlueprintServiceTest {
                 JsonParser.parseString("""
                         {"landscapeId":"central_green","landscapeProfileRef":"landscape:greenbelt",
                          "purpose":"FUNCTIONAL","originMode":"ATTACHED",
-                         "owner":{"groupId":"civic","requiredStructureRef":"geomantia:town_hall"},
                          "instanceCount":1,"parcelCount":1,"preferredPatchRefs":[],
                          "terrainPolicy":"CONFORM","required":true,
                          "fillSelection":{"variants":[{"fillProfileRef":"fill:relay_common_green","selectionWeight":1,

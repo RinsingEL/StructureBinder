@@ -169,17 +169,6 @@ public final class CityBlueprintService {
             return alreadyConsumed(debugRoot, cityId, contextId, context);
         }
 
-        CityBlueprint blueprint;
-        try {
-            blueprint = codec.read(blueprintJson);
-        } catch (CityBlueprintContractException exception) {
-            return failure(debugRoot, cityId, contextId, reportPath, tracePath, exception.reasonCode(),
-                    exception.fieldPath(), exception.getMessage(), true);
-        } catch (RuntimeException exception) {
-            return failure(debugRoot, cityId, contextId, reportPath, tracePath,
-                    CityBlueprintReasonCode.CITY_BLUEPRINT_JSON_INVALID, "$", exception.getMessage(), true);
-        }
-
         CityBlueprint.ArtifactRef expectedD3 = artifactRefFromJson(context.getAsJsonObject("sourceD3Ref"));
         CityBlueprint.ArtifactRef expectedSnapshot = artifactRefFromJson(
                 context.getAsJsonObject("catalogSnapshotRef"));
@@ -209,6 +198,16 @@ public final class CityBlueprintService {
         CityTemplateCatalog templates = new CityTemplateCatalogLoader().load(snapshot.getAsJsonObject("templateCatalog"));
         CityBlueprintReferenceCatalog references = CityBlueprintReferenceCatalog.parse(
                 snapshot.getAsJsonObject("referenceCatalog"), templates);
+        CityBlueprint blueprint;
+        try {
+            blueprint = codec.read(blueprintJson);
+        } catch (CityBlueprintContractException exception) {
+            return failure(debugRoot, cityId, contextId, reportPath, tracePath, exception.reasonCode(),
+                    exception.fieldPath(), exception.getMessage(), true);
+        } catch (RuntimeException exception) {
+            return failure(debugRoot, cityId, contextId, reportPath, tracePath,
+                    CityBlueprintReasonCode.CITY_BLUEPRINT_JSON_INVALID, "$", exception.getMessage(), true);
+        }
         Set<String> patchRefs = patchRefs(context.getAsJsonObject("d3ReviewPackage"));
         CityBlueprintValidator.ValidationResult result = validator.validate(blueprint,
                 new CityBlueprintValidator.ExpectedContext(cityId, expectedD3, expectedSnapshot, patchRefs),
