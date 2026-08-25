@@ -618,6 +618,32 @@ final class CityStructureLandingFlowTest {
     }
 
     @Test
+    void d4FinalQualityCannotPassWhenCompiledPreviewCarriesVisualOrConnectivityHardBlocks()
+            throws Exception {
+        Fixture fixture = fixture();
+        JsonObject plan = singleAnchorPlan(fixture.review());
+        plan.add("arrayVisualQuality", JsonParser.parseString("""
+                {"passed":false,"hardBlocks":["civic: COMPACT_ALLEY_MISSING"]}
+                """).getAsJsonObject());
+        plan.add("compilationAcceptance", JsonParser.parseString("""
+                {"passed":false,"previewCompiled":true,
+                 "hardBlocks":["REQUIRED_GROUP_RELATION_GRAPH_DISCONNECTED"]}
+                """).getAsJsonObject());
+
+        CityStructureAnchorPlanner.Result result = new CityStructureAnchorPlanner()
+                .plan(fixture.baseDir(), fixture.review(), fixture.terraSenseSource(), plan);
+
+        assertFalse(result.qualityReport().get("passed").getAsBoolean());
+        assertEquals(0, result.qualityReport().get("score").getAsInt());
+        assertTrue(result.qualityReport().getAsJsonArray("hardBlocks").toString()
+                .contains("COMPACT_ALLEY_MISSING"));
+        assertTrue(result.qualityReport().getAsJsonArray("hardBlocks").toString()
+                .contains("REQUIRED_GROUP_RELATION_GRAPH_DISCONNECTED"));
+        assertTrue(result.structureAnchorPlan().getAsJsonArray("anchors").size() > 0,
+                "failed acceptance must preserve the compiled preview for review");
+    }
+
+    @Test
     void d5ReservationMaskCoversStructureEnvelopeWithoutFixedRoadAccess() throws Exception {
         Fixture fixture = fixture();
         JsonObject anchorMap = new CityStructureAnchorPlanner()

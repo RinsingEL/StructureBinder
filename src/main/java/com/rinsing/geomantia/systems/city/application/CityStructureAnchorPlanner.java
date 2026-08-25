@@ -121,8 +121,15 @@ public final class CityStructureAnchorPlanner {
         JsonObject quality = quality(hardBlocks, warnings, needsReview, anchors.size());
         if (structureAnchorPlan.has("arrayVisualQuality")
                 && structureAnchorPlan.get("arrayVisualQuality").isJsonObject()) {
-            quality.getAsJsonObject("metrics").add("arrayVisualGeometry",
-                    structureAnchorPlan.getAsJsonObject("arrayVisualQuality").deepCopy());
+            JsonObject visual = structureAnchorPlan.getAsJsonObject("arrayVisualQuality");
+            quality.getAsJsonObject("metrics").add("arrayVisualGeometry", visual.deepCopy());
+            mergeNestedHardBlocks(quality, visual, "arrayVisualGeometry");
+        }
+        if (structureAnchorPlan.has("compilationAcceptance")
+                && structureAnchorPlan.get("compilationAcceptance").isJsonObject()) {
+            JsonObject acceptance = structureAnchorPlan.getAsJsonObject("compilationAcceptance");
+            quality.getAsJsonObject("metrics").add("compilationAcceptance", acceptance.deepCopy());
+            mergeNestedHardBlocks(quality, acceptance, "compilationAcceptance");
         }
         anchorMap.add("quality", quality);
         anchorMap.add("timingMs", timing(started));
@@ -425,6 +432,20 @@ public final class CityStructureAnchorPlanner {
         metrics.addProperty("acceptedAnchorCount", anchorCount);
         quality.add("metrics", metrics);
         return quality;
+    }
+
+    private static void mergeNestedHardBlocks(JsonObject quality, JsonObject nested, String source) {
+        if (!nested.has("passed") || nested.get("passed").getAsBoolean()) return;
+        JsonArray outer = quality.getAsJsonArray("hardBlocks");
+        if (nested.has("hardBlocks") && nested.get("hardBlocks").isJsonArray()) {
+            for (JsonElement element : nested.getAsJsonArray("hardBlocks")) {
+                String block = source + ": " + element.getAsString();
+                if (!strings(outer).contains(block)) outer.add(block);
+            }
+        }
+        if (outer.isEmpty()) outer.add(source + ": UNSATISFIED");
+        quality.addProperty("passed", false);
+        quality.addProperty("score", 0);
     }
 
     private static JsonObject timing(long started) {

@@ -393,8 +393,7 @@ public final class CityBlueprintCompilerService {
             }
         }
 
-        JsonObject dynamicAreaPlan = freezeDynamicAreaTargets(blueprint, states,
-                review.grid().cellStepBlocks(), cityPlanningBounds);
+        JsonObject dynamicAreaPlan = freezeDynamicAreaTargets(blueprint, states, cityPlanningBounds);
         fillGroupsToDynamicTargets(runDir, review, structureSource, templateCatalogJson, templates, blueprint,
                 groups, states, occupied, anchors, selections, catalog, terrainGate);
 
@@ -460,6 +459,9 @@ public final class CityBlueprintCompilerService {
         CityArrayVisualQualityGate.Result arrayVisualQuality = arrayVisualQualityGate.evaluate(
                 anchors, streetBands);
         anchorPlan.add("arrayVisualQuality", arrayVisualQuality.json().deepCopy());
+        JsonObject compilationAcceptance = compilationAcceptance(
+                blueprint, states, connectivityPlan, arrayVisualQuality);
+        anchorPlan.add("compilationAcceptance", compilationAcceptance.deepCopy());
         if (!arrayVisualQuality.passed()) {
             anchorPlan.addProperty("arrayVisualGapRecorded", true);
         }
@@ -479,6 +481,7 @@ public final class CityBlueprintCompilerService {
         compileTrace.add("residentialOverflowPlan", residentialOverflow.plan().deepCopy());
         compileTrace.add("arrayVisualQuality", arrayVisualQuality.json().deepCopy());
         compileTrace.addProperty("arrayVisualGapRecorded", !arrayVisualQuality.passed());
+        compileTrace.add("compilationAcceptance", compilationAcceptance.deepCopy());
         compileTrace.add("districtCapacityPlan", districtCapacity.plan().deepCopy());
         compileTrace.add("landscapeCapacityReservationPlan", landscapeCapacity.plan().deepCopy());
         compileTrace.add("dynamicAreaPlan", dynamicAreaPlan.deepCopy());
@@ -489,18 +492,17 @@ public final class CityBlueprintCompilerService {
 
     private JsonObject freezeDynamicAreaTargets(CityBlueprint blueprint,
                                                 Map<String, GroupState> states,
-                                                int cellStepBlocks,
                                                 BlockBounds planningBounds) {
         GroupState highest = states.values().stream()
                 .filter(state -> state.group().priority() == CityBlueprint.GroupPriority.CORE)
                 .findFirst()
                 .orElseThrow(() -> fail("CITY_BLUEPRINT_GROUP_PRIORITY_HIGHEST_COUNT_INVALID",
                         "Exactly one CORE group is required before dynamic area expansion."));
-        int cellArea = cellStepBlocks * cellStepBlocks;
-        int highestOwnedArea = Math.max(highest.builtCollisionAreaBlocks,
-                highest.districtReservation().cells().size() * cellArea);
-        highestOwnedArea = Math.max(highestOwnedArea, highest.spatialDemand().minimumAreaBlocks());
-        long referenceArea = (long) Math.ceil(highestOwnedArea / highest.group().targetAreaShare());
+        // Freeze only area that D4 actually assigned through committed structures/connection growth.
+        // District reservations and precomputed minimum/extent demand are capacity estimates, not ownership.
+        int highestOwnedArea = Math.max(0, highest.spatialDemandBlocks());
+        long referenceArea = highestOwnedArea == 0 ? 0L
+                : (long) Math.ceil(highestOwnedArea / highest.group().targetAreaShare());
         int previewArea = (int) Math.min(Integer.MAX_VALUE,
                 Math.max(1L, (long) planningBounds.widthBlocks() * planningBounds.heightBlocks()));
         referenceArea = Math.min(referenceArea, previewArea);
@@ -508,15 +510,15 @@ public final class CityBlueprintCompilerService {
         plan.addProperty("policy", "FREEZE_UNIQUE_HIGHEST_PRIORITY_AREA_THEN_DERIVE_GROUP_TARGETS");
         plan.addProperty("highestPriorityGroupId", highest.group().groupId());
         plan.addProperty("frozenHighestPriorityAreaBlocks", highestOwnedArea);
+        plan.addProperty("frozenAreaSource", "ACTUAL_COMMITTED_OWNED_AND_CONNECTION_AREA");
         plan.addProperty("referenceCityAreaBlocks", referenceArea);
         plan.add("previewBounds", CityStructureCandidateEnvelope.boundsJson(planningBounds));
         JsonArray groupPlans = new JsonArray();
         for (GroupState state : states.values()) {
             int target = (int) Math.min(Integer.MAX_VALUE,
-                    Math.max(state.spatialDemand().minimumAreaBlocks(),
-                            Math.round(referenceArea * state.group().targetAreaShare())));
+                    Math.round(referenceArea * state.group().targetAreaShare()));
             if (state.group().priority() == CityBlueprint.GroupPriority.CORE) {
-                target = Math.max(target, highestOwnedArea);
+                target = highestOwnedArea;
             }
             if (!state.group().expansionPolicy().stopWhenTargetReached()) target = previewArea;
             state.setDynamicTargetAreaBlocks(target);
@@ -532,6 +534,47 @@ public final class CityBlueprintCompilerService {
         }
         plan.add("groups", groupPlans);
         return plan;
+    }
+
+    private static JsonObject compilationAcceptance(CityBlueprint blueprint,
+                                                    Map<String, GroupState> states,
+                                                    ConnectivityPlan connectivityPlan,
+                                                    CityArrayVisualQualityGate.Result visualQuality) {
+        JsonArray hardBlocks = new JsonArray();
+        Set<String> relatedGroupIds = new LinkedHashSet<>();
+        blueprint.relations().forEach(relation -> {
+            relatedGroupIds.add(relation.fromGroupId());
+            relatedGroupIds.add(relation.toGroupId());
+        });
+        boolean graphConnected = !states.isEmpty()
+                && states.values().stream().allMatch(state -> state.anchorCount() > 0)
+                && connectivityPlan.connected(states.keySet());
+        if (states.size() > 1) states.values().stream()
+                .filter(state -> state.group().expansionPolicy().allowRelationConnection())
+                .filter(state -> !relatedGroupIds.contains(state.group().groupId()))
+                .forEach(state -> hardBlocks.add(state.group().groupId()
+                        + ": FUNCTION_AREA_RELATION_UNSPECIFIED"));
+        connectivityPlan.links.stream()
+                .filter(link -> link.finalGapBlocks > link.handoffGapBlocks)
+                .forEach(link -> hardBlocks.add(link.describe()
+                        + ": REQUIRED_GROUP_RELATION_UNSATISFIED"));
+        states.values().stream()
+                .filter(state -> state.anchorCount() == 0)
+                .forEach(state -> hardBlocks.add(state.group().groupId() + ": FUNCTION_AREA_EMPTY"));
+        visualQuality.hardBlocks().forEach(hardBlocks::add);
+
+        JsonObject acceptance = new JsonObject();
+        acceptance.addProperty("passed", hardBlocks.isEmpty());
+        acceptance.addProperty("previewCompiled", true);
+        acceptance.addProperty("requiredRelationCount", connectivityPlan.links.size());
+        acceptance.addProperty("requiredRelationsSatisfied", connectivityPlan.links.stream()
+                .allMatch(link -> link.finalGapBlocks <= link.handoffGapBlocks));
+        acceptance.addProperty("structureGraphConnected", graphConnected);
+        acceptance.addProperty("allFunctionAreasFormed",
+                states.values().stream().allMatch(state -> state.anchorCount() > 0));
+        acceptance.addProperty("arrayVisualGeometryPassed", visualQuality.passed());
+        acceptance.add("hardBlocks", hardBlocks);
+        return acceptance;
     }
 
     private static Map<String, Integer> desiredLandscapeParcelAreas(CityBlueprint blueprint,
@@ -4183,7 +4226,7 @@ public final class CityBlueprintCompilerService {
         int targetAreaBlocks() { return dynamicTargetAreaBlocks; }
         double targetAreaShare() { return group.targetAreaShare(); }
         void setDynamicTargetAreaBlocks(int value) {
-            dynamicTargetAreaBlocks = Math.max(spatialDemand.minimumAreaBlocks(), value);
+            dynamicTargetAreaBlocks = Math.max(0, value);
         }
         int dynamicTargetAreaBlocks() { return dynamicTargetAreaBlocks; }
         void beginAreaExpansion() {

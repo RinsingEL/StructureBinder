@@ -90,7 +90,7 @@ class CityBlueprintCompilerServiceTest {
         assertEquals(first.compileTrace(), second.compileTrace());
         JsonArray selections = first.compileTrace().getAsJsonArray("selections");
         assertEquals("required", selections.get(0).getAsJsonObject().get("phase").getAsString());
-        assertTrue(selections.size() > 4, first.compileTrace().toString());
+        assertTrue(selections.size() >= 3, first.compileTrace().toString());
         int anchorCount = first.structureAnchorPlan().getAsJsonArray("anchors").size();
         assertTrue(anchorCount >= 3);
         assertTrue(Set.of("CONNECTED_SPACE_EXHAUSTED", "PREVIEW_RANGE_EXHAUSTED",
@@ -469,7 +469,9 @@ class CityBlueprintCompilerServiceTest {
                 .filter(group -> "civic".equals(group.get("groupId").getAsString()))
                 .findFirst().orElseThrow();
         assertTrue(centerResult.get("minimumStructureCountReached").getAsBoolean(), centerResult.toString());
-        assertTrue(centerResult.get("actualStructureCount").getAsInt() >= 4, centerResult.toString());
+        assertEquals(centerResult.get("derivedMinimumStructureCount").getAsInt(),
+                centerResult.get("actualStructureCount").getAsInt(),
+                "frozen actual CORE area must not be inflated by the old minimum-area estimate");
     }
 
     @Test
@@ -1031,6 +1033,8 @@ class CityBlueprintCompilerServiceTest {
         assertEquals(CityBlueprintCompilerService.MINIMUM_DISTRICT_SEPARATION_BLOCKS,
                 first.groupExtentMap().get("minimumDistrictSeparationBlocks").getAsInt());
         assertTrue(first.groupExtentMap().get("structureGraphConnected").getAsBoolean());
+        assertTrue(first.compileTrace().getAsJsonObject("compilationAcceptance")
+                .get("passed").getAsBoolean(), first.compileTrace().toString());
         assertFalse(first.groupExtentMap().get("landUseConnected").getAsBoolean());
         assertFalse(first.groupExtentMap().has("maxInterGroupGapBlocks"));
 
@@ -1134,6 +1138,14 @@ class CityBlueprintCompilerServiceTest {
         assertTrue(first.compileTrace().getAsJsonArray("groupResults").asList().stream()
                 .map(JsonElement::getAsJsonObject)
                 .mapToInt(group -> group.get("connectionStructureCount").getAsInt()).sum() > 0);
+        Set<String> bilateralGrowthGroups = first.compileTrace().getAsJsonArray("selections").asList().stream()
+                .map(JsonElement::getAsJsonObject)
+                .filter(event -> "connectivity_growth".equals(event.get("phase").getAsString()))
+                .filter(event -> "committed".equals(event.get("status").getAsString()))
+                .map(event -> event.get("groupId").getAsString())
+                .collect(java.util.stream.Collectors.toSet());
+        assertEquals(Set.of("civic", "market", "workshop"), bilateralGrowthGroups,
+                "every distant related function area must grow outward toward its counterpart");
         assertTrue(first.compileTrace().getAsJsonArray("groupResults").asList().stream()
                 .map(JsonElement::getAsJsonObject)
                 .anyMatch(group -> group.get("extentExpandedForConnectivity").getAsBoolean()
@@ -1186,6 +1198,12 @@ class CityBlueprintCompilerServiceTest {
         assertEquals(0, plan.get("fallbackEdgeCount").getAsInt());
         assertEquals("EXPLICIT_RELATIONS_ONLY_NO_UNRELATED_FALLBACK",
                 plan.get("topologyPolicy").getAsString());
+        JsonObject acceptance = result.compileTrace().getAsJsonObject("compilationAcceptance");
+        assertFalse(acceptance.get("passed").getAsBoolean(), acceptance.toString());
+        assertTrue(acceptance.getAsJsonArray("hardBlocks").toString()
+                .contains("far: FUNCTION_AREA_RELATION_UNSPECIFIED"), acceptance.toString());
+        assertFalse(acceptance.getAsJsonArray("hardBlocks").toString()
+                .contains("REQUIRED_GROUP_RELATION_GRAPH_DISCONNECTED"), acceptance.toString());
     }
 
     @Test
@@ -1238,6 +1256,18 @@ class CityBlueprintCompilerServiceTest {
                 .compile(temporary, fixture.runId(), fixture.cityId());
         assertTrue(result.ok(), result.compileTrace().toString());
         assertEquals("compiled", result.compileTrace().get("status").getAsString());
+        JsonObject acceptance = result.compileTrace().getAsJsonObject("compilationAcceptance");
+        assertFalse(acceptance.get("passed").getAsBoolean(), acceptance.toString());
+        assertFalse(acceptance.get("allFunctionAreasFormed").getAsBoolean());
+        assertTrue(acceptance.getAsJsonArray("hardBlocks").toString().contains("FUNCTION_AREA_EMPTY"));
+        JsonObject dynamicArea = result.compileTrace().getAsJsonObject("dynamicAreaPlan");
+        assertEquals(0, dynamicArea.get("frozenHighestPriorityAreaBlocks").getAsInt());
+        assertEquals(0, dynamicArea.get("referenceCityAreaBlocks").getAsInt());
+        assertEquals("ACTUAL_COMMITTED_OWNED_AND_CONNECTION_AREA",
+                dynamicArea.get("frozenAreaSource").getAsString());
+        assertEquals(0, dynamicArea.getAsJsonArray("groups").get(0).getAsJsonObject()
+                .get("targetAreaBlocks").getAsInt(),
+                "minimum/district capacity must not fabricate owned area after every structure was skipped");
         JsonObject selection = result.compileTrace().getAsJsonArray("selections").get(0).getAsJsonObject();
         assertEquals("required", selection.get("phase").getAsString());
         assertTrue(selection.toString().contains("CITY_STRUCTURE_SURFACE_CELL_WATER"));
