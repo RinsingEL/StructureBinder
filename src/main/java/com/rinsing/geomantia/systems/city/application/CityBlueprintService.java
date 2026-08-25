@@ -200,20 +200,20 @@ public final class CityBlueprintService {
                 snapshot.getAsJsonObject("referenceCatalog"), templates);
         CityBlueprint blueprint;
         try {
-            blueprint = codec.read(blueprintJson);
+                blueprint = codec.read(blueprintJson);
         } catch (CityBlueprintContractException exception) {
             return failure(debugRoot, cityId, contextId, reportPath, tracePath, exception.reasonCode(),
-                    exception.fieldPath(), exception.getMessage(), true);
+                    exception.fieldPath(), exception.getMessage(), false);
         } catch (RuntimeException exception) {
             return failure(debugRoot, cityId, contextId, reportPath, tracePath,
-                    CityBlueprintReasonCode.CITY_BLUEPRINT_JSON_INVALID, "$", exception.getMessage(), true);
+                    CityBlueprintReasonCode.CITY_BLUEPRINT_JSON_INVALID, "$", exception.getMessage(), false);
         }
         Set<String> patchRefs = patchRefs(context.getAsJsonObject("d3ReviewPackage"));
         CityBlueprintValidator.ValidationResult result = validator.validate(blueprint,
                 new CityBlueprintValidator.ExpectedContext(cityId, expectedD3, expectedSnapshot, patchRefs),
                 references);
         if (!result.valid()) {
-            return failure(debugRoot, cityId, contextId, reportPath, tracePath, result.issues(), true);
+            return failure(debugRoot, cityId, contextId, reportPath, tracePath, result.issues(), false);
         }
 
         JsonObject canonical = codec.write(blueprint);
@@ -239,7 +239,12 @@ public final class CityBlueprintService {
         JsonArray issueArray = new JsonArray();
         issues.forEach(issue -> issueArray.add(issue.asJson()));
         JsonObject report = report(cityId, contextId, false, issueArray);
-        if (consumeSubmission) writeAtomic(reportPath, report);
+        writeAtomic(reportPath, report);
+        if (!consumeSubmission) {
+            Path claimPath = reportPath.getParent().resolve(".city_blueprint_submission_"
+                    + contextId.replace("sha256:", "") + ".claim");
+            Files.deleteIfExists(claimPath);
+        }
         // Trace intentionally contains only frozen identities, never the rejected Blueprint payload.
         int priorCount = 0;
         if (Files.isRegularFile(tracePath)) {
@@ -275,9 +280,8 @@ public final class CityBlueprintService {
             }
         }
         trace.add("failureReasons", issueArray.deepCopy());
-        if (consumeSubmission) writeAtomic(tracePath, trace);
-        return response(debugRoot, false, report, trace, null, consumeSubmission ? reportPath : null,
-                consumeSubmission ? tracePath : null);
+        writeAtomic(tracePath, trace);
+        return response(debugRoot, false, report, trace, null, reportPath, tracePath);
     }
 
     private static JsonObject alreadyConsumed(Path debugRoot, String cityId, String contextId,

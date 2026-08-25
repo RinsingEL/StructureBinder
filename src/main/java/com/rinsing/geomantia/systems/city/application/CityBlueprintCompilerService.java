@@ -140,11 +140,11 @@ public final class CityBlueprintCompilerService {
                 blueprint.arrayCompositions(), catalog);
         Map<String, CityBlueprint.Group> groupsById = new LinkedHashMap<>();
         groups.forEach(group -> groupsById.put(group.groupId(), group));
-        Map<String, CityDistrictCapacityPlanner.SpatialDemand> spatialDemands =
-                planGroupSpatialDemands(groups, review.targetScale().scale(), review.grid().cellStepBlocks(),
-                        catalog, templates);
         BlockBounds cityPlanningBounds = new BlockBounds(review.grid().blockMinX(), review.grid().blockMinZ(),
                 review.grid().blockMaxX() - 1, review.grid().blockMaxZ() - 1);
+        Map<String, CityDistrictCapacityPlanner.SpatialDemand> spatialDemands =
+                planGroupSpatialDemands(groups, review.targetScale().scale(), review.grid().cellStepBlocks(),
+                        catalog, templates, cityPlanningBounds);
         boolean hierarchicalRoadProfile = hierarchicalRoadProfile(blueprint, references);
         int interGroupRoadReserveBlocks = hierarchicalRoadProfile
                 ? derivedMainRoadWidth(groups, catalog) + 2 : 0;
@@ -248,14 +248,30 @@ public final class CityBlueprintCompilerService {
                 JsonObject event = selections.get(selections.size() - 1).getAsJsonObject();
                 limits[index] = intValue(event, "candidateCount", 0);
                 if (placement == null) {
+                    JsonObject reasons = event.has("compilerFilterReasonCounts")
+                            && event.get("compilerFilterReasonCounts").isJsonObject()
+                            ? event.getAsJsonObject("compilerFilterReasonCounts") : new JsonObject();
+                    if (reasons.has("CITY_STRUCTURE_TERRAIN_UNFIT_SKIP_MEMBER")
+                            && reasons.entrySet().stream().allMatch(entry ->
+                            entry.getKey().startsWith("CITY_STRUCTURE_TERRAIN_"))) {
+                        event.addProperty("status", "skipped_unfit_terrain_member");
+                        event.addProperty("reasonCode", "CITY_STRUCTURE_TERRAIN_UNFIT_SKIP_MEMBER");
+                        state.stop("REQUIRED_MEMBER_SKIPPED_UNFIT_TERRAIN");
+                        continue;
+                    }
+                    if (requiredRuntimeGap(event)) {
+                        event.addProperty("status", "skipped_runtime_gap_member");
+                        event.addProperty("reasonCode", "CITY_BLUEPRINT_RUNTIME_GAP_RECORDED");
+                        state.stop("REQUIRED_MEMBER_SKIPPED_RUNTIME_GAP");
+                        continue;
+                    }
                     placed = false;
                     break;
                 }
                 commit(placement, anchors, occupied, state);
                 if ("CENTER_SYMMETRIC".equals(state.layoutAlgorithm())
                         && state.requiredCount() == state.group().requiredStructureRefs().size()) {
-                    List<String> pool = catalog.pool(state.group().fillPoolRef(), state.group().role(),
-                            state.group().groupId());
+                    List<String> pool = catalog.pool(state.group().fillPoolRef());
                     int cursor = 0;
                     while (state.internalStructureCount() < state.minimumStructureCount()) {
                         String structureRef = nextFillRef(pool, state.blockedRefs(), cursor++);
@@ -313,11 +329,10 @@ public final class CityBlueprintCompilerService {
         // city stitching and must not substitute for the group's required/fill population.
         for (CityBlueprint.Group group : groups) {
             GroupState state = states.get(group.groupId());
-            List<String> pool = catalog.pool(group.fillPoolRef(), group.role(), group.groupId());
+            List<String> pool = catalog.pool(group.fillPoolRef());
             int cursor = 0;
             boolean centerSymmetric = "CENTER_SYMMETRIC".equals(state.layoutAlgorithm());
-            while (state.internalStructureCount() < state.minimumStructureCount()
-                    || state.internalSpatialDemandBlocks() < state.targetAreaBlocks()) {
+            while (state.internalStructureCount() < state.minimumStructureCount()) {
                 int requestedBatchSize = centerSymmetric ? 2 : 1;
                 if (state.anchorCount() + requestedBatchSize > INTERNAL_MAX_ANCHORS_PER_GROUP) {
                     JsonObject failureTrace = trace(blueprint, context, selections, states,
@@ -356,17 +371,10 @@ public final class CityBlueprintCompilerService {
             }
             if (state.stopReason().isBlank()) {
                 state.stop(state.internalStructureCount() >= state.minimumStructureCount()
-                        && state.internalSpatialDemandBlocks() >= state.targetAreaBlocks()
-                        ? "SPATIAL_BUDGET_REACHED" : "CONNECTED_SPACE_EXHAUSTED");
+                        ? "MINIMUM_FORMATION_REACHED" : "CONNECTED_SPACE_EXHAUSTED");
             }
             if (state.internalStructureCount() < state.minimumStructureCount()) {
-                JsonObject failureTrace = trace(blueprint, context, selections, states,
-                        connectivityPlan, "failed", "CITY_BLUEPRINT_GROUP_MINIMUM_UNREACHABLE");
-                return CompilationResult.failed(failureTrace,
-                        "CITY_BLUEPRINT_GROUP_MINIMUM_UNREACHABLE",
-                        group.groupId() + " formed " + state.internalStructureCount()
-                                + " internal structures but requires at least "
-                                + state.minimumStructureCount() + ".");
+                state.stop("MINIMUM_FORMATION_GAP_RECORDED");
             }
         }
 
@@ -383,6 +391,30 @@ public final class CityBlueprintCompilerService {
                 return CompilationResult.failed(failureTrace,
                         "CITY_BLUEPRINT_CONNECTIVITY_NO_LEGAL_PATH", connectivityFailure);
             }
+        }
+
+        JsonObject dynamicAreaPlan = freezeDynamicAreaTargets(blueprint, states,
+                review.grid().cellStepBlocks(), cityPlanningBounds);
+        fillGroupsToDynamicTargets(runDir, review, structureSource, templateCatalogJson, templates, blueprint,
+                groups, states, occupied, anchors, selections, catalog, terrainGate);
+
+        // Landscape parcels are the landscapeShare side of the same frozen percentage
+        // budget. Replan them after buildings finish so fields/tree belts/green/paths
+        // consume the group's actual target instead of the old extent-class estimate.
+        CityLandscapeCapacityReservationPlanner.Result percentageLandscapeCapacity =
+                landscapeCapacityPlanner.plan(blueprint, references, terrainField, anchors,
+                        CityLandscapeCapacityReservationPlanner.SEARCH_NODE_LIMIT,
+                        desiredLandscapeParcelAreas(blueprint, states));
+        if (percentageLandscapeCapacity.ok()) {
+            landscapeCapacity = percentageLandscapeCapacity;
+            landscapeCapacity.plan().addProperty("searchNodeCount", jointSearchNodes
+                    + intValue(landscapeCapacity.plan(), "searchNodeCount", 0));
+            landscapeCapacity.plan().addProperty("jointBuildingSearchNodeCount", buildingSearchNodes);
+            CityLandscapeCapacityReservationPlanner.refreshPlanHash(landscapeCapacity.plan());
+        } else {
+            dynamicAreaPlan.addProperty("landscapePercentageTargetStatus", "GAP_RECORDED");
+            dynamicAreaPlan.addProperty("landscapePercentageTargetReason",
+                    percentageLandscapeCapacity.reasonCode());
         }
 
         String hardRelationFailure = hardRelationFailure(blueprint.relations(), states,
@@ -429,14 +461,7 @@ public final class CityBlueprintCompilerService {
                 anchors, streetBands);
         anchorPlan.add("arrayVisualQuality", arrayVisualQuality.json().deepCopy());
         if (!arrayVisualQuality.passed()) {
-            JsonObject failureTrace = trace(blueprint, context, selections, states,
-                    connectivityPlan, "failed", "CITY_BLUEPRINT_ARRAY_VISUAL_GEOMETRY_INVALID");
-            failureTrace.add("streetBands", streetBands.deepCopy());
-            failureTrace.add("arrayVisualQuality", arrayVisualQuality.json().deepCopy());
-            failureTrace.add("cityMainRoadPlan", mainRoads.plan().deepCopy());
-            return CompilationResult.failed(failureTrace,
-                    "CITY_BLUEPRINT_ARRAY_VISUAL_GEOMETRY_INVALID",
-                    String.join("; ", arrayVisualQuality.hardBlocks()));
+            anchorPlan.addProperty("arrayVisualGapRecorded", true);
         }
         JsonObject provenance = new JsonObject();
         provenance.addProperty("schemaVersion", TRACE_SCHEMA);
@@ -453,11 +478,146 @@ public final class CityBlueprintCompilerService {
         compileTrace.add("cityMainRoadPlan", mainRoads.plan().deepCopy());
         compileTrace.add("residentialOverflowPlan", residentialOverflow.plan().deepCopy());
         compileTrace.add("arrayVisualQuality", arrayVisualQuality.json().deepCopy());
+        compileTrace.addProperty("arrayVisualGapRecorded", !arrayVisualQuality.passed());
         compileTrace.add("districtCapacityPlan", districtCapacity.plan().deepCopy());
         compileTrace.add("landscapeCapacityReservationPlan", landscapeCapacity.plan().deepCopy());
+        compileTrace.add("dynamicAreaPlan", dynamicAreaPlan.deepCopy());
         JsonObject extentMap = extentMap(blueprint, states, connectivityPlan, districtCapacity.plan());
         return CompilationResult.compiled(anchorPlan, compileTrace, extentMap, structureSource,
                 templateCatalogJson, landscapeCapacity.plan());
+    }
+
+    private JsonObject freezeDynamicAreaTargets(CityBlueprint blueprint,
+                                                Map<String, GroupState> states,
+                                                int cellStepBlocks,
+                                                BlockBounds planningBounds) {
+        GroupState highest = states.values().stream()
+                .filter(state -> state.group().priority() == CityBlueprint.GroupPriority.CORE)
+                .findFirst()
+                .orElseThrow(() -> fail("CITY_BLUEPRINT_GROUP_PRIORITY_HIGHEST_COUNT_INVALID",
+                        "Exactly one CORE group is required before dynamic area expansion."));
+        int cellArea = cellStepBlocks * cellStepBlocks;
+        int highestOwnedArea = Math.max(highest.builtCollisionAreaBlocks,
+                highest.districtReservation().cells().size() * cellArea);
+        highestOwnedArea = Math.max(highestOwnedArea, highest.spatialDemand().minimumAreaBlocks());
+        long referenceArea = (long) Math.ceil(highestOwnedArea / highest.group().targetAreaShare());
+        int previewArea = (int) Math.min(Integer.MAX_VALUE,
+                Math.max(1L, (long) planningBounds.widthBlocks() * planningBounds.heightBlocks()));
+        referenceArea = Math.min(referenceArea, previewArea);
+        JsonObject plan = new JsonObject();
+        plan.addProperty("policy", "FREEZE_UNIQUE_HIGHEST_PRIORITY_AREA_THEN_DERIVE_GROUP_TARGETS");
+        plan.addProperty("highestPriorityGroupId", highest.group().groupId());
+        plan.addProperty("frozenHighestPriorityAreaBlocks", highestOwnedArea);
+        plan.addProperty("referenceCityAreaBlocks", referenceArea);
+        plan.add("previewBounds", CityStructureCandidateEnvelope.boundsJson(planningBounds));
+        JsonArray groupPlans = new JsonArray();
+        for (GroupState state : states.values()) {
+            int target = (int) Math.min(Integer.MAX_VALUE,
+                    Math.max(state.spatialDemand().minimumAreaBlocks(),
+                            Math.round(referenceArea * state.group().targetAreaShare())));
+            if (state.group().priority() == CityBlueprint.GroupPriority.CORE) {
+                target = Math.max(target, highestOwnedArea);
+            }
+            if (!state.group().expansionPolicy().stopWhenTargetReached()) target = previewArea;
+            state.setDynamicTargetAreaBlocks(target);
+            state.beginAreaExpansion();
+            JsonObject value = new JsonObject();
+            value.addProperty("groupId", state.group().groupId());
+            value.addProperty("targetAreaShare", state.group().targetAreaShare());
+            value.addProperty("targetAreaBlocks", state.targetAreaBlocks());
+            value.addProperty("minimumAreaBlocks", state.spatialDemand().minimumAreaBlocks());
+            value.addProperty("areaGapBeforeExpansion", Math.max(0,
+                    state.targetAreaBlocks() - state.internalSpatialDemandBlocks()));
+            groupPlans.add(value);
+        }
+        plan.add("groups", groupPlans);
+        return plan;
+    }
+
+    private static Map<String, Integer> desiredLandscapeParcelAreas(CityBlueprint blueprint,
+                                                                      Map<String, GroupState> states) {
+        Map<String, Integer> landscapeCountsByGroup = new LinkedHashMap<>();
+        for (CityBlueprint.Landscape landscape : blueprint.outdoorPlan().landscapes()) {
+            if (landscape.required() && landscape.owner() != null) {
+                landscapeCountsByGroup.merge(landscape.owner().groupId(), 1, Integer::sum);
+            }
+        }
+        Map<String, Integer> result = new LinkedHashMap<>();
+        for (CityBlueprint.Landscape landscape : blueprint.outdoorPlan().landscapes()) {
+            if (!landscape.required() || landscape.owner() == null) continue;
+            GroupState state = states.get(landscape.owner().groupId());
+            int landscapeCount = Math.max(1, landscapeCountsByGroup.getOrDefault(
+                    landscape.owner().groupId(), 1));
+            if (state == null) continue;
+            double totalLandscapeArea = state.targetAreaBlocks()
+                    * state.group().spaceComposition().landscapeShare();
+            double perParcel = totalLandscapeArea / landscapeCount
+                    / Math.max(1, landscape.instanceCount())
+                    / Math.max(1, landscape.parcelCount());
+            result.put(landscape.landscapeId(), Math.max(1, (int) Math.ceil(perParcel)));
+        }
+        return result;
+    }
+
+    private void fillGroupsToDynamicTargets(Path runDir,
+                                             CityLandformReviewPackage review,
+                                             JsonObject structureSource,
+                                             JsonObject templateCatalogJson,
+                                             CityTemplateCatalog templates,
+                                             CityBlueprint blueprint,
+                                             List<CityBlueprint.Group> groups,
+                                             Map<String, GroupState> states,
+                                             JsonArray occupied,
+                                             JsonArray anchors,
+                                             JsonArray selections,
+                                             CatalogIndex catalog,
+                                             CityStructureTerrainGate terrainGate) throws IOException {
+        for (CityBlueprint.Group group : groups) {
+            GroupState state = states.get(group.groupId());
+            List<String> pool = catalog.pool(group.fillPoolRef());
+            int cursor = 0;
+            boolean centerSymmetric = "CENTER_SYMMETRIC".equals(state.layoutAlgorithm());
+            while (state.internalStructureCount() < state.minimumStructureCount()
+                    || state.internalSpatialDemandBlocks() < state.targetAreaBlocks()) {
+                if (!group.expansionPolicy().allowOutwardExpansion()
+                        && state.internalStructureCount() >= state.minimumStructureCount()) {
+                    state.stop("EXPANSION_DISABLED_AREA_GAP");
+                    break;
+                }
+                int requestedBatchSize = centerSymmetric ? 2 : 1;
+                if (state.anchorCount() + requestedBatchSize > INTERNAL_MAX_ANCHORS_PER_GROUP) {
+                    state.stop("EXPANSION_SAFETY_LIMIT_REACHED");
+                    break;
+                }
+                String structureRef = nextFillRef(pool, state.blockedRefs(), cursor++);
+                if (structureRef == null) {
+                    state.stop("PREVIEW_RANGE_EXHAUSTED");
+                    break;
+                }
+                List<Placement> placements;
+                if (centerSymmetric) {
+                    placements = chooseCenterSymmetricPair(runDir, review, structureSource,
+                            templateCatalogJson, templates, blueprint, state, structureRef,
+                            state.anchorCount() + 1, occupied, catalog, states, selections, terrainGate);
+                } else {
+                    state.beginExactSlotSearch(structureRef);
+                    Placement placement = chooseOne(runDir, review, structureSource, templateCatalogJson,
+                            templates, blueprint, state, structureRef, PlacementPhase.FILL,
+                            state.anchorCount() + 1, occupied, catalog, states, selections, null, terrainGate);
+                    placements = placement == null ? List.of() : List.of(placement);
+                }
+                if (placements.isEmpty()) {
+                    state.blockRef(structureRef);
+                    if (state.blockedRefs().containsAll(pool)) state.stop("PREVIEW_RANGE_EXHAUSTED");
+                    continue;
+                }
+                for (Placement placement : placements) commit(placement, anchors, occupied, state);
+            }
+            if (state.stopReason().isBlank()) {
+                state.stop(state.internalSpatialDemandBlocks() >= state.targetAreaBlocks()
+                        ? "PERCENTAGE_TARGET_REACHED" : "PREVIEW_RANGE_EXHAUSTED");
+            }
+        }
     }
 
     public JsonObject persist(Path debugRoot, String runId, String cityId, CompilationResult result)
@@ -762,7 +922,9 @@ public final class CityBlueprintCompilerService {
                 plan.addProperty("spacingBlocks", pair.radiusBlocks());
                 plan.add("candidateOrigins", pair.originsJson());
                 plan.addProperty("exactCandidateOriginsOnly", true);
-                plan.add("candidateLegalRegion", legalRegion(state, state.patches(), null, false));
+                plan.add("candidateLegalRegion", legalRegion(state,
+                        !"RESERVED".equals(state.districtReservation().status())
+                                ? state.connectionPatches() : state.patches(), null, false));
                 JsonObject layout = pair.traceJson(firstOrdinal - 1);
                 layout.addProperty("preferredPatchZone", state.group().preferredPatchZone().name());
                 layout.addProperty("symmetryPairId", pairId);
@@ -1155,7 +1317,8 @@ public final class CityBlueprintCompilerService {
             CityScale cityScale,
             int cellStepBlocks,
             CatalogIndex catalog,
-            CityTemplateCatalog templates) {
+            CityTemplateCatalog templates,
+            BlockBounds planningBounds) {
         Map<String, CityDistrictCapacityPlanner.SpatialDemand> result = new LinkedHashMap<>();
         for (CityBlueprint.Group group : groups) {
             String algorithm = catalog.algorithm(group.algorithmProfileRef());
@@ -1163,7 +1326,7 @@ public final class CityBlueprintCompilerService {
                     groupLayoutPlanner.parameters(algorithm, group.densityClass());
             int minimumCount = minimumGroupStructureCount(cityScale, group.extentClass(), algorithm);
             List<String> plannedRefs = new ArrayList<>(orderedRequiredStructureRefs(group, catalog));
-            List<String> fillPool = catalog.pool(group.fillPoolRef(), group.role(), group.groupId());
+            List<String> fillPool = catalog.pool(group.fillPoolRef());
             for (int cursor = 0; plannedRefs.size() < minimumCount; cursor++) {
                 plannedRefs.add(fillPool.get(cursor % fillPool.size()));
             }
@@ -1251,19 +1414,11 @@ public final class CityBlueprintCompilerService {
                 algorithmicSpan = outerRadius * 2 + memberSpan;
             }
 
-            int maximumExtentSpan = extentMaxSpan(group.extentClass());
-            int extentLimitArea = maximumExtentSpan * maximumExtentSpan;
-            boolean oversizedTemplate = maximumWidth > maximumExtentSpan || maximumDepth > maximumExtentSpan;
-            int minimumArea = oversizedTemplate
-                    ? extentTargetArea(group.extentClass())
-                    : Math.max(templateArea, Math.max(claimedArea, discreteClaimedArea) + streetArea);
-            int targetArea = switch (group.priority()) {
-                case CORE -> Math.max(minimumArea, extentTargetArea(group.extentClass()));
-                case STANDARD, PERIPHERAL -> minimumArea;
-            };
-            int maximumArea = Math.max(targetArea,
-                    Math.min(extentLimitArea, (int) Math.ceil(targetArea * 1.50)));
-            int areaSpan = (int) Math.ceil(Math.sqrt(targetArea));
+            int minimumArea = Math.max(templateArea, Math.max(claimedArea, discreteClaimedArea) + streetArea);
+            int targetArea = minimumArea;
+            long planningArea = (long) planningBounds.widthBlocks() * planningBounds.heightBlocks();
+            int maximumArea = (int) Math.min(Integer.MAX_VALUE, Math.max(targetArea, planningArea));
+            int areaSpan = (int) Math.ceil(Math.sqrt(Math.max(1, targetArea)));
             int formationSpan = Math.max(
                     Math.max(maximumWidth, maximumDepth),
                     Math.max(areaSpan + parameters.jitterBlocks(), algorithmicSpan));
@@ -1670,39 +1825,17 @@ public final class CityBlueprintCompilerService {
             if (!pairs.add(key)) continue;
             GroupState from = states.get(relation.fromGroupId());
             GroupState to = states.get(relation.toGroupId());
+            if (from == null || to == null || !from.group().expansionPolicy().allowRelationConnection()
+                    || !to.group().expansionPolicy().allowRelationConnection()
+                    || !from.group().expansionPolicy().allowOutwardExpansion()
+                    || !to.group().expansionPolicy().allowOutwardExpansion()) {
+                continue;
+            }
             links.add(new ConnectivityLink(from.group().groupId(), to.group().groupId(),
                     "EXPLICIT", relation.relationKind().name(), handoffThreshold(from, to),
                     nearestGap(from, to)));
         }
 
-        Components components = new Components(states.keySet());
-        links.forEach(link -> components.union(link.fromGroupId, link.toGroupId));
-        while (components.componentCount() > 1) {
-            ConnectivityLink best = null;
-            long bestTie = 0;
-            for (GroupState first : states.values()) {
-                for (GroupState second : states.values()) {
-                    if (first == second || components.connected(first.group().groupId(),
-                            second.group().groupId())) continue;
-                    if (first.group().groupId().compareTo(second.group().groupId()) >= 0) continue;
-                    double gap = nearestGap(first, second);
-                    long tie = tieKey(blueprint.generationSeed(), "connectivity_fallback",
-                            first.group().groupId(), second.group().groupId());
-                    if (best == null || gap < best.initialGapBlocks
-                            || (Double.compare(gap, best.initialGapBlocks) == 0
-                            && Long.compareUnsigned(tie, bestTie) < 0)) {
-                        best = new ConnectivityLink(first.group().groupId(), second.group().groupId(),
-                                "FALLBACK", "DETERMINISTIC_SHORTEST_COMPONENT_EDGE",
-                                handoffThreshold(first, second), gap);
-                        bestTie = tie;
-                    }
-                }
-            }
-            if (best == null) break;
-            links.add(best);
-            pairs.add(pairKey(best.fromGroupId, best.toGroupId));
-            components.union(best.fromGroupId, best.toGroupId);
-        }
         return new ConnectivityPlan(links);
     }
 
@@ -1777,7 +1910,7 @@ public final class CityBlueprintCompilerService {
                 ? "guide_line_dual_side" : "compound_cluster";
         CityBlueprint.ConnectionParameters parameters = plan == null
                 ? CityBlueprint.ConnectionParameters.empty() : plan.parameters();
-        catalog.pool(poolRef, group.role(), group.groupId());
+        catalog.pool(poolRef);
         return new ConnectionConfiguration(poolRef, algorithmProfileRef, algorithm, plannerType, density,
                 parameters, inheritedPool, inheritedAlgorithm, inheritedDensity,
                 groupLayoutPlanner.parameters(algorithm, density));
@@ -1800,8 +1933,7 @@ public final class CityBlueprintCompilerService {
         int available = INTERNAL_MAX_ANCHORS_PER_GROUP - source.anchorCount();
         if (available < 1) return null;
         ConnectionConfiguration configuration = source.connectionConfiguration();
-        List<String> pool = catalog.pool(configuration.structurePoolRef(), source.group().role(),
-                source.group().groupId());
+        List<String> pool = catalog.pool(configuration.structurePoolRef());
         if (pool.isEmpty()) return null;
         CommittedArray focus = source.nearestArray(target);
         if (focus == null) return null;
@@ -2158,7 +2290,9 @@ public final class CityBlueprintCompilerService {
         plan.addProperty("displayRole", state.group().role());
         JsonArray patches = new JsonArray();
         List<LandformPatchSummary> candidatePatches = overridePatches != null ? overridePatches
-                : phase == PlacementPhase.CONNECTIVITY ? state.connectionPatches() : state.formationPatches();
+                : phase == PlacementPhase.CONNECTIVITY || state.areaExpansionActive()
+                || !"RESERVED".equals(state.districtReservation().status())
+                ? state.connectionPatches() : state.formationPatches();
         candidatePatches.forEach(patch -> patches.add(patch.landformPatchId()));
         plan.add("candidatePatchRefs", patches);
         JsonArray templateIds = new JsonArray();
@@ -2546,7 +2680,7 @@ public final class CityBlueprintCompilerService {
         BlockBounds legalBounds = state.legalBounds(connectivityExpansion);
         BlockBounds growthWindow = growthWindow(state, frontierCell, step, connectivityExpansion);
         List<PatchMemberCell> sourceCells = memberCells(patches);
-        if (!connectivityExpansion && !state.hardSkeletonUsesExactGuides()
+        if (!connectivityExpansion && !state.areaExpansionActive() && !state.hardSkeletonUsesExactGuides()
                 && !state.districtReservation().cells().isEmpty()) {
             Set<String> patchCellKeys = sourceCells.stream()
                     .map(cell -> cell.cellX() + ":" + cell.cellZ()).collect(java.util.stream.Collectors.toSet());
@@ -2579,8 +2713,33 @@ public final class CityBlueprintCompilerService {
             maxZ = Math.max(maxZ, cell.blockMinZ() + step - 1);
         }
         if (cells.isEmpty()) {
-            throw fail("CITY_BLUEPRINT_GROUP_DISTRICT_CAPACITY_UNREACHABLE",
-                    state.group().groupId() + " has no legal cells inside its district capacity.");
+            for (PatchMemberCell cell : sourceCells) {
+                if (!seenCells.add(cell.cellX() + ":" + cell.cellZ())) continue;
+                JsonObject value = new JsonObject();
+                value.addProperty("gridX", cell.cellX());
+                value.addProperty("gridZ", cell.cellZ());
+                value.addProperty("blockMinX", cell.blockMinX());
+                value.addProperty("blockMinZ", cell.blockMinZ());
+                value.addProperty("blockMaxX", cell.blockMinX() + step - 1);
+                value.addProperty("blockMaxZ", cell.blockMinZ() + step - 1);
+                cells.add(value);
+                minX = Math.min(minX, cell.blockMinX());
+                minZ = Math.min(minZ, cell.blockMinZ());
+                maxX = Math.max(maxX, cell.blockMinX() + step - 1);
+                maxZ = Math.max(maxZ, cell.blockMinZ() + step - 1);
+            }
+        }
+        if (cells.isEmpty()) {
+            region.addProperty("capacityGapRecorded", true);
+            region.addProperty("capacityGapReason", "NO_LEGAL_TERRAIN_CELL");
+            region.add("memberCells", new JsonArray());
+            JsonObject bounds = new JsonObject();
+            bounds.addProperty("minX", legalBounds.minX());
+            bounds.addProperty("minZ", legalBounds.minZ());
+            bounds.addProperty("maxX", legalBounds.maxX());
+            bounds.addProperty("maxZ", legalBounds.maxZ());
+            region.add("bounds", bounds);
+            return region;
         }
         if (!connectivityExpansion && !state.districtReservation().cells().isEmpty()
                 && sourceCells.size() != memberCells(patches).size()) {
@@ -2707,6 +2866,21 @@ public final class CityBlueprintCompilerService {
         if (!key.isBlank()) counts.addProperty(key, intValue(counts, key, 0) + 1);
     }
 
+    private static boolean requiredRuntimeGap(JsonObject event) {
+        if (event.has("compilerFilterReasonCounts")
+                && event.getAsJsonObject("compilerFilterReasonCounts").has("D4_ARRAY_COUNT_UNSATISFIED")) {
+            return true;
+        }
+        if (!event.has("attempts") || !event.get("attempts").isJsonArray()) return false;
+        for (JsonElement attemptElement : event.getAsJsonArray("attempts")) {
+            if (!attemptElement.isJsonObject()) continue;
+            JsonObject reasons = attemptElement.getAsJsonObject().has("filterReasonCounts")
+                    ? attemptElement.getAsJsonObject().getAsJsonObject("filterReasonCounts") : null;
+            if (reasons != null && reasons.has("D4_ARRAY_COUNT_UNSATISFIED")) return true;
+        }
+        return false;
+    }
+
     private static TerrainCandidateEvaluation candidateTerrainEvaluation(JsonObject candidate, GroupState state,
                                                                           String structureRef,
                                                                           CityStructureTerrainGate terrainGate) {
@@ -2763,9 +2937,10 @@ public final class CityBlueprintCompilerService {
             return "GROUP_DISTRICT_BUFFER_VIOLATED";
         }
         BlockBounds proposed = union(state.extent(), footprint);
-        if (phase != PlacementPhase.CONNECTIVITY
-                && (width(proposed) > state.spatialDemand().formationSpanBlocks()
-                || depth(proposed) > state.spatialDemand().formationSpanBlocks())) {
+        if (phase != PlacementPhase.CONNECTIVITY && !state.areaExpansionActive()
+                && state.compositionSlot() != null
+                && (width(proposed) > state.formationBounds().widthBlocks()
+                || depth(proposed) > state.formationBounds().heightBlocks())) {
             return "GROUP_EXTENT_LIMIT_EXCEEDED";
         }
         if (state.anchorCount() > 0) {
@@ -3039,6 +3214,14 @@ public final class CityBlueprintCompilerService {
             GroupState from = states.get(relation.fromGroupId());
             GroupState to = states.get(relation.toGroupId());
             if (from == null || to == null || from.extent() == null || to.extent() == null) continue;
+            if ((relation.relationKind() == CityBlueprint.RelationKind.ADJACENCY
+                    || relation.relationKind() == CityBlueprint.RelationKind.CONNECTION)
+                    && (!from.group().expansionPolicy().allowRelationConnection()
+                    || !from.group().expansionPolicy().allowOutwardExpansion()
+                    || !to.group().expansionPolicy().allowRelationConnection()
+                    || !to.group().expansionPolicy().allowOutwardExpansion())) {
+                continue;
+            }
             double x = (from.extent().minX() + from.extent().maxX()) / 2.0;
             double z = (from.extent().minZ() + from.extent().maxZ()) / 2.0;
             if ((relation.relationKind() == CityBlueprint.RelationKind.ADJACENCY
@@ -3391,38 +3574,6 @@ public final class CityBlueprintCompilerService {
         return raw.replaceAll("[^A-Za-z0-9._-]", "_");
     }
 
-    private static Set<String> fillCategoriesForGroup(String role, String groupId) {
-        String id = groupId == null ? "" : groupId.toLowerCase(java.util.Locale.ROOT);
-        String text = role == null ? "" : role.toLowerCase(java.util.Locale.ROOT);
-        String kind;
-        if (containsAny(id, "admin", "civic", "行政", "市政")) kind = "civic";
-        else if (containsAny(id, "housing", "residen", "居民", "住宅")) kind = "residential";
-        else if (containsAny(id, "agri", "farm", "农业", "农田")) kind = "agriculture";
-        else if (containsAny(id, "market", "commercial", "市场", "商业")) kind = "commercial";
-        else if (containsAny(text, "农业", "农田", "farm", "agric", "field", "林场", "woodland")) {
-            kind = "agriculture";
-        } else if (containsAny(text, "住宅", "居民", "housing", "residen", "village")) {
-            kind = "residential";
-        } else if (containsAny(text, "市场", "market", "commercial", "commerce", "商业", "trade")) {
-            kind = "commercial";
-        } else if (containsAny(text, "行政", "administr", "government", "civic", "市政")) {
-            kind = "civic";
-        } else {
-            return Set.of();
-        }
-        Set<String> result = new LinkedHashSet<>();
-        result.add(kind);
-        if ("civic".equals(kind) && containsAny(text, "住宅", "居民", "housing", "residen", "village")) {
-            result.add("residential");
-        }
-        return Set.copyOf(result);
-    }
-
-    private static boolean containsAny(String text, String... terms) {
-        for (String term : terms) if (text.contains(term)) return true;
-        return false;
-    }
-
     private static JsonObject requiredObject(JsonObject object, String key) {
         if (object == null || !object.has(key) || !object.get(key).isJsonObject()) {
             throw fail("CITY_BLUEPRINT_COMPILER_INPUT_INVALID", key + " object is required.");
@@ -3669,7 +3820,7 @@ public final class CityBlueprintCompilerService {
 
         JsonObject asJson() {
             JsonObject value = new JsonObject();
-            value.addProperty("topologyPolicy", "EXPLICIT_RELATIONS_THEN_DETERMINISTIC_SHORTEST_FALLBACK");
+            value.addProperty("topologyPolicy", "EXPLICIT_RELATIONS_ONLY_NO_UNRELATED_FALLBACK");
             value.addProperty("handoffThresholdPolicy", "STRICT_BILATERAL_MINIMUM");
             value.addProperty("edgeCount", links.size());
             JsonArray edges = new JsonArray();
@@ -3805,6 +3956,8 @@ public final class CityBlueprintCompilerService {
         private final Set<String> districtBufferExemptGroupIds;
         private final CityDistrictCapacityPlanner.Reservation districtReservation;
         private final CityDistrictCapacityPlanner.SpatialDemand spatialDemand;
+        private int dynamicTargetAreaBlocks;
+        private boolean areaExpansionActive;
         private final Set<String> blockedRefs = new LinkedHashSet<>();
         private final Set<String> claimedPatchRefs = new LinkedHashSet<>();
         private final Map<String, Integer> structureCounts = new LinkedHashMap<>();
@@ -3864,6 +4017,7 @@ public final class CityBlueprintCompilerService {
                     CityBlueprintGroupLayoutPlanner.PlacementMode.fromAlgorithm(layoutAlgorithm), "UNPLANNED")
                     : districtReservation;
             this.spatialDemand = java.util.Objects.requireNonNull(spatialDemand, "spatialDemand");
+            this.dynamicTargetAreaBlocks = spatialDemand.targetAreaBlocks();
         }
 
         CityBlueprint.Group group() { return group; }
@@ -3897,6 +4051,7 @@ public final class CityBlueprintCompilerService {
         BlockBounds formationBounds() { return formationBounds; }
         BlockBounds legalBounds(boolean connectivityExpansion) {
             return connectivityExpansion || !districtReservation.cells().isEmpty()
+                    || !"RESERVED".equals(districtReservation.status())
                     ? planningBounds : formationBounds;
         }
         BlockPoint preferredOrigin() { return preferredOrigin; }
@@ -4025,7 +4180,17 @@ public final class CityBlueprintCompilerService {
         }
         int internalStructureCount() { return anchorCount - connectionStructureCount; }
         CityDistrictCapacityPlanner.SpatialDemand spatialDemand() { return spatialDemand; }
-        int targetAreaBlocks() { return spatialDemand.targetAreaBlocks(); }
+        int targetAreaBlocks() { return dynamicTargetAreaBlocks; }
+        double targetAreaShare() { return group.targetAreaShare(); }
+        void setDynamicTargetAreaBlocks(int value) {
+            dynamicTargetAreaBlocks = Math.max(spatialDemand.minimumAreaBlocks(), value);
+        }
+        int dynamicTargetAreaBlocks() { return dynamicTargetAreaBlocks; }
+        void beginAreaExpansion() {
+            areaExpansionActive = true;
+            stopReason = "";
+        }
+        boolean areaExpansionActive() { return areaExpansionActive; }
         int spatialDemandBlocks() { return spatialDemandBlocks; }
         int internalSpatialDemandBlocks() { return spatialDemandBlocks - connectionSpatialDemandBlocks; }
         String stopReason() { return stopReason; }
@@ -4126,8 +4291,8 @@ public final class CityBlueprintCompilerService {
                 connectionSpatialDemandBlocks += claimedAreaBlocks;
                 connectionExpansionBlocks = Math.max(connectionExpansionBlocks,
                         expansionBeyond(coreExtent, extent));
-                extentExpandedForConnectivity |= width(extent) > extentMaxSpan(group.extentClass())
-                        || depth(extent) > extentMaxSpan(group.extentClass())
+                extentExpandedForConnectivity |= width(extent) > maxExtentSpanBlocks()
+                        || depth(extent) > maxExtentSpanBlocks()
                         || spatialDemandBlocks > targetAreaBlocks();
             }
         }
@@ -4145,8 +4310,10 @@ public final class CityBlueprintCompilerService {
             }
             if (compositionSlot != null) value.add("arrayCompositionSlot", compositionSlot.asJson());
             value.add("formationBounds", CityStructureCandidateEnvelope.boundsJson(formationBounds));
-            value.addProperty("targetAreaBlocks", targetAreaBlocks());
-            value.addProperty("maxExtentSpanBlocks", extentMaxSpan(group.extentClass()));
+            value.addProperty("targetAreaBlocks", dynamicTargetAreaBlocks);
+            value.addProperty("targetAreaShare", group.targetAreaShare());
+            value.addProperty("maxExtentSpanBlocks", maxExtentSpanBlocks());
+            value.addProperty("targetAreaFrozenAfterConnectivity", areaExpansionActive);
             value.addProperty("densityParameterization", "ALGORITHM_SPECIFIC");
             value.addProperty("layoutAlgorithm", layoutAlgorithm);
             value.addProperty("placementMode", layoutParameters.placementMode().name());
@@ -4173,6 +4340,7 @@ public final class CityBlueprintCompilerService {
             value.addProperty("builtCollisionAreaBlocks", builtCollisionAreaBlocks);
             value.addProperty("actualSpatialDemandBlocks", spatialDemandBlocks);
             value.addProperty("internalSpatialDemandBlocks", internalSpatialDemandBlocks());
+            value.addProperty("areaGapBlocks", Math.max(0, dynamicTargetAreaBlocks - internalSpatialDemandBlocks()));
             value.addProperty("estimatedCoverageRatio", spatialDemandBlocks == 0 ? 0.0
                     : builtCollisionAreaBlocks / (double) spatialDemandBlocks);
             value.addProperty("stopReason", stopReason);
@@ -4186,6 +4354,12 @@ public final class CityBlueprintCompilerService {
             structureCounts.forEach(counts::addProperty);
             value.add("structureCounts", counts);
             return value;
+        }
+
+        private int maxExtentSpanBlocks() {
+            return compositionSlot == null
+                    ? Math.max(planningBounds.widthBlocks(), planningBounds.heightBlocks())
+                    : Math.max(formationBounds.widthBlocks(), formationBounds.heightBlocks());
         }
 
         private void updateStreetBand(JsonObject anchor) {
@@ -4256,8 +4430,7 @@ public final class CityBlueprintCompilerService {
                                 Map<String, String> algorithms,
                                 Map<String, Boolean> centerAxisStreets,
                                 Set<String> compositions,
-                                Set<String> primaryStructures,
-                                Map<String, Set<String>> semanticCategories) {
+                                Set<String> primaryStructures) {
         static CatalogIndex parse(JsonObject root, JsonObject semanticCatalog) {
             Map<String, List<TemplateCandidate>> structures = new LinkedHashMap<>();
             for (JsonElement element : array(root, "structureRefs")) {
@@ -4291,30 +4464,9 @@ public final class CityBlueprintCompilerService {
                 compositions.add(string(item, "compositionProfileRef"));
             }
             Set<String> primaryStructures = new LinkedHashSet<>();
-            Map<String, Set<String>> semanticCategories = new LinkedHashMap<>();
             for (JsonElement element : array(semanticCatalog, "semanticProfiles")) {
                 JsonObject profile = element.getAsJsonObject();
                 boolean primary = false;
-                Set<String> categories = new LinkedHashSet<>();
-                for (JsonElement term : array(profile, "functionTerms")) {
-                    String value = term.getAsString().toLowerCase(java.util.Locale.ROOT);
-                    if (containsAny(value, "function.行政", "function.administration", "function.civic",
-                            "function.defense", "行政", "administr", "civic", "市政", "防御", "defen")) {
-                        categories.add("civic");
-                    }
-                    if (containsAny(value, "function.商业", "function.commercial", "function.market",
-                            "商业", "commercial", "market", "trade")) {
-                        categories.add("commercial");
-                    }
-                    if (containsAny(value, "function.residential", "residential", "住宅", "居民")) {
-                        categories.add("residential");
-                    }
-                    if (containsAny(value, "function.农业", "function.agriculture", "function.farm",
-                            "农业", "agric", "farm")) {
-                        categories.add("agriculture");
-                    }
-                }
-                semanticCategories.put(string(profile, "semanticProfileId"), Set.copyOf(categories));
                 for (JsonElement term : array(profile, "planningRoleTerms")) {
                     String value = term.getAsString().toLowerCase(java.util.Locale.ROOT);
                     primary |= value.equals("planning_role.anchor") || value.equals("planning_role.key");
@@ -4323,7 +4475,7 @@ public final class CityBlueprintCompilerService {
             }
             return new CatalogIndex(Map.copyOf(structures), Map.copyOf(pools), Map.copyOf(algorithms),
                     Map.copyOf(centerAxisStreets), Set.copyOf(compositions),
-                    Set.copyOf(primaryStructures), Map.copyOf(semanticCategories));
+                    Set.copyOf(primaryStructures));
         }
         List<TemplateCandidate> templates(String ref) {
             List<TemplateCandidate> value = structures.get(ref);
@@ -4334,19 +4486,6 @@ public final class CityBlueprintCompilerService {
             List<String> value = pools.get(ref);
             if (value == null) throw fail("CITY_BLUEPRINT_FILL_POOL_UNKNOWN", ref);
             return value;
-        }
-        List<String> pool(String ref, String role, String groupId) {
-            List<String> value = pool(ref);
-            Set<String> allowedCategories = fillCategoriesForGroup(role, groupId);
-            if (allowedCategories.isEmpty()) return value;
-            List<String> filtered = value.stream()
-                    .filter(structureRef -> {
-                        Set<String> categories = semanticCategories.get(structureRef);
-                        return categories != null && !categories.isEmpty()
-                                && categories.stream().allMatch(allowedCategories::contains);
-                    })
-                    .toList();
-            return filtered.isEmpty() ? value : filtered;
         }
         String algorithm(String ref) {
             String value = algorithms.get(ref);

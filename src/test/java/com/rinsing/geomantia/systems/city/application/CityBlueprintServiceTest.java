@@ -143,14 +143,11 @@ class CityBlueprintServiceTest {
         JsonObject blueprint = blueprint(prepared.getAsJsonObject("cityBlueprintContext"));
         JsonObject group = blueprint.getAsJsonArray("groups").get(0).getAsJsonObject();
         group.addProperty("algorithmProfileRef", "algorithm:center_symmetric");
-        group.getAsJsonArray("requiredStructureRefs").add("geomantia:town_hall");
 
         JsonObject result = service.submit(temporary, fixture.runId(), fixture.cityId(),
                 prepared.get("contextId").getAsString(), blueprint);
 
         assertTrue(result.get("ok").getAsBoolean());
-        assertFalse(result.getAsJsonObject("submissionTrace").getAsJsonObject("pcgIntentMaterialization")
-                .get("buildingChoicesProvidedByAi").getAsBoolean());
         JsonObject accepted = JsonParser.parseString(Files.readString(
                 fixture.runDir().resolve("city_blueprint_city_center_symmetric_invalid/city_blueprint.json")))
                 .getAsJsonObject();
@@ -159,7 +156,7 @@ class CityBlueprintServiceTest {
     }
 
     @Test
-    void intentOnlyGroupLetsServerMaterializeBuildingPoolAndComposition() throws Exception {
+    void intentOnlyGroupMustProvideBuildingPoolAndComposition() throws Exception {
         Fixture fixture = fixture("run_intent_only", "city:intent_only");
         CityBlueprintService service = new CityBlueprintService();
         JsonObject prepared = service.prepare(temporary, fixture.runId(), fixture.cityId(),
@@ -173,14 +170,10 @@ class CityBlueprintServiceTest {
         JsonObject result = service.submit(temporary, fixture.runId(), fixture.cityId(),
                 prepared.get("contextId").getAsString(), blueprint);
 
-        assertTrue(result.get("ok").getAsBoolean());
-        JsonObject materialized = JsonParser.parseString(Files.readString(
-                fixture.runDir().resolve("city_blueprint_city_intent_only/city_blueprint.json")))
-                .getAsJsonObject().getAsJsonArray("groups").get(0).getAsJsonObject();
-        assertEquals("geomantia:town_hall", materialized.getAsJsonArray("requiredStructureRefs")
-                .get(0).getAsString());
-        assertEquals("pool:civic", materialized.get("fillPoolRef").getAsString());
-        assertEquals("composition:round_robin", materialized.get("compositionProfileRef").getAsString());
+        assertFalse(result.get("ok").getAsBoolean());
+        assertTrue(result.getAsJsonObject("validationReport").getAsJsonArray("issues").asList().stream()
+                .map(JsonElement::getAsJsonObject)
+                .anyMatch(issue -> issue.get("reasonCode").getAsString().equals("CITY_BLUEPRINT_FIELD_MISSING")));
     }
 
     @Test
@@ -310,6 +303,8 @@ class CityBlueprintServiceTest {
         secondGroup.addProperty("groupId", "market");
         secondGroup.add("preferredPatchRefs", JsonParser.parseString("[\"patch:plain:2\"]"));
         secondGroup.addProperty("priority", "STANDARD");
+        blueprint.getAsJsonArray("groups").get(0).getAsJsonObject().addProperty("targetAreaShare", 0.5);
+        secondGroup.addProperty("targetAreaShare", 0.5);
         blueprint.getAsJsonArray("groups").add(secondGroup);
         addStructureGround(blueprint, "market");
         blueprint.getAsJsonArray("relations").add(JsonParser.parseString("""
@@ -334,6 +329,8 @@ class CityBlueprintServiceTest {
         JsonObject second = blueprint.getAsJsonArray("groups").get(0).getAsJsonObject().deepCopy();
         second.addProperty("groupId", "market");
         second.addProperty("priority", "STANDARD");
+        blueprint.getAsJsonArray("groups").get(0).getAsJsonObject().addProperty("targetAreaShare", 0.5);
+        second.addProperty("targetAreaShare", 0.5);
         blueprint.getAsJsonArray("groups").add(second);
         addStructureGround(blueprint, "market");
 
@@ -410,6 +407,7 @@ class CityBlueprintServiceTest {
                 JsonParser.parseString("""
                         {"landscapeId":"central_green","landscapeProfileRef":"landscape:greenbelt",
                          "purpose":"FUNCTIONAL","originMode":"ATTACHED",
+                         "owner":{"groupId":"civic","requiredStructureRef":"geomantia:town_hall"},
                          "instanceCount":1,"parcelCount":1,"preferredPatchRefs":[],
                          "terrainPolicy":"CONFORM","required":true,
                          "fillSelection":{"variants":[{"fillProfileRef":"fill:relay_common_green","selectionWeight":1,
@@ -1022,7 +1020,10 @@ class CityBlueprintServiceTest {
                   "role":"administration","priority":"CORE","extentClass":"MEDIUM","densityClass":"BALANCED",
                   "algorithmProfileRef":"algorithm:compact","terrainPolicy":"BALANCED",
                   "requiredStructureRefs":["geomantia:town_hall"],"fillPoolRef":"pool:civic",
-                  "compositionProfileRef":"composition:round_robin","attachedFeatures":[]
+                  "compositionProfileRef":"composition:round_robin","attachedFeatures":[],
+                  "targetAreaShare":1.0,
+                  "spaceComposition":{"buildingShare":1.0,"landscapeShare":0.0,"openSpaceShare":0.0},
+                  "expansionPolicy":{"allowOutwardExpansion":true,"allowRelationConnection":true,"stopWhenTargetReached":true}
                 }
                 """).getAsJsonObject());
         blueprint.add("groups", groups);

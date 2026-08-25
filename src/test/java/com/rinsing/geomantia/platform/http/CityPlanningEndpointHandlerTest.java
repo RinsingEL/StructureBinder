@@ -4143,6 +4143,9 @@ class CityPlanningEndpointHandlerTest {
                     "groupId":"core","groupKind":"STRUCTURE","preferredPatchRefs":["PATCH_REF"],
                     "preferredPatchZone":"CENTER",
                     "role":"landmark","priority":"CORE","extentClass":"SMALL","densityClass":"BALANCED",
+                    "targetAreaShare":1.0,
+                    "spaceComposition":{"buildingShare":0.6,"landscapeShare":0.2,"openSpaceShare":0.2},
+                    "expansionPolicy":{"allowOutwardExpansion":true,"allowRelationConnection":true,"stopWhenTargetReached":true},
                     "algorithmProfileRef":"algorithm:grid","terrainPolicy":"BALANCED",
                     "requiredStructureRefs":["minecraft:desert_pyramid"],"fillPoolRef":"pool:test",
                     "compositionProfileRef":"composition:round_robin","attachedFeatures":[]

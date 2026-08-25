@@ -73,7 +73,7 @@ test("publishes the program-only context tool and one-shot structure plus outdoo
   assert.equal(landscape.properties.instanceCount.minimum, 1);
   assert.equal(landscape.properties.parcelCount.minimum, 1);
   assert.equal(landscape.oneOf.length, 2);
-  assert.equal(landscape.oneOf[0].required, undefined);
+  assert.deepEqual(landscape.oneOf[0].required, ["owner"]);
   assert.deepEqual(landscape.oneOf[1].required, ["placementDomain"]);
   assert.equal(landscape.oneOf[1].properties.required.const, false);
   assert.deepEqual(landscape.properties.terrainPolicy.enum, ["CONFORM", "BALANCED", "ASSERTIVE"]);

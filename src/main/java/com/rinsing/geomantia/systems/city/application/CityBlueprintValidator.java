@@ -29,6 +29,8 @@ public final class CityBlueprintValidator {
         }
 
         Set<String> groupIds = new HashSet<>();
+        int highestPriorityGroupCount = 0;
+        double areaShareSum = 0.0;
         for (int index = 0; index < blueprint.groups().size(); index++) {
             CityBlueprint.Group group = blueprint.groups().get(index);
             String path = "$.groups[" + index + "]";
@@ -39,6 +41,22 @@ public final class CityBlueprintValidator {
             if (group.groupKind() != CityBlueprint.GroupKind.STRUCTURE) {
                 add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_GROUP_KIND_UNSUPPORTED, path + ".groupKind",
                         "LANDSCAPE is reserved for case 04 and is not supported by v0.2.");
+            }
+            if (group.priority() == CityBlueprint.GroupPriority.CORE) highestPriorityGroupCount++;
+            if (!Double.isFinite(group.targetAreaShare()) || group.targetAreaShare() <= 0.0
+                    || group.targetAreaShare() > 1.0) {
+                add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_GROUP_AREA_SHARE_INVALID,
+                        path + ".targetAreaShare", "targetAreaShare must be in (0,1].");
+            }
+            areaShareSum += group.targetAreaShare();
+            CityBlueprint.SpaceComposition composition = group.spaceComposition();
+            double compositionSum = composition.buildingShare() + composition.landscapeShare()
+                    + composition.openSpaceShare();
+            if (!Double.isFinite(compositionSum) || composition.buildingShare() < 0.0
+                    || composition.landscapeShare() < 0.0 || composition.openSpaceShare() < 0.0
+                    || Math.abs(compositionSum - 1.0) > 1.0e-6) {
+                add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_GROUP_SPACE_COMPOSITION_INVALID,
+                        path + ".spaceComposition", "building/landscape/openSpace shares must be non-negative and sum to 1.");
             }
             for (int patchIndex = 0; patchIndex < group.preferredPatchRefs().size(); patchIndex++) {
                 String patchRef = group.preferredPatchRefs().get(patchIndex);
@@ -83,6 +101,14 @@ public final class CityBlueprintValidator {
                         path + ".attachedFeatures",
                         "attachedFeatures must be empty until case 04 defines LANDSCAPE ownership.");
             }
+        }
+        if (highestPriorityGroupCount != 1) {
+            add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_GROUP_PRIORITY_HIGHEST_COUNT_INVALID,
+                    "$.groups", "Exactly one group must have the highest priority CORE; pairwise conflicts still compare both groups.");
+        }
+        if (!Double.isFinite(areaShareSum) || Math.abs(areaShareSum - 1.0) > 1.0e-6) {
+            add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_GROUP_AREA_SHARE_INVALID,
+                    "$.groups", "All targetAreaShare values must sum to 1.0.");
         }
 
         java.util.Map<String, CityBlueprint.Group> groupsById = new HashMap<>();

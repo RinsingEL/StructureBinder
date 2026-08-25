@@ -147,10 +147,7 @@ final class CityDistrictCapacityPlanner {
                     .orElse(null);
         }
         if (seedCell == null) {
-            return Reservation.failed(group, placementMode, capacityPatchRefs, minimumArea, targetArea,
-                    spatialDemand.maximumAreaBlocks(), roadReserve, targetWithRoad,
-                    "CITY_BLUEPRINT_GROUP_DISTRICT_CAPACITY_UNREACHABLE",
-                    group.groupId() + " is blocked by existing district reservations.");
+            return Reservation.deferred(group, placementMode, "CAPACITY_GAP_RECORDED");
         }
 
         Set<CellKey> selected = new LinkedHashSet<>();
@@ -166,9 +163,13 @@ final class CityDistrictCapacityPlanner {
             }
         }
         if (selected.size() < minimumCells) {
-            return Reservation.failed(group, placementMode, capacityPatchRefs, minimumArea, targetArea,
-                    spatialDemand.maximumAreaBlocks(), roadReserve, targetWithRoad,
-                    "CITY_BLUEPRINT_GROUP_DISTRICT_CAPACITY_UNREACHABLE",
+            List<PatchMemberCell> gapCells = candidateCells.values().stream()
+                    .filter(cell -> selected.contains(key(cell)))
+                    .sorted(Comparator.comparingInt(PatchMemberCell::cellZ)
+                            .thenComparingInt(PatchMemberCell::cellX))
+                    .toList();
+            return Reservation.successWithGap(group, placementMode, capacityPatchRefs, minimumArea, targetArea,
+                    spatialDemand.maximumAreaBlocks(), roadReserve, targetWithRoad, gapCells, maximumCells,
                     group.groupId() + " reached " + selected.size() + " district cells but requires at least "
                             + minimumCells + ".");
         }
@@ -480,6 +481,18 @@ final class CityDistrictCapacityPlanner {
                                    int targetWithRoad, List<PatchMemberCell> cells, int maximumCells) {
             return new Reservation(group.groupId(), placementMode.name(), "RESERVED", "", "", List.copyOf(patchRefs), minimumArea,
                     targetArea, maximumArea, roadReserve,
+                    targetWithRoad, maximumCells, List.copyOf(cells));
+        }
+
+        static Reservation successWithGap(CityBlueprint.Group group,
+                                          CityBlueprintGroupLayoutPlanner.PlacementMode placementMode,
+                                          List<String> patchRefs,
+                                          int minimumArea, int targetArea, int maximumArea, int roadReserve,
+                                          int targetWithRoad, List<PatchMemberCell> cells, int maximumCells,
+                                          String message) {
+            return new Reservation(group.groupId(), placementMode.name(), "RESERVED_WITH_GAP",
+                    "CITY_BLUEPRINT_GROUP_DISTRICT_CAPACITY_GAP_RECORDED", message,
+                    List.copyOf(patchRefs), minimumArea, targetArea, maximumArea, roadReserve,
                     targetWithRoad, maximumCells, List.copyOf(cells));
         }
 

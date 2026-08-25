@@ -551,9 +551,21 @@ const cityBlueprintSchema = strictObject({
       }, []),
       compositionProfileRef: nonEmptyString("冻结 composition profile 引用，只控制结构组成顺序，不限制数量。"),
       attachedFeatures: { type: "array", maxItems: 0, description: "案子 04 前必须为空。" },
+      targetAreaShare: { type: "number", exclusiveMinimum: 0, maximum: 1,
+        description: "功能区占整座城市目标范围的比例；不提交具体面积。" },
+      spaceComposition: strictObject({
+        buildingShare: { type: "number", minimum: 0, maximum: 1 },
+        landscapeShare: { type: "number", minimum: 0, maximum: 1 },
+        openSpaceShare: { type: "number", minimum: 0, maximum: 1 },
+      }, ["buildingShare", "landscapeShare", "openSpaceShare"]),
+      expansionPolicy: strictObject({
+        allowOutwardExpansion: { type: "boolean" },
+        allowRelationConnection: { type: "boolean" },
+        stopWhenTargetReached: { type: "boolean" },
+      }, ["allowOutwardExpansion", "allowRelationConnection", "stopWhenTargetReached"]),
     }, ["groupId", "groupKind", "preferredPatchRefs", "preferredPatchZone", "role", "priority", "extentClass", "densityClass",
       "algorithmProfileRef", "terrainPolicy", "requiredStructureRefs", "fillPoolRef",
-      "compositionProfileRef", "attachedFeatures"]),
+      "compositionProfileRef", "attachedFeatures", "targetAreaShare", "spaceComposition", "expansionPolicy"]),
   },
   arrayCompositions: {
     type: "array",

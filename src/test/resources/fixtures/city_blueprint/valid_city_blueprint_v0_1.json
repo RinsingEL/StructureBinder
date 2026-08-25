@@ -33,7 +33,10 @@
       "requiredStructureRefs": ["geomantia:town_hall"],
       "fillPoolRef": "pool:civic",
       "compositionProfileRef": "composition:round_robin",
-      "attachedFeatures": []
+      "attachedFeatures": [],
+      "targetAreaShare": 1.0,
+      "spaceComposition": {"buildingShare": 0.4, "landscapeShare": 0.5, "openSpaceShare": 0.1},
+      "expansionPolicy": {"allowOutwardExpansion": true, "allowRelationConnection": true, "stopWhenTargetReached": true}
     }
   ],
   "arrayCompositions": [],

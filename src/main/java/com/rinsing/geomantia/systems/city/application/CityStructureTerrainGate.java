@@ -92,7 +92,10 @@ final class CityStructureTerrainGate {
                     }
                 }
                 if (cell != null && cell.sampled() && !cell.water() && limits != null) {
-                    if (cell.slope() > limits.maximumSlope()) {
+                    if (cell.slope() > limits.maximumSlope() * 2.0
+                            || cell.localRelief() > limits.maximumLocalRelief() * 2.0) {
+                        reason = "CITY_STRUCTURE_TERRAIN_UNFIT_SKIP_MEMBER";
+                    } else if (cell.slope() > limits.maximumSlope()) {
                         adaptations.add(adaptation(cell, "CITY_STRUCTURE_SURFACE_CELL_SLOPE_EXCEEDED",
                                 "foundation_or_skip"));
                     } else if (cell.localRelief() > limits.maximumLocalRelief()) {
@@ -144,6 +147,10 @@ final class CityStructureTerrainGate {
                 adaptation.addProperty("elevationRange", elevationRange);
                 adaptation.addProperty("action", "foundation_or_skip");
                 adaptations.add(adaptation);
+                if (elevationRange > limits.maximumElevationRange() * 2.0) {
+                    rejected++;
+                    if (primaryReason.isBlank()) primaryReason = "CITY_STRUCTURE_TERRAIN_UNFIT_SKIP_MEMBER";
+                }
             }
         }
         trace.addProperty("rejectedCellCount", rejected);

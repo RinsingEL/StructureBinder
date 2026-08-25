@@ -54,11 +54,61 @@ public record CityBlueprint(
             String fillPoolRef,
             ConnectionPlan connectionPlan,
             String compositionProfileRef,
-            List<String> attachedFeatures) {
+            List<String> attachedFeatures,
+            double targetAreaShare,
+            SpaceComposition spaceComposition,
+            ExpansionPolicy expansionPolicy) {
+        public Group(String groupId,
+                     GroupKind groupKind,
+                     List<String> preferredPatchRefs,
+                     PreferredPatchZone preferredPatchZone,
+                     PlacementRelation placementRelation,
+                     String role,
+                     GroupPriority priority,
+                     ExtentClass extentClass,
+                     DensityClass densityClass,
+                     String algorithmProfileRef,
+                     TerrainPolicy terrainPolicy,
+                     List<String> requiredStructureRefs,
+                     String fillPoolRef,
+                     ConnectionPlan connectionPlan,
+                     String compositionProfileRef,
+                     List<String> attachedFeatures) {
+            this(groupId, groupKind, preferredPatchRefs, preferredPatchZone, placementRelation, role, priority,
+                    extentClass, densityClass, algorithmProfileRef, terrainPolicy, requiredStructureRefs,
+                    fillPoolRef, connectionPlan, compositionProfileRef, attachedFeatures, 0.0,
+                    SpaceComposition.defaultUrban(), ExpansionPolicy.defaultPolicy());
+        }
+
         public Group {
             preferredPatchRefs = List.copyOf(preferredPatchRefs);
             requiredStructureRefs = List.copyOf(requiredStructureRefs);
             attachedFeatures = List.copyOf(attachedFeatures);
+            if (spaceComposition == null) spaceComposition = SpaceComposition.defaultUrban();
+            if (expansionPolicy == null) expansionPolicy = ExpansionPolicy.defaultPolicy();
+        }
+    }
+
+    /** AI-declared functional-zone share; geometry is always derived from the GIS review grid. */
+    public record SpaceComposition(double buildingShare, double landscapeShare, double openSpaceShare) {
+        public SpaceComposition {
+            if (!Double.isFinite(buildingShare) || !Double.isFinite(landscapeShare)
+                    || !Double.isFinite(openSpaceShare)) {
+                throw new IllegalArgumentException("Space composition shares must be finite.");
+            }
+        }
+
+        public static SpaceComposition defaultUrban() {
+            return new SpaceComposition(1.0, 0.0, 0.0);
+        }
+    }
+
+    /** AI may explicitly stop relation/outward growth; omitted policy defaults to growth enabled. */
+    public record ExpansionPolicy(boolean allowOutwardExpansion,
+                                  boolean allowRelationConnection,
+                                  boolean stopWhenTargetReached) {
+        public static ExpansionPolicy defaultPolicy() {
+            return new ExpansionPolicy(true, true, true);
         }
     }
 

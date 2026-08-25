@@ -41,12 +41,22 @@ public final class CityLandscapeCapacityReservationPlanner {
 
     public Result plan(CityBlueprint blueprint, CityBlueprintReferenceCatalog catalog,
                        LandUseTerrainField terrain, JsonArray requiredAnchors, int nodeLimit) {
+        return plan(blueprint, catalog, terrain, requiredAnchors, nodeLimit, Map.of());
+    }
+
+    /**
+     * Replans required landscape parcels after D4 freezes each group's percentage target.
+     * The map is per landscape and expresses the desired area of one parcel.
+     */
+    public Result plan(CityBlueprint blueprint, CityBlueprintReferenceCatalog catalog,
+                       LandUseTerrainField terrain, JsonArray requiredAnchors, int nodeLimit,
+                       Map<String, Integer> desiredParcelAreas) {
         if (nodeLimit <= 0) {
             return new Result(false, "CITY_BLUEPRINT_LANDSCAPE_SEARCH_LIMIT_EXHAUSTED",
                     withRequiredAnchorHash(failurePlan(blueprint,
                             "CITY_BLUEPRINT_LANDSCAPE_SEARCH_LIMIT_EXHAUSTED", 0), requiredAnchors));
         }
-        List<Subject> subjects = requiredSubjects(blueprint, catalog, requiredAnchors);
+        List<Subject> subjects = requiredSubjects(blueprint, catalog, requiredAnchors, desiredParcelAreas);
         if (subjects.isEmpty()) {
             return new Result(true, "", withRequiredAnchorHash(
                     successPlan(blueprint, 0, List.of(), List.of()), requiredAnchors));
@@ -66,7 +76,8 @@ public final class CityLandscapeCapacityReservationPlanner {
 
     private static List<Subject> requiredSubjects(CityBlueprint blueprint,
                                                   CityBlueprintReferenceCatalog catalog,
-                                                  JsonArray anchors) {
+                                                  JsonArray anchors,
+                                                  Map<String, Integer> desiredParcelAreas) {
         Map<String, CityBlueprint.ExtentClass> extentByGroup = new LinkedHashMap<>();
         for (CityBlueprint.Group group : blueprint.groups()) {
             extentByGroup.put(group.groupId(), group.extentClass());
@@ -89,15 +100,18 @@ public final class CityLandscapeCapacityReservationPlanner {
             if (profile == null) throw new IllegalArgumentException("CITY_BLUEPRINT_LANDSCAPE_PROFILE_UNKNOWN");
             JsonObject owner = owners.get(landscape.owner().groupId() + '\u0000'
                     + landscape.owner().requiredStructureRef());
-            if (owner == null) return List.of(new Subject(landscape, profile, null, 0, 0));
+            // The owning building may have been skipped as an unfit terrain member;
+            // its attached landscape is skipped with it, without failing the city.
+            if (owner == null) continue;
             CityBlueprint.ExtentClass ownerExtent = extentByGroup.get(landscape.owner().groupId());
             if (ownerExtent == null) {
                 throw new IllegalArgumentException("CITY_BLUEPRINT_REQUIRED_LANDSCAPE_OWNER_INVALID:"
                         + landscape.landscapeId());
             }
+            int defaultArea = Math.max(1, profile.baseArea(ownerExtent) / landscape.parcelCount());
+            int requestedArea = desiredParcelAreas.getOrDefault(landscape.landscapeId(), defaultArea);
             int area = Math.max(profile.parcelStyle().parcelAreaMinBlocks(),
-                    Math.min(profile.parcelStyle().parcelAreaMaxBlocks(),
-                            Math.max(1, profile.baseArea(ownerExtent) / landscape.parcelCount())));
+                    Math.min(profile.parcelStyle().parcelAreaMaxBlocks(), requestedArea));
             for (int instance = 0; instance < landscape.instanceCount(); instance++) {
                 result.add(new Subject(landscape, profile, owner, area, instance));
             }

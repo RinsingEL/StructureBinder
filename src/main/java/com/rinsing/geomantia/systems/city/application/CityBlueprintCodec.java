@@ -82,6 +82,9 @@ public final class CityBlueprintCodec {
             }
             item.addProperty("compositionProfileRef", group.compositionProfileRef());
             item.add("attachedFeatures", strings(group.attachedFeatures()));
+            item.addProperty("targetAreaShare", group.targetAreaShare());
+            item.add("spaceComposition", spaceCompositionJson(group.spaceComposition()));
+            item.add("expansionPolicy", expansionPolicyJson(group.expansionPolicy()));
             groups.add(item);
         }
         root.add("groups", groups);
@@ -272,7 +275,8 @@ public final class CityBlueprintCodec {
                 "placementRelation", "role", "priority",
                 "extentClass", "densityClass",
                 "algorithmProfileRef", "terrainPolicy", "requiredStructureRefs", "fillPoolRef",
-                "connectionPlan", "compositionProfileRef", "attachedFeatures");
+                "connectionPlan", "compositionProfileRef", "attachedFeatures", "targetAreaShare",
+                "spaceComposition", "expansionPolicy");
         for (int index = 0; index < array.size(); index++) {
             String path = "$.groups[" + index + "]";
             JsonObject item = objectElement(array.get(index), path);
@@ -299,9 +303,46 @@ public final class CityBlueprintCodec {
                             path + ".connectionPlan") : null,
                     requiredString(item, "compositionProfileRef", path + ".compositionProfileRef"),
                     stringList(requiredArray(item, "attachedFeatures", path + ".attachedFeatures"),
-                            path + ".attachedFeatures")));
+                            path + ".attachedFeatures"),
+                    boundedShare(item, "targetAreaShare", path + ".targetAreaShare"),
+                    spaceComposition(requiredObject(item, "spaceComposition", path + ".spaceComposition"),
+                            path + ".spaceComposition"),
+                    expansionPolicy(requiredObject(item, "expansionPolicy", path + ".expansionPolicy"),
+                            path + ".expansionPolicy")));
         }
         return List.copyOf(result);
+    }
+
+    private static CityBlueprint.SpaceComposition spaceComposition(JsonObject object, String path) {
+        exactFields(object, Set.of("buildingShare", "landscapeShare", "openSpaceShare"), path);
+        return new CityBlueprint.SpaceComposition(
+                boundedShare(object, "buildingShare", path + ".buildingShare"),
+                boundedShare(object, "landscapeShare", path + ".landscapeShare"),
+                boundedShare(object, "openSpaceShare", path + ".openSpaceShare"));
+    }
+
+    private static JsonObject spaceCompositionJson(CityBlueprint.SpaceComposition composition) {
+        JsonObject object = new JsonObject();
+        object.addProperty("buildingShare", composition.buildingShare());
+        object.addProperty("landscapeShare", composition.landscapeShare());
+        object.addProperty("openSpaceShare", composition.openSpaceShare());
+        return object;
+    }
+
+    private static CityBlueprint.ExpansionPolicy expansionPolicy(JsonObject object, String path) {
+        exactFields(object, Set.of("allowOutwardExpansion", "allowRelationConnection", "stopWhenTargetReached"), path);
+        return new CityBlueprint.ExpansionPolicy(
+                requiredBoolean(object, "allowOutwardExpansion", path + ".allowOutwardExpansion"),
+                requiredBoolean(object, "allowRelationConnection", path + ".allowRelationConnection"),
+                requiredBoolean(object, "stopWhenTargetReached", path + ".stopWhenTargetReached"));
+    }
+
+    private static JsonObject expansionPolicyJson(CityBlueprint.ExpansionPolicy policy) {
+        JsonObject object = new JsonObject();
+        object.addProperty("allowOutwardExpansion", policy.allowOutwardExpansion());
+        object.addProperty("allowRelationConnection", policy.allowRelationConnection());
+        object.addProperty("stopWhenTargetReached", policy.stopWhenTargetReached());
+        return object;
     }
 
     private static CityBlueprint.PlacementRelation placementRelation(JsonObject object, String path) {
@@ -492,6 +533,20 @@ public final class CityBlueprintCodec {
         if (!Double.isFinite(value) || value <= 0.0) {
             fail(CityBlueprintReasonCode.CITY_BLUEPRINT_FIELD_MISSING, path,
                     "A positive finite number is required.");
+        }
+        return value;
+    }
+
+    private static double boundedShare(JsonObject object, String key, String path) {
+        if (!object.has(key) || !object.get(key).isJsonPrimitive()
+                || !object.getAsJsonPrimitive(key).isNumber()) {
+            fail(CityBlueprintReasonCode.CITY_BLUEPRINT_FIELD_MISSING, path,
+                    "A finite share in [0,1] is required.");
+        }
+        double value = object.get(key).getAsDouble();
+        if (!Double.isFinite(value) || value < 0.0 || value > 1.0) {
+            fail(CityBlueprintReasonCode.CITY_BLUEPRINT_FIELD_MISSING, path,
+                    "A finite share in [0,1] is required.");
         }
         return value;
     }
