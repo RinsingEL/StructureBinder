@@ -59,6 +59,27 @@ class CityArrayVisualQualityGateTest {
                 "organic: ORGANIC_ONE_TO_THREE_BLOCK_GAPS_DISCONNECTED"));
     }
 
+    @Test
+    void rejectsAnyFormalRoadOverlappingStructureCollision() {
+        JsonArray anchors = new JsonArray();
+        JsonObject source = anchor("organic", "ORGANIC_COMPACT", 0, 0, 0, 0, new JsonObject());
+        anchors.add(source);
+        JsonObject road = new JsonObject();
+        road.addProperty("streetBandId", "city::main");
+        road.addProperty("groupId", "__city_main_road__");
+        road.addProperty("roadKind", "CITY_MAIN_ROAD");
+        road.add("bounds", source.getAsJsonObject("collisionEnvelope").deepCopy());
+        JsonArray roads = new JsonArray();
+        roads.add(road);
+
+        var result = gate.evaluate(anchors, roads);
+
+        assertFalse(result.passed());
+        assertTrue(result.hardBlocks().stream().anyMatch(value ->
+                value.contains("ROAD_OVERLAPS_STRUCTURE")));
+        assertTrue(result.json().get("roadStructureOverlapCount").getAsInt() > 0);
+    }
+
     private JsonArray roads(String groupId, String algorithm, JsonArray anchors) {
         JsonArray result = new JsonArray();
         List<JsonObject> source = anchors.asList().stream().map(value -> value.getAsJsonObject()).toList();

@@ -272,6 +272,32 @@ class CityLandUseChunkCompilerTest {
         assertTrue(east.boundaryOperations().isEmpty());
     }
 
+    @Test
+    void exactFeatureCellsAreClippedByOwnerChunk() {
+        LandUseAreaPlan areaPlan = areaPlan("city_features", SurfacePolicy.PAVE,
+                List.of(new LandUseAreaPlan.ScanlineSpan(0, 0, 31)));
+        CityLandUseSurfacePrintPlan base = uniformPlan(areaPlan);
+        CityLandUseSurfacePrintPlan plan = new CityLandUseSurfacePrintPlanCodec().withComputedHash(
+                new CityLandUseSurfacePrintPlan(base.schemaVersion(), base.cityId(),
+                        base.sourceLandUsePlanHash(), "", base.areas(), base.sharedBoundarySpans(), List.of(
+                        new CityLandUseSurfacePrintPlan.FeatureCell("road", 15, 0,
+                                "minecraft:stone_brick_slab", 0,
+                                CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB,
+                                CityLandUseSurfacePrintPlan.HorizontalFacing.NONE),
+                        new CityLandUseSurfacePrintPlan.FeatureCell("road", 16, 0,
+                                "minecraft:stone_brick_stairs", 0,
+                                CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR,
+                                CityLandUseSurfacePrintPlan.HorizontalFacing.WEST))));
+
+        CityLandUseChunkCompiler.ChunkFragment west = compiler.compile(areaPlan, plan, 0, 0);
+        CityLandUseChunkCompiler.ChunkFragment east = compiler.compile(areaPlan, plan, 1, 0);
+
+        assertEquals(1, west.featureOperations().size());
+        assertEquals(15, west.featureOperations().get(0).x());
+        assertEquals(1, east.featureOperations().size());
+        assertEquals(16, east.featureOperations().get(0).x());
+    }
+
     private static LandUseAreaPlan.Area landscapeArea(String areaId, String groupId, int x) {
         BlockPoint point = new BlockPoint(x, 0);
         return new LandUseAreaPlan.Area(areaId, areaId, "agriculture", List.of(groupId), List.of("anchor"),

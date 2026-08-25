@@ -14,8 +14,8 @@ class CityStructureAnchorProvenanceTest {
 
         CityStructureAnchorPlanner.applyPlacementProvenance(anchor, anchor);
 
-        assertEquals("city_structure_anchor_plan.v0.2", CityStructureAnchorPlanner.PLAN_SCHEMA);
-        assertEquals("city_structure_anchor_map.v0.2", CityStructureAnchorPlanner.MAP_SCHEMA);
+        assertEquals("city_structure_anchor_plan.v0.3", CityStructureAnchorPlanner.PLAN_SCHEMA);
+        assertEquals("city_structure_anchor_map.v0.3", CityStructureAnchorPlanner.MAP_SCHEMA);
         assertEquals("civic_slot", anchor.get("placementGroupId").getAsString());
         assertEquals("civic_slot", anchor.getAsJsonObject("placementProvenance").get("slotId").getAsString());
     }

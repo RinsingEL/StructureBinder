@@ -20,8 +20,8 @@ import java.util.Locale;
 import java.util.Map;
 
 public final class CityStructureAnchorPlanner {
-    public static final String PLAN_SCHEMA = "city_structure_anchor_plan.v0.2";
-    public static final String MAP_SCHEMA = "city_structure_anchor_map.v0.2";
+    public static final String PLAN_SCHEMA = "city_structure_anchor_plan.v0.3";
+    public static final String MAP_SCHEMA = "city_structure_anchor_map.v0.3";
     public static final int DEFAULT_CLEARANCE_BLOCKS = 8;
     public static final int DEFAULT_SMALL_CLEARANCE_BLOCKS = 4;
     public static final int DEFAULT_MASK_MARGIN_BLOCKS = 8;
@@ -106,6 +106,16 @@ public final class CityStructureAnchorPlanner {
         }
         if (structureAnchorPlan.has("streetBands") && structureAnchorPlan.get("streetBands").isJsonArray()) {
             anchorMap.add("streetBands", structureAnchorPlan.getAsJsonArray("streetBands").deepCopy());
+        }
+        if (structureAnchorPlan.has("cityMainRoadPlan")
+                && structureAnchorPlan.get("cityMainRoadPlan").isJsonObject()) {
+            anchorMap.add("cityMainRoadPlan",
+                    structureAnchorPlan.getAsJsonObject("cityMainRoadPlan").deepCopy());
+        }
+        if (structureAnchorPlan.has("residentialOverflowPlan")
+                && structureAnchorPlan.get("residentialOverflowPlan").isJsonObject()) {
+            anchorMap.add("residentialOverflowPlan",
+                    structureAnchorPlan.getAsJsonObject("residentialOverflowPlan").deepCopy());
         }
         anchorMap.add("anchors", anchors);
         JsonObject quality = quality(hardBlocks, warnings, needsReview, anchors.size());

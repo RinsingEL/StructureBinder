@@ -27,7 +27,7 @@ import java.util.Set;
 
 /** Pure block-to-owner compiler. It never samples terrain and never writes a level. */
 public final class CityLandUseChunkCompiler {
-    public static final String RESULT_SCHEMA = "city_land_use_chunk_fragment.v0.2";
+    public static final String RESULT_SCHEMA = "city_land_use_chunk_fragment.v0.3";
     public static final String MICRO_FILL_SUBGRADE_KEY = "MICRO_FILL_SUBGRADE";
 
     private final MaterialPalette palette;
@@ -72,7 +72,19 @@ public final class CityLandUseChunkCompiler {
         }
         Map<OwnerChunk, Map<AreaKey, CityLandUseSurfacePrintPlan.AreaPrint>> frozen = new HashMap<>();
         byOwner.forEach((owner, areas) -> frozen.put(owner, Map.copyOf(areas)));
-        return new PreparedSurfacePlan(plan, surfacePrintPlan, Map.copyOf(frozen));
+        Map<OwnerChunk, List<CityLandUseSurfacePrintPlan.FeatureCell>> featuresByOwner = new HashMap<>();
+        for (CityLandUseSurfacePrintPlan.FeatureCell cell : surfacePrintPlan.featureCells()) {
+            OwnerChunk owner = new OwnerChunk(Math.floorDiv(cell.x(), 16), Math.floorDiv(cell.z(), 16));
+            featuresByOwner.computeIfAbsent(owner, ignored -> new ArrayList<>()).add(cell);
+        }
+        Map<OwnerChunk, List<CityLandUseSurfacePrintPlan.FeatureCell>> frozenFeatures = new HashMap<>();
+        featuresByOwner.forEach((owner, cells) -> frozenFeatures.put(owner, cells.stream()
+                .sorted(Comparator.comparingInt(CityLandUseSurfacePrintPlan.FeatureCell::z)
+                        .thenComparingInt(CityLandUseSurfacePrintPlan.FeatureCell::x)
+                        .thenComparingInt(CityLandUseSurfacePrintPlan.FeatureCell::surfaceOffset))
+                .toList()));
+        return new PreparedSurfacePlan(plan, surfacePrintPlan, Map.copyOf(frozen),
+                Map.copyOf(frozenFeatures));
     }
 
     public ChunkFragment compilePrepared(PreparedSurfacePlan prepared, int chunkX, int chunkZ) {
@@ -81,6 +93,7 @@ public final class CityLandUseChunkCompiler {
         return compileInternal(prepared.areaPlan(),
                 prepared.printAreasByOwner().getOrDefault(owner, Map.of()),
                 prepared.surfacePrintPlan().sharedBoundarySpans(),
+                prepared.featureCellsByOwner().getOrDefault(owner, List.of()),
                 chunkX, chunkZ);
     }
 
@@ -88,6 +101,7 @@ public final class CityLandUseChunkCompiler {
             LandUseAreaPlan plan,
             Map<AreaKey, CityLandUseSurfacePrintPlan.AreaPrint> printAreas,
             List<CityLandUseSurfacePrintPlan.SharedBoundaryPrintSpan> sharedBoundarySpans,
+            List<CityLandUseSurfacePrintPlan.FeatureCell> featureCells,
             int chunkX,
             int chunkZ) {
         Objects.requireNonNull(plan, "plan");
@@ -245,12 +259,17 @@ public final class CityLandUseChunkCompiler {
         surfaceOperations.sort(SurfaceOperation.STABLE_ORDER);
         List<BoundaryOperation> boundaryOperations = new ArrayList<>(boundaries.values());
         boundaryOperations.sort(BoundaryOperation.STABLE_ORDER);
+        List<FeatureOperation> featureOperations = featureCells.stream()
+                .map(cell -> new FeatureOperation(cell.sourceId(), cell.x(), cell.z(), cell.blockId(),
+                        cell.surfaceOffset(), cell.kind(), cell.facing()))
+                .sorted(FeatureOperation.STABLE_ORDER).toList();
+        relevantCellCount += featureOperations.size();
         List<GradingMaskCell> gradingMaskCells = new ArrayList<>(gradingMask.values());
         gradingMaskCells.sort(GradingMaskCell.STABLE_ORDER);
         return new ChunkFragment(RESULT_SCHEMA, plan.cityId(), plan.planHash(), palette.paletteHash(), chunkX, chunkZ,
                 relevantCellCount, footprintExcluded, corridorExcluded, gateExcluded,
                 microFillBlock, List.copyOf(gradingMaskCells),
-                List.copyOf(surfaceOperations), List.copyOf(boundaryOperations));
+                List.copyOf(surfaceOperations), List.copyOf(boundaryOperations), featureOperations);
     }
 
     private static boolean isContourChannel(CityLandUseSurfacePrintPlan.AreaPrint printArea,
@@ -555,7 +574,8 @@ public final class CityLandUseChunkCompiler {
                                 String microFillBlockId,
                                 List<GradingMaskCell> gradingMaskCells,
                                 List<SurfaceOperation> surfaceOperations,
-                                List<BoundaryOperation> boundaryOperations) {
+                                List<BoundaryOperation> boundaryOperations,
+                                List<FeatureOperation> featureOperations) {
         public ChunkFragment {
             if (!RESULT_SCHEMA.equals(schemaVersion)) {
                 throw new IllegalArgumentException("CITY_LAND_USE_FRAGMENT_SCHEMA_UNSUPPORTED");
@@ -568,11 +588,23 @@ public final class CityLandUseChunkCompiler {
             gradingMaskCells = List.copyOf(gradingMaskCells);
             surfaceOperations = List.copyOf(surfaceOperations);
             boundaryOperations = List.copyOf(boundaryOperations);
+            featureOperations = List.copyOf(featureOperations == null ? List.of() : featureOperations);
+        }
+
+        public ChunkFragment(String schemaVersion, String cityId, String planHash, String paletteHash,
+                             int chunkX, int chunkZ, int relevantCellCount, int footprintExcludedCount,
+                             int corridorExcludedCount, int gateExcludedCount, String microFillBlockId,
+                             List<GradingMaskCell> gradingMaskCells,
+                             List<SurfaceOperation> surfaceOperations,
+                             List<BoundaryOperation> boundaryOperations) {
+            this(schemaVersion, cityId, planHash, paletteHash, chunkX, chunkZ, relevantCellCount,
+                    footprintExcludedCount, corridorExcludedCount, gateExcludedCount, microFillBlockId,
+                    gradingMaskCells, surfaceOperations, boundaryOperations, List.of());
         }
 
         public boolean hasRelevantCells() {
             return !surfaceOperations.isEmpty()
-                    || !boundaryOperations.isEmpty();
+                    || !boundaryOperations.isEmpty() || !featureOperations.isEmpty();
         }
     }
 
@@ -665,6 +697,28 @@ public final class CityLandUseChunkCompiler {
         }
     }
 
+    public record FeatureOperation(String sourceId,
+                                   int x,
+                                   int z,
+                                   String blockId,
+                                   int surfaceOffset,
+                                   CityLandUseSurfacePrintPlan.FeatureKind kind,
+                                   CityLandUseSurfacePrintPlan.HorizontalFacing facing) {
+        public static final Comparator<FeatureOperation> STABLE_ORDER =
+                Comparator.comparingInt(FeatureOperation::z)
+                        .thenComparingInt(FeatureOperation::x)
+                        .thenComparingInt(FeatureOperation::surfaceOffset)
+                        .thenComparing(operation -> operation.kind().name())
+                        .thenComparing(FeatureOperation::sourceId);
+
+        public FeatureOperation {
+            Objects.requireNonNull(sourceId, "sourceId");
+            Objects.requireNonNull(blockId, "blockId");
+            Objects.requireNonNull(kind, "kind");
+            Objects.requireNonNull(facing, "facing");
+        }
+    }
+
     private record BlockCell(int x, int z) {
     }
 
@@ -695,14 +749,17 @@ public final class CityLandUseChunkCompiler {
         private final LandUseAreaPlan areaPlan;
         private final CityLandUseSurfacePrintPlan surfacePrintPlan;
         private final Map<OwnerChunk, Map<AreaKey, CityLandUseSurfacePrintPlan.AreaPrint>> printAreasByOwner;
+        private final Map<OwnerChunk, List<CityLandUseSurfacePrintPlan.FeatureCell>> featureCellsByOwner;
 
         private PreparedSurfacePlan(
                 LandUseAreaPlan areaPlan,
                 CityLandUseSurfacePrintPlan surfacePrintPlan,
-                Map<OwnerChunk, Map<AreaKey, CityLandUseSurfacePrintPlan.AreaPrint>> printAreasByOwner) {
+                Map<OwnerChunk, Map<AreaKey, CityLandUseSurfacePrintPlan.AreaPrint>> printAreasByOwner,
+                Map<OwnerChunk, List<CityLandUseSurfacePrintPlan.FeatureCell>> featureCellsByOwner) {
             this.areaPlan = Objects.requireNonNull(areaPlan, "areaPlan");
             this.surfacePrintPlan = Objects.requireNonNull(surfacePrintPlan, "surfacePrintPlan");
             this.printAreasByOwner = Map.copyOf(printAreasByOwner);
+            this.featureCellsByOwner = Map.copyOf(featureCellsByOwner);
         }
 
         public String areaPlanHash() {
@@ -714,7 +771,9 @@ public final class CityLandUseChunkCompiler {
         }
 
         public int indexedOwnerCount() {
-            return printAreasByOwner.size();
+            Set<OwnerChunk> owners = new HashSet<>(printAreasByOwner.keySet());
+            owners.addAll(featureCellsByOwner.keySet());
+            return owners.size();
         }
 
         private LandUseAreaPlan areaPlan() {
@@ -727,6 +786,10 @@ public final class CityLandUseChunkCompiler {
 
         private Map<OwnerChunk, Map<AreaKey, CityLandUseSurfacePrintPlan.AreaPrint>> printAreasByOwner() {
             return printAreasByOwner;
+        }
+
+        private Map<OwnerChunk, List<CityLandUseSurfacePrintPlan.FeatureCell>> featureCellsByOwner() {
+            return featureCellsByOwner;
         }
 
     }

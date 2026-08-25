@@ -155,7 +155,8 @@ public final class LandUsePlanningService {
                 geometry.unclaimedSpans(), corridors, warnings);
         LandUseAreaPlan plan = new LandUseAreaPlanCodec().withComputedHash(rawPlan);
         CityLandUseSurfacePrintPlan surfacePrintPlan = new CityLandUseSurfacePrintPlanner().plan(
-                plan, sources.seedGroups(), terrainField);
+                plan, sources.seedGroups(), terrainField, sources.roadBands(), sources.greenParcels(),
+                sources.overflowZones());
         return new Result(plan, trace(sources, probe, resolvedExpansion, connectionOutcomes,
                 residualResult.urbanSpacePlan(), resolvedFoundationCloseRadius,
                 resolvedFoundationComponentCount, skippedOptionalLandscapes),

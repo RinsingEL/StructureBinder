@@ -11,6 +11,7 @@ import com.rinsing.geomantia.systems.city.domain.landuse.rules.LandUseRule;
 import com.rinsing.geomantia.systems.city.domain.landuse.rules.LandUseRuleCatalog;
 import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
 import com.rinsing.geomantia.systems.city.domain.model.BlockPoint;
+import com.rinsing.geomantia.systems.city.application.CityBlueprintReferenceCatalog;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -419,7 +420,10 @@ public final class LandUseSourceResolver {
                              List<String> warnings,
                              String seedSalt,
                              Map<String, Set<BlockPoint>> landscapeCapacityDomains,
-                             Map<String, String> landscapeParentParcelIds) {
+                             Map<String, String> landscapeParentParcelIds,
+                             List<RoadBand> roadBands,
+                             List<GreenParcelSpec> greenParcels,
+                             List<OverflowZoneSpec> overflowZones) {
         public Resolution(List<LandUseSeedGroup> seedGroups,
                           List<LandUseAreaPlan.CorridorExclusion> corridorExclusions,
                           List<String> warnings,
@@ -435,11 +439,59 @@ public final class LandUseSourceResolver {
             this(seedGroups, corridorExclusions, warnings, seedSalt, landscapeCapacityDomains, Map.of());
         }
 
+        public Resolution(List<LandUseSeedGroup> seedGroups,
+                          List<LandUseAreaPlan.CorridorExclusion> corridorExclusions,
+                          List<String> warnings,
+                          String seedSalt,
+                          Map<String, Set<BlockPoint>> landscapeCapacityDomains,
+                          Map<String, String> landscapeParentParcelIds) {
+            this(seedGroups, corridorExclusions, warnings, seedSalt, landscapeCapacityDomains,
+                    landscapeParentParcelIds, List.of(), List.of(), List.of());
+        }
+
         public Resolution {
             landscapeCapacityDomains = Map.copyOf(landscapeCapacityDomains == null
                     ? Map.of() : landscapeCapacityDomains);
             landscapeParentParcelIds = Map.copyOf(landscapeParentParcelIds == null
                     ? Map.of() : landscapeParentParcelIds);
+            roadBands = List.copyOf(roadBands == null ? List.of() : roadBands);
+            greenParcels = List.copyOf(greenParcels == null ? List.of() : greenParcels);
+            overflowZones = List.copyOf(overflowZones == null ? List.of() : overflowZones);
+        }
+    }
+
+    public record RoadBand(String streetBandId,
+                           String roadNetworkId,
+                           String roadKind,
+                           BlockPoint start,
+                           BlockPoint end,
+                           BlockBounds bounds,
+                           int widthBlocks,
+                           String crossSectionProfile) {
+    }
+
+    public record GreenParcelSpec(String parcelId,
+                                  String anchorId,
+                                  BlockBounds parcelBounds,
+                                  BlockBounds structureFootprint,
+                                  BlockPoint entrance,
+                                  CityBlueprintReferenceCatalog.GreenParcelPattern pattern,
+                                  CityBlueprintReferenceCatalog.GreenParcelDensity density,
+                                  String groundBlockId,
+                                  String pathBlockId,
+                                  List<CityBlueprintReferenceCatalog.PlantPaletteEntry> plantPalette,
+                                  long stableSeed) {
+        public GreenParcelSpec {
+            plantPalette = List.copyOf(plantPalette);
+        }
+    }
+
+    public record OverflowZoneSpec(String zoneId,
+                                   BlockBounds boundaryBounds,
+                                   List<BlockBounds> roadOpenings,
+                                   String boundaryBlockId) {
+        public OverflowZoneSpec {
+            roadOpenings = List.copyOf(roadOpenings);
         }
     }
 

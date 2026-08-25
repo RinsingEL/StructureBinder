@@ -823,7 +823,7 @@ class CityBlueprintServiceTest {
     private static JsonObject referenceCatalog() {
         return JsonParser.parseString("""
                 {
-                  "schemaVersion":"city_blueprint_reference_catalog.v0.8",
+                  "schemaVersion":"city_blueprint_reference_catalog.v0.9",
                   "structureRefs":[{"structureRef":"geomantia:town_hall","templateCandidates":[{"templateId":"geomantia:town_hall","variantId":"default"}]}],
                   "fillPools":[{"poolRef":"pool:civic","structureRefs":["geomantia:town_hall"]}],
                   "algorithmProfiles":[

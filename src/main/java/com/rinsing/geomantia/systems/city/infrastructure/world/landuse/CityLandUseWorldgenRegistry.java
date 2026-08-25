@@ -375,6 +375,7 @@ public final class CityLandUseWorldgenRegistry {
         entry.addProperty("chunkZ", key.chunkZ());
         entry.addProperty("surfaceOperationCount", fragment.surfaceOperations().size());
         entry.addProperty("boundaryOperationCount", fragment.boundaryOperations().size());
+        entry.addProperty("featureOperationCount", fragment.featureOperations().size());
         entry.addProperty("appliedOperationCount", result.appliedOperationCount());
         entry.addProperty("preparedBaseOperationCount", phaseCounts.preparedBase());
         entry.addProperty("appliedBaseOperationCount", phaseCounts.appliedBase());
@@ -397,6 +398,8 @@ public final class CityLandUseWorldgenRegistry {
                 .filter(operation -> operation.stage() == CityLandUseChunkCompiler.SurfaceStage.CROP)
                 .filter(operation -> world.naturalSurface(operation.x(), operation.z()))
                 .count();
+        preparedCrop += (int) fragment.featureOperations().stream()
+                .filter(operation -> operation.surfaceOffset() > 0).count();
         int preparedBoundary = fragment.boundaryOperations().size()
                 - result.occupiedBoundarySkippedCount();
         int preparedBase = result.preparedOperationCount() - preparedCrop - preparedBoundary;
@@ -461,6 +464,7 @@ public final class CityLandUseWorldgenRegistry {
             JsonObject entry = requiredObject(element, "CITY_LAND_USE_LEDGER_ENTRY_INVALID");
             requireFields(entry, Set.of("dimensionId", "cityId", "areaPlanHash", "surfacePrintPlanHash",
                     "paletteHash", "chunkX", "chunkZ", "surfaceOperationCount", "boundaryOperationCount",
+                    "featureOperationCount",
                     "appliedOperationCount", "preparedBaseOperationCount", "appliedBaseOperationCount",
                     "preparedCropOperationCount", "appliedCropOperationCount",
                     "preparedBoundaryOperationCount", "appliedBoundaryOperationCount",
@@ -590,6 +594,9 @@ public final class CityLandUseWorldgenRegistry {
                     area.surfaceSettings().channelBankOverlayBlockId());
             validateSurfaceBlockId(area.printAreaId(), "boundaryBlockId",
                     area.surfaceSettings().boundaryBlockId());
+        }
+        for (CityLandUseSurfacePrintPlan.FeatureCell cell : plan.featureCells()) {
+            validateSurfaceBlockId(cell.sourceId(), cell.kind().name(), cell.blockId());
         }
     }
 
@@ -832,7 +839,6 @@ public final class CityLandUseWorldgenRegistry {
         public CityLandUseChunkExecutor.TargetState inspect(int worldX, int y, int worldZ) {
             return delegate.inspect(worldX, y, worldZ);
         }
-
         @Override
         public Object beginWrite(int worldX, int y, int worldZ, Object snapshot) {
             return delegate.beginWrite(worldX, y, worldZ, snapshot);
@@ -841,6 +847,13 @@ public final class CityLandUseWorldgenRegistry {
         @Override
         public boolean setBlock(int worldX, int y, int worldZ, String blockId) {
             return delegate.setBlock(worldX, y, worldZ, blockId);
+        }
+
+        @Override
+        public boolean setFeatureBlock(int worldX, int y, int worldZ, String blockId,
+                                       CityLandUseSurfacePrintPlan.FeatureKind kind,
+                                       CityLandUseSurfacePrintPlan.HorizontalFacing facing) {
+            return delegate.setFeatureBlock(worldX, y, worldZ, blockId, kind, facing);
         }
 
         @Override

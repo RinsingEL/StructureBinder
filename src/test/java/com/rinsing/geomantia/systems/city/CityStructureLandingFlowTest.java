@@ -797,7 +797,7 @@ final class CityStructureLandingFlowTest {
         CityLandformReviewPackage review = preciseMemberCellReview();
         JsonObject anchorMap = JsonParser.parseString("""
                 {
-                  "schemaVersion": "city_structure_anchor_map.v0.2",
+                  "schemaVersion": "city_structure_anchor_map.v0.3",
                   "cityId": "city_test",
                   "anchors": [
                     {
@@ -1542,7 +1542,7 @@ final class CityStructureLandingFlowTest {
         LandformPatchSummary second = review.landformPatches().get(1);
         return JsonParser.parseString("""
                 {
-                  "schemaVersion": "city_structure_anchor_plan.v0.2",
+                  "schemaVersion": "city_structure_anchor_plan.v0.3",
                   "cityId": "city_test",
                   "anchors": [
                     {
@@ -1645,7 +1645,7 @@ final class CityStructureLandingFlowTest {
         LandformPatchSummary first = review.landformPatches().get(0);
         return JsonParser.parseString("""
                 {
-                  "schemaVersion": "city_structure_anchor_plan.v0.2",
+                  "schemaVersion": "city_structure_anchor_plan.v0.3",
                   "cityId": "city_test",
                   "anchors": [
                     {

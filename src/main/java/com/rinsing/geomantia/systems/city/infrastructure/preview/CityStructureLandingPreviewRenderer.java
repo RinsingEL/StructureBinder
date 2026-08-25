@@ -73,7 +73,8 @@ public final class CityStructureLandingPreviewRenderer {
             drawPatchBackdrop(g, t, gridBounds, reviewPackage);
             drawGrid(g, t, gridBounds);
             drawDistrictEnvelopes(g, t, groupExtentMap, Set.of());
-            drawStreetBands(g, t, groupExtentMap, Set.of());
+            drawStreetBands(g, t, anchorMap, Set.of());
+            drawResidentialOverflowZones(g, t, anchorMap, Set.of());
             drawLandscapeCapacities(g, t, landscapeCapacityPlan);
             int i = 0;
             for (JsonElement elem : array(anchorMap, "anchors")) {
@@ -384,7 +385,8 @@ public final class CityStructureLandingPreviewRenderer {
             drawPatchBackdrop(g, t, viewport, reviewPackage);
             drawGrid(g, t, viewport);
             drawDistrictEnvelopes(g, t, groupExtentMap, visibleGroups);
-            drawStreetBands(g, t, groupExtentMap, visibleGroups);
+            drawStreetBands(g, t, anchorMap, visibleGroups);
+            drawResidentialOverflowZones(g, t, anchorMap, visibleGroups);
             drawLandscapeCapacities(g, t, landscapeCapacityPlan);
             for (AnchorPreview preview : cluster) {
                 drawD4Geometry(g, t, preview.geometry());
@@ -526,39 +528,71 @@ public final class CityStructureLandingPreviewRenderer {
         }
     }
 
-    private static void drawStreetBands(Graphics2D g, Transform t, JsonObject extentMap,
+    private static void drawStreetBands(Graphics2D g, Transform t, JsonObject anchorMap,
                                         Set<String> visibleGroupIds) {
-        if (extentMap == null) return;
-        for (JsonElement element : array(extentMap, "groups")) {
+        if (anchorMap == null) return;
+        for (JsonElement element : array(anchorMap, "streetBands")) {
             if (!element.isJsonObject()) continue;
-            JsonObject group = element.getAsJsonObject();
-            String groupId = string(group, "groupId");
-            if (!visibleGroupIds.isEmpty() && !visibleGroupIds.contains(groupId)) continue;
-            JsonObject band = object(group, "streetBandPlan");
+            JsonObject band = element.getAsJsonObject();
+            String groupId = string(band, "groupId");
+            String sourceGroupId = string(band, "sourceGroupId");
+            String targetGroupId = string(band, "targetGroupId");
+            if (!visibleGroupIds.isEmpty() && !visibleGroupIds.contains(groupId)
+                    && !visibleGroupIds.contains(sourceGroupId) && !visibleGroupIds.contains(targetGroupId)) {
+                continue;
+            }
             JsonObject bounds = object(band, "bounds");
             if (bounds.size() == 0) continue;
+            boolean mainRoad = "CITY_MAIN_ROAD".equals(string(band, "roadKind"));
             JsonObject platform = object(band, "platformBounds");
             if (platform.size() > 0) {
                 BlockBounds platformBounds = new BlockBounds(intValue(platform, "minX", 0),
                         intValue(platform, "minZ", 0), intValue(platform, "maxX", 0),
                         intValue(platform, "maxZ", 0));
-                g.setColor(new Color(125, 128, 130, 42));
+                g.setColor(mainRoad ? new Color(111, 72, 45, 62) : new Color(125, 128, 130, 42));
                 fillBounds(g, t, platformBounds);
             }
             BlockBounds street = new BlockBounds(intValue(bounds, "minX", 0), intValue(bounds, "minZ", 0),
                     intValue(bounds, "maxX", 0), intValue(bounds, "maxZ", 0));
-            g.setColor(new Color(86, 89, 91, 118));
+            g.setColor(mainRoad ? new Color(92, 55, 35, 155) : new Color(86, 89, 91, 118));
             fillBounds(g, t, street);
-            g.setColor(new Color(55, 58, 60, 220));
-            g.setStroke(new BasicStroke(2.0f));
+            g.setColor(mainRoad ? new Color(68, 37, 24, 235) : new Color(55, 58, 60, 220));
+            g.setStroke(new BasicStroke(mainRoad ? 3.2f : 2.0f));
             JsonObject start = object(band, "start");
             JsonObject end = object(band, "end");
             if (start.size() > 0 && end.size() > 0) {
                 g.drawLine(t.x(intValue(start, "x", 0)), t.z(intValue(start, "z", 0)),
                         t.x(intValue(end, "x", 0)), t.z(intValue(end, "z", 0)));
             }
-            drawBadge(g, t, street.center(), "street " + intValue(band, "widthBlocks", 0),
-                    new Color(55, 58, 60, 235));
+            drawBadge(g, t, street.center(), (mainRoad ? "main " : "street ")
+                            + intValue(band, "widthBlocks", 0),
+                    mainRoad ? new Color(68, 37, 24, 235) : new Color(55, 58, 60, 235));
+        }
+    }
+
+    private static void drawResidentialOverflowZones(Graphics2D g, Transform t, JsonObject anchorMap,
+                                                     Set<String> visibleGroupIds) {
+        JsonObject plan = object(anchorMap, "residentialOverflowPlan");
+        for (JsonElement element : array(plan, "zones")) {
+            if (!element.isJsonObject()) continue;
+            JsonObject zone = element.getAsJsonObject();
+            String parentGroupId = string(zone, "parentGroupId");
+            if (!visibleGroupIds.isEmpty() && !visibleGroupIds.contains(parentGroupId)) continue;
+            JsonObject rawBounds = object(zone, "boundaryBounds");
+            if (rawBounds.size() == 0) continue;
+            BlockBounds bounds = new BlockBounds(intValue(rawBounds, "minX", 0),
+                    intValue(rawBounds, "minZ", 0), intValue(rawBounds, "maxX", 0),
+                    intValue(rawBounds, "maxZ", 0));
+            g.setColor(new Color(64, 145, 92, 28));
+            fillBounds(g, t, bounds);
+            g.setColor(new Color(42, 112, 68, 220));
+            g.setStroke(new BasicStroke(2.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER,
+                    10.0f, new float[]{7.0f, 4.0f}, 0.0f));
+            g.drawRect(t.x(bounds.minX()), t.z(bounds.minZ()),
+                    Math.max(1, t.x(bounds.maxX()) - t.x(bounds.minX())),
+                    Math.max(1, t.z(bounds.maxZ()) - t.z(bounds.minZ())));
+            drawBadge(g, t, bounds.center(), "residential overflow",
+                    new Color(42, 112, 68, 235));
         }
     }
 

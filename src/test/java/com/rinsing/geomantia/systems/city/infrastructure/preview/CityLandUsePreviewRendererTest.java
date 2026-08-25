@@ -164,7 +164,7 @@ class CityLandUsePreviewRendererTest {
 
         JsonObject metadata = new CityLandUsePreviewRenderer().render(terrain, plan, surfacePlan, tempDir);
 
-        assertEquals("city_land_use_preview.v0.4", metadata.get("schemaVersion").getAsString());
+        assertEquals("city_land_use_preview.v0.5", metadata.get("schemaVersion").getAsString());
         assertEquals(1, metadata.get("relayGrowthAreaCount").getAsInt());
         assertEquals(CityLandUseSurfacePrintPlan.CURRENT_SCHEMA_VERSION,
                 metadata.get("surfacePrintPlanSchemaVersion").getAsString());

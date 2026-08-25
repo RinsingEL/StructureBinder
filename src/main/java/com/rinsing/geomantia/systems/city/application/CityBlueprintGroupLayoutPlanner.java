@@ -321,7 +321,7 @@ final class CityBlueprintGroupLayoutPlanner {
     private static BlockPoint linearPoint(Frame frame, int slotIndex, int spacing,
                                           int footprintSpan, Parameters parameters) {
         int rank = (slotIndex + 1) / 2;
-        double sideDistance = parameters.streetBandWidthBlocks() / 2.0 + footprintSpan / 2.0;
+        double sideDistance = parameters.streetBandWidthBlocks() / 2.0 + 1.0 + footprintSpan / 2.0;
         double side = (slotIndex & 1) == 0 ? sideDistance : -sideDistance;
         double along = rank * spacing;
         double dx = frame.axisX() * along - frame.axisZ() * side;

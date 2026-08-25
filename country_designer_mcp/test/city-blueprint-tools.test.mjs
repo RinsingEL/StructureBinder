@@ -142,10 +142,10 @@ test("publishes the current strict LandUse v0.3 intent wire shape", () => {
   assert.deepEqual(override.properties.algorithmAnchor.required, ["x", "z"]);
 });
 
-test("requires the v0.8 Blueprint reference catalog with exact Landscape Parcel profiles", () => {
+test("requires the v0.9 Blueprint reference catalog with greenery and exact Landscape Parcel profiles", () => {
   const prepare = realmTools.find((tool) => tool.name === "city_prepare_d4_blueprint_context");
   const catalog = prepare.inputSchema.properties.blueprintReferenceCatalog;
-  assert.match(catalog.description, /city_blueprint_reference_catalog\.v0\.8/);
+  assert.match(catalog.description, /city_blueprint_reference_catalog\.v0\.9/);
   assert.match(catalog.description, /户外/);
   assert.equal(catalog.additionalProperties, false);
   assert.deepEqual(catalog.required, [
@@ -154,7 +154,7 @@ test("requires the v0.8 Blueprint reference catalog with exact Landscape Parcel 
     "landscapeProfiles", "landscapeFillProfiles",
   ]);
   assert.deepEqual(catalog.properties.schemaVersion.enum,
-    ["city_blueprint_reference_catalog.v0.8"]);
+    ["city_blueprint_reference_catalog.v0.9"]);
 
   for (const namespace of ["structureRefs", "fillPools", "algorithmProfiles", "compositionProfiles",
     "styleProfiles", "roadProfiles", "surfaceDetailProfiles", "foundationProfiles", "surfaceRecipes",
@@ -165,6 +165,13 @@ test("requires the v0.8 Blueprint reference catalog with exact Landscape Parcel 
   assert.deepEqual(catalog.properties.structureRefs.items.required,
     ["structureRef", "templateCandidates"]);
   assert.equal(catalog.properties.structureRefs.items.properties.templateCandidates.minItems, 1);
+  assert.deepEqual(catalog.properties.structureRefs.items.properties.greenParcel.properties.pattern.enum,
+    ["FREEFORM", "FIELD_GRID"]);
+  assert.deepEqual(catalog.properties.structureRefs.items.properties.greenParcel.properties.density.enum,
+    ["LOW", "MEDIUM", "HIGH"]);
+  assert.equal(catalog.properties.styleProfiles.items.properties.plantPalette.minItems, 1);
+  assert.equal(catalog.properties.styleProfiles.items.properties.plantPalette.items.properties.weight.exclusiveMinimum,
+    0);
   assert.deepEqual(catalog.properties.algorithmProfiles.items.properties.algorithm.enum,
     ["COMPACT", "GRID", "LINEAR", "COURTYARD", "ORGANIC_COMPACT", "CENTER_SYMMETRIC"]);
   assert.equal(catalog.properties.algorithmProfiles.items.properties.centerAxisStreetEnabled.type,

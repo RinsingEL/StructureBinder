@@ -34,7 +34,7 @@ import java.util.Set;
 
 /** Compiles an accepted, coordinate-free Blueprint into the existing fixed-template D4 anchor contract. */
 public final class CityBlueprintCompilerService {
-    public static final String TRACE_SCHEMA = "city_generation_compile_trace.v0.12";
+    public static final String TRACE_SCHEMA = "city_generation_compile_trace.v0.13";
     public static final String EXTENT_SCHEMA = "group_extent_map.v0.10";
     private static final int INTERNAL_MAX_ANCHORS_PER_GROUP = 256;
     static final int MINIMUM_DISTRICT_SEPARATION_BLOCKS = 12;
@@ -47,6 +47,9 @@ public final class CityBlueprintCompilerService {
             new CityStructureArrayLayoutLoopPlanner();
     private final CityBlueprintGroupLayoutPlanner groupLayoutPlanner = new CityBlueprintGroupLayoutPlanner();
     private final CityInternalStreetPlanner internalStreetPlanner = new CityInternalStreetPlanner();
+    private final CityMainRoadPlanner mainRoadPlanner = new CityMainRoadPlanner();
+    private final CityResidentialOverflowPlanner residentialOverflowPlanner =
+            new CityResidentialOverflowPlanner();
     private final CityArrayVisualQualityGate arrayVisualQualityGate = new CityArrayVisualQualityGate();
     private final CityTemplateOrientationSolver orientationSolver = new CityTemplateOrientationSolver();
     private final CityLandscapeCapacityReservationPlanner landscapeCapacityPlanner =
@@ -142,9 +145,12 @@ public final class CityBlueprintCompilerService {
                         catalog, templates);
         BlockBounds cityPlanningBounds = new BlockBounds(review.grid().blockMinX(), review.grid().blockMinZ(),
                 review.grid().blockMaxX() - 1, review.grid().blockMaxZ() - 1);
+        boolean hierarchicalRoadProfile = hierarchicalRoadProfile(blueprint, references);
+        int interGroupRoadReserveBlocks = hierarchicalRoadProfile
+                ? derivedMainRoadWidth(groups, catalog) + 2 : 0;
         Map<String, CompositionSlot> compositionSlots = planArrayCompositions(blueprint,
                 groupsById, patches, review.grid().cellStepBlocks(), cityPlanningBounds, catalog,
-                spatialDemands);
+                spatialDemands, interGroupRoadReserveBlocks);
         Map<String, Set<String>> districtBufferExemptions = districtBufferExemptions(blueprint);
         Map<String, BlockBounds> formationBoundsByGroup = new LinkedHashMap<>();
         for (CityBlueprint.Group group : groups) {
@@ -235,6 +241,7 @@ public final class CityBlueprintCompilerService {
             for (int index = 0; index < requiredRequests.size(); index++) {
                 RequiredRequest request = requiredRequests.get(index);
                 GroupState state = states.get(request.groupId());
+                state.beginExactSlotSearch(request.structureRef());
                 Placement placement = chooseOne(runDir, review, structureSource, templateCatalogJson,
                         templates, blueprint, state, request.structureRef(), PlacementPhase.REQUIRED,
                         request.ordinal(), occupied, catalog, states, selections, null, terrainGate, ranks[index]);
@@ -330,6 +337,7 @@ public final class CityBlueprintCompilerService {
                             templateCatalogJson, templates, blueprint, state, structureRef,
                             state.anchorCount() + 1, occupied, catalog, states, selections, terrainGate);
                 } else {
+                    state.beginExactSlotSearch(structureRef);
                     Placement placement = chooseOne(runDir, review, structureSource, templateCatalogJson,
                             templates, blueprint, state, structureRef, PlacementPhase.FILL,
                             state.anchorCount() + 1, occupied, catalog, states, selections, null, terrainGate);
@@ -362,18 +370,22 @@ public final class CityBlueprintCompilerService {
         }
 
         states.values().forEach(GroupState::freezeCoreExtent);
-        connectivityPlan = buildConnectivityPlan(blueprint, states);
-        String connectivityFailure = growConnectivity(runDir, review, structureSource,
-                templateCatalogJson, templates, blueprint, states, occupied, anchors, selections,
-                catalog, connectivityPlan, terrainGate);
-        if (!connectivityFailure.isBlank()) {
-            JsonObject failureTrace = trace(blueprint, context, selections, states,
-                    connectivityPlan, "failed", "CITY_BLUEPRINT_CONNECTIVITY_NO_LEGAL_PATH");
-            return CompilationResult.failed(failureTrace,
-                    "CITY_BLUEPRINT_CONNECTIVITY_NO_LEGAL_PATH", connectivityFailure);
+        boolean mainRoadOwnsInterGroupConnection = hierarchicalRoadProfile;
+        if (!mainRoadOwnsInterGroupConnection) {
+            connectivityPlan = buildConnectivityPlan(blueprint, states);
+            String connectivityFailure = growConnectivity(runDir, review, structureSource,
+                    templateCatalogJson, templates, blueprint, states, occupied, anchors, selections,
+                    catalog, connectivityPlan, terrainGate);
+            if (!connectivityFailure.isBlank()) {
+                JsonObject failureTrace = trace(blueprint, context, selections, states,
+                        connectivityPlan, "failed", "CITY_BLUEPRINT_CONNECTIVITY_NO_LEGAL_PATH");
+                return CompilationResult.failed(failureTrace,
+                        "CITY_BLUEPRINT_CONNECTIVITY_NO_LEGAL_PATH", connectivityFailure);
+            }
         }
 
-        String hardRelationFailure = hardRelationFailure(blueprint.relations(), states);
+        String hardRelationFailure = hardRelationFailure(blueprint.relations(), states,
+                mainRoadOwnsInterGroupConnection);
         if (!hardRelationFailure.isBlank()) {
             JsonObject failureTrace = trace(blueprint, context, selections, states,
                     connectivityPlan, "failed", "CITY_BLUEPRINT_HARD_RELATION_UNSATISFIED");
@@ -381,7 +393,7 @@ public final class CityBlueprintCompilerService {
                     hardRelationFailure);
         }
 
-        refreshConnections(connectivityPlan, states);
+        if (!mainRoadOwnsInterGroupConnection) refreshConnections(connectivityPlan, states);
         JsonObject anchorPlan = new JsonObject();
         anchorPlan.addProperty("schemaVersion", CityStructureAnchorPlanner.PLAN_SCHEMA);
         anchorPlan.addProperty("cityId", cityId);
@@ -397,7 +409,21 @@ public final class CityBlueprintCompilerService {
                             catalog.centerAxisStreetEnabled(state.group().algorithmProfileRef()))
                     .forEach(streetBands::add);
         });
+        CityResidentialOverflowPlanner.Result residentialOverflow = residentialOverflowPlanner.plan(
+                anchorObjects, streetBands.asList().stream().map(JsonElement::getAsJsonObject).toList());
         anchorPlan.add("streetBands", streetBands);
+        anchorPlan.add("residentialOverflowPlan", residentialOverflow.plan().deepCopy());
+        CityMainRoadPlanner.Result mainRoads = mainRoadPlanner.plan(blueprint, references, terrainField,
+                anchorObjects, streetBands.asList().stream().map(JsonElement::getAsJsonObject).toList());
+        if (!mainRoads.ok()) {
+            JsonObject failureTrace = trace(blueprint, context, selections, states,
+                    connectivityPlan, "failed", mainRoads.reasonCode());
+            failureTrace.add("streetBands", streetBands.deepCopy());
+            failureTrace.add("cityMainRoadPlan", mainRoads.plan().deepCopy());
+            return CompilationResult.failed(failureTrace, mainRoads.reasonCode(), mainRoads.message());
+        }
+        mainRoads.streetBands().forEach(streetBands::add);
+        anchorPlan.add("cityMainRoadPlan", mainRoads.plan().deepCopy());
         CityArrayVisualQualityGate.Result arrayVisualQuality = arrayVisualQualityGate.evaluate(
                 anchors, streetBands);
         anchorPlan.add("arrayVisualQuality", arrayVisualQuality.json().deepCopy());
@@ -406,6 +432,7 @@ public final class CityBlueprintCompilerService {
                     connectivityPlan, "failed", "CITY_BLUEPRINT_ARRAY_VISUAL_GEOMETRY_INVALID");
             failureTrace.add("streetBands", streetBands.deepCopy());
             failureTrace.add("arrayVisualQuality", arrayVisualQuality.json().deepCopy());
+            failureTrace.add("cityMainRoadPlan", mainRoads.plan().deepCopy());
             return CompilationResult.failed(failureTrace,
                     "CITY_BLUEPRINT_ARRAY_VISUAL_GEOMETRY_INVALID",
                     String.join("; ", arrayVisualQuality.hardBlocks()));
@@ -422,6 +449,8 @@ public final class CityBlueprintCompilerService {
         JsonObject compileTrace = trace(blueprint, context, selections, states,
                 connectivityPlan, "compiled", "");
         compileTrace.add("streetBands", streetBands.deepCopy());
+        compileTrace.add("cityMainRoadPlan", mainRoads.plan().deepCopy());
+        compileTrace.add("residentialOverflowPlan", residentialOverflow.plan().deepCopy());
         compileTrace.add("arrayVisualQuality", arrayVisualQuality.json().deepCopy());
         compileTrace.add("districtCapacityPlan", districtCapacity.plan().deepCopy());
         compileTrace.add("landscapeCapacityReservationPlan", landscapeCapacity.plan().deepCopy());
@@ -1299,7 +1328,8 @@ public final class CityBlueprintCompilerService {
             int patchStepBlocks,
             BlockBounds cityPlanningBounds,
             CatalogIndex catalog,
-            Map<String, CityDistrictCapacityPlanner.SpatialDemand> spatialDemands) {
+            Map<String, CityDistrictCapacityPlanner.SpatialDemand> spatialDemands,
+            int interGroupRoadReserveBlocks) {
         Map<String, CompositionSlot> result = new LinkedHashMap<>();
         List<BlockBounds> reserved = new ArrayList<>();
         for (CityBlueprint.ArrayComposition composition : blueprint.arrayCompositions()) {
@@ -1338,6 +1368,7 @@ public final class CityBlueprintCompilerService {
                     .mapToInt(CityDistrictCapacityPlanner.SpatialDemand::formationSpanBlocks)
                     .max().orElse(centerSpan);
             parentFixedSpan = Math.max(parentFixedSpan, centerSpan);
+            parentFixedSpan += interGroupRoadReserveBlocks;
             CityBlueprintGroupLayoutPlanner.Frame frame = groupLayoutPlanner.worldAxisLocked(parentAlgorithm)
                     ? groupLayoutPlanner.worldFrame(centerOrigin)
                     : groupLayoutPlanner.frame(centerOrigin, null, blueprint.generationSeed(),
@@ -1444,6 +1475,30 @@ public final class CityBlueprintCompilerService {
                             selectedPlacementOrigin = placementOrigin;
                             selectedBounds = candidate;
                             break;
+                        }
+                    }
+                    if (selectedOrigin == null) {
+                        List<BlockPoint> patchOrigins = new ArrayList<>();
+                        BlockPoint relationOrigin = patchPlacementOrigin(member, patches, patchStepBlocks,
+                                cityPlanningBounds);
+                        if (relationOrigin != null) patchOrigins.add(relationOrigin);
+                        for (PatchMemberCell patchCell : preferredZoneCells(preferredPatches(member, patches),
+                                member.preferredPatchZone(), patchStepBlocks, cityPlanningBounds)) {
+                            BlockPoint patchOrigin = cellCenter(patchCell, patchStepBlocks);
+                            if (!patchOrigins.contains(patchOrigin)) patchOrigins.add(patchOrigin);
+                        }
+                        for (BlockPoint patchOrigin : patchOrigins) {
+                            BlockPoint placementOrigin = slotPlacementOrigin(patchOrigin, memberDemand);
+                            BlockBounds candidate = slotBounds(placementOrigin, memberDemand);
+                            if (within(candidate, cityPlanningBounds)
+                                    && !overlapsAny(candidate, reserved)
+                                    && originInsidePreferredPatch(placementOrigin, member, patches,
+                                    patchStepBlocks, cityPlanningBounds)) {
+                                selectedOrigin = patchOrigin;
+                                selectedPlacementOrigin = placementOrigin;
+                                selectedBounds = candidate;
+                                break;
+                            }
                         }
                     }
                     if (selectedOrigin == null) {
@@ -2145,6 +2200,11 @@ public final class CityBlueprintCompilerService {
                 state.layoutAlgorithm(), state.group().densityClass(), blueprint.generationSeed(),
                 state.group().groupId(), state.layoutSlotIndex(), state.layoutFrame(), seedPoint,
                 outward.point(), outward.pending(), footprintSpan);
+        if (("COMPACT".equals(state.layoutAlgorithm()) || "COURTYARD".equals(state.layoutAlgorithm()))
+                && phase != PlacementPhase.CONNECTIVITY) {
+            layout = layoutWithLegalCardinalFrontage(blueprint, state, physicalTemplate, seedPoint,
+                    outward, footprintSpan, layout);
+        }
         plan.addProperty("spacingBlocks", layout.spacingBlocks());
         plan.add("candidateOrigins", layout.guidesJson());
         JsonObject layoutTrace = layout.traceJson();
@@ -2191,6 +2251,40 @@ public final class CityBlueprintCompilerService {
         plan.add("candidateLegalRegion", legalRegion(state, candidatePatches, legalRegionGuide,
                 phase == PlacementPhase.CONNECTIVITY));
         return plan;
+    }
+
+    private CityBlueprintGroupLayoutPlanner.Proposal layoutWithLegalCardinalFrontage(
+            CityBlueprint blueprint,
+            GroupState state,
+            CityTemplateCatalog.Template template,
+            BlockPoint seedPoint,
+            OutwardTarget outward,
+            int footprintSpan,
+            CityBlueprintGroupLayoutPlanner.Proposal initial) {
+        CityBlueprintGroupLayoutPlanner.Frame frame = state.layoutFrame();
+        List<CityBlueprintGroupLayoutPlanner.Frame> frames = List.of(
+                frame,
+                frame.reorient(-frame.axisZ(), frame.axisX()),
+                frame.reorient(-frame.axisX(), -frame.axisZ()),
+                frame.reorient(frame.axisZ(), -frame.axisX()));
+        for (int index = 0; index < frames.size(); index++) {
+            CityBlueprintGroupLayoutPlanner.Proposal proposal = index == 0 ? initial
+                    : groupLayoutPlanner.propose(state.layoutAlgorithm(), state.group().densityClass(),
+                    blueprint.generationSeed(), state.group().groupId(), state.layoutSlotIndex(),
+                    frames.get(index), seedPoint, outward.point(), outward.pending(), footprintSpan);
+            try {
+                CityTemplateOrientationSolver.RotationScore frontage = orientationSolver.rank(
+                        template, template.allowedMirrors().get(0), "", proposal.guides().get(0),
+                        CityTemplateOrientationSolver.FacingTarget.point(
+                                state.layoutAlgorithm().toLowerCase(java.util.Locale.ROOT)
+                                        + "_internal_road:" + state.group().groupId(),
+                                proposal.frontageTarget())).get(0);
+                if (frontage.alignmentScore() >= 0.70) return proposal;
+            } catch (IllegalArgumentException ignored) {
+                // Try the next cardinal local lane frame.
+            }
+        }
+        return initial;
     }
 
     private void applyFrontage(JsonObject plan,
@@ -2360,6 +2454,21 @@ public final class CityBlueprintCompilerService {
                                                        CityBlueprint.PreferredPatchZone zone,
                                                        int step,
                                                        BlockBounds planningBounds) {
+        List<PatchMemberCell> ordered = preferredZoneCellsFromCells(cells, zone, step, planningBounds);
+        return ordered.isEmpty() ? null : ordered.get(0);
+    }
+
+    private static List<PatchMemberCell> preferredZoneCells(List<LandformPatchSummary> patches,
+                                                             CityBlueprint.PreferredPatchZone zone,
+                                                             int step,
+                                                             BlockBounds planningBounds) {
+        return preferredZoneCellsFromCells(memberCells(patches), zone, step, planningBounds);
+    }
+
+    private static List<PatchMemberCell> preferredZoneCellsFromCells(List<PatchMemberCell> cells,
+                                                                      CityBlueprint.PreferredPatchZone zone,
+                                                                      int step,
+                                                                      BlockBounds planningBounds) {
         List<PatchMemberCell> legalCells = new ArrayList<>();
         for (PatchMemberCell cell : cells) {
             BlockBounds bounds = new BlockBounds(cell.blockMinX(), cell.blockMinZ(),
@@ -2367,7 +2476,7 @@ public final class CityBlueprintCompilerService {
             if (within(bounds, planningBounds)) legalCells.add(cell);
         }
         cells = legalCells;
-        if (cells.isEmpty()) return null;
+        if (cells.isEmpty()) return List.of();
 
         double meanX = cells.stream().mapToInt(cell -> cellCenter(cell, step).x()).average().orElse(0.0);
         double meanZ = cells.stream().mapToInt(cell -> cellCenter(cell, step).z()).average().orElse(0.0);
@@ -2385,7 +2494,7 @@ public final class CityBlueprintCompilerService {
             case SOUTH -> minZ + (maxZ - minZ) * 0.75;
             default -> meanZ;
         };
-        return cells.stream().min(Comparator
+        return cells.stream().sorted(Comparator
                 .comparingDouble((PatchMemberCell cell) -> {
                     BlockPoint center = cellCenter(cell, step);
                     double dx = center.x() - targetX;
@@ -2393,7 +2502,7 @@ public final class CityBlueprintCompilerService {
                     return dx * dx + dz * dz;
                 })
                 .thenComparingInt(PatchMemberCell::cellX)
-                .thenComparingInt(PatchMemberCell::cellZ)).orElse(null);
+                .thenComparingInt(PatchMemberCell::cellZ)).toList();
     }
 
     private static BlockPoint frontierAnchorCenterToward(GroupState state, GroupState target) {
@@ -2658,7 +2767,14 @@ public final class CityBlueprintCompilerService {
         }
         if (state.anchorCount() > 0) {
             Nearest nearest = nearest(footprint, state.envelopes(), state.group().groupId());
-            if (nearest == null || nearest.gapBlocks() > state.layoutParameters().maximumEdgeGapBlocks()) {
+            if (state.requiresInternalRoadGap()
+                    && (nearest == null
+                    || nearest.gapBlocks() < state.layoutParameters().targetEdgeGapBlocks())) {
+                return "HARD_SKELETON_GAP_BELOW_TARGET";
+            }
+            if (!state.hardSkeletonUsesExactGuides()
+                    && (nearest == null
+                    || nearest.gapBlocks() > state.layoutParameters().maximumEdgeGapBlocks())) {
                 return "GROUP_CONNECTIVITY_GAP_EXCEEDED";
             }
             if (phase != PlacementPhase.CONNECTIVITY && "ORGANIC_COMPACT".equals(state.layoutAlgorithm())
@@ -2746,6 +2862,10 @@ public final class CityBlueprintCompilerService {
         }
         if (state.anchorCount() > 0) {
             Nearest nearest = nearest(bounds, state.envelopes(), state.group().groupId());
+            if (state.hardSkeletonUsesExactGuides()) {
+                return ConnectivityFit.allowed(1.0, nearest == null ? 0.0 : nearest.gapBlocks(),
+                        nearest == null ? null : nearest.edge());
+            }
             int maximumGap = state.layoutParameters().maximumEdgeGapBlocks();
             if (nearest == null || nearest.gapBlocks() > maximumGap) {
                 return ConnectivityFit.rejected("GROUP_CONNECTIVITY_GAP_EXCEEDED");
@@ -2907,9 +3027,12 @@ public final class CityBlueprintCompilerService {
     }
 
     private static String hardRelationFailure(List<CityBlueprint.Relation> relations,
-                                              Map<String, GroupState> states) {
+                                              Map<String, GroupState> states,
+                                              boolean mainRoadOwnsInterGroupConnection) {
         for (CityBlueprint.Relation relation : relations) {
             if (relation.strength() != CityBlueprint.RelationStrength.HARD) continue;
+            if (mainRoadOwnsInterGroupConnection
+                    && relation.relationKind() == CityBlueprint.RelationKind.CONNECTION) continue;
             GroupState from = states.get(relation.fromGroupId());
             GroupState to = states.get(relation.toGroupId());
             if (from == null || to == null || from.extent() == null || to.extent() == null) continue;
@@ -2924,6 +3047,26 @@ public final class CityBlueprintCompilerService {
             }
         }
         return "";
+    }
+
+    private static boolean hierarchicalRoadProfile(CityBlueprint blueprint,
+                                                   CityBlueprintReferenceCatalog references) {
+        for (JsonElement element : array(references.json(), "roadProfiles")) {
+            if (!element.isJsonObject()) continue;
+            JsonObject profile = element.getAsJsonObject();
+            if (blueprint.roadProfile().profileRef().equals(string(profile, "profileRef"))) {
+                return "HIERARCHICAL".equals(string(profile, "hierarchy"));
+            }
+        }
+        return false;
+    }
+
+    private int derivedMainRoadWidth(List<CityBlueprint.Group> groups, CatalogIndex catalog) {
+        int internal = groups.stream().mapToInt(group -> groupLayoutPlanner.parameters(
+                catalog.algorithm(group.algorithmProfileRef()), group.densityClass())
+                .streetBandWidthBlocks()).max().orElse(1);
+        int width = Math.max(7, internal + 2);
+        return (width & 1) == 0 ? width + 1 : width;
     }
 
     private static boolean frontiersWithinHandoff(GroupState first, GroupState second) {
@@ -3644,6 +3787,7 @@ public final class CityBlueprintCompilerService {
         private int connectionFillCursor;
         private int connectionBatchCount;
         private int exactSlotCursor;
+        private String exactSearchStructureRef = "";
         private BlockPoint streetBandStart;
         private BlockPoint streetBandEnd;
         private int streetBandMaxProjection;
@@ -3701,10 +3845,12 @@ public final class CityBlueprintCompilerService {
                 if (!relationPatches.isEmpty()) return relationPatches;
             }
             if (claimedPatchRefs.isEmpty()) return patches;
-            List<LandformPatchSummary> claimed = connectionPatches.stream()
+            Map<String, LandformPatchSummary> formation = new LinkedHashMap<>();
+            patches.forEach(patch -> formation.put(patch.landformPatchId(), patch));
+            connectionPatches.stream()
                     .filter(patch -> claimedPatchRefs.contains(patch.landformPatchId()))
-                    .toList();
-            return claimed.isEmpty() ? patches : claimed;
+                    .forEach(patch -> formation.putIfAbsent(patch.landformPatchId(), patch));
+            return List.copyOf(formation.values());
         }
         Map<String, LandformPatchSummary> patchByRef() { return patchByRef; }
         int patchStepBlocks() { return patchStepBlocks; }
@@ -3732,6 +3878,11 @@ public final class CityBlueprintCompilerService {
         CityBlueprintGroupLayoutPlanner.Frame layoutFrame() { return layoutFrame; }
         int anchorCount() { return anchorCount; }
         int layoutSlotIndex() { return exactInternalGuides() ? exactSlotCursor : anchorCount; }
+        void beginExactSlotSearch(String structureRef) {
+            if (!exactInternalGuides()) return;
+            if (!structureRef.equals(exactSearchStructureRef)) exactSlotCursor = 0;
+            exactSearchStructureRef = structureRef;
+        }
         boolean advancePastIllegalExactSlot() {
             if (!skipIllegalExactSlots()) return false;
             int limit = "ORGANIC_COMPACT".equals(layoutAlgorithm)
@@ -3756,27 +3907,64 @@ public final class CityBlueprintCompilerService {
             return "GRID".equals(layoutAlgorithm) || "COURTYARD".equals(layoutAlgorithm)
                     || "LINEAR".equals(layoutAlgorithm) || "CENTER_SYMMETRIC".equals(layoutAlgorithm);
         }
+        boolean requiresInternalRoadGap() {
+            return "GRID".equals(layoutAlgorithm) || "COURTYARD".equals(layoutAlgorithm)
+                    || "LINEAR".equals(layoutAlgorithm);
+        }
         JsonObject streetBandPlan() {
             if (!"LINEAR".equals(layoutAlgorithm) || streetBandStart == null || streetBandEnd == null) {
                 return null;
             }
-            int halfWidth = layoutParameters.streetBandWidthBlocks() / 2;
-            BlockBounds streetBounds = new BlockBounds(
-                    Math.min(streetBandStart.x(), streetBandEnd.x()) - halfWidth,
-                    Math.min(streetBandStart.z(), streetBandEnd.z()) - halfWidth,
-                    Math.max(streetBandStart.x(), streetBandEnd.x()) + halfWidth,
-                    Math.max(streetBandStart.z(), streetBandEnd.z()) + halfWidth);
+            BlockPoint resolvedStart = streetBandStart;
+            BlockPoint resolvedEnd = streetBandEnd;
+            if (envelopes.size() > 2) {
+                boolean horizontal = Math.abs(layoutFrame.axisX()) >= Math.abs(layoutFrame.axisZ());
+                int reference = horizontal ? streetBandStart.z() : streetBandStart.x();
+                List<BlockBounds> left = envelopes.subList(1, envelopes.size()).stream()
+                        .filter(bounds -> (horizontal ? centerZ(bounds) : centerX(bounds)) < reference)
+                        .toList();
+                List<BlockBounds> right = envelopes.subList(1, envelopes.size()).stream()
+                        .filter(bounds -> (horizontal ? centerZ(bounds) : centerX(bounds)) > reference)
+                        .toList();
+                if (!left.isEmpty() && !right.isEmpty()) {
+                    int leftEdge = horizontal
+                            ? left.stream().mapToInt(BlockBounds::maxZ).max().orElse(reference)
+                            : left.stream().mapToInt(BlockBounds::maxX).max().orElse(reference);
+                    int rightEdge = horizontal
+                            ? right.stream().mapToInt(BlockBounds::minZ).min().orElse(reference)
+                            : right.stream().mapToInt(BlockBounds::minX).min().orElse(reference);
+                    int gapCenter = Math.floorDiv(leftEdge + rightEdge, 2);
+                    resolvedStart = horizontal
+                            ? new BlockPoint(streetBandStart.x(), gapCenter)
+                            : new BlockPoint(gapCenter, streetBandStart.z());
+                    resolvedEnd = horizontal
+                            ? new BlockPoint(streetBandEnd.x(), gapCenter)
+                            : new BlockPoint(gapCenter, streetBandEnd.z());
+                }
+            }
+            int lowerHalfWidth = (layoutParameters.streetBandWidthBlocks() - 1) / 2;
+            int upperHalfWidth = layoutParameters.streetBandWidthBlocks() / 2;
+            boolean horizontalStreet = resolvedStart.z() == resolvedEnd.z();
+            BlockBounds streetBounds = horizontalStreet
+                    ? new BlockBounds(Math.min(resolvedStart.x(), resolvedEnd.x()),
+                    resolvedStart.z() - lowerHalfWidth,
+                    Math.max(resolvedStart.x(), resolvedEnd.x()),
+                    resolvedStart.z() + upperHalfWidth)
+                    : new BlockBounds(resolvedStart.x() - lowerHalfWidth,
+                    Math.min(resolvedStart.z(), resolvedEnd.z()),
+                    resolvedStart.x() + upperHalfWidth,
+                    Math.max(resolvedStart.z(), resolvedEnd.z()));
             int platformHalfWidth = spatialDemand.formationWidthBlocks() / 2;
             boolean horizontal = Math.abs(layoutFrame.axisX()) >= Math.abs(layoutFrame.axisZ());
             BlockBounds platformBounds = horizontal
                     ? new BlockBounds(streetBounds.minX(),
-                    Math.min(streetBandStart.z(), streetBandEnd.z()) - platformHalfWidth,
-                    streetBounds.maxX(), Math.max(streetBandStart.z(), streetBandEnd.z()) + platformHalfWidth)
-                    : new BlockBounds(Math.min(streetBandStart.x(), streetBandEnd.x()) - platformHalfWidth,
-                    streetBounds.minZ(), Math.max(streetBandStart.x(), streetBandEnd.x()) + platformHalfWidth,
+                    Math.min(resolvedStart.z(), resolvedEnd.z()) - platformHalfWidth,
+                    streetBounds.maxX(), Math.max(resolvedStart.z(), resolvedEnd.z()) + platformHalfWidth)
+                    : new BlockBounds(Math.min(resolvedStart.x(), resolvedEnd.x()) - platformHalfWidth,
+                    streetBounds.minZ(), Math.max(resolvedStart.x(), resolvedEnd.x()) + platformHalfWidth,
                     streetBounds.maxZ());
             JsonObject value = new JsonObject();
-            value.addProperty("schemaVersion", "city_internal_street_band.v0.1");
+            value.addProperty("schemaVersion", "city_internal_street_band.v0.2");
             value.addProperty("streetBandId", group.groupId() + "::internal_street");
             value.addProperty("roadNetworkId", group.groupId() + "::LINEAR_STREET_BAND");
             value.addProperty("roadKind", "LINEAR_STREET_BAND");
@@ -3784,12 +3972,13 @@ public final class CityBlueprintCompilerService {
             value.addProperty("groupId", group.groupId());
             value.addProperty("geometryMode", "STRAIGHT_AXIS_CLIPPED_BY_TERRAIN");
             value.addProperty("widthBlocks", layoutParameters.streetBandWidthBlocks());
-            value.addProperty("surfacePolicy", "FOLLOW_TERRAIN_NO_LEVEL");
+            value.addProperty("surfacePolicy", "FOLLOW_TERRAIN_STEP_GRADED");
+            value.addProperty("crossSectionProfile", "STAIR_SLAB_STAIR");
             value.addProperty("hardSkeleton", true);
             value.addProperty("axisX", layoutFrame.axisX());
             value.addProperty("axisZ", layoutFrame.axisZ());
-            value.add("start", streetBandStart.asJson());
-            value.add("end", streetBandEnd.asJson());
+            value.add("start", resolvedStart.asJson());
+            value.add("end", resolvedEnd.asJson());
             value.add("bounds", CityStructureCandidateEnvelope.boundsJson(streetBounds));
             value.add("platformBounds", CityStructureCandidateEnvelope.boundsJson(platformBounds));
             value.addProperty("platformPolicy", "LOCAL_HARD_SKELETON");
@@ -3873,10 +4062,8 @@ public final class CityBlueprintCompilerService {
                         intValue(block, "z", layoutFrame.center().z())));
                 if ("LINEAR".equals(layoutAlgorithm)) {
                     layoutFrame = switch (firstRoadEntranceDirection(anchor)) {
-                        case "NORTH" -> layoutFrame.reorient(0.0, -1.0);
-                        case "EAST" -> layoutFrame.reorient(1.0, 0.0);
-                        case "SOUTH" -> layoutFrame.reorient(0.0, 1.0);
-                        case "WEST" -> layoutFrame.reorient(-1.0, 0.0);
+                        case "NORTH", "SOUTH" -> layoutFrame.reorient(1.0, 0.0);
+                        case "EAST", "WEST" -> layoutFrame.reorient(0.0, 1.0);
                         default -> layoutFrame;
                     };
                 }
@@ -3967,9 +4154,22 @@ public final class CityBlueprintCompilerService {
                     || !anchor.get("anchorBlock").isJsonObject()) return;
             BlockPoint anchorPoint = point(anchor.getAsJsonObject("anchorBlock"));
             if (streetBandStart == null) {
-                streetBandStart = firstRoadEntrancePosition(anchor);
-                if (streetBandStart == null) streetBandStart = anchorPoint;
+                JsonObject envelopeJson = anchor.has("collisionEnvelope")
+                        && anchor.get("collisionEnvelope").isJsonObject()
+                        ? anchor.getAsJsonObject("collisionEnvelope") : anchor;
+                BlockBounds envelope = bounds(envelopeJson);
+                BlockPoint frameCenter = layoutFrame.center();
+                if (Math.abs(layoutFrame.axisX()) >= Math.abs(layoutFrame.axisZ())) {
+                    streetBandStart = layoutFrame.axisX() >= 0.0
+                            ? new BlockPoint(envelope.maxX() + 1, frameCenter.z())
+                            : new BlockPoint(envelope.minX() - 1, frameCenter.z());
+                } else {
+                    streetBandStart = layoutFrame.axisZ() >= 0.0
+                            ? new BlockPoint(frameCenter.x(), envelope.maxZ() + 1)
+                            : new BlockPoint(frameCenter.x(), envelope.minZ() - 1);
+                }
                 streetBandEnd = streetBandStart;
+                layoutFrame = layoutFrame.recenter(streetBandStart);
             }
             double dx = anchorPoint.x() - streetBandStart.x();
             double dz = anchorPoint.z() - streetBandStart.z();

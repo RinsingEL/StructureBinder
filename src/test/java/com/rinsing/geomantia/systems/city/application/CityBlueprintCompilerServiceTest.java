@@ -474,6 +474,124 @@ class CityBlueprintCompilerServiceTest {
     }
 
     @Test
+    void parentGridPlacesTwoPatchConstrainedChildrenInsideTheirSharedRemotePatch() throws Exception {
+        Fixture fixture = acceptedFixture("run_parent_grid_remote_patch",
+                "city:parent_grid_remote_patch", 8, 7, "SMALL",
+                review -> {
+                    configureSeparatedPlanningPatches(review, true);
+                    JsonArray patches = review.getAsJsonArray("landformPatches");
+                    configurePatchCells(patches.get(0).getAsJsonObject(), -16, -8, -8, 8);
+                    configurePatchCells(patches.get(1).getAsJsonObject(), 12, 20, -8, 8);
+                    configurePatchCells(patches.get(3).getAsJsonObject(), -7, 11, -8, 8);
+                }, blueprint -> {
+                    JsonObject center = blueprint.getAsJsonArray("groups").get(0).getAsJsonObject();
+                    center.addProperty("algorithmProfileRef", "algorithm:grid");
+                    JsonObject remote = center.deepCopy();
+                    remote.addProperty("groupId", "remote_market");
+                    remote.add("preferredPatchRefs",
+                            JsonParser.parseString("[\"patch:plain:2\"]"));
+                    remote.addProperty("preferredPatchZone", "CENTER");
+                    remote.addProperty("algorithmProfileRef", "algorithm:street_band");
+                    JsonObject remoteHousing = remote.deepCopy();
+                    remoteHousing.addProperty("groupId", "remote_housing");
+                    remoteHousing.addProperty("algorithmProfileRef", "algorithm:grid");
+                    blueprint.getAsJsonArray("groups").add(remote);
+                    blueprint.getAsJsonArray("groups").add(remoteHousing);
+                    blueprint.getAsJsonArray("arrayCompositions").add(JsonParser.parseString("""
+                            {"compositionId":"cross_patch_parent_grid",
+                             "algorithmProfileRef":"algorithm:grid",
+                             "centerGroupId":"civic",
+                             "memberGroupIds":["remote_market","remote_housing"]}
+                            """).getAsJsonObject());
+                });
+
+        CityBlueprintCompilerService.CompilationResult result = new CityBlueprintCompilerService()
+                .compile(temporary, fixture.runId(), fixture.cityId());
+
+        assertTrue(result.ok(), result.compileTrace().toString());
+        List<JsonObject> remoteSlots = result.compileTrace().getAsJsonArray("arrayCompositionSlots").asList().stream()
+                .map(JsonElement::getAsJsonObject)
+                .filter(value -> value.get("groupId").getAsString().startsWith("remote_"))
+                .toList();
+        assertEquals(2, remoteSlots.size());
+        for (JsonObject slot : remoteSlots) {
+            int placementX = slot.getAsJsonObject("placementOrigin").get("x").getAsInt();
+            int placementZ = slot.getAsJsonObject("placementOrigin").get("z").getAsInt();
+            assertTrue(placementX >= 12 * 16 && placementX < 21 * 16, slot.toString());
+            assertTrue(placementZ >= -8 * 16 && placementZ < 9 * 16, slot.toString());
+        }
+        assertFalse(overlaps(remoteSlots.get(0).getAsJsonObject("slotBounds"),
+                remoteSlots.get(1).getAsJsonObject("slotBounds")));
+    }
+
+    @Test
+    void compactReorientsLocalLaneFrameForWestLockedEntrance() throws Exception {
+        Fixture fixture = acceptedFixture("run_compact_west_locked", "city:compact_west_locked",
+                9, 9, "SMALL", blueprint -> {
+                    JsonObject group = blueprint.getAsJsonArray("groups").get(0).getAsJsonObject();
+                    group.addProperty("algorithmProfileRef", "algorithm:compact");
+                    group.add("requiredStructureRefs",
+                            JsonParser.parseString("[\"geomantia:west_locked_house\"]"));
+                    group.addProperty("fillPoolRef", "pool:west_locked");
+                    group.addProperty("densityClass", "DENSE");
+                });
+
+        CityBlueprintCompilerService.CompilationResult result = new CityBlueprintCompilerService()
+                .compile(temporary, fixture.runId(), fixture.cityId());
+
+        assertTrue(result.ok(), result.compileTrace().toString());
+        List<JsonObject> anchors = result.structureAnchorPlan().getAsJsonArray("anchors").asList().stream()
+                .map(JsonElement::getAsJsonObject).toList();
+        assertFalse(anchors.isEmpty());
+        assertTrue(anchors.stream().allMatch(anchor -> "WEST".equals(anchor
+                .getAsJsonObject("blueprintLayout").get("frontageDirection").getAsString())));
+    }
+
+    @Test
+    void courtyardReorientsLocalRingFrameForWestLockedEntrance() throws Exception {
+        Fixture fixture = acceptedFixture("run_courtyard_west_locked", "city:courtyard_west_locked",
+                9, 9, "SMALL", blueprint -> {
+                    JsonObject group = blueprint.getAsJsonArray("groups").get(0).getAsJsonObject();
+                    group.addProperty("algorithmProfileRef", "algorithm:courtyard");
+                    group.add("requiredStructureRefs",
+                            JsonParser.parseString("[\"geomantia:west_locked_house\"]"));
+                    group.addProperty("fillPoolRef", "pool:west_locked");
+                    group.addProperty("densityClass", "DENSE");
+                });
+
+        CityBlueprintCompilerService.CompilationResult result = new CityBlueprintCompilerService()
+                .compile(temporary, fixture.runId(), fixture.cityId());
+
+        JsonObject required = result.compileTrace().getAsJsonArray("selections").asList().stream()
+                .map(JsonElement::getAsJsonObject)
+                .filter(selection -> "required".equals(selection.get("phase").getAsString()))
+                .findFirst().orElseThrow();
+        assertEquals("committed", required.get("status").getAsString(), required.toString());
+        assertEquals("WEST", required.getAsJsonObject("blueprintLayout")
+                .get("frontageDirection").getAsString());
+    }
+
+    @Test
+    void linearStreetAxisIsPerpendicularToPrimaryEntrance() throws Exception {
+        Fixture fixture = acceptedFixture("run_linear_perpendicular", "city:linear_perpendicular",
+                9, 9, "SMALL", blueprint -> blueprint.getAsJsonArray("groups")
+                        .get(0).getAsJsonObject().addProperty(
+                                "algorithmProfileRef", "algorithm:street_band"));
+
+        CityBlueprintCompilerService.CompilationResult result = new CityBlueprintCompilerService()
+                .compile(temporary, fixture.runId(), fixture.cityId());
+
+        assertTrue(result.ok(), result.compileTrace().toString());
+        String entrance = "WEST";
+        JsonObject band = result.compileTrace().getAsJsonArray("streetBands").get(0).getAsJsonObject();
+        double axisX = band.get("axisX").getAsDouble();
+        double axisZ = band.get("axisZ").getAsDouble();
+        double entranceX = "EAST".equals(entrance) ? 1.0 : "WEST".equals(entrance) ? -1.0 : 0.0;
+        double entranceZ = "SOUTH".equals(entrance) ? 1.0 : "NORTH".equals(entrance) ? -1.0 : 0.0;
+        assertEquals(0.0, axisX * entranceX + axisZ * entranceZ, 0.0001);
+    }
+
+    @Test
     void centerAxisStreetIsAnOptionalCenterSymmetricAlgorithmProfileSetting() {
         JsonObject references = referenceCatalog();
         JsonObject center = references.getAsJsonArray("algorithmProfiles").asList().stream()
@@ -488,6 +606,28 @@ class CityBlueprintCompilerServiceTest {
 
         assertTrue(parsed.centerAxisStreetEnabledByProfileRef().get("algorithm:center_symmetric"));
         assertFalse(parsed.centerAxisStreetEnabledByProfileRef().get("algorithm:grid"));
+    }
+
+    @Test
+    void referenceCatalogFreezesOptionalBuildingGreenParcelAndCityPlantPalette() {
+        JsonObject references = referenceCatalog();
+        JsonObject structure = references.getAsJsonArray("structureRefs").get(0).getAsJsonObject();
+        structure.add("greenParcel", JsonParser.parseString("""
+                {"pattern":"FIELD_GRID","density":"MEDIUM",
+                 "groundBlockId":"minecraft:grass_block","pathBlockId":"minecraft:gravel"}
+                """).getAsJsonObject());
+        references.getAsJsonArray("styleProfiles").get(0).getAsJsonObject().add("plantPalette",
+                JsonParser.parseString("""
+                        [{"blockId":"minecraft:oak_leaves","weight":2.0},
+                         {"blockId":"minecraft:poppy","weight":1.0}]
+                        """).getAsJsonArray());
+
+        CityBlueprintReferenceCatalog parsed = CityBlueprintReferenceCatalog.parse(references,
+                new CityTemplateCatalogLoader().load(templateCatalog(8, 7)));
+
+        assertEquals(CityBlueprintReferenceCatalog.GreenParcelPattern.FIELD_GRID,
+                parsed.buildingGreenParcelsByStructureRef().get("geomantia:town_hall").pattern());
+        assertEquals(2, parsed.plantPalettesByStyleProfileRef().get("style:stone").size());
     }
 
     @Test
@@ -820,7 +960,7 @@ class CityBlueprintCompilerServiceTest {
 
         assertTrue(first.ok(), first.compileTrace().toString());
         assertEquals(first.structureAnchorPlan(), second.structureAnchorPlan());
-        assertEquals("city_generation_compile_trace.v0.12",
+        assertEquals("city_generation_compile_trace.v0.13",
                 first.compileTrace().get("schemaVersion").getAsString());
         assertEquals("group_extent_map.v0.10",
                 first.groupExtentMap().get("schemaVersion").getAsString());
@@ -1147,6 +1287,7 @@ class CityBlueprintCompilerServiceTest {
                 .map(JsonElement::getAsString).toList());
         assertTrue(group.getAsJsonArray("claimedPatchRefs").asList().stream()
                 .map(JsonElement::getAsString).anyMatch("patch:plain:2"::equals));
+        assertTrue(group.get("minimumStructureCountReached").getAsBoolean(), group.toString());
     }
 
     @Test
@@ -1237,6 +1378,11 @@ class CityBlueprintCompilerServiceTest {
                     "semanticProfileId":"geomantia:floating_house",
                     "reviewState":"approved","functionTerms":["residential"],
                     "planningRoleTerms":["planning_role.fill"],"terrainModes":["FLOATING"],
+                    "styleTerms":["style.test"]
+                  },{
+                    "semanticProfileId":"geomantia:west_locked_house",
+                    "reviewState":"approved","functionTerms":["residential"],
+                    "planningRoleTerms":["planning_role.fill"],"terrainModes":["SURFACE"],
                     "styleTerms":["style.test"]
                   }
                 ]}
@@ -1552,6 +1698,15 @@ class CityBlueprintCompilerServiceTest {
                       "entranceId":"floating_house_west","position":{"x":0,"z":4},"direction":"WEST"}],
                     "terrainPosePolicy":"structure_start_beard_thin","supportPolicy":"none",
                     "clearanceBlocks":1
+                  },{
+                    "buildingSemantic":"residential","style":"stone",
+                    "templateId":"geomantia:west_locked_house","templateRef":"geomantia:west_locked_house",
+                    "contentHash":"sha256:west-locked-fixture","variant":"default",
+                    "rawSize":{"width":9,"height":8,"depth":9},
+                    "allowedRotations":["NONE"],"allowedMirrors":["NONE"],"roadEntrances":[{
+                      "entranceId":"west_locked_house_west","position":{"x":0,"z":4},"direction":"WEST"}],
+                    "terrainPosePolicy":"structure_start_beard_thin","supportPolicy":"none",
+                    "clearanceBlocks":1
                   }]
                 }
                 """.formatted(width, depth)).getAsJsonObject();
@@ -1560,18 +1715,20 @@ class CityBlueprintCompilerServiceTest {
     private static JsonObject referenceCatalog() {
         return JsonParser.parseString("""
                 {
-                  "schemaVersion":"city_blueprint_reference_catalog.v0.8",
+                  "schemaVersion":"city_blueprint_reference_catalog.v0.9",
                   "structureRefs":[
                     {"structureRef":"geomantia:town_hall","templateCandidates":[{"templateId":"geomantia:town_hall","variantId":"default"}]},
                     {"structureRef":"geomantia:oversized_hall","templateCandidates":[{"templateId":"geomantia:oversized_hall","variantId":"default"}]},
                     {"structureRef":"geomantia:terrain_house","templateCandidates":[{"templateId":"geomantia:terrain_house","variantId":"default"}]},
-                    {"structureRef":"geomantia:floating_house","templateCandidates":[{"templateId":"geomantia:floating_house","variantId":"default"}]}
+                    {"structureRef":"geomantia:floating_house","templateCandidates":[{"templateId":"geomantia:floating_house","variantId":"default"}]},
+                    {"structureRef":"geomantia:west_locked_house","templateCandidates":[{"templateId":"geomantia:west_locked_house","variantId":"default"}]}
                   ],
                   "fillPools":[
                     {"poolRef":"pool:civic","structureRefs":["geomantia:town_hall"]},
                     {"poolRef":"pool:mixed","structureRefs":["geomantia:town_hall","geomantia:oversized_hall"]},
                     {"poolRef":"pool:terrain","structureRefs":["geomantia:terrain_house"]},
-                    {"poolRef":"pool:unsupported","structureRefs":["geomantia:floating_house"]}
+                    {"poolRef":"pool:unsupported","structureRefs":["geomantia:floating_house"]},
+                    {"poolRef":"pool:west_locked","structureRefs":["geomantia:west_locked_house"]}
                   ],
                   "algorithmProfiles":[
                     {"algorithmProfileRef":"algorithm:compact","algorithm":"COMPACT"},

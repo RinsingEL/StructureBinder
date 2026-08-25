@@ -66,9 +66,9 @@ class CityInternalStreetPlannerTest {
     @Test
     void centerAxisStreetIsAbsentByDefaultAndPresentWhenEnabled() {
         var anchors = List.of(
-                anchor("sym_north", "fill", -2, -30, 2, -26, new JsonObject()),
+                anchor("sym_north", "fill", 10, -30, 14, -26, new JsonObject()),
                 anchor("sym_core", "required", -4, -4, 4, 4, new JsonObject()),
-                anchor("sym_south", "fill", -2, 26, 2, 30, new JsonObject()));
+                anchor("sym_south", "fill", 10, 26, 14, 30, new JsonObject()));
 
         assertTrue(planner.plan("symmetric", "CENTER_SYMMETRIC",
                 parameters("CENTER_SYMMETRIC"), anchors, false).isEmpty());
@@ -101,7 +101,7 @@ class CityInternalStreetPlannerTest {
     private static JsonObject compactAnchor(String id, int x, int z) {
         JsonObject layout = new JsonObject();
         layout.add("compactLaneTarget", point(x, z));
-        return anchor(id, "fill", x, z, x + 8, z + 8, layout);
+        return anchor(id, "fill", x - 4, z + 4, x + 4, z + 12, layout);
     }
 
     private static JsonObject anchor(String id, String phase, int minX, int minZ, int maxX, int maxZ,

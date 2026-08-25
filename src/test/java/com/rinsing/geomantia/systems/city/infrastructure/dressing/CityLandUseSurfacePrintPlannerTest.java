@@ -2,6 +2,8 @@ package com.rinsing.geomantia.systems.city.infrastructure.dressing;
 
 import com.rinsing.geomantia.systems.city.application.landuse.CityLandUseSurfacePrintPlan;
 import com.rinsing.geomantia.systems.city.application.landuse.CityLandUseSurfacePrintPlanner;
+import com.rinsing.geomantia.systems.city.application.landuse.LandUseSourceResolver;
+import com.rinsing.geomantia.systems.city.application.CityBlueprintReferenceCatalog;
 import com.rinsing.geomantia.systems.city.domain.landuse.BoundaryPolicy;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseAreaPlan;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseSeedGroup;
@@ -13,10 +15,14 @@ import com.rinsing.geomantia.systems.city.domain.landuse.VegetationPolicy;
 import com.rinsing.geomantia.systems.city.domain.landuse.rules.LandUseRule;
 import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
 import com.rinsing.geomantia.systems.city.domain.model.BlockPoint;
+import com.rinsing.geomantia.systems.city.infrastructure.preview.CityLandUsePreviewRenderer;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -168,6 +174,59 @@ class CityLandUseSurfacePrintPlannerTest {
                 .mapToInt(span -> span.maxX() - span.minX() + 1).sum());
         assertTrue(recipe.roleDefinitions().stream().anyMatch(role -> role.targetShare() == 0.325));
         assertEquals(2, recipe.contentWeights().size());
+    }
+
+    @Test
+    void freezesRoadCrossSectionGreenParcelAndOverflowBoundaryCells() throws Exception {
+        LandUseAreaPlan areaPlan = areaPlan();
+        LandUseTerrainField featureTerrain = terrain(new BlockBounds(0, 0, 63, 31), false);
+        List<LandUseSeedGroup> groups = List.of(
+                group("farm_group", SurfacePolicy.CULTIVATE, new BlockBounds(12, 5, 14, 7)),
+                group("market_group", SurfacePolicy.PAVE, new BlockBounds(42, 2, 43, 3)));
+        LandUseSourceResolver.RoadBand road = new LandUseSourceResolver.RoadBand(
+                "road::1", "network", "CITY_MAIN_ROAD", new BlockPoint(20, 18),
+                new BlockPoint(30, 18), new BlockBounds(20, 15, 30, 21), 7,
+                "STAIR_SLAB_STAIR");
+        LandUseSourceResolver.GreenParcelSpec green = new LandUseSourceResolver.GreenParcelSpec(
+                "market::green", "market", new BlockBounds(39, 0, 47, 8),
+                new BlockBounds(42, 2, 43, 3), new BlockPoint(41, 2),
+                CityBlueprintReferenceCatalog.GreenParcelPattern.FIELD_GRID,
+                CityBlueprintReferenceCatalog.GreenParcelDensity.MEDIUM,
+                "minecraft:grass_block", "minecraft:gravel",
+                List.of(new CityBlueprintReferenceCatalog.PlantPaletteEntry("minecraft:oak_leaves", 1),
+                        new CityBlueprintReferenceCatalog.PlantPaletteEntry("minecraft:poppy", 1)), 42L);
+        LandUseSourceResolver.OverflowZoneSpec overflow = new LandUseSourceResolver.OverflowZoneSpec(
+                "overflow", new BlockBounds(0, 0, 10, 8), List.of(new BlockBounds(4, 0, 6, 2)),
+                "minecraft:stone_brick_wall");
+
+        CityLandUseSurfacePrintPlan first = new CityLandUseSurfacePrintPlanner().plan(areaPlan, groups,
+                featureTerrain, List.of(road), List.of(green),
+                List.of(overflow));
+        CityLandUseSurfacePrintPlan second = new CityLandUseSurfacePrintPlanner().plan(areaPlan, groups,
+                featureTerrain, List.of(road), List.of(green),
+                List.of(overflow));
+
+        assertEquals(first, second);
+        assertTrue(first.featureCells().stream().anyMatch(cell ->
+                cell.kind() == CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB));
+        assertTrue(first.featureCells().stream().anyMatch(cell ->
+                cell.kind() == CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR
+                        && cell.facing() == CityLandUseSurfacePrintPlan.HorizontalFacing.NORTH));
+        assertTrue(first.featureCells().stream().anyMatch(cell ->
+                cell.kind() == CityLandUseSurfacePrintPlan.FeatureKind.GREEN_PATH));
+        assertTrue(first.featureCells().stream().filter(cell ->
+                        cell.kind() == CityLandUseSurfacePrintPlan.FeatureKind.GREEN_PLANT)
+                .allMatch(cell -> Set.of("minecraft:oak_leaves", "minecraft:poppy").contains(cell.blockId())));
+        assertTrue(first.featureCells().stream().noneMatch(cell ->
+                cell.x() >= 42 && cell.x() <= 43 && cell.z() >= 2 && cell.z() <= 3));
+        assertTrue(first.featureCells().stream().anyMatch(cell ->
+                cell.kind() == CityLandUseSurfacePrintPlan.FeatureKind.OVERFLOW_BOUNDARY));
+        assertTrue(first.featureCells().stream().noneMatch(cell ->
+                cell.kind() == CityLandUseSurfacePrintPlan.FeatureKind.OVERFLOW_BOUNDARY
+                        && cell.x() >= 4 && cell.x() <= 6 && cell.z() <= 2));
+        Path output = Path.of("build", "city-road-greenery-preview");
+        var metadata = new CityLandUsePreviewRenderer().render(featureTerrain, areaPlan, first, output);
+        assertTrue(Files.size(output.resolve(metadata.get("fileName").getAsString())) > 0);
     }
 
     @Test

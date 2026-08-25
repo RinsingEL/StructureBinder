@@ -57,6 +57,7 @@ import java.security.MessageDigest;
 import java.util.EnumSet;
 import java.util.HexFormat;
 import java.util.List;
+import java.util.Set;
 import java.util.OptionalInt;
 import java.util.function.Predicate;
 
@@ -121,6 +122,13 @@ class CityPlanningEndpointHandlerTest {
                 "surfacePrintPlanHash", "ruleProfileHash")) {
             assertFalse(completion.get(identity).getAsString().isBlank(), identity);
         }
+        JsonObject surfacePlan = JsonParser.parseString(Files.readString(
+                directory.resolve("city_land_use_surface_print_plan.json"))).getAsJsonObject();
+        Set<String> featureKinds = surfacePlan.getAsJsonArray("featureCells").asList().stream()
+                .map(value -> value.getAsJsonObject().get("kind").getAsString())
+                .collect(java.util.stream.Collectors.toSet());
+        assertTrue(featureKinds.contains("ROAD_SLAB"));
+        assertTrue(featureKinds.contains("ROAD_STAIR"));
         assertTrue(CityPlanningEndpointHandler.workflowBlueprintOutdoorArtifactsCurrent(
                 debugRoot, debugRoot.resolve(runId), citySeedId));
 
@@ -4083,7 +4091,7 @@ class CityPlanningEndpointHandlerTest {
     private static JsonObject blueprintReferenceCatalog() {
         return JsonParser.parseString("""
                 {
-                  "schemaVersion":"city_blueprint_reference_catalog.v0.8",
+                  "schemaVersion":"city_blueprint_reference_catalog.v0.9",
                   "structureRefs":[{"structureRef":"minecraft:desert_pyramid","templateCandidates":[{"templateId":"geomantia:test_house","variantId":"test_v1"}]}],
                   "fillPools":[{"poolRef":"pool:test","structureRefs":["minecraft:desert_pyramid"]}],
                   "algorithmProfiles":[{"algorithmProfileRef":"algorithm:grid","algorithm":"GRID"}],

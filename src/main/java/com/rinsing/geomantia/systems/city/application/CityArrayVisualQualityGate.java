@@ -35,6 +35,21 @@ final class CityArrayVisualQualityGate {
         }
 
         List<String> hardBlocks = new ArrayList<>();
+        int roadStructureOverlapCount = 0;
+        for (JsonElement element : streetsJson) {
+            if (!element.isJsonObject()) continue;
+            JsonObject road = element.getAsJsonObject();
+            JsonObject rawBounds = object(road, "bounds");
+            if (rawBounds.size() == 0) continue;
+            BlockBounds roadBounds = crossSectionBounds(road,
+                    CityStructureCandidateEnvelope.bounds(rawBounds));
+            for (Anchor anchor : anchors) {
+                if (!roadBounds.overlaps(anchor.body())) continue;
+                roadStructureOverlapCount++;
+                hardBlocks.add(string(road, "streetBandId") + ": ROAD_OVERLAPS_STRUCTURE:"
+                        + anchor.anchorId());
+            }
+        }
         JsonArray groups = new JsonArray();
         for (Map.Entry<String, List<Anchor>> entry : byGroup.entrySet()) {
             String groupId = entry.getKey();
@@ -57,11 +72,26 @@ final class CityArrayVisualQualityGate {
         JsonObject value = new JsonObject();
         value.addProperty("schemaVersion", SCHEMA_VERSION);
         value.addProperty("passed", hardBlocks.isEmpty());
+        value.addProperty("roadStructureOverlapCount", roadStructureOverlapCount);
         JsonArray blocks = new JsonArray();
         hardBlocks.forEach(blocks::add);
         value.add("hardBlocks", blocks);
         value.add("groups", groups);
         return new Result(hardBlocks.isEmpty(), List.copyOf(hardBlocks), value);
+    }
+
+    private static BlockBounds crossSectionBounds(JsonObject road, BlockBounds surface) {
+        int axisX = intValue(road, "axisX");
+        int axisZ = intValue(road, "axisZ");
+        if (axisX != 0 && axisZ == 0) {
+            return new BlockBounds(surface.minX(), surface.minZ() - 1,
+                    surface.maxX(), surface.maxZ() + 1);
+        }
+        if (axisZ != 0 && axisX == 0) {
+            return new BlockBounds(surface.minX() - 1, surface.minZ(),
+                    surface.maxX() + 1, surface.maxZ());
+        }
+        return surface;
     }
 
     private static JsonObject grid(String groupId, List<Anchor> anchors, List<JsonObject> roads,
@@ -248,16 +278,27 @@ final class CityArrayVisualQualityGate {
         return value.has(key) && !value.get(key).isJsonNull() ? value.get(key).getAsString() : "";
     }
 
-    private record Anchor(String groupId, String algorithm, String phase, BlockPoint point,
-                          BlockBounds collision, JsonObject layout) {
+    private record Anchor(String anchorId, String groupId, String algorithm, String phase, BlockPoint point,
+                          BlockBounds body, BlockBounds collision, JsonObject layout) {
         static Anchor parse(JsonObject value) {
             JsonObject layout = object(value, "blueprintLayout");
-            return new Anchor(string(value, "placementGroupId"), string(layout, "algorithm"),
+            return new Anchor(string(value, "anchorId"), string(value, "placementGroupId"),
+                    string(layout, "algorithm"),
                     string(value, "blueprintPlacementPhase"), new BlockPoint(
                     intValue(value.getAsJsonObject("anchorBlock"), "x"),
                     intValue(value.getAsJsonObject("anchorBlock"), "z")),
+                    bodyBounds(value),
                     CityStructureCandidateEnvelope.bounds(value.getAsJsonObject("collisionEnvelope")), layout);
         }
+    }
+
+    private static BlockBounds bodyBounds(JsonObject value) {
+        for (String key : List.of("actualFootprint", "plannedFootprint", "bodyEnvelope")) {
+            if (value.has(key) && value.get(key).isJsonObject()) {
+                return CityStructureCandidateEnvelope.bounds(value.getAsJsonObject(key));
+            }
+        }
+        return CityStructureCandidateEnvelope.bounds(value.getAsJsonObject("collisionEnvelope"));
     }
 
     record Result(boolean passed, List<String> hardBlocks, JsonObject json) {

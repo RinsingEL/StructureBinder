@@ -29,17 +29,40 @@ public record CityBlueprintReferenceCatalog(
         Set<String> styleProfileRefs,
         Set<String> roadProfileRefs,
         Set<String> surfaceDetailProfileRefs,
+        Map<String, BuildingGreenParcelProfile> buildingGreenParcelsByStructureRef,
+        Map<String, List<PlantPaletteEntry>> plantPalettesByStyleProfileRef,
         LandUseRuleCatalog landUseRuleCatalog,
         Map<String, SurfaceRecipe> surfaceRecipes,
         Map<String, FoundationProfile> foundationProfiles,
         Map<String, LandscapeProfile> landscapeProfiles,
         Map<String, LandscapeFillProfile> landscapeFillProfiles) {
 
-    public static final String SCHEMA_VERSION = "city_blueprint_reference_catalog.v0.8";
+    public static final String SCHEMA_VERSION = "city_blueprint_reference_catalog.v0.9";
     private static final Set<String> ROOT_FIELDS = Set.of("schemaVersion", "structureRefs", "fillPools",
             "algorithmProfiles", "compositionProfiles", "styleProfiles", "roadProfiles",
             "surfaceDetailProfiles", "landUseRuleProfile", "surfaceRecipes", "foundationProfiles",
             "landscapeProfiles", "landscapeFillProfiles");
+
+    public CityBlueprintReferenceCatalog(JsonObject json,
+                                         Set<String> structureRefs,
+                                         Set<String> fillPoolRefs,
+                                         Set<String> algorithmProfileRefs,
+                                         Map<String, String> algorithmsByProfileRef,
+                                         Map<String, Boolean> centerAxisStreetEnabledByProfileRef,
+                                         Set<String> compositionProfileRefs,
+                                         Set<String> styleProfileRefs,
+                                         Set<String> roadProfileRefs,
+                                         Set<String> surfaceDetailProfileRefs,
+                                         LandUseRuleCatalog landUseRuleCatalog,
+                                         Map<String, SurfaceRecipe> surfaceRecipes,
+                                         Map<String, FoundationProfile> foundationProfiles,
+                                         Map<String, LandscapeProfile> landscapeProfiles,
+                                         Map<String, LandscapeFillProfile> landscapeFillProfiles) {
+        this(json, structureRefs, fillPoolRefs, algorithmProfileRefs, algorithmsByProfileRef,
+                centerAxisStreetEnabledByProfileRef, compositionProfileRefs, styleProfileRefs,
+                roadProfileRefs, surfaceDetailProfileRefs, Map.of(), Map.of(), landUseRuleCatalog,
+                surfaceRecipes, foundationProfiles, landscapeProfiles, landscapeFillProfiles);
+    }
 
     public static CityBlueprintReferenceCatalog parse(JsonObject root, CityTemplateCatalog templateCatalog) {
         if (root == null) fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID,
@@ -50,12 +73,12 @@ public record CityBlueprintReferenceCatalog(
             fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_SCHEMA_UNSUPPORTED,
                     "$.schemaVersion", "Unsupported blueprint reference catalog schema: " + schema);
         }
-        Set<String> structures = structureRefs(array(root, "structureRefs"), templateCatalog);
+        StructureCatalog structures = structureRefs(array(root, "structureRefs"), templateCatalog);
         Set<String> pools = refs(array(root, "fillPools"), "poolRef", Set.of("poolRef", "structureRefs"),
                 "$.fillPools", item -> {
                     for (JsonElement entry : array(item, "structureRefs")) {
                         String ref = stringElement(entry, "$.fillPools[].structureRefs[]");
-                        if (!structures.contains(ref)) {
+                        if (!structures.refs().contains(ref)) {
                             fail(CityBlueprintReasonCode.CITY_BLUEPRINT_STRUCTURE_REF_UNKNOWN,
                                     "$.fillPools[].structureRefs", "Unknown structureRef in fill pool: " + ref);
                         }
@@ -93,8 +116,7 @@ public record CityBlueprintReferenceCatalog(
         Set<String> compositions = refs(array(root, "compositionProfiles"), "compositionProfileRef",
                 Set.of("compositionProfileRef", "mode"), "$.compositionProfiles",
                 item -> enumString(item, "mode", Set.of("ROUND_ROBIN")));
-        Set<String> styles = profileRefs(array(root, "styleProfiles"), "profileRef", Set.of("profileRef"),
-                "$.styleProfiles", ignored -> { });
+        StyleCatalog styles = styleProfiles(array(root, "styleProfiles"));
         Set<String> roads = profileRefs(array(root, "roadProfiles"), "profileRef",
                 Set.of("profileRef", "hierarchy", "density"), "$.roadProfiles", item -> {
                     enumString(item, "hierarchy", Set.of("SIMPLE", "HIERARCHICAL"));
@@ -120,8 +142,8 @@ public record CityBlueprintReferenceCatalog(
                 array(root, "landscapeProfiles"), landUseRules, surfaceRecipes);
         Map<String, LandscapeFillProfile> landscapeFillProfiles = landscapeFillProfiles(
                 array(root, "landscapeFillProfiles"));
-        if (structures.isEmpty() || pools.isEmpty() || algorithms.isEmpty() || compositions.isEmpty()
-            || styles.isEmpty() || roads.isEmpty() || surfaces.isEmpty() || surfaceRecipes.isEmpty()
+        if (structures.refs().isEmpty() || pools.isEmpty() || algorithms.isEmpty() || compositions.isEmpty()
+            || styles.refs().isEmpty() || roads.isEmpty() || surfaces.isEmpty() || surfaceRecipes.isEmpty()
                 || foundationProfiles.isEmpty() || landscapeProfiles.isEmpty() || landscapeFillProfiles.isEmpty()) {
             fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID, "$",
                     "Every reference catalog namespace must contain at least one entry.");
@@ -135,9 +157,10 @@ public record CityBlueprintReferenceCatalog(
                         "Every landscape profile must have at least one compatible landscapeFillProfile.");
             }
         }
-        return new CityBlueprintReferenceCatalog(root.deepCopy(), structures, pools, algorithms,
+        return new CityBlueprintReferenceCatalog(root.deepCopy(), structures.refs(), pools, algorithms,
                 Map.copyOf(algorithmsByRef), Map.copyOf(centerAxisStreetsByRef), compositions,
-                styles, roads, surfaces, landUseRules, Map.copyOf(surfaceRecipes),
+                styles.refs(), roads, surfaces, structures.greenParcels(), styles.plantPalettes(),
+                landUseRules, Map.copyOf(surfaceRecipes),
                 Map.copyOf(foundationProfiles),
                 Map.copyOf(landscapeProfiles), Map.copyOf(landscapeFillProfiles));
     }
@@ -524,15 +547,29 @@ public record CityBlueprintReferenceCatalog(
         return new ParcelStyle(countMin, countMax, areaMin, areaMax, minSharedBoundary);
     }
 
-    private static Set<String> structureRefs(JsonArray array, CityTemplateCatalog templates) {
+    private static StructureCatalog structureRefs(JsonArray array, CityTemplateCatalog templates) {
         Set<String> result = new LinkedHashSet<>();
+        Map<String, BuildingGreenParcelProfile> greenParcels = new LinkedHashMap<>();
         for (int index = 0; index < array.size(); index++) {
             String path = "$.structureRefs[" + index + "]";
             JsonObject item = object(array.get(index), path);
-            exactFields(item, Set.of("structureRef", "templateCandidates"), path,
+            Set<String> fields = item.has("greenParcel")
+                    ? Set.of("structureRef", "templateCandidates", "greenParcel")
+                    : Set.of("structureRef", "templateCandidates");
+            exactFields(item, fields, path,
                     CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID);
             String ref = string(item, "structureRef", path + ".structureRef");
             duplicate(result, ref, path);
+            if (item.has("greenParcel")) {
+                JsonObject green = object(item.get("greenParcel"), path + ".greenParcel");
+                exactFields(green, Set.of("pattern", "density", "groundBlockId", "pathBlockId"),
+                        path + ".greenParcel", CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID);
+                greenParcels.put(ref, new BuildingGreenParcelProfile(
+                        enumValue(green, "pattern", GreenParcelPattern.class, path + ".greenParcel"),
+                        enumValue(green, "density", GreenParcelDensity.class, path + ".greenParcel"),
+                        blockId(green, "groundBlockId", path + ".greenParcel"),
+                        blockId(green, "pathBlockId", path + ".greenParcel")));
+            }
             JsonArray candidates = array(item, "templateCandidates");
             if (candidates.isEmpty()) {
                 fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID,
@@ -552,7 +589,43 @@ public record CityBlueprintReferenceCatalog(
                 }
             }
         }
-        return Set.copyOf(result);
+        return new StructureCatalog(Set.copyOf(result), Map.copyOf(greenParcels));
+    }
+
+    private static StyleCatalog styleProfiles(JsonArray array) {
+        Set<String> refs = new LinkedHashSet<>();
+        Map<String, List<PlantPaletteEntry>> palettes = new LinkedHashMap<>();
+        for (int index = 0; index < array.size(); index++) {
+            String path = "$.styleProfiles[" + index + "]";
+            JsonObject item = object(array.get(index), path);
+            Set<String> fields = item.has("plantPalette")
+                    ? Set.of("profileRef", "plantPalette") : Set.of("profileRef");
+            exactFields(item, fields, path, CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID);
+            String ref = string(item, "profileRef", path + ".profileRef");
+            duplicate(refs, ref, path);
+            if (!item.has("plantPalette")) continue;
+            JsonArray palette = array(item, "plantPalette");
+            if (palette.isEmpty()) {
+                fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID,
+                        path + ".plantPalette", "plantPalette must not be empty.");
+            }
+            List<PlantPaletteEntry> entries = new ArrayList<>();
+            Set<String> blocks = new LinkedHashSet<>();
+            for (int paletteIndex = 0; paletteIndex < palette.size(); paletteIndex++) {
+                String entryPath = path + ".plantPalette[" + paletteIndex + "]";
+                JsonObject entry = object(palette.get(paletteIndex), entryPath);
+                exactFields(entry, Set.of("blockId", "weight"), entryPath,
+                        CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID);
+                String block = blockId(entry, "blockId", entryPath);
+                if (!blocks.add(block)) {
+                    fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_DUPLICATE_REF,
+                            entryPath + ".blockId", "Duplicate plant block: " + block);
+                }
+                entries.add(new PlantPaletteEntry(block, positiveNumber(entry, "weight", entryPath)));
+            }
+            palettes.put(ref, List.copyOf(entries));
+        }
+        return new StyleCatalog(Set.copyOf(refs), Map.copyOf(palettes));
     }
 
     private static Set<String> profileRefs(JsonArray array, String refField, Set<String> fields, String path,
@@ -761,6 +834,28 @@ public record CityBlueprintReferenceCatalog(
 
     private static void fail(CityBlueprintReasonCode code, String path, String message) {
         throw new CityBlueprintContractException(code, path, message);
+    }
+
+    public record BuildingGreenParcelProfile(
+            GreenParcelPattern pattern,
+            GreenParcelDensity density,
+            String groundBlockId,
+            String pathBlockId) {
+    }
+
+    public record PlantPaletteEntry(String blockId, double weight) {
+    }
+
+    public enum GreenParcelPattern { FREEFORM, FIELD_GRID }
+
+    public enum GreenParcelDensity { LOW, MEDIUM, HIGH }
+
+    private record StructureCatalog(Set<String> refs,
+                                    Map<String, BuildingGreenParcelProfile> greenParcels) {
+    }
+
+    private record StyleCatalog(Set<String> refs,
+                                Map<String, List<PlantPaletteEntry>> plantPalettes) {
     }
 
     public record SurfaceRecipe(

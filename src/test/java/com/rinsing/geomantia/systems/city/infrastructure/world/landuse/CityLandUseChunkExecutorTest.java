@@ -1,5 +1,6 @@
 package com.rinsing.geomantia.systems.city.infrastructure.world.landuse;
 
+import com.rinsing.geomantia.systems.city.application.landuse.CityLandUseSurfacePrintPlan;
 import net.minecraft.core.BlockPos;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,34 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityLandUseChunkExecutorTest {
     private final CityLandUseChunkExecutor executor = new CityLandUseChunkExecutor();
+
+    @Test
+    void featureOperationsPreserveRoadShapeAndGreenPlantLayer() {
+        CityLandUseChunkCompiler.ChunkFragment fragment = new CityLandUseChunkCompiler.ChunkFragment(
+                CityLandUseChunkCompiler.RESULT_SCHEMA, "city", "area-hash", "palette-hash",
+                0, 0, 3, 0, 0, 0, null, List.of(), List.of(), List.of(), List.of(
+                new CityLandUseChunkCompiler.FeatureOperation("road", 0, 0,
+                        "minecraft:stone_brick_slab", 0,
+                        CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB,
+                        CityLandUseSurfacePrintPlan.HorizontalFacing.NONE),
+                new CityLandUseChunkCompiler.FeatureOperation("road", 1, 0,
+                        "minecraft:stone_brick_stairs", 0,
+                        CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR,
+                        CityLandUseSurfacePrintPlan.HorizontalFacing.NORTH),
+                new CityLandUseChunkCompiler.FeatureOperation("green", 2, 0,
+                        "minecraft:poppy", 1,
+                        CityLandUseSurfacePrintPlan.FeatureKind.GREEN_PLANT,
+                        CityLandUseSurfacePrintPlan.HorizontalFacing.NONE)));
+        FakeWorld world = new FakeWorld();
+
+        CityLandUseChunkExecutor.ExecutionResult result = executor.execute(fragment, world,
+                CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES);
+
+        assertEquals(CityLandUseChunkExecutor.Status.APPLIED, result.status());
+        assertTrue(world.featureWrites.contains("0,64,0=ROAD_SLAB:NONE"));
+        assertTrue(world.featureWrites.contains("1,64,0=ROAD_STAIR:NORTH"));
+        assertTrue(world.featureWrites.contains("2,65,0=GREEN_PLANT:NONE"));
+    }
 
     @Test
     void appliesBaseThenOverlayThenBoundary() {
@@ -181,6 +210,7 @@ class CityLandUseChunkExecutorTest {
         private final Map<String, Boolean> known = new HashMap<>();
         private final Map<String, Boolean> replaceable = new HashMap<>();
         private final List<String> writes = new ArrayList<>();
+        private final List<String> featureWrites = new ArrayList<>();
         private final List<String> restores = new ArrayList<>();
         private int sampleCount;
         private int writeCount;
@@ -214,6 +244,14 @@ class CityLandUseChunkExecutorTest {
             writeCount++;
             writes.add(worldX + "," + y + "," + worldZ + "=" + blockId);
             return writeCount != mutateThenFailWriteIndex;
+        }
+
+        @Override
+        public boolean setFeatureBlock(int worldX, int y, int worldZ, String blockId,
+                                       CityLandUseSurfacePrintPlan.FeatureKind kind,
+                                       CityLandUseSurfacePrintPlan.HorizontalFacing facing) {
+            featureWrites.add(worldX + "," + y + "," + worldZ + "=" + kind + ':' + facing);
+            return setBlock(worldX, y, worldZ, blockId);
         }
 
         @Override

@@ -1,5 +1,6 @@
 package com.rinsing.geomantia.systems.city.infrastructure.world.landuse;
 
+import com.rinsing.geomantia.systems.city.application.landuse.CityLandUseSurfacePrintPlan;
 import com.rinsing.geomantia.systems.city.infrastructure.world.CityWorldgenBlockObservationRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -11,6 +12,10 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.CrossCollisionBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.Half;
+import net.minecraft.world.level.block.state.properties.SlabType;
+import net.minecraft.world.level.block.state.properties.StairsShape;
 import net.minecraft.world.level.levelgen.Heightmap;
 
 import java.util.ArrayList;
@@ -148,6 +153,23 @@ public final class CityLandUseChunkExecutor {
             boundaryPrepared.add(mutation);
         }
 
+        for (CityLandUseChunkCompiler.FeatureOperation operation : fragment.featureOperations()) {
+            ColumnKey key = new ColumnKey(operation.x(), operation.z());
+            ColumnSample column = terrainView.sample(operation.x(), operation.z());
+            CityLandUseMicroGrader.FoundationDecision foundation = foundationByColumn.get(key);
+            CityLandUseMicroGrader.FillDecision fill = fillByColumn.get(key);
+            int surfaceY = plannedSurfaceY.getOrDefault(key, foundation != null ? foundation.targetY()
+                    : fill == null ? column.surfaceY() : fill.targetY());
+            PreparedMutation mutation = prepareFeature(world, operation, surfaceY + operation.surfaceOffset());
+            if (mutation.failureReason() != null) {
+                return ExecutionResult.failed(fragment, mutation.failureReason(),
+                        preparedCount(basePrepared, cropPrepared, boundaryPrepared), 0,
+                        naturalSurfaceSkipped, occupiedBoundarySkipped, true);
+            }
+            (operation.surfaceOffset() == 0 ? basePrepared : cropPrepared).add(mutation);
+            if (operation.surfaceOffset() == 0) plannedSurfaceY.put(key, surfaceY);
+        }
+
         int preparedBlockCount = preparedCount(basePrepared, cropPrepared, boundaryPrepared);
 
         List<PreparedMutation> baseApplied = new ArrayList<>();
@@ -198,7 +220,10 @@ public final class CityLandUseChunkExecutor {
             applied.add(mutation.withSnapshot(writeSnapshot));
             boolean written;
             try {
-                written = world.setBlock(mutation.x(), mutation.y(), mutation.z(), mutation.blockId());
+                written = mutation.featureKind() == null
+                        ? world.setBlock(mutation.x(), mutation.y(), mutation.z(), mutation.blockId())
+                        : world.setFeatureBlock(mutation.x(), mutation.y(), mutation.z(), mutation.blockId(),
+                        mutation.featureKind(), mutation.facing());
             } catch (RuntimeException ex) {
                 written = false;
             }
@@ -296,6 +321,15 @@ public final class CityLandUseChunkExecutor {
         return PreparedMutation.ready(areaId, phase, x, y, z, blockId, target.snapshot());
     }
 
+    private static PreparedMutation prepareFeature(
+            ExecutionWorld world,
+            CityLandUseChunkCompiler.FeatureOperation operation,
+            int y) {
+        PreparedMutation prepared = prepare(world, operation.sourceId(), OperationPhase.FEATURE,
+                operation.x(), y, operation.z(), operation.blockId(), operation.surfaceOffset() > 0);
+        return prepared.withFeature(operation.kind(), operation.facing());
+    }
+
     private static boolean rollback(ExecutionWorld world, List<PreparedMutation> applied) {
         boolean complete = true;
         List<PreparedMutation> reverse = new ArrayList<>(applied);
@@ -321,7 +355,8 @@ public final class CityLandUseChunkExecutor {
         SURFACE,
         SURFACE_OVERLAY,
         CROP,
-        BOUNDARY
+        BOUNDARY,
+        FEATURE
     }
 
     public interface ExecutionWorld {
@@ -338,6 +373,12 @@ public final class CityLandUseChunkExecutor {
         }
 
         boolean setBlock(int worldX, int y, int worldZ, String blockId);
+
+        default boolean setFeatureBlock(int worldX, int y, int worldZ, String blockId,
+                                        CityLandUseSurfacePrintPlan.FeatureKind kind,
+                                        CityLandUseSurfacePrintPlan.HorizontalFacing facing) {
+            return setBlock(worldX, y, worldZ, blockId);
+        }
 
         default boolean setBoundaryBlockRaw(int worldX, int y, int worldZ, String blockId) {
             return setBlock(worldX, y, worldZ, blockId);
@@ -435,19 +476,30 @@ public final class CityLandUseChunkExecutor {
                                     int z,
                                     String blockId,
                                     Object snapshot,
-                                    String failureReason) {
+                                    String failureReason,
+                                    CityLandUseSurfacePrintPlan.FeatureKind featureKind,
+                                    CityLandUseSurfacePrintPlan.HorizontalFacing facing) {
         private static PreparedMutation ready(String areaId, OperationPhase phase,
                                               int x, int y, int z, String blockId, Object snapshot) {
-            return new PreparedMutation(areaId, phase, x, y, z, blockId, snapshot, null);
+            return new PreparedMutation(areaId, phase, x, y, z, blockId, snapshot, null, null,
+                    CityLandUseSurfacePrintPlan.HorizontalFacing.NONE);
         }
 
         private static PreparedMutation failed(String areaId, OperationPhase phase,
                                                int x, int y, int z, String blockId, String reason) {
-            return new PreparedMutation(areaId, phase, x, y, z, blockId, null, reason);
+            return new PreparedMutation(areaId, phase, x, y, z, blockId, null, reason, null,
+                    CityLandUseSurfacePrintPlan.HorizontalFacing.NONE);
         }
 
         private PreparedMutation withSnapshot(Object writeSnapshot) {
-            return new PreparedMutation(areaId, phase, x, y, z, blockId, writeSnapshot, failureReason);
+            return new PreparedMutation(areaId, phase, x, y, z, blockId, writeSnapshot, failureReason,
+                    featureKind, facing);
+        }
+
+        private PreparedMutation withFeature(CityLandUseSurfacePrintPlan.FeatureKind kind,
+                                             CityLandUseSurfacePrintPlan.HorizontalFacing direction) {
+            return new PreparedMutation(areaId, phase, x, y, z, blockId, snapshot, failureReason,
+                    kind, direction);
         }
     }
 
@@ -477,6 +529,38 @@ public final class CityLandUseChunkExecutor {
         Objects.requireNonNull(requested, "requested");
         return world.setBlock(pos, requested, flags)
                 && requested.equals(world.getBlockState(pos));
+    }
+
+    static BlockState featureBlockState(BlockState requested,
+                                        CityLandUseSurfacePrintPlan.FeatureKind kind,
+                                        CityLandUseSurfacePrintPlan.HorizontalFacing facing) {
+        if (kind == CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB
+                && requested.hasProperty(BlockStateProperties.SLAB_TYPE)) {
+            requested = requested.setValue(BlockStateProperties.SLAB_TYPE, SlabType.BOTTOM);
+        }
+        if (kind == CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR) {
+            if (requested.hasProperty(BlockStateProperties.HORIZONTAL_FACING)) {
+                requested = requested.setValue(BlockStateProperties.HORIZONTAL_FACING,
+                        switch (facing) {
+                            case NORTH -> Direction.NORTH;
+                            case EAST -> Direction.EAST;
+                            case SOUTH -> Direction.SOUTH;
+                            case WEST -> Direction.WEST;
+                            case NONE -> throw new IllegalArgumentException(
+                                    "CITY_LAND_USE_ROAD_STAIR_FACING_REQUIRED");
+                        });
+            }
+            if (requested.hasProperty(BlockStateProperties.HALF)) {
+                requested = requested.setValue(BlockStateProperties.HALF, Half.BOTTOM);
+            }
+            if (requested.hasProperty(BlockStateProperties.STAIRS_SHAPE)) {
+                requested = requested.setValue(BlockStateProperties.STAIRS_SHAPE, StairsShape.STRAIGHT);
+            }
+        }
+        if (requested.hasProperty(BlockStateProperties.WATERLOGGED)) {
+            requested = requested.setValue(BlockStateProperties.WATERLOGGED, false);
+        }
+        return requested;
     }
 
     // WorldGenRegion ignores neighbor-update flags, so all boundary identities must exist before shape finalization.
@@ -615,6 +699,24 @@ public final class CityLandUseChunkExecutor {
             if (written) {
                 watchObservedNeighborhood(pos);
             }
+            return written;
+        }
+
+        @Override
+        public boolean setFeatureBlock(int worldX, int y, int worldZ, String blockId,
+                                       CityLandUseSurfacePrintPlan.FeatureKind kind,
+                                       CityLandUseSurfacePrintPlan.HorizontalFacing facing) {
+            if (kind != CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB
+                    && kind != CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR) {
+                return setBlock(worldX, y, worldZ, blockId);
+            }
+            ResourceLocation key = ResourceLocation.tryParse(blockId);
+            if (key == null || !BuiltInRegistries.BLOCK.containsKey(key)) return false;
+            BlockPos pos = new BlockPos(worldX, y, worldZ);
+            BlockState requested = featureBlockState(
+                    BuiltInRegistries.BLOCK.get(key).defaultBlockState(), kind, facing);
+            boolean written = writeExactBlockState(this, pos, requested, Block.UPDATE_ALL);
+            if (written) watchObservedNeighborhood(pos);
             return written;
         }
 

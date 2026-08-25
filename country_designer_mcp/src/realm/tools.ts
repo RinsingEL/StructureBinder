@@ -314,7 +314,7 @@ const surfaceRecipeSchema: Record<string, unknown> = {
 };
 
 const blueprintReferenceCatalogSchema = strictObject({
-  schemaVersion: { type: "string", enum: ["city_blueprint_reference_catalog.v0.8"] },
+  schemaVersion: { type: "string", enum: ["city_blueprint_reference_catalog.v0.9"] },
   structureRefs: {
     type: "array", minItems: 1,
     items: strictObject({
@@ -326,6 +326,12 @@ const blueprintReferenceCatalogSchema = strictObject({
           variantId: nonEmptyString("该模板中存在的 variant ID。"),
         }, ["templateId", "variantId"]),
       },
+      greenParcel: strictObject({
+        pattern: { type: "string", enum: ["FREEFORM", "FIELD_GRID"] },
+        density: { type: "string", enum: ["LOW", "MEDIUM", "HIGH"] },
+        groundBlockId: minecraftBlockIdSchema,
+        pathBlockId: minecraftBlockIdSchema,
+      }, ["pattern", "density", "groundBlockId", "pathBlockId"]),
     }, ["structureRef", "templateCandidates"]),
   },
   fillPools: {
@@ -356,7 +362,16 @@ const blueprintReferenceCatalogSchema = strictObject({
   },
   styleProfiles: {
     type: "array", minItems: 1,
-    items: strictObject({ profileRef: nonEmptyString("稳定 style profile 引用。") }, ["profileRef"]),
+    items: strictObject({
+      profileRef: nonEmptyString("稳定 style profile 引用。"),
+      plantPalette: {
+        type: "array", minItems: 1,
+        items: strictObject({
+          blockId: minecraftBlockIdSchema,
+          weight: { type: "number", exclusiveMinimum: 0 },
+        }, ["blockId", "weight"]),
+      },
+    }, ["profileRef"]),
   },
   roadProfiles: {
     type: "array", minItems: 1,
@@ -1000,7 +1015,7 @@ export const realmTools: ToolDefinition[] = [
         templateCatalogSource: { type: "object", description: "现有固定 NBT template catalog 源。" },
         blueprintReferenceCatalog: {
           ...blueprintReferenceCatalogSchema,
-          description: "严格 city_blueprint_reference_catalog.v0.8 户外目录；AI 精确声明 Landscape 实例和 Parcel 数，required 主体与建筑联合预留，Parcel 使用父子边界接力；禁止固定图形和 geometry fallback。",
+          description: "严格 city_blueprint_reference_catalog.v0.9 户外目录；AI 精确声明 Landscape 实例和 Parcel 数，required 主体与建筑联合预留，Parcel 使用父子边界接力；结构可选绿化地块，城市 style profile 可冻结植物 palette；禁止固定图形和 geometry fallback。",
         },
       },
       required: ["runId", "citySeedId", "terrasenseProfileSource", "templateCatalogSource", "blueprintReferenceCatalog"],

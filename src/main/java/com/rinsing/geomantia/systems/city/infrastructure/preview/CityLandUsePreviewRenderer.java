@@ -118,7 +118,10 @@ public final class CityLandUsePreviewRenderer {
             drawUnclaimed(g, transform, plan);
             Map<String, Color> colors = areaColors(plan);
             drawAreas(g, transform, plan, colors);
-            if (surfacePrintPlan != null) drawSurfaceRoles(g, transform, surfacePrintPlan);
+            if (surfacePrintPlan != null) {
+                drawSurfaceRoles(g, transform, surfacePrintPlan);
+                drawFeatureCells(g, transform, surfacePrintPlan);
+            }
             if (urbanSpacePlan != null && urbanSpacePlan.enabled()) {
                 drawResiduals(g, transform, urbanSpacePlan);
             }
@@ -143,7 +146,7 @@ public final class CityLandUsePreviewRenderer {
         }
         JsonObject metadata = new JsonObject();
         metadata.addProperty("schemaVersion", surfacePrintPlan != null
-                ? "city_land_use_preview.v0.4"
+                ? "city_land_use_preview.v0.5"
                 : urbanSpacePlan == null ? "city_land_use_preview.v0.1" : "city_land_use_preview.v0.2");
         metadata.addProperty("cityId", plan.cityId());
         metadata.addProperty("planHash", plan.planHash());
@@ -157,6 +160,7 @@ public final class CityLandUsePreviewRenderer {
         if (surfacePrintPlan != null) {
             metadata.addProperty("surfacePrintPlanSchemaVersion", surfacePrintPlan.schemaVersion());
             metadata.addProperty("surfacePrintPlanHash", surfacePrintPlan.planHash());
+            metadata.addProperty("featureCellCount", surfacePrintPlan.featureCells().size());
             metadata.addProperty("relayGrowthAreaCount", surfacePrintPlan.areas().stream()
                     .filter(area -> area.recipe() instanceof
                             CityLandUseSurfacePrintPlan.RelayRegionGrowthRecipe).count());
@@ -319,6 +323,22 @@ public final class CityLandUsePreviewRenderer {
                 }
                 drawRelayProvenance(g, transform, relay);
             }
+        }
+    }
+
+    private static void drawFeatureCells(Graphics2D g,
+                                         Transform transform,
+                                         CityLandUseSurfacePrintPlan plan) {
+        for (CityLandUseSurfacePrintPlan.FeatureCell cell : plan.featureCells()) {
+            g.setColor(switch (cell.kind()) {
+                case ROAD_SLAB -> new Color(96, 72, 58, 238);
+                case ROAD_STAIR -> new Color(65, 45, 34, 245);
+                case GREEN_GROUND -> new Color(101, 158, 82, 218);
+                case GREEN_PATH -> new Color(173, 145, 94, 238);
+                case GREEN_PLANT -> new Color(57, 122, 63, 245);
+                case OVERFLOW_BOUNDARY -> new Color(69, 82, 67, 245);
+            });
+            fillBounds(g, transform, new BlockBounds(cell.x(), cell.z(), cell.x(), cell.z()));
         }
     }
 

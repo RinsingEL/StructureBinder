@@ -19,9 +19,10 @@ public record CityLandUseSurfacePrintPlan(
         String sourceLandUsePlanHash,
         String planHash,
         List<AreaPrint> areas,
-        List<SharedBoundaryPrintSpan> sharedBoundarySpans) {
+        List<SharedBoundaryPrintSpan> sharedBoundarySpans,
+        List<FeatureCell> featureCells) {
 
-    public static final String CURRENT_SCHEMA_VERSION = "city_land_use_surface_print_plan.v0.6";
+    public static final String CURRENT_SCHEMA_VERSION = "city_land_use_surface_print_plan.v0.7";
 
     public CityLandUseSurfacePrintPlan {
         if (!CURRENT_SCHEMA_VERSION.equals(schemaVersion)) {
@@ -32,6 +33,7 @@ public record CityLandUseSurfacePrintPlan(
         planHash = planHash == null ? "" : planHash;
         areas = List.copyOf(Objects.requireNonNull(areas, "areas"));
         sharedBoundarySpans = List.copyOf(sharedBoundarySpans == null ? List.of() : sharedBoundarySpans);
+        featureCells = List.copyOf(featureCells == null ? List.of() : featureCells);
         Set<String> printAreaIds = new HashSet<>();
         for (AreaPrint area : areas) {
             if (!printAreaIds.add(area.printAreaId())) {
@@ -39,17 +41,61 @@ public record CityLandUseSurfacePrintPlan(
                         + area.printAreaId());
             }
         }
+        Set<String> featureKeys = new HashSet<>();
+        for (FeatureCell cell : featureCells) {
+            String key = cell.x() + ":" + cell.z() + ":" + cell.surfaceOffset();
+            if (!featureKeys.add(key)) {
+                throw new IllegalArgumentException("CITY_LAND_USE_SURFACE_FEATURE_CELL_DUPLICATE:" + key);
+            }
+        }
     }
 
     public CityLandUseSurfacePrintPlan withPlanHash(String hash) {
         return new CityLandUseSurfacePrintPlan(schemaVersion, cityId, sourceLandUsePlanHash, hash, areas,
-                sharedBoundarySpans);
+                sharedBoundarySpans, featureCells);
     }
 
     public CityLandUseSurfacePrintPlan(String schemaVersion, String cityId, String sourceLandUsePlanHash,
                                        String planHash, List<AreaPrint> areas) {
-        this(schemaVersion, cityId, sourceLandUsePlanHash, planHash, areas, List.of());
+        this(schemaVersion, cityId, sourceLandUsePlanHash, planHash, areas, List.of(), List.of());
     }
+
+    public CityLandUseSurfacePrintPlan(String schemaVersion, String cityId, String sourceLandUsePlanHash,
+                                       String planHash, List<AreaPrint> areas,
+                                       List<SharedBoundaryPrintSpan> sharedBoundarySpans) {
+        this(schemaVersion, cityId, sourceLandUsePlanHash, planHash, areas, sharedBoundarySpans, List.of());
+    }
+
+    public record FeatureCell(String sourceId,
+                              int x,
+                              int z,
+                              String blockId,
+                              int surfaceOffset,
+                              FeatureKind kind,
+                              HorizontalFacing facing) {
+        public FeatureCell {
+            requireText(sourceId, "CITY_LAND_USE_SURFACE_FEATURE_SOURCE_REQUIRED");
+            requireBlock(blockId, "CITY_LAND_USE_SURFACE_FEATURE_BLOCK_INVALID");
+            Objects.requireNonNull(kind, "kind");
+            facing = facing == null ? HorizontalFacing.NONE : facing;
+            if (surfaceOffset < 0 || kind == FeatureKind.ROAD_STAIR
+                    && facing == HorizontalFacing.NONE || kind != FeatureKind.ROAD_STAIR
+                    && facing != HorizontalFacing.NONE) {
+                throw new IllegalArgumentException("CITY_LAND_USE_SURFACE_FEATURE_CELL_INVALID");
+            }
+        }
+    }
+
+    public enum FeatureKind {
+        ROAD_SLAB,
+        ROAD_STAIR,
+        GREEN_GROUND,
+        GREEN_PATH,
+        GREEN_PLANT,
+        OVERFLOW_BOUNDARY
+    }
+
+    public enum HorizontalFacing { NONE, NORTH, EAST, SOUTH, WEST }
 
     public record SharedBoundaryPrintSpan(int z, int minX, int maxX, String writerAreaId,
                                           String neighborAreaId,

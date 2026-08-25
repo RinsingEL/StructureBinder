@@ -14,33 +14,30 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityRoadWeaverSpatialPlanTest {
     @Test
-    void connectsWithinPlacementGroupsBeforeBuildingNearestGroupBackbone() {
+    void connectsOnlyLongDistancePlacementGroupsAndNeverBuildsIntraGroupRoads() {
         List<EndpointFixture> fixtures = List.of(
                 new EndpointFixture("farm_01", "farm", 0, 0),
                 new EndpointFixture("farm_02", "farm", 0, 10),
-                new EndpointFixture("plaza_01", "plaza", 50, 0),
-                new EndpointFixture("plaza_02", "plaza", 50, 10),
-                new EndpointFixture("housing_01", "housing", 100, 0),
-                new EndpointFixture("housing_02", "housing", 100, 10));
+                new EndpointFixture("plaza_01", "plaza", 200, 0),
+                new EndpointFixture("plaza_02", "plaza", 200, 10),
+                new EndpointFixture("housing_01", "housing", 400, 0),
+                new EndpointFixture("housing_02", "housing", 400, 10));
 
         JsonObject plan = CityRoadWeaverBridge.createConnectionPlan(materialization(fixtures));
 
         assertEquals("city_roadweaver_connection_plan.v0.2", plan.get("schemaVersion").getAsString());
-        assertEquals("group_spatial_mst", plan.get("connectionStrategy").getAsString());
+        assertEquals("long_distance_inter_group_mst", plan.get("connectionStrategy").getAsString());
         assertEquals(6, plan.get("endpointCount").getAsInt());
-        assertEquals(5, plan.get("connectionCount").getAsInt());
+        assertEquals(2, plan.get("connectionCount").getAsInt());
         assertEquals(3, plan.get("placementGroupCount").getAsInt());
-        assertEquals(3, plan.get("intraGroupConnectionCount").getAsInt());
+        assertEquals(0, plan.get("intraGroupConnectionCount").getAsInt());
         assertEquals(2, plan.get("interGroupConnectionCount").getAsInt());
 
         for (JsonElement element : plan.getAsJsonArray("connections")) {
             JsonObject connection = element.getAsJsonObject();
-            boolean sameGroup = connection.get("fromPlacementGroupId").getAsString()
-                    .equals(connection.get("toPlacementGroupId").getAsString());
-            assertEquals(sameGroup ? "intra_group" : "inter_group",
-                    connection.get("connectionScope").getAsString());
-            assertTrue(connection.get("distanceBlocks").getAsLong() <= 50,
-                    "Spatial MST must not reproduce the 100+ block priority-chain jump");
+            assertEquals("inter_group", connection.get("connectionScope").getAsString());
+            assertTrue(connection.get("distanceBlocks").getAsLong()
+                    >= CityRoadWeaverBridge.MIN_LONG_DISTANCE_BLOCKS);
         }
     }
 
@@ -49,14 +46,33 @@ class CityRoadWeaverSpatialPlanTest {
         List<EndpointFixture> fixtures = new ArrayList<>(List.of(
                 new EndpointFixture("a_01", "a", 0, 0),
                 new EndpointFixture("a_02", "a", 5, 0),
-                new EndpointFixture("b_01", "b", 20, 0),
-                new EndpointFixture("b_02", "b", 25, 0)));
+                new EndpointFixture("b_01", "b", 200, 0),
+                new EndpointFixture("b_02", "b", 205, 0)));
         JsonObject forward = CityRoadWeaverBridge.createConnectionPlan(materialization(fixtures));
         Collections.reverse(fixtures);
         JsonObject reversed = CityRoadWeaverBridge.createConnectionPlan(materialization(fixtures));
 
         assertEquals(forward.getAsJsonArray("endpoints"), reversed.getAsJsonArray("endpoints"));
         assertEquals(forward.getAsJsonArray("connections"), reversed.getAsJsonArray("connections"));
+    }
+
+    @Test
+    void hierarchicalCityMainRoadSuppressesAllRoadWeaverConnections() {
+        JsonObject materialization = materialization(List.of(
+                new EndpointFixture("a", "a", 0, 0),
+                new EndpointFixture("b", "b", 400, 0)));
+        JsonObject anchorMap = new JsonObject();
+        JsonObject mainRoad = new JsonObject();
+        mainRoad.addProperty("hierarchy", "HIERARCHICAL");
+        mainRoad.addProperty("status", "planned");
+        anchorMap.add("cityMainRoadPlan", mainRoad);
+        materialization.add("sourceStructureAnchorMap", anchorMap);
+
+        JsonObject plan = CityRoadWeaverBridge.createConnectionPlan(materialization);
+
+        assertTrue(plan.get("delegatedToCityMainRoad").getAsBoolean());
+        assertEquals(0, plan.get("connectionCount").getAsInt());
+        assertEquals(2, plan.get("endpointCount").getAsInt());
     }
 
     private static JsonObject materialization(List<EndpointFixture> fixtures) {

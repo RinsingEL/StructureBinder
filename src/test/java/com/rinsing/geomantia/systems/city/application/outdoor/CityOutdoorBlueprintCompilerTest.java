@@ -6,6 +6,7 @@ import com.google.gson.JsonParser;
 import com.rinsing.geomantia.systems.city.application.CityBlueprintReferenceCatalog;
 import com.rinsing.geomantia.systems.city.application.CityLandscapeCapacityReservationPlanner;
 import com.rinsing.geomantia.systems.city.application.landuse.LandUsePlanningService;
+import com.rinsing.geomantia.systems.city.application.landuse.LandUseSourceResolver;
 import com.rinsing.geomantia.systems.city.domain.blueprint.CityBlueprint;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseAreaPlan;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseSeedGroup;
@@ -34,10 +35,16 @@ class CityOutdoorBlueprintCompilerTest {
         JsonObject anchorMap = new JsonObject();
         JsonArray bands = new JsonArray();
         bands.add(JsonParser.parseString("""
-                {"schemaVersion":"city_internal_street_band.v0.1","streetBandId":"farm::street",
+                {"schemaVersion":"city_internal_street_band.v0.2","streetBandId":"farm::street",
                  "groupId":"farm_group","widthBlocks":5,
                  "bounds":{"minX":26,"minZ":40,"maxX":38,"maxZ":44},
                  "platformBounds":{"minX":24,"minZ":36,"maxX":40,"maxZ":48}}
+                """).getAsJsonObject());
+        bands.add(JsonParser.parseString("""
+                {"schemaVersion":"city_main_road_band.v0.1","streetBandId":"city_main::segment_001",
+                 "groupId":"__city_main_road__","roadKind":"CITY_MAIN_ROAD","widthBlocks":7,
+                 "bounds":{"minX":40,"minZ":52,"maxX":72,"maxZ":58},
+                 "platformBounds":{"minX":40,"minZ":52,"maxX":72,"maxZ":58}}
                 """).getAsJsonObject());
         anchorMap.add("streetBands", bands);
         d6.add("sourceStructureAnchorMap", anchorMap);
@@ -47,6 +54,81 @@ class CityOutdoorBlueprintCompilerTest {
                 .findFirst().orElseThrow();
 
         assertTrue(foundation.structureFootprints().contains(new BlockBounds(24, 36, 40, 48)));
+        assertTrue(foundation.structureFootprints().contains(new BlockBounds(40, 52, 72, 58)));
+    }
+
+    @Test
+    void buildingMarkerAndCityStylePaletteFreezeGreenParcelSpec() {
+        JsonObject d6 = d6Plan();
+        JsonObject farmhouse = d6.getAsJsonArray("plannedWorldgenStructures").get(1).getAsJsonObject();
+        farmhouse.add("lockedCollisionEnvelope", bounds(38, 38, 47, 47));
+        JsonObject placement = new JsonObject();
+        JsonObject transformed = new JsonObject();
+        JsonArray entrances = new JsonArray();
+        JsonObject entrance = new JsonObject();
+        JsonObject position = new JsonObject();
+        position.addProperty("x", 39);
+        position.addProperty("z", 42);
+        entrance.add("worldPosition", position);
+        entrances.add(entrance);
+        transformed.add("roadEntrances", entrances);
+        placement.add("transformed", transformed);
+        farmhouse.add("templatePlacementPlan", placement);
+        CityBlueprintReferenceCatalog source = catalog();
+        CityBlueprintReferenceCatalog greenCatalog = new CityBlueprintReferenceCatalog(source.json(),
+                source.structureRefs(), source.fillPoolRefs(), source.algorithmProfileRefs(),
+                source.algorithmsByProfileRef(), source.centerAxisStreetEnabledByProfileRef(),
+                source.compositionProfileRefs(), source.styleProfileRefs(), source.roadProfileRefs(),
+                source.surfaceDetailProfileRefs(), Map.of("farmhouse",
+                new CityBlueprintReferenceCatalog.BuildingGreenParcelProfile(
+                        CityBlueprintReferenceCatalog.GreenParcelPattern.FREEFORM,
+                        CityBlueprintReferenceCatalog.GreenParcelDensity.MEDIUM,
+                        "minecraft:grass_block", "minecraft:gravel")),
+                Map.of("style:test", List.of(
+                        new CityBlueprintReferenceCatalog.PlantPaletteEntry("minecraft:poppy", 1))),
+                source.landUseRuleCatalog(), source.surfaceRecipes(), source.foundationProfiles(),
+                source.landscapeProfiles(), source.landscapeFillProfiles());
+
+        CityOutdoorBlueprintCompiler.Result result = new CityOutdoorBlueprintCompiler().compile(
+                blueprint(), d6, terrain(), greenCatalog, capacity(blueprint(), d6));
+
+        assertEquals(1, result.resolution().greenParcels().size());
+        LandUseSourceResolver.GreenParcelSpec parcel = result.resolution().greenParcels().get(0);
+        assertEquals(new BlockBounds(38, 38, 47, 47), parcel.parcelBounds());
+        assertEquals(new BlockPoint(39, 42), parcel.entrance());
+        assertEquals("minecraft:poppy", parcel.plantPalette().get(0).blockId());
+    }
+
+    @Test
+    void d4ResidentialOverflowPlanFreezesBoundaryAndRoadOpeningsForSurfaceExecution() {
+        JsonObject d6 = d6Plan();
+        JsonObject anchorMap = new JsonObject();
+        JsonArray bands = new JsonArray();
+        bands.add(JsonParser.parseString("""
+                {"streetBandId":"farm::grid_main","roadNetworkId":"farm::grid",
+                 "roadKind":"GRID_MAIN_STREET","groupId":"farm_group","widthBlocks":3,
+                 "crossSectionProfile":"STAIR_SLAB_STAIR","axisX":1,"axisZ":0,
+                 "start":{"x":36,"z":48},"end":{"x":60,"z":48},
+                 "bounds":{"minX":36,"minZ":47,"maxX":60,"maxZ":49}}
+                """).getAsJsonObject());
+        anchorMap.add("streetBands", bands);
+        anchorMap.add("residentialOverflowPlan", JsonParser.parseString("""
+                {"schemaVersion":"city_residential_overflow_plan.v0.1","minimumBuildingCount":3,
+                 "zoneCount":1,"zones":[{"zoneId":"farm::overflow","parentGroupId":"farm_group",
+                 "zoneKind":"RESIDENTIAL_OVERFLOW","generationMode":"OUTWARD_GUIDED_FILL_BUILDINGS",
+                 "buildingCount":3,"boundaryBounds":{"minX":34,"minZ":38,"maxX":62,"maxZ":60},
+                 "boundaryBlockId":"minecraft:stone_brick_wall","anchorIds":["a","b","c"],
+                 "streetBandIds":["farm::grid_main"]}]}
+                """).getAsJsonObject());
+        d6.add("sourceStructureAnchorMap", anchorMap);
+
+        CityOutdoorBlueprintCompiler.Result result = compile(d6);
+
+        assertEquals(1, result.resolution().overflowZones().size());
+        LandUseSourceResolver.OverflowZoneSpec zone = result.resolution().overflowZones().get(0);
+        assertEquals("farm::overflow", zone.zoneId());
+        assertEquals(new BlockBounds(34, 38, 62, 60), zone.boundaryBounds());
+        assertEquals(List.of(new BlockBounds(36, 47, 60, 49)), zone.roadOpenings());
     }
 
     @Test
@@ -462,7 +544,17 @@ class CityOutdoorBlueprintCompilerTest {
         footprint.addProperty("maxX", maxX);
         footprint.addProperty("maxZ", maxZ);
         item.add("lockedActualFootprint", footprint);
+        item.add("lockedCollisionEnvelope", footprint.deepCopy());
         return item;
+    }
+
+    private static JsonObject bounds(int minX, int minZ, int maxX, int maxZ) {
+        JsonObject value = new JsonObject();
+        value.addProperty("minX", minX);
+        value.addProperty("minZ", minZ);
+        value.addProperty("maxX", maxX);
+        value.addProperty("maxZ", maxZ);
+        return value;
     }
 
     private static LandUseTerrainField terrain() {

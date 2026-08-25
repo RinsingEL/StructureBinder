@@ -69,6 +69,11 @@ public final class CityOutdoorBlueprintCompiler {
         }
 
         Map<String, List<AnchorData>> anchorsByGroup = readAnchors(structureMaterializationPlan);
+        List<LandUseSourceResolver.RoadBand> roadBands = roadBands(structureMaterializationPlan);
+        List<LandUseSourceResolver.GreenParcelSpec> greenParcels = greenParcels(
+                blueprint, anchorsByGroup, catalog);
+        List<LandUseSourceResolver.OverflowZoneSpec> overflowZones = overflowZones(
+                structureMaterializationPlan);
         CapacityReservation capacityReservation = capacityReservation(blueprint, anchorsByGroup,
                 landscapeCapacityReservationPlan);
         Map<String, Set<BlockPoint>> capacityDomains = capacityReservation.domains();
@@ -177,7 +182,7 @@ public final class CityOutdoorBlueprintCompiler {
                 foundationPlan.resolvedCloseRadiusBlocks());
         return new Result(new LandUseSourceResolver.Resolution(groups, List.of(), outdoorWarnings,
                 Long.toUnsignedString(blueprint.generationSeed()), capacityDomains,
-                resolvedParentParcelIds),
+                resolvedParentParcelIds, roadBands, greenParcels, overflowZones),
                 CityUrbanResidualResolver.Config.disabled(),
                 intent);
     }
@@ -685,8 +690,14 @@ public final class CityOutdoorBlueprintCompiler {
                 throw new IllegalArgumentException("CITY_OUTDOOR_D6_FOOTPRINT_MISSING:" + anchorId);
             }
             String structureRef = stringValue(item, "blueprintStructureRef", "");
+            JsonObject collision = object(item, "lockedCollisionEnvelope");
+            if (collision.size() == 0) collision = object(item, "collisionEnvelope");
+            if (collision.size() == 0) {
+                throw new IllegalArgumentException("CITY_OUTDOOR_D6_COLLISION_MISSING:" + anchorId);
+            }
+            BlockPoint entrance = firstRoadEntrance(item);
             result.computeIfAbsent(groupId, ignored -> new ArrayList<>()).add(new AnchorData(anchorId, groupId,
-                    structureRef, bounds(footprint), phase));
+                    structureRef, bounds(footprint), bounds(collision), entrance, phase));
         }
         result.replaceAll((ignored, values) -> values.stream().sorted(Comparator.comparing(AnchorData::anchorId))
                 .toList());
@@ -705,6 +716,100 @@ public final class CityOutdoorBlueprintCompiler {
             if (bounds.size() == 0) bounds = object(band, "bounds");
             if (bounds.size() > 0) result.add(bounds(bounds));
         }
+        return List.copyOf(result);
+    }
+
+    private static List<LandUseSourceResolver.RoadBand> roadBands(JsonObject materializationPlan) {
+        JsonObject anchorMap = object(materializationPlan, "sourceStructureAnchorMap");
+        List<LandUseSourceResolver.RoadBand> result = new ArrayList<>();
+        for (JsonElement element : array(anchorMap, "streetBands")) {
+            if (!element.isJsonObject()) continue;
+            JsonObject band = element.getAsJsonObject();
+            if (!"STAIR_SLAB_STAIR".equals(stringValue(band, "crossSectionProfile", ""))) continue;
+            JsonObject start = object(band, "start");
+            JsonObject end = object(band, "end");
+            JsonObject bounds = object(band, "bounds");
+            if (start.size() == 0 || end.size() == 0 || bounds.size() == 0) {
+                throw new IllegalArgumentException("CITY_OUTDOOR_ROAD_BAND_GEOMETRY_MISSING:"
+                        + stringValue(band, "streetBandId", "unknown"));
+            }
+            result.add(new LandUseSourceResolver.RoadBand(
+                    requiredString(band, "streetBandId"), requiredString(band, "roadNetworkId"),
+                    requiredString(band, "roadKind"), point(start), point(end), bounds(bounds),
+                    intValue(band, "widthBlocks", 1), requiredString(band, "crossSectionProfile")));
+        }
+        result.sort(Comparator.comparing(LandUseSourceResolver.RoadBand::streetBandId));
+        return List.copyOf(result);
+    }
+
+    private static List<LandUseSourceResolver.GreenParcelSpec> greenParcels(
+            CityBlueprint blueprint,
+            Map<String, List<AnchorData>> anchorsByGroup,
+            CityBlueprintReferenceCatalog catalog) {
+        List<CityBlueprintReferenceCatalog.PlantPaletteEntry> palette =
+                catalog.plantPalettesByStyleProfileRef().getOrDefault(
+                        blueprint.styleProfile().profileRef(), List.of());
+        List<LandUseSourceResolver.GreenParcelSpec> result = new ArrayList<>();
+        for (List<AnchorData> anchors : anchorsByGroup.values()) {
+            for (AnchorData anchor : anchors) {
+                CityBlueprintReferenceCatalog.BuildingGreenParcelProfile profile =
+                        catalog.buildingGreenParcelsByStructureRef().get(anchor.structureRef());
+                if (profile == null) continue;
+                if (palette.isEmpty()) {
+                    throw new IllegalArgumentException("CITY_OUTDOOR_GREEN_PARCEL_PALETTE_REQUIRED:"
+                            + blueprint.styleProfile().profileRef());
+                }
+                if (anchor.entrance() == null) {
+                    throw new IllegalArgumentException("CITY_OUTDOOR_GREEN_PARCEL_ENTRANCE_REQUIRED:"
+                            + anchor.anchorId());
+                }
+                long seed = blueprint.generationSeed()
+                        ^ Long.rotateLeft(Integer.toUnsignedLong(stableHash(anchor.anchorId())), 32);
+                result.add(new LandUseSourceResolver.GreenParcelSpec(
+                        anchor.anchorId() + "::green_parcel", anchor.anchorId(), anchor.collision(),
+                        anchor.footprint(), anchor.entrance(), profile.pattern(), profile.density(),
+                        profile.groundBlockId(), profile.pathBlockId(), palette, seed));
+            }
+        }
+        result.sort(Comparator.comparing(LandUseSourceResolver.GreenParcelSpec::parcelId));
+        return List.copyOf(result);
+    }
+
+    private static BlockPoint firstRoadEntrance(JsonObject item) {
+        JsonObject placement = object(item, "templatePlacementPlan");
+        JsonObject transformed = object(placement, "transformed");
+        JsonArray entrances = array(transformed, "roadEntrances");
+        if (entrances.isEmpty() || !entrances.get(0).isJsonObject()) return null;
+        JsonObject position = object(entrances.get(0).getAsJsonObject(), "worldPosition");
+        return position.size() == 0 ? null : point(position);
+    }
+
+    private static List<LandUseSourceResolver.OverflowZoneSpec> overflowZones(
+            JsonObject materializationPlan) {
+        JsonObject anchorMap = object(materializationPlan, "sourceStructureAnchorMap");
+        Map<String, BlockBounds> roads = new LinkedHashMap<>();
+        for (JsonElement element : array(anchorMap, "streetBands")) {
+            if (!element.isJsonObject()) continue;
+            JsonObject band = element.getAsJsonObject();
+            JsonObject bounds = object(band, "bounds");
+            if (bounds.size() > 0) roads.put(stringValue(band, "streetBandId", ""), bounds(bounds));
+        }
+        JsonObject plan = object(anchorMap, "residentialOverflowPlan");
+        List<LandUseSourceResolver.OverflowZoneSpec> result = new ArrayList<>();
+        for (JsonElement element : array(plan, "zones")) {
+            if (!element.isJsonObject()) continue;
+            JsonObject zone = element.getAsJsonObject();
+            List<BlockBounds> openings = new ArrayList<>();
+            for (JsonElement id : array(zone, "streetBandIds")) {
+                if (!id.isJsonPrimitive()) continue;
+                BlockBounds opening = roads.get(id.getAsString());
+                if (opening != null) openings.add(opening);
+            }
+            result.add(new LandUseSourceResolver.OverflowZoneSpec(requiredString(zone, "zoneId"),
+                    bounds(object(zone, "boundaryBounds")), openings,
+                    requiredString(zone, "boundaryBlockId")));
+        }
+        result.sort(Comparator.comparing(LandUseSourceResolver.OverflowZoneSpec::zoneId));
         return List.copyOf(result);
     }
 
@@ -907,6 +1012,11 @@ public final class CityOutdoorBlueprintCompiler {
         return object.getAsJsonArray(key);
     }
 
+    private static JsonArray array(JsonObject object, String key) {
+        return object != null && object.has(key) && object.get(key).isJsonArray()
+                ? object.getAsJsonArray(key) : new JsonArray();
+    }
+
     private static String requiredString(JsonObject object, String key) {
         String value = stringValue(object, key, "");
         if (value.isBlank()) throw new IllegalArgumentException(key + " is required");
@@ -926,6 +1036,15 @@ public final class CityOutdoorBlueprintCompiler {
         return object.get(key).getAsInt();
     }
 
+    private static int intValue(JsonObject object, String key, int fallback) {
+        return object != null && object.has(key) && object.get(key).isJsonPrimitive()
+                && object.getAsJsonPrimitive(key).isNumber() ? object.get(key).getAsInt() : fallback;
+    }
+
+    private static BlockPoint point(JsonObject object) {
+        return new BlockPoint(requiredInt(object, "x"), requiredInt(object, "z"));
+    }
+
     private static boolean booleanValue(JsonObject object, String key, boolean fallback) {
         return object != null && object.has(key) && object.get(key).isJsonPrimitive()
                 && object.getAsJsonPrimitive(key).isBoolean() ? object.get(key).getAsBoolean() : fallback;
@@ -940,6 +1059,8 @@ public final class CityOutdoorBlueprintCompiler {
                               String groupId,
                               String structureRef,
                               BlockBounds footprint,
+                              BlockBounds collision,
+                              BlockPoint entrance,
                               BlueprintPlacementPhase phase) {
     }
 

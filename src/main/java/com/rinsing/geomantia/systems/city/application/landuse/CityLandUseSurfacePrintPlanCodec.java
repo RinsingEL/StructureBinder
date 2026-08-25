@@ -17,11 +17,13 @@ import java.util.HexFormat;
 import java.util.List;
 import java.util.Set;
 
-/** Strict current-only JSON codec and canonical hash owner for SurfacePrintPlan v0.6. */
+/** Strict current-only JSON codec and canonical hash owner for SurfacePrintPlan v0.7. */
 public final class CityLandUseSurfacePrintPlanCodec {
     private static final Set<String> ROOT_FIELDS = Set.of(
             "schemaVersion", "cityId", "sourceLandUsePlanHash", "planHash", "areas",
-            "sharedBoundarySpans");
+            "sharedBoundarySpans", "featureCells");
+    private static final Set<String> FEATURE_FIELDS = Set.of(
+            "sourceId", "x", "z", "blockId", "surfaceOffset", "kind", "facing");
     private static final Set<String> AREA_FIELDS = Set.of(
             "printAreaId", "landUseAreaId", "sourceGroupIds", "surfaceSettings",
             "memberSpans", "exclusionSpans", "surfaceAlgorithm", "algorithmAnchor", "recipe");
@@ -89,6 +91,19 @@ public final class CityLandUseSurfacePrintPlanCodec {
             shared.add(value);
         }
         root.add("sharedBoundarySpans", shared);
+        JsonArray features = new JsonArray();
+        for (CityLandUseSurfacePrintPlan.FeatureCell cell : plan.featureCells()) {
+            JsonObject value = new JsonObject();
+            value.addProperty("sourceId", cell.sourceId());
+            value.addProperty("x", cell.x());
+            value.addProperty("z", cell.z());
+            value.addProperty("blockId", cell.blockId());
+            value.addProperty("surfaceOffset", cell.surfaceOffset());
+            value.addProperty("kind", cell.kind().name());
+            value.addProperty("facing", cell.facing().name());
+            features.add(value);
+        }
+        root.add("featureCells", features);
         return root;
     }
 
@@ -109,9 +124,20 @@ public final class CityLandUseSurfacePrintPlanCodec {
                     text(value, "neighborAreaId", false), LandUseAreaPlan.SharedBoundaryRelation.valueOf(
                     text(value, "relation", false)), optionalText(value, "boundaryBlockId")));
         }
+        List<CityLandUseSurfacePrintPlan.FeatureCell> features = new ArrayList<>();
+        for (JsonElement element : array(root, "featureCells")) {
+            JsonObject value = object(element, "featureCells[]");
+            rejectUnknown(value, FEATURE_FIELDS, "featureCell");
+            features.add(new CityLandUseSurfacePrintPlan.FeatureCell(
+                    text(value, "sourceId", false), integer(value, "x"), integer(value, "z"),
+                    text(value, "blockId", false), integer(value, "surfaceOffset"),
+                    enumValue(CityLandUseSurfacePrintPlan.FeatureKind.class, text(value, "kind", false)),
+                    enumValue(CityLandUseSurfacePrintPlan.HorizontalFacing.class,
+                            text(value, "facing", false))));
+        }
         CityLandUseSurfacePrintPlan plan = new CityLandUseSurfacePrintPlan(
                 schemaVersion, text(root, "cityId", false), text(root, "sourceLandUsePlanHash", false),
-                optionalText(root, "planHash"), areas, shared);
+                optionalText(root, "planHash"), areas, shared, features);
         if (!plan.planHash().isBlank() && !plan.planHash().equals(computePlanHash(plan))) {
             throw fail("CITY_LAND_USE_SURFACE_PRINT_PLAN_HASH_MISMATCH", "planHash does not match payload");
         }

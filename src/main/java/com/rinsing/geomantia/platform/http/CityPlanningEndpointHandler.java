@@ -1211,7 +1211,7 @@ final class CityPlanningEndpointHandler {
                     + debugRef(debugRoot, d6PlanPath));
         }
         JsonObject d4AnchorMap = JsonParser.parseString(Files.readString(d4AnchorMapPath)).getAsJsonObject();
-        if (!"city_structure_anchor_map.v0.2".equals(stringValue(d4AnchorMap, "schemaVersion", ""))) {
+        if (!"city_structure_anchor_map.v0.3".equals(stringValue(d4AnchorMap, "schemaVersion", ""))) {
             throw new IllegalArgumentException("LAND_USE_D4_V02_PROVENANCE_REQUIRED");
         }
         JsonObject d6Plan = JsonParser.parseString(Files.readString(d6PlanPath)).getAsJsonObject();
