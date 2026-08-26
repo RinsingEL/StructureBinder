@@ -231,6 +231,21 @@ class CityLandscapeCapacityReservationPlannerTest {
     }
 
     @Test
+    void percentageFillCanGrowLargeParcelsWithoutQuadraticBoundaryRescans() {
+        assertTimeout(Duration.ofSeconds(15), () -> {
+            var result = new CityLandscapeCapacityReservationPlanner().plan(
+                    blueprint(4), catalog(1, 12), terrain(new BlockBounds(0, 0, 511, 511)),
+                    anchors(240, 240), CityLandscapeCapacityReservationPlanner.SEARCH_NODE_LIMIT,
+                    Map.of("windmill_fields", 5_723));
+
+            assertTrue(result.ok(), result.plan().toString());
+            JsonObject instance = result.plan().getAsJsonArray("instances").get(0).getAsJsonObject();
+            assertEquals(5_723, instance.get("parcelAreaBlocks").getAsInt());
+            assertEquals(4 * 5_723, instance.get("actualAreaBlocks").getAsInt());
+        });
+    }
+
+    @Test
     void reusesInvariantCandidatesDuringMultiLandscapeJointSearch() {
         assertTimeout(Duration.ofSeconds(8), () -> {
             CityBlueprint source = blueprint(2);

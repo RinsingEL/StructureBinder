@@ -1068,6 +1068,12 @@ class CityBlueprintCompilerServiceTest {
                 .get("initialGapBlocks").getAsDouble() > 64.0));
         assertTrue(edges.asList().stream().allMatch(edge -> edge.getAsJsonObject()
                 .get("connectionStructureCount").getAsInt() > 0));
+        JsonObject dynamicArea = first.compileTrace().getAsJsonObject("dynamicAreaPlan");
+        assertTrue(dynamicArea.get("relationGrowthCompletedBeforeFreeze").getAsBoolean());
+        assertEquals(2, dynamicArea.get("relationEdgeCountAtFreeze").getAsInt());
+        assertTrue(dynamicArea.get("relationStructureCountAtFreeze").getAsInt() > 0);
+        assertEquals("INITIAL_FORMATION_THEN_RELATION_GROWTH_THEN_FREEZE_THEN_PERCENTAGE_FILL",
+                dynamicArea.get("stageOrder").getAsString());
         assertTrue(edges.asList().stream().allMatch(edge -> edge.getAsJsonObject()
                 .get("finalGapBlocks").getAsDouble()
                 <= edge.getAsJsonObject().get("handoffGapBlocks").getAsInt()));
@@ -1076,13 +1082,19 @@ class CityBlueprintCompilerServiceTest {
 
         JsonArray selectionEvents = first.compileTrace().getAsJsonArray("selections");
         int firstConnectivity = -1;
+        int firstPercentage = -1;
         int lastFill = -1;
         for (int index = 0; index < selectionEvents.size(); index++) {
             String phase = selectionEvents.get(index).getAsJsonObject().get("phase").getAsString();
             if ("fill".equals(phase)) lastFill = index;
             if (firstConnectivity < 0 && "connectivity_growth".equals(phase)) firstConnectivity = index;
+            if (firstPercentage < 0 && "percentage_growth".equals(phase)) firstPercentage = index;
         }
         assertTrue(lastFill >= 0);
+        assertTrue(firstConnectivity > lastFill,
+                "relation growth must start only after each function area forms internally");
+        assertTrue(firstPercentage > firstConnectivity,
+                "percentage fill must start only after relation growth reaches handoff and freezes the baseline");
         for (JsonElement element : first.compileTrace().getAsJsonArray("groupResults")) {
             JsonObject group = element.getAsJsonObject();
             assertTrue(group.get("internalStructureCount").getAsInt() > 0, group.toString());
@@ -1188,6 +1200,47 @@ class CityBlueprintCompilerServiceTest {
         assertTrue(inherited.get("structurePoolInheritedFromFillPool").getAsBoolean());
         assertTrue(inherited.get("algorithmInheritedFromGroup").getAsBoolean());
         assertTrue(inherited.get("densityInheritedFromGroup").getAsBoolean());
+    }
+
+    @Test
+    void hierarchicalMainRoadDoesNotReplaceRelationGrowthBeforePercentageFreeze() throws Exception {
+        Fixture fixture = acceptedFixture("run_hierarchical_growth", "city:hierarchical_growth",
+                9, 9, "SMALL", review -> {
+                    JsonArray patches = review.getAsJsonArray("landformPatches");
+                    configurePatchCells(patches.get(0).getAsJsonObject(), -5, -2, -3, 3);
+                    configurePatchCells(patches.get(1).getAsJsonObject(), 2, 5, -3, 3);
+                    JsonObject corridor = patches.get(0).getAsJsonObject().deepCopy();
+                    corridor.addProperty("landformPatchId", "patch:plain:corridor");
+                    corridor.addProperty("mapLabel", "plainCorridor");
+                    configurePatchCells(corridor, -1, 1, -3, 3);
+                    patches.add(corridor);
+                }, ignored -> { }, references ->
+                        references.getAsJsonArray("roadProfiles").get(0).getAsJsonObject()
+                                .addProperty("hierarchy", "HIERARCHICAL"), blueprint -> {
+                    JsonObject civic = blueprint.getAsJsonArray("groups").get(0).getAsJsonObject();
+                    civic.add("preferredPatchRefs", JsonParser.parseString("[\"patch:plain:1\"]"));
+                    JsonObject market = civic.deepCopy();
+                    market.addProperty("groupId", "market");
+                    market.addProperty("priority", "STANDARD");
+                    market.add("preferredPatchRefs", JsonParser.parseString("[\"patch:plain:2\"]"));
+                    blueprint.getAsJsonArray("groups").add(market);
+                    blueprint.getAsJsonArray("relations").add(relation("civic", "market", "CONNECTION"));
+                });
+
+        CityBlueprintCompilerService.CompilationResult result = new CityBlueprintCompilerService()
+                .compile(temporary, fixture.runId(), fixture.cityId());
+
+        assertTrue(result.ok(), result.compileTrace().toString());
+        JsonObject connectivity = result.compileTrace().getAsJsonObject("connectivityPlan");
+        assertEquals(1, connectivity.get("edgeCount").getAsInt());
+        assertTrue(connectivity.getAsJsonArray("edges").get(0).getAsJsonObject()
+                .get("connectionStructureCount").getAsInt() > 0);
+        JsonObject dynamicArea = result.compileTrace().getAsJsonObject("dynamicAreaPlan");
+        assertTrue(dynamicArea.get("relationGrowthCompletedBeforeFreeze").getAsBoolean());
+        assertEquals(1, dynamicArea.get("relationEdgeCountAtFreeze").getAsInt());
+        assertTrue(dynamicArea.get("relationStructureCountAtFreeze").getAsInt() > 0);
+        assertEquals("planned", result.compileTrace().getAsJsonObject("cityMainRoadPlan")
+                .get("status").getAsString());
     }
 
     @Test
@@ -1389,7 +1442,8 @@ class CityBlueprintCompilerServiceTest {
         assertEquals("compiled", result.compileTrace().get("status").getAsString());
         JsonObject group = result.compileTrace().getAsJsonArray("groupResults").get(0).getAsJsonObject();
         assertEquals(1, group.get("requiredStructureCount").getAsInt(), group.toString());
-        assertEquals("PREVIEW_RANGE_EXHAUSTED", group.get("stopReason").getAsString());
+        assertEquals("PERCENTAGE_TARGET_REACHED_BY_LANDSCAPE",
+                group.get("stopReason").getAsString());
     }
 
     @Test
@@ -1550,6 +1604,15 @@ class CityBlueprintCompilerServiceTest {
                                      Consumer<JsonObject> customizeD3,
                                      Consumer<JsonObject> customizeTerrainField,
                                      Consumer<JsonObject> customizeBlueprint) throws Exception {
+        return acceptedFixture(runId, cityId, width, depth, extentClass, customizeD3,
+                customizeTerrainField, ignored -> { }, customizeBlueprint);
+    }
+
+    private Fixture acceptedFixture(String runId, String cityId, int width, int depth, String extentClass,
+                                     Consumer<JsonObject> customizeD3,
+                                     Consumer<JsonObject> customizeTerrainField,
+                                     Consumer<JsonObject> customizeReferenceCatalog,
+                                     Consumer<JsonObject> customizeBlueprint) throws Exception {
         Path runDir = temporary.resolve(runId);
         Files.createDirectories(runDir.resolve("city_d3_" + safe(cityId)));
         JsonObject registry = new JsonObject();
@@ -1609,8 +1672,10 @@ class CityBlueprintCompilerServiceTest {
         JsonObject templateSource = new JsonObject();
         templateSource.add("catalog", templateCatalog(width, depth));
         CityBlueprintService service = new CityBlueprintService();
+        JsonObject references = referenceCatalog();
+        customizeReferenceCatalog.accept(references);
         JsonObject prepared = service.prepare(temporary, runId, cityId, terraSource,
-                templateSource, referenceCatalog());
+                templateSource, references);
         JsonObject blueprint = blueprint(prepared.getAsJsonObject("cityBlueprintContext"), extentClass);
         customizeBlueprint.accept(blueprint);
         normalizeCaseGroups(blueprint);

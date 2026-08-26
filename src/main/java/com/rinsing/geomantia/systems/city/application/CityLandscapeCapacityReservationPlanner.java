@@ -110,10 +110,16 @@ public final class CityLandscapeCapacityReservationPlanner {
             }
             int defaultArea = Math.max(1, profile.baseArea(ownerExtent) / landscape.parcelCount());
             int requestedArea = desiredParcelAreas.getOrDefault(landscape.landscapeId(), defaultArea);
-            int area = Math.max(profile.parcelStyle().parcelAreaMinBlocks(),
+            // The profile maximum shapes the initial parcel. Once the city percentage baseline is
+            // frozen, the requested area is the actual missing landscape share and may legitimately
+            // exceed that initial-size hint; the GIS planning boundary remains the hard limit.
+            int area = desiredParcelAreas.containsKey(landscape.landscapeId())
+                    ? Math.max(profile.parcelStyle().parcelAreaMinBlocks(), requestedArea)
+                    : Math.max(profile.parcelStyle().parcelAreaMinBlocks(),
                     Math.min(profile.parcelStyle().parcelAreaMaxBlocks(), requestedArea));
             for (int instance = 0; instance < landscape.instanceCount(); instance++) {
-                result.add(new Subject(landscape, profile, owner, area, instance));
+                result.add(new Subject(landscape, profile, owner, area, instance,
+                        desiredParcelAreas.containsKey(landscape.landscapeId())));
             }
         }
         result.sort(Comparator.comparing((Subject subject) -> subject.landscape().landscapeId())
@@ -247,9 +253,12 @@ public final class CityLandscapeCapacityReservationPlanner {
         Set<BlockPoint> ownerCells = cells(owner);
         TerrainIndex terrainIndex = new TerrainIndex(terrain);
         int count = subject.landscape().parcelCount();
+        int topologyStart = subject.percentageFill() ? Math.min(3, Math.max(0, count - 1)) : 0;
+        int topologyEnd = subject.percentageFill() ? topologyStart + 1 : 4;
+        int rootVariantCount = subject.percentageFill() ? 1 : 2;
         for (int directionIndex = 0; directionIndex < 4; directionIndex++) {
-            for (int topology = 0; topology < 4; topology++) {
-              for (int rootVariant = 0; rootVariant < 2; rootVariant++) {
+            for (int topology = topologyStart; topology < topologyEnd; topology++) {
+              for (int rootVariant = 0; rootVariant < rootVariantCount; rootVariant++) {
                 List<ParcelCapacity> parcels = new ArrayList<>();
                 Set<BlockPoint> cells = new LinkedHashSet<>();
                 boolean valid = true;
@@ -382,8 +391,7 @@ public final class CityLandscapeCapacityReservationPlanner {
                 if (pathCost + 1.0e-9 >= bestPath.getOrDefault(next, Double.POSITIVE_INFINITY)) continue;
                 bestPath.put(next, pathCost);
                 double priority = growthPriority(subject, terrain, next, seed, sourceCells, result,
-                        sourceCenterX, sourceCenterZ, bearing, shapeSeed, targetArea, pathCost,
-                        minimumSharedBoundary);
+                        sourceCenterX, sourceCenterZ, bearing, shapeSeed, targetArea, pathCost);
                 frontier.add(new GrowthNode(next, pathCost, priority));
             }
         }
@@ -451,8 +459,7 @@ public final class CityLandscapeCapacityReservationPlanner {
     private static double growthPriority(Subject subject, TerrainIndex terrain, BlockPoint point,
                                          BlockPoint seed, Set<BlockPoint> sourceCells, Set<BlockPoint> result,
                                          double sourceCenterX, double sourceCenterZ, double bearing,
-                                         long shapeSeed, int targetArea, double pathCost,
-                                         int minimumSharedBoundary) {
+                                         long shapeSeed, int targetArea, double pathCost) {
         double radius = Math.max(2.0, Math.sqrt(targetArea / Math.PI));
         double dx = point.x() - seed.x();
         double dz = point.z() - seed.z();
@@ -460,8 +467,11 @@ public final class CityLandscapeCapacityReservationPlanner {
         double lateral = Math.abs(dx * Math.sin(bearing) - dz * Math.cos(bearing)) / radius;
         int sameNeighbors = adjacentCount(result, point);
         int sourceNeighbors = adjacentCount(sourceCells, point);
-        int currentContact = sharedBoundary(result, sourceCells);
-        double contactReward = sourceNeighbors * (currentContact < minimumSharedBoundary ? 3.0 : 0.28);
+        // The seed is selected from the parent's legal boundary (or the detached-root case has
+        // no contact requirement), so the minimum contact invariant is already established once.
+        // Re-scanning the entire growing mask for every frontier node made large percentage-fill
+        // parcels quadratic in their area.
+        double contactReward = sourceNeighbors * 0.28;
         int broadScale = Math.max(6, (int) Math.round(radius));
         int localScale = Math.max(3, (int) Math.round(radius * 0.45));
         double broadNoise = valueNoise(shapeSeed ^ 0x6a09e667f3bcc909L,
@@ -870,7 +880,8 @@ public final class CityLandscapeCapacityReservationPlanner {
 
     private record Subject(CityBlueprint.Landscape landscape,
                            CityBlueprintReferenceCatalog.LandscapeProfile profile,
-                           JsonObject owner, int parcelArea, int instanceOrdinal) {
+                           JsonObject owner, int parcelArea, int instanceOrdinal,
+                           boolean percentageFill) {
     }
 
     private record ParcelCapacity(String parcelId, String parentParcelId, Set<BlockPoint> cells,

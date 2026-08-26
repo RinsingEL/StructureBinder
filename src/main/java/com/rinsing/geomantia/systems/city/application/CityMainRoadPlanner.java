@@ -172,7 +172,6 @@ final class CityMainRoadPlanner {
                                                             List<JsonObject> internalStreetBands) {
         Map<String, MutableGroup> mutable = new LinkedHashMap<>();
         for (JsonObject anchor : anchors) {
-            if ("connectivity_growth".equals(string(anchor, "blueprintPlacementPhase"))) continue;
             String groupId = string(anchor, "placementGroupId");
             if (groupId.isBlank()) continue;
             MutableGroup group = mutable.computeIfAbsent(groupId, MutableGroup::new);
