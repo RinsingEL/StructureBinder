@@ -96,6 +96,8 @@ public final class CityRoadWeaverBridge {
                             "Each transformed road entrance needs direction and relative/world coordinates.");
                     continue;
                 }
+                BlockBounds footprint = optionalBounds(item, "lockedActualFootprint", "actualFootprint");
+                BlockPoint gatewayPoint = projectOutsideFootprint(roadPoint, direction, footprint);
                 endpoints.add(new RoadEndpoint(
                         anchorId + "::" + entranceId,
                         anchorId,
@@ -104,8 +106,9 @@ public final class CityRoadWeaverBridge {
                         templateId,
                         templateHash,
                         intValue(item, "priority", index),
-                        optionalBounds(item, "lockedActualFootprint", "actualFootprint"),
+                        footprint,
                         roadPoint,
+                        gatewayPoint,
                         direction));
             }
         }
@@ -494,6 +497,20 @@ public final class CityRoadWeaverBridge {
                 ? null : new BlockPoint(anchor.x() + relativePoint.x(), anchor.z() + relativePoint.z());
     }
 
+    private static BlockPoint projectOutsideFootprint(BlockPoint entrancePoint, String direction,
+                                                       BlockBounds footprint) {
+        if (footprint == null) {
+            return entrancePoint;
+        }
+        return switch (direction.trim().toUpperCase()) {
+            case "NORTH" -> new BlockPoint(entrancePoint.x(), Math.min(entrancePoint.z(), footprint.minZ() - 1));
+            case "EAST" -> new BlockPoint(Math.max(entrancePoint.x(), footprint.maxX() + 1), entrancePoint.z());
+            case "SOUTH" -> new BlockPoint(entrancePoint.x(), Math.max(entrancePoint.z(), footprint.maxZ() + 1));
+            case "WEST" -> new BlockPoint(Math.min(entrancePoint.x(), footprint.minX() - 1), entrancePoint.z());
+            default -> entrancePoint;
+        };
+    }
+
     private static JsonObject jsonObject(JsonObject object, String key) {
         return object != null && object.has(key) && object.get(key).isJsonObject()
                 ? object.getAsJsonObject(key) : null;
@@ -588,7 +605,7 @@ public final class CityRoadWeaverBridge {
     public record RoadEndpoint(String endpointId, String anchorId, String placementGroupId,
                                String entranceId,
                                String templateId, String templateHash, int priority, BlockBounds footprint,
-                               BlockPoint roadPoint, String direction) {
+                               BlockPoint entrancePoint, BlockPoint roadPoint, String direction) {
         public RoadEndpoint {
             endpointId = requireText(endpointId, "endpointId");
             anchorId = requireText(anchorId, "anchorId");
@@ -596,6 +613,7 @@ public final class CityRoadWeaverBridge {
             entranceId = requireText(entranceId, "entranceId");
             templateId = requireText(templateId, "templateId");
             templateHash = requireText(templateHash, "templateHash");
+            Objects.requireNonNull(entrancePoint, "entrancePoint");
             Objects.requireNonNull(roadPoint, "roadPoint");
             direction = requireText(direction, "direction");
         }
@@ -610,7 +628,10 @@ public final class CityRoadWeaverBridge {
             obj.addProperty("templateHash", templateHash);
             obj.addProperty("priority", priority);
             obj.addProperty("direction", direction);
-            obj.addProperty("coordinateSource", "transformed_road_entrance");
+            obj.addProperty("coordinateSource", footprint == null
+                    ? "transformed_road_entrance"
+                    : "directional_gateway_outside_locked_footprint");
+            obj.add("entrancePoint", entrancePoint.asJson());
             obj.add("roadPoint", roadPoint.asJson());
             if (footprint != null) {
                 obj.add("lockedActualFootprint", boundsJson(footprint));

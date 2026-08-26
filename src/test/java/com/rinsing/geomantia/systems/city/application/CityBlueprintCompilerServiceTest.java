@@ -1260,6 +1260,8 @@ class CityBlueprintCompilerServiceTest {
         assertFalse(acceptance.get("passed").getAsBoolean(), acceptance.toString());
         assertFalse(acceptance.get("allFunctionAreasFormed").getAsBoolean());
         assertTrue(acceptance.getAsJsonArray("hardBlocks").toString().contains("FUNCTION_AREA_EMPTY"));
+        assertTrue(acceptance.getAsJsonArray("hardBlocks").toString().contains(
+                "SELECTED_PATCH_TERRAIN_UNABLE_TO_SUPPORT_REQUIRED_STRUCTURE"));
         JsonObject dynamicArea = result.compileTrace().getAsJsonObject("dynamicAreaPlan");
         assertEquals(0, dynamicArea.get("frozenHighestPriorityAreaBlocks").getAsInt());
         assertEquals(0, dynamicArea.get("referenceCityAreaBlocks").getAsInt());
@@ -1268,11 +1270,78 @@ class CityBlueprintCompilerServiceTest {
         assertEquals(0, dynamicArea.getAsJsonArray("groups").get(0).getAsJsonObject()
                 .get("targetAreaBlocks").getAsInt(),
                 "minimum/district capacity must not fabricate owned area after every structure was skipped");
-        JsonObject selection = result.compileTrace().getAsJsonArray("selections").get(0).getAsJsonObject();
+        JsonObject selection = result.compileTrace().getAsJsonArray("selections").asList().stream()
+                .map(JsonElement::getAsJsonObject)
+                .filter(event -> event.has("reasonCode") && "CITY_BLUEPRINT_SELECTED_PATCH_TERRAIN_UNFIT"
+                        .equals(event.get("reasonCode").getAsString()))
+                .findFirst().orElseThrow();
         assertEquals("required", selection.get("phase").getAsString());
+        assertEquals("CITY_BLUEPRINT_SELECTED_PATCH_TERRAIN_UNFIT",
+                selection.get("reasonCode").getAsString());
+        assertTrue(selection.getAsJsonObject("terrainFailureReasonCounts")
+                .has("CITY_STRUCTURE_SURFACE_CELL_WATER"), selection.toString());
         assertTrue(selection.toString().contains("CITY_STRUCTURE_SURFACE_CELL_WATER"));
+        JsonObject group = result.compileTrace().getAsJsonArray("groupResults").get(0).getAsJsonObject();
+        JsonObject terrainFailure = group.getAsJsonArray("terrainPlacementFailures")
+                .get(0).getAsJsonObject();
+        assertEquals("geomantia:terrain_house", terrainFailure.get("structureRef").getAsString());
+        assertEquals(List.of("patch:plain:1"), terrainFailure.getAsJsonArray("selectedPatchRefs")
+                .asList().stream().map(JsonElement::getAsString).toList());
+        assertTrue(terrainFailure.getAsJsonObject("terrainFailureReasonCounts")
+                .has("CITY_STRUCTURE_SURFACE_CELL_WATER"), terrainFailure.toString());
         assertEquals("all_intersecting_terrain_field_cells",
                 result.compileTrace().get("terrainGateEvaluationScope").getAsString());
+    }
+
+    @Test
+    void foundationEligibleLocalReliefCommitsWithoutTerrainFailureEscalation() throws Exception {
+        Fixture fixture = acceptedFixture("run_foundation_eligible_relief", "city:foundation_eligible_relief",
+                9, 9, "SMALL", ignored -> { }, terrain -> terrain.getAsJsonArray("cells")
+                        .forEach(element -> element.getAsJsonObject().addProperty("localRelief", 10.0)),
+                blueprint -> blueprint.getAsJsonArray("groups").get(0).getAsJsonObject()
+                        .addProperty("terrainPolicy", "CONFORM"));
+
+        CityBlueprintCompilerService.CompilationResult result = new CityBlueprintCompilerService()
+                .compile(temporary, fixture.runId(), fixture.cityId());
+
+        assertTrue(result.ok(), result.compileTrace().toString());
+        JsonObject required = result.compileTrace().getAsJsonArray("selections").get(0).getAsJsonObject();
+        assertEquals("committed", required.get("status").getAsString(), required.toString());
+        JsonObject terrain = required.getAsJsonObject("terrainGateEvaluation");
+        assertTrue(terrain.get("terrainAdaptationRequired").getAsBoolean(), terrain.toString());
+        assertTrue(terrain.getAsJsonArray("terrainAdaptations").toString().contains("foundation_or_skip"));
+        JsonObject group = result.compileTrace().getAsJsonArray("groupResults").get(0).getAsJsonObject();
+        assertTrue(group.getAsJsonArray("terrainPlacementFailures").isEmpty(), group.toString());
+        assertFalse(result.compileTrace().getAsJsonObject("compilationAcceptance")
+                .getAsJsonArray("hardBlocks").toString().contains("SELECTED_PATCH_TERRAIN"));
+    }
+
+    @Test
+    void missingExplicitRequiredStructureFailsAcceptanceEvenWhenFunctionAreaHasOtherBuildings() throws Exception {
+        Fixture fixture = acceptedFixture("run_required_member_missing", "city:required_member_missing",
+                9, 9, "SMALL", blueprint -> blueprint.getAsJsonArray("groups").get(0).getAsJsonObject()
+                        .add("requiredStructureRefs", JsonParser.parseString(
+                                "[\"geomantia:town_hall\",\"geomantia:floating_house\"]")));
+
+        CityBlueprintCompilerService.CompilationResult result = new CityBlueprintCompilerService()
+                .compile(temporary, fixture.runId(), fixture.cityId());
+
+        assertTrue(result.ok(), result.compileTrace().toString());
+        JsonObject group = result.compileTrace().getAsJsonArray("groupResults").get(0).getAsJsonObject();
+        assertTrue(group.get("actualStructureCount").getAsInt() > 0, group.toString());
+        assertFalse(group.get("allRequiredStructuresCommitted").getAsBoolean(), group.toString());
+        assertEquals(1, group.getAsJsonObject("requiredStructureCounts")
+                .get("geomantia:town_hall").getAsInt());
+        JsonObject missing = group.getAsJsonArray("missingRequiredStructures").get(0).getAsJsonObject();
+        assertEquals("geomantia:floating_house", missing.get("structureRef").getAsString());
+        assertEquals(1, missing.get("missingCount").getAsInt());
+        JsonObject acceptance = result.compileTrace().getAsJsonObject("compilationAcceptance");
+        assertTrue(acceptance.get("allFunctionAreasFormed").getAsBoolean(), acceptance.toString());
+        assertFalse(acceptance.get("allRequiredStructuresCommitted").getAsBoolean(), acceptance.toString());
+        assertFalse(acceptance.get("passed").getAsBoolean(), acceptance.toString());
+        assertTrue(acceptance.getAsJsonArray("hardBlocks").toString().contains(
+                "civic: REQUIRED_STRUCTURE_MISSING structureRef=geomantia:floating_house missingCount=1"),
+                acceptance.toString());
     }
 
     @Test
@@ -1285,6 +1354,22 @@ class CityBlueprintCompilerServiceTest {
         CityBlueprintCompilerService.CompilationResult result = new CityBlueprintCompilerService()
                 .compile(temporary, fixture.runId(), fixture.cityId());
         assertTrue(result.ok(), result.compileTrace().toString());
+    }
+
+    @Test
+    void emptyFillPoolCompilesRequiredStructuresWithoutDividingByZero() throws Exception {
+        Fixture fixture = acceptedFixture("run_empty_fill_pool", "city:empty_fill_pool", 9, 9,
+                "SMALL", blueprint -> blueprint.getAsJsonArray("groups").get(0).getAsJsonObject()
+                        .addProperty("fillPoolRef", "pool:empty"));
+
+        CityBlueprintCompilerService.CompilationResult result = new CityBlueprintCompilerService()
+                .compile(temporary, fixture.runId(), fixture.cityId());
+
+        assertTrue(result.ok(), result.compileTrace().toString());
+        assertEquals("compiled", result.compileTrace().get("status").getAsString());
+        JsonObject group = result.compileTrace().getAsJsonArray("groupResults").get(0).getAsJsonObject();
+        assertEquals(1, group.get("requiredStructureCount").getAsInt(), group.toString());
+        assertEquals("PREVIEW_RANGE_EXHAUSTED", group.get("stopReason").getAsString());
     }
 
     @Test
@@ -1337,7 +1422,7 @@ class CityBlueprintCompilerServiceTest {
     }
 
     @Test
-    void firstRequiredStructureFallsBackFromUnbuildablePreferredPatchWithinD3Grid() throws Exception {
+    void unbuildablePreferredPatchDoesNotRelocateRequiredStructureWithinD3Grid() throws Exception {
         Fixture fixture = acceptedFixture("run_terrain_patch_fallback", "city:terrain_patch_fallback", 9, 9,
                 "SMALL", ignored -> { }, terrain -> terrain.getAsJsonArray("cells").forEach(element -> {
                     JsonObject cell = element.getAsJsonObject();
@@ -1353,14 +1438,19 @@ class CityBlueprintCompilerServiceTest {
 
         assertTrue(result.ok(), result.compileTrace().toString());
         JsonObject required = result.compileTrace().getAsJsonArray("selections").get(0).getAsJsonObject();
-        assertEquals("d3_terrain_fallback", required.getAsJsonObject("blueprintLayout")
-                .get("patchSelectionScope").getAsString());
+        assertFalse(required.getAsJsonArray("attempts").isEmpty(), required.toString());
+        assertTrue(required.getAsJsonArray("attempts").asList().stream()
+                .map(JsonElement::getAsJsonObject)
+                .allMatch(attempt -> "blueprint_preferred".equals(
+                        attempt.get("patchSelectionScope").getAsString())), required.toString());
         JsonObject group = result.compileTrace().getAsJsonArray("groupResults").get(0).getAsJsonObject();
         assertEquals(List.of("patch:plain:1"), group.getAsJsonArray("preferredPatchRefs").asList().stream()
                 .map(JsonElement::getAsString).toList());
-        assertTrue(group.getAsJsonArray("claimedPatchRefs").asList().stream()
+        assertFalse(group.getAsJsonArray("claimedPatchRefs").asList().stream()
                 .map(JsonElement::getAsString).anyMatch("patch:plain:2"::equals));
-        assertTrue(group.get("minimumStructureCountReached").getAsBoolean(), group.toString());
+        assertEquals(0, group.get("actualStructureCount").getAsInt(), group.toString());
+        assertFalse(result.compileTrace().getAsJsonObject("compilationAcceptance")
+                .get("passed").getAsBoolean());
     }
 
     @Test
@@ -1833,6 +1923,7 @@ class CityBlueprintCompilerServiceTest {
                   ],
                   "fillPools":[
                     {"poolRef":"pool:civic","structureRefs":["geomantia:town_hall"]},
+                    {"poolRef":"pool:empty","structureRefs":[]},
                     {"poolRef":"pool:mixed","structureRefs":["geomantia:town_hall","geomantia:oversized_hall"]},
                     {"poolRef":"pool:terrain","structureRefs":["geomantia:terrain_house"]},
                     {"poolRef":"pool:unsupported","structureRefs":["geomantia:floating_house"]},

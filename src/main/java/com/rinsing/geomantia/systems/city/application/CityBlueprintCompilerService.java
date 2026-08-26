@@ -248,15 +248,13 @@ public final class CityBlueprintCompilerService {
                 JsonObject event = selections.get(selections.size() - 1).getAsJsonObject();
                 limits[index] = intValue(event, "candidateCount", 0);
                 if (placement == null) {
-                    JsonObject reasons = event.has("compilerFilterReasonCounts")
-                            && event.get("compilerFilterReasonCounts").isJsonObject()
-                            ? event.getAsJsonObject("compilerFilterReasonCounts") : new JsonObject();
-                    if (reasons.has("CITY_STRUCTURE_TERRAIN_UNFIT_SKIP_MEMBER")
-                            && reasons.entrySet().stream().allMatch(entry ->
-                            entry.getKey().startsWith("CITY_STRUCTURE_TERRAIN_"))) {
+                    JsonObject terrainReasons = terrainFailureReasonCounts(event);
+                    if (!terrainReasons.entrySet().isEmpty()) {
                         event.addProperty("status", "skipped_unfit_terrain_member");
-                        event.addProperty("reasonCode", "CITY_STRUCTURE_TERRAIN_UNFIT_SKIP_MEMBER");
-                        state.stop("REQUIRED_MEMBER_SKIPPED_UNFIT_TERRAIN");
+                        event.addProperty("reasonCode", "CITY_BLUEPRINT_SELECTED_PATCH_TERRAIN_UNFIT");
+                        event.add("terrainFailureReasonCounts", terrainReasons.deepCopy());
+                        state.recordTerrainPlacementFailure(request.structureRef(), terrainReasons);
+                        state.stop("SELECTED_PATCH_TERRAIN_UNABLE_TO_SUPPORT_REQUIRED_STRUCTURE");
                         continue;
                     }
                     if (requiredRuntimeGap(event)) {
@@ -561,6 +559,13 @@ public final class CityBlueprintCompilerService {
         states.values().stream()
                 .filter(state -> state.anchorCount() == 0)
                 .forEach(state -> hardBlocks.add(state.group().groupId() + ": FUNCTION_AREA_EMPTY"));
+        states.values().stream()
+                .filter(GroupState::hasTerrainPlacementFailures)
+                .forEach(state -> hardBlocks.add(state.group().groupId()
+                        + ": SELECTED_PATCH_TERRAIN_UNABLE_TO_SUPPORT_REQUIRED_STRUCTURE"));
+        states.values().forEach(state -> state.missingRequiredStructures().forEach(gap ->
+                hardBlocks.add(state.group().groupId() + ": REQUIRED_STRUCTURE_MISSING structureRef="
+                        + gap.structureRef() + " missingCount=" + gap.missingCount())));
         visualQuality.hardBlocks().forEach(hardBlocks::add);
 
         JsonObject acceptance = new JsonObject();
@@ -572,6 +577,8 @@ public final class CityBlueprintCompilerService {
         acceptance.addProperty("structureGraphConnected", graphConnected);
         acceptance.addProperty("allFunctionAreasFormed",
                 states.values().stream().allMatch(state -> state.anchorCount() > 0));
+        acceptance.addProperty("allRequiredStructuresCommitted",
+                states.values().stream().allMatch(state -> state.missingRequiredStructures().isEmpty()));
         acceptance.addProperty("arrayVisualGeometryPassed", visualQuality.passed());
         acceptance.add("hardBlocks", hardBlocks);
         return acceptance;
@@ -740,11 +747,6 @@ public final class CityBlueprintCompilerService {
                 state.group().groupId(), structureRef, candidate.templateId(), candidate.variantId())));
         List<PatchScope> patchScopes = new ArrayList<>();
         patchScopes.add(new PatchScope(state.initialPatchSelectionScope(), null));
-        if (required && state.anchorCount() == 0
-                && !state.hasExplicitPlacementRelation()
-                && state.connectionPatches().size() > state.patches().size()) {
-            patchScopes.add(new PatchScope("d3_terrain_fallback", state.connectionPatches()));
-        }
         for (PatchScope patchScope : patchScopes) {
             for (TemplateCandidate template : candidates) {
                 JsonObject plan = candidatePlan(blueprint, state, structureRef, phase, ordinal,
@@ -1370,7 +1372,7 @@ public final class CityBlueprintCompilerService {
             int minimumCount = minimumGroupStructureCount(cityScale, group.extentClass(), algorithm);
             List<String> plannedRefs = new ArrayList<>(orderedRequiredStructureRefs(group, catalog));
             List<String> fillPool = catalog.pool(group.fillPoolRef());
-            for (int cursor = 0; plannedRefs.size() < minimumCount; cursor++) {
+            for (int cursor = 0; plannedRefs.size() < minimumCount && !fillPool.isEmpty(); cursor++) {
                 plannedRefs.add(fillPool.get(cursor % fillPool.size()));
             }
 
@@ -2924,6 +2926,42 @@ public final class CityBlueprintCompilerService {
         return false;
     }
 
+    private static JsonObject terrainFailureReasonCounts(JsonObject event) {
+        JsonObject result = new JsonObject();
+        if (event.has("compilerFilterReasonCounts")
+                && event.get("compilerFilterReasonCounts").isJsonObject()) {
+            if (!mergeExclusiveTerrainReasons(result,
+                    event.getAsJsonObject("compilerFilterReasonCounts"))) return new JsonObject();
+        }
+        if (event.has("attempts") && event.get("attempts").isJsonArray()) {
+            for (JsonElement attemptElement : event.getAsJsonArray("attempts")) {
+                if (!attemptElement.isJsonObject()) continue;
+                JsonObject attempt = attemptElement.getAsJsonObject();
+                if (attempt.has("filterReasonCounts") && attempt.get("filterReasonCounts").isJsonObject()) {
+                    if (!mergeExclusiveTerrainReasons(result,
+                            attempt.getAsJsonObject("filterReasonCounts"))) return new JsonObject();
+                }
+            }
+        }
+        return result;
+    }
+
+    private static boolean mergeExclusiveTerrainReasons(JsonObject target, JsonObject source) {
+        for (Map.Entry<String, JsonElement> entry : source.entrySet()) {
+            String reason = entry.getKey();
+            boolean terrainReason = reason.startsWith("CITY_STRUCTURE_TERRAIN_")
+                    || reason.startsWith("CITY_STRUCTURE_SURFACE_");
+            if (!terrainReason) {
+                if ("D4_ARRAY_COUNT_UNSATISFIED".equals(reason)) continue;
+                return false;
+            }
+            int count = entry.getValue().isJsonPrimitive() && entry.getValue().getAsJsonPrimitive().isNumber()
+                    ? entry.getValue().getAsInt() : 1;
+            target.addProperty(reason, intValue(target, reason, 0) + count);
+        }
+        return true;
+    }
+
     private static TerrainCandidateEvaluation candidateTerrainEvaluation(JsonObject candidate, GroupState state,
                                                                           String structureRef,
                                                                           CityStructureTerrainGate terrainGate) {
@@ -4002,8 +4040,10 @@ public final class CityBlueprintCompilerService {
         private int dynamicTargetAreaBlocks;
         private boolean areaExpansionActive;
         private final Set<String> blockedRefs = new LinkedHashSet<>();
+        private final List<TerrainPlacementFailure> terrainPlacementFailures = new ArrayList<>();
         private final Set<String> claimedPatchRefs = new LinkedHashSet<>();
         private final Map<String, Integer> structureCounts = new LinkedHashMap<>();
+        private final Map<String, Integer> requiredStructureCounts = new LinkedHashMap<>();
         private final List<BlockBounds> envelopes = new ArrayList<>();
         private final Map<String, CommittedArray> committedArrays = new LinkedHashMap<>();
         private int anchorCount;
@@ -4277,6 +4317,20 @@ public final class CityBlueprintCompilerService {
         void blockRef(String ref) { blockedRefs.add(ref); }
         void claimPatch(String ref) { if (ref != null && !ref.isBlank()) claimedPatchRefs.add(ref); }
         void stop(String reason) { stopReason = reason; }
+        void recordTerrainPlacementFailure(String structureRef, JsonObject reasonCounts) {
+            terrainPlacementFailures.add(new TerrainPlacementFailure(structureRef, reasonCounts.deepCopy()));
+        }
+        boolean hasTerrainPlacementFailures() { return !terrainPlacementFailures.isEmpty(); }
+        List<RequiredStructureGap> missingRequiredStructures() {
+            Map<String, Integer> requested = new LinkedHashMap<>();
+            group.requiredStructureRefs().forEach(ref -> requested.merge(ref, 1, Integer::sum));
+            List<RequiredStructureGap> result = new ArrayList<>();
+            requested.forEach((ref, count) -> {
+                int missing = count - requiredStructureCounts.getOrDefault(ref, 0);
+                if (missing > 0) result.add(new RequiredStructureGap(ref, missing));
+            });
+            return List.copyOf(result);
+        }
         void freezeCoreExtent() { coreExtent = extent; }
         void ensureLayoutFrame(CityBlueprintGroupLayoutPlanner.Frame proposed) {
             if (layoutFrame == null) layoutFrame = proposed;
@@ -4285,7 +4339,10 @@ public final class CityBlueprintCompilerService {
                     PlacementPhase phase, ConnectivityFit connectivity, JsonObject anchor,
                     int claimedAreaBlocks) {
             anchorCount++;
-            if (required) requiredCount++;
+            if (required) {
+                requiredCount++;
+                requiredStructureCounts.merge(structureRef, 1, Integer::sum);
+            }
             structureCounts.put(structureRef, structureCounts.getOrDefault(structureRef, 0) + 1);
             BlockBounds next = bounds(boundsJson);
             JsonObject bodyJson = anchor.has("actualFootprint") && anchor.get("actualFootprint").isJsonObject()
@@ -4376,6 +4433,13 @@ public final class CityBlueprintCompilerService {
             value.addProperty("extentExpandedForConnectivity", extentExpandedForConnectivity);
             value.addProperty("actualStructureCount", anchorCount);
             value.addProperty("requiredStructureCount", requiredCount);
+            JsonObject requiredCounts = new JsonObject();
+            requiredStructureCounts.forEach(requiredCounts::addProperty);
+            value.add("requiredStructureCounts", requiredCounts);
+            JsonArray missingRequired = new JsonArray();
+            missingRequiredStructures().forEach(gap -> missingRequired.add(gap.asJson()));
+            value.add("missingRequiredStructures", missingRequired);
+            value.addProperty("allRequiredStructuresCommitted", missingRequired.isEmpty());
             value.addProperty("derivedMinimumStructureCount", minimumStructureCount);
             value.addProperty("internalStructureCount", internalStructureCount());
             value.addProperty("minimumStructureCountReached",
@@ -4387,6 +4451,9 @@ public final class CityBlueprintCompilerService {
             value.addProperty("estimatedCoverageRatio", spatialDemandBlocks == 0 ? 0.0
                     : builtCollisionAreaBlocks / (double) spatialDemandBlocks);
             value.addProperty("stopReason", stopReason);
+            JsonArray terrainFailures = new JsonArray();
+            terrainPlacementFailures.forEach(failure -> terrainFailures.add(failure.asJson(group)));
+            value.add("terrainPlacementFailures", terrainFailures);
             JsonArray preferred = new JsonArray();
             group.preferredPatchRefs().forEach(preferred::add);
             value.add("preferredPatchRefs", preferred);
@@ -4465,6 +4532,29 @@ public final class CityBlueprintCompilerService {
             int maxX = cells.stream().mapToInt(PatchMemberCell::blockMinX).max().orElse(0) + step - 1;
             int maxZ = cells.stream().mapToInt(PatchMemberCell::blockMinZ).max().orElse(0) + step - 1;
             return new BlockBounds(minX, minZ, maxX, maxZ);
+        }
+    }
+
+    private record TerrainPlacementFailure(String structureRef, JsonObject reasonCounts) {
+        private JsonObject asJson(CityBlueprint.Group group) {
+            JsonObject value = new JsonObject();
+            value.addProperty("structureRef", structureRef);
+            value.addProperty("reasonCode", "CITY_BLUEPRINT_SELECTED_PATCH_TERRAIN_UNFIT");
+            JsonArray patches = new JsonArray();
+            group.preferredPatchRefs().forEach(patches::add);
+            value.add("selectedPatchRefs", patches);
+            value.add("terrainFailureReasonCounts", reasonCounts.deepCopy());
+            return value;
+        }
+    }
+
+    private record RequiredStructureGap(String structureRef, int missingCount) {
+        private JsonObject asJson() {
+            JsonObject value = new JsonObject();
+            value.addProperty("structureRef", structureRef);
+            value.addProperty("missingCount", missingCount);
+            value.addProperty("reasonCode", "CITY_BLUEPRINT_REQUIRED_STRUCTURE_MISSING");
+            return value;
         }
     }
 

@@ -1619,6 +1619,14 @@ final class CityPlanningEndpointHandler {
         }
         JsonObject activeRegistry = CityReservationMaskRegistry.activate(activeMaskPlan, null, materializationPlan,
                 runId, citySeedId, serverRoot);
+        JsonObject activationProvenance = new JsonObject();
+        activationProvenance.addProperty("schemaVersion", "city_d5_activation_provenance.v0.1");
+        activationProvenance.addProperty("sourceD5Hash", sha256(Files.readString(maskPath)));
+        activationProvenance.addProperty("sourceD6Hash", sha256(Files.readString(d6PlanPath)));
+        activationProvenance.addProperty("sourceLandUseCompletionHash", optionalArtifactHash(landUseCompletePath));
+        activationProvenance.addProperty("sourceDecorationCompletionHash", optionalArtifactHash(decorationCompletePath));
+        activationProvenance.addProperty("roadProvider", roadProvider);
+        activeRegistry.add("activationProvenance", activationProvenance);
         JsonObject activeDecorationSummary = decorationWorldgenMode
                 ? CityDecorationWorldgenRegistry.activate(metadata.dimensionId(), compiledDecorationPlan,
                         frozenDecorationTerrainPlan, serverRoot, decorationCatalogRoot)
@@ -2832,9 +2840,14 @@ final class CityPlanningEndpointHandler {
             return ctx.workflow().finish(workflowStarted, "waiting_for_confirmation");
         }
 
-        Path executeD5SkipArtifact = blueprintWorkflow ? null
-                : cityStageDir(runDir, citySeedId, CityTestRunLayout.D5)
+        Path activeD5Registry = cityStageDir(runDir, citySeedId, CityTestRunLayout.D5)
                 .resolve("active_planned_structure_registry.json");
+        Path executeD5SkipArtifact = workflowD5ActivationCurrent(activeD5Registry,
+                workflowD5Plan, workflowD6Plan,
+                cityStageDir(runDir, citySeedId, CityTestRunLayout.LAND_USE)
+                        .resolve("city_land_use_planning_complete.json"),
+                decorationDir(runDir, citySeedId).resolve("city_decoration_planning_complete.json"),
+                stringValue(request, "roadProvider", "auto")) ? activeD5Registry : null;
         if (!ctx.workflow().runStep("city_execute_d5", executeD5SkipArtifact, () -> handleExecuteD5(debugRoot, serverRoot,
                 runId, citySeedId, true, level, stringValue(request, "roadProvider", "auto"),
                 null, blueprintWorkflow ? null : enableLandUseLayer))) {
@@ -2922,6 +2935,41 @@ final class CityPlanningEndpointHandler {
         } catch (RuntimeException | IOException ignored) {
             return false;
         }
+    }
+
+    static boolean workflowD5ActivationCurrent(Path activeRegistryPath,
+                                               Path d5PlanPath,
+                                               Path d6PlanPath,
+                                               Path landUseCompletionPath,
+                                               Path decorationCompletionPath,
+                                               String requestedRoadProvider) {
+        if (!Files.isRegularFile(activeRegistryPath)
+                || !Files.isRegularFile(d5PlanPath)
+                || !Files.isRegularFile(d6PlanPath)) return false;
+        try {
+            JsonObject active = JsonParser.parseString(Files.readString(activeRegistryPath)).getAsJsonObject();
+            if (!active.has("activationProvenance")
+                    || !active.get("activationProvenance").isJsonObject()) return false;
+            JsonObject provenance = active.getAsJsonObject("activationProvenance");
+            return "city_d5_activation_provenance.v0.1".equals(
+                    stringValue(provenance, "schemaVersion", ""))
+                    && sha256(Files.readString(d5PlanPath)).equals(
+                    stringValue(provenance, "sourceD5Hash", ""))
+                    && sha256(Files.readString(d6PlanPath)).equals(
+                    stringValue(provenance, "sourceD6Hash", ""))
+                    && optionalArtifactHash(landUseCompletionPath).equals(
+                    stringValue(provenance, "sourceLandUseCompletionHash", ""))
+                    && optionalArtifactHash(decorationCompletionPath).equals(
+                    stringValue(provenance, "sourceDecorationCompletionHash", ""))
+                    && CityRoadWeaverBridge.normalizeProvider(requestedRoadProvider).equals(
+                    stringValue(provenance, "roadProvider", ""));
+        } catch (RuntimeException | IOException ignored) {
+            return false;
+        }
+    }
+
+    private static String optionalArtifactHash(Path path) throws IOException {
+        return Files.isRegularFile(path) ? sha256(Files.readString(path)) : "absent";
     }
 
     static boolean workflowBlueprintAnchorMapCurrent(Path anchorMapPath, Path blueprintDir) {

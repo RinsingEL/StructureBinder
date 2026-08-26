@@ -2036,12 +2036,15 @@ class CityPlanningEndpointHandlerTest {
         assertEquals("valid", plan.get("validationStatus").getAsString());
         assertFalse(plan.get("generateImmediately").getAsBoolean());
         assertTrue(plan.get("transactional").getAsBoolean());
+        assertEquals(104, endpoint.getAsJsonObject("entrancePoint").get("x").getAsInt());
+        assertEquals(200, endpoint.getAsJsonObject("entrancePoint").get("z").getAsInt());
         assertEquals(104, endpoint.getAsJsonObject("roadPoint").get("x").getAsInt());
-        assertEquals(200, endpoint.getAsJsonObject("roadPoint").get("z").getAsInt());
+        assertEquals(199, endpoint.getAsJsonObject("roadPoint").get("z").getAsInt());
         assertEquals("NORTH", endpoint.get("direction").getAsString());
         assertEquals("city:house", endpoint.get("templateId").getAsString());
         assertEquals("sha256:house", endpoint.get("templateHash").getAsString());
-        assertEquals("transformed_road_entrance", endpoint.get("coordinateSource").getAsString());
+        assertEquals("directional_gateway_outside_locked_footprint",
+                endpoint.get("coordinateSource").getAsString());
         assertNotEquals(215, endpoint.getAsJsonObject("roadPoint").get("z").getAsInt(),
                 "Road endpoint must not be fabricated from bbox.maxZ()+3");
     }
@@ -2848,6 +2851,45 @@ class CityPlanningEndpointHandlerTest {
         Files.writeString(artifactPath, "not-json");
         assertFalse(CityPlanningEndpointHandler.workflowArtifactMatchesAnchorMap(
                 artifactPath, anchorMapPath));
+    }
+
+    @Test
+    void workflowD5SkipsOnlyWhenActivationMatchesAllCurrentInputs() throws Exception {
+        Path directory = Files.createTempDirectory("city-workflow-d5-activation-identity-test");
+        Path active = directory.resolve("active_planned_structure_registry.json");
+        Path d5 = directory.resolve("reservation_mask_plan.json");
+        Path d6 = directory.resolve("structure_materialization_plan.json");
+        Path landUse = directory.resolve("city_land_use_planning_complete.json");
+        Path decoration = directory.resolve("city_decoration_planning_complete.json");
+        Files.writeString(d5, "{\"plan\":\"d5\"}");
+        Files.writeString(d6, "{\"plan\":\"d6\"}");
+        Files.writeString(landUse, "{\"plan\":\"land_use\"}");
+
+        Files.writeString(active, """
+                {"activationProvenance":{
+                  "schemaVersion":"city_d5_activation_provenance.v0.1",
+                  "sourceD5Hash":"%s",
+                  "sourceD6Hash":"%s",
+                  "sourceLandUseCompletionHash":"%s",
+                  "sourceDecorationCompletionHash":"absent",
+                  "roadProvider":"none"
+                }}
+                """.formatted(sha256(Files.readString(d5)), sha256(Files.readString(d6)),
+                sha256(Files.readString(landUse))));
+
+        assertTrue(CityPlanningEndpointHandler.workflowD5ActivationCurrent(
+                active, d5, d6, landUse, decoration, "none"));
+
+        Files.writeString(d6, "{\"plan\":\"changed\"}");
+        assertFalse(CityPlanningEndpointHandler.workflowD5ActivationCurrent(
+                active, d5, d6, landUse, decoration, "none"));
+
+        Files.writeString(d6, "{\"plan\":\"d6\"}");
+        Files.writeString(decoration, "{\"plan\":\"new_decoration\"}");
+        assertFalse(CityPlanningEndpointHandler.workflowD5ActivationCurrent(
+                active, d5, d6, landUse, decoration, "none"));
+        assertFalse(CityPlanningEndpointHandler.workflowD5ActivationCurrent(
+                active, d5, d6, landUse, directory.resolve("missing.json"), "auto"));
     }
 
     @Test

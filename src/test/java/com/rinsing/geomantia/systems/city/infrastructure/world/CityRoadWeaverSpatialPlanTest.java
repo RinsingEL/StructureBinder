@@ -75,6 +75,36 @@ class CityRoadWeaverSpatialPlanTest {
         assertEquals(2, plan.get("endpointCount").getAsInt());
     }
 
+    @Test
+    void projectsEveryEntranceDirectionOutsideTheLockedFootprint() {
+        JsonObject materialization = materialization(List.of(
+                new EndpointFixture("north", "group", 0, 0),
+                new EndpointFixture("east", "group", 20, 0),
+                new EndpointFixture("south", "group", 40, 0),
+                new EndpointFixture("west", "group", 60, 0)));
+        String[] directions = {"NORTH", "EAST", "SOUTH", "WEST"};
+        JsonArray structures = materialization.getAsJsonArray("plannedWorldgenStructures");
+        for (int i = 0; i < directions.length; i++) {
+            structures.get(i).getAsJsonObject().getAsJsonObject("templatePlacementPlan")
+                    .getAsJsonObject("transformed").getAsJsonArray("roadEntrances")
+                    .get(0).getAsJsonObject().addProperty("direction", directions[i]);
+        }
+
+        JsonArray endpoints = CityRoadWeaverBridge.createConnectionPlan(materialization)
+                .getAsJsonArray("endpoints");
+
+        assertEquals(-1, point(endpoints, "north::front").get("z").getAsInt());
+        assertEquals(23, point(endpoints, "east::front").get("x").getAsInt());
+        assertEquals(5, point(endpoints, "south::front").get("z").getAsInt());
+        assertEquals(57, point(endpoints, "west::front").get("x").getAsInt());
+    }
+
+    private static JsonObject point(JsonArray endpoints, String endpointId) {
+        return endpoints.asList().stream().map(JsonElement::getAsJsonObject)
+                .filter(endpoint -> endpointId.equals(endpoint.get("endpointId").getAsString()))
+                .findFirst().orElseThrow().getAsJsonObject("roadPoint");
+    }
+
     private static JsonObject materialization(List<EndpointFixture> fixtures) {
         JsonObject plan = new JsonObject();
         plan.addProperty("cityId", "city_test");
@@ -86,6 +116,12 @@ class CityRoadWeaverSpatialPlanTest {
             item.addProperty("placementGroupId", fixture.groupId());
             item.addProperty("structureId", "template:" + fixture.anchorId());
             item.addProperty("priority", 101);
+            JsonObject footprint = new JsonObject();
+            footprint.addProperty("minX", fixture.x() - 2);
+            footprint.addProperty("minZ", fixture.z());
+            footprint.addProperty("maxX", fixture.x() + 2);
+            footprint.addProperty("maxZ", fixture.z() + 4);
+            item.add("lockedActualFootprint", footprint);
             JsonObject placement = new JsonObject();
             placement.addProperty("templateId", "city:" + fixture.anchorId());
             placement.addProperty("templateHash", "sha256:" + fixture.anchorId());
