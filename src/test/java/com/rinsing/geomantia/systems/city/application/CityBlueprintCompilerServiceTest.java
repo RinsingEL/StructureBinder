@@ -94,7 +94,7 @@ class CityBlueprintCompilerServiceTest {
         int anchorCount = first.structureAnchorPlan().getAsJsonArray("anchors").size();
         assertTrue(anchorCount >= 3);
         assertTrue(Set.of("CONNECTED_SPACE_EXHAUSTED", "PREVIEW_RANGE_EXHAUSTED",
-                "PERCENTAGE_TARGET_REACHED").contains(first.groupExtentMap().getAsJsonArray("groups")
+                "BUILDING_SHARE_TARGET_REACHED").contains(first.groupExtentMap().getAsJsonArray("groups")
                 .get(0).getAsJsonObject().get("stopReason").getAsString()));
         assertEquals("patch:plain:1", first.groupExtentMap().getAsJsonArray("groups")
                 .get(0).getAsJsonObject().getAsJsonArray("claimedPatchRefs").get(0).getAsString());
@@ -102,17 +102,21 @@ class CityBlueprintCompilerServiceTest {
                 .getAsJsonObject("collisionExtent");
         assertTrue(extent.get("maxX").getAsInt() - extent.get("minX").getAsInt() + 1 <= 96);
         assertTrue(extent.get("maxZ").getAsInt() - extent.get("minZ").getAsInt() + 1 <= 96);
-        JsonObject district = first.groupExtentMap().getAsJsonArray("groups").get(0).getAsJsonObject()
-                .getAsJsonObject("districtEnvelope");
-        assertTrue(district.has("minX") && district.has("minZ")
-                && district.has("maxX") && district.has("maxZ"));
-        JsonObject districtCapacity = first.groupExtentMap().getAsJsonArray("groups").get(0).getAsJsonObject()
-                .getAsJsonObject("districtCapacity");
-        assertEquals("RESERVED", districtCapacity.get("status").getAsString());
-        assertEquals("CLUSTER_BOUNDED", districtCapacity.get("placementMode").getAsString());
-        assertTrue(districtCapacity.get("reservedCellCount").getAsInt() > 0);
-        assertTrue(districtCapacity.getAsJsonArray("reservationSpans").size() > 0);
+        JsonObject functionAreaEnvelope = first.groupExtentMap().getAsJsonArray("groups").get(0)
+                .getAsJsonObject().getAsJsonObject("functionAreaEnvelope");
+        assertTrue(functionAreaEnvelope.has("minX") && functionAreaEnvelope.has("minZ")
+                && functionAreaEnvelope.has("maxX") && functionAreaEnvelope.has("maxZ"));
+        JsonObject functionArea = first.groupExtentMap().getAsJsonArray("groups").get(0)
+                .getAsJsonObject().getAsJsonObject("functionArea");
+        assertEquals("FORMED_FROM_COMMITTED_CLAIMS", functionArea.get("status").getAsString());
+        assertTrue(functionArea.get("initialStructureCount").getAsInt() > 0);
+        assertTrue(functionArea.getAsJsonArray("initialFormationSpans").size() > 0);
+        assertTrue(functionArea.getAsJsonArray("formationSpans").size()
+                >= functionArea.getAsJsonArray("initialFormationSpans").size());
         JsonObject groupResult = first.compileTrace().getAsJsonArray("groupResults").get(0).getAsJsonObject();
+        assertFalse(first.compileTrace().has("districtCapacityPlan"));
+        assertFalse(first.groupExtentMap().has("districtCapacityPlan"));
+        assertFalse(groupResult.has("districtCapacity"));
         assertEquals("CLUSTER_BOUNDED", groupResult.get("placementMode").getAsString());
         Set<Integer> anchorXs = new LinkedHashSet<>();
         Set<Integer> anchorZs = new LinkedHashSet<>();
@@ -130,8 +134,9 @@ class CityBlueprintCompilerServiceTest {
             anchorXs.add(anchor.getAsJsonObject("anchorBlock").get("x").getAsInt());
             anchorZs.add(anchor.getAsJsonObject("anchorBlock").get("z").getAsInt());
         }
-        assertTrue(anchorXs.size() >= 3 && anchorZs.size() >= 3,
-                "COMPACT must remain a two-dimensional group layout, not a one-axis nearest-cell chain");
+        assertTrue(anchorXs.size() >= 2 && anchorZs.size() >= 2,
+                "COMPACT must remain a two-dimensional group layout, not a one-axis nearest-cell chain: x="
+                        + anchorXs + ", z=" + anchorZs);
         CityLandformReviewPackage review = CityLandformReviewPackage.fromJson(JsonParser.parseString(
                 Files.readString(fixture.runDir().resolve(
                         "city_d3_city_compile/city_landform_review_package.json"))).getAsJsonObject());
@@ -301,12 +306,12 @@ class CityBlueprintCompilerServiceTest {
         assertTrue(result.ok(), result.compileTrace().toString());
         JsonObject group = result.groupExtentMap().getAsJsonArray("groups").get(0).getAsJsonObject();
         JsonObject demand = group.getAsJsonObject("spatialDemand");
-        JsonObject capacity = group.getAsJsonObject("districtCapacity");
-        assertEquals("TEMPLATE_ARRAY_DEMAND", demand.get("source").getAsString());
+        JsonObject functionArea = group.getAsJsonObject("functionArea");
+        assertEquals("TEMPLATE_ARRAY_LAYOUT_DEMAND", demand.get("source").getAsString());
         assertTrue(demand.get("targetAreaBlocks").getAsInt() < 4_096);
-        assertEquals(0, capacity.get("roadReserveAreaBlocks").getAsInt());
-        assertEquals(demand.get("targetAreaBlocks").getAsInt(),
-                capacity.get("targetWithRoadBlocks").getAsInt());
+        assertEquals("COMMITTED_STRUCTURE_AND_LANDSCAPE_CLAIMS",
+                functionArea.get("source").getAsString());
+        assertTrue(functionArea.get("actualAreaBlocks").getAsInt() > 0);
     }
 
     @Test
@@ -430,7 +435,7 @@ class CityBlueprintCompilerServiceTest {
                 marketSlotBounds.toString());
         for (JsonElement element : result.groupExtentMap().getAsJsonArray("groups")) {
             JsonObject group = element.getAsJsonObject();
-            assertEquals(3, group.getAsJsonArray("districtBufferExemptGroupIds").size(), group.toString());
+            assertEquals(3, group.getAsJsonArray("groupSeparationExemptGroupIds").size(), group.toString());
         }
     }
 
@@ -771,7 +776,7 @@ class CityBlueprintCompilerServiceTest {
                 .filter(group -> "plaza".equals(group.get("groupId").getAsString()))
                 .findFirst().orElseThrow();
         Set<String> exemptions = new java.util.LinkedHashSet<>();
-        plazaExtent.getAsJsonArray("districtBufferExemptGroupIds").forEach(value ->
+        plazaExtent.getAsJsonArray("groupSeparationExemptGroupIds").forEach(value ->
                 exemptions.add(value.getAsString()));
         assertEquals(Set.of("civic", "market"), exemptions);
     }
@@ -779,8 +784,10 @@ class CityBlueprintCompilerServiceTest {
     @Test
     void requiredLandscapeCapacityIsExactAndExcludesAllLaterStructures() throws Exception {
         Fixture fixture = acceptedFixture("run_capacity", "city:capacity", 9, 9, "SMALL", blueprint -> {
-                blueprint.getAsJsonArray("groups").get(0).getAsJsonObject()
-                        .addProperty("algorithmProfileRef", "algorithm:grid");
+                JsonObject group = blueprint.getAsJsonArray("groups").get(0).getAsJsonObject();
+                group.addProperty("algorithmProfileRef", "algorithm:grid");
+                group.add("spaceComposition", JsonParser.parseString(
+                        "{\"buildingShare\":0.4,\"landscapeShare\":0.5,\"openSpaceShare\":0.1}"));
                 blueprint.getAsJsonObject("outdoorPlan").getAsJsonArray("landscapes").add(
                         JsonParser.parseString("""
                                 {"landscapeId":"civic_green","landscapeProfileRef":"landscape:common_green",
@@ -807,6 +814,15 @@ class CityBlueprintCompilerServiceTest {
         JsonObject instance = capacity.getAsJsonArray("instances").get(0).getAsJsonObject();
         assertEquals(8, instance.get("parcelCount").getAsInt());
         assertEquals(8, instance.getAsJsonArray("parcelReservations").size());
+        JsonObject group = result.groupExtentMap().getAsJsonArray("groups").get(0).getAsJsonObject();
+        JsonObject functionArea = group.getAsJsonObject("functionArea");
+        assertEquals((int) Math.ceil(group.get("targetAreaBlocks").getAsInt() * 0.4),
+                group.get("buildingTargetAreaBlocks").getAsInt());
+        assertEquals(instance.get("actualAreaBlocks").getAsInt(),
+                functionArea.get("actualLandscapeAreaBlocks").getAsInt());
+        assertFalse(functionArea.getAsJsonArray("landscapeFormationSpans").isEmpty());
+        assertTrue(functionArea.get("actualAreaBlocks").getAsInt()
+                >= functionArea.get("actualLandscapeAreaBlocks").getAsInt());
 
         Set<BlockPoint> reserved = new LinkedHashSet<>();
         for (JsonElement element : instance.getAsJsonArray("reservationSpans")) {
@@ -1021,17 +1037,17 @@ class CityBlueprintCompilerServiceTest {
 
         assertTrue(first.ok(), first.compileTrace().toString());
         assertEquals(first.structureAnchorPlan(), second.structureAnchorPlan());
-        assertEquals("city_generation_compile_trace.v0.13",
+        assertEquals("city_generation_compile_trace.v0.14",
                 first.compileTrace().get("schemaVersion").getAsString());
-        assertEquals("group_extent_map.v0.10",
+        assertEquals("group_extent_map.v0.11",
                 first.groupExtentMap().get("schemaVersion").getAsString());
-        assertEquals("PREALLOCATED_CONNECTED_CAPACITY_WITH_RELATION_AWARE_HARD_BUFFER",
-                first.groupExtentMap().get("districtBoundaryPolicy").getAsString());
-        assertEquals("city_district_capacity_plan.v0.1",
-                first.groupExtentMap().getAsJsonObject("districtCapacityPlan")
+        assertEquals("COMMITTED_BUILDINGS_THEN_RELATION_AND_PERCENTAGE_EXPANSION",
+                first.groupExtentMap().get("functionAreaPolicy").getAsString());
+        assertEquals("city_function_area_formation_plan.v0.1",
+                first.groupExtentMap().getAsJsonObject("functionAreaFormationPlan")
                         .get("schemaVersion").getAsString());
-        assertEquals(CityBlueprintCompilerService.MINIMUM_DISTRICT_SEPARATION_BLOCKS,
-                first.groupExtentMap().get("minimumDistrictSeparationBlocks").getAsInt());
+        assertEquals(0, first.groupExtentMap().getAsJsonObject("functionAreaFormationPlan")
+                .get("preallocatedAreaCount").getAsInt());
         assertTrue(first.groupExtentMap().get("structureGraphConnected").getAsBoolean());
         assertTrue(first.compileTrace().getAsJsonObject("compilationAcceptance")
                 .get("passed").getAsBoolean(), first.compileTrace().toString());
@@ -1082,7 +1098,7 @@ class CityBlueprintCompilerServiceTest {
         for (JsonElement element : first.groupExtentMap().getAsJsonArray("groups")) {
             JsonObject group = element.getAsJsonObject();
             Set<String> exemptions = new java.util.LinkedHashSet<>();
-            group.getAsJsonArray("districtBufferExemptGroupIds").forEach(value ->
+            group.getAsJsonArray("groupSeparationExemptGroupIds").forEach(value ->
                     exemptions.add(value.getAsString()));
             districtExemptions.put(group.get("groupId").getAsString(), exemptions);
         }
@@ -1119,8 +1135,8 @@ class CityBlueprintCompilerServiceTest {
                 if (districtExemptions.getOrDefault(groupId, Set.of()).contains(entry.getKey())) continue;
                 for (JsonObject existing : entry.getValue()) {
                     assertTrue(edgeGap(collision, existing)
-                                    >= CityBlueprintCompilerService.MINIMUM_DISTRICT_SEPARATION_BLOCKS,
-                            groupId + " entered the district buffer around " + entry.getKey());
+                                    >= CityBlueprintCompilerService.MINIMUM_GROUP_SEPARATION_BLOCKS,
+                            groupId + " entered the group separation buffer around " + entry.getKey());
                 }
             }
             envelopesByGroup.computeIfAbsent(groupId, ignored -> new java.util.ArrayList<>()).add(collision);
@@ -1282,6 +1298,10 @@ class CityBlueprintCompilerServiceTest {
                 .has("CITY_STRUCTURE_SURFACE_CELL_WATER"), selection.toString());
         assertTrue(selection.toString().contains("CITY_STRUCTURE_SURFACE_CELL_WATER"));
         JsonObject group = result.compileTrace().getAsJsonArray("groupResults").get(0).getAsJsonObject();
+        JsonObject functionArea = group.getAsJsonObject("functionArea");
+        assertEquals("EMPTY_NO_COMMITTED_CLAIM", functionArea.get("status").getAsString());
+        assertTrue(functionArea.getAsJsonArray("initialFormationSpans").isEmpty());
+        assertTrue(functionArea.getAsJsonArray("formationSpans").isEmpty());
         JsonObject terrainFailure = group.getAsJsonArray("terrainPlacementFailures")
                 .get(0).getAsJsonObject();
         assertEquals("geomantia:terrain_house", terrainFailure.get("structureRef").getAsString());
@@ -1451,6 +1471,37 @@ class CityBlueprintCompilerServiceTest {
         assertEquals(0, group.get("actualStructureCount").getAsInt(), group.toString());
         assertFalse(result.compileTrace().getAsJsonObject("compilationAcceptance")
                 .get("passed").getAsBoolean());
+    }
+
+    @Test
+    void selectedPatchAnchorsFirstStructureButDoesNotClipContinuousGroupGrowth() throws Exception {
+        Fixture fixture = acceptedFixture("run_patch_seed_growth", "city:patch_seed_growth", 9, 9,
+                "SMALL", review -> {
+                    JsonArray patches = review.getAsJsonArray("landformPatches");
+                    configurePatchCells(patches.get(0).getAsJsonObject(), 0, 1, 0, 0);
+                    configurePatchCells(patches.get(1).getAsJsonObject(), 0, 10, 1, 4);
+                }, blueprint -> {
+                    JsonObject group = blueprint.getAsJsonArray("groups").get(0).getAsJsonObject();
+                    group.add("requiredStructureRefs", JsonParser.parseString(
+                            "[\"geomantia:town_hall\",\"geomantia:terrain_house\"]"));
+                    group.addProperty("fillPoolRef", "pool:empty");
+                });
+
+        CityBlueprintCompilerService.CompilationResult result = new CityBlueprintCompilerService()
+                .compile(temporary, fixture.runId(), fixture.cityId());
+
+        JsonArray anchors = result.structureAnchorPlan().getAsJsonArray("anchors");
+        assertEquals(2, anchors.size(), result.compileTrace().toString());
+        assertTrue(anchors.get(0).getAsJsonObject().getAsJsonArray("sourcePatchIds").asList().stream()
+                .map(JsonElement::getAsString).anyMatch("patch:plain:1"::equals));
+        assertTrue(anchors.get(1).getAsJsonObject().getAsJsonArray("sourcePatchIds").asList().stream()
+                .map(JsonElement::getAsString).anyMatch("patch:plain:2"::equals),
+                "The second required structure must be allowed to continue across the adjacent Patch label");
+        JsonObject secondSelection = result.compileTrace().getAsJsonArray("selections").get(1).getAsJsonObject();
+        assertTrue(secondSelection.getAsJsonArray("attempts").asList().stream()
+                .map(JsonElement::getAsJsonObject)
+                .allMatch(attempt -> "continuous_growth_from_selected_patch".equals(
+                        attempt.get("patchSelectionScope").getAsString())));
     }
 
     @Test

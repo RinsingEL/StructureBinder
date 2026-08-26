@@ -120,19 +120,38 @@ final class CityInternalStreetPlanner {
                 .toList();
         if (lane.size() < 2) return List.of();
         List<JsonObject> roads = new ArrayList<>();
-        for (int index = 0; index + 1 < lane.size(); index++) {
-            BlockPoint first = lane.get(index).point();
-            BlockPoint second = lane.get(index + 1).point();
-            List<BlockPoint> path = compactPath(first, second, parameters.streetBandWidthBlocks() + 2,
-                    allAnchors, parameters.maximumEdgeGapBlocks());
-            if (path.size() < 2) {
-                throw new IllegalArgumentException("CITY_COMPACT_ALLEY_NO_COLLISION_FREE_PATH:" + groupId);
+        List<LaneTarget> connected = new ArrayList<>();
+        List<LaneTarget> remaining = new ArrayList<>(lane);
+        connected.add(remaining.remove(0));
+        while (!remaining.isEmpty()) {
+            LaneTarget selected = null;
+            List<BlockPoint> selectedPath = List.of();
+            double selectedDistance = Double.POSITIVE_INFINITY;
+            for (LaneTarget from : connected) {
+                for (LaneTarget target : remaining) {
+                    List<BlockPoint> path = compactPath(from.point(), target.point(),
+                            parameters.streetBandWidthBlocks() + 2,
+                            allAnchors, parameters.maximumEdgeGapBlocks());
+                    if (path.size() < 2) continue;
+                    double distance = Math.hypot(from.point().x() - target.point().x(),
+                            from.point().z() - target.point().z());
+                    if (distance < selectedDistance) {
+                        selected = target;
+                        selectedPath = path;
+                        selectedDistance = distance;
+                    }
+                }
             }
-            for (int pathIndex = 0; pathIndex + 1 < path.size(); pathIndex++) {
+            if (selected == null) {
+                break;
+            }
+            for (int pathIndex = 0; pathIndex + 1 < selectedPath.size(); pathIndex++) {
                 roads.add(segment(groupId, "COMPACT_ALLEY_NETWORK", "COMPACT_ALLEY",
-                        roads.size(), parameters.streetBandWidthBlocks(), path.get(pathIndex),
-                        path.get(pathIndex + 1)));
+                        roads.size(), parameters.streetBandWidthBlocks(), selectedPath.get(pathIndex),
+                        selectedPath.get(pathIndex + 1)));
             }
+            remaining.remove(selected);
+            connected.add(selected);
         }
         return List.copyOf(roads);
     }

@@ -72,7 +72,7 @@ public final class CityStructureLandingPreviewRenderer {
             Transform t = transform(gridBounds);
             drawPatchBackdrop(g, t, gridBounds, reviewPackage);
             drawGrid(g, t, gridBounds);
-            drawDistrictEnvelopes(g, t, groupExtentMap, Set.of());
+            drawFunctionAreas(g, t, groupExtentMap, Set.of());
             drawStreetBands(g, t, anchorMap, Set.of());
             drawResidentialOverflowZones(g, t, anchorMap, Set.of());
             drawLandscapeCapacities(g, t, landscapeCapacityPlan);
@@ -84,10 +84,10 @@ public final class CityStructureLandingPreviewRenderer {
                 drawBadge(g, t, point(anchor, "anchorBlock"), "A" + i, color(i, 235));
             }
             title(g, "City D4 structure anchor preview",
-                    "district=exact expanded cells; landscape capacity=exact spans; body=blue collision=red; anchors="
+                    "function area=committed structures; landscape capacity=exact spans; body=blue collision=red; anchors="
                             + array(anchorMap, "anchors").size() + " landscapes="
-                            + landscapeCount(landscapeCapacityPlan) + " districts=" + districtCount(groupExtentMap));
-            d4AnchorSummary(g, anchorMap, landscapeCapacityPlan);
+                            + landscapeCount(landscapeCapacityPlan) + " functionAreas=" + functionAreaCount(groupExtentMap));
+            d4AnchorSummary(g, anchorMap, landscapeCapacityPlan, groupExtentMap);
         } finally {
             g.dispose();
         }
@@ -95,6 +95,19 @@ public final class CityStructureLandingPreviewRenderer {
         renderD4AnchorClusterDetail(anchorMap, reviewPackage, landscapeCapacityPlan, groupExtentMap,
                 outputDirectory);
         return path;
+    }
+
+    public D4PreviewArtifacts renderD4WithGroupDetails(JsonObject anchorMap,
+                                                       CityLandformReviewPackage reviewPackage,
+                                                       JsonObject landscapeCapacityPlan,
+                                                       JsonObject groupExtentMap,
+                                                       JsonObject compileTrace,
+                                                       Path outputDirectory) throws IOException {
+        Path overview = renderD4(anchorMap, reviewPackage, landscapeCapacityPlan, groupExtentMap,
+                outputDirectory);
+        Map<String, Path> groupPreviews = renderD4GroupDetails(anchorMap, reviewPackage,
+                landscapeCapacityPlan, groupExtentMap, compileTrace, outputDirectory);
+        return new D4PreviewArtifacts(overview, Map.copyOf(groupPreviews));
     }
 
     public Path renderD4SlotCandidateDebugOverview(JsonObject candidateSet, CityLandformReviewPackage reviewPackage,
@@ -378,13 +391,13 @@ public final class CityStructureLandingPreviewRenderer {
             BlockBounds viewport = unionMasks(cluster);
             BlockBounds landscapeBounds = landscapePlanBounds(landscapeCapacityPlan);
             if (landscapeBounds != null) viewport = union(viewport, landscapeBounds);
-            BlockBounds districtBounds = districtReservationBounds(groupExtentMap, visibleGroups);
-            if (districtBounds != null) viewport = union(viewport, districtBounds);
+            BlockBounds functionAreaBounds = functionAreaBounds(groupExtentMap, visibleGroups);
+            if (functionAreaBounds != null) viewport = union(viewport, functionAreaBounds);
             viewport = expand(viewport, 24);
             Transform t = detailTransform(viewport);
             drawPatchBackdrop(g, t, viewport, reviewPackage);
             drawGrid(g, t, viewport);
-            drawDistrictEnvelopes(g, t, groupExtentMap, visibleGroups);
+            drawFunctionAreas(g, t, groupExtentMap, visibleGroups);
             drawStreetBands(g, t, anchorMap, visibleGroups);
             drawResidentialOverflowZones(g, t, anchorMap, visibleGroups);
             drawLandscapeCapacities(g, t, landscapeCapacityPlan);
@@ -394,13 +407,236 @@ public final class CityStructureLandingPreviewRenderer {
                         color(preview.index(), 235));
             }
             title(g, "City D4 local structure cluster",
-                    "D*=exact expanded district; L*=landscape capacity; body=blue collision=red; anchors="
+                    "F*=actual function area; L*=landscape capacity; body=blue collision=red; anchors="
                             + cluster.size());
             drawD4DetailLegend(g, cluster, landscapeCapacityPlan);
         } finally {
             g.dispose();
         }
         ImageIO.write(image, "png", path.toFile());
+    }
+
+    private static Map<String, Path> renderD4GroupDetails(JsonObject anchorMap,
+                                                          CityLandformReviewPackage reviewPackage,
+                                                          JsonObject landscapeCapacityPlan,
+                                                          JsonObject groupExtentMap,
+                                                          JsonObject compileTrace,
+                                                          Path outputDirectory) throws IOException {
+        Set<String> groupIds = new LinkedHashSet<>();
+        for (JsonElement element : array(groupExtentMap, "groups")) {
+            if (element.isJsonObject()) addNonBlank(groupIds, string(element.getAsJsonObject(), "groupId"));
+        }
+        for (JsonElement element : array(anchorMap, "anchors")) {
+            if (element.isJsonObject()) addNonBlank(groupIds,
+                    string(element.getAsJsonObject(), "placementGroupId"));
+        }
+        for (JsonElement element : array(compileTrace, "selections")) {
+            if (element.isJsonObject()) addNonBlank(groupIds, string(element.getAsJsonObject(), "groupId"));
+        }
+
+        Map<String, Path> result = new LinkedHashMap<>();
+        for (String groupId : groupIds) {
+            List<AnchorPreview> anchors = groupAnchors(anchorMap, groupId);
+            List<FailurePreview> failures = groupFailures(compileTrace, groupId);
+            BlockBounds viewport = groupViewport(anchorMap, groupExtentMap, landscapeCapacityPlan,
+                    groupId, anchors, failures);
+            Path path = outputDirectory.resolve("structure_anchor_group_" + safeFilePart(groupId) + ".png");
+            BufferedImage image = baseImage();
+            Graphics2D g = image.createGraphics();
+            try {
+                setup(g);
+                Transform t = transform(viewport);
+                Set<String> visibleGroups = Set.of(groupId);
+                drawPatchBackdrop(g, t, viewport, reviewPackage);
+                drawGrid(g, t, viewport);
+                drawFunctionAreas(g, t, groupExtentMap, visibleGroups);
+                drawStreetBands(g, t, anchorMap, visibleGroups);
+                drawResidentialOverflowZones(g, t, anchorMap, visibleGroups);
+                drawLandscapeCapacities(g, t, landscapeCapacityPlan, visibleGroups);
+                for (AnchorPreview anchor : anchors) {
+                    drawD4Geometry(g, t, anchor.geometry());
+                    drawBadge(g, t, point(anchor.anchor(), "anchorBlock"), "A" + anchor.index(),
+                            new Color(28, 81, 140, 235));
+                }
+                for (FailurePreview failure : failures) {
+                    drawFailureAttempt(g, t, failure);
+                }
+                title(g, "City D4 group detail: " + groupId,
+                        "blue=A committed structure; X=failed attempt; tinted dashed area=function area; failures="
+                                + failures.size());
+                drawGroupFailureSummary(g, groupId, anchors, failures);
+            } finally {
+                g.dispose();
+            }
+            ImageIO.write(image, "png", path.toFile());
+            result.put(groupId, path);
+        }
+        return result;
+    }
+
+    private static List<AnchorPreview> groupAnchors(JsonObject anchorMap, String groupId) {
+        List<AnchorPreview> result = new ArrayList<>();
+        int groupIndex = 0;
+        for (JsonElement element : array(anchorMap, "anchors")) {
+            if (!element.isJsonObject()) continue;
+            JsonObject anchor = element.getAsJsonObject();
+            if (!groupId.equals(string(anchor, "placementGroupId"))) continue;
+            groupIndex++;
+            result.add(new AnchorPreview(groupIndex, anchor, d4AnchorGeometry(anchor)));
+        }
+        return result;
+    }
+
+    private static List<FailurePreview> groupFailures(JsonObject compileTrace, String groupId) {
+        Map<String, FailureAggregate> byPosition = new LinkedHashMap<>();
+        for (JsonElement selectionElement : array(compileTrace, "selections")) {
+            if (!selectionElement.isJsonObject()) continue;
+            JsonObject selection = selectionElement.getAsJsonObject();
+            if (!groupId.equals(string(selection, "groupId"))) continue;
+            String structureRef = string(selection, "structureRef");
+            String phase = string(selection, "phase");
+            for (JsonElement attemptElement : array(selection, "attempts")) {
+                if (!attemptElement.isJsonObject()) continue;
+                JsonObject attempt = attemptElement.getAsJsonObject();
+                for (JsonElement positionElement : array(attempt, "failedAttemptPositions")) {
+                    if (!positionElement.isJsonObject()) continue;
+                    JsonObject position = positionElement.getAsJsonObject();
+                    JsonObject rawPoint = object(position, "anchorBlock");
+                    if (rawPoint.size() == 0) continue;
+                    BlockPoint point = point(position, "anchorBlock");
+                    String reasonCode = string(position, "reasonCode");
+                    String templateId = string(position, "templateId");
+                    if (templateId.isBlank()) templateId = structureRef;
+                    PreviewGeometry geometry = failureGeometry(position);
+                    String key = point.x() + "|" + point.z();
+                    byPosition.computeIfAbsent(key, ignored -> new FailureAggregate(point))
+                            .add(templateId, phase, reasonCode, geometry);
+                }
+            }
+        }
+        List<FailurePreview> result = new ArrayList<>();
+        for (FailureAggregate aggregate : byPosition.values()) {
+            result.add(aggregate.preview(result.size() + 1));
+        }
+        return result;
+    }
+
+    private static PreviewGeometry failureGeometry(JsonObject position) {
+        if (!position.has("plannedFootprint") || !position.get("plannedFootprint").isJsonObject()) return null;
+        BlockBounds body = bounds(position, "plannedFootprint");
+        BlockBounds collision = position.has("estimatedCollisionEnvelope")
+                ? bounds(position, "estimatedCollisionEnvelope") : body;
+        BlockBounds mask = position.has("estimatedMaskEnvelope")
+                ? bounds(position, "estimatedMaskEnvelope") : collision;
+        return new PreviewGeometry(body, collision, mask);
+    }
+
+    private static BlockBounds groupViewport(JsonObject anchorMap, JsonObject groupExtentMap,
+                                             JsonObject landscapeCapacityPlan, String groupId,
+                                             List<AnchorPreview> anchors, List<FailurePreview> failures) {
+        BlockBounds viewport = null;
+        for (AnchorPreview anchor : anchors) {
+            viewport = viewport == null ? anchor.geometry().mask() : union(viewport, anchor.geometry().mask());
+        }
+        BlockBounds functionArea = functionAreaBounds(groupExtentMap, Set.of(groupId));
+        if (functionArea != null) viewport = viewport == null ? functionArea : union(viewport, functionArea);
+        BlockBounds landscape = landscapePlanBounds(landscapeCapacityPlan, Set.of(groupId));
+        if (landscape != null) viewport = viewport == null ? landscape : union(viewport, landscape);
+        for (FailurePreview failure : failures) {
+            BlockBounds bounds = failure.geometry() == null
+                    ? new BlockBounds(failure.point().x(), failure.point().z(), failure.point().x(), failure.point().z())
+                    : failure.geometry().mask();
+            viewport = viewport == null ? bounds : union(viewport, bounds);
+        }
+        return expand(viewport == null ? gridBounds(anchorMap) : viewport, 24);
+    }
+
+    private static void drawFailureAttempt(Graphics2D g, Transform t, FailurePreview failure) {
+        Color color = failureColor(failure.primaryReasonCode());
+        if (failure.geometry() != null) {
+            drawRect(g, t, failure.geometry().mask(), new Color(color.getRed(), color.getGreen(),
+                            color.getBlue(), 14), withAlpha(color, 90), 0.8f);
+            drawRect(g, t, failure.geometry().body(), new Color(color.getRed(), color.getGreen(),
+                            color.getBlue(), 24), withAlpha(color, 175), 1.4f);
+        }
+        int x = t.x(failure.point().x());
+        int z = t.z(failure.point().z());
+        g.setColor(color);
+        g.setStroke(new BasicStroke(2.4f));
+        g.drawLine(x - 6, z - 6, x + 6, z + 6);
+        g.drawLine(x - 6, z + 6, x + 6, z - 6);
+        drawBadge(g, t, failure.point(), "X" + failure.index(), color);
+    }
+
+    private static void drawGroupFailureSummary(Graphics2D g, String groupId,
+                                                List<AnchorPreview> anchors,
+                                                List<FailurePreview> failures) {
+        int x = 824;
+        int y = 92;
+        g.setColor(new Color(250, 248, 240, 238));
+        g.fillRoundRect(x - 12, y - 28, WIDTH - x - 18, HEIGHT - y - 22, 8, 8);
+        g.setColor(new Color(48, 48, 42, 170));
+        g.drawRoundRect(x - 12, y - 28, WIDTH - x - 18, HEIGHT - y - 22, 8, 8);
+        g.setFont(new Font(Font.MONOSPACED, Font.BOLD, 13));
+        g.setColor(new Color(32, 34, 34));
+        g.drawString(trim(groupId, 44), x, y);
+        y += 22;
+        g.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 11));
+        g.drawString("committed=" + anchors.size() + " failedPositions=" + failures.size(), x, y);
+        y += 22;
+        Map<String, Integer> reasons = new LinkedHashMap<>();
+        for (FailurePreview failure : failures) {
+            for (String reasonCode : failure.reasonCodes()) reasons.merge(reasonCode, 1, Integer::sum);
+        }
+        g.setFont(new Font(Font.MONOSPACED, Font.BOLD, 11));
+        g.drawString("Failure reasons", x, y);
+        y += 16;
+        g.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 10));
+        for (Map.Entry<String, Integer> entry : reasons.entrySet()) {
+            g.setColor(failureColor(entry.getKey()));
+            g.fillRect(x, y - 9, 9, 9);
+            g.setColor(new Color(32, 34, 34));
+            g.drawString(trim(entry.getKey(), 45) + " x" + entry.getValue(), x + 14, y);
+            y += 14;
+        }
+        y += 8;
+        g.setFont(new Font(Font.MONOSPACED, Font.BOLD, 11));
+        g.drawString("Attempt positions", x, y);
+        y += 16;
+        g.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 9));
+        for (FailurePreview failure : failures) {
+            if (y > HEIGHT - 38) {
+                g.drawString("... remaining positions are still marked on map", x, y);
+                break;
+            }
+            g.setColor(failureColor(failure.primaryReasonCode()));
+            g.drawString("X" + failure.index(), x, y);
+            g.setColor(new Color(32, 34, 34));
+            g.drawString(trim(failure.shortTemplateSummary(), 15)
+                            + " @" + failure.point().x() + "," + failure.point().z()
+                            + " " + trim(failure.reasonSummary(), 25)
+                            + (failure.occurrenceCount() > 1 ? " x" + failure.occurrenceCount() : ""), x + 28, y);
+            y += 13;
+        }
+    }
+
+    private static Color failureColor(String reasonCode) {
+        String normalized = reasonCode == null ? "" : reasonCode.toUpperCase(java.util.Locale.ROOT);
+        if (normalized.contains("OVERLAP") || normalized.contains("COLLISION")) return new Color(184, 54, 48, 235);
+        if (normalized.contains("TERRAIN") || normalized.contains("SURFACE")
+                || normalized.contains("SLOPE") || normalized.contains("WATER")) return new Color(211, 116, 24, 235);
+        if (normalized.contains("CONNECT") || normalized.contains("RELATION")) return new Color(104, 67, 168, 235);
+        if (normalized.contains("OUTSIDE")) return new Color(155, 56, 126, 235);
+        return new Color(92, 92, 92, 235);
+    }
+
+    private static void addNonBlank(Set<String> target, String value) {
+        if (value != null && !value.isBlank()) target.add(value);
+    }
+
+    private static String safeFilePart(String value) {
+        String safe = value == null ? "group" : value.replaceAll("[^A-Za-z0-9._-]", "_");
+        return safe.isBlank() ? "group" : safe;
     }
 
     private static void renderD4ArrayExpansionCandidateDetail(JsonObject candidateSet,
@@ -493,8 +729,8 @@ public final class CityStructureLandingPreviewRenderer {
         drawRect(g, t, geometry.body(), D2_BODY_FILL, D2_BODY_STROKE, 2.5f);
     }
 
-    private static void drawDistrictEnvelopes(Graphics2D g, Transform t, JsonObject extentMap,
-                                              Set<String> visibleGroupIds) {
+    private static void drawFunctionAreas(Graphics2D g, Transform t, JsonObject extentMap,
+                                          Set<String> visibleGroupIds) {
         if (extentMap == null) return;
         int index = 0;
         for (JsonElement element : array(extentMap, "groups")) {
@@ -502,29 +738,29 @@ public final class CityStructureLandingPreviewRenderer {
             JsonObject group = element.getAsJsonObject();
             String groupId = string(group, "groupId");
             if (!visibleGroupIds.isEmpty() && !visibleGroupIds.contains(groupId)) continue;
-            JsonObject capacity = object(group, "districtCapacity");
-            Area reservationArea = new Area();
+            JsonObject functionArea = object(group, "functionArea");
+            Area formationArea = new Area();
             BlockPoint labelPoint = null;
-            for (JsonElement spanElement : array(capacity, "reservationSpans")) {
+            for (JsonElement spanElement : array(functionArea, "formationSpans")) {
                 if (!spanElement.isJsonObject()) continue;
                 JsonObject span = spanElement.getAsJsonObject();
-                BlockBounds spanBounds = districtSpanBounds(span);
-                reservationArea.add(new Area(screenRectangle(t, spanBounds)));
+                BlockBounds spanBounds = functionAreaSpanBounds(span);
+                formationArea.add(new Area(screenRectangle(t, spanBounds)));
                 if (labelPoint == null) {
                     labelPoint = new BlockPoint(spanBounds.minX(), spanBounds.minZ());
                 }
             }
-            if (reservationArea.isEmpty() || labelPoint == null) continue;
+            if (formationArea.isEmpty() || labelPoint == null) continue;
 
             index++;
             Color base = color(index, 235);
             g.setColor(withAlpha(base, 58));
-            g.fill(reservationArea);
+            g.fill(formationArea);
             g.setColor(withAlpha(base, 220));
             g.setStroke(new BasicStroke(2.2f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER,
                     10.0f, new float[]{8.0f, 5.0f}, 0.0f));
-            g.draw(reservationArea);
-            drawBadge(g, t, labelPoint, "D" + index + " " + trim(groupId, 18), base);
+            g.draw(formationArea);
+            drawBadge(g, t, labelPoint, "F" + index + " " + trim(groupId, 18), base);
         }
     }
 
@@ -596,7 +832,7 @@ public final class CityStructureLandingPreviewRenderer {
         }
     }
 
-    private static BlockBounds districtReservationBounds(JsonObject extentMap, Set<String> visibleGroupIds) {
+    private static BlockBounds functionAreaBounds(JsonObject extentMap, Set<String> visibleGroupIds) {
         if (extentMap == null) return null;
         BlockBounds result = null;
         for (JsonElement element : array(extentMap, "groups")) {
@@ -604,32 +840,39 @@ public final class CityStructureLandingPreviewRenderer {
             JsonObject group = element.getAsJsonObject();
             String groupId = string(group, "groupId");
             if (!visibleGroupIds.isEmpty() && !visibleGroupIds.contains(groupId)) continue;
-            JsonObject capacity = object(group, "districtCapacity");
-            for (JsonElement spanElement : array(capacity, "reservationSpans")) {
+            JsonObject functionArea = object(group, "functionArea");
+            for (JsonElement spanElement : array(functionArea, "formationSpans")) {
                 if (!spanElement.isJsonObject()) continue;
-                BlockBounds spanBounds = districtSpanBounds(spanElement.getAsJsonObject());
+                BlockBounds spanBounds = functionAreaSpanBounds(spanElement.getAsJsonObject());
                 result = result == null ? spanBounds : union(result, spanBounds);
             }
         }
         return result;
     }
 
-    private static BlockBounds districtSpanBounds(JsonObject span) {
+    private static BlockBounds functionAreaSpanBounds(JsonObject span) {
         return new BlockBounds(intValue(span, "minX", 0), intValue(span, "minZ", 0),
                 intValue(span, "maxX", 0), intValue(span, "maxZ", 0));
     }
 
-    private static int districtCount(JsonObject extentMap) {
+    private static int functionAreaCount(JsonObject extentMap) {
         return extentMap == null ? 0 : array(extentMap, "groups").size();
     }
 
     private static void drawLandscapeCapacities(Graphics2D g, Transform t, JsonObject plan) {
+        drawLandscapeCapacities(g, t, plan, Set.of());
+    }
+
+    private static void drawLandscapeCapacities(Graphics2D g, Transform t, JsonObject plan,
+                                                Set<String> visibleGroupIds) {
         if (plan == null) return;
         int index = 0;
         for (JsonElement element : array(plan, "instances")) {
             if (!element.isJsonObject()) continue;
-            index++;
             JsonObject instance = element.getAsJsonObject();
+            if (!visibleGroupIds.isEmpty()
+                    && !visibleGroupIds.contains(string(instance, "ownerGroupId"))) continue;
+            index++;
             Color color = landscapeColor(instance, index);
             g.setColor(withAlpha(color, 92));
             for (JsonElement spanElement : array(instance, "reservationSpans")) {
@@ -654,11 +897,18 @@ public final class CityStructureLandingPreviewRenderer {
     }
 
     private static BlockBounds landscapePlanBounds(JsonObject plan) {
+        return landscapePlanBounds(plan, Set.of());
+    }
+
+    private static BlockBounds landscapePlanBounds(JsonObject plan, Set<String> visibleGroupIds) {
         if (plan == null) return null;
         BlockBounds result = null;
         for (JsonElement element : array(plan, "instances")) {
             if (!element.isJsonObject()) continue;
-            BlockBounds next = landscapeBounds(element.getAsJsonObject());
+            JsonObject instance = element.getAsJsonObject();
+            if (!visibleGroupIds.isEmpty()
+                    && !visibleGroupIds.contains(string(instance, "ownerGroupId"))) continue;
+            BlockBounds next = landscapeBounds(instance);
             if (next != null) result = result == null ? next : union(result, next);
         }
         return result;
@@ -736,7 +986,8 @@ public final class CityStructureLandingPreviewRenderer {
         return union;
     }
 
-    private static void d4AnchorSummary(Graphics2D g, JsonObject anchorMap, JsonObject landscapeCapacityPlan) {
+    private static void d4AnchorSummary(Graphics2D g, JsonObject anchorMap, JsonObject landscapeCapacityPlan,
+                                        JsonObject groupExtentMap) {
         int x = 820;
         int y = 90;
         g.setColor(new Color(32, 34, 34));
@@ -748,6 +999,19 @@ public final class CityStructureLandingPreviewRenderer {
         y = legendRow(g, x, y, COLLISION_STROKE, "red = collision clearance");
         y = legendRow(g, x, y, MASK_STROKE, "orange = mask margin");
         y += 8;
+        int functionAreaIndex = 0;
+        if (groupExtentMap != null) {
+            for (JsonElement element : array(groupExtentMap, "groups")) {
+                if (!element.isJsonObject()) continue;
+                JsonObject group = element.getAsJsonObject();
+                if (array(object(group, "functionArea"), "formationSpans").isEmpty()) continue;
+                functionAreaIndex++;
+                y = legendRow(g, x, y, color(functionAreaIndex, 220),
+                        "F" + functionAreaIndex + " " + trim(string(group, "groupId"), 22)
+                                + " = function area");
+            }
+            if (functionAreaIndex > 0) y += 5;
+        }
         int landscapeIndex = 0;
         if (landscapeCapacityPlan != null) {
             for (JsonElement element : array(landscapeCapacityPlan, "instances")) {
@@ -2044,5 +2308,51 @@ public final class CityStructureLandingPreviewRenderer {
     }
 
     private record AnchorPreview(int index, JsonObject anchor, PreviewGeometry geometry) {
+    }
+
+    private record FailurePreview(int index, List<String> templateIds, List<String> phases,
+                                  List<String> reasonCodes, BlockPoint point,
+                                  PreviewGeometry geometry, int occurrenceCount) {
+        String primaryReasonCode() {
+            return reasonCodes.isEmpty() ? "UNKNOWN" : reasonCodes.get(0);
+        }
+
+        String shortTemplateSummary() {
+            return templateIds.stream().map(CityStructureLandingPreviewRenderer::shortStructureName)
+                    .distinct().reduce((first, second) -> first + "," + second).orElse("unknown");
+        }
+
+        String reasonSummary() {
+            return String.join("|", reasonCodes);
+        }
+    }
+
+    private static final class FailureAggregate {
+        private final BlockPoint point;
+        private final Set<String> templateIds = new LinkedHashSet<>();
+        private final Set<String> phases = new LinkedHashSet<>();
+        private final Set<String> reasonCodes = new LinkedHashSet<>();
+        private PreviewGeometry geometry;
+        private int occurrenceCount;
+
+        private FailureAggregate(BlockPoint point) {
+            this.point = point;
+        }
+
+        private void add(String templateId, String phase, String reasonCode, PreviewGeometry candidateGeometry) {
+            if (!templateId.isBlank()) templateIds.add(templateId);
+            if (!phase.isBlank()) phases.add(phase);
+            reasonCodes.add(reasonCode.isBlank() ? "UNKNOWN" : reasonCode);
+            if (geometry == null && candidateGeometry != null) geometry = candidateGeometry;
+            occurrenceCount++;
+        }
+
+        private FailurePreview preview(int index) {
+            return new FailurePreview(index, List.copyOf(templateIds), List.copyOf(phases),
+                    List.copyOf(reasonCodes), point, geometry, occurrenceCount);
+        }
+    }
+
+    public record D4PreviewArtifacts(Path overview, Map<String, Path> groupPreviews) {
     }
 }

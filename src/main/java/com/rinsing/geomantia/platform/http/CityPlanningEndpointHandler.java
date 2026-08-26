@@ -182,7 +182,8 @@ final class CityPlanningEndpointHandler {
         }
         JsonObject finalized = handleFinalizeCompiledD4(debugRoot, runId, citySeedId,
                 compiled.terraSenseProfileSource(), compiled.structureAnchorPlan(),
-                compiled.landscapeCapacityReservationPlan(), compiled.groupExtentMap());
+                compiled.landscapeCapacityReservationPlan(), compiled.groupExtentMap(),
+                compiled.compileTrace());
         JsonObject artifacts = finalized.has("artifacts") && finalized.get("artifacts").isJsonObject()
                 ? finalized.getAsJsonObject("artifacts") : new JsonObject();
         compileResponse.getAsJsonObject("artifacts").entrySet().forEach(entry ->
@@ -200,21 +201,17 @@ final class CityPlanningEndpointHandler {
     }
 
     private static JsonObject handleFinalizeCompiledD4(Path debugRoot, String runId, String citySeedId,
-                                                         JsonObject terraSenseProfileSource,
-                                                         JsonObject resolvedAnchorPlan,
-                                                         JsonObject landscapeCapacityPlan,
-                                                         JsonObject groupExtentMap) throws IOException {
+                                                          JsonObject terraSenseProfileSource,
+                                                          JsonObject resolvedAnchorPlan,
+                                                          JsonObject landscapeCapacityPlan,
+                                                          JsonObject groupExtentMap,
+                                                          JsonObject compileTrace) throws IOException {
         Path runDir = debugRoot.resolve(runId);
         loadCitySeedForD4(runDir, runId, citySeedId);
         Path d3PackagePath = d3PackagePath(runDir, citySeedId);
         CityLandformReviewPackage reviewPackage = loadD3Package(debugRoot, runDir, citySeedId);
         CityStructureAnchorPlanner.Result result = new CityStructureAnchorPlanner()
                 .plan(runDir, reviewPackage, terraSenseProfileSource, resolvedAnchorPlan);
-        if (!booleanValue(result.qualityReport(), "passed", false)) {
-            JsonObject failure = result.asJson();
-            failure.addProperty("reasonCode", "CITY_BLUEPRINT_COMPILED_ANCHOR_FINALIZATION_FAILED");
-            return failure;
-        }
         Path outputDirectory = cityStageDir(runDir, citySeedId, CityTestRunLayout.D4);
         Files.createDirectories(outputDirectory);
         Path anchorPlanPath = outputDirectory.resolve("structure_anchor_plan.json");
@@ -226,18 +223,26 @@ final class CityPlanningEndpointHandler {
         Files.writeString(semanticSourcePath, CityJson.GSON.toJson(
                 result.structureAnchorMap().getAsJsonObject("semanticProfileSource")));
         Files.writeString(qualityPath, CityJson.GSON.toJson(result.qualityReport()));
-        Path previewPath = new CityStructureLandingPreviewRenderer()
-                .renderD4(result.structureAnchorMap(), reviewPackage, landscapeCapacityPlan, groupExtentMap,
-                        outputDirectory);
+        CityStructureLandingPreviewRenderer.D4PreviewArtifacts previews =
+                new CityStructureLandingPreviewRenderer().renderD4WithGroupDetails(
+                        result.structureAnchorMap(), reviewPackage, landscapeCapacityPlan, groupExtentMap,
+                        compileTrace, outputDirectory);
         JsonObject response = result.asJson();
         JsonObject artifacts = new JsonObject();
         artifacts.addProperty("structureAnchorPlan", debugRef(debugRoot, anchorPlanPath));
         artifacts.addProperty("structureAnchorMap", debugRef(debugRoot, anchorMapPath));
         artifacts.addProperty("semanticProfileSource", debugRef(debugRoot, semanticSourcePath));
-        artifacts.addProperty("structureAnchorPreview", debugRef(debugRoot, previewPath));
+        artifacts.addProperty("structureAnchorPreview", debugRef(debugRoot, previews.overview()));
+        JsonObject groupPreviews = new JsonObject();
+        previews.groupPreviews().forEach((groupId, path) ->
+                groupPreviews.addProperty(groupId, debugRef(debugRoot, path)));
+        artifacts.add("groupStructurePreviews", groupPreviews);
         artifacts.addProperty("qualityReport", debugRef(debugRoot, qualityPath));
         artifacts.addProperty("sourceD3Package", debugRef(debugRoot, d3PackagePath));
         response.add("artifacts", artifacts);
+        if (!booleanValue(result.qualityReport(), "passed", false)) {
+            response.addProperty("reasonCode", "CITY_BLUEPRINT_COMPILED_ANCHOR_FINALIZATION_FAILED");
+        }
         return response;
     }
 

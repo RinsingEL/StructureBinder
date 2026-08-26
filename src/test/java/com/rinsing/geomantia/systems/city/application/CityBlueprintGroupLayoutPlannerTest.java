@@ -147,27 +147,34 @@ class CityBlueprintGroupLayoutPlannerTest {
     }
 
     @Test
-    void compactPlacesBuildingsAlongBothSidesOfOneCurvedLane() {
+    void compactTriesEveryDirectionBeforeExpandingBeyondTheFirstRing() {
         BlockPoint center = new BlockPoint(0, 0);
         var frame = planner.worldFrame(center);
-        Set<Integer> laneZ = new LinkedHashSet<>();
-        Set<String> sides = new LinkedHashSet<>();
-        for (int slot = 0; slot < 6; slot++) {
+        Set<String> directions = new LinkedHashSet<>();
+        Set<BlockPoint> guides = new LinkedHashSet<>();
+        int spacing = -1;
+        for (int slot = 0; slot < 8; slot++) {
             var proposal = planner.propose("COMPACT", CityBlueprint.DensityClass.DENSE,
                     47L, "compact", slot, frame, center, null, false, 18);
             assertEquals(1, proposal.guides().size());
             assertTrue(proposal.frontageTarget() != null);
-            laneZ.add(proposal.frontageTarget().z());
-            sides.add(proposal.traceJson().get("compactLaneSide").getAsString());
+            spacing = proposal.spacingBlocks();
+            BlockPoint guide = proposal.guides().get(0);
+            guides.add(guide);
+            directions.add(proposal.traceJson().get("compactLaneSide").getAsString());
+            assertEquals(1, proposal.traceJson().get("compactLaneRank").getAsInt());
+            assertTrue(Math.abs(Math.hypot(guide.x(), guide.z()) - spacing) <= 1.0);
+            assertTrue(Math.hypot(proposal.frontageTarget().x(), proposal.frontageTarget().z())
+                    < Math.hypot(guide.x(), guide.z()));
         }
-        assertTrue(laneZ.size() >= 3, "compact lane must bend");
-        assertEquals(Set.of("NORTH", "SOUTH"), sides);
-        var firstNorth = planner.propose("COMPACT", CityBlueprint.DensityClass.DENSE,
-                47L, "compact", 0, frame, center, null, false, 18);
-        var secondNorth = planner.propose("COMPACT", CityBlueprint.DensityClass.DENSE,
-                47L, "compact", 2, frame, center, null, false, 18);
-        assertEquals(firstNorth.spacingBlocks(),
-                Math.abs(firstNorth.frontageTarget().x() - secondNorth.frontageTarget().x()));
+        assertEquals(8, guides.size());
+        assertEquals(8, directions.size());
+
+        var outer = planner.propose("COMPACT", CityBlueprint.DensityClass.DENSE,
+                47L, "compact", 8, frame, center, null, false, 18);
+        assertEquals(2, outer.traceJson().get("compactLaneRank").getAsInt());
+        assertTrue(Math.abs(Math.hypot(outer.guides().get(0).x(), outer.guides().get(0).z())
+                - spacing * 2.0) <= 1.0);
     }
 
     @Test

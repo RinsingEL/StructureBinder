@@ -8,8 +8,10 @@ import org.junit.jupiter.api.io.TempDir;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
+import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -18,6 +20,32 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 final class CityStructureLandingPreviewRendererTest {
+    @Test
+    void groupFailurePreviewAggregatesTemplateAndReasonVariantsAtOneWorldPosition() throws Exception {
+        JsonObject trace = JsonParser.parseString("""
+                {"selections":[
+                  {"groupId":"commercial","phase":"fill","structureRef":"geomantia:shop_a",
+                   "attempts":[{"failedAttemptPositions":[
+                     {"templateId":"geomantia:shop_a","anchorBlock":{"x":40,"z":60},
+                      "reasonCode":"CITY_STRUCTURE_SURFACE_CELL_WATER"}
+                   ]}]},
+                  {"groupId":"commercial","phase":"fill","structureRef":"geomantia:shop_b",
+                   "attempts":[{"failedAttemptPositions":[
+                     {"templateId":"geomantia:shop_b","anchorBlock":{"x":40,"z":60},
+                      "reasonCode":"OCCUPIED_ENVELOPE_OVERLAP"}
+                   ]}]}
+                ]}
+                """).getAsJsonObject();
+        Method groupFailures = CityStructureLandingPreviewRenderer.class
+                .getDeclaredMethod("groupFailures", JsonObject.class, String.class);
+        groupFailures.setAccessible(true);
+
+        List<?> failures = (List<?>) groupFailures.invoke(null, trace, "commercial");
+
+        assertEquals(1, failures.size(),
+                "one world position must render as one marker even when templates or reasons differ");
+    }
+
     @Test
     void d4CandidateMainPreviewsIgnoreEnvelopeLayers(@TempDir Path tempDir) throws Exception {
         JsonObject anchorSet = JsonParser.parseString("""
@@ -237,7 +265,7 @@ final class CityStructureLandingPreviewRendererTest {
                   "schemaVersion":"group_extent_map.v0.10",
                   "groups":[{
                     "groupId":"civic",
-                    "districtEnvelope":{"minX":12,"minZ":36,"maxX":84,"maxZ":124}
+                    "functionAreaEnvelope":{"minX":12,"minZ":36,"maxX":84,"maxZ":124}
                   }]
                 }
                 """).getAsJsonObject();
@@ -251,7 +279,7 @@ final class CityStructureLandingPreviewRendererTest {
     }
 
     @Test
-    void d4AnchorPreviewDrawsExactExpandedDistrictInsteadOfEnvelopeRectangle(@TempDir Path tempDir)
+    void d4AnchorPreviewDrawsExactFunctionAreaWithTranslucentColorInsteadOfEnvelopeRectangle(@TempDir Path tempDir)
             throws Exception {
         JsonObject anchorMap = JsonParser.parseString("""
                 {
@@ -271,8 +299,8 @@ final class CityStructureLandingPreviewRendererTest {
                   "schemaVersion":"group_extent_map.v0.10",
                   "groups":[{
                     "groupId":"civic",
-                    "districtEnvelope":{"minX":32,"minZ":32,"maxX":127,"maxZ":95},
-                    "districtCapacity":{"reservationSpans":[
+                    "functionAreaEnvelope":{"minX":32,"minZ":32,"maxX":127,"maxZ":95},
+                    "functionArea":{"formationSpans":[
                       {"minX":32,"minZ":32,"maxX":95,"maxZ":63,"cellStepBlocks":32},
                       {"minX":32,"minZ":64,"maxX":63,"maxZ":95,"cellStepBlocks":32}
                     ]}
@@ -290,9 +318,9 @@ final class CityStructureLandingPreviewRendererTest {
         int outsideX = 64 + (int) Math.round(144 * overviewScale);
 
         assertNotEquals(image.getRGB(filledX, overviewZ), image.getRGB(notchX, overviewZ),
-                "Reserved L-shape cell must be tinted");
+                "Exact function-area span must receive a translucent tint");
         assertEquals(image.getRGB(outsideX, overviewZ), image.getRGB(notchX, overviewZ),
-                "District envelope must not fill the unreserved L-shape notch");
+                "Function-area envelope must not fill the unclaimed L-shape notch");
 
         BufferedImage detail = ImageIO.read(tempDir.resolve("structure_anchor_cluster_preview.png").toFile());
         double detailScale = 772.0 / 237.0;
@@ -300,7 +328,7 @@ final class CityStructureLandingPreviewRendererTest {
         int reservedX = 64 + (int) Math.round((48 - 8) * detailScale);
         int unreservedX = 64 + (int) Math.round((128 - 8) * detailScale);
         assertNotEquals(detail.getRGB(reservedX, detailZ), detail.getRGB(unreservedX, detailZ),
-                "Local viewport must include expanded district cells outside the structure cluster");
+                "Local viewport must include actual function-area cells outside the structure cluster");
     }
 
     @Test
@@ -340,6 +368,60 @@ final class CityStructureLandingPreviewRendererTest {
         assertNotEquals(image.getRGB(398, 380), image.getRGB(520, 380),
                 "Exact landscape capacity span must tint the overview independently of structures");
         assertTrue(Files.exists(tempDir.resolve("structure_anchor_cluster_preview.png")));
+    }
+
+    @Test
+    void d4FailedCompileStillWritesEveryGroupDetailWithRejectedAttemptPositions(@TempDir Path tempDir)
+            throws Exception {
+        JsonObject anchorMap = JsonParser.parseString("""
+                {
+                  "grid":{"blockBounds":{"minX":0,"minZ":0,"maxX":128,"maxZ":128}},
+                  "anchors":[{
+                    "anchorId":"farm_windmill","placementGroupId":"agriculture",
+                    "templateId":"geomantia:windmill","anchorBlock":{"x":32,"z":32},
+                    "plannedFootprint":{"minX":28,"minZ":28,"maxX":36,"maxZ":36},
+                    "collisionEnvelope":{"minX":24,"minZ":24,"maxX":40,"maxZ":40},
+                    "maskEnvelope":{"minX":20,"minZ":20,"maxX":44,"maxZ":44}
+                  }]
+                }
+                """).getAsJsonObject();
+        JsonObject extentMap = JsonParser.parseString("""
+                {"groups":[
+                  {"groupId":"agriculture","functionArea":{"formationSpans":[
+                    {"minX":24,"minZ":24,"maxX":40,"maxZ":40}
+                  ]}},
+                  {"groupId":"commercial","functionArea":{"formationSpans":[]}}
+                ]}
+                """).getAsJsonObject();
+        JsonObject compileTrace = JsonParser.parseString("""
+                {"selections":[{
+                  "phase":"required","groupId":"agriculture",
+                  "structureRef":"geomantia:household_01","status":"skipped_illegal_slot",
+                  "attempts":[{"failedAttemptPositions":[
+                    {"templateId":"geomantia:household_01","anchorBlock":{"x":80,"z":64},
+                     "reasonCode":"OCCUPIED_ENVELOPE_OVERLAP"},
+                    {"templateId":"geomantia:household_01","anchorBlock":{"x":96,"z":80},
+                     "reasonCode":"GROUP_CONNECTIVITY_GAP_EXCEEDED",
+                     "plannedFootprint":{"minX":92,"minZ":76,"maxX":100,"maxZ":84},
+                     "estimatedCollisionEnvelope":{"minX":88,"minZ":72,"maxX":104,"maxZ":88},
+                     "estimatedMaskEnvelope":{"minX":84,"minZ":68,"maxX":108,"maxZ":92}}
+                  ]}]
+                }]}
+                """).getAsJsonObject();
+
+        CityStructureLandingPreviewRenderer.D4PreviewArtifacts previews =
+                new CityStructureLandingPreviewRenderer().renderD4WithGroupDetails(
+                        anchorMap, null, null, extentMap, compileTrace, tempDir);
+
+        assertTrue(Files.isRegularFile(previews.overview()));
+        assertEquals(2, previews.groupPreviews().size());
+        assertTrue(Files.isRegularFile(previews.groupPreviews().get("agriculture")));
+        assertTrue(Files.isRegularFile(previews.groupPreviews().get("commercial")),
+                "an empty failed group still needs its own reviewable local preview");
+        BufferedImage agriculture = ImageIO.read(previews.groupPreviews().get("agriculture").toFile());
+        assertNotNull(agriculture);
+        assertEquals(1280, agriculture.getWidth());
+        assertEquals(900, agriculture.getHeight());
     }
 
     @Test

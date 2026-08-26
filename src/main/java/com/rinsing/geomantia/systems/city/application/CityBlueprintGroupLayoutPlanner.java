@@ -340,22 +340,37 @@ final class CityBlueprintGroupLayoutPlanner {
     }
 
     BlockPoint compactLaneTarget(Frame frame, int slotIndex, int spacing, Parameters parameters) {
-        int rank = (slotIndex + 1) / 2;
-        int direction = slotIndex == 0 ? 0 : (slotIndex & 1) == 1 ? 1 : -1;
-        int signedRank = direction * rank;
-        double along = signedRank * (double) spacing;
-        double bend = Math.sin(signedRank * 1.15) * Math.max(2, parameters.streetBandWidthBlocks());
-        return point(frame.center(), frame.axisX() * along - frame.axisZ() * bend,
-                frame.axisZ() * along + frame.axisX() * bend);
+        int ring = slotIndex / 8 + 1;
+        double buildingRadius = ring * (double) spacing;
+        double laneRadius = Math.max(2.0, buildingRadius - Math.max(2.0, spacing / 2.0));
+        return compactRadialPoint(frame, slotIndex, laneRadius);
     }
 
     private BlockPoint compactBuildingPoint(Frame frame, int slotIndex, int spacing,
                                             int footprintSpan, Parameters parameters) {
-        BlockPoint lane = compactLaneTarget(frame, slotIndex, spacing, parameters);
-        double sideDistance = parameters.streetBandWidthBlocks() / 2.0 + footprintSpan / 2.0
-                + Math.max(1, parameters.targetEdgeGapBlocks() / 2);
-        double side = (slotIndex & 1) == 0 ? sideDistance : -sideDistance;
-        return point(lane, -frame.axisZ() * side, frame.axisX() * side);
+        int ring = slotIndex / 8 + 1;
+        return compactRadialPoint(frame, slotIndex, ring * (double) spacing);
+    }
+
+    private static BlockPoint compactRadialPoint(Frame frame, int slotIndex, double radius) {
+        double angle = Math.floorMod(slotIndex, 8) * Math.PI / 4.0;
+        double along = Math.cos(angle) * radius;
+        double lateral = Math.sin(angle) * radius;
+        return point(frame.center(), frame.axisX() * along - frame.axisZ() * lateral,
+                frame.axisZ() * along + frame.axisX() * lateral);
+    }
+
+    private static String compactDirection(int slotIndex) {
+        return switch (Math.floorMod(slotIndex, 8)) {
+            case 0 -> "FORWARD";
+            case 1 -> "FORWARD_RIGHT";
+            case 2 -> "RIGHT";
+            case 3 -> "BACK_RIGHT";
+            case 4 -> "BACK";
+            case 5 -> "BACK_LEFT";
+            case 6 -> "LEFT";
+            default -> "FORWARD_LEFT";
+        };
     }
 
     private BlockPoint centerSymmetricPoint(Frame frame,
@@ -534,8 +549,9 @@ final class CityBlueprintGroupLayoutPlanner {
                 value.addProperty("worldAxisLocked", true);
             }
             if ("COMPACT".equals(algorithm)) {
-                value.addProperty("compactLaneRank", (slotIndex + 1) / 2);
-                value.addProperty("compactLaneSide", (slotIndex & 1) == 0 ? "NORTH" : "SOUTH");
+                value.addProperty("compactLaneRank", slotIndex / 8 + 1);
+                value.addProperty("compactLaneSide", compactDirection(slotIndex));
+                value.addProperty("compactDirectionIndex", Math.floorMod(slotIndex, 8));
                 value.add("compactLaneTarget", frontageTarget.asJson());
             }
             if ("LINEAR".equals(algorithm)) {

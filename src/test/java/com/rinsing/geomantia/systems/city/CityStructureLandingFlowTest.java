@@ -16,6 +16,7 @@ import com.rinsing.geomantia.systems.city.application.CityWallReservationPlanner
 import com.rinsing.geomantia.systems.city.application.CityWallTemplateCatalog;
 import com.rinsing.geomantia.systems.city.domain.config.CityPlanningConfig;
 import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
+import com.rinsing.geomantia.systems.city.domain.model.BlockPoint;
 import com.rinsing.geomantia.systems.city.domain.model.CityLandformReviewPackage;
 import com.rinsing.geomantia.systems.city.domain.model.CitySiteContext;
 import com.rinsing.geomantia.systems.city.domain.model.LandformPatchSummary;
@@ -392,6 +393,43 @@ final class CityStructureLandingFlowTest {
         assertEquals(10, firstGroup.getAsJsonObject("expandedStructureAnchorPlan")
                 .getAsJsonArray("anchors").size());
         assertGroupItemsDoNotOverlap(firstGroup);
+    }
+
+    @Test
+    void d4ExactOriginsTryFallbackInOrderWithoutRepeatingAcrossSourcePatches() throws Exception {
+        Fixture fixture = fixture();
+        List<LandformPatchSummary> patches = fixture.review().landformPatches();
+        BlockPoint first = patches.get(0).centerBlock();
+        BlockPoint fallback = new BlockPoint(first.x() + 50, first.z());
+        JsonObject plan = arrayCandidatePlan(fixture.review(), 1);
+        plan.add("candidatePatchRefs", JsonParser.parseString("""
+                ["%s","%s"]
+                """.formatted(patches.get(0).landformPatchId(), patches.get(1).landformPatchId()))
+                .getAsJsonArray());
+        plan.add("templateIds", JsonParser.parseString("[\"geomantia:test_house\"]").getAsJsonArray());
+        plan.add("patterns", JsonParser.parseString("[\"patch_axis_band\"]").getAsJsonArray());
+        plan.addProperty("exactCandidateOriginsOnly", true);
+        plan.add("candidateOrigins", JsonParser.parseString("""
+                [{"x":%d,"z":%d},{"x":%d,"z":%d}]
+                """.formatted(first.x(), first.z(), fallback.x(), fallback.z())).getAsJsonArray());
+        JsonArray occupied = JsonParser.parseString("""
+                [{"blockBounds":{"minX":%d,"minZ":%d,"maxX":%d,"maxZ":%d}}]
+                """.formatted(first.x() - 20, first.z() - 20, first.x() + 20, first.z() + 20))
+                .getAsJsonArray();
+
+        CityStructureArrayCandidatePlanner.Result result = new CityStructureArrayCandidatePlanner()
+                .plan(fixture.baseDir(), fixture.review(), fixture.terraSenseSource(), plan,
+                        new JsonObject(), occupied);
+
+        JsonArray candidates = result.arrayCandidateSet().getAsJsonArray("arrayCandidates");
+        assertEquals(1, candidates.size(),
+                "exact origins describe one ordered landing attempt, not one candidate per source Patch");
+        assertEquals(1, result.arrayCandidateSet().getAsJsonArray("generationReports").size());
+        JsonObject anchor = candidates.get(0).getAsJsonObject()
+                .getAsJsonObject("expandedStructureAnchorPlan").getAsJsonArray("anchors")
+                .get(0).getAsJsonObject().getAsJsonObject("anchorBlock");
+        assertEquals(fallback.x(), anchor.get("x").getAsInt());
+        assertEquals(fallback.z(), anchor.get("z").getAsInt());
     }
 
     @Test

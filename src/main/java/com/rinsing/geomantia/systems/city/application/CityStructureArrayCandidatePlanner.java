@@ -104,8 +104,12 @@ public final class CityStructureArrayCandidatePlanner {
 
         if (hardBlocks.isEmpty()) {
             int candidateIndex = 0;
+            boolean exactOriginsOnly = booleanValue(arrayCandidatePlan, "exactCandidateOriginsOnly", false);
+            List<LandformPatchSummary> pivots = exactOriginsOnly
+                    ? List.of(exactOriginPivot(arrayCandidatePlan, sourcePatches, reviewPackage.grid()))
+                    : sourcePatches;
             for (String pattern : patterns) {
-                for (LandformPatchSummary pivot : sourcePatches) {
+                for (LandformPatchSummary pivot : pivots) {
                     if (candidateIndex >= MAX_GROUP_CANDIDATES) {
                         break;
                     }
@@ -149,6 +153,19 @@ public final class CityStructureArrayCandidatePlanner {
         candidateSet.add("quality", quality);
         candidateSet.add("timingMs", timing(started));
         return new Result(arrayCandidatePlan.deepCopy(), candidateSet, quality);
+    }
+
+    private static LandformPatchSummary exactOriginPivot(JsonObject plan,
+                                                         List<LandformPatchSummary> sourcePatches,
+                                                         PlanningGrid grid) {
+        List<BlockPoint> origins = candidateOrigins(plan);
+        if (!origins.isEmpty()) {
+            BlockPoint first = origins.get(0);
+            for (LandformPatchSummary patch : sourcePatches) {
+                if (patchContains(patch, grid, first)) return patch;
+            }
+        }
+        return sourcePatches.get(0);
     }
 
     private GroupBuildResult buildGroup(int candidateIndex,
