@@ -66,11 +66,14 @@ public final class CityDecorationWorldgenRegistry {
     private static final CityDecorationProgramPlanner PROGRAM_PLANNER = new CityDecorationProgramPlanner();
     private static final CityDecorationChunkCompiler COMPILER = new CityDecorationChunkCompiler();
     private static final CityDecorationNbtPlacer PLACER = new CityDecorationNbtPlacer();
+    private static final long LEDGER_FLUSH_INTERVAL_NANOS = 1_000_000_000L;
     private static final long LEDGER_RETRY_DELAY_NANOS = 1_000_000_000L;
 
     private static final Map<ActiveKey, ActivePlan> ACTIVE = new LinkedHashMap<>();
     private static final Map<String, SuppressionRecord> SUPPRESSIONS = new LinkedHashMap<>();
     private static final Set<String> IN_FLIGHT = new HashSet<>();
+    private static final Set<String> APPLIED_LEDGER_KEYS = new HashSet<>();
+    private static final Map<String, Integer> OUTCOME_INDEXES = new HashMap<>();
     // A WorldGenRegion is short lived and represents one feature-generation scope.  Do not
     // retain it strongly: it is only used to suppress duplicate top-level feature callbacks.
     private static final Map<Object, Set<FeatureOwnerKey>> FEATURE_OWNER_APPLICATIONS = new WeakHashMap<>();
@@ -79,6 +82,8 @@ public final class CityDecorationWorldgenRegistry {
     private static Function<Path, CityDecorationContentCatalog> catalogReader = CATALOG_LOADER::load;
     private static boolean ledgerPersistencePending;
     private static long nextLedgerPersistenceRetryNanos;
+    private static long ledgerMutationVersion;
+    private static boolean ledgerPersistenceInProgress;
     private static LedgerPersistenceWriter ledgerPersistenceWriter = CityDecorationWorldgenRegistry::atomicWrite;
     private static Path activeServerRoot;
     private static Path activeCatalogRoot;
@@ -278,8 +283,11 @@ public final class CityDecorationWorldgenRegistry {
         activeServerRoot = server;
         activeCatalogRoot = catalogPath;
         ledger = loaded.ledger();
+        rebuildLedgerIndexes();
         ledgerPersistencePending = false;
         nextLedgerPersistenceRetryNanos = 0L;
+        ledgerMutationVersion = 0L;
+        ledgerPersistenceInProgress = false;
         if (loaded.staleCatalogPlanCount() > 0) {
             persistActive();
             LOGGER.warn("Discarded {} stale City decoration active plan(s) after catalog change; replan before activation.",
@@ -430,12 +438,14 @@ public final class CityDecorationWorldgenRegistry {
         int skipped = 0;
         ChunkRef owner = new ChunkRef(chunkX, chunkZ);
         for (ActivePlan active : plans) {
+            Map<String, List<OwnedFragment>> fragmentsByProgram = compileOwner(active, owner, terrain);
             for (CompiledDecorationProgram program : active.plan().programsInExecutionOrder()) {
-                ProgramProjection projection = projectProgram(active, program, owner, terrain);
-                if (projection.fragments().isEmpty()) {
+                List<OwnedFragment> fragments = fragmentsByProgram.getOrDefault(program.programId(), List.of());
+                if (fragments.isEmpty()) {
                     continue;
                 }
-                ProgramApplyCounts counts = applyProgram(active, projection, placementWorld);
+                ProgramApplyCounts counts = applyProgram(active,
+                        new ProgramProjection(program, fragments), placementWorld);
                 ready += counts.ready();
                 applied += counts.applied();
                 alreadyApplied += counts.alreadyApplied();
@@ -443,9 +453,6 @@ public final class CityDecorationWorldgenRegistry {
                 skipped += counts.skipped();
             }
         }
-        // A single feature callback can apply hundreds of slots.  Write their ledger
-        // records as one snapshot, never once per fragment on a worldgen worker.
-        flushPendingLedger(false);
         return new ApplySummary(dimension, chunkX, chunkZ, plans.size(), ready, applied,
                 alreadyApplied, failed, skipped);
     }
@@ -459,30 +466,25 @@ public final class CityDecorationWorldgenRegistry {
                 new WorldGenTerrainView(level), new CityDecorationNbtPlacer.WorldGenPlacementWorld(level));
     }
 
-    private static ProgramProjection projectProgram(ActivePlan active,
-                                                     CompiledDecorationProgram program,
-                                                     ChunkRef owner,
-                                                     CityDecorationChunkCompiler.TerrainView terrain) {
-        if (!intersectsTargetMask(program, owner)) {
-            return new ProgramProjection(program, List.of());
-        }
-        List<DecorationSlot> slots = PROGRAM_PLANNER.project(program, program.targetMask().bounds());
-        long ownedSlotCount = slots.stream().filter(slot -> owner.equals(ownerOf(slot))).count();
-        if (ownedSlotCount == 0) {
-            return new ProgramProjection(program, List.of());
+    private static Map<String, List<OwnedFragment>> compileOwner(
+            ActivePlan active,
+            ChunkRef owner,
+            CityDecorationChunkCompiler.TerrainView terrain) {
+        if (active.plan().programsInExecutionOrder().stream()
+                .noneMatch(program -> intersectsTargetMask(program, owner))) {
+            return Map.of();
         }
         CityDecorationChunkCompiler.CompilationResult compilation = COMPILER.compile(
                 active.plan(), active.catalog(), owner.chunkX(), owner.chunkZ(), terrain,
                 active.frozenTerrainPlan());
-        List<OwnedFragment> fragments = compilation.fragments().stream()
-                .filter(fragment -> program.programId().equals(fragment.programId()))
-                .map(fragment -> new OwnedFragment(owner, fragment))
-                .toList();
-        if (fragments.size() != ownedSlotCount) {
-            throw new IllegalStateException("CITY_DECORATION_PROGRAM_FRAGMENT_PROJECTION_MISMATCH: "
-                    + program.programId());
+        Map<String, List<OwnedFragment>> grouped = new LinkedHashMap<>();
+        for (CityDecorationChunkCompiler.Fragment fragment : compilation.fragments()) {
+            grouped.computeIfAbsent(fragment.programId(), ignored -> new ArrayList<>())
+                    .add(new OwnedFragment(owner, fragment));
         }
-        return new ProgramProjection(program, fragments);
+        Map<String, List<OwnedFragment>> result = new LinkedHashMap<>();
+        grouped.forEach((programId, fragments) -> result.put(programId, List.copyOf(fragments)));
+        return Map.copyOf(result);
     }
 
     private static boolean intersectsTargetMask(CompiledDecorationProgram program, ChunkRef owner) {
@@ -493,11 +495,6 @@ public final class CityDecorationWorldgenRegistry {
         return program.targetMask().memberBounds().stream().anyMatch(bounds ->
                 bounds.minX() <= maxX && bounds.maxX() >= minX
                         && bounds.minZ() <= maxZ && bounds.maxZ() >= minZ);
-    }
-
-    private static ChunkRef ownerOf(DecorationSlot slot) {
-        return new ChunkRef(Math.floorDiv(slot.worldAnchor().x(), 16),
-                Math.floorDiv(slot.worldAnchor().z(), 16));
     }
 
     private static ProgramApplyCounts applyProgram(ActivePlan active,
@@ -677,9 +674,11 @@ public final class CityDecorationWorldgenRegistry {
         return summary;
     }
 
-    public static synchronized JsonObject ledgerSnapshot() {
+    public static JsonObject ledgerSnapshot() {
         flushPendingLedger(true);
-        return ledger.deepCopy();
+        synchronized (CityDecorationWorldgenRegistry.class) {
+            return ledger.deepCopy();
+        }
     }
 
     public static Path activePlansPath(Path serverRoot) {
@@ -719,11 +718,15 @@ public final class CityDecorationWorldgenRegistry {
         ACTIVE.clear();
         SUPPRESSIONS.clear();
         IN_FLIGHT.clear();
+        APPLIED_LEDGER_KEYS.clear();
+        OUTCOME_INDEXES.clear();
         FEATURE_OWNER_APPLICATIONS.clear();
         FEATURE_INVOCATION.remove();
         ledger = emptyLedger();
         ledgerPersistencePending = false;
         nextLedgerPersistenceRetryNanos = 0L;
+        ledgerMutationVersion = 0L;
+        ledgerPersistenceInProgress = false;
         ledgerPersistenceWriter = CityDecorationWorldgenRegistry::atomicWrite;
         catalogReader = CATALOG_LOADER::load;
         activeServerRoot = null;
@@ -883,11 +886,9 @@ public final class CityDecorationWorldgenRegistry {
         }
         entry.addProperty("appliedAt", Instant.now().toString());
         appliedEntries().add(entry);
+        APPLIED_LEDGER_KEYS.add(ledgerKey);
         recordOutcome(ledgerKey, key, fragment, catalogHash, chunkX, chunkZ,
                 "applied", result.reasonCode(), layers);
-        // World blocks are already placed at this point.  Keep the in-memory entry for
-        // same-session idempotency; applyForChunk persists all successful fragments once.
-        ledgerPersistencePending = true;
     }
 
     private static String ledgerKey(ActiveKey key,
@@ -900,12 +901,7 @@ public final class CityDecorationWorldgenRegistry {
     }
 
     private static synchronized boolean ledgerContains(String ledgerKey) {
-        for (JsonElement element : appliedEntries()) {
-            if (element.isJsonObject() && ledgerKey.equals(stringValue(element.getAsJsonObject(), "ledgerKey", ""))) {
-                return true;
-            }
-        }
-        return false;
+        return APPLIED_LEDGER_KEYS.contains(ledgerKey);
     }
 
     private static JsonArray appliedEntries() {
@@ -976,17 +972,14 @@ public final class CityDecorationWorldgenRegistry {
         }
         entry.addProperty("observedAt", Instant.now().toString());
         JsonArray outcomes = outcomeEntries();
-        for (int index = 0; index < outcomes.size(); index++) {
-            JsonElement existing = outcomes.get(index);
-            if (existing.isJsonObject() && outcomeKey.equals(
-                    stringValue(existing.getAsJsonObject(), "outcomeKey", ""))) {
-                outcomes.set(index, entry);
-                ledgerPersistencePending = true;
-                return;
-            }
+        Integer existingIndex = OUTCOME_INDEXES.get(outcomeKey);
+        if (existingIndex != null) {
+            outcomes.set(existingIndex, entry);
+        } else {
+            OUTCOME_INDEXES.put(outcomeKey, outcomes.size());
+            outcomes.add(entry);
         }
-        outcomes.add(entry);
-        ledgerPersistencePending = true;
+        markLedgerDirty();
     }
 
     private static JsonArray layerOutcomesJson(List<LayerOutcome> layers) {
@@ -1005,29 +998,25 @@ public final class CityDecorationWorldgenRegistry {
     }
 
     private static synchronized Set<String> successfulLayerIds(String outcomeKey) {
-        for (JsonElement element : outcomeEntries()) {
-            if (!element.isJsonObject()) {
-                continue;
-            }
-            JsonObject outcome = element.getAsJsonObject();
-            if (!outcomeKey.equals(stringValue(outcome, "outcomeKey", ""))
-                    || !outcome.has("layers") || !outcome.get("layers").isJsonArray()) {
-                continue;
-            }
-            Set<String> result = new HashSet<>();
-            for (JsonElement layerElement : outcome.getAsJsonArray("layers")) {
-                if (!layerElement.isJsonObject()) {
-                    continue;
-                }
+        Integer index = OUTCOME_INDEXES.get(outcomeKey);
+        if (index == null) {
+            return Set.of();
+        }
+        JsonObject outcome = outcomeEntries().get(index).getAsJsonObject();
+        if (!outcome.has("layers") || !outcome.get("layers").isJsonArray()) {
+            return Set.of();
+        }
+        Set<String> result = new HashSet<>();
+        for (JsonElement layerElement : outcome.getAsJsonArray("layers")) {
+            if (layerElement.isJsonObject()) {
                 JsonObject layer = layerElement.getAsJsonObject();
                 String status = stringValue(layer, "status", "");
                 if ("applied".equals(status) || "already_satisfied".equals(status)) {
                     result.add(stringValue(layer, "layerId", ""));
                 }
             }
-            return Set.copyOf(result);
         }
-        return Set.of();
+        return Set.copyOf(result);
     }
 
     private static synchronized void persistActive() {
@@ -1077,22 +1066,76 @@ public final class CityDecorationWorldgenRegistry {
                 "CITY_DECORATION_LEDGER_WRITE_FAILED");
     }
 
-    private static synchronized void flushPendingLedger(boolean force) {
-        if (!ledgerPersistencePending) {
-            return;
-        }
+    public static void flushPendingLedgerIfDue() {
+        flushPendingLedger(false);
+    }
+
+    public static void flushPendingLedgerNow() {
+        flushPendingLedger(true);
+    }
+
+    private static void flushPendingLedger(boolean force) {
+        JsonObject snapshot;
+        Path path;
+        LedgerPersistenceWriter writer;
+        long version;
         long now = System.nanoTime();
-        if (!force && now < nextLedgerPersistenceRetryNanos) {
-            return;
+        synchronized (CityDecorationWorldgenRegistry.class) {
+            if (!ledgerPersistencePending || ledgerPersistenceInProgress
+                    || (!force && now < nextLedgerPersistenceRetryNanos)
+                    || activeServerRoot == null) {
+                return;
+            }
+            ledgerPersistenceInProgress = true;
+            nextLedgerPersistenceRetryNanos = now + LEDGER_FLUSH_INTERVAL_NANOS;
+            snapshot = ledger.deepCopy();
+            path = ledgerPath(activeServerRoot);
+            writer = ledgerPersistenceWriter;
+            version = ledgerMutationVersion;
         }
+        RuntimeException failure = null;
         try {
-            persistLedger();
-            ledgerPersistencePending = false;
-            nextLedgerPersistenceRetryNanos = 0L;
+            writer.write(path, snapshot, "CITY_DECORATION_LEDGER_WRITE_FAILED");
         } catch (RuntimeException ex) {
-            nextLedgerPersistenceRetryNanos = now + LEDGER_RETRY_DELAY_NANOS;
+            failure = ex;
+        }
+        synchronized (CityDecorationWorldgenRegistry.class) {
+            ledgerPersistenceInProgress = false;
+            if (failure == null && ledgerMutationVersion == version) {
+                ledgerPersistencePending = false;
+                nextLedgerPersistenceRetryNanos = 0L;
+            } else if (failure != null) {
+                nextLedgerPersistenceRetryNanos = System.nanoTime() + LEDGER_RETRY_DELAY_NANOS;
+            }
+        }
+        if (failure != null) {
             LOGGER.warn("City decoration ledger persistence deferred; placed fragments remain recorded in memory "
-                    + "and this write will be retried later. reason={}", ex.toString());
+                    + "and this write will be retried later. reason={}", failure.toString());
+        }
+    }
+
+    private static void markLedgerDirty() {
+        ledgerPersistencePending = true;
+        ledgerMutationVersion++;
+        if (nextLedgerPersistenceRetryNanos == 0L) {
+            nextLedgerPersistenceRetryNanos = System.nanoTime() + LEDGER_FLUSH_INTERVAL_NANOS;
+        }
+    }
+
+    private static void rebuildLedgerIndexes() {
+        APPLIED_LEDGER_KEYS.clear();
+        for (JsonElement element : appliedEntries()) {
+            if (element.isJsonObject()) {
+                APPLIED_LEDGER_KEYS.add(stringValue(element.getAsJsonObject(), "ledgerKey", ""));
+            }
+        }
+        OUTCOME_INDEXES.clear();
+        JsonArray outcomes = outcomeEntries();
+        for (int index = 0; index < outcomes.size(); index++) {
+            JsonElement element = outcomes.get(index);
+            if (element.isJsonObject()) {
+                OUTCOME_INDEXES.put(stringValue(element.getAsJsonObject(), "outcomeKey", ""), index);
+            }
         }
     }
 

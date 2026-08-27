@@ -303,7 +303,7 @@ class CityDecorationWorldgenRegistryTest {
     }
 
     @Test
-    void batchesSuccessfulOwnerFragmentsIntoOneLedgerPersistence(@TempDir Path temp) throws Exception {
+    void defersSuccessfulOwnerLedgerPersistenceUntilControlledFlush(@TempDir Path temp) throws Exception {
         Path catalogRoot = temp.resolve("catalog");
         Path serverRoot = temp.resolve("server");
         CityDecorationContentCatalog catalog = catalog(catalogRoot, "minecraft:stone");
@@ -323,7 +323,9 @@ class CityDecorationWorldgenRegistryTest {
                 "minecraft:overworld", 0, 0, FlatTerrain.INSTANCE, new FakePlacementWorld(true));
 
         assertEquals(2, applied.appliedFragmentCount());
-        assertEquals(1, ledgerWrites.get(), "one owner callback must persist its complete batch once");
+        assertEquals(0, ledgerWrites.get(), "worldgen worker must not serialize the growing ledger");
+        CityDecorationWorldgenRegistry.flushPendingLedgerNow();
+        assertEquals(1, ledgerWrites.get(), "the controlled flush must persist one complete snapshot");
         JsonObject persisted = JsonParser.parseString(Files.readString(
                 CityDecorationWorldgenRegistry.worldgenLedgerPath(serverRoot))).getAsJsonObject();
         assertEquals(2, persisted.getAsJsonArray("appliedFragments").size());
@@ -385,6 +387,7 @@ class CityDecorationWorldgenRegistryTest {
         } finally {
             executor.shutdownNow();
         }
+        CityDecorationWorldgenRegistry.flushPendingLedgerNow();
         JsonObject persisted = JsonParser.parseString(Files.readString(
                 CityDecorationWorldgenRegistry.worldgenLedgerPath(serverRoot))).getAsJsonObject();
         assertEquals(2, persisted.getAsJsonArray("appliedFragments").size());

@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -65,6 +66,7 @@ class CityLandUseWorldgenRegistryTest {
         assertFalse(entry.has("catalogHash"));
         assertFalse(entry.has("catalogRoot"));
         assertFalse(entry.has("surfaceMode"));
+        CityLandUseWorldgenRegistry.flushPendingLedgerNow();
         JsonObject persistedLedger = JsonParser.parseString(Files.readString(
                 CityLandUseWorldgenRegistry.worldgenLedgerPath(serverRoot))).getAsJsonObject();
         assertFalse(persistedLedger.has("placementDatums"));
@@ -81,6 +83,31 @@ class CityLandUseWorldgenRegistryTest {
         assertEquals(1, reloaded.alreadyAppliedOwnerCount());
         assertEquals(1, CityLandUseWorldgenRegistry.ledgerSnapshot()
                 .getAsJsonArray("appliedOwners").size());
+    }
+
+    @Test
+    void worldgenDefersLedgerSerializationUntilControlledFlush() throws IOException {
+        LandUseAreaPlan areaPlan = areaPlan("city_deferred_ledger");
+        CityLandUseWorldgenRegistry.activate("minecraft:overworld", areaPlan,
+                CityLandUseChunkCompilerTest.uniformPlan(areaPlan), serverRoot);
+        AtomicInteger writes = new AtomicInteger();
+        CityLandUseWorldgenRegistry.setLedgerPersistenceWriterForTests((path, object, reasonCode) -> {
+            writes.incrementAndGet();
+            try {
+                Files.writeString(path, object.toString());
+            } catch (IOException ex) {
+                throw new IllegalStateException(reasonCode, ex);
+            }
+        });
+
+        CityLandUseWorldgenRegistry.ApplySummary applied = CityLandUseWorldgenRegistry.applyForChunk(
+                "minecraft:overworld", 0, 0,
+                CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES, new FakeWorld());
+
+        assertEquals(1, applied.appliedOwnerCount());
+        assertEquals(0, writes.get(), "worldgen worker must not serialize the growing ledger");
+        CityLandUseWorldgenRegistry.flushPendingLedgerNow();
+        assertEquals(1, writes.get());
     }
 
     @Test

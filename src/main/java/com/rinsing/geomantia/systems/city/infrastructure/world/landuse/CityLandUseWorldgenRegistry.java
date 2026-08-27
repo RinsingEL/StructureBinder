@@ -55,14 +55,20 @@ public final class CityLandUseWorldgenRegistry {
     private static final CityLandUseSurfacePrintPlanCodec SURFACE_CODEC =
             new CityLandUseSurfacePrintPlanCodec();
     private static final CityLandUseChunkExecutor EXECUTOR = new CityLandUseChunkExecutor();
+    private static final long LEDGER_FLUSH_INTERVAL_NANOS = 1_000_000_000L;
+    private static final long LEDGER_RETRY_DELAY_NANOS = 1_000_000_000L;
 
     private static final Map<ActiveKey, ActivePlan> ACTIVE = new LinkedHashMap<>();
     private static final Set<OwnerKey> IN_FLIGHT = new HashSet<>();
+    private static final Set<OwnerKey> APPLIED_OWNER_KEYS = new HashSet<>();
     private static final Map<Object, Set<FeatureOwnerKey>> FEATURE_OWNER_APPLICATIONS = new WeakHashMap<>();
     private static final ThreadLocal<Integer> FEATURE_INVOCATION_DEPTH = new ThreadLocal<>();
     private static JsonObject ledger = emptyLedger();
     private static Path activeServerRoot;
     private static boolean ledgerPersistencePending;
+    private static long nextLedgerPersistenceNanos;
+    private static long ledgerMutationVersion;
+    private static boolean ledgerPersistenceInProgress;
     private static Predicate<ResourceLocation> surfaceBlockExists =
             CityLandUseWorldgenRegistry::registeredSurfaceBlockExists;
     private static LedgerPersistenceWriter ledgerPersistenceWriter = CityLandUseWorldgenRegistry::atomicWrite;
@@ -133,8 +139,12 @@ public final class CityLandUseWorldgenRegistry {
         FEATURE_OWNER_APPLICATIONS.clear();
         FEATURE_INVOCATION_DEPTH.remove();
         ledger = state.ledger();
+        rebuildAppliedOwnerIndex();
         activeServerRoot = server;
         ledgerPersistencePending = false;
+        nextLedgerPersistenceNanos = 0L;
+        ledgerMutationVersion = 0L;
+        ledgerPersistenceInProgress = false;
         if (!state.ledgerExists()) {
             persistLedger();
         }
@@ -195,8 +205,6 @@ public final class CityLandUseWorldgenRegistry {
         int appliedOperations = 0;
         int naturalSkipped = 0;
         int boundarySkipped = 0;
-        boolean ledgerChanged = false;
-
         for (ActivePlan active : plans) {
             CityLandUseChunkCompiler.ChunkFragment fragment =
                     new CityLandUseChunkCompiler(active.palette())
@@ -226,7 +234,6 @@ public final class CityLandUseWorldgenRegistry {
                 boundarySkipped += result.occupiedBoundarySkippedCount();
                 if (result.status() == CityLandUseChunkExecutor.Status.APPLIED) {
                     recordApplied(ownerKey, fragment, result, phaseCounts(fragment, result, trackedWorld));
-                    ledgerChanged = true;
                     applied++;
                     appliedOperations += result.appliedOperationCount();
                 } else if (result.status() == CityLandUseChunkExecutor.Status.INELIGIBLE) {
@@ -237,9 +244,6 @@ public final class CityLandUseWorldgenRegistry {
             } finally {
                 release(ownerKey);
             }
-        }
-        if (ledgerChanged || ledgerPersistencePending) {
-            flushLedger();
         }
         return new ApplySummary(dimension, chunkX, chunkZ, plans.size(), relevant, applied,
                 alreadyApplied, failed, ineligible, appliedOperations, naturalSkipped, boundarySkipped);
@@ -345,19 +349,7 @@ public final class CityLandUseWorldgenRegistry {
     }
 
     private static synchronized boolean isApplied(OwnerKey key) {
-        for (JsonElement element : appliedOwners()) {
-            JsonObject entry = element.getAsJsonObject();
-            if (key.key().dimensionId().equals(requiredString(entry, "dimensionId"))
-                    && key.key().cityId().equals(requiredString(entry, "cityId"))
-                    && key.areaPlanHash().equals(requiredString(entry, "areaPlanHash"))
-                    && key.surfacePrintPlanHash().equals(requiredString(entry, "surfacePrintPlanHash"))
-                    && key.paletteHash().equals(requiredString(entry, "paletteHash"))
-                    && key.chunkX() == requiredInt(entry, "chunkX")
-                    && key.chunkZ() == requiredInt(entry, "chunkZ")) {
-                return true;
-            }
-        }
-        return false;
+        return APPLIED_OWNER_KEYS.contains(key);
     }
 
     private static synchronized void recordApplied(OwnerKey key,
@@ -387,7 +379,8 @@ public final class CityLandUseWorldgenRegistry {
         entry.addProperty("occupiedBoundarySkippedCount", result.occupiedBoundarySkippedCount());
         entry.addProperty("appliedAt", Instant.now().toString());
         appliedOwners().add(entry);
-        ledgerPersistencePending = true;
+        APPLIED_OWNER_KEYS.add(key);
+        markLedgerDirty();
     }
 
     private static PhaseCounts phaseCounts(
@@ -513,14 +506,73 @@ public final class CityLandUseWorldgenRegistry {
                 "CITY_LAND_USE_LEDGER_WRITE_FAILED");
     }
 
-    private static synchronized void flushLedger() {
-        if (!ledgerPersistencePending) return;
+    public static void flushPendingLedgerIfDue() {
+        flushLedger(false);
+    }
+
+    public static void flushPendingLedgerNow() {
+        flushLedger(true);
+    }
+
+    private static void flushLedger(boolean force) {
+        JsonObject snapshot;
+        Path path;
+        LedgerPersistenceWriter writer;
+        long version;
+        long now = System.nanoTime();
+        synchronized (CityLandUseWorldgenRegistry.class) {
+            if (!ledgerPersistencePending || ledgerPersistenceInProgress
+                    || (!force && now < nextLedgerPersistenceNanos)
+                    || activeServerRoot == null) {
+                return;
+            }
+            ledgerPersistenceInProgress = true;
+            nextLedgerPersistenceNanos = now + LEDGER_FLUSH_INTERVAL_NANOS;
+            snapshot = ledger.deepCopy();
+            path = worldgenLedgerPath(activeServerRoot);
+            writer = ledgerPersistenceWriter;
+            version = ledgerMutationVersion;
+        }
+        RuntimeException failure = null;
         try {
-            persistLedger();
-            ledgerPersistencePending = false;
-        } catch (RuntimeException failure) {
+            writer.write(path, snapshot, "CITY_LAND_USE_LEDGER_WRITE_FAILED");
+        } catch (RuntimeException ex) {
+            failure = ex;
+        }
+        synchronized (CityLandUseWorldgenRegistry.class) {
+            ledgerPersistenceInProgress = false;
+            if (failure == null && ledgerMutationVersion == version) {
+                ledgerPersistencePending = false;
+                nextLedgerPersistenceNanos = 0L;
+            } else if (failure != null) {
+                nextLedgerPersistenceNanos = System.nanoTime() + LEDGER_RETRY_DELAY_NANOS;
+            }
+        }
+        if (failure != null) {
             LOGGER.warn("City LandUse ledger persistence deferred; in-memory owner idempotence is retained. reason={}",
                     failure.toString());
+        }
+    }
+
+    private static void markLedgerDirty() {
+        ledgerPersistencePending = true;
+        ledgerMutationVersion++;
+        if (nextLedgerPersistenceNanos == 0L) {
+            nextLedgerPersistenceNanos = System.nanoTime() + LEDGER_FLUSH_INTERVAL_NANOS;
+        }
+    }
+
+    private static void rebuildAppliedOwnerIndex() {
+        APPLIED_OWNER_KEYS.clear();
+        for (JsonElement element : appliedOwners()) {
+            JsonObject entry = element.getAsJsonObject();
+            APPLIED_OWNER_KEYS.add(new OwnerKey(
+                    new ActiveKey(requiredString(entry, "dimensionId"), requiredString(entry, "cityId")),
+                    requiredString(entry, "areaPlanHash"),
+                    requiredString(entry, "surfacePrintPlanHash"),
+                    requiredString(entry, "paletteHash"),
+                    requiredInt(entry, "chunkX"),
+                    requiredInt(entry, "chunkZ")));
         }
     }
 
@@ -543,9 +595,11 @@ public final class CityLandUseWorldgenRegistry {
         return summary;
     }
 
-    public static synchronized JsonObject ledgerSnapshot() {
-        flushLedger();
-        return ledger.deepCopy();
+    public static JsonObject ledgerSnapshot() {
+        flushPendingLedgerNow();
+        synchronized (CityLandUseWorldgenRegistry.class) {
+            return ledger.deepCopy();
+        }
     }
 
     public static Path activePlansPath(Path serverRoot) {
@@ -723,11 +777,15 @@ public final class CityLandUseWorldgenRegistry {
     static synchronized void resetForTests() {
         ACTIVE.clear();
         IN_FLIGHT.clear();
+        APPLIED_OWNER_KEYS.clear();
         FEATURE_OWNER_APPLICATIONS.clear();
         FEATURE_INVOCATION_DEPTH.remove();
         ledger = emptyLedger();
         activeServerRoot = null;
         ledgerPersistencePending = false;
+        nextLedgerPersistenceNanos = 0L;
+        ledgerMutationVersion = 0L;
+        ledgerPersistenceInProgress = false;
         ledgerPersistenceWriter = CityLandUseWorldgenRegistry::atomicWrite;
         surfaceBlockExists = CityLandUseWorldgenRegistry::registeredSurfaceBlockExists;
     }
