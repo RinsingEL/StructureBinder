@@ -2,7 +2,7 @@
 
 | ID | 状态 | 现象与根因摘要 | 记录 |
 | --- | --- | --- | --- |
-| `CITY-DL-20260827-02` | 代码与全量回归已修复，待 32 视距新区块实机复验 | 高视距并发生成城市区块时，Decoration 与 LandUse 在每个 owner chunk 末尾同步重写完整 JSON ledger，幂等与 outcome 查询还随 ledger 线性扫描；Decoration 又按 program 重复编译整份 owner plan。现改为 O(1) 索引、tick 每秒限频持久化、锁外文件写入，并把 Decoration 收敛为每 plan / owner 单次编译。 | [任务记录](../active/20260827_城市区块生成性能修复/任务记录.md) |
+| `CITY-DL-20260827-02` | 代码与全量回归已修复，待 32 视距新区块实机复验 | 高视距并发生成城市区块时，Decoration 与 LandUse 在每个 owner chunk 末尾同步重写完整 JSON ledger，幂等与 outcome 查询还随 ledger 线性扫描；Decoration 又按 program 重复编译整份 owner plan。现改为 O(1) 索引、tick 每秒限频持久化、锁外文件写入，并把 Decoration 收敛为每 plan / owner 单次编译。 | [任务记录](../archive/7b77618_v0.1.0_城市区块生成性能修复/任务记录.md) |
 | `CITY-DL-20260827-01` | 代码与全量回归已修复，待新区块真实游玩验收 | 城区 Foundation 旧执行按单格 7×7 外环中位数各自削填，容易保留碎小坡坑；同时编译器把道路加入 Foundation 几何后又当作 corridor exclusion，导致路下整地被跳过。现按同一建设面邻域主高程聚合分级平台，差至少 2 格生成石砖挡土墙；道路参与整地但不再成为 collision exclusion，水列与 Landscape 保持原地形。 | [任务记录](../active/20260827_城市基面与真实路网/任务记录.md)；`CityLandUseMicroGraderTest`、`CityOutdoorBlueprintCompilerTest` |
 | `CITY-DL-20260821-01` | 已修复，真实 LandUse 复验通过 | fill program 含 `GROUND|BANK + CORRIDOR` 时，child 从父边界外第二格接力，中间一格冻结为不被 Parcel claim 的原地表路隙，origin kind 为 `PARENT_PARCEL_ROAD_GAP`。真实 FARMLAND 三 Parcel 为 823/956/371 blocks，两处路隙坐标 `(-3174,-843)`、`(-3160,-857)`，quality pass、无 warning。 | [任务记录](../archive/de6fbc3_v0.1.87_阵列主从骨架与街带完整实现/任务记录.md)；[调用记录](../archive/de6fbc3_v0.1.87_阵列主从骨架与街带完整实现/真实游玩调用记录.md) |
 | `CITY-DL-20260812-02` | 代码与自动回归已修复，待真实新区块验收 | 新增统一 `LandscapeTerrainContinuity`；D4 容量根 seed/生长和 D6 父子接力/实际 frontier 都按 `CONFORM/BALANCED/ASSERTIVE=4/6/10` blocks 相邻高程差停止，不再以二维连通跨崖。 | `CityLandscapeCapacityReservationPlannerTest`、`LandscapeParcelExpanderTest`；[任务记录](../active/20260812_城市台基与地形适应/任务记录.md) |
