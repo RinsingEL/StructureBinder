@@ -83,8 +83,9 @@ public final class CityOutdoorBlueprintCompiler {
                 .map(CityBlueprint.SpatialGround::sourceGroupId).distinct().sorted().toList();
         List<AnchorData> foundationAnchors = requiredGroups(anchorsByGroup, spatialGroupIds,
                 "CITY_OUTDOOR_STRUCTURE_GROUP_UNKNOWN");
-        List<BlockBounds> allFootprints = new ArrayList<>(foundationAnchors.stream()
-                .map(AnchorData::footprint).distinct().toList());
+        List<BlockBounds> structureFootprints = foundationAnchors.stream()
+                .map(AnchorData::footprint).distinct().toList();
+        List<BlockBounds> allFootprints = new ArrayList<>(structureFootprints);
         streetBandFootprints(structureMaterializationPlan).stream()
                 .filter(footprint -> !allFootprints.contains(footprint))
                 .forEach(allFootprints::add);
@@ -112,7 +113,7 @@ public final class CityOutdoorBlueprintCompiler {
                 allAnchorIds, foundationSeeds, foundationArea, foundationArea, foundationArea);
         List<LandUseSeedGroup> groups = new ArrayList<>();
         groups.add(new LandUseSeedGroup(foundationGroupId, foundationRule,
-                surfaceSettings(foundationRule, foundationRecipe, false), allAnchorIds, allFootprints,
+                surfaceSettings(foundationRule, foundationRecipe, false), allAnchorIds, structureFootprints,
                 foundationSeeds, List.of(), foundationArea, foundationArea, foundationArea,
                 foundationRule.actionBudget(), foundationRule.competitionWeight(), List.of(foundationRegion),
                 LandUseSeedGroup.GrowthBias.neutral(), LandUseSeedGroup.TerrainBias.BALANCED, List.of(),
@@ -714,6 +715,7 @@ public final class CityOutdoorBlueprintCompiler {
         for (JsonElement element : streetBands) {
             if (!element.isJsonObject()) continue;
             JsonObject band = element.getAsJsonObject();
+            if ("CITY_BRIDGE".equals(stringValue(band, "roadKind", ""))) continue;
             JsonObject bounds = object(band, "platformBounds");
             if (bounds.size() == 0) bounds = object(band, "bounds");
             if (bounds.size() > 0) result.add(bounds(bounds));
@@ -727,7 +729,9 @@ public final class CityOutdoorBlueprintCompiler {
         for (JsonElement element : array(anchorMap, "streetBands")) {
             if (!element.isJsonObject()) continue;
             JsonObject band = element.getAsJsonObject();
-            if (!"STAIR_SLAB_STAIR".equals(stringValue(band, "crossSectionProfile", ""))) continue;
+            String crossSection = stringValue(band, "crossSectionProfile", "");
+            if (!"STAIR_SLAB_STAIR".equals(crossSection)
+                    && !"BRIDGE_DECK_RAIL".equals(crossSection)) continue;
             JsonObject start = object(band, "start");
             JsonObject end = object(band, "end");
             JsonObject bounds = object(band, "bounds");
@@ -738,10 +742,27 @@ public final class CityOutdoorBlueprintCompiler {
             result.add(new LandUseSourceResolver.RoadBand(
                     requiredString(band, "streetBandId"), requiredString(band, "roadNetworkId"),
                     requiredString(band, "roadKind"), point(start), point(end), bounds(bounds),
-                    intValue(band, "widthBlocks", 1), requiredString(band, "crossSectionProfile")));
+                    intValue(band, "widthBlocks", 1), requiredString(band, "crossSectionProfile"),
+                    roadSurfaceBlockId(requiredString(band, "roadKind")),
+                    roadCurbBlockId(requiredString(band, "roadKind")),
+                    "CITY_BRIDGE".equals(requiredString(band, "roadKind"))
+                            ? "minecraft:spruce_fence" : ""));
         }
         result.sort(Comparator.comparing(LandUseSourceResolver.RoadBand::streetBandId));
         return List.copyOf(result);
+    }
+
+    private static String roadSurfaceBlockId(String roadKind) {
+        if ("CITY_BRIDGE".equals(roadKind)) return "minecraft:spruce_slab";
+        if ("CITY_MAIN_ROAD".equals(roadKind)) return "minecraft:deepslate_tile_slab";
+        if ("COMPACT_ALLEY".equals(roadKind)) return "minecraft:mud_brick_slab";
+        return "minecraft:polished_andesite_slab";
+    }
+
+    private static String roadCurbBlockId(String roadKind) {
+        if ("CITY_MAIN_ROAD".equals(roadKind)) return "minecraft:deepslate_tile_stairs";
+        if ("COMPACT_ALLEY".equals(roadKind)) return "minecraft:mud_brick_stairs";
+        return "minecraft:polished_andesite_stairs";
     }
 
     private static List<LandUseSourceResolver.GreenParcelSpec> greenParcels(

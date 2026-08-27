@@ -467,7 +467,21 @@ public final class LandUseSourceResolver {
                            BlockPoint end,
                            BlockBounds bounds,
                            int widthBlocks,
-                           String crossSectionProfile) {
+                           String crossSectionProfile,
+                           String surfaceBlockId,
+                           String curbBlockId,
+                           String bridgeRailBlockId) {
+        public RoadBand(String streetBandId, String roadNetworkId, String roadKind,
+                        BlockPoint start, BlockPoint end, BlockBounds bounds,
+                        int widthBlocks, String crossSectionProfile) {
+            this(streetBandId, roadNetworkId, roadKind, start, end, bounds, widthBlocks,
+                    crossSectionProfile, "minecraft:polished_andesite_slab",
+                    "minecraft:polished_andesite_stairs", "");
+        }
+
+        public boolean bridge() {
+            return "CITY_BRIDGE".equals(roadKind);
+        }
     }
 
     public record GreenParcelSpec(String parcelId,

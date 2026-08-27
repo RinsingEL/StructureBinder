@@ -148,36 +148,67 @@ public final class CityLandUseSurfacePrintPlanner {
         for (int z = bounds.minZ(); z <= bounds.maxZ(); z++) {
             for (int x = bounds.minX(); x <= bounds.maxX(); x++) {
                 putFeature(cells, new CityLandUseSurfacePrintPlan.FeatureCell(band.streetBandId(),
-                        x, z, "minecraft:stone_brick_slab", 0,
-                        CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB,
+                        x, z, band.surfaceBlockId(), 0,
+                        band.bridge() ? CityLandUseSurfacePrintPlan.FeatureKind.BRIDGE_DECK
+                                : CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB,
                         CityLandUseSurfacePrintPlan.HorizontalFacing.NONE), 510);
                 cells.remove(new FeatureKey(x, z, 1));
             }
         }
+        if (band.bridge()) {
+            addBridgeRails(cells, band, horizontal, bounds);
+            return;
+        }
         if (horizontal) {
             for (int x = bounds.minX(); x <= bounds.maxX(); x++) {
-                addRoadCurb(cells, band.streetBandId(), x, bounds.minZ() - 1,
+                addRoadCurb(cells, band.streetBandId(), band.curbBlockId(), x, bounds.minZ() - 1,
                         CityLandUseSurfacePrintPlan.HorizontalFacing.NORTH);
-                addRoadCurb(cells, band.streetBandId(), x, bounds.maxZ() + 1,
+                addRoadCurb(cells, band.streetBandId(), band.curbBlockId(), x, bounds.maxZ() + 1,
                         CityLandUseSurfacePrintPlan.HorizontalFacing.SOUTH);
             }
         } else {
             for (int z = bounds.minZ(); z <= bounds.maxZ(); z++) {
-                addRoadCurb(cells, band.streetBandId(), bounds.minX() - 1, z,
+                addRoadCurb(cells, band.streetBandId(), band.curbBlockId(), bounds.minX() - 1, z,
                         CityLandUseSurfacePrintPlan.HorizontalFacing.WEST);
-                addRoadCurb(cells, band.streetBandId(), bounds.maxX() + 1, z,
+                addRoadCurb(cells, band.streetBandId(), band.curbBlockId(), bounds.maxX() + 1, z,
                         CityLandUseSurfacePrintPlan.HorizontalFacing.EAST);
             }
         }
     }
 
     private static void addRoadCurb(Map<FeatureKey, FeatureCandidate> cells, String sourceId,
+                                    String blockId,
                                     int x, int z,
                                     CityLandUseSurfacePrintPlan.HorizontalFacing facing) {
         putFeature(cells, new CityLandUseSurfacePrintPlan.FeatureCell(sourceId, x, z,
-                "minecraft:stone_brick_stairs", 0,
+                blockId, 0,
                 CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR, facing), 500);
         cells.remove(new FeatureKey(x, z, 1));
+    }
+
+    private static void addBridgeRails(Map<FeatureKey, FeatureCandidate> cells,
+                                       LandUseSourceResolver.RoadBand band,
+                                       boolean horizontal,
+                                       BlockBounds bounds) {
+        if (band.bridgeRailBlockId().isBlank()) return;
+        if (horizontal) {
+            for (int x = bounds.minX(); x <= bounds.maxX(); x++) {
+                addBridgeRail(cells, band, x, bounds.minZ());
+                addBridgeRail(cells, band, x, bounds.maxZ());
+            }
+        } else {
+            for (int z = bounds.minZ(); z <= bounds.maxZ(); z++) {
+                addBridgeRail(cells, band, bounds.minX(), z);
+                addBridgeRail(cells, band, bounds.maxX(), z);
+            }
+        }
+    }
+
+    private static void addBridgeRail(Map<FeatureKey, FeatureCandidate> cells,
+                                      LandUseSourceResolver.RoadBand band, int x, int z) {
+        putFeature(cells, new CityLandUseSurfacePrintPlan.FeatureCell(band.streetBandId(), x, z,
+                band.bridgeRailBlockId(), 1, CityLandUseSurfacePrintPlan.FeatureKind.BRIDGE_RAIL,
+                CityLandUseSurfacePrintPlan.HorizontalFacing.NONE), 520);
     }
 
     private static void addGreenParcel(Map<FeatureKey, FeatureCandidate> cells,

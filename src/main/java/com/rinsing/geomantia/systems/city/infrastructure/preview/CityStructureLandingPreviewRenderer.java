@@ -799,21 +799,29 @@ public final class CityStructureLandingPreviewRenderer {
             }
             JsonObject bounds = object(band, "bounds");
             if (bounds.size() == 0) continue;
-            boolean mainRoad = "CITY_MAIN_ROAD".equals(string(band, "roadKind"));
+            String roadKind = string(band, "roadKind");
+            boolean mainRoad = "CITY_MAIN_ROAD".equals(roadKind);
+            boolean bridge = "CITY_BRIDGE".equals(roadKind);
+            boolean alley = "COMPACT_ALLEY".equals(roadKind);
             JsonObject platform = object(band, "platformBounds");
             if (platform.size() > 0) {
                 BlockBounds platformBounds = new BlockBounds(intValue(platform, "minX", 0),
                         intValue(platform, "minZ", 0), intValue(platform, "maxX", 0),
                         intValue(platform, "maxZ", 0));
-                g.setColor(mainRoad ? new Color(111, 72, 45, 62) : new Color(125, 128, 130, 42));
+                g.setColor(mainRoad ? new Color(54, 61, 70, 72)
+                        : alley ? new Color(126, 94, 65, 48) : new Color(145, 148, 151, 48));
                 fillBounds(g, t, platformBounds);
             }
             BlockBounds street = new BlockBounds(intValue(bounds, "minX", 0), intValue(bounds, "minZ", 0),
                     intValue(bounds, "maxX", 0), intValue(bounds, "maxZ", 0));
-            g.setColor(mainRoad ? new Color(92, 55, 35, 155) : new Color(86, 89, 91, 118));
+            g.setColor(bridge ? new Color(150, 91, 39, 210)
+                    : mainRoad ? new Color(49, 54, 63, 190)
+                    : alley ? new Color(120, 84, 54, 145) : new Color(127, 131, 135, 145));
             fillBounds(g, t, street);
-            g.setColor(mainRoad ? new Color(68, 37, 24, 235) : new Color(55, 58, 60, 220));
-            g.setStroke(new BasicStroke(mainRoad ? 3.2f : 2.0f));
+            g.setColor(bridge ? new Color(91, 48, 18, 245)
+                    : mainRoad ? new Color(31, 35, 43, 245)
+                    : alley ? new Color(83, 54, 34, 230) : new Color(70, 74, 78, 230));
+            g.setStroke(new BasicStroke(mainRoad || bridge ? 3.2f : alley ? 1.4f : 2.0f));
             JsonObject start = object(band, "start");
             JsonObject end = object(band, "end");
             if (start.size() > 0 && end.size() > 0) {
@@ -821,9 +829,12 @@ public final class CityStructureLandingPreviewRenderer {
                         t.x(intValue(end, "x", 0)), t.z(intValue(end, "z", 0)));
             }
             if (drawLabels) {
-                drawBadge(g, t, street.center(), (mainRoad ? "main " : "street ")
+                String label = bridge ? "bridge " : mainRoad ? "main " : alley ? "alley " : "street ";
+                drawBadge(g, t, street.center(), label
                                 + intValue(band, "widthBlocks", 0),
-                        mainRoad ? new Color(68, 37, 24, 235) : new Color(55, 58, 60, 235));
+                        bridge ? new Color(91, 48, 18, 245)
+                                : mainRoad ? new Color(31, 35, 43, 245)
+                                : alley ? new Color(83, 54, 34, 235) : new Color(70, 74, 78, 235));
             }
         }
         drawDelegatedBridges(g, t, anchorMap, visibleGroupIds, drawLabels);

@@ -24,7 +24,7 @@ class CityMainRoadPlannerTest {
     private final CityMainRoadPlanner planner = new CityMainRoadPlanner();
 
     @Test
-    void parentArrayRoadUsesWiderOrthogonalTerrainDetourAndStreetEndpoints() {
+    void explicitTrafficConnectionUsesWiderOrthogonalTerrainDetourAndStreetEndpoints() {
         CityBlueprint blueprint = blueprint("HIERARCHICAL");
         List<JsonObject> anchors = List.of(anchor("a", new BlockBounds(8, 8, 14, 14),
                         new BlockPoint(14, 15)),
@@ -61,8 +61,8 @@ class CityMainRoadPlannerTest {
     @Test
     void narrowInternalEndpointCanEscapeBeforeMainRoadWidens() {
         List<JsonObject> anchors = List.of(
-                anchor("a", new BlockBounds(16, 18, 18, 24), new BlockPoint(18, 20)),
-                anchor("a", new BlockBounds(22, 18, 24, 24), new BlockPoint(22, 20)),
+                anchor("a", new BlockBounds(16, 18, 18, 32), new BlockPoint(18, 20)),
+                anchor("a", new BlockBounds(22, 18, 24, 32), new BlockPoint(22, 20)),
                 anchor("b", new BlockBounds(80, 18, 86, 24), new BlockPoint(80, 20)));
         List<JsonObject> internal = List.of(
                 street("a", "CENTER_AXIS_NORTH", 3,
@@ -79,7 +79,23 @@ class CityMainRoadPlannerTest {
     }
 
     @Test
-    void waterBarrierWithoutLandDetourDelegatesBridgeInsteadOfDrawingGroundRoad() {
+    void structureEntranceCanExitItsOwnClearanceEnvelopeButNotOtherBuildings() {
+        List<JsonObject> anchors = List.of(
+                anchorWithDirectedEntrance("a", new BlockBounds(8, 8, 20, 20),
+                        new BlockPoint(14, 18), "SOUTH"),
+                anchorWithDirectedEntrance("b", new BlockBounds(72, 8, 84, 20),
+                        new BlockPoint(74, 14), "WEST"));
+
+        CityMainRoadPlanner.Result result = planner.plan(blueprint("HIERARCHICAL"),
+                references("HIERARCHICAL"), terrain(false), anchors, List.of());
+
+        assertTrue(result.ok(), result.plan().toString());
+        assertEquals("planned", result.plan().get("status").getAsString());
+        assertFalse(result.streetBands().isEmpty());
+    }
+
+    @Test
+    void waterBarrierWithRealExitsCreatesCityOwnedBridgeBands() {
         List<LandUseTerrainField.Cell> cells = List.of(cell(0, 0, false), cell(1, 0, true),
                 cell(2, 0, false));
         LandUseTerrainField terrain = new LandUseTerrainField(LandUseTerrainField.CURRENT_SCHEMA_VERSION,
@@ -95,14 +111,17 @@ class CityMainRoadPlannerTest {
                                 new BlockPoint(79, 20), new BlockPoint(90, 20))));
 
         assertTrue(result.ok(), result.plan().toString());
-        assertTrue(result.streetBands().isEmpty());
+        assertTrue(result.streetBands().stream().anyMatch(band ->
+                "CITY_BRIDGE".equals(band.get("roadKind").getAsString())));
         assertEquals(1, result.plan().get("bridgeConnectionCount").getAsInt());
-        assertEquals("DELEGATED_TO_ROADWEAVER", result.plan().getAsJsonArray("bridgeConnections")
+        assertEquals("PLANNED_BY_CITY", result.plan().getAsJsonArray("bridgeConnections")
                 .get(0).getAsJsonObject().get("status").getAsString());
+        assertEquals("INDEPENDENT_BRIDGE_DECK_AND_RAIL", result.plan().getAsJsonArray("bridgeConnections")
+                .get(0).getAsJsonObject().get("bridgePolicy").getAsString());
     }
 
     @Test
-    void blockedParentLinkDelegatesShortWaterCrossingToBridgeWithoutGroundBand() {
+    void spatialGrowthSkipDoesNotCancelExplicitTrafficBridge() {
         List<LandUseTerrainField.Cell> cells = List.of(cell(0, 0, false), cell(1, 0, true),
                 cell(2, 0, false));
         LandUseTerrainField terrain = new LandUseTerrainField(LandUseTerrainField.CURRENT_SCHEMA_VERSION,
@@ -120,11 +139,12 @@ class CityMainRoadPlannerTest {
 
         assertTrue(result.ok(), result.plan().toString());
         assertEquals("planned", result.plan().get("status").getAsString());
-        assertTrue(result.streetBands().isEmpty(), "bridge must not become a ground surface band");
+        assertTrue(result.streetBands().stream().anyMatch(band ->
+                "CITY_BRIDGE".equals(band.get("roadKind").getAsString())));
         assertEquals(1, result.plan().get("bridgeConnectionCount").getAsInt());
         JsonObject bridge = result.plan().getAsJsonArray("bridgeConnections").get(0).getAsJsonObject();
-        assertEquals("DELEGATED_TO_ROADWEAVER", bridge.get("status").getAsString());
-        assertEquals("AUTO_BRIDGE_NO_GROUND_SURFACE_PRINT", bridge.get("bridgePolicy").getAsString());
+        assertEquals("PLANNED_BY_CITY", bridge.get("status").getAsString());
+        assertEquals("INDEPENDENT_BRIDGE_DECK_AND_RAIL", bridge.get("bridgePolicy").getAsString());
         assertEquals(32, bridge.get("waterSpanBlocks").getAsInt());
     }
 
@@ -136,6 +156,32 @@ class CityMainRoadPlannerTest {
         assertTrue(result.ok());
         assertTrue(result.streetBands().isEmpty());
         assertEquals("not_required", result.plan().get("status").getAsString());
+    }
+
+    @Test
+    void hierarchyAndParentArrayWithoutExplicitTrafficConnectionDoNotCreateRoads() {
+        CityBlueprint source = blueprint("HIERARCHICAL");
+        CityBlueprint noTraffic = new CityBlueprint(source.schemaVersion(), source.cityId(),
+                source.sourceD3Ref(), source.catalogSnapshotRef(), source.generationSeed(),
+                source.designIntent(), source.styleProfile(), source.groups(), source.arrayCompositions(),
+                List.of(new CityBlueprint.Relation("a", "b", CityBlueprint.RelationKind.HIERARCHY,
+                        CityBlueprint.RelationStrength.HARD, CityBlueprint.DistancePreference.NEAR,
+                        CityBlueprint.DirectionPreference.NONE)), source.roadProfile(),
+                source.surfaceDetailProfile(), source.outdoorPlan());
+
+        CityMainRoadPlanner.Result result = planner.plan(noTraffic, references("HIERARCHICAL"),
+                terrain(false), List.of(
+                        anchor("a", new BlockBounds(8, 8, 14, 14), new BlockPoint(14, 15)),
+                        anchor("b", new BlockBounds(80, 8, 86, 14), new BlockPoint(80, 15))),
+                List.of(street("a", "LINEAR_STREET_BAND", 5,
+                                new BlockPoint(5, 20), new BlockPoint(15, 20)),
+                        street("b", "LINEAR_STREET_BAND", 5,
+                                new BlockPoint(79, 20), new BlockPoint(90, 20))));
+
+        assertTrue(result.ok());
+        assertTrue(result.streetBands().isEmpty());
+        assertEquals("CITY_MAIN_ROAD_EXPLICIT_TRAFFIC_CONNECTIONS_EMPTY",
+                result.plan().get("reasonCode").getAsString());
     }
 
     @Test
@@ -180,7 +226,10 @@ class CityMainRoadPlannerTest {
                 42L, new CityBlueprint.DesignIntent("test", "test", List.of()),
                 new CityBlueprint.ProfileRef("style:test"), List.of(),
                 List.of(new CityBlueprint.ArrayComposition("parent", "algorithm:grid", "a", List.of("b"))),
-                List.of(), new CityBlueprint.ProfileRef("road:test:" + hierarchy.toLowerCase()),
+                List.of(new CityBlueprint.Relation("a", "b", CityBlueprint.RelationKind.CONNECTION,
+                        CityBlueprint.RelationStrength.HARD, CityBlueprint.DistancePreference.NONE,
+                        CityBlueprint.DirectionPreference.NONE)),
+                new CityBlueprint.ProfileRef("road:test:" + hierarchy.toLowerCase()),
                 new CityBlueprint.ProfileRef("surface:test"),
                 new CityBlueprint.OutdoorPlan(CityBlueprint.OutdoorMode.PRESERVE,
                         CityBlueprint.EnvelopeProfile.BALANCED, "foundation:test", List.of(), List.of()));
@@ -236,6 +285,15 @@ class CityMainRoadPlannerTest {
         transformed.add("roadEntrances", entrances);
         placement.add("transformed", transformed);
         anchor.add("templatePlacementPlan", placement);
+        return anchor;
+    }
+
+    private static JsonObject anchorWithDirectedEntrance(String groupId, BlockBounds collision,
+                                                         BlockPoint entrance, String direction) {
+        JsonObject anchor = anchor(groupId, collision, entrance);
+        anchor.getAsJsonObject("templatePlacementPlan").getAsJsonObject("transformed")
+                .getAsJsonArray("roadEntrances").get(0).getAsJsonObject()
+                .addProperty("direction", direction);
         return anchor;
     }
 

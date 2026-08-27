@@ -63,8 +63,7 @@ final class CityMainRoadPlanner {
                 .map(anchor -> object(anchor, "collisionEnvelope"))
                 .filter(bounds -> bounds.size() > 0)
                 .map(CityStructureCandidateEnvelope::bounds).toList();
-        JsonArray bridgeConnections = bridgeConnections(terrain, groups, mainWidth + 2,
-                structureObstacles, excludedRelationPairKeys);
+        JsonArray bridgeConnections = new JsonArray();
         plan.add("bridgeConnections", bridgeConnections);
         plan.addProperty("bridgeConnectionCount", bridgeConnections.size());
         List<Link> links;
@@ -76,9 +75,9 @@ final class CityMainRoadPlanner {
                     exception.getMessage(), failedPlan(plan,
                             "CITY_BLUEPRINT_MAIN_ROAD_PARENT_GRAPH_DISCONNECTED", exception.getMessage()));
         }
-        if (links.isEmpty() && bridgeConnections.isEmpty()) {
+        if (links.isEmpty()) {
             plan.addProperty("status", "not_required");
-            plan.addProperty("reasonCode", "CITY_MAIN_ROAD_PARENT_LINKS_EMPTY");
+            plan.addProperty("reasonCode", "CITY_MAIN_ROAD_EXPLICIT_TRAFFIC_CONNECTIONS_EMPTY");
             return Result.ok(List.of(), plan);
         }
 
@@ -100,9 +99,40 @@ final class CityMainRoadPlanner {
             List<LandUseTerrainField.Cell> cellPath = route(terrain,
                     connectors.from().point(), connectors.to().point());
             if (cellPath.isEmpty()) {
-                JsonObject bridge = bridgeConnection(terrain, link.fromGroupId(), link.toGroupId(), connectors);
+                BridgeRoute bridge = bridgeRoute(terrain, connectors, mainWidth + 2, structureObstacles);
                 if (bridge != null) {
-                    bridgeConnections.add(bridge);
+                    connectionIndex++;
+                    String connectionId = "city_main_road_" + String.format("%03d", connectionIndex);
+                    JsonArray segmentIds = new JsonArray();
+                    JsonObject sourceTransition = transitionBand(connectionId, "source", link.fromGroupId(),
+                            connectors.from());
+                    if (sourceTransition != null) {
+                        segmentIds.add(sourceTransition.get("streetBandId").getAsString());
+                        bands.add(sourceTransition);
+                    }
+                    JsonObject targetTransition = transitionBand(connectionId, "target", link.toGroupId(),
+                            connectors.to());
+                    if (targetTransition != null) {
+                        segmentIds.add(targetTransition.get("streetBandId").getAsString());
+                        bands.add(targetTransition);
+                    }
+                    List<JsonObject> bridgeBands = classifiedBridgeBands(connectionId, link, mainWidth,
+                            bridge.polyline(), terrain);
+                    bridgeBands.forEach(band -> {
+                        segmentIds.add(band.get("streetBandId").getAsString());
+                        bands.add(band);
+                    });
+                    JsonObject bridgeJson = new JsonObject();
+                    bridgeJson.addProperty("connectionId", connectionId);
+                    bridgeJson.addProperty("fromGroupId", link.fromGroupId());
+                    bridgeJson.addProperty("toGroupId", link.toGroupId());
+                    bridgeJson.addProperty("status", "PLANNED_BY_CITY");
+                    bridgeJson.addProperty("provider", "city_surface_print");
+                    bridgeJson.addProperty("bridgePolicy", "INDEPENDENT_BRIDGE_DECK_AND_RAIL");
+                    bridgeJson.addProperty("waterSpanBlocks", bridge.waterSpanBlocks());
+                    bridgeJson.addProperty("maximumBridgeLengthBlocks", MAXIMUM_BRIDGE_LENGTH_BLOCKS);
+                    bridgeJson.add("streetBandIds", segmentIds);
+                    bridgeConnections.add(bridgeJson);
                     continue;
                 }
                 skippedConnections.add(skippedConnection(link,
@@ -161,61 +191,120 @@ final class CityMainRoadPlanner {
         return value;
     }
 
-    private static JsonArray bridgeConnections(LandUseTerrainField terrain,
-                                               Map<String, GroupGeometry> groups,
+    private static BridgeRoute bridgeRoute(LandUseTerrainField terrain,
+                                           ConnectorPair connectors,
+                                           int width,
+                                           List<BlockBounds> obstacles) {
+        BlockPoint from = connectors.from().point();
+        BlockPoint to = connectors.to().point();
+        List<List<BlockPoint>> candidates = new ArrayList<>();
+        if (from.x() == to.x() || from.z() == to.z()) {
+            candidates.add(List.of(from, to));
+        } else {
+            candidates.add(List.of(from, new BlockPoint(to.x(), from.z()), to));
+            candidates.add(List.of(from, new BlockPoint(from.x(), to.z()), to));
+        }
+        return candidates.stream()
+                .map(CityMainRoadPlanner::withoutDuplicatePoints)
+                .filter(points -> bridgePolylineLegal(points, terrain, width, obstacles))
+                .map(points -> new BridgeRoute(points, maximumConsecutiveWaterBlocks(points, terrain)))
+                .filter(route -> route.waterSpanBlocks() > 0
+                        && route.waterSpanBlocks() <= MAXIMUM_BRIDGE_LENGTH_BLOCKS)
+                .min(Comparator.comparingInt((BridgeRoute route) -> route.polyline().size())
+                        .thenComparingInt(route -> polylineLength(route.polyline()))
+                        .thenComparing(route -> route.polyline().toString()))
+                .orElse(null);
+    }
+
+    private static List<BlockPoint> withoutDuplicatePoints(List<BlockPoint> points) {
+        List<BlockPoint> result = new ArrayList<>();
+        for (BlockPoint point : points) {
+            if (result.isEmpty() || !result.get(result.size() - 1).equals(point)) result.add(point);
+        }
+        return List.copyOf(result);
+    }
+
+    private static boolean bridgePolylineLegal(List<BlockPoint> points,
+                                               LandUseTerrainField terrain,
                                                int width,
-                                               List<BlockBounds> obstacles,
-                                               Set<String> excludedRelationPairKeys) {
-        JsonArray result = new JsonArray();
-        excludedRelationPairKeys.stream().sorted().forEach(key -> {
-            int separator = key.indexOf('\u0000');
-            if (separator < 1 || separator + 1 >= key.length()) return;
-            String fromGroupId = key.substring(0, separator);
-            String toGroupId = key.substring(separator + 1);
-            GroupGeometry from = groups.get(fromGroupId);
-            GroupGeometry to = groups.get(toGroupId);
-            if (from == null || to == null) return;
-            ConnectorPair connectors = connectorPair(from, to, width, obstacles);
-            if (connectors == null) return;
-            JsonObject bridge = bridgeConnection(terrain, fromGroupId, toGroupId, connectors);
-            if (bridge != null) result.add(bridge);
-        });
-        return result;
+                                               List<BlockBounds> obstacles) {
+        for (BlockPoint point : unitPolyline(points)) {
+            LandUseTerrainField.Cell cell = terrain.cellAt(point.x(), point.z()).orElse(null);
+            if (cell == null || !passable(cell, true) || blocked(point, width, obstacles)) return false;
+        }
+        return true;
     }
 
-    private static JsonObject bridgeConnection(LandUseTerrainField terrain,
-                                               String fromGroupId,
-                                               String toGroupId,
-                                               ConnectorPair connectors) {
-        List<LandUseTerrainField.Cell> path = route(terrain,
-                connectors.from().point(), connectors.to().point(), true);
-        int waterSpanBlocks = maximumConsecutiveWaterSpanBlocks(path);
-        if (waterSpanBlocks <= 0 || waterSpanBlocks > MAXIMUM_BRIDGE_LENGTH_BLOCKS) return null;
-        JsonObject bridge = new JsonObject();
-        bridge.addProperty("fromGroupId", fromGroupId);
-        bridge.addProperty("toGroupId", toGroupId);
-        bridge.addProperty("status", "DELEGATED_TO_ROADWEAVER");
-        bridge.addProperty("provider", "roadweaver");
-        bridge.addProperty("bridgePolicy", "AUTO_BRIDGE_NO_GROUND_SURFACE_PRINT");
-        bridge.addProperty("waterSpanBlocks", waterSpanBlocks);
-        bridge.addProperty("maximumBridgeLengthBlocks", MAXIMUM_BRIDGE_LENGTH_BLOCKS);
-        bridge.add("from", connectors.from().point().asJson());
-        bridge.add("to", connectors.to().point().asJson());
-        return bridge;
-    }
-
-    private static int maximumConsecutiveWaterSpanBlocks(List<LandUseTerrainField.Cell> path) {
+    private static int maximumConsecutiveWaterBlocks(List<BlockPoint> points,
+                                                     LandUseTerrainField terrain) {
         int current = 0;
         int maximum = 0;
-        for (LandUseTerrainField.Cell cell : path) {
-            if (cell.water()) {
-                current += cell.cellStepBlocks();
-                maximum = Math.max(maximum, current);
-            } else {
-                current = 0;
-            }
+        for (BlockPoint point : unitPolyline(points)) {
+            boolean water = terrain.cellAt(point.x(), point.z()).map(LandUseTerrainField.Cell::water)
+                    .orElse(false);
+            current = water ? current + 1 : 0;
+            maximum = Math.max(maximum, current);
         }
         return maximum;
+    }
+
+    private static int polylineLength(List<BlockPoint> points) {
+        int length = 0;
+        for (int i = 0; i + 1 < points.size(); i++) length += manhattan(points.get(i), points.get(i + 1));
+        return length;
+    }
+
+    private static List<BlockPoint> unitPolyline(List<BlockPoint> points) {
+        List<BlockPoint> result = new ArrayList<>();
+        for (int segment = 0; segment + 1 < points.size(); segment++) {
+            BlockPoint from = points.get(segment);
+            BlockPoint to = points.get(segment + 1);
+            int dx = Integer.compare(to.x(), from.x());
+            int dz = Integer.compare(to.z(), from.z());
+            int distance = manhattan(from, to);
+            for (int step = segment == 0 ? 0 : 1; step <= distance; step++) {
+                result.add(new BlockPoint(from.x() + dx * step, from.z() + dz * step));
+            }
+        }
+        return List.copyOf(result);
+    }
+
+    private static List<JsonObject> classifiedBridgeBands(String connectionId,
+                                                           Link link,
+                                                           int width,
+                                                           List<BlockPoint> polyline,
+                                                           LandUseTerrainField terrain) {
+        List<BlockPoint> unit = unitPolyline(polyline);
+        List<JsonObject> result = new ArrayList<>();
+        int segmentIndex = 0;
+        int runStart = 0;
+        for (int index = 1; index < unit.size(); index++) {
+            BlockPoint previous = unit.get(index - 1);
+            BlockPoint current = unit.get(index);
+            boolean previousWater = terrain.cellAt(previous.x(), previous.z())
+                    .map(LandUseTerrainField.Cell::water).orElse(false);
+            boolean currentWater = terrain.cellAt(current.x(), current.z())
+                    .map(LandUseTerrainField.Cell::water).orElse(false);
+            int previousDx = index - 1 > runStart
+                    ? Integer.compare(previous.x(), unit.get(index - 2).x()) : Integer.compare(current.x(), previous.x());
+            int previousDz = index - 1 > runStart
+                    ? Integer.compare(previous.z(), unit.get(index - 2).z()) : Integer.compare(current.z(), previous.z());
+            int dx = Integer.compare(current.x(), previous.x());
+            int dz = Integer.compare(current.z(), previous.z());
+            if (previousWater != currentWater || dx != previousDx || dz != previousDz) {
+                BlockPoint start = unit.get(runStart);
+                BlockPoint end = previous;
+                if (!start.equals(end)) result.add(band(connectionId, link, segmentIndex++, width,
+                        start, end, previousWater ? "CITY_BRIDGE" : "CITY_MAIN_ROAD"));
+                runStart = index - 1;
+            }
+        }
+        BlockPoint start = unit.get(runStart);
+        BlockPoint end = unit.get(unit.size() - 1);
+        boolean water = terrain.cellAt(end.x(), end.z()).map(LandUseTerrainField.Cell::water).orElse(false);
+        if (!start.equals(end)) result.add(band(connectionId, link, segmentIndex, width, start, end,
+                water ? "CITY_BRIDGE" : "CITY_MAIN_ROAD"));
+        return List.copyOf(result);
     }
 
     private static JsonObject roadProfile(CityBlueprint blueprint, CityBlueprintReferenceCatalog references) {
@@ -239,7 +328,7 @@ final class CityMainRoadPlanner {
         plan.addProperty("roadProfileRef", blueprint.roadProfile().profileRef());
         plan.addProperty("hierarchy", string(roadProfile, "hierarchy"));
         plan.addProperty("density", string(roadProfile, "density"));
-        plan.addProperty("planningOwner", "BLUEPRINT_PARENT_ARRAY");
+        plan.addProperty("planningOwner", "BLUEPRINT_EXPLICIT_TRAFFIC_CONNECTIONS");
         plan.addProperty("geometryMode", "TERRAIN_AWARE_AXIS_ALIGNED_90_DEGREE");
         plan.addProperty("surfacePolicy", "FOLLOW_TERRAIN_STEP_GRADED");
         plan.addProperty("crossSectionProfile", "STAIR_SLAB_STAIR");
@@ -274,7 +363,8 @@ final class CityMainRoadPlanner {
                 if (position.size() > 0) {
                     BlockPoint entrance = point(position);
                     group.addConnector(new Connector(entrance, "STRUCTURE_ROAD_ENTRANCE", 3,
-                            string(entranceElement.getAsJsonObject(), "direction"), 1, entrance));
+                            string(entranceElement.getAsJsonObject(), "direction"), 1, entrance,
+                            collision.size() > 0 ? CityStructureCandidateEnvelope.bounds(collision) : null));
                 }
             }
         }
@@ -288,12 +378,12 @@ final class CityMainRoadPlanner {
             int axisZ = intValue(band, "axisZ", 0);
             JsonObject start = object(band, "start");
             JsonObject end = object(band, "end");
-            if (start.size() > 0) group.addConnector(new Connector(point(start),
+                if (start.size() > 0) group.addConnector(new Connector(point(start),
                     string(band, "roadKind") + "_ENDPOINT", rank,
-                    cardinal(-axisX, -axisZ), localWidth, point(start)));
+                    cardinal(-axisX, -axisZ), localWidth, point(start), null));
             if (end.size() > 0) group.addConnector(new Connector(point(end),
                     string(band, "roadKind") + "_ENDPOINT", rank,
-                    cardinal(axisX, axisZ), localWidth, point(end)));
+                    cardinal(axisX, axisZ), localWidth, point(end), null));
         }
         Map<String, GroupGeometry> result = new LinkedHashMap<>();
         mutable.forEach((groupId, group) -> {
@@ -336,12 +426,14 @@ final class CityMainRoadPlanner {
                 base = new BlockPoint(base.x() + dx * localDistance, base.z() + dz * localDistance);
             }
             int firstDistance = "STRUCTURE_ROAD_ENTRANCE".equals(connector.kind()) ? 0 : 1;
+            List<BlockBounds> transitionObstacles = connector.originObstacle() == null ? obstacles
+                    : obstacles.stream().filter(obstacle -> !obstacle.equals(connector.originObstacle())).toList();
             for (int distance = firstDistance; distance <= 128; distance++) {
                 BlockPoint candidate = new BlockPoint(base.x() + dx * distance, base.z() + dz * distance);
                 if (!blocked(candidate, width, obstacles)
-                        && transitionClear(base, candidate, connector.localWidth() + 2, obstacles)) {
+                        && transitionClear(base, candidate, connector.localWidth(), transitionObstacles)) {
                     return new Connector(candidate, connector.kind(), connector.rank(),
-                            cardinal(dx, dz), connector.localWidth(), base);
+                            cardinal(dx, dz), connector.localWidth(), base, connector.originObstacle());
                 }
             }
         }
@@ -369,53 +461,12 @@ final class CityMainRoadPlanner {
                                            Set<String> excludedRelationPairKeys) {
         Map<String, Link> result = new LinkedHashMap<>();
         blueprint.relations().stream()
-                .filter(relation -> relation.relationKind() == CityBlueprint.RelationKind.CONNECTION
-                        || relation.relationKind() == CityBlueprint.RelationKind.HIERARCHY)
+                .filter(relation -> relation.relationKind() == CityBlueprint.RelationKind.CONNECTION)
                 .sorted(Comparator.comparing(CityBlueprint.Relation::fromGroupId)
                         .thenComparing(CityBlueprint.Relation::toGroupId))
                 .forEach(relation -> addLink(result, new Link(relation.fromGroupId(), relation.toGroupId(),
                         "BLUEPRINT_" + relation.relationKind().name(), "relation")));
-        blueprint.arrayCompositions().stream()
-                .sorted(Comparator.comparing(CityBlueprint.ArrayComposition::compositionId))
-                .forEach(composition -> parentArrayMst(composition, groups, width, obstacles)
-                        .forEach(link -> addLink(result, link)));
-        excludedRelationPairKeys.forEach(result::remove);
         return List.copyOf(result.values());
-    }
-
-    private static List<Link> parentArrayMst(CityBlueprint.ArrayComposition composition,
-                                             Map<String, GroupGeometry> groups,
-                                             int width,
-                                             List<BlockBounds> obstacles) {
-        List<String> members = new ArrayList<>();
-        if (groups.containsKey(composition.centerGroupId())) members.add(composition.centerGroupId());
-        composition.memberGroupIds().stream().filter(groups::containsKey).sorted().forEach(members::add);
-        if (members.size() < 2) return List.of();
-        List<LinkCandidate> candidates = new ArrayList<>();
-        for (int first = 0; first < members.size(); first++) {
-            for (int second = first + 1; second < members.size(); second++) {
-                String from = members.get(first);
-                String to = members.get(second);
-                if (connectorPair(groups.get(from), groups.get(to), width, obstacles) == null) continue;
-                candidates.add(new LinkCandidate(from, to,
-                        manhattan(groups.get(from).center(), groups.get(to).center())));
-            }
-        }
-        candidates.sort(Comparator.comparingInt(LinkCandidate::distance)
-                .thenComparing(LinkCandidate::fromGroupId).thenComparing(LinkCandidate::toGroupId));
-        DisjointSet disjoint = new DisjointSet(members);
-        List<Link> links = new ArrayList<>();
-        for (LinkCandidate candidate : candidates) {
-            if (!disjoint.union(candidate.fromGroupId(), candidate.toGroupId())) continue;
-            links.add(new Link(candidate.fromGroupId(), candidate.toGroupId(),
-                    "PARENT_ARRAY_MST", composition.compositionId()));
-            if (links.size() + 1 == members.size()) break;
-        }
-        if (links.size() + 1 != members.size()) {
-            throw new IllegalArgumentException("Parent array " + composition.compositionId()
-                    + " has no full-width gateway spanning tree.");
-        }
-        return List.copyOf(links);
     }
 
     private static void addLink(Map<String, Link> links, Link link) {
@@ -722,6 +773,11 @@ final class CityMainRoadPlanner {
 
     private static JsonObject band(String connectionId, Link link, int segmentIndex, int width,
                                    BlockPoint start, BlockPoint end) {
+        return band(connectionId, link, segmentIndex, width, start, end, "CITY_MAIN_ROAD");
+    }
+
+    private static JsonObject band(String connectionId, Link link, int segmentIndex, int width,
+                                   BlockPoint start, BlockPoint end, String roadKind) {
         if (start.x() != end.x() && start.z() != end.z()) {
             throw new IllegalArgumentException("CITY_MAIN_ROAD_SEGMENT_NOT_AXIS_ALIGNED");
         }
@@ -732,7 +788,8 @@ final class CityMainRoadPlanner {
                 + String.format("%03d", segmentIndex + 1));
         value.addProperty("roadNetworkId", "city::main_road_network");
         value.addProperty("connectionId", connectionId);
-        value.addProperty("roadKind", "CITY_MAIN_ROAD");
+        boolean bridge = "CITY_BRIDGE".equals(roadKind);
+        value.addProperty("roadKind", roadKind);
         value.addProperty("roadHierarchy", "MAIN");
         value.addProperty("segmentIndex", segmentIndex);
         value.addProperty("groupId", MAIN_ROAD_GROUP_ID);
@@ -740,16 +797,18 @@ final class CityMainRoadPlanner {
         value.addProperty("targetGroupId", link.toGroupId());
         value.addProperty("geometryMode", "TERRAIN_AWARE_AXIS_ALIGNED_90_DEGREE");
         value.addProperty("widthBlocks", width);
-        value.addProperty("surfacePolicy", "FOLLOW_TERRAIN_STEP_GRADED");
-        value.addProperty("crossSectionProfile", "STAIR_SLAB_STAIR");
+        value.addProperty("surfacePolicy", bridge ? "FIXED_WATER_DECK" : "FOLLOW_PLATFORM_GRADE");
+        value.addProperty("crossSectionProfile", bridge ? "BRIDGE_DECK_RAIL" : "STAIR_SLAB_STAIR");
         value.addProperty("hardSkeleton", true);
         value.addProperty("axisX", Integer.compare(end.x(), start.x()));
         value.addProperty("axisZ", Integer.compare(end.z(), start.z()));
         value.add("start", start.asJson());
         value.add("end", end.asJson());
         value.add("bounds", CityStructureCandidateEnvelope.boundsJson(bounds));
-        value.add("platformBounds", CityStructureCandidateEnvelope.boundsJson(bounds));
-        value.addProperty("platformPolicy", "CITY_MAIN_ROAD_HARD_SKELETON");
+        if (!bridge) {
+            value.add("platformBounds", CityStructureCandidateEnvelope.boundsJson(bounds));
+            value.addProperty("platformPolicy", "CITY_MAIN_ROAD_HARD_SKELETON");
+        }
         return value;
     }
 
@@ -837,18 +896,6 @@ final class CityMainRoadPlanner {
         private GroupGeometry freeze() {
             BlockPoint center = new BlockPoint((extent.minX() + extent.maxX()) / 2,
                     (extent.minZ() + extent.maxZ()) / 2);
-            addConnector(new Connector(new BlockPoint(center.x(), extent.minZ() - 1),
-                    "GROUP_BOUNDARY_GATEWAY", 4, "NORTH", 1,
-                    new BlockPoint(center.x(), extent.minZ() - 1)));
-            addConnector(new Connector(new BlockPoint(extent.maxX() + 1, center.z()),
-                    "GROUP_BOUNDARY_GATEWAY", 4, "EAST", 1,
-                    new BlockPoint(extent.maxX() + 1, center.z())));
-            addConnector(new Connector(new BlockPoint(center.x(), extent.maxZ() + 1),
-                    "GROUP_BOUNDARY_GATEWAY", 4, "SOUTH", 1,
-                    new BlockPoint(center.x(), extent.maxZ() + 1)));
-            addConnector(new Connector(new BlockPoint(extent.minX() - 1, center.z()),
-                    "GROUP_BOUNDARY_GATEWAY", 4, "WEST", 1,
-                    new BlockPoint(extent.minX() - 1, center.z())));
             List<Connector> ordered = connectors.values().stream()
                     .sorted(Comparator.comparingInt(Connector::rank)
                             .thenComparingInt(connector -> connector.point().x())
@@ -860,16 +907,19 @@ final class CityMainRoadPlanner {
     }
 
     private record Connector(BlockPoint point, String kind, int rank, String direction,
-                             int localWidth, BlockPoint transitionStart) {
+                             int localWidth, BlockPoint transitionStart, BlockBounds originObstacle) {
     }
 
     private record ConnectorPair(Connector from, Connector to) {
     }
 
-    private record Link(String fromGroupId, String toGroupId, String graphRole, String graphRef) {
+    private record BridgeRoute(List<BlockPoint> polyline, int waterSpanBlocks) {
+        private BridgeRoute {
+            polyline = List.copyOf(polyline);
+        }
     }
 
-    private record LinkCandidate(String fromGroupId, String toGroupId, int distance) {
+    private record Link(String fromGroupId, String toGroupId, String graphRole, String graphRef) {
     }
 
     private record CellKey(int cellX, int cellZ) {
@@ -899,28 +949,4 @@ final class CityMainRoadPlanner {
         }
     }
 
-    private static final class DisjointSet {
-        private final Map<String, String> parents = new HashMap<>();
-
-        private DisjointSet(List<String> values) {
-            values.forEach(value -> parents.put(value, value));
-        }
-
-        private String find(String value) {
-            String parent = parents.get(value);
-            if (parent == null || parent.equals(value)) return value;
-            String root = find(parent);
-            parents.put(value, root);
-            return root;
-        }
-
-        private boolean union(String first, String second) {
-            String firstRoot = find(first);
-            String secondRoot = find(second);
-            if (firstRoot.equals(secondRoot)) return false;
-            if (firstRoot.compareTo(secondRoot) <= 0) parents.put(secondRoot, firstRoot);
-            else parents.put(firstRoot, secondRoot);
-            return true;
-        }
-    }
 }

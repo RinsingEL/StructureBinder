@@ -3462,8 +3462,10 @@ public final class CityBlueprintCompilerService {
     }
 
     private static Nearest nearest(BlockBounds source, List<BlockBounds> targets, String ownerGroupId) {
+        if (source == null) return null;
         Nearest nearest = null;
         for (BlockBounds target : targets) {
+            if (target == null) continue;
             double gap = edgeGap(source, target);
             if (nearest == null || gap < nearest.gapBlocks()) {
                 nearest = new Nearest(gap, ownerGroupId, connectionEdge(source, target));
@@ -3473,6 +3475,7 @@ public final class CityBlueprintCompilerService {
     }
 
     private static double edgeGap(BlockBounds first, BlockBounds second) {
+        if (first == null || second == null) return Double.POSITIVE_INFINITY;
         int dx = axisGap(first.minX(), first.maxX(), second.minX(), second.maxX());
         int dz = axisGap(first.minZ(), first.maxZ(), second.minZ(), second.maxZ());
         return Math.hypot(dx, dz);

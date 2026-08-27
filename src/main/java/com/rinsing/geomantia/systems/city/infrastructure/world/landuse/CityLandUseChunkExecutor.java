@@ -56,9 +56,10 @@ public final class CityLandUseChunkExecutor {
                 : CityLandUseMicroGrader.plan(fragment, terrainView)) {
             fillByColumn.put(new ColumnKey(decision.x(), decision.z()), decision);
         }
+        CityLandUseMicroGrader.FoundationPlan foundationPlan =
+                CityLandUseMicroGrader.planFoundationPlatform(fragment, terrainView);
         Map<ColumnKey, CityLandUseMicroGrader.FoundationDecision> foundationByColumn = new HashMap<>();
-        for (CityLandUseMicroGrader.FoundationDecision decision
-                : CityLandUseMicroGrader.planFoundation(fragment, terrainView)) {
+        for (CityLandUseMicroGrader.FoundationDecision decision : foundationPlan.decisions()) {
             foundationByColumn.put(new ColumnKey(decision.x(), decision.z()), decision);
         }
         Map<ColumnKey, Integer> plannedSurfaceY = new HashMap<>();
@@ -134,6 +135,17 @@ public final class CityLandUseChunkExecutor {
             plannedSurfaceY.put(key, targetSurfaceY);
         }
 
+        for (CityLandUseMicroGrader.RetainingWallDecision wall : foundationPlan.retainingWalls()) {
+            PreparedMutation mutation = prepare(world, wall.areaId(), OperationPhase.RETAINING_WALL,
+                    wall.x(), wall.y(), wall.z(), wall.blockId(), false);
+            if (mutation.failureReason() != null) {
+                return ExecutionResult.failed(fragment, mutation.failureReason(),
+                        preparedCount(basePrepared, cropPrepared, boundaryPrepared), 0,
+                        naturalSurfaceSkipped, occupiedBoundarySkipped, true);
+            }
+            basePrepared.add(mutation);
+        }
+
         for (CityLandUseChunkCompiler.BoundaryOperation operation : fragment.boundaryOperations()) {
             ColumnKey key = new ColumnKey(operation.x(), operation.z());
             if (preservedFoundationColumns.contains(key)) continue;
@@ -153,6 +165,8 @@ public final class CityLandUseChunkExecutor {
             boundaryPrepared.add(mutation);
         }
 
+        Set<CityLandUseChunkCompiler.FeatureOperation> bridgePierRails =
+                bridgePierRails(fragment.featureOperations());
         for (CityLandUseChunkCompiler.FeatureOperation operation : fragment.featureOperations()) {
             ColumnKey key = new ColumnKey(operation.x(), operation.z());
             ColumnSample column = terrainView.sample(operation.x(), operation.z());
@@ -160,6 +174,19 @@ public final class CityLandUseChunkExecutor {
             CityLandUseMicroGrader.FillDecision fill = fillByColumn.get(key);
             int surfaceY = plannedSurfaceY.getOrDefault(key, foundation != null ? foundation.targetY()
                     : fill == null ? column.surfaceY() : fill.targetY());
+            if (bridgePierRails.contains(operation)) {
+                for (int y = surfaceY - 1, depth = 0; depth < 64; y--, depth++) {
+                    if (!world.inspect(operation.x(), y, operation.z()).replaceable()) break;
+                    PreparedMutation pier = prepare(world, operation.sourceId(), OperationPhase.FEATURE,
+                            operation.x(), y, operation.z(), "minecraft:stone_bricks", true);
+                    if (pier.failureReason() != null) {
+                        return ExecutionResult.failed(fragment, pier.failureReason(),
+                                preparedCount(basePrepared, cropPrepared, boundaryPrepared), 0,
+                                naturalSurfaceSkipped, occupiedBoundarySkipped, true);
+                    }
+                    basePrepared.add(pier);
+                }
+            }
             PreparedMutation mutation = prepareFeature(world, operation, surfaceY + operation.surfaceOffset());
             if (mutation.failureReason() != null) {
                 return ExecutionResult.failed(fragment, mutation.failureReason(),
@@ -203,6 +230,38 @@ public final class CityLandUseChunkExecutor {
         }
         return ExecutionResult.applied(fragment, preparedBlockCount,
                 naturalSurfaceSkipped, occupiedBoundarySkipped);
+    }
+
+    /** Selects paired rail columns at a stable seven-block cadence as in-water bridge piers. */
+    private static Set<CityLandUseChunkCompiler.FeatureOperation> bridgePierRails(
+            List<CityLandUseChunkCompiler.FeatureOperation> operations) {
+        Map<String, List<CityLandUseChunkCompiler.FeatureOperation>> railsByBridge = new LinkedHashMap<>();
+        for (CityLandUseChunkCompiler.FeatureOperation operation : operations) {
+            if (operation.kind() == CityLandUseSurfacePrintPlan.FeatureKind.BRIDGE_RAIL) {
+                railsByBridge.computeIfAbsent(operation.sourceId(), ignored -> new ArrayList<>()).add(operation);
+            }
+        }
+        Set<CityLandUseChunkCompiler.FeatureOperation> selected = new HashSet<>();
+        for (Map.Entry<String, List<CityLandUseChunkCompiler.FeatureOperation>> entry : railsByBridge.entrySet()) {
+            List<CityLandUseChunkCompiler.FeatureOperation> rails = entry.getValue();
+            int minX = rails.stream().mapToInt(CityLandUseChunkCompiler.FeatureOperation::x).min().orElse(0);
+            int maxX = rails.stream().mapToInt(CityLandUseChunkCompiler.FeatureOperation::x).max().orElse(0);
+            int minZ = rails.stream().mapToInt(CityLandUseChunkCompiler.FeatureOperation::z).min().orElse(0);
+            int maxZ = rails.stream().mapToInt(CityLandUseChunkCompiler.FeatureOperation::z).max().orElse(0);
+            boolean horizontal = maxX - minX >= maxZ - minZ;
+            int phase = Math.floorMod(entry.getKey().hashCode(), 7);
+            int selectedBefore = selected.size();
+            for (CityLandUseChunkCompiler.FeatureOperation rail : rails) {
+                int coordinate = horizontal ? rail.x() : rail.z();
+                if (Math.floorMod(coordinate, 7) == phase) selected.add(rail);
+            }
+            if (selected.size() == selectedBefore) {
+                int middle = horizontal ? (minX + maxX) / 2 : (minZ + maxZ) / 2;
+                rails.stream().filter(rail -> (horizontal ? rail.x() : rail.z()) == middle)
+                        .forEach(selected::add);
+            }
+        }
+        return Set.copyOf(selected);
     }
 
     private static boolean apply(ExecutionWorld world,
@@ -352,6 +411,7 @@ public final class CityLandUseChunkExecutor {
     public enum OperationPhase {
         MICRO_FILL,
         MICRO_CUT,
+        RETAINING_WALL,
         SURFACE,
         SURFACE_OVERLAY,
         CROP,
@@ -534,7 +594,8 @@ public final class CityLandUseChunkExecutor {
     static BlockState featureBlockState(BlockState requested,
                                         CityLandUseSurfacePrintPlan.FeatureKind kind,
                                         CityLandUseSurfacePrintPlan.HorizontalFacing facing) {
-        if (kind == CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB
+        if ((kind == CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB
+                || kind == CityLandUseSurfacePrintPlan.FeatureKind.BRIDGE_DECK)
                 && requested.hasProperty(BlockStateProperties.SLAB_TYPE)) {
             requested = requested.setValue(BlockStateProperties.SLAB_TYPE, SlabType.BOTTOM);
         }
@@ -707,6 +768,7 @@ public final class CityLandUseChunkExecutor {
                                        CityLandUseSurfacePrintPlan.FeatureKind kind,
                                        CityLandUseSurfacePrintPlan.HorizontalFacing facing) {
             if (kind != CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB
+                    && kind != CityLandUseSurfacePrintPlan.FeatureKind.BRIDGE_DECK
                     && kind != CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR) {
                 return setBlock(worldX, y, worldZ, blockId);
             }

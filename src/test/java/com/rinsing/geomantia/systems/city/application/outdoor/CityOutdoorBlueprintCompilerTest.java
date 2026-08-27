@@ -31,7 +31,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityOutdoorBlueprintCompilerTest {
     @Test
-    void internalStreetBandBecomesFoundationFootprint() {
+    void streetBandsJoinFoundationWithoutBecomingCollisionExclusions() {
         JsonObject d6 = d6Plan();
         JsonObject anchorMap = new JsonObject();
         JsonArray bands = new JsonArray();
@@ -54,8 +54,8 @@ class CityOutdoorBlueprintCompilerTest {
                 .filter(group -> group.layerRole() == LandUseSeedGroup.LayerRole.FOUNDATION)
                 .findFirst().orElseThrow();
 
-        assertTrue(foundation.structureFootprints().contains(new BlockBounds(24, 36, 40, 48)));
-        assertTrue(foundation.structureFootprints().contains(new BlockBounds(40, 52, 72, 58)));
+        assertFalse(foundation.structureFootprints().contains(new BlockBounds(24, 36, 40, 48)));
+        assertFalse(foundation.structureFootprints().contains(new BlockBounds(40, 52, 72, 58)));
     }
 
     @Test

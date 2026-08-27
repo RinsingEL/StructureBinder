@@ -61,25 +61,80 @@ class CityLandUseMicroGraderTest {
                 "area", 8, 8, 76, 64, CityLandUseMicroGrader.FoundationMode.CUT)), decisions);
     }
 
+    @Test
+    void foundationSnapsAdjacentNoiseToOneDominantPlatformHeight() {
+        FakeTerrain terrain = new FakeTerrain(64);
+        terrain.height(8, 8, 66);
+        terrain.height(9, 8, 62);
+        CityLandUseChunkCompiler.ChunkFragment fragment = foundationFragment(List.of(
+                new CityLandUseChunkCompiler.SurfaceOperation("area", "plaza", 8, 8,
+                        "minecraft:stone_bricks"),
+                new CityLandUseChunkCompiler.SurfaceOperation("area", "plaza", 9, 8,
+                        "minecraft:stone_bricks")));
+
+        CityLandUseMicroGrader.FoundationPlan plan =
+                CityLandUseMicroGrader.planFoundationPlatform(fragment, terrain);
+
+        assertEquals(List.of(64, 64), plan.decisions().stream()
+                .map(CityLandUseMicroGrader.FoundationDecision::targetY).toList());
+    }
+
+    @Test
+    void platformEdgeWithTwoBlockDropProducesStoneRetainingWall() {
+        FakeTerrain terrain = new FakeTerrain(64);
+        terrain.height(25, 8, 62);
+        CityLandUseChunkCompiler.ChunkFragment fragment = foundationFragment(List.of(
+                new CityLandUseChunkCompiler.SurfaceOperation("area", "plaza", 24, 8,
+                        "minecraft:stone_bricks")));
+
+        CityLandUseMicroGrader.FoundationPlan plan =
+                CityLandUseMicroGrader.planFoundationPlatform(fragment, terrain);
+
+        assertTrue(plan.retainingWalls().stream().anyMatch(wall -> wall.x() == 24 && wall.z() == 8
+                && wall.y() == 63 && "minecraft:stone_bricks".equals(wall.blockId())));
+    }
+
+    @Test
+    void foundationPreservesUrbanWaterInsteadOfFillingIt() {
+        FakeTerrain terrain = new FakeTerrain(64);
+        terrain.water(8, 8, 63);
+
+        List<CityLandUseMicroGrader.FoundationDecision> decisions =
+                CityLandUseMicroGrader.planFoundation(foundationFragment(), terrain);
+
+        assertEquals(CityLandUseMicroGrader.FoundationMode.PRESERVE, decisions.get(0).mode());
+    }
+
     private static CityLandUseChunkCompiler.ChunkFragment fragment() {
         return fragment(gradingMask());
     }
 
     private static CityLandUseChunkCompiler.ChunkFragment foundationFragment() {
+        return foundationFragment(List.of(new CityLandUseChunkCompiler.SurfaceOperation(
+                "area", "plaza", 8, 8, "minecraft:stone_bricks")));
+    }
+
+    private static CityLandUseChunkCompiler.ChunkFragment foundationFragment(
+            List<CityLandUseChunkCompiler.SurfaceOperation> operations) {
         List<CityLandUseChunkCompiler.GradingMaskCell> mask = gradingMask().stream()
                 .map(cell -> new CityLandUseChunkCompiler.GradingMaskCell(
                         cell.areaId(), cell.x(), cell.z(), true))
                 .toList();
-        return fragment(mask);
+        return fragment(mask, operations);
     }
 
     private static CityLandUseChunkCompiler.ChunkFragment fragment(
             List<CityLandUseChunkCompiler.GradingMaskCell> mask) {
+        return fragment(mask, List.of(new CityLandUseChunkCompiler.SurfaceOperation(
+                "area", "plaza", 8, 8, "minecraft:stone_bricks")));
+    }
+
+    private static CityLandUseChunkCompiler.ChunkFragment fragment(
+            List<CityLandUseChunkCompiler.GradingMaskCell> mask,
+            List<CityLandUseChunkCompiler.SurfaceOperation> operations) {
         return new CityLandUseChunkCompiler.ChunkFragment(CityLandUseChunkCompiler.RESULT_SCHEMA,
                 "city", "hash", "palette", 0, 0, 1, 0, 0, 0,
-                "minecraft:dirt", mask,
-                List.of(new CityLandUseChunkCompiler.SurfaceOperation("area", "plaza", 8, 8,
-                        "minecraft:stone_bricks")), List.of());
+                "minecraft:dirt", mask, operations, List.of());
     }
 
     private static List<CityLandUseChunkCompiler.GradingMaskCell> gradingMask() {

@@ -96,7 +96,14 @@ class CityRoadLandscapeRtf0810ScenarioTest {
                 new CityBlueprint.ProfileRef("style:test"), List.of(),
                 List.of(new CityBlueprint.ArrayComposition("three_district_parent", "algorithm:grid",
                         "SLOPE-01_admin", List.of("SHORE-01_market_residential", "SHORE-06_agriculture"))),
-                List.of(), new CityBlueprint.ProfileRef("road:hierarchical"),
+                List.of(
+                        new CityBlueprint.Relation("SLOPE-01_admin", "SHORE-01_market_residential",
+                                CityBlueprint.RelationKind.CONNECTION, CityBlueprint.RelationStrength.HARD,
+                                CityBlueprint.DistancePreference.NONE, CityBlueprint.DirectionPreference.NONE),
+                        new CityBlueprint.Relation("SLOPE-01_admin", "SHORE-06_agriculture",
+                                CityBlueprint.RelationKind.CONNECTION, CityBlueprint.RelationStrength.HARD,
+                                CityBlueprint.DistancePreference.NONE, CityBlueprint.DirectionPreference.NONE)),
+                new CityBlueprint.ProfileRef("road:hierarchical"),
                 new CityBlueprint.ProfileRef("surface:test"),
                 new CityBlueprint.OutdoorPlan(CityBlueprint.OutdoorMode.GENERATE,
                         CityBlueprint.EnvelopeProfile.BALANCED, "foundation:test", List.of(), List.of()));

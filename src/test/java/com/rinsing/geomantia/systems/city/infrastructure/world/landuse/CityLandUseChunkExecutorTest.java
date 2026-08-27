@@ -45,6 +45,41 @@ class CityLandUseChunkExecutorTest {
     }
 
     @Test
+    void bridgeRailsCreatePairedStonePiersDownToSolidBed() {
+        List<CityLandUseChunkCompiler.FeatureOperation> features = new ArrayList<>();
+        for (int x = 0; x <= 8; x++) {
+            for (int z : List.of(0, 4)) {
+                features.add(new CityLandUseChunkCompiler.FeatureOperation("bridge-a", x, z,
+                        "minecraft:spruce_fence", 1,
+                        CityLandUseSurfacePrintPlan.FeatureKind.BRIDGE_RAIL,
+                        CityLandUseSurfacePrintPlan.HorizontalFacing.NONE));
+            }
+        }
+        CityLandUseChunkCompiler.ChunkFragment fragment = new CityLandUseChunkCompiler.ChunkFragment(
+                CityLandUseChunkCompiler.RESULT_SCHEMA, "city", "area-hash", "palette-hash",
+                0, 0, features.size(), 0, 0, 0, null, List.of(), List.of(), List.of(), features);
+        FakeWorld world = new FakeWorld();
+        for (int x = 0; x <= 8; x++) {
+            for (int z : List.of(0, 4)) {
+                world.columns.put(x + "," + z,
+                        new CityLandUseChunkExecutor.ColumnSample(64, "minecraft:water", true));
+                world.replaceable.put(x + ",62," + z, false);
+            }
+        }
+
+        CityLandUseChunkExecutor.ExecutionResult result = executor.execute(fragment, world,
+                CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES);
+
+        assertEquals(CityLandUseChunkExecutor.Status.APPLIED, result.status());
+        List<String> piers = world.writes.stream()
+                .filter(write -> write.endsWith("=minecraft:stone_bricks"))
+                .toList();
+        assertFalse(piers.isEmpty());
+        assertTrue(piers.stream().anyMatch(write -> write.contains(",63,0=")));
+        assertTrue(piers.stream().anyMatch(write -> write.contains(",63,4=")));
+    }
+
+    @Test
     void appliesBaseThenOverlayThenBoundary() {
         FakeWorld world = new FakeWorld();
 

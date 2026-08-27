@@ -274,6 +274,30 @@ class CityLandUseSurfacePrintPlannerTest {
     }
 
     @Test
+    void bridgeUsesIndependentDeckAndRailMaterials() {
+        LandUseSourceResolver.RoadBand bridge = new LandUseSourceResolver.RoadBand(
+                "bridge::1", "network", "CITY_BRIDGE", new BlockPoint(20, 18),
+                new BlockPoint(30, 18), new BlockBounds(20, 15, 30, 21), 7,
+                "BRIDGE_DECK_RAIL", "minecraft:spruce_slab", "",
+                "minecraft:spruce_fence");
+
+        CityLandUseSurfacePrintPlan result = new CityLandUseSurfacePrintPlanner().plan(areaPlan(),
+                List.of(group("farm_group", SurfacePolicy.CULTIVATE, new BlockBounds(12, 5, 14, 7)),
+                        group("market_group", SurfacePolicy.PAVE, new BlockBounds(42, 2, 43, 3))),
+                terrain(new BlockBounds(0, 0, 63, 31), false), List.of(bridge), List.of(), List.of());
+
+        assertTrue(result.featureCells().stream().anyMatch(cell ->
+                cell.kind() == CityLandUseSurfacePrintPlan.FeatureKind.BRIDGE_DECK
+                        && "minecraft:spruce_slab".equals(cell.blockId())));
+        assertTrue(result.featureCells().stream().anyMatch(cell ->
+                cell.kind() == CityLandUseSurfacePrintPlan.FeatureKind.BRIDGE_RAIL
+                        && cell.surfaceOffset() == 1
+                        && "minecraft:spruce_fence".equals(cell.blockId())));
+        assertTrue(result.featureCells().stream().noneMatch(cell ->
+                cell.kind() == CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR));
+    }
+
+    @Test
     void formalLandscapeRejectsAnAreaSeedOutsideItsFinalMask() {
         LandUseSurfaceSettings settings = LandUseSurfaceSettings.defaults(SurfacePolicy.CULTIVATE)
                 .forRelayRegionGrowth();

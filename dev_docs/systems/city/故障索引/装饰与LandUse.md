@@ -2,6 +2,7 @@
 
 | ID | 状态 | 现象与根因摘要 | 记录 |
 | --- | --- | --- | --- |
+| `CITY-DL-20260827-01` | 代码与全量回归已修复，待新区块真实游玩验收 | 城区 Foundation 旧执行按单格 7×7 外环中位数各自削填，容易保留碎小坡坑；同时编译器把道路加入 Foundation 几何后又当作 corridor exclusion，导致路下整地被跳过。现按同一建设面邻域主高程聚合分级平台，差至少 2 格生成石砖挡土墙；道路参与整地但不再成为 collision exclusion，水列与 Landscape 保持原地形。 | [任务记录](../active/20260827_城市基面与真实路网/任务记录.md)；`CityLandUseMicroGraderTest`、`CityOutdoorBlueprintCompilerTest` |
 | `CITY-DL-20260821-01` | 已修复，真实 LandUse 复验通过 | fill program 含 `GROUND|BANK + CORRIDOR` 时，child 从父边界外第二格接力，中间一格冻结为不被 Parcel claim 的原地表路隙，origin kind 为 `PARENT_PARCEL_ROAD_GAP`。真实 FARMLAND 三 Parcel 为 823/956/371 blocks，两处路隙坐标 `(-3174,-843)`、`(-3160,-857)`，quality pass、无 warning。 | [任务记录](../archive/de6fbc3_v0.1.87_阵列主从骨架与街带完整实现/任务记录.md)；[调用记录](../archive/de6fbc3_v0.1.87_阵列主从骨架与街带完整实现/真实游玩调用记录.md) |
 | `CITY-DL-20260812-02` | 代码与自动回归已修复，待真实新区块验收 | 新增统一 `LandscapeTerrainContinuity`；D4 容量根 seed/生长和 D6 父子接力/实际 frontier 都按 `CONFORM/BALANCED/ASSERTIVE=4/6/10` blocks 相邻高程差停止，不再以二维连通跨崖。 | `CityLandscapeCapacityReservationPlannerTest`、`LandscapeParcelExpanderTest`；[任务记录](../active/20260812_城市台基与地形适应/任务记录.md) |
 | `CITY-DL-20260812-01` | 代码与自动回归已修复，待真实新区块验收 | StructureStart datum 改为完整 locked footprint 每 4 格采样 generator base height 的中位数；仅 `full_footprint_support` 模板在 Beardifier 取得完整矩形承托（最大深度 32、收肩 2）。外围 Foundation 仍用 7×7 中位数，但不再因 relief 单独 `PRESERVE`，切方上限由 4 提到 12。 | `MinecraftCityWorldgenStructurePlacerTest`、`CityTerrainFoundationDensityComputerTest`、`CityLandUseMicroGraderTest`；[任务记录](../active/20260812_城市台基与地形适应/任务记录.md) |

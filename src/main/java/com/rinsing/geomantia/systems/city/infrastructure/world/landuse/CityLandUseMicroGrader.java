@@ -71,6 +71,11 @@ final class CityLandUseMicroGrader {
 
     static List<FoundationDecision> planFoundation(CityLandUseChunkCompiler.ChunkFragment fragment,
                                                    TerrainView terrain) {
+        return planFoundationPlatform(fragment, terrain).decisions();
+    }
+
+    static FoundationPlan planFoundationPlatform(CityLandUseChunkCompiler.ChunkFragment fragment,
+                                                 TerrainView terrain) {
         Objects.requireNonNull(fragment, "fragment");
         Objects.requireNonNull(terrain, "terrain");
         Map<Cell, String> foundationAreaByCell = new HashMap<>();
@@ -79,17 +84,33 @@ final class CityLandUseMicroGrader {
                 foundationAreaByCell.putIfAbsent(new Cell(cell.x(), cell.z()), cell.areaId());
             }
         }
-        if (foundationAreaByCell.isEmpty()) return List.of();
+        if (foundationAreaByCell.isEmpty()) return new FoundationPlan(List.of(), List.of());
+
+        Map<Cell, Integer> desiredTargets = new HashMap<>();
+        foundationAreaByCell.forEach((cell, areaId) -> {
+            CityLandUseChunkExecutor.ColumnSample sample = required(terrain, cell);
+            if (!liquid(sample)) {
+                desiredTargets.put(cell, localDominantHeight(cell, areaId, foundationAreaByCell, terrain));
+            }
+        });
+        Map<Cell, Integer> platformTargets = platformTargets(foundationAreaByCell, desiredTargets);
 
         List<FoundationDecision> decisions = new ArrayList<>();
+        Set<Cell> outputCells = new HashSet<>();
         for (CityLandUseChunkCompiler.SurfaceOperation operation : fragment.surfaceOperations()) {
             if (operation.surfaceOffset() != 0) continue;
             Cell center = new Cell(operation.x(), operation.z());
             if (!operation.areaId().equals(foundationAreaByCell.get(center))) continue;
+            outputCells.add(center);
             CityLandUseChunkExecutor.ColumnSample sample = required(terrain, center);
-            if (!sample.naturalSurface() && !liquid(sample)) continue;
+            if (liquid(sample)) {
+                decisions.add(new FoundationDecision(operation.areaId(), operation.x(), operation.z(),
+                        sample.surfaceY(), sample.surfaceY(), FoundationMode.PRESERVE));
+                continue;
+            }
+            if (!sample.naturalSurface()) continue;
 
-            int targetY = foundationReference(center, terrain);
+            int targetY = platformTargets.getOrDefault(center, sample.surfaceY());
             int delta = targetY - sample.surfaceY();
             FoundationMode mode;
             if (delta > 0 && delta <= FOUNDATION_MAX_FILL_DEPTH_BLOCKS) {
@@ -108,24 +129,97 @@ final class CityLandUseMicroGrader {
         decisions.sort(Comparator.comparingInt(FoundationDecision::z)
                 .thenComparingInt(FoundationDecision::x)
                 .thenComparing(FoundationDecision::areaId));
-        return List.copyOf(decisions);
+        List<RetainingWallDecision> retainingWalls = retainingWalls(outputCells, foundationAreaByCell,
+                platformTargets, terrain);
+        return new FoundationPlan(List.copyOf(decisions), retainingWalls);
     }
 
-    private static int foundationReference(Cell center, TerrainView terrain) {
-        List<Integer> ringHeights = new ArrayList<>();
+    private static int localDominantHeight(Cell center,
+                                           String areaId,
+                                           Map<Cell, String> foundationAreaByCell,
+                                           TerrainView terrain) {
+        List<Integer> heights = new ArrayList<>();
         for (int z = center.z() - REFERENCE_RADIUS_BLOCKS;
              z <= center.z() + REFERENCE_RADIUS_BLOCKS; z++) {
             for (int x = center.x() - REFERENCE_RADIUS_BLOCKS;
                  x <= center.x() + REFERENCE_RADIUS_BLOCKS; x++) {
-                CityLandUseChunkExecutor.ColumnSample sample = required(terrain, new Cell(x, z));
-                if (Math.abs(x - center.x()) == REFERENCE_RADIUS_BLOCKS
-                        || Math.abs(z - center.z()) == REFERENCE_RADIUS_BLOCKS) {
-                    ringHeights.add(sample.surfaceY());
+                Cell cell = new Cell(x, z);
+                if (!areaId.equals(foundationAreaByCell.get(cell))) continue;
+                CityLandUseChunkExecutor.ColumnSample sample = required(terrain, cell);
+                if (!liquid(sample) && sample.naturalSurface()) heights.add(sample.surfaceY());
+            }
+        }
+        if (heights.isEmpty()) return required(terrain, center).surfaceY();
+        return dominantHeight(heights);
+    }
+
+    private static Map<Cell, Integer> platformTargets(Map<Cell, String> areaByCell,
+                                                       Map<Cell, Integer> desiredTargets) {
+        Map<Cell, Integer> result = new HashMap<>();
+        Set<Cell> remaining = new HashSet<>(desiredTargets.keySet());
+        while (!remaining.isEmpty()) {
+            Cell first = remaining.stream().min(Comparator.comparingInt(Cell::z)
+                    .thenComparingInt(Cell::x)).orElseThrow();
+            String areaId = areaByCell.get(first);
+            ArrayDeque<Cell> pending = new ArrayDeque<>();
+            List<Cell> component = new ArrayList<>();
+            pending.add(first);
+            remaining.remove(first);
+            while (!pending.isEmpty()) {
+                Cell cell = pending.removeFirst();
+                component.add(cell);
+                int target = desiredTargets.get(cell);
+                for (int[] offset : CARDINAL_OFFSETS) {
+                    Cell neighbour = new Cell(cell.x() + offset[0], cell.z() + offset[1]);
+                    Integer neighbourTarget = desiredTargets.get(neighbour);
+                    if (neighbourTarget != null && areaId.equals(areaByCell.get(neighbour))
+                            && Math.abs(target - neighbourTarget) <= 1 && remaining.remove(neighbour)) {
+                        pending.addLast(neighbour);
+                    }
+                }
+            }
+            int platformY = dominantHeight(component.stream().map(desiredTargets::get).toList());
+            component.forEach(cell -> result.put(cell, platformY));
+        }
+        return Map.copyOf(result);
+    }
+
+    private static int dominantHeight(List<Integer> values) {
+        List<Integer> sorted = values.stream().sorted().toList();
+        int median = sorted.get(sorted.size() / 2);
+        Map<Integer, Integer> counts = new HashMap<>();
+        sorted.forEach(value -> counts.merge(value, 1, Integer::sum));
+        return counts.entrySet().stream().sorted(Comparator
+                .<Map.Entry<Integer, Integer>>comparingInt(Map.Entry::getValue).reversed()
+                .thenComparingInt(entry -> Math.abs(entry.getKey() - median))
+                .thenComparingInt(Map.Entry::getKey)).findFirst().orElseThrow().getKey();
+    }
+
+    private static List<RetainingWallDecision> retainingWalls(Set<Cell> outputCells,
+                                                               Map<Cell, String> areaByCell,
+                                                               Map<Cell, Integer> platformTargets,
+                                                               TerrainView terrain) {
+        Map<String, RetainingWallDecision> result = new HashMap<>();
+        for (Cell cell : outputCells) {
+            Integer targetY = platformTargets.get(cell);
+            if (targetY == null) continue;
+            String areaId = areaByCell.get(cell);
+            for (int[] offset : CARDINAL_OFFSETS) {
+                Cell neighbour = new Cell(cell.x() + offset[0], cell.z() + offset[1]);
+                int neighbourY = areaId.equals(areaByCell.get(neighbour))
+                        ? platformTargets.getOrDefault(neighbour, required(terrain, neighbour).surfaceY())
+                        : required(terrain, neighbour).surfaceY();
+                if (targetY - neighbourY < 2) continue;
+                for (int y = neighbourY + 1; y < targetY; y++) {
+                    RetainingWallDecision wall = new RetainingWallDecision(areaId, cell.x(), y, cell.z(),
+                            "minecraft:stone_bricks");
+                    result.put(cell.x() + ":" + y + ":" + cell.z(), wall);
                 }
             }
         }
-        ringHeights.sort(Integer::compareTo);
-        return ringHeights.get(ringHeights.size() / 2);
+        return result.values().stream().sorted(Comparator.comparingInt(RetainingWallDecision::z)
+                .thenComparingInt(RetainingWallDecision::x)
+                .thenComparingInt(RetainingWallDecision::y)).toList();
     }
 
     private static Integer referenceHeight(Cell center, TerrainView terrain) {
@@ -222,6 +316,21 @@ final class CityLandUseMicroGrader {
         FoundationDecision {
             Objects.requireNonNull(areaId, "areaId");
             Objects.requireNonNull(mode, "mode");
+        }
+    }
+
+    record FoundationPlan(List<FoundationDecision> decisions,
+                          List<RetainingWallDecision> retainingWalls) {
+        FoundationPlan {
+            decisions = List.copyOf(decisions);
+            retainingWalls = List.copyOf(retainingWalls);
+        }
+    }
+
+    record RetainingWallDecision(String areaId, int x, int y, int z, String blockId) {
+        RetainingWallDecision {
+            Objects.requireNonNull(areaId, "areaId");
+            Objects.requireNonNull(blockId, "blockId");
         }
     }
 

@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityRoadWeaverSpatialPlanTest {
     @Test
-    void connectsOnlyLongDistancePlacementGroupsAndNeverBuildsIntraGroupRoads() {
+    void neverInventsConnectionsFromPlacementGroupDistance() {
         List<EndpointFixture> fixtures = List.of(
                 new EndpointFixture("farm_01", "farm", 0, 0),
                 new EndpointFixture("farm_02", "farm", 0, 10),
@@ -25,20 +25,15 @@ class CityRoadWeaverSpatialPlanTest {
 
         JsonObject plan = CityRoadWeaverBridge.createConnectionPlan(materialization(fixtures));
 
-        assertEquals("city_roadweaver_connection_plan.v0.2", plan.get("schemaVersion").getAsString());
-        assertEquals("long_distance_inter_group_mst", plan.get("connectionStrategy").getAsString());
+        assertEquals("city_roadweaver_connection_plan.v0.3", plan.get("schemaVersion").getAsString());
+        assertEquals("explicit_external_traffic_intents_only", plan.get("connectionStrategy").getAsString());
         assertEquals(6, plan.get("endpointCount").getAsInt());
-        assertEquals(2, plan.get("connectionCount").getAsInt());
+        assertEquals(0, plan.get("connectionCount").getAsInt());
         assertEquals(3, plan.get("placementGroupCount").getAsInt());
         assertEquals(0, plan.get("intraGroupConnectionCount").getAsInt());
-        assertEquals(2, plan.get("interGroupConnectionCount").getAsInt());
+        assertEquals(0, plan.get("interGroupConnectionCount").getAsInt());
 
-        for (JsonElement element : plan.getAsJsonArray("connections")) {
-            JsonObject connection = element.getAsJsonObject();
-            assertEquals("inter_group", connection.get("connectionScope").getAsString());
-            assertTrue(connection.get("distanceBlocks").getAsLong()
-                    >= CityRoadWeaverBridge.MIN_LONG_DISTANCE_BLOCKS);
-        }
+        assertTrue(plan.getAsJsonArray("connections").isEmpty());
     }
 
     @Test
@@ -76,7 +71,7 @@ class CityRoadWeaverSpatialPlanTest {
     }
 
     @Test
-    void hierarchicalMainRoadDelegatesOnlyDeclaredBridgePairToRoadWeaver() {
+    void cityOwnedBridgeIsNeverDelegatedToRoadWeaver() {
         JsonObject materialization = materialization(List.of(
                 new EndpointFixture("farm", "agriculture", 0, 0),
                 new EndpointFixture("tower", "defense", 80, 0),
@@ -97,13 +92,9 @@ class CityRoadWeaverSpatialPlanTest {
         JsonObject plan = CityRoadWeaverBridge.createConnectionPlan(materialization);
 
         assertTrue(plan.get("delegatedToCityMainRoad").getAsBoolean());
-        assertEquals(1, plan.get("connectionCount").getAsInt());
-        assertEquals(1, plan.get("bridgeConnectionCount").getAsInt());
-        JsonObject connection = plan.getAsJsonArray("connections").get(0).getAsJsonObject();
-        assertEquals("BRIDGE_DELEGATED", connection.get("connectionKind").getAsString());
-        assertTrue(connection.get("bridgeRequired").getAsBoolean());
-        assertEquals("agriculture", connection.get("fromPlacementGroupId").getAsString());
-        assertEquals("defense", connection.get("toPlacementGroupId").getAsString());
+        assertEquals(0, plan.get("connectionCount").getAsInt());
+        assertEquals(0, plan.get("bridgeConnectionCount").getAsInt());
+        assertTrue(plan.getAsJsonArray("connections").isEmpty());
     }
 
     @Test
