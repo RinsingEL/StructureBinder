@@ -79,7 +79,7 @@ class CityMainRoadPlannerTest {
     }
 
     @Test
-    void waterBarrierWithoutDetourFailsInsteadOfDrawingThroughWater() {
+    void waterBarrierWithoutLandDetourDelegatesBridgeInsteadOfDrawingGroundRoad() {
         List<LandUseTerrainField.Cell> cells = List.of(cell(0, 0, false), cell(1, 0, true),
                 cell(2, 0, false));
         LandUseTerrainField terrain = new LandUseTerrainField(LandUseTerrainField.CURRENT_SCHEMA_VERSION,
@@ -94,9 +94,38 @@ class CityMainRoadPlannerTest {
                         street("b", "LINEAR_STREET_BAND", 5,
                                 new BlockPoint(79, 20), new BlockPoint(90, 20))));
 
-        assertFalse(result.ok());
-        assertEquals("CITY_BLUEPRINT_MAIN_ROAD_NO_LEGAL_PATH", result.reasonCode());
+        assertTrue(result.ok(), result.plan().toString());
         assertTrue(result.streetBands().isEmpty());
+        assertEquals(1, result.plan().get("bridgeConnectionCount").getAsInt());
+        assertEquals("DELEGATED_TO_ROADWEAVER", result.plan().getAsJsonArray("bridgeConnections")
+                .get(0).getAsJsonObject().get("status").getAsString());
+    }
+
+    @Test
+    void blockedParentLinkDelegatesShortWaterCrossingToBridgeWithoutGroundBand() {
+        List<LandUseTerrainField.Cell> cells = List.of(cell(0, 0, false), cell(1, 0, true),
+                cell(2, 0, false));
+        LandUseTerrainField terrain = new LandUseTerrainField(LandUseTerrainField.CURRENT_SCHEMA_VERSION,
+                "city:test", new BlockBounds(0, 0, 95, 31), 32, cells);
+
+        CityMainRoadPlanner.Result result = planner.plan(blueprint("HIERARCHICAL"),
+                references("HIERARCHICAL"), terrain,
+                List.of(anchor("a", new BlockBounds(8, 8, 14, 14), new BlockPoint(14, 15)),
+                        anchor("b", new BlockBounds(80, 8, 86, 14), new BlockPoint(80, 15))),
+                List.of(street("a", "LINEAR_STREET_BAND", 5,
+                                new BlockPoint(5, 20), new BlockPoint(15, 20)),
+                        street("b", "LINEAR_STREET_BAND", 5,
+                                new BlockPoint(79, 20), new BlockPoint(90, 20))),
+                Set.of("a\u0000b"));
+
+        assertTrue(result.ok(), result.plan().toString());
+        assertEquals("planned", result.plan().get("status").getAsString());
+        assertTrue(result.streetBands().isEmpty(), "bridge must not become a ground surface band");
+        assertEquals(1, result.plan().get("bridgeConnectionCount").getAsInt());
+        JsonObject bridge = result.plan().getAsJsonArray("bridgeConnections").get(0).getAsJsonObject();
+        assertEquals("DELEGATED_TO_ROADWEAVER", bridge.get("status").getAsString());
+        assertEquals("AUTO_BRIDGE_NO_GROUND_SURFACE_PRINT", bridge.get("bridgePolicy").getAsString());
+        assertEquals(32, bridge.get("waterSpanBlocks").getAsInt());
     }
 
     @Test

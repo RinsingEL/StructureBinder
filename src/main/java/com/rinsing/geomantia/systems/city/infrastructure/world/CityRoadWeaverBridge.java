@@ -140,8 +140,25 @@ public final class CityRoadWeaverBridge {
         JsonArray connections = new JsonArray();
         int intraGroupConnectionCount = 0;
         int interGroupConnectionCount = 0;
-        if (extraction.valid() && !delegatedToCityRoads) {
-            for (RoadConnection connection : longDistanceGroupMst(extraction.endpoints())) {
+        int bridgeConnectionCount = 0;
+        if (extraction.valid()) {
+            Map<String, List<RoadEndpoint>> endpointsByGroup = new TreeMap<>();
+            extraction.endpoints().forEach(endpoint -> endpointsByGroup
+                    .computeIfAbsent(endpoint.placementGroupId(), ignored -> new ArrayList<>()).add(endpoint));
+            for (GroupPair pair : delegatedBridgePairs(materializationPlan)) {
+                List<RoadEndpoint> from = endpointsByGroup.getOrDefault(pair.fromGroupId(), List.of());
+                List<RoadEndpoint> to = endpointsByGroup.getOrDefault(pair.toGroupId(), List.of());
+                if (from.isEmpty() || to.isEmpty()) continue;
+                JsonObject connectionJson = closestConnection(from, to, ConnectionScope.INTER_GROUP).asJson();
+                connectionJson.addProperty("connectionKind", "BRIDGE_DELEGATED");
+                connectionJson.addProperty("bridgeRequired", true);
+                connectionJson.addProperty("surfacePrintAllowed", false);
+                connections.add(connectionJson);
+                interGroupConnectionCount++;
+                bridgeConnectionCount++;
+            }
+            if (!delegatedToCityRoads) for (RoadConnection connection : longDistanceGroupMst(
+                    extraction.endpoints())) {
                 connections.add(connection.asJson());
                 if (connection.scope() == ConnectionScope.INTRA_GROUP) {
                     intraGroupConnectionCount++;
@@ -157,7 +174,25 @@ public final class CityRoadWeaverBridge {
                 .map(RoadEndpoint::placementGroupId).distinct().count());
         plan.addProperty("intraGroupConnectionCount", intraGroupConnectionCount);
         plan.addProperty("interGroupConnectionCount", interGroupConnectionCount);
+        plan.addProperty("bridgeConnectionCount", bridgeConnectionCount);
         return plan;
+    }
+
+    private static List<GroupPair> delegatedBridgePairs(JsonObject materializationPlan) {
+        JsonObject anchorMap = jsonObject(materializationPlan, "sourceStructureAnchorMap");
+        JsonObject mainRoadPlan = jsonObject(anchorMap, "cityMainRoadPlan");
+        if (mainRoadPlan == null) return List.of();
+        List<GroupPair> result = new ArrayList<>();
+        for (JsonElement element : array(mainRoadPlan, "bridgeConnections")) {
+            if (!element.isJsonObject()) continue;
+            JsonObject bridge = element.getAsJsonObject();
+            String from = stringValue(bridge, "fromGroupId", "");
+            String to = stringValue(bridge, "toGroupId", "");
+            if (!from.isBlank() && !to.isBlank() && !from.equals(to)) result.add(new GroupPair(from, to));
+        }
+        return result.stream().distinct()
+                .sorted(Comparator.comparing(GroupPair::fromGroupId).thenComparing(GroupPair::toGroupId))
+                .toList();
     }
 
     private static List<RoadConnection> longDistanceGroupMst(List<RoadEndpoint> endpoints) {
@@ -678,6 +713,9 @@ public final class CityRoadWeaverBridge {
             connection.add("to", to.roadPoint().asJson());
             return connection;
         }
+    }
+
+    private record GroupPair(String fromGroupId, String toGroupId) {
     }
 
     private static final class UnionFind<T> {

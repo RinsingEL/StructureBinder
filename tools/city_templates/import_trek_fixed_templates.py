@@ -105,9 +105,24 @@ def load_manifest(path: Path) -> dict[str, Any]:
     if not isinstance(entrance_review_version, str) or not entrance_review_version:
         raise ImportFailure("TREK_TEMPLATE_ENTRANCE_REVIEW_INVALID",
                             "entranceReviewVersion must be a non-empty string")
-    configured_ids = [entry.get("sourceConfiguredId") for entry in templates]
-    if len(configured_ids) != len(set(configured_ids)):
-        raise ImportFailure("TREK_TEMPLATE_MANIFEST_DUPLICATE", "sourceConfiguredId must be unique")
+    source_ids: list[str] = []
+    for entry in templates:
+        configured_id = entry.get("sourceConfiguredId")
+        template_id = entry.get("sourceTemplateId")
+        if (isinstance(configured_id, str) and configured_id) == (isinstance(template_id, str) and template_id):
+            raise ImportFailure("TREK_TEMPLATE_SOURCE_ID_INVALID",
+                                "each template requires exactly one sourceConfiguredId or sourceTemplateId")
+        source_ids.append(configured_id or template_id)
+        if template_id:
+            if entry.get("standaloneConfirmed") is not True:
+                raise ImportFailure("TREK_TEMPLATE_STANDALONE_UNCONFIRMED", template_id)
+            if entry.get("connectorPolicy") not in {"markers_only", "replace_all_with_final_state", "none"}:
+                raise ImportFailure("TREK_TEMPLATE_CONNECTOR_POLICY_INVALID", template_id)
+            target_path = entry.get("targetPath")
+            if not isinstance(target_path, str) or not target_path or target_path.startswith("/"):
+                raise ImportFailure("TREK_TEMPLATE_TARGET_PATH_INVALID", str(target_path))
+    if len(source_ids) != len(set(source_ids)):
+        raise ImportFailure("TREK_TEMPLATE_MANIFEST_DUPLICATE", "source template identities must be unique")
     profile_export = value.get("profileExport")
     if not isinstance(profile_export, dict):
         raise ImportFailure("TREK_TEMPLATE_SEMANTIC_PROFILE_INVALID", "profileExport must be an object")
@@ -128,11 +143,13 @@ def load_manifest(path: Path) -> dict[str, Any]:
             if not isinstance(entrance, dict) or not isinstance(evidence, dict):
                 raise ImportFailure("TREK_TEMPLATE_ENTRANCE_REVIEW_INVALID",
                                     f"{entry.get('sourceConfiguredId')}: entrance and evidence are required")
-            if (not isinstance(entrance.get("entranceId"), str) or not entrance["entranceId"]
-                    or entrance.get("direction") not in ENTRANCE_DIRECTIONS
-                    or any(not isinstance(entrance.get(axis), int) for axis in ("x", "z"))):
-                raise ImportFailure("TREK_TEMPLATE_ENTRANCE_REVIEW_INVALID",
-                                    f"{entry.get('sourceConfiguredId')}: invalid entrance")
+            for reviewed_entrance in entry_entrances(entry):
+                if (not isinstance(reviewed_entrance.get("entranceId"), str)
+                        or not reviewed_entrance["entranceId"]
+                        or reviewed_entrance.get("direction") not in ENTRANCE_DIRECTIONS
+                        or any(not isinstance(reviewed_entrance.get(axis), int) for axis in ("x", "z"))):
+                    raise ImportFailure("TREK_TEMPLATE_ENTRANCE_REVIEW_INVALID",
+                                        f"{configured_id or template_id}: invalid entrance")
             if (evidence.get("kind") not in ENTRANCE_EVIDENCE_KINDS
                     or any(not isinstance(evidence.get(axis), int) for axis in ("x", "y", "z"))
                     or not isinstance(evidence.get("block"), str) or not evidence["block"]):
@@ -177,13 +194,29 @@ def profile_term_groups(manifest: dict[str, Any], entry: dict[str, Any]) -> dict
     }
 
 
+def entry_entrances(entry: dict[str, Any]) -> list[dict[str, Any]]:
+    entrances = entry.get("entrances")
+    if entrances is None:
+        entrance = entry.get("entrance")
+        return [entrance] if isinstance(entrance, dict) else []
+    if (not isinstance(entrances, list) or not entrances
+            or any(not isinstance(value, dict) for value in entrances)):
+        raise ImportFailure("TREK_TEMPLATE_ENTRANCE_REVIEW_INVALID", "entrances must be non-empty objects")
+    return entrances
+
+
 def validate_confirmed_entrance(nbt: nbtlib.File, entry: dict[str, Any],
                                 raw_size: dict[str, int]) -> None:
     if not entry.get("entranceConfirmed"):
         return
     entrance = entry["entrance"]
     evidence = entry["entranceEvidence"]
-    source_id = entry["sourceConfiguredId"]
+    source_id = entry.get("sourceConfiguredId", entry.get("sourceTemplateId", "unknown"))
+    for reviewed_entrance in entry_entrances(entry):
+        if not (0 <= reviewed_entrance["x"] < raw_size["width"]
+                and 0 <= reviewed_entrance["z"] < raw_size["depth"]):
+            raise ImportFailure("TREK_TEMPLATE_ENTRANCE_REVIEW_INVALID",
+                                f"{source_id}: entrance is outside rawSize")
     if not (0 <= entrance["x"] < raw_size["width"] and 0 <= entrance["z"] < raw_size["depth"]):
         raise ImportFailure("TREK_TEMPLATE_ENTRANCE_REVIEW_INVALID",
                             f"{source_id}: entrance is outside rawSize")
@@ -301,43 +334,60 @@ def bake_processor(nbt: nbtlib.File, rules: list[dict[str, Any]], seed_prefix: l
 
 def inspect_entry(archive: zipfile.ZipFile, manifest: dict[str, Any], entry: dict[str, Any],
                   jar_hash: str) -> ImportedTemplate:
-    configured_id = entry["sourceConfiguredId"]
-    configured = zip_json(archive, resource_path(configured_id, "worldgen/structure", ".json"))
-    start_pool = configured.get("start_pool")
-    if not isinstance(start_pool, str):
-        raise ImportFailure("TREK_TEMPLATE_START_POOL_INVALID", configured_id)
-    pool = zip_json(archive, resource_path(start_pool, "worldgen/template_pool", ".json"))
-    elements = pool.get("elements")
-    if not isinstance(elements, list) or len(elements) != 1:
-        raise ImportFailure("TREK_TEMPLATE_STRUCTURAL_JIGSAW_REJECTED",
-                            f"{configured_id} start pool has {len(elements or [])} roots")
-    root = elements[0].get("element", {})
-    if root.get("element_type") != "minecraft:single_pool_element" or not isinstance(root.get("location"), str):
-        raise ImportFailure("TREK_TEMPLATE_STRUCTURAL_JIGSAW_REJECTED", configured_id)
-    source_nbt = root["location"]
-    processor_id = root.get("processors", "minecraft:empty")
+    configured_id = entry.get("sourceConfiguredId")
+    direct_template_id = entry.get("sourceTemplateId")
+    source_identity = configured_id or direct_template_id
+    if configured_id:
+        configured = zip_json(archive, resource_path(configured_id, "worldgen/structure", ".json"))
+        start_pool = configured.get("start_pool")
+        if not isinstance(start_pool, str):
+            raise ImportFailure("TREK_TEMPLATE_START_POOL_INVALID", configured_id)
+        pool = zip_json(archive, resource_path(start_pool, "worldgen/template_pool", ".json"))
+        elements = pool.get("elements")
+        if not isinstance(elements, list) or len(elements) != 1:
+            raise ImportFailure("TREK_TEMPLATE_STRUCTURAL_JIGSAW_REJECTED",
+                                f"{configured_id} start pool has {len(elements or [])} roots")
+        root = elements[0].get("element", {})
+        if root.get("element_type") != "minecraft:single_pool_element" or not isinstance(root.get("location"), str):
+            raise ImportFailure("TREK_TEMPLATE_STRUCTURAL_JIGSAW_REJECTED", configured_id)
+        source_nbt = root["location"]
+        processor_id = root.get("processors", "minecraft:empty")
+    else:
+        start_pool = ""
+        source_nbt = direct_template_id
+        processor_id = "minecraft:empty"
     try:
         source_bytes = archive.read(resource_path(source_nbt, "structures", ".nbt"))
     except KeyError as ex:
         raise ImportFailure("TREK_TEMPLATE_SOURCE_ENTRY_MISSING", source_nbt) from ex
     nbt = decode_nbt(source_bytes)
-    marker_count = strip_marker_jigsaws(nbt)
+    if direct_template_id and entry["connectorPolicy"] == "replace_all_with_final_state":
+        marker_count = len(replace_jigsaws_with_final_state(nbt, allowed=lambda _value: True))
+    elif direct_template_id and entry["connectorPolicy"] == "none":
+        marker_count = 0
+        palette = nbt["palette"]
+        if any(str(palette[int(block["state"])] ["Name"]) == "minecraft:jigsaw"
+               for block in nbt["blocks"]):
+            raise ImportFailure("TREK_TEMPLATE_CONNECTOR_POLICY_INVALID",
+                                f"{source_identity}: connectorPolicy=none but Jigsaw remains")
+    else:
+        marker_count = strip_marker_jigsaws(nbt)
     entity_count = clear_entities(nbt)
     rules = load_processor_rules(archive, processor_id)
     processor_replacements = bake_processor(
         nbt, rules,
-        [manifest["importerVersion"], jar_hash, configured_id, processor_id],
+        [manifest["importerVersion"], jar_hash, source_identity, processor_id],
     )
     raw_size_values = [int(value) for value in nbt["size"]]
     raw_size = dict(zip(("width", "height", "depth"), raw_size_values))
     validate_confirmed_entrance(nbt, entry, raw_size)
-    source_path = configured_id.split(":", 1)[1]
+    source_path = entry.get("targetPath") or source_identity.split(":", 1)[1]
     target_path = f"{manifest['targetPrefix'].strip('/')}/{source_path}"
     target_ref = f"{manifest['targetNamespace']}:{target_path}"
     return ImportedTemplate(
         manifest_entry=entry,
-        entrance_review_version=manifest["entranceReviewVersion"],
-        source_configured_id=configured_id,
+        entrance_review_version=entry.get("entranceReviewVersion", manifest["entranceReviewVersion"]),
+        source_configured_id=source_identity,
         source_pool=start_pool,
         source_nbt=source_nbt,
         processor=processor_id,
@@ -510,10 +560,10 @@ def build_catalog(imported: list[ImportedTemplate], runtime: dict[str, dict[str,
             "allowedRotations": ROTATIONS,
             "allowedMirrors": ["NONE"],
             "roadEntrances": [{
-                "entranceId": source["entrance"]["entranceId"],
-                "position": {"x": source["entrance"]["x"], "z": source["entrance"]["z"]},
-                "direction": source["entrance"]["direction"],
-            }],
+                "entranceId": entrance["entranceId"],
+                "position": {"x": entrance["x"], "z": entrance["z"]},
+                "direction": entrance["direction"],
+            } for entrance in entry_entrances(source)],
             "terrainPosePolicy": "structure_start_beard_thin",
             "supportPolicy": "full_footprint_support",
             "clearanceBlocks": source["clearanceBlocks"],
@@ -598,6 +648,8 @@ def write_outputs(save_dir: Path, imported: list[ImportedTemplate], overwrite: b
         previews = render_previews(item, preview_root)
         report_entries.append({
             "sourceConfiguredId": item.source_configured_id,
+            "sourceKind": "direct_template" if "sourceTemplateId" in item.manifest_entry else "configured_structure",
+            "sourceTemplateId": item.manifest_entry.get("sourceTemplateId", ""),
             "sourceStartPool": item.source_pool,
             "sourceRootNbt": item.source_nbt,
             "processor": item.processor,

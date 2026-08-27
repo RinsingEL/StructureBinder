@@ -69,25 +69,17 @@ public final class CityStructureLandingPreviewRenderer {
         try {
             setup(g);
             BlockBounds gridBounds = gridBounds(anchorMap);
-            Transform t = transform(gridBounds);
-            drawPatchBackdrop(g, t, gridBounds, reviewPackage);
+            Transform t = overviewTransform(gridBounds);
+            drawPatchBackdrop(g, t, gridBounds, reviewPackage, false);
             drawGrid(g, t, gridBounds);
-            drawFunctionAreas(g, t, groupExtentMap, Set.of());
-            drawStreetBands(g, t, anchorMap, Set.of());
-            drawResidentialOverflowZones(g, t, anchorMap, Set.of());
-            drawLandscapeCapacities(g, t, landscapeCapacityPlan);
-            int i = 0;
+            drawLandscapeCapacities(g, t, landscapeCapacityPlan, Set.of(), false);
+            drawFunctionAreas(g, t, groupExtentMap, Set.of(), false, true);
+            drawStreetBands(g, t, anchorMap, Set.of(), false);
             for (JsonElement elem : array(anchorMap, "anchors")) {
                 JsonObject anchor = elem.getAsJsonObject();
-                i++;
                 drawD4Geometry(g, t, d4AnchorGeometry(anchor));
-                drawBadge(g, t, point(anchor, "anchorBlock"), "A" + i, color(i, 235));
             }
-            title(g, "City D4 structure anchor preview",
-                    "function area=committed structures; landscape capacity=exact spans; body=blue collision=red; anchors="
-                            + array(anchorMap, "anchors").size() + " landscapes="
-                            + landscapeCount(landscapeCapacityPlan) + " functionAreas=" + functionAreaCount(groupExtentMap));
-            d4AnchorSummary(g, anchorMap, landscapeCapacityPlan, groupExtentMap);
+            drawFunctionAreas(g, t, groupExtentMap, Set.of(), false, true, false);
         } finally {
             g.dispose();
         }
@@ -731,6 +723,23 @@ public final class CityStructureLandingPreviewRenderer {
 
     private static void drawFunctionAreas(Graphics2D g, Transform t, JsonObject extentMap,
                                           Set<String> visibleGroupIds) {
+        drawFunctionAreas(g, t, extentMap, visibleGroupIds, true, false);
+    }
+
+    private static void drawFunctionAreas(Graphics2D g, Transform t, JsonObject extentMap,
+                                          Set<String> visibleGroupIds, boolean drawLabels) {
+        drawFunctionAreas(g, t, extentMap, visibleGroupIds, drawLabels, false);
+    }
+
+    private static void drawFunctionAreas(Graphics2D g, Transform t, JsonObject extentMap,
+                                          Set<String> visibleGroupIds, boolean drawLabels,
+                                          boolean emphasized) {
+        drawFunctionAreas(g, t, extentMap, visibleGroupIds, drawLabels, emphasized, true);
+    }
+
+    private static void drawFunctionAreas(Graphics2D g, Transform t, JsonObject extentMap,
+                                          Set<String> visibleGroupIds, boolean drawLabels,
+                                          boolean emphasized, boolean fillArea) {
         if (extentMap == null) return;
         int index = 0;
         for (JsonElement element : array(extentMap, "groups")) {
@@ -753,19 +762,30 @@ public final class CityStructureLandingPreviewRenderer {
             if (formationArea.isEmpty() || labelPoint == null) continue;
 
             index++;
-            Color base = color(index, 235);
-            g.setColor(withAlpha(base, 58));
-            g.fill(formationArea);
-            g.setColor(withAlpha(base, 220));
-            g.setStroke(new BasicStroke(2.2f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER,
+            Color base = functionAreaColor(groupId, index);
+            if (fillArea) {
+                g.setColor(withAlpha(base, emphasized ? 105 : 58));
+                g.fill(formationArea);
+            }
+            g.setColor(withAlpha(base, emphasized ? 245 : 220));
+            g.setStroke(emphasized
+                    ? new BasicStroke(3.2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND)
+                    : new BasicStroke(2.2f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER,
                     10.0f, new float[]{8.0f, 5.0f}, 0.0f));
             g.draw(formationArea);
-            drawBadge(g, t, labelPoint, "F" + index + " " + trim(groupId, 18), base);
+            if (drawLabels) {
+                drawBadge(g, t, labelPoint, "F" + index + " " + trim(groupId, 18), base);
+            }
         }
     }
 
     private static void drawStreetBands(Graphics2D g, Transform t, JsonObject anchorMap,
                                         Set<String> visibleGroupIds) {
+        drawStreetBands(g, t, anchorMap, visibleGroupIds, true);
+    }
+
+    private static void drawStreetBands(Graphics2D g, Transform t, JsonObject anchorMap,
+                                        Set<String> visibleGroupIds, boolean drawLabels) {
         if (anchorMap == null) return;
         for (JsonElement element : array(anchorMap, "streetBands")) {
             if (!element.isJsonObject()) continue;
@@ -800,9 +820,47 @@ public final class CityStructureLandingPreviewRenderer {
                 g.drawLine(t.x(intValue(start, "x", 0)), t.z(intValue(start, "z", 0)),
                         t.x(intValue(end, "x", 0)), t.z(intValue(end, "z", 0)));
             }
-            drawBadge(g, t, street.center(), (mainRoad ? "main " : "street ")
-                            + intValue(band, "widthBlocks", 0),
-                    mainRoad ? new Color(68, 37, 24, 235) : new Color(55, 58, 60, 235));
+            if (drawLabels) {
+                drawBadge(g, t, street.center(), (mainRoad ? "main " : "street ")
+                                + intValue(band, "widthBlocks", 0),
+                        mainRoad ? new Color(68, 37, 24, 235) : new Color(55, 58, 60, 235));
+            }
+        }
+        drawDelegatedBridges(g, t, anchorMap, visibleGroupIds, drawLabels);
+    }
+
+    private static void drawDelegatedBridges(Graphics2D g, Transform t, JsonObject anchorMap,
+                                             Set<String> visibleGroupIds, boolean drawLabels) {
+        JsonObject mainRoadPlan = object(anchorMap, "cityMainRoadPlan");
+        int index = 0;
+        for (JsonElement element : array(mainRoadPlan, "bridgeConnections")) {
+            if (!element.isJsonObject()) continue;
+            JsonObject bridge = element.getAsJsonObject();
+            String sourceGroupId = string(bridge, "fromGroupId");
+            String targetGroupId = string(bridge, "toGroupId");
+            if (!visibleGroupIds.isEmpty() && !visibleGroupIds.contains(sourceGroupId)
+                    && !visibleGroupIds.contains(targetGroupId)) continue;
+            JsonObject start = object(bridge, "from");
+            JsonObject end = object(bridge, "to");
+            if (start.size() == 0 || end.size() == 0) continue;
+            int x1 = t.x(intValue(start, "x", 0));
+            int z1 = t.z(intValue(start, "z", 0));
+            int x2 = t.x(intValue(end, "x", 0));
+            int z2 = t.z(intValue(end, "z", 0));
+            g.setColor(new Color(30, 74, 96, 235));
+            g.setStroke(new BasicStroke(7.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND));
+            g.drawLine(x1, z1, x2, z2);
+            g.setColor(new Color(214, 170, 94, 245));
+            g.setStroke(new BasicStroke(3.6f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND,
+                    10.0f, new float[]{8.0f, 3.0f}, 0.0f));
+            g.drawLine(x1, z1, x2, z2);
+            if (drawLabels) {
+                index++;
+                drawBadge(g, t, new BlockPoint(
+                                (intValue(start, "x", 0) + intValue(end, "x", 0)) / 2,
+                                (intValue(start, "z", 0) + intValue(end, "z", 0)) / 2),
+                        "bridge " + index, new Color(30, 74, 96, 235));
+            }
         }
     }
 
@@ -865,6 +923,11 @@ public final class CityStructureLandingPreviewRenderer {
 
     private static void drawLandscapeCapacities(Graphics2D g, Transform t, JsonObject plan,
                                                 Set<String> visibleGroupIds) {
+        drawLandscapeCapacities(g, t, plan, visibleGroupIds, true);
+    }
+
+    private static void drawLandscapeCapacities(Graphics2D g, Transform t, JsonObject plan,
+                                                Set<String> visibleGroupIds, boolean drawLabels) {
         if (plan == null) return;
         int index = 0;
         for (JsonElement element : array(plan, "instances")) {
@@ -883,7 +946,7 @@ public final class CityStructureLandingPreviewRenderer {
                         intValue(span, "maxX", 0), z));
             }
             BlockBounds bounds = landscapeBounds(instance);
-            if (bounds != null) drawBadge(g, t, bounds.center(), "L" + index, color);
+            if (drawLabels && bounds != null) drawBadge(g, t, bounds.center(), "L" + index, color);
         }
     }
 
@@ -894,6 +957,21 @@ public final class CityStructureLandingPreviewRenderer {
         if (profile.contains("pasture") || profile.contains("green")) return new Color(92, 151, 48, 235);
         if (profile.contains("flower") || profile.contains("meadow")) return new Color(185, 59, 126, 235);
         return color(index + 20, 235);
+    }
+
+    private static Color functionAreaColor(String groupId, int index) {
+        String normalized = groupId == null ? "" : groupId.toLowerCase(java.util.Locale.ROOT);
+        if (normalized.contains("admin") || normalized.contains("civic")) {
+            return new Color(158, 66, 196, 235);
+        }
+        if (normalized.contains("commercial") || normalized.contains("market")) {
+            return new Color(0, 156, 174, 235);
+        }
+        if (normalized.contains("agriculture") || normalized.contains("farm")) {
+            return new Color(82, 168, 48, 235);
+        }
+        Color fallback = color(index + 30, 235);
+        return new Color(fallback.getRed(), fallback.getGreen(), fallback.getBlue(), 235);
     }
 
     private static BlockBounds landscapePlanBounds(JsonObject plan) {
@@ -1006,7 +1084,7 @@ public final class CityStructureLandingPreviewRenderer {
                 JsonObject group = element.getAsJsonObject();
                 if (array(object(group, "functionArea"), "formationSpans").isEmpty()) continue;
                 functionAreaIndex++;
-                y = legendRow(g, x, y, color(functionAreaIndex, 220),
+                y = legendRow(g, x, y, functionAreaColor(string(group, "groupId"), functionAreaIndex),
                         "F" + functionAreaIndex + " " + trim(string(group, "groupId"), 22)
                                 + " = function area");
             }
@@ -1229,6 +1307,12 @@ public final class CityStructureLandingPreviewRenderer {
 
     private static void drawPatchBackdrop(Graphics2D g, Transform t, BlockBounds gridBounds,
                                           CityLandformReviewPackage reviewPackage) {
+        drawPatchBackdrop(g, t, gridBounds, reviewPackage, true);
+    }
+
+    private static void drawPatchBackdrop(Graphics2D g, Transform t, BlockBounds gridBounds,
+                                          CityLandformReviewPackage reviewPackage,
+                                          boolean drawLabels) {
         if (reviewPackage == null) {
             return;
         }
@@ -1243,8 +1327,10 @@ public final class CityStructureLandingPreviewRenderer {
                 }
             }
         }
-        for (LandformPatchSummary patch : reviewPackage.landformPatches()) {
-            drawPatchLabel(g, t, patch);
+        if (drawLabels) {
+            for (LandformPatchSummary patch : reviewPackage.landformPatches()) {
+                drawPatchLabel(g, t, patch);
+            }
         }
     }
 
@@ -2180,6 +2266,12 @@ public final class CityStructureLandingPreviewRenderer {
 
     private static Transform transform(BlockBounds bounds) {
         double sx = (800 - PAD * 2) / (double) Math.max(1, bounds.widthBlocks());
+        double sz = (HEIGHT - PAD * 2) / (double) Math.max(1, bounds.heightBlocks());
+        return new Transform(bounds.minX(), bounds.minZ(), Math.min(sx, sz));
+    }
+
+    private static Transform overviewTransform(BlockBounds bounds) {
+        double sx = (WIDTH - PAD * 2) / (double) Math.max(1, bounds.widthBlocks());
         double sz = (HEIGHT - PAD * 2) / (double) Math.max(1, bounds.heightBlocks());
         return new Transform(bounds.minX(), bounds.minZ(), Math.min(sx, sz));
     }

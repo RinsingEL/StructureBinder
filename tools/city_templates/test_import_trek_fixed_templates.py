@@ -16,9 +16,17 @@ class TrekFixedImporterTest(unittest.TestCase):
         cls.jar_hash, cls.templates = importer.inspect_all(cls.jar, cls.manifest)
         cls.profiles = importer.build_structure_profiles(cls.manifest, cls.templates)
 
-    def test_selected_batch_is_twenty_single_root_templates(self):
-        self.assertEqual(20, len(self.templates))
-        self.assertEqual(20, len({item.target_ref for item in self.templates}))
+    def test_selected_batch_contains_twenty_configured_and_four_reviewed_direct_templates(self):
+        self.assertEqual(24, len(self.templates))
+        self.assertEqual(24, len({item.target_ref for item in self.templates}))
+        direct = [item for item in self.templates if "sourceTemplateId" in item.manifest_entry]
+        self.assertEqual(4, len(direct))
+        self.assertEqual({
+            "geomantia:city/trek/landmark/plains_fountain_01",
+            "geomantia:city/trek/defense/mangrove_watchtower_1",
+            "geomantia:city/trek/defense/mangrove_watchtower_2",
+            "geomantia:city/trek/industry/claw_pillager",
+        }, {item.target_ref for item in direct})
 
     def test_outputs_have_no_jigsaws_or_entities(self):
         for item in self.templates:
@@ -45,7 +53,7 @@ class TrekFixedImporterTest(unittest.TestCase):
         self.assertEqual("TREK_TEMPLATE_SOURCE_JAR_HASH_MISMATCH", raised.exception.code)
 
     def test_profiles_use_stubbs_fixed_template_contract(self):
-        self.assertEqual(20, len(self.profiles))
+        self.assertEqual(24, len(self.profiles))
         for profile in self.profiles:
             self.assertEqual("approved", profile["reviewState"])
             self.assertEqual([], profile["planningRoleTerms"])
@@ -76,7 +84,7 @@ class TrekFixedImporterTest(unittest.TestCase):
                 importer.load_manifest(path)
         self.assertEqual("TREK_TEMPLATE_SEMANTIC_VOCABULARY_INCOMPLETE", raised.exception.code)
 
-    def test_all_twenty_entrances_are_confirmed_with_fixed_nbt_evidence(self):
+    def test_all_entrances_are_confirmed_with_fixed_nbt_evidence(self):
         self.assertEqual("fixed_nbt_and_terrasense_four_view_20260727_v1",
                          self.manifest["entranceReviewVersion"])
         self.assertTrue(all(item.manifest_entry["entranceConfirmed"] for item in self.templates))
@@ -95,6 +103,18 @@ class TrekFixedImporterTest(unittest.TestCase):
             {"entranceId": "tower_west_opening", "x": 2, "z": 4, "direction": "WEST"},
             entries["trek:overworld/medium/tower"],
         )
+        fountain = next(item for item in self.templates
+                        if item.target_ref.endswith("/landmark/plains_fountain_01"))
+        self.assertEqual(4, len(importer.entry_entrances(fountain.manifest_entry)))
+        self.assertEqual("live_game_review_20260826_v1", fountain.entrance_review_version)
+        self.assertEqual(10, fountain.marker_count)
+        short_tower = next(item for item in self.templates
+                           if item.target_ref.endswith("/defense/mangrove_watchtower_1"))
+        tall_tower = next(item for item in self.templates
+                          if item.target_ref.endswith("/defense/mangrove_watchtower_2"))
+        claw = next(item for item in self.templates
+                    if item.target_ref.endswith("/industry/claw_pillager"))
+        self.assertEqual((3, 4, 0), (short_tower.marker_count, tall_tower.marker_count, claw.marker_count))
 
     def test_entrance_evidence_drift_is_rejected(self):
         manifest = copy.deepcopy(self.manifest)
@@ -114,7 +134,10 @@ class TrekFixedImporterTest(unittest.TestCase):
             for index, item in enumerate(self.templates)
         }
         catalog = importer.build_catalog(self.templates, runtime)
-        self.assertEqual(20, len(catalog["templates"]))
+        self.assertEqual(24, len(catalog["templates"]))
+        fountain = next(entry for entry in catalog["templates"]
+                        if entry["templateId"].endswith("/landmark/plains_fountain_01"))
+        self.assertEqual(4, len(fountain["roadEntrances"]))
         self.assertTrue(all(entry["terrainPosePolicy"] == "structure_start_beard_thin"
                             for entry in catalog["templates"]))
 
@@ -128,13 +151,13 @@ class TrekFixedImporterTest(unittest.TestCase):
                 encoding="utf-8").splitlines()]
             vocabulary = json.loads(outputs["vocabulary"].read_text(encoding="utf-8"))
             source = json.loads(outputs["source"].read_text(encoding="utf-8"))
-        self.assertEqual(20, len(profiles))
+        self.assertEqual(24, len(profiles))
         used_terms = {term for profile in profiles
                       for field in ("functionTerms", "planningRoleTerms", "styleTerms")
                       for term in profile[field]}
         vocabulary_terms = {term["term_id"] for term in vocabulary["terms"]}
         self.assertEqual(used_terms, vocabulary_terms)
-        self.assertEqual(20, source["quality"]["exportedProfiles"])
+        self.assertEqual(24, source["quality"]["exportedProfiles"])
         self.assertTrue(Path(source["profilePath"]).is_absolute())
         self.assertTrue(Path(source["vocabularySnapshotPath"]).is_absolute())
 

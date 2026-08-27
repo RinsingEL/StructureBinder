@@ -76,6 +76,37 @@ class CityRoadWeaverSpatialPlanTest {
     }
 
     @Test
+    void hierarchicalMainRoadDelegatesOnlyDeclaredBridgePairToRoadWeaver() {
+        JsonObject materialization = materialization(List.of(
+                new EndpointFixture("farm", "agriculture", 0, 0),
+                new EndpointFixture("tower", "defense", 80, 0),
+                new EndpointFixture("hall", "administration", 300, 0)));
+        JsonObject anchorMap = new JsonObject();
+        JsonObject mainRoad = new JsonObject();
+        mainRoad.addProperty("hierarchy", "HIERARCHICAL");
+        mainRoad.addProperty("status", "planned");
+        JsonArray bridges = new JsonArray();
+        JsonObject bridge = new JsonObject();
+        bridge.addProperty("fromGroupId", "agriculture");
+        bridge.addProperty("toGroupId", "defense");
+        bridges.add(bridge);
+        mainRoad.add("bridgeConnections", bridges);
+        anchorMap.add("cityMainRoadPlan", mainRoad);
+        materialization.add("sourceStructureAnchorMap", anchorMap);
+
+        JsonObject plan = CityRoadWeaverBridge.createConnectionPlan(materialization);
+
+        assertTrue(plan.get("delegatedToCityMainRoad").getAsBoolean());
+        assertEquals(1, plan.get("connectionCount").getAsInt());
+        assertEquals(1, plan.get("bridgeConnectionCount").getAsInt());
+        JsonObject connection = plan.getAsJsonArray("connections").get(0).getAsJsonObject();
+        assertEquals("BRIDGE_DELEGATED", connection.get("connectionKind").getAsString());
+        assertTrue(connection.get("bridgeRequired").getAsBoolean());
+        assertEquals("agriculture", connection.get("fromPlacementGroupId").getAsString());
+        assertEquals("defense", connection.get("toPlacementGroupId").getAsString());
+    }
+
+    @Test
     void projectsEveryEntranceDirectionOutsideTheLockedFootprint() {
         JsonObject materialization = materialization(List.of(
                 new EndpointFixture("north", "group", 0, 0),

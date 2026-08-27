@@ -1276,7 +1276,7 @@ class CityBlueprintCompilerServiceTest {
     }
 
     @Test
-    void missingTerrainCorridorFailsConnectivityWithoutClaimingLandUseSuccess() throws Exception {
+    void missingTerrainCorridorSkipsBlockedConnectionAndCompilesWithWarning() throws Exception {
         Fixture fixture = acceptedFixture("run_no_corridor", "city:no_corridor", 9, 9, "SMALL",
                 d3 -> configureSeparatedPlanningPatches(d3, false), blueprint -> {
                     JsonObject second = blueprint.getAsJsonArray("groups").get(0).getAsJsonObject().deepCopy();
@@ -1289,10 +1289,18 @@ class CityBlueprintCompilerServiceTest {
 
         CityBlueprintCompilerService.CompilationResult result = new CityBlueprintCompilerService()
                 .compile(temporary, fixture.runId(), fixture.cityId());
-        assertFalse(result.ok());
-        assertEquals("CITY_BLUEPRINT_CONNECTIVITY_NO_LEGAL_PATH", result.reasonCode());
-        assertEquals("failed", result.compileTrace().get("status").getAsString());
-        assertFalse(result.compileTrace().toString().contains("\"landUseConnected\":true"));
+        assertTrue(result.ok(), result.compileTrace().toString());
+        assertEquals("compiled", result.compileTrace().get("status").getAsString());
+        JsonObject connectivity = result.compileTrace().getAsJsonObject("connectivityPlan");
+        assertEquals(1, connectivity.get("skippedEdgeCount").getAsInt());
+        assertTrue(connectivity.get("connectivityDegraded").getAsBoolean());
+        assertEquals("SKIPPED_NO_LEGAL_PATH", connectivity.getAsJsonArray("edges")
+                .get(0).getAsJsonObject().get("status").getAsString());
+        JsonObject acceptance = result.compileTrace().getAsJsonObject("compilationAcceptance");
+        assertTrue(acceptance.get("passed").getAsBoolean(), acceptance.toString());
+        assertFalse(acceptance.get("structureGraphConnected").getAsBoolean());
+        assertTrue(acceptance.getAsJsonArray("warnings").toString()
+                .contains("CONNECTION_SKIPPED_TERRAIN_BLOCKED"));
     }
 
     @Test
@@ -1329,7 +1337,7 @@ class CityBlueprintCompilerServiceTest {
         assertFalse(acceptance.get("passed").getAsBoolean(), acceptance.toString());
         assertFalse(acceptance.get("allFunctionAreasFormed").getAsBoolean());
         assertTrue(acceptance.getAsJsonArray("hardBlocks").toString().contains("FUNCTION_AREA_EMPTY"));
-        assertTrue(acceptance.getAsJsonArray("hardBlocks").toString().contains(
+        assertTrue(acceptance.getAsJsonArray("warnings").toString().contains(
                 "SELECTED_PATCH_TERRAIN_UNABLE_TO_SUPPORT_REQUIRED_STRUCTURE"));
         JsonObject dynamicArea = result.compileTrace().getAsJsonObject("dynamicAreaPlan");
         assertEquals(0, dynamicArea.get("frozenHighestPriorityAreaBlocks").getAsInt());
@@ -1447,7 +1455,7 @@ class CityBlueprintCompilerServiceTest {
     }
 
     @Test
-    void terrainGateRejectsConnectivityBatchItems() throws Exception {
+    void terrainGateRejectionsRemainVisibleWhenConnectivityEdgeIsSkipped() throws Exception {
         Fixture fixture = acceptedFixture("run_connectivity_terrain_gate", "city:connectivity_terrain_gate", 9, 9,
                 "SMALL", d3 -> configureSeparatedPlanningPatches(d3, true),
                 ignored -> { }, blueprint -> {
@@ -1464,8 +1472,10 @@ class CityBlueprintCompilerServiceTest {
 
         CityBlueprintCompilerService.CompilationResult result = new CityBlueprintCompilerService()
                 .compile(temporary, fixture.runId(), fixture.cityId());
-        assertFalse(result.ok());
-        assertEquals("CITY_BLUEPRINT_CONNECTIVITY_NO_LEGAL_PATH", result.reasonCode());
+        assertTrue(result.ok(), result.compileTrace().toString());
+        assertEquals("SKIPPED_NO_LEGAL_PATH", result.compileTrace()
+                .getAsJsonObject("connectivityPlan").getAsJsonArray("edges")
+                .get(0).getAsJsonObject().get("status").getAsString());
         JsonObject connectivity = result.compileTrace().getAsJsonArray("selections").asList().stream()
                 .map(JsonElement::getAsJsonObject)
                 .filter(event -> "connectivity_growth".equals(event.get("phase").getAsString()))

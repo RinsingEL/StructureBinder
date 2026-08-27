@@ -27,6 +27,7 @@ final class CityMainRoadPlanner {
     private static final int MINIMUM_MAIN_ROAD_WIDTH_BLOCKS = 7;
     private static final int MAXIMUM_SLOPE = 18;
     private static final int MAXIMUM_LOCAL_RELIEF = 18;
+    private static final int MAXIMUM_BRIDGE_LENGTH_BLOCKS = 100;
     private static final int CONNECTOR_RANK_WEIGHT = 1_000_000;
     private static final int[][] CARDINAL_DIRECTIONS = {{0, -1}, {1, 0}, {0, 1}, {-1, 0}};
 
@@ -35,12 +36,22 @@ final class CityMainRoadPlanner {
                 LandUseTerrainField terrain,
                 List<JsonObject> anchors,
                 List<JsonObject> internalStreetBands) {
+        return plan(blueprint, references, terrain, anchors, internalStreetBands, Set.of());
+    }
+
+    Result plan(CityBlueprint blueprint,
+                CityBlueprintReferenceCatalog references,
+                LandUseTerrainField terrain,
+                List<JsonObject> anchors,
+                List<JsonObject> internalStreetBands,
+                Set<String> excludedRelationPairKeys) {
         JsonObject roadProfile = roadProfile(blueprint, references);
         String hierarchy = string(roadProfile, "hierarchy");
         int internalWidth = internalStreetBands.stream()
                 .mapToInt(road -> intValue(road, "widthBlocks", 1)).max().orElse(1);
         int mainWidth = nextOdd(Math.max(MINIMUM_MAIN_ROAD_WIDTH_BLOCKS, internalWidth + 2));
         JsonObject plan = basePlan(blueprint, roadProfile, internalWidth, mainWidth);
+        plan.addProperty("skippedParentLinkCount", excludedRelationPairKeys.size());
         if (!"HIERARCHICAL".equals(hierarchy)) {
             plan.addProperty("status", "not_required");
             plan.addProperty("reasonCode", "CITY_MAIN_ROAD_PROFILE_NOT_HIERARCHICAL");
@@ -52,15 +63,20 @@ final class CityMainRoadPlanner {
                 .map(anchor -> object(anchor, "collisionEnvelope"))
                 .filter(bounds -> bounds.size() > 0)
                 .map(CityStructureCandidateEnvelope::bounds).toList();
+        JsonArray bridgeConnections = bridgeConnections(terrain, groups, mainWidth + 2,
+                structureObstacles, excludedRelationPairKeys);
+        plan.add("bridgeConnections", bridgeConnections);
+        plan.addProperty("bridgeConnectionCount", bridgeConnections.size());
         List<Link> links;
         try {
-            links = desiredLinks(blueprint, groups, mainWidth + 2, structureObstacles);
+            links = desiredLinks(blueprint, groups, mainWidth + 2, structureObstacles,
+                    excludedRelationPairKeys);
         } catch (IllegalArgumentException exception) {
             return Result.failed("CITY_BLUEPRINT_MAIN_ROAD_PARENT_GRAPH_DISCONNECTED",
                     exception.getMessage(), failedPlan(plan,
                             "CITY_BLUEPRINT_MAIN_ROAD_PARENT_GRAPH_DISCONNECTED", exception.getMessage()));
         }
-        if (links.isEmpty()) {
+        if (links.isEmpty() && bridgeConnections.isEmpty()) {
             plan.addProperty("status", "not_required");
             plan.addProperty("reasonCode", "CITY_MAIN_ROAD_PARENT_LINKS_EMPTY");
             return Result.ok(List.of(), plan);
@@ -68,6 +84,7 @@ final class CityMainRoadPlanner {
 
         List<JsonObject> bands = new ArrayList<>();
         JsonArray connections = new JsonArray();
+        JsonArray skippedConnections = new JsonArray();
         int connectionIndex = 0;
         for (Link link : links) {
             GroupGeometry from = groups.get(link.fromGroupId());
@@ -83,18 +100,21 @@ final class CityMainRoadPlanner {
             List<LandUseTerrainField.Cell> cellPath = route(terrain,
                     connectors.from().point(), connectors.to().point());
             if (cellPath.isEmpty()) {
-                String message = "No non-water, non-cliff terrain route for "
-                        + link.fromGroupId() + " -> " + link.toGroupId();
-                return Result.failed("CITY_BLUEPRINT_MAIN_ROAD_NO_LEGAL_PATH", message,
-                        failedPlan(plan, "CITY_BLUEPRINT_MAIN_ROAD_NO_LEGAL_PATH", message));
+                JsonObject bridge = bridgeConnection(terrain, link.fromGroupId(), link.toGroupId(), connectors);
+                if (bridge != null) {
+                    bridgeConnections.add(bridge);
+                    continue;
+                }
+                skippedConnections.add(skippedConnection(link,
+                        "CITY_BLUEPRINT_MAIN_ROAD_NO_LEGAL_PATH"));
+                continue;
             }
             List<BlockPoint> polyline = blockPolyline(connectors.from().point(), connectors.to().point(),
                     cellPath, terrain, structureObstacles, mainWidth + 2);
             if (polyline.size() < 2) {
-                String message = "No full-width structure-safe route for "
-                        + link.fromGroupId() + " -> " + link.toGroupId();
-                return Result.failed("CITY_BLUEPRINT_MAIN_ROAD_NO_LEGAL_PATH", message,
-                        failedPlan(plan, "CITY_BLUEPRINT_MAIN_ROAD_NO_LEGAL_PATH", message));
+                skippedConnections.add(skippedConnection(link,
+                        "CITY_BLUEPRINT_MAIN_ROAD_FULL_WIDTH_ROUTE_UNAVAILABLE"));
+                continue;
             }
             connectionIndex++;
             String connectionId = "city_main_road_" + String.format("%03d", connectionIndex);
@@ -123,10 +143,79 @@ final class CityMainRoadPlanner {
         }
         plan.addProperty("status", "planned");
         plan.addProperty("reasonCode", "");
-        plan.addProperty("connectionCount", connections.size());
+        plan.addProperty("connectionCount", connections.size() + bridgeConnections.size());
+        plan.addProperty("bridgeConnectionCount", bridgeConnections.size());
+        plan.addProperty("skippedConnectionCount", skippedConnections.size());
         plan.addProperty("segmentCount", bands.size());
         plan.add("connections", connections);
+        plan.add("skippedConnections", skippedConnections);
         return Result.ok(List.copyOf(bands), plan);
+    }
+
+    private static JsonObject skippedConnection(Link link, String reasonCode) {
+        JsonObject value = new JsonObject();
+        value.addProperty("fromGroupId", link.fromGroupId());
+        value.addProperty("toGroupId", link.toGroupId());
+        value.addProperty("status", "SKIPPED_WITH_WARNING");
+        value.addProperty("reasonCode", reasonCode);
+        return value;
+    }
+
+    private static JsonArray bridgeConnections(LandUseTerrainField terrain,
+                                               Map<String, GroupGeometry> groups,
+                                               int width,
+                                               List<BlockBounds> obstacles,
+                                               Set<String> excludedRelationPairKeys) {
+        JsonArray result = new JsonArray();
+        excludedRelationPairKeys.stream().sorted().forEach(key -> {
+            int separator = key.indexOf('\u0000');
+            if (separator < 1 || separator + 1 >= key.length()) return;
+            String fromGroupId = key.substring(0, separator);
+            String toGroupId = key.substring(separator + 1);
+            GroupGeometry from = groups.get(fromGroupId);
+            GroupGeometry to = groups.get(toGroupId);
+            if (from == null || to == null) return;
+            ConnectorPair connectors = connectorPair(from, to, width, obstacles);
+            if (connectors == null) return;
+            JsonObject bridge = bridgeConnection(terrain, fromGroupId, toGroupId, connectors);
+            if (bridge != null) result.add(bridge);
+        });
+        return result;
+    }
+
+    private static JsonObject bridgeConnection(LandUseTerrainField terrain,
+                                               String fromGroupId,
+                                               String toGroupId,
+                                               ConnectorPair connectors) {
+        List<LandUseTerrainField.Cell> path = route(terrain,
+                connectors.from().point(), connectors.to().point(), true);
+        int waterSpanBlocks = maximumConsecutiveWaterSpanBlocks(path);
+        if (waterSpanBlocks <= 0 || waterSpanBlocks > MAXIMUM_BRIDGE_LENGTH_BLOCKS) return null;
+        JsonObject bridge = new JsonObject();
+        bridge.addProperty("fromGroupId", fromGroupId);
+        bridge.addProperty("toGroupId", toGroupId);
+        bridge.addProperty("status", "DELEGATED_TO_ROADWEAVER");
+        bridge.addProperty("provider", "roadweaver");
+        bridge.addProperty("bridgePolicy", "AUTO_BRIDGE_NO_GROUND_SURFACE_PRINT");
+        bridge.addProperty("waterSpanBlocks", waterSpanBlocks);
+        bridge.addProperty("maximumBridgeLengthBlocks", MAXIMUM_BRIDGE_LENGTH_BLOCKS);
+        bridge.add("from", connectors.from().point().asJson());
+        bridge.add("to", connectors.to().point().asJson());
+        return bridge;
+    }
+
+    private static int maximumConsecutiveWaterSpanBlocks(List<LandUseTerrainField.Cell> path) {
+        int current = 0;
+        int maximum = 0;
+        for (LandUseTerrainField.Cell cell : path) {
+            if (cell.water()) {
+                current += cell.cellStepBlocks();
+                maximum = Math.max(maximum, current);
+            } else {
+                current = 0;
+            }
+        }
+        return maximum;
     }
 
     private static JsonObject roadProfile(CityBlueprint blueprint, CityBlueprintReferenceCatalog references) {
@@ -276,7 +365,8 @@ final class CityMainRoadPlanner {
     }
 
     private static List<Link> desiredLinks(CityBlueprint blueprint, Map<String, GroupGeometry> groups,
-                                           int width, List<BlockBounds> obstacles) {
+                                           int width, List<BlockBounds> obstacles,
+                                           Set<String> excludedRelationPairKeys) {
         Map<String, Link> result = new LinkedHashMap<>();
         blueprint.relations().stream()
                 .filter(relation -> relation.relationKind() == CityBlueprint.RelationKind.CONNECTION
@@ -289,6 +379,7 @@ final class CityMainRoadPlanner {
                 .sorted(Comparator.comparing(CityBlueprint.ArrayComposition::compositionId))
                 .forEach(composition -> parentArrayMst(composition, groups, width, obstacles)
                         .forEach(link -> addLink(result, link)));
+        excludedRelationPairKeys.forEach(result::remove);
         return List.copyOf(result.values());
     }
 
@@ -385,9 +476,15 @@ final class CityMainRoadPlanner {
 
     private static List<LandUseTerrainField.Cell> route(LandUseTerrainField terrain,
                                                          BlockPoint from, BlockPoint to) {
+        return route(terrain, from, to, false);
+    }
+
+    private static List<LandUseTerrainField.Cell> route(LandUseTerrainField terrain,
+                                                         BlockPoint from, BlockPoint to,
+                                                         boolean allowWater) {
         LandUseTerrainField.Cell start = terrain.cellAt(from.x(), from.z()).orElse(null);
         LandUseTerrainField.Cell target = terrain.cellAt(to.x(), to.z()).orElse(null);
-        if (!passable(start) || !passable(target)) return List.of();
+        if (!passable(start, allowWater) || !passable(target, allowWater)) return List.of();
         CellKey startKey = new CellKey(start.cellX(), start.cellZ());
         CellKey targetKey = new CellKey(target.cellX(), target.cellZ());
         Map<CellKey, LandUseTerrainField.Cell> cells = new HashMap<>();
@@ -411,7 +508,8 @@ final class CityMainRoadPlanner {
                 CellKey nextKey = new CellKey(current.key().cellX() + direction[0],
                         current.key().cellZ() + direction[1]);
                 LandUseTerrainField.Cell next = cells.get(nextKey);
-                if (!passable(next) || !LandscapeTerrainContinuity.allows("BALANCED", currentCell, next)) {
+                if (!passable(next, allowWater)
+                        || !bridgeContinuityAllows(currentCell, next, allowWater)) {
                     continue;
                 }
                 double nextCost = current.cost() + terrainCost(currentCell, next);
@@ -425,8 +523,20 @@ final class CityMainRoadPlanner {
     }
 
     private static boolean passable(LandUseTerrainField.Cell cell) {
-        return cell != null && cell.sampled() && !cell.water()
-                && cell.slope() <= MAXIMUM_SLOPE && cell.localRelief() <= MAXIMUM_LOCAL_RELIEF;
+        return passable(cell, false);
+    }
+
+    private static boolean passable(LandUseTerrainField.Cell cell, boolean allowWater) {
+        if (cell == null || !cell.sampled() || "cliff".equals(cell.landformType())) return false;
+        if (cell.water()) return allowWater;
+        return cell.slope() <= MAXIMUM_SLOPE && cell.localRelief() <= MAXIMUM_LOCAL_RELIEF;
+    }
+
+    private static boolean bridgeContinuityAllows(LandUseTerrainField.Cell from,
+                                                   LandUseTerrainField.Cell to,
+                                                   boolean allowWater) {
+        return allowWater && (from.water() || to.water())
+                || LandscapeTerrainContinuity.allows("BALANCED", from, to);
     }
 
     private static double terrainCost(LandUseTerrainField.Cell from, LandUseTerrainField.Cell to) {

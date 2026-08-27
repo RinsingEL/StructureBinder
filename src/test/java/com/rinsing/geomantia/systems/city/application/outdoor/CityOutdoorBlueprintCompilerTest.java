@@ -24,6 +24,7 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -284,6 +285,16 @@ class CityOutdoorBlueprintCompilerTest {
                         capacity(blueprint(), d6)));
 
         assertTrue(exception.getMessage().startsWith("CITY_OUTDOOR_D6_BLUEPRINT_PHASE_MISSING:core"));
+    }
+
+    @Test
+    void acceptsPercentageGrowthProducedByBlueprintCompiler() {
+        JsonObject d6 = d6Plan();
+        d6.getAsJsonArray("plannedWorldgenStructures").add(
+                structure("farm_percentage", "farm_group", "percentage_growth", 64, 52, 69, 57));
+
+        assertDoesNotThrow(() -> new CityOutdoorBlueprintCompiler().compile(
+                blueprint(), d6, terrain(), catalog(), capacity(blueprint(), d6)));
     }
 
     @Test

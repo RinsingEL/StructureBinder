@@ -347,15 +347,9 @@ public final class CityBlueprintCompilerService {
         // Function-area relations own spatial growth. A hierarchical main road is planned only
         // after that growth and must never stand in for the two groups expanding toward each other.
         connectivityPlan = buildConnectivityPlan(blueprint, states);
-        String connectivityFailure = growConnectivity(runDir, review, structureSource,
+        growConnectivity(runDir, review, structureSource,
                 templateCatalogJson, templates, blueprint, states, occupied, anchors, selections,
                 catalog, connectivityPlan, terrainGate);
-        if (!connectivityFailure.isBlank()) {
-            JsonObject failureTrace = trace(blueprint, context, selections, states,
-                    connectivityPlan, "failed", "CITY_BLUEPRINT_CONNECTIVITY_NO_LEGAL_PATH");
-            return CompilationResult.failed(failureTrace,
-                    "CITY_BLUEPRINT_CONNECTIVITY_NO_LEGAL_PATH", connectivityFailure);
-        }
 
         // Freeze the inter-group road skeleton after relation handoff and before percentage fill.
         // Later buildings must grow around this corridor instead of making the road solve through them.
@@ -364,7 +358,8 @@ public final class CityBlueprintCompilerService {
                 .map(JsonElement::getAsJsonObject).toList();
         CityMainRoadPlanner.Result mainRoads = mainRoadPlanner.plan(blueprint, references, terrainField,
                 relationStageAnchors,
-                relationStageStreetBands.asList().stream().map(JsonElement::getAsJsonObject).toList());
+                relationStageStreetBands.asList().stream().map(JsonElement::getAsJsonObject).toList(),
+                connectivityPlan.skippedPairKeys());
         if (!mainRoads.ok()) {
             JsonObject failureTrace = trace(blueprint, context, selections, states,
                     connectivityPlan, "failed", mainRoads.reasonCode());
@@ -372,6 +367,7 @@ public final class CityBlueprintCompilerService {
             failureTrace.add("cityMainRoadPlan", mainRoads.plan().deepCopy());
             return CompilationResult.failed(failureTrace, mainRoads.reasonCode(), mainRoads.message());
         }
+        connectivityPlan.markBridgeDelegated(mainRoads.plan());
         addRoadBandsToOccupied(mainRoads.streetBands(), occupied);
 
         // The percentage baseline is intentionally frozen only after every explicit relation has
@@ -404,7 +400,7 @@ public final class CityBlueprintCompilerService {
         }
         recordDynamicAreaOutcomes(dynamicAreaPlan, states);
 
-        String hardRelationFailure = hardRelationFailure(blueprint.relations(), states);
+        String hardRelationFailure = hardRelationFailure(blueprint.relations(), states, connectivityPlan);
         if (!hardRelationFailure.isBlank()) {
             JsonObject failureTrace = trace(blueprint, context, selections, states,
                     connectivityPlan, "failed", "CITY_BLUEPRINT_HARD_RELATION_UNSATISFIED");
@@ -483,7 +479,7 @@ public final class CityBlueprintCompilerService {
         plan.addProperty("stageOrder",
                 "INITIAL_FORMATION_THEN_RELATION_GROWTH_THEN_FREEZE_THEN_PERCENTAGE_FILL");
         plan.addProperty("relationGrowthCompletedBeforeFreeze", connectivityPlan.links.stream()
-                .allMatch(link -> link.finalGapBlocks <= link.handoffGapBlocks));
+                .allMatch(ConnectivityLink::satisfied));
         plan.addProperty("relationEdgeCountAtFreeze", connectivityPlan.links.size());
         plan.addProperty("relationStructureCountAtFreeze", connectivityPlan.links.stream()
                 .mapToInt(link -> link.connectionStructureCount).sum());
@@ -551,28 +547,32 @@ public final class CityBlueprintCompilerService {
                 .filter(state -> !relatedGroupIds.contains(state.group().groupId()))
                 .forEach(state -> hardBlocks.add(state.group().groupId()
                         + ": FUNCTION_AREA_RELATION_UNSPECIFIED"));
+        JsonArray warnings = new JsonArray();
         connectivityPlan.links.stream()
-                .filter(link -> link.finalGapBlocks > link.handoffGapBlocks)
-                .forEach(link -> hardBlocks.add(link.describe()
-                        + ": REQUIRED_GROUP_RELATION_UNSATISFIED"));
+                .filter(link -> !link.satisfied())
+                .forEach(link -> warnings.add(link.describe()
+                        + ": CONNECTION_SKIPPED_TERRAIN_BLOCKED status=" + link.status));
         states.values().stream()
                 .filter(state -> state.anchorCount() == 0)
                 .forEach(state -> hardBlocks.add(state.group().groupId() + ": FUNCTION_AREA_EMPTY"));
         states.values().stream()
                 .filter(GroupState::hasTerrainPlacementFailures)
-                .forEach(state -> hardBlocks.add(state.group().groupId()
+                .forEach(state -> warnings.add(state.group().groupId()
                         + ": SELECTED_PATCH_TERRAIN_UNABLE_TO_SUPPORT_REQUIRED_STRUCTURE"));
-        states.values().forEach(state -> state.missingRequiredStructures().forEach(gap ->
-                hardBlocks.add(state.group().groupId() + ": REQUIRED_STRUCTURE_MISSING structureRef="
-                        + gap.structureRef() + " missingCount=" + gap.missingCount())));
-        visualQuality.hardBlocks().forEach(hardBlocks::add);
+        states.values().forEach(state -> state.missingRequiredStructures().forEach(gap -> {
+            String message = state.group().groupId() + ": REQUIRED_STRUCTURE_MISSING structureRef="
+                    + gap.structureRef() + " missingCount=" + gap.missingCount();
+            if (state.group().priority() == CityBlueprint.GroupPriority.CORE) hardBlocks.add(message);
+            else warnings.add(message);
+        }));
+        visualQuality.hardBlocks().forEach(warnings::add);
 
         JsonObject acceptance = new JsonObject();
         acceptance.addProperty("passed", hardBlocks.isEmpty());
         acceptance.addProperty("previewCompiled", true);
         acceptance.addProperty("requiredRelationCount", connectivityPlan.links.size());
         acceptance.addProperty("requiredRelationsSatisfied", connectivityPlan.links.stream()
-                .allMatch(link -> link.finalGapBlocks <= link.handoffGapBlocks));
+                .allMatch(ConnectivityLink::satisfied));
         acceptance.addProperty("structureGraphConnected", graphConnected);
         acceptance.addProperty("allFunctionAreasFormed",
                 states.values().stream().allMatch(state -> state.anchorCount() > 0));
@@ -580,6 +580,7 @@ public final class CityBlueprintCompilerService {
                 states.values().stream().allMatch(state -> state.missingRequiredStructures().isEmpty()));
         acceptance.addProperty("arrayVisualGeometryPassed", visualQuality.passed());
         acceptance.add("hardBlocks", hardBlocks);
+        acceptance.add("warnings", warnings);
         return acceptance;
     }
 
@@ -1964,7 +1965,7 @@ public final class CityBlueprintCompilerService {
         return new ConnectivityPlan(links);
     }
 
-    private String growConnectivity(Path runDir,
+    private void growConnectivity(Path runDir,
                                     CityLandformReviewPackage review,
                                     JsonObject structureSource,
                                     JsonObject templateCatalog,
@@ -1985,8 +1986,8 @@ public final class CityBlueprintCompilerService {
                 if (first.anchorCount() >= INTERNAL_MAX_ANCHORS_PER_GROUP
                         && second.anchorCount() >= INTERNAL_MAX_ANCHORS_PER_GROUP) {
                     link.finalGapBlocks = nearestGap(first, second);
-                    link.status = "FAILED_SAFETY_LIMIT";
-                    return link.describe() + " reached the per-group connectivity safety limit.";
+                    link.status = "SKIPPED_SAFETY_LIMIT";
+                    break;
                 }
                 GroupState source = firstTurn ? first : second;
                 GroupState target = firstTurn ? second : first;
@@ -2001,8 +2002,8 @@ public final class CityBlueprintCompilerService {
                 }
                 if (batch == null) {
                     link.finalGapBlocks = nearestGap(first, second);
-                    link.status = "FAILED_NO_LEGAL_PATH";
-                    return link.describe() + " has no terrain-compatible continuous array slot inside review.grid.";
+                    link.status = "SKIPPED_NO_LEGAL_PATH";
+                    break;
                 }
                 GroupState owner = states.get(batch.ownerGroupId());
                 for (Placement placement : batch.placements()) {
@@ -2014,9 +2015,10 @@ public final class CityBlueprintCompilerService {
                 link.finalGapBlocks = nearestGap(first, second);
             }
             link.finalGapBlocks = nearestGap(first, second);
-            link.status = "HANDOFF_READY";
+            if (link.finalGapBlocks <= link.handoffGapBlocks) {
+                link.status = "HANDOFF_READY";
+            }
         }
-        return "";
     }
 
     private ConnectionConfiguration resolveConnectionConfiguration(CityBlueprint.Group group,
@@ -3590,9 +3592,16 @@ public final class CityBlueprintCompilerService {
     }
 
     private static String hardRelationFailure(List<CityBlueprint.Relation> relations,
-                                              Map<String, GroupState> states) {
+                                              Map<String, GroupState> states,
+                                              ConnectivityPlan connectivityPlan) {
         for (CityBlueprint.Relation relation : relations) {
             if (relation.strength() != CityBlueprint.RelationStrength.HARD) continue;
+            if ((relation.relationKind() == CityBlueprint.RelationKind.ADJACENCY
+                    || relation.relationKind() == CityBlueprint.RelationKind.CONNECTION)
+                    && connectivityPlan.degradedOrBridgeDelegated(
+                    relation.fromGroupId(), relation.toGroupId())) {
+                continue;
+            }
             GroupState from = states.get(relation.fromGroupId());
             GroupState to = states.get(relation.toGroupId());
             if (from == null || to == null || from.extent() == null || to.extent() == null) continue;
@@ -4218,6 +4227,7 @@ public final class CityBlueprintCompilerService {
         JsonObject asJson() {
             JsonObject value = new JsonObject();
             value.addProperty("topologyPolicy", "EXPLICIT_RELATIONS_ONLY_NO_UNRELATED_FALLBACK");
+            value.addProperty("blockedEdgePolicy", "SKIP_WITH_WARNING");
             value.addProperty("handoffThresholdPolicy", "STRICT_BILATERAL_MINIMUM");
             value.addProperty("edgeCount", links.size());
             JsonArray edges = new JsonArray();
@@ -4225,6 +4235,12 @@ public final class CityBlueprintCompilerService {
             value.add("edges", edges);
             value.addProperty("fallbackEdgeCount", links.stream()
                     .filter(link -> "FALLBACK".equals(link.source)).count());
+            value.addProperty("skippedEdgeCount", links.stream()
+                    .filter(link -> link.status.startsWith("SKIPPED_")).count());
+            value.addProperty("bridgeDelegatedEdgeCount", links.stream()
+                    .filter(link -> "BRIDGE_DELEGATED".equals(link.status)).count());
+            value.addProperty("connectivityDegraded", links.stream()
+                    .anyMatch(link -> link.status.startsWith("SKIPPED_")));
             return value;
         }
 
@@ -4232,11 +4248,36 @@ public final class CityBlueprintCompilerService {
             if (groupIds.isEmpty()) return false;
             Components components = new Components(groupIds);
             links.forEach(link -> {
-                if (link.finalGapBlocks <= link.handoffGapBlocks) {
+                if (link.satisfied()) {
                     components.union(link.fromGroupId, link.toGroupId);
                 }
             });
             return components.componentCount() == 1;
+        }
+
+        boolean degradedOrBridgeDelegated(String firstGroupId, String secondGroupId) {
+            String key = pairKey(firstGroupId, secondGroupId);
+            return links.stream().anyMatch(link -> pairKey(link.fromGroupId, link.toGroupId).equals(key)
+                    && (link.status.startsWith("SKIPPED_")
+                    || "BRIDGE_DELEGATED".equals(link.status)));
+        }
+
+        Set<String> skippedPairKeys() {
+            return links.stream()
+                    .filter(link -> link.status.startsWith("SKIPPED_"))
+                    .map(link -> pairKey(link.fromGroupId, link.toGroupId))
+                    .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
+        }
+
+        void markBridgeDelegated(JsonObject mainRoadPlan) {
+            for (JsonElement element : array(mainRoadPlan, "bridgeConnections")) {
+                if (!element.isJsonObject()) continue;
+                JsonObject bridge = element.getAsJsonObject();
+                String key = pairKey(string(bridge, "fromGroupId"), string(bridge, "toGroupId"));
+                links.stream()
+                        .filter(link -> pairKey(link.fromGroupId, link.toGroupId).equals(key))
+                        .forEach(link -> link.status = "BRIDGE_DELEGATED");
+            }
         }
     }
 
@@ -4267,6 +4308,10 @@ public final class CityBlueprintCompilerService {
 
         String describe() {
             return fromGroupId + " -> " + toGroupId;
+        }
+
+        boolean satisfied() {
+            return finalGapBlocks <= handoffGapBlocks || "BRIDGE_DELEGATED".equals(status);
         }
 
         JsonObject traceJson() {

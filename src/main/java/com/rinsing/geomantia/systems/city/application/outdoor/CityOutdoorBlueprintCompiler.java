@@ -1127,7 +1127,8 @@ public final class CityOutdoorBlueprintCompiler {
     private enum BlueprintPlacementPhase {
         REQUIRED,
         FILL,
-        CONNECTIVITY_GROWTH
+        CONNECTIVITY_GROWTH,
+        PERCENTAGE_GROWTH
     }
 
     private record AreaBudget(int min, int preferred, int max) {

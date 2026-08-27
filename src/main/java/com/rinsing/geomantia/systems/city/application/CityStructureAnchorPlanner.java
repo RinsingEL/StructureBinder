@@ -123,13 +123,19 @@ public final class CityStructureAnchorPlanner {
                 && structureAnchorPlan.get("arrayVisualQuality").isJsonObject()) {
             JsonObject visual = structureAnchorPlan.getAsJsonObject("arrayVisualQuality");
             quality.getAsJsonObject("metrics").add("arrayVisualGeometry", visual.deepCopy());
-            mergeNestedHardBlocks(quality, visual, "arrayVisualGeometry");
+            if (structureAnchorPlan.has("arrayVisualGapRecorded")
+                    && structureAnchorPlan.get("arrayVisualGapRecorded").getAsBoolean()) {
+                mergeNestedWarnings(quality, visual, "arrayVisualGeometry");
+            } else {
+                mergeNestedHardBlocks(quality, visual, "arrayVisualGeometry");
+            }
         }
         if (structureAnchorPlan.has("compilationAcceptance")
                 && structureAnchorPlan.get("compilationAcceptance").isJsonObject()) {
             JsonObject acceptance = structureAnchorPlan.getAsJsonObject("compilationAcceptance");
             quality.getAsJsonObject("metrics").add("compilationAcceptance", acceptance.deepCopy());
             mergeNestedHardBlocks(quality, acceptance, "compilationAcceptance");
+            mergeNestedWarnings(quality, acceptance, "compilationAcceptance");
         }
         anchorMap.add("quality", quality);
         anchorMap.add("timingMs", timing(started));
@@ -446,6 +452,17 @@ public final class CityStructureAnchorPlanner {
         if (outer.isEmpty()) outer.add(source + ": UNSATISFIED");
         quality.addProperty("passed", false);
         quality.addProperty("score", 0);
+    }
+
+    private static void mergeNestedWarnings(JsonObject quality, JsonObject nested, String source) {
+        JsonArray outer = quality.getAsJsonArray("warnings");
+        for (String key : List.of("hardBlocks", "warnings")) {
+            if (!nested.has(key) || !nested.get(key).isJsonArray()) continue;
+            for (JsonElement element : nested.getAsJsonArray(key)) {
+                String warning = source + ": " + element.getAsString();
+                if (!strings(outer).contains(warning)) outer.add(warning);
+            }
+        }
     }
 
     private static JsonObject timing(long started) {

@@ -80,7 +80,7 @@ public final class LandUsePlanningService {
         CityUrbanResidualResolver.Result residualResult;
         int resolvedFoundationCloseRadius = 0;
         int resolvedFoundationComponentCount = 0;
-        Set<String> skippedOptionalLandscapes = Set.of();
+        Set<String> skippedLandscapes = Set.of();
         if (layered) {
             if (foundations.size() != 1) {
                 throw new IllegalArgumentException("CITY_FOUNDATION_GROUP_COUNT_INVALID:" + foundations.size());
@@ -100,7 +100,7 @@ public final class LandUsePlanningService {
                     landscapes, sources.seedSalt(), sources.landscapeCapacityDomains(),
                     sources.landscapeParentParcelIds());
             LandUseExpansionResult landscapeExpansion = landscapeResult.expansion();
-            skippedOptionalLandscapes = landscapeResult.skippedOptionalGroupIds();
+            skippedLandscapes = landscapeResult.skippedGroupIds();
             expansion = overlay(foundation, foundationPlan, landscapeExpansion);
             probe = expansion;
             connectionOutcomes = List.of();
@@ -128,9 +128,13 @@ public final class LandUsePlanningService {
                 terrainField.planningBounds(), sources.seedGroups(), resolvedExpansion);
         List<String> warnings = new ArrayList<>(sources.warnings());
         warnings.addAll(residualResult.warnings());
-        skippedOptionalLandscapes.stream().map(LandUsePlanningService::landscapeInstanceId).distinct().sorted()
-                .forEach(instanceId -> warnings.add(
-                        "CITY_LANDSCAPE_OPTIONAL_SKIPPED_INSUFFICIENT_SPACE:" + instanceId));
+        skippedLandscapes.stream().sorted().forEach(groupId -> {
+            LandUseSeedGroup group = sources.seedGroups().stream()
+                    .filter(candidate -> candidate.groupId().equals(groupId)).findFirst().orElse(null);
+            String policy = group != null && group.admissionPolicy() == LandUseSeedGroup.AdmissionPolicy.REQUIRED
+                    ? "REQUIRED_PARCEL" : "OPTIONAL";
+            warnings.add("CITY_LANDSCAPE_" + policy + "_SKIPPED_INSUFFICIENT_SPACE:" + groupId);
+        });
         connectionOutcomes.stream().filter(value -> value.status().equals("not_reached"))
                 .map(LandUseAutoConnectionPlanner.ConnectionOutcome::connection)
                 .forEach(connection -> warnings.add("LAND_USE_AUTO_CONNECTION_NOT_REACHED:"
@@ -138,13 +142,13 @@ public final class LandUsePlanningService {
         for (LandUseSeedGroup group : sources.seedGroups()) {
             int claimed = resolvedExpansion.claimedBlocksByGroup().getOrDefault(group.groupId(), 0);
             boolean foundation = group.layerRole() == LandUseSeedGroup.LayerRole.FOUNDATION;
-            boolean skippedOptional = skippedOptionalLandscapes.contains(group.groupId());
-            if (!foundation && !skippedOptional && claimed < group.minAreaBlocks()) {
+            boolean skippedLandscape = skippedLandscapes.contains(group.groupId());
+            if (!foundation && !skippedLandscape && claimed < group.minAreaBlocks()) {
                 warnings.add("LAND_USE_AREA_BELOW_MIN:" + group.groupId());
             }
             for (LandUseSeedGroup.GrowthRegion region : group.growthRegions()) {
                 int regionClaimed = expansion.claimedBlocksByGrowthRegion().getOrDefault(region.regionId(), 0);
-                if (!foundation && !skippedOptional && regionClaimed < region.minAreaBlocks()) {
+                if (!foundation && !skippedLandscape && regionClaimed < region.minAreaBlocks()) {
                     warnings.add("LAND_USE_GROWTH_REGION_BELOW_MIN:" + group.groupId() + ':' + region.regionId());
                 }
             }
@@ -159,9 +163,9 @@ public final class LandUsePlanningService {
                 sources.overflowZones());
         return new Result(plan, trace(sources, probe, resolvedExpansion, connectionOutcomes,
                 residualResult.urbanSpacePlan(), resolvedFoundationCloseRadius,
-                resolvedFoundationComponentCount, skippedOptionalLandscapes),
+                 resolvedFoundationComponentCount, skippedLandscapes),
                 quality(plan, sources, resolvedExpansion, connectionOutcomes, residualResult.urbanSpacePlan(),
-                        skippedOptionalLandscapes),
+                         skippedLandscapes),
                 surfacePrintPlan,
                 residualResult.urbanSpacePlan());
     }
@@ -178,9 +182,27 @@ public final class LandUsePlanningService {
         List<LandUseSeedGroup> optional = landscapes.stream()
                 .filter(group -> group.admissionPolicy() == LandUseSeedGroup.AdmissionPolicy.OPTIONAL)
                 .sorted(Comparator.comparing(LandUseSeedGroup::groupId)).toList();
-        LandUseExpansionResult requiredExpansion = expander.expand(cityId, terrain.planningBounds(), terrain,
-                required, seedSalt, Set.of(), capacityDomains, parentParcelIds);
-        for (LandUseSeedGroup group : required) {
+        List<LandUseSeedGroup> activeRequired = new ArrayList<>(required);
+        Set<String> skipped = new LinkedHashSet<>();
+        LandUseExpansionResult requiredExpansion;
+        while (true) {
+            try {
+                requiredExpansion = expander.expand(cityId, terrain.planningBounds(), terrain,
+                        activeRequired, seedSalt, Set.of(), capacityDomains, parentParcelIds);
+                break;
+            } catch (IllegalArgumentException failure) {
+                String failedGroupId = relayFailureGroupId(failure, activeRequired);
+                if (failedGroupId == null) throw failure;
+                Set<String> cascade = activeRequired.stream()
+                        .map(LandUseSeedGroup::groupId)
+                        .filter(groupId -> descendsFrom(groupId, failedGroupId, parentParcelIds))
+                        .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
+                if (cascade.isEmpty()) throw failure;
+                skipped.addAll(cascade);
+                activeRequired.removeIf(group -> cascade.contains(group.groupId()));
+            }
+        }
+        for (LandUseSeedGroup group : activeRequired) {
             int claimed = requiredExpansion.claimedBlocksByGroup().getOrDefault(group.groupId(), 0);
             int minimumExecutable = minimumExecutableArea(group);
             if (claimed < minimumExecutable) {
@@ -197,7 +219,6 @@ public final class LandUsePlanningService {
         Map<String, LandUseExpansionResult.ExpansionOrigin> expansionOrigins = new LinkedHashMap<>(
                 requiredExpansion.expansionOriginsByGroup());
         Set<BlockPoint> reserved = new HashSet<>(claims.keySet());
-        Set<String> skipped = new LinkedHashSet<>();
         int contested = requiredExpansion.contestedClaimCount();
         int blocked = requiredExpansion.blockedCandidateCount();
         Map<String, List<LandUseSeedGroup>> optionalInstances = new LinkedHashMap<>();
@@ -233,6 +254,29 @@ public final class LandUsePlanningService {
         }
         return new LandscapeExpansion(new LandUseExpansionResult(claims, groupCounts, regionCounts, effectiveSeeds,
                 expansionOrigins, contested, blocked), Set.copyOf(skipped));
+    }
+
+    private static String relayFailureGroupId(IllegalArgumentException failure,
+                                              List<LandUseSeedGroup> activeGroups) {
+        String message = failure.getMessage();
+        if (message == null || (!message.startsWith("CITY_LANDSCAPE_PARENT_PARCEL_UNAVAILABLE:")
+                && !message.startsWith("CITY_LANDSCAPE_PARENT_INTERFACE_EXHAUSTED:"))) return null;
+        int marker = message.indexOf(':');
+        String payload = marker < 0 ? "" : message.substring(marker + 1);
+        return activeGroups.stream().map(LandUseSeedGroup::groupId)
+                .filter(groupId -> payload.startsWith(groupId + ':'))
+                .max(Comparator.comparingInt(String::length)).orElse(null);
+    }
+
+    private static boolean descendsFrom(String groupId, String ancestorId,
+                                        Map<String, String> parentParcelIds) {
+        String current = groupId;
+        Set<String> visited = new HashSet<>();
+        while (current != null && !current.isBlank() && visited.add(current)) {
+            if (current.equals(ancestorId)) return true;
+            current = parentParcelIds.get(current);
+        }
+        return false;
     }
 
     private static boolean isOptionalRelayAdmissionFailure(IllegalArgumentException failure) {
@@ -348,7 +392,7 @@ public final class LandUsePlanningService {
                                     CityUrbanSpacePlan urbanSpacePlan,
                                     int resolvedFoundationCloseRadius,
                                     int resolvedFoundationComponentCount,
-                                    Set<String> skippedOptionalLandscapes) {
+                                     Set<String> skippedLandscapes) {
         JsonObject trace = new JsonObject();
         trace.addProperty("schemaVersion", "city_land_use_planning_trace.v0.6");
         trace.addProperty("foundationResolvedCloseRadiusBlocks", resolvedFoundationCloseRadius);
@@ -404,7 +448,7 @@ public final class LandUsePlanningService {
             value.addProperty("maxAreaBlocks", group.maxAreaBlocks());
             int claimedAreaBlocks = expansion.claimedBlocksByGroup().getOrDefault(group.groupId(), 0);
             value.addProperty("claimedAreaBlocks", claimedAreaBlocks);
-            value.addProperty("admissionStatus", skippedOptionalLandscapes.contains(group.groupId())
+            value.addProperty("admissionStatus", skippedLandscapes.contains(group.groupId())
                     ? "skipped_insufficient_space" : "admitted");
             JsonArray effectiveSeedPoints = new JsonArray();
             List<BlockPoint> resolvedSeeds = expansion.effectiveSeedPointsByGroup().get(group.groupId());
@@ -418,7 +462,7 @@ public final class LandUsePlanningService {
                 LandUseExpansionResult.ExpansionOrigin origin = expansion.expansionOriginsByGroup()
                         .get(group.groupId());
                 if (origin == null) {
-                    if (!skippedOptionalLandscapes.contains(group.groupId()) && claimedAreaBlocks > 0) {
+                    if (!skippedLandscapes.contains(group.groupId()) && claimedAreaBlocks > 0) {
                         throw new IllegalStateException("CITY_LANDSCAPE_EXPANSION_ORIGIN_MISSING:"
                                 + group.groupId());
                     }
@@ -489,7 +533,7 @@ public final class LandUsePlanningService {
                                       LandUseExpansionResult expansion,
                                       List<LandUseAutoConnectionPlanner.ConnectionOutcome> connectionOutcomes,
                                       CityUrbanSpacePlan urbanSpacePlan,
-                                      Set<String> skippedOptionalLandscapes) {
+                                       Set<String> skippedLandscapes) {
         JsonObject quality = new JsonObject();
         quality.addProperty("schemaVersion", "city_land_use_quality.v0.1");
         quality.addProperty("status", plan.warnings().isEmpty() ? "pass" : "warning");
@@ -500,17 +544,27 @@ public final class LandUsePlanningService {
         quality.addProperty("automaticSurfaceConnectionCount", connectionOutcomes.size());
         quality.addProperty("unreachedAutomaticSurfaceConnectionCount", connectionOutcomes.stream()
                 .filter(value -> value.status().equals("not_reached")).count());
-        quality.addProperty("skippedOptionalLandscapeCount", skippedOptionalLandscapes.stream()
+        quality.addProperty("skippedLandscapeCount", skippedLandscapes.stream()
                 .map(LandUsePlanningService::landscapeInstanceId).distinct().count());
-        quality.addProperty("skippedOptionalParcelCount", skippedOptionalLandscapes.size());
+        quality.addProperty("skippedLandscapeParcelCount", skippedLandscapes.size());
+        Set<String> skippedOptional = skippedLandscapes.stream()
+                .filter(groupId -> sources.seedGroups().stream().anyMatch(group -> group.groupId().equals(groupId)
+                        && group.admissionPolicy() == LandUseSeedGroup.AdmissionPolicy.OPTIONAL))
+                .collect(java.util.stream.Collectors.toSet());
+        quality.addProperty("skippedOptionalLandscapeCount", skippedOptional.stream()
+                .map(LandUsePlanningService::landscapeInstanceId).distinct().count());
+        quality.addProperty("skippedOptionalParcelCount", skippedOptional.size());
+        quality.addProperty("skippedRequiredParcelCount", skippedLandscapes.stream()
+                .filter(groupId -> sources.seedGroups().stream().anyMatch(group -> group.groupId().equals(groupId)
+                        && group.admissionPolicy() == LandUseSeedGroup.AdmissionPolicy.REQUIRED)).count());
         int belowMinimum = 0;
         int belowMinimumRegions = 0;
         JsonArray groupResults = new JsonArray();
         for (LandUseSeedGroup group : sources.seedGroups()) {
             int claimed = expansion.claimedBlocksByGroup().getOrDefault(group.groupId(), 0);
             boolean foundation = group.layerRole() == LandUseSeedGroup.LayerRole.FOUNDATION;
-            boolean skippedOptional = skippedOptionalLandscapes.contains(group.groupId());
-            boolean below = !foundation && !skippedOptional && claimed < group.minAreaBlocks();
+            boolean skippedLandscape = skippedLandscapes.contains(group.groupId());
+            boolean below = !foundation && !skippedLandscape && claimed < group.minAreaBlocks();
             if (below) belowMinimum++;
             JsonObject groupResult = new JsonObject();
             groupResult.addProperty("groupId", group.groupId());
@@ -519,11 +573,11 @@ public final class LandUsePlanningService {
             groupResult.addProperty("preferredAreaBlocks", group.preferredAreaBlocks());
             groupResult.addProperty("maxAreaBlocks", group.maxAreaBlocks());
             groupResult.addProperty("status", foundation ? "covered_by_landscape_overlay"
-                    : skippedOptional ? "skipped_insufficient_space" : below ? "below_minimum" : "accepted");
+                    : skippedLandscape ? "skipped_insufficient_space" : below ? "below_minimum" : "accepted");
             JsonArray regionResults = new JsonArray();
             for (LandUseSeedGroup.GrowthRegion region : group.growthRegions()) {
                 int regionClaimed = expansion.claimedBlocksByGrowthRegion().getOrDefault(region.regionId(), 0);
-                boolean regionBelow = !foundation && !skippedOptional && regionClaimed < region.minAreaBlocks();
+                boolean regionBelow = !foundation && !skippedLandscape && regionClaimed < region.minAreaBlocks();
                 if (regionBelow) belowMinimumRegions++;
                 JsonObject regionResult = new JsonObject();
                 regionResult.addProperty("regionId", region.regionId());
@@ -532,7 +586,7 @@ public final class LandUsePlanningService {
                 regionResult.addProperty("preferredAreaBlocks", region.preferredAreaBlocks());
                 regionResult.addProperty("maxAreaBlocks", region.maxAreaBlocks());
                 regionResult.addProperty("status", foundation ? "covered_by_landscape_overlay"
-                        : skippedOptional ? "skipped_insufficient_space"
+                        : skippedLandscape ? "skipped_insufficient_space"
                         : regionBelow ? "below_minimum" : "accepted");
                 regionResults.add(regionResult);
             }
@@ -569,7 +623,7 @@ public final class LandUsePlanningService {
     }
 
     private record LandscapeExpansion(LandUseExpansionResult expansion,
-                                      Set<String> skippedOptionalGroupIds) {
+                                      Set<String> skippedGroupIds) {
     }
 
     public record Result(LandUseAreaPlan plan,

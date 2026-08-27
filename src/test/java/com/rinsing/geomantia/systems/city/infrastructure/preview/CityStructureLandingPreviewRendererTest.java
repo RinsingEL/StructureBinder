@@ -311,7 +311,7 @@ final class CityStructureLandingPreviewRendererTest {
         Path overview = new CityStructureLandingPreviewRenderer()
                 .renderD4(anchorMap, null, null, extentMap, tempDir);
         BufferedImage image = ImageIO.read(overview.toFile());
-        double overviewScale = 2.625;
+        double overviewScale = 772.0 / 257.0;
         int overviewZ = 64 + (int) Math.round(80 * overviewScale);
         int filledX = 64 + (int) Math.round(48 * overviewScale);
         int notchX = 64 + (int) Math.round(80 * overviewScale);
@@ -365,7 +365,11 @@ final class CityStructureLandingPreviewRendererTest {
 
         BufferedImage image = ImageIO.read(overview.toFile());
         assertNotNull(image);
-        assertNotEquals(image.getRGB(398, 380), image.getRGB(520, 380),
+        double overviewScale = 772.0 / 257.0;
+        int landscapeX = 64 + (int) Math.round(128 * overviewScale);
+        int landscapeZ = 64 + (int) Math.round(120 * overviewScale);
+        int outsideLandscapeX = 64 + (int) Math.round(168 * overviewScale);
+        assertNotEquals(image.getRGB(landscapeX, landscapeZ), image.getRGB(outsideLandscapeX, landscapeZ),
                 "Exact landscape capacity span must tint the overview independently of structures");
         assertTrue(Files.exists(tempDir.resolve("structure_anchor_cluster_preview.png")));
     }
