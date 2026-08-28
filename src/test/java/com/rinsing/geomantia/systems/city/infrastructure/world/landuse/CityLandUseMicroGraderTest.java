@@ -1,5 +1,7 @@
 package com.rinsing.geomantia.systems.city.infrastructure.world.landuse;
 
+import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
+import com.rinsing.geomantia.systems.city.application.landuse.CityLandUseSurfacePrintPlan;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -80,6 +82,39 @@ class CityLandUseMicroGraderTest {
     }
 
     @Test
+    void subthresholdHighPatchMergesIntoItsSurroundingMainPlatform() {
+        FakeTerrain terrain = new FakeTerrain(64);
+        for (int z = 6; z <= 12; z++) {
+            for (int x = 6; x <= 12; x++) terrain.height(x, z, 68);
+        }
+
+        CityLandUseMicroGrader.FoundationPlan plan = CityLandUseMicroGrader.planFoundationPlatform(
+                foundationFragment(List.of(new CityLandUseChunkCompiler.SurfaceOperation(
+                        "area", "plaza", 9, 9, "minecraft:stone_bricks"))), terrain);
+
+        assertEquals(new CityLandUseMicroGrader.FoundationDecision(
+                "area", 9, 9, 68, 64, CityLandUseMicroGrader.FoundationMode.CUT),
+                plan.decisions().get(0));
+    }
+
+    @Test
+    void buildingSizedHighPatchRemainsAnIndependentPlatformLevel() {
+        FakeTerrain terrain = new FakeTerrain(64);
+        for (int z = 4; z <= 16; z++) {
+            for (int x = 4; x <= 16; x++) terrain.height(x, z, 68);
+        }
+        terrain.height(10, 10, 76);
+
+        CityLandUseMicroGrader.FoundationPlan plan = CityLandUseMicroGrader.planFoundationPlatform(
+                foundationFragment(List.of(new CityLandUseChunkCompiler.SurfaceOperation(
+                        "area", "plaza", 10, 10, "minecraft:stone_bricks"))), terrain);
+
+        assertEquals(new CityLandUseMicroGrader.FoundationDecision(
+                "area", 10, 10, 76, 68, CityLandUseMicroGrader.FoundationMode.CUT),
+                plan.decisions().get(0));
+    }
+
+    @Test
     void platformEdgeWithTwoBlockDropProducesStoneRetainingWall() {
         FakeTerrain terrain = new FakeTerrain(64);
         terrain.height(25, 8, 62);
@@ -95,14 +130,116 @@ class CityLandUseMicroGraderTest {
     }
 
     @Test
-    void foundationPreservesUrbanWaterInsteadOfFillingIt() {
+    void foundationClosesSmallWaterPocketInsidePavedPlatform() {
         FakeTerrain terrain = new FakeTerrain(64);
-        terrain.water(8, 8, 63);
+        terrain.water(8, 8, 62);
 
         List<CityLandUseMicroGrader.FoundationDecision> decisions =
                 CityLandUseMicroGrader.planFoundation(foundationFragment(), terrain);
 
+        assertEquals(new CityLandUseMicroGrader.FoundationDecision(
+                "area", 8, 8, 62, 64, CityLandUseMicroGrader.FoundationMode.FILL), decisions.get(0));
+    }
+
+    @Test
+    void foundationPreservesWaterConnectedOutsidePavedPlatform() {
+        FakeTerrain terrain = new FakeTerrain(64);
+        terrain.water(8, 8, 62);
+        List<CityLandUseChunkCompiler.GradingMaskCell> openMask = gradingMask().stream()
+                .filter(cell -> cell.x() != 9 || cell.z() != 8)
+                .map(cell -> new CityLandUseChunkCompiler.GradingMaskCell(
+                        cell.areaId(), cell.x(), cell.z(), true))
+                .toList();
+        CityLandUseChunkCompiler.ChunkFragment fragment = fragment(openMask, List.of(
+                new CityLandUseChunkCompiler.SurfaceOperation(
+                        "area", "plaza", 8, 8, "minecraft:stone_bricks")));
+
+        List<CityLandUseMicroGrader.FoundationDecision> decisions =
+                CityLandUseMicroGrader.planFoundation(fragment, terrain);
+
         assertEquals(CityLandUseMicroGrader.FoundationMode.PRESERVE, decisions.get(0).mode());
+    }
+
+    @Test
+    void structureDatumUsesSurroundingFoundationPlatformSurfacePlusOne() {
+        FakeTerrain terrain = new FakeTerrain(64);
+        List<CityLandUseChunkCompiler.GradingMaskCell> ring = gradingMask().stream()
+                .filter(cell -> cell.x() < 8 || cell.x() > 9 || cell.z() < 8 || cell.z() > 9)
+                .map(cell -> new CityLandUseChunkCompiler.GradingMaskCell(
+                        cell.areaId(), cell.x(), cell.z(), true))
+                .toList();
+        CityLandUseChunkCompiler.ChunkFragment fragment = fragment(ring, List.of());
+
+        assertEquals(65, CityLandUseMicroGrader.resolveStructureDatum(
+                fragment, terrain, new BlockBounds(8, 8, 9, 9)).orElseThrow());
+    }
+
+    @Test
+    void structureDatumUsesMergedPlatformLevelInsteadOfRawLocalSlopeHeight() {
+        FakeTerrain terrain = new FakeTerrain(66);
+        List<CityLandUseChunkCompiler.GradingMaskCell> ring = gradingMask().stream()
+                .filter(cell -> cell.x() < 8 || cell.x() > 9 || cell.z() < 8 || cell.z() > 9)
+                .map(cell -> new CityLandUseChunkCompiler.GradingMaskCell(
+                        cell.areaId(), cell.x(), cell.z(), true))
+                .toList();
+
+        assertEquals(69, CityLandUseMicroGrader.resolveStructureDatum(
+                fragment(ring, List.of()), terrain, new BlockBounds(8, 8, 9, 9)).orElseThrow());
+    }
+
+    @Test
+    void roadUsesStraightStairRunWhenLowSideHasEnoughDepth() {
+        FakeTerrain terrain = splitTerrain();
+        List<CityLandUseChunkCompiler.SurfaceOperation> surfaces = platformSurfaces();
+        List<CityLandUseChunkCompiler.FeatureOperation> roads = horizontalRoad(0, 15, 8);
+
+        CityLandUseMicroGrader.FoundationPlan plan = CityLandUseMicroGrader.planFoundationPlatform(
+                foundationFragment(surfaces, roads), terrain);
+
+        List<CityLandUseMicroGrader.StairDecision> direct = plan.stairs().stream()
+                .filter(stair -> stair.mode() == CityLandUseMicroGrader.StairMode.DIRECT
+                        && stair.z() == 8 && stair.x() >= 4 && stair.x() <= 7)
+                .toList();
+        assertEquals(List.of(64, 65, 66, 67), direct.stream()
+                .map(CityLandUseMicroGrader.StairDecision::targetY).toList());
+        assertTrue(direct.stream().allMatch(stair ->
+                stair.facing() == CityLandUseSurfacePrintPlan.HorizontalFacing.EAST));
+    }
+
+    @Test
+    void shortFrontRunCreatesTwoLowSideFlightsMeetingCentralHighPlatform() {
+        FakeTerrain terrain = splitTerrain();
+        List<CityLandUseChunkCompiler.SurfaceOperation> surfaces = platformSurfaces();
+        List<CityLandUseChunkCompiler.FeatureOperation> roads = horizontalRoad(7, 12, 8);
+
+        CityLandUseMicroGrader.FoundationPlan plan = CityLandUseMicroGrader.planFoundationPlatform(
+                foundationFragment(surfaces, roads), terrain);
+
+        List<CityLandUseMicroGrader.StairDecision> split = plan.stairs().stream()
+                .filter(stair -> stair.mode() == CityLandUseMicroGrader.StairMode.SPLIT)
+                .toList();
+        assertEquals(7, split.size());
+        assertTrue(split.stream().anyMatch(stair -> stair.x() == 7 && stair.z() == 8
+                && stair.targetY() == 67
+                && stair.facing() == CityLandUseSurfacePrintPlan.HorizontalFacing.EAST));
+        assertTrue(split.stream().anyMatch(stair -> stair.x() == 7 && stair.z() == 5
+                && stair.targetY() == 64
+                && stair.facing() == CityLandUseSurfacePrintPlan.HorizontalFacing.SOUTH));
+        assertTrue(split.stream().anyMatch(stair -> stair.x() == 7 && stair.z() == 11
+                && stair.targetY() == 64
+                && stair.facing() == CityLandUseSurfacePrintPlan.HorizontalFacing.NORTH));
+    }
+
+    @Test
+    void activeStairScanFindsTransitionOnSquareLShapedRoadSource() {
+        FakeTerrain terrain = splitTerrain();
+
+        CityLandUseMicroGrader.FoundationPlan plan = CityLandUseMicroGrader.planFoundationPlatform(
+                foundationFragment(platformSurfaces(), squareCrossRoad()), terrain);
+
+        assertTrue(plan.stairs().stream().anyMatch(stair ->
+                stair.mode() == CityLandUseMicroGrader.StairMode.DIRECT
+                        && stair.facing() == CityLandUseSurfacePrintPlan.HorizontalFacing.EAST));
     }
 
     private static CityLandUseChunkCompiler.ChunkFragment fragment() {
@@ -121,6 +258,72 @@ class CityLandUseMicroGraderTest {
                         cell.areaId(), cell.x(), cell.z(), true))
                 .toList();
         return fragment(mask, operations);
+    }
+
+    private static CityLandUseChunkCompiler.ChunkFragment foundationFragment(
+            List<CityLandUseChunkCompiler.SurfaceOperation> operations,
+            List<CityLandUseChunkCompiler.FeatureOperation> features) {
+        List<CityLandUseChunkCompiler.GradingMaskCell> mask = gradingMask().stream()
+                .map(cell -> new CityLandUseChunkCompiler.GradingMaskCell(
+                        cell.areaId(), cell.x(), cell.z(), true))
+                .toList();
+        return new CityLandUseChunkCompiler.ChunkFragment(CityLandUseChunkCompiler.RESULT_SCHEMA,
+                "city", "hash", "palette", 0, 0, operations.size(), 0, 0, 0,
+                "minecraft:dirt", mask, operations, List.of(), features);
+    }
+
+    private static FakeTerrain splitTerrain() {
+        FakeTerrain terrain = new FakeTerrain(64);
+        for (int z = -8; z <= 24; z++) {
+            for (int x = 8; x <= 24; x++) terrain.height(x, z, 68);
+        }
+        return terrain;
+    }
+
+    private static List<CityLandUseChunkCompiler.SurfaceOperation> platformSurfaces() {
+        List<CityLandUseChunkCompiler.SurfaceOperation> operations = new ArrayList<>();
+        for (int z = 0; z <= 15; z++) {
+            for (int x = 0; x <= 15; x++) {
+                operations.add(new CityLandUseChunkCompiler.SurfaceOperation(
+                        "area", "plaza", x, z, "minecraft:stone_bricks"));
+            }
+        }
+        return operations;
+    }
+
+    private static List<CityLandUseChunkCompiler.FeatureOperation> horizontalRoad(
+            int minX, int maxX, int z) {
+        List<CityLandUseChunkCompiler.FeatureOperation> operations = new ArrayList<>();
+        for (int x = minX; x <= maxX; x++) {
+            operations.add(new CityLandUseChunkCompiler.FeatureOperation("road", x, z,
+                    "minecraft:stone_brick_slab", 0,
+                    CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB,
+                    CityLandUseSurfacePrintPlan.HorizontalFacing.NONE));
+        }
+        operations.add(new CityLandUseChunkCompiler.FeatureOperation("road", minX, z - 1,
+                "minecraft:stone_brick_stairs", 0,
+                CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR,
+                CityLandUseSurfacePrintPlan.HorizontalFacing.NORTH));
+        return operations;
+    }
+
+    private static List<CityLandUseChunkCompiler.FeatureOperation> squareCrossRoad() {
+        List<CityLandUseChunkCompiler.FeatureOperation> operations = new ArrayList<>();
+        for (int coordinate = 0; coordinate <= 15; coordinate++) {
+            operations.add(new CityLandUseChunkCompiler.FeatureOperation("road", coordinate, 8,
+                    "minecraft:stone_brick_slab", 0,
+                    CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB,
+                    CityLandUseSurfacePrintPlan.HorizontalFacing.NONE));
+            operations.add(new CityLandUseChunkCompiler.FeatureOperation("road", 8, coordinate,
+                    "minecraft:stone_brick_slab", 0,
+                    CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB,
+                    CityLandUseSurfacePrintPlan.HorizontalFacing.NONE));
+        }
+        operations.add(new CityLandUseChunkCompiler.FeatureOperation("road", 0, 7,
+                "minecraft:stone_brick_stairs", 0,
+                CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR,
+                CityLandUseSurfacePrintPlan.HorizontalFacing.NORTH));
+        return operations;
     }
 
     private static CityLandUseChunkCompiler.ChunkFragment fragment(

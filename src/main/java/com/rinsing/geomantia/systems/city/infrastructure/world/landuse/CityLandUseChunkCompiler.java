@@ -90,10 +90,27 @@ public final class CityLandUseChunkCompiler {
     public ChunkFragment compilePrepared(PreparedSurfacePlan prepared, int chunkX, int chunkZ) {
         Objects.requireNonNull(prepared, "prepared");
         OwnerChunk owner = new OwnerChunk(chunkX, chunkZ);
+        int halo = CityLandUseMicroGrader.MASK_HALO_BLOCKS;
+        int minX = chunkX * 16 - halo;
+        int maxX = chunkX * 16 + 15 + halo;
+        int minZ = chunkZ * 16 - halo;
+        int maxZ = chunkZ * 16 + 15 + halo;
+        int ownerRadius = Math.max(1, Math.floorDiv(halo + 15, 16));
+        List<CityLandUseSurfacePrintPlan.FeatureCell> gradingFeatures = new ArrayList<>();
+        for (int dz = -ownerRadius; dz <= ownerRadius; dz++) {
+            for (int dx = -ownerRadius; dx <= ownerRadius; dx++) {
+                prepared.featureCellsByOwner().getOrDefault(
+                                new OwnerChunk(chunkX + dx, chunkZ + dz), List.of()).stream()
+                        .filter(cell -> cell.x() >= minX && cell.x() <= maxX
+                                && cell.z() >= minZ && cell.z() <= maxZ)
+                        .forEach(gradingFeatures::add);
+            }
+        }
         return compileInternal(prepared.areaPlan(),
                 prepared.printAreasByOwner().getOrDefault(owner, Map.of()),
                 prepared.surfacePrintPlan().sharedBoundarySpans(),
                 prepared.featureCellsByOwner().getOrDefault(owner, List.of()),
+                gradingFeatures,
                 chunkX, chunkZ);
     }
 
@@ -102,6 +119,7 @@ public final class CityLandUseChunkCompiler {
             Map<AreaKey, CityLandUseSurfacePrintPlan.AreaPrint> printAreas,
             List<CityLandUseSurfacePrintPlan.SharedBoundaryPrintSpan> sharedBoundarySpans,
             List<CityLandUseSurfacePrintPlan.FeatureCell> featureCells,
+            List<CityLandUseSurfacePrintPlan.FeatureCell> gradingFeatureCells,
             int chunkX,
             int chunkZ) {
         Objects.requireNonNull(plan, "plan");
@@ -263,13 +281,18 @@ public final class CityLandUseChunkCompiler {
                 .map(cell -> new FeatureOperation(cell.sourceId(), cell.x(), cell.z(), cell.blockId(),
                         cell.surfaceOffset(), cell.kind(), cell.facing()))
                 .sorted(FeatureOperation.STABLE_ORDER).toList();
+        List<FeatureOperation> gradingFeatureOperations = gradingFeatureCells.stream()
+                .map(cell -> new FeatureOperation(cell.sourceId(), cell.x(), cell.z(), cell.blockId(),
+                        cell.surfaceOffset(), cell.kind(), cell.facing()))
+                .sorted(FeatureOperation.STABLE_ORDER).toList();
         relevantCellCount += featureOperations.size();
         List<GradingMaskCell> gradingMaskCells = new ArrayList<>(gradingMask.values());
         gradingMaskCells.sort(GradingMaskCell.STABLE_ORDER);
         return new ChunkFragment(RESULT_SCHEMA, plan.cityId(), plan.planHash(), palette.paletteHash(), chunkX, chunkZ,
                 relevantCellCount, footprintExcluded, corridorExcluded, gateExcluded,
                 microFillBlock, List.copyOf(gradingMaskCells),
-                List.copyOf(surfaceOperations), List.copyOf(boundaryOperations), featureOperations);
+                List.copyOf(surfaceOperations), List.copyOf(boundaryOperations), featureOperations,
+                gradingFeatureOperations);
     }
 
     private static boolean isContourChannel(CityLandUseSurfacePrintPlan.AreaPrint printArea,
@@ -575,7 +598,8 @@ public final class CityLandUseChunkCompiler {
                                 List<GradingMaskCell> gradingMaskCells,
                                 List<SurfaceOperation> surfaceOperations,
                                 List<BoundaryOperation> boundaryOperations,
-                                List<FeatureOperation> featureOperations) {
+                                List<FeatureOperation> featureOperations,
+                                List<FeatureOperation> gradingFeatureOperations) {
         public ChunkFragment {
             if (!RESULT_SCHEMA.equals(schemaVersion)) {
                 throw new IllegalArgumentException("CITY_LAND_USE_FRAGMENT_SCHEMA_UNSUPPORTED");
@@ -589,6 +613,21 @@ public final class CityLandUseChunkCompiler {
             surfaceOperations = List.copyOf(surfaceOperations);
             boundaryOperations = List.copyOf(boundaryOperations);
             featureOperations = List.copyOf(featureOperations == null ? List.of() : featureOperations);
+            gradingFeatureOperations = List.copyOf(
+                    gradingFeatureOperations == null ? List.of() : gradingFeatureOperations);
+        }
+
+        public ChunkFragment(String schemaVersion, String cityId, String planHash, String paletteHash,
+                             int chunkX, int chunkZ, int relevantCellCount, int footprintExcludedCount,
+                             int corridorExcludedCount, int gateExcludedCount, String microFillBlockId,
+                             List<GradingMaskCell> gradingMaskCells,
+                             List<SurfaceOperation> surfaceOperations,
+                             List<BoundaryOperation> boundaryOperations,
+                             List<FeatureOperation> featureOperations) {
+            this(schemaVersion, cityId, planHash, paletteHash, chunkX, chunkZ, relevantCellCount,
+                    footprintExcludedCount, corridorExcludedCount, gateExcludedCount, microFillBlockId,
+                    gradingMaskCells, surfaceOperations, boundaryOperations, featureOperations,
+                    featureOperations);
         }
 
         public ChunkFragment(String schemaVersion, String cityId, String planHash, String paletteHash,
@@ -599,7 +638,7 @@ public final class CityLandUseChunkCompiler {
                              List<BoundaryOperation> boundaryOperations) {
             this(schemaVersion, cityId, planHash, paletteHash, chunkX, chunkZ, relevantCellCount,
                     footprintExcludedCount, corridorExcludedCount, gateExcludedCount, microFillBlockId,
-                    gradingMaskCells, surfaceOperations, boundaryOperations, List.of());
+                    gradingMaskCells, surfaceOperations, boundaryOperations, List.of(), List.of());
         }
 
         public boolean hasRelevantCells() {

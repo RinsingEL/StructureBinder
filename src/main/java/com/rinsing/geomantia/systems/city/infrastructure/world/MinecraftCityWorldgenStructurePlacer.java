@@ -7,12 +7,18 @@ import com.rinsing.geomantia.systems.city.domain.model.BlockPoint;
 import com.rinsing.geomantia.systems.city.application.CityStructureMaterializationPlanner;
 import com.rinsing.geomantia.systems.city.application.CityTemplatePlacementGeometry;
 import com.rinsing.geomantia.systems.city.application.CityTemplateTerrainPosePolicy;
+import com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityLandUseChunkExecutor;
+import com.rinsing.geomantia.systems.city.infrastructure.world.landuse.CityLandUseWorldgenRegistry;
 import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.LevelHeightAccessor;
+import net.minecraft.world.level.NoiseColumn;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.chunk.ChunkGeneratorStructureState;
@@ -149,8 +155,14 @@ public final class MinecraftCityWorldgenStructurePlacer {
                         "D6 locked footprint differs from the fixed template StructureStart piece.");
                 return;
             }
-            int datumY = medianFoundationDatum(footprint, (x, z) -> generator.getBaseHeight(x, z,
-                    Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, chunk.getHeightAccessorForGeneration(), randomState));
+            LevelHeightAccessor heightAccessor = chunk.getHeightAccessorForGeneration();
+            int datumY = CityLandUseWorldgenRegistry.resolveStructureFoundationDatum(
+                            item.cityId(), footprint,
+                            (x, z) -> generatorTerrainSample(generator, heightAccessor, randomState, x, z))
+                    .orElseGet(() -> medianFoundationDatum(footprint,
+                            (x, z) -> generator.getBaseHeight(x, z,
+                                    Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                                    heightAccessor, randomState)));
             if (datumY <= chunk.getMinBuildHeight()) {
                 CityReservationMaskRegistry.recordWorldgenFailure(item, chunkPos,
                         "TEMPLATE_DATUM_SURFACE_UNAVAILABLE",
@@ -210,6 +222,21 @@ public final class MinecraftCityWorldgenStructurePlacer {
         int middle = heights.size() / 2;
         return heights.size() % 2 == 1 ? heights.get(middle)
                 : Math.floorDiv(heights.get(middle - 1) + heights.get(middle), 2);
+    }
+
+    private static CityLandUseChunkExecutor.ColumnSample generatorTerrainSample(
+            ChunkGenerator generator,
+            LevelHeightAccessor heightAccessor,
+            RandomState randomState,
+            int worldX,
+            int worldZ) {
+        int firstFreeY = generator.getBaseHeight(worldX, worldZ,
+                Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, heightAccessor, randomState);
+        int surfaceY = Math.max(heightAccessor.getMinBuildHeight(), firstFreeY - 1);
+        NoiseColumn column = generator.getBaseColumn(worldX, worldZ, heightAccessor, randomState);
+        BlockState surface = column.getBlock(surfaceY);
+        ResourceLocation blockId = BuiltInRegistries.BLOCK.getKey(surface.getBlock());
+        return new CityLandUseChunkExecutor.ColumnSample(surfaceY, blockId.toString(), true);
     }
 
     private static List<Integer> sampleAxis(int minimum, int maximum) {

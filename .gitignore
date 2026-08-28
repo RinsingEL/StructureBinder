@@ -43,3 +43,4 @@ country_designer_mcp/*
 # local acceptance artifacts
 run-data/
 run_logs/
+country_designer_mcp_log.jsonl

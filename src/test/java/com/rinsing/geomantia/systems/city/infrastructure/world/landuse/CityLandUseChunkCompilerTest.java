@@ -296,6 +296,10 @@ class CityLandUseChunkCompilerTest {
         assertEquals(15, west.featureOperations().get(0).x());
         assertEquals(1, east.featureOperations().size());
         assertEquals(16, east.featureOperations().get(0).x());
+        assertEquals(List.of(15, 16), west.gradingFeatureOperations().stream()
+                .map(CityLandUseChunkCompiler.FeatureOperation::x).toList());
+        assertEquals(List.of(15, 16), east.gradingFeatureOperations().stream()
+                .map(CityLandUseChunkCompiler.FeatureOperation::x).toList());
     }
 
     private static LandUseAreaPlan.Area landscapeArea(String areaId, String groupId, int x) {

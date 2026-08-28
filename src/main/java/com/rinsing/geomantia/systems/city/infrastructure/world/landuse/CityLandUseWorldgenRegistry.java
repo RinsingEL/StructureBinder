@@ -30,12 +30,14 @@ import java.nio.file.StandardCopyOption;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.OptionalInt;
 import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.function.Predicate;
@@ -114,6 +116,45 @@ public final class CityLandUseWorldgenRegistry {
         validatePlanHash(Objects.requireNonNull(plan, "plan"));
         validateSurfacePrintLink(plan, surfacePrintPlan);
         return new CityLandUseChunkStatusPreflight().inspect(plan, surfacePrintPlan, probe);
+    }
+
+    public static synchronized OptionalInt resolveStructureFoundationDatum(
+            String cityId,
+            BlockBounds footprint,
+            ExactTerrainSampler terrain) {
+        Objects.requireNonNull(footprint, "footprint");
+        Objects.requireNonNull(terrain, "terrain");
+        String requiredCityId = requiredCityId(cityId);
+        List<Integer> candidates = new ArrayList<>();
+        Map<Long, CityLandUseChunkExecutor.ColumnSample> sampleCache = new HashMap<>();
+        CityLandUseMicroGrader.TerrainView cachedTerrain = (x, z) -> sampleCache.computeIfAbsent(
+                (((long) x) << 32) ^ (z & 0xffffffffL), ignored -> terrain.sample(x, z));
+        for (ActivePlan active : ACTIVE.values()) {
+            if (!active.key().cityId().equals(requiredCityId)) continue;
+            int minChunkX = Math.floorDiv(footprint.minX() - CityLandUseMicroGrader.REFERENCE_RADIUS_BLOCKS, 16);
+            int maxChunkX = Math.floorDiv(footprint.maxX() + CityLandUseMicroGrader.REFERENCE_RADIUS_BLOCKS, 16);
+            int minChunkZ = Math.floorDiv(footprint.minZ() - CityLandUseMicroGrader.REFERENCE_RADIUS_BLOCKS, 16);
+            int maxChunkZ = Math.floorDiv(footprint.maxZ() + CityLandUseMicroGrader.REFERENCE_RADIUS_BLOCKS, 16);
+            for (int chunkZ = minChunkZ; chunkZ <= maxChunkZ; chunkZ++) {
+                for (int chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
+                    CityLandUseChunkCompiler.ChunkFragment fragment =
+                            new CityLandUseChunkCompiler(active.palette())
+                                    .compilePrepared(active.preparedSurfacePlan(), chunkX, chunkZ);
+                    OptionalInt datum = CityLandUseMicroGrader.resolveStructureDatum(
+                            fragment, cachedTerrain, footprint);
+                    datum.ifPresent(candidates::add);
+                }
+            }
+        }
+        if (candidates.isEmpty()) return OptionalInt.empty();
+        Map<Integer, Integer> counts = new LinkedHashMap<>();
+        candidates.forEach(value -> counts.merge(value, 1, Integer::sum));
+        int median = candidates.stream().sorted().toList().get(candidates.size() / 2);
+        return counts.entrySet().stream().sorted(Comparator
+                        .<Map.Entry<Integer, Integer>>comparingInt(Map.Entry::getValue).reversed()
+                        .thenComparingInt(entry -> Math.abs(entry.getKey() - median))
+                        .thenComparingInt(Map.Entry::getKey))
+                .mapToInt(Map.Entry::getKey).findFirst();
     }
 
     public static JsonObject deactivate(String dimensionId, String cityId, Path serverRoot) {
@@ -801,6 +842,11 @@ public final class CityLandUseWorldgenRegistry {
     @FunctionalInterface
     interface LedgerPersistenceWriter {
         void write(Path path, JsonObject object, String reasonCode);
+    }
+
+    @FunctionalInterface
+    public interface ExactTerrainSampler {
+        CityLandUseChunkExecutor.ColumnSample sample(int worldX, int worldZ);
     }
 
     public record ApplySummary(String dimensionId,

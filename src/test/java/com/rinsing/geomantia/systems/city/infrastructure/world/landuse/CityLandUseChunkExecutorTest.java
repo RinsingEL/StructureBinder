@@ -45,6 +45,55 @@ class CityLandUseChunkExecutorTest {
     }
 
     @Test
+    void replacesRoadSlabsWithAscendingPlatformStairsAtTerrainStep() {
+        List<CityLandUseChunkCompiler.GradingMaskCell> mask = new ArrayList<>();
+        for (int z = -8; z <= 24; z++) {
+            for (int x = -8; x <= 24; x++) {
+                mask.add(new CityLandUseChunkCompiler.GradingMaskCell("area", x, z, true));
+            }
+        }
+        List<CityLandUseChunkCompiler.SurfaceOperation> surfaces = new ArrayList<>();
+        for (int z = 0; z <= 15; z++) {
+            for (int x = 0; x <= 15; x++) {
+                surfaces.add(new CityLandUseChunkCompiler.SurfaceOperation(
+                        "area", "plaza", x, z, "minecraft:stone_bricks"));
+            }
+        }
+        List<CityLandUseChunkCompiler.FeatureOperation> roads = new ArrayList<>();
+        for (int x = 0; x <= 15; x++) {
+            roads.add(new CityLandUseChunkCompiler.FeatureOperation("road", x, 8,
+                    "minecraft:stone_brick_slab", 0,
+                    CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB,
+                    CityLandUseSurfacePrintPlan.HorizontalFacing.NONE));
+        }
+        roads.add(new CityLandUseChunkCompiler.FeatureOperation("road", 0, 7,
+                "minecraft:stone_brick_stairs", 0,
+                CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR,
+                CityLandUseSurfacePrintPlan.HorizontalFacing.NORTH));
+        CityLandUseChunkCompiler.ChunkFragment fragment = new CityLandUseChunkCompiler.ChunkFragment(
+                CityLandUseChunkCompiler.RESULT_SCHEMA, "city", "area-hash", "palette-hash",
+                0, 0, surfaces.size(), 0, 0, 0, "minecraft:dirt",
+                mask, surfaces, List.of(), roads);
+        FakeWorld world = new FakeWorld();
+        for (int z = -8; z <= 24; z++) {
+            for (int x = 8; x <= 24; x++) {
+                world.columns.put(x + "," + z,
+                        new CityLandUseChunkExecutor.ColumnSample(68, "minecraft:dirt", true));
+            }
+        }
+
+        CityLandUseChunkExecutor.ExecutionResult result = executor.execute(fragment, world,
+                CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES);
+
+        assertEquals(CityLandUseChunkExecutor.Status.APPLIED, result.status());
+        assertTrue(world.featureWrites.contains("4,64,8=ROAD_STAIR:EAST"));
+        assertTrue(world.featureWrites.contains("5,65,8=ROAD_STAIR:EAST"));
+        assertTrue(world.featureWrites.contains("6,66,8=ROAD_STAIR:EAST"));
+        assertTrue(world.featureWrites.contains("7,67,8=ROAD_STAIR:EAST"));
+        assertTrue(world.featureWrites.contains("8,68,8=ROAD_SLAB:NONE"));
+    }
+
+    @Test
     void bridgeRailsCreatePairedStonePiersDownToSolidBed() {
         List<CityLandUseChunkCompiler.FeatureOperation> features = new ArrayList<>();
         for (int x = 0; x <= 8; x++) {

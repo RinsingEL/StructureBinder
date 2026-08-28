@@ -3,9 +3,14 @@ package com.rinsing.geomantia.systems.city.infrastructure.world.landuse;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.rinsing.geomantia.systems.city.application.landuse.CityLandUseSurfacePrintPlan;
+import com.rinsing.geomantia.systems.city.application.landuse.LandUseAreaPlanCodec;
+import com.rinsing.geomantia.systems.city.domain.landuse.BoundaryPolicy;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseAreaPlan;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseSurfaceSettings;
 import com.rinsing.geomantia.systems.city.domain.landuse.SurfacePolicy;
+import com.rinsing.geomantia.systems.city.domain.landuse.VegetationPolicy;
+import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
+import com.rinsing.geomantia.systems.city.domain.model.BlockPoint;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -199,6 +204,29 @@ class CityLandUseWorldgenRegistryTest {
                 "minecraft:overworld", 20, 0));
         assertTrue(CityLandUseWorldgenRegistry.vegetationLike("configured_tree_oak"));
         assertFalse(CityLandUseWorldgenRegistry.vegetationLike("ore_diamond"));
+    }
+
+    @Test
+    void activeFoundationResolvesStructureDatumFromSurroundingPlatform() {
+        List<LandUseAreaPlan.ScanlineSpan> spans = new ArrayList<>();
+        for (int z = 0; z <= 15; z++) spans.add(new LandUseAreaPlan.ScanlineSpan(z, 0, 15));
+        BlockBounds footprint = new BlockBounds(4, 4, 5, 5);
+        LandUseAreaPlan.Area area = new LandUseAreaPlan.Area("foundation", "foundation", "urban",
+                List.of("city::foundation"), List.of("house"), List.of(new BlockPoint(0, 0)),
+                spans, List.of(footprint), List.of(), List.of(), 1.0, SurfacePolicy.PAVE,
+                VegetationPolicy.CLEAR, BoundaryPolicy.OPEN, "foundation");
+        LandUseAreaPlan plan = new LandUseAreaPlanCodec().withComputedHash(new LandUseAreaPlan(
+                LandUseAreaPlan.CURRENT_SCHEMA_VERSION, "land_use_rules.v0.1", "city_foundation_datum", "",
+                new BlockBounds(0, 0, 15, 15), List.of(area), List.of(), List.of(), List.of()));
+        CityLandUseWorldgenRegistry.activate("minecraft:overworld", plan,
+                CityLandUseChunkCompilerTest.uniformPlan(plan), serverRoot);
+
+        int datum = CityLandUseWorldgenRegistry.resolveStructureFoundationDatum(
+                plan.cityId(), footprint,
+                (x, z) -> new CityLandUseChunkExecutor.ColumnSample(
+                        64, "minecraft:grass_block", true)).orElseThrow();
+
+        assertEquals(65, datum);
     }
 
     private static LandUseAreaPlan areaPlan(String cityId) {

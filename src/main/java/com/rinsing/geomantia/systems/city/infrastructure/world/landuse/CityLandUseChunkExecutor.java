@@ -62,6 +62,10 @@ public final class CityLandUseChunkExecutor {
         for (CityLandUseMicroGrader.FoundationDecision decision : foundationPlan.decisions()) {
             foundationByColumn.put(new ColumnKey(decision.x(), decision.z()), decision);
         }
+        Map<ColumnKey, CityLandUseMicroGrader.StairDecision> platformStairByColumn = new HashMap<>();
+        for (CityLandUseMicroGrader.StairDecision stair : foundationPlan.stairs()) {
+            platformStairByColumn.put(new ColumnKey(stair.x(), stair.z()), stair);
+        }
         Map<ColumnKey, Integer> plannedSurfaceY = new HashMap<>();
         Set<ColumnKey> countedNaturalSkips = new HashSet<>();
         Set<ColumnKey> preparedFillColumns = new HashSet<>();
@@ -87,7 +91,9 @@ public final class CityLandUseChunkExecutor {
                 continue;
             }
             CityLandUseMicroGrader.FillDecision fill = fillByColumn.get(key);
-            int targetSurfaceY = foundation != null ? foundation.targetY()
+            CityLandUseMicroGrader.StairDecision platformStair = platformStairByColumn.get(key);
+            int targetSurfaceY = platformStair != null ? platformStair.targetY()
+                    : foundation != null ? foundation.targetY()
                     : fill == null ? column.surfaceY() : fill.targetY();
             boolean shouldFill = foundation != null
                     ? foundation.mode() == CityLandUseMicroGrader.FoundationMode.FILL : fill != null;
@@ -167,12 +173,15 @@ public final class CityLandUseChunkExecutor {
 
         Set<CityLandUseChunkCompiler.FeatureOperation> bridgePierRails =
                 bridgePierRails(fragment.featureOperations());
+        Set<ColumnKey> materializedPlatformStairs = new HashSet<>();
         for (CityLandUseChunkCompiler.FeatureOperation operation : fragment.featureOperations()) {
             ColumnKey key = new ColumnKey(operation.x(), operation.z());
             ColumnSample column = terrainView.sample(operation.x(), operation.z());
             CityLandUseMicroGrader.FoundationDecision foundation = foundationByColumn.get(key);
             CityLandUseMicroGrader.FillDecision fill = fillByColumn.get(key);
-            int surfaceY = plannedSurfaceY.getOrDefault(key, foundation != null ? foundation.targetY()
+            CityLandUseMicroGrader.StairDecision platformStair = platformStairByColumn.get(key);
+            int surfaceY = plannedSurfaceY.getOrDefault(key, platformStair != null ? platformStair.targetY()
+                    : foundation != null ? foundation.targetY()
                     : fill == null ? column.surfaceY() : fill.targetY());
             if (bridgePierRails.contains(operation)) {
                 for (int y = surfaceY - 1, depth = 0; depth < 64; y--, depth++) {
@@ -187,7 +196,13 @@ public final class CityLandUseChunkExecutor {
                     basePrepared.add(pier);
                 }
             }
-            PreparedMutation mutation = prepareFeature(world, operation, surfaceY + operation.surfaceOffset());
+            CityLandUseChunkCompiler.FeatureOperation effectiveOperation = platformStair != null
+                    && (operation.kind() == CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB
+                    || operation.kind() == CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR)
+                    ? platformStairOperation(platformStair) : operation;
+            if (effectiveOperation != operation) materializedPlatformStairs.add(key);
+            PreparedMutation mutation = prepareFeature(world, effectiveOperation,
+                    surfaceY + effectiveOperation.surfaceOffset());
             if (mutation.failureReason() != null) {
                 return ExecutionResult.failed(fragment, mutation.failureReason(),
                         preparedCount(basePrepared, cropPrepared, boundaryPrepared), 0,
@@ -195,6 +210,19 @@ public final class CityLandUseChunkExecutor {
             }
             (operation.surfaceOffset() == 0 ? basePrepared : cropPrepared).add(mutation);
             if (operation.surfaceOffset() == 0) plannedSurfaceY.put(key, surfaceY);
+        }
+
+        for (CityLandUseMicroGrader.StairDecision stair : foundationPlan.stairs()) {
+            ColumnKey key = new ColumnKey(stair.x(), stair.z());
+            if (materializedPlatformStairs.contains(key)) continue;
+            PreparedMutation mutation = prepareFeature(world, platformStairOperation(stair), stair.targetY());
+            if (mutation.failureReason() != null) {
+                return ExecutionResult.failed(fragment, mutation.failureReason(),
+                        preparedCount(basePrepared, cropPrepared, boundaryPrepared), 0,
+                        naturalSurfaceSkipped, occupiedBoundarySkipped, true);
+            }
+            basePrepared.add(mutation);
+            plannedSurfaceY.put(key, stair.targetY());
         }
 
         int preparedBlockCount = preparedCount(basePrepared, cropPrepared, boundaryPrepared);
@@ -387,6 +415,12 @@ public final class CityLandUseChunkExecutor {
         PreparedMutation prepared = prepare(world, operation.sourceId(), OperationPhase.FEATURE,
                 operation.x(), y, operation.z(), operation.blockId(), operation.surfaceOffset() > 0);
         return prepared.withFeature(operation.kind(), operation.facing());
+    }
+
+    private static CityLandUseChunkCompiler.FeatureOperation platformStairOperation(
+            CityLandUseMicroGrader.StairDecision stair) {
+        return new CityLandUseChunkCompiler.FeatureOperation(stair.sourceId(), stair.x(), stair.z(),
+                stair.blockId(), 0, CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR, stair.facing());
     }
 
     private static boolean rollback(ExecutionWorld world, List<PreparedMutation> applied) {
