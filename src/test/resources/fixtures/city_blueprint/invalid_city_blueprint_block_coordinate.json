@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "city_blueprint.v0.11",
+  "schemaVersion": "city_blueprint.v0.12",
   "cityId": "city:test",
   "sourceD3Ref": {
     "path": "d3.json",
@@ -34,6 +34,11 @@
       "fillPoolRef": "pool:test",
       "compositionProfileRef": "composition:test",
       "attachedFeatures": [],
+      "buildingGreeneryPolicy": {
+        "coverage": "BALANCED",
+        "patternPreference": "MIXED",
+        "densityPreference": "MEDIUM"
+      },
       "blockX": 100
     }
   ],

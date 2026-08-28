@@ -122,6 +122,7 @@ class CityBlueprintCompilerServiceTest {
         Set<Integer> anchorZs = new LinkedHashSet<>();
         JsonArray compiledAnchors = first.structureAnchorPlan().getAsJsonArray("anchors");
         int previousSlot = -1;
+        int greenerySelected = 0;
         for (int index = 0; index < compiledAnchors.size(); index++) {
             JsonObject anchor = compiledAnchors.get(index).getAsJsonObject();
             assertEquals("civic", anchor.get("placementGroupId").getAsString());
@@ -133,7 +134,23 @@ class CityBlueprintCompilerServiceTest {
                     .get("targetEdgeGapBlocks").getAsInt());
             anchorXs.add(anchor.getAsJsonObject("anchorBlock").get("x").getAsInt());
             anchorZs.add(anchor.getAsJsonObject("anchorBlock").get("z").getAsInt());
+            JsonObject parcel = anchor.getAsJsonObject("buildingParcelPlan");
+            assertEquals("D4_BEFORE_ARRAY_COMMIT", parcel.get("planningStage").getAsString());
+            assertEquals("HARD_STRUCTURE_SOFT_COMPRESSIBLE_PARCEL",
+                    parcel.get("collisionPolicy").getAsString());
+            assertEquals(2, parcel.get("marginBlocks").getAsInt());
+            JsonObject collision = anchor.getAsJsonObject("collisionEnvelope");
+            JsonObject preferred = parcel.getAsJsonObject("preferredBounds");
+            assertEquals(collision.get("minX").getAsInt() - 2, preferred.get("minX").getAsInt());
+            assertEquals(collision.get("minZ").getAsInt() - 2, preferred.get("minZ").getAsInt());
+            assertEquals(collision.get("maxX").getAsInt() + 2, preferred.get("maxX").getAsInt());
+            assertEquals(collision.get("maxZ").getAsInt() + 2, preferred.get("maxZ").getAsInt());
+            assertTrue(parcel.get("usableGreenCells").getAsInt() > 0,
+                    "the parcel margin must remain usable outside the template clearance envelope");
+            if (parcel.get("greenerySelected").getAsBoolean()) greenerySelected++;
         }
+        assertTrue(greenerySelected > 0 && greenerySelected < anchorCount,
+                "BALANCED greenery must select a stable subset without blocking other buildings");
         assertTrue(anchorXs.size() >= 2 && anchorZs.size() >= 2,
                 "COMPACT must remain a two-dimensional group layout, not a one-axis nearest-cell chain: x="
                         + anchorXs + ", z=" + anchorZs);
@@ -2041,7 +2058,8 @@ class CityBlueprintCompilerServiceTest {
                 {
                   "schemaVersion":"city_blueprint_reference_catalog.v0.9",
                   "structureRefs":[
-                    {"structureRef":"geomantia:town_hall","templateCandidates":[{"templateId":"geomantia:town_hall","variantId":"default"}]},
+                    {"structureRef":"geomantia:town_hall","templateCandidates":[{"templateId":"geomantia:town_hall","variantId":"default"}],
+                     "greenParcel":{"pattern":"FREEFORM","density":"MEDIUM","groundBlockId":"minecraft:grass_block","pathBlockId":"minecraft:gravel"}},
                     {"structureRef":"geomantia:oversized_hall","templateCandidates":[{"templateId":"geomantia:oversized_hall","variantId":"default"}]},
                     {"structureRef":"geomantia:terrain_house","templateCandidates":[{"templateId":"geomantia:terrain_house","variantId":"default"}]},
                     {"structureRef":"geomantia:floating_house","templateCandidates":[{"templateId":"geomantia:floating_house","variantId":"default"}]},
@@ -2064,7 +2082,7 @@ class CityBlueprintCompilerServiceTest {
                     {"algorithmProfileRef":"algorithm:center_symmetric","algorithm":"CENTER_SYMMETRIC"}
                   ],
                   "compositionProfiles":[{"compositionProfileRef":"composition:round_robin","mode":"ROUND_ROBIN"}],
-                  "styleProfiles":[{"profileRef":"style:stone"}],
+                  "styleProfiles":[{"profileRef":"style:stone","plantPalette":[{"blockId":"minecraft:poppy","weight":1}]}],
                   "roadProfiles":[{"profileRef":"road:town","hierarchy":"SIMPLE","density":"BALANCED"}],
                   "surfaceDetailProfiles":[{"profileRef":"surface:working","intensity":"MEDIUM"}],
                   "landUseRuleProfile":{"schemaVersion":"city_land_use_rules.v0.1","profileId":"blueprint_test","rules":[{
@@ -2101,7 +2119,7 @@ class CityBlueprintCompilerServiceTest {
     private static JsonObject blueprint(JsonObject context, String extentClass) {
         JsonObject root = JsonParser.parseString("""
                 {
-                  "schemaVersion":"city_blueprint.v0.11","cityId":"placeholder","generationSeed":1,
+                  "schemaVersion":"city_blueprint.v0.12","cityId":"placeholder","generationSeed":1,
                   "sourceD3Ref":{},"catalogSnapshotRef":{},
                   "designIntent":{"cityIdentity":"town","theme":"stone","functionalRoles":["administration"]},
                   "styleProfile":{"profileRef":"style:stone"},
@@ -2112,6 +2130,7 @@ class CityBlueprintCompilerServiceTest {
                     "algorithmProfileRef":"algorithm:compact","terrainPolicy":"BALANCED",
                     "requiredStructureRefs":["geomantia:town_hall"],"fillPoolRef":"pool:civic",
                     "compositionProfileRef":"composition:round_robin","attachedFeatures":[],
+                    "buildingGreeneryPolicy":{"coverage":"BALANCED","patternPreference":"MIXED","densityPreference":"MEDIUM"},
                     "targetAreaShare":1.0,
                     "spaceComposition":{"buildingShare":1.0,"landscapeShare":0.0,"openSpaceShare":0.0},
                     "expansionPolicy":{"allowOutwardExpansion":true,"allowRelationConnection":true,"stopWhenTargetReached":true}

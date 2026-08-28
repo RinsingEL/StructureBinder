@@ -77,6 +77,7 @@ public final class CityStructureLandingPreviewRenderer {
             drawStreetBands(g, t, anchorMap, Set.of(), false);
             for (JsonElement elem : array(anchorMap, "anchors")) {
                 JsonObject anchor = elem.getAsJsonObject();
+                drawBuildingParcel(g, t, anchor);
                 drawD4Geometry(g, t, d4AnchorGeometry(anchor));
             }
             drawFunctionAreas(g, t, groupExtentMap, Set.of(), false, true, false);
@@ -446,6 +447,7 @@ public final class CityStructureLandingPreviewRenderer {
                 drawResidentialOverflowZones(g, t, anchorMap, visibleGroups);
                 drawLandscapeCapacities(g, t, landscapeCapacityPlan, visibleGroups);
                 for (AnchorPreview anchor : anchors) {
+                    drawBuildingParcel(g, t, anchor.anchor());
                     drawD4Geometry(g, t, anchor.geometry());
                     drawBadge(g, t, point(anchor.anchor(), "anchorBlock"), "A" + anchor.index(),
                             new Color(28, 81, 140, 235));
@@ -719,6 +721,15 @@ public final class CityStructureLandingPreviewRenderer {
         drawRect(g, t, geometry.mask(), MASK_FILL, MASK_STROKE, 1.0f);
         drawRect(g, t, geometry.collision(), COLLISION_FILL, COLLISION_STROKE, 1.5f);
         drawRect(g, t, geometry.body(), D2_BODY_FILL, D2_BODY_STROKE, 2.5f);
+    }
+
+    private static void drawBuildingParcel(Graphics2D g, Transform t, JsonObject anchor) {
+        JsonObject plan = object(anchor, "buildingParcelPlan");
+        JsonObject resolved = object(plan, "resolvedBounds");
+        if (resolved.size() == 0) return;
+        boolean green = plan.has("greenerySelected") && plan.get("greenerySelected").getAsBoolean();
+        drawRect(g, t, bounds(resolved), green ? new Color(72, 168, 94, 62) : new Color(218, 190, 128, 46),
+                green ? new Color(38, 132, 65, 190) : new Color(165, 128, 67, 150), 1.8f);
     }
 
     private static void drawFunctionAreas(Graphics2D g, Transform t, JsonObject extentMap,
@@ -1254,6 +1265,7 @@ public final class CityStructureLandingPreviewRenderer {
             for (JsonElement elem : structures) {
                 JsonObject structure = elem.getAsJsonObject();
                 i++;
+                drawBuildingParcel(g, t, structure);
                 drawRect(g, t, bounds(structure, "maskEnvelope"), new Color(202, 108, 62, 28),
                         new Color(178, 84, 46, 110), 0.9f);
                 drawRect(g, t, bounds(structure, "collisionEnvelope"), new Color(207, 81, 70, 36),

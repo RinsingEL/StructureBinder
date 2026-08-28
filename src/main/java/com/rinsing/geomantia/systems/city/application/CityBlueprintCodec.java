@@ -85,6 +85,7 @@ public final class CityBlueprintCodec {
             item.addProperty("targetAreaShare", group.targetAreaShare());
             item.add("spaceComposition", spaceCompositionJson(group.spaceComposition()));
             item.add("expansionPolicy", expansionPolicyJson(group.expansionPolicy()));
+            item.add("buildingGreeneryPolicy", buildingGreeneryPolicyJson(group.buildingGreeneryPolicy()));
             groups.add(item);
         }
         root.add("groups", groups);
@@ -276,7 +277,7 @@ public final class CityBlueprintCodec {
                 "extentClass", "densityClass",
                 "algorithmProfileRef", "terrainPolicy", "requiredStructureRefs", "fillPoolRef",
                 "connectionPlan", "compositionProfileRef", "attachedFeatures", "targetAreaShare",
-                "spaceComposition", "expansionPolicy");
+                "spaceComposition", "expansionPolicy", "buildingGreeneryPolicy");
         for (int index = 0; index < array.size(); index++) {
             String path = "$.groups[" + index + "]";
             JsonObject item = objectElement(array.get(index), path);
@@ -308,7 +309,9 @@ public final class CityBlueprintCodec {
                     spaceComposition(requiredObject(item, "spaceComposition", path + ".spaceComposition"),
                             path + ".spaceComposition"),
                     expansionPolicy(requiredObject(item, "expansionPolicy", path + ".expansionPolicy"),
-                            path + ".expansionPolicy")));
+                            path + ".expansionPolicy"),
+                    buildingGreeneryPolicy(requiredObject(item, "buildingGreeneryPolicy",
+                            path + ".buildingGreeneryPolicy"), path + ".buildingGreeneryPolicy")));
         }
         return List.copyOf(result);
     }
@@ -335,6 +338,22 @@ public final class CityBlueprintCodec {
                 requiredBoolean(object, "allowOutwardExpansion", path + ".allowOutwardExpansion"),
                 requiredBoolean(object, "allowRelationConnection", path + ".allowRelationConnection"),
                 requiredBoolean(object, "stopWhenTargetReached", path + ".stopWhenTargetReached"));
+    }
+
+    private static CityBlueprint.BuildingGreeneryPolicy buildingGreeneryPolicy(JsonObject object, String path) {
+        exactFields(object, Set.of("coverage", "patternPreference", "densityPreference"), path);
+        return new CityBlueprint.BuildingGreeneryPolicy(
+                enumValue(object, "coverage", CityBlueprint.GreeneryCoverage.class, path),
+                enumValue(object, "patternPreference", CityBlueprint.GreeneryPatternPreference.class, path),
+                enumValue(object, "densityPreference", CityBlueprint.GreeneryDensityPreference.class, path));
+    }
+
+    private static JsonObject buildingGreeneryPolicyJson(CityBlueprint.BuildingGreeneryPolicy policy) {
+        JsonObject object = new JsonObject();
+        object.addProperty("coverage", policy.coverage().name());
+        object.addProperty("patternPreference", policy.patternPreference().name());
+        object.addProperty("densityPreference", policy.densityPreference().name());
+        return object;
     }
 
     private static JsonObject expansionPolicyJson(CityBlueprint.ExpansionPolicy policy) {

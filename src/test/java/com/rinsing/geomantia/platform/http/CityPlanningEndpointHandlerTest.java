@@ -2899,7 +2899,7 @@ class CityPlanningEndpointHandlerTest {
         Files.createDirectories(blueprintDir);
         Path anchorMapPath = directory.resolve("structure_anchor_map.json");
         String contextId = "sha256:context";
-        String blueprint = "{\"schemaVersion\":\"city_blueprint.v0.11\",\"cityId\":\"city_test\"}";
+        String blueprint = "{\"schemaVersion\":\"city_blueprint.v0.12\",\"cityId\":\"city_test\"}";
         String blueprintHash = sha256(blueprint);
 
         Files.writeString(blueprintDir.resolve("city_blueprint_context.json"), """
@@ -4178,7 +4178,7 @@ class CityPlanningEndpointHandlerTest {
                 .get(0).getAsJsonObject().get("landformPatchId").getAsString();
         JsonObject blueprint = JsonParser.parseString("""
                 {
-                  "schemaVersion":"city_blueprint.v0.11","cityId":"city_test","generationSeed":42,
+                  "schemaVersion":"city_blueprint.v0.12","cityId":"city_test","generationSeed":42,
                   "designIntent":{"cityIdentity":"test city","theme":"test","functionalRoles":["landmark"]},
                   "styleProfile":{"profileRef":"style:test"},
                   "groups":[{
@@ -4190,7 +4190,8 @@ class CityPlanningEndpointHandlerTest {
                     "expansionPolicy":{"allowOutwardExpansion":true,"allowRelationConnection":true,"stopWhenTargetReached":true},
                     "algorithmProfileRef":"algorithm:grid","terrainPolicy":"BALANCED",
                     "requiredStructureRefs":["minecraft:desert_pyramid"],"fillPoolRef":"pool:test",
-                    "compositionProfileRef":"composition:round_robin","attachedFeatures":[]
+                    "compositionProfileRef":"composition:round_robin","attachedFeatures":[],
+                    "buildingGreeneryPolicy":{"coverage":"BALANCED","patternPreference":"MIXED","densityPreference":"MEDIUM"}
                   }],
                   "arrayCompositions":[],
                   "relations":[],"roadProfile":{"profileRef":"road:test"},

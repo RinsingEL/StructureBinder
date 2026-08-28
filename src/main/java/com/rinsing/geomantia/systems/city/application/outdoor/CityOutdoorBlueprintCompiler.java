@@ -71,14 +71,15 @@ public final class CityOutdoorBlueprintCompiler {
 
         Map<String, List<AnchorData>> anchorsByGroup = readAnchors(structureMaterializationPlan);
         List<LandUseSourceResolver.RoadBand> roadBands = roadBands(structureMaterializationPlan);
+        List<String> outdoorWarnings = new ArrayList<>();
         List<LandUseSourceResolver.GreenParcelSpec> greenParcels = greenParcels(
-                blueprint, anchorsByGroup, catalog);
+                blueprint, anchorsByGroup, catalog, outdoorWarnings);
         List<LandUseSourceResolver.OverflowZoneSpec> overflowZones = overflowZones(
                 structureMaterializationPlan);
         CapacityReservation capacityReservation = capacityReservation(blueprint, anchorsByGroup,
                 landscapeCapacityReservationPlan);
         Map<String, Set<BlockPoint>> capacityDomains = capacityReservation.domains();
-        List<String> outdoorWarnings = new ArrayList<>(capacityReservation.warnings());
+        outdoorWarnings.addAll(capacityReservation.warnings());
         List<String> spatialGroupIds = blueprint.outdoorPlan().spatialGrounds().stream()
                 .map(CityBlueprint.SpatialGround::sourceGroupId).distinct().sorted().toList();
         List<AnchorData> foundationAnchors = requiredGroups(anchorsByGroup, spatialGroupIds,
@@ -699,8 +700,22 @@ public final class CityOutdoorBlueprintCompiler {
                 throw new IllegalArgumentException("CITY_OUTDOOR_D6_COLLISION_MISSING:" + anchorId);
             }
             BlockPoint entrance = firstRoadEntrance(item);
+            JsonObject parcelPlan = object(item, "buildingParcelPlan");
+            BlockBounds buildingParcelBounds = parcelPlan.size() == 0
+                    ? bounds(collision) : bounds(object(parcelPlan, "resolvedBounds"));
+            boolean greenerySelected = parcelPlan.size() > 0
+                    && booleanValue(parcelPlan, "greenerySelected", false);
+            CityBlueprintReferenceCatalog.GreenParcelPattern greeneryPattern = parcelPlan.has("greeneryPattern")
+                    ? CityBlueprintReferenceCatalog.GreenParcelPattern.valueOf(
+                    requiredString(parcelPlan, "greeneryPattern"))
+                    : CityBlueprintReferenceCatalog.GreenParcelPattern.FREEFORM;
+            CityBlueprintReferenceCatalog.GreenParcelDensity greeneryDensity = parcelPlan.has("greeneryDensity")
+                    ? CityBlueprintReferenceCatalog.GreenParcelDensity.valueOf(
+                    requiredString(parcelPlan, "greeneryDensity"))
+                    : CityBlueprintReferenceCatalog.GreenParcelDensity.LOW;
             result.computeIfAbsent(groupId, ignored -> new ArrayList<>()).add(new AnchorData(anchorId, groupId,
-                    structureRef, bounds(footprint), bounds(collision), entrance, phase));
+                    structureRef, bounds(footprint), bounds(collision), entrance, phase,
+                    buildingParcelBounds, greenerySelected, greeneryPattern, greeneryDensity));
         }
         result.replaceAll((ignored, values) -> values.stream().sorted(Comparator.comparing(AnchorData::anchorId))
                 .toList());
@@ -768,29 +783,33 @@ public final class CityOutdoorBlueprintCompiler {
     private static List<LandUseSourceResolver.GreenParcelSpec> greenParcels(
             CityBlueprint blueprint,
             Map<String, List<AnchorData>> anchorsByGroup,
-            CityBlueprintReferenceCatalog catalog) {
+            CityBlueprintReferenceCatalog catalog,
+            List<String> warnings) {
         List<CityBlueprintReferenceCatalog.PlantPaletteEntry> palette =
                 catalog.plantPalettesByStyleProfileRef().getOrDefault(
                         blueprint.styleProfile().profileRef(), List.of());
         List<LandUseSourceResolver.GreenParcelSpec> result = new ArrayList<>();
         for (List<AnchorData> anchors : anchorsByGroup.values()) {
             for (AnchorData anchor : anchors) {
+                if (!anchor.greenerySelected()) continue;
                 CityBlueprintReferenceCatalog.BuildingGreenParcelProfile profile =
                         catalog.buildingGreenParcelsByStructureRef().get(anchor.structureRef());
                 if (profile == null) continue;
                 if (palette.isEmpty()) {
-                    throw new IllegalArgumentException("CITY_OUTDOOR_GREEN_PARCEL_PALETTE_REQUIRED:"
-                            + blueprint.styleProfile().profileRef());
+                    warnings.add("CITY_OUTDOOR_GREEN_PARCEL_PALETTE_MISSING_SKIPPED:"
+                            + anchor.anchorId());
+                    continue;
                 }
                 if (anchor.entrance() == null) {
-                    throw new IllegalArgumentException("CITY_OUTDOOR_GREEN_PARCEL_ENTRANCE_REQUIRED:"
+                    warnings.add("CITY_OUTDOOR_GREEN_PARCEL_ENTRANCE_MISSING_SKIPPED:"
                             + anchor.anchorId());
+                    continue;
                 }
                 long seed = blueprint.generationSeed()
                         ^ Long.rotateLeft(Integer.toUnsignedLong(stableHash(anchor.anchorId())), 32);
                 result.add(new LandUseSourceResolver.GreenParcelSpec(
-                        anchor.anchorId() + "::green_parcel", anchor.anchorId(), anchor.collision(),
-                        anchor.footprint(), anchor.entrance(), profile.pattern(), profile.density(),
+                        anchor.anchorId() + "::green_parcel", anchor.anchorId(), anchor.buildingParcelBounds(),
+                        anchor.collision(), anchor.entrance(), anchor.greeneryPattern(), anchor.greeneryDensity(),
                         profile.groundBlockId(), profile.pathBlockId(), palette, seed));
             }
         }
@@ -1119,7 +1138,11 @@ public final class CityOutdoorBlueprintCompiler {
                               BlockBounds footprint,
                               BlockBounds collision,
                               BlockPoint entrance,
-                              BlueprintPlacementPhase phase) {
+                              BlueprintPlacementPhase phase,
+                              BlockBounds buildingParcelBounds,
+                              boolean greenerySelected,
+                              CityBlueprintReferenceCatalog.GreenParcelPattern greeneryPattern,
+                              CityBlueprintReferenceCatalog.GreenParcelDensity greeneryDensity) {
     }
 
     private record ParcelSpec(String parcelId,

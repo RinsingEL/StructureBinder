@@ -28,7 +28,7 @@ test("publishes the program-only context tool and one-shot structure plus outdoo
   assert.deepEqual(groupProperties.extentClass.enum, ["SMALL", "MEDIUM", "LARGE"]);
   assert.deepEqual(groupProperties.densityClass.enum, ["SPARSE", "BALANCED", "DENSE"]);
   assert.deepEqual(submit.inputSchema.properties.cityBlueprint.properties.schemaVersion.enum,
-    ["city_blueprint.v0.11"]);
+    ["city_blueprint.v0.12"]);
   assert.equal(groupProperties.connectionPlan.additionalProperties, false);
   assert.deepEqual(groupProperties.connectionPlan.properties.parameters.properties.sideMode.enum,
     ["LEFT", "RIGHT", "BOTH"]);

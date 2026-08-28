@@ -1002,7 +1002,7 @@ class CityBlueprintServiceTest {
 
     private static JsonObject blueprint(JsonObject context) {
         JsonObject blueprint = new JsonObject();
-        blueprint.addProperty("schemaVersion", "city_blueprint.v0.11");
+        blueprint.addProperty("schemaVersion", "city_blueprint.v0.12");
         blueprint.addProperty("cityId", context.get("cityId").getAsString());
         blueprint.add("sourceD3Ref", context.getAsJsonObject("sourceD3Ref").deepCopy());
         blueprint.add("catalogSnapshotRef", context.getAsJsonObject("catalogSnapshotRef").deepCopy());
@@ -1021,6 +1021,7 @@ class CityBlueprintServiceTest {
                   "algorithmProfileRef":"algorithm:compact","terrainPolicy":"BALANCED",
                   "requiredStructureRefs":["geomantia:town_hall"],"fillPoolRef":"pool:civic",
                   "compositionProfileRef":"composition:round_robin","attachedFeatures":[],
+                  "buildingGreeneryPolicy":{"coverage":"BALANCED","patternPreference":"MIXED","densityPreference":"MEDIUM"},
                   "targetAreaShare":1.0,
                   "spaceComposition":{"buildingShare":1.0,"landscapeShare":0.0,"openSpaceShare":0.0},
                   "expansionPolicy":{"allowOutwardExpansion":true,"allowRelationConnection":true,"stopWhenTargetReached":true}

@@ -487,7 +487,7 @@ public final class LandUseSourceResolver {
     public record GreenParcelSpec(String parcelId,
                                   String anchorId,
                                   BlockBounds parcelBounds,
-                                  BlockBounds structureFootprint,
+                                  BlockBounds hardExclusionBounds,
                                   BlockPoint entrance,
                                   CityBlueprintReferenceCatalog.GreenParcelPattern pattern,
                                   CityBlueprintReferenceCatalog.GreenParcelDensity density,

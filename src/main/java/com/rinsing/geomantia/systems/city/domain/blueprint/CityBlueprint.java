@@ -18,7 +18,7 @@ public record CityBlueprint(
         ProfileRef surfaceDetailProfile,
         OutdoorPlan outdoorPlan) {
 
-    public static final String SCHEMA_VERSION = "city_blueprint.v0.11";
+    public static final String SCHEMA_VERSION = "city_blueprint.v0.12";
 
     public CityBlueprint {
         groups = List.copyOf(groups);
@@ -57,7 +57,34 @@ public record CityBlueprint(
             List<String> attachedFeatures,
             double targetAreaShare,
             SpaceComposition spaceComposition,
-            ExpansionPolicy expansionPolicy) {
+            ExpansionPolicy expansionPolicy,
+            BuildingGreeneryPolicy buildingGreeneryPolicy) {
+        public Group(String groupId,
+                     GroupKind groupKind,
+                     List<String> preferredPatchRefs,
+                     PreferredPatchZone preferredPatchZone,
+                     PlacementRelation placementRelation,
+                     String role,
+                     GroupPriority priority,
+                     ExtentClass extentClass,
+                     DensityClass densityClass,
+                     String algorithmProfileRef,
+                     TerrainPolicy terrainPolicy,
+                     List<String> requiredStructureRefs,
+                     String fillPoolRef,
+                     ConnectionPlan connectionPlan,
+                     String compositionProfileRef,
+                     List<String> attachedFeatures,
+                     double targetAreaShare,
+                     SpaceComposition spaceComposition,
+                     ExpansionPolicy expansionPolicy) {
+            this(groupId, groupKind, preferredPatchRefs, preferredPatchZone, placementRelation, role,
+                    priority, extentClass, densityClass, algorithmProfileRef, terrainPolicy,
+                    requiredStructureRefs, fillPoolRef, connectionPlan, compositionProfileRef,
+                    attachedFeatures, targetAreaShare, spaceComposition, expansionPolicy,
+                    BuildingGreeneryPolicy.none());
+        }
+
         public Group(String groupId,
                      GroupKind groupKind,
                      List<String> preferredPatchRefs,
@@ -77,7 +104,8 @@ public record CityBlueprint(
             this(groupId, groupKind, preferredPatchRefs, preferredPatchZone, placementRelation, role, priority,
                     extentClass, densityClass, algorithmProfileRef, terrainPolicy, requiredStructureRefs,
                     fillPoolRef, connectionPlan, compositionProfileRef, attachedFeatures, 0.0,
-                    SpaceComposition.defaultUrban(), ExpansionPolicy.defaultPolicy());
+                    SpaceComposition.defaultUrban(), ExpansionPolicy.defaultPolicy(),
+                    BuildingGreeneryPolicy.none());
         }
 
         public Group {
@@ -86,6 +114,19 @@ public record CityBlueprint(
             attachedFeatures = List.copyOf(attachedFeatures);
             if (spaceComposition == null) spaceComposition = SpaceComposition.defaultUrban();
             if (expansionPolicy == null) expansionPolicy = ExpansionPolicy.defaultPolicy();
+            if (buildingGreeneryPolicy == null) buildingGreeneryPolicy = BuildingGreeneryPolicy.none();
+        }
+    }
+
+    /** Group-level intent only. Per-building geometry is derived before D4 placement commits. */
+    public record BuildingGreeneryPolicy(
+            GreeneryCoverage coverage,
+            GreeneryPatternPreference patternPreference,
+            GreeneryDensityPreference densityPreference) {
+        public static BuildingGreeneryPolicy none() {
+            return new BuildingGreeneryPolicy(GreeneryCoverage.NONE,
+                    GreeneryPatternPreference.TEMPLATE_DEFAULT,
+                    GreeneryDensityPreference.TEMPLATE_DEFAULT);
         }
     }
 
@@ -241,6 +282,12 @@ public record CityBlueprint(
     public enum ExtentClass { SMALL, MEDIUM, LARGE }
 
     public enum DensityClass { SPARSE, BALANCED, DENSE }
+
+    public enum GreeneryCoverage { NONE, SPARSE, BALANCED, LUSH }
+
+    public enum GreeneryPatternPreference { TEMPLATE_DEFAULT, FREEFORM, FIELD_GRID, MIXED }
+
+    public enum GreeneryDensityPreference { TEMPLATE_DEFAULT, LOW, MEDIUM, HIGH }
 
     public enum ClusterShape { ORGANIC_COMPACT, GRID, COURTYARD, L_SHAPE, U_SHAPE }
 

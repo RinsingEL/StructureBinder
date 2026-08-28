@@ -112,7 +112,7 @@ public final class CityLandUseSurfacePrintPlanner {
         Map<FeatureKey, FeatureCandidate> cells = new LinkedHashMap<>();
         Set<Long> structureCells = new HashSet<>();
         for (LandUseSourceResolver.GreenParcelSpec parcel : greenParcels) {
-            BlockBounds footprint = parcel.structureFootprint();
+            BlockBounds footprint = parcel.hardExclusionBounds();
             for (int z = footprint.minZ(); z <= footprint.maxZ(); z++) {
                 for (int x = footprint.minX(); x <= footprint.maxX(); x++) {
                     structureCells.add(cellKey(x, z));

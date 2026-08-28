@@ -500,7 +500,7 @@ const artifactRefSchema = strictObject({
 }, ["path", "schemaVersion", "contentHash"]);
 
 const cityBlueprintSchema = strictObject({
-  schemaVersion: { type: "string", enum: ["city_blueprint.v0.11"] },
+  schemaVersion: { type: "string", enum: ["city_blueprint.v0.12"] },
   cityId: nonEmptyString("必须与冻结上下文一致。"),
   sourceD3Ref: artifactRefSchema,
   catalogSnapshotRef: artifactRefSchema,
@@ -563,9 +563,18 @@ const cityBlueprintSchema = strictObject({
         allowRelationConnection: { type: "boolean" },
         stopWhenTargetReached: { type: "boolean" },
       }, ["allowOutwardExpansion", "allowRelationConnection", "stopWhenTargetReached"]),
+      buildingGreeneryPolicy: strictObject({
+        coverage: { type: "string", enum: ["NONE", "SPARSE", "BALANCED", "LUSH"],
+          description: "功能区内符合模板能力的建筑拥有附属绿化的目标覆盖档位。" },
+        patternPreference: { type: "string", enum: ["TEMPLATE_DEFAULT", "FREEFORM", "FIELD_GRID", "MIXED"],
+          description: "功能区附属绿化构图偏好；不提交逐栋坐标或 mask。" },
+        densityPreference: { type: "string", enum: ["TEMPLATE_DEFAULT", "LOW", "MEDIUM", "HIGH"],
+          description: "功能区附属绿化疏密偏好。" },
+      }, ["coverage", "patternPreference", "densityPreference"]),
     }, ["groupId", "groupKind", "preferredPatchRefs", "preferredPatchZone", "role", "priority", "extentClass", "densityClass",
       "algorithmProfileRef", "terrainPolicy", "requiredStructureRefs", "fillPoolRef",
-      "compositionProfileRef", "attachedFeatures", "targetAreaShare", "spaceComposition", "expansionPolicy"]),
+      "compositionProfileRef", "attachedFeatures", "targetAreaShare", "spaceComposition", "expansionPolicy",
+      "buildingGreeneryPolicy"]),
   },
   arrayCompositions: {
     type: "array",

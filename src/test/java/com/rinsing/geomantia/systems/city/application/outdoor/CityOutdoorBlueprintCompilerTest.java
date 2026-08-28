@@ -75,6 +75,11 @@ class CityOutdoorBlueprintCompilerTest {
         transformed.add("roadEntrances", entrances);
         placement.add("transformed", transformed);
         farmhouse.add("templatePlacementPlan", placement);
+        farmhouse.add("buildingParcelPlan", JsonParser.parseString("""
+                {"schemaVersion":"city_building_parcel_plan.v0.1",
+                 "resolvedBounds":{"minX":36,"minZ":36,"maxX":49,"maxZ":49},
+                 "greenerySelected":true,"greeneryPattern":"FREEFORM","greeneryDensity":"MEDIUM"}
+                """).getAsJsonObject());
         CityBlueprintReferenceCatalog source = catalog();
         CityBlueprintReferenceCatalog greenCatalog = new CityBlueprintReferenceCatalog(source.json(),
                 source.structureRefs(), source.fillPoolRefs(), source.algorithmProfileRefs(),
@@ -95,7 +100,8 @@ class CityOutdoorBlueprintCompilerTest {
 
         assertEquals(1, result.resolution().greenParcels().size());
         LandUseSourceResolver.GreenParcelSpec parcel = result.resolution().greenParcels().get(0);
-        assertEquals(new BlockBounds(38, 38, 47, 47), parcel.parcelBounds());
+        assertEquals(new BlockBounds(36, 36, 49, 49), parcel.parcelBounds());
+        assertEquals(new BlockBounds(38, 38, 47, 47), parcel.hardExclusionBounds());
         assertEquals(new BlockPoint(39, 42), parcel.entrance());
         assertEquals("minecraft:poppy", parcel.plantPalette().get(0).blockId());
     }

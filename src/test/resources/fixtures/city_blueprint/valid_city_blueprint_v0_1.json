@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "city_blueprint.v0.11",
+  "schemaVersion": "city_blueprint.v0.12",
   "cityId": "city:test",
   "sourceD3Ref": {
     "path": "run/city_d3_city_test/city_landform_review_package.json",
@@ -34,6 +34,11 @@
       "fillPoolRef": "pool:civic",
       "compositionProfileRef": "composition:round_robin",
       "attachedFeatures": [],
+      "buildingGreeneryPolicy": {
+        "coverage": "BALANCED",
+        "patternPreference": "MIXED",
+        "densityPreference": "MEDIUM"
+      },
       "targetAreaShare": 1.0,
       "spaceComposition": {"buildingShare": 0.4, "landscapeShare": 0.5, "openSpaceShare": 0.1},
       "expansionPolicy": {"allowOutwardExpansion": true, "allowRelationConnection": true, "stopWhenTargetReached": true}

@@ -26,6 +26,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HexFormat;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -140,9 +141,11 @@ public final class CityBlueprintCompilerService {
         groups.forEach(group -> groupsById.put(group.groupId(), group));
         BlockBounds cityPlanningBounds = new BlockBounds(review.grid().blockMinX(), review.grid().blockMinZ(),
                 review.grid().blockMaxX() - 1, review.grid().blockMaxZ() - 1);
+        int buildingParcelMargin = catalog.foundationMargin(
+                blueprint.outdoorPlan().foundationProfileRef());
         Map<String, CityGroupSpatialDemand> spatialDemands =
                 planGroupSpatialDemands(groups, review.targetScale().scale(), review.grid().cellStepBlocks(),
-                        catalog, templates, cityPlanningBounds);
+                        catalog, templates, cityPlanningBounds, buildingParcelMargin);
         boolean hierarchicalRoadProfile = hierarchicalRoadProfile(blueprint, references);
         int interGroupRoadReserveBlocks = hierarchicalRoadProfile
                 ? derivedMainRoadWidth(groups, catalog) + 2 : 0;
@@ -409,6 +412,7 @@ public final class CityBlueprintCompilerService {
         }
 
         refreshConnections(connectivityPlan, states);
+        freezeBuildingParcelPlans(anchors, blueprint, catalog, cityPlanningBounds);
         JsonObject anchorPlan = new JsonObject();
         anchorPlan.addProperty("schemaVersion", CityStructureAnchorPlanner.PLAN_SCHEMA);
         anchorPlan.addProperty("cityId", cityId);
@@ -582,6 +586,146 @@ public final class CityBlueprintCompilerService {
         acceptance.add("hardBlocks", hardBlocks);
         acceptance.add("warnings", warnings);
         return acceptance;
+    }
+
+    private static void freezeBuildingParcelPlans(JsonArray anchors,
+                                                  CityBlueprint blueprint,
+                                                  CatalogIndex catalog,
+                                                  BlockBounds planningBounds) {
+        Map<String, CityBlueprint.Group> groups = new LinkedHashMap<>();
+        blueprint.groups().forEach(group -> groups.put(group.groupId(), group));
+        List<BlockBounds> hardCollisions = anchors.asList().stream()
+                .map(JsonElement::getAsJsonObject)
+                .map(anchor -> bounds(requiredObject(anchor, "collisionEnvelope")))
+                .toList();
+        List<BlockBounds> claimedParcels = new ArrayList<>();
+        Map<String, Integer> groupOrdinals = new HashMap<>();
+        int margin = catalog.foundationMargin(blueprint.outdoorPlan().foundationProfileRef());
+        for (int index = 0; index < anchors.size(); index++) {
+            JsonObject anchor = anchors.get(index).getAsJsonObject();
+            String groupId = string(anchor, "placementGroupId");
+            CityBlueprint.Group group = groups.get(groupId);
+            if (group == null) continue;
+            BlockBounds footprint = bounds(anchor.has("actualFootprint")
+                    ? requiredObject(anchor, "actualFootprint")
+                    : requiredObject(anchor, "plannedFootprint"));
+            BlockBounds collision = hardCollisions.get(index);
+            // The parcel is the building's complete lot, not a second name for its NBT
+            // footprint.  Keep the template's mandatory clearance as the hard inner core
+            // and reserve the Foundation margin outside that core for paving/greenery.
+            BlockBounds preferred = CityStructureMaterializationPlanner.expand(collision, margin);
+            BlockBounds resolved = intersect(preferred, planningBounds);
+            boolean compressed = !preferred.equals(resolved);
+            for (int other = 0; other < hardCollisions.size(); other++) {
+                if (other == index) continue;
+                BlockBounds before = resolved;
+                resolved = shrinkAround(resolved, collision, hardCollisions.get(other));
+                compressed |= !before.equals(resolved);
+            }
+            for (BlockBounds claimed : claimedParcels) {
+                BlockBounds before = resolved;
+                resolved = shrinkAround(resolved, collision, claimed);
+                compressed |= !before.equals(resolved);
+            }
+            claimedParcels.add(resolved);
+
+            int ordinal = groupOrdinals.merge(groupId, 1, Integer::sum) - 1;
+            int slotIndex = anchor.has("blueprintLayout")
+                    ? intValue(requiredObject(anchor, "blueprintLayout"), "slotIndex", ordinal) : ordinal;
+            GreenCapability capability = catalog.greenCapability(string(anchor, "blueprintStructureRef"));
+            CityBlueprint.BuildingGreeneryPolicy policy = group.buildingGreeneryPolicy();
+            boolean coverageSelected = capability != null && coverageSelected(policy.coverage(),
+                    blueprint.generationSeed(), groupId, slotIndex);
+            int usableGreenCells = Math.max(0, area(resolved) - intersectionArea(resolved, collision));
+            boolean greenerySelected = coverageSelected && usableGreenCells >= 6;
+            String greeneryStatus = capability == null ? "TEMPLATE_UNSUPPORTED"
+                    : policy.coverage() == CityBlueprint.GreeneryCoverage.NONE ? "POLICY_NONE"
+                    : !coverageSelected ? "COVERAGE_NOT_SELECTED"
+                    : usableGreenCells < 6 ? "INSUFFICIENT_SPACE_SKIPPED"
+                    : "SELECTED";
+
+            JsonObject plan = new JsonObject();
+            plan.addProperty("schemaVersion", "city_building_parcel_plan.v0.1");
+            plan.addProperty("planningStage", "D4_BEFORE_ARRAY_COMMIT");
+            plan.addProperty("collisionPolicy", "HARD_STRUCTURE_SOFT_COMPRESSIBLE_PARCEL");
+            plan.addProperty("marginBlocks", margin);
+            plan.add("preferredBounds", CityStructureCandidateEnvelope.boundsJson(preferred));
+            plan.add("resolvedBounds", CityStructureCandidateEnvelope.boundsJson(resolved));
+            plan.add("hardCollisionEnvelope", CityStructureCandidateEnvelope.boundsJson(collision));
+            plan.addProperty("parcelStatus", compressed ? "COMPRESSED" : "FULL");
+            plan.addProperty("greenerySelected", greenerySelected);
+            plan.addProperty("greeneryStatus", greeneryStatus);
+            plan.addProperty("usableGreenCells", usableGreenCells);
+            if (greenerySelected) {
+                plan.addProperty("greeneryPattern", resolvedPattern(policy.patternPreference(),
+                        capability.pattern(), blueprint.generationSeed(), groupId, slotIndex).name());
+                plan.addProperty("greeneryDensity", resolvedDensity(policy.densityPreference(),
+                        capability.density()).name());
+            }
+            anchor.add("buildingParcelPlan", plan);
+        }
+    }
+
+    private static boolean coverageSelected(CityBlueprint.GreeneryCoverage coverage, long seed,
+                                            String groupId, int slotIndex) {
+        if (coverage == CityBlueprint.GreeneryCoverage.NONE) return false;
+        int phase = Math.floorMod(groupId.hashCode() ^ (int) seed, 4);
+        int bucket = Math.floorMod(slotIndex + phase, 4);
+        return switch (coverage) {
+            case NONE -> false;
+            case SPARSE -> bucket == 0;
+            case BALANCED -> (bucket & 1) == 0;
+            case LUSH -> bucket != 3;
+        };
+    }
+
+    private static CityBlueprintReferenceCatalog.GreenParcelPattern resolvedPattern(
+            CityBlueprint.GreeneryPatternPreference preference,
+            CityBlueprintReferenceCatalog.GreenParcelPattern fallback,
+            long seed, String groupId, int slotIndex) {
+        return switch (preference) {
+            case TEMPLATE_DEFAULT -> fallback;
+            case FREEFORM -> CityBlueprintReferenceCatalog.GreenParcelPattern.FREEFORM;
+            case FIELD_GRID -> CityBlueprintReferenceCatalog.GreenParcelPattern.FIELD_GRID;
+            case MIXED -> ((slotIndex + Math.floorMod(groupId.hashCode() ^ (int) seed, 2)) & 1) == 0
+                    ? CityBlueprintReferenceCatalog.GreenParcelPattern.FREEFORM
+                    : CityBlueprintReferenceCatalog.GreenParcelPattern.FIELD_GRID;
+        };
+    }
+
+    private static CityBlueprintReferenceCatalog.GreenParcelDensity resolvedDensity(
+            CityBlueprint.GreeneryDensityPreference preference,
+            CityBlueprintReferenceCatalog.GreenParcelDensity fallback) {
+        return switch (preference) {
+            case TEMPLATE_DEFAULT -> fallback;
+            case LOW -> CityBlueprintReferenceCatalog.GreenParcelDensity.LOW;
+            case MEDIUM -> CityBlueprintReferenceCatalog.GreenParcelDensity.MEDIUM;
+            case HIGH -> CityBlueprintReferenceCatalog.GreenParcelDensity.HIGH;
+        };
+    }
+
+    private static BlockBounds intersect(BlockBounds left, BlockBounds right) {
+        return new BlockBounds(Math.max(left.minX(), right.minX()), Math.max(left.minZ(), right.minZ()),
+                Math.min(left.maxX(), right.maxX()), Math.min(left.maxZ(), right.maxZ()));
+    }
+
+    private static BlockBounds shrinkAround(BlockBounds parcel, BlockBounds footprint, BlockBounds obstacle) {
+        if (!parcel.overlaps(obstacle) || footprint.overlaps(obstacle)) return parcel;
+        int minX = parcel.minX();
+        int minZ = parcel.minZ();
+        int maxX = parcel.maxX();
+        int maxZ = parcel.maxZ();
+        if (obstacle.maxX() < footprint.minX()) minX = Math.max(minX, obstacle.maxX() + 1);
+        else if (obstacle.minX() > footprint.maxX()) maxX = Math.min(maxX, obstacle.minX() - 1);
+        else if (obstacle.maxZ() < footprint.minZ()) minZ = Math.max(minZ, obstacle.maxZ() + 1);
+        else if (obstacle.minZ() > footprint.maxZ()) maxZ = Math.min(maxZ, obstacle.minZ() - 1);
+        return new BlockBounds(minX, minZ, maxX, maxZ);
+    }
+
+    private static int intersectionArea(BlockBounds left, BlockBounds right) {
+        int width = Math.min(left.maxX(), right.maxX()) - Math.max(left.minX(), right.minX()) + 1;
+        int depth = Math.min(left.maxZ(), right.maxZ()) - Math.max(left.minZ(), right.minZ()) + 1;
+        return width <= 0 || depth <= 0 ? 0 : width * depth;
     }
 
     private static Map<String, Integer> desiredLandscapeParcelAreas(CityBlueprint blueprint,
@@ -989,7 +1133,8 @@ public final class CityBlueprintCompilerService {
             CityTemplateCatalog.Template physicalTemplate = templates.requireTemplate(
                     template.templateId(), template.variantId());
             int memberSpan = Math.max(physicalTemplate.width(), physicalTemplate.depth())
-                    + physicalTemplate.clearanceBlocks() * 2;
+                    + (physicalTemplate.clearanceBlocks()
+                    + catalog.foundationMargin(blueprint.outdoorPlan().foundationProfileRef())) * 2;
             CityTemplatePlacementGeometry memberGeometry = physicalTemplate.geometry(
                     physicalTemplate.allowedRotations().get(0), physicalTemplate.allowedMirrors().get(0));
             BlockBounds memberAtOrigin = CityStructureMaterializationPlanner.expand(
@@ -1438,7 +1583,8 @@ public final class CityBlueprintCompilerService {
             int cellStepBlocks,
             CatalogIndex catalog,
             CityTemplateCatalog templates,
-            BlockBounds planningBounds) {
+            BlockBounds planningBounds,
+            int buildingParcelMargin) {
         Map<String, CityGroupSpatialDemand> result = new LinkedHashMap<>();
         for (CityBlueprint.Group group : groups) {
             String algorithm = catalog.algorithm(group.algorithmProfileRef());
@@ -1458,7 +1604,8 @@ public final class CityBlueprintCompilerService {
             int maximumWidth = 1;
             int maximumDepth = 1;
             for (String structureRef : plannedRefs) {
-                TemplateDemand template = templateDemand(structureRef, catalog, templates);
+                TemplateDemand template = templateDemand(structureRef, catalog, templates,
+                        buildingParcelMargin);
                 templateArea += template.widthBlocks() * template.depthBlocks();
                 maximumWidth = Math.max(maximumWidth, template.widthBlocks());
                 maximumDepth = Math.max(maximumDepth, template.depthBlocks());
@@ -1518,10 +1665,12 @@ public final class CityBlueprintCompilerService {
                 streetArea = Math.max(1, length - maximumTemplateSpan)
                         * parameters.streetBandWidthBlocks();
             } else if ("CENTER_SYMMETRIC".equals(algorithm)) {
-                TemplateDemand centerTemplate = templateDemand(plannedRefs.get(0), catalog, templates);
+                TemplateDemand centerTemplate = templateDemand(plannedRefs.get(0), catalog, templates,
+                        buildingParcelMargin);
                 int centerSpan = Math.max(centerTemplate.widthBlocks(), centerTemplate.depthBlocks());
                 int memberSpan = plannedRefs.stream().skip(1)
-                        .map(structureRef -> templateDemand(structureRef, catalog, templates))
+                        .map(structureRef -> templateDemand(structureRef, catalog, templates,
+                                buildingParcelMargin))
                         .mapToInt(template -> Math.max(template.widthBlocks(), template.depthBlocks()))
                         .max().orElse(1);
                 int pairCount = Math.max(1, (plannedRefs.size() - 1) / 2);
@@ -1560,14 +1709,17 @@ public final class CityBlueprintCompilerService {
 
     private static TemplateDemand templateDemand(String structureRef,
                                                    CatalogIndex catalog,
-                                                   CityTemplateCatalog templates) {
+                                                   CityTemplateCatalog templates,
+                                                   int buildingParcelMargin) {
         int width = 0;
         int depth = 0;
         for (TemplateCandidate candidate : catalog.templates(structureRef)) {
             CityTemplateCatalog.Template template = templates.requireTemplate(
                     candidate.templateId(), candidate.variantId());
-            width = Math.max(width, template.width() + template.clearanceBlocks() * 2);
-            depth = Math.max(depth, template.depth() + template.clearanceBlocks() * 2);
+            width = Math.max(width, template.width()
+                    + (template.clearanceBlocks() + buildingParcelMargin) * 2);
+            depth = Math.max(depth, template.depth()
+                    + (template.clearanceBlocks() + buildingParcelMargin) * 2);
         }
         return new TemplateDemand(width, depth);
     }
@@ -2627,6 +2779,7 @@ public final class CityBlueprintCompilerService {
                 template.templateId(), template.variantId());
         int physicalSpan = Math.max(physicalTemplate.width(), physicalTemplate.depth())
                 + physicalTemplate.clearanceBlocks() * 2;
+        physicalSpan = Math.max(physicalSpan, state.spatialDemand().maximumTemplateSpanBlocks());
         int footprintSpan = state.fixedInternalSpacing()
                 ? state.spatialDemand().maximumTemplateSpanBlocks() : physicalSpan;
         CityBlueprintGroupLayoutPlanner.Proposal layout = groupLayoutPlanner.propose(
@@ -5054,9 +5207,12 @@ public final class CityBlueprintCompilerService {
                                 Map<String, String> algorithms,
                                 Map<String, Boolean> centerAxisStreets,
                                 Set<String> compositions,
-                                Set<String> primaryStructures) {
+                                Set<String> primaryStructures,
+                                Map<String, GreenCapability> greenCapabilities,
+                                Map<String, Integer> foundationMargins) {
         static CatalogIndex parse(JsonObject root, JsonObject semanticCatalog) {
             Map<String, List<TemplateCandidate>> structures = new LinkedHashMap<>();
+            Map<String, GreenCapability> greenCapabilities = new LinkedHashMap<>();
             for (JsonElement element : array(root, "structureRefs")) {
                 JsonObject item = element.getAsJsonObject();
                 List<TemplateCandidate> templates = new ArrayList<>();
@@ -5066,6 +5222,12 @@ public final class CityBlueprintCompilerService {
                             string(value, "variantId")));
                 }
                 structures.put(string(item, "structureRef"), List.copyOf(templates));
+                if (item.has("greenParcel") && item.get("greenParcel").isJsonObject()) {
+                    JsonObject green = item.getAsJsonObject("greenParcel");
+                    greenCapabilities.put(string(item, "structureRef"), new GreenCapability(
+                            CityBlueprintReferenceCatalog.GreenParcelPattern.valueOf(string(green, "pattern")),
+                            CityBlueprintReferenceCatalog.GreenParcelDensity.valueOf(string(green, "density"))));
+                }
             }
             Map<String, List<String>> pools = new LinkedHashMap<>();
             for (JsonElement element : array(root, "fillPools")) {
@@ -5097,9 +5259,16 @@ public final class CityBlueprintCompilerService {
                 }
                 if (primary) primaryStructures.add(string(profile, "semanticProfileId"));
             }
+            Map<String, Integer> foundationMargins = new LinkedHashMap<>();
+            for (JsonElement element : array(root, "foundationProfiles")) {
+                JsonObject item = element.getAsJsonObject();
+                foundationMargins.put(string(item, "foundationProfileRef"),
+                        intValue(item, "structureMarginBlocks", 0));
+            }
             return new CatalogIndex(Map.copyOf(structures), Map.copyOf(pools), Map.copyOf(algorithms),
                     Map.copyOf(centerAxisStreets), Set.copyOf(compositions),
-                    Set.copyOf(primaryStructures));
+                    Set.copyOf(primaryStructures), Map.copyOf(greenCapabilities),
+                    Map.copyOf(foundationMargins));
         }
         List<TemplateCandidate> templates(String ref) {
             List<TemplateCandidate> value = structures.get(ref);
@@ -5125,5 +5294,17 @@ public final class CityBlueprintCompilerService {
         boolean primaryStructure(String ref) {
             return primaryStructures.contains(ref);
         }
+        GreenCapability greenCapability(String ref) {
+            return greenCapabilities.get(ref);
+        }
+        int foundationMargin(String ref) {
+            Integer value = foundationMargins.get(ref);
+            if (value == null) throw fail("CITY_BLUEPRINT_FOUNDATION_PROFILE_UNKNOWN", ref);
+            return value;
+        }
+    }
+
+    private record GreenCapability(CityBlueprintReferenceCatalog.GreenParcelPattern pattern,
+                                   CityBlueprintReferenceCatalog.GreenParcelDensity density) {
     }
 }
