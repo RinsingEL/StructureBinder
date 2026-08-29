@@ -13,9 +13,11 @@ import com.rinsing.geomantia.systems.city.application.landuse.LandUseAreaPlanCod
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseAreaPlan;
 import com.rinsing.geomantia.systems.city.domain.landuse.VegetationPolicy;
 import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
+import com.rinsing.geomantia.systems.city.infrastructure.world.CityWorldgenBlockObservationRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.WorldGenRegion;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.WorldGenLevel;
@@ -234,6 +236,15 @@ public final class CityLandUseWorldgenRegistry {
                                              int chunkZ,
                                              CityLandUseChunkExecutor.GenerationEligibility eligibility,
                                              CityLandUseChunkExecutor.ExecutionWorld world) {
+        return applyForChunk(dimensionId, chunkX, chunkZ, eligibility, world, null);
+    }
+
+    private static ApplySummary applyForChunk(String dimensionId,
+                                              int chunkX,
+                                              int chunkZ,
+                                              CityLandUseChunkExecutor.GenerationEligibility eligibility,
+                                              CityLandUseChunkExecutor.ExecutionWorld world,
+                                              String requiredCityId) {
         String dimension = dimensionId(dimensionId);
         Objects.requireNonNull(eligibility, "eligibility");
         Objects.requireNonNull(world, "world");
@@ -246,7 +257,9 @@ public final class CityLandUseWorldgenRegistry {
         int appliedOperations = 0;
         int naturalSkipped = 0;
         int boundarySkipped = 0;
+        List<OwnerFailure> failures = new ArrayList<>();
         for (ActivePlan active : plans) {
+            if (requiredCityId != null && !requiredCityId.equals(active.key().cityId())) continue;
             CityLandUseChunkCompiler.ChunkFragment fragment =
                     new CityLandUseChunkCompiler(active.palette())
                             .compilePrepared(active.preparedSurfacePlan(), chunkX, chunkZ);
@@ -260,7 +273,8 @@ public final class CityLandUseWorldgenRegistry {
                 alreadyApplied++;
                 continue;
             }
-            if (eligibility != CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES) {
+            if (eligibility != CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES
+                    && eligibility != CityLandUseChunkExecutor.GenerationEligibility.CONTROLLED_D7_BACKFILL) {
                 ineligible++;
                 continue;
             }
@@ -281,13 +295,87 @@ public final class CityLandUseWorldgenRegistry {
                     ineligible++;
                 } else {
                     failed++;
+                    failures.add(new OwnerFailure(active.key().cityId(), active.areaPlan().planHash(),
+                            active.surfacePrintPlan().planHash(), chunkX, chunkZ, result.reasonCode(),
+                            result.rollbackComplete()));
+                    LOGGER.warn("City LandUse owner apply failed: cityId={}, chunk={},{} reason={} rollbackComplete={}",
+                            active.key().cityId(), chunkX, chunkZ, result.reasonCode(),
+                            result.rollbackComplete());
                 }
             } finally {
                 release(ownerKey);
             }
         }
         return new ApplySummary(dimension, chunkX, chunkZ, plans.size(), relevant, applied,
-                alreadyApplied, failed, ineligible, appliedOperations, naturalSkipped, boundarySkipped);
+                alreadyApplied, failed, ineligible, appliedOperations, naturalSkipped, boundarySkipped,
+                List.copyOf(failures));
+    }
+
+    /**
+     * Completes only the frozen owner chunks missing from the current city's exact plan identity.
+     * This is intentionally available only to the explicit D7 world-mutation path.
+     */
+    public static BackfillSummary backfillMissingOwners(String dimensionId,
+                                                        LandUseAreaPlan areaPlan,
+                                                        CityLandUseSurfacePrintPlan surfacePrintPlan,
+                                                        ServerLevel level) {
+        Objects.requireNonNull(level, "level");
+        validatePlanHash(Objects.requireNonNull(areaPlan, "areaPlan"));
+        validateSurfacePrintLink(areaPlan, surfacePrintPlan);
+        String dimension = dimensionId(dimensionId);
+        ActivePlan active;
+        synchronized (CityLandUseWorldgenRegistry.class) {
+            active = ACTIVE.get(new ActiveKey(dimension, areaPlan.cityId()));
+        }
+        if (active == null
+                || !active.areaPlan().planHash().equals(areaPlan.planHash())
+                || !active.surfacePrintPlan().planHash().equals(surfacePrintPlan.planHash())) {
+            throw new IllegalArgumentException("CITY_LAND_USE_D7_ACTIVE_PLAN_IDENTITY_MISMATCH");
+        }
+
+        List<CityLandUseChunkStatusPreflight.OwnerChunk> owners =
+                CityLandUseChunkStatusPreflight.ownerChunks(areaPlan, surfacePrintPlan);
+        int appliedBefore = 0;
+        List<OwnerFailure> failures = new ArrayList<>();
+        CityLandUseChunkExecutor.ExecutionWorld world =
+                new CityLandUseChunkExecutor.WorldGenExecutionWorld(level);
+        for (CityLandUseChunkStatusPreflight.OwnerChunk owner : owners) {
+            OwnerKey ownerKey = new OwnerKey(active.key(), areaPlan.planHash(), surfacePrintPlan.planHash(),
+                    active.palette().paletteHash(), owner.chunkX(), owner.chunkZ());
+            if (isApplied(ownerKey)) {
+                appliedBefore++;
+                continue;
+            }
+            var chunk = level.getChunk(owner.chunkX(), owner.chunkZ());
+            CityWorldgenBlockObservationRegistry.begin(level, chunk);
+            ApplySummary result;
+            try {
+                result = applyForChunk(dimension, owner.chunkX(), owner.chunkZ(),
+                        CityLandUseChunkExecutor.GenerationEligibility.CONTROLLED_D7_BACKFILL,
+                        world, areaPlan.cityId());
+                if (result.failedOwnerCount() == 0) {
+                    CityWorldgenBlockObservationRegistry.finishAfterRetry(level, chunk);
+                } else {
+                    CityWorldgenBlockObservationRegistry.abort();
+                }
+            } catch (RuntimeException | Error failure) {
+                CityWorldgenBlockObservationRegistry.abort();
+                throw failure;
+            }
+            failures.addAll(result.failures());
+        }
+        flushPendingLedgerNow();
+        int appliedAfter = 0;
+        List<CityLandUseChunkStatusPreflight.OwnerChunk> missing = new ArrayList<>();
+        for (CityLandUseChunkStatusPreflight.OwnerChunk owner : owners) {
+            OwnerKey ownerKey = new OwnerKey(active.key(), areaPlan.planHash(), surfacePrintPlan.planHash(),
+                    active.palette().paletteHash(), owner.chunkX(), owner.chunkZ());
+            if (isApplied(ownerKey)) appliedAfter++;
+            else missing.add(owner);
+        }
+        return new BackfillSummary(areaPlan.cityId(), areaPlan.planHash(), surfacePrintPlan.planHash(),
+                owners.size(), appliedBefore, appliedAfter - appliedBefore, appliedAfter, List.copyOf(missing),
+                List.copyOf(failures));
     }
 
     /** CLEAR suppresses natural features; selective clearing is owned by exact Decoration/D5 masks. */
@@ -860,7 +948,39 @@ public final class CityLandUseWorldgenRegistry {
                                int ineligibleOwnerCount,
                                int appliedOperationCount,
                                int naturalSurfaceSkippedCount,
-                               int occupiedBoundarySkippedCount) {
+                               int occupiedBoundarySkippedCount,
+                               List<OwnerFailure> failures) {
+        public ApplySummary {
+            failures = List.copyOf(failures);
+        }
+    }
+
+    public record OwnerFailure(String cityId,
+                               String areaPlanHash,
+                               String surfacePrintPlanHash,
+                               int chunkX,
+                               int chunkZ,
+                               String reasonCode,
+                               boolean rollbackComplete) {
+    }
+
+    public record BackfillSummary(String cityId,
+                                  String areaPlanHash,
+                                  String surfacePrintPlanHash,
+                                  int plannedOwnerCount,
+                                  int appliedBeforeCount,
+                                  int backfilledOwnerCount,
+                                  int appliedAfterCount,
+                                  List<CityLandUseChunkStatusPreflight.OwnerChunk> missingOwners,
+                                  List<OwnerFailure> failures) {
+        public BackfillSummary {
+            missingOwners = List.copyOf(missingOwners);
+            failures = List.copyOf(failures);
+        }
+
+        public boolean complete() {
+            return appliedAfterCount == plannedOwnerCount && missingOwners.isEmpty();
+        }
     }
 
     private record ActiveKey(String dimensionId, String cityId) {

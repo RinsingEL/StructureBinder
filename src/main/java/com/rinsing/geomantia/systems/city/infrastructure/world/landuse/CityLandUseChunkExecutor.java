@@ -39,7 +39,8 @@ public final class CityLandUseChunkExecutor {
         Objects.requireNonNull(fragment, "fragment");
         Objects.requireNonNull(world, "world");
         Objects.requireNonNull(eligibility, "eligibility");
-        if (eligibility != GenerationEligibility.FIRST_WORLDGEN_FEATURES) {
+        if (eligibility != GenerationEligibility.FIRST_WORLDGEN_FEATURES
+                && eligibility != GenerationEligibility.CONTROLLED_D7_BACKFILL) {
             return ExecutionResult.ineligible(fragment, "CITY_LAND_USE_OLD_CHUNK_NOT_BACKFILLED");
         }
 
@@ -201,8 +202,10 @@ public final class CityLandUseChunkExecutor {
                     || operation.kind() == CityLandUseSurfacePrintPlan.FeatureKind.ROAD_STAIR)
                     ? platformStairOperation(platformStair) : operation;
             if (effectiveOperation != operation) materializedPlatformStairs.add(key);
-            PreparedMutation mutation = prepareFeature(world, effectiveOperation,
-                    surfaceY + effectiveOperation.surfaceOffset());
+            int featureY = surfaceY + effectiveOperation.surfaceOffset();
+            PreparedMutation mutation = prepareFeature(world, effectiveOperation, featureY,
+                    baseMutationClearsTarget(basePrepared,
+                            effectiveOperation.x(), featureY, effectiveOperation.z()));
             if (mutation.failureReason() != null) {
                 return ExecutionResult.failed(fragment, mutation.failureReason(),
                         preparedCount(basePrepared, cropPrepared, boundaryPrepared), 0,
@@ -215,7 +218,8 @@ public final class CityLandUseChunkExecutor {
         for (CityLandUseMicroGrader.StairDecision stair : foundationPlan.stairs()) {
             ColumnKey key = new ColumnKey(stair.x(), stair.z());
             if (materializedPlatformStairs.contains(key)) continue;
-            PreparedMutation mutation = prepareFeature(world, platformStairOperation(stair), stair.targetY());
+            PreparedMutation mutation = prepareFeature(world, platformStairOperation(stair), stair.targetY(),
+                    baseMutationClearsTarget(basePrepared, stair.x(), stair.targetY(), stair.z()));
             if (mutation.failureReason() != null) {
                 return ExecutionResult.failed(fragment, mutation.failureReason(),
                         preparedCount(basePrepared, cropPrepared, boundaryPrepared), 0,
@@ -402,7 +406,11 @@ public final class CityLandUseChunkExecutor {
                     switch (phase) {
                         case BOUNDARY -> "CITY_LAND_USE_BOUNDARY_TARGET_OCCUPIED";
                         case SURFACE_OVERLAY -> "CITY_LAND_USE_SURFACE_PRINT_TARGET_OCCUPIED";
-                        default -> "CITY_LAND_USE_MICRO_FILL_TARGET_OCCUPIED";
+                        case MICRO_FILL -> "CITY_LAND_USE_MICRO_FILL_TARGET_OCCUPIED";
+                        case SURFACE -> "CITY_LAND_USE_SURFACE_TARGET_OCCUPIED";
+                        case CROP -> "CITY_LAND_USE_CROP_TARGET_OCCUPIED";
+                        case FEATURE -> "CITY_LAND_USE_FEATURE_TARGET_OCCUPIED";
+                        case MICRO_CUT, RETAINING_WALL -> "CITY_LAND_USE_TARGET_OCCUPIED";
                     });
         }
         return PreparedMutation.ready(areaId, phase, x, y, z, blockId, target.snapshot());
@@ -411,10 +419,31 @@ public final class CityLandUseChunkExecutor {
     private static PreparedMutation prepareFeature(
             ExecutionWorld world,
             CityLandUseChunkCompiler.FeatureOperation operation,
-            int y) {
+            int y,
+            boolean clearedByBaseMutation) {
         PreparedMutation prepared = prepare(world, operation.sourceId(), OperationPhase.FEATURE,
-                operation.x(), y, operation.z(), operation.blockId(), operation.surfaceOffset() > 0);
+                operation.x(), y, operation.z(), operation.blockId(),
+                operation.surfaceOffset() > 0 && !clearedByBaseMutation);
         return prepared.withFeature(operation.kind(), operation.facing());
+    }
+
+    /**
+     * Feature preflight runs before any mutation is applied. Treat a currently occupied target as available
+     * only when the final earlier base mutation at that exact position is this transaction's explicit cut-to-air.
+     */
+    private static boolean baseMutationClearsTarget(List<PreparedMutation> basePrepared,
+                                                    int x,
+                                                    int y,
+                                                    int z) {
+        PreparedMutation last = null;
+        for (PreparedMutation mutation : basePrepared) {
+            if (mutation.x() == x && mutation.y() == y && mutation.z() == z) {
+                last = mutation;
+            }
+        }
+        return last != null
+                && last.phase() == OperationPhase.MICRO_CUT
+                && "minecraft:air".equals(last.blockId());
     }
 
     private static CityLandUseChunkCompiler.FeatureOperation platformStairOperation(
@@ -439,6 +468,7 @@ public final class CityLandUseChunkExecutor {
 
     public enum GenerationEligibility {
         FIRST_WORLDGEN_FEATURES,
+        CONTROLLED_D7_BACKFILL,
         ALREADY_GENERATED
     }
 

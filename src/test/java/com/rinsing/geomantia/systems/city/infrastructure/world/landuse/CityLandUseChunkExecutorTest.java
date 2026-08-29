@@ -203,6 +203,70 @@ class CityLandUseChunkExecutorTest {
     }
 
     @Test
+    void explicitD7BackfillCanApplyTheFrozenChunkTransaction() {
+        FakeWorld world = new FakeWorld();
+
+        CityLandUseChunkExecutor.ExecutionResult result = executor.execute(stagedFragment(), world,
+                CityLandUseChunkExecutor.GenerationEligibility.CONTROLLED_D7_BACKFILL);
+
+        assertEquals(CityLandUseChunkExecutor.Status.APPLIED, result.status());
+        assertFalse(world.writes.isEmpty());
+    }
+
+    @Test
+    void featurePreflightAcceptsTerrainThatTheSameTransactionCutsFirst() {
+        List<CityLandUseChunkCompiler.GradingMaskCell> mask = new ArrayList<>();
+        for (int z = -3; z <= 3; z++) {
+            for (int x = -3; x <= 3; x++) {
+                mask.add(new CityLandUseChunkCompiler.GradingMaskCell("area", x, z, true));
+            }
+        }
+        CityLandUseChunkCompiler.ChunkFragment fragment = new CityLandUseChunkCompiler.ChunkFragment(
+                CityLandUseChunkCompiler.RESULT_SCHEMA, "city", "area-hash", "palette-hash",
+                0, 0, 1, 0, 0, 0, "minecraft:dirt", mask,
+                List.of(new CityLandUseChunkCompiler.SurfaceOperation(
+                        "area", "plaza", 0, 0, "minecraft:stone_bricks")),
+                List.of(),
+                List.of(new CityLandUseChunkCompiler.FeatureOperation("green", 0, 0,
+                        "minecraft:poppy", 1,
+                        CityLandUseSurfacePrintPlan.FeatureKind.GREEN_PLANT,
+                        CityLandUseSurfacePrintPlan.HorizontalFacing.NONE)));
+        FakeWorld world = new FakeWorld();
+        world.columns.put("0,0", new CityLandUseChunkExecutor.ColumnSample(
+                65, "minecraft:grass_block", true));
+        world.replaceable.put("0,65,0", false);
+
+        CityLandUseChunkExecutor.ExecutionResult result = executor.execute(fragment, world,
+                CityLandUseChunkExecutor.GenerationEligibility.CONTROLLED_D7_BACKFILL);
+
+        assertEquals(CityLandUseChunkExecutor.Status.APPLIED, result.status());
+        assertEquals(List.of(
+                "0,65,0=minecraft:air",
+                "0,64,0=minecraft:stone_bricks",
+                "0,65,0=minecraft:poppy"), world.writes);
+    }
+
+    @Test
+    void featurePreflightReportsItsOwnOccupiedPhaseWhenNoCutWillClearIt() {
+        CityLandUseChunkCompiler.ChunkFragment fragment = new CityLandUseChunkCompiler.ChunkFragment(
+                CityLandUseChunkCompiler.RESULT_SCHEMA, "city", "area-hash", "palette-hash",
+                0, 0, 1, 0, 0, 0, null, List.of(), List.of(), List.of(),
+                List.of(new CityLandUseChunkCompiler.FeatureOperation("green", 0, 0,
+                        "minecraft:poppy", 1,
+                        CityLandUseSurfacePrintPlan.FeatureKind.GREEN_PLANT,
+                        CityLandUseSurfacePrintPlan.HorizontalFacing.NONE)));
+        FakeWorld world = new FakeWorld();
+        world.replaceable.put("0,65,0", false);
+
+        CityLandUseChunkExecutor.ExecutionResult result = executor.execute(fragment, world,
+                CityLandUseChunkExecutor.GenerationEligibility.CONTROLLED_D7_BACKFILL);
+
+        assertEquals(CityLandUseChunkExecutor.Status.FAILED, result.status());
+        assertEquals("CITY_LAND_USE_FEATURE_TARGET_OCCUPIED", result.reasonCode());
+        assertTrue(world.writes.isEmpty());
+    }
+
+    @Test
     void writesNonConnectionStateExactlyWithoutNeighbourShapePreResolution() {
         WorldgenLikeBlockStateWorld world = new WorldgenLikeBlockStateWorld();
         BlockPos crop = new BlockPos(15, 65, 0);

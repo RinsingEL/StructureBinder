@@ -384,12 +384,28 @@ final class CityBlueprintGroupLayoutPlanner {
     }
 
     private static List<BlockPoint> fallbackGuides(BlockPoint desired,
-                                                    Frame frame,
-                                                    Parameters parameters,
-                                                    int spacing,
-                                                    String algorithm) {
+                                                     Frame frame,
+                                                     Parameters parameters,
+                                                     int spacing,
+                                                     String algorithm) {
         Set<BlockPoint> guides = new LinkedHashSet<>();
         guides.add(desired);
+        if ("COMPACT".equals(algorithm)) {
+            double radialX = desired.x() - frame.center().x();
+            double radialZ = desired.z() - frame.center().z();
+            double length = Math.max(0.0001, Math.hypot(radialX, radialZ));
+            double angle = Math.atan2(radialZ, radialX);
+            int nearOffset = Math.max(2, Math.min(spacing / 4,
+                    parameters.maximumEdgeGapBlocks() / 2));
+            int farOffset = Math.max(nearOffset, Math.min(spacing / 3,
+                    parameters.maximumEdgeGapBlocks()));
+            for (int offset : List.of(nearOffset, -nearOffset, farOffset, -farOffset)) {
+                double adjustedAngle = angle + offset / length;
+                guides.add(point(frame.center(), Math.cos(adjustedAngle) * length,
+                        Math.sin(adjustedAngle) * length));
+            }
+            return List.copyOf(guides);
+        }
         if ("LINEAR".equals(algorithm)) {
             int nearOffset = Math.max(2, Math.min(spacing / 4,
                     parameters.maximumEdgeGapBlocks() / 2));
@@ -417,6 +433,10 @@ final class CityBlueprintGroupLayoutPlanner {
         return "GRID".equals(algorithm) || "COURTYARD".equals(algorithm)
                 || "LINEAR".equals(algorithm) || "CENTER_SYMMETRIC".equals(algorithm)
                 || "COMPACT".equals(algorithm);
+    }
+
+    static boolean compactOuterRingHasLocalFrontier(int nextSlotIndex, int committedStructureCount) {
+        return nextSlotIndex < 8 || committedStructureCount != 1;
     }
 
     private static GridOffset squareSpiral(int index) {
@@ -553,6 +573,8 @@ final class CityBlueprintGroupLayoutPlanner {
                 value.addProperty("compactLaneSide", compactDirection(slotIndex));
                 value.addProperty("compactDirectionIndex", Math.floorMod(slotIndex, 8));
                 value.add("compactLaneTarget", frontageTarget.asJson());
+                value.addProperty("compactMicroAdjustmentEnabled", guides.size() > 1);
+                value.add("compactCandidateGuides", guidesJson());
             }
             if ("LINEAR".equals(algorithm)) {
                 value.addProperty("streetBandReserved", true);

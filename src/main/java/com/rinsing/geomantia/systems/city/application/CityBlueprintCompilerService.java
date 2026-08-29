@@ -1023,7 +1023,9 @@ public final class CityBlueprintCompilerService {
         }
         if (choices.isEmpty() || choiceRank < 0 || choiceRank >= choices.size()) {
             event.addProperty("status", "no_legal_candidate");
-            event.addProperty("reasonCode", required
+            event.addProperty("reasonCode", choices.isEmpty() && state.compactLocalFrontierExhausted()
+                    ? "CITY_BLUEPRINT_COMPACT_LOCAL_FRONTIER_EXHAUSTED"
+                    : required
                     ? "CITY_BLUEPRINT_REQUIRED_STRUCTURE_NO_LEGAL_PLACEMENT"
                     : phase == PlacementPhase.CONNECTIVITY
                             ? "CITY_BLUEPRINT_CONNECTIVITY_SLOT_UNAVAILABLE"
@@ -4695,9 +4697,18 @@ public final class CityBlueprintCompilerService {
                 case "ORGANIC_COMPACT" -> Math.max(32, spatialDemand.plannedStructureCount() * 12);
                 default -> Math.max(8, spatialDemand.plannedStructureCount() * 4);
             };
-            if (exactSlotCursor + 1 >= limit) return false;
+            int nextSlotIndex = exactSlotCursor + 1;
+            if ("COMPACT".equals(layoutAlgorithm)
+                    && !CityBlueprintGroupLayoutPlanner.compactOuterRingHasLocalFrontier(
+                    nextSlotIndex, anchorCount)) return false;
+            if (nextSlotIndex >= limit) return false;
             exactSlotCursor++;
             return true;
+        }
+        boolean compactLocalFrontierExhausted() {
+            return "COMPACT".equals(layoutAlgorithm)
+                    && anchorCount == 1
+                    && exactSlotCursor + 1 >= 8;
         }
         boolean exactInternalGuides() { return true; }
         boolean fixedInternalSpacing() { return !"ORGANIC_COMPACT".equals(layoutAlgorithm); }

@@ -2363,6 +2363,9 @@ final class CityPlanningEndpointHandler {
         Path planPath = d6Dir.resolve("structure_materialization_plan.json");
         Path d3PackagePath = d3PackagePath(runDir, citySeedId);
         Path wallReservationPath = d5Dir.resolve("wall_reservation_plan.json");
+        Path landUseDir = cityStageDir(runDir, citySeedId, CityTestRunLayout.LAND_USE);
+        Path landUseAreaPlanPath = landUseDir.resolve("city_land_use_area_plan.json");
+        Path landUseSurfacePlanPath = landUseDir.resolve("city_land_use_surface_print_plan.json");
         rejectLegacyArtifacts(d6Dir, "D6");
         if (!Files.exists(planPath)) {
             throw new IllegalArgumentException("D6 artifacts not found. Run city_plan_d6 first: "
@@ -2389,6 +2392,30 @@ final class CityPlanningEndpointHandler {
                 .executeWorldgen(materializationPlan, runtimeLedger, inspector, executeStructurePlacement);
 
         Files.createDirectories(outputDirectory);
+        CityLandUseWorldgenRegistry.BackfillSummary landUseBackfill = null;
+        Path landUseBackfillPath = outputDirectory.resolve("land_use_owner_completion.json");
+        boolean hasLandUseAreaPlan = Files.isRegularFile(landUseAreaPlanPath);
+        boolean hasLandUseSurfacePlan = Files.isRegularFile(landUseSurfacePlanPath);
+        if (hasLandUseAreaPlan != hasLandUseSurfacePlan) {
+            throw new IllegalArgumentException("CITY_LAND_USE_D7_ARTIFACTS_INCOMPLETE");
+        }
+        if (executeStructurePlacement && hasLandUseAreaPlan) {
+            LandUseAreaPlan landUseAreaPlan = new LandUseAreaPlanCodec().fromJson(
+                    JsonParser.parseString(Files.readString(landUseAreaPlanPath)).getAsJsonObject());
+            CityLandUseSurfacePrintPlan landUseSurfacePlan = new CityLandUseSurfacePrintPlanCodec().fromJson(
+                    JsonParser.parseString(Files.readString(landUseSurfacePlanPath)).getAsJsonObject());
+            landUseBackfill = CityLandUseWorldgenRegistry.backfillMissingOwners(
+                    level.dimension().location().toString(), landUseAreaPlan, landUseSurfacePlan, level);
+            Files.writeString(landUseBackfillPath, CityJson.GSON.toJson(
+                    landUseBackfillJson(landUseBackfill)));
+            if (!landUseBackfill.complete()) {
+                throw new IllegalArgumentException("CITY_LAND_USE_D7_OWNER_INCOMPLETE: plannedOwners="
+                        + landUseBackfill.plannedOwnerCount() + ", appliedOwners="
+                        + landUseBackfill.appliedAfterCount() + ", missingOwners="
+                        + landUseBackfill.missingOwners().size() + "; report="
+                        + debugRef(debugRoot, landUseBackfillPath));
+            }
+        }
         result.structureMaterializationTrace().add("terrainAdaptationReport",
                 terrainAdaptationReport(result.placedStructureLedger()));
         validateD5V5FootprintsWithinReservation(wallReservationPath, result.placedStructureLedger(),
@@ -2425,6 +2452,10 @@ final class CityPlanningEndpointHandler {
             artifacts.addProperty("deferredRoadPostprocessReport",
                     debugRef(debugRoot, outputDirectory.resolve("deferred_road_postprocess_report.json")));
             response.add("deferredRoadPostprocessReport", roadPostprocessReport);
+        }
+        if (landUseBackfill != null) {
+            response.add("landUseOwnerCompletion", landUseBackfillJson(landUseBackfill));
+            artifacts.addProperty("landUseOwnerCompletion", debugRef(debugRoot, landUseBackfillPath));
         }
         response.add("roadProviderState", roadProviderState);
         response.add("artifacts", artifacts);
@@ -3910,6 +3941,39 @@ final class CityPlanningEndpointHandler {
         json.addProperty("ownerChunkCount", result.ownerChunkCount());
         json.addProperty("featuresOrLaterCount", result.featuresOrLaterCount());
         json.addProperty("unknownCount", result.unknownCount());
+        return json;
+    }
+
+    private static JsonObject landUseBackfillJson(
+            CityLandUseWorldgenRegistry.BackfillSummary result) {
+        JsonObject json = new JsonObject();
+        json.addProperty("schemaVersion", "city_land_use_owner_completion.v0.1");
+        json.addProperty("cityId", result.cityId());
+        json.addProperty("areaPlanHash", result.areaPlanHash());
+        json.addProperty("surfacePrintPlanHash", result.surfacePrintPlanHash());
+        json.addProperty("complete", result.complete());
+        json.addProperty("plannedOwnerCount", result.plannedOwnerCount());
+        json.addProperty("appliedBeforeCount", result.appliedBeforeCount());
+        json.addProperty("backfilledOwnerCount", result.backfilledOwnerCount());
+        json.addProperty("appliedAfterCount", result.appliedAfterCount());
+        JsonArray missing = new JsonArray();
+        for (CityLandUseChunkStatusPreflight.OwnerChunk owner : result.missingOwners()) {
+            JsonObject item = new JsonObject();
+            item.addProperty("chunkX", owner.chunkX());
+            item.addProperty("chunkZ", owner.chunkZ());
+            missing.add(item);
+        }
+        json.add("missingOwners", missing);
+        JsonArray failures = new JsonArray();
+        for (CityLandUseWorldgenRegistry.OwnerFailure failure : result.failures()) {
+            JsonObject item = new JsonObject();
+            item.addProperty("chunkX", failure.chunkX());
+            item.addProperty("chunkZ", failure.chunkZ());
+            item.addProperty("reasonCode", failure.reasonCode());
+            item.addProperty("rollbackComplete", failure.rollbackComplete());
+            failures.add(item);
+        }
+        json.add("failures", failures);
         return json;
     }
 

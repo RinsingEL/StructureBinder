@@ -128,6 +128,9 @@ class CityLandUseWorldgenRegistryTest {
                 CityLandUseChunkExecutor.GenerationEligibility.FIRST_WORLDGEN_FEATURES, world);
 
         assertEquals(1, result.failedOwnerCount());
+        assertEquals(1, result.failures().size());
+        assertEquals("CITY_LAND_USE_BLOCK_WRITE_FAILED", result.failures().get(0).reasonCode());
+        assertTrue(result.failures().get(0).rollbackComplete());
         assertFalse(world.restores.isEmpty());
         assertEquals(0, CityLandUseWorldgenRegistry.ledgerSnapshot()
                 .getAsJsonArray("appliedOwners").size());
@@ -204,6 +207,27 @@ class CityLandUseWorldgenRegistryTest {
                 "minecraft:overworld", 20, 0));
         assertTrue(CityLandUseWorldgenRegistry.vegetationLike("configured_tree_oak"));
         assertFalse(CityLandUseWorldgenRegistry.vegetationLike("ore_diamond"));
+    }
+
+    @Test
+    void controlledD7BackfillAppliesAFormerlyMissedOwnerButRemainsIdempotent() {
+        LandUseAreaPlan areaPlan = areaPlan("city_controlled_backfill");
+        CityLandUseWorldgenRegistry.activate("minecraft:overworld", areaPlan,
+                CityLandUseChunkCompilerTest.uniformPlan(areaPlan), serverRoot);
+        FakeWorld world = new FakeWorld();
+
+        CityLandUseWorldgenRegistry.ApplySummary first = CityLandUseWorldgenRegistry.applyForChunk(
+                "minecraft:overworld", 0, 0,
+                CityLandUseChunkExecutor.GenerationEligibility.CONTROLLED_D7_BACKFILL, world);
+        CityLandUseWorldgenRegistry.ApplySummary repeated = CityLandUseWorldgenRegistry.applyForChunk(
+                "minecraft:overworld", 0, 0,
+                CityLandUseChunkExecutor.GenerationEligibility.CONTROLLED_D7_BACKFILL, world);
+
+        assertEquals(1, first.appliedOwnerCount());
+        assertEquals(0, first.failedOwnerCount());
+        assertEquals(1, repeated.alreadyAppliedOwnerCount());
+        assertEquals(1, CityLandUseWorldgenRegistry.ledgerSnapshot()
+                .getAsJsonArray("appliedOwners").size());
     }
 
     @Test

@@ -156,7 +156,7 @@ class CityBlueprintGroupLayoutPlannerTest {
         for (int slot = 0; slot < 8; slot++) {
             var proposal = planner.propose("COMPACT", CityBlueprint.DensityClass.DENSE,
                     47L, "compact", slot, frame, center, null, false, 18);
-            assertEquals(1, proposal.guides().size());
+            assertEquals(5, proposal.guides().size());
             assertTrue(proposal.frontageTarget() != null);
             spacing = proposal.spacingBlocks();
             BlockPoint guide = proposal.guides().get(0);
@@ -164,6 +164,8 @@ class CityBlueprintGroupLayoutPlannerTest {
             directions.add(proposal.traceJson().get("compactLaneSide").getAsString());
             assertEquals(1, proposal.traceJson().get("compactLaneRank").getAsInt());
             assertTrue(Math.abs(Math.hypot(guide.x(), guide.z()) - spacing) <= 1.0);
+            assertTrue(proposal.traceJson().get("compactMicroAdjustmentEnabled").getAsBoolean());
+            assertEquals(5, proposal.traceJson().getAsJsonArray("compactCandidateGuides").size());
             assertTrue(Math.hypot(proposal.frontageTarget().x(), proposal.frontageTarget().z())
                     < Math.hypot(guide.x(), guide.z()));
         }
@@ -175,6 +177,28 @@ class CityBlueprintGroupLayoutPlannerTest {
         assertEquals(2, outer.traceJson().get("compactLaneRank").getAsInt());
         assertTrue(Math.abs(Math.hypot(outer.guides().get(0).x(), outer.guides().get(0).z())
                 - spacing * 2.0) <= 1.0);
+    }
+
+    @Test
+    void compactMicroAdjustmentsStayTangentialToTheSameLocalRing() {
+        BlockPoint center = new BlockPoint(100, 200);
+        var proposal = planner.propose("COMPACT", CityBlueprint.DensityClass.DENSE,
+                49L, "compact", 0, planner.worldFrame(center), center, null, false, 18);
+
+        assertEquals(new BlockPoint(122, 200), proposal.guides().get(0));
+        assertEquals(5, proposal.guides().size());
+        assertEquals(2, proposal.guides().stream().filter(point -> point.z() < center.z()).count());
+        assertEquals(2, proposal.guides().stream().filter(point -> point.z() > center.z()).count());
+        assertTrue(proposal.guides().stream().allMatch(point -> Math.abs(
+                Math.hypot(point.x() - center.x(), point.z() - center.z()) - 22.0) <= 1.0));
+    }
+
+    @Test
+    void compactNeedsOneLocalFollowerBeforeScanningTheOuterRing() {
+        assertTrue(CityBlueprintGroupLayoutPlanner.compactOuterRingHasLocalFrontier(7, 1));
+        assertFalse(CityBlueprintGroupLayoutPlanner.compactOuterRingHasLocalFrontier(8, 1));
+        assertTrue(CityBlueprintGroupLayoutPlanner.compactOuterRingHasLocalFrontier(8, 0));
+        assertTrue(CityBlueprintGroupLayoutPlanner.compactOuterRingHasLocalFrontier(8, 2));
     }
 
     @Test
