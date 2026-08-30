@@ -88,6 +88,8 @@ class CityLandUseWorldgenRegistryTest {
         assertEquals(1, reloaded.alreadyAppliedOwnerCount());
         assertEquals(1, CityLandUseWorldgenRegistry.ledgerSnapshot()
                 .getAsJsonArray("appliedOwners").size());
+        assertTrue(CityLandUseWorldgenRegistry.ledgerSnapshot().getAsJsonArray("appliedOwners")
+                .get(0).getAsJsonObject().has("foundationDiagnostics"));
     }
 
     @Test
@@ -207,6 +209,21 @@ class CityLandUseWorldgenRegistryTest {
                 "minecraft:overworld", 20, 0));
         assertTrue(CityLandUseWorldgenRegistry.vegetationLike("configured_tree_oak"));
         assertFalse(CityLandUseWorldgenRegistry.vegetationLike("ore_diamond"));
+    }
+
+    @Test
+    void loadMigratesV03LedgerToFoundationDiagnosticSchema() throws IOException {
+        Path activePath = CityLandUseWorldgenRegistry.activePlansPath(serverRoot);
+        Files.createDirectories(activePath.getParent());
+        Files.writeString(activePath,
+                "{\"schemaVersion\":\"city_active_land_use_area_plans.v0.2\",\"plans\":[]}");
+        Files.writeString(CityLandUseWorldgenRegistry.worldgenLedgerPath(serverRoot),
+                "{\"schemaVersion\":\"city_land_use_worldgen_ledger.v0.3\",\"appliedOwners\":[]}");
+
+        CityLandUseWorldgenRegistry.load(serverRoot);
+
+        assertEquals(CityLandUseWorldgenRegistry.LEDGER_SCHEMA,
+                CityLandUseWorldgenRegistry.ledgerSnapshot().get("schemaVersion").getAsString());
     }
 
     @Test

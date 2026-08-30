@@ -4,6 +4,7 @@ import com.rinsing.geomantia.systems.city.application.landuse.CityLandUseSurface
 import com.rinsing.geomantia.systems.city.application.landuse.CityLandUseSurfacePrintPlanCodec;
 import com.rinsing.geomantia.systems.city.application.landuse.LandUseAreaPlanCodec;
 import com.rinsing.geomantia.systems.city.domain.landuse.BoundaryPolicy;
+import com.rinsing.geomantia.systems.city.domain.landuse.CardinalDirection;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseAreaPlan;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseSurfaceSettings;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandscapeFillProgram;
@@ -22,6 +23,34 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityLandUseChunkCompilerTest {
     private final CityLandUseChunkCompiler compiler = new CityLandUseChunkCompiler();
+
+    @Test
+    void foundationFragmentRetainsBuildingPurposeAndRealEntranceDemand() {
+        List<LandUseAreaPlan.ScanlineSpan> members = List.of(
+                new LandUseAreaPlan.ScanlineSpan(8, 0, 15));
+        BlockBounds footprint = new BlockBounds(6, 6, 9, 9);
+        LandUseAreaPlan.GateSlot entrance = new LandUseAreaPlan.GateSlot(
+                "house::front", new BlockPoint(6, 8), CardinalDirection.WEST, "house");
+        LandUseAreaPlan.Area area = new LandUseAreaPlan.Area(
+                "foundation", "foundation", "urban", List.of("city::foundation"),
+                List.of("house"), List.of(new BlockPoint(5, 8)), members, List.of(footprint),
+                List.of(), List.of(entrance), 16, SurfacePolicy.PAVE,
+                VegetationPolicy.CLEAR, BoundaryPolicy.OPEN, "foundation");
+        LandUseAreaPlan areaPlan = new LandUseAreaPlanCodec().withComputedHash(new LandUseAreaPlan(
+                LandUseAreaPlan.CURRENT_SCHEMA_VERSION, "land_use_rules.v0.1", "city_foundation", "",
+                new BlockBounds(0, 0, 15, 15), List.of(area), List.of(), List.of(), List.of()));
+
+        CityLandUseChunkCompiler.ChunkFragment fragment = compiler.compile(
+                areaPlan, uniformPlan(areaPlan), 0, 0);
+
+        assertEquals(1, fragment.platformPurposeAnchors().size());
+        assertEquals(CityLandUseChunkCompiler.PlatformPurpose.BUILDING,
+                fragment.platformPurposeAnchors().get(0).purpose());
+        assertEquals(footprint, fragment.platformPurposeAnchors().get(0).bounds());
+        assertEquals(List.of("house::front"), fragment.platformAccessDemands().stream()
+                .map(CityLandUseChunkCompiler.PlatformAccessDemand::demandId).toList());
+        assertEquals(new BlockPoint(6, 8), fragment.platformAccessDemands().get(0).entrance());
+    }
 
     @Test
     void uniformPlanUsesRuntimeBlockAndPreservesFrozenExclusions() {

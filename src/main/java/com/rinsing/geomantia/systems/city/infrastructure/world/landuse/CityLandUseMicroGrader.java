@@ -89,8 +89,18 @@ final class CityLandUseMicroGrader {
         Map<Cell, String> foundationAreaByCell = model.areaByCell();
         if (foundationAreaByCell.isEmpty()) return new FoundationPlan(List.of(), List.of(), List.of());
         Map<Cell, Integer> platformTargets = new HashMap<>(model.platformTargets());
-        List<StairDecision> stairs = platformStairs(fragment, foundationAreaByCell,
+        List<StairDecision> roadStairs = platformStairs(fragment, foundationAreaByCell,
                 platformTargets);
+        AccessPlan accessPlan = platformAccess(fragment, foundationAreaByCell,
+                platformTargets, roadStairs);
+        List<StairDecision> stairs = new ArrayList<>(roadStairs);
+        stairs.addAll(accessPlan.stairs());
+        stairs = stairs.stream().collect(java.util.stream.Collectors.toMap(
+                stair -> new Cell(stair.x(), stair.z()), stair -> stair,
+                (left, right) -> left, LinkedHashMap::new)).values().stream()
+                .sorted(Comparator.comparingInt(StairDecision::z)
+                        .thenComparingInt(StairDecision::x)
+                        .thenComparing(StairDecision::sourceId)).toList();
         stairs.forEach(stair -> platformTargets.put(new Cell(stair.x(), stair.z()), stair.targetY()));
 
         List<FoundationDecision> decisions = new ArrayList<>();
@@ -101,6 +111,11 @@ final class CityLandUseMicroGrader {
             if (!operation.areaId().equals(foundationAreaByCell.get(center))) continue;
             outputCells.add(center);
             CityLandUseChunkExecutor.ColumnSample sample = required(terrain, center);
+            if (model.droppedCells().contains(center)) {
+                decisions.add(new FoundationDecision(operation.areaId(), operation.x(), operation.z(),
+                        sample.surfaceY(), sample.surfaceY(), FoundationMode.PRESERVE));
+                continue;
+            }
             if (liquid(sample)) {
                 Integer targetY = platformTargets.get(center);
                 decisions.add(new FoundationDecision(operation.areaId(), operation.x(), operation.z(),
@@ -133,7 +148,8 @@ final class CityLandUseMicroGrader {
                 .thenComparing(FoundationDecision::areaId));
         List<RetainingWallDecision> retainingWalls = retainingWalls(outputCells, foundationAreaByCell,
                 platformTargets, terrain);
-        return new FoundationPlan(List.copyOf(decisions), retainingWalls, stairs);
+        return new FoundationPlan(List.copyOf(decisions), retainingWalls, stairs,
+                accessPlan.paths(), accessPlan.outcomes(), model.platformAdjustments());
     }
 
     static OptionalInt resolveStructureDatum(CityLandUseChunkCompiler.ChunkFragment fragment,
@@ -165,7 +181,9 @@ final class CityLandUseMicroGrader {
                 foundationAreaByCell.putIfAbsent(new Cell(cell.x(), cell.z()), cell.areaId());
             }
         }
-        if (foundationAreaByCell.isEmpty()) return new PlatformModel(Map.of(), Map.of());
+        if (foundationAreaByCell.isEmpty()) {
+            return new PlatformModel(Map.of(), Map.of(), Set.of(), List.of());
+        }
 
         Map<Cell, Integer> desiredTargets = new HashMap<>();
         foundationAreaByCell.forEach((cell, areaId) -> {
@@ -174,11 +192,13 @@ final class CityLandUseMicroGrader {
                 desiredTargets.put(cell, localDominantHeight(cell, areaId, foundationAreaByCell, terrain));
             }
         });
-        Map<Cell, Integer> platformTargets = new HashMap<>(
-                platformTargets(foundationAreaByCell, desiredTargets));
+        PlatformResolution resolution = platformTargets(foundationAreaByCell, desiredTargets,
+                fragment.platformPurposeAnchors());
+        Map<Cell, Integer> platformTargets = new HashMap<>(resolution.targets());
         closeSmallDryPlatformHoles(foundationAreaByCell, platformTargets);
         closeSmallLiquidHoles(foundationAreaByCell, platformTargets, terrain);
-        return new PlatformModel(Map.copyOf(foundationAreaByCell), Map.copyOf(platformTargets));
+        return new PlatformModel(Map.copyOf(foundationAreaByCell), Map.copyOf(platformTargets),
+                resolution.droppedCells(), resolution.adjustments());
     }
 
     private static int localDominantHeight(Cell center,
@@ -200,8 +220,10 @@ final class CityLandUseMicroGrader {
         return dominantHeight(heights);
     }
 
-    private static Map<Cell, Integer> platformTargets(Map<Cell, String> areaByCell,
-                                                       Map<Cell, Integer> desiredTargets) {
+    private static PlatformResolution platformTargets(
+            Map<Cell, String> areaByCell,
+            Map<Cell, Integer> desiredTargets,
+            List<CityLandUseChunkCompiler.PlatformPurposeAnchor> purposeAnchors) {
         Map<Cell, Integer> result = new HashMap<>();
         Set<Cell> remaining = new HashSet<>(desiredTargets.keySet());
         while (!remaining.isEmpty()) {
@@ -232,8 +254,10 @@ final class CityLandUseMicroGrader {
                     .toList());
             component.forEach(cell -> result.put(cell, platformY));
         }
-        mergeSubthresholdPlatforms(areaByCell, result);
-        return Map.copyOf(result);
+        Set<Cell> droppedCells = new HashSet<>();
+        List<PlatformAdjustment> adjustments = new ArrayList<>();
+        mergeInvalidPlatforms(areaByCell, result, purposeAnchors, droppedCells, adjustments);
+        return new PlatformResolution(Map.copyOf(result), Set.copyOf(droppedCells), adjustments);
     }
 
     private static int quantizedPlatformHeight(int desiredHeight) {
@@ -242,8 +266,13 @@ final class CityLandUseMicroGrader {
                 * PLATFORM_LEVEL_STEP_BLOCKS;
     }
 
-    private static void mergeSubthresholdPlatforms(Map<Cell, String> areaByCell,
-                                                   Map<Cell, Integer> targets) {
+    private static void mergeInvalidPlatforms(
+            Map<Cell, String> areaByCell,
+            Map<Cell, Integer> targets,
+            List<CityLandUseChunkCompiler.PlatformPurposeAnchor> purposeAnchors,
+            Set<Cell> droppedCells,
+            List<PlatformAdjustment> adjustments) {
+        boolean legacyAreaOnly = purposeAnchors.isEmpty();
         boolean changed;
         do {
             changed = false;
@@ -254,7 +283,19 @@ final class CityLandUseMicroGrader {
                 int targetY = targets.get(first);
                 Set<Cell> component = sameTargetComponent(first, areaId, targetY,
                         areaByCell, targets, remaining);
-                if (component.size() >= MIN_INDEPENDENT_PLATFORM_AREA_BLOCKS) continue;
+                List<CityLandUseChunkCompiler.PlatformPurposeAnchor> componentPurposes =
+                        purposeAnchors.stream().filter(anchor -> areaId.equals(anchor.areaId())
+                                        && component.stream().anyMatch(cell ->
+                                        outsideDistance(cell, anchor.bounds()) <= 1)).toList();
+                List<String> purposeIds = componentPurposes.stream()
+                        .map(CityLandUseChunkCompiler.PlatformPurposeAnchor::purposeId).sorted().toList();
+                boolean hasPurpose = legacyAreaOnly || !purposeIds.isEmpty();
+                int supportedArea = component.size() + componentPurposes.stream()
+                        .mapToInt(anchor -> anchor.bounds().widthBlocks()
+                                * anchor.bounds().heightBlocks()).sum();
+                if (supportedArea >= MIN_INDEPENDENT_PLATFORM_AREA_BLOCKS && hasPurpose) {
+                    continue;
+                }
 
                 Map<Integer, Integer> sharedEdgesByTarget = new HashMap<>();
                 for (Cell cell : component) {
@@ -273,11 +314,42 @@ final class CityLandUseMicroGrader {
                                 .thenComparingInt(entry -> Math.abs(entry.getKey() - targetY))
                                 .thenComparingInt(Map.Entry::getKey))
                         .map(Map.Entry::getKey).findFirst().orElse(null);
-                if (mergedY == null) continue;
+                if (mergedY == null) {
+                    if (legacyAreaOnly) continue;
+                    droppedCells.addAll(component);
+                    adjustments.add(new PlatformAdjustment(areaId, component.size(), targetY, null,
+                            PlatformAdjustmentStatus.WITHDRAWN,
+                            "CITY_LAND_USE_PLATFORM_NO_SAFE_MERGE_WITHDRAWN", purposeIds));
+                    component.forEach(targets::remove);
+                    changed = true;
+                    continue;
+                }
+                adjustments.add(new PlatformAdjustment(areaId, component.size(), targetY, mergedY,
+                        PlatformAdjustmentStatus.MERGED,
+                        hasPurpose ? "CITY_LAND_USE_PLATFORM_CAPACITY_TOO_SMALL"
+                                : "CITY_LAND_USE_PLATFORM_PURPOSE_MISSING",
+                        purposeIds));
                 component.forEach(cell -> targets.put(cell, mergedY));
                 changed = true;
             }
         } while (changed);
+        if (!legacyAreaOnly) {
+            Set<Cell> remaining = new HashSet<>(targets.keySet());
+            while (!remaining.isEmpty()) {
+                Cell first = stableFirst(remaining);
+                String areaId = areaByCell.get(first);
+                int targetY = targets.get(first);
+                Set<Cell> component = sameTargetComponent(first, areaId, targetY,
+                        areaByCell, targets, remaining);
+                List<String> purposeIds = purposeAnchors.stream().filter(anchor ->
+                                areaId.equals(anchor.areaId()) && component.stream()
+                                        .anyMatch(cell -> outsideDistance(cell, anchor.bounds()) <= 1))
+                        .map(CityLandUseChunkCompiler.PlatformPurposeAnchor::purposeId).sorted().toList();
+                adjustments.add(new PlatformAdjustment(areaId, component.size(), targetY, targetY,
+                        PlatformAdjustmentStatus.RETAINED,
+                        "CITY_LAND_USE_PLATFORM_PURPOSE_RETAINED", purposeIds));
+            }
+        }
     }
 
     private static void closeSmallDryPlatformHoles(Map<Cell, String> areaByCell,
@@ -541,6 +613,188 @@ final class CityLandUseMicroGrader {
                 .toList();
     }
 
+    private static AccessPlan platformAccess(
+            CityLandUseChunkCompiler.ChunkFragment fragment,
+            Map<Cell, String> areaByCell,
+            Map<Cell, Integer> platformTargets,
+            List<StairDecision> roadStairs) {
+        if (fragment.platformAccessDemands().isEmpty()) {
+            return new AccessPlan(List.of(), List.of(), List.of());
+        }
+        Set<Cell> ownedSurfaceCells = fragment.surfaceOperations().stream()
+                .filter(operation -> operation.surfaceOffset() == 0)
+                .map(operation -> new Cell(operation.x(), operation.z()))
+                .collect(java.util.stream.Collectors.toSet());
+        String pathBlock = fragment.gradingFeatureOperations().stream()
+                .filter(operation -> operation.kind() == CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB)
+                .map(CityLandUseChunkCompiler.FeatureOperation::blockId)
+                .findFirst().orElse("minecraft:polished_andesite_slab");
+        String stairBlock = derivedStairBlock(pathBlock);
+        if (stairBlock.isBlank()) stairBlock = "minecraft:polished_andesite_stairs";
+
+        Map<Cell, StairDecision> stairs = new LinkedHashMap<>();
+        Map<Cell, AccessPathDecision> paths = new LinkedHashMap<>();
+        List<AccessOutcome> outcomes = new ArrayList<>();
+        List<Set<Cell>> activelyServedPlatforms = new ArrayList<>();
+        List<CityLandUseChunkCompiler.PlatformAccessDemand> demands =
+                fragment.platformAccessDemands().stream()
+                        .sorted(Comparator.comparing(
+                                CityLandUseChunkCompiler.PlatformAccessDemand::demandId)).toList();
+        for (CityLandUseChunkCompiler.PlatformAccessDemand demand : demands) {
+            Cell entrance = new Cell(demand.entrance().x(), demand.entrance().z());
+            Cell platformCell = platformTargets.keySet().stream()
+                    .filter(cell -> demand.areaId().equals(areaByCell.get(cell)))
+                    .min(Comparator.comparingInt((Cell cell) -> manhattan(cell, entrance))
+                            .thenComparingInt(Cell::z).thenComparingInt(Cell::x))
+                    .orElse(null);
+            if (platformCell == null || manhattan(platformCell, entrance) > REFERENCE_RADIUS_BLOCKS + 1) {
+                if (insideOwnerChunk(fragment, entrance)) {
+                    outcomes.add(new AccessOutcome(demand.demandId(), AccessStatus.FAILED,
+                            "CITY_LAND_USE_ACCESS_PLATFORM_MISSING"));
+                }
+                continue;
+            }
+            int platformY = platformTargets.get(platformCell);
+            Set<Cell> component = sameTargetComponent(platformCell, demand.areaId(), platformY,
+                    areaByCell, platformTargets, new HashSet<>(platformTargets.keySet()));
+            Set<Cell> alreadyServed = activelyServedPlatforms.stream()
+                    .filter(component::equals).findFirst().orElse(null);
+            if (alreadyServed != null) {
+                Cell join = paths.keySet().stream().filter(component::contains)
+                        .min(Comparator.comparingInt((Cell cell) -> manhattan(platformCell, cell))
+                                .thenComparingInt(Cell::z).thenComparingInt(Cell::x))
+                        .orElse(platformCell);
+                addAccessPath(paths, demand, pathBlock,
+                        shortestPath(platformCell, join, component), ownedSurfaceCells, stairs.keySet());
+                outcomes.add(new AccessOutcome(demand.demandId(), AccessStatus.SHARED_PLATFORM_ACCESS,
+                        "CITY_LAND_USE_ACCESS_SHARED_PLATFORM_MAIN_ENTRANCE"));
+                continue;
+            }
+            boolean existingAccess = roadStairs.stream().anyMatch(stair -> component.stream()
+                    .anyMatch(cell -> manhattan(cell, new Cell(stair.x(), stair.z())) <= 1));
+            if (existingAccess) {
+                outcomes.add(new AccessOutcome(demand.demandId(), AccessStatus.EXISTING_ROAD_STAIR,
+                        "CITY_LAND_USE_ACCESS_EXISTING_ROAD_STAIR"));
+                continue;
+            }
+
+            List<AccessBoundary> boundaries = new ArrayList<>();
+            for (Cell cell : component) {
+                for (int[] direction : CARDINAL_OFFSETS) {
+                    Cell neighbour = offset(cell, direction);
+                    Integer neighbourY = platformTargets.get(neighbour);
+                    if (!demand.areaId().equals(areaByCell.get(neighbour)) || neighbourY == null
+                            || Math.abs(neighbourY - platformY) < PLATFORM_LEVEL_STEP_BLOCKS) continue;
+                    Cell low = platformY < neighbourY ? cell : neighbour;
+                    int highDx = platformY < neighbourY ? direction[0] : -direction[0];
+                    int highDz = platformY < neighbourY ? direction[1] : -direction[1];
+                    boundaries.add(new AccessBoundary(cell, low, Math.min(platformY, neighbourY),
+                            Math.max(platformY, neighbourY), highDx, highDz));
+                }
+            }
+            boundaries.sort(Comparator.comparingInt((AccessBoundary boundary) ->
+                            manhattan(platformCell, boundary.occupiedSide()))
+                    .thenComparingInt(boundary -> boundary.highY() - boundary.lowY())
+                    .thenComparingInt(boundary -> boundary.occupiedSide().z())
+                    .thenComparingInt(boundary -> boundary.occupiedSide().x()));
+            if (boundaries.isEmpty()) {
+                outcomes.add(new AccessOutcome(demand.demandId(), AccessStatus.LEVEL_ACCESS,
+                        "CITY_LAND_USE_ACCESS_NO_LEVEL_CHANGE"));
+                addAccessPath(paths, demand, pathBlock, shortestPath(platformCell, platformCell,
+                        component), ownedSurfaceCells, Set.of());
+                continue;
+            }
+
+            boolean built = false;
+            for (AccessBoundary boundary : boundaries) {
+                int delta = boundary.highY() - boundary.lowY();
+                TransitionKey key = new TransitionKey("access::" + demand.demandId(),
+                        boundary.highDx() != 0 ? Axis.HORIZONTAL : Axis.VERTICAL, 0,
+                        boundary.lowY(), boundary.highY(), boundary.highDx(), boundary.highDz());
+                Map<Cell, StairDecision> candidate = new LinkedHashMap<>();
+                if (directRunAvailable(boundary.low(), key, delta, areaByCell, platformTargets)) {
+                    for (int step = 0; step < delta; step++) {
+                        Cell cell = new Cell(boundary.low().x() - key.highDx() * step,
+                                boundary.low().z() - key.highDz() * step);
+                        putStair(candidate, new StairDecision(key.sourceId(), cell.x(), cell.z(),
+                                key.highY() - 1 - step, stairBlock,
+                                facing(key.highDx(), key.highDz()), StairMode.ACCESS_DIRECT));
+                    }
+                } else {
+                    addSplitStairs(candidate, key.sourceId(), stairBlock, key,
+                            List.of(boundary.low()), areaByCell, platformTargets, StairMode.ACCESS_SPLIT);
+                }
+                if (candidate.isEmpty()) continue;
+                Set<Cell> stairCells = candidate.keySet();
+                List<Cell> path = shortestPath(platformCell, boundary.occupiedSide(), component);
+                if (path.isEmpty()) continue;
+                candidate.forEach((cell, stair) -> {
+                    if (ownedSurfaceCells.contains(cell)) stairs.putIfAbsent(cell, stair);
+                });
+                addAccessPath(paths, demand, pathBlock, path, ownedSurfaceCells, stairCells);
+                outcomes.add(new AccessOutcome(demand.demandId(), AccessStatus.ACTIVE_STAIR,
+                        candidate.values().iterator().next().mode().name()));
+                activelyServedPlatforms.add(Set.copyOf(component));
+                built = true;
+                break;
+            }
+            if (!built && insideOwnerChunk(fragment, entrance)) {
+                outcomes.add(new AccessOutcome(demand.demandId(), AccessStatus.FAILED,
+                        "CITY_LAND_USE_ACCESS_STAIR_UNRESOLVED"));
+            }
+        }
+        return new AccessPlan(List.copyOf(stairs.values()), List.copyOf(paths.values()), outcomes);
+    }
+
+    private static boolean insideOwnerChunk(CityLandUseChunkCompiler.ChunkFragment fragment, Cell cell) {
+        int minX = fragment.chunkX() * 16;
+        int minZ = fragment.chunkZ() * 16;
+        return cell.x() >= minX && cell.x() <= minX + 15
+                && cell.z() >= minZ && cell.z() <= minZ + 15;
+    }
+
+    private static int manhattan(Cell left, Cell right) {
+        return Math.abs(left.x() - right.x()) + Math.abs(left.z() - right.z());
+    }
+
+    private static void addAccessPath(Map<Cell, AccessPathDecision> result,
+                                      CityLandUseChunkCompiler.PlatformAccessDemand demand,
+                                      String blockId,
+                                      List<Cell> path,
+                                      Set<Cell> ownedSurfaceCells,
+                                      Set<Cell> stairCells) {
+        for (Cell cell : path) {
+            if (ownedSurfaceCells.contains(cell) && !stairCells.contains(cell)) {
+                result.putIfAbsent(cell, new AccessPathDecision(demand.demandId(),
+                        cell.x(), cell.z(), blockId));
+            }
+        }
+    }
+
+    private static List<Cell> shortestPath(Cell start, Cell goal, Set<Cell> domain) {
+        if (!domain.contains(start) || !domain.contains(goal)) return List.of();
+        ArrayDeque<Cell> pending = new ArrayDeque<>();
+        Map<Cell, Cell> previous = new HashMap<>();
+        pending.add(start);
+        previous.put(start, null);
+        while (!pending.isEmpty()) {
+            Cell cell = pending.removeFirst();
+            if (cell.equals(goal)) break;
+            for (int[] direction : CARDINAL_OFFSETS) {
+                Cell next = offset(cell, direction);
+                if (domain.contains(next) && !previous.containsKey(next)) {
+                    previous.put(next, cell);
+                    pending.addLast(next);
+                }
+            }
+        }
+        if (!previous.containsKey(goal)) return List.of();
+        List<Cell> path = new ArrayList<>();
+        for (Cell cell = goal; cell != null; cell = previous.get(cell)) path.add(cell);
+        java.util.Collections.reverse(path);
+        return path;
+    }
+
     private static boolean directRunAvailable(Cell low,
                                               TransitionKey key,
                                               int delta,
@@ -557,6 +811,21 @@ final class CityLandUseMicroGrader {
         return true;
     }
 
+    private static boolean directRunAvailable(Cell low,
+                                              TransitionKey key,
+                                              int delta,
+                                              Map<Cell, String> areaByCell,
+                                              Map<Cell, Integer> platformTargets) {
+        String areaId = areaByCell.get(low);
+        for (int step = 0; step < delta; step++) {
+            Cell cell = new Cell(low.x() - key.highDx() * step,
+                    low.z() - key.highDz() * step);
+            if (!areaId.equals(areaByCell.get(cell))
+                    || !Integer.valueOf(key.lowY()).equals(platformTargets.get(cell))) return false;
+        }
+        return true;
+    }
+
     private static void addSplitStairs(Map<Cell, StairDecision> result,
                                        String sourceId,
                                        String stairBlock,
@@ -564,6 +833,18 @@ final class CityLandUseMicroGrader {
                                        List<Cell> lowCells,
                                        Map<Cell, String> areaByCell,
                                        Map<Cell, Integer> platformTargets) {
+        addSplitStairs(result, sourceId, stairBlock, key, lowCells,
+                areaByCell, platformTargets, StairMode.SPLIT);
+    }
+
+    private static void addSplitStairs(Map<Cell, StairDecision> result,
+                                       String sourceId,
+                                       String stairBlock,
+                                       TransitionKey key,
+                                       List<Cell> lowCells,
+                                       Map<Cell, String> areaByCell,
+                                       Map<Cell, Integer> platformTargets,
+                                       StairMode stairMode) {
         int delta = key.highY() - key.lowY();
         Cell lowCenter = lowCells.get(lowCells.size() / 2);
         String areaId = areaByCell.get(lowCenter);
@@ -584,7 +865,7 @@ final class CityLandUseMicroGrader {
         if (!available) return;
 
         putStair(result, new StairDecision(sourceId, lowCenter.x(), lowCenter.z(),
-                key.highY() - 1, stairBlock, facing(key.highDx(), key.highDz()), StairMode.SPLIT));
+                key.highY() - 1, stairBlock, facing(key.highDx(), key.highDz()), stairMode));
         for (int step = 1; step < delta; step++) {
             int targetY = key.highY() - 1 - step;
             Cell positive = new Cell(lowCenter.x() + lateralX * step,
@@ -592,9 +873,9 @@ final class CityLandUseMicroGrader {
             Cell negative = new Cell(lowCenter.x() - lateralX * step,
                     lowCenter.z() - lateralZ * step);
             putStair(result, new StairDecision(sourceId, positive.x(), positive.z(), targetY,
-                    stairBlock, facing(-lateralX, -lateralZ), StairMode.SPLIT));
+                    stairBlock, facing(-lateralX, -lateralZ), stairMode));
             putStair(result, new StairDecision(sourceId, negative.x(), negative.z(), targetY,
-                    stairBlock, facing(lateralX, lateralZ), StairMode.SPLIT));
+                    stairBlock, facing(lateralX, lateralZ), stairMode));
         }
     }
 
@@ -741,11 +1022,53 @@ final class CityLandUseMicroGrader {
 
     record FoundationPlan(List<FoundationDecision> decisions,
                           List<RetainingWallDecision> retainingWalls,
-                          List<StairDecision> stairs) {
+                          List<StairDecision> stairs,
+                          List<AccessPathDecision> accessPaths,
+                          List<AccessOutcome> accessOutcomes,
+                          List<PlatformAdjustment> platformAdjustments) {
         FoundationPlan {
             decisions = List.copyOf(decisions);
             retainingWalls = List.copyOf(retainingWalls);
             stairs = List.copyOf(stairs);
+            accessPaths = List.copyOf(accessPaths);
+            accessOutcomes = List.copyOf(accessOutcomes);
+            platformAdjustments = List.copyOf(platformAdjustments);
+        }
+
+        FoundationPlan(List<FoundationDecision> decisions,
+                       List<RetainingWallDecision> retainingWalls,
+                       List<StairDecision> stairs) {
+            this(decisions, retainingWalls, stairs, List.of(), List.of(), List.of());
+        }
+    }
+
+    record PlatformAdjustment(String areaId,
+                              int cellCount,
+                              int fromY,
+                              Integer targetY,
+                              PlatformAdjustmentStatus status,
+                              String reasonCode,
+                              List<String> purposeIds) {
+        PlatformAdjustment {
+            Objects.requireNonNull(areaId, "areaId");
+            Objects.requireNonNull(status, "status");
+            Objects.requireNonNull(reasonCode, "reasonCode");
+            purposeIds = List.copyOf(purposeIds);
+        }
+    }
+
+    record AccessPathDecision(String demandId, int x, int z, String blockId) {
+        AccessPathDecision {
+            Objects.requireNonNull(demandId, "demandId");
+            Objects.requireNonNull(blockId, "blockId");
+        }
+    }
+
+    record AccessOutcome(String demandId, AccessStatus status, String reasonCode) {
+        AccessOutcome {
+            Objects.requireNonNull(demandId, "demandId");
+            Objects.requireNonNull(status, "status");
+            Objects.requireNonNull(reasonCode, "reasonCode");
         }
     }
 
@@ -782,7 +1105,23 @@ final class CityLandUseMicroGrader {
 
     enum StairMode {
         DIRECT,
-        SPLIT
+        SPLIT,
+        ACCESS_DIRECT,
+        ACCESS_SPLIT
+    }
+
+    enum AccessStatus {
+        LEVEL_ACCESS,
+        EXISTING_ROAD_STAIR,
+        ACTIVE_STAIR,
+        SHARED_PLATFORM_ACCESS,
+        FAILED
+    }
+
+    enum PlatformAdjustmentStatus {
+        RETAINED,
+        MERGED,
+        WITHDRAWN
     }
 
     private enum Axis {
@@ -815,7 +1154,32 @@ final class CityLandUseMicroGrader {
     }
 
     private record PlatformModel(Map<Cell, String> areaByCell,
-                                 Map<Cell, Integer> platformTargets) {
+                                 Map<Cell, Integer> platformTargets,
+                                 Set<Cell> droppedCells,
+                                 List<PlatformAdjustment> platformAdjustments) {
+    }
+
+    private record PlatformResolution(Map<Cell, Integer> targets,
+                                      Set<Cell> droppedCells,
+                                      List<PlatformAdjustment> adjustments) {
+    }
+
+    private record AccessBoundary(Cell occupiedSide,
+                                  Cell low,
+                                  int lowY,
+                                  int highY,
+                                  int highDx,
+                                  int highDz) {
+    }
+
+    private record AccessPlan(List<StairDecision> stairs,
+                              List<AccessPathDecision> paths,
+                              List<AccessOutcome> outcomes) {
+        AccessPlan {
+            stairs = List.copyOf(stairs);
+            paths = List.copyOf(paths);
+            outcomes = List.copyOf(outcomes);
+        }
     }
 
     private record Cell(int x, int z) {

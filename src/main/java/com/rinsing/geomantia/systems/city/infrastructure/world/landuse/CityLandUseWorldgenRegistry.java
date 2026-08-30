@@ -47,7 +47,8 @@ import java.util.function.Predicate;
 /** Server-root registry for current LandUse surface plans and owner-chunk application ledgers. */
 public final class CityLandUseWorldgenRegistry {
     public static final String ACTIVE_SCHEMA = "city_active_land_use_area_plans.v0.2";
-    public static final String LEDGER_SCHEMA = "city_land_use_worldgen_ledger.v0.3";
+    public static final String LEDGER_SCHEMA = "city_land_use_worldgen_ledger.v0.4";
+    private static final String LEGACY_LEDGER_SCHEMA = "city_land_use_worldgen_ledger.v0.3";
 
     private static final Logger LOGGER = LogUtils.getLogger();
     private static final Gson STATE_GSON = new GsonBuilder().disableHtmlEscaping()
@@ -188,7 +189,7 @@ public final class CityLandUseWorldgenRegistry {
         nextLedgerPersistenceNanos = 0L;
         ledgerMutationVersion = 0L;
         ledgerPersistenceInProgress = false;
-        if (!state.ledgerExists()) {
+        if (!state.ledgerExists() || state.ledgerMigrated()) {
             persistLedger();
         }
         LOGGER.info("Loaded City LandUse registry: activePlans={}, appliedOwners={}",
@@ -375,7 +376,8 @@ public final class CityLandUseWorldgenRegistry {
         }
         return new BackfillSummary(areaPlan.cityId(), areaPlan.planHash(), surfacePrintPlan.planHash(),
                 owners.size(), appliedBefore, appliedAfter - appliedBefore, appliedAfter, List.copyOf(missing),
-                List.copyOf(failures));
+                List.copyOf(failures), foundationDiagnostics(areaPlan.cityId(), areaPlan.planHash(),
+                surfacePrintPlan.planHash()));
     }
 
     /** CLEAR suppresses natural features; selective clearing is owned by exact Decoration/D5 masks. */
@@ -506,10 +508,62 @@ public final class CityLandUseWorldgenRegistry {
         entry.addProperty("appliedBoundaryOperationCount", phaseCounts.appliedBoundary());
         entry.addProperty("naturalSurfaceSkippedCount", result.naturalSurfaceSkippedCount());
         entry.addProperty("occupiedBoundarySkippedCount", result.occupiedBoundarySkippedCount());
+        entry.add("foundationDiagnostics", foundationDiagnosticsJson(result.foundationDiagnostics()));
         entry.addProperty("appliedAt", Instant.now().toString());
         appliedOwners().add(entry);
         APPLIED_OWNER_KEYS.add(key);
         markLedgerDirty();
+    }
+
+    private static JsonObject foundationDiagnosticsJson(
+            CityLandUseChunkExecutor.FoundationDiagnostics diagnostics) {
+        JsonObject json = new JsonObject();
+        json.addProperty("purposeAnchorCount", diagnostics.purposeAnchorCount());
+        json.addProperty("accessDemandCount", diagnostics.accessDemandCount());
+        json.addProperty("accessPathCellCount", diagnostics.accessPathCellCount());
+        json.addProperty("stairCellCount", diagnostics.stairCellCount());
+        JsonArray platforms = new JsonArray();
+        for (CityLandUseMicroGrader.PlatformAdjustment adjustment : diagnostics.platformAdjustments()) {
+            JsonObject item = new JsonObject();
+            item.addProperty("areaId", adjustment.areaId());
+            item.addProperty("cellCount", adjustment.cellCount());
+            item.addProperty("fromY", adjustment.fromY());
+            if (adjustment.targetY() != null) item.addProperty("targetY", adjustment.targetY());
+            item.addProperty("status", adjustment.status().name());
+            item.addProperty("reasonCode", adjustment.reasonCode());
+            JsonArray purposes = new JsonArray();
+            adjustment.purposeIds().forEach(purposes::add);
+            item.add("purposeIds", purposes);
+            platforms.add(item);
+        }
+        json.add("platformAdjustments", platforms);
+        JsonArray access = new JsonArray();
+        for (CityLandUseMicroGrader.AccessOutcome outcome : diagnostics.accessOutcomes()) {
+            JsonObject item = new JsonObject();
+            item.addProperty("demandId", outcome.demandId());
+            item.addProperty("status", outcome.status().name());
+            item.addProperty("reasonCode", outcome.reasonCode());
+            access.add(item);
+        }
+        json.add("accessOutcomes", access);
+        return json;
+    }
+
+    private static synchronized JsonArray foundationDiagnostics(
+            String cityId, String areaPlanHash, String surfacePrintPlanHash) {
+        JsonArray result = new JsonArray();
+        for (JsonElement element : appliedOwners()) {
+            JsonObject entry = element.getAsJsonObject();
+            if (!cityId.equals(requiredString(entry, "cityId"))
+                    || !areaPlanHash.equals(requiredString(entry, "areaPlanHash"))
+                    || !surfacePrintPlanHash.equals(requiredString(entry, "surfacePrintPlanHash"))) continue;
+            JsonObject item = new JsonObject();
+            item.addProperty("chunkX", requiredInt(entry, "chunkX"));
+            item.addProperty("chunkZ", requiredInt(entry, "chunkZ"));
+            item.add("diagnostics", requiredObject(entry, "foundationDiagnostics").deepCopy());
+            result.add(item);
+        }
+        return result;
     }
 
     private static PhaseCounts phaseCounts(
@@ -579,18 +633,24 @@ public final class CityLandUseWorldgenRegistry {
         boolean ledgerExists = Files.isRegularFile(ledgerPath);
         JsonObject persistedLedger = ledgerExists
                 ? readObject(ledgerPath, "CITY_LAND_USE_LEDGER_READ_FAILED") : emptyLedger();
-        requireSchema(persistedLedger, LEDGER_SCHEMA, "CITY_LAND_USE_LEDGER_SCHEMA_UNSUPPORTED");
+        String ledgerSchema = requiredString(persistedLedger, "schemaVersion");
+        boolean legacyLedger = LEGACY_LEDGER_SCHEMA.equals(ledgerSchema);
+        if (!legacyLedger && !LEDGER_SCHEMA.equals(ledgerSchema)) {
+            throw new IllegalArgumentException("CITY_LAND_USE_LEDGER_SCHEMA_UNSUPPORTED: " + ledgerSchema);
+        }
         requireFields(persistedLedger, Set.of("schemaVersion", "appliedOwners"),
                 "CITY_LAND_USE_LEDGER_FIELDS_UNSUPPORTED");
         for (JsonElement element : requiredArray(persistedLedger, "appliedOwners")) {
             JsonObject entry = requiredObject(element, "CITY_LAND_USE_LEDGER_ENTRY_INVALID");
-            requireFields(entry, Set.of("dimensionId", "cityId", "areaPlanHash", "surfacePrintPlanHash",
+            Set<String> entryFields = new HashSet<>(Set.of("dimensionId", "cityId", "areaPlanHash", "surfacePrintPlanHash",
                     "paletteHash", "chunkX", "chunkZ", "surfaceOperationCount", "boundaryOperationCount",
                     "featureOperationCount",
                     "appliedOperationCount", "preparedBaseOperationCount", "appliedBaseOperationCount",
                     "preparedCropOperationCount", "appliedCropOperationCount",
                     "preparedBoundaryOperationCount", "appliedBoundaryOperationCount",
-                    "naturalSurfaceSkippedCount", "occupiedBoundarySkippedCount", "appliedAt"),
+                    "naturalSurfaceSkippedCount", "occupiedBoundarySkippedCount", "appliedAt"));
+            if (!legacyLedger) entryFields.add("foundationDiagnostics");
+            requireFields(entry, entryFields,
                     "CITY_LAND_USE_LEDGER_ENTRY_FIELDS_UNSUPPORTED");
             dimensionId(requiredString(entry, "dimensionId"));
             requiredString(entry, "cityId");
@@ -599,8 +659,11 @@ public final class CityLandUseWorldgenRegistry {
             requiredString(entry, "paletteHash");
             requiredInt(entry, "chunkX");
             requiredInt(entry, "chunkZ");
+            if (legacyLedger) entry.add("foundationDiagnostics",
+                    foundationDiagnosticsJson(CityLandUseChunkExecutor.FoundationDiagnostics.empty()));
         }
-        return new LoadedState(Map.copyOf(active), persistedLedger, ledgerExists);
+        if (legacyLedger) persistedLedger.addProperty("schemaVersion", LEDGER_SCHEMA);
+        return new LoadedState(Map.copyOf(active), persistedLedger, ledgerExists, legacyLedger);
     }
 
     private static synchronized void persistActive() {
@@ -972,10 +1035,13 @@ public final class CityLandUseWorldgenRegistry {
                                   int backfilledOwnerCount,
                                   int appliedAfterCount,
                                   List<CityLandUseChunkStatusPreflight.OwnerChunk> missingOwners,
-                                  List<OwnerFailure> failures) {
+                                  List<OwnerFailure> failures,
+                                  JsonArray foundationDiagnostics) {
         public BackfillSummary {
             missingOwners = List.copyOf(missingOwners);
             failures = List.copyOf(failures);
+            foundationDiagnostics = foundationDiagnostics == null
+                    ? new JsonArray() : foundationDiagnostics.deepCopy();
         }
 
         public boolean complete() {
@@ -1115,6 +1181,7 @@ public final class CityLandUseWorldgenRegistry {
 
     private record LoadedState(Map<ActiveKey, ActivePlan> activePlans,
                                JsonObject ledger,
-                               boolean ledgerExists) {
+                               boolean ledgerExists,
+                               boolean ledgerMigrated) {
     }
 }

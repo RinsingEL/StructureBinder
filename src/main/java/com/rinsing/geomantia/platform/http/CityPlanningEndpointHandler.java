@@ -3974,6 +3974,7 @@ final class CityPlanningEndpointHandler {
             failures.add(item);
         }
         json.add("failures", failures);
+        json.add("foundationDiagnostics", result.foundationDiagnostics().deepCopy());
         return json;
     }
 

@@ -60,6 +60,13 @@ public final class CityLandUseChunkExecutor {
         }
         CityLandUseMicroGrader.FoundationPlan foundationPlan =
                 CityLandUseMicroGrader.planFoundationPlatform(fragment, terrainView);
+        CityLandUseMicroGrader.AccessOutcome unresolvedAccess = foundationPlan.accessOutcomes().stream()
+                .filter(outcome -> outcome.status() == CityLandUseMicroGrader.AccessStatus.FAILED)
+                .findFirst().orElse(null);
+        if (unresolvedAccess != null) {
+            return ExecutionResult.failed(fragment, unresolvedAccess.reasonCode(), 0, 0,
+                    0, 0, true, foundationPlan);
+        }
         Map<ColumnKey, CityLandUseMicroGrader.FoundationDecision> foundationByColumn = new HashMap<>();
         for (CityLandUseMicroGrader.FoundationDecision decision : foundationPlan.decisions()) {
             foundationByColumn.put(new ColumnKey(decision.x(), decision.z()), decision);
@@ -216,6 +223,32 @@ public final class CityLandUseChunkExecutor {
             if (operation.surfaceOffset() == 0) plannedSurfaceY.put(key, surfaceY);
         }
 
+        Set<ColumnKey> platformStairColumns = foundationPlan.stairs().stream()
+                .map(stair -> new ColumnKey(stair.x(), stair.z()))
+                .collect(java.util.stream.Collectors.toSet());
+        for (CityLandUseMicroGrader.AccessPathDecision path : foundationPlan.accessPaths()) {
+            ColumnKey key = new ColumnKey(path.x(), path.z());
+            if (platformStairColumns.contains(key)) continue;
+            ColumnSample column = terrainView.sample(path.x(), path.z());
+            CityLandUseMicroGrader.FoundationDecision foundation = foundationByColumn.get(key);
+            int surfaceY = plannedSurfaceY.getOrDefault(key,
+                    foundation == null ? column.surfaceY() : foundation.targetY());
+            CityLandUseChunkCompiler.FeatureOperation operation =
+                    new CityLandUseChunkCompiler.FeatureOperation("access::" + path.demandId(),
+                            path.x(), path.z(), path.blockId(), 0,
+                            CityLandUseSurfacePrintPlan.FeatureKind.ROAD_SLAB,
+                            CityLandUseSurfacePrintPlan.HorizontalFacing.NONE);
+            PreparedMutation mutation = prepareFeature(world, operation, surfaceY,
+                    baseMutationClearsTarget(basePrepared, path.x(), surfaceY, path.z()));
+            if (mutation.failureReason() != null) {
+                return ExecutionResult.failed(fragment, mutation.failureReason(),
+                        preparedCount(basePrepared, cropPrepared, boundaryPrepared), 0,
+                        naturalSurfaceSkipped, occupiedBoundarySkipped, true);
+            }
+            basePrepared.add(mutation);
+            plannedSurfaceY.put(key, surfaceY);
+        }
+
         for (CityLandUseMicroGrader.StairDecision stair : foundationPlan.stairs()) {
             ColumnKey key = new ColumnKey(stair.x(), stair.z());
             if (materializedPlatformStairs.contains(key)) continue;
@@ -262,7 +295,7 @@ public final class CityLandUseChunkExecutor {
                     naturalSurfaceSkipped, occupiedBoundarySkipped, rolledBack);
         }
         return ExecutionResult.applied(fragment, preparedBlockCount,
-                naturalSurfaceSkipped, occupiedBoundarySkipped);
+                naturalSurfaceSkipped, occupiedBoundarySkipped, foundationPlan);
     }
 
     /** Selects paired rail columns at a stable seven-block cadence as in-water bridge piers. */
@@ -558,15 +591,18 @@ public final class CityLandUseChunkExecutor {
                                   int appliedOperationCount,
                                   int naturalSurfaceSkippedCount,
                                   int occupiedBoundarySkippedCount,
-                                  boolean rollbackComplete) {
+                                  boolean rollbackComplete,
+                                  FoundationDiagnostics foundationDiagnostics) {
         private static ExecutionResult applied(CityLandUseChunkCompiler.ChunkFragment fragment,
                                                int applied,
                                                int naturalSkipped,
-                                               int boundarySkipped) {
+                                               int boundarySkipped,
+                                               CityLandUseMicroGrader.FoundationPlan foundationPlan) {
             return new ExecutionResult(Status.APPLIED, "CITY_LAND_USE_OWNER_APPLIED",
                     fragment.cityId(), fragment.planHash(), fragment.paletteHash(),
                     fragment.chunkX(), fragment.chunkZ(), applied, applied,
-                    naturalSkipped, boundarySkipped, true);
+                    naturalSkipped, boundarySkipped, true,
+                    FoundationDiagnostics.from(fragment, foundationPlan));
         }
 
         private static ExecutionResult failed(CityLandUseChunkCompiler.ChunkFragment fragment,
@@ -578,13 +614,53 @@ public final class CityLandUseChunkExecutor {
                                               boolean rollbackComplete) {
             return new ExecutionResult(Status.FAILED, reason, fragment.cityId(), fragment.planHash(),
                     fragment.paletteHash(), fragment.chunkX(), fragment.chunkZ(), prepared, applied,
-                    naturalSkipped, boundarySkipped, rollbackComplete);
+                    naturalSkipped, boundarySkipped, rollbackComplete, FoundationDiagnostics.empty());
+        }
+
+        private static ExecutionResult failed(CityLandUseChunkCompiler.ChunkFragment fragment,
+                                              String reason,
+                                              int prepared,
+                                              int applied,
+                                              int naturalSkipped,
+                                              int boundarySkipped,
+                                              boolean rollbackComplete,
+                                              CityLandUseMicroGrader.FoundationPlan foundationPlan) {
+            return new ExecutionResult(Status.FAILED, reason, fragment.cityId(), fragment.planHash(),
+                    fragment.paletteHash(), fragment.chunkX(), fragment.chunkZ(), prepared, applied,
+                    naturalSkipped, boundarySkipped, rollbackComplete,
+                    FoundationDiagnostics.from(fragment, foundationPlan));
         }
 
         private static ExecutionResult ineligible(CityLandUseChunkCompiler.ChunkFragment fragment,
                                                   String reason) {
             return new ExecutionResult(Status.INELIGIBLE, reason, fragment.cityId(), fragment.planHash(),
-                    fragment.paletteHash(), fragment.chunkX(), fragment.chunkZ(), 0, 0, 0, 0, true);
+                    fragment.paletteHash(), fragment.chunkX(), fragment.chunkZ(), 0, 0, 0, 0, true,
+                    FoundationDiagnostics.empty());
+        }
+    }
+
+    public record FoundationDiagnostics(
+            int purposeAnchorCount,
+            int accessDemandCount,
+            int accessPathCellCount,
+            int stairCellCount,
+            List<CityLandUseMicroGrader.PlatformAdjustment> platformAdjustments,
+            List<CityLandUseMicroGrader.AccessOutcome> accessOutcomes) {
+        public FoundationDiagnostics {
+            platformAdjustments = List.copyOf(platformAdjustments);
+            accessOutcomes = List.copyOf(accessOutcomes);
+        }
+
+        private static FoundationDiagnostics from(
+                CityLandUseChunkCompiler.ChunkFragment fragment,
+                CityLandUseMicroGrader.FoundationPlan plan) {
+            return new FoundationDiagnostics(fragment.platformPurposeAnchors().size(),
+                    fragment.platformAccessDemands().size(), plan.accessPaths().size(),
+                    plan.stairs().size(), plan.platformAdjustments(), plan.accessOutcomes());
+        }
+
+        static FoundationDiagnostics empty() {
+            return new FoundationDiagnostics(0, 0, 0, 0, List.of(), List.of());
         }
     }
 

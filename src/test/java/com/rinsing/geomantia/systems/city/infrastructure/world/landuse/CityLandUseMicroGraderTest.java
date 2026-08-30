@@ -1,6 +1,8 @@
 package com.rinsing.geomantia.systems.city.infrastructure.world.landuse;
 
 import com.rinsing.geomantia.systems.city.domain.model.BlockBounds;
+import com.rinsing.geomantia.systems.city.domain.model.BlockPoint;
+import com.rinsing.geomantia.systems.city.domain.landuse.CardinalDirection;
 import com.rinsing.geomantia.systems.city.application.landuse.CityLandUseSurfacePrintPlan;
 import org.junit.jupiter.api.Test;
 
@@ -112,6 +114,75 @@ class CityLandUseMicroGraderTest {
         assertEquals(new CityLandUseMicroGrader.FoundationDecision(
                 "area", 10, 10, 76, 68, CityLandUseMicroGrader.FoundationMode.CUT),
                 plan.decisions().get(0));
+    }
+
+    @Test
+    void largeEmptyHighPatchMergesBecauseAreaAloneIsNotAPlatformPurpose() {
+        FakeTerrain terrain = new FakeTerrain(64);
+        for (int z = 4; z <= 16; z++) {
+            for (int x = 4; x <= 16; x++) terrain.height(x, z, 68);
+        }
+        CityLandUseChunkCompiler.ChunkFragment fragment = foundationFragmentWithPlatformFacts(
+                List.of(new CityLandUseChunkCompiler.SurfaceOperation(
+                        "area", "plaza", 10, 10, "minecraft:stone_bricks")),
+                List.of(new CityLandUseChunkCompiler.PlatformPurposeAnchor("area", "low-house",
+                        CityLandUseChunkCompiler.PlatformPurpose.BUILDING,
+                        new BlockBounds(0, 0, 1, 1))), List.of());
+
+        CityLandUseMicroGrader.FoundationPlan plan =
+                CityLandUseMicroGrader.planFoundationPlatform(fragment, terrain);
+
+        assertEquals(new CityLandUseMicroGrader.FoundationDecision(
+                "area", 10, 10, 68, 64, CityLandUseMicroGrader.FoundationMode.CUT),
+                plan.decisions().get(0));
+        assertTrue(plan.platformAdjustments().stream().anyMatch(adjustment ->
+                adjustment.status() == CityLandUseMicroGrader.PlatformAdjustmentStatus.MERGED
+                        && adjustment.reasonCode().equals("CITY_LAND_USE_PLATFORM_PURPOSE_MISSING")));
+    }
+
+    @Test
+    void isolatedPurposeLessFoundationWithdrawsInsteadOfPavingRawTerrain() {
+        FakeTerrain terrain = new FakeTerrain(64);
+        CityLandUseChunkCompiler.ChunkFragment fragment = foundationFragmentWithPlatformFacts(
+                List.of(new CityLandUseChunkCompiler.SurfaceOperation(
+                        "area", "plaza", 8, 8, "minecraft:stone_bricks")),
+                List.of(new CityLandUseChunkCompiler.PlatformPurposeAnchor("area", "remote-house",
+                        CityLandUseChunkCompiler.PlatformPurpose.BUILDING,
+                        new BlockBounds(100, 100, 101, 101))), List.of());
+
+        CityLandUseMicroGrader.FoundationPlan plan =
+                CityLandUseMicroGrader.planFoundationPlatform(fragment, terrain);
+
+        assertEquals(CityLandUseMicroGrader.FoundationMode.PRESERVE,
+                plan.decisions().get(0).mode());
+        assertTrue(plan.platformAdjustments().stream().anyMatch(adjustment ->
+                adjustment.status() == CityLandUseMicroGrader.PlatformAdjustmentStatus.WITHDRAWN
+                        && adjustment.targetY() == null));
+    }
+
+    @Test
+    void buildingPurposeAllowsLargeHighPatchToRemainIndependent() {
+        FakeTerrain terrain = new FakeTerrain(64);
+        for (int z = 4; z <= 16; z++) {
+            for (int x = 4; x <= 16; x++) terrain.height(x, z, 68);
+        }
+        terrain.height(10, 10, 76);
+        CityLandUseChunkCompiler.ChunkFragment fragment = foundationFragmentWithPlatformFacts(
+                List.of(new CityLandUseChunkCompiler.SurfaceOperation(
+                        "area", "plaza", 10, 10, "minecraft:stone_bricks")),
+                List.of(new CityLandUseChunkCompiler.PlatformPurposeAnchor("area", "high-house",
+                        CityLandUseChunkCompiler.PlatformPurpose.BUILDING,
+                        new BlockBounds(9, 9, 11, 11))), List.of());
+
+        CityLandUseMicroGrader.FoundationPlan plan =
+                CityLandUseMicroGrader.planFoundationPlatform(fragment, terrain);
+
+        assertEquals(new CityLandUseMicroGrader.FoundationDecision(
+                "area", 10, 10, 76, 68, CityLandUseMicroGrader.FoundationMode.CUT),
+                plan.decisions().get(0));
+        assertTrue(plan.platformAdjustments().stream().anyMatch(adjustment ->
+                adjustment.status() == CityLandUseMicroGrader.PlatformAdjustmentStatus.RETAINED
+                        && adjustment.purposeIds().contains("high-house")));
     }
 
     @Test
@@ -242,6 +313,37 @@ class CityLandUseMicroGraderTest {
                         && stair.facing() == CityLandUseSurfacePrintPlan.HorizontalFacing.EAST));
     }
 
+    @Test
+    void occupiedPlatformWithoutRoadGetsEntrancePathAndActiveStair() {
+        FakeTerrain terrain = splitTerrain();
+        List<CityLandUseChunkCompiler.PlatformPurposeAnchor> purposes = List.of(
+                new CityLandUseChunkCompiler.PlatformPurposeAnchor("area", "low-house",
+                        CityLandUseChunkCompiler.PlatformPurpose.BUILDING,
+                        new BlockBounds(2, 7, 3, 9)),
+                new CityLandUseChunkCompiler.PlatformPurposeAnchor("area", "high-house",
+                        CityLandUseChunkCompiler.PlatformPurpose.BUILDING,
+                        new BlockBounds(12, 7, 13, 9)));
+        List<CityLandUseChunkCompiler.PlatformAccessDemand> demands = List.of(
+                new CityLandUseChunkCompiler.PlatformAccessDemand("area", "high-house::front",
+                        new BlockPoint(12, 8), CardinalDirection.WEST),
+                new CityLandUseChunkCompiler.PlatformAccessDemand("area", "high-house::side",
+                        new BlockPoint(12, 9), CardinalDirection.WEST));
+        CityLandUseChunkCompiler.ChunkFragment fragment = foundationFragmentWithPlatformFacts(
+                platformSurfaces(), purposes, demands);
+
+        CityLandUseMicroGrader.FoundationPlan plan =
+                CityLandUseMicroGrader.planFoundationPlatform(fragment, terrain);
+
+        assertTrue(plan.stairs().stream().anyMatch(stair ->
+                stair.mode() == CityLandUseMicroGrader.StairMode.ACCESS_DIRECT));
+        assertTrue(plan.accessPaths().stream().anyMatch(path ->
+                path.demandId().equals("high-house::front")));
+        assertEquals(1, plan.accessOutcomes().stream().filter(outcome ->
+                outcome.status() == CityLandUseMicroGrader.AccessStatus.ACTIVE_STAIR).count());
+        assertEquals(1, plan.accessOutcomes().stream().filter(outcome ->
+                outcome.status() == CityLandUseMicroGrader.AccessStatus.SHARED_PLATFORM_ACCESS).count());
+    }
+
     private static CityLandUseChunkCompiler.ChunkFragment fragment() {
         return fragment(gradingMask());
     }
@@ -258,6 +360,20 @@ class CityLandUseMicroGraderTest {
                         cell.areaId(), cell.x(), cell.z(), true))
                 .toList();
         return fragment(mask, operations);
+    }
+
+    private static CityLandUseChunkCompiler.ChunkFragment foundationFragmentWithPlatformFacts(
+            List<CityLandUseChunkCompiler.SurfaceOperation> operations,
+            List<CityLandUseChunkCompiler.PlatformPurposeAnchor> purposes,
+            List<CityLandUseChunkCompiler.PlatformAccessDemand> demands) {
+        List<CityLandUseChunkCompiler.GradingMaskCell> mask = gradingMask().stream()
+                .map(cell -> new CityLandUseChunkCompiler.GradingMaskCell(
+                        cell.areaId(), cell.x(), cell.z(), true))
+                .toList();
+        return new CityLandUseChunkCompiler.ChunkFragment(CityLandUseChunkCompiler.RESULT_SCHEMA,
+                "city", "hash", "palette", 0, 0, operations.size(), 0, 0, 0,
+                "minecraft:dirt", mask, operations, List.of(), List.of(), List.of(),
+                purposes, demands);
     }
 
     private static CityLandUseChunkCompiler.ChunkFragment foundationFragment(

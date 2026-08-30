@@ -139,6 +139,8 @@ public final class CityLandUseChunkCompiler {
         Map<SurfaceCell, SurfaceOperation> surfaces = new HashMap<>();
         Map<BlockCell, BoundaryOperation> boundaries = new HashMap<>();
         Map<BlockCell, GradingMaskCell> gradingMask = new HashMap<>();
+        List<PlatformPurposeAnchor> platformPurposeAnchors = new ArrayList<>();
+        List<PlatformAccessDemand> platformAccessDemands = new ArrayList<>();
         String microFillBlock = palette.surfaceMaterial(MICRO_FILL_SUBGRADE_KEY);
         int relevantCellCount = 0;
         int footprintExcluded = 0;
@@ -193,6 +195,32 @@ public final class CityLandUseChunkCompiler {
                     printArea.surfaceSettings().compatibilityCategory());
             boolean foundationArea = area.sourceGroupIds().stream()
                     .anyMatch(groupId -> groupId.endsWith("::foundation"));
+            if (foundationArea) {
+                int footprintOrdinal = 0;
+                for (BlockBounds bounds : area.structureFootprintExclusions()) {
+                    if (intersects(bounds, minChunkX - halo, minChunkZ - halo,
+                            maxChunkX + halo, maxChunkZ + halo)) {
+                        platformPurposeAnchors.add(new PlatformPurposeAnchor(areaId,
+                                areaId + "::building_footprint::" + footprintOrdinal,
+                                PlatformPurpose.BUILDING, bounds));
+                    }
+                    footprintOrdinal++;
+                }
+                for (LandUseAreaPlan.GateSlot gate : area.gateSlots()) {
+                    if (gate.block().x() >= minChunkX - halo && gate.block().x() <= maxChunkX + halo
+                            && gate.block().z() >= minChunkZ - halo && gate.block().z() <= maxChunkZ + halo) {
+                        platformAccessDemands.add(new PlatformAccessDemand(areaId, gate.gateId(),
+                                gate.block(), gate.direction()));
+                        if (gate.sourceAnchorId().isBlank()) {
+                            platformPurposeAnchors.add(new PlatformPurposeAnchor(areaId,
+                                    gate.gateId() + "::enterable_open_space",
+                                    PlatformPurpose.ENTERABLE_OPEN_SPACE,
+                                    new BlockBounds(gate.block().x(), gate.block().z(),
+                                            gate.block().x(), gate.block().z())));
+                        }
+                    }
+                }
+            }
             if (microGradePave && microFillBlock != null) {
                 for (LandUseAreaPlan.ScanlineSpan span : area.memberSpans()) {
                     int z = span.z();
@@ -292,7 +320,12 @@ public final class CityLandUseChunkCompiler {
                 relevantCellCount, footprintExcluded, corridorExcluded, gateExcluded,
                 microFillBlock, List.copyOf(gradingMaskCells),
                 List.copyOf(surfaceOperations), List.copyOf(boundaryOperations), featureOperations,
-                gradingFeatureOperations);
+                gradingFeatureOperations, platformPurposeAnchors, platformAccessDemands);
+    }
+
+    private static boolean intersects(BlockBounds bounds, int minX, int minZ, int maxX, int maxZ) {
+        return bounds.maxX() >= minX && bounds.minX() <= maxX
+                && bounds.maxZ() >= minZ && bounds.minZ() <= maxZ;
     }
 
     private static boolean isContourChannel(CityLandUseSurfacePrintPlan.AreaPrint printArea,
@@ -599,7 +632,9 @@ public final class CityLandUseChunkCompiler {
                                 List<SurfaceOperation> surfaceOperations,
                                 List<BoundaryOperation> boundaryOperations,
                                 List<FeatureOperation> featureOperations,
-                                List<FeatureOperation> gradingFeatureOperations) {
+                                List<FeatureOperation> gradingFeatureOperations,
+                                List<PlatformPurposeAnchor> platformPurposeAnchors,
+                                List<PlatformAccessDemand> platformAccessDemands) {
         public ChunkFragment {
             if (!RESULT_SCHEMA.equals(schemaVersion)) {
                 throw new IllegalArgumentException("CITY_LAND_USE_FRAGMENT_SCHEMA_UNSUPPORTED");
@@ -615,6 +650,24 @@ public final class CityLandUseChunkCompiler {
             featureOperations = List.copyOf(featureOperations == null ? List.of() : featureOperations);
             gradingFeatureOperations = List.copyOf(
                     gradingFeatureOperations == null ? List.of() : gradingFeatureOperations);
+            platformPurposeAnchors = List.copyOf(
+                    platformPurposeAnchors == null ? List.of() : platformPurposeAnchors);
+            platformAccessDemands = List.copyOf(
+                    platformAccessDemands == null ? List.of() : platformAccessDemands);
+        }
+
+        public ChunkFragment(String schemaVersion, String cityId, String planHash, String paletteHash,
+                             int chunkX, int chunkZ, int relevantCellCount, int footprintExcludedCount,
+                             int corridorExcludedCount, int gateExcludedCount, String microFillBlockId,
+                             List<GradingMaskCell> gradingMaskCells,
+                             List<SurfaceOperation> surfaceOperations,
+                             List<BoundaryOperation> boundaryOperations,
+                             List<FeatureOperation> featureOperations,
+                             List<FeatureOperation> gradingFeatureOperations) {
+            this(schemaVersion, cityId, planHash, paletteHash, chunkX, chunkZ, relevantCellCount,
+                    footprintExcludedCount, corridorExcludedCount, gateExcludedCount, microFillBlockId,
+                    gradingMaskCells, surfaceOperations, boundaryOperations, featureOperations,
+                    gradingFeatureOperations, List.of(), List.of());
         }
 
         public ChunkFragment(String schemaVersion, String cityId, String planHash, String paletteHash,
@@ -627,7 +680,7 @@ public final class CityLandUseChunkCompiler {
             this(schemaVersion, cityId, planHash, paletteHash, chunkX, chunkZ, relevantCellCount,
                     footprintExcludedCount, corridorExcludedCount, gateExcludedCount, microFillBlockId,
                     gradingMaskCells, surfaceOperations, boundaryOperations, featureOperations,
-                    featureOperations);
+                    featureOperations, List.of(), List.of());
         }
 
         public ChunkFragment(String schemaVersion, String cityId, String planHash, String paletteHash,
@@ -660,6 +713,37 @@ public final class CityLandUseChunkCompiler {
         public GradingMaskCell(String areaId, int x, int z) {
             this(areaId, x, z, false);
         }
+    }
+
+    public record PlatformPurposeAnchor(String areaId,
+                                        String purposeId,
+                                        PlatformPurpose purpose,
+                                        BlockBounds bounds) {
+        public PlatformPurposeAnchor {
+            Objects.requireNonNull(areaId, "areaId");
+            Objects.requireNonNull(purposeId, "purposeId");
+            Objects.requireNonNull(purpose, "purpose");
+            Objects.requireNonNull(bounds, "bounds");
+        }
+    }
+
+    public record PlatformAccessDemand(String areaId,
+                                       String demandId,
+                                       BlockPoint entrance,
+                                       com.rinsing.geomantia.systems.city.domain.landuse.CardinalDirection direction) {
+        public PlatformAccessDemand {
+            Objects.requireNonNull(areaId, "areaId");
+            Objects.requireNonNull(demandId, "demandId");
+            Objects.requireNonNull(entrance, "entrance");
+            Objects.requireNonNull(direction, "direction");
+        }
+    }
+
+    public enum PlatformPurpose {
+        BUILDING,
+        ENTERABLE_OPEN_SPACE,
+        LANDSCAPE,
+        PRESERVED_TERRAIN
     }
 
     public record SurfaceOperation(String areaId,
