@@ -7,6 +7,7 @@ import com.rinsing.geomantia.systems.city.domain.model.BlockPoint;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -130,13 +131,10 @@ public final class CityFoundationPlanner {
                                    BlockBounds planningBounds,
                                    int bridgeHalfWidth,
                                    boolean requireDurableBridge) {
-        Set<BlockPoint> expanded = dilate(source, radius, planningBounds);
+        ClosedMask morphology = closeWithinBounds(source, radius, planningBounds);
+        Set<BlockPoint> expanded = morphology.expanded();
         boolean expandedConnected = components(expanded).size() == 1;
-        Set<BlockPoint> closed = expanded;
-        for (int step = 0; step < radius && !closed.isEmpty(); step++) {
-            closed = erodeWithinBounds(closed, planningBounds);
-        }
-        closed.addAll(source);
+        Set<BlockPoint> closed = morphology.closed();
         List<Set<BlockPoint>> closedComponents = components(closed);
         boolean singleComponent = closedComponents.size() == 1;
         boolean durable = singleComponent;
@@ -145,6 +143,90 @@ public final class CityFoundationPlanner {
             durable = !durableCore.isEmpty() && components(durableCore).size() == 1;
         }
         return new Attempt(radius, closed, closedComponents, expandedConnected, singleComponent && durable);
+    }
+
+    private static ClosedMask closeWithinBounds(Set<BlockPoint> source,
+                                                int radius,
+                                                BlockBounds planningBounds) {
+        BlockBounds sourceBounds = bounds(source);
+        int minX = clamp((long) sourceBounds.minX() - radius, planningBounds.minX(), planningBounds.maxX());
+        int minZ = clamp((long) sourceBounds.minZ() - radius, planningBounds.minZ(), planningBounds.maxZ());
+        int maxX = clamp((long) sourceBounds.maxX() + radius, planningBounds.minX(), planningBounds.maxX());
+        int maxZ = clamp((long) sourceBounds.maxZ() + radius, planningBounds.minZ(), planningBounds.maxZ());
+        int width = maxX - minX + 1;
+        int height = maxZ - minZ + 1;
+        boolean[] current = new boolean[Math.multiplyExact(width, height)];
+        for (BlockPoint point : source) current[index(point.x(), point.z(), minX, minZ, width)] = true;
+
+        for (int step = 0; step < radius; step++) {
+            boolean[] next = Arrays.copyOf(current, current.length);
+            for (int z = 0; z < height; z++) {
+                int row = z * width;
+                for (int x = 0; x < width; x++) {
+                    int cell = row + x;
+                    if (!current[cell]) continue;
+                    if (z > 0) next[cell - width] = true;
+                    if (x > 0) next[cell - 1] = true;
+                    if (x + 1 < width) next[cell + 1] = true;
+                    if (z + 1 < height) next[cell + width] = true;
+                }
+            }
+            current = next;
+        }
+        Set<BlockPoint> expanded = points(current, minX, minZ, width, height);
+
+        for (int step = 0; step < radius; step++) {
+            boolean[] next = new boolean[current.length];
+            boolean any = false;
+            for (int z = 0; z < height; z++) {
+                int worldZ = minZ + z;
+                int row = z * width;
+                for (int x = 0; x < width; x++) {
+                    int cell = row + x;
+                    if (!current[cell]) continue;
+                    int worldX = minX + x;
+                    boolean north = worldZ == planningBounds.minZ()
+                            || z > 0 && current[cell - width];
+                    boolean west = worldX == planningBounds.minX()
+                            || x > 0 && current[cell - 1];
+                    boolean east = worldX == planningBounds.maxX()
+                            || x + 1 < width && current[cell + 1];
+                    boolean south = worldZ == planningBounds.maxZ()
+                            || z + 1 < height && current[cell + width];
+                    if (north && west && east && south) {
+                        next[cell] = true;
+                        any = true;
+                    }
+                }
+            }
+            current = next;
+            if (!any) break;
+        }
+        for (BlockPoint point : source) current[index(point.x(), point.z(), minX, minZ, width)] = true;
+        return new ClosedMask(expanded, points(current, minX, minZ, width, height));
+    }
+
+    private static Set<BlockPoint> points(boolean[] mask,
+                                          int minX,
+                                          int minZ,
+                                          int width,
+                                          int height) {
+        Set<BlockPoint> result = new HashSet<>();
+        for (int z = 0; z < height; z++) {
+            int row = z * width;
+            for (int x = 0; x < width; x++) {
+                if (mask[row + x]) result.add(new BlockPoint(minX + x, minZ + z));
+            }
+        }
+        return result;
+    }
+
+    private static int index(int x, int z, int minX, int minZ, int width) {
+        return Math.addExact(Math.multiplyExact(z - minZ, width), x - minX);
+    }
+
+    private static int clamp(long value, int minimum, int maximum) {
+        return (int) Math.max(minimum, Math.min(maximum, value));
     }
 
     private static IllegalArgumentException disconnected(List<Set<BlockPoint>> components, int maximumRadius) {
@@ -185,22 +267,6 @@ public final class CityFoundationPlanner {
         int z = left.maxZ() < right.minZ() ? right.minZ() - left.maxZ() - 1
                 : right.maxZ() < left.minZ() ? left.minZ() - right.maxZ() - 1 : 0;
         return Math.max(0, x) + Math.max(0, z);
-    }
-
-    private static Set<BlockPoint> erodeWithinBounds(Set<BlockPoint> source, BlockBounds planningBounds) {
-        Set<BlockPoint> result = new HashSet<>();
-        for (BlockPoint point : source) {
-            boolean interior = true;
-            for (int[] direction : DIRECTIONS) {
-                BlockPoint neighbor = new BlockPoint(point.x() + direction[0], point.z() + direction[1]);
-                if (planningBounds.contains(neighbor.x(), neighbor.z()) && !source.contains(neighbor)) {
-                    interior = false;
-                    break;
-                }
-            }
-            if (interior) result.add(point);
-        }
-        return result;
     }
 
     private static Set<BlockPoint> dilate(Set<BlockPoint> source,
@@ -306,6 +372,9 @@ public final class CityFoundationPlanner {
             claims = Set.copyOf(claims);
             if (componentCount <= 0) throw new IllegalArgumentException("CITY_FOUNDATION_COMPONENTS_REQUIRED");
         }
+    }
+
+    private record ClosedMask(Set<BlockPoint> expanded, Set<BlockPoint> closed) {
     }
 
     private record ResolvedPlatform(Set<BlockPoint> claims, int radius) {

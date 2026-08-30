@@ -326,10 +326,11 @@ public final class CityBlueprintValidator {
                             path, "ATTACHED requires owner, forbids placementDomain, and fixes instanceCount to 1.");
                 } else {
                     CityBlueprint.Group ownerGroup = groupsById.get(landscape.owner().groupId());
-                    if (ownerGroup == null || !ownerGroup.requiredStructureRefs()
+                    if (ownerGroup == null || !landscape.owner().groupOwned()
+                            && !ownerGroup.requiredStructureRefs()
                             .contains(landscape.owner().requiredStructureRef())) {
                         add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_OUTDOOR_GROUP_REF_UNKNOWN,
-                                path + ".owner", "owner must identify a required structure in its Group.");
+                                path + ".owner", "owner must identify its Group and, when present, a required structure.");
                     }
                 }
             } else {

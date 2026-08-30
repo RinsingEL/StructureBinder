@@ -414,10 +414,47 @@ public final class RelayRegionGrowthClassifier {
         Map<Long, Integer> discovered = new HashMap<>();
         Map<Long, Integer> low = new HashMap<>();
         Set<Long> result = new HashSet<>();
-        int[] time = {0};
+        int time = 0;
         for (long cell : cells) {
-            if (!discovered.containsKey(cell)) {
-                articulationDfs(cell, null, cells, discovered, low, result, time);
+            if (discovered.containsKey(cell)) continue;
+
+            discovered.put(cell, ++time);
+            low.put(cell, time);
+            ArrayDeque<ArticulationFrame> stack = new ArrayDeque<>();
+            stack.addLast(new ArticulationFrame(cell, null));
+            while (!stack.isEmpty()) {
+                ArticulationFrame frame = stack.peekLast();
+                if (frame.nextDirection < DIRECTIONS_4.length) {
+                    int[] direction = DIRECTIONS_4[frame.nextDirection++];
+                    long neighborX = (long) x(frame.cell) + direction[0];
+                    long neighborZ = (long) z(frame.cell) + direction[1];
+                    if (neighborX < Integer.MIN_VALUE || neighborX > Integer.MAX_VALUE
+                            || neighborZ < Integer.MIN_VALUE || neighborZ > Integer.MAX_VALUE) continue;
+                    long neighbor = key((int) neighborX, (int) neighborZ);
+                    if (!cells.contains(neighbor)) continue;
+                    if (!discovered.containsKey(neighbor)) {
+                        frame.children++;
+                        discovered.put(neighbor, ++time);
+                        low.put(neighbor, time);
+                        stack.addLast(new ArticulationFrame(neighbor, frame.cell));
+                    } else if (frame.parent == null || neighbor != frame.parent) {
+                        low.put(frame.cell, Math.min(low.get(frame.cell), discovered.get(neighbor)));
+                    }
+                    continue;
+                }
+
+                stack.removeLast();
+                if (frame.parent == null) {
+                    if (frame.children > 1) result.add(frame.cell);
+                    continue;
+                }
+                long parent = frame.parent;
+                low.put(parent, Math.min(low.get(parent), low.get(frame.cell)));
+                ArticulationFrame parentFrame = stack.peekLast();
+                if (parentFrame != null && parentFrame.parent != null
+                        && low.get(frame.cell) >= discovered.get(parent)) {
+                    result.add(parent);
+                }
             }
         }
         return result;
@@ -449,33 +486,6 @@ public final class RelayRegionGrowthClassifier {
             }
         }
         return visited.containsAll(attachments);
-    }
-
-    private static void articulationDfs(long cell,
-                                        Long parent,
-                                        Set<Long> cells,
-                                        Map<Long, Integer> discovered,
-                                        Map<Long, Integer> low,
-                                        Set<Long> result,
-                                        int[] time) {
-        int discovery = ++time[0];
-        discovered.put(cell, discovery);
-        low.put(cell, discovery);
-        int children = 0;
-        for (long neighbor : neighbors4(cell)) {
-            if (!cells.contains(neighbor)) continue;
-            if (!discovered.containsKey(neighbor)) {
-                children++;
-                articulationDfs(neighbor, cell, cells, discovered, low, result, time);
-                low.put(cell, Math.min(low.get(cell), low.get(neighbor)));
-                if (parent == null && children > 1
-                        || parent != null && low.get(neighbor) >= discovery) {
-                    result.add(cell);
-                }
-            } else if (parent == null || neighbor != parent) {
-                low.put(cell, Math.min(low.get(cell), discovered.get(neighbor)));
-            }
-        }
     }
 
     private static boolean hasNeighborAfterRemoval(Set<Long> cells, long removed) {
@@ -733,6 +743,18 @@ public final class RelayRegionGrowthClassifier {
     }
 
     private record ValueSpan<T>(int z, int minX, int maxX, T value) {
+    }
+
+    private static final class ArticulationFrame {
+        private final long cell;
+        private final Long parent;
+        private int nextDirection;
+        private int children;
+
+        private ArticulationFrame(long cell, Long parent) {
+            this.cell = cell;
+            this.parent = parent;
+        }
     }
 
     private static final class SearchFrame {

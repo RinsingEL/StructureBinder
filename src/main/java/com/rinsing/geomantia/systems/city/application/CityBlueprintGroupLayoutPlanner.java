@@ -417,6 +417,14 @@ final class CityBlueprintGroupLayoutPlanner {
             }
             return List.copyOf(guides);
         }
+        if ("GRID".equals(algorithm)) {
+            // Stay inside the same logical lot while allowing one-block terrain adaptation.
+            guides.add(point(desired, frame.axisX(), frame.axisZ()));
+            guides.add(point(desired, -frame.axisX(), -frame.axisZ()));
+            guides.add(point(desired, -frame.axisZ(), frame.axisX()));
+            guides.add(point(desired, frame.axisZ(), -frame.axisX()));
+            return List.copyOf(guides);
+        }
         if (exactAlgorithm(algorithm)) {
             return List.copyOf(guides);
         }

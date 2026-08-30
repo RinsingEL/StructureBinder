@@ -32,6 +32,31 @@ class CityInternalStreetPlannerTest {
     }
 
     @Test
+    void gridSkipsLegacyInvalidCorridorInsteadOfFailingTheWholeCity() {
+        var anchors = List.of(
+                gridAnchor("a", 0, 0, 0, 0, 30, 8),
+                gridAnchor("b", 1, 0, 29, 0, 37, 8));
+
+        var roads = planner.plan("grid", "GRID", parameters("GRID"), anchors, false);
+
+        assertTrue(roads.isEmpty());
+    }
+
+    @Test
+    void gridRoadsCrossTheActualOccupiedExtentSoTheNetworkStaysConnected() {
+        var anchors = List.of(
+                gridAnchor("a", 0, 0, 0, 0),
+                gridAnchor("b", 1, 0, 20, 0),
+                gridAnchor("grid_far", 2, 0, 40, 100, 48, 108));
+
+        var roads = planner.plan("grid", "GRID", parameters("GRID"), anchors, false);
+
+        JsonObject first = roads.stream().filter(road -> "GRID_MAIN_STREET".equals(
+                road.get("roadKind").getAsString())).findFirst().orElseThrow();
+        assertEquals(108, first.getAsJsonObject("bounds").get("maxZ").getAsInt());
+    }
+
+    @Test
     void courtyardProducesOpenSouthRingAndGateForFiveBuildings() {
         var anchors = List.of(
                 courtyardAnchor("north", 0, -20),
@@ -84,11 +109,16 @@ class CityInternalStreetPlannerTest {
     }
 
     private static JsonObject gridAnchor(String id, int row, int column, int x, int z) {
+        return gridAnchor(id, row, column, x, z, x + 8, z + 8);
+    }
+
+    private static JsonObject gridAnchor(String id, int row, int column,
+                                         int minX, int minZ, int maxX, int maxZ) {
         JsonObject layout = new JsonObject();
         layout.addProperty("gridRow", row);
         layout.addProperty("gridColumn", column);
-        layout.add("theoreticalAnchor", point(x, z));
-        return anchor(id, "fill", x, z, x + 8, z + 8, layout);
+        layout.add("theoreticalAnchor", point(minX, minZ));
+        return anchor(id, "fill", minX, minZ, maxX, maxZ, layout);
     }
 
     private static JsonObject courtyardAnchor(String id, int x, int z) {
@@ -121,7 +151,8 @@ class CityInternalStreetPlannerTest {
     }
 
     private static String group(String id) {
-        if (id.equals("a") || id.equals("b") || id.equals("c") || id.equals("d")) return "grid";
+        if (id.equals("a") || id.equals("b") || id.equals("c") || id.equals("d")
+                || id.startsWith("grid_")) return "grid";
         if (id.equals("north") || id.equals("east") || id.startsWith("south_") || id.equals("west")) {
             return "court";
         }

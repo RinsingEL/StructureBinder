@@ -161,6 +161,7 @@ public final class CityBlueprintCompilerService {
                 .filter(patch -> !patch.memberCells().isEmpty())
                 .sorted(Comparator.comparing(LandformPatchSummary::landformPatchId))
                 .toList();
+        Set<String> landscapeGapCirculationGroups = landscapeGapCirculationGroups(blueprint);
         for (CityBlueprint.Group group : groups) {
             if (group.groupKind() != CityBlueprint.GroupKind.STRUCTURE) {
                 throw fail("CITY_BLUEPRINT_GROUP_KIND_UNSUPPORTED", "Only STRUCTURE groups compile in v0.2.");
@@ -190,7 +191,8 @@ public final class CityBlueprintCompilerService {
                     resolveConnectionConfiguration(group, catalog),
                     minimumGroupStructureCount(review.targetScale().scale(), group.extentClass(), algorithm),
                     groupSeparationExemptions.getOrDefault(group.groupId(), Set.of()),
-                    spatialDemands.get(group.groupId())));
+                    spatialDemands.get(group.groupId()),
+                    landscapeGapCirculationGroups.contains(group.groupId())));
         }
 
         Map<String, GroupState> initialStates = Map.copyOf(states);
@@ -956,7 +958,8 @@ public final class CityBlueprintCompilerService {
                 CityStructureArrayCandidatePlanner.Result result = candidatePlanner.plan(runDir, review,
                         structureSource, plan, null, occupied.deepCopy(),
                         footprint -> candidateFootprintRejectionReason(
-                                terrainGate, state, states, structureRef, phase, footprint));
+                                terrainGate, state, states, structureRef, phase, footprint,
+                                requiredObject(plan, "blueprintLayout")));
                 JsonObject candidateSet = result.arrayCandidateSet();
                 JsonObject attempt = candidateAttemptSummary(template, plan, result);
                 attempt.addProperty("patchSelectionScope", patchScope.name());
@@ -1167,7 +1170,8 @@ public final class CityBlueprintCompilerService {
                 CityStructureArrayCandidatePlanner.Result result = candidatePlanner.plan(runDir, review,
                         structureSource, plan, null, occupied.deepCopy(),
                         footprint -> candidateFootprintRejectionReason(
-                                terrainGate, state, states, structureRef, PlacementPhase.FILL, footprint));
+                                terrainGate, state, states, structureRef, PlacementPhase.FILL, footprint,
+                                requiredObject(plan, "blueprintLayout")));
                 JsonObject attempt = candidateAttemptSummary(template, plan, result);
                 attempt.addProperty("symmetryAxisVariant", pair.axisVariant());
                 attempts.add(attempt);
@@ -1411,6 +1415,10 @@ public final class CityBlueprintCompilerService {
     }
 
     private void commit(Placement placement, JsonArray anchors, JsonArray occupied, GroupState state) {
+        if (state.landscapeGapCirculation() && placement.anchor().has("blueprintLayout")) {
+            placement.anchor().getAsJsonObject("blueprintLayout")
+                    .addProperty("internalCirculationMode", "LANDSCAPE_GAPS");
+        }
         anchors.add(placement.anchor());
         JsonObject envelope = new JsonObject();
         envelope.add("blockBounds", placement.collisionEnvelope());
@@ -1444,12 +1452,28 @@ public final class CityBlueprintCompilerService {
         states.values().forEach(state -> {
             JsonObject streetBand = state.streetBandPlan();
             if (streetBand != null) streetBands.add(streetBand);
-            internalStreetPlanner.plan(state.group().groupId(), state.layoutAlgorithm(),
-                            state.layoutParameters(), anchorObjects,
-                            catalog.centerAxisStreetEnabled(state.group().algorithmProfileRef()))
-                    .forEach(streetBands::add);
+            if (!state.landscapeGapCirculation()) {
+                internalStreetPlanner.plan(state.group().groupId(), state.layoutAlgorithm(),
+                                state.layoutParameters(), anchorObjects,
+                                catalog.centerAxisStreetEnabled(state.group().algorithmProfileRef()))
+                        .forEach(streetBands::add);
+            }
         });
         return streetBands;
+    }
+
+    private static Set<String> landscapeGapCirculationGroups(CityBlueprint blueprint) {
+        Set<String> result = new LinkedHashSet<>();
+        for (CityBlueprint.Landscape landscape : blueprint.outdoorPlan().landscapes()) {
+            if (landscape.owner() == null || landscape.purpose() != CityBlueprint.LandscapePurpose.FUNCTIONAL) {
+                continue;
+            }
+            boolean hasCorridorSeparator = landscape.fillSelection().variants().stream()
+                    .flatMap(variant -> variant.roleShares().stream())
+                    .anyMatch(role -> role.growthForm() == CityBlueprint.RegionGrowthForm.CORRIDOR);
+            if (hasCorridorSeparator) result.add(landscape.owner().groupId());
+        }
+        return Set.copyOf(result);
     }
 
     private static void addRoadBandsToOccupied(List<JsonObject> bands, JsonArray occupied) {
@@ -3466,7 +3490,8 @@ public final class CityBlueprintCompilerService {
                                                             Map<String, GroupState> states,
                                                             String structureRef,
                                                             PlacementPhase phase,
-                                                            BlockBounds footprint) {
+                                                            BlockBounds footprint,
+                                                            JsonObject layout) {
         CityStructureTerrainGate.Evaluation evaluation = terrainGate.evaluate(
                 structureRef, footprint, state.group().terrainPolicy());
         if (!evaluation.passed()) return evaluation.reasonCode();
@@ -3477,6 +3502,10 @@ public final class CityBlueprintCompilerService {
         }
         if (violatesGroupSeparation(footprint, state, states)) {
             return "GROUP_DISTRICT_BUFFER_VIOLATED";
+        }
+        if (phase != PlacementPhase.CONNECTIVITY) {
+            String gridReservationFailure = state.gridStreetReservationFailure(footprint, layout);
+            if (!gridReservationFailure.isBlank()) return gridReservationFailure;
         }
         BlockBounds proposed = union(state.extent(), footprint);
         if (phase != PlacementPhase.CONNECTIVITY && !state.areaExpansionActive()
@@ -4563,6 +4592,7 @@ public final class CityBlueprintCompilerService {
         private final Map<String, Integer> structureCounts = new LinkedHashMap<>();
         private final Map<String, Integer> requiredStructureCounts = new LinkedHashMap<>();
         private final List<BlockBounds> envelopes = new ArrayList<>();
+        private final List<CityGridStreetReservation.Placement> gridStreetReservations = new ArrayList<>();
         private final Map<String, CommittedArray> committedArrays = new LinkedHashMap<>();
         private int anchorCount;
         private int requiredCount;
@@ -4594,6 +4624,7 @@ public final class CityBlueprintCompilerService {
         private BlockPoint streetBandStart;
         private BlockPoint streetBandEnd;
         private int streetBandMaxProjection;
+        private final boolean landscapeGapCirculation;
 
         private GroupState(CityBlueprint.Group group, List<LandformPatchSummary> patches,
                            List<LandformPatchSummary> connectionPatches,
@@ -4604,7 +4635,8 @@ public final class CityBlueprintCompilerService {
                            ConnectionConfiguration connectionConfiguration,
                            int minimumStructureCount,
                            Set<String> groupSeparationExemptGroupIds,
-                           CityGroupSpatialDemand spatialDemand) {
+                           CityGroupSpatialDemand spatialDemand,
+                           boolean landscapeGapCirculation) {
             this.group = group;
             this.patches = List.copyOf(patches);
             this.connectionPatches = List.copyOf(connectionPatches);
@@ -4623,6 +4655,7 @@ public final class CityBlueprintCompilerService {
             this.minimumStructureCount = minimumStructureCount;
             this.groupSeparationExemptGroupIds = Set.copyOf(groupSeparationExemptGroupIds);
             this.spatialDemand = java.util.Objects.requireNonNull(spatialDemand, "spatialDemand");
+            this.landscapeGapCirculation = landscapeGapCirculation;
             this.dynamicTargetAreaBlocks = spatialDemand.targetAreaBlocks();
         }
 
@@ -4725,8 +4758,16 @@ public final class CityBlueprintCompilerService {
                     || "LINEAR".equals(layoutAlgorithm) || "CENTER_SYMMETRIC".equals(layoutAlgorithm);
         }
         boolean requiresInternalRoadGap() {
-            return "GRID".equals(layoutAlgorithm) || "COURTYARD".equals(layoutAlgorithm)
-                    || "LINEAR".equals(layoutAlgorithm);
+            return !landscapeGapCirculation && ("GRID".equals(layoutAlgorithm) || "COURTYARD".equals(layoutAlgorithm)
+                    || "LINEAR".equals(layoutAlgorithm));
+        }
+        String gridStreetReservationFailure(BlockBounds footprint, JsonObject layout) {
+            if (landscapeGapCirculation || !"GRID".equals(layoutAlgorithm) || layout == null
+                    || !layout.has("gridRow") || !layout.has("gridColumn")) return "";
+            CityGridStreetReservation.Placement candidate = new CityGridStreetReservation.Placement(
+                    layout.get("gridRow").getAsInt(), layout.get("gridColumn").getAsInt(), footprint);
+            return CityGridStreetReservation.rejectionReason(
+                    gridStreetReservations, candidate, layoutParameters);
         }
         JsonObject streetBandPlan() {
             if (!"LINEAR".equals(layoutAlgorithm) || streetBandStart == null || streetBandEnd == null) {
@@ -4802,6 +4843,7 @@ public final class CityBlueprintCompilerService {
             return value;
         }
         int internalStructureCount() { return anchorCount - connectionStructureCount; }
+        boolean landscapeGapCirculation() { return landscapeGapCirculation; }
         CityGroupSpatialDemand spatialDemand() { return spatialDemand; }
         int targetAreaBlocks() { return dynamicTargetAreaBlocks; }
         int buildingTargetAreaBlocks() {
@@ -4852,7 +4894,7 @@ public final class CityBlueprintCompilerService {
             return new GroupState(group, patches, connectionPatches, patchStepBlocks, planningBounds,
                     formationBounds, preferredOrigin, compositionSlot, layoutAlgorithm, layoutParameters,
                     connectionConfiguration, minimumStructureCount, groupSeparationExemptGroupIds,
-                    spatialDemand);
+                    spatialDemand, landscapeGapCirculation);
         }
         void advanceConnectionCursor(int count) {
             connectionFillCursor += count;
@@ -5000,6 +5042,15 @@ public final class CityBlueprintCompilerService {
             }
             if ("LINEAR".equals(layoutAlgorithm) && phase != PlacementPhase.CONNECTIVITY) {
                 updateStreetBand(anchor);
+            }
+            if ("GRID".equals(layoutAlgorithm) && phase != PlacementPhase.CONNECTIVITY
+                    && anchor.has("blueprintLayout")
+                    && anchor.get("blueprintLayout").isJsonObject()) {
+                JsonObject layout = anchor.getAsJsonObject("blueprintLayout");
+                if (layout.has("gridRow") && layout.has("gridColumn")) {
+                    gridStreetReservations.add(new CityGridStreetReservation.Placement(
+                            layout.get("gridRow").getAsInt(), layout.get("gridColumn").getAsInt(), next));
+                }
             }
             if (anchor.has("blueprintLayout") && anchor.get("blueprintLayout").isJsonObject()
                     && booleanValue(anchor.getAsJsonObject("blueprintLayout"), "outwardGuided", false)) {

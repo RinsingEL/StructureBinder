@@ -177,10 +177,11 @@ public final class CityBlueprintCodec {
     }
 
     private static CityBlueprint.LandscapeOwner landscapeOwner(JsonObject object, String path) {
-        exactFields(object, Set.of("groupId", "requiredStructureRef"), path);
+        exactFields(object, Set.of("groupId", "requiredStructureRef"), Set.of("requiredStructureRef"), path);
         return new CityBlueprint.LandscapeOwner(
                 requiredString(object, "groupId", path + ".groupId"),
-                requiredString(object, "requiredStructureRef", path + ".requiredStructureRef"));
+                object.has("requiredStructureRef")
+                        ? requiredString(object, "requiredStructureRef", path + ".requiredStructureRef") : "");
     }
 
     private static CityBlueprint.FillSelection fillSelection(JsonObject object, String path) {
@@ -684,7 +685,9 @@ public final class CityBlueprintCodec {
             if (landscape.owner() != null) {
                 JsonObject owner = new JsonObject();
                 owner.addProperty("groupId", landscape.owner().groupId());
-                owner.addProperty("requiredStructureRef", landscape.owner().requiredStructureRef());
+                if (!landscape.owner().groupOwned()) {
+                    owner.addProperty("requiredStructureRef", landscape.owner().requiredStructureRef());
+                }
                 item.add("owner", owner);
             }
             if (landscape.placementDomain() != null) {

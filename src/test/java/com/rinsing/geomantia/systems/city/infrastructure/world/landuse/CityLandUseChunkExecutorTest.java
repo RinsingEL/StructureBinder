@@ -17,6 +17,14 @@ class CityLandUseChunkExecutorTest {
     private final CityLandUseChunkExecutor executor = new CityLandUseChunkExecutor();
 
     @Test
+    void landUseSurfaceMayReplaceCanopyButNotLogsOrConstructedBlocks() {
+        assertTrue(CityLandUseChunkExecutor.WorldGenExecutionWorld.isLandUseReplaceable(
+                false, false, true));
+        assertFalse(CityLandUseChunkExecutor.WorldGenExecutionWorld.isLandUseReplaceable(
+                false, false, false));
+    }
+
+    @Test
     void featureOperationsPreserveRoadShapeAndGreenPlantLayer() {
         CityLandUseChunkCompiler.ChunkFragment fragment = new CityLandUseChunkCompiler.ChunkFragment(
                 CityLandUseChunkCompiler.RESULT_SCHEMA, "city", "area-hash", "palette-hash",

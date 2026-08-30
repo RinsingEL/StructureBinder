@@ -281,6 +281,25 @@ class CityOutdoorBlueprintCompilerTest {
     }
 
     @Test
+    void requiredLandscapeUsesTheSeedFrozenByTheCapacityReservation() {
+        JsonObject d6 = d6Plan();
+        JsonObject capacity = capacity(blueprint(), d6);
+        JsonObject reservation = capacity.getAsJsonArray("instances").get(0).getAsJsonObject()
+                .getAsJsonArray("parcelReservations").get(0).getAsJsonObject();
+        String parcelId = reservation.get("parcelId").getAsString();
+        JsonObject frozenSeed = reservation.getAsJsonObject("seed");
+
+        LandUseSeedGroup parcel = new CityOutdoorBlueprintCompiler()
+                .compile(blueprint(), d6, terrain(), catalog(), capacity)
+                .resolution().seedGroups().stream()
+                .filter(group -> parcelId.equals(group.groupId()))
+                .findFirst().orElseThrow();
+
+        assertEquals(new BlockPoint(frozenSeed.get("x").getAsInt(), frozenSeed.get("z").getAsInt()),
+                parcel.seedPoints().get(0));
+    }
+
+    @Test
     void missingD6BlueprintPlacementPhaseFailsFormally() {
         JsonObject d6 = d6Plan();
         d6.getAsJsonArray("plannedWorldgenStructures").get(0).getAsJsonObject()
@@ -391,6 +410,12 @@ class CityOutdoorBlueprintCompilerTest {
     @Test
     void layeredPlanningUsesNoCorridorsAndKeepsOneAreaPerParcelOwner() {
         CityOutdoorBlueprintCompiler.Result compiled = compile(d6Plan());
+        assertTrue(compiled.resolution().seedGroups().stream()
+                .filter(group -> group.layerRole() == LandUseSeedGroup.LayerRole.LANDSCAPE)
+                .allMatch(group -> group.minAreaBlocks() == group.preferredAreaBlocks()
+                        && group.preferredAreaBlocks() == group.maxAreaBlocks()
+                        && group.maxAreaBlocks() == compiled.resolution().landscapeCapacityDomains()
+                        .get(group.groupId()).size()));
         LandUsePlanningService.Result planned = new LandUsePlanningService().plan("city", compiled.resolution(),
                 d5Corridor(), terrain(), compiled.residualConfig());
 
@@ -417,6 +442,8 @@ class CityOutdoorBlueprintCompilerTest {
                 .count());
         assertTrue(planned.plan().warnings().stream().noneMatch(warning -> warning.startsWith(
                 "CITY_LANDSCAPE_OPTIONAL_SKIPPED_INSUFFICIENT_SPACE:")));
+        assertTrue(planned.plan().warnings().stream().noneMatch(warning -> warning.contains(
+                "REQUIRED_PARCEL_SKIPPED")));
         for (LandUseSeedGroup parcel : compiled.resolution().seedGroups().stream()
                 .filter(group -> group.layerRole() == LandUseSeedGroup.LayerRole.LANDSCAPE).toList()) {
             JsonObject parcelTrace = planned.trace().getAsJsonArray("seedGroups").asList().stream()
@@ -430,7 +457,7 @@ class CityOutdoorBlueprintCompilerTest {
                 assertEquals("ROOT_SOURCE", origin.get("kind").getAsString());
                 assertTrue(origin.get("sourceFrontier").isJsonNull());
             } else {
-                assertEquals("PARENT_PARCEL_ROAD_GAP", origin.get("kind").getAsString());
+                assertEquals("PARENT_PARCEL_INTERFACE", origin.get("kind").getAsString());
                 assertFalse(origin.get("parentParcelId").getAsString().isBlank());
                 assertFalse(origin.get("sourceFrontier").isJsonNull());
             }

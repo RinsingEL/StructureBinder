@@ -98,7 +98,7 @@ class CityBlueprintGroupLayoutPlannerTest {
     }
 
     @Test
-    void gridUsesOneWorldAxisPitchWithoutFallbackGuides() {
+    void gridUsesOneWorldAxisPitchWithOneBlockInLotAdjustments() {
         BlockPoint center = new BlockPoint(100, 200);
         var frame = planner.worldFrame(center);
         var first = planner.propose("GRID", CityBlueprint.DensityClass.BALANCED,
@@ -106,7 +106,10 @@ class CityBlueprintGroupLayoutPlannerTest {
         var second = planner.propose("GRID", CityBlueprint.DensityClass.BALANCED,
                 41L, "grid", 2, frame, center, null, false, 20);
 
-        assertEquals(1, first.guides().size());
+        assertEquals(5, first.guides().size());
+        assertTrue(first.guides().stream().allMatch(point ->
+                Math.abs(point.x() - first.guides().get(0).x())
+                        + Math.abs(point.z() - first.guides().get(0).z()) <= 1));
         assertEquals(first.spacingBlocks(), second.spacingBlocks());
         assertEquals(new BlockPoint(130, 200), first.guides().get(0));
         assertEquals(new BlockPoint(130, 230), second.guides().get(0));

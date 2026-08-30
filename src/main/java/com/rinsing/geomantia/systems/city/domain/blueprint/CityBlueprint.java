@@ -248,7 +248,15 @@ public record CityBlueprint(
         }
     }
 
+    /** A blank structure ref means that the whole function-area Group owns the Landscape. */
     public record LandscapeOwner(String groupId, String requiredStructureRef) {
+        public LandscapeOwner {
+            requiredStructureRef = requiredStructureRef == null ? "" : requiredStructureRef;
+        }
+
+        public boolean groupOwned() {
+            return requiredStructureRef.isBlank();
+        }
     }
 
     /** AI-selected semantic fill variants; geometry and block materials remain catalog-owned. */

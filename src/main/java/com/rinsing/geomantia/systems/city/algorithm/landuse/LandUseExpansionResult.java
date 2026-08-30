@@ -2,6 +2,7 @@ package com.rinsing.geomantia.systems.city.algorithm.landuse;
 
 import com.rinsing.geomantia.systems.city.domain.model.BlockPoint;
 
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,7 +44,7 @@ public record LandUseExpansionResult(
     }
 
     public LandUseExpansionResult {
-        claims = Map.copyOf(claims);
+        claims = Collections.unmodifiableMap(new LinkedHashMap<>(claims));
         claimedBlocksByGroup = Map.copyOf(claimedBlocksByGroup);
         claimedBlocksByGrowthRegion = Map.copyOf(claimedBlocksByGrowthRegion);
         Map<String, List<BlockPoint>> normalizedSeeds = new LinkedHashMap<>();

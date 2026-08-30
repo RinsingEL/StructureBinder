@@ -959,17 +959,45 @@ public final class CityStructureLandingPreviewRenderer {
                     && !visibleGroupIds.contains(string(instance, "ownerGroupId"))) continue;
             index++;
             Color color = landscapeColor(instance, index);
-            g.setColor(withAlpha(color, 92));
-            for (JsonElement spanElement : array(instance, "reservationSpans")) {
-                if (!spanElement.isJsonObject()) continue;
-                JsonObject span = spanElement.getAsJsonObject();
-                int z = intValue(span, "z", 0);
-                fillBounds(g, t, new BlockBounds(intValue(span, "minX", 0), z,
-                        intValue(span, "maxX", 0), z));
+            JsonArray parcels = array(instance, "parcelReservations");
+            if (parcels.isEmpty()) {
+                drawLandscapeSpans(g, t, array(instance, "reservationSpans"), withAlpha(color, 92));
+            } else {
+                int parcelIndex = 0;
+                for (JsonElement parcelElement : parcels) {
+                    if (!parcelElement.isJsonObject()) continue;
+                    JsonObject parcel = parcelElement.getAsJsonObject();
+                    parcelIndex++;
+                    int delta = parcelIndex % 2 == 0 ? 24 : -8;
+                    Color parcelColor = new Color(clampColor(color.getRed() + delta),
+                            clampColor(color.getGreen() + delta), clampColor(color.getBlue() + delta), 92);
+                    drawLandscapeSpans(g, t, array(parcel, "reservationSpans"), parcelColor);
+                    BlockBounds parcelBounds = landscapeBounds(parcel);
+                    if (drawLabels && parcelBounds != null) {
+                        drawBadge(g, t, parcelBounds.center(), "L" + index + "P" + parcelIndex,
+                                new Color(parcelColor.getRed(), parcelColor.getGreen(),
+                                        parcelColor.getBlue(), 235));
+                    }
+                }
             }
             BlockBounds bounds = landscapeBounds(instance);
             if (drawLabels && bounds != null) drawBadge(g, t, bounds.center(), "L" + index, color);
         }
+    }
+
+    private static void drawLandscapeSpans(Graphics2D g, Transform t, JsonArray spans, Color color) {
+        g.setColor(color);
+        for (JsonElement spanElement : spans) {
+            if (!spanElement.isJsonObject()) continue;
+            JsonObject span = spanElement.getAsJsonObject();
+            int z = intValue(span, "z", 0);
+            fillBounds(g, t, new BlockBounds(intValue(span, "minX", 0), z,
+                    intValue(span, "maxX", 0), z));
+        }
+    }
+
+    private static int clampColor(int value) {
+        return Math.max(0, Math.min(255, value));
     }
 
     private static Color landscapeColor(JsonObject instance, int index) {

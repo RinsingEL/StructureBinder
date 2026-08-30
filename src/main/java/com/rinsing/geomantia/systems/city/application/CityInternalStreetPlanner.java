@@ -44,27 +44,30 @@ final class CityInternalStreetPlanner {
                                          List<Anchor> anchors) {
         Map<Integer, List<Anchor>> rows = grouped(anchors, "gridRow");
         Map<Integer, List<Anchor>> columns = grouped(anchors, "gridColumn");
-        BlockBounds extent = union(anchors.stream().map(Anchor::collision).toList());
+        BlockBounds usedExtent = union(anchors.stream().map(Anchor::collision).toList());
         int narrow = Math.max(1, parameters.streetBandWidthBlocks() / 2);
         List<JsonObject> roads = new ArrayList<>();
         List<Integer> rowKeys = new ArrayList<>(rows.keySet());
         for (int index = 0; index + 1 < rowKeys.size(); index++) {
             int width = (index & 1) == 0 ? parameters.streetBandWidthBlocks() : narrow;
-            Gap gap = collisionGap(rows.get(rowKeys.get(index)), rows.get(rowKeys.get(index + 1)), true);
-            requireWidth(gap, width + 2, groupId, "GRID_ROW_GAP");
+            List<Anchor> first = rows.get(rowKeys.get(index));
+            List<Anchor> second = rows.get(rowKeys.get(index + 1));
+            Gap gap = collisionGap(first, second, true);
+            if (gap.availableBlocks() < width + 2) continue;
             roads.add(segment(groupId, "GRID_STREET_NETWORK",
                     width == parameters.streetBandWidthBlocks() ? "GRID_MAIN_STREET" : "GRID_ROW_LANE",
-                    roads.size(), width, new BlockPoint(gap.center(), extent.minZ()),
-                    new BlockPoint(gap.center(), extent.maxZ())));
+                    roads.size(), width, new BlockPoint(gap.center(), usedExtent.minZ()),
+                    new BlockPoint(gap.center(), usedExtent.maxZ())));
         }
         List<Integer> columnKeys = new ArrayList<>(columns.keySet());
         for (int index = 0; index + 1 < columnKeys.size(); index++) {
-            Gap gap = collisionGap(columns.get(columnKeys.get(index)),
-                    columns.get(columnKeys.get(index + 1)), false);
-            requireWidth(gap, narrow + 2, groupId, "GRID_COLUMN_GAP");
+            List<Anchor> first = columns.get(columnKeys.get(index));
+            List<Anchor> second = columns.get(columnKeys.get(index + 1));
+            Gap gap = collisionGap(first, second, false);
+            if (gap.availableBlocks() < narrow + 2) continue;
             roads.add(segment(groupId, "GRID_STREET_NETWORK", "GRID_COLUMN_LANE", roads.size(), narrow,
-                    new BlockPoint(extent.minX(), gap.center()),
-                    new BlockPoint(extent.maxX(), gap.center())));
+                    new BlockPoint(usedExtent.minX(), gap.center()),
+                    new BlockPoint(usedExtent.maxX(), gap.center())));
         }
         return List.copyOf(roads);
     }
@@ -363,13 +366,6 @@ final class CityInternalStreetPlanner {
         int freeMin = firstMax + 1;
         int freeMax = secondMin - 1;
         return new Gap(midpoint(freeMin, freeMax), Math.max(0, freeMax - freeMin + 1));
-    }
-
-    private static void requireWidth(Gap gap, int width, String groupId, String gapKind) {
-        if (gap.availableBlocks() < width) {
-            throw new IllegalArgumentException("CITY_INTERNAL_STREET_WIDTH_EXCEEDS_COLLISION_GAP:"
-                    + groupId + ':' + gapKind + ":available=" + gap.availableBlocks() + ":required=" + width);
-        }
     }
 
     private static BlockBounds union(List<BlockBounds> values) {

@@ -23,6 +23,33 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityLandscapeCapacityReservationPlannerTest {
     @Test
+    void functionalCorridorLandscapeLeavesOneBlockBetweenFieldParcels() {
+        var result = new CityLandscapeCapacityReservationPlanner().plan(
+                blueprintWithFieldSeparators(4), catalog(1, 12),
+                terrain(new BlockBounds(0, 0, 255, 255)), anchors(120, 120));
+
+        assertTrue(result.ok(), result.plan().toString());
+        JsonObject instance = result.plan().getAsJsonArray("instances").get(0).getAsJsonObject();
+        assertEquals(4, instance.get("parcelCount").getAsInt());
+        JsonArray parcels = instance.getAsJsonArray("parcelReservations");
+        List<Set<BlockPoint>> masks = new ArrayList<>();
+        for (int index = 0; index < parcels.size(); index++) {
+            JsonObject parcel = parcels.get(index).getAsJsonObject();
+            masks.add(cells(parcel.getAsJsonArray("reservationSpans")));
+            if (index == 0) continue;
+            assertEquals(1, parcel.get("separatorWidthBlocks").getAsInt());
+            assertEquals(0, parcel.get("sharedBoundaryBlocks").getAsInt());
+            assertTrue(parcel.get("separatedBoundaryBlocks").getAsInt() > 0, parcel.toString());
+        }
+        for (int left = 0; left < masks.size(); left++) {
+            for (int right = left + 1; right < masks.size(); right++) {
+                assertFalse(touching(masks.get(left), masks.get(right)),
+                        "Field parcels consumed their one-block landscape gap");
+            }
+        }
+    }
+
+    @Test
     void reservesExactlyTenConnectedParcelsForRequiredWindmillLandscape() {
         var result = new CityLandscapeCapacityReservationPlanner().plan(
                 blueprint(10), catalog(1, 12), terrain(new BlockBounds(0, 0, 255, 255)), anchors(120, 120));
@@ -321,6 +348,38 @@ class CityLandscapeCapacityReservationPlannerTest {
                 new CityBlueprint.ProfileRef("road"), new CityBlueprint.ProfileRef("surface"),
                 new CityBlueprint.OutdoorPlan(CityBlueprint.OutdoorMode.GENERATE,
                         CityBlueprint.EnvelopeProfile.BALANCED, "foundation", List.of(), List.of(landscape)));
+    }
+
+    private static CityBlueprint blueprintWithFieldSeparators(int parcelCount) {
+        CityBlueprint source = blueprint(parcelCount);
+        CityBlueprint.Landscape original = source.outdoorPlan().landscapes().get(0);
+        CityBlueprint.FillVariant variant = new CityBlueprint.FillVariant("field_fill", 1.0,
+                List.of(new CityBlueprint.RoleShare("CULTIVATED", CityBlueprint.RegionGrowthForm.PATCH, 0.85),
+                        new CityBlueprint.RoleShare("GROUND_PATH", CityBlueprint.RegionGrowthForm.CORRIDOR, 0.15)),
+                List.of());
+        CityBlueprint.Landscape landscape = new CityBlueprint.Landscape(original.landscapeId(),
+                original.landscapeProfileRef(), original.purpose(), original.originMode(),
+                new CityBlueprint.LandscapeOwner("farm", ""), original.placementDomain(),
+                original.instanceCount(), original.parcelCount(), original.preferredPatchRefs(),
+                original.terrainPolicy(), original.required(),
+                new CityBlueprint.FillSelection(List.of(variant)));
+        CityBlueprint.OutdoorPlan outdoor = source.outdoorPlan();
+        return new CityBlueprint(source.schemaVersion(), source.cityId(), source.sourceD3Ref(),
+                source.catalogSnapshotRef(), source.generationSeed(), source.designIntent(), source.styleProfile(),
+                source.groups(), source.arrayCompositions(), source.relations(), source.roadProfile(),
+                source.surfaceDetailProfile(), new CityBlueprint.OutdoorPlan(outdoor.mode(),
+                outdoor.envelopeProfile(), outdoor.foundationProfileRef(), outdoor.spatialGrounds(),
+                List.of(landscape)));
+    }
+
+    private static boolean touching(Set<BlockPoint> left, Set<BlockPoint> right) {
+        for (BlockPoint point : left) {
+            if (right.contains(new BlockPoint(point.x() + 1, point.z()))
+                    || right.contains(new BlockPoint(point.x() - 1, point.z()))
+                    || right.contains(new BlockPoint(point.x(), point.z() + 1))
+                    || right.contains(new BlockPoint(point.x(), point.z() - 1))) return true;
+        }
+        return false;
     }
 
     private static CityBlueprintReferenceCatalog catalog(int min, int max) {

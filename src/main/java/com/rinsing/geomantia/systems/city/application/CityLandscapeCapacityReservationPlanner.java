@@ -83,10 +83,12 @@ public final class CityLandscapeCapacityReservationPlanner {
             extentByGroup.put(group.groupId(), group.extentClass());
         }
         Map<String, JsonObject> owners = new LinkedHashMap<>();
+        Map<String, JsonObject> groupOwners = new LinkedHashMap<>();
         for (JsonElement element : anchors) {
             JsonObject anchor = element.getAsJsonObject();
             if (!"required".equalsIgnoreCase(text(anchor, "blueprintPlacementPhase"))) continue;
             owners.put(text(anchor, "placementGroupId") + '\u0000' + text(anchor, "blueprintStructureRef"), anchor);
+            groupOwners.putIfAbsent(text(anchor, "placementGroupId"), anchor);
         }
         List<Subject> result = new ArrayList<>();
         for (CityBlueprint.Landscape landscape : blueprint.outdoorPlan().landscapes()) {
@@ -98,7 +100,9 @@ public final class CityLandscapeCapacityReservationPlanner {
             CityBlueprintReferenceCatalog.LandscapeProfile profile = catalog.landscapeProfiles()
                     .get(landscape.landscapeProfileRef());
             if (profile == null) throw new IllegalArgumentException("CITY_BLUEPRINT_LANDSCAPE_PROFILE_UNKNOWN");
-            JsonObject owner = owners.get(landscape.owner().groupId() + '\u0000'
+            JsonObject owner = landscape.owner().groupOwned()
+                    ? groupOwners.get(landscape.owner().groupId())
+                    : owners.get(landscape.owner().groupId() + '\u0000'
                     + landscape.owner().requiredStructureRef());
             // The owning building may have been skipped as an unfit terrain member;
             // its attached landscape is skipped with it, without failing the city.
@@ -253,6 +257,7 @@ public final class CityLandscapeCapacityReservationPlanner {
         Set<BlockPoint> ownerCells = cells(owner);
         TerrainIndex terrainIndex = new TerrainIndex(terrain);
         int count = subject.landscape().parcelCount();
+        boolean oneBlockSeparator = usesOneBlockSeparator(subject.landscape());
         int topologyStart = subject.percentageFill() ? Math.min(3, Math.max(0, count - 1)) : 0;
         int topologyEnd = subject.percentageFill() ? topologyStart + 1 : 4;
         int rootVariantCount = subject.percentageFill() ? 1 : 2;
@@ -269,13 +274,17 @@ public final class CityLandscapeCapacityReservationPlanner {
                     Set<BlockPoint> parentCells = parentParcel == null ? ownerCells : parentParcel.cells();
                     Set<BlockPoint> nonParentCells = new HashSet<>(cells);
                     if (parentParcel != null) nonParentCells.removeAll(parentParcel.cells());
+                    Set<BlockPoint> forbiddenAdjacency = oneBlockSeparator && parentParcel != null
+                            ? new HashSet<>(cells) : nonParentCells;
+                    int separatorWidthBlocks = oneBlockSeparator && parentParcel != null ? 1 : 0;
                     double bearing = bearing(directionIndex, topology, ordinal);
                     long shapeSeed = stableHash(generationSeed + ":" + subject.landscape().landscapeId()
                             + ':' + instanceOrdinal + ':' + directionIndex + ':' + topology + ':' + ordinal);
                     GrowthMask grown = forceGrowAdjacent(subject, terrainIndex, parentCells, structureCells, cells,
-                            nonParentCells, bearing, shapeSeed, subject.parcelArea(),
+                            forbiddenAdjacency, bearing, shapeSeed, subject.parcelArea(),
                             parentParcel == null, rootVariant == 1,
-                            parentParcel == null && rootVariant == 0 ? 1 : parentParcel == null ? 0 : 1);
+                            parentParcel == null && rootVariant == 0 ? 1 : parentParcel == null ? 0 : 1,
+                            separatorWidthBlocks);
                     if (grown == null) {
                         if (parentParcel == null) valid = false;
                         break;
@@ -285,7 +294,9 @@ public final class CityLandscapeCapacityReservationPlanner {
                             + String.format(java.util.Locale.ROOT, "%02d", instanceOrdinal + 1)
                             + "::parcel_" + String.format(java.util.Locale.ROOT, "%02d", ordinal + 1);
                     int sharedActual = ordinal == 0 ? 0 : sharedBoundary(mask, parentParcel.cells());
-                    if (ordinal > 0 && sharedActual < 1) {
+                    int separatedActual = ordinal == 0 ? 0
+                            : separatedBoundary(mask, parentParcel.cells(), separatorWidthBlocks);
+                    if (ordinal > 0 && (separatorWidthBlocks == 0 ? sharedActual < 1 : separatedActual < 1)) {
                         valid = false;
                         break;
                     }
@@ -296,7 +307,8 @@ public final class CityLandscapeCapacityReservationPlanner {
                         }
                     }
                     if (!valid) break;
-                    parcels.add(new ParcelCapacity(parcelId, parentId, mask, grown.seed(), sharedActual));
+                    parcels.add(new ParcelCapacity(parcelId, parentId, mask, grown.seed(), sharedActual,
+                            separatorWidthBlocks, separatedActual));
                     cells.addAll(mask);
                 }
                 String fingerprint = parcels.stream()
@@ -345,7 +357,8 @@ public final class CityLandscapeCapacityReservationPlanner {
                                                 int targetArea,
                                                 boolean ownerSeededRoot,
                                                 boolean allowDetachedRoot,
-                                                int minimumSharedBoundary) {
+                                                int minimumSourceBoundary,
+                                                int separatorWidthBlocks) {
         BlockBounds sourceBounds = bounds(sourceCells);
         double sourceCenterX = centerX(sourceBounds);
         double sourceCenterZ = centerZ(sourceBounds);
@@ -355,10 +368,15 @@ public final class CityLandscapeCapacityReservationPlanner {
                                 sourceCenterX, sourceCenterZ, bearing, shapeSeed)
                         : bestBoundarySeed(subject, terrain, sourceCells, structureCells, occupiedCells,
                                 forbiddenAdjacency, sourceCenterX, sourceCenterZ, bearing, shapeSeed))
-                : boundaryCandidates(sourceCells).stream()
+                : (separatorWidthBlocks > 0
+                        ? separatedBoundaryCandidates(sourceCells, separatorWidthBlocks)
+                        : boundaryCandidates(sourceCells)).stream()
                         .filter(point -> eligible(point, terrain, structureCells, occupiedCells,
                                 forbiddenAdjacency))
-                        .filter(point -> touchesContinuousTerrain(subject, terrain, sourceCells, point))
+                        .filter(point -> separatorWidthBlocks > 0
+                                ? touchesContinuousTerrainAcrossSeparator(subject, terrain, sourceCells,
+                                point, separatorWidthBlocks)
+                                : touchesContinuousTerrain(subject, terrain, sourceCells, point))
                         .min(Comparator.comparingDouble((BlockPoint point) -> seedScore(subject, terrain, point,
                                         sourceCenterX, sourceCenterZ, bearing, shapeSeed))
                                 .thenComparingInt(BlockPoint::z).thenComparingInt(BlockPoint::x))
@@ -395,8 +413,19 @@ public final class CityLandscapeCapacityReservationPlanner {
                 frontier.add(new GrowthNode(next, pathCost, priority));
             }
         }
-        if (result.isEmpty() || sharedBoundary(result, sourceCells) < minimumSharedBoundary) return null;
+        int sourceBoundary = separatorWidthBlocks > 0
+                ? separatedBoundary(result, sourceCells, separatorWidthBlocks)
+                : sharedBoundary(result, sourceCells);
+        if (result.isEmpty() || sourceBoundary < minimumSourceBoundary) return null;
         return new GrowthMask(Set.copyOf(result), seed);
+    }
+
+    private static boolean usesOneBlockSeparator(CityBlueprint.Landscape landscape) {
+        return landscape.purpose() == CityBlueprint.LandscapePurpose.FUNCTIONAL
+                && landscape.fillSelection().variants().stream()
+                .flatMap(variant -> variant.roleShares().stream())
+                .anyMatch(role -> role.growthForm() == CityBlueprint.RegionGrowthForm.CORRIDOR
+                        && "GROUND_PATH".equalsIgnoreCase(role.roleRef()));
     }
 
     private static BlockPoint bestBoundarySeed(Subject subject,
@@ -519,6 +548,20 @@ public final class CityLandscapeCapacityReservationPlanner {
         return result;
     }
 
+    private static Set<BlockPoint> separatedBoundaryCandidates(Set<BlockPoint> sourceCells,
+                                                                int separatorWidthBlocks) {
+        Set<BlockPoint> result = new LinkedHashSet<>();
+        int distance = separatorWidthBlocks + 1;
+        for (BlockPoint source : sourceCells) {
+            for (int[] direction : DIRECTIONS) {
+                BlockPoint point = new BlockPoint(source.x() + direction[0] * distance,
+                        source.z() + direction[1] * distance);
+                if (!sourceCells.contains(point)) result.add(point);
+            }
+        }
+        return result;
+    }
+
     private static double anglePenalty(double dx, double dz, double bearing) {
         double length = Math.max(1.0e-9, Math.hypot(dx, dz));
         double cosine = (dx * Math.cos(bearing) + dz * Math.sin(bearing)) / length;
@@ -543,6 +586,31 @@ public final class CityLandscapeCapacityReservationPlanner {
         for (int[] direction : DIRECTIONS) {
             BlockPoint source = new BlockPoint(target.x() + direction[0], target.z() + direction[1]);
             if (sourceCells.contains(source) && continuous(subject, terrain, source, target)) return true;
+        }
+        return false;
+    }
+
+    private static boolean touchesContinuousTerrainAcrossSeparator(Subject subject, TerrainIndex terrain,
+                                                                    Set<BlockPoint> sourceCells,
+                                                                    BlockPoint target,
+                                                                    int separatorWidthBlocks) {
+        int distance = separatorWidthBlocks + 1;
+        for (int[] direction : DIRECTIONS) {
+            BlockPoint source = new BlockPoint(target.x() + direction[0] * distance,
+                    target.z() + direction[1] * distance);
+            if (!sourceCells.contains(source)) continue;
+            BlockPoint previous = source;
+            boolean continuous = true;
+            for (int step = 1; step <= distance; step++) {
+                BlockPoint next = new BlockPoint(source.x() - direction[0] * step,
+                        source.z() - direction[1] * step);
+                if (!continuous(subject, terrain, previous, next)) {
+                    continuous = false;
+                    break;
+                }
+                previous = next;
+            }
+            if (continuous) return true;
         }
         return false;
     }
@@ -627,6 +695,20 @@ public final class CityLandscapeCapacityReservationPlanner {
         return count;
     }
 
+    private static int separatedBoundary(Set<BlockPoint> left, Set<BlockPoint> right,
+                                         int separatorWidthBlocks) {
+        if (separatorWidthBlocks <= 0) return sharedBoundary(left, right);
+        int distance = separatorWidthBlocks + 1;
+        int count = 0;
+        for (BlockPoint point : left) {
+            if (right.contains(new BlockPoint(point.x() + distance, point.z()))
+                    || right.contains(new BlockPoint(point.x() - distance, point.z()))
+                    || right.contains(new BlockPoint(point.x(), point.z() + distance))
+                    || right.contains(new BlockPoint(point.x(), point.z() - distance))) count++;
+        }
+        return count;
+    }
+
     private static Set<BlockPoint> structureCells(JsonArray anchors) {
         Set<BlockPoint> result = new HashSet<>();
         for (JsonElement element : anchors) {
@@ -699,6 +781,8 @@ public final class CityLandscapeCapacityReservationPlanner {
             value.addProperty("ownerGroupId", instance.subject().landscape().owner().groupId());
             value.addProperty("ownerRequiredStructureRef",
                     instance.subject().landscape().owner().requiredStructureRef());
+            value.addProperty("ownershipScope", instance.subject().landscape().owner().groupOwned()
+                    ? "FUNCTION_AREA" : "STRUCTURE_SEEDED");
             value.addProperty("ownerAnchorId", text(instance.subject().owner(), "anchorId"));
             value.add("ownerFootprint", footprintJson(bounds(instance.subject().owner())));
             value.addProperty("capacityCandidateId", instanceId + "::d" + instance.direction()
@@ -722,6 +806,8 @@ public final class CityLandscapeCapacityReservationPlanner {
                 item.addProperty("rootSource", parcel.parentParcelId().isBlank()
                         ? "owner_seeded_terrain_candidate" : "parent_parcel_boundary");
                 item.addProperty("sharedBoundaryBlocks", parcel.sharedBoundaryBlocks());
+                item.addProperty("separatorWidthBlocks", parcel.separatorWidthBlocks());
+                item.addProperty("separatedBoundaryBlocks", parcel.separatedBoundaryBlocks());
                 item.addProperty("targetAreaBlocks", instance.subject().parcelArea());
                 item.addProperty("actualAreaBlocks", parcel.cells().size());
                 JsonObject seed = new JsonObject();
@@ -734,7 +820,10 @@ public final class CityLandscapeCapacityReservationPlanner {
                 proof.addProperty("minimumBlocks", parcel.parentParcelId().isBlank()
                         ? 0 : 1);
                 proof.addProperty("actualBlocks", parcel.parentParcelId().isBlank()
-                        ? 0 : parcel.sharedBoundaryBlocks());
+                        ? 0 : parcel.separatorWidthBlocks() > 0
+                        ? parcel.separatedBoundaryBlocks() : parcel.sharedBoundaryBlocks());
+                proof.addProperty("relation", parcel.separatorWidthBlocks() > 0
+                        ? "ONE_BLOCK_SEPARATOR" : "SHARED_BOUNDARY");
                 item.add("sharedBoundaryProof", proof);
                 item.add("reservationSpans", spans(parcel.cells()));
                 parcels.add(item);
@@ -886,7 +975,9 @@ public final class CityLandscapeCapacityReservationPlanner {
 
     private record ParcelCapacity(String parcelId, String parentParcelId, Set<BlockPoint> cells,
                                   BlockPoint seed,
-                                  int sharedBoundaryBlocks) {
+                                  int sharedBoundaryBlocks,
+                                  int separatorWidthBlocks,
+                                  int separatedBoundaryBlocks) {
     }
 
     private record GrowthMask(Set<BlockPoint> cells, BlockPoint seed) {

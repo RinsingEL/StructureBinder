@@ -94,6 +94,23 @@ class LandscapeParcelExpanderTest {
     }
 
     @Test
+    void frozenCapacityDomainIsNotTruncatedByTheFreeSearchActionBudget() {
+        LandUseTerrainField terrain = flatTerrain();
+        String groupId = "farm::parcel_01";
+        LandUseSeedGroup group = withActionBudget(
+                group(groupId, new BlockPoint(10, 10), 12, 12, 12), 2);
+        Set<BlockPoint> capacity = new java.util.LinkedHashSet<>();
+        for (int x = 10; x < 22; x++) capacity.add(new BlockPoint(x, 10));
+
+        LandUseExpansionResult result = new LandscapeParcelExpander().expand("city_test",
+                terrain.planningBounds(), terrain, List.of(group), "frozen-budget", Set.of(),
+                Map.of(groupId, capacity), Map.of(groupId, ""));
+
+        assertEquals(12, result.claimedBlocksByGroup().get(groupId));
+        assertEquals(capacity, result.claims().keySet());
+    }
+
+    @Test
     void frozenBranchTopologyRelaysFromDeclaredParentInsteadOfPreviousOrdinal() {
         LandUseTerrainField terrain = flatTerrain();
         String rootId = "fields::instance_01::parcel_01";
@@ -176,8 +193,7 @@ class LandscapeParcelExpanderTest {
         LandUseSeedGroup child = group(childId, new BlockPoint(13, 10), 2, 2, 2, program);
         Map<String, Set<BlockPoint>> domains = Map.of(
                 rootId, Set.of(new BlockPoint(10, 10), new BlockPoint(11, 10)),
-                childId, Set.of(new BlockPoint(12, 10), new BlockPoint(13, 10),
-                        new BlockPoint(14, 10)));
+                childId, Set.of(new BlockPoint(13, 10), new BlockPoint(14, 10)));
 
         LandUseExpansionResult result = new LandscapeParcelExpander().expand("city_test",
                 terrain.planningBounds(), terrain, List.of(root, child), "natural-gap", Set.of(), domains,
@@ -189,6 +205,7 @@ class LandscapeParcelExpanderTest {
         assertEquals(new BlockPoint(11, 10), origin.sourceFrontier());
         assertTrue(!result.claims().containsKey(new BlockPoint(12, 10)),
                 "one unclaimed terrain-following cell must remain as the parcel road gap");
+        assertEquals(2, result.claimedBlocksByGroup().get(childId));
     }
 
     private static LandUseSeedGroup group(String groupId,
@@ -220,6 +237,21 @@ class LandscapeParcelExpanderTest {
                 source.preferredAreaBlocks(), source.maxAreaBlocks(), source.actionBudget(),
                 source.competitionWeight(), source.growthRegions(), source.growthBias(), source.terrainBias(),
                 source.preferredPatchRefs(), source.layerRole(), source.foundationSettings(), program,
+                source.admissionPolicy());
+    }
+
+    private static LandUseSeedGroup withActionBudget(LandUseSeedGroup source, int actionBudget) {
+        LandUseRule rule = source.rule();
+        LandUseRule limitedRule = new LandUseRule(rule.ruleRef(), rule.landUseType(), rule.semanticTerms(),
+                rule.footprintMultiplier(), rule.extraAreaBlocks(), rule.minAreaBlocks(), rule.maxAreaBlocks(),
+                actionBudget, rule.baseStepCost(), rule.slopeCost(), rule.reliefCost(), rule.waterCost(),
+                rule.forestAffinity(), rule.competitionWeight(), rule.mergeSameType(), rule.surfacePolicy(),
+                rule.vegetationPolicy(), rule.boundaryPolicy(), rule.decorationPolicy());
+        return new LandUseSeedGroup(source.groupId(), limitedRule, source.surfaceSettings(), source.anchorIds(),
+                source.structureFootprints(), source.seedPoints(), source.gateSlots(), source.minAreaBlocks(),
+                source.preferredAreaBlocks(), source.maxAreaBlocks(), actionBudget, source.competitionWeight(),
+                source.growthRegions(), source.growthBias(), source.terrainBias(), source.preferredPatchRefs(),
+                source.layerRole(), source.foundationSettings(), source.landscapeFillProgram(),
                 source.admissionPolicy());
     }
 

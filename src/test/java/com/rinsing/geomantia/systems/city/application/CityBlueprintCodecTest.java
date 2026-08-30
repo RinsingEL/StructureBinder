@@ -53,6 +53,19 @@ class CityBlueprintCodecTest {
     }
 
     @Test
+    void readsAndWritesFunctionAreaOwnedLandscape() throws IOException {
+        JsonObject json = fixture("valid_city_blueprint_v0_1.json");
+        JsonObject owner = json.getAsJsonObject("outdoorPlan").getAsJsonArray("landscapes")
+                .get(0).getAsJsonObject().getAsJsonObject("owner");
+        owner.remove("requiredStructureRef");
+
+        CityBlueprint blueprint = codec.read(json);
+
+        assertEquals(true, blueprint.outdoorPlan().landscapes().get(0).owner().groupOwned());
+        assertEquals(json, codec.write(blueprint));
+    }
+
+    @Test
     void rejectsPreviousBlueprintSchema() throws IOException {
         JsonObject json = fixture("valid_city_blueprint_v0_1.json");
         json.addProperty("schemaVersion", "city_blueprint.v0.8");

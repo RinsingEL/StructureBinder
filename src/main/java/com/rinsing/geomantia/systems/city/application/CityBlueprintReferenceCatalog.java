@@ -7,6 +7,7 @@ import com.rinsing.geomantia.systems.city.domain.blueprint.CityBlueprint;
 import com.rinsing.geomantia.systems.city.domain.blueprint.CityBlueprintContractException;
 import com.rinsing.geomantia.systems.city.domain.blueprint.CityBlueprintReasonCode;
 import com.rinsing.geomantia.systems.city.domain.landuse.LandUseSurfaceSettings;
+import com.rinsing.geomantia.systems.city.domain.landuse.SurfacePolicy;
 import com.rinsing.geomantia.systems.city.domain.landuse.rules.LandUseRuleCatalog;
 import com.rinsing.geomantia.systems.city.infrastructure.landuse.LandUseRuleCatalogLoader;
 
@@ -274,13 +275,29 @@ public record CityBlueprintReferenceCatalog(
             String ref = string(item, "landscapeProfileRef", path + ".landscapeProfileRef");
             String ruleRef = string(item, "landUseRuleRef", path + ".landUseRuleRef");
             String recipeRef = string(item, "surfaceRecipeRef", path + ".surfaceRecipeRef");
-            if (rules.byRef(ruleRef).isEmpty()) {
+            var rule = rules.byRef(ruleRef);
+            if (rule.isEmpty()) {
                 fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID,
                         path + ".landUseRuleRef", "Unknown LandUse ruleRef: " + ruleRef);
             }
-            if (!recipes.containsKey(recipeRef)) {
+            SurfaceRecipe recipe = recipes.get(recipeRef);
+            if (recipe == null) {
                 fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID,
                         path + ".surfaceRecipeRef", "Unknown surfaceRecipeRef: " + recipeRef);
+            }
+            LandscapeType landscapeType = enumValue(item, "landscapeType", LandscapeType.class, path);
+            if (landscapeType == LandscapeType.FARMLAND) {
+                if (rule.orElseThrow().surfacePolicy() != SurfacePolicy.CULTIVATE) {
+                    fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID,
+                            path + ".landUseRuleRef",
+                            "FARMLAND requires a CULTIVATE LandUse rule: " + ruleRef);
+                }
+                if (!recipe.surfacePrintEnabled() || recipe.cropBlockId() == null
+                        || recipe.cropBlockId().isBlank()) {
+                    fail(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID,
+                            path + ".surfaceRecipeRef",
+                            "FARMLAND requires an enabled crop-bearing surface recipe: " + recipeRef);
+                }
             }
             int small = positiveInt(item, "baseAreaSmall", path);
             int medium = positiveInt(item, "baseAreaMedium", path);
@@ -290,7 +307,7 @@ public record CityBlueprintReferenceCatalog(
                         "Landscape base areas must be monotonic: small <= medium <= large.");
             }
             LandscapeProfile profile = new LandscapeProfile(ref,
-                    enumValue(item, "landscapeType", LandscapeType.class, path), ruleRef, recipeRef,
+                    landscapeType, ruleRef, recipeRef,
                     small, medium, large,
                     enumValue(item, "membership", CityBlueprint.OutdoorMembership.class, path),
                     parcelStyle(object(item.get("parcelStyle"), path + ".parcelStyle"), path + ".parcelStyle"));

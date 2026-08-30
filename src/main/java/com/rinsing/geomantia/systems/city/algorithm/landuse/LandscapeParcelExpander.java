@@ -208,7 +208,7 @@ public final class LandscapeParcelExpander {
                         || obstacles.contains(start) || !state.allowed(start)
                         || !passable(terrain.cellAt(start.x(), start.z()))
                         || roadGap && (!planningBounds.contains(gap.x(), gap.z())
-                        || claims.containsKey(gap) || obstacles.contains(gap) || !state.allowed(gap)
+                        || claims.containsKey(gap) || obstacles.contains(gap)
                         || !passable(terrain.cellAt(gap.x(), gap.z()))
                         || !continuous(state.group, terrain, source, gap)
                         || !continuous(state.group, terrain, gap, start))
@@ -238,9 +238,7 @@ public final class LandscapeParcelExpander {
         return group.landscapeFillProgram().roles().stream().anyMatch(role ->
                 role.growthForm() == com.rinsing.geomantia.systems.city.domain.landuse.LandscapeFillProgram.GrowthForm.CORRIDOR
                         && (role.materialRole()
-                        == com.rinsing.geomantia.systems.city.domain.landuse.LandscapeFillProgram.MaterialRole.GROUND
-                        || role.materialRole()
-                        == com.rinsing.geomantia.systems.city.domain.landuse.LandscapeFillProgram.MaterialRole.BANK));
+                        == com.rinsing.geomantia.systems.city.domain.landuse.LandscapeFillProgram.MaterialRole.GROUND));
     }
 
     private static int adjacentCount(Set<BlockPoint> cells, BlockPoint point) {
@@ -294,7 +292,11 @@ public final class LandscapeParcelExpander {
                 continue;
             }
             double nextPathCost = pathCost + terrainStepCost(state.group, cell);
-            if (nextPathCost > state.group.actionBudget() + EPSILON) {
+            // A frozen D4 capacity domain is already the terrain-fit and size authority.
+            // The generic action budget limits free search only; applying it again here can
+            // truncate a large approved parcel before growth reaches its reserved boundary.
+            if (state.capacityDomain.isEmpty()
+                    && nextPathCost > state.group.actionBudget() + EPSILON) {
                 if (state.rejected.add(next)) counters.blocked++;
                 continue;
             }

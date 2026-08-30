@@ -31,6 +31,24 @@ class CityArrayVisualQualityGateTest {
     }
 
     @Test
+    void landscapeGapGridDoesNotRequireFormalCityStreets() {
+        JsonArray anchors = new JsonArray();
+        JsonObject first = gridLayout(0, 0, 0, 0);
+        first.addProperty("internalCirculationMode", "LANDSCAPE_GAPS");
+        JsonObject second = gridLayout(1, 0, 20, 0);
+        second.addProperty("internalCirculationMode", "LANDSCAPE_GAPS");
+        anchors.add(anchor("fields", "GRID", 0, 0, 0, 0, first));
+        anchors.add(anchor("fields", "GRID", 20, 0, 20, 0, second));
+
+        var result = gate.evaluate(anchors, new JsonArray());
+
+        assertTrue(result.passed(), result.json().toString());
+        JsonObject metrics = result.json().getAsJsonArray("groups").get(0).getAsJsonObject();
+        assertTrue("LANDSCAPE_GAPS".equals(metrics.get("internalCirculationMode").getAsString()));
+        assertFalse(metrics.get("formalStreetRequired").getAsBoolean());
+    }
+
+    @Test
     void rejectsCourtyardWhoseCenterIsOccupied() {
         JsonArray anchors = new JsonArray();
         anchors.add(anchor("court", "COURTYARD", 0, 0, 0, 0, courtyardLayout(-1, 0)));

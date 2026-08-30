@@ -182,27 +182,10 @@ public final class LandUsePlanningService {
         List<LandUseSeedGroup> optional = landscapes.stream()
                 .filter(group -> group.admissionPolicy() == LandUseSeedGroup.AdmissionPolicy.OPTIONAL)
                 .sorted(Comparator.comparing(LandUseSeedGroup::groupId)).toList();
-        List<LandUseSeedGroup> activeRequired = new ArrayList<>(required);
         Set<String> skipped = new LinkedHashSet<>();
-        LandUseExpansionResult requiredExpansion;
-        while (true) {
-            try {
-                requiredExpansion = expander.expand(cityId, terrain.planningBounds(), terrain,
-                        activeRequired, seedSalt, Set.of(), capacityDomains, parentParcelIds);
-                break;
-            } catch (IllegalArgumentException failure) {
-                String failedGroupId = relayFailureGroupId(failure, activeRequired);
-                if (failedGroupId == null) throw failure;
-                Set<String> cascade = activeRequired.stream()
-                        .map(LandUseSeedGroup::groupId)
-                        .filter(groupId -> descendsFrom(groupId, failedGroupId, parentParcelIds))
-                        .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
-                if (cascade.isEmpty()) throw failure;
-                skipped.addAll(cascade);
-                activeRequired.removeIf(group -> cascade.contains(group.groupId()));
-            }
-        }
-        for (LandUseSeedGroup group : activeRequired) {
+        LandUseExpansionResult requiredExpansion = expander.expand(cityId, terrain.planningBounds(), terrain,
+                required, seedSalt, Set.of(), capacityDomains, parentParcelIds);
+        for (LandUseSeedGroup group : required) {
             int claimed = requiredExpansion.claimedBlocksByGroup().getOrDefault(group.groupId(), 0);
             int minimumExecutable = minimumExecutableArea(group);
             if (claimed < minimumExecutable) {
@@ -254,29 +237,6 @@ public final class LandUsePlanningService {
         }
         return new LandscapeExpansion(new LandUseExpansionResult(claims, groupCounts, regionCounts, effectiveSeeds,
                 expansionOrigins, contested, blocked), Set.copyOf(skipped));
-    }
-
-    private static String relayFailureGroupId(IllegalArgumentException failure,
-                                              List<LandUseSeedGroup> activeGroups) {
-        String message = failure.getMessage();
-        if (message == null || (!message.startsWith("CITY_LANDSCAPE_PARENT_PARCEL_UNAVAILABLE:")
-                && !message.startsWith("CITY_LANDSCAPE_PARENT_INTERFACE_EXHAUSTED:"))) return null;
-        int marker = message.indexOf(':');
-        String payload = marker < 0 ? "" : message.substring(marker + 1);
-        return activeGroups.stream().map(LandUseSeedGroup::groupId)
-                .filter(groupId -> payload.startsWith(groupId + ':'))
-                .max(Comparator.comparingInt(String::length)).orElse(null);
-    }
-
-    private static boolean descendsFrom(String groupId, String ancestorId,
-                                        Map<String, String> parentParcelIds) {
-        String current = groupId;
-        Set<String> visited = new HashSet<>();
-        while (current != null && !current.isBlank() && visited.add(current)) {
-            if (current.equals(ancestorId)) return true;
-            current = parentParcelIds.get(current);
-        }
-        return false;
     }
 
     private static boolean isOptionalRelayAdmissionFailure(IllegalArgumentException failure) {

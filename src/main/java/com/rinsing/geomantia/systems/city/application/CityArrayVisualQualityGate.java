@@ -111,14 +111,22 @@ final class CityArrayVisualQualityGate {
         boolean mainStreet = roads.stream().anyMatch(road -> "GRID_MAIN_STREET".equals(string(road, "roadKind")));
         boolean lanes = roads.stream().anyMatch(road -> string(road, "roadKind").contains("LANE"));
         boolean connected = connectedRoads(roads);
+        boolean landscapeGaps = anchors.stream().anyMatch(anchor -> "LANDSCAPE_GAPS".equals(
+                string(anchor.layout(), "internalCirculationMode")));
         if (maximumError > 1) hardBlocks.add(groupId + ": GRID_ROW_COLUMN_ERROR_EXCEEDS_ONE_BLOCK");
         if (pitches.size() != 1) hardBlocks.add(groupId + ": GRID_PITCH_NOT_UNIFORM");
-        if (rows.size() > 1 && !mainStreet) hardBlocks.add(groupId + ": GRID_MAIN_STREET_MISSING");
-        if (columns.size() > 1 && !lanes) hardBlocks.add(groupId + ": GRID_LANE_MISSING");
-        if (!connected) hardBlocks.add(groupId + ": GRID_STREET_NETWORK_DISCONNECTED");
+        if (!landscapeGaps) {
+            if (rows.size() > 1 && !mainStreet) hardBlocks.add(groupId + ": GRID_MAIN_STREET_MISSING");
+            if (columns.size() > 1 && !lanes) hardBlocks.add(groupId + ": GRID_LANE_MISSING");
+            if (!connected) hardBlocks.add(groupId + ": GRID_STREET_NETWORK_DISCONNECTED");
+        } else if (!roads.isEmpty()) {
+            hardBlocks.add(groupId + ": LANDSCAPE_GAP_CIRCULATION_HAS_FORMAL_GRID_STREET");
+        }
         JsonObject value = new JsonObject();
         value.addProperty("maximumRowColumnErrorBlocks", maximumError);
         value.addProperty("fixedPitch", pitches.size() == 1);
+        value.addProperty("internalCirculationMode", landscapeGaps ? "LANDSCAPE_GAPS" : "FORMAL_STREETS");
+        value.addProperty("formalStreetRequired", !landscapeGaps);
         value.addProperty("mainStreetPresent", mainStreet);
         value.addProperty("lanePresent", lanes);
         value.addProperty("streetNetworkConnected", connected);

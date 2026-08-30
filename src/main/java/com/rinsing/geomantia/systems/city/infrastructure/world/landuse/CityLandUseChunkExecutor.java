@@ -11,6 +11,7 @@ import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.CrossCollisionBlock;
+import net.minecraft.world.level.block.LeavesBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.Half;
@@ -795,7 +796,22 @@ public final class CityLandUseChunkExecutor {
         public TargetState inspect(int worldX, int y, int worldZ) {
             BlockPos pos = new BlockPos(worldX, y, worldZ);
             BlockState state = getBlockState(pos);
-            return new TargetState(new WorldSnapshot(state, null), state.isAir() || state.canBeReplaced());
+            return new TargetState(new WorldSnapshot(state, null), isLandUseReplaceable(state));
+        }
+
+        /**
+         * The terrain heightmap deliberately ignores leaves. A canopy crossing into a confirmed LandUse
+         * surface must therefore be replaceable too, otherwise grading samples the ground below it and then
+         * rejects the same column when the platform reaches the canopy. Logs and constructed solid blocks
+         * remain occupied targets.
+         */
+        static boolean isLandUseReplaceable(BlockState state) {
+            return isLandUseReplaceable(state.isAir(), state.canBeReplaced(),
+                    state.getBlock() instanceof LeavesBlock || state.is(BlockTags.LEAVES));
+        }
+
+        static boolean isLandUseReplaceable(boolean air, boolean replaceable, boolean leaves) {
+            return air || replaceable || leaves;
         }
 
         @Override

@@ -217,6 +217,19 @@ class RelayRegionGrowthClassifierTest {
         assertGrowthProvenance(result);
     }
 
+    @Test
+    void realScaleFarmlandMaskDoesNotOverflowTheThreadStack() {
+        List<LandUseAreaPlan.ScanlineSpan> members = rectangleSpans(0, 61, 0, 63);
+
+        RelayRegionGrowthClassifier.Result result = classify(members, List.of(),
+                new BlockPoint(31, 31), 0x3864L, farmStages());
+
+        assertEquals(3_968, result.coveredBlockCount());
+        assertEquals(3_968, result.regions().stream()
+                .mapToInt(RelayRegionGrowthClassifier.RegionTrace::actualAreaBlocks).sum());
+        assertGrowthProvenance(result);
+    }
+
     private static RelayRegionGrowthClassifier.Result classify(
             List<LandUseAreaPlan.ScanlineSpan> members,
             List<LandUseAreaPlan.ScanlineSpan> exclusions,

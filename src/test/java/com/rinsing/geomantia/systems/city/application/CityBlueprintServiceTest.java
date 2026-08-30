@@ -587,6 +587,23 @@ class CityBlueprintServiceTest {
     }
 
     @Test
+    void rejectsFarmlandProfileBackedByUrbanPavement() throws Exception {
+        Fixture fixture = fixture("run_farmland_pavement", "city:farmland_pavement");
+        JsonObject catalog = fixture.referenceCatalog().deepCopy();
+        JsonObject farmland = catalog.getAsJsonArray("landscapeProfiles").get(0).getAsJsonObject();
+        farmland.addProperty("landUseRuleRef", "civic");
+        farmland.addProperty("surfaceRecipeRef", "surface_recipe:civic");
+
+        CityBlueprintContractException failure = assertThrows(CityBlueprintContractException.class,
+                () -> new CityBlueprintService().prepare(temporary, fixture.runId(), fixture.cityId(),
+                        fixture.terraSenseSource(), fixture.templateSource(), catalog));
+
+        assertEquals(CityBlueprintReasonCode.CITY_BLUEPRINT_REFERENCE_CATALOG_INVALID,
+                failure.reasonCode());
+        assertTrue(failure.getMessage().contains("FARMLAND requires a CULTIVATE LandUse rule"));
+    }
+
+    @Test
     void freezesFourStrictLandscapeProfilesWithDistinctSurfaceSemantics() throws Exception {
         Fixture fixture = fixture("run_landscape_catalog", "city:landscape_catalog");
 

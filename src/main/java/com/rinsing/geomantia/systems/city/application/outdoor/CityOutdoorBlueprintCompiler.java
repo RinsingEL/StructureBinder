@@ -443,7 +443,7 @@ public final class CityOutdoorBlueprintCompiler {
                 int preferred = stableBetween(key + "|area", minArea, maxArea);
                 Set<BlockPoint> capacity = capacityDomains.getOrDefault(parcelId, Set.of());
                 AreaBudget budget = frozenCapacity
-                        ? new AreaBudget(1, Math.min(preferred, capacity.size()), capacity.size())
+                        ? new AreaBudget(capacity.size(), capacity.size(), capacity.size())
                         : new AreaBudget(minArea, preferred, maxArea);
                 BlockPoint base = parent == null ? (anchor == null ? origin : center(anchor.footprint()))
                         : parent.seed();
@@ -459,7 +459,7 @@ public final class CityOutdoorBlueprintCompiler {
                 BlockPoint seed = capacity.isEmpty() ? nearestParcelSeed(terrain, target, profile.landscapeType(),
                         landscape.preferredPatchRefs(), structureFootprints, usedSeeds,
                         combinedParcels(occupiedParcels, result), 0, parcelRadius)
-                        : frozenCapacitySeed(capacity);
+                        : frozenCapacitySeed(parcelId, capacity, capacitySeeds);
                 if (seed == null) {
                     warnings.add("skipped_insufficient_space:" + instanceId);
                     instance.clear();
@@ -481,8 +481,13 @@ public final class CityOutdoorBlueprintCompiler {
         return List.copyOf(result);
     }
 
-    private static BlockPoint frozenCapacitySeed(Set<BlockPoint> capacity) {
-        return capacity.stream().min(POINT_ORDER).orElse(null);
+    private static BlockPoint frozenCapacitySeed(String parcelId, Set<BlockPoint> capacity,
+                                                  Map<String, BlockPoint> capacitySeeds) {
+        BlockPoint seed = capacitySeeds.get(parcelId);
+        if (seed == null || !capacity.contains(seed)) {
+            throw new IllegalArgumentException("CITY_OUTDOOR_LANDSCAPE_CAPACITY_SEED_DRIFT:" + parcelId);
+        }
+        return seed;
     }
 
     private static boolean adjacentTo(BlockPoint point, BlockBounds bounds) {
@@ -877,10 +882,13 @@ public final class CityOutdoorBlueprintCompiler {
                                                   CityBlueprint.Landscape landscape) {
         CityBlueprint.LandscapeOwner owner = landscape.owner();
         if (owner == null) throw new IllegalArgumentException("CITY_OUTDOOR_ATTACHED_OWNER_REQUIRED");
-        return anchorsByGroup.getOrDefault(owner.groupId(), List.of()).stream()
-                .filter(anchor -> anchor.phase() == BlueprintPlacementPhase.REQUIRED)
-                .filter(anchor -> owner.requiredStructureRef().equals(anchor.structureRef()))
-                .findFirst().orElseThrow(() -> new IllegalArgumentException(
+        java.util.stream.Stream<AnchorData> candidates = anchorsByGroup
+                .getOrDefault(owner.groupId(), List.of()).stream()
+                .filter(anchor -> anchor.phase() == BlueprintPlacementPhase.REQUIRED);
+        if (!owner.groupOwned()) {
+            candidates = candidates.filter(anchor -> owner.requiredStructureRef().equals(anchor.structureRef()));
+        }
+        return candidates.findFirst().orElseThrow(() -> new IllegalArgumentException(
                         "CITY_OUTDOOR_REQUIRED_LANDSCAPE_OWNER_DRIFT:" + landscape.landscapeId()));
     }
 
