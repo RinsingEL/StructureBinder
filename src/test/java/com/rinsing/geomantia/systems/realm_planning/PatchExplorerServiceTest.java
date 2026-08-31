@@ -21,6 +21,7 @@ import java.awt.image.BufferedImage;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -470,6 +471,57 @@ class PatchExplorerServiceTest {
         assertEquals(8, snapshot.get("cellStepBlocks").getAsInt());
         assertEquals("t_water_1", snapshot.getAsJsonArray("candidates").get(0).getAsJsonObject()
                 .getAsJsonArray("sourcePatchRefs").get(0).getAsString());
+    }
+
+    @Test
+    void realmT2SharesRefinementAndKeepsSessionSnapshotsLightweight() throws Exception {
+        Path root = tempDir.resolve("shared_t_scale_realm_debug");
+        Path run = root.resolve("run_shared_t_scale");
+        Files.createDirectories(run);
+        writeRealmArtifacts(run);
+        PatchExplorerService service = new PatchExplorerService(root);
+        AtomicInteger refinements = new AtomicInteger();
+        PatchExplorerService.TerrainPatchRunner runner =
+                (runId, scopeType, scopeId, refinementIdentity, sourceCells) -> {
+                    refinements.incrementAndGet();
+                    assertTrue(refinementIdentity.startsWith("sha256:"));
+                    TerrainScalePatchService.PatchCell cell = new TerrainScalePatchService.PatchCell(
+                            0, 0, 0, 0, "shared_plain_1", "plain", 70.0, false,
+                            "minecraft:plains", 0.0, 0.0);
+                    TerrainScalePatchService.Patch patch = new TerrainScalePatchService.Patch(
+                            "shared_plain_1", "plain", 1.0, List.of("p1"), List.of(cell));
+                    return new TerrainScalePatchService.Result(16, List.of(patch), 1, 1,
+                            new TerrainScalePatchService.Source("provider_fixture", "generator_native",
+                                    "provider:fingerprint", "heightmap_preview"));
+                };
+
+        JsonObject first = service.open(request("run_shared_t_scale", "realm_t2", "realm_a"),
+                "minecraft:overworld|provider_fixture|provider:fingerprint|heightmap_preview", runner);
+        JsonObject second = service.open(request("run_shared_t_scale", "realm_t2", "kingdom_a"),
+                "minecraft:overworld|provider_fixture|provider:fingerprint|heightmap_preview", runner);
+
+        assertEquals(1, refinements.get(), "identical T2 ranges must sample and classify only once");
+        assertFalse(first.get("tScaleRefinementCacheHit").getAsBoolean());
+        assertTrue(second.get("tScaleRefinementCacheHit").getAsBoolean());
+        assertEquals(first.get("tScaleRefinementArtifact"), second.get("tScaleRefinementArtifact"));
+        assertEquals(first.get("tScaleRefinementIdentity"), second.get("tScaleRefinementIdentity"));
+        JsonObject secondSession = read(root.resolve(second.getAsJsonObject("artifacts")
+                .get("explorationSession").getAsString()));
+        JsonObject secondSnapshot = read(root.resolve(secondSession.get("scopeSnapshot").getAsString()));
+        assertTrue(secondSnapshot.has("tScaleRefinementArtifact"));
+        assertFalse(secondSnapshot.has("scopeCells"));
+        assertFalse(secondSnapshot.has("candidates"));
+        assertTrue(Files.size(root.resolve(secondSession.get("scopeSnapshot").getAsString())) < 8192L);
+        assertEquals("plain", show(service, second, "plain").getAsJsonArray("typePages").get(0)
+                .getAsJsonObject().getAsJsonArray("candidates").get(0).getAsJsonObject()
+                .get("patchType").getAsString());
+
+        JsonObject differentProvider = service.open(request("run_shared_t_scale", "realm_t2", "realm_a"),
+                "minecraft:overworld|provider_other|provider:other|heightmap_preview", runner);
+        assertEquals(2, refinements.get(), "provider identity must isolate T-scale refinement caches");
+        assertFalse(differentProvider.get("tScaleRefinementCacheHit").getAsBoolean());
+        assertFalse(first.get("tScaleRefinementArtifact").equals(
+                differentProvider.get("tScaleRefinementArtifact")));
     }
 
     private static void assertReservedFieldRejected(ThrowingCall call) {

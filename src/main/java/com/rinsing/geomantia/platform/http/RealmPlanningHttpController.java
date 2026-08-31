@@ -183,9 +183,16 @@ final class RealmPlanningHttpController {
                     : null;
             RealmT4CoarseTerrainPreviewService.Result terrainPreview = ensureRealmT4TerrainPreview(request, runtime);
             PatchExplorerService explorer = new PatchExplorerService(debugRoot());
+            String terrainPatchProviderIdentity = runtime == null ? "" : String.join("|",
+                    runtime.dimensionId(),
+                    Boolean.toString(booleanValue(request, "preferGeneratorNativeTerrain", true)),
+                    runtime.selection().providerId(), runtime.selection().sourceKind(),
+                    Boolean.toString(runtime.selection().fastPath()), runtime.selection().fallbackReason(),
+                    runtime.selection().sourceFingerprint(), runtime.selection().samplingSemantics());
             JsonObject response = runtime == null ? explorer.open(request)
-                    : explorer.open(request, (runId, refinedScopeType, scopeId, sourceIdentity, sourceCells) ->
-                            new TerrainScalePatchService().analyze(runtime.dimensionId(), scopeId,
+                    : explorer.open(request, terrainPatchProviderIdentity,
+                            (runId, refinedScopeType, scopeId, refinementIdentity, sourceCells) ->
+                            new TerrainScalePatchService().analyze(runtime.dimensionId(), refinementIdentity,
                                     sourceCells, runtime.selection()));
             if (terrainPreview != null) {
                 response.addProperty("terrainPreviewCacheHit", terrainPreview.cacheHit());
